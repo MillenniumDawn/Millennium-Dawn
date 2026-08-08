@@ -9,6 +9,28 @@ on_actions = {
 
 			if = { limit = { NOT = { has_global_flag = on_weekly_global_done } }
 				set_global_flag = { flag = on_weekly_global_done value = 1 days = 7 }
+				if = { limit = { NOT = { has_global_flag = GLOBAL_arab_spring_work_arrays_rebuilt } }
+					AS_rebuild_arab_spring_work_arrays = yes
+				}
+				for_each_loop = {
+					array = global.arab_spring_active_countries
+					value = arab_spring_country
+					var:arab_spring_country = {
+						if = { limit = { has_country_flag = arab_spring_military_deployed }
+							random_list = {
+								33 = {
+									modifier = {
+										factor = 0
+										check_variable = { the_military_opinion > 50 }
+									}
+									country_event = { id = arab_spring.7 days = 3 }
+								}
+								33 = { country_event = { id = arab_spring.8 days = 3 } }
+								33 = { }
+							}
+						}
+					}
+				}
 				international_systems_update = yes
 				add_to_variable = { global.md_gui_dirty = 1 }
 				if = { limit = { check_variable = { global.md_gui_dirty > 1000000 } }
@@ -31,7 +53,17 @@ on_actions = {
 
 			# Must follow ingame_update_setup — it charges the week via space_prod_weekly_expense, and the accrual here has to read the same var_space_paid_1X to bill the same amount
 			space_prod_weekly_bill = yes
-			if = { limit = { is_ai = no }
+			if = {
+				limit = {
+					is_ai = no
+					OR = {
+						has_country_flag = space_auto_active
+						has_country_flag = space_auto_line_10
+						has_country_flag = space_auto_line_11
+						has_country_flag = space_auto_line_12
+						has_country_flag = space_auto_line_13
+					}
+				}
 				space_automation_weekly = yes
 			}
 
@@ -140,27 +172,6 @@ on_actions = {
 
 			MD_auto_agency_weekly_tick = yes
 
-			# Arab Spring
-			if = { limit = { has_country_flag = arab_spring_active }
-				if = {
-					limit = {
-						has_country_flag = arab_spring_military_deployed
-					}
-					random_list = {
-						33 = {
-							modifier = {
-								factor = 0
-								check_variable = { the_military_opinion > 50 }
-							}
-							country_event = { id = arab_spring.7 days = 3 }
-						}
-						33 = {
-							country_event = { id = arab_spring.8 days = 3 }
-						}
-						33 = { }
-					}
-				}
-			}
 
 			if = {
 				limit = {
@@ -320,6 +331,8 @@ on_actions = {
 	#ROOT is winner #FROM gets annexed - For civil wars on_civil_war_end is also fired
 	on_annex = {
 		effect = {
+			refresh_country_and_neighbors_effects = yes
+			FROM = { AS_unregister_arab_spring_country = yes }
 			civil_war_cleanup_hooks = yes
 
 			if = {
@@ -576,6 +589,12 @@ on_actions = {
 
 	on_peaceconference_ended = {
 		effect = {
+			refresh_country_and_neighbors_effects = yes
+			FROM = {
+				if = { limit = { exists = yes }
+					refresh_country_and_neighbors_effects = yes
+				}
+			}
 			civil_war_cleanup_hooks = yes
 
 			if = {
@@ -902,7 +921,25 @@ on_actions = {
 					recalculate_party = yes
 					gov_pop_calculation = yes
 					recalculate_law_desires = yes
-					update_neighbors_effects = yes
+					if = {
+						limit = {
+							OR = {
+								check_variable = { global.month = 1 }
+								check_variable = { global.month = 4 }
+								check_variable = { global.month = 7 }
+								check_variable = { global.month = 10 }
+								check_variable = { stability_factor_neighbor_var < 0 }
+								any_of_scopes = {
+									array = neighbors
+									OR = {
+										has_stability < 0.20
+										has_civil_war = yes
+									}
+								}
+							}
+						}
+						update_neighbors_effects = yes
+					}
 
 					civilian_microchip_consumption = yes
 
@@ -1120,36 +1157,34 @@ on_actions = {
 
 				# Arab Spring Monthly Tick
 				# DO NOT INCREMENT IF YOU HAVE COMPLETED THE ARAB SPRING MINI GAME
+				if = { limit = { NOT = { has_global_flag = GLOBAL_arab_spring_work_arrays_rebuilt } }
+					AS_rebuild_arab_spring_work_arrays = yes
+				}
 				if = { limit = { check_variable = { global.arabic_countries^num > 0 } }
 					for_each_loop = {
-						array = global.arabic_countries
+						array = global.arab_spring_pending_countries
 						value = v
-						var:v = {
-							if = {
-								limit = { NOT = { has_country_flag = AS_arab_spring_completed } }
-								increment_arab_spring_strength = yes
-							}
-						}
+						var:v = { increment_arab_spring_strength = yes }
+					}
+					for_each_loop = {
+						array = global.arab_spring_active_countries
+						value = v
+						var:v = { increment_arab_spring_strength = yes }
 					}
 
 					## This section is just for the instance where someone just need to have it started
 					if = { limit = { NOT = { has_global_flag = global_arab_spring_started } }
 						random_scope_in_array = {
-							array = global.arabic_countries
+							array = global.arab_spring_pending_countries
 							limit = {
 								check_variable = { arab_spring > 199 }
 								date > 2010.1.1
-								NOT = {
-									any_of_scopes = {
-										array = global.arabic_countries
-										has_country_flag = arab_spring_active
-									}
-								}
+								NOT = { check_variable = { global.arab_spring_active_countries^num > 0 } }
 								NOT = { is_in_array = { ruling_party = 12 } }
 								has_war = no
 							}
 
-							set_country_flag = arab_spring_active
+							AS_activate_arab_spring = yes
 							random_list = {
 								90 = {
 									modifier = {
