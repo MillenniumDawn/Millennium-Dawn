@@ -115,12 +115,15 @@ MD_auto_agency_find_first_valid = {
 			check_variable = { agency_queue^num > 0 }
 		}
 
-		for_each_loop = {
-			array = agency_queue
-			value = v
+		# Walk the queue top-down (index 0 first) so the first selectable item
+		# wins; for_each_loop iterates arrays back-to-front, which would pick
+		# the bottom of the queue instead.
+		for_loop_effect = {
+			end = agency_queue^num
+			value = v2
 			break = MD_auto_agency_loop_break
-			index = i
 
+			set_temp_variable = { v = agency_queue^v2 }
 			if = {
 				limit = {
 					MD_auto_agency_v_index_valid = yes
@@ -128,7 +131,7 @@ MD_auto_agency_find_first_valid = {
 				}
 
 				set_variable = { agency_selected_upgrade = v }
-				set_temp_variable = { idx_to_remove = i }
+				set_temp_variable = { idx_to_remove = v2 }
 				set_temp_variable = { MD_auto_agency_loop_break = 1 }
 			}
 		}
