@@ -5693,3 +5693,138 @@ SAU_faisalite_category = {
 }
 
 
+
+SAU_junta_category = {
+
+	SAU_appoint_provincial_governor = {
+		icon = GFX_decision_generic_political_actions
+		priority = 150
+
+		state_target = yes
+		on_map_mode = map_only
+
+		highlight_states = {
+			highlight_states_trigger = {
+				is_owned_and_controlled_by = ROOT
+				NOT = { has_state_flag = SAU_governor_appointed }
+			}
+			highlight_color_before_active = 3
+			highlight_color_while_active = 2
+		}
+
+		target_trigger = {
+			FROM = { is_owned_and_controlled_by = ROOT }
+		}
+
+		visible = {
+			has_completed_focus = SAU_Install_loyalist_in_government_military
+			FROM = { NOT = { has_state_flag = SAU_governor_appointed } }
+		}
+
+		cost = 40
+
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_appoint_provincial_governor in [FROM.GetName]"
+			FROM = {
+				set_state_flag = SAU_governor_appointed
+				save_event_target_as = SAU_governor_province
+			}
+			add_to_variable = { SAU_provinces_appointed = 1 }
+			country_event = { id = SAU_events.158 }
+		}
+
+		ai_will_do = { base = 8 }
+	}
+
+	SAU_junta_control_readout = {
+		icon = GFX_decision_generic_military
+		priority = 300
+
+		available = { always = no }
+
+		cost = 0
+
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_junta_legitimacy_readout = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 300
+
+		available = { always = no }
+
+		cost = 0
+
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_junta_standing_readout = {
+		icon = GFX_decision_generic_nationalism
+		priority = 300
+
+		available = { always = no }
+
+		cost = 0
+
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_junta_legitimacy_crisis = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 200
+
+		allowed = { original_tag = SAU }
+
+		activation = {
+			has_country_flag = SAU_military_coup_ready
+			NOT = { has_country_flag = SAU_military_rule_ended }
+			check_variable = { SAU_junta_legitimacy < 1 }
+		}
+
+		cancel_trigger = {
+			OR = {
+				has_country_flag = SAU_military_rule_ended
+				check_variable = { SAU_junta_legitimacy > 20 }
+			}
+		}
+
+		days_mission_timeout = 90
+		fire_only_once = yes
+		is_good = no
+
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SAU_junta_crisis_cost_tt
+				has_political_power > 199
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_junta_legitimacy_crisis complete"
+			add_political_power = -200
+			set_temp_variable = { treasury_change = -40.00 }
+			modify_treasury_effect = yes
+			add_to_variable = { SAU_junta_legitimacy = 25 tooltip = SAU_junta_legitimacy_tt }
+			add_to_variable = { SAU_junta_control = -15 tooltip = SAU_junta_control_tt }
+			hidden_effect = { SAU_junta_set_tier = yes }
+			add_stability = 0.05
+			country_event = { id = SAU_events.153 days = 1 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_junta_legitimacy_crisis timeout"
+			country_event = { id = SAU_events.154 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				has_active_mission = bankruptcy_incoming_collapse
+				factor = 0
+			}
+		}
+	}
+}

@@ -1097,3 +1097,39 @@ SAU_end_the_monarchy = {
 	set_variable = { SAU_army_grievance = 0 }
 	hidden_effect = { SAU_army_grievance_clear = yes }
 }
+
+SAU_junta_clear_tiers = {
+	if = { limit = { has_idea = SAU_junta_accepted } remove_ideas = SAU_junta_accepted }
+	if = { limit = { has_idea = SAU_junta_tolerated } remove_ideas = SAU_junta_tolerated }
+	if = { limit = { has_idea = SAU_junta_contested } remove_ideas = SAU_junta_contested }
+	if = { limit = { has_idea = SAU_junta_rejected } remove_ideas = SAU_junta_rejected }
+	if = { limit = { has_idea = SAU_junta_illegitimate } remove_ideas = SAU_junta_illegitimate }
+}
+
+# The junta runs on two counters: Control is what it can enforce, Legitimacy is what it is
+# owed. Legitimacy is the danger dial, so the badge hangs off it.
+SAU_junta_set_tier = {
+	clamp_variable = { var = SAU_junta_control min = 0 max = 100 }
+	clamp_variable = { var = SAU_junta_legitimacy min = 0 max = 100 }
+	SAU_junta_clear_tiers = yes
+
+	if = {
+		limit = { check_variable = { SAU_junta_legitimacy > 79 } }
+		add_ideas = SAU_junta_accepted
+	}
+	else_if = {
+		limit = { check_variable = { SAU_junta_legitimacy > 59 } }
+		add_ideas = SAU_junta_tolerated
+	}
+	else_if = {
+		limit = { check_variable = { SAU_junta_legitimacy > 39 } }
+		add_ideas = SAU_junta_contested
+	}
+	else_if = {
+		limit = { check_variable = { SAU_junta_legitimacy > 19 } }
+		add_ideas = SAU_junta_rejected
+	}
+	else = {
+		add_ideas = SAU_junta_illegitimate
+	}
+}
