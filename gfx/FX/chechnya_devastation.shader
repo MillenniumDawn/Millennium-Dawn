@@ -71,11 +71,11 @@ PixelShader =
         {
             float2 uv = v.vTexCoord0;
 
-            // ── 1. Aspect Ratio Normalization ───────────────────────────
+            //  1. Aspect Ratio Normalization 
             float aspect = 14.0f; 
             float2 aspectUV = float2(uv.x * aspect, uv.y);
 
-            // ── 2. Dark Hard Thin Border Frame ──────────────────────────
+            //  2. Dark Hard Thin Border Frame 
             float borderY = 0.035f; 
             float borderX = borderY / aspect;
 
@@ -93,14 +93,14 @@ PixelShader =
             innerUV.x = (uv.x - borderX) / (1.0f - 2.0f * borderX);
             innerUV.y = (uv.y - borderY) / (1.0f - 2.0f * borderY);
 
-            // ── 3. Blurred Fill Boundary ─────────────────────────────────
+            //  3. Blurred Fill Boundary 
             // Instead of a hard cutoff, blend smoothly across a small band
             // straddling CurrentState so the red fades into black.
             float blurWidth = 0.004f; // widen/narrow this to taste
             float fillBlend = saturate((CurrentState + blurWidth - innerUV.x) / (2.0f * blurWidth));
             fillBlend = smoothstep(0.0f, 1.0f, fillBlend); // ease the transition
 
-            // ── 4. Unfilled Section (Near Black Trough) ─────────────────
+            //  4. Unfilled Section (Near Black Trough) 
             float3 unlitBg = float3(0.012f, 0.014f, 0.018f);
 
             // Laser light spill into unlit section from progress edge
@@ -112,14 +112,14 @@ PixelShader =
             }
             unlitBg = clamp(unlitBg, 0.0f, 1.0f);
 
-            // ── 5. Red Volumetric Base Color ────────────────────────────
+            //  5. Red Volumetric Base Color 
             float4 darkRed   = float4(0.32f, 0.02f, 0.03f, 1.0f); 
             float4 brightRed = float4(0.62f, 0.08f, 0.06f, 1.0f); 
 
             float gradT = clamp(innerUV.x / (CurrentState + 0.001f), 0.0f, 1.0f);
             float4 baseRed = lerp(darkRed, brightRed, gradT);
 
-            // ── 6. Pattern: Directional Tactical Chevrons (`>>>`) ───────
+            //  6. Pattern: Directional Tactical Chevrons (`>>>`) 
             float chevronDensity = 1.2f;
             float chevronShape = abs(innerUV.y - 0.5f) * 1.5f + aspectUV.x;
             float chevronPattern = frac(chevronShape * chevronDensity);
@@ -128,7 +128,7 @@ PixelShader =
             // Apply subtle shading to alternate chevrons
             float3 patternRed = lerp(baseRed.rgb, baseRed.rgb * 1.28f, chevronMask * 0.25f);
 
-            // ── 7. Glass Glare & CRT Volumetric Lighting ────────────────
+            //  7. Glass Glare & CRT Volumetric Lighting 
             float centerCurve = sin(innerUV.y * 3.14159f);
             float glassHighlight = pow(centerCurve, 3.0f) * 0.30f;
             
@@ -139,7 +139,7 @@ PixelShader =
             patternRed = patternRed * (0.70f + 0.50f * centerCurve) + float3(glassHighlight, glassHighlight, glassHighlight);
             patternRed += float3(0.6f, 0.7f, 0.85f) * topGlass;
 
-            // ── 8. Smooth Hot Leading Edge ──────────────────────────────
+            //  8. Smooth Hot Leading Edge 
             float edgeDist = CurrentState - innerUV.x;
             if (edgeDist < 0.025f && edgeDist > -blurWidth)
             {
@@ -148,7 +148,7 @@ PixelShader =
             }
             patternRed = clamp(patternRed, 0.0f, 1.0f);
 
-            // ── 9. Final Blend Between Trough and Red Fill ───────────────
+            //  9. Final Blend Between Trough and Red Fill 
             float3 finalColor = lerp(unlitBg, patternRed, fillBlend);
 
             return float4(clamp(finalColor, 0.0f, 1.0f), 1.0f);
