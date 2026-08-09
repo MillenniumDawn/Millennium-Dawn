@@ -35,8 +35,7 @@ def _write_effects_file(tmp_path, extra=""):
 grant_pp_effect = {
 	add_political_power = 25
 }
-"""
-        + extra,
+""" + extra,
         encoding="utf-8",
     )
 

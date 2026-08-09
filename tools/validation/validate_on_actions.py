@@ -222,9 +222,7 @@ def _scan_on_action_block(
     return refs, duplicates
 
 
-def _parse_on_actions_text(
-    text_clean: str, filepath: str
-) -> Tuple[
+def _parse_on_actions_text(text_clean: str, filepath: str) -> Tuple[
     List[Tuple[str, str, int, str]],  # (event_id, block_name, line, relpath)
     List[Tuple[str, str, int, str]],  # duplicates
 ]:

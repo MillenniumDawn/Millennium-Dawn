@@ -235,9 +235,12 @@ def update_text(text, value):
     m = OWNER_RE.search(text)
     if not m:
         return text, "skip"
-    return text[: m.start()] + f"{m.group(0)}\n{m.group('indent')}{line}" + text[
-        m.end() :
-    ], "insert"
+    return (
+        text[: m.start()]
+        + f"{m.group(0)}\n{m.group('indent')}{line}"
+        + text[m.end() :],
+        "insert",
+    )
 
 
 def main():

@@ -60,6 +60,6 @@ def test_typo_watchlist_covers_every_doc_token():
         tokens.update(m.lower() for m in re.findall(r"`([^`]+)`", columns[1]))
     tokens -= excluded
     missing = tokens - set(_TYPO_WATCHLIST)
-    assert not missing, (
-        f"typo-watchlist.md tokens missing from _TYPO_WATCHLIST: {missing}"
-    )
+    assert (
+        not missing
+    ), f"typo-watchlist.md tokens missing from _TYPO_WATCHLIST: {missing}"

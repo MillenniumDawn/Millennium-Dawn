@@ -803,21 +803,25 @@ def process_file_for_orphan_money(
     issues: List[Tuple[str, str, int]] = []
     for m in setters:
         var = m.group(1)
-        holder = None
+        holder_start = -1
+        holder_end = -1
+        holder_is_tooltip = False
         for start, end, is_tt in spans:
-            if start <= m.start() < end and (holder is None or start > holder[0]):
-                holder = (start, end, is_tt)
-        if holder is None:
+            if start <= m.start() < end and start > holder_start:
+                holder_start = start
+                holder_end = end
+                holder_is_tooltip = is_tt
+        if holder_start < 0:
             continue
-        if holder[2]:
+        if holder_is_tooltip:
             # Setter previewed in a tooltip: any consumer within it renders.
-            hits = list(consumer_res[var].finditer(cleaned, m.end(), holder[1]))
+            hits = list(consumer_res[var].finditer(cleaned, m.end(), holder_end))
         else:
             # Runtime setter: consumers that only exist inside a nested
             # effect_tooltip are previews and never execute.
             hits = [
                 cm
-                for cm in consumer_res[var].finditer(cleaned, m.end(), holder[1])
+                for cm in consumer_res[var].finditer(cleaned, m.end(), holder_end)
                 if not any(ts <= cm.start() < te for ts, te in tooltip_spans)
             ]
         if hits and not _has_sequential_rewrite(
