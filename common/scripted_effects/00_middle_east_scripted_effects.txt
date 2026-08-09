@@ -1039,6 +1039,74 @@ clamp_shia = {
 
 # Arab Spring Section
 
+# Registry of the Arab Spring mini-game, derived from global.arabic_countries:
+#   global.arab_spring_countries         every arabic country still in the mini-game
+#   global.arab_spring_active_countries  the subset currently under protests (arab_spring_active)
+# Rebuilt from the country flags at startup and at the top of every monthly tick, so nothing
+# outside this system registers a country when it is released, formed, annexed or added to
+# global.arabic_countries mid-game. The recurring rebuild is also what makes the exists check
+# below safe: a tag filtered out while dead rejoins the month after it is released.
+
+AS_rebuild_arab_spring_registry = {
+	clear_array = global.arab_spring_countries
+	clear_array = global.arab_spring_active_countries
+	for_each_loop = {
+		array = global.arabic_countries
+		value = v
+		var:v = {
+			if = {
+				limit = {
+					exists = yes
+					NOT = { has_country_flag = AS_disabled_arab_spring }
+					NOT = { has_country_flag = AS_arab_spring_completed }
+				}
+				add_to_array = { global.arab_spring_countries = THIS.id }
+				if = { limit = { has_country_flag = arab_spring_active }
+					add_to_array = { global.arab_spring_active_countries = THIS.id }
+				}
+			}
+		}
+	}
+}
+
+# Effect: AS_activate_arab_spring
+# Purpose: Put a country under active protests. arab_spring_active drives the protest mission's
+#          activation trigger, so callers must not activate the mission unless this succeeds.
+#          Gated on the flags rather than registry membership so a country released mid-month
+#          can still be activated before the next rebuild picks it up.
+AS_activate_arab_spring = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = arab_spring_active }
+			NOT = { has_country_flag = AS_disabled_arab_spring }
+			NOT = { has_country_flag = AS_arab_spring_completed }
+		}
+		set_country_flag = arab_spring_active
+		if = { limit = { NOT = { is_in_array = { global.arab_spring_active_countries = THIS.id } } }
+			add_to_array = { global.arab_spring_active_countries = THIS.id }
+		}
+	}
+}
+
+# Effect: AS_deactivate_arab_spring
+# Purpose: End active protests without ending the mini-game. The country keeps accruing strength.
+AS_deactivate_arab_spring = {
+	clr_country_flag = arab_spring_active
+	if = { limit = { is_in_array = { global.arab_spring_active_countries = THIS.id } }
+		remove_from_array = { array = global.arab_spring_active_countries value = THIS.id }
+	}
+}
+
+# Effect: AS_complete_arab_spring
+# Purpose: Retire a country from the mini-game for good
+AS_complete_arab_spring = {
+	AS_deactivate_arab_spring = yes
+	set_country_flag = AS_arab_spring_completed
+	if = { limit = { is_in_array = { global.arab_spring_countries = THIS.id } }
+		remove_from_array = { array = global.arab_spring_countries value = THIS.id }
+	}
+}
+
 # Effect: change_arab_spring_strength
 # Purpose: Change the strength of the Arab Spring protests
 # Parameters:

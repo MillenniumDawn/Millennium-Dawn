@@ -9,6 +9,28 @@ on_actions = {
 
 			if = { limit = { NOT = { has_global_flag = on_weekly_global_done } }
 				set_global_flag = { flag = on_weekly_global_done value = 1 days = 7 }
+
+				# Arab Spring. Usually an empty array, so this costs nothing until protests start.
+				for_each_loop = {
+					array = global.arab_spring_active_countries
+					value = v
+					var:v = {
+						if = { limit = { has_country_flag = arab_spring_military_deployed }
+							random_list = {
+								33 = {
+									modifier = {
+										factor = 0
+										check_variable = { the_military_opinion > 50 }
+									}
+									country_event = { id = arab_spring.7 days = 3 }
+								}
+								33 = { country_event = { id = arab_spring.8 days = 3 } }
+								33 = { }
+							}
+						}
+					}
+				}
+
 				international_systems_update = yes
 				add_to_variable = { global.md_gui_dirty = 1 }
 				if = { limit = { check_variable = { global.md_gui_dirty > 1000000 } }
@@ -146,28 +168,6 @@ on_actions = {
 			}
 
 			MD_auto_agency_weekly_tick = yes
-
-			# Arab Spring
-			if = { limit = { has_country_flag = arab_spring_active }
-				if = {
-					limit = {
-						has_country_flag = arab_spring_military_deployed
-					}
-					random_list = {
-						33 = {
-							modifier = {
-								factor = 0
-								check_variable = { the_military_opinion > 50 }
-							}
-							country_event = { id = arab_spring.7 days = 3 }
-						}
-						33 = {
-							country_event = { id = arab_spring.8 days = 3 }
-						}
-						33 = { }
-					}
-				}
-			}
 
 			if = {
 				limit = {
@@ -1134,114 +1134,107 @@ on_actions = {
 
 
 				# Arab Spring Monthly Tick
-				# DO NOT INCREMENT IF YOU HAVE COMPLETED THE ARAB SPRING MINI GAME
-				if = { limit = { check_variable = { global.arabic_countries^num > 0 } }
-					for_each_loop = {
+				# The rebuild drops countries that finished or never joined the mini-game, so the
+				# loop below only pays for the ones still in it.
+				AS_rebuild_arab_spring_registry = yes
+				for_each_loop = {
+					array = global.arab_spring_countries
+					value = v
+					var:v = { increment_arab_spring_strength = yes }
+				}
+
+				## This section is just for the instance where someone just need to have it started
+				if = {
+					limit = {
+						NOT = { has_global_flag = global_arab_spring_started }
+						NOT = { check_variable = { global.arab_spring_active_countries^num > 0 } }
+						date > 2010.1.1
+					}
+					random_scope_in_array = {
+						array = global.arab_spring_countries
+						limit = {
+							check_variable = { arab_spring > 199 }
+							NOT = { is_in_array = { ruling_party = 12 } }
+							has_war = no
+						}
+
+						AS_activate_arab_spring = yes
+						random_list = {
+							90 = {
+								modifier = {
+									factor = 2
+									has_elections = yes
+									NOT = { has_idea = hybrid_regime_emerging }
+									NOT = { has_idea = hybrid_regime_western }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring < 200 }
+								}
+							}
+							10 = {
+								modifier = {
+									factor = 1.25
+									date > 2011.1.1
+								}
+								modifier = {
+									factor = 1.5
+									date > 2012.1.1
+								}
+								modifier = {
+									factor = 1.75
+									date > 2013.1.1
+								}
+								modifier = {
+									factor = 2
+									date > 2014.1.1
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 225 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 250 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 275 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 300 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 400 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 500 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 600 }
+								}
+								country_event = { id = arab_spring.0 days = 1 random_days = 15 }
+							}
+						}
+					}
+				}
+
+				if = { limit = { any_arabic_country_formed_the_uar = yes }
+					random_scope_in_array = {
 						array = global.arabic_countries
-						value = v
-						var:v = {
-							if = {
-								limit = { NOT = { has_country_flag = AS_arab_spring_completed } }
-								increment_arab_spring_strength = yes
+						limit = {
+							OR = {
+								is_neo_baathist_uar = yes
+								is_baathist_uar = yes
 							}
+							NOT = { has_country_flag = united_neo_baathist_uar }
+							NOT = { has_country_flag = united_baathist_uar }
 						}
-					}
-
-					## This section is just for the instance where someone just need to have it started
-					if = { limit = { NOT = { has_global_flag = global_arab_spring_started } }
-						random_scope_in_array = {
-							array = global.arabic_countries
-							limit = {
-								check_variable = { arab_spring > 199 }
-								date > 2010.1.1
-								NOT = {
-									any_of_scopes = {
-										array = global.arabic_countries
-										has_country_flag = arab_spring_active
-									}
-								}
-								NOT = { is_in_array = { ruling_party = 12 } }
-								has_war = no
-							}
-
-							set_country_flag = arab_spring_active
-							random_list = {
-								90 = {
-									modifier = {
-										factor = 2
-										has_elections = yes
-										NOT = { has_idea = hybrid_regime_emerging }
-										NOT = { has_idea = hybrid_regime_western }
-									}
-									modifier = {
-										factor = 2
-										check_variable = { arab_spring < 200 }
-									}
-								}
-								10 = {
-									modifier = {
-										factor = 1.25
-										date > 2011.1.1
-									}
-									modifier = {
-										factor = 1.5
-										date > 2012.1.1
-									}
-									modifier = {
-										factor = 1.75
-										date > 2013.1.1
-									}
-									modifier = {
-										factor = 2
-										date > 2014.1.1
-									}
-									modifier = {
-										factor = 2
-										check_variable = { arab_spring > 225 }
-									}
-									modifier = {
-										factor = 2
-										check_variable = { arab_spring > 250 }
-									}
-									modifier = {
-										factor = 2
-										check_variable = { arab_spring > 275 }
-									}
-									modifier = {
-										factor = 2
-										check_variable = { arab_spring > 300 }
-									}
-									modifier = {
-										factor = 2
-										check_variable = { arab_spring > 400 }
-									}
-									modifier = {
-										factor = 2
-										check_variable = { arab_spring > 500 }
-									}
-									modifier = {
-										factor = 2
-										check_variable = { arab_spring > 600 }
-									}
-									country_event = { id = arab_spring.0 days = 1 random_days = 15 }
-								}
-							}
-						}
-					}
-
-					if = { limit = { any_arabic_country_formed_the_uar = yes }
-						random_scope_in_array = {
-							array = global.arabic_countries
-							limit = {
-								OR = {
-									is_neo_baathist_uar = yes
-									is_baathist_uar = yes
-								}
-								NOT = { has_country_flag = united_neo_baathist_uar }
-								NOT = { has_country_flag = united_baathist_uar }
-							}
-							update_arabic_country_gdp_total_effect = yes
-						}
+						update_arabic_country_gdp_total_effect = yes
 					}
 				}
 
