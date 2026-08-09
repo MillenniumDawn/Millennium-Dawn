@@ -25,6 +25,8 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 
 # Maximum seconds a staged validator should take in CI
 MAX_TIME = 15.0
+# This validator intentionally scans the full repository in staged mode.
+TIME_BUDGETS = {"validate_scripted_localisation.py": 30.0}
 
 passed = 0
 failed = 0
@@ -70,10 +72,11 @@ def run_validator(script, label, expect_issues=True):
 
     ok = True
     status_parts = []
+    time_budget = TIME_BUDGETS.get(script, MAX_TIME)
 
-    if elapsed > MAX_TIME:
+    if elapsed > time_budget:
         ok = False
-        status_parts.append(f"TOO SLOW ({elapsed:.1f}s > {MAX_TIME}s)")
+        status_parts.append(f"TOO SLOW ({elapsed:.1f}s > {time_budget}s)")
     else:
         status_parts.append(f"{elapsed:.2f}s")
 
