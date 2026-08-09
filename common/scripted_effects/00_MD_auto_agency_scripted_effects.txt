@@ -239,9 +239,31 @@ MD_auto_agency_get_upgrade_time = {
 	round_variable = agency_upgrade_time_days
 }
 
+MD_auto_agency_queue_push_front = {
+	# Caller must `set_temp_variable = { push_front_val = N }` before invoking.
+	add_to_array = { agency_queue = push_front_val }
+	set_temp_variable = { last = agency_queue^num }
+	subtract_from_temp_variable = { last = 1 }
+
+	for_loop_effect = {
+		start = last
+		end = 0
+		value = v2
+		compare = greater_than
+		add = -1
+
+		set_temp_variable = { prev = v2 }
+		subtract_from_temp_variable = { prev = 1 }
+		set_variable = { agency_queue^v2 = agency_queue^prev }
+	}
+
+	set_variable = { agency_queue^0 = push_front_val }
+}
+
 MD_auto_agency_reconcile_state = {
 	# Stale selection recovery: mission gone, no native upgrade running, yet a
-	# selection remains. Push it back onto the queue so it gets re-evaluated.
+	# selection remains. Re-queue it at the front so it resumes before anything
+	# already queued.
 	if = {
 		limit = {
 			NOT = { has_active_mission = spy_agency_upgrade_in_progress }
@@ -249,9 +271,9 @@ MD_auto_agency_reconcile_state = {
 			NOT = { check_variable = { agency_selected_upgrade = -1 } }
 		}
 
-		set_temp_variable = { interrupted_selected_upgrade = agency_selected_upgrade }
+		set_temp_variable = { push_front_val = agency_selected_upgrade }
 		set_variable = { agency_selected_upgrade = -1 }
-		add_to_array = { agency_queue = interrupted_selected_upgrade }
+		MD_auto_agency_queue_push_front = yes
 		MD_auto_agency_verify_queue = yes
 	}
 }
