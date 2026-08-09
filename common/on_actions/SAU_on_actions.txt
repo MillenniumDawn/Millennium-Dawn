@@ -108,6 +108,101 @@ on_actions = {
 					}
 					country_event = { id = SAU_events.147 days = 3 }
 				}
+				# Faisalism grows out of how conservative the Kingdom actually is: the traditionalist
+				# end of the modernisation balance feeds it, the liberalising end eats it away.
+				if = {
+					limit = {
+						has_country_flag = SAU_faisalite_circle_active
+						NOT = { has_country_flag = SAU_faisalite_path_open }
+						NOT = { has_country_flag = SAU_faisalite_path_rejected }
+						NOT = { has_country_flag = SAU_military_coup_ready }
+					}
+					add_to_variable = { var = SAU_faisalite_conviction value = SAU_social_conservatism }
+					if = {
+						limit = { has_idea = wahabi_ulema }
+						add_to_variable = { SAU_faisalite_conviction = 1 }
+					}
+					if = {
+						limit = { has_country_flag = SAU_sang_shielded }
+						add_to_variable = { SAU_faisalite_conviction = 1 }
+					}
+					hidden_effect = { SAU_faisalite_conviction_set_tier = yes }
+					# American boots next door: the occupation of Iraq is the argument made for them.
+					if = {
+						limit = {
+							NOT = { has_country_flag = SAU_faisalite_pivot_iraq }
+							OR = {
+								has_global_flag = GLOBAL_operation_iraqi_freedom_succeeded
+								is_subject_of = USA
+								IRQ = { is_subject_of = USA }
+								USA = { has_war_with = IRQ }
+							}
+						}
+						set_country_flag = SAU_faisalite_pivot_iraq
+						country_event = { id = SAU_events.188 days = 5 }
+					}
+					# and every American war on a Muslim state after it.
+					if = {
+						limit = {
+							NOT = { has_country_flag = SAU_faisalite_pivot_next_war }
+							USA = {
+								OR = {
+									has_war_with = PER
+									has_war_with = SYR
+									has_war_with = LBA
+									has_war_with = YEM
+									has_war_with = AFG
+								}
+							}
+						}
+						set_country_flag = SAU_faisalite_pivot_next_war
+						country_event = { id = SAU_events.190 days = 5 }
+					}
+					if = {
+						limit = { has_idea = SAU_faisalite_street_movement }
+						add_to_variable = { SAU_faisalite_conviction = 2 }
+					}
+					# The doctrine leaves the officers' messes and reaches the street.
+					if = {
+						limit = {
+							check_variable = { SAU_faisalite_conviction > 59 }
+							NOT = { has_country_flag = SAU_faisalite_movement_risen }
+						}
+						set_country_flag = SAU_faisalite_movement_risen
+						country_event = { id = SAU_events.191 days = 4 }
+					}
+					# Israel at war with an Arab state - the street answers once per war.
+					if = {
+						limit = {
+							SAU_israel_at_war_with_arabs = yes
+							NOT = { has_country_flag = SAU_israel_war_answered }
+						}
+						set_country_flag = SAU_israel_war_answered
+						country_event = { id = SAU_events.192 days = 4 }
+					}
+					if = {
+						limit = {
+							has_country_flag = SAU_israel_war_answered
+							NOT = { SAU_israel_at_war_with_arabs = yes }
+						}
+						clr_country_flag = SAU_israel_war_answered
+					}
+					if = {
+						limit = {
+							check_variable = { SAU_faisalite_conviction > 49 }
+							NOT = { has_country_flag = SAU_faisalite_rabat_asked }
+						}
+						set_country_flag = SAU_faisalite_rabat_asked
+						country_event = { id = SAU_events.186 days = 3 }
+					}
+					if = {
+						limit = {
+							check_variable = { SAU_faisalite_conviction > 99 }
+							has_country_flag = SAU_faisalite_rabat_asked
+						}
+						country_event = { id = SAU_events.140 days = 3 }
+					}
+				}
 				# Under military rule, legitimacy decays unless it is bought. Let it fall far enough and
 				# the tribes answer; let it fall further with a weak grip and the officers turn on each other.
 				if = {
@@ -296,7 +391,7 @@ on_actions = {
 				}
 			}
 			}
-		
+
 if = {
 				limit = {
 					tag = SAU
@@ -333,7 +428,7 @@ if = {
 					complete_national_focus = SAU_Total_lost_in_Syria
 				}
 			}
-		
+
 			if = {
 				limit = {
 					tag = SAU
@@ -351,8 +446,8 @@ if = {
 					}
 				}
 			}
-		
-			
+
+
 			if = {
 				limit = {
 					tag = SAU
