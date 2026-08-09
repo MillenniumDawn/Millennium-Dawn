@@ -211,7 +211,7 @@ def run_checks(
 ) -> list[CheckResult]:
     results: list[CheckResult] = []
     phases = ["sources", "build", "dist"] if not skip_build else ["sources", "dist"]
-    build_ran = any(c.phase == "build" for c in checks) and not skip_build
+    build_ran = any(c.name == "build" for c in checks) and not skip_build
     build_ok = True
 
     for phase in phases:
@@ -226,10 +226,11 @@ def run_checks(
                 print(f"  Running {check.name}...")
                 result = check.fn()
                 results.append(result)
-                if not result.passed:
+                if check.name == "build" and not result.passed:
                     build_ok = False
         elif phase == "dist" and build_ran and not build_ok:
-            # No point checking a site that failed to build.
+            # Only a failing "build" check skips dist — a failing "astro check"
+            # alongside a passing build still lets dist run.
             for check in phase_checks:
                 results.append(
                     CheckResult(check.name, False, "skipped: build failed", 0.0)
