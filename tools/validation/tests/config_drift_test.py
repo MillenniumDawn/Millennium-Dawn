@@ -396,8 +396,14 @@ def test_python_quality_checks_are_wired_in_precommit_and_ci():
     }
     assert {"black-tools", "pylint-tools", "mypy-tools"} <= hooks.keys()
     assert hooks["black-tools"]["entry"] == "black"
+    assert hooks["black-tools"]["language"] == "python"
+    assert "black==26.5.1" in hooks["black-tools"]["additional_dependencies"]
     assert "pylint tools" in hooks["pylint-tools"]["entry"]
+    assert hooks["pylint-tools"]["language"] == "python"
+    assert "pylint==4.0.6" in hooks["pylint-tools"]["additional_dependencies"]
     assert hooks["mypy-tools"]["entry"] == "mypy"
+    assert hooks["mypy-tools"]["language"] == "python"
+    assert "mypy==2.3.0" in hooks["mypy-tools"]["additional_dependencies"]
 
     workflow = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))
     quality_steps = workflow["jobs"]["ruff-lint"]["steps"]
@@ -406,10 +412,31 @@ def test_python_quality_checks_are_wired_in_precommit_and_ci():
     assert "black --check tools" in commands
     assert "pylint tools" in commands
     assert "mypy" in commands
+    test_commands = "\n".join(
+        step.get("run", "") for step in workflow["jobs"]["report-lib-tests"]["steps"]
+    )
+    assert "coverage run" in test_commands
+    assert "coverage report" in test_commands
 
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    for package in ("black==", "mypy==", "pylint==", "ruff=="):
+    for package in ("black==", "coverage==", "mypy==", "pylint==", "ruff=="):
         assert package in pyproject
+
+
+def test_staged_validator_integration_runs_in_isolated_worktree():
+    workflow = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["staged-validator-integration"]["steps"]
+    worktree_step = next(
+        step for step in steps if step.get("name") == "Create isolated test worktree"
+    )
+    assert "git worktree add --detach" in worktree_step["run"]
+
+    run_step = next(
+        step for step in steps if step.get("name") == "Run staged-validator integration"
+    )
+    assert run_step["env"]["MD_RUN_STAGED_INTEGRATION"] == "1"
+    assert "staged_validators_test.py" in run_step["run"]
+    assert "staged_validators_real_test.py" in run_step["run"]
 
 
 def test_tools_tests_checkout_consumed_configuration():

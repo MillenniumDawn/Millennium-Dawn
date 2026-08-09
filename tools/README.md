@@ -10,7 +10,7 @@ in `pyproject.toml` under `[dependency-groups]`. Install them from the repo root
 
 ```bash
 pip install --group runtime   # requests, pillow (for the scripts that need them)
-pip install --group dev       # pytest, pyyaml, ruff (for tests and linting)
+pip install --group dev       # pytest, coverage, pyyaml, Ruff, Black, Pylint, mypy
 ```
 
 `python tools/dev_setup.py` installs these for you as part of the dev setup.
@@ -18,6 +18,8 @@ pip install --group dev       # pytest, pyyaml, ruff (for tests and linting)
 Python quality checks run on `tools/` in pre-commit and CI:
 
 ```bash
+python -m coverage run --branch -m pytest
+python -m coverage report
 ruff check tools
 black --check tools
 pylint tools --reports=no --score=no

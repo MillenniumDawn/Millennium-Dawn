@@ -366,7 +366,7 @@ def idea_add(cpath, dry_run=False):
                 )
             except OSError as e:
                 print(f"Could not write {filename}: {e}")
-                continue
+                raise
             outputfile.truncate()
             for line in lines:
                 line_number += 1
@@ -412,7 +412,7 @@ def idea_remove(cpath, dry_run=False):
                 )
             except OSError as e:
                 print(f"Could not write {filename}: {e}")
-                continue
+                raise
             outputfile.truncate()
             for line in lines:
                 if "on_add = { log = " not in line:
@@ -485,7 +485,7 @@ def decision_add(cpath, dry_run=False):
                 )
             except OSError as e:
                 print(f"Could not write {filename}: {e}")
-                continue
+                raise
             with outputfile:
                 outputfile.truncate()
                 for line_number, line in enumerate(lines):
@@ -588,7 +588,7 @@ def decision_remove(cpath, dry_run=False):
                 )
             except OSError as e:
                 print(f"Could not write {filename}: {e}")
-                continue
+                raise
             outputfile.truncate()
             for line in lines:
                 if 'log = "[GetDateText]' not in line:
@@ -641,15 +641,19 @@ def tech_add(cpath, dry_run=False):
                     level -= line.count("}")
             file.close()
             line_number = 0
-            outputfile = (
-                io.StringIO()
-                if dry_run
-                else open(
-                    os.path.join(cpath, "common", "technologies", filename),
-                    "w",
-                    encoding="utf-8",
+            try:
+                outputfile = (
+                    io.StringIO()
+                    if dry_run
+                    else open(
+                        os.path.join(cpath, "common", "technologies", filename),
+                        "w",
+                        encoding="utf-8",
+                    )
                 )
-            )
+            except OSError as e:
+                print(f"Could not write {filename}: {e}")
+                raise
             outputfile.truncate()
             for line in lines:
                 line_number += 1
@@ -694,15 +698,19 @@ def tech_remove(cpath, dry_run=False):
                 continue
             lines = outputfile.readlines()
             outputfile.close()
-            outputfile = (
-                io.StringIO()
-                if dry_run
-                else open(
-                    os.path.join(cpath, "common", "technologies", filename),
-                    "w",
-                    encoding="utf-8",
+            try:
+                outputfile = (
+                    io.StringIO()
+                    if dry_run
+                    else open(
+                        os.path.join(cpath, "common", "technologies", filename),
+                        "w",
+                        encoding="utf-8",
+                    )
                 )
-            )
+            except OSError as e:
+                print(f"Could not write {filename}: {e}")
+                raise
             outputfile.truncate()
             for x in range(len(lines)):
                 line = lines[x]

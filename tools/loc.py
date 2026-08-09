@@ -232,7 +232,7 @@ def main():
             with open(args.output, "a", encoding="utf-8") as f:
                 f.writelines(str(line) + "\n" for line in output_lines)
         except OSError as e:
-            print(f"Could not write file {args.output}: {e}")
+            raise SystemExit(f"Could not write file {args.output}: {e}") from e
     print(
         "Appended "
         + str(len(parsed_file[0]))

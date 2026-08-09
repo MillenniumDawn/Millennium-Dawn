@@ -441,6 +441,7 @@ def main() -> None:
         )
         print("  python3 tools/run.py --list              See available dev tools")
         print("  pytest                                   Run tool test suite")
+        print("  python -m coverage report                Check test coverage")
         print("  ruff check tools                         Lint the tool scripts")
         print("  black --check tools                      Check Python formatting")
         print("  pylint tools                             Run correctness checks")

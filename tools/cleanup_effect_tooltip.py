@@ -195,7 +195,7 @@ def process_file(filepath, check_only=False):
                 f.writelines(new_lines)
         except OSError as e:
             print(f"ERROR: {filepath}: could not write file ({e})", file=sys.stderr)
-            return 0
+            raise
     return collapsed
 
 
