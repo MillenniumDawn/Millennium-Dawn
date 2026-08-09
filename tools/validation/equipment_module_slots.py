@@ -584,9 +584,9 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
                 categories.update(cats)
 
     for slots in resolved.values():
-        for cats in (slots or {}).values():
-            if cats:
-                categories.update(cats)
+        for slot_categories in (slots or {}).values():
+            if slot_categories:
+                categories.update(slot_categories)
     return EquipmentIndex(
         resolved, module_category, categories, slot_unlocks, ship_hulls
     )

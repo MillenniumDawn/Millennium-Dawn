@@ -12,7 +12,7 @@ import os
 import re
 import sys
 from difflib import get_close_matches
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -171,7 +171,7 @@ def parse_canonical_units(mod_path: str) -> Set[str]:
             "oob_units.canonical",
             filepath,
             content,
-            lambda content=content: _parse_canonical_units_file(content),
+            lambda: _parse_canonical_units_file(content),
         )
 
     return canonical
@@ -204,7 +204,7 @@ def parse_canonical_namelist_keys(mod_path: str, sub_units: Set[str]) -> Set[str
             "oob_units.equipment",
             filepath,
             content,
-            lambda content=content: _parse_equipment_names_file(content),
+            lambda: _parse_equipment_names_file(content),
         )
 
     return valid
@@ -328,9 +328,7 @@ def parse_division_group_keys(mod_path: str) -> Set[str]:
             "oob_units.div_group_keys",
             filepath,
             content,
-            lambda content=content: _extract_division_group_keys(
-                strip_comments(content)
-            ),
+            lambda: _extract_division_group_keys(strip_comments(content)),
         )
     return keys
 
@@ -824,12 +822,12 @@ def _matching_braces(text: str) -> Dict[int, int]:
 def _build_block_nodes(text: str) -> List[Dict]:
     """Flattened `key = { }` block tree: label/start/end/line/parent/children."""
     pairs = _matching_braces(text)
-    nodes = []
-    stack = []
+    nodes: List[Dict[str, Any]] = []
+    stack: List[int] = []
     for op in sorted(pairs):
         while stack and nodes[stack[-1]]["end"] < op:
             stack.pop()
-        node = {
+        node: Dict[str, Any] = {
             "label": _label_before_brace(text, op),
             "start": op,
             "end": pairs[op],

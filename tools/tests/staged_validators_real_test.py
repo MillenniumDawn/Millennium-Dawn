@@ -22,7 +22,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 MAX_TIME = 10.0
 passed = 0
 failed = 0
-errors = []
+errors: list[str] = []
 
 
 def run(cmd, **kwargs):
@@ -53,7 +53,12 @@ def unstage_file(path):
     run(["git", "checkout", "--", path])
 
 
-def run_validator(script, label, expect_issues=True, min_issues=0):
+def run_validator(
+    script: str,
+    label: str,
+    expect_issues: bool | None = True,
+    min_issues: int = 0,
+):
     global passed, failed, errors
 
     cmd = [
@@ -88,14 +93,14 @@ def run_validator(script, label, expect_issues=True, min_issues=0):
     else:
         status_parts.append(f"{elapsed:.1f}s")
 
-    if expect_issues and result.returncode == 0:
+    if expect_issues is True and result.returncode == 0:
         ok = False
         status_parts.append("expected issues but validator passed")
-    elif not expect_issues and result.returncode != 0:
+    elif expect_issues is False and result.returncode != 0:
         ok = False
         status_parts.append(f"expected pass but got exit {result.returncode}")
 
-    if expect_issues and min_issues > 0 and issue_count < min_issues:
+    if expect_issues is True and min_issues > 0 and issue_count < min_issues:
         ok = False
         status_parts.append(f"expected >= {min_issues} issues but found {issue_count}")
     elif issue_count > 0:
@@ -204,8 +209,8 @@ def main():
         )
         cleanup()
 
-    except Exception as e:
-        print(f"\nERROR: {e}")
+    except Exception as exc:
+        print(f"\nERROR: {exc}")
         failed += 1
     finally:
         cleanup()
@@ -215,75 +220,11 @@ def main():
     print(f"Results: {passed} passed, {failed} failed")
     if errors:
         print("\nFailures:")
-        for e in errors:
-            print(e)
+        for error in errors:
+            print(error)
     print("=" * 60)
 
     return 1 if failed else 0
-
-
-# Override run_validator to handle expect_issues=None (don't care about result)
-_orig_run_validator = run_validator
-
-
-def run_validator(script, label, expect_issues=True, min_issues=0):
-    global passed, failed, errors
-
-    cmd = [
-        "python3",
-        f"tools/validation/{script}",
-        "--staged",
-        "--strict",
-        "--no-color",
-        "--workers",
-        "2",
-    ]
-
-    start = time.time()
-    result = run(cmd)
-    elapsed = time.time() - start
-
-    issue_count = 0
-    import re as _re
-
-    for line in (result.stderr or "").split("\n") + (result.stdout or "").split("\n"):
-        m = _re.search(r"(\d+)\s+TOTAL ISSUES FOUND", line)
-        if m:
-            issue_count = int(m.group(1))
-
-    ok = True
-    status_parts = []
-
-    if elapsed > MAX_TIME:
-        ok = False
-        status_parts.append(f"TOO SLOW ({elapsed:.1f}s)")
-    else:
-        status_parts.append(f"{elapsed:.1f}s")
-
-    if expect_issues is True and result.returncode == 0:
-        ok = False
-        status_parts.append("expected issues but validator passed")
-    elif expect_issues is False and result.returncode != 0:
-        ok = False
-        status_parts.append(f"expected pass but got exit {result.returncode}")
-
-    if expect_issues is True and min_issues > 0 and issue_count < min_issues:
-        ok = False
-        status_parts.append(f"expected >= {min_issues} issues but found {issue_count}")
-    elif issue_count > 0:
-        status_parts.append(f"{issue_count} issues")
-
-    if ok:
-        passed += 1
-        print(f"  PASS  {label} [{', '.join(status_parts)}]")
-    else:
-        failed += 1
-        msg = f"  FAIL  {label} [{', '.join(status_parts)}]"
-        errors.append(msg)
-        print(msg)
-        output = (result.stderr or "") + (result.stdout or "")
-        for line in output.strip().split("\n")[-5:]:
-            print(f"        {line}")
 
 
 # ── pytest entry points ─────────────────────────────────────────────────────

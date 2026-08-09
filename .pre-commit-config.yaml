@@ -63,8 +63,8 @@ repos:
         files: '\.py$'
       - id: name-tests-test
         files: 'tools/.*test.*\.py$'
-  # ruff owns lint (E/F), import order (I), and formatting. Config (select,
-  # ignores, per-file-ignores, isort) lives in pyproject.toml.
+  # Ruff owns lint (E/F) and import order (I). Config (select, ignores,
+  # per-file-ignores, and isort) lives in pyproject.toml.
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.17
     hooks:
@@ -72,9 +72,27 @@ repos:
         name: Lint Python (ruff)
         files: '^tools/.*\.py$'
         args: [--fix]
-      - id: ruff-format
-        name: Format Python (ruff)
+  # Black is the single canonical formatter. It runs after Ruff so a commit
+  # cannot leave the two formatters fighting over the same file.
+  - repo: local
+    hooks:
+      - id: black-tools
+        name: Format Python (black)
+        entry: black
+        language: system
         files: '^tools/.*\.py$'
+      - id: pylint-tools
+        name: Check Python correctness (pylint)
+        entry: pylint tools --reports=no --score=no
+        language: system
+        files: '^tools/.*\.py$'
+        pass_filenames: false
+      - id: mypy-tools
+        name: Type-check typed tools (mypy)
+        entry: mypy
+        language: system
+        files: '^tools/.*\.py$'
+        pass_filenames: false
   # pre-commit/mirrors-prettier was archived upstream — using rbubley's
   # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
   - repo: https://github.com/rbubley/mirrors-prettier

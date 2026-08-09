@@ -15,6 +15,19 @@ pip install --group dev       # pytest, pyyaml, ruff (for tests and linting)
 
 `python tools/dev_setup.py` installs these for you as part of the dev setup.
 
+Python quality checks run on `tools/` in pre-commit and CI:
+
+```bash
+ruff check tools
+black --check tools
+pylint tools --reports=no --score=no
+mypy
+```
+
+Black is the canonical formatter. Mypy checks the typed report and validator-core
+surfaces declared in `pyproject.toml`; the remaining scripts are migrated in
+small, behavior-tested slices rather than hidden behind broad ignores.
+
 ## Quick Start
 
 Use `run.py` to run any tool by short name — no need to remember subdirectory paths:
