@@ -35,6 +35,25 @@ def test_multi_line_wrapper_collapses(tmp_path):
     assert f.read_text(encoding="utf-8") == _COLLAPSED
 
 
+def test_process_file_propagates_write_error(tmp_path, monkeypatch):
+    f = tmp_path / "ctrl.txt"
+    f.write_text(_WRAP_SINGLE, encoding="utf-8")
+    real_open = open
+
+    def fail_write(path, mode="r", *args, **kwargs):
+        if "w" in mode:
+            raise OSError("read-only")
+        return real_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(cet, "open", fail_write, raising=False)
+    try:
+        cet.process_file(str(f))
+    except OSError as error:
+        assert "read-only" in str(error)
+    else:
+        assert False, "process_file should propagate write failures"
+
+
 def test_real_effect_block_untouched():
     src = "\teffect_tooltip = {\n\t\tadd_stability = 0.1\n\t}\n".splitlines(
         keepends=True
