@@ -1040,12 +1040,13 @@ clamp_shia = {
 # Arab Spring Section
 
 # Registry of the Arab Spring mini-game, derived from global.arabic_countries:
-#   global.arab_spring_countries         every arabic country still in the mini-game
-#   global.arab_spring_active_countries  the subset currently under protests (arab_spring_active)
+#   global.arab_spring_countries         every arabic country still in the mini-game, dead tags
+#                                        included so protest strength keeps accruing while annexed
+#   global.arab_spring_active_countries  the existing subset currently under protests (arab_spring_active)
 # Rebuilt from the country flags at startup and at the top of every monthly tick, so nothing
-# outside this system registers a country when it is released, formed, annexed or added to
-# global.arabic_countries mid-game. The recurring rebuild is also what makes the exists check
-# below safe: a tag filtered out while dead rejoins the month after it is released.
+# outside this system registers a country when it is released, formed or added to
+# global.arabic_countries mid-game. Dead tags are fenced out of the activation paths instead
+# (active subset here, auto-start limit, arab_spring.0/.17 triggers).
 
 AS_rebuild_arab_spring_registry = {
 	clear_array = global.arab_spring_countries
@@ -1056,12 +1057,15 @@ AS_rebuild_arab_spring_registry = {
 		var:v = {
 			if = {
 				limit = {
-					exists = yes
 					NOT = { has_country_flag = AS_disabled_arab_spring }
 					NOT = { has_country_flag = AS_arab_spring_completed }
 				}
 				add_to_array = { global.arab_spring_countries = THIS.id }
-				if = { limit = { has_country_flag = arab_spring_active }
+				if = {
+					limit = {
+						exists = yes
+						has_country_flag = arab_spring_active
+					}
 					add_to_array = { global.arab_spring_active_countries = THIS.id }
 				}
 			}
