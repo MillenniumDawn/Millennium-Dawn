@@ -1032,3 +1032,68 @@ SAU_faisalite_update_balance = {
 		add_ideas = SAU_faisalite_isolationist_dominant
 	}
 }
+
+# Mirror of SAU_tadawul_promote: walks the index down one tier. Ordered low-to-high so a
+# single call cannot cascade a tier past its neighbour.
+SAU_tadawul_demote = {
+	if = { limit = { has_idea = SAU_tadawul_market_t1 } swap_ideas = { remove_idea = SAU_tadawul_market_t1 add_idea = SAU_tadawul_market } }
+	if = { limit = { has_idea = SAU_tadawul_market_t2 } swap_ideas = { remove_idea = SAU_tadawul_market_t2 add_idea = SAU_tadawul_market_t1 } }
+	if = { limit = { has_idea = SAU_tadawul_market_t3 } swap_ideas = { remove_idea = SAU_tadawul_market_t3 add_idea = SAU_tadawul_market_t2 } }
+	if = { limit = { has_idea = SAU_tadawul_market_t4 } swap_ideas = { remove_idea = SAU_tadawul_market_t4 add_idea = SAU_tadawul_market_t3 } }
+	if = { limit = { has_idea = SAU_tadawul_market_t5 } swap_ideas = { remove_idea = SAU_tadawul_market_t5 add_idea = SAU_tadawul_market_t4 } }
+	if = { limit = { has_idea = SAU_tadawul_market_t6 } swap_ideas = { remove_idea = SAU_tadawul_market_t6 add_idea = SAU_tadawul_market_t5 } }
+	if = { limit = { has_idea = SAU_tadawul_market_t7 } swap_ideas = { remove_idea = SAU_tadawul_market_t7 add_idea = SAU_tadawul_market_t6 } }
+	if = { limit = { has_idea = SAU_tadawul_market_t8 } swap_ideas = { remove_idea = SAU_tadawul_market_t8 add_idea = SAU_tadawul_market_t7 } }
+	if = { limit = { has_idea = SAU_tadawul_market_t9 } swap_ideas = { remove_idea = SAU_tadawul_market_t9 add_idea = SAU_tadawul_market_t8 } }
+	if = { limit = { has_idea = SAU_tadawul_market_t10 } swap_ideas = { remove_idea = SAU_tadawul_market_t10 add_idea = SAU_tadawul_market_t9 } }
+}
+
+SAU_army_grievance_clear = {
+	if = { limit = { has_idea = SAU_grievance_contained } remove_ideas = SAU_grievance_contained }
+	if = { limit = { has_idea = SAU_grievance_restive } remove_ideas = SAU_grievance_restive }
+	if = { limit = { has_idea = SAU_grievance_bitter } remove_ideas = SAU_grievance_bitter }
+	if = { limit = { has_idea = SAU_grievance_mutinous } remove_ideas = SAU_grievance_mutinous }
+	if = { limit = { has_idea = SAU_grievance_brink } remove_ideas = SAU_grievance_brink }
+}
+
+# Hidden badge for the officer corps' resentment. Read out by GetSAUArmyGrievance.
+SAU_army_grievance_set_tier = {
+	SAU_army_grievance_clear = yes
+
+	if = {
+		limit = { check_variable = { SAU_army_grievance > 79 } }
+		add_ideas = SAU_grievance_brink
+	}
+	else_if = {
+		limit = { check_variable = { SAU_army_grievance > 59 } }
+		add_ideas = SAU_grievance_mutinous
+	}
+	else_if = {
+		limit = { check_variable = { SAU_army_grievance > 39 } }
+		add_ideas = SAU_grievance_bitter
+	}
+	else_if = {
+		limit = { check_variable = { SAU_army_grievance > 19 } }
+		add_ideas = SAU_grievance_restive
+	}
+	else = {
+		add_ideas = SAU_grievance_contained
+	}
+}
+
+# Tears down every monarchy-era system in one place. SAU_monarchy_abolished is the
+# remove_trigger on the House of Al Saud modifier and the cancel on the Faisalite spirits.
+SAU_end_the_monarchy = {
+	set_country_flag = SAU_monarchy_abolished
+	clr_country_flag = SAU_succession_race_active
+	clr_country_flag = SAU_crown_prince_race_active
+	clr_country_flag = SAU_crown_prince_named
+	clr_country_flag = SAU_royal_reign_active
+	clr_country_flag = SAU_mbn_reign_active
+	clr_country_flag = SAU_mutaib_reign_active
+	clr_country_flag = SAU_abdullah_legacy_active
+	clr_country_flag = SAU_officer_grievance_active
+	set_variable = { SAU_current_king = 0 }
+	set_variable = { SAU_army_grievance = 0 }
+	hidden_effect = { SAU_army_grievance_clear = yes }
+}
