@@ -9,7 +9,8 @@ import re
 import sys
 import time
 from dataclasses import dataclass
-from multiprocessing import Pool, cpu_count
+from multiprocessing import cpu_count
+from multiprocessing.pool import Pool
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -413,7 +414,7 @@ class BaseValidator:
         output_file: Optional[str] = None,
         use_colors: bool = True,
         staged_only: bool = False,
-        workers: int = None,
+        workers: Optional[int] = None,
         no_cache: bool = False,
         **kwargs,
     ):
@@ -432,7 +433,7 @@ class BaseValidator:
         if no_cache:
             os.environ["MD_NO_CACHE"] = "1"
         self.staged_files = None
-        self.output_lines = []
+        self.output_lines: List[str] = []
         self._pool: Optional[Pool] = None
         self._shared_cache: Dict[str, object] = {}
         self._issues: List[Issue] = []
@@ -476,12 +477,16 @@ class BaseValidator:
             text = FileOpener.open_text_file(
                 path, lowercase=lowercase, strip_comments_flag=strip_comments_flag
             )
+
+            def parse_cached() -> Any:
+                return parse_fn(text, path)
+
             results[path] = disk_cache.per_file_cached_by_content(
                 self.mod_path,
                 namespace,
                 path,
                 text,
-                lambda t=text, p=path: parse_fn(t, p),
+                parse_cached,
             )
         return results
 
@@ -751,7 +756,7 @@ class BaseValidator:
         key = "_basename_index:" + "|".join(patterns)
         existing = self._shared_cache.get(key)
         if existing is not None:
-            return existing
+            return cast(Dict[str, List[str]], existing)
 
         tracked: List[str] = []
         seen: Set[str] = set()
@@ -808,7 +813,10 @@ class BaseValidator:
         # cost. The Pool is created lazily on the first batch that uses it.
         if self.workers == 1 or len(args_list) < 10:
             return [func(a) for a in args_list]
-        return self._get_pool().map(func, args_list, chunksize=chunksize)
+        pool = self._get_pool()
+        if pool is None:
+            return [func(a) for a in args_list]
+        return pool.map(func, args_list, chunksize=chunksize)
 
     def _pool_map_init(
         self,
