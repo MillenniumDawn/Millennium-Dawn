@@ -566,3 +566,111 @@ PHI_communist_insurgency_category = {
 
 	}
 }
+
+PHI_edsa_dos_category = {
+ 
+	# Timed mission — activates automatically in October 2000.
+	# Applies the initial scandal effects on activation via complete/timeout.
+	# Cancelled if the player takes PHI_open_the_second_envelope first.
+	PHI_the_people_grow_disillusioned = {
+		icon = political_actions
+		is_good = no
+ 
+		visible = {
+			original_tag = PHI
+			date > 2000.10.1
+			NOT = { has_country_flag = PHI_edsa_dos_resolved }
+		}
+ 
+		available = {
+			original_tag = PHI
+			date > 2000.10.1
+			NOT = { has_country_flag = PHI_edsa_dos_resolved }
+		}
+ 
+		activation = {
+			original_tag = PHI
+			date > 2000.10.1
+			NOT = { has_country_flag = PHI_edsa_dos_resolved }
+		}
+ 
+		cancel_if_not_visible = yes
+		selectable_mission = yes
+		days_mission_timeout = 110
+ 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete PHI_the_people_grow_disillusioned"
+			set_temp_variable = { temp_change = 8 }
+			PHI_change_the_strength_of_corruption = yes
+			add_stability = -0.04
+			add_timed_idea = { idea = PHI_edsa_dos_impeachment_atmosphere days = 120 }
+			add_stability = -0.05
+			add_political_power = -50
+			country_event = { id = PHI.2 days = 1 }
+		}
+ 
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout PHI_the_people_grow_disillusioned"
+			set_temp_variable = { temp_change = 8 }
+			PHI_change_the_strength_of_corruption = yes
+			add_stability = -0.04
+			add_timed_idea = { idea = PHI_edsa_dos_impeachment_atmosphere days = 120 }
+			add_stability = -0.05
+			add_political_power = -50
+			country_event = { id = PHI.2 days = 1 }
+		}
+ 
+		ai_will_do = { base = 0 }
+	}
+ 
+	PHI_open_the_second_envelope = {
+		icon = political_actions
+ 
+		visible = {
+			original_tag = PHI
+			date > 2000.10.1
+			NOT = { has_country_flag = PHI_edsa_dos_resolved }
+		}
+ 
+		available = {
+			original_tag = PHI
+			date > 2000.10.1
+			NOT = { has_country_flag = PHI_edsa_dos_resolved }
+			custom_trigger_tooltip = {
+				tooltip = PHI_edsa_corruption_below_55_tt
+				check_variable = { PHI_corruption_strength < 55 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = PHI_edsa_stability_above_60_tt
+				stability > 0.60
+			}
+		}
+ 
+		cost = 75
+ 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PHI_open_the_second_envelope"
+			set_country_flag = PHI_edsa_dos_resolved
+			add_stability = -0.03
+			add_political_power = -75
+			set_temp_variable = { party_index = 13 }
+			set_temp_variable = { party_popularity_increase = -0.06 }
+			set_temp_variable = { temp_outlook_increase = -0.06 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { temp_change = -10 }
+			PHI_change_the_strength_of_corruption = yes
+		}
+ 
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				NOT = { stability > 0.65 }
+			}
+			modifier = {
+				factor = 0
+				NOT = { check_variable = { PHI_corruption_strength < 50 } }
+			}
+		}
+	}
+}
