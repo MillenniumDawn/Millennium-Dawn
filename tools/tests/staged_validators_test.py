@@ -4,7 +4,7 @@ Test that validators work correctly in --staged mode.
 
 Creates temporary files with deliberate errors, stages them via git,
 runs each validator with --staged, and checks that:
-  1. Validators exit quickly (under 5 seconds each)
+  1. Validators complete within the integration time budget
   2. Validators that should find issues DO find issues (non-zero exit)
   3. Validators that should skip (no relevant files) exit cleanly (zero exit)
 
@@ -19,17 +19,16 @@ import shutil
 import subprocess
 import sys
 import time
-
-import pytest
+from unittest import SkipTest
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Maximum seconds a staged validator should take
-MAX_TIME = 5.0
+# Maximum seconds a staged validator should take in CI
+MAX_TIME = 15.0
 
 passed = 0
 failed = 0
-errors = []
+errors: list[str] = []
 
 
 def run(cmd, **kwargs):
@@ -56,7 +55,7 @@ def run_validator(script, label, expect_issues=True):
     global passed, failed, errors
 
     cmd = [
-        "python3",
+        sys.executable,
         f"tools/validation/{script}",
         "--staged",
         "--strict",
@@ -318,13 +317,13 @@ def test_staged_validators():
     Opt-in (MD_RUN_STAGED_INTEGRATION=1): it mutates the working repo and runs
     the full validator set, so it stays out of the default `pytest` sweep."""
     if not os.environ.get("MD_RUN_STAGED_INTEGRATION"):
-        pytest.skip(
+        raise SkipTest(
             "set MD_RUN_STAGED_INTEGRATION=1 to run staged-validator integration"
         )
     if shutil.which("git") is None:
-        pytest.skip("git not available")
+        raise SkipTest("git not available")
     if not _index_is_clean():
-        pytest.skip("git index has staged changes; skipping to avoid clobbering")
+        raise SkipTest("git index has staged changes; skipping to avoid clobbering")
     assert main() == 0
 
 

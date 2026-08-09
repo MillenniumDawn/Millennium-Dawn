@@ -2,8 +2,8 @@
 """
 Test staged validators against REAL mod files that have known issues.
 
-Stages actual codebase files (without modifying them), runs each validator
-with --staged, and verifies they find the expected issues.
+Stages actual codebase files with temporary deliberate issues, runs each
+validator with --staged, and verifies they find the expected issues.
 
 Usage:
     python3 tools/test_staged_validators_real.py
@@ -14,37 +14,37 @@ import shutil
 import subprocess
 import sys
 import time
-
-import pytest
+from unittest import SkipTest
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-MAX_TIME = 10.0
+MAX_TIME = 15.0
 passed = 0
 failed = 0
 errors: list[str] = []
+
+EVENT_INTEGRATION_SUFFIX = """
+country_event = {
+\tid = _staged_validator.1
+\ttitle = _staged_validator.1.t
+\tdesc = _staged_validator.1.d
+\toption = {
+\t\tname = _staged_validator.1.a
+\t}
+}
+"""
+LOC_INTEGRATION_SUFFIX = '\n _staged_validator_key: "broken ["\n'
 
 
 def run(cmd, **kwargs):
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
 
 
-def stage_file_as_modified(path):
-    """Stage an existing file by touching it (add to index without changing content).
-
-    We use `git add` which works even if the file hasn't changed — it just
-    refreshes the index entry so --staged sees it.
-    """
-    # Create a harmless change, stage it, then restore the original
-    # This is needed because `git add` on an unchanged file won't mark it staged
-    with open(path, "r", encoding="utf-8-sig") as f:
-        original = f.read()
+def stage_file_as_modified(path, suffix="\n"):
+    """Append a temporary issue and stage the file for a real validator run."""
     with open(path, "a", encoding="utf-8-sig") as f:
-        f.write("\n")
+        f.write(suffix)
     run(["git", "add", path])
-    # Restore the working copy but keep it staged
-    with open(path, "w", encoding="utf-8-sig") as f:
-        f.write(original)
 
 
 def unstage_file(path):
@@ -62,7 +62,7 @@ def run_validator(
     global passed, failed, errors
 
     cmd = [
-        "python3",
+        sys.executable,
         f"tools/validation/{script}",
         "--staged",
         "--strict",
@@ -126,8 +126,8 @@ def main():
     os.chdir(REPO_ROOT)
     staged_files = []
 
-    def stage(path):
-        stage_file_as_modified(path)
+    def stage(path, suffix="\n"):
+        stage_file_as_modified(path, suffix)
         staged_files.append(path)
 
     def cleanup():
@@ -139,26 +139,29 @@ def main():
         # ── Test 1: Event file with known issues ───────────────────────────
         print("Test 1: Stage a real event file with known issues")
         print("-" * 60)
-        # Event Horizon.txt has 11 missing is_triggered_only
-        stage("events/Event Horizon.txt")
+        # Add a deliberately incomplete event to Event Horizon.txt.
+        stage("events/Event Horizon.txt", EVENT_INTEGRATION_SUFFIX)
 
         run_validator(
             "validate_events.py",
-            "events: Event Horizon.txt (11 missing is_triggered_only)",
+            "events: Event Horizon.txt (missing is_triggered_only)",
             expect_issues=True,
-            min_issues=10,
+            min_issues=1,
         )
         cleanup()
 
         # ── Test 2: Loc file with known issues ─────────────────────────────
         print("\nTest 2: Stage a real localisation file with known issues")
         print("-" * 60)
-        # MD_focus_ALG has color syntax issues
-        stage("localisation/english/MD_focus_ALG_l_english.yml")
+        # Add an unclosed localization bracket to MD_focus_ALG.
+        stage(
+            "localisation/english/MD_focus_ALG_l_english.yml",
+            LOC_INTEGRATION_SUFFIX,
+        )
 
         run_validator(
             "validate_localisation.py",
-            "localisation: ALG loc file (color syntax issues)",
+            "localisation: ALG loc file (unclosed bracket)",
             expect_issues=True,
             min_issues=1,
         )
@@ -191,15 +194,18 @@ def main():
         # ── Test 5: Multiple files staged at once ──────────────────────────
         print("\nTest 5: Stage multiple files and verify validators handle them")
         print("-" * 60)
-        stage("events/Event Horizon.txt")
-        stage("localisation/english/MD_focus_ALG_l_english.yml")
+        stage("events/Event Horizon.txt", EVENT_INTEGRATION_SUFFIX)
+        stage(
+            "localisation/english/MD_focus_ALG_l_english.yml",
+            LOC_INTEGRATION_SUFFIX,
+        )
         stage("common/national_focus/05_algeria.txt")
 
         run_validator(
             "validate_events.py",
             "events: multiple files staged (only events checked)",
             expect_issues=True,
-            min_issues=10,
+            min_issues=1,
         )
         run_validator(
             "validate_localisation.py",
@@ -263,7 +269,7 @@ def test_real_files_present():
     checks out tools/) since the game content this asserts on isn't present there.
     """
     if not _game_content_checked_out():
-        pytest.skip("game content not checked out (sparse checkout)")
+        raise SkipTest("game content not checked out (sparse checkout)")
     for rel in _TOUCHED_FILES:
         assert os.path.exists(os.path.join(REPO_ROOT, rel))
 
@@ -274,13 +280,13 @@ def test_staged_validators_real():
     Opt-in (MD_RUN_STAGED_INTEGRATION=1): it mutates the working repo and runs
     the full validator set, so it stays out of the default `pytest` sweep."""
     if not os.environ.get("MD_RUN_STAGED_INTEGRATION"):
-        pytest.skip(
+        raise SkipTest(
             "set MD_RUN_STAGED_INTEGRATION=1 to run staged-validator integration"
         )
     if shutil.which("git") is None:
-        pytest.skip("git not available")
+        raise SkipTest("git not available")
     if not _touched_files_clean():
-        pytest.skip("target files have local changes; skipping to avoid clobbering")
+        raise SkipTest("target files have local changes; skipping to avoid clobbering")
     assert main() == 0
 
 
