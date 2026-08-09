@@ -95,9 +95,9 @@ ai_is_threatened = {
 `potential_and_current_enemies` is a built-in engine array (current enemies + allies-of-enemies + countries with wargoals), so it already covers hostile neighbours without a live neighbour loop. When `ai_is_threatened`:
 
 - The division/plane/ship limiter caps expand (1.25x multiplier inside the daily calc).
-- `ai_default_no_build_units` deactivates → unit training allowed.
+- The division cap no longer receives its 0.75x peaceful-country reduction.
 
-This replaced the old `ai_update_build_units` effect and its `AI_is_threatened` country flag (removed). Subjects are no longer auto-flagged; `ai_default_no_build_units` excludes them with `is_subject = no`.
+This replaced the old `ai_update_build_units` effect and its `AI_is_threatened` country flag (removed).
 
 ### `division_limiter_calculation` / `plane_limiter_calculation` / `ship_limiter_calculation` (`00_AI_scripted_effects.txt`)
 
@@ -215,16 +215,31 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 | `MD_default_production_strategy` | 6-10 | Balanced with mech/armor intro |
 | `MD_major_production_strategy` | > 10 | Full spectrum with min factory targets |
 
+APCs use the `amphibious` equipment category and IFVs use `flame`, not
+`mechanized`. Countries with enough factories, a healthy rifle stockpile, and
+less than 1,000 APCs or IFVs receive a +300% perceived factory demand for the
+matching category. Countries with more than 10 military factories also reserve
+one factory each for APCs and IFVs. Command equipment shortages increase total
+`infantry`-category factory demand by 100% and raise command equipment's variant
+weight to compete with infantry weapons. The wartime response below 500
+stockpile adds a second +100% category-demand increase.
+
 **Division/Ship/Plane Limiters:**
 
-- `division_limiter`: factories × situational modifiers. Active war scales up (~1.75x, wars demand more divisions than peacetime), `AI_is_threatened` adds ~1.25x, major status adds ~1.15x. Alliances that constrain unilateral builds (NATO, EU) apply a negative multiplier (~-0.8x) so members don't all maintain peer-major standing armies.
+- `division_limiter`: factories × situational modifiers. Peaceful, unthreatened countries receive a 0.75x reduction instead of being blocked from training. Active war scales up (~1.75x, wars demand more divisions than peacetime), `ai_is_threatened` adds ~1.25x, major status adds ~1.15x. Alliances that constrain unilateral builds (NATO, EU) apply a negative multiplier (~-0.8x) so members don't all maintain peer-major standing armies.
 - `division_limiter_potato_edition`: 0.5x base for the "performance" rule path, extra penalties for very large factions (CHI/SOV) so end-game stutter stays manageable.
 - `ship_limiter`: naval_factories × ~7 (or ×3 potato), tuned so a typical naval power lands at a plausible fleet size, not the engine's hard cap.
 - `plane_limiter`: mil_factories × ~80 + 50 (or ×40 potato), accounts for air industries producing many cheap units per factory vs ground.
 
 **Unit build controls:**
 
-- `ai_default_no_build_units`: No war + not threatened → all roles -500
+- `division_limiter`: Above the current situational cap → all land-role build weights -500
+- `under_division_cap_recruitment`: Threatened countries below their cap
+  → wanted divisions +0.15
+- `minor_wartime_recruitment`: Non-major countries at war and below their
+  cap → force_build=20
+- `threatened_peacetime_recruitment`: Threatened countries at peace and below
+  their cap → force_build=25
 - `ai_subject_defensive_build`: Subjects at peace → garrison=5, L_Inf=10, infantry=5, force_build=25
 
 **Air production (3 tiers):**
@@ -293,6 +308,12 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 | DPR/HPR | 150       | Always                                |
 | CHE     | 150       | Always                                |
 | ZOM     | 200       | Always                                |
+
+**Offensive preparation:**
+
+- `MD_war_declaration_ai.txt`: Countries holding specific scripted wargoals
+  request units for the target front and receive force_build=30–40 until war
+  begins.
 
 **Notable diplomacy patterns:**
 
