@@ -75,14 +75,20 @@ def run_validator(
     result = run(cmd)
     elapsed = time.time() - start
 
-    # Extract issue count from output
+    # Extract issue count from the validator summary.
     issue_count = 0
     import re as _re
 
-    for line in (result.stderr or "").split("\n") + (result.stdout or "").split("\n"):
-        m = _re.search(r"(\d+)\s+TOTAL ISSUES FOUND", line)
-        if m:
-            issue_count = int(m.group(1))
+    output = (result.stderr or "") + (result.stdout or "")
+    total_match = _re.search(r"(\d+)\s+TOTAL ISSUES FOUND", output)
+    if total_match:
+        issue_count = int(total_match.group(1))
+    else:
+        summary_match = _re.search(
+            r"(\d+)\s+ERROR\(S\)(?:\s*-\s*(\d+)\s+WARNING\(S\))?", output
+        )
+        if summary_match:
+            issue_count = int(summary_match.group(1)) + int(summary_match.group(2) or 0)
 
     ok = True
     status_parts = []
