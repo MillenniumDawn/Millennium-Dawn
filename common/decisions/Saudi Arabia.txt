@@ -2300,6 +2300,91 @@ SAU_Among_Major_powers_Open_east = {
 		}
 		ai_will_do = { base = 1 }
 	}
+	SAU_storm_air_campaign = {
+		allowed = { original_tag = SAU }
+		icon = GFX_decision_generic_army_support
+		priority = 95
+
+		state_target = yes
+		on_map_mode = map_only
+
+		highlight_states = {
+			highlight_states_trigger = {
+				is_owned_by = HOU
+			}
+			highlight_color_before_active = 3
+			highlight_color_while_active = 2
+		}
+
+		target_trigger = {
+			FROM = { is_owned_by = HOU }
+		}
+
+		visible = {
+			has_country_flag = SAU_decisive_storm
+		}
+
+		cost = 25
+
+		days_re_enable = 14
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_storm_air_campaign"
+			FROM = {
+				damage_building = { type = infrastructure damage = 2 }
+				damage_building = { type = arms_factory damage = 1 }
+				damage_building = { type = anti_air_building damage = 1 }
+				add_manpower = -2000
+			}
+			add_war_support = 0.01
+		}
+
+		ai_will_do = { base = 10 }
+	}
+	SAU_storm_partner_readout = {
+		allowed = { original_tag = SAU }
+		icon = GFX_decision_generic_political_discourse
+		priority = 95
+
+		visible = {
+			has_country_flag = SAU_decisive_storm
+		}
+
+		available = { always = no }
+
+		cost = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_storm_partner_readout"
+			add_political_power = 0
+		}
+
+		ai_will_do = { base = 0 }
+	}
+	SAU_storm_stand_down = {
+		allowed = { original_tag = SAU }
+		icon = GFX_decision_generic_political_discourse
+		priority = 95
+
+		visible = {
+			has_country_flag = SAU_decisive_storm
+		}
+
+		cost = 100
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_storm_stand_down"
+			clr_country_flag = SAU_decisive_storm_launched
+			set_country_flag = SAU_storm_ended
+			add_stability = 0.04
+			add_war_support = -0.03
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
 
 	SAU_break_houthi_ceasefire = {
 		icon = military_buildup
@@ -3584,6 +3669,59 @@ SAU_vision2030_category = {
 }
 
 SAU_crown_prince_category = {
+
+	SAU_royal_patronage = {
+		icon = GFX_decision_influence
+		priority = 200
+
+		cost = 75
+
+		visible = {
+			has_country_flag = SAU_royal_patronage_unlocked
+			OR = {
+				AND = {
+					has_country_flag = SAU_succession_race_active
+					NOT = { check_variable = { SAU_crown_choice = 0 } }
+					NOT = { has_country_flag = SAU_patronage_spent_crown }
+				}
+				AND = {
+					has_country_flag = SAU_crown_prince_race_active
+					NOT = { check_variable = { SAU_heir_choice = 0 } }
+					NOT = { has_country_flag = SAU_patronage_spent_heir }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_royal_patronage"
+			set_temp_variable = { amount = 20 }
+			if = {
+				limit = {
+					has_country_flag = SAU_succession_race_active
+					NOT = { check_variable = { SAU_crown_choice = 0 } }
+					NOT = { has_country_flag = SAU_patronage_spent_crown }
+				}
+				set_country_flag = SAU_patronage_spent_crown
+				set_temp_variable = { prince = SAU_crown_choice }
+				SAU_add_crown_points = yes
+				SAU_recompute_crown_shares = yes
+			}
+			else_if = {
+				limit = {
+					has_country_flag = SAU_crown_prince_race_active
+					NOT = { check_variable = { SAU_heir_choice = 0 } }
+					NOT = { has_country_flag = SAU_patronage_spent_heir }
+				}
+				set_country_flag = SAU_patronage_spent_heir
+				set_temp_variable = { heir = SAU_heir_choice }
+				SAU_add_heir_points = yes
+				SAU_recompute_heir_shares = yes
+			}
+			custom_effect_tooltip = SAU_royal_patronage_tt
+		}
+
+		ai_will_do = { base = 6 }
+	}
 
 	#### KING SALMAN'S HEALTH ####
 
@@ -5061,6 +5199,60 @@ SAU_king_mbs_category = {
 
 SAU_debug_category = {
 
+	SAU_debug_storm_readout = {
+		icon = GFX_decision_generic_army_support
+		priority = 88
+
+		cost = 0
+
+		visible = {
+			always = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_debug_storm_readout"
+			add_political_power = 0
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_debug_storm_open = {
+		icon = GFX_decision_generic_army_support
+		priority = 87
+
+		cost = 0
+
+		visible = {
+			NOT = { has_country_flag = SAU_decisive_storm_launched }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_debug_storm_open"
+			country_event = { id = SAU_events.194 }
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_debug_storm_complete_civil_war = {
+		icon = GFX_decision_generic_army_support
+		priority = 86
+
+		cost = 0
+
+		visible = {
+			NOT = { has_completed_focus = SAU_Yemeni_Civil_war }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_debug_storm_complete_civil_war"
+			complete_national_focus = SAU_Yemeni_Civil_war
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
 	SAU_debug_grievance_readout = {
 		icon = GFX_decision_generic_military
 		priority = 91
@@ -6287,6 +6479,93 @@ SAU_officer_crisis_category = {
 		}
 
 		ai_will_do = { base = 20 }
+	}
+}
+SAU_coalition_member_category = {
+
+	SAU_coalition_member_strike = {
+		icon = GFX_decision_generic_army_support
+		priority = 200
+
+		state_target = yes
+		on_map_mode = map_only
+
+		highlight_states = {
+			highlight_states_trigger = {
+				is_owned_by = HOU
+			}
+			highlight_color_before_active = 3
+			highlight_color_while_active = 2
+		}
+
+		target_trigger = {
+			FROM = { is_owned_by = HOU }
+		}
+
+		cost = 25
+
+		days_re_enable = 21
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_coalition_member_strike"
+			FROM = {
+				damage_building = { type = infrastructure damage = 2 }
+				damage_building = { type = arms_factory damage = 1 }
+				damage_building = { type = anti_air_building damage = 1 }
+				add_manpower = -2000
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	SAU_coalition_member_arm_yemen = {
+		icon = GFX_decision_generic_army_support
+		priority = 190
+
+		cost = 40
+
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_coalition_member_arm_yemen"
+			if = {
+				limit = { country_exists = YEM }
+				YEM = {
+					add_equipment_to_stockpile = { type = infantry_weapons_1 amount = 1500 producer = ROOT }
+					add_manpower = 8000
+					army_experience = 10
+					add_opinion_modifier = { target = ROOT modifier = military_aid }
+				}
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	SAU_coalition_member_leave = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 180
+
+		cost = 75
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_coalition_member_leave"
+			clr_country_flag = SAU_joined_the_coalition
+			set_country_flag = SAU_left_the_coalition
+			if = {
+				limit = { country_exists = SAU }
+				SAU = { subtract_from_variable = { SAU_coalition_partners = 1 tooltip = SAU_coalition_partners_tt } }
+				SAU = { add_opinion_modifier = { target = ROOT modifier = SAU_talks_collapsed } }
+				add_opinion_modifier = { target = SAU modifier = SAU_talks_collapsed }
+			}
+			add_political_power = 50
+			add_stability = 0.03
+		}
+
+		ai_will_do = { base = 3 }
 	}
 
 }
