@@ -217,7 +217,7 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 
 APCs use the `amphibious` equipment category and IFVs use `flame`, not
 `mechanized`. Countries with enough factories, a healthy rifle stockpile, and
-less than 1,000 APCs or IFVs receive a +300% perceived factory demand for the
+less than 1,000 APCs or IFVs receive a +400% perceived factory demand for the
 matching category. Countries with more than 10 military factories also reserve
 one factory each for APCs and IFVs. Command equipment shortages increase total
 `infantry`-category factory demand by 100% and raise command equipment's variant
@@ -226,7 +226,7 @@ stockpile adds a second +100% category-demand increase.
 
 **Division/Ship/Plane Limiters:**
 
-- `division_limiter`: factories × situational modifiers. Peaceful, unthreatened countries receive a 0.75x reduction instead of being blocked from training. Active war scales up (~1.75x, wars demand more divisions than peacetime), `ai_is_threatened` adds ~1.25x, major status adds ~1.15x. Alliances that constrain unilateral builds (NATO, EU) apply a negative multiplier (~-0.8x) so members don't all maintain peer-major standing armies.
+- `division_limiter`: (factories + 5 when factories > 4) × 1.3 × situational modifiers. Peaceful, unthreatened countries receive a 0.75x reduction instead of being blocked from training. Active war scales up (~1.75x, wars demand more divisions than peacetime), `ai_is_threatened` adds ~1.25x, major status adds ~1.15x. Alliances that constrain unilateral builds (NATO, EU) apply a negative multiplier (~-0.8x) so members don't all maintain peer-major standing armies.
 - `division_limiter_potato_edition`: 0.5x base for the "performance" rule path, extra penalties for very large factions (CHI/SOV) so end-game stutter stays manageable.
 - `ship_limiter`: naval_factories × ~7 (or ×3 potato), tuned so a typical naval power lands at a plausible fleet size, not the engine's hard cap.
 - `plane_limiter`: mil_factories × ~80 + 50 (or ×40 potato), accounts for air industries producing many cheap units per factory vs ground.
