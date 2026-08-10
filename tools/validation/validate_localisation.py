@@ -73,9 +73,9 @@ _MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
 _MANGLED_SINGLE_QUOTE_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*'.*'\s*$")
 
 
-def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List:
+def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[Issue | str]:
     filename, valid_colors, subst_keys = args
-    results = []
+    results: List[Issue | str] = []
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
@@ -125,26 +125,23 @@ def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List:
                     f"{os.path.basename(filename)}, line {line_idx + 2}, colors - expected {expected} \u00a7! but got {actual}"
                 )
             else:
-                try:
-                    for idx, ch in enumerate(color_line):
-                        if ch == "\u00a7" and idx + 1 < len(color_line):
-                            next_ch = color_line[idx + 1]
-                            if next_ch not in valid_colors and next_ch not in [
-                                "!",
-                                "[",
-                                "$",
-                            ]:
-                                results.append(
-                                    f"{os.path.basename(filename)}, line {line_idx + 2}, colors - unsupported color '{next_ch}'"
-                                )
-                except Exception:
-                    continue
+                for idx, ch in enumerate(color_line):
+                    if ch == "\u00a7" and idx + 1 < len(color_line):
+                        next_ch = color_line[idx + 1]
+                        if next_ch not in valid_colors and next_ch not in [
+                            "!",
+                            "[",
+                            "$",
+                        ]:
+                            results.append(
+                                f"{os.path.basename(filename)}, line {line_idx + 2}, colors - unsupported color '{next_ch}'"
+                            )
     return results
 
 
 def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
     filename = args[0]
-    results = []
+    results: List[str] = []
     text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
     lines = text_file.split("\n")
     if lines == [""]:
@@ -213,6 +210,7 @@ _TYPO_RE = re.compile(
     re.IGNORECASE,
 )
 _TYPO_VALUE_RE = re.compile(r'^\s*[\w.\-]+:\d*\s*"(.*)"')
+_TYPO_RUNTIME_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$[\w.@|+\-]+\$|£[\w.@\-]+")
 
 
 def process_yml_for_typos(args: Tuple[str]) -> List[str]:
@@ -229,7 +227,8 @@ def process_yml_for_typos(args: Tuple[str]) -> List[str]:
         value = value_match.group(1)
         if any(exempt in value for exempt in _TYPO_EXEMPTIONS):
             continue
-        for m in _TYPO_RE.finditer(value):
+        prose = _TYPO_RUNTIME_REFERENCE_RE.sub("", value)
+        for m in _TYPO_RE.finditer(prose):
             correction = _TYPO_WATCHLIST[m.group(0).lower()]
             results.append(
                 f"{os.path.basename(filename)} - line {line_idx + 2} - "
@@ -261,7 +260,7 @@ def get_all_loc_keys(
     filepath = str(Path(mod_path) / "localisation" / "english") + "/"
     loc_dict: Dict[str, str] = {}
     duplicated_keys: List[str] = []
-    namespace = f"loc.keys.lc={int(lowercase)}"
+    namespace = f"loc.keys.lc={'1' if lowercase else '0'}"
 
     for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
         text_file = FileOpener.open_text_file(
@@ -762,10 +761,7 @@ class Validator(BaseValidator):
                 r"[A-Za-z0-9_]+",
                 esc,
             )
-            try:
-                dynamic_ref_patterns.append(re.compile(f"^{esc}$"))
-            except re.error:
-                pass
+            dynamic_ref_patterns.append(re.compile(f"^{esc}$"))
 
         def _matches_dynamic_ref(key: str) -> bool:
             return any(p.match(key) for p in dynamic_ref_patterns)
