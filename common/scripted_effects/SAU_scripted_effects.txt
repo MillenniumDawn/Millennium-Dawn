@@ -1169,3 +1169,46 @@ SAU_faisalite_conviction_set_tier = {
 		add_ideas = SAU_faisalite_conviction_dormant
 	}
 }
+
+
+# Majlis ash-Shura: three benches compete for the Council's seats. Whichever holds the
+# most decides how the Council reads the files it is finally allowed to read.
+SAU_shura_clear = {
+	if = { limit = { has_idea = SAU_shura_led_ulema } remove_ideas = SAU_shura_led_ulema }
+	if = { limit = { has_idea = SAU_shura_led_technocrats } remove_ideas = SAU_shura_led_technocrats }
+	if = { limit = { has_idea = SAU_shura_led_notables } remove_ideas = SAU_shura_led_notables }
+}
+
+SAU_shura_set_tier = {
+	clamp_variable = { var = SAU_shura_ulema min = 0 max = 100 }
+	clamp_variable = { var = SAU_shura_technocrats min = 0 max = 100 }
+	clamp_variable = { var = SAU_shura_notables min = 0 max = 100 }
+	SAU_shura_clear = yes
+
+	if = {
+		limit = {
+			check_variable = { SAU_shura_technocrats > SAU_shura_ulema }
+			check_variable = { SAU_shura_technocrats > SAU_shura_notables }
+		}
+		add_ideas = SAU_shura_led_technocrats
+	}
+	else_if = {
+		limit = {
+			check_variable = { SAU_shura_notables > SAU_shura_ulema }
+			check_variable = { SAU_shura_notables > SAU_shura_technocrats }
+		}
+		add_ideas = SAU_shura_led_notables
+	}
+	else = {
+		add_ideas = SAU_shura_led_ulema
+	}
+}
+
+# The Council sits by the King's leave and falls with him.
+SAU_shura_dissolve = {
+	clr_country_flag = SAU_shura_open
+	set_variable = { SAU_shura_ulema = 0 }
+	set_variable = { SAU_shura_technocrats = 0 }
+	set_variable = { SAU_shura_notables = 0 }
+	SAU_shura_clear = yes
+}
