@@ -194,9 +194,9 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 
 | Strategy | MIL Range | Key Ratios |
 | ---------- | ----------- | ------------ |
-| `default_army_production_strategy` | < 11 | L_Inf=30, infantry=20, mech/IFV=50, armor=35 |
-| `default_army_production_strategy_maj` | 11–29 | IFV=50, armor=40, SF=50, marines=25 |
-| `default_army_production_strategy_global` | 30+ | Infantry=25, APC=30, IFV=35, armor=25 |
+| `default_army_production_strategy` | < 11 | L_Inf=30, infantry=25, mech/IFV=50, armor=35 |
+| `default_army_production_strategy_maj` | 11–29 | Infantry=15, IFV=50, armor=40, SF=50, marines=25 |
+| `default_army_production_strategy_global` | 30+ | Infantry=30, APC=30, IFV=35, armor=25 |
 
 **Note:** `_maj` covers 11–29 MIL. `_global` replaces it at 30+ MIL so advanced-role weights do not stack.
 
