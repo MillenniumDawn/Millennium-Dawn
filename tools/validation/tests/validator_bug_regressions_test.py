@@ -55,9 +55,9 @@ def test_count_event_ids_in_file_returns_only_present_ids(tmp_path):
     tracked = frozenset(["test.1", "test.999"])
     result = count_event_ids_in_file((str(fpath), tracked))
     assert "test.1" in result, "Event ID present in file must be in result"
-    assert "test.999" not in result, (
-        "Absent ID must NOT be in result — caller pre-initializes zeros"
-    )
+    assert (
+        "test.999" not in result
+    ), "Absent ID must NOT be in result — caller pre-initializes zeros"
 
 
 def test_count_event_ids_in_file_dotted_id_not_inflated_by_loc_keys(tmp_path):
@@ -376,7 +376,9 @@ def test_tag_prefixed_var_set_and_read_not_flagged(tmp_path):
     )
     tracked = frozenset(_scan_set_vars(str(f)))
     counts = _count_refs(str(f), tracked)
-    assert counts.get("GER_event_counter_1_wot", 0) == 2  # add_to + check_variable
+    # add_to_variable and set_variable are writes (definitions); only the
+    # check_variable read is counted.
+    assert counts.get("GER_event_counter_1_wot", 0) == 1
 
 
 def test_var_set_once_read_once_counts_as_referenced(tmp_path):

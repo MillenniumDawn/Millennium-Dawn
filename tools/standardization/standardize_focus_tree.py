@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import time
+from typing import Any
 
 from _common import format_elapsed
 from common_utils import PROP_NAME_RE, compact_icon, compact_search_filters
@@ -82,8 +83,11 @@ _DEFAULT_REMOVALS = {
     "available_if_capitulated = no",
 }
 
+# Empty commented-out placeholders are dropped, not kept and re-sorted into the
+# `other` slot away from the position that gave them their meaning.
 _COMMENTED_EMPTY_BLOCK_RE = re.compile(
-    r"^#\s*(available|bypass|cancel|visible|mutually_exclusive)\s*=\s*\{\s*\}$"
+    r"^#\s*(allow_branch|available|bypass|bypass_effect|cancel|visible"
+    r"|mutually_exclusive)\s*=\s*\{\s*\}$"
 )
 
 # Matches an existing log line so we can correct a wrong focus ID or missing prefix.
@@ -197,7 +201,7 @@ def _merge_duplicate_blocks(first, second):
 
 def extract_focus_properties(focus_lines):
     """Extract properties from focus block lines"""
-    props = {
+    props: dict[str, Any] = {
         "id": "",
         "icon": "",
         "text_icon": "",
@@ -247,9 +251,11 @@ def extract_focus_properties(focus_lines):
             else:
                 entry = [line]
                 i += 1
-            if not isinstance(props["icon"], list):
-                props["icon"] = []
-            props["icon"].append(entry)
+            icon_entries = props["icon"]
+            if not isinstance(icon_entries, list):
+                icon_entries = []
+                props["icon"] = icon_entries
+            icon_entries.append(entry)
             continue
 
         if prop_name in _SINGLE_LINE_PROPS:
@@ -971,7 +977,7 @@ def standardize_focus_tree(
 
     # Post-processing: ensure blank lines between consecutive focus/shared_focus/joint_focus blocks
     focus_block_pattern = re.compile(r"^\t?(focus|shared_focus|joint_focus)\s*=\s*{")
-    final_lines = []
+    final_lines: list[str] = []
     for idx, line in enumerate(output_lines):
         if focus_block_pattern.match(line) and final_lines:
             # Find the previous non-empty line

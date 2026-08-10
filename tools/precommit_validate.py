@@ -96,13 +96,17 @@ _REGISTRY = [
             ("common/units/", TXT),
             ("common/ai_templates/", TXT),
             ("common/scripted_effects/", TXT),
-            # create_equipment_variant ship designs are slot-checked against
-            # their hull, so every directory that can hold one is routed here.
+            # Ship variants and create_unit effects share this validator, so
+            # every runtime source for either effect is routed here.
             ("history/countries/", TXT),
             ("common/national_focus/", TXT),
             ("events/", TXT),
             ("common/decisions/", TXT),
             ("common/special_projects/", TXT),
+            ("common/on_actions/", TXT),
+            ("common/operations/", TXT),
+            ("common/resistance_compliance_modifiers/", TXT),
+            ("common/scripted_guis/", TXT),
         ],
     ),
     _Spec(
@@ -134,7 +138,17 @@ _REGISTRY = [
             ("localisation/english/", YML),
         ],
     ),
-    _Spec("validate_events", [("events/", TXT)]),
+    _Spec(
+        "validate_events",
+        [("common/", TXT), ("events/", TXT), ("history/", TXT)],
+    ),
+    _Spec(
+        "validate_mios",
+        [
+            ("common/military_industrial_organization/organizations/", TXT),
+            ("localisation/english/", YML),
+        ],
+    ),
 ]
 
 
@@ -177,8 +191,12 @@ def _run(spec, mod_path, env, no_color, inner_workers):
             timeout=300,
         )
     except subprocess.TimeoutExpired as exc:
-        out = exc.stdout or ""
-        err = exc.stderr or ""
+        out = exc.stdout
+        err = exc.stderr
+        if out is None:
+            out = ""
+        if err is None:
+            err = ""
         if isinstance(out, bytes):
             out = out.decode("utf-8", "replace")
         if isinstance(err, bytes):

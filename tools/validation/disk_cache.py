@@ -36,7 +36,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 # scripted_params token cache after the 3-tuple → 4-tuple token format change
 # (the cache keys on file content, not validator source, so a format change in
 # the token shape requires a version bump to avoid stale 3-tuple entries).
-CACHE_VERSION = 7
+CACHE_VERSION = 8
 
 
 # Cache entries include this fingerprint so parser changes invalidate results
@@ -47,7 +47,7 @@ def _validator_code_fingerprint() -> str:
         Path(__file__).parent,
         Path(__file__).parent.parent / "shared_utils.py",
     )
-    paths = []
+    paths: list[Path] = []
     for source in source_dirs:
         if source.is_dir():
             paths.extend(source.glob("*.py"))
@@ -69,16 +69,6 @@ _CACHE_DIR_NAME = ".validation_cache"
 # suite can auto-reset a cache that has been accumulating orphaned rows for a
 # while. Lives at the cache root (version-independent), not inside a v<N> dir.
 _CREATED_MARKER = "created"
-
-_SCHEMA = (
-    "CREATE TABLE IF NOT EXISTS entries ("
-    " namespace TEXT NOT NULL,"
-    " key TEXT NOT NULL,"
-    " tag TEXT NOT NULL,"
-    " value BLOB NOT NULL,"
-    " PRIMARY KEY (namespace, key)"
-    ") WITHOUT ROWID"
-)
 
 # A SQLite connection cannot be shared across a fork, so each process (the main
 # validator and every pool worker) opens its own on first use, keyed by pid. The
@@ -126,8 +116,16 @@ def _connect(mod_path: str) -> Optional[sqlite3.Connection]:
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA synchronous=NORMAL")
             conn.execute("PRAGMA busy_timeout=30000")
-            conn.execute(_SCHEMA)
-        except sqlite3.Error:
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS entries ("
+                " namespace TEXT NOT NULL,"
+                " key TEXT NOT NULL,"
+                " tag TEXT NOT NULL,"
+                " value BLOB NOT NULL,"
+                " PRIMARY KEY (namespace, key)"
+                ") WITHOUT ROWID"
+            )
+        except (OSError, sqlite3.Error):
             return None
         _conns[key] = conn
         return conn
@@ -298,11 +296,14 @@ def clear(mod_path: str) -> None:
         for k in [k for k in _conns if k[1] == db]:
             try:
                 _conns.pop(k).close()
-            except sqlite3.Error:
+            except (OSError, sqlite3.Error):
                 pass
     root = Path(mod_path) / _CACHE_DIR_NAME
     if root.exists():
-        shutil.rmtree(root, ignore_errors=True)
+        try:
+            shutil.rmtree(root, ignore_errors=True)
+        except OSError:
+            pass
 
 
 def _marker_path(mod_path: str) -> Path:

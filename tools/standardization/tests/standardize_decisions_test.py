@@ -131,6 +131,21 @@ def test_single_leaf_block_collapsed():
     ]
 
 
+def test_body_comment_hugs_the_property_it_describes():
+    block = _decision(
+        [
+            "\tCHI_x_decision = {",
+            "\t\tcost = 50",
+            "\t\t# blocked once the ceasefire holds",
+            "\t\tavailable = { has_war = yes }",
+            "\t}",
+        ]
+    )
+    out = format_decision(block)
+    comment = out.index("\t\t# blocked once the ceasefire holds")
+    assert out[comment + 1] == "\t\tavailable = { has_war = yes }"
+
+
 def test_category_shell_preserved_and_decisions_reformatted():
     category = _decision(
         [

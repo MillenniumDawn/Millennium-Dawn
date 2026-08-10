@@ -477,8 +477,10 @@ country_event = {
 		add_dynamic_modifier = {
 			modifier = IRQ_economic_union_member
 		}
-		add_to_variable = { number_of_iraq_economic_union_members = 1 }
-		IRQ_update_economic_union_modifiers = yes
+		IRQ = {
+			add_to_variable = { number_of_iraq_economic_union_members = 1 }
+			IRQ_update_economic_union_modifiers = yes
+		}
 		ai_chance = {
 			base = 4
 		}
@@ -516,8 +518,12 @@ country_event = {
 	option = {
 		name = iraqi_events.14.a
 		log = "[GetDateText]: [This.GetName]: iraqi_events.14.a executed"
-		subtract_from_variable = { number_of_iraq_economic_union_members = 1 }
-		IRQ_update_economic_union_modifiers = yes
+		clr_country_flag = joined_iraqi_economic_union
+		remove_dynamic_modifier = { modifier = IRQ_economic_union_member }
+		IRQ = {
+			subtract_from_variable = { number_of_iraq_economic_union_members = 1 }
+			IRQ_update_economic_union_modifiers = yes
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1451,6 +1457,7 @@ country_event = {
 					id = iraqi_MNF.170
 					days = 400
 				}
+				country_event = iraq_war.11
 			}
 			set_temp_variable = { rul_party_temp = 0 }
 			set_temp_variable = { disable_elections = 1 }
@@ -1607,6 +1614,7 @@ country_event = {
 					id = iraqi_MNF.170
 					days = 400
 				}
+				country_event = iraq_war.11
 			}
 			set_temp_variable = { rul_party_temp = 0 }
 			set_temp_variable = { disable_elections = 1 }
@@ -1706,7 +1714,7 @@ country_event = {
 	option = {
 		name = iraq_saddam.1.b
 		log = "[GetDateText]: [This.GetName]: iraq_saddam.1.b executed"
-		488 = { transfer_state_to = KUW }
+		488 = { transfer_state_to = IRQ }
 		newline = yes
 		USA = {
 			country_event = {
@@ -4000,12 +4008,21 @@ country_event = { # Return of Ba'athism
 	option = {
 		name = iraq_civil_war.202.a
 		log = "[GetDateText]: [This.GetName]: iraq_civil_war.202.a executed"
-		swap_ideas = {
-			remove_idea = shia
-			add_idea = sunni
+		if = {
+			limit = {
+				has_idea = shia
+			}
+			swap_ideas = {
+				remove_idea = shia
+				add_idea = sunni
+			}
+		}
+		else = {
+			add_ideas = sunni
 		}
 		news_event = iraqi_flavor_events.6
 		custom_effect_tooltip = IRQ_shia_triggered_TT
+		set_country_flag = IRQ_war_with_shias
 		ai_chance = {
 			base = 5
 		}
@@ -5227,6 +5244,10 @@ country_event = {
 
 	option = {
 		name = iraq_md.4.a
+		trigger = {
+			165 = { is_fully_controlled_by = IRQ }
+			NOT = { 630 = { is_controlled_by = IRQ } }
+		}
 		log = "[GetDateText]: [This.GetName]: iraq_md.3.a executed"
 		start_border_war = {
 			change_state_after_war = no
@@ -5850,35 +5871,37 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: iraq_md.21.a executed"
 		custom_effect_tooltip = IRQ_give_guns_to_iraq_TT
 		effect_tooltip = {
-			add_equipment_to_stockpile = {
-				type = infantry_weapons_type
-				amount = 500
-				producer = PER
-			}
-			add_equipment_to_stockpile = {
-				type = cnc_equipment_2 #C3
-				amount = 200
-				producer = PER
-			}
-			add_equipment_to_stockpile = {
-				type = Heavy_Anti_tank_1 #Toophan 5/Towsan-1
-				amount = 30
-				producer = PER
-			}
-			add_equipment_to_stockpile = {
-				type = Anti_Air_1 #Stinger
-				amount = 30
-				producer = USA
-			}
-			add_equipment_to_stockpile = {
-				type = artillery_0 #D-30
-				amount = 10
-				producer = SOV
-			}
-			add_equipment_to_stockpile = {
-				type = util_vehicle_1 #Khawar
-				amount = 10
-				producer = PER
+			IRQ = {
+				add_equipment_to_stockpile = {
+					type = infantry_weapons_type
+					amount = 500
+					producer = PER
+				}
+				add_equipment_to_stockpile = {
+					type = cnc_equipment_2 #C3
+					amount = 200
+					producer = PER
+				}
+				add_equipment_to_stockpile = {
+					type = Heavy_Anti_tank_1 #Toophan 5/Towsan-1
+					amount = 30
+					producer = PER
+				}
+				add_equipment_to_stockpile = {
+					type = Anti_Air_1 #Stinger
+					amount = 30
+					producer = USA
+				}
+				add_equipment_to_stockpile = {
+					type = artillery_0 #D-30
+					amount = 10
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = util_vehicle_1 #Khawar
+					amount = 10
+					producer = PER
+				}
 			}
 		}
 		newline = yes
@@ -5960,10 +5983,8 @@ country_event = {
 			}
 		}
 		newline = yes
-		PER = {
-			set_temp_variable = { treasury_change = -75.00 }
-			modify_treasury_effect = yes
-		}
+		set_temp_variable = { treasury_change = -75.00 }
+		modify_treasury_effect = yes
 		newline = yes
 		custom_effect_tooltip = IRQ_receive_influence_5_TT
 		newline = yes
@@ -9034,6 +9055,10 @@ country_event = {
 	}
 	option = {
 		name = iraq_md.81.a
+		trigger = {
+			165 = { is_fully_controlled_by = IRQ }
+			NOT = { 630 = { is_controlled_by = IRQ } }
+		}
 		log = "[GetDateText]: [This.GetName]: iraq_md.81.a executed"
 		start_border_war = {
 			change_state_after_war = no
@@ -9047,8 +9072,8 @@ country_event = {
 			defender = {
 				state = 630
 				num_provinces = 2
-				on_win = iraq_md.82
-				on_lose = iraq_md.86
+				on_win = iraq_md.86
+				on_lose = iraq_md.82
 				on_cancel = iraq_md.86
 			}
 		}
@@ -10083,6 +10108,7 @@ country_event = {
 	title = iraq_md.319.t
 	desc = iraq_md.319.d
 	is_triggered_only = yes
+	fire_only_once = yes
 	picture = GFX_Ali_Sistani_event
 	option = {
 		name = iraq_md.319.a

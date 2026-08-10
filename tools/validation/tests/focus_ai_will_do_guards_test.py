@@ -35,8 +35,7 @@ def _write_effects_file(tmp_path, extra=""):
 grant_pp_effect = {
 	add_political_power = 25
 }
-"""
-        + extra,
+""" + extra,
         encoding="utf-8",
     )
 
@@ -560,6 +559,26 @@ def test_validator_unneeded_bankruptcy_guard_flagged(tmp_path):
     )
     v = _run_check(tmp_path)
     assert v.warnings_found == 1
+
+
+def test_validator_guard_kept_when_cost_only_previewed(tmp_path):
+    _write_effects_file(tmp_path)
+    reward = (
+        "FRA = { country_event = { id = test.1 days = 1 } }\n"
+        "			custom_effect_tooltip = TT_IF_THEY_ACCEPT\n"
+        "			effect_tooltip = {\n"
+        "				set_temp_variable = { treasury_change = -6 }\n"
+        "				modify_treasury_effect = yes\n"
+        "			}"
+    )
+    _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(
+            cost=2, extra="", reward=reward, modifiers=BANKRUPTCY_GUARD
+        ),
+    )
+    v = _run_check(tmp_path)
+    assert not [i for i in v._issues if i.category == "unneeded-bankruptcy-guard"]
 
 
 def test_validator_scripted_spend_without_guard_flagged(tmp_path):
