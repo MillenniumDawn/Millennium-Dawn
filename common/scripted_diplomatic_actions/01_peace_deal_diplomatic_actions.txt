@@ -231,7 +231,7 @@ scripted_diplomatic_actions = {
 							multiply = 100
 							round = yes
 							subtract = 100
-							clamp = { min = -500 max = 1000 }
+							clamp = { min = -500 max = 200 }
 						}
 					}
 					# Dampen when ROOT has no faction — engine metric includes all
@@ -467,6 +467,19 @@ scripted_diplomatic_actions = {
 					add = 100
 					ROOT = { has_country_flag = CPD_full_puppet_demand }
 					is_subject = yes
+				}
+			}
+			# Full annexation — receiver refuses to sign away its entire country.
+			# Blocks the superpower-annexes-tiny-nation exploit (issue #2733).
+			CPD_full_annexation_aversion = {
+				base = 0
+				modifier = {
+					set_temp_variable = { CPD_receiver_controlled_states = num_of_controlled_states }
+				}
+				modifier = {
+					add = -200
+					ROOT = { check_variable = { CPD_annex_state_DEMANDS^num > 0 } }
+					NOT = { check_variable = { ROOT.CPD_annex_state_DEMANDS^num < CPD_receiver_controlled_states } }
 				}
 			}
 			CPD_regime_change_aversion = {

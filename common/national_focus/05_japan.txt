@@ -2967,7 +2967,8 @@ base = 1
 			set_temp_variable = { temp_opinion = -12 }
 			change_industrial_conglomerates_opinion = yes
 			newline = yes
-			custom_effect_tooltip = JAP_financial_revival_program_TT
+			unlock_decision_tooltip = JAP_case_daiei_ircj
+			unlock_decision_tooltip = JAP_case_kanebo_accounts
 		}
 
 		ai_will_do = { base = 12 }
@@ -3243,11 +3244,18 @@ base = 1
 				MODIFIER = JAP_economy_modifier
 			}
 			add_to_variable = { JAP_economy_productivity_growth_modifier = 0.03 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { JAP_economy_research_speed_factor = -0.02 tooltip = research_speed_factor_tt }
 			newline = yes
-			unlock_decision_tooltip = {
-				decision = JAP_retirement_reform_decision
-				show_effect_tooltip = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = JAP_demographic_pressure_modifier
 			}
+			add_to_variable = { JAP_demographic_pressure_total_workforce_modifier = 0.03 tooltip = total_workforce_modifier_tt }
+			clamp_variable = { var = JAP_demographic_pressure_total_workforce_modifier min = -1 max = 0 }
+			add_to_variable = { JAP_demographic_pressure_social_cost_multiplier_modifier = -0.02 tooltip = social_cost_multiplier_modifier_tt }
+			clamp_variable = { var = JAP_demographic_pressure_social_cost_multiplier_modifier min = 0 max = 1 }
+			newline = yes
+			unlock_decision_tooltip = JAP_retirement_reform_decision
 		}
 
 		ai_will_do = { base = 12 }
@@ -3270,13 +3278,20 @@ base = 1
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = JAP_zombie_companies_resolved_tt
-				JAP_zombie_companies_resolved = yes
+				tooltip = JAP_corporate_restructuring_complete_TT
+				check_variable = { JAP_corporate_restructuring_progress > 84 }
 			}
+			has_idea = JAP_zombie_companies_3
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_the_lost_decade_ends"
+			remove_ideas = JAP_zombie_companies_3
+			newline = yes
+			remove_ideas = JAP_liquidation_wave
+			newline = yes
+			country_event = { id = Japan_economy.34 days = 3 }
+			newline = yes
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
 				MODIFIER = JAP_economy_modifier
@@ -3284,15 +3299,10 @@ base = 1
 			add_to_variable = { JAP_economy_productivity_growth_modifier = 0.08 tooltip = productivity_growth_modifier_tt }
 			add_to_variable = { JAP_economy_return_on_investment_modifier = 0.10 tooltip = return_on_investment_modifier_tt }
 			newline = yes
-			add_stability = 0.05
-			set_temp_variable = { party_index = 2 }
+			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			change_relative_party_popularity = yes
-			newline = yes
-			set_temp_variable = { debt_change = debt }
-			multiply_temp_variable = { debt_change = -0.10 }
-			modify_debt_effect = yes
 		}
 
 		ai_will_do = {
@@ -3450,7 +3460,17 @@ base = 1
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_keiretsu_cross_shareholding"
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = JAP_economy_modifier
+			}
+			add_to_variable = { JAP_economy_productivity_growth_modifier = -0.03 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { JAP_economy_receiving_investment_cost_modifier = 0.10 tooltip = receiving_investment_cost_modifier_tt }
+			newline = yes
 			add_stability = 0.05
+			newline = yes
+			set_temp_variable = { temp_opinion = 8 }
+			change_industrial_conglomerates_opinion = yes
 		}
 
 		ai_will_do = { base = 12 }
@@ -3472,8 +3492,26 @@ base = 1
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_employment_preservation_pact"
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = JAP_economy_modifier
+			}
+			add_to_variable = { JAP_economy_civ_facs_worker_requirement_modifier = 0.05 tooltip = civ_facs_worker_requirement_modifier_tt }
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = JAP_demographic_pressure_modifier
+			}
+			add_to_variable = { JAP_demographic_pressure_high_unemployment_threshold_modifier = 0.003 tooltip = high_unemployment_threshold_modifier_tt }
+			clamp_variable = { var = JAP_demographic_pressure_high_unemployment_threshold_modifier min = -1 max = 0 }
+			newline = yes
 			add_political_power = 50
 			add_stability = 0.05
+			newline = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_industrial_conglomerates_opinion = yes
 		}
 
 		ai_will_do = { base = 12 }
@@ -3494,8 +3532,34 @@ base = 1
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
 
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = JAP_corporate_restructuring_complete_TT
+				check_variable = { JAP_corporate_restructuring_progress > 84 }
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_consolidated_japan_inc"
+			if = {
+				limit = { has_idea = JAP_zombie_companies_1 }
+				remove_ideas = JAP_zombie_companies_1
+			}
+			if = {
+				limit = { has_idea = JAP_zombie_companies_2 }
+				remove_ideas = JAP_zombie_companies_2
+			}
+			if = {
+				limit = { has_idea = JAP_zombie_companies_3 }
+				remove_ideas = JAP_zombie_companies_3
+			}
+			if = {
+				limit = { has_idea = JAP_fusion_restructuring }
+				remove_ideas = JAP_fusion_restructuring
+			}
+			add_ideas = JAP_consolidated_conglomerates
+			country_event = { id = Japan_economy.35 days = 3 }
+			newline = yes
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
 				MODIFIER = JAP_economy_modifier
@@ -3530,7 +3594,6 @@ base = 1
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_declaration_price_target"
-			country_event = Japan_economy.01
 			activate_mission = JAP_price_target_mission
 		}
 
@@ -3545,7 +3608,7 @@ base = 1
 		y = 1
 		relative_position_id = JAP_declaration_price_target
 
-		cost = 5
+		cost = 3
 
 		prerequisite = { focus = JAP_declaration_price_target }
 
@@ -3570,7 +3633,7 @@ base = 1
 		y = 1
 		relative_position_id = JAP_declaration_price_target
 
-		cost = 5
+		cost = 3
 
 		prerequisite = { focus = JAP_declaration_price_target }
 
@@ -3611,6 +3674,7 @@ base = 1
 				decision = JAP_active_public_investment_decision
 				show_effect_tooltip = yes
 			}
+			add_to_variable = { JAP_demand_recovery_progress = 4 tooltip = JAP_demand_recovery_progress_tt }
 		}
 
 		ai_will_do = {
@@ -3642,16 +3706,16 @@ base = 1
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_improvement_private_investment_climate"
-			add_to_variable = { JAP_demand_recovery_progress = 4 tooltip = JAP_demand_recovery_progress_tt }
 			add_timed_idea = {
 				idea = JAP_focus_improving_investment_climate
 				days = 180
 			}
-			country_event = {
-				id = Japan_economy.02
-				days = 180
+			hidden_effect = {
+				country_event = {
+					id = Japan_economy.02
+					days = 180
+				}
 			}
-			custom_effect_tooltip = JAP_improvement_private_investment_climate_TT
 		}
 
 		ai_will_do = {
@@ -3899,8 +3963,11 @@ base = 1
 			add_to_variable = { JAP_demographic_pressure_social_cost_multiplier_modifier = 0.03 tooltip = social_cost_multiplier_modifier_tt }
 			add_to_variable = { JAP_demographic_pressure_expected_welfare_modifier = 0.50 tooltip = expected_welfare_modifier_tt }
 			newline = yes
-			add_to_variable = { JAP_galapagos_openness = -5 tooltip = JAP_galapagos_openness_down_tt }
-			newline = yes
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = -5 tooltip = JAP_galapagos_openness_down_tt }
+				newline = yes
+			}
 			set_temp_variable = { party_index = 20 }
 			set_temp_variable = { party_popularity_increase = 0.03 }
 			set_temp_variable = { temp_outlook_increase = 0.03 }
@@ -3931,6 +3998,8 @@ base = 1
 		cost = 10
 
 		prerequisite = { focus = JAP_japan_belongs_to_the_japanese }
+
+		bypass = { NOT = { has_dynamic_modifier = { modifier = JAP_demographic_pressure_modifier } } }
 
 		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_STABILITY }
 
@@ -3984,6 +4053,7 @@ base = 1
 		cost = 10
 
 		prerequisite = { focus = JAP_japan_belongs_to_the_japanese }
+		bypass = { NOT = { has_dynamic_modifier = { modifier = JAP_demographic_pressure_modifier } } }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
@@ -4048,6 +4118,7 @@ base = 1
 		cost = 10
 
 		prerequisite = { focus = JAP_pronatalist_turn }
+		bypass = { NOT = { has_dynamic_modifier = { modifier = JAP_demographic_pressure_modifier } } }
 
 		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_STABILITY }
 
@@ -4102,6 +4173,7 @@ base = 1
 		cost = 10
 
 		prerequisite = { focus = JAP_national_revival_campaign }
+		bypass = { NOT = { has_dynamic_modifier = { modifier = JAP_demographic_pressure_modifier } } }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
@@ -4313,8 +4385,11 @@ base = 1
 			add_to_variable = { JAP_economy_energy_use_modifier_civs = 0.05 tooltip = energy_use_modifier_civs_tt }
 			add_to_variable = { JAP_economy_energy_use_modifier_mils = 0.05 tooltip = energy_use_modifier_mils_tt }
 			newline = yes
-			add_to_variable = { JAP_galapagos_openness = -5 tooltip = JAP_galapagos_openness_down_tt }
-			newline = yes
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = -5 tooltip = JAP_galapagos_openness_down_tt }
+				newline = yes
+			}
 			set_temp_variable = { party_index = 20 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
@@ -4400,6 +4475,7 @@ base = 1
 		cost = 10
 
 		prerequisite = { focus = JAP_womenomics }
+		bypass = { NOT = { has_dynamic_modifier = { modifier = JAP_demographic_pressure_modifier } } }
 
 		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_STABILITY }
 
@@ -4463,6 +4539,7 @@ base = 1
 		cost = 10
 
 		prerequisite = { focus = JAP_womenomics }
+		bypass = { NOT = { has_dynamic_modifier = { modifier = JAP_demographic_pressure_modifier } } }
 
 		search_filters = { FOCUS_FILTER_ECONOMY }
 
@@ -4522,6 +4599,7 @@ base = 1
 		cost = 10
 
 		prerequisite = { focus = JAP_eliminate_daycare_waitlists }
+		bypass = { NOT = { has_dynamic_modifier = { modifier = JAP_demographic_pressure_modifier } } }
 
 		search_filters = { FOCUS_FILTER_STABILITY }
 
@@ -4594,6 +4672,7 @@ base = 1
 		x = 1
 		y = 2
 		relative_position_id = JAP_womenomics
+		bypass = { NOT = { has_dynamic_modifier = { modifier = JAP_demographic_pressure_modifier } } }
 
 		cost = 10
 
@@ -4900,8 +4979,11 @@ base = 1
 			add_to_variable = { JAP_political_stability_factor = -0.02 tooltip = stability_factor_tt }
 			add_to_variable = { JAP_political_political_power_factor = -0.03 tooltip = political_power_factor_tt }
 			newline = yes
-			add_to_variable = { JAP_galapagos_openness = 5 tooltip = JAP_galapagos_openness_up_tt }
-			newline = yes
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 5 tooltip = JAP_galapagos_openness_up_tt }
+				newline = yes
+			}
 			if = {
 				limit = { NOT = { has_nationalist_government = yes } }
 				set_temp_variable = { party_index = 20 }
@@ -4944,6 +5026,7 @@ base = 1
 		cost = 10
 
 		prerequisite = { focus = JAP_open_japan }
+		bypass = { NOT = { has_dynamic_modifier = { modifier = JAP_demographic_pressure_modifier } } }
 
 		search_filters = { FOCUS_FILTER_MIGRANT_CRISIS FOCUS_FILTER_MANPOWER }
 
@@ -5022,6 +5105,7 @@ base = 1
 		cost = 10
 
 		prerequisite = { focus = JAP_open_japan }
+		bypass = { NOT = { has_dynamic_modifier = { modifier = JAP_demographic_pressure_modifier } } }
 
 		search_filters = { FOCUS_FILTER_MIGRANT_CRISIS FOCUS_FILTER_MANPOWER }
 
@@ -5107,6 +5191,7 @@ base = 1
 		cost = 10
 
 		prerequisite = { focus = JAP_labor_migration_pact }
+		bypass = { NOT = { has_dynamic_modifier = { modifier = JAP_demographic_pressure_modifier } } }
 
 		search_filters = { FOCUS_FILTER_MIGRANT_CRISIS FOCUS_FILTER_STABILITY }
 
@@ -5212,8 +5297,11 @@ base = 1
 			add_to_variable = { JAP_political_stability_factor = 0.02 tooltip = stability_factor_tt }
 			add_to_variable = { JAP_political_political_power_factor = -0.03 tooltip = political_power_factor_tt }
 			newline = yes
-			add_to_variable = { JAP_galapagos_openness = 10 tooltip = JAP_galapagos_openness_up_tt }
-			newline = yes
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 10 tooltip = JAP_galapagos_openness_up_tt }
+				newline = yes
+			}
 			if = {
 				limit = { NOT = { has_nationalist_government = yes } }
 				set_temp_variable = { party_index = 20 }
@@ -5975,7 +6063,6 @@ base = 1
 				localization_key = modifies_dynamic_modifier_tt
 				MODIFIER = JAP_economy_modifier
 			}
-			add_to_variable = { JAP_economy_civ_facs_worker_requirement_modifier = -0.05 tooltip = civ_facs_worker_requirement_modifier_tt }
 			add_to_variable = { JAP_economy_civilian_industry_tax_modifier = 0.075 tooltip = civilian_industry_tax_modifier_tt }
 		}
 
@@ -6715,6 +6802,11 @@ base = 1
 				category = CAT_nuclear
 			}
 			newline = yes
+			if = {
+				limit = { has_idea = JAP_anxiety_nuclear_power }
+				remove_ideas = JAP_anxiety_nuclear_power
+				newline = yes
+			}
 			unlock_decision_tooltip = JAP_restart_genkai
 			unlock_decision_tooltip = JAP_restart_onagawa
 			unlock_decision_tooltip = JAP_restart_shimane
@@ -6755,6 +6847,11 @@ base = 1
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_local_consent_accords"
+			if = {
+				limit = { has_idea = JAP_continue_nuclear_plants }
+				remove_ideas = JAP_continue_nuclear_plants
+				newline = yes
+			}
 			if = {
 				limit = { has_idea = JAP_nuclear_power_program }
 				swap_ideas = {
@@ -8054,13 +8151,57 @@ base = 1
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_japanese_doctrine"
-			add_doctrine_cost_reduction = {
-				name = JAP_japanese_doctrine
-				cost_reduction = 0.4
-				uses = 2
-				category = CAT_land_doctrine
-				category = CAT_naval_doctrine
-				category = CAT_air_doctrine
+			if = {
+				limit = { has_any_grand_doctrine = land }
+				add_mastery = { amount = 15 folder = land }
+			}
+			else = {
+				add_doctrine_cost_reduction = {
+					name = JAP_japanese_doctrine
+					cost_reduction = 0.4
+					uses = 1
+					category = CAT_land_doctrine
+				}
+			}
+			if = {
+				limit = { has_any_grand_doctrine = equipment }
+				add_mastery = { amount = 15 folder = equipment }
+			}
+			else = {
+				add_doctrine_cost_reduction = {
+					name = JAP_japanese_doctrine
+					cost_reduction = 0.4
+					uses = 1
+					category = CAT_equipment_doctrines
+				}
+			}
+			if = {
+				limit = { has_any_grand_doctrine = naval }
+				add_mastery = { amount = 15 folder = naval }
+			}
+			else = {
+				add_doctrine_cost_reduction = {
+					name = JAP_japanese_doctrine
+					cost_reduction = 0.4
+					uses = 1
+					category = CAT_naval_doctrine
+				}
+			}
+			if = {
+				limit = { has_any_grand_doctrine = air }
+				add_mastery = { amount = 15 folder = air }
+			}
+			else = {
+				add_doctrine_cost_reduction = {
+					name = JAP_japanese_doctrine
+					cost_reduction = 0.4
+					uses = 1
+					category = CAT_air_doctrine
+				}
+			}
+			if = {
+				limit = { has_any_grand_doctrine = special_forces }
+				add_mastery = { amount = 15 folder = special_forces }
 			}
 		}
 
@@ -10741,6 +10882,28 @@ base = 4
 	}
 
 	focus = {
+		id = JAP_seismic_retrofitting
+		icon = infrastructure
+
+		x = 1
+		y = 3
+		relative_position_id = JAP_central_readiness_force
+
+		cost = 10
+
+		prerequisite = { focus = JAP_civil_protection_act }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus JAP_seismic_retrofitting"
+			unlock_decision_category_tooltip = JAP_seismic_retrofit_category
+		}
+
+		ai_will_do = { base = 6 }
+	}
+
+	focus = {
 		id = JAP_maritime_self_defence_force
 		icon = goal_JAP_JMSDF
 
@@ -10862,17 +11025,18 @@ base = 4
 				design_team = mio:JAP_mitsubishi_shipbuilding_naval_manufacturer
 				name = "Atago-class destroyer"
 				modules = {
-					front_1_custom_slot = module_asm_3
+					front_1_custom_slot = module_naval_missile_mount_quad
 					mid_1_custom_slot = module_ciws_3
 					mid_2_custom_slot = module_torpedoes_3
 					rear_1_custom_slot = module_light_helipad_1
 					fixed_ship_auxillary_slot = module_ciws_3
-					fixed_ship_auxillary_slot_2 = module_vls_sam_3
-					fixed_ship_auxillary_slot_3 = module_vls_asm_3
+					fixed_ship_auxillary_slot_2 = module_naval_vls_cells_64
+					fixed_ship_auxillary_slot_3 = module_naval_vls_cells_64
 					fixed_ship_battery_slot = module_127mm_battery
 					fixed_ship_radar_slot = module_radar_4
 					fixed_ship_fire_control_system_slot = module_capital_digital_integrated_fire_control
 					fixed_ship_engine_slot = module_surface_jet_turbine_power2
+					fixed_ship_missile_ammo_slot = module_naval_ammo_balanced_3
 				}
 			}
 			add_equipment_production = {
@@ -11129,13 +11293,14 @@ base = 4
 					fixed_ship_engine_slot = module_surface_jet_turbine_power
 					fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
 					fixed_ship_radar_slot = module_radar_3
+					fixed_ship_auxillary_slot_3 = module_naval_vls_cells_8
 					fixed_ship_auxillary_slot_2 = module_torpedoes_3
-					fixed_ship_auxillary_slot_3 = module_vls_asm_3
-					fixed_ship_auxillary_slot = module_vls_sam_3
+					fixed_ship_auxillary_slot = module_naval_vls_cells_64
 					fixed_ship_battery_slot = module_light_flight_deck_2
 					front_1_custom_slot = module_helipads_2
 					mid_1_custom_slot = module_helipads_2
 					rear_1_custom_slot = module_ciws_3
+					fixed_ship_missile_ammo_slot = module_naval_ammo_anti_ship_3
 				}
 			}
 		}
@@ -11247,6 +11412,7 @@ base = 4
 			hidden_effect = {
 				set_country_flag = JAP_article_nine_remove_flag
 				add_dynamic_modifier = { modifier = JAP_article9_modifier }
+				news_event = { id = JAP_news.04 hours = 6 }
 			}
 		}
 
@@ -11278,7 +11444,7 @@ base = 4
 					MODIFIER = JAP_article9_modifier
 				}
 				add_to_variable = { JAP_stability_factor_article9 = -0.025 tooltip = stability_factor_tt }
-				add_to_variable = { JAP_war_support_weekly_article9 = 0.001 tooltip = war_support_weekly_tt }
+				add_to_variable = { JAP_war_support_weekly_article9 = 0.0001 tooltip = war_support_weekly_tt }
 				add_to_variable = { JAP_recruitable_population_factor_article9 = 0.05 tooltip = recruitable_population_factor_tt }
 			}
 		}
@@ -11314,7 +11480,7 @@ base = 4
 				add_to_variable = { JAP_experience_gain_army_factor_article9 = 0.05 tooltip = experience_gain_army_factor_tt }
 				add_to_variable = { JAP_experience_gain_navy_factor_article9 = 0.05 tooltip = experience_gain_navy_factor_tt }
 				add_to_variable = { JAP_max_command_power_mult_article9 = 0.05 tooltip = max_command_power_mult_tt }
-				add_to_variable = { JAP_army_leader_cost_factor_article9 = 0.05 tooltip = army_leader_cost_factor_tt }
+				add_to_variable = { JAP_army_leader_cost_factor_article9 = -0.05 tooltip = army_leader_cost_factor_tt }
 			}
 		}
 
@@ -11380,8 +11546,14 @@ base = 4
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_formalize_national_defense"
 			if = {
-				limit = { NOT = { has_dynamic_modifier = { modifier = JAP_article9_modifier } } } effect_tooltip = { remove_power_balance = { id = JAP_article_nine } } }
-			else = { remove_dynamic_modifier = { modifier = JAP_article9_modifier } }
+				limit = { NOT = { has_dynamic_modifier = { modifier = JAP_article9_modifier } } }
+				effect_tooltip = {
+					remove_power_balance = { id = JAP_article_nine }
+				}
+			}
+			else = {
+				remove_dynamic_modifier = { modifier = JAP_article9_modifier }
+			}
 			newline = yes
 			add_dynamic_modifier = { modifier = JAP_defense_industry }
 			newline = yes
@@ -12661,6 +12833,8 @@ base = 4
 				id = JAP_article_nine
 				value = 0.05
 			}
+			newline = yes
+			country_event = Japan.105
 		}
 
 		ai_will_do = { base = 1 }
@@ -12752,7 +12926,7 @@ base = 4
 			add_to_variable = { JAP_war_support_factor_monarchist = 0.05 tooltip = war_support_factor_tt }
 			add_to_variable = { JAP_stability_factor_monarchist = -0.05 tooltip = stability_factor_tt }
 			add_to_variable = { JAP_surrender_limit_monarchist = 0.10 tooltip = surrender_limit_tt }
-			add_to_variable = { JAP_war_stability_factor_monarchist = 0.025 tooltip = war_stability_factor_tt }
+			add_to_variable = { JAP_war_stability_factor_monarchist = 0.25 tooltip = war_stability_factor_tt }
 			newline = yes
 			add_power_balance_value = {
 				id = JAP_article_nine
@@ -12971,7 +13145,7 @@ base = 4
 		y = 7
 		relative_position_id = JAP_restore_imperial_household
 
-		cost = 20
+		cost = 15
 
 		prerequisite = { focus = JAP_blue_water_navy }
 
@@ -13036,8 +13210,6 @@ base = 4
 			add_to_variable = { JAP_master_ideology_drift_monarchist = 0.10 tooltip = master_ideology_drift_tt }
 			add_to_variable = { JAP_naval_invasion_capacity_monarchist = 2 tooltip = naval_invasion_capacity_tt }
 			add_to_variable = { JAP_max_training_monarchist = 0.05 tooltip = max_training_tt }
-			newline = yes
-			country_event = Japan.105
 		}
 
 		ai_will_do = { base = 1 }
@@ -13658,7 +13830,6 @@ base = 4
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_cultural_change"
-			set_country_flag = JAP_cultural_change
 			add_to_variable = { JAP_karoshi_wellbeing = 5 tooltip = JAP_karoshi_wellbeing_up_tt }
 		}
 
@@ -13902,10 +14073,19 @@ base = 4
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_ECONOMY FOCUS_FILTER_COUNTER_DEBUFF }
 
-		available = { JAP_zombie_companies_resolved = yes }
+		available = {
+			JAP_zombie_companies_resolved = yes
+			custom_trigger_tooltip = {
+				tooltip = JAP_karoshi_wellbeing_complete_TT
+				check_variable = { JAP_karoshi_wellbeing > 84 }
+			}
+			has_idea = JAP_karoshi_crisis_3
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_end_of_karoshi"
+			remove_ideas = JAP_karoshi_crisis_3
+			newline = yes
 			add_to_variable = { JAP_karoshi_wellbeing = 20 tooltip = JAP_karoshi_wellbeing_up_tt }
 			newline = yes
 			custom_effect_tooltip = {
@@ -14138,10 +14318,19 @@ base = 4
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_ECONOMY FOCUS_FILTER_COUNTER_DEBUFF }
 
-		available = { JAP_zombie_companies_resolved = yes }
+		available = {
+			JAP_zombie_companies_resolved = yes
+			custom_trigger_tooltip = {
+				tooltip = JAP_karoshi_wellbeing_complete_TT
+				check_variable = { JAP_karoshi_wellbeing > 84 }
+			}
+			has_idea = JAP_karoshi_crisis_3
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_work_to_live"
+			remove_ideas = JAP_karoshi_crisis_3
+			newline = yes
 			add_to_variable = { JAP_karoshi_wellbeing = 20 tooltip = JAP_karoshi_wellbeing_up_tt }
 			add_stability = 0.05
 			newline = yes
@@ -14275,9 +14464,9 @@ base = 4
 			}
 			add_to_variable = { JAP_demographic_pressure_health_cost_multiplier_modifier = 0.02 tooltip = health_cost_multiplier_modifier_tt }
 			newline = yes
-			set_temp_variable = { party_index = 14 }
-			set_temp_variable = { party_popularity_increase = 0.02 }
-			set_temp_variable = { temp_outlook_increase = 0.02 }
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			change_relative_party_popularity = yes
 			newline = yes
 			set_temp_variable = { treasury_change = -10.00 }
@@ -14360,9 +14549,9 @@ base = 4
 			}
 			add_to_variable = { JAP_demographic_pressure_social_cost_multiplier_modifier = 0.03 tooltip = social_cost_multiplier_modifier_tt }
 			newline = yes
-			set_temp_variable = { party_index = 1 }
-			set_temp_variable = { party_popularity_increase = 0.02 }
-			set_temp_variable = { temp_outlook_increase = 0.02 }
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			change_relative_party_popularity = yes
 			newline = yes
 			set_temp_variable = { treasury_change = -15.00 }
@@ -14392,10 +14581,19 @@ base = 4
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_ECONOMY FOCUS_FILTER_COUNTER_DEBUFF }
 
-		available = { JAP_zombie_companies_resolved = yes }
+		available = {
+			JAP_zombie_companies_resolved = yes
+			custom_trigger_tooltip = {
+				tooltip = JAP_karoshi_wellbeing_complete_TT
+				check_variable = { JAP_karoshi_wellbeing > 84 }
+			}
+			has_idea = JAP_karoshi_crisis_3
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_the_bargain_kept"
+			remove_ideas = JAP_karoshi_crisis_3
+			newline = yes
 			add_to_variable = { JAP_karoshi_wellbeing = 20 tooltip = JAP_karoshi_wellbeing_up_tt }
 			add_stability = 0.03
 			newline = yes
@@ -14415,9 +14613,9 @@ base = 4
 			add_to_variable = { JAP_demographic_pressure_health_cost_multiplier_modifier = 0.04 tooltip = health_cost_multiplier_modifier_tt }
 			add_to_variable = { JAP_demographic_pressure_social_cost_multiplier_modifier = 0.02 tooltip = social_cost_multiplier_modifier_tt }
 			newline = yes
-			set_temp_variable = { party_index = 1 }
-			set_temp_variable = { party_popularity_increase = 0.03 }
-			set_temp_variable = { temp_outlook_increase = 0.03 }
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			change_relative_party_popularity = yes
 		}
 
@@ -14431,7 +14629,7 @@ base = 4
 		x = 121
 		y = 0
 
-		cost = 10
+		cost = 3
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INFLUENCE }
 
@@ -14461,8 +14659,11 @@ base = 4
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_international_standards_adjustment"
-			add_to_variable = { JAP_galapagos_openness = 2 tooltip = JAP_galapagos_openness_up_tt }
-			newline = yes
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 2 tooltip = JAP_galapagos_openness_up_tt }
+				newline = yes
+			}
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
 				MODIFIER = JAP_economy_modifier
@@ -14491,8 +14692,11 @@ base = 4
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_english_business_environment"
-			add_to_variable = { JAP_galapagos_openness = 2 tooltip = JAP_galapagos_openness_up_tt }
-			newline = yes
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 2 tooltip = JAP_galapagos_openness_up_tt }
+				newline = yes
+			}
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
 				MODIFIER = JAP_economy_modifier
@@ -14532,7 +14736,6 @@ base = 4
 			add_to_variable = { JAP_economy_foreign_influence_modifier = 0.05 tooltip = foreign_influence_modifier_tt }
 			if = {
 				limit = { has_country_flag = JAP_galapagos_consumer_base }
-				custom_effect_tooltip = JAP_consumer_base_bonus_tt
 				add_to_variable = { JAP_economy_offices_productivity = 0.03 tooltip = offices_productivity_tt }
 			}
 		}
@@ -14766,8 +14969,11 @@ base = 4
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_world_integration"
 			set_country_flag = JAP_world_integration
-			add_to_variable = { JAP_galapagos_openness = 10 tooltip = JAP_galapagos_openness_up_tt }
-			newline = yes
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 10 tooltip = JAP_galapagos_openness_up_tt }
+				newline = yes
+			}
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
 				MODIFIER = JAP_economy_modifier
@@ -14810,7 +15016,10 @@ base = 4
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_structural_reform_zones"
-			add_to_variable = { JAP_galapagos_openness = 12 tooltip = JAP_galapagos_openness_up_tt }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 12 tooltip = JAP_galapagos_openness_up_tt }
+			}
 			set_temp_variable = { treasury_change = gdp_total }
 			multiply_temp_variable = { treasury_change = -0.001 }
 			modify_treasury_effect = yes
@@ -14848,8 +15057,11 @@ base = 4
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_corporate_governance_code"
-			add_to_variable = { JAP_galapagos_openness = 12 tooltip = JAP_galapagos_openness_up_tt }
-			newline = yes
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 12 tooltip = JAP_galapagos_openness_up_tt }
+				newline = yes
+			}
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
 				MODIFIER = JAP_economy_modifier
@@ -14877,8 +15089,11 @@ base = 4
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_economic_partnership_agreements"
-			add_to_variable = { JAP_galapagos_openness = 12 tooltip = JAP_galapagos_openness_up_tt }
-			newline = yes
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 12 tooltip = JAP_galapagos_openness_up_tt }
+				newline = yes
+			}
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
 				MODIFIER = JAP_economy_modifier
@@ -14906,7 +15121,10 @@ base = 4
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_open_capital_markets"
-			add_to_variable = { JAP_galapagos_openness = 12 tooltip = JAP_galapagos_openness_up_tt }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 12 tooltip = JAP_galapagos_openness_up_tt }
+			}
 			set_temp_variable = { treasury_change = gdp_total }
 			multiply_temp_variable = { treasury_change = -0.002 }
 			modify_treasury_effect = yes
@@ -14941,19 +15159,19 @@ base = 4
 		prerequisite = { focus = JAP_corporate_governance_code }
 		prerequisite = { focus = JAP_open_capital_markets }
 
+		available = {
+			check_variable = {
+				JAP_galapagos_openness > 84
+			}
+		}
+
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_FOREIGN_INVESTMENTS FOCUS_FILTER_INFLUENCE FOCUS_FILTER_COUNTER_DEBUFF }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_the_third_opening"
-			add_to_variable = { JAP_galapagos_openness = 25 tooltip = JAP_galapagos_openness_up_tt }
+			remove_ideas = JAP_galapagos_syndrome
 			newline = yes
-			custom_effect_tooltip = JAP_galapagos_dissolution_tt
-			if = {
-				limit = { has_idea = JAP_galapagos_syndrome }
-				remove_ideas = JAP_galapagos_syndrome
-				set_variable = { JAP_galapagos_research_drift = 0 }
-				remove_dynamic_modifier = { modifier = JAP_galapagos_modifier }
-			}
+			remove_dynamic_modifier = { modifier = JAP_galapagos_modifier }
 			newline = yes
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
@@ -14961,11 +15179,6 @@ base = 4
 			}
 			add_to_variable = { JAP_economy_return_on_investment_modifier = 0.03 tooltip = return_on_investment_modifier_tt }
 			add_to_variable = { JAP_economy_international_market_income_modifier = 0.03 tooltip = international_market_income_modifier_tt }
-			if = {
-				limit = { has_completed_focus = JAP_an_open_nation }
-				custom_effect_tooltip = JAP_an_open_nation_bonus_tt
-				add_to_variable = { JAP_galapagos_openness = 5 tooltip = JAP_galapagos_openness_up_tt }
-			}
 		}
 
 		ai_will_do = { base = 12 }
@@ -15068,7 +15281,7 @@ base = 4
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_RESEARCH }
 
-		available = { has_tech = microchip_production_6 }
+		available = { has_tech = microchip_production_3 }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_rapidus_moonshot"
@@ -15116,7 +15329,10 @@ base = 4
 			one_random_microchip_plant = yes
 			add_timed_idea = { idea = JAP_foundry_localization days = 730 }
 			add_to_variable = { JAP_electronics_resilience = 1 tooltip = JAP_electronics_resilience_up_tt }
-			add_to_variable = { JAP_galapagos_openness = 5 tooltip = JAP_galapagos_openness_up_tt }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 5 tooltip = JAP_galapagos_openness_up_tt }
+			}
 			newline = yes
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
@@ -15161,7 +15377,7 @@ base = 4
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_RESEARCH }
 
-		available = { has_tech = microchip_production_7 }
+		available = { has_tech = microchip_production_4 }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_semiconductor_sovereignty"
@@ -15196,8 +15412,6 @@ base = 4
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_home_electronics"
 			add_timed_idea = { idea = JAP_consumer_electronics_drive days = 730 }
 			set_country_flag = JAP_galapagos_consumer_base
-			newline = yes
-			custom_effect_tooltip = JAP_home_electronics_no_cure_tt
 		}
 
 		ai_will_do = { base = 12 }
@@ -15219,14 +15433,16 @@ base = 4
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_gaming_powerhouse"
-			one_office_construction = yes
 			add_tech_bonus = {
 				name = JAP_gaming_powerhouse
 				category = CAT_computing_tech
 				uses = 1
 				bonus = 0.5
 			}
+			newline = yes
 			add_to_variable = { JAP_electronics_resilience = 1 tooltip = JAP_electronics_resilience_up_tt }
+			newline = yes
+			one_office_construction = yes
 		}
 
 		ai_will_do = {
@@ -15258,8 +15474,11 @@ base = 4
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_rights_and_licensing_regime"
-			add_to_variable = { JAP_galapagos_openness = 6 tooltip = JAP_galapagos_openness_up_tt }
-			newline = yes
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 6 tooltip = JAP_galapagos_openness_up_tt }
+				newline = yes
+			}
 			custom_effect_tooltip = {
 				localization_key = modifies_dynamic_modifier_tt
 				MODIFIER = JAP_economy_modifier
@@ -15323,7 +15542,10 @@ base = 4
 				uses = 1
 				bonus = 0.5
 			}
-			add_to_variable = { JAP_galapagos_openness = 8 tooltip = JAP_galapagos_openness_up_tt }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_galapagos_modifier } }
+				add_to_variable = { JAP_galapagos_openness = 8 tooltip = JAP_galapagos_openness_up_tt }
+			}
 		}
 
 		ai_will_do = {
@@ -15351,10 +15573,25 @@ base = 4
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_RESEARCH }
 
-		available = { has_tech = microchip_production_8 }
+		available = {
+			has_tech = microchip_production_5
+			OR = {
+				has_completed_focus = JAP_the_third_opening
+				has_completed_focus = JAP_gross_national_cool
+			}
+			custom_trigger_tooltip = {
+				tooltip = JAP_electronics_resilience_complete_TT
+				check_variable = { JAP_electronics_resilience > 4 }
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_electronics_superpower"
+			custom_effect_tooltip = JAP_electronics_war_won_tt
+			if = { limit = { has_idea = JAP_model_competition_1 } remove_ideas = JAP_model_competition_1 }
+			if = { limit = { has_idea = JAP_model_competition_2 } remove_ideas = JAP_model_competition_2 }
+			if = { limit = { has_idea = JAP_model_competition_3 } remove_ideas = JAP_model_competition_3 }
+			newline = yes
 			two_random_industrial_complex = yes
 			set_country_flag = JAP_galapagos_electronics_anchor
 			add_to_variable = { JAP_electronics_resilience = 1 tooltip = JAP_electronics_resilience_up_tt }
