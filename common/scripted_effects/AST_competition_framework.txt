@@ -1,0 +1,169 @@
+# Australian Pacific Influence Competition Framework
+#
+# Per-country influence contests in the Asia-Pacific. The subject country
+# (the contested nation) holds its own state; the framework manages
+# registration, leader caching, resolution bookkeeping, and the GUI dirty
+# counter.
+#
+# State on the subject country scope:
+#   AST_comp_scores^0           int   Australia's score
+#   AST_comp_scores^1           int   China's score
+#   AST_comp_scores^2           int   USA's score (only used in modes 2/3/4)
+#   AST_comp_mode               1..4  competitor configuration, locked at registration
+#   AST_comp_status             0..3  0=ongoing, 1=AST-bloc won, 2=CHI-bloc won, 3=tied
+#   AST_comp_leader             0..2  cached live leader (0=level, 1=AST-bloc, 2=CHI-bloc)
+#   AST_comp_registered         0/1   1 while in global.AST_active_competitions
+#
+# Modes:
+#   1  AST solo vs CHI                       (default)
+#   2  AST + USA bloc vs CHI                 (Australia liberal/centrist)
+#   3  AST + CHI bloc vs USA                 (Australia communist; reversed)
+#   4  AST alone, CHI primary + USA hindering (Australia fascist/nationalist)
+#
+# Globals:
+#   global.AST_active_competitions    array of subject country ids
+#   global.AST_resolved_competitions  array of subject country ids
+#   global.AST_competition_dirty      int, increment to refresh the tracker GUI
+#
+# Authoring a new competition:
+#   1. In your first event's accept branch:
+#        <SUBJECT> = {
+#            if = { limit = { NOT = { check_variable = { AST_comp_registered = 1 } } }
+#                register_AST_competition = yes
+#            }
+#            set_temp_variable = { comp_score_slot = 0 }   # 0=AST 1=CHI 2=USA
+#            set_temp_variable = { comp_score_delta = 4 }
+#            add_AST_comp_score = yes
+#        }
+#   2. In your resolution event (after applying narrative outcomes):
+#        <SUBJECT> = { resolve_AST_competition = yes }
+
+# Run inside the subject country's scope. Caller may pre-set AST_comp_mode
+# (1..4); defaults to 1 (AST solo vs CHI) if unset or out of range.
+register_AST_competition = {
+	if = {
+		limit = { NOT = { check_variable = { AST_comp_registered = 1 } } }
+
+		if = {
+			limit = { NOT = { has_variable = AST_comp_mode } }
+			set_variable = { AST_comp_mode = 1 }
+		}
+		else_if = {
+			limit = { check_variable = { AST_comp_mode < 1 } }
+			set_variable = { AST_comp_mode = 1 }
+		}
+		else_if = {
+			limit = { check_variable = { AST_comp_mode > 4 } }
+			set_variable = { AST_comp_mode = 1 }
+		}
+
+		set_variable = { AST_comp_scores^0 = 0 }
+		set_variable = { AST_comp_scores^1 = 0 }
+		set_variable = { AST_comp_scores^2 = 0 }
+		set_variable = { AST_comp_status = 0 }
+		set_variable = { AST_comp_leader = 0 }
+		set_variable = { AST_comp_registered = 1 }
+
+		add_to_array = { global.AST_active_competitions = THIS }
+		add_to_variable = { global.AST_competition_dirty = 1 }
+	}
+}
+
+# Increment one bloc's score on the subject and refresh the cached leader.
+# Caller temp vars:
+#   comp_score_slot   0=AST, 1=CHI, 2=USA
+#   comp_score_delta  signed integer to add
+add_AST_comp_score = {
+	set_temp_variable = { comp_slot_idx = comp_score_slot }
+	add_to_variable = { AST_comp_scores^comp_slot_idx = comp_score_delta }
+	recompute_AST_comp_leader = yes
+	add_to_variable = { global.AST_competition_dirty = 1 }
+}
+
+# Recompute AST_comp_leader from current scores and mode. Run inside the
+# subject country's scope.
+recompute_AST_comp_leader = {
+	set_temp_variable = { ast_bloc_total = AST_comp_scores^0 }
+	set_temp_variable = { chi_bloc_total = AST_comp_scores^1 }
+
+	if = {
+		limit = { check_variable = { AST_comp_mode = 2 } }
+		add_to_temp_variable = { ast_bloc_total = AST_comp_scores^2 }
+	}
+	else_if = {
+		limit = { check_variable = { AST_comp_mode = 3 } }
+		add_to_temp_variable = { ast_bloc_total = AST_comp_scores^1 }
+		set_temp_variable = { chi_bloc_total = AST_comp_scores^2 }
+	}
+	else_if = {
+		limit = { check_variable = { AST_comp_mode = 4 } }
+		add_to_temp_variable = { chi_bloc_total = AST_comp_scores^2 }
+	}
+
+	if = {
+		limit = { check_variable = { ast_bloc_total > chi_bloc_total } }
+		set_variable = { AST_comp_leader = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { ast_bloc_total < chi_bloc_total } }
+		set_variable = { AST_comp_leader = 2 }
+	}
+	else = {
+		set_variable = { AST_comp_leader = 0 }
+	}
+}
+
+# Finalise the competition. Called inside the subject country's scope from
+# the country's own resolution event, after the in-narrative outcomes have
+# been applied. Locks AST_comp_status from current scores+mode and moves
+# the subject from the active to the resolved registry.
+resolve_AST_competition = {
+	if = {
+		limit = { check_variable = { AST_comp_registered = 1 } }
+
+		recompute_AST_comp_leader = yes
+		# A level contest is a finished outcome in its own right. The live
+		# leader has no value for "tied and settled" - it uses 0 for "level"
+		# and status uses 0 for "still running" - so the tie is written to
+		# status 3 rather than copied across, which would leave a resolved
+		# competition reading as ongoing forever.
+		if = {
+			limit = { check_variable = { AST_comp_leader = 0 } }
+			set_variable = { AST_comp_status = 3 }
+		}
+		else = {
+			set_variable = { AST_comp_status = AST_comp_leader }
+		}
+
+		set_variable = { AST_comp_registered = 0 }
+		remove_from_array = { global.AST_active_competitions = THIS }
+		add_to_array = { global.AST_resolved_competitions = THIS }
+		add_to_variable = { global.AST_competition_dirty = 1 }
+	}
+}
+
+# Optional helper. Run in AST scope before register_AST_competition to derive
+# a comp_mode from Australia's current ruling ideology. Country chains with
+# a fixed mode skip this and set AST_comp_mode on the subject directly.
+pick_AST_comp_mode_from_politics = {
+	if = {
+		limit = { has_government = communism }
+		set_temp_variable = { comp_mode_from_politics = 3 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_government = fascism
+				has_government = nationalist
+			}
+		}
+		set_temp_variable = { comp_mode_from_politics = 4 }
+	}
+	else_if = {
+		limit = { has_government = democratic }
+		set_temp_variable = { comp_mode_from_politics = 2 }
+	}
+	else = {
+		set_temp_variable = { comp_mode_from_politics = 1 }
+	}
+}

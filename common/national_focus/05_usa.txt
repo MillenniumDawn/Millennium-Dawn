@@ -43506,4 +43506,425 @@ focus_tree = {
 
 		ai_will_do = { base = 1 }
 	}
+
+	##############################################
+	### Foreign Policy - The Pacific Rebalance ###
+	##############################################
+	# For two generations American policy in the South Pacific has been
+	# delegated to Canberra, on the reasonable assumption that Australia would
+	# hold the near region on Washington's behalf. This branch is what the
+	# United States does when that assumption needs reinforcing - and what it
+	# does when the assumption fails outright and Canberra changes sides.
+	focus = {
+		id = USA_focus_pacific_rebalance
+		icon = stage_oceania
+
+		x = 47
+		y = 19
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			date > 2001.6.1
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_focus_pacific_rebalance"
+			add_political_power = 50
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = USA_domestic_policies
+			}
+			add_to_variable = { domestic_offensive_foreign_influence = 0.02 tooltip = foreign_influence_modifier_tt }
+			add_to_variable = { domestic_political_power_gain = 0.03 tooltip = political_power_factor_tt }
+			newline = yes
+			# Honiara is the only Pacific capital anyone is actually fighting
+			# over, so a rebalance that means anything has to register there.
+			if = {
+				limit = {
+					country_exists = SOL
+					SOL_competition_active = yes
+				}
+				custom_effect_tooltip = USA_pacific_solomon_backing_tt
+				set_temp_variable = { comp_points = 2 }
+				SOL = { SOL_award_USA_backing_points = yes }
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = {
+				factor = 1.6
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 1.4
+				CHI = { is_faction_leader = yes }
+			}
+			modifier = {
+				factor = 1.4
+				SOL_competition_active = yes
+			}
+		}
+	}
+
+	focus = {
+		id = USA_focus_partners_in_the_blue_pacific
+		icon = oceania
+
+		x = -2
+		y = 1
+		relative_position_id = USA_focus_pacific_rebalance
+
+		cost = 4
+
+		prerequisite = { focus = USA_focus_pacific_rebalance }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			check_variable = { treasury > 35 }
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_focus_partners_in_the_blue_pacific"
+			set_temp_variable = { treasury_change = -35 }
+			modify_treasury_effect = yes
+			every_other_country = {
+				limit = {
+					has_country_flag = oceania_nation_flag
+					NOT = { tag = AST }
+					NOT = { tag = NZL }
+					NOT = { has_idea = non_state_actor }
+					NOT = { has_idea = lacks_international_recognition }
+					NOT = { has_war_with = ROOT }
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = usa_fp_diplomatic_cooperation
+				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+			}
+			if = {
+				limit = {
+					country_exists = SOL
+					SOL_competition_active = yes
+				}
+				custom_effect_tooltip = USA_pacific_solomon_backing_tt
+				set_temp_variable = { comp_points = 3 }
+				SOL = { SOL_award_USA_backing_points = yes }
+			}
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = USA_domestic_policies
+			}
+			add_to_variable = { domestic_offensive_foreign_influence = 0.02 tooltip = foreign_influence_modifier_tt }
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 1.4
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 1.6
+				CHI = { check_variable = { CHI_bri_pacific_engagement > 7 } }
+			}
+		}
+	}
+
+	focus = {
+		id = USA_focus_pacific_deterrence_posture
+		icon = reinforce_western_naval_bases
+
+		x = 2
+		y = 1
+		relative_position_id = USA_focus_pacific_rebalance
+
+		cost = 4
+
+		prerequisite = { focus = USA_focus_pacific_rebalance }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_NAVY }
+
+		available = {
+			check_variable = { treasury > 45 }
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_focus_pacific_deterrence_posture"
+			set_temp_variable = { treasury_change = -45 }
+			modify_treasury_effect = yes
+			# usa_pacific.30 hands out a five year copy of this to a country that
+			# has not taken the focus. add_ideas will not promote an idea that is
+			# already present, so the timed copy is cleared first and the
+			# permanent one granted here, which is what the focus is paying for.
+			if = {
+				limit = { has_idea = USA_pacific_deterrence_initiative }
+				remove_ideas = USA_pacific_deterrence_initiative
+			}
+			add_ideas = USA_pacific_deterrence_initiative
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = USA_dynamic_modifier_us_navy
+			}
+			add_to_variable = { us_navy_naval_damage = 0.02 tooltip = naval_damage_factor_tt }
+			add_to_variable = { us_navy_naval_speed = 0.02 tooltip = naval_speed_factor_tt }
+			newline = yes
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = USA_dynamic_modifier_us_general_staff
+			}
+			add_to_variable = { genstaff_daily_navy_xp = 0.03 tooltip = experience_gain_navy_tt }
+			newline = yes
+			# A carrier group in the Coral Sea is an argument in Honiara as much
+			# as it is one in Beijing.
+			if = {
+				limit = {
+					country_exists = SOL
+					SOL_competition_active = yes
+				}
+				custom_effect_tooltip = USA_pacific_solomon_backing_tt
+				set_temp_variable = { comp_points = 2 }
+				SOL = { SOL_award_USA_backing_points = yes }
+			}
+			if = {
+				limit = {
+					country_exists = CHI
+					NOT = { has_war_with = CHI }
+				}
+				CHI = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = chinese_american_rivalry
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 1.4
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 1.8
+				CHI = { has_idea = CHI_pacific_basing_rights }
+			}
+			modifier = {
+				factor = 1.4
+				threat > 0.30
+			}
+		}
+	}
+
+	# The ally path. Washington is not a bidder in Honiara here - it is the
+	# quartermaster of somebody else's bid, and the trilateral relationship
+	# that eventually acquires the name AUKUS is the vehicle for it.
+	focus = {
+		id = USA_focus_trilateral_pacific_partnership
+		icon = united_anglosphere
+
+		x = -2
+		y = 2
+		relative_position_id = USA_focus_pacific_rebalance
+
+		cost = 6.5
+
+		prerequisite = { focus = USA_focus_partners_in_the_blue_pacific }
+		prerequisite = { focus = USA_focus_pacific_deterrence_posture }
+		mutually_exclusive = { focus = USA_focus_pacific_compacts_of_association }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+		# The two forks off the rebalance are the only two answers to the same
+		# question, so between them they have to cover every state Canberra can
+		# be in. Whether Australia is a democracy is beside the point: what
+		# decides which fork applies is whether Canberra is still standing on
+		# this side of the Pacific, which is exactly what the alignment trigger
+		# asks. Requiring a democratic Australia on top of it left a nationalist
+		# but still pro-American Canberra qualifying for neither fork and the
+		# whole branch dead-ended three focuses in.
+		available = {
+			country_exists = AST
+			country_exists = ENG
+			NOT = { has_war_with = AST }
+			NOT = { has_war_with = ENG }
+			custom_trigger_tooltip = {
+				tooltip = USA_pacific_ally_still_ours_tt
+				AST = { AST_is_us_aligned_in_pacific = yes }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_focus_trilateral_pacific_partnership"
+			add_ideas = USA_indo_pacific_alliance_network
+			AST = {
+				add_relation_modifier = {
+					target = ROOT
+					modifier = generic_increased_military_support
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = usa_fp_strategic_partnership
+				}
+				country_event = { id = usa_pacific.40 days = 3 }
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = USA_trilateral_canberra_accepts_tt
+			newline = yes
+			ENG = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = usa_fp_strategic_partnership
+				}
+			}
+			add_opinion_modifier = {
+				target = AST
+				modifier = usa_fp_strategic_partnership
+			}
+			# Everything Washington spends here is spent through Canberra, so in
+			# the default configuration the Solomon contest scores it as an
+			# Australian gain rather than an American one.
+			if = {
+				limit = {
+					country_exists = SOL
+					SOL_competition_active = yes
+				}
+				custom_effect_tooltip = USA_pacific_solomon_backing_tt
+				set_temp_variable = { comp_points = 4 }
+				SOL = { SOL_award_USA_backing_points = yes }
+			}
+			# The submarine transfer only becomes real once the pact behind it
+			# exists; before that this is the framework that leads to it.
+			if = {
+				limit = {
+					OR = {
+						date > 2021.9.15
+						check_variable = { USA_aukus_accept_count > 0 }
+					}
+				}
+				custom_effect_tooltip = {
+					localization_key = modifies_dynamic_modifier_tt
+					MODIFIER = USA_dynamic_modifier_us_navy
+				}
+				add_to_variable = { us_navy_naval_damage = 0.02 tooltip = naval_damage_factor_tt }
+				AST = { navy_experience = 50 }
+			}
+			news_event = { id = usa_pacific_news.4 days = 2 }
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = {
+				factor = 1.7
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 1.3
+				western_liberals_are_in_power = yes
+			}
+			modifier = {
+				factor = 1.5
+				CHI = { is_faction_leader = yes }
+			}
+		}
+	}
+
+	# The rival path. Canberra has traded the American guarantee for a Chinese
+	# one, so Washington stops working through an ally and opens its own file
+	# on Honiara, on the model that has held Micronesia, the Marshalls and
+	# Palau since 1986.
+	focus = {
+		id = USA_focus_pacific_compacts_of_association
+		icon = diplomatic_treaty
+
+		x = 2
+		y = 2
+		relative_position_id = USA_focus_pacific_rebalance
+
+		cost = 7.5
+
+		prerequisite = { focus = USA_focus_partners_in_the_blue_pacific }
+		prerequisite = { focus = USA_focus_pacific_deterrence_posture }
+		mutually_exclusive = { focus = USA_focus_trilateral_pacific_partnership }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = USA_pacific_ally_lost_tt
+				OR = {
+					NOT = { country_exists = AST }
+					AST = { AST_is_china_aligned = yes }
+					has_war_with = AST
+				}
+			}
+			check_variable = { treasury > 40 }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_focus_pacific_compacts_of_association"
+			set_temp_variable = { treasury_change = -40 }
+			modify_treasury_effect = yes
+			set_country_flag = USA_SOL_competition_engaged
+			custom_effect_tooltip = USA_pacific_compact_chain_unlocked_tt
+			unlock_decision_tooltip = USA_SOL_compact_exploratory_talks
+			if = {
+				limit = {
+					country_exists = SOL
+					SOL_competition_active = yes
+				}
+				set_temp_variable = { comp_points = 4 }
+				SOL = { SOL_award_USA_points = yes }
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = SOL.id }
+				change_influence_percentage = yes
+			}
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = USA_domestic_policies
+			}
+			add_to_variable = { domestic_offensive_foreign_influence = 0.03 tooltip = foreign_influence_modifier_tt }
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 1.7
+				SOL_competition_is_usa_rival = yes
+			}
+			modifier = {
+				factor = 1.3
+				has_country_flag = USA_SOL_competition_engaged
+			}
+		}
+	}
 }

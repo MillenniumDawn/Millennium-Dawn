@@ -1,0 +1,691 @@
+# The American side of the Solomon Islands contest.
+#
+# Two distinct postures, decided by the configuration the competition is
+# running in rather than by anything the player clicks here:
+#
+#   Mode 2 - Washington is bankrolling Canberra. The joint decisions below cost
+#            American money and score in Australia's column, because the point
+#            of the alliance is that the ally is the one holding the ground.
+#   Mode 3 - Canberra has changed sides. Washington negotiates with Honiara
+#            directly, on the Compact of Free Association model that has held
+#            Micronesia, the Marshalls and Palau since 1986. That takes four
+#            beats, real money, and it costs the Australian relationship.
+#
+# The Compact arc tracks its progress in USA_SOL_compact_stage on the United
+# States:
+#   0  nothing opened
+#   1  exploratory talks held
+#   2  assistance package delivered
+#   3  strategic denial clause agreed
+#   4  Compact ratified
+
+USA_solomon_engagement_category = {
+
+	####################################################################
+	# The alliance path - mode 2
+	####################################################################
+
+	# Joint patrols out of Cairns and Honiara, run on American fuel with
+	# Australian crews. Washington pays and Canberra gets the credit, which is
+	# the entire point of having an ally in the near region.
+	USA_SOL_aukus_pacific_patrols = {
+		icon = GFX_decision_generic_naval
+
+		allowed = {
+			original_tag = USA
+		}
+
+		available = {
+			country_exists = SOL
+			country_exists = AST
+			SOL_competition_active = yes
+			SOL_competition_is_usa_backing_ast = yes
+			NOT = { has_war_with = SOL }
+			NOT = { has_war_with = AST }
+			custom_trigger_tooltip = {
+				tooltip = USA_pacific_ally_still_ours_tt
+				AST = { AST_is_us_aligned_in_pacific = yes }
+			}
+			check_variable = { treasury > 30 }
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			country_exists = SOL
+			country_exists = AST
+			SOL_competition_active = yes
+			has_completed_focus = USA_focus_trilateral_pacific_partnership
+		}
+
+		fire_only_once = no
+		cost = 40
+		days_remove = 150
+		days_re_enable = 545
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_SOL_aukus_pacific_patrols"
+			set_temp_variable = { treasury_change = -30.00 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_SOL_aukus_pacific_patrols"
+			custom_effect_tooltip = USA_pacific_solomon_backing_tt
+			set_temp_variable = { comp_points = 4 }
+			SOL = { SOL_award_USA_backing_points = yes }
+			if = {
+				limit = { country_exists = AST }
+				AST = {
+					navy_experience = 15
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = USA_pacific_burden_sharing
+					}
+				}
+				add_opinion_modifier = {
+					target = AST
+					modifier = USA_pacific_burden_sharing
+				}
+				SOL = {
+					add_opinion_modifier = {
+						target = AST
+						modifier = recently_invest
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				has_active_mission = bankruptcy_incoming_collapse
+				factor = 0
+			}
+			modifier = {
+				NOT = { SOL_competition_caller_leads = yes }
+				add = 10
+			}
+			modifier = {
+				CHI = { check_variable = { CHI_bri_pacific_engagement > 7 } }
+				add = 10
+			}
+		}
+	}
+
+	####################################################################
+	# The rival path - mode 3. The Compact of Free Association arc.
+	####################################################################
+
+	# Beat one. A delegation, a draft text, and the question of how much
+	# Washington is prepared to pay before anyone has agreed to anything.
+	USA_SOL_compact_exploratory_talks = {
+		icon = GFX_decision_generic_political_discourse
+
+		allowed = {
+			original_tag = USA
+		}
+
+		available = {
+			country_exists = SOL
+			SOL_competition_active = yes
+			SOL_competition_is_usa_rival = yes
+			NOT = { has_war_with = SOL }
+			custom_trigger_tooltip = {
+				tooltip = USA_SOL_compact_stage_0_tt
+				check_variable = { USA_SOL_compact_stage < 1 }
+			}
+			check_variable = { treasury > 20 }
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+			}
+		}
+
+		visible = {
+			country_exists = SOL
+			SOL_competition_is_usa_rival = yes
+			check_variable = { USA_SOL_compact_stage < 1 }
+			OR = {
+				has_completed_focus = USA_focus_pacific_compacts_of_association
+				has_country_flag = USA_SOL_competition_engaged
+			}
+		}
+
+		fire_only_once = yes
+		cost = 50
+		days_remove = 120
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_SOL_compact_exploratory_talks"
+			set_country_flag = USA_SOL_competition_engaged
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_SOL_compact_exploratory_talks"
+			set_variable = { USA_SOL_compact_stage = 1 }
+			set_temp_variable = { comp_points = 3 }
+			SOL = { SOL_award_USA_points = yes }
+			country_event = { id = usa_pacific.10 days = 3 }
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				has_active_mission = bankruptcy_incoming_collapse
+				factor = 0
+			}
+			modifier = {
+				has_completed_focus = USA_focus_pacific_compacts_of_association
+				add = 15
+			}
+			modifier = {
+				is_historical_focus_on = yes
+				add = 10
+			}
+		}
+	}
+
+	# Beat two. The money. Grant assistance, a trust fund, and postal and
+	# aviation services on American terms - the unglamorous half of every
+	# Compact and the half that actually buys the relationship.
+	USA_SOL_compact_economic_assistance = {
+		icon = GFX_decision_generic_construction
+
+		allowed = {
+			original_tag = USA
+		}
+
+		available = {
+			country_exists = SOL
+			SOL_competition_active = yes
+			SOL_competition_is_usa_rival = yes
+			NOT = { has_war_with = SOL }
+			custom_trigger_tooltip = {
+				tooltip = USA_SOL_compact_stage_1_tt
+				check_variable = { USA_SOL_compact_stage = 1 }
+			}
+			check_variable = { treasury > 70 }
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+			}
+		}
+
+		visible = {
+			country_exists = SOL
+			SOL_competition_is_usa_rival = yes
+			check_variable = { USA_SOL_compact_stage = 1 }
+		}
+
+		fire_only_once = yes
+		cost = 40
+		days_remove = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_SOL_compact_economic_assistance"
+			set_temp_variable = { treasury_change = -70.00 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_SOL_compact_economic_assistance"
+			set_variable = { USA_SOL_compact_stage = 2 }
+			set_temp_variable = { comp_points = 5 }
+			SOL = { SOL_award_USA_points = yes }
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+			SOL = {
+				random_owned_controlled_state = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = recently_invest
+				}
+				country_event = { id = usa_pacific.11 days = 2 }
+			}
+			# Canberra can read a budget line. This is the point at which the
+			# Australian relationship starts paying for the Compact.
+			if = {
+				limit = {
+					country_exists = AST
+					NOT = { has_war_with = AST }
+				}
+				AST = { country_event = { id = usa_pacific.20 days = 5 } }
+			}
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				has_active_mission = bankruptcy_incoming_collapse
+				factor = 0
+			}
+			modifier = {
+				SOL = { has_country_flag = solomon_competition_USA_influence }
+				add = 10
+			}
+			modifier = {
+				NOT = { SOL_competition_caller_leads = yes }
+				add = 10
+			}
+		}
+	}
+
+	# Beat three. The clause the whole instrument exists for: the United States
+	# assumes responsibility for the defence of the Solomon Islands, and no
+	# third power may be granted access to its territory or waters. Honiara has
+	# every reason to hesitate, and sometimes does.
+	USA_SOL_compact_defence_clause = {
+		icon = GFX_decision_generic_operation
+
+		allowed = {
+			original_tag = USA
+		}
+
+		available = {
+			country_exists = SOL
+			SOL_competition_active = yes
+			SOL_competition_is_usa_rival = yes
+			NOT = { has_war_with = SOL }
+			custom_trigger_tooltip = {
+				tooltip = USA_SOL_compact_stage_2_tt
+				check_variable = { USA_SOL_compact_stage = 2 }
+			}
+			check_variable = { treasury > 35 }
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+			}
+		}
+
+		visible = {
+			country_exists = SOL
+			SOL_competition_is_usa_rival = yes
+			check_variable = { USA_SOL_compact_stage = 2 }
+		}
+
+		fire_only_once = no
+		cost = 70
+		days_remove = 180
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_SOL_compact_defence_clause"
+			set_temp_variable = { treasury_change = -35.00 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_SOL_compact_defence_clause"
+			random_list = {
+				55 = {
+					# Generous opening terms, a lead in the contest and American
+					# money already in the ground all make Honiara easier.
+					modifier = {
+						factor = 1.6
+						has_country_flag = USA_SOL_compact_generous_terms
+					}
+					modifier = {
+						factor = 1.5
+						SOL_competition_caller_leads = yes
+					}
+					modifier = {
+						factor = 1.3
+						SOL = { has_country_flag = solomon_competition_USA_influence }
+					}
+					modifier = {
+						factor = 0.6
+						SOL = { has_opinion_modifier = CHI_honiara_security_partner }
+					}
+					# Decades of Australian aid budgets, police secondments and
+					# patrol boats are not signed away in an afternoon, whatever
+					# Canberra's current alignment happens to be.
+					modifier = {
+						factor = 0.7
+						AST = { check_variable = { AST_pacific_engagement > 15 } }
+					}
+					set_variable = { USA_SOL_compact_stage = 3 }
+					set_temp_variable = { comp_points = 6 }
+					SOL = { SOL_award_USA_points = yes }
+					country_event = { id = usa_pacific.13 days = 2 }
+				}
+				45 = {
+					modifier = {
+						factor = 0.6
+						has_country_flag = USA_SOL_compact_generous_terms
+					}
+					set_temp_variable = { comp_points = 1 }
+					SOL = { SOL_award_USA_points = yes }
+					country_event = { id = usa_pacific.14 days = 2 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = {
+				has_active_mission = bankruptcy_incoming_collapse
+				factor = 0
+			}
+			modifier = {
+				has_country_flag = USA_SOL_compact_generous_terms
+				add = 10
+			}
+			modifier = {
+				SOL_competition_caller_leads = yes
+				add = 10
+			}
+		}
+	}
+
+	# Beat four. Signature, ratification, and a small country that is
+	# sovereign in everything except who may enter its waters.
+	USA_SOL_compact_ratification = {
+		icon = GFX_decision_generic_form_nation
+
+		allowed = {
+			original_tag = USA
+		}
+
+		available = {
+			country_exists = SOL
+			SOL_competition_active = yes
+			SOL_competition_is_usa_rival = yes
+			NOT = { has_war_with = SOL }
+			custom_trigger_tooltip = {
+				tooltip = USA_SOL_compact_stage_3_tt
+				check_variable = { USA_SOL_compact_stage = 3 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = SOL_competition_tier_preferred_tt
+				SOL_competition_tier_at_least_preferred = yes
+			}
+			check_variable = { treasury > 50 }
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+			}
+		}
+
+		visible = {
+			country_exists = SOL
+			SOL_competition_is_usa_rival = yes
+			check_variable = { USA_SOL_compact_stage = 3 }
+			NOT = { has_country_flag = USA_SOL_compact_signed }
+		}
+
+		fire_only_once = yes
+		cost = 80
+		days_remove = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_SOL_compact_ratification"
+			set_temp_variable = { treasury_change = -50.00 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_SOL_compact_ratification"
+			set_variable = { USA_SOL_compact_stage = 4 }
+			set_country_flag = USA_SOL_compact_signed
+			set_temp_variable = { comp_points = 8 }
+			SOL = { SOL_award_USA_points = yes }
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+			# Honiara's own side of the Compact standing is applied by the event
+			# below, on the option Honiara actually takes. Applying it here as
+			# well would stack the modifier twice.
+			SOL = {
+				country_event = { id = usa_pacific.15 days = 2 }
+			}
+			add_opinion_modifier = {
+				target = SOL
+				modifier = USA_pacific_compact_partner
+			}
+			# Beijing's standing in Honiara does not survive an exclusive
+			# strategic denial clause.
+			if = {
+				limit = { country_exists = CHI }
+				set_temp_variable = { percent_change = -8 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = SOL.id }
+				change_influence_percentage = yes
+			}
+			# And neither does Canberra's, which is the price of the whole arc.
+			if = {
+				limit = {
+					country_exists = AST
+					NOT = { has_war_with = AST }
+				}
+				set_temp_variable = { percent_change = -6 }
+				set_temp_variable = { tag_index = AST }
+				set_temp_variable = { influence_target = SOL.id }
+				change_influence_percentage = yes
+				# What this costs the Australian relationship depends on how
+				# Canberra answers it, so the standing penalty is applied on
+				# the option taken in usa_pacific.21 rather than twice over.
+				AST = { country_event = { id = usa_pacific.21 days = 4 } }
+			}
+			news_event = { id = usa_pacific_news.3 days = 3 }
+			# A resolution that stood itself down to let this negotiation finish
+			# has nothing left to wait for now that the Compact is ratified, so
+			# the contest settles rather than idling out the deferral cap.
+			if = {
+				limit = { SOL = { has_country_flag = SOL_comp_resolution_deferred } }
+				SOL = { country_event = { id = solomon_competition.39 days = 14 } }
+			}
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = {
+				has_active_mission = bankruptcy_incoming_collapse
+				factor = 0
+			}
+			modifier = {
+				SOL_competition_caller_leads = yes
+				add = 15
+			}
+			modifier = {
+				is_historical_focus_on = yes
+				add = 10
+			}
+		}
+	}
+
+	# The part of a Compact nobody remembers: the economic provisions run out.
+	# Every few years Congress has to be asked for the money again, and a
+	# Honiara that is not being paid is a Honiara that starts taking other
+	# telephone calls. Runs for as long as the Compact does.
+	USA_SOL_compact_funding_renewal = {
+		icon = GFX_decision_generic_construction
+
+		allowed = {
+			original_tag = USA
+		}
+
+		available = {
+			country_exists = SOL
+			has_country_flag = USA_SOL_compact_signed
+			NOT = { has_war_with = SOL }
+			check_variable = { treasury > 40 }
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+			}
+		}
+
+		visible = {
+			country_exists = SOL
+			has_country_flag = USA_SOL_compact_signed
+		}
+
+		fire_only_once = no
+		cost = 30
+		days_remove = 120
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_SOL_compact_funding_renewal"
+			set_temp_variable = { treasury_change = -40.00 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_SOL_compact_funding_renewal"
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+			SOL = {
+				add_stability = 0.03
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = recently_invest
+				}
+			}
+			add_political_power = 15
+			# Points only while the contest is still open; awarding them after
+			# it has been settled would reopen a closed competition.
+			if = {
+				limit = { SOL_competition_active = yes }
+				set_temp_variable = { comp_points = 3 }
+				SOL = { SOL_award_USA_points = yes }
+			}
+		}
+
+		ai_will_do = {
+			base = 18
+			modifier = {
+				has_active_mission = bankruptcy_incoming_collapse
+				factor = 0
+			}
+			modifier = {
+				NOT = { SOL = { has_country_flag = solomon_competition_USA_influence } }
+				add = 10
+			}
+		}
+	}
+}
+
+AST_solomon_engagement_category = {
+
+	# The Australian half of the alliance path. Canberra runs the programme and
+	# Washington underwrites it, which is cheaper for Australia than doing it
+	# alone and cheaper for the United States than doing it itself. Only exists
+	# while Australia is still the Western horse in the race.
+	AST_SOL_joint_pacific_step_up = {
+		icon = GFX_decision_hol_exchange_intelligence_data
+
+		allowed = {
+			original_tag = AST
+		}
+
+		available = {
+			country_exists = SOL
+			country_exists = USA
+			SOL_competition_active = yes
+			SOL_competition_is_usa_backing_ast = yes
+			NOT = { has_war_with = SOL }
+			NOT = { has_war_with = USA }
+			AST_is_us_aligned_in_pacific = yes
+			USA = {
+				OR = {
+					western_conservatism_are_in_power = yes
+					western_liberals_are_in_power = yes
+				}
+			}
+			check_variable = { treasury > 8 }
+			# Three quarters of this programme is drawn on Washington's budget,
+			# not Canberra's. An ally that cannot cover its own share is not
+			# underwriting anything, so the American line is checked here as
+			# well rather than quietly overdrawing a partner's treasury.
+			custom_trigger_tooltip = {
+				tooltip = AST_SOL_joint_step_up_usa_can_pay_tt
+				USA = { check_variable = { treasury > 24 } }
+			}
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			country_exists = SOL
+			country_exists = USA
+			SOL_competition_active = yes
+			SOL_competition_is_usa_backing_ast = yes
+		}
+
+		fire_only_once = no
+		cost = 35
+		days_remove = 120
+		days_re_enable = 545
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AST_SOL_joint_pacific_step_up"
+			# Australia carries a quarter of the bill; Washington carries the
+			# rest of it out of its own treasury.
+			set_temp_variable = { treasury_change = -8.00 }
+			modify_treasury_effect = yes
+			USA = {
+				set_temp_variable = { treasury_change = -24.00 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove AST_SOL_joint_pacific_step_up"
+			set_temp_variable = { comp_points = 5 }
+			SOL = { SOL_award_AST_points = yes }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = AST }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+			SOL = {
+				add_stability = 0.02
+				add_opinion_modifier = {
+					target = AST
+					modifier = recently_invest
+				}
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = USA_pacific_burden_sharing
+				}
+			}
+			add_opinion_modifier = {
+				target = USA
+				modifier = USA_pacific_burden_sharing
+			}
+		}
+
+		# An Australian decision, so it follows Australia's own weighting idiom
+		# rather than the American one the rest of this file uses.
+		ai_will_do = {
+			base = 14
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 1.7
+				NOT = { SOL_competition_caller_leads = yes }
+			}
+			modifier = {
+				factor = 1.6
+				USA = { has_completed_focus = USA_focus_trilateral_pacific_partnership }
+			}
+		}
+	}
+}

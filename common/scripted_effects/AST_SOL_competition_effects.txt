@@ -1,0 +1,362 @@
+# Solomon Islands influence competition - scoring and state management
+#
+# The Solomon competition used to keep two flat tallies, SOL_AST_support and
+# SOL_CHI_support, that were compared exactly once in 2022 and then never
+# looked at again. Those are retired here in favour of the generic Australian
+# competition framework (common/scripted_effects/AST_competition_framework.txt),
+# which holds the scores on the Solomon Islands' own country scope and knows
+# how to run a three-cornered contest.
+#
+# State held on the Solomon Islands, on top of the framework's own:
+#   SOL_comp_tier                 0..3  engagement tier reached by the leading bloc
+#   SOL_comp_stage                1..4  which investment stage has been unlocked.
+#                                       Gates the request decisions in
+#                                       common/decisions/Solomon.txt and the
+#                                       maritime security requests.
+#   SOL_comp_patron               country id of the settled patron, 0 if the
+#                                 contest ended without one
+#   SOL_comp_has_patron           flag, set only when a patron was actually won
+#   SOL_comp_resolution_defers    how many times resolution has been put off
+#                                 while an American Compact was being negotiated
+#   SOL_comp_resolution_deferred  flag, set while a deferral is outstanding
+#
+# State held on Australia:
+#   AST_pacific_engagement    running total of Australian Pacific engagement,
+#                             the mirror of China's CHI_bri_pacific_engagement.
+#                             Gates AST_SOL_police_partnership at >7, the same
+#                             threshold China's branch uses, and weighs against
+#                             Washington's strategic denial clause at >15.
+#   AST_pacific_china_aligned latched when Australia swaps Washington for Beijing
+#
+# Tier thresholds are deliberately shaped like the ones China's Belt and Road
+# Pacific branch already uses (gates at >7 and >19) so the two sides of the
+# contest read the same way:
+#   tier 1  Preferred Partner   leading bloc > 7
+#   tier 2  Strategic Partner   leading bloc > 15
+#   tier 3  Patron              leading bloc > 25
+
+# Run in the Solomon Islands' scope. Opens the competition and locks in which
+# configuration of competitors is playing it out.
+SOL_register_competition = {
+	if = {
+		limit = { NOT = { check_variable = { AST_comp_registered = 1 } } }
+
+		if = {
+			limit = {
+				country_exists = AST
+				country_exists = USA
+				AST = { AST_is_china_aligned = yes }
+			}
+			# Australia has gone over to Beijing. Washington becomes the rival.
+			set_variable = { AST_comp_mode = 3 }
+		}
+		else_if = {
+			limit = {
+				country_exists = USA
+				USA = {
+					OR = {
+						western_conservatism_are_in_power = yes
+						western_liberals_are_in_power = yes
+					}
+				}
+			}
+			# The default: Australia contests China with American backing.
+			set_variable = { AST_comp_mode = 2 }
+		}
+		else = {
+			# No usable American partner. Australia carries it alone.
+			set_variable = { AST_comp_mode = 1 }
+		}
+
+		register_AST_competition = yes
+
+		set_variable = { SOL_comp_tier = 0 }
+		# Registration is lazy - the first award opens the competition, and
+		# that can happen after the investment ladder has already moved on.
+		# Only seed the stage if nothing has advanced it yet, or a late
+		# registration would wind the contest back to its first stage.
+		if = {
+			limit = { NOT = { has_variable = SOL_comp_stage } }
+			set_variable = { SOL_comp_stage = 1 }
+		}
+	}
+}
+
+# Run in the Solomon Islands' scope. Australia's realignment can happen long
+# after the competition opens, so the configuration is re-checked rather than
+# frozen at registration. Switching sides is a story beat in its own right and
+# announces itself to all three capitals.
+SOL_reevaluate_competition_mode = {
+	if = {
+		limit = {
+			check_variable = { AST_comp_registered = 1 }
+			country_exists = AST
+			country_exists = USA
+			AST = { AST_is_china_aligned = yes }
+			NOT = { check_variable = { AST_comp_mode = 3 } }
+		}
+		set_variable = { AST_comp_mode = 3 }
+		recompute_AST_comp_leader = yes
+		SOL_refresh_comp_tier = yes
+		add_to_variable = { global.AST_competition_dirty = 1 }
+		log = "[GetDateText]: Solomon Competition flipped to mode 3 - Australia and China against the United States."
+
+		AST = { country_event = { id = solomon_competition.50 days = 1 } }
+		USA = { country_event = { id = solomon_competition.51 days = 2 } }
+		if = {
+			limit = { country_exists = CHI }
+			CHI = { country_event = { id = solomon_competition.52 days = 2 } }
+		}
+		country_event = { id = solomon_competition.53 days = 3 }
+	}
+}
+
+# Award competition points. Run inside the Solomon Islands' scope with
+# set_temp_variable = { comp_points = N } beforehand.
+SOL_award_AST_points = {
+	SOL_register_competition = yes
+	set_temp_variable = { comp_score_slot = 0 }
+	set_temp_variable = { comp_score_delta = comp_points }
+	add_AST_comp_score = yes
+	if = {
+		limit = { country_exists = AST }
+		AST = { add_to_variable = { AST_pacific_engagement = comp_points tooltip = AST_pacific_engagement_tt } }
+	}
+	SOL_refresh_comp_tier = yes
+	log = "[GetDateText]: Solomon Competition - Australia scores [?comp_points] (AST [?AST_comp_scores^0], CHI [?AST_comp_scores^1], USA [?AST_comp_scores^2])."
+}
+
+SOL_award_CHI_points = {
+	SOL_register_competition = yes
+	set_temp_variable = { comp_score_slot = 1 }
+	set_temp_variable = { comp_score_delta = comp_points }
+	add_AST_comp_score = yes
+	SOL_refresh_comp_tier = yes
+	log = "[GetDateText]: Solomon Competition - China scores [?comp_points] (AST [?AST_comp_scores^0], CHI [?AST_comp_scores^1], USA [?AST_comp_scores^2])."
+}
+
+SOL_award_USA_points = {
+	SOL_register_competition = yes
+	set_temp_variable = { comp_score_slot = 2 }
+	set_temp_variable = { comp_score_delta = comp_points }
+	add_AST_comp_score = yes
+	SOL_refresh_comp_tier = yes
+	log = "[GetDateText]: Solomon Competition - the United States scores [?comp_points] (AST [?AST_comp_scores^0], CHI [?AST_comp_scores^1], USA [?AST_comp_scores^2])."
+}
+
+# American help routed through Canberra. In the default configuration this
+# lands in Australia's column, because Washington is bankrolling Australia's
+# play rather than making its own. Once Australia has changed sides the same
+# effort becomes an American bid of its own.
+SOL_award_USA_backing_points = {
+	# Register before reading the mode. Registration is what locks the mode in,
+	# so on a late start where nothing has opened the competition yet the mode
+	# is still unset and an unregistered read would route the very first
+	# American contribution into the wrong column.
+	SOL_register_competition = yes
+	if = {
+		limit = { check_variable = { AST_comp_mode = 3 } }
+		SOL_award_USA_points = yes
+	}
+	else = {
+		SOL_award_AST_points = yes
+	}
+}
+
+# Recompute the engagement tier from whichever bloc is currently ahead, and
+# announce a tier gain. Run in the Solomon Islands' scope.
+SOL_refresh_comp_tier = {
+	if = {
+		limit = { NOT = { has_variable = SOL_comp_tier } }
+		set_variable = { SOL_comp_tier = 0 }
+	}
+	set_temp_variable = { sol_prev_tier = SOL_comp_tier }
+
+	recompute_AST_comp_leader = yes
+
+	set_temp_variable = { sol_ast_bloc = AST_comp_scores^0 }
+	set_temp_variable = { sol_chi_bloc = AST_comp_scores^1 }
+
+	if = {
+		limit = { check_variable = { AST_comp_mode = 2 } }
+		add_to_temp_variable = { sol_ast_bloc = AST_comp_scores^2 }
+	}
+	else_if = {
+		limit = { check_variable = { AST_comp_mode = 3 } }
+		add_to_temp_variable = { sol_ast_bloc = AST_comp_scores^1 }
+		set_temp_variable = { sol_chi_bloc = AST_comp_scores^2 }
+	}
+	else_if = {
+		limit = { check_variable = { AST_comp_mode = 4 } }
+		add_to_temp_variable = { sol_chi_bloc = AST_comp_scores^2 }
+	}
+
+	set_temp_variable = { sol_lead_total = sol_ast_bloc }
+	if = {
+		limit = { check_variable = { sol_chi_bloc > sol_lead_total } }
+		set_temp_variable = { sol_lead_total = sol_chi_bloc }
+	}
+
+	if = {
+		limit = { check_variable = { sol_lead_total > 25 } }
+		set_variable = { SOL_comp_tier = 3 }
+	}
+	else_if = {
+		limit = { check_variable = { sol_lead_total > 15 } }
+		set_variable = { SOL_comp_tier = 2 }
+	}
+	else_if = {
+		limit = { check_variable = { sol_lead_total > 7 } }
+		set_variable = { SOL_comp_tier = 1 }
+	}
+	else = {
+		set_variable = { SOL_comp_tier = 0 }
+	}
+
+	if = {
+		limit = { check_variable = { SOL_comp_tier > sol_prev_tier } }
+		add_to_variable = { global.AST_competition_dirty = 1 }
+		country_event = { id = solomon_competition.20 days = 3 }
+	}
+}
+
+# China's Belt and Road Pacific branch runs on its own focuses and decisions
+# and never knew the Solomon competition existed. Rather than reaching into
+# that branch, the competition reads the marks it leaves on Honiara and
+# converts each one into competition points exactly once. Run monthly in the
+# Solomon Islands' scope.
+SOL_convert_CHI_bri_progress = {
+	if = {
+		limit = {
+			country_exists = CHI
+			has_opinion_modifier = CHI_pacific_pivot_partner
+			NOT = { has_country_flag = SOL_scored_CHI_pivot_partner }
+		}
+		set_country_flag = SOL_scored_CHI_pivot_partner
+		set_temp_variable = { comp_points = 3 }
+		SOL_award_CHI_points = yes
+	}
+	if = {
+		limit = {
+			country_exists = CHI
+			has_opinion_modifier = CHI_honiara_security_partner
+			NOT = { has_country_flag = SOL_scored_CHI_honiara_partner }
+		}
+		set_country_flag = SOL_scored_CHI_honiara_partner
+		set_temp_variable = { comp_points = 6 }
+		SOL_award_CHI_points = yes
+	}
+	if = {
+		limit = {
+			country_exists = CHI
+			has_opinion_modifier = CHI_pla_basing_partner
+			NOT = { has_country_flag = SOL_scored_CHI_basing_partner }
+		}
+		set_country_flag = SOL_scored_CHI_basing_partner
+		set_temp_variable = { comp_points = 8 }
+		SOL_award_CHI_points = yes
+	}
+}
+
+# Unlock the next investment stage. Run in the Solomon Islands' scope. This is
+# what gates the request decisions: industry at stage 1, infrastructure at 2,
+# connectivity at 3, maritime security at 4.
+SOL_advance_comp_stage = {
+	if = {
+		limit = { NOT = { has_variable = SOL_comp_stage } }
+		set_variable = { SOL_comp_stage = 1 }
+	}
+	add_to_variable = { SOL_comp_stage = 1 }
+	add_to_variable = { global.AST_competition_dirty = 1 }
+}
+
+# Apply the outcome of the competition and close it out. Run in the Solomon
+# Islands' scope from solomon_competition.40. The winning patron's reward
+# scales with the tier it reached, so a narrow win buys goodwill and a
+# dominant one buys an associated state.
+SOL_apply_competition_outcome = {
+	recompute_AST_comp_leader = yes
+
+	# Australia fronts the winning bloc in every mode where it leads, including
+	# the reversed one where Beijing is backing Canberra rather than opposing it.
+	set_temp_variable = { sol_patron = 0 }
+	set_temp_variable = { sol_has_patron = 0 }
+
+	if = {
+		limit = {
+			check_variable = { AST_comp_leader = 1 }
+			country_exists = AST
+		}
+		set_temp_variable = { sol_patron = AST.id }
+		set_temp_variable = { sol_has_patron = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { AST_comp_leader = 2 }
+			check_variable = { AST_comp_mode = 3 }
+			country_exists = USA
+		}
+		set_temp_variable = { sol_patron = USA.id }
+		set_temp_variable = { sol_has_patron = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { AST_comp_leader = 2 }
+			country_exists = CHI
+		}
+		set_temp_variable = { sol_patron = CHI.id }
+		set_temp_variable = { sol_has_patron = 1 }
+	}
+
+	# A contest nobody funded past the first tier, or one that ended level, has
+	# no winner to be a patron. Honiara keeps its own counsel, and none of the
+	# post-settlement content that asks "who is our patron" may claim it.
+	if = {
+		limit = {
+			OR = {
+				check_variable = { SOL_comp_tier = 0 }
+				check_variable = { AST_comp_leader = 0 }
+			}
+		}
+		set_temp_variable = { sol_patron = 0 }
+		set_temp_variable = { sol_has_patron = 0 }
+	}
+
+	set_variable = { SOL_comp_patron = sol_patron }
+	if = {
+		limit = { check_variable = { sol_has_patron = 1 } }
+		set_country_flag = SOL_comp_has_patron
+	}
+	else = {
+		clr_country_flag = SOL_comp_has_patron
+	}
+
+	resolve_AST_competition = yes
+	set_country_flag = SOL_finished_solomon_competition
+}
+
+# Grant the winning patron its standing with Honiara. Run in the *patron's*
+# scope from the resolution events, after the narrative outcome has been shown.
+# Only a patron-tier win buys association; anything less buys a partnership.
+SOL_grant_patron_standing = {
+	if = {
+		limit = { SOL = { check_variable = { SOL_comp_tier > 2 } } }
+		if = {
+			limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
+			set_autonomy = {
+				target = SOL
+				autonomy_state = autonomy_associated_state_colored
+				end_wars = no
+				end_civil_wars = no
+			}
+		}
+		else = {
+			set_autonomy = {
+				target = SOL
+				autonomy_state = autonomy_associated_state
+				end_wars = no
+				end_civil_wars = no
+			}
+		}
+	}
+}

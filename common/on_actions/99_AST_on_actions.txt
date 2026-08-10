@@ -338,25 +338,63 @@ on_actions = {
 	}
 	on_monthly_SOL = { # Solomon Islands Competition
 		effect = {
+			# Who currently holds the most influence in Honiara. The request
+			# decisions weight themselves off these, so they keep running after
+			# the competition resolves as well.
+			for_each_loop = {
+				array = influence_array
+				value = v
+				break = break
+				if = {
+					limit = { check_variable = { v = CHI } }
+					set_country_flag = solomon_competition_CHI_influence
+					clr_country_flag = solomon_competition_AST_influence
+					clr_country_flag = solomon_competition_USA_influence
+					set_temp_variable = { break = 1 }
+				}
+				else_if = {
+					limit = { check_variable = { v = AST } }
+					set_country_flag = solomon_competition_AST_influence
+					clr_country_flag = solomon_competition_CHI_influence
+					clr_country_flag = solomon_competition_USA_influence
+					set_temp_variable = { break = 1 }
+				}
+				else_if = {
+					limit = { check_variable = { v = USA } }
+					set_country_flag = solomon_competition_USA_influence
+					clr_country_flag = solomon_competition_AST_influence
+					clr_country_flag = solomon_competition_CHI_influence
+					set_temp_variable = { break = 1 }
+				}
+			}
+
 			if = {
 				limit = { NOT = { has_country_flag = SOL_finished_solomon_competition } }
-				for_each_loop = {
-					array = influence_array
-					value = v
-					break = break
-					if = {
-						limit = { check_variable = { v = CHI } }
-						set_country_flag = solomon_competition_CHI_influence
-						clr_country_flag = solomon_competition_AST_influence
-						log = "[GetDateText]: [This.GetName] executed on_monthly_sol and current competition winner is China."
-						set_temp_variable = { break = 1 }
+
+				# China's Belt and Road Pacific branch scores through the marks
+				# it leaves on Honiara rather than through hooks in its own tree.
+				SOL_convert_CHI_bri_progress = yes
+
+				# Australia can change sides at any point in the storyline.
+				SOL_reevaluate_competition_mode = yes
+			}
+			else = {
+				# The competition is settled, but the settlement still has to be
+				# held. Roughly once every four years the patron's standing in
+				# Honiara is tested. A stalemate settles without a patron, so
+				# there is nobody to test and the check never runs.
+				if = {
+					limit = {
+						check_variable = { AST_comp_status > 0 }
+						has_country_flag = SOL_comp_has_patron
+						NOT = { has_country_flag = SOL_patron_test_pending }
 					}
-					else_if = {
-						limit = { check_variable = { v = AST } }
-						set_country_flag = solomon_competition_AST_influence
-						clr_country_flag = solomon_competition_CHI_influence
-						log = "[GetDateText]: [This.GetName] executed on_monthly_sol and current competition winner is Australia."
-						set_temp_variable = { break = 1 }
+					random_list = {
+						2 = {
+							set_country_flag = { flag = SOL_patron_test_pending days = 1460 value = 1 }
+							country_event = { id = solomon_competition.60 days = 30 random_days = 90 }
+						}
+						98 = { }
 					}
 				}
 			}

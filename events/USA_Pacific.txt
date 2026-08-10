@@ -1,0 +1,742 @@
+# The American side of the Pacific contest.
+#
+# The Solomon Islands storyline is scored through the Australian competition
+# framework held on the Solomon Islands' own country scope. Which configuration
+# that competition is running in decides what these events mean:
+#
+#   Mode 2  Washington is bankrolling Canberra. Everything the United States
+#           spends here strengthens an ally's hand rather than its own, and the
+#           content reads as burden sharing inside an alliance.
+#   Mode 3  Canberra has traded the American guarantee for a Chinese one.
+#           Washington stops working through an ally and opens its own file on
+#           Honiara, on the Compact of Free Association model that has held
+#           Micronesia, the Marshalls and Palau since 1986. That is a bid
+#           against Australia, and it is priced like one.
+#
+# The Compact arc runs across four decisions in USA_solomon_engagement_category
+# and reports its beats through the events below.
+
+add_namespace = usa_pacific
+add_namespace = usa_pacific_news
+
+########################################################################
+# The Compact of Free Association arc
+########################################################################
+
+country_event = { # Exploratory talks in Honiara
+	id = usa_pacific.10
+	title = usa_pacific.10.t
+	desc = usa_pacific.10.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = USA }
+
+	option = { # Put the full package on the table
+		name = usa_pacific.10.o1
+		log = "[GetDateText]: [This.GetName]: usa_pacific.10.o1 executed"
+
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
+		set_country_flag = USA_SOL_compact_generous_terms
+		if = {
+			limit = { country_exists = SOL }
+			set_temp_variable = { comp_points = 2 }
+			SOL = { SOL_award_USA_points = yes }
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+		}
+
+		ai_chance = {
+			base = 7
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 20 }
+			}
+		}
+	}
+
+	option = { # Keep the price down and see what it buys
+		name = usa_pacific.10.o2
+		log = "[GetDateText]: [This.GetName]: usa_pacific.10.o2 executed"
+
+		add_political_power = 20
+		if = {
+			limit = { country_exists = SOL }
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+		}
+
+		ai_chance = {
+			base = 3
+			modifier = {
+				add = 5
+				check_variable = { treasury < 40 }
+			}
+		}
+	}
+}
+
+country_event = { # Honiara receives the American assistance package
+	id = usa_pacific.11
+	title = usa_pacific.11.t
+	desc = usa_pacific.11.d
+	picture = GFX_report_event_generic_1
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = usa_pacific.11.o1 # Money with a map attached
+		log = "[GetDateText]: [This.GetName]: usa_pacific.11.o1 executed"
+
+		add_stability = 0.03
+		if = {
+			limit = { country_exists = USA }
+			add_opinion_modifier = {
+				target = USA
+				modifier = usa_fp_diplomatic_cooperation
+			}
+		}
+	}
+}
+
+country_event = { # Honiara accepts the strategic denial clause
+	id = usa_pacific.13
+	title = usa_pacific.13.t
+	desc = usa_pacific.13.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	trigger = { original_tag = USA }
+
+	option = {
+		name = usa_pacific.13.o1 # The clause stands
+		log = "[GetDateText]: [This.GetName]: usa_pacific.13.o1 executed"
+
+		add_political_power = 25
+		if = {
+			limit = { country_exists = SOL }
+			SOL = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = usa_fp_strategic_partnership
+				}
+			}
+		}
+	}
+}
+
+country_event = { # Honiara balks at the strategic denial clause
+	id = usa_pacific.14
+	title = usa_pacific.14.t
+	desc = usa_pacific.14.d
+	picture = GFX_report_event_generic_1
+
+	is_triggered_only = yes
+
+	trigger = { original_tag = USA }
+
+	option = { # Go back with a better number
+		name = usa_pacific.14.o1
+		log = "[GetDateText]: [This.GetName]: usa_pacific.14.o1 executed"
+
+		add_political_power = -25
+		if = {
+			limit = { country_exists = SOL }
+			set_temp_variable = { percent_change = -2 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+		}
+	}
+}
+
+country_event = { # The Compact of Free Association is signed
+	id = usa_pacific.15
+	title = usa_pacific.15.t
+	desc = usa_pacific.15.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = usa_pacific.15.o1 # Sovereign, and spoken for
+		log = "[GetDateText]: [This.GetName]: usa_pacific.15.o1 executed"
+
+		add_stability = 0.05
+		if = {
+			limit = { country_exists = USA }
+			add_opinion_modifier = {
+				target = USA
+				modifier = USA_pacific_compact_partner
+			}
+		}
+	}
+}
+
+########################################################################
+# Canberra watches Washington bid in its own near region
+########################################################################
+
+country_event = { # Washington is spending money in our back yard
+	id = usa_pacific.20
+	title = usa_pacific.20.t
+	desc = usa_pacific.20.d
+	picture = GFX_report_event_generic_1
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = AST }
+
+	option = { # Register a formal protest
+		name = usa_pacific.20.o1
+		log = "[GetDateText]: [This.GetName]: usa_pacific.20.o1 executed"
+
+		add_political_power = -20
+		if = {
+			limit = { country_exists = USA }
+			add_opinion_modifier = {
+				target = USA
+				modifier = USA_courting_our_near_region
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = SOL_abandoned_us
+				}
+			}
+		}
+		# Canberra answering Washington in kind is worth something in Honiara.
+		if = {
+			limit = {
+				country_exists = SOL
+				SOL_competition_active = yes
+			}
+			set_temp_variable = { comp_points = 2 }
+			SOL = { SOL_award_AST_points = yes }
+		}
+
+		ai_chance = { base = 7 }
+	}
+
+	option = { # Say nothing and let them spend
+		name = usa_pacific.20.o2
+		log = "[GetDateText]: [This.GetName]: usa_pacific.20.o2 executed"
+
+		add_political_power = 15
+		add_stability = -0.02
+
+		ai_chance = { base = 3 }
+	}
+}
+
+country_event = { # The Compact is signed over our objections
+	id = usa_pacific.21
+	title = usa_pacific.21.t
+	desc = usa_pacific.21.d
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = AST }
+
+	option = { # Recall our ambassador from Washington
+		name = usa_pacific.21.o1
+		log = "[GetDateText]: [This.GetName]: usa_pacific.21.o1 executed"
+
+		add_political_power = -30
+		add_stability = -0.03
+		if = {
+			limit = { country_exists = USA }
+			# The protest at usa_pacific.20 may already have put a grievance on
+			# the record. Signing the Compact over it is worse, not twice the
+			# same, so the earlier modifier is retired and replaced with the
+			# heavier one rather than a second copy being stacked underneath it.
+			remove_opinion_modifier = {
+				target = USA
+				modifier = USA_courting_our_near_region
+			}
+			add_opinion_modifier = {
+				target = USA
+				modifier = USA_took_our_near_region
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = usa_fp_severe_confrontation
+				}
+			}
+		}
+		# Nothing pushes Canberra further into Beijing's arms than Washington
+		# buying the capital Canberra used to speak for.
+		if = {
+			limit = {
+				country_exists = CHI
+				NOT = { has_war_with = CHI }
+			}
+			CHI = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship
+				}
+			}
+			add_opinion_modifier = {
+				target = CHI
+				modifier = declaration_of_friendship
+			}
+		}
+
+		ai_chance = { base = 6 }
+	}
+
+	option = { # Swallow it and keep the relationship
+		name = usa_pacific.21.o2
+		log = "[GetDateText]: [This.GetName]: usa_pacific.21.o2 executed"
+
+		add_political_power = -10
+		add_stability = -0.05
+		if = {
+			limit = { country_exists = USA }
+			add_opinion_modifier = {
+				target = USA
+				modifier = SOL_abandoned_us
+			}
+		}
+
+		ai_chance = { base = 3 }
+	}
+}
+
+########################################################################
+# Washington reacts to China's Pacific expansion
+########################################################################
+
+country_event = { # Beijing signs a security pact in Honiara
+	id = usa_pacific.30
+	title = usa_pacific.30.t
+	desc = usa_pacific.30.d
+	picture = GFX_report_event_generic_1
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = USA }
+
+	option = { # Surge the Pacific Deterrence Initiative
+		name = usa_pacific.30.o1
+		log = "[GetDateText]: [This.GetName]: usa_pacific.30.o1 executed"
+
+		set_temp_variable = { treasury_change = -35 }
+		modify_treasury_effect = yes
+		# The posture focus already carries this permanently; a country that
+		# never took it buys five years of it the expensive way.
+		if = {
+			limit = { NOT = { has_idea = USA_pacific_deterrence_initiative } }
+			add_timed_idea = { idea = USA_pacific_deterrence_initiative days = 1825 }
+		}
+		if = {
+			limit = {
+				country_exists = SOL
+				SOL_competition_active = yes
+			}
+			custom_effect_tooltip = USA_pacific_solomon_backing_tt
+			set_temp_variable = { comp_points = 3 }
+			SOL = { SOL_award_USA_backing_points = yes }
+		}
+		if = {
+			limit = { country_exists = CHI }
+			CHI = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = chinese_american_rivalry
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 7
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 35 }
+			}
+			modifier = {
+				add = 5
+				has_completed_focus = USA_focus_pacific_deterrence_posture
+			}
+		}
+	}
+
+	option = { # Work the diplomatic channel instead
+		name = usa_pacific.30.o2
+		log = "[GetDateText]: [This.GetName]: usa_pacific.30.o2 executed"
+
+		add_political_power = -25
+		if = {
+			limit = {
+				country_exists = SOL
+				SOL_competition_active = yes
+				NOT = { has_war_with = SOL }
+			}
+			custom_effect_tooltip = USA_pacific_solomon_backing_tt
+			set_temp_variable = { comp_points = 2 }
+			SOL = { SOL_award_USA_backing_points = yes }
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+		}
+
+		ai_chance = { base = 4 }
+	}
+
+	option = { # This is Canberra's problem before it is ours
+		name = usa_pacific.30.o3
+		log = "[GetDateText]: [This.GetName]: usa_pacific.30.o3 executed"
+
+		add_political_power = 20
+		if = {
+			limit = {
+				country_exists = AST
+				NOT = { AST = { AST_is_china_aligned = yes } }
+			}
+			AST = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = SOL_abandoned_us
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				OR = {
+					western_conservatism_are_in_power = yes
+					western_liberals_are_in_power = yes
+				}
+			}
+		}
+	}
+}
+
+country_event = { # The People's Liberation Army reaches the second island chain
+	id = usa_pacific.31
+	title = usa_pacific.31.t
+	desc = usa_pacific.31.d
+	picture = GFX_corvette
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = USA }
+
+	option = { # Reinforce the second island chain
+		name = usa_pacific.31.o1
+		log = "[GetDateText]: [This.GetName]: usa_pacific.31.o1 executed"
+
+		set_temp_variable = { treasury_change = -60 }
+		modify_treasury_effect = yes
+		add_war_support = 0.03
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = USA_dynamic_modifier_us_navy
+		}
+		add_to_variable = { us_navy_naval_damage = 0.02 tooltip = naval_damage_factor_tt }
+		add_to_variable = { us_navy_naval_defense = 0.02 tooltip = naval_defense_factor_tt }
+		if = {
+			limit = {
+				country_exists = SOL
+				SOL_competition_active = yes
+			}
+			custom_effect_tooltip = USA_pacific_solomon_backing_tt
+			set_temp_variable = { comp_points = 3 }
+			SOL = { SOL_award_USA_backing_points = yes }
+		}
+
+		ai_chance = {
+			base = 7
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 60 }
+			}
+		}
+	}
+
+	option = { # Put the money into the alliance instead
+		name = usa_pacific.31.o2
+		log = "[GetDateText]: [This.GetName]: usa_pacific.31.o2 executed"
+		trigger = {
+			country_exists = AST
+			NOT = { has_war_with = AST }
+			AST = { AST_is_us_aligned_in_pacific = yes }
+		}
+
+		set_temp_variable = { treasury_change = -30 }
+		modify_treasury_effect = yes
+		AST = {
+			navy_experience = 25
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = USA_pacific_burden_sharing
+			}
+		}
+		add_opinion_modifier = {
+			target = AST
+			modifier = USA_pacific_burden_sharing
+		}
+		if = {
+			limit = {
+				country_exists = SOL
+				SOL_competition_active = yes
+			}
+			custom_effect_tooltip = USA_pacific_solomon_backing_tt
+			set_temp_variable = { comp_points = 4 }
+			SOL = { SOL_award_USA_backing_points = yes }
+		}
+
+		ai_chance = {
+			base = 8
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 30 }
+			}
+		}
+	}
+
+	option = { # Absorb it and say nothing
+		name = usa_pacific.31.o3
+		log = "[GetDateText]: [This.GetName]: usa_pacific.31.o3 executed"
+
+		add_political_power = 15
+		add_war_support = -0.02
+
+		ai_chance = { base = 1 }
+	}
+}
+
+########################################################################
+# The alliance path - Canberra hears about it from Washington first
+########################################################################
+
+country_event = { # Washington deepens the trilateral partnership
+	id = usa_pacific.40
+	title = usa_pacific.40.t
+	desc = usa_pacific.40.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = AST }
+
+	option = { # Take the offer
+		name = usa_pacific.40.o1
+		log = "[GetDateText]: [This.GetName]: usa_pacific.40.o1 executed"
+
+		add_political_power = 25
+		navy_experience = 25
+		if = {
+			limit = { country_exists = USA }
+			add_opinion_modifier = {
+				target = USA
+				modifier = USA_pacific_burden_sharing
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = USA_pacific_burden_sharing
+				}
+			}
+		}
+		# Canberra fronts the bloc in the Solomons, so an American commitment
+		# to the alliance is an Australian gain in Honiara.
+		if = {
+			limit = {
+				country_exists = SOL
+				SOL_competition_active = yes
+			}
+			set_temp_variable = { comp_points = 2 }
+			SOL = { SOL_award_AST_points = yes }
+		}
+
+		ai_chance = { base = 9 }
+	}
+
+	option = { # We will hold the near region on our own terms
+		name = usa_pacific.40.o2
+		log = "[GetDateText]: [This.GetName]: usa_pacific.40.o2 executed"
+
+		add_political_power = 40
+		add_stability = 0.02
+
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+########################################################################
+# News
+########################################################################
+
+news_event = { # The Solomons settle with Canberra and Beijing together
+	id = usa_pacific_news.1
+	title = usa_pacific_news.1.t
+	desc = usa_pacific_news.1.d
+	picture = GFX_political_deal
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = usa_pacific_news.1.a # An American century ends in the South Pacific
+		trigger = {
+			OR = {
+				original_tag = USA
+				is_in_faction_with = USA
+			}
+		}
+	}
+
+	option = {
+		name = usa_pacific_news.1.b # The near region answers to itself again
+		trigger = {
+			OR = {
+				original_tag = AST
+				original_tag = CHI
+				original_tag = SOL
+			}
+		}
+	}
+
+	option = {
+		name = usa_pacific_news.1.c # Noted, from a safe distance
+		trigger = {
+			NOT = { original_tag = USA }
+			NOT = { original_tag = AST }
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = SOL }
+			NOT = { is_in_faction_with = USA }
+		}
+	}
+}
+
+news_event = { # Washington holds Honiara against Canberra and Beijing
+	id = usa_pacific_news.2
+	title = usa_pacific_news.2.t
+	desc = usa_pacific_news.2.d
+	picture = GFX_political_deal
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = usa_pacific_news.2.a # The chain holds
+		trigger = { original_tag = USA }
+	}
+
+	option = {
+		name = usa_pacific_news.2.b # Outbid in our own waters
+		trigger = {
+			OR = {
+				original_tag = AST
+				original_tag = CHI
+			}
+		}
+	}
+
+	option = {
+		name = usa_pacific_news.2.c # A small country, courted by everyone
+		trigger = {
+			NOT = { original_tag = USA }
+			NOT = { original_tag = AST }
+			NOT = { original_tag = CHI }
+		}
+	}
+}
+
+news_event = { # A Compact of Free Association with the Solomon Islands
+	id = usa_pacific_news.3
+	title = usa_pacific_news.3.t
+	desc = usa_pacific_news.3.d
+	picture = GFX_handshake_black
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = usa_pacific_news.3.a # Signed in Washington
+		trigger = {
+			OR = {
+				original_tag = USA
+				original_tag = SOL
+			}
+		}
+	}
+
+	option = {
+		name = usa_pacific_news.3.b # An ally goes shopping in our back yard
+		trigger = { original_tag = AST }
+	}
+
+	option = {
+		name = usa_pacific_news.3.c # The old instrument, used again
+		trigger = {
+			NOT = { original_tag = USA }
+			NOT = { original_tag = SOL }
+			NOT = { original_tag = AST }
+		}
+	}
+}
+
+news_event = { # The trilateral Pacific partnership
+	id = usa_pacific_news.4
+	title = usa_pacific_news.4.t
+	desc = usa_pacific_news.4.d
+	picture = GFX_handshake_black
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = usa_pacific_news.4.a # Three navies, one architecture
+		trigger = {
+			OR = {
+				original_tag = USA
+				original_tag = AST
+				original_tag = ENG
+			}
+		}
+	}
+
+	option = {
+		name = usa_pacific_news.4.b # A bloc forming around us
+		trigger = { original_tag = CHI }
+	}
+
+	option = {
+		name = usa_pacific_news.4.c # The Anglosphere closes ranks
+		trigger = {
+			NOT = { original_tag = USA }
+			NOT = { original_tag = AST }
+			NOT = { original_tag = ENG }
+			NOT = { original_tag = CHI }
+		}
+	}
+}

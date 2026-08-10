@@ -1,0 +1,170 @@
+# Solomon Islands influence competition - shared triggers
+#
+# The competition is scored through the generic Australian competition
+# framework (common/scripted_effects/AST_competition_framework.txt) held on
+# the Solomon Islands' own country scope. These triggers wrap the raw
+# variable checks so content in the Australian, Chinese and American trees
+# can read the same state without duplicating the comparisons.
+
+# Run in Australia's scope. True when Australia has thrown its strategic lot
+# in with Beijing rather than Washington. This is the switch that reverses the
+# whole Solomon storyline: China stops being Australia's rival and the United
+# States becomes the Solomon Islands' alternative suitor instead.
+#
+# Both signals are deliberate and permanent, which they have to be: the mode
+# this decides is latched forward and never reverses, so anything that can flip
+# it has to be a choice Canberra actually made rather than a passing
+# circumstance. Faction membership used to count here and no longer does - a
+# faction can form and dissolve around a single war, and one incidental month
+# in a bloc with Beijing is not the same thing as trading Washington's guarantee
+# for Beijing's.
+#
+# Signals, in order of authority:
+#   1. AST_pacific_china_aligned - latched by AST_Reshaping_our_strategic_Alliances,
+#      the focus where Australia trades the American guarantee for a Chinese one.
+#   2. The focus itself, in case the flag was cleared by other content.
+AST_is_china_aligned = {
+	OR = {
+		has_country_flag = AST_pacific_china_aligned
+		has_completed_focus = AST_Reshaping_our_strategic_Alliances
+	}
+}
+
+# Run in Australia's scope. The default posture: Australia contests the Pacific
+# against China, with the United States behind it.
+AST_is_us_aligned_in_pacific = {
+	NOT = { AST_is_china_aligned = yes }
+}
+
+# Run in any scope. True while the Solomon competition is live.
+SOL_competition_active = {
+	country_exists = SOL
+	SOL = { check_variable = { AST_comp_registered = 1 } }
+}
+
+# Run in any scope. True once the Solomon competition has been resolved. A
+# stalemate settles at status 3, so it counts as resolved here exactly as a
+# win or a loss does rather than sitting between the two.
+SOL_competition_resolved = {
+	country_exists = SOL
+	SOL = {
+		check_variable = { AST_comp_registered = 0 }
+		check_variable = { AST_comp_status > 0 }
+	}
+}
+
+# Run in any scope. True when the settled competition actually produced a
+# patron. A contest that ended level, or one nobody funded past the first
+# tier, resolves without one and none of the post-settlement content that
+# leans on the relationship may fire.
+SOL_competition_has_patron = {
+	country_exists = SOL
+	SOL = { has_country_flag = SOL_comp_has_patron }
+}
+
+# Run in any scope. True while settling the contest would cut the American
+# Compact of Free Association arc off mid-negotiation. The arc only exists in
+# mode 3, needs the better part of a decade of decision timers to run its five
+# beats, and the fixed 2022 resolution would otherwise close the competition
+# out from under it before Washington could ever sign anything.
+SOL_competition_resolution_blocked = {
+	country_exists = SOL
+	SOL = { check_variable = { AST_comp_registered = 1 } }
+	SOL_competition_is_usa_rival = yes
+	country_exists = USA
+	USA = {
+		has_country_flag = USA_SOL_competition_engaged
+		check_variable = { USA_SOL_compact_stage < 4 }
+	}
+}
+
+# Run in any scope. Competitor configuration locked in at registration.
+# Mode 2 - Australia backed by the United States, against China (default).
+SOL_competition_is_usa_backing_ast = {
+	country_exists = SOL
+	SOL = { check_variable = { AST_comp_mode = 2 } }
+}
+
+# Mode 3 - Australia and China together, against the United States (the flip).
+SOL_competition_is_usa_rival = {
+	country_exists = SOL
+	SOL = { check_variable = { AST_comp_mode = 3 } }
+}
+
+# Run in any scope. Engagement tier reached by the leading bloc in the Solomons.
+#   0 Contested   1 Preferred Partner   2 Strategic Partner   3 Patron
+SOL_competition_tier_at_least_preferred = {
+	country_exists = SOL
+	SOL = { check_variable = { SOL_comp_tier > 0 } }
+}
+
+SOL_competition_tier_at_least_strategic = {
+	country_exists = SOL
+	SOL = { check_variable = { SOL_comp_tier > 1 } }
+}
+
+SOL_competition_tier_patron = {
+	country_exists = SOL
+	SOL = { check_variable = { SOL_comp_tier > 2 } }
+}
+
+# Run in the scope of the country asking "am I the one currently ahead?".
+# Works for Australia, China and the United States alike by comparing the
+# cached bloc leader against the caller's own bloc under the active mode.
+SOL_competition_caller_leads = {
+	country_exists = SOL
+	OR = {
+		AND = {
+			original_tag = AST
+			SOL = { check_variable = { AST_comp_leader = 1 } }
+		}
+		AND = {
+			original_tag = CHI
+			OR = {
+				AND = {
+					SOL = { check_variable = { AST_comp_mode = 3 } }
+					SOL = { check_variable = { AST_comp_leader = 1 } }
+				}
+				AND = {
+					NOT = { SOL = { check_variable = { AST_comp_mode = 3 } } }
+					SOL = { check_variable = { AST_comp_leader = 2 } }
+				}
+			}
+		}
+		AND = {
+			original_tag = USA
+			OR = {
+				AND = {
+					SOL = { check_variable = { AST_comp_mode = 3 } }
+					SOL = { check_variable = { AST_comp_leader = 2 } }
+				}
+				AND = {
+					NOT = { SOL = { check_variable = { AST_comp_mode = 3 } } }
+					SOL = { check_variable = { AST_comp_leader = 1 } }
+				}
+			}
+		}
+	}
+}
+
+# Run in the United States' scope. True when Washington is propping Australia
+# up in the Solomons rather than competing with it.
+USA_backs_australia_in_pacific = {
+	original_tag = USA
+	SOL_competition_is_usa_backing_ast = yes
+	OR = {
+		western_conservatism_are_in_power = yes
+		western_liberals_are_in_power = yes
+	}
+}
+
+# Run in the United States' scope. True when Australia has gone over to Beijing
+# and Washington is courting Honiara directly.
+USA_contests_australia_in_pacific = {
+	original_tag = USA
+	SOL_competition_is_usa_rival = yes
+	OR = {
+		western_conservatism_are_in_power = yes
+		western_liberals_are_in_power = yes
+	}
+}

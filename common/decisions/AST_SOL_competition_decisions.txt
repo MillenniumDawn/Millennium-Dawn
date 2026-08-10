@@ -1,0 +1,681 @@
+# Solomon Islands influence competition - ongoing engagement
+#
+# The original competition was three bursts of construction spending in the
+# early 2000s and then nothing at all until a single tally in 2022. These
+# decisions give Australia, the United States and Honiara something to do
+# across the whole span, and give the winner something to hold afterwards.
+#
+# Scoring runs through common/scripted_effects/AST_SOL_competition_effects.txt.
+
+AST_solomon_engagement_category = {
+
+	# The bread and butter of Australian Pacific policy: aid budgets, scholarships,
+	# and the seasonal worker programme. Always available while the contest runs.
+	AST_SOL_development_assistance = {
+		icon = GFX_decision_generic_construction
+
+		allowed = {
+			original_tag = AST
+		}
+
+		available = {
+			country_exists = SOL
+			SOL_competition_active = yes
+			NOT = { has_war_with = SOL }
+			check_variable = { treasury > 12 }
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			country_exists = SOL
+			SOL_competition_active = yes
+		}
+
+		fire_only_once = no
+		cost = 30
+		days_remove = 120
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AST_SOL_development_assistance"
+			set_temp_variable = { treasury_change = -12.00 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove AST_SOL_development_assistance"
+			set_temp_variable = { comp_points = 3 }
+			SOL = { SOL_award_AST_points = yes }
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = AST }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+			SOL = {
+				add_opinion_modifier = {
+					target = AST
+					modifier = recently_invest
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 2
+				NOT = { SOL_competition_caller_leads = yes }
+			}
+			# Realigning on Beijing does not take Australia out of the contest,
+			# it changes who is standing on the other side of it. Canberra's own
+			# column still carries the bloc, and the rival is now a great power,
+			# so a China-aligned Australia has more reason to keep spending in
+			# Honiara rather than less.
+			modifier = {
+				factor = 1.8
+				SOL_competition_is_usa_rival = yes
+			}
+		}
+	}
+
+	# The Australian Federal Police relationship that outlasted RAMSI. Only
+	# opens once Australia is genuinely the preferred partner.
+	AST_SOL_police_partnership = {
+		icon = GFX_decision_hol_exchange_intelligence_data
+
+		allowed = {
+			original_tag = AST
+		}
+
+		available = {
+			country_exists = SOL
+			SOL_competition_active = yes
+			NOT = { has_war_with = SOL }
+			custom_trigger_tooltip = {
+				tooltip = SOL_competition_tier_preferred_tt
+				SOL_competition_tier_at_least_preferred = yes
+			}
+			# The bloc's tier can be carried by a partner's money. Seconding
+			# Australian police officers takes an Australian relationship, so
+			# this reads Canberra's own engagement at the same threshold
+			# Beijing's Pacific branch uses for its own hard content.
+			custom_trigger_tooltip = {
+				tooltip = AST_pacific_engagement_gt_7_tt
+				check_variable = { AST_pacific_engagement > 7 }
+			}
+			check_variable = { treasury > 8 }
+		}
+
+		visible = {
+			country_exists = SOL
+			SOL_competition_active = yes
+			has_completed_focus = AST_Solomon_Islands_Restore_Government
+		}
+
+		fire_only_once = no
+		cost = 40
+		days_remove = 150
+		days_re_enable = 545
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AST_SOL_police_partnership"
+			set_temp_variable = { treasury_change = -8.00 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove AST_SOL_police_partnership"
+			set_temp_variable = { comp_points = 4 }
+			SOL = {
+				SOL_award_AST_points = yes
+				add_stability = 0.03
+				add_opinion_modifier = {
+					target = AST
+					modifier = SOL_ramsi_support
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			# The police relationship is the deepest hook Canberra has in
+			# Honiara, and it matters most when the rival across the table is
+			# Washington rather than Beijing.
+			modifier = {
+				factor = 1.7
+				SOL_competition_is_usa_rival = yes
+			}
+		}
+	}
+
+	# Canberra spending political capital in Honiara to blunt a rival's offer.
+	AST_SOL_counter_lobbying = {
+		icon = GFX_decision_generic_operation
+
+		allowed = {
+			original_tag = AST
+		}
+
+		available = {
+			country_exists = SOL
+			SOL_competition_active = yes
+			NOT = { has_war_with = SOL }
+			custom_trigger_tooltip = {
+				tooltip = SOL_competition_trailing_tt
+				NOT = { SOL_competition_caller_leads = yes }
+			}
+			check_variable = { treasury > 6 }
+		}
+
+		visible = {
+			country_exists = SOL
+			SOL_competition_active = yes
+		}
+
+		fire_only_once = no
+		cost = 50
+		days_remove = 90
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AST_SOL_counter_lobbying"
+			set_temp_variable = { treasury_change = -6.00 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove AST_SOL_counter_lobbying"
+			set_temp_variable = { comp_points = 3 }
+			SOL = { SOL_award_AST_points = yes }
+			# Whose offer is being blunted follows the configuration the contest
+			# is actually running in rather than Canberra's alignment on its own,
+			# because the two can disagree for up to a month after a realignment.
+			if = {
+				limit = {
+					country_exists = USA
+					SOL_competition_is_usa_rival = yes
+				}
+				set_temp_variable = { percent_change = -4 }
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = SOL.id }
+				change_influence_percentage = yes
+			}
+			else_if = {
+				limit = { country_exists = CHI }
+				set_temp_variable = { percent_change = -4 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = SOL.id }
+				change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	# Post-settlement. Australia carried the contest and now has to keep paying
+	# for the relationship it won.
+	AST_SOL_sustain_partnership = {
+		icon = GFX_decision_generic_construction
+
+		allowed = {
+			original_tag = AST
+		}
+
+		available = {
+			country_exists = SOL
+			SOL_competition_resolved = yes
+			custom_trigger_tooltip = {
+				tooltip = AST_SOL_is_our_partner_tt
+				SOL_competition_has_patron = yes
+				SOL = { check_variable = { SOL_comp_patron = AST.id } }
+			}
+			NOT = { has_war_with = SOL }
+			check_variable = { treasury > 10 }
+		}
+
+		visible = {
+			country_exists = SOL
+			SOL_competition_resolved = yes
+			SOL_competition_has_patron = yes
+			SOL = { check_variable = { SOL_comp_patron = AST.id } }
+		}
+
+		fire_only_once = no
+		cost = 25
+		days_remove = 120
+		days_re_enable = 545
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AST_SOL_sustain_partnership"
+			set_temp_variable = { treasury_change = -10.00 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove AST_SOL_sustain_partnership"
+			SOL = {
+				add_stability = 0.03
+				add_opinion_modifier = {
+					target = AST
+					modifier = SOL_pacific_partner
+				}
+			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = AST }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+			add_political_power = 15
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	# Post-settlement. Australia lost, and has to work its way back into a
+	# capital that now answers to somebody else.
+	AST_SOL_rebuild_influence = {
+		icon = GFX_decision_generic_operation
+
+		allowed = {
+			original_tag = AST
+		}
+
+		available = {
+			country_exists = SOL
+			SOL_competition_resolved = yes
+			custom_trigger_tooltip = {
+				tooltip = AST_SOL_is_not_our_partner_tt
+				NOT = {
+					AND = {
+						SOL_competition_has_patron = yes
+						SOL = { check_variable = { SOL_comp_patron = AST.id } }
+					}
+				}
+			}
+			NOT = { has_war_with = SOL }
+			check_variable = { treasury > 15 }
+		}
+
+		visible = {
+			country_exists = SOL
+			SOL_competition_resolved = yes
+			NOT = {
+				AND = {
+					SOL_competition_has_patron = yes
+					SOL = { check_variable = { SOL_comp_patron = AST.id } }
+				}
+			}
+		}
+
+		fire_only_once = no
+		cost = 45
+		days_remove = 180
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AST_SOL_rebuild_influence"
+			set_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove AST_SOL_rebuild_influence"
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = AST }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+			SOL = {
+				add_opinion_modifier = {
+					target = AST
+					modifier = recently_invest
+				}
+			}
+			# A Solomons that never signed with anyone is far easier to win
+			# back than one already inside a rival's security architecture.
+			if = {
+				limit = { SOL = { has_country_flag = SOL_non_aligned_pacific_state } }
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = AST }
+				set_temp_variable = { influence_target = SOL.id }
+				change_influence_percentage = yes
+			}
+			# Enough patient work eventually wears the standing penalty off.
+			if = {
+				limit = { has_idea = SOL_AST_lost_the_near_region }
+				random_list = {
+					35 = { remove_ideas = SOL_AST_lost_the_near_region }
+					65 = { }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 1.8
+				SOL = { has_country_flag = SOL_non_aligned_pacific_state }
+			}
+		}
+	}
+}
+
+USA_solomon_engagement_category = {
+
+	# Washington's contribution to the Pacific contest. While Australia is the
+	# Western horse in the race this money is spent through Canberra and lands
+	# in Australia's column. Once Australia has changed sides, the same
+	# programme becomes an American bid of its own.
+	USA_SOL_pacific_partnership_aid = {
+		icon = GFX_decision_generic_construction
+
+		allowed = {
+			original_tag = USA
+		}
+
+		available = {
+			country_exists = SOL
+			SOL_competition_active = yes
+			NOT = { has_war_with = SOL }
+			check_variable = { treasury > 25 }
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+			}
+		}
+
+		visible = {
+			country_exists = SOL
+			SOL_competition_active = yes
+		}
+
+		fire_only_once = no
+		cost = 35
+		days_remove = 120
+		days_re_enable = 545
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_SOL_pacific_partnership_aid"
+			set_temp_variable = { treasury_change = -25.00 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_SOL_pacific_partnership_aid"
+			set_temp_variable = { comp_points = 4 }
+			SOL = { SOL_award_USA_backing_points = yes }
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+			SOL = {
+				add_opinion_modifier = {
+					target = USA
+					modifier = recently_invest
+				}
+			}
+			# Backing Canberra rather than competing with it is worth something
+			# to the relationship in its own right.
+			if = {
+				limit = {
+					country_exists = AST
+					SOL_competition_is_usa_backing_ast = yes
+				}
+				AST = {
+					add_opinion_modifier = {
+						target = USA
+						modifier = SOL_ramsi_support
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 10
+				SOL_competition_is_usa_rival = yes
+			}
+			modifier = {
+				add = 5
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# Only reachable once Australia has realigned. Washington stops working
+	# through an ally and negotiates with Honiara directly, on the model of the
+	# Compacts of Free Association.
+	USA_SOL_compact_negotiations = {
+		icon = GFX_decision_generic_operation
+
+		allowed = {
+			original_tag = USA
+		}
+
+		available = {
+			country_exists = SOL
+			SOL_competition_active = yes
+			SOL_competition_is_usa_rival = yes
+			NOT = { has_war_with = SOL }
+			check_variable = { treasury > 45 }
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+			}
+		}
+
+		visible = {
+			country_exists = SOL
+			SOL_competition_is_usa_rival = yes
+		}
+
+		fire_only_once = no
+		cost = 60
+		days_remove = 180
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_SOL_compact_negotiations"
+			set_temp_variable = { treasury_change = -45.00 }
+			modify_treasury_effect = yes
+			set_country_flag = USA_SOL_competition_engaged
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_SOL_compact_negotiations"
+			set_temp_variable = { comp_points = 7 }
+			SOL = { SOL_award_USA_points = yes }
+			set_temp_variable = { percent_change = 6 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = SOL.id }
+			change_influence_percentage = yes
+			if = {
+				limit = { country_exists = AST }
+				AST = {
+					add_opinion_modifier = {
+						target = USA
+						modifier = SOL_abandoned_us
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			# Washington presses harder once it has already committed to
+			# contesting Honiara in its own name.
+			modifier = {
+				add = 10
+				has_country_flag = USA_SOL_competition_engaged
+			}
+			# And harder still when the influence numbers say it is working.
+			modifier = {
+				add = 5
+				SOL = { has_country_flag = solomon_competition_USA_influence }
+			}
+		}
+	}
+}
+
+SOL_developing_nation_category = {
+
+	# Stage four of the competition: the patrol fleet and the maritime
+	# surveillance programme. Honiara approaches Canberra first.
+	SOL_AST_request_maritime_security = {
+		icon = generic_construction
+		priority = 20
+
+		allowed = {
+			original_tag = SOL
+		}
+
+		available = {
+			NOT = { has_country_flag = SOL_CHI_requested_maritime_security }
+			NOT = { has_country_flag = SOL_USA_requested_maritime_security }
+			NOT = { has_country_flag = SOL_maritime_programme_built }
+			country_exists = AST
+		}
+
+		visible = {
+			NOT = { has_country_flag = SOL_maritime_programme_built }
+			check_variable = { SOL_comp_stage > 3 }
+		}
+
+		fire_only_once = yes
+		cost = 50
+
+		complete_effect = {
+			set_country_flag = SOL_AST_requested_maritime_security
+			AST = {
+				country_event = { id = solomon_competition.16 days = 5 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+
+			modifier = {
+				has_country_flag = solomon_competition_AST_influence # Set in 99_AST_on_actions.txt
+				factor = 2
+			}
+		}
+	}
+
+	# Honiara approaches Beijing first.
+	SOL_CHI_request_maritime_security = {
+		icon = generic_construction
+		priority = 20
+
+		allowed = {
+			original_tag = SOL
+		}
+
+		available = {
+			NOT = { has_country_flag = SOL_AST_requested_maritime_security }
+			NOT = { has_country_flag = SOL_USA_requested_maritime_security }
+			NOT = { has_country_flag = SOL_maritime_programme_built }
+			country_exists = CHI
+		}
+
+		visible = {
+			NOT = { has_country_flag = SOL_maritime_programme_built }
+			check_variable = { SOL_comp_stage > 3 }
+		}
+
+		fire_only_once = yes
+		cost = 50
+
+		complete_effect = {
+			set_country_flag = SOL_CHI_requested_maritime_security
+			CHI = {
+				country_event = { id = solomon_competition.16 days = 5 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+
+			modifier = {
+				has_country_flag = solomon_competition_CHI_influence # Set in 99_AST_on_actions.txt
+				factor = 2
+			}
+		}
+	}
+
+	# Honiara approaches Washington first. Only on the table once Canberra has
+	# changed sides and the Americans are bidding in their own name - while the
+	# alliance holds, an American patrol boat programme is an Australian one.
+	SOL_USA_request_maritime_security = {
+		icon = generic_construction
+		priority = 20
+
+		allowed = {
+			original_tag = SOL
+		}
+
+		available = {
+			NOT = { has_country_flag = SOL_AST_requested_maritime_security }
+			NOT = { has_country_flag = SOL_CHI_requested_maritime_security }
+			NOT = { has_country_flag = SOL_maritime_programme_built }
+			country_exists = USA
+			SOL_competition_is_usa_rival = yes
+		}
+
+		visible = {
+			NOT = { has_country_flag = SOL_maritime_programme_built }
+			check_variable = { SOL_comp_stage > 3 }
+			SOL_competition_is_usa_rival = yes
+		}
+
+		fire_only_once = yes
+		cost = 50
+
+		complete_effect = {
+			set_country_flag = SOL_USA_requested_maritime_security
+			USA = {
+				country_event = { id = solomon_competition.16 days = 5 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+
+			modifier = {
+				has_country_flag = solomon_competition_USA_influence # Set in 99_AST_on_actions.txt
+				factor = 2
+			}
+			# Washington is the natural first call once it is the one holding
+			# the file on Honiara rather than underwriting somebody else's.
+			modifier = {
+				USA = { has_country_flag = USA_SOL_competition_engaged }
+				factor = 2
+			}
+		}
+	}
+}
