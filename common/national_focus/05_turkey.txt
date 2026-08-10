@@ -1233,6 +1233,15 @@ focus_tree = {
 			newline = yes
 			set_temp_variable = { treasury_change = -26.00 }
 			modify_treasury_effect = yes
+			if = {
+				limit = {
+					NOT = {
+						has_tech = reactor3
+					}
+				}
+				newline = yes
+				custom_effect_tooltip = TUR_research_nuclear_tt
+			}
 		}
 
 		ai_will_do = {
@@ -1488,6 +1497,7 @@ focus_tree = {
 			160 = {
 				is_owned_and_controlled_by = TUR
 			}
+			has_completed_focus = TUR_cheap_electric_turkish_power
 		}
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
@@ -6599,10 +6609,6 @@ focus_tree = {
 	# IBDA-C Branch
 
 # Foreign Policy Branch
-
-	#Foreign policy skeleton (imported from drawio draft; four roots)
-
-	# Foreign Policy - Enemies Run Away Like the Wind (root)
 	focus = {
 		id = TUR_enemies_run_away_like_the_wind
 		icon = greater_turkey
@@ -6638,6 +6644,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_mavi_vatan"
+			TUR_tsk_modifier_tt	= yes
+			add_to_variable = { TUR_naval_morale_factor = 0.05 tooltip = naval_morale_factor_tt }
+			newline = yes
+			add_to_variable = { TUR_naval_defense_factor = 0.10 tooltip = naval_defense_factor_tt }
+			newline = yes
+			custom_effect_tooltip = TUR_mavi_vatan_tt
 		}
 
 		ai_will_do = {
@@ -6714,7 +6726,7 @@ focus_tree = {
 
 	focus = {
 		id = TUR_a_daring_dash_across_the_strait
-		icon = attack_greece
+		icon = Kill_Greece
 		cost = 10
 
 		x = -1
@@ -6724,10 +6736,58 @@ focus_tree = {
 		prerequisite = { focus = TUR_mavi_vatan }
 		mutually_exclusive = { focus = TUR_a_grand_compromise }
 
+		available = {
+			country_exists = GRE
+			NOT = {
+				has_war_with = GRE
+			}
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+				}
+				network_strength = {
+					target = GRE
+					value > 35
+				}
+			}
+			else = {
+				GRE = {
+					influence_higher_15 = yes
+				}
+			}
+		}
+
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_NAVY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_a_daring_dash_across_the_strait"
+			custom_effect_tooltip = TUR_the_daring_dash_tt
+			if = {
+				limit = {
+					OR = {
+						TUR = {
+							has_idea = NATO_member
+						}
+						GRE = {
+							has_idea = NATO_member
+						}
+					}
+				}
+				custom_effect_tooltip = TUR_banned_nato_tt
+			}
+			hidden_effect = {
+				random_list = { #TODO EVENTS
+					50 = {
+						# False flag successful, both Turkey and Greece removed from NATO, allowed back after conflict is over
+					}
+					50 = {
+						# False flag caught
+						# - If Turkey & Greece in NATO, Turkey removed
+						# - If Greece in NATO, and not Turkey, NATO volunteers sent to Greece
+						# - If neither party is in NATO, then Russian volunteers in Greece
+					}
+				}
+			}
 		}
 
 		ai_will_do = {
