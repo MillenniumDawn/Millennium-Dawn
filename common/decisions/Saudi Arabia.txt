@@ -5199,6 +5199,84 @@ SAU_king_mbs_category = {
 
 SAU_debug_category = {
 
+	SAU_debug_pc_readout = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 82
+
+		cost = 0
+
+		visible = {
+			always = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_debug_pc_readout"
+			add_political_power = 0
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_debug_pc_open = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 81
+
+		cost = 0
+
+		visible = {
+			NOT = { has_country_flag = SAU_peoples_council_open }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_debug_pc_open"
+			set_country_flag = SAU_peoples_council_open
+			set_variable = { SAU_pc_standing = 50 }
+			set_variable = { SAU_pc_reformists = 40 }
+			set_variable = { SAU_pc_traditionalists = 40 }
+			set_variable = { SAU_pc_provincials = 40 }
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_debug_pc_standing_up = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 80
+
+		cost = 0
+
+		visible = {
+			has_country_flag = SAU_peoples_council_open
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_debug_pc_standing_up"
+			add_to_variable = { SAU_pc_standing = 20 }
+			SAU_pc_clamp_seats = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_debug_pc_reset_cycle = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 79
+
+		cost = 0
+
+		visible = {
+			OR = { has_country_flag = SAU_pc_debate_ongoing has_country_flag = SAU_pc_doing_bill }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_debug_pc_reset_cycle"
+			clr_country_flag = SAU_pc_debate_ongoing
+			clr_country_flag = SAU_pc_doing_bill
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
 	SAU_debug_shura_readout = {
 		icon = GFX_decision_generic_political_discourse
 		priority = 85
@@ -6628,7 +6706,414 @@ SAU_coalition_member_category = {
 
 }
 
-SAU_shura_category = {
+SAU_councils_category = {
+
+	SAU_pc_enact_reformist = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 198
+
+		activation = { always = no }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SAU_pc_enact_reformist_tt
+				has_political_power > 299
+				check_variable = { SAU_pc_standing > 39 }
+			}
+		}
+
+		days_mission_timeout = 365
+		is_good = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_pc_enact_reformist complete"
+			add_political_power = -300
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SAU_Monarchy_house_of_al_saud }
+			add_to_variable = { SAU_production_speed_infrastructure_factor = 0.03 tooltip = production_speed_infrastructure_factor_tt }
+			add_to_variable = { SAU_production_speed_industrial_complex_factor = 0.02 tooltip = production_speed_industrial_complex_factor_tt }
+			hidden_effect = {
+				add_to_variable = { SAU_pc_standing = 5 }
+				SAU_pc_clamp_seats = yes
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_pc_enact_reformist timeout"
+			custom_effect_tooltip = SAU_pc_bill_unenacted_tt
+			add_stability = -0.04
+			hidden_effect = {
+				subtract_from_variable = { SAU_pc_standing = 15 }
+				SAU_pc_clamp_seats = yes
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SAU_pc_enact_traditionalist = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 198
+
+		activation = { always = no }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SAU_pc_enact_traditionalist_tt
+				has_political_power > 299
+				check_variable = { SAU_pc_standing > 39 }
+			}
+		}
+
+		days_mission_timeout = 365
+		is_good = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_pc_enact_traditionalist complete"
+			add_political_power = -300
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SAU_Monarchy_house_of_al_saud }
+			add_to_variable = { SAU_monthly_population = 0.02 tooltip = monthly_population_tt }
+			add_to_variable = { SAU_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
+			hidden_effect = {
+				add_to_variable = { SAU_pc_standing = 5 }
+				SAU_pc_clamp_seats = yes
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_pc_enact_traditionalist timeout"
+			custom_effect_tooltip = SAU_pc_bill_unenacted_tt
+			add_stability = -0.04
+			hidden_effect = {
+				subtract_from_variable = { SAU_pc_standing = 15 }
+				SAU_pc_clamp_seats = yes
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SAU_pc_enact_provincial = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 198
+
+		activation = { always = no }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SAU_pc_enact_provincial_tt
+				has_political_power > 299
+				check_variable = { SAU_pc_standing > 39 }
+			}
+		}
+
+		days_mission_timeout = 365
+		is_good = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_pc_enact_provincial complete"
+			add_political_power = -300
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SAU_Monarchy_house_of_al_saud }
+			add_to_variable = { SAU_recruitable_population = 0.02 tooltip = recruitable_population_tt }
+			add_to_variable = { SAU_corruption_cost = -0.03 tooltip = corruption_cost_factor_tt }
+			hidden_effect = {
+				add_to_variable = { SAU_pc_standing = 5 }
+				SAU_pc_clamp_seats = yes
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_pc_enact_provincial timeout"
+			custom_effect_tooltip = SAU_pc_bill_unenacted_tt
+			add_stability = -0.04
+			hidden_effect = {
+				subtract_from_variable = { SAU_pc_standing = 15 }
+				SAU_pc_clamp_seats = yes
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SAU_pc_readout = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 175
+
+		visible = { has_country_flag = SAU_peoples_council_open }
+
+		available = { always = no }
+
+		cost = 0
+
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_pc_convene = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 174
+
+		visible = {
+			has_country_flag = SAU_peoples_council_open
+			NOT = { has_country_flag = SAU_pc_debate_ongoing }
+			NOT = { has_country_flag = SAU_pc_doing_bill }
+		}
+
+		cost = 60
+
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_pc_convene"
+			set_country_flag = SAU_pc_debate_ongoing
+			clr_country_flag = SAU_pc_bill_answered
+			custom_effect_tooltip = SAU_pc_convene_tt
+			activate_mission = SAU_pc_session_clock
+		}
+
+		ai_will_do = { base = 8 }
+	}
+
+	SAU_pc_session_clock = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 199
+
+		activation = { always = no }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SAU_pc_answer_the_chamber_tt
+				has_country_flag = SAU_pc_bill_answered
+			}
+		}
+		days_mission_timeout = 21
+		is_good = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_pc_session_clock complete"
+			clr_country_flag = SAU_pc_debate_ongoing
+			clr_country_flag = SAU_pc_doing_bill
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_pc_session_clock timeout"
+			clr_country_flag = SAU_pc_debate_ongoing
+			clr_country_flag = SAU_pc_doing_bill
+			add_political_power = -100
+			add_stability = -0.03
+			custom_effect_tooltip = SAU_pc_ignored_tt
+			hidden_effect = {
+				subtract_from_variable = { SAU_pc_standing = 10 }
+				clamp_variable = { var = SAU_pc_standing min = 0 max = 100 }
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SAU_pc_take_reformist_bill = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 173
+
+		visible = {
+			has_country_flag = SAU_pc_debate_ongoing
+			NOT = { has_country_flag = SAU_pc_doing_bill }
+			check_variable = { SAU_pc_reformists > 20 }
+		}
+
+		cost = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_pc_take_reformist_bill"
+			set_country_flag = SAU_pc_doing_bill
+			set_country_flag = SAU_pc_bill_answered
+			clr_country_flag = SAU_pc_debate_ongoing
+			country_event = { id = SAU_events.206 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	SAU_pc_take_traditionalist_bill = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 172
+
+		visible = {
+			has_country_flag = SAU_pc_debate_ongoing
+			NOT = { has_country_flag = SAU_pc_doing_bill }
+			check_variable = { SAU_pc_traditionalists > 20 }
+		}
+
+		cost = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_pc_take_traditionalist_bill"
+			set_country_flag = SAU_pc_doing_bill
+			set_country_flag = SAU_pc_bill_answered
+			clr_country_flag = SAU_pc_debate_ongoing
+			country_event = { id = SAU_events.207 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	SAU_pc_take_provincial_bill = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 171
+
+		visible = {
+			has_country_flag = SAU_pc_debate_ongoing
+			NOT = { has_country_flag = SAU_pc_doing_bill }
+			check_variable = { SAU_pc_provincials > 20 }
+		}
+
+		cost = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_pc_take_provincial_bill"
+			set_country_flag = SAU_pc_doing_bill
+			set_country_flag = SAU_pc_bill_answered
+			clr_country_flag = SAU_pc_debate_ongoing
+			country_event = { id = SAU_events.208 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+
+	SAU_pc_public_works = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 170
+
+		visible = {
+			has_country_flag = SAU_peoples_council_open
+			NOT = { has_country_flag = SAU_pc_works_underway }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SAU_pc_works_gate_tt
+				check_variable = { SAU_pc_standing > 59 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = SAU_pc_works_somewhere_tt
+				any_owned_state = {
+					is_core_of = ROOT
+					NOT = { has_state_flag = SAU_pc_works_done }
+				}
+			}
+		}
+
+		cost = 50
+
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_pc_public_works"
+			set_country_flag = SAU_pc_works_underway
+			hidden_effect = {
+				if = { limit = { check_variable = { SAU_pc_req_civ < 1 } } set_variable = { SAU_pc_req_civ = 1 } }
+				if = { limit = { check_variable = { SAU_pc_req_off < 1 } } set_variable = { SAU_pc_req_off = 1 } }
+				if = { limit = { check_variable = { SAU_pc_req_inf < 1 } } set_variable = { SAU_pc_req_inf = 1 } }
+				random_owned_controlled_state = {
+					limit = {
+						is_core_of = ROOT
+						NOT = { has_state_flag = SAU_pc_works_done }
+					}
+					set_state_flag = SAU_pc_works_target
+					save_global_event_target_as = SAU_pc_works_province
+				}
+			}
+			custom_effect_tooltip = SAU_pc_works_named_tt
+			activate_mission = SAU_pc_works_mandate
+			set_temp_variable = { treasury_change = -4.00 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				has_active_mission = bankruptcy_incoming_collapse
+				factor = 0
+			}
+		}
+	}
+
+	SAU_pc_works_mandate = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 197
+
+		activation = { always = no }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SAU_pc_works_build_tt
+				event_target:SAU_pc_works_province = {
+					check_variable = { var = building_level@industrial_complex value = ROOT.SAU_pc_req_civ compare = greater_than_or_equals }
+					check_variable = { var = building_level@offices value = ROOT.SAU_pc_req_off compare = greater_than_or_equals }
+					check_variable = { var = building_level@infrastructure value = ROOT.SAU_pc_req_inf compare = greater_than_or_equals }
+				}
+			}
+		}
+
+		days_mission_timeout = 730
+		is_good = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_pc_works_mandate complete"
+			clr_country_flag = SAU_pc_works_underway
+			event_target:SAU_pc_works_province = {
+				clr_state_flag = SAU_pc_works_target
+				set_state_flag = SAU_pc_works_done
+				add_dynamic_modifier = { modifier = SAU_peoples_council_works }
+			}
+			custom_effect_tooltip = SAU_pc_works_finished_tt
+			hidden_effect = {
+				add_to_variable = { SAU_pc_standing = 5 }
+				add_to_variable = { SAU_pc_req_civ = 1 }
+				add_to_variable = { SAU_pc_req_off = 1 }
+				add_to_variable = { SAU_pc_req_inf = 1 }
+				SAU_pc_clamp_works = yes
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SAU_pc_works_mandate timeout"
+			clr_country_flag = SAU_pc_works_underway
+			event_target:SAU_pc_works_province = {
+				clr_state_flag = SAU_pc_works_target
+				remove_building = { type = industrial_complex level = 1 }
+			}
+			custom_effect_tooltip = SAU_pc_works_abandoned_tt
+			add_stability = -0.03
+			hidden_effect = {
+				subtract_from_variable = { SAU_pc_standing = 15 }
+				SAU_pc_clamp_works = yes
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SAU_pc_dissolve = {
+		icon = GFX_decision_generic_political_discourse
+		priority = 169
+
+		visible = { has_country_flag = SAU_peoples_council_open }
+
+		cost = 150
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_pc_dissolve"
+			clr_country_flag = SAU_peoples_council_open
+			custom_effect_tooltip = SAU_pc_dissolved_tt
+			add_stability = -0.10
+			add_war_support = -0.08
+			add_political_power = 150
+			hidden_effect = { set_variable = { SAU_pc_standing = 0 } }
+		}
+
+		ai_will_do = { base = 1 }
+	}
 
 	SAU_shura_readout = {
 		icon = GFX_decision_generic_political_discourse
