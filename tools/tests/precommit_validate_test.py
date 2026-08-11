@@ -34,24 +34,28 @@ _GOLDEN = {
         "validate_ideas",
         "validate_events",
         "validate_oob_units",
+        "validate_characters",
     },
     "events/Syria.txt": {
         "validate_style",
         "validate_ideas",
         "validate_events",
         "validate_oob_units",
+        "validate_characters",
     },
     "common/decisions/Sudan.txt": {
         "validate_style",
         "validate_ideas",
         "validate_events",
         "validate_oob_units",
+        "validate_characters",
     },
     "common/on_actions/00_on_actions.txt": {
         "validate_style",
         "validate_ideas",
         "validate_oob_units",
         "validate_events",
+        "validate_characters",
     },
     "common/operations/00_operations.txt": {
         "validate_style",
@@ -78,6 +82,7 @@ _GOLDEN = {
         "validate_oob_units",
         "validate_ideas",
         "validate_events",
+        "validate_characters",
     },
     "common/units/MD_land_units.txt": {
         "validate_style",
@@ -126,6 +131,7 @@ _GOLDEN = {
         "validate_ideas",
         "validate_oob_units",
         "validate_events",
+        "validate_characters",
     },
 }
 

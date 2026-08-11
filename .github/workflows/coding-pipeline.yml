@@ -124,6 +124,9 @@ jobs:
       factions: >-
         ${{ steps.filter.outputs.factions ||
         steps.dispatch.outputs.factions }}
+      characters: >-
+        ${{ steps.filter.outputs.characters ||
+        steps.dispatch.outputs.characters }}
       oob: >-
         ${{ steps.filter.outputs.oob ||
         steps.dispatch.outputs.oob }}
@@ -196,6 +199,16 @@ jobs:
               - 'common/ai_equipment/**'
             factions:
               - 'common/factions/**'
+            characters:
+              - 'common/characters/**'
+              - 'common/unit_leader/**'
+              # Sources of create_corps_commander and friends.
+              - 'common/national_focus/**'
+              - 'common/decisions/**'
+              - 'common/scripted_effects/**'
+              - 'common/on_actions/**'
+              - 'events/**'
+              - 'history/countries/**'
             oob:
               - 'history/units/**'
               - 'common/units/**'
@@ -254,9 +267,9 @@ jobs:
         id: dispatch
         run: |
           for out in common events history localisation ai-strategy \
-              ai-navy ai-equipment factions oob decisions scripted-loc \
-              scripted-guis interface national-focus on-actions \
-              scripted-effects mod content mios; do
+              ai-navy ai-equipment factions characters oob decisions \
+              scripted-loc scripted-guis interface national-focus \
+              on-actions scripted-effects mod content mios; do
             echo "$out=true" >> "$GITHUB_OUTPUT"
           done
           # style is diff-scoped (MD_STAGED_FILES from the changed-file
@@ -589,6 +602,7 @@ jobs:
       needs.detect-changes.outputs.ai-navy == 'true' ||
       needs.detect-changes.outputs.ai-equipment == 'true' ||
       needs.detect-changes.outputs.factions == 'true' ||
+      needs.detect-changes.outputs.characters == 'true' ||
       needs.detect-changes.outputs.scripted-guis == 'true' ||
       needs.detect-changes.outputs.interface == 'true' ||
       needs.detect-changes.outputs.national-focus == 'true' ||
@@ -634,6 +648,13 @@ jobs:
             title: "Validate Faction System"
             strict: true
             should_run: ${{ needs.detect-changes.outputs.factions }}
+          - script: validate_characters.py
+            name: characters
+            title: "Validate Character Traits"
+            strict: true
+            # undefined-unit-leader-trait is WARNING-severity: the 9-item
+            # ALG/PHI backlog surfaces in reports without gating PRs.
+            should_run: ${{ needs.detect-changes.outputs.characters }}
           - script: validate_mios.py
             name: mios
             title: "Validate MIO Organizations"
