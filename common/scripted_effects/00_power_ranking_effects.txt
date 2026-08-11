@@ -28,28 +28,107 @@ accumulate_power_ranking_contribution = {
 	add_to_variable = { global.global_num_of_factories = power_ranking_contribution }
 }
 
-# Shared: slot a country into its regional array. Idempotent — the is_in_array guards
-# keep mid-game callers from double-adding a tag that is already registered.
+# Shared: slot a country into its regional array. Keep membership checks inside the selected
+# branch so an already-registered country cannot fall through into a second region.
 register_in_power_ranking_array = {
 	if = {
-		limit = { has_country_flag = european_nation_flag NOT = { is_in_array = { global.european_nations = THIS } } }
-		add_to_array = { global.european_nations = THIS }
+		limit = { has_country_flag = european_nation_flag }
+		if = { limit = { NOT = { is_in_array = { global.european_nations = THIS } } }
+			add_to_array = { global.european_nations = THIS }
+		}
 	}
 	else_if = {
-		limit = { has_country_flag = african_nation_flag NOT = { is_in_array = { global.sub_saharan_nations = THIS } } }
-		add_to_array = { global.sub_saharan_nations = THIS }
+		limit = { has_country_flag = african_nation_flag }
+		if = { limit = { NOT = { is_in_array = { global.sub_saharan_nations = THIS } } }
+			add_to_array = { global.sub_saharan_nations = THIS }
+		}
 	}
 	else_if = {
-		limit = { has_country_flag = middle_east_nation_flag NOT = { is_in_array = { global.middle_eastern_nations = THIS } } }
-		add_to_array = { global.middle_eastern_nations = THIS }
+		limit = { has_country_flag = middle_east_nation_flag }
+		if = { limit = { NOT = { is_in_array = { global.middle_eastern_nations = THIS } } }
+			add_to_array = { global.middle_eastern_nations = THIS }
+		}
 	}
 	else_if = {
-		limit = { has_country_flag = asian_nation_flag NOT = { is_in_array = { global.asian_nations = THIS } } }
-		add_to_array = { global.asian_nations = THIS }
+		limit = { has_country_flag = asian_nation_flag }
+		if = { limit = { NOT = { is_in_array = { global.asian_nations = THIS } } }
+			add_to_array = { global.asian_nations = THIS }
+		}
 	}
 	else_if = {
-		limit = { has_country_flag = american_nation_flag NOT = { is_in_array = { global.american_nations = THIS } } }
-		add_to_array = { global.american_nations = THIS }
+		limit = { has_country_flag = american_nation_flag }
+		if = { limit = { NOT = { is_in_array = { global.american_nations = THIS } } }
+			add_to_array = { global.american_nations = THIS }
+		}
+	}
+}
+
+migrate_naval_power_tracking = {
+	if = { limit = { NOT = { has_global_flag = GLOBAL_naval_power_tracking_migrated } }
+		clear_array = global.european_nations
+		clear_array = global.sub_saharan_nations
+		clear_array = global.middle_eastern_nations
+		clear_array = global.asian_nations
+		clear_array = global.american_nations
+
+		every_country = {
+			set_country_group_flags = yes
+			register_in_power_ranking_array = yes
+		}
+
+		set_variable = { global.previous_largest_european_navy = 0 }
+		set_variable = { global.previous_largest_sub_saharan_navy = 0 }
+		set_variable = { global.previous_largest_middle_east_navy = 0 }
+		set_variable = { global.previous_largest_asian_navy = 0 }
+		set_variable = { global.previous_largest_american_navy = 0 }
+
+		for_each_loop = {
+			array = global.european_nations
+			value = v
+			var:v = {
+				if = { limit = { has_idea = naval_power_of_the_continent check_variable = { global.previous_largest_european_navy < 1 } }
+					set_variable = { global.previous_largest_european_navy = THIS.id }
+				}
+			}
+		}
+		for_each_loop = {
+			array = global.sub_saharan_nations
+			value = v
+			var:v = {
+				if = { limit = { has_idea = naval_power_of_the_continent check_variable = { global.previous_largest_sub_saharan_navy < 1 } }
+					set_variable = { global.previous_largest_sub_saharan_navy = THIS.id }
+				}
+			}
+		}
+		for_each_loop = {
+			array = global.middle_eastern_nations
+			value = v
+			var:v = {
+				if = { limit = { has_idea = naval_power_of_the_continent check_variable = { global.previous_largest_middle_east_navy < 1 } }
+					set_variable = { global.previous_largest_middle_east_navy = THIS.id }
+				}
+			}
+		}
+		for_each_loop = {
+			array = global.asian_nations
+			value = v
+			var:v = {
+				if = { limit = { has_idea = naval_power_of_the_continent check_variable = { global.previous_largest_asian_navy < 1 } }
+					set_variable = { global.previous_largest_asian_navy = THIS.id }
+				}
+			}
+		}
+		for_each_loop = {
+			array = global.american_nations
+			value = v
+			var:v = {
+				if = { limit = { has_idea = naval_power_of_the_continent check_variable = { global.previous_largest_american_navy < 1 } }
+					set_variable = { global.previous_largest_american_navy = THIS.id }
+				}
+			}
+		}
+
+		set_global_flag = GLOBAL_naval_power_tracking_migrated
 	}
 }
 
@@ -99,6 +178,8 @@ set_power_ranking_ideas_for_every_country = {
 	add_to_array = { global.sc_updates_euro_america = MEX }
 	add_to_array = { global.sc_updates_euro_america = USA }
 
+	set_global_flag = GLOBAL_naval_power_tracking_migrated
+
 	power_ranking_selection_sort_european = yes
 	power_ranking_selection_sort_sub_saharan = yes
 	power_ranking_selection_sort_middle_east = yes
@@ -125,6 +206,8 @@ calculate_power_ranking_contributions = {
 # power ranking value, and grant naval_power_of_the_continent to that region's naval hegemon.
 # Called by both the startup build and the quarterly recalculation.
 power_ranking_evaluate_all_regions = {
+	migrate_naval_power_tracking = yes
+
 	set_temp_variable = { largest_value = 0 }
 	set_temp_variable = { largest_european_navy = 0 }
 	for_each_loop = {
@@ -133,13 +216,6 @@ power_ranking_evaluate_all_regions = {
 		var:v = {
 			set_variable = { percentage_of_global_factories = power_ranking_contribution }
 			divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
-			if = {
-				limit = {
-					has_idea = naval_power_of_the_continent
-					check_variable = { global.previous_largest_european_navy < 1 }
-				}
-				set_variable = { global.previous_largest_european_navy = THIS.id }
-			}
 			if = { limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_european_navy = THIS.id }
@@ -155,7 +231,11 @@ power_ranking_evaluate_all_regions = {
 		var:global.previous_largest_european_navy = { remove_ideas = naval_power_of_the_continent }
 	}
 	if = { limit = { check_variable = { largest_european_navy > 0 } }
-		var:largest_european_navy = { add_ideas = naval_power_of_the_continent }
+		var:largest_european_navy = {
+			if = { limit = { NOT = { has_idea = naval_power_of_the_continent } }
+				add_ideas = naval_power_of_the_continent
+			}
+		}
 	}
 	set_variable = { global.previous_largest_european_navy = largest_european_navy }
 
@@ -167,13 +247,6 @@ power_ranking_evaluate_all_regions = {
 		var:v = {
 			set_variable = { percentage_of_global_factories = power_ranking_contribution }
 			divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
-			if = {
-				limit = {
-					has_idea = naval_power_of_the_continent
-					check_variable = { global.previous_largest_sub_saharan_navy < 1 }
-				}
-				set_variable = { global.previous_largest_sub_saharan_navy = THIS.id }
-			}
 			if = { limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_sub_saharan_navy = THIS.id }
@@ -189,7 +262,11 @@ power_ranking_evaluate_all_regions = {
 		var:global.previous_largest_sub_saharan_navy = { remove_ideas = naval_power_of_the_continent }
 	}
 	if = { limit = { check_variable = { largest_sub_saharan_navy > 0 } }
-		var:largest_sub_saharan_navy = { add_ideas = naval_power_of_the_continent }
+		var:largest_sub_saharan_navy = {
+			if = { limit = { NOT = { has_idea = naval_power_of_the_continent } }
+				add_ideas = naval_power_of_the_continent
+			}
+		}
 	}
 	set_variable = { global.previous_largest_sub_saharan_navy = largest_sub_saharan_navy }
 
@@ -201,13 +278,6 @@ power_ranking_evaluate_all_regions = {
 		var:v = {
 			set_variable = { percentage_of_global_factories = power_ranking_contribution }
 			divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
-			if = {
-				limit = {
-					has_idea = naval_power_of_the_continent
-					check_variable = { global.previous_largest_middle_east_navy < 1 }
-				}
-				set_variable = { global.previous_largest_middle_east_navy = THIS.id }
-			}
 			if = { limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_middle_east_navy = THIS.id }
@@ -223,7 +293,11 @@ power_ranking_evaluate_all_regions = {
 		var:global.previous_largest_middle_east_navy = { remove_ideas = naval_power_of_the_continent }
 	}
 	if = { limit = { check_variable = { largest_middle_east_navy > 0 } }
-		var:largest_middle_east_navy = { add_ideas = naval_power_of_the_continent }
+		var:largest_middle_east_navy = {
+			if = { limit = { NOT = { has_idea = naval_power_of_the_continent } }
+				add_ideas = naval_power_of_the_continent
+			}
+		}
 	}
 	set_variable = { global.previous_largest_middle_east_navy = largest_middle_east_navy }
 
@@ -235,13 +309,6 @@ power_ranking_evaluate_all_regions = {
 		var:v = {
 			set_variable = { percentage_of_global_factories = power_ranking_contribution }
 			divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
-			if = {
-				limit = {
-					has_idea = naval_power_of_the_continent
-					check_variable = { global.previous_largest_asian_navy < 1 }
-				}
-				set_variable = { global.previous_largest_asian_navy = THIS.id }
-			}
 			if = { limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_asian_navy = THIS.id }
@@ -257,7 +324,11 @@ power_ranking_evaluate_all_regions = {
 		var:global.previous_largest_asian_navy = { remove_ideas = naval_power_of_the_continent }
 	}
 	if = { limit = { check_variable = { largest_asian_navy > 0 } }
-		var:largest_asian_navy = { add_ideas = naval_power_of_the_continent }
+		var:largest_asian_navy = {
+			if = { limit = { NOT = { has_idea = naval_power_of_the_continent } }
+				add_ideas = naval_power_of_the_continent
+			}
+		}
 	}
 	set_variable = { global.previous_largest_asian_navy = largest_asian_navy }
 
@@ -269,13 +340,6 @@ power_ranking_evaluate_all_regions = {
 		var:v = {
 			set_variable = { percentage_of_global_factories = power_ranking_contribution }
 			divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
-			if = {
-				limit = {
-					has_idea = naval_power_of_the_continent
-					check_variable = { global.previous_largest_american_navy < 1 }
-				}
-				set_variable = { global.previous_largest_american_navy = THIS.id }
-			}
 			if = { limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_american_navy = THIS.id }
@@ -291,7 +355,11 @@ power_ranking_evaluate_all_regions = {
 		var:global.previous_largest_american_navy = { remove_ideas = naval_power_of_the_continent }
 	}
 	if = { limit = { check_variable = { largest_american_navy > 0 } }
-		var:largest_american_navy = { add_ideas = naval_power_of_the_continent }
+		var:largest_american_navy = {
+			if = { limit = { NOT = { has_idea = naval_power_of_the_continent } }
+				add_ideas = naval_power_of_the_continent
+			}
+		}
 	}
 	set_variable = { global.previous_largest_american_navy = largest_american_navy }
 }
@@ -322,6 +390,8 @@ assign_power_ranking_value = {
 
 # MONTH 2/5/8/11: select each regional-power prefix from the latest contributions.
 sort_and_assign_power_rankings = {
+	migrate_naval_power_tracking = yes
+
 	power_ranking_selection_sort_european = yes
 	power_ranking_selection_sort_sub_saharan = yes
 	power_ranking_selection_sort_middle_east = yes
