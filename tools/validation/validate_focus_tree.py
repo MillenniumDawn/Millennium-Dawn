@@ -5,7 +5,7 @@ import os
 import re
 import sys
 from collections import defaultdict
-from typing import Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -138,10 +138,10 @@ _TREASURY_MUTATE_VERBS = frozenset(
         "divide_variable",
     }
 )
-# Scaling by a literal loses the magnitude but keeps the sign, which is what
-# separates `treasury_change = gdp_total` * 0.05 (income) from the same base
-# * -0.15 (a cost of unknown size). Every other mutate loses the sign too.
+# Scaling by a literal loses the magnitude but keeps the sign for a known
+# non-negative source such as gdp_total. Every other mutate loses the sign too.
 _TREASURY_SCALE_VERBS = frozenset({"multiply_temp_variable", "multiply_variable"})
+_TREASURY_NONNEGATIVE_VARIABLES = frozenset({"gdp_total"})
 _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # modify_treasury_effect and its variants (e.g. modify_treasury_effect_corruption,
 # which scales the applied amount by a corruption-level idea before adding it to
@@ -397,34 +397,45 @@ def _body_money_cost(
             seg_has_set = True
             if val is not None and _NUMERIC_LITERAL_RE.match(val):
                 seg_var_base = False
-                if float(val) < 0:
-                    seg_neg = True
-                    seg_max = max(seg_max, -float(val))
+                try:
+                    amount = float(val)
+                except ValueError:
+                    seg_unknown = True
+                    seg_sign_unknown = True
+                else:
+                    if amount < 0:
+                        seg_neg = True
+                        seg_max = max(seg_max, -amount)
             elif val is not None and val != "{":
-                # A bare variable reference: the amount and the sign are both
-                # unknown until a scaling literal states which way it goes.
+                # A bare variable reference is unknown. Only known non-negative
+                # sources retain their sign when scaled by a literal.
                 seg_unknown = True
                 seg_sign_unknown = True
-                seg_var_base = True
+                seg_var_base = val in _TREASURY_NONNEGATIVE_VARIABLES
             else:
                 seg_unknown = True
                 seg_sign_unknown = True
                 seg_var_base = False
         elif kind == "scale":
             seg_unknown = True
-            if seg_var_base:
-                # `treasury_change = gdp_total` then `* -0.08` is the MD idiom
-                # for a cost of unknown size, and `* 0.05` for income: the base
-                # is a positive quantity, so the literal carries the sign.
-                seg_neg = float(val) < 0
-                seg_sign_unknown = False
-                seg_var_base = False
-            elif seg_has_set and not seg_sign_unknown:
-                if float(val) < 0:
-                    seg_neg = not seg_neg
-            else:
+            if val is None:
                 seg_has_set = True
                 seg_sign_unknown = True
+            else:
+                scale_is_negative = val.startswith("-") and val.lstrip("-0.") != ""
+                if seg_var_base:
+                    # `treasury_change = gdp_total` then `* -0.08` is the MD idiom
+                    # for a cost of unknown size, and `* 0.05` for income: the known
+                    # non-negative base lets the literal carry the sign.
+                    seg_neg = scale_is_negative
+                    seg_sign_unknown = False
+                    seg_var_base = False
+                elif seg_has_set and not seg_sign_unknown:
+                    if scale_is_negative:
+                        seg_neg = not seg_neg
+                else:
+                    seg_has_set = True
+                    seg_sign_unknown = True
         elif kind == "mutate":
             seg_has_set = True
             seg_unknown = True
@@ -1075,7 +1086,7 @@ def _parse_focus_text(text: str, filepath: str) -> Dict:
       "focuses"       — list of (focus_id, abs_line, prereq_groups)
       "shared_refs"   — set of shared_focus IDs referenced inside the tree
     """
-    result = {
+    result: Dict[str, Any] = {
         "filepath": filepath,
         "trees": [],
         "shared_defs": {},

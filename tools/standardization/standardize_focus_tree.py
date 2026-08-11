@@ -53,6 +53,10 @@ _SINGLE_LINE_LIST_PROPS = {
     "will_lead_to_war_with": "will_lead_to_war_with",
 }
 
+_REPEATABLE_PROPERTY_KEYS = frozenset(
+    {"icon", "offset", "prerequisites", "mutually_exclusive", "will_lead_to_war_with"}
+)
+
 # Block props: map script name -> (props key, style).
 # Styles: "scalar" overwrites; "list" appends; "skip_empty_scalar"/"skip_empty_list"
 # drop blocks that contain only whitespace.
@@ -234,9 +238,13 @@ def extract_focus_properties(focus_lines):
 
     pending: list[str] = []
 
-    def claim(key: str) -> None:
+    def claim(key: str, index: int | None = None) -> None:
         if pending:
-            props["comments"].setdefault(key, []).extend(pending)
+            comments = props["comments"]
+            if key in _REPEATABLE_PROPERTY_KEYS:
+                comments.setdefault(key, {})[index] = list(pending)
+            else:
+                comments.setdefault(key, []).extend(pending)
             pending.clear()
 
     i = 1  # Skip opening brace
@@ -278,7 +286,7 @@ def extract_focus_properties(focus_lines):
                 icon_entries = []
                 props["icon"] = icon_entries
             icon_entries.append(entry)
-            claim("icon")
+            claim("icon", len(icon_entries) - 1)
             continue
 
         if prop_name in _SINGLE_LINE_PROPS:
@@ -288,8 +296,9 @@ def extract_focus_properties(focus_lines):
             continue
 
         if prop_name in _SINGLE_LINE_LIST_PROPS:
-            props[_SINGLE_LINE_LIST_PROPS[prop_name]].append(line)
-            claim(_SINGLE_LINE_LIST_PROPS[prop_name])
+            key = _SINGLE_LINE_LIST_PROPS[prop_name]
+            props[key].append(line)
+            claim(key, len(props[key]) - 1)
             i += 1
             continue
 
@@ -301,12 +310,14 @@ def extract_focus_properties(focus_lines):
                 # Claim only when the block survives, so a dropped empty block
                 # hands its comments to whatever is emitted next instead of
                 # stranding them on a key that never renders.
-                claim(key)
                 if style.endswith("list"):
                     props[key].append(block_lines)
+                    claim(key, len(props[key]) - 1)
                 elif props[key]:
+                    claim(key)
                     props[key] = _merge_duplicate_blocks(props[key], block_lines)
                 else:
+                    claim(key)
                     props[key] = block_lines
             i = next_i
             continue
@@ -428,9 +439,13 @@ def format_focus_offset_block(block_lines):
     return lines
 
 
-def _emit_comments(lines, props, key):
-    """Emit the comments written above `key` in the source, if any."""
-    lines.extend(props.get("comments", {}).get(key, ()))
+def _emit_comments(lines, props, key, index=None):
+    """Emit comments written above a property or a repeated property entry."""
+    comments = props.get("comments", {}).get(key, {})
+    if index is None:
+        lines.extend(comments)
+    else:
+        lines.extend(comments.get(index, ()))
 
 
 def format_focus_block(props, block_type="focus"):
@@ -442,10 +457,10 @@ def format_focus_block(props, block_type="focus"):
     _emit_comments(lines, props, "id")
     if props["id"]:
         lines.append(f"\t\t{props['id']}")
-    _emit_comments(lines, props, "icon")
     if props["icon"]:
         # `icon` is always list[list[str]] — emit each entry in order.
-        for icon_block in props["icon"]:
+        for index, icon_block in enumerate(props["icon"]):
+            _emit_comments(lines, props, "icon", index)
             icon_lines = compact_icon(icon_block)
             if "\n" in icon_lines:
                 for icon_line in icon_lines.split("\n"):
@@ -473,8 +488,8 @@ def format_focus_block(props, block_type="focus"):
     _emit_comments(lines, props, "relative_position_id")
     if props["relative_position_id"]:
         lines.append(f"\t\t{props['relative_position_id']}")
-    _emit_comments(lines, props, "offset")
-    for offset_block in props["offset"]:
+    for index, offset_block in enumerate(props["offset"]):
+        _emit_comments(lines, props, "offset", index)
         formatted_offset = format_focus_offset_block(offset_block[:])
         for line in formatted_offset:
             lines.append(line)
@@ -501,24 +516,24 @@ def format_focus_block(props, block_type="focus"):
     # 8. Prerequisites and related conditions (grouped together without internal spacing)
     condition_group_added = False
 
-    _emit_comments(lines, props, "prerequisites")
-    for prereq in props["prerequisites"]:
+    for index, prereq in enumerate(props["prerequisites"]):
+        _emit_comments(lines, props, "prerequisites", index)
         compacted_prereq = collapse_or_compact(prereq[:])
         for line in compacted_prereq:
             lines.append(line)
         condition_group_added = True
 
     # Add all mutually_exclusive (no spacing between these and prerequisites)
-    _emit_comments(lines, props, "mutually_exclusive")
-    for mutex in props["mutually_exclusive"]:
+    for index, mutex in enumerate(props["mutually_exclusive"]):
+        _emit_comments(lines, props, "mutually_exclusive", index)
         compacted_mutex = collapse_or_compact(mutex[:])
         for line in compacted_mutex:
             lines.append(line)
         condition_group_added = True
 
     # Add will_lead_to_war_with as single-line property (may repeat — one line per target)
-    _emit_comments(lines, props, "will_lead_to_war_with")
-    for war_target in props["will_lead_to_war_with"]:
+    for index, war_target in enumerate(props["will_lead_to_war_with"]):
+        _emit_comments(lines, props, "will_lead_to_war_with", index)
         lines.append(f"\t\t{war_target}")
         condition_group_added = True
 

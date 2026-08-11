@@ -83,6 +83,49 @@ def test_round_trip_emits_one_line_per_target():
     ]
 
 
+def test_comments_stay_with_repeated_property_entries():
+    lines = [
+        "\tfocus = {\n",
+        "\t\tid = TST_repeated\n",
+        "\t\ticon = first_icon\n",
+        "\t\t# second icon\n",
+        "\t\ticon = second_icon\n",
+        "\t\tx = 0\n",
+        "\t\ty = 0\n",
+        "\t\toffset = { x = 1 }\n",
+        "\t\t# second offset\n",
+        "\t\toffset = { x = 2 }\n",
+        "\t\tcost = 5\n",
+        "\t\tprerequisite = { focus = TST_first }\n",
+        "\t\t# second prerequisite\n",
+        "\t\tprerequisite = { focus = TST_second }\n",
+        "\t\tmutually_exclusive = { focus = TST_third }\n",
+        "\t\t# second mutually exclusive\n",
+        "\t\tmutually_exclusive = { focus = TST_fourth }\n",
+        "\t\twill_lead_to_war_with = MOR\n",
+        "\t\t# second war target\n",
+        "\t\twill_lead_to_war_with = TUN\n",
+        "\t}\n",
+    ]
+
+    out = format_focus_block(extract_focus_properties(lines))
+    expected_properties = {
+        "second icon": "icon = second_icon",
+        "second offset": "offset = { x = 2 }",
+        "second prerequisite": "prerequisite = { focus = TST_second }",
+        "second mutually exclusive": "mutually_exclusive = { focus = TST_fourth }",
+        "second war target": "will_lead_to_war_with = TUN",
+    }
+    for comment, property_line in expected_properties.items():
+        comment_index = next(i for i, line in enumerate(out) if comment in line)
+        assert out[comment_index + 1].strip() == property_line
+
+    assert (
+        format_focus_block(extract_focus_properties([f"{line}\n" for line in out]))
+        == out
+    )
+
+
 def _focus_with_offset(trigger_lines):
     lines = [
         "\tfocus = {\n",

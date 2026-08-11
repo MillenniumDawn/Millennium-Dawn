@@ -35,7 +35,8 @@ def _write_effects_file(tmp_path, extra=""):
 grant_pp_effect = {
 	add_political_power = 25
 }
-""" + extra,
+"""
+        + extra,
         encoding="utf-8",
     )
 
@@ -563,6 +564,21 @@ def test_worker_gdp_multiply_by_positive_is_income(tmp_path):
     assert d["spend"] == 0.0
     assert d["has_cost"] is False
     assert d["unknown"] is False
+
+
+def test_worker_signed_variable_positive_multiply_is_unknown(tmp_path):
+    reward = (
+        "set_temp_variable = { treasury_change = signed_balance }\n"
+        "\t\t\tmultiply_temp_variable = { treasury_change = 0.05 }\n"
+        "\t\t\tmodify_treasury_effect = yes"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    d = _guard_data(fpath, tmp_path)[0]
+    assert d["has_cost"] is True
+    assert d["unknown"] is True
 
 
 def test_validator_gdp_multiply_income_needs_no_guard(tmp_path):
