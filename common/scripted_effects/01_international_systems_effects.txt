@@ -472,7 +472,14 @@ update_sc_vote = {
 	} else = {
 		set_variable = { global.current_sc_vote_type = sc_new_vote_type }
 		set_variable = { global.current_sc_vote_nation = sc_new_vote_nation }
-		recompute_un_sc_required_yes = yes
+		set_variable = {
+			global.un_sc_required_yes = {
+				value = global.security_council_members^num
+				multiply = 0.6
+				add = 0.499
+				round = yes
+			}
+		}
 		if = {
 			limit = {
 				check_variable = { global.current_sc_vote_type = 5 }
@@ -1045,37 +1052,6 @@ unsc_fail_permanent_seat_application = {
 	unsc_end_permanent_seat_application = yes
 }
 
-unsc_remove_queued_elected_seat_votes_for_this = {
-	clear_array = md_rebuild_vote_type
-	clear_array = md_rebuild_vote_nation
-	for_each_loop = {
-		array = global.ga_vote_nation_tracker
-		value = v
-		index = i
-		if = {
-			limit = {
-				OR = {
-					NOT = { check_variable = { v = THIS } }
-					NOT = { check_variable = { global.ga_vote_type_tracker^i = 6 } }
-				}
-			}
-			add_to_array = { md_rebuild_vote_type = global.ga_vote_type_tracker^i }
-			add_to_array = { md_rebuild_vote_nation = v }
-		}
-	}
-	clear_array = global.ga_vote_type_tracker
-	clear_array = global.ga_vote_nation_tracker
-	for_each_loop = {
-		array = md_rebuild_vote_nation
-		value = v
-		index = i
-		add_to_array = { global.ga_vote_type_tracker = md_rebuild_vote_type^i }
-		add_to_array = { global.ga_vote_nation_tracker = v }
-	}
-	clear_array = md_rebuild_vote_type
-	clear_array = md_rebuild_vote_nation
-}
-
 unsc_promote_permanent_member = {
 	if = {
 		limit = {
@@ -1141,7 +1117,34 @@ unsc_promote_permanent_member = {
 				limit = { is_in_array = { global.new_council_members = THIS } }
 				remove_from_array = { global.new_council_members = THIS }
 			}
-			unsc_remove_queued_elected_seat_votes_for_this = yes
+			clear_array = md_rebuild_vote_type
+			clear_array = md_rebuild_vote_nation
+			for_each_loop = {
+				array = global.ga_vote_nation_tracker
+				value = v
+				index = i
+				if = {
+					limit = {
+						OR = {
+							NOT = { check_variable = { v = THIS } }
+							NOT = { check_variable = { global.ga_vote_type_tracker^i = 6 } }
+						}
+					}
+					add_to_array = { md_rebuild_vote_type = global.ga_vote_type_tracker^i }
+					add_to_array = { md_rebuild_vote_nation = v }
+				}
+			}
+			clear_array = global.ga_vote_type_tracker
+			clear_array = global.ga_vote_nation_tracker
+			for_each_loop = {
+				array = md_rebuild_vote_nation
+				value = v
+				index = i
+				add_to_array = { global.ga_vote_type_tracker = md_rebuild_vote_type^i }
+				add_to_array = { global.ga_vote_nation_tracker = v }
+			}
+			clear_array = md_rebuild_vote_type
+			clear_array = md_rebuild_vote_nation
 			unsc_clear_permanent_seat_lobbying = yes
 			add_ideas = p5_member
 			news_event = UNSC.13
@@ -1156,15 +1159,6 @@ unsc_promote_permanent_member = {
 	}
 }
 
-unsc_finalize_permanent_seat_approval = {
-	clr_country_flag = unsc_permanent_seat_ga_pending
-	set_country_flag = unsc_permanent_seat_approved_pending_promotion
-	if = {
-		limit = { NOT = { has_global_flag = current_ongoing_sc_vote } }
-		unsc_promote_permanent_member = yes
-	}
-}
-
 recompute_un_2_3_number = {
 	set_variable = {
 		global.un_2_3_number = {
@@ -1172,31 +1166,6 @@ recompute_un_2_3_number = {
 			multiply = 0.66667
 			add = 0.499
 			round = yes
-		}
-	}
-}
-
-recompute_un_sc_required_yes = {
-	set_variable = {
-		global.un_sc_required_yes = {
-			value = global.security_council_members^num
-			multiply = 0.6
-			add = 0.499
-			round = yes
-		}
-	}
-}
-
-recompute_un_sc_veto = {
-	clr_global_flag = security_council_veto
-	for_each_loop = {
-		array = global.p5_sc_members
-		value = v
-		var:v = {
-			if = {
-				limit = { is_in_array = { global.security_council_vote_no = THIS } }
-				set_global_flag = security_council_veto
-			}
 		}
 	}
 }
@@ -1322,7 +1291,14 @@ un_check_for_next_queued_vote = {
 		#start the next queued vote!
 		set_variable = { global.current_sc_vote_type = global.sc_vote_type_tracker^0 }
 		set_variable = { global.current_sc_vote_nation = global.sc_vote_nation_tracker^0 }
-		recompute_un_sc_required_yes = yes
+		set_variable = {
+			global.un_sc_required_yes = {
+				value = global.security_council_members^num
+				multiply = 0.6
+				add = 0.499
+				round = yes
+			}
+		}
 
 		remove_from_array = {
 			array = global.sc_vote_type_tracker
@@ -1641,7 +1617,12 @@ general_assembly_vote_finished = {
 			if = {
 				limit = { un_ga_2_3_required = yes }
 				var:global.current_ga_vote_nation = {
-					unsc_finalize_permanent_seat_approval = yes
+					clr_country_flag = unsc_permanent_seat_ga_pending
+					set_country_flag = unsc_permanent_seat_approved_pending_promotion
+					if = {
+						limit = { NOT = { has_global_flag = current_ongoing_sc_vote } }
+						unsc_promote_permanent_member = yes
+					}
 				}
 			} else = {
 				var:global.current_ga_vote_nation = {
@@ -2488,7 +2469,17 @@ sc_sway_direction_effect = {
 			add_to_array = { global.security_council_vote_abstain = THIS }
 		}
 
-		recompute_un_sc_veto = yes
+		clr_global_flag = security_council_veto
+		for_each_loop = {
+			array = global.p5_sc_members
+			value = v
+			var:v = {
+				if = {
+					limit = { is_in_array = { global.security_council_vote_no = THIS } }
+					set_global_flag = security_council_veto
+				}
+			}
+		}
 	}
 }
 
