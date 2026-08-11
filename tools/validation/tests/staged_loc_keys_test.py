@@ -35,9 +35,9 @@ def test_loc_keys_loaded_full_repo_in_staged_mode(tmp_path):
     v.staged_files = ["events/some_event.txt"]
 
     keys = v._load_localisation_keys()
-    assert "TEST_key_one" in keys, (
-        "Staged mode must still load loc keys from unstaged .yml files"
-    )
+    assert (
+        "TEST_key_one" in keys
+    ), "Staged mode must still load loc keys from unstaged .yml files"
     assert "TEST_key_two" in keys
 
 
