@@ -39,14 +39,15 @@ RUS_establish_me = {
 			}
 		}
 		available = {
-			any_state = {
+			custom_trigger_tooltip = {
+				tooltip = RUS_continue_reunification_tt
 				OR = {
-					is_core_of = ESB
-					is_core_of = RUS
-					is_core_of = CSB
-					is_core_of = KOM
-					is_core_of = KAE
-					is_core_of = URA
+					check_variable = { ESB.core_states^num > 0 }
+					check_variable = { RUS.core_states^num > 0 }
+					check_variable = { CSB.core_states^num > 0 }
+					check_variable = { KOM.core_states^num > 0 }
+					check_variable = { KAE.core_states^num > 0 }
+					check_variable = { URA.core_states^num > 0 }
 				}
 			}
 		}
@@ -105,54 +106,23 @@ RUS_establish_me = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision RUS_establish_rusfor"
 			hidden_effect = {
-				if = {
-					limit = {
-						ROOT = {
-							controls_state = 1187
+				clear_temp_array = rusfor_transfer_states
+				add_to_temp_array = { rusfor_transfer_states = 1187 }
+				add_to_temp_array = { rusfor_transfer_states = 645 }
+				add_to_temp_array = { rusfor_transfer_states = 657 }
+				add_to_temp_array = { rusfor_transfer_states = 1189 }
+				add_to_temp_array = { rusfor_transfer_states = 644 }
+				set_temp_variable = { rusfor_transfer_done = 0 }
+				for_each_loop = {
+					array = rusfor_transfer_states
+					value = candidate_state
+					break = rusfor_transfer_done
+					if = {
+						limit = {
+							ROOT = { controls_state = var:candidate_state }
 						}
-					}
-					1187 = {
-						transfer_state_to = SOV
-					}
-				}
-				else_if = {
-					limit = {
-						ROOT = {
-							controls_state = 645
-						}
-					}
-					645 = {
-						transfer_state_to = SOV
-					}
-				}
-				else_if = {
-					limit = {
-						ROOT = {
-							controls_state = 657
-						}
-					}
-					657 = {
-						transfer_state_to = SOV
-					}
-				}
-				else_if = {
-					limit = {
-						ROOT = {
-							controls_state = 1189
-						}
-					}
-					1189 = {
-						transfer_state_to = SOV
-					}
-				}
-				else_if = {
-					limit = {
-						ROOT = {
-							controls_state = 644
-						}
-					}
-					644 = {
-						transfer_state_to = SOV
+						var:candidate_state = { transfer_state_to = SOV }
+						set_temp_variable = { rusfor_transfer_done = 1 }
 					}
 				}
 				if = {
@@ -183,8 +153,10 @@ RUS_establish_me = {
 						limit = {
 							is_core_of = SOV
 							NOT = {
-								is_core_of = ESB
-								is_core_of = CSB
+								OR = {
+									is_core_of = ESB
+									is_core_of = CSB
+								}
 							}
 						}
 						add_core_of = RUS
@@ -207,7 +179,7 @@ RUS_establish_me = {
 						}
 						set_temp_variable = { party_index = 1 }
 						set_temp_variable = { party_popularity_increase = 1.00 }
-						add_relative_party_popularity = yes
+						change_relative_party_popularity = yes
 
 						set_temp_variable = { rul_party_temp = 1 }
 						change_ruling_party_effect = yes
@@ -243,13 +215,15 @@ RUS_establish_me = {
 					limit = {
 						is_core_of = RUS
 						NOT = {
-							is_core_of = CSB
-							is_core_of = ESB
-							is_core_of = KOM
-							is_core_of = KAE
-							is_core_of = TAT
-							is_core_of = BSH
-							is_core_of = DON
+							OR = {
+								is_core_of = CSB
+								is_core_of = ESB
+								is_core_of = KOM
+								is_core_of = KAE
+								is_core_of = TAT
+								is_core_of = BSH
+								is_core_of = DON
+							}
 						}
 					}
 					THIS = {

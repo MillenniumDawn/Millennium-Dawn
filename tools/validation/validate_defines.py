@@ -14,6 +14,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import find_hoi4_install
 from validator_common import BaseValidator, run_validator_main
 
+# Repo-relative path used in findings so GitHub error annotations resolve.
+_REL_DEFINES_PATH = "common/defines/MD_defines.lua"
+
 # Pattern: NDefines.NAMESPACE.NAME = value
 MD_DEFINE_RE = re.compile(r"NDefines\.(\w+)\.(\w+)\s*=", re.IGNORECASE)
 
@@ -32,6 +35,31 @@ def find_vanilla_defines() -> Optional[str]:
         if os.path.isfile(path):
             return path
     return None
+
+
+# Committed fallback for machines without the game (CI): NAMESPACE.NAME per
+# line, regenerated from a local install by gen_vanilla_defines_manifest.py.
+_DEFINES_MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_defines.txt")
+
+
+def load_defines_manifest() -> Dict[str, Set[str]]:
+    """Parse vanilla_defines.txt into the {namespace: {names}} shape
+    parse_vanilla_defines returns. Empty dict when the manifest is absent."""
+    namespaces: Dict[str, Set[str]] = {}
+    # UnicodeDecodeError too: decoding happens lazily during iteration, and a
+    # corrupt manifest should read as absent (loud setup error), not crash.
+    try:
+        with open(_DEFINES_MANIFEST, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                ns, _, name = line.partition(".")
+                if name:
+                    namespaces.setdefault(ns, set()).add(name)
+    except (OSError, UnicodeDecodeError):
+        return {}
+    return namespaces
 
 
 def parse_vanilla_defines(filepath: str) -> Dict[str, Set[str]]:
@@ -156,19 +184,32 @@ class Validator(BaseValidator):
         self._validate_defines()
 
     def _validate_defines(self):
-        # Find vanilla defines
+        # An explicit but wrong path would parse to {} and flag every MD
+        # define as dead — fail the setup instead.
+        if self.vanilla_path and not os.path.isfile(self.vanilla_path):
+            self.add_error(
+                "defines-setup",
+                f"--vanilla-path {self.vanilla_path} does not exist",
+            )
+            return
+
+        # Find vanilla defines: live install first, committed manifest second
         vanilla_path = self.vanilla_path or find_vanilla_defines()
+        manifest: Dict[str, Set[str]] = {}
         if not vanilla_path:
+            manifest = load_defines_manifest()
+        if not vanilla_path and not manifest:
             # add_error (not a bare counter bump) so the JSON sidecar agrees
             # with the exit code — run_all_validators counts from the JSON.
             self.add_error(
                 "defines-setup",
-                "Cannot find vanilla 00_defines.lua. "
-                "Set --vanilla-path or ensure HOI4 is installed via Steam.",
+                "Cannot find vanilla 00_defines.lua and no vanilla_defines.txt "
+                "manifest exists. Set --vanilla-path, install HOI4 via Steam, "
+                "or run gen_vanilla_defines_manifest.py on a machine with the game.",
             )
             return
 
-        self.log(f"  Vanilla defines: {vanilla_path}")
+        self.log(f"  Vanilla defines: {vanilla_path or 'vanilla_defines.txt manifest'}")
 
         # Find MD defines file
         md_path = os.path.join(self.mod_path, "common", "defines", "MD_defines.lua")
@@ -186,7 +227,7 @@ class Validator(BaseValidator):
         # Parse both files
         self._log_section("Parsing vanilla defines...")
 
-        vanilla = parse_vanilla_defines(vanilla_path)
+        vanilla = parse_vanilla_defines(vanilla_path) if vanilla_path else manifest
         total_vanilla = sum(len(v) for v in vanilla.values())
         self.log(f"  Found {total_vanilla} defines across {len(vanilla)} namespaces")
 
@@ -218,7 +259,7 @@ class Validator(BaseValidator):
                     correct_ns = all_vanilla_names[matches[0]]
                     suggestion = f" (did you mean '{matches[0]}' in {correct_ns[0]}?)"
                 dead_results.append(
-                    f"MD_defines.lua:{line_num}: "
+                    f"{_REL_DEFINES_PATH}:{line_num}: "
                     f"{namespace}.{name} does not exist in vanilla{suggestion}"
                 )
             else:
@@ -226,7 +267,7 @@ class Validator(BaseValidator):
                 correct_namespaces = all_vanilla_names[name]
                 if namespace not in correct_namespaces:
                     namespace_results.append(
-                        f"MD_defines.lua:{line_num}: "
+                        f"{_REL_DEFINES_PATH}:{line_num}: "
                         f"{namespace}.{name} — wrong namespace, "
                         f"vanilla has it in {', '.join(correct_namespaces)}"
                     )
@@ -253,7 +294,7 @@ class Validator(BaseValidator):
             if key in seen:
                 prev_line, prev_text = seen[key]
                 duplicate_results.append(
-                    f"MD_defines.lua:{line_num}: duplicate {key} "
+                    f"{_REL_DEFINES_PATH}:{line_num}: duplicate {key} "
                     f"(first defined at line {prev_line})"
                 )
             seen[key] = (line_num, full_line)

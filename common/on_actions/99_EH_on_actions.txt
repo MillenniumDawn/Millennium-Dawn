@@ -767,6 +767,22 @@ on_actions = {
 
 			if = {
 				limit = {
+					has_global_flag = EH_bosphorus_line_fallen_flag
+					has_global_flag = EH_mechs_announced_flag
+					NOT = { has_global_flag = EH_bosphorus_counterattack_flag }
+					NOT = {
+						OR = {
+							controls_province = 9833
+							controls_province = 849
+						}
+					}
+				}
+				set_global_flag = EH_bosphorus_counterattack_flag
+				news_event = { id = EH_event.511 days = 1 }
+			}
+
+			if = {
+				limit = {
 					OR = {
 						controls_province = 9417
 						controls_province = 11418
@@ -880,59 +896,58 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
-					ROOT = {
-						has_completed_focus = EH_study_new_enemy
-						has_war_with = ALN
-						check_variable = { EH_army_attack_factor_var3 < 0.12 }
-					}
+					check_variable = { EH_research_sites_constructed_var > 0 }
+					has_country_flag = EH_research_sites_enabled
+					NOT = { has_country_flag = EH_event_fired_flag }
 				}
-				ROOT = {
-					add_to_variable = { EH_army_attack_factor_var3 = 0.02 }
-					add_to_variable = { EH_army_defence_factor_var3 = 0.02 }
-				}
-			}
-			if = {
-				limit = {
-					ROOT = {
-						check_variable = { EH_research_sites_constructed_var > 0 }
-						has_country_flag = EH_research_sites_enabled
-						NOT = {
-							has_country_flag = EH_event_fired_flag
-						}
-					}
-				}
-				random = {
-					chance = 30
-					if = {
-						limit = {
-							NOT = {
-								has_country_flag = EH_event_1_fired_flag
-							}
-						}
+
+				if = {
+					limit = { NOT = { has_country_flag = EH_event_1_fired_flag } }
+					random = {
+						chance = 30
 						country_event = EH_focus_event.9
 					}
 				}
-				random = {
-					chance = 50
-					if = {
-						limit = {
-							NOT = {
-								has_country_flag = EH_event_2_fired_flag
-							}
-						}
+				if = {
+					limit = { NOT = { has_country_flag = EH_event_2_fired_flag } }
+					random = {
+						chance = 50
 						country_event = EH_focus_event.10
 					}
 				}
-				random = {
-					chance = 10
-					if = {
-						limit = {
-							NOT = {
-								has_country_flag = EH_event_3_fired_flag
-							}
-						}
+				if = {
+					limit = { NOT = { has_country_flag = EH_event_3_fired_flag } }
+					random = {
+						chance = 10
 						country_event = EH_focus_event.11
 					}
+				}
+			}
+		}
+	}
+
+	on_monthly_ALN = {
+		effect = {
+			every_enemy_country = {
+				limit = {
+					has_completed_focus = EH_study_new_enemy
+					check_variable = { EH_army_attack_factor_var3 < 0.12 }
+				}
+				add_to_variable = { EH_army_attack_factor_var3 = 0.02 }
+				add_to_variable = { EH_army_defence_factor_var3 = 0.02 }
+			}
+			if = {
+				limit = {
+					num_divisions_in_states = {
+						count > 0
+						states = { 870 871 }
+					}
+				}
+				870 = {
+					teleport_armies = { to_state = 1213 }
+				}
+				871 = {
+					teleport_armies = { to_state = 1213 }
 				}
 			}
 		}

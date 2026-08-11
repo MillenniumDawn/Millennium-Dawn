@@ -1,0 +1,210 @@
+# Run in the scope of the member whose support rises. Caller sets temp_yugo_nost_gain first.
+add_yugo_nostalgia_effect = {
+	custom_effect_tooltip = yugo_nost_rise_tt
+	add_to_variable = { yugo_nostalgia = temp_yugo_nost_gain }
+	clamp_variable = { var = yugo_nostalgia min = 0 max = 100 }
+	hidden_effect = {
+		if = {
+			limit = {
+				check_variable = { yugo_nostalgia > 74 }
+				NOT = { has_country_flag = yugo_nostalgia_milestone }
+			}
+			set_country_flag = yugo_nostalgia_milestone
+			country_event = { id = yugoslavia.30 days = 1 }
+		}
+	}
+}
+
+# Run in ROOT scope. Caller sets temp_yugo_nost_self and temp_yugo_nost_others first.
+add_yugo_nostalgia_all_effect = {
+	set_temp_variable = { temp_yugo_nost_gain = temp_yugo_nost_self }
+	add_yugo_nostalgia_effect = yes
+	set_variable = { global.yugo_nost_others_buffer = temp_yugo_nost_others }
+	for_each_scope_loop = {
+		array = global.yugo_members
+		if = {
+			limit = {
+				exists = yes
+				NOT = { tag = ROOT }
+			}
+			set_temp_variable = { temp_yugo_nost_gain = global.yugo_nost_others_buffer }
+			add_yugo_nostalgia_effect = yes
+		}
+	}
+	clear_variable = global.yugo_nost_others_buffer
+}
+
+# Dominance = the member that tops the most other members' influence_array (falls back to highest yugo_nostalgia if nobody does). Ties keep the incumbent.
+recalc_yugo_dominant_effect = {
+	for_each_scope_loop = {
+		array = global.yugo_members
+		set_variable = { yugo_votes = 0 }
+	}
+	for_each_scope_loop = {
+		array = global.yugo_members
+		if = {
+			limit = {
+				exists = yes
+				check_variable = { influence_array^0 > 0 }
+			}
+			set_temp_variable = { yugo_top_inf = influence_array^0 }
+			if = {
+				limit = {
+					NOT = { check_variable = { yugo_top_inf = THIS.id } }
+					is_in_array = { array = global.yugo_members value = yugo_top_inf }
+				}
+				var:yugo_top_inf = { add_to_variable = { yugo_votes = 1 } }
+			}
+		}
+	}
+	set_variable = { global.yugo_best_votes = 0 }
+	for_each_scope_loop = {
+		array = global.yugo_members
+		if = {
+			limit = {
+				exists = yes
+				check_variable = { yugo_votes > global.yugo_best_votes }
+			}
+			set_variable = { global.yugo_best_votes = yugo_votes }
+		}
+	}
+	set_variable = { global.yugo_new_dominant = 0 }
+	if = {
+		limit = { check_variable = { global.yugo_best_votes > 0 } }
+		if = {
+			limit = { check_variable = { global.yugo_dominant > 0 } }
+			var:global.yugo_dominant = {
+				if = {
+					limit = {
+						exists = yes
+						check_variable = { yugo_votes = global.yugo_best_votes }
+					}
+					set_variable = { global.yugo_new_dominant = THIS.id }
+				}
+			}
+		}
+		if = {
+			limit = { check_variable = { global.yugo_new_dominant = 0 } }
+			for_each_scope_loop = {
+				array = global.yugo_members
+				if = {
+					limit = {
+						exists = yes
+						check_variable = { global.yugo_new_dominant = 0 }
+						check_variable = { yugo_votes = global.yugo_best_votes }
+					}
+					set_variable = { global.yugo_new_dominant = THIS.id }
+				}
+			}
+		}
+	} else = {
+		# No votes cast (outside powers dominate influence). Fall back to highest yugo_nostalgia, same tie logic.
+		set_variable = { global.yugo_best_nostalgia = -1 }
+		for_each_scope_loop = {
+			array = global.yugo_members
+			if = {
+				limit = {
+					exists = yes
+					check_variable = { yugo_nostalgia > global.yugo_best_nostalgia }
+				}
+				set_variable = { global.yugo_best_nostalgia = yugo_nostalgia }
+			}
+		}
+		if = {
+			limit = { check_variable = { global.yugo_dominant > 0 } }
+			var:global.yugo_dominant = {
+				if = {
+					limit = {
+						exists = yes
+						check_variable = { yugo_nostalgia = global.yugo_best_nostalgia }
+					}
+					set_variable = { global.yugo_new_dominant = THIS.id }
+				}
+			}
+		}
+		if = {
+			limit = { check_variable = { global.yugo_new_dominant = 0 } }
+			for_each_scope_loop = {
+				array = global.yugo_members
+				if = {
+					limit = {
+						exists = yes
+						check_variable = { global.yugo_new_dominant = 0 }
+						check_variable = { yugo_nostalgia = global.yugo_best_nostalgia }
+					}
+					set_variable = { global.yugo_new_dominant = THIS.id }
+				}
+			}
+		}
+	}
+	if = {
+		limit = { NOT = { check_variable = { global.yugo_new_dominant = global.yugo_dominant } } }
+		if = {
+			limit = {
+				check_variable = { global.yugo_dominant > 0 }
+				var:global.yugo_dominant = { exists = yes }
+			}
+			var:global.yugo_dominant = { remove_ideas = yugo_bloc_dominant }
+		}
+		set_variable = { global.yugo_dominant = global.yugo_new_dominant }
+		if = {
+			limit = {
+				check_variable = { global.yugo_dominant > 0 }
+				var:global.yugo_dominant = { exists = yes }
+			}
+			var:global.yugo_dominant = {
+				add_ideas = yugo_bloc_dominant
+				news_event = { id = yugoslavia_news.20 days = 2 }
+			}
+		}
+	}
+	clear_variable = global.yugo_best_votes
+	clear_variable = global.yugo_new_dominant
+	clear_variable = global.yugo_best_nostalgia
+}
+
+form_yugoslavia_effect = {
+	set_cosmetic_tag = yugoslavia_restored
+	add_ideas = formed_yugoslavia
+	add_named_threat = {
+		threat = 1.4
+		name = formed_yugoslavia
+	}
+	custom_effect_tooltip = yugo_sends_invites_tt
+	hidden_effect = {
+		news_event = news.85
+		set_global_flag = GLOBAL_yugoslavia_restored
+		if = {
+			limit = {
+				check_variable = { global.yugo_dominant > 0 }
+				var:global.yugo_dominant = { exists = yes }
+			}
+			var:global.yugo_dominant = { remove_ideas = yugo_bloc_dominant }
+		}
+		set_variable = { global.yugo_dominant = 0 }
+		if = {
+			limit = { country_exists = BOS }
+			BOS = {
+				remove_ideas = BOS_rotating_presidency
+				remove_ideas = BOS_rotating_presidency2
+				remove_ideas = BOS_rotating_presidency3
+			}
+		}
+		for_each_scope_loop = {
+			array = global.yugo_members
+			if = {
+				limit = {
+					exists = yes
+					NOT = { tag = ROOT }
+				}
+				save_event_target_as = yugo_invitee
+				ROOT = { event_target:yugo_invitee = { country_event = yugoslavia.1 } }
+			}
+		}
+		133 = { set_demilitarized_zone = no }
+	}
+	custom_effect_tooltip = TT_IF_THEY_ACCEPT
+	effect_tooltip = { custom_effect_tooltip = yugo_invite_accept_tt }
+	custom_effect_tooltip = TT_IF_THEY_REJECT
+	effect_tooltip = { custom_effect_tooltip = yugo_invite_reject_tt }
+}

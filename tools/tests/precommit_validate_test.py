@@ -29,31 +29,110 @@ def _selected(path):
 # scripted_params, simplifications, localisation, factions, history_techs, ...)
 # are stages:[manual] in the config and intentionally absent here.
 _GOLDEN = {
-    "common/national_focus/france.txt": {"validate_style", "validate_ideas"},
-    "events/Syria.txt": {"validate_style", "validate_ideas", "validate_events"},
-    "common/decisions/Sudan.txt": {"validate_style", "validate_ideas"},
-    "common/scripted_effects/00_x.txt": {"validate_style", "validate_oob_units"},
+    "common/national_focus/france.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_events",
+        "validate_oob_units",
+        "validate_characters",
+    },
+    "events/Syria.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_events",
+        "validate_oob_units",
+        "validate_characters",
+    },
+    "common/decisions/Sudan.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_events",
+        "validate_oob_units",
+        "validate_characters",
+    },
+    "common/on_actions/00_on_actions.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_oob_units",
+        "validate_events",
+        "validate_characters",
+    },
+    "common/operations/00_operations.txt": {
+        "validate_style",
+        "validate_events",
+        "validate_oob_units",
+    },
+    "common/resistance_compliance_modifiers/resistance_modifiers.txt": {
+        "validate_style",
+        "validate_events",
+        "validate_oob_units",
+    },
+    "common/scripted_guis/00_missiles_scripted_guis.txt": {
+        "validate_style",
+        "validate_events",
+        "validate_oob_units",
+    },
+    "common/scripted_triggers/00_triggers.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_events",
+    },
+    "common/scripted_effects/00_x.txt": {
+        "validate_style",
+        "validate_oob_units",
+        "validate_ideas",
+        "validate_events",
+        "validate_characters",
+    },
     "common/units/MD_land_units.txt": {
         "validate_style",
         "validate_oob_units",
         "validate_ai_navy",
+        "validate_events",
     },
     "common/ai_templates/x.txt": {
         "validate_style",
         "validate_oob_units",
         "validate_ai_roles",
+        "validate_events",
     },
-    "common/ai_strategy/CAN.txt": {"validate_style", "validate_ai_roles"},
-    "common/ai_navy/x.txt": {"validate_style", "validate_ai_navy"},
-    "common/ai_equipment/x.txt": {"validate_style", "validate_ai_equipment"},
+    "common/ai_strategy/CAN.txt": {
+        "validate_style",
+        "validate_ai_roles",
+        "validate_events",
+    },
+    "common/ai_navy/x.txt": {
+        "validate_style",
+        "validate_ai_navy",
+        "validate_events",
+    },
+    "common/ai_equipment/x.txt": {
+        "validate_style",
+        "validate_ai_equipment",
+        "validate_events",
+    },
     "common/intelligence_agency_upgrades/x.txt": {
         "validate_style",
         "validate_agency_upgrades",
+        "validate_events",
     },
-    "localisation/english/MD_focus_SER_l_english.yml": {"validate_ideas"},
-    # factories/history are manual-only now, so only the catch-all style runs.
-    "common/factions/x.txt": {"validate_style"},
-    "history/countries/x.txt": {"validate_style"},
+    "localisation/english/MD_focus_SER_l_english.yml": {
+        "validate_ideas",
+        "validate_mios",
+    },
+    "common/factions/x.txt": {"validate_style", "validate_events"},
+    "common/military_industrial_organization/organizations/MD_ISR_organizations.txt": {
+        "validate_style",
+        "validate_mios",
+        "validate_events",
+    },
+    "history/countries/x.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_oob_units",
+        "validate_events",
+        "validate_characters",
+    },
 }
 
 
@@ -83,12 +162,12 @@ def test_agency_upgrades_exact_file_match():
 
 def test_ai_equipment_is_warning_only():
     # Mirrors the hook: validate_ai_equipment runs without --strict.
-    assert _BY_SCRIPT["validate_ai_equipment"].strict is False
+    assert not _BY_SCRIPT["validate_ai_equipment"].strict
 
 
 def test_strict_validators_are_strict():
     for script in ("validate_events", "validate_ideas", "validate_oob_units"):
-        assert _BY_SCRIPT[script].strict is True
+        assert _BY_SCRIPT[script].strict
 
 
 def test_manual_validators_not_folded():

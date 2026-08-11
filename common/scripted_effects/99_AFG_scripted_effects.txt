@@ -1,0 +1,484 @@
+#Taliban Insurgency:
+
+AFG_reapply_taliban_opinion_modifiers = {
+	every_other_country = {
+		limit = {
+			NOT = { original_tag = TAL }
+			NOT = { original_tag = TTP }
+			NOT = { original_tag = QAT }
+			NOT = { original_tag = PAK }
+			NOT = { original_tag = SAU }
+			NOT = { original_tag = TRK }
+			NOT = { original_tag = UAE }
+			NOT = { original_tag = ERI }
+		}
+		add_opinion_modifier = { target = PREV modifier = Taliban_Are_Terrorists }
+		add_opinion_modifier = { target = PREV modifier = Taliban_Are_Terrorists_Trade }
+	}
+}
+
+#taliban_attack_strength is taliban_strength on a 0-1 scale; the AFG counter-insurgency decisions read it as a combat modifier
+AFG_sync_taliban_attack_strength = {
+	set_variable = {
+		taliban_attack_strength = {
+			value = taliban_strength
+			multiply = 0.01
+		}
+	}
+}
+
+#taliban_strength_increase is a temporary variable from 0 to 100, should be integers
+increase_taliban_strength = {
+	if = {
+		limit = { has_game_rule = { rule = AFG_taliban_insurgency_intensity option = WEAK } }
+		multiply_temp_variable = { taliban_strength_increase = 0.5 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = AFG_taliban_insurgency_intensity option = RELENTLESS } }
+		multiply_temp_variable = { taliban_strength_increase = 1.5 }
+	}
+	round_temp_variable = taliban_strength_increase
+	add_to_variable = { taliban_strength = taliban_strength_increase }
+	custom_effect_tooltip = increase_taliban_strength_effect_tt
+	clamp_variable = {
+		var = taliban_strength
+		min = 0
+		max = 100
+	}
+	AFG_sync_taliban_attack_strength = yes
+}
+
+#taliban_strength_decrease is a temporary variable from 0 to 100, should be integers
+decrease_taliban_strength = {
+	round_temp_variable = taliban_strength_decrease
+	subtract_from_variable = { taliban_strength = taliban_strength_decrease }
+	custom_effect_tooltip = decrease_taliban_strength_effect_tt
+	clamp_variable = {
+		var = taliban_strength
+		min = 0
+		max = 100
+	}
+	AFG_sync_taliban_attack_strength = yes
+}
+
+reset_taliban_strength = {
+	clear_variable = taliban_strength
+	clear_variable = taliban_attack_strength
+	clear_array = AFG_coalition_array
+	clear_array = AFG_observer_array
+	#Not AFG_ci_array here: AFG_clear_ci_supporters still has to iterate it afterwards to clear the supporter flags
+}
+
+#Every insurgency teardown path must call this, or supporters keep wot_supporting_afghan_counter_insurgency
+#forever and a later insurgency treats them as already enlisted. Scoped through AFG so non-AFG callers work.
+AFG_clear_ci_supporters = {
+	for_each_scope_loop = {
+		array = AFG.AFG_ci_array
+		if = {
+			limit = { exists = yes }
+			clr_country_flag = wot_supporting_afghan_counter_insurgency
+		}
+	}
+	AFG = { clear_array = AFG_ci_array }
+}
+
+# Rebuilt monthly while the insurgency runs from current UN members.
+AFG_refresh_insurgency_arrays = {
+	#A supporter that leaves the General Assembly drops out of the rebuild below, so clear its flag before the wipe or it keeps it forever
+	for_each_loop = {
+		array = AFG_ci_array
+		value = ci
+
+		if = {
+			limit = {
+				NOT = { is_in_array = { array = global.UN_general_assembly value = ci } }
+			}
+			var:ci = {
+				if = {
+					limit = { exists = yes }
+					clr_country_flag = wot_supporting_afghan_counter_insurgency
+				}
+			}
+		}
+	}
+	clear_array = AFG_coalition_array
+	clear_array = AFG_observer_array
+	clear_array = AFG_ci_array
+	every_collection_element = {
+		input = { input = collection:un_general_assembly_members_collection }
+		if = {
+			limit = { has_country_flag = wot_supporting_afghan_counter_insurgency }
+			AFG = { add_to_array = { AFG_ci_array = PREV.id } }
+		}
+		if = {
+			limit = { NOT = { tag = AFG } }
+			if = {
+				limit = { has_military_access_to = AFG }
+				AFG = {
+					add_to_array = { AFG_coalition_array = PREV.id }
+					add_to_array = { AFG_observer_array = PREV.id }
+				}
+			}
+			else_if = {
+				limit = {
+					OR = {
+						AFG = { is_in_array = { influence_array = PREV.id } }
+						is_neighbor_of = AFG
+						has_guaranteed = AFG
+					}
+				}
+				AFG = { add_to_array = { AFG_observer_array = PREV.id } }
+			}
+		}
+	}
+}
+
+#Own counter rather than global.md_gui_dirty, which every other country's panel also bumps
+update_afg_toll_dirty_variable = {
+	if = {
+		limit = { check_variable = { global.AFG_toll_dirty_update_var < 10000 } }
+		add_to_variable = { global.AFG_toll_dirty_update_var = 1 }
+	}
+	else = {
+		set_variable = { global.AFG_toll_dirty_update_var = 1 }
+	}
+}
+
+AFG_national_assembly_checks = {
+	if = {
+		limit = {
+			NOT = {
+				has_dynamic_modifier = {
+					modifier = AFG_national_assembly
+				}
+			}
+		}
+		hidden_effect = {
+			add_dynamic_modifier = { modifier = AFG_national_assembly }
+		}
+	}
+}
+
+AFG_build_infrastructure_or_internet = {
+	if = {
+		limit = {
+			infrastructure < 5
+			free_building_slots = { building = infrastructure size > 0 include_locked = no }
+		}
+		add_building_construction = {
+			type = infrastructure
+			level = 1
+			instant_build = yes
+		}
+	}
+	else_if = {
+		limit = {
+			owner = { has_tech = internet1 }
+			free_building_slots = { building = internet_station size > 0 include_locked = no }
+		}
+		add_building_construction = {
+			type = internet_station
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+
+AFG_build_two_infrastructure_or_internet = {
+	if = {
+		limit = {
+			infrastructure < 5
+			free_building_slots = { building = infrastructure size > 1 include_locked = no }
+		}
+		add_building_construction = {
+			type = infrastructure
+			level = 2
+			instant_build = yes
+		}
+	}
+	else_if = {
+		limit = {
+			owner = { has_tech = internet1 }
+			free_building_slots = { building = internet_station size > 0 include_locked = no }
+		}
+		add_building_construction = {
+			type = internet_station
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+
+
+#Toll rate for one transit state. Called in state scope: the state copy drives the province panel,
+#the OWNER copy feeds AFG_update_national_tollage.
+AFG_update_state_tollage = {
+	if = {
+		limit = {
+			state = 412
+			is_controlled_by = OWNER
+		}
+		if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = less_than } }
+			set_variable = { AFG_Hazarajat_Base_tollage = 9000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = equals } }
+			set_variable = { AFG_Hazarajat_Base_tollage = 8500 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 3 compare = equals } }
+			set_variable = { AFG_Hazarajat_Base_tollage = 8000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 4 compare = equals } }
+			set_variable = { AFG_Hazarajat_Base_tollage = 7500 }
+		}
+		else = { set_variable = { AFG_Hazarajat_Base_tollage = 7000 } }
+		set_variable = { AFG_Hazarajat_earnings_tollage = state_population_k }
+		divide_variable = { AFG_Hazarajat_earnings_tollage = AFG_Hazarajat_Base_tollage }
+		set_variable = { AFG_Toll_display_var = AFG_Hazarajat_earnings_tollage }
+		OWNER = {
+			set_variable = { AFG_Hazarajat_Base_tollage = PREV.AFG_Hazarajat_Base_tollage }
+			set_variable = { AFG_Hazarajat_earnings_tollage = PREV.AFG_Hazarajat_earnings_tollage }
+		}
+	}
+	if = {
+		limit = {
+			state = 409
+			is_controlled_by = OWNER
+		}
+		if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = less_than } }
+			set_variable = { AFG_Herat_Base_tollage = 9000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = equals } }
+			set_variable = { AFG_Herat_Base_tollage = 8500 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 3 compare = equals } }
+			set_variable = { AFG_Herat_Base_tollage = 8000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 4 compare = equals } }
+			set_variable = { AFG_Herat_Base_tollage = 7500 }
+		}
+		else = { set_variable = { AFG_Herat_Base_tollage = 7000 } }
+		if = {
+			limit = { OWNER = { has_completed_focus = AFG_islamic_democracy } }
+			add_to_variable = { AFG_Herat_Base_tollage = -500 } #lower divisor, so a higher take per head
+		}
+		set_variable = { AFG_Herat_earnings_tollage = state_population_k }
+		divide_variable = { AFG_Herat_earnings_tollage = AFG_Herat_Base_tollage }
+		multiply_variable = { AFG_Herat_earnings_tollage = 2 }
+		set_variable = { AFG_Toll_display_var = AFG_Herat_earnings_tollage }
+		OWNER = {
+			set_variable = { AFG_Herat_Base_tollage = PREV.AFG_Herat_Base_tollage }
+			set_variable = { AFG_Herat_earnings_tollage = PREV.AFG_Herat_earnings_tollage }
+		}
+	}
+	if = {
+		limit = {
+			state = 415
+			is_controlled_by = OWNER
+		}
+		if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = less_than } }
+			set_variable = { AFG_Sistan_Base_tollage = 9000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = equals } }
+			set_variable = { AFG_Sistan_Base_tollage = 8500 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 3 compare = equals } }
+			set_variable = { AFG_Sistan_Base_tollage = 8000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 4 compare = equals } }
+			set_variable = { AFG_Sistan_Base_tollage = 7500 }
+		}
+		else = { set_variable = { AFG_Sistan_Base_tollage = 7000 } }
+		set_variable = { AFG_Sistan_earnings_tollage = state_population_k }
+		divide_variable = { AFG_Sistan_earnings_tollage = AFG_Sistan_Base_tollage }
+		multiply_variable = { AFG_Sistan_earnings_tollage = 2 }
+		set_variable = { AFG_Toll_display_var = AFG_Sistan_earnings_tollage }
+		OWNER = {
+			set_variable = { AFG_Sistan_Base_tollage = PREV.AFG_Sistan_Base_tollage }
+			set_variable = { AFG_Sistan_earnings_tollage = PREV.AFG_Sistan_earnings_tollage }
+		}
+	}
+	if = {
+		limit = {
+			state = 414
+			is_controlled_by = OWNER
+		}
+		if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = less_than } }
+			set_variable = { AFG_Hindu_Kush_Base_tollage = 9000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = equals } }
+			set_variable = { AFG_Hindu_Kush_Base_tollage = 8500 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 3 compare = equals } }
+			set_variable = { AFG_Hindu_Kush_Base_tollage = 8000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 4 compare = equals } }
+			set_variable = { AFG_Hindu_Kush_Base_tollage = 7500 }
+		}
+		else = { set_variable = { AFG_Hindu_Kush_Base_tollage = 7000 } }
+		set_variable = { AFG_Hindu_Kush_earnings_tollage = state_population_k }
+		divide_variable = { AFG_Hindu_Kush_earnings_tollage = AFG_Hindu_Kush_Base_tollage }
+		multiply_variable = { AFG_Hindu_Kush_earnings_tollage = 0.33333 }
+		set_variable = { AFG_Toll_display_var = AFG_Hindu_Kush_earnings_tollage }
+		OWNER = {
+			set_variable = { AFG_Hindu_Kush_Base_tollage = PREV.AFG_Hindu_Kush_Base_tollage }
+			set_variable = { AFG_Hindu_Kush_earnings_tollage = PREV.AFG_Hindu_Kush_earnings_tollage }
+		}
+	}
+	if = {
+		limit = {
+			state = 411
+			is_controlled_by = OWNER
+		}
+		if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = less_than } }
+			set_variable = { AFG_Badakshan_Base_tollage = 9000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = equals } }
+			set_variable = { AFG_Badakshan_Base_tollage = 8500 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 3 compare = equals } }
+			set_variable = { AFG_Badakshan_Base_tollage = 8000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 4 compare = equals } }
+			set_variable = { AFG_Badakshan_Base_tollage = 7500 }
+		}
+		else = { set_variable = { AFG_Badakshan_Base_tollage = 7000 } }
+		set_variable = { AFG_Badakshan_earnings_tollage = state_population_k }
+		divide_variable = { AFG_Badakshan_earnings_tollage = AFG_Badakshan_Base_tollage }
+		multiply_variable = { AFG_Badakshan_earnings_tollage = 0.5 }
+		set_variable = { AFG_Toll_display_var = AFG_Badakshan_earnings_tollage }
+		OWNER = {
+			set_variable = { AFG_Badakshan_Base_tollage = PREV.AFG_Badakshan_Base_tollage }
+			set_variable = { AFG_Badakshan_earnings_tollage = PREV.AFG_Badakshan_earnings_tollage }
+		}
+	}
+	if = {
+		limit = {
+			state = 410
+			is_controlled_by = OWNER
+		}
+		if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = less_than } }
+			set_variable = { AFG_Bactria_Base_tollage = 9000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 2 compare = equals } }
+			set_variable = { AFG_Bactria_Base_tollage = 8500 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 3 compare = equals } }
+			set_variable = { AFG_Bactria_Base_tollage = 8000 }
+		}
+		else_if = {
+			limit = { check_variable = { var = AFG_toll_level value = 4 compare = equals } }
+			set_variable = { AFG_Bactria_Base_tollage = 7500 }
+		}
+		else = { set_variable = { AFG_Bactria_Base_tollage = 7000 } }
+		set_variable = { AFG_Bactria_earnings_tollage = state_population_k }
+		divide_variable = { AFG_Bactria_earnings_tollage = AFG_Bactria_Base_tollage }
+		divide_variable = { AFG_Bactria_earnings_tollage = 1.5 }
+		set_variable = { AFG_Toll_display_var = AFG_Bactria_earnings_tollage }
+		OWNER = {
+			set_variable = { AFG_Bactria_Base_tollage = PREV.AFG_Bactria_Base_tollage }
+			set_variable = { AFG_Bactria_earnings_tollage = PREV.AFG_Bactria_earnings_tollage }
+		}
+	}
+}
+
+#Country scope. Sole writer of additional_income_AFG_tolls_income1: tollage only moves when a toll level or
+#state control does, so calculate_additional_income_rate reads this rather than re-summing it every money tick.
+AFG_update_national_tollage = {
+	#A state we no longer control keeps its last rate otherwise, and goes on paying tolls we cannot collect
+	if = {
+		limit = { NOT = { controls_state = 412 } }
+		clear_variable = AFG_Hazarajat_earnings_tollage
+	}
+	if = {
+		limit = { NOT = { controls_state = 409 } }
+		clear_variable = AFG_Herat_earnings_tollage
+	}
+	if = {
+		limit = { NOT = { controls_state = 415 } }
+		clear_variable = AFG_Sistan_earnings_tollage
+	}
+	if = {
+		limit = { NOT = { controls_state = 414 } }
+		clear_variable = AFG_Hindu_Kush_earnings_tollage
+	}
+	if = {
+		limit = { NOT = { controls_state = 411 } }
+		clear_variable = AFG_Badakshan_earnings_tollage
+	}
+	if = {
+		limit = { NOT = { controls_state = 410 } }
+		clear_variable = AFG_Bactria_earnings_tollage
+	}
+	set_variable = {
+		additional_income_AFG_tolls_income1 = {
+			value = AFG_Bactria_earnings_tollage
+			add = AFG_Badakshan_earnings_tollage
+			add = AFG_Hindu_Kush_earnings_tollage
+			add = AFG_Herat_earnings_tollage
+			add = AFG_Sistan_earnings_tollage
+			add = AFG_Hazarajat_earnings_tollage
+		}
+	}
+}
+
+#State scope. The panel's single-state path: recalculate this state, then roll the national total up.
+update_afghan_toll = {
+	AFG_update_state_tollage = yes
+	OWNER = { AFG_update_national_tollage = yes }
+}
+
+#Monthly refresh for one transit state. The on_action rolls the national total up once after the loop.
+AFG_monthly_toll_state_update = {
+	#Seed at the floor the panel can return to. Anything higher would charge consumer goods nobody opted into,
+	#and the panel cannot lower a state below 1, so the charge would be unrefundable
+	if = {
+		limit = { check_variable = { var = AFG_toll_level value = 1 compare = less_than } }
+		set_variable = { AFG_toll_level = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { var = AFG_toll_level value = 5 compare = less_than }
+			OWNER = {
+				is_ai = yes
+				check_variable = { treasury_rate < 0 }
+			}
+		}
+		add_to_variable = { AFG_toll_level = 1 }
+		OWNER = { add_to_variable = { AFG_consumer_goods_factor_toll = 0.02 } }
+	}
+	else_if = {
+		limit = {
+			check_variable = { var = AFG_toll_level value = 1 compare = greater_than }
+			OWNER = {
+				is_ai = yes
+				has_stability < 0.35
+			}
+		}
+		add_to_variable = { AFG_toll_level = -1 }
+		OWNER = { add_to_variable = { AFG_consumer_goods_factor_toll = -0.02 } }
+	}
+	AFG_update_state_tollage = yes
+}

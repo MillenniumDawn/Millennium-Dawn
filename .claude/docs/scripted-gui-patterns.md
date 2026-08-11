@@ -2,7 +2,7 @@
 
 Recurring patterns for data-driven scripted GUIs in MD. Reference implementations: MIO Unlock Catalog (`common/scripted_guis/00_mio_unlock_catalog.txt`) and the EU council (`common/scripted_guis/01_european_union_guis.txt`).
 
-For raw scripted_gui mechanics (context types, parent windows, AI checks), see [`/.claude/rules/scripted-gui-rules.md`](../rules/scripted-gui-rules.md). This doc is about the recurring shapes built on top of those primitives.
+For raw scripted_gui mechanics (context types, parent windows, AI checks), see [`.claude/docs/scripted-gui-rules.md`](./scripted-gui-rules.md). This doc is about the recurring shapes built on top of those primitives.
 
 ## Data-driven entries via `dynamic_lists`
 
@@ -10,7 +10,7 @@ When a catalog has N similar entries (votes, MIO unlocks, member states), replac
 
 ### Backing array
 
-Holds integer entry IDs (1..N), not tokens. EU votes use the vote ID directly; MIO catalog uses 1..23 mapped to a parallel `global.mio_catalog_all_tokens` master array.
+Holds integer entry IDs (1..N), not tokens. EU votes use the vote ID directly; MIO catalog uses 1..23 mapped to a parallel `global.mio_catalog_all_tokens` master array. Because the IDs are 1-based but `add_to_array` is 0-based, the token array reserves a never-read index-0 slot so `array^v` lines up (otherwise every `^v` lookup is shifted by one — the cause of issue #1955).
 
 ```
 add_to_array = { mio_catalog_visible_array = 1 }
@@ -89,7 +89,7 @@ instantTextboxType = {
 ### What scripted-loc dispatch can't do
 
 - Return a loc key whose value contains `[!trigger_name]` and have the `[!]` re-evaluate. The engine substitutes the dispatched loc value as raw text. Put `[!]` directly in the same flat loc value as your scripted-loc call, not chained through a dispatcher.
-- Compute or transform — only branch on `check_variable` (or other triggers) and return a static `localization_key`. For runtime string construction, use `meta_trigger`/`meta_effect` instead (see [`tokenization-patterns.md`](tokenization-patterns.md)).
+- Compute or transform — only branch on `check_variable` (or other triggers) and return a static `localization_key`. For runtime string construction, use `meta_trigger`/`meta_effect` instead (see [`meta-effect-patterns.md`](meta-effect-patterns.md)).
 
 ### Dispatcher size economics
 
@@ -97,11 +97,11 @@ instantTextboxType = {
 
 ### When the dispatcher explodes — gridbox over an array of scopes
 
-The single-`v` dispatcher only scales in **one** dimension. The moment the display is an **entity × category matrix** — and especially when the entity axis is a *runtime-variable set* — branch count becomes N×M and the dispatcher is the wrong tool.
+The single-`v` dispatcher only scales in **one** dimension. The moment the display is an **entity × category matrix** — and especially when the entity axis is a _runtime-variable set_ — branch count becomes N×M and the dispatcher is the wrong tool.
 
 The EU Parliament member breakdown was the cautionary case: "which countries hold seats in political group N, and how many" is `tags × 24 groups`. It had been built as **1,536 `TAG_party_N_PG` `defined_text` blocks + 1,536 backing loc strings**, concatenated into 24 per-group tokens and shown in a hover tooltip (tooltips can't host a gridbox, which forced the concatenation). Every new EU member meant hand-writing 24 more blocks + 24 loc keys + editing 24 concatenations.
 
-The fix is to stop enumerating and **render from data**: a `gridboxType` over a backing array of **scope objects** (not integer IDs), with `change_scope = yes` so each row scopes *into* the country and reads generic getters. No per-entity loc, no per-entity GUI.
+The fix is to stop enumerating and **render from data**: a `gridboxType` over a backing array of **scope objects** (not integer IDs), with `change_scope = yes` so each row scopes _into_ the country and reads generic getters. No per-entity loc, no per-entity GUI.
 
 ```
 # Effect: rebuild the array for the selected category (loops the member array)
@@ -155,17 +155,16 @@ The payoff test for a data-driven display: **adding one more entity should requi
 
 EU parliament reference implementation:
 
-| Piece                          | Location                                                                  |
-| ------------------------------ | ------------------------------------------------------------------------- |
-| Populate effect                | `EU_select_party_members` — `common/scripted_effects/99_eu_scripted_effects.txt` |
-| Selector + open handler        | `eu_view_party_N_members_click` — `common/scripted_guis/01_european_union_guis.txt` |
-| Gridbox scripted_gui           | `eu_party_member_detail_gui` — same file                                  |
-| Window + entry container       | `eu_party_member_detail_container` / `eu_party_member_detail` — `interface/eu.gui` |
-| Per-scope data                 | `THIS.MEP_party_0..23`, `THIS.MEP_Total`; aggregates `global.MEP_PG_party_N` |
-| Entity set                     | `global.EU_member`                                                        |
+| Piece                    | Location                                                                            |
+| ------------------------ | ----------------------------------------------------------------------------------- |
+| Populate effect          | `EU_select_party_members` — `common/scripted_effects/99_eu_scripted_effects.txt`    |
+| Selector + open handler  | `eu_view_party_N_members_click` — `common/scripted_guis/01_european_union_guis.txt` |
+| Gridbox scripted_gui     | `eu_party_member_detail_gui` — same file                                            |
+| Window + entry container | `eu_party_member_detail_container` / `eu_party_member_detail` — `interface/eu.gui`  |
+| Per-scope data           | `THIS.MEP_party_0..23`, `THIS.MEP_Total`; aggregates `global.MEP_PG_party_N`        |
+| Entity set               | `global.EU_member`                                                                  |
 
 ---
-
 
 ## Dirty variable — MD standard
 
@@ -198,15 +197,11 @@ References:
 
 ### Call from every state-changing effect
 
-Every click handler / state-toggling effect in the scripted*gui should end with `update*<system>\_dirty_variable = yes`. Including the close/toggle-off paths, not just the open path.
-
-### Player-only guard
-
-The [`scripted-gui-rules.md` dirty rule](../rules/scripted-gui-rules.md) says to guard bumps with `is_ai = no` for GUIs the AI also interacts with. In practice MD's `update_*_dirty_variable` effects don't carry the guard — the dirty variable is only bumped from player-initiated click paths in the scripted_gui's `effects` block, reached only when the player clicks. If your effect can be invoked from an AI on_action, wrap the call site (not the dirty effect itself) with `is_ai = no`.
+Every click handler / state-toggling effect in the scripted*gui should end with `update*<system>\_dirty_variable = yes`. Including the close/toggle-off paths, not just the open path. For the player-only `is_ai = no` guard rule (and when call sites need it), see the dirty-variable section of [`scripted-gui-rules.md`](./scripted-gui-rules.md).
 
 ## Filter checkbox — image swap, not frame swap
 
-`GFX_generic_checkbox` is a single-frame sprite. The `_frame` trigger pattern silently fails on it (renders as nothing on the "checked" frame). Mirror the construction-UI pattern instead: two separate sprites swapped via a scripted-loc and the GUI's `properties` block.
+`GFX_generic_checkbox` is a single-frame sprite. The `_frame` trigger pattern silently fails on it (renders as nothing on the "checked" frame). Use two separate sprites swapped via a scripted-loc and the GUI's `properties` block.
 
 ```
 # Scripted-loc
@@ -236,7 +231,7 @@ buttonType = {
 }
 ```
 
-Reference: `interface/MD_countryconstructionsview.gui:13-21` (`toggle_construction_building_speed`).
+Reference implementation: `mio_catalog_filter_toggle_btn` — scripted-loc `mio_catalog_filter_toggle_icon` in `common/scripted_localisation/00_mio_catalog_scripted_loc.txt`, properties swap in `common/scripted_guis/00_mio_unlock_catalog.txt`, button in `interface/military_industrial_organization/zz_mio_unlock_catalog.gui`. The `GFX_generic_checkbox_open` / `GFX_generic_checkbox_checked` sprites are defined in `interface/countryconstructionsview.gfx`.
 
 ## Per-entry tooltip with dynamic per-MIO ✓/✗ icons
 
@@ -255,7 +250,7 @@ mio_catalog_entry_prereqs_yes = {
 }
 ```
 
-See [`tokenization-patterns.md`](tokenization-patterns.md) for the meta_trigger mechanics and why this is the only way to keep `[!]` rendering working with per-entry dispatch.
+See [`meta-effect-patterns.md`](meta-effect-patterns.md) for the meta_trigger mechanics and why this is the only way to keep `[!]` rendering working with per-entry dispatch.
 
 ## Visibility rule of thumb
 

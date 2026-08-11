@@ -1,0 +1,89 @@
+## Thailand: scripted triggers. The SIA_path_* flags stand in for the engine
+## mutually_exclusive, which script can never re-open.
+
+SIA_populist_trunk_open = { has_country_flag = SIA_path_populist }
+SIA_royalist_trunk_open = { has_country_flag = SIA_path_royalist }
+SIA_democrat_trunk_open = { has_country_flag = SIA_path_democrat }
+
+# Reform is the exception to the flag-based trunk_open scheme.
+SIA_reform_trunk_open = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_reform_trunk_entry_tt
+		is_in_array = { ruling_party = 3 }
+	}
+}
+
+SIA_communist_trunk_open = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_communist_trunk_entry_tt
+		is_in_array = { ruling_party = 4 }
+	}
+}
+
+SIA_asean_hegemony_available = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_asean_hegemony_government_tt
+		NOT = { is_in_array = { ruling_party = 1 } }
+		NOT = { is_in_array = { ruling_party = 3 } }
+	}
+	OR = {
+		has_completed_focus = SIA_lost_territories
+		has_war_support > 0.50
+	}
+}
+
+SIA_populist_trunk_entry = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_populist_trunk_entry_tt
+		OR = {
+			has_country_flag = SIA_path_populist
+			# Pheu Thai (18) — the Thaksinite government rules at idx 18 in the never idx 1 (which is the
+			# Democrats; see the Democrat entry).
+			is_in_array = { ruling_party = 18 }
+		}
+	}
+}
+
+SIA_royalist_trunk_entry = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_royalist_trunk_entry_tt
+		OR = {
+			has_country_flag = SIA_path_royalist
+			is_in_array = { ruling_party = 22 }
+			is_in_array = { ruling_party = 23 }
+		}
+	}
+}
+
+SIA_democrat_trunk_entry = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_democrat_trunk_entry_tt
+		OR = {
+			has_country_flag = SIA_path_democrat
+			# The Democrats (conservatism, idx 1).
+			is_in_array = { ruling_party = 1 }
+		}
+	}
+}
+
+## The Deep South conflict is armed and not yet settled by either route. Gates every decision,
+## category, effect and event that acts on the insurgency meters.
+SIA_ds_conflict_live = {
+	has_country_flag = SIA_ds_active
+	NOT = { has_country_flag = SIA_ds_resolved_force }
+	NOT = { has_country_flag = SIA_ds_resolved_peace }
+}
+
+SIA_coup_machinery_live = {
+	has_country_flag = SIA_path_populist
+	NOT = { has_idea = SIA_junta_government }
+	NOT = { has_completed_focus = SIA_civilian_control }
+}
+
+## Develop conquered land (breakaway-states + ASEAN-hegemony trees) A "reclaimed" state is
+## territory conquered on an expansion path but not yet integrated:
+SIA_is_reclaimed_state = {
+	is_owned_by = SIA
+	is_claimed_by = SIA
+	NOT = { is_core_of = SIA }
+}

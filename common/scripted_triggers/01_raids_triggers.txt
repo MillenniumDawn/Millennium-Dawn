@@ -1,6 +1,21 @@
+# Raid AI fast-fail — AI only prepares raids against current/probable enemies. Leads every shared
+# availability trigger so far-off neutral targets short-circuit here and never reach ai_will_do
+# scoring. is_ai = no leaves the player path (PP/opinion/doctrine) completely unchanged.
+raid_ai_target_relevant = {
+	OR = {
+		is_ai = no
+		has_war_with = FROM
+		has_wargoal_against = FROM
+		is_justifying_wargoal_against = FROM
+		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+		is_in_array = { array = potential_and_current_enemies value = FROM }
+	}
+}
+
 # Drone raid availability — wartime/wargoal/retaliation/PP>300
 # Used by drone raids that require active hostility (airfield, rocket site, swarm)
 drone_raid_available_hostile = {
+	raid_ai_target_relevant = yes
 	OR = {
 		has_war = yes
 		AND = {
@@ -26,6 +41,7 @@ drone_raid_available_hostile = {
 # Drone raid availability — grey-zone ops (PP>99 or wartime)
 # Used by drone raids against civilian infrastructure (power grid)
 drone_raid_available_grey_zone = {
+	raid_ai_target_relevant = yes
 	OR = {
 		has_war = yes
 		AND = {
@@ -50,6 +66,7 @@ drone_raid_available_grey_zone = {
 # Raid target basic eligibility — not a subject and no NAP
 # Used as a building block in available blocks that have custom OR conditions
 raid_target_eligible = {
+	raid_ai_target_relevant = yes
 	OR = {
 		has_war = yes
 		AND = {
@@ -70,6 +87,7 @@ raid_target_eligible = {
 # Used by air/drone raids that show when at war OR when opinion < 0 + doctrine permits
 raid_show_target_opinion_neutral = {
 	OR = {
+		has_war_with = FROM
 		AND = {
 			has_opinion = {
 				target = FROM
@@ -77,7 +95,6 @@ raid_show_target_opinion_neutral = {
 			}
 			raid_show_target_intervention_check = yes
 		}
-		has_war_with = FROM
 	}
 }
 
@@ -85,6 +102,7 @@ raid_show_target_opinion_neutral = {
 # Used by cruise missile raids requiring deeper hostility
 raid_show_target_opinion_hostile = {
 	OR = {
+		has_war_with = FROM
 		AND = {
 			has_opinion = {
 				target = FROM
@@ -92,7 +110,6 @@ raid_show_target_opinion_hostile = {
 			}
 			raid_show_target_intervention_check = yes
 		}
-		has_war_with = FROM
 	}
 }
 
@@ -100,6 +117,9 @@ raid_show_target_opinion_hostile = {
 # Extends raid_show_target_opinion_hostile with wargoal/justification visibility for pre-war prep
 raid_show_target_specops_hostile = {
 	OR = {
+		has_war_with = FROM
+		has_wargoal_against = FROM
+		is_justifying_wargoal_against = FROM
 		AND = {
 			has_opinion = {
 				target = FROM
@@ -107,9 +127,6 @@ raid_show_target_specops_hostile = {
 			}
 			raid_show_target_intervention_check = yes
 		}
-		has_war_with = FROM
-		has_wargoal_against = FROM
-		is_justifying_wargoal_against = FROM
 	}
 }
 
@@ -141,6 +158,7 @@ raid_show_target_intervention_check = {
 # raid, tech_4 unlocks intercontinental reach" logic inside a single custom_trigger_tooltip
 # so callers don't reimplement the tooltip wrapper.
 raid_special_forces_tech_available = {
+	raid_ai_target_relevant = yes
 	has_tech = special_forces_tech_1
 	custom_trigger_tooltip = {
 		tooltip = has_spec_ops_4_TT

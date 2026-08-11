@@ -18,9 +18,9 @@ focus_tree = {
 		x = 25
 		y = 0
 
-		ai_will_do = { base = 20 }
-
 		cost = 1.86
+
+		search_filters = { FOCUS_FILTER_ARMY FOCUS_FILTER_MANPOWER }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_Start"
@@ -34,7 +34,6 @@ focus_tree = {
 				regiments = {
 					Militia_Bat = { x = 0 y = 0 }
 					Militia_Bat = { x = 0 y = 1 }
-
 				}
 			}
 			random_owned_controlled_state = {
@@ -51,7 +50,6 @@ focus_tree = {
 				regiments = {
 					Militia_Bat = { x = 0 y = 0 }
 					Militia_Bat = { x = 0 y = 1 }
-
 				}
 			}
 			random_owned_controlled_state = {
@@ -68,7 +66,6 @@ focus_tree = {
 				regiments = {
 					Militia_Bat = { x = 0 y = 0 }
 					Militia_Bat = { x = 0 y = 1 }
-
 				}
 			}
 			random_owned_controlled_state = {
@@ -80,6 +77,8 @@ focus_tree = {
 				}
 			}
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Economic help
 	focus = {
@@ -89,18 +88,29 @@ focus_tree = {
 		x = 24
 		y = 1
 
-		ai_will_do = { base = 20 }
+		cost = 2
 
 		prerequisite = { focus = VBT_Start }
 
-		cost = 2
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_Economic_help"
 			SOV = {
 				country_event = { id = vitebsk_rus.3 days = 1 }
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				set_temp_variable = { treasury_change = 20 }
+				modify_treasury_effect = yes
+				set_temp_variable = { percent_change = 5.12 }
+				set_temp_variable = { tag_index = SOV }
+				set_temp_variable = { influence_target = VTB }
+				change_influence_percentage = yes
+			}
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Ruble from Russia
 	focus = {
@@ -110,11 +120,11 @@ focus_tree = {
 		x = 23
 		y = 3
 
-		ai_will_do = { base = 20	}
+		cost = 4
 
 		prerequisite = { focus = VBT_Economic_help }
 
-		cost = 4
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INFLUENCE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_Ruble"
@@ -125,6 +135,8 @@ focus_tree = {
 			set_temp_variable = { influence_target = VTB }
 			change_influence_percentage = yes
 		}
+
+		ai_will_do = { base = 20 }
 	}
 
 	#Weapon help
@@ -135,18 +147,48 @@ focus_tree = {
 		x = 26
 		y = 1
 
-		ai_will_do = { base = 20	}
+		cost = 2
 
 		prerequisite = { focus = VBT_Start }
 
-		cost = 2
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_weapon_help"
 			SOV = {
 				country_event = { id = vitebsk_rus.2 days = 1 }
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_ideas = SOV_support_nov_idea
+				add_equipment_to_stockpile = {
+					type = infantry_weapons_3
+					amount = 2000
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = transport_helicopter_1
+					amount = 15
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = cnc_equipment_1
+					amount = 1000
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = medium_tank_chassis
+					amount = 50
+					producer = SOV
+				}
+				set_temp_variable = { percent_change = 7.12 }
+				set_temp_variable = { tag_index = SOV }
+				set_temp_variable = { influence_target = VTB }
+				change_influence_percentage = yes
+			}
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Create a government of the Republic
 	focus = {
@@ -156,17 +198,19 @@ focus_tree = {
 		x = 27
 		y = 2
 
-		ai_will_do = { base = 20	}
+		cost = 4
 
 		prerequisite = { focus = VBT_weapon_help }
 
-		cost = 4
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_government"
 			add_stability = 0.2
 			add_political_power = 100
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Passports
 	focus = {
@@ -176,17 +220,19 @@ focus_tree = {
 		x = 27
 		y = 3
 
-		ai_will_do = { base = 20	}
+		cost = 4
 
 		prerequisite = { focus = VBT_government }
 
-		cost = 4
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_passports"
 			add_stability = 0.1
 			VTB = { add_state_core = 1094 }
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Let in volunteers from Russia
 	focus = {
@@ -196,12 +242,12 @@ focus_tree = {
 		x = 25
 		y = 3
 
-		ai_will_do = { base = 20	}
+		cost = 4
 
 		prerequisite = { focus = VBT_Economic_help }
 		prerequisite = { focus = VBT_weapon_help }
 
-		cost = 4
+		search_filters = { FOCUS_FILTER_ARMY FOCUS_FILTER_FOREIGN_POLICY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_volunteers_help"
@@ -210,7 +256,6 @@ focus_tree = {
 				is_locked = yes
 				regiments = {
 					Special_Forces = { x = 0 y = 0 }
-
 				}
 				priority = 2
 			}
@@ -223,6 +268,8 @@ focus_tree = {
 				}
 			}
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Mobilisation
 	focus = {
@@ -232,10 +279,11 @@ focus_tree = {
 		x = 26
 		y = 4
 
-		ai_will_do = { base = 20	}
+		cost = 4
 
 		prerequisite = { focus = VBT_passports }
-		cost = 4
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_mobilisation"
@@ -243,6 +291,8 @@ focus_tree = {
 			add_stability = -0.05
 			add_manpower = 2500
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Weapon help again
 	focus = {
@@ -252,19 +302,49 @@ focus_tree = {
 		x = 24
 		y = 4
 
-		ai_will_do = { base = 20	}
+		cost = 4
 
 		prerequisite = { focus = VBT_volunteers_help }
 		prerequisite = { focus = VBT_Ruble }
 		prerequisite = { focus = VBT_passports }
-		cost = 4
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_weapon_help2"
 			SOV = {
 				country_event = { id = vitebsk_rus.4 days = 1 }
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_equipment_to_stockpile = {
+					type = infantry_weapons_3
+					amount = 3000
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = artillery_0
+					amount = 70
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = cnc_equipment_1
+					amount = 1500
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = Rec_tank_0
+					amount = 100
+					producer = SOV
+				}
+				set_temp_variable = { percent_change = 4.12 }
+				set_temp_variable = { tag_index = SOV }
+				set_temp_variable = { influence_target = VTB }
+				change_influence_percentage = yes
+			}
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Hold a referendum on joining Russia
 	focus = {
@@ -274,18 +354,30 @@ focus_tree = {
 		x = 25
 		y = 5
 
-		ai_will_do = { base = 20	}
-
 		cost = 5
 
 		prerequisite = { focus = VBT_mobilisation }
 		prerequisite = { focus = VBT_weapon_help2 }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FOREIGN_POLICY }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_referendum"
 			SOV = {
 				country_event = { id = vitebsk_rus.6 days = 1 }
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				SOV = {
+					set_autonomy = {
+						target = VTB
+						autonomous_state = autonomy_republic_rf
+					}
+				}
+			}
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Nationalization of the electrotechnical enterprise Svet
 	focus = {
@@ -295,18 +387,29 @@ focus_tree = {
 		x = 24
 		y = 6
 
-
-		ai_will_do = { base = 20	}
+		cost = 7
 
 		prerequisite = { focus = VBT_referendum }
 
-		cost = 7
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_svet"
 			one_random_industrial_complex = yes
 			set_temp_variable = { party_popularity_increase = 0.01 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 	#Restore roads
@@ -317,18 +420,25 @@ focus_tree = {
 		x = 26
 		y = 6
 
-
-		ai_will_do = { base = 20	}
+		cost = 7
 
 		prerequisite = { focus = VBT_referendum }
 
-		cost = 7
+		search_filters = { FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_roads"
 			one_random_infrastructure = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 	#Strengthen government
@@ -339,19 +449,21 @@ focus_tree = {
 		x = 25
 		y = 7
 
-		ai_will_do = { base = 20	}
+		cost = 7
 
 		prerequisite = { focus = VBT_svet }
 		prerequisite = { focus = VBT_roads }
 
-		cost = 7
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus VBT_centralization"
+			log = "[GetDateText]: [Root.GetName]: Focus VBT_strengthen_government"
 			add_ideas = political_power_bonus
 			set_temp_variable = { party_popularity_increase = 0.02 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Creation of the army of the Vitebsk Republic
 	focus = {
@@ -361,11 +473,11 @@ focus_tree = {
 		x = 23
 		y = 8
 
-		ai_will_do = { base = 20	}
+		cost = 7
 
 		prerequisite = { focus = VBT_strengthen_government }
 
-		cost = 7
+		search_filters = { FOCUS_FILTER_ARMY FOCUS_FILTER_ARMY_XP }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_army_republic"
@@ -374,6 +486,8 @@ focus_tree = {
 			increase_military_spending = yes
 			add_ideas = VTB_profarmy
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Special Forces of the Republic
 	focus = {
@@ -383,11 +497,11 @@ focus_tree = {
 		x = 22
 		y = 9
 
-		ai_will_do = { base = 20	}
+		cost = 7
 
 		prerequisite = { focus = VBT_army_republic }
 
-		cost = 7
+		search_filters = { FOCUS_FILTER_ARMY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_specnaz_republic"
@@ -397,6 +511,8 @@ focus_tree = {
 				category = CAT_inf_wep
 			}
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#National Defense Strategy
 	focus = {
@@ -406,16 +522,18 @@ focus_tree = {
 		x = 24
 		y = 9
 
-		ai_will_do = { base = 20	}
+		cost = 7
 
 		prerequisite = { focus = VBT_army_republic }
 
-		cost = 7
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_defence_republic"
 			add_ideas = VTB_National_Defense_Strategy
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Education
 	focus = {
@@ -425,18 +543,20 @@ focus_tree = {
 		x = 27
 		y = 8
 
-		ai_will_do = { base = 20	}
+		cost = 7
 
 		prerequisite = { focus = VBT_strengthen_government }
 
-		cost = 7
+		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_education"
 			generic_research_buff = yes
 			set_temp_variable = { party_popularity_increase = 0.03 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Medicine
 	focus = {
@@ -446,18 +566,20 @@ focus_tree = {
 		x = 26
 		y = 9
 
-		ai_will_do = { base = 20	}
+		cost = 7
 
 		prerequisite = { focus = VBT_education }
 
-		cost = 7
+		search_filters = { FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_medicine"
 			increase_healthcare_budget = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
+
+		ai_will_do = { base = 20 }
 	}
 	#Social
 	focus = {
@@ -467,18 +589,20 @@ focus_tree = {
 		x = 28
 		y = 9
 
-		ai_will_do = { base = 20	}
+		cost = 7
 
 		prerequisite = { focus = VBT_education }
 
-		cost = 7
+		search_filters = { FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VBT_social"
 			increase_social_spending = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
+
+		ai_will_do = { base = 20 }
 	}
 
 }

@@ -67,7 +67,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 ### Small & Medium Business Owners
 
-**Available for**: Most nations (not available to WAG, KOR, NKO. Those use unique variants)
+**Available for**: Most nations (not available to KOR, NKO. Those use unique variants)
 
 **Dynamic Bonuses** (scale with opinion):
 
@@ -725,7 +725,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 | Faction                        | Category         | Key Bonus                            | Availability Restriction               |
 | ------------------------------ | ---------------- | ------------------------------------ | -------------------------------------- |
-| Small & Medium Business Owners | Economic         | +15% civ construction, +20% civ tax  | Not WAG, KOR, NKO                      |
+| Small & Medium Business Owners | Economic         | +15% civ construction, +20% civ tax  | Not KOR, NKO                           |
 | International Bankers          | Economic         | -1 interest rate, +20% trade op.     | Not USA                                |
 | Fossil Fuel Industry           | Economic         | +25% fuel gain                       | ,                                      |
 | Industrial Conglomerates       | Economic         | +15% infra construction              | Not oligarch/post-Soviet states        |

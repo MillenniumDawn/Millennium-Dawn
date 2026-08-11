@@ -360,12 +360,14 @@ state_has_any_resource = {
 #Expected scopes: Target country is THIS, country getting wargoal is PREV
 country_can_be_reasonable_target_of_wargoal = {
 	NOT = {
-		has_war_with = ROOT
-		is_in_faction_with = PREV
-		has_guaranteed = PREV
-		is_guaranteed_by = PREV
-		has_non_aggression_pact_with = PREV
-		is_subject_of = PREV
+		OR = {
+			has_war_with = ROOT
+			is_in_faction_with = PREV
+			has_guaranteed = PREV
+			is_guaranteed_by = PREV
+			has_non_aggression_pact_with = PREV
+			is_subject_of = PREV
+		}
 	}
 }
 
@@ -460,6 +462,20 @@ we_are_being_justified_against_or_wargoal_against_us = {
 	}
 }
 
+is_currently_importing_any_resources = {
+	custom_trigger_tooltip = {
+		tooltip = is_currently_importing_any_resources_tt
+		OR = {
+			check_variable = { resource_imported@oil > 0 }
+			check_variable = { resource_imported@aluminium > 0 }
+			check_variable = { resource_imported@rubber > 0 }
+			check_variable = { resource_imported@steel > 0 }
+			check_variable = { resource_imported@tungsten > 0 }
+			check_variable = { resource_imported@chromium > 0 }
+		}
+	}
+}
+
 ai_is_threatened = {
 	OR = {
 		has_war = yes
@@ -470,15 +486,13 @@ ai_is_threatened = {
 
 # UAR GDP Share Check
 # Checks if ROOT's UAR GDP share exceeds the threshold (40%)
-# Uses total_uar_gdp and total_arabic_gdp variables
-# Clamps denominator to prevent division by zero
+# Uses total_uar_gdp and global.total_arabic_gdp variables; denominator floored at 1 to prevent division by zero
 uar_has_required_gdp_share = {
 	custom_trigger_tooltip = {
 		tooltip = UAR_unite_uar_tt
 		check_expr = {
 			value = total_uar_gdp
-			clamp = { min = 0 max = 100000000 }
-			divide = total_arabic_gdp
+			divide = { value = global.total_arabic_gdp max = 1 }
 			greater_than = { value = 0.40 }
 		}
 	}
