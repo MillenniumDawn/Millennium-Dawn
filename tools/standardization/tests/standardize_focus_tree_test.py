@@ -550,6 +550,29 @@ def test_commented_focus_standardization_idempotent():
     assert once == twice
 
 
+_TWO_COMMENTED_OTHERS = [
+    "\tfocus = {\n",
+    "\t\tid = TST_x\n",
+    "\t\t# first\n",
+    "\t\tdynamic = yes\n",
+    "\t\t# second\n",
+    "\t\tbypass_if_unavailable = yes\n",
+    "\t}\n",
+]
+
+
+def test_each_other_property_keeps_its_own_comment():
+    # (defect) `other` claimed comments into one unindexed bucket, so both
+    # comments were emitted above the first property.
+    out = _standardize_focus(_TWO_COMMENTED_OTHERS)
+    expected = {"# first": "dynamic = yes", "# second": "bypass_if_unavailable = yes"}
+    for comment, property_line in expected.items():
+        idx = out.index(f"\t\t{comment}")
+        assert out[idx + 1].strip() == property_line
+
+    assert _standardize_focus([f"{line}\n" for line in out]) == out
+
+
 def test_failed_write_leaves_original_intact_and_no_temp_file(tmp_path, monkeypatch):
     target = tmp_path / "focus.txt"
     original = "focus_tree = {\n\tfocus = {\n\t\tid = TST_x\n\t}\n}\n"

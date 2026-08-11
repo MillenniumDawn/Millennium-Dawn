@@ -54,7 +54,14 @@ _SINGLE_LINE_LIST_PROPS = {
 }
 
 _REPEATABLE_PROPERTY_KEYS = frozenset(
-    {"icon", "offset", "prerequisites", "mutually_exclusive", "will_lead_to_war_with"}
+    {
+        "icon",
+        "offset",
+        "prerequisites",
+        "mutually_exclusive",
+        "will_lead_to_war_with",
+        "other",
+    }
 )
 
 # Block props: map script name -> (props key, style).
@@ -323,7 +330,7 @@ def extract_focus_properties(focus_lines):
             continue
 
         props["other"].append(focus_lines[i].rstrip())
-        claim("other")
+        claim("other", len(props["other"]) - 1)
         i += 1
 
     if pending:
@@ -581,13 +588,11 @@ def format_focus_block(props, block_type="focus"):
         lines.append("")
 
     # 13. Other properties (preserve as-is, but ensure spacing)
-    _emit_comments(lines, props, "other")
     if props["other"]:
-        for line in props["other"]:
-            if line.strip():
-                lines.append(line)
-        if props["other"]:
-            lines.append("")
+        for index, line in enumerate(props["other"]):
+            _emit_comments(lines, props, "other", index)
+            lines.append(line)
+        lines.append("")
 
     # id lines may carry a trailing comment — keep it out of the log string
     focus_id = props["id"].split("=")[1].split("#")[0].strip() if props["id"] else ""

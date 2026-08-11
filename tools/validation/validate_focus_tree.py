@@ -120,7 +120,7 @@ _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 # mutates the running value in a way that can't be summed statically, so it
 # forces the segment unknown rather than being read as a fresh set.
 _TREASURY_CHANGE_RE = re.compile(
-    r"\btreasury_change\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_]\w*)"
+    r"\btreasury_change\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_][\w.]*)"
     r"|\bvar\s*=\s*treasury_change\b"
 )
 _TREASURY_SET_VERBS = frozenset({"set_temp_variable", "set_variable"})
@@ -141,7 +141,9 @@ _TREASURY_MUTATE_VERBS = frozenset(
 # Scaling by a literal loses the magnitude but keeps the sign for a known
 # non-negative source such as gdp_total. Every other mutate loses the sign too.
 _TREASURY_SCALE_VERBS = frozenset({"multiply_temp_variable", "multiply_variable"})
-_TREASURY_NONNEGATIVE_VARIABLES = frozenset({"gdp_total"})
+# Matched on the bare name: a source may be read out of another country
+# (GER.gdp_per_capita), and the scope qualifier does not change its sign.
+_TREASURY_NONNEGATIVE_VARIABLES = frozenset({"gdp_total", "gdp_per_capita"})
 _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # modify_treasury_effect and its variants (e.g. modify_treasury_effect_corruption,
 # which scales the applied amount by a corruption-level idea before adding it to
@@ -397,45 +399,36 @@ def _body_money_cost(
             seg_has_set = True
             if val is not None and _NUMERIC_LITERAL_RE.match(val):
                 seg_var_base = False
-                try:
-                    amount = float(val)
-                except ValueError:
-                    seg_unknown = True
-                    seg_sign_unknown = True
-                else:
-                    if amount < 0:
-                        seg_neg = True
-                        seg_max = max(seg_max, -amount)
+                amount = float(val)
+                if amount < 0:
+                    seg_neg = True
+                    seg_max = max(seg_max, -amount)
             elif val is not None and val != "{":
                 # A bare variable reference is unknown. Only known non-negative
                 # sources retain their sign when scaled by a literal.
                 seg_unknown = True
                 seg_sign_unknown = True
-                seg_var_base = val in _TREASURY_NONNEGATIVE_VARIABLES
+                bare = val.rpartition(".")[2]
+                seg_var_base = bare in _TREASURY_NONNEGATIVE_VARIABLES
             else:
                 seg_unknown = True
                 seg_sign_unknown = True
                 seg_var_base = False
         elif kind == "scale":
             seg_unknown = True
-            if val is None:
+            scale_is_negative = val.startswith("-") and val.lstrip("-0.") != ""
+            if seg_var_base or (seg_has_set and not seg_sign_unknown):
+                # `treasury_change = gdp_total` then `* -0.08` is the MD idiom
+                # for a cost of unknown size, and `* 0.05` for income: a known
+                # non-negative base lets the literal carry the sign. Scales are
+                # not composed: sibling if/else branches scale the same set, so
+                # one negative anywhere in the segment keeps it negative.
+                seg_neg = seg_neg or scale_is_negative
+                seg_sign_unknown = False
+                seg_var_base = False
+            else:
                 seg_has_set = True
                 seg_sign_unknown = True
-            else:
-                scale_is_negative = val.startswith("-") and val.lstrip("-0.") != ""
-                if seg_var_base:
-                    # `treasury_change = gdp_total` then `* -0.08` is the MD idiom
-                    # for a cost of unknown size, and `* 0.05` for income: the known
-                    # non-negative base lets the literal carry the sign.
-                    seg_neg = scale_is_negative
-                    seg_sign_unknown = False
-                    seg_var_base = False
-                elif seg_has_set and not seg_sign_unknown:
-                    if scale_is_negative:
-                        seg_neg = not seg_neg
-                else:
-                    seg_has_set = True
-                    seg_sign_unknown = True
         elif kind == "mutate":
             seg_has_set = True
             seg_unknown = True
@@ -452,14 +445,13 @@ def _body_money_cost(
                 cur_unknown = True
                 cur_income = False
             # a non-negative applied treasury_change is income, not a cost
-            if cur_income:
-                pass
-            elif cur_unknown:
-                has_cost = True
-                unknown = True
-            elif cur_neg > 0:
-                spend += cur_neg
-                has_cost = True
+            if not cur_income:
+                if cur_unknown:
+                    has_cost = True
+                    unknown = True
+                elif cur_neg > 0:
+                    spend += cur_neg
+                    has_cost = True
             seg_max, seg_unknown, seg_has_set = 0.0, False, False
             seg_neg, seg_sign_unknown, seg_var_base = False, False, False
 
