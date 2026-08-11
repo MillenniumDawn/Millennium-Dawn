@@ -69,7 +69,7 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   `allowed_module_categories` blocks are often empty, so the naval resolver
   cannot be pointed at them as-is.
 
-- `validate_localisation.py` carries a **typo watchlist** check (WARNING, `loc-typo-watchlist`) against `.claude/docs/typo-watchlist.md`'s catalogued misspellings — loc values only, keys are never scanned. `it's` and `civilisation` are excluded as context-dependent. ~120-hit backlog (mostly `airforce`); flip to ERROR once cleared.
+- `validate_localisation.py` carries a **typo watchlist** check (WARNING, `loc-typo-watchlist`) against `.claude/docs/typo-watchlist.md`'s catalogued misspellings. It scans prose in loc values, excluding loc keys and runtime references (`[...]`, `$...$`, and `£...`). `it's` and `civilisation` are excluded as context-dependent. The backlog is clear; flip to ERROR when warning-only rollout is complete.
 
 ## Tooling deprecation watch
 
