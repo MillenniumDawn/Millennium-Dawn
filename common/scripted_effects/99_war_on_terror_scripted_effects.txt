@@ -1,0 +1,175 @@
+#War on Terror:
+
+bin_laden_set_hideout = {
+	save_global_event_target_as = GLOBAL_bin_laden_hideout
+	set_country_flag = wot_sheltering_bin_laden
+	set_global_flag = GLOBAL_bin_laden_at_large
+}
+
+#Each tier only runs if the previous one found nobody, so the candidate set can never diverge from a separate guard.
+#Dead on GLOBAL_bin_laden_killed_or_captured: OEF can still be launched after the manhunt ended, and relocating then would resurrect him.
+bin_laden_relocate_hideout = {
+	if = {
+		limit = { has_global_flag = GLOBAL_bin_laden_at_large }
+		event_target:GLOBAL_bin_laden_hideout = {
+			clr_country_flag = wot_sheltering_bin_laden
+		}
+		clear_global_event_target = GLOBAL_bin_laden_hideout
+		clr_global_flag = GLOBAL_bin_laden_at_large
+	}
+
+	#A Salafist-ruled Sunni state shelters him first. is_full_state matters: every other fascism+sunni tag
+	#in MD is a stateless militia (AIA, ISI, TTP...), and he cannot go to ground in a country with no territory.
+	if = {
+		limit = { NOT = { has_global_flag = GLOBAL_bin_laden_killed_or_captured } }
+		random_country = {
+			limit = {
+				exists = yes
+				is_full_state = yes
+				NOT = { original_tag = TAL }
+				NOT = { original_tag = AFG }
+				NOT = { original_tag = SAU }
+				has_government = fascism
+				has_idea = sunni
+			}
+			bin_laden_set_hideout = yes
+		}
+	}
+
+	#Otherwise the tribal areas of Pakistan, historically his refuge
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_bin_laden_at_large }
+			NOT = { has_global_flag = GLOBAL_bin_laden_killed_or_captured }
+			country_exists = PAK
+		}
+		random_list = {
+			70 = {
+				PAK = { bin_laden_set_hideout = yes }
+			}
+			30 = {
+				random_country = {
+					limit = {
+						exists = yes
+						is_full_state = yes
+						NOT = { original_tag = TAL }
+						NOT = { original_tag = AFG }
+						NOT = { original_tag = PAK }
+						has_idea = sunni
+					}
+					bin_laden_set_hideout = yes
+				}
+			}
+		}
+	}
+
+	#Failing that, any Sunni state at all
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_bin_laden_at_large }
+			NOT = { has_global_flag = GLOBAL_bin_laden_killed_or_captured }
+		}
+		random_country = {
+			limit = {
+				exists = yes
+				is_full_state = yes
+				NOT = { original_tag = TAL }
+				NOT = { original_tag = AFG }
+				has_idea = sunni
+			}
+			bin_laden_set_hideout = yes
+		}
+	}
+
+	#Nowhere left to run. Without this the manhunt chain stalls forever with no hideout to find.
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_bin_laden_at_large }
+			NOT = { has_global_flag = GLOBAL_bin_laden_killed_or_captured }
+		}
+		set_global_flag = GLOBAL_bin_laden_killed_or_captured
+		news_event = { id = wotnews.19 hours = 6 }
+	}
+}
+
+#Keeps GLOBAL_bin_laden_hideout and wot_sheltering_bin_laden: wotnews.16 renders the target days later,
+#and its option does the final cleanup and applies the shelterer fallout.
+bin_laden_clear_hideout = {
+	clr_global_flag = GLOBAL_bin_laden_at_large
+	set_global_flag = GLOBAL_bin_laden_killed_or_captured
+
+	#Decapitation. The network survives him, but it is badly degraded and far more exposed.
+	set_temp_variable = { wot_aq_threat_change = -30 }
+	set_temp_variable = { wot_aq_visibility_change = 20 }
+	wot_al_qaeda_shift = yes
+}
+
+#The Council turns on whoever is in ROOT. Runs on the country being condemned.
+unsc_members_condemn_us = {
+	for_each_scope_loop = {
+		array = global.security_council_members
+		if = {
+			limit = {
+				exists = yes
+				NOT = { tag = ROOT }
+			}
+			add_opinion_modifier = { target = ROOT modifier = territorial_integrity_violation }
+		}
+	}
+}
+
+#--- Counter-terror system bridge ---
+#Al-Qaeda is terror org VALUE 0 (00_ct_effects.txt: setup_all_orgs). The parallel org arrays
+#(threat/vis/reach, and each country's international_terror_org_intel) are indexed by SLOT, not by org id.
+#remove_terror_org shifts every slot above the removed org down, so never hardcode slot 0: resolve by value.
+#aq_slot stays -1 if Al-Qaeda has been removed entirely, and the callers no-op on that.
+wot_resolve_al_qaeda_slot = {
+	set_temp_variable = { aq_slot = -1 }
+	for_each_loop = {
+		array = global.active_terror_orgs
+		value = v
+		index = i
+
+		if = {
+			limit = { check_variable = { v = 0 } }
+			set_temp_variable = { aq_slot = i }
+		}
+	}
+}
+
+#Callers set wot_aq_threat_change and wot_aq_visibility_change first
+wot_al_qaeda_shift = {
+	wot_resolve_al_qaeda_slot = yes
+	if = {
+		limit = { check_variable = { aq_slot > -1 } }
+		add_to_variable = { global.active_terror_org_threat_lvl^aq_slot = wot_aq_threat_change }
+		clamp_variable = {
+			var = global.active_terror_org_threat_lvl^aq_slot
+			min = 0
+			max = 100
+		}
+		add_to_variable = { global.active_terror_org_vis_lvl^aq_slot = wot_aq_visibility_change }
+		clamp_variable = {
+			var = global.active_terror_org_vis_lvl^aq_slot
+			min = 0
+			max = 100
+		}
+	}
+}
+
+#Callers set wot_aq_intel_change first. Runs on the country gaining the intelligence.
+#Writes the temp-specific store, not international_terror_org_intel: that one is derived and
+#calculate_national_global_threat_detection rebuilds it from scratch every month, so a write there is erased
+#before the chain can read it. temp_specific_intel is additive on the same 0-100 scale and decays 1/month.
+wot_al_qaeda_intel_gain = {
+	wot_resolve_al_qaeda_slot = yes
+	if = {
+		limit = { check_variable = { aq_slot > -1 } }
+		add_to_variable = { international_terror_org_temp_specific_intel^aq_slot = wot_aq_intel_change }
+		clamp_variable = {
+			var = international_terror_org_temp_specific_intel^aq_slot
+			min = 0
+			max = 100
+		}
+	}
+}

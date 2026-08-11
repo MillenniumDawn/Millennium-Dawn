@@ -4,14 +4,15 @@
 Checks sprites referenced in .gui files (spriteType/quadTextureSprite/background),
 scripted_gui image= properties, and scripted_localisation localization_key= against
 the set defined in interface/*.gfx. Promotes .gui errors from WARNING to ERROR for
-MD-authored files; vanilla-override files stay at WARNING.
+MD-authored files; vanilla-override files stay at WARNING, as do MD-authored nation
+variants for refs inherited from the specific vanilla file they copy.
 """
 
 import glob
 import os
 import re
 import sys
-from typing import List, Optional, Set, Tuple
+from typing import FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -21,6 +22,7 @@ from shared_utils import (
     extract_block_from_text,
     find_hoi4_install,
     line_for_offset,
+    strip_inline_comment,
 )
 from validator_common import (
     BaseValidator,
@@ -43,19 +45,25 @@ from validator_common import (
 # means new MD content of any naming convention is classified correctly with no
 # edits here; the manifest only needs regenerating on a HOI4 version bump (see
 # gen_vanilla_gui_manifest.py).
+#
+# One carve-out: an MD-authored nation variant (`<vanilla_stem>_<tag>.gui`) that
+# inherits a dead ref from the specific vanilla file it copies stays WARNING too —
+# that ref is vanilla's bug, not the mod's (see _check_undefined_refs).
 
 _VANILLA_GUI_MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_gui_files.txt")
 
 
 def _load_vanilla_gui_basenames() -> frozenset:
+    # UnicodeDecodeError too: a corrupt manifest must degrade to "no manifest"
+    # rather than crash the validator at module-import time.
     try:
         with open(_VANILLA_GUI_MANIFEST, encoding="utf-8") as fh:
             return frozenset(
                 line.strip() for line in fh if line.strip() and not line.startswith("#")
             )
-    except OSError:
-        # No manifest: treat every .gui as MD-authored (fail loud as ERRORs
-        # rather than silently downgrading real missing-sprite bugs).
+    except (OSError, UnicodeDecodeError):
+        # No/unreadable manifest: treat every .gui as MD-authored (fail loud as
+        # ERRORs rather than silently downgrading real missing-sprite bugs).
         return frozenset()
 
 
@@ -67,24 +75,35 @@ def _is_md_gui_file(filepath: str) -> bool:
     return os.path.basename(filepath) not in _VANILLA_GUI_BASENAMES
 
 
-# .gfx and .gui files use C-style // and /* */ comments, NOT the # used by .txt scripts.
-# strip_comments() from shared_utils strips # comments; do NOT use it here.
+def _vanilla_parent_basename(filepath: str) -> Optional[str]:
+    """Vanilla .gui a nation-variant file copies, or None.
+
+    Country/variant designer GUIs are named ``<vanilla_stem>_<tag>.gui`` (e.g.
+    ``tank_chassis_super_heavy_tank_isr.gui`` copies vanilla
+    ``tank_chassis_super_heavy_tank.gui``). Strip the trailing ``_<tag>`` segment
+    and return it only when the result is a real vanilla basename — used to tie a
+    downgraded sprite ref back to the specific vanilla file it was inherited from.
+    """
+    stem, ext = os.path.splitext(os.path.basename(filepath))
+    if "_" not in stem:
+        return None
+    parent = stem.rsplit("_", 1)[0] + ext
+    return parent if parent in _VANILLA_GUI_BASENAMES else None
+
 
 _BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
-_LINE_COMMENT_RE = re.compile(r"//.*")
 _HASH_COMMENT_RE = re.compile(r"#.*")
 
 
 def _strip_comments(text: str) -> str:
     """Remove comments from Clausewitz GUI/GFX text.
 
-    `#` is the actual Clausewitz line-comment marker (interface/*.gui|*.gfx use
-    it almost exclusively); `//` and `/* */` are also stripped for safety. Without
-    `#` stripping, sprite references inside commented-out blocks leak through and
-    are wrongly reported as missing.
+    `#` is the Clausewitz line-comment marker. `//` is NOT stripped: it never
+    appears as a comment in interface/, but does appear inside texture paths
+    (`"gfx//interface/..."`), and cutting there leaves an unterminated quote that
+    desyncs the quote-aware block scanner and silently drops the sprite.
     """
     text = _BLOCK_COMMENT_RE.sub("", text)
-    text = _LINE_COMMENT_RE.sub("", text)
     text = _HASH_COMMENT_RE.sub("", text)
     return text
 
@@ -98,7 +117,8 @@ _GFX_SPRITE_TYPES = re.compile(
 )
 
 # name = "GFX_xxx" inside a block
-_GFX_NAME = re.compile(r'\bname\s*=\s*"(GFX_[A-Za-z0-9_]+)"')
+# `@` appears in engine frame-variant names (e.g. GFX_x@highlight).
+_GFX_NAME = re.compile(r'\bname\s*=\s*"(GFX_[A-Za-z0-9_@]+)"')
 
 # GUI references — spriteType / quadTextureSprite / background
 _GUI_REF = re.compile(
@@ -117,6 +137,13 @@ _SLOC_KEY_REF = re.compile(r'\blocalization_key\s*=\s*"(GFX_[^"\[]+)"')
 # the unused-sprite check, so over-matching (e.g. a token in a string) is safe.
 _GFX_TOKEN_REF = re.compile(r"GFX_[A-Za-z0-9_.\-]+")
 _HASH_COMMENT = re.compile(r"#[^\n]*")
+
+# Localisation sprite reference: `£name` renders the sprite `GFX_name` (an
+# optional `|frame` suffix may follow). Party, idea and money icons are often
+# referenced this way and nowhere else, so skipping .yml mis-reports them as
+# unused. `£GFX_name` also occurs, hence both spellings are recorded. Names can
+# carry `.` frame suffixes and `-`, same as _GFX_TOKEN_REF.
+_LOC_SPRITE_REF = re.compile(r"£([A-Za-z0-9_.\-]+)")
 # Idea `picture = X` resolves to the sprite `GFX_idea_X` (X is not GFX_-prefixed).
 _IDEA_PICTURE_REF = re.compile(r"^\s*picture\s*=\s*([A-Za-z0-9_.\-]+)", re.MULTILINE)
 
@@ -126,16 +153,30 @@ _FLAG_SPRITE_RE = re.compile(
     r"^GFX_(?:flag_|.*_flag$|.*_coat_of_arms$|.*_shield$)", re.IGNORECASE
 )
 
-# Sprites defined purely in vanilla (game install) that we can't track when
-# the vanilla install isn't present. We accept all vanilla-looking names
-# rather than false-positiving on them. The heuristic: if the name has no
-# MD-identifying prefix and a short common suffix, it's probably vanilla.
-# We limit false-positive suppression to a small explicit allowlist of
-# patterns, not a broad sweep.
-#
-# When the vanilla HOI4 install IS detected (Steam path), the validator
-# instead reads its interface/*.gfx files directly and adds them to the
-# defined-sprites set — much more accurate than the prefix heuristic.
+# Vanilla sprite names come from three sources, best first:
+#   1. A live HOI4 install (Steam path or $HOI4_PATH): interface/*.gfx read
+#      directly and folded into the defined-sprites set.
+#   2. The committed vanilla_sprites.txt manifest (generated from a local
+#      install by gen_vanilla_sprites_manifest.py) — what CI uses.
+#   3. The _VANILLA_PREFIXES heuristic below, only when neither exists:
+#      accept vanilla-looking names rather than false-positive on them.
+_VANILLA_SPRITES_MANIFEST = os.path.join(
+    os.path.dirname(__file__), "vanilla_sprites.txt"
+)
+
+
+def _load_vanilla_sprite_manifest() -> FrozenSet[str]:
+    # UnicodeDecodeError too: decoding happens lazily during iteration, and a
+    # corrupt manifest should degrade to the heuristic, not crash the run.
+    try:
+        with open(_VANILLA_SPRITES_MANIFEST, encoding="utf-8") as fh:
+            return frozenset(
+                line.strip() for line in fh if line.strip() and not line.startswith("#")
+            )
+    except (OSError, UnicodeDecodeError):
+        return frozenset()
+
+
 _VANILLA_PREFIXES = (
     "GFX_zoom_",
     "GFX_topbar_",
@@ -160,6 +201,65 @@ def _find_vanilla_interface_dir() -> Optional[str]:
     return None
 
 
+def _vanilla_gfx_files() -> List[str]:
+    """Return every vanilla .gfx path, including DLC interface dirs.
+
+    DLC sprites (dlc/*/interface, integrated_dlc/*/interface) are referenced by
+    vanilla-override .gui files, so omitting them false-positives those refs.
+    """
+    base = find_hoi4_install()
+    if not base:
+        return []
+    files = glob.glob(os.path.join(base, "interface", "**", "*.gfx"), recursive=True)
+    for sub in ("dlc", "integrated_dlc"):
+        files.extend(
+            glob.glob(
+                os.path.join(base, sub, "*", "interface", "**", "*.gfx"),
+                recursive=True,
+            )
+        )
+    return sorted(files)
+
+
+def _vanilla_gui_files() -> List[str]:
+    """Return every vanilla .gui path, including DLC interface dirs."""
+    base = find_hoi4_install()
+    if not base:
+        return []
+    files = glob.glob(os.path.join(base, "interface", "**", "*.gui"), recursive=True)
+    for sub in ("dlc", "integrated_dlc"):
+        files.extend(
+            glob.glob(
+                os.path.join(base, sub, "*", "interface", "**", "*.gui"),
+                recursive=True,
+            )
+        )
+    return sorted(files)
+
+
+def _vanilla_gui_ref_index() -> dict:
+    """Map each vanilla .gui basename to the GFX sprite names it references.
+
+    Lets a nation-variant file (``<stem>_<tag>.gui``) be forgiven a dead ref its
+    real vanilla parent carries even when the mod ships no full-name override of
+    that parent — without a live install the mod's own override map is the only
+    signal, and a variant added alone would false-positive to ERROR. Empty when
+    no vanilla install is discoverable (CI), so callers keep current behaviour.
+    """
+    index: dict = {}
+    for path in _vanilla_gui_files():
+        raw = _read_raw(path)
+        if raw is None:
+            continue
+        text = _strip_comments(raw)
+        refs = index.setdefault(os.path.basename(path), set())
+        for m in _GUI_REF.finditer(text):
+            sprite = m.group(2)
+            if not _is_dynamic(sprite):
+                refs.add(sprite)
+    return index
+
+
 _UNUSED_SPRITE_LIMIT = 50
 
 
@@ -178,6 +278,44 @@ def _is_likely_vanilla(name: str) -> bool:
     return any(name.startswith(p) for p in _VANILLA_PREFIXES)
 
 
+# Equipment icons are resolved by the engine from the archetype name, optionally
+# with a country prefix (GFX_util_vehicle_1_medium, GFX_AFG_util_vehicle_1_medium).
+# They are never named literally in script, so the unused check needs the
+# equipment list to tell a real orphan from an engine-resolved icon.
+_EQUIPMENT_ICON_RE = re.compile(r"^GFX_(.+?)_(?:small|medium|large)$")
+# Stripped as a second attempt only. Folding the optional tag into the pattern
+# above swallows the archetype's own prefix (APC_1 → "1"), because the match
+# succeeds either way and never backtracks.
+_EQUIPMENT_ICON_TAG_RE = re.compile(r"^[A-Z]{3}_(.+)$")
+# Only entries directly inside `equipments = { }` are equipment. Matching any
+# one-tab key would also pick up container keys such as `values` in
+# tank_filters.txt, which could mask a genuinely dead sprite.
+_EQUIPMENTS_BLOCK_RE = re.compile(r"^equipments\s*=\s*\{", re.MULTILINE)
+_EQUIPMENT_ENTRY_RE = re.compile(r"^\t([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+
+
+def _load_equipment_names(mod_path: str) -> FrozenSet[str]:
+    """Return every equipment archetype/variant declared in common/units/equipment."""
+    names: Set[str] = set()
+    root = os.path.join(mod_path, "common", "units", "equipment")
+    for dirpath, _dirnames, filenames in os.walk(root):
+        for fn in filenames:
+            if not fn.endswith(".txt"):
+                continue
+            try:
+                with open(
+                    os.path.join(dirpath, fn), encoding="utf-8-sig", errors="replace"
+                ) as fh:
+                    text = _HASH_COMMENT.sub("", fh.read())
+            except OSError:
+                continue
+            for block in _EQUIPMENTS_BLOCK_RE.finditer(text):
+                body, _end = extract_block_from_text(text, block.start())
+                if body:
+                    names.update(_EQUIPMENT_ENTRY_RE.findall(body))
+    return frozenset(names)
+
+
 # Per-file parsers take (filepath, mod_path) and disk-cache their result keyed
 # on file content, so a warm run only re-parses changed files. .gfx/.gui scans
 # cover all of interface/, so the cache is the bulk of the speedup.
@@ -191,6 +329,29 @@ def _read_raw(filepath: str) -> Optional[str]:
         return None
 
 
+def sprite_names_from_gfx_text(raw: str) -> Set[str]:
+    """Return the set of GFX sprite names defined in raw .gfx file content.
+
+    Shared with gen_vanilla_sprites_manifest.py so the committed manifest is
+    built with exactly the parse the validator applies to mod files.
+    """
+    text = _strip_comments(raw)
+    names: Set[str] = set()
+    for m in _GFX_SPRITE_TYPES.finditer(text):
+        block_start = m.end()
+        snippet, end = extract_block_from_text(text, block_start - 1)
+        if end == -1:
+            # Unbalanced braces: fall back to scanning the rest of the line.
+            line_end = text.find("\n", m.start())
+            snippet = text[
+                block_start : line_end if line_end != -1 else block_start + 200
+            ]
+        nm = _GFX_NAME.search(snippet)
+        if nm:
+            names.add(nm.group(1))
+    return names
+
+
 def _parse_gfx_file(args: Tuple[str, str]) -> Set[str]:
     """Return the set of GFX sprite names defined in a .gfx file."""
     filepath, mod_path = args
@@ -198,25 +359,8 @@ def _parse_gfx_file(args: Tuple[str, str]) -> Set[str]:
     if raw is None:
         return set()
 
-    def _compute():
-        text = _strip_comments(raw)
-        names: Set[str] = set()
-        for m in _GFX_SPRITE_TYPES.finditer(text):
-            block_start = m.end()
-            snippet, end = extract_block_from_text(text, block_start - 1)
-            if end == -1:
-                # Unbalanced braces: fall back to scanning the rest of the line.
-                line_end = text.find("\n", m.start())
-                snippet = text[
-                    block_start : line_end if line_end != -1 else block_start + 200
-                ]
-            nm = _GFX_NAME.search(snippet)
-            if nm:
-                names.add(nm.group(1))
-        return names
-
     return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.gfx", filepath, raw, _compute
+        mod_path, "gfx_ref.gfx", filepath, raw, lambda: sprite_names_from_gfx_text(raw)
     )
 
 
@@ -297,6 +441,29 @@ def _parse_script_refs(args: Tuple[str, str]) -> List[str]:
     )
 
 
+def _parse_loc_refs(args: Tuple[str, str]) -> List[str]:
+    """Return every GFX sprite a localisation .yml file references via `£name`."""
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return []
+
+    def _compute() -> List[str]:
+        text = "\n".join(strip_inline_comment(line) for line in raw.splitlines())
+        refs: Set[str] = set()
+        for name in _LOC_SPRITE_REF.findall(text):
+            # Sentence-final punctuation (`£command_power.`) is not part of the name.
+            name = name.rstrip(".-")
+            if not name:
+                continue
+            refs.add(name if name.startswith("GFX_") else "GFX_" + name)
+        return sorted(refs)
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.loc", filepath, raw, _compute
+    )
+
+
 def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a scripted_localisation .txt file."""
     filepath, mod_path = args
@@ -320,12 +487,15 @@ def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     )
 
 
-class GfxReferenceValidator(BaseValidator):
+class Validator(BaseValidator):
     TITLE = "GFX SPRITE REFERENCE VALIDATION"
     STAGED_EXTENSIONS = [".gui", ".gfx", ".txt"]
 
     def __init__(self, mod_path: str, **kwargs):
         super().__init__(mod_path, **kwargs)
+        # True once vanilla sprite names (live install or manifest) were folded
+        # into the defined set — disables the _is_likely_vanilla heuristic.
+        self._vanilla_defs_loaded = False
 
     def _build_gfx_definitions(self) -> Tuple[Set[str], Set[str]]:
         """Scan all interface/*.gfx files and return (all_defined, mod_defined).
@@ -340,7 +510,7 @@ class GfxReferenceValidator(BaseValidator):
         """
         self._log_section("Building GFX sprite definition set")
         # Always scan the full repo — definitions must come from anywhere.
-        gfx_files = self._collect_files(["interface/*.gfx"], ignore_staged=True)
+        gfx_files = self._collect_files(["interface/**/*.gfx"], ignore_staged=True)
         results = self._pool_map(
             _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
         )
@@ -352,9 +522,8 @@ class GfxReferenceValidator(BaseValidator):
         )
 
         defined = set(mod_defined)
-        vanilla_dir = _find_vanilla_interface_dir()
-        if vanilla_dir:
-            vanilla_gfx = glob.glob(os.path.join(vanilla_dir, "*.gfx"))
+        vanilla_gfx = _vanilla_gfx_files()
+        if vanilla_gfx:
             vanilla_results = self._pool_map(
                 _parse_gfx_file, [(f, self.mod_path) for f in vanilla_gfx]
             )
@@ -363,21 +532,36 @@ class GfxReferenceValidator(BaseValidator):
                 vanilla_defined.update(s)
             new = vanilla_defined - defined
             defined.update(vanilla_defined)
+            self._vanilla_defs_loaded = True
             self.log(
                 f"  Found {len(vanilla_defined)} GFX sprite names in vanilla "
-                f"({len(new)} new) at {vanilla_dir}"
+                f"({len(new)} new) across {len(vanilla_gfx)} .gfx files"
             )
         else:
-            self.log(
-                "  Vanilla HOI4 interface/ not detected — set HOI4_PATH to "
-                "enable vanilla sprite cross-reference (CI runs without it)"
-            )
+            manifest = _load_vanilla_sprite_manifest()
+            if manifest:
+                new = manifest - defined
+                defined.update(manifest)
+                self._vanilla_defs_loaded = True
+                self.log(
+                    f"  Loaded {len(manifest)} vanilla GFX sprite names from "
+                    f"vanilla_sprites.txt ({len(new)} new)"
+                )
+            else:
+                self.log(
+                    "  No vanilla HOI4 install detected and no vanilla_sprites.txt"
+                    " manifest — set HOI4_PATH or run"
+                    " gen_vanilla_sprites_manifest.py (prefix heuristic active)"
+                )
         return defined, mod_defined
 
     def _collect_gui_refs(self, defined: Set[str]) -> List[Tuple[str, str, int]]:
         """Return undefined GUI sprite references from interface/*.gui files."""
         self._log_section("Collecting GFX references from interface/*.gui files")
-        gui_files = self._collect_files(["interface/*.gui"])
+        # Full-repo scan even under --staged: a variant file's inherited refs are
+        # only downgradable when their vanilla parent/override is in view, so the
+        # ref universe must not be staged-limited (would escalate WARNING->ERROR).
+        gui_files = self._collect_files(["interface/**/*.gui"], ignore_staged=True)
         all_refs: List[Tuple[str, str, int]] = []
         for batch in self._pool_map(
             _parse_gui_file, [(f, self.mod_path) for f in gui_files]
@@ -409,6 +593,24 @@ class GfxReferenceValidator(BaseValidator):
             refs.update(batch)
         self.log(
             f"  Scanned {len(files)} script files; found {len(refs)} distinct GFX references"
+        )
+        return refs
+
+    def _collect_loc_refs(self) -> Set[str]:
+        """Return every GFX sprite referenced from localisation via `£name`.
+
+        Every language is scanned, not just English: a `£` reference is a real
+        sprite use whichever file it sits in.
+        """
+        self._log_section("Collecting GFX £sprite references from localisation/*.yml")
+        files = self._collect_files(["localisation/**/*.yml"], ignore_staged=True)
+        refs: Set[str] = set()
+        for batch in self._pool_map(
+            _parse_loc_refs, [(f, self.mod_path) for f in files]
+        ):
+            refs.update(batch)
+        self.log(
+            f"  Scanned {len(files)} localisation files; found {len(refs)} distinct GFX references"
         )
         return refs
 
@@ -456,8 +658,11 @@ class GfxReferenceValidator(BaseValidator):
         When gui_mode is True, .gui files that are vanilla overrides (not
         MD-authored) are reported as WARNINGs rather than ERRORs, because
         those files legitimately reference vanilla sprites the mod doesn't
-        redefine. MD-authored .gui files and all scripted_gui/.txt files
-        get ERROR severity.
+        redefine. An MD-authored nation variant is likewise WARNING'd for a
+        ref inherited from the specific vanilla file it copies — from the
+        mod's own full-name override of that file, or (when a live vanilla
+        install is present) from real vanilla .gui data. Every other
+        MD-authored .gui ref and all scripted_gui/.txt refs get ERROR.
 
         *mod_defined_ci* is the casefold index of mod-only sprites (not
         vanilla). When a ref misses case-sensitively but hits here, the
@@ -467,15 +672,43 @@ class GfxReferenceValidator(BaseValidator):
         warnings: List[Tuple[str, str, int]] = []
         seen: Set[Tuple[str, str, int]] = set()
         ci = mod_defined_ci or {}
+        # .gui refs are gathered full-repo (ignore_staged) to build the override
+        # index below, so under --staged the reported entries must be re-scoped to
+        # the staged files or the whole repo's ~50 .gui errors would surface.
+        staged_rel = (
+            {os.path.relpath(f, self.mod_path) for f in (self.staged_files or [])}
+            if self.staged_only
+            else None
+        )
+        # Vanilla .gui files ship dead sprite refs of their own; an MD-authored
+        # nation variant (`<vanilla_stem>_<tag>.gui`) inheriting the same ref is
+        # vanilla's bug, not the mod's — downgrade to WARNING. Keyed per vanilla
+        # file (basename -> its sprite refs) so a variant is only forgiven a ref
+        # its own parent carries, not any dead ref that happens to share a name
+        # somewhere else in the repo.
+        override_refs_by_file: dict = {}
+        vanilla_ref_index: dict = {}
+        if gui_mode:
+            for s, f, _ in refs:
+                if not _is_md_gui_file(f):
+                    override_refs_by_file.setdefault(os.path.basename(f), set()).add(s)
+            # Real vanilla .gui refs (keyed by basename), so a variant added
+            # without a full-name mod override is still forgiven refs its actual
+            # vanilla parent carries. Empty without a live install (CI).
+            vanilla_ref_index = _vanilla_gui_ref_index()
 
         for sprite, filepath, line in refs:
             if sprite in defined:
                 continue
             if _is_flag_sprite(sprite):
                 continue
-            if _is_likely_vanilla(sprite):
+            # Prefix heuristic only when no vanilla names were loaded — with a
+            # live install or manifest the defined set already covers vanilla.
+            if not self._vanilla_defs_loaded and _is_likely_vanilla(sprite):
                 continue
             rel = os.path.relpath(filepath, self.mod_path)
+            if staged_rel is not None and rel not in staged_rel:
+                continue
             key = (sprite, rel, line)
             if key in seen:
                 continue
@@ -489,7 +722,17 @@ class GfxReferenceValidator(BaseValidator):
             else:
                 msg = f"Undefined sprite '{sprite}'"
             entry = (msg, rel, line)
-            if gui_mode and not _is_md_gui_file(filepath):
+            downgrade = False
+            if gui_mode:
+                if not _is_md_gui_file(filepath):
+                    downgrade = True
+                else:
+                    parent = _vanilla_parent_basename(filepath)
+                    downgrade = parent is not None and (
+                        sprite in override_refs_by_file.get(parent, ())
+                        or sprite in vanilla_ref_index.get(parent, ())
+                    )
+            if downgrade:
                 warnings.append(entry)
             else:
                 errors.append(entry)
@@ -529,12 +772,30 @@ class GfxReferenceValidator(BaseValidator):
             self.log("  Skipping unused-sprite check in staged mode.")
             return
 
+        equipment = _load_equipment_names(self.mod_path)
+        if not equipment:
+            self.log(
+                "  No equipment archetypes found under common/units/equipment"
+                " — equipment-icon exemption disabled"
+            )
+
+        def _is_equipment_icon(name: str) -> bool:
+            m = _EQUIPMENT_ICON_RE.match(name)
+            if not m:
+                return False
+            stem = m.group(1)
+            if stem in equipment:
+                return True
+            tagged = _EQUIPMENT_ICON_TAG_RE.match(stem)
+            return bool(tagged) and tagged.group(1) in equipment
+
         unused = sorted(
             s
             for s in defined
             if s not in all_refs
             and not _is_flag_sprite(s)
             and not _is_likely_vanilla(s)
+            and not _is_equipment_icon(s)
         )
 
         if not unused:
@@ -550,14 +811,6 @@ class GfxReferenceValidator(BaseValidator):
             (f"Unused GFX sprite '{s}' (defined but never referenced)", "", 0)
             for s in display
         ]
-        if remainder > 0:
-            issues.append(
-                (
-                    f"... and {remainder} more unused sprites (run without --staged to see all)",
-                    "",
-                    0,
-                )
-            )
 
         self._report(
             issues,
@@ -566,6 +819,15 @@ class GfxReferenceValidator(BaseValidator):
             severity=Severity.WARNING,
             category="unused-sprite",
         )
+        # Logged, not reported: a truncation notice is not a finding. Emitting it
+        # as one makes report consumers count it as an issue and fail to parse a
+        # sprite name out of it.
+        if remainder > 0:
+            self.log(
+                f"  ... and {remainder} more unused sprites not shown "
+                f"(limit {_UNUSED_SPRITE_LIMIT})",
+                "always",
+            )
 
     def run_validations(self) -> None:
         defined, mod_defined = self._build_gfx_definitions()
@@ -612,12 +874,13 @@ class GfxReferenceValidator(BaseValidator):
         all_referenced: Set[str] = {r[0] for r in gui_refs + sgui_refs + sloc_refs}
         if not self.staged_only:
             all_referenced |= self._collect_script_refs()
+            all_referenced |= self._collect_loc_refs()
         self._check_unused_sprites(mod_defined, all_referenced)
 
 
 def main() -> int:
     return run_validator_main(
-        GfxReferenceValidator,
+        Validator,
         description="Validate GFX sprite references in Millennium Dawn mod.",
     )
 

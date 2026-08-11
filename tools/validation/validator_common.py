@@ -8,9 +8,10 @@ import os
 import re
 import sys
 import time
-from dataclasses import dataclass, field
-from multiprocessing import Pool, cpu_count
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from dataclasses import dataclass
+from multiprocessing import cpu_count
+from multiprocessing.pool import Pool
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
@@ -33,12 +34,22 @@ from shared_utils import (
     timing_enabled,
 )
 
+# Generic type for the cross-pass result cache accessor (see BaseValidator.cached).
+T = TypeVar("T")
+
 # Regex for meta_effect/meta_trigger template substitution patterns.
 # Matches identifiers containing at least one [VAR] placeholder with a non-empty
 # constant prefix (e.g. "set_leader_[IDEOLOGY]", "tooltip_EU_[EUXXX]_approve").
 _META_TEMPLATE_RE = re.compile(
     r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+)"
 )
+
+# Quoted meta-substitution value carrying the constant anchor, where the
+# placeholder may lead (e.g. `TRIG = "[?global.tokens^v.GetTokenKey]_unlock_btn_enabled"`).
+# The `text` block holds a bare `[TRIG] = yes` and the real prefix/suffix lives in
+# the quoted assignment, so a leading placeholder with only a trailing constant must
+# still resolve. The suffix anchor keeps the match from over-firing.
+_QUOTED_META_TEMPLATE_RE = re.compile(r'"([^"]*\[[^\]]+\][^"]*)"')
 
 _ANSI_RE = re.compile(r"\033\[[0-9;]+m")
 
@@ -117,10 +128,28 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "lar_collab_gov.1.d",
         "lar_collab_gov.1.t",
         "lar_heavy_water.1.a",
+        "lar_heavy_water.1.desc",
         "lar_heavy_water.1.t",
         "lar_heavy_water.2.a",
         "lar_heavy_water.2.desc",
         "lar_heavy_water.2.t",
+        # lar_events_l_english.yml — La Resistance agent-loss events reused
+        # verbatim by MD's LaR_agent_events.txt.
+        "lar_operative_event.1.a",
+        "lar_operative_event.1.desc",
+        "lar_operative_event.1.t",
+        "lar_operative_event.2.a",
+        "lar_operative_event.2.desc",
+        "lar_operative_event.2.t",
+        "lar_operative_event.3.a",
+        "lar_operative_event.3.desc",
+        "lar_operative_event.3.t",
+        "lar_operative_event.4.a",
+        "lar_operative_event.4.desc",
+        "lar_operative_event.4.t",
+        "lar_operative_event.5.a",
+        "lar_operative_event.5.desc",
+        "lar_operative_event.5.t",
         "lar_rescue_mussolini.1.a",
         "lar_rescue_mussolini.1.desc",
         "lar_rescue_mussolini.1.t",
@@ -220,9 +249,11 @@ def scan_meta_constructed_names(files, defined_names):
     template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
 
     For every file containing ``meta_effect`` or ``meta_trigger``, extracts
-    identifier templates of the form ``prefix_[VAR]_suffix``, splits on ``[VAR]``
-    segments, and matches any defined name whose lower-cased form starts with
-    *prefix* and ends with *suffix*.
+    identifier templates of the form ``prefix_[VAR]_suffix`` — both bare
+    identifiers and quoted meta-substitution values (tooltips/templates such as
+    ``"[?var]_unlock_btn_enabled"``) — splits on ``[VAR]`` segments, and matches
+    any defined name whose lower-cased form starts with *prefix* and ends with
+    *suffix*.
     """
     defined_lower = {n.lower(): n for n in defined_names}
     used = set()
@@ -239,8 +270,12 @@ def scan_meta_constructed_names(files, defined_names):
 
         content_clean = strip_comments(content)
 
-        for m in _META_TEMPLATE_RE.finditer(content_clean):
-            template = m.group(1)
+        templates = {m.group(1) for m in _META_TEMPLATE_RE.finditer(content_clean)}
+        templates.update(
+            m.group(1) for m in _QUOTED_META_TEMPLATE_RE.finditer(content_clean)
+        )
+
+        for template in templates:
             parts = re.split(r"\[[^\]]+\]", template)
             prefix = parts[0].lower()
             suffix = parts[-1].lower() if len(parts) > 1 else ""
@@ -397,7 +432,7 @@ class BaseValidator:
         output_file: Optional[str] = None,
         use_colors: bool = True,
         staged_only: bool = False,
-        workers: int = None,
+        workers: Optional[int] = None,
         no_cache: bool = False,
         **kwargs,
     ):
@@ -411,11 +446,13 @@ class BaseValidator:
         self.staged_only = staged_only
         self.workers = workers if workers else max(1, cpu_count() // 2)
         self.no_cache = no_cache
+        # Pool workers call disk_cache at module level and never see `self`, so the
+        # env var is the only channel that reaches them (fork inherits it).
+        if no_cache:
+            os.environ["MD_NO_CACHE"] = "1"
         self.staged_files = None
-        self.output_lines = []
+        self.output_lines: List[str] = []
         self._pool: Optional[Pool] = None
-        self._regex_cache: Dict[str, re.Pattern] = {}
-        self._line_offsets_cache: Dict[str, List[int]] = {}
         self._shared_cache: Dict[str, object] = {}
         self._issues: List[Issue] = []
         self._section_timings: List[Tuple[str, float]] = []
@@ -431,27 +468,11 @@ class BaseValidator:
             if not self.staged_files:
                 logging.warning("No staged files found")
 
-    def get_regex(self, pattern: str, flags: int = 0) -> re.Pattern:
-        """Get a compiled regex pattern from cache or compile and cache it."""
-        key = f"{pattern}:{flags}"
-        if key not in self._regex_cache:
-            self._regex_cache[key] = re.compile(pattern, flags)
-        return self._regex_cache[key]
-
-    def line_offsets(self, path: str, text: str) -> List[int]:
-        # Pool workers must use compute_line_offsets() from shared_utils — this
-        # cache only spans the main process.
-        cached = self._line_offsets_cache.get(path)
-        if cached is None:
-            cached = compute_line_offsets(text)
-            self._line_offsets_cache[path] = cached
-        return cached
-
-    def cached(self, key: str, factory_fn):
+    def cached(self, key: str, factory_fn: Callable[[], T]) -> T:
         # Pool workers don't see this cache; populate from the main process.
         if key not in self._shared_cache:
             self._shared_cache[key] = factory_fn()
-        return self._shared_cache[key]
+        return cast(T, self._shared_cache[key])
 
     def parse_files_cached(
         self,
@@ -474,12 +495,16 @@ class BaseValidator:
             text = FileOpener.open_text_file(
                 path, lowercase=lowercase, strip_comments_flag=strip_comments_flag
             )
+
+            def parse_cached() -> Any:
+                return parse_fn(text, path)
+
             results[path] = disk_cache.per_file_cached_by_content(
                 self.mod_path,
                 namespace,
                 path,
                 text,
-                lambda t=text, p=path: parse_fn(t, p),
+                parse_cached,
             )
         return results
 
@@ -743,22 +768,13 @@ class BaseValidator:
         """Get issues as JSON string."""
         return json.dumps([issue.to_dict() for issue in self._issues], indent=2)
 
-    def get_summary(self) -> dict:
-        """Get validation summary as dict."""
-        return {
-            "title": self.TITLE,
-            "errors": self.errors_found,
-            "warnings": self.warnings_found,
-            "issues": [issue.to_dict() for issue in self._issues],
-        }
-
     def _basename_index(self, patterns: Tuple[str, ...]) -> Dict[str, List[str]]:
         # Without this cache, get_full_path() re-globs **/*.txt for every call —
         # validate_variables makes hundreds of those per run.
         key = "_basename_index:" + "|".join(patterns)
         existing = self._shared_cache.get(key)
         if existing is not None:
-            return existing
+            return cast(Dict[str, List[str]], existing)
 
         tracked: List[str] = []
         seen: Set[str] = set()
@@ -815,7 +831,31 @@ class BaseValidator:
         # cost. The Pool is created lazily on the first batch that uses it.
         if self.workers == 1 or len(args_list) < 10:
             return [func(a) for a in args_list]
-        return self._get_pool().map(func, args_list, chunksize=chunksize)
+        pool = self._get_pool()
+        if pool is None:
+            return [func(a) for a in args_list]
+        return pool.map(func, args_list, chunksize=chunksize)
+
+    def _pool_map_init(
+        self,
+        func: Callable,
+        items: List,
+        initializer: Callable,
+        initargs: tuple,
+        chunksize: int = 50,
+    ) -> List:
+        # Like _pool_map, but each worker gets initargs once via initializer
+        # rather than in every task. Use when the per-file worker needs a large
+        # read-only payload (a membership set or lookup map): shipping it per
+        # task re-pickles it once per chunk, which can dominate runtime. Spins a
+        # dedicated pool since the shared one carries no initializer.
+        if self.workers == 1 or len(items) < 10:
+            initializer(*initargs)
+            return [func(it) for it in items]
+        with Pool(
+            processes=self.workers, initializer=initializer, initargs=initargs
+        ) as pool:
+            return pool.map(func, items, chunksize=chunksize)
 
     def _collect_files(
         self,
@@ -896,8 +936,17 @@ class BaseValidator:
 
         Also includes vanilla-provided keys that MD decisions/events override
         but reuse the vanilla loc string for (see ``KNOWN_VANILLA_LOC_KEYS``).
+
+        Always scans the full repo: in staged mode the referencing .txt is
+        staged but its loc .yml usually is not, and a staged-only key set
+        makes every unchanged key report as missing.
         """
-        yml_files = self._collect_files(["localisation/english/**/*.yml"])
+        memo = getattr(self, "_loc_keys_memo", None)
+        if memo is not None:
+            return memo
+        yml_files = self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        )
         key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
         all_keys: set = set()
         for filepath in yml_files:
@@ -908,7 +957,8 @@ class BaseValidator:
                 continue
             all_keys.update(key_pattern.findall(text))
         all_keys.update(KNOWN_VANILLA_LOC_KEYS)
-        return frozenset(all_keys)
+        self._loc_keys_memo = frozenset(all_keys)
+        return self._loc_keys_memo
 
     def run_validations(self):
         raise NotImplementedError("Subclasses must implement run_validations()")

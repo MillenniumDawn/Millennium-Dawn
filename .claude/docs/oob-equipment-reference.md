@@ -1,6 +1,6 @@
 # OOB Equipment Quick Reference
 
-Quick reference for equipment types in Order of Battle (OOB) files. For complete documentation, see `.claude/skills/oob-variants/SKILL.md`.
+Quick reference for equipment types in Order of Battle (OOB) files. For complete documentation, see `.claude/docs/oob-variants-reference.md`.
 
 ## File Type Quick Reference
 
@@ -96,4 +96,4 @@ grep 'name = "VARIANT_NAME"' history/countries/TAG\ -\ Name.txt
 
 ## Complete Reference
 
-For chassis types and roles, module configuration, aircraft airframes, naval hulls, complete equipment type mapping tables, and variant verification workflows, see `.claude/skills/oob-variants/SKILL.md`.
+For chassis types and roles, module configuration, aircraft airframes, naval hulls, complete equipment type mapping tables, and variant verification workflows, see `.claude/docs/oob-variants-reference.md`.

@@ -1,26 +1,93 @@
 india_religious_events = {
-	#recurring mafia events
+	#recurring religious events
 	random = {
 		chance = 60
-		add_to_variable = { event_counter_1_religious = 1 }
+		add_to_variable = { RAJ_religious_event_counter = 1 }
 	}
 	if = {
-		limit = { check_variable = { event_counter_1_religious > 5 } }
-		set_variable = { event_counter_1_religious = 0 }
-		random_list = {
-			25 = {
-				country_event = RAJ_religion.1
+		limit = { check_variable = { RAJ_religious_event_counter > 4 } }
+		set_variable = { RAJ_religious_event_counter = 0 }
+		set_temp_variable = { RAJ_conflict_roll = 0 }
+		random = {
+			chance = 25
+			set_temp_variable = { RAJ_conflict_roll = 1 }
+		}
+		if = {
+			limit = { check_variable = { RAJ_conflict_roll = 1 } }
+			country_event = RAJ_religion.4
+		}
+		else = {
+			set_temp_variable = { RAJ_pair_hm = RAJ_hindus_opinion }
+			add_to_temp_variable = { RAJ_pair_hm = RAJ_muslim_opinion }
+			set_temp_variable = { RAJ_pair_mc = RAJ_muslim_opinion }
+			add_to_temp_variable = { RAJ_pair_mc = RAJ_christians_opinion }
+			set_temp_variable = { RAJ_pair_hc = RAJ_hindus_opinion }
+			add_to_temp_variable = { RAJ_pair_hc = RAJ_christians_opinion }
+			if = {
+				limit = {
+					check_variable = { RAJ_pair_hm < RAJ_pair_mc }
+					check_variable = { RAJ_pair_hm < RAJ_pair_hc }
+				}
+				set_variable = { RAJ_conflict_side_a = 2 }
+				set_variable = { RAJ_conflict_side_b = 1 }
 			}
-			25 = {
-				country_event = RAJ_religion.2
+			else_if = {
+				limit = { check_variable = { RAJ_pair_mc < RAJ_pair_hc } }
+				set_variable = { RAJ_conflict_side_a = 2 }
+				set_variable = { RAJ_conflict_side_b = 3 }
 			}
-			25 = {
-				country_event = RAJ_religion.3
+			else = {
+				set_variable = { RAJ_conflict_side_a = 1 }
+				set_variable = { RAJ_conflict_side_b = 3 }
 			}
-			25 = {
-				country_event = RAJ_religion.4
+			country_event = RAJ_religion.1
+		}
+	}
+}
+
+RAJ_upgrade_energy_idea = {
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_idea = RAJ_energy1
+					has_idea = RAJ_energy2
+					has_idea = RAJ_energy3
+				}
 			}
 		}
+		add_ideas = RAJ_energy1
+	}
+	else_if = {
+		limit = { has_idea = RAJ_energy1 }
+		swap_ideas = {
+			remove_idea = RAJ_energy1
+			add_idea = RAJ_energy2
+		}
+	}
+	else_if = {
+		limit = { has_idea = RAJ_energy2 }
+		swap_ideas = {
+			remove_idea = RAJ_energy2
+			add_idea = RAJ_energy3
+		}
+	}
+}
+
+RAJ_afghan_wargoals = {
+	set_temp_variable = { wargoal_on = TAL }
+	set_temp_variable = { wargoal_type = 2 }
+	add_threat_from_wargoal_effect = yes
+	create_wargoal = {
+		type = annex_everything
+		target = TAL
+	}
+	set_temp_variable = { wargoal_on = AFG }
+	set_temp_variable = { wargoal_type = 2 }
+	add_threat_from_wargoal_effect = yes
+	create_wargoal = {
+		type = annex_everything
+		target = AFG
 	}
 }
 
@@ -64,7 +131,134 @@ RAJ_change_hindu_opinion = {
 	}
 }
 
-RAJ_suppress_maoist_in_state = {
+# Standard Greater Hindustan annex demand: fires indian_event.33 on the
+# target, creates an annex_everything wargoal, and emits the
+# accept/reject tooltip stack. Caller sets `demand_annex_target` to
+# `TAG.id` of the target country before calling.
+RAJ_demand_annex_target = {
+	var:demand_annex_target = { country_event = indian_event.33 }
+	set_temp_variable = { wargoal_on = demand_annex_target }
+	set_temp_variable = { wargoal_type = 2 }
+	add_threat_from_wargoal_effect = yes
+	hidden_effect = {
+		var:demand_annex_target = {
+			ROOT = { create_wargoal = { type = annex_everything target = PREV } }
+		}
+	}
+	custom_effect_tooltip = TT_IF_THEY_ACCEPT
+	effect_tooltip = {
+		var:demand_annex_target = {
+			ROOT = { annex_country = { target = PREV transfer_troops = yes } }
+		}
+	}
+	custom_effect_tooltip = TT_IF_THEY_REJECT
+	effect_tooltip = {
+		var:demand_annex_target = {
+			ROOT = { create_wargoal = { type = annex_everything target = PREV } }
+		}
+	}
+}
+
+# Appease one religion (+2 opinion) at the cost of a tradeoff (-1 to Hindu,
+# or -1 to Muslim when the Hindu majority is the one being appeased).
+# Caller sets `appease_target` to a religion index: 1=hindu, 2=muslim,
+# 3=christian, 4=sikh, 5=buddhist.
+RAJ_appease_religion = {
+	set_temp_variable = { temp_change = 4 }
+	if = {
+		limit = { check_variable = { appease_target = 1 } }
+		RAJ_change_hindu_opinion = yes
+		set_temp_variable = { temp_change = -1 }
+		RAJ_change_muslim_opinion = yes
+	}
+	else_if = {
+		limit = { check_variable = { appease_target = 2 } }
+		RAJ_change_muslim_opinion = yes
+		set_temp_variable = { temp_change = -1 }
+		RAJ_change_hindu_opinion = yes
+	}
+	else_if = {
+		limit = { check_variable = { appease_target = 3 } }
+		RAJ_change_christian_opinion = yes
+		set_temp_variable = { temp_change = -1 }
+		RAJ_change_hindu_opinion = yes
+	}
+	else_if = {
+		limit = { check_variable = { appease_target = 4 } }
+		RAJ_change_sikh_opinion = yes
+		set_temp_variable = { temp_change = -1 }
+		RAJ_change_hindu_opinion = yes
+	}
+	else_if = {
+		limit = { check_variable = { appease_target = 5 } }
+		RAJ_change_buddhist_opinion = yes
+		set_temp_variable = { temp_change = -1 }
+		RAJ_change_hindu_opinion = yes
+	}
+}
+
+RAJ_change_opinion_by_side_a = {
+	if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 1 } }
+		RAJ_change_hindu_opinion = yes
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 2 } }
+		RAJ_change_muslim_opinion = yes
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 3 } }
+		RAJ_change_christian_opinion = yes
+	}
+}
+
+RAJ_change_opinion_by_side_b = {
+	if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 1 } }
+		RAJ_change_hindu_opinion = yes
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 2 } }
+		RAJ_change_muslim_opinion = yes
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 3 } }
+		RAJ_change_christian_opinion = yes
+	}
+}
+
+RAJ_downgrade_naxalite_var = {
+	var:RAJ_naxalite_target_state = { RAJ_downgrade_naxalite_level = yes }
+}
+
+# State scope: write this state's display-tier index into RAJ_naxalite_presence.
+# 1=severe, 2=high, 3=moderate, 4=weak, 5=low, 0=cleared. Mirrors the dynamic
+# modifier on the state; called automatically by the level-shift effects.
+RAJ_sync_naxalite_presence = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
+		set_variable = { RAJ_naxalite_presence = 1 }
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 } }
+		set_variable = { RAJ_naxalite_presence = 2 }
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 } }
+		set_variable = { RAJ_naxalite_presence = 3 }
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 } }
+		set_variable = { RAJ_naxalite_presence = 4 }
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 } }
+		set_variable = { RAJ_naxalite_presence = 5 }
+	}
+	else = { clear_variable = RAJ_naxalite_presence }
+}
+
+RAJ_downgrade_naxalite_level = {
 	if = {
 		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
 		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
@@ -89,33 +283,416 @@ RAJ_suppress_maoist_in_state = {
 		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 } }
 		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 }
 	}
+	RAJ_sync_naxalite_presence = yes
+	ROOT = {
+		if = { limit = { is_ai = no } add_to_variable = { RAJ_mao_gui_dirty = 1 } }
+	}
 }
 
-RAJ_maoist_suppression_loot = {
+RAJ_suppression_equipment_reward = {
 	random_list = {
 		20 = {
-			add_equipment_to_stockpile = {
-				type = infantry_weapons_2
-				amount = 1000
-				producer = SOV
-			}
+			add_equipment_to_stockpile = { type = infantry_weapons_2 amount = 1000 producer = RAJ }
 			country_event = RAJ_mao_reb.1
 		}
 		40 = {
-			add_equipment_to_stockpile = {
-				type = infantry_weapons_2
-				amount = 500
-				producer = SOV
-			}
+			add_equipment_to_stockpile = { type = infantry_weapons_2 amount = 500 producer = RAJ }
 			country_event = RAJ_mao_reb.3
 		}
 		10 = {
-			add_equipment_to_stockpile = {
-				type = infantry_weapons_2
-				amount = 250
-				producer = SOV
-			}
+			add_equipment_to_stockpile = { type = infantry_weapons_2 amount = 250 producer = RAJ }
 			country_event = RAJ_mao_reb.2
+		}
+		30 = { }
+	}
+}
+
+RAJ_check_religious_harmony = {
+	if = {
+		limit = {
+			check_variable = { RAJ_hindus_opinion < 35 }
+			NOT = { has_idea = RAJ_hindu_discontent }
+		}
+		add_ideas = RAJ_hindu_discontent
+	}
+	else_if = {
+		limit = {
+			has_idea = RAJ_hindu_discontent
+			check_variable = { RAJ_hindus_opinion > 34 }
+		}
+		remove_ideas = RAJ_hindu_discontent
+	}
+	if = {
+		limit = {
+			check_variable = { RAJ_muslim_opinion > 74 }
+			check_variable = { RAJ_sikh_opinion > 74 }
+			check_variable = { RAJ_buddhist_opinion > 74 }
+			check_variable = { RAJ_christians_opinion > 74 }
+			check_variable = { RAJ_hindus_opinion > 74 }
+			NOT = { has_idea = RAJ_religious_harmony }
+		}
+		add_ideas = RAJ_religious_harmony
+	}
+	else_if = {
+		limit = {
+			has_idea = RAJ_religious_harmony
+			OR = {
+				check_variable = { RAJ_muslim_opinion < 75 }
+				check_variable = { RAJ_sikh_opinion < 75 }
+				check_variable = { RAJ_buddhist_opinion < 75 }
+				check_variable = { RAJ_christians_opinion < 75 }
+				check_variable = { RAJ_hindus_opinion < 75 }
+			}
+		}
+		remove_ideas = RAJ_religious_harmony
+	}
+}
+
+# Each contested region stays unsettled (its unrest idea active) while the
+# region's majority faith opinion is below the harmony threshold, and
+# auto-settles once that faith is content. Mirrors the add/remove pattern
+# of RAJ_check_religious_harmony. Driven monthly from on_monthly_RAJ.
+RAJ_check_regional_faith = {
+	if = {
+		limit = {
+			OR = {
+				check_variable = { RAJ_hindus_opinion < 35 }
+				check_variable = { RAJ_muslim_opinion < 35 }
+			}
+			NOT = { has_idea = RAJ_gujarat_trouble_idea }
+		}
+		add_ideas = RAJ_gujarat_trouble_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = RAJ_gujarat_trouble_idea
+			check_variable = { RAJ_hindus_opinion > 34 }
+			check_variable = { RAJ_muslim_opinion > 34 }
+		}
+		remove_ideas = RAJ_gujarat_trouble_idea
+	}
+	if = {
+		limit = {
+			check_variable = { RAJ_muslim_opinion < 35 }
+			NOT = { has_idea = RAJ_kashmir_unrest }
+		}
+		add_ideas = RAJ_kashmir_unrest
+	}
+	else_if = {
+		limit = {
+			has_idea = RAJ_kashmir_unrest
+			check_variable = { RAJ_muslim_opinion > 34 }
+		}
+		remove_ideas = RAJ_kashmir_unrest
+	}
+	if = {
+		limit = {
+			check_variable = { RAJ_sikh_opinion < 35 }
+			NOT = { has_idea = RAJ_punjab_unrest }
+		}
+		add_ideas = RAJ_punjab_unrest
+	}
+	else_if = {
+		limit = {
+			has_idea = RAJ_punjab_unrest
+			check_variable = { RAJ_sikh_opinion > 34 }
+		}
+		remove_ideas = RAJ_punjab_unrest
+	}
+	if = {
+		limit = {
+			check_variable = { RAJ_muslim_opinion < 35 }
+			NOT = { has_idea = RAJ_bengal_unrest }
+		}
+		add_ideas = RAJ_bengal_unrest
+	}
+	else_if = {
+		limit = {
+			has_idea = RAJ_bengal_unrest
+			check_variable = { RAJ_muslim_opinion > 34 }
+		}
+		remove_ideas = RAJ_bengal_unrest
+	}
+	if = {
+		limit = {
+			check_variable = { RAJ_christians_opinion < 35 }
+			NOT = { has_idea = RAJ_northeast_unrest }
+		}
+		add_ideas = RAJ_northeast_unrest
+	}
+	else_if = {
+		limit = {
+			has_idea = RAJ_northeast_unrest
+			check_variable = { RAJ_christians_opinion > 34 }
+		}
+		remove_ideas = RAJ_northeast_unrest
+	}
+}
+
+# Average the five faith opinions and map onto a stability/PP swing in
+# [-0.10, +0.10] (avg 50 -> 0, avg 25 -> -0.10, avg 75 -> +0.10). Drives
+# the RAJ_religious_climate dynamic modifier.
+RAJ_update_religious_climate = {
+	set_temp_variable = { RAJ_climate_avg = RAJ_hindus_opinion }
+	add_to_temp_variable = { RAJ_climate_avg = RAJ_muslim_opinion }
+	add_to_temp_variable = { RAJ_climate_avg = RAJ_sikh_opinion }
+	add_to_temp_variable = { RAJ_climate_avg = RAJ_christians_opinion }
+	add_to_temp_variable = { RAJ_climate_avg = RAJ_buddhist_opinion }
+	divide_temp_variable = { RAJ_climate_avg = 5 }
+	subtract_from_temp_variable = { RAJ_climate_avg = 50 }
+	multiply_temp_variable = { RAJ_climate_avg = 0.004 }
+	clamp_temp_variable = { var = RAJ_climate_avg min = -0.10 max = 0.10 }
+	set_variable = { RAJ_religious_climate_var = RAJ_climate_avg }
+}
+
+# State scope: clears every insurgency tier and zeroes the tracking var so it
+# always mirrors the (now absent) dynamic modifier.
+RAJ_remove_all_naxalite_modifiers = {
+	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 }
+	clear_variable = RAJ_naxalite_presence
+}
+
+# State scope: escalate to the next-higher severity tier.
+# Mirror of RAJ_downgrade_naxalite_level. Base RAJ_naxalite_insurgency is the cap.
+RAJ_upgrade_naxalite_level = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 }
+		add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+		add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+		add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+		add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+	}
+	RAJ_sync_naxalite_presence = yes
+	ROOT = {
+		if = { limit = { is_ai = no } add_to_variable = { RAJ_mao_gui_dirty = 1 } }
+	}
+}
+
+RAJ_naxalite_monthly_escalation = {
+	if = {
+		limit = {
+			RAJ_country_has_any_naxalite_states = yes
+			check_variable = { party_pop_array^19 > 0.05 }
+			NOT = { has_idea = RAJ_operation_green_hunt_active }
+			NOT = { has_idea = RAJ_samadhan_doctrine_idea }
+			NOT = { has_idea = RAJ_salwa_judum_active }
+		}
+		every_controlled_state = {
+			limit = { check_variable = { RAJ_naxalite_presence > 1 } }
+			random = {
+				chance = 5
+				RAJ_upgrade_naxalite_level = yes
+			}
+		}
+	}
+}
+
+RAJ_autarky_neighbor_boost = {
+	if = {
+		limit = {
+			country_exists = var:temp_neighbor
+			NOT = { has_war_with = var:temp_neighbor }
+		}
+		var:temp_neighbor = {
+			random_owned_controlled_state = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			add_opinion_modifier = { target = RAJ modifier = declaration_of_friendship }
+			set_temp_variable = { percent_change = 2 }
+			change_influence_percentage = yes
+		}
+	}
+}
+
+RAJ_set_rebellion_fired_flag = {
+	if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 993 } }
+		set_country_flag = RAJ_ladakh_rebellion_fired
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 980 } }
+		set_country_flag = RAJ_meghalaya_rebellion_fired
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 477 } }
+		set_country_flag = RAJ_manipur_rebellion_fired
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 982 } }
+		set_country_flag = RAJ_sikkim_rebellion_fired
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 429 } }
+		set_country_flag = RAJ_punjab_rebellion_fired
+	}
+}
+
+RAJ_spawn_religious_rebel = {
+	if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 993 } }
+		if = {
+			limit = { NOT = { country_exists = LAD } }
+			release = LAD
+		}
+		LAD = {
+			set_popularities = {
+				nationalist = 80
+				neutrality = 20
+			}
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			create_country_leader = {
+				name = "Ladakh Separatist Council"
+				picture = "gfx/leaders/generic_politicians/black_001.dds"
+				ideology = Nat_Populism
+				traits = {
+					capable
+					political_dancer
+				}
+			}
+		}
+		993 = {
+			set_demilitarized_zone = no
+			transfer_state_to = LAD
+		}
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 980 } }
+		if = {
+			limit = { NOT = { country_exists = MEG } }
+			release = MEG
+		}
+		MEG = {
+			set_popularities = {
+				democratic = 60
+				neutrality = 40
+			}
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = no
+			}
+			create_country_leader = {
+				name = "Meghalaya Independence Council"
+				picture = "gfx/leaders/generic_politicians/black_002.dds"
+				ideology = conservatism
+				traits = {
+					capable
+					political_dancer
+				}
+			}
+		}
+		980 = {
+			set_demilitarized_zone = no
+			transfer_state_to = MEG
+		}
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 477 } }
+		if = {
+			limit = { NOT = { country_exists = MAN } }
+			release = MAN
+		}
+		MAN = {
+			set_popularities = {
+				democratic = 60
+				neutrality = 40
+			}
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = no
+			}
+			create_country_leader = {
+				name = "Manipur Separatist Council"
+				picture = "gfx/leaders/generic_politicians/black_003.dds"
+				ideology = conservatism
+				traits = {
+					capable
+					political_dancer
+				}
+			}
+		}
+		477 = {
+			set_demilitarized_zone = no
+			transfer_state_to = MAN
+		}
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 982 } }
+		if = {
+			limit = { NOT = { country_exists = SIK } }
+			release = SIK
+		}
+		SIK = {
+			set_popularities = {
+				neutrality = 70
+				democratic = 30
+			}
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+			create_country_leader = {
+				name = "Sikkim Sovereignty Council"
+				picture = "gfx/leaders/generic_politicians/black_004.dds"
+				ideology = oligarchism
+				traits = {
+					capable
+					political_dancer
+				}
+			}
+		}
+		982 = {
+			set_demilitarized_zone = no
+			transfer_state_to = SIK
+		}
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 429 } }
+		create_dynamic_country = {
+			original_tag = RAJ
+			copy_tag = RAJ
+			ingame_startup_nations_effect = yes
+			set_cosmetic_tag = KHL
+			set_country_flag = is_civil_war_faction
+			set_country_flag = RAJ_punjab_rebellion
+			set_popularities = {
+				neutrality = 70
+				democratic = 30
+			}
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+			create_country_leader = {
+				name = "Khalistan Separatist Council"
+				picture = "gfx/leaders/generic_politicians/black_005.dds"
+				ideology = oligarchism
+				traits = {
+					capable
+					political_dancer
+				}
+			}
+			429 = {
+				set_demilitarized_zone = no
+				transfer_state_to = PREV
+			}
 		}
 	}
 }

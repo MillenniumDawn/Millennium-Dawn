@@ -1,7 +1,7 @@
 #Exclude self contained cosmetic change
 TAG_LIST = {"ALB","ARM","AUS","AZE","BEL","BLR","BOS","BUL","CAT","CRO","CZE","DEN","ENG","EST","FIN",
             "FYR","GER","GRE","GEO",
-            "HOL","IRE","LAT","LIT","MLV","NOR","POR","ROM","SWE","SWI","UKR","TUR", "SPR","SLV","SLO","HUN"}
+            "HOL","IRE","LAT","LIT","MLV","NRY","POR","ROM","SWE","SWI","UKR","TUR", "SPR","SLV","SLO","HUN"}
 EXCLUDE = "USoE"
 
 for TAG in TAG_LIST:

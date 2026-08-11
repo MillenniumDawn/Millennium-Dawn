@@ -116,7 +116,7 @@ export const homeSchema = z.object({
   }),
 });
 
-export const devDiaryArchiveSchema = z.array(
+export const devDiaryExternalSchema = z.array(
   z.object({
     title: z.string(),
     entries: z.array(

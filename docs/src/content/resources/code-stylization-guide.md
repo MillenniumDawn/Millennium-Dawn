@@ -94,28 +94,23 @@ focus = {
 
     cost = 5
 
-    # allow_branch = { }
     prerequisite = { focus = SER_western_approach }
-    # mutually_exclusive = { }
+
     search_filters = { FOCUS_FILTER_POLITICAL }
 
-    available = {
-        western_liberals_are_in_power = yes
-    }
-    # bypass = { }
-    # cancel = { }
+    available = { western_liberals_are_in_power = yes }
 
     completion_reward = {
         log = "[GetDateText]: [Root.GetName]: Focus SER_free_market_capitalism"
         add_ideas = SER_free_market_idea
     }
-    # bypass_effect = { }
 
-    ai_will_do = {
-        base = 1
-    }
+    ai_will_do = { base = 1 }
 }
 ```
+
+Write only the properties the focus uses. An empty commented-out slot marker
+(`# bypass = { }`) is dead code, and `standardize.py focus` deletes it.
 
 ---
 
@@ -153,9 +148,7 @@ URA_world_opr = {
         OPR = { country_event = { id = subject_rus.121 days = 1 } }
     }
 
-    ai_will_do = {
-        base = 10
-    }
+    ai_will_do = { base = 10 }
 }
 ```
 
@@ -217,9 +210,8 @@ country_event = {
 ```hoiscript
 BRA_idea_higher_minimum_wage_1 = {
     name = BRA_idea_higher_minimum_wage
-	picture = gold
+    picture = gold
     allowed_civil_war = { always = yes }
-
     modifier = {
         political_power_factor = 0.1
         stability_factor = 0.05

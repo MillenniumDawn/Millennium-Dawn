@@ -13,6 +13,17 @@ on_actions = {
 	}
 	on_weekly_HEZ = {
 		effect = {
+			#AI for International Hezbollah GUI
+			if = {
+				limit = {
+					is_ai = yes
+					has_government = communism
+					has_completed_focus = HEZ_International_Hezbollah
+					NOT = { has_country_flag = shared_mission_in_progress }
+				}
+				HEZ_ai_pick_operation = yes
+			}
+			# Weekly income mechanic
 			set_variable = { total_influence_in_countries = 0 }
 			for_each_loop = {
 				array = HEZ.HEZ_influenced_nations
@@ -32,13 +43,14 @@ on_actions = {
 			}
 
 			#Calculate weekly income with variables
-			# X = Sum of Hezbollah influence in all countries (except AoR members) (total_influence_in_countries)
+			# X = Sum of Hezbollah's influence in all countries (except AoR members) (total_influence_in_countries)
 			# manpower = X
 			# money = X*0.001
 			# small arms = X*2
 			# C&C = X*0.5 (Round)
 			# MANPADS = X*0.25 (Round)
 			# ATGM = X*0.25 (Round)
+			# MLRS = X*0.015 (Round)
 			# MBT = X*0.004 (Round)
 			# APC = X*0.01 (Round)
 			# IFV = X*0.008 (Round)
@@ -101,6 +113,12 @@ on_actions = {
 			}
 			set_variable = { hezbollah_weekly_atgm = x }
 
+			# MLRS
+			set_temp_variable = { mlrs_amount = total_influence_in_countries }
+			multiply_temp_variable = { mlrs_amount = 0.015 }
+			round_temp_variable = mlrs_amount
+			set_variable = { hezbollah_weekly_mlrs = mlrs_amount }
+
 			# MBT
 			set_temp_variable = { mbt_amount = total_influence_in_countries }
 			multiply_temp_variable = { mbt_amount = 0.004 }
@@ -139,6 +157,12 @@ on_actions = {
 					amount = ifv_amount
 					producer = SOV
 				}
+				add_equipment_to_stockpile = {
+					type = medium_tank_rocket_chassis_0
+					variant_name = "BM-21 Grad"
+					amount = mlrs_amount
+					producer = SOV
+				}
 			}
 			else = {
 				add_equipment_to_stockpile = {
@@ -154,6 +178,11 @@ on_actions = {
 				add_equipment_to_stockpile = {
 					type = IFV_2
 					amount = ifv_amount
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = SP_R_arty_2
+					amount = mlrs_amount
 					producer = SOV
 				}
 			}

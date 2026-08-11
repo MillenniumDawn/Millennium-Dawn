@@ -2,116 +2,30 @@
 ####Main Tree Scripted Effects- View USA_2017 for Donald Trump Scripted Effects####
 
 ######American Economy Effects####
-USA_set_resource_flag_effect = {
-	if = {
-		limit = { has_state_flag = USA_expanding_states_steel_production }
-		if = {
-			limit = {
-				NOT = { has_state_flag = USA_expanded_steel_one_flag }
-				NOT = { has_state_flag = USA_expanded_steel_two_flag }
-				NOT = { has_state_flag = USA_expanded_steel_three_flag }
-			}
-			set_state_flag = USA_expanded_steel_one_flag
-		}
-		else_if = {
-			limit = {
-				has_state_flag = USA_expanded_steel_one_flag
-			}
-			set_state_flag = USA_expanded_steel_two_flag
-		}
-		else_if = {
-			limit = {
-				has_state_flag = USA_expanded_steel_two_flag
-			}
-			set_state_flag = USA_expanded_steel_three_flag
-		}
-	}
-	if = {
-		limit = { has_state_flag = USA_expanding_states_aluminium_production }
-		if = {
-			limit = {
-				NOT = { has_state_flag = USA_expanded_aluminium_one_flag }
-				NOT = { has_state_flag = USA_expanded_aluminium_two_flag }
-				NOT = { has_state_flag = USA_expanded_aluminium_three_flag }
-			}
-			set_state_flag = USA_expanded_aluminium_one_flag
-		}
-		else_if = {
-			limit = {
-				has_state_flag = USA_expanded_aluminium_one_flag
-			}
-			set_state_flag = USA_expanded_aluminium_two_flag
-		}
-		else_if = {
-			limit = {
-				has_state_flag = USA_expanded_aluminium_two_flag
-			}
-			set_state_flag = USA_expanded_aluminium_three_flag
-		}
-	}
-	if = {
-		limit = { has_state_flag = USA_expanding_states_tungsten_production }
-		if = {
-			limit = {
-				NOT = { has_state_flag = USA_expanded_tungsten_one_flag }
-				NOT = { has_state_flag = USA_expanded_tungsten_two_flag }
-				NOT = { has_state_flag = USA_expanded_tungsten_three_flag }
-			}
-			set_state_flag = USA_expanded_tungsten_one_flag
-		}
-		else_if = {
-			limit = {
-				has_state_flag = USA_expanded_tungsten_one_flag
-			}
-			set_state_flag = USA_expanded_tungsten_two_flag
-		}
-		else_if = {
-			limit = {
-				has_state_flag = USA_expanded_tungsten_two_flag
-			}
-			set_state_flag = USA_expanded_tungsten_three_flag
-		}
-	}
-}
-
 USA_scaling_resource_production_cost_effect = {
 	if = {
-		limit = {
-			num_of_factories > 250
-			num_of_factories < 275
-		}
-		set_temp_variable = { treasury_change = -20.00 }
+		limit = { num_of_factories > 400 }
+		set_temp_variable = { treasury_change = -150.00 }
 		modify_treasury_effect = yes
 	}
 	else_if = {
-		limit = {
-			num_of_factories > 275
-			num_of_factories < 300
-		}
-		set_temp_variable = { treasury_change = -40.00 }
-		modify_treasury_effect = yes
-	}
-	else_if = {
-		limit = {
-			num_of_factories > 300
-			num_of_factories < 350
-		}
-		set_temp_variable = { treasury_change = -80.00 }
-		modify_treasury_effect = yes
-	}
-	else_if = {
-		limit = {
-			num_of_factories > 350
-			num_of_factories < 400
-		}
+		limit = { num_of_factories > 350 }
 		set_temp_variable = { treasury_change = -100.00 }
 		modify_treasury_effect = yes
 	}
 	else_if = {
-		limit = {
-			num_of_factories > 400
-		}
-		set_temp_variable = { treasury_change = -150.00 }
+		limit = { num_of_factories > 300 }
+		set_temp_variable = { treasury_change = -80.00 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = { num_of_factories > 275 }
+		set_temp_variable = { treasury_change = -40.00 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = { num_of_factories > 250 }
+		set_temp_variable = { treasury_change = -20.00 }
 		modify_treasury_effect = yes
 	}
 }
@@ -384,7 +298,9 @@ USA_flip_support = {
 
 USA_recalc_congress_icon_frames = {
 	set_temp_variable = { senators_temp = senators_support }
-	divide_temp_variable = { senators_temp = senators_total }
+	set_temp_variable = { senators_total_safe = senators_total }
+	clamp_temp_variable = { var = senators_total_safe min = 1 }
+	divide_temp_variable = { senators_temp = senators_total_safe }
 	multiply_temp_variable = { senators_temp = 21 }
 	if = {
 		limit = { check_variable = { senators_temp > 0 } }
@@ -400,7 +316,9 @@ USA_recalc_congress_icon_frames = {
 	set_variable = { current_senate_icon_frame = senators_temp }
 
 	set_temp_variable = { house_temp = representatives_support }
-	divide_temp_variable = { house_temp = representatives_total }
+	set_temp_variable = { representatives_total_safe = representatives_total }
+	clamp_temp_variable = { var = representatives_total_safe min = 1 }
+	divide_temp_variable = { house_temp = representatives_total_safe }
 	multiply_temp_variable = { house_temp = 21 }
 	if = {
 		limit = { check_variable = { house_temp > 0 } }
@@ -606,7 +524,7 @@ USA_belarus_reauthorization_act_effect = {
 						}
 						set_temp_variable = { party_index = 1 }
 						set_temp_variable = { party_popularity_increase = 1.00 }
-						add_relative_party_popularity = yes
+						change_relative_party_popularity = yes
 
 						set_temp_variable = { rul_party_temp = 1 }
 						set_temp_variable = { disable_elections = 1 }
@@ -778,126 +696,64 @@ USA_belarus_reauthorization_act_effect = {
 # Mirrors every completed United Defense trait onto BAE Systems Platforms' legacy branch.
 # Fires from USA_econ_event.30 option A (historical BAE acquisition of UD).
 USA_bae_absorb_united_defense = {
-	mio:USA_united_defense_tank_manufacturer = {
-		if = {
-			limit = { has_mio_trait = USA_ud_bradley_core }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_bradley_core show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_tow_missile }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_tow_missile show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_bushmaster_autocannon }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_bushmaster_autocannon show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_m3_cavalry }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_m3_cavalry show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_m113_gavin }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_m113_gavin show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_m88_hercules }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_m88_hercules show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_aav7_amphibious }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_aav7_amphibious show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_m8_ags }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_m8_ags show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_m109_paladin }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_m109_paladin show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_m992_faasv }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_m992_faasv show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_paladin_digital_fcs }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_paladin_digital_fcs show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_crusader_xm2001 }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_crusader_xm2001 show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_m270_mlrs }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_m270_mlrs show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_advanced_gun_system }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_advanced_gun_system show_modifiers = no }
-				}
-			}
-		}
-		if = {
-			limit = { has_mio_trait = USA_ud_fcs_mgv }
-			USA = {
-				mio:USA_bae_systems_platforms = {
-					complete_mio_trait = { trait = USA_bae_legacy_fcs_mgv show_modifiers = no }
-				}
-			}
-		}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_bradley_core } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_bradley_core show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_tow_missile } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_tow_missile show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_bushmaster_autocannon } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_bushmaster_autocannon show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_m3_cavalry } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_m3_cavalry show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_m113_gavin } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_m113_gavin show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_m88_hercules } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_m88_hercules show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_aav7_amphibious } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_aav7_amphibious show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_m8_ags } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_m8_ags show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_m109_paladin } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_m109_paladin show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_m992_faasv } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_m992_faasv show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_paladin_digital_fcs } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_paladin_digital_fcs show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_crusader_xm2001 } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_crusader_xm2001 show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_m270_mlrs } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_m270_mlrs show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_advanced_gun_system } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_advanced_gun_system show_modifiers = no } }
+	}
+	if = {
+		limit = { mio:USA_united_defense_tank_manufacturer = { is_mio_trait_completed = USA_ud_fcs_mgv } }
+		mio:USA_bae_systems_platforms = { complete_mio_trait = { trait = USA_bae_legacy_fcs_mgv show_modifiers = no } }
 	}
 }

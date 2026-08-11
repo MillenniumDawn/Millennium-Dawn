@@ -1,0 +1,89 @@
+on_actions = {
+	on_weekly_GRE = {
+		effect = {
+			# Process creditor interest payments
+			if = {
+				limit = { GRE_has_creditors = yes }
+				GRE_process_creditor_payments = yes
+			}
+
+			# Recalculate unified debt ratio (factors generic debt + creditor debt at 0.5x)
+			GRE_calculate_unified_debt = yes
+
+			# greece.701 — Turkey cancels migration deal (~90d MTTH, ~45d when tension > 85)
+			if = {
+				limit = {
+					has_country_flag = GRE_migration_deal_active
+					check_variable = { GRE_aegean_tension > 70 }
+				}
+				if = {
+					limit = { check_variable = { GRE_aegean_tension > 85 } }
+					random = { chance = 15 country_event = greece.701 }
+				}
+				else = {
+					random = { chance = 8 country_event = greece.701 }
+				}
+			}
+
+			# greece.703 — Turkey responds at moderate tension (~120d MTTH, ~60d when enosis)
+			if = {
+				limit = {
+					check_variable = { GRE_aegean_tension > 50 }
+					check_variable = { GRE_aegean_tension < 70 }
+					country_exists = NCY
+				}
+				if = {
+					limit = { has_completed_focus = GRE_enosis_campaign }
+					random = { chance = 11 country_event = greece.703 }
+				}
+				else = {
+					random = { chance = 6 country_event = greece.703 }
+				}
+			}
+
+			# greece.705 — Turkish ultimatum (~90d MTTH)
+			if = {
+				limit = {
+					check_variable = { GRE_aegean_tension > 80 }
+					has_completed_focus = GRE_enosis_campaign
+					country_exists = TUR
+					NOT = { has_war_with = TUR }
+				}
+				random = { chance = 8 country_event = greece.705 }
+			}
+
+			# greece.706 — Minor airspace violation (~365d MTTH)
+			if = {
+				limit = {
+					check_variable = { GRE_aegean_tension > 30 }
+					check_variable = { GRE_aegean_tension < 50 }
+				}
+				random = { chance = 2 country_event = greece.706 }
+			}
+		}
+	}
+	on_annex = {
+		effect = {
+			if = {
+				limit = {
+					country_exists = GRE
+					is_in_array = { GRE.GRE_creditors = FROM.id }
+				}
+				GRE = {
+					set_temp_variable = { GRE_creditor_remove_index = -1 }
+					for_each_loop = {
+						array = GRE_creditors
+						if = {
+							limit = { check_variable = { v = FROM.id } }
+							set_temp_variable = { GRE_creditor_remove_index = i }
+						}
+					}
+					if = {
+						limit = { check_variable = { GRE_creditor_remove_index > -1 } }
+						GRE_remove_creditor = yes
+					}
+				}
+			}
+		}
+	}
+}

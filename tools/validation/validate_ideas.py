@@ -38,6 +38,9 @@ _IDEA_REF_SWAP = re.compile(r"\b(?:add_idea|remove_idea)\s*=\s*([A-Za-z0-9_:\[\]
 
 # Matches swap_ideas = { ... } blocks (brace-balanced by hand after this finds the opener)
 _SWAP_BLOCK_START = re.compile(r"\bswap_ideas\s*=\s*\{")
+_IDEA_REF_BLOCK_START = re.compile(
+    r"\b(?:add_ideas|remove_ideas)\s*=\s*\{", re.IGNORECASE
+)
 
 # Matches an idea definition line at brace depth 2 inside `ideas = { CATEGORY = { IDEA = { `
 # We track depth manually; this just recognises `WORD = {` at the right level.
@@ -116,12 +119,43 @@ _NAME_OVERRIDE_LINE = re.compile(r"^\s+name\s*=\s*([A-Za-z0-9_.]+)", re.MULTILIN
 _PICTURE_VALUE_LINE = re.compile(r"^\s+picture\s*=\s*([A-Za-z0-9_.-]+)", re.MULTILINE)
 _ALLOWED_ALWAYS_NO = re.compile(r"\ballowed\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
-_ALLOWED_TAG_CHECK = re.compile(r"\ballowed\s*=\s*\{[^}]*\btag\s*=\s*([A-Z]{3})[^}]*\}")
+_ALLOWED_BLOCK_START = re.compile(r"\ballowed\s*=\s*\{")
+# `\btag` does not match inside `original_tag` (the preceding `_` is a word char),
+# so these two are disjoint. The capture spans 3+ chars so runtime civil-war
+# tags (`ISR_CW_0`) are caught, not just the 3-letter base tag.
+_TAG_IN_ALLOWED = re.compile(r"\btag\s*=\s*([A-Z][A-Z0-9_]{2,11})\b")
+_ORIGINAL_TAG_IN_ALLOWED = re.compile(r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{2})\b")
 _PICTURE_LINE = re.compile(r"^\s+picture\s*=", re.MULTILINE)
 _ON_ADD_BLOCK_START = re.compile(r"\bon_add\s*=\s*\{")
 _LOG_LINE = re.compile(r'^\s*log\s*=\s*"[^"]*"\s*$')
 _IDEA_CATEGORIES_SPRITE = re.compile(r'name\s*=\s*"GFX_idea_categories"')
 _NO_OF_FRAMES = re.compile(r"\bno[Oo]f[Ff]rames\s*=\s*(\d+)")
+
+# character idea_token entries (Validator._parse_all_ideas).
+_IDEA_TOKEN_RE = re.compile(r"\bidea_token\s*=\s*([A-Za-z0-9_]+)")
+# redundant allowed_civil_war = { always = no } (Validator.validate_idea_quality).
+_ALLOWED_CIVIL_WAR_ALWAYS_NO = re.compile(
+    r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}"
+)
+
+
+def _blank_nested_braces(text: str) -> str:
+    """Blank everything nested inside `{...}`, keeping only top-level text.
+
+    Lets a caller test whether two keys are direct siblings at the block's top
+    level rather than split across nested OR/NOT/AND child blocks."""
+    out = []
+    depth = 0
+    for ch in text:
+        if ch == "{":
+            depth += 1
+            out.append(" ")
+        elif ch == "}":
+            depth -= 1
+            out.append(" ")
+        else:
+            out.append(ch if depth == 0 else " ")
+    return "".join(out)
 
 
 def _missing_icon_message(
@@ -324,22 +358,32 @@ def _parse_ideas_from_text(
                         )
                     )
 
-                tag_match = _ALLOWED_TAG_CHECK.search(idea_text)
-                if (
-                    tag_match
-                    and "original_tag"
-                    not in idea_text.split("allowed")[1].split("}")[0]
-                    if "allowed" in idea_text
-                    else False
-                ):
-                    if category_name in _ALWAYS_NO_CATEGORIES:
+                allowed_start = _ALLOWED_BLOCK_START.search(idea_text)
+                if allowed_start:
+                    allowed_block, _ = extract_block_from_text(
+                        idea_text, allowed_start.end() - 1
+                    )
+                    tag_m = _TAG_IN_ALLOWED.search(allowed_block)
+                    if tag_m:
+                        # Redundant only when tag and original_tag are direct
+                        # top-level siblings; in different OR branches they are
+                        # alternatives (shared multi-country idea), not redundant.
+                        top_level = _blank_nested_braces(allowed_block)
+                        top_tag = _TAG_IN_ALLOWED.search(top_level)
+                        top_original = _ORIGINAL_TAG_IN_ALLOWED.search(top_level)
+                        if top_tag and top_original:
+                            kind = "redundant-tag-and-original-tag"
+                            detail = top_tag.group(1)
+                        else:
+                            kind = "tag-not-original-tag"
+                            detail = tag_m.group(1)
                         issues.append(
                             IdeaIssue(
                                 current_idea,
                                 category_name,
                                 current_idea_line,
-                                "tag-not-original-tag",
-                                detail=tag_match.group(1),
+                                kind,
+                                detail=detail,
                             )
                         )
 
@@ -362,10 +406,68 @@ def _parse_ideas_from_text(
     return defined, issues
 
 
+def _extract_idea_refs_from_blocks(text: str) -> List[str]:
+    """Return bare idea names from brace-form add/remove_ideas effects."""
+    refs: List[str] = []
+    token_chars = "_:-[]."
+    for match in _IDEA_REF_BLOCK_START.finditer(text):
+        body, _ = extract_block_from_text(text, match.end() - 1)
+        if not body:
+            continue
+        i = 0
+        while i < len(body):
+            if body[i].isspace():
+                i += 1
+                continue
+            if body[i] == "#":
+                newline = body.find("\n", i)
+                i = len(body) if newline < 0 else newline + 1
+                continue
+            if not (body[i].isalnum() or body[i] in token_chars):
+                i += 1
+                continue
+
+            start = i
+            while i < len(body) and (body[i].isalnum() or body[i] in token_chars):
+                i += 1
+            token = body[start:i]
+            lookahead = i
+            while lookahead < len(body) and body[lookahead] in " \t\r":
+                lookahead += 1
+            if lookahead >= len(body) or body[lookahead] != "=":
+                refs.append(token)
+                continue
+
+            i = lookahead + 1
+            while i < len(body) and body[i] in " \t\r":
+                i += 1
+            if i < len(body) and body[i] == "{":
+                depth = 1
+                i += 1
+                in_string = False
+                while i < len(body) and depth:
+                    if body[i] == '"' and body[i - 1] != "\\":
+                        in_string = not in_string
+                    elif not in_string and body[i] == "#":
+                        newline = body.find("\n", i)
+                        i = len(body) if newline < 0 else newline
+                        continue
+                    elif not in_string and body[i] == "{":
+                        depth += 1
+                    elif not in_string and body[i] == "}":
+                        depth -= 1
+                    i += 1
+            else:
+                newline = body.find("\n", i)
+                i = len(body) if newline < 0 else newline + 1
+    return refs
+
+
 def _scan_idea_refs(text: str) -> List[str]:
     """Return every raw idea reference token in the text (unfiltered)."""
     refs: List[str] = []
     refs.extend(_IDEA_REF_SIMPLE.findall(text))
+    refs.extend(_extract_idea_refs_from_blocks(text))
     refs.extend(_extract_swap_idea_refs(text))
     return refs
 
@@ -547,7 +649,6 @@ class Validator(BaseValidator):
         self.staged_only = False
         char_files = self._collect_files(["common/characters/**/*.txt"])
         self.staged_only = saved2
-        idea_token_re = re.compile(r"\bidea_token\s*=\s*([A-Za-z0-9_]+)")
         char_tokens = 0
         for filepath in char_files:
             text = FileOpener.open_text_file(
@@ -555,7 +656,7 @@ class Validator(BaseValidator):
             )
             if not text or "idea_token" not in text:
                 continue
-            for token in idea_token_re.findall(text):
+            for token in _IDEA_TOKEN_RE.findall(text):
                 if token not in all_defined:
                     all_defined[token] = ("character", None, None)
                     char_tokens += 1
@@ -574,7 +675,10 @@ class Validator(BaseValidator):
                 "common/national_focus/**/*.txt",
                 "common/decisions/**/*.txt",
                 "events/**/*.txt",
+                "history/**/*.txt",
+                "common/on_actions/**/*.txt",
                 "common/scripted_effects/**/*.txt",
+                "common/scripted_triggers/**/*.txt",
                 "common/ideas/**/*.txt",
             ]
         )
@@ -638,7 +742,6 @@ class Validator(BaseValidator):
         self._log_section("Checking idea definition quality...")
 
         idea_files = self._collect_files(["common/ideas/**/*.txt"])
-        acw_pattern = re.compile(r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}")
 
         findings: List[Issue] = []
 
@@ -659,7 +762,7 @@ class Validator(BaseValidator):
             )
             if not text:
                 continue
-            for m in acw_pattern.finditer(text):
+            for m in _ALLOWED_CIVIL_WAR_ALWAYS_NO.finditer(text):
                 lineno = text[: m.start()].count("\n") + 1
                 _add(
                     filepath,
@@ -687,6 +790,13 @@ class Validator(BaseValidator):
                         filepath,
                         issue.line,
                         f"'{issue.idea_name}' uses tag = {issue.detail} in allowed (use original_tag for civil war safety)",
+                    )
+                elif issue.issue_type == "redundant-tag-and-original-tag":
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' has both tag and original_tag = {issue.detail} in allowed"
+                        " (drop the tag = ...; original_tag already restricts it)",
                     )
                 elif issue.issue_type == "on-add-log-only":
                     _add(
@@ -827,14 +937,12 @@ class Validator(BaseValidator):
         point at vanilla pictures (e.g. `picture = generic_military_reform`)
         don't false-positive.
         """
-        import glob as _glob
-
         from validate_gfx_references import (
-            _find_vanilla_interface_dir,
             _parse_gfx_file,
+            _vanilla_gfx_files,
         )
 
-        gfx_files = self._collect_files(["interface/*.gfx"], ignore_staged=True)
+        gfx_files = self._collect_files(["interface/**/*.gfx"], ignore_staged=True)
         results = self._pool_map(
             _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
         )
@@ -845,15 +953,14 @@ class Validator(BaseValidator):
             f"  Found {len(defined)} GFX sprites across {len(gfx_files)} mod .gfx files"
         )
 
-        vanilla_dir = _find_vanilla_interface_dir()
-        if vanilla_dir:
-            vanilla_gfx = _glob.glob(os.path.join(vanilla_dir, "*.gfx"))
+        vanilla_gfx = _vanilla_gfx_files()
+        if vanilla_gfx:
             vanilla_results = self._pool_map(
                 _parse_gfx_file, [(f, self.mod_path) for f in vanilla_gfx]
             )
             for s in vanilla_results:
                 defined.update(s)
-            self.log(f"  Added vanilla sprites from {vanilla_dir}")
+            self.log(f"  Added vanilla sprites from {len(vanilla_gfx)} .gfx files")
         else:
             self.log(
                 "  No vanilla HOI4 install detected — ideas using vanilla "

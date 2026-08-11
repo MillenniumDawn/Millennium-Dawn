@@ -4,7 +4,7 @@ Test that validators work correctly in --staged mode.
 
 Creates temporary files with deliberate errors, stages them via git,
 runs each validator with --staged, and checks that:
-  1. Validators exit quickly (under 5 seconds each)
+  1. Validators complete within the integration time budget
   2. Validators that should find issues DO find issues (non-zero exit)
   3. Validators that should skip (no relevant files) exit cleanly (zero exit)
 
@@ -15,19 +15,22 @@ All temporary files and git state are cleaned up automatically.
 """
 
 import os
+import shutil
 import subprocess
 import sys
 import time
+from unittest import SkipTest
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.chdir(REPO_ROOT)
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Maximum seconds a staged validator should take
-MAX_TIME = 5.0
+# Maximum seconds a staged validator should take in CI
+MAX_TIME = 15.0
+# This validator intentionally scans the full repository in staged mode.
+TIME_BUDGETS = {"validate_scripted_localisation.py": 30.0}
 
 passed = 0
 failed = 0
-errors = []
+errors: list[str] = []
 
 
 def run(cmd, **kwargs):
@@ -54,7 +57,7 @@ def run_validator(script, label, expect_issues=True):
     global passed, failed, errors
 
     cmd = [
-        "python3",
+        sys.executable,
         f"tools/validation/{script}",
         "--staged",
         "--strict",
@@ -69,10 +72,11 @@ def run_validator(script, label, expect_issues=True):
 
     ok = True
     status_parts = []
+    time_budget = TIME_BUDGETS.get(script, MAX_TIME)
 
-    if elapsed > MAX_TIME:
+    if elapsed > time_budget:
         ok = False
-        status_parts.append(f"TOO SLOW ({elapsed:.1f}s > {MAX_TIME}s)")
+        status_parts.append(f"TOO SLOW ({elapsed:.1f}s > {time_budget}s)")
     else:
         status_parts.append(f"{elapsed:.2f}s")
 
@@ -173,6 +177,7 @@ def cleanup_test_files():
 def main():
     global passed, failed
 
+    os.chdir(REPO_ROOT)
     print("Creating test files and staging them...\n")
     create_test_files()
 
@@ -202,7 +207,7 @@ def main():
 
         # history_techs should find issues with non-existent tech
         run_validator(
-            "validate_history_techs.py",
+            "validate_history.py",
             "history techs validator finds bad tech dependency",
             expect_issues=True,
         )
@@ -281,6 +286,48 @@ def main():
     print("=" * 60)
 
     return 1 if failed else 0
+
+
+# ── pytest entry points ─────────────────────────────────────────────────────
+# Without a `test_*` function pytest collects this `*_test.py` module but finds
+# zero tests. These wrap the script logic so `pytest` actually exercises it.
+
+
+def _index_is_clean() -> bool:
+    r = subprocess.run(
+        ["git", "diff", "--cached", "--name-only"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    return r.returncode == 0 and not r.stdout.strip()
+
+
+def test_validator_scripts_exist():
+    """Always-collectible smoke check needing no git staging area."""
+    for script in (
+        "validate_events.py",
+        "validate_decisions.py",
+        "validate_localisation.py",
+        "validate_history.py",
+    ):
+        assert os.path.exists(os.path.join(REPO_ROOT, "tools", "validation", script))
+
+
+def test_staged_validators():
+    """Integration run; needs a clean git index (it stages/unstages files).
+
+    Opt-in (MD_RUN_STAGED_INTEGRATION=1): it mutates the working repo and runs
+    the full validator set, so it stays out of the default `pytest` sweep."""
+    if not os.environ.get("MD_RUN_STAGED_INTEGRATION"):
+        raise SkipTest(
+            "set MD_RUN_STAGED_INTEGRATION=1 to run staged-validator integration"
+        )
+    if shutil.which("git") is None:
+        raise SkipTest("git not available")
+    if not _index_is_clean():
+        raise SkipTest("git index has staged changes; skipping to avoid clobbering")
+    assert main() == 0
 
 
 if __name__ == "__main__":

@@ -4,31 +4,6 @@ add_namespace = EUelection
 add_namespace = EUvote
 add_namespace = EUbudget
 add_namespace = EU_POTEF_news
-add_namespace = EU_party_news
-
-# EU–Turkey deal TUR
-country_event = {
-	id = EUevent.2
-	title = EUevent.2.t
-	desc = EUevent.2.d
-	picture = GFX_euro_turkey_deal
-	is_triggered_only = yes
-
-	option = {
-		name = EUevent.2.a
-		log = "[GetDateText]: [ROOT.GetName]: event EUevent.2.a"
-		###
-		TUR = {
-			set_temp_variable = { treasury_change = 3 }
-			modify_treasury_effect = yes
-		}
-		for_each_scope_loop = {
-			array = global.EU_member
-			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-			country_event = EUevent.17
-		}
-	}
-}
 
 # Parliament Vote Started
 country_event = {
@@ -228,8 +203,8 @@ country_event = {
 		name = EUevent.6.a
 		log = "[GetDateText]: [ROOT.GetName]: event EUevent.6.a"
 		set_global_flag = eurozone_reforms
-		set_temp_variable = { modify_eurosceptic = -0.10 }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = 0.10 }
+		europeanism_change = yes
 	}
 }
 
@@ -336,26 +311,6 @@ country_event = {
 	}
 }
 
-# EU–Turkey Deal Member States
-country_event = {
-	id = EUevent.17
-	title = EUevent.17.t
-	desc = EUevent.17.d
-	picture = GFX_euro_turkey_deal
-	is_triggered_only = yes
-
-	option = { #a
-		name = EUevent.17.a
-		log = "[GetDateText]: [ROOT.GetName]: event EUevent.17.a"
-		ROOT = {
-			set_temp_variable = { temp1 = THIS.EU_pop_ratio }
-			multiply_temp_variable = { temp1 = -3.0 }
-			set_temp_variable = { treasury_change = temp1 }
-			modify_treasury_effect = yes
-		}
-	}
-}
-
 ### FROM asks us to host a Military Exercise
 country_event = {
 	id = EUevent.18
@@ -368,23 +323,33 @@ country_event = {
 		name = EUevent.18.a
 		log = "[GetDateText]: [ROOT.GetName]: event EUevent.18.a"
 
-		set_country_flag = EU_host_military_exercise@FROM
-		random_owned_state = {
+		# Only host if we own a province bordering the exercise target; otherwise the mission is uncompletable.
+		if = {
 			limit = {
-				any_neighbor_state = {
-					is_owned_by = FROM.var_EU_military_exercise_target
+				any_owned_state = {
+					any_neighbor_state = {
+						is_owned_by = FROM.var_EU_military_exercise_target
+					}
 				}
 			}
-			set_variable = {
-				var = FROM.var_EU_military_exercise_host_state
-				value = THIS
+			set_country_flag = EU_host_military_exercise@FROM
+			random_owned_state = {
+				limit = {
+					any_neighbor_state = {
+						is_owned_by = FROM.var_EU_military_exercise_target
+					}
+				}
+				set_variable = {
+					var = FROM.var_EU_military_exercise_host_state
+					value = THIS
+				}
 			}
-		}
-		FROM = {
-			activate_mission = EU_military_exercise_mission
-			set_variable = {
-				var = FROM.var_EU_military_exercise_host_tag
-				value = ROOT
+			FROM = {
+				activate_mission = EU_military_exercise_mission
+				set_variable = {
+					var = FROM.var_EU_military_exercise_host_tag
+					value = ROOT
+				}
 			}
 		}
 

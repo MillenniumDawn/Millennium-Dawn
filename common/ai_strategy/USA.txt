@@ -420,6 +420,8 @@ USA_default_naval_breakdown = { #Fleet in Being - Naval Strength on the High Sea
 	ai_strategy = { type = role_ratio id = naval_missile_submarine value = 9 }
 	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 8 }
 	ai_strategy = { type = role_ratio id = naval_carrier value = 4 }
+	ai_strategy = { type = role_ratio id = naval_battlecruiser value = 2 }
+	ai_strategy = { type = role_ratio id = naval_battleship value = 1 }
 	ai_strategy = { type = role_ratio id = naval_cruiser value = 8 }
 }
 
@@ -429,13 +431,15 @@ USA_army_breakdown = {
 	enable = { always = yes }
 	abort_when_not_enabled = yes
 
+	ai_strategy = { type = role_ratio id = L_Inf value = 10 }
+	ai_strategy = { type = role_ratio id = infantry value = 25 }
 	ai_strategy = { type = role_ratio id = apc_mechanized value = 19 }
 	ai_strategy = { type = role_ratio id = ifv_mechanized value = 19 }
 	ai_strategy = { type = role_ratio id = armor value = 38 }
 	ai_strategy = { type = role_ratio id = marines value = 20 }
 	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
 	ai_strategy = { type = role_ratio id = Air_mech value = 3 }
-	ai_strategy = { type = role_ratio id = Special_Forces value = 11 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 6 }
 	ai_strategy = { type = force_build_armies value = 50 } #Keep American AI building Units
 }
 USA_default_stockpile_management = {
@@ -675,8 +679,10 @@ USA_canadians_scary = {
 	enable = {
 		CAN = {
 			NOT = {
-				has_government = democratic
-				has_idea = NATO_member
+				OR = {
+					has_government = democratic
+					has_idea = NATO_member
+				}
 			}
 		}
 	}
@@ -695,10 +701,12 @@ USA_reduce_mexico_garrison_when_cartels_are_in_mexico = {
 	enable = {
 		MEX = {
 			NOT = {
-				has_war_with = SLA
-				has_war_with = TAM
-				has_war_with = TRC
-				has_war_with = USA
+				OR = {
+					has_war_with = SLA
+					has_war_with = TAM
+					has_war_with = TRC
+					has_war_with = USA
+				}
 			}
 		}
 	}
@@ -1061,7 +1069,7 @@ USA_operation_enduring_freedom = {
 	allowed = { original_tag = USA }
 	enable = {
 		has_country_leader_with_trait = war_on_terror_leader
-		NOT = { has_country_flag = Operation_enduring_freedom }
+		NOT = { has_country_flag = USA_wot_enduring_freedom }
 	}
 	abort_when_not_enabled = yes
 
@@ -1078,7 +1086,7 @@ USA_operation_iraqi_campaign = {
 	allowed = { original_tag = USA }
 	enable = {
 		has_country_leader_with_trait = war_on_terror_leader
-		NOT = { has_country_flag = Operation_iraqi_freedom }
+		NOT = { has_country_flag = USA_wot_iraqi_freedom }
 		IRQ = { NOT = { has_country_flag = IRQ_victory_against_america } }
 	}
 	abort_when_not_enabled = yes
@@ -1095,7 +1103,7 @@ USA_operation_iraqi_campaign = {
 USA_operation_iraqi_freedom = {
 	allowed = { original_tag = USA }
 	enable = {
-		has_country_flag = Operation_iraqi_freedom
+		has_country_flag = USA_wot_iraqi_freedom
 		has_wargoal_against = IRQ
 	}
 	abort_when_not_enabled = yes
@@ -1114,8 +1122,8 @@ USA_army_focus = {
 
 	ai_strategy = { type = role_ratio id = marines value = 250 }
 	ai_strategy = { type = build_army id = marines value = 200 }
-	ai_strategy = { type = role_ratio id = Special_Forces value = 200 }
-	ai_strategy = { type = build_army id = Special_Forces value = 200 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 100 }
+	ai_strategy = { type = build_army id = Special_Forces value = 100 }
 }
 
 #52 54 56 88 89 90 170 171
@@ -1141,14 +1149,14 @@ USA_support_bosnian_against_rsk = {
 	enable = {
 		country_exists = BOS
 		BOS = {
-			has_country_flag = defeat_all_serbs
+			has_country_flag = BOS_defeat_all_serbs
 			OR = {
 				has_idea = BOS_EUFOR
 				has_idea = BOS_SFOR
 			}
 		}
 		RSK = { has_war_with = BOS }
-		has_idea = bos_sfor_vol_troops
+		has_idea = BOS_sfor_vol_troops
 	}
 	abort_when_not_enabled = yes
 
@@ -1164,7 +1172,7 @@ USA_prepare_to_attack_IRQ = {
 		owns_state = 488
 		country_exists = IRQ
 		OR = {
-			has_country_flag = us_prepare_for_iraq_invasion
+			has_country_flag = USA_wot_iraq_invasion_prepared
 			IRQ = { has_completed_focus = IRQ_an_era_of_saddam }
 		}
 		IRQ = {
@@ -1181,7 +1189,7 @@ USA_support_afghanistan_enduring_freedom = {
 	enable = {
 		AFG = { NOT = { has_country_flag = AFG_new_war } }
 		country_exists = AFG
-		has_country_flag = Operation_enduring_freedom
+		has_country_flag = USA_wot_enduring_freedom
 		AFG = { has_war_with = TAL }
 	}
 	abort_when_not_enabled = yes
@@ -1301,4 +1309,34 @@ USA_construct_additional_microchips = {
 
 	ai_strategy = { type = build_building id = microchip_plant value = 50 }
 	ai_strategy = { type = building_target id = microchip_plant value = 350 }
+}
+
+USA_extradition_diplomacy = {
+	allowed = { original_tag = USA }
+	enable = {
+		has_country_flag = USA_wot_speech_given
+		NOT = { has_country_flag = USA_wot_enduring_freedom }
+		country_exists = TAL
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = pp_spend_priority id = decision value = 250 }
+	ai_strategy = { type = pp_spend_amount id = decision value = 250 }
+	ai_strategy = { type = befriend id = "PAK" value = 100 }
+	ai_strategy = { type = befriend id = "SAU" value = 100 }
+}
+
+USA_wot_peaceful_settlement = {
+	allowed = { original_tag = USA }
+	enable = {
+		has_country_flag = USA_wot_extradition_accepted
+		NOT = { has_country_flag = USA_wot_enduring_freedom }
+		NOT = { has_country_flag = USA_wot_afghan_settlement }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = pp_spend_priority id = decision value = 300 }
+	ai_strategy = { type = pp_spend_amount id = decision value = 300 }
+	ai_strategy = { type = influence id = "AFG" value = 200 }
+	ai_strategy = { type = declare_war id = "TAL" value = -200 }
 }

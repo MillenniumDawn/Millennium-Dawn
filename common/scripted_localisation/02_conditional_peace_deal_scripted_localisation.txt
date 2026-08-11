@@ -363,15 +363,32 @@ defined_text = {
 		trigger = {
 			if = {
 				limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
-				set_temp_variable = { CPD_rep_preview_temp = ROOT.gdp_total }
+				set_temp_variable = {
+					var = CPD_rep_preview_temp
+					value = {
+						value = ROOT.gdp_total
+						multiply = 0.0005
+						clamp = { min = 0 max = 15 }
+					}
+				}
 			}
 			else = {
-				set_temp_variable = { CPD_rep_preview_temp = THIS.gdp_total }
+				set_temp_variable = {
+					var = CPD_rep_preview_temp
+					value = {
+						value = THIS.gdp_total
+						multiply = 0.0005
+						clamp = { min = 0 max = 15 }
+					}
+				}
 			}
-			multiply_temp_variable = { CPD_rep_preview_temp = 0.0005 }
-			clamp_temp_variable = { var = CPD_rep_preview_temp max = 15 }
-			set_temp_variable = { CPD_rep_preview_total_temp = CPD_rep_preview_temp }
-			multiply_temp_variable = { CPD_rep_preview_total_temp = 52 }
+			set_temp_variable = {
+				var = CPD_rep_preview_total_temp
+				value = {
+					value = CPD_rep_preview_temp
+					multiply = 52
+				}
+			}
 		}
 		localization_key = "CPD_reparations_preview_TT"
 	}
@@ -420,10 +437,15 @@ defined_text = {
 
 	text = {
 		trigger = {
-			set_temp_variable = { CPD_WS_temp = var:THIS.has_war_support }
-			multiply_temp_variable = { CPD_WS_temp = -200 }
-			round_temp_variable = CPD_WS_temp
-			add_to_temp_variable = { CPD_WS_temp = 101 }
+			set_temp_variable = {
+				var = CPD_WS_temp
+				value = {
+					value = var:THIS.has_war_support
+					multiply = -200
+					round = yes
+					add = 101
+				}
+			}
 		}
 		localization_key = "CPD_ai_accept_war_support_tt"
 	}
@@ -433,18 +455,20 @@ defined_text = {
 
 	text = {
 		trigger = {
-			set_temp_variable = { CPD_RSB_temp = THIS.enemies_strength_ratio@ROOT }
-			multiply_temp_variable = { CPD_RSB_temp = 100 }
-			round_temp_variable = CPD_RSB_temp
-			subtract_from_temp_variable = { CPD_RSB_temp = 100 }
+			set_temp_variable = {
+				var = CPD_RSB_temp
+				value = {
+					value = THIS.enemies_strength_ratio@ROOT
+					multiply = 100
+					round = yes
+					subtract = 100
+					clamp = { min = -500 max = 1000 }
+				}
+			}
 			if = {
 				limit = { ROOT = { NOT = { is_in_faction = yes } } }
 				multiply_temp_variable = { CPD_RSB_temp = 0.25 }
 				round_temp_variable = CPD_RSB_temp
-			}
-			clamp_temp_variable = {
-				var = CPD_RSB_temp
-				max = 1000
 			}
 		}
 		localization_key = "CPD_ai_accept_relative_strength_tt"
@@ -455,14 +479,15 @@ defined_text = {
 
 	text = {
 		trigger = {
-			set_temp_variable = { CPD_SP_temp = var:THIS.surrender_progress }
-			multiply_temp_variable = { CPD_SP_temp = 200 }
-			round_temp_variable = CPD_SP_temp
-			subtract_from_temp_variable = { CPD_SP_temp = 100 }
-			clamp_temp_variable = {
+			set_temp_variable = {
 				var = CPD_SP_temp
-				min = 0
-				max = 100
+				value = {
+					value = var:THIS.surrender_progress
+					multiply = 200
+					round = yes
+					subtract = 50
+					clamp = { min = 0 max = 100 }
+				}
 			}
 		}
 		localization_key = "CPD_ai_accept_surrender_progress_tt"
@@ -473,14 +498,14 @@ defined_text = {
 
 	text = {
 		trigger = {
-			set_temp_variable = { CPD_RBW_temp = ROOT.CPD_VP@PREV }
-			set_temp_variable = { CPD_TBW_temp = THIS.CPD_VP@ROOT }
-			subtract_from_temp_variable = { CPD_RBW_temp = CPD_TBW_temp }
-			round_temp_variable = CPD_RBW_temp
-			clamp_temp_variable = {
+			set_temp_variable = {
 				var = CPD_RBW_temp
-				min = -150
-				max = 150
+				value = {
+					value = ROOT.CPD_VP@PREV
+					subtract = THIS.CPD_VP@ROOT
+					round = yes
+					clamp = { min = -150 max = 150 }
+				}
 			}
 		}
 		localization_key = "CPD_ai_accept_battles_won_tt"
@@ -492,10 +517,11 @@ defined_text = {
 	text = {
 		trigger = {
 			set_temp_variable = { CPD_SWC_temp = 0 }
+			set_temp_variable = { CPD_cost_raw_temp = ROOT.CPD_total_cost_of_built_peace_deal }
 			if = {
 				limit = {
 					NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-					check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 0 }
+					check_variable = { CPD_cost_raw_temp > 0 }
 					check_variable = { ROOT.CPD_VP@PREV < 1 }
 				}
 				set_temp_variable = { CPD_SWC_temp = -100 }
@@ -503,7 +529,7 @@ defined_text = {
 			else_if = {
 				limit = {
 					NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-					check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 5 }
+					check_variable = { CPD_cost_raw_temp > 5 }
 					check_variable = { ROOT.CPD_VP@PREV < 10 }
 				}
 				set_temp_variable = { CPD_SWC_temp = -50 }
@@ -511,7 +537,7 @@ defined_text = {
 			else_if = {
 				limit = {
 					NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-					check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 10 }
+					check_variable = { CPD_cost_raw_temp > 10 }
 					check_variable = { ROOT.CPD_VP@PREV < 25 }
 				}
 				set_temp_variable = { CPD_SWC_temp = -25 }
@@ -525,22 +551,40 @@ defined_text = {
 
 	text = {
 		trigger = {
-			set_temp_variable = { CPD_DF_temp = 0 }
-			if = {
-				limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 20 } }
-				add_to_temp_variable = { CPD_DF_temp = -25 }
-			}
-			if = {
-				limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 40 } }
-				add_to_temp_variable = { CPD_DF_temp = -50 }
-			}
-			if = {
-				limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 60 } }
-				add_to_temp_variable = { CPD_DF_temp = -75 }
-			}
-			if = {
-				limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 100 } }
-				add_to_temp_variable = { CPD_DF_temp = -100 }
+			set_temp_variable = { CPD_cost_raw_temp = ROOT.CPD_total_cost_of_built_peace_deal }
+			set_temp_variable = {
+				var = CPD_DF_temp
+				value = {
+					value = 0
+					if = {
+						limit = {
+							value = CPD_cost_raw_temp
+							greater_than = 20
+						}
+						subtract = 25
+					}
+					if = {
+						limit = {
+							value = CPD_cost_raw_temp
+							greater_than = 40
+						}
+						subtract = 50
+					}
+					if = {
+						limit = {
+							value = CPD_cost_raw_temp
+							greater_than = 60
+						}
+						subtract = 75
+					}
+					if = {
+						limit = {
+							value = CPD_cost_raw_temp
+							greater_than = 100
+						}
+						subtract = 100
+					}
+				}
 			}
 		}
 		localization_key = "CPD_ai_accept_deal_fairness_tt"
@@ -551,6 +595,7 @@ defined_text = {
 
 	text = {
 		trigger = {
+			set_temp_variable = { CPD_PR_temp = 0 }
 			if = {
 				limit = { THIS = { has_idea = super_power } }
 				set_temp_variable = { CPD_PR_temp = -60 }
@@ -589,6 +634,14 @@ defined_text = {
 				limit = { THIS = { has_idea = CSTO_member } }
 				add_to_temp_variable = { CPD_FB_temp = -25 }
 			}
+			if = {
+				limit = { THIS = { has_idea = faction_resistance_axis_member } }
+				add_to_temp_variable = { CPD_FB_temp = -25 }
+			}
+			if = {
+				limit = { THIS = { is_sco = yes } }
+				add_to_temp_variable = { CPD_FB_temp = -25 }
+			}
 		}
 		localization_key = "CPD_ai_accept_faction_backing_tt"
 	}
@@ -598,11 +651,13 @@ defined_text = {
 
 	text = {
 		trigger = {
-			set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
-			multiply_temp_variable = { months_at_war_tmp = 2 }
-			clamp_temp_variable = {
+			set_temp_variable = {
 				var = months_at_war_tmp
-				max = 120
+				value = {
+					value = THIS.months_at_war
+					multiply = 2
+					clamp = { min = 0 max = 120 }
+				}
 			}
 		}
 		localization_key = "CPD_ai_accept_months_at_war_tt"
@@ -613,21 +668,53 @@ defined_text = {
 
 	text = {
 		trigger = {
-			set_temp_variable = { CPD_WW_temp = 0 }
-			if = {
-				limit = { check_variable = { THIS.months_at_war > 12 } }
-				subtract_from_temp_variable = { CPD_WW_temp = 15 }
+			set_temp_variable = {
+				var = CPD_WW_temp
+				value = {
+					value = 0
+					if = {
+						limit = { value = THIS.months_at_war greater_than = 12 }
+						subtract = 15
+					}
+					if = {
+						limit = { value = THIS.months_at_war greater_than = 24 }
+						subtract = 15
+					}
+					if = {
+						limit = { value = THIS.months_at_war greater_than = 48 }
+						subtract = 30
+					}
+				}
 			}
 			if = {
-				limit = { check_variable = { THIS.months_at_war > 24 } }
-				subtract_from_temp_variable = { CPD_WW_temp = 15 }
-			}
-			if = {
-				limit = { check_variable = { THIS.months_at_war > 48 } }
-				subtract_from_temp_variable = { CPD_WW_temp = 30 }
+				limit = { NOT = { surrender_progress < 0.5 } }
+				set_temp_variable = { var = CPD_WW_temp value = 0 }
 			}
 		}
 		localization_key = "CPD_ai_accept_war_weariness_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_desperation
+
+	text = {
+		trigger = {
+			set_temp_variable = {
+				var = CPD_DESP_temp
+				value = {
+					value = 0
+					if = {
+						limit = { value = var:THIS.surrender_progress greater_than = 0.5 }
+						add = 25
+					}
+					if = {
+						limit = { value = var:THIS.surrender_progress greater_than = 0.75 }
+						add = 25
+					}
+				}
+			}
+		}
+		localization_key = "CPD_ai_accept_desperation_tt"
 	}
 }
 defined_text = {
@@ -696,12 +783,18 @@ defined_text = {
 	name = CPD_ai_accept_resource_rights_aversion
 	text = {
 		trigger = {
-			set_temp_variable = { CPD_RR_aversion_temp = 0 }
-			if = {
-				limit = { check_variable = { ROOT.CPD_resource_rights_DEMANDS^num > 0 } }
-				set_temp_variable = { CPD_RR_aversion_temp = -15 }
-				if = { limit = { check_variable = { ROOT.CPD_resource_rights_DEMANDS^num > 3 } }
-					add_to_temp_variable = { CPD_RR_aversion_temp = -25 }
+			set_temp_variable = {
+				var = CPD_RR_aversion_temp
+				value = {
+					value = 0
+					if = {
+						limit = { value = ROOT.CPD_resource_rights_DEMANDS^num greater_than = 0 }
+						subtract = 15
+					}
+					if = {
+						limit = { value = ROOT.CPD_resource_rights_DEMANDS^num greater_than = 3 }
+						subtract = 25
+					}
 				}
 			}
 		}
@@ -732,11 +825,13 @@ defined_text = {
 
 	text = {
 		trigger = {
-			set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
-			multiply_temp_variable = { v = -5 }
-			clamp_temp_variable = {
+			set_temp_variable = {
 				var = v
-				max = 50
+				value = {
+					value = ROOT.CPD_total_cost_of_built_peace_deal
+					multiply = -5
+					clamp = { min = -500 max = 50 }
+				}
 			}
 		}
 		localization_key = "CPD_ai_accept_cost_of_peace_tt"
@@ -748,15 +843,32 @@ defined_text = {
 
 	text = {
 		trigger = {
-			set_temp_variable = { v = 0 }
-			if = { limit = { difficulty < 1 }
-				add_to_temp_variable = { v = 15 }
-			}
-			if = { limit = { difficulty > 2 }
-				add_to_temp_variable = { v = -15 }
-			}
-			if = { limit = { difficulty > 1 }
-				add_to_temp_variable = { v = -15 }
+			set_temp_variable = {
+				var = v
+				value = {
+					value = 0
+					if = {
+						limit = {
+							value = difficulty
+							less_than = 1
+						}
+						add = 15
+					}
+					if = {
+						limit = {
+							value = difficulty
+							greater_than = 2
+						}
+						subtract = 15
+					}
+					if = {
+						limit = {
+							value = difficulty
+							greater_than = 1
+						}
+						subtract = 15
+					}
+				}
 			}
 		}
 		localization_key = "CPD_ai_acceptance_difficulty_setting_tt"

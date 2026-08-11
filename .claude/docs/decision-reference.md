@@ -1,6 +1,6 @@
 # Decision Reference
 
-On-demand reference for decision structure and examples. For best practices, see CLAUDE.md.
+On-demand reference for decision structure and examples. For best practices, see AGENTS.md.
 
 Full HOI4 wiki reference: https://hoi4.paradoxwikis.com/Decision_modding
 
@@ -29,6 +29,8 @@ A decision becomes targeted when it includes `targets`, `target_array`, `target_
 | `visible`             | ROOT + FROM | Every tick                                   | UI visibility (most expensive)                |
 | `available`           | ROOT + FROM | Every tick                                   | Clickability gate                             |
 
+**Don't repeat the category's `allowed` on each decision.** A decision's `allowed` is redundant when it just duplicates the parent category's `allowed` (e.g. both are `original_tag = TAG`) — the category gate already applies to every decision inside it. Restrict the nation once on the category; put dynamic conditions in `available`/`visible` (since `allowed` is locked at game start).
+
 ### Performance Optimization
 
 **Always move ROOT-only conditions from `visible` to `target_root_trigger`.** Single most impactful decision optimization:
@@ -45,6 +47,7 @@ When `target_root_trigger` is false, the engine skips `target_trigger`, `visible
 - Dynamic flags like `has_country_flag = flag_@FROM` reference FROM to build the name — these need `target_trigger` (not `target_root_trigger`)
 - `hidden_trigger` is redundant inside `target_root_trigger` — it never generates tooltips
 - `always = yes` inside `target_root_trigger` is a no-op — remove it
+- Never restate what the target list already guarantees: with an explicit `targets = { ... }`, `NOT = { tag = ROOT }` and `NOT = { original_tag = X }` for a tag outside the list are dead conditions evaluated once per target per day
 
 ### Target Selection
 
@@ -110,6 +113,32 @@ Regular `war_with_on_*` does not work with FROM. Use these instead:
 - `war_with_target_on_remove = yes`
 - `war_with_target_on_timeout = yes`
 
+## Effect Block Logging
+
+The engine runs four blocks as a decision's effects: `complete_effect` (player takes it), `remove_effect` (`days_remove` timer expires or `remove_trigger` fires), `timeout_effect` (mission `days_mission_timeout` expires) and `cancel_effect` (`cancel_trigger` fires). Each one logs its own line, as the block's first statement:
+
+```
+	log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"
+```
+
+Log first so the game log reads in firing order, and use the decision's own ID: a copied ID from a neighbouring decision is the most common mistake here (`tools/linting/fix_log_ids.py` rewrites those). A log nested inside an `if` / `else` / `hidden_effect` records which branch ran, so it belongs where it sits and does not substitute for the block's own log line.
+
+`validate_decisions.py` reports a block with no log as `missing-decision-log` and a block-level log that is not first as `decision-log-not-first`. A log that is the _only_ content of a `complete_effect` is a separate mistake: `check_common_mistakes.py` rejects it, because the block does nothing but log. Delete the dead block instead.
+
+## Randomised Effects
+
+A decision that can fire more than once and rolls randomness (`random_list = { ... }` or `random = { chance = N ... }`) needs `fixed_random_seed = no` at decision top level:
+
+```
+	days_re_enable = 180
+
+	fixed_random_seed = no
+
+	remove_effect = {
+```
+
+The engine seeds the roll from the save state, so without it every repeat of the decision returns the same branch. `fire_only_once = yes` decisions are exempt, since their roll only ever resolves once. Write `fixed_random_seed = yes` when the repeat _should_ be deterministic; `validate_decisions.py` treats an explicit value either way as intentional and only flags the field being absent.
+
 ## Example: Basic Decision
 
 ```
@@ -135,7 +164,7 @@ URA_world_opr = {
 		OPR = { country_event = { id = subject_rus.121 days = 1 } }
 	}
 
-	ai_will_do = { factor = 10 }
+	ai_will_do = { base = 10 }
 }
 ```
 
@@ -159,6 +188,7 @@ ISR_pal_rooting_terrorists = {
 	cancel_if_not_visible = yes
 
 	timeout_effect = {
+		log = "[GetDateText]: [Root.GetName]: Decision ISR_pal_rooting_terrorists"
 		custom_effect_tooltip = ISR_operation_result_outcome_tt
 		custom_effect_tooltip = ISR_operation_failed_root_terr_tt
 		hidden_effect = {
@@ -213,12 +243,12 @@ increase_military_spending = yes / decrease_military_spending = yes
 ```
 # Party popularity — defaults to the ruling party when party_index is unset
 set_temp_variable = { party_popularity_increase = 0.10 }
-add_relative_party_popularity = yes
+change_relative_party_popularity = yes
 
 # Or target a specific party by index (0-23)
 set_temp_variable = { party_index = 2 }
 set_temp_variable = { party_popularity_increase = 0.10 }
-add_relative_party_popularity = yes
+change_relative_party_popularity = yes
 
 # Ban/unban party
 set_temp_variable = { party_index = 1 }
@@ -233,9 +263,8 @@ unban_party_scripted_call = yes
 set_temp_variable = { percent_change = 10 }
 change_domestic_influence_percentage = yes
 
-# Foreign influence (requires target)
+# Foreign influence (requires target; tag_index defaults to ROOT.id)
 set_temp_variable = { percent_change = 5 }
-set_temp_variable = { tag_index = ROOT }
 set_temp_variable = { influence_target = GER }
 change_influence_percentage = yes
 ```
