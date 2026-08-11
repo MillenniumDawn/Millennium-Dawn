@@ -9,7 +9,7 @@ default_army_production_strategy = {
 
 	ai_strategy = { type = role_ratio id = L_Inf value = 30 }
 	ai_strategy = { type = role_ratio id = Militia value = 1 }
-	ai_strategy = { type = role_ratio id = infantry value = 20 }
+	ai_strategy = { type = role_ratio id = infantry value = 25 }
 	ai_strategy = { type = role_ratio id = garrison value = 1 }
 	ai_strategy = { type = role_ratio id = apc_mechanized value = 50 }
 	ai_strategy = { type = role_ratio id = ifv_mechanized value = 50 }
@@ -17,7 +17,7 @@ default_army_production_strategy = {
 	ai_strategy = { type = role_ratio id = marines value = 15 }
 	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
 	ai_strategy = { type = role_ratio id = Air_mech value = 10 }
-	ai_strategy = { type = role_ratio id = Special_Forces value = 40 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 20 }
 }
 
 default_army_production_strategy_maj = {
@@ -25,11 +25,14 @@ default_army_production_strategy_maj = {
 		ai_for_units_is_not_disabled = yes
 		country_uses_generic_army_production_ai = yes
 	}
-	enable = { num_of_military_factories > 10 }
+	enable = {
+		num_of_military_factories > 10
+		num_of_military_factories < 30
+	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = role_ratio id = L_Inf value = 5 }
-	ai_strategy = { type = role_ratio id = infantry value = 10 }
+	ai_strategy = { type = role_ratio id = infantry value = 15 }
 	ai_strategy = { type = role_ratio id = garrison value = 1 }
 	ai_strategy = { type = role_ratio id = apc_mechanized value = 35 }
 	ai_strategy = { type = role_ratio id = ifv_mechanized value = 50 }
@@ -37,7 +40,7 @@ default_army_production_strategy_maj = {
 	ai_strategy = { type = role_ratio id = marines value = 25 }
 	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
 	ai_strategy = { type = role_ratio id = Air_mech value = 15 }
-	ai_strategy = { type = role_ratio id = Special_Forces value = 50 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 25 }
 }
 
 default_army_production_strategy_global = {
@@ -48,13 +51,16 @@ default_army_production_strategy_global = {
 	enable = { num_of_military_factories > 29 }
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = role_ratio id = apc_mechanized value = 20 }
-	ai_strategy = { type = role_ratio id = ifv_mechanized value = 50 }
-	ai_strategy = { type = role_ratio id = armor value = 40 }
-	ai_strategy = { type = role_ratio id = marines value = 25 }
-	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
-	ai_strategy = { type = role_ratio id = Air_mech value = 15 }
-	ai_strategy = { type = role_ratio id = Special_Forces value = 50 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 5 }
+	ai_strategy = { type = role_ratio id = infantry value = 30 }
+	ai_strategy = { type = role_ratio id = garrison value = 1 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 30 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 35 }
+	ai_strategy = { type = role_ratio id = armor value = 25 }
+	ai_strategy = { type = role_ratio id = marines value = 10 }
+	ai_strategy = { type = role_ratio id = Air_helicopters value = 3 }
+	ai_strategy = { type = role_ratio id = Air_mech value = 5 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 6 }
 }
 
 default_area_priority = {
@@ -310,38 +316,43 @@ division_limiter_potato_edition = {
 	ai_strategy = { type = build_army id = Special_Forces value = -500 }
 }
 
-ai_default_no_build_units = {
+under_division_cap_recruitment = {
 	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
-		has_war = no
-		is_subject = no
-		NOT = { ai_is_threatened = yes }
-		NOT = {
-			AND = {
-				original_tag = BOS
-				has_global_flag = PRO_BOSNIAN_LEADERSHIP_MUSLIM_NATION
-				NOT = { has_completed_focus = BOS_national_awakening }
-				NOT = { has_active_mission = bankruptcy_incoming_collapse }
-			}
-		}
+		check_variable = { num_divisions < division_limiter_limit }
+		ai_is_threatened = yes
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = role_ratio id = L_Inf value = -500 }
-	ai_strategy = { type = role_ratio id = infantry value = -500 }
-	ai_strategy = { type = role_ratio id = garrison value = -500 }
-	ai_strategy = { type = role_ratio id = apc_mechanized value = -500 }
-	ai_strategy = { type = role_ratio id = ifv_mechanized value = -500 }
-	ai_strategy = { type = role_ratio id = armor value = -500 }
-	ai_strategy = { type = role_ratio id = marines value = -500 }
-	ai_strategy = { type = role_ratio id = Air_helicopters value = -500 }
-	ai_strategy = { type = role_ratio id = Air_mech value = -500 }
-	ai_strategy = { type = role_ratio id = Special_Forces value = -500 }
+	ai_strategy = { type = ai_wanted_divisions_factor value = 0.15 }
+}
+
+minor_wartime_recruitment = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		is_major = no
+		check_variable = { num_divisions < division_limiter_limit }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+threatened_peacetime_recruitment = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = no
+		ai_is_threatened = yes
+		check_variable = { num_divisions < division_limiter_limit }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = force_build_armies value = 25 }
 }
 
 ai_subject_defensive_build = {
-	# ai_default_no_build_units excludes subjects, so this gives them a small
-	# defensive baseline on top of the generic production strategies.
+	# Gives subjects a small defensive baseline on top of the generic production strategies.
 	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		is_subject = yes
@@ -700,28 +711,45 @@ MD_major_production_strategy = {
 	ai_strategy = { type = equipment_production_min_factories id = infantry value = 2 }
 	ai_strategy = { type = equipment_production_min_factories id = train value = 1 }
 	ai_strategy = { type = equipment_production_min_factories id = motorized value = 1 }
-	ai_strategy = { type = equipment_production_min_factories id = mechanized value = 2 }
+	ai_strategy = { type = equipment_production_min_factories_archetype id = medium_tank_amphibious_chassis value = 1 }
+	ai_strategy = { type = equipment_production_min_factories_archetype id = medium_tank_flame_chassis value = 1 }
 	ai_strategy = { type = equipment_production_min_factories id = armor value = 1 }
 }
 
-MD_build_equipment_not_units_while_at_war = {
-	allowed = {
-		ai_for_units_is_not_disabled = yes
-	}
+MD_low_apc_stockpile = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
-		has_war = yes
-		OR = {
-			has_equipment = { infantry_weapons_type < 1000 }
-			has_equipment = { L_AT_Equipment < 200 }
-			has_equipment = { util_vehicle_type < 400 }
-			has_equipment = { cnc_equipment_type < 500 }
-			has_equipment = { AA_Equipment < 200 }
-		}
+		num_of_military_factories > 7
+		has_equipment = { infantry_weapons_type > 999 }
+		has_equipment = { medium_tank_amphibious_chassis < 1000 }
 	}
-
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = equipment_variant_production_factor id = infantry_weapons_type value = 100 }
+	ai_strategy = { type = equipment_production_factor id = amphibious value = 400 }
+}
+
+MD_low_ifv_stockpile = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		num_of_military_factories > 9
+		has_equipment = { infantry_weapons_type > 999 }
+		has_equipment = { medium_tank_flame_chassis < 1000 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_factor id = flame value = 400 }
+}
+
+MD_wartime_low_infantry_weapons = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		has_equipment = { infantry_weapons_type < 1000 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = infantry_weapons_type value = 500 }
+	ai_strategy = { type = equipment_production_min_factories id = infantry value = 4 }
 	ai_strategy = { type = role_ratio id = L_Inf value = -500 }
 	ai_strategy = { type = role_ratio id = infantry value = -500 }
 	ai_strategy = { type = role_ratio id = garrison value = -500 }
@@ -734,12 +762,91 @@ MD_build_equipment_not_units_while_at_war = {
 	ai_strategy = { type = role_ratio id = Special_Forces value = -500 }
 }
 
+MD_wartime_low_command_equipment = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		has_equipment = { cnc_equipment_type < 500 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_factor id = infantry value = 100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cnc_equipment_type value = 500 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = -300 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = -300 }
+	ai_strategy = { type = role_ratio id = armor value = -300 }
+	ai_strategy = { type = role_ratio id = marines value = -300 }
+	ai_strategy = { type = role_ratio id = Air_helicopters value = -300 }
+	ai_strategy = { type = role_ratio id = Air_mech value = -300 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = -300 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 150 }
+	ai_strategy = { type = build_army id = L_Inf value = 50 }
+}
+
+MD_wartime_low_utility_vehicles = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		has_equipment = { util_vehicle_type < 400 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = util_vehicle_type value = 400 }
+	ai_strategy = { type = role_ratio id = infantry value = -300 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = -500 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = -500 }
+	ai_strategy = { type = role_ratio id = armor value = -300 }
+	ai_strategy = { type = role_ratio id = marines value = -300 }
+	ai_strategy = { type = role_ratio id = Air_helicopters value = -300 }
+	ai_strategy = { type = role_ratio id = Air_mech value = -500 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = -300 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 150 }
+	ai_strategy = { type = build_army id = L_Inf value = 50 }
+}
+
+MD_wartime_low_light_at = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		has_equipment = { L_AT_Equipment < 200 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = L_AT_Equipment value = 400 }
+	ai_strategy = { type = role_ratio id = armor value = -200 }
+	ai_strategy = { type = role_ratio id = marines value = -200 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = -200 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 125 }
+	ai_strategy = { type = build_army id = L_Inf value = 50 }
+}
+
+MD_wartime_low_aa = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		has_equipment = { AA_Equipment < 200 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = AA_Equipment value = 400 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = -200 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = -200 }
+	ai_strategy = { type = role_ratio id = armor value = -200 }
+	ai_strategy = { type = role_ratio id = marines value = -200 }
+	ai_strategy = { type = role_ratio id = Air_helicopters value = -200 }
+	ai_strategy = { type = role_ratio id = Air_mech value = -200 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = -200 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 125 }
+	ai_strategy = { type = build_army id = L_Inf value = 50 }
+}
+
 MD_build_command_equipment = {
 	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = { has_equipment = { cnc_equipment_type < 750 } }
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = equipment_variant_production_factor id = cnc_equipment_type value = 150 }
+	ai_strategy = { type = equipment_production_factor id = infantry value = 100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cnc_equipment_type value = 500 }
 }
 
 default_stockpile_management = {
@@ -1014,7 +1121,7 @@ wartime_offensive_composition = {
 	ai_strategy = { type = role_ratio id = ifv_mechanized value = 10 }
 	ai_strategy = { type = role_ratio id = armor value = 10 }
 	ai_strategy = { type = role_ratio id = Air_mech value = 5 }
-	ai_strategy = { type = role_ratio id = Special_Forces value = 5 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 3 }
 }
 
 # Majors at war should build armies more aggressively
@@ -1085,7 +1192,7 @@ land_major_wartime_industry = {
 	ai_strategy = { type = building_target id = fuel_silo value = 8 }
 	ai_strategy = { type = building_target id = synthetic_refinery value = 8 }
 	ai_strategy = { type = building_target id = infrastructure value = 14 }
-	ai_strategy = { type = added_military_to_civilian_factory_ratio value = 50 } # AI_ratio_military applies -25 baseline, so net +25 during war
+	ai_strategy = { type = added_military_to_civilian_factory_ratio value = 25 }
 }
 
 # Wartime military factory ratio push for naval majors
@@ -1108,7 +1215,7 @@ naval_major_wartime_industry = {
 	ai_strategy = { type = building_target id = fuel_silo value = 12 }
 	ai_strategy = { type = building_target id = synthetic_refinery value = 10 }
 	ai_strategy = { type = building_target id = infrastructure value = 10 }
-	ai_strategy = { type = added_military_to_civilian_factory_ratio value = 45 } # AI_ratio_military applies -25 baseline, so net +20 during war
+	ai_strategy = { type = added_military_to_civilian_factory_ratio value = 20 }
 }
 
 plane_limiter_potato = {
