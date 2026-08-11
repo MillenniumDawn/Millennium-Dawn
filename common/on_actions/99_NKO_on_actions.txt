@@ -23,6 +23,38 @@ on_actions = {
 
 	on_monthly_NKO = {
 		effect = {
+			if = {
+				limit = {
+					NKO_spa_mechanic_enabled = yes
+					NOT = { has_country_flag = NKO_spa_iraq_war_pending }
+				}
+				NKO_spa_initialise = yes
+				NKO_spa_select_weighted_mandate = yes
+			}
+			if = {
+				limit = {
+					NKO_spa_mechanic_enabled = yes
+					has_country_flag = NKO_spa_iraq_war_pending
+					country_exists = USA
+					country_exists = IRQ
+					USA = { has_war_with = IRQ }
+				}
+				NKO_spa_activate_iraq_emergency = yes
+			}
+			if = {
+				limit = {
+					NKO_spa_mechanic_enabled = yes
+					has_country_flag = NKO_spa_iraq_war_pending
+					OR = {
+						NOT = { country_exists = USA }
+						NOT = { country_exists = IRQ }
+						NOT = { USA = { has_war_with = IRQ } }
+					}
+				}
+				clr_country_flag = NKO_spa_iraq_war_pending
+				NKO_spa_initialise = yes
+				NKO_spa_select_weighted_mandate = yes
+			}
 			# Russia requests artillery shells while at war.
 			if = {
 				limit = {
@@ -34,6 +66,73 @@ on_actions = {
 				}
 				country_event = { id = NKO_export.1 days = 3 }
 				set_country_flag = { flag = NKO_arms_export_russia_offer_cooldown value = 1 days = 180 }
+			}
+		}
+	}
+
+	on_declare_war = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = USA }
+					FROM = { original_tag = IRQ }
+					country_exists = NKO
+				}
+				NKO = {
+					if = {
+						limit = { NKO_spa_mechanic_enabled = yes }
+						NKO_spa_activate_iraq_emergency = yes
+					}
+					else = { set_country_flag = NKO_spa_iraq_war_pending }
+				}
+			}
+			if = {
+				limit = {
+					ROOT = { original_tag = USA }
+					FROM = { original_tag = TAL }
+					country_exists = NKO
+				}
+				NKO = { set_country_flag = NKO_spa_afghanistan_war_observed }
+			}
+		}
+	}
+
+	on_peaceconference_ended = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = USA }
+					FROM = { original_tag = IRQ }
+					country_exists = NKO
+					NKO = {
+						has_country_flag = NKO_spa_iraq_war_response_fired
+						NOT = { has_country_flag = NKO_spa_iraq_outcome_reward_scheduled }
+					}
+				}
+				NKO = {
+					set_country_flag = NKO_spa_iraq_outcome_reward_scheduled
+					country_event = { id = NKO_spa.71 days = 365 }
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						original_tag = USA
+						has_country_flag = USA_wot_enduring_freedom
+					}
+					FROM = { original_tag = TAL }
+					country_exists = AFG
+					country_exists = NKO
+					NKO = {
+						NKO_spa_mechanic_enabled = yes
+						has_country_flag = NKO_spa_afghanistan_war_observed
+						NOT = { has_country_flag = NKO_spa_afghanistan_reward_fired }
+					}
+				}
+				NKO = {
+					set_country_flag = NKO_spa_afghanistan_reward_fired
+					country_event = { id = NKO_spa.72 hours = 6 }
+				}
 			}
 		}
 	}

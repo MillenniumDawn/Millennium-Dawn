@@ -199,8 +199,8 @@ NKO_civil_war_south = {
 
 
 # -----------------------------------------------------------------------------
-# Initialise — adds the umbrella idea + 8 standing debuffs and seeds the
-# picks counter. Idempotent (each idea add is gated). Called from on_startup.
+# Initialise the umbrella, restore any applicable standing penalties, and
+# reconcile the automatic mandate state. Each idea add is independently gated.
 # -----------------------------------------------------------------------------
 NKO_spa_initialise = {
 	hidden_effect = {
@@ -213,6 +213,7 @@ NKO_spa_initialise = {
 			limit = {
 				NOT = { has_idea = NKO_spa_debuff_industry }
 				NOT = { has_idea = NKO_spa_bonus_industry }
+				NOT = { has_country_flag = NKO_spa_debuff_industry_lifted }
 			}
 			add_ideas = NKO_spa_debuff_industry
 		}
@@ -220,6 +221,8 @@ NKO_spa_initialise = {
 			limit = {
 				NOT = { has_idea = NKO_spa_debuff_production }
 				NOT = { has_idea = NKO_spa_bonus_production }
+				NOT = { has_idea = NKO_spa_emergency_war_mobilisation }
+				NOT = { has_country_flag = NKO_spa_debuff_production_lifted }
 			}
 			add_ideas = NKO_spa_debuff_production
 		}
@@ -227,6 +230,8 @@ NKO_spa_initialise = {
 			limit = {
 				NOT = { has_idea = NKO_spa_debuff_military }
 				NOT = { has_idea = NKO_spa_bonus_military }
+				NOT = { has_idea = NKO_spa_emergency_war_mobilisation }
+				NOT = { has_country_flag = NKO_spa_debuff_military_lifted }
 			}
 			add_ideas = NKO_spa_debuff_military
 		}
@@ -234,12 +239,16 @@ NKO_spa_initialise = {
 			limit = {
 				NOT = { has_idea = NKO_spa_debuff_economy }
 				NOT = { has_idea = NKO_spa_bonus_economy }
+				NOT = { has_country_flag = NKO_spa_debuff_economy_lifted }
 			}
 			add_ideas = NKO_spa_debuff_economy
 		}
 		if = {
 			limit = {
 				NOT = { has_idea = NKO_spa_debuff_research }
+				NOT = { has_idea = NKO_spa_bonus_research }
+				NOT = { has_idea = NKO_spa_bonus_research_modern }
+				NOT = { has_country_flag = NKO_spa_debuff_research_lifted }
 			}
 			add_ideas = NKO_spa_debuff_research
 		}
@@ -247,6 +256,8 @@ NKO_spa_initialise = {
 			limit = {
 				NOT = { has_idea = NKO_spa_debuff_agriculture }
 				NOT = { has_idea = NKO_spa_bonus_agriculture }
+				NOT = { has_idea = NKO_spa_arduous_march_agriculture }
+				NOT = { has_country_flag = NKO_spa_debuff_agriculture_lifted }
 			}
 			add_ideas = NKO_spa_debuff_agriculture
 		}
@@ -254,6 +265,7 @@ NKO_spa_initialise = {
 			limit = {
 				NOT = { has_idea = NKO_spa_debuff_foreign }
 				NOT = { has_idea = NKO_spa_bonus_foreign }
+				NOT = { has_country_flag = NKO_spa_debuff_foreign_lifted }
 			}
 			add_ideas = NKO_spa_debuff_foreign
 		}
@@ -261,41 +273,31 @@ NKO_spa_initialise = {
 			limit = {
 				NOT = { has_idea = NKO_spa_debuff_construction }
 				NOT = { has_idea = NKO_spa_bonus_construction }
+				NOT = { has_idea = NKO_spa_emergency_war_mobilisation }
+				NOT = { has_country_flag = NKO_spa_debuff_construction_lifted }
 			}
 			add_ideas = NKO_spa_debuff_construction
 		}
-
-
-		set_variable = { NKO_spa_picks_made = 0 }
+		NKO_spa_reconcile_research_tier = yes
+		NKO_spa_ensure_arduous_march_agriculture = yes
+		NKO_spa_refresh_gui = yes
 	}
 }
 
-NKO_spa_open_session = {
-	hidden_effect = {
-		NKO_spa_resync_active_mandates = yes
-	}
-}
-
-NKO_spa_resync_active_mandates = {
-	hidden_effect = {
-		set_variable = { NKO_spa_picks_made = 0 }
-		if = { limit = { has_idea = NKO_spa_bonus_industry } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_production } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_military } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_economy } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { OR = { has_idea = NKO_spa_bonus_research has_idea = NKO_spa_bonus_research_half has_idea = NKO_spa_bonus_research_quarter } } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_agriculture } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_foreign } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_construction } add_to_variable = { NKO_spa_picks_made = 1 } }
-	}
-}
-
-NKO_spa_release_slot = {
-	hidden_effect = {
-		if = {
-			limit = { check_variable = { NKO_spa_picks_made > 0 } }
-			subtract_from_variable = { NKO_spa_picks_made = 1 }
-		}
+NKO_spa_refresh_gui = {
+	set_variable = { NKO_spa_display_active_mandates = 0 }
+	if = { limit = { has_idea = NKO_spa_bonus_industry } add_to_variable = { NKO_spa_display_active_mandates = 1 } }
+	if = { limit = { has_idea = NKO_spa_bonus_production } add_to_variable = { NKO_spa_display_active_mandates = 1 } }
+	if = { limit = { has_idea = NKO_spa_bonus_military } add_to_variable = { NKO_spa_display_active_mandates = 1 } }
+	if = { limit = { has_idea = NKO_spa_bonus_economy } add_to_variable = { NKO_spa_display_active_mandates = 1 } }
+	if = { limit = { NKO_spa_research_active = yes } add_to_variable = { NKO_spa_display_active_mandates = 1 } }
+	if = { limit = { NKO_spa_agriculture_active = yes } add_to_variable = { NKO_spa_display_active_mandates = 1 } }
+	if = { limit = { has_idea = NKO_spa_bonus_foreign } add_to_variable = { NKO_spa_display_active_mandates = 1 } }
+	if = { limit = { has_idea = NKO_spa_bonus_construction } add_to_variable = { NKO_spa_display_active_mandates = 1 } }
+	if = { limit = { has_idea = NKO_spa_emergency_war_mobilisation } add_to_variable = { NKO_spa_display_active_mandates = 1 } }
+	if = {
+		limit = { is_ai = no }
+		add_to_variable = { NKO_spa_gui_dirty = 1 }
 	}
 }
 
@@ -303,7 +305,8 @@ NKO_spa_pass_industry = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_industry } remove_ideas = NKO_spa_debuff_industry }
 		add_timed_idea = { idea = NKO_spa_bonus_industry days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
+		set_country_flag = { flag = NKO_spa_normal_selection_cooldown value = 1 days = 180 }
+		NKO_spa_refresh_gui = yes
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Industrial Acceleration"
 	}
 }
@@ -312,7 +315,8 @@ NKO_spa_pass_production = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_production } remove_ideas = NKO_spa_debuff_production }
 		add_timed_idea = { idea = NKO_spa_bonus_production days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
+		set_country_flag = { flag = NKO_spa_normal_selection_cooldown value = 1 days = 180 }
+		NKO_spa_refresh_gui = yes
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Equipment Production Mandate"
 	}
 }
@@ -321,7 +325,8 @@ NKO_spa_pass_military = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_military } remove_ideas = NKO_spa_debuff_military }
 		add_timed_idea = { idea = NKO_spa_bonus_military days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
+		set_country_flag = { flag = NKO_spa_normal_selection_cooldown value = 1 days = 180 }
+		NKO_spa_refresh_gui = yes
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Songun Resolution"
 	}
 }
@@ -330,7 +335,8 @@ NKO_spa_pass_economy = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_economy } remove_ideas = NKO_spa_debuff_economy }
 		add_timed_idea = { idea = NKO_spa_bonus_economy days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
+		set_country_flag = { flag = NKO_spa_normal_selection_cooldown value = 1 days = 180 }
+		NKO_spa_refresh_gui = yes
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Juche Self-Reliance"
 	}
 }
@@ -340,17 +346,28 @@ NKO_spa_pass_research = {
 		if = { limit = { has_idea = NKO_spa_debuff_research } remove_ideas = NKO_spa_debuff_research }
 		if = {
 			limit = { NKO_spa_has_2005_tech_tier = yes }
-			add_timed_idea = { idea = NKO_spa_bonus_research_quarter days = 365 }
-		}
-		else_if = {
-			limit = { NKO_spa_has_1995_tech_tier = yes }
-			add_timed_idea = { idea = NKO_spa_bonus_research_half days = 365 }
+			add_timed_idea = { idea = NKO_spa_bonus_research_modern days = 365 }
 		}
 		else = {
 			add_timed_idea = { idea = NKO_spa_bonus_research days = 365 }
 		}
-		add_to_variable = { NKO_spa_active_mandates = 1 }
+		set_country_flag = { flag = NKO_spa_normal_selection_cooldown value = 1 days = 180 }
+		NKO_spa_refresh_gui = yes
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Research Drive"
+	}
+}
+
+NKO_spa_reconcile_research_tier = {
+	if = {
+		limit = {
+			has_idea = NKO_spa_bonus_research
+			NKO_spa_has_2005_tech_tier = yes
+		}
+		swap_ideas = {
+			remove_idea = NKO_spa_bonus_research
+			add_idea = NKO_spa_bonus_research_modern
+		}
+		NKO_spa_refresh_gui = yes
 	}
 }
 
@@ -358,7 +375,8 @@ NKO_spa_pass_agriculture = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_agriculture } remove_ideas = NKO_spa_debuff_agriculture }
 		add_timed_idea = { idea = NKO_spa_bonus_agriculture days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
+		set_country_flag = { flag = NKO_spa_normal_selection_cooldown value = 1 days = 180 }
+		NKO_spa_refresh_gui = yes
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Agricultural Drive"
 	}
 }
@@ -367,7 +385,8 @@ NKO_spa_pass_foreign = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_foreign } remove_ideas = NKO_spa_debuff_foreign }
 		add_timed_idea = { idea = NKO_spa_bonus_foreign days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
+		set_country_flag = { flag = NKO_spa_normal_selection_cooldown value = 1 days = 180 }
+		NKO_spa_refresh_gui = yes
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Foreign Policy Directive"
 	}
 }
@@ -376,50 +395,335 @@ NKO_spa_pass_construction = {
 	hidden_effect = {
 		if = { limit = { has_idea = NKO_spa_debuff_construction } remove_ideas = NKO_spa_debuff_construction }
 		add_timed_idea = { idea = NKO_spa_bonus_construction days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
+		set_country_flag = { flag = NKO_spa_normal_selection_cooldown value = 1 days = 180 }
+		NKO_spa_refresh_gui = yes
 		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Construction Battalion"
 	}
+}
+
+NKO_spa_ensure_arduous_march_agriculture = {
+	if = {
+		limit = {
+			NKO_spa_arduous_march_complete = yes
+			has_idea = NKO_spa_arduous_march_agriculture
+		}
+		remove_ideas = NKO_spa_arduous_march_agriculture
+		NKO_spa_refresh_gui = yes
+	}
+	if = {
+		limit = {
+			NKO_spa_mechanic_enabled = yes
+			NKO_spa_has_open_slot = yes
+			NOT = { NKO_spa_arduous_march_complete = yes }
+			NOT = { NKO_spa_agriculture_active = yes }
+		}
+		if = { limit = { has_idea = NKO_spa_debuff_agriculture } remove_ideas = NKO_spa_debuff_agriculture }
+		add_ideas = NKO_spa_arduous_march_agriculture
+		NKO_spa_start_agriculture_chain = yes
+		country_event = { id = NKO_spa.68 hours = 6 }
+		NKO_spa_refresh_gui = yes
+	}
+}
+
+NKO_spa_start_industry_chain = {
+	if = {
+		limit = { check_variable = { NKO_spa_chain_industry < 4 } }
+		add_to_variable = { NKO_spa_chain_industry = 1 }
+		country_event = { id = NKO_spa.30 hours = 6 }
+		random = { chance = 25 country_event = { id = NKO_spa.20 hours = 6 } }
+	}
+}
+
+NKO_spa_start_production_chain = {
+	if = {
+		limit = { check_variable = { NKO_spa_chain_production < 4 } }
+		add_to_variable = { NKO_spa_chain_production = 1 }
+		country_event = { id = NKO_spa.33 hours = 6 }
+		random = { chance = 25 country_event = { id = NKO_spa.21 hours = 6 } }
+	}
+}
+
+NKO_spa_start_military_chain = {
+	if = {
+		limit = { check_variable = { NKO_spa_chain_military < 4 } }
+		add_to_variable = { NKO_spa_chain_military = 1 }
+		country_event = { id = NKO_spa.36 hours = 6 }
+		random = { chance = 25 country_event = { id = NKO_spa.22 hours = 6 } }
+	}
+}
+
+NKO_spa_start_economy_chain = {
+	if = {
+		limit = { check_variable = { NKO_spa_chain_economy < 4 } }
+		add_to_variable = { NKO_spa_chain_economy = 1 }
+		country_event = { id = NKO_spa.39 hours = 6 }
+		random = { chance = 25 country_event = { id = NKO_spa.23 hours = 6 } }
+	}
+}
+
+NKO_spa_start_agriculture_chain = {
+	if = {
+		limit = { check_variable = { NKO_spa_chain_agriculture < 4 } }
+		add_to_variable = { NKO_spa_chain_agriculture = 1 }
+		country_event = { id = NKO_spa.45 hours = 6 }
+		random = { chance = 25 country_event = { id = NKO_spa.25 hours = 6 } }
+	}
+}
+
+NKO_spa_start_foreign_chain = {
+	if = {
+		limit = { check_variable = { NKO_spa_chain_foreign < 4 } }
+		add_to_variable = { NKO_spa_chain_foreign = 1 }
+		country_event = { id = NKO_spa.48 hours = 6 }
+		random = { chance = 25 country_event = { id = NKO_spa.26 hours = 6 } }
+	}
+}
+
+NKO_spa_start_construction_chain = {
+	if = {
+		limit = { check_variable = { NKO_spa_chain_construction < 4 } }
+		add_to_variable = { NKO_spa_chain_construction = 1 }
+		country_event = { id = NKO_spa.51 hours = 6 }
+		random = { chance = 25 country_event = { id = NKO_spa.27 hours = 6 } }
+	}
+}
+
+NKO_spa_enact_industry = {
+	set_temp_variable = { treasury_change = -0.5 }
+	modify_treasury_effect = yes
+	set_temp_variable = { temp_productivity_change = 5 }
+	flat_productivity_change_effect = yes
+	NKO_spa_pass_industry = yes
+	NKO_spa_start_industry_chain = yes
+}
+
+NKO_spa_enact_production = {
+	set_temp_variable = { treasury_change = -0.7 }
+	modify_treasury_effect = yes
+	NKO_spa_pass_production = yes
+	NKO_spa_start_production_chain = yes
+}
+
+NKO_spa_enact_military = {
+	set_temp_variable = { treasury_change = -0.4 }
+	modify_treasury_effect = yes
+	NKO_spa_pass_military = yes
+	NKO_spa_start_military_chain = yes
+}
+
+NKO_spa_enact_economy = {
+	set_temp_variable = { treasury_change = -0.3 }
+	modify_treasury_effect = yes
+	set_temp_variable = { temp_productivity_change = 5 }
+	flat_productivity_change_effect = yes
+	NKO_spa_pass_economy = yes
+	NKO_spa_start_economy_chain = yes
+}
+
+NKO_spa_enact_research = {
+	set_temp_variable = { treasury_change = -1.5 }
+	modify_treasury_effect = yes
+	NKO_spa_pass_research = yes
+}
+
+NKO_spa_enact_agriculture = {
+	set_temp_variable = { treasury_change = -0.5 }
+	modify_treasury_effect = yes
+	NKO_spa_pass_agriculture = yes
+	NKO_spa_start_agriculture_chain = yes
+}
+
+NKO_spa_enact_foreign = {
+	set_temp_variable = { treasury_change = -0.7 }
+	modify_treasury_effect = yes
+	NKO_spa_pass_foreign = yes
+	NKO_spa_start_foreign_chain = yes
+}
+
+NKO_spa_enact_construction = {
+	set_temp_variable = { treasury_change = -0.75 }
+	modify_treasury_effect = yes
+	NKO_spa_pass_construction = yes
+	NKO_spa_start_construction_chain = yes
+}
+
+NKO_spa_select_weighted_mandate = {
+	if = {
+		limit = {
+			NKO_spa_can_run_normal_automation = yes
+			NKO_spa_has_weighted_candidate = yes
+		}
+		random_list = {
+			90 = {
+				modifier = { factor = 0 NOT = { NKO_spa_focus_is_industry = yes } }
+				modifier = { factor = 0 has_idea = NKO_spa_bonus_industry }
+				modifier = { factor = 0 NOT = { NKO_spa_can_afford_money_05 = yes } }
+				NKO_spa_enact_industry = yes
+				country_event = { id = NKO_spa.60 hours = 6 }
+			}
+			100 = {
+				modifier = { factor = 0 NOT = { NKO_spa_focus_is_production = yes } }
+				modifier = { factor = 0 has_idea = NKO_spa_bonus_production }
+				modifier = { factor = 0 NOT = { NKO_spa_can_afford_money_07 = yes } }
+				modifier = { factor = 1.6 has_war = yes }
+				NKO_spa_enact_production = yes
+				country_event = { id = NKO_spa.61 hours = 6 }
+			}
+			95 = {
+				modifier = { factor = 0 NOT = { NKO_spa_focus_is_military = yes } }
+				modifier = { factor = 0 has_idea = NKO_spa_bonus_military }
+				modifier = { factor = 0 NOT = { NKO_spa_can_afford_money_04 = yes } }
+				modifier = { factor = 1.8 has_war = yes }
+				NKO_spa_enact_military = yes
+				country_event = { id = NKO_spa.62 hours = 6 }
+			}
+			100 = {
+				modifier = { factor = 0 NOT = { NKO_spa_focus_is_economy = yes } }
+				modifier = { factor = 0 has_idea = NKO_spa_bonus_economy }
+				modifier = { factor = 0 NOT = { NKO_spa_can_afford_money_03 = yes } }
+				NKO_spa_enact_economy = yes
+				country_event = { id = NKO_spa.63 hours = 6 }
+			}
+			85 = {
+				modifier = { factor = 0 NOT = { NKO_spa_focus_is_research = yes } }
+				modifier = { factor = 0 NKO_spa_research_active = yes }
+				modifier = { factor = 0 NOT = { NKO_spa_can_afford_money_15 = yes } }
+				NKO_spa_enact_research = yes
+				country_event = { id = NKO_spa.64 hours = 6 }
+			}
+			110 = {
+				modifier = { factor = 0 NOT = { NKO_spa_focus_is_agriculture = yes } }
+				modifier = { factor = 0 NKO_spa_agriculture_active = yes }
+				modifier = { factor = 0 NOT = { NKO_spa_can_afford_money_05 = yes } }
+				NKO_spa_enact_agriculture = yes
+				country_event = { id = NKO_spa.65 hours = 6 }
+			}
+			75 = {
+				modifier = { factor = 0 NOT = { NKO_spa_focus_is_foreign = yes } }
+				modifier = { factor = 0 has_idea = NKO_spa_bonus_foreign }
+				modifier = { factor = 0 NOT = { NKO_spa_can_afford_money_07 = yes } }
+				NKO_spa_enact_foreign = yes
+				country_event = { id = NKO_spa.66 hours = 6 }
+			}
+			90 = {
+				modifier = { factor = 0 NOT = { NKO_spa_focus_is_construction = yes } }
+				modifier = { factor = 0 has_idea = NKO_spa_bonus_construction }
+				modifier = { factor = 0 NOT = { NKO_spa_can_afford_money_075 = yes } }
+				NKO_spa_enact_construction = yes
+				country_event = { id = NKO_spa.67 hours = 6 }
+			}
+		}
+	}
+}
+
+NKO_spa_activate_iraq_emergency = {
+	if = {
+		limit = {
+			NKO_spa_mechanic_enabled = yes
+			NOT = { has_country_flag = NKO_spa_iraq_war_response_fired }
+		}
+		set_country_flag = NKO_spa_iraq_war_response_fired
+		clr_country_flag = NKO_spa_iraq_war_pending
+		clr_country_flag = NKO_spa_normal_selection_cooldown
+		if = { limit = { has_idea = NKO_spa_bonus_industry } remove_ideas = NKO_spa_bonus_industry }
+		if = { limit = { has_idea = NKO_spa_bonus_production } remove_ideas = NKO_spa_bonus_production }
+		if = { limit = { has_idea = NKO_spa_bonus_military } remove_ideas = NKO_spa_bonus_military }
+		if = { limit = { has_idea = NKO_spa_bonus_economy } remove_ideas = NKO_spa_bonus_economy }
+		if = { limit = { has_idea = NKO_spa_bonus_research } remove_ideas = NKO_spa_bonus_research }
+		if = { limit = { has_idea = NKO_spa_bonus_research_modern } remove_ideas = NKO_spa_bonus_research_modern }
+		if = { limit = { has_idea = NKO_spa_bonus_agriculture } remove_ideas = NKO_spa_bonus_agriculture }
+		if = { limit = { has_idea = NKO_spa_bonus_foreign } remove_ideas = NKO_spa_bonus_foreign }
+		if = { limit = { has_idea = NKO_spa_bonus_construction } remove_ideas = NKO_spa_bonus_construction }
+		if = { limit = { has_idea = NKO_spa_debuff_production } remove_ideas = NKO_spa_debuff_production }
+		if = { limit = { has_idea = NKO_spa_debuff_military } remove_ideas = NKO_spa_debuff_military }
+		if = { limit = { has_idea = NKO_spa_debuff_construction } remove_ideas = NKO_spa_debuff_construction }
+		add_timed_idea = { idea = NKO_spa_emergency_war_mobilisation days = 730 }
+		if = {
+			limit = { 603 = { is_owned_and_controlled_by = NKO } }
+			603 = { add_building_construction = { type = bunker level = 1 instant_build = yes } }
+		}
+		else = { random_owned_controlled_state = { add_building_construction = { type = bunker level = 1 instant_build = yes } } }
+		if = {
+			limit = { 1199 = { is_owned_and_controlled_by = NKO } }
+			1199 = { add_building_construction = { type = bunker level = 1 instant_build = yes } }
+		}
+		else = { random_owned_controlled_state = { add_building_construction = { type = bunker level = 1 instant_build = yes } } }
+		if = {
+			limit = { 602 = { is_owned_and_controlled_by = NKO } }
+			602 = { add_building_construction = { type = radar_station level = 1 instant_build = yes } }
+		}
+		else = { random_owned_controlled_state = { add_building_construction = { type = radar_station level = 1 instant_build = yes } } }
+		NKO_spa_ensure_arduous_march_agriculture = yes
+		NKO_spa_refresh_gui = yes
+		country_event = { id = NKO_spa.69 hours = 6 }
+		log = "[GetDateText]: [Root.GetName]: SPA emergency mobilisation activated for the Iraq War"
+	}
+}
+
+NKO_spa_give_equipment_package = {
+	set_temp_variable = { NKO_spa_eq_amount = 1000 }
+	NKO_spa_give_latest_inf_weapons = yes
+	set_temp_variable = { NKO_spa_eq_amount = 75 }
+	NKO_spa_give_latest_tank = yes
+	NKO_spa_give_latest_sp_arty = yes
+}
+
+NKO_spa_give_afghanistan_reward = {
+	NKO_spa_give_equipment_package = yes
+	if = {
+		limit = { 602 = { is_owned_and_controlled_by = NKO } }
+		602 = { add_building_construction = { type = anti_air_building level = 1 instant_build = yes } }
+	}
+	else = { random_owned_controlled_state = { add_building_construction = { type = anti_air_building level = 1 instant_build = yes } } }
 }
 
 
 NKO_spa_lift_debuff_industry = {
 	set_country_flag = NKO_spa_debuff_industry_lifted
 	if = { limit = { has_idea = NKO_spa_debuff_industry } remove_ideas = NKO_spa_debuff_industry }
+	NKO_spa_refresh_gui = yes
 }
 
 NKO_spa_lift_debuff_production = {
 	set_country_flag = NKO_spa_debuff_production_lifted
 	if = { limit = { has_idea = NKO_spa_debuff_production } remove_ideas = NKO_spa_debuff_production }
+	NKO_spa_refresh_gui = yes
 }
 
 NKO_spa_lift_debuff_military = {
 	set_country_flag = NKO_spa_debuff_military_lifted
 	if = { limit = { has_idea = NKO_spa_debuff_military } remove_ideas = NKO_spa_debuff_military }
+	NKO_spa_refresh_gui = yes
 }
 
 NKO_spa_lift_debuff_economy = {
 	set_country_flag = NKO_spa_debuff_economy_lifted
 	if = { limit = { has_idea = NKO_spa_debuff_economy } remove_ideas = NKO_spa_debuff_economy }
+	NKO_spa_refresh_gui = yes
 }
 
 NKO_spa_lift_debuff_research = {
 	set_country_flag = NKO_spa_debuff_research_lifted
 	if = { limit = { has_idea = NKO_spa_debuff_research } remove_ideas = NKO_spa_debuff_research }
+	NKO_spa_refresh_gui = yes
 }
 
 NKO_spa_lift_debuff_agriculture = {
 	set_country_flag = NKO_spa_debuff_agriculture_lifted
 	if = { limit = { has_idea = NKO_spa_debuff_agriculture } remove_ideas = NKO_spa_debuff_agriculture }
+	NKO_spa_refresh_gui = yes
 }
 
 NKO_spa_lift_debuff_foreign = {
 	set_country_flag = NKO_spa_debuff_foreign_lifted
 	if = { limit = { has_idea = NKO_spa_debuff_foreign } remove_ideas = NKO_spa_debuff_foreign }
+	NKO_spa_refresh_gui = yes
 }
 
 NKO_spa_lift_debuff_construction = {
 	set_country_flag = NKO_spa_debuff_construction_lifted
 	if = { limit = { has_idea = NKO_spa_debuff_construction } remove_ideas = NKO_spa_debuff_construction }
+	NKO_spa_refresh_gui = yes
 }
 
 
@@ -544,11 +848,13 @@ NKO_spa_suppress_for_collapse = {
 		if = { limit = { has_idea = NKO_spa_bonus_military } remove_ideas = NKO_spa_bonus_military }
 		if = { limit = { has_idea = NKO_spa_bonus_economy } remove_ideas = NKO_spa_bonus_economy }
 		if = { limit = { has_idea = NKO_spa_bonus_research } remove_ideas = NKO_spa_bonus_research }
-		if = { limit = { has_idea = NKO_spa_bonus_research_half } remove_ideas = NKO_spa_bonus_research_half }
-		if = { limit = { has_idea = NKO_spa_bonus_research_quarter } remove_ideas = NKO_spa_bonus_research_quarter }
+		if = { limit = { has_idea = NKO_spa_bonus_research_modern } remove_ideas = NKO_spa_bonus_research_modern }
 		if = { limit = { has_idea = NKO_spa_bonus_agriculture } remove_ideas = NKO_spa_bonus_agriculture }
+		if = { limit = { has_idea = NKO_spa_arduous_march_agriculture } remove_ideas = NKO_spa_arduous_march_agriculture }
 		if = { limit = { has_idea = NKO_spa_bonus_foreign } remove_ideas = NKO_spa_bonus_foreign }
 		if = { limit = { has_idea = NKO_spa_bonus_construction } remove_ideas = NKO_spa_bonus_construction }
+		if = { limit = { has_idea = NKO_spa_emergency_war_mobilisation } remove_ideas = NKO_spa_emergency_war_mobilisation }
+		NKO_spa_refresh_gui = yes
 	}
 }
 
