@@ -198,6 +198,9 @@ class EventStandardizer(BaseStandardizer):
             "immediate_comments": [],
             "option_comments": [],
             "comments_trailing": [],
+            # format_block rebuilds the header from scratch, so a comment
+            # trailing the opening brace has to be carried across explicitly.
+            "header_comment": "",
         }
 
         first_line = block_lines[0].strip()
@@ -205,6 +208,10 @@ class EventStandardizer(BaseStandardizer):
             if event_type in first_line:
                 props["event_type"] = event_type
                 break
+
+        after_brace = first_line.partition("{")[2].strip()
+        if after_brace.startswith("#"):
+            props["header_comment"] = after_brace
 
         pending: List[str] = []
 
@@ -242,7 +249,10 @@ class EventStandardizer(BaseStandardizer):
     def format_block(self, props: Dict[str, Any]) -> List[str]:
         """Format event according to Millennium Dawn standard"""
         lines = []
-        lines.append(f"{props['event_type']} = {{")
+        header = f"{props['event_type']} = {{"
+        if props["header_comment"]:
+            header += f" {props['header_comment']}"
+        lines.append(header)
 
         # 1. ID (first line after opening brace)
         if props["id"]:

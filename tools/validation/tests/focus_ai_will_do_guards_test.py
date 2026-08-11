@@ -546,6 +546,175 @@ def test_validator_gdp_multiply_focus_flagged_as_scripted(tmp_path):
     assert len(issues) == 1
 
 
+def test_worker_gdp_multiply_by_positive_is_income(tmp_path):
+    """(defect) `set gdp_total, multiply by +N%` is income, but the multiply
+    made the segment unknown and the sign was dropped with it, so a focus that
+    only earns money was reported as an unguarded spend of unknown size."""
+    reward = (
+        "set_temp_variable = { treasury_change = gdp_total }\n"
+        "			multiply_temp_variable = { treasury_change = 0.05 }\n"
+        "			modify_treasury_effect = yes"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    d = _guard_data(fpath, tmp_path)[0]
+    assert d["spend"] == 0.0
+    assert d["has_cost"] is False
+    assert d["unknown"] is False
+
+
+def test_worker_signed_variable_positive_multiply_is_unknown(tmp_path):
+    reward = (
+        "set_temp_variable = { treasury_change = signed_balance }\n"
+        "\t\t\tmultiply_temp_variable = { treasury_change = 0.05 }\n"
+        "\t\t\tmodify_treasury_effect = yes"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    d = _guard_data(fpath, tmp_path)[0]
+    assert d["has_cost"] is True
+    assert d["unknown"] is True
+
+
+def test_worker_gdp_per_capita_multiply_by_positive_is_income(tmp_path):
+    """(defect) only gdp_total was known non-negative, so the same idiom over
+    gdp_per_capita was reported as an unguarded spend of unknown size."""
+    reward = (
+        "set_temp_variable = { treasury_change = gdp_per_capita }\n"
+        "\t\t\tmultiply_temp_variable = { treasury_change = 0.18 }\n"
+        "\t\t\tmodify_treasury_effect = yes"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    d = _guard_data(fpath, tmp_path)[0]
+    assert d["has_cost"] is False
+    assert d["unknown"] is False
+
+
+def test_worker_scoped_gdp_source_keeps_its_sign(tmp_path):
+    """(defect) `GER.gdp_per_capita` matched only up to the dot, so the scope
+    qualifier hid a known non-negative source behind an unknown one."""
+    reward = (
+        "set_temp_variable = { treasury_change = GER.gdp_per_capita }\n"
+        "\t\t\tmultiply_temp_variable = { treasury_change = 0.02 }\n"
+        "\t\t\tmodify_treasury_effect = yes"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    d = _guard_data(fpath, tmp_path)[0]
+    assert d["has_cost"] is False
+    assert d["unknown"] is False
+
+
+def test_worker_scoped_unknown_source_stays_unknown(tmp_path):
+    reward = (
+        "set_temp_variable = { treasury_change = JAP.int_investments }\n"
+        "\t\t\tmultiply_temp_variable = { treasury_change = 0.07 }\n"
+        "\t\t\tmodify_treasury_effect = yes"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    d = _guard_data(fpath, tmp_path)[0]
+    assert d["has_cost"] is True
+    assert d["unknown"] is True
+
+
+def test_worker_branching_negative_scales_do_not_cancel(tmp_path):
+    """(defect) two negative multiplies in sibling if/else branches were read as
+    a chain and toggled the sign back to positive, so a focus that spends a
+    share of GDP on either path was reported as income."""
+    reward = (
+        "set_temp_variable = { treasury_change = gdp_per_capita }\n"
+        "			if = {\n"
+        "				limit = { has_country_flag = flag_a }\n"
+        "				multiply_temp_variable = { treasury_change = -0.225 }\n"
+        "			}\n"
+        "			else = {\n"
+        "				multiply_temp_variable = { treasury_change = -0.25 }\n"
+        "			}\n"
+        "			modify_treasury_effect = yes"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    d = _guard_data(fpath, tmp_path)[0]
+    assert d["has_cost"] is True
+    assert d["unknown"] is True
+
+
+def test_worker_negative_branch_survives_a_later_gdp_income_branch(tmp_path):
+    """(defect) the gdp scale overwrote the segment's sign outright, so a
+    sibling if/else branch that spends a literal was read as pure income."""
+    reward = (
+        "if = {\n"
+        "				limit = { has_country_flag = flag_a }\n"
+        "				set_temp_variable = { treasury_change = -20 }\n"
+        "			}\n"
+        "			else = {\n"
+        "				set_temp_variable = { treasury_change = gdp_total }\n"
+        "				multiply_temp_variable = { treasury_change = 0.05 }\n"
+        "			}\n"
+        "			modify_treasury_effect = yes"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    d = _guard_data(fpath, tmp_path)[0]
+    assert d["has_cost"] is True
+    assert d["unknown"] is True
+
+
+def test_validator_gdp_multiply_income_needs_no_guard(tmp_path):
+    _write_effects_file(tmp_path)
+    reward = (
+        "set_temp_variable = { treasury_change = gdp_total }\n"
+        "			multiply_temp_variable = { treasury_change = 0.05 }\n"
+        "			modify_treasury_effect = yes"
+    )
+    _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    v = _run_check(tmp_path)
+    assert v.warnings_found == 0
+
+
+def test_validator_gdp_multiply_income_guard_is_unneeded(tmp_path):
+    """The flip side: a guard on a focus that only earns money blocks the AI
+    from recovering while bankrupt, so it has to be reported as unneeded."""
+    _write_effects_file(tmp_path)
+    reward = (
+        "set_temp_variable = { treasury_change = gdp_total }\n"
+        "			multiply_temp_variable = { treasury_change = 0.05 }\n"
+        "			modify_treasury_effect = yes"
+    )
+    guard = (
+        "modifier = {\n"
+        "				factor = 0\n"
+        "				has_active_mission = bankruptcy_incoming_collapse\n"
+        "			}"
+    )
+    _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=guard),
+    )
+    v = _run_check(tmp_path)
+    issues = [i for i in v._issues if i.category == "unneeded-bankruptcy-guard"]
+    assert len(issues) == 1
+
+
 def test_validator_unneeded_bankruptcy_guard_flagged(tmp_path):
     _write_effects_file(tmp_path)
     _write_focus_file(
