@@ -546,6 +546,64 @@ def test_validator_gdp_multiply_focus_flagged_as_scripted(tmp_path):
     assert len(issues) == 1
 
 
+def test_worker_gdp_multiply_by_positive_is_income(tmp_path):
+    """(defect) `set gdp_total, multiply by +N%` is income, but the multiply
+    made the segment unknown and the sign was dropped with it, so a focus that
+    only earns money was reported as an unguarded spend of unknown size."""
+    reward = (
+        "set_temp_variable = { treasury_change = gdp_total }\n"
+        "			multiply_temp_variable = { treasury_change = 0.05 }\n"
+        "			modify_treasury_effect = yes"
+    )
+    fpath = _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    d = _guard_data(fpath, tmp_path)[0]
+    assert d["spend"] == 0.0
+    assert d["has_cost"] is False
+    assert d["unknown"] is False
+
+
+def test_validator_gdp_multiply_income_needs_no_guard(tmp_path):
+    _write_effects_file(tmp_path)
+    reward = (
+        "set_temp_variable = { treasury_change = gdp_total }\n"
+        "			multiply_temp_variable = { treasury_change = 0.05 }\n"
+        "			modify_treasury_effect = yes"
+    )
+    _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
+    )
+    v = _run_check(tmp_path)
+    assert v.warnings_found == 0
+
+
+def test_validator_gdp_multiply_income_guard_is_unneeded(tmp_path):
+    """The flip side: a guard on a focus that only earns money blocks the AI
+    from recovering while bankrupt, so it has to be reported as unneeded."""
+    _write_effects_file(tmp_path)
+    reward = (
+        "set_temp_variable = { treasury_change = gdp_total }\n"
+        "			multiply_temp_variable = { treasury_change = 0.05 }\n"
+        "			modify_treasury_effect = yes"
+    )
+    guard = (
+        "modifier = {\n"
+        "				factor = 0\n"
+        "				has_active_mission = bankruptcy_incoming_collapse\n"
+        "			}"
+    )
+    _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=guard),
+    )
+    v = _run_check(tmp_path)
+    issues = [i for i in v._issues if i.category == "unneeded-bankruptcy-guard"]
+    assert len(issues) == 1
+
+
 def test_validator_unneeded_bankruptcy_guard_flagged(tmp_path):
     _write_effects_file(tmp_path)
     _write_focus_file(

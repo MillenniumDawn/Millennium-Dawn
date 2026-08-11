@@ -138,6 +138,10 @@ _TREASURY_MUTATE_VERBS = frozenset(
         "divide_variable",
     }
 )
+# Scaling by a literal loses the magnitude but keeps the sign, which is what
+# separates `treasury_change = gdp_total` * 0.05 (income) from the same base
+# * -0.15 (a cost of unknown size). Every other mutate loses the sign too.
+_TREASURY_SCALE_VERBS = frozenset({"multiply_temp_variable", "multiply_variable"})
 _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # modify_treasury_effect and its variants (e.g. modify_treasury_effect_corruption,
 # which scales the applied amount by a corruption-level idea before adding it to
@@ -331,6 +335,8 @@ def _body_money_cost(
                treasury_change touched by anything other than a plain set, a
                debt change, a corruption-style modify_treasury_effect variant,
                or a called effect in *money_effects*).
+    An amount whose sign is still known to be positive after scaling is income,
+    not an unknown cost, so it counts as neither.
     Amounts inside effect_tooltip previews (outcomes applied elsewhere) are
     ignored.
     """
@@ -345,11 +351,18 @@ def _body_money_cost(
             continue
         verb, _ = _enclosing_block_label(body, m.start())
         if verb in _TREASURY_MUTATE_VERBS:
-            events.append((m.start(), "mutate", None))
-        elif verb in _TREASURY_SET_VERBS:
             val = m.group(1)
-            known = val is not None and _NUMERIC_LITERAL_RE.match(val)
-            events.append((m.start(), "set", val if known else None))
+            scaled = (
+                verb in _TREASURY_SCALE_VERBS
+                and val is not None
+                and _NUMERIC_LITERAL_RE.match(val)
+            )
+            if scaled:
+                events.append((m.start(), "scale", val))
+            else:
+                events.append((m.start(), "mutate", None))
+        elif verb in _TREASURY_SET_VERBS:
+            events.append((m.start(), "set", m.group(1)))
     for m in _MODIFY_TREASURY_RE.finditer(body):
         if not previewed(m.start()):
             events.append((m.start(), "apply", "variant" if m.group(1) else None))
@@ -371,35 +384,73 @@ def _body_money_cost(
     unknown = False
     cur_neg = 0.0
     cur_unknown = False
+    cur_income = False
     cur_init = False
     seg_max = 0.0
     seg_unknown = False
     seg_has_set = False
+    seg_neg = False
+    seg_sign_unknown = False
+    seg_var_base = False
     for _, kind, val in events:
         if kind == "set":
             seg_has_set = True
-            if val is None:
+            if val is not None and _NUMERIC_LITERAL_RE.match(val):
+                seg_var_base = False
+                if float(val) < 0:
+                    seg_neg = True
+                    seg_max = max(seg_max, -float(val))
+            elif val is not None and val != "{":
+                # A bare variable reference: the amount and the sign are both
+                # unknown until a scaling literal states which way it goes.
                 seg_unknown = True
-            elif float(val) < 0:
-                seg_max = max(seg_max, -float(val))
+                seg_sign_unknown = True
+                seg_var_base = True
+            else:
+                seg_unknown = True
+                seg_sign_unknown = True
+                seg_var_base = False
+        elif kind == "scale":
+            seg_unknown = True
+            if seg_var_base:
+                # `treasury_change = gdp_total` then `* -0.08` is the MD idiom
+                # for a cost of unknown size, and `* 0.05` for income: the base
+                # is a positive quantity, so the literal carries the sign.
+                seg_neg = float(val) < 0
+                seg_sign_unknown = False
+                seg_var_base = False
+            elif seg_has_set and not seg_sign_unknown:
+                if float(val) < 0:
+                    seg_neg = not seg_neg
+            else:
+                seg_has_set = True
+                seg_sign_unknown = True
         elif kind == "mutate":
             seg_has_set = True
             seg_unknown = True
+            seg_sign_unknown = True
+            seg_var_base = False
         else:  # apply
             if seg_has_set:
                 cur_neg, cur_unknown, cur_init = seg_max, seg_unknown, True
+                cur_income = not seg_neg and not seg_sign_unknown
             elif not cur_init:
                 cur_unknown, cur_init = True, True  # treasury_change set elsewhere
+                cur_income = False
             if val == "variant":
                 cur_unknown = True
-            if cur_unknown:
+                cur_income = False
+            # a non-negative applied treasury_change is income, not a cost
+            if cur_income:
+                pass
+            elif cur_unknown:
                 has_cost = True
                 unknown = True
             elif cur_neg > 0:
                 spend += cur_neg
                 has_cost = True
-            # a non-negative applied treasury_change is income, not a cost
             seg_max, seg_unknown, seg_has_set = 0.0, False, False
+            seg_neg, seg_sign_unknown, seg_var_base = False, False, False
 
     for m in _MODIFY_DEBT_RE.finditer(body):
         if not previewed(m.start()):
