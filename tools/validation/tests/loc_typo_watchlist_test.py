@@ -32,6 +32,26 @@ def test_does_not_flag_typo_inside_loc_key(tmp_path):
     assert process_yml_for_typos((path,)) == []
 
 
+def test_does_not_flag_runtime_references(tmp_path):
+    path = _write_yml(
+        tmp_path,
+        "runtime_l_english.yml",
+        'key:0 "$Airforce$ [Unloyal] £Airforce [?defence_breakdown_airforce|-3] [additional_income_SOV_jirik_unloyal_party_idea2]"',
+    )
+    assert process_yml_for_typos((path,)) == []
+
+
+def test_still_flags_prose_around_runtime_references(tmp_path):
+    path = _write_yml(
+        tmp_path,
+        "prose_l_english.yml",
+        'key:0 "The Airforce uses [Airforce] and £Airforce."',
+    )
+    results = process_yml_for_typos((path,))
+    assert len(results) == 1
+    assert "Airforce" in results[0]
+
+
 def test_does_not_flag_correct_spellings(tmp_path):
     path = _write_yml(
         tmp_path, "c_l_english.yml", 'key:0 "The Air Force will separate the units."'
@@ -60,6 +80,6 @@ def test_typo_watchlist_covers_every_doc_token():
         tokens.update(m.lower() for m in re.findall(r"`([^`]+)`", columns[1]))
     tokens -= excluded
     missing = tokens - set(_TYPO_WATCHLIST)
-    assert (
-        not missing
-    ), f"typo-watchlist.md tokens missing from _TYPO_WATCHLIST: {missing}"
+    assert not missing, (
+        f"typo-watchlist.md tokens missing from _TYPO_WATCHLIST: {missing}"
+    )
