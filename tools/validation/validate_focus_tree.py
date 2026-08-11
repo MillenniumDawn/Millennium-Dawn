@@ -5,7 +5,7 @@ import os
 import re
 import sys
 from collections import defaultdict
-from typing import Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -120,7 +120,7 @@ _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 # mutates the running value in a way that can't be summed statically, so it
 # forces the segment unknown rather than being read as a fresh set.
 _TREASURY_CHANGE_RE = re.compile(
-    r"\btreasury_change\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_]\w*)"
+    r"\btreasury_change\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_][\w.]*)"
     r"|\bvar\s*=\s*treasury_change\b"
 )
 _TREASURY_SET_VERBS = frozenset({"set_temp_variable", "set_variable"})
@@ -138,6 +138,12 @@ _TREASURY_MUTATE_VERBS = frozenset(
         "divide_variable",
     }
 )
+# Scaling by a literal loses the magnitude but keeps the sign for a known
+# non-negative source such as gdp_total. Every other mutate loses the sign too.
+_TREASURY_SCALE_VERBS = frozenset({"multiply_temp_variable", "multiply_variable"})
+# Matched on the bare name: a source may be read out of another country
+# (GER.gdp_per_capita), and the scope qualifier does not change its sign.
+_TREASURY_NONNEGATIVE_VARIABLES = frozenset({"gdp_total", "gdp_per_capita"})
 _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # modify_treasury_effect and its variants (e.g. modify_treasury_effect_corruption,
 # which scales the applied amount by a corruption-level idea before adding it to
@@ -331,6 +337,8 @@ def _body_money_cost(
                treasury_change touched by anything other than a plain set, a
                debt change, a corruption-style modify_treasury_effect variant,
                or a called effect in *money_effects*).
+    An amount whose sign is still known to be positive after scaling is income,
+    not an unknown cost, so it counts as neither.
     Amounts inside effect_tooltip previews (outcomes applied elsewhere) are
     ignored.
     """
@@ -345,11 +353,18 @@ def _body_money_cost(
             continue
         verb, _ = _enclosing_block_label(body, m.start())
         if verb in _TREASURY_MUTATE_VERBS:
-            events.append((m.start(), "mutate", None))
-        elif verb in _TREASURY_SET_VERBS:
             val = m.group(1)
-            known = val is not None and _NUMERIC_LITERAL_RE.match(val)
-            events.append((m.start(), "set", val if known else None))
+            scaled = (
+                verb in _TREASURY_SCALE_VERBS
+                and val is not None
+                and _NUMERIC_LITERAL_RE.match(val)
+            )
+            if scaled:
+                events.append((m.start(), "scale", val))
+            else:
+                events.append((m.start(), "mutate", None))
+        elif verb in _TREASURY_SET_VERBS:
+            events.append((m.start(), "set", m.group(1)))
     for m in _MODIFY_TREASURY_RE.finditer(body):
         if not previewed(m.start()):
             events.append((m.start(), "apply", "variant" if m.group(1) else None))
@@ -371,35 +386,74 @@ def _body_money_cost(
     unknown = False
     cur_neg = 0.0
     cur_unknown = False
+    cur_income = False
     cur_init = False
     seg_max = 0.0
     seg_unknown = False
     seg_has_set = False
+    seg_neg = False
+    seg_sign_unknown = False
+    seg_var_base = False
     for _, kind, val in events:
         if kind == "set":
             seg_has_set = True
-            if val is None:
+            if val is not None and _NUMERIC_LITERAL_RE.match(val):
+                seg_var_base = False
+                amount = float(val)
+                if amount < 0:
+                    seg_neg = True
+                    seg_max = max(seg_max, -amount)
+            elif val is not None and val != "{":
+                # A bare variable reference is unknown. Only known non-negative
+                # sources retain their sign when scaled by a literal.
                 seg_unknown = True
-            elif float(val) < 0:
-                seg_max = max(seg_max, -float(val))
+                seg_sign_unknown = True
+                bare = val.rpartition(".")[2]
+                seg_var_base = bare in _TREASURY_NONNEGATIVE_VARIABLES
+            else:
+                seg_unknown = True
+                seg_sign_unknown = True
+                seg_var_base = False
+        elif kind == "scale":
+            seg_unknown = True
+            scale_is_negative = val.startswith("-") and val.lstrip("-0.") != ""
+            if seg_var_base or (seg_has_set and not seg_sign_unknown):
+                # `treasury_change = gdp_total` then `* -0.08` is the MD idiom
+                # for a cost of unknown size, and `* 0.05` for income: a known
+                # non-negative base lets the literal carry the sign. Scales are
+                # not composed: sibling if/else branches scale the same set, so
+                # one negative anywhere in the segment keeps it negative.
+                seg_neg = seg_neg or scale_is_negative
+                seg_sign_unknown = False
+                seg_var_base = False
+            else:
+                seg_has_set = True
+                seg_sign_unknown = True
         elif kind == "mutate":
             seg_has_set = True
             seg_unknown = True
+            seg_sign_unknown = True
+            seg_var_base = False
         else:  # apply
             if seg_has_set:
                 cur_neg, cur_unknown, cur_init = seg_max, seg_unknown, True
+                cur_income = not seg_neg and not seg_sign_unknown
             elif not cur_init:
                 cur_unknown, cur_init = True, True  # treasury_change set elsewhere
+                cur_income = False
             if val == "variant":
                 cur_unknown = True
-            if cur_unknown:
-                has_cost = True
-                unknown = True
-            elif cur_neg > 0:
-                spend += cur_neg
-                has_cost = True
+                cur_income = False
             # a non-negative applied treasury_change is income, not a cost
+            if not cur_income:
+                if cur_unknown:
+                    has_cost = True
+                    unknown = True
+                elif cur_neg > 0:
+                    spend += cur_neg
+                    has_cost = True
             seg_max, seg_unknown, seg_has_set = 0.0, False, False
+            seg_neg, seg_sign_unknown, seg_var_base = False, False, False
 
     for m in _MODIFY_DEBT_RE.finditer(body):
         if not previewed(m.start()):
@@ -1024,7 +1078,7 @@ def _parse_focus_text(text: str, filepath: str) -> Dict:
       "focuses"       — list of (focus_id, abs_line, prereq_groups)
       "shared_refs"   — set of shared_focus IDs referenced inside the tree
     """
-    result = {
+    result: Dict[str, Any] = {
         "filepath": filepath,
         "trees": [],
         "shared_defs": {},
