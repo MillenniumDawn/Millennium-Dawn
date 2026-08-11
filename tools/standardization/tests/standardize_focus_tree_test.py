@@ -456,6 +456,57 @@ def test_naming_check_is_opt_in(tmp_path):
     assert "TST_Invalid_modifier" in output.read_text(encoding="utf-8")
 
 
+_COMMENTED_FOCUS = [
+    "\tfocus = {\n",
+    "\t\tid = TST_x\n",
+    "\n",
+    "\t\tcost = 5\n",
+    "\n",
+    "\t\tcompletion_reward = {\n",
+    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TST_x"\n',
+    "\t\t\tadd_political_power = 50\n",
+    "\t\t}\n",
+    "\n",
+    "\t\t# Only the Pan-Thai AI should push for this, so the base stays 0\n",
+    "\t\t# for everyone else.\n",
+    "\t\tai_will_do = {\n",
+    "\t\t\tbase = 0\n",
+    "\t\t}\n",
+    "\t}\n",
+]
+
+
+def _standardize_focus(lines):
+    return format_focus_block(extract_focus_properties(lines))
+
+
+def test_comment_stays_with_the_block_it_describes():
+    # (defect) every unrecognized line landed in `other`, which is emitted before
+    # completion_reward — so an ai_will_do comment resurfaced above the reward.
+    out = _standardize_focus(_COMMENTED_FOCUS)
+    comment_idx = next(i for i, ln in enumerate(out) if "Pan-Thai AI" in ln)
+    ai_idx = next(i for i, ln in enumerate(out) if ln.strip().startswith("ai_will_do"))
+    reward_idx = next(
+        i for i, ln in enumerate(out) if ln.strip().startswith("completion_reward")
+    )
+    assert reward_idx < comment_idx < ai_idx
+
+
+def test_wrapped_comment_lines_stay_adjacent():
+    # (defect) `other` kept the raw source line including its trailing newline;
+    # the writer then appends another, splitting a wrapped comment with a blank.
+    out = _standardize_focus(_COMMENTED_FOCUS)
+    assert not any("\n" in line for line in out)
+    first = next(i for i, ln in enumerate(out) if "Pan-Thai AI" in ln)
+    assert out[first + 1].strip() == "# for everyone else."
+
+
+def test_commented_focus_standardization_idempotent():
+    once = _standardize_focus(_COMMENTED_FOCUS)
+    twice = _standardize_focus([f"{line}\n" for line in once])
+    assert once == twice
+
+
 def test_failed_write_leaves_original_intact_and_no_temp_file(tmp_path, monkeypatch):
     target = tmp_path / "focus.txt"
     original = "focus_tree = {\n\tfocus = {\n\t\tid = TST_x\n\t}\n}\n"
