@@ -25,6 +25,7 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
 - Prefix country-specific variables with tag (e.g., `ISR_operation_success`); **snake_case** for all identifiers
 - Flag naming: `TAG_` for a flag that only ever lands on one nation, `GLOBAL_` for `set_global_flag` and global event targets, a bare domain prefix (e.g. `wot_`) for a flag that can land on any nation. Name the thing, not the mechanic: `wot_refused_to_support_us`, not `wot_support_none`
+- Variable/flag casing is standardized as `<TAG/GLOBAL/SYSTEMACRONYM>_name_of_entity` in `snake_case` — e.g. `GLOBAL_pak_raj_border_attack_pending`, `pak_raj_border_readiness`, `border_war_progress_change`. Theater/system prefixes are `pak_raj_`, `raj_chi_`, `border_war_` (lower) and `GLOBAL_` (upper) for global scope. Do not mix `kasmir_`/`Kasmir_`/`CHI_arunachal_` legacy casings; new border-war code uses the `*_border_*` form exclusively
 - Do not add flags that duplicate authoritative state. Use `has_idea`,
   `has_completed_focus`, variables, event targets, ideology, subject status,
   faction membership, and similar direct checks instead. Use a flag only for
@@ -86,6 +87,7 @@ Unit production has three layers — threat gate (`ai_is_threatened`), role rati
 
 - Do NOT add `Co-Authored-By` or sign commits — the project does not use commit signing
 - Do NOT write `Changelog.txt` entries unless explicitly asked. A system new in 2.0.0 never needs an entry for its own changes
+- Developer builds may invalidate saves — do not carry legacy `kasmir_`/`Kasmir_`/`CHI_arunachal_`/`Attacking_in_*` migration shims to preserve old saves. Drop the old vars/flags and let the new `pak_raj_`/`raj_chi_`/`border_war_` state start clean
 
 ## Output Style
 
