@@ -55,24 +55,23 @@ raj_chi_border_pair_valid = {
 }
 
 pak_raj_border_available = {
-	pak_raj_border_pair_valid = yes
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_attack_pending }
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_war_active }
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_capture_pending }
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_claim_pending }
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_crisis_active }
+	pak_raj_border_pair_valid = yes
 }
 
 raj_chi_border_available = {
-	raj_chi_border_pair_valid = yes
 	NOT = { has_global_flag = GLOBAL_raj_chi_border_attack_pending }
 	NOT = { has_global_flag = GLOBAL_raj_chi_border_war_active }
 	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_pending }
 	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_active }
+	raj_chi_border_pair_valid = yes
 }
 
 pak_raj_border_attack_revalidate = {
-	pak_raj_border_pair_valid = yes
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_war_active }
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_capture_pending }
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_claim_pending }
@@ -80,16 +79,17 @@ pak_raj_border_attack_revalidate = {
 	check_variable = { pak_raj_border_readiness > 60 }
 	check_variable = { global.pak_raj_border_tension > 79 }
 	has_border_war = no
+	pak_raj_border_pair_valid = yes
 }
 
 raj_chi_border_attack_revalidate = {
-	raj_chi_border_pair_valid = yes
 	NOT = { has_global_flag = GLOBAL_raj_chi_border_war_active }
 	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_pending }
 	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_active }
 	check_variable = { raj_chi_border_readiness > 60 }
 	check_variable = { global.raj_chi_border_tension > 79 }
 	has_border_war = no
+	raj_chi_border_pair_valid = yes
 }
 
 pak_raj_border_attack_available = {
@@ -133,24 +133,45 @@ raj_chi_border_capture_available = {
 	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_pending }
 }
 
+pak_raj_border_preparation_idle = {
+	NOT = {
+		OR = {
+			has_decision = pak_raj_border_train_army
+			has_decision = pak_raj_border_train_mechanized
+			has_decision = pak_raj_border_train_artillery
+			has_decision = pak_raj_border_stage_incursion
+			has_decision = pak_raj_border_shell_positions
+		}
+	}
+}
+
+raj_chi_border_preparation_idle = {
+	NOT = {
+		OR = {
+			has_decision = raj_chi_border_train_army
+			has_decision = raj_chi_border_train_mechanized
+			has_decision = raj_chi_border_train_artillery
+			has_decision = raj_chi_border_stage_incursion
+			has_decision = raj_chi_border_shell_positions
+		}
+	}
+}
+
 pak_raj_border_ai_should_prepare = {
 	pak_raj_border_available = yes
 	is_ai = yes
 	NOT = { has_global_flag = GLOBAL_border_war_ai_off }
 	OR = {
 		has_global_flag = GLOBAL_border_war_ai_aggressive
-		is_historical_focus_on = no
-		date > 2001.6.1
-	}
-	OR = {
-		has_global_flag = GLOBAL_border_war_ai_aggressive
 		AND = {
-			original_tag = RAJ
-			has_opinion = { target = PAK value < 0 }
-		}
-		AND = {
-			original_tag = PAK
-			has_opinion = { target = RAJ value < 0 }
+			OR = {
+				is_historical_focus_on = no
+				date > 2001.6.1
+			}
+			OR = {
+				AND = { original_tag = RAJ has_opinion = { target = PAK value < 0 } }
+				AND = { original_tag = PAK has_opinion = { target = RAJ value < 0 } }
+			}
 		}
 	}
 }
@@ -161,18 +182,15 @@ raj_chi_border_ai_should_prepare = {
 	NOT = { has_global_flag = GLOBAL_border_war_ai_off }
 	OR = {
 		has_global_flag = GLOBAL_border_war_ai_aggressive
-		is_historical_focus_on = no
-		date > 2001.6.1
-	}
-	OR = {
-		has_global_flag = GLOBAL_border_war_ai_aggressive
 		AND = {
-			original_tag = RAJ
-			has_opinion = { target = CHI value < 0 }
-		}
-		AND = {
-			original_tag = CHI
-			has_opinion = { target = RAJ value < 0 }
+			OR = {
+				is_historical_focus_on = no
+				date > 2001.6.1
+			}
+			OR = {
+				AND = { original_tag = RAJ has_opinion = { target = CHI value < 0 } }
+				AND = { original_tag = CHI has_opinion = { target = RAJ value < 0 } }
+			}
 		}
 	}
 }
