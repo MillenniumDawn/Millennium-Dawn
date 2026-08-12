@@ -129,7 +129,7 @@ UNSC_permanent_seat_campaign = {
 
 		target_root_trigger = {
 			can_campaign_for_permanent_unsc_seat = yes
-			NOT = { has_global_flag = unsc_permanent_seat_application_active }
+			NOT = { check_variable = { global.unsc_permanent_seat_applicant = THIS.id } }
 		}
 
 		target_trigger = {
@@ -140,10 +140,10 @@ UNSC_permanent_seat_campaign = {
 		}
 
 		available = {
-			# FROM = { has_opinion = { target = ROOT value > 49 } }
+			FROM = { has_opinion = { target = ROOT value > 50 } }
 		}
 
-		cost = 300
+		cost = 250
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UNSC_lobby_permanent_member"
@@ -164,7 +164,6 @@ UNSC_permanent_seat_campaign = {
 		icon = GFX_decision_generic_UN
 
 		available = {
-			hidden_trigger = { can_campaign_for_permanent_unsc_seat = yes }
 			custom_trigger_tooltip = {
 				tooltip = UNSC_retry_cooldown_tt
 				NOT = { has_country_flag = unsc_permanent_seat_retry_cooldown }
@@ -176,6 +175,8 @@ UNSC_permanent_seat_campaign = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = security_council_support_tt
+				# all_of_scopes passes vacuously on an empty array, which would be a free seat.
+				check_variable = { global.p5_sc_members^num > 0 }
 				all_of_scopes = {
 					array = global.p5_sc_members
 					has_country_flag = recognition_campaign_UNSC@ROOT
@@ -196,6 +197,13 @@ UNSC_permanent_seat_campaign = {
 			update_sc_vote = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			# An aggressor's bid loses the Assembly and burns the year-long retry cooldown.
+			modifier = {
+				factor = 0
+				has_offensive_war = yes
+			}
+		}
 	}
 }
