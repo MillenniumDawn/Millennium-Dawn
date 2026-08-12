@@ -108,17 +108,19 @@ def _strip_comments(text: str) -> str:
     return text
 
 
-# All sprite type block openers in .gfx files; all use `name = "GFX_xxx"`.
-# We collect any `name = "GFX_xxx"` inside any of these blocks.
+# Renderable GFX block openers in .gfx files. Names may be quoted or bare.
 _GFX_SPRITE_TYPES = re.compile(
     r"\b(?:spriteType|frameAnimatedSpriteType|corneredTileSpriteType|"
-    r"maskedShieldType|progressbartype|textSpriteType)\s*=\s*\{",
+    r"maskedShieldType|progressbartype|textSpriteType|pieChartType|"
+    r"lineChartType|circularProgressBarType)\s*=\s*\{",
     re.IGNORECASE,
 )
 
-# name = "GFX_xxx" inside a block
-# `@` appears in engine frame-variant names (e.g. GFX_x@highlight).
-_GFX_NAME = re.compile(r'\bname\s*=\s*"(GFX_[A-Za-z0-9_@]+)"')
+# name = GFX_xxx or name = "GFX_xxx" inside a block. `@` appears in engine
+# frame-variant names (e.g. GFX_x@highlight); `.` and `-` occur in mod sprites.
+_GFX_NAME = re.compile(
+    r'\bname\s*=\s*(?:"(GFX_[A-Za-z0-9_.@-]+)"|(GFX_[A-Za-z0-9_.@-]+))'
+)
 
 # GUI references — spriteType / quadTextureSprite / background
 _GUI_REF = re.compile(
@@ -348,7 +350,7 @@ def sprite_names_from_gfx_text(raw: str) -> Set[str]:
             ]
         nm = _GFX_NAME.search(snippet)
         if nm:
-            names.add(nm.group(1))
+            names.add(nm.group(1) or nm.group(2))
     return names
 
 
@@ -540,7 +542,7 @@ class Validator(BaseValidator):
         else:
             manifest = _load_vanilla_sprite_manifest()
             if manifest:
-                new = manifest - defined
+                new = set(manifest) - defined
                 defined.update(manifest)
                 self._vanilla_defs_loaded = True
                 self.log(
@@ -787,7 +789,9 @@ class Validator(BaseValidator):
             if stem in equipment:
                 return True
             tagged = _EQUIPMENT_ICON_TAG_RE.match(stem)
-            return bool(tagged) and tagged.group(1) in equipment
+            if tagged is None:
+                return False
+            return tagged.group(1) in equipment
 
         unused = sorted(
             s

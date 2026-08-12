@@ -42,6 +42,27 @@ def test_sprite_names_from_gfx_text():
     assert vg.sprite_names_from_gfx_text(text) == {"GFX_manifest_probe"}
 
 
+def test_sprite_names_accept_bare_names_and_chart_types():
+    text = (
+        "spriteTypes = {\n"
+        '\tspriteType = { name = GFX_bare_sprite texturefile = "a.dds" }\n'
+        '\tpieChartType = { name = "GFX_chart" size = 10 }\n'
+        "\tLineChartType = { name = GFX_line_chart size = { x = 1 y = 1 } }\n"
+        '\tcircularProgressBarType = { name = "GFX_circular" }\n'
+        "\tprogressBarType = { name = GFX_progress }\n"
+        '\tspriteType = { name = "GFX_terrain_riviere-koksoak_1" }\n'
+        "}\n"
+    )
+    assert vg.sprite_names_from_gfx_text(text) == {
+        "GFX_bare_sprite",
+        "GFX_chart",
+        "GFX_line_chart",
+        "GFX_circular",
+        "GFX_progress",
+        "GFX_terrain_riviere-koksoak_1",
+    }
+
+
 def test_sprite_names_double_slash_in_quoted_texturefile():
     # `//` inside a quoted texturefile path is not a comment. Stripping it
     # blindly leaves an unterminated quote that drops the sprite definition.
