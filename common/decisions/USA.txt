@@ -1181,7 +1181,10 @@ USA_asteroid_mining_decision = {
 			has_country_flag = asteroid_mining
 		}
 		available = {
-			check_variable = { asteroid_mining_rate > 0 }
+			custom_trigger_tooltip = {
+				tooltip = asteroid_mining_rate_tt
+				check_variable = { asteroid_mining_rate > 0 }
+			}
 		}
 		cost = 10
 		complete_effect = {
@@ -3121,10 +3124,13 @@ USA_f35_program_decisions = {
 		days_remove = 60
 
 		available = {
-			NOT = {
-				USA = {
-					check_variable = {
-						USA_f35_progress > 99
+			custom_trigger_tooltip = {
+				tooltip = USA_f35_progress_incomplete_TT
+				NOT = {
+					USA = {
+						check_variable = {
+							USA_f35_progress > 99
+						}
 					}
 				}
 			}
@@ -3637,8 +3643,11 @@ USA_iranian_sanctions = {
 	USA_increase_sanctions_on_iran = {
 
 		available = {
-			NOT = {
-				check_variable = { USA_iran_sanction_level > 4 }
+			custom_trigger_tooltip = {
+				tooltip = USA_iran_sanction_level_max_tt
+				NOT = {
+					check_variable = { USA_iran_sanction_level > 4 }
+				}
 			}
 			NOT = {
 				has_country_flag = USA_sanctioned_PER_recently
@@ -3686,8 +3695,11 @@ USA_iranian_sanctions = {
 			NOT = {
 				has_country_flag = USA_sanctioned_PER_recently
 			}
-			NOT = {
-				check_variable = { USA_iran_sanction_level < 2 }
+			custom_trigger_tooltip = {
+				tooltip = USA_iran_sanction_level_min_tt
+				NOT = {
+					check_variable = { USA_iran_sanction_level < 2 }
+				}
 			}
 		}
 
@@ -3761,6 +3773,70 @@ USA_iranian_sanctions = {
 					value > 19
 				}
 				add = 10
+			}
+		}
+	}
+
+	USA_condemn_iranian_missile_launches = {
+		icon = GFX_decision_generic_operation
+		targets = { ENG FRA GER ITA CAN AUS JAP SKO ISR SAU UAE TUR EGY JOR POL SPR HOL BEL NOR DEN }
+		targets_dynamic = yes
+
+		cost = 40
+		days_re_enable = 180
+
+		target_root_trigger = {
+			NOT = { has_country_flag = collapsed_nation }
+		}
+
+		target_trigger = {
+			country_exists = FROM
+			FROM = {
+				NOT = { is_subject_of = PER }
+				NOT = { has_war_with = ROOT }
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = USA_condemned_PER_launch_recently }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_condemn_iranian_missile_launches"
+			set_country_flag = { flag = USA_condemned_PER_launch_recently days = 180 value = 1 }
+			FROM = {
+				country_event = {
+					id = USA_FOCUS.8
+					days = 1
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				FROM = {
+					add_opinion_modifier = { target = PER modifier = insult }
+					reverse_add_opinion_modifier = { target = PER modifier = insult }
+					reverse_add_opinion_modifier = { target = USA modifier = gratitude }
+					add_political_power = 25
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				FROM = {
+					add_opinion_modifier = { target = USA modifier = USA_Decline_PER_Embargo }
+					reverse_add_opinion_modifier = { target = USA modifier = USA_Decline_PER_Embargo }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				has_country_flag = PER_iran_misbehaved
+				add = 15
+			}
+			modifier = {
+				factor = 0
+				FROM = { is_in_faction_with = PER }
 			}
 		}
 	}
@@ -6478,7 +6554,10 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 35
 			modifier = {
-				has_global_flag = PER_ansar_allah
+				any_country_with_original_tag = {
+					original_tag_to_check = PER
+					has_completed_focus = PER_ansar_allah
+				}
 				add = 25
 			}
 			modifier = {
@@ -6523,6 +6602,13 @@ USA_foreign_policy = {
 			clr_country_flag = USA_doing_decision
 			set_country_flag = USA_mali_intervention
 			news_event = department_of_state.132
+			newline = yes
+			MAL = {
+				country_event = {
+					id = department_of_state.133
+					days = 1
+				}
+			}
 			newline = yes
 			add_relation_modifier = {
 				target = MAL
@@ -6598,6 +6684,13 @@ USA_foreign_policy = {
 			clr_country_flag = USA_doing_decision
 			set_country_flag = USA_nigeria_intervention
 			news_event = department_of_state.134
+			newline = yes
+			NIG = {
+				country_event = {
+					id = department_of_state.135
+					days = 1
+				}
+			}
 			newline = yes
 			add_relation_modifier = {
 				target = NIG
@@ -8077,6 +8170,102 @@ USA_foreign_policy = {
 			modifier = {
 				add = 5
 				CHI = { check_variable = { CHI_taiwan_strait_tension > 40 } }
+			}
+		}
+	}
+
+	USA_arm_rojava = {
+		icon = GFX_decision_generic_military
+		cost = 75
+		fire_only_once = yes
+
+		days_remove = 30
+
+		visible = {
+			country_exists = ROJ
+			country_exists = ISI
+			NOT = { has_war_with = ROJ }
+		}
+
+		available = {
+			NOT = { has_country_flag = USA_doing_decision }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_arm_rojava"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_arm_rojava"
+			clr_country_flag = USA_doing_decision
+			country_event = {
+				id = USA_FOCUS.10
+				days = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				add = 15
+				ISI = { surrender_progress < 0.25 }
+			}
+			modifier = {
+				factor = 0
+				TUR = { is_in_faction_with = USA }
+			}
+		}
+	}
+
+	USA_shayrat_missile_strike = {
+		icon = GFX_decision_generic_naval
+		cost = 100
+		fire_only_once = yes
+
+		days_remove = 7
+
+		visible = {
+			country_exists = SYR
+			date > 2017.4.1
+			NOT = { is_in_faction_with = SYR }
+		}
+
+		available = {
+			country_exists = FSA
+			SYR = { has_war_with = FSA }
+			NOT = { has_country_flag = USA_doing_decision }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_shayrat_missile_strike"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_shayrat_missile_strike"
+			clr_country_flag = USA_doing_decision
+			add_war_support = 0.03
+			SYR = {
+				add_opinion_modifier = { target = USA modifier = usa_fp_severe_confrontation }
+			}
+			SOV = {
+				add_opinion_modifier = { target = USA modifier = usa_fp_severe_confrontation }
+			}
+			PER = {
+				add_opinion_modifier = { target = USA modifier = usa_fp_severe_confrontation }
+			}
+			news_event = {
+				id = USA_FOCUS.9
+				hours = 6
+			}
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				is_historical_focus_on = yes
+				add = 30
 			}
 		}
 	}

@@ -1,14 +1,20 @@
 """Unit tests for the docs-site checks' pure helpers.
 
 Covers the edge cases hardened in the docs audit: inline-code / fenced-code
-masking in the link-syntax scanner, and same-origin vs external URL handling
-in the OG image normalizer.
+masking in the link-syntax scanner, same-origin vs external URL handling
+in the OG image normalizer, and the build/dist gating in run_checks().
 """
 
 import check_content_html as content_html
+import check_docs
 import check_link_syntax as link_syntax
 import check_og_images as og
 import pytest
+
+# CheckResult via check_docs, not `from common import`: ruff classifies `common`
+# first-party locally (the repo root has the mod's common/ dir) but third-party
+# on CI's sparse checkout, so a direct import has no stable I001-canonical form.
+from check_docs import Check, CheckResult, run_checks
 
 
 @pytest.mark.parametrize(
@@ -87,3 +93,59 @@ SITE = "https://millenniumdawn.github.io"
 )
 def test_normalize_meta_image_to_path(raw, baseurl, expected):
     assert og.normalize_meta_image_to_path(raw, baseurl=baseurl) == expected
+
+
+def _result(name, passed, output=""):
+    return CheckResult(name, passed, output, 0.0)
+
+
+def _dist_stub(calls):
+    def stub(checks, max_workers):
+        calls.append([c.name for c in checks])
+        return [_result(c.name, True) for c in checks]
+
+    return stub
+
+
+def test_astro_check_failure_does_not_skip_dist_when_build_passes(monkeypatch):
+    calls = []
+    monkeypatch.setattr(check_docs, "_run_dist_parallel", _dist_stub(calls))
+    checks = [
+        Check("astro check", "build", lambda: _result("astro check", False, "boom")),
+        Check("build", "build", lambda: _result("build", True)),
+        Check("links", "dist", lambda: _result("links", True)),
+    ]
+
+    results = run_checks(checks)
+
+    assert calls == [["links"]]
+    assert not any(r.output == "skipped: build failed" for r in results)
+
+
+def test_build_failure_skips_dist(monkeypatch):
+    calls = []
+    monkeypatch.setattr(check_docs, "_run_dist_parallel", _dist_stub(calls))
+    checks = [
+        Check("build", "build", lambda: _result("build", False, "boom")),
+        Check("links", "dist", lambda: _result("links", True)),
+    ]
+
+    results = run_checks(checks)
+
+    assert calls == []
+    dist_results = [r for r in results if r.name == "links"]
+    assert dist_results == [CheckResult("links", False, "skipped: build failed", 0.0)]
+
+
+def test_astro_check_failure_without_build_selected_still_runs_dist(monkeypatch):
+    calls = []
+    monkeypatch.setattr(check_docs, "_run_dist_parallel", _dist_stub(calls))
+    checks = [
+        Check("astro check", "build", lambda: _result("astro check", False, "boom")),
+        Check("links", "dist", lambda: _result("links", True)),
+    ]
+
+    results = run_checks(checks)
+
+    assert calls == [["links"]]
+    assert not any(r.output == "skipped: build failed" for r in results)

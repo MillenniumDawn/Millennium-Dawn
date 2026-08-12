@@ -146,6 +146,27 @@ def test_worker_clears_fire_with_tooltip(tmp_path):
     assert _ids(tmp_path, reward) == set()
 
 
+def test_worker_clears_fire_with_this_accepts_inside_target_scope(tmp_path):
+    reward = (
+        "GER = {\n"
+        "\t\t\t\tcountry_event = x.1\n"
+        "\t\t\t\tcustom_effect_tooltip = TT_IF_THIS_ACCEPTS\n"
+        "\t\t\t}\n"
+        "\t\t\teffect_tooltip = { add_stability = 0.05 }"
+    )
+    assert _ids(tmp_path, reward) == set()
+
+
+def test_worker_clears_fire_with_each_accepts(tmp_path):
+    reward = (
+        "custom_effect_tooltip = TT_IF_EACH_ACCEPTS\n"
+        "\t\t\teffect_tooltip = { add_stability = 0.05 }\n"
+        "\t\t\tGER = { country_event = x.1 }\n"
+        "\t\t\tFRA = { country_event = x.1 }"
+    )
+    assert _ids(tmp_path, reward) == set()
+
+
 def test_worker_ignores_self_owner_tag(tmp_path):
     assert _ids(tmp_path, "BUL = { country_event = x.1 }") == set()
 
@@ -171,6 +192,13 @@ def test_worker_skips_bare_notification_target(tmp_path):
     assert _ids(tmp_path, "GER = { country_event = x.1 }", frozenset({"x.1"})) == set()
 
 
+def test_worker_skips_fire_inside_effect_tooltip(tmp_path):
+    """A fire inside an effect_tooltip previews what a decision does elsewhere,
+    so the reward is not the thing making the offer."""
+    reward = "activate_decision = d\n\t\t\teffect_tooltip = { GER = { country_event = x.1 } }"
+    assert _ids(tmp_path, reward) == set()
+
+
 def test_worker_flags_unknown_target(tmp_path):
     reward = "GER = { country_event = { id = x.1 days = 1 } }"
     assert _ids(tmp_path, reward, notifications=frozenset({"other.9"})) == {
@@ -182,7 +210,7 @@ def test_worker_flags_unknown_target(tmp_path):
 
 EVENTS = """country_event = {
 	id = offer.1
-	option = { name = offer.1.a }
+	option = { name = offer.1.a add_political_power = 10 }
 	option = { name = offer.1.b }
 }
 
@@ -192,9 +220,19 @@ country_event = {
 }
 
 country_event = {
+	id = flavor.1
+	option = { name = flavor.1.a }
+	option = {
+		name = flavor.1.b
+		log = "[GetDateText]: [This.GetName]: flavor.1.b executed"
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = {
 	id = quiet.1
 	hidden = yes
-	option = { name = quiet.1.a }
+	option = { name = quiet.1.a add_political_power = 10 }
 	option = { name = quiet.1.b }
 }
 
@@ -212,10 +250,12 @@ country_event = {
 	option = {
 		name = routed.1.a
 		trigger = { original_tag = UKR }
+		add_political_power = 10
 	}
 	option = {
 		name = routed.1.b
 		trigger = { original_tag = SOV }
+		add_political_power = 10
 	}
 }
 
@@ -224,6 +264,7 @@ country_event = {
 	option = {
 		name = routed_shared.1.a
 		trigger = { tag = UKR }
+		add_political_power = 10
 	}
 	option = {
 		name = routed_shared.1.b
@@ -236,6 +277,7 @@ country_event = {
 	option = {
 		name = routed_negated.1.a
 		trigger = { tag = UKR }
+		add_political_power = 10
 	}
 	option = {
 		name = routed_negated.1.b
@@ -248,6 +290,7 @@ country_event = {
 	option = {
 		name = half_routed.1.a
 		trigger = { tag = UKR }
+		add_political_power = 10
 	}
 	option = { name = half_routed.1.b }
 }
@@ -271,6 +314,11 @@ def test_notification_index_marks_hidden(tmp_path):
 
 def test_notification_index_skips_answerable_event(tmp_path):
     assert "offer.1" not in _notifications(tmp_path)
+
+
+def test_notification_index_marks_flavor_only(tmp_path):
+    """Two options, neither with an outcome: a reaction notice, not an offer."""
+    assert "flavor.1" in _notifications(tmp_path)
 
 
 def test_notification_index_ignores_nested_fire(tmp_path):

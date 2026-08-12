@@ -391,7 +391,7 @@
 	NDefines.NMilitary.ACCLIMATIZATION_SPEED_GAIN = 0.1 -- 0.15
 	NDefines.NMilitary.ACCLIMATIZATION_LOSS_SPEED_FACTOR = 0.5 -- 2.0
 	NDefines.NMilitary.UNIT_LEADER_ASSIGN_TRAIT_COST = 15.0 -- 15
-	NDefines.NMilitary.ATTACHED_WINGS_ORDER_UPDATE_DAYS = 1 -- 5
+	NDefines.NMilitary.ATTACHED_WINGS_ORDER_UPDATE_DAYS = 5 -- 5
 	NDefines.NMilitary.BORDER_WAR_WIN_DAYS_AGAINST_EMPTY_OPPONENTS = 21 -- 14
 	NDefines.NMilitary.XP_GAIN_FOR_SHATTERING = 20.0 -- 35.0
 	NDefines.NMilitary.XP_GAIN_PER_OVERRUN_UNIT = 20.0 -- 35.0
@@ -1195,9 +1195,9 @@
 
 	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 0.65 --how much the country's industry affects its influence
 	NDefines.NFactions.FACTION_INFLUENCE_LEADER_BONUS = 250			-- How much influence we are giving a faction member for being the leader, vanilla 200
-	NDefines.NFactions.MAX_NUM_SHORT_TERM_GOALS = 2						-- Maximum number of short term goals a faction can have at any one time, vanilla 1
-	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 1						-- Maximum number of medium term goals a faction can have at any one time
-	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 1						-- Maximum number of long term goals a faction can have at any one time
+	NDefines.NFactions.MAX_NUM_SHORT_TERM_GOALS = 4						-- Maximum number of short term goals a faction can have at any one time, vanilla 1
+	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 3						-- Maximum number of medium term goals a faction can have at any one time
+	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 2						-- Maximum number of long term goals a faction can have at any one time
 	NDefines.NFactions.FACTION_INITIATIVE_CHANGE_RULE_COST = 3 -- vanilla 1
 	NDefines.NFactions.FACTION_TAKE_OVER_RELUCTANCE_VERSUS_HUMAN_INFLUENCE = 2.5
 	NDefines.NFactions.FACTION_ASSIGN_SCIENTIST_COST = 75

@@ -157,14 +157,19 @@ def inner_block(block, keyword):
 
 
 def winning_modifier(block):
-    best = None
+    best_key = None
+    best_value = 0.0
     for kw in ("equipment_bonus", "production_bonus", "organization_modifier"):
         inner = inner_block(block, kw)
         for key, val in re.findall(r"([a-z_]+)\s*=\s*(-?\d*\.?\d+)", inner):
-            v = abs(float(val))
-            if best is None or v > best[1]:
-                best = (key, v)
-    return best[0] if best else None
+            try:
+                value = abs(float(val))
+            except ValueError:
+                continue
+            if best_key is None or value > best_value:
+                best_key = key
+                best_value = value
+    return best_key
 
 
 def choose_icon(prefix, mod, sprites):
@@ -248,9 +253,12 @@ def main():
     new_text = "\n".join(out)
     if "--write" in sys.argv:
         tmp = path.with_suffix(path.suffix + ".tmp")
-        with open(tmp, "w", encoding="utf-8", newline="") as f:
-            f.write(new_text)
-        os.replace(tmp, path)
+        try:
+            with open(tmp, "w", encoding="utf-8", newline="") as f:
+                f.write(new_text)
+            os.replace(tmp, path)
+        except OSError as e:
+            sys.exit(f"error: cannot write {path}: {e}")
     for tok, mod, prefix, icon in report:
         print(f"{icon.replace(PRE, ''):28} <- {str(mod):45} [{prefix}]  {tok}")
     print(f"\nTotal placeholders resolved: {len(report)}")
