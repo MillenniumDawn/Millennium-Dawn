@@ -24,7 +24,9 @@ from validate_gfx_references import (
     _vanilla_gfx_files,
 )
 
-_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
+_NAME_IN_BLOCK = re.compile(
+    r'\bname\s*=\s*(?:"([^"]+)"|([^\s}]+))'
+)
 
 
 def _parse_names(raw: str) -> List[str]:
@@ -38,7 +40,7 @@ def _parse_names(raw: str) -> List[str]:
             block = text[m.end() : line_end if line_end != -1 else m.end() + 200]
         nm = _NAME_IN_BLOCK.search(block)
         if nm:
-            names.append(nm.group(1))
+            names.append(nm.group(1) or nm.group(2))
     return names
 
 
