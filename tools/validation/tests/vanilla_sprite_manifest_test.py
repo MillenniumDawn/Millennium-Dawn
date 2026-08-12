@@ -50,6 +50,7 @@ def test_sprite_names_accept_bare_names_and_chart_types():
         "\tLineChartType = { name = GFX_line_chart size = { x = 1 y = 1 } }\n"
         "\tcircularProgressBarType = { name = \"GFX_circular\" }\n"
         "\tprogressBarType = { name = GFX_progress }\n"
+        "\tspriteType = { name = \"GFX_terrain_riviere-koksoak_1\" }\n"
         "}\n"
     )
     assert vg.sprite_names_from_gfx_text(text) == {
@@ -58,6 +59,7 @@ def test_sprite_names_accept_bare_names_and_chart_types():
         "GFX_line_chart",
         "GFX_circular",
         "GFX_progress",
+        "GFX_terrain_riviere-koksoak_1",
     }
 
 
