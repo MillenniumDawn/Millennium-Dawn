@@ -24,9 +24,7 @@ from validate_gfx_references import (
     _vanilla_gfx_files,
 )
 
-_NAME_IN_BLOCK = re.compile(
-    r'\bname\s*=\s*(?:"([^"]+)"|([^\s}]+))'
-)
+_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*(?:"([^"]+)"|([^\s}]+))')
 
 
 def _parse_names(raw: str) -> List[str]:

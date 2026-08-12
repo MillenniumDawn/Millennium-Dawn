@@ -27,9 +27,7 @@ def test_gfx_icon_check_accepts_bare_sprite_names(tmp_path):
     interface = tmp_path / "interface"
     interface.mkdir()
     (interface / "icons.gfx").write_text(
-        "spriteTypes = {\n"
-        "\tspriteType = { name = GFX_bare_icon }\n"
-        "}\n"
+        "spriteTypes = {\n\tspriteType = { name = GFX_bare_icon }\n}\n"
     )
     loc_dir = tmp_path / "common" / "scripted_localisation"
     loc_dir.mkdir(parents=True)
