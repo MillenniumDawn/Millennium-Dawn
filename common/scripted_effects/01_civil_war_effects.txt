@@ -871,23 +871,22 @@ civil_war_cleanup_second_libya_war = {
 	}
 }
 
-# Nepal — shared helper: strip guerrilla modifiers from both Nepali states
 nep_remove_guerrilla_effect = {
 	485 = { remove_dynamic_modifier = { modifier = NEP_guerrilla_conflict } }
 	489 = { remove_dynamic_modifier = { modifier = NEP_guerrilla_conflict } }
 }
 
-# Nepal — mid-war royal massacre (1 June 2001)
 nep_kings_death_effect = {
 	if = {
 		limit = {
-			NOT = { has_global_flag = GLOBAL_nepal_kings_death }
-			date > 2001.6.1
 			country_exists = NEP
 			country_exists = NPM
-			NEP = { has_war_with = NPM }
+			NEP = {
+				has_war_with = NPM
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
 		}
-		set_global_flag = GLOBAL_nepal_kings_death
 		NEP = {
 			swap_ideas = {
 				remove_idea = NEP_National_Unity_Campaign
@@ -899,20 +898,24 @@ nep_kings_death_effect = {
 	}
 }
 
-# Nepal — Comprehensive Peace Accord forced peace (21 Nov 2006, both survive and still at war)
 civil_war_cleanup_nepal_truth_ending = {
 	if = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
-			date > 2006.11.21
 			country_exists = NEP
 			country_exists = NPM
-			NEP = { has_war_with = NPM }
+			NEP = {
+				has_war_with = NPM
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
 		}
-		set_global_flag = GLOBAL_nepal_civil_war_truth_ending
 		set_global_flag = GLOBAL_nepal_civil_war_over
 		nep_remove_guerrilla_effect = yes
-		NPM = { remove_ideas = NEP_Himalayan_Rebellion_Struggle }
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
 		NEP = {
 			country_event = { id = nepal.1 days = 511 }
 			annex_country = { target = NPM transfer_troops = no }
@@ -925,16 +928,14 @@ civil_war_cleanup_nepal_truth_ending = {
 	}
 }
 
-# Nepal — Kingdom victory (NPM eliminated, NEP at peace)
 civil_war_cleanup_nepal_kings_victory = {
 	if = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
 			country_exists = NEP
 			NOT = { country_exists = NPM }
-			NEP = { has_war = no }
+			NEP = { has_capitulated = no }
 		}
-		set_global_flag = GLOBAL_nepal_civil_war_kings_victory
 		set_global_flag = GLOBAL_nepal_civil_war_over
 		news_event = { id = news.89 random_days = 3 }
 		nep_remove_guerrilla_effect = yes
@@ -942,38 +943,89 @@ civil_war_cleanup_nepal_kings_victory = {
 			remove_ideas = NEP_National_Unity_Campaign
 			remove_ideas = NEP_The_National_vendetta
 		}
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
 		485 = { remove_core_of = NPM }
 		489 = { remove_core_of = NPM }
 	}
 }
 
-# Nepal — Maoist victory (NEP eliminated, NPM at peace)
 civil_war_cleanup_nepal_reds_victory = {
 	if = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
 			country_exists = NPM
 			NOT = { country_exists = NEP }
-			NPM = { has_war = no }
+			NPM = { has_capitulated = no }
 		}
-		set_global_flag = GLOBAL_nepal_civil_war_reds_victory
 		set_global_flag = GLOBAL_nepal_civil_war_over
 		news_event = { id = news.88 random_days = 3 }
 		nep_remove_guerrilla_effect = yes
 		NPM = {
 			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
 			set_cosmetic_tag = NEP
+		}
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
 		}
 		485 = { remove_core_of = NEP }
 		489 = { remove_core_of = NEP }
 	}
 }
 
-# Nepal — dispatcher; truth ending runs first so it claims a still-running war
+civil_war_cleanup_nepal_peace = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NEP
+			country_exists = NPM
+			NEP = {
+				NOT = { has_war_with = NPM }
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		nep_remove_guerrilla_effect = yes
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		NPM = { remove_ideas = NEP_Himalayan_Rebellion_Struggle }
+	}
+}
+
+civil_war_cleanup_nepal_no_survivor = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			NOT = { country_exists = NEP }
+			NOT = { country_exists = NPM }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		nep_remove_guerrilla_effect = yes
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
+		485 = { remove_core_of = NEP remove_core_of = NPM }
+		489 = { remove_core_of = NEP remove_core_of = NPM }
+	}
+}
+
 civil_war_cleanup_nepal = {
-	civil_war_cleanup_nepal_truth_ending = yes
 	civil_war_cleanup_nepal_kings_victory = yes
 	civil_war_cleanup_nepal_reds_victory = yes
+	civil_war_cleanup_nepal_peace = yes
+	civil_war_cleanup_nepal_no_survivor = yes
 }
 
 # Guards above self-validate, so this is safe to fire from any war-ending on_action;
@@ -1012,6 +1064,7 @@ civil_war_cleanup_hooks = {
 	GNA = { civil_war_cleanup_second_libya_war = yes }
 	GNC = { civil_war_cleanup_second_libya_war = yes }
 	NEP = { civil_war_cleanup_nepal = yes }
+	NPM = { civil_war_cleanup_nepal = yes }
 }
 
 civil_war_startup_repairs = {

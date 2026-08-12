@@ -135,7 +135,7 @@ def format_decision(block_lines: List[str]) -> List[str]:
 
     did = _read_header_id(block_lines)
 
-    lines: List[str] = [f"\t{did} = {{"]
+    lines: List[str] = [f"\t{did} = {{", ""]
     i = 1  # skip opening header line
     while i < len(block_lines) - 1:  # skip closing brace
         stripped = block_lines[i].strip()
@@ -162,9 +162,11 @@ def format_decision(block_lines: List[str]) -> List[str]:
             elif prop_name == "ai_will_do":
                 block = convert_root_factor_to_base(block)
             lines.extend(_reindent_or_collapse(block, 2))
+            lines.append("")
             i = next_i
         else:
             lines.append(f"\t\t{collapse_ws_outside_quotes(stripped)}")
+            lines.append("")
             i += 1
 
     while lines and lines[-1] == "":
@@ -236,7 +238,7 @@ class DecisionStandardizer(BaseStandardizer):
 
     def format_block(self, props: Dict[str, Any]) -> List[str]:
         """Emit the category with its children reformatted in source order."""
-        lines: List[str] = [f"{props['id']} = {{"]
+        lines: List[str] = [f"{props['id']} = {{", ""]
 
         for kind, data in props["children"]:
             if kind == "cat_single":
