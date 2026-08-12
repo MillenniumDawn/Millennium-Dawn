@@ -2004,33 +2004,93 @@ calculate_final_un_benefits = {
 	set_variable = { united_nations_investment_cost_var = investment_adder }
 }
 
+remove_un_aid_subsidies_modifier_if_unused = {
+	if = {
+		limit = {
+			has_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
+			NOT = { has_country_flag = is_getting_esco_subsidies }
+			NOT = { has_country_flag = is_getting_ido_subsidies }
+			NOT = { has_country_flag = is_getting_cdf_subsidies }
+		}
+		remove_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
+	}
+}
+
+revoke_un_esco_subsidies = {
+	clr_country_flag = is_getting_esco_subsidies
+	if = {
+		limit = { is_in_array = { global.unesco_recipients = THIS } }
+		remove_from_array = { global.unesco_recipients = THIS }
+	}
+	clear_variable = un_esco_political_power_var
+	clear_variable = un_esco_research_speed_var
+	remove_un_aid_subsidies_modifier_if_unused = yes
+}
+
+revoke_un_ido_subsidies = {
+	clr_country_flag = is_getting_ido_subsidies
+	if = {
+		limit = { is_in_array = { global.unido_recipients = THIS } }
+		remove_from_array = { global.unido_recipients = THIS }
+	}
+	if = {
+		limit = { check_variable = { un_ido_old_building_count > 0 } }
+		set_temp_variable = { un_ido_buildings_to_remove = { value = un_ido_old_building_count multiply = -1 } }
+		add_offsite_building = { type = industrial_complex level = un_ido_buildings_to_remove }
+	}
+	clear_variable = un_ido_current_building_count
+	clear_variable = un_ido_construction_speed_var
+	clear_variable = un_ido_old_building_count
+	remove_un_aid_subsidies_modifier_if_unused = yes
+}
+
+revoke_un_cdf_subsidies = {
+	clr_country_flag = is_getting_cdf_subsidies
+	if = {
+		limit = { is_in_array = { global.uncdf_recipients = THIS } }
+		remove_from_array = { global.uncdf_recipients = THIS }
+	}
+	clear_variable = un_cdf_productivity_var
+	clear_variable = un_cdf_construction_cost_var
+	remove_un_aid_subsidies_modifier_if_unused = yes
+}
+
 check_for_subsidy_expiration = {
 	set_temp_variable = { research_check = modifier@research_speed_factor }
 	subtract_from_temp_variable = { research_check = un_esco_research_speed_var }
+	set_temp_variable = { unsubsidized_political_power_daily = political_power_daily }
+	set_temp_variable = { political_power_factor_with_esco = { value = modifier@political_power_factor add = 1 } }
+	if = {
+		limit = { check_variable = { political_power_factor_with_esco > 0 } }
+		set_temp_variable = { political_power_factor_without_esco = political_power_factor_with_esco }
+		subtract_from_temp_variable = { political_power_factor_without_esco = un_esco_political_power_var }
+		multiply_temp_variable = { unsubsidized_political_power_daily = political_power_factor_without_esco }
+		divide_temp_variable = { unsubsidized_political_power_daily = political_power_factor_with_esco }
+	}
 	if = {
 		limit = {
 			has_country_flag = is_getting_esco_subsidies
 			OR = {
 				check_variable = { research_check > global.target_research_speed_mod }
-				NOT = { political_power_daily < 7 }
+				check_variable = { unsubsidized_political_power_daily > 6.999 }
 			}
 		}
-		clr_country_flag = is_getting_esco_subsidies
-		remove_from_array = { global.unesco_recipients = THIS }
+		revoke_un_esco_subsidies = yes
 		if = { limit = { NOT = { has_global_flag = un_initial_subsidy_pass } } country_event = UN.300 }
 	}
 	set_temp_variable = { construction_check = modifier@production_speed_buildings_factor }
 	subtract_from_temp_variable = { construction_check = un_ido_construction_speed_var }
+	set_temp_variable = { unsubsidized_civ_count = industrial_complex_total }
+	subtract_from_temp_variable = { unsubsidized_civ_count = un_ido_old_building_count }
 	if = {
 		limit = {
 			has_country_flag = is_getting_ido_subsidies
 			OR = {
 				check_variable = { construction_check > global.target_const_speed_mod }
-				check_variable = { industrial_complex_total > global.target_civ_count }
+				check_variable = { unsubsidized_civ_count > global.target_civ_count }
 			}
 		}
-		clr_country_flag = is_getting_ido_subsidies
-		remove_from_array = { global.unido_recipients = THIS }
+		revoke_un_ido_subsidies = yes
 		if = { limit = { NOT = { has_global_flag = un_initial_subsidy_pass } } country_event = UN.301 }
 	}
 	if = {
@@ -2041,19 +2101,10 @@ check_for_subsidy_expiration = {
 				check_variable = { overall_productivity > global.world_productivity_target }
 			}
 		}
-		clr_country_flag = is_getting_cdf_subsidies
-		remove_from_array = { global.uncdf_recipients = THIS }
+		revoke_un_cdf_subsidies = yes
 		if = { limit = { NOT = { has_global_flag = un_initial_subsidy_pass } } country_event = UN.302 }
 	}
-	if = {
-		limit = {
-			has_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
-			NOT = { has_country_flag = is_getting_esco_subsidies }
-			NOT = { has_country_flag = is_getting_ido_subsidies }
-			NOT = { has_country_flag = is_getting_cdf_subsidies }
-		}
-		remove_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
-	}
+	remove_un_aid_subsidies_modifier_if_unused = yes
 }
 
 # ------------------------------------------------------------
@@ -2664,6 +2715,10 @@ remove_stale_ga_membership_votes_for_this = {
 }
 
 clear_united_nations_member_state = {
+	revoke_un_esco_subsidies = yes
+	revoke_un_ido_subsidies = yes
+	revoke_un_cdf_subsidies = yes
+
 	if = {
 		limit = { check_variable = { global.unsc_permanent_seat_applicant = THIS.id } }
 		unsc_clear_permanent_seat_lobbying = yes
@@ -2865,25 +2920,9 @@ remove_from_bloc_membership_arrays = {
 # Non-bloc membership arrays: UN aid programs, unrecognised-state tracking, and other idea-tied
 # lists that would otherwise leave a stale annexed-country entry for their loop consumers.
 remove_from_secondary_membership_arrays = {
-	if = {
-		limit = { is_in_array = { global.unesco_recipients = THIS } }
-		remove_from_array = { global.unesco_recipients = THIS }
-	}
-	if = {
-		limit = { is_in_array = { global.unido_recipients = THIS } }
-		remove_from_array = { global.unido_recipients = THIS }
-	}
-	if = {
-		limit = { is_in_array = { global.uncdf_recipients = THIS } }
-		remove_from_array = { global.uncdf_recipients = THIS }
-	}
-	clr_country_flag = is_getting_esco_subsidies
-	clr_country_flag = is_getting_ido_subsidies
-	clr_country_flag = is_getting_cdf_subsidies
-	if = {
-		limit = { has_dynamic_modifier = { modifier = un_aid_subsidies_modifier } }
-		remove_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
-	}
+	revoke_un_esco_subsidies = yes
+	revoke_un_ido_subsidies = yes
+	revoke_un_cdf_subsidies = yes
 	if = {
 		limit = { is_in_array = { global.non_EU_EDU_ally = THIS } }
 		remove_from_array = { global.non_EU_EDU_ally = THIS }

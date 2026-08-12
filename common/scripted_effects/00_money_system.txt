@@ -6530,30 +6530,37 @@ calculate_united_nations_base_budget = {
 			set_variable = { united_nations_old_aid_expenses = 0 }
 		}
 
-		add_to_variable = { global.target_const_speed_mod = modifier@production_speed_buildings_factor }
-		add_to_variable = { global.target_research_speed_mod = modifier@research_speed_factor }
-		add_to_variable = { global.target_civ_count = industrial_complex_total }
+		set_temp_variable = { unsubsidized_const_speed = modifier@production_speed_buildings_factor }
+		set_temp_variable = { unsubsidized_research_speed = modifier@research_speed_factor }
+		set_temp_variable = { unsubsidized_civ_count = industrial_complex_total }
+		if = {
+			limit = { has_country_flag = is_getting_ido_subsidies }
+			subtract_from_temp_variable = { unsubsidized_const_speed = un_ido_construction_speed_var }
+			subtract_from_temp_variable = { unsubsidized_civ_count = un_ido_old_building_count }
+		}
+		if = {
+			limit = { has_country_flag = is_getting_esco_subsidies }
+			subtract_from_temp_variable = { unsubsidized_research_speed = un_esco_research_speed_var }
+		}
+
+		add_to_variable = { global.target_const_speed_mod = unsubsidized_const_speed }
+		add_to_variable = { global.target_research_speed_mod = unsubsidized_research_speed }
+		add_to_variable = { global.target_civ_count = unsubsidized_civ_count }
 		add_to_variable = { global.average_gdp_capita = gdp_per_capita }
 
 		if = {
-			limit = {
-				check_variable = { peak_const_speed_mod < modifier@production_speed_buildings_factor }
-			}
-			set_temp_variable = { peak_const_speed_mod = modifier@production_speed_buildings_factor }
+			limit = { check_variable = { peak_const_speed_mod < unsubsidized_const_speed } }
+			set_temp_variable = { peak_const_speed_mod = unsubsidized_const_speed }
 		}
 
 		if = {
-			limit = {
-				check_variable = { peak_research_speed_mod < modifier@research_speed_factor }
-			}
-			set_temp_variable = { peak_research_speed_mod = modifier@research_speed_factor }
+			limit = { check_variable = { peak_research_speed_mod < unsubsidized_research_speed } }
+			set_temp_variable = { peak_research_speed_mod = unsubsidized_research_speed }
 		}
 
 		if = {
-			limit = {
-				check_variable = { peak_civ_count < industrial_complex_total }
-			}
-			set_temp_variable = { peak_civ_count = industrial_complex_total }
+			limit = { check_variable = { peak_civ_count < unsubsidized_civ_count } }
+			set_temp_variable = { peak_civ_count = unsubsidized_civ_count }
 		}
 
 		if = {
@@ -6795,8 +6802,8 @@ calcluate_program_distributions = {
 
 	every_collection_element = {
 		input = { input = collection:un_esco_recipients_collection }
-		set_variable = { un_esco_political_power_var = esco_political_budget }
-		set_variable = { un_esco_research_speed_var = { value = esco_research_budget multiply = 0.2 clamp = { min = 0 max = 0.30 } } }
+		set_variable = { un_esco_political_power_var = { value = esco_political_budget multiply = 0.02 } }
+		set_variable = { un_esco_research_speed_var = { value = esco_research_budget multiply = 0.02 clamp = { min = 0 max = 0.30 } } }
 	}
 
 	set_temp_variable = {
@@ -6822,7 +6829,7 @@ calcluate_program_distributions = {
 	every_collection_element = {
 		input = { input = collection:un_ido_recipients_collection }
 		set_variable = { un_ido_current_building_count = un_ido_building_count }
-		set_variable = { un_ido_construction_speed_var = { value = construction_speed_buffs multiply = 0.2 clamp = { min = 0 max = 0.30 } } }
+		set_variable = { un_ido_construction_speed_var = { value = construction_speed_buffs multiply = 0.02 clamp = { min = 0 max = 0.30 } } }
 		if = {
 			limit = {
 				NOT = { check_variable = { un_ido_old_building_count = un_ido_building_count } }
@@ -6847,13 +6854,13 @@ calcluate_program_distributions = {
 			value = global.uncdf_budget
 			multiply = 0.55
 			divide = global.cdf_recipient_divisor
-			multiply = -1
+			multiply = -0.02
 		}
 	}
 
 	every_collection_element = {
 		input = { input = collection:un_cdf_recipients_collection }
-		set_variable = { un_cdf_productivity_var = { value = prod_var multiply = 0.2 clamp = { min = 0 max = 0.30 } } }
+		set_variable = { un_cdf_productivity_var = { value = prod_var multiply = 0.02 clamp = { min = 0 max = 0.30 } } }
 		set_variable = { un_cdf_construction_cost_var = cost_var }
 	}
 	set_variable = { global.full_aid_budget_calculator = { value = global.uncdf_budget add = global.undio_budget add = global.unescoe_budget } }
