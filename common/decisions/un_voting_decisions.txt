@@ -116,5 +116,94 @@ UN_voting_category = {
 			apply_united_nations_sanctions = yes
 			clr_country_flag = has_end_war_mission
 		}
+	}
+}
+
+UNSC_permanent_seat_campaign = {
+
+	UNSC_lobby_permanent_member = {
+
+		icon = GFX_decision_generic_UN
+
+		target_array = global.p5_sc_members
+
+		target_root_trigger = {
+			can_campaign_for_permanent_unsc_seat = yes
+			NOT = { check_variable = { global.unsc_permanent_seat_applicant = THIS.id } }
 		}
+
+		target_trigger = {
+			FROM = {
+				exists = yes
+				NOT = { has_country_flag = recognition_campaign_UNSC@ROOT }
+			}
+		}
+
+		available = {
+			FROM = { has_opinion = { target = ROOT value > 50 } }
+		}
+
+		cost = 250
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UNSC_lobby_permanent_member"
+			FROM = {
+				set_country_flag = recognition_campaign_UNSC@ROOT
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = is_trying_to_win_our_favour
+				}
+			}
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	UNSC_submit_permanent_seat_application = {
+
+		icon = GFX_decision_generic_UN
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UNSC_retry_cooldown_tt
+				NOT = { has_country_flag = unsc_permanent_seat_retry_cooldown }
+			}
+			custom_trigger_tooltip = {
+				tooltip = UNSC_no_active_application_tt
+				NOT = { has_global_flag = unsc_permanent_seat_application_active }
+				NOT = { has_global_flag = sc_action_against@THIS }
+			}
+			custom_trigger_tooltip = {
+				tooltip = security_council_support_tt
+				# all_of_scopes passes vacuously on an empty array, which would be a free seat.
+				check_variable = { global.p5_sc_members^num > 0 }
+				all_of_scopes = {
+					array = global.p5_sc_members
+					has_country_flag = recognition_campaign_UNSC@ROOT
+				}
+			}
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UNSC_submit_permanent_seat_application"
+			set_global_flag = unsc_permanent_seat_application_active
+			set_variable = { global.unsc_permanent_seat_applicant = THIS.id }
+			set_country_flag = unsc_permanent_seat_sc_pending
+			set_global_flag = sc_action_against@THIS
+			set_temp_variable = { sc_new_vote_type = 8 }
+			set_temp_variable = { sc_new_vote_nation = THIS.id }
+			update_sc_vote = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			# An aggressor's bid loses the Assembly and burns the year-long retry cooldown.
+			modifier = {
+				factor = 0
+				has_offensive_war = yes
+			}
+		}
+	}
 }
