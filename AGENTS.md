@@ -23,8 +23,9 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - Comments are small, targeted, and load-bearing — comment policy: `.claude/rules/general-rules.md` (Python tooling: `tools/COMMENT_STYLE.md`)
 - Remove unused/commented-out code
 - `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
-- Prefix country-specific variables with tag (e.g., `ISR_operation_success`); **snake_case** for all identifiers
-- Flag naming: `TAG_` for a flag that only ever lands on one nation, `GLOBAL_` for `set_global_flag` and global event targets, a bare domain prefix (e.g. `wot_`) for a flag that can land on any nation. Name the thing, not the mechanic: `wot_refused_to_support_us`, not `wot_support_none`
+- Prefix country-specific variables with tag; `snake_case`
+- Flag naming: `TAG_` single-nation, `GLOBAL_` global, bare domain prefix for any-nation
+- Flag/var casing: `<TAG/GLOBAL/SYSTEMACRONYM>_name_of_entity`, `snake_case`
 - Do not add flags that duplicate authoritative state. Use `has_idea`,
   `has_completed_focus`, variables, event targets, ideology, subject status,
   faction membership, and similar direct checks instead. Use a flag only for
@@ -43,14 +44,14 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - Omit defaults: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`
 - No empty `mutually_exclusive`/`available` blocks; limit permanent effects to 5
 - Never `available = { always = no }` with a `bypass` — use matching condition
-- Money-spending focuses (completion_reward spends treasury via `modify_treasury_effect`, or a money-costing scripted/building effect): add the standard bankruptcy guard (`has_active_mission = bankruptcy_incoming_collapse` → `factor = 0`) inside `ai_will_do`. Gate on the reward's money cost (~5bn+), not the focus `cost` (completion time). Block in `.claude/docs/focus-tree-reference.md`
+- Money-spending focuses need bankruptcy guard in `ai_will_do` — see `.claude/docs/focus-tree-reference.md`
 - Ref: `.claude/docs/focus-tree-reference.md`
 
 ## Decisions
 
 - Logging: `log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"` as the first statement of every effect block the engine runs (`complete_effect`, `remove_effect`, `timeout_effect`, `cancel_effect`). A log nested inside an `if`/`hidden_effect` records which branch ran and stays there
 - `ai_will_do = { base = N }` — `base` not `factor` at root
-- Don't put `allowed` on a decision when it just repeats the parent category's `allowed` (e.g. `original_tag = TAG`) — the category gate already covers every decision inside it. Put nation-restriction on the category; dynamic conditions go in `available`/`visible` (`allowed` is evaluated once at game start)
+- Don't repeat category `allowed` in decisions — put nation gate on category, dynamic checks in `available`/`visible`
 - Ref: `.claude/docs/decision-reference.md`
 
 ## Events
@@ -86,6 +87,7 @@ Unit production has three layers — threat gate (`ai_is_threatened`), role rati
 
 - Do NOT add `Co-Authored-By` or sign commits — the project does not use commit signing
 - Do NOT write `Changelog.txt` entries unless explicitly asked. A system new in 2.0.0 never needs an entry for its own changes
+- Dev builds may invalidate saves — no legacy migration needed
 
 ## Output Style
 

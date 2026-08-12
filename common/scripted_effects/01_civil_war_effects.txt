@@ -877,7 +877,7 @@ nep_remove_guerrilla_effect = {
 	489 = { remove_dynamic_modifier = { modifier = NEP_guerrilla_conflict } }
 }
 
-# Nepal — mid-war royal massacre (1 June 2001, replaces on_monthly_NEP polling)
+# Nepal — mid-war royal massacre (1 June 2001)
 nep_kings_death_effect = {
 	if = {
 		limit = {
@@ -888,7 +888,6 @@ nep_kings_death_effect = {
 			NEP = { has_war_with = NPM }
 		}
 		set_global_flag = GLOBAL_nepal_kings_death
-		set_global_flag = nep_kings_Death
 		NEP = {
 			swap_ideas = {
 				remove_idea = NEP_National_Unity_Campaign
@@ -912,43 +911,31 @@ civil_war_cleanup_nepal_truth_ending = {
 		}
 		set_global_flag = GLOBAL_nepal_civil_war_truth_ending
 		set_global_flag = GLOBAL_nepal_civil_war_over
-		set_global_flag = GLOBAL_nepal_civil_war_kings_victory
-		set_global_flag = GLOBAL_nepal_civil_war_reds_victory
-		set_global_flag = nep_truth_civil_war_Ending
-		set_global_flag = nep_kings_victory
-		set_global_flag = nep_reds_victory
 		nep_remove_guerrilla_effect = yes
+		NPM = { remove_ideas = NEP_Himalayan_Rebellion_Struggle }
 		NEP = {
 			country_event = { id = nepal.1 days = 511 }
 			annex_country = { target = NPM transfer_troops = no }
 			remove_ideas = NEP_National_Unity_Campaign
 			remove_ideas = NEP_The_National_vendetta
 		}
-		NPM = {
-			remove_state_core = 485
-			remove_state_core = 489
-			remove_ideas = NEP_Himalayan_Rebellion_Struggle
-		}
+		485 = { remove_core_of = NPM }
+		489 = { remove_core_of = NPM }
 		news_event = { id = news.87 random_days = 3 }
 	}
 }
 
-# Nepal — Kingdom victory before the CPA (NPM eliminated, NEP at peace, date < 2006.11.21)
+# Nepal — Kingdom victory (NPM eliminated, NEP at peace)
 civil_war_cleanup_nepal_kings_victory = {
 	if = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
-			NOT = { has_global_flag = GLOBAL_nepal_civil_war_kings_victory }
-			date < 2006.11.21
 			country_exists = NEP
 			NOT = { country_exists = NPM }
 			NEP = { has_war = no }
 		}
 		set_global_flag = GLOBAL_nepal_civil_war_kings_victory
 		set_global_flag = GLOBAL_nepal_civil_war_over
-		set_global_flag = nep_kings_victory
-		set_global_flag = nep_reds_victory
-		set_global_flag = nep_truth_civil_war_Ending
 		news_event = { id = news.89 random_days = 3 }
 		nep_remove_guerrilla_effect = yes
 		NEP = {
@@ -957,46 +944,32 @@ civil_war_cleanup_nepal_kings_victory = {
 		}
 		485 = { remove_core_of = NPM }
 		489 = { remove_core_of = NPM }
-		if = { limit = { country_exists = NPM }
-			NPM = { remove_ideas = NEP_Himalayan_Rebellion_Struggle }
-		}
 	}
 }
 
-# Nepal — Maoist victory before the CPA (NEP eliminated, NPM at peace, date < 2006.11.21)
+# Nepal — Maoist victory (NEP eliminated, NPM at peace)
 civil_war_cleanup_nepal_reds_victory = {
 	if = {
 		limit = {
 			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
-			NOT = { has_global_flag = GLOBAL_nepal_civil_war_reds_victory }
-			date < 2006.11.21
 			country_exists = NPM
 			NOT = { country_exists = NEP }
 			NPM = { has_war = no }
 		}
 		set_global_flag = GLOBAL_nepal_civil_war_reds_victory
 		set_global_flag = GLOBAL_nepal_civil_war_over
-		set_global_flag = nep_reds_victory
-		set_global_flag = nep_kings_victory
-		set_global_flag = nep_truth_civil_war_Ending
 		news_event = { id = news.88 random_days = 3 }
-		NPM = { remove_ideas = NEP_Himalayan_Rebellion_Struggle }
-		if = { limit = { country_exists = NPM }
-			NPM = { set_cosmetic_tag = NEP }
-		}
 		nep_remove_guerrilla_effect = yes
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			set_cosmetic_tag = NEP
+		}
 		485 = { remove_core_of = NEP }
 		489 = { remove_core_of = NEP }
-		if = { limit = { country_exists = NEP }
-			NEP = {
-				remove_ideas = NEP_National_Unity_Campaign
-				remove_ideas = NEP_The_National_vendetta
-			}
-		}
 	}
 }
 
-# Nepal — hook dispatcher (called from annex/capitulation/peace hooks)
+# Nepal — dispatcher; truth ending runs first so it claims a still-running war
 civil_war_cleanup_nepal = {
 	civil_war_cleanup_nepal_truth_ending = yes
 	civil_war_cleanup_nepal_kings_victory = yes
@@ -1039,7 +1012,6 @@ civil_war_cleanup_hooks = {
 	GNA = { civil_war_cleanup_second_libya_war = yes }
 	GNC = { civil_war_cleanup_second_libya_war = yes }
 	NEP = { civil_war_cleanup_nepal = yes }
-	NPM = { civil_war_cleanup_nepal = yes }
 }
 
 civil_war_startup_repairs = {
@@ -1163,46 +1135,5 @@ civil_war_startup_repairs = {
 			set_capital = { state = 195 }
 		}
 		set_global_flag = GLOBAL_yemeni_orphan_cores_repaired
-	}
-	# Nepal — flag migration and orphan-core repair (old nep_* saves)
-	if = {
-		limit = { has_global_flag = nep_truth_civil_war_Ending NOT = { has_global_flag = GLOBAL_nepal_civil_war_truth_ending } }
-		set_global_flag = GLOBAL_nepal_civil_war_truth_ending
-	}
-	if = {
-		limit = { has_global_flag = nep_kings_victory NOT = { has_global_flag = GLOBAL_nepal_civil_war_kings_victory } }
-		set_global_flag = GLOBAL_nepal_civil_war_kings_victory
-	}
-	if = {
-		limit = { has_global_flag = nep_reds_victory NOT = { has_global_flag = GLOBAL_nepal_civil_war_reds_victory } }
-		set_global_flag = GLOBAL_nepal_civil_war_reds_victory
-	}
-	if = {
-		limit = { has_global_flag = nep_kings_Death NOT = { has_global_flag = GLOBAL_nepal_kings_death } }
-		set_global_flag = GLOBAL_nepal_kings_death
-	}
-	if = {
-		limit = {
-			OR = { has_global_flag = GLOBAL_nepal_civil_war_truth_ending has_global_flag = GLOBAL_nepal_civil_war_kings_victory has_global_flag = GLOBAL_nepal_civil_war_reds_victory has_global_flag = nep_truth_civil_war_Ending has_global_flag = nep_kings_victory has_global_flag = nep_reds_victory }
-			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
-		}
-		set_global_flag = GLOBAL_nepal_civil_war_over
-	}
-	if = {
-		limit = {
-			NOT = { has_global_flag = GLOBAL_nepal_orphan_cores_repaired }
-			NOT = { country_exists = NEP }
-			NOT = { country_exists = NPM }
-			NOT = { 485 = { is_core_of = NEP } }
-			NOT = { 489 = { is_core_of = NEP } }
-		}
-		485 = { remove_core_of = NEP remove_core_of = NPM }
-		489 = { remove_core_of = NEP remove_core_of = NPM }
-		NEP = {
-			add_state_core = 485
-			add_state_core = 489
-			set_capital = { state = 485 }
-		}
-		set_global_flag = GLOBAL_nepal_orphan_cores_repaired
 	}
 }
