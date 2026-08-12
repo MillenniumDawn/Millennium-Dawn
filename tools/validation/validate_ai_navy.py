@@ -195,7 +195,12 @@ def parse_taskforce_files(
                 match = SHIP_TYPE_RE.match(line)
                 if match:
                     name = match.group(1)
-                    if name not in ("amount", "min_composition", "optimal_composition"):
+                    if name not in (
+                        "amount",
+                        "min_composition",
+                        "optimal_composition",
+                        "mission",
+                    ):
                         ship_refs.append((name, filename, line_num))
                         current_ship_type = name
 
@@ -203,7 +208,12 @@ def parse_taskforce_files(
                 if in_optimal and current_ship_type:
                     amount_match = AMOUNT_RE.search(stripped)
                     if amount_match:
-                        current_optimal[current_ship_type] = int(amount_match.group(1))
+                        try:
+                            current_optimal[current_ship_type] = int(
+                                amount_match.group(1)
+                            )
+                        except (TypeError, ValueError):
+                            pass
                         current_ship_type = ""
 
             # Mission references

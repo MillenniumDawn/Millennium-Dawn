@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import time
+from typing import Any
 
 from _common import format_elapsed
 from common_utils import PROP_NAME_RE, compact_icon, compact_search_filters
@@ -51,6 +52,17 @@ _SINGLE_LINE_PROPS = {
 _SINGLE_LINE_LIST_PROPS = {
     "will_lead_to_war_with": "will_lead_to_war_with",
 }
+
+_REPEATABLE_PROPERTY_KEYS = frozenset(
+    {
+        "icon",
+        "offset",
+        "prerequisites",
+        "mutually_exclusive",
+        "will_lead_to_war_with",
+        "other",
+    }
+)
 
 # Block props: map script name -> (props key, style).
 # Styles: "scalar" overwrites; "list" appends; "skip_empty_scalar"/"skip_empty_list"
@@ -200,7 +212,7 @@ def _merge_duplicate_blocks(first, second):
 
 def extract_focus_properties(focus_lines):
     """Extract properties from focus block lines"""
-    props = {
+    props: dict[str, Any] = {
         "id": "",
         "icon": "",
         "text_icon": "",
@@ -226,13 +238,39 @@ def extract_focus_properties(focus_lines):
         "search_filters": "",
         "ai_will_do": [],
         "other": [],
+        # props key -> comments written above it. The formatter reorders
+        # properties, so a comment has to travel with the one it describes.
+        "comments": {},
     }
+
+    pending: list[str] = []
+
+    def claim(key: str, index: int | None = None) -> None:
+        if pending:
+            comments = props["comments"]
+            if key in _REPEATABLE_PROPERTY_KEYS:
+                comments.setdefault(key, {})[index] = list(pending)
+            else:
+                comments.setdefault(key, []).extend(pending)
+            pending.clear()
 
     i = 1  # Skip opening brace
     while i < len(focus_lines) - 1:  # Skip closing brace
         line = focus_lines[i].strip()
 
         if line in _DEFAULT_REMOVALS or _COMMENTED_EMPTY_BLOCK_RE.match(line):
+            i += 1
+            continue
+
+        # Blank lines carry no anchor — dropping them here keeps a comment
+        # attached to the next real property instead of to the blank, and the
+        # formatter re-adds canonical spacing anyway.
+        if not line:
+            i += 1
+            continue
+
+        if line.startswith("#"):
+            pending.append(focus_lines[i].rstrip())
             i += 1
             continue
 
@@ -250,18 +288,24 @@ def extract_focus_properties(focus_lines):
             else:
                 entry = [line]
                 i += 1
-            if not isinstance(props["icon"], list):
-                props["icon"] = []
-            props["icon"].append(entry)
+            icon_entries = props["icon"]
+            if not isinstance(icon_entries, list):
+                icon_entries = []
+                props["icon"] = icon_entries
+            icon_entries.append(entry)
+            claim("icon", len(icon_entries) - 1)
             continue
 
         if prop_name in _SINGLE_LINE_PROPS:
             props[_SINGLE_LINE_PROPS[prop_name]] = line
+            claim(_SINGLE_LINE_PROPS[prop_name])
             i += 1
             continue
 
         if prop_name in _SINGLE_LINE_LIST_PROPS:
-            props[_SINGLE_LINE_LIST_PROPS[prop_name]].append(line)
+            key = _SINGLE_LINE_LIST_PROPS[prop_name]
+            props[key].append(line)
+            claim(key, len(props[key]) - 1)
             i += 1
             continue
 
@@ -270,17 +314,27 @@ def extract_focus_properties(focus_lines):
             block_lines, next_i = extract_block(focus_lines, i)
             skip_empty = style.startswith("skip_empty_")
             if not skip_empty or not is_empty_block(block_lines):
+                # Claim only when the block survives, so a dropped empty block
+                # hands its comments to whatever is emitted next instead of
+                # stranding them on a key that never renders.
                 if style.endswith("list"):
                     props[key].append(block_lines)
+                    claim(key, len(props[key]) - 1)
                 elif props[key]:
+                    claim(key)
                     props[key] = _merge_duplicate_blocks(props[key], block_lines)
                 else:
+                    claim(key)
                     props[key] = block_lines
             i = next_i
             continue
 
-        props["other"].append(focus_lines[i])
+        props["other"].append(focus_lines[i].rstrip())
+        claim("other", len(props["other"]) - 1)
         i += 1
+
+    if pending:
+        props["comments"]["__trailing__"] = list(pending)
 
     return props
 
@@ -392,17 +446,28 @@ def format_focus_offset_block(block_lines):
     return lines
 
 
+def _emit_comments(lines, props, key, index=None):
+    """Emit comments written above a property or a repeated property entry."""
+    comments = props.get("comments", {}).get(key, {})
+    if index is None:
+        lines.extend(comments)
+    else:
+        lines.extend(comments.get(index, ()))
+
+
 def format_focus_block(props, block_type="focus"):
     """Format focus according to Millennium Dawn standard"""
     lines = []
     lines.append(f"\t{block_type} = {{")
 
     # 1. ID, icon, text_icon, overlay (no blank line between them)
+    _emit_comments(lines, props, "id")
     if props["id"]:
         lines.append(f"\t\t{props['id']}")
     if props["icon"]:
         # `icon` is always list[list[str]] — emit each entry in order.
-        for icon_block in props["icon"]:
+        for index, icon_block in enumerate(props["icon"]):
+            _emit_comments(lines, props, "icon", index)
             icon_lines = compact_icon(icon_block)
             if "\n" in icon_lines:
                 for icon_line in icon_lines.split("\n"):
@@ -410,8 +475,10 @@ def format_focus_block(props, block_type="focus"):
                         lines.append(icon_line)
             else:
                 lines.append(f"\t\t{icon_lines}")
+    _emit_comments(lines, props, "text_icon")
     if props["text_icon"]:
         lines.append(f"\t\t{props['text_icon']}")
+    _emit_comments(lines, props, "overlay")
     if props["overlay"]:
         lines.append(f"\t\t{props['overlay']}")
 
@@ -419,13 +486,17 @@ def format_focus_block(props, block_type="focus"):
     lines.append("")
 
     # 3. Position group (x, y, relative_position_id - no blank lines between them)
+    _emit_comments(lines, props, "x")
     if props["x"]:
         lines.append(f"\t\t{props['x']}")
+    _emit_comments(lines, props, "y")
     if props["y"]:
         lines.append(f"\t\t{props['y']}")
+    _emit_comments(lines, props, "relative_position_id")
     if props["relative_position_id"]:
         lines.append(f"\t\t{props['relative_position_id']}")
-    for offset_block in props["offset"]:
+    for index, offset_block in enumerate(props["offset"]):
+        _emit_comments(lines, props, "offset", index)
         formatted_offset = format_focus_offset_block(offset_block[:])
         for line in formatted_offset:
             lines.append(line)
@@ -434,6 +505,7 @@ def format_focus_block(props, block_type="focus"):
     lines.append("")
 
     # 5. Cost
+    _emit_comments(lines, props, "cost")
     if props["cost"]:
         lines.append(f"\t\t{props['cost']}")
 
@@ -441,6 +513,7 @@ def format_focus_block(props, block_type="focus"):
     lines.append("")
 
     # 7. Allow branch (before prerequisites)
+    _emit_comments(lines, props, "allow_branch")
     if props["allow_branch"]:
         compacted_allow_branch = collapse_or_compact(props["allow_branch"][:])
         for line in compacted_allow_branch:
@@ -450,21 +523,24 @@ def format_focus_block(props, block_type="focus"):
     # 8. Prerequisites and related conditions (grouped together without internal spacing)
     condition_group_added = False
 
-    for prereq in props["prerequisites"]:
+    for index, prereq in enumerate(props["prerequisites"]):
+        _emit_comments(lines, props, "prerequisites", index)
         compacted_prereq = collapse_or_compact(prereq[:])
         for line in compacted_prereq:
             lines.append(line)
         condition_group_added = True
 
     # Add all mutually_exclusive (no spacing between these and prerequisites)
-    for mutex in props["mutually_exclusive"]:
+    for index, mutex in enumerate(props["mutually_exclusive"]):
+        _emit_comments(lines, props, "mutually_exclusive", index)
         compacted_mutex = collapse_or_compact(mutex[:])
         for line in compacted_mutex:
             lines.append(line)
         condition_group_added = True
 
     # Add will_lead_to_war_with as single-line property (may repeat — one line per target)
-    for war_target in props["will_lead_to_war_with"]:
+    for index, war_target in enumerate(props["will_lead_to_war_with"]):
+        _emit_comments(lines, props, "will_lead_to_war_with", index)
         lines.append(f"\t\t{war_target}")
         condition_group_added = True
 
@@ -473,12 +549,14 @@ def format_focus_block(props, block_type="focus"):
         lines.append("")
 
     # 9. Search filters (right after condition group, before available)
+    _emit_comments(lines, props, "search_filters")
     if props["search_filters"]:
         search_filters_line = compact_search_filters(props["search_filters"])
         lines.append(f"\t\t{search_filters_line}")
         lines.append("")
 
     # 10. Joint trigger (after search filters, before available)
+    _emit_comments(lines, props, "joint_trigger")
     if props["joint_trigger"]:
         compacted_joint_trigger = collapse_or_compact(props["joint_trigger"][:])
         for line in compacted_joint_trigger:
@@ -486,6 +564,7 @@ def format_focus_block(props, block_type="focus"):
         lines.append("")
 
     # 11. Available block
+    _emit_comments(lines, props, "available")
     if props["available"]:
         compacted_available = collapse_or_compact(props["available"][:])
         for line in compacted_available:
@@ -493,6 +572,7 @@ def format_focus_block(props, block_type="focus"):
         lines.append("")
 
     # 11. Bypass block (positioned after available)
+    _emit_comments(lines, props, "bypass")
     if props["bypass"]:
         compacted_bypass = collapse_or_compact(props["bypass"][:])
         for line in compacted_bypass:
@@ -500,6 +580,7 @@ def format_focus_block(props, block_type="focus"):
         lines.append("")
 
     # 12. Cancel block (positioned after bypass)
+    _emit_comments(lines, props, "cancel")
     if props["cancel"]:
         compacted_cancel = collapse_or_compact(props["cancel"][:])
         for line in compacted_cancel:
@@ -508,19 +589,20 @@ def format_focus_block(props, block_type="focus"):
 
     # 13. Other properties (preserve as-is, but ensure spacing)
     if props["other"]:
-        for line in props["other"]:
-            if line.strip():
-                lines.append(line)
-        if props["other"]:
-            lines.append("")
+        for index, line in enumerate(props["other"]):
+            _emit_comments(lines, props, "other", index)
+            lines.append(line)
+        lines.append("")
 
     # id lines may carry a trailing comment — keep it out of the log string
     focus_id = props["id"].split("=")[1].split("#")[0].strip() if props["id"] else ""
 
     # 14. Completion reward (add log if missing)
+    _emit_comments(lines, props, "completion_reward")
     emit_effect_block_with_log(lines, props["completion_reward"], focus_id)
 
     # 15. Completion reward joint originator
+    _emit_comments(lines, props, "completion_reward_joint_originator")
     if props["completion_reward_joint_originator"]:
         compacted = collapse_or_compact(props["completion_reward_joint_originator"][:])
         for line in compacted:
@@ -528,6 +610,7 @@ def format_focus_block(props, block_type="focus"):
         lines.append("")
 
     # 16. Completion reward joint member
+    _emit_comments(lines, props, "completion_reward_joint_member")
     if props["completion_reward_joint_member"]:
         compacted = collapse_or_compact(props["completion_reward_joint_member"][:])
         for line in compacted:
@@ -535,12 +618,15 @@ def format_focus_block(props, block_type="focus"):
         lines.append("")
 
     # 17. Select effect (add log if missing)
+    _emit_comments(lines, props, "select_effect")
     emit_effect_block_with_log(lines, props["select_effect"], focus_id)
 
     # 18. Bypass effect (add log if missing)
+    _emit_comments(lines, props, "bypass_effect")
     emit_effect_block_with_log(lines, props["bypass_effect"], focus_id)
 
     # 17. AI will do (always last)
+    _emit_comments(lines, props, "ai_will_do")
     if props["ai_will_do"]:
         compacted_ai = collapse_or_compact(
             convert_root_factor_to_base(props["ai_will_do"][:])
@@ -549,6 +635,8 @@ def format_focus_block(props, block_type="focus"):
             lines.append(line)
     else:
         lines.append("\t\tai_will_do = { base = 1 }")
+
+    _emit_comments(lines, props, "__trailing__")
 
     lines.append("\t}")
 
@@ -974,7 +1062,7 @@ def standardize_focus_tree(
 
     # Post-processing: ensure blank lines between consecutive focus/shared_focus/joint_focus blocks
     focus_block_pattern = re.compile(r"^\t?(focus|shared_focus|joint_focus)\s*=\s*{")
-    final_lines = []
+    final_lines: list[str] = []
     for idx, line in enumerate(output_lines):
         if focus_block_pattern.match(line) and final_lines:
             # Find the previous non-empty line

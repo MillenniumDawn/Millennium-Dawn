@@ -301,3 +301,25 @@ def test_multiline_packed_interior_option_gets_log():
     # Effect on the packed interior line is detected, so the option gets its log.
     assert '\t\tlog = "[GetDateText]: [This.GetName]: test.3.a executed"' in text
     assert "add_political_power = 10" in text
+
+
+_HEADER_COMMENT_EVENT = [
+    "country_event = { # 2001 Election Notification (Khatami vs Tavakkoli)",
+] + _EVENT[1:]
+
+
+def test_header_comment_preserved():
+    out = _standardize_event(_HEADER_COMMENT_EVENT)
+    assert (
+        out[0]
+        == "country_event = { # 2001 Election Notification (Khatami vs Tavakkoli)"
+    )
+
+
+def test_header_comment_idempotent():
+    once = _standardize_event(_HEADER_COMMENT_EVENT)
+    assert _standardize_event(once) == once
+
+
+def test_header_without_comment_unchanged():
+    assert _standardize_event(_EVENT)[0] == "country_event = {"
