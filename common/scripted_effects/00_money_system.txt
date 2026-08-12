@@ -6521,12 +6521,12 @@ calculate_united_nations_base_budget = {
 			add_to_variable = { global.un_operating_budget_base = united_nations_base_expenses }
 			add_to_array = { global.un_operating_budget_contributors = THIS }
 
-			#Add inflation *after* application, to represnt our inflated money being worth less
-			#This means less money goes to the UN, while we have to pay *more* to represent less value
-			set_temp_variable = { un_expenses_inflation = { value = 1 add = modifier@inflation_cost_multiplier_modifier } }
-			multiply_variable = { united_nations_base_expenses = un_expenses_inflation }
-
-			set_variable = { united_nations_expenses = united_nations_base_expenses }
+			set_variable = {
+				united_nations_expenses = {
+					value = united_nations_base_expenses
+					multiply = { value = 1 add = modifier@inflation_cost_multiplier_modifier }
+				}
+			}
 			set_variable = { united_nations_old_aid_expenses = 0 }
 		}
 
@@ -6728,7 +6728,13 @@ update_optional_contributions = {
 			limit = {
 				NOT = { check_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses } }
 			}
-			set_variable = { united_nations_expenses = { value = united_nations_base_expenses add = united_nations_aid_expenses } }
+			set_variable = {
+				united_nations_expenses = {
+					value = united_nations_base_expenses
+					multiply = { value = 1 add = modifier@inflation_cost_multiplier_modifier }
+					add = united_nations_aid_expenses
+				}
+			}
 			set_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses }
 		}
 	}
