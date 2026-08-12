@@ -149,7 +149,16 @@ MD_auto_agency_can_start = {
 	check_variable = { modifier@MD_auto_agency_in_progress_boolean = 0 }
 	check_variable = { agency_selected_upgrade = -1 }
 	has_intelligence_agency = yes
-	MD_auto_agency_can_upgrade = yes
+	# Run while something is still undone, or whenever the player has an explicit
+	# queue. Without this, manually-queued extra levels of an upgrade would stall
+	# forever once every upgrade has been done once.
+	OR = {
+		MD_auto_agency_can_upgrade = yes
+		AND = {
+			has_variable = agency_queue^num
+			check_variable = { agency_queue^num > 0 }
+		}
+	}
 }
 
 # The v_* helpers all read the temp variable `v` (caller's loop index) and guard
