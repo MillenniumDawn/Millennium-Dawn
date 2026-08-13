@@ -28,6 +28,7 @@ from pathlib import Path
 import pytest
 import yaml
 from precommit_validate import _REGISTRY
+from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_oob_units import _CREATE_UNIT_SOURCE_PATTERNS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -59,7 +60,7 @@ CI_EXEMPT = {
 }
 
 # Validators intentionally without a pre-commit hook. Each needs a reason.
-PRECOMMIT_EXEMPT = set()
+PRECOMMIT_EXEMPT: set[str] = set()
 
 # Validators whose --strict setting intentionally differs between pre-commit and
 # CI, because of a pre-existing backlog. Clear the backlog, then remove the
@@ -382,10 +383,61 @@ def test_tools_validation_triggers_for_consumed_configuration():
     assert {
         ".claude/docs/typo-watchlist.md",
         ".pre-commit-config.yaml",
+        "pyproject.toml",
         ".github/workflows/coding-pipeline.yml",
         ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/validator-cache.yml",
     } <= paths
+
+
+def test_python_quality_checks_are_wired_in_precommit_and_ci():
+    config = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
+    hooks = {
+        hook["id"]: hook for repo in config["repos"] for hook in repo.get("hooks", [])
+    }
+    assert {"black-tools", "pylint-tools", "mypy-tools"} <= hooks.keys()
+    assert hooks["black-tools"]["entry"] == "black"
+    assert hooks["black-tools"]["language"] == "python"
+    assert "black==26.5.1" in hooks["black-tools"]["additional_dependencies"]
+    assert "pylint tools" in hooks["pylint-tools"]["entry"]
+    assert hooks["pylint-tools"]["language"] == "python"
+    assert "pylint==4.0.6" in hooks["pylint-tools"]["additional_dependencies"]
+    assert hooks["mypy-tools"]["entry"] == "mypy"
+    assert hooks["mypy-tools"]["language"] == "python"
+    assert "mypy==2.3.0" in hooks["mypy-tools"]["additional_dependencies"]
+
+    workflow = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))
+    quality_steps = workflow["jobs"]["ruff-lint"]["steps"]
+    commands = "\n".join(step.get("run", "") for step in quality_steps)
+    assert "ruff check tools" in commands
+    assert "black --check tools" in commands
+    assert "pylint tools" in commands
+    assert "mypy" in commands
+    test_commands = "\n".join(
+        step.get("run", "") for step in workflow["jobs"]["report-lib-tests"]["steps"]
+    )
+    assert "coverage run" in test_commands
+    assert "coverage report" in test_commands
+
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    for package in ("black==", "coverage==", "mypy==", "pylint==", "ruff=="):
+        assert package in pyproject
+
+
+def test_staged_validator_integration_runs_in_isolated_worktree():
+    workflow = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["staged-validator-integration"]["steps"]
+    worktree_step = next(
+        step for step in steps if step.get("name") == "Create isolated test worktree"
+    )
+    assert "git worktree add --detach" in worktree_step["run"]
+
+    run_step = next(
+        step for step in steps if step.get("name") == "Run staged-validator integration"
+    )
+    assert run_step["env"]["MD_RUN_STAGED_INTEGRATION"] == "1"
+    assert "staged_validators_test.py" in run_step["run"]
+    assert "staged_validators_real_test.py" in run_step["run"]
 
 
 def test_tools_tests_checkout_consumed_configuration():
@@ -400,6 +452,7 @@ def test_tools_tests_checkout_consumed_configuration():
         ".claude/docs/typo-watchlist.md",
         ".github/workflows/validator-cache.yml",
         ".github/workflows/nightly-pr-validation.yml",
+        "pyproject.toml",
     } <= sparse_paths
 
 
@@ -439,6 +492,11 @@ def test_oob_routes_cover_every_create_unit_source():
     assert {d + "**" for d in dirs} <= set(filters["oob"])
     spec = next(s for s in _REGISTRY if s.script == "validate_oob_units")
     assert dirs <= {prefix for prefix, _ in spec.rules}
+
+
+def test_decision_filter_covers_every_reference_source():
+    _, filters = _filter_definitions()
+    assert set(_DECISION_REFERENCE_SOURCE_PATTERNS) <= set(filters["decisions"])
 
 
 def test_gfx_reference_validator_runs_for_all_reference_sources():

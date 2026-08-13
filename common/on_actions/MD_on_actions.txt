@@ -38,19 +38,21 @@ on_actions = {
 
 			# Must follow ingame_update_setup — it charges the week via space_prod_weekly_expense, and the accrual here has to read the same var_space_paid_1X to bill the same amount
 			space_prod_weekly_bill = yes
-			if = { limit = { is_ai = no }
+			if = {
+				limit = {
+					is_ai = no
+					OR = {
+						has_country_flag = space_auto_active
+						has_country_flag = space_auto_line_10
+						has_country_flag = space_auto_line_11
+						has_country_flag = space_auto_line_12
+						has_country_flag = space_auto_line_13
+					}
+				}
 				space_automation_weekly = yes
 			}
 
-			# Remove weekly rate from treasury
-			if = { limit = { check_variable = { int_reinvest_mode = 1 } }
-				add_to_variable = { int_investments = int_investments_rate }
-			}
-			else_if = { limit = { check_variable = { int_reinvest_mode = 2 } }
-				set_temp_variable = { _split_reinvest = int_investments_rate }
-				multiply_temp_variable = { _split_reinvest = 0.5 }
-				add_to_variable = { int_investments = _split_reinvest }
-			}
+			add_to_variable = { int_investments = int_investments_reinvest_rate }
 
 			# No longer subject stop paying for subsidies
 			if = { limit = { NOT = { check_variable = { subject_subsidization^0 = 0 } } }
@@ -315,9 +317,16 @@ on_actions = {
 		}
 	}
 
+	on_monthly_TAL = {
+		effect = {
+			AFG_reapply_taliban_opinion_modifiers = yes
+		}
+	}
+
 	#ROOT is winner #FROM gets annexed - For civil wars on_civil_war_end is also fired
 	on_annex = {
 		effect = {
+			update_neighbors_effects = yes
 			civil_war_cleanup_hooks = yes
 
 			if = {
@@ -574,6 +583,12 @@ on_actions = {
 
 	on_peaceconference_ended = {
 		effect = {
+			update_neighbors_effects = yes
+			FROM = {
+				if = { limit = { exists = yes }
+					update_neighbors_effects = yes
+				}
+			}
 			civil_war_cleanup_hooks = yes
 
 			if = {
