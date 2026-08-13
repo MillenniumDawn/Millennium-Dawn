@@ -27,6 +27,12 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
+_DECISION_REFERENCE_SOURCE_PATTERNS = (
+    "common/**/*.txt",
+    "events/**/*.txt",
+    "history/**/*.txt",
+)
+
 
 def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
@@ -37,7 +43,6 @@ _TARGETED_BLOCK_RE = re.compile(
 )
 _DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
 _MISSION_NAME_RE = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
-_META_PLACEHOLDER_RE = re.compile(r"\[[^\]]+\]")
 _BRACKETED_LOC_RE = re.compile(r"^\[([A-Za-z0-9_]+)\]$")
 _SCRIPTED_LOC_RE = re.compile(r"\bname\s*=\s*([A-Za-z0-9_]+)")
 
@@ -88,34 +93,43 @@ _REMOVE_TARGETED_BLOCK_RE = re.compile(
 )
 _REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
 
+_CYBER_OPERATION_TYPES = (
+    "gps_tracking",
+    "economic_tracking",
+    "propaganda_tracking",
+    "infra_tracking",
+    "crit_tracking",
+    "sigint_surveillance_tracking",
+    "radar_spoofing_tracking",
+    "election_interference_tracking",
+    "industrial_espionage_tracking",
+    "comms_intercept_tracking",
+    "financial_system_attack_tracking",
+    "logistics_disruption_tracking",
+    "sleeper_network_tracking",
+    "deception_campaign_tracking",
+    "zero_day_strike_tracking",
+    "network_hardening_tracking",
+    "counter_intrusion_tracking",
+    "attribution_hunt_tracking",
+)
+_DYNAMIC_ACTIVATION_EXPANSIONS = {
+    "cyber_op_slot_[SLOT]_[TYPE]": {
+        f"cyber_op_slot_{slot}_{operation_type}"
+        for slot in range(10)
+        for operation_type in _CYBER_OPERATION_TYPES
+    },
+    "investments_project_[INDEX]_target_decision": {
+        f"investments_project_{index}_target_decision" for index in range(15)
+    },
+}
+
 
 def _unactivated(candidates: set, activated: set) -> list:
-    """Sorted *candidates* with no matching entry in *activated*.
-
-    Names assembled by ``meta_effect`` substitution reach the scan with their
-    placeholders intact (``cyber_op_slot_[SLOT]_[TYPE]``), so they never match
-    a token literally — those are matched on the constant text surrounding
-    each ``[...]`` instead.
-    """
+    """Sorted *candidates* with no literal or finite meta-effect activation."""
     remaining = candidates - activated
     for name in activated:
-        if not remaining:
-            break
-        if "[" not in name:
-            continue
-        parts = _META_PLACEHOLDER_RE.split(name)
-        prefix, suffix = parts[0], parts[-1]
-        if not prefix and not suffix:
-            continue
-        remaining = {
-            token
-            for token in remaining
-            if not (
-                token.startswith(prefix)
-                and token.endswith(suffix)
-                and len(token) > len(prefix) + len(suffix)
-            )
-        }
+        remaining.difference_update(_DYNAMIC_ACTIVATION_EXPANSIONS.get(name, ()))
     return sorted(remaining)
 
 
@@ -483,7 +497,7 @@ def _find_category_redundant_rows(
 def extract_value_single_line(obj: str, s: str) -> str:
     pattern = r"\t+" + s + r" = (\S*)"
     matches = re.findall(pattern, obj)
-    return matches[0] if f"\t{s} =" in obj and matches else False
+    return matches[0] if f"\t{s} =" in obj and matches else ""
 
 
 def _top_level_field_value(raw: str, field: str):
@@ -531,9 +545,9 @@ def _top_level_field_value(raw: str, field: str):
 def extract_value_multi_line(obj: str, s: str) -> str:
     pattern = r"(\t+)" + s + r" = (\{([^\n]*|.*?^\1)\})"
     if f"\t{s} =" not in obj:
-        return False
+        return ""
     matches = re.findall(pattern, obj, flags=re.DOTALL | re.MULTILINE)
-    return matches[0][1] if matches else False
+    return matches[0][1] if matches else ""
 
 
 class DecisionFactory:
@@ -840,16 +854,16 @@ class Validator(BaseValidator):
             _set_cache_enabled(False)
 
     def _get_activation_removal_scan(self) -> Tuple[set, set, set]:
-        """Full-repo scan for decision activations and external removals.
-
-        One .txt sweep shared by validate_unused_decisions and
-        validate_orphaned_remove_effect (was two separate full-repo passes).
-        """
+        """Scan shipped content for decision activations and external removals."""
         if self._activation_removal_cache is not None:
             return self._activation_removal_cache
-        all_files = list(
-            glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
-        )
+        all_files = [
+            filename
+            for pattern in _DECISION_REFERENCE_SOURCE_PATTERNS
+            for filename in glob.iglob(
+                os.path.join(self.mod_path, pattern), recursive=True
+            )
+        ]
         activated_decisions: set = set()
         activated_missions: set = set()
         externally_removed: set = set()
