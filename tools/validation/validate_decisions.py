@@ -180,6 +180,39 @@ _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILIN
 _FROM_BLOCK_RE = re.compile(r"\bFROM\s*=\s*\{")
 _FROM_WORD_RE = re.compile(r"\bFROM\b")
 
+
+def _is_targeted_decision(d: "DecisionFactory") -> bool:
+    """True if targets/target_array/target_trigger/target_root_trigger is present."""
+    return bool(
+        d.targets or d.target_array or d.target_trigger or d.target_root_trigger
+    )
+
+
+def _extract_from_blocks(block: str) -> List[str]:
+    """Return the brace-balanced body text of every ``FROM = { ... }`` in *block*.
+
+    ``_FROM_BLOCK_RE`` only matches the opening ``FROM = {``; this walks
+    forward to the matching close so callers get the full block body, not
+    just the header.
+    """
+    if not block:
+        return []
+    bodies = []
+    for m in _FROM_BLOCK_RE.finditer(block):
+        depth = 1
+        i = m.end()
+        n = len(block)
+        while i < n and depth > 0:
+            if block[i] == "{":
+                depth += 1
+            elif block[i] == "}":
+                depth -= 1
+            i += 1
+        if depth == 0:
+            bodies.append(block[m.end() : i - 1])
+    return bodies
+
+
 # Bare trigger names needing a has_ prefix (hoisted from validate_bare_trigger_names).
 _BARE_TRIGGERS = {
     "political_power": "has_political_power",
@@ -1110,6 +1143,118 @@ class Validator(BaseValidator):
             results,
             "✓ No decisions with FROM checks needing target_trigger",
             "Decisions with FROM checks in visible/available but no target_trigger (move FROM into target_trigger for perf):",
+        )
+
+    def validate_root_only_visible_on_targeted(self):
+        """Flag targeted decisions whose visible block is entirely ROOT-only.
+
+        A targeted decision (targets/target_array/target_trigger/
+        target_root_trigger present) evaluates visible every tick, once per
+        surviving target with FROM bound. If visible never references FROM
+        and there's no target_root_trigger already carrying the ROOT-only
+        checks, the whole block is redundant per-target work for something
+        that only needs to run once per ROOT per day. Rename it to
+        target_root_trigger.
+
+        Exempts:
+        - ``allowed = { always = no }`` (decision is script-activated, never
+          auto-visible)
+        - ``state_target = yes`` / ``on_map_mode = map_only`` (player-driven
+          map click, not a daily per-target loop)
+        """
+        self._log_section(
+            "Checking targeted decisions for a ROOT-only visible block (performance)..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            if not _is_targeted_decision(d):
+                continue
+            if d.target_root_trigger:
+                continue
+            if not d.visible:
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            if d.state_target or d.map_only:
+                continue
+            if _FROM_WORD_RE.search(d.visible):
+                continue
+            results.append(
+                f"{d.token:<55}{d.source_basename} - visible is ROOT-only and "
+                f"re-evaluated every tick per target; rename to target_root_trigger"
+            )
+
+        self._report(
+            results,
+            "✓ No targeted decisions with a ROOT-only visible block",
+            "Targeted decisions with a ROOT-only visible and no target_root_trigger (rename visible to target_root_trigger, evaluated daily instead of every tick per target):",
+        )
+
+    def validate_from_checks_in_visible(self):
+        """Flag targeted decisions with FROM checks in visible when a
+        target_trigger already exists.
+
+        visible is evaluated every tick with FROM bound to each surviving
+        target; target_trigger runs the same predicate once per (ROOT, FROM)
+        pair per day. Moving a FROM check from visible into an existing
+        target_trigger is safe with no player-facing change: a failing
+        visible hides the entry and renders no tooltip, exactly like a
+        failing target_trigger.
+
+        Deliberately out of scope: FROM checks in ``available`` are NOT
+        flagged here and must stay put. ``available`` is what renders the
+        red blocked-reason tooltip; moving those into target_trigger would
+        silently drop targets from the list instead of explaining why
+        they're blocked. ``validate_targets_no_trigger`` already covers the
+        case where target_trigger is genuinely missing.
+
+        Exempts:
+        - ``allowed = { always = no }``
+        - ``state_target = yes`` / ``on_map_mode = map_only``
+        """
+        self._log_section(
+            "Checking targeted decisions for FROM checks in visible duplicating target_trigger (performance)..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            if not d.target_trigger:
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            if d.state_target or d.map_only:
+                continue
+            if not d.visible:
+                continue
+
+            visible_from_bodies = _extract_from_blocks(d.visible)
+            if not visible_from_bodies:
+                continue
+
+            normalized_visible = {self._normalize_block(b) for b in visible_from_bodies}
+            normalized_trigger = {
+                self._normalize_block(b) for b in _extract_from_blocks(d.target_trigger)
+            }
+
+            if normalized_visible <= normalized_trigger:
+                advice = (
+                    "identical to the FROM check already in target_trigger; "
+                    "delete it from visible instead of moving it"
+                )
+            else:
+                advice = "move the FROM check into target_trigger (daily) instead of visible (every tick)"
+
+            results.append(f"{d.token:<55}{d.source_basename} - {advice}")
+
+        self._report(
+            results,
+            "✓ No targeted decisions with FROM checks in visible duplicating target_trigger",
+            "Targeted decisions with FROM checks in visible while target_trigger exists:",
         )
 
     def validate_from_without_targets(self):
@@ -2076,6 +2221,8 @@ class Validator(BaseValidator):
         self.validate_custom_cost_trigger()
         self.validate_targeted_without_target()
         self.validate_targets_no_trigger()
+        self.validate_root_only_visible_on_targeted()
+        self.validate_from_checks_in_visible()
         self.validate_from_without_targets()
         self.validate_without_allowed_check()
         self.validate_random_seed()
