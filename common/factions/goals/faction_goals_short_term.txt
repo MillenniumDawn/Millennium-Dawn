@@ -160,29 +160,53 @@ faction_goal_ensure_military_r_d = {
 	group = FOCUS_FILTER_RESEARCH
 	visible = {
 		collection_size = {
-			input = collection:faction_controlled_land_facility_collection
+			input = {
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { land_facility > 0 } }
+				name = COLLECTION_FACTION_LAND_FACILITY
+			}
 			value < 1
 		}
 		collection_size = {
-			input = collection:faction_controlled_naval_facility_collection
+			input = {
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { naval_facility > 0 } }
+				name = COLLECTION_FACTION_NAVAL_FACILITY
+			}
 			value < 1
 		}
 		collection_size = {
-			input = collection:faction_controlled_air_facility_collection
+			input = {
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { air_facility > 0 } }
+				name = COLLECTION_FACTION_AIR_FACILITY
+			}
 			value < 1
 		}
 	}
 	completed = {
 		collection_size = {
-			input = collection:faction_controlled_land_facility_collection
+			input = {
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { land_facility > 0 } }
+				name = COLLECTION_FACTION_LAND_FACILITY
+			}
 			value > 0
 		}
 		collection_size = {
-			input = collection:faction_controlled_naval_facility_collection
+			input = {
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { naval_facility > 0 } }
+				name = COLLECTION_FACTION_NAVAL_FACILITY
+			}
 			value > 0
 		}
 		collection_size = {
-			input = collection:faction_controlled_air_facility_collection
+			input = {
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { air_facility > 0 } }
+				name = COLLECTION_FACTION_AIR_FACILITY
+			}
 			value > 0
 		}
 	}
@@ -191,7 +215,19 @@ faction_goal_ensure_military_r_d = {
 		newline = yes
 		custom_effect_tooltip = ALL_FACTION_MEMBERS
 		every_collection_element = {
-			input = collection:faction_controlled_any_facility_collection
+			input = {
+				input = collection:faction_controlled_states_collection
+				operators = {
+					limit = {
+						OR = {
+							land_facility > 0
+							naval_facility > 0
+							air_facility > 0
+						}
+					}
+				}
+				name = COLLECTION_FACTION_ANY_FACILITY
+			}
 			custom_effect_tooltip = OWNS_LISTED_STATE
 			add_faction_influence_ratio = 0.05
 		}
@@ -442,7 +478,7 @@ faction_goal_unlock_research = {
 	category = short_term
 	group = FOCUS_FILTER_INTERNAL_AFFAIRS
 	available = { num_faction_members > 2 }
-	visible = { has_faction_research_unlocked = no }
+	visible = { NOT = { has_faction_research_unlocked = yes } }
 	select_effect = {
 		scope:faction = {
 			set_temp_variable = {
@@ -519,7 +555,7 @@ faction_goal_unlock_military = {
 	category = short_term
 	group = FOCUS_FILTER_INTERNAL_AFFAIRS
 	available = { num_faction_members > 2 }
-	visible = { has_faction_military_unlocked = no }
+	visible = { NOT = { has_faction_military_unlocked = yes } }
 	select_effect = {
 		scope:faction = {
 			set_temp_variable = {
@@ -579,40 +615,4 @@ faction_goal_unlock_military = {
 	}
 }
 
-faction_goal_military_infrastructure = {
-	name = military_infrastructure_goal_name
-	description = military_infrastructure_goal_desc
-	category = short_term
-	group = FOCUS_FILTER_CONSOLIDATION
-	available = { num_faction_members > 2 }
-	visible = {
-		collection_size = {
-			input = collection:faction_owned_core_border_low_infra_collection
-			value > 0
-		}
-	}
-	completed = {
-		collection_size = {
-			input = collection:faction_controlled_border_low_infra_collection
-			value < 1
-		}
-	}
-	complete_effect = {
-		add_faction_power_projection = 100
-		newline = yes
-		custom_effect_tooltip = THE_FACTION_LEADER
-		add_faction_initiative = 1
-		newline = yes
-		custom_effect_tooltip = ALL_FACTION_MEMBERS
-		every_faction_member = {
-			army_experience = 100
-		}
-	}
-	ai_will_do = {
-		base = 0
-		modifier = {
-			add = 1
-			has_war = no
-		}
-	}
-}
+

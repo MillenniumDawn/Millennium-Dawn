@@ -1445,3 +1445,65 @@ faction_goal_control_mandeb = {
 		}
 	}
 }
+
+faction_goal_military_infrastructure = {
+	name = military_infrastructure_goal_name
+	description = military_infrastructure_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	available = { num_faction_members > 2 }
+	visible = {
+		collection_size = {
+			input = {
+				input = collection:faction_owned_core_states_collection
+				operators = {
+					limit = {
+						impassable = no
+						any_neighbor_state = {
+							controller = { NOT = { is_in_faction_with = ROOT } }
+						}
+						infrastructure < 4
+					}
+				}
+				name = COLLECTION_FACTION_BORDER_STATES_FULL_INFRASTRUCTURE
+			}
+			value > 0
+		}
+	}
+	completed = {
+		collection_size = {
+			input = {
+				input = collection:faction_controlled_states_collection
+				operators = {
+					limit = {
+						impassable = no
+						any_neighbor_state = {
+							controller = { NOT = { is_in_faction_with = ROOT } }
+						}
+						infrastructure < 4
+					}
+				}
+				name = COLLECTION_FACTION_BORDER_STATES_FULL_INFRASTRUCTURE
+			}
+			value < 1
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			army_experience = 100
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1
+			has_war = no
+		}
+	}
+}
