@@ -2720,20 +2720,26 @@ remove_satellite_from_system = {
 }
 
 remove_deorbited_satellite_target_reference = {
-	set_temp_variable = { MD_deorbit_target_removed = 0 }
 	for_each_loop = {
-		array = sat_target_array
-		value = v
-		index = i
-		break = MD_deorbit_target_removed
-		if = {
-			limit = {
-				check_variable = { v = var_sat_ID }
-				check_variable = { sat_target_TAG_array^i = ROOT.id }
+		array = global.countries
+		value = targeting_country
+		var:targeting_country = {
+			set_temp_variable = { MD_deorbit_target_removed = 0 }
+			for_each_loop = {
+				array = sat_target_array
+				value = v
+				index = i
+				break = MD_deorbit_target_removed
+				if = {
+					limit = {
+						check_variable = { v = ROOT.var_sat_ID }
+						check_variable = { sat_target_TAG_array^i = ROOT.id }
+					}
+					remove_from_array = { array = sat_target_TAG_array index = i }
+					remove_from_array = { array = sat_target_array index = i }
+					set_temp_variable = { MD_deorbit_target_removed = 1 }
+				}
 			}
-			remove_from_array = { array = sat_target_TAG_array index = i }
-			remove_from_array = { array = sat_target_array index = i }
-			set_temp_variable = { MD_deorbit_target_removed = 1 }
 		}
 	}
 }
