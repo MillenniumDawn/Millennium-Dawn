@@ -71,9 +71,9 @@ space_auto_push_slot = {
 }
 
 space_auto_pick_oldest_family = {
-	set_temp_variable = { temp_GNSS_idx = { value = var_GNSS_mil_system_idx subtract = 121 } }
-	set_temp_variable = { temp_COM_idx = { value = var_COM_mil_system_idx subtract = 141 } }
-	set_temp_variable = { temp_SPY_idx = { value = var_SPY_mil_system_idx subtract = 161 } }
+	set_GNSS_local_idx = yes
+	set_COM_local_idx = yes
+	set_SPY_local_idx = yes
 	set_temp_variable = { temp_auto_fam = 99 }
 	set_temp_variable = { temp_auto_idx = 99 }
 	set_temp_variable = { temp_auto_short = 0 }
@@ -82,14 +82,14 @@ space_auto_pick_oldest_family = {
 			check_variable = { space_auto_newest_array^0 > 0 }
 			check_variable = { space_auto_short_array^0 > 0 }
 			OR = {
-				check_variable = { temp_GNSS_idx < temp_auto_idx }
+				check_variable = { temp_GNSS_mil_idx < temp_auto_idx }
 				AND = {
-					check_variable = { temp_GNSS_idx = temp_auto_idx }
+					check_variable = { temp_GNSS_mil_idx = temp_auto_idx }
 					check_variable = { space_auto_short_array^0 > temp_auto_short }
 				}
 			}
 		}
-		set_temp_variable = { temp_auto_idx = temp_GNSS_idx }
+		set_temp_variable = { temp_auto_idx = temp_GNSS_mil_idx }
 		set_temp_variable = { temp_auto_short = space_auto_short_array^0 }
 		set_temp_variable = { temp_auto_fam = 0 }
 	}
@@ -98,14 +98,14 @@ space_auto_pick_oldest_family = {
 			check_variable = { space_auto_newest_array^1 > 0 }
 			check_variable = { space_auto_short_array^1 > 0 }
 			OR = {
-				check_variable = { temp_COM_idx < temp_auto_idx }
+				check_variable = { temp_COM_mil_idx < temp_auto_idx }
 				AND = {
-					check_variable = { temp_COM_idx = temp_auto_idx }
+					check_variable = { temp_COM_mil_idx = temp_auto_idx }
 					check_variable = { space_auto_short_array^1 > temp_auto_short }
 				}
 			}
 		}
-		set_temp_variable = { temp_auto_idx = temp_COM_idx }
+		set_temp_variable = { temp_auto_idx = temp_COM_mil_idx }
 		set_temp_variable = { temp_auto_short = space_auto_short_array^1 }
 		set_temp_variable = { temp_auto_fam = 1 }
 	}
@@ -114,14 +114,14 @@ space_auto_pick_oldest_family = {
 			check_variable = { space_auto_newest_array^2 > 0 }
 			check_variable = { space_auto_short_array^2 > 0 }
 			OR = {
-				check_variable = { temp_SPY_idx < temp_auto_idx }
+				check_variable = { temp_SPY_mil_idx < temp_auto_idx }
 				AND = {
-					check_variable = { temp_SPY_idx = temp_auto_idx }
+					check_variable = { temp_SPY_mil_idx = temp_auto_idx }
 					check_variable = { space_auto_short_array^2 > temp_auto_short }
 				}
 			}
 		}
-		set_temp_variable = { temp_auto_idx = temp_SPY_idx }
+		set_temp_variable = { temp_auto_idx = temp_SPY_mil_idx }
 		set_temp_variable = { temp_auto_short = space_auto_short_array^2 }
 		set_temp_variable = { temp_auto_fam = 2 }
 	}
@@ -373,9 +373,8 @@ space_auto_usable_rocket_stock = {
 		while_loop_effect = {
 			limit = { check_variable = { temp_stock_scan < @olv_pid_end } }
 			set_temp_variable = { temp_stock_idx = { value = temp_stock_scan subtract = @olv_pid_base } }
-			set_temp_variable = { temp_stock_cap = global.OLV_payload_mass_array^temp_stock_idx }
 			if = {
-				limit = { check_variable = { var = temp_stock_cap value = temp_mass compare = greater_than_or_equals } }
+				limit = { check_variable = { var = global.OLV_payload_mass_array^temp_stock_idx value = temp_mass compare = greater_than_or_equals } }
 				add_to_temp_variable = { temp_rocket_stock = missile_inventory_array^temp_stock_scan }
 			}
 			add_to_temp_variable = { temp_stock_scan = 1 }
@@ -398,7 +397,6 @@ space_auto_fit_slot_tiers = {
 					check_variable = { temp_fam < 3 }
 					check_variable = { temp_fit_mass > temp_capacity }
 				}
-				set_temp_variable = { temp_fit_base = { value = temp_pid subtract = temp_tier } }
 				set_temp_variable = { temp_fit_moff = { value = temp_massidx subtract = temp_idx } }
 
 				set_temp_variable = { temp_fit_tier = temp_tier }
@@ -418,8 +416,7 @@ space_auto_fit_slot_tiers = {
 				}
 				if = {
 					limit = { check_variable = { temp_fit_searching = 0 } }
-					set_temp_variable = { temp_fit_id = { value = temp_fit_base add = temp_fit_tier } }
-					set_variable = { space_auto_effective_array^temp_fit_scan = temp_fit_id }
+					set_variable = { space_auto_effective_array^temp_fit_scan = { value = temp_pid subtract = temp_tier add = temp_fit_tier } }
 				}
 			}
 		}
@@ -921,8 +918,7 @@ space_auto_fit_multiplier_10 = {
 			check_variable = { temp_fit_guard < 16 }
 		}
 		add_to_temp_variable = { temp_fit_guard = 1 }
-		divide_variable = { prod_10_multiplier = 2 }
-		round_variable = prod_10_multiplier
+		set_variable = { prod_10_multiplier = { value = prod_10_multiplier divide = 2 round = yes } }
 		space_auto_price_10 = yes
 	}
 	set_temp_variable = { temp_fit_guard = 0 }
@@ -933,8 +929,7 @@ space_auto_fit_multiplier_10 = {
 			check_variable = { temp_fit_guard < 16 }
 		}
 		add_to_temp_variable = { temp_fit_guard = 1 }
-		divide_variable = { var_gui_prod_10_amount = 2 }
-		round_variable = var_gui_prod_10_amount
+		set_variable = { var_gui_prod_10_amount = { value = var_gui_prod_10_amount divide = 2 round = yes } }
 		space_auto_price_10 = yes
 	}
 }
@@ -956,8 +951,7 @@ space_auto_fit_multiplier_11 = {
 			check_variable = { temp_fit_guard < 16 }
 		}
 		add_to_temp_variable = { temp_fit_guard = 1 }
-		divide_variable = { prod_11_multiplier = 2 }
-		round_variable = prod_11_multiplier
+		set_variable = { prod_11_multiplier = { value = prod_11_multiplier divide = 2 round = yes } }
 		space_auto_price_11 = yes
 	}
 	set_temp_variable = { temp_fit_guard = 0 }
@@ -968,8 +962,7 @@ space_auto_fit_multiplier_11 = {
 			check_variable = { temp_fit_guard < 16 }
 		}
 		add_to_temp_variable = { temp_fit_guard = 1 }
-		divide_variable = { var_gui_prod_11_amount = 2 }
-		round_variable = var_gui_prod_11_amount
+		set_variable = { var_gui_prod_11_amount = { value = var_gui_prod_11_amount divide = 2 round = yes } }
 		space_auto_price_11 = yes
 	}
 }
@@ -991,8 +984,7 @@ space_auto_fit_multiplier_12 = {
 			check_variable = { temp_fit_guard < 16 }
 		}
 		add_to_temp_variable = { temp_fit_guard = 1 }
-		divide_variable = { prod_12_multiplier = 2 }
-		round_variable = prod_12_multiplier
+		set_variable = { prod_12_multiplier = { value = prod_12_multiplier divide = 2 round = yes } }
 		space_auto_price_12 = yes
 	}
 	set_temp_variable = { temp_fit_guard = 0 }
@@ -1003,8 +995,7 @@ space_auto_fit_multiplier_12 = {
 			check_variable = { temp_fit_guard < 16 }
 		}
 		add_to_temp_variable = { temp_fit_guard = 1 }
-		divide_variable = { var_gui_prod_12_amount = 2 }
-		round_variable = var_gui_prod_12_amount
+		set_variable = { var_gui_prod_12_amount = { value = var_gui_prod_12_amount divide = 2 round = yes } }
 		space_auto_price_12 = yes
 	}
 }
@@ -1026,8 +1017,7 @@ space_auto_fit_multiplier_13 = {
 			check_variable = { temp_fit_guard < 16 }
 		}
 		add_to_temp_variable = { temp_fit_guard = 1 }
-		divide_variable = { prod_13_multiplier = 2 }
-		round_variable = prod_13_multiplier
+		set_variable = { prod_13_multiplier = { value = prod_13_multiplier divide = 2 round = yes } }
 		space_auto_price_13 = yes
 	}
 	set_temp_variable = { temp_fit_guard = 0 }
@@ -1038,8 +1028,7 @@ space_auto_fit_multiplier_13 = {
 			check_variable = { temp_fit_guard < 16 }
 		}
 		add_to_temp_variable = { temp_fit_guard = 1 }
-		divide_variable = { var_gui_prod_13_amount = 2 }
-		round_variable = var_gui_prod_13_amount
+		set_variable = { var_gui_prod_13_amount = { value = var_gui_prod_13_amount divide = 2 round = yes } }
 		space_auto_price_13 = yes
 	}
 }
@@ -1323,8 +1312,7 @@ space_auto_raise_system_tiers = {
 }
 
 space_auto_raise_gnss = {
-	set_temp_variable = { temp_GNSS_mil_idx = { value = var_GNSS_mil_system_idx subtract = 121 } }
-	set_temp_variable = { temp_GNSS_civ_idx = { value = var_GNSS_civ_system_idx subtract = 121 } }
+	set_GNSS_local_idx = yes
 	if = {
 		limit = { check_variable = { space_auto_newest_array^0 > 0 } }
 		set_temp_variable = { temp_new_idx = { value = space_auto_newest_array^0 subtract = 1 } }
@@ -1342,7 +1330,7 @@ space_auto_raise_gnss = {
 			set_temp_variable = { temp_rhs = { value = GNSS_satellite_array^temp_GNSS_mil_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
-				set_variable = { var_GNSS_mil_system_idx = temp_new_idx }
+				set_temp_variable = { temp_GNSS_mil_idx = temp_new_idx }
 				set_variable = { var_GNSS_mil_sat_system_max = temp_new_max }
 			}
 		}
@@ -1355,16 +1343,16 @@ space_auto_raise_gnss = {
 			set_temp_variable = { temp_rhs = { value = GNSS_satellite_array^temp_GNSS_civ_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
-				set_variable = { var_GNSS_civ_system_idx = temp_new_idx }
+				set_temp_variable = { temp_GNSS_civ_idx = temp_new_idx }
 				set_variable = { var_GNSS_civ_sat_system_max = temp_new_max }
 			}
 		}
+		store_GNSS_local_idx = yes
 	}
 }
 
 space_auto_raise_comsat = {
-	set_temp_variable = { temp_COM_mil_idx = { value = var_COM_mil_system_idx subtract = 141 } }
-	set_temp_variable = { temp_COM_civ_idx = { value = var_COM_civ_system_idx subtract = 141 } }
+	set_COM_local_idx = yes
 	if = {
 		limit = { check_variable = { space_auto_newest_array^1 > 0 } }
 		set_temp_variable = { temp_new_idx = { value = space_auto_newest_array^1 subtract = 1 } }
@@ -1381,7 +1369,7 @@ space_auto_raise_comsat = {
 			set_temp_variable = { temp_rhs = { value = COM_satellite_array^temp_COM_mil_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
-				set_variable = { var_COM_mil_system_idx = temp_new_idx }
+				set_temp_variable = { temp_COM_mil_idx = temp_new_idx }
 				set_variable = { var_COM_mil_sat_system_max = temp_new_max }
 			}
 		}
@@ -1394,16 +1382,16 @@ space_auto_raise_comsat = {
 			set_temp_variable = { temp_rhs = { value = COM_satellite_array^temp_COM_civ_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
-				set_variable = { var_COM_civ_system_idx = temp_new_idx }
+				set_temp_variable = { temp_COM_civ_idx = temp_new_idx }
 				set_variable = { var_COM_civ_sat_system_max = temp_new_max }
 			}
 		}
+		store_COM_local_idx = yes
 	}
 }
 
 space_auto_raise_spysat = {
-	set_temp_variable = { temp_SPY_mil_idx = { value = var_SPY_mil_system_idx subtract = 161 } }
-	set_temp_variable = { temp_SPY_civ_idx = { value = var_SPY_civ_system_idx subtract = 161 } }
+	set_SPY_local_idx = yes
 	if = {
 		limit = { check_variable = { space_auto_newest_array^2 > 0 } }
 		set_temp_variable = { temp_new_idx = { value = space_auto_newest_array^2 subtract = 1 } }
@@ -1420,7 +1408,7 @@ space_auto_raise_spysat = {
 			set_temp_variable = { temp_rhs = { value = SPY_satellite_array^temp_SPY_mil_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
-				set_variable = { var_SPY_mil_system_idx = temp_new_idx }
+				set_temp_variable = { temp_SPY_mil_idx = temp_new_idx }
 				set_variable = { var_SPY_mil_sat_system_max = temp_new_max }
 			}
 		}
@@ -1433,10 +1421,11 @@ space_auto_raise_spysat = {
 			set_temp_variable = { temp_rhs = { value = SPY_satellite_array^temp_SPY_civ_idx multiply = temp_new_max } }
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
-				set_variable = { var_SPY_civ_system_idx = temp_new_idx }
+				set_temp_variable = { temp_SPY_civ_idx = temp_new_idx }
 				set_variable = { var_SPY_civ_sat_system_max = temp_new_max }
 			}
 		}
+		store_SPY_local_idx = yes
 	}
 }
 

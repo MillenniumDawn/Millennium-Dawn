@@ -5,6 +5,18 @@
 # Upper clamp on production days: large build orders (5000 units x 440 days) can exceed @prod_math_max
 @prod_days_math_max = 100000000
 
+# var_*_system_idx is stored in model-index space; the 12-element stat arrays are indexed 0-11.
+# Convert with set_<fam>_local_idx / store_<fam>_local_idx, never by hand.
+@GNSS_sat_idx_base = 121
+@GNSS_sat_idx_top = 132
+@COM_sat_idx_base = 141
+@COM_sat_idx_top = 152
+@SPY_sat_idx_base = 161
+@SPY_sat_idx_top = 172
+@KILLSAT_sat_idx_base = 181
+@KILLSAT_sat_idx_top = 190
+@sat_system_tier_top = 11
+
 #################################################
 ### effects for gui / buttons / trigger / loc ###
 #################################################
@@ -628,13 +640,37 @@ update_sat_systems_stats = {
 	add_access_SPY_civ_vars = yes
 }
 
+# Model-index space (var_*_system_idx) to tier space (0-11) and back.
+# Clamped because tags created after on_startup never ran the seeding pass and read 0.
+set_GNSS_local_idx = {
+	set_temp_variable = { temp_GNSS_mil_idx = { value = var_GNSS_mil_system_idx subtract = @GNSS_sat_idx_base clamp = { min = 0 max = @sat_system_tier_top } } }
+	set_temp_variable = { temp_GNSS_civ_idx = { value = var_GNSS_civ_system_idx subtract = @GNSS_sat_idx_base clamp = { min = 0 max = @sat_system_tier_top } } }
+}
+store_GNSS_local_idx = {
+	set_variable = { var_GNSS_mil_system_idx = { value = temp_GNSS_mil_idx add = @GNSS_sat_idx_base } }
+	set_variable = { var_GNSS_civ_system_idx = { value = temp_GNSS_civ_idx add = @GNSS_sat_idx_base } }
+}
+set_COM_local_idx = {
+	set_temp_variable = { temp_COM_mil_idx = { value = var_COM_mil_system_idx subtract = @COM_sat_idx_base clamp = { min = 0 max = @sat_system_tier_top } } }
+	set_temp_variable = { temp_COM_civ_idx = { value = var_COM_civ_system_idx subtract = @COM_sat_idx_base clamp = { min = 0 max = @sat_system_tier_top } } }
+}
+store_COM_local_idx = {
+	set_variable = { var_COM_mil_system_idx = { value = temp_COM_mil_idx add = @COM_sat_idx_base } }
+	set_variable = { var_COM_civ_system_idx = { value = temp_COM_civ_idx add = @COM_sat_idx_base } }
+}
+set_SPY_local_idx = {
+	set_temp_variable = { temp_SPY_mil_idx = { value = var_SPY_mil_system_idx subtract = @SPY_sat_idx_base clamp = { min = 0 max = @sat_system_tier_top } } }
+	set_temp_variable = { temp_SPY_civ_idx = { value = var_SPY_civ_system_idx subtract = @SPY_sat_idx_base clamp = { min = 0 max = @sat_system_tier_top } } }
+}
+store_SPY_local_idx = {
+	set_variable = { var_SPY_mil_system_idx = { value = temp_SPY_mil_idx add = @SPY_sat_idx_base } }
+	set_variable = { var_SPY_civ_system_idx = { value = temp_SPY_civ_idx add = @SPY_sat_idx_base } }
+}
+
 check_sat_systems_min_sat_num = {
-	set_temp_variable = { temp_GNSS_mil_idx = { value = var_GNSS_mil_system_idx subtract = 121 } }
-	set_temp_variable = { temp_GNSS_civ_idx = { value = var_GNSS_civ_system_idx subtract = 121 } }
-	set_temp_variable = { temp_COM_mil_idx = { value = var_COM_mil_system_idx subtract = 141 } }
-	set_temp_variable = { temp_COM_civ_idx = { value = var_COM_civ_system_idx subtract = 141 } }
-	set_temp_variable = { temp_SPY_mil_idx = { value = var_SPY_mil_system_idx subtract = 161 } }
-	set_temp_variable = { temp_SPY_civ_idx = { value = var_SPY_civ_system_idx subtract = 161 } }
+	set_GNSS_local_idx = yes
+	set_COM_local_idx = yes
+	set_SPY_local_idx = yes
 	#GNSS
 	if = {
 		limit = {
@@ -642,7 +678,7 @@ check_sat_systems_min_sat_num = {
 				GNSS_satellite_array^temp_GNSS_mil_idx < global.GNSS_sat_system_min_array^temp_GNSS_mil_idx
 			}
 			check_variable = {
-				var_GNSS_mil_system_idx > 121
+				var_GNSS_mil_system_idx > @GNSS_sat_idx_base
 			}
 		}
 		subtract_from_variable = { var_GNSS_mil_system_idx = 1 }
@@ -654,7 +690,7 @@ check_sat_systems_min_sat_num = {
 				GNSS_satellite_array^temp_GNSS_civ_idx < global.GNSS_sat_system_min_array^temp_GNSS_civ_idx
 			}
 			check_variable = {
-				var_GNSS_civ_system_idx > 121
+				var_GNSS_civ_system_idx > @GNSS_sat_idx_base
 			}
 		}
 		subtract_from_variable = { var_GNSS_civ_system_idx = 1 }
@@ -664,7 +700,7 @@ check_sat_systems_min_sat_num = {
 	if = {
 		limit = {
 			check_variable = { COM_satellite_array^temp_COM_mil_idx < global.COM_sat_system_min_array^temp_COM_mil_idx }
-			check_variable = { var_COM_mil_system_idx > 141 }
+			check_variable = { var_COM_mil_system_idx > @COM_sat_idx_base }
 		}
 		subtract_from_variable = { var_COM_mil_system_idx = 1 }
 		ROOT = { news_event = satellites.4 }
@@ -672,7 +708,7 @@ check_sat_systems_min_sat_num = {
 	if = {
 		limit = {
 			check_variable = { COM_satellite_array^temp_COM_civ_idx < global.COM_sat_system_min_array^temp_COM_civ_idx }
-			check_variable = { var_COM_civ_system_idx > 141 }
+			check_variable = { var_COM_civ_system_idx > @COM_sat_idx_base }
 		}
 		subtract_from_variable = { var_COM_civ_system_idx = 1 }
 		ROOT = { news_event = satellites.5 }
@@ -681,7 +717,7 @@ check_sat_systems_min_sat_num = {
 	if = {
 		limit = {
 			check_variable = { SPY_satellite_array^temp_SPY_mil_idx < global.SPY_sat_system_min_array^temp_SPY_mil_idx }
-			check_variable = { var_SPY_mil_system_idx > 161 }
+			check_variable = { var_SPY_mil_system_idx > @SPY_sat_idx_base }
 		}
 		subtract_from_variable = { var_SPY_mil_system_idx = 1 }
 		ROOT = { news_event = satellites.6 }
@@ -689,7 +725,7 @@ check_sat_systems_min_sat_num = {
 	if = {
 		limit = {
 			check_variable = { SPY_satellite_array^temp_SPY_civ_idx < global.SPY_sat_system_min_array^temp_SPY_civ_idx }
-			check_variable = { var_SPY_civ_system_idx > 161 }
+			check_variable = { var_SPY_civ_system_idx > @SPY_sat_idx_base }
 		}
 		subtract_from_variable = { var_SPY_civ_system_idx = 1 }
 		ROOT = { news_event = satellites.7 }
@@ -697,8 +733,7 @@ check_sat_systems_min_sat_num = {
 }
 
 update_GNSS_system_stats = {
-	set_temp_variable = { temp_GNSS_mil_idx = { value = var_GNSS_mil_system_idx subtract = 121 } }
-	set_temp_variable = { temp_GNSS_civ_idx = { value = var_GNSS_civ_system_idx subtract = 121 } }
+	set_GNSS_local_idx = yes
 	### GNSS mil system
 	set_variable = {
 		var_GNSS_mil_sat_system_num = {
@@ -796,8 +831,7 @@ update_GNSS_SBAS = {
 }
 
 update_COM_system_stats = {
-	set_temp_variable = { temp_COM_mil_idx = { value = var_COM_mil_system_idx subtract = 141 } }
-	set_temp_variable = { temp_COM_civ_idx = { value = var_COM_civ_system_idx subtract = 141 } }
+	set_COM_local_idx = yes
 	set_variable = { var_COM_mil_sat_system_num = 0 }
 	set_variable = { var_COM_mil_receiver_cap = 0 }
 	set_variable = { var_COM_civ_sat_system_num = 0 }
@@ -994,8 +1028,7 @@ add_treaty_COM_civ_receiver_num = {
 # Effect: update_SPY_system_stats
 # Purpose: Updates the Reconnaissance Satellite System variables and values
 update_SPY_system_stats = {
-	set_temp_variable = { temp_SPY_mil_idx = { value = var_SPY_mil_system_idx subtract = 161 } }
-	set_temp_variable = { temp_SPY_civ_idx = { value = var_SPY_civ_system_idx subtract = 161 } }
+	set_SPY_local_idx = yes
 	### SPY mil system
 	set_variable = {
 		var_SPY_mil_sat_system_num = {
@@ -1104,7 +1137,7 @@ update_SPY_mission_plus_minus_button = {
 }
 
 calculate_GNSS_mil_gui_vars = {
-	set_temp_variable = { temp_GNSS_mil_idx = { value = var_GNSS_mil_system_idx subtract = 121 } }
+	set_GNSS_local_idx = yes
 	set_variable = {
 		var_GNSS_mil_army_speed_factor_base = {
 			value = global.GNSS_mil_army_speed_factor_max_array^temp_GNSS_mil_idx
@@ -1172,7 +1205,7 @@ calculate_GNSS_mil_gui_vars = {
 	}
 }
 calculate_GNSS_civ_gui_vars = {
-	set_temp_variable = { temp_GNSS_civ_idx = { value = var_GNSS_civ_system_idx subtract = 121 } }
+	set_GNSS_local_idx = yes
 	set_variable = {
 		var_GNSS_civ_production_speed_buildings_factor_base = {
 			value = global.GNSS_civ_production_speed_buildings_factor_max_array^temp_GNSS_civ_idx
@@ -1207,7 +1240,7 @@ calculate_GNSS_civ_gui_vars = {
 	}
 }
 calculate_COM_mil_gui_vars = {
-	set_temp_variable = { temp_COM_mil_idx = { value = var_COM_mil_system_idx subtract = 141 } }
+	set_COM_local_idx = yes
 	# Command Power
 	set_variable = {
 		var_COM_mil_max_command_power_base = {
@@ -1276,7 +1309,7 @@ calculate_COM_mil_gui_vars = {
 	}
 }
 calculate_COM_civ_gui_vars = {
-	set_temp_variable = { temp_COM_civ_idx = { value = var_COM_civ_system_idx subtract = 141 } }
+	set_COM_local_idx = yes
 	#political_power_factor
 	set_variable = {
 		var_COM_civ_political_power_factor_base = {
@@ -1334,7 +1367,7 @@ calculate_COM_civ_gui_vars = {
 	}
 }
 calculate_SPY_mil_gui_vars = {
-	set_temp_variable = { temp_SPY_mil_idx = { value = var_SPY_mil_system_idx subtract = 161 } }
+	set_SPY_local_idx = yes
 	### SPY mil
 	#max_planning_factor
 	set_variable = {
@@ -1404,7 +1437,7 @@ calculate_SPY_mil_gui_vars = {
 	}
 }
 calculate_SPY_civ_gui_vars = {
-	set_temp_variable = { temp_SPY_civ_idx = { value = var_SPY_civ_system_idx subtract = 161 } }
+	set_SPY_local_idx = yes
 	### SPY civ
 	#research_speed_factor
 	set_variable = {
@@ -1551,25 +1584,25 @@ add_access_GNSS_mil_vars = {
 				add_to_variable = { ROOT.var_GNSS_mil_naval_hit_chance = THIS.var_GNSS_mil_naval_hit_chance_base }
 			}
 		}
-		set_temp_variable = { temp_GNSS_mil_access_highest_idx = { value = temp_GNSS_mil_access_system_highest_idx subtract = 121 } }
 		if = {
 			limit = {
 				check_variable = {
 					ROOT.GNSS_mil_access_array^num > 0
 				}
 			}
+			subtract_from_temp_variable = { temp_GNSS_mil_access_system_highest_idx = @GNSS_sat_idx_base }
 			#army_speed_factor
-			clamp_variable = { var = ROOT.var_GNSS_mil_army_speed_factor max = global.GNSS_mil_army_speed_factor_max_array^temp_GNSS_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_GNSS_mil_army_speed_factor max = global.GNSS_mil_army_speed_factor_max_array^temp_GNSS_mil_access_system_highest_idx }
 			#air_cas_efficiency
-			clamp_variable = { var = ROOT.var_GNSS_mil_air_cas_efficiency max = global.GNSS_mil_air_cas_efficiency_max_array^temp_GNSS_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_GNSS_mil_air_cas_efficiency max = global.GNSS_mil_air_cas_efficiency_max_array^temp_GNSS_mil_access_system_highest_idx }
 			#air_nav_efficiency
-			clamp_variable = { var = ROOT.var_GNSS_mil_air_nav_efficiency max = global.GNSS_mil_air_nav_efficiency_max_array^temp_GNSS_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_GNSS_mil_air_nav_efficiency max = global.GNSS_mil_air_nav_efficiency_max_array^temp_GNSS_mil_access_system_highest_idx }
 			#air_strategic_bomber_bombing_factor
-			clamp_variable = { var = ROOT.var_GNSS_mil_air_strategic_bomber_bombing_factor max = global.GNSS_mil_air_strategic_bomber_bombing_factor_max_array^temp_GNSS_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_GNSS_mil_air_strategic_bomber_bombing_factor max = global.GNSS_mil_air_strategic_bomber_bombing_factor_max_array^temp_GNSS_mil_access_system_highest_idx }
 			#positioning
-			clamp_variable = { var = ROOT.var_GNSS_mil_positioning max = global.GNSS_mil_positioning_max_array^temp_GNSS_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_GNSS_mil_positioning max = global.GNSS_mil_positioning_max_array^temp_GNSS_mil_access_system_highest_idx }
 			#naval_hit_chance
-			clamp_variable = { var = ROOT.var_GNSS_mil_naval_hit_chance max = global.GNSS_mil_naval_hit_chance_max_array^temp_GNSS_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_GNSS_mil_naval_hit_chance max = global.GNSS_mil_naval_hit_chance_max_array^temp_GNSS_mil_access_system_highest_idx }
 		}
 	}
 }
@@ -1642,14 +1675,14 @@ add_access_GNSS_civ_vars = {
 		}
 
 		# Clamp variables for the GNSS satellites to the maximum value
-		set_temp_variable = { temp_GNSS_civ_access_highest_idx = { value = temp_GNSS_civ_access_system_highest_idx subtract = 121 } }
 		if = { limit = { check_variable = { ROOT.GNSS_civ_access_array^num > 0 } }
+			subtract_from_temp_variable = { temp_GNSS_civ_access_system_highest_idx = @GNSS_sat_idx_base }
 			#production_speed_buildings_factor
-			clamp_variable = { var = ROOT.var_GNSS_civ_production_speed_buildings_factor max = global.GNSS_civ_production_speed_buildings_factor_max_array^temp_GNSS_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_GNSS_civ_production_speed_buildings_factor max = global.GNSS_civ_production_speed_buildings_factor_max_array^temp_GNSS_civ_access_system_highest_idx }
 			#production_speed_infrastructure_factor
-			clamp_variable = { var = ROOT.var_GNSS_civ_production_speed_infrastructure_factor max = global.GNSS_civ_production_speed_infrastructure_factor_max_array^temp_GNSS_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_GNSS_civ_production_speed_infrastructure_factor max = global.GNSS_civ_production_speed_infrastructure_factor_max_array^temp_GNSS_civ_access_system_highest_idx }
 			#local_resources_factor
-			clamp_variable = { var = ROOT.var_GNSS_civ_local_resources_factor max = global.GNSS_civ_local_resources_factor_max_array^temp_GNSS_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_GNSS_civ_local_resources_factor max = global.GNSS_civ_local_resources_factor_max_array^temp_GNSS_civ_access_system_highest_idx }
 		}
 	}
 }
@@ -1704,20 +1737,20 @@ add_access_COM_mil_vars = {
 				add_to_variable = { ROOT.var_COM_mil_naval_coordination = THIS.var_COM_mil_naval_coordination_base }
 			}
 		}
-		set_temp_variable = { temp_COM_mil_access_highest_idx = { value = temp_COM_mil_access_system_highest_idx subtract = 141 } }
 		if = { limit = { check_variable = { ROOT.COM_mil_access_array^num > 0 } }
+			subtract_from_temp_variable = { temp_COM_mil_access_system_highest_idx = @COM_sat_idx_base }
 			#max_command_power
-			clamp_variable = { var = ROOT.var_COM_mil_max_command_power max = global.COM_mil_max_command_power_max_array^temp_COM_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_COM_mil_max_command_power max = global.COM_mil_max_command_power_max_array^temp_COM_mil_access_system_highest_idx }
 			#army_org_factor
-			clamp_variable = { var = ROOT.var_COM_mil_army_org_factor max = global.COM_mil_army_org_factor_max_array^temp_COM_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_COM_mil_army_org_factor max = global.COM_mil_army_org_factor_max_array^temp_COM_mil_access_system_highest_idx }
 			#planning_speed
-			clamp_variable = { var = ROOT.var_COM_mil_planning_speed max = global.COM_mil_planning_speed_max_array^temp_COM_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_COM_mil_planning_speed max = global.COM_mil_planning_speed_max_array^temp_COM_mil_access_system_highest_idx }
 			#air_escort_efficiency
-			clamp_variable = { var = ROOT.var_COM_mil_air_escort_efficiency max = global.COM_mil_air_escort_efficiency_max_array^temp_COM_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_COM_mil_air_escort_efficiency max = global.COM_mil_air_escort_efficiency_max_array^temp_COM_mil_access_system_highest_idx }
 			#air_intercept_efficiency
-			clamp_variable = { var = ROOT.var_COM_mil_air_intercept_efficiency max = global.COM_mil_air_intercept_efficiency_max_array^temp_COM_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_COM_mil_air_intercept_efficiency max = global.COM_mil_air_intercept_efficiency_max_array^temp_COM_mil_access_system_highest_idx }
 			#naval_coordination
-			clamp_variable = { var = ROOT.var_COM_mil_naval_coordination max = global.COM_mil_naval_coordination_max_array^temp_COM_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_COM_mil_naval_coordination max = global.COM_mil_naval_coordination_max_array^temp_COM_mil_access_system_highest_idx }
 		}
 	}
 }
@@ -1770,23 +1803,23 @@ add_access_COM_civ_vars = {
 				add_to_variable = { ROOT.var_COM_civ_operation_outcome = THIS.var_COM_civ_operation_outcome_base }
 			}
 		}
-		set_temp_variable = { temp_COM_civ_access_highest_idx = { value = temp_COM_civ_access_system_highest_idx subtract = 141 } }
 		if = {
 			limit = {
 				check_variable = {
 					ROOT.COM_civ_access_array^num > 0
 				}
 			}
+			subtract_from_temp_variable = { temp_COM_civ_access_system_highest_idx = @COM_sat_idx_base }
 			#political_power_factor
-			clamp_variable = { var = ROOT.var_COM_civ_political_power_factor max = global.COM_civ_political_power_factor_max_array^temp_COM_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_COM_civ_political_power_factor max = global.COM_civ_political_power_factor_max_array^temp_COM_civ_access_system_highest_idx }
 			#decryption_factor
-			clamp_variable = { var = ROOT.var_COM_civ_decryption_factor max = global.COM_civ_decryption_factor_max_array^temp_COM_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_COM_civ_decryption_factor max = global.COM_civ_decryption_factor_max_array^temp_COM_civ_access_system_highest_idx }
 			#encryption_factor
-			clamp_variable = { var = ROOT.var_COM_civ_encryption_factor max = global.COM_civ_encryption_factor_max_array^temp_COM_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_COM_civ_encryption_factor max = global.COM_civ_encryption_factor_max_array^temp_COM_civ_access_system_highest_idx }
 			#intel_network_gain_factor
-			clamp_variable = { var = ROOT.var_COM_civ_intel_network_gain_factor max = global.COM_civ_intel_network_gain_factor_max_array^temp_COM_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_COM_civ_intel_network_gain_factor max = global.COM_civ_intel_network_gain_factor_max_array^temp_COM_civ_access_system_highest_idx }
 			#operation_outcome
-			clamp_variable = { var = ROOT.var_COM_civ_operation_outcome max = global.COM_civ_operation_outcome_max_array^temp_COM_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_COM_civ_operation_outcome max = global.COM_civ_operation_outcome_max_array^temp_COM_civ_access_system_highest_idx }
 		}
 	}
 }
@@ -1841,25 +1874,25 @@ add_access_SPY_mil_vars = {
 				add_to_variable = { ROOT.var_SPY_mil_convoy_escort_efficiency = THIS.var_SPY_mil_convoy_escort_efficiency_base }
 			}
 		}
-		set_temp_variable = { temp_SPY_mil_access_highest_idx = { value = temp_SPY_mil_access_system_highest_idx subtract = 161 } }
 		if = {
 			limit = {
 				check_variable = {
 					ROOT.SPY_mil_access_array^num > 0
 				}
 			}
+			subtract_from_temp_variable = { temp_SPY_mil_access_system_highest_idx = @SPY_sat_idx_base }
 			#max_planning_factor
-			clamp_variable = { var = ROOT.var_SPY_mil_max_planning_factor max = global.SPY_mil_max_planning_factor_max_array^temp_SPY_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_mil_max_planning_factor max = global.SPY_mil_max_planning_factor_max_array^temp_SPY_mil_access_system_highest_idx }
 			#recon_factor
-			clamp_variable = { var = ROOT.var_SPY_mil_recon_factor max = global.SPY_mil_recon_factor_max_array^temp_SPY_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_mil_recon_factor max = global.SPY_mil_recon_factor_max_array^temp_SPY_mil_access_system_highest_idx }
 			#air_weather_penalty
-			clamp_variable = { var = ROOT.var_SPY_mil_air_weather_penalty max = global.SPY_mil_air_weather_penalty_max_array^temp_SPY_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_mil_air_weather_penalty max = global.SPY_mil_air_weather_penalty_max_array^temp_SPY_mil_access_system_highest_idx }
 			#spotting_chance
-			clamp_variable = { var = ROOT.var_SPY_mil_spotting_chance max = global.SPY_mil_spotting_chance_max_array^temp_SPY_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_mil_spotting_chance max = global.SPY_mil_spotting_chance_max_array^temp_SPY_mil_access_system_highest_idx }
 			#convoy_raiding_efficiency_factor
-			clamp_variable = { var = ROOT.var_SPY_mil_convoy_raiding_efficiency_factor max = global.SPY_mil_convoy_raiding_efficiency_factor_max_array^temp_SPY_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_mil_convoy_raiding_efficiency_factor max = global.SPY_mil_convoy_raiding_efficiency_factor_max_array^temp_SPY_mil_access_system_highest_idx }
 			#convoy_escort_efficiency
-			clamp_variable = { var = ROOT.var_SPY_mil_convoy_escort_efficiency max = global.SPY_mil_convoy_escort_efficiency_max_array^temp_SPY_mil_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_mil_convoy_escort_efficiency max = global.SPY_mil_convoy_escort_efficiency_max_array^temp_SPY_mil_access_system_highest_idx }
 		}
 	}
 }
@@ -1915,20 +1948,20 @@ add_access_SPY_civ_vars = {
 			}
 		}
 
-		set_temp_variable = { temp_SPY_civ_access_highest_idx = { value = temp_SPY_civ_access_system_highest_idx subtract = 161 } }
 		if = { limit = { check_variable = { ROOT.SPY_civ_access_array^num > 0 } }
+			subtract_from_temp_variable = { temp_SPY_civ_access_system_highest_idx = @SPY_sat_idx_base }
 			#research_speed_factor
-			clamp_variable = { var = ROOT.var_SPY_civ_research_speed_factor max = global.SPY_civ_research_speed_factor_max_array^temp_SPY_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_civ_research_speed_factor max = global.SPY_civ_research_speed_factor_max_array^temp_SPY_civ_access_system_highest_idx }
 			#civilian_intel_factor
-			clamp_variable = { var = ROOT.var_SPY_civ_civilian_intel_factor max = global.SPY_civ_civilian_intel_factor_max_array^temp_SPY_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_civ_civilian_intel_factor max = global.SPY_civ_civilian_intel_factor_max_array^temp_SPY_civ_access_system_highest_idx }
 			#army_intel_factor
-			clamp_variable = { var = ROOT.var_SPY_civ_army_intel_factor max = global.SPY_civ_army_intel_factor_max_array^temp_SPY_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_civ_army_intel_factor max = global.SPY_civ_army_intel_factor_max_array^temp_SPY_civ_access_system_highest_idx }
 			#navy_intel_factor
-			clamp_variable = { var = ROOT.var_SPY_civ_navy_intel_factor max = global.SPY_civ_navy_intel_factor_max_array^temp_SPY_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_civ_navy_intel_factor max = global.SPY_civ_navy_intel_factor_max_array^temp_SPY_civ_access_system_highest_idx }
 			#airforce_intel_factor
-			clamp_variable = { var = ROOT.var_SPY_civ_airforce_intel_factor max = global.SPY_civ_airforce_intel_factor_max_array^temp_SPY_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_civ_airforce_intel_factor max = global.SPY_civ_airforce_intel_factor_max_array^temp_SPY_civ_access_system_highest_idx }
 			#root_out_resistance_effectiveness_factor
-			clamp_variable = { var = ROOT.var_SPY_civ_root_out_resistance_effectiveness_factor max = global.SPY_civ_root_out_resistance_effectiveness_factor_max_array^temp_SPY_civ_access_highest_idx }
+			clamp_variable = { var = ROOT.var_SPY_civ_root_out_resistance_effectiveness_factor max = global.SPY_civ_root_out_resistance_effectiveness_factor_max_array^temp_SPY_civ_access_system_highest_idx }
 		}
 	}
 }
@@ -2288,52 +2321,48 @@ add_satellite_from_payload = {
 			if = {
 				limit = {
 					check_variable = { payload_id > 120 }
-					check_variable = { payload_id < 139 }
+					check_variable = { payload_id < 133 }
 				}
-				set_temp_variable = { sat_idx = { value = payload_id subtract = 121 } }
+				set_temp_variable = { sat_idx = { value = payload_id subtract = @GNSS_sat_idx_base } }
 				add_to_variable = { GNSS_satellite_array^sat_idx = 1 }
 				add_to_array = { orbit_array = payload_id }
-				set_variable = { var_orbit_display_ID = orbit_array^num }
-				subtract_from_variable = { var_orbit_display_ID = 1 }
+				set_variable = { var_orbit_display_ID = { value = orbit_array^num subtract = 1 } }
 				add_new_satellite_to_orbit = yes
 				add_to_temp_variable = { sat_active_total = 1 }
 			}
 			else_if = {
 				limit = {
 					check_variable = { payload_id > 140 }
-					check_variable = { payload_id < 159 }
+					check_variable = { payload_id < 153 }
 				}
-				set_temp_variable = { sat_idx = { value = payload_id subtract = 141 } }
+				set_temp_variable = { sat_idx = { value = payload_id subtract = @COM_sat_idx_base } }
 				add_to_variable = { COM_satellite_array^sat_idx = 1 }
 				add_to_array = { orbit_array = payload_id }
-				set_variable = { var_orbit_display_ID = orbit_array^num }
-				subtract_from_variable = { var_orbit_display_ID = 1 }
+				set_variable = { var_orbit_display_ID = { value = orbit_array^num subtract = 1 } }
 				add_new_satellite_to_orbit = yes
 				add_to_temp_variable = { sat_active_total = 1 }
 			}
 			else_if = {
 				limit = {
 					check_variable = { payload_id > 160 }
-					check_variable = { payload_id < 179 }
+					check_variable = { payload_id < 173 }
 				}
-				set_temp_variable = { sat_idx = { value = payload_id subtract = 161 } }
+				set_temp_variable = { sat_idx = { value = payload_id subtract = @SPY_sat_idx_base } }
 				add_to_variable = { SPY_satellite_array^sat_idx = 1 }
 				add_to_array = { orbit_array = payload_id }
-				set_variable = { var_orbit_display_ID = orbit_array^num }
-				subtract_from_variable = { var_orbit_display_ID = 1 }
+				set_variable = { var_orbit_display_ID = { value = orbit_array^num subtract = 1 } }
 				add_new_satellite_to_orbit = yes
 				add_to_temp_variable = { sat_active_total = 1 }
 			}
 			else_if = {
 				limit = {
 					check_variable = { payload_id > 180 }
-					check_variable = { payload_id < 199 }
+					check_variable = { payload_id < 191 }
 				}
-				set_temp_variable = { sat_idx = { value = payload_id subtract = 181 } }
+				set_temp_variable = { sat_idx = { value = payload_id subtract = @KILLSAT_sat_idx_base } }
 				add_to_variable = { KILL_satellite_array^sat_idx = 1 }
 				add_to_array = { orbit_array = payload_id }
-				set_variable = { var_orbit_display_ID = orbit_array^num }
-				subtract_from_variable = { var_orbit_display_ID = 1 }
+				set_variable = { var_orbit_display_ID = { value = orbit_array^num subtract = 1 } }
 				add_new_satellite_to_orbit = yes
 				add_to_temp_variable = { sat_active_total = 1 }
 			}
@@ -2712,33 +2741,33 @@ remove_satellite_from_system = {
 		if = {
 			limit = {
 				check_variable = { sat_id > 120 }
-				check_variable = { sat_id < 139 }
+				check_variable = { sat_id < 133 }
 			}
-			set_temp_variable = { sat_idx = { value = sat_id subtract = 121 } }
+			set_temp_variable = { sat_idx = { value = sat_id subtract = @GNSS_sat_idx_base } }
 			subtract_from_variable = { GNSS_satellite_array^sat_idx = 1 }
 		}
 		else_if = {
 			limit = {
 				check_variable = { sat_id > 140 }
-				check_variable = { sat_id < 159 }
+				check_variable = { sat_id < 153 }
 			}
-			set_temp_variable = { sat_idx = { value = sat_id subtract = 141 } }
+			set_temp_variable = { sat_idx = { value = sat_id subtract = @COM_sat_idx_base } }
 			subtract_from_variable = { COM_satellite_array^sat_idx = 1 }
 		}
 		else_if = {
 			limit = {
 				check_variable = { sat_id > 160 }
-				check_variable = { sat_id < 179 }
+				check_variable = { sat_id < 173 }
 			}
-			set_temp_variable = { sat_idx = { value = sat_id subtract = 161 } }
+			set_temp_variable = { sat_idx = { value = sat_id subtract = @SPY_sat_idx_base } }
 			subtract_from_variable = { SPY_satellite_array^sat_idx = 1 }
 		}
 		else_if = {
 			limit = {
 				check_variable = { sat_id > 180 }
-				check_variable = { sat_id < 199 }
+				check_variable = { sat_id < 191 }
 			}
-			set_temp_variable = { sat_idx = { value = sat_id subtract = 181 } }
+			set_temp_variable = { sat_idx = { value = sat_id subtract = @KILLSAT_sat_idx_base } }
 			subtract_from_variable = { KILL_satellite_array^sat_idx = 1 }
 		}
 	}
@@ -2749,8 +2778,7 @@ remove_deorbited_satellite_target_references = {
 		array = global.countries
 		value = targeting_country
 		var:targeting_country = {
-			set_temp_variable = { target_index = sat_target_array^num }
-			subtract_from_temp_variable = { target_index = 1 }
+			set_temp_variable = { target_index = { value = sat_target_array^num subtract = 1 } }
 			while_loop_effect = {
 				limit = { check_variable = { target_index > -1 } }
 				set_temp_variable = { target_slot = sat_target_array^target_index }
@@ -2855,8 +2883,8 @@ bulk_deorbit_selected_model = {
 		limit = {
 			check_variable = { MD_bulk_deorbit_count > 0 }
 			OR = {
-				check_variable = { MD_bulk_deorbit_model < 161 }
-				check_variable = { MD_bulk_deorbit_model > 178 }
+				check_variable = { MD_bulk_deorbit_model < @SPY_sat_idx_base }
+				check_variable = { MD_bulk_deorbit_model > @SPY_sat_idx_top }
 				check_variable = {
 					var = MD_bulk_deorbit_count
 					value = var_SPY_mission_num_available
@@ -2891,12 +2919,12 @@ advanced_filter_effect = {
 			limit = {
 				check_variable = { spec_filter = 0 }
 			}
-			set_variable = { spec_filter = 121 }
+			set_variable = { spec_filter = @GNSS_sat_idx_base }
 		} else = {
 			add_to_variable = { spec_filter = 1 }
 			if = {
 				limit = {
-					check_variable = { spec_filter > 138 }
+					check_variable = { spec_filter > @GNSS_sat_idx_top }
 				}
 				set_variable = { spec_filter = 0 }
 			}
@@ -2910,12 +2938,12 @@ advanced_filter_effect = {
 			limit = {
 				check_variable = { spec_filter = 0 }
 			}
-			set_variable = { spec_filter = 141 }
+			set_variable = { spec_filter = @COM_sat_idx_base }
 		} else = {
 			add_to_variable = { spec_filter = 1 }
 			if = {
 				limit = {
-					check_variable = { spec_filter > 158 }
+					check_variable = { spec_filter > @COM_sat_idx_top }
 				}
 				set_variable = { spec_filter = 0 }
 			}
@@ -2929,12 +2957,12 @@ advanced_filter_effect = {
 			limit = {
 				check_variable = { spec_filter = 0 }
 			}
-			set_variable = { spec_filter = 161 }
+			set_variable = { spec_filter = @SPY_sat_idx_base }
 		} else = {
 			add_to_variable = { spec_filter = 1 }
 			if = {
 				limit = {
-					check_variable = { spec_filter > 178 }
+					check_variable = { spec_filter > @SPY_sat_idx_top }
 				}
 				set_variable = { spec_filter = 0 }
 			}
