@@ -23,6 +23,22 @@ def test_scripted_loc_keeps_and_reports_undefined_bracketed_invocation(tmp_path)
     assert "missingnestedloc" in validator._issues[0].message.lower()
 
 
+def test_gfx_icon_check_accepts_bare_sprite_names(tmp_path):
+    interface = tmp_path / "interface"
+    interface.mkdir()
+    (interface / "icons.gfx").write_text(
+        "spriteTypes = {\n\tspriteType = { name = GFX_bare_icon }\n}\n"
+    )
+    loc_dir = tmp_path / "common" / "scripted_localisation"
+    loc_dir.mkdir(parents=True)
+    (loc_dir / "icons.txt").write_text("localization_key = GFX_bare_icon\n")
+
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_gfx_icons()
+
+    assert validator._issues == []
+
+
 def test_digit_prefixed_defined_loc_is_tracked_via_gui(tmp_path):
     gui_dir = tmp_path / "interface"
     gui_dir.mkdir()
