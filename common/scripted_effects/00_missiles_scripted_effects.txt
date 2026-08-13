@@ -2245,60 +2245,84 @@ add_satellite_from_payload = {
 	resize_array = { COM_satellite_array = 12 }
 	resize_array = { SPY_satellite_array = 12 }
 	resize_array = { KILL_satellite_array = 10 }
+	set_satellites_gui = yes
+	set_temp_variable = {
+		sat_active_total = {
+			value = var_GNSS_sat_total
+			add = var_COM_sat_total
+			add = var_SPY_sat_total
+			add = var_KILL_sat_total
+		}
+	}
+	set_temp_variable = { sat_limit_reported = 0 }
 
 	for_each_loop = {
 		array = payload_array
 		set_temp_variable = { payload_id = payload_array^i }
 		if = {
-			limit = {
-				check_variable = { payload_id > 120 }
-				check_variable = { payload_id < 139 }
+			limit = { check_variable = { sat_active_total < 3000 } }
+			if = {
+				limit = {
+					check_variable = { payload_id > 120 }
+					check_variable = { payload_id < 139 }
+				}
+				set_temp_variable = { sat_idx = { value = payload_id subtract = 121 } }
+				add_to_variable = { GNSS_satellite_array^sat_idx = 1 }
+				add_to_array = { orbit_array = payload_id }
+				set_variable = { var_orbit_display_ID = orbit_array^num }
+				subtract_from_variable = { var_orbit_display_ID = 1 }
+				add_new_satellite_to_orbit = yes
+				add_to_temp_variable = { sat_active_total = 1 }
 			}
-			set_temp_variable = { sat_idx = { value = payload_id subtract = 121 } }
-			add_to_variable = { GNSS_satellite_array^sat_idx = 1 }
-			add_to_array = { orbit_array = payload_id }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
+			else_if = {
+				limit = {
+					check_variable = { payload_id > 140 }
+					check_variable = { payload_id < 159 }
+				}
+				set_temp_variable = { sat_idx = { value = payload_id subtract = 141 } }
+				add_to_variable = { COM_satellite_array^sat_idx = 1 }
+				add_to_array = { orbit_array = payload_id }
+				set_variable = { var_orbit_display_ID = orbit_array^num }
+				subtract_from_variable = { var_orbit_display_ID = 1 }
+				add_new_satellite_to_orbit = yes
+				add_to_temp_variable = { sat_active_total = 1 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { payload_id > 160 }
+					check_variable = { payload_id < 179 }
+				}
+				set_temp_variable = { sat_idx = { value = payload_id subtract = 161 } }
+				add_to_variable = { SPY_satellite_array^sat_idx = 1 }
+				add_to_array = { orbit_array = payload_id }
+				set_variable = { var_orbit_display_ID = orbit_array^num }
+				subtract_from_variable = { var_orbit_display_ID = 1 }
+				add_new_satellite_to_orbit = yes
+				add_to_temp_variable = { sat_active_total = 1 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { payload_id > 180 }
+					check_variable = { payload_id < 199 }
+				}
+				set_temp_variable = { sat_idx = { value = payload_id subtract = 181 } }
+				add_to_variable = { KILL_satellite_array^sat_idx = 1 }
+				add_to_array = { orbit_array = payload_id }
+				set_variable = { var_orbit_display_ID = orbit_array^num }
+				subtract_from_variable = { var_orbit_display_ID = 1 }
+				add_new_satellite_to_orbit = yes
+				add_to_temp_variable = { sat_active_total = 1 }
+			}
 		}
 		else_if = {
-			limit = {
-				check_variable = { payload_id > 140 }
-				check_variable = { payload_id < 159 }
-			}
-			set_temp_variable = { sat_idx = { value = payload_id subtract = 141 } }
-			add_to_variable = { COM_satellite_array^sat_idx = 1 }
-			add_to_array = { orbit_array = payload_id }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		else_if = {
-			limit = {
-				check_variable = { payload_id > 160 }
-				check_variable = { payload_id < 179 }
-			}
-			set_temp_variable = { sat_idx = { value = payload_id subtract = 161 } }
-			add_to_variable = { SPY_satellite_array^sat_idx = 1 }
-			add_to_array = { orbit_array = payload_id }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		else_if = {
-			limit = {
-				check_variable = { payload_id > 180 }
-				check_variable = { payload_id < 199 }
-			}
-			set_temp_variable = { sat_idx = { value = payload_id subtract = 181 } }
-			add_to_variable = { KILL_satellite_array^sat_idx = 1 }
-			add_to_array = { orbit_array = payload_id }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
+			limit = { check_variable = { sat_limit_reported = 0 } }
+			ROOT = { news_event = satellites.8 }
+			set_temp_variable = { sat_limit_reported = 1 }
 		}
 	}
+	set_satellites_gui = yes
 	clear_array = payload_array
+	refresh_bulk_deorbit_state = yes
 }
 
 ###################################
@@ -2696,6 +2720,144 @@ remove_satellite_from_system = {
 	}
 }
 
+remove_deorbited_satellite_target_references = {
+	for_each_loop = {
+		array = global.countries
+		value = targeting_country
+		var:targeting_country = {
+			set_temp_variable = { target_index = sat_target_array^num }
+			subtract_from_temp_variable = { target_index = 1 }
+			while_loop_effect = {
+				limit = { check_variable = { target_index > -1 } }
+				set_temp_variable = { target_slot = sat_target_array^target_index }
+				if = {
+					limit = {
+						check_variable = { sat_target_TAG_array^target_index = ROOT.id }
+						OR = {
+							AND = {
+								check_variable = { ROOT.MD_remove_all_zeroed_deorbit_targets = 0 }
+								check_variable = { target_slot = ROOT.var_sat_ID }
+							}
+							AND = {
+								check_variable = { ROOT.MD_remove_all_zeroed_deorbit_targets = 1 }
+								check_variable = { ROOT.orbit_array^target_slot = 0 }
+							}
+						}
+					}
+					remove_from_array = { array = sat_target_TAG_array index = target_index }
+					remove_from_array = { array = sat_target_array index = target_index }
+				}
+				subtract_from_temp_variable = { target_index = 1 }
+			}
+		}
+	}
+}
+
+remove_deorbited_satellite_target_reference = {
+	set_temp_variable = { MD_remove_all_zeroed_deorbit_targets = 0 }
+	remove_deorbited_satellite_target_references = yes
+}
+
+remove_bulk_deorbited_satellite_target_references = {
+	set_temp_variable = { MD_remove_all_zeroed_deorbit_targets = 1 }
+	remove_deorbited_satellite_target_references = yes
+}
+
+clear_bulk_deorbit_state = {
+	clear_variable = MD_bulk_deorbit_model
+	clear_variable = MD_bulk_deorbit_count
+	clr_country_flag = MD_confirm_bulk_deorbit_satellites
+}
+
+clear_satellite_deorbit_state = {
+	clear_variable = var_deorbit_sat_ID
+	clr_country_flag = MD_confirm_deorbit_satellite
+	clear_bulk_deorbit_state = yes
+	clr_country_flag = MD_satellite_orbit_selection_active
+}
+
+start_satellite_deorbit_selection = {
+	clear_satellite_deorbit_state = yes
+	set_country_flag = MD_satellite_orbit_selection_active
+}
+
+finish_satellite_deorbit = {
+	clear_variable = var_selected_sat
+	clear_satellite_deorbit_state = yes
+	country_event = satellites.9
+}
+
+refresh_bulk_deorbit_state = {
+	if = {
+		limit = { has_country_flag = MD_confirm_bulk_deorbit_satellites }
+		set_variable = { MD_bulk_deorbit_count = 0 }
+		for_each_loop = {
+			array = orbit_array
+			if = {
+				limit = {
+					check_variable = { v = MD_bulk_deorbit_model }
+					check_variable = { v > 0 }
+				}
+				add_to_variable = { MD_bulk_deorbit_count = 1 }
+			}
+		}
+		if = {
+			limit = { check_variable = { MD_bulk_deorbit_count < 1 } }
+			clear_bulk_deorbit_state = yes
+		}
+		international_systems_update = yes
+	}
+}
+
+deorbit_selected_satellite = {
+	set_variable = { tempTAG = ROOT.id }
+	set_variable = { var_sat_ID = var_deorbit_sat_ID }
+	remove_satellite_from_system = yes
+	remove_satellite_from_orbit = yes
+	remove_deorbited_satellite_target_reference = yes
+	finish_satellite_deorbit = yes
+}
+
+stage_bulk_deorbit_selected_model = {
+	set_variable = { MD_bulk_deorbit_model = orbit_array^var_selected_sat }
+	set_country_flag = MD_confirm_bulk_deorbit_satellites
+	clr_country_flag = MD_confirm_deorbit_satellite
+	refresh_bulk_deorbit_state = yes
+}
+
+bulk_deorbit_selected_model = {
+	refresh_bulk_deorbit_state = yes
+	if = {
+		limit = {
+			check_variable = { MD_bulk_deorbit_count > 0 }
+			OR = {
+				check_variable = { MD_bulk_deorbit_model < 161 }
+				check_variable = { MD_bulk_deorbit_model > 178 }
+				check_variable = {
+					var = MD_bulk_deorbit_count
+					value = var_SPY_mission_num_available
+					compare = less_than_or_equals
+				}
+			}
+		}
+		set_variable = { tempTAG = ROOT.id }
+		for_each_loop = {
+			array = orbit_array
+			if = {
+				limit = {
+					check_variable = { v = MD_bulk_deorbit_model }
+					check_variable = { v > 0 }
+				}
+				set_variable = { var_sat_ID = i }
+				remove_satellite_from_system = yes
+				remove_satellite_from_orbit = yes
+			}
+		}
+		remove_bulk_deorbited_satellite_target_references = yes
+	}
+	finish_satellite_deorbit = yes
+}
+
 advanced_filter_effect = {
 	if = {
 		limit = {
@@ -3058,6 +3220,7 @@ anti_satellite_weapon_use = {
 			}
 		}
 		var:tempTAG = {
+			refresh_bulk_deorbit_state = yes
 			country_event = satellites.9
 		}
 	}
@@ -3097,6 +3260,7 @@ remove_killsat_used = {
 	}
 	set_satellites_gui = yes
 	set_variable = { var_KILLSAT_orbit = KILL_satellite_array^var_KILLSAT_type }
+	refresh_bulk_deorbit_state = yes
 }
 
 ### right container # sat access arrays
