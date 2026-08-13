@@ -28,6 +28,7 @@ from pathlib import Path
 import pytest
 import yaml
 from precommit_validate import _REGISTRY
+from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_oob_units import _CREATE_UNIT_SOURCE_PATTERNS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -282,9 +283,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert (
-        not gone
-    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    assert not gone, (
+        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    )
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED
@@ -332,9 +333,9 @@ def test_validator_cache_restore_is_source_hash_scoped():
                     restore_steps.extend(
                         step.get("with", {}).get("restore-keys", "").splitlines()
                     )
-        assert (
-            restore_steps
-        ), f"No validator cache restore keys found in {workflow.name}"
+        assert restore_steps, (
+            f"No validator cache restore keys found in {workflow.name}"
+        )
         assert all(key.startswith(expected_prefix) for key in restore_steps), (
             f"{workflow.name} has a validator cache fallback outside the current "
             "validator source-hash generation"
@@ -355,12 +356,12 @@ def test_nightly_keys_the_bundle_on_the_live_base_tip():
     script = "\n".join(
         line for line in step["run"].splitlines() if not line.lstrip().startswith("#")
     )
-    assert (
-        "commits/main" in script
-    ), "the nightly must resolve main's live head for base_sha"
-    assert (
-        ".base.sha" not in script
-    ), "the PR list's .base.sha does not track main, so it cannot key the bundle"
+    assert "commits/main" in script, (
+        "the nightly must resolve main's live head for base_sha"
+    )
+    assert ".base.sha" not in script, (
+        "the PR list's .base.sha does not track main, so it cannot key the bundle"
+    )
 
 
 def test_mio_validator_runs_for_localisation_changes():
@@ -478,9 +479,9 @@ def test_ci_run_steps_default_to_strict():
             for step in workflow["jobs"][job]["steps"]
             if step.get("name") == "Run validation"
         )
-        assert (
-            'matrix.validator.strict }}" != "false"' in run
-        ), f"{job}'s Run step must default to --strict when `strict:` is absent."
+        assert 'matrix.validator.strict }}" != "false"' in run, (
+            f"{job}'s Run step must default to --strict when `strict:` is absent."
+        )
 
 
 def test_oob_routes_cover_every_create_unit_source():
@@ -491,6 +492,11 @@ def test_oob_routes_cover_every_create_unit_source():
     assert {d + "**" for d in dirs} <= set(filters["oob"])
     spec = next(s for s in _REGISTRY if s.script == "validate_oob_units")
     assert dirs <= {prefix for prefix, _ in spec.rules}
+
+
+def test_decision_filter_covers_every_reference_source():
+    _, filters = _filter_definitions()
+    assert set(_DECISION_REFERENCE_SOURCE_PATTERNS) <= set(filters["decisions"])
 
 
 def test_gfx_reference_validator_runs_for_all_reference_sources():
