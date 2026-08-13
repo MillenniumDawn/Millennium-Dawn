@@ -89,6 +89,8 @@ Do not copy paid-DLC playlist or asset files into MD under their vanilla filenam
 
 Leave paid-DLC music files to the game. Their playlists and assets then load only for owners, while players without the DLC receive no missing-music errors. MD may adapt playlists from integrated DLC because those assets are available to every player.
 
+If a paid-DLC playlist references vanilla scripted triggers or focus IDs removed by an MD `replace_path`, preserve those identifiers in an MD compatibility file. Scripted triggers should retain their vanilla conditions; focus IDs should be registered as unattached shared focuses so they cannot alter any playable tree.
+
 ## Adding a new track
 
 ### Step 1 — Register in a music definition file
