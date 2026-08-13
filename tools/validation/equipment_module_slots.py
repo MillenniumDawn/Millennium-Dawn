@@ -1,4 +1,4 @@
-"""Cross-check ship variant modules against ship-hull slot rules.
+"""Cross-check equipment variant modules against hull slot rules.
 
 The engine silently drops a module assigned to a slot that does not exist on the
 hull, or whose module category is not in that slot's ``allowed_module_categories``
@@ -6,15 +6,26 @@ hull, or whose module category is not in that slot's ``allowed_module_categories
 which fixed ~200 screen-hull fire-control modules pointing at the plain
 ``module_fire_control_system_category`` where the slot only accepts the screen
 category). Slot rules differ per hull, so every variant is validated against the
-hull its ``type`` names.
+hull its ``type`` names. Ship hulls, tank chassis and plane airframes all follow
+the same rules, so "hull" here means any of the three.
 
 A slot value in ``target_variant.modules`` references either a concrete module
 (resolved to its ``category``) or a category token directly (the
 ``{ module = <category> upgrade = current }`` form the generic designs use, which
 means "current best module of this category"). Both are legal references; the
 category — resolved or literal — must appear in the slot's allowed set.
+
+Three things have to be resolved before a slot's allowed set is known. A module's
+own ``allowed_module_categories`` is keyed by slot and widens that slot while the
+module is equipped, which is how a tank's gun picks its own ammunition. An empty
+``allowed_module_categories`` on the hull is therefore not the same as an absent
+one — absent is unconstrained, empty means the modules decide. And
+``duplicate_archetypes`` clones whole families at load, so hulls like
+``medium_tank_destroyer_chassis_2`` exist in game while appearing in no file.
 """
 
+import glob
+import logging
 import os
 import re
 import sys
@@ -25,9 +36,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from shared_utils import strip_comments, strip_inline_comment
 
+# Ship hulls live only in files carrying one of these engine hull-type markers,
+# so the ship/land-air split needs no per-hull annotation.
+_SHIP_HULL_MARKERS = ("screen_ship", "capital_ship", "= submarine", "= carrier")
+
 _NAME_BLOCK_RE = re.compile(r"([A-Za-z_][\w.]*)\s*=\s*\{")
 _ASSIGN_RE = re.compile(r"([A-Za-z_]\w*)\s*=\s*")
-_CATEGORY_TOKEN_RE = re.compile(r"module_\w+")
+_CATEGORY_TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
 
 
 def _match_brace(text: str, open_idx: int) -> int:
@@ -132,7 +147,12 @@ def _parse_slot_categories(
     text: str, lo: int, hi: int
 ) -> Dict[str, Optional[Set[str]]]:
     """slot name -> allowed category set (None when the slot declares no
-    ``allowed_module_categories``, meaning unconstrained)."""
+    ``allowed_module_categories``, meaning unconstrained).
+
+    An empty block is not the same as an absent one: it means the hull permits
+    nothing on its own and the slot is filled entirely by what the equipped
+    modules unlock, which is how a tank's gun picks its own ammunition.
+    """
     slots: Dict[str, Optional[Set[str]]] = {}
     for slot, blo, bhi, _ in _iter_blocks(text, lo, hi):
         cats: Optional[Set[str]] = None
@@ -150,8 +170,8 @@ class _Hull:
     inherit: bool
 
 
-def parse_ship_hulls(text: str) -> Dict[str, _Hull]:
-    """Parse a ship-equipment file into ``{hull: _Hull}``. Hulls with
+def parse_hulls(text: str) -> Dict[str, _Hull]:
+    """Parse an equipment file into ``{hull: _Hull}``. Hulls with
     ``module_slots = inherit`` carry no slots until resolved against their
     archetype (see :func:`resolve_hull_slots`)."""
     hulls: Dict[str, _Hull] = {}
@@ -179,6 +199,25 @@ def parse_ship_hulls(text: str) -> Dict[str, _Hull]:
                 continue
             hulls[hull] = _Hull(slots=slots, archetype=arch, inherit=inherit)
     return hulls
+
+
+def parse_duplicate_archetypes(text: str) -> Dict[str, str]:
+    """generated archetype name -> the archetype it copies.
+
+    ``duplicate_archetypes`` clones a whole family at load: the tank-destroyer
+    and SPAA chassis are copies of ``medium_tank_chassis``, so
+    ``medium_tank_destroyer_chassis_2`` exists in game with the slots of
+    ``medium_tank_chassis_2`` while appearing in no equipment file.
+    """
+    dups: Dict[str, str] = {}
+    for name, blo, bhi, _ in _iter_blocks(text, 0, len(text)):
+        if name != "duplicate_archetypes":
+            continue
+        for dup, dlo, dhi, _ in _iter_blocks(text, blo, bhi):
+            m = re.search(r"\barchetype\s*=\s*(\w+)", _depth0_text(text, dlo, dhi))
+            if m:
+                dups[dup] = m.group(1)
+    return dups
 
 
 def resolve_hull_slots(
@@ -222,10 +261,34 @@ def _top_level_category(text: str, lo: int, hi: int) -> Optional[str]:
     return None
 
 
-def parse_ship_modules(text: str) -> Dict[str, str]:
-    """module name -> its top-level ``category`` (nested ``module_category``
-    keys inside ``can_convert_from`` are ignored)."""
+def _module_slot_unlocks(text: str, lo: int, hi: int) -> Dict[str, Set[str]]:
+    """slot -> categories this module adds to that slot while it is equipped.
+
+    A module's own ``allowed_module_categories`` is keyed by slot, unlike a
+    hull's flat token list: ``tank_base_tank_turret`` is what lets NERA armor
+    into ``armor_type_slot``, and the turret-less designs cannot use it.
+    """
+    unlocks: Dict[str, Set[str]] = {}
+    for key, blo, bhi, _ in _iter_blocks(text, lo, hi):
+        if key != "allowed_module_categories":
+            continue
+        for slot, slo, shi, _ in _iter_blocks(text, blo, bhi):
+            unlocks.setdefault(slot, set()).update(
+                _CATEGORY_TOKEN_RE.findall(text[slo:shi])
+            )
+    return unlocks
+
+
+def parse_equipment_modules(
+    text: str,
+) -> Tuple[Dict[str, str], Dict[str, Dict[str, Set[str]]]]:
+    """(module -> top-level ``category``, module -> slot unlocks).
+
+    Nested ``module_category`` keys inside ``can_convert_from`` and
+    ``module_count_limit`` are ignored — neither says what the module is.
+    """
     mods: Dict[str, str] = {}
+    unlocks: Dict[str, Dict[str, Set[str]]] = {}
     n = len(text)
     containers = [
         (blo, bhi)
@@ -237,9 +300,26 @@ def parse_ship_modules(text: str) -> Dict[str, str]:
     for lo, hi in containers:
         for mod, mlo, mhi, _ in _iter_blocks(text, lo, hi):
             cat = _top_level_category(text, mlo, mhi)
-            if cat:
-                mods[mod] = cat
-    return mods
+            if not cat:
+                continue
+            mods[mod] = cat
+            slot_unlocks = _module_slot_unlocks(text, mlo, mhi)
+            if slot_unlocks:
+                unlocks[mod] = slot_unlocks
+    return mods, unlocks
+
+
+@dataclass
+class EquipmentIndex:
+    """Everything a variant check needs about the equipment tree."""
+
+    hull_slots: Dict[str, Optional[Dict[str, Optional[Set[str]]]]]
+    module_category: Dict[str, str]
+    known_categories: Set[str]
+    # Keyed by module *and* by category: a generic AI design names the category
+    # it wants the best available of, so anything in it may end up equipped.
+    slot_unlocks: Dict[str, Dict[str, Set[str]]]
+    ship_hulls: Set[str]
 
 
 # ---- variant module assignments -------------------------------------------
@@ -304,25 +384,23 @@ class Finding:
     line: int
     kind: str  # unknown_hull | unknown_slot | unknown_module | category_mismatch
     message: str
+    hull: str = ""
 
 
 def _check_variant(
     text: str,
     vlo: int,
     vhi: int,
-    hull_slots: Dict[str, Optional[Dict[str, Optional[Set[str]]]]],
-    module_category: Dict[str, str],
-    known_categories: Set[str],
+    index: EquipmentIndex,
     findings: List[Finding],
     *,
-    naval_only: bool,
+    require_known_hull: bool,
 ) -> None:
     """Validate one variant body's ``modules`` block against its hull's slots.
 
-    With *naval_only* the caller has already established that the variant is a
-    ship, so an unresolvable ``type`` is a real error. Without it the variant
-    may equally be a tank or plane design, whose chassis/airframe is absent
-    from the ship-hull index by construction, so those are skipped instead.
+    With *require_known_hull* an unresolvable ``type`` is a real error. Without
+    it the variant is skipped, which is what a caller indexing only part of the
+    equipment tree needs.
     """
     hull = _scalar(text, vlo, vhi, "type")
     mods_span = None
@@ -332,20 +410,31 @@ def _check_variant(
             break
     if mods_span is None or hull is None:
         return
-    if hull not in hull_slots:
-        if naval_only:
+    if hull not in index.hull_slots:
+        if require_known_hull:
             findings.append(
                 Finding(
                     text.count("\n", 0, mods_span[0]) + 1,
                     "unknown_hull",
-                    f"variant type '{hull}' is not a defined ship hull",
+                    f"variant type '{hull}' is not a defined hull",
+                    hull,
                 )
             )
         return
-    slots = hull_slots[hull]
+    slots = index.hull_slots[hull]
     if slots is None:
         return
-    for slot, refs, off in _parse_module_assignments(text, *mods_span):
+
+    assignments = _parse_module_assignments(text, *mods_span)
+    # Modules widen each other's slots, so the whole design has to be read
+    # before any one assignment can be judged.
+    unlocked: Dict[str, Set[str]] = {}
+    for _, refs, _ in assignments:
+        for ref in refs:
+            for slot, cats in index.slot_unlocks.get(ref, {}).items():
+                unlocked.setdefault(slot, set()).update(cats)
+
+    for slot, refs, off in assignments:
         line = text.count("\n", 0, off) + 1
         if slot not in slots:
             findings.append(
@@ -354,16 +443,19 @@ def _check_variant(
                     "unknown_slot",
                     f"hull '{hull}' has no slot '{slot}' — module "
                     f"assignment is silently ignored",
+                    hull,
                 )
             )
             continue
         allowed = slots[slot]
+        if allowed is not None and slot in unlocked:
+            allowed = allowed | unlocked[slot]
         for ref in refs:
             if ref == "empty":
                 continue
-            if ref in module_category:
-                eff = module_category[ref]
-            elif ref in known_categories:
+            if ref in index.module_category:
+                eff = index.module_category[ref]
+            elif ref in index.known_categories:
                 eff = ref
             else:
                 findings.append(
@@ -372,6 +464,7 @@ def _check_variant(
                         "unknown_module",
                         f"'{ref}' in slot '{slot}' on hull '{hull}' is "
                         f"neither a defined module nor a module category",
+                        hull,
                     )
                 )
                 continue
@@ -383,69 +476,45 @@ def _check_variant(
                         f"'{ref}' (category {eff}) is not allowed in slot "
                         f"'{slot}' on hull '{hull}'; that slot accepts "
                         f"{{{', '.join(sorted(allowed))}}}",
+                        hull,
                     )
                 )
 
 
-def check_naval_variants(
-    content: str,
-    hull_slots: Dict[str, Optional[Dict[str, Optional[Set[str]]]]],
-    module_category: Dict[str, str],
-    known_categories: Set[str],
+def _check_all(
+    content: str, index: EquipmentIndex, block: str, *, require_known_hull: bool
 ) -> List[Finding]:
-    """Validate every ``category = naval`` variant's module assignments against
-    its hull's slot rules. Returns findings sorted by line."""
     text = blank_comments(content)
     findings: List[Finding] = []
-    for tname, tlo, thi, _ in _iter_blocks(text, 0, len(text)):
-        if _scalar(text, tlo, thi, "category") != "naval":
-            continue
-        for vlo, vhi in _iter_named_blocks(text, tlo, thi, "target_variant"):
-            _check_variant(
-                text,
-                vlo,
-                vhi,
-                hull_slots,
-                module_category,
-                known_categories,
-                findings,
-                naval_only=True,
-            )
-    findings.sort(key=lambda f: f.line)
-    return findings
-
-
-def check_created_variants(
-    content: str,
-    hull_slots: Dict[str, Optional[Dict[str, Optional[Set[str]]]]],
-    module_category: Dict[str, str],
-    known_categories: Set[str],
-) -> List[Finding]:
-    """Same slot/category check for ``create_equipment_variant`` effects, which
-    are what focus rewards, events, decisions and history files use.
-
-    These blocks sit at arbitrary depth inside effect scopes and carry no
-    ``category`` marker, so a variant is treated as naval exactly when its
-    ``type`` resolves to a known ship hull. Tank and plane designs fall out
-    here; validating their slots needs a chassis/airframe index, and their
-    ``allowed_module_categories`` blocks are frequently empty (unconstrained),
-    which this resolver would read as "nothing permitted".
-    """
-    text = blank_comments(content)
-    findings: List[Finding] = []
-    for vlo, vhi in _iter_named_blocks(text, 0, len(text), "create_equipment_variant"):
+    for vlo, vhi in _iter_named_blocks(text, 0, len(text), block):
         _check_variant(
-            text,
-            vlo,
-            vhi,
-            hull_slots,
-            module_category,
-            known_categories,
-            findings,
-            naval_only=False,
+            text, vlo, vhi, index, findings, require_known_hull=require_known_hull
         )
     findings.sort(key=lambda f: f.line)
     return findings
+
+
+def check_target_variants(content: str, index: EquipmentIndex) -> List[Finding]:
+    """Validate every ``target_variant`` design's module assignments against its
+    hull's slot rules. Returns findings sorted by line.
+
+    These are AI equipment templates, whose ``type`` always names a hull the mod
+    defines, so an unresolvable one is reported rather than skipped.
+    """
+    return _check_all(content, index, "target_variant", require_known_hull=True)
+
+
+def check_created_variants(content: str, index: EquipmentIndex) -> List[Finding]:
+    """Same slot/category check for ``create_equipment_variant`` effects, which
+    are what focus rewards, events, decisions and history files use.
+
+    These blocks sit at arbitrary depth inside effect scopes. A variant whose
+    ``type`` is not indexed is skipped: unlike an AI template, the effect is also
+    used for equipment archetypes that declare no ``module_slots`` at all.
+    """
+    return _check_all(
+        content, index, "create_equipment_variant", require_known_hull=False
+    )
 
 
 def parse_variant_names(content: str) -> List[Tuple[str, str, int]]:
@@ -464,33 +533,84 @@ def parse_variant_names(content: str) -> List[Tuple[str, str, int]]:
     return out
 
 
-def build_indexes(
-    hull_texts: List[str], module_texts: List[str]
-) -> Tuple[
-    Dict[str, Optional[Dict[str, Optional[Set[str]]]]], Dict[str, str], Set[str]
-]:
-    """Build (resolved hull->slots, module->category, known category names) from
-    the raw text of the ship-hull and module definition files."""
-    hulls: Dict[str, _Hull] = {}
-    for text in hull_texts:
-        hulls.update(parse_ship_hulls(strip_comments(text)))
-    resolved = resolve_hull_slots(hulls)
+def _add_duplicate_hulls(
+    resolved: Dict[str, Optional[Dict[str, Optional[Set[str]]]]],
+    duplicates: Dict[str, str],
+) -> None:
+    """Register each cloned archetype and its whole numbered family.
 
-    hull_categories: Set[str] = set()
-    for slots in resolved.values():
-        if not slots:
-            continue
-        for cats in slots.values():
-            if cats:
-                hull_categories.update(cats)
+    The clone takes the source's name suffix, so ``medium_tank_chassis_2``
+    becomes ``medium_tank_destroyer_chassis_2``. An explicit definition of the
+    same name always wins.
+    """
+    for dup, src in duplicates.items():
+        if resolved.get(src) is not None:
+            resolved.setdefault(dup, resolved[src])
+        prefix = src + "_"
+        for name, slots in list(resolved.items()):
+            if slots is not None and name.startswith(prefix):
+                resolved.setdefault(dup + name[len(src) :], slots)
+
+
+def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIndex:
+    """Build the index from the raw text of the hull and module definition files."""
+    hulls: Dict[str, _Hull] = {}
+    duplicates: Dict[str, str] = {}
+    ship_hulls: Set[str] = set()
+    for text in hull_texts:
+        stripped = strip_comments(text)
+        parsed = parse_hulls(stripped)
+        hulls.update(parsed)
+        duplicates.update(parse_duplicate_archetypes(stripped))
+        if any(marker in text for marker in _SHIP_HULL_MARKERS):
+            ship_hulls.update(parsed)
+    resolved = resolve_hull_slots(hulls)
+    _add_duplicate_hulls(resolved, duplicates)
 
     module_category: Dict[str, str] = {}
+    module_unlocks: Dict[str, Dict[str, Set[str]]] = {}
     for text in module_texts:
-        # Ship categories only appear in the ship module file, so a cheap
-        # substring test skips parsing the tank/plane/arty module trees.
-        if not any(c in text for c in hull_categories):
-            continue
-        module_category.update(parse_ship_modules(strip_comments(text)))
+        mods, unlocks = parse_equipment_modules(strip_comments(text))
+        module_category.update(mods)
+        module_unlocks.update(unlocks)
 
-    known_categories = set(module_category.values()) | hull_categories
-    return resolved, module_category, known_categories
+    slot_unlocks: Dict[str, Dict[str, Set[str]]] = {}
+    categories: Set[str] = set(module_category.values())
+    for mod, per_slot in module_unlocks.items():
+        for ref in (mod, module_category[mod]):
+            by_slot = slot_unlocks.setdefault(ref, {})
+            for slot, cats in per_slot.items():
+                by_slot.setdefault(slot, set()).update(cats)
+                categories.update(cats)
+
+    for slots in resolved.values():
+        for slot_categories in (slots or {}).values():
+            if slot_categories:
+                categories.update(slot_categories)
+    return EquipmentIndex(
+        resolved, module_category, categories, slot_unlocks, ship_hulls
+    )
+
+
+def _read_text(filepath: str) -> str:
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            return f.read()
+    except OSError:
+        logging.warning(
+            "Could not read equipment file %s; its hulls/modules are not indexed",
+            filepath,
+        )
+        return ""
+
+
+def build_equipment_index(units_dir: str) -> EquipmentIndex:
+    """Index every hull and module under *units_dir* (``common/units/equipment``)."""
+    hull_texts = [
+        _read_text(fp) for fp in sorted(glob.iglob(os.path.join(units_dir, "*.txt")))
+    ]
+    module_texts = [
+        _read_text(fp)
+        for fp in sorted(glob.iglob(os.path.join(units_dir, "modules", "*.txt")))
+    ]
+    return build_indexes(hull_texts, module_texts)
