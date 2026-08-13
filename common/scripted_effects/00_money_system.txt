@@ -6750,39 +6750,46 @@ calculate_united_nations_base_budget = {
 			add_to_variable = { global.un_operating_budget_base = united_nations_base_expenses }
 			add_to_array = { global.un_operating_budget_contributors = THIS }
 
-			#Add inflation *after* application, to represnt our inflated money being worth less
-			#This means less money goes to the UN, while we have to pay *more* to represent less value
-			set_temp_variable = { un_expenses_inflation = { value = 1 add = modifier@inflation_cost_multiplier_modifier } }
-			multiply_variable = { united_nations_base_expenses = un_expenses_inflation }
-
-			set_variable = { united_nations_expenses = united_nations_base_expenses }
+			set_variable = {
+				united_nations_expenses = {
+					value = united_nations_base_expenses
+					multiply = { value = 1 add = modifier@inflation_cost_multiplier_modifier }
+				}
+			}
 			set_variable = { united_nations_old_aid_expenses = 0 }
 		}
 
-		add_to_variable = { global.target_const_speed_mod = modifier@production_speed_buildings_factor }
-		add_to_variable = { global.target_research_speed_mod = modifier@research_speed_factor }
-		add_to_variable = { global.target_civ_count = industrial_complex_total }
+		set_temp_variable = { unsubsidized_const_speed = modifier@production_speed_buildings_factor }
+		set_temp_variable = { unsubsidized_research_speed = modifier@research_speed_factor }
+		set_temp_variable = { unsubsidized_civ_count = industrial_complex_total }
+		if = {
+			limit = { has_country_flag = is_getting_ido_subsidies }
+			subtract_from_temp_variable = { unsubsidized_const_speed = un_ido_construction_speed_var }
+			subtract_from_temp_variable = { unsubsidized_civ_count = un_ido_old_building_count }
+		}
+		if = {
+			limit = { has_country_flag = is_getting_esco_subsidies }
+			subtract_from_temp_variable = { unsubsidized_research_speed = un_esco_research_speed_var }
+		}
+
+		add_to_variable = { global.target_const_speed_mod = unsubsidized_const_speed }
+		add_to_variable = { global.target_research_speed_mod = unsubsidized_research_speed }
+		add_to_variable = { global.target_civ_count = unsubsidized_civ_count }
 		add_to_variable = { global.average_gdp_capita = gdp_per_capita }
 
 		if = {
-			limit = {
-				check_variable = { peak_const_speed_mod < modifier@production_speed_buildings_factor }
-			}
-			set_temp_variable = { peak_const_speed_mod = modifier@production_speed_buildings_factor }
+			limit = { check_variable = { peak_const_speed_mod < unsubsidized_const_speed } }
+			set_temp_variable = { peak_const_speed_mod = unsubsidized_const_speed }
 		}
 
 		if = {
-			limit = {
-				check_variable = { peak_research_speed_mod < modifier@research_speed_factor }
-			}
-			set_temp_variable = { peak_research_speed_mod = modifier@research_speed_factor }
+			limit = { check_variable = { peak_research_speed_mod < unsubsidized_research_speed } }
+			set_temp_variable = { peak_research_speed_mod = unsubsidized_research_speed }
 		}
 
 		if = {
-			limit = {
-				check_variable = { peak_civ_count < industrial_complex_total }
-			}
-			set_temp_variable = { peak_civ_count = industrial_complex_total }
+			limit = { check_variable = { peak_civ_count < unsubsidized_civ_count } }
+			set_temp_variable = { peak_civ_count = unsubsidized_civ_count }
 		}
 
 		if = {
@@ -6950,7 +6957,13 @@ update_optional_contributions = {
 			limit = {
 				NOT = { check_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses } }
 			}
-			set_variable = { united_nations_expenses = { value = united_nations_base_expenses add = united_nations_aid_expenses } }
+			set_variable = {
+				united_nations_expenses = {
+					value = united_nations_base_expenses
+					multiply = { value = 1 add = modifier@inflation_cost_multiplier_modifier }
+					add = united_nations_aid_expenses
+				}
+			}
 			set_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses }
 		}
 	}
@@ -7024,7 +7037,7 @@ calcluate_program_distributions = {
 
 	every_collection_element = {
 		input = { input = collection:un_esco_recipients_collection }
-		set_variable = { un_esco_political_power_var = esco_political_budget }
+		set_variable = { un_esco_political_power_var = { value = esco_political_budget multiply = 0.2 } }
 		set_variable = { un_esco_research_speed_var = { value = esco_research_budget multiply = 0.2 clamp = { min = 0 max = 0.30 } } }
 	}
 
@@ -7052,6 +7065,12 @@ calcluate_program_distributions = {
 		input = { input = collection:un_ido_recipients_collection }
 		set_variable = { un_ido_current_building_count = un_ido_building_count }
 		set_variable = { un_ido_construction_speed_var = { value = construction_speed_buffs multiply = 0.2 clamp = { min = 0 max = 0.30 } } }
+		set_variable = {
+			un_ido_investment_speed_var = {
+				value = un_ido_construction_speed_var
+				multiply = -1
+			}
+		}
 		if = {
 			limit = {
 				NOT = { check_variable = { un_ido_old_building_count = un_ido_building_count } }
@@ -7076,7 +7095,7 @@ calcluate_program_distributions = {
 			value = global.uncdf_budget
 			multiply = 0.55
 			divide = global.cdf_recipient_divisor
-			multiply = -1
+			multiply = -0.2
 		}
 	}
 
