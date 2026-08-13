@@ -2483,6 +2483,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_1_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_1_array^i }
 				}
@@ -2496,6 +2497,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_2_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_2_array^i }
 				}
@@ -2509,6 +2511,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_3_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_3_array^i }
 				}
@@ -2522,6 +2525,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_4_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_4_array^i }
 				}
@@ -2535,6 +2539,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_5_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_5_array^i }
 				}
@@ -2548,6 +2553,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_6_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_6_array^i }
 				}
@@ -2569,6 +2575,21 @@ scripted_gui = {
 				clear_array = ROOT.sat_target_array
 				clear_array = ROOT.sat_target_TAG_array
 				international_systems_update = yes
+			}
+			deorbit_satellite_button_click = {
+				clear_bulk_deorbit_state = yes
+				set_variable = { var_deorbit_sat_ID = var_selected_sat }
+				set_country_flag = MD_confirm_deorbit_satellite
+				international_systems_update = yes
+			}
+			confirm_deorbit_satellite_button_click = {
+				deorbit_selected_satellite = yes
+			}
+			bulk_deorbit_model_button_click = {
+				stage_bulk_deorbit_selected_model = yes
+			}
+			confirm_bulk_deorbit_model_button_click = {
+				bulk_deorbit_selected_model = yes
 			}
 			#
 			spy_mission_start_button_click = {
@@ -2618,6 +2639,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			country_view_flag_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_country_flag = open_MD_satellite_orbit_country_selection
 				clear_array = temp_countries
 				every_country = {
@@ -2626,6 +2648,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			country_view_flag_button_right_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = ROOT.id }
 				set_sat_access_arrays_selected_TAG = yes
 				set_satellites_gui = yes
@@ -2633,36 +2656,43 @@ scripted_gui = {
 			}
 			### sat access buttons
 			GNSS_mil_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_GNSS_mil_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			GNSS_civ_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_GNSS_civ_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			COM_mil_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_COM_mil_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			COM_civ_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_COM_civ_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			SPY_mil_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_SPY_mil_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			SPY_civ_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_SPY_civ_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			close_button_click = {
+				clear_satellite_deorbit_state = yes
 				if = {
 					limit = {
 						NOT = { has_country_flag = rods_search_target }
@@ -2722,6 +2752,72 @@ scripted_gui = {
 					check_variable = { sat_6_array^i > 0 }
 					NOT = { check_variable = { sat_6_array^i < 1 } }
 					is_filtered_type = yes
+				}
+			}
+			deorbit_satellite_button_visible = {
+				NOT = { has_country_flag = MD_confirm_deorbit_satellite }
+				check_variable = { orbit_selected_TAG = ROOT.id }
+			}
+			confirm_deorbit_satellite_button_visible = {
+				has_country_flag = MD_confirm_deorbit_satellite
+				has_country_flag = MD_satellite_orbit_selection_active
+				check_variable = { orbit_selected_TAG = ROOT.id }
+				check_variable = { var_deorbit_sat_ID = var_selected_sat }
+				check_variable = { orbit_array^var_deorbit_sat_ID > 0 }
+			}
+			deorbit_satellite_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = DEORBIT_SATELLITE_SELECTION_TT
+					has_country_flag = MD_satellite_orbit_selection_active
+					check_variable = { var_selected_sat > -1 }
+					check_variable = { orbit_array^var_selected_sat > 0 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = DEORBIT_SATELLITE_SPY_MISSION_TT
+					OR = {
+						check_variable = { orbit_array^var_selected_sat < 161 }
+						check_variable = { orbit_array^var_selected_sat > 178 }
+						check_variable = { var_SPY_mission_num_available > 0 }
+					}
+				}
+			}
+			confirm_deorbit_satellite_button_click_enabled = {
+				OR = {
+					check_variable = { orbit_array^var_deorbit_sat_ID < 161 }
+					check_variable = { orbit_array^var_deorbit_sat_ID > 178 }
+					check_variable = { var_SPY_mission_num_available > 0 }
+				}
+			}
+			bulk_deorbit_model_button_visible = {
+				NOT = { has_country_flag = MD_confirm_bulk_deorbit_satellites }
+				check_variable = { orbit_selected_TAG = ROOT.id }
+			}
+			confirm_bulk_deorbit_model_button_visible = {
+				has_country_flag = MD_confirm_bulk_deorbit_satellites
+				has_country_flag = MD_satellite_orbit_selection_active
+				check_variable = { orbit_selected_TAG = ROOT.id }
+				check_variable = { MD_bulk_deorbit_count > 0 }
+			}
+			bulk_deorbit_model_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = BULK_DEORBIT_MODEL_SELECTION_TT
+					has_country_flag = MD_satellite_orbit_selection_active
+					check_variable = { var_selected_sat > -1 }
+					check_variable = { orbit_array^var_selected_sat > 0 }
+				}
+			}
+			confirm_bulk_deorbit_model_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = BULK_DEORBIT_SPY_MISSION_TT
+					OR = {
+						check_variable = { MD_bulk_deorbit_model < 161 }
+						check_variable = { MD_bulk_deorbit_model > 178 }
+						check_variable = {
+							var = MD_bulk_deorbit_count
+							value = var_SPY_mission_num_available
+							compare = less_than_or_equals
+						}
+					}
 				}
 			}
 			####################
@@ -5764,7 +5860,7 @@ scripted_gui = {
 				hidden_trigger = {
 					original_tag = var:selected_antarctica_station_controller
 					custom_trigger_tooltip = {
-						tooltip = ANTARCTICA_MODULE_UNDER_REPAIR_OUTPUT
+						tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
 						meta_trigger = {
 							text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_2_blizzard_damaged > 0 } } }
 							ID = "[?selected_antarctica_station]"
@@ -5802,9 +5898,12 @@ scripted_gui = {
 				is_antarctica_station_tier_two = yes
 				hidden_trigger = {
 					original_tag = var:selected_antarctica_station_controller
-					meta_trigger = {
-						text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_6_blizzard_damaged > 0 } } }
-						ID = "[?selected_antarctica_station]"
+					custom_trigger_tooltip = {
+						tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
+						meta_trigger = {
+							text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_6_blizzard_damaged > 0 } } }
+							ID = "[?selected_antarctica_station]"
+						}
 					}
 				}
 			}
@@ -5817,9 +5916,12 @@ scripted_gui = {
 				check_variable = { selected_antarctica_station > 0 }
 				check_variable = { selected_antarctica_station_tier > 0 }
 				original_tag = var:selected_antarctica_station_controller
-				meta_trigger = {
-					text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_7_blizzard_damaged > 0 } } }
-					ID = "[?selected_antarctica_station]"
+				custom_trigger_tooltip = {
+					tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
+					meta_trigger = {
+						text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_7_blizzard_damaged > 0 } } }
+						ID = "[?selected_antarctica_station]"
+					}
 				}
 			}
 
@@ -5831,9 +5933,12 @@ scripted_gui = {
 				check_variable = { selected_antarctica_station > 0 }
 				check_variable = { selected_antarctica_station_tier > 0 }
 				original_tag = var:selected_antarctica_station_controller
-				meta_trigger = {
-					text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_8_blizzard_damaged > 0 } } }
-					ID = "[?selected_antarctica_station]"
+				custom_trigger_tooltip = {
+					tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
+					meta_trigger = {
+						text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_8_blizzard_damaged > 0 } } }
+						ID = "[?selected_antarctica_station]"
+					}
 				}
 			}
 
@@ -5846,9 +5951,12 @@ scripted_gui = {
 				is_antarctica_station_tier_three = yes
 				hidden_trigger = {
 					original_tag = var:selected_antarctica_station_controller
-					meta_trigger = {
-						text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_9_blizzard_damaged > 0 } } }
-						ID = "[?selected_antarctica_station]"
+					custom_trigger_tooltip = {
+						tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
+						meta_trigger = {
+							text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_9_blizzard_damaged > 0 } } }
+							ID = "[?selected_antarctica_station]"
+						}
 					}
 				}
 			}
@@ -5872,9 +5980,12 @@ scripted_gui = {
 				check_variable = { selected_antarctica_station > 0 }
 				check_variable = { selected_antarctica_station_tier > 0 }
 				original_tag = var:selected_antarctica_station_controller
-				meta_trigger = {
-					text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_11_blizzard_damaged > 0 } } }
-					ID = "[?selected_antarctica_station]"
+				custom_trigger_tooltip = {
+					tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
+					meta_trigger = {
+						text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_11_blizzard_damaged > 0 } } }
+						ID = "[?selected_antarctica_station]"
+					}
 				}
 			}
 
@@ -5899,7 +6010,7 @@ scripted_gui = {
 				hidden_trigger = {
 					original_tag = var:selected_antarctica_station_controller
 					custom_trigger_tooltip = {
-						tooltip = ANTARCTICA_MODULE_UNDER_REPAIR_OUTPUT
+						tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
 						meta_trigger = {
 							text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_13_blizzard_damaged > 0 } } }
 							ID = "[?selected_antarctica_station]"
@@ -6033,6 +6144,20 @@ scripted_gui = {
 			antarctica_station_slot_14_fuel_2_visible = { has_country_flag = antarctica_station_bp_visible check_variable = { selected_antarctica_station_module_slot_14 = 2 } }
 			antarctica_station_slot_14_fuel_3_visible = { has_country_flag = antarctica_station_bp_visible check_variable = { selected_antarctica_station_module_slot_14 = 3 } }
 			antarctica_station_slot_14_fuel_4_visible = { has_country_flag = antarctica_station_bp_visible check_variable = { selected_antarctica_station_module_slot_14 = 4 } }
+
+			antarctica_station_repair_status_visible = {
+				check_variable = { selected_antarctica_station > 0 }
+				OR = {
+					check_variable = { selected_antarctica_station_repair_days_remaining > 0 }
+					check_variable = { selected_antarctica_station_module_slot_2_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_6_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_7_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_8_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_9_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_11_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_13_blizzard_damaged > 0 }
+				}
+			}
 
 			antarctica_station_preview_powerplant_1_visible = { check_variable = { selected_antarctica_station_selected_module_category = 1 } check_variable = { selected_antarctica_station_selected_module = 1 } has_country_flag = antarctica_station_bp_visible }
 			antarctica_station_preview_powerplant_2_visible = { check_variable = { selected_antarctica_station_selected_module_category = 1 } check_variable = { selected_antarctica_station_selected_module = 2 } has_country_flag = antarctica_station_bp_visible }
