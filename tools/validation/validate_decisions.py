@@ -27,13 +27,6 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
-# Decisions activated dynamically (e.g. via variable-constructed IDs) that
-# cannot be detected by static analysis and should be excluded from the
-# unused-decision check.
-DYNAMICALLY_ACTIVATED_DECISIONS = [
-    f"AC_project_{i}_target_decision" for i in range(15)
-] + [f"investments_project_{i}_target_decision" for i in range(15)]
-
 
 def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
@@ -44,6 +37,7 @@ _TARGETED_BLOCK_RE = re.compile(
 )
 _DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
 _MISSION_NAME_RE = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
+_META_PLACEHOLDER_RE = re.compile(r"\[[^\]]+\]")
 _BRACKETED_LOC_RE = re.compile(r"^\[([A-Za-z0-9_]+)\]$")
 _SCRIPTED_LOC_RE = re.compile(r"\bname\s*=\s*([A-Za-z0-9_]+)")
 
@@ -92,7 +86,37 @@ _REMOVE_DECISION_RE = re.compile(r"\bremove_decision\s*=\s*(\w+)")
 _REMOVE_TARGETED_BLOCK_RE = re.compile(
     r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
 )
-_REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\w+)")
+_REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
+
+
+def _unactivated(candidates: set, activated: set) -> list:
+    """Sorted *candidates* with no matching entry in *activated*.
+
+    Names assembled by ``meta_effect`` substitution reach the scan with their
+    placeholders intact (``cyber_op_slot_[SLOT]_[TYPE]``), so they never match
+    a token literally — those are matched on the constant text surrounding
+    each ``[...]`` instead.
+    """
+    remaining = candidates - activated
+    for name in activated:
+        if not remaining:
+            break
+        if "[" not in name:
+            continue
+        parts = _META_PLACEHOLDER_RE.split(name)
+        prefix, suffix = parts[0], parts[-1]
+        if not prefix and not suffix:
+            continue
+        remaining = {
+            token
+            for token in remaining
+            if not (
+                token.startswith(prefix)
+                and token.endswith(suffix)
+                and len(token) > len(prefix) + len(suffix)
+            )
+        }
+    return sorted(remaining)
 
 
 def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set]:
@@ -877,16 +901,11 @@ class Validator(BaseValidator):
             "Checking for unused decisions (always=no but never activated)..."
         )
 
-        factories = parse_all_decision_factories(self.mod_path)
-        manual_decisions: set = set()
-        manual_missions: set = set()
-
-        for d in factories:
-            if d.allowed and "always = no" in d.allowed:
-                if d.mission_subtype:
-                    manual_missions.add(d.token)
-                else:
-                    manual_decisions.add(d.token)
+        manual = {
+            d.token
+            for d in parse_all_decision_factories(self.mod_path)
+            if d.allowed and "always = no" in d.allowed
+        }
 
         # The worker extracts `decision = X` only from inside an
         # `activate_targeted_decision = { ... }` block; the bare keyword
@@ -894,14 +913,9 @@ class Validator(BaseValidator):
         # and matching them would hide genuinely unused decisions.
         activated_decisions, activated_missions, _ = self._get_activation_removal_scan()
 
-        results = sorted(
-            (manual_decisions - activated_decisions)
-            - set(DYNAMICALLY_ACTIVATED_DECISIONS)
-        )
-        results += sorted(
-            (manual_missions - activated_missions)
-            - set(DYNAMICALLY_ACTIVATED_DECISIONS)
-        )
+        # A mission with a target is activated by activate_targeted_decision, so
+        # neither set alone covers every activation mechanism.
+        results = _unactivated(manual, activated_decisions | activated_missions)
         self._report(
             results,
             "✓ No unused decisions",
