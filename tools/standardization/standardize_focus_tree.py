@@ -598,11 +598,7 @@ def format_focus_block(props, block_type="focus"):
     _emit_comments(trailing, props, "__trailing__")
     groups.append(trailing)
 
-    return (
-        [f"\t{block_type} = {{"]
-        + collapse_blank_runs(join_groups(groups))
-        + ["\t}"]
-    )
+    return [f"\t{block_type} = {{"] + collapse_blank_runs(join_groups(groups)) + ["\t}"]
 
 
 def reindent_by_brace_depth(block_lines, base_tabs=0):
