@@ -283,9 +283,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert not gone, (
-        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
-    )
+    assert (
+        not gone
+    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED
@@ -321,8 +321,13 @@ def test_targeted_parent_reaches_every_matrix_entry():
 
 
 def test_validator_cache_restore_is_source_hash_scoped():
-    expected_prefix = (
-        "md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
+    # Both shared cache entries (the disk cache and the validation baseline)
+    # are keyed on the validator source hash: a validator change must
+    # invalidate every restore, never hand a PR cache or baseline output from
+    # a different validator generation.
+    expected_prefixes = (
+        "md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-",
+        "md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-",
     )
     for workflow in (CI_WORKFLOW, VALIDATOR_CACHE_WORKFLOW):
         config = yaml.safe_load(workflow.read_text(encoding="utf-8"))
@@ -333,10 +338,13 @@ def test_validator_cache_restore_is_source_hash_scoped():
                     restore_steps.extend(
                         step.get("with", {}).get("restore-keys", "").splitlines()
                     )
-        assert restore_steps, (
-            f"No validator cache restore keys found in {workflow.name}"
-        )
-        assert all(key.startswith(expected_prefix) for key in restore_steps), (
+        assert (
+            restore_steps
+        ), f"No validator cache restore keys found in {workflow.name}"
+        assert all(
+            any(key.startswith(prefix) for prefix in expected_prefixes)
+            for key in restore_steps
+        ), (
             f"{workflow.name} has a validator cache fallback outside the current "
             "validator source-hash generation"
         )
@@ -356,12 +364,12 @@ def test_nightly_keys_the_bundle_on_the_live_base_tip():
     script = "\n".join(
         line for line in step["run"].splitlines() if not line.lstrip().startswith("#")
     )
-    assert "commits/main" in script, (
-        "the nightly must resolve main's live head for base_sha"
-    )
-    assert ".base.sha" not in script, (
-        "the PR list's .base.sha does not track main, so it cannot key the bundle"
-    )
+    assert (
+        "commits/main" in script
+    ), "the nightly must resolve main's live head for base_sha"
+    assert (
+        ".base.sha" not in script
+    ), "the PR list's .base.sha does not track main, so it cannot key the bundle"
 
 
 def test_mio_validator_runs_for_localisation_changes():
@@ -479,9 +487,9 @@ def test_ci_run_steps_default_to_strict():
             for step in workflow["jobs"][job]["steps"]
             if step.get("name") == "Run validation"
         )
-        assert 'matrix.validator.strict }}" != "false"' in run, (
-            f"{job}'s Run step must default to --strict when `strict:` is absent."
-        )
+        assert (
+            'matrix.validator.strict }}" != "false"' in run
+        ), f"{job}'s Run step must default to --strict when `strict:` is absent."
 
 
 def test_oob_routes_cover_every_create_unit_source():

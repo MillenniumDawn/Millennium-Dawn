@@ -1,6 +1,13 @@
 """Tests for `report_lib.markdown`."""
 
-from report_lib import Issue, ReportContext, Severity, ValidatorRun, render
+from report_lib import (
+    Issue,
+    ReportContext,
+    Severity,
+    ValidatorRun,
+    render,
+)
+from report_lib.baseline import BaselineStats
 from report_lib.comment import REPORT_MARKER
 
 
@@ -249,3 +256,90 @@ def test_concise_comment_no_pointer_when_clean():
     assert "## Validators" not in body
     assert "full issue list" not in body
     assert "All 1 validator passed" in body
+
+
+def _stats(**overrides):
+    fields = {
+        "new_errors": 1,
+        "new_warnings": 1,
+        "existing_errors": 4,
+        "existing_warnings": 2,
+        "unclassified": 0,
+    }
+    fields.update(overrides)
+    stats = BaselineStats()
+    for key, value in fields.items():
+        setattr(stats, key, value)
+    return stats
+
+
+def test_verdict_counts_new_against_baseline():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=2)]
+    body = render([runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=2))
+    assert (
+        "2 errors must be fixed before merge. (2 new against the main baseline.)"
+        in body
+    )
+
+
+def test_verdict_says_none_new_when_all_existing():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=2)]
+    body = render([runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=0))
+    assert "(none new against the main baseline.)" in body
+
+
+def test_step_summary_lists_new_findings():
+    runs = [
+        ValidatorRun(
+            name="events", title="Events", status="failed", errors=1, warnings=1
+        )
+    ]
+    issue = Issue(
+        severity=Severity.ERROR,
+        category="missing_key",
+        message="key FOO not found",
+        file="events/MD_x.txt",
+        line=212,
+        validator="events",
+        baseline_status="new",
+    )
+    stats = _stats(new_issues=[issue])
+    body = render([runs[0]], [issue], _ctx(), baseline_stats=stats)
+    assert "## New findings vs main baseline" in body
+    assert "1 error, 1 warning not present on the latest main run:" in body
+    assert "**NEW**" in body
+
+
+def test_step_summary_baseline_section_when_nothing_new():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=2)]
+    body = render([runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=0))
+    assert "✅ No new findings against the main baseline." in body
+
+
+def test_concise_comment_omits_baseline_section():
+    runs = [
+        ValidatorRun(
+            name="events", title="Events", status="failed", errors=1, warnings=1
+        )
+    ]
+    issue = Issue(
+        severity=Severity.ERROR,
+        category="missing_key",
+        message="key FOO not found",
+        file="events/MD_x.txt",
+        line=212,
+        validator="events",
+        baseline_status="new",
+    )
+    stats = _stats(new_issues=[issue])
+    body = render(
+        [runs[0]],
+        [issue],
+        _ctx(),
+        include_validator_sections=False,
+        baseline_stats=stats,
+    )
+    # The concise PR comment carries the counts in the verdict, not the
+    # per-finding section that lives in the step summary.
+    assert "## New findings vs main baseline" not in body
+    assert "(1 new against the main baseline.)" in body
