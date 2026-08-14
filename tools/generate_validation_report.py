@@ -19,6 +19,7 @@ import argparse
 import os
 import sys
 from datetime import datetime, timezone
+from typing import List, Optional
 
 # Add tools/ to path so the report_lib package imports cleanly when this
 # script is invoked directly (e.g. `python3 tools/generate_validation_report.py`).
@@ -94,7 +95,7 @@ def should_delete_comment(runs, deduped, validation_scope: str) -> bool:
     )
 
 
-def main() -> int:
+def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Generate the Millennium Dawn validation PR report",
     )
@@ -148,7 +149,7 @@ def main() -> int:
         help="owner/repo (defaults to $GITHUB_REPOSITORY)",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     ctx = ReportContext(
         pr_number=args.pr_number,

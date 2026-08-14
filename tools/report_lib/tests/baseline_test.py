@@ -75,8 +75,14 @@ def test_classify_tags_new_and_existing(tmp_path):
     (tmp_path / META_FILENAME).write_text(
         json.dumps({"toolshash": "h"}), encoding="utf-8"
     )
-    existing = _issue_dict("error", file="old.txt", line=1, message="old finding")
-    _write_sidecar(tmp_path, "events", [existing])
+    _write_sidecar(
+        tmp_path,
+        "events",
+        [
+            _issue_dict("error", file="old.txt", line=1, message="old finding"),
+            _issue_dict("warning", file="warn.txt", line=3, message="known warning"),
+        ],
+    )
     baseline = load_baseline(str(tmp_path), "h")
 
     issues = [
@@ -88,16 +94,27 @@ def test_classify_tags_new_and_existing(tmp_path):
             line=2,
             message="new warning",
         ),
+        _issue(
+            severity=Severity.WARNING,
+            file="warn.txt",
+            line=3,
+            message="known warning",
+        ),
     ]
     stats = classify(issues, baseline)
 
-    assert [i.baseline_status for i in issues] == ["existing", "new", "new"]
+    assert [i.baseline_status for i in issues] == [
+        "existing",
+        "new",
+        "new",
+        "existing",
+    ]
     assert stats.new_errors == 1
     assert stats.new_warnings == 1
     assert stats.existing_errors == 1
-    assert stats.existing_warnings == 0
+    assert stats.existing_warnings == 1
     assert stats.unclassified == 0
-    assert stats.new_issues == issues[1:]
+    assert stats.new_issues == issues[1:3]
 
 
 def test_classify_escalated_severity_counts_as_new(tmp_path):
@@ -135,6 +152,75 @@ def test_classify_leaves_unkeyable_issues_untagged(tmp_path):
 def test_load_issues_ignores_non_list_json(tmp_path):
     (tmp_path / "notes.json").write_text('{"not": "a list"}', encoding="utf-8")
     assert load_issues(str(tmp_path)) == []
+
+
+def test_load_issues_skips_unparseable_sidecars(tmp_path):
+    (tmp_path / "broken.json").write_text("not json", encoding="utf-8")
+    (tmp_path / "events.json").write_text(
+        json.dumps([_issue_dict("error")]), encoding="utf-8"
+    )
+    issues = load_issues(str(tmp_path))
+    # The broken sidecar is skipped, not fatal: one validator with a
+    # truncated upload must not crash the PR report or the nightly diff.
+    assert len(issues) == 1
+
+
+def test_load_baseline_returns_none_when_meta_not_a_dict(tmp_path):
+    (tmp_path / META_FILENAME).write_text("[1, 2, 3]", encoding="utf-8")
+    assert load_baseline(str(tmp_path), "h") is None
+
+
+def test_load_baseline_returns_none_on_unreadable_meta(tmp_path):
+    (tmp_path / META_FILENAME).write_text("{broken", encoding="utf-8")
+    assert load_baseline(str(tmp_path), "h") is None
+
+
+def test_classify_with_empty_baseline_marks_everything_new(tmp_path):
+    # An all-clean main run stores only meta (no sidecars): any PR finding
+    # is new by definition.
+    (tmp_path / META_FILENAME).write_text(
+        json.dumps({"toolshash": "h"}), encoding="utf-8"
+    )
+    baseline = load_baseline(str(tmp_path), "h")
+    assert baseline is not None
+
+    stats = classify(
+        [
+            _issue(file="a.txt", line=1, message="first"),
+            _issue(
+                severity=Severity.WARNING,
+                file="b.txt",
+                line=2,
+                message="second",
+            ),
+        ],
+        baseline,
+    )
+
+    assert stats.new_errors == 1
+    assert stats.new_warnings == 1
+    assert stats.existing_errors == 0
+    assert stats.unclassified == 0
+
+
+def test_classify_counts_mixed_unclassified_and_new(tmp_path):
+    (tmp_path / META_FILENAME).write_text(
+        json.dumps({"toolshash": "h"}), encoding="utf-8"
+    )
+    baseline = load_baseline(str(tmp_path), "h")
+    assert baseline is not None
+
+    stats = classify(
+        [
+            _issue(file="a.txt", line=1, message="keyed"),
+            _issue(file="", line=0, message="no location"),
+        ],
+        baseline,
+    )
+
+    assert stats.new_errors == 1
+    assert stats.unclassified == 1
+    assert len(stats.new_issues) == 1
 
 
 def test_write_baseline_copies_sidecars_writes_meta_and_prunes(tmp_path):

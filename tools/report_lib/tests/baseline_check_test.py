@@ -1,5 +1,6 @@
 """Tests for the nightly `baseline_check` CLI."""
 
+import builtins
 import json
 
 import baseline_check
@@ -30,12 +31,18 @@ def _write_meta(base, toolshash="h"):
     )
 
 
-def _run(tmp_path, previous, current, toolshash="h", monkeypatch=None):
+def _run(
+    tmp_path, previous, current, toolshash="h", monkeypatch=None, summary_path=None
+):
     if monkeypatch is not None:
-        monkeypatch.setattr(baseline_check, "_write_step_summary", lambda lines: None)
-        monkeypatch.setattr(
-            baseline_check, "_build_meta", lambda args: {"toolshash": args.toolshash}
-        )
+        if summary_path is None:
+            # No summary requested: exercise the real no-op path rather
+            # than mocking the writer away.
+            monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+        else:
+            # Keep the real writer: the step summary is the nightly alarm's
+            # only human-readable output, so tests assert its content.
+            monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_path))
     argv = [
         "--previous",
         str(previous),
@@ -63,6 +70,12 @@ def test_establishing_baseline_when_previous_missing(tmp_path, monkeypatch, caps
     assert "established" in capsys.readouterr().out
     assert (tmp_path / "baseline" / META_FILENAME).is_file()
     assert (tmp_path / "baseline" / "events.json").is_file()
+    # The real _build_meta ran: the persisted meta carries the hash the
+    # PR-side load_baseline will later verify against.
+    meta = json.loads(
+        (tmp_path / "baseline" / META_FILENAME).read_text(encoding="utf-8")
+    )
+    assert meta["toolshash"] == "h"
 
 
 def test_new_errors_fail_and_keep_old_baseline(tmp_path, monkeypatch, capsys):
@@ -115,8 +128,91 @@ def test_fixed_errors_still_promote(tmp_path, monkeypatch, capsys):
     code = _run(tmp_path, previous, current, monkeypatch=monkeypatch)
 
     assert code == 0
-    assert "fixed" in capsys.readouterr().out
+    assert "1 error(s), 0 warning(s) fixed" in capsys.readouterr().out
     assert (tmp_path / "baseline" / META_FILENAME).is_file()
+
+
+def test_red_night_step_summary_reports_new_errors(tmp_path, monkeypatch):
+    previous = tmp_path / "prev"
+    _write_meta(previous)
+    current = tmp_path / "current"
+    _write_sidecar(
+        current,
+        "events",
+        [_issue_dict("error", file="b.txt", line=2, message="brand new")],
+    )
+    summary_path = tmp_path / "summary.md"
+
+    code = _run(
+        tmp_path,
+        previous,
+        current,
+        monkeypatch=monkeypatch,
+        summary_path=summary_path,
+    )
+
+    assert code == 1
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "New errors on main — baseline not updated." in summary
+    assert "`b.txt:2` — brand new" in summary
+
+
+def test_clean_night_step_summary_confirms_update(tmp_path, monkeypatch):
+    previous = tmp_path / "prev"
+    _write_meta(previous)
+    _write_sidecar(previous, "events", [_issue_dict("error", message="old")])
+    current = tmp_path / "current"
+    _write_sidecar(current, "events", [_issue_dict("error", message="old")])
+    summary_path = tmp_path / "summary.md"
+
+    code = _run(
+        tmp_path,
+        previous,
+        current,
+        monkeypatch=monkeypatch,
+        summary_path=summary_path,
+    )
+
+    assert code == 0
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "✅ No new errors — baseline updated to tonight's results." in summary
+
+
+def test_step_summary_caps_new_findings_lists(tmp_path, monkeypatch):
+    previous = tmp_path / "prev"
+    _write_meta(previous)
+    current = tmp_path / "current"
+    issues = [
+        _issue_dict("warning", file="w.txt", line=n, message=f"warning {n}")
+        for n in range(1, baseline_check.MAX_LISTED + 2)
+    ]
+    _write_sidecar(current, "events", issues)
+    summary_path = tmp_path / "summary.md"
+
+    code = _run(
+        tmp_path,
+        previous,
+        current,
+        monkeypatch=monkeypatch,
+        summary_path=summary_path,
+    )
+
+    assert code == 0
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "_…and 1 more._" in summary
+    assert summary.count("- ⚠️ `w.txt:") == baseline_check.MAX_LISTED
+
+
+def test_issue_line_renders_fallback_locations():
+    no_line = baseline_check.Issue.from_dict(
+        {"severity": "error", "category": "c", "message": "m", "file": "f.txt"}
+    )
+    assert baseline_check._issue_line(no_line) == "- ❌ `f.txt` — m"
+
+    no_file = baseline_check.Issue.from_dict(
+        {"severity": "warning", "category": "c", "message": "m"}
+    )
+    assert baseline_check._issue_line(no_file) == "- ⚠️ _(no location)_ — m"
 
 
 def test_new_warnings_do_not_fail(tmp_path, monkeypatch, capsys):
@@ -183,3 +279,22 @@ def test_unkeyable_findings_count_as_new(tmp_path):
     new_errors, new_warnings = baseline_check._split_new_findings(current, baseline)
     assert len(new_errors) == 1
     assert new_warnings == []
+
+    # The fixed-counts side also skips unkeyable findings instead of
+    # treating them as keyed matches.
+    fixed_errors, fixed_warnings = baseline_check._fixed_counts(current, baseline)
+    assert fixed_errors == 0
+    assert fixed_warnings == 0
+
+
+def test_step_summary_write_failure_is_non_fatal(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(tmp_path / "summary.md"))
+
+    def broken_open(_path, _mode, encoding="utf-8"):
+        raise OSError("read-only filesystem")
+
+    monkeypatch.setattr(builtins, "open", broken_open)
+
+    baseline_check._write_step_summary(["line"])
+
+    assert "could not write step summary" in capsys.readouterr().err

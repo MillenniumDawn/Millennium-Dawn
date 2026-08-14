@@ -386,6 +386,51 @@ def test_mio_validator_runs_for_localisation_changes():
         assert f"needs.detect-changes.outputs.{output} == 'true'" in expression
 
 
+def test_check_baseline_saves_only_on_clean_diff():
+    # The save gating is the whole nightly alarm: baseline_check exits 1 on
+    # new errors, and only `steps.diff.outcome == 'success'` reaches the
+    # save step. If that `if` is dropped, a red night saves tonight's
+    # regressed results as the new baseline and the alarm self-heals
+    # silently.
+    config = yaml.safe_load(VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8"))
+    job = config["jobs"]["check-baseline"]
+    assert job["needs"] == ["build-cache"]
+
+    diff = next(step for step in job["steps"] if step.get("id") == "diff")
+    assert "tools/baseline_check.py" in diff["run"]
+
+    save = next(
+        step for step in job["steps"] if step.get("name") == "Save validation baseline"
+    )
+    assert save["if"] == "steps.diff.outcome == 'success'"
+
+
+def test_report_job_wires_baseline_flags():
+    # The PR report only annotates when the workflow passes the restored
+    # baseline and the matching toolshash; a drifted flag or path silently
+    # drops the NEW/EXISTING annotation for every PR.
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["validation-report"]
+
+    restore = next(
+        step
+        for step in job["steps"]
+        if step.get("name") == "Restore validation baseline"
+    )
+    baseline_prefix = (
+        "md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
+    )
+    assert baseline_prefix in restore["with"]["restore-keys"]
+
+    run = next(
+        step["run"]
+        for step in job["steps"]
+        if step.get("name") == "Generate and post validation report"
+    )
+    assert "--baseline-dir .validation_baseline" in run
+    assert "--baseline-toolshash" in run
+
+
 def test_tools_validation_triggers_for_consumed_configuration():
     paths = _pull_request_paths(TOOLS_WORKFLOW)
     assert {

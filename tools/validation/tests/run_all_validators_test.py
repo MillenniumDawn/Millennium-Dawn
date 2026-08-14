@@ -4,6 +4,7 @@ import io
 import json
 from types import SimpleNamespace
 
+import pytest
 import run_all_validators as runner
 
 
@@ -188,6 +189,36 @@ def test_persist_results_writes_nothing_when_clean(tmp_path, monkeypatch):
 
     assert code == 0
     assert list(persist_dir.iterdir()) == []
+
+
+def test_persist_results_copy_failure_propagates(tmp_path, monkeypatch):
+    # A copy failure must fail the run, never silently save a truncated
+    # baseline under a valid-looking meta.
+    issues = [
+        {
+            "severity": "error",
+            "category": "test-finding",
+            "message": "finding",
+            "file": "test.txt",
+            "line": 1,
+        }
+    ]
+    monkeypatch.setattr(runner, "launch_validator", _launcher_with(issues))
+
+    def broken_copy(_src, _dst):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(runner.shutil, "copyfile", broken_copy)
+    persist_dir = tmp_path / "persisted"
+
+    with pytest.raises(OSError, match="disk full"):
+        runner._run_suite(
+            _args("both", persist_results=str(persist_dir)),
+            [],
+            str(tmp_path),
+            [("stub", "validate_stub.py", "Stub")],
+            str(tmp_path),
+        )
 
 
 def test_crashed_validator_fails_run_without_strict(tmp_path, monkeypatch, capsys):
