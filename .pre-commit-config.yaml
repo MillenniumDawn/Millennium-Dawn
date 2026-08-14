@@ -63,8 +63,8 @@ repos:
         files: '\.py$'
       - id: name-tests-test
         files: 'tools/.*test.*\.py$'
-  # ruff owns lint (E/F), import order (I), and formatting. Config (select,
-  # ignores, per-file-ignores, isort) lives in pyproject.toml.
+  # Ruff owns lint (E/F) and import order (I). Config (select, ignores,
+  # per-file-ignores, and isort) lives in pyproject.toml.
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.17
     hooks:
@@ -72,9 +72,30 @@ repos:
         name: Lint Python (ruff)
         files: '^tools/.*\.py$'
         args: [--fix]
-      - id: ruff-format
-        name: Format Python (ruff)
+  # Black is the single canonical formatter. It runs after Ruff so a commit
+  # cannot leave the two formatters fighting over the same file.
+  - repo: local
+    hooks:
+      - id: black-tools
+        name: Format Python (black)
+        entry: black
+        language: python
+        additional_dependencies: [black==26.5.1]
         files: '^tools/.*\.py$'
+      - id: pylint-tools
+        name: Check Python correctness (pylint)
+        entry: pylint tools --reports=no --score=no
+        language: python
+        additional_dependencies: [pylint==4.0.6]
+        files: '^tools/.*\.py$'
+        pass_filenames: false
+      - id: mypy-tools
+        name: Type-check typed tools (mypy)
+        entry: mypy
+        language: python
+        additional_dependencies: [mypy==2.3.0]
+        files: '^tools/.*\.py$'
+        pass_filenames: false
   # pre-commit/mirrors-prettier was archived upstream — using rbubley's
   # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
   - repo: https://github.com/rbubley/mirrors-prettier
@@ -143,7 +164,7 @@ repos:
         name: MD Standardize (auto-fix ideas/events/decisions/focuses)
         entry: python3 tools/standardize_staged.py
         language: system
-        files: '(common/national_focus|common/decisions|common/ideas|events)/.*\.txt$'
+        files: '(common/(national_focus|decisions|ideas)|events)/.*\.txt$'
         pass_filenames: true
       - id: md-validate-content
         name: MD Validate (commit-stage content validators, in parallel)
@@ -167,19 +188,28 @@ repos:
         pass_filenames: false
       - id: md-validate-defines
         name: MD Validate defines against vanilla
-        entry: python3 tools/validation/validate_defines.py --staged --strict --no-color
+        entry: >-
+          python3 tools/validation/validate_defines.py --staged --strict
+          --no-color
         language: system
         files: 'common/defines/.*\.lua$'
+        pass_filenames: false
+      - id: md-validate-descriptors
+        name: MD Validate mod descriptors (replace_path sync)
+        entry: >-
+          python3 tools/validation/validate_mod_descriptors.py --staged
+          --strict --no-color
+        language: system
+        files: '\.mod$'
         pass_filenames: false
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)
         # Manual: full-repo scan is slow and currently reports ~22k legacy
-        # unreferenced textures. CI runs it informationally (no --strict) so
-        # the report is visible without gating PRs. Run before mod-size
-        # cleanup passes:
+        # unreferenced textures. CI cannot run it. Run before mod-size cleanup
+        # passes:
         #   pre-commit run md-validate-unused-textures --hook-stage manual
         entry: python3 tools/validation/validate_unused_textures.py --no-color
         language: system
-        files: '\.(gfx|asset|dds|tga|png)$'
+        always_run: true
         pass_filenames: false
         stages: [manual]

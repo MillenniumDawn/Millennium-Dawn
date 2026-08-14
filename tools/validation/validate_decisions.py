@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import blank_quoted_strings
+from shared_utils import blank_quoted_strings, strip_inline_comment
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -27,12 +27,11 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
-# Decisions activated dynamically (e.g. via variable-constructed IDs) that
-# cannot be detected by static analysis and should be excluded from the
-# unused-decision check.
-DYNAMICALLY_ACTIVATED_DECISIONS = [
-    f"AC_project_{i}_target_decision" for i in range(15)
-] + [f"investments_project_{i}_target_decision" for i in range(15)]
+_DECISION_REFERENCE_SOURCE_PATTERNS = (
+    "common/**/*.txt",
+    "events/**/*.txt",
+    "history/**/*.txt",
+)
 
 
 def _should_skip(filename: str) -> bool:
@@ -47,6 +46,44 @@ _MISSION_NAME_RE = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
 _BRACKETED_LOC_RE = re.compile(r"^\[([A-Za-z0-9_]+)\]$")
 _SCRIPTED_LOC_RE = re.compile(r"\bname\s*=\s*([A-Za-z0-9_]+)")
 
+# The four blocks the engine runs as a decision's effects, all of which log.
+EFFECT_BLOCKS = (
+    "complete_effect",
+    "remove_effect",
+    "timeout_effect",
+    "cancel_effect",
+)
+_LOG_STRING_RE = re.compile(r'\blog\s*=\s*"')
+_STATEMENT_NAME_RE = re.compile(r"([A-Za-z_]\w*)\s*=")
+
+
+def _block_level_statements(block: str) -> List[str]:
+    """Statement names at an effect block's own level, in source order.
+
+    *block* is the ``{ ... }`` text of the block. Nested blocks are skipped, so
+    a ``log`` inside an ``if`` / ``hidden_effect`` does not read as a statement
+    of the block itself.
+    """
+    names: List[str] = []
+    depth = 0
+    for line in block.split("\n"):
+        code = blank_quoted_strings(strip_inline_comment(line))
+        i = 0
+        while i < len(code):
+            char = code[i]
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+            elif depth == 1:
+                match = _STATEMENT_NAME_RE.match(code, i)
+                if match:
+                    names.append(match.group(1))
+                    i = match.end()
+                    continue
+            i += 1
+    return names
+
 
 # --- Decision parsing helpers ---
 
@@ -54,7 +91,46 @@ _REMOVE_DECISION_RE = re.compile(r"\bremove_decision\s*=\s*(\w+)")
 _REMOVE_TARGETED_BLOCK_RE = re.compile(
     r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
 )
-_REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\w+)")
+_REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
+
+_CYBER_OPERATION_TYPES = (
+    "gps_tracking",
+    "economic_tracking",
+    "propaganda_tracking",
+    "infra_tracking",
+    "crit_tracking",
+    "sigint_surveillance_tracking",
+    "radar_spoofing_tracking",
+    "election_interference_tracking",
+    "industrial_espionage_tracking",
+    "comms_intercept_tracking",
+    "financial_system_attack_tracking",
+    "logistics_disruption_tracking",
+    "sleeper_network_tracking",
+    "deception_campaign_tracking",
+    "zero_day_strike_tracking",
+    "network_hardening_tracking",
+    "counter_intrusion_tracking",
+    "attribution_hunt_tracking",
+)
+_DYNAMIC_ACTIVATION_EXPANSIONS = {
+    "cyber_op_slot_[SLOT]_[TYPE]": {
+        f"cyber_op_slot_{slot}_{operation_type}"
+        for slot in range(10)
+        for operation_type in _CYBER_OPERATION_TYPES
+    },
+    "investments_project_[INDEX]_target_decision": {
+        f"investments_project_{index}_target_decision" for index in range(15)
+    },
+}
+
+
+def _unactivated(candidates: set, activated: set) -> list:
+    """Sorted *candidates* with no literal or finite meta-effect activation."""
+    remaining = candidates - activated
+    for name in activated:
+        remaining.difference_update(_DYNAMIC_ACTIVATION_EXPANSIONS.get(name, ()))
+    return sorted(remaining)
 
 
 def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set]:
@@ -117,6 +193,39 @@ _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILIN
 # validate_from_without_targets).
 _FROM_BLOCK_RE = re.compile(r"\bFROM\s*=\s*\{")
 _FROM_WORD_RE = re.compile(r"\bFROM\b")
+
+
+def _is_targeted_decision(d: "DecisionFactory") -> bool:
+    """True if targets/target_array/target_trigger/target_root_trigger is present."""
+    return bool(
+        d.targets or d.target_array or d.target_trigger or d.target_root_trigger
+    )
+
+
+def _extract_from_blocks(block: str) -> List[str]:
+    """Return the brace-balanced body text of every ``FROM = { ... }`` in *block*.
+
+    ``_FROM_BLOCK_RE`` only matches the opening ``FROM = {``; this walks
+    forward to the matching close so callers get the full block body, not
+    just the header.
+    """
+    if not block:
+        return []
+    bodies = []
+    for m in _FROM_BLOCK_RE.finditer(block):
+        depth = 1
+        i = m.end()
+        n = len(block)
+        while i < n and depth > 0:
+            if block[i] == "{":
+                depth += 1
+            elif block[i] == "}":
+                depth -= 1
+            i += 1
+        if depth == 0:
+            bodies.append(block[m.end() : i - 1])
+    return bodies
+
 
 # Bare trigger names needing a has_ prefix (hoisted from validate_bare_trigger_names).
 _BARE_TRIGGERS = {
@@ -388,7 +497,7 @@ def _find_category_redundant_rows(
 def extract_value_single_line(obj: str, s: str) -> str:
     pattern = r"\t+" + s + r" = (\S*)"
     matches = re.findall(pattern, obj)
-    return matches[0] if f"\t{s} =" in obj and matches else False
+    return matches[0] if f"\t{s} =" in obj and matches else ""
 
 
 def _top_level_field_value(raw: str, field: str):
@@ -436,9 +545,9 @@ def _top_level_field_value(raw: str, field: str):
 def extract_value_multi_line(obj: str, s: str) -> str:
     pattern = r"(\t+)" + s + r" = (\{([^\n]*|.*?^\1)\})"
     if f"\t{s} =" not in obj:
-        return False
+        return ""
     matches = re.findall(pattern, obj, flags=re.DOTALL | re.MULTILINE)
-    return matches[0][1] if matches else False
+    return matches[0][1] if matches else ""
 
 
 class DecisionFactory:
@@ -452,6 +561,7 @@ class DecisionFactory:
         self.cancel_effect = extract_value_multi_line(dec, "cancel_effect")
         self.complete_effect = extract_value_multi_line(dec, "complete_effect")
         self.remove_effect = extract_value_multi_line(dec, "remove_effect")
+        self.timeout_effect = extract_value_multi_line(dec, "timeout_effect")
         self.cancel_trigger = extract_value_multi_line(dec, "cancel_trigger")
         self.cancel_if_not_visible = "cancel_if_not_visible = yes" in dec
         self.activation = extract_value_multi_line(dec, "activation")
@@ -476,6 +586,8 @@ class DecisionFactory:
         self.cost = extract_value_single_line(dec, "cost")
         self.has_tooltip = "tooltip =" in dec
         self.has_random_list = bool(re.search(r"\brandom_list\s*=\s*\{", dec))
+        self.has_random_effect = bool(re.search(r"\brandom\s*=\s*\{", dec))
+        self.fire_only_once = "fire_only_once = yes" in dec
         self.fixed_random_seed_explicit = bool(
             re.search(r"\bfixed_random_seed\s*=\s*(yes|no)\b", dec)
         )
@@ -742,16 +854,16 @@ class Validator(BaseValidator):
             _set_cache_enabled(False)
 
     def _get_activation_removal_scan(self) -> Tuple[set, set, set]:
-        """Full-repo scan for decision activations and external removals.
-
-        One .txt sweep shared by validate_unused_decisions and
-        validate_orphaned_remove_effect (was two separate full-repo passes).
-        """
+        """Scan shipped content for decision activations and external removals."""
         if self._activation_removal_cache is not None:
             return self._activation_removal_cache
-        all_files = list(
-            glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
-        )
+        all_files = [
+            filename
+            for pattern in _DECISION_REFERENCE_SOURCE_PATTERNS
+            for filename in glob.iglob(
+                os.path.join(self.mod_path, pattern), recursive=True
+            )
+        ]
         activated_decisions: set = set()
         activated_missions: set = set()
         externally_removed: set = set()
@@ -836,16 +948,11 @@ class Validator(BaseValidator):
             "Checking for unused decisions (always=no but never activated)..."
         )
 
-        factories = parse_all_decision_factories(self.mod_path)
-        manual_decisions: set = set()
-        manual_missions: set = set()
-
-        for d in factories:
-            if d.allowed and "always = no" in d.allowed:
-                if d.mission_subtype:
-                    manual_missions.add(d.token)
-                else:
-                    manual_decisions.add(d.token)
+        manual = {
+            d.token
+            for d in parse_all_decision_factories(self.mod_path)
+            if d.allowed and "always = no" in d.allowed
+        }
 
         # The worker extracts `decision = X` only from inside an
         # `activate_targeted_decision = { ... }` block; the bare keyword
@@ -853,14 +960,9 @@ class Validator(BaseValidator):
         # and matching them would hide genuinely unused decisions.
         activated_decisions, activated_missions, _ = self._get_activation_removal_scan()
 
-        results = sorted(
-            (manual_decisions - activated_decisions)
-            - set(DYNAMICALLY_ACTIVATED_DECISIONS)
-        )
-        results += sorted(
-            (manual_missions - activated_missions)
-            - set(DYNAMICALLY_ACTIVATED_DECISIONS)
-        )
+        # A mission with a target is activated by activate_targeted_decision, so
+        # neither set alone covers every activation mechanism.
+        results = _unactivated(manual, activated_decisions | activated_missions)
         self._report(
             results,
             "✓ No unused decisions",
@@ -1057,6 +1159,118 @@ class Validator(BaseValidator):
             "Decisions with FROM checks in visible/available but no target_trigger (move FROM into target_trigger for perf):",
         )
 
+    def validate_root_only_visible_on_targeted(self):
+        """Flag targeted decisions whose visible block is entirely ROOT-only.
+
+        A targeted decision (targets/target_array/target_trigger/
+        target_root_trigger present) evaluates visible every tick, once per
+        surviving target with FROM bound. If visible never references FROM
+        and there's no target_root_trigger already carrying the ROOT-only
+        checks, the whole block is redundant per-target work for something
+        that only needs to run once per ROOT per day. Rename it to
+        target_root_trigger.
+
+        Exempts:
+        - ``allowed = { always = no }`` (decision is script-activated, never
+          auto-visible)
+        - ``state_target = yes`` / ``on_map_mode = map_only`` (player-driven
+          map click, not a daily per-target loop)
+        """
+        self._log_section(
+            "Checking targeted decisions for a ROOT-only visible block (performance)..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            if not _is_targeted_decision(d):
+                continue
+            if d.target_root_trigger:
+                continue
+            if not d.visible:
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            if d.state_target or d.map_only:
+                continue
+            if _FROM_WORD_RE.search(d.visible):
+                continue
+            results.append(
+                f"{d.token:<55}{d.source_basename} - visible is ROOT-only and "
+                f"re-evaluated every tick per target; rename to target_root_trigger"
+            )
+
+        self._report(
+            results,
+            "✓ No targeted decisions with a ROOT-only visible block",
+            "Targeted decisions with a ROOT-only visible and no target_root_trigger (rename visible to target_root_trigger, evaluated daily instead of every tick per target):",
+        )
+
+    def validate_from_checks_in_visible(self):
+        """Flag targeted decisions with FROM checks in visible when a
+        target_trigger already exists.
+
+        visible is evaluated every tick with FROM bound to each surviving
+        target; target_trigger runs the same predicate once per (ROOT, FROM)
+        pair per day. Moving a FROM check from visible into an existing
+        target_trigger is safe with no player-facing change: a failing
+        visible hides the entry and renders no tooltip, exactly like a
+        failing target_trigger.
+
+        Deliberately out of scope: FROM checks in ``available`` are NOT
+        flagged here and must stay put. ``available`` is what renders the
+        red blocked-reason tooltip; moving those into target_trigger would
+        silently drop targets from the list instead of explaining why
+        they're blocked. ``validate_targets_no_trigger`` already covers the
+        case where target_trigger is genuinely missing.
+
+        Exempts:
+        - ``allowed = { always = no }``
+        - ``state_target = yes`` / ``on_map_mode = map_only``
+        """
+        self._log_section(
+            "Checking targeted decisions for FROM checks in visible duplicating target_trigger (performance)..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            if not d.target_trigger:
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            if d.state_target or d.map_only:
+                continue
+            if not d.visible:
+                continue
+
+            visible_from_bodies = _extract_from_blocks(d.visible)
+            if not visible_from_bodies:
+                continue
+
+            normalized_visible = {self._normalize_block(b) for b in visible_from_bodies}
+            normalized_trigger = {
+                self._normalize_block(b) for b in _extract_from_blocks(d.target_trigger)
+            }
+
+            if normalized_visible <= normalized_trigger:
+                advice = (
+                    "identical to the FROM check already in target_trigger; "
+                    "delete it from visible instead of moving it"
+                )
+            else:
+                advice = "move the FROM check into target_trigger (daily) instead of visible (every tick)"
+
+            results.append(f"{d.token:<55}{d.source_basename} - {advice}")
+
+        self._report(
+            results,
+            "✓ No targeted decisions with FROM checks in visible duplicating target_trigger",
+            "Targeted decisions with FROM checks in visible while target_trigger exists:",
+        )
+
     def validate_from_without_targets(self):
         """Flag decisions referencing FROM without a targeting mechanism.
 
@@ -1138,34 +1352,39 @@ class Validator(BaseValidator):
             "Decisions in categories without allowed check that also lack their own allowed trigger:",
         )
 
-    def validate_random_list_seed(self):
-        """Flag decisions using ``random_list`` without an explicit ``fixed_random_seed`` setting.
+    def validate_random_seed(self):
+        """Flag repeatable decisions rolling randomness without an explicit ``fixed_random_seed``.
 
         HOI4 caches RNG outcomes by default within a single tick/save state, so
-        a ``random_list`` inside a decision will deterministically pick the same
-        branch every time it's evaluated unless ``fixed_random_seed = no`` is
-        set on the decision. This defeats the point of the random_list and
-        leads to confusingly stuck behavior.
+        a ``random_list`` or ``random = { chance = N ... }`` inside a decision
+        will deterministically pick the same branch every time it's evaluated
+        unless ``fixed_random_seed = no`` is set on the decision. This defeats
+        the point of the roll and leads to confusingly stuck behavior.
+
+        ``fire_only_once = yes`` decisions are exempt: they resolve their roll
+        once, so a repeating seed can never surface.
 
         We only flag decisions where ``fixed_random_seed`` is omitted entirely;
         an explicit ``fixed_random_seed = yes`` is treated as a deliberate
         choice (e.g. reproducible AI rolls) and left alone.
         """
         self._log_section(
-            "Checking decisions with random_list missing fixed_random_seed = no..."
+            "Checking repeatable decisions with random rolls missing fixed_random_seed = no..."
         )
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
 
         for d in factories:
-            if d.has_random_list and not d.fixed_random_seed_explicit:
+            if d.fire_only_once or d.fixed_random_seed_explicit:
+                continue
+            if d.has_random_list or d.has_random_effect:
                 results.append(f"{d.token:<55}{d.source_basename}")
 
         self._report(
             results,
-            "✓ No random_list decisions missing an explicit fixed_random_seed setting",
-            "Decisions with random_list but no explicit 'fixed_random_seed' (RNG will deterministically repeat — set 'fixed_random_seed = no' to randomise, or 'fixed_random_seed = yes' to acknowledge intentional determinism):",
+            "✓ No repeatable random decisions missing an explicit fixed_random_seed setting",
+            "Repeatable decisions with random_list or random but no explicit 'fixed_random_seed' (RNG will deterministically repeat — set 'fixed_random_seed = no' to randomise, or 'fixed_random_seed = yes' to acknowledge intentional determinism):",
         )
 
     def validate_redundant_tag_checks(self):
@@ -1624,6 +1843,66 @@ class Validator(BaseValidator):
             category="missing-decision-localisation",
         )
 
+    def validate_missing_log(self):
+        """Flag decision effect blocks that carry no log line.
+
+        AGENTS.md / decision-reference.md require the log in every block the
+        engine runs as a decision's effects (complete_effect, remove_effect,
+        timeout_effect, cancel_effect):
+        `log = "[GetDateText]: [Root.GetName]: Decision <ID>"`. An effect block
+        with nothing in it is dead script, so it is reported too.
+        """
+        self._log_section("Checking decision effect blocks for a missing log...")
+
+        results = []
+        for dec in parse_all_decision_factories(self.mod_path):
+            for block_name in EFFECT_BLOCKS:
+                block = getattr(dec, block_name)
+                if not block or _LOG_STRING_RE.search(block):
+                    continue
+                results.append(
+                    f"{dec.token} - {dec.source_basename}: {block_name} has no log line"
+                )
+
+        self._report(
+            results,
+            "✓ Every decision effect block logs",
+            "Decision effect blocks with no log line:",
+            Severity.ERROR,
+            category="missing-decision-log",
+        )
+
+    def validate_log_not_first(self):
+        """Flag effect blocks whose log is not the block's first statement.
+
+        The log goes at the top so the game log reads in firing order. Only a
+        log at the block's own level counts: one nested inside an `if` /
+        `hidden_effect` records which branch ran and belongs where it sits.
+        """
+        self._log_section("Checking decision effect blocks for a log placed late...")
+
+        results = []
+        for dec in parse_all_decision_factories(self.mod_path):
+            for block_name in EFFECT_BLOCKS:
+                block = getattr(dec, block_name)
+                if not block:
+                    continue
+                statements = _block_level_statements(block)
+                if "log" not in statements or statements[0] == "log":
+                    continue
+                results.append(
+                    f"{dec.token} - {dec.source_basename}: {block_name} logs "
+                    f"after {statements[0]}, move the log to the top of the block"
+                )
+
+        self._report(
+            results,
+            "✓ Every decision effect block logs first",
+            "Decision effect blocks whose log is not the first statement:",
+            Severity.WARNING,
+            category="decision-log-not-first",
+        )
+
     def validate_visible_in_missions(self):
         """Flag missions that have a visible block.
 
@@ -1956,9 +2235,11 @@ class Validator(BaseValidator):
         self.validate_custom_cost_trigger()
         self.validate_targeted_without_target()
         self.validate_targets_no_trigger()
+        self.validate_root_only_visible_on_targeted()
+        self.validate_from_checks_in_visible()
         self.validate_from_without_targets()
         self.validate_without_allowed_check()
-        self.validate_random_list_seed()
+        self.validate_random_seed()
         self.validate_redundant_tag_checks()
         self.validate_allowed_redundant_with_category()
         self.validate_tag_redundant_with_category()
@@ -1966,6 +2247,8 @@ class Validator(BaseValidator):
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
         self.validate_missing_localisation()
+        self.validate_missing_log()
+        self.validate_log_not_first()
         self.validate_visible_in_missions()
         self.validate_war_with_targeted()
         self.validate_missing_war_hint()

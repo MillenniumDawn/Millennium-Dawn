@@ -128,3 +128,21 @@ def test_quoted_string_brace_does_not_break_boundary():
     block, end = extract_block(lines, 0)
     assert len(block) == 4
     assert end == 4
+
+
+def test_blank_quoted_strings_escaped_quote_does_not_end_the_string():
+    raw = 'log = "a \\"b\\" c { d } e"\nafter = { yes }\n'
+    out = blank_quoted_strings(raw)
+    assert out.count("{") == 1
+    assert out.count("}") == 1
+    assert 'log = "' in out
+    assert out.endswith("after = { yes }\n")
+
+
+def test_blank_quoted_strings_keep_start_preserves_one_string():
+    raw = 'has_dlc = "By Blood Alone" log = "hide me"\n'
+    keep_at = raw.index('"By Blood Alone"')
+    out = blank_quoted_strings(raw, {keep_at})
+    assert 'has_dlc = "By Blood Alone"' in out
+    assert "hide me" not in out
+    assert 'log = "' in out

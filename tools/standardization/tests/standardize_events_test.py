@@ -126,6 +126,42 @@ def test_event_idempotent():
     assert once == twice
 
 
+_COMMENTED_EVENT = [
+    "country_event = {",
+    "\tid = test.2",
+    "\tis_triggered_only = yes",
+    "",
+    "\t# We stand by our allies!",
+    "\toption = {",
+    "\t\tname = test.2.a",
+    "\t}",
+    "",
+    "\t# Let them fall...",
+    "\toption = {",
+    "\t\tname = test.2.b",
+    "\t}",
+    "}",
+]
+
+
+def test_comment_hugs_the_option_it_describes():
+    out = _standardize_event(_COMMENTED_EVENT)
+    pairs = [
+        (line.strip(), out[i + 1].strip())
+        for i, line in enumerate(out)
+        if line.lstrip().startswith("#")
+    ]
+    assert pairs == [
+        ("# We stand by our allies!", "option = { name = test.2.a }"),
+        ("# Let them fall...", "option = { name = test.2.b }"),
+    ]
+
+
+def test_comment_after_the_last_option_is_kept():
+    out = _standardize_event(_COMMENTED_EVENT[:-1] + ["\t# Nothing follows this", "}"])
+    assert "\t# Nothing follows this" in out
+
+
 def test_packed_single_line_option_effect_detected():
     # A fully packed option (header + body + closer on one physical line) must
     # still have its effects detected -- previously the empty [1:-1] slice hid them.
@@ -265,3 +301,25 @@ def test_multiline_packed_interior_option_gets_log():
     # Effect on the packed interior line is detected, so the option gets its log.
     assert '\t\tlog = "[GetDateText]: [This.GetName]: test.3.a executed"' in text
     assert "add_political_power = 10" in text
+
+
+_HEADER_COMMENT_EVENT = [
+    "country_event = { # 2001 Election Notification (Khatami vs Tavakkoli)",
+] + _EVENT[1:]
+
+
+def test_header_comment_preserved():
+    out = _standardize_event(_HEADER_COMMENT_EVENT)
+    assert (
+        out[0]
+        == "country_event = { # 2001 Election Notification (Khatami vs Tavakkoli)"
+    )
+
+
+def test_header_comment_idempotent():
+    once = _standardize_event(_HEADER_COMMENT_EVENT)
+    assert _standardize_event(once) == once
+
+
+def test_header_without_comment_unchanged():
+    assert _standardize_event(_EVENT)[0] == "country_event = {"

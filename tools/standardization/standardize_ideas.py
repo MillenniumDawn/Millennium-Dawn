@@ -141,6 +141,10 @@ class IdeaStandardizer(BaseStandardizer):
             "on_add": [],
             "on_remove": [],
             "other": [],
+            # (property, index) -> comments written above it. Properties are
+            # re-emitted in a fixed order below, so a comment has to travel with
+            # the one it describes instead of being left where it was written.
+            "comments": {},
         }
 
         # Extract ID from the opening line (e.g., "BRA_idea_higher_minimum_wage_1 = {").
@@ -157,6 +161,15 @@ class IdeaStandardizer(BaseStandardizer):
         if brace != -1 and first_code[brace + 1 :].strip():
             block_lines = _explode_braces(block_lines)
 
+        pending: List[str] = []
+
+        def flush_pending():
+            """Park comments in `other`, in source order, when the property they
+            precede isn't one of the re-ordered ones (or was dropped)."""
+            nonlocal pending
+            props["other"].extend(("comment", comment) for comment in pending)
+            pending = []
+
         i = 1  # Skip opening brace line
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
@@ -165,11 +178,15 @@ class IdeaStandardizer(BaseStandardizer):
 
             if prop_name in _SINGLE_LINE_PROPS:
                 props[prop_name] = line
+                props["comments"][(prop_name, 0)] = pending
+                pending = []
             elif prop_name in _BLOCK_PROPS:
                 block, next_i = extract_block(block_lines, i)
                 if prop_name in _ALWAYS_NO_FILTERED and self.is_always_no_block(
                     block, prop_name
                 ):
+                    # The block goes away as dead code; its comments stay.
+                    flush_pending()
                     i = next_i
                     continue
                 if prop_name == "allowed":
@@ -178,11 +195,14 @@ class IdeaStandardizer(BaseStandardizer):
                     # is preserved verbatim.
                     block = [_rewrite_allowed_tag(bl) for bl in block]
                 props[prop_name].append(block)
+                props["comments"][(prop_name, len(props[prop_name]) - 1)] = pending
+                pending = []
                 i = next_i
                 continue
             elif line.startswith("#"):
-                props["other"].append(("comment", block_lines[i].rstrip()))
+                pending.append(block_lines[i].rstrip())
             elif line:
+                flush_pending()
                 # Blank quoted strings before counting so a `{` inside a quoted
                 # value isn't misread as a block opener (which would send the
                 # quote-aware extract_block negative and drop lines to the closer).
@@ -197,6 +217,7 @@ class IdeaStandardizer(BaseStandardizer):
 
             i += 1
 
+        flush_pending()
         return props
 
     def is_empty_log_block(self, block_lines: List[str]) -> bool:
@@ -359,12 +380,18 @@ class IdeaStandardizer(BaseStandardizer):
         # Property indent is one level deeper
         prop_indent = base_indent + "\t"
 
+        def emit_comments(key: str, index: int = 0) -> None:
+            for comment in props.get("comments", {}).get((key, index), []):
+                lines.append(prop_indent + comment.strip())
+
         # 1. Name (optional, first property if present)
         if props["name"]:
+            emit_comments("name")
             lines.append(prop_indent + props["name"])
 
         # 2. Picture
         if props["picture"]:
+            emit_comments("picture")
             lines.append(prop_indent + props["picture"])
 
         # 3-10. Simple blocks emitted in order
@@ -378,17 +405,20 @@ class IdeaStandardizer(BaseStandardizer):
             "rule",
             "equipment_bonus",
         ):
-            for block in props[key]:
+            for index, block in enumerate(props[key]):
+                emit_comments(key, index)
                 lines.extend(self._reindent_or_collapse(block, prop_indent))
 
         # 11. on_add (log only when making changes)
-        for block in props["on_add"]:
+        for index, block in enumerate(props["on_add"]):
+            emit_comments("on_add", index)
             lines.extend(
                 self._emit_lifecycle_block(block, prop_indent, props["id"], "added")
             )
 
         # 12. on_remove (log only when making changes)
-        for block in props["on_remove"]:
+        for index, block in enumerate(props["on_remove"]):
+            emit_comments("on_remove", index)
             lines.extend(
                 self._emit_lifecycle_block(block, prop_indent, props["id"], "removed")
             )
