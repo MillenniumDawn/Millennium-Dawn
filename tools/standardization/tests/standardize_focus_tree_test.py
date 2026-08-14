@@ -573,6 +573,43 @@ def test_each_other_property_keeps_its_own_comment():
     assert _standardize_focus([f"{line}\n" for line in out]) == out
 
 
+_SPARSE_FOCUS = [
+    "\tfocus = {\n",
+    "\t\tid = TST_sparse\n",
+    "\t\ticon = GFX_goal_generic_demand_territory\n",
+    "\t\tcost = 5\n",
+    "\t\tai_will_do = { base = 1 }\n",
+    "\t}\n",
+]
+
+
+def test_absent_property_costs_no_blank_line():
+    # (defect) the position and cost separators were emitted unconditionally, so
+    # a focus with no x/y still paid a blank line for the group it never had.
+    out = _standardize_focus(_SPARSE_FOCUS)
+    assert out == [
+        "\tfocus = {",
+        "\t\tid = TST_sparse",
+        "\t\ticon = GFX_goal_generic_demand_territory",
+        "",
+        "\t\tcost = 5",
+        "",
+        "\t\tai_will_do = { base = 1 }",
+        "\t}",
+    ]
+
+
+def test_no_blank_line_before_closing_brace():
+    out = _standardize_focus(_COMMENTED_FOCUS)
+    assert out[-1] == "\t}"
+    assert out[-2].strip() != ""
+
+
+def test_sparse_focus_idempotent():
+    once = _standardize_focus(_SPARSE_FOCUS)
+    assert _standardize_focus([f"{line}\n" for line in once]) == once
+
+
 def test_failed_write_leaves_original_intact_and_no_temp_file(tmp_path, monkeypatch):
     target = tmp_path / "focus.txt"
     original = "focus_tree = {\n\tfocus = {\n\t\tid = TST_x\n\t}\n}\n"
