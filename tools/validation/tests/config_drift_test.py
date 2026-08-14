@@ -324,29 +324,36 @@ def test_validator_cache_restore_is_source_hash_scoped():
     # Both shared cache entries (the disk cache and the validation baseline)
     # are keyed on the validator source hash: a validator change must
     # invalidate every restore, never hand a PR cache or baseline output from
-    # a different validator generation.
-    expected_prefixes = (
-        "md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-",
-        "md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-",
-    )
+    # a different validator generation. Scoped by restore path so a swapped
+    # prefix can't hide behind the other entry's.
+    expected_prefix = {
+        ".validation_cache": (
+            "md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
+        ),
+        ".validation_baseline": (
+            "md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
+        ),
+    }
+    restores = {path: [] for path in expected_prefix}
     for workflow in (CI_WORKFLOW, VALIDATOR_CACHE_WORKFLOW):
         config = yaml.safe_load(workflow.read_text(encoding="utf-8"))
-        restore_steps = []
         for job in config["jobs"].values():
             for step in job.get("steps", []):
-                if "actions/cache/restore@" in step.get("uses", ""):
-                    restore_steps.extend(
-                        step.get("with", {}).get("restore-keys", "").splitlines()
-                    )
-        assert (
-            restore_steps
-        ), f"No validator cache restore keys found in {workflow.name}"
-        assert all(
-            any(key.startswith(prefix) for prefix in expected_prefixes)
-            for key in restore_steps
-        ), (
-            f"{workflow.name} has a validator cache fallback outside the current "
-            "validator source-hash generation"
+                if "actions/cache/restore@" not in step.get("uses", ""):
+                    continue
+                path = step.get("with", {}).get("path", "")
+                if path not in restores:
+                    # Workspace-bundle restores key on the merge tree, not the
+                    # validator source hash — out of scope for this guard.
+                    continue
+                restores[path].extend(
+                    step.get("with", {}).get("restore-keys", "").splitlines()
+                )
+    for path, expected in expected_prefix.items():
+        assert restores[path], f"No {path} restores found across the two workflows"
+        assert all(key.startswith(expected) for key in restores[path]), (
+            f"{path} is restored with a key outside the current validator "
+            "source-hash generation"
         )
 
 

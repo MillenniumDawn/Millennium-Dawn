@@ -10,8 +10,11 @@ Fingerprint: (severity, category, file, line, message) — the report_lib
 dedupe key plus severity, computed after the same cross-validator dedupe
 runs on both sides. Severity is part of the key so an existing warning that
 escalates to an error reads as a new error (the alarm direction). Known
-limitation: an unrelated edit that shifts lines makes existing findings
-look NEW.
+limitations:
+  - an unrelated edit that shifts lines makes existing findings look NEW;
+  - a PR that runs only a subset of validators can tag an existing finding
+    NEW when main's cross-validator dedupe escalated its severity but the
+    PR's subset didn't (see classify).
 """
 
 import json
@@ -53,9 +56,10 @@ def issue_key(issue: Issue) -> Optional[BaselineKey]:
     """The comparison key for one issue.
 
     None when the issue cannot be keyed: text-fallback issues carry no
-    file/line, so they can never be proven to match a baseline entry.
+    file/line, so they can never be proven to match a baseline entry. Line
+    must be positive to agree with Issue.has_location.
     """
-    if not issue.category or not issue.file or not issue.line or not issue.message:
+    if not issue.category or not issue.file or issue.line <= 0 or not issue.message:
         return None
     return (issue.severity, issue.category, issue.file, issue.line, issue.message)
 
@@ -79,7 +83,9 @@ def load_issues(sidecar_dir: str) -> List[Issue]:
             continue
         if not isinstance(data, list):
             continue
-        issues.extend(Issue.from_dict(d, validator=path.stem) for d in data)
+        issues.extend(
+            Issue.from_dict(d, validator=path.stem) for d in data if isinstance(d, dict)
+        )
     return dedupe(issues)
 
 
@@ -121,6 +127,12 @@ def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
     Unkeyable issues (no file/line) are left untagged and counted as
     unclassified. Rendering only adds a NEW tag when the field is set, so a
     missing baseline needs no special case at render time.
+
+    Severity is part of the key on purpose: an existing warning escalated to
+    an error must read as a new error (the alarm direction). The accepted
+    asymmetry is de-escalation — a PR that runs only the validator reporting
+    a warning while main's cross-validator dedupe recorded the same finding
+    as an error tags it NEW even though it exists on main.
     """
     stats = BaselineStats()
     for issue in issues:

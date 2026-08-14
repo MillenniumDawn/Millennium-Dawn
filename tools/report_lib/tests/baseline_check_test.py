@@ -114,6 +114,24 @@ def test_clean_diff_promotes_baseline(tmp_path, monkeypatch, capsys):
     assert "baseline updated" in capsys.readouterr().out
 
 
+def test_all_clean_night_promotes_empty_baseline(tmp_path, monkeypatch, capsys):
+    # A fully clean suite writes no sidecars at all. That is the empty
+    # findings set, not a crash: the previous baseline (with findings)
+    # collapses to meta-only and the fixed counts are reported.
+    previous = tmp_path / "prev"
+    _write_meta(previous)
+    _write_sidecar(previous, "events", [_issue_dict("error", message="old")])
+    current = tmp_path / "current"
+    current.mkdir()
+
+    code = _run(tmp_path, previous, current, monkeypatch=monkeypatch)
+
+    assert code == 0
+    assert (tmp_path / "baseline" / META_FILENAME).is_file()
+    assert not (tmp_path / "baseline" / "events.json").exists()
+    assert "1 error(s), 0 warning(s) fixed" in capsys.readouterr().out
+
+
 def test_fixed_errors_still_promote(tmp_path, monkeypatch, capsys):
     previous = tmp_path / "prev"
     _write_meta(previous)

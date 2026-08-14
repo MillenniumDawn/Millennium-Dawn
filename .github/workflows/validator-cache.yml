@@ -187,6 +187,9 @@ jobs:
 
       # The warm cache build-cache saved for THIS run (run_id-suffixed exact
       # key) — a miss here is a real failure, not a graceful cold fallback.
+      # Same-sha fallback keeps "Re-run failed jobs" recoverable: build-cache
+      # may not re-run with the same run_id, but a same sha + same toolshash
+      # entry holds identical content.
       - name: Restore validator disk cache
         # v6.1.0
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
@@ -196,6 +199,8 @@ jobs:
             md-valcache-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
             github.run_id }}
+          restore-keys: |
+            md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ github.sha }}-
           fail-on-cache-miss: true
 
       - name: Set up Python
@@ -238,3 +243,25 @@ jobs:
             md-baseline-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
             github.run_id }}
+
+      # cache/save only warns on failure; without this check a failed save
+      # leaves the job green while PRs silently keep annotating against the
+      # previous baseline (which may never advance). Mirrors build-cache's
+      # verify step.
+      - name: Verify this run's baseline entry exists
+        if: steps.diff.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_KEY: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
+            github.run_id }}
+        run: |
+          cache_url="repos/${{ github.repository }}/actions/caches"
+          cache_url="${cache_url}?key=$EXPECTED_KEY&per_page=1"
+          count=$(gh api "$cache_url" --jq '.total_count')
+          if [ "$count" -eq 0 ]; then
+            echo "::error::Baseline entry ${EXPECTED_KEY} was not saved"
+            exit 1
+          fi
+          echo "Baseline entry ${EXPECTED_KEY} confirmed"

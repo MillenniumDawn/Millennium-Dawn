@@ -69,6 +69,7 @@ def test_load_baseline_loads_and_dedupes_sidecars(tmp_path):
 def test_issue_key_requires_location():
     assert issue_key(_issue()) is not None
     assert issue_key(_issue(file="", line=0)) is None
+    assert issue_key(_issue(line=-3)) is None
 
 
 def test_classify_tags_new_and_existing(tmp_path):
@@ -163,6 +164,42 @@ def test_load_issues_skips_unparseable_sidecars(tmp_path):
     # The broken sidecar is skipped, not fatal: one validator with a
     # truncated upload must not crash the PR report or the nightly diff.
     assert len(issues) == 1
+
+
+def test_load_issues_skips_non_dict_entries(tmp_path):
+    (tmp_path / "events.json").write_text(
+        json.dumps(
+            [
+                _issue_dict("error"),
+                None,
+                "garbage",
+                42,
+                _issue_dict("warning", file="b.txt", line=2, message="second"),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    issues = load_issues(str(tmp_path))
+    # Non-dict entries are dropped, not fatal: a malformed sidecar element
+    # must not kill the whole report job via AttributeError.
+    assert [i.file for i in issues] == ["a.txt", "b.txt"]
+    assert [i.severity for i in issues] == ["error", "warning"]
+
+
+def test_from_dict_coerces_non_numeric_line_to_zero(tmp_path):
+    from report_lib import Issue
+
+    issue = Issue.from_dict(
+        {
+            "severity": "error",
+            "category": "c",
+            "message": "m",
+            "file": "f.txt",
+            "line": "abc",
+        }
+    )
+    assert issue.line == 0
+    assert issue.has_location is False
 
 
 def test_load_baseline_returns_none_when_meta_not_a_dict(tmp_path):
