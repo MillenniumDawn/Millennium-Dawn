@@ -23,15 +23,22 @@ class Issue:
     line: int = 0
     validator: str = ""
     detected_by: List[str] = field(default_factory=list)
+    # Set by baseline.classify(): "new" / "existing" when a baseline was
+    # available and the issue could be keyed; None otherwise.
+    baseline_status: Optional[str] = None
 
     @classmethod
     def from_dict(cls, d: dict, validator: str = "") -> "Issue":
+        try:
+            line = int(d.get("line", 0) or 0)
+        except (TypeError, ValueError):
+            line = 0
         return cls(
             severity=d.get("severity", Severity.ERROR),
             category=d.get("category", ""),
             message=d.get("message", ""),
             file=d.get("file", ""),
-            line=int(d.get("line", 0) or 0),
+            line=line,
             validator=d.get("validator", validator),
         )
 
