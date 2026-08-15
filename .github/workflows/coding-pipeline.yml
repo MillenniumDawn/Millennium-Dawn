@@ -226,7 +226,9 @@ jobs:
               - 'common/resistance_compliance_modifiers/**'
               - 'common/scripted_guis/**'
             decisions:
-              - 'common/decisions/**'
+              - 'common/**/*.txt'
+              - 'events/**/*.txt'
+              - 'history/**/*.txt'
             scripted-loc:
               - 'common/scripted_localisation/**'
             scripted-guis:
@@ -857,8 +859,9 @@ jobs:
         needs.validate-targeted.result == 'success' &&
         needs.validate-paths.result == 'success' && 'full' || 'partial' }}
     steps:
-      # Checkout the report generator + the report_lib package it imports.
-      # Stays much smaller than a full checkout — we skip everything else.
+      # Checkout the report generator + the report_lib package it imports,
+      # plus tools/validation for the hashFiles baseline key below. Stays
+      # much smaller than a full checkout — we skip everything else.
       - name: Checkout report tooling
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -867,7 +870,34 @@ jobs:
           sparse-checkout: |
             tools/generate_validation_report.py
             tools/report_lib
+            tools/validation
+            tools/shared_utils.py
           sparse-checkout-cone-mode: false
+
+      # Same source hash as prepare-workspace: the baseline cache entry is
+      # keyed on it, so a report can only restore a baseline built by the
+      # current validator generation.
+      - name: Compute validator code hash
+        id: toolshash
+        run: >-
+          echo "hash=${{ hashFiles('tools/validation/**',
+          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+
+      # Latest main-side validation baseline (saved nightly by
+      # validator-cache.yml's check-baseline job). A miss (cold cache,
+      # validator generation changed) only drops the NEW/EXISTING annotation
+      # in the report — never a failure.
+      - name: Restore validation baseline
+        # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_baseline
+          key: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{
+            inputs.base_sha || github.event.pull_request.base.sha }}
+          restore-keys: |
+            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
@@ -897,6 +927,13 @@ jobs:
             --checks-api
             --print
           )
+          # Missing/stale baseline just renders without NEW/EXISTING tags.
+          if [ -f .validation_baseline/baseline-meta.json ]; then
+            args+=(
+              --baseline-dir .validation_baseline
+              --baseline-toolshash "${{ steps.toolshash.outputs.hash }}"
+            )
+          fi
           if [ -n "$PR_NUMBER" ]; then
             args+=(--post-comment)
           fi
