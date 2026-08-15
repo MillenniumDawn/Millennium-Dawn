@@ -3,6 +3,12 @@
 # Adds the nation to the appropriate vote array based on their flag.
 process_auto_sc_vote = {
 	if = {
+		limit = {
+			check_variable = { global.current_sc_vote_type = 8 }
+			check_variable = { global.current_sc_vote_nation = THIS.id }
+		}
+		add_to_array = { global.security_council_vote_abstain = THIS }
+	} else_if = {
 		limit = { has_country_flag = auto_accept_all_sc_votes }
 		add_to_array = { global.security_council_vote_yes = THIS }
 	} else_if = {
@@ -25,6 +31,12 @@ process_auto_sc_vote = {
 # Adds the nation to the appropriate vote array based on their flag.
 process_auto_ga_vote = {
 	if = {
+		limit = {
+			check_variable = { global.current_ga_vote_type = 22 }
+			check_variable = { global.current_ga_vote_nation = THIS.id }
+		}
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+	} else_if = {
 		limit = { has_country_flag = auto_accept_all_ga_votes }
 		add_to_array = { global.general_assembly_vote_yes = THIS }
 	} else_if = {
@@ -384,20 +396,12 @@ un_recog_setup_check = {
 			}
 			add_to_array = { global.Unrecognised_States = THIS }
 
-			for_each_loop = {
-				array = global.UN_general_assembly
-				value = v
-
-				var:v = {
-					if = {
-						limit = {
-							has_country_flag = original_owner_@PREV
-						}
-						set_temp_variable = { spot_tracker = THIS }
-						PREV = {
-							set_variable = { prev_owner = spot_tracker }
-						}
-					}
+			every_collection_element = {
+				input = { input = collection:un_general_assembly_members_collection }
+				if = {
+					limit = { has_country_flag = original_owner_@PREV }
+					set_temp_variable = { spot_tracker = THIS }
+					PREV = { set_variable = { prev_owner = spot_tracker } }
 				}
 			}
 
@@ -411,20 +415,12 @@ un_recog_setup_check = {
 				value = THIS
 				index = 0
 			}
-			for_each_loop = {
-				array = global.UN_general_assembly
-				value = v
-
-				var:v = {
-					if = {
-						limit = {
-							has_country_flag = original_owner_@PREV
-						}
-						set_temp_variable = { spot_tracker = THIS }
-						PREV = {
-							set_variable = { prev_owner = spot_tracker }
-						}
-					}
+			every_collection_element = {
+				input = { input = collection:un_general_assembly_members_collection }
+				if = {
+					limit = { has_country_flag = original_owner_@PREV }
+					set_temp_variable = { spot_tracker = THIS }
+					PREV = { set_variable = { prev_owner = spot_tracker } }
 				}
 			}
 		}
@@ -476,6 +472,7 @@ update_sc_vote = {
 	} else = {
 		set_variable = { global.current_sc_vote_type = sc_new_vote_type }
 		set_variable = { global.current_sc_vote_nation = sc_new_vote_nation }
+		recompute_un_sc_required_yes = yes
 		if = {
 			limit = {
 				check_variable = { global.current_sc_vote_type = 5 }
@@ -590,6 +587,7 @@ manipulate_ga_vote_front = {
 			limit = {
 				NOT = { check_variable = { v = 6 } }
 				NOT = { check_variable = { v = 7 } }
+				NOT = { check_variable = { v = 22 } }
 			}
 			set_temp_variable = { move_index = i }
 			set_temp_variable = { b = 1 }
@@ -618,12 +616,13 @@ update_ga_vote = {
 				check_variable = { global.ga_vote_type_tracker^num > 0 }
 			}
 		}
-		#if is a new UNSC member vote or non-binding raid vote, front-load it!
+		#if is a new UNSC member vote, permanent-seat vote, or non-binding raid vote, front-load it!
 		if = {
 			limit = {
 				OR = {
 					check_variable = { ga_new_vote_type = 6 }
 					check_variable = { ga_new_vote_type = 7 }
+					check_variable = { ga_new_vote_type = 22 }
 				}
 			}
 			add_to_array = { array = global.ga_vote_type_tracker value = ga_new_vote_type index = 0 }
@@ -1021,6 +1020,116 @@ un_sc_new_members_re_roll = {
 	}
 }
 
+unsc_clear_permanent_seat_lobbying = {
+	for_each_loop = {
+		array = global.p5_sc_members
+		value = v
+		var:v = { clr_country_flag = recognition_campaign_UNSC@PREV }
+	}
+}
+
+unsc_end_permanent_seat_application = {
+	clr_country_flag = unsc_permanent_seat_sc_pending
+	clr_country_flag = unsc_permanent_seat_ga_pending
+	clr_country_flag = unsc_permanent_seat_approved_pending_promotion
+	clr_global_flag = sc_action_against@THIS
+	if = {
+		limit = { check_variable = { global.unsc_permanent_seat_applicant = THIS.id } }
+		clr_global_flag = unsc_permanent_seat_application_active
+		clear_variable = global.unsc_permanent_seat_applicant
+	}
+}
+
+unsc_fail_permanent_seat_application = {
+	set_country_flag = { flag = unsc_permanent_seat_retry_cooldown days = 365 value = 1 }
+	unsc_end_permanent_seat_application = yes
+}
+
+unsc_promote_permanent_member = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = current_ongoing_sc_vote }
+			NOT = {
+				AND = {
+					has_global_flag = current_ongoing_ga_vote
+					check_variable = { global.current_ga_vote_type = 6 }
+					check_variable = { global.current_ga_vote_nation = THIS.id }
+				}
+			}
+			NOT = { has_idea = p5_member }
+		}
+		set_temp_variable = { md_promoted_sc_seat = -1 }
+		for_each_loop = {
+			array = global.security_council_members
+			value = v
+			index = i
+			if = {
+				limit = {
+					check_variable = { v = THIS }
+					check_variable = { i < 10 }
+				}
+				set_temp_variable = { md_promoted_sc_seat = i }
+			}
+		}
+
+		set_temp_variable = { md_promotion_can_finish = 1 }
+		if = {
+			limit = { check_variable = { md_promoted_sc_seat > -1 } }
+			set_temp_variable = { md_promoted_sc_replacement_found = 0 }
+			random_scope_in_array = {
+				array = global.UN_general_assembly
+				limit = {
+					exists = yes
+					has_capitulated = no
+					NOT = { tag = PREV }
+					NOT = { is_in_array = { global.security_council_members = THIS } }
+					NOT = { is_in_array = { global.p5_sc_members = THIS } }
+					NOT = { is_in_array = { global.new_council_members = THIS } }
+					NOT = { is_in_array = { global.confirmed_new_council_members = THIS } }
+					NOT = { has_idea = lacks_international_recognition }
+					NOT = { has_idea = non_state_actor }
+				}
+				PREV = {
+					set_temp_variable = { md_promoted_sc_replacement = PREV }
+					set_temp_variable = { md_promoted_sc_replacement_found = 1 }
+				}
+			}
+			if = {
+				limit = { check_variable = { md_promoted_sc_replacement_found = 1 } }
+				set_variable = { global.security_council_members^md_promoted_sc_seat = md_promoted_sc_replacement }
+			} else = {
+				set_temp_variable = { md_promotion_can_finish = 0 }
+			}
+		}
+
+		if = {
+			limit = { check_variable = { md_promotion_can_finish = 1 } }
+			if = {
+				limit = { is_in_array = { global.confirmed_new_council_members = THIS } }
+				remove_from_array = { global.confirmed_new_council_members = THIS }
+			}
+			if = {
+				limit = { is_in_array = { global.new_council_members = THIS } }
+				remove_from_array = { global.new_council_members = THIS }
+			}
+			set_temp_variable = { md_purge_vote_type = 6 }
+			un_purge_queued_ga_votes_for_this = yes
+			unsc_clear_permanent_seat_lobbying = yes
+			add_ideas = p5_member
+			#UNSC.13 is major, so THIS is the viewer; the name must come from a global.
+			set_variable = { global.unsc_last_permanent_admission = THIS.id }
+			news_event = UNSC.13
+			unsc_end_permanent_seat_application = yes
+			international_systems_update = yes
+		} else = {
+			unsc_fail_permanent_seat_application = yes
+		}
+	} else_if = {
+		limit = { has_idea = p5_member }
+		unsc_end_permanent_seat_application = yes
+	}
+}
+
 recompute_un_2_3_number = {
 	set_variable = {
 		global.un_2_3_number = {
@@ -1028,6 +1137,33 @@ recompute_un_2_3_number = {
 			multiply = 0.66667
 			add = 0.499
 			round = yes
+		}
+	}
+}
+
+recompute_un_sc_required_yes = {
+	set_variable = {
+		global.un_sc_required_yes = {
+			value = global.security_council_members^num
+			multiply = 0.6
+			add = 0.499
+			round = yes
+		}
+	}
+}
+
+# Promotion has to wait out any live Council vote; run this wherever one ends.
+unsc_try_pending_promotion = {
+	if = {
+		limit = {
+			has_global_flag = unsc_permanent_seat_application_active
+			check_variable = { global.unsc_permanent_seat_applicant > 0 }
+		}
+		var:global.unsc_permanent_seat_applicant = {
+			if = {
+				limit = { has_country_flag = unsc_permanent_seat_approved_pending_promotion }
+				unsc_promote_permanent_member = yes
+			}
 		}
 	}
 }
@@ -1069,6 +1205,81 @@ un_check_for_next_queued_vote = {
 	clear_array = md_dead_member_sweep
 
 	if = {
+		limit = { has_global_flag = unsc_permanent_seat_application_active }
+		if = {
+			limit = { var:global.unsc_permanent_seat_applicant = { exists = yes } }
+			var:global.unsc_permanent_seat_applicant = {
+				#No ongoing-vote check: promotion self-guards, and gating it here would drop an
+				#approved applicant into the else branch and cancel the application it won.
+				if = {
+					limit = { has_country_flag = unsc_permanent_seat_approved_pending_promotion }
+					unsc_promote_permanent_member = yes
+				}
+				else_if = {
+					limit = { has_country_flag = unsc_permanent_seat_sc_pending }
+					set_temp_variable = { md_unsc_application_vote_found = 0 }
+					if = {
+						limit = {
+							has_global_flag = current_ongoing_sc_vote
+							check_variable = { global.current_sc_vote_type = 8 }
+							check_variable = { global.current_sc_vote_nation = THIS.id }
+						}
+						set_temp_variable = { md_unsc_application_vote_found = 1 }
+					}
+					for_each_loop = {
+						array = global.sc_vote_nation_tracker
+						value = v
+						index = i
+						if = {
+							limit = {
+								check_variable = { v = THIS }
+								check_variable = { global.sc_vote_type_tracker^i = 8 }
+							}
+							set_temp_variable = { md_unsc_application_vote_found = 1 }
+						}
+					}
+					if = {
+						limit = { check_variable = { md_unsc_application_vote_found = 0 } }
+						unsc_fail_permanent_seat_application = yes
+					}
+				}
+				else_if = {
+					limit = { has_country_flag = unsc_permanent_seat_ga_pending }
+					set_temp_variable = { md_unsc_application_vote_found = 0 }
+					if = {
+						limit = {
+							has_global_flag = current_ongoing_ga_vote
+							check_variable = { global.current_ga_vote_type = 22 }
+							check_variable = { global.current_ga_vote_nation = THIS.id }
+						}
+						set_temp_variable = { md_unsc_application_vote_found = 1 }
+					}
+					for_each_loop = {
+						array = global.ga_vote_nation_tracker
+						value = v
+						index = i
+						if = {
+							limit = {
+								check_variable = { v = THIS }
+								check_variable = { global.ga_vote_type_tracker^i = 22 }
+							}
+							set_temp_variable = { md_unsc_application_vote_found = 1 }
+						}
+					}
+					if = {
+						limit = { check_variable = { md_unsc_application_vote_found = 0 } }
+						unsc_fail_permanent_seat_application = yes
+					}
+				}
+				else = { unsc_end_permanent_seat_application = yes }
+			}
+		} else = {
+			clr_global_flag = unsc_permanent_seat_application_active
+			clear_variable = global.unsc_permanent_seat_applicant
+		}
+	}
+
+	if = {
 		limit = {
 			NOT = { has_global_flag = current_ongoing_sc_vote }
 			NOT = { has_global_flag = un_sc_vote_cooldown }
@@ -1077,6 +1288,7 @@ un_check_for_next_queued_vote = {
 		#start the next queued vote!
 		set_variable = { global.current_sc_vote_type = global.sc_vote_type_tracker^0 }
 		set_variable = { global.current_sc_vote_nation = global.sc_vote_nation_tracker^0 }
+		recompute_un_sc_required_yes = yes
 
 		remove_from_array = {
 			array = global.sc_vote_type_tracker
@@ -1125,8 +1337,13 @@ un_check_for_next_queued_vote = {
 
 	if = {
 		limit = {
-			has_global_flag = electing_new_unsc_members
-			is_in_array = { global.ga_vote_type_tracker = 6 }
+			OR = {
+				AND = {
+					has_global_flag = electing_new_unsc_members
+					is_in_array = { global.ga_vote_type_tracker = 6 }
+				}
+				is_in_array = { global.ga_vote_type_tracker = 22 }
+			}
 		}
 		clr_global_flag = un_ga_vote_cooldown
 	}
@@ -1237,8 +1454,17 @@ security_council_vote_finished = {
 				}
 			}
 		}
+		else_if = {
+			limit = { check_variable = { global.current_sc_vote_type = 8 } }
+			var:global.current_sc_vote_nation = {
+				clr_country_flag = unsc_permanent_seat_sc_pending
+				set_country_flag = unsc_permanent_seat_ga_pending
+			}
+			set_temp_variable = { ga_new_vote_type = 22 }
+			update_ga_vote = yes
+		}
 
-		# Fire result events for types 1-4, 6 and 7 (type 5 is handled via update_ga_vote)
+		# Fire result events for types 1-4 and 6-8 (type 5 is handled via update_ga_vote)
 		if = {
 			limit = {
 				NOT = { check_variable = { global.current_sc_vote_type = 5 } }
@@ -1270,6 +1496,12 @@ security_council_vote_finished = {
 			}
 			var:global.current_sc_vote_nation = {
 				set_country_flag = unsc_extradition_rejected
+			}
+		}
+		else_if = {
+			limit = { check_variable = { global.current_sc_vote_type = 8 } }
+			var:global.current_sc_vote_nation = {
+				unsc_fail_permanent_seat_application = yes
 			}
 		}
 
@@ -1310,6 +1542,8 @@ security_council_vote_finished = {
 	clear_variable = global.current_sc_vote_type
 	clear_variable = global.current_sc_vote_nation
 	clr_global_flag = current_ongoing_sc_vote
+
+	unsc_try_pending_promotion = yes
 
 	clr_global_flag = security_council_veto
 
@@ -1359,6 +1593,23 @@ general_assembly_vote_finished = {
 					check_variable = { global.new_council_members^0 = global.current_ga_vote_nation }
 				}
 				un_sc_new_members_re_roll = yes
+			}
+		} else_if = {
+			limit = { check_variable = { global.current_ga_vote_type = 22 } }
+			if = {
+				limit = { un_ga_2_3_required = yes }
+				var:global.current_ga_vote_nation = {
+					clr_country_flag = unsc_permanent_seat_ga_pending
+					set_country_flag = unsc_permanent_seat_approved_pending_promotion
+					if = {
+						limit = { NOT = { has_global_flag = current_ongoing_sc_vote } }
+						unsc_promote_permanent_member = yes
+					}
+				}
+			} else = {
+				var:global.current_ga_vote_nation = {
+					unsc_fail_permanent_seat_application = yes
+				}
 			}
 		} else_if = {
 			limit = {
@@ -1506,6 +1757,11 @@ general_assembly_vote_finished = {
 				check_variable = { global.new_council_members^0 = global.current_ga_vote_nation }
 			}
 			un_sc_new_members_re_roll = yes
+		} else_if = {
+			limit = { check_variable = { global.current_ga_vote_type = 22 } }
+			var:global.current_ga_vote_nation = {
+				unsc_fail_permanent_seat_application = yes
+			}
 		}
 	}
 
@@ -1557,12 +1813,8 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_GNSS_mil_system_idx = var_GNSS_mil_system_idx }
 				check_variable = { FROM.var_GNSS_mil_system_idx > var_GNSS_mil_system_idx }
 			}
-			NOT = {
-				OR = {
-					check_variable = { FROM.var_GNSS_mil_system_idx = 0 }
-					is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id }
-				}
-			}
+			check_variable = { FROM.var_GNSS_mil_system_idx > 121 }
+			NOT = { is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id } }
 		}
 		FROM = {
 			add_to_array = { array = THIS.GNSS_mil_treaty_array value = ROOT.id }
@@ -1582,12 +1834,8 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_GNSS_civ_system_idx = var_GNSS_civ_system_idx }
 				check_variable = { FROM.var_GNSS_civ_system_idx > var_GNSS_civ_system_idx }
 			}
-			NOT = {
-				OR = {
-					check_variable = { FROM.var_GNSS_civ_system_idx = 0 }
-					is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id }
-				}
-			}
+			check_variable = { FROM.var_GNSS_civ_system_idx > 121 }
+			NOT = { is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id } }
 		}
 		FROM = {
 			add_to_array = { array = THIS.GNSS_civ_treaty_array value = ROOT.id }
@@ -1607,12 +1855,8 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_COM_mil_system_idx = var_COM_mil_system_idx }
 				check_variable = { FROM.var_COM_mil_system_idx > var_COM_mil_system_idx }
 			}
-			NOT = {
-				OR = {
-					check_variable = { FROM.var_COM_mil_system_idx = 0 }
-					is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id }
-				}
-			}
+			check_variable = { FROM.var_COM_mil_system_idx > 141 }
+			NOT = { is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id } }
 		}
 		FROM = {
 			add_to_array = { array = THIS.COM_mil_treaty_array value = ROOT.id }
@@ -1632,12 +1876,8 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_COM_civ_system_idx = var_COM_civ_system_idx }
 				check_variable = { FROM.var_COM_civ_system_idx > var_COM_civ_system_idx }
 			}
-			NOT = {
-				OR = {
-					check_variable = { FROM.var_COM_civ_system_idx = 0 }
-					is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id }
-				}
-			}
+			check_variable = { FROM.var_COM_civ_system_idx > 141 }
+			NOT = { is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id } }
 		}
 		FROM = {
 			add_to_array = { array = THIS.COM_civ_treaty_array value = ROOT.id }
@@ -1655,25 +1895,35 @@ full_satellite_system_access = {
 #This makes it so that receiving money reduces your benefits from the main UN modifier
 #While spending a higher percentage will increase your benefits
 calculate_final_un_benefits = {
-	#add up everything we are receiving aid wise
-	set_temp_variable = { current_receiving_budget_tracker = un_esco_political_power_var }
-	add_to_temp_variable = { current_receiving_budget_tracker = un_esco_research_speed_var }
-	add_to_temp_variable = { current_receiving_budget_tracker = un_ido_construction_speed_var }
-
-	add_to_temp_variable = {
-		var = current_receiving_budget_tracker
-		value = {
-			value = un_ido_current_building_count
-			multiply = 0.14
+	set_temp_variable = { current_receiving_budget_tracker = 0 }
+	if = {
+		limit = { has_country_flag = is_getting_esco_subsidies }
+		add_to_temp_variable = {
+			var = current_receiving_budget_tracker
+			value = { value = global.unescoe_budget divide = global.esco_recipient_divisor }
 		}
 	}
-	add_to_temp_variable = { current_receiving_budget_tracker = un_cdf_productivity_var }
-	add_to_temp_variable = { current_receiving_budget_tracker = un_cdf_construction_cost_var }
-
-	#Divide here to see how much % of the money we are getting
-	#then flip it to negative; we need to add this back into the nations that are getting benefits
-	divide_temp_variable = { current_receiving_budget_tracker = global.full_aid_budget_calculator }
-	multiply_temp_variable = { current_receiving_budget_tracker = -2 }
+	if = {
+		limit = { has_country_flag = is_getting_ido_subsidies }
+		add_to_temp_variable = {
+			var = current_receiving_budget_tracker
+			value = { value = global.undio_budget divide = global.ido_recipient_divisor }
+		}
+	}
+	if = {
+		limit = { has_country_flag = is_getting_cdf_subsidies }
+		add_to_temp_variable = {
+			var = current_receiving_budget_tracker
+			value = { value = global.uncdf_budget divide = global.cdf_recipient_divisor }
+		}
+	}
+	set_temp_variable = {
+		current_receiving_budget_tracker = {
+			value = current_receiving_budget_tracker
+			divide = global.full_aid_budget_calculator
+			multiply = -2
+		}
+	}
 
 	#if you receive aid, you begin to lose some of the gains from giving aid
 	set_temp_variable = { contribution_multiplier = 1 }
@@ -1696,56 +1946,136 @@ calculate_final_un_benefits = {
 		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
 	}
 
-	set_temp_variable = { aid_program_adder = united_nations_aid_program_contribution_percent }
-	multiply_temp_variable = { aid_program_adder = contribution_multiplier }
+	set_temp_variable = {
+		aid_program_adder = {
+			value = united_nations_aid_program_contribution_percent
+			multiply = contribution_multiplier
+		}
+	}
 
-	set_variable = { united_nations_political_power_var = aid_program_adder }
-	multiply_variable = { united_nations_political_power_var = 0.5 }
+	set_variable = {
+		united_nations_political_power_var = {
+			value = aid_program_adder
+			multiply = 0.5
+		}
+	}
 
-	set_variable = { united_nations_influence_gain_var = united_nations_contribution_percent }
-	add_to_variable = { united_nations_influence_gain_var = aid_program_adder }
-	add_to_variable = { united_nations_influence_gain_var = current_receiving_budget_tracker }
+	set_variable = {
+		united_nations_influence_gain_var = {
+			value = united_nations_contribution_percent
+			add = aid_program_adder
+			add = current_receiving_budget_tracker
+		}
+	}
 
-	set_variable = { united_nations_influence_defense_var = united_nations_contribution_percent }
-	add_to_variable = { united_nations_influence_defense_var = aid_program_adder }
-	add_to_variable = { united_nations_influence_defense_var = current_receiving_budget_tracker }
+	set_variable = {
+		united_nations_influence_defense_var = {
+			value = united_nations_contribution_percent
+			add = aid_program_adder
+			add = current_receiving_budget_tracker
+		}
+	}
 
-	#Investments get calculated as the average of contributions
-	set_temp_variable = { investment_adder = united_nations_contribution_percent }
-	add_to_temp_variable = { investment_adder = aid_program_adder }
-	multiply_temp_variable = { investment_adder = -0.5 }
+	set_temp_variable = {
+		investment_adder = {
+			value = united_nations_contribution_percent
+			add = aid_program_adder
+			multiply = -0.5
+		}
+	}
 
 	set_variable = { united_nations_investment_duration_var = investment_adder }
 	set_variable = { united_nations_investment_cost_var = investment_adder }
 }
 
+remove_un_aid_subsidies_modifier_if_unused = {
+	if = {
+		limit = {
+			has_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
+			NOT = { has_country_flag = is_getting_esco_subsidies }
+			NOT = { has_country_flag = is_getting_ido_subsidies }
+			NOT = { has_country_flag = is_getting_cdf_subsidies }
+		}
+		remove_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
+	}
+}
+
+revoke_un_esco_subsidies = {
+	clr_country_flag = is_getting_esco_subsidies
+	if = {
+		limit = { is_in_array = { global.unesco_recipients = THIS } }
+		remove_from_array = { global.unesco_recipients = THIS }
+	}
+	clear_variable = un_esco_political_power_var
+	clear_variable = un_esco_research_speed_var
+	remove_un_aid_subsidies_modifier_if_unused = yes
+}
+
+revoke_un_ido_subsidies = {
+	clr_country_flag = is_getting_ido_subsidies
+	if = {
+		limit = { is_in_array = { global.unido_recipients = THIS } }
+		remove_from_array = { global.unido_recipients = THIS }
+	}
+	if = {
+		limit = { check_variable = { un_ido_old_building_count > 0 } }
+		set_temp_variable = { un_ido_buildings_to_remove = { value = un_ido_old_building_count multiply = -1 } }
+		add_offsite_building = { type = industrial_complex level = un_ido_buildings_to_remove }
+	}
+	clear_variable = un_ido_current_building_count
+	clear_variable = un_ido_construction_speed_var
+	clear_variable = un_ido_investment_speed_var
+	clear_variable = un_ido_old_building_count
+	remove_un_aid_subsidies_modifier_if_unused = yes
+}
+
+revoke_un_cdf_subsidies = {
+	clr_country_flag = is_getting_cdf_subsidies
+	if = {
+		limit = { is_in_array = { global.uncdf_recipients = THIS } }
+		remove_from_array = { global.uncdf_recipients = THIS }
+	}
+	clear_variable = un_cdf_productivity_var
+	clear_variable = un_cdf_construction_cost_var
+	remove_un_aid_subsidies_modifier_if_unused = yes
+}
+
 check_for_subsidy_expiration = {
 	set_temp_variable = { research_check = modifier@research_speed_factor }
 	subtract_from_temp_variable = { research_check = un_esco_research_speed_var }
+	set_temp_variable = { unsubsidized_political_power_daily = political_power_daily }
+	set_temp_variable = { political_power_factor_with_esco = { value = modifier@political_power_factor add = 1 } }
+	if = {
+		limit = { check_variable = { political_power_factor_with_esco > 0 } }
+		set_temp_variable = { political_power_factor_without_esco = political_power_factor_with_esco }
+		subtract_from_temp_variable = { political_power_factor_without_esco = un_esco_political_power_var }
+		multiply_temp_variable = { unsubsidized_political_power_daily = political_power_factor_without_esco }
+		divide_temp_variable = { unsubsidized_political_power_daily = political_power_factor_with_esco }
+	}
 	if = {
 		limit = {
 			has_country_flag = is_getting_esco_subsidies
 			OR = {
 				check_variable = { research_check > global.target_research_speed_mod }
-				NOT = { political_power_daily < 7 }
+				check_variable = { unsubsidized_political_power_daily > 6.999 }
 			}
 		}
-		clr_country_flag = is_getting_esco_subsidies
-		remove_from_array = { global.unesco_recipients = THIS }
+		revoke_un_esco_subsidies = yes
 		if = { limit = { NOT = { has_global_flag = un_initial_subsidy_pass } } country_event = UN.300 }
 	}
 	set_temp_variable = { construction_check = modifier@production_speed_buildings_factor }
 	subtract_from_temp_variable = { construction_check = un_ido_construction_speed_var }
+	set_temp_variable = { unsubsidized_civ_count = industrial_complex_total }
+	subtract_from_temp_variable = { unsubsidized_civ_count = un_ido_old_building_count }
 	if = {
 		limit = {
 			has_country_flag = is_getting_ido_subsidies
 			OR = {
 				check_variable = { construction_check > global.target_const_speed_mod }
-				check_variable = { industrial_complex_total > global.target_civ_count }
+				check_variable = { unsubsidized_civ_count > global.target_civ_count }
 			}
 		}
-		clr_country_flag = is_getting_ido_subsidies
-		remove_from_array = { global.unido_recipients = THIS }
+		revoke_un_ido_subsidies = yes
 		if = { limit = { NOT = { has_global_flag = un_initial_subsidy_pass } } country_event = UN.301 }
 	}
 	if = {
@@ -1756,19 +2086,10 @@ check_for_subsidy_expiration = {
 				check_variable = { overall_productivity > global.world_productivity_target }
 			}
 		}
-		clr_country_flag = is_getting_cdf_subsidies
-		remove_from_array = { global.uncdf_recipients = THIS }
+		revoke_un_cdf_subsidies = yes
 		if = { limit = { NOT = { has_global_flag = un_initial_subsidy_pass } } country_event = UN.302 }
 	}
-	if = {
-		limit = {
-			has_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
-			NOT = { has_country_flag = is_getting_esco_subsidies }
-			NOT = { has_country_flag = is_getting_ido_subsidies }
-			NOT = { has_country_flag = is_getting_cdf_subsidies }
-		}
-		remove_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
-	}
+	remove_un_aid_subsidies_modifier_if_unused = yes
 }
 
 # ------------------------------------------------------------
@@ -1781,17 +2102,14 @@ check_for_subsidy_expiration = {
 rebuild_ga_ai_active_pool = {
 	set_global_flag = { flag = ga_ai_pool_rebuild_cooldown days = 60 value = 1 }
 	clear_array = global.ga_ai_active_pool
-	for_each_loop = {
-		array = global.UN_general_assembly
-		value = v
-		var:v = {
-			if = {
-				limit = {
-					is_ai = yes
-					has_political_power > 250
-				}
-				add_to_array = { global.ga_ai_active_pool = THIS }
+	every_collection_element = {
+		input = { input = collection:un_general_assembly_members_collection }
+		if = {
+			limit = {
+				is_ai = yes
+				has_political_power > 250
 			}
+			add_to_array = { global.ga_ai_active_pool = THIS }
 		}
 	}
 }
@@ -1926,7 +2244,7 @@ un_ai_sc_consider_action = {
 un_ai_ga_consider_resolution = {
 	if = {
 		limit = {
-			is_in_array = { global.UN_general_assembly = THIS }
+			has_dynamic_modifier = { modifier = united_nations_member }
 			NOT = { has_global_flag = current_ongoing_ga_vote }
 		}
 
@@ -2098,16 +2416,17 @@ un_ai_ga_consider_resolution = {
 
 # Sanctions Effects
 apply_united_nations_sanctions = {
+	set_temp_variable = { un_member_count = { value = 0 every_collection = { named_collection = un_general_assembly_members_collection add = 1 } } }
 	set_variable = {
 		security_council_trade_sanctions_var = {
-			value = global.UN_general_assembly^num
+			value = un_member_count
 			multiply = -0.005
 			clamp = { min = -1.00 max = 0 }
 		}
 	}
 	set_variable = {
 		security_council_research_sanctions_var = {
-			value = global.UN_general_assembly^num
+			value = un_member_count
 			multiply = -0.003
 			clamp = { min = -0.50 max = 0 }
 		}
@@ -2167,6 +2486,18 @@ sc_sway_direction_effect = {
 		} else = {
 			add_to_array = { global.security_council_vote_abstain = THIS }
 		}
+
+		clr_global_flag = security_council_veto
+		for_each_loop = {
+			array = global.p5_sc_members
+			value = v
+			var:v = {
+				if = {
+					limit = { is_in_array = { global.security_council_vote_no = THIS } }
+					set_global_flag = security_council_veto
+				}
+			}
+		}
 	}
 }
 
@@ -2199,7 +2530,7 @@ recognition_grant_increment = {
 	# One-time notification when recognition first reaches the UN-ascension threshold (40% of GA)
 	if = {
 		limit = { NOT = { has_country_flag = un_ascension_eligible_notified } }
-		set_temp_variable = { recog_threshold = global.UN_general_assembly^num }
+		set_temp_variable = { recog_threshold = { value = 0 every_collection = { named_collection = un_general_assembly_members_collection add = 1 } } }
 		multiply_temp_variable = { recog_threshold = 0.4 }
 		if = {
 			limit = { check_variable = { Granted_Recognition > recog_threshold } }
@@ -2211,6 +2542,15 @@ recognition_grant_increment = {
 }
 
 un_abort_ga_vote = {
+	if = {
+		limit = {
+			check_variable = { global.current_ga_vote_type = 22 }
+			check_variable = { global.current_ga_vote_nation > 0 }
+		}
+		var:global.current_ga_vote_nation = {
+			unsc_fail_permanent_seat_application = yes
+		}
+	}
 	# Disarm any surviving mission holder or its stale mission finishes the next live vote early.
 	random_scope_in_array = {
 		array = global.UN_general_assembly
@@ -2235,6 +2575,15 @@ un_abort_ga_vote = {
 }
 
 un_abort_sc_vote = {
+	if = {
+		limit = {
+			check_variable = { global.current_sc_vote_type = 8 }
+			check_variable = { global.current_sc_vote_nation > 0 }
+		}
+		var:global.current_sc_vote_nation = {
+			unsc_fail_permanent_seat_application = yes
+		}
+	}
 	#Must run before current_sc_vote_nation is cleared below, or the subject stays immune to every
 	#future Security Council proposal for the rest of the campaign.
 	if = {
@@ -2264,10 +2613,12 @@ un_abort_sc_vote = {
 	international_systems_update = yes
 	clr_global_flag = current_ongoing_sc_vote
 	clr_global_flag = security_council_veto
+	unsc_try_pending_promotion = yes
 }
 
 # In-place removal would desync the parallel type/nation queue arrays, so rebuild via scratch arrays.
-un_remove_dying_nation_queued_votes = {
+# md_purge_vote_type = 0 drops every queued vote about THIS, otherwise only that one type.
+un_purge_queued_ga_votes_for_this = {
 	clear_array = md_rebuild_vote_type
 	clear_array = md_rebuild_vote_nation
 	for_each_loop = {
@@ -2275,7 +2626,15 @@ un_remove_dying_nation_queued_votes = {
 		value = v
 		index = i
 		if = {
-			limit = { NOT = { check_variable = { v = THIS } } }
+			limit = {
+				OR = {
+					NOT = { check_variable = { v = THIS } }
+					AND = {
+						check_variable = { md_purge_vote_type > 0 }
+						NOT = { check_variable = { global.ga_vote_type_tracker^i = md_purge_vote_type } }
+					}
+				}
+			}
 			add_to_array = { md_rebuild_vote_type = global.ga_vote_type_tracker^i }
 			add_to_array = { md_rebuild_vote_nation = v }
 		}
@@ -2289,7 +2648,11 @@ un_remove_dying_nation_queued_votes = {
 		add_to_array = { global.ga_vote_type_tracker = md_rebuild_vote_type^i }
 		add_to_array = { global.ga_vote_nation_tracker = v }
 	}
+	clear_array = md_rebuild_vote_type
+	clear_array = md_rebuild_vote_nation
+}
 
+un_purge_queued_sc_votes_for_this = {
 	clear_array = md_rebuild_vote_type
 	clear_array = md_rebuild_vote_nation
 	for_each_loop = {
@@ -2297,7 +2660,15 @@ un_remove_dying_nation_queued_votes = {
 		value = v
 		index = i
 		if = {
-			limit = { NOT = { check_variable = { v = THIS } } }
+			limit = {
+				OR = {
+					NOT = { check_variable = { v = THIS } }
+					AND = {
+						check_variable = { md_purge_vote_type > 0 }
+						NOT = { check_variable = { global.sc_vote_type_tracker^i = md_purge_vote_type } }
+					}
+				}
+			}
 			add_to_array = { md_rebuild_vote_type = global.sc_vote_type_tracker^i }
 			add_to_array = { md_rebuild_vote_nation = v }
 		}
@@ -2311,72 +2682,34 @@ un_remove_dying_nation_queued_votes = {
 		add_to_array = { global.sc_vote_type_tracker = md_rebuild_vote_type^i }
 		add_to_array = { global.sc_vote_nation_tracker = v }
 	}
-
 	clear_array = md_rebuild_vote_type
 	clear_array = md_rebuild_vote_nation
+}
+
+un_remove_dying_nation_queued_votes = {
+	set_temp_variable = { md_purge_vote_type = 0 }
+	un_purge_queued_ga_votes_for_this = yes
+	un_purge_queued_sc_votes_for_this = yes
 }
 
 # Drops queued type-5 admission votes about THIS so a nation that just joined isn't voted on again.
 remove_stale_ga_membership_votes_for_this = {
-	clear_array = md_rebuild_vote_type
-	clear_array = md_rebuild_vote_nation
-	for_each_loop = {
-		array = global.ga_vote_nation_tracker
-		value = v
-		index = i
-		if = {
-			limit = {
-				OR = {
-					NOT = { check_variable = { v = THIS } }
-					NOT = { check_variable = { global.ga_vote_type_tracker^i = 5 } }
-				}
-			}
-			add_to_array = { md_rebuild_vote_type = global.ga_vote_type_tracker^i }
-			add_to_array = { md_rebuild_vote_nation = v }
-		}
-	}
-	clear_array = global.ga_vote_type_tracker
-	clear_array = global.ga_vote_nation_tracker
-	for_each_loop = {
-		array = md_rebuild_vote_nation
-		value = v
-		index = i
-		add_to_array = { global.ga_vote_type_tracker = md_rebuild_vote_type^i }
-		add_to_array = { global.ga_vote_nation_tracker = v }
-	}
-
-	clear_array = md_rebuild_vote_type
-	clear_array = md_rebuild_vote_nation
-	for_each_loop = {
-		array = global.sc_vote_nation_tracker
-		value = v
-		index = i
-		if = {
-			limit = {
-				OR = {
-					NOT = { check_variable = { v = THIS } }
-					NOT = { check_variable = { global.sc_vote_type_tracker^i = 5 } }
-				}
-			}
-			add_to_array = { md_rebuild_vote_type = global.sc_vote_type_tracker^i }
-			add_to_array = { md_rebuild_vote_nation = v }
-		}
-	}
-	clear_array = global.sc_vote_type_tracker
-	clear_array = global.sc_vote_nation_tracker
-	for_each_loop = {
-		array = md_rebuild_vote_nation
-		value = v
-		index = i
-		add_to_array = { global.sc_vote_type_tracker = md_rebuild_vote_type^i }
-		add_to_array = { global.sc_vote_nation_tracker = v }
-	}
-
-	clear_array = md_rebuild_vote_type
-	clear_array = md_rebuild_vote_nation
+	set_temp_variable = { md_purge_vote_type = 5 }
+	un_purge_queued_ga_votes_for_this = yes
+	un_purge_queued_sc_votes_for_this = yes
 }
 
 clear_united_nations_member_state = {
+	revoke_un_esco_subsidies = yes
+	revoke_un_ido_subsidies = yes
+	revoke_un_cdf_subsidies = yes
+
+	if = {
+		limit = { check_variable = { global.unsc_permanent_seat_applicant = THIS.id } }
+		unsc_clear_permanent_seat_lobbying = yes
+		unsc_end_permanent_seat_application = yes
+	}
+
 	# GA voting-mission holder is dying: hand the mission to another member, else abort the vote.
 	if = {
 		limit = { has_country_flag = has_ga_mission }
@@ -2455,6 +2788,8 @@ clear_united_nations_member_state = {
 				NOT = { tag = PREV }
 				NOT = { is_in_array = { global.security_council_members = THIS } }
 				NOT = { is_in_array = { global.p5_sc_members = THIS } }
+				NOT = { is_in_array = { global.new_council_members = THIS } }
+				NOT = { is_in_array = { global.confirmed_new_council_members = THIS } }
 				NOT = { has_idea = lacks_international_recognition }
 				NOT = { has_idea = non_state_actor }
 			}
@@ -2570,25 +2905,9 @@ remove_from_bloc_membership_arrays = {
 # Non-bloc membership arrays: UN aid programs, unrecognised-state tracking, and other idea-tied
 # lists that would otherwise leave a stale annexed-country entry for their loop consumers.
 remove_from_secondary_membership_arrays = {
-	if = {
-		limit = { is_in_array = { global.unesco_recipients = THIS } }
-		remove_from_array = { global.unesco_recipients = THIS }
-	}
-	if = {
-		limit = { is_in_array = { global.unido_recipients = THIS } }
-		remove_from_array = { global.unido_recipients = THIS }
-	}
-	if = {
-		limit = { is_in_array = { global.uncdf_recipients = THIS } }
-		remove_from_array = { global.uncdf_recipients = THIS }
-	}
-	clr_country_flag = is_getting_esco_subsidies
-	clr_country_flag = is_getting_ido_subsidies
-	clr_country_flag = is_getting_cdf_subsidies
-	if = {
-		limit = { has_dynamic_modifier = { modifier = un_aid_subsidies_modifier } }
-		remove_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
-	}
+	revoke_un_esco_subsidies = yes
+	revoke_un_ido_subsidies = yes
+	revoke_un_cdf_subsidies = yes
 	if = {
 		limit = { is_in_array = { global.non_EU_EDU_ally = THIS } }
 		remove_from_array = { global.non_EU_EDU_ally = THIS }

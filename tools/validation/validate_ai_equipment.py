@@ -4,6 +4,7 @@
 # covered in a custom or shared file, and flag role templates whose names
 # collide across overlapping files.
 import glob
+import logging
 import os
 import re
 import sys
@@ -11,13 +12,9 @@ from typing import Dict, List, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from naval_module_slots import build_indexes, check_naval_variants
+from equipment_module_slots import build_equipment_index, check_target_variants
 from shared_utils import strip_inline_comment
 from validator_common import BaseValidator, Issue, Severity, run_validator_main
-
-# Ship hulls live only in files carrying one of these engine hull-type markers,
-# so plane/tank equipment files are skipped without parsing their whole tree.
-_SHIP_HULL_MARKERS = ("screen_ship", "capital_ship", "= submarine", "= carrier")
 
 _NAVAL_SLOT_CATEGORIES = {
     "unknown_hull": "NAVAL VARIANT: unknown hull type",
@@ -26,11 +23,35 @@ _NAVAL_SLOT_CATEGORIES = {
     "category_mismatch": "NAVAL VARIANT: module category not allowed in slot",
 }
 
+_EQUIPMENT_SLOT_CATEGORIES = {
+    "unknown_hull": "EQUIPMENT VARIANT: unknown hull type",
+    "unknown_slot": "EQUIPMENT VARIANT: slot not on hull",
+    "unknown_module": "EQUIPMENT VARIANT: unknown module reference",
+    "category_mismatch": "EQUIPMENT VARIANT: module category not allowed in slot",
+}
+
 ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
 BLOCKED_FOR_RE = re.compile(r"blocked_for\s*=\s*\{([^}]*)\}", re.DOTALL)
 AVAILABLE_FOR_RE = re.compile(r"available_for\s*=\s*\{([^}]*)\}", re.DOTALL)
 CATEGORY_RE = re.compile(r"category\s*=\s*(naval|land|air)")
 TEMPLATE_NAME_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
+HISTORY_RE = re.compile(r"^\s*history\s*=\s*yes\s*$", re.MULTILINE)
+
+# Keys that are design attributes rather than nested design blocks.
+DESIGN_META_KEYS = {
+    "priority",
+    "roles",
+    "available_for",
+    "blocked_for",
+    "allowed_modules",
+    "allowed_types",
+    "requirements",
+    "enable",
+    "allowed",
+    "upgrades",
+    "target_variant",
+    "modules",
+}
 
 
 def parse_tags(text: str) -> Set[str]:
@@ -129,25 +150,76 @@ def _read_text(filepath: str) -> str:
     try:
         with open(filepath, "r", encoding="utf-8-sig") as f:
             return f.read()
-    except Exception:
+    except OSError:
+        logging.warning(
+            "Could not read %s; its variant modules will not be checked", filepath
+        )
         return ""
+
+
+def parse_designs(content: str) -> List[Dict]:
+    """Return one entry per design block, with the group it belongs to and
+    whether it carries ``history = yes``.
+
+    ``history`` decides which folder a design appears in inside the equipment
+    designer, so a group that sets it on only some of its designs shows the
+    player a partial preset list.
+    """
+    designs = []
+    lines = content.split("\n")
+    group = None
+    group_depth = 0
+    depth = 0
+    pending = None
+
+    for idx, raw in enumerate(lines):
+        code = strip_inline_comment(raw)
+        stripped = code.strip()
+        match = re.match(r"^(\w+)\s*=\s*\{", stripped)
+        if match and depth in (0, group_depth):
+            name = match.group(1)
+            if depth == 0:
+                group = name
+                group_depth = 1
+            elif name not in DESIGN_META_KEYS:
+                pending = {
+                    "group": group,
+                    "name": name,
+                    "line": idx + 1,
+                    "start": idx,
+                    "depth": depth,
+                }
+                designs.append(pending)
+        depth += code.count("{") - code.count("}")
+        if pending is not None and depth <= pending["depth"]:
+            body = "\n".join(lines[pending["start"] : idx + 1])
+            pending["history"] = bool(HISTORY_RE.search(body))
+            pending["is_design"] = "target_variant" in body
+            pending = None
+        if depth == 0:
+            group = None
+
+    return [d for d in designs if d.get("is_design")]
 
 
 class Validator(BaseValidator):
     TITLE = "AI EQUIPMENT COVERAGE"
     STAGED_EXTENSIONS = [".txt"]
 
-    # WARNING until the ~270-site pre-existing backlog on main is cleared, then
-    # ERROR. PR #2510 fixed the screen-hull fire-control class but left other
-    # category mismatches (light engines on destroyers, ESM on subs, mineclearing
-    # on corvettes, engine modules in weapon slots) untouched.
-    NAVAL_SLOT_SEVERITY = Severity.WARNING
+    # WARNING until the ~390-site pre-existing backlog on main is cleared, then
+    # ERROR (measured 2026-08: 262 naval + 124 land/air). PR #2510 fixed the
+    # screen-hull fire-control class but left other category mismatches (light
+    # engines on destroyers, ESM on subs, mineclearing on corvettes, engine
+    # modules in weapon slots) untouched; the tank and plane templates came into
+    # scope later and carry their own share.
+    SLOT_SEVERITY = Severity.WARNING
 
     def run_validations(self):
         self._validate_coverage()
-        self._validate_naval_variant_modules()
+        self._validate_variant_modules()
+        self._validate_history_consistency()
 
-    def _validate_naval_variant_modules(self):
+    def _validate_variant_modules(self):
         equip_dir = os.path.join(self.mod_path, "common", "ai_equipment")
         units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
         if not os.path.isdir(equip_dir) or not os.path.isdir(units_dir):
@@ -161,24 +233,10 @@ class Validator(BaseValidator):
             if not staged_equip:
                 return
 
-        self._log_section("Checking naval variant modules against hull slot rules...")
+        self._log_section("Checking AI variant modules against hull slot rules...")
 
-        def _build():
-            hull_texts = []
-            for fp in sorted(glob.iglob(os.path.join(units_dir, "*.txt"))):
-                text = _read_text(fp)
-                if any(marker in text for marker in _SHIP_HULL_MARKERS):
-                    hull_texts.append(text)
-            module_texts = [
-                _read_text(fp)
-                for fp in sorted(
-                    glob.iglob(os.path.join(units_dir, "modules", "*.txt"))
-                )
-            ]
-            return build_indexes(hull_texts, module_texts)
-
-        hull_slots, module_category, known_categories = self.cached(
-            "naval_hull_index", _build
+        index = self.cached(
+            "equipment_hull_index", lambda: build_equipment_index(units_dir)
         )
 
         results = []
@@ -187,15 +245,17 @@ class Validator(BaseValidator):
             if staged_equip is not None and basename not in staged_equip:
                 continue
             content = _read_text(fp)
-            findings = check_naval_variants(
-                content, hull_slots, module_category, known_categories
-            )
             rel = os.path.relpath(fp, self.mod_path)
-            for f in findings:
+            for f in check_target_variants(content, index):
+                labels = (
+                    _NAVAL_SLOT_CATEGORIES
+                    if f.hull in index.ship_hulls
+                    else _EQUIPMENT_SLOT_CATEGORIES
+                )
                 results.append(
                     Issue(
-                        severity=self.NAVAL_SLOT_SEVERITY,
-                        category=_NAVAL_SLOT_CATEGORIES[f.kind],
+                        severity=self.SLOT_SEVERITY,
+                        category=labels[f.kind],
                         message=f.message,
                         file=rel,
                         line=f.line,
@@ -204,9 +264,60 @@ class Validator(BaseValidator):
 
         self._report(
             results,
-            "✓ All naval variant modules match their hull slot rules",
-            "Naval variant modules invalid for their hull slot:",
-            severity=self.NAVAL_SLOT_SEVERITY,
+            "✓ All AI variant modules match their hull slot rules",
+            "AI variant modules invalid for their hull slot:",
+            severity=self.SLOT_SEVERITY,
+        )
+
+    def _validate_history_consistency(self):
+        equip_dir = os.path.join(self.mod_path, "common", "ai_equipment")
+        if not os.path.isdir(equip_dir):
+            return
+
+        staged_equip = None
+        if self.staged_only and self.staged_files:
+            staged_equip = {
+                os.path.basename(f) for f in self.staged_files if "ai_equipment" in f
+            }
+            if not staged_equip:
+                return
+
+        self._log_section("Checking history = yes consistency within design groups...")
+
+        results = []
+        for fp in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
+            basename = os.path.basename(fp)
+            if staged_equip is not None and basename not in staged_equip:
+                continue
+            rel = os.path.relpath(fp, self.mod_path)
+            groups: Dict[str, List[Dict]] = {}
+            for design in parse_designs(_read_text(fp)):
+                groups.setdefault(design["group"], []).append(design)
+            for group, designs in groups.items():
+                marked = [d for d in designs if d["history"]]
+                if not marked or len(marked) == len(designs):
+                    continue
+                missing = [d for d in designs if not d["history"]]
+                results.append(
+                    Issue(
+                        severity=Severity.WARNING,
+                        category="AI EQUIPMENT: partial history = yes",
+                        message=(
+                            f"'{group}' sets history = yes on "
+                            f"{len(marked)}/{len(designs)} designs; "
+                            f"{', '.join(d['name'] for d in missing)} will not "
+                            f"appear in the designer alongside the rest"
+                        ),
+                        file=rel,
+                        line=missing[0]["line"],
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ history = yes is applied consistently within design groups",
+            "Design groups with an inconsistent history = yes:",
+            severity=Severity.WARNING,
         )
 
     def _validate_coverage(self):

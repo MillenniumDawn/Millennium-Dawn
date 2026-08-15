@@ -78,6 +78,28 @@ def collapse_blank_runs(lines: List[str], max_blank: int = 1) -> List[str]:
     return result
 
 
+def join_groups(groups: List[List[str]]) -> List[str]:
+    """Join line groups with exactly one blank line between them.
+
+    A blank line separates two groups rather than terminating one, so an absent
+    property contributes no gap and the last group is not followed by a blank.
+    Emitting a trailing blank per section is what left a dead line before every
+    closing brace and a stray gap wherever a property was missing."""
+    out: List[str] = []
+    for group in groups:
+        body = list(group)
+        while body and not body[0].strip():
+            body.pop(0)
+        while body and not body[-1].strip():
+            body.pop()
+        if not body:
+            continue
+        if out:
+            out.append("")
+        out.extend(body)
+    return out
+
+
 def block_has_log(block_lines: List[str]) -> bool:
     """Check whether any line in a block contains a log statement."""
     return any("log =" in line for line in block_lines)

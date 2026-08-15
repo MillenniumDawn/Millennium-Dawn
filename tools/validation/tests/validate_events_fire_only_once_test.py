@@ -253,8 +253,8 @@ def test_fire_only_once_lookup_full_repo_in_staged_mode(tmp_path):
     v.staged_only = True
     v.staged_files = [str(caller)]
     v.validate_fire_only_once_in_loop()
-    # WARNING-severity until the pre-existing backlog is cleared.
-    assert v.warnings_found >= 1, (
+    # ERROR-severity: the pre-existing backlog was cleared.
+    assert v.errors_found >= 1, (
         "fire_only_once definition in an unstaged file must still be looked "
         "up — staged mode used to scan only staged event files and miss it, "
         "silently passing the in-loop bug at commit time"

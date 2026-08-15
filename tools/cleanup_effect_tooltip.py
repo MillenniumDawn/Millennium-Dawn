@@ -58,7 +58,7 @@ _RE_EFFECT_TOOLTIP_OPEN = re.compile(r"^\s*effect_tooltip\s*=\s*\{")
 _RE_INLINE_EFFECT_TOOLTIP = re.compile(r"\beffect_tooltip\s*=\s*\{([^{}]*)\}")
 
 
-def _custom_tooltip_keys(inner):
+def _custom_tooltip_keys(inner: str) -> list[str] | None:
     """Keys of a block that is ONLY custom_effect_tooltip statements, else None.
 
     Returns the list of loc KEYs (>= 1) when the block holds nothing but
@@ -98,12 +98,13 @@ def _fix_inline_line(line):
     comment = line[len(code) :]
     count = [0]
 
-    def _replace(m):
+    def _replace(m: re.Match[str]) -> str:
         keys = _custom_tooltip_keys(m.group(1))
-        if keys is None:
+        if not isinstance(keys, list):
             return m.group(0)
+        keys_list = list(keys)
         count[0] += 1
-        return " ".join(f"custom_effect_tooltip = {k}" for k in keys)
+        return " ".join(f"custom_effect_tooltip = {key}" for key in keys_list)
 
     new_code = _RE_INLINE_EFFECT_TOOLTIP.sub(_replace, code)
     return new_code + comment, count[0]
@@ -189,8 +190,12 @@ def process_file(filepath, check_only=False):
         return 0
     new_lines, collapsed = simplify_effect_tooltip_block(lines)
     if collapsed and not check_only and new_lines != lines:
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.writelines(new_lines)
+        try:
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.writelines(new_lines)
+        except OSError as e:
+            print(f"ERROR: {filepath}: could not write file ({e})", file=sys.stderr)
+            raise
     return collapsed
 
 

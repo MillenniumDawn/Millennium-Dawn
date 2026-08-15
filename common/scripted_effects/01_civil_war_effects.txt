@@ -382,3 +382,811 @@ MAL_common_rebel_setup = {
 	}
 	inherit_technology = MAL
 }
+
+civil_war_cleanup_ivory_coast = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_ivorian_first_civil_war_cleanup_complete }
+			NOT = { has_global_flag = GLOBAL_ivorian_first_civil_war_cleanup_pending }
+			has_global_flag = GLOBAL_ivorian_first_civil_war
+			OR = { original_tag = CDI original_tag = FNC }
+			owns_state = 352
+			owns_state = 353
+			owns_state = 354
+		}
+		set_global_flag = {
+			flag = GLOBAL_ivorian_first_civil_war_cleanup_pending
+			days = 7
+			value = 1
+		}
+		country_event = { id = ivory_coast_md.10 days = 1 }
+	}
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_ivorian_second_civil_war_cleanup_complete }
+			NOT = { has_global_flag = GLOBAL_ivorian_second_civil_war_cleanup_pending }
+			has_global_flag = GLOBAL_ivorian_second_civil_war
+			OR = { original_tag = CDI original_tag = FNC }
+			owns_state = 352
+			owns_state = 353
+			owns_state = 354
+		}
+		set_global_flag = {
+			flag = GLOBAL_ivorian_second_civil_war_cleanup_pending
+			days = 7
+			value = 1
+		}
+		country_event = { id = ivory_coast_md.15 days = 1 }
+	}
+}
+
+civil_war_cleanup_senegal = {
+	if = {
+		limit = {
+			original_tag = SEN
+			has_global_flag = GLOBAL_senegalese_civil_war
+			NOT = { has_global_flag = GLOBAL_senegalese_civil_war_cleanup_complete }
+			NOT = { has_global_flag = GLOBAL_senegalese_civil_war_cleanup_pending }
+			is_senegal_states_owned = yes
+		}
+		set_global_flag = {
+			flag = GLOBAL_senegalese_civil_war_cleanup_pending
+			days = 7
+			value = 1
+		}
+		country_event = { id = senegal_md.11 days = 1 }
+	}
+}
+
+civil_war_cleanup_haiti = {
+	if = {
+		limit = {
+			original_tag = HAI
+			has_global_flag = GLOBAL_haitian_civil_war
+			NOT = { has_global_flag = GLOBAL_haitian_civil_war_cleanup_complete }
+			owns_state = 859
+			owns_state = 860
+		}
+		country_event = { id = haiti.21 days = 1 }
+	}
+}
+
+civil_war_cleanup_car_bush_war = {
+	if = {
+		limit = {
+			original_tag = CAR
+			has_global_flag = GLOBAL_central_african_bush_war_escalated
+			NOT = { has_global_flag = GLOBAL_central_african_bush_war_begun }
+			NOT = { has_global_flag = GLOBAL_central_african_bush_war_cleanup_complete }
+			is_central_african_states_owned = yes
+		}
+		country_event = { id = central_africa.18 days = 7 }
+	}
+}
+
+civil_war_cleanup_car_delayed_bush_war = {
+	if = {
+		limit = {
+			original_tag = CAR
+			has_civil_war = no
+			has_global_flag = GLOBAL_central_african_bush_war_begun
+			NOT = { has_idea = CAR_central_bush_republic_war_idea }
+			NOT = { has_global_flag = GLOBAL_central_african_bush_war_cleanup_complete }
+			is_central_african_states_owned = yes
+			date > 2007.1.1
+		}
+		country_event = { id = central_africa.18 days = 7 }
+	}
+}
+
+civil_war_cleanup_car_phase_two = {
+	if = {
+		limit = {
+			has_global_flag = GLOBAL_central_african_civil_war
+			has_global_flag = GLOBAL_central_african_civil_war_phase_two
+			NOT = { has_global_flag = GLOBAL_central_african_civil_war_cleanup_complete }
+			NOT = { has_global_flag = GLOBAL_central_african_civil_war_cleanup_pending }
+			OR = { original_tag = CAR original_tag = LGN original_tag = SEL original_tag = BAL }
+			is_central_african_states_owned = yes
+		}
+		set_global_flag = {
+			flag = GLOBAL_central_african_civil_war_cleanup_pending
+			days = 14
+			value = 1
+		}
+		country_event = { id = central_africa.25 days = 7 }
+	}
+}
+
+civil_war_cleanup_somalia = {
+	if = {
+		limit = {
+			has_global_flag = GLOBAL_somali_civil_war_begun
+			NOT = { has_global_flag = GLOBAL_somali_civil_war_cleanup_complete }
+			OR = { original_tag = SOM original_tag = SHB }
+			if = {
+				limit = { original_tag = SOM }
+				NOT = { country_exists = SHB }
+			}
+			if = {
+				limit = { original_tag = SHB }
+				NOT = { country_exists = SOM }
+			}
+			is_somali_state_no_sml_owned = yes
+		}
+		country_event = { id = somalia.11 days = 1 }
+	}
+}
+
+civil_war_cleanup_afghanistan = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_afghan_civil_war_over }
+			OR = { original_tag = AFG original_tag = TAL }
+			exists = yes
+			if = {
+				limit = { original_tag = AFG }
+				NOT = { country_exists = TAL }
+			}
+			if = {
+				limit = { original_tag = TAL }
+				NOT = { country_exists = AFG }
+			}
+		}
+		set_global_flag = GLOBAL_afghan_civil_war_over
+		409 = { remove_core_of = AFG remove_core_of = TAL }
+		410 = { remove_core_of = AFG remove_core_of = TAL }
+		411 = { remove_core_of = AFG remove_core_of = TAL }
+		412 = { remove_core_of = AFG remove_core_of = TAL }
+		414 = { remove_core_of = AFG remove_core_of = TAL }
+		415 = { remove_core_of = AFG remove_core_of = TAL }
+		drop_cosmetic_tag = yes
+		if = { limit = { has_idea = non_state_actor } remove_ideas = non_state_actor }
+		if = {
+			limit = { original_tag = TAL }
+			set_cosmetic_tag = AFG
+			set_country_flag = dynamic_flag
+			set_country_flag = dynamic_rebel_flag
+			add_ideas = intervention_neo_imperialism
+			#Massoud's resistance rises once the Taliban have consolidated. The event's own trigger gates it and
+			#fire_only_once caps it. GLOBAL_afghan_civil_war_over must stay set: clearing it re-arms this cleanup,
+			#which strips and re-adds six cores and resets the capital to 414 over wherever the player moved it
+			country_event = { id = AFG_events.34 days = 180 random_days = 120 }
+		}
+		add_state_core = 409
+		add_state_core = 410
+		add_state_core = 411
+		add_state_core = 412
+		add_state_core = 414
+		add_state_core = 415
+		set_capital = { state = 414 }
+		if = {
+			limit = { original_tag = AFG }
+			1207 = { transfer_state_to = TAL }
+			set_temp_variable = { taliban_strength_increase = 35 }
+			increase_taliban_strength = yes
+			country_event = { id = AFG_taliban_insurgency.0 days = 1 }
+		}
+		hidden_effect = { news_event = { id = AFG_news.1 hours = 6 } }
+	}
+}
+
+civil_war_cleanup_angola = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_angolan_civil_war_over }
+			OR = { original_tag = AGL original_tag = UNI }
+			exists = yes
+			if = {
+				limit = { original_tag = AGL }
+				NOT = { country_exists = UNI }
+			}
+			if = {
+				limit = { original_tag = UNI }
+				NOT = { country_exists = AGL }
+			}
+		}
+		296 = { remove_core_of = AGL remove_core_of = UNI }
+		297 = { remove_core_of = AGL remove_core_of = UNI }
+		298 = { remove_core_of = AGL remove_core_of = UNI }
+		299 = { remove_core_of = AGL remove_core_of = UNI }
+		300 = { remove_core_of = AGL remove_core_of = UNI }
+		301 = { remove_core_of = AGL remove_core_of = UNI }
+		if = {
+			limit = { original_tag = UNI }
+			set_cosmetic_tag = AGL
+			set_country_flag = dynamic_flag
+			set_country_flag = dynamic_rebel_flag
+			remove_ideas = non_state_actor
+		}
+		add_state_core = 296
+		add_state_core = 297
+		add_state_core = 298
+		add_state_core = 299
+		add_state_core = 300
+		add_state_core = 301
+		set_capital = { state = 298 }
+		set_global_flag = GLOBAL_angolan_civil_war_over
+		news_event = { id = AngolaNews.1 hours = 6 }
+	}
+}
+
+civil_war_cleanup_sierra_leone = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_sierra_leonean_civil_war_over }
+			OR = { original_tag = SIE original_tag = AFR }
+			exists = yes
+			if = {
+				limit = { original_tag = SIE }
+				NOT = { country_exists = AFR }
+			}
+			if = {
+				limit = { original_tag = AFR }
+				NOT = { country_exists = SIE }
+			}
+		}
+		country_event = { id = SierraLeone.0 days = 1 random_days = 14 }
+	}
+}
+
+civil_war_cleanup_liberia = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_liberian_civil_war_over }
+			OR = { original_tag = LIB original_tag = LUR }
+			exists = yes
+			if = {
+				limit = { original_tag = LIB }
+				NOT = { country_exists = LUR }
+			}
+			if = {
+				limit = { original_tag = LUR }
+				NOT = { country_exists = LIB }
+			}
+		}
+		country_event = { id = Liberia.0 days = 1 random_days = 14 }
+	}
+}
+
+civil_war_cleanup_syria = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+			has_global_flag = GLOBAL_syrian_civil_war_started
+			OR = { original_tag = SYR original_tag = FSA original_tag = NUS }
+			exists = yes
+			if = {
+				limit = { NOT = { original_tag = SYR } }
+				NOT = { country_exists = SYR }
+			}
+			if = {
+				limit = { NOT = { original_tag = FSA } }
+				NOT = { country_exists = FSA }
+			}
+			if = {
+				limit = { NOT = { original_tag = NUS } }
+				NOT = { country_exists = NUS }
+			}
+			NOT = { country_exists = ISI }
+		}
+		every_state = {
+			limit = { OR = { is_core_of = ISI is_claimed_by = ISI } }
+			remove_claim_by = ISI
+			remove_core_of = ISI
+		}
+		587 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		184 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		185 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		186 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		561 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		188 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		189 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		192 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		191 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		566 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		190 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		158 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		193 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		571 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		575 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		if = { limit = { NOT = { has_country_flag = Relinquished_Golan } } add_state_core = 587 }
+		add_state_core = 184
+		add_state_core = 185
+		add_state_core = 186
+		add_state_core = 561
+		add_state_core = 188
+		add_state_core = 189
+		add_state_core = 192
+		add_state_core = 191
+		add_state_core = 566
+		add_state_core = 190
+		if = {
+			limit = {
+				NOT = { original_tag = FSA }
+				NOT = { has_country_flag = Relinquished_Hatay }
+			}
+			add_state_core = 158
+		}
+		if = {
+			limit = { NOT = { has_country_flag = Deal_With_Rojava } }
+			add_state_core = 193
+			add_state_core = 571
+			add_state_core = 575
+			add_state_core = 995
+		}
+		set_capital = { state = 186 }
+		if = {
+			limit = { NOT = { original_tag = SYR } }
+			set_cosmetic_tag = SYR
+			set_country_flag = dynamic_flag
+			set_country_flag = dynamic_rebel_flag
+			add_ideas = divided_syria
+			add_offsite_building = { type = industrial_complex level = -1 }
+			add_offsite_building = { type = arms_factory level = -1 }
+		}
+		if = {
+			limit = { original_tag = NUS }
+			add_ideas = intervention_neo_imperialism
+			remove_ideas = non_state_actor
+		}
+		set_global_flag = GLOBAL_syrian_civil_war_over
+		hidden_effect = { news_event = { id = SyriaNews.1 hours = 6 } }
+	}
+}
+
+civil_war_cleanup_yemen = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_yemeni_civil_war_over }
+			has_global_flag = GLOBAL_yemeni_civil_war_iranian_intervention
+			OR = { original_tag = YEM original_tag = HOU original_tag = AQY original_tag = STC }
+			has_war = no
+			owns_state = 194
+			owns_state = 195
+			owns_state = 196
+			owns_state = 197
+			owns_state = 198
+			owns_state = 199
+			owns_state = 200
+			owns_state = 951
+			owns_state = 952
+			owns_state = 1103
+			owns_state = 1104
+		}
+		set_global_flag = GLOBAL_yemeni_civil_war_over
+		194 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU remove_core_of = STC }
+		195 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU remove_core_of = STC }
+		196 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU remove_core_of = STC }
+		197 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU remove_core_of = STC }
+		198 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU remove_core_of = STC }
+		199 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU remove_core_of = STC }
+		200 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU remove_core_of = STC }
+		951 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU remove_core_of = STC }
+		952 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU remove_core_of = STC }
+		1103 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU remove_core_of = STC }
+		1104 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU remove_core_of = STC }
+		if = {
+			limit = { NOT = { original_tag = YEM } }
+			drop_cosmetic_tag = yes
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
+			set_cosmetic_tag = YEM
+			remove_ideas = non_state_actor
+		}
+		if = {
+			limit = { original_tag = AQY }
+			add_ideas = intervention_neo_imperialism
+			drop_cosmetic_tag = yes
+			set_cosmetic_tag = YEM_AUTH_SS_fascism
+		}
+		add_state_core = 194
+		add_state_core = 195
+		add_state_core = 196
+		add_state_core = 197
+		add_state_core = 198
+		add_state_core = 199
+		add_state_core = 200
+		add_state_core = 951
+		add_state_core = 952
+		add_state_core = 1103
+		add_state_core = 1104
+		set_capital = { state = 195 }
+		if = {
+			limit = { NOT = { has_global_flag = GLOBAL_yemeni_civil_war_news_sent } }
+			set_global_flag = GLOBAL_yemeni_civil_war_news_sent
+			news_event = Yemen.4
+		}
+	}
+}
+
+civil_war_cleanup_mali = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_malian_civil_war_cleanup_complete }
+			NOT = { has_global_flag = GLOBAL_malian_civil_war_cleanup_pending }
+			has_global_flag = GLOBAL_malian_civil_war_phase_one
+			has_global_flag = GLOBAL_malian_civil_war_phase_two
+			OR = { original_tag = MAL original_tag = TUA }
+			if = {
+				limit = { original_tag = MAL }
+				is_malian_states_owned = yes
+			}
+			if = {
+				limit = { original_tag = TUA }
+				OR = {
+					is_malian_states_owned = yes
+					MAL = { is_subject_of = TUA }
+				}
+			}
+		}
+		set_global_flag = {
+			flag = GLOBAL_malian_civil_war_cleanup_pending
+			days = 7
+			value = 1
+		}
+		country_event = { id = mali.33 days = 1 }
+	}
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_malian_tuareg_rebellion_cleanup_complete }
+			NOT = { has_global_flag = GLOBAL_malian_tuareg_rebellion_cleanup_pending }
+			has_global_flag = GLOBAL_malian_tuareg_rebellion_escalated
+			NOT = { has_global_flag = GLOBAL_malian_civil_war_phase_one }
+			NOT = { has_global_flag = GLOBAL_malian_civil_war_phase_two }
+			OR = { original_tag = MAL original_tag = TUA }
+			if = {
+				limit = { original_tag = MAL }
+				is_malian_states_owned = yes
+			}
+			if = {
+				limit = { original_tag = TUA }
+				OR = {
+					is_malian_states_owned = yes
+					MAL = { is_subject_of = TUA }
+				}
+			}
+		}
+		set_global_flag = {
+			flag = GLOBAL_malian_tuareg_rebellion_cleanup_pending
+			days = 7
+			value = 1
+		}
+		country_event = { id = mali.34 days = 1 }
+	}
+}
+
+civil_war_cleanup_second_libya_war = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_libyan_civil_war_over }
+			OR = { original_tag = HOR original_tag = GNA original_tag = GNC }
+			exists = yes
+			NOT = { has_war_with = HOR }
+			NOT = { has_war_with = GNA }
+			NOT = { has_war_with = GNC }
+			NOT = { has_cosmetic_tag = GNA_NTC }
+		}
+		LBA_civil_war_cleanup_effect = yes
+	}
+}
+
+nep_remove_guerrilla_effect = {
+	485 = { remove_dynamic_modifier = { modifier = NEP_guerrilla_conflict } }
+	489 = { remove_dynamic_modifier = { modifier = NEP_guerrilla_conflict } }
+}
+
+nep_kings_death_effect = {
+	if = {
+		limit = {
+			country_exists = NEP
+			country_exists = NPM
+			NEP = {
+				has_war_with = NPM
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
+		}
+		NEP = {
+			swap_ideas = {
+				remove_idea = NEP_National_Unity_Campaign
+				add_idea = NEP_The_National_vendetta
+			}
+			kill_country_leader = yes
+		}
+		news_event = { id = news.90 random_days = 3 }
+	}
+}
+
+civil_war_cleanup_nepal_truth_ending = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NEP
+			country_exists = NPM
+			NEP = {
+				has_war_with = NPM
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		nep_remove_guerrilla_effect = yes
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
+		NEP = {
+			country_event = { id = nepal.1 days = 511 }
+			annex_country = { target = NPM transfer_troops = no }
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		485 = { remove_core_of = NPM }
+		489 = { remove_core_of = NPM }
+		news_event = { id = news.87 random_days = 3 }
+	}
+}
+
+civil_war_cleanup_nepal_kings_victory = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NEP
+			NOT = { country_exists = NPM }
+			NEP = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		news_event = { id = news.89 random_days = 3 }
+		nep_remove_guerrilla_effect = yes
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
+		485 = { remove_core_of = NPM }
+		489 = { remove_core_of = NPM }
+	}
+}
+
+civil_war_cleanup_nepal_reds_victory = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NPM
+			NOT = { country_exists = NEP }
+			NPM = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		news_event = { id = news.88 random_days = 3 }
+		nep_remove_guerrilla_effect = yes
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+			set_cosmetic_tag = NEP
+		}
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		485 = { remove_core_of = NEP }
+		489 = { remove_core_of = NEP }
+	}
+}
+
+civil_war_cleanup_nepal_peace = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NEP
+			country_exists = NPM
+			NEP = {
+				NOT = { has_war_with = NPM }
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		nep_remove_guerrilla_effect = yes
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		NPM = { remove_ideas = NEP_Himalayan_Rebellion_Struggle }
+	}
+}
+
+civil_war_cleanup_nepal_no_survivor = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			NOT = { country_exists = NEP }
+			NOT = { country_exists = NPM }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		nep_remove_guerrilla_effect = yes
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
+		485 = { remove_core_of = NEP remove_core_of = NPM }
+		489 = { remove_core_of = NEP remove_core_of = NPM }
+	}
+}
+
+civil_war_cleanup_nepal = {
+	civil_war_cleanup_nepal_kings_victory = yes
+	civil_war_cleanup_nepal_reds_victory = yes
+	civil_war_cleanup_nepal_peace = yes
+	civil_war_cleanup_nepal_no_survivor = yes
+}
+
+# Guards above self-validate, so this is safe to fire from any war-ending on_action;
+# a call that comes too early is a no-op and the next hook retries it.
+civil_war_cleanup_hooks = {
+	AFG = { civil_war_cleanup_afghanistan = yes }
+	TAL = { civil_war_cleanup_afghanistan = yes }
+	AGL = { civil_war_cleanup_angola = yes }
+	UNI = { civil_war_cleanup_angola = yes }
+	SIE = { civil_war_cleanup_sierra_leone = yes }
+	AFR = { civil_war_cleanup_sierra_leone = yes }
+	LIB = { civil_war_cleanup_liberia = yes }
+	LUR = { civil_war_cleanup_liberia = yes }
+	SEN = { civil_war_cleanup_senegal = yes }
+	SOM = { civil_war_cleanup_somalia = yes }
+	SHB = { civil_war_cleanup_somalia = yes }
+	SYR = { civil_war_cleanup_syria = yes }
+	FSA = { civil_war_cleanup_syria = yes }
+	NUS = { civil_war_cleanup_syria = yes }
+	YEM = { civil_war_cleanup_yemen = yes }
+	HOU = { civil_war_cleanup_yemen = yes }
+	AQY = { civil_war_cleanup_yemen = yes }
+	# Tag Aliases here so we need this here to prevent errors in the log.
+	if = { limit = { country_exists = STC }
+		STC = { civil_war_cleanup_yemen = yes }
+	}
+	CDI = { civil_war_cleanup_ivory_coast = yes }
+	FNC = { civil_war_cleanup_ivory_coast = yes }
+	MAL = { civil_war_cleanup_mali = yes }
+	TUA = { civil_war_cleanup_mali = yes }
+	CAR = { civil_war_cleanup_car_phase_two = yes }
+	LGN = { civil_war_cleanup_car_phase_two = yes }
+	SEL = { civil_war_cleanup_car_phase_two = yes }
+	BAL = { civil_war_cleanup_car_phase_two = yes }
+	HOR = { civil_war_cleanup_second_libya_war = yes }
+	GNA = { civil_war_cleanup_second_libya_war = yes }
+	GNC = { civil_war_cleanup_second_libya_war = yes }
+	NEP = { civil_war_cleanup_nepal = yes }
+	NPM = { civil_war_cleanup_nepal = yes }
+}
+
+civil_war_startup_repairs = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_yemeni_civil_war_iranian_intervention }
+			any_country_with_original_tag = {
+				original_tag_to_check = PER
+				has_completed_focus = PER_ansar_allah
+			}
+		}
+		set_global_flag = GLOBAL_yemeni_civil_war_iranian_intervention
+	}
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_angolan_orphan_cores_repaired }
+			NOT = { country_exists = AGL }
+			NOT = { country_exists = UNI }
+			NOT = { 298 = { is_core_of = AGL } }
+		}
+		296 = { remove_core_of = AGL remove_core_of = UNI }
+		297 = { remove_core_of = AGL remove_core_of = UNI }
+		298 = { remove_core_of = AGL remove_core_of = UNI }
+		299 = { remove_core_of = AGL remove_core_of = UNI }
+		300 = { remove_core_of = AGL remove_core_of = UNI }
+		301 = { remove_core_of = AGL remove_core_of = UNI }
+		AGL = {
+			add_state_core = 296
+			add_state_core = 297
+			add_state_core = 298
+			add_state_core = 299
+			add_state_core = 300
+			add_state_core = 301
+			set_capital = { state = 298 }
+		}
+		set_global_flag = GLOBAL_angolan_orphan_cores_repaired
+	}
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_afghan_orphan_cores_repaired }
+			NOT = { country_exists = AFG }
+			NOT = { country_exists = TAL }
+			NOT = { 414 = { is_core_of = AFG } }
+		}
+		409 = { remove_core_of = AFG remove_core_of = TAL }
+		410 = { remove_core_of = AFG remove_core_of = TAL }
+		411 = { remove_core_of = AFG remove_core_of = TAL }
+		412 = { remove_core_of = AFG remove_core_of = TAL }
+		414 = { remove_core_of = AFG remove_core_of = TAL }
+		415 = { remove_core_of = AFG remove_core_of = TAL }
+		AFG = {
+			add_state_core = 409
+			add_state_core = 410
+			add_state_core = 411
+			add_state_core = 412
+			add_state_core = 414
+			add_state_core = 415
+			set_capital = { state = 414 }
+		}
+		set_global_flag = GLOBAL_afghan_orphan_cores_repaired
+	}
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_sierra_leonean_orphan_cores_repaired }
+			NOT = { country_exists = SIE }
+			NOT = { country_exists = AFR }
+			NOT = { 358 = { is_core_of = SIE } }
+		}
+		358 = { remove_core_of = SIE remove_core_of = AFR }
+		357 = { remove_core_of = SIE remove_core_of = AFR }
+		SIE = {
+			add_state_core = 358
+			add_state_core = 357
+			set_capital = { state = 358 }
+		}
+		set_global_flag = GLOBAL_sierra_leonean_orphan_cores_repaired
+	}
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_liberian_orphan_cores_repaired }
+			NOT = { country_exists = LIB }
+			NOT = { country_exists = LUR }
+			NOT = { 356 = { is_core_of = LIB } }
+		}
+		356 = { remove_core_of = LIB remove_core_of = LUR }
+		355 = { remove_core_of = LIB remove_core_of = LUR }
+		LIB = {
+			add_state_core = 356
+			add_state_core = 355
+			set_capital = { state = 356 }
+		}
+		set_global_flag = GLOBAL_liberian_orphan_cores_repaired
+	}
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_yemeni_orphan_cores_repaired }
+			NOT = { country_exists = YEM }
+			NOT = { country_exists = AQY }
+			NOT = { country_exists = HOU }
+			NOT = { 195 = { is_core_of = YEM } }
+		}
+		194 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU }
+		195 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU }
+		196 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU }
+		197 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU }
+		198 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU }
+		199 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU }
+		200 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU }
+		951 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU }
+		952 = { remove_core_of = YEM remove_core_of = AQY remove_core_of = HOU }
+		YEM = {
+			add_state_core = 194
+			add_state_core = 195
+			add_state_core = 196
+			add_state_core = 197
+			add_state_core = 198
+			add_state_core = 199
+			add_state_core = 200
+			add_state_core = 951
+			add_state_core = 952
+			set_capital = { state = 195 }
+		}
+		set_global_flag = GLOBAL_yemeni_orphan_cores_repaired
+	}
+}

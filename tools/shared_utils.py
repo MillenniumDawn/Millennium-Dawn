@@ -7,6 +7,7 @@ import bisect
 import logging
 import os
 import re
+import subprocess
 import sys
 import time
 from collections import OrderedDict
@@ -458,8 +459,12 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
         return []
 
     out: List[Dict] = []
+    try:
+        filenames = sorted(os.listdir(tags_dir))
+    except OSError:
+        return out
 
-    for fname in sorted(os.listdir(tags_dir)):
+    for fname in filenames:
         if not fname.endswith(".txt"):
             continue
         fpath = os.path.join(tags_dir, fname)
@@ -578,7 +583,7 @@ def strip_comments(text: str) -> str:
     return "\n".join(result)
 
 
-def blank_quoted_strings(text: str) -> str:
+def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> str:
     """Replace the interior of double-quoted strings with spaces.
 
     Quotes, string length, and newlines are preserved so byte offsets and line
@@ -586,15 +591,24 @@ def blank_quoted_strings(text: str) -> str:
     braces / ``#`` / ``=`` inside a quoted log string that would otherwise
     desync a brace-depth or token scan. Run AFTER comment stripping — a stray
     ``"`` in a ``#`` comment would otherwise flip the in-string state.
+
+    ``keep_start``, if given, is a set of offsets of opening ``"`` characters
+    whose string contents are left untouched — for a caller that must preserve
+    specific quoted values (e.g. a ``has_dlc = "X"`` name) while still handling
+    escaped quotes (``\\"``) correctly everywhere else.
     """
     if '"' not in text:
         return text
     out = list(text)
     in_str = False
+    start = -1
+    keep = keep_start or ()
     for i, c in enumerate(text):
         if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            if not in_str:
+                start = i
             in_str = not in_str
-        elif in_str and c != "\n":
+        elif in_str and c != "\n" and start not in keep:
             out[i] = " "
     return "".join(out)
 
@@ -712,7 +726,7 @@ class Timer:
         self.start()
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
         return False
 
@@ -749,7 +763,7 @@ def print_timing_summary(timings: List[Tuple[str, float]]):
     print(f"\n{dim}{'─' * (max_label + 18)}", file=sys.stderr)
     print("  Timing summary:", file=sys.stderr)
     for label, elapsed in timings:
-        bar_len = int(elapsed / total * 20) if total > 0 else 0
+        bar_len = round(elapsed / total * 20) if total > 0 else 0
         bar = "█" * bar_len + "░" * (20 - bar_len)
         print(
             f"  {label:<{max_label}}  {elapsed:6.3f}s  {bar}",
@@ -840,7 +854,7 @@ def run_with_pool(
     func,
     items: list,
     workers: int,
-    chunksize: int = None,
+    chunksize: Optional[int] = None,
     initializer=None,
     initargs=(),
 ):
@@ -976,7 +990,6 @@ def get_staged_files(
         return _filter(env_files) or None
 
     try:
-        import subprocess
 
         def _git_diff(*args):
             result = subprocess.run(
@@ -1000,10 +1013,7 @@ def get_staged_files(
             return files
 
         return None
-    except subprocess.CalledProcessError:
-        return None
-    except ImportError:
-        log_message("WARNING", "Git not available, skipping staged file detection")
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
 
 

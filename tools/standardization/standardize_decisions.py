@@ -16,6 +16,7 @@ from common_utils import (
     block_has_log,
     collapse_blank_runs,
     inject_log_after_brace,
+    join_groups,
 )
 from shared_utils import (
     collapse_or_compact,
@@ -135,7 +136,13 @@ def format_decision(block_lines: List[str]) -> List[str]:
 
     did = _read_header_id(block_lines)
 
-    lines: List[str] = [f"\t{did} = {{", ""]
+    # Consecutive one-line properties share a group; each multi-line block gets
+    # its own. `join_groups` then puts a single blank between groups, so a
+    # decision reads as the guide's example rather than one blank per property.
+    groups: List[List[str]] = []
+    singles: List[str] = []
+    pending: List[str] = []
+
     i = 1  # skip opening header line
     while i < len(block_lines) - 1:  # skip closing brace
         stripped = block_lines[i].strip()
@@ -143,8 +150,8 @@ def format_decision(block_lines: List[str]) -> List[str]:
             i += 1
             continue
         if stripped.startswith("#"):
-            # No trailing blank: the comment hugs the property it describes.
-            lines.append(f"\t\t{stripped}")
+            # The comment hugs the property it describes, so it waits for it.
+            pending.append(f"\t\t{stripped}")
             i += 1
             continue
 
@@ -161,18 +168,26 @@ def format_decision(block_lines: List[str]) -> List[str]:
                 block = inject_log_after_brace(block, log_line)
             elif prop_name == "ai_will_do":
                 block = convert_root_factor_to_base(block)
-            lines.extend(_reindent_or_collapse(block, 2))
-            lines.append("")
+            rendered = _reindent_or_collapse(block, 2)
+            if len(rendered) == 1:
+                singles.extend(pending)
+                singles.extend(rendered)
+            else:
+                if singles:
+                    groups.append(singles)
+                    singles = []
+                groups.append(pending + rendered)
+            pending = []
             i = next_i
         else:
-            lines.append(f"\t\t{collapse_ws_outside_quotes(stripped)}")
-            lines.append("")
+            singles.extend(pending)
+            pending = []
+            singles.append(f"\t\t{collapse_ws_outside_quotes(stripped)}")
             i += 1
 
-    while lines and lines[-1] == "":
-        lines.pop()
-    lines.append("\t}")
-    return lines
+    groups.append(singles)
+    groups.append(pending)
+    return [f"\t{did} = {{"] + join_groups(groups) + ["\t}"]
 
 
 class DecisionStandardizer(BaseStandardizer):
@@ -238,26 +253,34 @@ class DecisionStandardizer(BaseStandardizer):
 
     def format_block(self, props: Dict[str, Any]) -> List[str]:
         """Emit the category with its children reformatted in source order."""
-        lines: List[str] = [f"{props['id']} = {{", ""]
+        groups: List[List[str]] = []
+        singles: List[str] = []
+        pending: List[str] = []
 
         for kind, data in props["children"]:
             if kind == "cat_single":
-                lines.append(f"\t{data}")
-                lines.append("")
-            elif kind == "cat_block":
-                lines.extend(_reindent_or_collapse(data, 1))
-                lines.append("")
-            elif kind == "decision":
-                lines.extend(format_decision(data))
-                lines.append("")
-            else:  # raw — comment or stray line, hug the following block
-                lines.append(data)
+                singles.extend(pending)
+                pending = []
+                singles.append(f"\t{data}")
+                continue
+            if kind == "raw":  # comment or stray line, hug the following block
+                pending.append(data)
+                continue
+            if singles:
+                groups.append(singles)
+                singles = []
+            if kind == "cat_block":
+                groups.append(pending + _reindent_or_collapse(data, 1))
+            else:  # decision
+                groups.append(pending + format_decision(data))
+            pending = []
 
-        while lines and lines[-1] == "":
-            lines.pop()
-        lines.append("}")
+        groups.append(singles)
+        groups.append(pending)
 
-        return collapse_blank_runs(lines)
+        return collapse_blank_runs(
+            [f"{props['id']} = {{"] + join_groups(groups) + ["}"]
+        )
 
 
 def detect_file_type(input_file: str) -> BaseStandardizer:

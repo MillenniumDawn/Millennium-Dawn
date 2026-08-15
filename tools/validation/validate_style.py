@@ -38,6 +38,7 @@ _RE_TAG_LINE = re.compile(r"^[A-Z]{3}", re.M | re.I)
 _RE_FOCUS_FORMAT = re.compile(r"^[A-Z]{3}_[a-zA-Z0-9_-]+$", re.M | re.U)
 _RE_NEWS_EVENT = re.compile(r"news_event\s*=\s*\{")
 _RE_OPTION = re.compile(r"\boption\s*=\s*\{")
+_RE_OPTION_TRIGGER = re.compile(r"trigger\s*=\s*\{")
 
 # EH is the Event Horizon generic tree's mod-wide domain prefix, not a tag.
 _SHARED_FOCUS_PREFIXES = ("USoE", "POTEF", "AFRICAN_UNION", "GENERIC", "EH")
@@ -306,12 +307,17 @@ def _check_event_log_standards(text: str, path: str):
             ai_block_depth = -1
 
         if option_found:
-            # Detect ai_chance / ai_will_do before the effects check so the block's
-            # own opening line (an `=` line) isn't counted as an effect.
+            # Detect ai_chance / ai_will_do / trigger before the effects check so
+            # the block's own opening line (an `=` line) isn't counted as an
+            # effect. An option-level trigger is a visibility condition.
             if (
                 ai_block_depth < 0
                 and "{" in line
-                and ("ai_chance" in line or "ai_will_do" in line)
+                and (
+                    "ai_chance" in line
+                    or "ai_will_do" in line
+                    or _RE_OPTION_TRIGGER.match(stripped)
+                )
             ):
                 ai_block_depth = braces
             if "name" in line and "=" in line:
@@ -455,11 +461,7 @@ class Validator(BaseValidator):
         )
 
         self._log_section("Event Log Standards (WARNING)")
-        event_warnings = [
-            r
-            for r in warning_results
-            if "event option" in r[0].lower() or "log" in r[0].lower()
-        ]
+        event_warnings = [r for r in warning_results if "event option" in r[0].lower()]
         self._report(
             event_warnings,
             "Event log standards OK",

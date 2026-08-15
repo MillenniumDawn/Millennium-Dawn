@@ -40,7 +40,7 @@ recog_ai_monthly = {
 
 #determine what action you should do now
 recog_ai_evaluate_actions = {
-	set_temp_variable = { recog_threshold = global.UN_general_assembly^num }
+	set_temp_variable = { recog_threshold = { value = 0 every_collection = { named_collection = un_general_assembly_members_collection add = 1 } } }
 	multiply_temp_variable = { recog_threshold = 0.4 }
 
 	if = { limit = { has_political_power > 200 }
@@ -82,12 +82,9 @@ recog_ai_evaluate_actions = {
 			}
 			add_political_power = -200
 			set_country_flag = { flag = recent_global_recog_campaign days = 365 value = 1 }
-			for_each_loop = {
-				array = global.UN_general_assembly
-				value = v
-				var:v = {
-					add_opinion_modifier = { target = PREV modifier = improving_un_relations }
-				}
+			every_collection_element = {
+				input = { input = collection:un_general_assembly_members_collection }
+				add_opinion_modifier = { target = PREV modifier = improving_un_relations }
 			}
 			set_country_flag = { flag = recog_ai_cooldown days = 90 value = 1 }
 		}
