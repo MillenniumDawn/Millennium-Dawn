@@ -23,7 +23,7 @@ country_event = {
 	option = {
 		name = venezuela.1.a
 		log = "[GetDateText]: [This.GetName]: venezuela.1.a executed"
-		country_event = { id = venezuela.2 days = 15 }
+		country_event = { id = venezuela.102 days = 15 }
 	}
 
 	# Denounce the Recall Election
@@ -657,12 +657,14 @@ country_event = {
 	title = venezuela.101.t
 	desc = venezuela.101.d
 	is_triggered_only = yes
+	fire_only_once = yes
 	# picture =
 
 	trigger = {
 		original_tag = VEN
 		emerging_anarchist_communism_in_power_or_coalition = yes
 		has_country_leader = { name = "Hugo Chávez" ruling_only = yes }
+		NOT = { has_country_flag = VEN_2004_recall_referendum_engaged }
 	}
 
 	# Signatures Collected... a crisis is coming
@@ -674,6 +676,86 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = 0.03 }
 		change_relative_party_popularity = yes
 		set_country_flag = VEN_2004_recall_referendum_engaged
+		set_country_flag = { flag = VEN_2004_recall_campaign_active days = 240 value = 1 }
+		country_event = { id = venezuela.1 days = 245 }
+	}
+}
+
+# 2004 - Recall Referendum Results
+country_event = {
+	id = venezuela.102
+	title = venezuela.102.t
+	desc = {
+		text = venezuela.102.d1
+		trigger = { has_country_flag = VEN_2004_recall_chavez_survives }
+	}
+	desc = {
+		text = venezuela.102.d2
+		trigger = { has_country_flag = VEN_2004_recall_chavez_recalled }
+	}
+	picture = GFX_election_day
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		random_list = {
+			60 = {
+				modifier = {
+					add = 40
+					has_completed_focus = VEN_mission_florentino
+				}
+				modifier = {
+					factor = 0.6
+					has_idea = VEN_opposition_strengthened
+				}
+				modifier = {
+					factor = 0.75
+					check_variable = { party_pop_array^2 > 0.20 }
+				}
+				set_country_flag = VEN_2004_recall_chavez_survives
+			}
+			40 = {
+				modifier = {
+					add = 20
+					has_idea = VEN_opposition_strengthened
+				}
+				modifier = {
+					add = 15
+					check_variable = { party_pop_array^2 > 0.20 }
+				}
+				set_country_flag = VEN_2004_recall_chavez_recalled
+			}
+		}
+	}
+
+	option = {
+		name = venezuela.102.a
+		trigger = { has_country_flag = VEN_2004_recall_chavez_survives }
+		log = "[GetDateText]: [This.GetName]: venezuela.102.a executed"
+		add_stability = 0.05
+		add_political_power = 50
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		change_relative_party_popularity = yes
+		hidden_effect = {
+			clr_country_flag = VEN_2004_recall_referendum_engaged
+			clr_country_flag = VEN_2004_recall_campaign_active
+			clr_country_flag = VEN_2004_recall_chavez_survives
+		}
+	}
+
+	option = {
+		name = venezuela.102.b
+		trigger = { has_country_flag = VEN_2004_recall_chavez_recalled }
+		log = "[GetDateText]: [This.GetName]: venezuela.102.b executed"
+		add_stability = -0.10
+		add_political_power = -50
+		country_event = { id = MD4_election_campaign.0 days = 1 }
+		hidden_effect = {
+			clr_country_flag = VEN_2004_recall_referendum_engaged
+			clr_country_flag = VEN_2004_recall_campaign_active
+			clr_country_flag = VEN_2004_recall_chavez_recalled
+		}
 	}
 }
 
