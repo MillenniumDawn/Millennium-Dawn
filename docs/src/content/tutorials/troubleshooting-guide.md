@@ -67,6 +67,16 @@ To resolve this:
 
 Save games in Millennium Dawn are much larger than other mods. It is important to ensure you are using local game saves over cloud saves for the most stability. Typically this becomes more problematic in the late game around the 2020+ mark when save files start to exceed 100MB or more. You can easily bypass this issue by not saving anything on the cloud for _Millennium Dawn_.
 
+### Corrupted `operation_assets` Entry (Crash on Load / End of Day)
+
+After 20+ years of play, a contributor country that ceased to exist (annexed or capitulated during a war) may leave behind a dangling entry in another country's `operation_assets` intel data. On save, the now-invalid tag serializes as `={ token_airforce token_army }` (no country tag before the `=`), which desyncs the Clausewitz parser and causes a fatal crash at end-of-day serialization.
+
+**Symptoms:** Crash on load or at end of day with "Unexpected token" errors in the log; all tokens after the corruption are misread.
+
+**Player workaround:** Open the save file in a text editor, locate the malformed `={ token_... }` line (it is brace-balanced and safe to remove), and delete it. The parser resyncs after the removed line and other intel entries are preserved.
+
+**Prevention:** The mod includes automated cleanup of bugged tokens via event hooks (`on_puppet`, `on_annex`, `on_subject_annexed`) that free captured operatives when countries are removed from play.
+
 ## Low Virtual Memory / Paging File
 
 If you receive a "your paging file is low" warning or experience crashes on systems with limited RAM (common on laptops), you may need to increase your Windows virtual memory (page file) =.

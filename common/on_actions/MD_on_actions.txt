@@ -541,6 +541,22 @@ on_actions = {
 			}
 
 			log = "[GetDateText]: [ROOT.GetName] annexed [FROM.GetName] - Inflation blended to [?ROOT.inflation_rate_var|%], GDP/C tracker reset to [?ROOT.last_quarter_gdpc_total]"
+
+			# LAR cleanup: free bugged operatives captured by ROOT or FROM when a country is annexed
+			every_country = {
+				limit = {
+					OR = {
+						has_captured_operative = ROOT
+						has_captured_operative = FROM
+					}
+				}
+				ROOT = {
+					free_random_operative = {
+						captured_by = THIS
+						all = yes
+					}
+				}
+			}
 		}
 	}
 
@@ -558,6 +574,17 @@ on_actions = {
 					NOT = { has_global_flag = GLOBAL_yemeni_civil_war_over }
 				}
 				remove_from_faction = AQY
+			}
+
+			# LAR cleanup: free bugged operatives captured by ROOT when a country capitulates
+			every_country = {
+				limit = { has_captured_operative = ROOT }
+				ROOT = {
+					free_random_operative = {
+						captured_by = ROOT
+						all = yes
+					}
+				}
 			}
 		}
 	}
