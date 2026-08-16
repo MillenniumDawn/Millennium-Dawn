@@ -115,26 +115,10 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "RAJ_indian_national_congress_desc",
         "RAJ_industrial_expansion",
         "RAJ_industrial_expansion_desc",
-        # lar_events_l_english.yml — La Resistance operation events reused by
-        # MD's intel/raid systems.
-        "lar_bruneval_raid.1.a",
-        "lar_bruneval_raid.1.desc",
-        "lar_bruneval_raid.1.t",
-        "lar_bruneval_raid.2.desc",
-        "lar_bruneval_raid.2.t",
-        "lar_capture_tito.1.a",
-        "lar_capture_tito.1.desc",
-        "lar_capture_tito.1.t",
+        # lar_events_l_english.yml — live La Resistance systems reused by MD.
         "lar_collab_gov.1.d",
         "lar_collab_gov.1.t",
-        "lar_heavy_water.1.a",
-        "lar_heavy_water.1.desc",
-        "lar_heavy_water.1.t",
-        "lar_heavy_water.2.a",
-        "lar_heavy_water.2.desc",
-        "lar_heavy_water.2.t",
-        # lar_events_l_english.yml — La Resistance agent-loss events reused
-        # verbatim by MD's LaR_agent_events.txt.
+        # lar_events_l_english.yml — agent-loss events reused by LaR_agent_events.txt.
         "lar_operative_event.1.a",
         "lar_operative_event.1.desc",
         "lar_operative_event.1.t",
@@ -150,12 +134,6 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "lar_operative_event.5.a",
         "lar_operative_event.5.desc",
         "lar_operative_event.5.t",
-        "lar_rescue_mussolini.1.a",
-        "lar_rescue_mussolini.1.desc",
-        "lar_rescue_mussolini.1.t",
-        "lar_rescue_mussolini.2.a",
-        "lar_rescue_mussolini.2.desc",
-        "lar_rescue_mussolini.2.t",
         "occupied_countries.1.a",
         "occupied_countries.1.b",
         "occupied_countries.1.desc",
