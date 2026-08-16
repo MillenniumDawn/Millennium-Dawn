@@ -75,7 +75,7 @@ After 20+ years of play, a contributor country that ceased to exist (annexed or 
 
 **Player workaround:** Open the save file in a text editor, locate the malformed `={ token_... }` line (it is brace-balanced and safe to remove), and delete it. The parser resyncs after the removed line and other intel entries are preserved.
 
-**Prevention:** The mod includes automated cleanup of bugged tokens via event hooks (`on_puppet`, `on_annex`, `on_subject_annexed`) that free captured operatives when countries are removed from play.
+**Prevention:** The mod frees captured operatives when a country becomes a puppet or is removed, and clears all operation tokens targeting annexed countries from every nation's intel data.
 
 ## Low Virtual Memory / Paging File
 
