@@ -69,7 +69,7 @@ Save games in Millennium Dawn are much larger than other mods. It is important t
 
 ### Corrupted `operation_assets` Entry (Crash on Load / End of Day)
 
-After 20+ years of play, a contributor country that ceased to exist (annexed or capitulated during a war) may leave behind a dangling entry in another country's `operation_assets` intel data. On save, the now-invalid tag serializes as `={ token_airforce token_army }` (no country tag before the `=`), which desyncs the Clausewitz parser and causes a fatal crash at end-of-day serialization.
+After 20+ years of play, a country that ceases to exist through annexation may leave behind a dangling entry in another country's `operation_assets` intel data. On save, the now-invalid tag serializes as `={ token_airforce token_army }` (no country tag before the `=`), which desyncs the Clausewitz parser and causes a fatal crash at end-of-day serialization.
 
 **Symptoms:** Crash on load or at end of day with "Unexpected token" errors in the log; all tokens after the corruption are misread.
 
