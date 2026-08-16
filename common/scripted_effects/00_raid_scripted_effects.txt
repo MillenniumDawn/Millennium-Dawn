@@ -226,43 +226,36 @@ apply_raid_critical_success_losses = {
 
 send_events_to_others = {
 	hidden_effect = {
-		var:ROOT.target_country = {
-			for_each_scope_loop = {
-				array = faction_members
+		for_each_loop = {
+			array = FROM.faction_members
+			value = raid_notification_recipient
+			var:raid_notification_recipient = {
 				if = {
 					limit = {
 						NOT = { tag = ROOT }
-						NOT = { original_tag = var:ROOT.target_country }
+						NOT = { original_tag = FROM }
 						NOT = { has_country_flag = disable_raid_notification }
 					}
-					save_event_target_as = raid_notification_recipient
-					# Return through ROOT so notification events keep the attacker as FROM.
-					ROOT = {
-						event_target:raid_notification_recipient = {
-							country_event = MD_raid.12
-						}
-					}
+					country_event = MD_raid.12
 				}
 			}
+		}
 
-			for_each_scope_loop = {
-				array = neighbors
+		for_each_loop = {
+			array = FROM.neighbors
+			value = raid_notification_recipient
+			var:raid_notification_recipient = {
 				if = {
 					limit = {
 						NOT = { tag = ROOT }
-						NOT = { original_tag = var:ROOT.target_country }
-						NOT = { is_in_faction_with = var:ROOT.target_country }
+						NOT = { original_tag = FROM }
+						NOT = { is_in_faction_with = FROM }
 						NOT = { has_country_flag = temp_flag_raids }
 						NOT = { has_country_flag = disable_raid_notification }
 					}
-					save_event_target_as = raid_notification_recipient
-					ROOT = {
-						event_target:raid_notification_recipient = {
-							country_event = {
-								id = MD_raid.10
-								days = 1
-							}
-						}
+					country_event = {
+						id = MD_raid.10
+						days = 1
 					}
 				}
 			}
