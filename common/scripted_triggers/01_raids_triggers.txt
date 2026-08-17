@@ -2,13 +2,15 @@
 # availability trigger so far-off neutral targets short-circuit here and never reach ai_will_do
 # scoring. is_ai = no leaves the player path (PP/opinion/doctrine) completely unchanged.
 raid_ai_target_relevant = {
-	OR = {
-		is_ai = no
-		has_war_with = FROM
-		has_wargoal_against = FROM
-		is_justifying_wargoal_against = FROM
-		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
-		is_in_array = { array = potential_and_current_enemies value = FROM }
+	hidden_trigger = {
+		OR = {
+			is_ai = no
+			has_war_with = FROM
+			has_wargoal_against = FROM
+			is_justifying_wargoal_against = FROM
+			has_country_flag = promised_retaliation_against@FROM
+			is_in_array = { array = potential_and_current_enemies value = FROM }
+		}
 	}
 }
 
@@ -18,17 +20,14 @@ drone_raid_available_hostile = {
 	raid_ai_target_relevant = yes
 	OR = {
 		has_war = yes
-		AND = {
+		if = {
+			limit = {
+				has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
+			}
 			NOT = { has_idea = intervention_local_security }
 			NOT = { has_idea = intervention_isolation }
 		}
-		has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
-	}
-	FROM = {
-		NOT = { is_subject_of = ROOT }
-		NOT = { has_non_aggression_pact_with = ROOT }
-		NOT = { original_tag = ZOM }
-		NOT = { original_tag = ALN }
+		else = { always = no }
 	}
 	OR = {
 		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
@@ -36,30 +35,37 @@ drone_raid_available_hostile = {
 		has_wargoal_against = FROM
 		has_political_power > 300
 	}
-}
-
-# Drone raid availability — grey-zone ops (PP>99 or wartime)
-# Used by drone raids against civilian infrastructure (power grid)
-drone_raid_available_grey_zone = {
-	raid_ai_target_relevant = yes
-	OR = {
-		has_war = yes
-		AND = {
-			NOT = { has_idea = intervention_local_security }
-			NOT = { has_idea = intervention_isolation }
-		}
-		has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
-	}
 	FROM = {
 		NOT = { is_subject_of = ROOT }
 		NOT = { has_non_aggression_pact_with = ROOT }
-		NOT = { original_tag = ZOM }
-		NOT = { original_tag = ALN }
+		hidden_trigger = { MD_special_countries = no }
+	}
+}
+
+# Drone/air raid availability — grey-zone ops (PP>99 or wartime)
+# Used by drone/ai raids against civilian infrastructure (power grid, resources)
+raid_available_grey_zone = {
+	raid_ai_target_relevant = yes
+	OR = {
+		has_war = yes
+		if = {
+			limit = {
+				has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
+			}
+			NOT = { has_idea = intervention_local_security }
+			NOT = { has_idea = intervention_isolation }
+		}
+		else = { always = no }
 	}
 	OR = {
 		has_political_power > 99
 		has_war_with = FROM
 		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+	}
+	FROM = {
+		NOT = { is_subject_of = ROOT }
+		NOT = { has_non_aggression_pact_with = ROOT }
+		hidden_trigger = { MD_special_countries = no }
 	}
 }
 
@@ -69,17 +75,21 @@ raid_target_eligible = {
 	raid_ai_target_relevant = yes
 	OR = {
 		has_war = yes
-		AND = {
+		if = {
+			limit = {
+				has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
+			}
 			NOT = { has_idea = intervention_local_security }
 			NOT = { has_idea = intervention_isolation }
 		}
-		has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
+		else = { always = no }
 	}
+}
+raid_target_eligible_from = {
 	FROM = {
 		NOT = { is_subject_of = ROOT }
 		NOT = { has_non_aggression_pact_with = ROOT }
-		NOT = { original_tag = ZOM }
-		NOT = { original_tag = ALN }
+		hidden_trigger = { MD_special_countries = no }
 	}
 }
 
