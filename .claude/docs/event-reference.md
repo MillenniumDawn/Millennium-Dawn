@@ -250,6 +250,31 @@ random_events = {
 - **`mean_time_to_happen` is NOT dead inside `random_events`**: the engine multiplies the candidate's effective weight by the MTTH `factor` modifiers that match the rolled scope. This lets you globally register an event but still tune per-country pacing via MTTH modifier blocks (e.g., "fire 1.5× more often when `neutrality > 0.40`"). Keep MTTH blocks on events listed in `random_events` whenever you want per-country weight tuning.
 - Prefer `random_events` over hand-rolled `random_list` inside on_action effects for systems that should fire across many countries — cheaper than iterating arrays and adds a uniform global cadence.
 
+## Batched Notification Events
+
+When many sources deliver the same kind of thing to one country (NATO aid to Ukraine, coalition funding, aid convoys), don't fire one event per delivery. Accumulate into per-category variables at the delivery site and fire a single batched report. Worked example: `UKR_queue_nato_aid_report` in `common/scripted_effects/99_UKR_scripted_effects.txt`, reported by `ukraine_nato_help.1`.
+
+Four rules make the batch safe:
+
+- **Never put the payload in the report.** Grant the money, equipment, or modifier at the delivery site. The event is a summary and nothing else. If the payload lives in the event option, a report lost to annexation, tag change, or a stuck flag loses the payload with it, and the delivery-site tooltip goes silent because `add_to_variable` renders nothing.
+- **Time the "report pending" flag.** `set_country_flag = { flag = X_report_pending days = N+1 value = 1 }` where the event fires at `days = N`. An untimed flag that only clears in the event option wedges the whole system permanently the first time an event is dropped, and every later delivery goes unreported forever.
+- **Skip the event for AI owners.** Guard on `is_ai = yes` and clear the accumulators instead of firing. Saves a popup resolution per window and keeps the variables from growing on AI games.
+- **`minor_flavor = yes`** on the report event so it lands as a corner notification rather than a blocking popup. Reports fire on a cadence, and a full popup every window is what makes the system feel spammy.
+
+## Reuse Effect Tooltips Instead of Writing New Loc
+
+`effect_tooltip = { <the real effect> }` renders vanilla's own tooltip for an effect without executing it. Prefer it over hand-written `custom_effect_tooltip` keys whenever the thing you want to describe is an effect the engine already localises:
+
+```
+# Good — no new loc key, equipment names come from vanilla
+effect_tooltip = { add_equipment_to_stockpile = { type = infantry_weapons_type amount = UKR_aid_report_infantry } }
+
+# Avoid — a new key per category that has to be kept in sync by hand
+custom_effect_tooltip = UKR_aid_report_infantry_tt
+```
+
+`amount` accepts a variable, so a report can render live totals. For MD scripted effects that already carry their own tooltip, wrap the effect itself (`effect_tooltip = { modify_treasury_effect = yes }`) and set its input temp var in a preceding `hidden_effect` so the setter doesn't emit a blank line. Reserve `custom_effect_tooltip` for things with no effect behind them.
+
 ## Content Guidelines for Events
 
 - All events targeting another nation need AI weighting based on opinion/influence
