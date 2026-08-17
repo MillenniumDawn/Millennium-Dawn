@@ -59,6 +59,8 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - Date-based events: owner-guard pattern in `common/scripted_effects/00_yearly_effects.txt`
 - `add_building_construction` for `naval_base` requires `province = XXXXX`
 - New subideology parties: register in `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`
+- Pure notifications get `minor_flavor = yes`. When many sources deliver to one country, batch them into a single report event instead of one event per delivery, and keep the payload at the delivery site (rules and traps: `.claude/docs/event-reference.md`)
+- Describe an effect with `effect_tooltip = { <the real effect> }` before writing a new `custom_effect_tooltip` loc key
 - Ref: `.claude/docs/event-reference.md`
 
 ## Ideas
