@@ -509,6 +509,14 @@ update_global_energy_ui = {
 # TODO: This right now is limited to one way agreements for now. We can expand this to more bilateral agreements later on when we have more details on it.
 calculate_energy_load_sharing = {
 	if = { limit = { NOT = { check_variable = { energy_load_sharing_nations^0 = 0 } } }
+		set_temp_variable = {
+			available_energy_to_share = {
+				value = energy_difference_variable
+				add = energy_load_sharing_use_var
+				max = 0
+			}
+		}
+
 		# Reset the amount of energy load shared to 0
 		set_variable = { energy_load_sharing_use_var = 0 }
 		set_variable = { energy_load_sharing_gain_var = 0 }
@@ -516,13 +524,14 @@ calculate_energy_load_sharing = {
 		for_each_scope_loop = {
 			array = energy_load_sharing_nations
 			if = { limit = { check_variable = { energy_difference_variable < 0 } }
-				add_to_temp_variable = { PREV.needed_energy_for_nations = energy_difference_variable }
+				set_temp_variable = { energy_required = { value = energy_difference_variable multiply = -1 } }
+				add_to_temp_variable = { PREV.needed_energy_for_nations = energy_required }
 			}
 		}
 
 		# Calculate the Energy Shared
 		# Assume that if you are sharing energy that you have to maintain more energy otherwise the loading sharing has gotta stop
-		if = { limit = { check_variable = { energy_difference_variable > needed_energy_for_nations } }
+		if = { limit = { NOT = { check_variable = { available_energy_to_share < needed_energy_for_nations } } }
 			resize_array = { array = energy_load_sharing_nations_value size = energy_load_sharing_nations^num }
 
 			for_each_loop = {
