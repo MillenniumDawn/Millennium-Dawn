@@ -273,7 +273,7 @@ effect_tooltip = { add_equipment_to_stockpile = { type = infantry_weapons_type a
 custom_effect_tooltip = UKR_aid_report_infantry_tt
 ```
 
-`amount` accepts a variable, so a report can render live totals. For MD scripted effects that already carry their own tooltip, wrap the effect itself (`effect_tooltip = { modify_treasury_effect = yes }`) and set its input temp var in a preceding `hidden_effect` so the setter doesn't emit a blank line. Reserve `custom_effect_tooltip` for things with no effect behind them.
+`amount` accepts a variable, so a report can render live totals. A `hidden_effect` setter is not visible to a following `effect_tooltip`, so when a scripted effect's tooltip reads a temp var, either set that var at effect level (accepting one blank line, as every other MD caller does) or write a small loc key that reads the persistent variable directly. Reserve `custom_effect_tooltip` for things with no effect behind them.
 
 ## Content Guidelines for Events
 
