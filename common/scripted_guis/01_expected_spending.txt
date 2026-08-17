@@ -37,24 +37,141 @@ scripted_gui = {
 
 		ai_enabled = { always = no }
 
+		effects = {
+			close_protest_screen_click = {
+				clr_country_flag = open_protests_screen
+				update_protest_dirty_var = yes
+			}
+		}
+
+		triggers = {
+			# TODO: display warining icon when there is problems
+			protests_warning_icon_visible = {
+
+			}
+			MD_protests_state_calm_visible = {
+				NOT = { has_country_flag = MD_protest_mission_active }
+				NOT = { has_country_flag = MD_protest_cooldown }
+			}
+			MD_protests_state_warning_visible = {
+				has_active_mission = MD_incoming_protest_movement
+			}
+			MD_protests_state_revolt_visible = {
+				has_active_mission = MD_incoming_revolt
+			}
+			MD_protests_state_cooldown_visible = {
+				has_country_flag = MD_protest_cooldown
+				NOT = { has_country_flag = MD_protest_mission_active }
+			}
+
+			# Drift source rows — render when contributing (spending shows both signs)
+			MD_drift_spending_row_visible = {
+				OR = {
+					check_variable = { drift_spending_last > 0.01 }
+					check_variable = { drift_spending_last < -0.01 }
+				}
+			}
+			MD_drift_stability_row_visible = {
+				check_variable = { drift_stability_last > 0.01 }
+			}
+			MD_drift_interest_row_visible = {
+				check_variable = { drift_interest_last > 0.01 }
+			}
+			MD_drift_recession_row_visible = {
+				check_variable = { drift_recession_last > 0.01 }
+			}
+			MD_drift_depression_row_visible = {
+				check_variable = { drift_depression_last > 0.01 }
+			}
+			MD_drift_war_row_visible = {
+				check_variable = { drift_war_last > 0.01 }
+			}
+			MD_drift_corruption_row_visible = {
+				check_variable = { drift_corruption_last > 0.01 }
+			}
+			MD_drift_ct_row_visible = {
+				check_variable = { drift_ct_last > 0.01 }
+			}
+			MD_drift_passive_row_visible = {
+				check_variable = { drift_passive_last < 0 }
+			}
+
+			# Revolt-state tracker only during revolt
+			close_protest_screen_click_enabled = {
+				# calculate frames for all the expected spending levels
+
+				# welfare spending
+				for_loop_effect = {
+					start = 1
+					end = 6
+					value = current
+				
+					if = {
+						limit = {
+							check_variable = { 
+								var = current
+								value = welfare_law
+								compare = greater_than_or_equals
+							}
+						}
+
+						meta_trigger = {
+							text = {
+								set_temp_variable = { welfare_spending_[CURRENT]_frame = 2 } 
+							}
+							CURRENT = "current"
+						}
+					}
+					else_if = {
+						limit = {
+							check_variable = { 
+								var = current
+								value = expected_welfare_spending
+								compare = greater_than_or_equals
+							}
+						}
+
+						meta_trigger = {
+							text = {
+								set_temp_variable = { welfare_spending_[CURRENT]_frame = 4 } 
+							}
+							CURRENT = "current"
+						}
+					}
+					else = {
+						meta_trigger = {
+							text = {
+								set_temp_variable = { welfare_spending_[CURRENT]_frame = 1 } 
+							}
+							CURRENT = "current"
+						}
+					}
+				}
+			}
+
+			set_temp_variable = { welfare_spending_1_frame = 3 }
+
+			always = yes
+		}
+
 		properties = {
-			welfare_spending_1_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_1_COLOR]"
+			welfare_spending_1 = {
+				frame = welfare_spending_1_frame
 			}
-			welfare_spending_2_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_2_COLOR]"
+			welfare_spending_2 = {
+				frame = welfare_spending_2_frame
 			}
-			welfare_spending_3_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_3_COLOR]"
+			welfare_spending_3 = {
+				frame = welfare_spending_3_frame
 			}
-			welfare_spending_4_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_4_COLOR]"
+			welfare_spending_4 = {
+				frame = welfare_spending_4_frame
 			}
-			welfare_spending_5_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_5_COLOR]"
+			welfare_spending_5 = {
+				frame = welfare_spending_5_frame
 			}
-			welfare_spending_6_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_6_COLOR]"
+			welfare_spending_6 = {
+				frame = welfare_spending_6_frame
 			}
 
 			health_spending_1_icon = {
@@ -153,71 +270,6 @@ scripted_gui = {
 			}
 			defence_spending_10_icon = {
 				image = "[GET_DEFENCE_SPENDING_LEVEL_10_COLOR]"
-			}
-		}
-
-		effects = {
-			close_protest_screen_click = {
-				clr_country_flag = open_protests_screen
-				update_protest_dirty_var = yes
-			}
-		}
-
-		triggers = {
-			# TODO: display warining icon when there is problems
-			protests_warning_icon_visible = {
-
-			}
-			MD_protests_state_calm_visible = {
-				NOT = { has_country_flag = MD_protest_mission_active }
-				NOT = { has_country_flag = MD_protest_cooldown }
-			}
-			MD_protests_state_warning_visible = {
-				has_active_mission = MD_incoming_protest_movement
-			}
-			MD_protests_state_revolt_visible = {
-				has_active_mission = MD_incoming_revolt
-			}
-			MD_protests_state_cooldown_visible = {
-				has_country_flag = MD_protest_cooldown
-				NOT = { has_country_flag = MD_protest_mission_active }
-			}
-
-			# Drift source rows — render when contributing (spending shows both signs)
-			MD_drift_spending_row_visible = {
-				OR = {
-					check_variable = { drift_spending_last > 0.01 }
-					check_variable = { drift_spending_last < -0.01 }
-				}
-			}
-			MD_drift_stability_row_visible = {
-				check_variable = { drift_stability_last > 0.01 }
-			}
-			MD_drift_interest_row_visible = {
-				check_variable = { drift_interest_last > 0.01 }
-			}
-			MD_drift_recession_row_visible = {
-				check_variable = { drift_recession_last > 0.01 }
-			}
-			MD_drift_depression_row_visible = {
-				check_variable = { drift_depression_last > 0.01 }
-			}
-			MD_drift_war_row_visible = {
-				check_variable = { drift_war_last > 0.01 }
-			}
-			MD_drift_corruption_row_visible = {
-				check_variable = { drift_corruption_last > 0.01 }
-			}
-			MD_drift_ct_row_visible = {
-				check_variable = { drift_ct_last > 0.01 }
-			}
-			MD_drift_passive_row_visible = {
-				check_variable = { drift_passive_last < 0 }
-			}
-
-			# Revolt-state tracker only during revolt
-			MD_protests_revolt_states_visible = {
-				has_active_mission = MD_incoming_revolt
 			}
 		}
 	}
