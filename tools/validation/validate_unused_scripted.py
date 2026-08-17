@@ -148,6 +148,8 @@ FALSE_POSITIVE_FILES = frozenset(
         "MD_regional_triggers.txt",
         "00_scripted_effects.txt",
         "00_law_blocking_effects.txt",
+        # Gates for DLC-owned music playlists; MD ships no playlist that calls them.
+        "00_music_dlc_compatibility_triggers.txt",
     }
 )
 
