@@ -262,9 +262,6 @@ def _vanilla_gui_ref_index() -> dict:
     return index
 
 
-_UNUSED_SPRITE_LIMIT = 50
-
-
 def _is_dynamic(name: str) -> bool:
     """Return True if name contains template substitution markers."""
     return "[" in name or "]" in name
@@ -533,8 +530,9 @@ class Validator(BaseValidator):
     TITLE = "GFX SPRITE REFERENCE VALIDATION"
     STAGED_EXTENSIONS = [".gui", ".gfx", ".txt"]
 
-    def __init__(self, mod_path: str, **kwargs):
+    def __init__(self, mod_path: str, report_unused: bool = False, **kwargs):
         super().__init__(mod_path, **kwargs)
+        self.report_unused = report_unused
         # True once vanilla sprite names (live install or manifest) were folded
         # into the defined set — disables the _is_likely_vanilla heuristic.
         self._vanilla_defs_loaded = False
@@ -812,9 +810,9 @@ class Validator(BaseValidator):
     ) -> None:
         """Report GFX sprites that are defined but never referenced (warning only).
 
-        Skipped entirely in staged mode to avoid noise — this check needs a
-        full-repo scan to be meaningful, but in staged mode we only see a
-        subset of files.
+        Only reached when --report-unused is passed. Skipped entirely in staged
+        mode to avoid noise — this check needs a full-repo scan to be
+        meaningful, but in staged mode we only see a subset of files.
         """
         self._log_section("Checking for unused GFX sprite definitions")
         if self.staged_only:
@@ -862,30 +860,18 @@ class Validator(BaseValidator):
             )
             return
 
-        display = unused[:_UNUSED_SPRITE_LIMIT]
-        remainder = len(unused) - len(display)
-
         issues = [
             (f"Unused GFX sprite '{s}' (defined but never referenced)", "", 0)
-            for s in display
+            for s in unused
         ]
 
         self._report(
             issues,
             ok_msg="All defined GFX sprites are referenced.",
-            fail_msg=f"Unused GFX sprite definitions ({len(unused)} total; first {_UNUSED_SPRITE_LIMIT} shown):",
+            fail_msg=f"Unused GFX sprite definitions ({len(unused)} total):",
             severity=Severity.WARNING,
             category="unused-sprite",
         )
-        # Logged, not reported: a truncation notice is not a finding. Emitting it
-        # as one makes report consumers count it as an issue and fail to parse a
-        # sprite name out of it.
-        if remainder > 0:
-            self.log(
-                f"  ... and {remainder} more unused sprites not shown "
-                f"(limit {_UNUSED_SPRITE_LIMIT})",
-                "always",
-            )
 
     def run_validations(self) -> None:
         defined, mod_defined = self._build_gfx_definitions()
@@ -927,6 +913,12 @@ class Validator(BaseValidator):
             mod_defined_ci=mod_defined_ci,
         )
 
+        if not self.report_unused:
+            self._log_section(
+                "Skipping unused-sprite check (pass --report-unused to enable)"
+            )
+            return
+
         # Unused-sprite check is mod-only; vanilla sprites the mod doesn't redefine aren't ours to flag.
         # A sprite is "used" if referenced anywhere — interface/ or game script.
         all_referenced: Set[str] = {r[0] for r in gui_refs + sgui_refs + sloc_refs}
@@ -936,10 +928,20 @@ class Validator(BaseValidator):
         self._check_unused_sprites(mod_defined, all_referenced)
 
 
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--report-unused",
+        action="store_true",
+        dest="report_unused",
+        help="Report GFX sprites that are defined but never referenced",
+    )
+
+
 def main() -> int:
     return run_validator_main(
         Validator,
         description="Validate GFX sprite references in Millennium Dawn mod.",
+        extra_args_fn=_add_extra_args,
     )
 
 
