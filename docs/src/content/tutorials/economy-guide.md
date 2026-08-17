@@ -209,9 +209,7 @@ When global demand exceeds half of global supply (demand/supply ratio > 0.5), pr
 
 ### Seigniorage Income
 
-Reserve currency issuers (the countries controlling USD, EUR, CNY, RUB, JPY, GBP, and CHF) earn passive seigniorage income proportional to how many other nations have adopted their currency. The more countries that hold your currency as their reserve, the more seigniorage you earn.
-
-Non-issuer countries can earn a smaller seigniorage income by activating the **Expand Money Supply** monetary policy decision, which provides a fraction of tax income as additional revenue at the cost of weakening the currency.
+Reserve currency issuers (the countries controlling USD, EUR, CNY, RUB, JPY, GBP, CHF, and NLG) earn passive seigniorage income proportional to how many other nations have adopted their currency. The more countries that hold your currency as their reserve, the more seigniorage you earn. Only issuers can use **Expand Money Supply** to increase that income at the cost of weakening their currency.
 
 ### Additional Income
 
