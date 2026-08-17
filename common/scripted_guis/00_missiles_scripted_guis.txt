@@ -1158,30 +1158,6 @@ scripted_gui = {
 				subtract_from_temp_variable = { prod_10_tier_idx = 101 }
 				set_variable = { var_gui_prod_10_price_unit = global.prod_10_price_unit^prod_10_tier_idx }
 				set_variable = { var_gui_prod_10_days_unit = global.prod_10_duration_unit^prod_10_tier_idx }
-				if = {
-					limit = {
-						has_tech = part_reusable_OLV6
-						check_variable = { prod_10_display_array^i = 106 }
-					}
-					add_to_variable = { var_gui_prod_10_price_unit = -0.005 }
-					add_to_variable = { var_gui_prod_10_days_unit = -10 }
-				}
-				if = {
-					limit = {
-						has_tech = full_reusable_OLV7
-						check_variable = { prod_10_display_array^i = 107 }
-					}
-					add_to_variable = { var_gui_prod_10_price_unit = -0.01 }
-					add_to_variable = { var_gui_prod_10_days_unit = -25 }
-				}
-				if = {
-					limit = {
-						has_tech = full_reusable_OLV8
-						check_variable = { prod_10_display_array^i = 108 }
-					}
-					add_to_variable = { var_gui_prod_10_price_unit = -0.03 }
-					add_to_variable = { var_gui_prod_10_days_unit = -45 }
-				}
 				set_variable = { var_gui_prod_10_amount = 1 }
 				set_variable = { prod_10_multiplier = 1 }
 				calculate_production_vars_10 = yes
@@ -1862,7 +1838,16 @@ scripted_gui = {
 		effects = {
 			OLV_type_button_click = {
 				set_variable = { var_OLV_type = OLV_display_array^i }
-				set_variable = { var_OLV_reliability = global.OLV_reliability_array^i }
+				set_variable = {
+					var_OLV_reliability = {
+						value = global.OLV_reliability_array^i
+						multiply = {
+							value = 1
+							add = modifier@olv_launch_reliability_modifier
+						}
+						clamp = { min = 0 max = 1 }
+					}
+				}
 				set_variable = { var_OLV_payload_mass = global.OLV_payload_mass_array^i }
 				set_variable = { var_OLV_inventory = missile_inventory_array^OLV_display_array^i }
 				clear_array = OLV_display_array
@@ -2498,6 +2483,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_1_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_1_array^i }
 				}
@@ -2511,6 +2497,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_2_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_2_array^i }
 				}
@@ -2524,6 +2511,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_3_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_3_array^i }
 				}
@@ -2537,6 +2525,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_4_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_4_array^i }
 				}
@@ -2550,6 +2539,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_5_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_5_array^i }
 				}
@@ -2563,6 +2553,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			sat_6_button_click = {
+				start_satellite_deorbit_selection = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_6_array^i }
 				}
@@ -2584,6 +2575,21 @@ scripted_gui = {
 				clear_array = ROOT.sat_target_array
 				clear_array = ROOT.sat_target_TAG_array
 				international_systems_update = yes
+			}
+			deorbit_satellite_button_click = {
+				clear_bulk_deorbit_state = yes
+				set_variable = { var_deorbit_sat_ID = var_selected_sat }
+				set_country_flag = MD_confirm_deorbit_satellite
+				international_systems_update = yes
+			}
+			confirm_deorbit_satellite_button_click = {
+				deorbit_selected_satellite = yes
+			}
+			bulk_deorbit_model_button_click = {
+				stage_bulk_deorbit_selected_model = yes
+			}
+			confirm_bulk_deorbit_model_button_click = {
+				bulk_deorbit_selected_model = yes
 			}
 			#
 			spy_mission_start_button_click = {
@@ -2633,6 +2639,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			country_view_flag_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_country_flag = open_MD_satellite_orbit_country_selection
 				clear_array = temp_countries
 				every_country = {
@@ -2641,6 +2648,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			country_view_flag_button_right_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = ROOT.id }
 				set_sat_access_arrays_selected_TAG = yes
 				set_satellites_gui = yes
@@ -2648,36 +2656,43 @@ scripted_gui = {
 			}
 			### sat access buttons
 			GNSS_mil_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_GNSS_mil_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			GNSS_civ_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_GNSS_civ_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			COM_mil_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_COM_mil_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			COM_civ_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_COM_civ_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			SPY_mil_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_SPY_mil_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			SPY_civ_access_flags_button_click = {
+				clear_satellite_deorbit_state = yes
 				set_variable = { orbit_selected_TAG = selected_TAG_SPY_civ_access_array^i.id }
 				set_sat_access_arrays_selected_TAG = yes
 				international_systems_update = yes
 			}
 			close_button_click = {
+				clear_satellite_deorbit_state = yes
 				if = {
 					limit = {
 						NOT = { has_country_flag = rods_search_target }
@@ -2737,6 +2752,72 @@ scripted_gui = {
 					check_variable = { sat_6_array^i > 0 }
 					NOT = { check_variable = { sat_6_array^i < 1 } }
 					is_filtered_type = yes
+				}
+			}
+			deorbit_satellite_button_visible = {
+				NOT = { has_country_flag = MD_confirm_deorbit_satellite }
+				check_variable = { orbit_selected_TAG = ROOT.id }
+			}
+			confirm_deorbit_satellite_button_visible = {
+				has_country_flag = MD_confirm_deorbit_satellite
+				has_country_flag = MD_satellite_orbit_selection_active
+				check_variable = { orbit_selected_TAG = ROOT.id }
+				check_variable = { var_deorbit_sat_ID = var_selected_sat }
+				check_variable = { orbit_array^var_deorbit_sat_ID > 0 }
+			}
+			deorbit_satellite_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = DEORBIT_SATELLITE_SELECTION_TT
+					has_country_flag = MD_satellite_orbit_selection_active
+					check_variable = { var_selected_sat > -1 }
+					check_variable = { orbit_array^var_selected_sat > 0 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = DEORBIT_SATELLITE_SPY_MISSION_TT
+					OR = {
+						check_variable = { orbit_array^var_selected_sat < 161 }
+						check_variable = { orbit_array^var_selected_sat > 178 }
+						check_variable = { var_SPY_mission_num_available > 0 }
+					}
+				}
+			}
+			confirm_deorbit_satellite_button_click_enabled = {
+				OR = {
+					check_variable = { orbit_array^var_deorbit_sat_ID < 161 }
+					check_variable = { orbit_array^var_deorbit_sat_ID > 178 }
+					check_variable = { var_SPY_mission_num_available > 0 }
+				}
+			}
+			bulk_deorbit_model_button_visible = {
+				NOT = { has_country_flag = MD_confirm_bulk_deorbit_satellites }
+				check_variable = { orbit_selected_TAG = ROOT.id }
+			}
+			confirm_bulk_deorbit_model_button_visible = {
+				has_country_flag = MD_confirm_bulk_deorbit_satellites
+				has_country_flag = MD_satellite_orbit_selection_active
+				check_variable = { orbit_selected_TAG = ROOT.id }
+				check_variable = { MD_bulk_deorbit_count > 0 }
+			}
+			bulk_deorbit_model_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = BULK_DEORBIT_MODEL_SELECTION_TT
+					has_country_flag = MD_satellite_orbit_selection_active
+					check_variable = { var_selected_sat > -1 }
+					check_variable = { orbit_array^var_selected_sat > 0 }
+				}
+			}
+			confirm_bulk_deorbit_model_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = BULK_DEORBIT_SPY_MISSION_TT
+					OR = {
+						check_variable = { MD_bulk_deorbit_model < 161 }
+						check_variable = { MD_bulk_deorbit_model > 178 }
+						check_variable = {
+							var = MD_bulk_deorbit_count
+							value = var_SPY_mission_num_available
+							compare = less_than_or_equals
+						}
+					}
 				}
 			}
 			####################
@@ -3932,9 +4013,9 @@ scripted_gui = {
 								NOT = { has_country_flag = original_owner_[stname] }
 								NOT = { has_country_flag = supports_original_owner_[stname] }
 							}
-							for_each_scope_loop = {
-								array = global.UN_general_assembly
-								tooltip = TT_ALL_UN_MEMBERS
+							custom_effect_tooltip = TT_ALL_UN_MEMBERS
+							every_collection_element = {
+								input = { input = collection:un_general_assembly_members_collection }
 								if = {
 									limit = {
 										has_country_flag = supports_original_owner_[stname]
@@ -3971,8 +4052,8 @@ scripted_gui = {
 			pressure_countries_recog_button_click = {
 				meta_effect = {
 					text = {
-						for_each_scope_loop = {
-							array = global.UN_general_assembly
+						every_collection_element = {
+							input = { input = collection:un_general_assembly_members_collection }
 							if = {
 								limit = {
 									is_influencer = yes
@@ -4043,9 +4124,9 @@ scripted_gui = {
 					value = 1
 				}
 
-				for_each_scope_loop = {
-					array = global.UN_general_assembly
-					tooltip = TT_ALL_UN_MEMBER_NATIONS_GAIN
+				custom_effect_tooltip = TT_ALL_UN_MEMBER_NATIONS_GAIN
+				every_collection_element = {
+					input = { input = collection:un_general_assembly_members_collection }
 					add_opinion_modifier = {
 						target = ROOT
 						modifier = improving_un_relations
@@ -4734,32 +4815,24 @@ scripted_gui = {
 						has_idea = un_aid_esco_member
 					}
 					remove_ideas = un_aid_esco_member
-					for_each_loop = {
-						array = global.UN_general_assembly
-						value = v
-
-						var:v = {
-							add_opinion_modifier = {
-								target = ROOT
-								modifier = left_un_esco
-							}
-							remove_opinion_modifier = {
-								target = ROOT
-								modifier = un_esco_member
-							}
+					every_collection_element = {
+						input = { input = collection:un_general_assembly_members_collection }
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = left_un_esco
+						}
+						remove_opinion_modifier = {
+							target = ROOT
+							modifier = un_esco_member
 						}
 					}
 				} else = {
 					add_ideas = un_aid_esco_member
-					for_each_loop = {
-						array = global.UN_general_assembly
-						value = v
-
-						var:v = {
-							add_opinion_modifier = {
-								target = ROOT
-								modifier = un_esco_member
-							}
+					every_collection_element = {
+						input = { input = collection:un_general_assembly_members_collection }
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = un_esco_member
 						}
 					}
 				}
@@ -4776,32 +4849,24 @@ scripted_gui = {
 						has_idea = un_aid_ido_member
 					}
 					remove_ideas = un_aid_ido_member
-					for_each_loop = {
-						array = global.UN_general_assembly
-						value = v
-
-						var:v = {
-							add_opinion_modifier = {
-								target = ROOT
-								modifier = left_un_ido
-							}
-							remove_opinion_modifier = {
-								target = ROOT
-								modifier = un_ido_member
-							}
+					every_collection_element = {
+						input = { input = collection:un_general_assembly_members_collection }
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = left_un_ido
+						}
+						remove_opinion_modifier = {
+							target = ROOT
+							modifier = un_ido_member
 						}
 					}
 				} else = {
 					add_ideas = un_aid_ido_member
-					for_each_loop = {
-						array = global.UN_general_assembly
-						value = v
-
-						var:v = {
-							add_opinion_modifier = {
-								target = ROOT
-								modifier = un_ido_member
-							}
+					every_collection_element = {
+						input = { input = collection:un_general_assembly_members_collection }
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = un_ido_member
 						}
 					}
 				}
@@ -4818,32 +4883,24 @@ scripted_gui = {
 						has_idea = un_aid_cdf_member
 					}
 					remove_ideas = un_aid_cdf_member
-					for_each_loop = {
-						array = global.UN_general_assembly
-						value = v
-
-						var:v = {
-							add_opinion_modifier = {
-								target = ROOT
-								modifier = left_un_cdf
-							}
-							remove_opinion_modifier = {
-								target = ROOT
-								modifier = un_cdf_member
-							}
+					every_collection_element = {
+						input = { input = collection:un_general_assembly_members_collection }
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = left_un_cdf
+						}
+						remove_opinion_modifier = {
+							target = ROOT
+							modifier = un_cdf_member
 						}
 					}
 				} else = {
 					add_ideas = un_aid_cdf_member
-					for_each_loop = {
-						array = global.UN_general_assembly
-						value = v
-
-						var:v = {
-							add_opinion_modifier = {
-								target = ROOT
-								modifier = un_cdf_member
-							}
+					every_collection_element = {
+						input = { input = collection:un_general_assembly_members_collection }
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = un_cdf_member
 						}
 					}
 				}
@@ -5803,7 +5860,7 @@ scripted_gui = {
 				hidden_trigger = {
 					original_tag = var:selected_antarctica_station_controller
 					custom_trigger_tooltip = {
-						tooltip = ANTARCTICA_MODULE_UNDER_REPAIR_OUTPUT
+						tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
 						meta_trigger = {
 							text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_2_blizzard_damaged > 0 } } }
 							ID = "[?selected_antarctica_station]"
@@ -5841,9 +5898,12 @@ scripted_gui = {
 				is_antarctica_station_tier_two = yes
 				hidden_trigger = {
 					original_tag = var:selected_antarctica_station_controller
-					meta_trigger = {
-						text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_6_blizzard_damaged > 0 } } }
-						ID = "[?selected_antarctica_station]"
+					custom_trigger_tooltip = {
+						tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
+						meta_trigger = {
+							text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_6_blizzard_damaged > 0 } } }
+							ID = "[?selected_antarctica_station]"
+						}
 					}
 				}
 			}
@@ -5856,9 +5916,12 @@ scripted_gui = {
 				check_variable = { selected_antarctica_station > 0 }
 				check_variable = { selected_antarctica_station_tier > 0 }
 				original_tag = var:selected_antarctica_station_controller
-				meta_trigger = {
-					text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_7_blizzard_damaged > 0 } } }
-					ID = "[?selected_antarctica_station]"
+				custom_trigger_tooltip = {
+					tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
+					meta_trigger = {
+						text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_7_blizzard_damaged > 0 } } }
+						ID = "[?selected_antarctica_station]"
+					}
 				}
 			}
 
@@ -5870,9 +5933,12 @@ scripted_gui = {
 				check_variable = { selected_antarctica_station > 0 }
 				check_variable = { selected_antarctica_station_tier > 0 }
 				original_tag = var:selected_antarctica_station_controller
-				meta_trigger = {
-					text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_8_blizzard_damaged > 0 } } }
-					ID = "[?selected_antarctica_station]"
+				custom_trigger_tooltip = {
+					tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
+					meta_trigger = {
+						text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_8_blizzard_damaged > 0 } } }
+						ID = "[?selected_antarctica_station]"
+					}
 				}
 			}
 
@@ -5885,9 +5951,12 @@ scripted_gui = {
 				is_antarctica_station_tier_three = yes
 				hidden_trigger = {
 					original_tag = var:selected_antarctica_station_controller
-					meta_trigger = {
-						text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_9_blizzard_damaged > 0 } } }
-						ID = "[?selected_antarctica_station]"
+					custom_trigger_tooltip = {
+						tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
+						meta_trigger = {
+							text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_9_blizzard_damaged > 0 } } }
+							ID = "[?selected_antarctica_station]"
+						}
 					}
 				}
 			}
@@ -5911,9 +5980,12 @@ scripted_gui = {
 				check_variable = { selected_antarctica_station > 0 }
 				check_variable = { selected_antarctica_station_tier > 0 }
 				original_tag = var:selected_antarctica_station_controller
-				meta_trigger = {
-					text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_11_blizzard_damaged > 0 } } }
-					ID = "[?selected_antarctica_station]"
+				custom_trigger_tooltip = {
+					tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
+					meta_trigger = {
+						text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_11_blizzard_damaged > 0 } } }
+						ID = "[?selected_antarctica_station]"
+					}
 				}
 			}
 
@@ -5938,7 +6010,7 @@ scripted_gui = {
 				hidden_trigger = {
 					original_tag = var:selected_antarctica_station_controller
 					custom_trigger_tooltip = {
-						tooltip = ANTARCTICA_MODULE_UNDER_REPAIR_OUTPUT
+						tooltip = ANTARCTICA_MODULE_REPAIR_BLOCKED_TT
 						meta_trigger = {
 							text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_13_blizzard_damaged > 0 } } }
 							ID = "[?selected_antarctica_station]"
@@ -6072,6 +6144,20 @@ scripted_gui = {
 			antarctica_station_slot_14_fuel_2_visible = { has_country_flag = antarctica_station_bp_visible check_variable = { selected_antarctica_station_module_slot_14 = 2 } }
 			antarctica_station_slot_14_fuel_3_visible = { has_country_flag = antarctica_station_bp_visible check_variable = { selected_antarctica_station_module_slot_14 = 3 } }
 			antarctica_station_slot_14_fuel_4_visible = { has_country_flag = antarctica_station_bp_visible check_variable = { selected_antarctica_station_module_slot_14 = 4 } }
+
+			antarctica_station_repair_status_visible = {
+				check_variable = { selected_antarctica_station > 0 }
+				OR = {
+					check_variable = { selected_antarctica_station_repair_days_remaining > 0 }
+					check_variable = { selected_antarctica_station_module_slot_2_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_6_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_7_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_8_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_9_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_11_blizzard_damaged > 0 }
+					check_variable = { selected_antarctica_station_module_slot_13_blizzard_damaged > 0 }
+				}
+			}
 
 			antarctica_station_preview_powerplant_1_visible = { check_variable = { selected_antarctica_station_selected_module_category = 1 } check_variable = { selected_antarctica_station_selected_module = 1 } has_country_flag = antarctica_station_bp_visible }
 			antarctica_station_preview_powerplant_2_visible = { check_variable = { selected_antarctica_station_selected_module_category = 1 } check_variable = { selected_antarctica_station_selected_module = 2 } has_country_flag = antarctica_station_bp_visible }
@@ -7046,6 +7132,7 @@ scripted_gui = {
 					has_country_flag = aegis_sel
 					has_country_flag = wagner_sel
 					has_country_flag = constellis_sel
+					has_country_flag = md_sel
 				}
 
 				OR = {
@@ -7151,6 +7238,10 @@ scripted_gui = {
 						set_country_flag = inf_hire
 						activate_mission = get_wagner_light_infantry
 					}
+					else_if = { limit = { has_country_flag = md_sel }
+						set_country_flag = inf_hire
+						activate_mission = get_md_light_infantry
+					}
 				}
 				if = { limit = { check_variable = { v = 002 } }
 					if = { limit = { has_country_flag = blackwater_sel }
@@ -7168,6 +7259,10 @@ scripted_gui = {
 					else_if = { limit = { has_country_flag = wagner_sel }
 						set_country_flag = mot_inf_hire
 						activate_mission = get_wagner_mot_infantry
+					}
+					else_if = { limit = { has_country_flag = md_sel }
+						set_country_flag = mot_inf_hire
+						activate_mission = get_md_mot_infantry
 					}
 				}
 				if = { limit = { check_variable = { v = 003 } }
@@ -7187,6 +7282,10 @@ scripted_gui = {
 						set_country_flag = mech_inf_hire
 						activate_mission = get_wagner_mech_infantry
 					}
+					else_if = { limit = { has_country_flag = md_sel }
+						set_country_flag = mech_inf_hire
+						activate_mission = get_md_mech_infantry
+					}
 				}
 				if = { limit = { check_variable = { v = 004 } }
 					if = { limit = { has_country_flag = blackwater_sel }
@@ -7204,6 +7303,10 @@ scripted_gui = {
 					else_if = { limit = { has_country_flag = wagner_sel }
 						set_country_flag = hvy_inf_hire
 						activate_mission = get_wagner_heavy_mech_infantry
+					}
+					else_if = { limit = { has_country_flag = md_sel }
+						set_country_flag = hvy_inf_hire
+						activate_mission = get_md_heavy_mech_infantry
 					}
 				}
 				if = { limit = { check_variable = { v = 005 } }
@@ -7223,6 +7326,10 @@ scripted_gui = {
 						set_country_flag = spec_inf_hire
 						activate_mission = get_wagner_special_infantry
 					}
+					else_if = { limit = { has_country_flag = md_sel }
+						set_country_flag = spec_inf_hire
+						activate_mission = get_md_special_infantry
+					}
 				}
 				if = { limit = { check_variable = { v = 006 } }
 					if = { limit = { has_country_flag = blackwater_sel }
@@ -7241,6 +7348,10 @@ scripted_gui = {
 						set_country_flag = tank_hire
 						activate_mission = get_wagner_tank
 					}
+					else_if = { limit = { has_country_flag = md_sel }
+						set_country_flag = tank_hire
+						activate_mission = get_md_tank
+					}
 				}
 				if = { limit = { check_variable = { v = 007 } }
 					if = { limit = { has_country_flag = blackwater_sel }
@@ -7258,6 +7369,10 @@ scripted_gui = {
 					else_if = { limit = { has_country_flag = wagner_sel }
 						set_country_flag = sf_hire
 						activate_mission = get_wagner_specops
+					}
+					else_if = { limit = { has_country_flag = md_sel }
+						set_country_flag = sf_hire
+						activate_mission = get_md_specops
 					}
 				}
 				if = { limit = { is_ai = yes }
