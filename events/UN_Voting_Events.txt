@@ -16,8 +16,8 @@ country_event = {
 	immediate = {
 		random_scope_in_array = {
 			array = global.security_council_members
-			# A dead holder never completes the mission, so the ongoing flag leaks and voting stalls forever.
-			limit = { exists = yes }
+			# Dead members cannot finish the mission, and the vote subject is recused.
+			limit = { is_eligible_current_sc_voter = yes }
 			set_global_flag = current_ongoing_sc_vote
 			set_country_flag = has_sc_mission
 			activate_mission = UN_SC_voting_mission
@@ -27,16 +27,19 @@ country_event = {
 			value = v
 			var:v = {
 				if = {
-					limit = { NOT = { has_auto_sc_vote = yes } }
-					country_event = UNSC.1
-				} else = {
-					process_auto_sc_vote = yes
-				}
-				if = {
-					limit = {
-						NOT = { has_country_flag = has_sc_mission }
+					limit = { is_eligible_current_sc_voter = yes }
+					if = {
+						limit = { NOT = { has_auto_sc_vote = yes } }
+						country_event = UNSC.1
+					} else = {
+						process_auto_sc_vote = yes
 					}
-					activate_mission = UN_SC_voting_mission_result_timer
+					if = {
+						limit = {
+							NOT = { has_country_flag = has_sc_mission }
+						}
+						activate_mission = UN_SC_voting_mission_result_timer
+					}
 				}
 			}
 		}

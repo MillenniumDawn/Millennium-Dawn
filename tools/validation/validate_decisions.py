@@ -542,6 +542,43 @@ def _top_level_field_value(raw: str, field: str):
     return None
 
 
+def _top_level_neg_pp(block: str):
+    """Return the magnitude (positive int) of an unconditional
+    ``add_political_power = -N`` at depth 0 of ``block``, or ``None``
+    if there is no such line. Conditional/nested subtractions are
+    ignored (they are gameplay outcomes, not entry costs)."""
+    if not block:
+        return None
+    inner = block.strip()
+    if inner.startswith("{"):
+        inner = inner[1:]
+    if inner.endswith("}"):
+        inner = inner[:-1]
+    depth = 0
+    i = 0
+    n = len(inner)
+    while i < n:
+        ch = inner[i]
+        if ch == "{":
+            depth += 1
+            i += 1
+            continue
+        if ch == "}":
+            depth -= 1
+            i += 1
+            continue
+        if ch == "#":
+            while i < n and inner[i] != "\n":
+                i += 1
+            continue
+        if depth == 0:
+            m = re.match(r"add_political_power\s*=\s*-(\d+)", inner[i:])
+            if m:
+                return int(m.group(1))
+        i += 1
+    return None
+
+
 def extract_value_multi_line(obj: str, s: str) -> str:
     pattern = r"(\t+)" + s + r" = (\{([^\n]*|.*?^\1)\})"
     if f"\t{s} =" not in obj:
@@ -1588,42 +1625,6 @@ class Validator(BaseValidator):
         hidden = []
         double = []
 
-        def _top_level_neg_pp(block: str):
-            """Return the magnitude (positive int) of an unconditional
-            ``add_political_power = -N`` at depth 0 of ``block``, or ``None``
-            if there is no such line. Conditional/nested subtractions are
-            ignored (they are gameplay outcomes, not entry costs)."""
-            if not block:
-                return None
-            inner = block.strip()
-            if inner.startswith("{"):
-                inner = inner[1:]
-            if inner.endswith("}"):
-                inner = inner[:-1]
-            depth = 0
-            i = 0
-            n = len(inner)
-            while i < n:
-                ch = inner[i]
-                if ch == "{":
-                    depth += 1
-                    i += 1
-                    continue
-                if ch == "}":
-                    depth -= 1
-                    i += 1
-                    continue
-                if ch == "#":
-                    while i < n and inner[i] != "\n":
-                        i += 1
-                    continue
-                if depth == 0:
-                    m = re.match(r"add_political_power\s*=\s*-(\d+)", inner[i:])
-                    if m:
-                        return int(m.group(1))
-                i += 1
-            return None
-
         for d in factories:
             if d.custom_cost_trigger:
                 continue
@@ -2036,35 +2037,62 @@ class Validator(BaseValidator):
         )
 
     def validate_custom_cost_ai_hint(self):
-        """Flag decisions with custom_cost_trigger involving PP but no ai_hint_pp_cost.
+        """Flag decisions that spend political power but carry no ai_hint_pp_cost.
 
-        A custom cost replaces the regular cost field, so the AI has no idea
-        it needs to save up political power. ai_hint_pp_cost tells the AI
-        how much PP to reserve before attempting the decision.
+        The AI only reserves PP for a decision when it can see the price. It
+        reads the ``cost`` field, and nothing else — a custom cost replaces
+        that field, and an ``add_political_power = -N`` buried in an effect is
+        invisible to it. ``ai_hint_pp_cost`` is how either shape gets declared,
+        and without it the AI evaluates a free decision it cannot actually
+        afford, ranking it against genuinely free ones.
+
+        Two shapes are reported:
+
+        1. ``custom_cost_trigger`` gating on political power.
+        2. An unconditional ``add_political_power = -N`` at the top level of
+           ``complete_effect``/``remove_effect``.
+
+        Nested charges inside ``if``/``random_list``/scope changes are gameplay
+        outcomes rather than prices, so they are left alone. Skipped when the
+        AI never takes the decision (``base = 0`` with no ``add``), and for a
+        non-selectable mission's ``remove_effect``, where the PP change is a
+        timeout outcome.
         """
-        self._log_section(
-            "Checking decisions with custom PP cost but no ai_hint_pp_cost..."
-        )
+        self._log_section("Checking decisions that spend PP for ai_hint_pp_cost...")
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
 
         for d in factories:
-            if not d.custom_cost_trigger:
-                continue
             if d.ai_hint_pp_cost:
                 continue
             if d.ai_factor and "base = 0" in d.ai_factor and "add" not in d.ai_factor:
                 continue
-            if "political_power" in d.custom_cost_trigger:
+
+            if d.custom_cost_trigger and "political_power" in d.custom_cost_trigger:
                 results.append(
                     f"{d.token:<55}{d.source_basename} - custom_cost_trigger checks political_power but no ai_hint_pp_cost"
                 )
+                continue
+
+            for block_name, block in (
+                ("complete_effect", d.complete_effect),
+                ("remove_effect", d.remove_effect),
+            ):
+                if block_name == "remove_effect" and d.mission_subtype:
+                    continue
+                pp = _top_level_neg_pp(block)
+                if pp is None:
+                    continue
+                results.append(
+                    f"{d.token:<55}{d.source_basename} - {block_name} spends {pp} PP but no ai_hint_pp_cost"
+                )
+                break
 
         self._report(
             results,
-            "✓ No custom PP cost decisions missing ai_hint_pp_cost",
-            "Decisions with custom PP cost but no ai_hint_pp_cost (AI won't save up PP):",
+            "✓ No PP-spending decisions missing ai_hint_pp_cost",
+            "Decisions spending political power with no ai_hint_pp_cost (AI won't reserve PP):",
             severity=Severity.WARNING,
         )
 
