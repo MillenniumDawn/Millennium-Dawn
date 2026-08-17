@@ -1142,14 +1142,26 @@ recompute_un_2_3_number = {
 }
 
 recompute_un_sc_required_yes = {
+	set_variable = { global.un_sc_eligible_voter_count = 0 }
+	for_each_loop = {
+		array = global.security_council_members
+		value = v
+		var:v = {
+			if = {
+				limit = { is_eligible_current_sc_voter = yes }
+				add_to_variable = { global.un_sc_eligible_voter_count = 1 }
+			}
+		}
+	}
 	set_variable = {
 		global.un_sc_required_yes = {
-			value = global.security_council_members^num
+			value = global.un_sc_eligible_voter_count
 			multiply = 0.6
 			add = 0.499
 			round = yes
 		}
 	}
+	clear_variable = global.un_sc_eligible_voter_count
 }
 
 # Promotion has to wait out any live Council vote; run this wherever one ends.
