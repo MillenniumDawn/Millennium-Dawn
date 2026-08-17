@@ -330,6 +330,17 @@ def test_localised_tooltip_key_clean(tmp_path):
     )
 
 
+def test_vanilla_tooltip_key_clean(tmp_path):
+    assert not _bad_keys(
+        tmp_path,
+        {
+            "common/national_focus/t.txt": _focus(
+                "\t\tadd_to_variable = { tag_pp_var = 0.05 tooltip = air_range_factor_tt }"
+            )
+        },
+    )
+
+
 def test_bad_key_checked_on_every_variable_effect(tmp_path):
     body = _focus(
         "\t\tset_variable = { a = 1 tooltip = bad_one_tt }\n"
