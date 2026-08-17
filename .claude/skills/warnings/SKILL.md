@@ -48,6 +48,9 @@ python tools/validation/validate_<name>.py --path . --no-color -o "<scratchpad>/
 The run writes `warnings-<name>.json` alongside the `.txt`. That sidecar is the input for
 step 3 — it holds every finding, uncapped.
 
+`gfx-references` skips its unused-sprite check unless `--report-unused` is passed. Append
+that flag when the requested category is `unused-sprite`.
+
 All validators:
 
 ```bash

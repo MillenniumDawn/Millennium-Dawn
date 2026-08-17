@@ -2513,9 +2513,6 @@ calculate_interest_rate = {
 # Effect: update_military_rate
 # Purpose: Computes daily military upkeep: defence-industry cost plus fielded-unit personnel cost
 update_military_rate = {
-	set_temp_variable = { num_missile_silo = rocket_sites }
-	set_temp_variable = { num_anti_air_building = anti_air_building }
-
 	#clear the array that stores the law costgdp_total
 	clear_array = array_defence_spend
 
@@ -2783,7 +2780,7 @@ update_military_rate = {
 	}
 
 	#from millions yearly to billions weekly
-	set_variable = { equipment_operative_cost = { value = equipment_operative_cost multiply = equipment_operative_cost_multiplier multiply = 0.019 multiply = 0.001 } }
+	set_variable = { equipment_operative_cost = { value = equipment_operative_cost multiply = @equipment_operative_cost_multiplier multiply = 0.019 multiply = 0.001 } }
 	if = { limit = { has_war = yes }
 		if = { limit = { is_ai = no }
 			multiply_variable = { equipment_operative_cost = 2.25 }
@@ -3427,29 +3424,25 @@ calculate_additional_expense_rate = {
 	# Generic Propaganda Campaign Decisions
 	# AI do not use the propganda campaigns at all. Wrap them in a check to minimize checking.
 	if = { limit = { is_ai = no }
+		calculate_all_propaganda_costs = yes
 		if = {
 			limit = { has_country_flag = prowestern_propaganda }
-			calculate_prowestern_propaganda_cost = yes
 			add_to_variable = { additional_expenses_rate = promote_outlook_western_costs }
 		}
 		if = {
 			limit = { has_country_flag = emerging_propaganda }
-			calculate_emerging_propaganda_cost = yes
 			add_to_variable = { additional_expenses_rate = promote_outlook_emerging_costs }
 		}
 		if = {
 			limit = { has_country_flag = nonaligned_propaganda }
-			calculate_nonaligned_propaganda_cost = yes
 			add_to_variable = { additional_expenses_rate = promote_outlook_nonaligned_costs }
 		}
 		if = {
 			limit = { has_country_flag = nationalist_propaganda }
-			calculate_nationalist_propaganda_cost = yes
 			add_to_variable = { additional_expenses_rate = promote_outlook_nationalist_costs }
 		}
 		if = {
 			limit = { has_country_flag = fascism_propaganda }
-			calculate_salafist_propaganda_cost = yes
 			add_to_variable = { additional_expenses_rate = promote_outlook_salafist_costs }
 		}
 
@@ -4534,140 +4527,270 @@ update_state_variables = {
 	hidden_effect = {
 		productivity_growth_country_display_effect = yes
 
-		set_variable = { rocket_sites = 0 }
-		set_variable = { anti_air_building = 0 }
-		set_variable = { agriculture_district_total = 0 }
-		set_variable = { office_park_total = 0 }
-		set_variable = { industrial_complex_total = 0 }
-		set_variable = { military_factory_total = 0 }
-		set_variable = { naval_factory_total = 0 }
-		set_variable = { renewable_energy_infra = 0 }
-		set_variable = { nuclear_reactors = 0 }
-		set_variable = { hydroelectric_energy_generation = 0 }
-		set_variable = { geothermal_energy_generation = 0 }
-		set_variable = { max_stored_energy = 0 }
-		set_variable = { number_of_battery_parks = 0 }
-		set_variable = { number_of_fossil_pps = 0 }
-		set_variable = { fuel_silos = 0 }
-		set_variable = { nuclear_facility_total = 0 }
-		set_variable = { air_facility_total = 0 }
-		set_variable = { land_facility_total = 0 }
-		set_variable = { naval_facility_total = 0 }
-		set_variable = { microchip_plant_total = 0 }
-		set_variable = { synthetic_refinery_total = 0 }
-		set_variable = { composite_plant_total = 0 }
-		set_variable = { internet_station_total = 0 }
-		set_variable = { rail_terminal_total = 0 }
-		set_variable = { undamaged_enrichment_facilities = 0 }
-		set_variable = { total_enrichment_facilities = 0 }
-		set_variable = { population_total = 0 }
-		set_variable = { var = last_overall_productivity value = overall_productivity }
-		set_variable = { overall_productivity = 0 }
-		set_variable = { state_renewable_energy_var = 0 }
-		set_variable = { minimum_renewable_energy_var = 0 }
-		set_variable = { maximum_renewable_energy_var = 1 }
-		set_variable = { state_fossil_energy_var = 0 }
-		set_variable = { state_nuclear_energy_var = 0 }
-
-		every_collection_element = {
-			input = { input = collection:controlled_states_collection }
-
-			add_to_variable = { PREV.rocket_sites = building_level@rocket_site }
-			add_to_variable = { PREV.anti_air_building = building_level@anti_air_building }
-			add_to_variable = { PREV.agriculture_district_total = building_level@agriculture_district }
-			add_to_variable = { PREV.office_park_total = building_level@offices }
-			add_to_variable = { PREV.industrial_complex_total = building_level@industrial_complex }
-			add_to_variable = { PREV.military_factory_total = building_level@arms_factory }
-			add_to_variable = { PREV.naval_factory_total = building_level@dockyard }
-			add_to_variable = { PREV.renewable_energy_infra = building_level@renewable_energy_infra }
-			add_to_variable = { PREV.nuclear_reactors = building_level@nuclear_reactor }
-			add_to_variable = { PREV.hydroelectric_energy_generation = hydroelectric_energy_production_var }
-			add_to_variable = { PREV.geothermal_energy_generation = geothermal_energy_production_var }
-			add_to_variable = { PREV.max_stored_energy = hydroelectric_energy_storage_var }
-			add_to_variable = { PREV.number_of_battery_parks = number_of_battery_parks_state_var }
-			add_to_variable = { PREV.number_of_fossil_pps = building_level@fossil_powerplant }
-			add_to_variable = { PREV.fuel_silos = building_level@fuel_silo }
-			add_to_variable = { PREV.nuclear_facility_total = building_level@nuclear_facility }
-			add_to_variable = { PREV.air_facility_total = building_level@air_facility }
-			add_to_variable = { PREV.land_facility_total = building_level@land_facility }
-			add_to_variable = { PREV.naval_facility_total = building_level@naval_facility }
-			add_to_variable = { PREV.microchip_plant_total = building_level@microchip_plant }
-			add_to_variable = { PREV.synthetic_refinery_total = building_level@synthetic_refinery }
-			add_to_variable = { PREV.composite_plant_total = building_level@composite_plant }
-			add_to_variable = { PREV.internet_station_total = building_level@internet_station }
-			add_to_variable = { PREV.rail_terminal_total = building_level@rail_terminal }
-			add_to_variable = { PREV.undamaged_enrichment_facilities = non_damaged_building_level@enrichment_facility }
-			add_to_variable = { PREV.total_enrichment_facilities = building_level@enrichment_facility }
-			add_to_variable = { PREV.population_total = { value = state_population_k multiply = 0.01 } }
-			add_to_variable = {
-				PREV.overall_productivity = {
-					value = productivity_state_var
-					multiply = 0.001
-					multiply = { value = state_population_k multiply = 0.01 }
+		set_temp_variable = {
+			num_missile_silo = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@rocket_site
 				}
 			}
+		}
 
-			if = {
-				limit = { check_variable = { building_level@renewable_energy_infra > 0 } }
-				add_to_variable = {
-					PREV.state_renewable_energy_var = {
-						value = building_level@renewable_energy_infra
-						multiply = 0.5
-						multiply = renewable_energy_random_var
-						multiply = {
-							value = 1
-							add = modifier@state_renewable_energy_generation_modifier
-						}
-					}
-				}
-				add_to_variable = {
-					PREV.minimum_renewable_energy_var = {
-						value = building_level@renewable_energy_infra
-						multiply = 0.5
-						multiply = min_renewable_energy_var
-						multiply = {
-							value = 1
-							add = modifier@state_renewable_energy_generation_modifier
-						}
-					}
-				}
-				add_to_variable = {
-					PREV.maximum_renewable_energy_var = {
-						value = building_level@renewable_energy_infra
-						multiply = 0.5
-						multiply = max_renewable_energy_var
-						multiply = {
-							value = 1
-							add = modifier@state_renewable_energy_generation_modifier
-						}
-					}
+		set_temp_variable = {
+			num_anti_air_building = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@anti_air_building
 				}
 			}
+		}
 
-			# Per-state building output only; country idea bonuses to fossil_energy_gain stay applied at the country level
-			if = {
-				limit = { check_variable = { building_level@fossil_powerplant > 0 } }
-				add_to_variable = {
-					PREV.state_fossil_energy_var = {
-						value = building_level@fossil_powerplant
-						multiply = 2
-						multiply = {
-							value = 1
-							add = modifier@state_fossil_fuel_energy_generation_modifier
-						}
-					}
+		set_variable = {
+			rocket_sites = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@rocket_site
 				}
 			}
-			if = {
-				limit = { check_variable = { building_level@nuclear_reactor > 0 } }
-				add_to_variable = {
-					PREV.state_nuclear_energy_var = {
-						value = building_level@nuclear_reactor
-						multiply = 4
-						multiply = {
-							value = 1
-							add = modifier@state_nuclear_energy_generation_modifier
-						}
+		}
+		set_variable = {
+			anti_air_building = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@anti_air_building
+				}
+			}
+		}
+
+		set_variable = {
+			agriculture_district_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@agriculture_district
+				}
+			}
+		}
+		set_variable = {
+			office_park_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@offices
+				}
+			}
+		}
+		set_variable = {
+			industrial_complex_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@industrial_complex
+				}
+			}
+		}
+		set_variable = {
+			military_factory_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@arms_factory
+				}
+			}
+		}
+		set_variable = {
+			naval_factory_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@dockyard
+				}
+			}
+		}
+		set_variable = {
+			renewable_energy_infra = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@renewable_energy_infra
+				}
+			}
+		}
+		set_variable = {
+			nuclear_reactors = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@nuclear_reactor
+				}
+			}
+		}
+		set_variable = {
+			hydroelectric_energy_generation_base = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = hydroelectric_energy_production_var
+				}
+			}
+		}
+		set_variable = {
+			geothermal_energy_generation_base = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = geothermal_energy_production_var
+				}
+			}
+		}
+		set_variable = {
+			max_stored_energy_base = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = hydroelectric_energy_storage_var
+				}
+			}
+		}
+		set_variable = {
+			number_of_battery_parks = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = number_of_battery_parks_state_var
+				}
+			}
+		}
+		set_variable = {
+			number_of_fossil_pps = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@fossil_powerplant
+				}
+			}
+		}
+		set_variable = {
+			fuel_silos = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@fuel_silo
+				}
+			}
+		}
+		set_variable = {
+			nuclear_facility_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@nuclear_facility
+				}
+			}
+		}
+		set_variable = {
+			air_facility_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@air_facility
+				}
+			}
+		}
+		set_variable = {
+			land_facility_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@land_facility
+				}
+			}
+		}
+		set_variable = {
+			naval_facility_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@naval_facility
+				}
+			}
+		}
+		set_variable = {
+			microchip_plant_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@microchip_plant
+				}
+			}
+		}
+		set_variable = {
+			synthetic_refinery_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@synthetic_refinery
+				}
+			}
+		}
+		set_variable = {
+			composite_plant_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@composite_plant
+				}
+			}
+		}
+		set_variable = {
+			internet_station_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@internet_station
+				}
+			}
+		}
+		set_variable = {
+			rail_terminal_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@rail_terminal
+				}
+			}
+		}
+		set_variable = {
+			undamaged_enrichment_facilities = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = non_damaged_building_level@enrichment_facility
+				}
+			}
+		}
+		set_variable = {
+			total_enrichment_facilities = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = building_level@enrichment_facility
+				}
+			}
+		}
+
+		set_variable = {
+			population_total = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = {
+						value = state_population_k
+						multiply = 0.01
 					}
 				}
 			}
@@ -4682,14 +4805,129 @@ update_state_variables = {
 			}
 		}
 
+		set_variable = { var = last_overall_productivity value = overall_productivity }
+
 		set_variable = {
 			overall_productivity = {
-				value = overall_productivity
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					add = {
+						value = productivity_state_var
+						multiply = 0.001
+						multiply = { value = state_population_k multiply = 0.01 }
+					}
+				}
 				multiply = 0.1
 				divide = population_total_m
 				multiply = 1000
 				# INFO: This is a workaround to prevent the overflow of produtcivity to 424 million.
 				clamp = { min = 0 max = 1000000 }
+			}
+		}
+
+		# Calculate Renewable Infrastructure Information
+		set_variable = {
+			state_renewable_energy_var = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					if = {
+						limit = { value = building_level@renewable_energy_infra greater_than = 0 }
+						add = {
+							value = building_level@renewable_energy_infra
+							multiply = 0.5
+							multiply = renewable_energy_random_var
+							multiply = {
+								value = 1
+								add = THIS.modifier@state_renewable_energy_generation_modifier
+							}
+						}
+					}
+				}
+			}
+		}
+
+		set_variable = {
+			minimum_renewable_energy_var_base = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					if = {
+						limit = { value = building_level@renewable_energy_infra greater_than = 0 }
+						add = {
+							value = building_level@renewable_energy_infra
+							multiply = 0.5
+							multiply = min_renewable_energy_var
+							multiply = {
+								value = 1
+								add = THIS.modifier@state_renewable_energy_generation_modifier
+							}
+						}
+					}
+				}
+			}
+		}
+
+		set_variable = {
+			maximum_renewable_energy_var_base = {
+				value = 1
+				every_collection = {
+					named_collection = controlled_states_collection
+					if = {
+						limit = { value = building_level@renewable_energy_infra greater_than = 0 }
+						add = {
+							value = building_level@renewable_energy_infra
+							multiply = 0.5
+							multiply = max_renewable_energy_var
+							multiply = {
+								value = 1
+								add = THIS.modifier@state_renewable_energy_generation_modifier
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# Per-state building output only; country idea bonuses to fossil_energy_gain stay applied at the country level
+		set_variable = {
+			state_fossil_energy_var = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					if = {
+						limit = { value = building_level@fossil_powerplant greater_than = 0 }
+						add = {
+							value = building_level@fossil_powerplant
+							multiply = 2
+							multiply = {
+								value = 1
+								add = THIS.modifier@state_fossil_fuel_energy_generation_modifier
+							}
+						}
+					}
+				}
+			}
+		}
+
+		set_variable = {
+			state_nuclear_energy_var = {
+				value = 0
+				every_collection = {
+					named_collection = controlled_states_collection
+					if = {
+						limit = { value = building_level@nuclear_reactor greater_than = 0 }
+						add = {
+							value = building_level@nuclear_reactor
+							multiply = 4
+							multiply = {
+								value = 1
+								add = THIS.modifier@state_nuclear_energy_generation_modifier
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -5037,14 +5275,14 @@ calculate_gdp = {
 		}
 	}
 	set_variable = {
-		minimum_renewable_energy_var = {
-			value = minimum_renewable_energy_var
+		minimum_renewable_energy_var_base = {
+			value = minimum_renewable_energy_var_base
 			multiply = renewable_energy_infra_manpower_fulfillment
 		}
 	}
 	set_variable = {
-		maximum_renewable_energy_var = {
-			value = maximum_renewable_energy_var
+		maximum_renewable_energy_var_base = {
+			value = maximum_renewable_energy_var_base
 			multiply = renewable_energy_infra_manpower_fulfillment
 		}
 	}
@@ -5935,6 +6173,7 @@ calculate_gdp = {
 	}
 
 	calculate_gdp_modifiers = yes
+	set_country_flag = energy_state_bases_initialized
 	calculate_energy_use = yes
 }
 
@@ -6474,42 +6713,23 @@ set_initial_cost_resources = {
 # Purpose: Adjusts resource prices based on global supply and demand shifts
 recalculate_resources_price = {
 	#Set the current global supply + demand
-	set_temp_variable = { sum_steel = 0 }
-	set_temp_variable = { sum_rubber = 0 }
-	set_temp_variable = { sum_oil = 0 }
-	set_temp_variable = { sum_alum = 0 }
-	set_temp_variable = { sum_tungsten = 0 }
-	set_temp_variable = { sum_chromium = 0 }
-	set_temp_variable = { sum_microchips = 0 }
-	set_temp_variable = { sum_composites = 0 }
-	set_temp_variable = { sum_import_steel = 0 }
-	set_temp_variable = { sum_import_rubber = 0 }
-	set_temp_variable = { sum_import_oil = 0 }
-	set_temp_variable = { sum_import_alum = 0 }
-	set_temp_variable = { sum_import_tungsten = 0 }
-	set_temp_variable = { sum_import_chromium = 0 }
-	set_temp_variable = { sum_import_microchips = 0 }
-	set_temp_variable = { sum_import_composites = 0 }
+	set_temp_variable = { sum_steel = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_exported@steel } } }
+	set_temp_variable = { sum_rubber = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_exported@rubber } } }
+	set_temp_variable = { sum_oil = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_exported@oil } } }
+	set_temp_variable = { sum_alum = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_exported@aluminium } } }
+	set_temp_variable = { sum_tungsten = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_exported@tungsten } } }
+	set_temp_variable = { sum_chromium = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_exported@chromium } } }
+	set_temp_variable = { sum_microchips = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_exported@microchips } } }
+	set_temp_variable = { sum_composites = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_exported@composites } } }
 
-	every_collection_element = {
-		input = { input = collection:all_countries_collection }
-		add_to_temp_variable = { PREV.sum_steel = resource_exported@steel }
-		add_to_temp_variable = { PREV.sum_rubber = resource_exported@rubber }
-		add_to_temp_variable = { PREV.sum_oil = resource_exported@oil }
-		add_to_temp_variable = { PREV.sum_alum = resource_exported@aluminium }
-		add_to_temp_variable = { PREV.sum_tungsten = resource_exported@tungsten }
-		add_to_temp_variable = { PREV.sum_chromium = resource_exported@chromium }
-		add_to_temp_variable = { PREV.sum_microchips = resource_exported@microchips }
-		add_to_temp_variable = { PREV.sum_composites = resource_exported@composites }
-		add_to_temp_variable = { PREV.sum_import_steel = resource_imported@steel }
-		add_to_temp_variable = { PREV.sum_import_rubber = resource_imported@rubber }
-		add_to_temp_variable = { PREV.sum_import_oil = resource_imported@oil }
-		add_to_temp_variable = { PREV.sum_import_alum = resource_imported@aluminium }
-		add_to_temp_variable = { PREV.sum_import_tungsten = resource_imported@tungsten }
-		add_to_temp_variable = { PREV.sum_import_chromium = resource_imported@chromium }
-		add_to_temp_variable = { PREV.sum_import_microchips = resource_imported@microchips }
-		add_to_temp_variable = { PREV.sum_import_composites = resource_imported@composites }
-	}
+	set_temp_variable = { sum_import_steel = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_imported@steel } } }
+	set_temp_variable = { sum_import_rubber = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_imported@rubber } } }
+	set_temp_variable = { sum_import_oil = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_imported@oil } } }
+	set_temp_variable = { sum_import_alum = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_imported@aluminium } } }
+	set_temp_variable = { sum_import_tungsten = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_imported@tungsten } } }
+	set_temp_variable = { sum_import_chromium = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_imported@chromium } } }
+	set_temp_variable = { sum_import_microchips = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_imported@microchips } } }
+	set_temp_variable = { sum_import_composites = { value = 0 every_collection = { named_collection = all_countries_collection add = resource_imported@composites } } }
 
 	#Set the % of supply used by doing demand / supply
 	#If using > 50% of supply, price should go up
@@ -6595,7 +6815,13 @@ calculate_united_nations_base_budget = {
 
 	every_collection_element = {
 		input = { input = collection:un_general_assembly_members_collection }
-		set_variable = { united_nations_base_expenses = { value = gdp_total multiply = global.general_operating_budget_contribute_percent } }
+		set_variable = {
+			united_nations_base_expenses = {
+				value = gdp_total
+				multiply = global.general_operating_budget_contribute_percent
+				divide = 52
+			}
+		}
 
 		if = {
 			limit = {
@@ -6604,39 +6830,46 @@ calculate_united_nations_base_budget = {
 			add_to_variable = { global.un_operating_budget_base = united_nations_base_expenses }
 			add_to_array = { global.un_operating_budget_contributors = THIS }
 
-			#Add inflation *after* application, to represnt our inflated money being worth less
-			#This means less money goes to the UN, while we have to pay *more* to represent less value
-			set_temp_variable = { un_expenses_inflation = { value = 1 add = modifier@inflation_cost_multiplier_modifier } }
-			multiply_variable = { united_nations_base_expenses = un_expenses_inflation }
-
-			set_variable = { united_nations_expenses = united_nations_base_expenses }
+			set_variable = {
+				united_nations_expenses = {
+					value = united_nations_base_expenses
+					multiply = { value = 1 add = modifier@inflation_cost_multiplier_modifier }
+				}
+			}
 			set_variable = { united_nations_old_aid_expenses = 0 }
 		}
 
-		add_to_variable = { global.target_const_speed_mod = modifier@production_speed_buildings_factor }
-		add_to_variable = { global.target_research_speed_mod = modifier@research_speed_factor }
-		add_to_variable = { global.target_civ_count = industrial_complex_total }
+		set_temp_variable = { unsubsidized_const_speed = modifier@production_speed_buildings_factor }
+		set_temp_variable = { unsubsidized_research_speed = modifier@research_speed_factor }
+		set_temp_variable = { unsubsidized_civ_count = industrial_complex_total }
+		if = {
+			limit = { has_country_flag = is_getting_ido_subsidies }
+			subtract_from_temp_variable = { unsubsidized_const_speed = un_ido_construction_speed_var }
+			subtract_from_temp_variable = { unsubsidized_civ_count = un_ido_old_building_count }
+		}
+		if = {
+			limit = { has_country_flag = is_getting_esco_subsidies }
+			subtract_from_temp_variable = { unsubsidized_research_speed = un_esco_research_speed_var }
+		}
+
+		add_to_variable = { global.target_const_speed_mod = unsubsidized_const_speed }
+		add_to_variable = { global.target_research_speed_mod = unsubsidized_research_speed }
+		add_to_variable = { global.target_civ_count = unsubsidized_civ_count }
 		add_to_variable = { global.average_gdp_capita = gdp_per_capita }
 
 		if = {
-			limit = {
-				check_variable = { peak_const_speed_mod < modifier@production_speed_buildings_factor }
-			}
-			set_temp_variable = { peak_const_speed_mod = modifier@production_speed_buildings_factor }
+			limit = { check_variable = { peak_const_speed_mod < unsubsidized_const_speed } }
+			set_temp_variable = { peak_const_speed_mod = unsubsidized_const_speed }
 		}
 
 		if = {
-			limit = {
-				check_variable = { peak_research_speed_mod < modifier@research_speed_factor }
-			}
-			set_temp_variable = { peak_research_speed_mod = modifier@research_speed_factor }
+			limit = { check_variable = { peak_research_speed_mod < unsubsidized_research_speed } }
+			set_temp_variable = { peak_research_speed_mod = unsubsidized_research_speed }
 		}
 
 		if = {
-			limit = {
-				check_variable = { peak_civ_count < industrial_complex_total }
-			}
-			set_temp_variable = { peak_civ_count = industrial_complex_total }
+			limit = { check_variable = { peak_civ_count < unsubsidized_civ_count } }
+			set_temp_variable = { peak_civ_count = unsubsidized_civ_count }
 		}
 
 		if = {
@@ -6804,7 +7037,13 @@ update_optional_contributions = {
 			limit = {
 				NOT = { check_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses } }
 			}
-			set_variable = { united_nations_expenses = { value = united_nations_base_expenses add = united_nations_aid_expenses } }
+			set_variable = {
+				united_nations_expenses = {
+					value = united_nations_base_expenses
+					multiply = { value = 1 add = modifier@inflation_cost_multiplier_modifier }
+					add = united_nations_aid_expenses
+				}
+			}
 			set_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses }
 		}
 	}
@@ -6878,7 +7117,7 @@ calcluate_program_distributions = {
 
 	every_collection_element = {
 		input = { input = collection:un_esco_recipients_collection }
-		set_variable = { un_esco_political_power_var = esco_political_budget }
+		set_variable = { un_esco_political_power_var = { value = esco_political_budget multiply = 0.2 } }
 		set_variable = { un_esco_research_speed_var = { value = esco_research_budget multiply = 0.2 clamp = { min = 0 max = 0.30 } } }
 	}
 
@@ -6906,6 +7145,12 @@ calcluate_program_distributions = {
 		input = { input = collection:un_ido_recipients_collection }
 		set_variable = { un_ido_current_building_count = un_ido_building_count }
 		set_variable = { un_ido_construction_speed_var = { value = construction_speed_buffs multiply = 0.2 clamp = { min = 0 max = 0.30 } } }
+		set_variable = {
+			un_ido_investment_speed_var = {
+				value = un_ido_construction_speed_var
+				multiply = -1
+			}
+		}
 		if = {
 			limit = {
 				NOT = { check_variable = { un_ido_old_building_count = un_ido_building_count } }
@@ -6930,7 +7175,7 @@ calcluate_program_distributions = {
 			value = global.uncdf_budget
 			multiply = 0.55
 			divide = global.cdf_recipient_divisor
-			multiply = -1
+			multiply = -0.2
 		}
 	}
 

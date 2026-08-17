@@ -28,6 +28,7 @@ from pathlib import Path
 import pytest
 import yaml
 from precommit_validate import _REGISTRY
+from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_oob_units import _CREATE_UNIT_SOURCE_PATTERNS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -320,24 +321,39 @@ def test_targeted_parent_reaches_every_matrix_entry():
 
 
 def test_validator_cache_restore_is_source_hash_scoped():
-    expected_prefix = (
-        "md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
-    )
+    # Both shared cache entries (the disk cache and the validation baseline)
+    # are keyed on the validator source hash: a validator change must
+    # invalidate every restore, never hand a PR cache or baseline output from
+    # a different validator generation. Scoped by restore path so a swapped
+    # prefix can't hide behind the other entry's.
+    expected_prefix = {
+        ".validation_cache": (
+            "md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
+        ),
+        ".validation_baseline": (
+            "md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
+        ),
+    }
+    restores = {path: [] for path in expected_prefix}
     for workflow in (CI_WORKFLOW, VALIDATOR_CACHE_WORKFLOW):
         config = yaml.safe_load(workflow.read_text(encoding="utf-8"))
-        restore_steps = []
         for job in config["jobs"].values():
             for step in job.get("steps", []):
-                if "actions/cache/restore@" in step.get("uses", ""):
-                    restore_steps.extend(
-                        step.get("with", {}).get("restore-keys", "").splitlines()
-                    )
-        assert (
-            restore_steps
-        ), f"No validator cache restore keys found in {workflow.name}"
-        assert all(key.startswith(expected_prefix) for key in restore_steps), (
-            f"{workflow.name} has a validator cache fallback outside the current "
-            "validator source-hash generation"
+                if "actions/cache/restore@" not in step.get("uses", ""):
+                    continue
+                path = step.get("with", {}).get("path", "")
+                if path not in restores:
+                    # Workspace-bundle restores key on the merge tree, not the
+                    # validator source hash — out of scope for this guard.
+                    continue
+                restores[path].extend(
+                    step.get("with", {}).get("restore-keys", "").splitlines()
+                )
+    for path, expected in expected_prefix.items():
+        assert restores[path], f"No {path} restores found across the two workflows"
+        assert all(key.startswith(expected) for key in restores[path]), (
+            f"{path} is restored with a key outside the current validator "
+            "source-hash generation"
         )
 
 
@@ -375,6 +391,51 @@ def test_mio_validator_runs_for_localisation_changes():
     expression = entry["should_run"]
     for output in ("mios", "localisation"):
         assert f"needs.detect-changes.outputs.{output} == 'true'" in expression
+
+
+def test_check_baseline_saves_only_on_clean_diff():
+    # The save gating is the whole nightly alarm: baseline_check exits 1 on
+    # new errors, and only `steps.diff.outcome == 'success'` reaches the
+    # save step. If that `if` is dropped, a red night saves tonight's
+    # regressed results as the new baseline and the alarm self-heals
+    # silently.
+    config = yaml.safe_load(VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8"))
+    job = config["jobs"]["check-baseline"]
+    assert job["needs"] == ["build-cache"]
+
+    diff = next(step for step in job["steps"] if step.get("id") == "diff")
+    assert "tools/baseline_check.py" in diff["run"]
+
+    save = next(
+        step for step in job["steps"] if step.get("name") == "Save validation baseline"
+    )
+    assert save["if"] == "steps.diff.outcome == 'success'"
+
+
+def test_report_job_wires_baseline_flags():
+    # The PR report only annotates when the workflow passes the restored
+    # baseline and the matching toolshash; a drifted flag or path silently
+    # drops the NEW/EXISTING annotation for every PR.
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["validation-report"]
+
+    restore = next(
+        step
+        for step in job["steps"]
+        if step.get("name") == "Restore validation baseline"
+    )
+    baseline_prefix = (
+        "md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
+    )
+    assert baseline_prefix in restore["with"]["restore-keys"]
+
+    run = next(
+        step["run"]
+        for step in job["steps"]
+        if step.get("name") == "Generate and post validation report"
+    )
+    assert "--baseline-dir .validation_baseline" in run
+    assert "--baseline-toolshash" in run
 
 
 def test_tools_validation_triggers_for_consumed_configuration():
@@ -491,6 +552,11 @@ def test_oob_routes_cover_every_create_unit_source():
     assert {d + "**" for d in dirs} <= set(filters["oob"])
     spec = next(s for s in _REGISTRY if s.script == "validate_oob_units")
     assert dirs <= {prefix for prefix, _ in spec.rules}
+
+
+def test_decision_filter_covers_every_reference_source():
+    _, filters = _filter_definitions()
+    assert set(_DECISION_REFERENCE_SOURCE_PATTERNS) <= set(filters["decisions"])
 
 
 def test_gfx_reference_validator_runs_for_all_reference_sources():
