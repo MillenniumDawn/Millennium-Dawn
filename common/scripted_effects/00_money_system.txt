@@ -2391,6 +2391,16 @@ calculate_additional_income_rate = {
 
 
 }
+
+# Effect: update_tension_premium
+# Purpose: Weekly decay of the tension-cause borrowing premium, plus intake of newly generated tension
+update_tension_premium = {
+	set_temp_variable = { recent_threat = { value = has_added_tension_amount subtract = tracked_threat } }
+	# 3.5%/week: 20 weeks to decay 50%, 66 weeks to decay 90%
+	set_variable = { tension_premium = { value = tension_premium multiply = 0.965 add = recent_threat } }
+	set_variable = { tracked_threat = has_added_tension_amount }
+}
+
 # Effect: calculate_interest_rate
 # Purpose: Computes daily interest rate on debt based on debt-to-GDP ratio, monetary policy, and world threat
 calculate_interest_rate = {
@@ -2431,12 +2441,8 @@ calculate_interest_rate = {
 
 		# World tension cause premium - Countries which cause world tension are chaotic and less
 		# stable.
-		set_temp_variable = { recent_threat = { value = has_added_tension_amount subtract = tracked_threat } }
-		# Decay by 0.5% each day, 140 days to decay 50%, 460 days to decay 90%, then add new tension
-		set_variable = { tension_premium = { value = tension_premium multiply = 0.995 add = recent_threat } }
 		set_variable = { adjusted_tension_premium = { value = tension_premium multiply = 0.1 } } # 100% tension -> 10% interest rate
 		add_to_variable = { interest_rate = adjusted_tension_premium }
-		set_variable = { tracked_threat = has_added_tension_amount }
 
 		set_temp_variable = { pre_clamp_interest_rate = interest_rate }
 		clamp_variable = { var = interest_rate min = 0.8 max = 50 } #Min is 0.8% on debt max is 50%
