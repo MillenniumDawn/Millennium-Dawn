@@ -19,6 +19,7 @@ from shared_utils import (
     create_backup,
     extract_block,
     log_message,
+    normalize_spacing,
     run_tool_main,
 )
 
@@ -209,7 +210,7 @@ class BaseStandardizer(ABC):
             tmp_path = output_file + ".tmp"
             with open(tmp_path, "w", encoding="utf-8", newline="") as f:
                 for line in output_lines:
-                    f.write(line + "\n")
+                    f.write(normalize_spacing(line) + "\n")
             os.replace(tmp_path, output_file)
 
             time_str = format_elapsed(time.time() - self.start_time)
