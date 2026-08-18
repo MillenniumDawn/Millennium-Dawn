@@ -2841,7 +2841,7 @@ country_event = {
 			country_event = ukraine_maidan_overthrow.2
 		}
 		ai_chance = {
-			base = 0
+			base = 5
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
@@ -2861,7 +2861,7 @@ country_event = {
 			country_event = ukraine_maidan_overthrow.2
 		}
 		ai_chance = {
-			base = 0
+			base = 2
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
@@ -3196,7 +3196,7 @@ country_event = {
 
 	option = {
 		name = ukraine_kuchma.12.b
-		log = "[GetDateText]: [This.GetName]: ukraine_kuchma.12.a executed"
+		log = "[GetDateText]: [This.GetName]: ukraine_kuchma.12.b executed"
 		if = {
 			limit = {
 				NOT = { has_country_flag = ukr_revoult_bilo }
@@ -3265,10 +3265,8 @@ country_event = {
 		has_country_flag = UKR_orange_maidan_2004
 		has_country_flag = UKR_seuar_rise
 		date > 2004.10.31
-		SOV = {
-			country_exists = SOV
-			influence_higher_30 = yes
-		}
+		country_exists = SOV
+		UKR_pro_russian_support_30 = yes
 	}
 
 	option = {
@@ -3491,11 +3489,16 @@ country_event = {
 		annex_country = { target = SEU transfer_troops = yes }
 		UKR_cleanup_seu_rework = yes
 		set_country_flag = UKR_seuar_reintegrated
+		add_timed_idea = {
+			idea = UKR_constitutional_compromise_idea
+			days = 365
+		}
 		set_temp_variable = { tension_change = -15 }
 		UKR_add_political_tension = yes
 		if = {
 			limit = { country_exists = SOV }
 			SOV = {
+				add_opinion_modifier = { target = UKR modifier = recent_actions_positive }
 				set_temp_variable = { percent_change = 10 }
 				set_temp_variable = { tag_index = SOV }
 				set_temp_variable = { influence_target = UKR }
@@ -3564,10 +3567,7 @@ country_event = {
 		country_exists = UKR
 		country_exists = SEU
 		NOT = { is_in_faction_with = UKR }
-		UKR = {
-			has_country_flag = UKR_seuar_force_used
-			has_war_with = SEU
-		}
+		UKR = { has_war_with = SEU }
 	}
 
 	option = {
@@ -3579,14 +3579,6 @@ country_event = {
 			hostility_reason = asked_to_join
 		}
 		set_country_flag = SOV_backed_seuar
-		custom_effect_tooltip = TT_IF_WE_ACCEPT
-		effect_tooltip = {
-			add_to_war = {
-				targeted_alliance = SEU
-				enemy = UKR
-				hostility_reason = asked_to_join
-			}
-		}
 		ai_chance = {
 			base = 5
 			modifier = {
@@ -3675,6 +3667,53 @@ country_event = {
 		}
 	}
 }
+#Resolve the 2004 western autonomy crisis
+country_event = {
+	id = ukraine_revolution.17
+	title = ukraine_revolution.17.t
+	desc = ukraine_revolution.17.d
+	picture = GFX_ukr_orange_maidan
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		tag = UKR
+		country_exists = UKR
+		has_country_flag = UKR_western_crisis_2004
+	}
+
+	option = {
+		name = ukraine_revolution.17.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.17.a executed"
+		add_political_power = -50
+		if = {
+			limit = { has_idea = UKR_western_crisis_idea }
+			remove_ideas = UKR_western_crisis_idea
+		}
+		set_temp_variable = { tension_change = -8 }
+		UKR_add_political_tension = yes
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 60
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	option = {
+		name = ukraine_revolution.17.b
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.17.b executed"
+		add_stability = -0.03
+		if = {
+			limit = { has_idea = UKR_western_crisis_idea }
+			remove_ideas = UKR_western_crisis_idea
+		}
+		set_temp_variable = { tension_change = 5 }
+		UKR_add_political_tension = yes
+		ai_chance = { base = 30 }
+	}
+}
 #2013 Association decision
 country_event = {
 	id = ukraine_revolution.20
@@ -3725,7 +3764,6 @@ country_event = {
 	option = {
 		name = ukraine_revolution.20.b
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.20.b executed"
-		set_country_flag = UKR_association_signed
 		set_country_flag = UKR_association_decided
 		set_country_flag = UKR_association_recheck_scheduled
 		UKR_wve_rivlary_alignment_to_the_west = yes
@@ -3734,6 +3772,10 @@ country_event = {
 		europeanism_change = yes
 		set_temp_variable = { tension_change = 20 }
 		UKR_add_political_tension = yes
+		if = {
+			limit = { country_exists = SOV }
+			SOV = { add_opinion_modifier = { target = UKR modifier = recent_actions_negative } }
+		}
 		hidden_effect = {
 			country_event = { id = ukraine_revolution.21 days = 400 }
 		}
@@ -3766,7 +3808,6 @@ country_event = {
 		tag = UKR
 		country_exists = UKR
 		date > 2013.10.31
-		has_country_flag = UKR_association_signed
 		has_country_flag = UKR_association_recheck_scheduled
 		NOT = { has_country_flag = UKR_association_recheck_done }
 		NOT = { has_country_flag = ukr_revoult_bilo }
@@ -3781,8 +3822,6 @@ country_event = {
 		if = {
 			limit = { check_variable = { UKR_political_tension > 60 } }
 			UKR_start_euromaidan = yes
-		}
-		else = {
 		}
 		ai_chance = { base = 100 }
 	}
@@ -4305,10 +4344,7 @@ country_event = {
 		name = ukraine_revolution.46.c
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.46.c executed"
 		trigger = {
-			OR = {
-				owns_state = 695
-				owns_state = 333
-			}
+			owns_state = 695
 			NOT = { has_war_with = OPR }
 			OR = {
 				NOT = { country_exists = OPR }
@@ -4676,6 +4712,7 @@ country_event = {
 		name = ukraine_revolution.30.a
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.30.a executed"
 		set_country_flag = UKR_crimea_2004_pending
+		custom_effect_tooltip = UKR_crimea_2004_permit_tt
 		hidden_effect = {
 			SOV = {
 				country_event = { id = ukraine_revolution.31 days = 1 }
@@ -4684,8 +4721,8 @@ country_event = {
 		ai_chance = {
 			base = 20
 			modifier = {
-				add = 20
-				is_historical_focus_on = yes
+				add = 30
+				has_global_flag = UKR_YANUK_PATH
 			}
 		}
 	}
@@ -4708,7 +4745,7 @@ country_event = {
 		ai_chance = {
 			base = 80
 			modifier = {
-				add = 20
+				factor = 2
 				is_historical_focus_on = yes
 			}
 		}
@@ -4725,19 +4762,14 @@ country_event = {
 
 	trigger = {
 		tag = SOV
-		country_exists = SOV
 		country_exists = UKR
-		has_country_flag = SOV_backed_seuar
-		owns_state = 1112
-		UKR = {
-			has_country_flag = UKR_crimea_2004_pending
-			owns_state = 669
-		}
+		UKR = { has_country_flag = UKR_crimea_2004_pending }
 	}
 
 	option = {
 		name = ukraine_revolution.31.a
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.31.a executed"
+		custom_effect_tooltip = UKR_crimea_2004_restrain_tt
 		hidden_effect = {
 			if = {
 				limit = {
@@ -4784,15 +4816,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 100
+			base = 80
+			modifier = {
+				factor = 3
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
 	option = {
 		name = ukraine_revolution.31.b
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.31.b executed"
-		trigger = { is_ai = no }
 		set_country_flag = SOV_crimea_2004_underwritten
+		custom_effect_tooltip = UKR_crimea_2004_underwrite_tt
 		hidden_effect = {
 			if = {
 				limit = {
@@ -4826,7 +4862,18 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 0
+			base = 10
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 20
+				strength_ratio = {
+					tag = UKR
+					ratio > 3
+				}
+			}
 		}
 	}
 }
@@ -4841,17 +4888,10 @@ country_event = {
 
 	trigger = {
 		tag = SOV
-		country_exists = SOV
 		country_exists = UKR
 		country_exists = CRM
 		has_country_flag = SOV_crimea_2004_underwritten
-		owns_state = 1112
-		NOT = { UKR = { owns_state = 669 } }
-		UKR = { has_country_flag = UKR_crimea_2004_pending }
-		CRM = {
-			owns_state = 669
-			NOT = { owns_state = 1112 }
-		}
+		CRM = { owns_state = 669 }
 	}
 
 	option = {
@@ -4864,7 +4904,6 @@ country_event = {
 			set_country_flag = CRM_2004_content_unlocked
 			add_ideas = SUB_small_taxes
 		}
-		669 = { add_core_of = SOV }
 		set_autonomy = {
 			target = CRM
 			autonomy_state = autonomy_republic_rf
@@ -4880,13 +4919,7 @@ country_event = {
 			UKR_add_political_tension = yes
 			UKR_queue_provisional_crimea_flavor = yes
 		}
-		ai_chance = {
-			base = 80
-			modifier = {
-				add = 20
-				is_historical_focus_on = yes
-			}
-		}
+		ai_chance = { base = 60 }
 	}
 
 	option = {
@@ -4910,7 +4943,10 @@ country_event = {
 			base = 20
 			modifier = {
 				add = 20
-				is_historical_focus_on = no
+				strength_ratio = {
+					tag = UKR
+					ratio > 3
+				}
 			}
 		}
 	}
@@ -4992,8 +5028,6 @@ country_event = {
 				SOV = { country_event = { id = ukraine_kuchma.15 days = 10 } }
 			}
 			else = {
-				set_country_flag = UKR_seuar_suppressed
-				set_country_flag = UKR_seuar_legacy
 				set_country_flag = UKR_orange_2004_resolved
 				set_temp_variable = { tension_change = 5 }
 				UKR_add_political_tension = yes
@@ -5054,8 +5088,6 @@ country_event = {
 		name = ukraine_kuchma.15.b
 		log = "[GetDateText]: [This.GetName]: ukraine_kuchma.15.b executed"
 		UKR = {
-			set_country_flag = UKR_seuar_suppressed
-			set_country_flag = UKR_seuar_legacy
 			set_country_flag = UKR_orange_2004_resolved
 			set_temp_variable = { tension_change = 5 }
 			UKR_add_political_tension = yes
@@ -5115,7 +5147,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ukraine_kuchma.17.a executed"
 		set_country_flag = UKR_seuar_rise
 		set_country_flag = UKR_orange_2004_resolved
-		remove_ideas = UKR_crisis_political4
+		if = {
+			limit = { has_idea = UKR_crisis_political4 }
+			remove_ideas = UKR_crisis_political4
+		}
 		hidden_effect = { country_event = { id = ukraine_revolution.10 days = 7 } }
 		ai_chance = { base = 100 }
 	}
@@ -5145,7 +5180,6 @@ country_event = {
 				POL = { country_event = { id = ukraine_kuchma.19 days = 15 } }
 			}
 			else = {
-				set_country_flag = UKR_western_crisis_2004
 				set_country_flag = UKR_orange_2004_resolved
 				set_temp_variable = { tension_change = 5 }
 				UKR_add_political_tension = yes
@@ -5261,9 +5295,17 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ukraine_kuchma.21.a executed"
 		set_country_flag = UKR_western_crisis_2004
 		set_country_flag = UKR_orange_2004_resolved
-		remove_ideas = UKR_crisis_political4
+		if = {
+			limit = { has_idea = UKR_crisis_political4 }
+			remove_ideas = UKR_crisis_political4
+		}
+		add_timed_idea = {
+			idea = UKR_western_crisis_idea
+			days = 180
+		}
 		set_temp_variable = { tension_change = 10 }
 		UKR_add_political_tension = yes
+		hidden_effect = { country_event = { id = ukraine_revolution.17 days = 150 } }
 		ai_chance = { base = 100 }
 	}
 }
@@ -5682,7 +5724,7 @@ country_event = {
 
 	option = {
 		name = ukraine_regions.10.b
-		log = "[GetDateText]: [This.GetName]: ukraine_regions.10.a executed"
+		log = "[GetDateText]: [This.GetName]: ukraine_regions.10.b executed"
 		UKR_wve_rivlary_alignment_to_the_west = yes
 		set_temp_variable = { modify_europeanism = 0.1 }
 		set_temp_variable = { modify_europeanism_target = ROOT }
@@ -5705,13 +5747,16 @@ country_event = {
 		set_temp_variable = { modify_europeanism_target = ROOT }
 		europeanism_change = yes
 		if = {
+			limit = { tag = UKR }
+			set_country_flag = UKR_association_decided
+		}
+		if = {
 			limit = {
 				tag = UKR
 				date > 2013.10.31
-				NOT = { has_country_flag = UKR_association_decided }
+				NOT = { has_country_flag = UKR_association_recheck_scheduled }
+				NOT = { has_country_flag = UKR_association_recheck_done }
 			}
-			set_country_flag = UKR_association_signed
-			set_country_flag = UKR_association_decided
 			set_country_flag = UKR_association_recheck_scheduled
 			set_temp_variable = { tension_change = 20 }
 			UKR_add_political_tension = yes
@@ -5729,12 +5774,14 @@ country_event = {
 		set_temp_variable = { modify_europeanism_target = ROOT }
 		europeanism_change = yes
 		if = {
+			limit = { tag = UKR }
+			set_country_flag = UKR_association_decided
+		}
+		if = {
 			limit = {
 				tag = UKR
 				date > 2013.10.31
-				NOT = { has_country_flag = UKR_association_decided }
 			}
-			set_country_flag = UKR_association_decided
 			hidden_effect = {
 				UKR_start_euromaidan = yes
 			}

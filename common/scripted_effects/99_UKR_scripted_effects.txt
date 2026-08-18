@@ -17,6 +17,11 @@ UKR_setup_euromaidan_severity = {
 			UKR_add_political_tension = yes
 		}
 		if = {
+			limit = { has_country_flag = UKR_seuar_congress_only }
+			set_temp_variable = { tension_change = 5 }
+			UKR_add_political_tension = yes
+		}
+		if = {
 			limit = { has_country_flag = UKR_crimea_referendum_suppressed }
 			set_temp_variable = { tension_change = 15 }
 			UKR_add_political_tension = yes
@@ -56,7 +61,10 @@ UKR_setup_euromaidan_severity = {
 	clr_country_flag = UKR_euromaidan_mild
 	clr_country_flag = UKR_euromaidan_severe
 	if = {
-		limit = { check_variable = { UKR_political_tension < 40 } }
+		limit = {
+			check_variable = { UKR_political_tension < 40 }
+			is_historical_focus_on = no
+		}
 		set_country_flag = UKR_euromaidan_mild
 	}
 	else_if = {
@@ -68,6 +76,7 @@ UKR_start_euromaidan = {
 	log = "[GetDateText]: [Root.GetName]: Effect UKR_start_euromaidan"
 	if = {
 		limit = {
+			tag = UKR
 			date > 2013.10.31
 			NOT = { has_country_flag = ukr_revoult_bilo }
 		}
@@ -108,9 +117,17 @@ UKR_start_republic_wave = {
 			date > 2013.12.31
 			NOT = { has_country_flag = UKR_republic_wave_started }
 		}
+		clr_country_flag = UKR_republic_wave_deferred
 		set_country_flag = UKR_republic_wave_started
 		set_country_flag = UKR_republic_wave_active
 		country_event = { id = ukraine_revolution.40 days = 1 }
+	}
+	else_if = {
+		limit = {
+			tag = UKR
+			NOT = { has_country_flag = UKR_republic_wave_started }
+		}
+		set_country_flag = UKR_republic_wave_deferred
 	}
 }
 UKR_finish_republic_wave = {
@@ -275,14 +292,10 @@ UKR_prepare_OPR_wave = {
 			}
 		}
 		695 = { add_core_of = OPR }
-		333 = { add_core_of = OPR }
 		if = {
 			limit = {
 				NOT = { country_exists = OPR }
-				OR = {
-					owns_state = 695
-					owns_state = 333
-				}
+				owns_state = 695
 			}
 			release = OPR
 		}
@@ -293,7 +306,6 @@ UKR_prepare_OPR_wave = {
 				set_country_flag = UKR_provisional_republic_focus_setup
 				if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
 				if = { limit = { UKR = { owns_state = 695 } } transfer_state = 695 }
-				if = { limit = { UKR = { owns_state = 333 } } transfer_state = 333 }
 				if = {
 					limit = { NOT = { has_country_flag = UKR_republic_army_initialized } }
 					OPR_maidan_create_army = yes
@@ -327,7 +339,6 @@ UKR_form_novorossiya = {
 		clr_country_flag = UKR_novorossiya_include_1085
 		clr_country_flag = UKR_novorossiya_include_1086
 		clr_country_flag = UKR_novorossiya_include_695
-		clr_country_flag = UKR_novorossiya_include_333
 		clr_country_flag = UKR_novorossiya_include_1087
 		clr_country_flag = UKR_novorossiya_include_1088
 
@@ -344,7 +355,7 @@ UKR_form_novorossiya = {
 			set_country_flag = UKR_novorossiya_include_drp
 		}
 		if = {
-			limit = { OPR = { OR = { owns_state = 695 owns_state = 333 } } }
+			limit = { OPR = { owns_state = 695 } }
 			set_country_flag = UKR_novorossiya_include_opr
 		}
 
@@ -459,18 +470,6 @@ UKR_form_novorossiya = {
 		if = {
 			limit = {
 				OR = {
-					OPR = { owns_state = 333 }
-					AND = {
-						has_country_flag = UKR_republic_council_odessa
-						owns_state = 333
-					}
-				}
-			}
-			set_country_flag = UKR_novorossiya_include_333
-		}
-		if = {
-			limit = {
-				OR = {
 					DRP = { owns_state = 1087 }
 					AND = {
 						has_country_flag = UKR_republic_council_dnipro
@@ -543,10 +542,6 @@ UKR_form_novorossiya = {
 			695 = { add_core_of = NOV }
 		}
 		if = {
-			limit = { has_country_flag = UKR_novorossiya_include_333 }
-			333 = { add_core_of = NOV }
-		}
-		if = {
 			limit = { has_country_flag = UKR_novorossiya_include_1087 }
 			1087 = { add_core_of = NOV }
 		}
@@ -568,7 +563,6 @@ UKR_form_novorossiya = {
 					has_country_flag = UKR_novorossiya_include_1085
 					has_country_flag = UKR_novorossiya_include_1086
 					has_country_flag = UKR_novorossiya_include_695
-					has_country_flag = UKR_novorossiya_include_333
 					has_country_flag = UKR_novorossiya_include_1087
 					has_country_flag = UKR_novorossiya_include_1088
 				}
@@ -603,7 +597,6 @@ UKR_form_novorossiya = {
 			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1085 } } 1085 = { add_claim_by = NOV } }
 			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1086 } } 1086 = { add_claim_by = NOV } }
 			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_695 } } 695 = { add_claim_by = NOV } }
-			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_333 } } 333 = { add_claim_by = NOV } }
 			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1087 } } 1087 = { add_claim_by = NOV } }
 			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1088 } } 1088 = { add_claim_by = NOV } }
 			NOV = { NOV_shared_setup = yes }
@@ -833,7 +826,6 @@ UKR_cleanup_opr_rework = {
 			clr_country_flag = UKR_republic_odessa_emerged
 			clr_country_flag = UKR_novorossiya_include_opr
 			clr_country_flag = UKR_novorossiya_include_695
-			clr_country_flag = UKR_novorossiya_include_333
 			clr_country_flag = UKR_opr_subject_seen
 			clr_country_flag = UKR_opr_war_seen
 			clr_country_flag = UKR_opr_capitulated
@@ -937,7 +929,6 @@ UKR_cleanup_nov_rework = {
 			clr_country_flag = UKR_novorossiya_include_1085
 			clr_country_flag = UKR_novorossiya_include_1086
 			clr_country_flag = UKR_novorossiya_include_695
-			clr_country_flag = UKR_novorossiya_include_333
 			clr_country_flag = UKR_novorossiya_include_1087
 			clr_country_flag = UKR_novorossiya_include_1088
 			clr_country_flag = UKR_nov_subject_seen
@@ -947,6 +938,14 @@ UKR_cleanup_nov_rework = {
 	}
 }
 UKR_rework_monthly_cleanup = {
+	# a re-created republic re-arms its cleanup latch so a second death gets cleaned too
+	if = { limit = { country_exists = SEU } clr_country_flag = UKR_seuar_cores_removed }
+	if = { limit = { country_exists = DPR } clr_country_flag = UKR_dpr_rework_cleanup_done }
+	if = { limit = { country_exists = LPR } clr_country_flag = UKR_lpr_rework_cleanup_done }
+	if = { limit = { country_exists = DRP } clr_country_flag = UKR_drp_rework_cleanup_done }
+	if = { limit = { country_exists = OPR } clr_country_flag = UKR_opr_rework_cleanup_done }
+	if = { limit = { country_exists = CRM } clr_country_flag = UKR_crm_rework_cleanup_done }
+	if = { limit = { country_exists = NOV } clr_country_flag = UKR_nov_rework_cleanup_done }
 	if = {
 		limit = {
 			NOT = { country_exists = SEU }
@@ -5860,7 +5859,7 @@ UKR_apply_verkhovna_election_result = {
 		set_temp_variable = { UKR_election_bracket_found = 1 }
 	}
 	else_if = {
-		limit = { check_variable = { UKR_verkhovna_support > 410 } }
+		limit = { check_variable = { UKR_verkhovna_support > 409 } }
 		set_temp_variable = { UKR_election_bracket = 9 }
 		set_temp_variable = { UKR_election_bracket_found = 1 }
 	}
