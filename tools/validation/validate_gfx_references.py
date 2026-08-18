@@ -44,7 +44,7 @@ from validator_common import (
 # filename, listed in vanilla_gui_files.txt. Everything else is MD-authored. This
 # means new MD content of any naming convention is classified correctly with no
 # edits here; the manifest only needs regenerating on a HOI4 version bump (see
-# gen_vanilla_gui_manifest.py).
+# refresh_vanilla_data.py).
 #
 # One carve-out: an MD-authored nation variant (`<vanilla_stem>_<tag>.gui`) that
 # inherits a dead ref from the specific vanilla file it copies stays WARNING too —
@@ -159,7 +159,7 @@ _FLAG_SPRITE_RE = re.compile(
 #   1. A live HOI4 install (Steam path or $HOI4_PATH): interface/*.gfx read
 #      directly and folded into the defined-sprites set.
 #   2. The committed vanilla_sprites.txt manifest (generated from a local
-#      install by gen_vanilla_sprites_manifest.py) — what CI uses.
+#      install by refresh_vanilla_data.py) — what CI uses.
 #   3. The _VANILLA_PREFIXES heuristic below, only when neither exists:
 #      accept vanilla-looking names rather than false-positive on them.
 _VANILLA_SPRITES_MANIFEST = os.path.join(
@@ -371,7 +371,7 @@ def _read_raw(filepath: str) -> Optional[str]:
 def sprite_names_from_gfx_text(raw: str) -> Set[str]:
     """Return the set of GFX sprite names defined in raw .gfx file content.
 
-    Shared with gen_vanilla_sprites_manifest.py so the committed manifest is
+    Shared with refresh_vanilla_data.py so the committed manifest is
     built with exactly the parse the validator applies to mod files.
     """
     text = _strip_comments(raw)
@@ -591,7 +591,7 @@ class Validator(BaseValidator):
                 self.log(
                     "  No vanilla HOI4 install detected and no vanilla_sprites.txt"
                     " manifest — set HOI4_PATH or run"
-                    " gen_vanilla_sprites_manifest.py (prefix heuristic active)"
+                    " refresh_vanilla_data.py (prefix heuristic active)"
                 )
         return defined, mod_defined
 

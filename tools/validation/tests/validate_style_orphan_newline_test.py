@@ -11,11 +11,17 @@ import validate_style as V
 def _lines(*body):
     """Wrap effect-block body lines in a focus, tab-indented as MD files are."""
     inner = "\n".join("\t\t\t" + line for line in body)
-    return "\tfocus = {\n\t\tid = TAG_focus\n\t\tcompletion_reward = {\n" + inner + "\n\t\t}\n\t}\n"
+    return (
+        "\tfocus = {\n\t\tid = TAG_focus\n\t\tcompletion_reward = {\n"
+        + inner
+        + "\n\t\t}\n\t}\n"
+    )
 
 
 def _orphan_lines(text):
-    return [line for _, line in V._check_orphan_newline(text, "common/national_focus/x.txt")]
+    return [
+        line for _, line in V._check_orphan_newline(text, "common/national_focus/x.txt")
+    ]
 
 
 # ---------------------------------------------------------------------------
