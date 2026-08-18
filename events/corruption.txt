@@ -1348,7 +1348,6 @@ country_event = {
 			days = 365
 		}
 		grant_random_corruption_offer_buff = yes
-		ai_chance = { base = 1 }
 	}
 }
 
@@ -1368,7 +1367,6 @@ country_event = {
 			idea = corruption_reform_resistance
 			days = 365
 		}
-		ai_chance = { base = 1 }
 	}
 }
 
@@ -1380,67 +1378,23 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		is_ai = no
-		NOT = {
-			OR = {
-				has_country_flag = auto_decline_corruption
-				has_active_mission = corruption_reform_challenge
-				has_idea = corruption_level_01
-			}
-		}
+		NOT = { has_country_flag = auto_decline_corruption }
+		NOT = { has_active_mission = corruption_reform_challenge }
 		OR = {
 			has_idea = corruption_level_10
-			has_idea = corruption_level_09
-			has_idea = corruption_level_08
-			has_idea = corruption_level_07
-			has_idea = corruption_level_06
-			has_idea = corruption_level_05
-			has_idea = corruption_level_04
-			has_idea = corruption_level_03
-			has_idea = corruption_level_02
+			check_variable = { modifier@political_manipulation_corruption_factor > 0.01 }
 		}
 	}
 
 	option = {
 		name = corruption.19.a
 		log = "[GetDateText]: [This.GetName]: corruption.19.a executed"
-		clear_corruption_reform_challenge_flags = yes
+		set_variable = { corruption_reform_start_factor = modifier@political_manipulation_corruption_factor }
+		# Corruption-law-only factor; level 10 exposes 0, so 0.08 stays above level 9's 0.07.
 		if = {
 			limit = { has_idea = corruption_level_10 }
-			set_country_flag = corruption_reform_challenge_started_at_10
-		}
-		else_if = {
-			limit = { has_idea = corruption_level_09 }
-			set_country_flag = corruption_reform_challenge_started_at_09
-		}
-		else_if = {
-			limit = { has_idea = corruption_level_08 }
-			set_country_flag = corruption_reform_challenge_started_at_08
-		}
-		else_if = {
-			limit = { has_idea = corruption_level_07 }
-			set_country_flag = corruption_reform_challenge_started_at_07
-		}
-		else_if = {
-			limit = { has_idea = corruption_level_06 }
-			set_country_flag = corruption_reform_challenge_started_at_06
-		}
-		else_if = {
-			limit = { has_idea = corruption_level_05 }
-			set_country_flag = corruption_reform_challenge_started_at_05
-		}
-		else_if = {
-			limit = { has_idea = corruption_level_04 }
-			set_country_flag = corruption_reform_challenge_started_at_04
-		}
-		else_if = {
-			limit = { has_idea = corruption_level_03 }
-			set_country_flag = corruption_reform_challenge_started_at_03
-		}
-		else_if = {
-			limit = { has_idea = corruption_level_02 }
-			set_country_flag = corruption_reform_challenge_started_at_02
+			set_variable = { corruption_reform_start_factor = 0.08 }
 		}
 		activate_mission = corruption_reform_challenge
-		ai_chance = { base = 1 }
 	}
 }
