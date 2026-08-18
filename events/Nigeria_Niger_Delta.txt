@@ -29,6 +29,7 @@ country_event = {
 			limit = { NOT = { has_idea = NIG_niger_delta_crisis_1 } }
 			add_ideas = NIG_niger_delta_crisis_1
 		}
+		custom_effect_tooltip = NIG_delta_military_tt
 
 		set_country_flag = NIG_niger_delta_military_response
 
@@ -54,6 +55,8 @@ country_event = {
 			limit = { NOT = { has_idea = NIG_niger_delta_crisis_1 } }
 			add_ideas = NIG_niger_delta_crisis_1
 		}
+
+		custom_effect_tooltip = NIG_delta_negotiation_tt
 
 		set_country_flag = NIG_niger_delta_negotiation_path
 
@@ -641,44 +644,37 @@ country_event = {
 	}
 }
 
-# Amnesty Program Failure - Conditions not met
-country_event = {
-	id = nigeria_delta.12
-	title = nigeria_delta.12.t
-	desc = nigeria_delta.12.d
-	picture = GFX_terrorist_attack
-	is_triggered_only = yes
 
-	trigger = {
-		original_tag = NIG
-		has_country_flag = NIG_amnesty_active
-		has_stability < 0.25
+country_event = {
+	id = nigeria_delta.19
+	title = nigeria_delta.19.t
+	desc = nigeria_delta.19.d
+	picture = GFX_port_harcourt_attack
+	is_triggered_only = yes
+	immediate = {
+		if = {
+			limit = {has_idea = NIG_amnesty_program_idea }
+			remove_ideas = NIG_amnesty_program_idea
+		}
+	}
+	option = {
+		name = nigeria_delta.19.a
+		add_political_power = 100
+		hidden_effect = {
+			country_event = {id = nigeria_delta.20 days = 14}
+		}
+		custom_effect_tooltip = NIG_amnesty_renewal_warning_tt
 	}
 
 	option = {
-		name = nigeria_delta.12.a
-		log = "[GetDateText]: [This.GetName]: nigeria_delta.12.a executed"
-
-		if = {
-			limit = { has_idea = NIG_amnesty_program_idea }
-			swap_ideas = {
-				remove_idea = NIG_amnesty_program_idea
-				add_idea = NIG_failed_amnesty_idea
-			}
-		}
-
-		clr_country_flag = NIG_amnesty_active
-		set_country_flag = NIG_amnesty_failed
-
-		# Set up NDA emergence
-		hidden_effect = {
-			country_event = { id = nigeria_delta.20 days = 730 random_days = 365 }
-		}
-
-		ai_chance = {
-			base = 100
+		name = nigeria_delta.19.b
+		add_political_power = -100
+		add_timed_idea = {
+			idea = NIG_amnesty_program_idea
+			years = 3
 		}
 	}
+
 }
 
 # Niger Delta Avengers Emerge - 2015-16 or amnesty failure
@@ -689,21 +685,11 @@ country_event = {
 	picture = GFX_port_harcourt_attack
 	is_triggered_only = yes
 
-	trigger = {
-		original_tag = NIG
-		has_full_control_of_state = 332
-		NOT = { has_country_flag = NIG_nda_emerged }
-		NOT = { has_country_flag = NIG_niger_delta_resolved }
-		NOT = { has_idea = NIG_niger_delta_resolved_idea }
-		OR = {
-			has_country_flag = NIG_amnesty_succeeded
-			has_country_flag = NIG_amnesty_failed
-		}
-	}
 
 	# Set flag and trigger news event
 	immediate = {
 		set_country_flag = NIG_nda_emerged
+		remove_ideas = {NIG_niger_delta_resolved_idea}
 		hidden_effect = {
 			news_event = { id = nigeria_delta.102 hours = 6 }
 		}
@@ -719,18 +705,20 @@ country_event = {
 
 		if = {
 			limit = { has_idea = NIG_failed_amnesty_idea }
-			swap_ideas = {
-				remove_idea = NIG_failed_amnesty_idea
-				add_idea = NIG_niger_delta_avengers_idea
-			}
-		}
-		else = {
-			add_ideas = NIG_niger_delta_avengers_idea
+				remove_ideas = NIG_failed_amnesty_idea
 		}
 
 		if = {
 			limit = { NOT = { has_idea = NIG_joint_task_force_idea } }
-			add_ideas = NIG_joint_task_force_idea
+			add_timed_idea = {
+				idea = NIG_joint_task_force_idea
+				months = 18
+			}
+		}
+
+		add_timed_idea = {
+			idea = NIG_niger_delta_avengers_idea
+			months = 18
 		}
 
 		ai_chance = {
@@ -748,13 +736,20 @@ country_event = {
 
 		if = {
 			limit = { has_idea = NIG_failed_amnesty_idea }
-			swap_ideas = {
-				remove_idea = NIG_failed_amnesty_idea
-				add_idea = NIG_niger_delta_avengers_idea
+				remove_ideas = NIG_failed_amnesty_idea
+		}
+
+		if = {
+			limit = { NOT = { has_idea = NIG_ongoing_negotiations } }
+			add_timed_idea = {
+				idea = NIG_ongoing_negotiations
+				years = 1
 			}
 		}
-		else = {
-			add_ideas = NIG_niger_delta_avengers_idea
+
+		add_timed_idea = {
+			idea = NIG_niger_delta_avengers_idea
+			years = 1
 		}
 
 		ai_chance = {
