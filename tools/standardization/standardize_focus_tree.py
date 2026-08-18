@@ -13,7 +13,13 @@ import time
 from typing import Any
 
 from _common import format_elapsed
-from common_utils import PROP_NAME_RE, compact_icon, compact_search_filters
+from common_utils import (
+    PROP_NAME_RE,
+    collapse_blank_runs,
+    compact_icon,
+    compact_search_filters,
+    join_groups,
+)
 from shared_utils import (
     blank_quoted_strings,
     collapse_or_compact,
@@ -355,12 +361,12 @@ def _fix_log_id(line: str, focus_id: str) -> str:
     return _LOG_FOCUS_RE.sub(rf"\g<1>Focus {focus_id}\g<3>", line)
 
 
-def emit_effect_block_with_log(lines, effect_block, focus_id):
-    """Append an effect block to `lines`, injecting a log line as the first
+def effect_block_with_log(effect_block, focus_id):
+    """Return an effect block's lines, injecting a log line as the first
     statement if the block doesn't already contain one, or correcting a
     mismatched focus ID / missing 'Focus ' prefix in an existing log line."""
     if not effect_block:
-        return
+        return []
     if focus_id and not any("log =" in line for line in effect_block):
         log_line = f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
         if len(effect_block) == 1:
@@ -384,9 +390,7 @@ def emit_effect_block_with_log(lines, effect_block, focus_id):
             _fix_log_id(line, focus_id) if "log =" in line else line
             for line in effect_block
         ]
-    for line in collapse_or_compact(effect_block[:]):
-        lines.append(line)
-    lines.append("")
+    return collapse_or_compact(effect_block[:])
 
 
 def _passthrough_single_line(block_lines, indent):
@@ -456,204 +460,145 @@ def _emit_comments(lines, props, key, index=None):
 
 
 def format_focus_block(props, block_type="focus"):
-    """Format focus according to Millennium Dawn standard"""
-    lines = []
-    lines.append(f"\t{block_type} = {{")
+    """Format focus according to Millennium Dawn standard.
+
+    Each numbered step below builds one group; `join_groups` then separates the
+    groups that produced lines with a single blank. Property order follows the
+    Code Stylization Guide, and an absent property costs no blank line."""
+    groups = []
 
     # 1. ID, icon, text_icon, overlay (no blank line between them)
-    _emit_comments(lines, props, "id")
+    identity = []
+    _emit_comments(identity, props, "id")
     if props["id"]:
-        lines.append(f"\t\t{props['id']}")
+        identity.append(f"\t\t{props['id']}")
     if props["icon"]:
         # `icon` is always list[list[str]] — emit each entry in order.
         for index, icon_block in enumerate(props["icon"]):
-            _emit_comments(lines, props, "icon", index)
+            _emit_comments(identity, props, "icon", index)
             icon_lines = compact_icon(icon_block)
             if "\n" in icon_lines:
                 for icon_line in icon_lines.split("\n"):
                     if icon_line.strip():
-                        lines.append(icon_line)
+                        identity.append(icon_line)
             else:
-                lines.append(f"\t\t{icon_lines}")
-    _emit_comments(lines, props, "text_icon")
+                identity.append(f"\t\t{icon_lines}")
+    _emit_comments(identity, props, "text_icon")
     if props["text_icon"]:
-        lines.append(f"\t\t{props['text_icon']}")
-    _emit_comments(lines, props, "overlay")
+        identity.append(f"\t\t{props['text_icon']}")
+    _emit_comments(identity, props, "overlay")
     if props["overlay"]:
-        lines.append(f"\t\t{props['overlay']}")
+        identity.append(f"\t\t{props['overlay']}")
+    groups.append(identity)
 
-    # 2. Blank line before position group
-    lines.append("")
-
-    # 3. Position group (x, y, relative_position_id - no blank lines between them)
-    _emit_comments(lines, props, "x")
+    # 2. Position group (x, y, relative_position_id - no blank lines between them)
+    position = []
+    _emit_comments(position, props, "x")
     if props["x"]:
-        lines.append(f"\t\t{props['x']}")
-    _emit_comments(lines, props, "y")
+        position.append(f"\t\t{props['x']}")
+    _emit_comments(position, props, "y")
     if props["y"]:
-        lines.append(f"\t\t{props['y']}")
-    _emit_comments(lines, props, "relative_position_id")
+        position.append(f"\t\t{props['y']}")
+    _emit_comments(position, props, "relative_position_id")
     if props["relative_position_id"]:
-        lines.append(f"\t\t{props['relative_position_id']}")
+        position.append(f"\t\t{props['relative_position_id']}")
     for index, offset_block in enumerate(props["offset"]):
-        _emit_comments(lines, props, "offset", index)
-        formatted_offset = format_focus_offset_block(offset_block[:])
-        for line in formatted_offset:
-            lines.append(line)
+        _emit_comments(position, props, "offset", index)
+        position.extend(format_focus_offset_block(offset_block[:]))
+    groups.append(position)
 
-    # 4. Blank line before cost
-    lines.append("")
-
-    # 5. Cost
-    _emit_comments(lines, props, "cost")
+    # 3. Cost
+    cost = []
+    _emit_comments(cost, props, "cost")
     if props["cost"]:
-        lines.append(f"\t\t{props['cost']}")
+        cost.append(f"\t\t{props['cost']}")
+    groups.append(cost)
 
-    # 6. Blank line before prerequisites/conditions
-    lines.append("")
-
-    # 7. Allow branch (before prerequisites)
-    _emit_comments(lines, props, "allow_branch")
+    # 4. Allow branch (before prerequisites)
+    allow_branch = []
+    _emit_comments(allow_branch, props, "allow_branch")
     if props["allow_branch"]:
-        compacted_allow_branch = collapse_or_compact(props["allow_branch"][:])
-        for line in compacted_allow_branch:
-            lines.append(line)
-        lines.append("")
+        allow_branch.extend(collapse_or_compact(props["allow_branch"][:]))
+    groups.append(allow_branch)
 
-    # 8. Prerequisites and related conditions (grouped together without internal spacing)
-    condition_group_added = False
-
+    # 5. Prerequisites and related conditions (grouped together, no internal spacing)
+    conditions = []
     for index, prereq in enumerate(props["prerequisites"]):
-        _emit_comments(lines, props, "prerequisites", index)
-        compacted_prereq = collapse_or_compact(prereq[:])
-        for line in compacted_prereq:
-            lines.append(line)
-        condition_group_added = True
-
-    # Add all mutually_exclusive (no spacing between these and prerequisites)
+        _emit_comments(conditions, props, "prerequisites", index)
+        conditions.extend(collapse_or_compact(prereq[:]))
     for index, mutex in enumerate(props["mutually_exclusive"]):
-        _emit_comments(lines, props, "mutually_exclusive", index)
-        compacted_mutex = collapse_or_compact(mutex[:])
-        for line in compacted_mutex:
-            lines.append(line)
-        condition_group_added = True
-
-    # Add will_lead_to_war_with as single-line property (may repeat — one line per target)
+        _emit_comments(conditions, props, "mutually_exclusive", index)
+        conditions.extend(collapse_or_compact(mutex[:]))
+    # will_lead_to_war_with is a single-line property (may repeat — one per target)
     for index, war_target in enumerate(props["will_lead_to_war_with"]):
-        _emit_comments(lines, props, "will_lead_to_war_with", index)
-        lines.append(f"\t\t{war_target}")
-        condition_group_added = True
+        _emit_comments(conditions, props, "will_lead_to_war_with", index)
+        conditions.append(f"\t\t{war_target}")
+    groups.append(conditions)
 
-    # Only add blank line after the entire condition group (if any conditions were added)
-    if condition_group_added:
-        lines.append("")
-
-    # 9. Search filters (right after condition group, before available)
-    _emit_comments(lines, props, "search_filters")
+    # 6. Search filters (right after condition group, before available)
+    search_filters = []
+    _emit_comments(search_filters, props, "search_filters")
     if props["search_filters"]:
-        search_filters_line = compact_search_filters(props["search_filters"])
-        lines.append(f"\t\t{search_filters_line}")
-        lines.append("")
+        search_filters.append(f"\t\t{compact_search_filters(props['search_filters'])}")
+    groups.append(search_filters)
 
-    # 10. Joint trigger (after search filters, before available)
-    _emit_comments(lines, props, "joint_trigger")
-    if props["joint_trigger"]:
-        compacted_joint_trigger = collapse_or_compact(props["joint_trigger"][:])
-        for line in compacted_joint_trigger:
-            lines.append(line)
-        lines.append("")
+    # 7-10. Joint trigger, then available / bypass / cancel
+    for key in ("joint_trigger", "available", "bypass", "cancel"):
+        group = []
+        _emit_comments(group, props, key)
+        if props[key]:
+            group.extend(collapse_or_compact(props[key][:]))
+        groups.append(group)
 
-    # 11. Available block
-    _emit_comments(lines, props, "available")
-    if props["available"]:
-        compacted_available = collapse_or_compact(props["available"][:])
-        for line in compacted_available:
-            lines.append(line)
-        lines.append("")
-
-    # 11. Bypass block (positioned after available)
-    _emit_comments(lines, props, "bypass")
-    if props["bypass"]:
-        compacted_bypass = collapse_or_compact(props["bypass"][:])
-        for line in compacted_bypass:
-            lines.append(line)
-        lines.append("")
-
-    # 12. Cancel block (positioned after bypass)
-    _emit_comments(lines, props, "cancel")
-    if props["cancel"]:
-        compacted_cancel = collapse_or_compact(props["cancel"][:])
-        for line in compacted_cancel:
-            lines.append(line)
-        lines.append("")
-
-    # 13. Other properties (preserve as-is, but ensure spacing)
-    if props["other"]:
-        for index, line in enumerate(props["other"]):
-            _emit_comments(lines, props, "other", index)
-            lines.append(line)
-        lines.append("")
+    # 11. Other properties (preserve as-is)
+    other = []
+    for index, line in enumerate(props["other"]):
+        _emit_comments(other, props, "other", index)
+        other.append(line)
+    groups.append(other)
 
     # id lines may carry a trailing comment — keep it out of the log string
     focus_id = props["id"].split("=")[1].split("#")[0].strip() if props["id"] else ""
 
-    # 14. Completion reward (add log if missing)
-    _emit_comments(lines, props, "completion_reward")
-    emit_effect_block_with_log(lines, props["completion_reward"], focus_id)
+    # 12. Completion reward (add log if missing)
+    completion_reward = []
+    _emit_comments(completion_reward, props, "completion_reward")
+    completion_reward.extend(
+        effect_block_with_log(props["completion_reward"], focus_id)
+    )
+    groups.append(completion_reward)
 
-    # 15. Completion reward joint originator
-    _emit_comments(lines, props, "completion_reward_joint_originator")
-    if props["completion_reward_joint_originator"]:
-        compacted = collapse_or_compact(props["completion_reward_joint_originator"][:])
-        for line in compacted:
-            lines.append(line)
-        lines.append("")
+    # 13-14. Completion reward joint originator / member
+    for key in ("completion_reward_joint_originator", "completion_reward_joint_member"):
+        group = []
+        _emit_comments(group, props, key)
+        if props[key]:
+            group.extend(collapse_or_compact(props[key][:]))
+        groups.append(group)
 
-    # 16. Completion reward joint member
-    _emit_comments(lines, props, "completion_reward_joint_member")
-    if props["completion_reward_joint_member"]:
-        compacted = collapse_or_compact(props["completion_reward_joint_member"][:])
-        for line in compacted:
-            lines.append(line)
-        lines.append("")
-
-    # 17. Select effect (add log if missing)
-    _emit_comments(lines, props, "select_effect")
-    emit_effect_block_with_log(lines, props["select_effect"], focus_id)
-
-    # 18. Bypass effect (add log if missing)
-    _emit_comments(lines, props, "bypass_effect")
-    emit_effect_block_with_log(lines, props["bypass_effect"], focus_id)
+    # 15-16. Select effect and bypass effect (add log if missing)
+    for key in ("select_effect", "bypass_effect"):
+        group = []
+        _emit_comments(group, props, key)
+        group.extend(effect_block_with_log(props[key], focus_id))
+        groups.append(group)
 
     # 17. AI will do (always last)
-    _emit_comments(lines, props, "ai_will_do")
+    ai_will_do = []
+    _emit_comments(ai_will_do, props, "ai_will_do")
     if props["ai_will_do"]:
-        compacted_ai = collapse_or_compact(
-            convert_root_factor_to_base(props["ai_will_do"][:])
+        ai_will_do.extend(
+            collapse_or_compact(convert_root_factor_to_base(props["ai_will_do"][:]))
         )
-        for line in compacted_ai:
-            lines.append(line)
     else:
-        lines.append("\t\tai_will_do = { base = 1 }")
+        ai_will_do.append("\t\tai_will_do = { base = 1 }")
+    groups.append(ai_will_do)
 
-    _emit_comments(lines, props, "__trailing__")
+    trailing = []
+    _emit_comments(trailing, props, "__trailing__")
+    groups.append(trailing)
 
-    lines.append("\t}")
-
-    # Clean up excessive blank lines
-    cleaned_lines = []
-    blank_count = 0
-
-    for line in lines:
-        if line.strip() == "":
-            blank_count += 1
-            if blank_count <= 1:  # Only allow 1 consecutive blank line
-                cleaned_lines.append(line)
-        else:
-            blank_count = 0
-            cleaned_lines.append(line)
-
-    return cleaned_lines
+    return [f"\t{block_type} = {{"] + collapse_blank_runs(join_groups(groups)) + ["\t}"]
 
 
 def reindent_by_brace_depth(block_lines, base_tabs=0):

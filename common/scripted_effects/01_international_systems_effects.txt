@@ -1142,14 +1142,26 @@ recompute_un_2_3_number = {
 }
 
 recompute_un_sc_required_yes = {
+	set_variable = { global.un_sc_eligible_voter_count = 0 }
+	for_each_loop = {
+		array = global.security_council_members
+		value = v
+		var:v = {
+			if = {
+				limit = { is_eligible_current_sc_voter = yes }
+				add_to_variable = { global.un_sc_eligible_voter_count = 1 }
+			}
+		}
+	}
 	set_variable = {
 		global.un_sc_required_yes = {
-			value = global.security_council_members^num
+			value = global.un_sc_eligible_voter_count
 			multiply = 0.6
 			add = 0.499
 			round = yes
 		}
 	}
+	clear_variable = global.un_sc_eligible_voter_count
 }
 
 # Promotion has to wait out any live Council vote; run this wherever one ends.
@@ -1813,12 +1825,8 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_GNSS_mil_system_idx = var_GNSS_mil_system_idx }
 				check_variable = { FROM.var_GNSS_mil_system_idx > var_GNSS_mil_system_idx }
 			}
-			NOT = {
-				OR = {
-					check_variable = { FROM.var_GNSS_mil_system_idx = 0 }
-					is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id }
-				}
-			}
+			check_variable = { FROM.var_GNSS_mil_system_idx > 121 }
+			NOT = { is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id } }
 		}
 		FROM = {
 			add_to_array = { array = THIS.GNSS_mil_treaty_array value = ROOT.id }
@@ -1838,12 +1846,8 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_GNSS_civ_system_idx = var_GNSS_civ_system_idx }
 				check_variable = { FROM.var_GNSS_civ_system_idx > var_GNSS_civ_system_idx }
 			}
-			NOT = {
-				OR = {
-					check_variable = { FROM.var_GNSS_civ_system_idx = 0 }
-					is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id }
-				}
-			}
+			check_variable = { FROM.var_GNSS_civ_system_idx > 121 }
+			NOT = { is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id } }
 		}
 		FROM = {
 			add_to_array = { array = THIS.GNSS_civ_treaty_array value = ROOT.id }
@@ -1863,12 +1867,8 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_COM_mil_system_idx = var_COM_mil_system_idx }
 				check_variable = { FROM.var_COM_mil_system_idx > var_COM_mil_system_idx }
 			}
-			NOT = {
-				OR = {
-					check_variable = { FROM.var_COM_mil_system_idx = 0 }
-					is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id }
-				}
-			}
+			check_variable = { FROM.var_COM_mil_system_idx > 141 }
+			NOT = { is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id } }
 		}
 		FROM = {
 			add_to_array = { array = THIS.COM_mil_treaty_array value = ROOT.id }
@@ -1888,12 +1888,8 @@ full_satellite_system_access = {
 				check_variable = { FROM.var_COM_civ_system_idx = var_COM_civ_system_idx }
 				check_variable = { FROM.var_COM_civ_system_idx > var_COM_civ_system_idx }
 			}
-			NOT = {
-				OR = {
-					check_variable = { FROM.var_COM_civ_system_idx = 0 }
-					is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id }
-				}
-			}
+			check_variable = { FROM.var_COM_civ_system_idx > 141 }
+			NOT = { is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id } }
 		}
 		FROM = {
 			add_to_array = { array = THIS.COM_civ_treaty_array value = ROOT.id }
