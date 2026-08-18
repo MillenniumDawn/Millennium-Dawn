@@ -38,7 +38,6 @@ _AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
 _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
     "ideas": ["--missing-icons"],
     "focus-tree": ["--missing-icons"],
-    "decisions": ["--missing-icons"],
 }
 
 

@@ -2,7 +2,7 @@
 
 Covers sprite-name resolution per reference kind, the reference extractor
 (including the dynamic `icon = { key = ... }` form and depth-aware owner
-attribution), and the vanilla-manifest fold in build_sprite_index.
+attribution), and that build_sprite_index does not consult the vanilla manifest.
 """
 
 from sprite_index import build_sprite_index
@@ -194,12 +194,11 @@ def test_unreadable_file_returns_no_refs(tmp_path):
 # --- sprite index ---------------------------------------------------------
 
 
-def test_sprite_index_folds_in_vanilla_manifest(tmp_path):
-    # With no mod interface/ and no HOI4 install, the committed manifest is the
-    # only source — without it CI would flag every vanilla sprite as missing.
+def test_sprite_index_does_not_fold_in_vanilla_manifest(tmp_path):
+    # The manifest is deliberately not consulted: the icon checks it fed are
+    # opt-in and kept out of CI, so the index stays mod- plus live-install-only.
     manifest = _load_vanilla_sprite_manifest()
     if not manifest:
         return
-    index = build_sprite_index(str(tmp_path), include_vanilla=True)
-    assert manifest <= index
+    assert not (manifest <= build_sprite_index(str(tmp_path), include_vanilla=True))
     assert not build_sprite_index(str(tmp_path), include_vanilla=False)

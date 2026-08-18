@@ -127,6 +127,9 @@ jobs:
       characters: >-
         ${{ steps.filter.outputs.characters ||
         steps.dispatch.outputs.characters }}
+      scientist-traits: >-
+        ${{ steps.filter.outputs.scientist-traits ||
+        steps.dispatch.outputs.scientist-traits }}
       oob: >-
         ${{ steps.filter.outputs.oob ||
         steps.dispatch.outputs.oob }}
@@ -209,6 +212,11 @@ jobs:
               - 'common/on_actions/**'
               - 'events/**'
               - 'history/countries/**'
+            scientist-traits:
+              - 'common/scientist_traits/**'
+              # The medal-sprite index is the other half of the check, so a
+              # .gfx edit changes what resolves for every trait.
+              - 'interface/**'
             oob:
               - 'history/units/**'
               - 'common/units/**'
@@ -269,9 +277,9 @@ jobs:
         id: dispatch
         run: |
           for out in common events history localisation ai-strategy \
-              ai-navy ai-equipment factions characters oob decisions \
-              scripted-loc scripted-guis interface national-focus \
-              on-actions scripted-effects mod content mios; do
+              ai-navy ai-equipment factions characters scientist-traits \
+              oob decisions scripted-loc scripted-guis interface \
+              national-focus on-actions scripted-effects mod content mios; do
             echo "$out=true" >> "$GITHUB_OUTPUT"
           done
           # style is diff-scoped (MD_STAGED_FILES from the changed-file
@@ -531,7 +539,6 @@ jobs:
             name: ideas
             title: "Idea References"
             strict: true
-            args: --missing-icons
           - script: validate_set_variables.py
             name: set-variables
             title: "Set Variable References"
@@ -567,7 +574,8 @@ jobs:
       # (still produces the log + PR comment but exits 0 on findings). An entry
       # that omits the field keeps gating behavior — never fail open by default.
       # `args` passes validator-specific opt-in flags; entries that omit it
-      # render an empty string.
+      # render an empty string. No entry sets it right now: the --missing-icons
+      # icon checks are deliberately kept out of CI (see validation-pipeline.md).
       - name: Run validation
         run: |
           if [ "${{ matrix.validator.strict }}" != "false" ]; then
@@ -608,6 +616,7 @@ jobs:
       needs.detect-changes.outputs.ai-equipment == 'true' ||
       needs.detect-changes.outputs.factions == 'true' ||
       needs.detect-changes.outputs.characters == 'true' ||
+      needs.detect-changes.outputs.scientist-traits == 'true' ||
       needs.detect-changes.outputs.scripted-guis == 'true' ||
       needs.detect-changes.outputs.interface == 'true' ||
       needs.detect-changes.outputs.national-focus == 'true' ||
@@ -627,7 +636,6 @@ jobs:
             name: decisions
             title: "Validate Decisions"
             strict: true
-            args: --missing-icons
             should_run: ${{ needs.detect-changes.outputs.decisions }}
           - script: validate_oob_units.py
             name: oob-units
@@ -661,6 +669,13 @@ jobs:
             # undefined-unit-leader-trait is WARNING-severity: the 9-item
             # ALG/PHI backlog surfaces in reports without gating PRs.
             should_run: ${{ needs.detect-changes.outputs.characters }}
+          - script: validate_scientist_traits.py
+            name: scientist-traits
+            title: "Validate Scientist Traits"
+            strict: true
+            # All findings are WARNING-severity: the 19-item missing-medal
+            # backlog surfaces in reports without gating PRs.
+            should_run: ${{ needs.detect-changes.outputs.scientist-traits }}
           - script: validate_mios.py
             name: mios
             title: "Validate MIO Organizations"
@@ -681,7 +696,6 @@ jobs:
             name: focus-tree
             title: "Validate Focus Tree Structure"
             strict: true
-            args: --missing-icons
             # the ai_will_do guard checks (#2233) are WARNING-severity: the
             # ~1900-focus backlog surfaces in reports without gating PRs.
             should_run: ${{ needs.detect-changes.outputs.national-focus }}
