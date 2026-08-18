@@ -56,6 +56,17 @@ roll_corruption_event = {
 		10 = {
 			country_event = { id = corruption.15 random_days = 30 }
 		}
+		10 = {
+			modifier = {
+				factor = 0
+				OR = {
+					is_ai = yes
+					has_idea = corruption_level_01
+					has_active_mission = corruption_reform_challenge
+				}
+			}
+			country_event = { id = corruption.19 random_days = 30 }
+		}
 	}
 }
 
@@ -75,128 +86,14 @@ grant_random_corruption_offer_buff = {
 	}
 }
 
-set_corruption_event_level = {
-	if = {
-		limit = { has_idea = corruption_level_10 }
-		set_temp_variable = { corruption_event_new_level = 10 }
-	}
-	else_if = {
-		limit = { has_idea = corruption_level_09 }
-		set_temp_variable = { corruption_event_new_level = 9 }
-	}
-	else_if = {
-		limit = { has_idea = corruption_level_08 }
-		set_temp_variable = { corruption_event_new_level = 8 }
-	}
-	else_if = {
-		limit = { has_idea = corruption_level_07 }
-		set_temp_variable = { corruption_event_new_level = 7 }
-	}
-	else_if = {
-		limit = { has_idea = corruption_level_06 }
-		set_temp_variable = { corruption_event_new_level = 6 }
-	}
-	else_if = {
-		limit = { has_idea = corruption_level_05 }
-		set_temp_variable = { corruption_event_new_level = 5 }
-	}
-	else_if = {
-		limit = { has_idea = corruption_level_04 }
-		set_temp_variable = { corruption_event_new_level = 4 }
-	}
-	else_if = {
-		limit = { has_idea = corruption_level_03 }
-		set_temp_variable = { corruption_event_new_level = 3 }
-	}
-	else_if = {
-		limit = { has_idea = corruption_level_02 }
-		set_temp_variable = { corruption_event_new_level = 2 }
-	}
-	else = {
-		set_temp_variable = { corruption_event_new_level = 1 }
-	}
-}
-
-initialize_corruption_reform_events = {
-	set_corruption_event_level = yes
-	set_variable = { corruption_event_tracked_level = corruption_event_new_level }
-	set_variable = { corruption_reform_years_since_event = 0 }
-	if = {
-		limit = { is_ai = no }
-		set_country_flag = { flag = corruption_reform_yearly_check value = 1 days = 350 }
-	}
-}
-
-reset_corruption_reform_cycle = {
-	set_variable = { corruption_reform_years_since_event = 0 }
-	clr_country_flag = corruption_reform_yearly_check
-	set_country_flag = { flag = corruption_reform_yearly_check value = 1 days = 350 }
-	clear_variable = corruption_reductions_in_year
-	clr_country_flag = corruption_reduction_year
-}
-
-start_corruption_reform_challenge = {
-	if = {
-		limit = { NOT = { has_active_mission = corruption_reform_challenge } }
-		reset_corruption_reform_cycle = yes
-		if = {
-			limit = { has_idea = corruption_level_01 }
-			country_event = corruption.17
-		}
-		else = {
-			country_event = corruption.19
-		}
-	}
-}
-
-track_corruption_reform_progress = {
-	set_corruption_event_level = yes
-	if = {
-		limit = {
-			is_ai = no
-			has_variable = corruption_event_tracked_level
-		}
-		set_temp_variable = { corruption_event_reductions = corruption_event_tracked_level }
-		subtract_from_temp_variable = { corruption_event_reductions = corruption_event_new_level }
-		if = {
-			limit = { check_variable = { corruption_event_reductions > 0 } }
-			if = {
-				limit = { has_active_mission = corruption_reform_challenge }
-				set_country_flag = corruption_reform_challenge_succeeded
-			}
-			if = {
-				limit = { NOT = { has_country_flag = corruption_reduction_year } }
-				set_variable = { corruption_reductions_in_year = 0 }
-				set_country_flag = { flag = corruption_reduction_year value = 1 days = 365 }
-			}
-			add_to_variable = { corruption_reductions_in_year = corruption_event_reductions }
-			if = {
-				limit = {
-					check_variable = { corruption_reductions_in_year > 2 }
-					NOT = { has_active_mission = corruption_reform_challenge }
-				}
-				reset_corruption_reform_cycle = yes
-				country_event = corruption.17
-			}
-		}
-	}
-	set_variable = { corruption_event_tracked_level = corruption_event_new_level }
-}
-
-corruption_reform_event_yearly_update = {
-	if = {
-		limit = { is_ai = no }
-		set_country_flag = { flag = corruption_reform_yearly_check value = 1 days = 350 }
-		if = {
-			limit = { NOT = { has_variable = corruption_event_tracked_level } }
-			initialize_corruption_reform_events = yes
-		}
-		else = {
-			add_to_variable = { corruption_reform_years_since_event = 1 }
-			if = {
-				limit = { check_variable = { corruption_reform_years_since_event > 2 } }
-				start_corruption_reform_challenge = yes
-			}
-		}
-	}
+clear_corruption_reform_challenge_flags = {
+	clr_country_flag = corruption_reform_challenge_started_at_10
+	clr_country_flag = corruption_reform_challenge_started_at_09
+	clr_country_flag = corruption_reform_challenge_started_at_08
+	clr_country_flag = corruption_reform_challenge_started_at_07
+	clr_country_flag = corruption_reform_challenge_started_at_06
+	clr_country_flag = corruption_reform_challenge_started_at_05
+	clr_country_flag = corruption_reform_challenge_started_at_04
+	clr_country_flag = corruption_reform_challenge_started_at_03
+	clr_country_flag = corruption_reform_challenge_started_at_02
 }
