@@ -51,7 +51,7 @@ step 3 — it holds every finding, uncapped.
 `gfx-references` skips its unused-sprite check unless `--report-unused` is passed. Append
 that flag when the requested category is `unused-sprite`, `unused-sprite-case`,
 `duplicate-sprite` or `case-variant-sprite`. For the latter three, also set
-`MD_GFX_HIDE_UNUSED=1` so the ~8.6k orphan warnings stay out of the report.
+`MD_GFX_HIDE_UNUSED=1` so the ~6.7k orphan warnings stay out of the report.
 
 All validators:
 

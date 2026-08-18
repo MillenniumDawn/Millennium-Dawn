@@ -1,6 +1,6 @@
 """Tests for the opt-in gate on the unused-sprite check.
 
-The unused-sprite report is ~8.6k findings on a full repo, so a default run (and
+The unused-sprite report is ~6.7k findings on a full repo, so a default run (and
 CI) must skip it entirely — including the script ref collection that feeds only
 it. `--report-unused` turns it back on, and `MD_GFX_HIDE_UNUSED` suppresses just
 the orphan list so the case and duplicate findings shipped alongside it are

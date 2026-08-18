@@ -52,7 +52,7 @@ from validator_common import (
 
 _VANILLA_GUI_MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_gui_files.txt")
 
-# The orphan backlog is ~8.6k warnings and buries the case-mismatch and duplicate
+# The orphan backlog is ~6.7k warnings and buries the case-mismatch and duplicate
 # findings shipped alongside it. Set this to run the full --report-unused pass for
 # those findings alone, without the backlog scrolling them off the screen.
 _HIDE_UNUSED_ENV = "MD_GFX_HIDE_UNUSED"
@@ -148,6 +148,12 @@ _SGUI_IMAGE_REF = re.compile(r'\bimage\s*=\s*"(GFX_[^"\[]+)"')
 
 # Scripted localisation: localization_key = "GFX_xxx"
 _SLOC_KEY_REF = re.compile(r'\blocalization_key\s*=\s*"(GFX_[^"\[]+)"')
+
+# The same two attributes, but keeping the `[` those exclude — a bracket is what
+# marks a name the engine builds at runtime (GFX_missile_[THIS.GetTag]_ID_[?v]_icon).
+_SPRITE_TEMPLATE_REF = re.compile(
+    r'\b(?:localization_key|image)\s*=\s*"(GFX_[^"]*\[[^"]*)"'
+)
 
 # Any literal GFX_ sprite token in game script (event `picture = GFX_x`, focus
 # `icon = GFX_x`, decision icons, MIO/agency logos, portraits, etc.). Names can
@@ -310,6 +316,7 @@ _EQUIPMENT_ICON_TAG_RE = re.compile(r"^[A-Z][A-Z0-9]{2}_(.+)$")
 # tank_filters.txt, which could mask a genuinely dead sprite.
 _EQUIPMENTS_BLOCK_RE = re.compile(r"^equipments\s*=\s*\{", re.MULTILINE)
 _TECHNOLOGIES_BLOCK_RE = re.compile(r"^technologies\s*=\s*\{", re.MULTILINE)
+_MODULES_BLOCK_RE = re.compile(r"^equipment_modules\s*=\s*\{", re.MULTILINE)
 _EQUIPMENT_ENTRY_RE = re.compile(r"^\t([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
 
 # Focus search-filter icons: a focus tags itself `search_filters = { FOCUS_FILTER_X }`
@@ -317,6 +324,23 @@ _EQUIPMENT_ENTRY_RE = re.compile(r"^\t([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{", re.MULT
 # nationalfocusview.gui only carries GFX_FOCUS_FILTER_POLITICAL as the template
 # placeholder, so no other filter icon is ever named literally.
 _SEARCH_FILTERS_RE = re.compile(r"\bsearch_filters\s*=\s*\{([^}]*)\}")
+
+# Ace portraits. The engine picks GFX_<TAG>_ace_<m|f>_<n>, falling back to the
+# country's graphical culture (GFX_african_2d_ace_f_0) and then the generic pool
+# (GFX_ace_m_2). The pool name is the only variable part, so resolving one means
+# checking it against the tags and cultures the mod actually declares.
+_ACE_PORTRAIT_RE = re.compile(r"^GFX_(?:(?P<pool>.+)_)?ace_[mf]_\d+$")
+_COUNTRY_TAG_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
+_GRAPHICAL_CULTURE_RE = re.compile(
+    r"^\s*graphical_culture(?:_2d)?\s*=\s*([A-Za-z0-9_]+)", re.MULTILINE
+)
+
+# A `[...]` placeholder inside a sprite name is filled at runtime, so the literal
+# template never matches a definition. Turning it into a pattern resolves the
+# concrete sprites it can produce — but only when enough literal text survives to
+# identify them: `GFX_[?topbar.GetTokenKey]` would otherwise match every sprite.
+_TEMPLATE_PLACEHOLDER_RE = re.compile(r"\[[^\]]*\]")
+_TEMPLATE_MIN_LITERAL = 4
 
 
 def _entry_names_from_text(raw: str, block_re: "re.Pattern[str]") -> List[str]:
@@ -399,6 +423,60 @@ def _load_search_filter_names(mod_path: str) -> FrozenSet[str]:
         _search_filter_names_from_text,
         "gfx_ref.search_filters",
     )
+
+
+def _load_module_names(mod_path: str) -> FrozenSet[str]:
+    """Return every equipment module declared in common/units/equipment/modules."""
+    return _load_entry_names(
+        mod_path,
+        os.path.join(mod_path, "common", "units", "equipment", "modules"),
+        _MODULES_BLOCK_RE,
+        "gfx_ref.module_names",
+    )
+
+
+def _load_ace_pool_names(mod_path: str) -> FrozenSet[str]:
+    """Return every country tag and graphical culture an ace portrait can key off."""
+    names: Set[str] = set()
+    for pattern, name_re in (
+        (os.path.join("common", "country_tags", "*.txt"), _COUNTRY_TAG_RE),
+        (os.path.join("common", "countries", "*.txt"), _GRAPHICAL_CULTURE_RE),
+    ):
+        for filepath in glob.glob(os.path.join(mod_path, pattern)):
+            raw = _read_raw(filepath)
+            if raw is None:
+                continue
+            names.update(
+                disk_cache.per_file_cached_by_content(
+                    mod_path,
+                    "gfx_ref.ace_pools",
+                    filepath,
+                    raw,
+                    lambda: sorted(set(name_re.findall(_HASH_COMMENT.sub("", raw)))),
+                )
+            )
+    return frozenset(names)
+
+
+def _template_pattern(template: str) -> Optional["re.Pattern[str]"]:
+    """Compile a `GFX_x_[placeholder]_y` sprite template into a matcher.
+
+    Returns None when the literal text outside the placeholders is too short to
+    identify anything — `GFX_[?topbar.GetTokenKey]` names every sprite in the mod,
+    so treating it as a reference would mark the whole repo as used.
+    """
+    literal = _TEMPLATE_PLACEHOLDER_RE.sub("", template)[len("GFX_") :]
+    if len(literal.replace("_", "")) < _TEMPLATE_MIN_LITERAL:
+        return None
+    pattern = "".join(
+        r"[A-Za-z0-9_.\-]+" if part.startswith("[") else re.escape(part)
+        for part in re.split(r"(\[[^\]]*\])", template)
+        if part
+    )
+    try:
+        return re.compile(f"^{pattern}$")
+    except re.error:
+        return None
 
 
 # Per-file parsers take (filepath, mod_path) and disk-cache their result keyed
@@ -581,6 +659,26 @@ def _parse_loc_refs(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     )
 
 
+def _parse_sprite_templates(args: Tuple[str, str]) -> List[str]:
+    """Return every runtime-built `GFX_...[...]...` sprite name in a scripted file.
+
+    Comments are left in place for the same reason `_parse_sloc_file` leaves them:
+    a scripted loc key may legitimately start with `#`.
+    """
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return []
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "gfx_ref.templates",
+        filepath,
+        raw,
+        lambda: sorted(set(_SPRITE_TEMPLATE_REF.findall(raw))),
+    )
+
+
 def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a scripted_localisation .txt file."""
     filepath, mod_path = args
@@ -747,6 +845,77 @@ class Validator(BaseValidator):
         )
         return all_refs
 
+    def _resolve_engine_refs(self, defined: Set[str]) -> Set[str]:
+        """Return the sprites the engine resolves from mod data rather than script.
+
+        These are real references, not exemptions: each one is derived from a
+        declaration the mod ships, so a sprite whose module, tag or filter has
+        since been deleted still reports as unused, and a sprite spelled with the
+        wrong case still reports as miscased instead of quietly passing.
+
+            GFX_<FOCUS_FILTER_X>          every search_filters token in a focus tree
+            GFX_EMI_<module>              every entry in equipment_modules = { }
+            GFX_<TAG|culture>_ace_<m|f>_N ace portraits, keyed by tag or 2d culture
+            GFX_missile_<TAG>_ID_<N>_icon and anything else a `[...]` scripted-loc
+                                          or scripted-GUI template can build
+        """
+        self._log_section("Resolving engine-built GFX references from mod data")
+        refs: Set[str] = set()
+
+        filters = _load_search_filter_names(self.mod_path)
+        if not filters:
+            self.log(
+                "  No search_filters found under common/national_focus"
+                " — focus-filter icons unresolved"
+            )
+        refs.update("GFX_" + f for f in filters)
+
+        modules = _load_module_names(self.mod_path)
+        if not modules:
+            self.log(
+                "  No equipment modules found under common/units/equipment/modules"
+                " — module icons unresolved"
+            )
+        refs.update("GFX_EMI_" + m for m in modules)
+
+        pools = _load_ace_pool_names(self.mod_path)
+        if not pools:
+            self.log(
+                "  No country tags or graphical cultures found"
+                " — ace portraits unresolved"
+            )
+        for name in defined:
+            ace = _ACE_PORTRAIT_RE.match(name)
+            # A pool-less GFX_ace_m_0 is the engine's own last-resort fallback.
+            if ace and (ace.group("pool") is None or ace.group("pool") in pools):
+                refs.add(name)
+
+        template_files = self._collect_files(
+            ["common/scripted_localisation/*.txt", "common/scripted_guis/*.txt"],
+            ignore_staged=True,
+        )
+        templates: Set[str] = set()
+        for batch in self._pool_map(
+            _parse_sprite_templates, [(f, self.mod_path) for f in template_files]
+        ):
+            templates.update(batch)
+        patterns = [p for p in map(_template_pattern, sorted(templates)) if p]
+        skipped = len(templates) - len(patterns)
+        if skipped:
+            self.log(
+                f"  {skipped} sprite template(s) too generic to resolve"
+                " (nothing but a placeholder after GFX_)"
+            )
+        for name in defined:
+            if any(p.match(name) for p in patterns):
+                refs.add(name)
+
+        self.log(
+            f"  Resolved {len(refs)} engine-built GFX references"
+            f" from {len(patterns)} template(s) plus mod declarations"
+        )
+        return refs
+
     def _collect_sgui_refs(self, defined: Set[str]) -> List[Tuple[str, str, int]]:
         """Return undefined image= references from common/scripted_guis/*.txt."""
         self._log_section("Collecting GFX image= references from scripted_guis/*.txt")
@@ -897,7 +1066,7 @@ class Validator(BaseValidator):
         sprites to the engine but the same file to a Windows author, which is how a
         `£ref` ends up pointing at whichever variant happens to be miscased.
 
-        WARNING, not ERROR: the mod carries a ~465-entry backlog of exact repeats,
+        WARNING, not ERROR: the mod carries a ~477-entry backlog of exact repeats,
         and `--strict` gates on errors, so erroring here would fail every CI run
         until that backlog is cleared.
         """
@@ -1059,12 +1228,6 @@ class Validator(BaseValidator):
             )
         implicit = equipment | technologies
 
-        filter_icons = {"GFX_" + f for f in _load_search_filter_names(self.mod_path)}
-        if not filter_icons:
-            self.log(
-                "  No search_filters found under common/national_focus"
-                " — focus-filter icon exemption disabled"
-            )
         # A mod sprite carrying a vanilla name overrides vanilla's definition, so
         # vanilla's own UI and engine lookups still resolve it — the mod is under
         # no obligation to reference it. Removing it either blanks a vanilla icon
@@ -1093,7 +1256,6 @@ class Validator(BaseValidator):
             for s in defined
             if s not in all_refs
             and s not in self._vanilla_defined
-            and s not in filter_icons
             and not _is_flag_sprite(s)
             and not _is_likely_vanilla(s)
             and not _is_engine_resolved_icon(s)
@@ -1217,6 +1379,7 @@ class Validator(BaseValidator):
         if not self.staged_only:
             all_referenced |= self._collect_script_refs()
             all_referenced |= {r[0] for r in loc_refs}
+            all_referenced |= self._resolve_engine_refs(mod_defined)
         self._check_unused_sprites(mod_defined, all_referenced)
 
 

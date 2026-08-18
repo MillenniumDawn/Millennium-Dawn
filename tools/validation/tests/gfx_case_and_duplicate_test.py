@@ -196,7 +196,7 @@ def test_case_variants_on_separate_textures_are_marked_distinct(tmp_path):
     assert "distinct textures" in _categories(v, "case-variant-sprite")[0].message
 
 
-# --- engine-resolved exemptions ---------------------------------------------
+# --- vanilla-override exemption ---------------------------------------------
 
 
 def test_vanilla_name_override_is_exempt_from_the_unused_report(tmp_path):
@@ -213,10 +213,41 @@ def test_mod_only_name_is_still_reported_when_vanilla_names_are_loaded(tmp_path)
     assert [i for i in v._issues if "GFX_MD_only" in i.message]
 
 
+# --- engine-resolved references ---------------------------------------------
+#
+# These are resolved into the reference set, not filtered out of the report, so
+# a sprite whose backing declaration is gone still reports as unused and one
+# spelled with the wrong case still reports as miscased.
+
+
 def _write_focus(tmp_path, body):
     focus_dir = tmp_path / "common" / "national_focus"
     focus_dir.mkdir(parents=True, exist_ok=True)
     (focus_dir / "test.txt").write_text(body, encoding="utf-8")
+
+
+def _write_modules(tmp_path, body):
+    mod_dir = tmp_path / "common" / "units" / "equipment" / "modules"
+    mod_dir.mkdir(parents=True, exist_ok=True)
+    (mod_dir / "test.txt").write_text(body, encoding="utf-8")
+
+
+def _write_tags(tmp_path, body):
+    tag_dir = tmp_path / "common" / "country_tags"
+    tag_dir.mkdir(parents=True, exist_ok=True)
+    (tag_dir / "00_countries.txt").write_text(body, encoding="utf-8")
+
+
+def _write_country(tmp_path, body):
+    country_dir = tmp_path / "common" / "countries"
+    country_dir.mkdir(parents=True, exist_ok=True)
+    (country_dir / "Test.txt").write_text(body, encoding="utf-8")
+
+
+def _write_sloc(tmp_path, body):
+    sloc_dir = tmp_path / "common" / "scripted_localisation"
+    sloc_dir.mkdir(parents=True, exist_ok=True)
+    (sloc_dir / "test.txt").write_text(body, encoding="utf-8")
 
 
 def test_search_filter_names_are_read_from_focus_trees(tmp_path):
@@ -229,37 +260,120 @@ def test_search_filter_names_are_read_from_focus_trees(tmp_path):
     )
 
 
-def test_focus_filter_icon_in_use_is_exempt_from_the_unused_report(tmp_path):
+def test_focus_filter_icon_in_use_resolves_as_a_reference(tmp_path):
     _write_focus(
         tmp_path, "focus = {\n\tsearch_filters = { FOCUS_FILTER_UKR_STABILITY }\n}\n"
     )
     v = GfxReferenceValidator(str(tmp_path), use_colors=False)
-    v._check_unused_sprites(defined={"GFX_FOCUS_FILTER_UKR_STABILITY"}, all_refs=set())
-    assert not v._issues
+    assert "GFX_FOCUS_FILTER_UKR_STABILITY" in v._resolve_engine_refs(set())
 
 
-def test_focus_filter_icon_no_focus_uses_stays_reported(tmp_path):
+def test_focus_filter_icon_no_focus_uses_stays_unresolved(tmp_path):
     _write_focus(
         tmp_path, "focus = {\n\tsearch_filters = { FOCUS_FILTER_POLITICAL }\n}\n"
     )
     v = GfxReferenceValidator(str(tmp_path), use_colors=False)
-    v._check_unused_sprites(defined={"GFX_FOCUS_FILTER_RETIRED"}, all_refs=set())
-    assert [i for i in v._issues if "GFX_FOCUS_FILTER_RETIRED" in i.message]
+    assert "GFX_FOCUS_FILTER_RETIRED" not in v._resolve_engine_refs(
+        {"GFX_FOCUS_FILTER_RETIRED"}
+    )
 
 
-def test_commented_out_search_filter_does_not_exempt(tmp_path):
+def test_commented_out_search_filter_does_not_resolve(tmp_path):
     _write_focus(tmp_path, "focus = {\n#\tsearch_filters = { FOCUS_FILTER_DEAD }\n}\n")
     v = GfxReferenceValidator(str(tmp_path), use_colors=False)
-    v._check_unused_sprites(defined={"GFX_FOCUS_FILTER_DEAD"}, all_refs=set())
-    assert [i for i in v._issues if "GFX_FOCUS_FILTER_DEAD" in i.message]
+    assert "GFX_FOCUS_FILTER_DEAD" not in v._resolve_engine_refs(
+        {"GFX_FOCUS_FILTER_DEAD"}
+    )
 
 
-def test_unused_check_logs_notice_when_no_search_filters_exist(tmp_path, monkeypatch):
+def test_module_names_are_read_from_equipment_modules(tmp_path):
+    _write_modules(
+        tmp_path,
+        "equipment_modules = {\n\ttank_diesel_engine_gen1 = {\n"
+        "\t\tcategory = tank_engine_type\n\t}\n}\n",
+    )
+    assert vg._load_module_names(str(tmp_path)) == frozenset(
+        {"tank_diesel_engine_gen1"}
+    )
+
+
+def test_module_icon_resolves_as_a_reference(tmp_path):
+    _write_modules(
+        tmp_path, "equipment_modules = {\n\tCZE_engine_1 = {\n\t\tyear = 2000\n\t}\n}\n"
+    )
+    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    assert "GFX_EMI_CZE_engine_1" in v._resolve_engine_refs(set())
+
+
+def test_module_icon_for_a_deleted_module_stays_unresolved(tmp_path):
+    # GFX_EMI_afv_battlestation_1 is real MD art for an AFV module set that no
+    # longer exists — membership must keep reporting it.
+    _write_modules(
+        tmp_path, "equipment_modules = {\n\tCZE_engine_1 = {\n\t\tyear = 2000\n\t}\n}\n"
+    )
+    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    assert "GFX_EMI_afv_battlestation_1" not in v._resolve_engine_refs(
+        {"GFX_EMI_afv_battlestation_1"}
+    )
+
+
+def test_ace_portrait_resolves_for_a_real_tag_and_culture(tmp_path):
+    _write_tags(tmp_path, 'CHI = "countries/China.txt"\n')
+    _write_country(
+        tmp_path, "graphical_culture = asian_gfx\ngraphical_culture_2d = asian_2d\n"
+    )
+    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    resolved = v._resolve_engine_refs(
+        {"GFX_CHI_ace_m_0", "GFX_asian_2d_ace_f_1", "GFX_ace_m_2", "GFX_XYZ_ace_m_0"}
+    )
+    assert "GFX_CHI_ace_m_0" in resolved
+    assert "GFX_asian_2d_ace_f_1" in resolved
+    # The engine's own last-resort pool has no key to check.
+    assert "GFX_ace_m_2" in resolved
+    # An ace portrait for a tag the mod does not declare is dead art.
+    assert "GFX_XYZ_ace_m_0" not in resolved
+
+
+def test_scripted_loc_template_resolves_the_sprites_it_can_build(tmp_path):
+    _write_sloc(
+        tmp_path,
+        "defined_text = {\n\tname = missile_icon\n\ttext = {\n"
+        '\t\tlocalization_key = "GFX_missile_[THIS.GetTag]_ID_[?var_x]_icon"\n'
+        "\t}\n}\n",
+    )
+    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    resolved = v._resolve_engine_refs(
+        {"GFX_missile_CHI_ID_101_icon", "GFX_missile_submarine_offensive_medium"}
+    )
+    assert "GFX_missile_CHI_ID_101_icon" in resolved
+    # Same GFX_missile_ prefix, but the template's _ID_/_icon literals don't fit.
+    assert "GFX_missile_submarine_offensive_medium" not in resolved
+
+
+def test_template_that_is_only_a_placeholder_is_rejected(tmp_path):
+    # GFX_[?topbar.GetTokenKey] would otherwise resolve every sprite in the mod.
+    assert vg._template_pattern("GFX_[?topbar.GetTokenKey]") is None
+    assert vg._template_pattern("GFX_missile_[THIS.GetTag]_ID_[?v]_icon") is not None
+
+
+def test_only_a_placeholder_template_resolves_nothing(tmp_path):
+    _write_sloc(
+        tmp_path,
+        "defined_text = {\n\tname = alert\n\ttext = {\n"
+        '\t\tlocalization_key = "GFX_[?md_alerts^alert_idx.GetTokenKey]"\n'
+        "\t}\n}\n",
+    )
+    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    assert v._resolve_engine_refs({"GFX_anything_at_all"}) == set()
+
+
+def test_resolver_logs_notices_when_the_data_dirs_are_missing(tmp_path, monkeypatch):
     logged = []
     v = GfxReferenceValidator(str(tmp_path), use_colors=False)
     monkeypatch.setattr(v, "log", lambda msg, *a, **k: logged.append(msg))
-    v._check_unused_sprites(defined=set(), all_refs=set())
-    assert any("search_filters" in msg for msg in logged)
+    v._resolve_engine_refs(set())
+    for expected in ("search_filters", "equipment modules", "graphical cultures"):
+        assert any(expected in msg for msg in logged)
 
 
 def test_gfx_parse_carries_the_texturefile(tmp_path):
