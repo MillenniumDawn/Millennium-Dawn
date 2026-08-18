@@ -318,7 +318,7 @@ def _is_parametric_modifier(name: str) -> bool:
 # Vanilla modifier reference doc. Each `## name` section is a concrete modifier;
 # each `## <span id="..."></span>name_<Placeholder>_rest` section is a parametric
 # family whose concrete members are listed on a `**Modified types**:` line. Read
-# the template off the heading text, not the span anchor — 1.19 dropped the
+# the template off the heading text, not the span anchor: 1.19 dropped the
 # placeholder from the anchor id (`experience_gain__combat_factor`), which left
 # every family unexpanded and its members reported as unknown.
 _DOC_REL_PATH = os.path.join("resources", "documentation", "modifiers_documentation.md")

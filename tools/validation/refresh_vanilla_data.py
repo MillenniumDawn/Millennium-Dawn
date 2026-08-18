@@ -18,7 +18,7 @@ import glob
 import os
 import shutil
 import sys
-from typing import Callable, Dict, Iterable, List, Optional
+from typing import Callable, Dict, Iterable, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import find_hoi4_install
@@ -38,7 +38,14 @@ _DOC_DIR = os.path.normpath(
 
 
 class RefreshError(Exception):
-    """A target could not be refreshed — missing source data under the install."""
+    """A target could not be refreshed: its source data is missing."""
+
+
+def _install() -> str:
+    base = find_hoi4_install()
+    if not base:
+        raise RefreshError("no HOI4 install found")
+    return base
 
 
 def _write_manifest(
@@ -73,7 +80,7 @@ def _refresh_defines() -> str:
 
 
 def _refresh_docs() -> str:
-    source = os.path.join(find_hoi4_install() or "", "documentation")
+    source = os.path.join(_install(), "documentation")
     docs = glob.glob(os.path.join(source, "*.md"))
     if not docs:
         raise RefreshError(f"no .md files under {source}")
@@ -105,7 +112,7 @@ def _refresh_gui() -> str:
 
 
 def _refresh_paths() -> str:
-    install = find_hoi4_install() or ""
+    install = _install()
     paths = collect_vanilla_paths(install)
     if not paths:
         raise RefreshError(f"no checksummed paths found under {install}")
@@ -153,17 +160,18 @@ _TARGETS: Dict[str, Callable[[], str]] = {
 }
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main() -> int:
+    targets = sorted(_TARGETS)
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--only",
         nargs="+",
-        choices=sorted(_TARGETS),
+        choices=targets,
         metavar="TARGET",
-        default=sorted(_TARGETS),
-        help=f"refresh a subset ({', '.join(sorted(_TARGETS))})",
+        default=targets,
+        help=f"refresh a subset ({', '.join(targets)})",
     )
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
 
     install = find_hoi4_install()
     if not install:

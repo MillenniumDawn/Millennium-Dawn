@@ -92,7 +92,7 @@ def test_shipped_doc_yields_concrete_names_and_families():
     """Guard the doc parse against a format change in the next refresh.
 
     1.19 dropped the placeholder from the `<span>` anchor id, which silently
-    left every parametric family unexpanded — the loss only surfaced as
+    left every parametric family unexpanded. The loss only surfaced as
     unknown-modifier warnings on names the doc does document.
     """
     names, templates_by_word = _load_documented_modifiers(
