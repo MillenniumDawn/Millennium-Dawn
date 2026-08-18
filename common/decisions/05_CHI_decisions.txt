@@ -3136,6 +3136,7 @@ CHI_national_commitee_decisions_category = {
 		highlight_states = {
 			highlight_states_trigger = {
 				is_owned_and_controlled_by = ROOT
+				is_core_of = ROOT
 				NOT = { has_state_flag = CHI_housing_project_complete }
 			}
 			highlight_color_before_active = 3
@@ -3144,7 +3145,8 @@ CHI_national_commitee_decisions_category = {
 
 		target_trigger = {
 			FROM = {
-				is_core_of = CHI
+				is_owned_and_controlled_by = ROOT
+				is_core_of = ROOT
 				NOT = { has_state_flag = CHI_housing_project_complete }
 			}
 		}
@@ -7170,7 +7172,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_jap_open_back_channel = {
-		icon = generic_political_actions
+		icon = GFX_decision_generic_political_actions
 		allowed = { original_tag = JAP }
 		visible = { CHI = { has_country_flag = CHI_senkaku_back_channel_open } }
 		available = { NOT = { has_war_with = CHI } }
@@ -7201,7 +7203,7 @@ CHI_japan_strategy = {
 	}
 
 	CHI_push_rcep_signing = {
-		icon = generic_political_actions
+		icon = GFX_decision_generic_political_actions
 		allowed = { original_tag = CHI }
 
 		available = {
@@ -11517,6 +11519,226 @@ CHI_megaprojects = {
 		}
 	}
 
+	CHI_hainan_free_trade_port = {
+		icon = generic_construction
+
+		visible = {
+			has_completed_focus = CHI_four_trillion_stimulus
+			NOT = { has_country_flag = CHI_hainan_ftp_done }
+			531 = { is_owned_by = CHI }
+		}
+
+		available = {
+			date > 2013.1.1
+			num_of_civilian_factories_available_for_projects > 7
+			gdp_per_capita_greater_than_5 = yes
+		}
+		custom_cost_trigger = { check_variable = { treasury > 30 } }
+		custom_cost_text = cost_30_0
+		cost = 0
+		fire_only_once = yes
+		days_remove = 900
+		modifier = { civilian_factory_use = 7 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hainan_free_trade_port executed"
+			newline = yes
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hainan_free_trade_port completed"
+			531 = {
+				add_extra_state_shared_building_slots = 3
+				add_building_construction = { type = infrastructure level = 2 instant_build = no }
+				add_building_construction = { type = offices level = 2 instant_build = no }
+				add_state_modifier = {
+					modifier = {
+						state_production_speed_buildings_factor = 0.05
+						local_building_slots_factor = 0.10
+					}
+				}
+			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
+			add_to_variable = { CHI_economy_trade_opinion_factor = 0.05 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { CHI_economy_production_speed_offices_factor = 0.05 tooltip = production_speed_offices_factor_tt }
+			add_to_variable = { CHI_chinese_aggression = -2 tooltip = CHI_chinese_aggression_tt }
+			clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
+			set_country_flag = CHI_hainan_ftp_done
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CHI_hainan_zero_tariff_zone = {
+		icon = generic_fundraising
+
+		visible = {
+			has_country_flag = CHI_hainan_ftp_done
+			NOT = { has_country_flag = CHI_hainan_tariff_done }
+			531 = { is_owned_by = CHI }
+		}
+
+		available = {
+			date > 2018.1.1
+			num_of_civilian_factories_available_for_projects > 9
+			gdp_per_capita_greater_than_7 = yes
+		}
+		custom_cost_trigger = { check_variable = { treasury > 24 } }
+		custom_cost_text = cost_24_0
+		cost = 0
+		fire_only_once = yes
+		days_remove = 720
+		modifier = { civilian_factory_use = 9 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hainan_zero_tariff_zone executed"
+			newline = yes
+			set_temp_variable = { treasury_change = -24 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_hainan_zero_tariff_zone completed"
+			531 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = { type = offices level = 2 instant_build = no }
+				add_building_construction = { type = internet_station level = 1 instant_build = no }
+			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
+			add_to_variable = { CHI_economy_offices_productivity = 0.05 tooltip = offices_productivity_tt }
+			add_to_variable = { CHI_economy_resource_export_multiplier_modifier = 0.04 tooltip = resource_export_multiplier_modifier_tt }
+			add_to_variable = { CHI_economy_return_on_investment_modifier = 0.03 tooltip = return_on_investment_modifier_tt }
+			add_to_variable = { CHI_economy_corporate_tax_income_multiplier_modifier = -0.03 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			add_to_variable = { CHI_chinese_aggression = -3 tooltip = CHI_chinese_aggression_tt }
+			clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
+			set_country_flag = CHI_hainan_tariff_done
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CHI_kra_canal_underwriting = {
+		icon = generic_construction
+
+		visible = {
+			has_completed_focus = CHI_four_trillion_stimulus
+			NOT = { has_country_flag = CHI_kra_underwritten }
+			SIA = { has_completed_focus = SIA_kra_patron_china }
+		}
+
+		available = {
+			NOT = { has_war_with = SIA }
+			custom_trigger_tooltip = {
+				tooltip = CHI_kra_canal_underwriting_phase_tt
+				SIA = { check_variable = { SIA_kra_phase < 4 } }
+			}
+		}
+		custom_cost_trigger = { check_variable = { treasury > 25 } }
+		custom_cost_text = cost_25_0
+		cost = 0
+		fire_only_once = yes
+		days_remove = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_kra_canal_underwriting executed"
+			newline = yes
+			set_temp_variable = { treasury_change = -25 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_kra_canal_underwriting completed"
+			SIA = {
+				set_temp_variable = { treasury_change = 15 }
+				modify_treasury_effect = yes
+				clr_country_flag = SIA_kra_phase_timer
+			}
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { influence_target = SIA }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = SIA modifier = large_commercial_relations }
+			SIA = { add_opinion_modifier = { target = CHI modifier = large_commercial_relations } }
+			set_country_flag = CHI_kra_underwritten
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CHI_kra_transit_corridor = {
+		icon = generic_naval
+
+		visible = {
+			has_completed_focus = CHI_four_trillion_stimulus
+			NOT = { has_country_flag = CHI_kra_transit_done }
+			SIA = {
+				OR = {
+					has_idea = SIA_kra_canal
+					has_idea = SIA_kra_canal_sovereign
+				}
+			}
+		}
+
+		available = {
+			NOT = { has_war_with = SIA }
+			SIA = { NOT = { has_idea = SIA_kra_default_pariah } }
+		}
+		custom_cost_trigger = { check_variable = { treasury > 20 } }
+		custom_cost_text = cost_20_0
+		cost = 0
+		fire_only_once = yes
+		days_remove = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_kra_transit_corridor executed"
+			newline = yes
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_kra_transit_corridor completed"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
+			if = {
+				limit = { SIA = { has_idea = SIA_kra_lease_concession } }
+				add_to_variable = { CHI_economy_local_resources_oil_factor = 0.08 tooltip = local_resources_oil_factor_tt }
+			}
+			else = {
+				add_to_variable = { CHI_economy_local_resources_oil_factor = 0.04 tooltip = local_resources_oil_factor_tt }
+			}
+			add_to_variable = { CHI_economy_fuel_gain_factor = 0.05 tooltip = fuel_gain_factor_tt }
+			add_to_variable = { CHI_economy_resource_export_multiplier_modifier = 0.03 tooltip = resource_export_multiplier_modifier_tt }
+			set_country_flag = CHI_kra_transit_done
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
 	CHI_invest_domestic_arms_lines = {
 		icon = generic_factory
 
@@ -11809,7 +12031,6 @@ CHI_space_program = {
 CHI_factional_balance_category = {
 	CHI_back_princeling_network = {
 		icon = eng_propaganda_campaigns
-		available = { has_country_flag = CHI_ic_initialized }
 		cost = 75
 		days_re_enable = 180
 
@@ -11839,7 +12060,6 @@ CHI_factional_balance_category = {
 
 	CHI_promote_youth_league = {
 		icon = eng_propaganda_campaigns
-		available = { has_country_flag = CHI_ic_initialized }
 		cost = 75
 		days_re_enable = 180
 
