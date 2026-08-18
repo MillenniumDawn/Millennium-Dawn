@@ -58,3 +58,105 @@ roll_corruption_event = {
 		}
 	}
 }
+
+set_corruption_event_level = {
+	if = {
+		limit = { has_idea = corruption_level_10 }
+		set_temp_variable = { corruption_event_new_level = 10 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_09 }
+		set_temp_variable = { corruption_event_new_level = 9 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_08 }
+		set_temp_variable = { corruption_event_new_level = 8 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_07 }
+		set_temp_variable = { corruption_event_new_level = 7 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_06 }
+		set_temp_variable = { corruption_event_new_level = 6 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_05 }
+		set_temp_variable = { corruption_event_new_level = 5 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_04 }
+		set_temp_variable = { corruption_event_new_level = 4 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_03 }
+		set_temp_variable = { corruption_event_new_level = 3 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_02 }
+		set_temp_variable = { corruption_event_new_level = 2 }
+	}
+	else = {
+		set_temp_variable = { corruption_event_new_level = 1 }
+	}
+}
+
+initialize_corruption_reform_events = {
+	set_corruption_event_level = yes
+	set_variable = { corruption_event_tracked_level = corruption_event_new_level }
+	if = {
+		limit = { is_ai = no }
+		set_country_flag = { flag = corruption_reform_event_cooldown value = 1 days = 1095 }
+	}
+}
+
+roll_corruption_reform_event = {
+	clr_country_flag = corruption_reform_event_cooldown
+	set_country_flag = { flag = corruption_reform_event_cooldown value = 1 days = 1095 }
+	random_list = {
+		50 = { country_event = { id = corruption.17 } }
+		50 = { country_event = { id = corruption.18 } }
+	}
+}
+
+track_corruption_reform_progress = {
+	set_corruption_event_level = yes
+	if = {
+		limit = {
+			is_ai = no
+			has_variable = corruption_event_tracked_level
+		}
+		set_temp_variable = { corruption_event_reductions = corruption_event_tracked_level }
+		subtract_from_temp_variable = { corruption_event_reductions = corruption_event_new_level }
+		if = {
+			limit = { check_variable = { corruption_event_reductions > 0 } }
+			if = {
+				limit = { NOT = { has_country_flag = corruption_reduction_year } }
+				set_variable = { corruption_reductions_in_year = 0 }
+				set_country_flag = { flag = corruption_reduction_year value = 1 days = 365 }
+			}
+			add_to_variable = { corruption_reductions_in_year = corruption_event_reductions }
+			if = {
+				limit = { check_variable = { corruption_reductions_in_year > 2 } }
+				roll_corruption_reform_event = yes
+				clear_variable = corruption_reductions_in_year
+				clr_country_flag = corruption_reduction_year
+			}
+		}
+	}
+	set_variable = { corruption_event_tracked_level = corruption_event_new_level }
+}
+
+corruption_reform_event_monthly_update = {
+	if = {
+		limit = { is_ai = no }
+		if = {
+			limit = { NOT = { has_variable = corruption_event_tracked_level } }
+			initialize_corruption_reform_events = yes
+		}
+		else_if = {
+			limit = { NOT = { has_country_flag = corruption_reform_event_cooldown } }
+			roll_corruption_reform_event = yes
+		}
+	}
+}
