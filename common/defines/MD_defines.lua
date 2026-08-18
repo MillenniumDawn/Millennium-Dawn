@@ -971,7 +971,7 @@
 	NDefines.NAI.LAND_DEFENSE_MIN_FACTORIES_FOR_AIR_IMPORTANCE = 2 -- 5; even small nations value air defense
 	NDefines.NAI.MAX_AIR_REGIONS_TO_CARE_ABOUT = 7
 	NDefines.NAir.ACE_WING_SIZE = 24 -- 100; smaller wing size for ace bonus scaling (MD uses smaller wings)
-	NDefines.NFocus.MAX_SAVED_FOCUS_PROGRESS = 20 -- 10; AI can restart more focuses after interruption
+	NDefines.NFocus.MAX_SAVED_FOCUS_PROGRESS = 30 -- 10; a month of focus progress banks while the slot sits empty
 	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10
 	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 30
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of priority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
