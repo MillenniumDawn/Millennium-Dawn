@@ -533,7 +533,7 @@ def generate_ideas(mod_root):
 
     def render(name, texture_path):
         return (
-            "\tspriteType ={\n"
+            "\tspriteType = {\n"
             f'\t\tname = "{name}"\n'
             f'\t\ttexturefile = "{texture_path}"\n'
             "\t}\n"
@@ -541,7 +541,7 @@ def generate_ideas(mod_root):
 
     header = (
         "spriteTypes = {\n"
-        '\n\t## DO NOT REMOVE\n\tspriteType={\n\t\tname = "GFX_idea_traits_strip"\n'
+        '\n\t## DO NOT REMOVE\n\tspriteType = {\n\t\tname = "GFX_idea_traits_strip"\n'
         '\t\ttexturefile = "gfx/interface/ideas/idea_traits_strip.dds"\n\t\tnoOfFrames = 18\n\t}\n'
     )
 

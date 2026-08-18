@@ -1,8 +1,11 @@
 """Tests for the opt-in gate on the unused-sprite check.
 
-The unused-sprite report is ~10k findings on a full repo, so a default run (and
-CI) must skip it entirely — including the script/localisation ref collection
-that feeds only it. `--report-unused` turns it back on.
+The unused-sprite report is ~8.6k findings on a full repo, so a default run (and
+CI) must skip it entirely — including the script ref collection that feeds only
+it. `--report-unused` turns it back on, and `MD_GFX_HIDE_UNUSED` suppresses just
+the orphan list so the case and duplicate findings shipped alongside it are
+readable. The localisation scan is NOT gated: it also feeds the £ref case check,
+which reports real Linux breakage on every run.
 """
 
 import pytest
@@ -46,14 +49,25 @@ def test_default_run_skips_unused_check(tmp_path, monkeypatch):
     monkeypatch.setattr(
         v, "_collect_script_refs", lambda: pytest.fail("script refs collected")
     )
-    monkeypatch.setattr(
-        v, "_collect_loc_refs", lambda: pytest.fail("loc refs collected")
-    )
     v.run_validations()
     assert not _unused(v)
 
 
 def test_report_unused_run_reports_unused_sprite(tmp_path):
+    v = GfxReferenceValidator(_mod_path(tmp_path), use_colors=False, report_unused=True)
+    v.run_validations()
+    assert [i for i in _unused(v) if "GFX_never_referenced" in i.message]
+
+
+def test_hide_unused_env_suppresses_the_orphan_list(tmp_path, monkeypatch):
+    monkeypatch.setenv("MD_GFX_HIDE_UNUSED", "1")
+    v = GfxReferenceValidator(_mod_path(tmp_path), use_colors=False, report_unused=True)
+    v.run_validations()
+    assert not _unused(v)
+
+
+def test_hide_unused_env_off_value_keeps_the_orphan_list(tmp_path, monkeypatch):
+    monkeypatch.setenv("MD_GFX_HIDE_UNUSED", "0")
     v = GfxReferenceValidator(_mod_path(tmp_path), use_colors=False, report_unused=True)
     v.run_validations()
     assert [i for i in _unused(v) if "GFX_never_referenced" in i.message]
