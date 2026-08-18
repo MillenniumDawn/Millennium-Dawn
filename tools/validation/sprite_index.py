@@ -80,8 +80,8 @@ def build_sprite_index(
         include_vanilla: when True, also scan the vanilla HOI4 install (if
             discoverable). Event pictures must be MD-defined, so the event check
             passes False — that keeps it accurate in CI, where vanilla is absent.
-            Focus/idea icons may legitimately reuse vanilla sprites, so those
-            keep the default.
+            Focus/idea/decision icons may legitimately reuse vanilla sprites, so
+            those keep the default.
     """
     gfx_files: List[str] = glob.glob(
         os.path.join(mod_path, "interface", "**", "*.gfx"), recursive=True
