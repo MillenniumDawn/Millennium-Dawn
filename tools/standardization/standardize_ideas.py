@@ -17,6 +17,7 @@ from shared_utils import (
     collapse_or_compact,
     extract_block,
     log_message,
+    normalize_spacing,
     strip_inline_comment,
 )
 
@@ -480,7 +481,7 @@ class IdeaStandardizer(BaseStandardizer):
         try:
             with open(output_file, "w", encoding="utf-8") as f:
                 for line in output_lines:
-                    f.write(line + "\n")
+                    f.write(normalize_spacing(line) + "\n")
 
             time_str = format_elapsed(time.time() - self.start_time)
 
