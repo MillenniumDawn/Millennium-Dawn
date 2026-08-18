@@ -571,6 +571,8 @@ focus_EU203_QMV_result = {
 	}
 
 	set_temp_variable = { eurobonds_debt_total = 0 }
+	clear_temp_array = debt_consumers
+	set_temp_variable = { debt_consumer_counter = 0 }
 
 	for_each_scope_loop = {
 		array = global.EU_member
@@ -591,22 +593,24 @@ focus_EU203_QMV_result = {
 
 			subtract_from_variable = { debt = current_debt }
 		}
-	}
-
-	set_temp_variable = {
-		debt_number = {
-			value = eurobonds_debt_total
-			multiply = 0.8
-			divide = {
-				value = 0
-				every_collection = { named_collection = eu_eurobond_consumers_collection add = 1 }
-				clamp = { min = 1 max = 1000000 }
+		if = {
+			limit = {
+				NOT = { check_variable = { interest_rate > 7.5 } }
+				check_variable = { debt_ratio < 1.0 }
+				check_variable = { EU_ratio_of_total_eu_gdp > 0.1 }
 			}
+			add_to_temp_array = { debt_consumers = THIS }
+			add_to_temp_variable = { debt_consumer_counter = 1 }
 		}
 	}
 
-	every_collection_element = {
-		input = { input = collection:eu_eurobond_consumers_collection }
+	set_temp_variable = { var = debt_number value = { value = eurobonds_debt_total multiply = 0.8 } }
+	clamp_temp_variable = { var = debt_consumer_counter min = 1 }
+	divide_temp_variable = { debt_number = debt_consumer_counter }
+
+	for_each_scope_loop = {
+		array = debt_consumers
+
 		add_to_variable = { debt = debt_number }
 	}
 
