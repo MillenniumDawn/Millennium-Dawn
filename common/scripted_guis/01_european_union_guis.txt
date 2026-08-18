@@ -1255,8 +1255,7 @@ scripted_gui = {
 			proeuro_euwide_button_click_enabled = {
 				NOT = { has_country_flag = proeuro_euwide_button_click_cooldown }
 				has_idea = EU_member
-				set_temp_variable = { the_cost = global.EU_15_per_member_cost }
-				multiply_temp_variable = { the_cost = 0.5 }
+				set_temp_variable = { the_cost = { value = global.EU_15_per_member_cost multiply = 0.5 } }
 				has_political_power > the_cost
 				#pan-EU campaign is members-only
 			}
@@ -2561,12 +2560,9 @@ scripted_gui = {
 			}
 			proeuro_euwide_button_click = {
 				log = "[GetDateText]: [ROOT.GetName]: EU GUI pro_european_campaign"
-				set_temp_variable = { treasury_change = global.EU_gdp }
-				multiply_temp_variable = { treasury_change = -0.0005 }
+				set_temp_variable = { treasury_change = { value = global.EU_gdp multiply = -0.0005 } }
 				modify_treasury_effect = yes
-				set_temp_variable = { the_cost = global.EU_15_per_member_cost }
-				multiply_temp_variable = { the_cost = 0.5 }
-				multiply_temp_variable = { the_cost = -1 }
+				set_temp_variable = { the_cost = { value = global.EU_15_per_member_cost multiply = -0.5 } }
 				add_political_power = the_cost
 				random_list = {
 					50 = {
@@ -2628,7 +2624,6 @@ scripted_gui = {
 
 			support_council_vote_button_click = {
 				add_to_array = { global.EU_active_vote_supporters = THIS }
-				add_to_variable = { global.EU_active_vote_yes = 1 }
 				set_temp_variable = { add_ratio_value = THIS.EU_pop_ratio }
 				add_to_variable = { global.EU_pop_ratio_yes = add_ratio_value }
 				if = {
@@ -2661,7 +2656,6 @@ scripted_gui = {
 						array = global.EU_active_vote_supporters
 						value = THIS
 					}
-					subtract_from_variable = { global.EU_active_vote_yes = 1 }
 					subtract_from_variable = { global.EU_pop_ratio_yes = add_ratio_value }
 				}
 				update_eu_dirty_variable = yes
@@ -2670,7 +2664,7 @@ scripted_gui = {
 			EU_min_call_rate_click = {
 				custom_effect_tooltip = tooltip_EU_budget_raise_min_call_rate_effect
 				add_political_power = global.EU_15_per_member_cost_minus
-				add_to_variable = { global.EU_budget_min_call_rate = 0.05 }
+				set_variable = { global.EU_budget_min_call_rate = { value = global.EU_budget_min_call_rate add = 0.05 clamp = { min = 0 max = 100 } } }
 				for_each_scope_loop = {
 					array = global.EU_member
 					if = { limit = { NOT = { has_variable = EU_budget_call_rate } } set_variable = { EU_budget_call_rate = 1 } }
@@ -2700,11 +2694,7 @@ scripted_gui = {
 			EU_min_call_rate_right_click = {
 				custom_effect_tooltip = tooltip_EU_budget_lower_min_call_rate_effect
 				add_political_power = global.EU_15_per_member_cost_minus
-				subtract_from_variable = { global.EU_budget_min_call_rate = 0.05 }
-				clamp_variable = {
-					var = global.EU_budget_min_call_rate
-					min = 0
-				}
+				set_variable = { global.EU_budget_min_call_rate = { value = global.EU_budget_min_call_rate subtract = 0.05 clamp = { min = 0 max = 100 } } }
 				update_EU_budget_call_rate = yes
 				EU_country_call_rate_cost_calc = yes
 				add_to_variable = { global.EU_budget_draft_invested_PP = global.EU_15_per_member_cost }
@@ -2732,8 +2722,7 @@ scripted_gui = {
 				for_each_scope_loop = {
 					array = global.EU_member
 					tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-					add_to_variable = { THIS.EU_budget_call_rate = 0.05 }
-					clamp_variable = { var = THIS.EU_budget_call_rate max = 100 }
+					set_variable = { THIS.EU_budget_call_rate = { value = THIS.EU_budget_call_rate add = 0.05 clamp = { min = global.EU_budget_min_call_rate max = 100 } } }
 				}
 				update_EU_budget_call_rate = yes
 				EU_country_call_rate_cost_calc = yes
@@ -2762,8 +2751,7 @@ scripted_gui = {
 				for_each_scope_loop = {
 					array = global.EU_member
 					tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-					subtract_from_variable = { THIS.EU_budget_call_rate = 0.05 }
-					clamp_variable = { var = THIS.EU_budget_call_rate min = global.EU_budget_min_call_rate }
+					set_variable = { THIS.EU_budget_call_rate = { value = THIS.EU_budget_call_rate subtract = 0.05 clamp = { min = global.EU_budget_min_call_rate max = 100 } } }
 				}
 				update_EU_budget_call_rate = yes
 				EU_country_call_rate_cost_calc = yes
@@ -2794,8 +2782,7 @@ scripted_gui = {
 				set_temp_variable = { modify_europeanism = -0.08 }
 				set_temp_variable = { modify_europeanism_target = THIS }
 				europeanism_change = yes
-				add_to_variable = { THIS.EU_budget_call_rate = 0.01 }
-				clamp_variable = { var = THIS.EU_budget_call_rate max = 100 }
+				set_variable = { THIS.EU_budget_call_rate = { value = THIS.EU_budget_call_rate add = 0.01 clamp = { min = global.EU_budget_min_call_rate max = 100 } } }
 				update_EU_budget_call_rate = yes
 				add_to_variable = { global.EU_budget_draft_invested_PP = THIS.EU_mff_country_cost }
 				add_to_variable = { THIS.EU_budget_draft_invested_PP = THIS.EU_mff_country_cost }
@@ -2821,8 +2808,7 @@ scripted_gui = {
 				set_temp_variable = { modify_europeanism = 0.08 }
 				set_temp_variable = { modify_europeanism_target = THIS }
 				europeanism_change = yes
-				add_to_variable = { THIS.EU_budget_call_rate = -0.01 }
-				clamp_variable = { var = THIS.EU_budget_call_rate min = global.EU_budget_min_call_rate }
+				set_variable = { THIS.EU_budget_call_rate = { value = THIS.EU_budget_call_rate subtract = 0.01 clamp = { min = global.EU_budget_min_call_rate max = 100 } } }
 				update_EU_budget_call_rate = yes
 				add_to_variable = { global.EU_budget_draft_invested_PP = THIS.EU_mff_country_cost }
 				add_to_variable = { THIS.EU_budget_draft_invested_PP = THIS.EU_mff_country_cost }
@@ -3047,13 +3033,7 @@ scripted_gui = {
 					remove_OMT = yes
 				}
 				hidden_effect = {
-					subtract_from_variable = { var = global.OMT_size_limit value = 200 }
-					if = {
-						limit = {
-							check_variable = { global.OMT_size_limit < 0 }
-						}
-						set_variable = { global.OMT_size_limit = 0 }
-					}
+					set_variable = { global.OMT_size_limit = { value = global.OMT_size_limit subtract = 200 clamp = { min = 0 max = global.OMT_size_limit } } }
 					for_each_scope_loop = { ### contra OMT
 						array = global.EU_member
 						if = {
@@ -4399,7 +4379,6 @@ scripted_gui = {
 				log = "[GetDateText]: [ROOT.GetTag]: Enacted an EU Wide Vote with the id of [?v]."
 				set_variable = { global.current_active_vote_disp = v }
 				set_variable = { global.EUXXX_council_agenda = global.current_active_vote_disp }
-				set_variable = { global.EU_active_vote_yes = 0 }
 				clear_array = global.EU_active_vote_supporters
 				clear_array = global.EU_active_vote_rejecters
 
@@ -4447,7 +4426,6 @@ scripted_gui = {
 			eu_council_voting_members_list_button_click = {
 				if = { limit = { is_in_array = { array = global.EU_active_vote_supporters value = ROOT } }
 					add_to_array = { global.EU_active_vote_supporters = THIS }
-					add_to_variable = { global.EU_active_vote_yes = 1 }
 					if = { limit = { is_in_array = { array = global.EU_active_vote_rejecters value = THIS } }
 						remove_from_array = { array = global.EU_active_vote_rejecters value = THIS }
 					}
@@ -4458,7 +4436,6 @@ scripted_gui = {
 					add_to_array = { global.EU_active_vote_rejecters = THIS }
 					if = { limit = { is_in_array = { array = global.EU_active_vote_supporters value = THIS } }
 						remove_from_array = { array = global.EU_active_vote_supporters value = THIS }
-						subtract_from_variable = { global.EU_active_vote_yes = 1 }
 					}
 					set_temp_variable = { add_ratio_value = THIS.EU_pop_ratio }
 					add_to_variable = { global.EU_pop_ratio_no = add_ratio_value }

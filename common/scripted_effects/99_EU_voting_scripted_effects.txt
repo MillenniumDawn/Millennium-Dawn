@@ -94,7 +94,6 @@ EU_update_AI_general_voting_modifiers = {
 		limit = { is_ai = yes }
 		if = {
 			limit = { check_variable = { EU_AI_focus_modifier_yes_vote > 0 } }
-			add_to_variable = { global.EU_active_vote_yes = 1 }
 			add_to_array = { global.EU_active_vote_supporters = THIS }
 			add_to_variable = { global.EU_pop_ratio_yes = THIS.EU_pop_ratio }
 		}
@@ -229,27 +228,20 @@ EU_init_focus_vote_weights = {
 
 EU_apply_expansion_focus_weights = {
 	# rule_european_union_expansion_focus = yes: bias EU AI toward enlargement agendas (605-611, 650-660).
-	clear_temp_array = EU_expansion_codes
-	add_to_temp_array = { EU_expansion_codes = 605 }
-	add_to_temp_array = { EU_expansion_codes = 606 }
-	add_to_temp_array = { EU_expansion_codes = 607 }
-	add_to_temp_array = { EU_expansion_codes = 608 }
-	add_to_temp_array = { EU_expansion_codes = 609 }
-	add_to_temp_array = { EU_expansion_codes = 610 }
-	add_to_temp_array = { EU_expansion_codes = 611 }
-	add_to_temp_array = { EU_expansion_codes = 650 }
-	add_to_temp_array = { EU_expansion_codes = 651 }
-	add_to_temp_array = { EU_expansion_codes = 652 }
-	add_to_temp_array = { EU_expansion_codes = 653 }
-	add_to_temp_array = { EU_expansion_codes = 654 }
-	add_to_temp_array = { EU_expansion_codes = 655 }
-	add_to_temp_array = { EU_expansion_codes = 656 }
-	add_to_temp_array = { EU_expansion_codes = 657 }
-	add_to_temp_array = { EU_expansion_codes = 658 }
-	add_to_temp_array = { EU_expansion_codes = 659 }
-	add_to_temp_array = { EU_expansion_codes = 660 }
-	for_each_loop = {
-		array = EU_expansion_codes
+	for_loop_effect = {
+		start = 605
+		end = 612
+		value = code
+		add_to_variable = { global.EU_vote_w1^code = 25 }
+		add_to_variable = { global.EU_vote_w2^code = 25 }
+		add_to_variable = { global.EU_vote_w3^code = 25 }
+		add_to_variable = { global.EU_vote_w4^code = 25 }
+		add_to_variable = { global.EU_vote_w5^code = 25 }
+		add_to_variable = { global.EU_vote_w6^code = 25 }
+	}
+	for_loop_effect = {
+		start = 650
+		end = 661
 		value = code
 		add_to_variable = { global.EU_vote_w1^code = 25 }
 		add_to_variable = { global.EU_vote_w2^code = 25 }
@@ -579,8 +571,6 @@ focus_EU203_QMV_result = {
 	}
 
 	set_temp_variable = { eurobonds_debt_total = 0 }
-	clear_temp_array = debt_consumers
-	set_temp_variable = { debt_consumer_counter = 0 }
 
 	for_each_scope_loop = {
 		array = global.EU_member
@@ -601,24 +591,22 @@ focus_EU203_QMV_result = {
 
 			subtract_from_variable = { debt = current_debt }
 		}
-		if = {
-			limit = {
-				NOT = { check_variable = { interest_rate > 7.5 } }
-				check_variable = { debt_ratio < 1.0 }
-				check_variable = { EU_ratio_of_total_eu_gdp > 0.1 }
+	}
+
+	set_temp_variable = {
+		debt_number = {
+			value = eurobonds_debt_total
+			multiply = 0.8
+			divide = {
+				value = 0
+				every_collection = { named_collection = eu_eurobond_consumers_collection add = 1 }
+				clamp = { min = 1 max = 1000000 }
 			}
-			add_to_temp_array = { debt_consumers = THIS }
-			add_to_temp_variable = { debt_consumer_counter = 1 }
 		}
 	}
 
-	set_temp_variable = { var = debt_number value = { value = eurobonds_debt_total multiply = 0.8 } }
-	clamp_temp_variable = { var = debt_consumer_counter min = 1 }
-	divide_temp_variable = { debt_number = debt_consumer_counter }
-
-	for_each_scope_loop = {
-		array = debt_consumers
-
+	every_collection_element = {
+		input = { input = collection:eu_eurobond_consumers_collection }
 		add_to_variable = { debt = debt_number }
 	}
 
@@ -1139,7 +1127,6 @@ cleanup_european_union_voting = {
 		set_variable = { global.EUU_recently_failed_vote = global.current_active_vote_disp }
 	}
 	set_variable = { global.current_active_vote_disp = 0 }
-	set_variable = { global.EU_active_vote_yes = 0 }
 	set_variable = { global.EU_pop_ratio_no = 0 }
 	set_variable = { global.EU_pop_ratio_yes = 0 }
 	clear_array = global.EU_active_vote_supporters
@@ -1435,7 +1422,6 @@ EU_show_display_effects_for_law = {
 EU_emergency_vote_clear = {
 	set_variable = { global.EUU_recently_failed_vote = global.current_active_vote_disp }
 	set_variable = { global.current_active_vote_disp = 0 }
-	set_variable = { global.EU_active_vote_yes = 0 }
 	set_variable = { global.EU_pop_ratio_no = 0 }
 	set_variable = { global.EU_pop_ratio_yes = 0 }
 	clear_array = global.EU_active_vote_supporters
