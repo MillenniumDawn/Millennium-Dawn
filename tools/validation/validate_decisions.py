@@ -101,6 +101,7 @@ def _owner_spans(text: str, want_depth: int) -> List[Tuple[int, int, str]]:
                 spans.append((start, pos, token))
     return spans
 
+
 _ICON_KIND_FIELD = {
     "decision": "icon",
     "category_icon": "icon",
