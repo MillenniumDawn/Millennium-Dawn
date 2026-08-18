@@ -44,6 +44,7 @@ patrol_boat Patrol Boat
 support_ship_hull Support Ship
 repair_ship_hull Repair Ship
 convoy Convoy
+floating_harbor_equipment Modular Causeway System
 train_equipment Civilian Trains
 zombie Zombie Virus
 zombie_runner Runner Strain
