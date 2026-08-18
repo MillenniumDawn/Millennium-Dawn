@@ -319,6 +319,16 @@ _TECHNOLOGIES_BLOCK_RE = re.compile(r"^technologies\s*=\s*\{", re.MULTILINE)
 _MODULES_BLOCK_RE = re.compile(r"^equipment_modules\s*=\s*\{", re.MULTILINE)
 _EQUIPMENT_ENTRY_RE = re.compile(r"^\t([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
 
+# The equipment designer draws GFX_EMI_<name> for both halves of the module
+# system: the module itself, and the category its slot accepts. A category is
+# never declared on its own — it exists because a module claims it and a chassis
+# slot allows it, so both spellings have to be harvested or live category icons
+# (GFX_EMI_afv_gasoline_engine_type) read as orphans.
+_MODULE_CATEGORY_RE = re.compile(
+    r"^\s*(?:module_)?category\s*=\s*([A-Za-z][A-Za-z0-9_]*)", re.MULTILINE
+)
+_ALLOWED_CATEGORIES_RE = re.compile(r"\ballowed_module_categories\s*=\s*\{([^}]*)\}")
+
 # Focus search-filter icons: a focus tags itself `search_filters = { FOCUS_FILTER_X }`
 # and the engine swaps GFX_FOCUS_FILTER_X into the filter button at runtime — vanilla's
 # nationalfocusview.gui only carries GFX_FOCUS_FILTER_POLITICAL as the template
@@ -425,13 +435,23 @@ def _load_search_filter_names(mod_path: str) -> FrozenSet[str]:
     )
 
 
-def _load_module_names(mod_path: str) -> FrozenSet[str]:
-    """Return every equipment module declared in common/units/equipment/modules."""
-    return _load_entry_names(
+def _module_icon_names_from_text(raw: str) -> List[str]:
+    """Return every module and module category an equipment file declares."""
+    text = _HASH_COMMENT.sub("", raw)
+    names: Set[str] = set(_entry_names_from_text(text, _MODULES_BLOCK_RE))
+    names.update(_MODULE_CATEGORY_RE.findall(text))
+    for block in _ALLOWED_CATEGORIES_RE.finditer(text):
+        names.update(block.group(1).split())
+    return sorted(names)
+
+
+def _load_module_icon_names(mod_path: str) -> FrozenSet[str]:
+    """Return every module and category the designer can draw an icon for."""
+    return _load_names_from_dir(
         mod_path,
-        os.path.join(mod_path, "common", "units", "equipment", "modules"),
-        _MODULES_BLOCK_RE,
-        "gfx_ref.module_names",
+        os.path.join(mod_path, "common", "units", "equipment"),
+        _module_icon_names_from_text,
+        "gfx_ref.module_icon_names",
     )
 
 
@@ -854,7 +874,8 @@ class Validator(BaseValidator):
         wrong case still reports as miscased instead of quietly passing.
 
             GFX_<FOCUS_FILTER_X>          every search_filters token in a focus tree
-            GFX_EMI_<module>              every entry in equipment_modules = { }
+            GFX_EMI_<module|category>     equipment modules and the slot categories
+                                          they claim / a chassis slot allows
             GFX_<TAG|culture>_ace_<m|f>_N ace portraits, keyed by tag or 2d culture
             GFX_missile_<TAG>_ID_<N>_icon and anything else a `[...]` scripted-loc
                                           or scripted-GUI template can build
@@ -870,10 +891,10 @@ class Validator(BaseValidator):
             )
         refs.update("GFX_" + f for f in filters)
 
-        modules = _load_module_names(self.mod_path)
+        modules = _load_module_icon_names(self.mod_path)
         if not modules:
             self.log(
-                "  No equipment modules found under common/units/equipment/modules"
+                "  No equipment modules found under common/units/equipment"
                 " — module icons unresolved"
             )
         refs.update("GFX_EMI_" + m for m in modules)

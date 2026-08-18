@@ -286,15 +286,43 @@ def test_commented_out_search_filter_does_not_resolve(tmp_path):
     )
 
 
-def test_module_names_are_read_from_equipment_modules(tmp_path):
+def test_module_names_cover_modules_and_their_categories(tmp_path):
     _write_modules(
         tmp_path,
         "equipment_modules = {\n\ttank_diesel_engine_gen1 = {\n"
         "\t\tcategory = tank_engine_type\n\t}\n}\n",
     )
-    assert vg._load_module_names(str(tmp_path)) == frozenset(
-        {"tank_diesel_engine_gen1"}
+    assert vg._load_module_icon_names(str(tmp_path)) == frozenset(
+        {"tank_diesel_engine_gen1", "tank_engine_type"}
     )
+
+
+def test_chassis_slot_categories_are_read_too(tmp_path):
+    # A category is never declared on its own. Harvesting only `category =` misses
+    # one a chassis slot allows but no surviving module claims, and deleting its
+    # icon blanks the slot in the designer.
+    equipment = tmp_path / "common" / "units" / "equipment"
+    equipment.mkdir(parents=True, exist_ok=True)
+    (equipment / "chassis.txt").write_text(
+        "equipments = {\n\ttank_chassis = {\n\t\tmodule_slots = {\n"
+        "\t\t\tengine_type_slot = {\n\t\t\t\tallowed_module_categories = {\n"
+        "\t\t\t\t\tafv_gasoline_engine_type\n\t\t\t\t\ttank_diesel_engine_type\n"
+        "\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n",
+        encoding="utf-8",
+    )
+    names = vg._load_module_icon_names(str(tmp_path))
+    assert "afv_gasoline_engine_type" in names
+    assert "tank_diesel_engine_type" in names
+
+
+def test_category_icon_resolves_as_a_reference(tmp_path):
+    _write_modules(
+        tmp_path,
+        "equipment_modules = {\n\tafv_petrol_1 = {\n"
+        "\t\tcategory = afv_gasoline_engine_type\n\t}\n}\n",
+    )
+    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    assert "GFX_EMI_afv_gasoline_engine_type" in v._resolve_engine_refs(set())
 
 
 def test_module_icon_resolves_as_a_reference(tmp_path):
