@@ -2005,6 +2005,331 @@ types = {
 			#do some checks for nations here, like someone going for nukes will likely be targeted by enemies
 		}
 	}
+	#Direct action mission to free a captured spy / operative
+	free_captured_operative_mission = {
+		days_to_prepare = 30
+		days_re_enable = 50
+
+		category = special_forces_raids
+
+		command_power = 20 # command power allocation cost
+
+		arrow = {
+			type = line
+		}
+
+		# Raid Type is visible
+		# Specific Target is visible
+		show_target = {
+			raid_show_target_specops_hostile = yes
+			FROM = { MD_special_countries = no }
+		}
+
+		# Can prepare
+		available = {
+			raid_target_eligible = yes
+			raid_special_forces_tech_available = yes
+			# Target country must be holding one of our operatives captive
+			FROM = { has_captured_operative = ROOT }
+			raid_target_eligible_from = yes
+		}
+
+		launchable = {
+			FROM = { has_captured_operative = ROOT }
+			has_political_power > 200
+		}
+
+		target_type = {
+			state = {
+				is_capital = yes
+			}
+		}
+
+		unit_requirements = {
+			battalion_types = {
+				Special_Forces = { min = 5 }
+			}
+		}
+
+		launch_sound = raid_launch_marine
+		target_icon = GFX_other_target_icon
+		starting_point = {
+			types = { air_base naval_base }
+		}
+		success_factors = {
+			success = {
+				base = 0.25
+
+				# Raiding unit modifiers
+				experience = {
+					weight = 0.50
+					start_weight = -0.25
+					reference = 0.75
+				}
+
+				organisation = {
+					weight = 0.20
+					start_weight = -0.10
+					reference = 100
+				}
+
+				strength = {
+					weight = 0.15
+					start_weight = -0.05
+					reference = 1
+				}
+
+				recon = {
+					weight = 0.25
+					start_weight = -0.25
+					reference = 10
+				}
+
+				### Target Modifiers
+				resistance = {
+					reference = 100
+					start_reference = 20 # Resistance below 20 doesn't help
+					weight = 0.2
+				}
+				intel = {
+					weight = 0.5
+					start_weight = -0.1
+					reference = 100
+					start_reference = 10
+				}
+			}
+
+			critical = {
+				base = 0.05
+			}
+
+			disaster = {
+				base = 0.05
+			}
+		}
+
+		# Only two outcomes: failure and success
+		success_levels = {
+			failure = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+				}
+				actor_effects = {
+					raid_damage_units = {
+						org_damage = 0.40
+						str_damage = 0.20
+						ratio = yes
+					}
+
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						random_operative = {
+							limit = {
+								is_operative_captured = yes
+							}
+							kill_operative = { killed_by = var:ROOT.victim_country }
+						}
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 50
+				}
+			}
+			success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+				}
+				actor_effects = {
+					raid_damage_units = {
+						org_damage = 0.15
+						str_damage = 0.05
+						ratio = yes
+					}
+
+					raid_add_unit_experience = 0.25
+
+					# Spring our operative
+					var:actor_country = {
+						free_random_operative = {
+							captured_by = var:ROOT.victim_country
+						}
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 250
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				factor = 0
+				NOT = { FROM = { has_captured_operative = ROOT } }
+			}
+			modifier = {
+				NOT = { has_war_with = FROM }
+				NOT = { is_neighbor_of = FROM }
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+				add = -100
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -95
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -125
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -50
+				}
+			}
+			modifier = {
+				add = -10
+				NOT = { has_war_with = FROM }
+				has_government = FROM
+			}
+			modifier = {
+				NOT = {
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				factor = 0
+				FROM = {
+					OR = {
+						has_idea = NATO_member
+						has_idea = CSTO_member
+						has_idea = EU_member
+						has_idea = faction_resistance_axis_member
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				raid_alliance_unfavorable = yes
+			}
+			modifier = {
+				factor = 0
+				raid_intervention_doctrine_reach_block = yes
+			}
+			modifier = {
+				factor = 0.25
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = {
+					OR = { has_idea = super_power has_idea = great_power }
+				}
+				NOT = { OR = { has_idea = super_power has_idea = great_power } }
+			}
+			modifier = {
+				factor = 100
+				has_country_flag = promised_retaliation_against@FROM
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_idea = super_power
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				factor = 0
+				threat < 0.10
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+				NOT = {
+					is_in_array = {
+						array = potential_and_current_enemies
+						value = FROM
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0.05
+				OR = {
+					has_government = democratic
+					has_government = neutrality
+					has_elections = yes
+				}
+				FROM = { has_added_tension_amount < 5 }
+			}
+			modifier = {
+				has_country_flag = conceded_to@FROM
+				factor = 0
+			}
+			modifier = {
+				NOT = {
+					FROM = {
+						is_on_same_continent_as = PREV
+					}
+				}
+				strength_ratio = {
+					tag = FROM
+					ratio > 0.35
+				}
+				factor = 0
+			}
+			modifier = {
+				factor = 0
+				is_ally_with = FROM
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					FROM = { is_subject_of = ROOT }
+					is_subject_of = FROM
+				}
+			}
+			modifier = {
+				factor = 0
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = { is_influencer = yes }
+			}
+			modifier = {
+				factor = 0
+				raid_skip_target_non_hostile_no_retaliation = yes
+				check_variable = { debt_ratio > 0.25 }
+			}
+			modifier = {
+				factor = 0.25
+				NOT = { has_war_with = FROM }
+				check_variable = { debt_ratio > 0.15 }
+			}
+		}
+	}
 	# [USA] Capture Venezuelan Leader
 	USA_raid_venezuela = {
 		allowed = { original_tag = USA }
