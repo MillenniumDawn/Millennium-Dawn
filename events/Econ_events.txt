@@ -1873,6 +1873,441 @@ country_event = {
 
 }
 
+# Modern Production Methods Spread
+country_event = {
+	id = econvent.16
+	title = econvent.16.t
+	desc = econvent.16.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			has_idea = economic_boom
+		}
+		modifier = {
+			factor = 1.75
+			has_idea = fast_growth
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = stable_growth
+		}
+		modifier = {
+			factor = 1.5
+			check_variable = { overall_productivity < 750 }
+		}
+		modifier = {
+			factor = 1.5
+			check_variable = { overall_productivity < 500 }
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_productivity_gain }
+		check_variable = { overall_productivity < global.average_world_productivity }
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_productivity_gain value = 1 days = 365 }
+	}
+
+	option = {
+		name = econvent.16.a
+		log = "[GetDateText]: [This.GetName]: econvent.16.a executed"
+		set_temp_variable = { temp_productivity_change = 10 }
+		flat_productivity_change_effect = yes
+	}
+
+}
+
+# Education Investments Bear Fruit
+country_event = {
+	id = econvent.17
+	title = econvent.17.t
+	desc = econvent.17.d
+	picture = GFX_generic_education_event_picture
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.5
+			check_variable = { education_law > 3 }
+		}
+		modifier = {
+			factor = 1.5
+			check_variable = { education_law > 4 }
+		}
+		modifier = {
+			factor = 1.5
+			OR = {
+				has_idea = economic_boom
+				has_idea = fast_growth
+				has_idea = stable_growth
+			}
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_productivity_gain }
+		check_variable = { overall_productivity < global.average_world_productivity }
+		check_variable = { education_law > 2 }
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_productivity_gain value = 1 days = 365 }
+	}
+
+	option = {
+		name = econvent.17.a
+		log = "[GetDateText]: [This.GetName]: econvent.17.a executed"
+		set_temp_variable = { temp_productivity_change = 10 }
+		flat_productivity_change_effect = yes
+	}
+
+}
+
+# Foreign Technology Spreads Domestically
+country_event = {
+	id = econvent.18
+	title = econvent.18.t
+	desc = econvent.18.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.75
+			has_idea = globalized_trade_economy
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = international_bankers
+			check_variable = { international_bankers_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = industrial_conglomerates
+			check_variable = { industrial_conglomerates_opinion > 60 }
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_productivity_gain }
+		check_variable = { overall_productivity < global.average_world_productivity }
+		OR = {
+			has_idea = export_economy
+			has_idea = globalized_trade_economy
+		}
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_productivity_gain value = 1 days = 365 }
+	}
+
+	option = {
+		name = econvent.18.a
+		log = "[GetDateText]: [This.GetName]: econvent.18.a executed"
+		set_temp_variable = { temp_productivity_change = 10 }
+		flat_productivity_change_effect = yes
+	}
+
+}
+
+# Semiconductor Foundry Investment
+country_event = {
+	id = econvent.19
+	title = econvent.19.t
+	desc = econvent.19.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			check_variable = { resource@microchips < 0 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = international_bankers
+			check_variable = { international_bankers_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = industrial_conglomerates
+			check_variable = { industrial_conglomerates_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			OR = {
+				has_idea = economic_boom
+				has_idea = fast_growth
+				has_idea = stable_growth
+			}
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_advanced_industry_investment }
+		has_tech = microchip_production_1
+		check_variable = { resource@chromium > 0 }
+		check_variable = { resource@tungsten > 0 }
+		check_variable = { energy_difference_variable > 0 }
+		any_controlled_state = {
+			is_owned_by = ROOT
+			free_building_slots = {
+				building = microchip_plant
+				size > 0
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_advanced_industry_investment value = 1 days = 730 }
+	}
+
+	option = {
+		name = econvent.19.a
+		log = "[GetDateText]: [This.GetName]: econvent.19.a executed"
+		random_owned_controlled_state = {
+			limit = {
+				free_building_slots = {
+					building = microchip_plant
+					size > 0
+				}
+			}
+			add_building_construction = {
+				type = microchip_plant
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+}
+
+# Composite Industry Expansion
+country_event = {
+	id = econvent.20
+	title = econvent.20.t
+	desc = econvent.20.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			check_variable = { resource@composites < 0 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = defense_industry
+			check_variable = { defense_industry_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = industrial_conglomerates
+			check_variable = { industrial_conglomerates_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			OR = {
+				check_variable = { military_factory_total > 0 }
+				check_variable = { naval_factory_total > 0 }
+			}
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_advanced_industry_investment }
+		has_tech = composite_production_1
+		check_variable = { resource@chromium > 0 }
+		check_variable = { resource@rubber > 0 }
+		check_variable = { resource@oil > 0 }
+		check_variable = { energy_difference_variable > 0 }
+		any_controlled_state = {
+			is_owned_by = ROOT
+			free_building_slots = {
+				building = composite_plant
+				size > 0
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_advanced_industry_investment value = 1 days = 730 }
+	}
+
+	option = {
+		name = econvent.20.a
+		log = "[GetDateText]: [This.GetName]: econvent.20.a executed"
+		random_owned_controlled_state = {
+			limit = {
+				free_building_slots = {
+					building = composite_plant
+					size > 0
+				}
+			}
+			add_building_construction = {
+				type = composite_plant
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+}
+
+# Defense Contracts Expand Production
+country_event = {
+	id = econvent.21
+	title = econvent.21.t
+	desc = econvent.21.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			has_war = yes
+		}
+		modifier = {
+			factor = 1.5
+			check_variable = { military_law > 7 }
+		}
+		modifier = {
+			factor = 2
+			has_idea = defense_industry
+			check_variable = { defense_industry_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			OR = {
+				has_idea = economic_boom
+				has_idea = fast_growth
+				has_idea = stable_growth
+			}
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_idea = no_military }
+		NOT = { has_country_flag = econ_recent_strategic_industry_expansion }
+		check_variable = { military_law > 4 }
+		check_variable = { total_unemployed_percentage_display > 0.01 }
+		check_variable = { energy_difference_variable > 0 }
+		any_controlled_state = {
+			is_owned_by = ROOT
+			free_building_slots = {
+				building = arms_factory
+				size > 0
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_strategic_industry_expansion value = 1 days = 730 }
+	}
+
+	option = {
+		name = econvent.21.a
+		log = "[GetDateText]: [This.GetName]: econvent.21.a executed"
+		random_owned_controlled_state = {
+			limit = {
+				free_building_slots = {
+					building = arms_factory
+					size > 0
+				}
+			}
+			add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+}
+
+# Commercial Shipbuilding Orders Surge
+country_event = {
+	id = econvent.22
+	title = econvent.22.t
+	desc = econvent.22.d
+	picture = GFX_cargo_ship
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.5
+			check_variable = { naval_factory_total > 0 }
+		}
+		modifier = {
+			factor = 2
+			has_idea = maritime_industry
+			check_variable = { maritime_industry_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = globalized_trade_economy
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_strategic_industry_expansion }
+		check_variable = { total_unemployed_percentage_display > 0.01 }
+		check_variable = { energy_difference_variable > 0 }
+		OR = {
+			has_idea = export_economy
+			has_idea = globalized_trade_economy
+			AND = {
+				has_idea = maritime_industry
+				check_variable = { maritime_industry_opinion > 60 }
+			}
+		}
+		any_controlled_state = {
+			is_owned_by = ROOT
+			is_coastal = yes
+			free_building_slots = {
+				building = dockyard
+				size > 0
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_strategic_industry_expansion value = 1 days = 730 }
+	}
+
+	option = {
+		name = econvent.22.a
+		log = "[GetDateText]: [This.GetName]: econvent.22.a executed"
+		random_owned_controlled_state = {
+			limit = {
+				is_coastal = yes
+				free_building_slots = {
+					building = dockyard
+					size > 0
+				}
+			}
+			add_building_construction = {
+				type = dockyard
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+}
+
 # Bailout Requested
 country_event = {
 	id = bankruptcy.1
@@ -2403,7 +2838,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: bankruptcy.10.b executed"
 		country_event = { id = bankruptcy.11 days = 1 }
 		ai_chance = { # AI won't block for the time being
-			factor = 5
+			base = 5
 		}
 	}
 

@@ -32,6 +32,8 @@ on_actions = {
 				set_country_flag = economic_project_flags_migrated
 			}
 
+			# Per-week decay; must stay out of ingame_update_setup, which re-runs on demand (focuses, events, economy refresh button)
+			update_tension_premium = yes
 			ingame_update_setup = yes
 			calculate_energy_load_sharing = yes
 			nuclear_reactor_fuel_consumption = yes
@@ -50,6 +52,11 @@ on_actions = {
 					}
 				}
 				space_automation_weekly = yes
+			}
+
+			# Banked here, not in ingame_update_setup, which re-runs on demand
+			if = { limit = { check_variable = { EU_seigniorage_weekly > 0 } }
+				add_to_variable = { global.EU_seigniorage_pool = EU_seigniorage_weekly }
 			}
 
 			add_to_variable = { int_investments = int_investments_reinvest_rate }
@@ -478,6 +485,16 @@ on_actions = {
 				}
 				# Antarctica Research Station blackout
 				if = {
+					limit = { has_country_flag = antarctica_station_setup_capacity_reserved }
+					add_to_variable = { global.antarctica_station_display_capacity_remaining = 1 }
+					clamp_variable = { var = global.antarctica_station_display_capacity_remaining min = 0 max = 70 }
+					clr_country_flag = antarctica_station_setup_capacity_reserved
+					set_variable = { antarctica_station_setup_in_progress = 0 }
+					set_variable = { antarctica_station_setup_days_remaining = 0 }
+					set_variable = { antarctica_station_setup_x = 0 }
+					set_variable = { antarctica_station_setup_y = 0 }
+				}
+				if = {
 					limit = { has_country_flag = antarctica_has_active_station }
 					antarctica_remove_research_station = yes
 					ROOT = { country_event = MD_antarctica.10 }
@@ -541,6 +558,45 @@ on_actions = {
 			}
 
 			log = "[GetDateText]: [ROOT.GetName] annexed [FROM.GetName] - Inflation blended to [?ROOT.inflation_rate_var|%], GDP/C tracker reset to [?ROOT.last_quarter_gdpc_total]"
+
+			# Free operatives held by the annexed country.
+			every_country = {
+				limit = {
+					FROM = { has_captured_operative = PREV }
+				}
+				free_random_operative = {
+					captured_by = FROM
+					all = yes
+				}
+			}
+
+			# Clear operation assets targeting the annexed country.
+			every_country = {
+				limit = {
+					OR = {
+						has_operation_token = { tag = FROM token = token_airforce }
+						has_operation_token = { tag = FROM token = token_army }
+						has_operation_token = { tag = FROM token = token_civilian }
+						has_operation_token = { tag = FROM token = token_navy }
+						has_operation_token = { tag = FROM token = token_resistance_contacts }
+						has_operation_token = { tag = FROM token = token_hvt }
+						has_operation_token = { tag = FROM token = token_arms_cache }
+						has_operation_token = { tag = FROM token = token_training_camps }
+						has_operation_token = { tag = FROM token = token_regional_headquarters }
+						has_operation_token = { tag = FROM token = token_foreign_advisors }
+					}
+				}
+				remove_operation_token = { tag = FROM token = token_airforce }
+				remove_operation_token = { tag = FROM token = token_army }
+				remove_operation_token = { tag = FROM token = token_civilian }
+				remove_operation_token = { tag = FROM token = token_navy }
+				remove_operation_token = { tag = FROM token = token_resistance_contacts }
+				remove_operation_token = { tag = FROM token = token_hvt }
+				remove_operation_token = { tag = FROM token = token_arms_cache }
+				remove_operation_token = { tag = FROM token = token_training_camps }
+				remove_operation_token = { tag = FROM token = token_regional_headquarters }
+				remove_operation_token = { tag = FROM token = token_foreign_advisors }
+			}
 		}
 	}
 
@@ -1324,7 +1380,13 @@ on_actions = {
 				limit = {
 					is_ai = yes
 					FROM = { tag = CHI }
-					NOT = { has_idea = chinese_yuan }
+					NOT = {
+						OR = {
+							has_idea = chinese_yuan
+							has_idea = chinese_yuan_2
+							has_idea = chinese_yuan_3
+						}
+					}
 				}
 				add_ideas = chinese_yuan
 			}
@@ -1349,7 +1411,11 @@ on_actions = {
 			if = {
 				limit = {
 					is_ai = yes
-					has_idea = chinese_yuan
+					OR = {
+						has_idea = chinese_yuan
+						has_idea = chinese_yuan_2
+						has_idea = chinese_yuan_3
+					}
 					NOT = { is_in_faction_with = CHI }
 					NOT = { tag = CHI }
 				}
