@@ -20,6 +20,7 @@ import disk_cache
 from shared_utils import extract_block_from_text
 from validate_gfx_references import (
     _GFX_SPRITE_TYPES,
+    _load_vanilla_sprite_manifest,
     _strip_comments,
     _vanilla_gfx_files,
 )
@@ -77,11 +78,13 @@ def build_sprite_index(
             pictures are always prefixed; focus icons are not).
         pool_map: optional BaseValidator._pool_map for parallel reads; falls
             back to a sequential scan when None.
-        include_vanilla: when True, also scan the vanilla HOI4 install (if
-            discoverable). Event pictures must be MD-defined, so the event check
-            passes False — that keeps it accurate in CI, where vanilla is absent.
-            Focus/idea icons may legitimately reuse vanilla sprites, so those
-            keep the default.
+        include_vanilla: when True, also take in the vanilla sprite names — from
+            a live HOI4 install when one is discoverable, and always from the
+            committed vanilla_sprites.txt manifest, so the index is the same with
+            or without a local install (CI has none). Event pictures must be
+            MD-defined, so the event check passes False. Focus/idea/decision
+            icons may legitimately reuse vanilla sprites, so those keep the
+            default.
     """
     gfx_files: List[str] = glob.glob(
         os.path.join(mod_path, "interface", "**", "*.gfx"), recursive=True
@@ -96,6 +99,9 @@ def build_sprite_index(
     else:
         for f in gfx_files:
             names.update(_names_in_file(f, mod_path))
+
+    if include_vanilla:
+        names.update(_load_vanilla_sprite_manifest())
 
     if gfx_only:
         names = {n for n in names if n.startswith("GFX_")}
