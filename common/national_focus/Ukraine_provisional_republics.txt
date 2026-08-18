@@ -1,0 +1,339 @@
+focus_tree = {
+	id = ukr_provisional_republic_focus
+
+	country = {
+		factor = 0
+		modifier = {
+			add = 20
+			has_country_flag = UKR_provisional_republic_focus_setup
+			OR = {
+				original_tag = SEU
+				original_tag = DRP
+				original_tag = OPR
+				original_tag = NOV
+			}
+		}
+	}
+
+	continuous_focus_position = { x = 1500 y = 1200 }
+
+	focus = {
+		id = UKR_prp_provisional_administration
+		icon = parliament_ukraine
+
+		x = 0
+		y = 0
+
+		cost = 1
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = { has_country_flag = UKR_provisional_republic_focus_setup }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_prp_provisional_administration"
+			add_political_power = 75
+			add_stability = 0.03
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	focus = {
+		id = UKR_prp_local_security
+		icon = military_fort
+
+		x = -3
+		y = 1
+		relative_position_id = UKR_prp_provisional_administration
+
+		cost = 1
+
+		prerequisite = { focus = UKR_prp_provisional_administration }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = { has_completed_focus = UKR_prp_provisional_administration }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_prp_local_security"
+			every_owned_state = {
+				add_resistance = -2
+			}
+			add_stability = 0.04
+		}
+
+		ai_will_do = { base = 90 }
+	}
+
+	focus = {
+		id = UKR_prp_volunteer_forces
+		icon = army_mobilisation
+
+		x = 3
+		y = 1
+		relative_position_id = UKR_prp_provisional_administration
+
+		cost = 1
+
+		prerequisite = { focus = UKR_prp_provisional_administration }
+
+		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_MANPOWER }
+
+		available = { has_completed_focus = UKR_prp_provisional_administration }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_prp_volunteer_forces"
+			division_template = {
+				name = "Provisional Volunteer Battalion"
+				regiments = {
+					L_Inf_Bat = { x = 0 y = 0 }
+					L_Inf_Bat = { x = 0 y = 1 }
+					L_Inf_Bat = { x = 0 y = 2 }
+				}
+				support = {
+					Arty_Battery = { x = 0 y = 0 }
+				}
+			}
+			set_equipment_fraction = 0.25
+			add_manpower = 1500
+			random_owned_controlled_state = {
+				create_unit = {
+					division = "name = \"Provisional Volunteer Battalion\" division_template = \"Provisional Volunteer Battalion\" start_experience_factor = 0.1"
+					owner = ROOT
+				}
+			}
+		}
+
+		ai_will_do = { base = 85 }
+	}
+
+	focus = {
+		id = UKR_prp_utilities_repair
+		icon = economic_roads_new
+
+		x = -3
+		y = 2
+		relative_position_id = UKR_prp_local_security
+
+		cost = 1
+
+		prerequisite = { focus = UKR_prp_local_security }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_POWER_INFRASTRUCTURE }
+
+		available = { has_completed_focus = UKR_prp_provisional_administration }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_prp_utilities_repair"
+			one_random_infrastructure = yes
+		}
+
+		ai_will_do = {
+			base = 80
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = UKR_prp_emergency_economy
+		icon = economic_civil_industry
+
+		x = 3
+		y = 2
+		relative_position_id = UKR_prp_volunteer_forces
+
+		cost = 1
+
+		prerequisite = { focus = UKR_prp_volunteer_forces }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
+
+		available = { has_completed_focus = UKR_prp_provisional_administration }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_prp_emergency_economy"
+			one_random_industrial_complex = yes
+		}
+
+		ai_will_do = {
+			base = 75
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = UKR_prp_constitutional_choice
+		icon = parliament_ukraine
+
+		x = 0
+		y = 3
+		relative_position_id = UKR_prp_utilities_repair
+
+		cost = 1
+
+		prerequisite = { focus = UKR_prp_utilities_repair }
+		prerequisite = { focus = UKR_prp_emergency_economy }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = { has_completed_focus = UKR_prp_provisional_administration }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_prp_constitutional_choice"
+			add_political_power = 50
+			add_stability = 0.05
+		}
+
+		ai_will_do = { base = 70 }
+	}
+
+	focus = {
+		id = UKR_prp_negotiate_kyiv
+		icon = ukr_uda
+
+		x = -3
+		y = 4
+		relative_position_id = UKR_prp_constitutional_choice
+
+		cost = 1
+
+		prerequisite = { focus = UKR_prp_constitutional_choice }
+		mutually_exclusive = { focus = UKR_prp_seek_moscow_support }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_DIPLOMACY }
+
+		available = {
+			country_exists = UKR
+			NOT = { has_war_with = UKR }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_prp_negotiate_kyiv"
+			UKR = {
+				add_opinion_modifier = { target = ROOT modifier = improve_trade }
+			}
+			add_opinion_modifier = { target = UKR modifier = improve_trade }
+			add_stability = 0.03
+		}
+
+		ai_will_do = { base = 70 }
+	}
+
+	focus = {
+		id = UKR_prp_seek_moscow_support
+		icon = flag_russia
+
+		x = 3
+		y = 4
+		relative_position_id = UKR_prp_constitutional_choice
+
+		cost = 1
+
+		prerequisite = { focus = UKR_prp_constitutional_choice }
+		mutually_exclusive = { focus = UKR_prp_negotiate_kyiv }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_DIPLOMACY }
+
+		available = {
+			country_exists = SOV
+			NOT = { has_war_with = SOV }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_prp_seek_moscow_support"
+			SOV = {
+				add_opinion_modifier = { target = ROOT modifier = improve_trade }
+			}
+			add_opinion_modifier = { target = SOV modifier = improve_trade }
+			add_political_power = 50
+		}
+
+		ai_will_do = { base = 65 }
+	}
+
+	focus = {
+		id = UKR_prp_independent_republic
+		icon = ukr_tro
+
+		x = -2
+		y = 5
+		relative_position_id = UKR_prp_constitutional_choice
+
+		cost = 1
+
+		prerequisite = { focus = UKR_prp_constitutional_choice }
+		mutually_exclusive = { focus = UKR_prp_regional_union }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = { NOT = { has_war = yes } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_prp_independent_republic"
+			if = {
+				limit = { is_subject = yes }
+				OVERLORD = {
+					set_autonomy = {
+						target = ROOT
+						autonomy_state = autonomy_free
+					}
+				}
+			}
+			add_stability = 0.05
+		}
+
+		ai_will_do = { base = 25 }
+	}
+
+	focus = {
+		id = UKR_prp_regional_union
+		icon = align_to_novorossiya
+
+		x = 2
+		y = 5
+		relative_position_id = UKR_prp_constitutional_choice
+
+		cost = 1
+
+		prerequisite = { focus = UKR_prp_constitutional_choice }
+		mutually_exclusive = { focus = UKR_prp_independent_republic }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_DIPLOMACY }
+
+		available = {
+			OR = {
+				original_tag = NOV
+				country_exists = NOV
+			}
+			NOT = { has_war = yes }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_prp_regional_union"
+			if = {
+				limit = { original_tag = NOV }
+			}
+			else_if = {
+				limit = { country_exists = NOV }
+				NOV = {
+					add_opinion_modifier = { target = ROOT modifier = improve_trade }
+				}
+				add_opinion_modifier = { target = NOV modifier = improve_trade }
+			}
+			add_stability = 0.03
+		}
+
+		ai_will_do = { base = 20 }
+	}
+}

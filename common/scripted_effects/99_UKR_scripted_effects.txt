@@ -1,37 +1,1478 @@
-modify_westerns_support = {
-	add_to_variable = { westerns = modify_westerns }
-	custom_effect_tooltip = UKR_westerns_tt
+UKR_add_political_tension = {
+	add_to_variable = { UKR_political_tension = tension_change }
+	custom_effect_tooltip = UKR_political_tension_tt
 	clamp_variable = {
-		var = westerns
+		var = UKR_political_tension
 		min = 0
-		max = 90
-	}
-}
-modify_easterns_support = {
-	add_to_variable = { easterns = modify_easterns }
-	custom_effect_tooltip = UKR_easterns_tt
-	clamp_variable = {
-		var = easterns
-		min = 0
-		max = 90
-	}
-}
-modify_maidani_support = {
-	add_to_variable = { maidani = modify_maidani }
-	custom_effect_tooltip = UKR_maidani_tt
-	clamp_variable = {
-		var = maidani
-		min = 0
-		max = 90
-	}
-}
-modify_subjectautoritet_support = {
-	add_to_variable = { subjectavtoritet = modify_subjectautoritet }
-	custom_effect_tooltip = UKR_subjectautoritet_tt
-	clamp_variable = {
-		var = subjectautoritet
-		min = 1
 		max = 100
+	}
+}
+UKR_setup_euromaidan_severity = {
+	log = "[GetDateText]: [Root.GetName]: Effect UKR_setup_euromaidan_severity"
+	if = {
+		limit = { NOT = { has_country_flag = UKR_euromaidan_severity_setup } }
+		if = {
+			limit = { has_country_flag = UKR_seuar_suppressed }
+			set_temp_variable = { tension_change = 20 }
+			UKR_add_political_tension = yes
+		}
+		if = {
+			limit = { has_country_flag = UKR_crimea_referendum_suppressed }
+			set_temp_variable = { tension_change = 15 }
+			UKR_add_political_tension = yes
+		}
+		if = {
+			limit = { has_country_flag = UKR_seuar_autonomy_declared }
+			set_temp_variable = { tension_change = -15 }
+			UKR_add_political_tension = yes
+		}
+		if = {
+			limit = { has_country_flag = UKR_seuar_reintegrated }
+			set_temp_variable = { tension_change = -20 }
+			UKR_add_political_tension = yes
+		}
+		if = {
+			limit = { has_country_flag = UKR_crimea_2004_restrained }
+			set_temp_variable = { tension_change = -15 }
+			UKR_add_political_tension = yes
+		}
+		if = {
+			limit = { has_country_flag = UKR_crimea_2004_departed }
+			set_temp_variable = { tension_change = 20 }
+			UKR_add_political_tension = yes
+		}
+		if = {
+			limit = { has_country_flag = UKR_crimea_2004_release_failed }
+			set_temp_variable = { tension_change = 5 }
+			UKR_add_political_tension = yes
+		}
+		if = {
+			limit = { has_country_flag = UKR_seuar_defeated }
+			set_temp_variable = { tension_change = 10 }
+			UKR_add_political_tension = yes
+		}
+		set_country_flag = UKR_euromaidan_severity_setup
+	}
+	clr_country_flag = UKR_euromaidan_mild
+	clr_country_flag = UKR_euromaidan_severe
+	if = {
+		limit = { check_variable = { UKR_political_tension < 40 } }
+		set_country_flag = UKR_euromaidan_mild
+	}
+	else_if = {
+		limit = { check_variable = { UKR_political_tension > 69 } }
+		set_country_flag = UKR_euromaidan_severe
+	}
+}
+UKR_start_euromaidan = {
+	log = "[GetDateText]: [Root.GetName]: Effect UKR_start_euromaidan"
+	if = {
+		limit = {
+			date > 2013.10.31
+			NOT = { has_country_flag = ukr_revoult_bilo }
+		}
+		UKR_setup_euromaidan_severity = yes
+		if = {
+			limit = { has_country_flag = UKR_euromaidan_severe }
+			add_stability = -0.05
+			add_war_support = 0.05
+		}
+		else_if = {
+			limit = { has_country_flag = UKR_euromaidan_mild }
+			add_stability = 0.02
+		}
+		set_country_flag = ukr_revoult_bilo
+		if = {
+			limit = {
+				OR = {
+					UKR_is_pro_east = yes
+					AND = {
+						is_ai = yes
+						has_global_flag = UKR_YANUK_PATH
+					}
+				}
+			}
+			country_event = { id = ukraine_maidan_west.1 days = 10 }
+		}
+		else = {
+			country_event = { id = ukraine_maidan_east.1 days = 10 }
+		}
+	}
+}
+UKR_start_republic_wave = {
+	log = "[GetDateText]: [Root.GetName]: Effect UKR_start_republic_wave"
+	if = {
+		limit = {
+			tag = UKR
+			country_exists = UKR
+			date > 2013.12.31
+			NOT = { has_country_flag = UKR_republic_wave_started }
+		}
+		set_country_flag = UKR_republic_wave_started
+		set_country_flag = UKR_republic_wave_active
+		country_event = { id = ukraine_revolution.40 days = 1 }
+	}
+}
+UKR_finish_republic_wave = {
+	clr_country_flag = UKR_republic_wave_active
+	set_country_flag = UKR_republic_wave_complete
+	if = {
+		limit = { NOT = { has_country_flag = UKR_provisional_flavor_wave_queued } }
+		set_country_flag = UKR_provisional_flavor_wave_queued
+		country_event = { id = ukraine_revolution.51 days = 1 }
+	}
+}
+UKR_queue_provisional_crimea_flavor = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_provisional_flavor_crimea_queued } }
+		set_country_flag = UKR_provisional_flavor_crimea_queued
+		country_event = { id = ukraine_revolution.53 days = 1 }
+	}
+}
+UKR_queue_provisional_novorossiya_flavor = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_provisional_flavor_novorossiya_queued } }
+		set_country_flag = UKR_provisional_flavor_novorossiya_queued
+		country_event = { id = ukraine_revolution.54 days = 1 }
+	}
+}
+UKR_prepare_DPR_wave = {
+	if = {
+		limit = {
+			OR = {
+				NOT = { country_exists = DPR }
+				DPR = { UKR_novorossiya_participant_eligible = yes }
+			}
+		}
+		693 = { add_core_of = DPR }
+		1030 = { add_core_of = DPR }
+		if = {
+			limit = {
+				NOT = { country_exists = DPR }
+				OR = {
+					owns_state = 693
+					owns_state = 1030
+				}
+			}
+			release = DPR
+		}
+		if = {
+			limit = { country_exists = DPR }
+			DPR = {
+				set_country_flag = UKR_subject_agree
+				if = {
+					limit = { NOT = { has_country_flag = UKR_provisional_flavor_first_republic_queued } }
+					set_country_flag = UKR_provisional_flavor_first_republic_queued
+					country_event = { id = ukraine_revolution.52 days = 1 }
+				}
+				if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+				if = { limit = { UKR = { owns_state = 693 } } transfer_state = 693 }
+				if = { limit = { UKR = { owns_state = 1030 } } transfer_state = 1030 }
+				if = {
+					limit = { NOT = { has_country_flag = UKR_republic_army_initialized } }
+					DPR_maidan_create_army = yes
+					set_country_flag = UKR_republic_army_initialized
+				}
+			}
+			if = {
+				limit = { DPR = { UKR_novorossiya_participant_eligible = yes } }
+				set_autonomy = {
+					target = DPR
+					autonomy_state = autonomy_republic_ukr
+				}
+			}
+		}
+	}
+}
+UKR_prepare_LPR_wave = {
+	if = {
+		limit = {
+			OR = {
+				NOT = { country_exists = LPR }
+				LPR = { UKR_novorossiya_participant_eligible = yes }
+			}
+		}
+		1075 = { add_core_of = LPR }
+		1076 = { add_core_of = LPR }
+		if = {
+			limit = {
+				NOT = { country_exists = LPR }
+				OR = {
+					owns_state = 1075
+					owns_state = 1076
+				}
+			}
+			release = LPR
+		}
+		if = {
+			limit = { country_exists = LPR }
+			LPR = {
+				set_country_flag = UKR_subject_agree
+				if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+				if = { limit = { UKR = { owns_state = 1075 } } transfer_state = 1075 }
+				if = { limit = { UKR = { owns_state = 1076 } } transfer_state = 1076 }
+				if = {
+					limit = { NOT = { has_country_flag = UKR_republic_army_initialized } }
+					LPR_maidan_create_army = yes
+					set_country_flag = UKR_republic_army_initialized
+				}
+			}
+			if = {
+				limit = { LPR = { UKR_novorossiya_participant_eligible = yes } }
+				set_autonomy = {
+					target = LPR
+					autonomy_state = autonomy_republic_ukr
+				}
+			}
+		}
+	}
+}
+UKR_prepare_DRP_wave = {
+	if = {
+		limit = {
+			OR = {
+				NOT = { country_exists = DRP }
+				DRP = { UKR_novorossiya_participant_eligible = yes }
+			}
+		}
+		1087 = { add_core_of = DRP }
+		if = {
+			limit = {
+				NOT = { country_exists = DRP }
+				owns_state = 1087
+			}
+			release = DRP
+		}
+		if = {
+			limit = { country_exists = DRP }
+			DRP = {
+				set_country_flag = UKR_subject_agree
+				set_country_flag = UKR_provisional_republic_focus_setup
+				if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+				if = { limit = { UKR = { owns_state = 1087 } } transfer_state = 1087 }
+				if = {
+					limit = { NOT = { has_country_flag = UKR_republic_army_initialized } }
+					DRP_maidan_create_army = yes
+					set_country_flag = UKR_republic_army_initialized
+				}
+			}
+			if = {
+				limit = { DRP = { UKR_novorossiya_participant_eligible = yes } }
+				set_autonomy = {
+					target = DRP
+					autonomy_state = autonomy_republic_ukr
+				}
+			}
+		}
+	}
+}
+UKR_prepare_OPR_wave = {
+	if = {
+		limit = {
+			OR = {
+				NOT = { country_exists = OPR }
+				OPR = { UKR_novorossiya_participant_eligible = yes }
+			}
+		}
+		695 = { add_core_of = OPR }
+		333 = { add_core_of = OPR }
+		if = {
+			limit = {
+				NOT = { country_exists = OPR }
+				OR = {
+					owns_state = 695
+					owns_state = 333
+				}
+			}
+			release = OPR
+		}
+		if = {
+			limit = { country_exists = OPR }
+			OPR = {
+				set_country_flag = UKR_subject_agree
+				set_country_flag = UKR_provisional_republic_focus_setup
+				if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+				if = { limit = { UKR = { owns_state = 695 } } transfer_state = 695 }
+				if = { limit = { UKR = { owns_state = 333 } } transfer_state = 333 }
+				if = {
+					limit = { NOT = { has_country_flag = UKR_republic_army_initialized } }
+					OPR_maidan_create_army = yes
+					set_country_flag = UKR_republic_army_initialized
+				}
+			}
+			if = {
+				limit = { OPR = { UKR_novorossiya_participant_eligible = yes } }
+				set_autonomy = {
+					target = OPR
+					autonomy_state = autonomy_republic_ukr
+				}
+			}
+		}
+	}
+}
+UKR_form_novorossiya = {
+	log = "[GetDateText]: [Root.GetName]: Effect UKR_form_novorossiya"
+	if = {
+		limit = { UKR_novorossiya_formation_ready = yes }
+		clr_country_flag = UKR_novorossiya_include_dpr
+		clr_country_flag = UKR_novorossiya_include_lpr
+		clr_country_flag = UKR_novorossiya_include_drp
+		clr_country_flag = UKR_novorossiya_include_opr
+		clr_country_flag = UKR_novorossiya_include_693
+		clr_country_flag = UKR_novorossiya_include_1030
+		clr_country_flag = UKR_novorossiya_include_1075
+		clr_country_flag = UKR_novorossiya_include_1076
+		clr_country_flag = UKR_novorossiya_include_696
+		clr_country_flag = UKR_novorossiya_include_694
+		clr_country_flag = UKR_novorossiya_include_1085
+		clr_country_flag = UKR_novorossiya_include_1086
+		clr_country_flag = UKR_novorossiya_include_695
+		clr_country_flag = UKR_novorossiya_include_333
+		clr_country_flag = UKR_novorossiya_include_1087
+		clr_country_flag = UKR_novorossiya_include_1088
+
+		if = {
+			limit = { DPR = { OR = { owns_state = 693 owns_state = 1030 } } }
+			set_country_flag = UKR_novorossiya_include_dpr
+		}
+		if = {
+			limit = { LPR = { OR = { owns_state = 1075 owns_state = 1076 } } }
+			set_country_flag = UKR_novorossiya_include_lpr
+		}
+		if = {
+			limit = { DRP = { owns_state = 1087 } }
+			set_country_flag = UKR_novorossiya_include_drp
+		}
+		if = {
+			limit = { OPR = { OR = { owns_state = 695 owns_state = 333 } } }
+			set_country_flag = UKR_novorossiya_include_opr
+		}
+
+		if = {
+			limit = {
+				OR = {
+					DPR = { owns_state = 693 }
+					AND = {
+						has_country_flag = UKR_republic_council_donetsk
+						owns_state = 693
+					}
+				}
+			}
+			set_country_flag = UKR_novorossiya_include_693
+		}
+		if = {
+			limit = {
+				OR = {
+					DPR = { owns_state = 1030 }
+					AND = {
+						has_country_flag = UKR_republic_council_donetsk
+						owns_state = 1030
+					}
+				}
+			}
+			set_country_flag = UKR_novorossiya_include_1030
+		}
+		if = {
+			limit = {
+				OR = {
+					LPR = { owns_state = 1075 }
+					AND = {
+						has_country_flag = UKR_republic_council_luhansk
+						owns_state = 1075
+					}
+				}
+			}
+			set_country_flag = UKR_novorossiya_include_1075
+		}
+		if = {
+			limit = {
+				OR = {
+					LPR = { owns_state = 1076 }
+					AND = {
+						has_country_flag = UKR_republic_council_luhansk
+						owns_state = 1076
+					}
+				}
+			}
+			set_country_flag = UKR_novorossiya_include_1076
+		}
+		if = {
+			limit = {
+				OR = {
+					DRP = { owns_state = 696 }
+					AND = {
+						has_country_flag = UKR_republic_council_kharkiv
+						owns_state = 696
+					}
+				}
+			}
+			set_country_flag = UKR_novorossiya_include_696
+		}
+		if = {
+			limit = {
+				OR = {
+					DRP = { owns_state = 694 }
+					AND = {
+						has_country_flag = UKR_republic_council_zaporizhzhia
+						owns_state = 694
+					}
+				}
+			}
+			set_country_flag = UKR_novorossiya_include_694
+		}
+		if = {
+			limit = {
+				OR = {
+					DRP = { owns_state = 1085 }
+					AND = {
+						has_country_flag = UKR_republic_council_south
+						owns_state = 1085
+					}
+				}
+			}
+			set_country_flag = UKR_novorossiya_include_1085
+		}
+		if = {
+			limit = {
+				OR = {
+					DRP = { owns_state = 1086 }
+					AND = {
+						has_country_flag = UKR_republic_council_south
+						owns_state = 1086
+					}
+				}
+			}
+			set_country_flag = UKR_novorossiya_include_1086
+		}
+		if = {
+			limit = {
+				OR = {
+					OPR = { owns_state = 695 }
+					AND = {
+						has_country_flag = UKR_republic_council_odessa
+						owns_state = 695
+					}
+				}
+			}
+			set_country_flag = UKR_novorossiya_include_695
+		}
+		if = {
+			limit = {
+				OR = {
+					OPR = { owns_state = 333 }
+					AND = {
+						has_country_flag = UKR_republic_council_odessa
+						owns_state = 333
+					}
+				}
+			}
+			set_country_flag = UKR_novorossiya_include_333
+		}
+		if = {
+			limit = {
+				OR = {
+					DRP = { owns_state = 1087 }
+					AND = {
+						has_country_flag = UKR_republic_council_dnipro
+						owns_state = 1087
+					}
+				}
+			}
+			set_country_flag = UKR_novorossiya_include_1087
+		}
+		if = {
+			limit = {
+				has_country_flag = UKR_republic_council_sumy
+				owns_state = 1088
+			}
+			set_country_flag = UKR_novorossiya_include_1088
+		}
+
+		set_country_flag = UKR_novorossiya_consolidating
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_dpr }
+			annex_country = { target = DPR transfer_troops = yes }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_lpr }
+			annex_country = { target = LPR transfer_troops = yes }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_drp }
+			annex_country = { target = DRP transfer_troops = yes }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_opr }
+			annex_country = { target = OPR transfer_troops = yes }
+		}
+
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_693 }
+			693 = { add_core_of = NOV }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_1030 }
+			1030 = { add_core_of = NOV }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_1075 }
+			1075 = { add_core_of = NOV }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_1076 }
+			1076 = { add_core_of = NOV }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_696 }
+			696 = { add_core_of = NOV }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_694 }
+			694 = { add_core_of = NOV }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_1085 }
+			1085 = { add_core_of = NOV }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_1086 }
+			1086 = { add_core_of = NOV }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_695 }
+			695 = { add_core_of = NOV }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_333 }
+			333 = { add_core_of = NOV }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_1087 }
+			1087 = { add_core_of = NOV }
+		}
+		if = {
+			limit = { has_country_flag = UKR_novorossiya_include_1088 }
+			1088 = { add_core_of = NOV }
+		}
+
+		if = {
+			limit = {
+				NOT = { country_exists = NOV }
+				OR = {
+					has_country_flag = UKR_novorossiya_include_693
+					has_country_flag = UKR_novorossiya_include_1030
+					has_country_flag = UKR_novorossiya_include_1075
+					has_country_flag = UKR_novorossiya_include_1076
+					has_country_flag = UKR_novorossiya_include_696
+					has_country_flag = UKR_novorossiya_include_694
+					has_country_flag = UKR_novorossiya_include_1085
+					has_country_flag = UKR_novorossiya_include_1086
+					has_country_flag = UKR_novorossiya_include_695
+					has_country_flag = UKR_novorossiya_include_333
+					has_country_flag = UKR_novorossiya_include_1087
+					has_country_flag = UKR_novorossiya_include_1088
+				}
+			}
+			release = NOV
+		}
+
+		if = {
+			limit = {
+				country_exists = NOV
+				NOV = {
+					OR = {
+						owns_state = 693
+						owns_state = 1030
+					}
+					OR = {
+						owns_state = 1075
+						owns_state = 1076
+					}
+				}
+			}
+			NOV = {
+				set_country_flag = UKR_subject_agree
+				if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+			}
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_693 } } 693 = { add_claim_by = NOV } }
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1030 } } 1030 = { add_claim_by = NOV } }
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1075 } } 1075 = { add_claim_by = NOV } }
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1076 } } 1076 = { add_claim_by = NOV } }
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_696 } } 696 = { add_claim_by = NOV } }
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_694 } } 694 = { add_claim_by = NOV } }
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1085 } } 1085 = { add_claim_by = NOV } }
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1086 } } 1086 = { add_claim_by = NOV } }
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_695 } } 695 = { add_claim_by = NOV } }
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_333 } } 333 = { add_claim_by = NOV } }
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1087 } } 1087 = { add_claim_by = NOV } }
+			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1088 } } 1088 = { add_claim_by = NOV } }
+			NOV = { NOV_shared_setup = yes }
+			set_country_flag = UKR_novorossiya_formed
+		}
+		clr_country_flag = UKR_novorossiya_consolidating
+	}
+}
+UKR_accept_novorossiya = {
+	log = "[GetDateText]: [Root.GetName]: Effect UKR_accept_novorossiya"
+	if = {
+		limit = {
+			country_exists = NOV
+			NOV = {
+				UKR_novorossiya_participant_eligible = yes
+				OR = {
+					owns_state = 693
+					owns_state = 1030
+				}
+				OR = {
+					owns_state = 1075
+					owns_state = 1076
+				}
+			}
+		}
+		NOV = {
+			set_country_flag = UKR_subject_agree
+			if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+		}
+		set_autonomy = {
+			target = NOV
+			autonomy_state = autonomy_novorossiya_ukr
+		}
+		set_country_flag = UKR_novorossiya_subject
+		set_temp_variable = { tension_change = -10 }
+		UKR_add_political_tension = yes
+	}
+}
+UKR_end_seuar_struggle = {
+	if = {
+		limit = { has_power_balance = { id = UKR_seuar_balance } }
+		remove_power_balance = { id = UKR_seuar_balance }
+	}
+	remove_ideas = UKR_seuar_autonomy_movement
+	clr_country_flag = UKR_seuar_struggle_active
+	clr_country_flag = UKR_seuar_resolution_scheduled
+}
+UKR_remove_seuar_cores = {
+	if = {
+		limit = { NOT = { country_exists = SEU } }
+		693 = {
+			remove_core_of = SEU
+			remove_claim_by = SEU
+		}
+		1030 = {
+			remove_core_of = SEU
+			remove_claim_by = SEU
+		}
+		1075 = {
+			remove_core_of = SEU
+			remove_claim_by = SEU
+		}
+		1076 = {
+			remove_core_of = SEU
+			remove_claim_by = SEU
+		}
+		696 = {
+			remove_core_of = SEU
+			remove_claim_by = SEU
+		}
+		694 = {
+			remove_core_of = SEU
+			remove_claim_by = SEU
+		}
+		1087 = {
+			remove_core_of = SEU
+			remove_claim_by = SEU
+		}
+		1085 = {
+			remove_core_of = SEU
+			remove_claim_by = SEU
+		}
+		1086 = {
+			remove_core_of = SEU
+			remove_claim_by = SEU
+		}
+		695 = {
+			remove_core_of = SEU
+			remove_claim_by = SEU
+		}
+	}
+}
+UKR_cleanup_seu_rework = {
+	if = {
+		limit = { NOT = { country_exists = SEU } }
+		UKR_remove_seuar_cores = yes
+		UKR = {
+			set_country_flag = UKR_seuar_cores_removed
+			if = {
+				limit = {
+					OR = {
+						has_country_flag = UKR_seuar_border_war
+						has_country_flag = UKR_seuar_capitulated
+					}
+				}
+				set_country_flag = UKR_seuar_defeated
+			}
+			clr_country_flag = UKR_seuar_rise
+			clr_country_flag = UKR_seuar_autonomy_requested
+			clr_country_flag = UKR_seuar_struggle_active
+			clr_country_flag = UKR_seuar_resolution_scheduled
+			clr_country_flag = UKR_seuar_force_used
+			clr_country_flag = UKR_seuar_border_war
+			clr_country_flag = UKR_seuar_ceasefire_offered
+			clr_country_flag = UKR_used_seuar_specops
+			clr_country_flag = UKR_seuar_subject_seen
+			clr_country_flag = UKR_seuar_war_seen
+			clr_country_flag = UKR_seuar_capitulated
+		}
+	}
+}
+UKR_cleanup_dpr_rework = {
+	if = {
+		limit = {
+			NOT = { country_exists = DPR }
+			NOT = { has_country_flag = UKR_novorossiya_consolidating }
+		}
+		693 = {
+			remove_core_of = DPR
+			remove_claim_by = DPR
+		}
+		1030 = {
+			remove_core_of = DPR
+			remove_claim_by = DPR
+		}
+		1075 = {
+			remove_core_of = DPR
+			remove_claim_by = DPR
+		}
+		1076 = {
+			remove_core_of = DPR
+			remove_claim_by = DPR
+		}
+		UKR = {
+			set_country_flag = UKR_dpr_rework_cleanup_done
+			clr_country_flag = UKR_republic_wave_donetsk_done
+			clr_country_flag = UKR_republic_council_donetsk
+			clr_country_flag = UKR_republic_donetsk_emerged
+			clr_country_flag = UKR_novorossiya_include_dpr
+			clr_country_flag = UKR_novorossiya_include_693
+			clr_country_flag = UKR_novorossiya_include_1030
+			clr_country_flag = UKR_dpr_subject_seen
+			clr_country_flag = UKR_dpr_war_seen
+			clr_country_flag = UKR_dpr_capitulated
+		}
+	}
+}
+UKR_cleanup_lpr_rework = {
+	if = {
+		limit = {
+			NOT = { country_exists = LPR }
+			NOT = { has_country_flag = UKR_novorossiya_consolidating }
+		}
+		1075 = {
+			remove_core_of = LPR
+			remove_claim_by = LPR
+		}
+		1076 = {
+			remove_core_of = LPR
+			remove_claim_by = LPR
+		}
+		UKR = {
+			set_country_flag = UKR_lpr_rework_cleanup_done
+			clr_country_flag = UKR_republic_wave_luhansk_done
+			clr_country_flag = UKR_republic_council_luhansk
+			clr_country_flag = UKR_republic_luhansk_emerged
+			clr_country_flag = UKR_novorossiya_include_lpr
+			clr_country_flag = UKR_novorossiya_include_1075
+			clr_country_flag = UKR_novorossiya_include_1076
+			clr_country_flag = UKR_lpr_subject_seen
+			clr_country_flag = UKR_lpr_war_seen
+			clr_country_flag = UKR_lpr_capitulated
+		}
+	}
+}
+UKR_cleanup_drp_rework = {
+	if = {
+		limit = {
+			NOT = { country_exists = DRP }
+			NOT = { has_country_flag = UKR_novorossiya_consolidating }
+		}
+		1087 = {
+			remove_core_of = DRP
+			remove_claim_by = DRP
+		}
+		UKR = {
+			set_country_flag = UKR_drp_rework_cleanup_done
+			clr_country_flag = UKR_republic_wave_dnipro_done
+			clr_country_flag = UKR_republic_council_dnipro
+			clr_country_flag = UKR_republic_dnipro_emerged
+			clr_country_flag = UKR_novorossiya_include_drp
+			clr_country_flag = UKR_novorossiya_include_1087
+			clr_country_flag = UKR_drp_subject_seen
+			clr_country_flag = UKR_drp_war_seen
+			clr_country_flag = UKR_drp_capitulated
+		}
+	}
+}
+UKR_cleanup_opr_rework = {
+	if = {
+		limit = {
+			NOT = { country_exists = OPR }
+			NOT = { has_country_flag = UKR_novorossiya_consolidating }
+		}
+		695 = {
+			remove_core_of = OPR
+			remove_claim_by = OPR
+		}
+		333 = {
+			remove_core_of = OPR
+			remove_claim_by = OPR
+		}
+		UKR = {
+			set_country_flag = UKR_opr_rework_cleanup_done
+			clr_country_flag = UKR_republic_wave_odessa_done
+			clr_country_flag = UKR_republic_council_odessa
+			clr_country_flag = UKR_republic_odessa_emerged
+			clr_country_flag = UKR_novorossiya_include_opr
+			clr_country_flag = UKR_novorossiya_include_695
+			clr_country_flag = UKR_novorossiya_include_333
+			clr_country_flag = UKR_opr_subject_seen
+			clr_country_flag = UKR_opr_war_seen
+			clr_country_flag = UKR_opr_capitulated
+		}
+	}
+}
+UKR_cleanup_crm_rework = {
+	if = {
+		limit = { NOT = { country_exists = CRM } }
+		669 = {
+			remove_core_of = CRM
+			remove_claim_by = CRM
+		}
+		1112 = {
+			remove_core_of = CRM
+			remove_claim_by = CRM
+		}
+		1085 = {
+			remove_core_of = CRM
+			remove_claim_by = CRM
+		}
+		694 = {
+			remove_core_of = CRM
+			remove_claim_by = CRM
+		}
+		UKR = {
+			set_country_flag = UKR_crm_rework_cleanup_done
+			clr_country_flag = UKR_republic_wave_crimea_done
+			clr_country_flag = UKR_republic_council_crimea
+			clr_country_flag = UKR_crimea_2014_chain_active
+			clr_country_flag = UKR_crm_subject_seen
+			clr_country_flag = UKR_crm_war_seen
+			clr_country_flag = UKR_crm_capitulated
+		}
+	}
+}
+UKR_cleanup_nov_rework = {
+	if = {
+		limit = { NOT = { country_exists = NOV } }
+		693 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		1030 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		1075 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		1076 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		696 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		694 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		1085 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		1086 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		695 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		333 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		1087 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		1088 = {
+			remove_core_of = NOV
+			remove_claim_by = NOV
+		}
+		UKR = {
+			set_country_flag = UKR_nov_rework_cleanup_done
+			clr_country_flag = UKR_novorossiya_subject
+			clr_country_flag = UKR_novorossiya_include_dpr
+			clr_country_flag = UKR_novorossiya_include_lpr
+			clr_country_flag = UKR_novorossiya_include_drp
+			clr_country_flag = UKR_novorossiya_include_opr
+			clr_country_flag = UKR_novorossiya_include_693
+			clr_country_flag = UKR_novorossiya_include_1030
+			clr_country_flag = UKR_novorossiya_include_1075
+			clr_country_flag = UKR_novorossiya_include_1076
+			clr_country_flag = UKR_novorossiya_include_696
+			clr_country_flag = UKR_novorossiya_include_694
+			clr_country_flag = UKR_novorossiya_include_1085
+			clr_country_flag = UKR_novorossiya_include_1086
+			clr_country_flag = UKR_novorossiya_include_695
+			clr_country_flag = UKR_novorossiya_include_333
+			clr_country_flag = UKR_novorossiya_include_1087
+			clr_country_flag = UKR_novorossiya_include_1088
+			clr_country_flag = UKR_nov_subject_seen
+			clr_country_flag = UKR_nov_war_seen
+			clr_country_flag = UKR_nov_capitulated
+		}
+	}
+}
+UKR_rework_monthly_cleanup = {
+	if = {
+		limit = {
+			NOT = { country_exists = SEU }
+			NOT = { has_country_flag = UKR_seuar_cores_removed }
+			OR = {
+				has_country_flag = UKR_seuar_rise
+				has_country_flag = UKR_seuar_autonomy_requested
+				has_country_flag = UKR_seuar_struggle_active
+				has_country_flag = UKR_seuar_border_war
+				has_country_flag = UKR_seuar_subject_seen
+				has_country_flag = UKR_seuar_war_seen
+				has_country_flag = UKR_seuar_capitulated
+				has_country_flag = UKR_seuar_autonomy_declared
+				has_country_flag = UKR_seuar_reintegrated
+				has_country_flag = UKR_seuar_legacy
+			}
+		}
+		UKR_cleanup_seu_rework = yes
+	}
+	if = {
+		limit = {
+			NOT = { country_exists = DPR }
+			NOT = { has_country_flag = UKR_dpr_rework_cleanup_done }
+			OR = {
+				has_country_flag = UKR_republic_wave_donetsk_done
+				has_country_flag = UKR_republic_council_donetsk
+				has_country_flag = UKR_republic_donetsk_emerged
+				has_country_flag = UKR_dpr_subject_seen
+				has_country_flag = UKR_dpr_war_seen
+				has_country_flag = UKR_dpr_capitulated
+			}
+		}
+		UKR_cleanup_dpr_rework = yes
+	}
+	if = {
+		limit = {
+			NOT = { country_exists = LPR }
+			NOT = { has_country_flag = UKR_lpr_rework_cleanup_done }
+			OR = {
+				has_country_flag = UKR_republic_wave_luhansk_done
+				has_country_flag = UKR_republic_council_luhansk
+				has_country_flag = UKR_republic_luhansk_emerged
+				has_country_flag = UKR_lpr_subject_seen
+				has_country_flag = UKR_lpr_war_seen
+				has_country_flag = UKR_lpr_capitulated
+			}
+		}
+		UKR_cleanup_lpr_rework = yes
+	}
+	if = {
+		limit = {
+			NOT = { country_exists = DRP }
+			NOT = { has_country_flag = UKR_drp_rework_cleanup_done }
+			OR = {
+				has_country_flag = UKR_republic_wave_dnipro_done
+				has_country_flag = UKR_republic_council_dnipro
+				has_country_flag = UKR_republic_dnipro_emerged
+				has_country_flag = UKR_drp_subject_seen
+				has_country_flag = UKR_drp_war_seen
+				has_country_flag = UKR_drp_capitulated
+			}
+		}
+		UKR_cleanup_drp_rework = yes
+	}
+	if = {
+		limit = {
+			NOT = { country_exists = OPR }
+			NOT = { has_country_flag = UKR_opr_rework_cleanup_done }
+			OR = {
+				has_country_flag = UKR_republic_wave_odessa_done
+				has_country_flag = UKR_republic_council_odessa
+				has_country_flag = UKR_republic_odessa_emerged
+				has_country_flag = UKR_opr_subject_seen
+				has_country_flag = UKR_opr_war_seen
+				has_country_flag = UKR_opr_capitulated
+			}
+		}
+		UKR_cleanup_opr_rework = yes
+	}
+	if = {
+		limit = {
+			NOT = { country_exists = CRM }
+			NOT = { has_country_flag = UKR_crm_rework_cleanup_done }
+			OR = {
+				has_country_flag = UKR_republic_wave_crimea_done
+				has_country_flag = UKR_republic_council_crimea
+				has_country_flag = UKR_crimea_2014_chain_active
+				has_country_flag = UKR_crm_subject_seen
+				has_country_flag = UKR_crm_war_seen
+				has_country_flag = UKR_crm_capitulated
+				has_country_flag = UKR_crimea_2004_restrained
+				has_country_flag = UKR_crimea_2004_legacy
+				has_country_flag = UKR_crimea_2004_protectorate
+				has_country_flag = UKR_crimea_2004_departed
+				has_country_flag = UKR_crimea_2004_annexed
+			}
+		}
+		UKR_cleanup_crm_rework = yes
+	}
+	if = {
+		limit = {
+			NOT = { country_exists = NOV }
+			NOT = { has_country_flag = UKR_nov_rework_cleanup_done }
+			OR = {
+				has_country_flag = UKR_novorossiya_formed
+				has_country_flag = UKR_novorossiya_subject
+				has_country_flag = UKR_nov_subject_seen
+				has_country_flag = UKR_nov_war_seen
+				has_country_flag = UKR_nov_capitulated
+			}
+		}
+		UKR_cleanup_nov_rework = yes
+	}
+}
+UKR_record_rework_war = {
+	if = {
+		limit = {
+			OR = {
+				AND = { ROOT = { original_tag = UKR } FROM = { original_tag = SEU } }
+				AND = { ROOT = { original_tag = SEU } FROM = { original_tag = UKR } }
+			}
+		}
+		UKR = { set_country_flag = UKR_seuar_war_seen }
+	}
+	if = {
+		limit = {
+			OR = {
+				AND = { ROOT = { original_tag = UKR } FROM = { original_tag = DPR } }
+				AND = { ROOT = { original_tag = DPR } FROM = { original_tag = UKR } }
+			}
+		}
+		UKR = { set_country_flag = UKR_dpr_war_seen }
+	}
+	if = {
+		limit = {
+			OR = {
+				AND = { ROOT = { original_tag = UKR } FROM = { original_tag = LPR } }
+				AND = { ROOT = { original_tag = LPR } FROM = { original_tag = UKR } }
+			}
+		}
+		UKR = { set_country_flag = UKR_lpr_war_seen }
+	}
+	if = {
+		limit = {
+			OR = {
+				AND = { ROOT = { original_tag = UKR } FROM = { original_tag = DRP } }
+				AND = { ROOT = { original_tag = DRP } FROM = { original_tag = UKR } }
+			}
+		}
+		UKR = { set_country_flag = UKR_drp_war_seen }
+	}
+	if = {
+		limit = {
+			OR = {
+				AND = { ROOT = { original_tag = UKR } FROM = { original_tag = OPR } }
+				AND = { ROOT = { original_tag = OPR } FROM = { original_tag = UKR } }
+			}
+		}
+		UKR = { set_country_flag = UKR_opr_war_seen }
+	}
+	if = {
+		limit = {
+			OR = {
+				AND = { ROOT = { original_tag = UKR } FROM = { original_tag = CRM } }
+				AND = { ROOT = { original_tag = CRM } FROM = { original_tag = UKR } }
+			}
+		}
+		UKR = { set_country_flag = UKR_crm_war_seen }
+	}
+	if = {
+		limit = {
+			OR = {
+				AND = { ROOT = { original_tag = UKR } FROM = { original_tag = NOV } }
+				AND = { ROOT = { original_tag = NOV } FROM = { original_tag = UKR } }
+			}
+		}
+		UKR = { set_country_flag = UKR_nov_war_seen }
+	}
+}
+UKR_record_rework_capitulation = {
+	if = {
+		limit = { original_tag = SEU }
+		set_country_flag = UKR_seuar_capitulated
+		if = {
+			limit = { FROM = { original_tag = UKR } }
+			FROM = { set_country_flag = UKR_seuar_capitulated }
+		}
+	}
+	if = {
+		limit = { original_tag = DPR }
+		set_country_flag = UKR_dpr_capitulated
+		if = {
+			limit = { FROM = { original_tag = UKR } }
+			FROM = { set_country_flag = UKR_dpr_capitulated }
+		}
+	}
+	if = {
+		limit = { original_tag = LPR }
+		set_country_flag = UKR_lpr_capitulated
+		if = {
+			limit = { FROM = { original_tag = UKR } }
+			FROM = { set_country_flag = UKR_lpr_capitulated }
+		}
+	}
+	if = {
+		limit = { original_tag = DRP }
+		set_country_flag = UKR_drp_capitulated
+		if = {
+			limit = { FROM = { original_tag = UKR } }
+			FROM = { set_country_flag = UKR_drp_capitulated }
+		}
+	}
+	if = {
+		limit = { original_tag = OPR }
+		set_country_flag = UKR_opr_capitulated
+		if = {
+			limit = { FROM = { original_tag = UKR } }
+			FROM = { set_country_flag = UKR_opr_capitulated }
+		}
+	}
+	if = {
+		limit = { original_tag = CRM }
+		set_country_flag = UKR_crm_capitulated
+		if = {
+			limit = { FROM = { original_tag = UKR } }
+			FROM = { set_country_flag = UKR_crm_capitulated }
+		}
+	}
+	if = {
+		limit = { original_tag = NOV }
+		set_country_flag = UKR_nov_capitulated
+		if = {
+			limit = { FROM = { original_tag = UKR } }
+			FROM = { set_country_flag = UKR_nov_capitulated }
+		}
+	}
+}
+UKR_register_rework_puppet = {
+	if = {
+		limit = {
+			original_tag = SEU
+			FROM = { original_tag = UKR }
+		}
+		set_country_flag = UKR_subject_agree
+		if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+		FROM = {
+			set_country_flag = UKR_seuar_subject_seen
+			set_autonomy = { target = ROOT autonomy_state = autonomy_republic_ukr }
+		}
+	}
+	if = {
+		limit = {
+			original_tag = DPR
+			FROM = { original_tag = UKR }
+		}
+		set_country_flag = UKR_subject_agree
+		if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+		FROM = {
+			set_country_flag = UKR_dpr_subject_seen
+			set_autonomy = { target = ROOT autonomy_state = autonomy_republic_ukr }
+		}
+	}
+	if = {
+		limit = {
+			original_tag = LPR
+			FROM = { original_tag = UKR }
+		}
+		set_country_flag = UKR_subject_agree
+		if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+		FROM = {
+			set_country_flag = UKR_lpr_subject_seen
+			set_autonomy = { target = ROOT autonomy_state = autonomy_republic_ukr }
+		}
+	}
+	if = {
+		limit = {
+			original_tag = DRP
+			FROM = { original_tag = UKR }
+		}
+		set_country_flag = UKR_subject_agree
+		if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+		FROM = {
+			set_country_flag = UKR_drp_subject_seen
+			set_autonomy = { target = ROOT autonomy_state = autonomy_republic_ukr }
+		}
+	}
+	if = {
+		limit = {
+			original_tag = OPR
+			FROM = { original_tag = UKR }
+		}
+		set_country_flag = UKR_subject_agree
+		if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+		FROM = {
+			set_country_flag = UKR_opr_subject_seen
+			set_autonomy = { target = ROOT autonomy_state = autonomy_republic_ukr }
+		}
+	}
+	if = {
+		limit = {
+			original_tag = CRM
+			FROM = { original_tag = UKR }
+		}
+		set_country_flag = UKR_subject_agree
+		if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+		FROM = {
+			set_country_flag = UKR_crm_subject_seen
+			set_autonomy = { target = ROOT autonomy_state = autonomy_republic_ukr }
+		}
+	}
+	if = {
+		limit = {
+			original_tag = NOV
+			FROM = { original_tag = UKR }
+		}
+		set_country_flag = UKR_subject_agree
+		if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+		FROM = {
+			set_country_flag = UKR_nov_subject_seen
+			set_autonomy = { target = ROOT autonomy_state = autonomy_novorossiya_ukr }
+		}
+	}
+}
+UKR_regional_republic_templates = {
+	division_template = {
+		name = "Batalyon Dobrovolchev"
+		regiments = {
+			L_Inf_Bat = { x = 0 y = 0 }
+			L_Inf_Bat = { x = 0 y = 1 }
+			L_Inf_Bat = { x = 0 y = 2 }
+			L_Inf_Bat = { x = 0 y = 3 }
+		}
+		priority = 0
+	}
+	division_template = {
+		name = "Brigada Dobrovolchev"
+		regiments = {
+			L_Inf_Bat = { x = 0 y = 0 }
+			L_Inf_Bat = { x = 0 y = 1 }
+			L_Inf_Bat = { x = 0 y = 2 }
+		}
+		support = {
+			Arty_Battery = { x = 0 y = 0 }
+		}
+		priority = 0
+	}
+	division_template = {
+		name = "Pekhotnaya Brigada"
+		regiments = {
+			Mot_Inf_Bat = { x = 0 y = 0 }
+			Mot_Inf_Bat = { x = 0 y = 1 }
+			Mot_Inf_Bat = { x = 0 y = 2 }
+		}
+		support = {
+			Arty_Battery = { x = 0 y = 0 }
+			L_Engi_Comp = { x = 0 y = 1 }
+		}
+	}
+	division_template = {
+		name = "Motorizovannaya Brigada"
+		regiments = {
+			Mech_Inf_Bat = { x = 0 y = 0 }
+			Mech_Inf_Bat = { x = 0 y = 1 }
+			Mech_Inf_Bat = { x = 0 y = 2 }
+		}
+		support = {
+			SP_Arty_Battery = { x = 0 y = 0 }
+			L_Engi_Comp = { x = 0 y = 1 }
+		}
+	}
+	division_template = {
+		name = "Batalyon Spetsnaza"
+		regiments = {
+			Mech_Inf_Bat = { x = 0 y = 0 }
+			Mech_Inf_Bat = { x = 0 y = 1 }
+			Mech_Inf_Bat = { x = 0 y = 2 }
+		}
+		support = {
+			armor_Comp = { x = 0 y = 0 }
+		}
+		priority = 2
+	}
+	division_template = {
+		name = "Mekhanizirovannaya Brigada"
+		regiments = {
+			Arm_Inf_Bat = { x = 0 y = 0 }
+			Arm_Inf_Bat = { x = 0 y = 1 }
+			Arm_Inf_Bat = { x = 0 y = 2 }
+		}
+		support = {
+			SP_Arty_Battery = { x = 0 y = 0 }
+			L_Engi_Comp = { x = 0 y = 1 }
+		}
+	}
+	division_template = {
+		name = "Kazachya Brigada"
+		regiments = {
+			Arm_Inf_Bat = { x = 0 y = 0 }
+			Arm_Inf_Bat = { x = 0 y = 1 }
+			Arm_Inf_Bat = { x = 0 y = 2 }
+			SP_Arty_Bat = { x = 0 y = 3 }
+			armor_Bat = { x = 1 y = 0 }
+		}
+		support = {
+			H_Engi_Comp = { x = 0 y = 0 }
+		}
+		priority = 2
+	}
+	division_template = {
+		name = "Tankovyi Batalyon"
+		regiments = {
+			armor_Bat = { x = 0 y = 0 }
+			armor_Bat = { x = 0 y = 1 }
+		}
+		support = {
+			armor_Recce_Comp = { x = 0 y = 0 }
+		}
+	}
+}
+DRP_maidan_create_army = {
+	UKR_regional_republic_templates = yes
+	division_template = {
+		name = "Dnipro Volunteer Battalion"
+		regiments = {
+			L_Inf_Bat = { x = 0 y = 0 }
+			L_Inf_Bat = { x = 0 y = 1 }
+			L_Inf_Bat = { x = 0 y = 2 }
+		}
+		support = {
+			Arty_Battery = { x = 0 y = 0 }
+		}
+	}
+	set_equipment_fraction = 0.25
+	random_owned_controlled_state = {
+		create_unit = {
+			division = "name = \"Dnipro Volunteer Battalion\" division_template = \"Dnipro Volunteer Battalion\" start_experience_factor = 0.1"
+			owner = DRP
+		}
+	}
+}
+OPR_maidan_create_army = {
+	UKR_regional_republic_templates = yes
+	division_template = {
+		name = "Bryhada Morskoyi Pikhoty"
+		division_names_group = UKR_MAR_01
+		regiments = {
+			Arm_Marine_Bat = { x = 0 y = 2 }
+			Mech_Marine_Bat = { x = 0 y = 0 }
+			Mech_Marine_Bat = { x = 0 y = 1 }
+			Mot_Marine_Bat = { x = 0 y = 3 }
+			Mot_Marine_Bat = { x = 0 y = 4 }
+		}
+		support = {
+			H_Engi_Comp = { x = 0 y = 0 }
+		}
+	}
+	division_template = {
+		name = "Odesa Volunteer Battalion"
+		regiments = {
+			L_Inf_Bat = { x = 0 y = 0 }
+			L_Inf_Bat = { x = 0 y = 1 }
+			L_Inf_Bat = { x = 0 y = 2 }
+		}
+		support = {
+			Arty_Battery = { x = 0 y = 0 }
+		}
+	}
+	set_equipment_fraction = 0.25
+	random_owned_controlled_state = {
+		create_unit = {
+			division = "name = \"Odesa Volunteer Battalion\" division_template = \"Odesa Volunteer Battalion\" start_experience_factor = 0.1"
+			owner = OPR
+		}
+	}
+}
+NOV_shared_setup = {
+	set_country_flag = UKR_provisional_republic_focus_setup
+	if = {
+		limit = {
+			NOT = { has_country_flag = NOV_wave_army_initialized }
+			any_owned_state = {
+				controller = { tag = NOV }
+			}
+		}
+		UKR_regional_republic_templates = yes
+		division_template = {
+			name = "Novorossiyan Volunteer Brigade"
+			regiments = {
+				L_Inf_Bat = { x = 0 y = 0 }
+				L_Inf_Bat = { x = 0 y = 1 }
+				L_Inf_Bat = { x = 0 y = 2 }
+			}
+			support = {
+				Arty_Battery = { x = 0 y = 0 }
+			}
+		}
+		set_equipment_fraction = 0.25
+		random_owned_controlled_state = {
+			create_unit = {
+				division = "name = \"Novorossiyan Volunteer Brigade\" division_template = \"Novorossiyan Volunteer Brigade\" start_experience_factor = 0.1"
+				owner = NOV
+			}
+		}
+		set_country_flag = NOV_wave_army_initialized
+	}
+}
+SEU_maidan_create_army = {
+	division_template = {
+		name = "SEU Volunteer Brigade"
+		regiments = {
+			L_Inf_Bat = { x = 0 y = 0 }
+			L_Inf_Bat = { x = 0 y = 1 }
+			L_Inf_Bat = { x = 0 y = 2 }
+		}
+		support = {
+			Arty_Battery = { x = 0 y = 0 }
+		}
+		priority = 1
+	}
+	set_equipment_fraction = 0.25
+	693 = {
+		create_unit = {
+			division = "name = \"SEU Volunteer Brigade\" division_template = \"SEU Volunteer Brigade\" start_experience_factor = 0.1"
+			prioritize_location = 6474
+			owner = SEU
+		}
 	}
 }
 ukrane_choose_ai = {
@@ -49,6 +1490,21 @@ ukrane_choose_ai = {
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
+		change_relative_party_popularity = yes
+	}
+	if = {
+		limit = {
+			has_global_flag = UKR_YANUK_PATH
+		}
+		if = {
+			limit = { NOT = { is_in_array = { ruling_party = 6 } } }
+			set_temp_variable = { rul_party_temp = 6 }
+			set_temp_variable = { disable_elections = 0 }
+			change_ruling_party_effect = yes
+		}
+		set_temp_variable = { party_index = 6 }
+		set_temp_variable = { party_popularity_increase = 0.35 }
+		set_temp_variable = { temp_outlook_increase = 0.35 }
 		change_relative_party_popularity = yes
 	}
 	if = {
@@ -149,8 +1605,8 @@ ukraine_subjects_annex = {
 		set_temp_variable = { party_popularity_increase = -0.13 }
 		set_temp_variable = { temp_outlook_increase = -0.13 }
 		change_relative_party_popularity = yes
-		annex_country = { target = DPR transfer_troops = yes }
 		DPR = { every_core_state = { add_core_of = UKR } }
+		annex_country = { target = DPR transfer_troops = yes }
 		hidden_effect = {
 			add_to_variable = { treasury = DPR.treasury }
 			add_to_variable = { debt = DPR.debt }
@@ -197,8 +1653,8 @@ ukraine_subjects_annex = {
 		set_temp_variable = { party_popularity_increase = -0.13 }
 		set_temp_variable = { temp_outlook_increase = -0.13 }
 		change_relative_party_popularity = yes
-		annex_country = { target = LRP transfer_troops = yes }
 		LRP = { every_core_state = { add_core_of = UKR } }
+		annex_country = { target = LRP transfer_troops = yes }
 		hidden_effect = {
 			add_to_variable = { treasury = LRP.treasury }
 			add_to_variable = { debt = LRP.debt }
@@ -221,8 +1677,8 @@ ukraine_subjects_annex = {
 		set_temp_variable = { party_popularity_increase = -0.13 }
 		set_temp_variable = { temp_outlook_increase = -0.13 }
 		change_relative_party_popularity = yes
-		annex_country = { target = LPR transfer_troops = yes }
 		LPR = { every_core_state = { add_core_of = UKR } }
+		annex_country = { target = LPR transfer_troops = yes }
 		hidden_effect = {
 			add_to_variable = { treasury = LPR.treasury }
 			add_to_variable = { debt = LPR.debt }
@@ -245,12 +1701,84 @@ ukraine_subjects_annex = {
 		set_temp_variable = { party_popularity_increase = -0.13 }
 		set_temp_variable = { temp_outlook_increase = -0.13 }
 		change_relative_party_popularity = yes
-		annex_country = { target = CRM transfer_troops = yes }
 		CRM = { every_core_state = { add_core_of = UKR } }
+		annex_country = { target = CRM transfer_troops = yes }
 		hidden_effect = {
 			add_to_variable = { treasury = CRM.treasury }
 			add_to_variable = { debt = CRM.debt }
 			add_to_variable = { int_investments = CRM.int_investments }
+		}
+	}
+	if = {
+		limit = {
+			DRP = {
+				is_ai = yes
+				has_autonomy_state = autonomy_republic_ukr
+				is_subject_of = UKR
+				influence_higher_40 = yes
+			}
+			country_exists = DRP
+		}
+		add_political_power = -300
+		set_temp_variable = { treasury_change = -12 }
+		modify_treasury_effect = yes
+		set_temp_variable = { party_popularity_increase = -0.13 }
+		set_temp_variable = { temp_outlook_increase = -0.13 }
+		change_relative_party_popularity = yes
+		DRP = { every_core_state = { add_core_of = UKR } }
+		annex_country = { target = DRP transfer_troops = yes }
+		hidden_effect = {
+			add_to_variable = { treasury = DRP.treasury }
+			add_to_variable = { debt = DRP.debt }
+			add_to_variable = { int_investments = DRP.int_investments }
+		}
+	}
+	if = {
+		limit = {
+			OPR = {
+				is_ai = yes
+				has_autonomy_state = autonomy_republic_ukr
+				is_subject_of = UKR
+				influence_higher_40 = yes
+			}
+			country_exists = OPR
+		}
+		add_political_power = -300
+		set_temp_variable = { treasury_change = -12 }
+		modify_treasury_effect = yes
+		set_temp_variable = { party_popularity_increase = -0.13 }
+		set_temp_variable = { temp_outlook_increase = -0.13 }
+		change_relative_party_popularity = yes
+		OPR = { every_core_state = { add_core_of = UKR } }
+		annex_country = { target = OPR transfer_troops = yes }
+		hidden_effect = {
+			add_to_variable = { treasury = OPR.treasury }
+			add_to_variable = { debt = OPR.debt }
+			add_to_variable = { int_investments = OPR.int_investments }
+		}
+	}
+	if = {
+		limit = {
+			NOV = {
+				is_ai = yes
+				has_autonomy_state = autonomy_novorossiya_ukr
+				is_subject_of = UKR
+				influence_higher_40 = yes
+			}
+			country_exists = NOV
+		}
+		add_political_power = -300
+		set_temp_variable = { treasury_change = -12 }
+		modify_treasury_effect = yes
+		set_temp_variable = { party_popularity_increase = -0.13 }
+		set_temp_variable = { temp_outlook_increase = -0.13 }
+		change_relative_party_popularity = yes
+		NOV = { every_core_state = { add_core_of = UKR } }
+		annex_country = { target = NOV transfer_troops = yes }
+		hidden_effect = {
+			add_to_variable = { treasury = NOV.treasury }
+			add_to_variable = { debt = NOV.debt }
+			add_to_variable = { int_investments = NOV.int_investments }
 		}
 	}
 }
@@ -512,93 +2040,6 @@ DPR_maidan_create_army = {
 			division = "name = \"Mariupolsko-Khinganskyi Morskaya Pekhota\" division_template = \"Pekhotnaya Brigada\" start_experience_factor = 0.1"
 			prioritize_location = 6474
 			owner = DPR
-		}
-	}
-}
-UKR_maidan_more45_check = {
-	if = {
-		limit = {
-			NOT = { has_country_flag = ukr_revoult_bilo }
-			check_variable = { UKR.maidani > 45 }
-		}
-		hidden_effect = {
-			UKR = {
-				country_event = { id = ukraine_maidan.17 days = 1 }
-			}
-		}
-	}
-}
-UKR_maidan_east_stability_check = {
-	if = {
-		limit = {
-			NOT = { has_country_flag = ukr_revoult_bilo }
-			check_variable = { UKR.easterns < 2 }
-		}
-		hidden_effect = {
-			UKR = {
-				country_event = { id = ukraine_maidan.14 days = 1 }
-			}
-		}
-	}
-	else_if = {
-		limit = {
-			NOT = { has_country_flag = ukr_revoult_bilo }
-			check_variable = { UKR.easterns < 15 }
-		}
-		hidden_effect = {
-			UKR = {
-				country_event = { id = ukraine_maidan.12 days = 1 }
-			}
-		}
-	}
-}
-UKR_maidan_west_stability_check = {
-	if = {
-		limit = {
-			NOT = { has_country_flag = ukr_revoult_bilo }
-			check_variable = { UKR.westerns < 2 }
-		}
-		hidden_effect = {
-			UKR = {
-				country_event = { id = ukraine_maidan.15 days = 1 }
-			}
-		}
-	}
-	else_if = {
-		limit = {
-			NOT = { has_country_flag = ukr_revoult_bilo }
-			check_variable = { UKR.westerns < 15 }
-		}
-		hidden_effect = {
-			UKR = {
-				country_event = { id = ukraine_maidan.11 days = 1 }
-			}
-		}
-	}
-}
-UKR_maidan_start_check = {
-	if = {
-		limit = {
-			NOT = { has_country_flag = ukr_revoult_bilo }
-			check_variable = { UKR.maidani < 15 }
-		}
-		if = {
-			limit = { check_variable = { UKR.easterns < UKR.westerns } }
-			hidden_effect = {
-				set_country_flag = ukr_revoult_bilo
-				UKR = {
-					country_event = { id = ukraine_maidan_west.1 days = 10 }
-				}
-			}
-		}
-		else_if = {
-			limit = { check_variable = { UKR.easterns > UKR.westerns } }
-			hidden_effect = {
-				set_country_flag = ukr_revoult_bilo
-				UKR = {
-					country_event = { id = ukraine_maidan_east.1 days = 10 }
-				}
-			}
 		}
 	}
 }
@@ -3926,7 +5367,7 @@ UKR_nazbols_revoult_poland = {
 				communism = 0
 				nationalist = 100
 			}
-			inherit_technology = BLR
+			inherit_technology = POL
 			set_temp_variable = { rul_party_temp = 21 }
 			set_temp_variable = { disable_elections = 1 }
 			change_ruling_party_effect = yes
