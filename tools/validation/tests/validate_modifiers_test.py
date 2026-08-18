@@ -4,11 +4,17 @@ Invalid modifier names compile silently and do nothing in-game, so this check
 is the only guard against typo'd modifiers in ideas/focuses/decisions.
 """
 
+from pathlib import Path
+
 from validate_modifiers import (
+    _DOC_REL_PATH,
     Validator,
     _check_file_for_unknown_modifiers,
     _is_parametric_modifier,
+    _load_documented_modifiers,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _write_idea_file(tmp_path, modifier_body):
@@ -80,6 +86,25 @@ def test_parametric_modifier_families_exempt():
     assert _is_parametric_modifier("production_speed_arms_factory_factor")
     assert _is_parametric_modifier("democratic_drift")
     assert not _is_parametric_modifier("completely_fake_modifier_field")
+
+
+def test_shipped_doc_yields_concrete_names_and_families():
+    """Guard the doc parse against a format change in the next refresh.
+
+    1.19 dropped the placeholder from the `<span>` anchor id, which silently
+    left every parametric family unexpanded — the loss only surfaced as
+    unknown-modifier warnings on names the doc does document.
+    """
+    names, templates_by_word = _load_documented_modifiers(
+        str(REPO_ROOT / _DOC_REL_PATH)
+    )
+    assert len(names) > 4000
+    assert templates_by_word["unit"]
+    assert templates_by_word["operation"]
+    # Expanded from <Operation>_risk's Modified types, not a `## name` header.
+    assert "operation_risk" in names
+    # Documented concrete modifiers the pre-1.19 doc dump predated.
+    assert {"casualty_trickleback", "org_damage_multiplier"} <= names
 
 
 def test_repeated_unknown_modifier_is_not_known_or_reported_repeatedly(tmp_path):
@@ -185,9 +210,9 @@ def test_md_operation_generates_cost_outcome_risk_modifiers(tmp_path):
     doc_dir = tmp_path / "resources" / "documentation"
     doc_dir.mkdir(parents=True)
     (doc_dir / "modifiers_documentation.md").write_text(
-        '## <span id="-operation-_cost"></span><Operation>\\_cost\n\n'
-        '## <span id="-operation-_outcome"></span><Operation>\\_outcome\n\n'
-        '## <span id="-operation-_risk"></span><Operation>\\_risk\n',
+        '##  <span id="_cost"></span><Operation>_cost\n\n'
+        '##  <span id="_outcome"></span><Operation>_outcome\n\n'
+        '##  <span id="_risk"></span><Operation>_risk\n',
         encoding="utf-8",
     )
     ops_dir = tmp_path / "common" / "operations"

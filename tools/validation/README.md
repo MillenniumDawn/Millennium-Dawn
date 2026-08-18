@@ -61,11 +61,11 @@ Output is color-coded. Pass `--no-color` for plain text (e.g. in log files).
 
 These cross-reference the entire codebase. A disk cache under `.validation_cache/` keeps re-runs fast — see [DISK_CACHE.md](DISK_CACHE.md).
 
-| Validator                       | Checks                                                                                                                                                                                                              |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **validate_set_variables.py**   | Variables set with `set_variable` are actually used somewhere                                                                                                                                                       |
-| **validate_unused_scripted.py** | Scripted effects/triggers defined but never called                                                                                                                                                                  |
-| **validate_unused_textures.py** | Texture files not referenced in any `.gfx` file; `.gfx` entries with missing files. Manual-only.                                                                                                                    |
+| Validator                       | Checks                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **validate_set_variables.py**   | Variables set with `set_variable` are actually used somewhere                                                                                                                                                                                                                                                                                                                    |
+| **validate_unused_scripted.py** | Scripted effects/triggers defined but never called                                                                                                                                                                                                                                                                                                                               |
+| **validate_unused_textures.py** | Texture files not referenced in any `.gfx` file; `.gfx` entries with missing files. Manual-only.                                                                                                                                                                                                                                                                                 |
 | **validate_variables.py**       | Country/state/global flags and event targets: cleared-but-not-set, missing, unused; untooltipped `check_variable` in `available` (warning); country flags checked in `available` with no localisation key (warning); variable-effect `tooltip =` keys with no localisation entry (warning); dynamic-modifier writes in player-facing effect blocks with no `tooltip =` (warning) |
 
 ---
@@ -154,6 +154,19 @@ To run any validator locally — including a CI-only one — invoke it directly:
 python3 tools/validation/validate_scripted_gui.py --staged --no-color  # changed files only
 python3 tools/validation/validate_scripted_gui.py --no-color           # full-repo scan
 ```
+
+---
+
+## Refreshing Vanilla Data
+
+CI has no HOI4 install, so `validate_defines`, `validate_file_paths`, `validate_gfx_references` and `validate_modifiers` read checked-in copies of vanilla data instead: `vanilla_defines.txt`, `vanilla_gui_files.txt`, `vanilla_paths.txt`, `vanilla_sprites.txt`, and `resources/documentation/*.md`. `refresh_vanilla_data.py` rebuilds all five from a local install (auto-detected, or set `$HOI4_PATH`):
+
+```bash
+python3 tools/validation/refresh_vanilla_data.py
+python3 tools/validation/refresh_vanilla_data.py --only docs sprites
+```
+
+Run it after every HOI4 version bump and commit the diff. Stale data never fails CI — it produces false positives instead, which is worse: a modifier or sprite Paradox added after the last refresh reads as a typo. Details in `.claude/docs/validation-pipeline.md`.
 
 ---
 
