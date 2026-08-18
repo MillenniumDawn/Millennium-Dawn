@@ -151,71 +151,43 @@ class MIOStandardizer(BaseStandardizer):
         if props["include"]:
             lines.append(f"\t{props['include']}")
 
+        # Every section below opens with `_add_blank_line_if_needed`, which is a
+        # separator: it only fires when something precedes it. A section must not
+        # also close with a blank, or the last one leaves a dead line before `}`.
         if props["task_capacity"]:
             self._add_blank_line_if_needed(lines)
             lines.append(f"\t{props['task_capacity']}")
-            lines.append("")
 
-        if props["available"]:
-            for index, block in enumerate(props["available"]):
+        for key in ("available", "visible"):
+            for block in props[key]:
                 self._add_blank_line_if_needed(lines)
                 lines.extend(self.format_nested_block(block, "\t"))
-                if index < len(props["available"]) - 1:
-                    lines.append("")
-            lines.append("")
 
-        if props["visible"]:
-            for index, block in enumerate(props["visible"]):
-                self._add_blank_line_if_needed(lines)
-                lines.extend(self.format_nested_block(block, "\t"))
-                if index < len(props["visible"]) - 1:
-                    lines.append("")
-            lines.append("")
-
-        if props["on_callbacks"]:
-            for _name, block in props["on_callbacks"]:
-                self._add_blank_line_if_needed(lines)
-                lines.extend(self.format_nested_block(block, "\t"))
-                lines.append("")
+        for _name, block in props["on_callbacks"]:
+            self._add_blank_line_if_needed(lines)
+            lines.extend(self.format_nested_block(block, "\t"))
 
         if props["other"]:
             self._add_blank_line_if_needed(lines)
             self._add_comments(lines, props["other"])
-            lines.append("")
 
         if props["ai_will_do"]:
             self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["ai_will_do"])
-            lines.append("")
 
-        if props["equipment_type"]:
-            self._add_blank_line_if_needed(lines)
-            self._add_token_list_blocks(
-                lines, props["equipment_type"], "equipment_type", "\t"
-            )
-            lines.append("")
-
-        if props["research_categories"]:
-            self._add_blank_line_if_needed(lines)
-            self._add_token_list_blocks(
-                lines, props["research_categories"], "research_categories", "\t"
-            )
-            lines.append("")
+        for key in ("equipment_type", "research_categories"):
+            if props[key]:
+                self._add_blank_line_if_needed(lines)
+                self._add_token_list_blocks(lines, props[key], key, "\t")
 
         if props["tree_header_text"]:
             self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["tree_header_text"])
-            lines.append("")
 
-        if props["initial_trait"]:
-            self._add_blank_line_if_needed(lines)
-            self._add_blocks(lines, props["initial_trait"], is_trait=True)
-            lines.append("")
-
-        if props["traits"]:
-            self._add_blank_line_if_needed(lines)
-            self._add_blocks(lines, props["traits"], is_trait=True)
-            lines.append("")
+        for key in ("initial_trait", "traits"):
+            if props[key]:
+                self._add_blank_line_if_needed(lines)
+                self._add_blocks(lines, props[key], is_trait=True)
 
         lines.append("}")
         return self._clean_blank_lines(lines)
@@ -298,11 +270,20 @@ class MIOStandardizer(BaseStandardizer):
         self, block_lines: List[str], key: str, indent: str
     ) -> List[str]:
         """Format `key = { tokens }` as single-line for 1 token, multi-line for 2+.
-        Falls back to compact_block if the block contains comments (to preserve them).
+        Falls back to compact_block if the block contains comments (to preserve them),
+        or collapse_or_compact if the block wraps a nested block (e.g.
+        `parent = { traits = { ... } }`) whose inner `{`/`}`/`=` must not be
+        flattened into stray tokens.
         """
         for line in block_lines:
             if line.strip().startswith("#"):
                 return compact_block(block_lines)
+
+        full = " ".join(l.strip() for l in block_lines if l.strip())
+        if "{" in full and "}" in full:
+            inner = full.split("{", 1)[1].rsplit("}", 1)[0].strip()
+            if "{" in inner or "}" in inner:
+                return collapse_or_compact(block_lines, indent)
 
         content_tokens = []
         for line in block_lines:

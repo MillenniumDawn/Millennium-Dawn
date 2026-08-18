@@ -1,13 +1,17 @@
 @DEFENSE_WALLS_RENDER_DISTANCE = 300.0
 
 EH_electric_traps_category = {
+
 	EH_set_up_electric_trap = {
+
 		icon = GFX_decision_fixes_button
+
 		days_remove = 7
 
 		state_target = yes
 
 		on_map_mode = map_only
+
 		highlight_states = {
 			highlight_states_trigger = {
 				is_controlled_by = ROOT
@@ -16,10 +20,12 @@ EH_electric_traps_category = {
 			highlight_color_before_active = 3
 			highlight_color_while_active = 2
 		}
+
 		target_trigger = {
 			FROM = {
 				is_controlled_by = ROOT
 				has_state_flag = EH_electric_trap_enabled_flag
+				NOT = { has_state_flag = EH_electric_trap_set_up_flag }
 			}
 		}
 
@@ -30,24 +36,24 @@ EH_electric_traps_category = {
 			}
 		}
 
-		visible = {
-			FROM = {
-				NOT = { has_state_flag = EH_electric_trap_set_up_flag }
-			}
-		}
-
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_set_up_electric_trap"
 			FROM = {
 				set_state_flag = EH_electric_trap_set_up_flag
 			}
-			add_to_variable = { EH_electric_trap_country_resource_cost_tungsten_var = 1 }
+			hidden_effect = {
+				add_to_variable = { EH_electric_trap_country_resource_cost_tungsten_var = 1 }
+			}
 			custom_effect_tooltip = EH_electric_trap_country_resource_cost_tungsten_TT
 		}
 
 		ai_will_do = { base = 0 }
 	}
+
 	EH_remove_electric_trap = {
+
 		icon = GFX_decision_fixes_button_blocked
+
 		days_remove = 7
 
 		state_target = yes
@@ -70,39 +76,34 @@ EH_electric_traps_category = {
 			}
 		}
 
-		visible = {
-			FROM = {
-				has_state_flag = EH_electric_trap_set_up_flag
-			}
-		}
-
-		available = {
-			FROM = {
-				NOT = {
-					has_state_flag = EH_electric_trap_active_flag
-				}
-			}
-		}
+		available = { FROM = { NOT = { has_state_flag = EH_electric_trap_active_flag } } }
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_remove_electric_trap"
 			FROM = {
 				set_state_flag = EH_electric_trap_removing_flag
 			}
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_remove_electric_trap"
 			FROM = {
 				clr_state_flag = EH_electric_trap_set_up_flag
 				clr_state_flag = EH_electric_trap_removing_flag
 			}
-			add_to_variable = { EH_electric_trap_country_resource_cost_tungsten_var = -1 }
+			hidden_effect = {
+				add_to_variable = { EH_electric_trap_country_resource_cost_tungsten_var = -1 }
+			}
 			custom_effect_tooltip = EH_electric_trap_remove_country_resource_cost_tungsten_TT
 		}
 
 		ai_will_do = { base = 0 }
 	}
+
 	EH_activate_electric_trap = {
+
 		icon = GFX_decision_influence
+
 		days_remove = 10
 
 		state_target = yes
@@ -125,22 +126,19 @@ EH_electric_traps_category = {
 			}
 		}
 
-		visible = {
-			FROM = {
-				has_state_flag = EH_electric_trap_set_up_flag
-			}
-		}
-
 		available = {
 			FROM = {
 				NOT = {
-					has_state_flag = EH_electric_trap_cooldown
-					has_state_flag = EH_electric_trap_removing_flag
+					OR = {
+						has_state_flag = EH_electric_trap_cooldown
+						has_state_flag = EH_electric_trap_removing_flag
+					}
 				}
 			}
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_activate_electric_trap"
 			if = {
 				limit = {
 					NOT = {
@@ -155,7 +153,9 @@ EH_electric_traps_category = {
 					}
 				}
 			}
-			add_to_variable = { EH_electric_trap_energy_use_var = 0.1 }
+			hidden_effect = {
+				add_to_variable = { EH_electric_trap_energy_use_var = 0.1 }
+			}
 			custom_effect_tooltip = EH_electric_trap_energy_use_TT
 			FROM = {
 				set_state_flag = EH_electric_trap_active_flag
@@ -166,8 +166,11 @@ EH_electric_traps_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_activate_electric_trap"
 			# Effects for country
-			add_to_variable = { EH_electric_trap_energy_use_var = -0.1 }
+			hidden_effect = {
+				add_to_variable = { EH_electric_trap_energy_use_var = -0.1 }
+			}
 			FROM = {
 				# Effects for state
 				set_state_flag = {
@@ -184,8 +187,11 @@ EH_electric_traps_category = {
 }
 
 EH_research_sites_category = {
+
 	EH_setup_research_site = {
+
 		icon = GFX_decision_generic_research
+
 		days_remove = var:EH_research_sites_prep_time_var
 
 		available = {
@@ -200,6 +206,7 @@ EH_research_sites_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_setup_research_site"
 			set_temp_variable = { treasury_change = -15 }
 			if = {
 				limit = {
@@ -213,6 +220,7 @@ EH_research_sites_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_setup_research_site"
 			add_to_variable = { EH_research_sites_constructed_var = 1 }
 			EH_calculate_research_sites_effects = yes
 			if = {
@@ -235,8 +243,11 @@ EH_research_sites_category = {
 	}
 
 	EH_install_anti_air_weapons = {
+
 		icon = GFX_decision_shoot_bird
+
 		days_remove = 60
+
 		fire_only_once = yes
 
 		available = {
@@ -247,6 +258,7 @@ EH_research_sites_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_install_anti_air_weapons"
 			set_temp_variable = { treasury_change = -5 }
 			multiply_temp_variable = { treasury_change = EH_research_sites_constructed_var }
 			modify_treasury_effect = yes
@@ -256,6 +268,7 @@ EH_research_sites_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_install_anti_air_weapons"
 			set_temp_variable = { EH_temp_protection_increase = 25 }
 			EH_research_sites_protection_increase = yes
 			clr_country_flag = EH_research_sites_decision_ongoing_flag
@@ -265,8 +278,11 @@ EH_research_sites_category = {
 	}
 
 	EH_panic_shelters_and_land_turrets = {
+
 		icon = GFX_decision_conter_raid_button
+
 		days_remove = 60
+
 		fire_only_once = yes
 
 		available = {
@@ -277,6 +293,7 @@ EH_research_sites_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_panic_shelters_and_land_turrets"
 			set_temp_variable = { treasury_change = -5 }
 			multiply_temp_variable = { treasury_change = EH_research_sites_constructed_var }
 			modify_treasury_effect = yes
@@ -285,6 +302,7 @@ EH_research_sites_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_panic_shelters_and_land_turrets"
 			set_temp_variable = { EH_temp_protection_increase = 15 }
 			EH_research_sites_protection_increase = yes
 			set_temp_variable = { EH_temp_research_sites_scientist_protection_increase = 10 }
@@ -296,8 +314,11 @@ EH_research_sites_category = {
 	}
 
 	EH_hire_additional_security_for_scientists = {
+
 		icon = GFX_decision_recruit_operative
+
 		days_remove = 40
+
 		fire_only_once = yes
 
 		available = {
@@ -308,6 +329,7 @@ EH_research_sites_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_hire_additional_security_for_scientists"
 			set_temp_variable = { treasury_change = -3 }
 			multiply_temp_variable = { treasury_change = EH_research_sites_constructed_var }
 			modify_treasury_effect = yes
@@ -316,6 +338,7 @@ EH_research_sites_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_hire_additional_security_for_scientists"
 			set_temp_variable = { EH_temp_research_sites_scientist_protection_increase = 25 }
 			EH_research_sites_scientist_protection_increase = yes
 			clr_country_flag = EH_research_sites_decision_ongoing_flag
@@ -325,14 +348,15 @@ EH_research_sites_category = {
 	}
 
 	EH_disable_site_notifications = {
+
 		icon = GFX_decision_message_decline_button
+
 		days_remove = 0
 
-		visible = {
-			NOT = { has_country_flag = EH_research_sites_disable_notifications_flag }
-		}
+		visible = { NOT = { has_country_flag = EH_research_sites_disable_notifications_flag } }
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_disable_site_notifications"
 			set_country_flag = EH_research_sites_disable_notifications_flag
 			custom_effect_tooltip = EH_research_sites_disable_notifications_TT
 		}
@@ -341,14 +365,15 @@ EH_research_sites_category = {
 	}
 
 	EH_enable_site_notifications = {
+
 		icon = GFX_decision_message_accept_button
+
 		days_remove = 0
 
-		visible = {
-			has_country_flag = EH_research_sites_disable_notifications_flag
-		}
+		visible = { has_country_flag = EH_research_sites_disable_notifications_flag }
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_enable_site_notifications"
 			clr_country_flag = EH_research_sites_disable_notifications_flag
 			custom_effect_tooltip = EH_research_sites_enable_notifications_TT
 		}
@@ -357,6 +382,7 @@ EH_research_sites_category = {
 	}
 
 	EH_doudna_or_charpentier_project_mission = {
+
 		activation = {
 			has_country_flag = EH_hired_jennifer_doudna_flag
 			has_country_flag = EH_hired_emmanuelle_charpentier_flag
@@ -372,25 +398,34 @@ EH_research_sites_category = {
 
 		cancel_trigger = {
 			NOT = {
-				has_country_flag = EH_hired_jennifer_doudna_flag
-				has_country_flag = EH_hired_emmanuelle_charpentier_flag
+				OR = {
+					has_country_flag = EH_hired_jennifer_doudna_flag
+					has_country_flag = EH_hired_emmanuelle_charpentier_flag
+				}
 			}
 		}
 
 		icon = GFX_decision_jennifer_emmanuelle
+
 		is_good = yes
+
 		days_mission_timeout = 280
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_doudna_or_charpentier_project_mission"
 			set_country_flag = EH_doudna_or_charpentier_finished_project_flag
 		}
 	}
 }
 
 EH_find_new_veins_category = {
+
 	EH_search_for_randallite_veins = {
+
 		icon = GFX_decision_search_for_randallite
+
 		days_remove = var:EH_search_for_randallite_veins_time_var
+
 		days_re_enable = 10
 
 		fixed_random_seed = no
@@ -407,7 +442,6 @@ EH_find_new_veins_category = {
 				tooltip = EH_randallite_limit_TT
 				check_variable = { EH_randallite_stockpile < 300 }
 			}
-
 			OR = {
 				NOT = {
 					has_active_mission = EH_set_up_mine_mission
@@ -422,6 +456,7 @@ EH_find_new_veins_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_search_for_randallite_veins"
 			if = {
 				limit = {
 					NOT = {
@@ -439,6 +474,7 @@ EH_find_new_veins_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_search_for_randallite_veins"
 			random_list = {
 				80 = {
 					country_event = EH_focus_event.12
@@ -456,19 +492,19 @@ EH_find_new_veins_category = {
 	}
 
 	EH_set_up_mine_mission = {
+
 		icon = GFX_decision_search_for_randallite
+
 		is_good = yes
+
 		days_mission_timeout = var:EH_set_up_mine_time_var
 
-		activation = {
-			always = no
-		}
+		activation = { always = no }
 
-		available = {
-			always = no
-		}
+		available = { always = no }
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_set_up_mine_mission"
 			if = {
 				limit = {
 					has_country_flag = EH_setting_up_randallite_mine_flag
@@ -507,7 +543,9 @@ EH_find_new_veins_category = {
 	}
 
 	EH_large_company_seeks_for_randallite_mission = {
+
 		icon = GFX_decision_gre_investment_decisions
+
 		days_mission_timeout = 100
 
 		fixed_random_seed = no
@@ -519,11 +557,10 @@ EH_find_new_veins_category = {
 			has_completed_focus = EH_find_new_veins
 		}
 
-		available = {
-			has_country_flag = EH_outlawed_randallite_extraction_flag
-		}
+		available = { has_country_flag = EH_outlawed_randallite_extraction_flag }
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_large_company_seeks_for_randallite_mission"
 			random = {
 				chance = 85
 				country_event = EH_focus_event.15
@@ -531,7 +568,6 @@ EH_find_new_veins_category = {
 				add_to_variable = { EH_non_state_mines_var = 1 }
 				add_to_variable = { EH_total_mines = 1 }
 				multiply_variable = { EH_non_state_mines_corporate_tax_income_var = EH_non_state_mines_var }
-
 				if = {
 					limit = {
 						NOT = {
@@ -557,7 +593,9 @@ EH_find_new_veins_category = {
 	}
 
 	EH_outlaw_randallite_extraction = {
+
 		icon = GFX_decision_randallite_outlawed
+
 		days_remove = 30
 
 		visible = {
@@ -567,34 +605,26 @@ EH_find_new_veins_category = {
 			check_variable = { EH_non_state_mines_var > 0 }
 		}
 
-		modifier = {
-			political_power_gain = -1
-		}
+		modifier = { political_power_gain = -1 }
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_outlaw_randallite_extraction"
 			set_temp_variable = { EH_outlaw_randallite_stability_penalty = -0.04 }
 			set_temp_variable = { EH_outlaw_randallite_pp_penalty = -50 }
 			set_temp_variable = { EH_outlaw_randallite_randallite_gain = 2 }
-
 			multiply_temp_variable = { EH_outlaw_randallite_stability_penalty = EH_non_state_mines_var }
 			multiply_temp_variable = { EH_outlaw_randallite_pp_penalty = EH_non_state_mines_var }
 			multiply_temp_variable = { EH_outlaw_randallite_randallite_gain = EH_non_state_mines_var }
-
 			add_stability = EH_outlaw_randallite_stability_penalty
 			add_political_power = EH_outlaw_randallite_pp_penalty
 			set_temp_variable = { add_randallite = EH_outlaw_randallite_randallite_gain }
 			EH_add_randallite_effect = yes
-
 			add_to_variable = { EH_randallite_mines_set_up_var = EH_non_state_mines_var }
 			set_variable = { EH_non_state_mines_var = 0 }
-
 			newline = yes
-
 			set_country_flag = EH_outlawed_randallite_extraction_flag
 			custom_effect_tooltip = EH_outlaw_randallite_extraction_TT
-
 			newline = yes
-
 			increase_corruption = yes
 		}
 
@@ -602,18 +632,17 @@ EH_find_new_veins_category = {
 	}
 
 	EH_legalize_randallite_extraction = {
+
 		icon = GFX_decision_randallite_allowed
+
 		days_remove = 30
 
-		visible = {
-			has_country_flag = EH_outlawed_randallite_extraction_flag
-		}
+		visible = { has_country_flag = EH_outlawed_randallite_extraction_flag }
 
-		modifier = {
-			political_power_gain = -0.5
-		}
+		modifier = { political_power_gain = -0.5 }
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_legalize_randallite_extraction"
 			clr_country_flag = EH_outlawed_randallite_extraction_flag
 			custom_effect_tooltip = EH_legalize_randallite_extraction_TT
 		}
@@ -623,9 +652,13 @@ EH_find_new_veins_category = {
 }
 
 EH_nile_defense_line_category = {
+
 	EH_construct_southern_zenobia_defense_line = {
+
 		icon = GFX_decision_fortification
+
 		days_remove = 30
+
 		fire_only_once = yes
 
 		available = {
@@ -666,6 +699,7 @@ EH_nile_defense_line_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_southern_zenobia_defense_line"
 			if = {
 				limit = { NOT = { has_global_flag = EH_zenobia_line_construction_flag } }
 				news_event = EH_event.800
@@ -673,6 +707,7 @@ EH_nile_defense_line_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_southern_zenobia_defense_line"
 			create_entity = {
 				entity = building_landmark_zenobia_wall
 				id = 8991
@@ -719,8 +754,11 @@ EH_nile_defense_line_category = {
 
 		ai_will_do = { base = 100 }
 	}
+
 	EH_southern_zenobia_defense_line_destruction = {
+
 		icon = GFX_decision_fire
+
 		days_mission_timeout = 15
 
 		activation = {
@@ -739,14 +777,17 @@ EH_nile_defense_line_category = {
 		available = {
 			ALN = {
 				NOT = {
-					controls_province = 3871
-					controls_province = 14157
-					controls_province = 13227
+					OR = {
+						controls_province = 3871
+						controls_province = 14157
+						controls_province = 13227
+					}
 				}
 			}
 		}
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_southern_zenobia_defense_line_destruction"
 			create_entity = {
 				entity = building_landmark_zenobia_wall_destroyed
 				id = 8991
@@ -783,8 +824,11 @@ EH_nile_defense_line_category = {
 	}
 
 	EH_construct_western_zenobia_defense_line = {
+
 		icon = GFX_decision_fortification
+
 		days_remove = 30
+
 		fire_only_once = yes
 
 		available = {
@@ -824,6 +868,7 @@ EH_nile_defense_line_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_western_zenobia_defense_line"
 			if = {
 				limit = { NOT = { has_global_flag = EH_zenobia_line_construction_flag } }
 				news_event = EH_event.800
@@ -831,6 +876,7 @@ EH_nile_defense_line_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_western_zenobia_defense_line"
 			create_entity = {
 				entity = building_landmark_zenobia_wall
 				id = 8993
@@ -869,7 +915,9 @@ EH_nile_defense_line_category = {
 	}
 
 	EH_western_zenobia_defense_line_destruction = {
+
 		icon = GFX_decision_fire
+
 		days_mission_timeout = 15
 
 		activation = {
@@ -887,13 +935,16 @@ EH_nile_defense_line_category = {
 		available = {
 			ALN = {
 				NOT = {
-					controls_province = 12764
-					controls_province = 7079
+					OR = {
+						controls_province = 12764
+						controls_province = 7079
+					}
 				}
 			}
 		}
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_western_zenobia_defense_line_destruction"
 			create_entity = {
 				entity = building_landmark_zenobia_wall_destroyed
 				id = 8993
@@ -920,8 +971,11 @@ EH_nile_defense_line_category = {
 	}
 
 	EH_construct_inner_saladin_defense_line = {
+
 		icon = GFX_decision_fortification
+
 		days_remove = 45
+
 		fire_only_once = yes
 
 		available = {
@@ -982,6 +1036,7 @@ EH_nile_defense_line_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_inner_saladin_defense_line"
 			if = {
 				limit = { NOT = { has_global_flag = EH_zenobia_line_construction_flag } }
 				news_event = EH_event.800
@@ -989,6 +1044,7 @@ EH_nile_defense_line_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_inner_saladin_defense_line"
 			create_entity = {
 				entity = building_landmark_zenobia_wall
 				id = 8995
@@ -1069,7 +1125,9 @@ EH_nile_defense_line_category = {
 	}
 
 	EH_inner_saladin_defense_line_destruction = {
+
 		icon = GFX_decision_fire
+
 		days_mission_timeout = 15
 
 		activation = {
@@ -1092,18 +1150,21 @@ EH_nile_defense_line_category = {
 		available = {
 			ALN = {
 				NOT = {
-					controls_province = 11967
-					controls_province = 7148
-					controls_province = 10127
-					controls_province = 12889
-					controls_province = 12044
-					controls_province = 7073
-					controls_province = 12071
+					OR = {
+						controls_province = 11967
+						controls_province = 7148
+						controls_province = 10127
+						controls_province = 12889
+						controls_province = 12044
+						controls_province = 7073
+						controls_province = 12071
+					}
 				}
 			}
 		}
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_inner_saladin_defense_line_destruction"
 			create_entity = {
 				entity = building_landmark_zenobia_wall_destroyed
 				id = 8995
@@ -1169,8 +1230,11 @@ EH_nile_defense_line_category = {
 	}
 
 	EH_construct_outer_saladin_defense_line = {
+
 		icon = GFX_decision_fortification
+
 		days_remove = 45
+
 		fire_only_once = yes
 
 		available = {
@@ -1202,6 +1266,7 @@ EH_nile_defense_line_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_outer_saladin_defense_line"
 			if = {
 				limit = { NOT = { has_global_flag = EH_zenobia_line_construction_flag } }
 				news_event = EH_event.800
@@ -1209,6 +1274,7 @@ EH_nile_defense_line_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_outer_saladin_defense_line"
 			create_entity = {
 				entity = building_landmark_zenobia_wall
 				id = 8994
@@ -1241,7 +1307,9 @@ EH_nile_defense_line_category = {
 	}
 
 	EH_outer_saladin_defense_line_destruction = {
+
 		icon = GFX_decision_fire
+
 		days_mission_timeout = 15
 
 		activation = {
@@ -1259,13 +1327,16 @@ EH_nile_defense_line_category = {
 		available = {
 			ALN = {
 				NOT = {
-					controls_province = 9947
-					controls_province = 1155
+					OR = {
+						controls_province = 9947
+						controls_province = 1155
+					}
 				}
 			}
 		}
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_outer_saladin_defense_line_destruction"
 			create_entity = {
 				entity = building_landmark_zenobia_wall_destroyed
 				id = 8994
@@ -1290,9 +1361,13 @@ EH_nile_defense_line_category = {
 }
 
 EH_bosporus_defense_line_category = {
+
 	EH_construct_bosphorus_defense_line = {
+
 		icon = GFX_decision_fortification
+
 		days_remove = 30
+
 		fire_only_once = yes
 
 		available = {
@@ -1336,6 +1411,7 @@ EH_bosporus_defense_line_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_bosphorus_defense_line"
 			if = {
 				limit = { NOT = { has_global_flag = EH_bosphorus_line_construction_flag } }
 				news_event = EH_event.803
@@ -1343,6 +1419,7 @@ EH_bosporus_defense_line_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_bosphorus_defense_line"
 			create_entity = {
 				entity = building_landmark_zenobia_wall
 				id = 9010
@@ -1396,8 +1473,11 @@ EH_bosporus_defense_line_category = {
 
 		ai_will_do = { base = 100 }
 	}
+
 	EH_bosphorus_defense_line_destruction = {
+
 		icon = GFX_decision_fire
+
 		days_mission_timeout = 15
 
 		activation = {
@@ -1419,17 +1499,20 @@ EH_bosporus_defense_line_category = {
 		available = {
 			ALN = {
 				NOT = {
-					controls_province = 6864
-					controls_province = 9887
-					controls_province = 11778
-					controls_province = 11867
-					controls_province = 3786
-					controls_province = 6871
+					OR = {
+						controls_province = 6864
+						controls_province = 9887
+						controls_province = 11778
+						controls_province = 11867
+						controls_province = 3786
+						controls_province = 6871
+					}
 				}
 			}
 		}
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_bosphorus_defense_line_destruction"
 			create_entity = {
 				entity = building_landmark_zenobia_wall_destroyed
 				id = 9010
@@ -1464,9 +1547,13 @@ EH_bosporus_defense_line_category = {
 }
 
 EH_caucasus_defense_line_category = {
+
 	EH_construct_caucasus_defense_line = {
+
 		icon = GFX_decision_fortification
+
 		days_remove = 30
+
 		fire_only_once = yes
 
 		available = {
@@ -1603,6 +1690,7 @@ EH_caucasus_defense_line_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_caucasus_defense_line"
 			if = {
 				limit = { NOT = { has_global_flag = EH_caucasus_line_construction_flag } }
 				news_event = EH_event.806
@@ -1610,6 +1698,7 @@ EH_caucasus_defense_line_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_caucasus_defense_line"
 			create_entity = {
 				entity = building_landmark_zenobia_wall
 				id = 9012
@@ -1766,13 +1855,15 @@ EH_caucasus_defense_line_category = {
 					modifier = EH_caucasus_line_wall_modifier
 				}
 			}
-			newline = yes
 		}
 
 		ai_will_do = { base = 100 }
 	}
+
 	EH_caucasus_defense_line_destruction_1 = {
+
 		icon = GFX_decision_fire
+
 		days_mission_timeout = 15
 
 		activation = {
@@ -1801,24 +1892,27 @@ EH_caucasus_defense_line_category = {
 		available = {
 			ALN = {
 				NOT = {
-					controls_province = 9663
-					controls_province = 9694
-					controls_province = 9674
-					controls_province = 11664
-					controls_province = 13828
-					controls_province = 9649
-					controls_province = 11633
-					controls_province = 9628
-					controls_province = 670
-					controls_province = 666
-					controls_province = 6689
-					controls_province = 9645
-					controls_province = 4463
+					OR = {
+						controls_province = 9663
+						controls_province = 9694
+						controls_province = 9674
+						controls_province = 11664
+						controls_province = 13828
+						controls_province = 9649
+						controls_province = 11633
+						controls_province = 9628
+						controls_province = 670
+						controls_province = 666
+						controls_province = 6689
+						controls_province = 9645
+						controls_province = 4463
+					}
 				}
 			}
 		}
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_caucasus_defense_line_destruction_1"
 			create_entity = {
 				entity = building_landmark_zenobia_wall_destroyed
 				id = 9012
@@ -1854,8 +1948,11 @@ EH_caucasus_defense_line_category = {
 			custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
 		}
 	}
+
 	EH_caucasus_defense_line_destruction_2 = {
+
 		icon = GFX_decision_fire
+
 		days_mission_timeout = 15
 
 		activation = {
@@ -1885,25 +1982,28 @@ EH_caucasus_defense_line_category = {
 		available = {
 			ALN = {
 				NOT = {
-					controls_province = 14328
-					controls_province = 9718
-					controls_province = 14435
-					controls_province = 11559
-					controls_province = 684
-					controls_province = 3587
-					controls_province = 775
-					controls_province = 3779
-					controls_province = 6765
-					controls_province = 11724
-					controls_province = 742
-					controls_province = 14600
-					controls_province = 6758
-					controls_province = 9503
+					OR = {
+						controls_province = 14328
+						controls_province = 9718
+						controls_province = 14435
+						controls_province = 11559
+						controls_province = 684
+						controls_province = 3587
+						controls_province = 775
+						controls_province = 3779
+						controls_province = 6765
+						controls_province = 11724
+						controls_province = 742
+						controls_province = 14600
+						controls_province = 6758
+						controls_province = 9503
+					}
 				}
 			}
 		}
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_caucasus_defense_line_destruction_2"
 			create_entity = {
 				entity = building_landmark_zenobia_wall_destroyed
 				id = 9014
@@ -1951,12 +2051,15 @@ EH_caucasus_defense_line_category = {
 }
 
 EH_start_scenario_cheat_category = {
+
 	EH_start_scenario_decision = {
+
 		icon = GFX_decision_generic_research
 
 		fire_only_once = yes
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_start_scenario_decision"
 			hidden_effect = { EH_convergence_event_chain_effect = yes }
 			set_global_flag = EH_scenario_launched_earlier_flag
 		}

@@ -7,6 +7,7 @@ import bisect
 import logging
 import os
 import re
+import subprocess
 import sys
 import time
 from collections import OrderedDict
@@ -51,8 +52,11 @@ def log_message(
 
     timestamp = datetime.now().strftime("%H:%M:%S")
 
-    color = _LEVEL_COLORS.get(level, "") if use_colors else ""
-    reset = Colors.ENDC if use_colors else ""
+    # Honor the NO_COLOR convention (https://no-color.org) so CI logs stay
+    # escape-free even when a caller left use_colors at its default.
+    colors_on = use_colors and not os.environ.get("NO_COLOR")
+    color = _LEVEL_COLORS.get(level, "") if colors_on else ""
+    reset = Colors.ENDC if colors_on else ""
 
     formatted_message = f"{color}[{timestamp}] {level}: {message}{reset}"
     print(formatted_message, file=sys.stderr)
@@ -136,29 +140,44 @@ def strip_inline_comment(line: str) -> str:
 def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
     """Extract a multi-line block by counting braces.
 
-    Inline comments are stripped before counting so a ``#`` comment containing an
-    unbalanced brace does not corrupt the depth.
+    Inline comments are stripped and quoted-string interiors blanked before
+    counting, so a ``#`` comment or a ``{`` / ``}`` inside a ``"..."`` string
+    does not corrupt the depth.
     """
     if start_index >= len(lines):
         return [], start_index
 
     block_lines = []
     brace_count = 0
+    opened = False
     i = start_index
 
     while i < len(lines):
         line = lines[i]
         block_lines.append(line)
 
-        code = strip_inline_comment(line)
+        code = blank_quoted_strings(strip_inline_comment(line))
+        if "{" in code:
+            opened = True
         brace_count += code.count("{") - code.count("}")
 
-        if brace_count == 0 and "{" in strip_inline_comment(lines[start_index]):
+        # `opened` lets the block terminate once braces balance even when the
+        # opening `{` sits on a later line than the name; without it a next-line
+        # brace never satisfies the old "{ on start line" check and the block
+        # ran to EOF.
+        if opened and brace_count == 0:
             i += 1
             break
         elif brace_count < 0:
-            # Malformed: more closing than opening braces.
-            break
+            if opened:
+                # Over-closing line (e.g. `} }` or a stray extra `}`) after the
+                # block opened: keep the accumulated lines with this line as the
+                # closer so the consumer never silently drops source lines.
+                return block_lines, i + 1
+            # Malformed: a stray `}` before any `{`. Advance past it (returning
+            # no block) so a caller looping on the returned index still makes
+            # forward progress instead of spinning on an unchanged start index.
+            return [], i + 1
 
         i += 1
 
@@ -209,6 +228,30 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+def collapse_ws_outside_quotes(text: str) -> str:
+    """Collapse runs of whitespace outside double-quoted spans to single spaces,
+    leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
+    unquoted text, but a `log`/tooltip string keeps its internal spacing."""
+    result: List[str] = []
+    in_str = False
+    prev_space = False
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            in_str = not in_str
+            result.append(c)
+            prev_space = False
+        elif in_str:
+            result.append(c)
+        elif c.isspace():
+            if not prev_space:
+                result.append(" ")
+            prev_space = True
+        else:
+            result.append(c)
+            prev_space = False
+    return "".join(result).strip()
+
+
 def _normalize_oneline_braces(text: str) -> str:
     """Collapse whitespace and put single spaces around ``{``/``}``, leaving the
     contents of double-quoted strings untouched."""
@@ -224,24 +267,7 @@ def _normalize_oneline_braces(text: str) -> str:
             out.append(" ")
         else:
             out.append(c)
-    # Collapse runs of whitespace that sit outside string literals.
-    result: List[str] = []
-    in_str = False
-    prev_space = False
-    joined = "".join(out)
-    for i, c in enumerate(joined):
-        if c == '"' and (i == 0 or joined[i - 1] != "\\"):
-            in_str = not in_str
-            result.append(c)
-            prev_space = False
-        elif not in_str and c.isspace():
-            if not prev_space:
-                result.append(" ")
-            prev_space = True
-        else:
-            result.append(c)
-            prev_space = False
-    return "".join(result).strip()
+    return collapse_ws_outside_quotes("".join(out))
 
 
 def collapse_or_compact(
@@ -433,8 +459,12 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
         return []
 
     out: List[Dict] = []
+    try:
+        filenames = sorted(os.listdir(tags_dir))
+    except OSError:
+        return out
 
-    for fname in sorted(os.listdir(tags_dir)):
+    for fname in filenames:
         if not fname.endswith(".txt"):
             continue
         fpath = os.path.join(tags_dir, fname)
@@ -553,6 +583,36 @@ def strip_comments(text: str) -> str:
     return "\n".join(result)
 
 
+def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> str:
+    """Replace the interior of double-quoted strings with spaces.
+
+    Quotes, string length, and newlines are preserved so byte offsets and line
+    numbers stay valid; only interior characters are blanked. Neutralizes
+    braces / ``#`` / ``=`` inside a quoted log string that would otherwise
+    desync a brace-depth or token scan. Run AFTER comment stripping — a stray
+    ``"`` in a ``#`` comment would otherwise flip the in-string state.
+
+    ``keep_start``, if given, is a set of offsets of opening ``"`` characters
+    whose string contents are left untouched — for a caller that must preserve
+    specific quoted values (e.g. a ``has_dlc = "X"`` name) while still handling
+    escaped quotes (``\\"``) correctly everywhere else.
+    """
+    if '"' not in text:
+        return text
+    out = list(text)
+    in_str = False
+    start = -1
+    keep = keep_start or ()
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            if not in_str:
+                start = i
+            in_str = not in_str
+        elif in_str and c != "\n" and start not in keep:
+            out[i] = " "
+    return "".join(out)
+
+
 class FileOpener:
     # LRU bound sized for common/ (~3600 files) plus localisation, so a broad
     # scan stays cached without evicting on every overflow.
@@ -666,7 +726,7 @@ class Timer:
         self.start()
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
         return False
 
@@ -703,7 +763,7 @@ def print_timing_summary(timings: List[Tuple[str, float]]):
     print(f"\n{dim}{'─' * (max_label + 18)}", file=sys.stderr)
     print("  Timing summary:", file=sys.stderr)
     for label, elapsed in timings:
-        bar_len = int(elapsed / total * 20) if total > 0 else 0
+        bar_len = round(elapsed / total * 20) if total > 0 else 0
         bar = "█" * bar_len + "░" * (20 - bar_len)
         print(
             f"  {label:<{max_label}}  {elapsed:6.3f}s  {bar}",
@@ -794,7 +854,7 @@ def run_with_pool(
     func,
     items: list,
     workers: int,
-    chunksize: int = None,
+    chunksize: Optional[int] = None,
     initializer=None,
     initargs=(),
 ):
@@ -930,7 +990,6 @@ def get_staged_files(
         return _filter(env_files) or None
 
     try:
-        import subprocess
 
         def _git_diff(*args):
             result = subprocess.run(
@@ -954,10 +1013,7 @@ def get_staged_files(
             return files
 
         return None
-    except subprocess.CalledProcessError:
-        return None
-    except ImportError:
-        log_message("WARNING", "Git not available, skipping staged file detection")
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
 
 

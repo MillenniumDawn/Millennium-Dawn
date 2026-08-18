@@ -45,10 +45,10 @@ steal_from_party = {
 			}
 			set_temp_variable = { party_index = steal_party_index }
 			set_temp_variable = { party_popularity_increase = -0.01 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.01 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		meta_effect = {
 			text = {
@@ -239,7 +239,7 @@ set_party_index_to_ruling_party = {
 	}
 }
 
-# Add Relative Party Popularity:
+# Change Relative Party Popularity:
 #
 # This scripted effect adds (or substracts) relative party popularity. How to use:
 #
@@ -248,10 +248,10 @@ set_party_index_to_ruling_party = {
 # set_temp_variable = { party_index = X } #OPTIONAL -- Index of party to be changed 0-23. Defaults to ruling party if not set.
 # set_temp_variable = { party_popularity_increase = Y } #How much party popularity is changed, must be in decimals so 2% is 0.02
 # set_temp_variable = { temp_outlook_increase = Z } #OPTIONAL PARAMETER -- Must be in decimals so 2% is 0.02
-# add_relative_party_popularity = yes
+# change_relative_party_popularity = yes
 #
 #NOTE! The temp variable names must be the same as above!
-add_relative_party_popularity = {
+change_relative_party_popularity = {
 	if = {
 		limit = { NOT = { has_variable = party_index } }
 		set_party_index_to_ruling_party = yes
@@ -261,7 +261,7 @@ add_relative_party_popularity = {
 		limit = { check_variable = { party_index < 4 } }
 
 		# If you have the optional parameter. First ADD the new outlook percentage.
-		if = { limit = { check_variable = { temp_outlook_increase > 0 } }
+		if = { limit = { NOT = { check_variable = { temp_outlook_increase = 0 } } }
 			hidden_effect = { add_popularity = { ideology = democratic popularity = temp_outlook_increase } }
 			add_to_variable = { party_pop_array^party_index = party_popularity_increase }
 		}
@@ -301,7 +301,7 @@ add_relative_party_popularity = {
 		limit = { check_variable = { party_index < 10 } }
 
 		# If you have the optional parameter. First ADD the new outlook percentage.
-		if = { limit = { check_variable = { temp_outlook_increase > 0 } }
+		if = { limit = { NOT = { check_variable = { temp_outlook_increase = 0 } } }
 			hidden_effect = { add_popularity = { ideology = communism popularity = temp_outlook_increase } }
 			add_to_variable = { party_pop_array^party_index = party_popularity_increase }
 		}
@@ -341,7 +341,7 @@ add_relative_party_popularity = {
 		limit = { check_variable = { party_index < 12 } }
 
 		# If you have the optional parameter. First ADD the new outlook percentage.
-		if = { limit = { check_variable = { temp_outlook_increase > 0 } }
+		if = { limit = { NOT = { check_variable = { temp_outlook_increase = 0 } } }
 			hidden_effect = { add_popularity = { ideology = fascism popularity = temp_outlook_increase } }
 			add_to_variable = { party_pop_array^party_index = party_popularity_increase }
 		}
@@ -381,7 +381,7 @@ add_relative_party_popularity = {
 		limit = { check_variable = { party_index < 20 } }
 
 		# If you have the optional parameter. First ADD the new outlook percentage.
-		if = { limit = { check_variable = { temp_outlook_increase > 0 } }
+		if = { limit = { NOT = { check_variable = { temp_outlook_increase = 0 } } }
 			hidden_effect = { add_popularity = { ideology = neutrality popularity = temp_outlook_increase } }
 			add_to_variable = { party_pop_array^party_index = party_popularity_increase }
 		}
@@ -419,7 +419,7 @@ add_relative_party_popularity = {
 	}
 	else = {
 		# If you have the optional parameter. First ADD the new outlook percentage.
-		if = { limit = { check_variable = { temp_outlook_increase > 0 } }
+		if = { limit = { NOT = { check_variable = { temp_outlook_increase = 0 } } }
 			hidden_effect = { add_popularity = { ideology = nationalist popularity = temp_outlook_increase } }
 			add_to_variable = { party_pop_array^party_index = party_popularity_increase }
 		}
@@ -818,7 +818,9 @@ start_politics_input = {
 recalculate_party = {
 	hidden_effect = {
 		add_up_party_totals = yes
-		set_party_positions = yes
+		if = { limit = { is_ai = no }
+			set_party_positions = yes
+		}
 		update_government_coalition_strength = yes
 		update_dirty_politicsview_expanded = yes
 	}
@@ -1709,8 +1711,10 @@ make_affinity_arrays = {
 		if = {
 			limit = {
 				NOT = {
-					check_variable = { max_index_1 = v }
-					check_variable = { max_index_2 = v }
+					OR = {
+						check_variable = { max_index_1 = v }
+						check_variable = { max_index_2 = v }
+					}
 				}
 			}
 			if = {
@@ -2681,6 +2685,7 @@ update_dirty_politicsview_expanded = {
 		}
 
 		generete_politics_pie_chart = yes
+		calculate_all_propaganda_costs = yes
 		if = { limit = { check_variable = { THIS.politicsview_expanded_dirty < 100000 } }
 			add_to_variable = { THIS.politicsview_expanded_dirty = 1 }
 		}
@@ -3094,7 +3099,7 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				has_country_flag = PER_access_to_this
-				non_technocrats_western_autocrats_are_in_power = yes
+				western_autocrats_have_autocrat_powers = yes
 				is_in_array = { ruling_party = 7 }	#Emerging autocrats
 				is_in_array = { ruling_party = 13 }	#Neutral autocrats
 				is_in_array = { ruling_party = 15 }	#oligarchs
@@ -3103,6 +3108,9 @@ IP_idea_configuration = {
 			}
 		}
 		update_pp_bonus_from_corruption = yes
+	}
+	else = {
+		remove_current_corruption_pp_bonus = yes
 	}
 	if = {
 		limit = {
@@ -3115,7 +3123,7 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				has_country_flag = PER_access_to_this
-				non_technocrats_western_autocrats_are_in_power = yes
+				western_autocrats_have_autocrat_powers = yes
 				is_in_array = { ruling_party = 7 }	#Emerging autocrats
 				is_in_array = { ruling_party = 13 }	#Neutral autocrats
 				is_in_array = { ruling_party = 15 }	#oligarchs
@@ -3129,7 +3137,7 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				has_country_flag = PER_access_to_this
-				non_technocrats_western_autocrats_are_in_power = yes
+				western_autocrats_have_autocrat_powers = yes
 				is_in_array = { ruling_party = 7 }	#Emerging autocrats
 				is_in_array = { ruling_party = 13 }	#Neutral autocrats
 				is_in_array = { ruling_party = 15 }	#oligarchs
@@ -3144,6 +3152,7 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
+				western_autocrats_have_monarchist_powers = yes
 				is_in_array = { ruling_party = 10 }	#Kingdom
 				is_in_array = { ruling_party = 23 }	#Monarchist
 			}
@@ -3154,6 +3163,7 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
+				western_autocrats_have_monarchist_powers = yes
 				is_in_array = { ruling_party = 10 }	#Kingdom
 				is_in_array = { ruling_party = 23 }	#Monarchist
 			}
@@ -3164,6 +3174,7 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
+				western_autocrats_have_monarchist_powers = yes
 				is_in_array = { ruling_party = 10 }	#Kingdom
 				is_in_array = { ruling_party = 23 }	#Monarchist
 			}
@@ -3174,6 +3185,7 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
+				western_autocrats_have_monarchist_powers = yes
 				is_in_array = { ruling_party = 10 }	#Kingdom
 				is_in_array = { ruling_party = 23 }	#Monarchist
 			}
@@ -3228,7 +3240,6 @@ IP_idea_configuration = {
 	}
 	if = {
 		limit = { is_ai = no }
-		add_to_variable = { global.update_ideological_powers_ui = 1 }
 	}
 }
 
@@ -3255,7 +3266,7 @@ IP_idea_corruption_update = {
 			limit = {
 				OR = {
 					has_country_flag = PER_access_to_this
-					non_technocrats_western_autocrats_are_in_power = yes
+					western_autocrats_have_autocrat_powers = yes
 					is_in_array = { ruling_party = 7 }	#Emerging autocrats
 					is_in_array = { ruling_party = 13 }	#Neutral autocrats
 					is_in_array = { ruling_party = 15 }	#oligarchs
@@ -3264,6 +3275,9 @@ IP_idea_corruption_update = {
 				}
 			}
 			update_pp_bonus_from_corruption = yes
+		}
+		else = {
+			remove_current_corruption_pp_bonus = yes
 		}
 	}
 }
@@ -3513,6 +3527,14 @@ generete_politics_pie_chart = {
 		set_variable = { politics_pie_chart^chart_idx = popularity }
 		add_to_temp_variable = { chart_idx = 1 }
 	}
+}
+
+calculate_all_propaganda_costs = {
+	calculate_prowestern_propaganda_cost = yes
+	calculate_emerging_propaganda_cost = yes
+	calculate_nonaligned_propaganda_cost = yes
+	calculate_nationalist_propaganda_cost = yes
+	calculate_salafist_propaganda_cost = yes
 }
 
 calculate_prowestern_propaganda_cost = {

@@ -38,8 +38,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_constitution"
 			add_dynamic_modifier = { modifier = KBY_alg_modifier }
-			add_to_variable = { KBY_alg_modifier_political_power_factor = 0.02 }
-			add_to_variable = { KBY_alg_modifier_stability_factor = 0.05 }
+			hidden_effect = {
+				add_to_variable = { KBY_alg_modifier_political_power_factor = 0.02 }
+				add_to_variable = { KBY_alg_modifier_stability_factor = 0.05 }
+			}
 			custom_effect_tooltip = KBY_alg_start_tt
 			add_ideas = KBY_new_institutions
 			#set_country_flag = KBY_government_established
@@ -73,7 +75,7 @@ focus_tree = {
 		}
 		relative_position_id = KBY_new_state
 		prerequisite = { focus = KBY_maloross_economy }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_fra_companies"
 			one_office_construction = yes
@@ -87,6 +89,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_offices = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -126,8 +132,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_drs"
-			add_to_variable = { KBY_alg_encryption_factor = 0.10 }
-			add_to_variable = { KBY_alg_foreign_influence_defense_modifier = 0.15 }
+			hidden_effect = {
+				add_to_variable = { KBY_alg_encryption_factor = 0.10 }
+				add_to_variable = { KBY_alg_foreign_influence_defense_modifier = 0.15 }
+			}
 			custom_effect_tooltip = KBY_alg1_tt
 			set_temp_variable = { percent_change = 5 }
 			set_temp_variable = { tag_index = ALG }
@@ -147,9 +155,23 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_ter_defence"
-			add_to_variable = { KBY_alg_army_core_defence_factor = 0.10 }
+			hidden_effect = {
+				add_to_variable = { KBY_alg_army_core_defence_factor = 0.10 }
+			}
 			custom_effect_tooltip = KBY_alg3_tt
 			hidden_effect = {
+				if = {
+					limit = { NOT = { has_template = "Territorial Defense Brigade" } }
+					division_template = {
+						name = "Territorial Defense Brigade"
+						is_locked = yes
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							Mot_Inf_Bat = { x = 1 y = 0 }
+						}
+					}
+				}
 				capital_scope = {
 					create_unit = {
 						division = "name = \"1st Territorial Defense Brigade\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 0.5"
@@ -165,15 +187,6 @@ focus_tree = {
 						division = "name = \"3rd Territorial Defense Brigade\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 0.5"
 						owner = ROOT
 						prioritize_location = 6756
-					}
-				}
-				division_template = {
-					name = "Territorial Defense Brigade"
-					is_locked = yes
-					regiments = {
-						L_Inf_Bat = { x = 0 y = 0 }
-						L_Inf_Bat = { x = 0 y = 1 }
-						Mot_Inf_Bat = { x = 1 y = 0 }
 					}
 				}
 			}
@@ -192,8 +205,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_mvd"
-			add_to_variable = { KBY_alg_police_resistance_growth = -0.10 }
-			add_to_variable = { KBY_alg_police_cost_multiplier_modifier = 0.05 }
+			hidden_effect = {
+				add_to_variable = { KBY_alg_police_resistance_growth = -0.10 }
+				add_to_variable = { KBY_alg_police_cost_multiplier_modifier = 0.05 }
+			}
 			custom_effect_tooltip = KBY_alg2_tt
 		}
 		ai_will_do = { base = 100 }
@@ -209,14 +224,16 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_contract_army"
-			add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = 0.35 }
-			add_to_variable = { KBY_alg_army_defence_factor = 0.10 }
-			add_to_variable = { KBY_alg_personnel_army_org_factor = 0.15 }
-			add_to_variable = { KBY_alg_army_attack_factor = 0.15 }
+			hidden_effect = {
+				add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = 0.35 }
+				add_to_variable = { KBY_alg_army_defence_factor = 0.10 }
+				add_to_variable = { KBY_alg_personnel_army_org_factor = 0.15 }
+				add_to_variable = { KBY_alg_army_attack_factor = 0.15 }
+			}
 			custom_effect_tooltip = KBY_alg4_tt
 			set_temp_variable = { party_index = 22 }
 			set_temp_variable = { party_popularity_increase = 0.003 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		ai_will_do = { base = 100 }
 	}
@@ -232,13 +249,15 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_defence_doctrine"
-			add_to_variable = { KBY_alg_army_defence_factor = 0.10 }
-			add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = 0.15 }
-			add_to_variable = { KBY_alg_army_core_defence_factor = 0.10 }
+			hidden_effect = {
+				add_to_variable = { KBY_alg_army_defence_factor = 0.10 }
+				add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = 0.15 }
+				add_to_variable = { KBY_alg_army_core_defence_factor = 0.10 }
+			}
 			custom_effect_tooltip = KBY_alg5_tt
 			set_temp_variable = { party_index = 22 }
 			set_temp_variable = { party_popularity_increase = 0.001 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_ideas = KBY_border_readiness
 			385 = {
 				add_building_construction = {
@@ -259,7 +278,7 @@ focus_tree = {
 		relative_position_id = KBY_new_state
 		prerequisite = { focus = KBY_defence_doctrine }
 		prerequisite = { focus = KBY_contract_army }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_defence_prom"
 			one_random_arms_factory = yes
@@ -269,6 +288,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_arms_industry = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -284,12 +307,14 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_rebuild_war_academy"
-			add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = 0.05 }
-			add_to_variable = { KBY_alg_training_time_army_factor = -0.10 }
+			hidden_effect = {
+				add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = 0.05 }
+				add_to_variable = { KBY_alg_training_time_army_factor = -0.10 }
+			}
 			custom_effect_tooltip = KBY_alg6_tt
 			set_temp_variable = { party_index = 22 }
 			set_temp_variable = { party_popularity_increase = 0.04 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		ai_will_do = { base = 100 }
 	}
@@ -305,12 +330,14 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_no_corrupt_military"
-			add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = -0.08 }
+			hidden_effect = {
+				add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = -0.08 }
+			}
 			custom_effect_tooltip = KBY_alg7_tt
 			decrease_corruption = yes
 			set_temp_variable = { party_index = 22 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		ai_will_do = { base = 100 }
 	}
@@ -425,7 +452,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = KBY_new_state
 		prerequisite = { focus = KBY_corruption }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_build_factories"
 			one_random_industrial_complex = yes
@@ -435,6 +462,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -452,7 +483,13 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_infrastructure"
 			one_random_infrastructure = yes
 		}
-		ai_will_do = { base = 100 }
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 	focus = {
 		id = KBY_social_invest
@@ -479,7 +516,7 @@ focus_tree = {
 		relative_position_id = KBY_new_state
 		prerequisite = { focus = KBY_social_invest }
 		prerequisite = { focus = KBY_infrastructure }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KBY_it_invest"
 			one_office_construction = yes
@@ -490,6 +527,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_offices = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}

@@ -14,6 +14,8 @@ Validation runs on GitHub CI at PR time — don't run proactively. Standardizati
 
 Pre-commit and CI run **different hook sets** — passing locally does not guarantee passing CI, and vice versa. Before wiring, judging, or debugging any validator, read `.claude/docs/validation-pipeline.md` (CI-only validators, pre-commit-only fixers, strictness divergences, vanilla-manifest regeneration, deprecation watch).
 
+**The validator test suite must stay green permanently.** CI runs `python -m pytest` on every PR that touches `tools/` (testpaths in `pyproject.toml` cover `tools/tests`, `tools/report_lib/tests`, `tools/validation/tests`, `tools/linting/tests`, `tools/standardization/tests`, `tools/docs_checks/tests`). Do not introduce regressions into the testing schema. When a validator behavior change breaks a regression test, fix it in the same change: update the affected `*_test.py` to match the new correct behavior, or fix the validator if the test is right. Never delete or weaken a regression test to hide a failure — the suite is a gate, not a suggestion. Before merging any `tools/` change, run `python -m pytest` and confirm zero failures.
+
 ## Formatting
 
 - Tabs for indentation; `{` on same line, `}` on own line at outer indent; 1 blank line between elements
@@ -23,6 +25,10 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
 - Prefix country-specific variables with tag (e.g., `ISR_operation_success`); **snake_case** for all identifiers
 - Flag naming: `TAG_` for a flag that only ever lands on one nation, `GLOBAL_` for `set_global_flag` and global event targets, a bare domain prefix (e.g. `wot_`) for a flag that can land on any nation. Name the thing, not the mechanic: `wot_refused_to_support_us`, not `wot_support_none`
+- Do not add flags that duplicate authoritative state. Use `has_idea`,
+  `has_completed_focus`, variables, event targets, ideology, subject status,
+  faction membership, and similar direct checks instead. Use a flag only for
+  state that cannot be queried directly or must record a historical transition.
 
 ## Performance
 
@@ -37,12 +43,12 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - Omit defaults: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`
 - No empty `mutually_exclusive`/`available` blocks; limit permanent effects to 5
 - Never `available = { always = no }` with a `bypass` — use matching condition
-- High-cost focuses (cost >= 8, or >= 5 for mil/econ/research): add the standard bankruptcy guard (`has_active_mission = bankruptcy_incoming_collapse` → `factor = 0`) inside `ai_will_do` — block in `.claude/docs/focus-tree-reference.md`
+- Money-spending focuses (completion_reward spends treasury via `modify_treasury_effect`, or a money-costing scripted/building effect): add the standard bankruptcy guard (`has_active_mission = bankruptcy_incoming_collapse` → `factor = 0`) inside `ai_will_do`. Gate on the reward's money cost (~5bn+), not the focus `cost` (completion time). Block in `.claude/docs/focus-tree-reference.md`
 - Ref: `.claude/docs/focus-tree-reference.md`
 
 ## Decisions
 
-- Logging in `complete_effect`: `log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"`
+- Logging: `log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"` as the first statement of every effect block the engine runs (`complete_effect`, `remove_effect`, `timeout_effect`, `cancel_effect`). A log nested inside an `if`/`hidden_effect` records which branch ran and stays there
 - `ai_will_do = { base = N }` — `base` not `factor` at root
 - Don't put `allowed` on a decision when it just repeats the parent category's `allowed` (e.g. `original_tag = TAG`) — the category gate already covers every decision inside it. Put nation-restriction on the category; dynamic conditions go in `available`/`visible` (`allowed` is evaluated once at game start)
 - Ref: `.claude/docs/decision-reference.md`
@@ -53,6 +59,8 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - Date-based events: owner-guard pattern in `common/scripted_effects/00_yearly_effects.txt`
 - `add_building_construction` for `naval_base` requires `province = XXXXX`
 - New subideology parties: register in `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`
+- Pure notifications get `minor_flavor = yes`. When many sources deliver to one country, batch them into a single report event instead of one event per delivery, and keep the payload at the delivery site (rules and traps: `.claude/docs/event-reference.md`)
+- Describe an effect with `effect_tooltip = { <the real effect> }` before writing a new `custom_effect_tooltip` loc key
 - Ref: `.claude/docs/event-reference.md`
 
 ## Ideas
@@ -79,6 +87,7 @@ Unit production has three layers — threat gate (`ai_is_threatened`), role rati
 ## Git Commits
 
 - Do NOT add `Co-Authored-By` or sign commits — the project does not use commit signing
+- Do NOT write `Changelog.txt` entries unless explicitly asked. A system new in 2.0.0 never needs an entry for its own changes
 
 ## Output Style
 

@@ -45,7 +45,7 @@ On-demand quality checklist for new Millennium Dawn content. Condensed from `doc
 - No empty trigger blocks (`allowed`, `available`, `cancel`, `bypass`)
 - Use `relative_position_id` in all focus trees
 - Tags must be capitalised in script IDs (e.g., `SPR_focus_name_here`)
-- High-cost focuses must have a `factor = 0` modifier in `ai_will_do` when `has_active_mission = bankruptcy_incoming_collapse`. "High-cost" thresholds: `cost ≥ 8` for any focus, or `cost ≥ 5` if the focus has military / economy / research `search_filters`. **Why:** focuses at or above these costs commit enough treasury that an AI in active collapse digs deeper into debt; the lower threshold for econ/mil/research reflects that those focuses typically chain large monetary effects. The guard skips the AI without locking the player out.
+- Money-spending focuses must have a `factor = 0` modifier in `ai_will_do` when `has_active_mission = bankruptcy_incoming_collapse`. The gate is the completion_reward's actual money cost (a negative `treasury_change` applied via `modify_treasury_effect` summing to ~5bn or more, or a money-costing scripted/building effect), not the focus `cost` field, which is completion time. **Why:** a reward that spends real treasury drags an AI already in active collapse deeper into debt. The guard skips the AI without locking the player out.
 
 ## Balance & Tradeoffs
 

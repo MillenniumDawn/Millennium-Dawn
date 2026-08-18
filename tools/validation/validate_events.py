@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text
+from shared_utils import blank_quoted_strings, extract_block_from_text, strip_comments
 from sprite_index import build_sprite_index
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
@@ -28,8 +28,22 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
+# The five HOI4 event-firing keywords. It is `operative_leader_event`, not
+# `operative_event`, and there is no `character_event`; because `operative` has
+# no word boundary before `_leader_event`, an `operative`/`_event` split never
+# matches the real keyword. Kept in sync with the definition keywords in
+# _EVENT_BLOCK_PATTERN / _EVENT_TYPE_PATTERN.
+_EVENT_CALL_KEYWORDS = (
+    "country_event",
+    "news_event",
+    "state_event",
+    "unit_leader_event",
+    "operative_leader_event",
+)
+_EVENT_CALL_ALT = "|".join(_EVENT_CALL_KEYWORDS)
+
 _LONG_FORM_PATTERN = re.compile(
-    r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
+    r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
 )
 
 # Event picture: `picture = GFX_xxx` (always GFX_-prefixed, resolves to that
@@ -92,6 +106,118 @@ _DYNAMIC_EVENT_NS_PATTERN = re.compile(
 )
 
 
+# Every way a script fires an event: the short form `country_event = foo.1` and
+# the block form `country_event = { id = foo.1 days = 3 }`. The block form is
+# matched by finding the keyword and then the first `id =` inside its braces, so
+# `days`/`hours`/`random_days` in any order are handled.
+_EVENT_FIRE_SHORT_RE = re.compile(
+    r"\b(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
+    r"\s*=\s*([A-Za-z_][\w.]*)"
+)
+_EVENT_FIRE_BLOCK_RE = re.compile(
+    r"\b(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
+    r"\s*=\s*\{([^{}]*)\}"
+)
+_FIRE_ID_RE = re.compile(r"\bid\s*=\s*([A-Za-z_][\w.]*)")
+
+
+# Keys that only ever appear in an event definition, never in a fire. Used to
+# tell `country_event = { id = x title = ... }` (a definition) from
+# `country_event = { id = x days = 3 }` (a fire).
+_DEFINITION_ONLY_RE = re.compile(
+    r"\b(?:title|desc|picture|is_triggered_only|fire_only_once|hidden|option|"
+    r"immediate|major|trigger|mean_time_to_happen|timeout_days)\s*="
+)
+_EVENT_BLOCK_OPEN_RE = re.compile(
+    r"\b(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
+    r"\s*=\s*\{"
+)
+
+
+def _matching_brace(text: str, open_pos: int) -> int:
+    depth = 0
+    for i in range(open_pos, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+    return -1
+
+
+def _iter_event_bodies(cleaned: str):
+    """Yield (event_id, body, match_start) for each event defined in `cleaned`.
+
+    Brace-matches each event block rather than keying off indentation, because
+    several event files indent their definitions one tab deeper than the norm
+    and a `^\\tid = ` pattern misses those entirely. A block counts as a
+    definition only when it carries a key no fire ever has, which is what
+    separates it from a `{ id = x days = 3 }` fire.
+    """
+    for m in _EVENT_BLOCK_OPEN_RE.finditer(cleaned):
+        ob = cleaned.index("{", m.end() - 1)
+        end = _matching_brace(cleaned, ob)
+        if end == -1:
+            continue
+        body = cleaned[ob + 1 : end]
+        idm = _FIRE_ID_RE.search(body)
+        if idm and _DEFINITION_ONLY_RE.search(body):
+            yield idm.group(1), body, m.start()
+
+
+def scan_event_definitions(args: Tuple[str, frozenset]) -> Set[str]:
+    """Pool worker: event IDs *defined* in one file."""
+    filename = args[0]
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return set()
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    return {eid for eid, _body, _start in _iter_event_bodies(cleaned)}
+
+
+def _is_literal_id(eid: str, after: str) -> bool:
+    """False when the ID is assembled at runtime rather than written out.
+
+    `UN.[ID]` matches as `UN.` and `MD_cyber.1[TYPE]` as `MD_cyber.1`, so a
+    trailing dot or a following `[` both mean the ID is interpolated.
+    """
+    return "." in eid and not eid.endswith(".") and not after.startswith("[")
+
+
+def _iter_fired_ids(text: str):
+    """Yield (event_id, match_start) for every literal event fire in `text`."""
+    for m in _EVENT_FIRE_SHORT_RE.finditer(text):
+        if _is_literal_id(m.group(1), text[m.end() : m.end() + 1]):
+            yield m.group(1), m.start()
+    for m in _EVENT_FIRE_BLOCK_RE.finditer(text):
+        idm = _FIRE_ID_RE.search(m.group(1))
+        if idm and _is_literal_id(idm.group(1), m.group(1)[idm.end() : idm.end() + 1]):
+            yield idm.group(1), m.start()
+
+
+def scan_event_fires(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
+    """Pool worker: every event ID fired from one file, as (id, file, line).
+
+    Only literal IDs are returned. An ID assembled at runtime (`UN.[ID]`) has no
+    literal form to resolve, so it is skipped rather than guessed at.
+    """
+    filename = args[0]
+    if _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    cleaned = re.sub(r"#[^\n]*", "", text)
+
+    return [
+        (eid, filename, cleaned.count("\n", 0, pos) + 1)
+        for eid, pos in _iter_fired_ids(cleaned)
+    ]
+
+
 def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
     """Pool worker: namespaces fired via string-interpolated event IDs in a file.
 
@@ -107,6 +233,228 @@ def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
         return set()
     cleaned = re.sub(r"#[^\n]*", "", text)
     return set(_DYNAMIC_EVENT_NS_PATTERN.findall(cleaned))
+
+
+# --- date-gated events and the event fire graph ---
+#
+# A `date >` lower bound anchors an event to a point in history. A `date <`
+# bound on its own is an expiry guard on a chain event and says nothing about
+# scheduling, so only the lower bound is matched here.
+_DATE_LOWER_BOUND_RE = re.compile(r"\bdate\s*>\s*\d{4}\.\d{1,2}\.\d{1,2}")
+_TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
+
+
+def _event_trigger_body(body: str) -> Optional[str]:
+    """Return the event's own ``trigger = { … }`` body, or None.
+
+    Walks brace depth instead of anchoring on ``^\\ttrigger``: several event
+    files indent their definitions one tab deeper than the norm, and the
+    triggers nested in `option` / `immediate` / `mean_time_to_happen` blocks
+    are not the event's own gate.
+    """
+    depth = 0
+    pos = 0
+    for m in _TRIGGER_OPEN_RE.finditer(body):
+        seg = body[pos : m.start()]
+        depth += seg.count("{") - seg.count("}")
+        pos = m.start()
+        if depth != 0:
+            continue
+        ob = body.index("{", m.end() - 1)
+        end = _matching_brace(body, ob)
+        return None if end == -1 else body[ob + 1 : end]
+    return None
+
+
+def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
+    """Pool worker: events whose own trigger carries a `date >` bound.
+
+    Returns (id, file, line) so a finding can point at the definition.
+    """
+    filename = args[0]
+    if _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    cleaned = re.sub(r"#[^\n]*", "", text)
+
+    out: List[Tuple[str, str, int]] = []
+    for eid, body, start in _iter_event_bodies(cleaned):
+        trigger = _event_trigger_body(body)
+        if trigger and _DATE_LOWER_BOUND_RE.search(trigger):
+            out.append((eid, filename, cleaned.count("\n", 0, start) + 1))
+    return out
+
+
+def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
+    """Pool worker: (parent_id, child_id) for every event fired from an event.
+
+    Lets a chain event inherit whatever schedules its parent, so only the head
+    of a chain needs a scheduling entry.
+    """
+    filename = args[0]
+    if _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    cleaned = re.sub(r"#[^\n]*", "", text)
+
+    out: List[Tuple[str, str]] = []
+    for parent, body, _start in _iter_event_bodies(cleaned):
+        for child, _pos in _iter_fired_ids(body):
+            if child != parent:
+                out.append((parent, child))
+    return out
+
+
+# Where MD schedules its historical events from.
+_YEARLY_EFFECTS_REL = "common/scripted_effects/00_yearly_effects.txt"
+
+# Fire sources where a date bound is an availability window rather than a
+# missing schedule: the player decides when a focus completes or a decision is
+# taken, so the event has no scheduled moment to belong to.
+_PLAYER_DRIVEN_FIRE_DIRS = ("common/national_focus/", "common/decisions/")
+
+
+def _is_scheduled_chain(
+    eid: str, scheduled: Set[str], parents: Dict[str, Set[str]]
+) -> bool:
+    """True if `eid` or any ancestor that fires it is scheduled."""
+    seen = {eid}
+    stack = [eid]
+    while stack:
+        current = stack.pop()
+        if current in scheduled:
+            return True
+        for parent in parents.get(current, ()):
+            if parent not in seen:
+                seen.add(parent)
+                stack.append(parent)
+    return False
+
+
+# --- fire_only_once fired inside a country/state iterator ---
+#
+# An event with `fire_only_once = yes` fired inside an iterating scope
+# (every_country / every_other_country / every_state / for_each_scope_loop /
+# any every_* or for_each_* iterator) only reaches the first recipient: the
+# flag is set on the first iteration and subsequent firings no-op. The
+# caller meant to drop fire_only_once, or fire the event outside the loop.
+# A scope switch to a FIXED recipient between the iterator and the call
+# (ROOT/FROM/PREV/THIS, a literal tag, event_target:/var:) fires the same
+# recipient every iteration, so fire_only_once is a legitimate dedup idiom
+# there and the outer iterator is not flagged. `random_country` /
+# `random_state` pick a single scope by design and are not iterators.
+
+# Iterating effect scopes: every_* and for_each_* (array walkers). `any_*` /
+# `all_*` are triggers, not effect loops, so events are never fired inside
+# them; they are not matched here. random_* picks a single scope (not an
+# iterator) but does not shield an outer iterator either, so it needs no
+# frame kind of its own — its brace is just an "other" frame.
+_FOF_ITER_OPEN = r"\b(?:every_\w+|for_each_\w+)\s*=\s*\{"
+_RE_FOF_ITER_OPEN = re.compile(_FOF_ITER_OPEN)
+# Scope-switch openers that pin the recipient to a fixed country: an explicit
+# scope keyword (incl. chains like PREV.PREV), a literal 3-letter tag (AND/NOT
+# excluded — trigger operators, not scopes), or an event_target:/var: ref.
+_FOF_PINNED = (
+    r"(?:(?:ROOT|FROM|PREV|THIS)(?:\.(?:ROOT|FROM|PREV|THIS))*"
+    r"|(?:event_target|var):[\w.@:^]+"
+    r"|(?<![A-Za-z0-9_])(?!AND|NOT)[A-Z]{3}(?![A-Za-z0-9_]))\s*=\s*\{"
+)
+_RE_FOF_PINNED_OPEN = re.compile(_FOF_PINNED)
+
+# Event-call opens. Long form (`<type>_event = { id = X ... }`) and short
+# form (`<type>_event = X`). The long-form alternative is tried first so the
+# brace is consumed with the opener (the bare `\{` below never re-matches
+# it).
+_FOF_EVENT_LONG = r"\b(?:" + _EVENT_CALL_ALT + r")\s*=\s*\{"
+_FOF_EVENT_SHORT = r"\b(?:" + _EVENT_CALL_ALT + r")\s*=\s*[A-Za-z0-9_.]+"
+_RE_FOF_EVENT_LONG = re.compile(_FOF_EVENT_LONG)
+_RE_FOF_EVENT_SHORT = re.compile(_FOF_EVENT_SHORT)
+_RE_FOF_ID = re.compile(r"\bid\s*=\s*([^\s}]+)")
+_RE_FOF_TOKEN = re.compile(
+    "|".join(
+        (r"\{", r"\}", _FOF_ITER_OPEN, _FOF_PINNED, _FOF_EVENT_LONG, _FOF_EVENT_SHORT)
+    )
+)
+
+
+def _fof_stack_flags(stack: List[str]) -> bool:
+    """Walk scope frames innermost-first; True iff the nearest loop/pin frame is
+    an iterator. A "pinned" scope switch fixes the recipient, so it shields an
+    outer iterator (dedup idiom); "other" frames (incl. random_*) are
+    transparent, so a random pick nested inside an iterator is still flagged."""
+    for kind in reversed(stack):
+        if kind == "iter":
+            return True
+        if kind == "pinned":
+            return False
+    return False
+
+
+def scan_fire_only_once_in_loop(args: Tuple[str, frozenset, str]) -> List[str]:
+    """Pool worker: flag fire_only_once events fired inside an iterator."""
+    filename, fire_only_once_ids, mod_path = args
+    if not fire_only_once_ids or _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    # Cheap early-out: a file that fires no events can't fire one inside a loop,
+    # so skip the two full-text transforms + tokenize on the bulk of the repo
+    # (history/, ai_strategy/, unit stat files, ... none of which fire events).
+    if not any(k in text for k in _EVENT_CALL_KEYWORDS):
+        return []
+    # Quote-aware: strip comments, then blank quoted-string interiors so a
+    # literal brace inside a `log = "...{..."` string can't desync the depth
+    # stack and corrupt every finding after it.
+    cleaned = blank_quoted_strings(strip_comments(text))
+    findings: List[str] = []
+
+    def _flag(eid: str, pos: int) -> None:
+        line = cleaned.count("\n", 0, pos) + 1
+        rel = os.path.relpath(filename, mod_path)
+        findings.append(
+            f"{rel}:{line} - fire_only_once event {eid} fired inside"
+            f" an every_*/for_each_* iterator (only the first"
+            f" recipient gets it; drop fire_only_once or fire it"
+            f" outside the loop)"
+        )
+
+    # Stack of scope frames: "iter" (every_/for_each_), "pinned"
+    # (fixed-recipient scope switch), or "other" (limit / if / random_* /
+    # completion_reward / the event-call block / ...). An event call is flagged
+    # when the nearest enclosing loop/pin frame is an iterator (_fof_stack_flags).
+    stack: List[str] = []
+    for m in _RE_FOF_TOKEN.finditer(cleaned):
+        tok = m.group(0)
+        if tok == "{":
+            stack.append("other")
+        elif tok == "}":
+            if stack:
+                stack.pop()
+        elif _RE_FOF_ITER_OPEN.match(tok):
+            stack.append("iter")
+        elif _RE_FOF_PINNED_OPEN.match(tok):
+            stack.append("pinned")
+        elif _RE_FOF_EVENT_LONG.match(tok):
+            # Long form: extract id from the block body (id may not be first).
+            stack.append("other")
+            body, _ = extract_block_from_text(cleaned, m.end() - 1)
+            idm = _RE_FOF_ID.search(body)
+            eid = idm.group(1) if idm else None
+            if eid and eid in fire_only_once_ids and _fof_stack_flags(stack[:-1]):
+                _flag(eid, m.start())
+        elif _RE_FOF_EVENT_SHORT.match(tok):
+            eid = tok.split("=", 1)[1].strip()
+            if eid in fire_only_once_ids and _fof_stack_flags(stack):
+                _flag(eid, m.start())
+    return findings
 
 
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
@@ -138,7 +486,9 @@ def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
 
 
 _EVENT_BLOCK_PATTERN = re.compile(
-    r"^(?:country_event|news_event) = \{(.*?)^\}", flags=re.DOTALL | re.MULTILINE
+    r"^(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
+    r"\s*=\s*\{(.*?)^\}",
+    flags=re.DOTALL | re.MULTILINE,
 )
 
 
@@ -218,12 +568,50 @@ def _extract_random_event_ids(text: str) -> set:
     return ids
 
 
+# A `random = { chance = N ... }` block: the on_action poll that emulates MTTH.
+# `\brandom\s*=\s*\{` cannot match `random_country` / `random_list` /
+# `random_events` (those carry `_` after `random`, not `=`), so only the plain
+# chance-rolled poll is matched.
+_RANDOM_BLOCK_PATTERN = re.compile(r"\brandom\s*=\s*\{")
+_CHANCE_PATTERN = re.compile(r"\bchance\s*=")
+
+
+def scan_probability_rolled_fires(args: Tuple[str, frozenset]) -> Set[str]:
+    """Pool worker: event IDs fired inside a `random = { chance = N ... }` poll.
+
+    A chance-rolled on_action poll emulates MTTH: each tick it rolls a chance
+    and fires the event when it wins. The event has no deterministic yearly
+    slot, so the date-gated scheduling check must not flag it as dead content.
+    """
+    filename = args[0]
+    if _should_skip(filename):
+        return set()
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return set()
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    ids: set = set()
+    for m in _RANDOM_BLOCK_PATTERN.finditer(cleaned):
+        body, _ = extract_block_from_text(cleaned, m.end() - 1)
+        if _CHANCE_PATTERN.search(body):
+            for eid, _pos in _iter_fired_ids(body):
+                ids.add(eid)
+    return ids
+
+
 def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str]]:
     namespaces: Set[str] = set(_ADD_NAMESPACE_PATTERN.findall(text))
     meta: List[dict] = []
     for m in _EVENT_TYPE_PATTERN.finditer(text):
         event_type = m.group(1)
         body, _ = extract_block_from_text(text, m.end() - 1)
+        # Quote-aware comment strip + quoted-string blanking before the `in body`
+        # flag checks: a commented-out `#fire_only_once = yes` (or hidden /
+        # is_triggered_only / mean_time_to_happen) must not count as an active
+        # directive, and a `#` (or one of those keywords) inside a quoted
+        # log/desc string must not truncate the line or false-match.
+        body_nc = blank_quoted_strings(strip_comments(body))
 
         id_match = _EVENT_ID_PATTERN.search(body)
         if not id_match:
@@ -234,10 +622,10 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "id": id_match.group(1),
                 "type": event_type,
                 "file": basename,
-                "is_hidden": "hidden = yes" in body,
-                "is_triggered_only": "is_triggered_only = yes" in body,
-                "fire_only_once": "fire_only_once = yes" in body,
-                "has_mtth": "mean_time_to_happen" in body,
+                "is_hidden": "hidden = yes" in body_nc,
+                "is_triggered_only": "is_triggered_only = yes" in body_nc,
+                "fire_only_once": "fire_only_once = yes" in body_nc,
+                "has_mtth": "mean_time_to_happen" in body_nc,
                 "option_count": len(_OPTION_BLOCK_PATTERN.findall(body)),
                 "title_desc_refs": [
                     v.strip() for v in _EVENT_TITLEDESC_PATTERN.findall(body)
@@ -256,6 +644,10 @@ class Validator(BaseValidator):
         self._events_cache: Optional[Tuple[List[str], Dict[str, str]]] = None
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
         self._random_events_cache: Optional[set] = None
+        self._probability_rolled_cache: Optional[set] = None
+        self._fire_only_once_ids_cache: Optional[set] = None
+        self._fire_scan_args_cache: Optional[List[Tuple[str, frozenset]]] = None
+        self._fires_cache: Optional[List[Tuple[str, str, int]]] = None
 
     def _get_all_events(self) -> Tuple[List[str], Dict[str, str]]:
         if self._events_cache is not None:
@@ -307,6 +699,38 @@ class Validator(BaseValidator):
         self._meta_cache = (meta, namespaces)
         return self._meta_cache
 
+    def _rel_posix(self, filename: str) -> str:
+        """Mod-relative path with forward slashes, so matching works on Windows."""
+        return Path(os.path.relpath(filename, self.mod_path)).as_posix()
+
+    def _get_fire_scan_args(self) -> List[Tuple[str, frozenset]]:
+        """Pool args for every file that can fire an event.
+
+        Fires live all over the mod, not just in events/. Full repo even in
+        staged mode: a staged caller's target usually sits elsewhere.
+        """
+        if self._fire_scan_args_cache is None:
+            self._fire_scan_args_cache = [
+                (f, frozenset())
+                for f in self._collect_files(
+                    ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+                    ignore_staged=True,
+                )
+            ]
+        return self._fire_scan_args_cache
+
+    def _get_event_fires(self) -> List[Tuple[str, str, int]]:
+        """Every literal event fire in the mod as (event_id, file, line)."""
+        if self._fires_cache is not None:
+            return self._fires_cache
+        fires: List[Tuple[str, str, int]] = []
+        for result in self._pool_map(
+            scan_event_fires, self._get_fire_scan_args(), chunksize=30
+        ):
+            fires.extend(result)
+        self._fires_cache = fires
+        return fires
+
     def _get_random_event_ids(self) -> set:
         """Return event IDs referenced inside ``random_events`` blocks in on_actions.
 
@@ -329,6 +753,63 @@ class Validator(BaseValidator):
             ids.update(_extract_random_event_ids(text))
 
         self._random_events_cache = ids
+        return ids
+
+    def _get_probability_rolled_ids(self) -> set:
+        """Return event IDs fired from chance-rolled on_action polls.
+
+        A `random = { chance = N ... }` poll emulates MTTH: each tick it rolls
+        a chance and fires the event when it wins, so the event has no
+        deterministic yearly slot. The date-gated scheduling check must not
+        flag such an event as dead content.
+        """
+        if self._probability_rolled_cache is not None:
+            return self._probability_rolled_cache
+
+        # Lookup pass: must scan full repo even in staged mode, mirroring
+        # `_get_random_event_ids`.
+        files = self._collect_files(["common/on_actions/**/*.txt"], ignore_staged=True)
+        ids: set = set()
+        for result in self._pool_map(
+            scan_probability_rolled_fires,
+            [(f, frozenset()) for f in files],
+            chunksize=30,
+        ):
+            ids.update(result)
+
+        self._probability_rolled_cache = ids
+        return ids
+
+    def _get_fire_only_once_ids(self) -> set:
+        """Return IDs of events declared ``fire_only_once = yes``.
+
+        Lookup pass: must scan the full repo even in staged mode. Otherwise a
+        staged caller that fires an existing fire_only_once event whose
+        definition lives in an unstaged file drops out of the ID set, and the
+        real in-loop / multi-caller bug commits silently.
+        """
+        if self._fire_only_once_ids_cache is not None:
+            return self._fire_only_once_ids_cache
+
+        files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
+        ids: set = set()
+        for filepath in files:
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not text:
+                continue
+            basename = os.path.basename(filepath)
+            file_meta, _ = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "events.metadata",
+                filepath,
+                text,
+                lambda: _parse_event_metadata(text, basename),
+            )
+            ids.update(ev["id"] for ev in file_meta if ev["fire_only_once"])
+
+        self._fire_only_once_ids_cache = ids
         return ids
 
     def validate_unsupported_title_desc(self):
@@ -500,6 +981,102 @@ class Validator(BaseValidator):
             category="unreferenced-triggered-only",
         )
 
+    def validate_date_gated_scheduling(self):
+        """Flag date-anchored events nothing schedules from the yearly effects.
+
+        MD fires its historical events from
+        `common/scripted_effects/00_yearly_effects.txt`
+        (`MD_event_on_startup_events` for 2000, `trigger_year_YYYY_events`
+        after) and uses the event's own `date >` check only as a guard. An
+        event that carries the guard but never gets a scheduling entry is dead
+        content: it is triggered-only, so nothing ever fires it.
+
+        A `date <` bound alone is an expiry guard on a chain event and says
+        nothing about scheduling, so only `date >` counts. Chain events inherit
+        whatever schedules an ancestor, focus/decision fires are player-driven
+        availability windows, `random_events` pools weight their events by
+        MTTH, and chance-rolled on_action polls emulate MTTH. All are exempt.
+        """
+        self._log_section(
+            "Checking date-gated events are scheduled from the yearly effects..."
+        )
+
+        # Staged-aware on purpose: on commit, only report on the event files
+        # actually being committed.
+        gated_args = [
+            (f, frozenset()) for f in self._collect_files(["events/**/*.txt"])
+        ]
+        gated: List[Tuple[str, str, int]] = []
+        for result in self._pool_map(scan_date_gated_events, gated_args, chunksize=10):
+            gated.extend(result)
+        self.log(f"  Found {len(gated)} events with a date > guard")
+
+        results = []
+        if gated:
+            results = self._unscheduled_date_gated(gated)
+            if results is None:
+                # Scheduling file missing: logged and skipped, nothing to report.
+                return
+
+        self._report(
+            results,
+            "✓ Every date-gated event is scheduled from the yearly effects",
+            f"Date-gated events missing a {_YEARLY_EFFECTS_REL} entry:",
+            Severity.ERROR,
+            category="date-gated-not-scheduled",
+        )
+
+    def _unscheduled_date_gated(
+        self, gated: List[Tuple[str, str, int]]
+    ) -> Optional[List[str]]:
+        """Findings for `gated`, or None when the scheduling file is missing."""
+        sources: Dict[str, Set[str]] = {}
+        for eid, filename, _line in self._get_event_fires():
+            sources.setdefault(eid, set()).add(self._rel_posix(filename))
+        scheduled = {
+            eid for eid, rels in sources.items() if _YEARLY_EFFECTS_REL in rels
+        }
+        if not scheduled:
+            # Without the scheduling file every date-gated event would be
+            # reported, so a rename must skip the check rather than flood it.
+            self.log(f"  {_YEARLY_EFFECTS_REL} schedules nothing, skipping")
+            return None
+
+        # Lookup pass: a staged event's parent almost always lives elsewhere.
+        graph_args = [
+            (f, frozenset())
+            for f in self._collect_files(["events/**/*.txt"], ignore_staged=True)
+        ]
+        parents: Dict[str, Set[str]] = {}
+        for pairs in self._pool_map(scan_event_fire_graph, graph_args, chunksize=10):
+            for parent, child in pairs:
+                parents.setdefault(child, set()).add(parent)
+
+        results = []
+        random_events_ids = self._get_random_event_ids()
+        probability_rolled_ids = self._get_probability_rolled_ids()
+        for eid, filename, line in sorted(gated):
+            if _is_scheduled_chain(eid, scheduled, parents):
+                continue
+            if eid in random_events_ids:
+                # A `random_events` pool weights its events by MTTH; the pool
+                # is the schedule.
+                continue
+            if eid in probability_rolled_ids:
+                # A chance-rolled on_action poll emulates MTTH and has no
+                # deterministic yearly slot.
+                continue
+            rels = sources.get(eid, set())
+            if any(r.startswith(d) for r in rels for d in _PLAYER_DRIVEN_FIRE_DIRS):
+                continue
+            origin = ", ".join(sorted(rels)) if rels else "nothing"
+            results.append(
+                f"{eid} - {self._rel_posix(filename)}:{line} has a date > guard but "
+                f"nothing schedules it from {_YEARLY_EFFECTS_REL} "
+                f"(fired from: {origin})"
+            )
+        return results
+
     def validate_mtth_triggered_only(self):
         """Flag events with both mean_time_to_happen and is_triggered_only.
 
@@ -655,6 +1232,57 @@ class Validator(BaseValidator):
             category="namespace-mismatch",
         )
 
+    def validate_undefined_event_fires(self):
+        """Flag scripts that fire an event ID no event file defines.
+
+        MD sets `replace_path = "events"`, so vanilla events are not loaded and
+        every fired ID has to resolve inside the mod. A fire at an undefined ID
+        compiles fine and silently does nothing, which is how a whole chain can
+        rot after its events are renamed or commented out.
+
+        IDs assembled at runtime (`country_event = UN.[ID]`) never appear as a
+        literal token, so any namespace dispatched that way is exempt.
+        """
+        self._log_section("Checking event fires resolve to a defined event...")
+
+        args_list = self._get_fire_scan_args()
+
+        # The definition scan must also cover the full repo in staged mode: a
+        # staged caller's target event almost always lives in an unstaged file.
+        event_files = [
+            (f, frozenset())
+            for f in self._collect_files(["events/**/*.txt"], ignore_staged=True)
+        ]
+        defined: Set[str] = set()
+        for s in self._pool_map(scan_event_definitions, event_files, chunksize=10):
+            defined.update(s)
+        self.log(f"  Found {len(defined)} defined event IDs")
+
+        dynamic_namespaces: Set[str] = set()
+        for s in self._pool_map(scan_dynamic_event_namespaces, args_list, chunksize=30):
+            dynamic_namespaces.update(s)
+
+        seen: Dict[str, Tuple[str, int]] = {}
+        for eid, filename, line in self._get_event_fires():
+            if eid in defined or eid in seen:
+                continue
+            if eid[: eid.rfind(".")] in dynamic_namespaces:
+                continue
+            seen[eid] = (filename, line)
+
+        results = []
+        for eid in sorted(seen):
+            filename, line = seen[eid]
+            rel = os.path.relpath(filename, self.mod_path)
+            results.append(f"{eid} - fired from {rel}:{line}, no event defines it")
+
+        self._report(
+            results,
+            "✓ Every fired event ID resolves to a defined event",
+            "Fires at undefined event IDs (silently do nothing):",
+            category="undefined-event-fire",
+        )
+
     def validate_event_pictures(self):
         """Flag events whose `picture = GFX_x` sprite is not MD-defined.
 
@@ -714,18 +1342,66 @@ class Validator(BaseValidator):
             category="missing-event-picture",
         )
 
+    def validate_fire_only_once_in_loop(self):
+        """Flag fire_only_once events fired inside an every_*/for_each_* iterator.
+
+        A fire_only_once event sets a one-shot flag on first firing, so inside
+        an iterating scope (every_country / every_state / for_each_scope_loop
+        / etc.) only the first recipient actually gets it -- the rest of the
+        iterations silently no-op. ``random_country`` / ``random_state`` pick a
+        single scope by design and are not iterators, so calls nested only in
+        them are not flagged.
+        """
+        self._log_section(
+            "Checking for fire_only_once events fired inside iterators..."
+        )
+
+        fire_only_once_ids = frozenset(self._get_fire_only_once_ids())
+        if not fire_only_once_ids:
+            self.log("  No fire_only_once events defined — skipping")
+            self._report(
+                [],
+                "✓ No fire_only_once events fired inside iterators",
+                "fire_only_once events fired inside iterators (only the first recipient gets it):",
+                category="fire-only-once-in-loop",
+            )
+            return
+
+        txt_files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+        )
+        args_list = [(f, fire_only_once_ids, self.mod_path) for f in txt_files]
+        all_results = self._pool_map(
+            scan_fire_only_once_in_loop, args_list, chunksize=30
+        )
+        results = [r for file_res in all_results for r in file_res]
+
+        # ERROR: the 11-site pre-existing backlog was cleared.
+        self._report(
+            results,
+            "✓ No fire_only_once events fired inside iterators",
+            "fire_only_once events fired inside every_*/for_each_* iterators"
+            " (only the first recipient gets it; drop fire_only_once or fire"
+            " the event outside the loop):",
+            Severity.ERROR,
+            category="fire-only-once-in-loop",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
         self.validate_event_call_long_form()
         self.validate_triggered_only_unreferenced()
+        self.validate_date_gated_scheduling()
         self.validate_missing_localisation()
         self.validate_mtth_triggered_only()
         self.validate_hidden_event_options()
         self.validate_hidden_event_localisation()
         self.validate_duplicate_event_ids()
         self.validate_namespace_mismatch()
+        self.validate_undefined_event_fires()
         self.validate_event_pictures()
+        self.validate_fire_only_once_in_loop()
 
 
 if __name__ == "__main__":

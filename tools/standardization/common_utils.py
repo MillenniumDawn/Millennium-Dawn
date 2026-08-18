@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from _common import format_elapsed
 from shared_utils import (
     create_backup,
     extract_block,
@@ -75,6 +76,28 @@ def collapse_blank_runs(lines: List[str], max_blank: int = 1) -> List[str]:
             blank_count = 0
             result.append(line)
     return result
+
+
+def join_groups(groups: List[List[str]]) -> List[str]:
+    """Join line groups with exactly one blank line between them.
+
+    A blank line separates two groups rather than terminating one, so an absent
+    property contributes no gap and the last group is not followed by a blank.
+    Emitting a trailing blank per section is what left a dead line before every
+    closing brace and a stray gap wherever a property was missing."""
+    out: List[str] = []
+    for group in groups:
+        body = list(group)
+        while body and not body[0].strip():
+            body.pop(0)
+        while body and not body[-1].strip():
+            body.pop()
+        if not body:
+            continue
+        if out:
+            out.append("")
+        out.extend(body)
+    return out
 
 
 def block_has_log(block_lines: List[str]) -> bool:
@@ -189,15 +212,7 @@ class BaseStandardizer(ABC):
                     f.write(line + "\n")
             os.replace(tmp_path, output_file)
 
-            end_time = time.time()
-            elapsed_time = end_time - self.start_time
-
-            if elapsed_time < 60:
-                time_str = f"{elapsed_time:.2f} seconds"
-            else:
-                minutes = int(elapsed_time // 60)
-                seconds = elapsed_time % 60
-                time_str = f"{minutes}m {seconds:.2f}s"
+            time_str = format_elapsed(time.time() - self.start_time)
 
             log_message("SUCCESS", f"Standardization completed in {time_str}")
             log_message("SUCCESS", f"Processed {self.processed_count} blocks")

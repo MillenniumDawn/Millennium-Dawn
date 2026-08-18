@@ -27,11 +27,11 @@ This dispatcher:
     validator's own worker pool so the two layers don't oversubscribe.
 
 Only the commit-stage validators live here. The expensive cross-reference
-validators are deliberately `stages: [manual]` (CI-gated) and must stay out, or
-they would run on every commit — running the full suite on commit was measured
-at ~7s warm, a large regression. Validators keyed off non-`.txt`/`.yml` files
-(`validate_scripted_gui`, `validate_scripted_localisation`, `validate_defines`,
-`validate_gfx_references`) also stay as their own hooks.
+validators run in CI only (never on commit), and must stay out of this
+registry, or they would run on every commit — running the full suite on commit
+was measured at ~7s warm, a large regression. `validate_defines` keeps its own
+pre-commit hook because it is keyed off `.lua` files, which this dispatcher
+does not route.
 
 Opt out with `MD_SKIP_VALIDATE=1 git commit ...`.
 """
@@ -78,12 +78,11 @@ class _Spec:
 
 # Only the commit-stage validators belong here. The expensive cross-reference
 # validators (cosmetic_tags, localisation, focus_tree, variables, decisions,
-# modifiers, scripted_params, simplifications, ...) are deliberately
-# `stages: [manual]` in .pre-commit-config.yaml — CI gates them, they do NOT run
-# on commit. Folding them in here would drag them back onto every commit, so
-# this registry mirrors exactly the run-on-commit `md-validate-*` hooks (their
-# `files:` patterns and --strict flags). Keep in sync when hooks change; the
-# golden test in tools/tests/precommit_validate_test.py guards against drift.
+# modifiers, scripted_params, simplifications, ...) run in CI only — they do NOT
+# run on commit. Folding them in here would drag them onto every commit, so this
+# registry mirrors exactly the run-on-commit validators (their `files:` patterns
+# and --strict flags). Keep in sync when the config changes; the golden test in
+# tools/tests/precommit_validate_test.py guards against drift.
 _REGISTRY = [
     _Spec(
         "validate_style",
@@ -97,6 +96,17 @@ _REGISTRY = [
             ("common/units/", TXT),
             ("common/ai_templates/", TXT),
             ("common/scripted_effects/", TXT),
+            # Ship variants and create_unit effects share this validator, so
+            # every runtime source for either effect is routed here.
+            ("history/countries/", TXT),
+            ("common/national_focus/", TXT),
+            ("events/", TXT),
+            ("common/decisions/", TXT),
+            ("common/special_projects/", TXT),
+            ("common/on_actions/", TXT),
+            ("common/operations/", TXT),
+            ("common/resistance_compliance_modifiers/", TXT),
+            ("common/scripted_guis/", TXT),
         ],
     ),
     _Spec(
@@ -104,6 +114,20 @@ _REGISTRY = [
         [("common/ai_strategy/", TXT), ("common/ai_templates/", TXT)],
     ),
     _Spec("validate_ai_navy", [("common/ai_navy/", TXT), ("common/units/", TXT)]),
+    _Spec(
+        "validate_characters",
+        [
+            ("common/characters/", TXT),
+            ("common/unit_leader/", TXT),
+            # Sources of create_corps_commander and friends.
+            ("common/national_focus/", TXT),
+            ("common/decisions/", TXT),
+            ("common/scripted_effects/", TXT),
+            ("common/on_actions/", TXT),
+            ("events/", TXT),
+            ("history/countries/", TXT),
+        ],
+    ),
     _Spec("validate_ai_equipment", [("common/ai_equipment/", TXT)], strict=False),
     _Spec(
         "validate_agency_upgrades",
@@ -128,7 +152,17 @@ _REGISTRY = [
             ("localisation/english/", YML),
         ],
     ),
-    _Spec("validate_events", [("events/", TXT)]),
+    _Spec(
+        "validate_events",
+        [("common/", TXT), ("events/", TXT), ("history/", TXT)],
+    ),
+    _Spec(
+        "validate_mios",
+        [
+            ("common/military_industrial_organization/organizations/", TXT),
+            ("localisation/english/", YML),
+        ],
+    ),
 ]
 
 
@@ -159,7 +193,30 @@ def _run(spec, mod_path, env, no_color, inner_workers):
     if no_color:
         cmd.append("--no-color")
     start = time.perf_counter()
-    proc = subprocess.run(cmd, cwd=mod_path, env=env, capture_output=True, text=True)
+    # A hung validator must not block `git commit` forever; 300s matches the
+    # timeout the legacy per-hook dispatcher used.
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=mod_path,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+    except subprocess.TimeoutExpired as exc:
+        out = exc.stdout
+        err = exc.stderr
+        if out is None:
+            out = ""
+        if err is None:
+            err = ""
+        if isinstance(out, bytes):
+            out = out.decode("utf-8", "replace")
+        if isinstance(err, bytes):
+            err = err.decode("utf-8", "replace")
+        err += f"\n{spec.script}: TIMED OUT after 300s"
+        return (spec.script, 124, out, err, time.perf_counter() - start)
     return (
         spec.script,
         proc.returncode,

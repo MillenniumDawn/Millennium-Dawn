@@ -1,14 +1,14 @@
 add_namespace = Japan
 add_namespace = japan_classic
-add_namespace = Japan_Demographic
 add_namespace = JAP_territorial
 add_namespace = JAP_historical
 add_namespace = JAP_diplomacy
 add_namespace = JAP_news
 add_namespace = Japan_economy
+add_namespace = JAP_electronics
+add_namespace = JAP_ai
 
 #China is Demanding the Senkaku Islands!
-#It is triggered by China’s national focus, so don’t delete it!
 country_event = {
 	id = Japan.8
 	title = Japan.8.t
@@ -41,7 +41,7 @@ country_event = {
 		change_influence_percentage = yes
 		CHI = { country_event = { days = 2 id = Japan.4 } }
 		ai_chance = {
-			factor = 20
+			base = 20
 			modifier = {
 				factor = 2
 				ROOT = {
@@ -134,7 +134,7 @@ country_event = {
 			country_event = { days = 2 id = Japan.5 }
 		}
 		ai_chance = {
-			factor = 80
+			base = 80
 			modifier = {
 				factor = 2
 				CHI = { check_variable = { CHI_chinese_aggression > 0 } }
@@ -192,7 +192,6 @@ country_event = {
 }
 
 #Japan Remains Defiant!
-#It is triggered by China’s national focus, so don’t delete it!
 country_event = {
 	id = Japan.5
 	title = Japan.5.t
@@ -233,7 +232,6 @@ country_event = {
 }
 
 #Chinese jets have fired on the aircraft we scrambled to intercept them!
-#It is triggered by China’s national focus, so don’t delete it!
 country_event = {
 	id = Japan.6
 	title = Japan.6.t
@@ -250,7 +248,7 @@ country_event = {
 			target = CHI
 		}
 		ai_chance = {
-			factor = 5
+			base = 5
 			modifier = {
 				add = 100
 				OR = {
@@ -280,7 +278,7 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: Japan.6.b executed"
 		ai_chance = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 2
 				CHI = { check_variable = { CHI_chinese_aggression > 10 } }
@@ -299,7 +297,7 @@ country_event = {
 		name = Japan.6.c #This was probably an accident...
 		log = "[GetDateText]: [This.GetName]: Japan.6.c executed"
 		ai_chance = {
-			factor = 20
+			base = 20
 			modifier = {
 				factor = 2
 				CHI = { check_variable = { CHI_chinese_aggression < 0 } }
@@ -321,7 +319,6 @@ country_event = {
 }
 
 #Chinese and Japanese Fighter Jets Engage in Aerial Combat
-#It is triggered by China’s national focus, so don’t delete it!
 news_event = {
 	id = Japan.7
 	title = Japan.7.t
@@ -373,6 +370,42 @@ country_event = {
 	}
 }
 
+#Proclamation of the Empire
+country_event = {
+	id = Japan.105
+	title = Japan.105.t
+	desc = Japan.105.d
+	picture = GFX_JAP_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = Japan.105.a
+		log = "[GetDateText]: [This.GetName]: Japan.105.a executed"
+		drop_cosmetic_tag = yes
+		set_cosmetic_tag = JAP_EMPIRE
+		clr_country_flag = dynamic_flag
+		add_country_leader_trait = emperor_of_the_continent
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = Japan.105.b
+		log = "[GetDateText]: [This.GetName]: Japan.105.b executed"
+		drop_cosmetic_tag = yes
+		set_cosmetic_tag = JAP_EMPIRE_NAVAL
+		clr_country_flag = dynamic_flag
+		add_country_leader_trait = emperor_of_the_seas
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 5
+				has_completed_focus = JAP_national_shipbuilding_plan
+			}
+		}
+	}
+}
+
 #----------------------------------------------------------------
 #historical events
 #----------------------------------------------------------------
@@ -419,7 +452,7 @@ country_event = {
 		name = japan_classic.16.o1
 		log = "[GetDateText]: [This.GetName]: japan_classic.16.o1 executed"
 		set_temp_variable = { party_popularity_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		create_country_leader = {
 			name = "Yoshiro Mori"
 			picture = "yoshiro_mori.dds"
@@ -454,7 +487,7 @@ country_event = {
 		add_stability = -0.01
 		add_political_power = -10
 		set_temp_variable = { party_popularity_increase = -0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 90 }
 	}
 
@@ -464,7 +497,7 @@ country_event = {
 		set_temp_variable = { party_index = 23 }
 		set_temp_variable = { party_popularity_increase = 0.03 }
 		set_temp_variable = { temp_outlook_increase = 0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_stability = -0.04
 		add_political_power = -25
 		country_event = {
@@ -521,7 +554,7 @@ country_event = {
 		set_temp_variable = { party_index = 23 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -544,26 +577,24 @@ country_event = {
 
 	trigger = {
 		controls_state = 611
+		NOT = { 611 = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
 	}
 
 	fire_only_once = yes
 	is_triggered_only = yes
 
-	immediate = {
-		611 = {
-			damage_building = {
-				type = infrastructure
-				damage = 1.0
-			}
-		}
-	}
-
 	#National Aid
 	option = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.121006001 - disaster_help"
-		add_to_variable = { debt = 1.0 }
-		custom_effect_tooltip = MDMOSJAP_add_debt_disaster1_TT
+		611 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+		}
+		newline = yes
+		small_expenditure = yes
 		ai_chance = {
 			 base = 75
 		}
@@ -573,10 +604,16 @@ country_event = {
 	option = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.121006001 - disaster_leave"
+		611 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+		}
 		add_stability = -0.01
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -618,7 +655,7 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.130210001.oB"
 		add_stability = -0.03
 		set_temp_variable = { party_popularity_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		if = {
 			limit = {
 				has_country_leader = {
@@ -648,9 +685,43 @@ country_event = {
 	trigger = {
 		controls_state = 611
 		controls_state = 610
+		NOT = { 611 = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
 	}
 
-	immediate = {
+	#National Aid
+	option = {
+		name = JAP_historical.disaster_help
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.130324001 - disaster_help"
+		611 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 0.25
+			}
+		}
+		610 = {
+			if = {
+				limit = { NOT = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
+				damage_building = {
+					type = infrastructure
+					damage = 0.05
+				}
+			}
+		}
+		newline = yes
+		small_expenditure = yes
+		ai_chance = {
+			base = 75
+		 }
+	}
+
+	#Self-Determination
+	option = {
+		name = JAP_historical.disaster_leave
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.130324001 - disaster_leave"
 		611 = {
 			damage_building = {
 				type = infrastructure
@@ -662,32 +733,18 @@ country_event = {
 			}
 		}
 		610 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.1
+			if = {
+				limit = { NOT = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
+				damage_building = {
+					type = infrastructure
+					damage = 0.1
+				}
 			}
 		}
-	}
-
-	#National Aid
-	option = {
-		name = JAP_historical.disaster_help
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.130324001 - disaster_help"
-		add_to_variable = { debt = 1.0 }
-		custom_effect_tooltip = MDMOSJAP_add_debt_disaster1_TT
-		ai_chance = {
-			base = 75
-		 }
-	}
-
-	#Self-Determination
-	option = {
-		name = JAP_historical.disaster_leave
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.130324001 - disaster_leave"
 		add_stability = -0.01
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -725,7 +782,7 @@ country_event = {
 		}
 
 		set_temp_variable = { party_popularity_increase = 0.15 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_country_flag = JAP_KOIZUMI_HISTRICAL_APPEARANCE
 
 		ai_chance = {
@@ -764,7 +821,10 @@ country_event = {
 	option = {
 		name = JAP_historical.131201001.oA
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.131201001.oA"
-		add_stability = 0.01
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		change_relative_party_popularity = yes
 	}
 
 }
@@ -781,23 +841,21 @@ country_event = {
 
 	trigger = {
 		controls_state = 616
-	}
-
-	immediate = {
-		616 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.5
-			}
-		}
+		NOT = { 616 = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
 	}
 
 	#National Aid
 	option = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.150526001 - disaster_help"
-		add_to_variable = { debt = 1.0 }
-		custom_effect_tooltip = MDMOSJAP_add_debt_disaster1_TT
+		616 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.25
+			}
+		}
+		newline = yes
+		small_expenditure = yes
 		ai_chance = {
 			 base = 75
 		}
@@ -807,10 +865,16 @@ country_event = {
 	option = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.150526001 - disaster_leave"
+		616 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+		}
 		add_stability = -0.01
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -833,9 +897,38 @@ country_event = {
 
 	trigger = {
 		controls_state = 616
+		NOT = { 616 = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
 	}
 
-	immediate = {
+	#National Aid
+	option = {
+		name = JAP_historical.disaster_help
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.150726001 - disaster_help"
+		616 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 0.5
+			}
+			damage_building = {
+				type = air_base
+				damage = 0.25
+			}
+		}
+		newline = yes
+		small_expenditure = yes
+		ai_chance = {
+			 base = 75
+		}
+	}
+
+	#Self-Determination
+	option = {
+		name = JAP_historical.disaster_leave
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.150726001 - disaster_leave"
 		616 = {
 			damage_building = {
 				type = infrastructure
@@ -850,29 +943,10 @@ country_event = {
 				damage = 0.5
 			}
 		}
-	}
-
-	#National Aid
-	option = {
-
-		name = JAP_historical.disaster_help
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.150726001 - disaster_help"
-		add_to_variable = { debt = 1.0 }
-		custom_effect_tooltip = MDMOSJAP_add_debt_disaster1_TT
-		ai_chance = {
-			 base = 75
-		}
-	}
-
-	#Self-Determination
-	option = {
-
-		name = JAP_historical.disaster_leave
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.150726001 - disaster_leave"
 		add_stability = -0.01
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -895,9 +969,38 @@ country_event = {
 
 	trigger = {
 		controls_state = 617
+		NOT = { 617 = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
 	}
 
-	immediate = {
+	#National Aid
+	option = {
+		name = JAP_historical.disaster_help
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.150926001 - disaster_help"
+		617 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.75
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 0.5
+			}
+			damage_building = {
+				type = naval_base
+				damage = 0.5
+			}
+		}
+		newline = yes
+		small_expenditure = yes
+		ai_chance = {
+			base = 75
+		}
+	}
+
+	#Self-Determination
+	option = {
+		name = JAP_historical.disaster_leave
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.150926001 - disaster_leave"
 		617 = {
 			damage_building = {
 				type = infrastructure
@@ -912,27 +1015,10 @@ country_event = {
 				damage = 1.0
 			}
 		}
-	}
-
-	#National Aid
-	option = {
-		name = JAP_historical.disaster_help
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.150926001 - disaster_help"
-		add_to_variable = { debt = 1.0 }
-		custom_effect_tooltip = MDMOSJAP_add_debt_disaster1_TT
-		ai_chance = {
-			base = 75
-		}
-	}
-
-	#Self-Determination
-	option = {
-		name = JAP_historical.disaster_leave
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.150926001 - disaster_leave"
 		add_stability = -0.01
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -955,9 +1041,38 @@ country_event = {
 
 	trigger = {
 		controls_state = 613
+		NOT = { 613 = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
 	}
 
-	immediate = {
+	#National Aid
+	option = {
+		name = JAP_historical.disaster_help
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.161023001 - disaster_help"
+		613 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.5
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 1.0
+			}
+			damage_building = {
+				type = arms_factory
+				damage = 0.5
+			}
+		}
+		newline = yes
+		medium_expenditure = yes
+		ai_chance = {
+			base = 75
+		}
+	}
+
+	#Self-Determination
+	option = {
+		name = JAP_historical.disaster_leave
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.161023001 - disaster_leave"
 		613 = {
 			damage_building = {
 				type = infrastructure
@@ -972,28 +1087,10 @@ country_event = {
 				damage = 1.0
 			}
 		}
-	}
-
-	#National Aid
-	option = {
-
-		name = JAP_historical.disaster_help
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.161023001 - disaster_help"
-		add_to_variable = { debt = 4.0 }
-		custom_effect_tooltip = MDMOSJAP_add_debt_disaster4_TT
-		ai_chance = {
-			base = 75
-		}
-	}
-
-	#Self-Determination
-	option = {
-		name = JAP_historical.disaster_leave
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.161023001 - disaster_leave"
 		add_stability = -0.01
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -1016,9 +1113,34 @@ country_event = {
 
 	trigger = {
 		controls_state = 609
+		NOT = { 609 = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
 	}
 
-	immediate = {
+	#National Aid
+	option = {
+		name = JAP_historical.disaster_help
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.170320001 - disaster_help"
+		609 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 0.25
+			}
+		}
+		newline = yes
+		small_expenditure = yes
+		ai_chance = {
+			base = 75
+		}
+	}
+
+	#Self-Determination
+	option = {
+		name = JAP_historical.disaster_leave
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.170320001 - disaster_leave"
 		609 = {
 			damage_building = {
 				type = infrastructure
@@ -1029,27 +1151,10 @@ country_event = {
 				damage = 0.5
 			}
 		}
-	}
-
-	#National Aid
-	option = {
-		name = JAP_historical.disaster_help
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.170320001 - disaster_help"
-		add_to_variable = { debt = 1.0 }
-		custom_effect_tooltip = MDMOSJAP_add_debt_disaster1_TT
-		ai_chance = {
-			base = 75
-		}
-	}
-
-	#Self-Determination
-	option = {
-		name = JAP_historical.disaster_leave
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.170320001 - disaster_leave"
 		add_stability = -0.01
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -1105,7 +1210,10 @@ country_event = {
 	option = {
 		name = JAP_historical.180906001.oA
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.180906001.oA"
-		add_stability = 0.01
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		change_relative_party_popularity = yes
 	}
 }
 
@@ -1173,7 +1281,7 @@ country_event = {
 		add_stability = -0.05
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 }
 
@@ -1208,7 +1316,7 @@ country_event = {
 		name = JAP_historical.20070307.oB
 		log = "[GetDateText]: [This.GetName]: JAP_historical.20070307.oB executed"
 		set_temp_variable = { party_popularity_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_country_flag = JAP_MATSUOKA_SCANDAL
 
 		ai_chance = {
@@ -1229,9 +1337,34 @@ country_event = {
 
 	trigger = {
 		controls_state = 613
+		NOT = { 613 = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
 	}
 
-	immediate = {
+	#National Aid
+	option = {
+		name = JAP_historical.disaster_help
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.190325001 - disaster_help"
+		613 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.25
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 0.1
+			}
+		}
+		newline = yes
+		small_expenditure = yes
+		ai_chance = {
+			 base = 75
+		}
+	}
+
+	#Self-Determination
+	option = {
+		name = JAP_historical.disaster_leave
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.190325001 - disaster_leave"
 		613 = {
 			damage_building = {
 				type = infrastructure
@@ -1242,27 +1375,10 @@ country_event = {
 				damage = 0.2
 			}
 		}
-	}
-
-	#National Aid
-	option = {
-		name = JAP_historical.disaster_help
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.190325001 - disaster_help"
-		add_to_variable = { debt = 1.0 }
-		custom_effect_tooltip = MDMOSJAP_add_debt_disaster1_TT
-		ai_chance = {
-			 base = 75
-		}
-	}
-
-	#Self-Determination
-	option = {
-		name = JAP_historical.disaster_leave
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.190325001 - disaster_leave"
 		add_stability = -0.01
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -1287,7 +1403,7 @@ country_event = {
 		name = JAP_historical.20070528.oA
 		log = "[GetDateText]: [This.GetName]: JAP_historical.20070528.oA executed"
 		set_temp_variable = { party_popularity_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		ai_chance = {
 			base = 1
@@ -1310,7 +1426,7 @@ country_event = {
 		name = JAP_historical.20070704.oA
 		log = "[GetDateText]: [This.GetName]: JAP_historical.20070704.oA executed"
 		set_temp_variable = { party_popularity_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		ai_chance = {
 			base = 1
@@ -1330,23 +1446,21 @@ country_event = {
 
 	trigger = {
 		controls_state = 613
-	}
-
-	immediate = {
-		613 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.5
-			}
-		}
+		NOT = { 613 = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
 	}
 
 	#National Aid
 	option = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.190716001 - disaster_help"
-		add_to_variable = { debt = 1.0 }
-		custom_effect_tooltip = MDMOSJAP_add_debt_disaster1_TT
+		613 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.25
+			}
+		}
+		newline = yes
+		small_expenditure = yes
 		ai_chance = {
 			base = 75
 		}
@@ -1356,10 +1470,16 @@ country_event = {
 	option = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.190716001 - disaster_leave"
+		613 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+		}
 		add_stability = -0.01
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -1384,7 +1504,7 @@ country_event = {
 		name = JAP_historical.20070801.oA
 		log = "[GetDateText]: [This.GetName]: JAP_historical.20070801.oA executed"
 		set_temp_variable = { party_popularity_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		ai_chance = {
 			base = 1
@@ -1452,23 +1572,21 @@ country_event = {
 
 	trigger = {
 		controls_state = 616
-	}
-
-	immediate = {
-		616 = {
-			damage_building = {
-				type = infrastructure
-				damage = 1.0
-			}
-		}
+		NOT = { 616 = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
 	}
 
 	#National Aid
 	option = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.200614001 - disaster_help"
-		add_to_variable = { debt = 1.0 }
-		custom_effect_tooltip = MDMOSJAP_add_debt_disaster1_TT
+		616 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+		}
+		newline = yes
+		small_expenditure = yes
 		ai_chance = {
 			 base = 75
 		}
@@ -1478,10 +1596,16 @@ country_event = {
 	option = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.200614001 - disaster_leave"
+		616 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+		}
 		add_stability = -0.01
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -1560,13 +1684,13 @@ country_event = {
 		set_temp_variable = { party_index = 2 }
 		set_temp_variable = { party_popularity_increase = tmp_liberal }
 		set_temp_variable = { temp_outlook_increase = tmp_liberal }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_temp_variable = { var = tmp_liberal value = var:party_pop_array^14 }
 		multiply_temp_variable = { var = tmp_liberal value = -1 }
 		set_temp_variable = { party_index = 14 }
 		set_temp_variable = { party_popularity_increase = tmp_liberal }
 		set_temp_variable = { temp_outlook_increase = tmp_liberal }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		ai_chance = {
 			base = 1
@@ -1602,7 +1726,7 @@ country_event = {
 		set_temp_variable = { party_index = 14 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		ai_chance = {
 			base = 1
@@ -1634,7 +1758,7 @@ country_event = {
 		set_temp_variable = { party_index = 16 }
 		set_temp_variable = { party_popularity_increase = 0.12 }
 		set_temp_variable = { temp_outlook_increase = 0.12 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		ai_chance = {
 			base = 1
@@ -1667,7 +1791,7 @@ country_event = {
 		set_temp_variable = { party_index = 14 }
 		set_temp_variable = { party_popularity_increase = tmp_your }
 		set_temp_variable = { temp_outlook_increase = tmp_your }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		ai_chance = {
 			base = 1
@@ -1701,7 +1825,7 @@ country_event = {
 		set_temp_variable = { party_index = 14 }
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		newline = yes
 		custom_effect_tooltip = JAP_historical.20170925_TT
 
@@ -1765,7 +1889,7 @@ country_event = {
 		set_temp_variable = { party_index = 5 }
 		set_temp_variable = { party_popularity_increase = 0.03 }
 		set_temp_variable = { temp_outlook_increase = 0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		ai_chance = {
 			base = 1
@@ -1797,7 +1921,7 @@ country_event = {
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = 0.03 }
 		set_temp_variable = { temp_outlook_increase = 0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		ai_chance = {
 			base = 1
@@ -1817,9 +1941,38 @@ country_event = {
 
 	trigger = {
 		controls_state = 613
+		NOT = { 613 = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
 	}
 
-	immediate = {
+	#National Aid
+	option = {
+		name = JAP_historical.disaster_help
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.210811001 - disaster_help"
+		613 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.25
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 0.25
+			}
+			damage_building = {
+				type = arms_factory
+				damage = 0.25
+			}
+		}
+		newline = yes
+		small_expenditure = yes
+		ai_chance = {
+			 base = 75
+		}
+	}
+
+	#Self-Determination
+	option = {
+		name = JAP_historical.disaster_leave
+		log = "[GetDateText]: [Root.GetName]: JAP_historical.210811001 - disaster_leave"
 		613 = {
 			damage_building = {
 				type = infrastructure
@@ -1834,27 +1987,10 @@ country_event = {
 				damage = 0.5
 			}
 		}
-	}
-
-	#National Aid
-	option = {
-		name = JAP_historical.disaster_help
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.210811001 - disaster_help"
-		add_to_variable = { debt = 1.0 }
-		custom_effect_tooltip = MDMOSJAP_add_debt_disaster1_TT
-		ai_chance = {
-			 base = 75
-		}
-	}
-
-	#Self-Determination
-	option = {
-		name = JAP_historical.disaster_leave
-		log = "[GetDateText]: [Root.GetName]: JAP_historical.210811001 - disaster_leave"
 		add_stability = -0.01
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -1886,14 +2022,30 @@ country_event = {
 		set_variable = { JAP_once_millennium_disaster_consumer_goods_factor = 0.20 }
 		set_variable = { JAP_once_millennium_disaster_energy_gain_multiplier = -0.20 }
 		616 = {
-			set_variable = { JAP_scars_earthquake_and_tsunami_state_production_speed_buildings_factor = -0.50 }
-			 set_variable = { JAP_scars_earthquake_and_tsunami_state_resources_factor = -0.30 }
-			set_variable = { JAP_scars_earthquake_and_tsunami_state_productivity_growth_modifier = -0.30 }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } }
+				set_variable = { JAP_scars_earthquake_and_tsunami_state_production_speed_buildings_factor = -0.25 }
+				set_variable = { JAP_scars_earthquake_and_tsunami_state_resources_factor = -0.15 }
+				set_variable = { JAP_scars_earthquake_and_tsunami_state_productivity_growth_modifier = -0.15 }
+			}
+			else = {
+				set_variable = { JAP_scars_earthquake_and_tsunami_state_production_speed_buildings_factor = -0.50 }
+				set_variable = { JAP_scars_earthquake_and_tsunami_state_resources_factor = -0.30 }
+				set_variable = { JAP_scars_earthquake_and_tsunami_state_productivity_growth_modifier = -0.30 }
+			}
 		}
 		615 = {
-			set_variable = { JAP_scars_earthquake_state_production_speed_buildings_factor = -0.20 }
-			 set_variable = { JAP_scars_earthquake_state_resources_factor = -0.15 }
-			 set_variable = { JAP_scars_earthquake_state_productivity_growth_modifier = -0.10 }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } }
+				set_variable = { JAP_scars_earthquake_state_production_speed_buildings_factor = -0.10 }
+				set_variable = { JAP_scars_earthquake_state_resources_factor = -0.075 }
+				set_variable = { JAP_scars_earthquake_state_productivity_growth_modifier = -0.05 }
+			}
+			else = {
+				set_variable = { JAP_scars_earthquake_state_production_speed_buildings_factor = -0.20 }
+				set_variable = { JAP_scars_earthquake_state_resources_factor = -0.15 }
+				set_variable = { JAP_scars_earthquake_state_productivity_growth_modifier = -0.10 }
+			}
 		}
 		set_country_flag = JAP_great_east_japan_earthquake_flag
 		mark_focus_tree_layout_dirty = yes
@@ -1903,26 +2055,47 @@ country_event = {
 		name = JAP_historical.20110311.a
 		log = "[GetDateText]: [This.GetName]: JAP_historical.20110311.a executed"
 		616 = {
-			remove_building = { type = infrastructure level = 4 }
-			remove_building = { type = internet_station level = 2 }
-			remove_building = { type = industrial_complex level = 4 }
-			remove_building = { type = dockyard level = 1 }
-			remove_building = { type = agriculture_district level = 1 }
-			damage_building = { type = arms_factory damage = 5.0 }
-			damage_building = { type = offices damage = 5.0 }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } }
+				remove_building = { type = infrastructure level = 2 }
+				remove_building = { type = internet_station level = 1 }
+				remove_building = { type = industrial_complex level = 2 }
+				damage_building = { type = arms_factory damage = 2.5 }
+				damage_building = { type = offices damage = 2.5 }
+			}
+			else = {
+				remove_building = { type = infrastructure level = 4 }
+				remove_building = { type = internet_station level = 2 }
+				remove_building = { type = industrial_complex level = 4 }
+				remove_building = { type = dockyard level = 1 }
+				remove_building = { type = agriculture_district level = 1 }
+				damage_building = { type = arms_factory damage = 5.0 }
+				damage_building = { type = offices damage = 5.0 }
+			}
 			add_dynamic_modifier = {
 					modifier = JAP_scars_earthquake_and_tsunami
 			}
 		}
 		newline = yes
 		615 = {
-			remove_building = { type = infrastructure level = 2 }
-			remove_building = { type = internet_station level = 1 }
-			remove_building = { type = industrial_complex level = 3 }
-			damage_building = { type = arms_factory damage = 2.0 }
-			damage_building = { type = dockyard damage = 2.0 }
-			damage_building = { type = agriculture_district damage = 2.0 }
-			damage_building = { type = offices damage = 2.0 }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } }
+				remove_building = { type = infrastructure level = 1 }
+				remove_building = { type = industrial_complex level = 2 }
+				damage_building = { type = arms_factory damage = 1.0 }
+				damage_building = { type = dockyard damage = 1.0 }
+				damage_building = { type = agriculture_district damage = 1.0 }
+				damage_building = { type = offices damage = 1.0 }
+			}
+			else = {
+				remove_building = { type = infrastructure level = 2 }
+				remove_building = { type = internet_station level = 1 }
+				remove_building = { type = industrial_complex level = 3 }
+				damage_building = { type = arms_factory damage = 2.0 }
+				damage_building = { type = dockyard damage = 2.0 }
+				damage_building = { type = agriculture_district damage = 2.0 }
+				damage_building = { type = offices damage = 2.0 }
+			}
 			add_dynamic_modifier = {
 					modifier = JAP_scars_earthquake
 			}
@@ -2353,7 +2526,23 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Japan.2011031150.a executed"
 		add_stability = -0.15
 		newline = yes
-		add_ideas = JAP_anxiety_nuclear_power
+		if = {
+			limit = { has_idea = JAP_nuclear_power_program }
+			swap_ideas = {
+				remove_idea = JAP_nuclear_power_program
+				add_idea = JAP_anxiety_nuclear_power
+			}
+		}
+		else_if = {
+			limit = { has_idea = JAP_nuclear_local_consent }
+			swap_ideas = {
+				remove_idea = JAP_nuclear_local_consent
+				add_idea = JAP_anxiety_nuclear_power
+			}
+		}
+		else = {
+			add_ideas = JAP_anxiety_nuclear_power
+		}
 		hidden_effect = {
 			country_event = { id = Japan.2011031151 days = 30 }
 			every_country = { news_event = JAP_news.03 }
@@ -2437,130 +2626,6 @@ country_event = {
 }
 
 #----------------------------------------------------------------
-#Events for Demographic Crisis
-#----------------------------------------------------------------
-country_event = {
-	id = Japan_Demographic.002
-	hidden = yes
-	is_triggered_only = yes
-
-	immediate = {
-		set_temp_variable = { jap_birth_measures = modifier@JAP_declining_birthrate_measures_modifier }
-		if = {
-			limit = {
-				check_variable = { jap_birth_measures > 13 }
-				has_idea = JAP_depopulation_0
-			}
-			JAP = { country_event = Japan_Demographic.006 }
-		}
-		else_if = {
-			limit = {
-				check_variable = { jap_birth_measures < 7 }
-			}
-			JAP = {
-				country_event = Japan_Demographic.003
-				country_event = {
-					id = Japan_Demographic.002
-					days = 730
-					random_days = 730
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				check_variable = { jap_birth_measures < 14 }
-			}
-			JAP = {
-				country_event = Japan_Demographic.004
-				country_event = {
-					id = Japan_Demographic.002
-					days = 730
-					random_days = 730
-				}
-			}
-		}
-		else = {
-			JAP = {
-				country_event = Japan_Demographic.005
-				country_event = {
-					id = Japan_Demographic.002
-					days = 730
-					random_days = 730
-				}
-			}
-		}
-	}
-}
-
-country_event = {
-	id = Japan_Demographic.003
-	title = Japan_Demographic.003.t
-	desc = Japan_Demographic.003.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_Demographic.003.a
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.003.a"
-		set_temp_variable = { party_popularity_increase = -0.05 }
-		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
-		JAP_demographics_depopulation_increase_1 = yes
-	}
-}
-
-country_event = {
-	id = Japan_Demographic.004
-	title = Japan_Demographic.004.t
-	desc = Japan_Demographic.004.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_Demographic.004.a
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.004.a"
-		set_temp_variable = { party_popularity_increase = -0.02 }
-		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
-	}
-}
-
-country_event = {
-	id = Japan_Demographic.005
-	title = Japan_Demographic.005.t
-	desc = Japan_Demographic.005.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_Demographic.005.a
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.005.a"
-		set_temp_variable = { party_popularity_increase = 0.05 }
-		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
-		JAP_demographics_depopulation_decrease_1 = yes
-	}
-}
-
-country_event = {
-	id = Japan_Demographic.006
-	title = Japan_Demographic.006.t
-	desc = Japan_Demographic.006.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_Demographic.006.a
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.006.a"
-		set_temp_variable = { party_popularity_increase = 0.10 }
-		set_temp_variable = { temp_outlook_increase = 0.10 }
-		add_relative_party_popularity = yes
-		newline = yes
-		remove_ideas = JAP_depopulation_0
-	}
-}
-
-#----------------------------------------------------------------
 #Focus Fired Events
 #----------------------------------------------------------------
 
@@ -2590,7 +2655,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Japan.101.b executed"
 		set_temp_variable = { party_popularity_increase = -0.03 }
 		set_temp_variable = { temp_outlook_increase = -0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		ai_chance = {
 			base = 1
@@ -2692,13 +2757,13 @@ country_event = {
 			set_temp_variable = { party_index = 2 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		else = {
 			set_temp_variable = { party_index = 2 }
 			set_temp_variable = { party_popularity_increase = 0.20 }
 			set_temp_variable = { temp_outlook_increase = 0.20 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 		ai_chance = {
@@ -2720,13 +2785,13 @@ country_event = {
 			set_temp_variable = { party_index = 18 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		else = {
 			set_temp_variable = { party_index = 18 }
 			set_temp_variable = { party_popularity_increase = 0.20 }
 			set_temp_variable = { temp_outlook_increase = 0.20 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 		ai_chance = {
@@ -2748,13 +2813,13 @@ country_event = {
 			set_temp_variable = { party_index = 19 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		else = {
 			set_temp_variable = { party_index = 19 }
 			set_temp_variable = { party_popularity_increase = 0.20 }
 			set_temp_variable = { temp_outlook_increase = 0.20 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 		ai_chance = {
@@ -2779,13 +2844,13 @@ country_event = {
 			set_temp_variable = { party_index = 5 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		else = {
 			set_temp_variable = { party_index = 5 }
 			set_temp_variable = { party_popularity_increase = 0.20 }
 			set_temp_variable = { temp_outlook_increase = 0.20 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 		ai_chance = {
@@ -2816,13 +2881,13 @@ country_event = {
 			set_temp_variable = { party_index = 1 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		else = {
 			set_temp_variable = { party_index = 1 }
 			set_temp_variable = { party_popularity_increase = 0.20 }
 			set_temp_variable = { temp_outlook_increase = 0.20 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 		ai_chance = {
@@ -2844,13 +2909,13 @@ country_event = {
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		else = {
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = 0.20 }
 			set_temp_variable = { temp_outlook_increase = 0.20 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 		ai_chance = {
@@ -2880,13 +2945,13 @@ country_event = {
 			set_temp_variable = { party_index = 14 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		else = {
 			set_temp_variable = { party_index = 14 }
 			set_temp_variable = { party_popularity_increase = 0.20 }
 			set_temp_variable = { temp_outlook_increase = 0.20 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 		ai_chance = {
@@ -2911,13 +2976,13 @@ country_event = {
 			set_temp_variable = { party_index = 16 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		else = {
 			set_temp_variable = { party_index = 16 }
 			set_temp_variable = { party_popularity_increase = 0.20 }
 			set_temp_variable = { temp_outlook_increase = 0.20 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 		ai_chance = {
@@ -3078,31 +3143,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: JAP_territorial.03.oA executed"
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
-		add_relative_party_popularity = yes
-		if = {
-			limit = { has_idea = JAP_territorial_disputes1 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes1
-				add_idea = JAP_territorial_disputes2
-			}
-		}
-		else_if = {
-			limit = { has_idea = JAP_territorial_disputes2 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes2
-				add_idea = JAP_territorial_disputes3
-			}
-		}
-		else_if = {
-			limit = { has_idea = JAP_territorial_disputes3 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes3
-				add_idea = JAP_territorial_disputes4
-			}
-		}
-		else = {
-			add_ideas = JAP_territorial_disputes1
-		}
+		change_relative_party_popularity = yes
+		JAP_escalate_territorial_disputes = yes
 		hidden_effect = {
 			set_country_flag = JAP_kuril_islands_solve
 		}
@@ -3125,7 +3167,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: JAP_territorial.04.oA executed"
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		custom_effect_tooltip = JAP_renegotiation_territory
 
 		ai_chance = {
@@ -3277,31 +3319,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: JAP_territorial.07.oA executed"
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
-		add_relative_party_popularity = yes
-		if = {
-			limit = { has_idea = JAP_territorial_disputes1 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes1
-				add_idea = JAP_territorial_disputes2
-			}
-		}
-		else_if = {
-			limit = { has_idea = JAP_territorial_disputes2 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes2
-				add_idea = JAP_territorial_disputes3
-			}
-		}
-		else_if = {
-			limit = { has_idea = JAP_territorial_disputes3 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes3
-				add_idea = JAP_territorial_disputes4
-			}
-		}
-		else = {
-			add_ideas = JAP_territorial_disputes1
-		}
+		change_relative_party_popularity = yes
+		JAP_escalate_territorial_disputes = yes
 		hidden_effect = {
 			set_country_flag = JAP_chi_senkaku_solve
 		}
@@ -3324,7 +3343,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: JAP_territorial.08.oA executed"
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		custom_effect_tooltip = JAP_renegotiation_territory
 
 		ai_chance = {
@@ -3476,31 +3495,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: JAP_territorial.11.oA executed"
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
-		add_relative_party_popularity = yes
-		if = {
-			limit = { has_idea = JAP_territorial_disputes1 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes1
-				add_idea = JAP_territorial_disputes2
-			}
-		}
-		else_if = {
-			limit = { has_idea = JAP_territorial_disputes2 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes2
-				add_idea = JAP_territorial_disputes3
-			}
-		}
-		else_if = {
-			limit = { has_idea = JAP_territorial_disputes3 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes3
-				add_idea = JAP_territorial_disputes4
-			}
-		}
-		else = {
-			add_ideas = JAP_territorial_disputes1
-		}
+		change_relative_party_popularity = yes
+		JAP_escalate_territorial_disputes = yes
 		hidden_effect = {
 			set_country_flag = JAP_tai_senkaku_solve
 		}
@@ -3523,7 +3519,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: JAP_territorial.12.oA executed"
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		custom_effect_tooltip = JAP_renegotiation_territory
 
 		ai_chance = {
@@ -3672,31 +3668,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: JAP_territorial.15.oA executed"
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
-		add_relative_party_popularity = yes
-		if = {
-			limit = { has_idea = JAP_territorial_disputes1 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes1
-				add_idea = JAP_territorial_disputes2
-			}
-		}
-		else_if = {
-			limit = { has_idea = JAP_territorial_disputes2 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes2
-				add_idea = JAP_territorial_disputes3
-			}
-		}
-		else_if = {
-			limit = { has_idea = JAP_territorial_disputes3 }
-			swap_ideas = {
-				remove_idea = JAP_territorial_disputes3
-				add_idea = JAP_territorial_disputes4
-			}
-		}
-		else = {
-			add_ideas = JAP_territorial_disputes1
-		}
+		change_relative_party_popularity = yes
+		JAP_escalate_territorial_disputes = yes
 		hidden_effect = {
 			set_country_flag = JAP_liancourt_rocks_solve
 		}
@@ -3719,7 +3692,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: JAP_territorial.16.oA executed"
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		custom_effect_tooltip = JAP_renegotiation_territory
 
 		ai_chance = {
@@ -3885,7 +3858,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.03.a executed"
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		USA = {
 			remove_opinion_modifier = {
 				target = JAP
@@ -3910,7 +3883,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.04.a executed"
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		custom_effect_tooltip = JAP_renegotiation_territory
 
 		ai_chance = {
@@ -5348,7 +5321,7 @@ country_event = {
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 }
 country_event = {
@@ -5376,7 +5349,7 @@ country_event = {
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		country_event = { id = JAP_diplomacy.29 days = 365 }
 	}
 }
@@ -5406,7 +5379,7 @@ country_event = {
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		country_event = { id = JAP_diplomacy.30 days = 365 }
 	}
 }
@@ -5470,7 +5443,7 @@ country_event = {
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_country_flag = JAP_moon_base_completed
 	}
 }
@@ -6364,7 +6337,7 @@ country_event = {
 	}
 }
 
-# Japan demand Subjectgation of South-Korea
+# Japan demand Subjugation of South-Korea
 country_event = {
 	id = JAP_diplomacy.94
 	title = JAP_diplomacy.94.t
@@ -6379,7 +6352,19 @@ country_event = {
 		JAP = { country_event = JAP_diplomacy.95 }
 
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -6391,6 +6376,14 @@ country_event = {
 
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -6439,7 +6432,7 @@ country_event = {
 		}
 	}
 }
-# Japan demand Subjectgation of North-Korea
+# Japan demand Subjugation of North-Korea
 country_event = {
 	id = JAP_diplomacy.97
 	title = JAP_diplomacy.97.t
@@ -6454,7 +6447,19 @@ country_event = {
 		JAP = { country_event = JAP_diplomacy.98 }
 
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -6466,6 +6471,14 @@ country_event = {
 
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -6524,7 +6537,7 @@ country_event = {
 		activate_decision = JAP_claiming_north_korea
 	}
 }
-# Japan demand Subjectgation of Taiwan
+# Japan demand Subjugation of Taiwan
 country_event = {
 	id = JAP_diplomacy.101
 	title = JAP_diplomacy.101.t
@@ -6539,7 +6552,19 @@ country_event = {
 		JAP = { country_event = JAP_diplomacy.102 }
 
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -6551,6 +6576,14 @@ country_event = {
 
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -6600,7 +6633,7 @@ country_event = {
 	}
 }
 
-# Japan demand Subjectgation of Phillipines
+# Japan demand Subjugation of the Philippines
 country_event = {
 	id = JAP_diplomacy.105
 	title = JAP_diplomacy.105.t
@@ -6615,7 +6648,19 @@ country_event = {
 		JAP = { country_event = JAP_diplomacy.106 }
 
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -6627,10 +6672,18 @@ country_event = {
 
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
-# Phillipines Accepts
+# Philippines Accepts
 country_event = {
 	id = JAP_diplomacy.106
 	title = JAP_diplomacy.106.t
@@ -6653,7 +6706,7 @@ country_event = {
 	}
 }
 
-# Phillipines Rejects
+# Philippines Rejects
 country_event = {
 	id = JAP_diplomacy.107
 	title = JAP_diplomacy.107.t
@@ -6683,11 +6736,11 @@ country_event = {
 
 	immediate = {
 		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.108 executed"
-		activate_decision = JAP_claiming_phillipines
+		activate_decision = JAP_claiming_philippines
 	}
 }
 
-# Japan demand Subjectgation of Malaysia
+# Japan demand Subjugation of Malaysia
 country_event = {
 	id = JAP_diplomacy.109
 	title = JAP_diplomacy.109.t
@@ -6702,7 +6755,19 @@ country_event = {
 		JAP = { country_event = JAP_diplomacy.110 }
 
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -6714,6 +6779,14 @@ country_event = {
 
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -6773,7 +6846,7 @@ country_event = {
 		activate_decision = JAP_claiming_malaysia
 	}
 }
-# Japan demand Subjectgation of Indonesia
+# Japan demand Subjugation of Indonesia
 country_event = {
 	id = JAP_diplomacy.113
 	title = JAP_diplomacy.113.t
@@ -6788,7 +6861,19 @@ country_event = {
 		JAP = { country_event = JAP_diplomacy.114 }
 
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -6800,6 +6885,14 @@ country_event = {
 
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -6859,7 +6952,7 @@ country_event = {
 		activate_decision = JAP_claiming_indonesia
 	}
 }
-# Japan demand Subjectgation of Vietnam
+# Japan demand Subjugation of Vietnam
 country_event = {
 	id = JAP_diplomacy.117
 	title = JAP_diplomacy.117.t
@@ -6880,7 +6973,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -6898,6 +7003,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -6957,7 +7070,7 @@ country_event = {
 		activate_decision = JAP_claiming_vietnam
 	}
 }
-# Japan demand Subjectgation of Cambodia
+# Japan demand Subjugation of Cambodia
 country_event = {
 	id = JAP_diplomacy.121
 	title = JAP_diplomacy.121.t
@@ -6978,7 +7091,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -6996,6 +7121,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -7055,7 +7188,7 @@ country_event = {
 		activate_decision = JAP_claiming_cambodia
 	}
 }
-# Japan demand Subjectgation of Laos
+# Japan demand Subjugation of Laos
 country_event = {
 	id = JAP_diplomacy.125
 	title = JAP_diplomacy.125.t
@@ -7076,7 +7209,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -7094,6 +7239,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -7153,7 +7306,7 @@ country_event = {
 		activate_decision = JAP_claiming_laos
 	}
 }
-# Japan demand Subjectgation of Australia
+# Japan demand Subjugation of Australia
 country_event = {
 	id = JAP_diplomacy.129
 	title = JAP_diplomacy.129.t
@@ -7174,7 +7327,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -7192,6 +7357,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -7251,7 +7424,7 @@ country_event = {
 		activate_decision = JAP_claiming_australia
 	}
 }
-# Japan demand Subjectgation of New Zealand
+# Japan demand Subjugation of New Zealand
 country_event = {
 	id = JAP_diplomacy.133
 	title = JAP_diplomacy.133.t
@@ -7272,7 +7445,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -7290,6 +7475,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -7349,7 +7542,7 @@ country_event = {
 		activate_decision = JAP_claiming_new_zealand
 	}
 }
-# Japan demand Subjectgation of Myanmar
+# Japan demand Subjugation of Myanmar
 country_event = {
 	id = JAP_diplomacy.137
 	title = JAP_diplomacy.137.t
@@ -7370,7 +7563,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -7388,6 +7593,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -7447,7 +7660,7 @@ country_event = {
 		activate_decision = JAP_claiming_myanmar
 	}
 }
-# Japan demand Subjectgation of Kachin
+# Japan demand Subjugation of Kachin
 country_event = {
 	id = JAP_diplomacy.141
 	title = JAP_diplomacy.141.t
@@ -7468,7 +7681,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -7486,6 +7711,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -7534,7 +7767,7 @@ country_event = {
 		}
 	}
 }
-# Japan demand Subjectgation of Wa
+# Japan demand Subjugation of Wa
 country_event = {
 	id = JAP_diplomacy.145
 	title = JAP_diplomacy.145.t
@@ -7555,7 +7788,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -7573,6 +7818,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -7608,8 +7861,8 @@ country_event = {
 	is_triggered_only = yes
 
 	option = { #Gain Wargoal
-		name = JAP_diplomacy.148.a
-		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.148.a"
+		name = JAP_diplomacy.147.a
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.147.a"
 
 		create_wargoal = {
 			target = WAA
@@ -7642,7 +7895,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -7660,6 +7925,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -7730,7 +8003,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -7748,6 +8033,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -7818,7 +8111,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -7836,6 +8141,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -7906,7 +8219,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -7924,6 +8249,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -7994,7 +8327,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8012,6 +8357,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -8081,7 +8434,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8099,6 +8464,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -8169,7 +8542,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8187,6 +8572,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -8257,7 +8650,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8275,6 +8680,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -8346,7 +8759,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8364,6 +8789,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -8435,7 +8868,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8453,6 +8898,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -8523,7 +8976,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8541,6 +9006,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -8611,7 +9084,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8629,6 +9114,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -8699,7 +9192,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8717,6 +9222,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -8787,7 +9300,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8805,6 +9330,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -8876,7 +9409,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8894,6 +9439,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -8970,7 +9523,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -8988,6 +9553,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -9058,7 +9631,19 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 5
+			modifier = {
+				factor = 2
+				has_opinion = { target = JAP value > 50 }
+			}
+			modifier = {
+				factor = 0.2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support > 0.5
+			}
 		}
 	}
 
@@ -9076,6 +9661,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = JAP value > 50 }
+			}
 		}
 	}
 }
@@ -9221,19 +9814,18 @@ news_event = {
 	}
 }
 
-country_event = {
-	id = Japan_economy.01
-	title = Japan_economy.01.t
-	desc = Japan_economy.01.d
+news_event = {
+	id = JAP_news.04
+	title = JAP_news.04.t
+	desc = JAP_news.04.d
+	picture = GFX_news_press_conference
+
+	major = yes
 
 	is_triggered_only = yes
 
 	option = {
-		name = Japan_economy.01.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.01.a executed"
-		effect_tooltip = {
-			activate_mission = JAP_price_target_mission
-		}
+		name = JAP_news.04.a
 
 		ai_chance = {
 			base = 1
@@ -9260,187 +9852,6 @@ country_event = {
 }
 
 country_event = {
-	id = Japan_economy.03
-	title = Japan_economy.03.t
-	desc = Japan_economy.03.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_economy.03.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.03.a executed"
-		swap_ideas = {
-			remove_idea = JAP_entrenched_demand_shortfall_idea_1
-			add_idea = JAP_entrenched_demand_shortfall_idea_2
-		}
-
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-
-country_event = {
-	id = Japan_economy.04
-	title = Japan_economy.04.t
-	desc = Japan_economy.04.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_economy.04.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.04.a executed"
-		swap_ideas = {
-			remove_idea = JAP_entrenched_demand_shortfall_idea_2
-			add_idea = JAP_entrenched_demand_shortfall_idea_3
-		}
-
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-
-country_event = {
-	id = Japan_economy.05
-	title = Japan_economy.05.t
-	desc = Japan_economy.05.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_economy.05.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.05.a executed"
-		remove_ideas = JAP_entrenched_demand_shortfall_idea_3
-		increase_economic_growth = yes
-
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-
-country_event = {
-	id = Japan_economy.06
-	title = Japan_economy.06.t
-	desc = Japan_economy.06.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_economy.06.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.06.a executed"
-		swap_ideas = {
-			remove_idea = JAP_banks_non_performing_loans_idea_1
-			add_idea = JAP_banks_non_performing_loans_idea_2
-		}
-
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-
-country_event = {
-	id = Japan_economy.07
-	title = Japan_economy.07.t
-	desc = Japan_economy.07.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_economy.07.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.07.a executed"
-		swap_ideas = {
-			remove_idea = JAP_banks_non_performing_loans_idea_2
-			add_idea = JAP_banks_non_performing_loans_idea_3
-		}
-
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-
-country_event = {
-	id = Japan_economy.08
-	title = Japan_economy.08.t
-	desc = Japan_economy.08.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_economy.08.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.08.a executed"
-		remove_ideas = JAP_banks_non_performing_loans_idea_3
-
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-
-country_event = {
-	id = Japan_economy.09
-	title = Japan_economy.09.t
-	desc = Japan_economy.09.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_economy.09.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.09.a executed"
-		swap_ideas = {
-			remove_idea = JAP_corporate_excess_debt_idea_1
-			add_idea = JAP_corporate_excess_debt_idea_2
-		}
-
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-
-country_event = {
-	id = Japan_economy.10
-	title = Japan_economy.10.t
-	desc = Japan_economy.10.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_economy.10.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.10.a executed"
-		swap_ideas = {
-			remove_idea = JAP_corporate_excess_debt_idea_2
-			add_idea = JAP_corporate_excess_debt_idea_3
-		}
-
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-
-country_event = {
-	id = Japan_economy.11
-	title = Japan_economy.11.t
-	desc = Japan_economy.11.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = Japan_economy.11.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.11.a executed"
-		remove_ideas = JAP_corporate_excess_debt_idea_3
-
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-
-country_event = {
 	id = Japan_economy.12
 	title = Japan_economy.12.t
 	desc = Japan_economy.12.d
@@ -9450,8 +9861,13 @@ country_event = {
 	option = {
 		name = Japan_economy.12.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.12.a executed"
-		set_country_flag = JAP_wage_negotiations_normal_flag
 		custom_effect_tooltip = Japan_economy.12_a_TT
+		hidden_effect = {
+			random_list = {
+				50 = { set_country_flag = JAP_wage_negotiations_success_flag }
+				50 = { set_country_flag = JAP_wage_negotiations_failure_flag }
+			}
+		}
 		set_temp_variable = { temp_opinion = -2 }
 		change_small_medium_business_owners_opinion = yes
 
@@ -9463,8 +9879,13 @@ country_event = {
 	option = {
 		name = Japan_economy.12.b
 		log = "[GetDateText]: [This.GetName]: Japan_economy.12.b executed"
-		set_country_flag = JAP_wage_negotiations_strong_flag
 		custom_effect_tooltip = Japan_economy.12_b_TT
+		hidden_effect = {
+			random_list = {
+				80 = { set_country_flag = JAP_wage_negotiations_success_flag }
+				20 = { set_country_flag = JAP_wage_negotiations_failure_flag }
+			}
+		}
 		set_temp_variable = { temp_opinion = -5 }
 		change_small_medium_business_owners_opinion = yes
 		set_temp_variable = { temp_opinion = -3 }
@@ -9478,55 +9899,16 @@ country_event = {
 	option = {
 		name = Japan_economy.12.c
 		log = "[GetDateText]: [This.GetName]: Japan_economy.12.c executed"
-		set_country_flag = JAP_wage_negotiations_weak_flag
 		custom_effect_tooltip = Japan_economy.12_c_TT
+		hidden_effect = {
+			random_list = {
+				25 = { set_country_flag = JAP_wage_negotiations_success_flag }
+				75 = { set_country_flag = JAP_wage_negotiations_failure_flag }
+			}
+		}
 
 		ai_chance = {
 			base = 1
-		}
-	}
-}
-
-country_event = {
-	id = Japan_economy.13
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		if = {
-			limit = { has_country_flag = JAP_wage_negotiations_normal_flag }
-			random_list = {
-				50 = {
-					set_country_flag = JAP_wage_negotiations_success_flag
-				}
-
-				50 = {
-					set_country_flag = JAP_wage_negotiations_failure_flag
-				}
-			}
-		}
-		else_if = {
-			limit = { has_country_flag = JAP_wage_negotiations_strong_flag }
-			random_list = {
-				20 = {
-					set_country_flag = JAP_wage_negotiations_failure_flag
-				}
-
-				80 = {
-					set_country_flag = JAP_wage_negotiations_success_flag
-				}
-			}
-		}
-		else_if = {
-			limit = { has_country_flag = JAP_wage_negotiations_weak_flag }
-			random_list = {
-				75 = {
-					set_country_flag = JAP_wage_negotiations_failure_flag
-				}
-
-				25 = {
-					set_country_flag = JAP_wage_negotiations_success_flag
-				}
-			}
 		}
 	}
 }
@@ -9545,11 +9927,7 @@ country_event = {
 	option = {
 		name = Japan_economy.14.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.14.a executed"
-		set_country_flag = JAP_wage_negotiations_normal_flag
-		add_to_variable = {
-			JAP_demand_recovery_progress = 6
-		}
-		custom_effect_tooltip = JAP_demand_recovery_progress_up_6_tt
+		add_to_variable = { JAP_demand_recovery_progress = 6 tooltip = JAP_demand_recovery_progress_tt }
 		hidden_effect = {
 			country_event = {
 				id = Japan_economy.16
@@ -9578,11 +9956,7 @@ country_event = {
 	option = {
 		name = Japan_economy.15.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.15.a executed"
-		set_country_flag = JAP_wage_negotiations_normal_flag
-		add_to_variable = {
-			JAP_demand_recovery_progress = 2
-		}
-		custom_effect_tooltip = JAP_demand_recovery_progress_up_2_tt
+		add_to_variable = { JAP_demand_recovery_progress = 2 tooltip = JAP_demand_recovery_progress_tt }
 		hidden_effect = {
 			country_event = {
 				id = Japan_economy.16
@@ -9601,9 +9975,6 @@ country_event = {
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		clr_country_flag = JAP_wage_negotiations_normal_flag
-		clr_country_flag = JAP_wage_negotiations_strong_flag
-		clr_country_flag = JAP_wage_negotiations_weak_flag
 		clr_country_flag = JAP_wage_negotiations_success_flag
 		clr_country_flag = JAP_wage_negotiations_failure_flag
 	}
@@ -9618,10 +9989,6 @@ country_event = {
 
 	option = {
 		name = Japan_economy.17.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.17.a executed"
-		custom_effect_tooltip = JAP_demand_recovery_progress_up_8_tt
-
-
 		ai_chance = {
 			base = 1
 		}
@@ -9637,10 +10004,6 @@ country_event = {
 
 	option = {
 		name = Japan_economy.18.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.18.a executed"
-		custom_effect_tooltip = JAP_demand_recovery_progress_dawn_5_tt
-
-
 		ai_chance = {
 			base = 1
 		}
@@ -9656,10 +10019,6 @@ country_event = {
 
 	option = {
 		name = Japan_economy.19.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.19.a executed"
-		custom_effect_tooltip = JAP_demand_recovery_progress_up_4_tt
-
-
 		ai_chance = {
 			base = 1
 		}
@@ -9675,10 +10034,6 @@ country_event = {
 
 	option = {
 		name = Japan_economy.20.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.20.a executed"
-		custom_effect_tooltip = JAP_demand_recovery_progress_up_8_tt
-
-
 		ai_chance = {
 			base = 1
 		}
@@ -9694,10 +10049,6 @@ country_event = {
 
 	option = {
 		name = Japan_economy.21.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.21.a executed"
-		custom_effect_tooltip = JAP_demand_recovery_progress_up_4_tt
-
-
 		ai_chance = {
 			base = 1
 		}
@@ -9713,9 +10064,34 @@ country_event = {
 
 	option = {
 		name = Japan_economy.22.a
-		log = "[GetDateText]: [This.GetName]: Japan_economy.22.a executed"
-		custom_effect_tooltip = JAP_demand_recovery_progress_up_5_tt
+		ai_chance = {
+			base = 1
+		}
+	}
+}
 
+# Fired by JAP_local_consent_accords focus
+country_event = {
+	id = Japan_economy.32
+	title = Japan_economy.32.t
+	desc = Japan_economy.32.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = Japan_economy.32.a
+		log = "[GetDateText]: [This.GetName]: Japan_economy.32.a executed"
+		add_political_power = -30
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = Japan_economy.32.b
+		log = "[GetDateText]: [This.GetName]: Japan_economy.32.b executed"
+		add_stability = -0.02
 
 		ai_chance = {
 			base = 1
@@ -9723,6 +10099,241 @@ country_event = {
 	}
 }
 
+# Fired 30 days after JAP_zombie_firms_investigation
+country_event = {
+	id = Japan_economy.06
+	title = Japan_economy.06.t
+	desc = Japan_economy.06.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = Japan_economy.06.a
+		log = "[GetDateText]: [This.GetName]: Japan_economy.06.a executed"
+		add_stability = -0.03
+		add_political_power = -50
+		add_to_variable = { JAP_zombie_case_files = 1 tooltip = JAP_zombie_case_files_up_1_tt }
+		add_to_variable = { JAP_zombie_obstruction = 6 tooltip = JAP_zombie_obstruction_up_6_tt }
+		newline = yes
+		set_temp_variable = { temp_opinion = -8 }
+		change_industrial_conglomerates_opinion = yes
+		hidden_effect = {
+			country_event = { id = Japan_economy.07 days = 45 }
+		}
+		ai_chance = { base = 10 }
+	}
+	option = {
+		name = Japan_economy.06.b
+		log = "[GetDateText]: [This.GetName]: Japan_economy.06.b executed"
+		add_stability = 0.01
+		set_country_flag = JAP_banks_self_report
+		add_to_variable = { JAP_zombie_obstruction = 15 tooltip = JAP_zombie_obstruction_up_15_tt }
+		newline = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_industrial_conglomerates_opinion = yes
+		ai_chance = { base = 1 }
+	}
+	option = {
+		name = Japan_economy.06.c
+		log = "[GetDateText]: [This.GetName]: Japan_economy.06.c executed"
+		add_stability = 0.02
+		set_country_flag = JAP_zombie_probe_abandoned
+		newline = yes
+		set_temp_variable = { temp_opinion = 10 }
+		change_industrial_conglomerates_opinion = yes
+		custom_effect_tooltip = JAP_zombie_probe_abandoned_TT
+		custom_effect_tooltip = JAP_zombie_whitewash_penalty_TT
+		ai_chance = { base = 0 }
+	}
+}
+
+country_event = {
+	id = Japan_economy.07
+	title = Japan_economy.07.t
+	desc = Japan_economy.07.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = Japan_economy.07.a
+		log = "[GetDateText]: [This.GetName]: Japan_economy.07.a executed"
+		add_stability = -0.02
+		add_to_variable = { JAP_zombie_case_files = 1 tooltip = JAP_zombie_case_files_up_1_tt }
+		add_to_variable = { JAP_zombie_obstruction = 5 tooltip = JAP_zombie_obstruction_up_5_tt }
+		add_to_variable = { JAP_corporate_restructuring_progress = 4 tooltip = JAP_corporate_restructuring_progress_tt }
+		ai_chance = { base = 10 }
+	}
+	option = {
+		name = Japan_economy.07.b
+		log = "[GetDateText]: [This.GetName]: Japan_economy.07.b executed"
+		add_political_power = -25
+		add_to_variable = { JAP_corporate_restructuring_progress = 2 tooltip = JAP_corporate_restructuring_progress_tt }
+		newline = yes
+		set_temp_variable = { temp_opinion = 4 }
+		change_industrial_conglomerates_opinion = yes
+		ai_chance = { base = 5 }
+	}
+}
+
+# Fired by JAP_zombie_investigation_mission on completion, timeout or cancellation
+country_event = {
+	id = Japan_economy.08
+	title = Japan_economy.08.t
+	desc = Japan_economy.08.d
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			clr_country_flag = JAP_zombie_investigation_running
+			if = {
+				limit = { has_idea = JAP_zombie_investigation_idea }
+				remove_ideas = JAP_zombie_investigation_idea
+			}
+			if = {
+				limit = { has_idea = JAP_zombie_investigation_suspended }
+				remove_ideas = JAP_zombie_investigation_suspended
+			}
+		}
+	}
+
+	option = {
+		name = Japan_economy.08.a
+		trigger = { check_variable = { JAP_zombie_case_files > 9 } }
+		log = "[GetDateText]: [This.GetName]: Japan_economy.08.a executed"
+		set_country_flag = JAP_zombie_report_strong
+		add_political_power = 50
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = -0.08 }
+		set_temp_variable = { temp_outlook_increase = -0.08 }
+		change_relative_party_popularity = yes
+		newline = yes
+		set_temp_variable = { temp_opinion = -10 }
+		change_industrial_conglomerates_opinion = yes
+		newline = yes
+		custom_effect_tooltip = JAP_zombie_investigation_western_pop_TT
+		custom_effect_tooltip = JAP_zombie_report_strong_TT
+		ai_chance = { base = 1 }
+	}
+	option = {
+		name = Japan_economy.08.b
+		trigger = {
+			check_variable = { JAP_zombie_case_files > 2 }
+			check_variable = { JAP_zombie_case_files < 10 }
+		}
+		log = "[GetDateText]: [This.GetName]: Japan_economy.08.b executed"
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		change_relative_party_popularity = yes
+		newline = yes
+		custom_effect_tooltip = JAP_zombie_investigation_western_pop_TT
+		custom_effect_tooltip = JAP_zombie_report_partial_TT
+		ai_chance = { base = 1 }
+	}
+	option = {
+		name = Japan_economy.08.c
+		trigger = { check_variable = { JAP_zombie_case_files < 3 } }
+		log = "[GetDateText]: [This.GetName]: Japan_economy.08.c executed"
+		set_country_flag = JAP_zombie_report_whitewash
+		subtract_from_variable = { JAP_zombie_case_files = 3 tooltip = JAP_zombie_case_files_down_3_tt }
+		clamp_variable = { var = JAP_zombie_case_files min = 0 max = 14 }
+		add_stability = -0.02
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_temp_variable = { temp_outlook_increase = -0.02 }
+		change_relative_party_popularity = yes
+		newline = yes
+		set_temp_variable = { temp_opinion = 8 }
+		change_industrial_conglomerates_opinion = yes
+		newline = yes
+		custom_effect_tooltip = JAP_zombie_report_whitewash_TT
+		custom_effect_tooltip = JAP_zombie_whitewash_penalty_TT
+		ai_chance = { base = 1 }
+	}
+}
+
+# Obstruction threshold 30
+country_event = {
+	id = Japan_economy.09
+	title = Japan_economy.09.t
+	desc = Japan_economy.09.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = Japan_economy.09.a
+		log = "[GetDateText]: [This.GetName]: Japan_economy.09.a executed"
+		subtract_from_variable = { JAP_zombie_case_files = 2 tooltip = JAP_zombie_case_files_down_2_tt }
+		clamp_variable = { var = JAP_zombie_case_files min = 0 max = 14 }
+		add_stability = -0.02
+		ai_chance = { base = 5 }
+	}
+	option = {
+		name = Japan_economy.09.b
+		log = "[GetDateText]: [This.GetName]: Japan_economy.09.b executed"
+		add_political_power = -75
+		subtract_from_variable = { JAP_zombie_obstruction = 8 tooltip = JAP_zombie_obstruction_down_8_tt }
+		clamp_variable = { var = JAP_zombie_obstruction min = 0 max = 100 }
+		ai_chance = { base = 5 }
+	}
+}
+
+# Obstruction threshold 55
+country_event = {
+	id = Japan_economy.10
+	title = Japan_economy.10.t
+	desc = Japan_economy.10.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = Japan_economy.10.a
+		log = "[GetDateText]: [This.GetName]: Japan_economy.10.a executed"
+		activate_mission = JAP_keidanren_ultimatum_mission
+		newline = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_industrial_conglomerates_opinion = yes
+		ai_chance = { base = 1 }
+	}
+}
+
+# Obstruction threshold 80
+country_event = {
+	id = Japan_economy.11
+	title = Japan_economy.11.t
+	desc = Japan_economy.11.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = Japan_economy.11.a
+		log = "[GetDateText]: [This.GetName]: Japan_economy.11.a executed"
+		add_political_power = -100
+		add_stability = -0.08
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = -0.06 }
+		set_temp_variable = { temp_outlook_increase = -0.06 }
+		change_relative_party_popularity = yes
+		newline = yes
+		set_country_flag = JAP_zombie_probe_suspended
+		if = {
+			limit = { has_idea = JAP_zombie_investigation_idea }
+			swap_ideas = {
+				remove_idea = JAP_zombie_investigation_idea
+				add_idea = JAP_zombie_investigation_suspended
+			}
+		}
+		set_variable = { JAP_zombie_obstruction = 45 }
+		set_variable = { JAP_zombie_obstruction_stage = 1 }
+		hidden_effect = {
+			country_event = { id = Japan_economy.33 days = 180 }
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# Case: the Long-Term Credit Bank and the Shinsei put option
 country_event = {
 	id = Japan_economy.23
 	title = Japan_economy.23.t
@@ -9733,15 +10344,35 @@ country_event = {
 	option = {
 		name = Japan_economy.23.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.23.a executed"
-		custom_effect_tooltip = JAP_banking_confidence_dawn_10_tt
-
-
+		JAP_zombie_case_prosecuted = yes
+		newline = yes
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
 		ai_chance = {
-			base = 1
+			base = 8
+			modifier = {
+				factor = 2
+				has_country_flag = JAP_HISTORICAL_PATH
+			}
 		}
+	}
+	option = {
+		name = Japan_economy.23.b
+		log = "[GetDateText]: [This.GetName]: Japan_economy.23.b executed"
+		JAP_zombie_case_rescued = yes
+		newline = yes
+		medium_expenditure = yes
+		ai_chance = { base = 5 }
+	}
+	option = {
+		name = Japan_economy.23.c
+		log = "[GetDateText]: [This.GetName]: Japan_economy.23.c executed"
+		JAP_zombie_case_ignored = yes
+		ai_chance = { base = 1 }
 	}
 }
 
+# Case: the collapse of Sogo
 country_event = {
 	id = Japan_economy.24
 	title = Japan_economy.24.t
@@ -9752,82 +10383,35 @@ country_event = {
 	option = {
 		name = Japan_economy.24.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.24.a executed"
-		if = {
-			limit = { has_country_flag = JAP_dangerous_npl_stock_5_flag }
-			custom_effect_tooltip = JAP_dangerous_npl_stock_to_4_tt
-			clr_country_flag = JAP_dangerous_npl_stock_5_flag
-			set_country_flag = JAP_dangerous_npl_stock_4_flag
-		}
-		else_if = {
-			limit = { has_country_flag = JAP_dangerous_npl_stock_4_flag }
-			custom_effect_tooltip = JAP_dangerous_npl_stock_to_3_tt
-			clr_country_flag = JAP_dangerous_npl_stock_4_flag
-			set_country_flag = JAP_dangerous_npl_stock_3_flag
-		}
-		else_if = {
-			limit = { has_country_flag = JAP_dangerous_npl_stock_3_flag }
-			custom_effect_tooltip = JAP_dangerous_npl_stock_to_2_tt
-			clr_country_flag = JAP_dangerous_npl_stock_3_flag
-			set_country_flag = JAP_dangerous_npl_stock_2_flag
-		}
-		else_if = {
-			limit = { has_country_flag = JAP_dangerous_npl_stock_2_flag }
-			custom_effect_tooltip = JAP_dangerous_npl_stock_to_1_tt
-			clr_country_flag = JAP_dangerous_npl_stock_2_flag
-			set_country_flag = JAP_dangerous_npl_stock_1_flag
-		}
-		else_if = {
-			limit = { has_country_flag = JAP_dangerous_npl_stock_1_flag }
-			custom_effect_tooltip = JAP_dangerous_npl_stock_to_0_tt
-		}
-		effect_tooltip = {
-			if = {
-				limit = { check_variable = { JAP_business_care = 0 } }
-				random = {
-					chance = 50
-					random_owned_state = {
-						limit = {
-							industrial_complex > 0
-						}
-						remove_building = { type = industrial_complex level = 1 }
-					}
-				}
-			}
-			else_if = {
-				limit = { check_variable = { JAP_business_care = 1 } }
-				random = {
-					chance = 30
-					random_owned_state = {
-						limit = {
-							industrial_complex > 0
-						}
-						remove_building = { type = industrial_complex level = 1 }
-					}
-				}
-			}
-			else_if = {
-				limit = { check_variable = { JAP_business_care = 2 } }
-				random = {
-					chance = 10
-					random_owned_state = {
-						limit = {
-							industrial_complex > 0
-						}
-						remove_building = { type = industrial_complex level = 1 }
-					}
-				}
-			}
-
-			set_temp_variable = { temp_opinion = -5 }
-			change_small_medium_business_owners_opinion = yes
-		}
-
+		JAP_zombie_case_prosecuted = yes
+		newline = yes
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
 		ai_chance = {
-			base = 1
+			base = 8
+			modifier = {
+				factor = 2
+				has_country_flag = JAP_HISTORICAL_PATH
+			}
 		}
+	}
+	option = {
+		name = Japan_economy.24.b
+		log = "[GetDateText]: [This.GetName]: Japan_economy.24.b executed"
+		JAP_zombie_case_rescued = yes
+		newline = yes
+		medium_expenditure = yes
+		ai_chance = { base = 5 }
+	}
+	option = {
+		name = Japan_economy.24.c
+		log = "[GetDateText]: [This.GetName]: Japan_economy.24.c executed"
+		JAP_zombie_case_ignored = yes
+		ai_chance = { base = 1 }
 	}
 }
 
+# Case: the Mycal bankruptcy
 country_event = {
 	id = Japan_economy.25
 	title = Japan_economy.25.t
@@ -9838,15 +10422,35 @@ country_event = {
 	option = {
 		name = Japan_economy.25.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.25.a executed"
-		custom_effect_tooltip = JAP_banking_confidence_up_15_tt
-
-
+		JAP_zombie_case_prosecuted = yes
+		newline = yes
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
 		ai_chance = {
-			base = 1
+			base = 8
+			modifier = {
+				factor = 2
+				has_country_flag = JAP_HISTORICAL_PATH
+			}
 		}
+	}
+	option = {
+		name = Japan_economy.25.b
+		log = "[GetDateText]: [This.GetName]: Japan_economy.25.b executed"
+		JAP_zombie_case_rescued = yes
+		newline = yes
+		medium_expenditure = yes
+		ai_chance = { base = 5 }
+	}
+	option = {
+		name = Japan_economy.25.c
+		log = "[GetDateText]: [This.GetName]: Japan_economy.25.c executed"
+		JAP_zombie_case_ignored = yes
+		ai_chance = { base = 1 }
 	}
 }
 
+# Case: the Resona capital injection
 country_event = {
 	id = Japan_economy.26
 	title = Japan_economy.26.t
@@ -9857,15 +10461,36 @@ country_event = {
 	option = {
 		name = Japan_economy.26.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.26.a executed"
-		custom_effect_tooltip = JAP_banking_confidence_up_10_tt
-
-
+		JAP_zombie_case_prosecuted = yes
+		newline = yes
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
 		ai_chance = {
-			base = 1
+			base = 8
+			modifier = {
+				factor = 2
+				has_country_flag = JAP_HISTORICAL_PATH
+			}
 		}
+	}
+	option = {
+		name = Japan_economy.26.b
+		log = "[GetDateText]: [This.GetName]: Japan_economy.26.b executed"
+		JAP_zombie_case_rescued = yes
+		newline = yes
+		large_expenditure = yes
+		ai_chance = { base = 5 }
+	}
+	option = {
+		name = Japan_economy.26.c
+		log = "[GetDateText]: [This.GetName]: Japan_economy.26.c executed"
+		JAP_zombie_case_ignored = yes
+		add_stability = -0.03
+		ai_chance = { base = 1 }
 	}
 }
 
+# Case: the nationalisation of the Ashikaga Bank
 country_event = {
 	id = Japan_economy.27
 	title = Japan_economy.27.t
@@ -9876,29 +10501,37 @@ country_event = {
 	option = {
 		name = Japan_economy.27.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.27.a executed"
-		effect_tooltip = {
-			if = {
-				limit = { NOT = { has_idea = JAP_review_rehabilitation_plans_idea } }
-				add_timed_idea = {
-					idea = JAP_review_rehabilitation_plans_idea
-					days = 180
-				}
-			}
-			else = {
-				modify_timed_idea = {
-					idea = JAP_review_rehabilitation_plans_idea
-					days = 180
-				}
-			}
-		}
-		custom_effect_tooltip = JAP_review_rehabilitation_plans_TT
-
+		JAP_zombie_case_prosecuted = yes
+		add_stability = -0.02
+		newline = yes
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
 		ai_chance = {
-			base = 1
+			base = 8
+			modifier = {
+				factor = 2
+				has_country_flag = JAP_HISTORICAL_PATH
+			}
 		}
+	}
+	option = {
+		name = Japan_economy.27.b
+		log = "[GetDateText]: [This.GetName]: Japan_economy.27.b executed"
+		JAP_zombie_case_rescued = yes
+		newline = yes
+		large_expenditure = yes
+		ai_chance = { base = 5 }
+	}
+	option = {
+		name = Japan_economy.27.c
+		log = "[GetDateText]: [This.GetName]: Japan_economy.27.c executed"
+		JAP_zombie_case_ignored = yes
+		add_stability = -0.03
+		ai_chance = { base = 1 }
 	}
 }
 
+# Case: Daiei and the Industrial Revitalization Corporation
 country_event = {
 	id = Japan_economy.28
 	title = Japan_economy.28.t
@@ -9909,14 +10542,35 @@ country_event = {
 	option = {
 		name = Japan_economy.28.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.28.a executed"
-		custom_effect_tooltip = JAP_corporate_restructuring_progress_up_5_tt
-
+		JAP_zombie_case_prosecuted = yes
+		newline = yes
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
 		ai_chance = {
-			base = 1
+			base = 8
+			modifier = {
+				factor = 2
+				has_country_flag = JAP_HISTORICAL_PATH
+			}
 		}
+	}
+	option = {
+		name = Japan_economy.28.b
+		log = "[GetDateText]: [This.GetName]: Japan_economy.28.b executed"
+		JAP_zombie_case_rescued = yes
+		newline = yes
+		medium_expenditure = yes
+		ai_chance = { base = 5 }
+	}
+	option = {
+		name = Japan_economy.28.c
+		log = "[GetDateText]: [This.GetName]: Japan_economy.28.c executed"
+		JAP_zombie_case_ignored = yes
+		ai_chance = { base = 1 }
 	}
 }
 
+# Case: the Kanebo accounts and the auditors who signed them
 country_event = {
 	id = Japan_economy.29
 	title = Japan_economy.29.t
@@ -9927,14 +10581,38 @@ country_event = {
 	option = {
 		name = Japan_economy.29.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.29.a executed"
-		custom_effect_tooltip = JAP_corporate_restructuring_progress_up_5_tt
-
-		ai_chance = {
-			base = 1
+		JAP_zombie_case_prosecuted = yes
+		newline = yes
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = JAP_economy_modifier
 		}
+		add_to_variable = { JAP_economy_return_on_investment_modifier = 0.03 tooltip = return_on_investment_modifier_tt }
+		ai_chance = {
+			base = 8
+			modifier = {
+				factor = 2
+				has_country_flag = JAP_HISTORICAL_PATH
+			}
+		}
+	}
+	option = {
+		name = Japan_economy.29.b
+		log = "[GetDateText]: [This.GetName]: Japan_economy.29.b executed"
+		JAP_zombie_case_rescued = yes
+		newline = yes
+		medium_expenditure = yes
+		ai_chance = { base = 5 }
+	}
+	option = {
+		name = Japan_economy.29.c
+		log = "[GetDateText]: [This.GetName]: Japan_economy.29.c executed"
+		JAP_zombie_case_ignored = yes
+		ai_chance = { base = 1 }
 	}
 }
 
+# Keidanren ultimatum met
 country_event = {
 	id = Japan_economy.30
 	title = Japan_economy.30.t
@@ -9945,22 +10623,14 @@ country_event = {
 	option = {
 		name = Japan_economy.30.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.30.a executed"
-		custom_effect_tooltip = JAP_corporate_restructuring_progress_up_4_tt
-		effect_tooltip = {
-			add_tech_bonus = {
-				name = JAP_investment_growth_industries
-				category = CAT_Civilian
-				bonus = 0.25
-				uses = 1
-			}
-		}
-
-		ai_chance = {
-			base = 1
-		}
+		add_political_power = 50
+		set_temp_variable = { temp_opinion = 8 }
+		change_industrial_conglomerates_opinion = yes
+		ai_chance = { base = 1 }
 	}
 }
 
+# Keidanren ultimatum ignored
 country_event = {
 	id = Japan_economy.31
 	title = Japan_economy.31.t
@@ -9971,25 +10641,217 @@ country_event = {
 	option = {
 		name = Japan_economy.31.a
 		log = "[GetDateText]: [This.GetName]: Japan_economy.31.a executed"
-		custom_effect_tooltip = JAP_corporate_restructuring_progress_up_4_tt
-		effect_tooltip = {
-			if = {
-				limit = { NOT = { has_idea = JAP_startup_campaign_idea } }
-				add_timed_idea = {
-					idea = JAP_startup_campaign_idea
-					days = 180
-				}
-			}
-			else = {
-				modify_timed_idea = {
-					idea = JAP_startup_campaign_idea
-					days = 180
-				}
-			}
-		}
+		add_political_power = -75
+		add_stability = -0.05
+		add_to_variable = { JAP_zombie_obstruction = 10 tooltip = JAP_zombie_obstruction_up_10_tt }
+		clamp_variable = { var = JAP_zombie_obstruction min = 0 max = 100 }
+		newline = yes
+		set_temp_variable = { temp_opinion = -15 }
+		change_industrial_conglomerates_opinion = yes
+		ai_chance = { base = 1 }
+	}
+}
 
-		ai_chance = {
-			base = 1
+# The suspension of the probe is lifted
+country_event = {
+	id = Japan_economy.33
+	title = Japan_economy.33.t
+	desc = Japan_economy.33.d
+
+	is_triggered_only = yes
+
+	trigger = { has_country_flag = JAP_zombie_probe_suspended }
+
+	option = {
+		name = Japan_economy.33.a
+		log = "[GetDateText]: [This.GetName]: Japan_economy.33.a executed"
+		clr_country_flag = JAP_zombie_probe_suspended
+		if = {
+			limit = { has_idea = JAP_zombie_investigation_suspended }
+			swap_ideas = {
+				remove_idea = JAP_zombie_investigation_suspended
+				add_idea = JAP_zombie_investigation_idea
+			}
 		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# The zombie firms are gone: Controlled Downsize
+country_event = {
+	id = Japan_economy.34
+	title = Japan_economy.34.t
+	desc = Japan_economy.34.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = Japan_economy.34.a
+		log = "[GetDateText]: [This.GetName]: Japan_economy.34.a executed"
+		add_stability = 0.03
+		add_political_power = 75
+		newline = yes
+		set_temp_variable = { temp_opinion = 6 }
+		change_small_medium_business_owners_opinion = yes
+		ai_chance = { base = 1 }
+	}
+}
+
+# The zombie firms are gone: Fusion leaves its scar
+country_event = {
+	id = Japan_economy.35
+	title = Japan_economy.35.t
+	desc = Japan_economy.35.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = Japan_economy.35.a
+		log = "[GetDateText]: [This.GetName]: Japan_economy.35.a executed"
+		add_political_power = 50
+		newline = yes
+		set_temp_variable = { temp_opinion = 6 }
+		change_industrial_conglomerates_opinion = yes
+		ai_chance = { base = 1 }
+	}
+}
+
+##############################################
+# Electronics: Model Competition news chain
+##############################################
+
+# Fired by on_monthly_JAP when Asian rivals escalate the pressure to tier 2
+country_event = {
+	id = JAP_electronics.1
+	title = JAP_electronics.1.t
+	desc = JAP_electronics.1.d
+	picture = GFX_JAP_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = JAP_electronics.1.a #We will not cede the market without a fight.
+	}
+}
+
+# Fired by on_monthly_JAP when China reaches the leading edge (tier 3)
+country_event = {
+	id = JAP_electronics.2
+	title = JAP_electronics.2.t
+	desc = JAP_electronics.2.d
+	picture = GFX_JAP_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = JAP_electronics.2.a #The frontier has moved. We must answer.
+	}
+}
+
+# Fired by on_monthly_JAP when Japan out-competes the pressure entirely
+country_event = {
+	id = JAP_electronics.3
+	title = JAP_electronics.3.t
+	desc = JAP_electronics.3.d
+	picture = GFX_JAP_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = JAP_electronics.3.a #Japan stands once more at the summit of the industry.
+	}
+}
+
+# Capstone news: Japan returns to the semiconductor frontier
+news_event = {
+	id = JAP_electronics.4
+	title = JAP_electronics.4.t
+	desc = JAP_electronics.4.d
+	picture = GFX_JAP_generic
+
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = JAP_electronics.4.a #A remarkable resurgence.
+	}
+
+	option = {
+		name = JAP_electronics.4.b #The old giant still has teeth.
+		trigger = { NOT = { original_tag = JAP } }
+	}
+}
+
+country_event = {
+	id = JAP_ai.1
+
+	fire_only_once = yes
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_country_flag = JAP_RETURN_OF_THE_EMPIRE_PATH
+		nationalist_monarchists_are_in_power = no
+		has_civil_war = no
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: JAP_ai.1 executed"
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.2 }
+		set_temp_variable = { temp_outlook_increase = 0.2 }
+		change_relative_party_popularity = yes
+	}
+}
+
+country_event = {
+	id = JAP_ai.2
+	hidden = yes
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_country_flag = JAP_RETURN_OF_THE_EMPIRE_PATH
+		nationalist_monarchists_are_in_power = no
+		has_civil_war = no
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: JAP_ai.2 executed"
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.2 }
+		set_temp_variable = { temp_outlook_increase = 0.2 }
+		change_relative_party_popularity = yes
+	}
+}
+
+country_event = {
+	id = JAP_ai.3
+	hidden = yes
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_country_flag = JAP_RETURN_OF_THE_EMPIRE_PATH
+		nationalist_monarchists_are_in_power = no
+		has_civil_war = no
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: JAP_ai.3 executed"
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.2 }
+		set_temp_variable = { temp_outlook_increase = 0.2 }
+		change_relative_party_popularity = yes
 	}
 }

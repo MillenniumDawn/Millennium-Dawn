@@ -55,9 +55,9 @@ def test_count_event_ids_in_file_returns_only_present_ids(tmp_path):
     tracked = frozenset(["test.1", "test.999"])
     result = count_event_ids_in_file((str(fpath), tracked))
     assert "test.1" in result, "Event ID present in file must be in result"
-    assert "test.999" not in result, (
-        "Absent ID must NOT be in result — caller pre-initializes zeros"
-    )
+    assert (
+        "test.999" not in result
+    ), "Absent ID must NOT be in result — caller pre-initializes zeros"
 
 
 def test_count_event_ids_in_file_dotted_id_not_inflated_by_loc_keys(tmp_path):
@@ -376,7 +376,9 @@ def test_tag_prefixed_var_set_and_read_not_flagged(tmp_path):
     )
     tracked = frozenset(_scan_set_vars(str(f)))
     counts = _count_refs(str(f), tracked)
-    assert counts.get("GER_event_counter_1_wot", 0) == 2  # add_to + check_variable
+    # add_to_variable and set_variable are writes (definitions); only the
+    # check_variable read is counted.
+    assert counts.get("GER_event_counter_1_wot", 0) == 1
 
 
 def test_var_set_once_read_once_counts_as_referenced(tmp_path):
@@ -512,7 +514,9 @@ def test_dynamic_ref_pattern_strips_scope_prefix():
 
     from validate_set_variables import _dynamic_ref_pattern
 
-    rx = re.compile(_dynamic_ref_pattern("this.mep_party_[p_n3]"))
+    pat = _dynamic_ref_pattern("this.mep_party_[p_n3]")
+    assert pat is not None
+    rx = re.compile(pat)
     assert rx.match("mep_party_0")
 
 
@@ -562,3 +566,54 @@ def test_strip_comments_removes_trailing_hash_comment():
     out = _strip_comments(text)
     assert "GFX_real" in out
     assert "GFX_commented" not in out
+
+
+def test_parse_loc_refs_ignores_hash_comments(tmp_path):
+    from validate_gfx_references import _parse_loc_refs
+
+    loc = tmp_path / "test_l_english.yml"
+    loc.write_text(
+        "l_english:\n"
+        '# disabled: "£GFX_commented"\n'
+        ' live: "£GFX_live" # £GFX_trailing\n',
+        encoding="utf-8",
+    )
+
+    assert _parse_loc_refs((str(loc), str(tmp_path))) == ["GFX_live"]
+
+
+def test_parse_loc_refs_adds_gfx_prefix(tmp_path):
+    """`£name` (no GFX_ prefix in the loc file) resolves to sprite GFX_name."""
+    from validate_gfx_references import _parse_loc_refs
+
+    loc = tmp_path / "test_l_english.yml"
+    loc.write_text(' party: "£party_icon"\n', encoding="utf-8")
+
+    assert _parse_loc_refs((str(loc), str(tmp_path))) == ["GFX_party_icon"]
+
+
+def test_parse_loc_refs_keeps_dotted_and_hyphenated_names(tmp_path):
+    # Regression: _LOC_SPRITE_REF used to stop at `.`/`-`, truncating names like
+    # GFX_CTC.5 and GFX_Polizistin-Kiesewetter to GFX_CTC / GFX_Polizistin.
+    from validate_gfx_references import _parse_loc_refs
+
+    loc = tmp_path / "test_l_english.yml"
+    loc.write_text(
+        ' a: "£GFX_CTC.5"\n b: "£GFX_Polizistin-Kiesewetter"\n',
+        encoding="utf-8",
+    )
+
+    assert _parse_loc_refs((str(loc), str(tmp_path))) == [
+        "GFX_CTC.5",
+        "GFX_Polizistin-Kiesewetter",
+    ]
+
+
+def test_parse_loc_refs_strips_sentence_final_period(tmp_path):
+    # A trailing `.` ending a sentence must not be absorbed into the name.
+    from validate_gfx_references import _parse_loc_refs
+
+    loc = tmp_path / "test_l_english.yml"
+    loc.write_text(' a: "Costs £command_power."\n', encoding="utf-8")
+
+    assert _parse_loc_refs((str(loc), str(tmp_path))) == ["GFX_command_power"]
