@@ -270,6 +270,51 @@ def _normalize_oneline_braces(text: str) -> str:
     return collapse_ws_outside_quotes("".join(out))
 
 
+_COMPARISON_OPS = {"!=", "==", ">=", "<="}
+
+
+def normalize_spacing(line: str) -> str:
+    """Put single spaces around ``{``, ``}`` and ``=`` in one line of script.
+
+    Leading indentation, ``"..."`` string interiors and any trailing ``#``
+    comment are left byte-exact; a whole-line comment is returned unchanged.
+    ``!=``/``==``/``>=``/``<=`` are padded as one operator, and an empty block
+    keeps the spacing it was written with (``{}`` and ``{ }`` both survive).
+    Idempotent.
+    """
+    code = strip_inline_comment(line)
+    comment = line[len(code) :].strip()
+    stripped = code.strip()
+    if not stripped or stripped.startswith("#"):
+        return line.rstrip()
+
+    indent = code[: len(code) - len(code.lstrip())]
+
+    out: List[str] = []
+    in_str = False
+    i = 0
+    n = len(code)
+    while i < n:
+        c = code[i]
+        if c == '"' and (i == 0 or code[i - 1] != "\\"):
+            in_str = not in_str
+            out.append(c)
+        elif in_str:
+            out.append(c)
+        elif code[i : i + 2] in _COMPARISON_OPS or code[i : i + 2] == "{}":
+            out.append(f" {code[i : i + 2]} ")
+            i += 2
+            continue
+        elif c in "{}=":
+            out.append(f" {c} ")
+        else:
+            out.append(c)
+        i += 1
+
+    body = collapse_ws_outside_quotes("".join(out))
+    return f"{indent}{body} {comment}".rstrip() if comment else f"{indent}{body}"
+
+
 def collapse_or_compact(
     block_lines: List[str], indent: Optional[str] = None
 ) -> List[str]:
