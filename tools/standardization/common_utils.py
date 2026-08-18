@@ -207,7 +207,7 @@ class BaseStandardizer(ABC):
 
         try:
             tmp_path = output_file + ".tmp"
-            with open(tmp_path, "w", encoding="utf-8") as f:
+            with open(tmp_path, "w", encoding="utf-8", newline="") as f:
                 for line in output_lines:
                     f.write(line + "\n")
             os.replace(tmp_path, output_file)

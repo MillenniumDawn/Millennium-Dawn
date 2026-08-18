@@ -478,7 +478,7 @@ class IdeaStandardizer(BaseStandardizer):
         output_lines = self._process_lines(lines, depth=0)
 
         try:
-            with open(output_file, "w", encoding="utf-8") as f:
+            with open(output_file, "w", encoding="utf-8", newline="") as f:
                 for line in output_lines:
                     f.write(line + "\n")
 

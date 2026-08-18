@@ -1037,7 +1037,7 @@ def standardize_focus_tree(
     # never leaves a truncated focus tree behind.
     tmp_path = f"{output_file}.tmp"
     try:
-        with open(tmp_path, "w", encoding="utf-8") as f:
+        with open(tmp_path, "w", encoding="utf-8", newline="") as f:
             for line in output_lines:
                 f.write(line + "\n")
         os.replace(tmp_path, output_file)
