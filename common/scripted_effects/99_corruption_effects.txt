@@ -59,6 +59,22 @@ roll_corruption_event = {
 	}
 }
 
+grant_random_corruption_offer_buff = {
+	random_list = {
+		10 = { add_timed_idea = { idea = corruption_decreased_adm_spending days = 200 } }
+		10 = { add_timed_idea = { idea = corruption_decreased_police_spending days = 200 } }
+		10 = { add_timed_idea = { idea = corruption_decreased_mil_spending days = 200 } }
+		10 = { add_timed_idea = { idea = corruption_decreased_edu_spending days = 200 } }
+		10 = { add_timed_idea = { idea = corruption_decreased_health_spending days = 200 } }
+		10 = { add_timed_idea = { idea = corruption_decreased_social_spending days = 200 } }
+		10 = { add_timed_idea = { idea = corruption_civ_construction days = 200 } }
+		10 = { add_timed_idea = { idea = corruption_mil_construction days = 200 } }
+		10 = { add_timed_idea = { idea = corruption_construction_buff_idea days = 200 } }
+		10 = { add_timed_idea = { idea = corruption_military_prod_buff_idea days = 200 } }
+		10 = { add_timed_idea = { idea = corruption_resource_buff_idea days = 200 } }
+	}
+}
+
 set_corruption_event_level = {
 	if = {
 		limit = { has_idea = corruption_level_10 }
@@ -111,13 +127,25 @@ initialize_corruption_reform_events = {
 	}
 }
 
-roll_corruption_reform_event = {
+reset_corruption_reform_cycle = {
 	set_variable = { corruption_reform_years_since_event = 0 }
 	clr_country_flag = corruption_reform_yearly_check
 	set_country_flag = { flag = corruption_reform_yearly_check value = 1 days = 350 }
-	random_list = {
-		50 = { country_event = corruption.17 }
-		50 = { country_event = corruption.18 }
+	clear_variable = corruption_reductions_in_year
+	clr_country_flag = corruption_reduction_year
+}
+
+start_corruption_reform_challenge = {
+	if = {
+		limit = { NOT = { has_active_mission = corruption_reform_challenge } }
+		reset_corruption_reform_cycle = yes
+		if = {
+			limit = { has_idea = corruption_level_01 }
+			country_event = corruption.17
+		}
+		else = {
+			country_event = corruption.19
+		}
 	}
 }
 
@@ -133,16 +161,22 @@ track_corruption_reform_progress = {
 		if = {
 			limit = { check_variable = { corruption_event_reductions > 0 } }
 			if = {
+				limit = { has_active_mission = corruption_reform_challenge }
+				set_country_flag = corruption_reform_challenge_succeeded
+			}
+			if = {
 				limit = { NOT = { has_country_flag = corruption_reduction_year } }
 				set_variable = { corruption_reductions_in_year = 0 }
 				set_country_flag = { flag = corruption_reduction_year value = 1 days = 365 }
 			}
 			add_to_variable = { corruption_reductions_in_year = corruption_event_reductions }
 			if = {
-				limit = { check_variable = { corruption_reductions_in_year > 2 } }
-				roll_corruption_reform_event = yes
-				clear_variable = corruption_reductions_in_year
-				clr_country_flag = corruption_reduction_year
+				limit = {
+					check_variable = { corruption_reductions_in_year > 2 }
+					NOT = { has_active_mission = corruption_reform_challenge }
+				}
+				reset_corruption_reform_cycle = yes
+				country_event = corruption.17
 			}
 		}
 	}
@@ -161,7 +195,7 @@ corruption_reform_event_yearly_update = {
 			add_to_variable = { corruption_reform_years_since_event = 1 }
 			if = {
 				limit = { check_variable = { corruption_reform_years_since_event > 2 } }
-				roll_corruption_reform_event = yes
+				start_corruption_reform_challenge = yes
 			}
 		}
 	}
