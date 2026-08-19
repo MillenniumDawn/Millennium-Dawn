@@ -38,6 +38,8 @@ def run(cmd, **kwargs):
 
 
 def git_stage(path):
+    if ".." in path or os.path.isabs(path) or path not in TEST_FILES:
+        raise ValueError(f"unsafe test path: {path}")
     run(["git", "add", path])
 
 
@@ -47,8 +49,11 @@ def git_unstage(path):
 
 def git_restore(path):
     """Remove a file from the index and working tree if it was newly created."""
+    if ".." in path or os.path.isabs(path) or path not in TEST_FILES:
+        raise ValueError(f"unsafe test path: {path}")
     run(["git", "reset", "HEAD", path], cwd=REPO_ROOT)
     if os.path.exists(path):
+        # pi-lens-ignore: python-path-traversal
         os.remove(path)
 
 
@@ -163,7 +168,11 @@ def create_test_files():
         (TEST_LOC_FILE, TEST_LOC_CONTENT),
         (TEST_HISTORY_FILE, TEST_HISTORY_CONTENT),
     ]:
+        if ".." in path or os.path.isabs(path) or path not in TEST_FILES:
+            raise ValueError(f"unsafe test path: {path}")
+        # pi-lens-ignore: python-path-traversal
         os.makedirs(os.path.dirname(path), exist_ok=True)
+        # pi-lens-ignore: python-path-traversal
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         git_stage(path)
@@ -311,7 +320,9 @@ def test_validator_scripts_exist():
         "validate_localisation.py",
         "validate_history.py",
     ):
-        assert os.path.exists(os.path.join(REPO_ROOT, "tools", "validation", script))
+        script_path = os.path.join(REPO_ROOT, "tools", "validation", script)
+        if not os.path.exists(script_path):
+            raise AssertionError(f"missing validator script: {script_path}")
 
 
 def test_staged_validators():
@@ -327,7 +338,8 @@ def test_staged_validators():
         raise SkipTest("git not available")
     if not _index_is_clean():
         raise SkipTest("git index has staged changes; skipping to avoid clobbering")
-    assert main() == 0
+    if main() != 0:
+        raise AssertionError("staged validator integration failed")
 
 
 if __name__ == "__main__":

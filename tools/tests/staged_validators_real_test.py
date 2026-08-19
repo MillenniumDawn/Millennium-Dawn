@@ -42,8 +42,12 @@ def run(cmd, **kwargs):
 
 def stage_file_as_modified(path, suffix="\n"):
     """Append a temporary issue and stage the file for a real validator run."""
+    if ".." in path or os.path.isabs(path) or path not in _TOUCHED_FILES:
+        raise ValueError(f"unsafe real path: {path}")
+    # pi-lens-ignore: python-path-traversal
     with open(path, "a", encoding="utf-8-sig") as f:
         f.write(suffix)
+    # pi-lens-ignore: python-path-traversal
     run(["git", "add", path])
 
 
@@ -277,7 +281,9 @@ def test_real_files_present():
     if not _game_content_checked_out():
         raise SkipTest("game content not checked out (sparse checkout)")
     for rel in _TOUCHED_FILES:
-        assert os.path.exists(os.path.join(REPO_ROOT, rel))
+        rel_path = os.path.join(REPO_ROOT, rel)
+        if not os.path.exists(rel_path):
+            raise AssertionError(f"missing touched file: {rel_path}")
 
 
 def test_staged_validators_real():
@@ -293,7 +299,8 @@ def test_staged_validators_real():
         raise SkipTest("git not available")
     if not _touched_files_clean():
         raise SkipTest("target files have local changes; skipping to avoid clobbering")
-    assert main() == 0
+    if main() != 0:
+        raise AssertionError("staged validator real integration failed")
 
 
 if __name__ == "__main__":
