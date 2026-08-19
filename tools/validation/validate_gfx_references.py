@@ -466,13 +466,13 @@ def _load_ace_pool_names(mod_path: str) -> FrozenSet[str]:
             raw = _read_raw(filepath)
             if raw is None:
                 continue
+
+            def _ace_names(text: str = raw) -> list[str]:
+                return sorted(set(name_re.findall(_HASH_COMMENT.sub("", text))))
+
             names.update(
                 disk_cache.per_file_cached_by_content(
-                    mod_path,
-                    "gfx_ref.ace_pools",
-                    filepath,
-                    raw,
-                    lambda: sorted(set(name_re.findall(_HASH_COMMENT.sub("", raw)))),
+                    mod_path, "gfx_ref.ace_pools", filepath, raw, _ace_names
                 )
             )
     return frozenset(names)
@@ -485,7 +485,8 @@ def _template_pattern(template: str) -> Optional["re.Pattern[str]"]:
     identify anything — `GFX_[?topbar.GetTokenKey]` names every sprite in the mod,
     so treating it as a reference would mark the whole repo as used.
     """
-    literal = _TEMPLATE_PLACEHOLDER_RE.sub("", template)[len("GFX_") :]
+    stripped = _TEMPLATE_PLACEHOLDER_RE.sub("", template)
+    literal = stripped[len("GFX_") :] if stripped.startswith("GFX_") else stripped
     if len(literal.replace("_", "")) < _TEMPLATE_MIN_LITERAL:
         return None
     pattern = "".join(
@@ -495,7 +496,7 @@ def _template_pattern(template: str) -> Optional["re.Pattern[str]"]:
     )
     try:
         return re.compile(f"^{pattern}$")
-    except re.error:
+    except re.error as _e:
         return None
 
 
