@@ -61,6 +61,7 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
 - New subideology parties: register in `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`
 - Pure notifications get `minor_flavor = yes`. When many sources deliver to one country, batch them into a single report event instead of one event per delivery, and keep the payload at the delivery site (rules and traps: `.claude/docs/event-reference.md`)
 - Describe an effect with `effect_tooltip = { <the real effect> }` before writing a new `custom_effect_tooltip` loc key
+- Every `picture = GFX_*` must resolve to a sprite defined in `interface/*.gfx` — MD must not use vanilla event pictures. An undefined name is a commit blocker (`validate_events` → `missing-event-picture`), so grep `interface/` for it before writing it
 - Ref: `.claude/docs/event-reference.md`
 
 ## Ideas
