@@ -160,6 +160,12 @@ _REGISTRY = [
         "validate_mios",
         [
             ("common/military_industrial_organization/organizations/", TXT),
+            ("common/military_industrial_organization/policies/", TXT),
+            ("common/country_leader/", TXT),
+            # Equipment and its groups are the other half of the dead-bonus
+            # check: dropping a base stat there kills bonuses elsewhere.
+            ("common/units/equipment/", TXT),
+            ("common/equipment_groups/", TXT),
             ("localisation/english/", YML),
         ],
     ),
