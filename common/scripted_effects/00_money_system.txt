@@ -2328,6 +2328,16 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = CPD_reparations_weekly }
 	}
 }
+
+# Effect: update_tension_premium
+# Purpose: Weekly decay of the tension-cause borrowing premium, plus intake of newly generated tension
+update_tension_premium = {
+	set_temp_variable = { recent_threat = { value = has_added_tension_amount subtract = tracked_threat } }
+	# 3.5%/week: 20 weeks to decay 50%, 66 weeks to decay 90%
+	set_variable = { tension_premium = { value = tension_premium multiply = 0.965 add = recent_threat } }
+	set_variable = { tracked_threat = has_added_tension_amount }
+}
+
 # Effect: calculate_interest_rate
 # Purpose: Computes daily interest rate on debt based on debt-to-GDP ratio, monetary policy, and world threat
 calculate_interest_rate = {
@@ -2368,12 +2378,8 @@ calculate_interest_rate = {
 
 		# World tension cause premium - Countries which cause world tension are chaotic and less
 		# stable.
-		set_temp_variable = { recent_threat = { value = has_added_tension_amount subtract = tracked_threat } }
-		# Decay by 0.5% each day, 140 days to decay 50%, 460 days to decay 90%, then add new tension
-		set_variable = { tension_premium = { value = tension_premium multiply = 0.995 add = recent_threat } }
 		set_variable = { adjusted_tension_premium = { value = tension_premium multiply = 0.1 } } # 100% tension -> 10% interest rate
 		add_to_variable = { interest_rate = adjusted_tension_premium }
-		set_variable = { tracked_threat = has_added_tension_amount }
 
 		set_temp_variable = { pre_clamp_interest_rate = interest_rate }
 		clamp_variable = { var = interest_rate min = 0.8 max = 50 } #Min is 0.8% on debt max is 50%
@@ -3361,29 +3367,25 @@ calculate_additional_expense_rate = {
 	# Generic Propaganda Campaign Decisions
 	# AI do not use the propganda campaigns at all. Wrap them in a check to minimize checking.
 	if = { limit = { is_ai = no }
+		calculate_all_propaganda_costs = yes
 		if = {
 			limit = { has_country_flag = prowestern_propaganda }
-			calculate_prowestern_propaganda_cost = yes
 			add_to_variable = { additional_expenses_rate = promote_outlook_western_costs }
 		}
 		if = {
 			limit = { has_country_flag = emerging_propaganda }
-			calculate_emerging_propaganda_cost = yes
 			add_to_variable = { additional_expenses_rate = promote_outlook_emerging_costs }
 		}
 		if = {
 			limit = { has_country_flag = nonaligned_propaganda }
-			calculate_nonaligned_propaganda_cost = yes
 			add_to_variable = { additional_expenses_rate = promote_outlook_nonaligned_costs }
 		}
 		if = {
 			limit = { has_country_flag = nationalist_propaganda }
-			calculate_nationalist_propaganda_cost = yes
 			add_to_variable = { additional_expenses_rate = promote_outlook_nationalist_costs }
 		}
 		if = {
 			limit = { has_country_flag = fascism_propaganda }
-			calculate_salafist_propaganda_cost = yes
 			add_to_variable = { additional_expenses_rate = promote_outlook_salafist_costs }
 		}
 
@@ -4551,7 +4553,7 @@ update_state_variables = {
 			}
 		}
 		set_variable = {
-			hydroelectric_energy_generation = {
+			hydroelectric_energy_generation_base = {
 				value = 0
 				every_collection = {
 					named_collection = controlled_states_collection
@@ -4560,7 +4562,7 @@ update_state_variables = {
 			}
 		}
 		set_variable = {
-			geothermal_energy_generation = {
+			geothermal_energy_generation_base = {
 				value = 0
 				every_collection = {
 					named_collection = controlled_states_collection
@@ -4569,7 +4571,7 @@ update_state_variables = {
 			}
 		}
 		set_variable = {
-			max_stored_energy = {
+			max_stored_energy_base = {
 				value = 0
 				every_collection = {
 					named_collection = controlled_states_collection
@@ -4770,7 +4772,7 @@ update_state_variables = {
 		}
 
 		set_variable = {
-			minimum_renewable_energy_var = {
+			minimum_renewable_energy_var_base = {
 				value = 0
 				every_collection = {
 					named_collection = controlled_states_collection
@@ -4791,7 +4793,7 @@ update_state_variables = {
 		}
 
 		set_variable = {
-			maximum_renewable_energy_var = {
+			maximum_renewable_energy_var_base = {
 				value = 1
 				every_collection = {
 					named_collection = controlled_states_collection
@@ -5196,14 +5198,14 @@ calculate_gdp = {
 		}
 	}
 	set_variable = {
-		minimum_renewable_energy_var = {
-			value = minimum_renewable_energy_var
+		minimum_renewable_energy_var_base = {
+			value = minimum_renewable_energy_var_base
 			multiply = renewable_energy_infra_manpower_fulfillment
 		}
 	}
 	set_variable = {
-		maximum_renewable_energy_var = {
-			value = maximum_renewable_energy_var
+		maximum_renewable_energy_var_base = {
+			value = maximum_renewable_energy_var_base
 			multiply = renewable_energy_infra_manpower_fulfillment
 		}
 	}
@@ -6094,6 +6096,7 @@ calculate_gdp = {
 	}
 
 	calculate_gdp_modifiers = yes
+	set_country_flag = energy_state_bases_initialized
 	calculate_energy_use = yes
 }
 

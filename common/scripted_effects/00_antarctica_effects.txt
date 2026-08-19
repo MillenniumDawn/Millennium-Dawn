@@ -1,26 +1,87 @@
 # Author(s): XCezor
 
-# Usage
-# set_temp_variable = { station_id = x }
-# antarctica_setup_research_station = yes
+antarctica_append_station_state = {
+	add_to_array = { global.antarctica_station_exists = 0 }
+	add_to_array = { global.antarctica_station_controller = 0 }
+	add_to_array = { global.antarctica_station_region_filter = 0 }
+	add_to_array = { global.antarctica_station_module_slot_1 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_2 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_4 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_5 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_6 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_7 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_8 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_9 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_10 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_11 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_12 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_13 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_14 = 0 }
+	add_to_array = { global.antarctica_station_module_slot_2_blizzard_damaged = 0 }
+	add_to_array = { global.antarctica_station_module_slot_6_blizzard_damaged = 0 }
+	add_to_array = { global.antarctica_station_module_slot_7_blizzard_damaged = 0 }
+	add_to_array = { global.antarctica_station_module_slot_8_blizzard_damaged = 0 }
+	add_to_array = { global.antarctica_station_module_slot_9_blizzard_damaged = 0 }
+	add_to_array = { global.antarctica_station_module_slot_11_blizzard_damaged = 0 }
+	add_to_array = { global.antarctica_station_module_slot_13_blizzard_damaged = 0 }
+	add_to_array = { global.antarctica_station_output_power = 0 }
+	add_to_array = { global.antarctica_station_output_power_total = 0 }
+	add_to_array = { global.antarctica_station_output_fuel_usage = 0 }
+	add_to_array = { global.antarctica_station_output_fuel_capacity_days = 0 }
+	add_to_array = { global.antarctica_station_output_fuel_usage_bonus = 0 }
+	add_to_array = { global.antarctica_station_output_staff_satisfaction = 0 }
+	add_to_array = { global.antarctica_station_output_iteration_speed_multiplier = 0 }
+	add_to_array = { global.antarctica_station_output_storage = 0 }
+	add_to_array = { global.antarctica_station_output_capacity = 0 }
+	add_to_array = { global.antarctica_station_output_install_cost = 0 }
+	add_to_array = { global.antarctica_station_output_reliability = 0 }
+	add_to_array = { global.antarctica_station_output_construction_time = 0 }
+	add_to_array = { global.antarctica_station_output_upkeep_cost = 0 }
+	add_to_array = { global.antarctica_station_output_required_staff = 0 }
+	add_to_array = { global.antarctica_station_output_total_staff = 0 }
+	add_to_array = { global.antarctica_station_tier = 0 }
+	add_to_array = { global.antarctica_station_iteration_progress = 0 }
+	add_to_array = { global.antarctica_station_iterations = 0 }
+	add_to_array = { global.antarctica_station_install_pending = 0 }
+	add_to_array = { global.antarctica_station_install_slot = 0 }
+	add_to_array = { global.antarctica_station_install_category = 0 }
+	add_to_array = { global.antarctica_station_install_module = 0 }
+	add_to_array = { global.antarctica_station_install_days_remaining = 0 }
+	add_to_array = { global.antarctica_station_illegal_activities_enabled = 0 }
+	add_to_array = { global.antarctica_station_name_id = 0 }
+	add_to_array = { global.antarctica_station_delivery_days_remaining = 0 }
+	add_to_array = { global.antarctica_station_delivery_fuel_pending = 0 }
+	add_to_array = { global.antarctica_station_fuel_initialized = 0 }
+	add_to_array = { global.antarctica_station_observers_incoming = 0 }
+	add_to_array = { global.antarctica_station_repair_days_remaining = 0 }
+	add_to_array = { global.antarctica_station_laboratories_current_index = 0 }
+}
+
 antarctica_setup_research_station = {
+	antarctica_initialize_station_display_arrays = yes
+	set_temp_variable = { station_created = 0 }
+	set_temp_variable = { station_capacity_reserved = 0 }
+	if = {
+		limit = { has_country_flag = antarctica_station_setup_capacity_reserved }
+		set_temp_variable = { station_capacity_reserved = 1 }
+	}
+
 	if = {
 		limit = {
-			meta_trigger = {
-				text = {
-					NOT = { has_global_flag = research_station_[ID]_exists }
-				}
-				ID = "[?station_id]"
+			NOT = { check_variable = { global.antarctica_station_exists^station_id > 0 } }
+			OR = {
+				check_variable = { station_capacity_reserved > 0 }
+				check_variable = { global.antarctica_station_display_capacity_remaining > 0 }
 			}
 		}
-		meta_effect = {
-			text = {
-				set_global_flag = research_station_[ID]_exists
-				set_country_flag = research_station_[ID]_controller_@THIS
-				set_variable = { global.research_station_[ID]_controller = THIS.id }
-			}
-			ID = "[?station_id]"
+		if = {
+			limit = { check_variable = { station_capacity_reserved < 1 } }
+			subtract_from_variable = { global.antarctica_station_display_capacity_remaining = 1 }
 		}
+		antarctica_append_station_state = yes
+		set_variable = { global.antarctica_station_exists^station_id = 1 }
+		set_variable = { global.antarctica_station_controller^station_id = THIS.id }
+		set_temp_variable = { station_created = 1 }
 
 		add_to_array = { country_owned_station_ids = station_id }
 
@@ -63,14 +124,7 @@ antarctica_setup_research_station = {
 			}
 			set_temp_variable = { station_region = 4 }
 		}
-
-		meta_effect = {
-			text = {
-				set_variable = { global.research_station_[ID]_region_filter = [REGION] }
-			}
-			ID = "[?station_id]"
-			REGION = "[?station_region]"
-		}
+		set_variable = { global.antarctica_station_region_filter^station_id = station_region }
 
 		if = {
 			limit = { check_variable = { selected_antarctica_station = 0 } }
@@ -79,8 +133,12 @@ antarctica_setup_research_station = {
 		}
 		log = "[GetDateText]: [Root.GetName]: Set up research station in Antarctica. Station ID: [?station_id] with controller [Root.GetName]."
 	}
-	else = {
+	else_if = {
+		limit = { check_variable = { global.antarctica_station_exists^station_id > 0 } }
 		log = "[GetDateText]: [Root.GetName]: Failed to set up research station in Antarctica. Station ID: [?station_id] already exists."
+	}
+	else = {
+		log = "[GetDateText]: [Root.GetName]: Failed to set up research station in Antarctica. All 70 display slots are occupied."
 	}
 }
 
@@ -95,6 +153,62 @@ antarctica_initialize_station_display_arrays = {
 		clear_array = global.antarctica_station_x
 		clear_array = global.antarctica_station_y
 		clear_array = global.antarctica_station_region
+		clear_array = global.antarctica_station_exists
+		clear_array = global.antarctica_station_controller
+		clear_array = global.antarctica_station_region_filter
+		clear_array = global.antarctica_station_module_slot_1
+		clear_array = global.antarctica_station_module_slot_2
+		clear_array = global.antarctica_station_module_slot_4
+		clear_array = global.antarctica_station_module_slot_5
+		clear_array = global.antarctica_station_module_slot_6
+		clear_array = global.antarctica_station_module_slot_7
+		clear_array = global.antarctica_station_module_slot_8
+		clear_array = global.antarctica_station_module_slot_9
+		clear_array = global.antarctica_station_module_slot_10
+		clear_array = global.antarctica_station_module_slot_11
+		clear_array = global.antarctica_station_module_slot_12
+		clear_array = global.antarctica_station_module_slot_13
+		clear_array = global.antarctica_station_module_slot_14
+		clear_array = global.antarctica_station_module_slot_2_blizzard_damaged
+		clear_array = global.antarctica_station_module_slot_6_blizzard_damaged
+		clear_array = global.antarctica_station_module_slot_7_blizzard_damaged
+		clear_array = global.antarctica_station_module_slot_8_blizzard_damaged
+		clear_array = global.antarctica_station_module_slot_9_blizzard_damaged
+		clear_array = global.antarctica_station_module_slot_11_blizzard_damaged
+		clear_array = global.antarctica_station_module_slot_13_blizzard_damaged
+		clear_array = global.antarctica_station_output_power
+		clear_array = global.antarctica_station_output_power_total
+		clear_array = global.antarctica_station_output_fuel_usage
+		clear_array = global.antarctica_station_output_fuel_capacity_days
+		clear_array = global.antarctica_station_output_fuel_usage_bonus
+		clear_array = global.antarctica_station_output_staff_satisfaction
+		clear_array = global.antarctica_station_output_iteration_speed_multiplier
+		clear_array = global.antarctica_station_output_storage
+		clear_array = global.antarctica_station_output_capacity
+		clear_array = global.antarctica_station_output_install_cost
+		clear_array = global.antarctica_station_output_reliability
+		clear_array = global.antarctica_station_output_construction_time
+		clear_array = global.antarctica_station_output_upkeep_cost
+		clear_array = global.antarctica_station_output_required_staff
+		clear_array = global.antarctica_station_output_total_staff
+		clear_array = global.antarctica_station_tier
+		clear_array = global.antarctica_station_iteration_progress
+		clear_array = global.antarctica_station_iterations
+		clear_array = global.antarctica_station_install_pending
+		clear_array = global.antarctica_station_install_slot
+		clear_array = global.antarctica_station_install_category
+		clear_array = global.antarctica_station_install_module
+		clear_array = global.antarctica_station_install_days_remaining
+		clear_array = global.antarctica_station_illegal_activities_enabled
+		clear_array = global.antarctica_station_name_id
+		clear_array = global.antarctica_station_delivery_days_remaining
+		clear_array = global.antarctica_station_delivery_fuel_pending
+		clear_array = global.antarctica_station_fuel_initialized
+		clear_array = global.antarctica_station_observers_incoming
+		clear_array = global.antarctica_station_repair_days_remaining
+		clear_array = global.antarctica_station_laboratories_current_index
+		antarctica_append_station_state = yes
+		set_variable = { global.antarctica_station_display_capacity_remaining = 70 }
 
 		set_variable = { selected_antarctica_station = 0 }
 		set_variable = { selected_antarctica_station_controller = 0 }
@@ -139,6 +253,15 @@ antarctica_initialize_station_display_arrays = {
 		set_variable = { selected_antarctica_station_iteration_speed_multiplier = 1 }
 		set_variable = { selected_antarctica_station_preview_output_power = 0 }
 		set_variable = { selected_antarctica_station_preview_output_required_staff = 0 }
+		set_variable = { selected_antarctica_station_module_slot_2_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_6_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_7_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_8_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_9_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_11_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_13_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_repair_days_remaining = 0 }
+		set_variable = { selected_antarctica_station_name_id = 0 }
 
 		set_global_flag = antarctica_station_display_initialized
 		log = "[GetDateText]: [Root.GetName]: Initialized Antarctica station display arrays."
@@ -150,73 +273,7 @@ antarctica_initialize_station_display_arrays = {
 # antarctica_recalculate_station_module_outputs = yes
 antarctica_recalculate_station_module_outputs = {
 	if = {
-		limit = {
-			meta_trigger = {
-				text = { has_global_flag = research_station_[ID]_exists }
-				ID = "[?station_id]"
-			}
-		}
-
-		meta_effect = {
-			text = {
-				set_temp_variable = { pwr_module = global.research_station_[ID]_module_powerplant_active }
-				set_temp_variable = { life_module = global.research_station_[ID]_module_life_support_active }
-				set_temp_variable = { fuel_module = global.research_station_[ID]_module_fuel_storage_active }
-				set_temp_variable = { house_module = global.research_station_[ID]_module_housing_active }
-				set_temp_variable = { lab_module = global.research_station_[ID]_module_laboratories_active }
-			}
-			ID = "[?station_id]"
-		}
-
-		if = {
-			limit = { check_variable = { pwr_module < 1 } }
-			meta_effect = {
-				text = {
-					set_temp_variable = { pwr_module = global.research_station_[ID]_module_powerplant_list^0 }
-				}
-				ID = "[?station_id]"
-			}
-		}
-
-		if = {
-			limit = { check_variable = { life_module < 1 } }
-			meta_effect = {
-				text = {
-					set_temp_variable = { life_module = global.research_station_[ID]_module_life_support_list^0 }
-				}
-				ID = "[?station_id]"
-			}
-		}
-
-		if = {
-			limit = { check_variable = { fuel_module < 1 } }
-			meta_effect = {
-				text = {
-					set_temp_variable = { fuel_module = global.research_station_[ID]_module_fuel_storage_list^0 }
-				}
-				ID = "[?station_id]"
-			}
-		}
-
-		if = {
-			limit = { check_variable = { house_module < 1 } }
-			meta_effect = {
-				text = {
-					set_temp_variable = { house_module = global.research_station_[ID]_module_housing_list^0 }
-				}
-				ID = "[?station_id]"
-			}
-		}
-
-		if = {
-			limit = { check_variable = { lab_module < 1 } }
-			meta_effect = {
-				text = {
-					set_temp_variable = { lab_module = global.research_station_[ID]_module_laboratories_list^0 }
-				}
-				ID = "[?station_id]"
-			}
-		}
+		limit = { check_variable = { global.antarctica_station_exists^station_id > 0 } }
 
 		set_temp_variable = { out_power = 0 }
 		set_temp_variable = { out_power_total = 0 }
@@ -227,181 +284,122 @@ antarctica_recalculate_station_module_outputs = {
 		set_temp_variable = { out_capacity = 0 }
 		set_temp_variable = { out_install_cost = 0 }
 		set_temp_variable = { out_iteration_speed_multiplier = 1 }
-		# Reliability is module-specific and not aggregated into a station-wide value.
 		set_temp_variable = { out_reliability = 0 }
 		set_temp_variable = { out_construction_time = 0 }
 		set_temp_variable = { out_upkeep_cost = 0 }
 		set_temp_variable = { out_required_staff = 0 }
 		set_temp_variable = { out_total_staff = 0 }
-
-		# Aggregate all installed module contributions for station outputs.
-		set_temp_variable = { has_powerplant_modules = 0 }
-		set_temp_variable = { has_life_support_modules = 0 }
-		set_temp_variable = { has_fuel_storage_modules = 0 }
-		set_temp_variable = { has_housing_modules = 0 }
-		set_temp_variable = { has_laboratory_modules = 0 }
-
-		meta_effect = {
-			text = {
-				if = {
-					limit = {
-						check_variable = { global.research_station_[ID]_module_slot_2 > 0 }
-						NOT = { check_variable = { global.research_station_[ID]_module_slot_2_blizzard_damaged > 0 } }
-					}
-					set_temp_variable = { pwr_module = global.research_station_[ID]_module_slot_2 }
-					set_temp_variable = { has_powerplant_modules = 1 }
-					antarctica_apply_single_powerplant_station_output = yes
-				}
-				if = {
-					limit = {
-						check_variable = { global.research_station_[ID]_module_slot_11 > 0 }
-						NOT = { check_variable = { global.research_station_[ID]_module_slot_11_blizzard_damaged > 0 } }
-					}
-					set_temp_variable = { pwr_module = global.research_station_[ID]_module_slot_11 }
-					set_temp_variable = { has_powerplant_modules = 1 }
-					antarctica_apply_single_powerplant_station_output = yes
-				}
-				if = {
-					limit = {
-						check_variable = { global.research_station_[ID]_module_slot_13 > 0 }
-						NOT = { check_variable = { global.research_station_[ID]_module_slot_13_blizzard_damaged > 0 } }
-					}
-					set_temp_variable = { pwr_module = global.research_station_[ID]_module_slot_13 }
-					set_temp_variable = { has_powerplant_modules = 1 }
-					antarctica_apply_single_powerplant_station_output = yes
-				}
-			}
-			ID = "[?station_id]"
-		}
-
-		meta_effect = {
-			text = {
-				for_each_loop = {
-					array = global.research_station_[ID]_module_life_support_list
-					value = current_module
-					if = {
-						limit = { check_variable = { current_module > 0 } }
-						set_temp_variable = { life_module = current_module }
-						set_temp_variable = { has_life_support_modules = 1 }
-						antarctica_apply_single_life_support_station_output = yes
-					}
-				}
-			}
-			ID = "[?station_id]"
-		}
+		set_temp_variable = { existing_storage = global.antarctica_station_output_storage^station_id }
 
 		if = {
 			limit = {
-				check_variable = { has_life_support_modules < 1 }
-				check_variable = { life_module > 0 }
+				check_variable = { global.antarctica_station_module_slot_1^station_id > 0 }
 			}
-			antarctica_apply_single_life_support_station_output = yes
-		}
-
-		meta_effect = {
-			text = {
-				for_each_loop = {
-					array = global.research_station_[ID]_module_fuel_storage_list
-					value = current_module
-					if = {
-						limit = { check_variable = { current_module > 0 } }
-						set_temp_variable = { fuel_module = current_module }
-						set_temp_variable = { has_fuel_storage_modules = 1 }
-						antarctica_apply_single_fuel_storage_station_output = yes
-					}
-				}
-			}
-			ID = "[?station_id]"
-		}
-
-		if = {
-			limit = {
-				check_variable = { has_fuel_storage_modules < 1 }
-				check_variable = { fuel_module > 0 }
-			}
-			antarctica_apply_single_fuel_storage_station_output = yes
-		}
-
-		meta_effect = {
-			text = {
-				for_each_loop = {
-					array = global.research_station_[ID]_module_housing_list
-					value = current_module
-					if = {
-						limit = { check_variable = { current_module > 0 } }
-						set_temp_variable = { house_module = current_module }
-						set_temp_variable = { has_housing_modules = 1 }
-						antarctica_apply_single_housing_station_output = yes
-					}
-				}
-			}
-			ID = "[?station_id]"
-		}
-
-		if = {
-			limit = {
-				check_variable = { has_housing_modules < 1 }
-				check_variable = { house_module > 0 }
-			}
+			set_temp_variable = { house_module = global.antarctica_station_module_slot_1^station_id }
 			antarctica_apply_single_housing_station_output = yes
 		}
 
-		# Laboratory output stats aggregate all installed laboratory modules.
-		meta_effect = {
-			text = {
-				if = {
-					limit = {
-						check_variable = { global.research_station_[ID]_module_slot_6 > 0 }
-						NOT = { check_variable = { global.research_station_[ID]_module_slot_6_blizzard_damaged > 0 } }
-					}
-					set_temp_variable = { has_laboratory_modules = 1 }
-					set_temp_variable = { lab_module = global.research_station_[ID]_module_slot_6 }
-					antarctica_apply_single_laboratory_station_output = yes
-				}
-				if = {
-					limit = {
-						check_variable = { global.research_station_[ID]_module_slot_7 > 0 }
-						NOT = { check_variable = { global.research_station_[ID]_module_slot_7_blizzard_damaged > 0 } }
-					}
-					set_temp_variable = { has_laboratory_modules = 1 }
-					set_temp_variable = { lab_module = global.research_station_[ID]_module_slot_7 }
-					antarctica_apply_single_laboratory_station_output = yes
-				}
-				if = {
-					limit = {
-						check_variable = { global.research_station_[ID]_module_slot_8 > 0 }
-						NOT = { check_variable = { global.research_station_[ID]_module_slot_8_blizzard_damaged > 0 } }
-					}
-					set_temp_variable = { has_laboratory_modules = 1 }
-					set_temp_variable = { lab_module = global.research_station_[ID]_module_slot_8 }
-					antarctica_apply_single_laboratory_station_output = yes
-				}
-				if = {
-					limit = {
-						check_variable = { global.research_station_[ID]_module_slot_9 > 0 }
-						NOT = { check_variable = { global.research_station_[ID]_module_slot_9_blizzard_damaged > 0 } }
-					}
-					set_temp_variable = { has_laboratory_modules = 1 }
-					set_temp_variable = { lab_module = global.research_station_[ID]_module_slot_9 }
-					antarctica_apply_single_laboratory_station_output = yes
-				}
+		if = {
+			limit = {
+				check_variable = { global.antarctica_station_module_slot_2^station_id > 0 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_2_blizzard_damaged^station_id > 0 } }
 			}
-			ID = "[?station_id]"
+			set_temp_variable = { pwr_module = global.antarctica_station_module_slot_2^station_id }
+			antarctica_apply_single_powerplant_station_output = yes
 		}
 
 		if = {
 			limit = {
-				check_variable = { has_laboratory_modules < 1 }
-				check_variable = { lab_module > 0 }
+				check_variable = { global.antarctica_station_module_slot_4^station_id > 0 }
 			}
+			set_temp_variable = { fuel_module = global.antarctica_station_module_slot_4^station_id }
+			antarctica_apply_single_fuel_storage_station_output = yes
+		}
+
+		if = {
+			limit = {
+				check_variable = { global.antarctica_station_module_slot_5^station_id > 0 }
+			}
+			set_temp_variable = { house_module = global.antarctica_station_module_slot_5^station_id }
+			antarctica_apply_single_housing_station_output = yes
+		}
+
+		if = {
+			limit = {
+				check_variable = { global.antarctica_station_module_slot_6^station_id > 0 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^station_id > 0 } }
+			}
+			set_temp_variable = { lab_module = global.antarctica_station_module_slot_6^station_id }
 			antarctica_apply_single_laboratory_station_output = yes
 		}
 
-		meta_effect = {
-			text = {
-				set_temp_variable = { existing_storage = global.research_station_[ID]_output_storage }
+		if = {
+			limit = {
+				check_variable = { global.antarctica_station_module_slot_7^station_id > 0 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^station_id > 0 } }
 			}
-			ID = "[?station_id]"
+			set_temp_variable = { lab_module = global.antarctica_station_module_slot_7^station_id }
+			antarctica_apply_single_laboratory_station_output = yes
+		}
+
+		if = {
+			limit = {
+				check_variable = { global.antarctica_station_module_slot_8^station_id > 0 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^station_id > 0 } }
+			}
+			set_temp_variable = { lab_module = global.antarctica_station_module_slot_8^station_id }
+			antarctica_apply_single_laboratory_station_output = yes
+		}
+
+		if = {
+			limit = {
+				check_variable = { global.antarctica_station_module_slot_9^station_id > 0 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^station_id > 0 } }
+			}
+			set_temp_variable = { lab_module = global.antarctica_station_module_slot_9^station_id }
+			antarctica_apply_single_laboratory_station_output = yes
+		}
+
+		if = {
+			limit = {
+				check_variable = { global.antarctica_station_module_slot_10^station_id > 0 }
+			}
+			set_temp_variable = { house_module = global.antarctica_station_module_slot_10^station_id }
+			antarctica_apply_single_housing_station_output = yes
+		}
+
+		if = {
+			limit = {
+				check_variable = { global.antarctica_station_module_slot_11^station_id > 0 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_11_blizzard_damaged^station_id > 0 } }
+			}
+			set_temp_variable = { pwr_module = global.antarctica_station_module_slot_11^station_id }
+			antarctica_apply_single_powerplant_station_output = yes
+		}
+
+		if = {
+			limit = {
+				check_variable = { global.antarctica_station_module_slot_12^station_id > 0 }
+			}
+			set_temp_variable = { life_module = global.antarctica_station_module_slot_12^station_id }
+			antarctica_apply_single_life_support_station_output = yes
+		}
+
+		if = {
+			limit = {
+				check_variable = { global.antarctica_station_module_slot_13^station_id > 0 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_13_blizzard_damaged^station_id > 0 } }
+			}
+			set_temp_variable = { pwr_module = global.antarctica_station_module_slot_13^station_id }
+			antarctica_apply_single_powerplant_station_output = yes
+		}
+
+		if = {
+			limit = {
+				check_variable = { global.antarctica_station_module_slot_14^station_id > 0 }
+			}
+			set_temp_variable = { fuel_module = global.antarctica_station_module_slot_14^station_id }
+			antarctica_apply_single_fuel_storage_station_output = yes
 		}
 
 		# out_storage is the module-defined max fuel capacity.
@@ -446,42 +444,21 @@ antarctica_recalculate_station_module_outputs = {
 			divide_temp_variable = { out_fuel_capacity_days = out_fuel_usage }
 			round_variable = out_fuel_capacity_days
 		}
-
-		meta_effect = {
-			text = {
-				set_variable = { global.research_station_[ID]_output_power = [PWR] }
-				set_variable = { global.research_station_[ID]_output_power_total = [TOTAL_PWR] }
-				set_variable = { global.research_station_[ID]_output_fuel_usage = [FUEL] }
-				set_variable = { global.research_station_[ID]_output_fuel_capacity_days = [FUEL_DAYS] }
-				set_variable = { global.research_station_[ID]_output_fuel_usage_bonus = [FUEL_BONUS] }
-				set_variable = { global.research_station_[ID]_output_staff_satisfaction = [SAT] }
-				set_variable = { global.research_station_[ID]_output_iteration_speed_multiplier = [ITER_MOD] }
-				set_variable = { global.research_station_[ID]_output_storage = [STO] }
-				set_variable = { global.research_station_[ID]_output_capacity = [CAP] }
-				set_variable = { global.research_station_[ID]_output_install_cost = [INS] }
-				set_variable = { global.research_station_[ID]_output_reliability = [REL] }
-				set_variable = { global.research_station_[ID]_output_construction_time = [CON] }
-				set_variable = { global.research_station_[ID]_output_upkeep_cost = [UPK] }
-				set_variable = { global.research_station_[ID]_output_required_staff = [REQ] }
-				set_variable = { global.research_station_[ID]_output_total_staff = [TOTAL_STAFF] }
-			}
-			ID = "[?station_id]"
-			PWR = "[?out_power]"
-			FUEL = "[?out_fuel_usage]"
-			FUEL_DAYS = "[?out_fuel_capacity_days]"
-			FUEL_BONUS = "[?out_fuel_usage_bonus]"
-			TOTAL_PWR = "[?out_power_total]"
-			SAT = "[?out_staff_satisfaction]"
-			ITER_MOD = "[?out_iteration_speed_multiplier]"
-			STO = "[?effective_storage]"
-			CAP = "[?out_capacity]"
-			INS = "[?out_install_cost]"
-			REL = "[?out_reliability]"
-			CON = "[?out_construction_time]"
-			UPK = "[?out_upkeep_cost]"
-			REQ = "[?out_required_staff]"
-			TOTAL_STAFF = "[?out_total_staff]"
-		}
+		set_variable = { global.antarctica_station_output_power^station_id = out_power }
+		set_variable = { global.antarctica_station_output_power_total^station_id = out_power_total }
+		set_variable = { global.antarctica_station_output_fuel_usage^station_id = out_fuel_usage }
+		set_variable = { global.antarctica_station_output_fuel_capacity_days^station_id = out_fuel_capacity_days }
+		set_variable = { global.antarctica_station_output_fuel_usage_bonus^station_id = out_fuel_usage_bonus }
+		set_variable = { global.antarctica_station_output_staff_satisfaction^station_id = out_staff_satisfaction }
+		set_variable = { global.antarctica_station_output_iteration_speed_multiplier^station_id = out_iteration_speed_multiplier }
+		set_variable = { global.antarctica_station_output_storage^station_id = effective_storage }
+		set_variable = { global.antarctica_station_output_capacity^station_id = out_capacity }
+		set_variable = { global.antarctica_station_output_install_cost^station_id = out_install_cost }
+		set_variable = { global.antarctica_station_output_reliability^station_id = out_reliability }
+		set_variable = { global.antarctica_station_output_construction_time^station_id = out_construction_time }
+		set_variable = { global.antarctica_station_output_upkeep_cost^station_id = out_upkeep_cost }
+		set_variable = { global.antarctica_station_output_required_staff^station_id = out_required_staff }
+		set_variable = { global.antarctica_station_output_total_staff^station_id = out_total_staff }
 	}
 }
 
@@ -492,76 +469,27 @@ antarctica_recalculate_station_module_outputs = {
 # antarctica_set_station_module = yes
 antarctica_set_station_module = {
 	if = {
-		limit = {
-			meta_trigger = {
-				text = { has_global_flag = research_station_[ID]_exists }
-				ID = "[?station_id]"
-			}
-		}
+		limit = { check_variable = { global.antarctica_station_exists^station_id > 0 } }
 
 		if = {
 			limit = { check_variable = { module_category = 1 } }
-			meta_effect = {
-				text = {
-					add_to_array = { global.research_station_[ID]_module_powerplant_list = [MOD] }
-					set_variable = { global.research_station_[ID]_module_powerplant_active = [MOD] }
-					set_variable = { global.research_station_[ID]_module_powerplant = [MOD] }
-					set_variable = { global.research_station_[ID]_module_slot_11 = [MOD] }
-				}
-				ID = "[?station_id]"
-				MOD = "[?module_id]"
-			}
+			set_variable = { global.antarctica_station_module_slot_11^station_id = module_id }
 		}
 		else_if = {
 			limit = { check_variable = { module_category = 2 } }
-			meta_effect = {
-				text = {
-					add_to_array = { global.research_station_[ID]_module_life_support_list = [MOD] }
-					set_variable = { global.research_station_[ID]_module_life_support_active = [MOD] }
-					set_variable = { global.research_station_[ID]_module_life_support = [MOD] }
-					set_variable = { global.research_station_[ID]_module_slot_12 = [MOD] }
-				}
-				ID = "[?station_id]"
-				MOD = "[?module_id]"
-			}
+			set_variable = { global.antarctica_station_module_slot_12^station_id = module_id }
 		}
 		else_if = {
 			limit = { check_variable = { module_category = 3 } }
-			meta_effect = {
-				text = {
-					add_to_array = { global.research_station_[ID]_module_fuel_storage_list = [MOD] }
-					set_variable = { global.research_station_[ID]_module_fuel_storage_active = [MOD] }
-					set_variable = { global.research_station_[ID]_module_fuel_storage = [MOD] }
-					set_variable = { global.research_station_[ID]_module_slot_14 = [MOD] }
-				}
-				ID = "[?station_id]"
-				MOD = "[?module_id]"
-			}
+			set_variable = { global.antarctica_station_module_slot_14^station_id = module_id }
 		}
 		else_if = {
 			limit = { check_variable = { module_category = 4 } }
-			meta_effect = {
-				text = {
-					add_to_array = { global.research_station_[ID]_module_housing_list = [MOD] }
-					set_variable = { global.research_station_[ID]_module_housing_active = [MOD] }
-					set_variable = { global.research_station_[ID]_module_housing = [MOD] }
-					set_variable = { global.research_station_[ID]_module_slot_5 = [MOD] }
-				}
-				ID = "[?station_id]"
-				MOD = "[?module_id]"
-			}
+			set_variable = { global.antarctica_station_module_slot_5^station_id = module_id }
 		}
 		else_if = {
 			limit = { check_variable = { module_category = 5 } }
-			meta_effect = {
-				text = {
-					add_to_array = { global.research_station_[ID]_module_laboratories_list = [MOD] }
-					set_variable = { global.research_station_[ID]_module_laboratories_active = [MOD] }
-					set_variable = { global.research_station_[ID]_module_slot_8 = [MOD] }
-				}
-				ID = "[?station_id]"
-				MOD = "[?module_id]"
-			}
+			set_variable = { global.antarctica_station_module_slot_8^station_id = module_id }
 		}
 
 		antarctica_recalculate_station_module_outputs = yes
@@ -611,13 +539,7 @@ antarctica_cycle_station_laboratory_module = {
 			set_variable = { selected_antarctica_station_module_laboratories = selected_antarctica_station_laboratories_list^current_lab_index }
 
 			# Persist preview index per station, but keep installed effects independent of preview.
-			meta_effect = {
-				text = {
-					set_variable = { global.research_station_[ID]_module_laboratories_current_index = [NEW_INDEX] }
-				}
-				ID = "[?selected_antarctica_station]"
-				NEW_INDEX = "[?current_lab_index]"
-			}
+			set_variable = { global.antarctica_station_laboratories_current_index^selected_antarctica_station = current_lab_index }
 		}
 
 		add_to_variable = { global.missile_ui_updated = 1 }
@@ -666,22 +588,11 @@ antarctica_remove_research_station = {
 	set_temp_variable = { station_id = player_station_id }
 	if = {
 		limit = {
-			meta_trigger = {
-				text = {
-					has_global_flag = research_station_[ID]_exists
-					has_country_flag = research_station_[ID]_controller_@THIS
-				}
-				ID = "[?station_id]"
-			}
+			check_variable = { global.antarctica_station_exists^station_id > 0 }
+			check_variable = { global.antarctica_station_controller^station_id = THIS.id }
 		}
-		meta_effect = {
-			text = {
-				clr_global_flag = research_station_[ID]_exists
-				clr_country_flag = research_station_[ID]_controller_@THIS
-				set_variable = { global.research_station_[ID]_controller = 0 }
-			}
-			ID = "[?station_id]"
-		}
+		set_variable = { global.antarctica_station_exists^station_id = 0 }
+		set_variable = { global.antarctica_station_controller^station_id = 0 }
 
 		# Remove this station from our own owned-station index (tombstone
 		# the slot, same convention as antarctica_remove_research_station_from_display).
@@ -705,6 +616,8 @@ antarctica_remove_research_station = {
 
 		clr_country_flag = antarctica_has_active_station
 		antarctica_remove_research_station_from_display = yes
+		add_to_variable = { global.antarctica_station_display_capacity_remaining = 1 }
+		clamp_variable = { var = global.antarctica_station_display_capacity_remaining min = 0 max = 70 }
 		if = {
 			limit = { has_idea = at_member }
 			antarctica_recalculate_country_laboratory_effects = yes
@@ -730,81 +643,18 @@ antarctica_research_station_position = {
 
 	if = {
 		limit = {
-			meta_trigger = {
-				text = {
-					has_global_flag = research_station_[ID]_exists
-				}
-				ID = "[?station_id]"
-			}
+			check_variable = { global.antarctica_station_exists^station_id > 0 }
 		}
-		meta_effect = {
-			text = {
-				set_variable = { global.research_station_[ID]_x = [X] }
-				set_variable = { global.research_station_[ID]_y = [Y] }
-			}
-			ID = "[?station_id]"
-			X = "[?station_x]"
-			Y = "[?station_y]"
-		}
-
-		set_temp_variable = { station_region = 3 }
-		if = {
-			limit = {
-				meta_trigger = {
-					text = {
-						OR = {
-							var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = north_america } }
-							var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = south_america } }
-						}
-					}
-					ID = "[?station_id]"
-				}
-			}
-			set_temp_variable = { station_region = 1 }
-		}
-		else_if = {
-			limit = {
-				meta_trigger = {
-					text = {
-						OR = {
-							var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = asia } }
-							var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = australia } }
-						}
-					}
-					ID = "[?station_id]"
-				}
-			}
-			set_temp_variable = { station_region = 2 }
-		}
-		else_if = {
-			limit = {
-				meta_trigger = {
-					text = {
-						OR = {
-							var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = africa } }
-							var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = middle_east } }
-						}
-					}
-					ID = "[?station_id]"
-				}
-			}
-			set_temp_variable = { station_region = 4 }
-		}
-
-		meta_effect = {
-			text = {
-				set_variable = { global.research_station_[ID]_region_filter = [REGION] }
-			}
-			ID = "[?station_id]"
-			REGION = "[?station_region]"
-		}
+		set_temp_variable = { station_region = global.antarctica_station_region_filter^station_id }
 
 		set_temp_variable = { station_found = 0 }
+		set_temp_variable = { available_display_index = -1 }
+		set_temp_variable = { break_position_loop = 0 }
 		for_each_loop = {
 			array = global.antarctica_station_ids
 			value = current_station_id
 			index = i
-			break = break_loop
+			break = break_position_loop
 
 			if = {
 				limit = { check_variable = { current_station_id = station_id } }
@@ -812,12 +662,32 @@ antarctica_research_station_position = {
 				set_variable = { global.antarctica_station_y^i = station_y }
 				set_variable = { global.antarctica_station_region^i = station_region }
 				set_temp_variable = { station_found = 1 }
-				set_temp_variable = { break_loop = 1 }
+				set_temp_variable = { break_position_loop = 1 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { available_display_index < 0 }
+					check_variable = { current_station_id < 1 }
+				}
+				set_temp_variable = { available_display_index = i }
 			}
 		}
 
 		if = {
-			limit = { check_variable = { station_found = 0 } }
+			limit = {
+				check_variable = { station_found = 0 }
+				check_variable = { available_display_index > -1 }
+			}
+			set_variable = { global.antarctica_station_ids^available_display_index = station_id }
+			set_variable = { global.antarctica_station_x^available_display_index = station_x }
+			set_variable = { global.antarctica_station_y^available_display_index = station_y }
+			set_variable = { global.antarctica_station_region^available_display_index = station_region }
+		}
+		else_if = {
+			limit = {
+				check_variable = { station_found = 0 }
+				check_variable = { global.antarctica_station_ids^num < 70 }
+			}
 			add_to_array = { global.antarctica_station_ids = station_id }
 			add_to_array = { global.antarctica_station_x = station_x }
 			add_to_array = { global.antarctica_station_y = station_y }
@@ -832,12 +702,7 @@ antarctica_research_station_position = {
 				}
 			}
 			set_variable = { selected_antarctica_station = station_id }
-			meta_effect = {
-				text = {
-					set_variable = { selected_antarctica_station_controller = global.research_station_[ID]_controller }
-				}
-				ID = "[?station_id]"
-			}
+			set_variable = { selected_antarctica_station_controller = global.antarctica_station_controller^station_id }
 		}
 
 		add_to_variable = { global.missile_ui_updated = 1 }
@@ -902,71 +767,57 @@ antarctica_create_startup_research_station = {
 	}
 
 	antarctica_setup_research_station = yes
-	antarctica_research_station_position = yes
+	if = {
+		limit = { check_variable = { station_created > 0 } }
+		antarctica_research_station_position = yes
 
-	# Initialize stations with a minimal starter blueprint to avoid install deadlocks.
-	meta_effect = {
-		text = {
-			set_variable = { global.research_station_[ID]_module_powerplant = 0 }
-			set_variable = { global.research_station_[ID]_module_life_support = 0 }
-			set_variable = { global.research_station_[ID]_module_fuel_storage = 0 }
-			set_variable = { global.research_station_[ID]_module_housing = 0 }
-			clear_array = global.research_station_[ID]_module_powerplant_list
-			clear_array = global.research_station_[ID]_module_life_support_list
-			clear_array = global.research_station_[ID]_module_fuel_storage_list
-			clear_array = global.research_station_[ID]_module_housing_list
-			set_variable = { global.research_station_[ID]_module_powerplant_active = 0 }
-			set_variable = { global.research_station_[ID]_module_life_support_active = 0 }
-			set_variable = { global.research_station_[ID]_module_fuel_storage_active = 0 }
-			set_variable = { global.research_station_[ID]_module_housing_active = 0 }
-			set_variable = { global.research_station_[ID]_module_powerplant_current_index = 0 }
-			set_variable = { global.research_station_[ID]_module_life_support_current_index = 0 }
-			set_variable = { global.research_station_[ID]_module_fuel_storage_current_index = 0 }
-			set_variable = { global.research_station_[ID]_module_housing_current_index = 0 }
-			clear_array = global.research_station_[ID]_module_laboratories_list
-			set_variable = { global.research_station_[ID]_module_laboratories_active = 0 }
-			set_variable = { global.research_station_[ID]_module_laboratories_current_index = 0 }
-			set_variable = { global.research_station_[ID]_module_slot_1 = 0 }
-			set_variable = { global.research_station_[ID]_module_slot_2 = 0 }
-			set_variable = { global.research_station_[ID]_module_slot_4 = 0 }
-			set_variable = { global.research_station_[ID]_module_slot_5 = 1 }
-			set_variable = { global.research_station_[ID]_module_slot_6 = 0 }
-			set_variable = { global.research_station_[ID]_module_slot_7 = 0 }
-			set_variable = { global.research_station_[ID]_module_slot_8 = 0 }
-			set_variable = { global.research_station_[ID]_module_slot_9 = 0 }
-			set_variable = { global.research_station_[ID]_module_slot_10 = 0 }
-			set_variable = { global.research_station_[ID]_module_slot_11 = 1 }
-			set_variable = { global.research_station_[ID]_module_slot_12 = 0 }
-			set_variable = { global.research_station_[ID]_module_slot_13 = 0 }
-			set_variable = { global.research_station_[ID]_module_slot_14 = 0 }
-			set_variable = { global.research_station_[ID]_tier = 1 }
-			set_variable = { global.research_station_[ID]_iteration_progress = 0 }
-			set_variable = { global.research_station_[ID]_iterations = 0 }
-			set_variable = { global.research_station_[ID]_install_pending = 0 }
-			set_variable = { global.research_station_[ID]_install_slot = 0 }
-			set_variable = { global.research_station_[ID]_install_category = 0 }
-			set_variable = { global.research_station_[ID]_install_module = 0 }
-			set_variable = { global.research_station_[ID]_install_days_remaining = 0 }
-			set_variable = { global.research_station_[ID]_illegal_activities_enabled = 0 }
+		# Initialize stations with a minimal starter blueprint to avoid install deadlocks.
+		set_variable = { global.antarctica_station_module_slot_1^station_id = 0 }
+		set_variable = { global.antarctica_station_module_slot_2^station_id = 0 }
+		set_variable = { global.antarctica_station_module_slot_4^station_id = 0 }
+		set_variable = { global.antarctica_station_module_slot_5^station_id = 1 }
+		set_variable = { global.antarctica_station_module_slot_6^station_id = 0 }
+		set_variable = { global.antarctica_station_module_slot_7^station_id = 0 }
+		set_variable = { global.antarctica_station_module_slot_8^station_id = 0 }
+		set_variable = { global.antarctica_station_module_slot_9^station_id = 0 }
+		set_variable = { global.antarctica_station_module_slot_10^station_id = 0 }
+		set_variable = { global.antarctica_station_module_slot_11^station_id = 1 }
+		set_variable = { global.antarctica_station_module_slot_12^station_id = 0 }
+		set_variable = { global.antarctica_station_module_slot_13^station_id = 0 }
+		set_variable = { global.antarctica_station_module_slot_14^station_id = 0 }
+		set_variable = { global.antarctica_station_tier^station_id = 1 }
+		set_variable = { global.antarctica_station_iteration_progress^station_id = 0 }
+		set_variable = { global.antarctica_station_iterations^station_id = 0 }
+		set_variable = { global.antarctica_station_install_pending^station_id = 0 }
+		set_variable = { global.antarctica_station_install_slot^station_id = 0 }
+		set_variable = { global.antarctica_station_install_category^station_id = 0 }
+		set_variable = { global.antarctica_station_install_module^station_id = 0 }
+		set_variable = { global.antarctica_station_install_days_remaining^station_id = 0 }
+		set_variable = { global.antarctica_station_illegal_activities_enabled^station_id = 0 }
+
+		if = {
+			limit = { check_variable = { station_name_id > 0 } }
+			set_variable = { global.antarctica_station_name_id^station_id = station_name_id }
 		}
-		ID = "[?station_id]"
+
+		antarctica_recalculate_station_module_outputs = yes
+
+		log = "[GetDateText]: [Root.GetName]: Created startup Antarctica station. Station ID: [?station_id], Name ID: [?station_name_id], X: [?station_x], Y: [?station_y]."
+	}
+	else = {
+		subtract_from_variable = { global.next_antarctica_station_id = 1 }
+		set_temp_variable = { station_id = 0 }
 	}
 
 	if = {
-		limit = { check_variable = { station_name_id > 0 } }
-		meta_effect = {
-			text = {
-				set_variable = { global.research_station_[ID]_name_id = [NAME] }
-			}
-			ID = "[?station_id]"
-			NAME = "[?station_name_id]"
+		limit = { has_country_flag = antarctica_station_setup_capacity_reserved }
+		if = {
+			limit = { check_variable = { station_created < 1 } }
+			add_to_variable = { global.antarctica_station_display_capacity_remaining = 1 }
+			clamp_variable = { var = global.antarctica_station_display_capacity_remaining min = 0 max = 70 }
 		}
+		clr_country_flag = antarctica_station_setup_capacity_reserved
 	}
-
-	antarctica_rebuild_station_module_lists_from_slots = yes
-	antarctica_recalculate_station_module_outputs = yes
-
-	log = "[GetDateText]: [Root.GetName]: Created startup Antarctica station. Station ID: [?station_id], Name ID: [?station_name_id], X: [?station_x], Y: [?station_y]."
 }
 
 # Usage
@@ -983,13 +834,8 @@ antarctica_select_or_create_player_station = {
 		if = {
 			limit = {
 				check_variable = { current_station_id > 0 }
-				meta_trigger = {
-					text = {
-						has_global_flag = research_station_[ID]_exists
-						check_variable = { global.research_station_[ID]_controller = THIS.id }
-					}
-					ID = "[?current_station_id]"
-				}
+				check_variable = { global.antarctica_station_exists^current_station_id > 0 }
+				check_variable = { global.antarctica_station_controller^current_station_id = THIS.id }
 			}
 
 			set_temp_variable = { player_station_id = current_station_id }
@@ -1001,6 +847,7 @@ antarctica_select_or_create_player_station = {
 		limit = {
 			check_variable = { player_station_id < 1 }
 			check_variable = { antarctica_station_setup_in_progress < 1 }
+			check_variable = { global.antarctica_station_display_capacity_remaining > 0 }
 		}
 
 		set_temp_variable_to_random = {
@@ -1029,6 +876,8 @@ antarctica_select_or_create_player_station = {
 		multiply_temp_variable = { treasury_change = -1 }
 		modify_treasury_effect = yes
 
+		subtract_from_variable = { global.antarctica_station_display_capacity_remaining = 1 }
+		set_country_flag = antarctica_station_setup_capacity_reserved
 		set_variable = { antarctica_station_setup_in_progress = 1 }
 		set_variable = { antarctica_station_setup_days_remaining = setup_days }
 		set_variable = { antarctica_station_setup_x = station_x }
@@ -1042,13 +891,7 @@ antarctica_select_or_create_player_station = {
 	if = {
 		limit = { check_variable = { player_station_id > 0 } }
 		set_variable = { selected_antarctica_station = player_station_id }
-
-		meta_effect = {
-			text = {
-				set_variable = { selected_antarctica_station_controller = global.research_station_[ID]_controller }
-			}
-			ID = "[?player_station_id]"
-		}
+		set_variable = { selected_antarctica_station_controller = global.antarctica_station_controller^player_station_id }
 
 		antarctica_set_selected_station_controller = yes
 		add_to_variable = { global.missile_ui_updated = 1 }
@@ -1069,13 +912,8 @@ antarctica_find_player_station = {
 		if = {
 			limit = {
 				check_variable = { current_station_id > 0 }
-				meta_trigger = {
-					text = {
-						has_global_flag = research_station_[ID]_exists
-						check_variable = { global.research_station_[ID]_controller = THIS.id }
-					}
-					ID = "[?current_station_id]"
-				}
+				check_variable = { global.antarctica_station_exists^current_station_id > 0 }
+				check_variable = { global.antarctica_station_controller^current_station_id = THIS.id }
 			}
 
 			set_temp_variable = { player_station_id = current_station_id }
@@ -1098,25 +936,19 @@ antarctica_start_station_dismantle = {
 		if = {
 			limit = { check_variable = { player_station_id > 0 } }
 			set_temp_variable = { dismantle_modules = 0 }
-
-			meta_effect = {
-				text = {
-					set_temp_variable = { station_slot_1 = global.research_station_[ID]_module_slot_1 }
-					set_temp_variable = { station_slot_2 = global.research_station_[ID]_module_slot_2 }
-					set_temp_variable = { station_slot_4 = global.research_station_[ID]_module_slot_4 }
-					set_temp_variable = { station_slot_5 = global.research_station_[ID]_module_slot_5 }
-					set_temp_variable = { station_slot_6 = global.research_station_[ID]_module_slot_6 }
-					set_temp_variable = { station_slot_7 = global.research_station_[ID]_module_slot_7 }
-					set_temp_variable = { station_slot_8 = global.research_station_[ID]_module_slot_8 }
-					set_temp_variable = { station_slot_9 = global.research_station_[ID]_module_slot_9 }
-					set_temp_variable = { station_slot_10 = global.research_station_[ID]_module_slot_10 }
-					set_temp_variable = { station_slot_11 = global.research_station_[ID]_module_slot_11 }
-					set_temp_variable = { station_slot_12 = global.research_station_[ID]_module_slot_12 }
-					set_temp_variable = { station_slot_13 = global.research_station_[ID]_module_slot_13 }
-					set_temp_variable = { station_slot_14 = global.research_station_[ID]_module_slot_14 }
-				}
-				ID = "[?player_station_id]"
-			}
+			set_temp_variable = { station_slot_1 = global.antarctica_station_module_slot_1^player_station_id }
+			set_temp_variable = { station_slot_2 = global.antarctica_station_module_slot_2^player_station_id }
+			set_temp_variable = { station_slot_4 = global.antarctica_station_module_slot_4^player_station_id }
+			set_temp_variable = { station_slot_5 = global.antarctica_station_module_slot_5^player_station_id }
+			set_temp_variable = { station_slot_6 = global.antarctica_station_module_slot_6^player_station_id }
+			set_temp_variable = { station_slot_7 = global.antarctica_station_module_slot_7^player_station_id }
+			set_temp_variable = { station_slot_8 = global.antarctica_station_module_slot_8^player_station_id }
+			set_temp_variable = { station_slot_9 = global.antarctica_station_module_slot_9^player_station_id }
+			set_temp_variable = { station_slot_10 = global.antarctica_station_module_slot_10^player_station_id }
+			set_temp_variable = { station_slot_11 = global.antarctica_station_module_slot_11^player_station_id }
+			set_temp_variable = { station_slot_12 = global.antarctica_station_module_slot_12^player_station_id }
+			set_temp_variable = { station_slot_13 = global.antarctica_station_module_slot_13^player_station_id }
+			set_temp_variable = { station_slot_14 = global.antarctica_station_module_slot_14^player_station_id }
 
 			if = { limit = { check_variable = { station_slot_1 > 0 } } add_to_temp_variable = { dismantle_modules = 1 } }
 			if = { limit = { check_variable = { station_slot_2 > 0 } } add_to_temp_variable = { dismantle_modules = 1 } }
@@ -1193,16 +1025,17 @@ antarctica_process_player_station_setup = {
 			set_variable = { antarctica_station_setup_x = 0 }
 			set_variable = { antarctica_station_setup_y = 0 }
 
-			set_variable = { selected_antarctica_station = player_station_id }
-			meta_effect = {
-				text = {
-					set_variable = { selected_antarctica_station_controller = global.research_station_[ID]_controller }
-				}
-				ID = "[?player_station_id]"
-			}
+			if = {
+				limit = { check_variable = { player_station_id > 0 } }
+				set_variable = { selected_antarctica_station = player_station_id }
+				set_variable = { selected_antarctica_station_controller = global.antarctica_station_controller^player_station_id }
 
-			antarctica_set_selected_station_controller = yes
-			log = "[GetDateText]: [Root.GetName]: Completed Antarctica station setup. Station ID: [?player_station_id]."
+				antarctica_set_selected_station_controller = yes
+				log = "[GetDateText]: [Root.GetName]: Completed Antarctica station setup. Station ID: [?player_station_id]."
+			}
+			else = {
+				log = "[GetDateText]: [Root.GetName]: Antarctica station setup failed because all 70 display slots are occupied."
+			}
 		}
 		add_to_variable = { global.missile_ui_updated = 1 }
 	}
@@ -1313,240 +1146,238 @@ antarctica_set_station_next_tier_iterations_count = {
 	}
 }
 
+antarctica_read_selected_slot_module = {
+	set_variable = { selected_antarctica_station_selected_slot_installed_module = 0 }
+	if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 1 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_1^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 2 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_2^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 4 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_4^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 5 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_5^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 6 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_6^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 7 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_7^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 8 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_8^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 9 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_9^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 10 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_10^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 11 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_11^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 12 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_12^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 13 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_13^selected_antarctica_station }
+	}
+	else_if = {
+		limit = { check_variable = { selected_antarctica_station_selected_slot = 14 } }
+		set_variable = { selected_antarctica_station_selected_slot_installed_module = global.antarctica_station_module_slot_14^selected_antarctica_station }
+	}
+}
+
+antarctica_write_station_slot_module = {
+	if = {
+		limit = { check_variable = { module_slot = 1 } }
+		set_variable = { global.antarctica_station_module_slot_1^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 2 } }
+		set_variable = { global.antarctica_station_module_slot_2^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 4 } }
+		set_variable = { global.antarctica_station_module_slot_4^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 5 } }
+		set_variable = { global.antarctica_station_module_slot_5^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 6 } }
+		set_variable = { global.antarctica_station_module_slot_6^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 7 } }
+		set_variable = { global.antarctica_station_module_slot_7^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 8 } }
+		set_variable = { global.antarctica_station_module_slot_8^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 9 } }
+		set_variable = { global.antarctica_station_module_slot_9^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 10 } }
+		set_variable = { global.antarctica_station_module_slot_10^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 11 } }
+		set_variable = { global.antarctica_station_module_slot_11^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 12 } }
+		set_variable = { global.antarctica_station_module_slot_12^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 13 } }
+		set_variable = { global.antarctica_station_module_slot_13^station_id = module_id }
+	}
+	else_if = {
+		limit = { check_variable = { module_slot = 14 } }
+		set_variable = { global.antarctica_station_module_slot_14^station_id = module_id }
+	}
+}
+
 antarctica_set_selected_station_controller = {
 	if = {
 		limit = { check_variable = { selected_antarctica_station > 0 } }
-		meta_effect = {
-			text = {
-				if = {
-					limit = {
-						check_variable = { global.research_station_[ID]_module_slot_11 < 1 }
-						check_variable = { global.research_station_[ID]_module_powerplant_active > 0 }
-					}
-					set_variable = { global.research_station_[ID]_module_slot_11 = global.research_station_[ID]_module_powerplant_active }
-				}
-				if = {
-					limit = {
-						check_variable = { global.research_station_[ID]_module_slot_12 < 1 }
-						check_variable = { global.research_station_[ID]_module_life_support_active > 0 }
-					}
-					set_variable = { global.research_station_[ID]_module_slot_12 = global.research_station_[ID]_module_life_support_active }
-				}
-				if = {
-					limit = {
-						check_variable = { global.research_station_[ID]_module_slot_14 < 1 }
-						check_variable = { global.research_station_[ID]_module_fuel_storage_active > 0 }
-					}
-					set_variable = { global.research_station_[ID]_module_slot_14 = global.research_station_[ID]_module_fuel_storage_active }
-				}
-				if = {
-					limit = {
-						check_variable = { global.research_station_[ID]_module_slot_5 < 1 }
-						check_variable = { global.research_station_[ID]_module_housing_active > 0 }
-					}
-					set_variable = { global.research_station_[ID]_module_slot_5 = global.research_station_[ID]_module_housing_active }
-				}
-			}
-			ID = "[?selected_antarctica_station]"
-		}
 
-		meta_effect = {
-			text = {
-				set_variable = { selected_antarctica_station_controller = global.research_station_[ID]_controller }
-				set_variable = { selected_antarctica_station_module_powerplant = global.research_station_[ID]_module_powerplant_active }
-				set_variable = { selected_antarctica_station_module_life_support = global.research_station_[ID]_module_life_support_active }
-				set_variable = { selected_antarctica_station_module_fuel_storage = global.research_station_[ID]_module_fuel_storage_active }
-				set_variable = { selected_antarctica_station_module_housing = global.research_station_[ID]_module_housing_active }
-				set_variable = { selected_antarctica_station_module_laboratories = 0 }
-				set_variable = { selected_antarctica_station_module_slot_1 = global.research_station_[ID]_module_slot_1 }
-				set_variable = { selected_antarctica_station_module_slot_2 = global.research_station_[ID]_module_slot_2 }
-				set_variable = { selected_antarctica_station_module_slot_4 = global.research_station_[ID]_module_slot_4 }
-				set_variable = { selected_antarctica_station_module_slot_5 = global.research_station_[ID]_module_slot_5 }
-				set_variable = { selected_antarctica_station_module_slot_6 = global.research_station_[ID]_module_slot_6 }
-				set_variable = { selected_antarctica_station_module_slot_7 = global.research_station_[ID]_module_slot_7 }
-				set_variable = { selected_antarctica_station_module_slot_8 = global.research_station_[ID]_module_slot_8 }
-				set_variable = { selected_antarctica_station_module_slot_9 = global.research_station_[ID]_module_slot_9 }
-				set_variable = { selected_antarctica_station_module_slot_10 = global.research_station_[ID]_module_slot_10 }
-				set_variable = { selected_antarctica_station_module_slot_11 = global.research_station_[ID]_module_slot_11 }
-				set_variable = { selected_antarctica_station_module_slot_12 = global.research_station_[ID]_module_slot_12 }
-				set_variable = { selected_antarctica_station_module_slot_13 = global.research_station_[ID]_module_slot_13 }
-				set_variable = { selected_antarctica_station_module_slot_14 = global.research_station_[ID]_module_slot_14 }
-				clear_array = selected_antarctica_station_powerplant_list
-				clear_array = selected_antarctica_station_life_support_list
-				clear_array = selected_antarctica_station_fuel_storage_list
-				clear_array = selected_antarctica_station_housing_list
-				clear_array = selected_antarctica_station_laboratories_list
-				set_variable = { selected_antarctica_station_powerplant_current_index = global.research_station_[ID]_module_powerplant_current_index }
-				set_variable = { selected_antarctica_station_life_support_current_index = global.research_station_[ID]_module_life_support_current_index }
-				set_variable = { selected_antarctica_station_fuel_storage_current_index = global.research_station_[ID]_module_fuel_storage_current_index }
-				set_variable = { selected_antarctica_station_housing_current_index = global.research_station_[ID]_module_housing_current_index }
-				set_variable = { selected_antarctica_station_laboratories_current_index = global.research_station_[ID]_module_laboratories_current_index }
-				set_variable = { selected_antarctica_station_output_power = global.research_station_[ID]_output_power }
-				set_variable = { selected_antarctica_station_output_power_total = global.research_station_[ID]_output_power_total }
-				set_variable = { selected_antarctica_station_output_fuel_usage = global.research_station_[ID]_output_fuel_usage }
-				set_variable = { selected_antarctica_station_output_fuel_capacity_days = global.research_station_[ID]_output_fuel_capacity_days }
-				set_variable = { selected_antarctica_station_output_iteration_speed_multiplier = global.research_station_[ID]_output_iteration_speed_multiplier }
-				set_variable = { selected_antarctica_station_output_upkeep_cost = global.research_station_[ID]_output_upkeep_cost }
-				set_variable = { selected_antarctica_station_output_required_staff = global.research_station_[ID]_output_required_staff }
-				set_variable = { selected_antarctica_station_output_total_staff = global.research_station_[ID]_output_total_staff }
-			}
-			ID = "[?selected_antarctica_station]"
-		}
-
-		set_variable = { selected_antarctica_station_iteration_speed_multiplier = selected_antarctica_station_output_iteration_speed_multiplier }
-
-		meta_effect = {
-			text = {
-				for_each_loop = {
-					array = global.research_station_[ID]_module_powerplant_list
-					value = module_id
-					if = {
-						limit = { check_variable = { module_id > 0 } }
-						add_to_array = { selected_antarctica_station_powerplant_list = module_id }
-					}
-				}
-				for_each_loop = {
-					array = global.research_station_[ID]_module_life_support_list
-					value = module_id
-					if = {
-						limit = { check_variable = { module_id > 0 } }
-						add_to_array = { selected_antarctica_station_life_support_list = module_id }
-					}
-				}
-				for_each_loop = {
-					array = global.research_station_[ID]_module_fuel_storage_list
-					value = module_id
-					if = {
-						limit = { check_variable = { module_id > 0 } }
-						add_to_array = { selected_antarctica_station_fuel_storage_list = module_id }
-					}
-				}
-				for_each_loop = {
-					array = global.research_station_[ID]_module_housing_list
-					value = module_id
-					if = {
-						limit = { check_variable = { module_id > 0 } }
-						add_to_array = { selected_antarctica_station_housing_list = module_id }
-					}
-				}
-				for_each_loop = {
-					array = global.research_station_[ID]_module_laboratories_list
-					value = module_id
-					if = {
-						limit = { check_variable = { module_id > 0 } }
-						add_to_array = { selected_antarctica_station_laboratories_list = module_id }
-					}
-				}
-			}
-			ID = "[?selected_antarctica_station]"
-		}
-
+		set_variable = { selected_antarctica_station_controller = global.antarctica_station_controller^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_1 = global.antarctica_station_module_slot_1^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_2 = global.antarctica_station_module_slot_2^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_4 = global.antarctica_station_module_slot_4^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_5 = global.antarctica_station_module_slot_5^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_6 = global.antarctica_station_module_slot_6^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_7 = global.antarctica_station_module_slot_7^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_8 = global.antarctica_station_module_slot_8^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_9 = global.antarctica_station_module_slot_9^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_10 = global.antarctica_station_module_slot_10^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_11 = global.antarctica_station_module_slot_11^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_12 = global.antarctica_station_module_slot_12^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_13 = global.antarctica_station_module_slot_13^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_14 = global.antarctica_station_module_slot_14^selected_antarctica_station }
+		clear_array = selected_antarctica_station_powerplant_list
+		clear_array = selected_antarctica_station_life_support_list
+		clear_array = selected_antarctica_station_fuel_storage_list
+		clear_array = selected_antarctica_station_housing_list
+		clear_array = selected_antarctica_station_laboratories_list
 		if = {
-			limit = { check_variable = { selected_antarctica_station_module_powerplant < 1 } }
-			meta_effect = {
-				text = {
-					set_variable = { selected_antarctica_station_module_powerplant = global.research_station_[ID]_module_powerplant }
-				}
-				ID = "[?selected_antarctica_station]"
-			}
+			limit = { check_variable = { global.antarctica_station_module_slot_1^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_housing_list = global.antarctica_station_module_slot_1^selected_antarctica_station }
 		}
 		if = {
-			limit = { check_variable = { selected_antarctica_station_module_powerplant < 1 } }
-			set_variable = { selected_antarctica_station_module_powerplant = selected_antarctica_station_powerplant_list^0 }
-		}
-
-		if = {
-			limit = { check_variable = { selected_antarctica_station_module_life_support < 1 } }
-			meta_effect = {
-				text = {
-					set_variable = { selected_antarctica_station_module_life_support = global.research_station_[ID]_module_life_support }
-				}
-				ID = "[?selected_antarctica_station]"
-			}
+			limit = { check_variable = { global.antarctica_station_module_slot_2^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_powerplant_list = global.antarctica_station_module_slot_2^selected_antarctica_station }
 		}
 		if = {
-			limit = { check_variable = { selected_antarctica_station_module_life_support < 1 } }
-			set_variable = { selected_antarctica_station_module_life_support = selected_antarctica_station_life_support_list^0 }
-		}
-
-		if = {
-			limit = { check_variable = { selected_antarctica_station_module_fuel_storage < 1 } }
-			meta_effect = {
-				text = {
-					set_variable = { selected_antarctica_station_module_fuel_storage = global.research_station_[ID]_module_fuel_storage }
-				}
-				ID = "[?selected_antarctica_station]"
-			}
+			limit = { check_variable = { global.antarctica_station_module_slot_4^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_fuel_storage_list = global.antarctica_station_module_slot_4^selected_antarctica_station }
 		}
 		if = {
-			limit = { check_variable = { selected_antarctica_station_module_fuel_storage < 1 } }
-			set_variable = { selected_antarctica_station_module_fuel_storage = selected_antarctica_station_fuel_storage_list^0 }
-		}
-
-		if = {
-			limit = { check_variable = { selected_antarctica_station_module_housing < 1 } }
-			meta_effect = {
-				text = {
-					set_variable = { selected_antarctica_station_module_housing = global.research_station_[ID]_module_housing }
-				}
-				ID = "[?selected_antarctica_station]"
-			}
+			limit = { check_variable = { global.antarctica_station_module_slot_5^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_housing_list = global.antarctica_station_module_slot_5^selected_antarctica_station }
 		}
 		if = {
-			limit = { check_variable = { selected_antarctica_station_module_housing < 1 } }
-			set_variable = { selected_antarctica_station_module_housing = selected_antarctica_station_housing_list^0 }
+			limit = { check_variable = { global.antarctica_station_module_slot_6^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_laboratories_list = global.antarctica_station_module_slot_6^selected_antarctica_station }
 		}
-
+		if = {
+			limit = { check_variable = { global.antarctica_station_module_slot_7^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_laboratories_list = global.antarctica_station_module_slot_7^selected_antarctica_station }
+		}
+		if = {
+			limit = { check_variable = { global.antarctica_station_module_slot_8^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_laboratories_list = global.antarctica_station_module_slot_8^selected_antarctica_station }
+		}
+		if = {
+			limit = { check_variable = { global.antarctica_station_module_slot_9^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_laboratories_list = global.antarctica_station_module_slot_9^selected_antarctica_station }
+		}
+		if = {
+			limit = { check_variable = { global.antarctica_station_module_slot_10^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_housing_list = global.antarctica_station_module_slot_10^selected_antarctica_station }
+		}
+		if = {
+			limit = { check_variable = { global.antarctica_station_module_slot_11^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_powerplant_list = global.antarctica_station_module_slot_11^selected_antarctica_station }
+		}
+		if = {
+			limit = { check_variable = { global.antarctica_station_module_slot_12^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_life_support_list = global.antarctica_station_module_slot_12^selected_antarctica_station }
+		}
+		if = {
+			limit = { check_variable = { global.antarctica_station_module_slot_13^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_powerplant_list = global.antarctica_station_module_slot_13^selected_antarctica_station }
+		}
+		if = {
+			limit = { check_variable = { global.antarctica_station_module_slot_14^selected_antarctica_station > 0 } }
+			add_to_array = { selected_antarctica_station_fuel_storage_list = global.antarctica_station_module_slot_14^selected_antarctica_station }
+		}
+		set_variable = { selected_antarctica_station_powerplant_current_index = 0 }
+		set_variable = { selected_antarctica_station_life_support_current_index = 0 }
+		set_variable = { selected_antarctica_station_fuel_storage_current_index = 0 }
+		set_variable = { selected_antarctica_station_housing_current_index = 0 }
+		set_variable = { selected_antarctica_station_laboratories_current_index = global.antarctica_station_laboratories_current_index^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_powerplant = selected_antarctica_station_powerplant_list^0 }
+		set_variable = { selected_antarctica_station_module_life_support = selected_antarctica_station_life_support_list^0 }
+		set_variable = { selected_antarctica_station_module_fuel_storage = selected_antarctica_station_fuel_storage_list^0 }
+		set_variable = { selected_antarctica_station_module_housing = selected_antarctica_station_housing_list^0 }
+		set_variable = { selected_antarctica_station_module_laboratories = selected_antarctica_station_laboratories_list^selected_antarctica_station_laboratories_current_index }
 		if = {
 			limit = { check_variable = { selected_antarctica_station_module_laboratories < 1 } }
-			set_variable = { selected_antarctica_station_module_laboratories = selected_antarctica_station_laboratories_list^selected_antarctica_station_laboratories_current_index }
-		}
-
-		if = {
-			limit = { check_variable = { selected_antarctica_station_module_laboratories < 1 } }
-			meta_effect = {
-				text = {
-					set_variable = { selected_antarctica_station_module_laboratories = global.research_station_[ID]_module_laboratories_active }
-				}
-				ID = "[?selected_antarctica_station]"
-			}
-		}
-
-		if = {
-			limit = { check_variable = { selected_antarctica_station_module_laboratories < 1 } }
+			set_variable = { selected_antarctica_station_laboratories_current_index = 0 }
 			set_variable = { selected_antarctica_station_module_laboratories = selected_antarctica_station_laboratories_list^0 }
 		}
-
-		meta_effect = {
-			text = {
-				set_variable = { selected_antarctica_station_install_in_progress = global.research_station_[ID]_install_pending }
-				set_variable = { selected_antarctica_station_install_days_remaining = global.research_station_[ID]_install_days_remaining }
-				set_variable = { selected_antarctica_station_illegal_activities = global.research_station_[ID]_illegal_activities_enabled }
-				set_variable = { selected_antarctica_station_tier = global.research_station_[ID]_tier }
-				set_variable = { selected_antarctica_station_iteration_progress = global.research_station_[ID]_iteration_progress }
-				set_variable = { selected_antarctica_station_iterations = global.research_station_[ID]_iterations }
-			}
-			ID = "[?selected_antarctica_station]"
-		}
-
-		set_variable = { selected_antarctica_station_selected_slot_installed_module = 0 }
-		meta_effect = {
-			text = {
-				set_variable = { selected_antarctica_station_selected_slot_installed_module = global.research_station_[ID]_module_slot_[SLOT] }
-			}
-			ID = "[?selected_antarctica_station]"
-			SLOT = "[?selected_antarctica_station_selected_slot]"
-		}
-
+		set_variable = { selected_antarctica_station_output_power = global.antarctica_station_output_power^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_output_power_total = global.antarctica_station_output_power_total^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_output_fuel_usage = global.antarctica_station_output_fuel_usage^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_output_fuel_capacity_days = global.antarctica_station_output_fuel_capacity_days^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_output_iteration_speed_multiplier = global.antarctica_station_output_iteration_speed_multiplier^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_output_upkeep_cost = global.antarctica_station_output_upkeep_cost^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_output_required_staff = global.antarctica_station_output_required_staff^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_output_total_staff = global.antarctica_station_output_total_staff^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_2_blizzard_damaged = global.antarctica_station_module_slot_2_blizzard_damaged^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_6_blizzard_damaged = global.antarctica_station_module_slot_6_blizzard_damaged^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_7_blizzard_damaged = global.antarctica_station_module_slot_7_blizzard_damaged^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_8_blizzard_damaged = global.antarctica_station_module_slot_8_blizzard_damaged^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_9_blizzard_damaged = global.antarctica_station_module_slot_9_blizzard_damaged^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_11_blizzard_damaged = global.antarctica_station_module_slot_11_blizzard_damaged^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_module_slot_13_blizzard_damaged = global.antarctica_station_module_slot_13_blizzard_damaged^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_repair_days_remaining = global.antarctica_station_repair_days_remaining^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_name_id = global.antarctica_station_name_id^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_install_in_progress = global.antarctica_station_install_pending^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_install_days_remaining = global.antarctica_station_install_days_remaining^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_illegal_activities = global.antarctica_station_illegal_activities_enabled^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_tier = global.antarctica_station_tier^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_iteration_progress = global.antarctica_station_iteration_progress^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_iterations = global.antarctica_station_iterations^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_iteration_speed_multiplier = selected_antarctica_station_output_iteration_speed_multiplier }
+		antarctica_read_selected_slot_module = yes
 		if = {
 			limit = { check_variable = { selected_antarctica_station_tier < 1 } }
 			set_variable = { selected_antarctica_station_tier = 1 }
 		}
-
 		antarctica_set_station_next_tier_iterations_count = yes
 		antarctica_refresh_selected_station_iteration_values = yes
-
-		# Array will be properly initialized from station data
 	}
 	else = {
 		set_variable = { selected_antarctica_station_controller = 0 }
@@ -1602,6 +1433,17 @@ antarctica_set_selected_station_controller = {
 		set_variable = { selected_antarctica_station_iterations = 0 }
 		set_variable = { selected_antarctica_station_iterations_until_next_tier = 0 }
 		set_variable = { selected_antarctica_station_iteration_speed_multiplier = 1 }
+		set_variable = { selected_antarctica_station_preview_output_power = 0 }
+		set_variable = { selected_antarctica_station_preview_output_required_staff = 0 }
+		set_variable = { selected_antarctica_station_module_slot_2_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_6_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_7_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_8_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_9_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_11_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_module_slot_13_blizzard_damaged = 0 }
+		set_variable = { selected_antarctica_station_repair_days_remaining = 0 }
+		set_variable = { selected_antarctica_station_name_id = 0 }
 	}
 }
 
@@ -1739,14 +1581,7 @@ antarctica_set_selected_station_preview_defaults = {
 				}
 			}
 		}
-
-		meta_effect = {
-			text = {
-				set_variable = { selected_antarctica_station_selected_slot_installed_module = global.research_station_[ID]_module_slot_[SLOT] }
-			}
-			ID = "[?selected_antarctica_station]"
-			SLOT = "[?selected_antarctica_station_selected_slot]"
-		}
+		antarctica_read_selected_slot_module = yes
 
 		if = {
 			limit = { check_variable = { selected_antarctica_station_selected_slot_installed_module > 0 } }
@@ -1764,15 +1599,9 @@ antarctica_set_selected_station_preview_defaults = {
 antarctica_refresh_selected_station_iteration_values = {
 	if = {
 		limit = { check_variable = { selected_antarctica_station > 0 } }
-
-		meta_effect = {
-			text = {
-				set_variable = { selected_antarctica_station_tier = global.research_station_[ID]_tier }
-				set_variable = { selected_antarctica_station_iteration_progress = global.research_station_[ID]_iteration_progress }
-				set_variable = { selected_antarctica_station_iterations = global.research_station_[ID]_iterations }
-			}
-			ID = "[?selected_antarctica_station]"
-		}
+		set_variable = { selected_antarctica_station_tier = global.antarctica_station_tier^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_iteration_progress = global.antarctica_station_iteration_progress^selected_antarctica_station }
+		set_variable = { selected_antarctica_station_iterations = global.antarctica_station_iterations^selected_antarctica_station }
 
 		antarctica_set_station_next_tier_iterations_count = yes
 
@@ -1799,12 +1628,7 @@ antarctica_refresh_selected_station_iteration_values = {
 # antarctica_normalize_startup_station_slots = yes
 antarctica_normalize_startup_station_slots = {
 	if = {
-		limit = {
-			meta_trigger = {
-				text = { has_global_flag = research_station_[ID]_exists }
-				ID = "[?station_id]"
-			}
-		}
+		limit = { check_variable = { global.antarctica_station_exists^station_id > 0 } }
 
 		set_temp_variable = { station_tier = 1 }
 		set_temp_variable = { station_start_iterations = 0 }
@@ -1819,39 +1643,9 @@ antarctica_normalize_startup_station_slots = {
 			set_temp_variable = { station_start_iterations = 3 }
 		}
 
-		meta_effect = {
-			text = {
-				set_variable = { global.research_station_[ID]_tier = [TIER] }
-				set_variable = { global.research_station_[ID]_iteration_progress = 0 }
-				set_variable = { global.research_station_[ID]_iterations = [ITER] }
-
-				set_variable = { global.research_station_[ID]_module_slot_1 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_2 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_4 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_5 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_6 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_7 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_8 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_9 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_10 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_11 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_12 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_13 = 0 }
-				set_variable = { global.research_station_[ID]_module_slot_14 = 0 }
-
-				# Keep startup stations with one installed module per category in canonical slots only.
-				set_variable = { global.research_station_[ID]_module_slot_5 = global.research_station_[ID]_module_housing_active }
-				set_variable = { global.research_station_[ID]_module_slot_8 = global.research_station_[ID]_module_laboratories_active }
-				set_variable = { global.research_station_[ID]_module_slot_11 = global.research_station_[ID]_module_powerplant_active }
-				set_variable = { global.research_station_[ID]_module_slot_12 = global.research_station_[ID]_module_life_support_active }
-				set_variable = { global.research_station_[ID]_module_slot_14 = global.research_station_[ID]_module_fuel_storage_active }
-			}
-			ID = "[?station_id]"
-			TIER = "[?station_tier]"
-			ITER = "[?station_start_iterations]"
-		}
-
-		antarctica_rebuild_station_module_lists_from_slots = yes
+		set_variable = { global.antarctica_station_tier^station_id = station_tier }
+		set_variable = { global.antarctica_station_iteration_progress^station_id = 0 }
+		set_variable = { global.antarctica_station_iterations^station_id = station_start_iterations }
 		antarctica_recalculate_station_module_outputs = yes
 	}
 }
@@ -1969,7 +1763,7 @@ antarctica_cycle_selected_preview_module = {
 		limit = { check_variable = { selected_antarctica_station_selected_module_category = 1 } }
 		add_to_variable = { selected_antarctica_station_selected_module = 1 }
 		if = {
-			limit = { check_variable = { selected_antarctica_station_selected_module > 11 } }
+			limit = { check_variable = { selected_antarctica_station_selected_module > 10 } }
 			set_variable = { selected_antarctica_station_selected_module = 1 }
 		}
 	}
@@ -1977,7 +1771,7 @@ antarctica_cycle_selected_preview_module = {
 		limit = { check_variable = { selected_antarctica_station_selected_module_category = 2 } }
 		add_to_variable = { selected_antarctica_station_selected_module = 1 }
 		if = {
-			limit = { check_variable = { selected_antarctica_station_selected_module > 5 } }
+			limit = { check_variable = { selected_antarctica_station_selected_module > 4 } }
 			set_variable = { selected_antarctica_station_selected_module = 1 }
 		}
 	}
@@ -1985,7 +1779,7 @@ antarctica_cycle_selected_preview_module = {
 		limit = { check_variable = { selected_antarctica_station_selected_module_category = 3 } }
 		add_to_variable = { selected_antarctica_station_selected_module = 1 }
 		if = {
-			limit = { check_variable = { selected_antarctica_station_selected_module > 5 } }
+			limit = { check_variable = { selected_antarctica_station_selected_module > 4 } }
 			set_variable = { selected_antarctica_station_selected_module = 1 }
 		}
 	}
@@ -1993,7 +1787,7 @@ antarctica_cycle_selected_preview_module = {
 		limit = { check_variable = { selected_antarctica_station_selected_module_category = 4 } }
 		add_to_variable = { selected_antarctica_station_selected_module = 1 }
 		if = {
-			limit = { check_variable = { selected_antarctica_station_selected_module > 5 } }
+			limit = { check_variable = { selected_antarctica_station_selected_module > 4 } }
 			set_variable = { selected_antarctica_station_selected_module = 1 }
 		}
 	}
@@ -2001,7 +1795,7 @@ antarctica_cycle_selected_preview_module = {
 		limit = { check_variable = { selected_antarctica_station_selected_module_category = 5 } }
 		add_to_variable = { selected_antarctica_station_selected_module = 1 }
 		if = {
-			limit = { check_variable = { selected_antarctica_station_selected_module > 13 } }
+			limit = { check_variable = { selected_antarctica_station_selected_module > 12 } }
 			set_variable = { selected_antarctica_station_selected_module = 1 }
 		}
 	}
@@ -2041,89 +1835,15 @@ antarctica_cycle_selected_preview_module_back = {
 
 # Usage
 # set_temp_variable = { station_id = id }
-# antarctica_rebuild_station_module_lists_from_slots = yes
-antarctica_rebuild_station_module_lists_from_slots = {
-	if = {
-		limit = {
-			meta_trigger = {
-				text = { has_global_flag = research_station_[ID]_exists }
-				ID = "[?station_id]"
-			}
-		}
-
-		meta_effect = {
-			text = {
-				clear_array = global.research_station_[ID]_module_powerplant_list
-				clear_array = global.research_station_[ID]_module_life_support_list
-				clear_array = global.research_station_[ID]_module_fuel_storage_list
-				clear_array = global.research_station_[ID]_module_housing_list
-				clear_array = global.research_station_[ID]_module_laboratories_list
-
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_2 > 0 } } add_to_array = { global.research_station_[ID]_module_powerplant_list = global.research_station_[ID]_module_slot_2 } }
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_11 > 0 } } add_to_array = { global.research_station_[ID]_module_powerplant_list = global.research_station_[ID]_module_slot_11 } }
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_13 > 0 } } add_to_array = { global.research_station_[ID]_module_powerplant_list = global.research_station_[ID]_module_slot_13 } }
-
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_12 > 0 } } add_to_array = { global.research_station_[ID]_module_life_support_list = global.research_station_[ID]_module_slot_12 } }
-
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_4 > 0 } } add_to_array = { global.research_station_[ID]_module_fuel_storage_list = global.research_station_[ID]_module_slot_4 } }
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_14 > 0 } } add_to_array = { global.research_station_[ID]_module_fuel_storage_list = global.research_station_[ID]_module_slot_14 } }
-
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_1 > 0 } } add_to_array = { global.research_station_[ID]_module_housing_list = global.research_station_[ID]_module_slot_1 } }
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_5 > 0 } } add_to_array = { global.research_station_[ID]_module_housing_list = global.research_station_[ID]_module_slot_5 } }
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_10 > 0 } } add_to_array = { global.research_station_[ID]_module_housing_list = global.research_station_[ID]_module_slot_10 } }
-
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_6 > 0 } } add_to_array = { global.research_station_[ID]_module_laboratories_list = global.research_station_[ID]_module_slot_6 } }
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_7 > 0 } } add_to_array = { global.research_station_[ID]_module_laboratories_list = global.research_station_[ID]_module_slot_7 } }
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_8 > 0 } } add_to_array = { global.research_station_[ID]_module_laboratories_list = global.research_station_[ID]_module_slot_8 } }
-				if = { limit = { check_variable = { global.research_station_[ID]_module_slot_9 > 0 } } add_to_array = { global.research_station_[ID]_module_laboratories_list = global.research_station_[ID]_module_slot_9 } }
-
-				set_variable = { global.research_station_[ID]_module_powerplant_active = global.research_station_[ID]_module_powerplant_list^0 }
-				set_variable = { global.research_station_[ID]_module_life_support_active = global.research_station_[ID]_module_life_support_list^0 }
-				set_variable = { global.research_station_[ID]_module_fuel_storage_active = global.research_station_[ID]_module_fuel_storage_list^0 }
-				set_variable = { global.research_station_[ID]_module_housing_active = global.research_station_[ID]_module_housing_list^0 }
-				set_variable = { global.research_station_[ID]_module_laboratories_active = global.research_station_[ID]_module_laboratories_list^0 }
-
-				set_variable = { global.research_station_[ID]_module_powerplant = global.research_station_[ID]_module_powerplant_active }
-				set_variable = { global.research_station_[ID]_module_life_support = global.research_station_[ID]_module_life_support_active }
-				set_variable = { global.research_station_[ID]_module_fuel_storage = global.research_station_[ID]_module_fuel_storage_active }
-				set_variable = { global.research_station_[ID]_module_housing = global.research_station_[ID]_module_housing_active }
-
-				set_variable = { global.research_station_[ID]_module_powerplant_current_index = 0 }
-				set_variable = { global.research_station_[ID]_module_life_support_current_index = 0 }
-				set_variable = { global.research_station_[ID]_module_fuel_storage_current_index = 0 }
-				set_variable = { global.research_station_[ID]_module_housing_current_index = 0 }
-				set_variable = { global.research_station_[ID]_module_laboratories_current_index = 0 }
-			}
-			ID = "[?station_id]"
-		}
-	}
-}
-
-# Usage
-# set_temp_variable = { station_id = id }
 # set_temp_variable = { module_category = n }
 # set_temp_variable = { module_id = n }
 # antarctica_replace_station_module = yes
 antarctica_replace_station_module = {
 	if = {
 		limit = {
-			meta_trigger = {
-				text = { has_global_flag = research_station_[ID]_exists }
-				ID = "[?station_id]"
-			}
+			check_variable = { global.antarctica_station_exists^station_id > 0 }
 		}
-
-		meta_effect = {
-			text = {
-				set_variable = { global.research_station_[ID]_module_slot_[SLOT] = [MOD] }
-			}
-			ID = "[?station_id]"
-			SLOT = "[?module_slot]"
-			MOD = "[?module_id]"
-		}
-
-		antarctica_rebuild_station_module_lists_from_slots = yes
-
+		antarctica_write_station_slot_module = yes
 		antarctica_recalculate_station_module_outputs = yes
 		if = {
 			limit = { check_variable = { selected_antarctica_station = station_id } }
@@ -2141,13 +1861,10 @@ antarctica_queue_selected_station_module_install = {
 		limit = {
 			check_variable = { selected_antarctica_station > 0 }
 			check_variable = { selected_antarctica_station_selected_module > 0 }
-				antarctica_can_install_module_power_balance = yes
-				antarctica_can_install_module_staff_availability = yes
+			antarctica_can_install_module_power_balance = yes
+			antarctica_can_install_module_staff_availability = yes
 			NOT = {
-				meta_trigger = {
-					text = { check_variable = { global.research_station_[ID]_install_pending > 0 } }
-					ID = "[?selected_antarctica_station]"
-				}
+				check_variable = { global.antarctica_station_install_pending^selected_antarctica_station > 0 }
 			}
 		}
 
@@ -2158,21 +1875,11 @@ antarctica_queue_selected_station_module_install = {
 		set_temp_variable = { treasury_change = selected_antarctica_station_selected_module_install_cost }
 		multiply_temp_variable = { treasury_change = -1 }
 		modify_treasury_effect = yes
-
-		meta_effect = {
-			text = {
-				set_variable = { global.research_station_[ID]_install_pending = 1 }
-				set_variable = { global.research_station_[ID]_install_slot = [SLOT] }
-				set_variable = { global.research_station_[ID]_install_category = [CAT] }
-				set_variable = { global.research_station_[ID]_install_module = [MOD] }
-				set_variable = { global.research_station_[ID]_install_days_remaining = [TIME] }
-			}
-			ID = "[?selected_antarctica_station]"
-			SLOT = "[?selected_antarctica_station_selected_slot]"
-			CAT = "[?selected_antarctica_station_selected_module_category]"
-			MOD = "[?selected_antarctica_station_selected_module]"
-			TIME = "[?selected_antarctica_station_selected_module_install_time]"
-		}
+		set_variable = { global.antarctica_station_install_pending^selected_antarctica_station = 1 }
+		set_variable = { global.antarctica_station_install_slot^selected_antarctica_station = selected_antarctica_station_selected_slot }
+		set_variable = { global.antarctica_station_install_category^selected_antarctica_station = selected_antarctica_station_selected_module_category }
+		set_variable = { global.antarctica_station_install_module^selected_antarctica_station = selected_antarctica_station_selected_module }
+		set_variable = { global.antarctica_station_install_days_remaining^selected_antarctica_station = selected_antarctica_station_selected_module_install_time }
 
 		set_variable = { selected_antarctica_station_install_in_progress = 1 }
 		set_variable = { selected_antarctica_station_install_days_remaining = selected_antarctica_station_selected_module_install_time }
@@ -2190,38 +1897,18 @@ antarctica_process_station_module_installations = {
 		if = {
 			limit = {
 				check_variable = { process_station_id > 0 }
-				meta_trigger = {
-					text = {
-						has_global_flag = research_station_[ID]_exists
-						check_variable = { global.research_station_[ID]_install_pending > 0 }
-					}
-					ID = "[?process_station_id]"
-				}
+				check_variable = { global.antarctica_station_exists^process_station_id > 0 }
+				check_variable = { global.antarctica_station_install_pending^process_station_id > 0 }
 			}
-
-			meta_effect = {
-				text = {
-					add_to_variable = { global.research_station_[ID]_install_days_remaining = -1 }
-				}
-				ID = "[?process_station_id]"
-			}
+			add_to_variable = { global.antarctica_station_install_days_remaining^process_station_id = -1 }
 
 			if = {
 				limit = {
-					meta_trigger = {
-						text = { check_variable = { global.research_station_[ID]_install_days_remaining < 1 } }
-						ID = "[?process_station_id]"
-					}
+					check_variable = { global.antarctica_station_install_days_remaining^process_station_id < 1 }
 				}
-
-				meta_effect = {
-					text = {
-						set_temp_variable = { module_slot = global.research_station_[ID]_install_slot }
-						set_temp_variable = { module_category = global.research_station_[ID]_install_category }
-						set_temp_variable = { module_id = global.research_station_[ID]_install_module }
-					}
-					ID = "[?process_station_id]"
-				}
+				set_temp_variable = { module_slot = global.antarctica_station_install_slot^process_station_id }
+				set_temp_variable = { module_category = global.antarctica_station_install_category^process_station_id }
+				set_temp_variable = { module_id = global.antarctica_station_install_module^process_station_id }
 
 				if = {
 					limit = { check_variable = { module_slot < 1 } }
@@ -2248,17 +1935,11 @@ antarctica_process_station_module_installations = {
 
 				set_temp_variable = { station_id = process_station_id }
 				antarctica_replace_station_module = yes
-
-				meta_effect = {
-					text = {
-						set_variable = { global.research_station_[ID]_install_pending = 0 }
-						set_variable = { global.research_station_[ID]_install_slot = 0 }
-						set_variable = { global.research_station_[ID]_install_category = 0 }
-						set_variable = { global.research_station_[ID]_install_module = 0 }
-						set_variable = { global.research_station_[ID]_install_days_remaining = 0 }
-					}
-					ID = "[?process_station_id]"
-				}
+				set_variable = { global.antarctica_station_install_pending^process_station_id = 0 }
+				set_variable = { global.antarctica_station_install_slot^process_station_id = 0 }
+				set_variable = { global.antarctica_station_install_category^process_station_id = 0 }
+				set_variable = { global.antarctica_station_install_module^process_station_id = 0 }
+				set_variable = { global.antarctica_station_install_days_remaining^process_station_id = 0 }
 			}
 		}
 	}
@@ -2280,22 +1961,13 @@ antarctica_process_station_fuel_consumption = {
 			if = {
 				limit = {
 					check_variable = { migrate_station_id > 0 }
-					meta_trigger = {
-						text = { has_global_flag = research_station_[ID]_exists }
-						ID = "[?migrate_station_id]"
-					}
+					check_variable = { global.antarctica_station_exists^migrate_station_id > 0 }
 				}
 
 				set_temp_variable = { station_id = migrate_station_id }
 				antarctica_recalculate_station_module_outputs = yes
-
-				meta_effect = {
-					text = {
-						set_temp_variable = { migrate_capacity = global.research_station_[ID]_output_capacity }
-						set_temp_variable = { migrate_usage = global.research_station_[ID]_output_fuel_usage }
-					}
-					ID = "[?migrate_station_id]"
-				}
+				set_temp_variable = { migrate_capacity = global.antarctica_station_output_capacity^migrate_station_id }
+				set_temp_variable = { migrate_usage = global.antarctica_station_output_fuel_usage^migrate_station_id }
 
 				if = {
 					limit = {
@@ -2305,17 +1977,9 @@ antarctica_process_station_fuel_consumption = {
 					set_temp_variable = { migrate_days = migrate_capacity }
 					divide_temp_variable = { migrate_days = migrate_usage }
 					round_variable = migrate_days
-
-					meta_effect = {
-						text = {
-							set_variable = { global.research_station_[ID]_output_storage = [STORAGE] }
-							set_variable = { global.research_station_[ID]_output_fuel_capacity_days = [DAYS] }
-							set_global_flag = research_station_[ID]_fuel_initialized
-						}
-						ID = "[?migrate_station_id]"
-						STORAGE = "[?migrate_capacity]"
-						DAYS = "[?migrate_days]"
-					}
+					set_variable = { global.antarctica_station_output_storage^migrate_station_id = migrate_capacity }
+					set_variable = { global.antarctica_station_output_fuel_capacity_days^migrate_station_id = migrate_days }
+					set_variable = { global.antarctica_station_fuel_initialized^migrate_station_id = 1 }
 				}
 			}
 		}
@@ -2330,33 +1994,19 @@ antarctica_process_station_fuel_consumption = {
 		if = {
 			limit = {
 				check_variable = { process_station_id > 0 }
-				meta_trigger = {
-					text = { has_global_flag = research_station_[ID]_exists }
-					ID = "[?process_station_id]"
-				}
+				check_variable = { global.antarctica_station_exists^process_station_id > 0 }
 			}
-
-			meta_effect = {
-				text = {
-					set_temp_variable = { fuel_usage = global.research_station_[ID]_output_fuel_usage }
-					set_temp_variable = { current_storage = global.research_station_[ID]_output_storage }
-					set_temp_variable = { max_capacity = global.research_station_[ID]_output_capacity }
-				}
-				ID = "[?process_station_id]"
-			}
+			set_temp_variable = { fuel_usage = global.antarctica_station_output_fuel_usage^process_station_id }
+			set_temp_variable = { current_storage = global.antarctica_station_output_storage^process_station_id }
+			set_temp_variable = { max_capacity = global.antarctica_station_output_capacity^process_station_id }
 
 			if = {
 				limit = { check_variable = { max_capacity < 1 } }
 				set_temp_variable = { station_id = process_station_id }
 				antarctica_recalculate_station_module_outputs = yes
-				meta_effect = {
-					text = {
-						set_temp_variable = { fuel_usage = global.research_station_[ID]_output_fuel_usage }
-						set_temp_variable = { current_storage = global.research_station_[ID]_output_storage }
-						set_temp_variable = { max_capacity = global.research_station_[ID]_output_capacity }
-					}
-					ID = "[?process_station_id]"
-				}
+				set_temp_variable = { fuel_usage = global.antarctica_station_output_fuel_usage^process_station_id }
+				set_temp_variable = { current_storage = global.antarctica_station_output_storage^process_station_id }
+				set_temp_variable = { max_capacity = global.antarctica_station_output_capacity^process_station_id }
 			}
 
 			# One-time initialization for legacy saves: if storage was never seeded,
@@ -2365,18 +2015,10 @@ antarctica_process_station_fuel_consumption = {
 				limit = {
 					check_variable = { current_storage < 1 }
 					check_variable = { max_capacity > 0 }
-					meta_trigger = {
-						text = {
-							NOT = { has_global_flag = research_station_[ID]_fuel_initialized }
-						}
-						ID = "[?process_station_id]"
-					}
+					NOT = { check_variable = { global.antarctica_station_fuel_initialized^process_station_id > 0 } }
 				}
 				set_temp_variable = { current_storage = max_capacity }
-				meta_effect = {
-					text = { set_global_flag = research_station_[ID]_fuel_initialized }
-					ID = "[?process_station_id]"
-				}
+				set_variable = { global.antarctica_station_fuel_initialized^process_station_id = 1 }
 			}
 
 			if = {
@@ -2391,16 +2033,8 @@ antarctica_process_station_fuel_consumption = {
 				set_temp_variable = { fuel_capacity_days = current_storage }
 				divide_temp_variable = { fuel_capacity_days = fuel_usage }
 				round_variable = fuel_capacity_days
-
-				meta_effect = {
-					text = {
-						set_variable = { global.research_station_[ID]_output_storage = [STORAGE] }
-						set_variable = { global.research_station_[ID]_output_fuel_capacity_days = [DAYS] }
-					}
-					ID = "[?process_station_id]"
-					STORAGE = "[?current_storage]"
-					DAYS = "[?fuel_capacity_days]"
-				}
+				set_variable = { global.antarctica_station_output_storage^process_station_id = current_storage }
+				set_variable = { global.antarctica_station_output_fuel_capacity_days^process_station_id = fuel_capacity_days }
 			}
 		}
 	}
@@ -2418,53 +2052,44 @@ antarctica_process_station_research_progress = {
 		if = {
 			limit = {
 				check_variable = { process_station_id > 0 }
-				meta_trigger = {
-					text = { has_global_flag = research_station_[ID]_exists }
-					ID = "[?process_station_id]"
-				}
+				check_variable = { global.antarctica_station_exists^process_station_id > 0 }
 			}
-
-			meta_effect = {
-				text = {
-					set_temp_variable = { station_tier = global.research_station_[ID]_tier }
-					set_temp_variable = { station_iteration_progress = global.research_station_[ID]_iteration_progress }
-					set_temp_variable = { station_iterations = global.research_station_[ID]_iterations }
-					set_temp_variable = { station_controller = global.research_station_[ID]_controller }
-					set_temp_variable = { station_fuel_usage = global.research_station_[ID]_output_fuel_usage }
-					set_temp_variable = { station_fuel_storage = global.research_station_[ID]_output_storage }
-					set_temp_variable = { station_output_power = global.research_station_[ID]_output_power }
-					set_temp_variable = { station_speed_multiplier = global.research_station_[ID]_output_iteration_speed_multiplier }
-					set_temp_variable = { station_active_lab_slots = 0 }
-					if = {
-						limit = {
-							check_variable = { global.research_station_[ID]_module_slot_6 > 0 }
-							NOT = { check_variable = { global.research_station_[ID]_module_slot_6_blizzard_damaged > 0 } }
-						}
-						add_to_temp_variable = { station_active_lab_slots = 1 }
-					}
-					if = {
-						limit = {
-							check_variable = { global.research_station_[ID]_module_slot_7 > 0 }
-							NOT = { check_variable = { global.research_station_[ID]_module_slot_7_blizzard_damaged > 0 } }
-						}
-						add_to_temp_variable = { station_active_lab_slots = 1 }
-					}
-					if = {
-						limit = {
-							check_variable = { global.research_station_[ID]_module_slot_8 > 0 }
-							NOT = { check_variable = { global.research_station_[ID]_module_slot_8_blizzard_damaged > 0 } }
-						}
-						add_to_temp_variable = { station_active_lab_slots = 1 }
-					}
-					if = {
-						limit = {
-							check_variable = { global.research_station_[ID]_module_slot_9 > 0 }
-							NOT = { check_variable = { global.research_station_[ID]_module_slot_9_blizzard_damaged > 0 } }
-						}
-						add_to_temp_variable = { station_active_lab_slots = 1 }
-					}
+			set_temp_variable = { station_tier = global.antarctica_station_tier^process_station_id }
+			set_temp_variable = { station_iteration_progress = global.antarctica_station_iteration_progress^process_station_id }
+			set_temp_variable = { station_iterations = global.antarctica_station_iterations^process_station_id }
+			set_temp_variable = { station_controller = global.antarctica_station_controller^process_station_id }
+			set_temp_variable = { station_fuel_usage = global.antarctica_station_output_fuel_usage^process_station_id }
+			set_temp_variable = { station_fuel_storage = global.antarctica_station_output_storage^process_station_id }
+			set_temp_variable = { station_output_power = global.antarctica_station_output_power^process_station_id }
+			set_temp_variable = { station_speed_multiplier = global.antarctica_station_output_iteration_speed_multiplier^process_station_id }
+			set_temp_variable = { station_active_lab_slots = 0 }
+			if = {
+				limit = {
+					check_variable = { global.antarctica_station_module_slot_6^process_station_id > 0 }
+					NOT = { check_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^process_station_id > 0 } }
 				}
-				ID = "[?process_station_id]"
+				add_to_temp_variable = { station_active_lab_slots = 1 }
+			}
+			if = {
+				limit = {
+					check_variable = { global.antarctica_station_module_slot_7^process_station_id > 0 }
+					NOT = { check_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^process_station_id > 0 } }
+				}
+				add_to_temp_variable = { station_active_lab_slots = 1 }
+			}
+			if = {
+				limit = {
+					check_variable = { global.antarctica_station_module_slot_8^process_station_id > 0 }
+					NOT = { check_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^process_station_id > 0 } }
+				}
+				add_to_temp_variable = { station_active_lab_slots = 1 }
+			}
+			if = {
+				limit = {
+					check_variable = { global.antarctica_station_module_slot_9^process_station_id > 0 }
+					NOT = { check_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^process_station_id > 0 } }
+				}
+				add_to_temp_variable = { station_active_lab_slots = 1 }
 			}
 
 			# Blackout gate for iteration progress:
@@ -2578,17 +2203,11 @@ antarctica_process_station_research_progress = {
 				set_variable = { global.antarctica_iteration_lab_module_1 = 0 }
 				set_variable = { global.antarctica_iteration_lab_module_2 = 0 }
 				set_variable = { global.antarctica_iteration_lab_module_3 = 0 }
-
-				meta_effect = {
-					text = {
-						set_variable = { global.antarctica_iteration_lab_module_0 = global.research_station_[ID]_module_slot_6 }
-						set_variable = { global.antarctica_iteration_lab_module_1 = global.research_station_[ID]_module_slot_7 }
-						set_variable = { global.antarctica_iteration_lab_module_2 = global.research_station_[ID]_module_slot_8 }
-						set_variable = { global.antarctica_iteration_lab_module_3 = global.research_station_[ID]_module_slot_9 }
-						set_temp_variable = { station_illegal_activities = global.research_station_[ID]_illegal_activities_enabled }
-					}
-					ID = "[?process_station_id]"
-				}
+				set_variable = { global.antarctica_iteration_lab_module_0 = global.antarctica_station_module_slot_6^process_station_id }
+				set_variable = { global.antarctica_iteration_lab_module_1 = global.antarctica_station_module_slot_7^process_station_id }
+				set_variable = { global.antarctica_iteration_lab_module_2 = global.antarctica_station_module_slot_8^process_station_id }
+				set_variable = { global.antarctica_iteration_lab_module_3 = global.antarctica_station_module_slot_9^process_station_id }
+				set_temp_variable = { station_illegal_activities = global.antarctica_station_illegal_activities_enabled^process_station_id }
 
 				set_variable = { temp_controller_id = station_controller }
 				var:temp_controller_id = {
@@ -2614,18 +2233,9 @@ antarctica_process_station_research_progress = {
 					}
 				}
 			}
-
-			meta_effect = {
-				text = {
-					set_variable = { global.research_station_[ID]_tier = [TIER] }
-					set_variable = { global.research_station_[ID]_iteration_progress = [PROGRESS] }
-					set_variable = { global.research_station_[ID]_iterations = [ITERATIONS] }
-				}
-				ID = "[?process_station_id]"
-				TIER = "[?station_tier]"
-				PROGRESS = "[?station_iteration_progress]"
-				ITERATIONS = "[?station_iterations]"
-			}
+			set_variable = { global.antarctica_station_tier^process_station_id = station_tier }
+			set_variable = { global.antarctica_station_iteration_progress^process_station_id = station_iteration_progress }
+			set_variable = { global.antarctica_station_iterations^process_station_id = station_iterations }
 		}
 	}
 
@@ -2645,22 +2255,11 @@ antarctica_send_supplies_to_selected_station = {
 		antarctica_recalculate_station_module_outputs = yes
 		set_temp_variable = { delivery_days_remaining = 0 }
 		set_temp_variable = { delivery_fuel_pending = 0 }
-
-		meta_effect = {
-			text = {
-				set_temp_variable = { delivery_days_remaining = global.research_station_[ID]_delivery_days_remaining }
-				set_temp_variable = { delivery_fuel_pending = global.research_station_[ID]_delivery_fuel_pending }
-			}
-			ID = "[?station_id]"
-		}
+		set_temp_variable = { delivery_days_remaining = global.antarctica_station_delivery_days_remaining^station_id }
+		set_temp_variable = { delivery_fuel_pending = global.antarctica_station_delivery_fuel_pending^station_id }
 
 		# Get max capacity and determine delivery parameters
-		meta_effect = {
-			text = {
-				set_temp_variable = { max_capacity = global.research_station_[ID]_output_capacity }
-			}
-			ID = "[?station_id]"
-		}
+		set_temp_variable = { max_capacity = global.antarctica_station_output_capacity^station_id }
 
 		if = {
 			limit = {
@@ -2691,15 +2290,8 @@ antarctica_send_supplies_to_selected_station = {
 			modify_treasury_effect = yes
 
 			# Start delivery queue
-			meta_effect = {
-				text = {
-					set_variable = { global.research_station_[ID]_delivery_days_remaining = [DAYS] }
-					set_variable = { global.research_station_[ID]_delivery_fuel_pending = [FUEL] }
-				}
-				ID = "[?station_id]"
-				DAYS = "[?delivery_days]"
-				FUEL = "[?max_capacity]"
-			}
+			set_variable = { global.antarctica_station_delivery_days_remaining^station_id = delivery_days }
+			set_variable = { global.antarctica_station_delivery_fuel_pending^station_id = max_capacity }
 
 			log = "[GetDateText]: [Root.GetName]: Ordered fuel delivery to Antarctica station [?selected_antarctica_station] for $$[?delivery_cost]b (delivery time: [?delivery_days] days)"
 
@@ -2727,41 +2319,24 @@ antarctica_process_delivery_queue = {
 		if = {
 			limit = {
 				check_variable = { process_station_id > 0 }
-				meta_trigger = {
-					text = {
-						has_global_flag = research_station_[ID]_exists
-						check_variable = { global.research_station_[ID]_delivery_days_remaining > 0 }
-					}
-					ID = "[?process_station_id]"
-				}
+				check_variable = { global.antarctica_station_exists^process_station_id > 0 }
+				check_variable = { global.antarctica_station_delivery_days_remaining^process_station_id > 0 }
 			}
 
 			set_temp_variable = { station_id = process_station_id }
 			set_temp_variable = { delivery_complete = 0 }
-
-			meta_effect = {
-				text = {
-					subtract_from_variable = { global.research_station_[ID]_delivery_days_remaining = 1 }
-					if = {
-						limit = { check_variable = { global.research_station_[ID]_delivery_days_remaining = 0 } }
-						set_temp_variable = { delivery_complete = 1 }
-					}
-				}
-				ID = "[?station_id]"
+			subtract_from_variable = { global.antarctica_station_delivery_days_remaining^station_id = 1 }
+			if = {
+				limit = { check_variable = { global.antarctica_station_delivery_days_remaining^station_id = 0 } }
+				set_temp_variable = { delivery_complete = 1 }
 			}
 
 			if = {
 				limit = { check_variable = { delivery_complete = 1 } }
-
-				meta_effect = {
-					text = {
-						set_temp_variable = { current_storage = global.research_station_[ID]_output_storage }
-						set_temp_variable = { pending_fuel = global.research_station_[ID]_delivery_fuel_pending }
-						set_temp_variable = { max_capacity = global.research_station_[ID]_output_capacity }
-						set_temp_variable = { fuel_usage = global.research_station_[ID]_output_fuel_usage }
-					}
-					ID = "[?station_id]"
-				}
+				set_temp_variable = { current_storage = global.antarctica_station_output_storage^station_id }
+				set_temp_variable = { pending_fuel = global.antarctica_station_delivery_fuel_pending^station_id }
+				set_temp_variable = { max_capacity = global.antarctica_station_output_capacity^station_id }
+				set_temp_variable = { fuel_usage = global.antarctica_station_output_fuel_usage^station_id }
 
 				add_to_temp_variable = { current_storage = pending_fuel }
 				if = {
@@ -2776,17 +2351,9 @@ antarctica_process_delivery_queue = {
 					divide_temp_variable = { fuel_capacity_days = fuel_usage }
 					round_variable = fuel_capacity_days
 				}
-
-				meta_effect = {
-					text = {
-						set_variable = { global.research_station_[ID]_output_storage = [STORAGE] }
-						set_variable = { global.research_station_[ID]_delivery_fuel_pending = 0 }
-						set_variable = { global.research_station_[ID]_output_fuel_capacity_days = [DAYS] }
-					}
-					ID = "[?station_id]"
-					STORAGE = "[?current_storage]"
-					DAYS = "[?fuel_capacity_days]"
-				}
+				set_variable = { global.antarctica_station_output_storage^station_id = current_storage }
+				set_variable = { global.antarctica_station_delivery_fuel_pending^station_id = 0 }
+				set_variable = { global.antarctica_station_output_fuel_capacity_days^station_id = fuel_capacity_days }
 
 				log = "[GetDateText]: Fuel delivery completed for Antarctica station [?station_id]. New storage: [?current_storage] fuel ([?fuel_capacity_days] days)"
 				add_to_variable = { global.missile_ui_updated = 1 }
@@ -3531,50 +3098,40 @@ antarctica_apply_laboratory_iteration_progression = {
 # set_temp_variable = { station_id = id }
 # antarctica_apply_station_laboratory_effects_to_controller = yes
 antarctica_apply_station_laboratory_effects_to_controller = {
-	meta_effect = {
-		text = {
-			set_temp_variable = { station_controller = global.research_station_[ID]_controller }
-			set_temp_variable = { station_fuel_usage = global.research_station_[ID]_output_fuel_usage }
-			set_temp_variable = { station_fuel_storage = global.research_station_[ID]_output_storage }
-			set_temp_variable = { station_output_power = global.research_station_[ID]_output_power }
-			set_temp_variable = { station_illegal_activities = global.research_station_[ID]_illegal_activities_enabled }
-		}
-		ID = "[?station_id]"
-	}
+	set_temp_variable = { station_controller = global.antarctica_station_controller^station_id }
+	set_temp_variable = { station_fuel_usage = global.antarctica_station_output_fuel_usage^station_id }
+	set_temp_variable = { station_fuel_storage = global.antarctica_station_output_storage^station_id }
+	set_temp_variable = { station_output_power = global.antarctica_station_output_power^station_id }
+	set_temp_variable = { station_illegal_activities = global.antarctica_station_illegal_activities_enabled^station_id }
 
 	if = {
-		limit = { check_variable = { station_controller = THIS.id } }
-
-		# Fuel blackout gate:
-		# - always allow renewable stations (fuel usage <= 0)
-		# - for fuel-consuming stations, require remaining storage > 0
+		limit = {
+			check_variable = { station_controller = THIS.id }
+			OR = {
+				check_variable = { station_fuel_usage < 1 }
+				check_variable = { station_fuel_storage > 0 }
+			}
+			check_variable = { var = station_output_power value = 0 compare = greater_than_or_equals }
+		}
 		if = {
-			limit = {
-				OR = {
-					check_variable = { station_fuel_usage < 1 }
-					check_variable = { station_fuel_storage > 0 }
-				}
-				check_variable = {
-					var = station_output_power
-					value = 0
-					compare = greater_than_or_equals
-				}
-			}
-
-			meta_effect = {
-				text = {
-					for_each_loop = {
-						array = global.research_station_[ID]_module_laboratories_list
-						value = current_lab_module
-						if = {
-							limit = { check_variable = { current_lab_module > 0 } }
-							set_temp_variable = { station_lab_module = current_lab_module }
-							antarctica_apply_single_laboratory_module_effect = yes
-						}
-					}
-				}
-				ID = "[?station_id]"
-			}
+			limit = { check_variable = { global.antarctica_station_module_slot_6^station_id > 0 } }
+			set_temp_variable = { station_lab_module = global.antarctica_station_module_slot_6^station_id }
+			antarctica_apply_single_laboratory_module_effect = yes
+		}
+		if = {
+			limit = { check_variable = { global.antarctica_station_module_slot_7^station_id > 0 } }
+			set_temp_variable = { station_lab_module = global.antarctica_station_module_slot_7^station_id }
+			antarctica_apply_single_laboratory_module_effect = yes
+		}
+		if = {
+			limit = { check_variable = { global.antarctica_station_module_slot_8^station_id > 0 } }
+			set_temp_variable = { station_lab_module = global.antarctica_station_module_slot_8^station_id }
+			antarctica_apply_single_laboratory_module_effect = yes
+		}
+		if = {
+			limit = { check_variable = { global.antarctica_station_module_slot_9^station_id > 0 } }
+			set_temp_variable = { station_lab_module = global.antarctica_station_module_slot_9^station_id }
+			antarctica_apply_single_laboratory_module_effect = yes
 		}
 	}
 }
@@ -3600,13 +3157,7 @@ antarctica_recalculate_country_laboratory_effects = {
 				if = {
 					limit = { check_variable = { current_station_id > 0 } }
 					set_temp_variable = { station_id = current_station_id }
-
-					meta_effect = {
-						text = {
-							set_temp_variable = { station_staff_satisfaction = global.research_station_[ID]_output_staff_satisfaction }
-						}
-						ID = "[?station_id]"
-					}
+					set_temp_variable = { station_staff_satisfaction = global.antarctica_station_output_staff_satisfaction^station_id }
 
 					add_to_temp_variable = { country_staff_satisfaction_total = station_staff_satisfaction }
 					add_to_temp_variable = { country_staff_satisfaction_count = 1 }
@@ -3693,14 +3244,8 @@ antarctica_apply_station_maintenance_costs = {
 
 		if = {
 			limit = { check_variable = { process_station_id > 0 } }
-
-			meta_effect = {
-				text = {
-					set_variable = { global.antarctica_temp_upkeep_cost = global.research_station_[ID]_output_upkeep_cost }
-					set_temp_variable = { station_controller_id = global.research_station_[ID]_controller }
-				}
-				ID = "[?process_station_id]"
-			}
+			set_variable = { global.antarctica_temp_upkeep_cost = global.antarctica_station_output_upkeep_cost^process_station_id }
+			set_temp_variable = { station_controller_id = global.antarctica_station_controller^process_station_id }
 
 			# Add maintenance cost to the owning country.
 			if = {
@@ -3813,26 +3358,19 @@ antarctica_process_blizzard_weekly_damage = {
 			if = {
 				limit = {
 					check_variable = { process_station_id > 0 }
-					meta_trigger = {
-						text = { has_global_flag = research_station_[ID]_exists }
-						ID = "[?process_station_id]"
-					}
+					check_variable = { global.antarctica_station_exists^process_station_id > 0 }
 				}
 
 				set_temp_variable = { station_id = process_station_id }
-
-				meta_effect = {
-					text = {
-						set_temp_variable = { station_power_slot_2 = global.research_station_[ID]_module_slot_2 }
-						set_temp_variable = { station_lab_slot_6 = global.research_station_[ID]_module_slot_6 }
-						set_temp_variable = { station_lab_slot_7 = global.research_station_[ID]_module_slot_7 }
-						set_temp_variable = { station_lab_slot_8 = global.research_station_[ID]_module_slot_8 }
-						set_temp_variable = { station_lab_slot_9 = global.research_station_[ID]_module_slot_9 }
-						set_temp_variable = { station_power_slot_11 = global.research_station_[ID]_module_slot_11 }
-						set_temp_variable = { station_power_slot_13 = global.research_station_[ID]_module_slot_13 }
-					}
-					ID = "[?station_id]"
-				}
+				set_temp_variable = { station_controller = global.antarctica_station_controller^station_id }
+				set_temp_variable = { station_damage_applied = 0 }
+				set_temp_variable = { station_power_slot_2 = global.antarctica_station_module_slot_2^station_id }
+				set_temp_variable = { station_lab_slot_6 = global.antarctica_station_module_slot_6^station_id }
+				set_temp_variable = { station_lab_slot_7 = global.antarctica_station_module_slot_7^station_id }
+				set_temp_variable = { station_lab_slot_8 = global.antarctica_station_module_slot_8^station_id }
+				set_temp_variable = { station_lab_slot_9 = global.antarctica_station_module_slot_9^station_id }
+				set_temp_variable = { station_power_slot_11 = global.antarctica_station_module_slot_11^station_id }
+				set_temp_variable = { station_power_slot_13 = global.antarctica_station_module_slot_13^station_id }
 
 				set_temp_variable = { blizzard_slot = 6 }
 				set_temp_variable = { station_lab_module = station_lab_slot_6 }
@@ -3861,6 +3399,19 @@ antarctica_process_blizzard_weekly_damage = {
 				set_temp_variable = { blizzard_slot = 13 }
 				set_temp_variable = { station_lab_module = station_power_slot_13 }
 				antarctica_roll_blizzard_damage_for_slot = yes
+
+				if = {
+					limit = {
+						check_variable = { station_damage_applied > 0 }
+						check_variable = { station_controller > 0 }
+					}
+					var:station_controller = {
+						if = {
+							limit = { check_variable = { selected_antarctica_station = process_station_id } }
+							antarctica_set_selected_station_controller = yes
+						}
+					}
+				}
 			}
 		}
 	}
@@ -3870,10 +3421,14 @@ antarctica_roll_blizzard_damage_for_slot = {
 	if = {
 		limit = {
 			check_variable = { station_lab_module > 0 }
-			meta_trigger = {
-				text = { NOT = { check_variable = { global.research_station_[ID]_module_slot_[SLOT]_blizzard_damaged > 0 } } }
-				ID = "[?station_id]"
-				SLOT = "[?blizzard_slot]"
+			OR = {
+				AND = { check_variable = { blizzard_slot = 2 } NOT = { check_variable = { global.antarctica_station_module_slot_2_blizzard_damaged^station_id > 0 } } }
+				AND = { check_variable = { blizzard_slot = 6 } NOT = { check_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^station_id > 0 } } }
+				AND = { check_variable = { blizzard_slot = 7 } NOT = { check_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^station_id > 0 } } }
+				AND = { check_variable = { blizzard_slot = 8 } NOT = { check_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^station_id > 0 } } }
+				AND = { check_variable = { blizzard_slot = 9 } NOT = { check_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^station_id > 0 } } }
+				AND = { check_variable = { blizzard_slot = 11 } NOT = { check_variable = { global.antarctica_station_module_slot_11_blizzard_damaged^station_id > 0 } } }
+				AND = { check_variable = { blizzard_slot = 13 } NOT = { check_variable = { global.antarctica_station_module_slot_13_blizzard_damaged^station_id > 0 } } }
 			}
 		}
 
@@ -3915,19 +3470,37 @@ antarctica_roll_blizzard_damage_for_slot = {
 }
 
 antarctica_mark_blizzard_slot_damaged = {
-	meta_effect = {
-		text = {
-			set_variable = { global.research_station_[ID]_module_slot_[SLOT]_blizzard_damaged = 1 }
-			set_temp_variable = { station_controller = global.research_station_[ID]_controller }
-		}
-		ID = "[?station_id]"
-		SLOT = "[?blizzard_slot]"
-	}
-	antarctica_recalculate_station_module_outputs = yes
 	if = {
-		limit = { check_variable = { selected_antarctica_station = station_id } }
-		antarctica_set_selected_station_controller = yes
+		limit = { check_variable = { blizzard_slot = 2 } }
+		set_variable = { global.antarctica_station_module_slot_2_blizzard_damaged^station_id = 1 }
 	}
+	else_if = {
+		limit = { check_variable = { blizzard_slot = 6 } }
+		set_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^station_id = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { blizzard_slot = 7 } }
+		set_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^station_id = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { blizzard_slot = 8 } }
+		set_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^station_id = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { blizzard_slot = 9 } }
+		set_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^station_id = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { blizzard_slot = 11 } }
+		set_variable = { global.antarctica_station_module_slot_11_blizzard_damaged^station_id = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { blizzard_slot = 13 } }
+		set_variable = { global.antarctica_station_module_slot_13_blizzard_damaged^station_id = 1 }
+	}
+	set_temp_variable = { station_controller = global.antarctica_station_controller^station_id }
+	antarctica_recalculate_station_module_outputs = yes
+	set_temp_variable = { station_damage_applied = 1 }
 	log = "[GetDateText]: [Root.GetName]: Antarctica module damaged station = [?station_id] slot = [?blizzard_slot] module = [?station_lab_module]"
 	if = {
 		limit = { check_variable = { station_controller > 0 } }
@@ -3949,39 +3522,31 @@ antarctica_start_blizzard_repairs = {
 		if = {
 			limit = {
 				check_variable = { process_station_id > 0 }
-				meta_trigger = {
-					text = {
-						has_global_flag = research_station_[ID]_exists
-						OR = {
-							AND = {
-								check_variable = { global.research_station_[ID]_module_slot_2 > 0 }
-								check_variable = { global.research_station_[ID]_module_slot_2_blizzard_damaged > 0 }
-							}
-							check_variable = { global.research_station_[ID]_module_slot_6_blizzard_damaged > 0 }
-							check_variable = { global.research_station_[ID]_module_slot_7_blizzard_damaged > 0 }
-							check_variable = { global.research_station_[ID]_module_slot_8_blizzard_damaged > 0 }
-							check_variable = { global.research_station_[ID]_module_slot_9_blizzard_damaged > 0 }
-							AND = {
-								check_variable = { global.research_station_[ID]_module_slot_11 > 0 }
-								check_variable = { global.research_station_[ID]_module_slot_11_blizzard_damaged > 0 }
-							}
-							AND = {
-								check_variable = { global.research_station_[ID]_module_slot_13 > 0 }
-								check_variable = { global.research_station_[ID]_module_slot_13_blizzard_damaged > 0 }
-							}
-						}
+				check_variable = { global.antarctica_station_exists^process_station_id > 0 }
+				OR = {
+					AND = {
+						check_variable = { global.antarctica_station_module_slot_2^process_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_2_blizzard_damaged^process_station_id > 0 }
 					}
-					ID = "[?process_station_id]"
+					check_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^process_station_id > 0 }
+					check_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^process_station_id > 0 }
+					check_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^process_station_id > 0 }
+					check_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^process_station_id > 0 }
+					AND = {
+						check_variable = { global.antarctica_station_module_slot_11^process_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_11_blizzard_damaged^process_station_id > 0 }
+					}
+					AND = {
+						check_variable = { global.antarctica_station_module_slot_13^process_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_13_blizzard_damaged^process_station_id > 0 }
+					}
 				}
 			}
-
-			meta_effect = {
-				text = {
-					var:global.research_station_[ID]_controller = {
-						set_variable = { research_station_module_repair_days_remaining = 14 }
-					}
-				}
-				ID = "[?process_station_id]"
+			set_variable = { global.antarctica_station_repair_days_remaining^process_station_id = 14 }
+			set_temp_variable = { repair_station_controller = global.antarctica_station_controller^process_station_id }
+			if = {
+				limit = { check_variable = { repair_station_controller > 0 } }
+				var:repair_station_controller = { set_variable = { research_station_module_repair_days_remaining = 14 } }
 			}
 		}
 	}
@@ -3992,25 +3557,32 @@ antarctica_process_blizzard_repairs_daily = {
 		limit = { check_variable = { research_station_module_repair_days_remaining > 0 } }
 		subtract_from_variable = { research_station_module_repair_days_remaining = 1 }
 
+		antarctica_find_player_station = yes
+		set_temp_variable = { station_id = player_station_id }
+
+		# Mirror the countdown per station so observers read the viewed station, not their own.
+		if = {
+			limit = { check_variable = { station_id > 0 } }
+			set_variable = { global.antarctica_station_repair_days_remaining^station_id = research_station_module_repair_days_remaining }
+			if = {
+				limit = { check_variable = { selected_antarctica_station = station_id } }
+				set_variable = { selected_antarctica_station_repair_days_remaining = research_station_module_repair_days_remaining }
+			}
+		}
+
 		if = {
 			limit = { check_variable = { research_station_module_repair_days_remaining < 1 } }
 			clear_variable = research_station_module_repair_days_remaining
-			antarctica_find_player_station = yes
 
 			# Clear all blizzard damage flags on this country's station.
-			set_temp_variable = { station_id = player_station_id }
-			meta_effect = {
-				text = {
-					clear_variable = global.research_station_[ID]_module_slot_2_blizzard_damaged
-					clear_variable = global.research_station_[ID]_module_slot_6_blizzard_damaged
-					clear_variable = global.research_station_[ID]_module_slot_7_blizzard_damaged
-					clear_variable = global.research_station_[ID]_module_slot_8_blizzard_damaged
-					clear_variable = global.research_station_[ID]_module_slot_9_blizzard_damaged
-					clear_variable = global.research_station_[ID]_module_slot_11_blizzard_damaged
-					clear_variable = global.research_station_[ID]_module_slot_13_blizzard_damaged
-				}
-				ID = "[?station_id]"
-			}
+			set_variable = { global.antarctica_station_repair_days_remaining^station_id = 0 }
+			set_variable = { global.antarctica_station_module_slot_2_blizzard_damaged^station_id = 0 }
+			set_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^station_id = 0 }
+			set_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^station_id = 0 }
+			set_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^station_id = 0 }
+			set_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^station_id = 0 }
+			set_variable = { global.antarctica_station_module_slot_11_blizzard_damaged^station_id = 0 }
+			set_variable = { global.antarctica_station_module_slot_13_blizzard_damaged^station_id = 0 }
 
 			antarctica_recalculate_station_module_outputs = yes
 			if = {
