@@ -419,6 +419,54 @@ def test_unreadable_decision_header_raises_instead_of_guessing():
         format_decision(block)
 
 
+def test_one_line_properties_are_not_blank_separated():
+    # (defect) every property, one-liners included, was followed by a blank, so a
+    # decision was double-spaced end to end and opened with a gap after `{`.
+    out = format_decision(
+        _decision(
+            [
+                "\tURA_world_opr = {",
+                "\t\tallowed = { original_tag = URA }",
+                "\t\ticon = GFX_decision_sovfed_button",
+                "\t\tcost = 50",
+                "\t\tdays_remove = 400",
+                "\t\tai_will_do = { base = 10 }",
+                "\t}",
+            ]
+        )
+    )
+    assert out == [
+        "\tURA_world_opr = {",
+        "\t\tallowed = { original_tag = URA }",
+        "\t\ticon = GFX_decision_sovfed_button",
+        "\t\tcost = 50",
+        "\t\tdays_remove = 400",
+        "\t\tai_will_do = { base = 10 }",
+        "\t}",
+    ]
+
+
+def test_multiline_block_is_separated_from_one_line_run():
+    out = format_decision(
+        _decision(
+            [
+                "\tURA_world_opr = {",
+                "\t\tcost = 50",
+                "\t\tvisible = {",
+                "\t\t\tcountry_exists = OPR",
+                "\t\t\thas_country_flag = foo",
+                "\t\t}",
+                "\t}",
+            ]
+        )
+    )
+    assert out[-1] == "\t}"
+    assert out[-2].strip() != ""
+    blank_idx = out.index("")
+    assert out[blank_idx - 1].strip() == "cost = 50"
+    assert out[blank_idx + 1].strip() == "visible = {"
+
+
 def test_unreadable_category_header_raises_instead_of_guessing():
     category = _decision(
         [

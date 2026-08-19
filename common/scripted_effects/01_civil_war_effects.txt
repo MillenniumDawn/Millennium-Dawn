@@ -548,6 +548,10 @@ civil_war_cleanup_afghanistan = {
 			set_country_flag = dynamic_flag
 			set_country_flag = dynamic_rebel_flag
 			add_ideas = intervention_neo_imperialism
+			#Massoud's resistance rises once the Taliban have consolidated. The event's own trigger gates it and
+			#fire_only_once caps it. GLOBAL_afghan_civil_war_over must stay set: clearing it re-arms this cleanup,
+			#which strips and re-adds six cores and resets the capital to 414 over wherever the player moved it
+			country_event = { id = AFG_events.34 days = 180 random_days = 120 }
 		}
 		add_state_core = 409
 		add_state_core = 410
@@ -561,9 +565,9 @@ civil_war_cleanup_afghanistan = {
 			1207 = { transfer_state_to = TAL }
 			set_temp_variable = { taliban_strength_increase = 35 }
 			increase_taliban_strength = yes
-			country_event = { id = TalibanInsurgency.0 days = 1 }
+			country_event = { id = AFG_taliban_insurgency.0 days = 1 }
 		}
-		hidden_effect = { news_event = { id = AfghanistanNews.1 hours = 6 } }
+		hidden_effect = { news_event = { id = AFG_news.1 hours = 6 } }
 	}
 }
 
@@ -867,6 +871,163 @@ civil_war_cleanup_second_libya_war = {
 	}
 }
 
+nep_remove_guerrilla_effect = {
+	485 = { remove_dynamic_modifier = { modifier = NEP_guerrilla_conflict } }
+	489 = { remove_dynamic_modifier = { modifier = NEP_guerrilla_conflict } }
+}
+
+nep_kings_death_effect = {
+	if = {
+		limit = {
+			country_exists = NEP
+			country_exists = NPM
+			NEP = {
+				has_war_with = NPM
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
+		}
+		NEP = {
+			swap_ideas = {
+				remove_idea = NEP_National_Unity_Campaign
+				add_idea = NEP_The_National_vendetta
+			}
+			kill_country_leader = yes
+		}
+		news_event = { id = news.90 random_days = 3 }
+	}
+}
+
+civil_war_cleanup_nepal_truth_ending = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NEP
+			country_exists = NPM
+			NEP = {
+				has_war_with = NPM
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		nep_remove_guerrilla_effect = yes
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
+		NEP = {
+			country_event = { id = nepal.1 days = 511 }
+			annex_country = { target = NPM transfer_troops = no }
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		485 = { remove_core_of = NPM }
+		489 = { remove_core_of = NPM }
+		news_event = { id = news.87 random_days = 3 }
+	}
+}
+
+civil_war_cleanup_nepal_kings_victory = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NEP
+			NOT = { country_exists = NPM }
+			NEP = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		news_event = { id = news.89 random_days = 3 }
+		nep_remove_guerrilla_effect = yes
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
+		485 = { remove_core_of = NPM }
+		489 = { remove_core_of = NPM }
+	}
+}
+
+civil_war_cleanup_nepal_reds_victory = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NPM
+			NOT = { country_exists = NEP }
+			NPM = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		news_event = { id = news.88 random_days = 3 }
+		nep_remove_guerrilla_effect = yes
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+			set_cosmetic_tag = NEP
+		}
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		485 = { remove_core_of = NEP }
+		489 = { remove_core_of = NEP }
+	}
+}
+
+civil_war_cleanup_nepal_peace = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NEP
+			country_exists = NPM
+			NEP = {
+				NOT = { has_war_with = NPM }
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		nep_remove_guerrilla_effect = yes
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		NPM = { remove_ideas = NEP_Himalayan_Rebellion_Struggle }
+	}
+}
+
+civil_war_cleanup_nepal_no_survivor = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			NOT = { country_exists = NEP }
+			NOT = { country_exists = NPM }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		nep_remove_guerrilla_effect = yes
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
+		485 = { remove_core_of = NEP remove_core_of = NPM }
+		489 = { remove_core_of = NEP remove_core_of = NPM }
+	}
+}
+
+civil_war_cleanup_nepal = {
+	civil_war_cleanup_nepal_kings_victory = yes
+	civil_war_cleanup_nepal_reds_victory = yes
+	civil_war_cleanup_nepal_peace = yes
+	civil_war_cleanup_nepal_no_survivor = yes
+}
+
 # Guards above self-validate, so this is safe to fire from any war-ending on_action;
 # a call that comes too early is a no-op and the next hook retries it.
 civil_war_cleanup_hooks = {
@@ -902,6 +1063,8 @@ civil_war_cleanup_hooks = {
 	HOR = { civil_war_cleanup_second_libya_war = yes }
 	GNA = { civil_war_cleanup_second_libya_war = yes }
 	GNC = { civil_war_cleanup_second_libya_war = yes }
+	NEP = { civil_war_cleanup_nepal = yes }
+	NPM = { civil_war_cleanup_nepal = yes }
 }
 
 civil_war_startup_repairs = {

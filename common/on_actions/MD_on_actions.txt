@@ -14,6 +14,13 @@ on_actions = {
 				if = { limit = { check_variable = { global.md_gui_dirty > 1000000 } }
 					set_variable = { global.md_gui_dirty = 1 }
 				}
+				if = {
+					limit = {
+						has_global_flag = NATO_CSTO_treaty_ratified
+						NOT = { has_global_flag = NATO_CSTO_treaty_adandoned }
+					}
+					NATO_CSTO_calculate_number_of_batallions = yes
+				}
 			}
 
 			microchip_update = yes
@@ -25,25 +32,34 @@ on_actions = {
 				set_country_flag = economic_project_flags_migrated
 			}
 
+			# Per-week decay; must stay out of ingame_update_setup, which re-runs on demand (focuses, events, economy refresh button)
+			update_tension_premium = yes
 			ingame_update_setup = yes
 			calculate_energy_load_sharing = yes
 			nuclear_reactor_fuel_consumption = yes
 
 			# Must follow ingame_update_setup — it charges the week via space_prod_weekly_expense, and the accrual here has to read the same var_space_paid_1X to bill the same amount
 			space_prod_weekly_bill = yes
-			if = { limit = { is_ai = no }
+			if = {
+				limit = {
+					is_ai = no
+					OR = {
+						has_country_flag = space_auto_active
+						has_country_flag = space_auto_line_10
+						has_country_flag = space_auto_line_11
+						has_country_flag = space_auto_line_12
+						has_country_flag = space_auto_line_13
+					}
+				}
 				space_automation_weekly = yes
 			}
 
-			# Remove weekly rate from treasury
-			if = { limit = { check_variable = { int_reinvest_mode = 1 } }
-				add_to_variable = { int_investments = int_investments_rate }
+			# Banked here, not in ingame_update_setup, which re-runs on demand
+			if = { limit = { check_variable = { EU_seigniorage_weekly > 0 } }
+				add_to_variable = { global.EU_seigniorage_pool = EU_seigniorage_weekly }
 			}
-			else_if = { limit = { check_variable = { int_reinvest_mode = 2 } }
-				set_temp_variable = { _split_reinvest = int_investments_rate }
-				multiply_temp_variable = { _split_reinvest = 0.5 }
-				add_to_variable = { int_investments = _split_reinvest }
-			}
+
+			add_to_variable = { int_investments = int_investments_reinvest_rate }
 
 			# No longer subject stop paying for subsidies
 			if = { limit = { NOT = { check_variable = { subject_subsidization^0 = 0 } } }
@@ -160,15 +176,6 @@ on_actions = {
 						33 = { }
 					}
 				}
-			}
-
-			if = {
-				limit = {
-					has_global_flag = NATO_CSTO_treaty_ratified
-					NOT = { has_global_flag = NATO_CSTO_treaty_adandoned }
-				}
-
-				NATO_CSTO_calculate_number_of_batallions = yes
 			}
 
 			if = {
@@ -317,9 +324,16 @@ on_actions = {
 		}
 	}
 
+	on_monthly_TAL = {
+		effect = {
+			AFG_reapply_taliban_opinion_modifiers = yes
+		}
+	}
+
 	#ROOT is winner #FROM gets annexed - For civil wars on_civil_war_end is also fired
 	on_annex = {
 		effect = {
+			update_neighbors_effects = yes
 			civil_war_cleanup_hooks = yes
 
 			if = {
@@ -347,7 +361,6 @@ on_actions = {
 					set_variable = { global.current_active_agenda_disp = 0 }
 					set_variable = { global.current_active_vote_disp = 0 }
 					set_variable = { global.EUXXX_council_agenda = global.current_active_vote_disp }
-					set_variable = { global.EU_active_vote_yes = 0 }
 					clear_array = global.EU_active_vote_supporters
 					clear_array = global.EU_active_vote_rejecters
 					EU_emergency_vote_clear = yes
@@ -471,6 +484,16 @@ on_actions = {
 				}
 				# Antarctica Research Station blackout
 				if = {
+					limit = { has_country_flag = antarctica_station_setup_capacity_reserved }
+					add_to_variable = { global.antarctica_station_display_capacity_remaining = 1 }
+					clamp_variable = { var = global.antarctica_station_display_capacity_remaining min = 0 max = 70 }
+					clr_country_flag = antarctica_station_setup_capacity_reserved
+					set_variable = { antarctica_station_setup_in_progress = 0 }
+					set_variable = { antarctica_station_setup_days_remaining = 0 }
+					set_variable = { antarctica_station_setup_x = 0 }
+					set_variable = { antarctica_station_setup_y = 0 }
+				}
+				if = {
 					limit = { has_country_flag = antarctica_has_active_station }
 					antarctica_remove_research_station = yes
 					ROOT = { country_event = MD_antarctica.10 }
@@ -534,6 +557,45 @@ on_actions = {
 			}
 
 			log = "[GetDateText]: [ROOT.GetName] annexed [FROM.GetName] - Inflation blended to [?ROOT.inflation_rate_var|%], GDP/C tracker reset to [?ROOT.last_quarter_gdpc_total]"
+
+			# Free operatives held by the annexed country.
+			every_country = {
+				limit = {
+					FROM = { has_captured_operative = PREV }
+				}
+				free_random_operative = {
+					captured_by = FROM
+					all = yes
+				}
+			}
+
+			# Clear operation assets targeting the annexed country.
+			every_country = {
+				limit = {
+					OR = {
+						has_operation_token = { tag = FROM token = token_airforce }
+						has_operation_token = { tag = FROM token = token_army }
+						has_operation_token = { tag = FROM token = token_civilian }
+						has_operation_token = { tag = FROM token = token_navy }
+						has_operation_token = { tag = FROM token = token_resistance_contacts }
+						has_operation_token = { tag = FROM token = token_hvt }
+						has_operation_token = { tag = FROM token = token_arms_cache }
+						has_operation_token = { tag = FROM token = token_training_camps }
+						has_operation_token = { tag = FROM token = token_regional_headquarters }
+						has_operation_token = { tag = FROM token = token_foreign_advisors }
+					}
+				}
+				remove_operation_token = { tag = FROM token = token_airforce }
+				remove_operation_token = { tag = FROM token = token_army }
+				remove_operation_token = { tag = FROM token = token_civilian }
+				remove_operation_token = { tag = FROM token = token_navy }
+				remove_operation_token = { tag = FROM token = token_resistance_contacts }
+				remove_operation_token = { tag = FROM token = token_hvt }
+				remove_operation_token = { tag = FROM token = token_arms_cache }
+				remove_operation_token = { tag = FROM token = token_training_camps }
+				remove_operation_token = { tag = FROM token = token_regional_headquarters }
+				remove_operation_token = { tag = FROM token = token_foreign_advisors }
+			}
 		}
 	}
 
@@ -576,6 +638,12 @@ on_actions = {
 
 	on_peaceconference_ended = {
 		effect = {
+			update_neighbors_effects = yes
+			FROM = {
+				if = { limit = { exists = yes }
+					update_neighbors_effects = yes
+				}
+			}
 			civil_war_cleanup_hooks = yes
 
 			if = {
@@ -908,8 +976,25 @@ on_actions = {
 
 					AGRI_plow_the_fields = yes
 					monthly_tick_internal_factions_opinion = yes
-					# Event fire rebases ROOT per country; the satellite effects are ROOT-relative and recompute onto the wrong country under every_country.
-					country_event = satellites.9
+					if = {
+						limit = {
+							OR = {
+								has_completed_space_program = yes
+								check_variable = { var_GNSS_sat_total > 0 }
+								check_variable = { var_COM_sat_total > 0 }
+								check_variable = { var_SPY_sat_total > 0 }
+								check_variable = { var_KILL_sat_total > 0 }
+								check_variable = { GNSS_mil_access_array^num > 0 }
+								check_variable = { GNSS_civ_access_array^num > 0 }
+								check_variable = { COM_mil_access_array^num > 0 }
+								check_variable = { COM_civ_access_array^num > 0 }
+								check_variable = { SPY_mil_access_array^num > 0 }
+								check_variable = { SPY_civ_access_array^num > 0 }
+								check_variable = { spy_mission_array^num > 0 }
+							}
+						}
+						country_event = satellites.9
+					}
 
 					calculate_expected_spending = yes
 					apply_protest_effects = yes
@@ -1294,7 +1379,13 @@ on_actions = {
 				limit = {
 					is_ai = yes
 					FROM = { tag = CHI }
-					NOT = { has_idea = chinese_yuan }
+					NOT = {
+						OR = {
+							has_idea = chinese_yuan
+							has_idea = chinese_yuan_2
+							has_idea = chinese_yuan_3
+						}
+					}
 				}
 				add_ideas = chinese_yuan
 			}
@@ -1319,7 +1410,11 @@ on_actions = {
 			if = {
 				limit = {
 					is_ai = yes
-					has_idea = chinese_yuan
+					OR = {
+						has_idea = chinese_yuan
+						has_idea = chinese_yuan_2
+						has_idea = chinese_yuan_3
+					}
 					NOT = { is_in_faction_with = CHI }
 					NOT = { tag = CHI }
 				}
