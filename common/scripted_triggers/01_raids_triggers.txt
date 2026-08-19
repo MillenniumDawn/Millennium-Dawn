@@ -17,7 +17,6 @@ raid_ai_target_relevant = {
 # Drone raid availability — wartime/wargoal/retaliation/PP>300
 # Used by drone raids that require active hostility (airfield, rocket site, swarm)
 drone_raid_available_hostile = {
-	set_temp_variable = { raid_required_pp_300 = { value = 300  multiply = { value = 1  add = modifier@raid_cost_factor } } }
 	raid_ai_target_relevant = yes
 	OR = {
 		has_war = yes
@@ -31,10 +30,8 @@ drone_raid_available_hostile = {
 		else = { always = no }
 	}
 	OR = {
-		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
-		has_war_with = FROM
+		raid_can_launch_300 = yes
 		has_wargoal_against = FROM
-		has_political_power > raid_required_pp_300
 	}
 	FROM = {
 		NOT = { is_subject_of = ROOT }
@@ -46,7 +43,6 @@ drone_raid_available_hostile = {
 # Drone/air raid availability — grey-zone ops (PP>99 or wartime)
 # Used by drone/ai raids against civilian infrastructure (power grid, resources)
 raid_available_grey_zone = {
-	set_temp_variable = { raid_required_pp_99 = { value = 99  multiply = { value = 1  add = modifier@raid_cost_factor } } }
 	raid_ai_target_relevant = yes
 	OR = {
 		has_war = yes
@@ -59,11 +55,7 @@ raid_available_grey_zone = {
 		}
 		else = { always = no }
 	}
-	OR = {
-		has_war_with = FROM
-		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
-		has_political_power > raid_required_pp_99
-	}
+	raid_can_launch_99 = yes
 	FROM = {
 		NOT = { is_subject_of = ROOT }
 		NOT = { has_non_aggression_pact_with = ROOT }
