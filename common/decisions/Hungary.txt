@@ -1,0 +1,126 @@
+HUN_karpatalja_question_category = {
+	HUN_annex_karpatalja = {
+		icon = GFX_decision_annex
+		days_remove = 30
+
+		available = {
+			has_capitulated = no
+			NOT = { owns_state = 701 }
+		}
+		visible = {
+			date > 2013.12.31
+			OR = {
+				AND = {
+					country_exists = UKR
+					UKR = { UKR_border_claim_window = yes }
+				}
+				country_exists = NOV
+			}
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HUN_annex_karpatalja"
+			country_event = { id = hungary_karpatalja.1 days = 3 }
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+	HUN_karpatalja_ultimatum = {
+		icon = GFX_decision_border_war
+		fire_only_once = yes
+		days_remove = 15
+
+		available = {
+			date > 2013.12.31
+			country_exists = UKR
+			NOT = { has_war_with = UKR }
+			has_capitulated = no
+			701 = { is_owned_by = UKR is_controlled_by = UKR }
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HUN_karpatalja_ultimatum"
+			add_named_threat = {
+				threat = 3
+				name = HUN_karpatalja_ultimatum
+			}
+			add_state_claim = 701
+			add_opinion_modifier = {
+				target = UKR
+				modifier = imminent_danger_to_national_security
+			}
+			UKR = {
+				country_event = hungary_karpatalja.10
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = HUN_ukr_cede_tt
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			custom_effect_tooltip = HUN_ukr_refuse_tt
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				NOT = {
+					OR = {
+						has_government = fascism
+						has_government = nationalist
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = {
+					OR = {
+						UKR = { has_civil_war = yes }
+						UKR = { surrender_progress > 0.2 }
+					}
+				}
+			}
+		}
+	}
+}
+
+HUN_karpatalja_integration_category = {
+	HUN_701_return = {
+		icon = GFX_decision_hungary
+		fire_only_once = yes
+		days_remove = 120
+
+		cost = 70
+
+		visible = {
+			owns_state = 701
+			NOT = { is_in_array = { core_states = 701 } }
+		}
+
+		available = {
+			701 = { compliance > 79 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HUN_701_return"
+			add_state_core = 701
+			add_stability = -0.05
+		}
+
+		ai_will_do = {
+			base = 355
+		}
+	}
+}
