@@ -86,13 +86,15 @@ Used inside `production_bonus = { ... }` blocks.
 
 Used inside `equipment_bonus = { ... }` blocks.
 
+**A bonus is a percentage of the equipment's declared base stat, so a key the target equipment never declares — or declares as `0` — does nothing.** Parser-legal is not the same as effective: the tables below say which keys the engine accepts for a category, not which ones bite on a given archetype. `AA_Equipment` (MANPADS) declares only `reliability`, `build_cost_ic`, `supply_consumption`, `lend_lease_cost` and `air_attack`, so every other key is inert on it; `infantry_weapons_type` declares `ap_attack = 0` and `armor_value = 0`, which is no better than omitting them. Check the archetype in `common/units/equipment/` before picking a stat. `validate_mios.py` reports the dead ones as `mio-bonus-no-base-stat` / `mio-bonus-partial-base-stat`.
+
 #### All equipment
 
-| Key                |
-| ------------------ |
-| `build_cost_ic`    |
-| `reliability`      |
-| `max_organisation` |
+| Key                | Effective on                                                                                                                                                                          |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `build_cost_ic`    | everything                                                                                                                                                                            |
+| `reliability`      | everything                                                                                                                                                                            |
+| `max_organisation` | **only `cnc_equipment_type`, `convoy` and ship hulls.** No land or air archetype declares it — it is inert on infantry, armour, artillery, MANPADS, ATGM, aircraft and missiles alike |
 
 #### Air and Missiles
 
