@@ -75,7 +75,6 @@ FALSE_POSITIVE_NAMES = frozenset(
         "antarctica_is_life_support_slot_selected",
         "antarctica_is_fuel_storage_slot_selected",
         "antarctica_is_laboratory_slot_selected",
-        "antarctica_dynamic_station_matches_selected_filter",
         # 00_budget_effects.txt
         "disable_debt_rate_payments",
         "enable_debt_rate_payments",
@@ -148,6 +147,8 @@ FALSE_POSITIVE_FILES = frozenset(
         "MD_regional_triggers.txt",
         "00_scripted_effects.txt",
         "00_law_blocking_effects.txt",
+        # Gates for DLC-owned music playlists; MD ships no playlist that calls them.
+        "00_music_dlc_compatibility_triggers.txt",
     }
 )
 

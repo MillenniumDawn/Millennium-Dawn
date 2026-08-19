@@ -10,7 +10,6 @@
 
 # Seigniorage income, in-game B/week.
 @seigniorage_per_adopter = 0.0225
-@seigniorage_nonissuer_fraction = 0.009
 
 # Reserve ROI bonus: per-currency curve multiplier plus a shared per-adopter factor.
 @usd_roi_curve = 0.06
@@ -282,6 +281,8 @@ apply_currency_multipliers = {
 				has_idea = us_dollar
 				has_idea = euro
 				has_idea = chinese_yuan
+				has_idea = chinese_yuan_2
+				has_idea = chinese_yuan_3
 				has_idea = russia_rouble
 				has_idea = japanese_yen
 				has_idea = british_pound
@@ -296,13 +297,13 @@ apply_currency_multipliers = {
 # ── Seigniorage income ────────────────────────────────────────────────────────
 
 # Runs in ingame_update_setup before apply_currency_multipliers. Issuers earn from
-# how many nations hold their currency; non-issuers earn a slice of tax_gain only
-# while Expand Money Supply (seigniorage_income_modifier) is active.
-# seigniorage_base is left set for issuers: calculate_additional_income_rate in
-# 00_money_system.txt reads it and applies the (1 + modifier) multiplier.
+# how many nations hold their currency. calculate_additional_income_rate in
+# 00_money_system.txt applies the (1 + modifier) multiplier.
 calculate_seigniorage_income = {
 	set_temp_variable = { seigniorage_mod = modifier@seigniorage_income_modifier }
 	set_temp_variable = { seigniorage_base = 0 }
+	set_variable = { seigniorage_income_display = 0 }
+	set_variable = { EU_seigniorage_weekly = 0 }
 
 	if = { limit = { has_country_flag = is_usd_issuer }
 		set_temp_variable = {
@@ -325,7 +326,7 @@ calculate_seigniorage_income = {
 				multiply = seigniorage_mod
 			}
 		}
-		add_to_variable = { global.EU_seigniorage_pool = pool_base }
+		set_variable = { EU_seigniorage_weekly = pool_base }
 	}
 	else_if = { limit = { has_country_flag = is_rub_issuer }
 		set_temp_variable = {
@@ -356,20 +357,6 @@ calculate_seigniorage_income = {
 		set_temp_variable = {
 			seigniorage_base = { value = global.nlg_reserve_adoption_count  multiply = @seigniorage_per_adopter }
 		}
-	}
-	else_if = { limit = { check_variable = { seigniorage_mod > 0 } }
-		set_temp_variable = {
-			seigniorage_base = {
-				value = tax_gain
-				multiply = @seigniorage_nonissuer_fraction
-				multiply = seigniorage_mod
-			}
-		}
-		add_to_variable = { additional_income_rate = seigniorage_base }
-		set_variable = { seigniorage_income_display = seigniorage_base }
-		# Booked here, so clear it to stop calculate_additional_income_rate
-		# from counting it again.
-		set_temp_variable = { seigniorage_base = 0 }
 	}
 }
 
@@ -411,6 +398,8 @@ calculate_reserve_roi_bonus = {
 				has_idea = us_dollar
 				has_idea = euro
 				has_idea = chinese_yuan
+				has_idea = chinese_yuan_2
+				has_idea = chinese_yuan_3
 				has_idea = russia_rouble
 				has_idea = japanese_yen
 				has_idea = british_pound
@@ -428,7 +417,14 @@ calculate_reserve_roi_bonus = {
 			set_temp_variable = { tmp_adopters = global.eur_reserve_adoption_count }
 			var:global.eur_issuer = { ROOT = { apply_reserve_roi_curve = yes } }
 		}
-		else_if = { limit = { has_idea = chinese_yuan }
+		else_if = {
+			limit = {
+				OR = {
+					has_idea = chinese_yuan
+					has_idea = chinese_yuan_2
+					has_idea = chinese_yuan_3
+				}
+			}
 			set_temp_variable = { tmp_roi_mult = @cny_roi_curve }
 			set_temp_variable = { tmp_adopters = global.cny_reserve_adoption_count }
 			var:global.cny_issuer = { ROOT = { apply_reserve_roi_curve = yes } }

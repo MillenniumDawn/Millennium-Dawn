@@ -37,6 +37,7 @@ import re
 #############################
 def readfile(name):
     print("Reading file " + name + "...")
+    lines = []
     try:
         with open(name, "r") as f:
             lines = f.read().splitlines()
@@ -53,6 +54,7 @@ def readfile(name):
     tags = collections.OrderedDict()
 
     open_blocks = 0
+    temp_tags = []
     is_event_file = False
     is_focus_file = False
     is_idea_file = False
@@ -226,8 +228,11 @@ def main():
                     y = y + i.capitalize() + " "
             print(y)
             output_lines.append(" " + line + ': "' + y + '"')
-        with open(args.output, "a") as f:
-            f.writelines(str(line) + "\n" for line in output_lines)
+        try:
+            with open(args.output, "a", encoding="utf-8") as f:
+                f.writelines(str(line) + "\n" for line in output_lines)
+        except OSError as e:
+            raise SystemExit(f"Could not write file {args.output}: {e}") from e
     print(
         "Appended "
         + str(len(parsed_file[0]))

@@ -28,7 +28,7 @@ def test_names_in_file_block_scoped_and_comment_safe(tmp_path):
         "spriteTypes = {\n"
         '  spriteType = { name = "GFX_one" texturefile = "a.dds" } // a comment\n'
         "  # another comment\n"
-        '  spriteType = { name = "bare_two" texturefile = "b.dds" }\n'
+        '  spriteType = { name = bare_two texturefile = "b.dds" }\n'
         "}\n",
     )
     names = set(_names_in_file(f))

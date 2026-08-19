@@ -12,11 +12,14 @@ Two renderings come out of the same builder:
 """
 
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 from urllib.parse import quote
 
 from .comment import REPORT_MARKER
 from .models import Issue, ReportContext, Severity, ValidatorRun
+
+if TYPE_CHECKING:
+    from .baseline import BaselineStats
 
 # PR comment cap — keeps comment inside GitHub's 65 536-byte limit.
 MAX_ISSUES_COMMENT = 200
@@ -36,6 +39,7 @@ def render(
     max_visible: int = MAX_ISSUES_COMMENT,
     include_raw_logs: bool = True,
     include_validator_sections: bool = True,
+    baseline_stats: Optional["BaselineStats"] = None,
 ) -> str:
     """Render the report body.
 
@@ -43,19 +47,31 @@ def render(
     sections and raw logs are dropped in favour of a one-line pointer to the
     step summary — that's the concise PR comment. The default renders the full
     detail for the step summary.
+
+    ``baseline_stats`` (from ``baseline.classify``) adds the new-vs-existing
+    annotation: NEW/EXISTING counts in the verdict and, in the step summary,
+    a dedicated section listing new findings. ``Issue.baseline_status`` drives
+    the per-bullet NEW tag. Omit it (no baseline restored) and the report
+    renders as before.
     """
     parts: List[str] = []
     parts.append(REPORT_MARKER)
     parts.append("# Validation Report")
     parts.append("")
 
-    verdict = _render_verdict(runs, ctx.validation_scope)
+    verdict = _render_verdict(runs, ctx.validation_scope, baseline_stats)
     if verdict:
         parts.append(verdict)
         parts.append("")
 
     parts.append(_render_metadata_strip(ctx))
     parts.append("")
+
+    if baseline_stats is not None and include_validator_sections:
+        baseline_section = _render_baseline_section(baseline_stats, ctx, max_visible)
+        if baseline_section:
+            parts.append(baseline_section)
+            parts.append("")
 
     # Concise comment hides passing validators (count note only); the step
     # summary lists the full roster alongside the per-validator sections.
@@ -137,7 +153,11 @@ def _severity_icon(errors: int, warnings: int) -> str:
 # ── Verdict banner ─────────────────────────────────────────────────────────────
 
 
-def _render_verdict(runs: List[ValidatorRun], validation_scope: str = "full") -> str:
+def _render_verdict(
+    runs: List[ValidatorRun],
+    validation_scope: str = "full",
+    baseline_stats: Optional["BaselineStats"] = None,
+) -> str:
     """A GitHub alert callout giving an at-a-glance pass/fail verdict."""
     if not runs:
         return ""
@@ -145,12 +165,24 @@ def _render_verdict(runs: List[ValidatorRun], validation_scope: str = "full") ->
 
     if total_errors:
         line = f"{_plural(total_errors, 'error')} must be fixed before merge."
+        if baseline_stats is not None:
+            if baseline_stats.new_errors:
+                line += f" ({baseline_stats.new_errors} new against the main baseline.)"
+            else:
+                line += " (none new against the main baseline.)"
         if total_warnings:
             line += f" ({_plural(total_warnings, 'warning')}, advisory.)"
         return f"> [!CAUTION]\n> ❌ {line}"
 
     if total_warnings:
         line = f"{_plural(total_warnings, 'warning')} to review. None block merge."
+        if baseline_stats is not None:
+            if baseline_stats.new_warnings:
+                line += (
+                    f" ({baseline_stats.new_warnings} new against the main baseline.)"
+                )
+            else:
+                line += " (none new against the main baseline.)"
         return f"> [!WARNING]\n> ⚠️ {line}"
 
     tail = (
@@ -223,6 +255,45 @@ def _render_summary_table(runs: List[ValidatorRun], show_passing: bool = True) -
 
 
 # ── Issues section ─────────────────────────────────────────────────────────────
+
+
+def _render_baseline_section(
+    stats: "BaselineStats", ctx: ReportContext, max_visible: int
+) -> str:
+    """The step-summary 'New findings vs main baseline' section."""
+    lines: List[str] = ["## New findings vs main baseline", ""]
+
+    if not stats.new_issues:
+        lines.append("✅ No new findings against the main baseline.")
+        if stats.unclassified:
+            lines.append(
+                f"_{stats.unclassified} finding(s) could not be compared "
+                "(no file/line)._"
+            )
+        return "\n".join(lines)
+
+    label = _count_label(stats.new_errors, stats.new_warnings)
+    lines.append(f"{label} not present on the latest main run:")
+    lines.append("")
+    sorted_new = sorted(
+        stats.new_issues,
+        key=lambda i: (
+            0 if i.severity == Severity.ERROR else 1,
+            i.file,
+            i.line,
+            i.message,
+        ),
+    )
+    shown = sorted_new[:max_visible]
+    lines.extend(_render_bullet(i, ctx) for i in shown)
+    overflow = len(sorted_new) - len(shown)
+    if overflow:
+        lines.append(f"_…and {overflow:,} more new findings._")
+    if stats.unclassified:
+        lines.append(
+            f"_{stats.unclassified} finding(s) could not be compared (no file/line)._"
+        )
+    return "\n".join(lines)
 
 
 def _render_details_pointer(ctx: ReportContext) -> str:
@@ -366,11 +437,12 @@ def _file_ref(issue: Issue, ctx: ReportContext) -> str:
 
 def _render_bullet(issue: Issue, ctx: ReportContext) -> str:
     marker = "❌" if issue.severity == Severity.ERROR else "⚠️"
+    new_tag = " **NEW**" if issue.baseline_status == "new" else ""
     also = f" _(also: {', '.join(issue.detected_by)})_" if issue.detected_by else ""
 
     if issue.file:
-        return f"- {marker} {_file_ref(issue, ctx)} — {issue.message}{also}"
-    return f"- {marker} {issue.message}{also}"
+        return f"- {marker}{new_tag} {_file_ref(issue, ctx)} — {issue.message}{also}"
+    return f"- {marker}{new_tag} {issue.message}{also}"
 
 
 # ── Raw logs ───────────────────────────────────────────────────────────────────

@@ -55,9 +55,9 @@ def test_count_event_ids_in_file_returns_only_present_ids(tmp_path):
     tracked = frozenset(["test.1", "test.999"])
     result = count_event_ids_in_file((str(fpath), tracked))
     assert "test.1" in result, "Event ID present in file must be in result"
-    assert "test.999" not in result, (
-        "Absent ID must NOT be in result — caller pre-initializes zeros"
-    )
+    assert (
+        "test.999" not in result
+    ), "Absent ID must NOT be in result — caller pre-initializes zeros"
 
 
 def test_count_event_ids_in_file_dotted_id_not_inflated_by_loc_keys(tmp_path):
@@ -568,9 +568,14 @@ def test_strip_comments_removes_trailing_hash_comment():
     assert "GFX_commented" not in out
 
 
-def test_parse_loc_refs_ignores_hash_comments(tmp_path):
+def _loc_ref_names(loc, tmp_path):
+    """Sprite names from _parse_loc_refs, dropping its (file, line) columns."""
     from validate_gfx_references import _parse_loc_refs
 
+    return [name for name, _file, _line in _parse_loc_refs((str(loc), str(tmp_path)))]
+
+
+def test_parse_loc_refs_ignores_hash_comments(tmp_path):
     loc = tmp_path / "test_l_english.yml"
     loc.write_text(
         "l_english:\n"
@@ -579,41 +584,49 @@ def test_parse_loc_refs_ignores_hash_comments(tmp_path):
         encoding="utf-8",
     )
 
-    assert _parse_loc_refs((str(loc), str(tmp_path))) == ["GFX_live"]
+    assert _loc_ref_names(loc, tmp_path) == ["GFX_live"]
 
 
 def test_parse_loc_refs_adds_gfx_prefix(tmp_path):
     """`£name` (no GFX_ prefix in the loc file) resolves to sprite GFX_name."""
-    from validate_gfx_references import _parse_loc_refs
-
     loc = tmp_path / "test_l_english.yml"
     loc.write_text(' party: "£party_icon"\n', encoding="utf-8")
 
-    assert _parse_loc_refs((str(loc), str(tmp_path))) == ["GFX_party_icon"]
+    assert _loc_ref_names(loc, tmp_path) == ["GFX_party_icon"]
 
 
 def test_parse_loc_refs_keeps_dotted_and_hyphenated_names(tmp_path):
     # Regression: _LOC_SPRITE_REF used to stop at `.`/`-`, truncating names like
     # GFX_CTC.5 and GFX_Polizistin-Kiesewetter to GFX_CTC / GFX_Polizistin.
-    from validate_gfx_references import _parse_loc_refs
-
     loc = tmp_path / "test_l_english.yml"
     loc.write_text(
         ' a: "£GFX_CTC.5"\n b: "£GFX_Polizistin-Kiesewetter"\n',
         encoding="utf-8",
     )
 
-    assert _parse_loc_refs((str(loc), str(tmp_path))) == [
+    assert _loc_ref_names(loc, tmp_path) == [
         "GFX_CTC.5",
         "GFX_Polizistin-Kiesewetter",
     ]
 
 
-def test_parse_loc_refs_strips_sentence_final_period(tmp_path):
-    # A trailing `.` ending a sentence must not be absorbed into the name.
+def test_parse_loc_refs_reports_the_line_of_each_ref(tmp_path):
+    # The £ref case check anchors its finding at the referencing line.
     from validate_gfx_references import _parse_loc_refs
 
     loc = tmp_path / "test_l_english.yml"
+    loc.write_text(
+        'l_english:\n a: "£GFX_first"\n b: "£GFX_second"\n', encoding="utf-8"
+    )
+
+    assert [
+        (name, line) for name, _file, line in _parse_loc_refs((str(loc), str(tmp_path)))
+    ] == [("GFX_first", 2), ("GFX_second", 3)]
+
+
+def test_parse_loc_refs_strips_sentence_final_period(tmp_path):
+    # A trailing `.` ending a sentence must not be absorbed into the name.
+    loc = tmp_path / "test_l_english.yml"
     loc.write_text(' a: "Costs £command_power."\n', encoding="utf-8")
 
-    assert _parse_loc_refs((str(loc), str(tmp_path))) == ["GFX_command_power"]
+    assert _loc_ref_names(loc, tmp_path) == ["GFX_command_power"]

@@ -30,19 +30,33 @@ is_major_company = {
 	}
 }
 
-has_support_of_p5 = {
-	custom_trigger_tooltip = {
-		tooltip = security_council_support_tt
-		all_of_scopes = {
-			array = global.p5_sc_members
-			has_country_flag = Recognised_@FROM
-		}
-	}
-}
-
 has_passed_sc_vote = {
 	NOT = { has_global_flag = security_council_veto }
-	check_variable = { global.security_council_vote_yes^num > 8 }
+	check_variable = { var = global.security_council_vote_yes^num value = global.un_sc_required_yes compare = greater_than_or_equals }
+}
+
+is_eligible_current_sc_voter = {
+	exists = yes
+	NOT = { check_variable = { global.current_sc_vote_nation = THIS.id } }
+}
+
+can_seek_permanent_unsc_seat = {
+	has_dynamic_modifier = { modifier = united_nations_member }
+	NOT = { has_idea = p5_member }
+	NOT = { has_idea = lacks_international_recognition }
+	NOT = { has_idea = non_state_actor }
+}
+
+can_campaign_for_permanent_unsc_seat = {
+	OR = {
+		has_completed_focus = ALG_seek_security_council_seat
+		has_completed_focus = KOR_seek_security_council_seat
+		has_completed_focus = BRA_a_global_power
+		has_completed_focus = RAJ_seek_permanent_unsc_seat
+		has_completed_focus = JAP_seek_permanent_unsc_seat
+		has_completed_focus = GER_seek_permanent_unsc_seat
+	}
+	can_seek_permanent_unsc_seat = yes
 }
 
 is_on_un_sec_council = {
@@ -55,7 +69,7 @@ is_on_un_sec_council = {
 un_sc_voting_result_trigger = {
 	custom_trigger_tooltip = {
 		tooltip = ongoing_sc_vote_tt
-		check_variable = { global.security_council_vote_yes^num > 8 }
+		check_variable = { var = global.security_council_vote_yes^num value = global.un_sc_required_yes compare = greater_than_or_equals }
 		NOT = { has_global_flag = security_council_veto }
 	}
 }

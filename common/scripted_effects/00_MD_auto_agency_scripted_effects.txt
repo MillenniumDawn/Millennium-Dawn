@@ -115,12 +115,15 @@ MD_auto_agency_find_first_valid = {
 			check_variable = { agency_queue^num > 0 }
 		}
 
-		for_each_loop = {
-			array = agency_queue
-			value = v
+		# Walk the queue top-down (index 0 first) so the first selectable item
+		# wins; for_each_loop iterates arrays back-to-front, which would pick
+		# the bottom of the queue instead.
+		for_loop_effect = {
+			end = agency_queue^num
+			value = v2
 			break = MD_auto_agency_loop_break
-			index = i
 
+			set_temp_variable = { v = agency_queue^v2 }
 			if = {
 				limit = {
 					MD_auto_agency_v_index_valid = yes
@@ -128,7 +131,7 @@ MD_auto_agency_find_first_valid = {
 				}
 
 				set_variable = { agency_selected_upgrade = v }
-				set_temp_variable = { idx_to_remove = i }
+				set_temp_variable = { idx_to_remove = v2 }
 				set_temp_variable = { MD_auto_agency_loop_break = 1 }
 			}
 		}
@@ -236,9 +239,31 @@ MD_auto_agency_get_upgrade_time = {
 	round_variable = agency_upgrade_time_days
 }
 
+MD_auto_agency_queue_push_front = {
+	# Caller must `set_temp_variable = { push_front_val = N }` before invoking.
+	add_to_array = { agency_queue = push_front_val }
+	set_temp_variable = { last = agency_queue^num }
+	subtract_from_temp_variable = { last = 1 }
+
+	for_loop_effect = {
+		start = last
+		end = 0
+		value = v2
+		compare = greater_than
+		add = -1
+
+		set_temp_variable = { prev = v2 }
+		subtract_from_temp_variable = { prev = 1 }
+		set_variable = { agency_queue^v2 = agency_queue^prev }
+	}
+
+	set_variable = { agency_queue^0 = push_front_val }
+}
+
 MD_auto_agency_reconcile_state = {
 	# Stale selection recovery: mission gone, no native upgrade running, yet a
-	# selection remains. Push it back onto the queue so it gets re-evaluated.
+	# selection remains. Re-queue it at the front so it resumes before anything
+	# already queued.
 	if = {
 		limit = {
 			NOT = { has_active_mission = spy_agency_upgrade_in_progress }
@@ -246,9 +271,9 @@ MD_auto_agency_reconcile_state = {
 			NOT = { check_variable = { agency_selected_upgrade = -1 } }
 		}
 
-		set_temp_variable = { interrupted_selected_upgrade = agency_selected_upgrade }
+		set_temp_variable = { push_front_val = agency_selected_upgrade }
 		set_variable = { agency_selected_upgrade = -1 }
-		add_to_array = { agency_queue = interrupted_selected_upgrade }
+		MD_auto_agency_queue_push_front = yes
 		MD_auto_agency_verify_queue = yes
 	}
 }

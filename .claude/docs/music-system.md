@@ -33,7 +33,7 @@ Key definition files for MD content:
 | `music/Middle East/MD_middle_eastern_music.asset` | Middle Eastern regional music (calm/tension/war + jihad nasheeds)                           |
 | `music/UKR-RUS war/UKR_RUS_war_music.asset`       | Ukraine-Russia war station (UKR and SOV/separatist tracks)                                  |
 | `music/Synthwave/MD_synthwave.asset`              | Synthwave station tracks                                                                    |
-| `music/music.asset`                               | Vanilla HOI4 soundtrack definitions                                                         |
+| `music/music.asset`                               | Vanilla base-game soundtrack definitions                                                     |
 
 ## Playlist (`.txt` files)
 
@@ -79,9 +79,17 @@ Some playlists use fake `song` entries with descriptive names (e.g., `"--ASIAN P
 | `MD_ukrwar_music`    | `UKR-RUS war/MD_ukraine_war_music.txt`               | `UKR-RUS war/UKR_RUS_war_music.asset`                                     | Ukraine and Russia/separatist war tracks, triggered by `original_tag` + `has_war_with` |
 | `MD_synthwave_music` | `Synthwave/MD_synthwave.txt`                         | `Synthwave/MD_synthwave.asset`                                            | Always-on synthwave ambient music (equal weight)                                       |
 | `MD_fm_habibi`       | `MD_fm_habibi.txt`                                   | —                                                                         | Israeli music (currently commented out / disabled)                                     |
-| `base_music`         | `_songs.txt`, `dod_songs.txt`, `got_songs.txt`, etc. | `music.asset`, `music_bba.asset`                                          | Vanilla HOI4 soundtrack (DLC-gated)                                                    |
+| `base_music`         | `_songs.txt` and integrated-DLC playlists           | `music.asset` and game/integrated-DLC assets                               | Vanilla base and integrated-DLC soundtrack                                             |
 
 All stations play simultaneously; the game mixes or crossfades between them. Regional stations use `original_tag = TAG` triggers to target specific countries.
+
+### Paid DLC playlists
+
+Do not copy paid-DLC playlist or asset files into MD under their vanilla filenames. Mod files load regardless of DLC ownership, so an override references unavailable song assets and station GUI components for players who do not own that DLC. The engine resolves those references before evaluating `chance`, so a `has_dlc` modifier does not prevent the errors.
+
+Leave paid-DLC music files to the game. Their playlists and assets then load only for owners, while players without the DLC receive no missing-music errors. MD may adapt playlists from integrated DLC because those assets are available to every player.
+
+If a paid-DLC playlist references vanilla scripted triggers or focus IDs removed by an MD `replace_path`, preserve those identifiers in an MD compatibility file. Scripted triggers should retain their vanilla conditions; focus IDs should be registered as unattached shared focuses so they cannot alter any playable tree.
 
 ## Adding a new track
 
@@ -104,7 +112,7 @@ Add to the relevant `.txt` playlist. Choose station and triggers by mood and sco
 - **Regional** (`MD_regional_music.txt`) — country-specific regional music (Asian, Middle Eastern)
 - **UKR-RUS war** (`UKR-RUS war/MD_ukraine_war_music.txt`) — Ukraine/Russia conflict tracks
 - **Synthwave** (`Synthwave/MD_synthwave.txt`) — always-on ambient synthwave
-- **Vanilla base** (`_songs.txt` / `base_music`) — vanilla tracks MD reuses
+- **Vanilla base** (`_songs.txt` / `base_music`) — base-game or integrated-DLC tracks MD reuses
 
 Example — general peace track:
 

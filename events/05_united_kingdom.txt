@@ -568,7 +568,7 @@ country_event = {
 		name = ENG_military.031.a
 		log = "[GetDateText]: [This.GetName]: ENG_military.031.a executed"
 		hidden_effect = {
-			set_country_flag = mars_city_building_completed
+			set_country_flag = ENG_mars_city_building_completed
 			country_event = { id = ENG_military.032 days = 360 random_hours = 8192 }
 		}
 	}
@@ -1187,6 +1187,224 @@ country_event = {
 
 	option = {
 		name = ENG_military.047.a
+	}
+}
+
+# AUKUS
+
+country_event = {
+	id = ENG_military.048
+	title = ENG_military.048.t
+	desc = ENG_military.048.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.048.a # Approve the transfer
+		log = "[GetDateText]: [This.GetName]: ENG_military.048.a executed"
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		add_relation_modifier = {
+			target = ENG
+			modifier = generic_increased_military_support
+		}
+		if = {
+			limit = { country_exists = AST }
+			AST = { country_event = { id = ENG_military.049 days = 5 } }
+		}
+		else = {
+			ENG = { country_event = ENG_military.053 }
+		}
+
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 2
+				CHI = { has_added_tension_amount > 19.999 }
+			}
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value < 50
+				}
+			}
+		}
+	}
+
+	option = {
+		name = ENG_military.048.b # Refuse
+		log = "[GetDateText]: [This.GetName]: ENG_military.048.b executed"
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		add_political_power = 10
+		ENG = { country_event = ENG_military.052 }
+
+		ai_chance = { base = 10 }
+	}
+}
+
+country_event = {
+	id = ENG_military.049
+	title = ENG_military.049.t
+	desc = ENG_military.049.d
+	picture = GFX_AST_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.049.a # Cancel the conventional order
+		log = "[GetDateText]: [This.GetName]: ENG_military.049.a executed"
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		set_global_flag = GLOBAL_aukus_formed
+		add_to_tech_sharing_group = AUKUS_Tech_Share
+		complete_special_project = sp:sp_medium_naval_nuclear_engines
+		if = {
+			limit = { NOT = { has_idea = AST_aukus_submarine_programme } }
+			add_ideas = AST_aukus_submarine_programme
+		}
+		create_equipment_variant = {
+			name = "SSN-AUKUS"
+			icon = "gfx/interface/technologies/ENG/NAV/AUKUS.dds"
+			type = attack_submarine_hull_5
+			parent_version = 5
+			modules = {
+				fixed_ship_engine_slot = module_sub_fut_reactor_power
+				fixed_ship_radar_slot = module_sonar_7
+				fixed_ship_auxillary_slot_3 = module_naval_sub_vls_cells_16
+				fixed_ship_auxillary_slot_2 = module_sub_esm_4
+				fixed_ship_auxillary_slot_1 = module_torpedoes_5
+				fixed_ship_auxillary_slot = module_naval_sub_vls_cells_16
+				fixed_ship_battery_slot = module_anti_ship_torpedoes_5
+				fixed_ship_missile_ammo_slot = module_naval_sub_ammo_land_attack_4
+			}
+			design_team = mio:AST_asc_naval_manufacturer
+		}
+		add_opinion_modifier = { target = ENG modifier = aukus_partnership }
+		add_opinion_modifier = { target = USA modifier = aukus_partnership }
+		ENG = {
+			add_to_tech_sharing_group = AUKUS_Tech_Share
+			add_opinion_modifier = { target = AST modifier = aukus_partnership }
+			add_opinion_modifier = { target = USA modifier = aukus_partnership }
+			country_event = ENG_military.050
+			set_temp_variable = { treasury_change = 8 }
+			modify_treasury_effect = yes
+		}
+		USA = {
+			add_to_tech_sharing_group = AUKUS_Tech_Share
+			add_opinion_modifier = { target = AST modifier = aukus_partnership }
+			add_opinion_modifier = { target = ENG modifier = aukus_partnership }
+			set_temp_variable = { treasury_change = 12 }
+			modify_treasury_effect = yes
+		}
+		if = {
+			limit = { country_exists = FRA }
+			FRA = { country_event = { id = ENG_military.051 days = 3 } }
+		}
+		every_country = {
+			limit = { is_ai = no }
+			news_event = { id = ENG_military.054 days = 1 }
+		}
+		newline = yes
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
+
+		ai_chance = {
+			base = 70
+			modifier = {
+				factor = 2
+				CHI = { has_added_tension_amount > 19.999 }
+			}
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value < 50
+				}
+			}
+		}
+	}
+
+	option = {
+		name = ENG_military.049.b # Keep the existing order
+		log = "[GetDateText]: [This.GetName]: ENG_military.049.b executed"
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		add_political_power = 15
+		ENG = { country_event = ENG_military.053 }
+
+		ai_chance = { base = 20 }
+	}
+}
+
+country_event = {
+	id = ENG_military.050
+	title = ENG_military.050.t
+	desc = ENG_military.050.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.050.a
+	}
+}
+
+country_event = {
+	id = ENG_military.051
+	title = ENG_military.051.t
+	desc = ENG_military.051.d
+	picture = GFX_FRA_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.051.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.051.a executed"
+		add_political_power = 25
+		add_opinion_modifier = { target = AST modifier = FRA_cancelled_submarine_contract }
+		add_opinion_modifier = { target = ENG modifier = diplomatic_insults }
+		add_opinion_modifier = { target = USA modifier = diplomatic_insults }
+		set_temp_variable = { temp_opinion = -15 }
+		change_maritime_industry_opinion = yes
+	}
+}
+
+country_event = {
+	id = ENG_military.052
+	title = ENG_military.052.t
+	desc = ENG_military.052.d
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.052.a
+	}
+}
+
+country_event = {
+	id = ENG_military.053
+	title = ENG_military.053.t
+	desc = ENG_military.053.d
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.053.a
+	}
+}
+
+news_event = {
+	id = ENG_military.054
+	title = ENG_military.054.t
+	desc = ENG_military.054.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = ENG_military.054.a
 	}
 }
 

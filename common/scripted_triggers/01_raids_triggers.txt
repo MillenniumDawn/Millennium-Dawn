@@ -2,84 +2,53 @@
 # availability trigger so far-off neutral targets short-circuit here and never reach ai_will_do
 # scoring. is_ai = no leaves the player path (PP/opinion/doctrine) completely unchanged.
 raid_ai_target_relevant = {
-	OR = {
-		is_ai = no
-		has_war_with = FROM
-		has_wargoal_against = FROM
-		is_justifying_wargoal_against = FROM
-		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
-		is_in_array = { array = potential_and_current_enemies value = FROM }
+	hidden_trigger = {
+		OR = {
+			is_ai = no
+			has_war_with = FROM
+			has_country_flag = promised_retaliation_against@FROM
+			is_in_array = { array = potential_and_current_enemies value = FROM }
+		}
 	}
 }
 
 # Drone raid availability — wartime/wargoal/retaliation/PP>300
 # Used by drone raids that require active hostility (airfield, rocket site, swarm)
-drone_raid_available_hostile = {
+# Shared available base — ai_target_relevant + war/doctrine bypass + FROM eligibility
+raid_available_base = {
 	raid_ai_target_relevant = yes
+	raid_war_or_doctrine_bypass = yes
+	raid_target_eligible_from = yes
+}
+
+drone_raid_available_hostile = {
+	set_temp_variable = { cost = 300 }
+	raid_available_base = yes
 	OR = {
-		has_war = yes
-		AND = {
-			NOT = { has_idea = intervention_local_security }
-			NOT = { has_idea = intervention_isolation }
-		}
-		has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
-	}
-	FROM = {
-		NOT = { is_subject_of = ROOT }
-		NOT = { has_non_aggression_pact_with = ROOT }
-		NOT = { original_tag = ZOM }
-		NOT = { original_tag = ALN }
-	}
-	OR = {
-		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
-		has_war_with = FROM
+		raid_can_launch = yes
 		has_wargoal_against = FROM
-		has_political_power > 300
 	}
 }
 
-# Drone raid availability — grey-zone ops (PP>99 or wartime)
-# Used by drone raids against civilian infrastructure (power grid)
-drone_raid_available_grey_zone = {
-	raid_ai_target_relevant = yes
-	OR = {
-		has_war = yes
-		AND = {
-			NOT = { has_idea = intervention_local_security }
-			NOT = { has_idea = intervention_isolation }
-		}
-		has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
-	}
-	FROM = {
-		NOT = { is_subject_of = ROOT }
-		NOT = { has_non_aggression_pact_with = ROOT }
-		NOT = { original_tag = ZOM }
-		NOT = { original_tag = ALN }
-	}
-	OR = {
-		has_political_power > 99
-		has_war_with = FROM
-		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
-	}
+# Drone/air raid availability — grey-zone ops (PP>99 or wartime)
+# Used by drone/ai raids against civilian infrastructure (power grid, resources)
+raid_available_grey_zone = {
+	raid_available_base = yes
+	set_temp_variable = { cost = 99 }
+	raid_can_launch = yes
 }
 
 # Raid target basic eligibility — not a subject and no NAP
 # Used as a building block in available blocks that have custom OR conditions
 raid_target_eligible = {
 	raid_ai_target_relevant = yes
-	OR = {
-		has_war = yes
-		AND = {
-			NOT = { has_idea = intervention_local_security }
-			NOT = { has_idea = intervention_isolation }
-		}
-		has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
-	}
+	raid_war_or_doctrine_bypass = yes
+}
+raid_target_eligible_from = {
 	FROM = {
 		NOT = { is_subject_of = ROOT }
 		NOT = { has_non_aggression_pact_with = ROOT }
-		NOT = { original_tag = ZOM }
-		NOT = { original_tag = ALN }
+		hidden_trigger = { MD_special_countries = no }
 	}
 }
 
@@ -214,6 +183,32 @@ raid_intervention_doctrine_reach_block = {
 			NOT = { is_neighbor_of = FROM }
 			NOT = { has_war_with = FROM }
 		}
+	}
+}
+
+# Shared war/doctrine bypass — has_war = yes or rule_raid_doctrine_reach with local_security/isolation
+raid_war_or_doctrine_bypass = {
+	OR = {
+		has_war = yes
+		if = {
+			limit = {
+				has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
+			}
+			NOT = { has_idea = intervention_local_security }
+			NOT = { has_idea = intervention_isolation }
+		}
+		else = { always = no }
+	}
+}
+
+# Raid PP check — discounted by raid_cost_factor (ISR doctrine -0.25 → 25% off)
+# Caller must set cost first: set_temp_variable = { cost = 99 } then raid_can_launch = yes
+raid_can_launch = {
+	set_temp_variable = { raid_required_pp = { value = cost  multiply = { value = 1  add = modifier@raid_cost_factor } } }
+	OR = {
+		has_war_with = FROM
+		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+		has_political_power > raid_required_pp
 	}
 }
 

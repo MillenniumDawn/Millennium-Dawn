@@ -24,7 +24,7 @@ from validate_gfx_references import (
     _vanilla_gfx_files,
 )
 
-_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
+_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*(?:"([^"]+)"|([^\s}]+))')
 
 
 def _parse_names(raw: str) -> List[str]:
@@ -38,7 +38,7 @@ def _parse_names(raw: str) -> List[str]:
             block = text[m.end() : line_end if line_end != -1 else m.end() + 200]
         nm = _NAME_IN_BLOCK.search(block)
         if nm:
-            names.append(nm.group(1))
+            names.append(nm.group(1) or nm.group(2))
     return names
 
 
@@ -80,8 +80,8 @@ def build_sprite_index(
         include_vanilla: when True, also scan the vanilla HOI4 install (if
             discoverable). Event pictures must be MD-defined, so the event check
             passes False — that keeps it accurate in CI, where vanilla is absent.
-            Focus/idea icons may legitimately reuse vanilla sprites, so those
-            keep the default.
+            Focus/idea/decision icons may legitimately reuse vanilla sprites, so
+            those keep the default.
     """
     gfx_files: List[str] = glob.glob(
         os.path.join(mod_path, "interface", "**", "*.gfx"), recursive=True

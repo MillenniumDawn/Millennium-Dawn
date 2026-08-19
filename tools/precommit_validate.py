@@ -114,6 +114,20 @@ _REGISTRY = [
         [("common/ai_strategy/", TXT), ("common/ai_templates/", TXT)],
     ),
     _Spec("validate_ai_navy", [("common/ai_navy/", TXT), ("common/units/", TXT)]),
+    _Spec(
+        "validate_characters",
+        [
+            ("common/characters/", TXT),
+            ("common/unit_leader/", TXT),
+            # Sources of create_corps_commander and friends.
+            ("common/national_focus/", TXT),
+            ("common/decisions/", TXT),
+            ("common/scripted_effects/", TXT),
+            ("common/on_actions/", TXT),
+            ("events/", TXT),
+            ("history/countries/", TXT),
+        ],
+    ),
     _Spec("validate_ai_equipment", [("common/ai_equipment/", TXT)], strict=False),
     _Spec(
         "validate_agency_upgrades",
@@ -138,10 +152,16 @@ _REGISTRY = [
             ("localisation/english/", YML),
         ],
     ),
-    _Spec("validate_events", [("events/", TXT)]),
+    _Spec(
+        "validate_events",
+        [("common/", TXT), ("events/", TXT), ("history/", TXT)],
+    ),
     _Spec(
         "validate_mios",
-        [("common/military_industrial_organization/organizations/", TXT)],
+        [
+            ("common/military_industrial_organization/organizations/", TXT),
+            ("localisation/english/", YML),
+        ],
     ),
 ]
 
