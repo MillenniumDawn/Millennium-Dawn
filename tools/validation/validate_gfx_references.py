@@ -1202,7 +1202,7 @@ class Validator(BaseValidator):
 
         issues = [
             (
-                f"Sprite reference '£{sprite[len('GFX_'):]}' matches no sprite —"
+                f"Sprite reference '£{sprite[len('GFX_') :]}' matches no sprite —"
                 f" defined as '{canonical}' (works on Windows, fails on Linux)",
                 rel,
                 line,
@@ -1257,8 +1257,7 @@ class Validator(BaseValidator):
         # MD art, so it is never an orphan to archive.
         if not self._vanilla_defined:
             self.log(
-                "  No vanilla sprite names loaded"
-                " — vanilla-override exemption disabled"
+                "  No vanilla sprite names loaded — vanilla-override exemption disabled"
             )
 
         def _is_engine_resolved_icon(name: str) -> bool:
