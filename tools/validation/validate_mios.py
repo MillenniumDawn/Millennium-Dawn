@@ -571,9 +571,17 @@ class Validator(BaseValidator):
         scope: Dict[str, FrozenSet[str]],
         rel: str,
         line_of,
+        *,
+        allow_partial: bool = False,
     ):
         """Flag every stat in one equipment_bonus block that no equipment in
-        *scope* declares a base for."""
+        *scope* declares a base for.
+
+        With *allow_partial* a stat that reaches only part of the scope is
+        accepted and just a wholly dead one is reported, which is the shape an
+        ``initial_trait`` has no way to fix (see
+        :meth:`_check_org_equipment_bonus`).
+        """
         for m in BONUS_STAT_RE.finditer(inner):
             stat = m.group(1)
             if stat in NON_STAT_BONUS_KEYS or stat in ZERO_BASE_EXEMPT_STATS:
@@ -591,9 +599,9 @@ class Validator(BaseValidator):
                     rel,
                     line,
                 )
-            else:
+            elif not allow_partial:
                 live = sorted(set(scope) - set(dead))
-                self.add_warning(
+                self.add_error(
                     "mio-bonus-partial-base-stat",
                     f"equipment_bonus '{stat}' is inert on "
                     f"{', '.join(dead)} (no base value); it only applies to "
@@ -613,9 +621,13 @@ class Validator(BaseValidator):
         org_types = self._org_equipment_types(org_id, body)
         if not org_types:
             return
-        for start, inner in _sub_blocks(body, "initial_trait") + _sub_blocks(
-            body, "trait"
-        ):
+        # An org has exactly one initial_trait, it cannot be split, and a
+        # limit_to_equipment_type narrowing it would restrict its
+        # production_bonus too, so a stat reaching only part of the roster is
+        # unfixable there and only a wholly dead one is reported.
+        blocks = [(True, b) for b in _sub_blocks(body, "initial_trait")]
+        blocks += [(False, b) for b in _sub_blocks(body, "trait")]
+        for is_initial, (start, inner) in blocks:
             trait_line = body_offset + body.count("\n", 0, start) + 1
             limits = _sub_blocks(inner, "limit_to_equipment_type")
             tokens = (
@@ -632,6 +644,7 @@ class Validator(BaseValidator):
                     scope,
                     rel,
                     lambda pos, o=offset, b=bonus: o + b.count("\n", 0, pos) + 1,
+                    allow_partial=is_initial,
                 )
 
     def _check_nested_equipment_bonus(

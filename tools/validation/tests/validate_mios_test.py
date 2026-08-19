@@ -330,8 +330,40 @@ def test_partial_coverage_is_its_own_category(tmp_path):
     )
     v = _run_org_check(tmp_path, body)
     assert [i.category for i in v._issues] == ["mio-bonus-partial-base-stat"]
+    assert [i.severity for i in v._issues] == ["error"]
     assert "AA_Equipment" in v._issues[0].message
     assert "cnc_equipment_type" in v._issues[0].message
+
+
+def test_initial_trait_partial_coverage_is_accepted(tmp_path):
+    """An org has one initial_trait and cannot split it, and a limit narrowing
+    it would restrict its production_bonus too, so a stat reaching only part of
+    the roster is unfixable there and must not be reported."""
+    body = (
+        "\tequipment_type = {\n"
+        "\t\tAA_Equipment\n"
+        "\t\tcnc_equipment_type\n"
+        "\t}\n"
+        "\tinitial_trait = {\n"
+        "\t\tequipment_bonus = { max_organisation = 0.10 }\n"
+        "\t}\n"
+    )
+    assert _run_org_check(tmp_path, body)._issues == []
+
+
+def test_initial_trait_still_reports_a_wholly_dead_bonus(tmp_path):
+    """The exemption covers partial coverage only: a stat no equipment in the
+    org declares is still a no-op the author can simply drop."""
+    body = (
+        "\tequipment_type = {\n"
+        "\t\tAA_Equipment\n"
+        "\t}\n"
+        "\tinitial_trait = {\n"
+        "\t\tequipment_bonus = { max_organisation = 0.10 }\n"
+        "\t}\n"
+    )
+    v = _run_org_check(tmp_path, body)
+    assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
 
 
 def test_include_supplies_the_equipment_type(tmp_path):
