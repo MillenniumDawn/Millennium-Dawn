@@ -2,32 +2,30 @@
 
 ## Table of Content
 
-- [Ace](#ace)
-- [Building](#building)
-- [Character](#character)
-- [Country](#country)
-- [Faction](#faction)
-- [IndustrialOrg](#industrialorg)
-- [LocalizationEnvironment](#localizationenvironment)
-- [Operation](#operation)
-- [Province](#province)
-- [PurchaseContract](#purchasecontract)
-- [Scope](#scope)
-- [SpecialProject](#specialproject)
-- [State](#state)
-- [Terrain](#terrain)
-- [UnitLeader](#unitleader)
+* [Ace](#ace)
+* [Building](#building)
+* [Character](#character)
+* [Country](#country)
+* [Faction](#faction)
+* [IndustrialOrg](#industrialorg)
+* [LocalizationEnvironment](#localizationenvironment)
+* [Operation](#operation)
+* [Province](#province)
+* [PurchaseContract](#purchasecontract)
+* [Scope](#scope)
+* [SpecialProject](#specialproject)
+* [State](#state)
+* [Terrain](#terrain)
+* [UnitLeader](#unitleader)
 
 ## Ace
 
 ### Promotions
-
 **Owner**
 
 Gets the owner country of the ace.
 
 ### Properties
-
 **GetCallsign**
 
 Gets the callsign of the ace.
@@ -103,9 +101,7 @@ Gets the name of the region of the mission the ace is on.
 ## Building
 
 ### Promotions
-
 ### Properties
-
 **GetName**
 
 Gets the name of the building.
@@ -113,13 +109,11 @@ Gets the name of the building.
 ## Character
 
 ### Promotions
-
 **Owner**
 
 Gets the owner country of the character.
 
 ### Properties
-
 **GetSheHeCap**
 
 Gets the pronoun for the character with an initial capital letter.
@@ -175,7 +169,6 @@ Gets the pronoun for the character with an initial capital letter.
 ## Country
 
 ### Promotions
-
 **OriginalCapital**
 
 Gets the original capital state of the current country.
@@ -193,7 +186,6 @@ Gets the overlord country of the current country.
 Gets the faction leader country of the current country.
 
 ### Properties
-
 **GetLeader**
 
 Gets the name of the current country's leader.
@@ -433,13 +425,11 @@ Gets the old name of the current country.
 ## Faction
 
 ### Promotions
-
 **Leader**
 
 Gets the leader of the faction
 
 ### Properties
-
 **GetName**
 
 Gets the name of the faction.
@@ -447,13 +437,11 @@ Gets the name of the faction.
 ## IndustrialOrg
 
 ### Promotions
-
 **Owner**
 
 Gets the owner country of the industrial organisation
 
 ### Properties
-
 **GetName**
 
 Gets the name of the industrial organisation
@@ -461,7 +449,6 @@ Gets the name of the industrial organisation
 ## LocalizationEnvironment
 
 ### Promotions
-
 **Faction**
 
 Gets the faction in the localization environment.
@@ -479,11 +466,9 @@ Gets the province in the localization environment.
 Gets the terrain in the localization environment.
 
 ### Properties
-
 ## Operation
 
 ### Promotions
-
 **Target**
 
 Gets the target country of the operation.
@@ -509,7 +494,6 @@ Gets the second operative of the operation.
 Gets the fourth operative of the operation.
 
 ### Properties
-
 **GetName**
 
 Gets the name of the operation.
@@ -517,7 +501,6 @@ Gets the name of the operation.
 ## Province
 
 ### Promotions
-
 **Controller**
 
 Gets the controlling country of the province
@@ -527,7 +510,6 @@ Gets the controlling country of the province
 Gets the terrain of the province.
 
 ### Properties
-
 **GetName**
 
 Gets the name of the province.
@@ -535,7 +517,6 @@ Gets the name of the province.
 ## PurchaseContract
 
 ### Promotions
-
 **Buyer**
 
 Gets the buyer country of the purchase contract.
@@ -545,7 +526,6 @@ Gets the buyer country of the purchase contract.
 Gets the seller country of the purchase contract.
 
 ### Properties
-
 **GetDeliveredPayment**
 
 Gets the delivered payment of the purchase contract.
@@ -553,7 +533,6 @@ Gets the delivered payment of the purchase contract.
 ## Scope
 
 ### Promotions
-
 **Player**
 
 Gets the player country.
@@ -619,7 +598,6 @@ Gets the state of the current scope.
 Gets the combatant of the current scope.
 
 ### Properties
-
 **GetYear**
 
 Gets the current game year.
@@ -639,13 +617,11 @@ Gets the current game date as a long string.
 ## SpecialProject
 
 ### Promotions
-
 **Owner**
 
 Gets the owner country of the special project.
 
 ### Properties
-
 **GetName**
 
 Gets the name of the special project
@@ -653,7 +629,6 @@ Gets the name of the special project
 ## State
 
 ### Promotions
-
 **Controller**
 
 Gets the controller country of the state.
@@ -667,7 +642,6 @@ Gets the occupied country of the state.
 Gets the owner country of the state.
 
 ### Properties
-
 **GetID**
 
 Gets the ID of the state.
@@ -687,9 +661,7 @@ Gets the name of the continent this state is in.
 ## Terrain
 
 ### Promotions
-
 ### Properties
-
 **GetName**
 
 Gets the name of the terrain.
@@ -697,13 +669,11 @@ Gets the name of the terrain.
 ## UnitLeader
 
 ### Promotions
-
 **Owner**
 
 Gets the owner country of the unit leader.
 
 ### Properties
-
 **GetLeaderSkill**
 
 Gets the skill level of the unit leader.
@@ -751,3 +721,4 @@ Gets the codename of the operative leader.
 **GetHerHisCap**
 
 Gets Her if the unit leader is a female, otherwise His.
+

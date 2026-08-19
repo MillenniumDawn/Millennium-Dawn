@@ -283,9 +283,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert not gone, (
-        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
-    )
+    assert (
+        not gone
+    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED
@@ -371,12 +371,12 @@ def test_nightly_keys_the_bundle_on_the_live_base_tip():
     script = "\n".join(
         line for line in step["run"].splitlines() if not line.lstrip().startswith("#")
     )
-    assert "commits/main" in script, (
-        "the nightly must resolve main's live head for base_sha"
-    )
-    assert ".base.sha" not in script, (
-        "the PR list's .base.sha does not track main, so it cannot key the bundle"
-    )
+    assert (
+        "commits/main" in script
+    ), "the nightly must resolve main's live head for base_sha"
+    assert (
+        ".base.sha" not in script
+    ), "the PR list's .base.sha does not track main, so it cannot key the bundle"
 
 
 def test_mio_validator_runs_for_localisation_changes():
@@ -442,6 +442,7 @@ def test_tools_validation_triggers_for_consumed_configuration():
     paths = _pull_request_paths(TOOLS_WORKFLOW)
     assert {
         ".claude/docs/typo-watchlist.md",
+        "resources/documentation/modifiers_documentation.md",
         ".pre-commit-config.yaml",
         "pyproject.toml",
         ".github/workflows/coding-pipeline.yml",
@@ -510,6 +511,12 @@ def test_tools_tests_checkout_consumed_configuration():
     sparse_paths = set(checkout["with"]["sparse-checkout"].splitlines())
     assert {
         ".claude/docs/typo-watchlist.md",
+        # validate_modifiers_test parses the shipped doc to catch a Paradox
+        # format change; without it here the test reads an absent file.
+        "resources/documentation/modifiers_documentation.md",
+        # focus_pp_malus_test walks the real tree to prove every exemption still
+        # applies a malus; absent, it reads every one of them as stale.
+        "common/national_focus",
         ".github/workflows/validator-cache.yml",
         ".github/workflows/nightly-pr-validation.yml",
         "pyproject.toml",
@@ -539,9 +546,9 @@ def test_ci_run_steps_default_to_strict():
             for step in workflow["jobs"][job]["steps"]
             if step.get("name") == "Run validation"
         )
-        assert 'matrix.validator.strict }}" != "false"' in run, (
-            f"{job}'s Run step must default to --strict when `strict:` is absent."
-        )
+        assert (
+            'matrix.validator.strict }}" != "false"' in run
+        ), f"{job}'s Run step must default to --strict when `strict:` is absent."
 
 
 def test_oob_routes_cover_every_create_unit_source():
