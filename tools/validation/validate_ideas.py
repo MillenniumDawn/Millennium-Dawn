@@ -116,7 +116,7 @@ def _extract_swap_idea_refs(text: str) -> List[str]:
 
 
 _NAME_OVERRIDE_LINE = re.compile(r"^\s+name\s*=\s*([A-Za-z0-9_.]+)", re.MULTILINE)
-_PICTURE_VALUE_LINE = re.compile(r"^\s+picture\s*=\s*([A-Za-z0-9_.-]+)", re.MULTILINE)
+_PICTURE_VALUE_LINE = re.compile(r"^\s+picture\s*=\s*([^\s#]+)", re.MULTILINE)
 _ALLOWED_ALWAYS_NO = re.compile(r"\ballowed\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _ALLOWED_BLOCK_START = re.compile(r"\ballowed\s*=\s*\{")
@@ -192,7 +192,7 @@ def _missing_icon_message(
     return f"{idea_name}: no picture and no auto-icon GFX_idea_{idea_name}"
 
 
-def _idea_categories_frame_count(gfx_dirs: List[str]) -> Optional[int]:
+def _idea_categories_frame_count(gfx_dirs: List[Optional[str]]) -> Optional[int]:
     """Return noOfFrames of the GFX_idea_categories sprite, or None if absent.
 
     Scans the given interface dirs in order (mod first, then vanilla) and
@@ -342,7 +342,7 @@ def _parse_ideas_from_text(
                         issues.append(
                             IdeaIssue(
                                 current_idea,
-                                category_name,
+                                cat,
                                 current_idea_line,
                                 "allowed-always-no",
                             )
@@ -352,7 +352,7 @@ def _parse_ideas_from_text(
                     issues.append(
                         IdeaIssue(
                             current_idea,
-                            category_name,
+                            cat,
                             current_idea_line,
                             "cancel-always-no",
                         )
@@ -380,7 +380,7 @@ def _parse_ideas_from_text(
                         issues.append(
                             IdeaIssue(
                                 current_idea,
-                                category_name,
+                                cat,
                                 current_idea_line,
                                 kind,
                                 detail=detail,
@@ -391,7 +391,7 @@ def _parse_ideas_from_text(
                     issues.append(
                         IdeaIssue(
                             current_idea,
-                            category_name,
+                            cat,
                             current_idea_line,
                             "on-add-log-only",
                         )
@@ -933,11 +933,12 @@ class Validator(BaseValidator):
 
         Reuses the .gfx parser from validate_gfx_references so the icon check
         and the gfx-reference check agree on what counts as "defined". Vanilla
-        sprites are folded in when a HOI4 install is discoverable, so ideas that
-        point at vanilla pictures (e.g. `picture = generic_military_reform`)
-        don't false-positive.
+        sprites come from a discoverable HOI4 install or the committed manifest,
+        so ideas that point at vanilla pictures (e.g.
+        `picture = generic_military_reform`) don't false-positive in CI.
         """
         from validate_gfx_references import (
+            _load_vanilla_sprite_manifest,
             _parse_gfx_file,
             _vanilla_gfx_files,
         )
@@ -947,8 +948,8 @@ class Validator(BaseValidator):
             _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
         )
         defined: Set[str] = set()
-        for s in results:
-            defined.update(s)
+        for batch in results:
+            defined.update(name for name, _file, _texture, _line in batch)
         self.log(
             f"  Found {len(defined)} GFX sprites across {len(gfx_files)} mod .gfx files"
         )
@@ -958,14 +959,22 @@ class Validator(BaseValidator):
             vanilla_results = self._pool_map(
                 _parse_gfx_file, [(f, self.mod_path) for f in vanilla_gfx]
             )
-            for s in vanilla_results:
-                defined.update(s)
+            for batch in vanilla_results:
+                defined.update(name for name, _file, _texture, _line in batch)
             self.log(f"  Added vanilla sprites from {len(vanilla_gfx)} .gfx files")
         else:
-            self.log(
-                "  No vanilla HOI4 install detected — ideas using vanilla "
-                "pictures may be reported (set HOI4_PATH to suppress)"
-            )
+            manifest = _load_vanilla_sprite_manifest()
+            if manifest:
+                defined.update(manifest)
+                self.log(
+                    f"  Loaded {len(manifest)} vanilla GFX sprites from "
+                    "vanilla_sprites.txt"
+                )
+            else:
+                self.log(
+                    "  No vanilla HOI4 install or vanilla_sprites.txt manifest "
+                    "detected — ideas using vanilla pictures may be reported"
+                )
         return frozenset(defined)
 
     def validate_missing_icons(

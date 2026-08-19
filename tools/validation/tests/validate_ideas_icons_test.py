@@ -9,6 +9,7 @@ from validate_ideas import (
     _IDEA_REF_BLOCK,
     _IDEA_REF_GENEROUS,
     _WORD_TOKEN,
+    Validator,
     _idea_categories_frame_count,
     _missing_icon_message,
     _parse_ideas_from_text,
@@ -67,6 +68,44 @@ def test_icon_explicit_picture_missing():
     assert msg == "X: picture = nope -> GFX_idea_nope (undefined)"
 
 
+def test_icon_sprite_index_resolves_explicit_picture(tmp_path, monkeypatch):
+    interface = tmp_path / "interface"
+    interface.mkdir()
+    (interface / "ideas.gfx").write_text(
+        'spriteType = { name = "GFX_idea_international_treaty2" }',
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("validate_gfx_references._vanilla_gfx_files", lambda: [])
+    sprites = Validator(
+        str(tmp_path), use_colors=False, workers=1
+    )._build_idea_sprite_set()
+
+    assert (
+        _missing_icon_message(
+            "TEST_idea", "country", None, "international_treaty2", sprites, HIDDEN
+        )
+        is None
+    )
+
+
+def test_icon_sprite_index_uses_vanilla_manifest(tmp_path, monkeypatch):
+    monkeypatch.setattr("validate_gfx_references._vanilla_gfx_files", lambda: [])
+    monkeypatch.setattr(
+        "validate_gfx_references._load_vanilla_sprite_manifest",
+        lambda: frozenset({"GFX_idea_vanilla"}),
+    )
+
+    sprites = Validator(
+        str(tmp_path), use_colors=False, workers=1
+    )._build_idea_sprite_set()
+
+    assert (
+        _missing_icon_message("TEST_idea", "country", None, "vanilla", sprites, HIDDEN)
+        is None
+    )
+
+
 def test_icon_no_picture_auto_registered():
     # GFX_idea_AUTO exists -> no finding.
     assert _missing_icon_message("AUTO", "country", None, None, SPRITES, HIDDEN) is None
@@ -99,6 +138,23 @@ def test_icon_character_token_skipped():
 def test_icon_dynamic_picture_skipped():
     assert (
         _missing_icon_message("X", "country", None, "[GetIcon]", SPRITES, HIDDEN)
+        is None
+    )
+
+
+def test_parser_preserves_dynamic_picture():
+    defined, _ = _parse_ideas_from_text("""ideas = {
+ country = {
+  DYNAMIC = {
+   picture = [GetIcon]
+  }
+ }
+}""")
+    cat, name_override, picture = defined["DYNAMIC"]
+
+    assert picture == "[GetIcon]"
+    assert (
+        _missing_icon_message("DYNAMIC", cat, name_override, picture, SPRITES, HIDDEN)
         is None
     )
 
