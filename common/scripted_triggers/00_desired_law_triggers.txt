@@ -39,50 +39,65 @@ has_social_law_at_least_2 = {
 	}
 }
 
-generate_expected_spending_frames = {
-	for_loop_effect = {
-		end = 6
-		value = v
-	
-		if = {
-			limit = {
-				check_variable = { 
-					var = v
-					value = THIS.welfare_law
-					compare = greater_than_or_equals
-				}
+# INPUT
+# index (index of the law, starting from 1)
+generate_expected_welfare_spending_frame = {
+	# welfare spending frames
+	if = {
+		limit = {
+			check_variable = { 
+				var = social_law
+				value = index
+				compare = greater_than_or_equals
 			}
+			check_variable = { index > expected_welfare_spending }
+		}
 
-			meta_trigger = {
-				text = {
-					set_temp_variable = { welfare_spending_[INDEX]_frame = 2 } 
-				}
-				INDEX = "[?v]"
+		meta_trigger = {
+			text = {
+				set_temp_variable = { welfare_spending_frame_[INDEX] = 3 } 
+			}
+			INDEX = "[?index]"
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { 
+				var = social_law
+				value = index
+				compare = greater_than_or_equals
 			}
 		}
-		else_if = {
-			limit = {
-				check_variable = { 
-					var = v
-					value = THIS.expected_welfare_spending
-					compare = greater_than_or_equals
-				}
-			}
 
-			meta_trigger = {
-				text = {
-					set_temp_variable = { welfare_spending_[INDEX]_frame = 4 } 
-				}
-				INDEX = "[?v]"
+		meta_trigger = {
+			text = {
+				set_temp_variable = { welfare_spending_frame_[INDEX] = 2 } 
+			}
+			INDEX = "[?index]"
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { 
+				var = expected_welfare_spending
+				value = index
+				compare = greater_than_or_equals
 			}
 		}
-		else = {
-			meta_trigger = {
-				text = {
-					set_temp_variable = { welfare_spending_[INDEX]_frame = 1 } 
-				}
-				INDEX = "[?v]"
+
+		meta_trigger = {
+			text = {
+				set_temp_variable = { welfare_spending_frame_[INDEX] = 4 } 
 			}
+			INDEX = "[?index]"
+		}
+	}
+	else = {
+		meta_trigger = {
+			text = {
+				set_temp_variable = { welfare_spending_frame_[INDEX] = 1 } 
+			}
+			INDEX = "[?index]"
 		}
 	}
 }
