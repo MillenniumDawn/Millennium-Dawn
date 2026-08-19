@@ -18,19 +18,9 @@ raid_ai_target_relevant = {
 # Used by drone raids that require active hostility (airfield, rocket site, swarm)
 drone_raid_available_hostile = {
 	raid_ai_target_relevant = yes
+	raid_war_or_doctrine_bypass = yes
 	OR = {
-		has_war = yes
-		if = {
-			limit = {
-				has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
-			}
-			NOT = { has_idea = intervention_local_security }
-			NOT = { has_idea = intervention_isolation }
-		}
-		else = { always = no }
-	}
-	OR = {
-		raid_can_launch_300 = yes
+		raid_can_launch = { COST = 300 }
 		has_wargoal_against = FROM
 	}
 	FROM = {
@@ -44,18 +34,8 @@ drone_raid_available_hostile = {
 # Used by drone/ai raids against civilian infrastructure (power grid, resources)
 raid_available_grey_zone = {
 	raid_ai_target_relevant = yes
-	OR = {
-		has_war = yes
-		if = {
-			limit = {
-				has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
-			}
-			NOT = { has_idea = intervention_local_security }
-			NOT = { has_idea = intervention_isolation }
-		}
-		else = { always = no }
-	}
-	raid_can_launch_99 = yes
+	raid_war_or_doctrine_bypass = yes
+	raid_can_launch = { COST = 99 }
 	FROM = {
 		NOT = { is_subject_of = ROOT }
 		NOT = { has_non_aggression_pact_with = ROOT }
@@ -67,17 +47,7 @@ raid_available_grey_zone = {
 # Used as a building block in available blocks that have custom OR conditions
 raid_target_eligible = {
 	raid_ai_target_relevant = yes
-	OR = {
-		has_war = yes
-		if = {
-			limit = {
-				has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
-			}
-			NOT = { has_idea = intervention_local_security }
-			NOT = { has_idea = intervention_isolation }
-		}
-		else = { always = no }
-	}
+	raid_war_or_doctrine_bypass = yes
 }
 raid_target_eligible_from = {
 	FROM = {
@@ -221,45 +191,29 @@ raid_intervention_doctrine_reach_block = {
 	}
 }
 
-# Raid PP checks — discounted by raid_cost_factor (ISR doctrine -0.25 → 25% off)
-raid_can_launch_99 = {
-	set_temp_variable = { raid_required_pp_99 = { value = 99  multiply = { value = 1  add = modifier@raid_cost_factor } } }
+# Shared war/doctrine bypass — has_war = yes or rule_raid_doctrine_reach with local_security/isolation
+raid_war_or_doctrine_bypass = {
 	OR = {
-		has_war_with = FROM
-		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
-		has_political_power > raid_required_pp_99
+		has_war = yes
+		if = {
+			limit = {
+				has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
+			}
+			NOT = { has_idea = intervention_local_security }
+			NOT = { has_idea = intervention_isolation }
+		}
+		else = { always = no }
 	}
 }
-raid_can_launch_100 = {
-	set_temp_variable = { raid_required_pp_100 = { value = 100  multiply = { value = 1  add = modifier@raid_cost_factor } } }
+
+# Raid PP check — discounted by raid_cost_factor (ISR doctrine -0.25 → 25% off)
+# Single parameterized trigger: raid_can_launch = { COST = 99 } etc.
+raid_can_launch = {
+	set_temp_variable = { raid_required_pp = { value = $COST$  multiply = { value = 1  add = modifier@raid_cost_factor } } }
 	OR = {
 		has_war_with = FROM
 		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
-		has_political_power > raid_required_pp_100
-	}
-}
-raid_can_launch_150 = {
-	set_temp_variable = { raid_required_pp_150 = { value = 150  multiply = { value = 1  add = modifier@raid_cost_factor } } }
-	OR = {
-		has_war_with = FROM
-		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
-		has_political_power > raid_required_pp_150
-	}
-}
-raid_can_launch_200 = {
-	set_temp_variable = { raid_required_pp_200 = { value = 200  multiply = { value = 1  add = modifier@raid_cost_factor } } }
-	OR = {
-		has_war_with = FROM
-		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
-		has_political_power > raid_required_pp_200
-	}
-}
-raid_can_launch_300 = {
-	set_temp_variable = { raid_required_pp_300 = { value = 300  multiply = { value = 1  add = modifier@raid_cost_factor } } }
-	OR = {
-		has_war_with = FROM
-		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
-		has_political_power > raid_required_pp_300
+		has_political_power > raid_required_pp
 	}
 }
 
