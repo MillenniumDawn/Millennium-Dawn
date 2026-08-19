@@ -1635,16 +1635,9 @@ on_actions = {
 			set_variable = { global.update_monie_ui = 1 }
 			set_variable = { global.update_influence_ui = 1 }
 			set_variable = { global.storage_scripted_gui_var = 1 }
-			# Currency system global counters
-			# on_add does not fire for history-file ideas, so we count them manually here
-			set_variable = { global.usd_reserve_adoption_count = 0 }
-			set_variable = { global.eur_reserve_adoption_count = 0 }
-			set_variable = { global.cny_reserve_adoption_count = 0 }
-			set_variable = { global.rub_reserve_adoption_count = 0 }
-			set_variable = { global.jpy_reserve_adoption_count = 0 }
-			set_variable = { global.gbp_reserve_adoption_count = 0 }
-			set_variable = { global.chf_reserve_adoption_count = 0 }
-			set_variable = { global.nlg_reserve_adoption_count = 0 }
+			# on_add does not fire for history-file ideas, so count them manually here.
+			# Must precede the every_country loop below, whose ingame_update_setup reads the counts.
+			recount_global_reserve_currency = yes
 			set_variable = { global.general_operating_budget_contribute_percent = 0.0001 }
 
 			ABK = {
@@ -1815,8 +1808,6 @@ on_actions = {
 				setup_missile_configuration_effect = yes
 
 				mio_catalog_rebuild_visible_yes = yes
-
-				increment_global_reserve_currency = yes
 
 				# Needed for inflation initialization
 				set_variable = { last_quarter_gdp_total = gdp_total }
@@ -2050,6 +2041,17 @@ on_actions = {
 			reapply_agreement_opinion_modifiers = yes
 
 			if = { limit = { original_tag = TAL } AFG_reapply_taliban_opinion_modifiers = yes }
+
+			# Free operatives held by the new subject.
+			every_country = {
+				limit = {
+					ROOT = { has_captured_operative = PREV }
+				}
+				free_random_operative = {
+					captured_by = ROOT
+					all = yes
+				}
+			}
 		}
 	}
 

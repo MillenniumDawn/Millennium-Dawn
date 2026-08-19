@@ -5,16 +5,24 @@ Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
 
+import bisect
 import glob
 import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import blank_quoted_strings, strip_inline_comment
+import disk_cache
+from shared_utils import (
+    blank_quoted_strings,
+    extract_block_from_text,
+    strip_comments,
+    strip_inline_comment,
+)
+from sprite_index import build_sprite_index
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -55,6 +63,142 @@ EFFECT_BLOCKS = (
 )
 _LOG_STRING_RE = re.compile(r'\blog\s*=\s*"')
 _STATEMENT_NAME_RE = re.compile(r"([A-Za-z_]\w*)\s*=")
+
+# Icon/picture sprite references (_extract_decision_icons). `.` and `-` stay
+# inside the character class: they are part of a sprite name, not a delimiter
+# (GFX_CTC.5, GFX_MIG-29-GER), a regression sprite_reference_test.py pins.
+_SPRITE_VALUE = r'"?([A-Za-z0-9_.\-]+)"?'
+_DEC_ICON_SIMPLE_RE = re.compile(
+    r"^[ \t]*icon\s*=\s*(?!\{)" + _SPRITE_VALUE + r"[ \t]*$", re.MULTILINE
+)
+_DEC_ICON_BLOCK_RE = re.compile(r"^[ \t]*icon\s*=\s*\{", re.MULTILINE)
+_DEC_ICON_KEY_RE = re.compile(r"\bkey\s*=\s*" + _SPRITE_VALUE)
+_DEC_PICTURE_RE = re.compile(
+    r"^[ \t]*picture\s*=\s*" + _SPRITE_VALUE + r"[ \t]*$", re.MULTILINE
+)
+# The token naming a block, read backwards from its opening brace.
+_DEC_OWNER_RE = re.compile(r"([A-Za-z0-9_.]+)\s*=\s*$")
+
+
+def _owner_spans(text: str, want_depth: int) -> List[Tuple[int, int, str]]:
+    """Return (start, end, token) for every named block opened at *want_depth*.
+
+    A decision id sits one level inside its category block (depth 1); a category
+    definition is at file level (depth 0). Selecting by depth rather than by
+    "nearest `x = {` above" keeps a one-line `visible = { ... }` sitting between
+    the id and its `icon` from being reported as the owner.
+    """
+    spans: List[Tuple[int, int, str]] = []
+    stack: List[Tuple[int, str]] = []
+    for m in re.finditer(r"[{}]", text):
+        pos = m.start()
+        if m.group() == "{":
+            name = _DEC_OWNER_RE.search(text, max(0, pos - 128), pos)
+            stack.append((pos, name.group(1) if name else ""))
+        elif stack:
+            start, token = stack.pop()
+            if len(stack) == want_depth and token:
+                spans.append((start, pos, token))
+    return spans
+
+
+_ICON_KIND_FIELD = {
+    "decision": "icon",
+    "category_icon": "icon",
+    "category_picture": "picture",
+}
+
+
+def _sprite_candidates(kind: str, value: str) -> List[str]:
+    """Return the sprite names the engine tries for one icon/picture value.
+
+    A decision `icon = X` resolves to X verbatim when it is already a full
+    sprite name, otherwise the engine prepends `GFX_decision_` (bare names are
+    the dominant MD convention and are NOT a bug). A decision *category* uses
+    the `GFX_decision_category_` prefix instead, and a category `picture` is
+    always the full sprite name.
+    """
+    if kind == "category_picture" or value.startswith("GFX_"):
+        return [value]
+    if kind == "category_icon":
+        return [value, f"GFX_decision_category_{value}"]
+    return [value, f"GFX_decision_{value}", f"GFX_{value}"]
+
+
+def _missing_sprite_message(
+    kind: str, owner: str, value: str, sprites: frozenset
+) -> Optional[str]:
+    """Return a finding message when no candidate sprite is defined, else None.
+
+    Dynamic `[...]` values resolve at runtime, so they are skipped.
+    """
+    if "[" in value or "]" in value:
+        return None
+    candidates = _sprite_candidates(kind, value)
+    if sprites.intersection(candidates):
+        return None
+    tried = " / ".join(candidates)
+    return (
+        f"{owner}: {_ICON_KIND_FIELD[kind]} = {value} -> no sprite {tried} defined "
+        "in interface/*.gfx (create the sprite or pick an existing icon)"
+    )
+
+
+def _is_category_file(filepath: str) -> bool:
+    return "decisions/categories/" in filepath.replace("\\", "/")
+
+
+def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, int]]:
+    """Pool worker: return (owner, kind, value, line) for each sprite reference.
+
+    Covers a decision's `icon`, a category's `icon` and `picture`, and the
+    dynamic `icon = { key = ... trigger = { ... } }` form, which contributes one
+    entry per `key`.
+    """
+    filepath, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except OSError:
+        return []
+    text = strip_comments(raw)
+    is_category = _is_category_file(filepath)
+    icon_kind = "category_icon" if is_category else "decision"
+
+    def _compute() -> List[Tuple[str, str, str, int]]:
+        # Owner spans and newline offsets are collected once and bisected per
+        # reference; rescanning from the top for every icon is quadratic on the
+        # bigger decision files.
+        owners = _owner_spans(text, 0 if is_category else 1)
+        owner_starts = [s for s, _, _ in owners]
+        newlines = [i for i, ch in enumerate(text) if ch == "\n"]
+
+        refs: List[Tuple[int, str, str]] = []
+        for m in _DEC_ICON_SIMPLE_RE.finditer(text):
+            refs.append((m.start(), icon_kind, m.group(1)))
+        for m in _DEC_ICON_BLOCK_RE.finditer(text):
+            block, end = extract_block_from_text(text, m.start())
+            if end == -1:
+                continue
+            for km in _DEC_ICON_KEY_RE.finditer(block):
+                refs.append((m.start(), icon_kind, km.group(1)))
+        if is_category:
+            for m in _DEC_PICTURE_RE.finditer(text):
+                refs.append((m.start(), "category_picture", m.group(1)))
+
+        out: List[Tuple[str, str, str, int]] = []
+        for offset, kind, value in sorted(refs):
+            idx = bisect.bisect_right(owner_starts, offset) - 1
+            owner = "<unknown>"
+            if idx >= 0 and offset < owners[idx][1]:
+                owner = owners[idx][2]
+            line = bisect.bisect_right(newlines, offset) + 1
+            out.append((owner, kind, value, line))
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "decisions.icons", filepath, text, _compute
+    )
 
 
 def _block_level_statements(block: str) -> List[str]:
@@ -542,6 +686,43 @@ def _top_level_field_value(raw: str, field: str):
     return None
 
 
+def _top_level_neg_pp(block: str):
+    """Return the magnitude (positive int) of an unconditional
+    ``add_political_power = -N`` at depth 0 of ``block``, or ``None``
+    if there is no such line. Conditional/nested subtractions are
+    ignored (they are gameplay outcomes, not entry costs)."""
+    if not block:
+        return None
+    inner = block.strip()
+    if inner.startswith("{"):
+        inner = inner[1:]
+    if inner.endswith("}"):
+        inner = inner[:-1]
+    depth = 0
+    i = 0
+    n = len(inner)
+    while i < n:
+        ch = inner[i]
+        if ch == "{":
+            depth += 1
+            i += 1
+            continue
+        if ch == "}":
+            depth -= 1
+            i += 1
+            continue
+        if ch == "#":
+            while i < n and inner[i] != "\n":
+                i += 1
+            continue
+        if depth == 0:
+            m = re.match(r"add_political_power\s*=\s*-(\d+)", inner[i:])
+            if m:
+                return int(m.group(1))
+        i += 1
+    return None
+
+
 def extract_value_multi_line(obj: str, s: str) -> str:
     pattern = r"(\t+)" + s + r" = (\{([^\n]*|.*?^\1)\})"
     if f"\t{s} =" not in obj:
@@ -846,9 +1027,10 @@ class Validator(BaseValidator):
     TITLE = "DECISION VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, fix: bool = False, **kwargs):
+    def __init__(self, *args, fix: bool = False, missing_icons: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
         self.fix = fix
+        self.missing_icons = missing_icons
         self._activation_removal_cache = None
         if self.no_cache:
             _set_cache_enabled(False)
@@ -1588,42 +1770,6 @@ class Validator(BaseValidator):
         hidden = []
         double = []
 
-        def _top_level_neg_pp(block: str):
-            """Return the magnitude (positive int) of an unconditional
-            ``add_political_power = -N`` at depth 0 of ``block``, or ``None``
-            if there is no such line. Conditional/nested subtractions are
-            ignored (they are gameplay outcomes, not entry costs)."""
-            if not block:
-                return None
-            inner = block.strip()
-            if inner.startswith("{"):
-                inner = inner[1:]
-            if inner.endswith("}"):
-                inner = inner[:-1]
-            depth = 0
-            i = 0
-            n = len(inner)
-            while i < n:
-                ch = inner[i]
-                if ch == "{":
-                    depth += 1
-                    i += 1
-                    continue
-                if ch == "}":
-                    depth -= 1
-                    i += 1
-                    continue
-                if ch == "#":
-                    while i < n and inner[i] != "\n":
-                        i += 1
-                    continue
-                if depth == 0:
-                    m = re.match(r"add_political_power\s*=\s*-(\d+)", inner[i:])
-                    if m:
-                        return int(m.group(1))
-                i += 1
-            return None
-
         for d in factories:
             if d.custom_cost_trigger:
                 continue
@@ -2036,35 +2182,62 @@ class Validator(BaseValidator):
         )
 
     def validate_custom_cost_ai_hint(self):
-        """Flag decisions with custom_cost_trigger involving PP but no ai_hint_pp_cost.
+        """Flag decisions that spend political power but carry no ai_hint_pp_cost.
 
-        A custom cost replaces the regular cost field, so the AI has no idea
-        it needs to save up political power. ai_hint_pp_cost tells the AI
-        how much PP to reserve before attempting the decision.
+        The AI only reserves PP for a decision when it can see the price. It
+        reads the ``cost`` field, and nothing else — a custom cost replaces
+        that field, and an ``add_political_power = -N`` buried in an effect is
+        invisible to it. ``ai_hint_pp_cost`` is how either shape gets declared,
+        and without it the AI evaluates a free decision it cannot actually
+        afford, ranking it against genuinely free ones.
+
+        Two shapes are reported:
+
+        1. ``custom_cost_trigger`` gating on political power.
+        2. An unconditional ``add_political_power = -N`` at the top level of
+           ``complete_effect``/``remove_effect``.
+
+        Nested charges inside ``if``/``random_list``/scope changes are gameplay
+        outcomes rather than prices, so they are left alone. Skipped when the
+        AI never takes the decision (``base = 0`` with no ``add``), and for a
+        non-selectable mission's ``remove_effect``, where the PP change is a
+        timeout outcome.
         """
-        self._log_section(
-            "Checking decisions with custom PP cost but no ai_hint_pp_cost..."
-        )
+        self._log_section("Checking decisions that spend PP for ai_hint_pp_cost...")
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
 
         for d in factories:
-            if not d.custom_cost_trigger:
-                continue
             if d.ai_hint_pp_cost:
                 continue
             if d.ai_factor and "base = 0" in d.ai_factor and "add" not in d.ai_factor:
                 continue
-            if "political_power" in d.custom_cost_trigger:
+
+            if d.custom_cost_trigger and "political_power" in d.custom_cost_trigger:
                 results.append(
                     f"{d.token:<55}{d.source_basename} - custom_cost_trigger checks political_power but no ai_hint_pp_cost"
                 )
+                continue
+
+            for block_name, block in (
+                ("complete_effect", d.complete_effect),
+                ("remove_effect", d.remove_effect),
+            ):
+                if block_name == "remove_effect" and d.mission_subtype:
+                    continue
+                pp = _top_level_neg_pp(block)
+                if pp is None:
+                    continue
+                results.append(
+                    f"{d.token:<55}{d.source_basename} - {block_name} spends {pp} PP but no ai_hint_pp_cost"
+                )
+                break
 
         self._report(
             results,
-            "✓ No custom PP cost decisions missing ai_hint_pp_cost",
-            "Decisions with custom PP cost but no ai_hint_pp_cost (AI won't save up PP):",
+            "✓ No PP-spending decisions missing ai_hint_pp_cost",
+            "Decisions spending political power with no ai_hint_pp_cost (AI won't reserve PP):",
             severity=Severity.WARNING,
         )
 
@@ -2217,6 +2390,53 @@ class Validator(BaseValidator):
             "Decisions with targets_dynamic/target_non_existing but no targets (meaningless — add targets or remove):",
         )
 
+    def validate_missing_icons(self):
+        """Flag decisions/categories whose icon or picture sprite is undefined.
+
+        A decision `icon = X` renders X verbatim when X is already a full sprite
+        name and `GFX_decision_X` otherwise; a category uses
+        `GFX_decision_category_X`, and a category `picture` is always the full
+        name. When none of those exist in any interface/*.gfx (mod or vanilla)
+        the decision draws a missing-texture box.
+        """
+        self._log_section("Checking for decisions with missing icons...")
+
+        # Built sequentially (no pool_map): a sub-second scan that can't be left
+        # empty by a 'spawn' pool worker that fails to start. An empty index
+        # would otherwise flag every icon as missing.
+        sprites = build_sprite_index(self.mod_path, gfx_only=False)
+        if len(sprites) < 1000:
+            self.log(
+                f"  Only {len(sprites)} GFX sprites loaded — sprite definitions "
+                "did not load; skipping the icon check",
+                "warning",
+            )
+            return
+
+        files = self._collect_files(["common/decisions/**/*.txt"], ignore_staged=True)
+        ref_lists = self._pool_map(
+            _extract_decision_icons, [(f, self.mod_path) for f in files]
+        )
+
+        results = []
+        checked = 0
+        for filepath, refs in zip(files, ref_lists):
+            for owner, kind, value, line in refs:
+                checked += 1
+                msg = _missing_sprite_message(kind, owner, value, sprites)
+                if not msg:
+                    continue
+                results.append((msg, os.path.relpath(filepath, self.mod_path), line))
+
+        self.log(f"  Checked {checked} decision icon/picture references")
+        self._report(
+            results,
+            "✓ All decision icons and pictures are defined",
+            "Decisions with missing icons (sprite not defined in interface/*.gfx):",
+            Severity.WARNING,
+            category="missing-decision-icon",
+        )
+
     def run_validations(self):
         if self.staged_only:
             # Decision checks parse all 200+ decision files even for structural
@@ -2259,12 +2479,25 @@ class Validator(BaseValidator):
         self.validate_orphaned_remove_effect()
         self.validate_orphaned_target_modifiers()
 
+        if self.missing_icons:
+            self.validate_missing_icons()
+        else:
+            self._log_section(
+                "Skipping missing icon check (pass --missing-icons to enable)"
+            )
+
 
 def _add_extra_args(parser):
     parser.add_argument(
         "--fix",
         action="store_true",
         help="Auto-fix decisions: insert 'ai_will_do = { base = 0 }' for missing AI factors, and move identical available blocks into visible",
+    )
+    parser.add_argument(
+        "--missing-icons",
+        action="store_true",
+        dest="missing_icons",
+        help="Flag decisions and decision categories whose icon/picture sprite is undefined in interface/*.gfx",
     )
 
 
