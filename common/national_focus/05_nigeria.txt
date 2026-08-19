@@ -2793,23 +2793,18 @@ focus_tree = {
 		icon = army_reform
 
 		x = 6
-		y = 8
+		y = 7
 		relative_position_id = NIG_federal_government_of_nigeria
 
-		cost = 10
+		cost = 0
 
-		prerequisite = { focus = NIG_address_niger_delta }
+		prerequisite = { focus = NIG_the_togo_triangle }
 		mutually_exclusive = { focus = NIG_negotiate_peace }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
 
 		available = {
-			OR = {
-				has_idea = NIG_niger_delta_crisis_1
-				has_idea = NIG_niger_delta_crisis_2
-				has_idea = NIG_niger_delta_crisis_3
-				has_idea = NIG_niger_delta_avengers_idea
-			}
+			always = no
 		}
 
 		bypass = {
@@ -2823,7 +2818,10 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: Focus NIG_military_solution"
 			add_war_support = 0.05
 			army_experience = 25
-			add_ideas = NIG_joint_task_force_idea
+			add_timed_idea = {
+				idea = NIG_joint_task_force_idea
+				years = 3
+			}
 			set_country_flag = NIG_military_solution_path
 		}
 
@@ -2841,12 +2839,12 @@ focus_tree = {
 		icon = Focus_African_Liberation
 
 		x = 7
-		y = 7
+		y = 8
 		relative_position_id = NIG_federal_government_of_nigeria
 
 		cost = 10
 
-		prerequisite = { focus = NIG_the_togo_triangle }
+		prerequisite = { focus = NIG_negotiate_peace focus = NIG_military_solution }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY FOCUS_FILTER_RESOURCE }
 
@@ -2855,9 +2853,6 @@ focus_tree = {
 				has_idea = NIG_niger_delta_crisis_1
 				has_idea = NIG_niger_delta_crisis_2
 				has_idea = NIG_niger_delta_crisis_3
-				has_idea = NIG_niger_delta_avengers_idea
-				has_country_flag = NIG_amnesty_succeeded
-				has_country_flag = NIG_amnesty_partial
 			}
 		}
 
@@ -2865,11 +2860,24 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: Focus NIG_address_niger_delta"
-			unlock_decision_tooltip = NIG_oil_revenue_sharing_agreement
-			unlock_decision_tooltip = NIG_reform_nddc
 			add_political_power = 100
 			add_stability = 0.03
 			set_country_flag = NIG_address_niger_delta_path
+			#unlock_decision_tooltip = NIG_suppress_delta_militants
+			#unlock_decision_tooltip = NIG_environmental_cleanup_program
+
+			if = {
+				limit = {
+					has_country_flag = NIG_negotiating_with_militants
+				}
+				unlock_decision_tooltip = NIG_environmental_cleanup_program
+			}
+			if = {
+				limit = {
+					has_country_flag = NIG_military_solution_path
+				}
+				unlock_decision_tooltip = NIG_suppress_delta_militants
+			}
 		}
 
 		ai_will_do = {
@@ -2886,32 +2894,24 @@ focus_tree = {
 		icon = peace
 
 		x = 8
-		y = 8
+		y = 7
 		relative_position_id = NIG_federal_government_of_nigeria
 
-		cost = 10
+		cost = 0
 
-		prerequisite = { focus = NIG_address_niger_delta }
+		prerequisite = { focus = NIG_the_togo_triangle }
 		mutually_exclusive = { focus = NIG_military_solution }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
 
 		available = {
-			OR = {
-				has_idea = NIG_niger_delta_crisis_1
-				has_idea = NIG_niger_delta_crisis_2
-				has_idea = NIG_niger_delta_crisis_3
-			}
-			NOT = { has_country_flag = NIG_amnesty_failed }
+			always = no
 		}
 
 		bypass = {
 			OR = {
 				has_country_flag = NIG_negotiating_with_militants
-				has_country_flag = NIG_amnesty_active
 				has_country_flag = NIG_amnesty_succeeded
-				has_country_flag = NIG_amnesty_partial
-				has_country_flag = NIG_niger_delta_resolved
 			}
 		}
 
@@ -2920,6 +2920,10 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
 			add_stability = 0.02
+			add_timed_idea = {
+				idea = NIG_ongoing_negotiations
+				years = 3
+			}
 			set_country_flag = NIG_negotiating_with_militants
 		}
 
@@ -2950,19 +2954,14 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = {
-			focus = NIG_negotiate_peace
-			focus = NIG_military_solution
-		}
+		prerequisite = { focus = NIG_address_niger_delta }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
 
-		bypass = {
-			OR = {
-				has_idea = NIG_nddc_reformed_idea
-				has_country_flag = NIG_niger_delta_resolved
-			}
+		available = {
+			NOT = { has_idea = NIG_niger_delta_crisis_3 }
 		}
+		bypass = { has_country_flag = NIG_niger_delta_resolved }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: Focus NIG_nddc_reform"
@@ -2997,28 +2996,19 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = {
-			focus = NIG_negotiate_peace
-			focus = NIG_military_solution
-		}
+		prerequisite = { focus = NIG_address_niger_delta }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			date > 2008.1.1
-			OR = {
-				has_idea = NIG_niger_delta_crisis_1
-				has_idea = NIG_niger_delta_crisis_2
-				has_idea = NIG_niger_delta_crisis_3
-			}
-			NOT = { has_country_flag = NIG_amnesty_active }
+			NOT = { has_idea = NIG_niger_delta_crisis_3 }
+			NOT = { has_country_flag = NIG_amnesty_succeeded }
 		}
 
 		bypass = {
 			OR = {
-				has_country_flag = NIG_amnesty_active
 				has_country_flag = NIG_amnesty_succeeded
-				has_country_flag = NIG_amnesty_partial
 				has_country_flag = NIG_niger_delta_resolved
 			}
 		}
@@ -3027,32 +3017,27 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: Focus NIG_amnesty_program"
 			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
-			set_country_flag = NIG_amnesty_blanket
-			set_country_flag = NIG_amnesty_active
+			set_country_flag = NIG_amnesty_succeeded
 			# Replace crisis with amnesty program
 			if = {
 				limit = { has_idea = NIG_niger_delta_crisis_3 }
-				swap_ideas = {
-					remove_idea = NIG_niger_delta_crisis_3
-					add_idea = NIG_amnesty_program_idea
-				}
+				remove_ideas = NIG_niger_delta_crisis_3
 			}
 			else_if = {
 				limit = { has_idea = NIG_niger_delta_crisis_2 }
-				swap_ideas = {
-					remove_idea = NIG_niger_delta_crisis_2
-					add_idea = NIG_amnesty_program_idea
-				}
+				remove_ideas = NIG_niger_delta_crisis_2
 			}
 			else_if = {
 				limit = { has_idea = NIG_niger_delta_crisis_1 }
-				swap_ideas = {
-					remove_idea = NIG_niger_delta_crisis_1
-					add_idea = NIG_amnesty_program_idea
-				}
+				remove_ideas = NIG_niger_delta_crisis_1
+			}
+
+			add_timed_idea = {
+				idea = NIG_amnesty_program_idea
+				years = 5
 			}
 			hidden_effect = {
-				country_event = { id = nigeria_delta.11 days = 180 }
+				country_event = { id = nigeria_delta.19 years = 5 }
 			}
 		}
 
@@ -3085,25 +3070,45 @@ focus_tree = {
 
 		prerequisite = { focus = NIG_nddc_reform }
 
+		available = {
+			NOT = {
+			 has_idea = NIG_niger_delta_crisis_3
+			}
+		}
+
 		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_STABILITY FOCUS_FILTER_INDUSTRY }
 
 		bypass = {
 			OR = {
-				has_idea = NIG_oil_revenue_sharing_idea
+				has_idea = NIG_oil_revenue_sharing_mil_idea
+				has_idea = NIG_oil_revenue_sharing_peace_idea
 				has_country_flag = NIG_niger_delta_resolved
 			}
 		}
 
+
 		completion_reward = {
+			custom_effect_tooltip = NIG_oil_sharing_tt
 			log = "[GetDateText]: [This.GetName]: Focus NIG_oil_revenue_sharing"
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
-			add_ideas = NIG_oil_revenue_sharing_idea
-			add_stability = 0.05
+			if = {
+				limit = { has_completed_focus = NIG_military_solution }
+				add_ideas = NIG_oil_revenue_sharing_mil_idea
+			add_resource = {
+				type = oil
+				amount = 8
+				state = 332
+				}
+			}
+			if = {
+				limit = { has_completed_focus = NIG_negotiate_peace }
+				add_ideas = NIG_oil_revenue_sharing_peace_idea
 			add_resource = {
 				type = oil
 				amount = 5
 				state = 332
+				}
 			}
 		}
 
@@ -3126,10 +3131,7 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = {
-			focus = NIG_military_solution
-			focus = NIG_amnesty_program
-		}
+		prerequisite = { focus = NIG_amnesty_program }
 		prerequisite = { focus = NIG_oil_revenue_sharing }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY FOCUS_FILTER_RESOURCE }
@@ -3145,7 +3147,6 @@ focus_tree = {
 			}
 			OR = {
 				has_country_flag = NIG_amnesty_succeeded
-				has_country_flag = NIG_amnesty_partial
 				AND = {
 					has_country_flag = NIG_military_solution_path
 					NOT = {
