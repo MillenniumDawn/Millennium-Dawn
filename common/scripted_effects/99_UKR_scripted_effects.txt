@@ -190,6 +190,10 @@ UKR_prepare_DPR_wave = {
 					DPR_maidan_create_army = yes
 					set_country_flag = UKR_republic_army_initialized
 				}
+				if = {
+					limit = { is_ai = yes }
+					give_AI_templates = yes
+				}
 			}
 			if = {
 				limit = { DPR = { UKR_novorossiya_participant_eligible = yes } }
@@ -233,6 +237,10 @@ UKR_prepare_LPR_wave = {
 					LPR_maidan_create_army = yes
 					set_country_flag = UKR_republic_army_initialized
 				}
+				if = {
+					limit = { is_ai = yes }
+					give_AI_templates = yes
+				}
 			}
 			if = {
 				limit = { LPR = { UKR_novorossiya_participant_eligible = yes } }
@@ -247,6 +255,7 @@ UKR_prepare_LPR_wave = {
 UKR_prepare_DRP_wave = {
 	if = {
 		limit = {
+			NOT = { has_country_flag = UKR_kolomoisky_dnipro_autonomy }
 			OR = {
 				NOT = { country_exists = DRP }
 				DRP = { UKR_novorossiya_participant_eligible = yes }
@@ -271,6 +280,10 @@ UKR_prepare_DRP_wave = {
 					limit = { NOT = { has_country_flag = UKR_republic_army_initialized } }
 					DRP_maidan_create_army = yes
 					set_country_flag = UKR_republic_army_initialized
+				}
+				if = {
+					limit = { is_ai = yes }
+					give_AI_templates = yes
 				}
 			}
 			if = {
@@ -310,6 +323,10 @@ UKR_prepare_OPR_wave = {
 					limit = { NOT = { has_country_flag = UKR_republic_army_initialized } }
 					OPR_maidan_create_army = yes
 					set_country_flag = UKR_republic_army_initialized
+				}
+				if = {
+					limit = { is_ai = yes }
+					give_AI_templates = yes
 				}
 			}
 			if = {
@@ -351,7 +368,10 @@ UKR_form_novorossiya = {
 			set_country_flag = UKR_novorossiya_include_lpr
 		}
 		if = {
-			limit = { DRP = { owns_state = 1087 } }
+			limit = {
+				NOT = { has_country_flag = UKR_kolomoisky_dnipro_autonomy }
+				DRP = { owns_state = 1087 }
+			}
 			set_country_flag = UKR_novorossiya_include_drp
 		}
 		if = {
@@ -469,6 +489,7 @@ UKR_form_novorossiya = {
 		}
 		if = {
 			limit = {
+				NOT = { has_country_flag = UKR_kolomoisky_dnipro_autonomy }
 				OR = {
 					DRP = { owns_state = 1087 }
 					AND = {
@@ -587,6 +608,10 @@ UKR_form_novorossiya = {
 			NOV = {
 				set_country_flag = UKR_subject_agree
 				if = { limit = { NOT = { has_idea = UKR_republic_ukr } } add_ideas = UKR_republic_ukr }
+				if = {
+					limit = { is_ai = yes }
+					give_AI_templates = yes
+				}
 			}
 			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_693 } } 693 = { add_claim_by = NOV } }
 			if = { limit = { NOT = { has_country_flag = UKR_novorossiya_include_1030 } } 1030 = { add_claim_by = NOV } }
@@ -802,6 +827,7 @@ UKR_cleanup_drp_rework = {
 			clr_country_flag = UKR_drp_subject_seen
 			clr_country_flag = UKR_drp_war_seen
 			clr_country_flag = UKR_drp_capitulated
+			clr_country_flag = UKR_kolomoisky_dnipro_autonomy
 		}
 	}
 }
@@ -1781,7 +1807,137 @@ ukraine_subjects_annex = {
 		}
 	}
 }
-LPR_maidan_create_army = {
+UKR_spawn_donbass_war = {
+	hidden_effect = {
+		decrease_economic_growth = yes
+		set_country_flag = UKR_donbass_rise
+		SOV = { country_event = { id = russia.16 days = 1 } }
+		if = {
+			limit = {
+				OR = {
+					country_exists = DPR
+					country_exists = LPR
+					country_exists = HPR
+				}
+			}
+			country_event = { id = ukraine_maidan.4 days = 260 }
+		}
+	}
+	news_event = ukraine_news.7
+	add_ideas = UKR_civil_war
+	DPR = {
+		set_country_flag = donbass_civil_war
+		add_ideas = DPR_civil_war
+		add_ideas = DPR_bivaluta
+		add_ideas = DPR_unproffesional_army
+		add_ideas = DPR_no_government_idea
+		create_country_leader = {
+			name = "Alexander Zakharchenko"
+			picture = "Alexander_Zakharchenko.dds"
+			ideology = Autocracy
+			traits = {
+				emerging_Autocracy
+				career_politician
+				pro_russia
+				cautious
+			}
+		}
+		set_equipment_fraction = 0.25
+		if = {
+			limit = { UKR = { owns_state = 693 } }
+			DPR = { transfer_state = 693 }
+		}
+		if = {
+			limit = { UKR = { owns_state = 1030 } }
+			DPR = { transfer_state = 1030 }
+		}
+		set_variable = { corporate_tax_rate = UKR.corporate_tax_rate }
+		set_variable = { population_tax_rate = UKR.population_tax_rate }
+		if = {
+			limit = { NOT = { has_country_flag = UKR_republic_army_initialized } }
+			DPR_maidan_create_army = yes
+			set_country_flag = UKR_republic_army_initialized
+		}
+		if = {
+			limit = { is_ai = yes }
+			give_AI_templates = yes
+		}
+	}
+	LPR = {
+		add_ideas = DPR_civil_war
+		if = {
+			limit = { NOT = { has_country_leader = { name = "Igor Plotnitsky" } } }
+			create_country_leader = {
+				name = "Igor Plotnitsky"
+				picture = "Igor_Plotnitsky.dds"
+				ideology = Autocracy
+				traits = {
+					emerging_Autocracy
+					career_politician
+					pro_russia
+					cautious
+				}
+			}
+		}
+		set_equipment_fraction = 0.25
+		if = {
+			limit = { UKR = { owns_state = 1075 } }
+			LPR = {
+				transfer_state = 1075
+				add_state_core = 1075
+			}
+		}
+		if = {
+			limit = { UKR = { owns_state = 1076 } }
+			LPR = {
+				transfer_state = 1076
+				add_state_core = 1076
+			}
+		}
+		set_variable = { corporate_tax_rate = UKR.corporate_tax_rate }
+		set_variable = { population_tax_rate = UKR.population_tax_rate }
+		if = {
+			limit = { NOT = { has_country_flag = UKR_republic_army_initialized } }
+			LPR_maidan_create_army = yes
+			set_country_flag = UKR_republic_army_initialized
+		}
+		if = {
+			limit = { is_ai = yes }
+			give_AI_templates = yes
+		}
+	}
+}
+UKR_spawn_HPR_war = {
+	HPR = {
+		add_ideas = DPR_civil_war
+		transfer_state = 696
+		add_state_core = 696
+		if = {
+			limit = { is_ai = yes }
+			give_AI_templates = yes
+		}
+	}
+	declare_war_on = {
+		target = HPR
+		type = annex_everything
+	}
+}
+UKR_spawn_OPR_war = {
+	OPR = {
+		add_ideas = DPR_civil_war
+		transfer_state = 695
+		add_state_core = 695
+		if = {
+			limit = { is_ai = yes }
+			give_AI_templates = yes
+		}
+	}
+	declare_war_on = {
+		target = OPR
+		type = annex_everything
+	}
+}
+UKR_republic_army_templates = {
 	division_template = {
 		name = "Batalyon Dobrovolchev"
 		regiments = {
@@ -1818,7 +1974,6 @@ LPR_maidan_create_army = {
 	}
 	division_template = {
 		name = "Motorizovannaya Brigada"
-
 		regiments = {
 			Mech_Inf_Bat = { x = 0 y = 0 }
 			Mech_Inf_Bat = { x = 0 y = 1 }
@@ -1831,7 +1986,6 @@ LPR_maidan_create_army = {
 	}
 	division_template = {
 		name = "Batalyon Spetsnaza"
-
 		regiments = {
 			Mech_Inf_Bat = { x = 0 y = 0 }
 			Mech_Inf_Bat = { x = 0 y = 1 }
@@ -1840,12 +1994,10 @@ LPR_maidan_create_army = {
 		support = {
 			armor_Comp = { x = 0 y = 0 }
 		}
-
 		priority = 2
 	}
 	division_template = {
 		name = "Mekhanizirovannaya Brigada"
-
 		regiments = {
 			Arm_Inf_Bat = { x = 0 y = 0 }
 			Arm_Inf_Bat = { x = 0 y = 1 }
@@ -1858,7 +2010,6 @@ LPR_maidan_create_army = {
 	}
 	division_template = {
 		name = "Kazachya Brigada"
-
 		regiments = {
 			Arm_Inf_Bat = { x = 0 y = 0 }
 			Arm_Inf_Bat = { x = 0 y = 1 }
@@ -1869,12 +2020,10 @@ LPR_maidan_create_army = {
 		support = {
 			H_Engi_Comp = { x = 0 y = 0 }
 		}
-
 		priority = 2
 	}
 	division_template = {
 		name = "Tankovyi Batalyon"
-
 		regiments = {
 			armor_Bat = { x = 0 y = 0 }
 			armor_Bat = { x = 0 y = 1 }
@@ -1883,6 +2032,9 @@ LPR_maidan_create_army = {
 			armor_Recce_Comp = { x = 0 y = 0 }
 		}
 	}
+}
+LPR_maidan_create_army = {
+	UKR_republic_army_templates = yes
 	1075 = {
 		create_unit = {
 			division = "name = \"Kazachya Natsionalnaya Gvardiya\" division_template = \"Kazachya Brigada\" start_experience_factor = 0.1"
@@ -1897,103 +2049,7 @@ LPR_maidan_create_army = {
 	}
 }
 DPR_maidan_create_army = {
-	division_template = {
-		name = "Batalyon Dobrovolchev"
-		regiments = {
-			L_Inf_Bat = { x = 0 y = 0 }
-			L_Inf_Bat = { x = 0 y = 1 }
-			L_Inf_Bat = { x = 0 y = 2 }
-			L_Inf_Bat = { x = 0 y = 3 }
-		}
-
-		priority = 0
-	}
-	division_template = {
-		name = "Brigada Dobrovolchev"
-		regiments = {
-			L_Inf_Bat = { x = 0 y = 0 }
-			L_Inf_Bat = { x = 0 y = 1 }
-			L_Inf_Bat = { x = 0 y = 2 }
-		}
-		support = {
-			Arty_Battery = { x = 0 y = 0 }
-		}
-
-		priority = 0
-	}
-	division_template = {
-		name = "Pekhotnaya Brigada"
-		regiments = {
-			Mot_Inf_Bat = { x = 0 y = 0 }
-			Mot_Inf_Bat = { x = 0 y = 1 }
-			Mot_Inf_Bat = { x = 0 y = 2 }
-		}
-		support = {
-			Arty_Battery = { x = 0 y = 0 }
-			L_Engi_Comp = { x = 0 y = 1 }
-		}
-	}
-	division_template = {
-		name = "Motorizovannaya Brigada"
-		regiments = {
-			Mech_Inf_Bat = { x = 0 y = 0 }
-			Mech_Inf_Bat = { x = 0 y = 1 }
-			Mech_Inf_Bat = { x = 0 y = 2 }
-		}
-		support = {
-			SP_Arty_Battery = { x = 0 y = 0 }
-			L_Engi_Comp = { x = 0 y = 1 }
-		}
-	}
-	division_template = {
-		name = "Batalyon Spetsnaza"
-		regiments = {
-			Mech_Inf_Bat = { x = 0 y = 0 }
-			Mech_Inf_Bat = { x = 0 y = 1 }
-			Mech_Inf_Bat = { x = 0 y = 2 }
-		}
-		support = {
-			armor_Comp = { x = 0 y = 0 }
-		}
-		priority = 2
-	}
-	division_template = {
-		name = "Mekhanizirovannaya Brigada"
-		regiments = {
-			Arm_Inf_Bat = { x = 0 y = 0 }
-			Arm_Inf_Bat = { x = 0 y = 1 }
-			Arm_Inf_Bat = { x = 0 y = 2 }
-		}
-		support = {
-			SP_Arty_Battery = { x = 0 y = 0 }
-			L_Engi_Comp = { x = 0 y = 1 }
-		}
-	}
-	division_template = {
-		name = "Kazachya Brigada"
-		regiments = {
-			Arm_Inf_Bat = { x = 0 y = 0 }
-			Arm_Inf_Bat = { x = 0 y = 1 }
-			Arm_Inf_Bat = { x = 0 y = 2 }
-			SP_Arty_Bat = { x = 0 y = 3 }
-			armor_Bat = { x = 1 y = 0 }
-		}
-		support = {
-			H_Engi_Comp = { x = 0 y = 0 }
-		}
-
-		priority = 2
-	}
-	division_template = {
-		name = "Tankovyi Batalyon"
-		regiments = {
-			armor_Bat = { x = 0 y = 0 }
-			armor_Bat = { x = 0 y = 1 }
-		}
-		support = {
-			armor_Recce_Comp = { x = 0 y = 0 }
-		}
-	}
+	UKR_republic_army_templates = yes
 	693 = {
 		create_unit = {
 			division = "name = \"Balayon 'Sever'\" division_template = \"Batalyon Dobrovolchev\" start_experience_factor = 0.1"
@@ -4003,6 +4059,8 @@ UKR_kolomoiskyi_rise = {
 	if = {
 		limit = {
 			owns_state = 1087
+			NOT = { country_exists = DRP }
+			NOT = { has_country_flag = UKR_republic_dnipro_emerged }
 			OR = {
 				has_idea = UKR_kleptocracy02
 				has_idea = UKR_kleptocracy03
