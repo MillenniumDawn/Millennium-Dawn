@@ -44,7 +44,7 @@ from validator_common import (
 # filename, listed in vanilla_gui_files.txt. Everything else is MD-authored. This
 # means new MD content of any naming convention is classified correctly with no
 # edits here; the manifest only needs regenerating on a HOI4 version bump (see
-# gen_vanilla_gui_manifest.py).
+# refresh_vanilla_data.py).
 #
 # One carve-out: an MD-authored nation variant (`<vanilla_stem>_<tag>.gui`) that
 # inherits a dead ref from the specific vanilla file it copies stays WARNING too —
@@ -108,17 +108,19 @@ def _strip_comments(text: str) -> str:
     return text
 
 
-# All sprite type block openers in .gfx files; all use `name = "GFX_xxx"`.
-# We collect any `name = "GFX_xxx"` inside any of these blocks.
+# Renderable GFX block openers in .gfx files. Names may be quoted or bare.
 _GFX_SPRITE_TYPES = re.compile(
     r"\b(?:spriteType|frameAnimatedSpriteType|corneredTileSpriteType|"
-    r"maskedShieldType|progressbartype|textSpriteType)\s*=\s*\{",
+    r"maskedShieldType|progressbartype|textSpriteType|pieChartType|"
+    r"lineChartType|circularProgressBarType)\s*=\s*\{",
     re.IGNORECASE,
 )
 
-# name = "GFX_xxx" inside a block
-# `@` appears in engine frame-variant names (e.g. GFX_x@highlight).
-_GFX_NAME = re.compile(r'\bname\s*=\s*"(GFX_[A-Za-z0-9_@]+)"')
+# name = GFX_xxx or name = "GFX_xxx" inside a block. `@` appears in engine
+# frame-variant names (e.g. GFX_x@highlight); `.` and `-` occur in mod sprites.
+_GFX_NAME = re.compile(
+    r'\bname\s*=\s*(?:"(GFX_[A-Za-z0-9_.@-]+)"|(GFX_[A-Za-z0-9_.@-]+))'
+)
 
 # GUI references — spriteType / quadTextureSprite / background
 _GUI_REF = re.compile(
@@ -157,7 +159,7 @@ _FLAG_SPRITE_RE = re.compile(
 #   1. A live HOI4 install (Steam path or $HOI4_PATH): interface/*.gfx read
 #      directly and folded into the defined-sprites set.
 #   2. The committed vanilla_sprites.txt manifest (generated from a local
-#      install by gen_vanilla_sprites_manifest.py) — what CI uses.
+#      install by refresh_vanilla_data.py) — what CI uses.
 #   3. The _VANILLA_PREFIXES heuristic below, only when neither exists:
 #      accept vanilla-looking names rather than false-positive on them.
 _VANILLA_SPRITES_MANIFEST = os.path.join(
@@ -260,9 +262,6 @@ def _vanilla_gui_ref_index() -> dict:
     return index
 
 
-_UNUSED_SPRITE_LIMIT = 50
-
-
 def _is_dynamic(name: str) -> bool:
     """Return True if name contains template substitution markers."""
     return "[" in name or "]" in name
@@ -278,42 +277,82 @@ def _is_likely_vanilla(name: str) -> bool:
     return any(name.startswith(p) for p in _VANILLA_PREFIXES)
 
 
-# Equipment icons are resolved by the engine from the archetype name, optionally
-# with a country prefix (GFX_util_vehicle_1_medium, GFX_AFG_util_vehicle_1_medium).
-# They are never named literally in script, so the unused check needs the
-# equipment list to tell a real orphan from an engine-resolved icon.
+# Three sprite families are resolved by the engine from an equipment archetype or
+# a technology id and are never named literally in script, so the unused check
+# needs both lists to tell a real orphan from an engine-resolved icon:
+#   equipment icons         GFX_util_vehicle_1_medium, GFX_AFG_util_vehicle_1_medium
+#   country tech-tree icons GFX_BEL_SAM0_medium
+#   designer profile icons  GFX_BRA_MBT_1 (no size suffix, country tag required)
 _EQUIPMENT_ICON_RE = re.compile(r"^GFX_(.+?)_(?:small|medium|large)$")
 # Stripped as a second attempt only. Folding the optional tag into the pattern
 # above swallows the archetype's own prefix (APC_1 → "1"), because the match
-# succeeds either way and never backtracks.
-_EQUIPMENT_ICON_TAG_RE = re.compile(r"^[A-Z]{3}_(.+)$")
-# Only entries directly inside `equipments = { }` are equipment. Matching any
-# one-tab key would also pick up container keys such as `values` in
+# succeeds either way and never backtracks. Tags are a letter plus two
+# alphanumerics (BRA, C01).
+_EQUIPMENT_ICON_TAG_RE = re.compile(r"^[A-Z][A-Z0-9]{2}_(.+)$")
+# Only entries directly inside `equipments = { }` / `technologies = { }` count.
+# Matching any one-tab key would also pick up container keys such as `values` in
 # tank_filters.txt, which could mask a genuinely dead sprite.
 _EQUIPMENTS_BLOCK_RE = re.compile(r"^equipments\s*=\s*\{", re.MULTILINE)
+_TECHNOLOGIES_BLOCK_RE = re.compile(r"^technologies\s*=\s*\{", re.MULTILINE)
 _EQUIPMENT_ENTRY_RE = re.compile(r"^\t([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
 
 
-def _load_equipment_names(mod_path: str) -> FrozenSet[str]:
-    """Return every equipment archetype/variant declared in common/units/equipment."""
+def _entry_names_from_text(raw: str, block_re: "re.Pattern[str]") -> List[str]:
+    """Return the one-tab entry names declared inside every `block_re` block."""
+    text = _HASH_COMMENT.sub("", raw)
     names: Set[str] = set()
-    root = os.path.join(mod_path, "common", "units", "equipment")
+    for block in block_re.finditer(text):
+        body, _end = extract_block_from_text(text, block.start())
+        if body:
+            names.update(_EQUIPMENT_ENTRY_RE.findall(body))
+    return sorted(names)
+
+
+def _load_entry_names(
+    mod_path: str, root: str, block_re: "re.Pattern[str]", namespace: str
+) -> FrozenSet[str]:
+    """Return every entry name declared under `root`, content-cached per file."""
+    names: Set[str] = set()
     for dirpath, _dirnames, filenames in os.walk(root):
         for fn in filenames:
             if not fn.endswith(".txt"):
                 continue
+            filepath = os.path.join(dirpath, fn)
             try:
-                with open(
-                    os.path.join(dirpath, fn), encoding="utf-8-sig", errors="replace"
-                ) as fh:
-                    text = _HASH_COMMENT.sub("", fh.read())
+                with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
+                    raw = fh.read()
             except OSError:
                 continue
-            for block in _EQUIPMENTS_BLOCK_RE.finditer(text):
-                body, _end = extract_block_from_text(text, block.start())
-                if body:
-                    names.update(_EQUIPMENT_ENTRY_RE.findall(body))
+            names.update(
+                disk_cache.per_file_cached_by_content(
+                    mod_path,
+                    namespace,
+                    filepath,
+                    raw,
+                    lambda: _entry_names_from_text(raw, block_re),
+                )
+            )
     return frozenset(names)
+
+
+def _load_equipment_names(mod_path: str) -> FrozenSet[str]:
+    """Return every equipment archetype/variant declared in common/units/equipment."""
+    return _load_entry_names(
+        mod_path,
+        os.path.join(mod_path, "common", "units", "equipment"),
+        _EQUIPMENTS_BLOCK_RE,
+        "gfx_ref.equipment_names",
+    )
+
+
+def _load_technology_names(mod_path: str) -> FrozenSet[str]:
+    """Return every technology id declared in common/technologies."""
+    return _load_entry_names(
+        mod_path,
+        os.path.join(mod_path, "common", "technologies"),
+        _TECHNOLOGIES_BLOCK_RE,
+        "gfx_ref.tech_names",
+    )
 
 
 # Per-file parsers take (filepath, mod_path) and disk-cache their result keyed
@@ -332,7 +371,7 @@ def _read_raw(filepath: str) -> Optional[str]:
 def sprite_names_from_gfx_text(raw: str) -> Set[str]:
     """Return the set of GFX sprite names defined in raw .gfx file content.
 
-    Shared with gen_vanilla_sprites_manifest.py so the committed manifest is
+    Shared with refresh_vanilla_data.py so the committed manifest is
     built with exactly the parse the validator applies to mod files.
     """
     text = _strip_comments(raw)
@@ -348,7 +387,7 @@ def sprite_names_from_gfx_text(raw: str) -> Set[str]:
             ]
         nm = _GFX_NAME.search(snippet)
         if nm:
-            names.add(nm.group(1))
+            names.add(nm.group(1) or nm.group(2))
     return names
 
 
@@ -491,8 +530,9 @@ class Validator(BaseValidator):
     TITLE = "GFX SPRITE REFERENCE VALIDATION"
     STAGED_EXTENSIONS = [".gui", ".gfx", ".txt"]
 
-    def __init__(self, mod_path: str, **kwargs):
+    def __init__(self, mod_path: str, report_unused: bool = False, **kwargs):
         super().__init__(mod_path, **kwargs)
+        self.report_unused = report_unused
         # True once vanilla sprite names (live install or manifest) were folded
         # into the defined set — disables the _is_likely_vanilla heuristic.
         self._vanilla_defs_loaded = False
@@ -540,7 +580,7 @@ class Validator(BaseValidator):
         else:
             manifest = _load_vanilla_sprite_manifest()
             if manifest:
-                new = manifest - defined
+                new = set(manifest) - defined
                 defined.update(manifest)
                 self._vanilla_defs_loaded = True
                 self.log(
@@ -551,7 +591,7 @@ class Validator(BaseValidator):
                 self.log(
                     "  No vanilla HOI4 install detected and no vanilla_sprites.txt"
                     " manifest — set HOI4_PATH or run"
-                    " gen_vanilla_sprites_manifest.py (prefix heuristic active)"
+                    " refresh_vanilla_data.py (prefix heuristic active)"
                 )
         return defined, mod_defined
 
@@ -573,18 +613,25 @@ class Validator(BaseValidator):
         return all_refs
 
     def _collect_script_refs(self) -> Set[str]:
-        """Return every GFX sprite referenced from game script (events, common, history).
+        """Return every GFX sprite referenced from game script (events, common, history, gfx).
 
         Feeds the unused-sprite check so sprites used as event pictures, focus or
         decision icons, MIO/agency logos, portraits, etc. are not mis-reported as
         unused just because they are not referenced from interface/.
         """
         self._log_section(
-            "Collecting GFX references from game script (events/common/history)"
+            "Collecting GFX references from game script (events/common/history/gfx)"
         )
         files = self._collect_files(
             ["events/**/*.txt", "common/**/*.txt", "history/**/*.txt"],
             ignore_staged=True,
+        )
+        # should_skip_file ignores gfx/ wholesale, so _collect_files can't reach
+        # the equipment-designer graphic_db there — and it names sprites literally.
+        files.extend(
+            glob.iglob(
+                os.path.join(self.mod_path, "gfx", "**", "*.txt"), recursive=True
+            )
         )
         refs: Set[str] = set()
         for batch in self._pool_map(
@@ -763,9 +810,9 @@ class Validator(BaseValidator):
     ) -> None:
         """Report GFX sprites that are defined but never referenced (warning only).
 
-        Skipped entirely in staged mode to avoid noise — this check needs a
-        full-repo scan to be meaningful, but in staged mode we only see a
-        subset of files.
+        Only reached when --report-unused is passed. Skipped entirely in staged
+        mode to avoid noise — this check needs a full-repo scan to be
+        meaningful, but in staged mode we only see a subset of files.
         """
         self._log_section("Checking for unused GFX sprite definitions")
         if self.staged_only:
@@ -778,16 +825,25 @@ class Validator(BaseValidator):
                 "  No equipment archetypes found under common/units/equipment"
                 " — equipment-icon exemption disabled"
             )
+        technologies = _load_technology_names(self.mod_path)
+        if not technologies:
+            self.log(
+                "  No technologies found under common/technologies"
+                " — tech-icon exemption disabled"
+            )
+        implicit = equipment | technologies
 
-        def _is_equipment_icon(name: str) -> bool:
-            m = _EQUIPMENT_ICON_RE.match(name)
-            if not m:
+        def _is_engine_resolved_icon(name: str) -> bool:
+            if not name.startswith("GFX_"):
                 return False
-            stem = m.group(1)
-            if stem in equipment:
+            sized = _EQUIPMENT_ICON_RE.match(name)
+            stem = sized.group(1) if sized else name[len("GFX_") :]
+            if sized and stem in implicit:
                 return True
+            # Without a size suffix only a tagged name is engine-resolved; an
+            # untagged bare name is an ordinary sprite and stays reportable.
             tagged = _EQUIPMENT_ICON_TAG_RE.match(stem)
-            return bool(tagged) and tagged.group(1) in equipment
+            return tagged is not None and tagged.group(1) in implicit
 
         unused = sorted(
             s
@@ -795,7 +851,7 @@ class Validator(BaseValidator):
             if s not in all_refs
             and not _is_flag_sprite(s)
             and not _is_likely_vanilla(s)
-            and not _is_equipment_icon(s)
+            and not _is_engine_resolved_icon(s)
         )
 
         if not unused:
@@ -804,30 +860,18 @@ class Validator(BaseValidator):
             )
             return
 
-        display = unused[:_UNUSED_SPRITE_LIMIT]
-        remainder = len(unused) - len(display)
-
         issues = [
             (f"Unused GFX sprite '{s}' (defined but never referenced)", "", 0)
-            for s in display
+            for s in unused
         ]
 
         self._report(
             issues,
             ok_msg="All defined GFX sprites are referenced.",
-            fail_msg=f"Unused GFX sprite definitions ({len(unused)} total; first {_UNUSED_SPRITE_LIMIT} shown):",
+            fail_msg=f"Unused GFX sprite definitions ({len(unused)} total):",
             severity=Severity.WARNING,
             category="unused-sprite",
         )
-        # Logged, not reported: a truncation notice is not a finding. Emitting it
-        # as one makes report consumers count it as an issue and fail to parse a
-        # sprite name out of it.
-        if remainder > 0:
-            self.log(
-                f"  ... and {remainder} more unused sprites not shown "
-                f"(limit {_UNUSED_SPRITE_LIMIT})",
-                "always",
-            )
 
     def run_validations(self) -> None:
         defined, mod_defined = self._build_gfx_definitions()
@@ -869,6 +913,12 @@ class Validator(BaseValidator):
             mod_defined_ci=mod_defined_ci,
         )
 
+        if not self.report_unused:
+            self._log_section(
+                "Skipping unused-sprite check (pass --report-unused to enable)"
+            )
+            return
+
         # Unused-sprite check is mod-only; vanilla sprites the mod doesn't redefine aren't ours to flag.
         # A sprite is "used" if referenced anywhere — interface/ or game script.
         all_referenced: Set[str] = {r[0] for r in gui_refs + sgui_refs + sloc_refs}
@@ -878,10 +928,20 @@ class Validator(BaseValidator):
         self._check_unused_sprites(mod_defined, all_referenced)
 
 
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--report-unused",
+        action="store_true",
+        dest="report_unused",
+        help="Report GFX sprites that are defined but never referenced",
+    )
+
+
 def main() -> int:
     return run_validator_main(
         Validator,
         description="Validate GFX sprite references in Millennium Dawn mod.",
+        extra_args_fn=_add_extra_args,
     )
 
 

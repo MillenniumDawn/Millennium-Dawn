@@ -74,7 +74,8 @@ jobs:
       # a run_id suffix); the restore-keys prefixes do the real matching,
       # newest entry first.
       - name: Restore previous validator disk cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .validation_cache
           key: >-
@@ -84,7 +85,7 @@ jobs:
             md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
           python-version: "3.x"
 
@@ -99,7 +100,8 @@ jobs:
       # on an unchanged sha — without it the rebuild could never save. PR
       # restores prefix-match the newest entry via restore-keys.
       - name: Save validator disk cache
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        # v6.1.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .validation_cache
           key: >-
@@ -126,3 +128,140 @@ jobs:
             exit 1
           fi
           echo "Cache entry ${EXPECTED_KEY} confirmed"
+
+  # ───────────────────────────────────────────────────────────────
+  # Validation baseline — the nightly regression alarm for main itself.
+  # Re-runs the suite (warm, against the cache build-cache just saved) and
+  # diffs the findings against the previous night's baseline. New errors
+  # fail the job and leave the old baseline in place, so the run stays red
+  # every night until the regression is fixed. A validator-code change moves
+  # the toolshash, which instead establishes a fresh baseline. The baseline
+  # entry is what PR validation-report jobs restore to annotate NEW vs
+  # EXISTING findings.
+  # ───────────────────────────────────────────────────────────────
+  check-baseline:
+    name: Check validation baseline
+    needs: [build-cache]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      # Same union as build-cache: validators only see what is on disk, so a
+      # narrower checkout would produce a baseline missing whole namespaces.
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            common
+            events
+            history
+            localisation
+            interface
+            gfx/flags
+            tools
+            resources/documentation
+            .claude
+
+      - name: Compute validator code hash
+        id: toolshash
+        run: >-
+          echo "hash=${{ hashFiles('tools/validation/**',
+          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+
+      # Previous night's baseline for the current validator generation. A
+      # validator change moves the toolshash and the restore misses, which is
+      # the re-establish signal: comparing across generations would report
+      # every moved finding as new.
+      - name: Restore previous validation baseline
+        # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_baseline
+          key: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}
+          restore-keys: |
+            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
+
+      # The warm cache build-cache saved for THIS run (run_id-suffixed exact
+      # key) — a miss here is a real failure, not a graceful cold fallback.
+      # Same-sha fallback keeps "Re-run failed jobs" recoverable: build-cache
+      # may not re-run with the same run_id, but a same sha + same toolshash
+      # entry holds identical content.
+      - name: Restore validator disk cache
+        # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_cache
+          key: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
+            github.run_id }}
+          restore-keys: |
+            md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ github.sha }}-
+          fail-on-cache-miss: true
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        with:
+          python-version: "3.x"
+
+      # Non-strict: findings never fail this step — the diff below decides.
+      # A validator crash exits 1 and skips the diff, so a broken night
+      # keeps the previous baseline instead of promoting partial results.
+      - name: Run validators and persist results
+        run: >-
+          python3 tools/validation/run_all_validators.py --no-color
+          --persist-results .validation_baseline_candidate
+
+      - name: Diff against previous baseline
+        id: diff
+        run: |
+          workflow_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          workflow_url="$workflow_url/actions/runs/$GITHUB_RUN_ID"
+          python3 tools/baseline_check.py \
+            --previous .validation_baseline \
+            --current .validation_baseline_candidate \
+            --output .validation_baseline \
+            --toolshash "${{ steps.toolshash.outputs.hash }}" \
+            --commit-sha "${{ github.sha }}" \
+            --workflow-run-url "$workflow_url" \
+            --github-repository "${{ github.repository }}"
+
+      # Only a clean diff reaches this step: baseline_check exits 1 on new
+      # errors, so a red night saves nothing and the previous baseline stays
+      # the one PRs compare against.
+      - name: Save validation baseline
+        if: steps.diff.outcome == 'success'
+        # v6.1.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_baseline
+          key: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
+            github.run_id }}
+
+      # cache/save only warns on failure; without this check a failed save
+      # leaves the job green while PRs silently keep annotating against the
+      # previous baseline (which may never advance). Mirrors build-cache's
+      # verify step.
+      - name: Verify this run's baseline entry exists
+        if: steps.diff.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_KEY: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
+            github.run_id }}
+        run: |
+          cache_url="repos/${{ github.repository }}/actions/caches"
+          cache_url="${cache_url}?key=$EXPECTED_KEY&per_page=1"
+          count=$(gh api "$cache_url" --jq '.total_count')
+          if [ "$count" -eq 0 ]; then
+            echo "::error::Baseline entry ${EXPECTED_KEY} was not saved"
+            exit 1
+          fi
+          echo "Baseline entry ${EXPECTED_KEY} confirmed"

@@ -301,3 +301,61 @@ def test_multiline_packed_interior_option_gets_log():
     # Effect on the packed interior line is detected, so the option gets its log.
     assert '\t\tlog = "[GetDateText]: [This.GetName]: test.3.a executed"' in text
     assert "add_political_power = 10" in text
+
+
+_HEADER_COMMENT_EVENT = [
+    "country_event = { # 2001 Election Notification (Khatami vs Tavakkoli)",
+] + _EVENT[1:]
+
+
+def test_header_comment_preserved():
+    out = _standardize_event(_HEADER_COMMENT_EVENT)
+    assert (
+        out[0]
+        == "country_event = { # 2001 Election Notification (Khatami vs Tavakkoli)"
+    )
+
+
+def test_header_comment_idempotent():
+    once = _standardize_event(_HEADER_COMMENT_EVENT)
+    assert _standardize_event(once) == once
+
+
+def test_header_without_comment_unchanged():
+    assert _standardize_event(_EVENT)[0] == "country_event = {"
+
+
+def test_no_blank_line_before_closing_brace():
+    # (defect) every section appended a trailing blank, so the last one always
+    # left a dead line above `}`.
+    out = _standardize_event(_EVENT)
+    assert out[-1] == "}"
+    assert out[-2].strip() != ""
+
+
+def test_blank_lines_separate_groups_not_terminate_them():
+    out = _standardize_event(_EVENT)
+    blanks = [i for i, line in enumerate(out) if line.strip() == ""]
+    # Exactly two: header group -> option, and option -> option.
+    assert len(blanks) == 2
+    for i in blanks:
+        assert out[i - 1].strip() and out[i + 1].strip()
+
+
+_MINIMAL_EVENT = [
+    "country_event = {",
+    "\tid = test.6",
+    "\tis_triggered_only = yes",
+    "}",
+]
+
+
+def test_event_without_options_has_no_stray_blank():
+    # An event with nothing after the header group must not gain a gap from the
+    # absent option/trigger/immediate sections.
+    assert _standardize_event(_MINIMAL_EVENT) == [
+        "country_event = {",
+        "\tid = test.6",
+        "\tis_triggered_only = yes",
+        "}",
+    ]
