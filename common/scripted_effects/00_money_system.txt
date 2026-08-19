@@ -5687,18 +5687,106 @@ calculate_gdp = {
 		subtract_from_temp_variable = { workforce_total = workers_in_rail_terminals }
 	}
 
-	# Healthcare Sector — Workforce
-	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_workforce_level_scalar = 0.15 } }
-	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_workforce_level_scalar = 0.30 } }
-	else_if = { limit = { has_idea = health_03 } set_temp_variable = { healthcare_workforce_level_scalar = 0.50 } }
-	else_if = { limit = { has_idea = health_04 } set_temp_variable = { healthcare_workforce_level_scalar = 0.70 } }
-	else_if = { limit = { has_idea = health_05 } set_temp_variable = { healthcare_workforce_level_scalar = 0.90 } }
-	else_if = { limit = { has_idea = health_06 } set_temp_variable = { healthcare_workforce_level_scalar = 1.10 } }
+	# Public Sector Workforce
+	# Drawn after all industry, so a labour-poor country understaffs its state before its factories.
+	# Ordered by what a government staffs first: administration, policing, health, education, welfare.
+	if = { limit = { has_idea = bureau_01 } set_temp_variable = { bureaucracy_workforce_level_scalar = 0.00075 } }
+	else_if = { limit = { has_idea = bureau_02 } set_temp_variable = { bureaucracy_workforce_level_scalar = 0.0015 } }
+	else_if = { limit = { has_idea = bureau_03 } set_temp_variable = { bureaucracy_workforce_level_scalar = 0.003 } }
+	else_if = { limit = { has_idea = bureau_04 } set_temp_variable = { bureaucracy_workforce_level_scalar = 0.00525 } }
+	else_if = { limit = { has_idea = bureau_05 } set_temp_variable = { bureaucracy_workforce_level_scalar = 0.009 } }
+
+	set_temp_variable = {
+		max_workers_in_bureaucracy = {
+			value = population_total_m
+			multiply = bureaucracy_workforce_level_scalar
+			multiply = {
+				value = 1
+				add = modifier@bureaucracy_workforce_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
+			}
+		}
+	}
+
+	if = { limit = { check_variable = { max_workers_in_bureaucracy < 0.001 } }
+		set_variable = { workers_in_bureaucracy = 0 }
+		set_variable = { bureaucracy_manpower_fulfillment = 1 }
+	}
+	else = {
+		set_variable = {
+			workers_in_bureaucracy = {
+				value = max_workers_in_bureaucracy
+				clamp = { min = 0 max = workforce_total }
+			}
+		}
+		set_variable = {
+			bureaucracy_manpower_fulfillment = {
+				value = workers_in_bureaucracy
+				divide = { value = max_workers_in_bureaucracy clamp = { min = 0.001 max = @math_expressions_max } }
+				clamp = { min = 0.1 max = 1 }
+			}
+		}
+		subtract_from_temp_variable = { workforce_total = workers_in_bureaucracy }
+
+		# Civil servant wages are part of what the administration costs to run
+		add_to_variable = {
+			var = bureaucracy_gain
+			value = {
+				value = workers_in_bureaucracy
+				multiply = @bureau_salary_per_worker
+			}
+		}
+	}
+
+	if = { limit = { has_idea = police_01 } set_temp_variable = { police_workforce_level_scalar = 0.0008 } }
+	else_if = { limit = { has_idea = police_02 } set_temp_variable = { police_workforce_level_scalar = 0.0015 } }
+	else_if = { limit = { has_idea = police_03 } set_temp_variable = { police_workforce_level_scalar = 0.0025 } }
+	else_if = { limit = { has_idea = police_04 } set_temp_variable = { police_workforce_level_scalar = 0.004 } }
+	else_if = { limit = { has_idea = police_05 } set_temp_variable = { police_workforce_level_scalar = 0.006 } }
+
+	set_temp_variable = {
+		max_workers_in_police = {
+			value = population_total_m
+			multiply = police_workforce_level_scalar
+			multiply = {
+				value = 1
+				add = modifier@police_workforce_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
+			}
+		}
+	}
+
+	if = { limit = { check_variable = { max_workers_in_police < 0.001 } }
+		set_variable = { workers_in_police = 0 }
+		set_variable = { police_manpower_fulfillment = 1 }
+	}
+	else = {
+		set_variable = {
+			workers_in_police = {
+				value = max_workers_in_police
+				clamp = { min = 0 max = workforce_total }
+			}
+		}
+		set_variable = {
+			police_manpower_fulfillment = {
+				value = workers_in_police
+				divide = { value = max_workers_in_police clamp = { min = 0.001 max = @math_expressions_max } }
+				clamp = { min = 0.1 max = 1 }
+			}
+		}
+		subtract_from_temp_variable = { workforce_total = workers_in_police }
+	}
+
+	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_workforce_level_scalar = 0.0045 } }
+	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_workforce_level_scalar = 0.009 } }
+	else_if = { limit = { has_idea = health_03 } set_temp_variable = { healthcare_workforce_level_scalar = 0.015 } }
+	else_if = { limit = { has_idea = health_04 } set_temp_variable = { healthcare_workforce_level_scalar = 0.021 } }
+	else_if = { limit = { has_idea = health_05 } set_temp_variable = { healthcare_workforce_level_scalar = 0.027 } }
+	else_if = { limit = { has_idea = health_06 } set_temp_variable = { healthcare_workforce_level_scalar = 0.033 } }
 
 	set_temp_variable = {
 		max_workers_in_healthcare = {
-			value = population_total
-			multiply = 0.003
+			value = population_total_m
 			multiply = healthcare_workforce_level_scalar
 			multiply = {
 				value = 1
@@ -5729,60 +5817,109 @@ calculate_gdp = {
 		subtract_from_temp_variable = { workforce_total = workers_in_healthcare }
 	}
 
-	# Bureaucracy — civil servants required by government administration level
-	set_temp_variable = { workers_per_bureau = 0 }
-	if = { limit = { has_idea = bureau_01 }
-		set_temp_variable = { workers_per_bureau = 0.00075 }
-	}
-	else_if = { limit = { has_idea = bureau_02 }
-		set_temp_variable = { workers_per_bureau = 0.0015 }
-	}
-	else_if = { limit = { has_idea = bureau_03 }
-		set_temp_variable = { workers_per_bureau = 0.003 }
-	}
-	else_if = { limit = { has_idea = bureau_04 }
-		set_temp_variable = { workers_per_bureau = 0.00525 }
-	}
-	else_if = { limit = { has_idea = bureau_05 }
-		set_temp_variable = { workers_per_bureau = 0.009 }
-	}
+	if = { limit = { has_idea = edu_01 } set_temp_variable = { education_workforce_level_scalar = 0.003 } }
+	else_if = { limit = { has_idea = edu_02 } set_temp_variable = { education_workforce_level_scalar = 0.006 } }
+	else_if = { limit = { has_idea = edu_03 } set_temp_variable = { education_workforce_level_scalar = 0.01 } }
+	else_if = { limit = { has_idea = edu_04 } set_temp_variable = { education_workforce_level_scalar = 0.014 } }
+	else_if = { limit = { has_idea = edu_05 } set_temp_variable = { education_workforce_level_scalar = 0.018 } }
 
-	if = { limit = { check_variable = { workers_per_bureau = 0 } }
-		set_variable = { bureaucracy_manpower_fulfillment = 1 }
-	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_bureaucracy = {
-				value = population_total_m
-				multiply = workers_per_bureau
-				clamp = { min = 0 max = @math_expressions_max }
+	set_temp_variable = {
+		max_workers_in_education = {
+			value = population_total_m
+			multiply = education_workforce_level_scalar
+			multiply = {
+				value = 1
+				add = modifier@education_workforce_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
 			}
 		}
+	}
 
+	if = { limit = { check_variable = { max_workers_in_education < 0.001 } }
+		set_variable = { workers_in_education = 0 }
+		set_variable = { education_manpower_fulfillment = 1 }
+	}
+	else = {
 		set_variable = {
-			workers_in_bureaucracy = {
-				value = max_workers_in_bureaucracy
+			workers_in_education = {
+				value = max_workers_in_education
 				clamp = { min = 0 max = workforce_total }
 			}
 		}
-
 		set_variable = {
-			bureaucracy_manpower_fulfillment = {
-				value = workers_in_bureaucracy
-				divide = { value = max_workers_in_bureaucracy clamp = { min = 0.001 max = @math_expressions_max } }
+			education_manpower_fulfillment = {
+				value = workers_in_education
+				divide = { value = max_workers_in_education clamp = { min = 0.001 max = @math_expressions_max } }
 				clamp = { min = 0.1 max = 1 }
 			}
 		}
+		subtract_from_temp_variable = { workforce_total = workers_in_education }
+	}
 
-		subtract_from_temp_variable = { workforce_total = workers_in_bureaucracy }
+	if = { limit = { has_idea = social_01 } set_temp_variable = { welfare_workforce_level_scalar = 0.0002 } }
+	else_if = { limit = { has_idea = social_02 } set_temp_variable = { welfare_workforce_level_scalar = 0.0005 } }
+	else_if = { limit = { has_idea = social_03 } set_temp_variable = { welfare_workforce_level_scalar = 0.0009 } }
+	else_if = { limit = { has_idea = social_04 } set_temp_variable = { welfare_workforce_level_scalar = 0.0013 } }
+	else_if = { limit = { has_idea = social_05 } set_temp_variable = { welfare_workforce_level_scalar = 0.0017 } }
+	else_if = { limit = { has_idea = social_06 } set_temp_variable = { welfare_workforce_level_scalar = 0.002 } }
 
-		# Salary cost — civil servant wages add to total bureaucracy expenditure
-		add_to_variable = {
-			var = bureaucracy_gain
-			value = {
-				value = workers_in_bureaucracy
-				multiply = @bureau_salary_per_worker
+	set_temp_variable = {
+		max_workers_in_welfare = {
+			value = population_total_m
+			multiply = welfare_workforce_level_scalar
+			multiply = {
+				value = 1
+				add = modifier@welfare_workforce_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
 			}
+		}
+	}
+
+	if = { limit = { check_variable = { max_workers_in_welfare < 0.001 } }
+		set_variable = { workers_in_welfare = 0 }
+		set_variable = { welfare_manpower_fulfillment = 1 }
+	}
+	else = {
+		set_variable = {
+			workers_in_welfare = {
+				value = max_workers_in_welfare
+				clamp = { min = 0 max = workforce_total }
+			}
+		}
+		set_variable = {
+			welfare_manpower_fulfillment = {
+				value = workers_in_welfare
+				divide = { value = max_workers_in_welfare clamp = { min = 0.001 max = @math_expressions_max } }
+				clamp = { min = 0.1 max = 1 }
+			}
+		}
+		subtract_from_temp_variable = { workforce_total = workers_in_welfare }
+	}
+
+	set_variable = {
+		public_sector_manpower_fulfillment = {
+			value = bureaucracy_manpower_fulfillment
+			add = police_manpower_fulfillment
+			add = healthcare_manpower_fulfillment
+			add = education_manpower_fulfillment
+			add = welfare_manpower_fulfillment
+			divide = 5
+		}
+	}
+	set_variable = {
+		public_sector_understaffing_stability_var = {
+			value = public_sector_manpower_fulfillment
+			add = -1
+			multiply = 0.25
+			clamp = { min = -0.15 max = 0 }
+		}
+	}
+	set_variable = {
+		bureaucracy_understaffing_pp_var = {
+			value = bureaucracy_manpower_fulfillment
+			add = -1
+			multiply = 0.5
+			clamp = { min = -0.45 max = 0 }
 		}
 	}
 
@@ -5804,7 +5941,10 @@ calculate_gdp = {
 			add = rail_terminal_manpower_fulfillment
 			add = healthcare_manpower_fulfillment
 			add = bureaucracy_manpower_fulfillment
-			divide = 15
+			add = police_manpower_fulfillment
+			add = education_manpower_fulfillment
+			add = welfare_manpower_fulfillment
+			divide = 18
 		}
 	}
 
