@@ -157,6 +157,7 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "production_oil_factor_tt",
         "production_speed_facility_factor_tt",
         "production_speed_supply_node_factor_tt",
+        "production_speed_synthetic_refinery_factor_tt",
         "recruitable_population_tt",
         "resistance_activity_tt",
         "resistance_target_tt",
