@@ -53,11 +53,15 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     scope's faction; it takes a country tag or scope ref, never a faction name.
   - create_faction = X (deprecated; use create_faction_from_template = TEMPLATE
     for DLC compatibility)
+  - add_building_construction of a provincial building (naval_base, supply_node,
+    rail_way, bunker, the special-project facilities ...) with no province key --
+    the engine rejects the effect and the building is never placed
 """
 
 import os
 import re
 import sys
+from functools import lru_cache
 
 _RE_THREAT = re.compile(r"(?<!\w)threat\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_WAR_SUPPORT = re.compile(r"(?<!\w)has_war_support\s*([><]=?)\s*(\d+\.?\d*)")
@@ -85,6 +89,11 @@ _RE_CHECK_EXPR_BAD_OPERAND = re.compile(
     r"not_equals|equals)\s*([><])\s*\S"
 )
 _RE_EVERY_OWNED_CONTROLLED_STATE = re.compile(r"\bevery_owned_controlled_state\b")
+_RE_ADD_BUILDING_OPEN = re.compile(r"\badd_building_construction\s*=\s*\{")
+_RE_BUILDING_TYPE = re.compile(r"\btype\s*=\s*(\w+)")
+_RE_BUILDING_PROVINCE = re.compile(r"\bprovince\s*=")
+_RE_BUILDING_ENTRY = re.compile(r"^\t(\w+)\s*=\s*\{", re.M)
+_RE_PROVINCE_MAX = re.compile(r"\bprovince_max\s*=")
 _RE_RANDOM_SELECT_AMOUNT = re.compile(r"\brandom_select_amount\s*=\s*([^\s}]+)")
 _RE_BARE_INT = re.compile(r"^-?\d+$")
 # Tautological OR covering both polarities of one trigger (X = yes / X = no) is
@@ -1793,6 +1802,71 @@ def _check_every_owned_controlled_state(lines):
     return issues
 
 
+@lru_cache(maxsize=1)
+def _provincial_building_types():
+    """Building types placed on a province rather than a state, read from
+    common/buildings/. A `level_cap = { province_max = N }` entry is the marker.
+    """
+    types = set()
+    # Anchored on this file, not get_root_dir(): that reads sys.argv[0], which
+    # points at pytest rather than the linter when the tests import this.
+    mod_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+    buildings_dir = os.path.join(mod_root, "common", "buildings")
+    try:
+        filenames = sorted(os.listdir(buildings_dir))
+    except OSError:
+        return frozenset()
+    for fname in filenames:
+        if not fname.endswith(".txt"):
+            continue
+        try:
+            with open(os.path.join(buildings_dir, fname), encoding="utf-8") as f:
+                lines = f.readlines()
+        except OSError:
+            continue
+        for i, line in enumerate(lines):
+            entry = _RE_BUILDING_ENTRY.match(_code_for_depth(line))
+            if not entry:
+                continue
+            block, _ = _get_block(lines, i)
+            if _RE_PROVINCE_MAX.search("".join(block)):
+                types.add(entry.group(1))
+    return frozenset(types)
+
+
+def _check_building_missing_province(lines):
+    """Flag add_building_construction of a provincial building with no province.
+
+    A provincial building sits on a province, not a state, so the effect needs
+    `province = <id>` or a `province = { all_provinces = yes ... }` selector.
+    Without one the engine rejects the whole effect (state_effect_implementation.cpp)
+    and the building is never placed -- the focus or decision silently does nothing.
+    """
+    issues = []
+    provincial = _provincial_building_types()
+    if not provincial:
+        return issues
+    for i, line in enumerate(lines):
+        if not _RE_ADD_BUILDING_OPEN.search(_code_for_depth(line)):
+            continue
+        block = "".join(_code_for_depth(bl) for bl in _get_block(lines, i)[0])
+        type_match = _RE_BUILDING_TYPE.search(block)
+        if not type_match or type_match.group(1) not in provincial:
+            continue
+        if _RE_BUILDING_PROVINCE.search(block):
+            continue
+        issues.append(
+            (
+                i + 1,
+                f"add_building_construction type = {type_match.group(1)} has no "
+                f"province -- it is a provincial building, so the engine rejects "
+                f"the effect and nothing is built; add province = <id> or "
+                f"province = {{ all_provinces = yes ... }}",
+            )
+        )
+    return issues
+
+
 def _add_to_faction_value_ok(value):
     """True when value is a country add_to_faction can take: a 3-letter tag, a
     country scope keyword or dotted scope chain (PREV.PREV), a var:/event_target:
@@ -2742,6 +2816,7 @@ def check_file(filepath):
     issues.extend(_check_random_select_amount_literal(lines))
     if is_common_or_events_file:
         issues.extend(_check_every_owned_controlled_state(lines))
+        issues.extend(_check_building_missing_province(lines))
 
     return [(filepath, ln, msg) for ln, msg in issues]
 
