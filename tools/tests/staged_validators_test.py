@@ -37,9 +37,13 @@ def run(cmd, **kwargs):
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
 
 
-def git_stage(path):
+def _assert_safe_path(path):
     if ".." in path or os.path.isabs(path) or path not in TEST_FILES:
         raise ValueError(f"unsafe test path: {path}")
+
+
+def git_stage(path):
+    _assert_safe_path(path)
     run(["git", "add", path])
 
 
@@ -49,8 +53,7 @@ def git_unstage(path):
 
 def git_restore(path):
     """Remove a file from the index and working tree if it was newly created."""
-    if ".." in path or os.path.isabs(path) or path not in TEST_FILES:
-        raise ValueError(f"unsafe test path: {path}")
+    _assert_safe_path(path)
     run(["git", "reset", "HEAD", path], cwd=REPO_ROOT)
     if os.path.exists(path):
         # pi-lens-ignore: python-path-traversal
@@ -168,8 +171,7 @@ def create_test_files():
         (TEST_LOC_FILE, TEST_LOC_CONTENT),
         (TEST_HISTORY_FILE, TEST_HISTORY_CONTENT),
     ]:
-        if ".." in path or os.path.isabs(path) or path not in TEST_FILES:
-            raise ValueError(f"unsafe test path: {path}")
+        _assert_safe_path(path)
         # pi-lens-ignore: python-path-traversal
         os.makedirs(os.path.dirname(path), exist_ok=True)
         # pi-lens-ignore: python-path-traversal
