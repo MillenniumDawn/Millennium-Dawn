@@ -609,7 +609,7 @@ class Validator(BaseValidator):
 
     def __init__(self, *args, **kwargs):
         self.missing_loc = kwargs.pop("missing_loc", False)
-        self.missing_icons = kwargs.pop("missing_icons", False)
+        kwargs.pop("missing_icons", None)
         self.unused_ideas = kwargs.pop("unused_ideas", True)
         self.suggest_consolidation = kwargs.pop("suggest_consolidation", False)
         super().__init__(*args, **kwargs)
@@ -1225,12 +1225,7 @@ class Validator(BaseValidator):
                 "Skipping missing localisation check (pass --missing-loc to enable)"
             )
 
-        if self.missing_icons:
-            self.validate_missing_icons(defined_ideas)
-        else:
-            self._log_section(
-                "Skipping missing icon check (pass --missing-icons to enable)"
-            )
+        self.validate_missing_icons(defined_ideas)
 
         if self.unused_ideas:
             self.validate_unused_ideas(defined_ideas, ideas_by_file)
@@ -1251,7 +1246,7 @@ def _add_extra_args(parser):
         "--missing-icons",
         action="store_true",
         dest="missing_icons",
-        help="Enable the missing icon check (flags ideas whose picture sprite is undefined)",
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--unused-ideas",

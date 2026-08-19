@@ -283,9 +283,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert (
-        not gone
-    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    assert not gone, (
+        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    )
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED
@@ -371,12 +371,12 @@ def test_nightly_keys_the_bundle_on_the_live_base_tip():
     script = "\n".join(
         line for line in step["run"].splitlines() if not line.lstrip().startswith("#")
     )
-    assert (
-        "commits/main" in script
-    ), "the nightly must resolve main's live head for base_sha"
-    assert (
-        ".base.sha" not in script
-    ), "the PR list's .base.sha does not track main, so it cannot key the bundle"
+    assert "commits/main" in script, (
+        "the nightly must resolve main's live head for base_sha"
+    )
+    assert ".base.sha" not in script, (
+        "the PR list's .base.sha does not track main, so it cannot key the bundle"
+    )
 
 
 def test_mio_validator_runs_for_localisation_changes():
@@ -530,6 +530,7 @@ def test_tools_tests_checkout_consumed_configuration():
     }
     for co in checkouts:
         sparse = co.get("with", {}).get("sparse-checkout")
+        # Full checkout (no sparse) already exposes every file.
         if sparse is None:
             return
         if required <= set(sparse.splitlines()):
@@ -563,9 +564,9 @@ def test_ci_run_steps_default_to_strict():
             for step in workflow["jobs"][job]["steps"]
             if step.get("name") == "Run validation"
         )
-        assert (
-            'matrix.validator.strict }}" != "false"' in run
-        ), f"{job}'s Run step must default to --strict when `strict:` is absent."
+        assert 'matrix.validator.strict }}" != "false"' in run, (
+            f"{job}'s Run step must default to --strict when `strict:` is absent."
+        )
 
 
 def test_ci_idea_icon_check_is_enabled():
@@ -577,7 +578,8 @@ def test_ci_idea_icon_check_is_enabled():
         ]
         if entry["script"] == "validate_ideas.py"
     )
-    assert entry.get("args") == "--missing-icons"
+    # Icon check is now default-on; no opt-in flag needed.
+    assert entry.get("args") in (None, "")
 
 
 def test_oob_routes_cover_every_create_unit_source():
