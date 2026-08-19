@@ -17,6 +17,7 @@ raid_ai_target_relevant = {
 # Drone raid availability — wartime/wargoal/retaliation/PP>300
 # Used by drone raids that require active hostility (airfield, rocket site, swarm)
 drone_raid_available_hostile = {
+	set_temp_variable = { raid_required_pp_300 = { value = 300  multiply = { value = 1  add = modifier@raid_cost_factor } } }
 	raid_ai_target_relevant = yes
 	OR = {
 		has_war = yes
@@ -33,7 +34,7 @@ drone_raid_available_hostile = {
 		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
 		has_war_with = FROM
 		has_wargoal_against = FROM
-		has_political_power > 300
+		has_political_power > raid_required_pp_300
 	}
 	FROM = {
 		NOT = { is_subject_of = ROOT }
@@ -45,6 +46,7 @@ drone_raid_available_hostile = {
 # Drone/air raid availability — grey-zone ops (PP>99 or wartime)
 # Used by drone/ai raids against civilian infrastructure (power grid, resources)
 raid_available_grey_zone = {
+	set_temp_variable = { raid_required_pp_99 = { value = 99  multiply = { value = 1  add = modifier@raid_cost_factor } } }
 	raid_ai_target_relevant = yes
 	OR = {
 		has_war = yes
@@ -58,9 +60,9 @@ raid_available_grey_zone = {
 		else = { always = no }
 	}
 	OR = {
-		has_political_power > 99
 		has_war_with = FROM
 		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+		has_political_power > raid_required_pp_99
 	}
 	FROM = {
 		NOT = { is_subject_of = ROOT }
@@ -224,6 +226,48 @@ raid_intervention_doctrine_reach_block = {
 			NOT = { is_neighbor_of = FROM }
 			NOT = { has_war_with = FROM }
 		}
+	}
+}
+
+# Raid PP checks — discounted by raid_cost_factor (ISR doctrine -0.25 → 25% off)
+raid_can_launch_99 = {
+	set_temp_variable = { raid_required_pp_99 = { value = 99  multiply = { value = 1  add = modifier@raid_cost_factor } } }
+	OR = {
+		has_war_with = FROM
+		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+		has_political_power > raid_required_pp_99
+	}
+}
+raid_can_launch_100 = {
+	set_temp_variable = { raid_required_pp_100 = { value = 100  multiply = { value = 1  add = modifier@raid_cost_factor } } }
+	OR = {
+		has_war_with = FROM
+		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+		has_political_power > raid_required_pp_100
+	}
+}
+raid_can_launch_150 = {
+	set_temp_variable = { raid_required_pp_150 = { value = 150  multiply = { value = 1  add = modifier@raid_cost_factor } } }
+	OR = {
+		has_war_with = FROM
+		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+		has_political_power > raid_required_pp_150
+	}
+}
+raid_can_launch_200 = {
+	set_temp_variable = { raid_required_pp_200 = { value = 200  multiply = { value = 1  add = modifier@raid_cost_factor } } }
+	OR = {
+		has_war_with = FROM
+		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+		has_political_power > raid_required_pp_200
+	}
+}
+raid_can_launch_300 = {
+	set_temp_variable = { raid_required_pp_300 = { value = 300  multiply = { value = 1  add = modifier@raid_cost_factor } } }
+	OR = {
+		has_war_with = FROM
+		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+		has_political_power > raid_required_pp_300
 	}
 }
 
