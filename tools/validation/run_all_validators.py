@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-# Run all validation scripts in parallel (cross-platform).
+# Run auto-runnable validation scripts in parallel (cross-platform).
 # Usage: python run_all_validators.py [--staged] [--strict] [--no-color] [--format json]
 import argparse
 import glob
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -20,8 +21,14 @@ SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 
 
-_NON_VALIDATOR_SCRIPTS = frozenset(
-    ("validate_tools.py", "validate_staged.py", "run_all_validators.py")
+# The manual texture audit needs the full gfx tree, which cache warm-up omits.
+_AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
+    (
+        "validate_tools.py",
+        "validate_staged.py",
+        "run_all_validators.py",
+        "validate_unused_textures.py",
+    )
 )
 
 # Opt-in flags that only one validator understands, applied by its discovered
@@ -35,11 +42,11 @@ _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
 
 
 def discover_validators() -> List[Tuple[str, str, str]]:
-    """Return (name, script_name, label) for every validate_*.py in this dir."""
+    """Return (name, script_name, label) for each auto-runnable validator."""
     validators = []
     for script_path in glob.glob(os.path.join(SCRIPTS_DIR, "validate_*.py")):
         script_name = os.path.basename(script_path)
-        if script_name in _NON_VALIDATOR_SCRIPTS:
+        if script_name in _AUTO_RUN_EXCLUDED_SCRIPTS:
             continue
         name = script_name.replace("validate_", "").replace(".py", "").replace("_", "-")
         label = _extract_label_from_script(script_path, name)
@@ -255,6 +262,34 @@ def generate_combined_report(
     return "\n".join(lines)
 
 
+def _persist_sidecars(output_dir: str, persist_dir: str) -> None:
+    """Copy every validator's JSON sidecar into persist_dir.
+
+    The suite runs inside a TemporaryDirectory that is deleted on exit; the
+    copies are the only per-validator results that survive. A validator that
+    passed clean writes no sidecar, which is exactly the empty findings set a
+    baseline wants from it. Copy errors raise: a silent partial persist would
+    save a truncated baseline under a valid-looking meta.
+    """
+    try:
+        os.makedirs(persist_dir, exist_ok=True)
+    except OSError:
+        raise
+    copied = 0
+    for json_path in glob.glob(os.path.join(output_dir, "*.json")):
+        try:
+            shutil.copyfile(
+                json_path, os.path.join(persist_dir, os.path.basename(json_path))
+            )
+        except OSError:
+            raise
+        copied += 1
+    print(
+        f"Persisted {copied} validator result sidecar(s) to {persist_dir}",
+        file=sys.stderr,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run all MD validators in parallel")
     parser.add_argument("--staged", action="store_true")
@@ -296,6 +331,17 @@ def main():
         type=str,
         default=".",
         help="Path to the mod folder (default: current directory)",
+    )
+    parser.add_argument(
+        "--persist-results",
+        type=str,
+        default=None,
+        help=(
+            "Copy each validator's JSON sidecar into this directory before "
+            "the run's temporary output is deleted. Used by the nightly "
+            "baseline job to keep the per-validator results after the suite "
+            "completes."
+        ),
     )
     args = parser.parse_args()
 
@@ -453,6 +499,15 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             )
         else:
             print(f"\n{report}")
+
+    # Persist before the TemporaryDirectory cleanup in main() reclaims the
+    # sidecars. Runs even when validators crashed so a failing night still
+    # leaves the partial results to inspect (the nightly baseline job gates
+    # its diff on this step's exit code, so a partial persist never becomes
+    # the baseline).
+    persist_dir = getattr(args, "persist_results", None)
+    if persist_dir:
+        _persist_sidecars(output_dir, persist_dir)
 
     if total_errors == 0 and total_warnings == 0:
         print(f"{Colors.GREEN}✓ ALL VALIDATIONS PASSED{Colors.ENDC}", file=human_stream)

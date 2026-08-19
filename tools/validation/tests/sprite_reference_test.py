@@ -13,6 +13,12 @@ def _write(tmp_path, name, text):
     return str(p)
 
 
+def _event_picture_name(text):
+    match = _EVENT_PICTURE_REF.search(text)
+    assert match is not None
+    return match.group(1)
+
+
 def test_names_in_file_block_scoped_and_comment_safe(tmp_path):
     # `//` and `#` are line comments; a sprite after a commented line must still
     # be collected (regression: a `//.*` DOTALL pattern ate the rest of the file).
@@ -22,7 +28,7 @@ def test_names_in_file_block_scoped_and_comment_safe(tmp_path):
         "spriteTypes = {\n"
         '  spriteType = { name = "GFX_one" texturefile = "a.dds" } // a comment\n'
         "  # another comment\n"
-        '  spriteType = { name = "bare_two" texturefile = "b.dds" }\n'
+        '  spriteType = { name = bare_two texturefile = "b.dds" }\n'
         "}\n",
     )
     names = set(_names_in_file(f))
@@ -30,21 +36,17 @@ def test_names_in_file_block_scoped_and_comment_safe(tmp_path):
 
 
 def test_event_picture_regex_matches_quoted_and_unquoted():
-    assert _EVENT_PICTURE_REF.search("picture = GFX_political_deal").group(1) == (
-        "GFX_political_deal"
-    )
-    assert _EVENT_PICTURE_REF.search('picture = "GFX_handshake"').group(1) == (
-        "GFX_handshake"
-    )
+    assert _event_picture_name("picture = GFX_political_deal") == "GFX_political_deal"
+    assert _event_picture_name('picture = "GFX_handshake"') == "GFX_handshake"
 
 
 def test_event_picture_regex_keeps_frame_and_hyphen():
     # Sprite names can carry a `.N` frame suffix or a hyphen; both are part of
     # the name, not a delimiter (regression: stopping at `.`/`-` flagged the
     # real sprite GFX_CTC.5 / GFX_Polizistin-Kiesewetter as undefined).
-    assert _EVENT_PICTURE_REF.search("picture = GFX_CTC.5").group(1) == "GFX_CTC.5"
+    assert _event_picture_name("picture = GFX_CTC.5") == "GFX_CTC.5"
     assert (
-        _EVENT_PICTURE_REF.search("picture = GFX_Polizistin-Kiesewetter").group(1)
+        _event_picture_name("picture = GFX_Polizistin-Kiesewetter")
         == "GFX_Polizistin-Kiesewetter"
     )
 

@@ -2,12 +2,13 @@
 # Variable and event target validation: checks flags (country/state/global) and
 # event targets for cleared-but-not-set, used-but-not-set, and unused items.
 # Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323).
+import bisect
 import glob
 import os
 import re
 import sys
 from multiprocessing import Pool
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -16,7 +17,13 @@ import disk_cache
 # strip_comments is quote-aware: a '#' inside a quoted log string must survive,
 # or the orphaned quote desyncs extract_block_from_text's in-string tracking
 # and container spans are silently lost.
-from shared_utils import blank_quoted_strings, extract_block_from_text, strip_comments
+from shared_utils import (
+    blank_quoted_strings,
+    compute_line_offsets,
+    extract_block_from_text,
+    line_for_offset,
+    strip_comments,
+)
 from validator_common import (
     BaseValidator,
     DataCleaner,
@@ -194,6 +201,477 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
                 f"{rel}:{line} - math expression literal with >5 decimal places"
                 f" (engine truncates silently): {m.group(0).strip()}"
             )
+    return issues
+
+
+# A variable clamped to a literal range can never hold a value outside it, so a
+# check_variable comparing against one is dead logic — always true or always false.
+# The sub-1 case is the same bug seen from the other side: a 0-1 scale value written
+# against a variable clamped to a wide integer range (taliban_strength > 0.19 on a
+# 0..100 clamp fires immediately instead of at 19%). Same failure class as the
+# `threat > 40` trap in general-rules.md.
+_CLAMP_RE = re.compile(
+    r"clamp_variable\s*=\s*\{(?P<body>[^{}]*?)\}",
+    re.S,
+)
+_CLAMP_VAR_RE = re.compile(r"\bvar\s*=\s*([A-Za-z_][A-Za-z0-9_.]*)")
+_CLAMP_MIN_RE = re.compile(r"\bmin\s*=\s*(-?\d+(?:\.\d+)?)")
+_CLAMP_MAX_RE = re.compile(r"\bmax\s*=\s*(-?\d+(?:\.\d+)?)")
+# `check_variable = { my_var > 5 }` and `check_variable = { var = my_var value = 5 ... }`
+_CHECKVAR_SHORT_RE = re.compile(
+    r"check_variable\s*=\s*\{\s*([A-Za-z_][A-Za-z0-9_.]*)\s*[<>=]\s*(-?\d+(?:\.\d+)?)\s*\}"
+)
+_CHECKVAR_LONG_RE = re.compile(
+    r"check_variable\s*=\s*\{\s*var\s*=\s*([A-Za-z_][A-Za-z0-9_.]*)\s+value\s*=\s*(-?\d+(?:\.\d+)?)"
+)
+# A clamp on a scratch parameter constrains that one invocation, not the variable,
+# so its range says nothing about what a check elsewhere may compare against.
+_SET_TEMP_VAR_RE = re.compile(
+    r"set_temp_variable\s*=\s*\{\s*(?:var\s*=\s*)?([A-Za-z_][A-Za-z0-9_.]*)"
+)
+_SET_PERSISTENT_VAR_RE = re.compile(
+    r"set(?:_global)?_variable\s*=\s*\{\s*(?:var\s*=\s*)?([A-Za-z_][A-Za-z0-9_.]*)"
+)
+
+
+_UNTOOLTIPPED_TRIGGER_RE = re.compile(r"\bcheck_variable\s*=\s*\{")
+_TOOLTIP_WRAPPER_TOKENS = frozenset(
+    {"custom_trigger_tooltip", "hidden_trigger", "custom_override_tooltip"}
+)
+# check_variable takes its own inline `tooltip = KEY`, which renders the same
+# requirement line a wrapper would. `\b` does not match custom_trigger_tooltip.
+_INLINE_TOOLTIP_RE = re.compile(r"\btooltip\s*=")
+_PLAYER_FACING_BLOCK = "available"
+# Both `available` scans cover the same player-facing object types.
+_PLAYER_FACING_GLOBS = [
+    "common/decisions/**/*.txt",
+    "common/national_focus/*.txt",
+    "common/ideas/*.txt",
+    "common/military_industrial_organization/**/*.txt",
+    "common/operations/*.txt",
+    "common/special_projects/**/*.txt",
+    "common/scripted_diplomatic_actions/*.txt",
+]
+# Shorthand and long form: `has_country_flag = X` / `= { flag = X value > 0 }`.
+_AVAILABLE_FLAG_RE = re.compile(
+    r"\bhas_country_flag\s*=\s*(?:\{\s*flag\s*=\s*)?([A-Za-z_][A-Za-z0-9_.@]*)"
+)
+
+
+# Variable effects that render a tooltip line. The `*_temp_variable` forms are
+# excluded structurally — no alternation below is a substring of them — because a
+# temp variable backs no dynamic modifier and survives nothing the player sees.
+_VAR_TOOLTIP_EFFECT_RE = re.compile(
+    r"\b(?:set|add_to|subtract_from|multiply|divide|clamp)_variable\s*=\s*\{"
+)
+# Only the two write forms that move an existing modifier by a delta.
+_VAR_WRITE_EFFECT_RE = re.compile(r"\b(add_to|subtract_from)_variable\s*=\s*\{")
+_TOOLTIP_KEY_RE = re.compile(r"\btooltip\s*=\s*([A-Za-z_][A-Za-z0-9_.]*)")
+# Target variable of a variable effect: shorthand `{ my_var = 5 }` or long form
+# `{ var = my_var value = 5 }`.
+_VAR_TARGET_RE = re.compile(r"\{\s*(?:var\s*=\s*)?([A-Za-z_][A-Za-z0-9_.:^]*)")
+
+_RE_HIDDEN_EFFECT = re.compile(r"\bhidden_effect\s*=\s*\{")
+# Block kinds the engine renders as a player-facing effect tooltip. cancel_effect
+# is absent on purpose: it fires on cancellation, not on a player action.
+_TOOLTIP_EFFECT_BLOCKS = (
+    "complete_effect",
+    "timeout_effect",
+    "remove_effect",
+    "completion_reward",
+    "option",
+    "on_complete",
+)
+_RE_TOOLTIP_EFFECT_BLOCK = re.compile(
+    r"\b(?:" + "|".join(_TOOLTIP_EFFECT_BLOCKS) + r")\s*=\s*\{"
+)
+
+# Dynamic modifier definitions: `<modifier_key> = <backing_variable>` at depth 1
+# of a `<modifier_name> = { ... }` block.
+_DM_PAIR_RE = re.compile(r"^([A-Za-z_][\w.]*)\s*=\s*([^\s{}#]+)$")
+_DM_NON_MODIFIER_KEYS = frozenset(
+    {"icon", "enable", "remove_trigger", "custom_modifier_tooltip"}
+)
+# `x` is the placeholder icon; yes/no are booleans, not variables.
+_DM_NON_VARIABLE_VALUES = frozenset({"yes", "no", "x"})
+
+
+def _matching_brace(text: str, open_idx: int) -> int:
+    """Index of the `}` closing the `{` at ``open_idx``, or ``len(text)`` if unbalanced."""
+    depth = 0
+    for i in range(open_idx, len(text)):
+        ch = text[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+    return len(text)
+
+
+def _brace_spans(text: str, pattern) -> List[Tuple[int, int]]:
+    """(open, close) offsets of every block whose opener matches ``pattern``."""
+    return [
+        (m.start(), _matching_brace(text, m.end() - 1)) for m in pattern.finditer(text)
+    ]
+
+
+def _span_index(spans: List[Tuple[int, int]]) -> Tuple[List[int], List[int]]:
+    """Sorted starts plus a prefix-max of ends, for O(log n) containment tests.
+
+    The prefix-max is what makes nesting work: a position inside an outer span
+    but past every inner one still resolves to the outer span's end.
+    """
+    spans = sorted(spans)
+    starts = [start for start, _ in spans]
+    max_ends: List[int] = []
+    running = -1
+    for _, end in spans:
+        running = max(running, end)
+        max_ends.append(running)
+    return starts, max_ends
+
+
+def _inside(index: Tuple[List[int], List[int]], pos: int) -> bool:
+    starts, max_ends = index
+    i = bisect.bisect_right(starts, pos) - 1
+    return i >= 0 and max_ends[i] > pos
+
+
+def _normalise_variable(name: str) -> str:
+    """Strip scope prefixes and array indices so a write matches its definition.
+
+    `var:X`, `global.X`, `BRA.X` and `SPR.X^0` all name the same variable X.
+    """
+    if name.startswith("var:"):
+        name = name[4:]
+    name = name.split("^", 1)[0]
+    if "." in name:
+        name = name.rsplit(".", 1)[1]
+    return name
+
+
+def collect_clamp_ranges(
+    args: Tuple[str, str],
+) -> Tuple[List[Tuple[str, float, float]], List[str], List[str]]:
+    """Pool worker: harvest ``clamp_variable`` min/max pairs and variable writes."""
+    filename, _mod_path = args
+    if should_skip_file(filename):
+        return [], [], []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+        cleaned = blank_quoted_strings(strip_comments(text))
+    except Exception:
+        return [], [], []
+    found: List[Tuple[str, float, float]] = []
+    for m in _CLAMP_RE.finditer(cleaned):
+        body = m.group("body")
+        var = _CLAMP_VAR_RE.search(body)
+        lo = _CLAMP_MIN_RE.search(body)
+        hi = _CLAMP_MAX_RE.search(body)
+        if var and lo and hi:
+            name = var.group(1)
+            if name.startswith("global."):
+                name = name[7:]
+            try:
+                lower = float(lo.group(1))
+                upper = float(hi.group(1))
+            except ValueError:
+                continue
+            found.append((name, lower, upper))
+    temp_written = _SET_TEMP_VAR_RE.findall(cleaned)
+    persistent_written = _SET_PERSISTENT_VAR_RE.findall(cleaned)
+    return found, temp_written, persistent_written
+
+
+def process_file_for_clamp_conflicts(args) -> List[str]:
+    """Pool worker: flag check_variable comparisons that contradict a clamp range."""
+    filename, mod_path, ranges = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+        cleaned = blank_quoted_strings(strip_comments(text))
+    except Exception:
+        return []
+    rel = os.path.relpath(filename, mod_path)
+
+    issues: List[str] = []
+    seen_ends: set = set()
+    for pattern in (_CHECKVAR_SHORT_RE, _CHECKVAR_LONG_RE):
+        for m in pattern.finditer(cleaned):
+            if m.end() in seen_ends:
+                continue
+            name, raw = m.group(1), m.group(2)
+            base = name[7:] if name.startswith("global.") else name
+            bounds = ranges.get(base)
+            if not bounds:
+                continue
+            lo, hi = bounds
+            try:
+                value = float(raw)
+            except ValueError:
+                continue
+            line = cleaned[: m.start()].count("\n") + 1
+            if value < lo or value > hi:
+                seen_ends.add(m.end())
+                issues.append(
+                    f"{rel}:{line} - {base} is clamped to {lo}..{hi} but compared"
+                    f" against {raw} — the check can never change outcome"
+                )
+            elif hi >= 10 and 0 < abs(value) < 1:
+                seen_ends.add(m.end())
+                issues.append(
+                    f"{rel}:{line} - {base} is clamped to {lo}..{hi} but compared"
+                    f" against {raw} — looks like a 0-1 scale value on a 0-{hi:g} variable"
+                )
+    return issues
+
+
+def process_file_for_untooltipped_available_checks(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: flag check_variable inside `available` with no tooltip wrapper.
+
+    Walks the enclosing block stack outward from each check so a wrapper at any
+    depth above it counts, not just the direct parent. A check carrying its own
+    inline ``tooltip = KEY`` needs no wrapper.
+    """
+    filename, mod_path = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    cleaned = blank_quoted_strings(strip_comments(text))
+    if "check_variable" not in cleaned:
+        return []
+
+    events: List[Tuple[int, int, str]] = []
+    for m in _SCOPE_OPEN_RE.finditer(cleaned):
+        events.append((m.end() - 1, 0, m.group(1)))
+    for m in re.finditer(r"\}", cleaned):
+        events.append((m.start(), 1, ""))
+    for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
+        open_idx = m.end() - 1
+        body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
+        if _INLINE_TOOLTIP_RE.search(body):
+            continue
+        events.append((m.start(), 2, ""))
+    events.sort(key=lambda e: (e[0], e[1]))
+
+    rel = os.path.relpath(filename, mod_path)
+    stack: List[str] = []
+    issues: List[Tuple[str, str, int]] = []
+    for pos, kind, tok in events:
+        if kind == 0:
+            stack.append(tok)
+        elif kind == 1:
+            if stack:
+                stack.pop()
+        else:
+            for token in reversed(stack):
+                if token in _TOOLTIP_WRAPPER_TOKENS:
+                    break
+                if token == _PLAYER_FACING_BLOCK:
+                    line = cleaned[:pos].count("\n") + 1
+                    issues.append(
+                        (
+                            "check_variable in `available` renders no tooltip line"
+                            " - the player sees a blank requirement; wrap it in"
+                            " custom_trigger_tooltip = { tooltip = KEY ... }",
+                            rel,
+                            line,
+                        )
+                    )
+                    break
+    return issues
+
+
+def process_file_for_available_flags(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: collect `has_country_flag` names checked inside `available`.
+
+    Returns (flag, relative path, line) triples; the parent owns the loc index
+    and does the missing-key filtering.
+    """
+    filename, mod_path = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    cleaned = blank_quoted_strings(strip_comments(text))
+    if "has_country_flag" not in cleaned:
+        return []
+
+    events: List[Tuple[int, int, str]] = []
+    for m in _SCOPE_OPEN_RE.finditer(cleaned):
+        events.append((m.end() - 1, 0, m.group(1)))
+    for m in re.finditer(r"\}", cleaned):
+        events.append((m.start(), 1, ""))
+    for m in _AVAILABLE_FLAG_RE.finditer(cleaned):
+        events.append((m.start(), 2, m.group(1)))
+    events.sort(key=lambda e: (e[0], e[1]))
+
+    rel = os.path.relpath(filename, mod_path)
+    stack: List[str] = []
+    issues: List[Tuple[str, str, int]] = []
+    for pos, kind, tok in events:
+        if kind == 0:
+            stack.append(tok)
+        elif kind == 1:
+            if stack:
+                stack.pop()
+        else:
+            if "@" in tok:
+                # Runtime-substituted flag names (e.g. trade_agreement@PREV)
+                # cannot be resolved to a loc key statically.
+                continue
+            for token in reversed(stack):
+                if token in _TOOLTIP_WRAPPER_TOKENS:
+                    break
+                if token == _PLAYER_FACING_BLOCK:
+                    line = cleaned[:pos].count("\n") + 1
+                    issues.append((tok, rel, line))
+                    break
+    return issues
+
+
+def collect_dynamic_modifier_vars(args: Tuple[str, str]) -> List[Tuple[str, str]]:
+    """Pool worker: harvest (backing variable, modifier key) pairs from one file.
+
+    Depth-1 filtering is load-bearing — it keeps `remove_trigger` / `enable`
+    bodies (`original_tag`, `has_country_flag`, …) out of the map.
+    """
+    filename, _mod_path = args
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    cleaned = blank_quoted_strings(strip_comments(text))
+
+    pairs: List[Tuple[str, str]] = []
+    depth = 0
+    for raw_line in cleaned.splitlines():
+        line = raw_line.strip()
+        if depth == 1:
+            m = _DM_PAIR_RE.match(line)
+            if m:
+                key, value = m.group(1), m.group(2)
+                if key not in _DM_NON_MODIFIER_KEYS and value.lower() not in (
+                    _DM_NON_VARIABLE_VALUES
+                ):
+                    try:
+                        float(value)
+                    except ValueError:
+                        name = _normalise_variable(value)
+                        if name:
+                            pairs.append((name, key))
+        depth += line.count("{") - line.count("}")
+    return pairs
+
+
+def process_file_for_variable_tooltips(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: collect `tooltip = KEY` used inside variable effects.
+
+    Returns (key, relative path, line) triples; the parent owns the loc index
+    and does the missing-key filtering.
+    """
+    filename, mod_path = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    cleaned = blank_quoted_strings(strip_comments(text))
+    if "tooltip" not in cleaned:
+        return []
+
+    hidden = _span_index(_brace_spans(cleaned, _RE_HIDDEN_EFFECT))
+    offsets = compute_line_offsets(cleaned)
+    rel = os.path.relpath(filename, mod_path)
+
+    issues: List[Tuple[str, str, int]] = []
+    for m in _VAR_TOOLTIP_EFFECT_RE.finditer(cleaned):
+        open_idx = m.end() - 1
+        body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
+        key = _TOOLTIP_KEY_RE.search(body)
+        if not key or _inside(hidden, m.start()):
+            continue
+        pos = open_idx + key.start(1)
+        issues.append((key.group(1), rel, line_for_offset(offsets, pos)))
+    return issues
+
+
+def process_file_for_missing_variable_tooltips(
+    args,
+) -> List[Tuple[str, str, Tuple[str, ...], str, int]]:
+    """Pool worker: flag dynamic-modifier writes carrying no `tooltip =`.
+
+    Fires only inside the block kinds the engine renders as a player tooltip, so
+    a scripted_effects helper or a history bootstrap write — neither of which has
+    a tooltip surface — is never reported. A `hidden_effect` anywhere above the
+    write swallows the tooltip, so it wins over the enclosing rendered block.
+    """
+    filename, mod_path, backing = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    cleaned = blank_quoted_strings(strip_comments(text))
+    if "_variable" not in cleaned:
+        return []
+
+    rendered = _span_index(_brace_spans(cleaned, _RE_TOOLTIP_EFFECT_BLOCK))
+    if not rendered[0]:
+        return []
+    hidden = _span_index(_brace_spans(cleaned, _RE_HIDDEN_EFFECT))
+    offsets = compute_line_offsets(cleaned)
+    rel = os.path.relpath(filename, mod_path)
+
+    issues: List[Tuple[str, str, Tuple[str, ...], str, int]] = []
+    for m in _VAR_WRITE_EFFECT_RE.finditer(cleaned):
+        open_idx = m.end() - 1
+        body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
+        target = _VAR_TARGET_RE.match(body)
+        if not target:
+            continue
+        name = _normalise_variable(target.group(1))
+        keys = backing.get(name)
+        if not keys or _TOOLTIP_KEY_RE.search(body):
+            continue
+        if not _inside(rendered, m.start()) or _inside(hidden, m.start()):
+            continue
+        effect = f"{m.group(1)}_variable"
+        issues.append((effect, name, keys, rel, line_for_offset(offsets, m.start())))
     return issues
 
 
@@ -535,21 +1013,25 @@ def process_file_for_orphan_money(
     issues: List[Tuple[str, str, int]] = []
     for m in setters:
         var = m.group(1)
-        holder = None
+        holder_start = -1
+        holder_end = -1
+        holder_is_tooltip = False
         for start, end, is_tt in spans:
-            if start <= m.start() < end and (holder is None or start > holder[0]):
-                holder = (start, end, is_tt)
-        if holder is None:
+            if start <= m.start() < end and start > holder_start:
+                holder_start = start
+                holder_end = end
+                holder_is_tooltip = is_tt
+        if holder_start < 0:
             continue
-        if holder[2]:
+        if holder_is_tooltip:
             # Setter previewed in a tooltip: any consumer within it renders.
-            hits = list(consumer_res[var].finditer(cleaned, m.end(), holder[1]))
+            hits = list(consumer_res[var].finditer(cleaned, m.end(), holder_end))
         else:
             # Runtime setter: consumers that only exist inside a nested
             # effect_tooltip are previews and never execute.
             hits = [
                 cm
-                for cm in consumer_res[var].finditer(cleaned, m.end(), holder[1])
+                for cm in consumer_res[var].finditer(cleaned, m.end(), holder_end)
                 if not any(ts <= cm.start() < te for ts, te in tooltip_spans)
             ]
         if hits and not _has_sequential_rewrite(
@@ -1042,6 +1524,259 @@ class Validator(BaseValidator):
             category="treasury-state-scope",
         )
 
+    def validate_clamp_range_conflicts(self):
+        """Flag check_variable comparisons that contradict the variable's own clamp.
+
+        A variable clamped to a literal min/max can never hold a value outside
+        that range, so comparing against one is dead logic. The paired sub-1
+        heuristic catches the inverse slip: a 0-1 scale value written against a
+        variable clamped to a wide integer range.
+        """
+        self._log_section("Checking clamp ranges against check_variable values...")
+
+        txt_files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
+        if not txt_files:
+            self.log("✓ No clamp-range conflicts found")
+            return
+
+        # Clamps are harvested repo-wide even in staged mode: the clamp and the
+        # check that contradicts it almost never sit in the same file.
+        clamp_files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt"], ignore_staged=True
+        )
+        args_list = [(f, self.mod_path) for f in clamp_files]
+        harvested = self._pool_map(collect_clamp_ranges, args_list, chunksize=30)
+        ranges: Dict[str, Tuple[float, float]] = {}
+        temp_names: Set[str] = set()
+        persistent_names: Set[str] = set()
+        for file_ranges, temp_written, persistent_written in harvested:
+            for name, lo, hi in file_ranges:
+                if name in ranges:
+                    prev = ranges[name]
+                    ranges[name] = (min(prev[0], lo), max(prev[1], hi))
+                else:
+                    ranges[name] = (lo, hi)
+            temp_names.update(temp_written)
+            persistent_names.update(persistent_written)
+        for name in temp_names - persistent_names:
+            ranges.pop(name, None)
+        if not ranges:
+            self.log("✓ No clamp-range conflicts found")
+            return
+
+        conflict_args = [(f, self.mod_path, ranges) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_clamp_conflicts, conflict_args, chunksize=30
+        )
+        issues = [issue for file_issues in all_results for issue in file_issues]
+        self._report(
+            issues,
+            "✓ No clamp-range conflicts found",
+            "check_variable comparisons that contradict the variable's clamp range:",
+            severity=Severity.WARNING,
+            category="clamp-range-conflict",
+        )
+
+    def validate_untooltipped_available_checks(self):
+        """Flag bare check_variable inside `available` blocks (WARNING).
+
+        `visible` is excluded: a failing visible hides the object outright, so
+        there is no tooltip surface for the check to render into.
+        """
+        self._log_section(
+            "Checking for untooltipped check_variable in available blocks..."
+        )
+
+        txt_files = self._collect_files(_PLAYER_FACING_GLOBS)
+        if not txt_files:
+            self.log("✓ No untooltipped check_variable in available blocks")
+            return
+
+        args_list = [(f, self.mod_path) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_untooltipped_available_checks, args_list, chunksize=30
+        )
+        issues = [issue for file_issues in all_results for issue in file_issues]
+        self._report(
+            issues,
+            "✓ No untooltipped check_variable in available blocks",
+            "check_variable in `available` with no tooltip wrapper (the player sees a blank requirement line):",
+            severity=Severity.WARNING,
+            category="untooltipped-available-check",
+        )
+
+    def validate_unlocalised_available_flags(self):
+        """Flag `has_country_flag` in `available` whose flag has no loc key (WARNING).
+
+        HOI4 renders the requirement line from a loc key named after the flag;
+        with no key the player reads the raw token.
+        """
+        self._log_section(
+            "Checking for unlocalised country flags in available blocks..."
+        )
+
+        txt_files = self._collect_files(_PLAYER_FACING_GLOBS)
+        if not txt_files:
+            self.log("✓ No unlocalised country flags in available blocks")
+            return
+
+        args_list = [(f, self.mod_path) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_available_flags, args_list, chunksize=30
+        )
+        loc_keys = self._load_localisation_keys()
+
+        seen: Set[Tuple[str, str]] = set()
+        issues = []
+        for file_results in all_results:
+            for flag, rel, line in file_results:
+                if flag in loc_keys:
+                    continue
+                key = (flag, rel)
+                if key in seen:
+                    continue
+                seen.add(key)
+                issues.append(
+                    (
+                        f"has_country_flag = {flag} in `available` has no localisation"
+                        " key - the player sees the raw flag name; add a loc key named"
+                        " after the flag",
+                        rel,
+                        line,
+                    )
+                )
+
+        self._report(
+            issues,
+            "✓ No unlocalised country flags in available blocks",
+            "country flags checked in `available` with no localisation key (the player sees the raw token):",
+            severity=Severity.WARNING,
+            category="unlocalised-available-flag",
+        )
+
+    def _collect_dynamic_modifier_vars(self) -> Dict[str, Tuple[str, ...]]:
+        """Map each dynamic-modifier backing variable to the modifier keys it drives.
+
+        Harvested repo-wide even in staged mode: the modifier definition and the
+        write that moves it are almost never in the same file. One variable can
+        back several modifier keys, so the value is a tuple.
+        """
+        memo = getattr(self, "_dyn_mod_vars_memo", None)
+        if memo is not None:
+            return memo
+
+        files = self._collect_files(
+            ["common/dynamic_modifiers/**/*.txt"], ignore_staged=True
+        )
+        mapping: Dict[str, Set[str]] = {}
+        harvested = self._pool_map(
+            collect_dynamic_modifier_vars,
+            [(f, self.mod_path) for f in files],
+            chunksize=10,
+        )
+        for pairs in harvested:
+            for name, key in pairs:
+                mapping.setdefault(name, set()).add(key)
+
+        self._dyn_mod_vars_memo = {
+            name: tuple(sorted(keys)) for name, keys in mapping.items()
+        }
+        return self._dyn_mod_vars_memo
+
+    def validate_variable_tooltip_keys(self):
+        """Flag `tooltip = KEY` in a variable effect whose key has no loc entry.
+
+        The engine renders the raw key when it does not resolve, so the player
+        reads `political_power_factor_tt` instead of the modifier line.
+        """
+        self._log_section("Checking variable effect tooltip keys...")
+
+        txt_files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
+        if not txt_files:
+            self.log("✓ No unlocalised variable effect tooltips found")
+            return
+
+        args_list = [(f, self.mod_path) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_variable_tooltips, args_list, chunksize=30
+        )
+        loc_keys = self._load_localisation_keys()
+
+        seen: Set[Tuple[str, str]] = set()
+        issues: List[Tuple[str, str, int]] = []
+        for file_results in all_results:
+            for key, rel, line in file_results:
+                if key in loc_keys or (key, rel) in seen:
+                    continue
+                seen.add((key, rel))
+                issues.append(
+                    (
+                        f"tooltip = {key} has no English localisation entry - the"
+                        " tooltip renders the raw key; add it to"
+                        " MD_dm_modifiers_l_english.yml",
+                        rel,
+                        line,
+                    )
+                )
+
+        self._report(
+            issues,
+            "✓ No unlocalised variable effect tooltips found",
+            "variable effect tooltips whose key has no localisation entry (the player sees the raw key):",
+            severity=Severity.WARNING,
+            category="variable-tooltip-missing-loc",
+        )
+
+    def validate_missing_variable_tooltips(self):
+        """Flag dynamic-modifier writes with no `tooltip =` (WARNING).
+
+        Without one the modifier changes silently — the player gets no line for
+        it anywhere. Scoped to rendered effect blocks; see the pool worker.
+        """
+        self._log_section("Checking dynamic modifier writes for tooltips...")
+
+        txt_files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
+        backing = self._collect_dynamic_modifier_vars() if txt_files else {}
+        if not backing:
+            self.log("✓ No untooltipped dynamic modifier writes found")
+            return
+
+        args_list = [(f, self.mod_path, backing) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_missing_variable_tooltips, args_list, chunksize=30
+        )
+        loc_keys = self._load_localisation_keys()
+
+        issues: List[Tuple[str, str, int]] = []
+        for file_results in all_results:
+            for effect, name, keys, rel, line in file_results:
+                resolvable = [key for key in keys if f"{key}_tt" in loc_keys]
+                prefix = (
+                    f"{effect} = {{ {name} ... }} moves dynamic modifier"
+                    f" `{keys[0]}` with no tooltip - the change is invisible to"
+                    " the player;"
+                )
+                if resolvable:
+                    fix = " or ".join(f"tooltip = {key}_tt" for key in resolvable)
+                    issues.append((f"{prefix} add {fix}", rel, line))
+                else:
+                    issues.append(
+                        (
+                            f"{prefix} `{keys[0]}_tt` does not exist either, so add"
+                            " it to MD_dm_modifiers_l_english.yml first",
+                            rel,
+                            line,
+                        )
+                    )
+
+        self._report(
+            issues,
+            "✓ No untooltipped dynamic modifier writes found",
+            "dynamic modifier writes in player-facing effect blocks with no `tooltip =` (the modifier changes silently):",
+            severity=Severity.WARNING,
+            category="dynamic-modifier-tooltip-missing",
+        )
+
     def validate_flag_syntax(self):
         """Combined check for two flag syntax issues in a single pool_map pass:
 
@@ -1225,6 +1960,11 @@ class Validator(BaseValidator):
         self.validate_math_precision()
         self.validate_orphan_money_setters()
         self.validate_treasury_state_scope()
+        self.validate_clamp_range_conflicts()
+        self.validate_untooltipped_available_checks()
+        self.validate_unlocalised_available_flags()
+        self.validate_variable_tooltip_keys()
+        self.validate_missing_variable_tooltips()
 
         if self.staged_only:
             # Variable validation cross-references flags across all files
