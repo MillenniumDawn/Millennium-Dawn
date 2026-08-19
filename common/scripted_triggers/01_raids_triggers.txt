@@ -16,33 +16,28 @@ raid_ai_target_relevant = {
 
 # Drone raid availability — wartime/wargoal/retaliation/PP>300
 # Used by drone raids that require active hostility (airfield, rocket site, swarm)
-drone_raid_available_hostile = {
-	set_temp_variable = { cost = 300 }
+# Shared available base — ai_target_relevant + war/doctrine bypass + FROM eligibility
+raid_available_base = {
 	raid_ai_target_relevant = yes
 	raid_war_or_doctrine_bypass = yes
+	raid_target_eligible_from = yes
+}
+
+drone_raid_available_hostile = {
+	set_temp_variable = { cost = 300 }
+	raid_available_base = yes
 	OR = {
 		raid_can_launch = yes
 		has_wargoal_against = FROM
-	}
-	FROM = {
-		NOT = { is_subject_of = ROOT }
-		NOT = { has_non_aggression_pact_with = ROOT }
-		hidden_trigger = { MD_special_countries = no }
 	}
 }
 
 # Drone/air raid availability — grey-zone ops (PP>99 or wartime)
 # Used by drone/ai raids against civilian infrastructure (power grid, resources)
 raid_available_grey_zone = {
+	raid_available_base = yes
 	set_temp_variable = { cost = 99 }
-	raid_ai_target_relevant = yes
-	raid_war_or_doctrine_bypass = yes
 	raid_can_launch = yes
-	FROM = {
-		NOT = { is_subject_of = ROOT }
-		NOT = { has_non_aggression_pact_with = ROOT }
-		hidden_trigger = { MD_special_countries = no }
-	}
 }
 
 # Raid target basic eligibility — not a subject and no NAP
