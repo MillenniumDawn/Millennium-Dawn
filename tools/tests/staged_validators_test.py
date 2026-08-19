@@ -63,7 +63,7 @@ def run_validator(script, label, expect_issues=True):
         "--strict",
         "--no-color",
         "--workers",
-        "2",
+        "4",
     ]
 
     start = time.time()

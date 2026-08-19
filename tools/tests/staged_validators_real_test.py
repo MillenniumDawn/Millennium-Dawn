@@ -68,7 +68,7 @@ def run_validator(
         "--strict",
         "--no-color",
         "--workers",
-        "2",
+        "4",
     ]
 
     start = time.time()

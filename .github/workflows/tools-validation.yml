@@ -58,72 +58,49 @@ jobs:
           path: tools_validation.log
           retention-days: 7
 
-  report-lib-tests:
-    name: report_lib + validator unit tests
+  checks:
+    name: ${{ matrix.check.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - name: unit tests
+            id: unit
+          - name: staged integration
+            id: staged
+          - name: lint
+            id: lint
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
-          # config_drift_test reads the pre-commit config and these workflows to
-          # compare the validator set declared in each, and to check the
-          # pipeline wiring around them. pyproject.toml supplies the pytest
-          # testpaths so all six test dirs are collected. typo-watchlist.md is
-          # read by loc_typo_watchlist_test's doc-sync guard, and
-          # modifiers_documentation.md by validate_modifiers_test's parse guard.
-          # common/national_focus is walked by focus_pp_malus_test's
-          # exemption-freshness guard.
-          sparse-checkout: |
-            tools
-            pyproject.toml
-            .pre-commit-config.yaml
-            .claude/docs/typo-watchlist.md
-            resources/documentation/modifiers_documentation.md
-            common/national_focus
-            .github/workflows/coding-pipeline.yml
-            .github/workflows/nightly-pr-validation.yml
-            .github/workflows/tools-validation.yml
-            .github/workflows/validator-cache.yml
-          sparse-checkout-cone-mode: false
+
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
           python-version: "3.x"
-      - name: Install test deps
+
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install --group dev
-      - name: Run pytest with coverage
-        # testpaths in pyproject.toml covers all six test dirs (tools/tests,
-        # report_lib/tests, validation/tests, linting/tests,
-        # standardization/tests, docs_checks/tests).
+          pip install --group dev --group runtime
+
+      - name: Run unit tests
+        if: matrix.check.id == 'unit'
         run: |
           python -m coverage run --branch -m pytest -v
           python -m coverage report
 
-  staged-validator-integration:
-    name: staged validator integration
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 1
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
-        with:
-          python-version: "3.x"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install --group runtime
-          pip install --group dev
       - name: Create isolated test worktree
+        if: matrix.check.id == 'staged'
         run: |
           git worktree add --detach \
             "${{ runner.temp }}/md-staged-validator-test" HEAD
+
       - name: Run staged-validator integration
+        if: matrix.check.id == 'staged'
         working-directory: ${{ runner.temp }}/md-staged-validator-test
         env:
           MD_RUN_STAGED_INTEGRATION: "1"
@@ -132,31 +109,18 @@ jobs:
             tools/tests/staged_validators_test.py \
             tools/tests/staged_validators_real_test.py -q
 
-  ruff-lint:
-    name: ruff lint (tools)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 1
-          sparse-checkout: |
-            tools
-            pyproject.toml
-          sparse-checkout-cone-mode: false
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
-        with:
-          python-version: "3.x"
-      - name: Install ruff
-        run: |
-          python -m pip install --upgrade pip
-          pip install --group dev
       - name: Run ruff
+        if: matrix.check.id == 'lint'
         run: ruff check tools --output-format=github
+
       - name: Check formatting (black)
+        if: matrix.check.id == 'lint'
         run: black --check tools
+
       - name: Run pylint
+        if: matrix.check.id == 'lint'
         run: pylint tools --output-format=github --reports=no --score=no
+
       - name: Run mypy
+        if: matrix.check.id == 'lint'
         run: mypy
