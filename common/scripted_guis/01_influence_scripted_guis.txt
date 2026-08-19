@@ -7,18 +7,6 @@ scripted_gui = {
 
 		dirty = global.update_influence_ui
 
-		properties = {
-			# opt_influence_action_button = { image = "[select_influence_action_button]" }
-			opt_aid_button = { image = "[select_aid_button]" }
-			opt_aid_military_button = { image = "[select_aid_military_button]" }
-			opt_target_other_button = { image = "[select_target_other_button]" }
-			opt_manipulate_politics_button = { image = "[select_manipulate_politics_button]" }
-			opt_coup_button = { image = "[select_coup_button]" }
-			opt_economic_exploitation_button = { image = "[select_economic_exploitation_button]" }
-			opt_make_puppet_button = { image = "[select_make_puppet_button]" }
-			opt_military_supply_button = { image = "[select_military_supply_button]" }
-		}
-
 		triggers = {
 			# Column 1:
 			# Auto Spread
@@ -256,6 +244,10 @@ scripted_gui = {
 					is_subject = no
 					has_war = no
 				}
+				# Must be independent
+				ROOT = {
+					is_subject = no
+				}
 				if = {
 					limit = {
 						ROOT = { original_tag = IRQ }
@@ -299,17 +291,7 @@ scripted_gui = {
 				ROOT = {
 					if = { limit = { NOT = { is_in_array = { auto_influence_array = PREV.id } } }
 						create_new_auto_influencer_request = yes
-						# Set spread_influence cooldown on activation to prevent monthly exploit
-						# (activating late in month to get free influence when month ticks)
-						if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
-							set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
-						}
-						else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
-							set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
-						}
-						else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
-							set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
-						}
+						spread_influence_cooldown_effect = yes
 					}
 					else = {
 						remove_auto_influencer_request = yes
@@ -339,15 +321,7 @@ scripted_gui = {
 					set_temp_variable = { percent_change = global.percent_change_value }
 					set_temp_variable = { influence_target = PREV.id }
 					change_influence_percentage = yes
-					if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
-						set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
-					}
-					else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
-						set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
-					}
-					else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
-						set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
-					}
+					spread_influence_cooldown_effect = yes
 				}
 			}
 

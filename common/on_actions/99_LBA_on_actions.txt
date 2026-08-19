@@ -41,7 +41,9 @@ on_actions = {
 						limit = {
 							is_ruled_by_a_gaddafi = yes
 						}
-						set_variable = { gaddafi_family_stability_effect = FROM.gaddafi_family_instability }
+						set_variable = { gaddafi_family_instability = FROM.gaddafi_family_instability }
+						set_variable = { gaddafi_family_instability_decay = FROM.gaddafi_family_instability_decay }
+						update_gaddafi_family_stability_effect = yes
 						add_dynamic_modifier = { modifier = libya_gaddafi_instability_dynamic_modifier }
 					}
 					libya_copy_gaddafi_flags = yes
@@ -292,6 +294,7 @@ on_actions = {
 		random_events = {
 			1000 = 0
 
+			300 = LibyaCivilWarContent.25	#Ansar al-Sharia is formed
 			200 = LibyaCivilWarContent.26	#Derna Shura Council
 			200 = LibyaCivilWarContent.27	#Ajdabiya Shura Council
 			200 = LibyaCivilWarContent.28	#Rafallah al-Sahati Brigade is formed
@@ -310,10 +313,7 @@ on_actions = {
 					is_ruled_by_a_gaddafi = yes
 				}
 				add_to_variable = { gaddafi_family_instability = gaddafi_family_instability_decay }
-				clamp_variable = { var = gaddafi_family_instability min = 0 }
-				set_variable = { gaddafi_family_stability_effect = gaddafi_family_instability }
-				multiply_variable = { gaddafi_family_stability_effect = -0.005 }
-				clamp_variable = { var = gaddafi_family_stability_effect min = -1.00 max = 1.00 }
+				update_gaddafi_family_stability_effect = yes
 			}
 			if = {
 				limit = {
@@ -370,49 +370,6 @@ on_actions = {
 					}
 				}
 			}
-		}
-	}
-
-	on_weekly = {
-		#These happen when the "Anti-Gaddafi Protests" is active
-		random_events = {
-			2700 = 0	#Was 3000
-
-			100 = LibyaCivilWar.1 #Libyan National Democratic Front expands in Libya
-			100 = LibyaCivilWar.2 #Libyan Communist Party starts operations
-			100 = LibyaCivilWar.3 #Soldiers defect to LIFG
-			100 = LibyaCivilWar.4 #NFSL calls for unity among rebels
-			100 = LibyaCivilWar.5 #Baathists call for democracy
-			100 = LibyaCivilWar.6 #Army ignores protesters
-			100 = LibyaCivilWar.7 #Revolutionary Guard Corps ignores protestors
-			100 = LibyaCivilWar.8 #Royal family campaigns against Gaddafi
-			100 = LibyaCivilWar.9 #Government minister resigns
-			100 = LibyaCivilWar.10 #Ambassador resigns
-			100 = LibyaCivilWar.11 #Military unit defects
-			100 = LibyaCivilWar.12 #Rebels raid military stockpile
-			100 = LibyaCivilWar.13 #Pilots abandon the country
-			100 = LibyaCivilWar.14 #Sailors abandon the country
-		}
-		#These happen during the civil wars
-		random_events = {
-			4500 = 0	#Was 5000
-
-			#1st Libyan Civil War
-			100 = LibyaCivilWarContent.1	#Warfalla tribe mobilises
-			100 = LibyaCivilWarContent.2	#Qadhadhfa tribe mobilises
-			100 = LibyaCivilWarContent.3	#Berbers Join Rebels
-			100 = LibyaCivilWarContent.5	#Al-Mujabra tribe mobilises
-			100 = LibyaCivilWarContent.6	#Magarha tribe mobilises
-			100 = LibyaCivilWarContent.7	#Hassawna tribe mobilises
-			100 = LibyaCivilWarContent.8	#Tuaregs offer their services
-			100 = LibyaCivilWarContent.9	#Toubou tribes mobilise
-			100 = LibyaCivilWarContent.10	#Farjan tribes mobilise
-			100 = LibyaCivilWarContent.11	#Misurat tribes mobilise
-			100 = LibyaCivilWarContent.12	#Abaydat tribes mobilise
-			200 = LibyaCivilWarContent.20	#Jihadist militias
-			200 = LibyaCivilWarContent.21	#Islamist militias
-			200 = LibyaCivilWarContent.22	#Secularist militias
-			200 = LibyaCivilWarContent.23	#Reformist militias
 		}
 	}
 
@@ -680,53 +637,51 @@ on_actions = {
 		}
 	}
 
-	on_weekly_HOR = {
-		effect = {
-			if = {
-				limit = {
-					NOT = { has_global_flag = Libya_Civil_War_Over }
-					NOT = {
-						has_war_with = GNA
-						has_war_with = GNC
-					}
-				}
-				LBA_civil_war_cleanup_effect = yes
-			}
-		}
-	}
+	on_weekly = {
+		#These happen during the civil wars
+		random_events = {
+			4500 = 0	#Was 5000
 
-	on_weekly_GNA = {
-		effect = {
-			if = {
-				limit = {
-					NOT = { has_global_flag = Libya_Civil_War_Over }
-					NOT = {
-						has_war_with = HOR
-						has_war_with = GNC
-						has_cosmetic_tag = GNA_NTC
-					}
-				}
-				LBA_civil_war_cleanup_effect = yes
-			}
+			#1st Libyan Civil War
+			100 = LibyaCivilWarContent.1	#Warfalla tribe mobilises
+			100 = LibyaCivilWarContent.2	#Qadhadhfa tribe mobilises
+			100 = LibyaCivilWarContent.3	#Berbers Join Rebels
+			100 = LibyaCivilWarContent.5	#Al-Mujabra tribe mobilises
+			100 = LibyaCivilWarContent.6	#Magarha tribe mobilises
+			100 = LibyaCivilWarContent.7	#Hassawna tribe mobilises
+			100 = LibyaCivilWarContent.8	#Tuaregs offer their services
+			100 = LibyaCivilWarContent.9	#Toubou tribes mobilise
+			100 = LibyaCivilWarContent.10	#Farjan tribes mobilise
+			100 = LibyaCivilWarContent.11	#Misurat tribes mobilise
+			100 = LibyaCivilWarContent.12	#Abaydat tribes mobilise
+			200 = LibyaCivilWarContent.20	#Jihadist militias
+			200 = LibyaCivilWarContent.21	#Islamist militias
+			200 = LibyaCivilWarContent.22	#Secularist militias
+			200 = LibyaCivilWarContent.23	#Reformist militias
 		}
-	}
 
-	on_weekly_GNC = {
-		effect = {
-			if = {
-				limit = {
-					NOT = { has_global_flag = Libya_Civil_War_Over }
-					NOT = {
-						has_war_with = GNA
-						has_war_with = HOR
-					}
-				}
-				LBA_civil_war_cleanup_effect = yes
-			}
+		random_events = {
+			2700 = 0	#Was 3000
+
+			100 = LibyaCivilWar.1 #Libyan National Democratic Front expands in Libya
+			100 = LibyaCivilWar.2 #Libyan Communist Party starts operations
+			100 = LibyaCivilWar.3 #Soldiers defect to LIFG
+			100 = LibyaCivilWar.4 #NFSL calls for unity among rebels
+			100 = LibyaCivilWar.5 #Baathists call for democracy
+			100 = LibyaCivilWar.6 #Army ignores protesters
+			100 = LibyaCivilWar.7 #Revolutionary Guard Corps ignores protestors
+			100 = LibyaCivilWar.8 #Royal family campaigns against Gaddafi
+			100 = LibyaCivilWar.9 #Government minister resigns
+			100 = LibyaCivilWar.10 #Ambassador resigns
+			100 = LibyaCivilWar.11 #Military unit defects
+			100 = LibyaCivilWar.12 #Rebels raid military stockpile
+			100 = LibyaCivilWar.13 #Pilots abandon the country
+			100 = LibyaCivilWar.14 #Sailors abandon the country
 		}
 	}
 
 	on_weekly_LBA = {
+		#These happen when the "Anti-Gaddafi Protests" is active
 		effect = {
 			if = {
 				limit = { check_variable = { LBA_volunteer_nations^num > 0 } }

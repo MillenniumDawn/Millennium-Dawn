@@ -9,6 +9,12 @@ country_event = {
 	picture = GFX_french_flag_generic
 	is_triggered_only = yes
 
+	trigger = {
+		is_subject = no
+		is_in_faction = no
+		FRA = { is_faction_leader = yes }
+	}
+
 	option = {
 		name = france_md.0.o1
 		log = "[GetDateText]: [This.GetName]: france_md.0.o1 executed"
@@ -18,6 +24,14 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 2
+				sender_influence_higher_40 = yes
+			}
+			modifier = {
+				factor = 0.25
+				has_opinion = { target = FRA value < 20 }
+			}
 		}
 	}
 
@@ -27,250 +41,11 @@ country_event = {
 		FRA = { country_event = diplomatic_response.2 }
 		ai_chance = {
 			base = 2.5
-		}
-	}
-
-}
-
-# European Investments
-country_event = {
-	id = france_md.1
-	title = france_md.1.t
-	desc = france_md.1.d
-	picture = GFX_euro_investments
-	is_triggered_only = yes
-
-	option = {
-		name = france_md.1.a
-		log = "[GetDateText]: [This.GetName]: france_md.1.a executed"
-		FRA = {
-			country_event = france_md.2
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-			set_temp_variable = { int_investment_change = 10 }
-			modify_international_investment_effect = yes
-			set_country_flag = FRA_euro_investments_1
-		}
-		random_owned_state = {
-			add_extra_state_shared_building_slots = 2
-			add_building_construction = {
-				type = industrial_complex
-				level = 1
-				instant_build = yes
-			}
-			add_building_construction = {
-				type = arms_factory
-				level = 1
-				instant_build = yes
-			}
-		}
-		set_temp_variable = { percent_change = 2 }
-		set_temp_variable = { tag_index = FRA.id }
-		change_influence_percentage = yes
-		ai_chance = {
-			base = 6
-		}
-	}
-
-	option = {
-		name = france_md.1.b
-		log = "[GetDateText]: [This.GetName]: france_md.1.b executed"
-		FRA = { country_event = france_md.3 }
-		ai_chance = {
-			base = 2
-		}
-	}
-
-}
-
-# [Root.GetName] accepts!
-country_event = {
-	id = france_md.2
-	title = france_md.2.t
-	desc = france_md.2.d
-	picture = GFX_political_deal
-	is_triggered_only = yes
-
-	option = {
-		name = france_md.2.a
-		log = "[GetDateText]: [This.GetName]: france_md.2.a executed"
-		if = { limit = { has_country_flag = FRA_euro_investments_1 }
-			custom_effect_tooltip = FRA_euro_investments_cost_TT
-			effect_tooltip = {
-				set_temp_variable = { treasury_change = -10 }
-				modify_treasury_effect = yes
-				set_temp_variable = { int_investment_change = 10 }
-				modify_international_investment_effect = yes
-				newline = yes
-				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = FRA.id }
-				set_temp_variable = { influence_target = FROM.id }
-				change_influence_percentage = yes
-			}
-			clr_country_flag = FRA_euro_investments_1
-		}
-		else_if = { limit = { has_country_flag = FRA_europe_investments_2 }
-			custom_effect_tooltip = FRA_euro_investments_cost_2_TT
-			effect_tooltip = {
-				set_temp_variable = { treasury_change = -5 }
-				modify_treasury_effect = yes
-				set_temp_variable = { int_investment_change = 5 }
-				modify_international_investment_effect = yes
-				newline = yes
-				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = FRA.id }
-				set_temp_variable = { influence_target = FROM.id }
-				change_influence_percentage = yes
-			}
-			clr_country_flag = FRA_europe_investments_2
-		}
-		ai_chance = {
-			base = 1
-		}
-	}
-
-}
-
-# [ROOT.GetName] Refuses
-country_event = {
-	id = france_md.3
-	title = france_md.3.t
-	desc = france_md.3.d
-	picture = GFX_treaty_rejected
-	is_triggered_only = yes
-
-	option = {
-		name = france_md.3.a
-		log = "[GetDateText]: [This.GetName]: france_md.3.a executed"
-		ai_chance = {
-			base = 1
-		}
-	}
-
-}
-
-# Investments in Eastern Europe
-country_event = {
-	id = france_md.4
-	title = france_md.4.t
-	desc = france_md.4.d
-	picture = GFX_invetsments_in_eastern_europe
-	is_triggered_only = yes
-
-	option = {
-		name = france_md.4.a
-		log = "[GetDateText]: [This.GetName]: france_md.4.a executed"
-		random_owned_state = {
-			limit = {
-				infrastructure < 5
-			}
-			add_building_construction = {
-				type = infrastructure
-				level = 1
-				instant_build = yes
-			}
-		}
-		FRA = {
-			set_temp_variable = { treasury_change = -5 }
-			modify_treasury_effect = yes
-			set_temp_variable = { int_investment_change = 5 }
-			modify_international_investment_effect = yes
-			country_event = france_md.2
-			set_country_flag = FRA_europe_investments_2
-		}
-		set_temp_variable = { percent_change = 2 }
-		set_temp_variable = { tag_index = FRA.id }
-		change_influence_percentage = yes
-		ai_chance = {
-			base = 6
-		}
-	}
-
-	option = {
-		name = france_md.4.b
-		log = "[GetDateText]: [This.GetName]: france_md.4.b executed"
-		FRA = { country_event = france_md.3 }
-		ai_chance = {
-			base = 4
-		}
-	}
-
-}
-
-# The Paris Convention
-country_event = {
-	id = france_md.5
-	title = france_md.5.t
-	desc = france_md.5.d
-	picture = GFX_paris_convention
-	is_triggered_only = yes
-
-	option = {
-		name = france_md.5.a
-		log = "[GetDateText]: [This.GetName]: france_md.5.a executed"
-		FRA = {
-			add_opinion_modifier = { target = ROOT modifier = supported_the_unification }
-			country_event = france_md.6
-		}
-		add_political_power = 50
-		set_temp_variable = { percent_change = 2 }
-		set_temp_variable = { tag_index = FRA.id }
-		change_influence_percentage = yes
-		ai_chance = {
-			base = 40
 			modifier = {
-				is_historical_focus_on = no
-				factor = 60
+				factor = 4
+				has_opinion = { target = FRA value < 0 }
 			}
 		}
-	}
-
-	option = {
-		name = france_md.5.b
-		log = "[GetDateText]: [This.GetName]: france_md.5.b executed"
-		FRA = {
-			add_opinion_modifier = { target = ROOT modifier = fled_the_union }
-			country_event = france_md.7
-		}
-		leaving_EU = yes
-		hidden_effect = {
-			news_event = news.4
-		}
-		ai_chance = {
-			base = 60
-			modifier = {
-				is_historical_focus_on = no
-				factor = 40
-			}
-		}
-	}
-
-}
-
-# [Root.GetName] Supports Unification!
-country_event = {
-	id = france_md.6
-	title = france_md.6.t
-	desc = france_md.6.d
-	is_triggered_only = yes
-
-	option = {
-		name = france_md.6.a
-		log = "[GetDateText]: [This.GetName]: france_md.6.a executed"
-	}
-
-}
-
-#[Root.GetName] Flees the Union!
-country_event = {
-	id = france_md.7
-	title = france_md.7.t
-	desc = france_md.7.d
-	is_triggered_only = yes
-
-	option = {
-		name = france_md.7.a
-		log = "[GetDateText]: [This.GetName]: france_md.7.a executed"
 	}
 
 }
@@ -825,8 +600,8 @@ country_event = {
 		name = france_md.106.b
 		log = "[GetDateText]: [This.GetName]: france_md.106.b executed"
 		trigger = {
-			has_global_flag = CAR_central_african_bush_war_escalated
-			NOT = { has_global_flag = CAR_central_african_bush_war_escalated_cleanedup }
+			has_global_flag = GLOBAL_central_african_bush_war_escalated
+			NOT = { has_global_flag = GLOBAL_central_african_bush_war_cleanup_complete }
 		}
 		random_other_country = {
 			limit = {
@@ -853,7 +628,7 @@ country_event = {
 		name = france_md.106.c
 		log = "[GetDateText]: [This.GetName]: france_md.106.c executed"
 		trigger = {
-			has_global_flag = CAR_central_african_republic_civil_war
+			has_global_flag = GLOBAL_central_african_civil_war
 			country_exists = SEL
 			SEL = { has_war_with = CAR }
 		}
@@ -874,7 +649,7 @@ country_event = {
 		name = france_md.106.d1
 		log = "[GetDateText]: [This.GetName]: france_md.106.d1 executed"
 		trigger = {
-			has_global_flag = CAR_central_african_republic_civil_war
+			has_global_flag = GLOBAL_central_african_civil_war
 			country_exists = LGN
 			"LGN" = { has_war_with = CAR }
 		}
@@ -895,7 +670,7 @@ country_event = {
 		name = france_md.106.e
 		log = "[GetDateText]: [This.GetName]: france_md.106.e executed"
 		trigger = {
-			has_global_flag = CAR_central_african_republic_civil_war
+			has_global_flag = GLOBAL_central_african_civil_war
 			country_exists = BAL
 			BAL = { has_war_with = CAR }
 		}
@@ -1129,7 +904,7 @@ country_event = {
 		name = france_md.109.a
 		log = "[GetDateText]: [This.GetName]: france_md.109.a executed"
 		trigger = {
-			NOT = { has_global_flag = HAI_haitian_civil_war }
+			NOT = { has_global_flag = GLOBAL_haitian_civil_war }
 		}
 		random_list = {
 			60 = {
@@ -1257,7 +1032,7 @@ country_event = {
 		name = france_md.109.b
 		log = "[GetDateText]: [This.GetName]: france_md.109.b executed"
 		trigger = {
-			has_global_flag = HAI_haitian_civil_war
+			has_global_flag = GLOBAL_haitian_civil_war
 		}
 		add_relation_modifier = {
 			target = HAI
@@ -1325,7 +1100,7 @@ country_event = {
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = 0.04 }
 		set_temp_variable = { temp_outlook_increase = 0.04 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 0
 		}
@@ -1392,7 +1167,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: france_md.504.a executed"
 		set_temp_variable = { party_popularity_increase = -0.01 }
 		set_temp_variable = { temp_outlook_increase = -0.01 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 1
 		}
@@ -2142,9 +1917,11 @@ news_event = {
 		text = France_news.97.d1
 		trigger = {
 			NOT = {
-				emerging_anarchist_communism_are_in_power = yes
-				emerging_communist_state_are_in_power = yes
-				neutrality_neutral_communism_are_in_power = yes
+				OR = {
+					emerging_anarchist_communism_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					neutrality_neutral_communism_are_in_power = yes
+				}
 			}
 		}
 	}
@@ -2274,97 +2051,6 @@ news_event = {
 		name = France_news.99.o3
 		trigger = {
 			NOT = { original_tag = FRA }
-		}
-	}
-
-}
-
-news_event = {
-	id = France_news.100
-	title = France_news.100.t
-	desc = France_news.100.d
-	picture = GFX_news_french_military
-	is_triggered_only = yes
-	major = yes
-
-	option = {
-			log = "[GetDateText]: [This.GetName]: France_news.100.o1 executed"
-		name = France_news.100.o1
-		trigger = { original_tag = FRA }
-	}
-
-	option = {
-			log = "[GetDateText]: [This.GetName]: France_news.100.o2 executed"
-		name = France_news.100.o2
-		trigger = {
-			OR = {
-				original_tag = MNC
-				original_tag = ADO
-			}
-		}
-	}
-
-	option = {
-			log = "[GetDateText]: [This.GetName]: France_news.100.o3 executed"
-		name = France_news.100.o3
-		trigger = {
-			NOT = { original_tag = FRA }
-			OR = {
-				is_in_faction_with = FRA
-				is_subject_of = FRA
-			}
-		}
-	}
-
-	option = {
-			log = "[GetDateText]: [This.GetName]: France_news.100.o4 executed"
-		name = France_news.100.o4
-		trigger = {
-			NOT = { original_tag = FRA }
-			NOT = { is_in_faction_with = FRA }
-			NOT = { is_subject_of = FRA }
-			has_elections = yes
-		}
-	}
-
-	option = {
-			log = "[GetDateText]: [This.GetName]: France_news.100.o5 executed"
-		name = France_news.100.o5
-		trigger = {
-			NOT = { original_tag = FRA }
-			NOT = { is_in_faction_with = FRA }
-			NOT = { is_subject_of = FRA }
-			has_elections = no
-		}
-	}
-
-}
-
-news_event = {
-	id = France_news.101
-	title = France_news.101.t
-	desc = France_news.101.d
-	picture = GFX_french_flag
-	is_triggered_only = yes
-	major = yes
-
-	option = {
-			log = "[GetDateText]: [This.GetName]: France_news.101.o1 executed"
-		name = France_news.101.o1
-		trigger = {
-			OR = {
-				original_tag = FRA
-				is_subject_of = FRA
-				is_in_faction_with = FRA
-			}
-		}
-	}
-
-	option = {
-			log = "[GetDateText]: [This.GetName]: France_news.101.o2 executed"
-		name = France_news.101.o2
-		trigger = {
-			NOT = { is_in_faction_with = FRA }
 		}
 	}
 

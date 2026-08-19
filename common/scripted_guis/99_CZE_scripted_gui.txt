@@ -1595,7 +1595,7 @@ scripted_gui = {
 		}
 
 		triggers = {
-		   CZE_petr_pavel_open_button_visible = {
+			CZE_petr_pavel_open_button_visible = {
 				always = yes
 			}
 		}
@@ -1644,8 +1644,10 @@ scripted_gui = {
 				if = {
 					limit = {
 						NOT = {
-							has_country_flag = CZE_petr_pavel_missions_visible
-							has_country_flag = CZE_petr_pavel_politics_visible
+							OR = {
+								has_country_flag = CZE_petr_pavel_missions_visible
+								has_country_flag = CZE_petr_pavel_politics_visible
+							}
 						}
 					}
 					set_country_flag = CZE_petr_pavel_missions_visible
@@ -1993,6 +1995,7 @@ scripted_gui = {
 				else = {
 					set_country_flag = CZE_petr_pavel_gui_visible
 				}
+				CZE_pavel_gui_dirty_update = yes
 			}
 
 			CZE_petr_pavel_switch_to_training_button_click = {
@@ -2023,7 +2026,7 @@ scripted_gui = {
 				clr_country_flag = CZE_petr_pavel_card_four_activated
 				clr_country_flag = CZE_petr_pavel_card_five_activated
 				clr_country_flag = CZE_petr_pavel_card_six_activated
-					CZE_pavel_gui_dirty_update = yes
+				CZE_pavel_gui_dirty_update = yes
 			}
 			CZE_petr_pavel_card_one_button_active_click = {
 				clr_country_flag = CZE_petr_pavel_card_one_activated
@@ -2103,7 +2106,7 @@ scripted_gui = {
 		ai_weights = {
 			CZE_petr_pavel_gui_close_click = {
 				ai_will_do = {
-					factor = 0
+					base = 0
 				}
 			}
 			CZE_petr_pavel_switch_to_training_button_click = {
@@ -2128,12 +2131,12 @@ scripted_gui = {
 			}
 			CZE_petr_pavel_switch_to_missions_button_click = {
 				ai_will_do = {
-					factor = 10
+					base = 10
 				}
 			}
 			CZE_petr_pavel_switch_to_politics_button_click = {
 				ai_will_do = {
-					factor = 10
+					base = 10
 				}
 			}
 			CZE_petr_pavel_card_one_button_click = {
@@ -2240,174 +2243,122 @@ scripted_gui = {
 			CZE_petr_pavel_scripted_gui_north_flank_politics_button_three_text_visible = {
 				has_country_flag = CZE_petr_pavel_politics_visible
 			}
-
 			CZE_petr_pavel_scripted_gui_north_flank_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_north_flank_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				OR = {
-					ENG = {
-						is_in_faction_with = USA
-						has_war = no
-					}
-					DEN = {
-						is_in_faction_with = USA
-						has_war = no
-					}
-					NRY = {
-						is_in_faction_with = USA
-						has_war = no
-					}
-				}
-				CZE = {
-					is_in_faction_with = USA
-					has_war = no
-				}
-				date > 2014.1.1
+				CZE_petr_pavel_north_flank_mission_available = yes
 			}
-
 			CZE_petr_pavel_scripted_gui_north_flank_politics_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_north_flank_politics_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				HOL = {
-					is_in_faction_with = USA
-					has_war = no
-				}
-				CZE = {
-					is_in_faction_with = USA
-					has_war = no
-				}
+				CZE_petr_pavel_north_flank_politics_mission_available = yes
 			}
-
 			CZE_petr_pavel_scripted_gui_north_flank_politics_button_two_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_north_flank_politics_mission_two_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				has_completed_focus = CZE_generalporucik
-				CZE = {
-					is_in_faction_with = USA
-					has_war = no
-				}
-				ENG = {
-					is_in_faction_with = USA
-					has_war = no
-				}
+				CZE_petr_pavel_north_flank_politics_button_two_mission_available = yes
 			}
-
 			CZE_petr_pavel_scripted_gui_north_flank_politics_button_three_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_north_flank_politics_mission_three_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				has_completed_focus = CZE_shape_representative
-				CZE = {
-					is_in_faction_with = USA
-					has_war = no
-				}
-				BEL = {
-					is_in_faction_with = USA
-					has_war = no
-				}
+				CZE_petr_pavel_north_flank_politics_button_three_mission_available = yes
 			}
 		}
 
 		effects = {
 			CZE_petr_pavel_scripted_gui_north_flank_button_click = {
-				set_variable = { petr_pavel_north_flank_mission_one_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_north_flank_flag_one
-					days = 180
-					value = 1
-				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 180
-					value = 1
-				}
 				if = {
-					limit = {
+					limit = { CZE_petr_pavel_north_flank_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 180 }
+						set_variable = { petr_pavel_north_flank_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_north_flank_flag_one
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.28 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					if = {
+						limit = {
+							ENG = {
+								is_in_faction_with = USA
+								has_war = no
+							}
+						}
 						ENG = {
-							is_in_faction_with = USA
-							has_war = no
+							country_event = CZE_petr_pavel_event.29
 						}
 					}
-					ENG = {
-						country_event = CZE_petr_pavel_event.29
-					}
-				}
-				if = {
-					limit = {
+					if = {
+						limit = {
+							DEN = {
+								is_in_faction_with = USA
+								has_war = no
+							}
+						}
 						DEN = {
-							is_in_faction_with = USA
-							has_war = no
+							country_event = CZE_petr_pavel_event.29
 						}
 					}
-					DEN = {
-						country_event = CZE_petr_pavel_event.29
-					}
-				}
-				if = {
-					limit = {
+					if = {
+						limit = {
+							NRY = {
+								is_in_faction_with = USA
+								has_war = no
+							}
+						}
 						NRY = {
-							is_in_faction_with = USA
-							has_war = no
+							country_event = CZE_petr_pavel_event.29
 						}
 					}
-					NRY = {
-						country_event = CZE_petr_pavel_event.29
+				}
+				effect_tooltip = { CZE_petr_pavel_north_flank_completion_reward = yes }
+			}
+			CZE_petr_pavel_scripted_gui_north_flank_politics_button_click = {
+				if = {
+					limit = { CZE_petr_pavel_north_flank_politics_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 120 }
+						set_variable = { petr_pavel_north_flank_politics_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_north_flank_flag_two
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.30 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
 					}
 				}
-				country_event = { id = CZE_petr_pavel_event.28 days = 180 }
+				effect_tooltip = { CZE_petr_pavel_north_flank_politics_completion_reward = yes }
 			}
-
-			CZE_petr_pavel_scripted_gui_north_flank_politics_button_click = {
-				set_variable = { petr_pavel_north_flank_politics_mission_one_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_north_flank_flag_two
-					days = 120
-					value = 1
-				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 120
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.30 days = 120 }
-			}
-
 			CZE_petr_pavel_scripted_gui_north_flank_politics_button_two_click = {
-				set_variable = { petr_pavel_north_flank_politics_mission_two_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_north_flank_flag_three
-					days = 60
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_north_flank_politics_button_two_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 60 }
+						set_variable = { petr_pavel_north_flank_politics_mission_two_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_north_flank_flag_three
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.31 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					add_timed_idea = { idea = CZE_petr_pavel_walia_representative_idea days = 60 }
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 60
-					value = 1
-				}
-				add_timed_idea = { idea = CZE_petr_pavel_walia_representative_idea days = 60 }
-				country_event = { id = CZE_petr_pavel_event.31 days = 60 }
+				effect_tooltip = { CZE_petr_pavel_north_flank_politics_button_two_completion_reward = yes }
 			}
-
 			CZE_petr_pavel_scripted_gui_north_flank_politics_button_three_click = {
-				set_variable = { petr_pavel_north_flank_politics_mission_three_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_north_flank_flag_four
-					days = 240
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_north_flank_politics_button_three_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 240 }
+						set_variable = { petr_pavel_north_flank_politics_mission_three_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_north_flank_flag_four
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.32 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 240
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.32 days = 240 }
+				effect_tooltip = { CZE_petr_pavel_north_flank_politics_button_three_completion_reward = yes }
 			}
 		}
 
@@ -2418,22 +2369,38 @@ scripted_gui = {
 		ai_weights = {
 			CZE_petr_pavel_scripted_gui_north_flank_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_north_flank_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_north_flank_politics_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_north_flank_politics_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_north_flank_politics_button_two_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_north_flank_politics_button_two_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_north_flank_politics_button_three_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_north_flank_politics_button_three_mission_available = yes }
+					}
 				}
 			}
 		}
@@ -2474,174 +2441,97 @@ scripted_gui = {
 			CZE_petr_pavel_scripted_gui_east_south_flank_politics_button_three_text_visible = {
 				has_country_flag = CZE_petr_pavel_politics_visible
 			}
-
 			CZE_petr_pavel_scripted_gui_east_south_flank_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_east_south_flank_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				has_completed_focus = CZE_armadni_general
-				TUR = {
-					has_opinion = {
-						target = CZE
-						value > 34
-					}
-				}
-				SYR = {
-					has_opinion = {
-						target = CZE
-						value > 34
-					}
-				}
+				CZE_petr_pavel_east_south_flank_mission_available = yes
 			}
-
 			CZE_petr_pavel_scripted_gui_east_south_flank_politics_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_east_south_flank_politics_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				has_war = no
-				has_completed_focus = CZE_whitebook
-				OR = {
-					SLO = {
-						OR = {
-							has_opinion = {
-								target = CZE
-								value > 24
-							}
-							all_core_state = {
-								is_fully_controlled_by = CZE
-							}
-							is_subject_of = CZE
-						}
-					}
-					has_cosmetic_tag = CZE_SLO_czechoslovakia
-				}
-				HUN = {
-					OR = {
-						has_opinion = {
-							target = CZE
-							value > 24
-						}
-						all_core_state = {
-							is_fully_controlled_by = CZE
-						}
-						is_subject_of = CZE
-					}
-				}
+				CZE_petr_pavel_east_south_flank_politics_mission_available = yes
 			}
-
 			CZE_petr_pavel_scripted_gui_east_south_flank_politics_button_two_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_east_south_flank_politics_mission_two_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				has_completed_focus = CZE_generalmajor
-				KOS = {
-					OR = {
-						has_opinion = {
-							target = CZE
-							value > 14
-						}
-						all_core_state = {
-							is_fully_controlled_by = CZE
-						}
-						is_subject_of = CZE
-					}
-				}
+				CZE_petr_pavel_east_south_flank_politics_button_two_mission_available = yes
 			}
-
 			CZE_petr_pavel_scripted_gui_east_south_flank_politics_button_three_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_east_south_flank_politics_mission_three_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				BOS = {
-					OR = {
-						has_opinion = {
-							target = CZE
-							value > 9
-						}
-						all_core_state = {
-							is_fully_controlled_by = CZE
-						}
-						is_subject_of = CZE
-					}
-				}
-				CZE = {
-					has_completed_focus = CZE_eufor_althera_bosna
-				}
+				CZE_petr_pavel_east_south_flank_politics_button_three_mission_available = yes
 			}
 		}
 
 		effects = {
 			CZE_petr_pavel_scripted_gui_east_south_flank_button_click = {
-				set_variable = { petr_pavel_east_south_flank_mission_one_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_east_south_flank_flag_one
-					days = 260
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_east_south_flank_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 260 }
+						set_variable = { petr_pavel_east_south_flank_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_east_south_flank_flag_one
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.22 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 260
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.22 days = 260 }
+				effect_tooltip = { CZE_petr_pavel_east_south_flank_completion_reward = yes }
 			}
-
 			CZE_petr_pavel_scripted_gui_east_south_flank_politics_button_click = {
-				set_variable = { petr_pavel_east_south_flank_politics_mission_one_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_east_south_flank_flag_two
-					days = 75
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_east_south_flank_politics_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 75 }
+						set_variable = { petr_pavel_east_south_flank_politics_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_east_south_flank_flag_two
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.23 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					SLO = {
+						country_event = CZE_petr_pavel_event.24
+					}
+					HUN = {
+						country_event = CZE_petr_pavel_event.24
+					}
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 75
-					value = 1
-				}
-				SLO = {
-					country_event = CZE_petr_pavel_event.24
-				}
-				HUN = {
-					country_event = CZE_petr_pavel_event.24
-				}
-				country_event = { id = CZE_petr_pavel_event.23 days = 75 }
+				effect_tooltip = { CZE_petr_pavel_east_south_flank_politics_completion_reward = yes }
 			}
-
 			CZE_petr_pavel_scripted_gui_east_south_flank_politics_button_two_click = {
-				set_variable = { petr_pavel_east_south_flank_politics_mission_two_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_east_south_flank_flag_three
-					days = 80
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_east_south_flank_politics_button_two_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 80 }
+						set_variable = { petr_pavel_east_south_flank_politics_mission_two_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_east_south_flank_flag_three
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.25 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 80
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.25 days = 80 }
+				effect_tooltip = { CZE_petr_pavel_east_south_flank_politics_button_two_completion_reward = yes }
 			}
-
 			CZE_petr_pavel_scripted_gui_east_south_flank_politics_button_three_click = {
-				set_variable = { petr_pavel_east_south_flank_politics_mission_three_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_east_south_flank_flag_four
-					days = 100
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_east_south_flank_politics_button_three_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 100 }
+						set_variable = { petr_pavel_east_south_flank_politics_mission_three_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_east_south_flank_flag_four
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.26 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					BOS = {
+						country_event = CZE_petr_pavel_event.27
+					}
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 100
-					value = 1
-				}
-				BOS = {
-					country_event = CZE_petr_pavel_event.27
-				}
-				country_event = { id = CZE_petr_pavel_event.26 days = 100 }
+				effect_tooltip = { CZE_petr_pavel_east_south_flank_politics_button_three_completion_reward = yes }
 			}
 		}
 
@@ -2652,22 +2542,38 @@ scripted_gui = {
 		ai_weights = {
 			CZE_petr_pavel_scripted_gui_east_south_flank_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_east_south_flank_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_east_south_flank_politics_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_east_south_flank_politics_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_east_south_flank_politics_button_two_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_east_south_flank_politics_button_two_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_east_south_flank_politics_button_three_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_east_south_flank_politics_button_three_mission_available = yes }
+					}
 				}
 			}
 		}
@@ -2703,228 +2609,145 @@ scripted_gui = {
 			CZE_petr_pavel_scripted_gui_eastern_flank_political_button_text_visible = {
 				has_country_flag = CZE_petr_pavel_politics_visible
 			}
-
 			CZE_petr_pavel_scripted_gui_eastern_flank_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_eastern_flank_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				SOV = {
-					NOT = {
-						is_in_faction_with = USA
-					}
-				}
-				OR = {
-					POL = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-						has_war = no
-					}
-					LIT = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-						has_war = no
-					}
-					LAT = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-						has_war = no
-					}
-					EST = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-						has_war = no
-					}
-				}
-				threat > 0.199
-				has_completed_focus = CZE_armadni_general
-				669 = {
-					is_fully_controlled_by = SOV
-				}
+				CZE_petr_pavel_eastern_flank_mission_available = yes
 			}
 			CZE_petr_pavel_scripted_gui_eastern_flank_button_two_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_eastern_flank_mission_two_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				SOV = {
-					NOT = {
-						is_in_faction_with = USA
-					}
-				}
-				OR = {
-					POL = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-						has_war = no
-					}
-					LIT = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-						has_war = no
-					}
-					LAT = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-						has_war = no
-					}
-					EST = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-						has_war = no
-					}
-				}
-				threat > 0.199
-				has_completed_focus = CZE_generalporucik
+				CZE_petr_pavel_eastern_flank_button_two_mission_available = yes
 			}
-
 			CZE_petr_pavel_scripted_gui_eastern_flank_political_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_eastern_flank_mission_three_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				OR = {
-					LIT = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-						has_war = no
-					}
-					LAT = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-						has_war = no
-					}
-					EST = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-						has_war = no
-					}
-				}
-				has_completed_focus = CZE_brigadni_general
+				CZE_petr_pavel_eastern_flank_political_mission_available = yes
 			}
 		}
 
 		effects = {
 			CZE_petr_pavel_scripted_gui_eastern_flank_button_click = {
-				set_variable = { petr_pavel_eastern_flank_mission_one_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_eastern_flank_flag_one
-					days = 280
-					value = 1
-				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 280
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.10 days = 280 }
 				if = {
-					limit = {
+					limit = { CZE_petr_pavel_eastern_flank_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 280 }
+						set_variable = { petr_pavel_eastern_flank_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_eastern_flank_flag_one
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.10 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					if = {
+						limit = {
+							POL = {
+								is_in_faction_with = CZE
+								is_in_faction_with = USA
+							}
+						}
 						POL = {
-							is_in_faction_with = CZE
-							is_in_faction_with = USA
+							country_event = CZE_petr_pavel_event.11
 						}
 					}
-					POL = {
-						country_event = CZE_petr_pavel_event.11
-					}
-				}
-				if = {
-					limit = {
+					if = {
+						limit = {
+							LIT = {
+								is_in_faction_with = CZE
+								is_in_faction_with = USA
+							}
+						}
 						LIT = {
-							is_in_faction_with = CZE
-							is_in_faction_with = USA
+							country_event = CZE_petr_pavel_event.11
 						}
 					}
-					LIT = {
-						country_event = CZE_petr_pavel_event.11
-					}
-				}
-				if = {
-					limit = {
+					if = {
+						limit = {
+							LAT = {
+								is_in_faction_with = CZE
+								is_in_faction_with = USA
+							}
+						}
 						LAT = {
-							is_in_faction_with = CZE
-							is_in_faction_with = USA
+							country_event = CZE_petr_pavel_event.11
 						}
 					}
-					LAT = {
-						country_event = CZE_petr_pavel_event.11
-					}
-				}
-				if = {
-					limit = {
+					if = {
+						limit = {
+							EST = {
+								is_in_faction_with = CZE
+								is_in_faction_with = USA
+							}
+						}
 						EST = {
-							is_in_faction_with = CZE
-							is_in_faction_with = USA
+							country_event = CZE_petr_pavel_event.11
 						}
 					}
-					EST = {
-						country_event = CZE_petr_pavel_event.11
-					}
 				}
+				effect_tooltip = { CZE_petr_pavel_eastern_flank_completion_reward = yes }
 			}
-
 			CZE_petr_pavel_scripted_gui_eastern_flank_button_two_click = {
-				set_variable = { petr_pavel_eastern_flank_mission_two_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_eastern_flank_flag_two
-					days = 280
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_eastern_flank_button_two_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 280 }
+						set_variable = { petr_pavel_eastern_flank_mission_two_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_eastern_flank_flag_two
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.12 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 280
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.12 days = 280 }
+				effect_tooltip = { CZE_petr_pavel_eastern_flank_button_two_completion_reward = yes }
 			}
-
 			CZE_petr_pavel_scripted_gui_eastern_flank_political_button_click = {
-				set_variable = { petr_pavel_eastern_flank_mission_three_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_eastern_flank_flag_three
-					days = 120
-					value = 1
-				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 120
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.13 days = 120 }
 				if = {
-					limit = {
+					limit = { CZE_petr_pavel_eastern_flank_political_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 120 }
+						set_variable = { petr_pavel_eastern_flank_mission_three_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_eastern_flank_flag_three
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.13 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					if = {
+						limit = {
+							LIT = {
+								is_in_faction_with = CZE
+								is_in_faction_with = USA
+							}
+						}
 						LIT = {
-							is_in_faction_with = CZE
-							is_in_faction_with = USA
+							country_event = CZE_petr_pavel_event.14
 						}
 					}
-					LIT = {
-						country_event = CZE_petr_pavel_event.14
-					}
-				}
-				if = {
-					limit = {
+					if = {
+						limit = {
+							LAT = {
+								is_in_faction_with = CZE
+								is_in_faction_with = USA
+							}
+						}
 						LAT = {
-							is_in_faction_with = CZE
-							is_in_faction_with = USA
+							country_event = CZE_petr_pavel_event.14
 						}
 					}
-					LAT = {
-						country_event = CZE_petr_pavel_event.14
-					}
-				}
-				if = {
-					limit = {
+					if = {
+						limit = {
+							EST = {
+								is_in_faction_with = CZE
+								is_in_faction_with = USA
+							}
+						}
 						EST = {
-							is_in_faction_with = CZE
-							is_in_faction_with = USA
+							country_event = CZE_petr_pavel_event.14
 						}
 					}
-					EST = {
-						country_event = CZE_petr_pavel_event.14
-					}
 				}
+				effect_tooltip = { CZE_petr_pavel_eastern_flank_political_completion_reward = yes }
 			}
 		}
 
@@ -2935,17 +2758,29 @@ scripted_gui = {
 		ai_weights = {
 			CZE_petr_pavel_scripted_gui_eastern_flank_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_eastern_flank_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_eastern_flank_button_two_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_eastern_flank_button_two_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_eastern_flank_political_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_eastern_flank_political_mission_available = yes }
+					}
 				}
 			}
 		}
@@ -2980,112 +2815,70 @@ scripted_gui = {
 			CZE_petr_pavel_scripted_gui_usa_politics_button_text_visible = {
 				has_country_flag = CZE_petr_pavel_politics_visible
 			}
-
 			CZE_petr_pavel_scripted_gui_usa_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_usa_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				USA = {
-					NOT = {
-						has_war_with = CZE
-					}
-					OR = {
-						has_war_with = IRQ
-						has_subject = IRQ
-					}
-					OR = {
-						has_opinion = {
-							target = CZE
-							value > 19
-						}
-						all_core_state = {
-							is_fully_controlled_by = CZE
-						}
-						is_subject_of = CZE
-					}
-				}
+				CZE_petr_pavel_usa_mission_available = yes
 			}
 			CZE_petr_pavel_scripted_gui_usa_button_two_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_usa_mission_two_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				USA = {
-					NOT = {
-						has_war_with = CZE
-					}
-					has_country_flag = USA_911_happened
-				}
-				TAL = {
-					NOT = {
-						is_in_faction_with = CZE
-						is_in_faction_with = USA
-					}
-					OR = {
-						has_war_with = AFG
-						has_government = fascism
-					}
-				}
-				CZE = {
-					has_completed_focus = CZE_operation_enduring_freedom
-				}
+				CZE_petr_pavel_usa_button_two_mission_available = yes
 			}
 			CZE_petr_pavel_scripted_gui_usa_politics_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_usa_politics_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				USA = {
-					is_in_faction_with = CZE
-				}
+				CZE_petr_pavel_usa_politics_mission_available = yes
 			}
 		}
 
 		effects = {
 			CZE_petr_pavel_scripted_gui_usa_button_click = {
-				set_variable = { petr_pavel_usa_mission_one_completed = 1 }
-				USA = { country_event = CZE_petr_pavel_event.16 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_usa_flag_one
-					days = 60
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_usa_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 60 }
+						set_variable = { petr_pavel_usa_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_usa_flag_one
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.15 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					USA = { country_event = CZE_petr_pavel_event.16 }
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 60
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.15 days = 60 }
+				effect_tooltip = { CZE_petr_pavel_usa_completion_reward = yes }
 			}
 			CZE_petr_pavel_scripted_gui_usa_button_two_click = {
-				set_variable = { petr_pavel_usa_mission_two_completed = 1 }
-				USA = { country_event = CZE_petr_pavel_event.18 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_usa_flag_two
-					days = 360
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_usa_button_two_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 360 }
+						set_variable = { petr_pavel_usa_mission_two_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_usa_flag_two
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.17 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					USA = { country_event = CZE_petr_pavel_event.18 }
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 360
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.17 days = 360 }
+				effect_tooltip = { CZE_petr_pavel_usa_button_two_completion_reward = yes }
 			}
 			CZE_petr_pavel_scripted_gui_usa_politics_button_click = {
-				set_variable = { petr_pavel_usa_politics_mission_one_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_usa_flag_three
-					days = 45
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_usa_politics_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 45 }
+						set_variable = { petr_pavel_usa_politics_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_usa_flag_three
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.36 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 45
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.36 days = 45 }
+				effect_tooltip = { CZE_petr_pavel_usa_politics_completion_reward = yes }
 			}
 		}
 
@@ -3096,14 +2889,32 @@ scripted_gui = {
 		ai_weights = {
 			CZE_petr_pavel_scripted_gui_usa_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_usa_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_usa_button_two_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_usa_button_two_mission_available = yes }
+					}
 				}
 			}
+			CZE_petr_pavel_scripted_gui_usa_politics_button_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_usa_politics_mission_available = yes }
+					}
+				}
+			}
+
 		}
 	}
 
@@ -3130,65 +2941,48 @@ scripted_gui = {
 			CZE_petr_pavel_scripted_gui_russia_politics_button_text_visible = {
 				has_country_flag = CZE_petr_pavel_missions_visible
 			}
-
-			CZE_petr_pavel_scripted_gui_russia_politics_button_click_enabled = { #This is mission
-				NOT = {
-					check_variable = { petr_pavel_russia_politics_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				669 = {
-					is_fully_controlled_by = SOV
-				}
-				SOV = {
-					NOT = {
-						is_in_faction_with = CZE
-						has_war_with = CZE
-					}
-				}
-				has_completed_focus = CZE_generalporucik
+			CZE_petr_pavel_scripted_gui_russia_politics_button_click_enabled = {
+				CZE_petr_pavel_russia_politics_mission_available = yes
 			}
-			CZE_petr_pavel_scripted_gui_russia_button_click_enabled = { #This is politics YES I FUCKED THE NAME but I don't want to change that
-				NOT = {
-					check_variable = { petr_pavel_russia_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				SOV = {
-					NOT = {
-						has_war_with = CZE
-					}
-				}
-				has_completed_focus = CZE_generalmajor
+			CZE_petr_pavel_scripted_gui_russia_button_click_enabled = {
+				CZE_petr_pavel_russia_mission_available = yes
 			}
 		}
 
 		effects = {
 			CZE_petr_pavel_scripted_gui_russia_politics_button_click = {
-				set_variable = { petr_pavel_russia_politics_mission_one_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_russia_flag_one
-					days = 60
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_russia_politics_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 60 }
+						set_variable = { petr_pavel_russia_politics_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_russia_flag_one
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.33 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 60
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.33 days = 60 }
+				effect_tooltip = { CZE_petr_pavel_russia_politics_completion_reward = yes }
 			}
 			CZE_petr_pavel_scripted_gui_russia_button_click = {
-				set_variable = { petr_pavel_russia_mission_one_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_russia_flag_two
-					days = 40
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_russia_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 40 }
+						set_variable = { petr_pavel_russia_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_russia_flag_two
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.37 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 40
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.37 days = 40 }
+				effect_tooltip = { CZE_petr_pavel_russia_completion_reward = yes }
 			}
 		}
 
@@ -3199,9 +2993,23 @@ scripted_gui = {
 		ai_weights = {
 			CZE_petr_pavel_scripted_gui_russia_politics_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_russia_politics_mission_available = yes }
+					}
 				}
 			}
+			CZE_petr_pavel_scripted_gui_russia_button_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_russia_mission_available = yes }
+					}
+				}
+			}
+
 		}
 	}
 
@@ -3228,87 +3036,50 @@ scripted_gui = {
 			CZE_petr_pavel_scripted_gui_qatar_politics_button_text_visible = {
 				has_country_flag = CZE_petr_pavel_politics_visible
 			}
-
 			CZE_petr_pavel_scripted_gui_qatar_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_qatar_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-					check_variable = { petr_pavel_iraq_mission_one_completed > 0 }
-				}
-				USA = {
-					NOT = {
-						has_war_with = CZE
-					}
-					has_war_with = IRQ
-				}
-				QAT = {
-					OR = {
-						has_opinion = {
-							target = CZE
-							value > 9
-						}
-						all_core_state = {
-							is_fully_controlled_by = CZE
-						}
-						is_subject_of = CZE
-					}
-				}
+				CZE_petr_pavel_qatar_mission_available = yes
 			}
-
 			CZE_petr_pavel_scripted_gui_qatar_politics_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_qatar_mission_two_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-					check_variable = { petr_pavel_iraq_mission_two_completed > 0 }
-				}
-				QAT = {
-					OR = {
-						has_opinion = {
-							target = CZE
-							value > 19
-						}
-						all_core_state = {
-							is_fully_controlled_by = CZE
-						}
-						is_subject_of = CZE
-					}
-				}
-				date > 2003.1.1
-				has_completed_focus = CZE_brigadni_general
+				CZE_petr_pavel_qatar_politics_mission_available = yes
 			}
 		}
 
 		effects = {
 			CZE_petr_pavel_scripted_gui_qatar_button_click = {
-				set_variable = { petr_pavel_qatar_mission_one_completed = 1 }
-				QAT = { country_event = CZE_petr_pavel_event.19 }
-				USA = { country_event = CZE_petr_pavel_event.19 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_qatar_flag_one
-					days = 20
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_qatar_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 20 }
+						set_variable = { petr_pavel_qatar_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_qatar_flag_one
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.20 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					QAT = { country_event = CZE_petr_pavel_event.19 }
+					USA = { country_event = CZE_petr_pavel_event.19 }
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 20
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.20 days = 20 }
+				effect_tooltip = { CZE_petr_pavel_qatar_completion_reward = yes }
 			}
-
 			CZE_petr_pavel_scripted_gui_qatar_politics_button_click = {
-				set_variable = { petr_pavel_qatar_mission_two_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_qatar_flag_two
-					days = 30
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_qatar_politics_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 30 }
+						set_variable = { petr_pavel_qatar_mission_two_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_qatar_flag_two
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.21 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 30
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.21 days = 30 }
+				effect_tooltip = { CZE_petr_pavel_qatar_politics_completion_reward = yes }
 			}
 		}
 
@@ -3319,12 +3090,20 @@ scripted_gui = {
 		ai_weights = {
 			CZE_petr_pavel_scripted_gui_qatar_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_qatar_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_qatar_politics_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_qatar_politics_mission_available = yes }
+					}
 				}
 			}
 		}
@@ -3353,86 +3132,76 @@ scripted_gui = {
 			CZE_petr_pavel_scripted_gui_iraq_politics_text_visible = {
 				has_country_flag = CZE_petr_pavel_politics_visible
 			}
-
 			CZE_petr_pavel_scripted_gui_iraq_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_qatar_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-					check_variable = { petr_pavel_iraq_mission_one_completed > 0 }
-				}
-				IRQ = {
-					OR = {
-						has_opinion = {
-							target = CZE
-							value > 24
-						}
-						all_core_state = {
-							is_fully_controlled_by = CZE
-						}
-						is_subject_of = CZE
-					}
-					NOT = {
-						has_war_with = CZE
-					}
-					has_war_with = USA
-				}
+				CZE_petr_pavel_iraq_mission_available = yes
 			}
-
 			CZE_petr_pavel_scripted_gui_iraq_politics_button_click_enabled = {
-				NOT = {
-					has_country_flag = petr_pavel_mission_ongoing
-					check_variable = { petr_pavel_iraq_mission_two_completed > 0 }
-				}
-				check_variable = { petr_pavel_iraq_mission_one_completed > 0 }
-				IRQ = {
-					OR = {
-						has_opinion = {
-							target = CZE
-							value > 24
-						}
-						all_core_state = {
-							is_fully_controlled_by = CZE
-						}
-						is_subject_of = CZE
-					}
-					has_war = no
-				}
+				CZE_petr_pavel_iraq_politics_mission_available = yes
 			}
 		}
 
 		effects = {
 			CZE_petr_pavel_scripted_gui_iraq_button_click = {
-				set_variable = { petr_pavel_iraq_mission_one_completed = 1 }
-				QAT = { country_event = CZE_petr_pavel_event.34 }
-				USA = { country_event = CZE_petr_pavel_event.34 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_iraq_flag_one
-					days = 20
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_iraq_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 20 }
+						set_variable = { petr_pavel_iraq_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_iraq_flag_one
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.35 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					IRQ = { country_event = CZE_petr_pavel_event.34 }
+					USA = { country_event = CZE_petr_pavel_event.34 }
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 20
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.35 days = 20 }
+				effect_tooltip = { CZE_petr_pavel_iraq_completion_reward = yes }
 			}
-
 			CZE_petr_pavel_scripted_gui_iraq_politics_button_click = {
-				set_variable = { petr_pavel_iraq_mission_two_completed = 1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_iraq_flag_two
-					days = 45
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_iraq_politics_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 45 }
+						set_variable = { petr_pavel_iraq_mission_two_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_iraq_flag_two
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.38 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 45
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.38 days = 45 }
+				effect_tooltip = { CZE_petr_pavel_iraq_politics_completion_reward = yes }
 			}
 		}
+
+		ai_enabled = { always = yes }
+
+		ai_weights = {
+			CZE_petr_pavel_scripted_gui_iraq_button_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_iraq_mission_available = yes }
+					}
+				}
+			}
+			CZE_petr_pavel_scripted_gui_iraq_politics_button_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_iraq_politics_mission_available = yes }
+					}
+				}
+			}
+		}
+
 	}
 
 	CZE_petr_pavel_afghanistan_gui = {
@@ -3471,144 +3240,93 @@ scripted_gui = {
 			CZE_petr_pavel_scripted_gui_afghanistan_button_two_text_visible = {
 				has_country_flag = CZE_petr_pavel_missions_visible
 			}
-
 			CZE_petr_pavel_scripted_gui_afghanistan_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_afghanistan_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				AFG = {
-					NOT = {
-						has_war_with = CZE
-						has_government = fascism
-					}
-					has_war_with = TAL
-				}
-				has_completed_focus = CZE_brigadni_general
+				CZE_petr_pavel_afghanistan_mission_available = yes
 			}
 			CZE_petr_pavel_scripted_gui_afghanistan_button_two_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_afghanistan_mission_two_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				AFG = {
-					NOT = {
-						has_war_with = CZE
-						has_government = fascism
-					}
-					has_war_with = TAL
-				}
-				check_variable = { petr_pavel_afghanistan_political_mission_two_completed > 0 }
-				has_country_flag = CZE_petr_pavel_afghanistan_flag_two_political_accepted
+				CZE_petr_pavel_afghanistan_button_two_mission_available = yes
 			}
 			CZE_petr_pavel_scripted_gui_afghanistan_political_button_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_afghanistan_political_mission_one_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				AFG = {
-					NOT = {
-						has_war_with = CZE
-						has_government = fascism
-					}
-					OR = {
-						has_opinion = {
-							target = CZE
-							value > 29
-						}
-						all_core_state = {
-							is_fully_controlled_by = CZE
-						}
-						is_subject_of = CZE
-					}
-				}
-				date > 2015.1.1
-				has_completed_focus = CZE_armadni_general
+				CZE_petr_pavel_afghanistan_political_mission_available = yes
 			}
 			CZE_petr_pavel_scripted_gui_afghanistan_political_button_two_click_enabled = {
-				NOT = {
-					check_variable = { petr_pavel_afghanistan_political_mission_two_completed > 0 }
-					has_country_flag = petr_pavel_mission_ongoing
-				}
-				AFG = {
-					NOT = {
-						has_war_with = CZE
-						has_government = fascism
-					}
-					OR = {
-						has_opinion = {
-							target = CZE
-							value > 24
-						}
-						all_core_state = {
-							is_fully_controlled_by = CZE
-						}
-						is_subject_of = CZE
-					}
-				}
+				CZE_petr_pavel_afghanistan_political_button_two_mission_available = yes
 			}
 		}
 
 		effects = {
 			CZE_petr_pavel_scripted_gui_afghanistan_button_click = {
-				set_variable = { petr_pavel_afghanistan_mission_one_completed = 1 }
-				AFG = { country_event = CZE_petr_pavel_event.1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_afghanistan_flag_one
-					days = 260
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_afghanistan_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 260 }
+						set_variable = { petr_pavel_afghanistan_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_afghanistan_flag_one
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.2 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					AFG = { country_event = CZE_petr_pavel_event.1 }
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 260
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.2 days = 260 }
+				effect_tooltip = { CZE_petr_pavel_afghanistan_completion_reward = yes }
 			}
 			CZE_petr_pavel_scripted_gui_afghanistan_button_two_click = {
-				set_variable = { petr_pavel_afghanistan_mission_two_completed = 1 }
-				AFG = { country_event = CZE_petr_pavel_event.3 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_afghanistan_flag_two
-					days = 220
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_afghanistan_button_two_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 220 }
+						set_variable = { petr_pavel_afghanistan_mission_two_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_afghanistan_flag_two
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.4 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					AFG = { country_event = CZE_petr_pavel_event.3 }
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 220
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.4 days = 220 }
+				effect_tooltip = { CZE_petr_pavel_afghanistan_button_two_completion_reward = yes }
 			}
 			CZE_petr_pavel_scripted_gui_afghanistan_political_button_click = {
-				set_variable = { petr_pavel_afghanistan_political_mission_one_completed = 1 }
-				add_to_variable = { CZE_petr_pavel_modifier_opinion_relation = 0.1 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_afghanistan_flag_three
-					days = 120
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_afghanistan_political_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 120 }
+						set_variable = { petr_pavel_afghanistan_political_mission_one_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_afghanistan_flag_three
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.5 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CZE_petr_pavel_modifier }
+					add_to_variable = { CZE_petr_pavel_modifier_opinion_relation = 0.1 tooltip = opinion_gain_monthly_factor_tt }
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 120
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.5 days = 120 }
+				effect_tooltip = { CZE_petr_pavel_afghanistan_political_completion_reward = yes }
 			}
 			CZE_petr_pavel_scripted_gui_afghanistan_political_button_two_click = {
-				set_variable = { petr_pavel_afghanistan_political_mission_two_completed = 1 }
-				AFG = { country_event = CZE_petr_pavel_event.6 }
-				set_country_flag = {
-					flag = CZE_petr_pavel_afghanistan_flag_four
-					days = 75
-					value = 1
+				if = {
+					limit = { CZE_petr_pavel_afghanistan_political_button_two_mission_available = yes }
+					hidden_effect = {
+						set_temp_variable = { CZE_petr_pavel_mission_duration = 75 }
+						set_variable = { petr_pavel_afghanistan_political_mission_two_completed = 1 }
+						set_country_flag = {
+							flag = CZE_petr_pavel_afghanistan_flag_four
+							days = CZE_petr_pavel_mission_duration
+							value = 1
+						}
+						country_event = { id = CZE_petr_pavel_event.7 days = CZE_petr_pavel_mission_duration }
+						CZE_petr_pavel_start_mission = yes
+					}
+					AFG = { country_event = CZE_petr_pavel_event.6 }
 				}
-				set_country_flag = {
-					flag = petr_pavel_mission_ongoing
-					days = 75
-					value = 1
-				}
-				country_event = { id = CZE_petr_pavel_event.7 days = 75 }
+				effect_tooltip = { CZE_petr_pavel_afghanistan_political_button_two_completion_reward = yes }
 			}
 		}
 
@@ -3619,27 +3337,42 @@ scripted_gui = {
 		ai_weights = {
 			CZE_petr_pavel_scripted_gui_afghanistan_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_afghanistan_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_afghanistan_button_two_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_afghanistan_button_two_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_afghanistan_political_button_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_afghanistan_political_mission_available = yes }
+					}
 				}
 			}
 			CZE_petr_pavel_scripted_gui_afghanistan_political_button_two_click = {
 				ai_will_do = {
-					factor = 100
+					base = 100
+					modifier = {
+						factor = 0
+						NOT = { CZE_petr_pavel_afghanistan_political_button_two_mission_available = yes }
+					}
 				}
 			}
 		}
 	}
-
 	CZE_SLO_scripted_gui = {
 		window_name = "CZE_SLO_scripted_gui_window"
 		context_type = decision_category
@@ -3648,10 +3381,12 @@ scripted_gui = {
 		visible = {
 			has_country_flag = CZE_SLO_czechoslovakia_start
 			NOT = {
-				has_completed_focus = CZE_SLO_new_dawn_of_czechoslovakia
-				check_variable = { THIS.CZE_SLO_people_acceptance > 99 }
-				check_variable = { THIS.CZE_SLO_law_similarity > 99 }
-				check_variable = { THIS.CZE_SLO_military_support > 99 }
+				OR = {
+					has_completed_focus = CZE_SLO_new_dawn_of_czechoslovakia
+					check_variable = { THIS.CZE_SLO_people_acceptance > 99 }
+					check_variable = { THIS.CZE_SLO_law_similarity > 99 }
+					check_variable = { THIS.CZE_SLO_military_support > 99 }
+				}
 			}
 		}
 

@@ -28,7 +28,6 @@ recalculate_influence = {
 	hidden_effect = {
 		sort_influence = yes
 		calculate_influence_percentage = yes
-		update_dirty_influence_var = yes
 	}
 }
 
@@ -290,13 +289,13 @@ manipulate_politics_action = {
 			set_temp_variable = { party_index = 6 }
 			set_temp_variable = { party_popularity_increase = var_pop }
 			set_temp_variable = { temp_outlook_increase = var_pop }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 
 			add_to_temp_variable = { var_pop = -0.02 }
 			set_temp_variable = { party_index = 8 }
 			set_temp_variable = { party_popularity_increase = var_pop }
 			set_temp_variable = { temp_outlook_increase = var_pop }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 
 			# Reduce by -5%
 			set_temp_variable = { percent_change = -5 }
@@ -311,13 +310,13 @@ manipulate_politics_action = {
 			set_temp_variable = { party_index = 8 }
 			set_temp_variable = { party_popularity_increase = var_pop }
 			set_temp_variable = { temp_outlook_increase = var_pop }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 
 			add_to_temp_variable = { var_pop = -0.02 }
 			set_temp_variable = { party_index = 9 }
 			set_temp_variable = { party_popularity_increase = var_pop }
 			set_temp_variable = { temp_outlook_increase = var_pop }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 
 			# Reduce by -5%
 			set_temp_variable = { percent_change = -5 }
@@ -340,13 +339,13 @@ manipulate_politics_action = {
 		set_temp_variable = { party_index = 8 }
 		set_temp_variable = { party_popularity_increase = var_pop }
 		set_temp_variable = { temp_outlook_increase = var_pop }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		add_to_temp_variable = { var_pop = -0.02 }
 		set_temp_variable = { party_index = 9 }
 		set_temp_variable = { party_popularity_increase = var_pop }
 		set_temp_variable = { temp_outlook_increase = var_pop }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		# Reduce by -5%
 		set_temp_variable = { percent_change = -5 }
@@ -358,7 +357,7 @@ manipulate_politics_action = {
 		set_temp_variable = { party_index = ROOT.ruling_party^0 }
 		set_temp_variable = { party_popularity_increase = var_pop }
 		set_temp_variable = { temp_outlook_increase = var_pop }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		# Reduce by -10%
 		set_temp_variable = { percent_change = -10 }
@@ -461,8 +460,8 @@ redistribute_influence_pool = {
 	set_temp_variable = { temp_total = { value = 100 subtract = held_value divide = influence_outlook_amount } }
 
 	if = { limit = { check_variable = { scale_domestic = 1 } }
-		if = { limit = { check_variable = { domestic_influence_amount < 0.01 } }
-			set_variable = { domestic_influence_amount = 0.01 }
+		if = { limit = { check_variable = { domestic_influence_amount < 1 } }
+			set_variable = { domestic_influence_amount = 1 }
 		}
 		multiply_variable = { domestic_influence_amount = temp_total }
 	}
@@ -531,6 +530,14 @@ apply_influence_special_modifiers = {
 			}
 			add_to_temp_variable = { influence_change = 0.15 }
 		}
+	}
+	else_if = { limit = { check_variable = { tag_index = GRE } }
+		if = { limit = { has_idea = GRE_enosis_campaign_idea } add_to_temp_variable = { influence_change = 0.15 } }
+		if = { limit = { has_idea = GRE_enosis_campaign_idea_2 } add_to_temp_variable = { influence_change = 0.20 } }
+	}
+	else_if = { limit = { check_variable = { tag_index = JAP } }
+		if = { limit = { JAP = { has_country_flag = JAP_cool_japan_doctrine } } add_to_temp_variable = { influence_change = 0.10 } }
+		if = { limit = { JAP = { has_completed_focus = JAP_gross_national_cool } } add_to_temp_variable = { influence_change = 0.05 } }
 	}
 
 	# -- Multi-influencer / influencer-property (independent, always checked) --
@@ -944,6 +951,8 @@ change_influence_percentage = {
 		recalculate_influence = yes
 	}
 	set_temp_variable = { percent_change = percent_change_temp }
+
+	update_dirty_influence_var = yes
 }
 
 # Effect: init_auto_influence_array
@@ -1001,7 +1010,7 @@ update_auto_influence_array = {
 		}
 	}
 
-	clamp_variable = { var = ROOT.auto_influence_users min = 0 max = 10 }
+	clamp_variable = { var = auto_influence_users min = 0 max = 10 }
 	update_dirty_influence_var = yes
 }
 
@@ -1059,4 +1068,18 @@ remove_auto_influencer_request = {
 		clamp_variable = { var = auto_influence_users min = 0 max = 10 }
 	}
 	custom_effect_tooltip = influence_remove_auto_request_TT
+}
+
+# Effect: spread_influence_cooldown_effect
+# Purpose: sets the game rule country flags for spread_influence so we do not copy this code everywhere.
+spread_influence_cooldown_effect = {
+	if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
+		set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
+	}
+	else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
+		set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
+	}
+	else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
+		set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
+	}
 }

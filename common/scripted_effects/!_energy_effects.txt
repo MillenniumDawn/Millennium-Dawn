@@ -21,6 +21,26 @@ calculate_energy_use = {
 	energy_calc_fuel = yes
 }
 
+# Effect: update_energy_policy_change
+# Purpose: Refreshes only the values affected by an Energy consumption policy
+update_energy_policy_change = {
+	if = {
+		limit = { has_country_flag = energy_state_bases_initialized }
+		calculate_energy_use = yes
+	}
+	else = {
+		update_state_variables = yes
+	}
+	calculate_tax_gain = yes
+	update_display = yes
+
+	if = {
+		limit = { is_ai = no }
+		update_money_dirty_variable = yes
+		refresh_investment_gui = yes
+	}
+}
+
 # Effect: energy_calc_consumption
 # Purpose: Population, building, and static energy consumption, computed straight into the per-type display vars
 # Produces (temp): temp_total_energy_use (consumed by energy_calc_balance)
@@ -107,7 +127,7 @@ energy_calc_consumption = {
 	}
 	set_variable = {
 		energy_use_mils_total_display_var = {
-			value = military_fac
+			value = military_factory_total
 			multiply = { value = 1 add = modifier@energy_use_modifier_mils }
 			multiply = 0.5
 			multiply = display_multiplier
@@ -164,29 +184,34 @@ energy_calc_generation = {
 	}
 
 	set_variable = { energy_sum = { value = state_renewable_energy_var multiply = temp_renewable_energy_gain_m } }
-	multiply_variable = { minimum_renewable_energy_var = temp_renewable_energy_gain_m }
-	multiply_variable = { maximum_renewable_energy_var = temp_renewable_energy_gain_m }
+	set_variable = { minimum_renewable_energy_var = { value = minimum_renewable_energy_var_base multiply = temp_renewable_energy_gain_m } }
+	set_variable = { maximum_renewable_energy_var = { value = maximum_renewable_energy_var_base multiply = temp_renewable_energy_gain_m } }
 
 	set_variable = { renewable_energy_display_var = energy_sum }
 
 	# Base amount of GW/h one battery park can store, scaled by storage size modifier
-	add_to_variable = {
+	set_variable = {
 		max_stored_energy = {
-			value = number_of_battery_parks
-			multiply = 100
-			multiply = { value = 1 add = modifier@battery_park_storage_size_modifier }
+			value = max_stored_energy_base
+			add = {
+				value = number_of_battery_parks
+				multiply = 100
+				multiply = { value = 1 add = modifier@battery_park_storage_size_modifier }
+			}
 		}
 	}
 
-	multiply_variable = {
+	set_variable = {
 		hydroelectric_energy_generation = {
-			value = temp_energy_gain_m
+			value = hydroelectric_energy_generation_base
+			multiply = temp_energy_gain_m
 			multiply = { value = 1 add = modifier@hydroelectric_power_generation_modifier }
 		}
 	}
-	multiply_variable = {
+	set_variable = {
 		geothermal_energy_generation = {
-			value = temp_energy_gain_m
+			value = geothermal_energy_generation_base
+			multiply = temp_energy_gain_m
 			multiply = { value = 1 add = modifier@geothermal_power_generation_modifier }
 		}
 	}
@@ -484,6 +509,14 @@ update_global_energy_ui = {
 # TODO: This right now is limited to one way agreements for now. We can expand this to more bilateral agreements later on when we have more details on it.
 calculate_energy_load_sharing = {
 	if = { limit = { NOT = { check_variable = { energy_load_sharing_nations^0 = 0 } } }
+		set_temp_variable = {
+			available_energy_to_share = {
+				value = energy_difference_variable
+				add = energy_load_sharing_use_var
+				max = 0
+			}
+		}
+
 		# Reset the amount of energy load shared to 0
 		set_variable = { energy_load_sharing_use_var = 0 }
 		set_variable = { energy_load_sharing_gain_var = 0 }
@@ -491,13 +524,14 @@ calculate_energy_load_sharing = {
 		for_each_scope_loop = {
 			array = energy_load_sharing_nations
 			if = { limit = { check_variable = { energy_difference_variable < 0 } }
-				add_to_temp_variable = { PREV.needed_energy_for_nations = energy_difference_variable }
+				set_temp_variable = { energy_required = { value = energy_difference_variable multiply = -1 } }
+				add_to_temp_variable = { PREV.needed_energy_for_nations = energy_required }
 			}
 		}
 
 		# Calculate the Energy Shared
 		# Assume that if you are sharing energy that you have to maintain more energy otherwise the loading sharing has gotta stop
-		if = { limit = { check_variable = { energy_difference_variable > needed_energy_for_nations } }
+		if = { limit = { NOT = { check_variable = { available_energy_to_share < needed_energy_for_nations } } }
 			resize_array = { array = energy_load_sharing_nations_value size = energy_load_sharing_nations^num }
 
 			for_each_loop = {
@@ -639,7 +673,7 @@ change_reactor_grade_material_effect = {
 # Effect: buy_fuel_from_the_market_effect
 # Purpose: Adds 50k units of fuel when buying it from the energy screen
 buy_fuel_from_the_market_effect = {
-	add_fuel = 50000
+	add_fuel = 100000
 	set_temp_variable = { treasury_change = -0.1 }
 	modify_treasury_effect = yes
 }

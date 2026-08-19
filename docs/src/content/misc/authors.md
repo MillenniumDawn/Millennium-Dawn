@@ -13,7 +13,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 - [Voice Lines](#voice-lines)
 - [3D Models](#3d-models)
 - [Musicians](#musicians)
-  - [Asia Radio Station](#asia-radio-station)
+	- [Asia Radio Station](#asia-radio-station)
 
 # Individuals
 
@@ -188,6 +188,9 @@ The following page is a non-exhaustive list of contributors from over the years 
 | Karandash1984        | @karandash1984                  | @Karandash1984 | -             | -                             |
 | Natin                | @nothing4182                    | @NothingMD     | -             | -                             |
 | Ironfury             | -                               | -              | -             | -                             |
+| Calvin C.            | -                               | @cal-chu       | -             | -                             |
+| Imperialist          | @x_imperialist                  | @imperialistx2 | -             | -                             |
+| Barracuda            | @Barracuda                      | @SBeausoleil   | -             | -                             |
 
 # Fellow Modders/Teams
 
@@ -201,10 +204,10 @@ The following page is a non-exhaustive list of contributors from over the years 
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3698041064)_
 - **Orphanmaker** - Indian icons
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1852163517), [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2814175841)_
-- **Stjern** - Total War mod for adaptation of Counter UI
-  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=806209426&searchtext=total+war)_
 - **KaiserRedux Team** - For sharing icons
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2076426030)_
+- **Truck Gaming** - "Modifier Icons" submod (101 vanilla-style modifier texticons integrated into `gfx/texticons/modifier_icons/` and wired in `interface/modifiericons_texticons.gfx`)
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2668048070)_
 - **Sinuiju chan** - MD PLA general resetting
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3138331129)_
 - **Doomsday Series: Zombies modern day subnmod**
@@ -219,6 +222,8 @@ The following page is a non-exhaustive list of contributors from over the years 
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2993766165)_
 - **Better Mechanics : Namelists** - Division namelist inspiration (native-language unit-type vocabulary and categorical unit type variety beyond the standard 7 groups). Used as reference only, no copy-paste; all integrations adapted to MD's `L_Inf_Bat`/`armor_Bat`/`Special_Forces` tokens. WW2-themed entries deliberately excluded.
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3413087807)_
+- **Black ICE** - Cooperation with modding, coding and for their customizable top bar.
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1137372539)_
 
 # Voice Lines
 

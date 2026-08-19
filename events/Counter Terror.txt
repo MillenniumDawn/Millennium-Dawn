@@ -2,142 +2,79 @@ add_namespace = radicalization
 add_namespace = terror
 add_namespace = MD_terror
 
-#hidden event that increases radicalization/salafi jihadist/shia revolutionary/islamist popularity
+#hidden event that adjusts radicalization/salafi jihadist/shia revolutionary/islamist popularity toward the government's social conservatism
 country_event = {
 	id = radicalization.1
 
 	hidden = yes
 	is_triggered_only = yes
 
-	trigger = {
-		check_variable = { social_conservatism_government < social_conservatism_society }
-	}
-
 	immediate = {
-		log = "[GetDateText]: [This.GetName]: radicalization.1 executed"
 		if = {
 			limit = {
-				OR = {
-					has_idea = large_shia_population
-					has_idea = substantial_shia_population
-					AND = {
-						original_tag = SAU
-						controls_state = 174 #Haasa
+				check_variable = { social_conservatism_government < social_conservatism_society }
+			}
+			log = "[GetDateText]: [This.GetName]: radicalization.1 executed (rising)"
+			set_temp_variable = { rad_shift = 0.02 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { social_conservatism_government > social_conservatism_society }
+			}
+			log = "[GetDateText]: [This.GetName]: radicalization.1 executed (falling)"
+			set_temp_variable = { rad_shift = -0.02 }
+		}
+		if = {
+			limit = {
+				NOT = { check_variable = { rad_shift = 0 } }
+			}
+			if = {
+				limit = {
+					OR = {
+						has_idea = large_shia_population
+						has_idea = substantial_shia_population
+						AND = {
+							original_tag = SAU
+							controls_state = 174 #Haasa
+						}
 					}
+					NOT = { has_government = communism }
 				}
-				NOT = { has_government = communism }
-			}
-			add_popularity = {
-				ideology = communism
-				popularity = 0.02
-			}
-			recalculate_party = yes
-		}
-		if = {
-			limit = {
-				NOT = { has_government = neutrality }
-			}
-			add_popularity = {
-				ideology = neutrality
-				popularity = 0.02
-			}
-			recalculate_party = yes
-		}
-		if = {
-			limit = { NOT = { has_government = fascism } }
-			add_popularity = {
-				ideology = fascism
-				popularity = 0.02
-			}
-			recalculate_party = yes
-		}
-		if = {
-			limit = {
-				has_government = fascism
-				no_jihadist_government = yes
-			}
-			set_temp_variable = { party_index = 11 }
-			set_temp_variable = { party_popularity_increase = 0.01 }
-			set_temp_variable = { temp_outlook_increase = 0.01 }
-			add_relative_party_popularity = yes
-		}
-	}
-}
-
-#hidden event that decreases militant support/salafi jihadist/shia revolutionary/islamist popularity
-country_event = {
-	id = radicalization.2
-
-	hidden = yes
-
-	trigger = {
-		check_variable = { social_conservatism_government > social_conservatism_society }
-	}
-	is_triggered_only = yes
-
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: radicalization.2 executed"
-		if = {
-			limit = {
-				OR = {
-					has_idea = large_shia_population
-					has_idea = substantial_shia_population
-					AND = {
-						original_tag = SAU
-						controls_state = 174 #Haasa
-					}
+				add_popularity = {
+					ideology = communism
+					popularity = rad_shift
 				}
-				NOT = { has_government = communism }
+				recalculate_party = yes
 			}
-			add_popularity = { ideology = communism popularity = -0.02 }
-			recalculate_party = yes
-		}
-		if = {
-			limit = {
-				NOT = { has_government = neutrality }
+			if = {
+				limit = {
+					NOT = { has_government = neutrality }
+				}
+				add_popularity = {
+					ideology = neutrality
+					popularity = rad_shift
+				}
+				recalculate_party = yes
 			}
-			add_popularity = { ideology = neutrality popularity = -0.02 }
-			recalculate_party = yes
-		}
-		if = {
-			limit = { NOT = { has_government = fascism } }
-			add_popularity = { ideology = fascism popularity = -0.02 }
-			recalculate_party = yes
-		}
-		if = {
-			limit = {
-				has_government = fascism
-				no_jihadist_government = yes
+			if = {
+				limit = { NOT = { has_government = fascism } }
+				add_popularity = {
+					ideology = fascism
+					popularity = rad_shift
+				}
+				recalculate_party = yes
 			}
-			set_temp_variable = { party_index = 11 }
-			set_temp_variable = { party_popularity_increase = -0.01 }
-			set_temp_variable = { temp_outlook_increase = -0.01 }
-			add_relative_party_popularity = yes
+			if = {
+				limit = {
+					has_government = fascism
+					no_jihadist_government = yes
+				}
+				set_temp_variable = { party_index = 11 }
+				set_temp_variable = { party_popularity_increase = { value = rad_shift multiply = 0.5 } }
+				set_temp_variable = { temp_outlook_increase = party_popularity_increase }
+				change_relative_party_popularity = yes
+			}
 		}
-	}
-}
-
-# Number of [ROOT.GetAdjective] Joining Extremist Groups on the Rise
-country_event = {
-	id = radicalization.7
-	title = radicalization.7.t
-	desc = radicalization.7.d
-
-	picture = GFX_politics_salafism
-
-	trigger = {
-		has_idea = youth_radicalization
-		no_jihadist_government = yes
-	}
-	is_triggered_only = yes
-
-	option = {
-		name = radicalization.7.a #The terrorists are growing stronger...
-		log = "[GetDateText]: [This.GetName]: radicalization.7.a executed"
-		set_temp_variable = { party_index = 11 }
-		set_temp_variable = { party_popularity_increase = 0.01 }
-		set_temp_variable = { temp_outlook_increase = 0.01 }
-		add_relative_party_popularity = yes
 	}
 }
 
@@ -157,9 +94,7 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		every_country = {
-			country_event = MD_terror.3
-		}
+		ct_fire_attack_news = yes
 		# AI attack response — set targeting flags and clear cooldown for immediate retaliation
 		if = {
 			limit = { is_ai = yes }
@@ -212,9 +147,7 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		every_other_country = {
-			country_event = MD_terror.4
-		}
+		ct_fire_prevention_news = yes
 	}
 
 	option = {
@@ -241,12 +174,13 @@ country_event = {
 		}
 	}
 
-	picture = GFX_terrorist_attack
+	picture = GFX_pkk_ambush
 
 	is_triggered_only = yes
 
 	option = {
 		name = MD_terror.3.a
+		trigger = { no_jihadist_government = yes }
 		log = "[GetDateText]: [This.GetName]: MD_terror.3.a"
 		add_timed_idea = {
 			idea = CT_terror_attack_happened
@@ -258,12 +192,23 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD_terror.3.b"
 		trigger = {
 			NOT = { has_idea = police_05 }
+			no_jihadist_government = yes
 		}
 		add_timed_idea = {
 			idea = CT_terror_attack_happened
 			days = 90
 		}
 		increase_policing_budget = yes
+	}
+	option = {
+		name = MD_terror.3.c
+		trigger = { jihadist_government = yes }
+		log = "[GetDateText]: [This.GetName]: MD_terror.3.c"
+		set_temp_variable = { party_index = 11 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		change_relative_party_popularity = yes
+		add_stability = 0.01
 	}
 }
 
@@ -278,6 +223,7 @@ country_event = {
 				original_tag = ROOT
 			}
 		}
+		no_jihadist_government = yes
 	}
 	picture = GFX_CTC.1
 	is_triggered_only = yes
@@ -366,7 +312,7 @@ country_event = {
 	title = MD_terror.9.t
 	desc = MD_terror.9.d
 
-	picture = GFX_CTC.4
+	picture = GFX_CTC.10
 
 	is_triggered_only = yes
 
@@ -402,8 +348,11 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		var:selected_ct_nation = {
-			country_event = MD_terror.11
+		if = {
+			limit = { has_valid_ct_nation_selected = yes }
+			var:selected_ct_nation = {
+				country_event = MD_terror.11
+			}
 		}
 	}
 }
@@ -420,6 +369,7 @@ country_event = {
 
 	option = { #Do the exercises
 		name = MD_terror.11.a
+		trigger = { no_jihadist_government = yes }
 		log = "[GetDateText]: [This.GetName]: MD_terror.11.a"
 		army_experience = 10
 		small_expenditure = yes
@@ -443,6 +393,7 @@ country_event = {
 
 	option = { #Refuse the exercises
 		name = MD_terror.11.b
+		trigger = { no_jihadist_government = yes }
 		log = "[GetDateText]: [This.GetName]: MD_terror.11.b"
 		reverse_add_opinion_modifier = {
 			target = FROM
@@ -455,8 +406,30 @@ country_event = {
 		}
 		international_systems_update = yes
 		FROM = {
-			army_experience = 10
-			small_expenditure = yes
+			set_country_flag = {
+				flag = refused_joint_exercises@PREV
+				days = 190
+				value = 1
+			}
+			international_systems_update = yes
+		}
+	}
+
+	option = { #We train for jihad, not with crusaders
+		name = MD_terror.11.c
+		trigger = { jihadist_government = yes }
+		log = "[GetDateText]: [This.GetName]: MD_terror.11.c"
+		reverse_add_opinion_modifier = {
+			target = FROM
+			modifier = rejected_joint_ct_training
+		}
+		set_country_flag = {
+			flag = refused_joint_exercises@FROM
+			days = 190
+			value = 1
+		}
+		international_systems_update = yes
+		FROM = {
 			set_country_flag = {
 				flag = refused_joint_exercises@PREV
 				days = 190
@@ -479,8 +452,11 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		var:selected_ct_nation = {
-			country_event = MD_terror.13
+		if = {
+			limit = { has_valid_ct_nation_selected = yes }
+			var:selected_ct_nation = {
+				country_event = MD_terror.13
+			}
 		}
 	}
 }
@@ -491,29 +467,62 @@ country_event = {
 	title = MD_terror.13.t
 	desc = MD_terror.13.d
 
-	picture = GFX_CTC.4
+	picture = GFX_CTC.7
 
 	is_triggered_only = yes
 
 	option = {
 		name = MD_terror.13.a
+		trigger = { no_jihadist_government = yes }
 		log = "[GetDateText]: [This.GetName]: MD_terror.13.a"
+		ai_chance = {
+			base = 80
+		}
 		set_country_flag = has_ct_advisor_from@FROM
 		add_to_variable = { foreign_counter_terror_support = 1 }
 		FROM = {
 			country_event = MD_terror.15
-			add_operation_token = {
-				tag = PREV
-				token = token_foreign_advisors
+			if = {
+				limit = { NOT = { tag = PREV } }
+				add_operation_token = {
+					tag = PREV
+					token = token_foreign_advisors
+				}
 			}
 		}
 	}
 	option = {
 		name = MD_terror.13.b
+		trigger = { no_jihadist_government = yes }
 		log = "[GetDateText]: [This.GetName]: MD_terror.13.b"
+		ai_chance = {
+			base = 20
+		}
 		reverse_add_opinion_modifier = {
 			target = FROM
 			modifier = rejected_ct_advisors
+		}
+		set_country_flag = {
+			flag = refused_ct_advisors_from@FROM
+			days = 365
+			value = 1
+		}
+		FROM = {
+			country_event = MD_terror.16
+		}
+	}
+	option = {
+		name = MD_terror.13.c
+		trigger = { jihadist_government = yes }
+		log = "[GetDateText]: [This.GetName]: MD_terror.13.c"
+		reverse_add_opinion_modifier = {
+			target = FROM
+			modifier = rejected_ct_advisors
+		}
+		set_country_flag = {
+			flag = refused_ct_advisors_from@FROM
+			days = 365
+			value = 1
 		}
 		FROM = {
 			country_event = MD_terror.16
@@ -527,7 +536,7 @@ country_event = {
 	title = MD_terror.14.t
 	desc = MD_terror.14.d
 
-	picture = GFX_CTC.4
+	picture = GFX_CTC.9
 
 	is_triggered_only = yes
 
@@ -542,7 +551,7 @@ country_event = {
 	title = MD_terror.15.t
 	desc = MD_terror.15.d
 
-	picture = GFX_CTC.4
+	picture = GFX_CTN.4
 
 	is_triggered_only = yes
 
@@ -557,7 +566,7 @@ country_event = {
 	title = MD_terror.16.t
 	desc = MD_terror.16.d
 
-	picture = GFX_CTC.4
+	picture = GFX_CTN.5
 
 	is_triggered_only = yes
 
@@ -578,24 +587,7 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		var:actor_country = {
-			country_event = MD_terror.18
-		}
-	}
-}
-
-country_event = {
-	id = MD_terror.18
-	title = MD_terror.18.t
-	desc = MD_terror.18.d
-	hidden = yes
-
-	picture = GFX_CTC.4
-
-	is_triggered_only = yes
-
-	immediate = {
-		var:ROOT.target_country = {
+		var:target_country = {
 			country_event = MD_terror.19
 		}
 	}
@@ -607,20 +599,32 @@ country_event = {
 	title = MD_terror.20.t
 	desc = MD_terror.20.d
 
-	picture = GFX_terrorist_attack
+	picture = GFX_CTN.1
 
 	is_triggered_only = yes
 
 	option = {
 		name = MD_terror.20.a
+		trigger = { no_jihadist_government = yes }
 		log = "[GetDateText]: [This.GetName]: MD_terror.20.a executed"
 		add_stability = -0.01
 	}
 
 	option = {
 		name = MD_terror.20.b
+		trigger = { no_jihadist_government = yes }
 		log = "[GetDateText]: [This.GetName]: MD_terror.20.b executed"
 		increase_policing_budget = yes
+	}
+
+	option = {
+		name = MD_terror.20.c
+		trigger = { jihadist_government = yes }
+		log = "[GetDateText]: [This.GetName]: MD_terror.20.c executed"
+		set_temp_variable = { party_index = 11 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		change_relative_party_popularity = yes
 	}
 }
 
@@ -630,21 +634,33 @@ country_event = {
 	title = MD_terror.21.t
 	desc = MD_terror.21.d
 
-	picture = GFX_terrorist_attack
+	picture = GFX_CTN.2
 
 	is_triggered_only = yes
 
 	option = {
 		name = MD_terror.21.a
+		trigger = { no_jihadist_government = yes }
 		log = "[GetDateText]: [This.GetName]: MD_terror.21.a executed"
 		add_stability = -0.02
 	}
 
 	option = {
 		name = MD_terror.21.b
+		trigger = { no_jihadist_government = yes }
 		log = "[GetDateText]: [This.GetName]: MD_terror.21.b executed"
 		increase_policing_budget = yes
 		add_stability = -0.01
+	}
+
+	option = {
+		name = MD_terror.21.c
+		trigger = { jihadist_government = yes }
+		log = "[GetDateText]: [This.GetName]: MD_terror.21.c executed"
+		set_temp_variable = { party_index = 11 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		change_relative_party_popularity = yes
 	}
 }
 
@@ -659,41 +675,39 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		var:ROOT.target_country = {
-			if = {
-				limit = {
-					has_country_flag = ct_hit_by_hvt_raid
-				}
-				clr_country_flag = ct_hvt_target_found_by@FROM
-				clr_country_flag = ct_hit_by_hvt_raid
+		if = {
+			limit = {
+				has_country_flag = ct_hit_by_hvt_raid
 			}
-			if = {
-				limit = {
-					has_country_flag = ct_hit_by_cache_raid
-				}
-				clr_country_flag = ct_cache_target_found_by@FROM
-				clr_country_flag = ct_hit_by_cache_raid
+			clr_country_flag = ct_hvt_target_found_by@FROM
+			clr_country_flag = ct_hit_by_hvt_raid
+		}
+		if = {
+			limit = {
+				has_country_flag = ct_hit_by_cache_raid
 			}
-			if = {
-				limit = {
-					has_country_flag = ct_hit_by_training_raid
-				}
-				clr_country_flag = ct_training_target_found_by@FROM
-				clr_country_flag = ct_hit_by_training_raid
+			clr_country_flag = ct_cache_target_found_by@FROM
+			clr_country_flag = ct_hit_by_cache_raid
+		}
+		if = {
+			limit = {
+				has_country_flag = ct_hit_by_training_raid
 			}
-			if = {
-				limit = {
-					has_country_flag = ct_hit_by_elim_raid
-				}
-				clr_country_flag = ct_elim_raid_prepared_by@FROM
-				clr_country_flag = ct_hit_by_elim_raid
+			clr_country_flag = ct_training_target_found_by@FROM
+			clr_country_flag = ct_hit_by_training_raid
+		}
+		if = {
+			limit = {
+				has_country_flag = ct_hit_by_elim_raid
 			}
-			if = {
-				limit = {
-					has_country_flag = ct_drone_op_prepared_by@FROM
-				}
-				clr_country_flag = ct_drone_op_prepared_by@FROM
+			clr_country_flag = ct_elim_raid_prepared_by@FROM
+			clr_country_flag = ct_hit_by_elim_raid
+		}
+		if = {
+			limit = {
+				has_country_flag = ct_drone_op_prepared_by@FROM
 			}
+			clr_country_flag = ct_drone_op_prepared_by@FROM
 		}
 	}
 }

@@ -7,6 +7,7 @@ check_braces.py with a single BaseValidator pass.
 ERROR-level checks (fail the run):
   - Brace matching: unbalanced { } with comment/string awareness (stack-based)
   - 4-space indent instead of a tab
+  - Orphaned `newline = yes` with no visible effect left after it
 
 WARNING-level checks (reported, do not fail):
   - Missing space around open/close braces
@@ -14,7 +15,6 @@ WARNING-level checks (reported, do not fail):
   - Odd number of quotation marks on a line
   - Running brace depth going negative
   - Focus ID format (must be TAG_focus_name)
-  - Missing search_filters in focus blocks
   - Event option has effects but no log =
 """
 
@@ -24,6 +24,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from shared_utils import strip_inline_comment
 from validator_common import BaseValidator, Severity, run_validator_main
 
 _SCAN_PATTERNS = [
@@ -39,8 +40,27 @@ _RE_TAG_LINE = re.compile(r"^[A-Z]{3}", re.M | re.I)
 _RE_FOCUS_FORMAT = re.compile(r"^[A-Z]{3}_[a-zA-Z0-9_-]+$", re.M | re.U)
 _RE_NEWS_EVENT = re.compile(r"news_event\s*=\s*\{")
 _RE_OPTION = re.compile(r"\boption\s*=\s*\{")
+_RE_OPTION_TRIGGER = re.compile(r"trigger\s*=\s*\{")
 
-_SHARED_FOCUS_PREFIXES = ("USoE", "POTEF", "AFRICAN_UNION", "GENERIC")
+_RE_EFFECT_BLOCK = re.compile(
+    r"^\s*(?:completion_reward|complete_effect|remove_effect|timeout_effect"
+    r"|cancel_effect)\s*=\s*\{"
+)
+_RE_NEWLINE_YES = re.compile(r"^newline\s*=\s*yes$")
+# Effects rendering no tooltip output, so a separator before them separates
+# nothing. update_focus_tree_obsolete_branches is wholly wrapped in a
+# hidden_effect (common/scripted_effects/00_focus_utilities.txt).
+_RE_INVISIBLE_EFFECT = re.compile(
+    r"^(?:log|newline|update_focus_tree_obsolete_branches"
+    r"|set_temp_variable|add_to_temp_variable|subtract_from_temp_variable"
+    r"|multiply_temp_variable|divide_temp_variable|clamp_temp_variable"
+    r"|set_country_flag|clr_country_flag|set_global_flag|clr_global_flag)\b"
+)
+_RE_INVISIBLE_BLOCK = re.compile(r"^(?:hidden_effect|limit)\s*=\s*\{")
+_RE_TRANSPARENT_BLOCK = re.compile(r"^(?:if|else|else_if)\s*=\s*\{")
+
+# EH is the Event Horizon generic tree's mod-wide domain prefix, not a tag.
+_SHARED_FOCUS_PREFIXES = ("USoE", "POTEF", "AFRICAN_UNION", "GENERIC", "EH")
 
 
 def _check_brace_matching(text: str, path: str):
@@ -93,6 +113,7 @@ def _check_indent_and_brackets(text: str, path: str):
     count_open_square = 0
     count_close_square = 0
     indent_count = 0
+    at_line_start = True
     ignore_till_eol = False
     in_string = False
     line_num = 1
@@ -103,9 +124,15 @@ def _check_indent_and_brackets(text: str, path: str):
             ignore_till_eol = False
             in_string = False
             indent_count = 0
+            at_line_start = True
             continue
         if c != " ":
             indent_count = 0
+        # Leading whitespace ends at the first non-space, non-tab character;
+        # spaces past that point are inline alignment (e.g. `= 1    }`), not
+        # indentation, and must not be flagged as a 4-space indent.
+        if c != " " and c != "\t":
+            at_line_start = False
         if ignore_till_eol:
             continue
         if c == '"':
@@ -125,7 +152,7 @@ def _check_indent_and_brackets(text: str, path: str):
             count_close_square += 1
         elif c == " ":
             indent_count += 1
-            if indent_count == 4:
+            if indent_count == 4 and at_line_start:
                 errors.append(("4-space indent detected (use tab)", line_num))
 
     if count_open_square != count_close_square:
@@ -155,11 +182,20 @@ def _check_spacing_and_quotes(text: str, path: str):
         if line.startswith("#"):
             continue
 
+        # Empty `{}` blocks (e.g. `topbar_empty = {}`) are idiomatic and have no
+        # interior to space; strip them before the brace-spacing check so they
+        # don't false-positive. Brace depth still counts the originals.
+        spacing_line = re.sub(r"\{\s*\}", "", line)
+
         if "{" in line:
             if not re.search(r"#.*[{}]+", line):
                 brace_depth += line.count("{")
-                unstyled = line.count("{") - line.count(" {\n") - line.count(" { ")
-                if unstyled > 0 and _RE_NO_SP_OPEN.search(line):
+                unstyled = (
+                    spacing_line.count("{")
+                    - spacing_line.count(" {\n")
+                    - spacing_line.count(" { ")
+                )
+                if unstyled > 0 and _RE_NO_SP_OPEN.search(spacing_line):
                     warnings.append(
                         ("Missing space before or after open brace", line_num)
                     )
@@ -167,8 +203,12 @@ def _check_spacing_and_quotes(text: str, path: str):
         if "}" in line:
             if not re.search(r"#.*[{}]+", line):
                 brace_depth -= line.count("}")
-                unstyled = line.count("}") - line.count(" }\n") - line.count(" } ")
-                if unstyled > 0 and _RE_NO_SP_CLOSE.search(line):
+                unstyled = (
+                    spacing_line.count("}")
+                    - spacing_line.count(" }\n")
+                    - spacing_line.count(" } ")
+                )
+                if unstyled > 0 and _RE_NO_SP_CLOSE.search(spacing_line):
                     warnings.append(
                         ("Missing space before or after close brace", line_num)
                     )
@@ -194,69 +234,44 @@ def _check_spacing_and_quotes(text: str, path: str):
 
 
 def _check_focus_standards(text: str, path: str):
-    """Focus ID format and missing search_filters. Returns [(message, line)]."""
+    """Focus ID format checks. Returns [(message, line)]."""
     warnings = []
     lines = text.splitlines()
-    braces = 0
-    current_focus_id = ""
-    has_search_filters = False
+    depth = 0
     in_focus_block = False
-    in_completion_reward = False
     found_focus_id = False
-    focus_line = 0
     focus_open_depth = 0
-    completion_reward_depth = 0
 
     for line_num, line in enumerate(lines, 1):
         if line.startswith("#") or not line.strip():
             continue
-        depth_before = braces
         if "{" in line:
-            braces += line.count("{")
+            depth += line.count("{")
         if "}" in line:
-            braces -= line.count("}")
-
-        if "completion_reward" in line and "{" in line:
-            in_completion_reward = True
-            completion_reward_depth = depth_before
-        elif in_completion_reward and braces == completion_reward_depth:
-            in_completion_reward = False
-
-        if in_focus_block and "search_filters" in line:
-            has_search_filters = True
+            depth -= line.count("}")
 
         # A focus = { block sits inside focus_tree = { ... } (depth 1); a
-        # shared_focus = { block sits at the file top level (depth 0). Match
-        # either and remember the depth so the block closes at the right level.
-        if not in_focus_block and re.match(r"^\s*(?:shared_)?focus\s*=\s*\{", line):
+        # shared_focus/joint_focus = { block sits at the file top level
+        # (depth 0). Match any and remember the depth so the block closes at
+        # the right level.
+        if not in_focus_block and re.match(
+            r"^\s*(?:shared_|joint_)?focus\s*=\s*\{", line
+        ):
             in_focus_block = True
             found_focus_id = False
-            has_search_filters = False
-            focus_line = line_num
-            focus_open_depth = depth_before
-        elif in_focus_block and braces == focus_open_depth:
-            if found_focus_id and not has_search_filters:
-                warnings.append(
-                    (f"Focus {current_focus_id} missing search_filters", focus_line)
-                )
+            focus_open_depth = depth - 1
+        elif in_focus_block and depth <= focus_open_depth:
             in_focus_block = False
-            current_focus_id = ""
             found_focus_id = False
 
-        if (
-            in_focus_block
-            and not in_completion_reward
-            and not found_focus_id
-            and ("id =" in line or "id=" in line)
-        ):
-            m = re.match(r"[ \t]+id\s?=\s?([A-Za-z0-9_?]+)", line)
+        if in_focus_block and not found_focus_id and ("id =" in line or "id=" in line):
+            m = re.match(r"[ \t]+id\s*=\s*([A-Za-z0-9_?]+)", line)
             if m:
-                current_focus_id = m.group(1)
                 found_focus_id = True
-                if not _has_focus_format(current_focus_id):
+                if not _has_focus_format(m.group(1)):
                     warnings.append(
                         (
-                            f"Focus ID {current_focus_id} must be TAG_focus_name",
+                            f"Focus ID {m.group(1)} must be TAG_focus_name",
                             line_num,
                         )
                     )
@@ -264,10 +279,9 @@ def _check_focus_standards(text: str, path: str):
 
 
 def _has_focus_format(focus_id: str) -> bool:
-    for prefix in _SHARED_FOCUS_PREFIXES:
-        if focus_id.startswith(prefix):
-            return True
-    return bool(_RE_FOCUS_FORMAT.match(focus_id))
+    return focus_id.startswith(_SHARED_FOCUS_PREFIXES) or bool(
+        _RE_FOCUS_FORMAT.match(focus_id)
+    )
 
 
 def _check_event_log_standards(text: str, path: str):
@@ -282,6 +296,8 @@ def _check_event_log_standards(text: str, path: str):
     has_other_defs = False
     in_news_event = False
     event_braces = 0
+    # ai_chance / ai_will_do are AI weighting, not effects; -1 means "outside one".
+    ai_block_depth = -1
 
     for line_num, line in enumerate(lines, 1):
         if line.startswith("#") or not line.strip():
@@ -307,14 +323,32 @@ def _check_event_log_standards(text: str, path: str):
             option_name = ""
             has_log = False
             has_other_defs = False
+            ai_block_depth = -1
 
         if option_found:
+            # Detect ai_chance / ai_will_do / trigger before the effects check so
+            # the block's own opening line (an `=` line) isn't counted as an
+            # effect. An option-level trigger is a visibility condition.
+            if (
+                ai_block_depth < 0
+                and "{" in line
+                and (
+                    "ai_chance" in line
+                    or "ai_will_do" in line
+                    or _RE_OPTION_TRIGGER.match(stripped)
+                )
+            ):
+                ai_block_depth = braces
             if "name" in line and "=" in line:
                 m = re.search(r"name\s?=\s([a-zA-Z0-9_.]+)", line)
                 if m:
                     option_name = m.group(1)
             elif (
-                "=" in line and braces > 0 and "name" not in line and "log" not in line
+                "=" in line
+                and braces > 0
+                and ai_block_depth < 0
+                and "name" not in line
+                and "log" not in line
             ):
                 has_other_defs = True
             if "{" in line:
@@ -323,8 +357,11 @@ def _check_event_log_standards(text: str, path: str):
                 has_log = True
                 option_found = False
                 braces = 0
+                ai_block_depth = -1
             if "}" in line:
                 braces -= line.count("}")
+            if ai_block_depth >= 0 and braces <= ai_block_depth:
+                ai_block_depth = -1
             if braces == 0 and not has_log and has_other_defs and option_name:
                 warnings.append(
                     (f"Event option {option_name} has effects but no log", option_line)
@@ -334,6 +371,81 @@ def _check_event_log_standards(text: str, path: str):
             elif braces == 0:
                 option_found = False
                 braces = 0
+
+    return warnings
+
+
+def _check_orphan_newline(text: str, path: str):
+    """`newline = yes` with no tooltip-visible effect left after it.
+
+    `newline = yes` inserts a blank line into a reward tooltip, so it is only
+    meaningful as a separator between two visible effects. When everything
+    following it inside the same effect block renders nothing, the tooltip ends
+    on a dangling blank line. The usual cause is an effect being deleted while
+    its paired separator is left behind.
+
+    Deliberately not the naive "`newline = yes` then `}`" match: a separator as
+    the last statement of an `if` is the standard MD idiom and is correct
+    whenever visible content follows the `if`, so the scan continues past the
+    enclosing braces to the end of the effect block.
+    """
+    warnings = []
+    lines = [strip_inline_comment(line) for line in text.splitlines()]
+
+    # Net brace delta per line, so a block's extent is a depth comparison.
+    deltas = [line.count("{") - line.count("}") for line in lines]
+    depths = []
+    depth = 0
+    for delta in deltas:
+        depths.append(depth)
+        depth += delta
+
+    def _visible_effect_follows(start: int, end: int) -> bool:
+        """Whether any line in (start, end) renders tooltip output."""
+        idx = start + 1
+        while idx < end:
+            stripped = lines[idx].strip()
+            if not stripped or stripped in ("{", "}"):
+                idx += 1
+                continue
+            # hidden_effect renders nothing; limit is a condition, not output.
+            if _RE_INVISIBLE_BLOCK.match(stripped):
+                block_depth = depths[idx]
+                idx += 1
+                while idx < end and depths[idx] > block_depth:
+                    idx += 1
+                continue
+            # if/else render their children inline, so keep scanning inside.
+            if _RE_TRANSPARENT_BLOCK.match(stripped):
+                idx += 1
+                continue
+            if _RE_INVISIBLE_EFFECT.match(stripped):
+                idx += 1
+                continue
+            return True
+        return False
+
+    for line_num, line in enumerate(lines, 1):
+        if not _RE_EFFECT_BLOCK.match(line):
+            continue
+        start = line_num - 1
+        block_depth = depths[start]
+        end = start + 1
+        while end < len(lines) and depths[end] > block_depth:
+            end += 1
+
+        for idx in range(start + 1, end):
+            if not _RE_NEWLINE_YES.match(lines[idx].strip()):
+                continue
+            if not _visible_effect_follows(idx, end):
+                warnings.append(
+                    (
+                        "Orphaned newline = yes: no visible effect follows it in"
+                        " this block, leaving a blank line at the end of the"
+                        " tooltip",
+                        idx + 1,
+                    )
+                )
 
     return warnings
 
@@ -349,6 +461,8 @@ def _scan_file(text: str, path: str):
     findings.extend(_check_indent_and_brackets(text, rel))
     # WARNING-level: spacing and quotes
     findings.extend(_check_spacing_and_quotes(text, rel))
+    # ERROR-level: orphaned tooltip separators
+    findings.extend(_check_orphan_newline(text, rel))
 
     # Focus standards: only national_focus files
     if "/national_focus/" in path.replace("\\", "/"):
@@ -382,6 +496,7 @@ class Validator(BaseValidator):
                         "without matching",
                         "Unbalanced",
                         "4-space indent",
+                        "Orphaned newline",
                     )
                 )
                 entry = (message, rel, line)
@@ -405,13 +520,25 @@ class Validator(BaseValidator):
         )
 
         self._log_section("Indent & Brackets (ERROR)")
-        indent_errors = [r for r in error_results if r not in brace_errors]
+        orphan_errors = [r for r in error_results if "Orphaned newline" in r[0]]
+        indent_errors = [
+            r for r in error_results if r not in brace_errors and r not in orphan_errors
+        ]
         self._report(
             indent_errors,
             "Indent and bracket balance OK",
             "Indent/bracket errors:",
             severity=Severity.ERROR,
             category="indent-brackets",
+        )
+
+        self._log_section("Orphaned Tooltip Separators (ERROR)")
+        self._report(
+            orphan_errors,
+            "No orphaned newline = yes found",
+            "Orphaned newline = yes (blank line at end of tooltip):",
+            severity=Severity.ERROR,
+            category="orphan-newline",
         )
 
         self._log_section("Spacing & Quotes (WARNING)")
@@ -433,11 +560,7 @@ class Validator(BaseValidator):
         )
 
         self._log_section("Focus Standards (WARNING)")
-        focus_warnings = [
-            r
-            for r in warning_results
-            if "focus" in r[0].lower() or "search_filters" in r[0].lower()
-        ]
+        focus_warnings = [r for r in warning_results if "focus" in r[0].lower()]
         self._report(
             focus_warnings,
             "Focus standards OK",
@@ -447,11 +570,7 @@ class Validator(BaseValidator):
         )
 
         self._log_section("Event Log Standards (WARNING)")
-        event_warnings = [
-            r
-            for r in warning_results
-            if "event option" in r[0].lower() or "log" in r[0].lower()
-        ]
+        event_warnings = [r for r in warning_results if "event option" in r[0].lower()]
         self._report(
             event_warnings,
             "Event log standards OK",

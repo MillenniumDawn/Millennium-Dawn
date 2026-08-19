@@ -3,8 +3,15 @@ name: Tools Validation
 on:
   pull_request:
     paths:
-      - 'tools/**'
-      - '.github/workflows/tools-validation.yml'
+      - "tools/**"
+      - ".claude/docs/typo-watchlist.md"
+      - "resources/documentation/modifiers_documentation.md"
+      - ".pre-commit-config.yaml"
+      - "pyproject.toml"
+      - ".github/workflows/coding-pipeline.yml"
+      - ".github/workflows/nightly-pr-validation.yml"
+      - ".github/workflows/tools-validation.yml"
+      - ".github/workflows/validator-cache.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -18,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
           sparse-checkout: |
@@ -31,18 +38,20 @@ jobs:
             interface
             gfx/flags
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
-          python-version: '3.x'
+          python-version: "3.x"
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install --group runtime
       - name: Run tools validation
         run: |
-          python tools/validate_tools.py --strict --no-color --output tools_validation.log
+          python tools/validate_tools.py --strict --no-color --output \
+            tools_validation.log
       - name: Upload validation report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
           name: tools-validation-report
@@ -54,38 +63,81 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
-          # config_drift_test reads these two config files to compare the
-          # validator set declared in each. pyproject.toml supplies the pytest
-          # testpaths so all four test dirs are collected.
+          # config_drift_test reads the pre-commit config and these workflows to
+          # compare the validator set declared in each, and to check the
+          # pipeline wiring around them. pyproject.toml supplies the pytest
+          # testpaths so all six test dirs are collected. typo-watchlist.md is
+          # read by loc_typo_watchlist_test's doc-sync guard, and
+          # modifiers_documentation.md by validate_modifiers_test's parse guard.
+          # common/national_focus is walked by focus_pp_malus_test's
+          # exemption-freshness guard.
           sparse-checkout: |
             tools
             pyproject.toml
             .pre-commit-config.yaml
+            .claude/docs/typo-watchlist.md
+            resources/documentation/modifiers_documentation.md
+            common/national_focus
             .github/workflows/coding-pipeline.yml
+            .github/workflows/nightly-pr-validation.yml
+            .github/workflows/tools-validation.yml
+            .github/workflows/validator-cache.yml
           sparse-checkout-cone-mode: false
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
-          python-version: '3.x'
+          python-version: "3.x"
       - name: Install test deps
         run: |
           python -m pip install --upgrade pip
           pip install --group dev
-      - name: Run pytest
-        # testpaths in pyproject.toml covers all four test dirs (tools/tests,
-        # report_lib/tests, validation/tests, linting/tests).
+      - name: Run pytest with coverage
+        # testpaths in pyproject.toml covers all six test dirs (tools/tests,
+        # report_lib/tests, validation/tests, linting/tests,
+        # standardization/tests, docs_checks/tests).
         run: |
-          python -m pytest -v
+          python -m coverage run --branch -m pytest -v
+          python -m coverage report
+
+  staged-validator-integration:
+    name: staged validator integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        with:
+          python-version: "3.x"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --group runtime
+          pip install --group dev
+      - name: Create isolated test worktree
+        run: |
+          git worktree add --detach \
+            "${{ runner.temp }}/md-staged-validator-test" HEAD
+      - name: Run staged-validator integration
+        working-directory: ${{ runner.temp }}/md-staged-validator-test
+        env:
+          MD_RUN_STAGED_INTEGRATION: "1"
+        run: |
+          python -m pytest \
+            tools/tests/staged_validators_test.py \
+            tools/tests/staged_validators_real_test.py -q
 
   ruff-lint:
     name: ruff lint (tools)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
           sparse-checkout: |
@@ -93,14 +145,18 @@ jobs:
             pyproject.toml
           sparse-checkout-cone-mode: false
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
-          python-version: '3.x'
+          python-version: "3.x"
       - name: Install ruff
         run: |
           python -m pip install --upgrade pip
           pip install --group dev
       - name: Run ruff
         run: ruff check tools --output-format=github
-      - name: Check formatting (ruff format)
-        run: ruff format --check tools
+      - name: Check formatting (black)
+        run: black --check tools
+      - name: Run pylint
+        run: pylint tools --output-format=github --reports=no --score=no
+      - name: Run mypy
+        run: mypy

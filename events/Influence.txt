@@ -240,6 +240,22 @@ country_event = {
 	picture = GFX_united_states_dollar
 	is_triggered_only = yes
 
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: News_influence.0 executed"
+		if = {
+			limit = { has_country_flag = sending_five_percent_of_gdp_@FROM }
+			set_variable = { gift_sum = five_gift_sum }
+		}
+		else_if = {
+			limit = { has_country_flag = sending_ten_percent_of_gdp_@FROM }
+			set_variable = { gift_sum = ten_gift_sum }
+		}
+		else_if = {
+			limit = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM }
+			set_variable = { gift_sum = fifteen_gift_sum }
+		}
+	}
+
 	# Accept the Aid
 	option = {
 		name = News_influence.0.a
@@ -604,7 +620,7 @@ country_event = {
 	option = {
 		name = influence.3.f
 		log = "[GetDateText]: [This.GetName]: influence.3.f executed"
-		ai_chance = { factor = 0 }
+		ai_chance = { base = 0 }
 	}
 }
 
@@ -1223,39 +1239,8 @@ country_event = {
 				set_temp_variable = { percent_change = 10 }
 				set_temp_variable = { influence_target = FROM.id }
 				change_influence_percentage = yes
-				# NATO member couped by hostile power — trigger USA response
-				if = {
-					limit = {
-						FROM = {
-							has_idea = NATO_member
-							NOT = { original_tag = USA }
-						}
-						NOT = { has_government = democratic }
-						NOT = { original_tag = USA }
-						OR = {
-							original_tag = CHI
-							original_tag = SOV
-							original_tag = PER
-						}
-						USA = {
-							exists = yes
-							has_idea = NATO_member
-							is_faction_leader = yes
-							NOT = { has_country_flag = collapsed_nation }
-							NOT = { has_country_flag = USA_nato_coup_recently }
-						}
-					}
-					FROM = { save_event_target_as = nato_coup_victim }
-					save_event_target_as = nato_coup_aggressor
-					USA = {
-						set_country_flag = {
-							flag = USA_nato_coup_recently
-							days = 365
-							value = 1
-						}
-						country_event = { id = department_of_state.233 days = 3 }
-					}
-				}
+				# NATO member couped by hostile power — fire dilemma on the current NATO faction leader (USA, or any other if USA is gone)
+				NATO_coup_response_pulse = yes
 				# Other major influencers get a chance to contest the coup
 				if = {
 					limit = {
@@ -1302,7 +1287,6 @@ country_event = {
 			#discovered
 			var:FROM.fail_factor_biggest = {
 				custom_effect_tooltip = influence_coup_largest_discovered_TT
-
 				FROM = {
 					add_opinion_modifier = { target = ROOT modifier = failed_coup }
 				}
@@ -1868,7 +1852,7 @@ country_event = {
 				set_temp_variable = { party_index = 22 }
 				set_temp_variable = { party_popularity_increase = 1 }
 				set_temp_variable = { temp_outlook_increase = 1 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 				set_temp_variable = { rul_party_temp = 22 }
 				set_temp_variable = { disable_elections = 1 }
 				change_ruling_party_effect = yes
@@ -2039,14 +2023,16 @@ country_event = {
 		NOT = { has_country_flag = collapsed_nation }
 		# Skip if this is already handled as a NATO coup response
 		NOT = {
-			has_idea = NATO_member
-			is_faction_leader = yes
-			event_target:coup_contest_victim = { has_idea = NATO_member }
-			event_target:coup_contest_sender = {
-				OR = {
-					original_tag = CHI
-					original_tag = SOV
-					original_tag = PER
+			OR = {
+				has_idea = NATO_member
+				is_faction_leader = yes
+				event_target:coup_contest_victim = { has_idea = NATO_member }
+				event_target:coup_contest_sender = {
+					OR = {
+						original_tag = CHI
+						original_tag = SOV
+						original_tag = PER
+					}
 				}
 			}
 		}
@@ -2162,7 +2148,7 @@ country_event = {
 			else = {
 				set_temp_variable = { party_popularity_increase = 0.03 }
 			}
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_political_power = -50
 		}
 		add_political_power = -50
@@ -2221,7 +2207,7 @@ country_event = {
 			else = {
 				set_temp_variable = { party_popularity_increase = 0.06 }
 			}
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			add_political_power = -100
 		}
 		set_temp_variable = { percent_change = 15 }
@@ -2995,8 +2981,6 @@ country_event = {
 					check_variable = { aid_size_mult > 4 }
 				}
 			}
-			save_global_event_target_as = aid_recipient
-			FROM = { save_global_event_target_as = aid_donor }
 			# Modern equipment package gets its own (more provocative) news flavor
 			if = {
 				limit = { check_variable = { aid_was_modern = 1 } }
@@ -3024,7 +3008,7 @@ country_event = {
 
 		FROM = { country_event = diplomatic_response.1 }
 		ai_chance = {
-			factor = 1
+			base = 1
 			modifier = { #Sacrifice Influence for free guns
 				OR = {
 					has_equipment = { infantry_weapons_type < 250 }
@@ -3116,7 +3100,7 @@ country_event = {
 
 		FROM = { country_event = diplomatic_response.2 }
 		ai_chance = { #Should be more likely to reject if they don't need it
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 100
 				has_idea = no_military
@@ -3154,40 +3138,28 @@ country_event = {
 
 	immediate = {
 		clear_array = auto_influence_target_val
-		for_loop_effect = {
-			end = auto_influence_array^num
-			value = i
-			if = {
-				limit = { NOT = { check_variable = { auto_influence_array^i = 0 } } }
-				set_variable = { ROOT.found_influence_val = 0 }
-				set_variable = { ROOT.found_influence_match = 0 }
-				var:auto_influence_array^i = {
-					set_temp_variable = { influencer_index = -1 }
-					for_loop_effect = {
-						end = influence_array^num
-						value = v
-						if = {
-							limit = { check_variable = { influence_array^v = ROOT } }
-							set_temp_variable = { influencer_index = v }
-						}
-					}
+		for_each_loop = {
+			array = auto_influence_target_array
+			value = report_target
+			set_variable = { ROOT.found_influence_val = 0 }
+			var:report_target = {
+				set_temp_variable = { influencer_index = -1 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
 					if = {
-						limit = { NOT = { check_variable = { influencer_index = -1 } } }
-						set_variable = { ROOT.found_influence_val = influence_array_val^influencer_index }
-						set_variable = { ROOT.found_influence_match = 1 }
+						limit = { check_variable = { influence_array^v = ROOT } }
+						set_temp_variable = { influencer_index = v }
 					}
 				}
 				if = {
-					limit = { check_variable = { found_influence_match = 1 } }
-					set_variable = { auto_influence_target_val^i = found_influence_val }
-				}
-				else = {
-					set_variable = { auto_influence_target_val^i = 0 }
+					limit = { NOT = { check_variable = { influencer_index = -1 } } }
+					set_variable = { ROOT.found_influence_val = influence_array_val^influencer_index }
 				}
 			}
+			add_to_array = { auto_influence_target_val = found_influence_val }
 		}
 		clear_variable = found_influence_val
-		clear_variable = found_influence_match
 	}
 
 	option = {
@@ -3294,5 +3266,18 @@ country_event = {
 				spread_influence = yes
 			}
 		}
+	}
+}
+
+#Foreign lobbying has locked our government out of combating one influencer
+country_event = {
+	id = influence.62
+	title = influence.62.t
+	desc = influence.62.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	option = {
+		name = influence.62.a
 	}
 }

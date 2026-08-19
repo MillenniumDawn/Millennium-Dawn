@@ -18,16 +18,18 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 import disk_cache
 from shared_utils import extract_block_from_text
-from validate_gfx_references import _GFX_SPRITE_TYPES, _find_vanilla_interface_dir
+from validate_gfx_references import (
+    _GFX_SPRITE_TYPES,
+    _strip_comments,
+    _vanilla_gfx_files,
+)
 
-_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
-# `//` and `#` are line comments; only `/* */` spans lines (needs DOTALL).
-_GFX_COMMENT = re.compile(r"//[^\n]*|#[^\n]*|/\*.*?\*/", re.DOTALL)
+_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*(?:"([^"]+)"|([^\s}]+))')
 
 
 def _parse_names(raw: str) -> List[str]:
     """Return every spriteType name in one .gfx file's text (block-scoped)."""
-    text = _GFX_COMMENT.sub("", raw)
+    text = _strip_comments(raw)
     names: List[str] = []
     for m in _GFX_SPRITE_TYPES.finditer(text):
         block, end = extract_block_from_text(text, m.end() - 1)
@@ -36,7 +38,7 @@ def _parse_names(raw: str) -> List[str]:
             block = text[m.end() : line_end if line_end != -1 else m.end() + 200]
         nm = _NAME_IN_BLOCK.search(block)
         if nm:
-            names.append(nm.group(1))
+            names.append(nm.group(1) or nm.group(2))
     return names
 
 
@@ -78,17 +80,14 @@ def build_sprite_index(
         include_vanilla: when True, also scan the vanilla HOI4 install (if
             discoverable). Event pictures must be MD-defined, so the event check
             passes False — that keeps it accurate in CI, where vanilla is absent.
-            Focus/idea icons may legitimately reuse vanilla sprites, so those
-            keep the default.
+            Focus/idea/decision icons may legitimately reuse vanilla sprites, so
+            those keep the default.
     """
-    interface_dirs: List[Optional[str]] = [os.path.join(mod_path, "interface")]
+    gfx_files: List[str] = glob.glob(
+        os.path.join(mod_path, "interface", "**", "*.gfx"), recursive=True
+    )
     if include_vanilla:
-        interface_dirs.append(_find_vanilla_interface_dir())
-
-    gfx_files: List[str] = []
-    for d in interface_dirs:
-        if d and os.path.isdir(d):
-            gfx_files.extend(glob.glob(os.path.join(d, "*.gfx")))
+        gfx_files.extend(_vanilla_gfx_files())
 
     names = set()
     if pool_map is not None:

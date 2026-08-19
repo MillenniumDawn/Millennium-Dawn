@@ -46,33 +46,33 @@ LAYER 5: GOD OF WAR OVERRIDES (game rule gated)
 
 ### on_startup (`common/on_actions/00_on_actions.txt`)
 
-- **AI Template Init** (line ~1710): every AI country (zombie/joke tags excluded, see `give_AI_templates`) → `give_AI_templates`. Also sets microstate tax rates and investment targets.
+- **AI Template Init**: every AI country (zombie/joke tags excluded, see `give_AI_templates`) → `give_AI_templates`. Also sets microstate tax rates and investment targets.
 
 ### on_daily (`common/on_actions/00_on_actions.txt`)
 
-- **AI Unit-Cap Cache** (line ~101): AI only → `division_limiter_calculation` + `plane_limiter_calculation` + `ship_limiter_calculation`. Each recomputes the cached `*_limiter_limit` variable the matching limiter strategy reads in its `enable`.
+- **AI Unit-Cap Cache**: AI only → `division_limiter_calculation` + `plane_limiter_calculation` + `ship_limiter_calculation`. Each recomputes the cached `*_limiter_limit` variable the matching limiter strategy reads in its `enable`.
 
 ### on_monthly (`common/on_actions/MD_on_actions.txt`)
 
-- **AI Weapon Dump** (line ~939): All AI → `ai_weapon_dump`
-- **AI Taxes** (line ~964): All AI → `calculate_ai_taxes_desire`
-- **AI Influence** (line ~817): AI + PP > 200 + not subject + not bankrupt → `influence.500`
-- **AI Investment Targets** (January only, line ~730): Regional+ powers → `yearly_investment_targets_routine`
-- **AI UN Actions** (line ~1241): `un_ai_evaluate_actions`
-- **AI Recognition** (line ~1243): `recog_ai_monthly`
-- **God of War** (line ~966): `ai_add_xp`, and if no player allies + threat > 0.3: `ai_add_equipment` + `ai_spawn_units`
+- **AI Weapon Dump**: All AI → `ai_weapon_dump`
+- **AI Taxes**: All AI → `calculate_ai_taxes_desire`
+- **AI Influence**: AI + PP > 200 + not subject + not bankrupt → `influence.500`
+- **AI Investment Targets** (January only): Regional+ powers → `yearly_investment_targets_routine`
+- **AI UN Actions**: `un_ai_evaluate_actions`
+- **AI Recognition**: `recog_ai_monthly`
+- **God of War**: `ai_add_xp`, and if no player allies + threat > 0.3: `ai_add_equipment` + `ai_spawn_units`
 
 ### on_weekly (`common/on_actions/MD_on_actions.txt`)
 
-- **AI Investment Pulse** (line ~80): Regional+ powers with investment targets → `AC_event.500`
-- **AI Cyber** (line ~178): Rotates through 4 weekly batches → `ai_cyber_monthly`
-- **AI Counter-Terror** (same lines): `global.active_terror_orgs^num > 0` → `ct_ai_weekly`
+- **AI Investment Pulse**: Regional+ powers with investment targets → `AC_event.500`
+- **AI Cyber**: Rotates through 4 weekly batches → `ai_cyber_monthly`
+- **AI Counter-Terror** (same batch rotation): `global.active_terror_orgs^num > 0` → `ct_ai_weekly`
 
 ### Other on_actions
 
-- **on_puppet** (`01_tfv_on_actions.txt:93`): AI puppeted nations → `give_AI_templates`
-- **on_declare_war** (`00_on_actions.txt:2049`): AI combatants with cyber capability → `ai_cyber_add_target` on each other
-- **on_join_faction / on_leave_faction** (`MD_on_actions.txt:1270`): AI reserve currency auto-switch (Chinese faction → yuan, Russian → rouble, else → dollar)
+- **on_puppet** (`01_tfv_on_actions.txt`): AI puppeted nations → `give_AI_templates`
+- **on_declare_war** (`00_on_actions.txt`): AI combatants with cyber capability → `ai_cyber_add_target` on each other
+- **on_join_faction / on_leave_faction** (`MD_on_actions.txt`): AI reserve currency auto-switch (Chinese faction → yuan, Russian → rouble, else → dollar)
 
 Threat state is no longer pushed by these hooks. It is evaluated live by the `ai_is_threatened` scripted trigger (see below), so nothing has to set or refresh a flag on war/justification/liberation.
 
@@ -95,9 +95,9 @@ ai_is_threatened = {
 `potential_and_current_enemies` is a built-in engine array (current enemies + allies-of-enemies + countries with wargoals), so it already covers hostile neighbours without a live neighbour loop. When `ai_is_threatened`:
 
 - The division/plane/ship limiter caps expand (1.25x multiplier inside the daily calc).
-- `ai_default_no_build_units` deactivates → unit training allowed.
+- The division cap no longer receives its 0.75x peaceful-country reduction.
 
-This replaced the old `ai_update_build_units` effect and its `AI_is_threatened` country flag (removed). Subjects are no longer auto-flagged; `ai_default_no_build_units` excludes them with `is_subject = no`.
+This replaced the old `ai_update_build_units` effect and its `AI_is_threatened` country flag (removed).
 
 ### `division_limiter_calculation` / `plane_limiter_calculation` / `ship_limiter_calculation` (`00_AI_scripted_effects.txt`)
 
@@ -113,7 +113,7 @@ Monthly, all AI at peace with threat < 0.51. Sells excess equipment for 30 treas
 - Various tank chassis > 2.5-5k → dump 500 each
 - Artillery > 5k → dump 750
 
-### `calculate_ai_taxes_desire` (`00_money_system.txt:5210`)
+### `calculate_ai_taxes_desire` (`00_money_system.txt`)
 
 Monthly tax rate adjustment:
 
@@ -191,37 +191,55 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 ### `MD_combat_ai_strategies.txt` — Production & Combat
 
 **Army production (3 tiers by factory count):**
-| Strategy | MIL Range | Key Ratios |
-|----------|-----------|------------|
-| `default_army_production_strategy` | < 11 | L_Inf=30, infantry=20, mech/IFV=50, armor=35 |
-| `default_army_production_strategy_maj` | > 10 | IFV=50, armor=40, SF=50, marines=20 |
-| `default_army_production_strategy_global` | > 29 | Further IFV/armor emphasis |
 
-**Note:** `_maj` and `_global` stack at MIL > 29, doubling role weights.
+| Strategy | MIL Range | Key Ratios |
+| ---------- | ----------- | ------------ |
+| `default_army_production_strategy` | < 11 | L_Inf=30, infantry=25, mech/IFV=50, armor=35, SF=20, marines=15 |
+| `default_army_production_strategy_maj` | 11–29 | Infantry=15, IFV=50, armor=40, SF=25, marines=25 |
+| `default_army_production_strategy_global` | 30+ | Infantry=30, APC=30, IFV=35, armor=25, SF=6, marines=10 |
+
+**Note:** `_maj` covers 11–29 MIL. `_global` replaces it at 30+ MIL so advanced-role weights do not stack.
 
 **Emergency strategies:**
 
 - `default_AI_needs_to_live`: surrender > 49% → L_Inf=150
-- `MD_build_equipment_not_units_while_at_war`: At war + low stocks → halt training, boost weapons
+- `MD_wartime_low_infantry_weapons`: At war + low weapons → halt training and prioritize weapons
+- `MD_wartime_low_command_equipment` / `_utility_vehicles` / `_light_at` / `_aa`: Shift wartime recruitment toward emergency light infantry while prioritizing the missing equipment
 - `MD_desperately_need_guns`: Zero infantry weapons → massive production, all training halted
 
 **Equipment production (3 tiers):**
+
 | Strategy | MIL Range | Focus |
-|----------|-----------|-------|
+| ---------- | ----------- | ------- |
 | `MD_poor_production_strategy` | < 6 | Infantry weapons dominate |
 | `MD_default_production_strategy` | 6-10 | Balanced with mech/armor intro |
 | `MD_major_production_strategy` | > 10 | Full spectrum with min factory targets |
 
+APCs use the `amphibious` equipment category and IFVs use `flame`, not
+`mechanized`. Countries with enough factories, a healthy rifle stockpile, and
+less than 1,000 APCs or IFVs receive a +400% perceived factory demand for the
+matching category. Countries with more than 10 military factories also reserve
+one factory each for APCs and IFVs. Command equipment shortages increase total
+`infantry`-category factory demand by 100% and raise command equipment's variant
+weight to compete with infantry weapons. The wartime response below 500
+stockpile adds a second +100% category-demand increase.
+
 **Division/Ship/Plane Limiters:**
 
-- `division_limiter`: factories × situational modifiers. Active war scales up (~1.75x, wars demand more divisions than peacetime), `AI_is_threatened` adds ~1.25x, major status adds ~1.15x. Alliances that constrain unilateral builds (NATO, EU) apply a negative multiplier (~-0.8x) so members don't all maintain peer-major standing armies.
+- `division_limiter`: (factories + 5 when factories > 4) × 1.3 × situational modifiers. Peaceful, unthreatened countries receive a 0.75x reduction instead of being blocked from training. Active war scales up (~1.75x, wars demand more divisions than peacetime), `ai_is_threatened` adds ~1.25x, major status adds ~1.15x. Alliances that constrain unilateral builds (NATO, EU) apply a negative multiplier (~-0.8x) so members don't all maintain peer-major standing armies.
 - `division_limiter_potato_edition`: 0.5x base for the "performance" rule path, extra penalties for very large factions (CHI/SOV) so end-game stutter stays manageable.
 - `ship_limiter`: naval_factories × ~7 (or ×3 potato), tuned so a typical naval power lands at a plausible fleet size, not the engine's hard cap.
 - `plane_limiter`: mil_factories × ~80 + 50 (or ×40 potato), accounts for air industries producing many cheap units per factory vs ground.
 
 **Unit build controls:**
 
-- `ai_default_no_build_units`: No war + not threatened → all roles -500
+- `division_limiter`: Above the current situational cap → all land-role build weights -500
+- `under_division_cap_recruitment`: Threatened countries below their cap
+  → wanted divisions +0.15
+- `minor_wartime_recruitment`: Non-major countries at war and below their
+  cap → force_build=20
+- `threatened_peacetime_recruitment`: Threatened countries at peace and below
+  their cap → force_build=25
 - `ai_subject_defensive_build`: Subjects at peace → garrison=5, L_Inf=10, infantry=5, force_build=25
 
 **Air production (3 tiers):**
@@ -238,8 +256,9 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 - `AI_idea_focus`: Surplus + lacking top ideas → massive idea spending (5000)
 
 **Factory building targets (scaled by power level):**
+
 | Power Level | CIC Target |
-|-------------|-----------|
+| ------------- | ----------- |
 | Minor/non-power | +50 |
 | Regional | +75 |
 | Large | +100 |
@@ -289,6 +308,12 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 | DPR/HPR | 150       | Always                                |
 | CHE     | 150       | Always                                |
 | ZOM     | 200       | Always                                |
+
+**Offensive preparation:**
+
+- `MD_war_declaration_ai.txt`: Countries holding specific scripted wargoals
+  request units for the target front and receive force_build=30–40 until war
+  begins.
 
 **Notable diplomacy patterns:**
 
@@ -421,6 +446,6 @@ Used throughout the AI system for priorities, weights, and `ai_will_do` values.
 | `role = armored` in templates                  | Template never selected               | Use `armor`                              |
 | Case-mismatched unit names                     | Battalion silently missing            | `validate_oob_units` pre-commit hook     |
 | Factory threshold gaps                         | No template at specific factory count | Ensure contiguous ranges                 |
-| `_maj` + `_global` stacking at MIL > 29        | Doubled role weights                  | By design but notable                    |
+| Overlapping MIL-tier enable ranges               | Role weights stack unexpectedly         | Keep generic, major, and global tiers exclusive   |
 | Missing equipment coverage for blocked nations | AI can't produce equipment            | Check all roles covered                  |
 | CAS designs with `medium_as_fighter` role      | Deployed as air superiority           | Use `medium_cas_fighter`                 |

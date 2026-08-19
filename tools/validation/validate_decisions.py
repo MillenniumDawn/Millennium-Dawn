@@ -5,12 +5,24 @@ Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
 
+import bisect
 import glob
 import os
 import re
+import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+import disk_cache
+from shared_utils import (
+    blank_quoted_strings,
+    extract_block_from_text,
+    strip_comments,
+    strip_inline_comment,
+)
+from sprite_index import build_sprite_index
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -23,12 +35,11 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 
-# Decisions activated dynamically (e.g. via variable-constructed IDs) that
-# cannot be detected by static analysis and should be excluded from the
-# unused-decision check.
-DYNAMICALLY_ACTIVATED_DECISIONS = [
-    f"AC_project_{i}_target_decision" for i in range(15)
-] + [f"investments_project_{i}_target_decision" for i in range(15)]
+_DECISION_REFERENCE_SOURCE_PATTERNS = (
+    "common/**/*.txt",
+    "events/**/*.txt",
+    "history/**/*.txt",
+)
 
 
 def _should_skip(filename: str) -> bool:
@@ -40,22 +51,182 @@ _TARGETED_BLOCK_RE = re.compile(
 )
 _DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
 _MISSION_NAME_RE = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
+_BRACKETED_LOC_RE = re.compile(r"^\[([A-Za-z0-9_]+)\]$")
+_SCRIPTED_LOC_RE = re.compile(r"\bname\s*=\s*([A-Za-z0-9_]+)")
+
+# The four blocks the engine runs as a decision's effects, all of which log.
+EFFECT_BLOCKS = (
+    "complete_effect",
+    "remove_effect",
+    "timeout_effect",
+    "cancel_effect",
+)
+_LOG_STRING_RE = re.compile(r'\blog\s*=\s*"')
+_STATEMENT_NAME_RE = re.compile(r"([A-Za-z_]\w*)\s*=")
+
+# Icon/picture sprite references (_extract_decision_icons). `.` and `-` stay
+# inside the character class: they are part of a sprite name, not a delimiter
+# (GFX_CTC.5, GFX_MIG-29-GER), a regression sprite_reference_test.py pins.
+_SPRITE_VALUE = r'"?([A-Za-z0-9_.\-]+)"?'
+_DEC_ICON_SIMPLE_RE = re.compile(
+    r"^[ \t]*icon\s*=\s*(?!\{)" + _SPRITE_VALUE + r"[ \t]*$", re.MULTILINE
+)
+_DEC_ICON_BLOCK_RE = re.compile(r"^[ \t]*icon\s*=\s*\{", re.MULTILINE)
+_DEC_ICON_KEY_RE = re.compile(r"\bkey\s*=\s*" + _SPRITE_VALUE)
+_DEC_PICTURE_RE = re.compile(
+    r"^[ \t]*picture\s*=\s*" + _SPRITE_VALUE + r"[ \t]*$", re.MULTILINE
+)
+# The token naming a block, read backwards from its opening brace.
+_DEC_OWNER_RE = re.compile(r"([A-Za-z0-9_.]+)\s*=\s*$")
 
 
-def _scan_activations_in_file(filename: str) -> Tuple[set, set]:
-    if _should_skip(filename):
-        return set(), set()
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=False, strip_comments_flag=True
+def _owner_spans(text: str, want_depth: int) -> List[Tuple[int, int, str]]:
+    """Return (start, end, token) for every named block opened at *want_depth*.
+
+    A decision id sits one level inside its category block (depth 1); a category
+    definition is at file level (depth 0). Selecting by depth rather than by
+    "nearest `x = {` above" keeps a one-line `visible = { ... }` sitting between
+    the id and its `icon` from being reported as the owner.
+    """
+    spans: List[Tuple[int, int, str]] = []
+    stack: List[Tuple[int, str]] = []
+    for m in re.finditer(r"[{}]", text):
+        pos = m.start()
+        if m.group() == "{":
+            name = _DEC_OWNER_RE.search(text, max(0, pos - 128), pos)
+            stack.append((pos, name.group(1) if name else ""))
+        elif stack:
+            start, token = stack.pop()
+            if len(stack) == want_depth and token:
+                spans.append((start, pos, token))
+    return spans
+
+
+_ICON_KIND_FIELD = {
+    "decision": "icon",
+    "category_icon": "icon",
+    "category_picture": "picture",
+}
+
+
+def _sprite_candidates(kind: str, value: str) -> List[str]:
+    """Return the sprite names the engine tries for one icon/picture value.
+
+    A decision `icon = X` resolves to X verbatim when it is already a full
+    sprite name, otherwise the engine prepends `GFX_decision_` (bare names are
+    the dominant MD convention and are NOT a bug). A decision *category* uses
+    the `GFX_decision_category_` prefix instead, and a category `picture` is
+    always the full sprite name.
+    """
+    if kind == "category_picture" or value.startswith("GFX_"):
+        return [value]
+    if kind == "category_icon":
+        return [value, f"GFX_decision_category_{value}"]
+    return [value, f"GFX_decision_{value}", f"GFX_{value}"]
+
+
+def _missing_sprite_message(
+    kind: str, owner: str, value: str, sprites: frozenset
+) -> Optional[str]:
+    """Return a finding message when no candidate sprite is defined, else None.
+
+    Dynamic `[...]` values resolve at runtime, so they are skipped.
+    """
+    if "[" in value or "]" in value:
+        return None
+    candidates = _sprite_candidates(kind, value)
+    if sprites.intersection(candidates):
+        return None
+    tried = " / ".join(candidates)
+    return (
+        f"{owner}: {_ICON_KIND_FIELD[kind]} = {value} -> no sprite {tried} defined "
+        "in interface/*.gfx (create the sprite or pick an existing icon)"
     )
-    decisions: set = set()
-    missions: set = set()
-    if "activate_targeted_decision" in text_file:
-        for block in _TARGETED_BLOCK_RE.findall(text_file):
-            decisions.update(_DECISION_NAME_RE.findall(block))
-    if "activate_mission" in text_file:
-        missions.update(_MISSION_NAME_RE.findall(text_file))
-    return decisions, missions
+
+
+def _is_category_file(filepath: str) -> bool:
+    return "decisions/categories/" in filepath.replace("\\", "/")
+
+
+def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, int]]:
+    """Pool worker: return (owner, kind, value, line) for each sprite reference.
+
+    Covers a decision's `icon`, a category's `icon` and `picture`, and the
+    dynamic `icon = { key = ... trigger = { ... } }` form, which contributes one
+    entry per `key`.
+    """
+    filepath, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except OSError:
+        return []
+    text = strip_comments(raw)
+    is_category = _is_category_file(filepath)
+    icon_kind = "category_icon" if is_category else "decision"
+
+    def _compute() -> List[Tuple[str, str, str, int]]:
+        # Owner spans and newline offsets are collected once and bisected per
+        # reference; rescanning from the top for every icon is quadratic on the
+        # bigger decision files.
+        owners = _owner_spans(text, 0 if is_category else 1)
+        owner_starts = [s for s, _, _ in owners]
+        newlines = [i for i, ch in enumerate(text) if ch == "\n"]
+
+        refs: List[Tuple[int, str, str]] = []
+        for m in _DEC_ICON_SIMPLE_RE.finditer(text):
+            refs.append((m.start(), icon_kind, m.group(1)))
+        for m in _DEC_ICON_BLOCK_RE.finditer(text):
+            block, end = extract_block_from_text(text, m.start())
+            if end == -1:
+                continue
+            for km in _DEC_ICON_KEY_RE.finditer(block):
+                refs.append((m.start(), icon_kind, km.group(1)))
+        if is_category:
+            for m in _DEC_PICTURE_RE.finditer(text):
+                refs.append((m.start(), "category_picture", m.group(1)))
+
+        out: List[Tuple[str, str, str, int]] = []
+        for offset, kind, value in sorted(refs):
+            idx = bisect.bisect_right(owner_starts, offset) - 1
+            owner = "<unknown>"
+            if idx >= 0 and offset < owners[idx][1]:
+                owner = owners[idx][2]
+            line = bisect.bisect_right(newlines, offset) + 1
+            out.append((owner, kind, value, line))
+        return out
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "decisions.icons", filepath, text, _compute
+    )
+
+
+def _block_level_statements(block: str) -> List[str]:
+    """Statement names at an effect block's own level, in source order.
+
+    *block* is the ``{ ... }`` text of the block. Nested blocks are skipped, so
+    a ``log`` inside an ``if`` / ``hidden_effect`` does not read as a statement
+    of the block itself.
+    """
+    names: List[str] = []
+    depth = 0
+    for line in block.split("\n"):
+        code = blank_quoted_strings(strip_inline_comment(line))
+        i = 0
+        while i < len(code):
+            char = code[i]
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+            elif depth == 1:
+                match = _STATEMENT_NAME_RE.match(code, i)
+                if match:
+                    names.append(match.group(1))
+                    i = match.end()
+                    continue
+            i += 1
+    return names
 
 
 # --- Decision parsing helpers ---
@@ -64,32 +235,164 @@ _REMOVE_DECISION_RE = re.compile(r"\bremove_decision\s*=\s*(\w+)")
 _REMOVE_TARGETED_BLOCK_RE = re.compile(
     r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
 )
-_REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\w+)")
+_REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
+
+_CYBER_OPERATION_TYPES = (
+    "gps_tracking",
+    "economic_tracking",
+    "propaganda_tracking",
+    "infra_tracking",
+    "crit_tracking",
+    "sigint_surveillance_tracking",
+    "radar_spoofing_tracking",
+    "election_interference_tracking",
+    "industrial_espionage_tracking",
+    "comms_intercept_tracking",
+    "financial_system_attack_tracking",
+    "logistics_disruption_tracking",
+    "sleeper_network_tracking",
+    "deception_campaign_tracking",
+    "zero_day_strike_tracking",
+    "network_hardening_tracking",
+    "counter_intrusion_tracking",
+    "attribution_hunt_tracking",
+)
+_DYNAMIC_ACTIVATION_EXPANSIONS = {
+    "cyber_op_slot_[SLOT]_[TYPE]": {
+        f"cyber_op_slot_{slot}_{operation_type}"
+        for slot in range(10)
+        for operation_type in _CYBER_OPERATION_TYPES
+    },
+    "investments_project_[INDEX]_target_decision": {
+        f"investments_project_{index}_target_decision" for index in range(15)
+    },
+}
 
 
-def _scan_external_removals(filename: str) -> set:
+def _unactivated(candidates: set, activated: set) -> list:
+    """Sorted *candidates* with no literal or finite meta-effect activation."""
+    remaining = candidates - activated
+    for name in activated:
+        remaining.difference_update(_DYNAMIC_ACTIVATION_EXPANSIONS.get(name, ()))
+    return sorted(remaining)
+
+
+def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set]:
+    """Single-read worker: (activated_decisions, activated_missions, removed).
+
+    Combines the activation and external-removal scans so the full-repo .txt
+    sweep reads each file once instead of twice.
+    """
     if _should_skip(filename):
-        return set()
+        return set(), set(), set()
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
-    if "remove_decision" not in text_file:
-        return set()
-    out = set(_REMOVE_DECISION_RE.findall(text_file))
-    for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
-        out.update(_REMOVE_DECISION_NAME_RE.findall(block))
-    return out
+    decisions: set = set()
+    missions: set = set()
+    removals: set = set()
+    if "activate_targeted_decision" in text_file:
+        for block in _TARGETED_BLOCK_RE.findall(text_file):
+            decisions.update(_DECISION_NAME_RE.findall(block))
+    if "activate_mission" in text_file:
+        missions.update(_MISSION_NAME_RE.findall(text_file))
+    if "remove_decision" in text_file or "remove_targeted_decision" in text_file:
+        removals.update(_REMOVE_DECISION_RE.findall(text_file))
+        for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
+            removals.update(_REMOVE_DECISION_NAME_RE.findall(block))
+    return decisions, missions, removals
+
+
+def _load_scripted_localisation_keys(mod_path: str) -> set:
+    keys = set()
+    pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
+    for filename in glob.iglob(pattern):
+        if _should_skip(filename):
+            continue
+        text_file = FileOpener.open_text_file(
+            filename, lowercase=False, strip_comments_flag=True
+        )
+        if "defined_text" in text_file and "name =" in text_file:
+            keys.update(_SCRIPTED_LOC_RE.findall(text_file))
+    return keys
 
 
 _TAG_TOKEN_PATTERN = re.compile(r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
 
+# Decision-block / category-block parsing patterns (hoisted from cached
+# closures in parse_all_decisions / parse_all_decision_names /
+# parse_decision_categories / parse_categories_with_decisions).
+# The name is confined to its own line (`[^\t#\n]`): allowing newlines let the
+# non-greedy match jump from a stray `\t}` across blank lines into a column-0
+# decision, producing a bogus block with no name line.
+_DECISIONS_BLOCK_RE = re.compile(
+    r"^\t[^\t#\n]+?\s*=\s*\{.*?^\t\}", flags=re.MULTILINE | re.DOTALL
+)
+_DECISION_TOKEN_LINE_RE = re.compile(r"^\t(\S+)\s*=", flags=re.MULTILINE)
+_CATEGORY_BLOCK_RE = re.compile(r"^\w* = \{.*?^\}", flags=re.DOTALL | re.MULTILINE)
+_CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
+_CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
-def _flat_tag_pins(block: str) -> set:
-    """Return the set of tags pinned by flat (non-nested) tag/original_tag tokens.
+# FROM-usage detection (hoisted from validate_targets_no_trigger /
+# validate_from_without_targets).
+_FROM_BLOCK_RE = re.compile(r"\bFROM\s*=\s*\{")
+_FROM_WORD_RE = re.compile(r"\bFROM\b")
 
-    Tokens nested inside OR/NOT/AND/if subblocks are skipped because they are
-    conditional, not hard pins. Handles both multi-line and single-line block
-    formats.
+
+def _is_targeted_decision(d: "DecisionFactory") -> bool:
+    """True if targets/target_array/target_trigger/target_root_trigger is present."""
+    return bool(
+        d.targets or d.target_array or d.target_trigger or d.target_root_trigger
+    )
+
+
+def _extract_from_blocks(block: str) -> List[str]:
+    """Return the brace-balanced body text of every ``FROM = { ... }`` in *block*.
+
+    ``_FROM_BLOCK_RE`` only matches the opening ``FROM = {``; this walks
+    forward to the matching close so callers get the full block body, not
+    just the header.
+    """
+    if not block:
+        return []
+    bodies = []
+    for m in _FROM_BLOCK_RE.finditer(block):
+        depth = 1
+        i = m.end()
+        n = len(block)
+        while i < n and depth > 0:
+            if block[i] == "{":
+                depth += 1
+            elif block[i] == "}":
+                depth -= 1
+            i += 1
+        if depth == 0:
+            bodies.append(block[m.end() : i - 1])
+    return bodies
+
+
+# Bare trigger names needing a has_ prefix (hoisted from validate_bare_trigger_names).
+_BARE_TRIGGERS = {
+    "political_power": "has_political_power",
+    "stability": "has_stability",
+    "war_support": "has_war_support",
+    "manpower": "has_manpower",
+}
+_BARE_TRIGGER_RE = re.compile(
+    r"^\t+(" + "|".join(_BARE_TRIGGERS.keys()) + r")\s+[<>]",
+    flags=re.MULTILINE,
+)
+
+
+def _flat_tag_pins_with_kind(block: str) -> set:
+    """Return {(keyword, tag), ...} for flat (non-nested), depth-0 tag/original_tag tokens.
+
+    Dim-aware sibling of ``_flat_tag_pins``: keeps the keyword ('tag' or
+    'original_tag') alongside each pinned tag so callers can tell a
+    ``tag = X`` lock (excludes civil-war split-offs) apart from
+    ``original_tag = X`` (admits them). Tokens nested inside OR/NOT/AND/if/
+    FROM/any_country/TAG={} subblocks are skipped because they are
+    conditional or scoped, not flat hard pins.
     """
     if not block:
         return set()
@@ -98,7 +401,7 @@ def _flat_tag_pins(block: str) -> set:
         inner = inner[1:]
     if inner.endswith("}"):
         inner = inner[:-1]
-    tags = set()
+    pins = set()
     depth = 0
     i = 0
     n = len(inner)
@@ -119,17 +422,226 @@ def _flat_tag_pins(block: str) -> set:
         if depth == 0:
             m = _TAG_TOKEN_PATTERN.match(inner, i)
             if m:
-                tags.add(m.group(2))
+                pins.add((m.group(1), m.group(2)))
                 i = m.end()
                 continue
         i += 1
-    return tags
+    return pins
+
+
+def _flat_tag_pins(block: str) -> set:
+    """Return the set of tags pinned by flat (non-nested) tag/original_tag tokens.
+
+    Tokens nested inside OR/NOT/AND/if subblocks are skipped because they are
+    conditional, not hard pins. Handles both multi-line and single-line block
+    formats.
+    """
+    return {tag for _, tag in _flat_tag_pins_with_kind(block)}
+
+
+def _is_sole_flat_pin(block: str, tag: str) -> bool:
+    """True if ``block``'s only content (after comment-stripping) is a single
+    flat ``tag = X`` / ``original_tag = X`` pin equal to ``tag``.
+
+    Mirrors the sole-pin shape validate_allowed_redundant_with_category
+    already reports, so callers can skip re-flagging it.
+    """
+    if not block:
+        return False
+    inner = block.strip()
+    if inner.startswith("{"):
+        inner = inner[1:]
+    if inner.endswith("}"):
+        inner = inner[:-1]
+    cleaned = re.sub(r"#[^\n]*", "", inner).strip()
+    pat = re.compile(r"^\s*(?:original_tag|tag)\s*=\s*" + re.escape(tag) + r"\s*$")
+    return bool(pat.match(cleaned))
+
+
+def _category_allowed_pins(categories: Dict[str, str]) -> Dict[str, set]:
+    """Return category name -> {(keyword, tag), ...} pinned by its flat,
+    depth-0 ``allowed`` block.
+
+    Categories with no ``allowed`` block are omitted; categories whose
+    ``allowed`` has no flat tag pin at all (e.g. a scripted trigger) map to
+    an empty set — both read as "no lock" to callers.
+    """
+    cat_pins: Dict[str, set] = {}
+    for cat_name, cat_code in categories.items():
+        am = re.search(r"\ballowed\s*=\s*\{", cat_code)
+        if not am:
+            continue
+        a_start = cat_code.find("{", am.start())
+        depth = 1
+        i = a_start + 1
+        while i < len(cat_code) and depth > 0:
+            if cat_code[i] == "{":
+                depth += 1
+            elif cat_code[i] == "}":
+                depth -= 1
+            i += 1
+        cat_pins[cat_name] = _flat_tag_pins_with_kind(cat_code[a_start:i])
+    return cat_pins
+
+
+def _scan_top_level(block: str):
+    """Iterate top-level tokens inside a block.
+
+    Yields (kind, payload) pairs where kind is 'tag' or 'scope' and payload
+    is the tag string. Tokens nested inside subblocks (OR/AND/NOT/if/
+    custom_trigger_tooltip/etc.) are skipped — those are conditional
+    context, not unconditional pins.
+    """
+    if not block:
+        return
+    inner = block.strip()
+    if inner.startswith("{"):
+        inner = inner[1:]
+    if inner.endswith("}"):
+        inner = inner[:-1]
+
+    depth = 0
+    i = 0
+    n = len(inner)
+    while i < n:
+        ch = inner[i]
+        if ch == "{":
+            depth += 1
+            i += 1
+            continue
+        if ch == "}":
+            depth -= 1
+            i += 1
+            continue
+        if ch == "#":
+            while i < n and inner[i] != "\n":
+                i += 1
+            continue
+        if depth == 0:
+            # An identifier-start char only counts if it begins on a
+            # word boundary (preceded by start-of-block or whitespace),
+            # otherwise we'd misread `has_cosmetic_tag = MAU` as a
+            # `tag = MAU` token.
+            if ch.isalpha() or ch == "_":
+                prev = inner[i - 1] if i > 0 else "\n"
+                if prev.isalnum() or prev == "_":
+                    i += 1
+                    continue
+                m = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*", inner[i:])
+                if m:
+                    ident = m.group(1)
+                    after = i + m.end()
+                    # `tag = X` / `original_tag = X` token
+                    if ident in ("tag", "original_tag"):
+                        tm = re.match(r"([A-Z][A-Z0-9_]{1,7})\b", inner[after:])
+                        if tm:
+                            yield ("tag", tm.group(1))
+                            i = after + tm.end()
+                            continue
+                    # `TAG = { ... }` self-scope (3-letter caps tag)
+                    if (
+                        re.match(r"^[A-Z][A-Z0-9_]{1,7}$", ident)
+                        and after < n
+                        and inner[after] == "{"
+                    ):
+                        yield ("scope", ident)
+                        # Don't consume the brace, let the outer loop dive in
+                        i = after
+                        continue
+                    # Skip past the entire identifier so we don't
+                    # re-scan its tail and falsely match nested tokens.
+                    i = after
+                    continue
+        i += 1
+
+
+def _find_category_redundant_rows(
+    factories: List["DecisionFactory"],
+    cat_pins: Dict[str, set],
+    cats_with_decs: Dict[str, List[str]],
+) -> List[str]:
+    """Pure detection: decision-level tag/original_tag re-checks already
+    covered by the parent category's single-tag lock.
+
+    Fills the gap between ``validate_redundant_tag_checks`` (decision's own
+    ``allowed`` pin vs its own ``visible``/``available``) and
+    ``validate_allowed_redundant_with_category`` (sole-content ``allowed``
+    duplicating the category pin): neither compares the *category* lock
+    against a decision's ``visible``/``available``, or against a partial
+    (multi-condition) ``allowed`` block.
+
+    Rules:
+    - Only single-tag category locks count: the category's ``allowed`` must
+      pin exactly one tag value at depth 0. A scripted-trigger ``allowed``
+      (no flat tag/original_tag token) or one pinning several different tags
+      yields no lock and is skipped.
+    - A category locked via ``original_tag = X`` only flags decision-level
+      ``original_tag = X`` re-checks. ``tag = X`` is a real narrowing (it
+      excludes civil-war split-offs the ``original_tag`` lock admits), so
+      it's left alone.
+    - A category locked via ``tag = X`` (with or without an accompanying
+      ``original_tag = X`` for the same tag) flags both ``tag = X`` and
+      ``original_tag = X`` re-checks — the category is already at least as
+      restrictive as either.
+    - ``allowed`` is skipped when its only content is the pin itself; that
+      exact shape is already reported by
+      ``validate_allowed_redundant_with_category``.
+    - Depth-0 only, via ``_flat_tag_pins_with_kind``: negations
+      (``NOT = {...}``), ``FROM``/``any_country``/``TAG = {}`` scopes are
+      auto-excluded. ``target_trigger``/``target_root_trigger`` are separate
+      factory fields and are not scanned.
+    """
+    token_to_cat: Dict[str, str] = {}
+    for cat, dec_tokens in cats_with_decs.items():
+        for tok in dec_tokens:
+            token_to_cat.setdefault(tok, cat)
+
+    results: List[str] = []
+    for d in factories:
+        cat_name = token_to_cat.get(d.token)
+        if cat_name is None:
+            continue
+        pins = cat_pins.get(cat_name)
+        if not pins:
+            continue
+        tag_values = {tg for _, tg in pins}
+        if len(tag_values) != 1:
+            continue
+        lock_tag = next(iter(tag_values))
+        keywords_used = {kw for kw, tg in pins if tg == lock_tag}
+        lock_kind = "tag" if "tag" in keywords_used else "original_tag"
+        flagged_kinds = (
+            {"tag", "original_tag"} if lock_kind == "tag" else {"original_tag"}
+        )
+
+        issues = []
+        for field_name, block in (
+            ("allowed", d.allowed),
+            ("available", d.available),
+            ("visible", d.visible),
+        ):
+            if not block:
+                continue
+            if field_name == "allowed" and _is_sole_flat_pin(block, lock_tag):
+                continue
+            hits = _flat_tag_pins_with_kind(block)
+            for kw in ("original_tag", "tag"):
+                if kw in flagged_kinds and (kw, lock_tag) in hits:
+                    issues.append(f"{field_name} re-checks {kw}")
+
+        if issues:
+            results.append(
+                f"{d.token:<55}{d.source_basename} "
+                f"(category locked to {lock_kind} = {lock_tag}: {', '.join(issues)})"
+            )
+
+    return results
 
 
 def extract_value_single_line(obj: str, s: str) -> str:
     pattern = r"\t+" + s + r" = (\S*)"
     matches = re.findall(pattern, obj)
-    return matches[0] if f"\t{s} =" in obj and matches else False
+    return matches[0] if f"\t{s} =" in obj and matches else ""
 
 
 def _top_level_field_value(raw: str, field: str):
@@ -174,27 +686,66 @@ def _top_level_field_value(raw: str, field: str):
     return None
 
 
+def _top_level_neg_pp(block: str):
+    """Return the magnitude (positive int) of an unconditional
+    ``add_political_power = -N`` at depth 0 of ``block``, or ``None``
+    if there is no such line. Conditional/nested subtractions are
+    ignored (they are gameplay outcomes, not entry costs)."""
+    if not block:
+        return None
+    inner = block.strip()
+    if inner.startswith("{"):
+        inner = inner[1:]
+    if inner.endswith("}"):
+        inner = inner[:-1]
+    depth = 0
+    i = 0
+    n = len(inner)
+    while i < n:
+        ch = inner[i]
+        if ch == "{":
+            depth += 1
+            i += 1
+            continue
+        if ch == "}":
+            depth -= 1
+            i += 1
+            continue
+        if ch == "#":
+            while i < n and inner[i] != "\n":
+                i += 1
+            continue
+        if depth == 0:
+            m = re.match(r"add_political_power\s*=\s*-(\d+)", inner[i:])
+            if m:
+                return int(m.group(1))
+        i += 1
+    return None
+
+
 def extract_value_multi_line(obj: str, s: str) -> str:
     pattern = r"(\t+)" + s + r" = (\{([^\n]*|.*?^\1)\})"
     if f"\t{s} =" not in obj:
-        return False
+        return ""
     matches = re.findall(pattern, obj, flags=re.DOTALL | re.MULTILINE)
-    return matches[0][1] if matches else False
+    return matches[0][1] if matches else ""
 
 
 class DecisionFactory:
     def __init__(self, dec: str, source_basename: str = "") -> None:
         self.source_basename = source_basename
         self.raw = dec
-        self.token = re.findall(r"^\t*(.+) = \{", dec, flags=re.MULTILINE)[0]
+        self.token = re.findall(r"^\t*(\S+)\s*=\s*\{", dec, flags=re.MULTILINE)[0]
         self.allowed = extract_value_multi_line(dec, "allowed")
         self.available = extract_value_multi_line(dec, "available")
         self.visible = extract_value_multi_line(dec, "visible")
         self.cancel_effect = extract_value_multi_line(dec, "cancel_effect")
         self.complete_effect = extract_value_multi_line(dec, "complete_effect")
         self.remove_effect = extract_value_multi_line(dec, "remove_effect")
+        self.timeout_effect = extract_value_multi_line(dec, "timeout_effect")
         self.cancel_trigger = extract_value_multi_line(dec, "cancel_trigger")
         self.cancel_if_not_visible = "cancel_if_not_visible = yes" in dec
+        self.activation = extract_value_multi_line(dec, "activation")
         self.target_root_trigger = extract_value_multi_line(dec, "target_root_trigger")
         self.target_trigger = extract_value_multi_line(dec, "target_trigger")
         self.targets = extract_value_multi_line(dec, "targets")
@@ -216,6 +767,8 @@ class DecisionFactory:
         self.cost = extract_value_single_line(dec, "cost")
         self.has_tooltip = "tooltip =" in dec
         self.has_random_list = bool(re.search(r"\brandom_list\s*=\s*\{", dec))
+        self.has_random_effect = bool(re.search(r"\brandom\s*=\s*\{", dec))
+        self.fire_only_once = "fire_only_once = yes" in dec
         self.fixed_random_seed_explicit = bool(
             re.search(r"\bfixed_random_seed\s*=\s*(yes|no)\b", dec)
         )
@@ -280,9 +833,6 @@ def parse_all_decisions(
 
     def _parse():
         filepath = str(Path(mod_path) / "common" / "decisions")
-        _decisions_pattern = re.compile(
-            r"^\t[^\t#]+ = \{.*?^\t\}", flags=re.MULTILINE | re.DOTALL
-        )
         decisions = []
         paths = {}
 
@@ -292,8 +842,14 @@ def parse_all_decisions(
             text_file = FileOpener.open_text_file(
                 filename, lowercase=lowercase, strip_comments_flag=True
             )
-            matches = _decisions_pattern.findall(text_file)
-            for match in matches:
+            # Neutralize quoted strings before block-splitting: a literal `}`
+            # inside a `name = "... } ..."` value would otherwise close the
+            # block early and drop every field after it. blank_quoted_strings
+            # preserves length/offsets, so match spans still slice the real
+            # text (quoted fields intact) for downstream extraction.
+            blanked = blank_quoted_strings(text_file)
+            for m in _DECISIONS_BLOCK_RE.finditer(blanked):
+                match = text_file[m.start() : m.end()]
                 decisions.append(match)
                 paths[match] = os.path.basename(filename)
 
@@ -329,11 +885,10 @@ def parse_all_decision_names(
 
     def _parse():
         decisions, dec_paths = parse_all_decisions(mod_path, lowercase)
-        _names_pattern = re.compile(r"^\t(.+) =", flags=re.MULTILINE)
         names = []
         name_paths = {}
         for d in decisions:
-            name = _names_pattern.findall(d)[0]
+            name = _DECISION_TOKEN_LINE_RE.findall(d)[0]
             names.append(name)
             name_paths[name] = dec_paths[d]
         return names, name_paths
@@ -349,18 +904,16 @@ def parse_decision_categories(
     def _parse():
         filepath = str(Path(mod_path) / "common" / "decisions" / "categories")
         categories = {}
-        _cat_pattern = re.compile(r"^\w* = \{.*?^\}", flags=re.DOTALL | re.MULTILINE)
-        _name_pattern = re.compile(r"^(.*) = \{")
 
         for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
             text_file = FileOpener.open_text_file(
                 filename, lowercase=lowercase, strip_comments_flag=True
             )
-            matches = re.findall(_cat_pattern, text_file)
+            matches = _CATEGORY_BLOCK_RE.findall(text_file)
             for match in matches:
                 if not visible_when_empty and "visible_when_empty = yes" in match:
                     continue
-                name = re.findall(_name_pattern, match)
+                name = _CATEGORY_NAME_RE.findall(match)
                 if name:
                     categories[name[0]] = match
 
@@ -382,7 +935,6 @@ def parse_categories_with_decisions(
         result = {cat: [] for cat in category_names}
 
         filepath = str(Path(mod_path) / "common" / "decisions")
-        _dec_pattern = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
         for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
             if "categories" in filename:
@@ -397,7 +949,7 @@ def parse_categories_with_decisions(
                         pattern, text_file, flags=re.DOTALL | re.MULTILINE
                     )
                     for match in matches:
-                        dec_names = _dec_pattern.findall(match)
+                        dec_names = _CATEGORY_DECISION_TOKEN_RE.findall(match)
                         result[category].extend(dec_names)
 
         return result
@@ -475,11 +1027,40 @@ class Validator(BaseValidator):
     TITLE = "DECISION VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, fix: bool = False, **kwargs):
+    def __init__(self, *args, fix: bool = False, missing_icons: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
         self.fix = fix
+        self.missing_icons = missing_icons
+        self._activation_removal_cache = None
         if self.no_cache:
             _set_cache_enabled(False)
+
+    def _get_activation_removal_scan(self) -> Tuple[set, set, set]:
+        """Scan shipped content for decision activations and external removals."""
+        if self._activation_removal_cache is not None:
+            return self._activation_removal_cache
+        all_files = [
+            filename
+            for pattern in _DECISION_REFERENCE_SOURCE_PATTERNS
+            for filename in glob.iglob(
+                os.path.join(self.mod_path, pattern), recursive=True
+            )
+        ]
+        activated_decisions: set = set()
+        activated_missions: set = set()
+        externally_removed: set = set()
+        for dec_set, mis_set, rem_set in self._pool_map(
+            _scan_activations_and_removals, all_files, chunksize=30
+        ):
+            activated_decisions |= dec_set
+            activated_missions |= mis_set
+            externally_removed |= rem_set
+        self._activation_removal_cache = (
+            activated_decisions,
+            activated_missions,
+            externally_removed,
+        )
+        return self._activation_removal_cache
 
     def _apply_ai_factor_fixes(self, fixes: list):
         """Insert a default ai_will_do = { base = 0 } block into decisions missing one."""
@@ -549,40 +1130,21 @@ class Validator(BaseValidator):
             "Checking for unused decisions (always=no but never activated)..."
         )
 
-        factories = parse_all_decision_factories(self.mod_path)
-        manual_decisions: set = set()
-        manual_missions: set = set()
-
-        for d in factories:
-            if d.allowed and "always = no" in d.allowed:
-                if d.mission_subtype:
-                    manual_missions.add(d.token)
-                else:
-                    manual_decisions.add(d.token)
+        manual = {
+            d.token
+            for d in parse_all_decision_factories(self.mod_path)
+            if d.allowed and "always = no" in d.allowed
+        }
 
         # The worker extracts `decision = X` only from inside an
         # `activate_targeted_decision = { ... }` block; the bare keyword
         # `decision` appears in unrelated places (on_political_decision hooks etc.)
         # and matching them would hide genuinely unused decisions.
-        all_files = list(
-            glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
-        )
-        activated_decisions: set = set()
-        activated_missions: set = set()
-        for dec_set, mis_set in self._pool_map(
-            _scan_activations_in_file, all_files, chunksize=30
-        ):
-            activated_decisions.update(dec_set)
-            activated_missions.update(mis_set)
+        activated_decisions, activated_missions, _ = self._get_activation_removal_scan()
 
-        results = sorted(
-            (manual_decisions - activated_decisions)
-            - set(DYNAMICALLY_ACTIVATED_DECISIONS)
-        )
-        results += sorted(
-            (manual_missions - activated_missions)
-            - set(DYNAMICALLY_ACTIVATED_DECISIONS)
-        )
+        # A mission with a target is activated by activate_targeted_decision, so
+        # neither set alone covers every activation mechanism.
+        results = _unactivated(manual, activated_decisions | activated_missions)
         self._report(
             results,
             "✓ No unused decisions",
@@ -759,7 +1321,6 @@ class Validator(BaseValidator):
         factories = parse_all_decision_factories(self.mod_path)
         results = []
 
-        from_pattern = re.compile(r"\bFROM\s*=\s*\{")
         for d in factories:
             if not (d.targets or d.target_array):
                 continue
@@ -767,9 +1328,9 @@ class Validator(BaseValidator):
                 continue
             # Only flag if there's at least one FROM = { ... } block in visible or available
             has_from_filter = False
-            if d.visible and from_pattern.search(d.visible):
+            if d.visible and _FROM_BLOCK_RE.search(d.visible):
                 has_from_filter = True
-            if d.available and from_pattern.search(d.available):
+            if d.available and _FROM_BLOCK_RE.search(d.available):
                 has_from_filter = True
             if has_from_filter:
                 results.append(f"{d.token:<55}{d.source_basename}")
@@ -778,6 +1339,118 @@ class Validator(BaseValidator):
             results,
             "✓ No decisions with FROM checks needing target_trigger",
             "Decisions with FROM checks in visible/available but no target_trigger (move FROM into target_trigger for perf):",
+        )
+
+    def validate_root_only_visible_on_targeted(self):
+        """Flag targeted decisions whose visible block is entirely ROOT-only.
+
+        A targeted decision (targets/target_array/target_trigger/
+        target_root_trigger present) evaluates visible every tick, once per
+        surviving target with FROM bound. If visible never references FROM
+        and there's no target_root_trigger already carrying the ROOT-only
+        checks, the whole block is redundant per-target work for something
+        that only needs to run once per ROOT per day. Rename it to
+        target_root_trigger.
+
+        Exempts:
+        - ``allowed = { always = no }`` (decision is script-activated, never
+          auto-visible)
+        - ``state_target = yes`` / ``on_map_mode = map_only`` (player-driven
+          map click, not a daily per-target loop)
+        """
+        self._log_section(
+            "Checking targeted decisions for a ROOT-only visible block (performance)..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            if not _is_targeted_decision(d):
+                continue
+            if d.target_root_trigger:
+                continue
+            if not d.visible:
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            if d.state_target or d.map_only:
+                continue
+            if _FROM_WORD_RE.search(d.visible):
+                continue
+            results.append(
+                f"{d.token:<55}{d.source_basename} - visible is ROOT-only and "
+                f"re-evaluated every tick per target; rename to target_root_trigger"
+            )
+
+        self._report(
+            results,
+            "✓ No targeted decisions with a ROOT-only visible block",
+            "Targeted decisions with a ROOT-only visible and no target_root_trigger (rename visible to target_root_trigger, evaluated daily instead of every tick per target):",
+        )
+
+    def validate_from_checks_in_visible(self):
+        """Flag targeted decisions with FROM checks in visible when a
+        target_trigger already exists.
+
+        visible is evaluated every tick with FROM bound to each surviving
+        target; target_trigger runs the same predicate once per (ROOT, FROM)
+        pair per day. Moving a FROM check from visible into an existing
+        target_trigger is safe with no player-facing change: a failing
+        visible hides the entry and renders no tooltip, exactly like a
+        failing target_trigger.
+
+        Deliberately out of scope: FROM checks in ``available`` are NOT
+        flagged here and must stay put. ``available`` is what renders the
+        red blocked-reason tooltip; moving those into target_trigger would
+        silently drop targets from the list instead of explaining why
+        they're blocked. ``validate_targets_no_trigger`` already covers the
+        case where target_trigger is genuinely missing.
+
+        Exempts:
+        - ``allowed = { always = no }``
+        - ``state_target = yes`` / ``on_map_mode = map_only``
+        """
+        self._log_section(
+            "Checking targeted decisions for FROM checks in visible duplicating target_trigger (performance)..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            if not d.target_trigger:
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            if d.state_target or d.map_only:
+                continue
+            if not d.visible:
+                continue
+
+            visible_from_bodies = _extract_from_blocks(d.visible)
+            if not visible_from_bodies:
+                continue
+
+            normalized_visible = {self._normalize_block(b) for b in visible_from_bodies}
+            normalized_trigger = {
+                self._normalize_block(b) for b in _extract_from_blocks(d.target_trigger)
+            }
+
+            if normalized_visible <= normalized_trigger:
+                advice = (
+                    "identical to the FROM check already in target_trigger; "
+                    "delete it from visible instead of moving it"
+                )
+            else:
+                advice = "move the FROM check into target_trigger (daily) instead of visible (every tick)"
+
+            results.append(f"{d.token:<55}{d.source_basename} - {advice}")
+
+        self._report(
+            results,
+            "✓ No targeted decisions with FROM checks in visible duplicating target_trigger",
+            "Targeted decisions with FROM checks in visible while target_trigger exists:",
         )
 
     def validate_from_without_targets(self):
@@ -803,7 +1476,6 @@ class Validator(BaseValidator):
         factories = parse_all_decision_factories(self.mod_path)
         results = []
 
-        from_pattern = re.compile(r"\bFROM\b")
         for d in factories:
             if d.targets or d.target_array:
                 continue
@@ -813,11 +1485,11 @@ class Validator(BaseValidator):
                 continue
 
             offending = []
-            if d.visible and from_pattern.search(d.visible):
+            if d.visible and _FROM_WORD_RE.search(d.visible):
                 offending.append("visible")
-            if d.available and from_pattern.search(d.available):
+            if d.available and _FROM_WORD_RE.search(d.available):
                 offending.append("available")
-            if d.complete_effect and from_pattern.search(d.complete_effect):
+            if d.complete_effect and _FROM_WORD_RE.search(d.complete_effect):
                 offending.append("complete_effect")
 
             if offending:
@@ -862,34 +1534,39 @@ class Validator(BaseValidator):
             "Decisions in categories without allowed check that also lack their own allowed trigger:",
         )
 
-    def validate_random_list_seed(self):
-        """Flag decisions using ``random_list`` without an explicit ``fixed_random_seed`` setting.
+    def validate_random_seed(self):
+        """Flag repeatable decisions rolling randomness without an explicit ``fixed_random_seed``.
 
         HOI4 caches RNG outcomes by default within a single tick/save state, so
-        a ``random_list`` inside a decision will deterministically pick the same
-        branch every time it's evaluated unless ``fixed_random_seed = no`` is
-        set on the decision. This defeats the point of the random_list and
-        leads to confusingly stuck behavior.
+        a ``random_list`` or ``random = { chance = N ... }`` inside a decision
+        will deterministically pick the same branch every time it's evaluated
+        unless ``fixed_random_seed = no`` is set on the decision. This defeats
+        the point of the roll and leads to confusingly stuck behavior.
+
+        ``fire_only_once = yes`` decisions are exempt: they resolve their roll
+        once, so a repeating seed can never surface.
 
         We only flag decisions where ``fixed_random_seed`` is omitted entirely;
         an explicit ``fixed_random_seed = yes`` is treated as a deliberate
         choice (e.g. reproducible AI rolls) and left alone.
         """
         self._log_section(
-            "Checking decisions with random_list missing fixed_random_seed = no..."
+            "Checking repeatable decisions with random rolls missing fixed_random_seed = no..."
         )
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
 
         for d in factories:
-            if d.has_random_list and not d.fixed_random_seed_explicit:
+            if d.fire_only_once or d.fixed_random_seed_explicit:
+                continue
+            if d.has_random_list or d.has_random_effect:
                 results.append(f"{d.token:<55}{d.source_basename}")
 
         self._report(
             results,
-            "✓ No random_list decisions missing an explicit fixed_random_seed setting",
-            "Decisions with random_list but no explicit 'fixed_random_seed' (RNG will deterministically repeat — set 'fixed_random_seed = no' to randomise, or 'fixed_random_seed = yes' to acknowledge intentional determinism):",
+            "✓ No repeatable random decisions missing an explicit fixed_random_seed setting",
+            "Repeatable decisions with random_list or random but no explicit 'fixed_random_seed' (RNG will deterministically repeat — set 'fixed_random_seed = no' to randomise, or 'fixed_random_seed = yes' to acknowledge intentional determinism):",
         )
 
     def validate_redundant_tag_checks(self):
@@ -915,76 +1592,6 @@ class Validator(BaseValidator):
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
-
-        def _scan_top_level(block: str):
-            """Iterate top-level tokens inside a block.
-
-            Yields (kind, payload) pairs where kind is 'tag' or 'scope' and
-            payload is the tag string. Tokens nested inside subblocks
-            (OR/AND/NOT/if/custom_trigger_tooltip/etc.) are skipped — those are
-            conditional context, not unconditional pins.
-            """
-            if not block:
-                return
-            inner = block.strip()
-            if inner.startswith("{"):
-                inner = inner[1:]
-            if inner.endswith("}"):
-                inner = inner[:-1]
-
-            depth = 0
-            i = 0
-            n = len(inner)
-            while i < n:
-                ch = inner[i]
-                if ch == "{":
-                    depth += 1
-                    i += 1
-                    continue
-                if ch == "}":
-                    depth -= 1
-                    i += 1
-                    continue
-                if ch == "#":
-                    while i < n and inner[i] != "\n":
-                        i += 1
-                    continue
-                if depth == 0:
-                    # An identifier-start char only counts if it begins on a
-                    # word boundary (preceded by start-of-block or whitespace),
-                    # otherwise we'd misread `has_cosmetic_tag = MAU` as a
-                    # `tag = MAU` token.
-                    if ch.isalpha() or ch == "_":
-                        prev = inner[i - 1] if i > 0 else "\n"
-                        if prev.isalnum() or prev == "_":
-                            i += 1
-                            continue
-                        m = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*", inner[i:])
-                        if m:
-                            ident = m.group(1)
-                            after = i + m.end()
-                            # `tag = X` / `original_tag = X` token
-                            if ident in ("tag", "original_tag"):
-                                tm = re.match(r"([A-Z][A-Z0-9_]{1,7})\b", inner[after:])
-                                if tm:
-                                    yield ("tag", tm.group(1))
-                                    i = after + tm.end()
-                                    continue
-                            # `TAG = { ... }` self-scope (3-letter caps tag)
-                            if (
-                                re.match(r"^[A-Z][A-Z0-9_]{1,7}$", ident)
-                                and after < n
-                                and inner[after] == "{"
-                            ):
-                                yield ("scope", ident)
-                                # Don't consume the brace, let the outer loop dive in
-                                i = after
-                                continue
-                            # Skip past the entire identifier so we don't
-                            # re-scan its tail and falsely match nested tokens.
-                            i = after
-                            continue
-                i += 1
 
         def _has_top_level_tag_check(block: str, tag: str) -> bool:
             for kind, payload in _scan_top_level(block):
@@ -1073,23 +1680,7 @@ class Validator(BaseValidator):
         factories = parse_all_decision_factories(self.mod_path)
         categories = parse_decision_categories(self.mod_path)
         cats_with_decs = parse_categories_with_decisions(self.mod_path)
-
-        # Build category -> pinned tags
-        cat_pins = {}
-        for cat_name, cat_code in categories.items():
-            am = re.search(r"\ballowed\s*=\s*\{", cat_code)
-            if not am:
-                continue
-            a_start = cat_code.find("{", am.start())
-            depth = 1
-            i = a_start + 1
-            while i < len(cat_code) and depth > 0:
-                if cat_code[i] == "{":
-                    depth += 1
-                elif cat_code[i] == "}":
-                    depth -= 1
-                i += 1
-            cat_pins[cat_name] = _flat_tag_pins(cat_code[a_start:i])
+        cat_pins = _category_allowed_pins(categories)
 
         results = []
         for d in factories:
@@ -1100,16 +1691,7 @@ class Validator(BaseValidator):
                 continue
             pinned = next(iter(dec_pinned))
             # Verify allowed has ONLY this pin (no extra conditions)
-            inner = d.allowed.strip()
-            if inner.startswith("{"):
-                inner = inner[1:]
-            if inner.endswith("}"):
-                inner = inner[:-1]
-            cleaned = re.sub(r"#[^\n]*", "", inner).strip()
-            single_pin_pat = re.compile(
-                r"^\s*(?:original_tag|tag)\s*=\s*" + re.escape(pinned) + r"\s*$"
-            )
-            if not single_pin_pat.match(cleaned):
+            if not _is_sole_flat_pin(d.allowed, pinned):
                 continue
 
             # Find parent category
@@ -1120,13 +1702,37 @@ class Validator(BaseValidator):
                     break
             if cat_name not in cat_pins:
                 continue
-            if pinned in cat_pins[cat_name]:
+            cat_tag_values = {tg for _, tg in cat_pins[cat_name]}
+            if pinned in cat_tag_values:
                 results.append(f"{d.token:<55}{d.source_basename} ({pinned})")
 
         self._report(
             results,
             "✓ No decisions with allowed redundant with parent category",
             "Decisions with `allowed` redundant with parent category (remove the decision's allowed):",
+        )
+
+    def validate_tag_redundant_with_category(self):
+        """Flag decision-level tag/original_tag re-checks already covered by
+        the parent category's single-tag lock.
+
+        See ``_find_category_redundant_rows`` for the full rule set.
+        """
+        self._log_section(
+            "Checking decisions for tag re-checks redundant with category lock..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        categories = parse_decision_categories(self.mod_path)
+        cats_with_decs = parse_categories_with_decisions(self.mod_path)
+        cat_pins = _category_allowed_pins(categories)
+
+        results = _find_category_redundant_rows(factories, cat_pins, cats_with_decs)
+
+        self._report(
+            results,
+            "✓ No decisions with tag checks redundant with category lock",
+            "Decisions with tag/original_tag re-checks redundant with the parent category's lock (remove the re-check):",
         )
 
     def validate_pp_charge_in_effect(self):
@@ -1163,42 +1769,6 @@ class Validator(BaseValidator):
         factories = parse_all_decision_factories(self.mod_path)
         hidden = []
         double = []
-
-        def _top_level_neg_pp(block: str):
-            """Return the magnitude (positive int) of an unconditional
-            ``add_political_power = -N`` at depth 0 of ``block``, or ``None``
-            if there is no such line. Conditional/nested subtractions are
-            ignored (they are gameplay outcomes, not entry costs)."""
-            if not block:
-                return None
-            inner = block.strip()
-            if inner.startswith("{"):
-                inner = inner[1:]
-            if inner.endswith("}"):
-                inner = inner[:-1]
-            depth = 0
-            i = 0
-            n = len(inner)
-            while i < n:
-                ch = inner[i]
-                if ch == "{":
-                    depth += 1
-                    i += 1
-                    continue
-                if ch == "}":
-                    depth -= 1
-                    i += 1
-                    continue
-                if ch == "#":
-                    while i < n and inner[i] != "\n":
-                        i += 1
-                    continue
-                if depth == 0:
-                    m = re.match(r"add_political_power\s*=\s*-(\d+)", inner[i:])
-                    if m:
-                        return int(m.group(1))
-                i += 1
-            return None
 
         for d in factories:
             if d.custom_cost_trigger:
@@ -1350,18 +1920,6 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking for bare trigger names missing has_ prefix...")
 
-        BARE_TRIGGERS = {
-            "political_power": "has_political_power",
-            "stability": "has_stability",
-            "war_support": "has_war_support",
-            "manpower": "has_manpower",
-        }
-
-        pattern = re.compile(
-            r"^\t+(" + "|".join(BARE_TRIGGERS.keys()) + r")\s+[<>]",
-            flags=re.MULTILINE,
-        )
-
         results = []
         dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
         for filename in sorted(glob.iglob(dec_filepath + "/**/*.txt", recursive=True)):
@@ -1372,9 +1930,9 @@ class Validator(BaseValidator):
             )
             # Remove check_variable blocks where bare names are valid
             cleaned = re.sub(r"check_variable\s*=\s*\{[^}]*\}", "", text_file)
-            for match in pattern.finditer(cleaned):
+            for match in _BARE_TRIGGER_RE.finditer(cleaned):
                 bare = match.group(1)
-                correct = BARE_TRIGGERS[bare]
+                correct = _BARE_TRIGGERS[bare]
                 line_num = cleaned[: match.start()].count("\n") + 1
                 basename = os.path.basename(filename)
                 results.append(
@@ -1393,6 +1951,7 @@ class Validator(BaseValidator):
 
         factories = parse_all_decision_factories(self.mod_path, lowercase=False)
         loc_keys = self._load_localisation_keys()
+        scripted_loc_keys = _load_scripted_localisation_keys(self.mod_path)
         self.log(
             f"  Found {len(factories)} decisions, {len(loc_keys)} localisation keys"
         )
@@ -1412,8 +1971,13 @@ class Validator(BaseValidator):
                 missing.append(name_key)
             if dec.desc_override and dec.desc_override not in loc_keys:
                 missing.append(dec.desc_override)
-            if dec.custom_cost_text and dec.custom_cost_text not in loc_keys:
-                missing.append(dec.custom_cost_text)
+            if dec.custom_cost_text:
+                scripted_loc = _BRACKETED_LOC_RE.match(dec.custom_cost_text)
+                if scripted_loc:
+                    if scripted_loc.group(1) not in scripted_loc_keys:
+                        missing.append(dec.custom_cost_text)
+                elif dec.custom_cost_text not in loc_keys:
+                    missing.append(dec.custom_cost_text)
             for key in missing:
                 results.append(f"{dec_id} - {filename}: missing loc key '{key}'")
 
@@ -1425,11 +1989,73 @@ class Validator(BaseValidator):
             category="missing-decision-localisation",
         )
 
+    def validate_missing_log(self):
+        """Flag decision effect blocks that carry no log line.
+
+        AGENTS.md / decision-reference.md require the log in every block the
+        engine runs as a decision's effects (complete_effect, remove_effect,
+        timeout_effect, cancel_effect):
+        `log = "[GetDateText]: [Root.GetName]: Decision <ID>"`. An effect block
+        with nothing in it is dead script, so it is reported too.
+        """
+        self._log_section("Checking decision effect blocks for a missing log...")
+
+        results = []
+        for dec in parse_all_decision_factories(self.mod_path):
+            for block_name in EFFECT_BLOCKS:
+                block = getattr(dec, block_name)
+                if not block or _LOG_STRING_RE.search(block):
+                    continue
+                results.append(
+                    f"{dec.token} - {dec.source_basename}: {block_name} has no log line"
+                )
+
+        self._report(
+            results,
+            "✓ Every decision effect block logs",
+            "Decision effect blocks with no log line:",
+            Severity.ERROR,
+            category="missing-decision-log",
+        )
+
+    def validate_log_not_first(self):
+        """Flag effect blocks whose log is not the block's first statement.
+
+        The log goes at the top so the game log reads in firing order. Only a
+        log at the block's own level counts: one nested inside an `if` /
+        `hidden_effect` records which branch ran and belongs where it sits.
+        """
+        self._log_section("Checking decision effect blocks for a log placed late...")
+
+        results = []
+        for dec in parse_all_decision_factories(self.mod_path):
+            for block_name in EFFECT_BLOCKS:
+                block = getattr(dec, block_name)
+                if not block:
+                    continue
+                statements = _block_level_statements(block)
+                if "log" not in statements or statements[0] == "log":
+                    continue
+                results.append(
+                    f"{dec.token} - {dec.source_basename}: {block_name} logs "
+                    f"after {statements[0]}, move the log to the top of the block"
+                )
+
+        self._report(
+            results,
+            "✓ Every decision effect block logs first",
+            "Decision effect blocks whose log is not the first statement:",
+            Severity.WARNING,
+            category="decision-log-not-first",
+        )
+
     def validate_visible_in_missions(self):
         """Flag missions that have a visible block.
 
         The HOI4 engine ignores visible on mission-type decisions entirely.
-        Use activation = { ... } to control when a mission appears.
+        For script-activated missions (activation = { always = no }) the fix
+        is to delete the dead block — moving the condition into activation
+        would make the mission double-activate.
         """
         self._log_section(
             "Checking missions with visible block (does nothing for missions)..."
@@ -1440,14 +2066,21 @@ class Validator(BaseValidator):
 
         for d in factories:
             if d.mission_subtype and d.visible:
-                results.append(
-                    f"{d.token:<55}{d.source_basename} - visible does nothing on missions; use activation"
+                script_activated = (
+                    d.activation
+                    and "always = no" in d.activation
+                    and not d.cancel_if_not_visible
                 )
+                if script_activated:
+                    advice = "delete the dead visible block (mission is script-activated; do NOT move it to activation)"
+                else:
+                    advice = "delete the dead visible block, or move the condition to activation if it should gate appearance"
+                results.append(f"{d.token:<55}{d.source_basename} - {advice}")
 
         self._report(
             results,
             "✓ No missions with useless visible block",
-            "Missions with visible block (does nothing — use activation instead):",
+            "Missions with visible block (engine ignores it on missions):",
         )
 
     def validate_war_with_targeted(self):
@@ -1549,35 +2182,62 @@ class Validator(BaseValidator):
         )
 
     def validate_custom_cost_ai_hint(self):
-        """Flag decisions with custom_cost_trigger involving PP but no ai_hint_pp_cost.
+        """Flag decisions that spend political power but carry no ai_hint_pp_cost.
 
-        A custom cost replaces the regular cost field, so the AI has no idea
-        it needs to save up political power. ai_hint_pp_cost tells the AI
-        how much PP to reserve before attempting the decision.
+        The AI only reserves PP for a decision when it can see the price. It
+        reads the ``cost`` field, and nothing else — a custom cost replaces
+        that field, and an ``add_political_power = -N`` buried in an effect is
+        invisible to it. ``ai_hint_pp_cost`` is how either shape gets declared,
+        and without it the AI evaluates a free decision it cannot actually
+        afford, ranking it against genuinely free ones.
+
+        Two shapes are reported:
+
+        1. ``custom_cost_trigger`` gating on political power.
+        2. An unconditional ``add_political_power = -N`` at the top level of
+           ``complete_effect``/``remove_effect``.
+
+        Nested charges inside ``if``/``random_list``/scope changes are gameplay
+        outcomes rather than prices, so they are left alone. Skipped when the
+        AI never takes the decision (``base = 0`` with no ``add``), and for a
+        non-selectable mission's ``remove_effect``, where the PP change is a
+        timeout outcome.
         """
-        self._log_section(
-            "Checking decisions with custom PP cost but no ai_hint_pp_cost..."
-        )
+        self._log_section("Checking decisions that spend PP for ai_hint_pp_cost...")
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
 
         for d in factories:
-            if not d.custom_cost_trigger:
-                continue
             if d.ai_hint_pp_cost:
                 continue
             if d.ai_factor and "base = 0" in d.ai_factor and "add" not in d.ai_factor:
                 continue
-            if "political_power" in d.custom_cost_trigger:
+
+            if d.custom_cost_trigger and "political_power" in d.custom_cost_trigger:
                 results.append(
                     f"{d.token:<55}{d.source_basename} - custom_cost_trigger checks political_power but no ai_hint_pp_cost"
                 )
+                continue
+
+            for block_name, block in (
+                ("complete_effect", d.complete_effect),
+                ("remove_effect", d.remove_effect),
+            ):
+                if block_name == "remove_effect" and d.mission_subtype:
+                    continue
+                pp = _top_level_neg_pp(block)
+                if pp is None:
+                    continue
+                results.append(
+                    f"{d.token:<55}{d.source_basename} - {block_name} spends {pp} PP but no ai_hint_pp_cost"
+                )
+                break
 
         self._report(
             results,
-            "✓ No custom PP cost decisions missing ai_hint_pp_cost",
-            "Decisions with custom PP cost but no ai_hint_pp_cost (AI won't save up PP):",
+            "✓ No PP-spending decisions missing ai_hint_pp_cost",
+            "Decisions spending political power with no ai_hint_pp_cost (AI won't reserve PP):",
             severity=Severity.WARNING,
         )
 
@@ -1674,15 +2334,7 @@ class Validator(BaseValidator):
 
         factories = parse_all_decision_factories(self.mod_path)
 
-        externally_removed: set = set()
-        for found in self._pool_map(
-            _scan_external_removals,
-            list(
-                glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
-            ),
-            chunksize=30,
-        ):
-            externally_removed |= found
+        _, _, externally_removed = self._get_activation_removal_scan()
 
         results = []
 
@@ -1738,6 +2390,53 @@ class Validator(BaseValidator):
             "Decisions with targets_dynamic/target_non_existing but no targets (meaningless — add targets or remove):",
         )
 
+    def validate_missing_icons(self):
+        """Flag decisions/categories whose icon or picture sprite is undefined.
+
+        A decision `icon = X` renders X verbatim when X is already a full sprite
+        name and `GFX_decision_X` otherwise; a category uses
+        `GFX_decision_category_X`, and a category `picture` is always the full
+        name. When none of those exist in any interface/*.gfx (mod or vanilla)
+        the decision draws a missing-texture box.
+        """
+        self._log_section("Checking for decisions with missing icons...")
+
+        # Built sequentially (no pool_map): a sub-second scan that can't be left
+        # empty by a 'spawn' pool worker that fails to start. An empty index
+        # would otherwise flag every icon as missing.
+        sprites = build_sprite_index(self.mod_path, gfx_only=False)
+        if len(sprites) < 1000:
+            self.log(
+                f"  Only {len(sprites)} GFX sprites loaded — sprite definitions "
+                "did not load; skipping the icon check",
+                "warning",
+            )
+            return
+
+        files = self._collect_files(["common/decisions/**/*.txt"], ignore_staged=True)
+        ref_lists = self._pool_map(
+            _extract_decision_icons, [(f, self.mod_path) for f in files]
+        )
+
+        results = []
+        checked = 0
+        for filepath, refs in zip(files, ref_lists):
+            for owner, kind, value, line in refs:
+                checked += 1
+                msg = _missing_sprite_message(kind, owner, value, sprites)
+                if not msg:
+                    continue
+                results.append((msg, os.path.relpath(filepath, self.mod_path), line))
+
+        self.log(f"  Checked {checked} decision icon/picture references")
+        self._report(
+            results,
+            "✓ All decision icons and pictures are defined",
+            "Decisions with missing icons (sprite not defined in interface/*.gfx):",
+            Severity.WARNING,
+            category="missing-decision-icon",
+        )
+
     def run_validations(self):
         if self.staged_only:
             # Decision checks parse all 200+ decision files even for structural
@@ -1756,15 +2455,20 @@ class Validator(BaseValidator):
         self.validate_custom_cost_trigger()
         self.validate_targeted_without_target()
         self.validate_targets_no_trigger()
+        self.validate_root_only_visible_on_targeted()
+        self.validate_from_checks_in_visible()
         self.validate_from_without_targets()
         self.validate_without_allowed_check()
-        self.validate_random_list_seed()
+        self.validate_random_seed()
         self.validate_redundant_tag_checks()
         self.validate_allowed_redundant_with_category()
+        self.validate_tag_redundant_with_category()
         self.validate_pp_charge_in_effect()
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
         self.validate_missing_localisation()
+        self.validate_missing_log()
+        self.validate_log_not_first()
         self.validate_visible_in_missions()
         self.validate_war_with_targeted()
         self.validate_missing_war_hint()
@@ -1775,12 +2479,25 @@ class Validator(BaseValidator):
         self.validate_orphaned_remove_effect()
         self.validate_orphaned_target_modifiers()
 
+        if self.missing_icons:
+            self.validate_missing_icons()
+        else:
+            self._log_section(
+                "Skipping missing icon check (pass --missing-icons to enable)"
+            )
+
 
 def _add_extra_args(parser):
     parser.add_argument(
         "--fix",
         action="store_true",
         help="Auto-fix decisions: insert 'ai_will_do = { base = 0 }' for missing AI factors, and move identical available blocks into visible",
+    )
+    parser.add_argument(
+        "--missing-icons",
+        action="store_true",
+        dest="missing_icons",
+        help="Flag decisions and decision categories whose icon/picture sprite is undefined in interface/*.gfx",
     )
 
 
