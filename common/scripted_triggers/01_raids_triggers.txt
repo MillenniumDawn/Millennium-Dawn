@@ -17,10 +17,11 @@ raid_ai_target_relevant = {
 # Drone raid availability — wartime/wargoal/retaliation/PP>300
 # Used by drone raids that require active hostility (airfield, rocket site, swarm)
 drone_raid_available_hostile = {
+	set_temp_variable = { cost = 300 }
 	raid_ai_target_relevant = yes
 	raid_war_or_doctrine_bypass = yes
 	OR = {
-		raid_can_launch = { COST = 300 }
+		raid_can_launch = yes
 		has_wargoal_against = FROM
 	}
 	FROM = {
@@ -33,9 +34,10 @@ drone_raid_available_hostile = {
 # Drone/air raid availability — grey-zone ops (PP>99 or wartime)
 # Used by drone/ai raids against civilian infrastructure (power grid, resources)
 raid_available_grey_zone = {
+	set_temp_variable = { cost = 99 }
 	raid_ai_target_relevant = yes
 	raid_war_or_doctrine_bypass = yes
-	raid_can_launch = { COST = 99 }
+	raid_can_launch = yes
 	FROM = {
 		NOT = { is_subject_of = ROOT }
 		NOT = { has_non_aggression_pact_with = ROOT }
@@ -207,9 +209,9 @@ raid_war_or_doctrine_bypass = {
 }
 
 # Raid PP check — discounted by raid_cost_factor (ISR doctrine -0.25 → 25% off)
-# Single parameterized trigger: raid_can_launch = { COST = 99 } etc.
+# Caller must set cost first: set_temp_variable = { cost = 99 } then raid_can_launch = yes
 raid_can_launch = {
-	set_temp_variable = { raid_required_pp = { value = $COST$  multiply = { value = 1  add = modifier@raid_cost_factor } } }
+	set_temp_variable = { raid_required_pp = { value = cost  multiply = { value = 1  add = modifier@raid_cost_factor } } }
 	OR = {
 		has_war_with = FROM
 		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
