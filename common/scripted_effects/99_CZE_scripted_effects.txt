@@ -3405,33 +3405,28 @@ CZE_skoda_initialize_export_targets = {
 }
 
 CZE_skoda_update_export_demand = {
-	meta_effect = {
-		text = {
-			random_list = {
-				70 = {
-					set_temp_variable_to_random = {
-						var = CZE_skoda_superb_demand_change
-						min = 0.4
-						max = 1
-					}
-					add_to_variable = { CZE_skoda_superb_[TAG]_demand = CZE_skoda_superb_demand_change }
-					clamp_variable = { var = CZE_skoda_superb_[TAG]_demand max = 100 }
+	var:CZE_skoda_loop_target_tag = {
+		random_list = {
+			70 = {
+				set_temp_variable_to_random = {
+					var = CZE_skoda_superb_demand_change
+					min = 0.4
+					max = 1
 				}
-				20 = {
-					set_temp_variable_to_random = {
-						var = CZE_skoda_superb_demand_change
-						min = -0.6
-						max = -0.1
-					}
-					add_to_variable = { CZE_skoda_superb_[TAG]_demand = CZE_skoda_superb_demand_change }
-					clamp_variable = { var = CZE_skoda_superb_[TAG]_demand min = 0 }
-				}
-				10 = {
-					# NOTHING
-				}
+				add_to_variable = { CZE_skoda_superb_demand = CZE_skoda_superb_demand_change }
+				clamp_variable = { var = CZE_skoda_superb_demand max = 100 }
 			}
+			20 = {
+				set_temp_variable_to_random = {
+					var = CZE_skoda_superb_demand_change
+					min = -0.6
+					max = -0.1
+				}
+				add_to_variable = { CZE_skoda_superb_demand = CZE_skoda_superb_demand_change }
+				clamp_variable = { var = CZE_skoda_superb_demand min = 0 }
+			}
+			10 = { }
 		}
-		TAG = "[?CZE_skoda_loop_target_tag.GetTag]"
 	}
 }
 
@@ -3449,61 +3444,44 @@ CZE_increase_demand_effect = {
 	for_each_loop = {
 		array = CZE_skoda_export_target_tags
 		value = CZE_skoda_loop_target_tag
-		meta_effect = {
-			text = {
-				add_to_variable = { CZE_skoda_superb_[TAG]_demand = 7.5 }
-				clamp_variable = { var = CZE_skoda_superb_[TAG]_demand max = 100 }
-			}
-			TAG = "[?CZE_skoda_loop_target_tag.GetTag]"
+		var:CZE_skoda_loop_target_tag = {
+			add_to_variable = { CZE_skoda_superb_demand = 7.5 }
+			clamp_variable = { var = CZE_skoda_superb_demand max = 100 }
 		}
 	}
 }
 
 CZE_skoda_set_export_flag_effect = {
-	meta_effect = {
-		text = {
-			[TAG] = {
-				if = {
-					limit = { ROOT = { check_variable = { CZE_skoda_car_generation = 1 } } }
-					set_country_flag = CZE_skoda_export_[TAG]_gen1_flag
-				}
-				else_if = {
-					limit = { ROOT = { check_variable = { CZE_skoda_car_generation = 2 } } }
-					set_country_flag = CZE_skoda_export_[TAG]_gen2_flag
-				}
-				else_if = {
-					limit = { ROOT = { check_variable = { CZE_skoda_car_generation = 3 } } }
-					set_country_flag = CZE_skoda_export_[TAG]_gen3_flag
-				}
-				else_if = {
-					limit = { ROOT = { check_variable = { CZE_skoda_car_generation = 4 } } }
-					set_country_flag = CZE_skoda_export_[TAG]_gen4_flag
-				}
-			}
+	var:CZE_skoda_export_target_tag = {
+		if = {
+			limit = { CZE = { check_variable = { CZE_skoda_car_generation = 1 } } }
+			set_country_flag = skoda_superb_export_gen1_offer
 		}
-		TAG = "[?CZE_skoda_export_target_tag.GetTag]"
+		else_if = {
+			limit = { CZE = { check_variable = { CZE_skoda_car_generation = 2 } } }
+			set_country_flag = skoda_superb_export_gen2_offer
+		}
+		else_if = {
+			limit = { CZE = { check_variable = { CZE_skoda_car_generation = 3 } } }
+			set_country_flag = skoda_superb_export_gen3_offer
+		}
+		else_if = {
+			limit = { CZE = { check_variable = { CZE_skoda_car_generation = 4 } } }
+			set_country_flag = skoda_superb_export_gen4_offer
+		}
 	}
 }
 
 CZE_skoda_clear_export_data_effect = {
-	meta_effect = {
-		text = { clear_variable = CZE_skoda_superb_cars_sell_[TAG]_var }
-		TAG = "[?CZE_skoda_export_target_tag.GetTag]"
-	}
 	clear_variable = CZE_skoda_export_target_tag
 	CZE_gui_dirty_update = yes
 }
 
 CZE_skoda_clear_current_export_flags = {
-	meta_effect = {
-		text = {
-			clr_country_flag = CZE_skoda_export_[TAG]_gen1_flag
-			clr_country_flag = CZE_skoda_export_[TAG]_gen2_flag
-			clr_country_flag = CZE_skoda_export_[TAG]_gen3_flag
-			clr_country_flag = CZE_skoda_export_[TAG]_gen4_flag
-		}
-		TAG = "[?CZE.CZE_skoda_export_target_tag.GetTag]"
-	}
+	clr_country_flag = skoda_superb_export_gen1_offer
+	clr_country_flag = skoda_superb_export_gen2_offer
+	clr_country_flag = skoda_superb_export_gen3_offer
+	clr_country_flag = skoda_superb_export_gen4_offer
 }
 
 CZE_skoda_universal_export_button_click = {
@@ -3515,13 +3493,6 @@ CZE_skoda_universal_export_button_click = {
 				check_variable = { CZE_skoda_superb3_cars_stockpile > 999 }
 				check_variable = { CZE_skoda_superb4_cars_stockpile > 999 }
 			}
-		}
-		meta_effect = {
-			text = {
-				set_variable = { CZE_skoda_superb_cars_sell_[TAG]_var = 100 }
-				subtract_from_variable = { CZE_skoda_superb_cars_sell_[TAG]_var = CZE_skoda_superb_[TAG]_demand }
-			}
-			TAG = "[?CZE_skoda_export_target_tag.GetTag]"
 		}
 		country_event = czech_skoda.1
 	}
@@ -3538,31 +3509,19 @@ CZE_skoda_export_option_effect = {
 }
 
 CZE_skoda_send_export_offer_effect = {
-	meta_effect = {
-		text = { [TAG] = { country_event = czech_skoda.2 } }
-		TAG = "[?CZE_skoda_export_target_tag.GetTag]"
-	}
+	var:CZE_skoda_export_target_tag = { country_event = czech_skoda.2 }
 }
 
 CZE_skoda_cancel_export_offer_effect = {
-	meta_effect = {
-		text = { [TAG] = { CZE_skoda_clear_current_export_flags = yes } }
-		TAG = "[?CZE_skoda_export_target_tag.GetTag]"
-	}
+	var:CZE_skoda_export_target_tag = { CZE_skoda_clear_current_export_flags = yes }
 	CZE_skoda_clear_export_data_effect = yes
 	clear_variable = CZE_skoda_car_generation
 }
 
 CZE_skoda_reject_export_offer_effect = {
 	CZE_skoda_clear_current_export_flags = yes
+	set_country_flag = { flag = skoda_superb_export_offer_cooldown days = 7 value = 1 }
 	CZE = {
-		meta_effect = {
-			text = {
-				clear_variable = CZE_skoda_superb_cars_sell_[TAG]_var
-				set_country_flag = { flag = CZE_skoda_superb_cars_sell_[TAG]_cooldown days = 7 value = 1 }
-			}
-			TAG = "[?CZE_skoda_export_target_tag.GetTag]"
-		}
 		country_event = czech_skoda.5
 		clear_variable = CZE_skoda_car_generation
 		clear_variable = CZE_skoda_export_target_tag
@@ -3572,14 +3531,8 @@ CZE_skoda_reject_export_offer_effect = {
 
 CZE_skoda_block_export_offer_effect = {
 	CZE_skoda_clear_current_export_flags = yes
+	set_country_flag = skoda_superb_export_offer_cooldown
 	CZE = {
-		meta_effect = {
-			text = {
-				clear_variable = CZE_skoda_superb_cars_sell_[TAG]_var
-				set_country_flag = CZE_skoda_superb_cars_sell_[TAG]_cooldown
-			}
-			TAG = "[?CZE_skoda_export_target_tag.GetTag]"
-		}
 		country_event = czech_skoda.7
 		clear_variable = CZE_skoda_car_generation
 		clear_variable = CZE_skoda_export_target_tag
@@ -3595,13 +3548,13 @@ CZE_skoda_complete_sale_effect = {
 		set_temp_variable = { treasury_change = -4 }
 		modify_treasury_effect = yes
 		add_timed_idea = { idea = CZE_skoda_superb_i_bought_idea days = 30 }
+		set_temp_variable = { CZE_skoda_sale_demand_high = -2 }
+		set_temp_variable = { CZE_skoda_sale_demand_low = -4 }
+		set_temp_variable = { CZE_skoda_sale_duration = 30 }
 		CZE = {
 			subtract_from_variable = { CZE_skoda_superb_cars_stockpile = 1000 }
 			set_temp_variable = { CZE_skoda_sale_revenue_high = 1.35 }
 			set_temp_variable = { CZE_skoda_sale_revenue_low = 1.125 }
-			set_temp_variable = { CZE_skoda_sale_demand_high = -2 }
-			set_temp_variable = { CZE_skoda_sale_demand_low = -4 }
-			set_temp_variable = { CZE_skoda_sale_duration = 30 }
 		}
 	}
 	else_if = {
@@ -3609,13 +3562,13 @@ CZE_skoda_complete_sale_effect = {
 		set_temp_variable = { treasury_change = -8 }
 		modify_treasury_effect = yes
 		add_timed_idea = { idea = CZE_skoda_superb_ii_bought_idea days = 40 }
+		set_temp_variable = { CZE_skoda_sale_demand_high = -4 }
+		set_temp_variable = { CZE_skoda_sale_demand_low = -7.5 }
+		set_temp_variable = { CZE_skoda_sale_duration = 40 }
 		CZE = {
 			subtract_from_variable = { CZE_skoda_superb2_cars_stockpile = 1000 }
 			set_temp_variable = { CZE_skoda_sale_revenue_high = 3.375 }
 			set_temp_variable = { CZE_skoda_sale_revenue_low = 2.73 }
-			set_temp_variable = { CZE_skoda_sale_demand_high = -4 }
-			set_temp_variable = { CZE_skoda_sale_demand_low = -7.5 }
-			set_temp_variable = { CZE_skoda_sale_duration = 40 }
 		}
 	}
 	else_if = {
@@ -3623,13 +3576,13 @@ CZE_skoda_complete_sale_effect = {
 		set_temp_variable = { treasury_change = -12 }
 		modify_treasury_effect = yes
 		add_timed_idea = { idea = CZE_skoda_superb_iii_bought_idea days = 50 }
+		set_temp_variable = { CZE_skoda_sale_demand_high = -6 }
+		set_temp_variable = { CZE_skoda_sale_demand_low = -11 }
+		set_temp_variable = { CZE_skoda_sale_duration = 50 }
 		CZE = {
 			subtract_from_variable = { CZE_skoda_superb3_cars_stockpile = 1000 }
 			set_temp_variable = { CZE_skoda_sale_revenue_high = 4.6 }
 			set_temp_variable = { CZE_skoda_sale_revenue_low = 4.23 }
-			set_temp_variable = { CZE_skoda_sale_demand_high = -6 }
-			set_temp_variable = { CZE_skoda_sale_demand_low = -11 }
-			set_temp_variable = { CZE_skoda_sale_duration = 50 }
 		}
 	}
 	else_if = {
@@ -3637,48 +3590,45 @@ CZE_skoda_complete_sale_effect = {
 		set_temp_variable = { treasury_change = -16 }
 		modify_treasury_effect = yes
 		add_timed_idea = { idea = CZE_skoda_superb_iv_bought_idea days = 60 }
+		set_temp_variable = { CZE_skoda_sale_demand_high = -9.5 }
+		set_temp_variable = { CZE_skoda_sale_demand_low = -15 }
+		set_temp_variable = { CZE_skoda_sale_duration = 60 }
 		CZE = {
 			subtract_from_variable = { CZE_skoda_superb4_cars_stockpile = 1000 }
 			set_temp_variable = { CZE_skoda_sale_revenue_high = 6 }
 			set_temp_variable = { CZE_skoda_sale_revenue_low = 5.7 }
-			set_temp_variable = { CZE_skoda_sale_demand_high = -9.5 }
-			set_temp_variable = { CZE_skoda_sale_demand_low = -15 }
-			set_temp_variable = { CZE_skoda_sale_duration = 60 }
 		}
 	}
 
-	CZE = {
-		meta_effect = {
-			text = {
-				clear_variable = CZE_skoda_superb_cars_sell_[TAG]_var
-				set_country_flag = {
-					flag = CZE_skoda_cars_sold_to_[TAG]
-					days = [DURATION]
-					value = 1
-				}
-				if = {
-					limit = { check_variable = { CZE_skoda_superb_[TAG]_demand > 90 } }
-					set_temp_variable = { treasury_change = CZE_skoda_sale_revenue_high }
-					modify_treasury_effect = yes
-					add_to_variable = { CZE_skoda_superb_cars_treasury = CZE_skoda_sale_revenue_high }
-				}
-				else = {
-					set_temp_variable = { treasury_change = CZE_skoda_sale_revenue_low }
-					modify_treasury_effect = yes
-					add_to_variable = { CZE_skoda_superb_cars_treasury = CZE_skoda_sale_revenue_low }
-				}
-				if = {
-					limit = { has_idea = CZE_volkswagen_group_skoda_idea }
-					add_to_variable = { CZE_skoda_superb_[TAG]_demand = CZE_skoda_sale_demand_high }
-				}
-				else = {
-					add_to_variable = { CZE_skoda_superb_[TAG]_demand = CZE_skoda_sale_demand_low }
-				}
-				clamp_variable = { var = CZE_skoda_superb_[TAG]_demand min = 0 }
-			}
-			TAG = "[?CZE_skoda_export_target_tag.GetTag]"
-			DURATION = "[?CZE_skoda_sale_duration]"
+	set_country_flag = {
+		flag = skoda_superb_recent_purchase
+		days = CZE_skoda_sale_duration
+		value = 1
+	}
+	if = {
+		limit = { check_variable = { CZE_skoda_superb_demand > 90 } }
+		CZE = {
+			set_temp_variable = { treasury_change = CZE_skoda_sale_revenue_high }
+			modify_treasury_effect = yes
+			add_to_variable = { CZE_skoda_superb_cars_treasury = CZE_skoda_sale_revenue_high }
 		}
+	}
+	else = {
+		CZE = {
+			set_temp_variable = { treasury_change = CZE_skoda_sale_revenue_low }
+			modify_treasury_effect = yes
+			add_to_variable = { CZE_skoda_superb_cars_treasury = CZE_skoda_sale_revenue_low }
+		}
+	}
+	if = {
+		limit = { CZE = { has_idea = CZE_volkswagen_group_skoda_idea } }
+		add_to_variable = { CZE_skoda_superb_demand = CZE_skoda_sale_demand_high }
+	}
+	else = {
+		add_to_variable = { CZE_skoda_superb_demand = CZE_skoda_sale_demand_low }
+	}
+	clamp_variable = { var = CZE_skoda_superb_demand min = 0 }
+	CZE = {
 		country_event = czech_skoda.3
 		clear_variable = CZE_skoda_car_generation
 		clear_variable = CZE_skoda_export_target_tag
