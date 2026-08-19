@@ -197,6 +197,12 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "RAJ_indian_national_congress_desc",
         "RAJ_industrial_expansion",
         "RAJ_industrial_expansion_desc",
+        "SOV_raskovas_aviation_group",  # nsb_focus_l_english.yml
+        "SOV_raskovas_aviation_group_desc",
+        "SPA_a_great_spain",  # lar_focus_l_english.yml
+        "SPA_a_great_spain_desc",
+        "SPR_the_popular_front",  # lar_focus_l_english.yml
+        "SPR_the_popular_front_desc",
         # lar_events_l_english.yml — live La Resistance systems reused by MD.
         "lar_collab_gov.1.d",
         "lar_collab_gov.1.t",
