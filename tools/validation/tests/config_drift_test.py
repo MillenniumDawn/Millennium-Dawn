@@ -442,6 +442,7 @@ def test_tools_validation_triggers_for_consumed_configuration():
     paths = _pull_request_paths(TOOLS_WORKFLOW)
     assert {
         ".claude/docs/typo-watchlist.md",
+        "resources/documentation/modifiers_documentation.md",
         ".pre-commit-config.yaml",
         "pyproject.toml",
         ".github/workflows/coding-pipeline.yml",
@@ -510,6 +511,12 @@ def test_tools_tests_checkout_consumed_configuration():
     sparse_paths = set(checkout["with"]["sparse-checkout"].splitlines())
     assert {
         ".claude/docs/typo-watchlist.md",
+        # validate_modifiers_test parses the shipped doc to catch a Paradox
+        # format change; without it here the test reads an absent file.
+        "resources/documentation/modifiers_documentation.md",
+        # focus_pp_malus_test walks the real tree to prove every exemption still
+        # applies a malus; absent, it reads every one of them as stale.
+        "common/national_focus",
         ".github/workflows/validator-cache.yml",
         ".github/workflows/nightly-pr-validation.yml",
         "pyproject.toml",
