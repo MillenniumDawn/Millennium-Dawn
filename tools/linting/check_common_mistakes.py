@@ -94,6 +94,25 @@ _RE_BUILDING_TYPE = re.compile(r"\btype\s*=\s*(\w+)")
 _RE_BUILDING_PROVINCE = re.compile(r"\bprovince\s*=")
 _RE_BUILDING_ENTRY = re.compile(r"^\t(\w+)\s*=\s*\{", re.M)
 _RE_PROVINCE_MAX = re.compile(r"\bprovince_max\s*=")
+# Used only when common/buildings/ can't be read; the live parse is authoritative.
+_PROVINCIAL_BUILDINGS_FALLBACK = frozenset(
+    {
+        "naval_base",
+        "bunker",
+        "coastal_bunker",
+        "supply_node",
+        "rail_way",
+        "naval_facility",
+        "land_facility",
+        "air_facility",
+        "nuclear_facility",
+        "naval_supply_hub",
+        "naval_headquarters",
+        "dam",
+        "dam_mountain",
+        "canal_locks",
+    }
+)
 _RE_RANDOM_SELECT_AMOUNT = re.compile(r"\brandom_select_amount\s*=\s*([^\s}]+)")
 _RE_BARE_INT = re.compile(r"^-?\d+$")
 # Tautological OR covering both polarities of one trigger (X = yes / X = no) is
@@ -1802,20 +1821,27 @@ def _check_every_owned_controlled_state(lines):
     return issues
 
 
-@lru_cache(maxsize=1)
-def _provincial_building_types():
+@lru_cache(maxsize=None)
+def _provincial_building_types(mod_root=None):
     """Building types placed on a province rather than a state, read from
     common/buildings/. A `level_cap = { province_max = N }` entry is the marker.
+
+    Falls back to the known list if the directory can't be read, so a hiccup
+    downgrades the check to a fixed list rather than silently disabling it.
     """
+    if mod_root is None:
+        # Anchored on this file, not get_root_dir(): that reads sys.argv[0],
+        # which points at pytest rather than the linter when the tests import
+        # this. realpath so a symlinked checkout still lands on the real root.
+        mod_root = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
+        )
     types = set()
-    # Anchored on this file, not get_root_dir(): that reads sys.argv[0], which
-    # points at pytest rather than the linter when the tests import this.
-    mod_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
     buildings_dir = os.path.join(mod_root, "common", "buildings")
     try:
         filenames = sorted(os.listdir(buildings_dir))
     except OSError:
-        return frozenset()
+        return _PROVINCIAL_BUILDINGS_FALLBACK
     for fname in filenames:
         if not fname.endswith(".txt"):
             continue
@@ -1828,13 +1854,13 @@ def _provincial_building_types():
             entry = _RE_BUILDING_ENTRY.match(_code_for_depth(line))
             if not entry:
                 continue
-            block, _ = _get_block(lines, i)
-            if _RE_PROVINCE_MAX.search("".join(block)):
+            block = "".join(_code_for_depth(bl) for bl in _get_block(lines, i)[0])
+            if _RE_PROVINCE_MAX.search(block):
                 types.add(entry.group(1))
-    return frozenset(types)
+    return frozenset(types) or _PROVINCIAL_BUILDINGS_FALLBACK
 
 
-def _check_building_missing_province(lines):
+def _check_building_missing_province(lines, mod_root=None):
     """Flag add_building_construction of a provincial building with no province.
 
     A provincial building sits on a province, not a state, so the effect needs
@@ -1843,21 +1869,26 @@ def _check_building_missing_province(lines):
     and the building is never placed -- the focus or decision silently does nothing.
     """
     issues = []
-    provincial = _provincial_building_types()
-    if not provincial:
-        return issues
-    for i, line in enumerate(lines):
-        if not _RE_ADD_BUILDING_OPEN.search(_code_for_depth(line)):
-            continue
-        block = "".join(_code_for_depth(bl) for bl in _get_block(lines, i)[0])
-        type_match = _RE_BUILDING_TYPE.search(block)
+    provincial = _provincial_building_types(mod_root)
+    # Brace-matched over the whole file rather than per line: a construction
+    # block spans lines, and two single-line blocks can share one line.
+    text = "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
+    for match in _RE_ADD_BUILDING_OPEN.finditer(text):
+        depth, i = 0, match.end() - 1
+        while i < len(text):
+            depth += (text[i] == "{") - (text[i] == "}")
+            if not depth:
+                break
+            i += 1
+        body = text[match.end() : i]
+        type_match = _RE_BUILDING_TYPE.search(body)
         if not type_match or type_match.group(1) not in provincial:
             continue
-        if _RE_BUILDING_PROVINCE.search(block):
+        if _RE_BUILDING_PROVINCE.search(body):
             continue
         issues.append(
             (
-                i + 1,
+                text.count("\n", 0, match.start()) + 1,
                 f"add_building_construction type = {type_match.group(1)} has no "
                 f"province -- it is a provincial building, so the engine rejects "
                 f"the effect and nothing is built; add province = <id> or "
