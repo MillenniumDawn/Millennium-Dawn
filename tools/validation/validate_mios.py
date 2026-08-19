@@ -16,6 +16,18 @@ Rules from .claude/docs/mio-reference.md + AGENTS.md:
     localisation key (TAG_<key> fallback included)
   * equipment_bonus stats reach equipment that declares a base for them, since
     the bonus is a percentage and 10% of an undeclared stat is still nothing
+  * every `mio:<org>` reference names a real org, and the org is reachable from
+    the country whose script references it — an org pinned to another tag is
+    simply absent in that scope, so the engine logs `was not found in country
+    scope` and the effect silently does nothing
+
+Scope resolution for the reference check only trusts three signals: an explicit
+enclosing `TAG = { ... }`, the enclosing focus block in common/national_focus/,
+and the tag in a history/ filename. Everything else (an event option, most
+notably) runs in the scope of whoever fired it, which the file cannot prove —
+ENG_military.049 lives in events/05_united_kingdom.txt but fires at AST and
+legitimately design-teams an AST org. Those references are still checked for
+existence, never for tag reachability.
 """
 
 import glob
@@ -30,6 +42,11 @@ from validator_common import BaseValidator, run_validator_main
 ORG_DIR = "common/military_industrial_organization/organizations"
 POLICY_DIR = "common/military_industrial_organization/policies"
 COMPANY_TRAIT_FILE = "common/country_leader/defense_company_traits.txt"
+COUNTRY_TAG_DIR = "common/country_tags"
+
+# Files that can carry a `mio:` reference. The org dir itself is excluded — a
+# trait naming its own org is not a cross-scope reference.
+REFERENCE_PATTERNS = ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
 
 # Top-level org definition: `TAG_name = {` at column 0.
 ORG_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
@@ -66,6 +83,23 @@ ON_COMPLETE_RE = re.compile(r"on_complete\s*=\s*\{([^{}]*)\}")
 HEADER_TEXT_RE = re.compile(r'(?<![A-Za-z0-9_])text\s*=\s*("[^"]*"|[^\s{}]+)')
 NAME_RE = re.compile(r"(?<![A-Za-z0-9_])name\s*=\s*([A-Za-z0-9_]+)")
 TOKEN_RE = re.compile(r"(?<![A-Za-z0-9_])token\s*=\s*([A-Za-z0-9_]+)")
+
+# Covers every reference form in one pass: `design_team = mio:X`,
+# `industrial_manufacturer = mio:X`, the unlock tooltip, and the `mio:X = { }`
+# scope block.
+MIO_REFERENCE_RE = re.compile(r"(?<![A-Za-z0-9_])mio:([A-Za-z0-9_]+)")
+COUNTRY_TAG_DEF_RE = re.compile(r"^\s*([A-Z][A-Z0-9]{2})\s*=", re.MULTILINE)
+FOCUS_BLOCK_RE = re.compile(
+    r"^[^\S\n]*(?:shared_focus|joint_focus|focus)\s*=\s*\{", re.MULTILINE
+)
+FOCUS_ID_RE = re.compile(r"^[^\S\n]*id\s*=\s*([A-Za-z0-9_]+)", re.MULTILINE)
+# Any literal tag named inside a focus block: `original_tag = X`, `tag = X`.
+BLOCK_TAG_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(?:original_)?tag\s*=\s*([A-Z][A-Z0-9]{2})\b"
+)
+# `TAG = {` opening a scope block, matched against the text before a reference.
+SCOPE_OPEN_RE = re.compile(r"([A-Za-z0-9_]+)\s*=\s*\{$")
+HISTORY_FILE_TAG_RE = re.compile(r"^([A-Z]{3})(?: -|_)")
 
 INCLUDE_RE = re.compile(r"(?<![A-Za-z0-9_])include\s*=\s*([A-Za-z0-9_]+)")
 NAMED_BLOCK_RE = re.compile(r"([A-Za-z0-9_]+)\s*=\s*\{")
@@ -109,6 +143,42 @@ def _block_spans(text: str) -> List[Tuple[int, int, str]]:
             i += 1
         spans.append((m.start(), i, m.group(1)))
     return spans
+
+
+def _block_end(text: str, open_brace_end: int) -> int:
+    """End offset of the block whose `{` was consumed up to *open_brace_end*."""
+    depth = 1
+    i = open_brace_end
+    while i < len(text) and depth > 0:
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+        i += 1
+    return i
+
+
+def _enclosing_scope_tag(text: str, pos: int, tags: LocKeys) -> Optional[str]:
+    """Innermost `TAG = { ... }` country scope containing *pos*, if any.
+
+    Walks left counting braces, so `CHI = { mio:CHI_norinco = { ... } }` inside
+    an NKO-gated joint focus reads as CHI and not as the focus owner.
+    """
+    depth = 0
+    i = pos
+    while i > 0:
+        i -= 1
+        char = text[i]
+        if char == "}":
+            depth += 1
+        elif char == "{":
+            if depth:
+                depth -= 1
+                continue
+            m = SCOPE_OPEN_RE.search(text[max(0, i - 80) : i + 1])
+            if m and m.group(1) in tags:
+                return m.group(1)
+    return None
 
 
 def _sub_blocks(body: str, keyword: str) -> List[Tuple[int, str]]:
@@ -157,6 +227,9 @@ class Validator(BaseValidator):
 
     # org id -> comment-blanked body, for resolving `include` across files.
     _org_bodies: Dict[str, str] = {}
+    # Lazily built once per run; both are full-repo indexes.
+    _org_allowed: Optional[Dict[str, FrozenSet[str]]] = None
+    _tags: Optional[FrozenSet[str]] = None
 
     def _org_files(self) -> List[str]:
         pattern = str(Path(self.mod_path) / ORG_DIR / "*.txt")
@@ -183,6 +256,56 @@ class Validator(BaseValidator):
                 return True
         return False
 
+    def _reference_files(self) -> List[str]:
+        """Script files that may carry a `mio:` reference, minus the org dir."""
+
+        def _in_org_dir(filepath: str) -> bool:
+            # Plain string test: Path.resolve() here costs a syscall per file
+            # across ~6k candidates.
+            return f"/{ORG_DIR}/" in filepath.replace("\\", "/")
+
+        return self._collect_files(REFERENCE_PATTERNS, extra_skip=_in_org_dir)
+
+    def _org_allowed_tags(self) -> Dict[str, FrozenSet[str]]:
+        """org id -> every tag its `allowed` block accepts.
+
+        Always scans the full org dir, even in staged mode: a staged focus file
+        has to be resolvable against orgs nobody touched. The `allowed` block is
+        walked with balanced braces because the multi-tag orgs nest their tags
+        inside `OR = { ... }`.
+        """
+        if self._org_allowed is not None:
+            return self._org_allowed
+        allowed: Dict[str, FrozenSet[str]] = {}
+        for filepath in self._collect_files([f"{ORG_DIR}/*.txt"], ignore_staged=True):
+            try:
+                text = blank_comments(Path(filepath).read_text(encoding="utf-8"))
+            except (OSError, UnicodeDecodeError):
+                continue
+            for start, end, org_id in _block_spans(text):
+                body = text[start:end]
+                blocks = _sub_blocks(body, "allowed")
+                tags = ORIGINAL_TAG_RE.findall(blocks[0][1]) if blocks else []
+                allowed[org_id] = frozenset(tags)
+        self._org_allowed = allowed
+        return allowed
+
+    def _country_tags(self) -> FrozenSet[str]:
+        """Every tag declared in common/country_tags/."""
+        if self._tags is not None:
+            return self._tags
+        tags: Set[str] = set()
+        for filepath in self._collect_files(
+            [f"{COUNTRY_TAG_DIR}/*.txt"], ignore_staged=True
+        ):
+            try:
+                text = Path(filepath).read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            tags.update(COUNTRY_TAG_DEF_RE.findall(text))
+        self._tags = frozenset(tags)
+        return self._tags
+
     def _bonus_files(self) -> List[str]:
         """Files carrying the nested `equipment_bonus = { ARCHETYPE = {...} }`
         form: MIO policies and the country-leader company traits."""
@@ -200,7 +323,8 @@ class Validator(BaseValidator):
     def run_validations(self):
         files = self._org_files()
         bonus_files = self._bonus_files()
-        if self.staged_only and not files and not bonus_files:
+        reference_files = self._reference_files()
+        if self.staged_only and not files and not bonus_files and not reference_files:
             self.log("No staged MIO files found — skipping MIO validation", "warning")
             return
 
@@ -242,9 +366,29 @@ class Validator(BaseValidator):
             rel = Path(filepath).relative_to(self.mod_path).as_posix()
             self._check_nested_equipment_bonus(blank_comments(text), rel, equipment)
 
+        reference_hits = 0
+        for filepath in reference_files:
+            # ~6k script files reach this loop and only a few dozen name a MIO,
+            # so gate on the raw bytes before paying for decode + comment
+            # blanking.
+            try:
+                raw = Path(filepath).read_bytes()
+            except OSError:
+                continue
+            if b"mio:" not in raw:
+                continue
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                continue
+            reference_hits += 1
+            rel = Path(filepath).relative_to(self.mod_path).as_posix()
+            self._check_mio_references(blank_comments(text), rel)
+
         self.log(
             f"  Scanned {len(files) + len(bonus_files)} files | "
-            f"{org_count} organizations"
+            f"{org_count} organizations | "
+            f"{reference_hits} files with mio: references"
         )
 
     @staticmethod
@@ -508,6 +652,77 @@ class Validator(BaseValidator):
                     scope,
                     rel,
                     lambda pos, o=offset, b=inner: o + b.count("\n", 0, pos) + 1,
+                )
+
+    def _focus_context(self, text: str, pos: int, tags: FrozenSet[str]) -> Set[str]:
+        """Tags a focus block containing *pos* can run as.
+
+        The union of the focus id prefix and every literal tag named anywhere in
+        the block. Deliberately permissive: a joint focus pays out to more than
+        one country (completion_reward_joint_member runs in the member's scope),
+        and widening the accepted set can only hide a finding, never invent one.
+        """
+        for m in FOCUS_BLOCK_RE.finditer(text):
+            end = _block_end(text, m.end())
+            if not m.start() <= pos < end:
+                continue
+            block = text[m.start() : end]
+            context = set(BLOCK_TAG_RE.findall(block)) & tags
+            focus_id = FOCUS_ID_RE.search(block)
+            if focus_id:
+                prefix = focus_id.group(1).split("_", 1)[0]
+                if prefix in tags:
+                    context.add(prefix)
+            return context
+        return set()
+
+    def _check_mio_references(self, text: str, rel: str):
+        """Flag `mio:` tokens that name no org, or an org another tag owns."""
+        allowed = self._org_allowed_tags()
+        tags = self._country_tags()
+        is_focus_file = rel.startswith("common/national_focus/")
+        file_tag = None
+        if rel.startswith("history/"):
+            m = HISTORY_FILE_TAG_RE.match(Path(rel).name)
+            if m and m.group(1) in tags:
+                file_tag = m.group(1)
+
+        for m in MIO_REFERENCE_RE.finditer(text):
+            org_id = m.group(1)
+            line = text.count("\n", 0, m.start()) + 1
+            org_tags = allowed.get(org_id)
+            if org_tags is None:
+                self.add_error(
+                    "mio-reference-unknown",
+                    f"mio:{org_id} matches no MIO definition in {ORG_DIR}/ "
+                    f"(ids are case-sensitive)",
+                    rel,
+                    line,
+                )
+                continue
+            if not org_tags:
+                continue
+
+            scope = _enclosing_scope_tag(text, m.start(), tags)
+            if scope:
+                context = {scope}
+            elif is_focus_file:
+                context = self._focus_context(text, m.start(), tags)
+            elif file_tag:
+                context = {file_tag}
+            else:
+                # An event option runs in the scope of whoever fired it, which
+                # this file cannot tell us. Existence was checked above.
+                continue
+
+            if context and not (context & org_tags):
+                self.add_error(
+                    "mio-reference-wrong-tag",
+                    f"mio:{org_id} is allowed only for "
+                    f"{', '.join(sorted(org_tags))}, so it does not resolve in "
+                    f"{', '.join(sorted(context))} scope",
+                    rel,
+                    line,
                 )
 
     def _check_on_complete(self, body: str, rel: str, body_offset: int):
