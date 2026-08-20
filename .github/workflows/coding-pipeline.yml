@@ -127,6 +127,9 @@ jobs:
       characters: >-
         ${{ steps.filter.outputs.characters ||
         steps.dispatch.outputs.characters }}
+      scientist-traits: >-
+        ${{ steps.filter.outputs.scientist-traits ||
+        steps.dispatch.outputs.scientist-traits }}
       oob: >-
         ${{ steps.filter.outputs.oob ||
         steps.dispatch.outputs.oob }}
@@ -209,6 +212,11 @@ jobs:
               - 'common/on_actions/**'
               - 'events/**'
               - 'history/countries/**'
+            scientist-traits:
+              - 'common/scientist_traits/**'
+              # The medal-sprite index is the other half of the check, so a
+              # .gfx edit changes what resolves for every trait.
+              - 'interface/**'
             oob:
               - 'history/units/**'
               - 'common/units/**'
@@ -241,6 +249,11 @@ jobs:
               - 'common/on_actions/**'
             mios:
               - 'common/military_industrial_organization/**'
+              - 'common/country_leader/**'
+              # Equipment and its groups are the other half of the dead-bonus
+              # check: dropping a base stat there kills bonuses elsewhere.
+              - 'common/units/equipment/**'
+              - 'common/equipment_groups/**'
             scripted-effects:
               - 'common/scripted_effects/**'
             style:
@@ -269,9 +282,9 @@ jobs:
         id: dispatch
         run: |
           for out in common events history localisation ai-strategy \
-              ai-navy ai-equipment factions characters oob decisions \
-              scripted-loc scripted-guis interface national-focus \
-              on-actions scripted-effects mod content mios; do
+              ai-navy ai-equipment factions characters scientist-traits \
+              oob decisions scripted-loc scripted-guis interface \
+              national-focus on-actions scripted-effects mod content mios; do
             echo "$out=true" >> "$GITHUB_OUTPUT"
           done
           # style is diff-scoped (MD_STAGED_FILES from the changed-file
@@ -541,7 +554,7 @@ jobs:
             strict: true
             # cross-references the committed vanilla_defines.txt manifest (CI
             # has no HOI4 install); regenerate it after a game update via
-            # gen_vanilla_defines_manifest.py.
+            # refresh_vanilla_data.py.
           # NOTE: validate_unused_textures.py is intentionally not wired here
           # — ~22k pre-existing unreferenced textures make it a periodic
           # mod-size audit, not a per-PR signal. Run manually via
@@ -565,6 +578,8 @@ jobs:
       # Per-matrix opt-out: `strict: false` makes the validator informational
       # (still produces the log + PR comment but exits 0 on findings). An entry
       # that omits the field keeps gating behavior — never fail open by default.
+      # The idea missing-icon audit is WARNING severity, so it reports its
+      # backlog without blocking a PR.
       - name: Run validation
         run: |
           if [ "${{ matrix.validator.strict }}" != "false" ]; then
@@ -605,6 +620,7 @@ jobs:
       needs.detect-changes.outputs.ai-equipment == 'true' ||
       needs.detect-changes.outputs.factions == 'true' ||
       needs.detect-changes.outputs.characters == 'true' ||
+      needs.detect-changes.outputs.scientist-traits == 'true' ||
       needs.detect-changes.outputs.scripted-guis == 'true' ||
       needs.detect-changes.outputs.interface == 'true' ||
       needs.detect-changes.outputs.national-focus == 'true' ||
@@ -657,6 +673,13 @@ jobs:
             # undefined-unit-leader-trait is WARNING-severity: the 9-item
             # ALG/PHI backlog surfaces in reports without gating PRs.
             should_run: ${{ needs.detect-changes.outputs.characters }}
+          - script: validate_scientist_traits.py
+            name: scientist-traits
+            title: "Validate Scientist Traits"
+            strict: true
+            # All findings are WARNING-severity: the 19-item missing-medal
+            # backlog surfaces in reports without gating PRs.
+            should_run: ${{ needs.detect-changes.outputs.scientist-traits }}
           - script: validate_mios.py
             name: mios
             title: "Validate MIO Organizations"
@@ -704,7 +727,7 @@ jobs:
             strict: true
             # Gating: undefined-sprite errors are clean on main. Vanilla sprite
             # names come from the committed tools/validation/vanilla_sprites.txt
-            # manifest (regenerate with gen_vanilla_sprites_manifest.py after a
+            # manifest (regenerate with refresh_vanilla_data.py after a
             # HOI4 version bump). The unused-sprite check is opt-in
             # (--report-unused) and never runs here.
             should_run: >-

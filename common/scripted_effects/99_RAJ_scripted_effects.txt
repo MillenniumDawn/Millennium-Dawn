@@ -258,6 +258,16 @@ RAJ_sync_naxalite_presence = {
 	else = { clear_variable = RAJ_naxalite_presence }
 }
 
+# Country scope: re-read the tier off every state that still claims one. The
+# modifiers carry a remove_trigger, so the engine can strip them behind script's
+# back and leave RAJ_naxalite_presence pointing at a tier that is no longer there.
+RAJ_resync_naxalite_presence = {
+	every_controlled_state = {
+		limit = { check_variable = { RAJ_naxalite_presence > 0 } }
+		RAJ_sync_naxalite_presence = yes
+	}
+}
+
 RAJ_downgrade_naxalite_level = {
 	if = {
 		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
@@ -448,11 +458,26 @@ RAJ_update_religious_climate = {
 # State scope: clears every insurgency tier and zeroes the tracking var so it
 # always mirrors the (now absent) dynamic modifier.
 RAJ_remove_all_naxalite_modifiers = {
-	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
-	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
-	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
-	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
-	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 }
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+	}
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+	}
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+	}
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+	}
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 }
+	}
 	clear_variable = RAJ_naxalite_presence
 }
 
