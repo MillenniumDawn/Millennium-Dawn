@@ -502,9 +502,7 @@ def _scan_available_file(
                 if token in _TOOLTIP_WRAPPER_TOKENS:
                     break
                 if token == _PLAYER_FACING_BLOCK:
-                    flags.append(
-                        (flag, rel, cleaned[:pos].count("\n") + 1, flag_kind)
-                    )
+                    flags.append((flag, rel, cleaned[:pos].count("\n") + 1, flag_kind))
                     break
     return untooltipped, flags
 
