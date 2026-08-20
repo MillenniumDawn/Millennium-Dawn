@@ -108,6 +108,7 @@ def _validator_code_fingerprint(namespace: str = "") -> str:
     _FINGERPRINT_CACHE[namespace] = (signature, result)
     return result
 
+
 _CACHE_DIR_NAME = ".validation_cache"
 # Records when the cache was created / last cleared (one unix timestamp), so the
 # suite can auto-reset a cache that has been accumulating orphaned rows for a
@@ -265,9 +266,7 @@ def per_file_cached_by_content(
     return result
 
 
-def _stats_tag(
-    stats: Dict[str, Optional[Tuple[int, int]]], namespace: str = ""
-) -> str:
+def _stats_tag(stats: Dict[str, Optional[Tuple[int, int]]], namespace: str = "") -> str:
     parts = []
     for p in sorted(stats):
         v = stats[p]

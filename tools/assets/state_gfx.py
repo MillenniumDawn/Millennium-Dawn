@@ -8,7 +8,10 @@ import os
 import re
 import sys
 
-Image = importlib.import_module("PIL.Image")
+
+def _pil_image():
+    return importlib.import_module("PIL.Image")
+
 
 # Anchor to the repo (tools/assets/ -> repo root) with OS-correct separators;
 # the old `r"..\history\states"` literals were dead on Linux.
@@ -24,7 +27,7 @@ def rgb_to_hex(rgb):
 
 
 def merge_provinces(image_path, target_hex_codes, replacement_hex_code):
-    img = Image.open(image_path).convert("RGB")
+    img = _pil_image().open(image_path).convert("RGB")
     img_arr = img.load()
 
     width, height = img.size
@@ -135,7 +138,7 @@ def main():
             max_y = max(y for x, y in white_pixel_coords)
             new_width = max_x - min_x + 1
             new_height = max_y - min_y + 1
-            new_image = Image.new("RGBA", (new_width, new_height), (0, 0, 0, 0))
+            new_image = _pil_image().new("RGBA", (new_width, new_height), (0, 0, 0, 0))
             for x, y in white_pixel_coords:
                 new_image.putpixel((x - min_x, y - min_y), (255, 255, 255, 255))
             resize_width = int(new_image.width)

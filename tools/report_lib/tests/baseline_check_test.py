@@ -73,7 +73,9 @@ def test_empty_candidate_establishes_clean_baseline(tmp_path, monkeypatch, capsy
 
 def test_missing_candidate_directory_fails(tmp_path, monkeypatch, capsys):
     code = _run(
-        tmp_path, tmp_path / "no-such-baseline", tmp_path / "missing",
+        tmp_path,
+        tmp_path / "no-such-baseline",
+        tmp_path / "missing",
         monkeypatch=monkeypatch,
     )
 

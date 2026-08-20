@@ -213,7 +213,7 @@ def main():
             "validate_events.py",
             "events validator finds missing is_triggered_only",
             expect_issues=True,
-            expected_path=TEST_EVENT_FILE,
+            expected_path=os.path.basename(TEST_EVENT_FILE),
             expected_category="missing-triggered-only",
         )
 

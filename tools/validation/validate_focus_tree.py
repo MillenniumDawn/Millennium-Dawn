@@ -477,9 +477,7 @@ def _body_money_cost(
         elif kind == "scale":
             seg_unknown = True
             scale_is_negative = (
-                val is not None
-                and val.startswith("-")
-                and val.lstrip("-0.") != ""
+                val is not None and val.startswith("-") and val.lstrip("-0.") != ""
             )
             if seg_var_base or (seg_has_set and not seg_sign_unknown):
                 # `treasury_change = gdp_total` then `* -0.08` is the MD idiom
@@ -1744,9 +1742,7 @@ class Validator(BaseValidator):
         is unknown, so a handful of computed-income effects may be included.
         """
         effect_bodies, _, direct_money = self._scripted_effect_data_for_guards()
-        _, money = _resolve_scripted_effect_chains(
-            effect_bodies, {}, direct_money
-        )
+        _, money = _resolve_scripted_effect_chains(effect_bodies, {}, direct_money)
         return money
 
     def validate_ai_will_do_guards(self):

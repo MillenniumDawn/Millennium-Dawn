@@ -1648,9 +1648,11 @@ def _spot_scan_context_body(
                 _spot_finding(
                     "repeated-invariant-scope",
                     name,
-                    "high"
-                    if loop_context.get("reachability") == "recurring"
-                    else "medium",
+                    (
+                        "high"
+                        if loop_context.get("reachability") == "recurring"
+                        else "medium"
+                    ),
                     "medium",
                     file,
                     _line_of(full_source, loop_abs + second_start),

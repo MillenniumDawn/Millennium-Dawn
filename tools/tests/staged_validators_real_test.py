@@ -167,7 +167,7 @@ def main():
             "events: Event Horizon.txt (missing is_triggered_only)",
             expect_issues=True,
             min_issues=1,
-            expected_path="events/Event Horizon.txt",
+            expected_path="Event Horizon.txt",
             expected_category="missing-triggered-only",
         )
         cleanup()
@@ -230,7 +230,7 @@ def main():
             "events: multiple files staged (only events checked)",
             expect_issues=True,
             min_issues=1,
-            expected_path="events/Event Horizon.txt",
+            expected_path="Event Horizon.txt",
             expected_category="missing-triggered-only",
         )
         run_validator(

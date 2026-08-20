@@ -40,9 +40,7 @@ def run_reference_search(
     subject_singular: str,
     subject_plural: str,
     extract_names: Callable[[Path], List[str]],
-    search_for_references: Callable[
-        [List[str]], Dict[str, List[Tuple[str, int, str]]]
-    ],
+    search_for_references: Callable[[List[str]], Dict[str, List[Tuple[str, int, str]]]],
     show_all: bool,
     no_report: bool,
     report_prefix_all: str,

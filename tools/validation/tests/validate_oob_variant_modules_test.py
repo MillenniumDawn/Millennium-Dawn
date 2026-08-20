@@ -110,9 +110,9 @@ def test_variant_sources_preserve_staged_and_full_scopes(tmp_path):
     }
 
     full_validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    assert full_validator._get_variant_sources(ignore_staged=False) is full_validator._get_variant_sources(
-        ignore_staged=True
-    )
+    assert full_validator._get_variant_sources(
+        ignore_staged=False
+    ) is full_validator._get_variant_sources(ignore_staged=True)
 
 
 def test_flags_land_variant_in_every_source(tmp_path):

@@ -110,6 +110,6 @@ def test_allowlist_entries_still_exist():
                 "write_text",
             ):
                 live.add(f"{rel}:{node.lineno}")
-    assert not (_ALLOWLIST - live), (
-        f"Allowlist entries no longer exist: {_ALLOWLIST - live}"
-    )
+    assert not (
+        _ALLOWLIST - live
+    ), f"Allowlist entries no longer exist: {_ALLOWLIST - live}"

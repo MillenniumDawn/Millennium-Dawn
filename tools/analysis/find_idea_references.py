@@ -100,9 +100,7 @@ def make_idea_searcher(search_dirs: list[Path]):
     """Build a closure that scans each candidate file once for all ideas."""
 
     def search(names: list[str]) -> dict[str, list[tuple[str, int, str]]]:
-        refs: dict[str, list[tuple[str, int, str]]] = {
-            name: [] for name in names
-        }
+        refs: dict[str, list[tuple[str, int, str]]] = {name: [] for name in names}
         if not names:
             return refs
         token_re = re.compile(

@@ -60,9 +60,9 @@ def _checks_matrix_steps(check_id: str) -> list:
 
 def _sole_checkout(steps: list) -> dict:
     checkouts = [s for s in steps if s.get("uses", "").startswith("actions/checkout@")]
-    assert len(checkouts) == 1, (
-        f"expected exactly one checkout for this matrix entry, got {len(checkouts)}"
-    )
+    assert (
+        len(checkouts) == 1
+    ), f"expected exactly one checkout for this matrix entry, got {len(checkouts)}"
     return checkouts[0]
 
 
@@ -310,9 +310,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert not gone, (
-        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
-    )
+    assert (
+        not gone
+    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED
@@ -358,11 +358,13 @@ def test_validator_cache_runs_suite_once_and_reuses_results():
     assert "Download validation result candidate" in workflow
     config = yaml.safe_load(workflow)
     upload = next(
-        step for step in config["jobs"]["build-cache"]["steps"]
+        step
+        for step in config["jobs"]["build-cache"]["steps"]
         if step.get("name") == "Upload validation result candidate"
     )
     download = next(
-        step for step in config["jobs"]["check-baseline"]["steps"]
+        step
+        for step in config["jobs"]["check-baseline"]["steps"]
         if step.get("name") == "Download validation result candidate"
     )
     assert upload["with"]["path"] == ".validation_baseline_candidate/"
@@ -428,12 +430,12 @@ def test_nightly_keys_the_bundle_on_the_live_base_tip():
     script = "\n".join(
         line for line in step["run"].splitlines() if not line.lstrip().startswith("#")
     )
-    assert "commits/main" in script, (
-        "the nightly must resolve main's live head for base_sha"
-    )
-    assert ".base.sha" not in script, (
-        "the PR list's .base.sha does not track main, so it cannot key the bundle"
-    )
+    assert (
+        "commits/main" in script
+    ), "the nightly must resolve main's live head for base_sha"
+    assert (
+        ".base.sha" not in script
+    ), "the PR list's .base.sha does not track main, so it cannot key the bundle"
 
 
 def test_mio_validator_runs_for_localisation_changes():
@@ -617,9 +619,9 @@ def test_ci_run_steps_default_to_strict():
             for step in workflow["jobs"][job]["steps"]
             if step.get("name") == "Run validation"
         )
-        assert 'matrix.validator.strict }}" != "false"' in run, (
-            f"{job}'s Run step must default to --strict when `strict:` is absent."
-        )
+        assert (
+            'matrix.validator.strict }}" != "false"' in run
+        ), f"{job}'s Run step must default to --strict when `strict:` is absent."
 
 
 def test_ci_idea_icon_check_is_enabled():

@@ -208,6 +208,7 @@ def _parse_canonical_unit_sources(
     parsed = []
     for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
         content = _read_text(filepath)
+
         def compute(
             source_content: str = content,
         ) -> Tuple[Set[str], Set[str]]:
@@ -1150,9 +1151,7 @@ class Validator(BaseValidator):
         self._log_section("Building canonical unit name set...")
 
         unit_sources = _parse_canonical_unit_sources(self.mod_path)
-        self.canonical = {
-            name for sub_units, _ in unit_sources for name in sub_units
-        }
+        self.canonical = {name for sub_units, _ in unit_sources for name in sub_units}
         self.canonical_lower = {name.lower(): name for name in self.canonical}
 
         # Namelist keys also accept equipment-type names (air namelists use
@@ -1313,9 +1312,7 @@ class Validator(BaseValidator):
         if full_scope in self._variant_sources_by_scope:
             return self._variant_sources_by_scope[full_scope]
 
-        files = self._collect_files(
-            _VARIANT_SOURCE_PATTERNS, ignore_staged=full_scope
-        )
+        files = self._collect_files(_VARIANT_SOURCE_PATTERNS, ignore_staged=full_scope)
         sources = [
             (os.path.relpath(filepath, self.mod_path), _read_text(filepath))
             for filepath in files

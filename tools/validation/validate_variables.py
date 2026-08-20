@@ -1568,11 +1568,7 @@ class Validator(BaseValidator):
             self.log("✓ No untooltipped check_variable in available blocks")
             return
 
-        issues = [
-            issue
-            for untooltipped, _flags in available
-            for issue in untooltipped
-        ]
+        issues = [issue for untooltipped, _flags in available for issue in untooltipped]
         self._report(
             issues,
             "✓ No untooltipped check_variable in available blocks",
