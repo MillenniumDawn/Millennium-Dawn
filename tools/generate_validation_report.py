@@ -175,7 +175,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
 
     try:
-        with open(args.output, "w", encoding="utf-8") as f:
+        with open(args.output, "w", encoding="utf-8", newline="") as f:
             f.write(body)
     except Exception as e:
         print(f"Error writing report: {e}", file=sys.stderr)
@@ -191,7 +191,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     step_summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if step_summary_path:
         try:
-            with open(step_summary_path, "w", encoding="utf-8") as f:
+            with open(step_summary_path, "w", encoding="utf-8", newline="") as f:
                 f.write(step_body)
             print("Step summary written.", file=sys.stderr)
         except Exception as e:
