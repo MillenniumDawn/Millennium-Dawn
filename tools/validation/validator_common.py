@@ -682,7 +682,7 @@ class BaseValidator:
     def save_output(self):
         if self.output_file and self.output_lines:
             try:
-                with open(self.output_file, "w", encoding="utf-8") as f:
+                with open(self.output_file, "w", encoding="utf-8", newline="") as f:
                     f.write("\n".join(self.output_lines))
                 logging.info(f"Results saved to: {self.output_file}")
             except Exception as e:
@@ -695,7 +695,7 @@ class BaseValidator:
         )
         if json_file and self._issues:
             try:
-                with open(json_file, "w", encoding="utf-8") as f:
+                with open(json_file, "w", encoding="utf-8", newline="") as f:
                     f.write(self.get_issues_json())
                 logging.info(f"JSON results saved to: {json_file}")
             except Exception as e:
