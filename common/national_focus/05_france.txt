@@ -84,11 +84,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_PS"
 			country_event = france_md.24
-			set_country_flag = FRA_PS_PATH
 		}
 
 		ai_will_do = {
 			base = 2
+			modifier = {
+				factor = 20
+				has_global_flag = FRA_AI_PS_FOCUS_PATH
+			}
 			modifier = {
 				is_historical_focus_on = yes
 				add = 4
@@ -139,14 +142,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_UDF_LREM"
 			country_event = france_md.20
-			set_country_flag = FRA_UDF_PATH
 		}
 
 		ai_will_do = {
-			base = 2
+			base = 4
 			modifier = {
-				add = 2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
+				factor = 20
+				has_global_flag = FRA_AI_UDF_FOCUS_PATH
 			}
 			modifier = {
 				add = 2
@@ -198,11 +200,17 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_LR"
 			country_event = france_md.21
-			set_country_flag = FRA_LR_PATH
 		}
 
 		ai_will_do = {
 			base = 2
+			modifier = {
+				factor = 20
+				OR = {
+					has_global_flag = FRA_AI_LR_FOCUS_PATH
+					has_global_flag = FRA_HISTORICAL_FOCUS_PATH
+				}
+			}
 			modifier = {
 				is_historical_focus_on = yes
 				add = 4
@@ -242,14 +250,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_RPF"
 			country_event = france_md.22
-			set_country_flag = FRA_RPF_PATH
 		}
 
 		ai_will_do = {
-			base = 2
+			base = 3
 			modifier = {
-				add = 1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
+				factor = 20
+				has_global_flag = FRA_AI_RPF_FOCUS_PATH
 			}
 			modifier = {
 				add = 2
@@ -297,14 +304,17 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_FN"
 			country_event = france_md.23
-			set_country_flag = FRA_RN_PATH
 		}
 
 		ai_will_do = {
-			base = 2
+			base = 3
 			modifier = {
-				add = 1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
+				factor = 20
+				OR = {
+					has_global_flag = FRA_RN_FOCUS_PATH
+					has_global_flag = FRA_KINGDOM_FOCUS_PATH
+					has_global_flag = FRA_EMPIRE_FOCUS_PATH
+				}
 			}
 			modifier = {
 				add = 2
@@ -342,11 +352,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_LFI"
 			country_event = france_md.25
-			set_country_flag = FRA_LFI_PATH
 		}
 
 		ai_will_do = {
 			base = 2
+			modifier = {
+				factor = 20
+				has_global_flag = FRA_AI_LFI_FOCUS_PATH
+			}
 			modifier = {
 				is_historical_focus_on = yes
 				add = -2
@@ -390,11 +403,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_EELV"
 			country_event = france_md.26
-			set_country_flag = FRA_GREEN_PATH
 		}
 
 		ai_will_do = {
 			base = 2
+			modifier = {
+				factor = 20
+				has_global_flag = FRA_AI_EELV_FOCUS_PATH
+			}
 			modifier = {
 				is_historical_focus_on = yes
 				add = -2
@@ -434,11 +450,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_PCF"
 			country_event = france_md.27
-			set_country_flag = FRA_PCF_PATH
 		}
 
 		ai_will_do = {
 			base = 2
+			modifier = {
+				factor = 20
+				has_global_flag = FRA_COMMUNE_FOCUS_PATH
+			}
 			modifier = {
 				is_historical_focus_on = yes
 				add = -2
@@ -540,7 +559,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_PS_PATH
+				has_completed_focus = FRA_PS
 			}
 		}
 	}
@@ -584,7 +603,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_PS_PATH
+				has_completed_focus = FRA_PS
 			}
 		}
 	}
@@ -1138,7 +1157,7 @@ focus_tree = {
 		prerequisite = { focus = FRA_cut_with_unions }
 		prerequisite = { focus = FRA_vigipirate }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_FACTION }
 
 		available = {
 			western_social_democrats_are_in_power = yes
@@ -1150,23 +1169,22 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_not_done"
-			add_stability = 0.1
-			add_political_power = 150
 			add_ideas = FRA_resist_inevitable
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { steal_party_index = 5 }
+			steal_from_party = yes
+			set_temp_variable = { steal_party_index = 19 }
+			steal_from_party = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_political_balance }
+			add_to_variable = { FRA_Balance_drift_defense = 0.1 tooltip = drift_defence_factor_tt }
+			add_to_variable = { FRA_balance_domestic_nationalist_drift = -0.02 tooltip = nationalist_drift_tt }
+			add_political_power = 100
+			add_stability = 0.05
 		}
 
 		ai_will_do = {
-			base = 20
-			modifier = {
-				factor = 40
-				NOT = {
-					has_global_flag = FRA_CHAOS_PATH
-				}
-			}
-			modifier = {
-				factor = 2
-					has_global_flag = FRA_CHAOS_PATH
-			}
+			base = 800
 			modifier = {
 				factor = 1
 				is_historical_focus_on = yes
@@ -1230,7 +1248,7 @@ focus_tree = {
 
 		prerequisite = { focus = FRA_not_done }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_ENVIRONMENT }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_POWER_INFRASTRUCTURE }
 
 		available = {
 			western_social_democrats_are_in_power = yes
@@ -1246,23 +1264,12 @@ focus_tree = {
 				remove_idea = FRA_resist_inevitable
 				add_idea = FRA_resist_inevitable2
 			}
-			set_temp_variable = { party_index = 3 }
-			set_temp_variable = { party_popularity_increase = 0.05 }
-			change_relative_party_popularity = yes
+			steal_popularity_from_enviromentalists = yes
+			country_event = france_md.404
 		}
 
 		ai_will_do = {
-			base = 20
-			modifier = {
-				factor = 40
-				NOT = {
-					has_global_flag = FRA_CHAOS_PATH
-				}
-			}
-			modifier = {
-				factor = 2
-					has_global_flag = FRA_CHAOS_PATH
-			}
+			base = 800
 			modifier = {
 				factor = 1
 				is_historical_focus_on = yes
@@ -1335,7 +1342,7 @@ focus_tree = {
 
 		prerequisite = { focus = FRA_not_done }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
 
 		available = {
 			western_social_democrats_are_in_power = yes
@@ -1347,27 +1354,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_party_unity"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_political_balance }
+			add_to_variable = { FRA_Balance_drift_defense = 0.15 tooltip = drift_defence_factor_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_social_balance }
+			add_to_variable = { FRA_SOC_BP = 0.1 tooltip = political_power_factor_tt }
+			add_to_variable = { FRA_soc_bureaucracy_cost = 0.1 tooltip = bureaucracy_cost_multiplier_modifier_tt }
 			set_temp_variable = { party_index = 3 }
-			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { party_popularity_increase = 0.08 }
 			change_relative_party_popularity = yes
-			set_temp_variable = { party_index = 2 }
-			set_temp_variable = { party_popularity_increase = -0.1 }
-			change_relative_party_popularity = yes
-			add_stability = 0.1
+			add_stability = 0.05
+			add_political_power = -75
 		}
 
 		ai_will_do = {
-			base = 20
-			modifier = {
-				factor = 40
-				NOT = {
-					has_global_flag = FRA_CHAOS_PATH
-				}
-			}
-			modifier = {
-				factor = 2
-					has_global_flag = FRA_CHAOS_PATH
-			}
+			base = 800
 			modifier = {
 				factor = 1
 				is_historical_focus_on = yes
@@ -1437,6 +1437,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_stole_voter"
 			country_event = france_md.163
+			steal_popularity_from_patriots = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+			add_ideas = FRA_bassin_minier
 			if = {
 				limit = { has_full_control_of_state = 54 }
 				54 = {
@@ -1459,12 +1463,13 @@ focus_tree = {
 					}
 				}
 			}
+			newline = yes
 			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
-			base = 20
+			base = 800
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
@@ -1472,16 +1477,6 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 40
-				NOT = {
-					has_global_flag = FRA_CHAOS_PATH
-				}
-			}
-			modifier = {
-				factor = 2
-				has_global_flag = FRA_CHAOS_PATH
 			}
 			modifier = {
 				factor = 1
@@ -1498,11 +1493,11 @@ focus_tree = {
 		y = 1
 		relative_position_id = FRA_turn_ecology
 
-		cost = 3
+		cost = 10
 
 		prerequisite = { focus = FRA_turn_ecology }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SOCIAL_CONSERVATISM }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SOCIAL_CONSERVATISM FOCUS_FILTER_STABILITY }
 
 		available = {
 			western_social_democrats_are_in_power = yes
@@ -1514,27 +1509,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_ps_lgbt"
-			set_temp_variable = { party_index = 3 }
-			set_temp_variable = { party_popularity_increase = 0.05 }
-			change_relative_party_popularity = yes
 			swap_ideas = {
 				remove_idea = FRA_resist_inevitable2
 				add_idea = FRA_resist_inevitable3
 			}
+			set_temp_variable = { steal_party_index = 2 }
+			steal_from_party = yes
+			set_temp_variable = { steal_party_index = 17 }
+			steal_from_party = yes
+			country_event = france_md.405
 		}
 
 		ai_will_do = {
-			base = 20
-			modifier = {
-				factor = 40
-				NOT = {
-					has_global_flag = FRA_CHAOS_PATH
-				}
-			}
-			modifier = {
-				factor = 2
-					has_global_flag = FRA_CHAOS_PATH
-			}
+			base = 800
 			modifier = {
 				factor = 1
 				is_historical_focus_on = yes
@@ -1613,7 +1600,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_UDF_PATH
+				has_completed_focus = FRA_UDF_LREM
 			}
 		}
 	}
@@ -1630,7 +1617,7 @@ focus_tree = {
 
 		prerequisite = { focus = FRA_UDF_LREM }
 
-		search_filters = { FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_PROPAGANDA }
 
 		available = {
 			OR = {
@@ -1641,19 +1628,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_Get_indecisives"
-			set_temp_variable = { party_index = 1 }
-			set_temp_variable = { party_popularity_increase = -0.10 }
+			steal_popularity_from_conservatives = yes
+			steal_popularity_from_socialists = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
 			change_relative_party_popularity = yes
-			set_temp_variable = { party_index = 2 }
-			set_temp_variable = { party_popularity_increase = -0.10 }
-			change_relative_party_popularity = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_political_balance }
+			add_to_variable = { FRA_Balance_drift_defense = -0.1 tooltip = drift_defence_factor_tt }
+			add_political_power = -50
 		}
 
 		ai_will_do = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_UDF_PATH
+				has_completed_focus = FRA_UDF_LREM
 			}
 		}
 	}
@@ -1671,7 +1660,7 @@ focus_tree = {
 		prerequisite = { focus = FRA_Neither_right_nor_left }
 		prerequisite = { focus = FRA_Get_indecisives }
 
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_FOREIGN_INVESTMENTS FOCUS_FILTER_STABILITY }
 
 		available = {
 			western_liberals_are_in_power = yes
@@ -1685,8 +1674,14 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_abolish_ISF"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_econ_policy }
 			add_to_variable = { FRA_econ_tax_revenue = -0.1 tooltip = population_tax_income_multiplier_modifier_tt }
-			set_temp_variable = { temp_change = -5 }
-			modify_population_tax_rate_effect = yes
+			add_to_variable = { FRA_econ_investment_cost_modifier = -0.15 tooltip = investment_cost_modifier_tt }
+			add_to_variable = { FRA_econ_return_on_investment_modifier = 0.1 tooltip = return_on_investment_modifier_tt }
+			add_to_variable = { FRA_econ_growth = 0.03 tooltip = production_factory_efficiency_gain_factor_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_social_balance }
+			add_to_variable = { FRA_social_STAB = -0.05 tooltip = stability_factor_tt }
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			change_relative_party_popularity = yes
 		}
 
 		ai_will_do = { base = 8 }
@@ -1738,7 +1733,7 @@ focus_tree = {
 		prerequisite = { focus = FRA_Neither_right_nor_left }
 		prerequisite = { focus = FRA_Get_indecisives }
 
-		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_NATO FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
 		available = {
 			western_liberals_are_in_power = yes
@@ -1755,13 +1750,24 @@ focus_tree = {
 				add_opinion_modifier = { target = ROOT modifier = military_cooperation }
 				reverse_add_opinion_modifier = { target = ROOT modifier = military_cooperation }
 			}
-			if = { limit = { country_exists = USA }
+			if = {
+				limit = { country_exists = USA }
 				add_opinion_modifier = {
 					modifier = supports_us
 					target = USA
 				}
+				set_temp_variable = { percent_change = 10 }
+				set_temp_variable = { tag_index = USA.id }
+				set_temp_variable = { influence_target = ROOT.id }
+				change_influence_percentage = yes
 			}
-			add_political_power = 150
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_political_balance }
+			add_to_variable = { FRA_balance_democratic_drift = 0.03 tooltip = democratic_drift_tt }
+			add_to_variable = { FRA_balance_domestic_nationalist_drift = 0.02 tooltip = nationalist_drift_tt }
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			change_relative_party_popularity = yes
+			add_political_power = 100
 		}
 
 		ai_will_do = { base = 2 }
@@ -1830,7 +1836,7 @@ focus_tree = {
 
 		prerequisite = { focus = FRA_abolish_ISF }
 
-		search_filters = { FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INTERNAL_FACTION }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_STABILITY }
 
 		available = {
 			western_liberals_are_in_power = yes
@@ -1843,11 +1849,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_reduce_tax"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_econ_policy }
-			add_to_variable = { FRA_econ_tax_revenue = -0.1 tooltip = population_tax_income_multiplier_modifier_tt }
+			add_to_variable = { FRA_econ_cons_goo = -0.15 tooltip = consumer_goods_factor_tt }
+			add_to_variable = { FRA_econ_monthly_pop = 0.05 tooltip = monthly_population_tt }
+			add_to_variable = { FRA_econ_tax_efficiency = -0.1 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_social_balance }
+			add_to_variable = { FRA_soc_bureaucracy_cost = 0.1 tooltip = bureaucracy_cost_multiplier_modifier_tt }
+			add_to_variable = { FRA_social_STAB = 0.05 tooltip = stability_factor_tt }
 			set_temp_variable = { temp_change = -5 }
 			modify_population_tax_rate_effect = yes
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_econ_policy }
-			add_to_variable = { FRA_econ_cons_goo = -0.15 tooltip = consumer_goods_factor_tt }
 		}
 
 		ai_will_do = { base = 3 }
@@ -2016,7 +2025,7 @@ focus_tree = {
 
 		prerequisite = { focus = FRA_independant_Euro }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_EXPENDITURE }
+		search_filters = { FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POWER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			western_liberals_are_in_power = yes
@@ -2031,6 +2040,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_nuclear_eu"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_econ_policy }
+			add_to_variable = { FRA_econ_nuke_reactor_construction_speed = 0.1 tooltip = production_speed_nuclear_reactor_factor_tt }
+			add_to_variable = { FRA_nuclear_energy_prod = 0.1 tooltip = nuclear_energy_generation_modifier_tt }
 			for_each_scope_loop = {
 				array = global.EU_member
 				if = {
@@ -2038,11 +2050,35 @@ focus_tree = {
 					country_event = france_md.172
 				}
 			}
+			if = {
+				limit = { country_exists = GER }
+				set_temp_variable = { modify_europeanism = -0.15 }
+				set_temp_variable = { modify_europeanism_target = GER }
+				europeanism_change = yes
+			}
+			if = {
+				limit = { country_exists = AUT }
+				set_temp_variable = { modify_europeanism = -0.1 }
+				set_temp_variable = { modify_europeanism_target = AUT }
+				europeanism_change = yes
+			}
+			if = {
+				limit = { country_exists = CZE }
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = CZE.id }
+				change_influence_percentage = yes
+			}
+			if = {
+				limit = { country_exists = POL }
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = POL.id }
+				change_influence_percentage = yes
+			}
+			newline = yes
 			set_temp_variable = { treasury_change = -30 }
 			modify_treasury_effect = yes
-			set_temp_variable = { modify_europeanism = -0.15 }
-			set_temp_variable = { modify_europeanism_target = GER }
-			europeanism_change = yes
 		}
 
 		ai_will_do = {
@@ -2167,7 +2203,6 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 5.5
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = democratic
 			}
 		}
@@ -2420,7 +2455,7 @@ focus_tree = {
 		prerequisite = { focus = FRA_finance_student }
 		prerequisite = { focus = FRA_right_left_money }
 
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			western_liberals_are_in_power = yes
@@ -2432,14 +2467,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: FRA_handle"
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_social_balance }
-			add_to_variable = { FRA_soc_police_cost = 0.4 tooltip = police_cost_multiplier_modifier_tt }
-			add_to_variable = { FRA_social_STAB = 0.15 tooltip = stability_factor_tt }
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_political_balance }
-			add_to_variable = { FRA_Balance_drift_defense = -0.15 tooltip = drift_defence_factor_tt }
+			set_temp_variable = { temp_opinion = -10 }
+			change_labour_unions_opinion = yes
+			country_event = france_md.406
 		}
 
-		ai_will_do = { base = 15 }
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	focus = {
@@ -2511,7 +2550,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_LR_PATH
+				has_completed_focus = FRA_LR
 			}
 		}
 	}
@@ -2548,7 +2587,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_LR_PATH
+				has_completed_focus = FRA_LR
 			}
 		}
 	}
@@ -2750,7 +2789,7 @@ focus_tree = {
 
 		prerequisite = { focus = FRA_continue_liberal }
 
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_WAR_SUPPORT }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		available = {
 			western_conservatism_are_in_power = yes
@@ -2769,6 +2808,13 @@ focus_tree = {
 			add_to_variable = { FRA_econ_energy_cons = -0.25 tooltip = energy_use_modifier_civs_tt }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_social_balance }
 			add_to_variable = { FRA_social_STAB = -0.075 tooltip = stability_factor_tt }
+			add_to_variable = { FRA_soc_bureaucracy_cost = -0.2 tooltip = bureaucracy_cost_multiplier_modifier_tt }
+			add_to_variable = { FRA_SOC_adm_ned = -5 tooltip = expected_adm_modifier_tt }
+			set_temp_variable = { temp_opinion = -10 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			change_relative_party_popularity = yes
 		}
 
 		ai_will_do = { base = 3 }
@@ -2931,7 +2977,7 @@ focus_tree = {
 
 		prerequisite = { focus = FRA_question_ref }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_POLITICAL }
 
 		available = {
 			western_conservatism_are_in_power = yes
@@ -2943,6 +2989,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_looming_crisis"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_econ_policy }
+			add_to_variable = { FRA_econ_cycle_multi = -0.1 tooltip = econ_cycle_upg_cost_multiplier_modifier_tt }
 			country_event = france_md.165
 		}
 
@@ -3369,7 +3417,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_RPF_PATH
+				has_completed_focus = FRA_RPF
 			}
 		}
 	}
@@ -3424,7 +3472,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_RPF_PATH
+				has_completed_focus = FRA_RPF
 			}
 		}
 	}
@@ -3628,10 +3676,6 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_social_balance }
 			add_to_variable = { FRA_social_foreign_influence_defense = 0.15 tooltip = foreign_influence_defense_modifier_tt }
 			add_to_variable = { FRA_SOC_BP = 0.1 tooltip = political_power_factor_tt }
-			# Set RPF Gaullist path flag and add foreign policy idea
-			hidden_effect = {
-				set_country_flag = FRA_rpf_path
-			}
 			add_ideas = FRA_gaullist_foreign_policy
 		}
 
@@ -4378,7 +4422,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_RN_PATH
+				has_completed_focus = FRA_FN
 			}
 		}
 	}
@@ -4460,7 +4504,7 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 34
-				has_country_flag = FRA_RN_PATH
+				has_completed_focus = FRA_FN
 			}
 		}
 	}
@@ -5480,7 +5524,7 @@ focus_tree = {
 
 		cost = 10
 
-		allow_branch = { NOT = { has_country_flag = FRA_allowed_extremists_right } }
+		allow_branch = { has_country_flag = FRA_allowed_extremists_right }
 
 		prerequisite = { focus = FRA_salvage_mondialisation }
 		prerequisite = { focus = FRA_immigration_wave }
@@ -5661,7 +5705,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_LFI_PATH
+				has_completed_focus = FRA_LFI
 			}
 		}
 	}
@@ -5699,7 +5743,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_LFI_PATH
+				has_completed_focus = FRA_LFI
 			}
 		}
 	}
@@ -6643,7 +6687,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_GREEN_PATH
+				has_completed_focus = FRA_EELV
 			}
 		}
 	}
@@ -6692,7 +6736,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_GREEN_PATH
+				has_completed_focus = FRA_EELV
 			}
 		}
 	}
@@ -7636,7 +7680,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_PCF_PATH
+				has_completed_focus = FRA_PCF
 			}
 		}
 	}
@@ -7682,7 +7726,7 @@ focus_tree = {
 			base = 4
 			modifier = {
 				add = 30
-				has_country_flag = FRA_PCF_PATH
+				has_completed_focus = FRA_PCF
 			}
 		}
 	}
@@ -7825,10 +7869,7 @@ focus_tree = {
 			}
 			# Add Communist foreign policy idea
 			add_ideas = FRA_communist_foreign_policy
-			# Set Communist path flags
 			hidden_effect = {
-				set_country_flag = FRA_communist_path
-				set_country_flag = FRA_pcf_path
 				set_country_flag = FRA_left_nato_permanently
 			}
 			# Trigger USA reaction
@@ -8735,7 +8776,7 @@ focus_tree = {
 
 		cost = 10
 
-		allow_branch = { NOT = { has_country_flag = FRA_allowed_extremists_left } }
+		allow_branch = { has_country_flag = FRA_allowed_extremists_left }
 
 		prerequisite = { focus = FRA_altermondialism }
 		prerequisite = { focus = FRA_unite_struggle }
@@ -8860,7 +8901,13 @@ focus_tree = {
 			set_variable = { FRA_bonapart_domestic_nationalist_drift = 0.05 }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 20
+				has_global_flag = FRA_EMPIRE_FOCUS_PATH
+			}
+		}
 	}
 
 	focus = {
@@ -8899,7 +8946,13 @@ focus_tree = {
 			set_variable = { FRA_king_domestic_nationalist_drift = 0.05 }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 20
+				has_global_flag = FRA_KINGDOM_FOCUS_PATH
+			}
+		}
 	}
 
 	focus = {
@@ -10775,7 +10828,13 @@ focus_tree = {
 			set_variable = { FRA_commie_domestic_communist_drift = 0.05 }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 20
+				has_global_flag = FRA_COMMUNE_FOCUS_PATH
+			}
+		}
 	}
 
 	focus = {
@@ -11674,7 +11733,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 0.6
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 		}
@@ -11714,12 +11772,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				OR = {
 					is_in_array = { array = ruling_party value = 4 } #Communist
 					is_in_array = { array = ruling_party value = 5 } #Left wing radical
@@ -11764,12 +11820,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				OR = {
 					is_in_array = { array = ruling_party value = 16 } #Libertarian
 					is_in_array = { array = ruling_party value = 17 } #Greens
@@ -11812,12 +11866,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			 modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 } #Libertarian
 			}
 		}
@@ -11850,12 +11902,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				OR = {
 					is_in_array = { array = ruling_party value = 4 } #Communist
 					is_in_array = { array = ruling_party value = 5 } #Left wing radical
@@ -11906,12 +11956,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				OR = {
 					is_in_array = { array = ruling_party value = 4 } #Communist
 					is_in_array = { array = ruling_party value = 5 } #Left wing radical
@@ -11956,12 +12004,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				OR = {
 					is_in_array = { array = ruling_party value = 16 } #Libertarian
 					is_in_array = { array = ruling_party value = 17 } #Greens
@@ -12012,7 +12058,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
@@ -12021,7 +12066,6 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 } #Libertarian
 			}
 			modifier = {
@@ -12084,12 +12128,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 } #Libertarian
 			}
 			modifier = {
@@ -12124,12 +12166,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				OR = {
 					is_in_array = {
 						array = ruling_party #Communist
@@ -12196,12 +12236,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				OR = {
 					is_in_array = {
 						array = ruling_party #Communist
@@ -12272,12 +12310,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				OR = {
 					is_in_array = { array = ruling_party value = 16 } #Libertarian
 					is_in_array = { array = ruling_party value = 17 } #Greens
@@ -12316,7 +12352,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
@@ -12325,7 +12360,6 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 } #Libertarian
 			}
 			modifier = {
@@ -12385,12 +12419,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 } #Libertarian
 			}
 			modifier = {
@@ -12444,12 +12476,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				OR = {
 					is_in_array = { array = ruling_party value = 4 } #Communist
 					is_in_array = { array = ruling_party value = 5 } #Left wing radical
@@ -12505,12 +12535,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 } #Libertarian
 			}
 		}
@@ -12546,12 +12574,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 } #Libertarian
 			}
 		}
@@ -12591,12 +12617,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
@@ -12637,7 +12661,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 		}
@@ -12671,12 +12694,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			 modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 } #Libertarian
 			}
 		}
@@ -12749,7 +12770,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
@@ -12758,7 +12778,6 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
@@ -12836,7 +12855,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
@@ -12845,7 +12863,6 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
@@ -12927,7 +12944,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
@@ -12936,7 +12952,6 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
@@ -13006,7 +13021,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 		}
@@ -13039,7 +13053,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 		}
@@ -13075,12 +13088,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 		}
@@ -13119,12 +13130,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 			modifier = {
@@ -13164,12 +13173,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 		}
@@ -13216,7 +13223,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
@@ -13225,7 +13231,6 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 			modifier = {
@@ -13269,7 +13274,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 		}
@@ -13300,7 +13304,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 		}
@@ -13346,7 +13349,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
@@ -13389,12 +13391,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 		}
@@ -13516,7 +13516,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
@@ -13525,7 +13524,6 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 } #Libertarian
 			}
 			modifier = {
@@ -13628,12 +13626,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 } #Libertarian
 			}
 			modifier = {
@@ -13675,7 +13671,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 		}
@@ -13719,12 +13714,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 } #Libertarian
 			}
 			modifier = {
@@ -13764,12 +13757,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 		}
@@ -13804,12 +13795,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 		}
@@ -13840,7 +13829,6 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 0.6
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 		}
@@ -13907,12 +13895,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 			modifier = {
@@ -13983,12 +13969,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 			modifier = {
@@ -14059,12 +14043,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 			modifier = {
@@ -14117,12 +14099,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				OR = {
 					is_in_array = { array = ruling_party value = 16 }
 					is_in_array = { array = ruling_party value = 17 }
@@ -14167,12 +14147,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 			modifier = {
@@ -14206,12 +14184,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				is_in_array = { array = ruling_party value = 16 }
 			}
 		}
@@ -14271,18 +14247,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -14354,18 +14327,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 			modifier = {
@@ -14441,18 +14411,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 			modifier = {
@@ -14528,18 +14495,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 			modifier = {
@@ -14599,18 +14563,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 			modifier = {
@@ -14653,18 +14614,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -14710,18 +14668,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -14755,18 +14710,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -14813,18 +14765,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -14863,18 +14812,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -14913,18 +14859,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -14980,18 +14923,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 			modifier = {
@@ -15034,18 +14974,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15108,18 +15045,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 			modifier = {
@@ -15157,18 +15091,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15202,18 +15133,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15264,18 +15192,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 			modifier = {
@@ -15318,18 +15243,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15365,18 +15287,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 			modifier = {
@@ -15414,18 +15333,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15449,7 +15365,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_the_space_program"
-			set_country_flag = FRA_new_frontiers
 			unlock_decision_category_tooltip = FRA_french_space_decision_category
 			add_ideas = FRA_idea_space_agency_1
 		}
@@ -15458,18 +15373,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15508,18 +15420,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15558,18 +15467,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15610,18 +15516,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15671,18 +15574,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15752,18 +15652,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15821,18 +15718,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15873,18 +15767,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
@@ -15936,18 +15827,15 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 1.1
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = yes
 			}
 			modifier = {
 				factor = 0.8
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_war = no
 				has_government = neutrality
 			}
 			modifier = {
 				factor = 1.2
-				NOT = { has_global_flag = FRA_CHAOS_PATH }
 				has_government = nationalist
 			}
 		}
