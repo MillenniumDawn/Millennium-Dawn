@@ -92,6 +92,29 @@ _NOT_UNLOCKED = (
 )
 
 
+def test_variant_sources_preserve_staged_and_full_scopes(tmp_path):
+    staged_path = _write(tmp_path, "events/05_staged.txt", _variant(_UNLOCKED))
+    _write(tmp_path, "events/06_full.txt", _variant(_UNLOCKED))
+
+    validator = Validator(
+        mod_path=str(tmp_path), use_colors=False, workers=1, staged_only=True
+    )
+    validator.staged_files = [str(staged_path)]
+
+    staged = validator._get_variant_sources(ignore_staged=False)
+    full = validator._get_variant_sources(ignore_staged=True)
+    assert {rel for rel, _ in staged} == {"events/05_staged.txt"}
+    assert {rel for rel, _ in full} == {
+        "events/05_staged.txt",
+        "events/06_full.txt",
+    }
+
+    full_validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    assert full_validator._get_variant_sources(ignore_staged=False) is full_validator._get_variant_sources(
+        ignore_staged=True
+    )
+
+
 def test_flags_land_variant_in_every_source(tmp_path):
     sources = {
         "events/05_test.txt": _variant(_NOT_UNLOCKED),

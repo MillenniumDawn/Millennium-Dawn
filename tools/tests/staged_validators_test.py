@@ -60,7 +60,9 @@ def git_restore(path):
         os.remove(path)
 
 
-def run_validator(script, label, expect_issues=True):
+def run_validator(
+    script, label, expect_issues=True, expected_path=None, expected_category=None
+):
     """Run a validator with --staged and check the result."""
     global passed, failed, errors
 
@@ -88,9 +90,18 @@ def run_validator(script, label, expect_issues=True):
     else:
         status_parts.append(f"{elapsed:.2f}s")
 
-    if expect_issues and result.returncode == 0:
+    output = (result.stdout or "") + (result.stderr or "")
+    if expect_issues and result.returncode != 1:
         ok = False
-        status_parts.append("expected issues but validator passed")
+        status_parts.append(
+            f"expected findings exit code 1 but got {result.returncode}"
+        )
+    elif expect_issues and expected_path and expected_path not in output:
+        ok = False
+        status_parts.append(f"missing expected path {expected_path}")
+    elif expect_issues and expected_category and expected_category not in output:
+        ok = False
+        status_parts.append(f"missing expected category {expected_category}")
     elif not expect_issues and result.returncode != 0:
         ok = False
         status_parts.append(
@@ -202,6 +213,8 @@ def main():
             "validate_events.py",
             "events validator finds missing is_triggered_only",
             expect_issues=True,
+            expected_path=TEST_EVENT_FILE,
+            expected_category="missing-triggered-only",
         )
 
         run_validator(
@@ -214,6 +227,8 @@ def main():
             "validate_localisation.py",
             "localisation validator finds unpaired bracket",
             expect_issues=True,
+            expected_path=os.path.basename(TEST_LOC_FILE),
+            expected_category="Unpaired brackets found in localisation",
         )
 
         # history_techs should find issues with non-existent tech
@@ -221,6 +236,8 @@ def main():
             "validate_history.py",
             "history techs validator finds bad tech dependency",
             expect_issues=True,
+            expected_path=os.path.basename(TEST_HISTORY_FILE),
+            expected_category="missing technology prerequisites",
         )
 
         print()

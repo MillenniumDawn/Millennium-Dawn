@@ -442,9 +442,6 @@ jobs:
           MD_STAGED_FILES="$(cat style_files.txt)" \
             python3 tools/validation/validate_style.py \
               --staged --strict --no-color
-          # Feed check_common_mistakes.py NUL-delimited paths through xargs.
-          tr '\n' '\0' < style_files.txt | xargs -0 -r \
-            python3 tools/linting/check_common_mistakes.py
 
   # ───────────────────────────────────────────────────────────────
   # Structural lint — file-integrity checks that otherwise only run as
@@ -508,6 +505,10 @@ jobs:
       fail-fast: false
       matrix:
         validator:
+          - script: validate_common_mistakes.py
+            name: common-mistakes
+            title: "Common Scripting Mistakes"
+            strict: true
           - script: validate_variables.py
             name: variables
             title: "Variables"

@@ -8,6 +8,7 @@ money-spending scripted effect) needs the bankruptcy_incoming_collapse guard;
 a guard on a focus with no money cost is flagged as unneeded.
 """
 
+import validate_focus_tree
 from validate_focus_tree import Validator, _extract_ai_guard_data
 
 
@@ -96,6 +97,58 @@ def _run_check(tmp_path):
     v = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     v.validate_ai_will_do_guards()
     return v
+
+
+def test_scripted_effect_facts_resolve_direct_and_wrapper_chains(tmp_path):
+    _write_effects_file(
+        tmp_path,
+        extra="""direct_builder = {
+	add_building_construction = {
+		type = arms_factory
+	}
+}
+builder_wrapper = {
+	direct_builder = yes
+}
+builder_outer = {
+	builder_wrapper = yes
+}
+direct_money = {
+	set_temp_variable = { treasury_change = -7 }
+	modify_treasury_effect = yes
+}
+money_wrapper = {
+	direct_money = yes
+}
+money_outer = {
+	money_wrapper = yes
+}
+""",
+    )
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+
+    staffable = validator._staffable_effect_map()
+    money = validator._money_cost_effect_names()
+    assert staffable["direct_builder"] == frozenset({"arms_factory"})
+    assert staffable["builder_outer"] == frozenset({"arms_factory"})
+    assert {"direct_money", "money_wrapper", "money_outer"} <= money
+
+
+def test_scripted_effect_sources_are_read_once_for_both_indexes(tmp_path, monkeypatch):
+    _write_effects_file(tmp_path)
+    reads = []
+    original = validate_focus_tree._read_scripted_effect_file
+
+    def read(filepath):
+        reads.append(filepath)
+        return original(filepath)
+
+    monkeypatch.setattr(validate_focus_tree, "_read_scripted_effect_file", read)
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator._staffable_effect_map()
+    validator._money_cost_effect_names()
+
+    assert len(reads) == 1
 
 
 # --------------------------------------------------------------------------

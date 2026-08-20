@@ -223,7 +223,7 @@ def _named_sub_blocks(body: str) -> List[Tuple[str, int, str]]:
 
 class Validator(BaseValidator):
     TITLE = "MIOS"
-    STAGED_EXTENSIONS = (".txt", ".yml")
+    STAGED_EXTENSIONS = [".txt", ".yml"]
 
     # org id -> comment-blanked body, for resolving `include` across files.
     _org_bodies: Dict[str, str] = {}
@@ -342,11 +342,11 @@ class Validator(BaseValidator):
             # blank_comments preserves offsets, so line numbers still line up
             # while a commented-out bonus can no longer be read as live script.
             clean = blank_comments(text)
-            for start, end, org_id in _block_spans(text):
+            for start, end, org_id in _block_spans(clean):
                 org_count += 1
-                body = text[start:end]
-                self._org_bodies[org_id] = clean[start:end]
-                body_offset = text.count("\n", 0, start)
+                body = clean[start:end]
+                self._org_bodies[org_id] = body
+                body_offset = clean.count("\n", 0, start)
                 self._check_id(org_id, rel, body_offset)
                 self._check_allowed(org_id, body, rel, body_offset)
                 self._check_initial_trait(org_id, body, rel, body_offset)
@@ -355,7 +355,7 @@ class Validator(BaseValidator):
                 self._check_header_text(org_id, body, rel, body_offset, loc_keys)
                 self._check_trait_localisation(org_id, body, rel, body_offset, loc_keys)
                 self._check_org_equipment_bonus(
-                    org_id, clean[start:end], rel, body_offset, equipment
+                    org_id, body, rel, body_offset, equipment
                 )
 
         for filepath in bonus_files:

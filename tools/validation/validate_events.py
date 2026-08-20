@@ -614,12 +614,11 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
         body_nc = blank_quoted_strings(strip_comments(body))
 
         id_match = _EVENT_ID_PATTERN.search(body)
-        if not id_match:
-            continue
 
         meta.append(
             {
-                "id": id_match.group(1),
+                "id": id_match.group(1) if id_match else None,
+                "body": body,
                 "type": event_type,
                 "file": basename,
                 "is_hidden": "hidden = yes" in body_nc,
@@ -652,24 +651,17 @@ class Validator(BaseValidator):
     def _get_all_events(self) -> Tuple[List[str], Dict[str, str]]:
         if self._events_cache is not None:
             return self._events_cache
-        files = self._collect_files(["events/**/*.txt"])
-        args_list = [(f, False, self.mod_path) for f in files]
-        all_results = self._pool_map(process_file_for_events, args_list, chunksize=10)
-
-        events = []
-        paths = {}
-        for ev_list, ev_paths in all_results:
-            events.extend(ev_list)
-            paths.update(ev_paths)
-
+        metadata, _ = self._get_event_metadata()
+        events = [event["body"] for event in metadata]
+        paths = {event["body"]: event["file"] for event in metadata}
         self._events_cache = (events, paths)
         return self._events_cache
 
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
-        Each metadata dict has: id, type, file, is_hidden,
-        is_triggered_only, fire_only_once, has_mtth, option_count,
+        Each metadata dict has: id (or None for malformed blocks), type, file,
+        is_hidden, is_triggered_only, fire_only_once, has_mtth, option_count,
         title_desc_refs.
         """
         if self._meta_cache is not None:
@@ -1043,7 +1035,7 @@ class Validator(BaseValidator):
             return None
 
         # Lookup pass: a staged event's parent almost always lives elsewhere.
-        graph_args = [
+        graph_args: List[Tuple[str, frozenset]] = [
             (f, frozenset())
             for f in self._collect_files(["events/**/*.txt"], ignore_staged=True)
         ]
@@ -1098,6 +1090,8 @@ class Validator(BaseValidator):
         for ev in meta:
             if not (ev["has_mtth"] and ev["is_triggered_only"]):
                 continue
+            if ev["id"] is None:
+                continue
             if ev["id"] in random_event_ids:
                 continue
             results.append(f"{ev['id']} - {ev['file']}")
@@ -1129,7 +1123,8 @@ class Validator(BaseValidator):
             detail = f"{count} option block{'s' if count != 1 else ''}"
             if count >= 2:
                 detail += " (only the first auto-fires — the rest are dead code)"
-            results.append(f"{ev['id']} - {ev['file']}: {detail}")
+            event_id = ev["id"] or "unknown"
+            results.append(f"{event_id} - {ev['file']}: {detail}")
 
         self._report(
             results,
@@ -1167,7 +1162,8 @@ class Validator(BaseValidator):
             if not real:
                 continue
             detail = "; ".join(real)
-            results.append(f"{ev['id']} - {ev['file']}: {detail}")
+            event_id = ev["id"] or "unknown"
+            results.append(f"{event_id} - {ev['file']}: {detail}")
 
         self._report(
             results,
@@ -1191,6 +1187,8 @@ class Validator(BaseValidator):
 
         for ev in meta:
             eid = ev["id"]
+            if eid is None:
+                continue
             if eid in seen:
                 results.append(f"{eid} - defined in {seen[eid]} and {ev['file']}")
             else:
@@ -1218,6 +1216,8 @@ class Validator(BaseValidator):
 
         for ev in meta:
             eid = ev["id"]
+            if eid is None:
+                continue
             last_dot = eid.rfind(".")
             if last_dot < 0:
                 continue

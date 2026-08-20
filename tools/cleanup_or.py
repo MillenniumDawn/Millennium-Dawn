@@ -24,7 +24,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from shared_utils import strip_inline_comment
+from shared_utils import atomic_write_text, strip_inline_comment
 
 # ---------------------------------------------------------------------------
 # Core OR-block parsing helpers (also imported by check_common_mistakes.py)
@@ -449,19 +449,18 @@ def process_file(filepath):
     new_lines = simplify_or_block(lines)
     new_lines = simplify_and_block(new_lines)
     if new_lines != lines:
-        with open(filepath, "w", encoding="utf-8", newline="") as f:
-            f.writelines(new_lines)
+        atomic_write_text(filepath, "".join(new_lines))
         return True
     return False
 
 
 # resources/ is reference-only and must never be modified; .git is not content.
-_EXCLUDED_DIRS = {"resources", ".git"}
+_EXCLUDED_DIRS = {"resources", ".git", ".claude"}
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 def _is_excluded_path(path, repo_root=None):
-    """True if the path is under an excluded dir (resources/, .git) inside the repo.
+    """True if the path is under an excluded repository directory.
 
     Matching is against the path *relative to the repo root*, not the absolute
     path: a checkout nested under an ancestor dir literally named `resources`
@@ -483,7 +482,7 @@ def main(paths):
     for path in paths:
         if _is_excluded_path(path):
             print(
-                f"SKIP: {path} is under an excluded directory (resources/, .git); not modified",
+                f"SKIP: {path} is under an excluded directory; not modified",
                 file=sys.stderr,
             )
             continue

@@ -3,12 +3,12 @@
 # YOU SHOULD DO `pip install Pillow` IN CMD IF YOU GET ERRORS FOR 'PIL' MODULE.
 
 import csv
+import importlib
 import os
 import re
 import sys
 
-import PIL.Image
-from PIL import Image
+Image = importlib.import_module("PIL.Image")
 
 # Anchor to the repo (tools/assets/ -> repo root) with OS-correct separators;
 # the old `r"..\history\states"` literals were dead on Linux.
@@ -24,7 +24,7 @@ def rgb_to_hex(rgb):
 
 
 def merge_provinces(image_path, target_hex_codes, replacement_hex_code):
-    img = PIL.Image.open(image_path).convert("RGB")
+    img = Image.open(image_path).convert("RGB")
     img_arr = img.load()
 
     width, height = img.size
@@ -75,7 +75,9 @@ def main():
                 match = re.findall(r"provinces\s*=\s*{([^}]*)}", state_data)
                 if match:
                     province_ids = match[0].split()
-                state_name_match = re.search(r"\d+-(.+)\.txt", file_name)
+                state_name_match = re.search(
+                    r"\d+-(.+)\.txt", os.path.basename(state_file)
+                )
                 if state_name_match:
                     state_name = state_name_match.group(1)
                     print("State Name:", state_name)
@@ -105,7 +107,7 @@ def main():
             print("Let me cook...")
 
         else:
-            print("Couldn't find state file")
+            raise SystemExit(f"Couldn't find state file for state ID {state_id}")
 
         image_path = provinces_bmp
         target_hex_codes = hex_codes

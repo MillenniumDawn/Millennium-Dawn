@@ -433,29 +433,22 @@ def process_file_for_clamp_conflicts(args) -> List[str]:
     return issues
 
 
-def process_file_for_untooltipped_available_checks(
+def _scan_available_file(
     args: Tuple[str, str],
-) -> List[Tuple[str, str, int]]:
-    """Pool worker: flag check_variable inside `available` with no tooltip wrapper.
-
-    Walks the enclosing block stack outward from each check so a wrapper at any
-    depth above it counts, not just the direct parent. A check carrying its own
-    inline ``tooltip = KEY`` needs no wrapper.
-    """
+) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int]]]:
+    """Extract both available-block checks from one comment-stripped source."""
     filename, mod_path = args
     if should_skip_file(filename):
-        return []
+        return [], []
     try:
         from pathlib import Path as _Path
 
         text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
-        return []
+        return [], []
 
     cleaned = blank_quoted_strings(strip_comments(text))
-    if "check_variable" not in cleaned:
-        return []
-
+    rel = os.path.relpath(filename, mod_path)
     events: List[Tuple[int, int, str]] = []
     for m in _SCOPE_OPEN_RE.finditer(cleaned):
         events.append((m.end() - 1, 0, m.group(1)))
@@ -464,27 +457,30 @@ def process_file_for_untooltipped_available_checks(
     for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
         open_idx = m.end() - 1
         body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
-        if _INLINE_TOOLTIP_RE.search(body):
-            continue
-        events.append((m.start(), 2, ""))
+        if not _INLINE_TOOLTIP_RE.search(body):
+            events.append((m.start(), 2, ""))
+    for m in _AVAILABLE_FLAG_RE.finditer(cleaned):
+        events.append((m.start(), 3, m.group(1)))
     events.sort(key=lambda e: (e[0], e[1]))
 
-    rel = os.path.relpath(filename, mod_path)
     stack: List[str] = []
-    issues: List[Tuple[str, str, int]] = []
+    untooltipped: List[Tuple[str, str, int]] = []
+    flags: List[Tuple[str, str, int]] = []
     for pos, kind, tok in events:
         if kind == 0:
             stack.append(tok)
-        elif kind == 1:
+            continue
+        if kind == 1:
             if stack:
                 stack.pop()
-        else:
+            continue
+        if kind == 2:
             for token in reversed(stack):
                 if token in _TOOLTIP_WRAPPER_TOKENS:
                     break
                 if token == _PLAYER_FACING_BLOCK:
                     line = cleaned[:pos].count("\n") + 1
-                    issues.append(
+                    untooltipped.append(
                         (
                             "check_variable in `available` renders no tooltip line"
                             " - the player sees a blank requirement; wrap it in"
@@ -494,62 +490,26 @@ def process_file_for_untooltipped_available_checks(
                         )
                     )
                     break
-    return issues
+        elif "@" not in tok:
+            for token in reversed(stack):
+                if token in _TOOLTIP_WRAPPER_TOKENS:
+                    break
+                if token == _PLAYER_FACING_BLOCK:
+                    flags.append((tok, rel, cleaned[:pos].count("\n") + 1))
+                    break
+    return untooltipped, flags
+
+
+def process_file_for_untooltipped_available_checks(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    return _scan_available_file(args)[0]
 
 
 def process_file_for_available_flags(
     args: Tuple[str, str],
 ) -> List[Tuple[str, str, int]]:
-    """Pool worker: collect `has_country_flag` names checked inside `available`.
-
-    Returns (flag, relative path, line) triples; the parent owns the loc index
-    and does the missing-key filtering.
-    """
-    filename, mod_path = args
-    if should_skip_file(filename):
-        return []
-    try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-
-    cleaned = blank_quoted_strings(strip_comments(text))
-    if "has_country_flag" not in cleaned:
-        return []
-
-    events: List[Tuple[int, int, str]] = []
-    for m in _SCOPE_OPEN_RE.finditer(cleaned):
-        events.append((m.end() - 1, 0, m.group(1)))
-    for m in re.finditer(r"\}", cleaned):
-        events.append((m.start(), 1, ""))
-    for m in _AVAILABLE_FLAG_RE.finditer(cleaned):
-        events.append((m.start(), 2, m.group(1)))
-    events.sort(key=lambda e: (e[0], e[1]))
-
-    rel = os.path.relpath(filename, mod_path)
-    stack: List[str] = []
-    issues: List[Tuple[str, str, int]] = []
-    for pos, kind, tok in events:
-        if kind == 0:
-            stack.append(tok)
-        elif kind == 1:
-            if stack:
-                stack.pop()
-        else:
-            if "@" in tok:
-                # Runtime-substituted flag names (e.g. trade_agreement@PREV)
-                # cannot be resolved to a loc key statically.
-                continue
-            for token in reversed(stack):
-                if token in _TOOLTIP_WRAPPER_TOKENS:
-                    break
-                if token == _PLAYER_FACING_BLOCK:
-                    line = cleaned[:pos].count("\n") + 1
-                    issues.append((tok, rel, line))
-                    break
-    return issues
+    return _scan_available_file(args)[1]
 
 
 def collect_dynamic_modifier_vars(args: Tuple[str, str]) -> List[Tuple[str, str]]:
@@ -1577,6 +1537,22 @@ class Validator(BaseValidator):
             category="clamp-range-conflict",
         )
 
+    def _get_available_scan(self):
+        """Return both available-block scans from one per-file worker pass."""
+        memo = getattr(self, "_available_scan_memo", None)
+        if memo is not None:
+            return memo
+        files = self._collect_files(_PLAYER_FACING_GLOBS)
+        if not files:
+            self._available_scan_memo = []
+            return self._available_scan_memo
+        self._available_scan_memo = self._pool_map(
+            _scan_available_file,
+            [(f, self.mod_path) for f in files],
+            chunksize=30,
+        )
+        return self._available_scan_memo
+
     def validate_untooltipped_available_checks(self):
         """Flag bare check_variable inside `available` blocks (WARNING).
 
@@ -1587,16 +1563,16 @@ class Validator(BaseValidator):
             "Checking for untooltipped check_variable in available blocks..."
         )
 
-        txt_files = self._collect_files(_PLAYER_FACING_GLOBS)
-        if not txt_files:
+        available = self._get_available_scan()
+        if not available:
             self.log("✓ No untooltipped check_variable in available blocks")
             return
 
-        args_list = [(f, self.mod_path) for f in txt_files]
-        all_results = self._pool_map(
-            process_file_for_untooltipped_available_checks, args_list, chunksize=30
-        )
-        issues = [issue for file_issues in all_results for issue in file_issues]
+        issues = [
+            issue
+            for untooltipped, _flags in available
+            for issue in untooltipped
+        ]
         self._report(
             issues,
             "✓ No untooltipped check_variable in available blocks",
@@ -1615,20 +1591,16 @@ class Validator(BaseValidator):
             "Checking for unlocalised country flags in available blocks..."
         )
 
-        txt_files = self._collect_files(_PLAYER_FACING_GLOBS)
-        if not txt_files:
+        available = self._get_available_scan()
+        if not available:
             self.log("✓ No unlocalised country flags in available blocks")
             return
 
-        args_list = [(f, self.mod_path) for f in txt_files]
-        all_results = self._pool_map(
-            process_file_for_available_flags, args_list, chunksize=30
-        )
         loc_keys = self._load_localisation_keys()
 
         seen: Set[Tuple[str, str]] = set()
         issues = []
-        for file_results in all_results:
+        for _unt, file_results in available:
             for flag, rel, line in file_results:
                 if flag in loc_keys:
                     continue

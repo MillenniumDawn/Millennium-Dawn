@@ -156,24 +156,9 @@ def parse_canonical_units(mod_path: str) -> Set[str]:
 
     Unit names are top-level identifiers inside sub_units = { ... } blocks.
     """
-    units_dir = os.path.join(mod_path, "common", "units")
     canonical = set()
-
-    for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-
-        canonical |= disk_cache.per_file_cached_by_content(
-            mod_path,
-            "oob_units.canonical",
-            filepath,
-            content,
-            lambda: _parse_canonical_units_file(content),
-        )
-
+    for sub_units, _ in _parse_canonical_unit_sources(mod_path):
+        canonical.update(sub_units)
     return canonical
 
 
@@ -190,23 +175,8 @@ def parse_canonical_namelist_keys(mod_path: str, sub_units: Set[str]) -> Set[str
     include both.
     """
     valid = set(sub_units)
-    units_dir = os.path.join(mod_path, "common", "units")
-
-    for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-
-        valid |= disk_cache.per_file_cached_by_content(
-            mod_path,
-            "oob_units.equipment",
-            filepath,
-            content,
-            lambda: _parse_equipment_names_file(content),
-        )
-
+    for _, equipment_names in _parse_canonical_unit_sources(mod_path):
+        valid.update(equipment_names)
     return valid
 
 
@@ -222,6 +192,37 @@ def _parse_equipment_names_file(content: str) -> Set[str]:
             equipment.add(entry.group(1))
 
     return equipment
+
+
+def _parse_canonical_unit_source(
+    content: str,
+) -> Tuple[Set[str], Set[str]]:
+    return _parse_canonical_units_file(content), _parse_equipment_names_file(content)
+
+
+def _parse_canonical_unit_sources(
+    mod_path: str,
+) -> List[Tuple[Set[str], Set[str]]]:
+    """Parse each unit source once for both canonical unit indexes."""
+    units_dir = os.path.join(mod_path, "common", "units")
+    parsed = []
+    for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
+        content = _read_text(filepath)
+        def compute(
+            source_content: str = content,
+        ) -> Tuple[Set[str], Set[str]]:
+            return _parse_canonical_unit_source(source_content)
+
+        parsed.append(
+            disk_cache.per_file_cached_by_content(
+                mod_path,
+                "oob_units.composite",
+                filepath,
+                content,
+                compute,
+            )
+        )
+    return parsed
 
 
 def _extract_namelist_block_keys(content: str) -> Set[str]:
@@ -1142,18 +1143,23 @@ class Validator(BaseValidator):
         self.canonical_lower = {}
         self.namelist_canonical = set()
         self.namelist_canonical_lower = {}
+        self._variant_sources_by_scope: Dict[bool, List[Tuple[str, str]]] = {}
 
     def _build_canonical_units(self):
         """Build the canonical unit name set from unit definition files."""
         self._log_section("Building canonical unit name set...")
 
-        self.canonical = parse_canonical_units(self.mod_path)
+        unit_sources = _parse_canonical_unit_sources(self.mod_path)
+        self.canonical = {
+            name for sub_units, _ in unit_sources for name in sub_units
+        }
         self.canonical_lower = {name.lower(): name for name in self.canonical}
 
         # Namelist keys also accept equipment-type names (air namelists use
         # `small_plane_airframe` rather than the sub_unit name `light_fighter`).
-        self.namelist_canonical = parse_canonical_namelist_keys(
-            self.mod_path, self.canonical
+        self.namelist_canonical = set(self.canonical)
+        self.namelist_canonical.update(
+            name for _, equipment_names in unit_sources for name in equipment_names
         )
         self.namelist_canonical_lower = {
             name.lower(): name for name in self.namelist_canonical
@@ -1301,6 +1307,22 @@ class Validator(BaseValidator):
             category="air-wing-template-loc",
         )
 
+    def _get_variant_sources(self, *, ignore_staged: bool) -> List[Tuple[str, str]]:
+        """Read variant sources once per effective staged/full scope."""
+        full_scope = not (self.staged_only and not ignore_staged)
+        if full_scope in self._variant_sources_by_scope:
+            return self._variant_sources_by_scope[full_scope]
+
+        files = self._collect_files(
+            _VARIANT_SOURCE_PATTERNS, ignore_staged=full_scope
+        )
+        sources = [
+            (os.path.relpath(filepath, self.mod_path), _read_text(filepath))
+            for filepath in files
+        ]
+        self._variant_sources_by_scope[full_scope] = sources
+        return sources
+
     def validate_created_variant_modules(self):
         """Check every `create_equipment_variant` design against its hull's slots.
 
@@ -1320,22 +1342,20 @@ class Validator(BaseValidator):
             self.log("  common/units/equipment/ not found, skipping")
             return
 
-        files = self._collect_files(_VARIANT_SOURCE_PATTERNS)
-        if not files:
+        sources = self._get_variant_sources(ignore_staged=False)
+        if not sources:
             self.log("  No files with equipment variants to check")
             return
-        self.log(f"  Found {len(files)} files to check")
+        self.log(f"  Found {len(sources)} files to check")
 
         index = self.cached(
             "equipment_hull_index", lambda: build_equipment_index(units_dir)
         )
 
         results = []
-        for filepath in files:
-            content = _read_text(filepath)
+        for rel, content in sources:
             if "create_equipment_variant" not in content:
                 continue
-            rel = os.path.relpath(filepath, self.mod_path)
 
             for f in check_created_variants(content, index):
                 labels = (
@@ -1370,10 +1390,9 @@ class Validator(BaseValidator):
         self._log_section("Checking OOB and production equipment references...")
 
         def _build_variants():
-            sources = []
-            for fp in self._collect_files(_VARIANT_SOURCE_PATTERNS, ignore_staged=True):
-                sources.append((os.path.relpath(fp, self.mod_path), _read_text(fp)))
-            return build_variant_name_index(sources)
+            return build_variant_name_index(
+                self._get_variant_sources(ignore_staged=True)
+            )
 
         by_tag, wildcard = self.cached("variant_name_index", _build_variants)
         if not by_tag and not wildcard:

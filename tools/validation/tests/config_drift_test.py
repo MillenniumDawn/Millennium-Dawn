@@ -60,9 +60,9 @@ def _checks_matrix_steps(check_id: str) -> list:
 
 def _sole_checkout(steps: list) -> dict:
     checkouts = [s for s in steps if s.get("uses", "").startswith("actions/checkout@")]
-    assert (
-        len(checkouts) == 1
-    ), f"expected exactly one checkout for this matrix entry, got {len(checkouts)}"
+    assert len(checkouts) == 1, (
+        f"expected exactly one checkout for this matrix entry, got {len(checkouts)}"
+    )
     return checkouts[0]
 
 
@@ -310,9 +310,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert (
-        not gone
-    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    assert not gone, (
+        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    )
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED
@@ -332,19 +332,49 @@ def test_targeted_parent_reaches_every_matrix_entry():
     parent_true_outputs = set(
         re.findall(r"needs\.detect-changes\.outputs\.([\w-]+)\s*==\s*'true'", parent)
     )
-    missing = {}
+    invalid = {}
     for entry in matrix:
         expression = entry.get("should_run", "")
         outputs = set(
             re.findall(r"needs\.detect-changes\.outputs\.([\w-]+)", expression)
         )
         unreachable = outputs - parent_true_outputs
-        if unreachable:
-            missing[entry["script"]] = sorted(unreachable)
-    assert not missing, (
-        "validate-targeted parent condition cannot reach matrix entries for "
-        f"these detect-changes outputs: {missing}"
+        if not expression.strip() or not outputs or unreachable:
+            invalid[entry["script"]] = {
+                "expression": expression,
+                "unreachable": sorted(unreachable),
+            }
+    assert not invalid, (
+        "validate-targeted entries need a nonempty should_run expression using "
+        f"reachable detect-changes outputs: {invalid}"
     )
+
+
+def test_validator_cache_runs_suite_once_and_reuses_results():
+    workflow = VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
+    assert workflow.count("python3 tools/validation/run_all_validators.py") == 1
+    assert "--persist-results .validation_baseline_candidate" in workflow
+    assert "Upload validation result candidate" in workflow
+    assert "Download validation result candidate" in workflow
+    config = yaml.safe_load(workflow)
+    upload = next(
+        step for step in config["jobs"]["build-cache"]["steps"]
+        if step.get("name") == "Upload validation result candidate"
+    )
+    download = next(
+        step for step in config["jobs"]["check-baseline"]["steps"]
+        if step.get("name") == "Download validation result candidate"
+    )
+    assert upload["with"]["path"] == ".validation_baseline_candidate/"
+    assert upload["with"]["include-hidden-files"] is True
+    assert download["with"]["path"] == ".validation_baseline_candidate/"
+    verify = next(
+        step
+        for step in config["jobs"]["check-baseline"]["steps"]
+        if step.get("name") == "Verify validation result candidate completion"
+    )
+    assert verify["run"] == "test -f .validation_baseline_candidate/.persist-complete"
+    assert "--current .validation_baseline_candidate" in workflow
 
 
 def test_validator_cache_restore_is_source_hash_scoped():
@@ -398,12 +428,12 @@ def test_nightly_keys_the_bundle_on_the_live_base_tip():
     script = "\n".join(
         line for line in step["run"].splitlines() if not line.lstrip().startswith("#")
     )
-    assert (
-        "commits/main" in script
-    ), "the nightly must resolve main's live head for base_sha"
-    assert (
-        ".base.sha" not in script
-    ), "the PR list's .base.sha does not track main, so it cannot key the bundle"
+    assert "commits/main" in script, (
+        "the nightly must resolve main's live head for base_sha"
+    )
+    assert ".base.sha" not in script, (
+        "the PR list's .base.sha does not track main, so it cannot key the bundle"
+    )
 
 
 def test_mio_validator_runs_for_localisation_changes():
@@ -587,9 +617,9 @@ def test_ci_run_steps_default_to_strict():
             for step in workflow["jobs"][job]["steps"]
             if step.get("name") == "Run validation"
         )
-        assert (
-            'matrix.validator.strict }}" != "false"' in run
-        ), f"{job}'s Run step must default to --strict when `strict:` is absent."
+        assert 'matrix.validator.strict }}" != "false"' in run, (
+            f"{job}'s Run step must default to --strict when `strict:` is absent."
+        )
 
 
 def test_ci_idea_icon_check_is_enabled():
@@ -608,7 +638,9 @@ def test_ci_idea_icon_check_is_enabled():
     validator = IdeaValidator("/nonexistent", use_colors=False, workers=1)
     called = []
     validator._parse_all_ideas = lambda: ({}, {}, {})
-    validator.validate_missing_icons = lambda defined: called.append(defined)
+    validator.validate_missing_icons = lambda defined_ideas: called.append(
+        defined_ideas
+    )
     for name in (
         "validate_undefined_idea_refs",
         "validate_idea_quality",

@@ -19,11 +19,7 @@ TOOLS_ROOT = os.path.join(REPO_ROOT, "tools")
 # Deliberate exemptions, as "<repo-relative path>:<line>". Add an entry only for
 # a write whose consumer genuinely requires platform-native line endings, and
 # say why — never to silence a real offender.
-_ALLOWLIST = {
-    # Steam workshop manifest handed straight to SteamCMD; generated outside the
-    # repo and never committed, so its line endings are Steam's business.
-    "tools/publishing/publish_workshop.py:337",
-}
+_ALLOWLIST: set[str] = set()
 
 _WRITE_MODES = set("wax")
 
@@ -114,6 +110,6 @@ def test_allowlist_entries_still_exist():
                 "write_text",
             ):
                 live.add(f"{rel}:{node.lineno}")
-    assert not (
-        _ALLOWLIST - live
-    ), f"Allowlist entries no longer exist: {_ALLOWLIST - live}"
+    assert not (_ALLOWLIST - live), (
+        f"Allowlist entries no longer exist: {_ALLOWLIST - live}"
+    )
