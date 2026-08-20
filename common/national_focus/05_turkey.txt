@@ -6687,7 +6687,7 @@ focus_tree = {
 					country_exists = FSA
 					NOT = { country_exists = SYR }
 				}
-				set_temp_variable = { percent_change = 8 }
+				set_temp_variable = { percent_change = 5 }
 				set_temp_variable = { tag_index = TUR }
 				set_temp_variable = { influence_target = FSA }
 				change_influence_percentage = yes
@@ -6747,6 +6747,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_raise_the_iron_fist"
+			TUR_tsk_modifier_tt	= yes
+			add_to_variable = { TUR_TUR_army_org_regain = 0.1 tooltip = army_org_regain_tt }
+			newline = yes
+			add_to_variable = { TUR_army_attack_speed_factor = 0.05 tooltip = army_attack_speed_factor_tt }
+			newline = yes
+			add_to_variable = { TUR_breakthrough_factor = 0.05 tooltip = breakthrough_factor_tt }
 		}
 
 		ai_will_do = {
@@ -6863,6 +6869,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_advise_the_fsa"
+			TUR_tsk_modifier_tt	= yes
+			add_to_variable = { TUR_max_command_power = 50 tooltip = max_command_power_tt }
+			newline = yes
+			add_to_variable = { TUR_max_planning = 0.05 tooltip = max_planning_tt }
 		}
 
 		ai_will_do = {
@@ -6947,7 +6957,7 @@ focus_tree = {
 			}
 			NOT = { has_war_with = SYR }
 			NOT = { has_war_with = FSA }
-			SYR = { influence_higher_40 = yes }
+			SYR = { influence_higher_20 = yes }
 		}
 
 		bypass = {
@@ -6974,8 +6984,8 @@ focus_tree = {
 	}
 
 	focus = {
-		id = TUR_crush_the_kurdish_spirit
-		icon = attack_kurdistan
+		id = TUR_crush_the_iraqi_spirit
+		icon = attack_iraq
 		cost = 10
 
 		x = 1
@@ -6985,10 +6995,39 @@ focus_tree = {
 		prerequisite = { focus = TUR_contact_talabani }
 		prerequisite = { focus = TUR_advise_the_fsa }
 
+		available = {
+			has_completed_focus = TUR_operation_olive_branch
+			country_exists = IRQ
+			IRQ = { is_subject = no }
+		}
+
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INSURGENCY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TUR_crush_the_kurdish_spirit"
+			log = "[GetDateText]: [Root.GetName]: Focus TUR_crush_the_iraqi_spirit"
+			if = {
+				limit = {
+					IRQ = {
+						is_subject_of = USA
+					}
+				}
+				custom_effect_tooltip = TUR_wait_for_withdrawal_tt
+			}
+			else_if = {
+				limit = {
+					has_completed_focus = TUR_operation_olive_branch
+				}
+				TSA = {
+					declare_war_on = {
+						target = IRQ
+						type = annex_everything
+					}
+				}
+				activate_mission = TUR_crush_iraq
+			}
+			else = {
+				custom_effect_tooltip = TUR_do_olive_branch_tt
+			}
 		}
 
 		ai_will_do = {
@@ -7097,8 +7136,27 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_DIPLOMACY }
 
+		available = {
+			country_exists = PUK
+			NOT = {
+				has_war_with = PUK
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_contact_talabani"
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = TUR }
+			set_temp_variable = { influence_target = PUK }
+			change_influence_percentage = yes
+			newline	= yes
+			custom_effect_tooltip = TUR_utilize_PUK_tt
+			newline = yes
+			diplomatic_relation = {
+				country = PUK
+				relation = guarantee
+				active = yes
+			}
 		}
 
 		ai_will_do = {
