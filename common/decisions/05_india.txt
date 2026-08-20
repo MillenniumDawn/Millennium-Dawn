@@ -1919,12 +1919,24 @@ RAJ_PAK_border_conflict_category = {
 	pak_raj_border_train_army = {
 		desc = pak_raj_border_train_army_desc
 		icon = generic_army_support
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+		targets = { 416 418 420 422 426 427 428 429 431 432 436 563 573 984 987 }
 		days_remove = 15
 		days_re_enable = 30
 		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
+
+		target_root_trigger = {
+			OR = {
+				original_tag = RAJ
+				original_tag = PAK
+			}
+		}
+
+		highlight_states = { highlight_state_targets = { state = FROM } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -1936,54 +1948,54 @@ RAJ_PAK_border_conflict_category = {
 				pak_raj_border_preparation_idle = yes
 			}
 			custom_trigger_tooltip = {
-				tooltip = pak_raj_border_garrison_tt
-				pak_raj_border_frontier_garrison = yes
+				tooltip = border_war_state_garrison_tt
+				FROM = { is_owned_by = ROOT is_controlled_by = ROOT }
+				divisions_in_state = { size > 4 state = FROM }
 			}
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision pak_raj_border_train_army"
+			log = "[GetDateText]: [Root.GetName]: Decision pak_raj_border_train_army on state [?FROM.id]"
 			add_command_power = -20
-			set_variable = { pak_raj_border_exercise_mode = 1 }
-			pak_raj_border_begin_frontier_prep = yes
-			custom_effect_tooltip = pak_raj_border_train_army_outcome_tt
+			FROM = { add_dynamic_modifier = { modifier = border_war_frontier_exercise days = 15 } }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { FROM = { is_owned_by = ROOT is_controlled_by = ROOT } }
+				NOT = { divisions_in_state = { size > 4 state = FROM } }
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel pak_raj_border_train_army on state [?FROM.id]"
+			FROM = { remove_dynamic_modifier = { modifier = border_war_frontier_exercise } }
+			if = {
+				limit = { original_tag = RAJ }
+				PAK = {
+					set_temp_variable = { pak_raj_border_readiness_change = 3 }
+					pak_raj_border_add_readiness = yes
+				}
+			}
+			if = {
+				limit = { original_tag = PAK }
+				RAJ = {
+					set_temp_variable = { pak_raj_border_readiness_change = 3 }
+					pak_raj_border_add_readiness = yes
+				}
+			}
+			country_event = border_war_operation_blocked.2
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove pak_raj_border_train_army"
+			log = "[GetDateText]: [Root.GetName]: Remove pak_raj_border_train_army on state [?FROM.id]"
+			set_temp_variable = { pak_raj_border_readiness_change = 3 }
+			pak_raj_border_add_readiness = yes
 			hidden_effect = {
-				if = {
-					limit = {
-						pak_raj_border_pair_valid = yes
-						pak_raj_border_prep_force_holds = yes
-					}
-					add_to_variable = { pak_raj_border_readiness = 12 }
-					clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-					random = {
-						chance = 10
-						country_event = { id = border_war_training_failure.1 days = 1 }
-					}
+				random = {
+					chance = 10
+					country_event = { id = border_war_training_failure.1 days = 1 }
 				}
-				else = {
-					subtract_from_variable = { pak_raj_border_readiness = 10 }
-					clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-					if = {
-						limit = { original_tag = RAJ }
-						PAK = {
-							add_to_variable = { pak_raj_border_readiness = 8 }
-							clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						}
-					}
-					if = {
-						limit = { original_tag = PAK }
-						RAJ = {
-							add_to_variable = { pak_raj_border_readiness = 8 }
-							clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						}
-					}
-					country_event = border_war_operation_blocked.2
-				}
-				pak_raj_border_end_frontier_prep = yes
 			}
 		}
 
@@ -1997,12 +2009,24 @@ RAJ_PAK_border_conflict_category = {
 	pak_raj_border_train_mechanized = {
 		desc = pak_raj_border_train_mechanized_desc
 		icon = zbl08_button
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+		targets = { 416 418 420 422 426 427 428 429 431 432 436 563 573 984 987 }
 		days_remove = 15
 		days_re_enable = 45
 		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
+
+		target_root_trigger = {
+			OR = {
+				original_tag = RAJ
+				original_tag = PAK
+			}
+		}
+
+		highlight_states = { highlight_state_targets = { state = FROM } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -2014,54 +2038,54 @@ RAJ_PAK_border_conflict_category = {
 				pak_raj_border_preparation_idle = yes
 			}
 			custom_trigger_tooltip = {
-				tooltip = pak_raj_border_mechanized_tt
-				pak_raj_border_frontier_mechanized = yes
+				tooltip = border_war_state_mechanized_tt
+				FROM = { is_owned_by = ROOT is_controlled_by = ROOT }
+				border_war_state_mechanized = yes
 			}
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision pak_raj_border_train_mechanized"
+			log = "[GetDateText]: [Root.GetName]: Decision pak_raj_border_train_mechanized on state [?FROM.id]"
 			add_command_power = -20
-			set_variable = { pak_raj_border_exercise_mode = 2 }
-			pak_raj_border_begin_frontier_prep = yes
-			custom_effect_tooltip = pak_raj_border_train_mechanized_outcome_tt
+			FROM = { add_dynamic_modifier = { modifier = border_war_frontier_exercise days = 15 } }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { FROM = { is_owned_by = ROOT is_controlled_by = ROOT } }
+				NOT = { border_war_state_mechanized = yes }
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel pak_raj_border_train_mechanized on state [?FROM.id]"
+			FROM = { remove_dynamic_modifier = { modifier = border_war_frontier_exercise } }
+			if = {
+				limit = { original_tag = RAJ }
+				PAK = {
+					set_temp_variable = { pak_raj_border_readiness_change = 8 }
+					pak_raj_border_add_readiness = yes
+				}
+			}
+			if = {
+				limit = { original_tag = PAK }
+				RAJ = {
+					set_temp_variable = { pak_raj_border_readiness_change = 8 }
+					pak_raj_border_add_readiness = yes
+				}
+			}
+			country_event = border_war_operation_blocked.2
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove pak_raj_border_train_mechanized"
+			log = "[GetDateText]: [Root.GetName]: Remove pak_raj_border_train_mechanized on state [?FROM.id]"
+			set_temp_variable = { pak_raj_border_readiness_change = 8 }
+			pak_raj_border_add_readiness = yes
 			hidden_effect = {
-				if = {
-					limit = {
-						pak_raj_border_pair_valid = yes
-						pak_raj_border_prep_force_holds = yes
-					}
-					add_to_variable = { pak_raj_border_readiness = 20 }
-					clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-					random = {
-						chance = 10
-						country_event = { id = border_war_training_failure.2 days = 1 }
-					}
+				random = {
+					chance = 10
+					country_event = { id = border_war_training_failure.2 days = 1 }
 				}
-				else = {
-					subtract_from_variable = { pak_raj_border_readiness = 10 }
-					clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-					if = {
-						limit = { original_tag = RAJ }
-						PAK = {
-							add_to_variable = { pak_raj_border_readiness = 8 }
-							clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						}
-					}
-					if = {
-						limit = { original_tag = PAK }
-						RAJ = {
-							add_to_variable = { pak_raj_border_readiness = 8 }
-							clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						}
-					}
-					country_event = border_war_operation_blocked.2
-				}
-				pak_raj_border_end_frontier_prep = yes
 			}
 		}
 
@@ -2075,11 +2099,24 @@ RAJ_PAK_border_conflict_category = {
 	pak_raj_border_train_artillery = {
 		desc = pak_raj_border_train_artillery_desc
 		icon = ger_military_buildup
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+		targets = { 416 418 420 422 426 427 428 429 431 432 436 563 573 984 987 }
 		days_remove = 15
 		days_re_enable = 30
 		fire_only_once = no
+		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
+
+		target_root_trigger = {
+			OR = {
+				original_tag = RAJ
+				original_tag = PAK
+			}
+		}
+
+		highlight_states = { highlight_state_targets = { state = FROM } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -2091,51 +2128,49 @@ RAJ_PAK_border_conflict_category = {
 				pak_raj_border_preparation_idle = yes
 			}
 			custom_trigger_tooltip = {
-				tooltip = pak_raj_border_artillery_tt
-				pak_raj_border_frontier_artillery = yes
+				tooltip = border_war_state_artillery_tt
+				FROM = { is_owned_by = ROOT is_controlled_by = ROOT }
+				border_war_state_artillery = yes
 			}
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision pak_raj_border_train_artillery"
+			log = "[GetDateText]: [Root.GetName]: Decision pak_raj_border_train_artillery on state [?FROM.id]"
 			add_command_power = -20
-			set_variable = { pak_raj_border_exercise_mode = 3 }
-			pak_raj_border_begin_frontier_prep = yes
-			custom_effect_tooltip = pak_raj_border_train_artillery_outcome_tt
+			FROM = { add_dynamic_modifier = { modifier = border_war_frontier_exercise days = 15 } }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { FROM = { is_owned_by = ROOT is_controlled_by = ROOT } }
+				NOT = { border_war_state_artillery = yes }
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel pak_raj_border_train_artillery on state [?FROM.id]"
+			FROM = { remove_dynamic_modifier = { modifier = border_war_frontier_exercise } }
+			if = {
+				limit = { original_tag = RAJ }
+				PAK = {
+					set_temp_variable = { pak_raj_border_readiness_change = 5 }
+					pak_raj_border_add_readiness = yes
+				}
+			}
+			if = {
+				limit = { original_tag = PAK }
+				RAJ = {
+					set_temp_variable = { pak_raj_border_readiness_change = 5 }
+					pak_raj_border_add_readiness = yes
+				}
+			}
+			country_event = border_war_operation_blocked.2
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove pak_raj_border_train_artillery"
-			hidden_effect = {
-				if = {
-					limit = {
-						pak_raj_border_pair_valid = yes
-						pak_raj_border_prep_force_holds = yes
-					}
-					add_to_variable = { pak_raj_border_readiness = 8 }
-					clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-				}
-				else = {
-					subtract_from_variable = { pak_raj_border_readiness = 10 }
-					clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-					if = {
-						limit = { original_tag = RAJ }
-						PAK = {
-							add_to_variable = { pak_raj_border_readiness = 8 }
-							clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						}
-					}
-					if = {
-						limit = { original_tag = PAK }
-						RAJ = {
-							add_to_variable = { pak_raj_border_readiness = 8 }
-							clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						}
-					}
-					country_event = border_war_operation_blocked.2
-				}
-				pak_raj_border_end_frontier_prep = yes
-			}
+			log = "[GetDateText]: [Root.GetName]: Remove pak_raj_border_train_artillery on state [?FROM.id]"
+			set_temp_variable = { pak_raj_border_readiness_change = 5 }
+			pak_raj_border_add_readiness = yes
 		}
 
 		ai_will_do = {
@@ -2148,12 +2183,24 @@ RAJ_PAK_border_conflict_category = {
 	pak_raj_border_stage_incursion = {
 		desc = pak_raj_border_stage_incursion_desc
 		icon = generic_reorganize_irregulars
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+		targets = { 416 418 420 422 426 427 428 429 431 432 436 563 573 984 987 }
 		days_remove = 15
 		days_re_enable = 30
 		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
+
+		target_root_trigger = {
+			OR = {
+				original_tag = RAJ
+				original_tag = PAK
+			}
+		}
+
+		highlight_states = { highlight_state_targets = { state = FROM } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -2169,57 +2216,57 @@ RAJ_PAK_border_conflict_category = {
 				pak_raj_border_preparation_idle = yes
 			}
 			custom_trigger_tooltip = {
-				tooltip = pak_raj_border_patrol_tt
-				pak_raj_border_frontier_patrol = yes
+				tooltip = border_war_state_patrol_tt
+				FROM = { is_owned_by = ROOT is_controlled_by = ROOT }
+				divisions_in_state = { size > 2 state = FROM }
 			}
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision pak_raj_border_stage_incursion"
+			log = "[GetDateText]: [Root.GetName]: Decision pak_raj_border_stage_incursion on state [?FROM.id]"
 			add_command_power = -20
-			set_variable = { pak_raj_border_exercise_mode = 4 }
-			pak_raj_border_begin_frontier_prep = yes
-			custom_effect_tooltip = pak_raj_border_stage_incursion_outcome_tt
+			FROM = { add_dynamic_modifier = { modifier = border_war_frontier_operation days = 15 } }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { FROM = { is_owned_by = ROOT is_controlled_by = ROOT } }
+				NOT = { divisions_in_state = { size > 2 state = FROM } }
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel pak_raj_border_stage_incursion on state [?FROM.id]"
+			FROM = { remove_dynamic_modifier = { modifier = border_war_frontier_operation } }
+			if = {
+				limit = { original_tag = RAJ }
+				PAK = {
+					set_temp_variable = { pak_raj_border_readiness_change = 3 }
+					pak_raj_border_add_readiness = yes
+				}
+			}
+			if = {
+				limit = { original_tag = PAK }
+				RAJ = {
+					set_temp_variable = { pak_raj_border_readiness_change = 3 }
+					pak_raj_border_add_readiness = yes
+				}
+			}
+			country_event = border_war_operation_blocked.2
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove pak_raj_border_stage_incursion"
+			log = "[GetDateText]: [Root.GetName]: Remove pak_raj_border_stage_incursion on state [?FROM.id]"
+			set_temp_variable = { pak_raj_border_tension_change = 15 }
+			pak_raj_border_add_tension = yes
+			add_threat = 0.25
 			hidden_effect = {
-				if = {
-					limit = {
-						pak_raj_border_pair_valid = yes
-						pak_raj_border_prep_force_holds = yes
-					}
-					add_to_variable = { global.pak_raj_border_tension = 15 }
-					clamp_variable = { var = global.pak_raj_border_tension min = 0 max = 100 }
-					add_threat = 0.25
-					random = {
-						chance = 10
-						subtract_from_variable = { pak_raj_border_readiness = 10 }
-						clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						country_event = { id = border_war_tension_failure.1 days = 1 }
-					}
+				random = {
+					chance = 10
+					set_temp_variable = { pak_raj_border_readiness_change = -10 }
+					pak_raj_border_add_readiness = yes
+					country_event = { id = border_war_tension_failure.1 days = 1 }
 				}
-				else = {
-					subtract_from_variable = { pak_raj_border_readiness = 10 }
-					clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-					if = {
-						limit = { original_tag = RAJ }
-						PAK = {
-							add_to_variable = { pak_raj_border_readiness = 8 }
-							clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						}
-					}
-					if = {
-						limit = { original_tag = PAK }
-						RAJ = {
-							add_to_variable = { pak_raj_border_readiness = 8 }
-							clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						}
-					}
-					country_event = border_war_operation_blocked.2
-				}
-				pak_raj_border_end_frontier_prep = yes
 			}
 		}
 
@@ -2233,12 +2280,24 @@ RAJ_PAK_border_conflict_category = {
 	pak_raj_border_shell_positions = {
 		desc = pak_raj_border_shell_positions_desc
 		icon = generic_scorched_earth
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+		targets = { 416 418 420 422 426 427 428 429 431 432 436 563 573 984 987 }
 		days_remove = 15
 		days_re_enable = 45
 		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
+
+		target_root_trigger = {
+			OR = {
+				original_tag = RAJ
+				original_tag = PAK
+			}
+		}
+
+		highlight_states = { highlight_state_targets = { state = FROM } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -2254,57 +2313,57 @@ RAJ_PAK_border_conflict_category = {
 				pak_raj_border_preparation_idle = yes
 			}
 			custom_trigger_tooltip = {
-				tooltip = pak_raj_border_artillery_tt
-				pak_raj_border_frontier_artillery = yes
+				tooltip = border_war_state_artillery_tt
+				FROM = { is_owned_by = ROOT is_controlled_by = ROOT }
+				border_war_state_artillery = yes
 			}
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision pak_raj_border_shell_positions"
+			log = "[GetDateText]: [Root.GetName]: Decision pak_raj_border_shell_positions on state [?FROM.id]"
 			add_command_power = -20
-			set_variable = { pak_raj_border_exercise_mode = 5 }
-			pak_raj_border_begin_frontier_prep = yes
-			custom_effect_tooltip = pak_raj_border_shell_positions_outcome_tt
+			FROM = { add_dynamic_modifier = { modifier = border_war_frontier_operation days = 15 } }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { FROM = { is_owned_by = ROOT is_controlled_by = ROOT } }
+				NOT = { border_war_state_artillery = yes }
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel pak_raj_border_shell_positions on state [?FROM.id]"
+			FROM = { remove_dynamic_modifier = { modifier = border_war_frontier_operation } }
+			if = {
+				limit = { original_tag = RAJ }
+				PAK = {
+					set_temp_variable = { pak_raj_border_readiness_change = 5 }
+					pak_raj_border_add_readiness = yes
+				}
+			}
+			if = {
+				limit = { original_tag = PAK }
+				RAJ = {
+					set_temp_variable = { pak_raj_border_readiness_change = 5 }
+					pak_raj_border_add_readiness = yes
+				}
+			}
+			country_event = border_war_operation_blocked.2
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove pak_raj_border_shell_positions"
+			log = "[GetDateText]: [Root.GetName]: Remove pak_raj_border_shell_positions on state [?FROM.id]"
+			set_temp_variable = { pak_raj_border_tension_change = 22 }
+			pak_raj_border_add_tension = yes
+			add_threat = 0.5
 			hidden_effect = {
-				if = {
-					limit = {
-						pak_raj_border_pair_valid = yes
-						pak_raj_border_prep_force_holds = yes
-					}
-					add_to_variable = { global.pak_raj_border_tension = 22 }
-					clamp_variable = { var = global.pak_raj_border_tension min = 0 max = 100 }
-					add_threat = 0.5
-					random = {
-						chance = 10
-						subtract_from_variable = { pak_raj_border_readiness = 10 }
-						clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						country_event = { id = border_war_tension_failure.1 days = 1 }
-					}
+				random = {
+					chance = 10
+					set_temp_variable = { pak_raj_border_readiness_change = -10 }
+					pak_raj_border_add_readiness = yes
+					country_event = { id = border_war_tension_failure.1 days = 1 }
 				}
-				else = {
-					subtract_from_variable = { pak_raj_border_readiness = 10 }
-					clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-					if = {
-						limit = { original_tag = RAJ }
-						PAK = {
-							add_to_variable = { pak_raj_border_readiness = 8 }
-							clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						}
-					}
-					if = {
-						limit = { original_tag = PAK }
-						RAJ = {
-							add_to_variable = { pak_raj_border_readiness = 8 }
-							clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
-						}
-					}
-					country_event = border_war_operation_blocked.2
-				}
-				pak_raj_border_end_frontier_prep = yes
 			}
 		}
 
@@ -4550,12 +4609,24 @@ RAJ_CHI_border_conflict_category = {
 	raj_chi_border_train_army = {
 		desc = raj_chi_border_train_army_desc
 		icon = generic_military
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+		targets = { 428 455 473 475 589 591 982 993 }
 		days_remove = 15
 		days_re_enable = 30
 		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
+
+		target_root_trigger = {
+			OR = {
+				original_tag = RAJ
+				original_tag = CHI
+			}
+		}
+
+		highlight_states = { highlight_state_targets = { state = FROM } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -4567,54 +4638,54 @@ RAJ_CHI_border_conflict_category = {
 				raj_chi_border_preparation_idle = yes
 			}
 			custom_trigger_tooltip = {
-				tooltip = raj_chi_border_garrison_tt
-				raj_chi_border_frontier_garrison = yes
+				tooltip = border_war_state_garrison_tt
+				FROM = { is_owned_by = ROOT is_controlled_by = ROOT }
+				divisions_in_state = { size > 4 state = FROM }
 			}
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision raj_chi_border_train_army"
+			log = "[GetDateText]: [Root.GetName]: Decision raj_chi_border_train_army on state [?FROM.id]"
 			add_command_power = -20
-			set_variable = { raj_chi_border_exercise_mode = 1 }
-			raj_chi_border_begin_frontier_prep = yes
-			custom_effect_tooltip = raj_chi_border_train_army_outcome_tt
+			FROM = { add_dynamic_modifier = { modifier = border_war_frontier_exercise days = 15 } }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { FROM = { is_owned_by = ROOT is_controlled_by = ROOT } }
+				NOT = { divisions_in_state = { size > 4 state = FROM } }
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel raj_chi_border_train_army on state [?FROM.id]"
+			FROM = { remove_dynamic_modifier = { modifier = border_war_frontier_exercise } }
+			if = {
+				limit = { original_tag = RAJ }
+				CHI = {
+					set_temp_variable = { raj_chi_border_readiness_change = 3 }
+					raj_chi_border_add_readiness = yes
+				}
+			}
+			if = {
+				limit = { original_tag = CHI }
+				RAJ = {
+					set_temp_variable = { raj_chi_border_readiness_change = 3 }
+					raj_chi_border_add_readiness = yes
+				}
+			}
+			country_event = border_war_operation_blocked.2
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove raj_chi_border_train_army"
+			log = "[GetDateText]: [Root.GetName]: Remove raj_chi_border_train_army on state [?FROM.id]"
+			set_temp_variable = { raj_chi_border_readiness_change = 3 }
+			raj_chi_border_add_readiness = yes
 			hidden_effect = {
-				if = {
-					limit = {
-						raj_chi_border_pair_valid = yes
-						raj_chi_border_prep_force_holds = yes
-					}
-					add_to_variable = { raj_chi_border_readiness = 12 }
-					clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-					random = {
-						chance = 10
-						country_event = { id = border_war_training_failure.1 days = 1 }
-					}
+				random = {
+					chance = 10
+					country_event = { id = border_war_training_failure.1 days = 1 }
 				}
-				else = {
-					subtract_from_variable = { raj_chi_border_readiness = 10 }
-					clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-					if = {
-						limit = { original_tag = RAJ }
-						CHI = {
-							add_to_variable = { raj_chi_border_readiness = 8 }
-							clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						}
-					}
-					if = {
-						limit = { original_tag = CHI }
-						RAJ = {
-							add_to_variable = { raj_chi_border_readiness = 8 }
-							clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						}
-					}
-					country_event = border_war_operation_blocked.2
-				}
-				raj_chi_border_end_frontier_prep = yes
 			}
 		}
 
@@ -4628,12 +4699,24 @@ RAJ_CHI_border_conflict_category = {
 	raj_chi_border_train_mechanized = {
 		desc = raj_chi_border_train_mechanized_desc
 		icon = kurganets_button
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+		targets = { 428 455 473 475 589 591 982 993 }
 		days_remove = 15
 		days_re_enable = 45
 		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
+
+		target_root_trigger = {
+			OR = {
+				original_tag = RAJ
+				original_tag = CHI
+			}
+		}
+
+		highlight_states = { highlight_state_targets = { state = FROM } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -4645,54 +4728,54 @@ RAJ_CHI_border_conflict_category = {
 				raj_chi_border_preparation_idle = yes
 			}
 			custom_trigger_tooltip = {
-				tooltip = raj_chi_border_mechanized_tt
-				raj_chi_border_frontier_mechanized = yes
+				tooltip = border_war_state_mechanized_tt
+				FROM = { is_owned_by = ROOT is_controlled_by = ROOT }
+				border_war_state_mechanized = yes
 			}
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision raj_chi_border_train_mechanized"
+			log = "[GetDateText]: [Root.GetName]: Decision raj_chi_border_train_mechanized on state [?FROM.id]"
 			add_command_power = -20
-			set_variable = { raj_chi_border_exercise_mode = 2 }
-			raj_chi_border_begin_frontier_prep = yes
-			custom_effect_tooltip = raj_chi_border_train_mechanized_outcome_tt
+			FROM = { add_dynamic_modifier = { modifier = border_war_frontier_exercise days = 15 } }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { FROM = { is_owned_by = ROOT is_controlled_by = ROOT } }
+				NOT = { border_war_state_mechanized = yes }
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel raj_chi_border_train_mechanized on state [?FROM.id]"
+			FROM = { remove_dynamic_modifier = { modifier = border_war_frontier_exercise } }
+			if = {
+				limit = { original_tag = RAJ }
+				CHI = {
+					set_temp_variable = { raj_chi_border_readiness_change = 8 }
+					raj_chi_border_add_readiness = yes
+				}
+			}
+			if = {
+				limit = { original_tag = CHI }
+				RAJ = {
+					set_temp_variable = { raj_chi_border_readiness_change = 8 }
+					raj_chi_border_add_readiness = yes
+				}
+			}
+			country_event = border_war_operation_blocked.2
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove raj_chi_border_train_mechanized"
+			log = "[GetDateText]: [Root.GetName]: Remove raj_chi_border_train_mechanized on state [?FROM.id]"
+			set_temp_variable = { raj_chi_border_readiness_change = 8 }
+			raj_chi_border_add_readiness = yes
 			hidden_effect = {
-				if = {
-					limit = {
-						raj_chi_border_pair_valid = yes
-						raj_chi_border_prep_force_holds = yes
-					}
-					add_to_variable = { raj_chi_border_readiness = 20 }
-					clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-					random = {
-						chance = 10
-						country_event = { id = border_war_training_failure.2 days = 1 }
-					}
+				random = {
+					chance = 10
+					country_event = { id = border_war_training_failure.2 days = 1 }
 				}
-				else = {
-					subtract_from_variable = { raj_chi_border_readiness = 10 }
-					clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-					if = {
-						limit = { original_tag = RAJ }
-						CHI = {
-							add_to_variable = { raj_chi_border_readiness = 8 }
-							clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						}
-					}
-					if = {
-						limit = { original_tag = CHI }
-						RAJ = {
-							add_to_variable = { raj_chi_border_readiness = 8 }
-							clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						}
-					}
-					country_event = border_war_operation_blocked.2
-				}
-				raj_chi_border_end_frontier_prep = yes
 			}
 		}
 
@@ -4706,11 +4789,24 @@ RAJ_CHI_border_conflict_category = {
 	raj_chi_border_train_artillery = {
 		desc = raj_chi_border_train_artillery_desc
 		icon = ger_military_buildup
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+		targets = { 428 455 473 475 589 591 982 993 }
 		days_remove = 15
 		days_re_enable = 30
 		fire_only_once = no
+		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
+
+		target_root_trigger = {
+			OR = {
+				original_tag = RAJ
+				original_tag = CHI
+			}
+		}
+
+		highlight_states = { highlight_state_targets = { state = FROM } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -4722,51 +4818,49 @@ RAJ_CHI_border_conflict_category = {
 				raj_chi_border_preparation_idle = yes
 			}
 			custom_trigger_tooltip = {
-				tooltip = raj_chi_border_artillery_tt
-				raj_chi_border_frontier_artillery = yes
+				tooltip = border_war_state_artillery_tt
+				FROM = { is_owned_by = ROOT is_controlled_by = ROOT }
+				border_war_state_artillery = yes
 			}
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision raj_chi_border_train_artillery"
+			log = "[GetDateText]: [Root.GetName]: Decision raj_chi_border_train_artillery on state [?FROM.id]"
 			add_command_power = -20
-			set_variable = { raj_chi_border_exercise_mode = 3 }
-			raj_chi_border_begin_frontier_prep = yes
-			custom_effect_tooltip = raj_chi_border_train_artillery_outcome_tt
+			FROM = { add_dynamic_modifier = { modifier = border_war_frontier_exercise days = 15 } }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { FROM = { is_owned_by = ROOT is_controlled_by = ROOT } }
+				NOT = { border_war_state_artillery = yes }
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel raj_chi_border_train_artillery on state [?FROM.id]"
+			FROM = { remove_dynamic_modifier = { modifier = border_war_frontier_exercise } }
+			if = {
+				limit = { original_tag = RAJ }
+				CHI = {
+					set_temp_variable = { raj_chi_border_readiness_change = 5 }
+					raj_chi_border_add_readiness = yes
+				}
+			}
+			if = {
+				limit = { original_tag = CHI }
+				RAJ = {
+					set_temp_variable = { raj_chi_border_readiness_change = 5 }
+					raj_chi_border_add_readiness = yes
+				}
+			}
+			country_event = border_war_operation_blocked.2
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove raj_chi_border_train_artillery"
-			hidden_effect = {
-				if = {
-					limit = {
-						raj_chi_border_pair_valid = yes
-						raj_chi_border_prep_force_holds = yes
-					}
-					add_to_variable = { raj_chi_border_readiness = 8 }
-					clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-				}
-				else = {
-					subtract_from_variable = { raj_chi_border_readiness = 10 }
-					clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-					if = {
-						limit = { original_tag = RAJ }
-						CHI = {
-							add_to_variable = { raj_chi_border_readiness = 8 }
-							clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						}
-					}
-					if = {
-						limit = { original_tag = CHI }
-						RAJ = {
-							add_to_variable = { raj_chi_border_readiness = 8 }
-							clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						}
-					}
-					country_event = border_war_operation_blocked.2
-				}
-				raj_chi_border_end_frontier_prep = yes
-			}
+			log = "[GetDateText]: [Root.GetName]: Remove raj_chi_border_train_artillery on state [?FROM.id]"
+			set_temp_variable = { raj_chi_border_readiness_change = 5 }
+			raj_chi_border_add_readiness = yes
 		}
 
 		ai_will_do = {
@@ -4779,12 +4873,24 @@ RAJ_CHI_border_conflict_category = {
 	raj_chi_border_stage_incursion = {
 		desc = raj_chi_border_stage_incursion_desc
 		icon = SWI_expand_covert_operations
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+		targets = { 428 455 473 475 589 591 982 993 }
 		days_remove = 15
 		days_re_enable = 30
 		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
+
+		target_root_trigger = {
+			OR = {
+				original_tag = RAJ
+				original_tag = CHI
+			}
+		}
+
+		highlight_states = { highlight_state_targets = { state = FROM } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -4800,57 +4906,57 @@ RAJ_CHI_border_conflict_category = {
 				raj_chi_border_preparation_idle = yes
 			}
 			custom_trigger_tooltip = {
-				tooltip = raj_chi_border_patrol_tt
-				raj_chi_border_frontier_patrol = yes
+				tooltip = border_war_state_patrol_tt
+				FROM = { is_owned_by = ROOT is_controlled_by = ROOT }
+				divisions_in_state = { size > 2 state = FROM }
 			}
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision raj_chi_border_stage_incursion"
+			log = "[GetDateText]: [Root.GetName]: Decision raj_chi_border_stage_incursion on state [?FROM.id]"
 			add_command_power = -20
-			set_variable = { raj_chi_border_exercise_mode = 4 }
-			raj_chi_border_begin_frontier_prep = yes
-			custom_effect_tooltip = raj_chi_border_stage_incursion_outcome_tt
+			FROM = { add_dynamic_modifier = { modifier = border_war_frontier_operation days = 15 } }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { FROM = { is_owned_by = ROOT is_controlled_by = ROOT } }
+				NOT = { divisions_in_state = { size > 2 state = FROM } }
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel raj_chi_border_stage_incursion on state [?FROM.id]"
+			FROM = { remove_dynamic_modifier = { modifier = border_war_frontier_operation } }
+			if = {
+				limit = { original_tag = RAJ }
+				CHI = {
+					set_temp_variable = { raj_chi_border_readiness_change = 3 }
+					raj_chi_border_add_readiness = yes
+				}
+			}
+			if = {
+				limit = { original_tag = CHI }
+				RAJ = {
+					set_temp_variable = { raj_chi_border_readiness_change = 3 }
+					raj_chi_border_add_readiness = yes
+				}
+			}
+			country_event = border_war_operation_blocked.2
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove raj_chi_border_stage_incursion"
+			log = "[GetDateText]: [Root.GetName]: Remove raj_chi_border_stage_incursion on state [?FROM.id]"
+			set_temp_variable = { raj_chi_border_tension_change = 15 }
+			raj_chi_border_add_tension = yes
+			add_threat = 0.25
 			hidden_effect = {
-				if = {
-					limit = {
-						raj_chi_border_pair_valid = yes
-						raj_chi_border_prep_force_holds = yes
-					}
-					add_to_variable = { global.raj_chi_border_tension = 15 }
-					clamp_variable = { var = global.raj_chi_border_tension min = 0 max = 100 }
-					add_threat = 0.25
-					random = {
-						chance = 10
-						subtract_from_variable = { raj_chi_border_readiness = 10 }
-						clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						country_event = { id = border_war_tension_failure.1 days = 1 }
-					}
+				random = {
+					chance = 10
+					set_temp_variable = { raj_chi_border_readiness_change = -10 }
+					raj_chi_border_add_readiness = yes
+					country_event = { id = border_war_tension_failure.1 days = 1 }
 				}
-				else = {
-					subtract_from_variable = { raj_chi_border_readiness = 10 }
-					clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-					if = {
-						limit = { original_tag = RAJ }
-						CHI = {
-							add_to_variable = { raj_chi_border_readiness = 8 }
-							clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						}
-					}
-					if = {
-						limit = { original_tag = CHI }
-						RAJ = {
-							add_to_variable = { raj_chi_border_readiness = 8 }
-							clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						}
-					}
-					country_event = border_war_operation_blocked.2
-				}
-				raj_chi_border_end_frontier_prep = yes
 			}
 		}
 
@@ -4864,12 +4970,24 @@ RAJ_CHI_border_conflict_category = {
 	raj_chi_border_shell_positions = {
 		desc = raj_chi_border_shell_positions_desc
 		icon = generic_scorched_earth
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+		targets = { 428 455 473 475 589 591 982 993 }
 		days_remove = 15
 		days_re_enable = 45
 		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
+
+		target_root_trigger = {
+			OR = {
+				original_tag = RAJ
+				original_tag = CHI
+			}
+		}
+
+		highlight_states = { highlight_state_targets = { state = FROM } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -4885,57 +5003,57 @@ RAJ_CHI_border_conflict_category = {
 				raj_chi_border_preparation_idle = yes
 			}
 			custom_trigger_tooltip = {
-				tooltip = raj_chi_border_artillery_tt
-				raj_chi_border_frontier_artillery = yes
+				tooltip = border_war_state_artillery_tt
+				FROM = { is_owned_by = ROOT is_controlled_by = ROOT }
+				border_war_state_artillery = yes
 			}
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision raj_chi_border_shell_positions"
+			log = "[GetDateText]: [Root.GetName]: Decision raj_chi_border_shell_positions on state [?FROM.id]"
 			add_command_power = -20
-			set_variable = { raj_chi_border_exercise_mode = 5 }
-			raj_chi_border_begin_frontier_prep = yes
-			custom_effect_tooltip = raj_chi_border_shell_positions_outcome_tt
+			FROM = { add_dynamic_modifier = { modifier = border_war_frontier_operation days = 15 } }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { FROM = { is_owned_by = ROOT is_controlled_by = ROOT } }
+				NOT = { border_war_state_artillery = yes }
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel raj_chi_border_shell_positions on state [?FROM.id]"
+			FROM = { remove_dynamic_modifier = { modifier = border_war_frontier_operation } }
+			if = {
+				limit = { original_tag = RAJ }
+				CHI = {
+					set_temp_variable = { raj_chi_border_readiness_change = 5 }
+					raj_chi_border_add_readiness = yes
+				}
+			}
+			if = {
+				limit = { original_tag = CHI }
+				RAJ = {
+					set_temp_variable = { raj_chi_border_readiness_change = 5 }
+					raj_chi_border_add_readiness = yes
+				}
+			}
+			country_event = border_war_operation_blocked.2
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Remove raj_chi_border_shell_positions"
+			log = "[GetDateText]: [Root.GetName]: Remove raj_chi_border_shell_positions on state [?FROM.id]"
+			set_temp_variable = { raj_chi_border_tension_change = 22 }
+			raj_chi_border_add_tension = yes
+			add_threat = 0.5
 			hidden_effect = {
-				if = {
-					limit = {
-						raj_chi_border_pair_valid = yes
-						raj_chi_border_prep_force_holds = yes
-					}
-					add_to_variable = { global.raj_chi_border_tension = 22 }
-					clamp_variable = { var = global.raj_chi_border_tension min = 0 max = 100 }
-					add_threat = 0.5
-					random = {
-						chance = 10
-						subtract_from_variable = { raj_chi_border_readiness = 10 }
-						clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						country_event = { id = border_war_tension_failure.1 days = 1 }
-					}
+				random = {
+					chance = 10
+					set_temp_variable = { raj_chi_border_readiness_change = -10 }
+					raj_chi_border_add_readiness = yes
+					country_event = { id = border_war_tension_failure.1 days = 1 }
 				}
-				else = {
-					subtract_from_variable = { raj_chi_border_readiness = 10 }
-					clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-					if = {
-						limit = { original_tag = RAJ }
-						CHI = {
-							add_to_variable = { raj_chi_border_readiness = 8 }
-							clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						}
-					}
-					if = {
-						limit = { original_tag = CHI }
-						RAJ = {
-							add_to_variable = { raj_chi_border_readiness = 8 }
-							clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
-						}
-					}
-					country_event = border_war_operation_blocked.2
-				}
-				raj_chi_border_end_frontier_prep = yes
 			}
 		}
 
