@@ -1050,18 +1050,14 @@ CHI_bri_shutdown_recipient = {
 }
 
 CHI_bri_monthly_tick = {
-	set_temp_variable = { bri_contribution = CHI_bri_monthly_income_base }
-	add_to_temp_variable = { bri_contribution = modifier@CHI_bri_monthly_income }
-	clamp_temp_variable = { var = bri_contribution min = 0 }
+	set_temp_variable = { bri_contribution = { value = CHI_bri_monthly_income_base add = modifier@CHI_bri_monthly_income max = 0 } }
 	if = {
 		limit = { check_variable = { var = treasury value = bri_contribution compare = less_than } }
-		set_temp_variable = { bri_contribution = treasury }
-		clamp_temp_variable = { var = bri_contribution min = 0 }
+		set_temp_variable = { bri_contribution = { value = treasury max = 0 } }
 	}
 	set_variable = { CHI_bri_monthly_income_total = bri_contribution }
 
-	set_temp_variable = { treasury_change = bri_contribution }
-	multiply_temp_variable = { treasury_change = -1 }
+	set_temp_variable = { treasury_change = { value = bri_contribution multiply = -1 } }
 	modify_treasury_effect = yes
 	add_to_variable = { var = CHI_bri_treasury value = bri_contribution }
 
@@ -1083,11 +1079,11 @@ CHI_bri_schedule_application = {
 				is_ai = yes
 				is_major = no
 				NOT = { original_tag = IND }
+				NOT = { has_country_flag = bri_ai_application_cooldown }
+				CHI_bri_is_application_eligible = yes
 				NOT = { gdp_per_capita_greater_than_10 = yes }
 				NOT = { is_in_faction_with = USA }
 				NOT = { has_opinion = { target = CHI value < 0 } }
-				NOT = { has_country_flag = bri_ai_application_cooldown }
-				CHI_bri_is_application_eligible = yes
 			}
 
 			clear_temp_array = bri_hostable_project_types
@@ -1714,27 +1710,22 @@ CHI_bri_find_debtor_index = {
 	}
 }
 CHI_bri_issue_loan = {
-	set_temp_variable = { bri_principal = bri_project_cost_committed }
-	add_to_variable = { var = bri_debt_owed_to_china value = bri_principal }
+	add_to_variable = { var = bri_debt_owed_to_china value = bri_project_cost_committed }
 
 	CHI = {
 		set_temp_variable = { bri_debtor_id = PREV.id }
-		set_temp_variable = { bri_loan_amount = PREV.bri_principal }
+		set_temp_variable = { bri_loan_amount = PREV.bri_project_cost_committed }
 
+		CHI_bri_find_debtor_index = yes
 		if = {
-			limit = { is_in_array = { CHI_bri_debtors = bri_debtor_id } }
-			CHI_bri_find_debtor_index = yes
-			if = {
-				limit = { check_variable = { bri_found_index > -1 } }
-				add_to_variable = { var = CHI_bri_loan_principal^bri_found_index value = bri_loan_amount }
-				set_temp_variable = { bri_existing_rate = CHI_bri_loan_rate^bri_found_index }
-				PREV = { set_variable = { bri_loan_rate = PREV.bri_existing_rate } }
-			}
+			limit = { check_variable = { bri_found_index > -1 } }
+			add_to_variable = { var = CHI_bri_loan_principal^bri_found_index value = bri_loan_amount }
+			set_temp_variable = { bri_existing_rate = CHI_bri_loan_rate^bri_found_index }
+			PREV = { set_variable = { bri_loan_rate = PREV.bri_existing_rate } }
 		}
 		else = {
 			add_to_array = { CHI_bri_debtors = bri_debtor_id }
-			set_temp_variable = { bri_new_index = CHI_bri_debtors^num }
-			subtract_from_temp_variable = { bri_new_index = 1 }
+			set_temp_variable = { bri_new_index = { value = CHI_bri_debtors^num subtract = 1 } }
 			set_variable = { CHI_bri_loan_principal^bri_new_index = bri_loan_amount }
 			set_variable = { CHI_bri_loan_rate^bri_new_index = 4 }
 			PREV = { set_variable = { bri_loan_rate = 4 } }
@@ -1755,9 +1746,7 @@ CHI_bri_recalculate_loan_payment = {
 			NOT = { has_country_flag = bri_loan_grace }
 			NOT = { has_war_with = CHI }
 		}
-		set_variable = { bri_loan_payment = bri_debt_owed_to_china }
-		multiply_variable = { bri_loan_payment = 0.00019 }
-		multiply_variable = { bri_loan_payment = bri_loan_rate }
+		set_variable = { bri_loan_payment = { value = bri_debt_owed_to_china multiply = 0.00019 multiply = bri_loan_rate } }
 	}
 }
 
@@ -1772,11 +1761,8 @@ CHI_bri_process_loans = {
 			value = v
 			index = i
 
-			set_temp_variable = { bri_interest = CHI_bri_loan_principal^i }
-			multiply_temp_variable = { bri_interest = 0.00019 }
-			multiply_temp_variable = { bri_interest = CHI_bri_loan_rate^i }
-			set_temp_variable = { bri_amortisation = CHI_bri_loan_principal^i }
-			multiply_temp_variable = { bri_amortisation = 0.05 }
+			set_temp_variable = { bri_interest = { value = CHI_bri_loan_principal^i multiply = 0.00019 multiply = CHI_bri_loan_rate^i } }
+			set_temp_variable = { bri_amortisation = { value = CHI_bri_loan_principal^i multiply = 0.05 } }
 
 			var:CHI_bri_debtors^i = {
 				set_variable = { bri_loan_payment = 0 }
@@ -1792,8 +1778,7 @@ CHI_bri_process_loans = {
 							NOT = { has_active_mission = bankruptcy_incoming_collapse }
 						}
 						set_variable = { bri_loan_payment = ROOT.bri_interest }
-						set_temp_variable = { treasury_change = ROOT.bri_amortisation }
-						multiply_temp_variable = { treasury_change = -1 }
+						set_temp_variable = { treasury_change = { value = ROOT.bri_amortisation multiply = -1 } }
 						modify_treasury_effect = yes
 						subtract_from_variable = { var = bri_debt_owed_to_china value = ROOT.bri_amortisation }
 						clamp_variable = { var = bri_debt_owed_to_china min = 0 }
@@ -1835,8 +1820,7 @@ CHI_bri_process_loans = {
 }
 
 CHI_bri_cleanup_loans = {
-	set_temp_variable = { bri_cleanup_index = CHI_bri_debtors^num }
-	subtract_from_temp_variable = { bri_cleanup_index = 1 }
+	set_temp_variable = { bri_cleanup_index = { value = CHI_bri_debtors^num subtract = 1 } }
 
 	while_loop_effect = {
 		limit = { check_variable = { bri_cleanup_index > -1 } }
@@ -1867,10 +1851,7 @@ CHI_bri_cleanup_loans = {
 
 CHI_bri_reduce_loan = {
 	if = {
-		limit = {
-			country_exists = CHI
-			CHI = { is_in_array = { CHI_bri_debtors = PREV.id } }
-		}
+		limit = { country_exists = CHI }
 		CHI = {
 			set_temp_variable = { bri_debtor_id = PREV.id }
 			CHI_bri_find_debtor_index = yes
@@ -1893,10 +1874,7 @@ CHI_bri_reduce_loan = {
 CHI_bri_restructure_loan = {
 	CHI_bri_grant_loan_grace = yes
 	if = {
-		limit = {
-			country_exists = CHI
-			CHI = { is_in_array = { CHI_bri_debtors = PREV.id } }
-		}
+		limit = { country_exists = CHI }
 		CHI = {
 			set_temp_variable = { bri_debtor_id = PREV.id }
 			CHI_bri_find_debtor_index = yes
@@ -1928,10 +1906,7 @@ CHI_bri_clear_loan = {
 	clr_country_flag = bri_loan_grace
 
 	if = {
-		limit = {
-			country_exists = CHI
-			CHI = { is_in_array = { CHI_bri_debtors = PREV.id } }
-		}
+		limit = { country_exists = CHI }
 		CHI = {
 			set_temp_variable = { bri_debtor_id = PREV.id }
 			CHI_bri_find_debtor_index = yes
@@ -1940,12 +1915,12 @@ CHI_bri_clear_loan = {
 				remove_from_array = { array = CHI_bri_debtors index = bri_found_index }
 				remove_from_array = { array = CHI_bri_loan_principal index = bri_found_index }
 				remove_from_array = { array = CHI_bri_loan_rate index = bri_found_index }
+				if = {
+					limit = { check_variable = { CHI_bri_debtors^num = 0 } }
+					set_variable = { CHI_bri_loan_income = 0 }
+				}
+				CHI_bri_mark_dirty = yes
 			}
-			if = {
-				limit = { check_variable = { CHI_bri_debtors^num = 0 } }
-				set_variable = { CHI_bri_loan_income = 0 }
-			}
-			CHI_bri_mark_dirty = yes
 		}
 	}
 }
