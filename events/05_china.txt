@@ -7429,13 +7429,7 @@ country_event = {
 	option = {
 		name = chi_bri.10.a
 		log = "[GetDateText]: [This.GetName]: chi_bri.10.a executed"
-		FROM = {
-			if = {
-				limit = { CHI_bri_reserved_application_is_valid = yes }
-				CHI_bri_start_project = yes
-			}
-			else = { CHI_bri_cancel_project = yes }
-		}
+		FROM = { CHI_bri_start_project = yes }
 		custom_effect_tooltip = CHI_bri_application_approved_tt
 		ai_chance = {
 			base = 8
@@ -7524,14 +7518,21 @@ country_event = {
 	}
 }
 
-# Fires at the debtor the month it first misses a payment. The default flag gates the whole
-# predatory branch, so both sides have to be told it happened.
+# Fires at the debtor the month it first misses a payment.
 country_event = {
 	id = chi_bri.16
 	title = chi_bri.16.t
 	desc = chi_bri.16.d
 	picture = GFX_trade_agreement
 	is_triggered_only = yes
+
+	trigger = {
+		country_exists = CHI
+		NOT = { has_war_with = CHI }
+		has_country_flag = bri_defaulted
+		check_variable = { bri_debt_owed_to_china > 0 }
+		CHI = { is_in_array = { CHI_bri_debtors = PREV.id } }
+	}
 
 	option = {
 		name = chi_bri.16.a
@@ -7540,8 +7541,7 @@ country_event = {
 	}
 }
 
-# Fires at the debtor when China claims resource rights. China has already decided to demand;
-# this is the debtor's answer, because the concession idea is permanent.
+# Fires at the debtor when China claims resource rights.
 country_event = {
 	id = chi_bri.17
 	title = chi_bri.17.t
@@ -7624,8 +7624,7 @@ country_event = {
 	}
 }
 
-# Notifies China that a debtor has defaulted. The default flag is what arms Debt Restructuring,
-# Asset Seizure and Claim Resource Rights, so China has to be told it happened.
+# Notifies China that a debtor has defaulted.
 country_event = {
 	id = chi_bri.19
 	title = chi_bri.19.t
@@ -7633,7 +7632,15 @@ country_event = {
 	picture = GFX_trade_agreement
 	is_triggered_only = yes
 
-	trigger = { original_tag = CHI }
+	trigger = {
+		original_tag = CHI
+		is_in_array = { CHI_bri_debtors = FROM.id }
+		FROM = {
+			NOT = { has_war_with = CHI }
+			has_country_flag = bri_defaulted
+			check_variable = { bri_debt_owed_to_china > 0 }
+		}
+	}
 
 	option = {
 		name = chi_bri.19.a
@@ -7642,8 +7649,7 @@ country_event = {
 	}
 }
 
-# Fires at the recipient when China's money arrives as credit rather than a grant. Without it the
-# recipient spends political power on an apply decision and silently acquires debt.
+# Notifies the recipient when China's funding arrives as a loan.
 country_event = {
 	id = chi_bri.23
 	title = chi_bri.23.t
