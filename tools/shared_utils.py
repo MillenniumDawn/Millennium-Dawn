@@ -613,8 +613,10 @@ def strip_comments(text: str) -> str:
     lines = text.split("\n")
     result = []
     for line in lines:
-        stripped = line.lstrip()
-        if stripped.startswith("#"):
+        if "#" not in line:
+            result.append(line)
+            continue
+        if line.lstrip().startswith("#"):
             result.append("")
             continue
         in_quote = False

@@ -578,18 +578,17 @@ jobs:
       # Per-matrix opt-out: `strict: false` makes the validator informational
       # (still produces the log + PR comment but exits 0 on findings). An entry
       # that omits the field keeps gating behavior — never fail open by default.
-      # `args` passes validator-specific opt-in flags; entries that omit it
-      # render an empty string. No entry sets it right now: the --missing-icons
-      # icon checks are deliberately kept out of CI (see validation-pipeline.md).
+      # The idea missing-icon audit is WARNING severity, so it reports its
+      # backlog without blocking a PR.
       - name: Run validation
         run: |
           if [ "${{ matrix.validator.strict }}" != "false" ]; then
             python3 tools/validation/${{ matrix.validator.script }} \
-              --strict --no-color --workers 4 ${{ matrix.validator.args }} \
+              --strict --no-color --workers 4 \
               --output validation-${{ matrix.validator.name }}.log
           else
             python3 tools/validation/${{ matrix.validator.script }} \
-              --no-color --workers 4 ${{ matrix.validator.args }} \
+              --no-color --workers 4 \
               --output validation-${{ matrix.validator.name }}.log
           fi
 
@@ -792,11 +791,11 @@ jobs:
         run: |
           if [ "${{ matrix.validator.strict }}" != "false" ]; then
             python3 tools/validation/${{ matrix.validator.script }} \
-              --strict --no-color --workers 4 ${{ matrix.validator.args }} \
+              --strict --no-color --workers 4 \
               --output validation-${{ matrix.validator.name }}.log
           else
             python3 tools/validation/${{ matrix.validator.script }} \
-              --no-color --workers 4 ${{ matrix.validator.args }} \
+              --no-color --workers 4 \
               --output validation-${{ matrix.validator.name }}.log
           fi
       - name: Upload results
