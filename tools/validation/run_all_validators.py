@@ -99,7 +99,7 @@ def launch_validator(
     # previously DEVNULL made crashes undiagnosable from the suite output.
     stderr_path = os.path.join(output_dir, f"{name}.stderr.log")
     try:
-        stderr_fh = open(stderr_path, "w", encoding="utf-8")
+        stderr_fh = open(stderr_path, "w", encoding="utf-8", newline="")
     except OSError:
         raise
     try:
@@ -478,7 +478,7 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
                     else f"{args.output}.json"
                 )
             try:
-                with open(json_path, "w", encoding="utf-8") as f:
+                with open(json_path, "w", encoding="utf-8", newline="") as f:
                     f.write(json_output)
             except OSError:
                 raise
@@ -488,7 +488,7 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     if args.format in ("text", "both"):
         if args.output:
             try:
-                with open(args.output, "w", encoding="utf-8") as f:
+                with open(args.output, "w", encoding="utf-8", newline="") as f:
                     f.write(report)
             except OSError:
                 raise

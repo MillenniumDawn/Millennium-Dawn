@@ -432,14 +432,52 @@ CHI_TAI_both_at_peace = {
 }
 
 ### Belt and Road Initiative ###
-CHI_bri_can_request = {
-	country_exists = CHI
+CHI_bri_is_application_eligible = {
+	has_war = no
 	NOT = { has_war_with = CHI }
 	NOT = { has_country_flag = bri_pipeline_busy }
+	NOT = { has_country_flag = bri_defaulted }
+	NOT = { has_active_mission = bankruptcy_incoming_collapse }
+}
+
+CHI_bri_can_request = {
+	country_exists = CHI
+	CHI_bri_is_application_eligible = yes
 	NOT = { gdp_per_capita_greater_than_30 = yes }
 	CHI = {
 		check_variable = { CHI_bri_committed_projects < CHI_bri_project_slots }
-		check_variable = { CHI_bri_treasury > CHI_bri_project_cost }
+		check_variable = { var = CHI_bri_treasury value = CHI_bri_project_cost compare = greater_than_or_equals }
+	}
+}
+
+CHI_bri_reserved_application_is_valid = {
+	country_exists = CHI
+	has_country_flag = bri_pipeline_busy
+	has_war = no
+	NOT = { has_war_with = CHI }
+	NOT = { has_country_flag = bri_defaulted }
+	NOT = { has_active_mission = bankruptcy_incoming_collapse }
+	NOT = { gdp_per_capita_greater_than_30 = yes }
+	if = {
+		limit = { check_variable = { bri_project_type = 2 } }
+		OR = {
+			is_neighbor_of = CHI
+			has_country_flag = CHI_bri_partner
+		}
+	}
+	CHI_bri_project_type_is_hostable = yes
+}
+
+CHI_bri_project_type_is_hostable = {
+	OR = {
+		AND = { check_variable = { bri_project_type = 1 } CHI_bri_can_host_port = yes }
+		AND = { check_variable = { bri_project_type = 2 } CHI_bri_can_host_rail = yes }
+		AND = { check_variable = { bri_project_type = 3 } CHI_bri_can_host_pipeline = yes }
+		AND = { check_variable = { bri_project_type = 4 } CHI_bri_can_host_telecom = yes }
+		AND = { check_variable = { bri_project_type = 5 } CHI_bri_can_host_sez = yes }
+		AND = { check_variable = { bri_project_type = 6 } CHI_bri_can_host_mine = yes }
+		AND = { check_variable = { bri_project_type = 7 } CHI_bri_can_host_energy = yes }
+		AND = { check_variable = { bri_project_type = 8 } CHI_bri_can_host_prestige = yes }
 	}
 }
 
@@ -447,13 +485,14 @@ CHI_bri_can_host_port = {
 	any_owned_state = {
 		is_controlled_by = PREV
 		is_coastal = yes
+		infrastructure < 5
 	}
 }
 
 CHI_bri_can_host_rail = {
 	any_owned_state = {
 		is_controlled_by = PREV
-		any_neighbor_state = { CONTROLLER = { original_tag = CHI } }
+		infrastructure < 5
 	}
 }
 
@@ -469,12 +508,17 @@ CHI_bri_can_host_pipeline = {
 }
 
 CHI_bri_can_host_telecom = {
-	any_owned_state = { is_controlled_by = PREV }
+	any_owned_state = {
+		is_controlled_by = PREV
+		free_building_slots = { building = internet_station size > 0 include_locked = no }
+	}
 }
 
 CHI_bri_can_host_sez = {
+	num_of_factories > 4
 	any_owned_state = {
 		is_controlled_by = PREV
+		free_building_slots = { building = industrial_complex size > 0 include_locked = no }
 		OR = {
 			is_coastal = yes
 			infrastructure > 3
@@ -498,13 +542,16 @@ CHI_bri_can_host_energy = {
 	any_owned_state = {
 		is_controlled_by = PREV
 		industrial_complex > 0
+		free_building_slots = { building = renewable_energy_infra size > 0 include_locked = no }
 	}
 }
 
 CHI_bri_can_host_prestige = {
+	has_stability > 0.4
 	any_owned_state = {
 		is_controlled_by = PREV
 		is_capital = yes
+		free_building_slots = { building = offices size > 0 include_locked = no }
 	}
 }
 
@@ -519,6 +566,14 @@ CHI_bri_has_reclaimable_structure = {
 	any_owned_state = {
 		is_controlled_by = PREV
 		OR = {
+			has_dynamic_modifier = { modifier = CHI_bri_state_port }
+			has_dynamic_modifier = { modifier = CHI_bri_state_rail }
+			has_dynamic_modifier = { modifier = CHI_bri_state_pipeline }
+			has_dynamic_modifier = { modifier = CHI_bri_state_telecom }
+			has_dynamic_modifier = { modifier = CHI_bri_state_sez }
+			has_dynamic_modifier = { modifier = CHI_bri_state_mine }
+			has_dynamic_modifier = { modifier = CHI_bri_state_energy }
+			has_dynamic_modifier = { modifier = CHI_bri_state_prestige }
 			has_dynamic_modifier = { modifier = CHI_bri_state_industrial }
 			has_dynamic_modifier = { modifier = CHI_bri_state_infrastructure }
 		}
