@@ -54,52 +54,94 @@ raj_chi_border_pair_valid = {
 	}
 }
 
-pak_raj_border_available = {
+pak_raj_border_no_operation_active = {
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_attack_pending }
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_war_active }
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_capture_pending }
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_claim_pending }
 	NOT = { has_global_flag = GLOBAL_pak_raj_border_crisis_active }
+}
+
+raj_chi_border_no_operation_active = {
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_attack_pending }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_war_active }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_pending }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_active }
+}
+
+pak_raj_border_no_claim_cooldown = {
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_capture_cooldown }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_crisis_cooldown }
+}
+
+raj_chi_border_no_claim_cooldown = {
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_cooldown }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_cooldown }
+}
+
+pak_raj_border_attack_thresholds = {
+	check_variable = { pak_raj_border_readiness > 60 }
+	check_variable = { global.pak_raj_border_tension > 79 }
+	has_border_war = no
+}
+
+raj_chi_border_attack_thresholds = {
+	check_variable = { raj_chi_border_readiness > 60 }
+	check_variable = { global.raj_chi_border_tension > 79 }
+	has_border_war = no
+}
+
+pak_raj_border_available = {
+	pak_raj_border_no_operation_active = yes
 	pak_raj_border_pair_valid = yes
 }
 
 raj_chi_border_available = {
-	NOT = { has_global_flag = GLOBAL_raj_chi_border_attack_pending }
-	NOT = { has_global_flag = GLOBAL_raj_chi_border_war_active }
-	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_pending }
-	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_active }
-	raj_chi_border_pair_valid = yes
-}
-
-pak_raj_border_attack_revalidate = {
-	NOT = { has_global_flag = GLOBAL_pak_raj_border_war_active }
-	NOT = { has_global_flag = GLOBAL_pak_raj_border_capture_pending }
-	NOT = { has_global_flag = GLOBAL_pak_raj_border_claim_pending }
-	NOT = { has_global_flag = GLOBAL_pak_raj_border_crisis_active }
-	check_variable = { pak_raj_border_readiness > 60 }
-	check_variable = { global.pak_raj_border_tension > 79 }
-	has_border_war = no
-	pak_raj_border_pair_valid = yes
-}
-
-raj_chi_border_attack_revalidate = {
-	NOT = { has_global_flag = GLOBAL_raj_chi_border_war_active }
-	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_pending }
-	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_active }
-	check_variable = { raj_chi_border_readiness > 60 }
-	check_variable = { global.raj_chi_border_tension > 79 }
-	has_border_war = no
+	raj_chi_border_no_operation_active = yes
 	raj_chi_border_pair_valid = yes
 }
 
 pak_raj_border_attack_available = {
-	pak_raj_border_attack_revalidate = yes
-	NOT = { has_global_flag = GLOBAL_pak_raj_border_attack_pending }
+	pak_raj_border_no_operation_active = yes
+	pak_raj_border_pair_valid = yes
+	pak_raj_border_attack_thresholds = yes
 }
 
 raj_chi_border_attack_available = {
-	raj_chi_border_attack_revalidate = yes
-	NOT = { has_global_flag = GLOBAL_raj_chi_border_attack_pending }
+	raj_chi_border_no_operation_active = yes
+	raj_chi_border_pair_valid = yes
+	raj_chi_border_attack_thresholds = yes
+}
+
+pak_raj_border_attack_revalidate = {
+	pak_raj_border_pair_valid = yes
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_war_active }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_capture_pending }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_claim_pending }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_crisis_active }
+	has_border_war = no
+}
+
+raj_chi_border_attack_revalidate = {
+	raj_chi_border_pair_valid = yes
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_war_active }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_pending }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_active }
+	has_border_war = no
+}
+
+pak_raj_border_capture_available = {
+	pak_raj_border_no_operation_active = yes
+	pak_raj_border_no_claim_cooldown = yes
+	pak_raj_border_pair_valid = yes
+	has_border_war = no
+}
+
+raj_chi_border_capture_available = {
+	raj_chi_border_no_operation_active = yes
+	raj_chi_border_no_claim_cooldown = yes
+	raj_chi_border_pair_valid = yes
+	has_border_war = no
 }
 
 pak_raj_border_capture_revalidate = {
@@ -123,14 +165,136 @@ raj_chi_border_capture_revalidate = {
 	has_border_war = no
 }
 
-pak_raj_border_capture_available = {
-	pak_raj_border_capture_revalidate = yes
-	NOT = { has_global_flag = GLOBAL_pak_raj_border_capture_pending }
+pak_raj_border_frontier_garrison = {
+	OR = {
+		AND = { 416 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 416 } }
+		AND = { 418 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 418 } }
+		AND = { 420 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 420 } }
+		AND = { 422 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 422 } }
+		AND = { 426 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 426 } }
+		AND = { 427 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 427 } }
+		AND = { 428 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 428 } }
+		AND = { 429 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 429 } }
+		AND = { 431 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 431 } }
+		AND = { 432 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 432 } }
+		AND = { 436 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 436 } }
+		AND = { 563 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 563 } }
+		AND = { 573 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 573 } }
+		AND = { 984 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 984 } }
+		AND = { 987 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 987 } }
+	}
 }
 
-raj_chi_border_capture_available = {
-	raj_chi_border_capture_revalidate = yes
-	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_pending }
+raj_chi_border_frontier_garrison = {
+	OR = {
+		AND = { 428 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 428 } }
+		AND = { 455 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 455 } }
+		AND = { 473 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 473 } }
+		AND = { 475 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 475 } }
+		AND = { 589 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 589 } }
+		AND = { 591 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 591 } }
+		AND = { 982 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 982 } }
+		AND = { 993 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 4 state = 993 } }
+	}
+}
+
+pak_raj_border_frontier_patrol = {
+	OR = {
+		AND = { 416 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 416 } }
+		AND = { 418 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 418 } }
+		AND = { 420 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 420 } }
+		AND = { 422 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 422 } }
+		AND = { 426 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 426 } }
+		AND = { 427 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 427 } }
+		AND = { 428 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 428 } }
+		AND = { 429 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 429 } }
+		AND = { 431 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 431 } }
+		AND = { 432 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 432 } }
+		AND = { 436 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 436 } }
+		AND = { 563 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 563 } }
+		AND = { 573 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 573 } }
+		AND = { 984 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 984 } }
+		AND = { 987 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 987 } }
+	}
+}
+
+raj_chi_border_frontier_patrol = {
+	OR = {
+		AND = { 428 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 428 } }
+		AND = { 455 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 455 } }
+		AND = { 473 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 473 } }
+		AND = { 475 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 475 } }
+		AND = { 589 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 589 } }
+		AND = { 591 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 591 } }
+		AND = { 982 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 982 } }
+		AND = { 993 = { is_owned_by = ROOT is_controlled_by = ROOT } divisions_in_state = { size > 2 state = 993 } }
+	}
+}
+
+pak_raj_border_exercise_garrison_holds = {
+	OR = {
+		AND = { check_variable = { pak_raj_border_exercise_state = 416 } divisions_in_state = { size > 4 state = 416 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 418 } divisions_in_state = { size > 4 state = 418 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 420 } divisions_in_state = { size > 4 state = 420 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 422 } divisions_in_state = { size > 4 state = 422 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 426 } divisions_in_state = { size > 4 state = 426 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 427 } divisions_in_state = { size > 4 state = 427 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 428 } divisions_in_state = { size > 4 state = 428 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 429 } divisions_in_state = { size > 4 state = 429 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 431 } divisions_in_state = { size > 4 state = 431 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 432 } divisions_in_state = { size > 4 state = 432 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 436 } divisions_in_state = { size > 4 state = 436 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 563 } divisions_in_state = { size > 4 state = 563 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 573 } divisions_in_state = { size > 4 state = 573 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 984 } divisions_in_state = { size > 4 state = 984 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 987 } divisions_in_state = { size > 4 state = 987 } }
+	}
+}
+
+raj_chi_border_exercise_garrison_holds = {
+	OR = {
+		AND = { check_variable = { raj_chi_border_exercise_state = 428 } divisions_in_state = { size > 4 state = 428 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 455 } divisions_in_state = { size > 4 state = 455 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 473 } divisions_in_state = { size > 4 state = 473 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 475 } divisions_in_state = { size > 4 state = 475 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 589 } divisions_in_state = { size > 4 state = 589 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 591 } divisions_in_state = { size > 4 state = 591 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 982 } divisions_in_state = { size > 4 state = 982 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 993 } divisions_in_state = { size > 4 state = 993 } }
+	}
+}
+
+pak_raj_border_patrol_garrison_holds = {
+	OR = {
+		AND = { check_variable = { pak_raj_border_exercise_state = 416 } divisions_in_state = { size > 2 state = 416 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 418 } divisions_in_state = { size > 2 state = 418 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 420 } divisions_in_state = { size > 2 state = 420 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 422 } divisions_in_state = { size > 2 state = 422 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 426 } divisions_in_state = { size > 2 state = 426 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 427 } divisions_in_state = { size > 2 state = 427 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 428 } divisions_in_state = { size > 2 state = 428 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 429 } divisions_in_state = { size > 2 state = 429 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 431 } divisions_in_state = { size > 2 state = 431 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 432 } divisions_in_state = { size > 2 state = 432 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 436 } divisions_in_state = { size > 2 state = 436 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 563 } divisions_in_state = { size > 2 state = 563 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 573 } divisions_in_state = { size > 2 state = 573 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 984 } divisions_in_state = { size > 2 state = 984 } }
+		AND = { check_variable = { pak_raj_border_exercise_state = 987 } divisions_in_state = { size > 2 state = 987 } }
+	}
+}
+
+raj_chi_border_patrol_garrison_holds = {
+	OR = {
+		AND = { check_variable = { raj_chi_border_exercise_state = 428 } divisions_in_state = { size > 2 state = 428 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 455 } divisions_in_state = { size > 2 state = 455 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 473 } divisions_in_state = { size > 2 state = 473 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 475 } divisions_in_state = { size > 2 state = 475 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 589 } divisions_in_state = { size > 2 state = 589 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 591 } divisions_in_state = { size > 2 state = 591 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 982 } divisions_in_state = { size > 2 state = 982 } }
+		AND = { check_variable = { raj_chi_border_exercise_state = 993 } divisions_in_state = { size > 2 state = 993 } }
+	}
 }
 
 pak_raj_border_preparation_idle = {
@@ -218,11 +382,6 @@ raj_chi_border_ai_should_capture = {
 	raj_chi_border_capture_available = yes
 	is_ai = yes
 }
-
-
-
-
-
 
 pak_raj_border_axis_427_from_420_valid = {
 	420 = {
