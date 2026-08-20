@@ -409,8 +409,8 @@ def create_backup(filename: str) -> str:
     backup_filename = f"{filename}.backup.{timestamp}"
 
     try:
-        with open(filename, "r", encoding="utf-8") as src:
-            with open(backup_filename, "w", encoding="utf-8") as dst:
+        with open(filename, "r", encoding="utf-8", newline="") as src:
+            with open(backup_filename, "w", encoding="utf-8", newline="") as dst:
                 dst.write(src.read())
         log_message("INFO", f"Backup created: {backup_filename}")
         return backup_filename
@@ -613,8 +613,10 @@ def strip_comments(text: str) -> str:
     lines = text.split("\n")
     result = []
     for line in lines:
-        stripped = line.lstrip()
-        if stripped.startswith("#"):
+        if "#" not in line:
+            result.append(line)
+            continue
+        if line.lstrip().startswith("#"):
             result.append("")
             continue
         in_quote = False

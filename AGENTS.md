@@ -31,6 +31,10 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
   faction membership, and similar direct checks instead. Use a flag only for
   state that cannot be queried directly or must record a historical transition.
 
+### Line endings in Python tooling
+
+Every text-mode write in `tools/` must pass `newline=""`. Without it, Python's text mode turns each `\n` into `\r\n` on Windows, so a tool that rewrites a mod file hands back CRLF; `git add` normalises the index but the working tree stays CRLF, and the next commit touching that file gets bounced by the `mixed-line-ending` hook. `Path.write_text` is banned outright (its `newline` parameter only exists on 3.10+) — use an explicit `open(..., newline="")`. Writes to `.txt` use `encoding="utf-8"`, never `utf-8-sig`, which would inject a BOM. `tools/tests/text_write_newline_test.py` enforces both and carries a documented allowlist for the rare write that genuinely needs platform-native endings. Repo-wide, `.gitattributes` (`* text=auto eol=lf`) and `.editorconfig` keep everything else on LF.
+
 ## Performance
 
 - Always `is_triggered_only = yes`; use `on_daily_TAG` not global triggers
