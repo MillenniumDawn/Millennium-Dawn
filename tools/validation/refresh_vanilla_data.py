@@ -58,7 +58,7 @@ def _write_manifest(
         "",
     ]
     lines = sorted(entries)
-    with open(os.path.join(_HERE, filename), "w", encoding="utf-8") as fh:
+    with open(os.path.join(_HERE, filename), "w", encoding="utf-8", newline="") as fh:
         fh.write("\n".join(header) + "\n".join(lines) + "\n")
     return f"{filename}: {len(lines)} entries"
 
