@@ -1082,7 +1082,7 @@ class Validator(BaseValidator):
                 self.log(f"  Could not locate file: {basename}", "warning")
                 continue
 
-            with open(target_file, "r", encoding="utf-8-sig") as f:
+            with open(target_file, "r", encoding="utf-8-sig", newline="") as f:
                 content = f.read()
 
             for token in tokens:
@@ -1105,7 +1105,7 @@ class Validator(BaseValidator):
                 else:
                     self.log(f"  Could not patch {token} in {basename}", "warning")
 
-            with open(target_file, "w", encoding="utf-8-sig") as f:
+            with open(target_file, "w", encoding="utf-8", newline="") as f:
                 f.write(content)
 
         self.log(
@@ -1885,7 +1885,7 @@ class Validator(BaseValidator):
                 self.log(f"  Could not locate file: {basename}", "warning")
                 continue
 
-            with open(target_file, "r", encoding="utf-8-sig") as f:
+            with open(target_file, "r", encoding="utf-8-sig", newline="") as f:
                 content = f.read()
 
             for token in tokens:
@@ -1899,7 +1899,7 @@ class Validator(BaseValidator):
                 else:
                     self.log(f"  Could not patch {token} in {basename}", "warning")
 
-            with open(target_file, "w", encoding="utf-8-sig") as f:
+            with open(target_file, "w", encoding="utf-8", newline="") as f:
                 f.write(content)
 
         self.log(

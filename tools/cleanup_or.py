@@ -449,7 +449,7 @@ def process_file(filepath):
     new_lines = simplify_or_block(lines)
     new_lines = simplify_and_block(new_lines)
     if new_lines != lines:
-        with open(filepath, "w", encoding="utf-8") as f:
+        with open(filepath, "w", encoding="utf-8", newline="") as f:
             f.writelines(new_lines)
         return True
     return False

@@ -116,6 +116,7 @@ def focus_add(cpath, dry_run=False):
                     os.path.join(cpath, "common", "national_focus", filename),
                     "w",
                     encoding="utf-8",
+                    newline="",
                 )
             )
             outputfile.truncate()
@@ -179,6 +180,7 @@ def focus_remove(cpath, dry_run=False):
                     os.path.join(cpath, "common", "national_focus", filename),
                     "w",
                     encoding="utf-8",
+                    newline="",
                 )
             )
             outputfile.truncate()
@@ -255,7 +257,10 @@ def event_add(cpath, dry_run=False):
                 io.StringIO()
                 if dry_run
                 else open(
-                    os.path.join(cpath, "events", filename), "w", encoding="utf-8"
+                    os.path.join(cpath, "events", filename),
+                    "w",
+                    encoding="utf-8",
+                    newline="",
                 )
             )
             outputfile.truncate()
@@ -304,7 +309,10 @@ def event_remove(cpath, dry_run=False):
                 io.StringIO()
                 if dry_run
                 else open(
-                    os.path.join(cpath, "events", filename), "w", encoding="utf-8"
+                    os.path.join(cpath, "events", filename),
+                    "w",
+                    encoding="utf-8",
+                    newline="",
                 )
             )
             outputfile.truncate()
@@ -362,6 +370,7 @@ def idea_add(cpath, dry_run=False):
                         os.path.join(cpath, "common", "ideas", filename),
                         "w",
                         encoding="utf-8",
+                        newline="",
                     )
                 )
             except OSError as e:
@@ -408,7 +417,9 @@ def idea_remove(cpath, dry_run=False):
                 continue
             try:
                 outputfile = (
-                    io.StringIO() if dry_run else open(path, "w", encoding="utf-8")
+                    io.StringIO()
+                    if dry_run
+                    else open(path, "w", encoding="utf-8", newline="")
                 )
             except OSError as e:
                 print(f"Could not write {filename}: {e}")
@@ -481,6 +492,7 @@ def decision_add(cpath, dry_run=False):
                         os.path.join(cpath, "common", "decisions", filename),
                         "w",
                         encoding="utf-8",
+                        newline="",
                     )
                 )
             except OSError as e:
@@ -584,6 +596,7 @@ def decision_remove(cpath, dry_run=False):
                         os.path.join(cpath, "common", "decisions", filename),
                         "w",
                         encoding="utf-8",
+                        newline="",
                     )
                 )
             except OSError as e:
@@ -649,6 +662,7 @@ def tech_add(cpath, dry_run=False):
                         os.path.join(cpath, "common", "technologies", filename),
                         "w",
                         encoding="utf-8",
+                        newline="",
                     )
                 )
             except OSError as e:
@@ -706,6 +720,7 @@ def tech_remove(cpath, dry_run=False):
                         os.path.join(cpath, "common", "technologies", filename),
                         "w",
                         encoding="utf-8",
+                        newline="",
                     )
                 )
             except OSError as e:

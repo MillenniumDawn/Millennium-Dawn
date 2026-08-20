@@ -229,7 +229,7 @@ def main():
             print(y)
             output_lines.append(" " + line + ': "' + y + '"')
         try:
-            with open(args.output, "a", encoding="utf-8") as f:
+            with open(args.output, "a", encoding="utf-8", newline="") as f:
                 f.writelines(str(line) + "\n" for line in output_lines)
         except OSError as e:
             raise SystemExit(f"Could not write file {args.output}: {e}") from e
