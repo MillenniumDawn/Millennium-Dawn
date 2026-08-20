@@ -138,9 +138,10 @@ _GFX_NAME = re.compile(
 # textureFile / texturefile inside a sprite block — the art a definition points at.
 _GFX_TEXTUREFILE = re.compile(r'\btexture[fF]ile\s*=\s*"([^"]+)"', re.IGNORECASE)
 
-# GUI references — spriteType / quadTextureSprite / background
+# Property names are case-insensitive; quotes are optional. GFX_ stays exact.
 _GUI_REF = re.compile(
-    r'\b(spriteType|quadTextureSprite|background)\s*=\s*"(GFX_[^"\[]+)"'
+    r"\b(?i:spriteType|quadTextureSprite|background)\s*=\s*"
+    r'(?:"(GFX_[^"\[]+)"|(GFX_[A-Za-z0-9_.@-]+))'
 )
 
 # Scripted GUI properties: image = "GFX_xxx"
@@ -278,7 +279,7 @@ def _vanilla_gui_ref_index() -> dict:
         text = _strip_comments(raw)
         refs = index.setdefault(os.path.basename(path), set())
         for m in _GUI_REF.finditer(text):
-            sprite = m.group(2)
+            sprite = m.group(1) or m.group(2)
             if not _is_dynamic(sprite):
                 refs.add(sprite)
     return index
@@ -317,7 +318,18 @@ _EQUIPMENT_ICON_TAG_RE = re.compile(r"^[A-Z][A-Z0-9]{2}_(.+)$")
 _EQUIPMENTS_BLOCK_RE = re.compile(r"^equipments\s*=\s*\{", re.MULTILINE)
 _TECHNOLOGIES_BLOCK_RE = re.compile(r"^technologies\s*=\s*\{", re.MULTILINE)
 _MODULES_BLOCK_RE = re.compile(r"^equipment_modules\s*=\s*\{", re.MULTILINE)
+_SUB_UNITS_BLOCK_RE = re.compile(r"^sub_units\s*=\s*\{", re.MULTILINE)
+_SUB_UNIT_CATEGORIES_BLOCK_RE = re.compile(
+    r"^sub_unit_categories\s*=\s*\{", re.MULTILINE
+)
 _EQUIPMENT_ENTRY_RE = re.compile(r"^\t([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+_UNIT_ICON_SUFFIXES = (
+    "_icon_small",
+    "_icon_medium",
+    "_icon_small_white",
+    "_icon_medium_white",
+    "_icon_medium_black",
+)
 
 # The equipment designer draws GFX_EMI_<name> for both halves of the module
 # system: the module itself, and the category its slot accepts. A category is
@@ -373,26 +385,41 @@ def _search_filter_names_from_text(raw: str) -> List[str]:
     return sorted(names)
 
 
+def _iter_txt_files(root: str, *, recursive: bool = True) -> List[str]:
+    """Return `.txt` paths under `root`. Missing dirs yield an empty list."""
+    if not recursive:
+        try:
+            return [
+                os.path.join(root, fn)
+                for fn in os.listdir(root)
+                if fn.endswith(".txt") and os.path.isfile(os.path.join(root, fn))
+            ]
+        except OSError:
+            return []
+    files: List[str] = []
+    for dirpath, _dirnames, filenames in os.walk(root):
+        for fn in filenames:
+            if fn.endswith(".txt"):
+                files.append(os.path.join(dirpath, fn))
+    return files
+
+
 def _load_names_from_dir(
-    mod_path: str, root: str, parse, namespace: str
+    mod_path: str, root: str, parse, namespace: str, *, recursive: bool = True
 ) -> FrozenSet[str]:
     """Return every name `parse` finds under `root`, content-cached per file."""
     names: Set[str] = set()
-    for dirpath, _dirnames, filenames in os.walk(root):
-        for fn in filenames:
-            if not fn.endswith(".txt"):
-                continue
-            filepath = os.path.join(dirpath, fn)
-            try:
-                with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
-                    raw = fh.read()
-            except OSError:
-                continue
-            names.update(
-                disk_cache.per_file_cached_by_content(
-                    mod_path, namespace, filepath, raw, lambda: parse(raw)
-                )
+    for filepath in _iter_txt_files(root, recursive=recursive):
+        try:
+            with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
+                raw = fh.read()
+        except OSError:
+            continue
+        names.update(
+            disk_cache.per_file_cached_by_content(
+                mod_path, namespace, filepath, raw, lambda: parse(raw)
             )
+        )
     return frozenset(names)
 
 
@@ -405,14 +432,47 @@ def _load_entry_names(
     )
 
 
+def _equipment_tree_from_text(raw: str) -> Tuple[List[str], List[str]]:
+    """Return (equipment entries, module/category names) from one equipment file."""
+    return (
+        _entry_names_from_text(raw, _EQUIPMENTS_BLOCK_RE),
+        _module_icon_names_from_text(raw),
+    )
+
+
+def _load_equipment_tree(mod_path: str) -> Tuple[FrozenSet[str], FrozenSet[str]]:
+    """Return cached (equipment names, module/category names) for the equipment tree."""
+    root = os.path.join(mod_path, "common", "units", "equipment")
+    tracked = _iter_txt_files(root)
+
+    def _build() -> Tuple[FrozenSet[str], FrozenSet[str]]:
+        equipment: Set[str] = set()
+        modules: Set[str] = set()
+        for filepath in tracked:
+            try:
+                with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
+                    raw = fh.read()
+            except OSError:
+                continue
+            eq_names, module_names = disk_cache.per_file_cached_by_content(
+                mod_path,
+                "gfx_ref.equipment_tree",
+                filepath,
+                raw,
+                lambda: _equipment_tree_from_text(raw),
+            )
+            equipment.update(eq_names)
+            modules.update(module_names)
+        return frozenset(equipment), frozenset(modules)
+
+    return disk_cache.aggregate_cached(
+        mod_path, "gfx_ref.equipment_tree.aggregate", tracked, _build
+    )
+
+
 def _load_equipment_names(mod_path: str) -> FrozenSet[str]:
     """Return every equipment archetype/variant declared in common/units/equipment."""
-    return _load_entry_names(
-        mod_path,
-        os.path.join(mod_path, "common", "units", "equipment"),
-        _EQUIPMENTS_BLOCK_RE,
-        "gfx_ref.equipment_names",
-    )
+    return _load_equipment_tree(mod_path)[0]
 
 
 def _load_technology_names(mod_path: str) -> FrozenSet[str]:
@@ -447,11 +507,93 @@ def _module_icon_names_from_text(raw: str) -> List[str]:
 
 def _load_module_icon_names(mod_path: str) -> FrozenSet[str]:
     """Return every module and category the designer can draw an icon for."""
-    return _load_names_from_dir(
+    return _load_equipment_tree(mod_path)[1]
+
+
+def _unit_category_names_from_text(raw: str) -> List[str]:
+    """Return every token listed inside a `sub_unit_categories = { }` block."""
+    text = _HASH_COMMENT.sub("", raw)
+    names: Set[str] = set()
+    for block in _SUB_UNIT_CATEGORIES_BLOCK_RE.finditer(text):
+        body, _end = extract_block_from_text(text, block.start())
+        if body:
+            names.update(body.split())
+    return sorted(names)
+
+
+def _load_unit_icon_names(mod_path: str) -> FrozenSet[str]:
+    """Return every subunit and unit category the engine can draw a counter for."""
+    names = set(
+        _load_names_from_dir(
+            mod_path,
+            os.path.join(mod_path, "common", "units"),
+            lambda raw: _entry_names_from_text(raw, _SUB_UNITS_BLOCK_RE),
+            "gfx_ref.unit_names",
+            recursive=False,
+        )
+    )
+    names.update(
+        _load_names_from_dir(
+            mod_path,
+            os.path.join(mod_path, "common", "unit_tags"),
+            _unit_category_names_from_text,
+            "gfx_ref.unit_categories",
+        )
+    )
+    return frozenset(names)
+
+
+_ENGINE_DECLARATION_FAMILIES = (
+    (
+        _load_search_filter_names,
+        "  No search_filters found under common/national_focus"
+        " — focus-filter icons unresolved",
+        ("GFX_{name}",),
+    ),
+    (
+        _load_module_icon_names,
+        "  No equipment modules found under common/units/equipment"
+        " — module icons unresolved",
+        ("GFX_EMI_{name}", "GFX_SMI_{name}"),
+    ),
+    (
+        _load_unit_icon_names,
+        "  No sub-units or unit categories found — unit icons unresolved",
+        tuple("GFX_unit_{name}" + suffix for suffix in _UNIT_ICON_SUFFIXES),
+    ),
+)
+
+
+def _declaration_engine_source_files(mod_path: str) -> List[str]:
+    """Return the files that feed declaration-derived engine sprites."""
+    return (
+        _iter_txt_files(os.path.join(mod_path, "common", "national_focus"))
+        + _iter_txt_files(os.path.join(mod_path, "common", "units", "equipment"))
+        + _iter_txt_files(os.path.join(mod_path, "common", "units"), recursive=False)
+        + _iter_txt_files(os.path.join(mod_path, "common", "unit_tags"))
+    )
+
+
+def _declaration_engine_refs(
+    mod_path: str,
+) -> Tuple[FrozenSet[str], Tuple[str, ...]]:
+    """Return cached declaration-derived engine sprites plus empty-source notices."""
+
+    def _build() -> Tuple[FrozenSet[str], Tuple[str, ...]]:
+        refs: Set[str] = set()
+        notices: List[str] = []
+        for load, notice, templates in _ENGINE_DECLARATION_FAMILIES:
+            names = load(mod_path)
+            if not names:
+                notices.append(notice)
+            refs.update(t.format(name=n) for t in templates for n in names)
+        return frozenset(refs), tuple(notices)
+
+    return disk_cache.aggregate_cached(
         mod_path,
-        os.path.join(mod_path, "common", "units", "equipment"),
-        _module_icon_names_from_text,
-        "gfx_ref.module_icon_names",
+        "gfx_ref.declaration_engine_refs",
+        _declaration_engine_source_files(mod_path),
+        _build,
     )
 
 
@@ -585,7 +727,7 @@ def _parse_gui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
         offsets = compute_line_offsets(raw)
         results = []
         for m in _GUI_REF.finditer(text):
-            sprite = m.group(2)
+            sprite = m.group(1) or m.group(2)
             if _is_dynamic(sprite):
                 continue
             line = line_for_offset(offsets, m.start())
@@ -877,28 +1019,19 @@ class Validator(BaseValidator):
             GFX_<FOCUS_FILTER_X>          every search_filters token in a focus tree
             GFX_EMI_<module|category>     equipment modules and the slot categories
                                           they claim / a chassis slot allows
+            GFX_SMI_<module|category>     the same names, ship-designer prefix
+            GFX_unit_<subunit|category>_icon_{small,medium}[_white|_black]
+                                          battalion counters from sub_units and
+                                          unit_tags
             GFX_<TAG|culture>_ace_<m|f>_N ace portraits, keyed by tag or 2d culture
             GFX_missile_<TAG>_ID_<N>_icon and anything else a `[...]` scripted-loc
                                           or scripted-GUI template can build
         """
         self._log_section("Resolving engine-built GFX references from mod data")
-        refs: Set[str] = set()
-
-        filters = _load_search_filter_names(self.mod_path)
-        if not filters:
-            self.log(
-                "  No search_filters found under common/national_focus"
-                " — focus-filter icons unresolved"
-            )
-        refs.update("GFX_" + f for f in filters)
-
-        modules = _load_module_icon_names(self.mod_path)
-        if not modules:
-            self.log(
-                "  No equipment modules found under common/units/equipment"
-                " — module icons unresolved"
-            )
-        refs.update("GFX_EMI_" + m for m in modules)
+        declared, notices = _declaration_engine_refs(self.mod_path)
+        refs: Set[str] = set(declared)
+        for notice in notices:
+            self.log(notice)
 
         pools = _load_ace_pool_names(self.mod_path)
         if not pools:
