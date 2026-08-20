@@ -27,6 +27,7 @@ from shared_utils import (
     create_backup,
     extract_block,
     log_message,
+    normalize_spacing,
     strip_inline_comment,
 )
 
@@ -1039,7 +1040,7 @@ def standardize_focus_tree(
     try:
         with open(tmp_path, "w", encoding="utf-8") as f:
             for line in output_lines:
-                f.write(line + "\n")
+                f.write(normalize_spacing(line) + "\n")
         os.replace(tmp_path, output_file)
 
         time_str = format_elapsed(time.time() - start_time)
