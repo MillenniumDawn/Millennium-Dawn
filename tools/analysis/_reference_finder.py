@@ -151,5 +151,6 @@ def run_reference_search(
             lines_out.append(f"\n  {name} ({len(refs)} refs):")
             for filepath, line_num, content in refs:
                 lines_out.append(f"    {filepath}:{line_num} -> {content}")
-    report_path.write_text("\n".join(lines_out), encoding="utf-8")
+    with open(report_path, "w", encoding="utf-8", newline="") as fh:
+        fh.write("\n".join(lines_out))
     print(f"Report saved to: {report_path}")
