@@ -1,46 +1,49 @@
 india_religious_events = {
-	#recurring religious events
-	random = {
-		chance = 60
-		add_to_variable = { RAJ_religious_event_counter = 1 }
-	}
 	if = {
-		limit = { check_variable = { RAJ_religious_event_counter > 4 } }
-		set_variable = { RAJ_religious_event_counter = 0 }
-		set_temp_variable = { RAJ_conflict_roll = 0 }
+		limit = { NOT = { has_idea = RAJ_pluralist_settlement } }
+		#recurring religious events
 		random = {
-			chance = 25
-			set_temp_variable = { RAJ_conflict_roll = 1 }
+			chance = 60
+			add_to_variable = { RAJ_religious_event_counter = 1 }
 		}
 		if = {
-			limit = { check_variable = { RAJ_conflict_roll = 1 } }
-			country_event = RAJ_religion.4
-		}
-		else = {
-			set_temp_variable = { RAJ_pair_hm = RAJ_hindus_opinion }
-			add_to_temp_variable = { RAJ_pair_hm = RAJ_muslim_opinion }
-			set_temp_variable = { RAJ_pair_mc = RAJ_muslim_opinion }
-			add_to_temp_variable = { RAJ_pair_mc = RAJ_christians_opinion }
-			set_temp_variable = { RAJ_pair_hc = RAJ_hindus_opinion }
-			add_to_temp_variable = { RAJ_pair_hc = RAJ_christians_opinion }
-			if = {
-				limit = {
-					check_variable = { RAJ_pair_hm < RAJ_pair_mc }
-					check_variable = { RAJ_pair_hm < RAJ_pair_hc }
-				}
-				set_variable = { RAJ_conflict_side_a = 2 }
-				set_variable = { RAJ_conflict_side_b = 1 }
+			limit = { check_variable = { RAJ_religious_event_counter > 4 } }
+			set_variable = { RAJ_religious_event_counter = 0 }
+			set_temp_variable = { RAJ_conflict_roll = 0 }
+			random = {
+				chance = 25
+				set_temp_variable = { RAJ_conflict_roll = 1 }
 			}
-			else_if = {
-				limit = { check_variable = { RAJ_pair_mc < RAJ_pair_hc } }
-				set_variable = { RAJ_conflict_side_a = 2 }
-				set_variable = { RAJ_conflict_side_b = 3 }
+			if = {
+				limit = { check_variable = { RAJ_conflict_roll = 1 } }
+				country_event = RAJ_religion.4
 			}
 			else = {
-				set_variable = { RAJ_conflict_side_a = 1 }
-				set_variable = { RAJ_conflict_side_b = 3 }
+				set_temp_variable = { RAJ_pair_hm = RAJ_hindus_opinion }
+				add_to_temp_variable = { RAJ_pair_hm = RAJ_muslim_opinion }
+				set_temp_variable = { RAJ_pair_mc = RAJ_muslim_opinion }
+				add_to_temp_variable = { RAJ_pair_mc = RAJ_christians_opinion }
+				set_temp_variable = { RAJ_pair_hc = RAJ_hindus_opinion }
+				add_to_temp_variable = { RAJ_pair_hc = RAJ_christians_opinion }
+				if = {
+					limit = {
+						check_variable = { RAJ_pair_hm < RAJ_pair_mc }
+						check_variable = { RAJ_pair_hm < RAJ_pair_hc }
+					}
+					set_variable = { RAJ_conflict_side_a = 2 }
+					set_variable = { RAJ_conflict_side_b = 1 }
+				}
+				else_if = {
+					limit = { check_variable = { RAJ_pair_mc < RAJ_pair_hc } }
+					set_variable = { RAJ_conflict_side_a = 2 }
+					set_variable = { RAJ_conflict_side_b = 3 }
+				}
+				else = {
+					set_variable = { RAJ_conflict_side_a = 1 }
+					set_variable = { RAJ_conflict_side_b = 3 }
+				}
+				country_event = RAJ_religion.1
 			}
-			country_event = RAJ_religion.1
 		}
 	}
 }
@@ -91,46 +94,6 @@ RAJ_afghan_wargoals = {
 	}
 }
 
-RAJ_change_muslim_opinion = {
-	custom_override_tooltip = {
-		tooltip = RAJ_change_muslim_opinion_tt
-		add_to_variable = { var = RAJ_muslim_opinion value = temp_change }
-		clamp_variable = { var = RAJ_muslim_opinion min = 0 max = 100 }
-	}
-}
-
-RAJ_change_christian_opinion = {
-	custom_override_tooltip = {
-		tooltip = RAJ_change_christian_opinion_tt
-		add_to_variable = { var = RAJ_christians_opinion value = temp_change }
-		clamp_variable = { var = RAJ_christians_opinion min = 0 max = 100 }
-	}
-}
-
-RAJ_change_sikh_opinion = {
-	custom_override_tooltip = {
-		tooltip = RAJ_change_sikh_opinion_tt
-		add_to_variable = { var = RAJ_sikh_opinion value = temp_change }
-		clamp_variable = { var = RAJ_sikh_opinion min = 0 max = 100 }
-	}
-}
-
-RAJ_change_buddhist_opinion = {
-	custom_override_tooltip = {
-		tooltip = RAJ_change_buddhist_opinion_tt
-		add_to_variable = { var = RAJ_buddhist_opinion value = temp_change }
-		clamp_variable = { var = RAJ_buddhist_opinion min = 0 max = 100 }
-	}
-}
-
-RAJ_change_hindu_opinion = {
-	custom_override_tooltip = {
-		tooltip = RAJ_change_hindu_opinion_tt
-		add_to_variable = { var = RAJ_hindus_opinion value = temp_change }
-		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
-	}
-}
-
 # Standard Greater Hindustan annex demand: fires indian_event.33 on the
 # target, creates an annex_everything wargoal, and emits the
 # accept/reject tooltip stack. Caller sets `demand_annex_target` to
@@ -164,66 +127,78 @@ RAJ_demand_annex_target = {
 # Caller sets `appease_target` to a religion index: 1=hindu, 2=muslim,
 # 3=christian, 4=sikh, 5=buddhist.
 RAJ_appease_religion = {
-	set_temp_variable = { temp_change = 4 }
 	if = {
 		limit = { check_variable = { appease_target = 1 } }
-		RAJ_change_hindu_opinion = yes
-		set_temp_variable = { temp_change = -1 }
-		RAJ_change_muslim_opinion = yes
+		add_to_variable = { RAJ_hindus_opinion = 4 tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
+		add_to_variable = { RAJ_muslim_opinion = -1 tooltip = RAJ_muslim_opinion_tt }
+		clamp_variable = { var = RAJ_muslim_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { appease_target = 2 } }
-		RAJ_change_muslim_opinion = yes
-		set_temp_variable = { temp_change = -1 }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_muslim_opinion = 4 tooltip = RAJ_muslim_opinion_tt }
+		clamp_variable = { var = RAJ_muslim_opinion min = 0 max = 100 }
+		add_to_variable = { RAJ_hindus_opinion = -1 tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { appease_target = 3 } }
-		RAJ_change_christian_opinion = yes
-		set_temp_variable = { temp_change = -1 }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_christians_opinion = 4 tooltip = RAJ_christians_opinion_tt }
+		clamp_variable = { var = RAJ_christians_opinion min = 0 max = 100 }
+		add_to_variable = { RAJ_hindus_opinion = -1 tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { appease_target = 4 } }
-		RAJ_change_sikh_opinion = yes
-		set_temp_variable = { temp_change = -1 }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_sikh_opinion = 4 tooltip = RAJ_sikh_opinion_tt }
+		clamp_variable = { var = RAJ_sikh_opinion min = 0 max = 100 }
+		add_to_variable = { RAJ_hindus_opinion = -1 tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { appease_target = 5 } }
-		RAJ_change_buddhist_opinion = yes
-		set_temp_variable = { temp_change = -1 }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_buddhist_opinion = 4 tooltip = RAJ_buddhist_opinion_tt }
+		clamp_variable = { var = RAJ_buddhist_opinion min = 0 max = 100 }
+		add_to_variable = { RAJ_hindus_opinion = -1 tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 }
 
+# Caller sets RAJ_opinion_delta to the change before invoking; the faith is
+# picked at runtime from RAJ_conflict_side_a / _b (1=Hindu, 2=Muslim, 3=Christian).
 RAJ_change_opinion_by_side_a = {
 	if = {
 		limit = { check_variable = { RAJ_conflict_side_a = 1 } }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_hindus_opinion = RAJ_opinion_delta tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { RAJ_conflict_side_a = 2 } }
-		RAJ_change_muslim_opinion = yes
+		add_to_variable = { RAJ_muslim_opinion = RAJ_opinion_delta tooltip = RAJ_muslim_opinion_tt }
+		clamp_variable = { var = RAJ_muslim_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { RAJ_conflict_side_a = 3 } }
-		RAJ_change_christian_opinion = yes
+		add_to_variable = { RAJ_christians_opinion = RAJ_opinion_delta tooltip = RAJ_christians_opinion_tt }
+		clamp_variable = { var = RAJ_christians_opinion min = 0 max = 100 }
 	}
 }
 
 RAJ_change_opinion_by_side_b = {
 	if = {
 		limit = { check_variable = { RAJ_conflict_side_b = 1 } }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_hindus_opinion = RAJ_opinion_delta tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { RAJ_conflict_side_b = 2 } }
-		RAJ_change_muslim_opinion = yes
+		add_to_variable = { RAJ_muslim_opinion = RAJ_opinion_delta tooltip = RAJ_muslim_opinion_tt }
+		clamp_variable = { var = RAJ_muslim_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { RAJ_conflict_side_b = 3 } }
-		RAJ_change_christian_opinion = yes
+		add_to_variable = { RAJ_christians_opinion = RAJ_opinion_delta tooltip = RAJ_christians_opinion_tt }
+		clamp_variable = { var = RAJ_christians_opinion min = 0 max = 100 }
 	}
 }
 
@@ -319,42 +294,45 @@ RAJ_suppression_equipment_reward = {
 
 RAJ_check_religious_harmony = {
 	if = {
-		limit = {
-			check_variable = { RAJ_hindus_opinion < 35 }
-			NOT = { has_idea = RAJ_hindu_discontent }
-		}
-		add_ideas = RAJ_hindu_discontent
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_hindu_discontent
-			check_variable = { RAJ_hindus_opinion > 34 }
-		}
-		remove_ideas = RAJ_hindu_discontent
-	}
-	if = {
-		limit = {
-			check_variable = { RAJ_muslim_opinion > 74 }
-			check_variable = { RAJ_sikh_opinion > 74 }
-			check_variable = { RAJ_buddhist_opinion > 74 }
-			check_variable = { RAJ_christians_opinion > 74 }
-			check_variable = { RAJ_hindus_opinion > 74 }
-			NOT = { has_idea = RAJ_religious_harmony }
-		}
-		add_ideas = RAJ_religious_harmony
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_religious_harmony
-			OR = {
-				check_variable = { RAJ_muslim_opinion < 75 }
-				check_variable = { RAJ_sikh_opinion < 75 }
-				check_variable = { RAJ_buddhist_opinion < 75 }
-				check_variable = { RAJ_christians_opinion < 75 }
-				check_variable = { RAJ_hindus_opinion < 75 }
+		limit = { NOT = { has_idea = RAJ_pluralist_settlement } }
+		if = {
+			limit = {
+				check_variable = { RAJ_hindus_opinion < 35 }
+				NOT = { has_idea = RAJ_hindu_discontent }
 			}
+			add_ideas = RAJ_hindu_discontent
 		}
-		remove_ideas = RAJ_religious_harmony
+		else_if = {
+			limit = {
+				has_idea = RAJ_hindu_discontent
+				check_variable = { RAJ_hindus_opinion > 34 }
+			}
+			remove_ideas = RAJ_hindu_discontent
+		}
+		if = {
+			limit = {
+				check_variable = { RAJ_muslim_opinion > 74 }
+				check_variable = { RAJ_sikh_opinion > 74 }
+				check_variable = { RAJ_buddhist_opinion > 74 }
+				check_variable = { RAJ_christians_opinion > 74 }
+				check_variable = { RAJ_hindus_opinion > 74 }
+				NOT = { has_idea = RAJ_religious_harmony }
+			}
+			add_ideas = RAJ_religious_harmony
+		}
+		else_if = {
+			limit = {
+				has_idea = RAJ_religious_harmony
+				OR = {
+					check_variable = { RAJ_muslim_opinion < 75 }
+					check_variable = { RAJ_sikh_opinion < 75 }
+					check_variable = { RAJ_buddhist_opinion < 75 }
+					check_variable = { RAJ_christians_opinion < 75 }
+					check_variable = { RAJ_hindus_opinion < 75 }
+				}
+			}
+			remove_ideas = RAJ_religious_harmony
+		}
 	}
 }
 
@@ -364,78 +342,81 @@ RAJ_check_religious_harmony = {
 # of RAJ_check_religious_harmony. Driven monthly from on_monthly_RAJ.
 RAJ_check_regional_faith = {
 	if = {
-		limit = {
-			OR = {
-				check_variable = { RAJ_hindus_opinion < 35 }
-				check_variable = { RAJ_muslim_opinion < 35 }
+		limit = { NOT = { has_idea = RAJ_pluralist_settlement } }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { RAJ_hindus_opinion < 35 }
+					check_variable = { RAJ_muslim_opinion < 35 }
+				}
+				NOT = { has_idea = RAJ_gujarat_trouble_idea }
 			}
-			NOT = { has_idea = RAJ_gujarat_trouble_idea }
+			add_ideas = RAJ_gujarat_trouble_idea
 		}
-		add_ideas = RAJ_gujarat_trouble_idea
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_gujarat_trouble_idea
-			check_variable = { RAJ_hindus_opinion > 34 }
-			check_variable = { RAJ_muslim_opinion > 34 }
+		else_if = {
+			limit = {
+				has_idea = RAJ_gujarat_trouble_idea
+				check_variable = { RAJ_hindus_opinion > 34 }
+				check_variable = { RAJ_muslim_opinion > 34 }
+			}
+			remove_ideas = RAJ_gujarat_trouble_idea
 		}
-		remove_ideas = RAJ_gujarat_trouble_idea
-	}
-	if = {
-		limit = {
-			check_variable = { RAJ_muslim_opinion < 35 }
-			NOT = { has_idea = RAJ_kashmir_unrest }
+		if = {
+			limit = {
+				check_variable = { RAJ_muslim_opinion < 35 }
+				NOT = { has_idea = RAJ_kashmir_unrest }
+			}
+			add_ideas = RAJ_kashmir_unrest
 		}
-		add_ideas = RAJ_kashmir_unrest
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_kashmir_unrest
-			check_variable = { RAJ_muslim_opinion > 34 }
+		else_if = {
+			limit = {
+				has_idea = RAJ_kashmir_unrest
+				check_variable = { RAJ_muslim_opinion > 34 }
+			}
+			remove_ideas = RAJ_kashmir_unrest
 		}
-		remove_ideas = RAJ_kashmir_unrest
-	}
-	if = {
-		limit = {
-			check_variable = { RAJ_sikh_opinion < 35 }
-			NOT = { has_idea = RAJ_punjab_unrest }
+		if = {
+			limit = {
+				check_variable = { RAJ_sikh_opinion < 35 }
+				NOT = { has_idea = RAJ_punjab_unrest }
+			}
+			add_ideas = RAJ_punjab_unrest
 		}
-		add_ideas = RAJ_punjab_unrest
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_punjab_unrest
-			check_variable = { RAJ_sikh_opinion > 34 }
+		else_if = {
+			limit = {
+				has_idea = RAJ_punjab_unrest
+				check_variable = { RAJ_sikh_opinion > 34 }
+			}
+			remove_ideas = RAJ_punjab_unrest
 		}
-		remove_ideas = RAJ_punjab_unrest
-	}
-	if = {
-		limit = {
-			check_variable = { RAJ_muslim_opinion < 35 }
-			NOT = { has_idea = RAJ_bengal_unrest }
+		if = {
+			limit = {
+				check_variable = { RAJ_muslim_opinion < 35 }
+				NOT = { has_idea = RAJ_bengal_unrest }
+			}
+			add_ideas = RAJ_bengal_unrest
 		}
-		add_ideas = RAJ_bengal_unrest
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_bengal_unrest
-			check_variable = { RAJ_muslim_opinion > 34 }
+		else_if = {
+			limit = {
+				has_idea = RAJ_bengal_unrest
+				check_variable = { RAJ_muslim_opinion > 34 }
+			}
+			remove_ideas = RAJ_bengal_unrest
 		}
-		remove_ideas = RAJ_bengal_unrest
-	}
-	if = {
-		limit = {
-			check_variable = { RAJ_christians_opinion < 35 }
-			NOT = { has_idea = RAJ_northeast_unrest }
+		if = {
+			limit = {
+				check_variable = { RAJ_christians_opinion < 35 }
+				NOT = { has_idea = RAJ_northeast_unrest }
+			}
+			add_ideas = RAJ_northeast_unrest
 		}
-		add_ideas = RAJ_northeast_unrest
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_northeast_unrest
-			check_variable = { RAJ_christians_opinion > 34 }
+		else_if = {
+			limit = {
+				has_idea = RAJ_northeast_unrest
+				check_variable = { RAJ_christians_opinion > 34 }
+			}
+			remove_ideas = RAJ_northeast_unrest
 		}
-		remove_ideas = RAJ_northeast_unrest
 	}
 }
 
@@ -443,16 +424,19 @@ RAJ_check_regional_faith = {
 # [-0.10, +0.10] (avg 50 -> 0, avg 25 -> -0.10, avg 75 -> +0.10). Drives
 # the RAJ_religious_climate dynamic modifier.
 RAJ_update_religious_climate = {
-	set_temp_variable = { RAJ_climate_avg = RAJ_hindus_opinion }
-	add_to_temp_variable = { RAJ_climate_avg = RAJ_muslim_opinion }
-	add_to_temp_variable = { RAJ_climate_avg = RAJ_sikh_opinion }
-	add_to_temp_variable = { RAJ_climate_avg = RAJ_christians_opinion }
-	add_to_temp_variable = { RAJ_climate_avg = RAJ_buddhist_opinion }
-	divide_temp_variable = { RAJ_climate_avg = 5 }
-	subtract_from_temp_variable = { RAJ_climate_avg = 50 }
-	multiply_temp_variable = { RAJ_climate_avg = 0.004 }
-	clamp_temp_variable = { var = RAJ_climate_avg min = -0.10 max = 0.10 }
-	set_variable = { RAJ_religious_climate_var = RAJ_climate_avg }
+	if = {
+		limit = { NOT = { has_idea = RAJ_pluralist_settlement } }
+		set_temp_variable = { RAJ_climate_avg = RAJ_hindus_opinion }
+		add_to_temp_variable = { RAJ_climate_avg = RAJ_muslim_opinion }
+		add_to_temp_variable = { RAJ_climate_avg = RAJ_sikh_opinion }
+		add_to_temp_variable = { RAJ_climate_avg = RAJ_christians_opinion }
+		add_to_temp_variable = { RAJ_climate_avg = RAJ_buddhist_opinion }
+		divide_temp_variable = { RAJ_climate_avg = 5 }
+		subtract_from_temp_variable = { RAJ_climate_avg = 50 }
+		multiply_temp_variable = { RAJ_climate_avg = 0.004 }
+		clamp_temp_variable = { var = RAJ_climate_avg min = -0.10 max = 0.10 }
+		set_variable = { RAJ_religious_climate_var = RAJ_climate_avg }
+	}
 }
 
 # State scope: clears every insurgency tier and zeroes the tracking var so it
