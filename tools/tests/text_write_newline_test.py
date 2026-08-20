@@ -12,9 +12,12 @@ required instead.
 
 import ast
 import os
+import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TOOLS_ROOT = os.path.join(REPO_ROOT, "tools")
+sys.path.insert(0, TOOLS_ROOT)
+from shared_utils import read_text_under
 
 # Deliberate exemptions, as "<repo-relative path>:<line>". Add an entry only for
 # a write whose consumer genuinely requires platform-native line endings, and
@@ -68,8 +71,10 @@ def _python_sources():
 def _offenders():
     found = []
     for path in _python_sources():
-        with open(path, "r", encoding="utf-8", newline="") as fh:
-            tree = ast.parse(fh.read(), filename=path)
+        tree = ast.parse(
+            read_text_under(path, TOOLS_ROOT, encoding="utf-8", errors="strict"),
+            filename=path,
+        )
         rel = os.path.relpath(path, REPO_ROOT).replace(os.sep, "/")
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
@@ -102,8 +107,10 @@ def test_allowlist_entries_still_exist():
     live = set()
     for path in _python_sources():
         rel = os.path.relpath(path, REPO_ROOT).replace(os.sep, "/")
-        with open(path, "r", encoding="utf-8", newline="") as fh:
-            tree = ast.parse(fh.read(), filename=path)
+        tree = ast.parse(
+            read_text_under(path, TOOLS_ROOT, encoding="utf-8", errors="strict"),
+            filename=path,
+        )
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and _callee_name(node) in (
                 "open",

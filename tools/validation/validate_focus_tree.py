@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from shared_utils import extract_block_from_text as _extract_block
+from shared_utils import read_text_under
 from sprite_index import build_sprite_index
 from validator_common import (
     BaseValidator,
@@ -459,10 +460,15 @@ def _body_money_cost(
             seg_has_set = True
             if val is not None and _NUMERIC_LITERAL_RE.match(val):
                 seg_var_base = False
-                amount = float(val)
-                if amount < 0:
-                    seg_neg = True
-                    seg_max = max(seg_max, -amount)
+                try:
+                    amount = float(val)
+                except ValueError:
+                    seg_unknown = True
+                    seg_sign_unknown = True
+                else:
+                    if amount < 0:
+                        seg_neg = True
+                        seg_max = max(seg_max, -amount)
             elif val is not None and val != "{":
                 # A bare variable reference is unknown. Only known non-negative
                 # sources retain their sign when scaled by a literal.
@@ -533,12 +539,16 @@ def _body_money_cost(
     return spend, has_cost, unknown
 
 
-def _read_scripted_effect_file(filepath: str) -> str:
+def _read_mod_text(filepath: str, mod_path: str) -> str:
     try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            return strip_comments(fh.read())
-    except OSError:
+        return read_text_under(filepath, mod_path)
+    except (OSError, ValueError):
         return ""
+
+
+def _read_scripted_effect_file(filepath: str, mod_path: str) -> str:
+    text = _read_mod_text(filepath, mod_path)
+    return strip_comments(text) if text else ""
 
 
 def _parse_scripted_effect_file(
@@ -741,10 +751,8 @@ def _parse_focus_ids_from_block(block: str) -> List[Tuple[str, int, List[List[st
 def parse_focus_file(args: Tuple[str, str]) -> Dict:
     """Read one focus tree file and return its parsed structure, content-cached."""
     filepath, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return {"filepath": filepath, "trees": [], "shared_defs": {}}
     text = strip_comments(raw)
     return disk_cache.per_file_cached_by_content(
@@ -763,10 +771,8 @@ def _extract_focus_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, int
     Focuses that omit `icon` (or use a dynamic `[...]` value) are skipped.
     """
     filepath, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
 
@@ -805,10 +811,8 @@ def _extract_tech_bonuses(
     the block has no `name =` parameter.
     """
     filepath, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
 
@@ -877,10 +881,8 @@ def _extract_ai_guard_data(
     definitions change.
     """
     filepath, mod_path, staffable_map, money_effects = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
     fingerprint = (
@@ -1029,10 +1031,8 @@ def _extract_focus_search_filters(
     nested reward blocks.
     """
     filepath, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
 
@@ -1073,10 +1073,8 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
     Returns one dict (id, file, line) per non-compliant focus.
     """
     filepath, mod_path, notifications = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
     fingerprint = ";".join(sorted(notifications))
@@ -1161,10 +1159,8 @@ def _extract_pp_malus(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     than executing the malus.
     """
     filepath, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
 
@@ -1699,7 +1695,7 @@ class Validator(BaseValidator):
             ["common/scripted_effects/*.txt"], ignore_staged=True
         )
         for filepath in fx_files:
-            text = _read_scripted_effect_file(filepath)
+            text = _read_scripted_effect_file(filepath, self.mod_path)
             bodies, staffable, money = disk_cache.per_file_cached_by_content(
                 self.mod_path,
                 "focus_tree.scripted_effects",
@@ -1899,11 +1895,10 @@ class Validator(BaseValidator):
         """
         ids: Set[str] = set()
         for fp in self._collect_files(["events/*.txt"], ignore_staged=True):
-            try:
-                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
-                    text = strip_comments(fh.read())
-            except Exception:
+            raw = _read_mod_text(fp, self.mod_path)
+            if not raw:
                 continue
+            text = strip_comments(raw)
 
             def _compute(text=text) -> List[str]:
                 found: List[str] = []

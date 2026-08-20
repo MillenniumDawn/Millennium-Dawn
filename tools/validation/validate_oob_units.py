@@ -27,6 +27,7 @@ from equipment_module_slots import (
     check_created_variants,
     parse_variant_names,
 )
+from shared_utils import read_text_under
 from validator_common import (
     BaseValidator,
     Issue,
@@ -89,11 +90,10 @@ _CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
 ]
 
 
-def _read_text(filepath: str) -> str:
+def _read_text(filepath: str, under: str) -> str:
     try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            return f.read()
-    except OSError:
+        return read_text_under(filepath, under)
+    except (OSError, ValueError):
         return ""
 
 
@@ -207,7 +207,7 @@ def _parse_canonical_unit_sources(
     units_dir = os.path.join(mod_path, "common", "units")
     parsed = []
     for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
-        content = _read_text(filepath)
+        content = _read_text(filepath, mod_path)
 
         def compute(
             source_content: str = content,
@@ -320,10 +320,8 @@ def parse_division_group_keys(mod_path: str) -> Set[str]:
     keys = set()
     pattern = os.path.join(mod_path, "common", "units", "names_divisions", "*.txt")
     for filepath in glob.iglob(pattern):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except OSError:
+        content = _read_text(filepath, mod_path)
+        if not content:
             continue
         keys |= disk_cache.per_file_cached_by_content(
             mod_path,
@@ -560,10 +558,8 @@ def validate_oob_file(
     filepath, canonical, canonical_lower, mod_path = args
     filename = os.path.basename(filepath)
 
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            raw = f.read()
-    except Exception:
+    raw = _read_text(filepath, mod_path)
+    if not raw:
         return []
 
     refs = disk_cache.per_file_cached_by_content(
@@ -608,10 +604,8 @@ def validate_namelist_file(
     filepath, canonical, canonical_lower, mod_path = args
     filename = os.path.basename(filepath)
 
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            raw = f.read()
-    except Exception:
+    raw = _read_text(filepath, mod_path)
+    if not raw:
         return []
 
     parent = os.path.basename(os.path.dirname(filepath))
@@ -635,10 +629,8 @@ def validate_oob_division_groups_file(
     filepath, group_keys, group_keys_lower, mod_path = args
     filename = os.path.basename(filepath)
 
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            raw = f.read()
-    except OSError:
+    raw = _read_text(filepath, mod_path)
+    if not raw:
         return []
 
     refs = disk_cache.per_file_cached_by_content(
@@ -1028,10 +1020,8 @@ def _in_state_scope(nodes: List[Dict], text: str, idx: int) -> bool:
 def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
     """Validate every create_unit block in one file. Returns error Issues."""
     filepath, rel, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            raw = f.read()
-    except OSError:
+    raw = _read_text(filepath, mod_path)
+    if not raw:
         return []
     content = strip_comments(raw)
     nodes = disk_cache.per_file_cached_by_content(
@@ -1277,10 +1267,8 @@ class Validator(BaseValidator):
 
         results = []
         for filepath in files:
-            try:
-                with open(filepath, "r", encoding="utf-8-sig") as f:
-                    raw = f.read()
-            except OSError:
+            raw = _read_text(filepath, self.mod_path)
+            if not raw:
                 continue
             content = strip_comments(raw)
             refs = disk_cache.per_file_cached_by_content(
@@ -1314,7 +1302,10 @@ class Validator(BaseValidator):
 
         files = self._collect_files(_VARIANT_SOURCE_PATTERNS, ignore_staged=full_scope)
         sources = [
-            (os.path.relpath(filepath, self.mod_path), _read_text(filepath))
+            (
+                os.path.relpath(filepath, self.mod_path),
+                _read_text(filepath, self.mod_path),
+            )
             for filepath in files
         ]
         self._variant_sources_by_scope[full_scope] = sources
@@ -1400,7 +1391,7 @@ class Validator(BaseValidator):
             units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
             return parse_archetypes(
                 [
-                    _read_text(fp)
+                    _read_text(fp, self.mod_path)
                     for fp in sorted(glob.iglob(os.path.join(units_dir, "*.txt")))
                 ]
             )
@@ -1409,7 +1400,7 @@ class Validator(BaseValidator):
 
         results = []
         for filepath in self._collect_files(["history/units/*.txt"]):
-            content = _read_text(filepath)
+            content = _read_text(filepath, self.mod_path)
             if "version_name" not in content:
                 continue
             rel = os.path.relpath(filepath, self.mod_path)
@@ -1425,7 +1416,7 @@ class Validator(BaseValidator):
                 )
 
         for filepath in self._collect_files(_HISTORY_PRODUCTION_PATTERNS):
-            content = _read_text(filepath)
+            content = _read_text(filepath, self.mod_path)
             if "add_equipment_" not in content:
                 continue
             rel = os.path.relpath(filepath, self.mod_path)

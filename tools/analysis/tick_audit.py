@@ -64,6 +64,7 @@ from shared_utils import (  # noqa: E402
     atomic_write_text,
     extract_block_from_text,
     read_text_strict,
+    read_text_under,
     strip_comments,
 )
 
@@ -142,8 +143,7 @@ def _iter_txt(subdir):
             if name.endswith(".txt"):
                 path = os.path.join(root, name)
                 try:
-                    with open(path, "r", encoding="utf-8-sig", errors="replace") as fh:
-                        yield path, fh.read()
+                    yield path, read_text_under(path, REPO_ROOT)
                 except OSError:
                     continue
 

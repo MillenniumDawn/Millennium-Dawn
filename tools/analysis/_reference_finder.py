@@ -9,10 +9,14 @@ supply their domain-specific name extractor and reference search logic via the
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
 from typing import Callable, Dict, List, Tuple
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from shared_utils import write_text_under
 
 
 def build_parser(
@@ -100,7 +104,10 @@ def run_reference_search(
             print(f"\r  UNREFERENCED: {name:<50}")
 
     elapsed = time.time() - start
-    minutes, seconds = divmod(int(elapsed), 60)
+    try:
+        minutes, seconds = divmod(int(elapsed), 60)
+    except (TypeError, ValueError, OverflowError):
+        minutes, seconds = 0, 0
 
     print("\n")
     print(header_bar)
@@ -152,6 +159,8 @@ def run_reference_search(
             lines_out.append(f"\n  {name} ({len(refs)} refs):")
             for filepath, line_num, content in refs:
                 lines_out.append(f"    {filepath}:{line_num} -> {content}")
-    with open(report_path, "w", encoding="utf-8", newline="") as fh:
-        fh.write("\n".join(lines_out))
+    try:
+        write_text_under(str(report_path), os.getcwd(), "\n".join(lines_out) + "\n")
+    except (OSError, ValueError) as e:
+        sys.exit(f"Error writing report: {e}")
     print(f"Report saved to: {report_path}")

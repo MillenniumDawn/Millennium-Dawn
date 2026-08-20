@@ -83,6 +83,28 @@ def test_atomic_write_failure_leaves_original(tmp_path, monkeypatch):
     assert not list(tmp_path.glob(".file.txt.*"))
 
 
+def test_resolve_under_rejects_escape(tmp_path):
+    inside = tmp_path / "ok.txt"
+    inside.write_text("ok", encoding="utf-8")
+    assert U.resolve_under(str(inside), str(tmp_path)) == inside.resolve()
+    with pytest.raises(ValueError, match="not under"):
+        U.resolve_under(str(tmp_path / ".." / "outside.txt"), str(tmp_path))
+
+
+def test_read_text_under_reads_inside_and_rejects_escape(tmp_path):
+    inside = tmp_path / "ok.txt"
+    inside.write_text("hello", encoding="utf-8")
+    assert U.read_text_under(str(inside), str(tmp_path)) == "hello"
+    with pytest.raises(ValueError, match="not under"):
+        U.read_text_under("/etc/passwd", str(tmp_path))
+
+
+def test_write_text_under_rejects_escape(tmp_path):
+    with pytest.raises(ValueError, match="not under"):
+        U.write_text_under(str(tmp_path / ".." / "out.txt"), str(tmp_path), "nope")
+    assert not (tmp_path / "out.txt").exists()
+
+
 def test_atomic_write_rejects_symlink(tmp_path):
     target = tmp_path / "target.txt"
     target.write_text("target", encoding="utf-8")

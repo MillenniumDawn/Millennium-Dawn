@@ -466,6 +466,28 @@ def read_text_strict(
         return handle.read()
 
 
+def resolve_under(path: str, under: str) -> Path:
+    """Resolve *path* and raise if it is not inside *under*."""
+    root = Path(under).resolve()
+    resolved = Path(path).resolve()
+    if resolved != root and root not in resolved.parents:
+        raise ValueError(f"path {path} is not under {under}")
+    _reject_symlink_path(resolved)
+    return resolved
+
+
+def read_text_under(
+    path: str,
+    under: str,
+    encoding: str = "utf-8-sig",
+    *,
+    errors: str = "replace",
+) -> str:
+    """Read a text file after proving it lives under *under*."""
+    resolved = resolve_under(path, under)
+    return Path(os.fspath(resolved)).read_text(encoding=encoding, errors=errors)
+
+
 def atomic_write_bytes(filename: str, data: bytes) -> None:
     """Replace a regular file atomically, preserving mode and old contents."""
     path = Path(filename)
@@ -520,6 +542,17 @@ def atomic_write_text(
         text = "\ufeff" + text
     output_encoding = "utf-8" if encoding == "utf-8-sig" else encoding
     atomic_write_bytes(filename, text.encode(output_encoding, errors="strict"))
+
+
+def write_text_under(
+    path: str,
+    under: str,
+    text: str,
+    encoding: str = "utf-8",
+) -> None:
+    """Write text after proving *path* lives under *under*."""
+    resolved = resolve_under(path, under)
+    atomic_write_text(str(resolved), text, encoding=encoding)
 
 
 def clean_filepath(filepath: str) -> str:

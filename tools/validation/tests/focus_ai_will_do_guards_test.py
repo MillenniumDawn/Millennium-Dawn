@@ -139,9 +139,9 @@ def test_scripted_effect_sources_are_read_once_for_both_indexes(tmp_path, monkey
     reads = []
     original = validate_focus_tree._read_scripted_effect_file
 
-    def read(filepath):
+    def read(filepath, mod_path):
         reads.append(filepath)
-        return original(filepath)
+        return original(filepath, mod_path)
 
     monkeypatch.setattr(validate_focus_tree, "_read_scripted_effect_file", read)
     validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)

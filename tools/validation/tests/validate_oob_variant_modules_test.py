@@ -6,6 +6,7 @@ set of sources a variant can be created from, the module-unlock rule that keeps
 legal designs quiet, and the severity split against ship designs.
 """
 
+from shared_utils import write_text_under
 from validate_oob_units import Validator
 
 _HULLS = """
@@ -67,7 +68,7 @@ def _variant(modules_body):
 def _write(tmp_path, rel, body):
     path = tmp_path / rel
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body, encoding="utf-8")
+    write_text_under(str(path), str(tmp_path), body)
     return path
 
 

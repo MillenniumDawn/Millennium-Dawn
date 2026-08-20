@@ -25,10 +25,14 @@ import os
 import pickle
 import shutil
 import sqlite3
+import sys
 import threading
 import time
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import write_text_under
 
 # Bump to invalidate every entry after a schema change. v5 replaced the
 # one-pickle-per-entry layout with a single SQLite db; prune_old_versions drops
@@ -369,9 +373,8 @@ def stamp_created(mod_path: str) -> None:
         return
     try:
         marker.parent.mkdir(parents=True, exist_ok=True)
-        with open(marker, "w", encoding="utf-8", newline="") as fh:
-            fh.write(str(time.time()))
-    except OSError:
+        write_text_under(str(marker), mod_path, str(time.time()))
+    except (OSError, ValueError):
         pass
 
 

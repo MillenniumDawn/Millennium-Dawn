@@ -22,6 +22,7 @@ from shared_utils import (
     compute_line_offsets,
     extract_block_from_text,
     line_for_offset,
+    read_text_under,
     strip_comments,
 )
 from validator_common import (
@@ -822,7 +823,9 @@ _MONEY_WRITE_RES = {
 }
 
 
-def build_money_consumer_map(effect_files: List[str]) -> Dict[str, frozenset]:
+def build_money_consumer_map(
+    effect_files: List[str], under: str
+) -> Dict[str, frozenset]:
     """Map each money input variable to the scripted effects that consume it.
 
     An effect consumes a variable when the variable's first appearance in its
@@ -834,9 +837,8 @@ def build_money_consumer_map(effect_files: List[str]) -> Dict[str, frozenset]:
     bodies: Dict[str, str] = {}
     for fp in effect_files:
         try:
-            with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
-                text = strip_comments(fh.read())
-        except Exception:
+            text = strip_comments(read_text_under(fp, under))
+        except (OSError, ValueError):
             continue
         for m in _SCRIPTED_EFFECT_DEF_RE.finditer(text):
             body, _ = extract_block_from_text(text, m.start())
@@ -1429,7 +1431,7 @@ class Validator(BaseValidator):
         effect_files = self._collect_files(
             ["common/scripted_effects/**/*.txt"], ignore_staged=True
         )
-        consumer_map = build_money_consumer_map(effect_files)
+        consumer_map = build_money_consumer_map(effect_files, self.mod_path)
         args_list = [(f, self.mod_path, consumer_map) for f in txt_files]
         all_results = self._pool_map(
             process_file_for_orphan_money, args_list, chunksize=30
