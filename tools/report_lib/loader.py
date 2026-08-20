@@ -181,6 +181,17 @@ def _parse_issues_from_log(
 
 
 def _determine_status(run: ValidatorRun, log_text: Optional[str]) -> str:
+    if log_text is None and not run.had_json:
+        return "no_output"
+    # A JSON sidecar carries every issue, so its counts settle the status on
+    # their own. Linters outside BaseValidator emit one without the
+    # "VALIDATION COMPLETE" marker the text fallback below keys on.
+    if run.had_json:
+        if run.errors > 0:
+            return "failed"
+        if run.warnings > 0:
+            return "warnings"
+        return "passed"
     if log_text is None:
         return "no_output"
     if "✓ VALIDATION COMPLETE" in log_text and run.errors == 0 and run.warnings == 0:
