@@ -2,30 +2,26 @@
 
 ## Table of Content
 
-- [Bindable Localization](#bindable-localization)
-- [Collections](#collections)
-- [Contextual Localization](#contextual-localization)
-- [Formatted Localization](#formatted-localization)
-- [Script Constants](#script-constants)
+* [Bindable Localization](#bindable-localization)
+* [Collections](#collections)
+* [Contextual Localization](#contextual-localization)
+* [Formatted Localization](#formatted-localization)
+* [Math Expressions](#math-expressions)
+* [Script Constants](#script-constants)
 
 ## Bindable Localization
-
 Bindable localization is a modular way of binding localization parameters in script for the specified localization key.
 Any variable that accepts a bindable localization accepts the following:
-
-- A [formatted localization](#formatted_localization).
-- A bound localization object.
+* A [formatted localization](#formatted-localization).
+* A bound localization object.
 
 The bound localization object has the following members:
-
-- `localization_key = KEY`: The localization key that is used for the object.
-- `PARAMETER = BINDABLE_LOC`: A parameter to the localization key that is replaced with the localized version `BINDABLE_LOC`,
-  where `BINDABLE_LOC` is a bound localization object itself.
+* `localization_key = KEY`: The localization key that is used for the object.
+* `PARAMETER = BINDABLE_LOC`: A parameter to the localization key that is replaced with the localized version `BINDABLE_LOC`,
+   where `BINDABLE_LOC` is a bound localization object itself.
 
 #### Examples
-
 The following are example usages where the `tooltip` is a bindable localization:
-
 ```
 tooltip = MY_TOOLTIP # Simple loc key tooltip
 
@@ -60,33 +56,8 @@ The thing everyone wonders is if the meaning of life is 42. The rest is unimport
 custom_effect_tooltip = idea_desc|canadian_pacific_railway
 ```
 
-## Formatted Localization
-
-Formatted localization is a concept for generating texts based on a specific token. It can for example, be used to
-generate a description of an idea from the ideas token. A formatted localization entry also accepts standard localization keys
-and raw localization strings giving the following allowed options:
-
-- A localization tag.
-- A string (can for example be used to inject things based on the [Localization Scope Object](#localization_scope_object) if one exists).
-- A formatter and it's associated tag.
-
-Documentation for the existing formatters can be found at [Localization formatter](localization_formatter.md).
-
-### Example
-
-```
-# Using a  formatter
-custom_effect_tooltip = idea_desc|canadian_pacific_railway
-
-# Using a standard loc key
-custom_effect_tooltip = WHILE_FOCUSING
-
-# Using a loc string with a localization scope object
-custom_effect_tooltip = "[ROOT.GetName]"
-```
 
 ## Collections
-
 Collections are a collection of game objects of the same type, just like the game arrays.
 However, unlike arrays they support operations to transform, expand or filter the original
 collection in a unified and efficient way. In many cases, using arrays in combinations with
@@ -97,7 +68,6 @@ owned states within the faction is larger than 42 would require doing an implici
 Finally, that variable would be compared to whatever value is needed. To make it clear to the
 player that probably needs a custom tooltip as well. With collections, you could achieve the
 same result with a single trigger:
-
 ```
 collection_size = {
 	input = {
@@ -110,10 +80,8 @@ collection_size = {
 ```
 
 ### Collection structure
-
 A collection contains three properties `input`, `operators` and `name`.
 Where both `operators` and `name` are optional.
-
 - `input` is the original set of item to use as the base of the collection.
   All available inputs can be found in their [documentation](script_collection_input.md).
 - `operators` are all the operations that can be applied to the collection in order.
@@ -129,10 +97,8 @@ Now for every country in the faction, the operator `owned_states` is applied.
 This generates a set of states owned by the faction members.
 
 ### Shorthand notations
-
 There is currently one shorthand notation for collections: Using only input. This allows you only provide
 the input to the collection instead of the complete object. For example, the following collections are equivalent:
-
 ```
 my_collection = {
 	input = game:all_states
@@ -142,24 +108,112 @@ my_collection = game:all_states
 ```
 
 ### Uniqueness of game items
-
 There is one pitfall that should be noted, there is no guarantee that the objects in
 the collection is unique. So if we for example replace the `owned_states` operator with
 a `core_states` operator, the collection will contain the same state multiple times if
 multiple faction members has core of the same state.
 
 ### Named collections
-
 A named collection is a collection that is defined in the collections database. It has a unique name
 and can be used as input in other collections. For more information see the [input documentation](script_collection_input.md).
 
 ### Localization of collections
-
 A collection is localized using the `name` property. If the collection has no name, it will use the name of the input
 collection.
 
-## Script Constants
 
+## Contextual Localization
+Contextual localization is a way to access data from Localization Objects when localizing a string.
+The concept differs slightly from standard values ($VAL$) that can be injected into the localization string by allowing the localization string
+to select which properties to add to the resulting string and where.
+When a string is contextually localized with a localization object, then there's one root object (either a [Scope](loc_objects_documentation.md#scope) or [Localization Environment](loc_objects_documentation.md#localization-environment).
+In general this object can only be used for two purposes: Accessing other objects and getting the current date.
+
+The documentation for the different localization objects can be found at [Localization Objects](loc_objects_documentation.md).
+
+### Using a localization object
+The localization objects are used with the following syntax: `[(Object.)+Property]`.
+`(Object.)+` refers to a sequence of at least one object accessor and `Property` is the property
+that is accessed by the last object in the sequence. For example, if the localization string is localized with an [Character](loc_objects_documentation.md#character) object
+the following queries would get the character's name and the name of the country that the character belongs to `[Character.GetName]`
+and `[Character.Owner.GetName]`, respectively.
+
+### Condition in contextual localization
+Conditions in contextual localization can be used to check if objects are null or not. The basic syntax for the condition is `[(OBJECT ? TRUE_CASE : FALSE_CASE)]`.
+Where:
+* `OBJECT` is any object you can use to access a property from (for example, `Character` and `Character.Owner` are valid objects).
+* `TRUE_CASE` and `FALSE_CASE` are what is to be localized if `OBJECT` is not null and null, respectively. These can hold one of the following values:
+   1. `'LOC_KEY` - A localization key (`LOC_KEY`, note the prepending `'` that means that it's a localization key) that will be localized using the same context as the root contextual localization.
+   2. `(OBJECT.)+Property` - Standard access of a property from an object (discards the object before the `?`). `(OBJECT.)+` stands for a sequence of at least one object, with dots as separators.
+   3. (true case only) `.(OBJECT.)*Property` - Continue that object sequence from the object before the `?`. `(OBJECT.)*` stands for a potentially empty sequence of objects with dots as separators. This is more efficient than the second option since it will not redo the object getters before the `?`.
+
+### Relation to Event Scopes
+When a localization string is localized from a scoped context (for example effects or triggers), then the root [Scope](loc_objects_documentation.md#scope) is created
+from the event scope of that context. For example, an effect that creates a trade route between two countries `FROM` and `THIS`
+could be localized with: `LOC_KEY: "Creates a trade route between [FROM.GetName] and [THIS.GetName]"`. For more information on
+how the scope accessors `FROM`, `THIS`, `PREV` and `ROOT` works on `Scope` see TODO: Add link.
+
+### Documentation of localized objects
+In general a scoped context (for example, effects and triggers) are localized using a [Scope](loc_objects_documentation.md#scope) object based on the scope of that context.
+However, there are legacy systems where this may not hold. For other places where localization keys are provided, please see the documentation
+for which localization objects that are defined for that context.
+
+## Formatted Localization
+Formatted localization is a concept for generating texts based on a specific token. It can for example, be used to
+generate a description of an idea from the ideas token. A formatted localization entry also accepts standard localization keys
+and raw localization strings giving the following allowed options:
+* A localization tag.
+* A string (can for example be used to inject things based on the Localization Scope Object if one exists).
+* A formatter and it's associated tag.
+
+Documentation for the existing formatters can be found at [Localization formatter](localization_formatter.md).
+
+### Example
+```
+# Using a  formatter
+custom_effect_tooltip = idea_desc|canadian_pacific_railway
+
+# Using a standard loc key
+custom_effect_tooltip = WHILE_FOCUSING
+
+# Using a loc string with a localization scope object
+custom_effect_tooltip = "[ROOT.GetName]"
+```
+
+
+## Math Expressions
+```
+
+Math expressions allow for mathematical calculations using constants, scoped variables and mathematical functions.
+Using math expressions is expected to be more performant than using temporary variables for calculations.
+
+All math expressions are based on fixed point arithmetic. For boolean operations, 0.0 is considered false and any
+other value is considered true. All operators that return a boolean value will return 1.0 for true and 0.0 for false.
+
+A list of math functions can be found [here](script_math_functions.md).
+
+### Syntax
+Math expressions use a base value (`value = ...`) that is then modified by sequential statements.
+Statements can either be:
+* No argument statement (e.g. `round = yes`) that simply applies an operation to the accumulator.
+* Simple statements that takes one or more math expression as argument (e.g. `add = 5`, `clamp = { min = 0 max = 100 }`).
+* Control flow statements that take a block of statements as argument (e.g. `if = { limit = { value = x  greater_than = 10 }  add = 100 }`).
+* Collection iterators that takes a named collection and a block of modification statements to apply for each element. The collection elements will be scoped to.
+
+### Error Handling
+If a math expression fails to parse properly, it will be replaced with the value 0.0 for runtime operations.
+
+### Examples
+```
+{ value = num_cavalry
+  add = num_motorized
+  add = num_mechanized
+  greater_than = { value = num_units  multiply = 0.4 }
+}
+```
+```
+
+## Script Constants
 Script constants are a way to define constants in scripts that can be reused in any script file (except for other script constants files).
 In general, script constants can be used instead of the script macro operator `@` that is file local.
 Note that the script constants has a negligible load time impact and no runtime performance cost.
@@ -167,15 +221,12 @@ Like many other concepts, the script constant is only supported where explicitly
 accepts script constants that are pointing to a single fixed point value, by using the prefix `constant:`.
 
 #### Reloading
-
 A script constant is a bit specific when it comes to reloading the database.
 It's not enough to reload the script constant database itself since script constants are injected into the script on load.
 Instead one have to first reload the script constant database, and then reload the database that uses the script constant.
 
 #### Example
-
 In the script constant file, the following constant file definition is made:
-
 ```
 numeric_constants = {
     schema = {
@@ -188,50 +239,10 @@ numeric_constants = {
 ```
 
 These can then be used in a script file like this:
-
 ```
 some_scoped_variable = constant:numeric_constants.pi
 some_fixed_point_supporting_constants = numeric_constants.e
 ```
 
-## Contextual Localization
 
-Contextual localization is a way to access data from Localization Objects when localizing a string.
-The concept differs slightly from standard values ($VAL$) that can be injected into the localization string by allowing the localization string
-to select which properties to add to the resulting string and where.
-When a string is contextually localized with a localization object, then there's one root object (either a [Scope](loc_objects_documentation.md#scope) or [Localization Environment(loc_objects_documentation.md#localization_environment)].
-In general this object can only be used for two purposes: Accessing other objects and getting the current date.
 
-The documentation for the different localization objects can be found at [Localization Objects](loc_objects_documentation.md).
-
-### Using a localization object
-
-The localization objects are used with the following syntax: `[(Object.)+Property]`.
-`(Object.)+` refers to a sequence of at least one object accessor and `Property` is the property
-that is accessed by the last object in the sequence. For example, if the localization string is localized with an [Character](loc_objects_documentation.md#character) object
-the following queries would get the character's name and the name of the country that the character belongs to `[Character.GetName]`
-and `[Character.Owner.GetName]`, respectively.
-
-### Condition in contextual localization
-
-Conditions in contextual localization can be used to check if objects are null or not. The basic syntax for the condition is `[(OBJECT ? TRUE_CASE : FALSE_CASE)]`.
-Where:
-
-- `OBJECT` is any object you can use to access a property from (for example, `Character` and `Character.Owner` are valid objects).
-- `TRUE_CASE` and `FALSE_CASE` are what is to be localized if `OBJECT` is not null and null, respectively. These can hold one of the following values:
-  1.  `'LOC_KEY` - A localization key (`LOC_KEY`, note the prepending `'` that means that it's a localization key) that will be localized using the same context as the root contextual localization.
-  2.  `(OBJECT.)+Property` - Standard access of a property from an object (discards the object before the `?`). `(OBJECT.)+` stands for a sequence of at least one object, with dots as separators.
-  3.  (true case only) `.(OBJECT.)*Property` - Continue that object sequence from the object before the `?`. `(OBJECT.)*` stands for a potentially empty sequence of objects with dots as separators. This is more efficient than the second option since it will not redo the object getters before the `?`.
-
-### Relation to Event Scopes
-
-When a localization string is localized from a scoped context (for example effects or triggers), then the root [Scope](loc_objects_documentation.md#scope) is created
-from the event scope of that context. For example, an effect that creates a trade route between two countries `FROM` and `THIS`
-could be localized with: `LOC_KEY: "Creates a trade route between [FROM.GetName] and [THIS.GetName]"`. For more information on
-how the scope accessors `FROM`, `THIS`, `PREV` and `ROOT` works on `Scope` see TODO: Add link.
-
-### Documentation of localized objects
-
-In general a scoped context (for example, effects and triggers) are localized using a [Scope](loc_objects_documentation.md#scope) object based on the scope of that context.
-However, there are legacy systems where this may not hold. For other places where localization keys are provided, please see the documentation
-for which localization objects that are defined for that context.
