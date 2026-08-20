@@ -3551,7 +3551,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_HKG_sinicization_slot_free = yes }
-
 		cost = 50
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
@@ -3592,7 +3591,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_HKG_sinicization_slot_free = yes }
-
 		cost = 100
 		custom_cost_trigger = { check_variable = { treasury > 6 } }
 		custom_cost_text = cost_6_0
@@ -3644,7 +3642,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_MAC_sinicization_slot_free = yes }
-
 		cost = 50
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
@@ -3684,7 +3681,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_MAC_sinicization_slot_free = yes }
-
 		cost = 100
 		custom_cost_trigger = { check_variable = { treasury > 6 } }
 		custom_cost_text = cost_6_0
@@ -3733,7 +3729,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_TIB_sinicization_slot_free = yes }
-
 		cost = 50
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
@@ -3828,7 +3823,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_ETK_sinicization_slot_free = yes }
-
 		cost = 50
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
@@ -3926,10 +3920,8 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_OMG_sinicization_slot_free = yes }
-
 		fire_only_once = no
 		days_remove = 180
-
 		modifier = { social_cost_multiplier_modifier = 0.03 }
 
 		complete_effect = {
@@ -3979,7 +3971,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_OMG_sinicization_slot_free = yes }
-
 		fire_only_once = no
 		days_remove = 270
 
@@ -4094,7 +4085,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_OMG_sinicization_slot_free = yes }
-
 		cost = 50
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
@@ -4186,7 +4176,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_national_sinicization_slot_free = yes }
-
 		cost = 150
 		custom_cost_trigger = { check_variable = { treasury > 15 } }
 		custom_cost_text = cost_15_0
@@ -4227,7 +4216,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_national_sinicization_slot_free = yes }
-
 		cost = 250
 		custom_cost_trigger = { check_variable = { treasury > 30 } }
 		custom_cost_text = cost_30_0
@@ -8116,6 +8104,11 @@ CHI_BRI_management = {
 		available = {
 			has_political_power > 99
 			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = CHI_bri_dual_treasury_50_tt
+				check_variable = { var = CHI_bri_treasury value = 50 compare = greater_than_or_equals }
+				check_variable = { var = treasury value = 50 compare = greater_than_or_equals }
+			}
 		}
 
 		cost = 100
@@ -8125,11 +8118,9 @@ CHI_BRI_management = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_FOCAC_Summit executed"
 			subtract_from_variable = { CHI_bri_treasury = 50 }
-			every_country = {
-				limit = {
-					has_country_flag = african_nation_flag
-					NOT = { has_war_with = CHI }
-				}
+			for_each_scope_loop = {
+				array = global.is_african_nation
+				limit = { NOT = { has_war_with = CHI } }
 				add_opinion_modifier = { target = CHI modifier = medium_increase }
 			}
 			country_event = { id = chi_bri.80 days = 1 }
@@ -8159,7 +8150,7 @@ CHI_BRI_management = {
 			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_bri_treasury_gt_149_tt
-				check_variable = { CHI_bri_treasury > 149 }
+				check_variable = { var = CHI_bri_treasury value = 150 compare = greater_than_or_equals }
 			}
 		}
 
@@ -8189,6 +8180,7 @@ CHI_BRI_management = {
 		icon = generic_political_discourse
 
 		visible = {
+			is_ai = no
 			has_completed_focus = CHI_Belt_and_Road_Initiative
 			NOT = { has_country_flag = CHI_bri_auto_accept }
 		}
@@ -8202,13 +8194,14 @@ CHI_BRI_management = {
 			custom_effect_tooltip = CHI_BRI_automation_enable_tt
 		}
 
-		ai_will_do = { base = 100 }
+		ai_will_do = { base = 0 }
 	}
 
 	CHI_BRI_automation_disable = {
 		icon = generic_political_discourse
 
 		visible = {
+			is_ai = no
 			has_completed_focus = CHI_Belt_and_Road_Initiative
 			has_country_flag = CHI_bri_auto_accept
 		}
@@ -8246,6 +8239,7 @@ CHI_BRI_management = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_bri_raise_contribution executed"
 			add_to_variable = { CHI_bri_monthly_income_base = 4 tooltip = CHI_bri_monthly_income_tt }
+			clamp_variable = { var = CHI_bri_monthly_income_base max = 30 }
 		}
 
 		ai_will_do = {
@@ -8263,11 +8257,12 @@ CHI_BRI_management = {
 		icon = generic_fundraising
 		target_root_trigger = { has_completed_focus = CHI_Win_Win_Cooperation }
 		available = { has_political_power > 99 }
-		target_array = global.bri_eligible_countries
+		target_array = CHI_bri_debtors
 
 		target_trigger = {
 			FROM = {
 				NOT = { original_tag = CHI }
+				NOT = { has_war_with = CHI }
 				has_country_flag = bri_defaulted
 			}
 		}
@@ -8277,8 +8272,8 @@ CHI_BRI_management = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_Debt_Restructuring executed"
 			FROM = {
-				CHI_bri_clear_loan = yes
-				custom_effect_tooltip = CHI_bri_clear_loan_tt
+				CHI_bri_restructure_loan = yes
+				custom_effect_tooltip = CHI_bri_restructure_loan_tt
 				add_opinion_modifier = { target = CHI modifier = medium_increase }
 			}
 			add_to_variable = { CHI_bri_winwin_score = 2 tooltip = CHI_bri_winwin_score_tt }
@@ -8296,11 +8291,12 @@ CHI_BRI_management = {
 		icon = infiltrate_state
 		target_root_trigger = { has_completed_focus = CHI_Predatory_Lending_Doctrine }
 		available = { has_political_power > 49 }
-		target_array = global.bri_eligible_countries
+		target_array = CHI_bri_debtors
 
 		target_trigger = {
 			FROM = {
 				NOT = { original_tag = CHI }
+				NOT = { has_war_with = CHI }
 				has_country_flag = bri_defaulted
 				CHI_bri_has_reclaimable_structure = yes
 			}
@@ -8310,16 +8306,14 @@ CHI_BRI_management = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_Asset_Seizure executed"
-			FROM = {
-				CHI_bri_reclaim_structure = yes
-				CHI_bri_clear_loan = yes
-				custom_effect_tooltip = CHI_bri_clear_loan_tt
-				add_opinion_modifier = { target = CHI modifier = large_decrease }
-			}
-			# Taking the asset is the point: China realises the build cost it fronted and books the
-			# leverage. Guarded on the reclaim actually finding something rather than assumed.
+			FROM = { CHI_bri_reclaim_structure = yes }
 			if = {
 				limit = { FROM = { check_variable = { bri_structure_reclaimed = 1 } } }
+				FROM = {
+					set_temp_variable = { bri_debt_reduction = CHI.CHI_bri_project_cost }
+					CHI_bri_reduce_loan = yes
+					add_opinion_modifier = { target = CHI modifier = large_decrease }
+				}
 				custom_effect_tooltip = CHI_Asset_Seizure_tt
 				add_to_variable = { CHI_bri_global_presence = 3 tooltip = CHI_bri_global_presence_tt }
 				CHI_bri_recalc_presence = yes
@@ -8344,11 +8338,12 @@ CHI_BRI_management = {
 		icon = generic_industry
 		target_root_trigger = { has_completed_focus = CHI_Predatory_Lending_Doctrine }
 		available = { has_political_power > 49 }
-		target_array = global.bri_eligible_countries
+		target_array = CHI_bri_debtors
 
 		target_trigger = {
 			FROM = {
 				NOT = { original_tag = CHI }
+				NOT = { has_war_with = CHI }
 				has_country_flag = bri_defaulted
 				NOT = { has_idea = CHI_bri_resource_concession_idea }
 			}
@@ -8362,7 +8357,8 @@ CHI_BRI_management = {
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
 				FROM = {
-					CHI_bri_clear_loan = yes
+					set_temp_variable = { bri_debt_reduction = CHI.CHI_bri_project_cost }
+					CHI_bri_reduce_loan = yes
 					add_ideas = CHI_bri_resource_concession_idea
 				}
 			}
@@ -8387,6 +8383,11 @@ CHI_BRI_management = {
 		available = {
 			has_political_power > 74
 			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = CHI_bri_dual_treasury_80_tt
+				check_variable = { var = CHI_bri_treasury value = 80 compare = greater_than_or_equals }
+				check_variable = { var = treasury value = 80 compare = greater_than_or_equals }
+			}
 			FROM = {
 				NOT = { has_government = democratic }
 				NOT = { has_idea = chinese_surveillance_systems }
@@ -8436,13 +8437,13 @@ CHI_BRI_management = {
 				tooltip = CHI_bri_ports_next_tier_tt
 				OR = {
 					AND = {
-						check_variable = { CHI_bri_ports_built > 49 }
+						check_variable = { CHI_bri_ports_built > 4 }
 						NOT = { has_idea = CHI_bri_ports_tier_1_idea }
 						NOT = { has_idea = CHI_bri_ports_tier_2_idea }
 						NOT = { has_idea = CHI_bri_ports_tier_3_idea }
 					}
-					AND = { check_variable = { CHI_bri_ports_built > 74 } has_idea = CHI_bri_ports_tier_1_idea }
-					AND = { check_variable = { CHI_bri_ports_built > 99 } has_idea = CHI_bri_ports_tier_2_idea }
+					AND = { check_variable = { CHI_bri_ports_built > 14 } has_idea = CHI_bri_ports_tier_1_idea }
+					AND = { check_variable = { CHI_bri_ports_built > 29 } has_idea = CHI_bri_ports_tier_2_idea }
 				}
 			}
 		}
@@ -8453,11 +8454,11 @@ CHI_BRI_management = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_promote_maritime_network executed"
 			if = {
-				limit = { check_variable = { CHI_bri_ports_built > 99 } has_idea = CHI_bri_ports_tier_2_idea }
+				limit = { check_variable = { CHI_bri_ports_built > 29 } has_idea = CHI_bri_ports_tier_2_idea }
 				swap_ideas = { remove_idea = CHI_bri_ports_tier_2_idea add_idea = CHI_bri_ports_tier_3_idea }
 			}
 			else_if = {
-				limit = { check_variable = { CHI_bri_ports_built > 74 } has_idea = CHI_bri_ports_tier_1_idea }
+				limit = { check_variable = { CHI_bri_ports_built > 14 } has_idea = CHI_bri_ports_tier_1_idea }
 				swap_ideas = { remove_idea = CHI_bri_ports_tier_1_idea add_idea = CHI_bri_ports_tier_2_idea }
 			}
 			else = {
@@ -8477,13 +8478,13 @@ CHI_BRI_management = {
 				tooltip = CHI_bri_railways_next_tier_tt
 				OR = {
 					AND = {
-						check_variable = { CHI_bri_railways_built > 49 }
+						check_variable = { CHI_bri_railways_built > 4 }
 						NOT = { has_idea = CHI_bri_railways_tier_1_idea }
 						NOT = { has_idea = CHI_bri_railways_tier_2_idea }
 						NOT = { has_idea = CHI_bri_railways_tier_3_idea }
 					}
-					AND = { check_variable = { CHI_bri_railways_built > 74 } has_idea = CHI_bri_railways_tier_1_idea }
-					AND = { check_variable = { CHI_bri_railways_built > 99 } has_idea = CHI_bri_railways_tier_2_idea }
+					AND = { check_variable = { CHI_bri_railways_built > 14 } has_idea = CHI_bri_railways_tier_1_idea }
+					AND = { check_variable = { CHI_bri_railways_built > 29 } has_idea = CHI_bri_railways_tier_2_idea }
 				}
 			}
 		}
@@ -8494,11 +8495,11 @@ CHI_BRI_management = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_promote_overland_corridors executed"
 			if = {
-				limit = { check_variable = { CHI_bri_railways_built > 99 } has_idea = CHI_bri_railways_tier_2_idea }
+				limit = { check_variable = { CHI_bri_railways_built > 29 } has_idea = CHI_bri_railways_tier_2_idea }
 				swap_ideas = { remove_idea = CHI_bri_railways_tier_2_idea add_idea = CHI_bri_railways_tier_3_idea }
 			}
 			else_if = {
-				limit = { check_variable = { CHI_bri_railways_built > 74 } has_idea = CHI_bri_railways_tier_1_idea }
+				limit = { check_variable = { CHI_bri_railways_built > 14 } has_idea = CHI_bri_railways_tier_1_idea }
 				swap_ideas = { remove_idea = CHI_bri_railways_tier_1_idea add_idea = CHI_bri_railways_tier_2_idea }
 			}
 			else = {
@@ -8518,13 +8519,13 @@ CHI_BRI_management = {
 				tooltip = CHI_bri_pipelines_next_tier_tt
 				OR = {
 					AND = {
-						check_variable = { CHI_bri_pipelines_built > 49 }
+						check_variable = { CHI_bri_pipelines_built > 4 }
 						NOT = { has_idea = CHI_bri_pipelines_tier_1_idea }
 						NOT = { has_idea = CHI_bri_pipelines_tier_2_idea }
 						NOT = { has_idea = CHI_bri_pipelines_tier_3_idea }
 					}
-					AND = { check_variable = { CHI_bri_pipelines_built > 74 } has_idea = CHI_bri_pipelines_tier_1_idea }
-					AND = { check_variable = { CHI_bri_pipelines_built > 99 } has_idea = CHI_bri_pipelines_tier_2_idea }
+					AND = { check_variable = { CHI_bri_pipelines_built > 14 } has_idea = CHI_bri_pipelines_tier_1_idea }
+					AND = { check_variable = { CHI_bri_pipelines_built > 29 } has_idea = CHI_bri_pipelines_tier_2_idea }
 				}
 			}
 		}
@@ -8535,11 +8536,11 @@ CHI_BRI_management = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_promote_energy_arteries executed"
 			if = {
-				limit = { check_variable = { CHI_bri_pipelines_built > 99 } has_idea = CHI_bri_pipelines_tier_2_idea }
+				limit = { check_variable = { CHI_bri_pipelines_built > 29 } has_idea = CHI_bri_pipelines_tier_2_idea }
 				swap_ideas = { remove_idea = CHI_bri_pipelines_tier_2_idea add_idea = CHI_bri_pipelines_tier_3_idea }
 			}
 			else_if = {
-				limit = { check_variable = { CHI_bri_pipelines_built > 74 } has_idea = CHI_bri_pipelines_tier_1_idea }
+				limit = { check_variable = { CHI_bri_pipelines_built > 14 } has_idea = CHI_bri_pipelines_tier_1_idea }
 				swap_ideas = { remove_idea = CHI_bri_pipelines_tier_1_idea add_idea = CHI_bri_pipelines_tier_2_idea }
 			}
 			else = {
@@ -8559,13 +8560,13 @@ CHI_BRI_management = {
 				tooltip = CHI_bri_telecom_next_tier_tt
 				OR = {
 					AND = {
-						check_variable = { CHI_bri_telecom_built > 49 }
+						check_variable = { CHI_bri_telecom_built > 4 }
 						NOT = { has_idea = CHI_bri_telecom_tier_1_idea }
 						NOT = { has_idea = CHI_bri_telecom_tier_2_idea }
 						NOT = { has_idea = CHI_bri_telecom_tier_3_idea }
 					}
-					AND = { check_variable = { CHI_bri_telecom_built > 74 } has_idea = CHI_bri_telecom_tier_1_idea }
-					AND = { check_variable = { CHI_bri_telecom_built > 99 } has_idea = CHI_bri_telecom_tier_2_idea }
+					AND = { check_variable = { CHI_bri_telecom_built > 14 } has_idea = CHI_bri_telecom_tier_1_idea }
+					AND = { check_variable = { CHI_bri_telecom_built > 29 } has_idea = CHI_bri_telecom_tier_2_idea }
 				}
 			}
 		}
@@ -8576,11 +8577,11 @@ CHI_BRI_management = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_promote_digital_silk_road executed"
 			if = {
-				limit = { check_variable = { CHI_bri_telecom_built > 99 } has_idea = CHI_bri_telecom_tier_2_idea }
+				limit = { check_variable = { CHI_bri_telecom_built > 29 } has_idea = CHI_bri_telecom_tier_2_idea }
 				swap_ideas = { remove_idea = CHI_bri_telecom_tier_2_idea add_idea = CHI_bri_telecom_tier_3_idea }
 			}
 			else_if = {
-				limit = { check_variable = { CHI_bri_telecom_built > 74 } has_idea = CHI_bri_telecom_tier_1_idea }
+				limit = { check_variable = { CHI_bri_telecom_built > 14 } has_idea = CHI_bri_telecom_tier_1_idea }
 				swap_ideas = { remove_idea = CHI_bri_telecom_tier_1_idea add_idea = CHI_bri_telecom_tier_2_idea }
 			}
 			else = {
@@ -8600,13 +8601,13 @@ CHI_BRI_management = {
 				tooltip = CHI_bri_mines_next_tier_tt
 				OR = {
 					AND = {
-						check_variable = { CHI_bri_mines_secured > 49 }
+						check_variable = { CHI_bri_mines_secured > 4 }
 						NOT = { has_idea = CHI_bri_mines_tier_1_idea }
 						NOT = { has_idea = CHI_bri_mines_tier_2_idea }
 						NOT = { has_idea = CHI_bri_mines_tier_3_idea }
 					}
-					AND = { check_variable = { CHI_bri_mines_secured > 74 } has_idea = CHI_bri_mines_tier_1_idea }
-					AND = { check_variable = { CHI_bri_mines_secured > 99 } has_idea = CHI_bri_mines_tier_2_idea }
+					AND = { check_variable = { CHI_bri_mines_secured > 14 } has_idea = CHI_bri_mines_tier_1_idea }
+					AND = { check_variable = { CHI_bri_mines_secured > 29 } has_idea = CHI_bri_mines_tier_2_idea }
 				}
 			}
 		}
@@ -8617,11 +8618,11 @@ CHI_BRI_management = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_promote_resource_concessions executed"
 			if = {
-				limit = { check_variable = { CHI_bri_mines_secured > 99 } has_idea = CHI_bri_mines_tier_2_idea }
+				limit = { check_variable = { CHI_bri_mines_secured > 29 } has_idea = CHI_bri_mines_tier_2_idea }
 				swap_ideas = { remove_idea = CHI_bri_mines_tier_2_idea add_idea = CHI_bri_mines_tier_3_idea }
 			}
 			else_if = {
-				limit = { check_variable = { CHI_bri_mines_secured > 74 } has_idea = CHI_bri_mines_tier_1_idea }
+				limit = { check_variable = { CHI_bri_mines_secured > 14 } has_idea = CHI_bri_mines_tier_1_idea }
 				swap_ideas = { remove_idea = CHI_bri_mines_tier_1_idea add_idea = CHI_bri_mines_tier_2_idea }
 			}
 			else = {
@@ -8641,13 +8642,13 @@ CHI_BRI_management = {
 				tooltip = CHI_bri_powerplants_next_tier_tt
 				OR = {
 					AND = {
-						check_variable = { CHI_bri_powerplants_built > 49 }
+						check_variable = { CHI_bri_powerplants_built > 4 }
 						NOT = { has_idea = CHI_bri_powerplants_tier_1_idea }
 						NOT = { has_idea = CHI_bri_powerplants_tier_2_idea }
 						NOT = { has_idea = CHI_bri_powerplants_tier_3_idea }
 					}
-					AND = { check_variable = { CHI_bri_powerplants_built > 74 } has_idea = CHI_bri_powerplants_tier_1_idea }
-					AND = { check_variable = { CHI_bri_powerplants_built > 99 } has_idea = CHI_bri_powerplants_tier_2_idea }
+					AND = { check_variable = { CHI_bri_powerplants_built > 14 } has_idea = CHI_bri_powerplants_tier_1_idea }
+					AND = { check_variable = { CHI_bri_powerplants_built > 29 } has_idea = CHI_bri_powerplants_tier_2_idea }
 				}
 			}
 		}
@@ -8658,11 +8659,11 @@ CHI_BRI_management = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_promote_power_generation executed"
 			if = {
-				limit = { check_variable = { CHI_bri_powerplants_built > 99 } has_idea = CHI_bri_powerplants_tier_2_idea }
+				limit = { check_variable = { CHI_bri_powerplants_built > 29 } has_idea = CHI_bri_powerplants_tier_2_idea }
 				swap_ideas = { remove_idea = CHI_bri_powerplants_tier_2_idea add_idea = CHI_bri_powerplants_tier_3_idea }
 			}
 			else_if = {
-				limit = { check_variable = { CHI_bri_powerplants_built > 74 } has_idea = CHI_bri_powerplants_tier_1_idea }
+				limit = { check_variable = { CHI_bri_powerplants_built > 14 } has_idea = CHI_bri_powerplants_tier_1_idea }
 				swap_ideas = { remove_idea = CHI_bri_powerplants_tier_1_idea add_idea = CHI_bri_powerplants_tier_2_idea }
 			}
 			else = {
@@ -8682,13 +8683,13 @@ CHI_BRI_management = {
 				tooltip = CHI_bri_industrial_zones_next_tier_tt
 				OR = {
 					AND = {
-						check_variable = { CHI_bri_industrial_zones > 49 }
+						check_variable = { CHI_bri_industrial_zones > 4 }
 						NOT = { has_idea = CHI_bri_industrial_zones_tier_1_idea }
 						NOT = { has_idea = CHI_bri_industrial_zones_tier_2_idea }
 						NOT = { has_idea = CHI_bri_industrial_zones_tier_3_idea }
 					}
-					AND = { check_variable = { CHI_bri_industrial_zones > 74 } has_idea = CHI_bri_industrial_zones_tier_1_idea }
-					AND = { check_variable = { CHI_bri_industrial_zones > 99 } has_idea = CHI_bri_industrial_zones_tier_2_idea }
+					AND = { check_variable = { CHI_bri_industrial_zones > 14 } has_idea = CHI_bri_industrial_zones_tier_1_idea }
+					AND = { check_variable = { CHI_bri_industrial_zones > 29 } has_idea = CHI_bri_industrial_zones_tier_2_idea }
 				}
 			}
 		}
@@ -8699,11 +8700,11 @@ CHI_BRI_management = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_promote_economic_zones executed"
 			if = {
-				limit = { check_variable = { CHI_bri_industrial_zones > 99 } has_idea = CHI_bri_industrial_zones_tier_2_idea }
+				limit = { check_variable = { CHI_bri_industrial_zones > 29 } has_idea = CHI_bri_industrial_zones_tier_2_idea }
 				swap_ideas = { remove_idea = CHI_bri_industrial_zones_tier_2_idea add_idea = CHI_bri_industrial_zones_tier_3_idea }
 			}
 			else_if = {
-				limit = { check_variable = { CHI_bri_industrial_zones > 74 } has_idea = CHI_bri_industrial_zones_tier_1_idea }
+				limit = { check_variable = { CHI_bri_industrial_zones > 14 } has_idea = CHI_bri_industrial_zones_tier_1_idea }
 				swap_ideas = { remove_idea = CHI_bri_industrial_zones_tier_1_idea add_idea = CHI_bri_industrial_zones_tier_2_idea }
 			}
 			else = {
@@ -8723,13 +8724,13 @@ CHI_BRI_management = {
 				tooltip = CHI_bri_prestige_next_tier_tt
 				OR = {
 					AND = {
-						check_variable = { CHI_bri_prestige_projects > 49 }
+						check_variable = { CHI_bri_prestige_projects > 4 }
 						NOT = { has_idea = CHI_bri_prestige_tier_1_idea }
 						NOT = { has_idea = CHI_bri_prestige_tier_2_idea }
 						NOT = { has_idea = CHI_bri_prestige_tier_3_idea }
 					}
-					AND = { check_variable = { CHI_bri_prestige_projects > 74 } has_idea = CHI_bri_prestige_tier_1_idea }
-					AND = { check_variable = { CHI_bri_prestige_projects > 99 } has_idea = CHI_bri_prestige_tier_2_idea }
+					AND = { check_variable = { CHI_bri_prestige_projects > 14 } has_idea = CHI_bri_prestige_tier_1_idea }
+					AND = { check_variable = { CHI_bri_prestige_projects > 29 } has_idea = CHI_bri_prestige_tier_2_idea }
 				}
 			}
 		}
@@ -8740,11 +8741,11 @@ CHI_BRI_management = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_promote_prestige_diplomacy executed"
 			if = {
-				limit = { check_variable = { CHI_bri_prestige_projects > 99 } has_idea = CHI_bri_prestige_tier_2_idea }
+				limit = { check_variable = { CHI_bri_prestige_projects > 29 } has_idea = CHI_bri_prestige_tier_2_idea }
 				swap_ideas = { remove_idea = CHI_bri_prestige_tier_2_idea add_idea = CHI_bri_prestige_tier_3_idea }
 			}
 			else_if = {
-				limit = { check_variable = { CHI_bri_prestige_projects > 74 } has_idea = CHI_bri_prestige_tier_1_idea }
+				limit = { check_variable = { CHI_bri_prestige_projects > 14 } has_idea = CHI_bri_prestige_tier_1_idea }
 				swap_ideas = { remove_idea = CHI_bri_prestige_tier_1_idea add_idea = CHI_bri_prestige_tier_2_idea }
 			}
 			else = {
@@ -9083,14 +9084,16 @@ CHI_BRI_recipient_actions = {
 			modifier = { factor = 2 has_stability > 0.6 }
 		}
 	}
+}
 
+CHI_BRI_recipient_finance = {
 	# The way out of a resource concession. Without this the idea is a permanent, unescapable
 	# penalty for missing a single payment.
 	CHI_bri_buy_back_concession = {
 		icon = generic_fundraising
 		visible = { has_idea = CHI_bri_resource_concession_idea }
 		available = { has_political_power > 74 }
-		custom_cost_trigger = { check_variable = { treasury > 74 } }
+		custom_cost_trigger = { check_variable = { var = treasury value = 75 compare = greater_than_or_equals } }
 		custom_cost_text = cost_75_0
 		cost = 75
 
@@ -11533,6 +11536,7 @@ CHI_megaprojects = {
 			num_of_civilian_factories_available_for_projects > 7
 			gdp_per_capita_greater_than_5 = yes
 		}
+
 		custom_cost_trigger = { check_variable = { treasury > 30 } }
 		custom_cost_text = cost_30_0
 		cost = 0
@@ -11591,6 +11595,7 @@ CHI_megaprojects = {
 			num_of_civilian_factories_available_for_projects > 9
 			gdp_per_capita_greater_than_7 = yes
 		}
+
 		custom_cost_trigger = { check_variable = { treasury > 24 } }
 		custom_cost_text = cost_24_0
 		cost = 0
@@ -11647,6 +11652,7 @@ CHI_megaprojects = {
 				SIA = { check_variable = { SIA_kra_phase < 4 } }
 			}
 		}
+
 		custom_cost_trigger = { check_variable = { treasury > 25 } }
 		custom_cost_text = cost_25_0
 		cost = 0
@@ -11702,6 +11708,7 @@ CHI_megaprojects = {
 			NOT = { has_war_with = SIA }
 			SIA = { NOT = { has_idea = SIA_kra_default_pariah } }
 		}
+
 		custom_cost_trigger = { check_variable = { treasury > 20 } }
 		custom_cost_text = cost_20_0
 		cost = 0

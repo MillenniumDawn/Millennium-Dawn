@@ -568,8 +568,13 @@ CHI_bri_unlock = {
 	set_variable = { CHI_bri_monthly_income_total = CHI_bri_monthly_income_base }
 
 	add_ideas = CHI_belt_and_road_initiative_idea
+	if = {
+		limit = { is_ai = yes }
+		set_country_flag = CHI_bri_auto_accept
+	}
 	CHI_bri_recalc_presence = yes
 	add_dynamic_modifier = { modifier = CHI_bri_presence_modifier }
+	CHI_bri_mark_dirty = yes
 }
 CHI_bri_recalc_presence = {
 	set_temp_variable = { bri_presence = CHI_bri_global_presence }
@@ -577,16 +582,29 @@ CHI_bri_recalc_presence = {
 
 	set_variable = { CHI_bri_presence_political_power_factor = { value = bri_presence multiply = 0.00075 } }
 	set_variable = { CHI_bri_presence_trade_opinion_factor = { value = bri_presence multiply = 0.00125 } }
-	set_variable = { CHI_bri_presence_consumer_goods_factor = { value = bri_presence multiply = -0.0375 } }
+	set_variable = { CHI_bri_presence_consumer_goods_factor = { value = bri_presence multiply = -0.000375 } }
 	set_variable = { CHI_bri_presence_monthly_population = { value = bri_presence multiply = 0.0015 } }
+}
+
+CHI_bri_mark_dirty = {
+	if = {
+		limit = { is_ai = no }
+		if = {
+			limit = { check_variable = { global.CHI_bri_dirty_update_var < 10000 } }
+			add_to_variable = { global.CHI_bri_dirty_update_var = 1 }
+		}
+		else = { set_variable = { global.CHI_bri_dirty_update_var = 1 } }
+	}
 }
 
 CHI_bri_request_project = {
 	set_country_flag = bri_pipeline_busy
+	set_variable = { bri_project_cost_committed = CHI.CHI_bri_project_cost }
 	CHI = {
 		add_to_variable = { CHI_bri_committed_projects = 1 }
 		subtract_from_variable = { var = CHI_bri_treasury value = CHI_bri_project_cost }
 		clamp_variable = { var = CHI_bri_treasury min = 0 }
+		CHI_bri_mark_dirty = yes
 	}
 
 	if = {
@@ -598,55 +616,50 @@ CHI_bri_request_project = {
 		CHI = { country_event = { id = chi_bri.10 days = 3 } }
 	}
 }
+
 CHI_bri_start_project = {
 	if = {
-		limit = {
-			has_country_flag = bri_pipeline_busy
-			country_exists = CHI
-		}
+		limit = { CHI_bri_reserved_application_is_valid = yes }
 		clr_country_flag = bri_pending_application
 		set_variable = { bri_project_granted = 0 }
-
-		set_temp_variable = { bri_cost = CHI.CHI_bri_project_cost }
+		set_temp_variable = { bri_cost = bri_project_cost_committed }
 
 		if = {
-			limit = { check_variable = { treasury > bri_cost } }
+			limit = { check_variable = { var = treasury value = bri_cost compare = greater_than_or_equals } }
 			set_temp_variable = { treasury_change = bri_cost }
 			multiply_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
+			set_country_flag = bri_project_financed_cash
 			CHI = {
 				set_temp_variable = { treasury_change = PREV.bri_cost }
 				modify_treasury_effect = yes
 			}
 		}
 		else = {
+			set_country_flag = bri_project_financed_loan
 			CHI_bri_issue_loan = yes
 			country_event = { id = chi_bri.23 days = 1 }
 		}
 
 		activate_mission = CHI_bri_project_mission
 	}
+	else = { CHI_bri_cancel_project = yes }
 }
 
 CHI_bri_complete_project = {
 	if = {
 		limit = { has_country_flag = bri_pipeline_busy }
-		clr_country_flag = bri_pipeline_busy
-		if = {
-			limit = { country_exists = CHI }
-			CHI = {
-				subtract_from_variable = { CHI_bri_committed_projects = 1 }
-				clamp_variable = { var = CHI_bri_committed_projects min = 0 }
-			}
-		}
-
-		CHI_bri_grant_project_reward = yes
-
+		set_variable = { bri_project_granted = 0 }
 		if = {
 			limit = {
-				check_variable = { bri_project_granted = 1 }
 				country_exists = CHI
+				CHI_bri_project_type_is_hostable = yes
 			}
+			CHI_bri_grant_project_reward = yes
+		}
+
+		if = {
+			limit = { check_variable = { bri_project_granted = 1 } }
 			add_to_variable = { bri_projects_completed = 1 }
 			CHI_bri_advance_named_project = yes
 			CHI = { add_to_variable = { CHI_bri_completed_projects = 1 } }
@@ -661,6 +674,47 @@ CHI_bri_complete_project = {
 				modify_international_investment_effect = yes
 			}
 		}
+		else = { CHI_bri_unwind_project_financing = yes }
+
+		clr_country_flag = bri_pipeline_busy
+		clr_country_flag = bri_pending_application
+		clr_country_flag = bri_project_financed_cash
+		clr_country_flag = bri_project_financed_loan
+		set_variable = { bri_project_cost_committed = 0 }
+		if = {
+			limit = { country_exists = CHI }
+			CHI = {
+				subtract_from_variable = { CHI_bri_committed_projects = 1 }
+				clamp_variable = { var = CHI_bri_committed_projects min = 0 }
+				CHI_bri_mark_dirty = yes
+			}
+		}
+	}
+}
+
+CHI_bri_unwind_project_financing = {
+	if = {
+		limit = { country_exists = CHI }
+		CHI = { add_to_variable = { var = CHI_bri_treasury value = PREV.bri_project_cost_committed } }
+	}
+	if = {
+		limit = { has_country_flag = bri_project_financed_cash }
+		set_temp_variable = { bri_unwind_cost = bri_project_cost_committed }
+		set_temp_variable = { treasury_change = bri_unwind_cost }
+		modify_treasury_effect = yes
+		if = {
+			limit = { country_exists = CHI }
+			CHI = {
+				set_temp_variable = { treasury_change = PREV.bri_unwind_cost }
+				multiply_temp_variable = { treasury_change = -1 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { has_country_flag = bri_project_financed_loan }
+		set_temp_variable = { bri_debt_reduction = bri_project_cost_committed }
+		CHI_bri_reduce_loan = yes
 	}
 }
 
@@ -668,21 +722,26 @@ CHI_bri_cancel_project = {
 	if = {
 		limit = { has_country_flag = bri_pipeline_busy }
 		if = {
-			limit = {
-				has_country_flag = bri_pending_application
-				country_exists = CHI
+			limit = { has_country_flag = bri_pending_application }
+			if = {
+				limit = { country_exists = CHI }
+				CHI = { add_to_variable = { var = CHI_bri_treasury value = PREV.bri_project_cost_committed } }
 			}
-			CHI = { add_to_variable = { var = CHI_bri_treasury value = CHI_bri_project_cost } }
 		}
+		else = { CHI_bri_unwind_project_financing = yes }
 
 		clr_country_flag = bri_pipeline_busy
 		clr_country_flag = bri_pending_application
+		clr_country_flag = bri_project_financed_cash
+		clr_country_flag = bri_project_financed_loan
+		set_variable = { bri_project_cost_committed = 0 }
 		remove_mission = CHI_bri_project_mission
 		if = {
 			limit = { country_exists = CHI }
 			CHI = {
 				subtract_from_variable = { CHI_bri_committed_projects = 1 }
 				clamp_variable = { var = CHI_bri_committed_projects min = 0 }
+				CHI_bri_mark_dirty = yes
 			}
 		}
 	}
@@ -694,8 +753,11 @@ CHI_bri_grant_project_reward = {
 			CHI_bri_can_host_port = yes
 		}
 		random_owned_controlled_state = {
-			limit = { is_coastal = yes }
-			add_dynamic_modifier = { modifier = CHI_bri_state_infrastructure }
+			limit = {
+				is_coastal = yes
+				infrastructure < 5
+			}
+			add_dynamic_modifier = { modifier = CHI_bri_state_port }
 			add_building_construction = {
 				type = infrastructure
 				level = 1
@@ -711,10 +773,8 @@ CHI_bri_grant_project_reward = {
 			CHI_bri_can_host_rail = yes
 		}
 		random_owned_controlled_state = {
-			limit = {
-				any_neighbor_state = { CONTROLLER = { original_tag = CHI } }
-			}
-			add_dynamic_modifier = { modifier = CHI_bri_state_infrastructure }
+			limit = { infrastructure < 5 }
+			add_dynamic_modifier = { modifier = CHI_bri_state_rail }
 			add_building_construction = {
 				type = infrastructure
 				level = 1
@@ -737,7 +797,7 @@ CHI_bri_grant_project_reward = {
 					has_resources_amount = { resource = chromium amount > 4 }
 				}
 			}
-			add_dynamic_modifier = { modifier = CHI_bri_state_industrial }
+			add_dynamic_modifier = { modifier = CHI_bri_state_pipeline }
 		}
 		set_variable = { bri_project_granted = 1 }
 		CHI = { add_to_variable = { CHI_bri_pipelines_built = 1 } }
@@ -748,7 +808,13 @@ CHI_bri_grant_project_reward = {
 			CHI_bri_can_host_telecom = yes
 		}
 		random_owned_controlled_state = {
-			add_dynamic_modifier = { modifier = CHI_bri_state_infrastructure }
+			limit = { free_building_slots = { building = internet_station size > 0 include_locked = no } }
+			add_dynamic_modifier = { modifier = CHI_bri_state_telecom }
+			add_building_construction = {
+				type = internet_station
+				level = 1
+				instant_build = yes
+			}
 		}
 		set_variable = { bri_project_granted = 1 }
 		CHI = { add_to_variable = { CHI_bri_telecom_built = 1 } }
@@ -760,12 +826,13 @@ CHI_bri_grant_project_reward = {
 		}
 		random_owned_controlled_state = {
 			limit = {
+				free_building_slots = { building = industrial_complex size > 0 include_locked = no }
 				OR = {
 					is_coastal = yes
 					infrastructure > 3
 				}
 			}
-			add_dynamic_modifier = { modifier = CHI_bri_state_industrial }
+			add_dynamic_modifier = { modifier = CHI_bri_state_sez }
 			add_building_construction = {
 				type = industrial_complex
 				level = 1
@@ -789,7 +856,7 @@ CHI_bri_grant_project_reward = {
 					has_resources_amount = { resource = tungsten amount > 2 }
 				}
 			}
-			add_dynamic_modifier = { modifier = CHI_bri_state_industrial }
+			add_dynamic_modifier = { modifier = CHI_bri_state_mine }
 		}
 		set_variable = { bri_project_granted = 1 }
 		CHI = { add_to_variable = { CHI_bri_mines_secured = 1 } }
@@ -800,10 +867,13 @@ CHI_bri_grant_project_reward = {
 			CHI_bri_can_host_energy = yes
 		}
 		random_owned_controlled_state = {
-			limit = { industrial_complex > 0 }
-			add_dynamic_modifier = { modifier = CHI_bri_state_industrial }
+			limit = {
+				industrial_complex > 0
+				free_building_slots = { building = renewable_energy_infra size > 0 include_locked = no }
+			}
+			add_dynamic_modifier = { modifier = CHI_bri_state_energy }
 			add_building_construction = {
-				type = industrial_complex
+				type = renewable_energy_infra
 				level = 1
 				instant_build = yes
 			}
@@ -817,8 +887,16 @@ CHI_bri_grant_project_reward = {
 			CHI_bri_can_host_prestige = yes
 		}
 		random_owned_controlled_state = {
-			limit = { is_capital = yes }
-			add_dynamic_modifier = { modifier = CHI_bri_state_infrastructure }
+			limit = {
+				is_capital = yes
+				free_building_slots = { building = offices size > 0 include_locked = no }
+			}
+			add_dynamic_modifier = { modifier = CHI_bri_state_prestige }
+			add_building_construction = {
+				type = offices
+				level = 1
+				instant_build = yes
+			}
 		}
 		set_variable = { bri_project_granted = 1 }
 		CHI = { add_to_variable = { CHI_bri_prestige_projects = 1 } }
@@ -912,34 +990,33 @@ CHI_bri_apply_partner_rank = {
 }
 
 CHI_bri_reclaim_structure = {
-	if = {
+	set_variable = { bri_structure_reclaimed = 0 }
+	random_owned_controlled_state = {
 		limit = {
-			any_owned_state = {
-				is_controlled_by = PREV
+			OR = {
+				has_dynamic_modifier = { modifier = CHI_bri_state_port }
+				has_dynamic_modifier = { modifier = CHI_bri_state_rail }
+				has_dynamic_modifier = { modifier = CHI_bri_state_pipeline }
+				has_dynamic_modifier = { modifier = CHI_bri_state_telecom }
+				has_dynamic_modifier = { modifier = CHI_bri_state_sez }
+				has_dynamic_modifier = { modifier = CHI_bri_state_mine }
+				has_dynamic_modifier = { modifier = CHI_bri_state_energy }
+				has_dynamic_modifier = { modifier = CHI_bri_state_prestige }
 				has_dynamic_modifier = { modifier = CHI_bri_state_industrial }
-			}
-		}
-		random_owned_controlled_state = {
-			limit = { has_dynamic_modifier = { modifier = CHI_bri_state_industrial } }
-			remove_dynamic_modifier = { modifier = CHI_bri_state_industrial }
-		}
-		set_variable = { bri_structure_reclaimed = 1 }
-	}
-	else_if = {
-		limit = {
-			any_owned_state = {
-				is_controlled_by = PREV
 				has_dynamic_modifier = { modifier = CHI_bri_state_infrastructure }
 			}
 		}
-		random_owned_controlled_state = {
-			limit = { has_dynamic_modifier = { modifier = CHI_bri_state_infrastructure } }
-			remove_dynamic_modifier = { modifier = CHI_bri_state_infrastructure }
-		}
-		set_variable = { bri_structure_reclaimed = 1 }
-	}
-	else = {
-		set_variable = { bri_structure_reclaimed = 0 }
+		if = { limit = { has_dynamic_modifier = { modifier = CHI_bri_state_port } } remove_dynamic_modifier = { modifier = CHI_bri_state_port } }
+		else_if = { limit = { has_dynamic_modifier = { modifier = CHI_bri_state_rail } } remove_dynamic_modifier = { modifier = CHI_bri_state_rail } }
+		else_if = { limit = { has_dynamic_modifier = { modifier = CHI_bri_state_pipeline } } remove_dynamic_modifier = { modifier = CHI_bri_state_pipeline } }
+		else_if = { limit = { has_dynamic_modifier = { modifier = CHI_bri_state_telecom } } remove_dynamic_modifier = { modifier = CHI_bri_state_telecom } }
+		else_if = { limit = { has_dynamic_modifier = { modifier = CHI_bri_state_sez } } remove_dynamic_modifier = { modifier = CHI_bri_state_sez } }
+		else_if = { limit = { has_dynamic_modifier = { modifier = CHI_bri_state_mine } } remove_dynamic_modifier = { modifier = CHI_bri_state_mine } }
+		else_if = { limit = { has_dynamic_modifier = { modifier = CHI_bri_state_energy } } remove_dynamic_modifier = { modifier = CHI_bri_state_energy } }
+		else_if = { limit = { has_dynamic_modifier = { modifier = CHI_bri_state_prestige } } remove_dynamic_modifier = { modifier = CHI_bri_state_prestige } }
+		else_if = { limit = { has_dynamic_modifier = { modifier = CHI_bri_state_industrial } } remove_dynamic_modifier = { modifier = CHI_bri_state_industrial } }
+		else = { remove_dynamic_modifier = { modifier = CHI_bri_state_infrastructure } }
+		PREV = { set_variable = { bri_structure_reclaimed = 1 } }
 	}
 }
 
@@ -967,12 +1044,55 @@ CHI_bri_drop_partner = {
 		limit = { has_country_flag = bri_pipeline_busy }
 		CHI_bri_cancel_project = yes
 	}
-	CHI_bri_clear_loan = yes
+	if = { limit = { has_war_with = CHI } set_variable = { bri_loan_payment = 0 } }
 }
+
+CHI_bri_shutdown_recipient = {
+	if = {
+		limit = {
+			has_country_flag = bri_pipeline_busy
+			NOT = { has_country_flag = bri_pending_application }
+			has_country_flag = bri_project_financed_cash
+		}
+		set_temp_variable = { treasury_change = 40 }
+		modify_treasury_effect = yes
+	}
+
+	remove_mission = CHI_bri_project_mission
+	if = { limit = { has_idea = CHI_bri_partner_1 } remove_ideas = CHI_bri_partner_1 }
+	else_if = { limit = { has_idea = CHI_bri_partner_2 } remove_ideas = CHI_bri_partner_2 }
+	else_if = { limit = { has_idea = CHI_bri_partner_3 } remove_ideas = CHI_bri_partner_3 }
+	else_if = { limit = { has_idea = CHI_bri_partner_4 } remove_ideas = CHI_bri_partner_4 }
+	else_if = { limit = { has_idea = CHI_bri_partner_5 } remove_ideas = CHI_bri_partner_5 }
+	if = { limit = { has_idea = CHI_bri_resource_concession_idea } remove_ideas = CHI_bri_resource_concession_idea }
+
+	set_variable = { bri_partner_rank = 0 }
+	set_variable = { bri_projects_completed = 0 }
+	set_variable = { bri_presence_given = 0 }
+	set_variable = { bri_debt_owed_to_china = 0 }
+	set_variable = { bri_loan_payment = 0 }
+	set_variable = { bri_loan_rate = 0 }
+	set_variable = { bri_project_granted = 0 }
+	set_variable = { bri_project_cost_committed = 0 }
+	clr_country_flag = CHI_bri_partner
+	clr_country_flag = bri_pipeline_busy
+	clr_country_flag = bri_pending_application
+	clr_country_flag = bri_project_financed_cash
+	clr_country_flag = bri_project_financed_loan
+	clr_country_flag = bri_defaulted
+	clr_country_flag = bri_default_recorded
+	clr_country_flag = bri_loan_grace
+}
+
 CHI_bri_monthly_tick = {
 	set_temp_variable = { bri_contribution = CHI_bri_monthly_income_base }
 	add_to_temp_variable = { bri_contribution = modifier@CHI_bri_monthly_income }
 	clamp_temp_variable = { var = bri_contribution min = 0 }
+	if = {
+		limit = { check_variable = { var = treasury value = bri_contribution compare = less_than } }
+		set_temp_variable = { bri_contribution = treasury }
+		clamp_temp_variable = { var = bri_contribution min = 0 }
+	}
 	set_variable = { CHI_bri_monthly_income_total = bri_contribution }
 
 	set_temp_variable = { treasury_change = bri_contribution }
@@ -982,6 +1102,58 @@ CHI_bri_monthly_tick = {
 
 	CHI_bri_recalc_presence = yes
 	CHI_bri_process_loans = yes
+	CHI_bri_schedule_application = yes
+	CHI_bri_mark_dirty = yes
+}
+
+CHI_bri_schedule_application = {
+	if = {
+		limit = {
+			check_variable = { CHI_bri_committed_projects < CHI_bri_project_slots }
+			check_variable = { var = CHI_bri_treasury value = CHI_bri_project_cost compare = greater_than_or_equals }
+		}
+		random_scope_in_array = {
+			array = global.bri_eligible_countries
+			limit = {
+				is_ai = yes
+				is_major = no
+				NOT = { original_tag = IND }
+				NOT = { gdp_per_capita_greater_than_10 = yes }
+				NOT = { is_in_faction_with = USA }
+				NOT = { has_opinion = { target = CHI value < 0 } }
+				NOT = { has_country_flag = bri_ai_application_cooldown }
+				CHI_bri_can_request = yes
+			}
+
+			clear_temp_array = bri_hostable_project_types
+			if = { limit = { CHI_bri_can_host_port = yes } add_to_temp_array = { bri_hostable_project_types = 1 } }
+			if = {
+				limit = {
+					OR = {
+						is_neighbor_of = CHI
+						has_country_flag = CHI_bri_partner
+					}
+					CHI_bri_can_host_rail = yes
+				}
+				add_to_temp_array = { bri_hostable_project_types = 2 }
+			}
+			if = { limit = { CHI_bri_can_host_pipeline = yes } add_to_temp_array = { bri_hostable_project_types = 3 } }
+			if = { limit = { CHI_bri_can_host_telecom = yes } add_to_temp_array = { bri_hostable_project_types = 4 } }
+			if = { limit = { CHI_bri_can_host_sez = yes } add_to_temp_array = { bri_hostable_project_types = 5 } }
+			if = { limit = { CHI_bri_can_host_mine = yes } add_to_temp_array = { bri_hostable_project_types = 6 } }
+			if = { limit = { CHI_bri_can_host_energy = yes } add_to_temp_array = { bri_hostable_project_types = 7 } }
+			if = { limit = { CHI_bri_can_host_prestige = yes } add_to_temp_array = { bri_hostable_project_types = 8 } }
+
+			if = {
+				limit = { check_variable = { bri_hostable_project_types^num > 0 } }
+				set_temp_variable = { bri_project_pick_max = { value = bri_hostable_project_types^num subtract = 1 } }
+				set_temp_variable_to_random = { var = bri_project_pick min = 0 max = bri_project_pick_max integer = yes }
+				set_variable = { bri_project_type = bri_hostable_project_types^bri_project_pick }
+				set_country_flag = { flag = bri_ai_application_cooldown days = 540 value = 1 }
+				CHI_bri_request_project = yes
+			}
+		}
+	}
 }
 
 # Applies the demographic dividend and population penalty for the current one-child
@@ -1577,13 +1749,8 @@ CHI_bri_find_debtor_index = {
 	}
 }
 CHI_bri_issue_loan = {
-	set_temp_variable = { bri_principal = CHI.CHI_bri_project_cost }
-	set_variable = { bri_loan_rate = 4 }
+	set_temp_variable = { bri_principal = bri_project_cost_committed }
 	add_to_variable = { var = bri_debt_owed_to_china value = bri_principal }
-
-	set_variable = { bri_loan_payment = bri_debt_owed_to_china }
-	multiply_variable = { bri_loan_payment = 0.00019 }
-	multiply_variable = { bri_loan_payment = bri_loan_rate }
 
 	CHI = {
 		set_temp_variable = { bri_debtor_id = PREV.id }
@@ -1595,6 +1762,8 @@ CHI_bri_issue_loan = {
 			if = {
 				limit = { check_variable = { bri_found_index > -1 } }
 				add_to_variable = { var = CHI_bri_loan_principal^bri_found_index value = bri_loan_amount }
+				set_temp_variable = { bri_existing_rate = CHI_bri_loan_rate^bri_found_index }
+				PREV = { set_variable = { bri_loan_rate = PREV.bri_existing_rate } }
 			}
 		}
 		else = {
@@ -1603,9 +1772,30 @@ CHI_bri_issue_loan = {
 			subtract_from_temp_variable = { bri_new_index = 1 }
 			set_variable = { CHI_bri_loan_principal^bri_new_index = bri_loan_amount }
 			set_variable = { CHI_bri_loan_rate^bri_new_index = 4 }
+			PREV = { set_variable = { bri_loan_rate = 4 } }
 		}
+		CHI_bri_mark_dirty = yes
+	}
+
+	CHI_bri_recalculate_loan_payment = yes
+}
+
+CHI_bri_recalculate_loan_payment = {
+	set_variable = { bri_loan_payment = 0 }
+	if = {
+		limit = {
+			country_exists = CHI
+			check_variable = { bri_debt_owed_to_china > 0 }
+			NOT = { has_country_flag = bri_defaulted }
+			NOT = { has_country_flag = bri_loan_grace }
+			NOT = { has_war_with = CHI }
+		}
+		set_variable = { bri_loan_payment = bri_debt_owed_to_china }
+		multiply_variable = { bri_loan_payment = 0.00019 }
+		multiply_variable = { bri_loan_payment = bri_loan_rate }
 	}
 }
+
 CHI_bri_process_loans = {
 	set_variable = { CHI_bri_loan_income = 0 }
 
@@ -1619,59 +1809,58 @@ CHI_bri_process_loans = {
 			set_temp_variable = { bri_interest = CHI_bri_loan_principal^i }
 			multiply_temp_variable = { bri_interest = 0.00019 }
 			multiply_temp_variable = { bri_interest = CHI_bri_loan_rate^i }
-			add_to_variable = { var = CHI_bri_loan_income value = bri_interest }
-
 			set_temp_variable = { bri_amortisation = CHI_bri_loan_principal^i }
 			multiply_temp_variable = { bri_amortisation = 0.05 }
 
 			var:CHI_bri_debtors^i = {
-				set_variable = { bri_loan_payment = ROOT.bri_interest }
+				set_variable = { bri_loan_payment = 0 }
 				if = {
 					limit = {
-						check_variable = { treasury > ROOT.bri_amortisation }
-						NOT = { has_active_mission = bankruptcy_incoming_collapse }
+						NOT = { has_country_flag = bri_defaulted }
+						NOT = { has_country_flag = bri_loan_grace }
+						NOT = { has_war_with = CHI }
 					}
-					set_temp_variable = { treasury_change = ROOT.bri_amortisation }
-					multiply_temp_variable = { treasury_change = -1 }
-					modify_treasury_effect = yes
-					subtract_from_variable = { var = bri_debt_owed_to_china value = ROOT.bri_amortisation }
-					clamp_variable = { var = bri_debt_owed_to_china min = 0 }
-					clr_country_flag = bri_defaulted
-				}
-				else_if = {
-					limit = { NOT = { has_country_flag = bri_defaulted } }
-					set_country_flag = bri_defaulted
-					country_event = { id = chi_bri.16 days = 1 }
 					if = {
-						limit = { original_tag = SRI }
-						country_event = { id = chi_bri.20 days = 30 }
+						limit = {
+							check_variable = { var = treasury value = ROOT.bri_amortisation compare = greater_than_or_equals }
+							NOT = { has_active_mission = bankruptcy_incoming_collapse }
+						}
+						set_variable = { bri_loan_payment = ROOT.bri_interest }
+						set_temp_variable = { treasury_change = ROOT.bri_amortisation }
+						multiply_temp_variable = { treasury_change = -1 }
+						modify_treasury_effect = yes
+						subtract_from_variable = { var = bri_debt_owed_to_china value = ROOT.bri_amortisation }
+						clamp_variable = { var = bri_debt_owed_to_china min = 0 }
+						ROOT = {
+							subtract_from_variable = { var = CHI_bri_loan_principal^i value = bri_amortisation }
+							add_to_variable = { var = CHI_bri_loan_income value = bri_interest }
+							set_temp_variable = { treasury_change = bri_amortisation }
+							modify_treasury_effect = yes
+						}
 					}
-					else_if = {
-						limit = { original_tag = PAK }
-						country_event = { id = chi_bri.21 days = 30 }
-					}
-					else_if = {
-						limit = { original_tag = DJI }
-						country_event = { id = chi_bri.22 days = 30 }
-					}
-					ROOT = {
-						add_to_variable = { CHI_bri_defaulted_projects = 1 }
-						country_event = { id = chi_bri.19 days = 1 }
+					else = {
+						set_country_flag = bri_defaulted
+						if = {
+							limit = { NOT = { has_country_flag = bri_default_recorded } }
+							set_country_flag = bri_default_recorded
+							country_event = { id = chi_bri.16 days = 1 }
+							if = { limit = { original_tag = SRI } country_event = { id = chi_bri.20 days = 30 } }
+							else_if = { limit = { original_tag = PAK } country_event = { id = chi_bri.21 days = 30 } }
+							else_if = { limit = { original_tag = DJI } country_event = { id = chi_bri.22 days = 30 } }
+							ROOT = {
+								add_to_variable = { CHI_bri_defaulted_projects = 1 }
+								country_event = { id = chi_bri.19 days = 1 }
+							}
+						}
 					}
 				}
-			}
-
-			if = {
-				limit = { var:CHI_bri_debtors^i = { NOT = { has_country_flag = bri_defaulted } } }
-				subtract_from_variable = { var = CHI_bri_loan_principal^i value = bri_amortisation }
-				set_temp_variable = { treasury_change = bri_amortisation }
-				modify_treasury_effect = yes
 			}
 		}
 
 		CHI_bri_cleanup_loans = yes
 	}
 }
+
 CHI_bri_cleanup_loans = {
 	set_temp_variable = { bri_cleanup_index = CHI_bri_debtors^num }
 	subtract_from_temp_variable = { bri_cleanup_index = 1 }
@@ -1686,6 +1875,8 @@ CHI_bri_cleanup_loans = {
 				set_variable = { bri_loan_payment = 0 }
 				set_variable = { bri_loan_rate = 0 }
 				clr_country_flag = bri_defaulted
+				clr_country_flag = bri_default_recorded
+				clr_country_flag = bri_loan_grace
 			}
 			remove_from_array = { array = CHI_bri_debtors index = bri_cleanup_index }
 			remove_from_array = { array = CHI_bri_loan_principal index = bri_cleanup_index }
@@ -1700,11 +1891,69 @@ CHI_bri_cleanup_loans = {
 		set_variable = { CHI_bri_loan_income = 0 }
 	}
 }
+
+CHI_bri_reduce_loan = {
+	if = {
+		limit = {
+			country_exists = CHI
+			CHI = { is_in_array = { CHI_bri_debtors = PREV.id } }
+		}
+		CHI = {
+			set_temp_variable = { bri_debtor_id = PREV.id }
+			CHI_bri_find_debtor_index = yes
+			if = {
+				limit = { check_variable = { bri_found_index > -1 } }
+				subtract_from_variable = { var = CHI_bri_loan_principal^bri_found_index value = PREV.bri_debt_reduction }
+				clamp_variable = { var = CHI_bri_loan_principal^bri_found_index min = 0 }
+				set_temp_variable = { bri_remaining_principal = CHI_bri_loan_principal^bri_found_index }
+				PREV = {
+					set_variable = { bri_debt_owed_to_china = PREV.bri_remaining_principal }
+				}
+				CHI_bri_cleanup_loans = yes
+			}
+		}
+	}
+	CHI_bri_recalculate_loan_payment = yes
+}
+
+CHI_bri_restructure_loan = {
+	clr_country_flag = bri_defaulted
+	set_country_flag = { flag = bri_loan_grace days = 365 value = 1 }
+	if = {
+		limit = {
+			country_exists = CHI
+			CHI = { is_in_array = { CHI_bri_debtors = PREV.id } }
+		}
+		CHI = {
+			set_temp_variable = { bri_debtor_id = PREV.id }
+			CHI_bri_find_debtor_index = yes
+			if = {
+				limit = { check_variable = { bri_found_index > -1 } }
+				set_variable = { CHI_bri_loan_rate^bri_found_index = 2 }
+				PREV = {
+					set_variable = { bri_loan_rate = 2 }
+					set_variable = { bri_loan_payment = 0 }
+				}
+			}
+			CHI_bri_mark_dirty = yes
+		}
+	}
+}
+
+CHI_bri_grant_loan_grace = {
+	clr_country_flag = bri_defaulted
+	set_country_flag = { flag = bri_loan_grace days = 365 value = 1 }
+	set_variable = { bri_loan_payment = 0 }
+	CHI = { CHI_bri_mark_dirty = yes }
+}
+
 CHI_bri_clear_loan = {
 	set_variable = { bri_debt_owed_to_china = 0 }
 	set_variable = { bri_loan_payment = 0 }
 	set_variable = { bri_loan_rate = 0 }
 	clr_country_flag = bri_defaulted
+	clr_country_flag = bri_default_recorded
+	clr_country_flag = bri_loan_grace
 
 	if = {
 		limit = {
@@ -1724,6 +1973,7 @@ CHI_bri_clear_loan = {
 				limit = { check_variable = { CHI_bri_debtors^num = 0 } }
 				set_variable = { CHI_bri_loan_income = 0 }
 			}
+			CHI_bri_mark_dirty = yes
 		}
 	}
 }
