@@ -250,6 +250,18 @@ def _write_sloc(tmp_path, body):
     (sloc_dir / "test.txt").write_text(body, encoding="utf-8")
 
 
+def _write_units(tmp_path, body):
+    unit_dir = tmp_path / "common" / "units"
+    unit_dir.mkdir(parents=True, exist_ok=True)
+    (unit_dir / "test.txt").write_text(body, encoding="utf-8")
+
+
+def _write_unit_tags(tmp_path, body):
+    tag_dir = tmp_path / "common" / "unit_tags"
+    tag_dir.mkdir(parents=True, exist_ok=True)
+    (tag_dir / "00_categories.txt").write_text(body, encoding="utf-8")
+
+
 def test_search_filter_names_are_read_from_focus_trees(tmp_path):
     _write_focus(
         tmp_path,
@@ -322,7 +334,9 @@ def test_category_icon_resolves_as_a_reference(tmp_path):
         "\t\tcategory = afv_gasoline_engine_type\n\t}\n}\n",
     )
     v = GfxReferenceValidator(str(tmp_path), use_colors=False)
-    assert "GFX_EMI_afv_gasoline_engine_type" in v._resolve_engine_refs(set())
+    resolved = v._resolve_engine_refs(set())
+    assert "GFX_EMI_afv_gasoline_engine_type" in resolved
+    assert "GFX_SMI_afv_gasoline_engine_type" in resolved
 
 
 def test_module_icon_resolves_as_a_reference(tmp_path):
@@ -330,7 +344,9 @@ def test_module_icon_resolves_as_a_reference(tmp_path):
         tmp_path, "equipment_modules = {\n\tCZE_engine_1 = {\n\t\tyear = 2000\n\t}\n}\n"
     )
     v = GfxReferenceValidator(str(tmp_path), use_colors=False)
-    assert "GFX_EMI_CZE_engine_1" in v._resolve_engine_refs(set())
+    resolved = v._resolve_engine_refs(set())
+    assert "GFX_EMI_CZE_engine_1" in resolved
+    assert "GFX_SMI_CZE_engine_1" in resolved
 
 
 def test_module_icon_for_a_deleted_module_stays_unresolved(tmp_path):
@@ -340,8 +356,104 @@ def test_module_icon_for_a_deleted_module_stays_unresolved(tmp_path):
         tmp_path, "equipment_modules = {\n\tCZE_engine_1 = {\n\t\tyear = 2000\n\t}\n}\n"
     )
     v = GfxReferenceValidator(str(tmp_path), use_colors=False)
-    assert "GFX_EMI_afv_battlestation_1" not in v._resolve_engine_refs(
-        {"GFX_EMI_afv_battlestation_1"}
+    resolved = v._resolve_engine_refs(
+        {"GFX_EMI_afv_battlestation_1", "GFX_SMI_afv_battlestation_1"}
+    )
+    assert "GFX_EMI_afv_battlestation_1" not in resolved
+    assert "GFX_SMI_afv_battlestation_1" not in resolved
+
+
+def test_unit_icon_names_cover_subunits_and_categories(tmp_path):
+    _write_units(
+        tmp_path, "sub_units = {\n\tAA_company = {\n\t\tsprite = infantry\n\t}\n}\n"
+    )
+    _write_unit_tags(tmp_path, "sub_unit_categories = {\n\tcategory_fighter\n}\n")
+    assert vg._load_unit_icon_names(str(tmp_path)) == frozenset(
+        {"AA_company", "category_fighter"}
+    )
+
+
+def test_unit_icon_names_ignore_equipment_and_namelist_dirs(tmp_path):
+    _write_units(
+        tmp_path, "sub_units = {\n\tAA_company = {\n\t\tsprite = infantry\n\t}\n}\n"
+    )
+    equipment = tmp_path / "common" / "units" / "equipment"
+    equipment.mkdir(parents=True, exist_ok=True)
+    (equipment / "fake.txt").write_text(
+        "sub_units = {\n\tfake_from_equipment = {\n\t\tsprite = infantry\n\t}\n}\n",
+        encoding="utf-8",
+    )
+    names_dir = tmp_path / "common" / "units" / "names"
+    names_dir.mkdir(parents=True, exist_ok=True)
+    (names_dir / "00_names.txt").write_text(
+        "sub_units = {\n\tfake_from_names = {\n\t\tsprite = infantry\n\t}\n}\n",
+        encoding="utf-8",
+    )
+    assert vg._load_unit_icon_names(str(tmp_path)) == frozenset({"AA_company"})
+
+
+def test_equipment_tree_serves_archetypes_and_modules(tmp_path):
+    equipment = tmp_path / "common" / "units" / "equipment"
+    equipment.mkdir(parents=True, exist_ok=True)
+    (equipment / "both.txt").write_text(
+        "equipments = {\n\tutil_vehicle_1 = {\n\t\tyear = 1936\n\t}\n}\n"
+        "equipment_modules = {\n\tCZE_engine_1 = {\n\t\tyear = 2000\n\t}\n}\n",
+        encoding="utf-8",
+    )
+    archetypes, modules = vg._load_equipment_tree(str(tmp_path))
+    assert archetypes == frozenset({"util_vehicle_1"})
+    assert modules == frozenset({"CZE_engine_1"})
+    assert vg._load_equipment_names(str(tmp_path)) == archetypes
+    assert vg._load_module_icon_names(str(tmp_path)) == modules
+
+
+def test_declaration_engine_refs_reuse_the_aggregate_cache(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    _write_units(
+        tmp_path, "sub_units = {\n\tAA_company = {\n\t\tsprite = infantry\n\t}\n}\n"
+    )
+    first, _notices = vg._declaration_engine_refs(str(tmp_path))
+    assert "GFX_unit_AA_company_icon_medium" in first
+
+    def _boom(_mod_path):
+        raise AssertionError("declaration cache missed")
+
+    monkeypatch.setattr(
+        vg,
+        "_ENGINE_DECLARATION_FAMILIES",
+        ((_boom, "", ("GFX_unit_{name}_icon_medium",)),),
+    )
+    second, _notices = vg._declaration_engine_refs(str(tmp_path))
+    assert second == first
+
+
+def test_unit_icon_resolves_for_a_real_subunit(tmp_path):
+    _write_units(
+        tmp_path,
+        "sub_units = {\n\tALN_bellatoris = {\n\t\tsprite = CHIMERA_bellatoris\n\t}\n}\n",
+    )
+    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    resolved = v._resolve_engine_refs(set())
+    assert "GFX_unit_ALN_bellatoris_icon_medium" in resolved
+    assert "GFX_unit_ALN_bellatoris_icon_small" in resolved
+    assert "GFX_unit_ALN_bellatoris_icon_medium_white" in resolved
+    assert "GFX_unit_ALN_bellatoris_icon_small_white" in resolved
+    assert "GFX_unit_ALN_bellatoris_icon_medium_black" in resolved
+
+
+def test_unit_category_icon_resolves_as_a_reference(tmp_path):
+    _write_unit_tags(tmp_path, "sub_unit_categories = {\n\tcategory_all_airborne\n}\n")
+    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    assert "GFX_unit_category_all_airborne_icon_small" in v._resolve_engine_refs(set())
+
+
+def test_unit_icon_for_a_deleted_unit_stays_unresolved(tmp_path):
+    _write_units(
+        tmp_path, "sub_units = {\n\tAA_company = {\n\t\tsprite = infantry\n\t}\n}\n"
+    )
+    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    assert "GFX_unit_AFG_donkey_logistics_icon_medium" not in v._resolve_engine_refs(
+        {"GFX_unit_AFG_donkey_logistics_icon_medium"}
     )
 
 
@@ -400,7 +512,12 @@ def test_resolver_logs_notices_when_the_data_dirs_are_missing(tmp_path, monkeypa
     v = GfxReferenceValidator(str(tmp_path), use_colors=False)
     monkeypatch.setattr(v, "log", lambda msg, *a, **k: logged.append(msg))
     v._resolve_engine_refs(set())
-    for expected in ("search_filters", "equipment modules", "graphical cultures"):
+    for expected in (
+        "search_filters",
+        "equipment modules",
+        "unit icons",
+        "graphical cultures",
+    ):
         assert any(expected in msg for msg in logged)
 
 

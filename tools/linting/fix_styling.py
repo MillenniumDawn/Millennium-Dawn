@@ -101,7 +101,7 @@ def fix_file(filepath):
         new_content = "\n".join(fixed_lines)
 
         if new_content != content:
-            with open(filepath, "w", encoding="utf-8") as f:
+            with open(filepath, "w", encoding="utf-8", newline="") as f:
                 f.write(new_content)
 
         return (filepath, total_fixes, unfixable)
