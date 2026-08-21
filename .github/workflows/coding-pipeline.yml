@@ -205,7 +205,11 @@ jobs:
             characters:
               - 'common/characters/**'
               - 'common/unit_leader/**'
-              # Sources of create_corps_commander and friends.
+              # The other leader trait pool. A trait moved between the two
+              # changes whether it is legal on a unit leader, and a trait moved
+              # between pool files reclassifies every advisor slot using it.
+              - 'common/country_leader/**'
+              # Sources of create_corps_commander and add_advisor_role.
               - 'common/national_focus/**'
               - 'common/decisions/**'
               - 'common/scripted_effects/**'
@@ -710,10 +714,11 @@ jobs:
             should_run: ${{ needs.detect-changes.outputs.factions }}
           - script: validate_characters.py
             name: characters
-            title: "Validate Character Traits"
+            title: "Validate Character and Advisor Traits"
             strict: true
             # undefined-unit-leader-trait is WARNING-severity: the 9-item
-            # ALG/PHI backlog surfaces in reports without gating PRs.
+            # ALG/PHI backlog surfaces in reports without gating PRs. Every
+            # advisor-slot category gates.
             should_run: ${{ needs.detect-changes.outputs.characters }}
           - script: validate_scientist_traits.py
             name: scientist-traits
