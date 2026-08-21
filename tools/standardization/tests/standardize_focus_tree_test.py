@@ -615,10 +615,10 @@ def test_failed_write_leaves_original_intact_and_no_temp_file(tmp_path, monkeypa
     original = "focus_tree = {\n\tfocus = {\n\t\tid = TST_x\n\t}\n}\n"
     target.write_text(original, encoding="utf-8")
 
-    def _boom(src, dst):
+    def _boom(_path, _text):
         raise OSError("disk full")
 
-    monkeypatch.setattr(focus_tree_module.os, "replace", _boom)
+    monkeypatch.setattr(focus_tree_module, "atomic_write_text", _boom)
 
     assert standardize_focus_tree(str(target), str(target)) is False
     assert target.read_text(encoding="utf-8") == original

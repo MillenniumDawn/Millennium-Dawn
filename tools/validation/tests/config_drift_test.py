@@ -29,6 +29,7 @@ import pytest
 import yaml
 from precommit_validate import _REGISTRY
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
+from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import _CREATE_UNIT_SOURCE_PATTERNS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -38,6 +39,32 @@ CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "coding-pipeline.yml"
 TOOLS_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "tools-validation.yml"
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
 NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
+
+
+def _checks_matrix_steps(check_id: str) -> list:
+    """Return the `checks` job steps that actually run for one matrix entry.
+
+    Every lint/test step in that job is gated on `matrix.check.id`, so scanning
+    the job's steps unconditionally would pass even after the entry that runs
+    them was deleted from the matrix.
+    """
+    job = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))["jobs"]["checks"]
+    ids = {entry["id"] for entry in job["strategy"]["matrix"]["check"]}
+    assert check_id in ids, (
+        f"tools-validation has no `{check_id}` entry in the checks matrix — "
+        "its steps are present but never run"
+    )
+    guard = f"matrix.check.id == '{check_id}'"
+    return [s for s in job["steps"] if "if" not in s or guard in s["if"]]
+
+
+def _sole_checkout(steps: list) -> dict:
+    checkouts = [s for s in steps if s.get("uses", "").startswith("actions/checkout@")]
+    assert (
+        len(checkouts) == 1
+    ), f"expected exactly one checkout for this matrix entry, got {len(checkouts)}"
+    return checkouts[0]
+
 
 # Validators intentionally absent from the CI matrices. Each needs a reason.
 CI_EXEMPT = {
@@ -305,19 +332,51 @@ def test_targeted_parent_reaches_every_matrix_entry():
     parent_true_outputs = set(
         re.findall(r"needs\.detect-changes\.outputs\.([\w-]+)\s*==\s*'true'", parent)
     )
-    missing = {}
+    invalid = {}
     for entry in matrix:
         expression = entry.get("should_run", "")
         outputs = set(
             re.findall(r"needs\.detect-changes\.outputs\.([\w-]+)", expression)
         )
         unreachable = outputs - parent_true_outputs
-        if unreachable:
-            missing[entry["script"]] = sorted(unreachable)
-    assert not missing, (
-        "validate-targeted parent condition cannot reach matrix entries for "
-        f"these detect-changes outputs: {missing}"
+        if not expression.strip() or not outputs or unreachable:
+            invalid[entry["script"]] = {
+                "expression": expression,
+                "unreachable": sorted(unreachable),
+            }
+    assert not invalid, (
+        "validate-targeted entries need a nonempty should_run expression using "
+        f"reachable detect-changes outputs: {invalid}"
     )
+
+
+def test_validator_cache_runs_suite_once_and_reuses_results():
+    workflow = VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
+    assert workflow.count("python3 tools/validation/run_all_validators.py") == 1
+    assert "--persist-results .validation_baseline_candidate" in workflow
+    assert "Upload validation result candidate" in workflow
+    assert "Download validation result candidate" in workflow
+    config = yaml.safe_load(workflow)
+    upload = next(
+        step
+        for step in config["jobs"]["build-cache"]["steps"]
+        if step.get("name") == "Upload validation result candidate"
+    )
+    download = next(
+        step
+        for step in config["jobs"]["check-baseline"]["steps"]
+        if step.get("name") == "Download validation result candidate"
+    )
+    assert upload["with"]["path"] == ".validation_baseline_candidate/"
+    assert upload["with"]["include-hidden-files"] is True
+    assert download["with"]["path"] == ".validation_baseline_candidate/"
+    verify = next(
+        step
+        for step in config["jobs"]["check-baseline"]["steps"]
+        if step.get("name") == "Verify validation result candidate completion"
+    )
+    assert verify["run"] == "test -f .validation_baseline_candidate/.persist-complete"
+    assert "--current .validation_baseline_candidate" in workflow
 
 
 def test_validator_cache_restore_is_source_hash_scoped():
@@ -467,18 +526,17 @@ def test_python_quality_checks_are_wired_in_precommit_and_ci():
     assert hooks["mypy-tools"]["language"] == "python"
     assert "mypy==2.3.0" in hooks["mypy-tools"]["additional_dependencies"]
 
-    workflow = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))
-    quality_steps = workflow["jobs"]["ruff-lint"]["steps"]
-    commands = "\n".join(step.get("run", "") for step in quality_steps)
+    steps = _checks_matrix_steps("lint")
+    commands = "\n".join(s.get("run", "") for s in steps)
     assert "ruff check tools" in commands
     assert "black --check tools" in commands
     assert "pylint tools" in commands
-    assert "mypy" in commands
-    test_commands = "\n".join(
-        step.get("run", "") for step in workflow["jobs"]["report-lib-tests"]["steps"]
-    )
-    assert "coverage run" in test_commands
-    assert "coverage report" in test_commands
+    # mypy runs bare; its target list comes from [tool.mypy] files in pyproject.
+    assert any(s.get("run", "").strip() == "mypy" for s in steps)
+
+    unit = "\n".join(s.get("run", "") for s in _checks_matrix_steps("unit"))
+    assert "coverage run" in unit
+    assert "coverage report" in unit
 
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     for package in ("black==", "coverage==", "mypy==", "pylint==", "ruff=="):
@@ -486,30 +544,38 @@ def test_python_quality_checks_are_wired_in_precommit_and_ci():
 
 
 def test_staged_validator_integration_runs_in_isolated_worktree():
-    workflow = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))
-    steps = workflow["jobs"]["staged-validator-integration"]["steps"]
+    steps = _checks_matrix_steps("staged")
     worktree_step = next(
-        step for step in steps if step.get("name") == "Create isolated test worktree"
+        s for s in steps if s.get("name") == "Create isolated test worktree"
     )
     assert "git worktree add --detach" in worktree_step["run"]
 
     run_step = next(
-        step for step in steps if step.get("name") == "Run staged-validator integration"
+        s for s in steps if s.get("name") == "Run staged-validator integration"
     )
     assert run_step["env"]["MD_RUN_STAGED_INTEGRATION"] == "1"
     assert "staged_validators_test.py" in run_step["run"]
     assert "staged_validators_real_test.py" in run_step["run"]
 
+    # The integration stages files under these trees; a sparse checkout that
+    # drops one makes every real-file test skip instead of fail.
+    checkout = _sole_checkout(steps)
+    sparse = checkout.get("with", {}).get("sparse-checkout")
+    if sparse is not None:
+        assert {"events", "common", "localisation", "history", "tools"} <= set(
+            sparse.split()
+        )
+
 
 def test_tools_tests_checkout_consumed_configuration():
-    workflow = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))
-    checkout = next(
-        step
-        for step in workflow["jobs"]["report-lib-tests"]["steps"]
-        if step.get("uses", "").startswith("actions/checkout@")
-    )
-    sparse_paths = set(checkout["with"]["sparse-checkout"].splitlines())
-    assert {
+    # These paths must be present in the entry that actually runs pytest, not
+    # merely somewhere in the workflow.
+    checkout = _sole_checkout(_checks_matrix_steps("unit"))
+    sparse = checkout.get("with", {}).get("sparse-checkout")
+    if sparse is None:
+        return  # full checkout exposes everything
+    required = {
+        ".pre-commit-config.yaml",
         ".claude/docs/typo-watchlist.md",
         # validate_modifiers_test parses the shipped doc to catch a Paradox
         # format change; without it here the test reads an absent file.
@@ -517,10 +583,17 @@ def test_tools_tests_checkout_consumed_configuration():
         # focus_pp_malus_test walks the real tree to prove every exemption still
         # applies a malus; absent, it reads every one of them as stale.
         "common/national_focus",
+        ".github/workflows/coding-pipeline.yml",
         ".github/workflows/validator-cache.yml",
         ".github/workflows/nightly-pr-validation.yml",
+        ".github/workflows/tools-validation.yml",
         "pyproject.toml",
-    } <= sparse_paths
+    }
+    missing = sorted(required - set(sparse.split()))
+    assert not missing, (
+        "the tools-validation unit-test checkout does not expose "
+        f"{missing} — the tests that read them silently pass on absent files"
+    )
 
 
 def test_manual_texture_audit_always_runs():
@@ -549,6 +622,42 @@ def test_ci_run_steps_default_to_strict():
         assert (
             'matrix.validator.strict }}" != "false"' in run
         ), f"{job}'s Run step must default to --strict when `strict:` is absent."
+
+
+def test_ci_idea_icon_check_is_enabled():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    entry = next(
+        entry
+        for entry in workflow["jobs"]["validate-core"]["strategy"]["matrix"][
+            "validator"
+        ]
+        if entry["script"] == "validate_ideas.py"
+    )
+    # The CI run passes no opt-in flag, so the check has to be default-on in
+    # the validator itself — asserting the absent flag proves nothing alone.
+    assert entry.get("args") in (None, "")
+
+    validator = IdeaValidator("/nonexistent", use_colors=False, workers=1)
+    called = []
+    validator._parse_all_ideas = lambda: ({}, {}, {})
+    validator.validate_missing_icons = lambda defined_ideas: called.append(
+        defined_ideas
+    )
+    for name in (
+        "validate_undefined_idea_refs",
+        "validate_idea_quality",
+        "validate_category_icon_frames",
+        "validate_unused_ideas",
+    ):
+        setattr(validator, name, lambda *a, **k: None)
+    validator.run_validations()
+    assert called, "validate_ideas.run_validations no longer runs the icon check"
+
+    # CI has no HOI4 install, so the check resolves mod sprites from the
+    # restored interface/ and vanilla names from the committed manifest.
+    paths = set(workflow["env"]["WORKSPACE_PATHS"].split())
+    assert {"interface", "tools"} <= paths
+    assert (VALIDATION_DIR / "vanilla_sprites.txt").is_file()
 
 
 def test_oob_routes_cover_every_create_unit_source():

@@ -1,46 +1,49 @@
 india_religious_events = {
-	#recurring religious events
-	random = {
-		chance = 60
-		add_to_variable = { RAJ_religious_event_counter = 1 }
-	}
 	if = {
-		limit = { check_variable = { RAJ_religious_event_counter > 4 } }
-		set_variable = { RAJ_religious_event_counter = 0 }
-		set_temp_variable = { RAJ_conflict_roll = 0 }
+		limit = { NOT = { has_idea = RAJ_pluralist_settlement } }
+		#recurring religious events
 		random = {
-			chance = 25
-			set_temp_variable = { RAJ_conflict_roll = 1 }
+			chance = 60
+			add_to_variable = { RAJ_religious_event_counter = 1 }
 		}
 		if = {
-			limit = { check_variable = { RAJ_conflict_roll = 1 } }
-			country_event = RAJ_religion.4
-		}
-		else = {
-			set_temp_variable = { RAJ_pair_hm = RAJ_hindus_opinion }
-			add_to_temp_variable = { RAJ_pair_hm = RAJ_muslim_opinion }
-			set_temp_variable = { RAJ_pair_mc = RAJ_muslim_opinion }
-			add_to_temp_variable = { RAJ_pair_mc = RAJ_christians_opinion }
-			set_temp_variable = { RAJ_pair_hc = RAJ_hindus_opinion }
-			add_to_temp_variable = { RAJ_pair_hc = RAJ_christians_opinion }
-			if = {
-				limit = {
-					check_variable = { RAJ_pair_hm < RAJ_pair_mc }
-					check_variable = { RAJ_pair_hm < RAJ_pair_hc }
-				}
-				set_variable = { RAJ_conflict_side_a = 2 }
-				set_variable = { RAJ_conflict_side_b = 1 }
+			limit = { check_variable = { RAJ_religious_event_counter > 4 } }
+			set_variable = { RAJ_religious_event_counter = 0 }
+			set_temp_variable = { RAJ_conflict_roll = 0 }
+			random = {
+				chance = 25
+				set_temp_variable = { RAJ_conflict_roll = 1 }
 			}
-			else_if = {
-				limit = { check_variable = { RAJ_pair_mc < RAJ_pair_hc } }
-				set_variable = { RAJ_conflict_side_a = 2 }
-				set_variable = { RAJ_conflict_side_b = 3 }
+			if = {
+				limit = { check_variable = { RAJ_conflict_roll = 1 } }
+				country_event = RAJ_religion.4
 			}
 			else = {
-				set_variable = { RAJ_conflict_side_a = 1 }
-				set_variable = { RAJ_conflict_side_b = 3 }
+				set_temp_variable = { RAJ_pair_hm = RAJ_hindus_opinion }
+				add_to_temp_variable = { RAJ_pair_hm = RAJ_muslim_opinion }
+				set_temp_variable = { RAJ_pair_mc = RAJ_muslim_opinion }
+				add_to_temp_variable = { RAJ_pair_mc = RAJ_christians_opinion }
+				set_temp_variable = { RAJ_pair_hc = RAJ_hindus_opinion }
+				add_to_temp_variable = { RAJ_pair_hc = RAJ_christians_opinion }
+				if = {
+					limit = {
+						check_variable = { RAJ_pair_hm < RAJ_pair_mc }
+						check_variable = { RAJ_pair_hm < RAJ_pair_hc }
+					}
+					set_variable = { RAJ_conflict_side_a = 2 }
+					set_variable = { RAJ_conflict_side_b = 1 }
+				}
+				else_if = {
+					limit = { check_variable = { RAJ_pair_mc < RAJ_pair_hc } }
+					set_variable = { RAJ_conflict_side_a = 2 }
+					set_variable = { RAJ_conflict_side_b = 3 }
+				}
+				else = {
+					set_variable = { RAJ_conflict_side_a = 1 }
+					set_variable = { RAJ_conflict_side_b = 3 }
+				}
+				country_event = RAJ_religion.1
 			}
-			country_event = RAJ_religion.1
 		}
 	}
 }
@@ -91,46 +94,6 @@ RAJ_afghan_wargoals = {
 	}
 }
 
-RAJ_change_muslim_opinion = {
-	custom_override_tooltip = {
-		tooltip = RAJ_change_muslim_opinion_tt
-		add_to_variable = { var = RAJ_muslim_opinion value = temp_change }
-		clamp_variable = { var = RAJ_muslim_opinion min = 0 max = 100 }
-	}
-}
-
-RAJ_change_christian_opinion = {
-	custom_override_tooltip = {
-		tooltip = RAJ_change_christian_opinion_tt
-		add_to_variable = { var = RAJ_christians_opinion value = temp_change }
-		clamp_variable = { var = RAJ_christians_opinion min = 0 max = 100 }
-	}
-}
-
-RAJ_change_sikh_opinion = {
-	custom_override_tooltip = {
-		tooltip = RAJ_change_sikh_opinion_tt
-		add_to_variable = { var = RAJ_sikh_opinion value = temp_change }
-		clamp_variable = { var = RAJ_sikh_opinion min = 0 max = 100 }
-	}
-}
-
-RAJ_change_buddhist_opinion = {
-	custom_override_tooltip = {
-		tooltip = RAJ_change_buddhist_opinion_tt
-		add_to_variable = { var = RAJ_buddhist_opinion value = temp_change }
-		clamp_variable = { var = RAJ_buddhist_opinion min = 0 max = 100 }
-	}
-}
-
-RAJ_change_hindu_opinion = {
-	custom_override_tooltip = {
-		tooltip = RAJ_change_hindu_opinion_tt
-		add_to_variable = { var = RAJ_hindus_opinion value = temp_change }
-		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
-	}
-}
-
 # Standard Greater Hindustan annex demand: fires indian_event.33 on the
 # target, creates an annex_everything wargoal, and emits the
 # accept/reject tooltip stack. Caller sets `demand_annex_target` to
@@ -164,66 +127,78 @@ RAJ_demand_annex_target = {
 # Caller sets `appease_target` to a religion index: 1=hindu, 2=muslim,
 # 3=christian, 4=sikh, 5=buddhist.
 RAJ_appease_religion = {
-	set_temp_variable = { temp_change = 4 }
 	if = {
 		limit = { check_variable = { appease_target = 1 } }
-		RAJ_change_hindu_opinion = yes
-		set_temp_variable = { temp_change = -1 }
-		RAJ_change_muslim_opinion = yes
+		add_to_variable = { RAJ_hindus_opinion = 4 tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
+		add_to_variable = { RAJ_muslim_opinion = -1 tooltip = RAJ_muslim_opinion_tt }
+		clamp_variable = { var = RAJ_muslim_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { appease_target = 2 } }
-		RAJ_change_muslim_opinion = yes
-		set_temp_variable = { temp_change = -1 }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_muslim_opinion = 4 tooltip = RAJ_muslim_opinion_tt }
+		clamp_variable = { var = RAJ_muslim_opinion min = 0 max = 100 }
+		add_to_variable = { RAJ_hindus_opinion = -1 tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { appease_target = 3 } }
-		RAJ_change_christian_opinion = yes
-		set_temp_variable = { temp_change = -1 }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_christians_opinion = 4 tooltip = RAJ_christians_opinion_tt }
+		clamp_variable = { var = RAJ_christians_opinion min = 0 max = 100 }
+		add_to_variable = { RAJ_hindus_opinion = -1 tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { appease_target = 4 } }
-		RAJ_change_sikh_opinion = yes
-		set_temp_variable = { temp_change = -1 }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_sikh_opinion = 4 tooltip = RAJ_sikh_opinion_tt }
+		clamp_variable = { var = RAJ_sikh_opinion min = 0 max = 100 }
+		add_to_variable = { RAJ_hindus_opinion = -1 tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { appease_target = 5 } }
-		RAJ_change_buddhist_opinion = yes
-		set_temp_variable = { temp_change = -1 }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_buddhist_opinion = 4 tooltip = RAJ_buddhist_opinion_tt }
+		clamp_variable = { var = RAJ_buddhist_opinion min = 0 max = 100 }
+		add_to_variable = { RAJ_hindus_opinion = -1 tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 }
 
+# Caller sets RAJ_opinion_delta to the change before invoking; the faith is
+# picked at runtime from RAJ_conflict_side_a / _b (1=Hindu, 2=Muslim, 3=Christian).
 RAJ_change_opinion_by_side_a = {
 	if = {
 		limit = { check_variable = { RAJ_conflict_side_a = 1 } }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_hindus_opinion = RAJ_opinion_delta tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { RAJ_conflict_side_a = 2 } }
-		RAJ_change_muslim_opinion = yes
+		add_to_variable = { RAJ_muslim_opinion = RAJ_opinion_delta tooltip = RAJ_muslim_opinion_tt }
+		clamp_variable = { var = RAJ_muslim_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { RAJ_conflict_side_a = 3 } }
-		RAJ_change_christian_opinion = yes
+		add_to_variable = { RAJ_christians_opinion = RAJ_opinion_delta tooltip = RAJ_christians_opinion_tt }
+		clamp_variable = { var = RAJ_christians_opinion min = 0 max = 100 }
 	}
 }
 
 RAJ_change_opinion_by_side_b = {
 	if = {
 		limit = { check_variable = { RAJ_conflict_side_b = 1 } }
-		RAJ_change_hindu_opinion = yes
+		add_to_variable = { RAJ_hindus_opinion = RAJ_opinion_delta tooltip = RAJ_hindus_opinion_tt }
+		clamp_variable = { var = RAJ_hindus_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { RAJ_conflict_side_b = 2 } }
-		RAJ_change_muslim_opinion = yes
+		add_to_variable = { RAJ_muslim_opinion = RAJ_opinion_delta tooltip = RAJ_muslim_opinion_tt }
+		clamp_variable = { var = RAJ_muslim_opinion min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { RAJ_conflict_side_b = 3 } }
-		RAJ_change_christian_opinion = yes
+		add_to_variable = { RAJ_christians_opinion = RAJ_opinion_delta tooltip = RAJ_christians_opinion_tt }
+		clamp_variable = { var = RAJ_christians_opinion min = 0 max = 100 }
 	}
 }
 
@@ -256,6 +231,16 @@ RAJ_sync_naxalite_presence = {
 		set_variable = { RAJ_naxalite_presence = 5 }
 	}
 	else = { clear_variable = RAJ_naxalite_presence }
+}
+
+# Country scope: re-read the tier off every state that still claims one. The
+# modifiers carry a remove_trigger, so the engine can strip them behind script's
+# back and leave RAJ_naxalite_presence pointing at a tier that is no longer there.
+RAJ_resync_naxalite_presence = {
+	every_controlled_state = {
+		limit = { check_variable = { RAJ_naxalite_presence > 0 } }
+		RAJ_sync_naxalite_presence = yes
+	}
 }
 
 RAJ_downgrade_naxalite_level = {
@@ -309,42 +294,45 @@ RAJ_suppression_equipment_reward = {
 
 RAJ_check_religious_harmony = {
 	if = {
-		limit = {
-			check_variable = { RAJ_hindus_opinion < 35 }
-			NOT = { has_idea = RAJ_hindu_discontent }
-		}
-		add_ideas = RAJ_hindu_discontent
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_hindu_discontent
-			check_variable = { RAJ_hindus_opinion > 34 }
-		}
-		remove_ideas = RAJ_hindu_discontent
-	}
-	if = {
-		limit = {
-			check_variable = { RAJ_muslim_opinion > 74 }
-			check_variable = { RAJ_sikh_opinion > 74 }
-			check_variable = { RAJ_buddhist_opinion > 74 }
-			check_variable = { RAJ_christians_opinion > 74 }
-			check_variable = { RAJ_hindus_opinion > 74 }
-			NOT = { has_idea = RAJ_religious_harmony }
-		}
-		add_ideas = RAJ_religious_harmony
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_religious_harmony
-			OR = {
-				check_variable = { RAJ_muslim_opinion < 75 }
-				check_variable = { RAJ_sikh_opinion < 75 }
-				check_variable = { RAJ_buddhist_opinion < 75 }
-				check_variable = { RAJ_christians_opinion < 75 }
-				check_variable = { RAJ_hindus_opinion < 75 }
+		limit = { NOT = { has_idea = RAJ_pluralist_settlement } }
+		if = {
+			limit = {
+				check_variable = { RAJ_hindus_opinion < 35 }
+				NOT = { has_idea = RAJ_hindu_discontent }
 			}
+			add_ideas = RAJ_hindu_discontent
 		}
-		remove_ideas = RAJ_religious_harmony
+		else_if = {
+			limit = {
+				has_idea = RAJ_hindu_discontent
+				check_variable = { RAJ_hindus_opinion > 34 }
+			}
+			remove_ideas = RAJ_hindu_discontent
+		}
+		if = {
+			limit = {
+				check_variable = { RAJ_muslim_opinion > 74 }
+				check_variable = { RAJ_sikh_opinion > 74 }
+				check_variable = { RAJ_buddhist_opinion > 74 }
+				check_variable = { RAJ_christians_opinion > 74 }
+				check_variable = { RAJ_hindus_opinion > 74 }
+				NOT = { has_idea = RAJ_religious_harmony }
+			}
+			add_ideas = RAJ_religious_harmony
+		}
+		else_if = {
+			limit = {
+				has_idea = RAJ_religious_harmony
+				OR = {
+					check_variable = { RAJ_muslim_opinion < 75 }
+					check_variable = { RAJ_sikh_opinion < 75 }
+					check_variable = { RAJ_buddhist_opinion < 75 }
+					check_variable = { RAJ_christians_opinion < 75 }
+					check_variable = { RAJ_hindus_opinion < 75 }
+				}
+			}
+			remove_ideas = RAJ_religious_harmony
+		}
 	}
 }
 
@@ -354,78 +342,81 @@ RAJ_check_religious_harmony = {
 # of RAJ_check_religious_harmony. Driven monthly from on_monthly_RAJ.
 RAJ_check_regional_faith = {
 	if = {
-		limit = {
-			OR = {
-				check_variable = { RAJ_hindus_opinion < 35 }
-				check_variable = { RAJ_muslim_opinion < 35 }
+		limit = { NOT = { has_idea = RAJ_pluralist_settlement } }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { RAJ_hindus_opinion < 35 }
+					check_variable = { RAJ_muslim_opinion < 35 }
+				}
+				NOT = { has_idea = RAJ_gujarat_trouble_idea }
 			}
-			NOT = { has_idea = RAJ_gujarat_trouble_idea }
+			add_ideas = RAJ_gujarat_trouble_idea
 		}
-		add_ideas = RAJ_gujarat_trouble_idea
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_gujarat_trouble_idea
-			check_variable = { RAJ_hindus_opinion > 34 }
-			check_variable = { RAJ_muslim_opinion > 34 }
+		else_if = {
+			limit = {
+				has_idea = RAJ_gujarat_trouble_idea
+				check_variable = { RAJ_hindus_opinion > 34 }
+				check_variable = { RAJ_muslim_opinion > 34 }
+			}
+			remove_ideas = RAJ_gujarat_trouble_idea
 		}
-		remove_ideas = RAJ_gujarat_trouble_idea
-	}
-	if = {
-		limit = {
-			check_variable = { RAJ_muslim_opinion < 35 }
-			NOT = { has_idea = RAJ_kashmir_unrest }
+		if = {
+			limit = {
+				check_variable = { RAJ_muslim_opinion < 35 }
+				NOT = { has_idea = RAJ_kashmir_unrest }
+			}
+			add_ideas = RAJ_kashmir_unrest
 		}
-		add_ideas = RAJ_kashmir_unrest
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_kashmir_unrest
-			check_variable = { RAJ_muslim_opinion > 34 }
+		else_if = {
+			limit = {
+				has_idea = RAJ_kashmir_unrest
+				check_variable = { RAJ_muslim_opinion > 34 }
+			}
+			remove_ideas = RAJ_kashmir_unrest
 		}
-		remove_ideas = RAJ_kashmir_unrest
-	}
-	if = {
-		limit = {
-			check_variable = { RAJ_sikh_opinion < 35 }
-			NOT = { has_idea = RAJ_punjab_unrest }
+		if = {
+			limit = {
+				check_variable = { RAJ_sikh_opinion < 35 }
+				NOT = { has_idea = RAJ_punjab_unrest }
+			}
+			add_ideas = RAJ_punjab_unrest
 		}
-		add_ideas = RAJ_punjab_unrest
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_punjab_unrest
-			check_variable = { RAJ_sikh_opinion > 34 }
+		else_if = {
+			limit = {
+				has_idea = RAJ_punjab_unrest
+				check_variable = { RAJ_sikh_opinion > 34 }
+			}
+			remove_ideas = RAJ_punjab_unrest
 		}
-		remove_ideas = RAJ_punjab_unrest
-	}
-	if = {
-		limit = {
-			check_variable = { RAJ_muslim_opinion < 35 }
-			NOT = { has_idea = RAJ_bengal_unrest }
+		if = {
+			limit = {
+				check_variable = { RAJ_muslim_opinion < 35 }
+				NOT = { has_idea = RAJ_bengal_unrest }
+			}
+			add_ideas = RAJ_bengal_unrest
 		}
-		add_ideas = RAJ_bengal_unrest
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_bengal_unrest
-			check_variable = { RAJ_muslim_opinion > 34 }
+		else_if = {
+			limit = {
+				has_idea = RAJ_bengal_unrest
+				check_variable = { RAJ_muslim_opinion > 34 }
+			}
+			remove_ideas = RAJ_bengal_unrest
 		}
-		remove_ideas = RAJ_bengal_unrest
-	}
-	if = {
-		limit = {
-			check_variable = { RAJ_christians_opinion < 35 }
-			NOT = { has_idea = RAJ_northeast_unrest }
+		if = {
+			limit = {
+				check_variable = { RAJ_christians_opinion < 35 }
+				NOT = { has_idea = RAJ_northeast_unrest }
+			}
+			add_ideas = RAJ_northeast_unrest
 		}
-		add_ideas = RAJ_northeast_unrest
-	}
-	else_if = {
-		limit = {
-			has_idea = RAJ_northeast_unrest
-			check_variable = { RAJ_christians_opinion > 34 }
+		else_if = {
+			limit = {
+				has_idea = RAJ_northeast_unrest
+				check_variable = { RAJ_christians_opinion > 34 }
+			}
+			remove_ideas = RAJ_northeast_unrest
 		}
-		remove_ideas = RAJ_northeast_unrest
 	}
 }
 
@@ -433,26 +424,44 @@ RAJ_check_regional_faith = {
 # [-0.10, +0.10] (avg 50 -> 0, avg 25 -> -0.10, avg 75 -> +0.10). Drives
 # the RAJ_religious_climate dynamic modifier.
 RAJ_update_religious_climate = {
-	set_temp_variable = { RAJ_climate_avg = RAJ_hindus_opinion }
-	add_to_temp_variable = { RAJ_climate_avg = RAJ_muslim_opinion }
-	add_to_temp_variable = { RAJ_climate_avg = RAJ_sikh_opinion }
-	add_to_temp_variable = { RAJ_climate_avg = RAJ_christians_opinion }
-	add_to_temp_variable = { RAJ_climate_avg = RAJ_buddhist_opinion }
-	divide_temp_variable = { RAJ_climate_avg = 5 }
-	subtract_from_temp_variable = { RAJ_climate_avg = 50 }
-	multiply_temp_variable = { RAJ_climate_avg = 0.004 }
-	clamp_temp_variable = { var = RAJ_climate_avg min = -0.10 max = 0.10 }
-	set_variable = { RAJ_religious_climate_var = RAJ_climate_avg }
+	if = {
+		limit = { NOT = { has_idea = RAJ_pluralist_settlement } }
+		set_temp_variable = { RAJ_climate_avg = RAJ_hindus_opinion }
+		add_to_temp_variable = { RAJ_climate_avg = RAJ_muslim_opinion }
+		add_to_temp_variable = { RAJ_climate_avg = RAJ_sikh_opinion }
+		add_to_temp_variable = { RAJ_climate_avg = RAJ_christians_opinion }
+		add_to_temp_variable = { RAJ_climate_avg = RAJ_buddhist_opinion }
+		divide_temp_variable = { RAJ_climate_avg = 5 }
+		subtract_from_temp_variable = { RAJ_climate_avg = 50 }
+		multiply_temp_variable = { RAJ_climate_avg = 0.004 }
+		clamp_temp_variable = { var = RAJ_climate_avg min = -0.10 max = 0.10 }
+		set_variable = { RAJ_religious_climate_var = RAJ_climate_avg }
+	}
 }
 
 # State scope: clears every insurgency tier and zeroes the tracking var so it
 # always mirrors the (now absent) dynamic modifier.
 RAJ_remove_all_naxalite_modifiers = {
-	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
-	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
-	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
-	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
-	remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 }
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+	}
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+	}
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+	}
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+	}
+	if = {
+		limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 } }
+		remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 }
+	}
 	clear_variable = RAJ_naxalite_presence
 }
 
@@ -694,5 +703,619 @@ RAJ_spawn_religious_rebel = {
 				transfer_state_to = PREV
 			}
 		}
+	}
+}
+
+pak_raj_border_add_readiness = {
+	add_to_variable = { pak_raj_border_readiness = pak_raj_border_readiness_change }
+	clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
+	custom_effect_tooltip = pak_raj_border_readiness_change_tt
+}
+
+raj_chi_border_add_readiness = {
+	add_to_variable = { raj_chi_border_readiness = raj_chi_border_readiness_change }
+	clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
+	custom_effect_tooltip = raj_chi_border_readiness_change_tt
+}
+
+pak_raj_border_clear_sector = {
+	hidden_effect = {
+		420 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = pak_raj_border_sector } }
+		426 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = pak_raj_border_sector } }
+		427 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = pak_raj_border_sector } }
+		429 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = pak_raj_border_sector } }
+		563 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = pak_raj_border_sector } }
+		573 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = pak_raj_border_sector } }
+		984 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = pak_raj_border_sector } }
+		987 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = pak_raj_border_sector } }
+	}
+}
+
+pak_raj_border_pick_sector = {
+	hidden_effect = {
+		random_list = {
+			10 = {
+				modifier = { factor = 0 NOT = { 420 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 420 = { has_state_flag = pak_raj_border_sector } }
+				pak_raj_border_clear_sector = yes
+				420 = { set_state_flag = pak_raj_border_sector }
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { 426 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 426 = { has_state_flag = pak_raj_border_sector } }
+				pak_raj_border_clear_sector = yes
+				426 = { set_state_flag = pak_raj_border_sector }
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { 427 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 427 = { has_state_flag = pak_raj_border_sector } }
+				pak_raj_border_clear_sector = yes
+				427 = { set_state_flag = pak_raj_border_sector }
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { 429 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 429 = { has_state_flag = pak_raj_border_sector } }
+				pak_raj_border_clear_sector = yes
+				429 = { set_state_flag = pak_raj_border_sector }
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { 563 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 563 = { has_state_flag = pak_raj_border_sector } }
+				pak_raj_border_clear_sector = yes
+				563 = { set_state_flag = pak_raj_border_sector }
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { 573 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 573 = { has_state_flag = pak_raj_border_sector } }
+				pak_raj_border_clear_sector = yes
+				573 = { set_state_flag = pak_raj_border_sector }
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { 984 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 984 = { has_state_flag = pak_raj_border_sector } }
+				pak_raj_border_clear_sector = yes
+				984 = { set_state_flag = pak_raj_border_sector }
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { 987 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 987 = { has_state_flag = pak_raj_border_sector } }
+				pak_raj_border_clear_sector = yes
+				987 = { set_state_flag = pak_raj_border_sector }
+			}
+		}
+	}
+}
+
+pak_raj_border_refresh_sector = {
+	hidden_effect = {
+		if = {
+			limit = { NOT = { pak_raj_border_has_sector = yes } }
+			pak_raj_border_pick_sector = yes
+		}
+	}
+}
+
+raj_chi_border_clear_sector = {
+	hidden_effect = {
+		475 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = raj_chi_border_sector } }
+		589 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = raj_chi_border_sector } }
+		591 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = raj_chi_border_sector } }
+		982 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = raj_chi_border_sector } }
+		993 = { if = { limit = { is_controlled_by = PREV } clr_state_flag = raj_chi_border_sector } }
+	}
+}
+
+raj_chi_border_pick_sector = {
+	hidden_effect = {
+		random_list = {
+			10 = {
+				modifier = { factor = 0 NOT = { 475 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 475 = { has_state_flag = raj_chi_border_sector } }
+				raj_chi_border_clear_sector = yes
+				475 = { set_state_flag = raj_chi_border_sector }
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { 589 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 589 = { has_state_flag = raj_chi_border_sector } }
+				raj_chi_border_clear_sector = yes
+				589 = { set_state_flag = raj_chi_border_sector }
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { 591 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 591 = { has_state_flag = raj_chi_border_sector } }
+				raj_chi_border_clear_sector = yes
+				591 = { set_state_flag = raj_chi_border_sector }
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { 982 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 982 = { has_state_flag = raj_chi_border_sector } }
+				raj_chi_border_clear_sector = yes
+				982 = { set_state_flag = raj_chi_border_sector }
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { 993 = { is_controlled_by = PREV } } }
+				modifier = { factor = 0.1 993 = { has_state_flag = raj_chi_border_sector } }
+				raj_chi_border_clear_sector = yes
+				993 = { set_state_flag = raj_chi_border_sector }
+			}
+		}
+	}
+}
+
+raj_chi_border_refresh_sector = {
+	hidden_effect = {
+		if = {
+			limit = { NOT = { raj_chi_border_has_sector = yes } }
+			raj_chi_border_pick_sector = yes
+		}
+	}
+}
+
+pak_raj_border_add_tension = {
+	add_to_variable = { global.pak_raj_border_tension = pak_raj_border_tension_change }
+	clamp_variable = { var = global.pak_raj_border_tension min = 0 max = 100 }
+	custom_effect_tooltip = pak_raj_border_tension_change_tt
+}
+
+raj_chi_border_add_tension = {
+	add_to_variable = { global.raj_chi_border_tension = raj_chi_border_tension_change }
+	clamp_variable = { var = global.raj_chi_border_tension min = 0 max = 100 }
+	custom_effect_tooltip = raj_chi_border_tension_change_tt
+}
+
+pak_raj_border_change_objective_progress = {
+	custom_effect_tooltip = pak_raj_border_progress_change_tt
+	if = {
+		limit = { check_variable = { pak_raj_border_objective_state = 420 } }
+		add_to_variable = { pak_raj_border_progress_420 = border_war_progress_change }
+		clamp_variable = { var = pak_raj_border_progress_420 min = 0 max = 100 }
+	}
+	else_if = {
+		limit = { check_variable = { pak_raj_border_objective_state = 427 } }
+		add_to_variable = { pak_raj_border_progress_427 = border_war_progress_change }
+		clamp_variable = { var = pak_raj_border_progress_427 min = 0 max = 100 }
+	}
+	else_if = {
+		limit = { check_variable = { pak_raj_border_objective_state = 429 } }
+		add_to_variable = { pak_raj_border_progress_429 = border_war_progress_change }
+		clamp_variable = { var = pak_raj_border_progress_429 min = 0 max = 100 }
+	}
+	else_if = {
+		limit = { check_variable = { pak_raj_border_objective_state = 563 } }
+		add_to_variable = { pak_raj_border_progress_563 = border_war_progress_change }
+		clamp_variable = { var = pak_raj_border_progress_563 min = 0 max = 100 }
+	}
+	else_if = {
+		limit = { check_variable = { pak_raj_border_objective_state = 573 } }
+		add_to_variable = { pak_raj_border_progress_573 = border_war_progress_change }
+		clamp_variable = { var = pak_raj_border_progress_573 min = 0 max = 100 }
+	}
+	else_if = {
+		limit = { check_variable = { pak_raj_border_objective_state = 426 } }
+		add_to_variable = { pak_raj_border_progress_426 = border_war_progress_change }
+		clamp_variable = { var = pak_raj_border_progress_426 min = 0 max = 100 }
+	}
+	else_if = {
+		limit = { check_variable = { pak_raj_border_objective_state = 987 } }
+		add_to_variable = { pak_raj_border_progress_987 = border_war_progress_change }
+		clamp_variable = { var = pak_raj_border_progress_987 min = 0 max = 100 }
+	}
+	else_if = {
+		limit = { check_variable = { pak_raj_border_objective_state = 984 } }
+		add_to_variable = { pak_raj_border_progress_984 = border_war_progress_change }
+		clamp_variable = { var = pak_raj_border_progress_984 min = 0 max = 100 }
+	}
+}
+
+raj_chi_border_change_objective_progress = {
+	custom_effect_tooltip = raj_chi_border_progress_change_tt
+	if = {
+		limit = { check_variable = { raj_chi_border_objective_state = 475 } }
+		add_to_variable = { raj_chi_border_progress_475 = border_war_progress_change }
+		clamp_variable = { var = raj_chi_border_progress_475 min = 0 max = 100 }
+	}
+	else_if = {
+		limit = { check_variable = { raj_chi_border_objective_state = 982 } }
+		add_to_variable = { raj_chi_border_progress_982 = border_war_progress_change }
+		clamp_variable = { var = raj_chi_border_progress_982 min = 0 max = 100 }
+	}
+	else_if = {
+		limit = { check_variable = { raj_chi_border_objective_state = 591 } }
+		add_to_variable = { raj_chi_border_progress_591 = border_war_progress_change }
+		clamp_variable = { var = raj_chi_border_progress_591 min = 0 max = 100 }
+	}
+	else_if = {
+		limit = { check_variable = { raj_chi_border_objective_state = 993 } }
+		add_to_variable = { raj_chi_border_progress_993 = border_war_progress_change }
+		clamp_variable = { var = raj_chi_border_progress_993 min = 0 max = 100 }
+	}
+}
+
+pak_raj_border_finish_outcome = {
+	if = {
+		limit = {
+			NOT = { RAJ = { check_variable = { pak_raj_border_objective_state > 0 } } }
+			NOT = { PAK = { check_variable = { pak_raj_border_objective_state > 0 } } }
+		}
+		clr_global_flag = GLOBAL_pak_raj_border_war_active
+	}
+	RAJ = { clear_variable = pak_raj_border_objective_state }
+	PAK = { clear_variable = pak_raj_border_objective_state }
+}
+
+raj_chi_border_finish_outcome = {
+	if = {
+		limit = {
+			NOT = { RAJ = { check_variable = { raj_chi_border_objective_state > 0 } } }
+			NOT = { CHI = { check_variable = { raj_chi_border_objective_state > 0 } } }
+		}
+		clr_global_flag = GLOBAL_raj_chi_border_war_active
+	}
+	RAJ = { clear_variable = raj_chi_border_objective_state }
+	CHI = { clear_variable = raj_chi_border_objective_state }
+}
+
+pak_raj_border_begin_claim = {
+	set_global_flag = { flag = GLOBAL_pak_raj_border_capture_cooldown value = 1 days = 180 }
+	set_global_flag = GLOBAL_pak_raj_border_claim_pending
+	set_variable = { pak_raj_border_claimed_state = border_war_claimed_state }
+	set_temp_variable = { pak_raj_border_tension_change = 10 }
+	pak_raj_border_add_tension = yes
+	if = {
+		limit = { original_tag = RAJ }
+		PAK = { country_event = pak_raj_border_claim.1 }
+	}
+	else_if = {
+		limit = { original_tag = PAK }
+		RAJ = { country_event = pak_raj_border_claim.1 }
+	}
+}
+
+raj_chi_border_begin_claim = {
+	set_global_flag = { flag = GLOBAL_raj_chi_border_capture_cooldown value = 1 days = 180 }
+	set_variable = { raj_chi_border_claimed_state = border_war_claimed_state }
+	set_temp_variable = { raj_chi_border_tension_change = 10 }
+	raj_chi_border_add_tension = yes
+	raj_chi_border_start_crisis = yes
+	CHI = {
+		add_to_variable = { CHI_chinese_aggression = 5 tooltip = CHI_chinese_aggression_tt }
+		clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
+	}
+	if = {
+		limit = { original_tag = RAJ }
+		CHI = { country_event = raj_chi_border_crisis.2 }
+	}
+	else_if = {
+		limit = { original_tag = CHI }
+		RAJ = { country_event = raj_chi_border_crisis.2 }
+	}
+}
+
+pak_raj_border_clear_claim = {
+	clr_global_flag = GLOBAL_pak_raj_border_claim_pending
+	RAJ = { clear_variable = pak_raj_border_claimed_state }
+	PAK = { clear_variable = pak_raj_border_claimed_state }
+}
+
+pak_raj_border_start_crisis = {
+	clr_global_flag = GLOBAL_pak_raj_border_claim_pending
+	set_global_flag = GLOBAL_pak_raj_border_crisis_active
+	set_country_flag = pak_raj_border_crisis_escalator
+}
+
+raj_chi_border_start_crisis = {
+	set_global_flag = GLOBAL_raj_chi_border_crisis_active
+	set_country_flag = raj_chi_border_crisis_escalator
+}
+
+pak_raj_border_crisis_cleanup = {
+	clr_global_flag = GLOBAL_pak_raj_border_crisis_active
+	clr_global_flag = GLOBAL_pak_raj_border_claim_pending
+	clr_global_flag = GLOBAL_pak_raj_border_nuclear_prompted
+	clr_global_flag = GLOBAL_pak_raj_border_nuclear_standoff
+	clr_global_flag = GLOBAL_pak_raj_border_mediation_offered
+	set_global_flag = { flag = GLOBAL_pak_raj_border_crisis_cooldown value = 1 days = 540 }
+	RAJ = {
+		clr_country_flag = pak_raj_border_crisis_escalator
+		clr_country_flag = pak_raj_border_ultimatum_pending
+		clr_country_flag = pak_raj_border_nuclear_posture
+		clear_variable = pak_raj_border_claimed_state
+		if = {
+			limit = { has_idea = border_war_mobilization_idea }
+			remove_ideas = border_war_mobilization_idea
+		}
+	}
+	PAK = {
+		clr_country_flag = pak_raj_border_crisis_escalator
+		clr_country_flag = pak_raj_border_ultimatum_pending
+		clr_country_flag = pak_raj_border_nuclear_posture
+		clear_variable = pak_raj_border_claimed_state
+		if = {
+			limit = { has_idea = border_war_mobilization_idea }
+			remove_ideas = border_war_mobilization_idea
+		}
+	}
+}
+
+pak_raj_border_crisis_resolve_peacefully = {
+	pak_raj_border_crisis_cleanup = yes
+	set_global_flag = GLOBAL_pak_raj_border_crisis_resolved_peacefully
+}
+
+raj_chi_border_crisis_cleanup = {
+	clr_global_flag = GLOBAL_raj_chi_border_crisis_active
+	set_global_flag = { flag = GLOBAL_raj_chi_border_crisis_cooldown value = 1 days = 360 }
+	RAJ = {
+		clr_country_flag = raj_chi_border_crisis_escalator
+		clear_variable = raj_chi_border_claimed_state
+	}
+	CHI = {
+		clr_country_flag = raj_chi_border_crisis_escalator
+		clear_variable = raj_chi_border_claimed_state
+	}
+}
+
+pak_raj_border_crisis_monthly = {
+	if = {
+		limit = {
+			has_global_flag = GLOBAL_pak_raj_border_crisis_active
+			pak_raj_border_pair_valid = yes
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = GLOBAL_pak_raj_border_nuclear_prompted }
+				check_variable = { global.pak_raj_border_tension > 79 }
+				RAJ = { has_idea = nuclear_power_off }
+				PAK = { has_idea = nuclear_power_off }
+			}
+			set_global_flag = GLOBAL_pak_raj_border_nuclear_prompted
+			if = {
+				limit = { RAJ = { has_country_flag = pak_raj_border_crisis_escalator } }
+				RAJ = { country_event = { id = pak_raj_border_crisis.5 days = 1 } }
+			}
+			else_if = {
+				limit = { PAK = { has_country_flag = pak_raj_border_crisis_escalator } }
+				PAK = { country_event = { id = pak_raj_border_crisis.5 days = 1 } }
+			}
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = GLOBAL_pak_raj_border_mediation_offered }
+				country_exists = USA
+				USA = { is_subject = no }
+				OR = {
+					has_global_flag = { flag = GLOBAL_pak_raj_border_crisis_active days > 60 }
+					has_global_flag = GLOBAL_pak_raj_border_nuclear_standoff
+				}
+			}
+			set_global_flag = GLOBAL_pak_raj_border_mediation_offered
+			USA = { country_event = { id = pak_raj_border_crisis.7 days = 1 } }
+		}
+		if = {
+			limit = { check_variable = { global.pak_raj_border_tension < 40 } }
+			pak_raj_border_crisis_resolve_peacefully = yes
+			RAJ = { country_event = { id = pak_raj_border_crisis.9 days = 1 } }
+			PAK = { country_event = { id = pak_raj_border_crisis.9 days = 1 } }
+		}
+	}
+	else_if = {
+		limit = { has_global_flag = GLOBAL_pak_raj_border_crisis_active }
+		pak_raj_border_crisis_cleanup = yes
+	}
+}
+
+pak_raj_border_monthly = {
+	if = {
+		limit = { pak_raj_border_pair_valid = yes }
+		if = {
+			limit = { pak_raj_border_no_operation_active = yes }
+			random = {
+				chance = 35
+				subtract_from_variable = { global.pak_raj_border_tension = 5 }
+				clamp_variable = { var = global.pak_raj_border_tension min = 0 max = 100 }
+			}
+			RAJ = {
+				random = {
+					chance = 20
+					subtract_from_variable = { pak_raj_border_readiness = 5 }
+					clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
+				}
+			}
+			PAK = {
+				random = {
+					chance = 20
+					subtract_from_variable = { pak_raj_border_readiness = 5 }
+					clamp_variable = { var = pak_raj_border_readiness min = 0 max = 100 }
+				}
+			}
+		}
+		RAJ = { pak_raj_border_refresh_sector = yes }
+		PAK = { pak_raj_border_refresh_sector = yes }
+		if = {
+			limit = {
+				has_global_flag = { flag = GLOBAL_pak_raj_border_attack_pending days > 30 }
+			}
+			clr_global_flag = GLOBAL_pak_raj_border_attack_pending
+		}
+		if = {
+			limit = {
+				has_global_flag = { flag = GLOBAL_pak_raj_border_war_active days > 30 }
+				RAJ = { has_border_war = no }
+				PAK = { has_border_war = no }
+			}
+			clr_global_flag = GLOBAL_pak_raj_border_war_active
+			RAJ = { clear_variable = pak_raj_border_objective_state }
+			PAK = { clear_variable = pak_raj_border_objective_state }
+		}
+		if = {
+			limit = {
+				has_global_flag = { flag = GLOBAL_pak_raj_border_capture_pending days > 60 }
+			}
+			clr_global_flag = GLOBAL_pak_raj_border_capture_pending
+		}
+		if = {
+			limit = {
+				has_global_flag = { flag = GLOBAL_pak_raj_border_claim_pending days > 60 }
+			}
+			pak_raj_border_clear_claim = yes
+		}
+		pak_raj_border_crisis_monthly = yes
+	}
+	else = {
+		clr_global_flag = GLOBAL_pak_raj_border_attack_pending
+		clr_global_flag = GLOBAL_pak_raj_border_war_active
+		clr_global_flag = GLOBAL_pak_raj_border_capture_pending
+		RAJ = {
+			clear_variable = pak_raj_border_objective_state
+			pak_raj_border_clear_sector = yes
+		}
+		PAK = {
+			clear_variable = pak_raj_border_objective_state
+			pak_raj_border_clear_sector = yes
+		}
+		pak_raj_border_clear_claim = yes
+		if = {
+			limit = { has_global_flag = GLOBAL_pak_raj_border_crisis_active }
+			pak_raj_border_crisis_cleanup = yes
+		}
+	}
+}
+
+raj_chi_border_monthly = {
+	if = {
+		limit = { raj_chi_border_pair_valid = yes }
+		if = {
+			limit = { raj_chi_border_no_operation_active = yes }
+			random = {
+				chance = 35
+				subtract_from_variable = { global.raj_chi_border_tension = 5 }
+				clamp_variable = { var = global.raj_chi_border_tension min = 0 max = 100 }
+			}
+			RAJ = {
+				random = {
+					chance = 20
+					subtract_from_variable = { raj_chi_border_readiness = 5 }
+					clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
+				}
+			}
+			CHI = {
+				random = {
+					chance = 20
+					subtract_from_variable = { raj_chi_border_readiness = 5 }
+					clamp_variable = { var = raj_chi_border_readiness min = 0 max = 100 }
+				}
+			}
+		}
+		RAJ = { raj_chi_border_refresh_sector = yes }
+		CHI = { raj_chi_border_refresh_sector = yes }
+		if = {
+			limit = {
+				has_global_flag = { flag = GLOBAL_raj_chi_border_attack_pending days > 30 }
+			}
+			clr_global_flag = GLOBAL_raj_chi_border_attack_pending
+		}
+		if = {
+			limit = {
+				has_global_flag = { flag = GLOBAL_raj_chi_border_war_active days > 30 }
+				RAJ = { has_border_war = no }
+				CHI = { has_border_war = no }
+			}
+			clr_global_flag = GLOBAL_raj_chi_border_war_active
+			RAJ = { clear_variable = raj_chi_border_objective_state }
+			CHI = { clear_variable = raj_chi_border_objective_state }
+		}
+		if = {
+			limit = {
+				has_global_flag = { flag = GLOBAL_raj_chi_border_capture_pending days > 60 }
+			}
+			clr_global_flag = GLOBAL_raj_chi_border_capture_pending
+		}
+	}
+	else = {
+		clr_global_flag = GLOBAL_raj_chi_border_attack_pending
+		clr_global_flag = GLOBAL_raj_chi_border_war_active
+		clr_global_flag = GLOBAL_raj_chi_border_capture_pending
+		RAJ = {
+			clear_variable = raj_chi_border_objective_state
+			clear_variable = raj_chi_border_claimed_state
+			raj_chi_border_clear_sector = yes
+		}
+		CHI = {
+			clear_variable = raj_chi_border_objective_state
+			clear_variable = raj_chi_border_claimed_state
+			raj_chi_border_clear_sector = yes
+		}
+		if = {
+			limit = { has_global_flag = GLOBAL_raj_chi_border_crisis_active }
+			raj_chi_border_crisis_cleanup = yes
+		}
+	}
+}
+
+pak_raj_border_try_transfer_claimed = {
+	set_temp_variable = { border_war_state_returned = 0 }
+	if = {
+		limit = {
+			FROM = { check_variable = { pak_raj_border_claimed_state = 420 } }
+			420 = { is_owned_by = ROOT is_controlled_by = ROOT }
+		}
+		FROM = { transfer_state = 420 }
+		set_temp_variable = { border_war_state_returned = 1 }
+	}
+	else_if = {
+		limit = {
+			FROM = { check_variable = { pak_raj_border_claimed_state = 427 } }
+			427 = { is_owned_by = ROOT is_controlled_by = ROOT }
+		}
+		FROM = { transfer_state = 427 }
+		set_temp_variable = { border_war_state_returned = 1 }
+	}
+	else_if = {
+		limit = {
+			FROM = { check_variable = { pak_raj_border_claimed_state = 429 } }
+			429 = { is_owned_by = ROOT is_controlled_by = ROOT }
+		}
+		FROM = { transfer_state = 429 }
+		set_temp_variable = { border_war_state_returned = 1 }
+	}
+	else_if = {
+		limit = {
+			FROM = { check_variable = { pak_raj_border_claimed_state = 563 } }
+			563 = { is_owned_by = ROOT is_controlled_by = ROOT }
+		}
+		FROM = { transfer_state = 563 }
+		set_temp_variable = { border_war_state_returned = 1 }
+	}
+	else_if = {
+		limit = {
+			FROM = { check_variable = { pak_raj_border_claimed_state = 573 } }
+			573 = { is_owned_by = ROOT is_controlled_by = ROOT }
+		}
+		FROM = { transfer_state = 573 }
+		set_temp_variable = { border_war_state_returned = 1 }
+	}
+	else_if = {
+		limit = {
+			FROM = { check_variable = { pak_raj_border_claimed_state = 426 } }
+			426 = { is_owned_by = ROOT is_controlled_by = ROOT }
+		}
+		FROM = { transfer_state = 426 }
+		set_temp_variable = { border_war_state_returned = 1 }
+	}
+	else_if = {
+		limit = {
+			FROM = { check_variable = { pak_raj_border_claimed_state = 987 } }
+			987 = { is_owned_by = ROOT is_controlled_by = ROOT }
+		}
+		FROM = { transfer_state = 987 }
+		set_temp_variable = { border_war_state_returned = 1 }
+	}
+	else_if = {
+		limit = {
+			FROM = { check_variable = { pak_raj_border_claimed_state = 984 } }
+			984 = { is_owned_by = ROOT is_controlled_by = ROOT }
+		}
+		FROM = { transfer_state = 984 }
+		set_temp_variable = { border_war_state_returned = 1 }
 	}
 }

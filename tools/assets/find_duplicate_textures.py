@@ -159,7 +159,7 @@ def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_filename = f"duplicate_textures_report_{timestamp}.txt"
 
-    with open(output_filename, "w", encoding="utf-8") as output_file:
+    with open(output_filename, "w", encoding="utf-8", newline="") as output_file:
         output_file.write("Millennium Dawn - Duplicate Texture Finder\n")
         output_file.write("=" * 50 + "\n")
         output_file.write(
