@@ -22,8 +22,7 @@ mod's accepted guard idioms, all derived from live usage:
   - A sibling `modifier = { factor = 0  X < N }` zeroing a `random_list`
     bucket's weight when the building is absent.
 
-This is WARNING-only: the mod carries a ~700-item backlog of unguarded sites
-predating this check. Flip the crashing categories to ERROR once triaged.
+This is WARNING-only while the rule remains in rollout.
 """
 
 import os
@@ -70,7 +69,14 @@ _OBJECT_GATES = frozenset({"trigger", "available", "visible", "allowed"})
 # Never contain effects; walking them would re-read a branch condition as a
 # guarded effect, or double-count a gate already handled elsewhere.
 _SKIP_BLOCKS = frozenset(
-    {"limit", "ai_will_do", "search_filters", "prerequisite", "mutually_exclusive"}
+    {
+        "limit",
+        "ai_will_do",
+        "effect_tooltip",
+        "search_filters",
+        "prerequisite",
+        "mutually_exclusive",
+    }
 )
 _BRANCHES = frozenset({"if", "else_if", "else"})
 
@@ -226,7 +232,7 @@ def scan_file(args: Tuple[str, str]) -> List[Tuple[str, str, int, str]]:
         return scanner.findings
 
     findings = disk_cache.per_file_cached_by_content(
-        mod_path, "building_guards_scan", filepath, raw, compute
+        mod_path, "building_guards_scan_v2", filepath, raw, compute
     )
     relative = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
     return [(category, relative, line, message) for category, line, message in findings]

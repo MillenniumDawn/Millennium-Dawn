@@ -54,6 +54,17 @@ def test_unguarded_remove_building_is_flagged():
     assert "arms_factory" in findings[0][2]
 
 
+def test_effect_tooltip_preview_is_ignored():
+    script = (
+        "effect_tooltip = {\n"
+        "\t652 = {\n"
+        "\t\tdamage_building = { type = fuel_silo damage = 1 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+
+
 # --- accepted guard idioms -----------------------------------------------
 
 
