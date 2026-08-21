@@ -85,6 +85,7 @@ def test_classify_tags_new_and_existing(tmp_path):
         ],
     )
     baseline = load_baseline(str(tmp_path), "h")
+    assert baseline is not None
 
     issues = [
         _issue(file="old.txt", line=1, message="old finding"),
@@ -130,6 +131,7 @@ def test_classify_escalated_severity_counts_as_new(tmp_path):
         [_issue_dict("warning", file="a.txt", line=1, message="escalated")],
     )
     baseline = load_baseline(str(tmp_path), "h")
+    assert baseline is not None
 
     stats = classify([_issue(file="a.txt", line=1, message="escalated")], baseline)
     assert stats.new_errors == 1
@@ -345,6 +347,6 @@ def test_build_report_annotates_new_vs_existing(tmp_path):
     assert stats is not None
     assert stats.new_errors == 1
     assert stats.existing_errors == 1
-    assert "1 new against the main baseline." in body
+    assert "1 new error against the main baseline." in body
     assert "## New findings vs main baseline" in step_body
     assert len(deduped) == 2

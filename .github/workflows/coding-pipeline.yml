@@ -205,7 +205,11 @@ jobs:
             characters:
               - 'common/characters/**'
               - 'common/unit_leader/**'
-              # Sources of create_corps_commander and friends.
+              # The other leader trait pool. A trait moved between the two
+              # changes whether it is legal on a unit leader, and a trait moved
+              # between pool files reclassifies every advisor slot using it.
+              - 'common/country_leader/**'
+              # Sources of create_corps_commander and add_advisor_role.
               - 'common/national_focus/**'
               - 'common/decisions/**'
               - 'common/scripted_effects/**'
@@ -249,6 +253,11 @@ jobs:
               - 'common/on_actions/**'
             mios:
               - 'common/military_industrial_organization/**'
+              - 'common/country_leader/**'
+              # Equipment and its groups are the other half of the dead-bonus
+              # check: dropping a base stat there kills bonuses elsewhere.
+              - 'common/units/equipment/**'
+              - 'common/equipment_groups/**'
             scripted-effects:
               - 'common/scripted_effects/**'
             style:
@@ -416,7 +425,8 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Run style check
+      - name: Collect style-relevant files
+        id: style-files
         env:
           # JSON array of changed .txt files under common/events/history.
           STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style-files }}
@@ -428,18 +438,55 @@ jobs:
             | grep -vE \
               '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
             > style_files.txt || true
-          if [ ! -s style_files.txt ]; then
+          if [ -s style_files.txt ]; then
+            echo "has-files=true" >> "$GITHUB_OUTPUT"
+          else
             echo "No style-relevant files changed"
-            exit 0
+            echo "has-files=false" >> "$GITHUB_OUTPUT"
           fi
+
+      # Both tools run in their own step so a --strict style failure doesn't
+      # stop check_common_mistakes.py, and so each uploads its findings to the
+      # validation report even when the other one fails.
+      - name: Run style check
+        if: steps.style-files.outputs.has-files == 'true'
+        run: |
           # validate_style.py reads the diff list from MD_STAGED_FILES.
           # Newline-separated paths keep spaces and apostrophes safe.
           MD_STAGED_FILES="$(cat style_files.txt)" \
             python3 tools/validation/validate_style.py \
-              --staged --strict --no-color
+              --staged --strict --no-color \
+              --output validation-style-check.log
+
+      - name: Run common-mistakes check
+        if: always() && steps.style-files.outputs.has-files == 'true'
+        run: |
           # Feed check_common_mistakes.py NUL-delimited paths through xargs.
           tr '\n' '\0' < style_files.txt | xargs -0 -r \
-            python3 tools/linting/check_common_mistakes.py
+            python3 tools/linting/check_common_mistakes.py \
+              --output validation-common-mistakes.log
+
+      - name: Upload style check results
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: validation-style-check-results
+          path: |
+            validation-style-check.log
+            validation-style-check.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload common-mistakes results
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: validation-common-mistakes-results
+          path: |
+            validation-common-mistakes.log
+            validation-common-mistakes.json
+          if-no-files-found: ignore
+          retention-days: 7
 
   # ───────────────────────────────────────────────────────────────
   # Structural lint — file-integrity checks that otherwise only run as
@@ -503,6 +550,10 @@ jobs:
       fail-fast: false
       matrix:
         validator:
+          - script: validate_common_mistakes.py
+            name: common-mistakes
+            title: "Common Scripting Mistakes"
+            strict: true
           - script: validate_variables.py
             name: variables
             title: "Variables"
@@ -573,18 +624,17 @@ jobs:
       # Per-matrix opt-out: `strict: false` makes the validator informational
       # (still produces the log + PR comment but exits 0 on findings). An entry
       # that omits the field keeps gating behavior — never fail open by default.
-      # `args` passes validator-specific opt-in flags; entries that omit it
-      # render an empty string. No entry sets it right now: the --missing-icons
-      # icon checks are deliberately kept out of CI (see validation-pipeline.md).
+      # The idea missing-icon audit is WARNING severity, so it reports its
+      # backlog without blocking a PR.
       - name: Run validation
         run: |
           if [ "${{ matrix.validator.strict }}" != "false" ]; then
             python3 tools/validation/${{ matrix.validator.script }} \
-              --strict --no-color --workers 4 ${{ matrix.validator.args }} \
+              --strict --no-color --workers 4 \
               --output validation-${{ matrix.validator.name }}.log
           else
             python3 tools/validation/${{ matrix.validator.script }} \
-              --no-color --workers 4 ${{ matrix.validator.args }} \
+              --no-color --workers 4 \
               --output validation-${{ matrix.validator.name }}.log
           fi
 
@@ -664,10 +714,11 @@ jobs:
             should_run: ${{ needs.detect-changes.outputs.factions }}
           - script: validate_characters.py
             name: characters
-            title: "Validate Character Traits"
+            title: "Validate Character and Advisor Traits"
             strict: true
             # undefined-unit-leader-trait is WARNING-severity: the 9-item
-            # ALG/PHI backlog surfaces in reports without gating PRs.
+            # ALG/PHI backlog surfaces in reports without gating PRs. Every
+            # advisor-slot category gates.
             should_run: ${{ needs.detect-changes.outputs.characters }}
           - script: validate_scientist_traits.py
             name: scientist-traits
@@ -752,6 +803,15 @@ jobs:
               needs.detect-changes.outputs.on-actions == 'true' ||
               needs.detect-changes.outputs.events == 'true') && 'true' ||
               'false' }}
+          - script: validate_building_guards.py
+            name: building-guards
+            title: "Validate Building Guards"
+            # informational: WARNING-only, ~660-item backlog, never gates a PR
+            strict: false
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.common == 'true' ||
+              needs.detect-changes.outputs.events == 'true') && 'true' ||
+              'false' }}
           - script: validate_dlc_guards.py
             name: dlc-guards
             title: "Validate DLC Guards"
@@ -787,11 +847,11 @@ jobs:
         run: |
           if [ "${{ matrix.validator.strict }}" != "false" ]; then
             python3 tools/validation/${{ matrix.validator.script }} \
-              --strict --no-color --workers 4 ${{ matrix.validator.args }} \
+              --strict --no-color --workers 4 \
               --output validation-${{ matrix.validator.name }}.log
           else
             python3 tools/validation/${{ matrix.validator.script }} \
-              --no-color --workers 4 ${{ matrix.validator.args }} \
+              --no-color --workers 4 \
               --output validation-${{ matrix.validator.name }}.log
           fi
       - name: Upload results
@@ -855,7 +915,12 @@ jobs:
   validation-report:
     name: Generate Validation Report
     runs-on: ubuntu-latest
-    needs: [structural-lint, validate-core, validate-targeted, validate-paths]
+    needs:
+      - styling-check
+      - structural-lint
+      - validate-core
+      - validate-targeted
+      - validate-paths
     permissions:
       contents: read
       pull-requests: write
@@ -869,6 +934,9 @@ jobs:
     # and passed. A pull_request run gates validators on the changed file
     # groups, so its "no findings" may only refresh an existing report comment,
     # never delete one.
+    # styling-check is deliberately absent below: detect-changes forces
+    # style=false on dispatch, so the job is always skipped there and a
+    # `== 'success'` test would pin the scope to `partial` forever.
     env:
       PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}

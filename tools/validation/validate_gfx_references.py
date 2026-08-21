@@ -52,6 +52,19 @@ from validator_common import (
 
 _VANILLA_GUI_MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_gui_files.txt")
 
+# The orphan backlog is ~6.7k warnings and buries the case-mismatch and duplicate
+# findings shipped alongside it. Set this to run the full --report-unused pass for
+# those findings alone, without the backlog scrolling them off the screen.
+_HIDE_UNUSED_ENV = "MD_GFX_HIDE_UNUSED"
+
+
+def _hide_unused_backlog() -> bool:
+    return os.environ.get(_HIDE_UNUSED_ENV, "").strip().lower() not in (
+        "",
+        "0",
+        "false",
+    )
+
 
 def _load_vanilla_gui_basenames() -> frozenset:
     # UnicodeDecodeError too: a corrupt manifest must degrade to "no manifest"
@@ -122,9 +135,13 @@ _GFX_NAME = re.compile(
     r'\bname\s*=\s*(?:"(GFX_[A-Za-z0-9_.@-]+)"|(GFX_[A-Za-z0-9_.@-]+))'
 )
 
-# GUI references — spriteType / quadTextureSprite / background
+# textureFile / texturefile inside a sprite block — the art a definition points at.
+_GFX_TEXTUREFILE = re.compile(r'\btexture[fF]ile\s*=\s*"([^"]+)"', re.IGNORECASE)
+
+# Property names are case-insensitive; quotes are optional. GFX_ stays exact.
 _GUI_REF = re.compile(
-    r'\b(spriteType|quadTextureSprite|background)\s*=\s*"(GFX_[^"\[]+)"'
+    r"\b(?i:spriteType|quadTextureSprite|background)\s*=\s*"
+    r'(?:"(GFX_[^"\[]+)"|(GFX_[A-Za-z0-9_.@-]+))'
 )
 
 # Scripted GUI properties: image = "GFX_xxx"
@@ -132,6 +149,12 @@ _SGUI_IMAGE_REF = re.compile(r'\bimage\s*=\s*"(GFX_[^"\[]+)"')
 
 # Scripted localisation: localization_key = "GFX_xxx"
 _SLOC_KEY_REF = re.compile(r'\blocalization_key\s*=\s*"(GFX_[^"\[]+)"')
+
+# The same two attributes, but keeping the `[` those exclude — a bracket is what
+# marks a name the engine builds at runtime (GFX_missile_[THIS.GetTag]_ID_[?v]_icon).
+_SPRITE_TEMPLATE_REF = re.compile(
+    r'\b(?:localization_key|image)\s*=\s*"(GFX_[^"]*\[[^"]*)"'
+)
 
 # Any literal GFX_ sprite token in game script (event `picture = GFX_x`, focus
 # `icon = GFX_x`, decision icons, MIO/agency logos, portraits, etc.). Names can
@@ -256,7 +279,7 @@ def _vanilla_gui_ref_index() -> dict:
         text = _strip_comments(raw)
         refs = index.setdefault(os.path.basename(path), set())
         for m in _GUI_REF.finditer(text):
-            sprite = m.group(2)
+            sprite = m.group(1) or m.group(2)
             if not _is_dynamic(sprite):
                 refs.add(sprite)
     return index
@@ -294,7 +317,52 @@ _EQUIPMENT_ICON_TAG_RE = re.compile(r"^[A-Z][A-Z0-9]{2}_(.+)$")
 # tank_filters.txt, which could mask a genuinely dead sprite.
 _EQUIPMENTS_BLOCK_RE = re.compile(r"^equipments\s*=\s*\{", re.MULTILINE)
 _TECHNOLOGIES_BLOCK_RE = re.compile(r"^technologies\s*=\s*\{", re.MULTILINE)
+_MODULES_BLOCK_RE = re.compile(r"^equipment_modules\s*=\s*\{", re.MULTILINE)
+_SUB_UNITS_BLOCK_RE = re.compile(r"^sub_units\s*=\s*\{", re.MULTILINE)
+_SUB_UNIT_CATEGORIES_BLOCK_RE = re.compile(
+    r"^sub_unit_categories\s*=\s*\{", re.MULTILINE
+)
 _EQUIPMENT_ENTRY_RE = re.compile(r"^\t([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+_UNIT_ICON_SUFFIXES = (
+    "_icon_small",
+    "_icon_medium",
+    "_icon_small_white",
+    "_icon_medium_white",
+    "_icon_medium_black",
+)
+
+# The equipment designer draws GFX_EMI_<name> for both halves of the module
+# system: the module itself, and the category its slot accepts. A category is
+# never declared on its own — it exists because a module claims it and a chassis
+# slot allows it, so both spellings have to be harvested or live category icons
+# (GFX_EMI_afv_gasoline_engine_type) read as orphans.
+_MODULE_CATEGORY_RE = re.compile(
+    r"^\s*(?:module_)?category\s*=\s*([A-Za-z][A-Za-z0-9_]*)", re.MULTILINE
+)
+_ALLOWED_CATEGORIES_RE = re.compile(r"\ballowed_module_categories\s*=\s*\{([^}]*)\}")
+
+# Focus search-filter icons: a focus tags itself `search_filters = { FOCUS_FILTER_X }`
+# and the engine swaps GFX_FOCUS_FILTER_X into the filter button at runtime — vanilla's
+# nationalfocusview.gui only carries GFX_FOCUS_FILTER_POLITICAL as the template
+# placeholder, so no other filter icon is ever named literally.
+_SEARCH_FILTERS_RE = re.compile(r"\bsearch_filters\s*=\s*\{([^}]*)\}")
+
+# Ace portraits. The engine picks GFX_<TAG>_ace_<m|f>_<n>, falling back to the
+# country's graphical culture (GFX_african_2d_ace_f_0) and then the generic pool
+# (GFX_ace_m_2). The pool name is the only variable part, so resolving one means
+# checking it against the tags and cultures the mod actually declares.
+_ACE_PORTRAIT_RE = re.compile(r"^GFX_(?:(?P<pool>.+)_)?ace_[mf]_\d+$")
+_COUNTRY_TAG_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
+_GRAPHICAL_CULTURE_RE = re.compile(
+    r"^\s*graphical_culture(?:_2d)?\s*=\s*([A-Za-z0-9_]+)", re.MULTILINE
+)
+
+# A `[...]` placeholder inside a sprite name is filled at runtime, so the literal
+# template never matches a definition. Turning it into a pattern resolves the
+# concrete sprites it can produce — but only when enough literal text survives to
+# identify them: `GFX_[?topbar.GetTokenKey]` would otherwise match every sprite.
+_TEMPLATE_PLACEHOLDER_RE = re.compile(r"\[[^\]]*\]")
+_TEMPLATE_MIN_LITERAL = 4
 
 
 def _entry_names_from_text(raw: str, block_re: "re.Pattern[str]") -> List[str]:
@@ -308,41 +376,107 @@ def _entry_names_from_text(raw: str, block_re: "re.Pattern[str]") -> List[str]:
     return sorted(names)
 
 
+def _search_filter_names_from_text(raw: str) -> List[str]:
+    """Return every token listed inside a `search_filters = { }` block."""
+    text = _HASH_COMMENT.sub("", raw)
+    names: Set[str] = set()
+    for block in _SEARCH_FILTERS_RE.finditer(text):
+        names.update(block.group(1).split())
+    return sorted(names)
+
+
+def _iter_txt_files(root: str, *, recursive: bool = True) -> List[str]:
+    """Return `.txt` paths under `root`. Missing dirs yield an empty list."""
+    if not recursive:
+        try:
+            return [
+                os.path.join(root, fn)
+                for fn in os.listdir(root)
+                if fn.endswith(".txt") and os.path.isfile(os.path.join(root, fn))
+            ]
+        except OSError:
+            return []
+    files: List[str] = []
+    for dirpath, _dirnames, filenames in os.walk(root):
+        for fn in filenames:
+            if fn.endswith(".txt"):
+                files.append(os.path.join(dirpath, fn))
+    return files
+
+
+def _load_names_from_dir(
+    mod_path: str, root: str, parse, namespace: str, *, recursive: bool = True
+) -> FrozenSet[str]:
+    """Return every name `parse` finds under `root`, content-cached per file."""
+    names: Set[str] = set()
+    for filepath in _iter_txt_files(root, recursive=recursive):
+        try:
+            with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
+                raw = fh.read()
+        except OSError:
+            continue
+        names.update(
+            disk_cache.per_file_cached_by_content(
+                mod_path, namespace, filepath, raw, lambda: parse(raw)
+            )
+        )
+    return frozenset(names)
+
+
 def _load_entry_names(
     mod_path: str, root: str, block_re: "re.Pattern[str]", namespace: str
 ) -> FrozenSet[str]:
     """Return every entry name declared under `root`, content-cached per file."""
-    names: Set[str] = set()
-    for dirpath, _dirnames, filenames in os.walk(root):
-        for fn in filenames:
-            if not fn.endswith(".txt"):
-                continue
-            filepath = os.path.join(dirpath, fn)
+    return _load_names_from_dir(
+        mod_path, root, lambda raw: _entry_names_from_text(raw, block_re), namespace
+    )
+
+
+def _equipment_tree_from_text(raw: str) -> Tuple[List[str], List[str]]:
+    """Return (equipment entries, module/category names) from one equipment file."""
+    return (
+        _entry_names_from_text(raw, _EQUIPMENTS_BLOCK_RE),
+        _module_icon_names_from_text(raw),
+    )
+
+
+def _load_equipment_tree(mod_path: str) -> Tuple[FrozenSet[str], FrozenSet[str]]:
+    """Return cached (equipment names, module/category names) for the equipment tree."""
+    root = os.path.join(mod_path, "common", "units", "equipment")
+    tracked = _iter_txt_files(root)
+
+    def _build() -> Tuple[FrozenSet[str], FrozenSet[str]]:
+        equipment: Set[str] = set()
+        modules: Set[str] = set()
+        for filepath in tracked:
             try:
                 with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
                     raw = fh.read()
             except OSError:
                 continue
-            names.update(
-                disk_cache.per_file_cached_by_content(
-                    mod_path,
-                    namespace,
-                    filepath,
-                    raw,
-                    lambda: _entry_names_from_text(raw, block_re),
-                )
+            eq_names, module_names = disk_cache.per_file_cached_by_content(
+                mod_path,
+                "gfx_ref.equipment_tree",
+                filepath,
+                raw,
+                lambda: _equipment_tree_from_text(raw),
             )
-    return frozenset(names)
+            equipment.update(eq_names)
+            modules.update(module_names)
+        return frozenset(equipment), frozenset(modules)
+
+    return disk_cache.aggregate_cached(
+        mod_path,
+        "gfx_ref.equipment_tree.aggregate",
+        tracked,
+        _build,
+        namespace="gfx_ref",
+    )
 
 
 def _load_equipment_names(mod_path: str) -> FrozenSet[str]:
     """Return every equipment archetype/variant declared in common/units/equipment."""
-    return _load_entry_names(
-        mod_path,
-        os.path.join(mod_path, "common", "units", "equipment"),
-        _EQUIPMENTS_BLOCK_RE,
-        "gfx_ref.equipment_names",
-    )
+    return _load_equipment_tree(mod_path)[0]
 
 
 def _load_technology_names(mod_path: str) -> FrozenSet[str]:
@@ -353,6 +487,164 @@ def _load_technology_names(mod_path: str) -> FrozenSet[str]:
         _TECHNOLOGIES_BLOCK_RE,
         "gfx_ref.tech_names",
     )
+
+
+def _load_search_filter_names(mod_path: str) -> FrozenSet[str]:
+    """Return every search_filters token used in common/national_focus."""
+    return _load_names_from_dir(
+        mod_path,
+        os.path.join(mod_path, "common", "national_focus"),
+        _search_filter_names_from_text,
+        "gfx_ref.search_filters",
+    )
+
+
+def _module_icon_names_from_text(raw: str) -> List[str]:
+    """Return every module and module category an equipment file declares."""
+    text = _HASH_COMMENT.sub("", raw)
+    names: Set[str] = set(_entry_names_from_text(text, _MODULES_BLOCK_RE))
+    names.update(_MODULE_CATEGORY_RE.findall(text))
+    for block in _ALLOWED_CATEGORIES_RE.finditer(text):
+        names.update(block.group(1).split())
+    return sorted(names)
+
+
+def _load_module_icon_names(mod_path: str) -> FrozenSet[str]:
+    """Return every module and category the designer can draw an icon for."""
+    return _load_equipment_tree(mod_path)[1]
+
+
+def _unit_category_names_from_text(raw: str) -> List[str]:
+    """Return every token listed inside a `sub_unit_categories = { }` block."""
+    text = _HASH_COMMENT.sub("", raw)
+    names: Set[str] = set()
+    for block in _SUB_UNIT_CATEGORIES_BLOCK_RE.finditer(text):
+        body, _end = extract_block_from_text(text, block.start())
+        if body:
+            names.update(body.split())
+    return sorted(names)
+
+
+def _load_unit_icon_names(mod_path: str) -> FrozenSet[str]:
+    """Return every subunit and unit category the engine can draw a counter for."""
+    names = set(
+        _load_names_from_dir(
+            mod_path,
+            os.path.join(mod_path, "common", "units"),
+            lambda raw: _entry_names_from_text(raw, _SUB_UNITS_BLOCK_RE),
+            "gfx_ref.unit_names",
+            recursive=False,
+        )
+    )
+    names.update(
+        _load_names_from_dir(
+            mod_path,
+            os.path.join(mod_path, "common", "unit_tags"),
+            _unit_category_names_from_text,
+            "gfx_ref.unit_categories",
+        )
+    )
+    return frozenset(names)
+
+
+_ENGINE_DECLARATION_FAMILIES = (
+    (
+        _load_search_filter_names,
+        "  No search_filters found under common/national_focus"
+        " — focus-filter icons unresolved",
+        ("GFX_{name}",),
+    ),
+    (
+        _load_module_icon_names,
+        "  No equipment modules found under common/units/equipment"
+        " — module icons unresolved",
+        ("GFX_EMI_{name}", "GFX_SMI_{name}"),
+    ),
+    (
+        _load_unit_icon_names,
+        "  No sub-units or unit categories found — unit icons unresolved",
+        tuple("GFX_unit_{name}" + suffix for suffix in _UNIT_ICON_SUFFIXES),
+    ),
+)
+
+
+def _declaration_engine_source_files(mod_path: str) -> List[str]:
+    """Return the files that feed declaration-derived engine sprites."""
+    return (
+        _iter_txt_files(os.path.join(mod_path, "common", "national_focus"))
+        + _iter_txt_files(os.path.join(mod_path, "common", "units", "equipment"))
+        + _iter_txt_files(os.path.join(mod_path, "common", "units"), recursive=False)
+        + _iter_txt_files(os.path.join(mod_path, "common", "unit_tags"))
+    )
+
+
+def _declaration_engine_refs(
+    mod_path: str,
+) -> Tuple[FrozenSet[str], Tuple[str, ...]]:
+    """Return cached declaration-derived engine sprites plus empty-source notices."""
+
+    def _build() -> Tuple[FrozenSet[str], Tuple[str, ...]]:
+        refs: Set[str] = set()
+        notices: List[str] = []
+        for load, notice, templates in _ENGINE_DECLARATION_FAMILIES:
+            names = load(mod_path)
+            if not names:
+                notices.append(notice)
+            refs.update(t.format(name=n) for t in templates for n in names)
+        return frozenset(refs), tuple(notices)
+
+    return disk_cache.aggregate_cached(
+        mod_path,
+        "gfx_ref.declaration_engine_refs",
+        _declaration_engine_source_files(mod_path),
+        _build,
+        namespace="gfx_ref",
+    )
+
+
+def _load_ace_pool_names(mod_path: str) -> FrozenSet[str]:
+    """Return every country tag and graphical culture an ace portrait can key off."""
+    names: Set[str] = set()
+    for pattern, name_re in (
+        (os.path.join("common", "country_tags", "*.txt"), _COUNTRY_TAG_RE),
+        (os.path.join("common", "countries", "*.txt"), _GRAPHICAL_CULTURE_RE),
+    ):
+        for filepath in glob.glob(os.path.join(mod_path, pattern)):
+            raw = _read_raw(filepath)
+            if raw is None:
+                continue
+
+            def _ace_names(text: str = raw) -> list[str]:
+                return sorted(set(name_re.findall(_HASH_COMMENT.sub("", text))))
+
+            names.update(
+                disk_cache.per_file_cached_by_content(
+                    mod_path, "gfx_ref.ace_pools", filepath, raw, _ace_names
+                )
+            )
+    return frozenset(names)
+
+
+def _template_pattern(template: str) -> Optional["re.Pattern[str]"]:
+    """Compile a `GFX_x_[placeholder]_y` sprite template into a matcher.
+
+    Returns None when the literal text outside the placeholders is too short to
+    identify anything — `GFX_[?topbar.GetTokenKey]` names every sprite in the mod,
+    so treating it as a reference would mark the whole repo as used.
+    """
+    stripped = _TEMPLATE_PLACEHOLDER_RE.sub("", template)
+    literal = stripped[len("GFX_") :] if stripped.startswith("GFX_") else stripped
+    if len(literal.replace("_", "")) < _TEMPLATE_MIN_LITERAL:
+        return None
+    pattern = "".join(
+        r"[A-Za-z0-9_.\-]+" if part.startswith("[") else re.escape(part)
+        for part in re.split(r"(\[[^\]]*\])", template)
+        if part
+    )
+    try:
+        return re.compile(f"^{pattern}$")
+    except re.error as _e:
+        return None
 
 
 # Per-file parsers take (filepath, mod_path) and disk-cache their result keyed
@@ -368,14 +660,17 @@ def _read_raw(filepath: str) -> Optional[str]:
         return None
 
 
-def sprite_names_from_gfx_text(raw: str) -> Set[str]:
-    """Return the set of GFX sprite names defined in raw .gfx file content.
+def sprite_defs_from_gfx_text(raw: str) -> List[Tuple[str, str, int]]:
+    """Return (sprite_name, texturefile, line) for every definition in .gfx content.
 
-    Shared with refresh_vanilla_data.py so the committed manifest is
-    built with exactly the parse the validator applies to mod files.
+    One entry per spriteType block, duplicates included — the duplicate-name check
+    needs to see a name defined twice, which a set would silently collapse. The
+    texturefile tells a harmless repeat of the same art from a silent override of
+    two different textures under one name.
     """
     text = _strip_comments(raw)
-    names: Set[str] = set()
+    offsets = compute_line_offsets(text)
+    defs: List[Tuple[str, str, int]] = []
     for m in _GFX_SPRITE_TYPES.finditer(text):
         block_start = m.end()
         snippet, end = extract_block_from_text(text, block_start - 1)
@@ -387,19 +682,41 @@ def sprite_names_from_gfx_text(raw: str) -> Set[str]:
             ]
         nm = _GFX_NAME.search(snippet)
         if nm:
-            names.add(nm.group(1) or nm.group(2))
-    return names
+            tx = _GFX_TEXTUREFILE.search(snippet)
+            defs.append(
+                (
+                    nm.group(1) or nm.group(2),
+                    tx.group(1) if tx else "",
+                    line_for_offset(offsets, m.start()),
+                )
+            )
+    return defs
 
 
-def _parse_gfx_file(args: Tuple[str, str]) -> Set[str]:
-    """Return the set of GFX sprite names defined in a .gfx file."""
+def sprite_names_from_gfx_text(raw: str) -> Set[str]:
+    """Return the set of GFX sprite names defined in raw .gfx file content.
+
+    Shared with refresh_vanilla_data.py so the committed manifest is
+    built with exactly the parse the validator applies to mod files.
+    """
+    return {name for name, _tx, _line in sprite_defs_from_gfx_text(raw)}
+
+
+def _parse_gfx_file(args: Tuple[str, str]) -> List[Tuple[str, str, str, int]]:
+    """Return (sprite_name, filepath, texturefile, line) for each def in a .gfx file."""
     filepath, mod_path = args
     raw = _read_raw(filepath)
     if raw is None:
-        return set()
+        return []
+
+    def _compute() -> List[Tuple[str, str, str, int]]:
+        return [
+            (name, filepath, texture, line)
+            for name, texture, line in sprite_defs_from_gfx_text(raw)
+        ]
 
     return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.gfx", filepath, raw, lambda: sprite_names_from_gfx_text(raw)
+        mod_path, "gfx_ref.gfx", filepath, raw, _compute
     )
 
 
@@ -415,7 +732,7 @@ def _parse_gui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
         offsets = compute_line_offsets(raw)
         results = []
         for m in _GUI_REF.finditer(text):
-            sprite = m.group(2)
+            sprite = m.group(1) or m.group(2)
             if _is_dynamic(sprite):
                 continue
             line = line_for_offset(offsets, m.start())
@@ -480,26 +797,53 @@ def _parse_script_refs(args: Tuple[str, str]) -> List[str]:
     )
 
 
-def _parse_loc_refs(args: Tuple[str, str]) -> List[str]:
-    """Return every GFX sprite a localisation .yml file references via `£name`."""
+def _parse_loc_refs(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
+    """Return (sprite_name, filepath, line) for every `£name` in a localisation .yml."""
     filepath, mod_path = args
     raw = _read_raw(filepath)
     if raw is None:
         return []
 
-    def _compute() -> List[str]:
+    def _compute() -> List[Tuple[str, str, int]]:
         text = "\n".join(strip_inline_comment(line) for line in raw.splitlines())
-        refs: Set[str] = set()
-        for name in _LOC_SPRITE_REF.findall(text):
+        offsets = compute_line_offsets(text)
+        seen: Set[str] = set()
+        results: List[Tuple[str, str, int]] = []
+        for m in _LOC_SPRITE_REF.finditer(text):
             # Sentence-final punctuation (`£command_power.`) is not part of the name.
-            name = name.rstrip(".-")
+            name = m.group(1).rstrip(".-")
             if not name:
                 continue
-            refs.add(name if name.startswith("GFX_") else "GFX_" + name)
-        return sorted(refs)
+            if not name.startswith("GFX_"):
+                name = "GFX_" + name
+            if name in seen:
+                continue
+            seen.add(name)
+            results.append((name, filepath, line_for_offset(offsets, m.start())))
+        return results
 
     return disk_cache.per_file_cached_by_content(
         mod_path, "gfx_ref.loc", filepath, raw, _compute
+    )
+
+
+def _parse_sprite_templates(args: Tuple[str, str]) -> List[str]:
+    """Return every runtime-built `GFX_...[...]...` sprite name in a scripted file.
+
+    Comments are left in place for the same reason `_parse_sloc_file` leaves them:
+    a scripted loc key may legitimately start with `#`.
+    """
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return []
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "gfx_ref.templates",
+        filepath,
+        raw,
+        lambda: sorted(set(_SPRITE_TEMPLATE_REF.findall(raw))),
     )
 
 
@@ -536,6 +880,11 @@ class Validator(BaseValidator):
         # True once vanilla sprite names (live install or manifest) were folded
         # into the defined set — disables the _is_likely_vanilla heuristic.
         self._vanilla_defs_loaded = False
+        # The vanilla names themselves, for the unused check's override exemption.
+        self._vanilla_defined: Set[str] = set()
+        # Every mod definition site (name, file, texturefile, line) for the
+        # duplicate-name check.
+        self._mod_defs: List[Tuple[str, str, str, int]] = []
 
     def _build_gfx_definitions(self) -> Tuple[Set[str], Set[str]]:
         """Scan all interface/*.gfx files and return (all_defined, mod_defined).
@@ -554,9 +903,9 @@ class Validator(BaseValidator):
         results = self._pool_map(
             _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
         )
-        mod_defined: Set[str] = set()
-        for s in results:
-            mod_defined.update(s)
+        for batch in results:
+            self._mod_defs.extend(batch)
+        mod_defined: Set[str] = {name for name, _f, _tx, _l in self._mod_defs}
         self.log(
             f"  Found {len(mod_defined)} GFX sprite names across {len(gfx_files)} .gfx files (mod)"
         )
@@ -567,12 +916,13 @@ class Validator(BaseValidator):
             vanilla_results = self._pool_map(
                 _parse_gfx_file, [(f, self.mod_path) for f in vanilla_gfx]
             )
-            vanilla_defined: Set[str] = set()
-            for s in vanilla_results:
-                vanilla_defined.update(s)
+            vanilla_defined: Set[str] = {
+                name for batch in vanilla_results for name, _f, _tx, _l in batch
+            }
             new = vanilla_defined - defined
             defined.update(vanilla_defined)
             self._vanilla_defs_loaded = True
+            self._vanilla_defined = vanilla_defined
             self.log(
                 f"  Found {len(vanilla_defined)} GFX sprite names in vanilla "
                 f"({len(new)} new) across {len(vanilla_gfx)} .gfx files"
@@ -583,6 +933,7 @@ class Validator(BaseValidator):
                 new = set(manifest) - defined
                 defined.update(manifest)
                 self._vanilla_defs_loaded = True
+                self._vanilla_defined = set(manifest)
                 self.log(
                     f"  Loaded {len(manifest)} vanilla GFX sprite names from "
                     f"vanilla_sprites.txt ({len(new)} new)"
@@ -643,7 +994,7 @@ class Validator(BaseValidator):
         )
         return refs
 
-    def _collect_loc_refs(self) -> Set[str]:
+    def _collect_loc_refs(self) -> List[Tuple[str, str, int]]:
         """Return every GFX sprite referenced from localisation via `£name`.
 
         Every language is scanned, not just English: a `£` reference is a real
@@ -651,13 +1002,77 @@ class Validator(BaseValidator):
         """
         self._log_section("Collecting GFX £sprite references from localisation/*.yml")
         files = self._collect_files(["localisation/**/*.yml"], ignore_staged=True)
-        refs: Set[str] = set()
+        all_refs: List[Tuple[str, str, int]] = []
         for batch in self._pool_map(
             _parse_loc_refs, [(f, self.mod_path) for f in files]
         ):
-            refs.update(batch)
+            all_refs.extend(batch)
         self.log(
-            f"  Scanned {len(files)} localisation files; found {len(refs)} distinct GFX references"
+            f"  Scanned {len(files)} localisation files;"
+            f" found {len({r[0] for r in all_refs})} distinct GFX references"
+        )
+        return all_refs
+
+    def _resolve_engine_refs(self, defined: Set[str]) -> Set[str]:
+        """Return the sprites the engine resolves from mod data rather than script.
+
+        These are real references, not exemptions: each one is derived from a
+        declaration the mod ships, so a sprite whose module, tag or filter has
+        since been deleted still reports as unused, and a sprite spelled with the
+        wrong case still reports as miscased instead of quietly passing.
+
+            GFX_<FOCUS_FILTER_X>          every search_filters token in a focus tree
+            GFX_EMI_<module|category>     equipment modules and the slot categories
+                                          they claim / a chassis slot allows
+            GFX_SMI_<module|category>     the same names, ship-designer prefix
+            GFX_unit_<subunit|category>_icon_{small,medium}[_white|_black]
+                                          battalion counters from sub_units and
+                                          unit_tags
+            GFX_<TAG|culture>_ace_<m|f>_N ace portraits, keyed by tag or 2d culture
+            GFX_missile_<TAG>_ID_<N>_icon and anything else a `[...]` scripted-loc
+                                          or scripted-GUI template can build
+        """
+        self._log_section("Resolving engine-built GFX references from mod data")
+        declared, notices = _declaration_engine_refs(self.mod_path)
+        refs: Set[str] = set(declared)
+        for notice in notices:
+            self.log(notice)
+
+        pools = _load_ace_pool_names(self.mod_path)
+        if not pools:
+            self.log(
+                "  No country tags or graphical cultures found"
+                " — ace portraits unresolved"
+            )
+        for name in defined:
+            ace = _ACE_PORTRAIT_RE.match(name)
+            # A pool-less GFX_ace_m_0 is the engine's own last-resort fallback.
+            if ace and (ace.group("pool") is None or ace.group("pool") in pools):
+                refs.add(name)
+
+        template_files = self._collect_files(
+            ["common/scripted_localisation/*.txt", "common/scripted_guis/*.txt"],
+            ignore_staged=True,
+        )
+        templates: Set[str] = set()
+        for batch in self._pool_map(
+            _parse_sprite_templates, [(f, self.mod_path) for f in template_files]
+        ):
+            templates.update(batch)
+        patterns = [p for p in map(_template_pattern, sorted(templates)) if p]
+        skipped = len(templates) - len(patterns)
+        if skipped:
+            self.log(
+                f"  {skipped} sprite template(s) too generic to resolve"
+                " (nothing but a placeholder after GFX_)"
+            )
+        for name in defined:
+            if any(p.match(name) for p in patterns):
+                refs.add(name)
+
+        self.log(
+            f"  Resolved {len(refs)} engine-built GFX references"
+            f" from {len(patterns)} template(s) plus mod declarations"
         )
         return refs
 
@@ -803,6 +1218,143 @@ class Validator(BaseValidator):
                 category=category + "-vanilla",
             )
 
+    def _check_duplicate_definitions(self) -> None:
+        """Report sprite names the mod defines more than once.
+
+        Exact repeats are an engine coin-flip: whichever block loads last wins, so
+        the two textures silently compete. Names differing only in case are separate
+        sprites to the engine but the same file to a Windows author, which is how a
+        `£ref` ends up pointing at whichever variant happens to be miscased.
+
+        WARNING, not ERROR: the mod carries a ~477-entry backlog of exact repeats,
+        and `--strict` gates on errors, so erroring here would fail every CI run
+        until that backlog is cleared.
+        """
+        self._log_section("Checking for duplicate GFX sprite definitions")
+        by_name: dict = {}
+        for name, filepath, texture, line in self._mod_defs:
+            by_name.setdefault(name, []).append(
+                (os.path.relpath(filepath, self.mod_path), texture, line)
+            )
+
+        exact = []
+        for name in sorted(by_name):
+            sites = by_name[name]
+            if len(sites) < 2:
+                continue
+            elsewhere = ", ".join(f"{f}:{ln}" for f, _tx, ln in sites[1:])
+            same_art = len({tx for _f, tx, _ln in sites}) == 1
+            verdict = (
+                "same texture, so the extra blocks are redundant"
+                if same_art
+                else "different textures — the last block loaded wins"
+            )
+            exact.append(
+                (
+                    f"Duplicate GFX sprite '{name}' defined {len(sites)} times"
+                    f" (also at {elsewhere}) — {verdict}",
+                    sites[0][0],
+                    sites[0][2],
+                )
+            )
+        self._report(
+            exact,
+            ok_msg="No GFX sprite name is defined twice.",
+            fail_msg=f"Duplicate GFX sprite definitions ({len(exact)} total):",
+            severity=Severity.WARNING,
+            category="duplicate-sprite",
+        )
+
+        by_lower: dict = {}
+        for name in by_name:
+            by_lower.setdefault(name.lower(), []).append(name)
+        variants = []
+        for lower in sorted(by_lower):
+            names = sorted(by_lower[lower])
+            if len(names) < 2:
+                continue
+            first = by_name[names[0]][0]
+            # Same art under two spellings is one sprite split in half by a Windows
+            # author; distinct art is two real sprites that merely collide in case.
+            same_art = len({by_name[n][0][1] for n in names}) == 1
+            verdict = (
+                " on the same texture — collapse them onto one name"
+                if same_art
+                else " (distinct textures)"
+            )
+            variants.append(
+                (
+                    f"Case-variant GFX sprites {', '.join(repr(n) for n in names)}"
+                    f" differ only in case{verdict}",
+                    first[0],
+                    first[2],
+                )
+            )
+        if variants:
+            self._report(
+                variants,
+                ok_msg="No case-variant GFX sprite definitions.",
+                fail_msg="Case-variant GFX sprite definitions:",
+                severity=Severity.WARNING,
+                category="case-variant-sprite",
+            )
+
+    def _check_loc_ref_case(
+        self,
+        refs: List[Tuple[str, str, int]],
+        defined: Set[str],
+        defined_ci: dict,
+    ) -> None:
+        """Report `£sprite` localisation refs that only match a sprite case-insensitively.
+
+        Nothing else validates localisation sprite refs — script `GFX_` tokens are
+        covered by the focus/event/decision/idea validators' sprite index, and .gui
+        refs by `_check_undefined_refs`. A miscased `£ref` renders no icon on Linux.
+
+        English only: non-English loc is out of scope until the translation project
+        (AGENTS.md), and a stray `£` before an accented word truncates at the accent
+        (`£Réseau` -> `£R`), which then collides with short vanilla sprite names.
+
+        One entry per distinct misspelling, not per occurrence — the same `£token` is
+        copied verbatim into every file that carries the key.
+        """
+        self._log_section("Checking GFX £sprite reference case in localisation")
+        staged_rel = (
+            {os.path.relpath(f, self.mod_path) for f in (self.staged_files or [])}
+            if self.staged_only
+            else None
+        )
+        sites: dict = {}
+        for sprite, filepath, line in refs:
+            if sprite in defined or sprite in sites:
+                continue
+            rel = os.path.relpath(filepath, self.mod_path)
+            if os.sep + "english" + os.sep not in rel:
+                continue
+            canonical = case_mismatch(sprite, defined_ci)
+            if not canonical:
+                continue
+            if staged_rel is not None and rel not in staged_rel:
+                continue
+            sites[sprite] = (canonical, rel, line)
+
+        issues = [
+            (
+                f"Sprite reference '£{sprite[len('GFX_') :]}' matches no sprite —"
+                f" defined as '{canonical}' (works on Windows, fails on Linux)",
+                rel,
+                line,
+            )
+            for sprite, (canonical, rel, line) in sorted(sites.items())
+        ]
+        self._report(
+            issues,
+            ok_msg="All localisation £sprite references match a defined sprite's case.",
+            fail_msg="Case-mismatched £sprite references in localisation:",
+            severity=Severity.ERROR,
+            category="sprite-ref-case",
+        )
+
     def _check_unused_sprites(
         self,
         defined: Set[str],
@@ -813,6 +1365,9 @@ class Validator(BaseValidator):
         Only reached when --report-unused is passed. Skipped entirely in staged
         mode to avoid noise — this check needs a full-repo scan to be
         meaningful, but in staged mode we only see a subset of files.
+
+        A sprite whose only reference spells it with different case is reported
+        separately: it is a live icon broken on Linux, not an orphan to archive.
         """
         self._log_section("Checking for unused GFX sprite definitions")
         if self.staged_only:
@@ -833,6 +1388,16 @@ class Validator(BaseValidator):
             )
         implicit = equipment | technologies
 
+        # A mod sprite carrying a vanilla name overrides vanilla's definition, so
+        # vanilla's own UI and engine lookups still resolve it — the mod is under
+        # no obligation to reference it. Removing it either blanks a vanilla icon
+        # (same-path .gfx overrides replace the file outright) or silently reverts
+        # MD art, so it is never an orphan to archive.
+        if not self._vanilla_defined:
+            self.log(
+                "  No vanilla sprite names loaded — vanilla-override exemption disabled"
+            )
+
         def _is_engine_resolved_icon(name: str) -> bool:
             if not name.startswith("GFX_"):
                 return False
@@ -849,12 +1414,52 @@ class Validator(BaseValidator):
             s
             for s in defined
             if s not in all_refs
+            and s not in self._vanilla_defined
             and not _is_flag_sprite(s)
             and not _is_likely_vanilla(s)
             and not _is_engine_resolved_icon(s)
         )
 
-        if not unused:
+        refs_ci = casefold_index(all_refs)
+        orphans: List[str] = []
+        miscased: List[Tuple[str, str]] = []
+        for s in unused:
+            referenced_as = case_mismatch(s, refs_ci)
+            # A miscased reference that is itself a defined sprite resolves fine;
+            # `s` is then a redundant case-variant alias, not a broken icon.
+            if referenced_as and referenced_as not in defined:
+                miscased.append((s, referenced_as))
+            else:
+                orphans.append(s)
+
+        if miscased:
+            self._report(
+                [
+                    (
+                        f"Unused GFX sprite '{s}': referenced only as"
+                        f" '{ref}' (works on Windows, fails on Linux)",
+                        "",
+                        0,
+                    )
+                    for s, ref in miscased
+                ],
+                ok_msg="No case-mismatched GFX sprite definitions.",
+                fail_msg=(
+                    f"Case-mismatched GFX sprite definitions ({len(miscased)} total)"
+                    " — live icons, fix the case rather than archiving them:"
+                ),
+                severity=Severity.WARNING,
+                category="unused-sprite-case",
+            )
+
+        if _hide_unused_backlog():
+            self.log(
+                f"  Suppressing {len(orphans)} unused-sprite warnings"
+                f" ({_HIDE_UNUSED_ENV} is set); case and duplicate findings still report."
+            )
+            return
+
+        if not orphans:
             self.log(
                 f"{Colors.GREEN if self.use_colors else ''}  All defined GFX sprites are referenced.{Colors.ENDC if self.use_colors else ''}"
             )
@@ -862,13 +1467,13 @@ class Validator(BaseValidator):
 
         issues = [
             (f"Unused GFX sprite '{s}' (defined but never referenced)", "", 0)
-            for s in unused
+            for s in orphans
         ]
 
         self._report(
             issues,
             ok_msg="All defined GFX sprites are referenced.",
-            fail_msg=f"Unused GFX sprite definitions ({len(unused)} total):",
+            fail_msg=f"Unused GFX sprite definitions ({len(orphans)} total):",
             severity=Severity.WARNING,
             category="unused-sprite",
         )
@@ -878,6 +1483,8 @@ class Validator(BaseValidator):
         # Case-insensitive index of mod-only sprites — never suggest a
         # vanilla-only sprite as the canonical name for a case-mismatch.
         mod_defined_ci = casefold_index(mod_defined)
+
+        self._check_duplicate_definitions()
 
         gui_refs = self._collect_gui_refs(defined)
         sgui_refs = self._collect_sgui_refs(defined)
@@ -913,6 +1520,12 @@ class Validator(BaseValidator):
             mod_defined_ci=mod_defined_ci,
         )
 
+        # Localisation £refs are checked for case whether or not --report-unused is
+        # passed: a miscased ref is a broken icon, not backlog. The full defined set
+        # (mod + vanilla) is the index — £refs legitimately name vanilla sprites.
+        loc_refs = self._collect_loc_refs()
+        self._check_loc_ref_case(loc_refs, defined, casefold_index(defined))
+
         if not self.report_unused:
             self._log_section(
                 "Skipping unused-sprite check (pass --report-unused to enable)"
@@ -924,7 +1537,8 @@ class Validator(BaseValidator):
         all_referenced: Set[str] = {r[0] for r in gui_refs + sgui_refs + sloc_refs}
         if not self.staged_only:
             all_referenced |= self._collect_script_refs()
-            all_referenced |= self._collect_loc_refs()
+            all_referenced |= {r[0] for r in loc_refs}
+            all_referenced |= self._resolve_engine_refs(mod_defined)
         self._check_unused_sprites(mod_defined, all_referenced)
 
 
