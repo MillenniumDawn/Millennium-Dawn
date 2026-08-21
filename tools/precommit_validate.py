@@ -124,10 +124,11 @@ _REGISTRY = [
         [
             ("common/characters/", TXT),
             ("common/unit_leader/", TXT),
-            # The other leader trait pool: a trait moved between the two changes
-            # whether it is legal on a unit leader.
+            # The other leader trait pool. A trait moved between the two
+            # changes whether it is legal on a unit leader, and a trait moved
+            # between pool files reclassifies every advisor slot using it.
             ("common/country_leader/", TXT),
-            # Sources of create_corps_commander and friends.
+            # Sources of create_corps_commander and add_advisor_role.
             ("common/national_focus/", TXT),
             ("common/decisions/", TXT),
             ("common/scripted_effects/", TXT),
