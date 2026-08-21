@@ -11,10 +11,13 @@ guard trigger that can only pass when that building is present, sitting
 somewhere between the effect and the top of its enclosing script tree. The
 mod's accepted guard idioms, all derived from live usage:
 
-  - A bare building-count comparison in the enclosing `if = { limit = { ... } }`
-    (the dominant idiom: `if = { limit = { fuel_silo > 0 } ... }`), including
-    one nested inside an `any_core_state`/`any_owned_state`/`any_state`-style
-    pre-selection trigger.
+  - A bare building-count comparison in an enclosing `limit`. That is the
+    `if = { limit = { fuel_silo > 0 } ... }` form every `common/raids/` site
+    uses, and the same `limit` on a scoped iterator (`random_owned_state =
+    { limit = { dockyard > 0 } ... }`, `every_owned_state`,
+    `random_core_state`, `random_controlled_state`, ...). Nested
+    `any_core_state`/`any_owned_state` pre-selection inside an `if` limit
+    also counts.
   - `non_damaged_building_level = { building = X ... }` or
     `any_province_building_level = { building = X ... }` (also accepts
     `has_building` / `num_of_buildings`, both unused today) anywhere in the
@@ -22,8 +25,12 @@ mod's accepted guard idioms, all derived from live usage:
   - A sibling `modifier = { factor = 0  X < N }` zeroing a `random_list`
     bucket's weight when the building is absent.
 
-This is WARNING-only: the mod carries a ~700-item backlog of unguarded sites
-predating this check. Flip the crashing categories to ERROR once triaged.
+`trigger` / `available` / `visible` / `allowed` are not guards: a
+country-level `any_owned_state = { arms_factory > 0 }` does not prove the
+state the effect runs on has that building. `effect_tooltip` subtrees are
+skipped because they only preview effects and never execute.
+
+This is WARNING-only while the rule remains in rollout.
 """
 
 import os
@@ -63,16 +70,23 @@ _NAMED_BUILDING_TRIGGERS = frozenset(
         "num_of_buildings",
     }
 )
-# A has_dlc-style gate here would cover the whole enclosing object, but no
-# building-guard idiom in the mod uses trigger/available/visible/allowed --
-# building counts are always read in state/country scope, inside a `limit`.
-_OBJECT_GATES = frozenset({"trigger", "available", "visible", "allowed"})
-# Never contain effects; walking them would re-read a branch condition as a
-# guarded effect, or double-count a gate already handled elsewhere.
+# Never contain effects. `trigger`/`available`/`visible`/`allowed` are
+# skipped rather than treated as presence proofs: a country-level
+# any_owned_state check does not prove the effect's state has the building.
 _SKIP_BLOCKS = frozenset(
-    {"limit", "ai_will_do", "search_filters", "prerequisite", "mutually_exclusive"}
+    {
+        "limit",
+        "ai_will_do",
+        "effect_tooltip",
+        "search_filters",
+        "prerequisite",
+        "mutually_exclusive",
+        "trigger",
+        "available",
+        "visible",
+        "allowed",
+    }
 )
-_BRANCHES = frozenset({"if", "else_if", "else"})
 
 
 def _match_brace(text: str, open_pos: int) -> int:
@@ -171,42 +185,35 @@ class Scanner:
         )
         self.findings.append((category, line, message))
 
+    def _buildings_from_limit(self, body_start: int, body_end: int) -> Set[str]:
+        for sub, _, s_start, s_end in _child_blocks(self.text, body_start, body_end):
+            if sub == "limit":
+                return _extract_building_guards(self.text[s_start:s_end])
+        return set()
+
     def walk(self, start: int, end: int, ctx: Context):
         blocks = _child_blocks(self.text, start, end)
 
         gate_buildings: Set[str] = set()
         for name, _, body_start, body_end in blocks:
-            if name in _OBJECT_GATES:
-                gate_buildings |= _extract_building_guards(
-                    self.text[body_start:body_end]
-                )
-            elif name == "modifier":
+            if name == "modifier":
                 body = self.text[body_start:body_end]
                 if _FACTOR_ZERO_RE.search(body):
                     gate_buildings |= _extract_building_guards(body)
         ctx = ctx.apply(gate_buildings)
 
         for name, _, body_start, body_end in blocks:
-            if name in _SKIP_BLOCKS or name in _OBJECT_GATES or name == "modifier":
+            if name in _SKIP_BLOCKS or name == "modifier":
                 continue
             category = _BUILDING_EFFECTS.get(name)
             if category is not None:
                 self._check_effect(name, category, body_start, body_end, ctx)
                 continue
-            if name in _BRANCHES:
-                branch_ctx = ctx
-                if name != "else":
-                    for sub, _, s_start, s_end in _child_blocks(
-                        self.text, body_start, body_end
-                    ):
-                        if sub == "limit":
-                            branch_ctx = ctx.apply(
-                                _extract_building_guards(self.text[s_start:s_end])
-                            )
-                            break
-                self.walk(body_start, body_end, branch_ctx)
-                continue
-            self.walk(body_start, body_end, ctx)
+            self.walk(
+                body_start,
+                body_end,
+                ctx.apply(self._buildings_from_limit(body_start, body_end)),
+            )
 
 
 def scan_file(args: Tuple[str, str]) -> List[Tuple[str, str, int, str]]:
@@ -226,7 +233,7 @@ def scan_file(args: Tuple[str, str]) -> List[Tuple[str, str, int, str]]:
         return scanner.findings
 
     findings = disk_cache.per_file_cached_by_content(
-        mod_path, "building_guards_scan", filepath, raw, compute
+        mod_path, "building_guards_scan_v3", filepath, raw, compute
     )
     relative = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
     return [(category, relative, line, message) for category, line, message in findings]
