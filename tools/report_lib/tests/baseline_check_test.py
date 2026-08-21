@@ -58,6 +58,31 @@ def _run(
     return baseline_check.main(argv)
 
 
+def test_empty_candidate_establishes_clean_baseline(tmp_path, monkeypatch, capsys):
+    current = tmp_path / "current"
+    current.mkdir()
+
+    code = _run(
+        tmp_path, tmp_path / "no-such-baseline", current, monkeypatch=monkeypatch
+    )
+
+    assert code == 0
+    assert (tmp_path / "baseline" / META_FILENAME).is_file()
+    assert "0 issue(s)" in capsys.readouterr().out
+
+
+def test_missing_candidate_directory_fails(tmp_path, monkeypatch, capsys):
+    code = _run(
+        tmp_path,
+        tmp_path / "no-such-baseline",
+        tmp_path / "missing",
+        monkeypatch=monkeypatch,
+    )
+
+    assert code == 1
+    assert "--current directory does not exist" in capsys.readouterr().err
+
+
 def test_establishing_baseline_when_previous_missing(tmp_path, monkeypatch, capsys):
     current = tmp_path / "current"
     _write_sidecar(current, "events", [_issue_dict("error")])
