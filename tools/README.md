@@ -59,7 +59,6 @@ tools/
 ├── loc.py             Localisation utilities
 ├── logging_tool.py    Logging utility
 ├── precommit_validate.py Pre-commit hook: runs the commit-stage validators in parallel
-├── validate_staged.py Legacy staged-file router (no longer wired into pre-commit)
 ├── standardize_staged.py Pre-commit hook: routes staged files to standardizers
 ├── generate_validation_report.py CI: generates PR validation reports
 ├── validate_tools.py  CI: validates Python scripts in tools/
@@ -145,18 +144,22 @@ if __name__ == "__main__":
 
 Style checkers, formatters, and encoding validators. These are used in pre-commit hooks and CI.
 
-| Script                                | Description                                                                                                                                                                                                |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **check_common_mistakes.py**          | Detects common scripting mistakes: bad value ranges, `allowed`/`cancel` no-ops, `ai_will_do factor` vs `base`, division instead of multiplication, malformed leader rotations in `*_political_leaders.txt` |
-| **fix_styling.py**                    | Comprehensive auto-fixer for style issues (tabs, spacing, braces, whitespace)                                                                                                                              |
-| **fix_line_endings.py**               | Converts CRLF to LF line endings                                                                                                                                                                           |
-| **fix_loc_yaml.py**                   | Fixes localisation YAML issues (quotes, tabs, colons, version keys)                                                                                                                                        |
-| **validate_localization_encoding.py** | Validates and fixes UTF-8 BOM encoding for localisation files                                                                                                                                              |
-| **validate_mod_encoding.py**          | Checks UTF-8 encoding for `.mod` files                                                                                                                                                                     |
+| Script                                | Description                                                                                                                                                                                                                                                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **check_common_mistakes.py**          | Detects common scripting mistakes: bad value ranges, `allowed`/`cancel` no-ops, `ai_will_do factor` vs `base`, division instead of multiplication, malformed leader rotations in `*_political_leaders.txt`. `--output FILE` also writes the `FILE`-stem `.json` sidecar the CI validation report reads |
+| **fix_styling.py**                    | Comprehensive auto-fixer for style issues (tabs, spacing, braces, whitespace)                                                                                                                                                                                                                          |
+| **fix_line_endings.py**               | Converts CRLF to LF line endings                                                                                                                                                                                                                                                                       |
+| **fix_loc_yaml.py**                   | Fixes localisation YAML issues (quotes, tabs, colons, version keys)                                                                                                                                                                                                                                    |
+| **validate_localization_encoding.py** | Validates and fixes UTF-8 BOM encoding for localisation files                                                                                                                                                                                                                                          |
+| **validate_mod_encoding.py**          | Checks UTF-8 encoding for `.mod` files                                                                                                                                                                                                                                                                 |
 
 ### Validation (`validation/`)
 
-Content validators run in CI via matrix strategy. See `validation/README.md` for full list of all 25 validators and their checks.
+Content validators run in CI via matrix strategy. See `validation/README.md` for the full list and check details.
+
+`validate_common_mistakes.py` owns the fast scripting checks formerly run as a
+separate lint hook. The linting module remains its implementation library and
+direct compatibility entry point.
 
 ### Standardization (`standardization/`)
 
@@ -243,7 +246,6 @@ Hook entry points, CI tools, shared libraries, and other scripts that stay at th
 | Script                            | Description                                                                                                                                                                                                                                                                                                                                        |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                |
-| **validate_staged.py**            | Legacy staged-file router; no longer wired into pre-commit (superseded by `precommit_validate.py`)                                                                                                                                                                                                                                                 |
 | **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                   |
 | **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                    |
 | **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                |

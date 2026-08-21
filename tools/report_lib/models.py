@@ -42,6 +42,17 @@ class Issue:
             validator=d.get("validator", validator),
         )
 
+    def to_dict(self) -> dict:
+        return {
+            "severity": self.severity,
+            "category": self.category,
+            "message": self.message,
+            "file": self.file,
+            "line": self.line,
+            "validator": self.validator,
+            "detected_by": list(self.detected_by),
+        }
+
     @property
     def dedup_key(self) -> tuple:
         return (self.category, self.file, self.line, self.message)
