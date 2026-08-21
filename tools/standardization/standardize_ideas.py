@@ -13,6 +13,7 @@ from typing import Any, Dict, List
 from _common import format_elapsed
 from common_utils import PROP_NAME_RE, BaseStandardizer, run_standardizer
 from shared_utils import (
+    atomic_write_text,
     blank_quoted_strings,
     collapse_or_compact,
     extract_block,
@@ -492,9 +493,8 @@ class IdeaStandardizer(BaseStandardizer):
         output_lines = self._process_lines(lines, depth=0)
 
         try:
-            with open(output_file, "w", encoding="utf-8", newline="") as f:
-                for line in output_lines:
-                    f.write(normalize_spacing(line) + "\n")
+            output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
+            atomic_write_text(output_file, output)
 
             time_str = format_elapsed(time.time() - self.start_time)
 

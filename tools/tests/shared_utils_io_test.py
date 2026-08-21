@@ -1,0 +1,133 @@
+import os
+import stat
+
+import pytest
+import shared_utils as U
+
+
+def test_normalized_traversal_exclusions_handle_both_separators():
+    assert U.should_skip_file(".claude/worktrees/test/events/x.txt")
+    assert U.should_skip_file(r".git\objects\x")
+    assert U.should_skip_file("resources/reference.txt")
+    assert not U.should_skip_file("common/resources/game-data.txt")
+
+
+def test_strict_read_rejects_malformed_bytes(tmp_path):
+    path = tmp_path / "bad.txt"
+    path.write_bytes(b"ok\xff")
+    with pytest.raises(UnicodeDecodeError):
+        U.read_text_strict(str(path))
+
+
+def test_file_opener_fails_closed_on_malformed_bytes(tmp_path):
+    path = tmp_path / "bad.txt"
+    path.write_bytes(b"ok\xff")
+    U.FileOpener.clear_cache()
+
+    with pytest.raises(UnicodeDecodeError):
+        U.FileOpener.open_text_file(str(path))
+
+
+def test_atomic_write_invalidates_file_opener_cache(tmp_path):
+    path = tmp_path / "file.txt"
+    path.write_text("old", encoding="utf-8")
+    U.FileOpener.clear_cache()
+    assert U.FileOpener.open_text_file(str(path)) == "old"
+
+    U.atomic_write_text(str(path), "new")
+
+    assert U.FileOpener.open_text_file(str(path)) == "new"
+
+
+def test_atomic_write_preserves_mode_and_existing_bom(tmp_path):
+    path = tmp_path / "loc.yml"
+    path.write_bytes(b"\xef\xbb\xbfl_english:\n")
+    path.chmod(0o744)
+
+    U.atomic_write_text(str(path), 'l_english:\n key: "value"\n')
+
+    assert stat.S_IMODE(path.stat().st_mode) == 0o744
+    assert path.read_bytes().startswith(b"\xef\xbb\xbf")
+    assert path.read_bytes().count(b"\xef\xbb\xbf") == 1
+
+
+def test_atomic_write_uses_non_executable_mode_for_new_files(tmp_path):
+    path = tmp_path / "generated.txt"
+
+    U.atomic_write_text(str(path), "generated\n")
+
+    assert stat.S_IMODE(path.stat().st_mode) == 0o644
+
+
+def test_atomic_write_preserves_bom_and_crlf(tmp_path):
+    path = tmp_path / "loc.yml"
+    path.write_bytes(b"\xef\xbb\xbfkey: old\r\n")
+
+    U.atomic_write_text(str(path), "key: new\n")
+
+    assert path.read_bytes() == b"\xef\xbb\xbfkey: new\r\n"
+
+
+def test_atomic_write_failure_leaves_original(tmp_path, monkeypatch):
+    path = tmp_path / "file.txt"
+    path.write_bytes(b"original\n")
+
+    def fail_replace(_source, _target):
+        raise OSError("replace failed")
+
+    monkeypatch.setattr(U.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="replace failed"):
+        U.atomic_write_text(str(path), "replacement\n")
+
+    assert path.read_bytes() == b"original\n"
+    assert not list(tmp_path.glob(".file.txt.*"))
+
+
+def test_resolve_under_rejects_escape(tmp_path):
+    inside = tmp_path / "ok.txt"
+    inside.write_text("ok", encoding="utf-8")
+    assert U.resolve_under(str(inside), str(tmp_path)) == inside.resolve()
+    with pytest.raises(ValueError, match="not under"):
+        U.resolve_under(str(tmp_path / ".." / "outside.txt"), str(tmp_path))
+
+
+def test_read_text_under_reads_inside_and_rejects_escape(tmp_path):
+    inside = tmp_path / "ok.txt"
+    inside.write_text("hello", encoding="utf-8")
+    assert U.read_text_under(str(inside), str(tmp_path)) == "hello"
+    with pytest.raises(ValueError, match="not under"):
+        U.read_text_under("/etc/passwd", str(tmp_path))
+
+
+def test_write_text_under_rejects_escape(tmp_path):
+    with pytest.raises(ValueError, match="not under"):
+        U.write_text_under(str(tmp_path / ".." / "out.txt"), str(tmp_path), "nope")
+    assert not (tmp_path / "out.txt").exists()
+
+
+def test_atomic_write_rejects_symlink(tmp_path):
+    target = tmp_path / "target.txt"
+    target.write_text("target", encoding="utf-8")
+    link = tmp_path / "link.txt"
+    try:
+        os.symlink(target, link)
+    except OSError:
+        pytest.skip("symlinks unavailable")
+
+    with pytest.raises(OSError, match="symlink"):
+        U.atomic_write_text(str(link), "changed")
+    assert target.read_text(encoding="utf-8") == "target"
+
+
+def test_atomic_write_rejects_symlinked_parent(tmp_path):
+    target = tmp_path / "target"
+    target.mkdir()
+    link = tmp_path / "link"
+    try:
+        os.symlink(target, link, target_is_directory=True)
+    except OSError:
+        pytest.skip("symlinks unavailable")
+
+    with pytest.raises(OSError, match="symlinked parent"):
+        U.atomic_write_text(str(link / "file.txt"), "changed")
+    assert not (target / "file.txt").exists()
