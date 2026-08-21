@@ -11,20 +11,16 @@
 # The normal `git commit` flow already runs hooks against just the staged
 # files, which is what you want.
 #
-# MD-specific hooks (prefixed "MD") are set to stages: [manual] by default
-# so they don't block external contributors. To run them:
+# md-standardize runs on commit so focus, event, decision, and idea files cannot
+# bypass the project's formatter. The remaining MD-specific hooks are manual:
 #   pre-commit run --hook-stage manual           # all manual hooks
 #   pre-commit run md-fix-styling --hook-stage manual  # single hook
-#
-# Team members can enable them on every commit by adding to .pre-commit-config.yaml
-# (local override, don't commit):
-#   default_stages: [pre-commit, manual]
 
 # Global exclude. resources/ is a holding area for unintegrated submods and
 # external contributions — its contents are not subject to MD style rules and
 # must not be auto-modified by any hook. Any hook can still re-include a path
 # inside resources/ by setting its own `files:` pattern explicitly.
-exclude: '^resources/'
+exclude: "^resources/"
 
 repos:
   - repo: https://github.com/Yelp/detect-secrets
@@ -32,7 +28,7 @@ repos:
     hooks:
       - id: detect-secrets
         name: Detect secrets
-        args: ['--baseline', '.secrets.baseline']
+        args: ["--baseline", ".secrets.baseline"]
         exclude: '(^localisation/|\.secrets\.baseline$)'
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -53,12 +49,12 @@ repos:
         files: '\.json$'
       - id: check-merge-conflict
       - id: check-added-large-files
-        args: ['--maxkb=100000']  # Prevent files larger than 100MB
+        args: ["--maxkb=100000"] # Prevent files larger than 100MB
       - id: check-case-conflict
       - id: check-executables-have-shebangs
-        files: '^tools/'
+        files: "^tools/"
       - id: check-shebang-scripts-are-executable
-        files: '^tools/'
+        files: "^tools/"
       - id: fix-byte-order-marker
         exclude: 'localisation/.*\.yml$|^(gfx|map|interface|music|sound)/'
       - id: check-ast
@@ -67,8 +63,8 @@ repos:
         files: '\.py$'
       - id: name-tests-test
         files: 'tools/.*test.*\.py$'
-  # ruff owns lint (E/F), import order (I), and formatting. Config (select,
-  # ignores, per-file-ignores, isort) lives in pyproject.toml.
+  # Ruff owns lint (E/F) and import order (I). Config (select, ignores,
+  # per-file-ignores, and isort) lives in pyproject.toml.
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.17
     hooks:
@@ -76,9 +72,30 @@ repos:
         name: Lint Python (ruff)
         files: '^tools/.*\.py$'
         args: [--fix]
-      - id: ruff-format
-        name: Format Python (ruff)
+  # Black is the single canonical formatter. It runs after Ruff so a commit
+  # cannot leave the two formatters fighting over the same file.
+  - repo: local
+    hooks:
+      - id: black-tools
+        name: Format Python (black)
+        entry: black
+        language: python
+        additional_dependencies: [black==26.5.1]
         files: '^tools/.*\.py$'
+      - id: pylint-tools
+        name: Check Python correctness (pylint)
+        entry: pylint tools --reports=no --score=no
+        language: python
+        additional_dependencies: [pylint==4.0.6]
+        files: '^tools/.*\.py$'
+        pass_filenames: false
+      - id: mypy-tools
+        name: Type-check typed tools (mypy)
+        entry: mypy
+        language: python
+        additional_dependencies: [mypy==2.3.0]
+        files: '^tools/.*\.py$'
+        pass_filenames: false
   # pre-commit/mirrors-prettier was archived upstream — using rbubley's
   # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
   - repo: https://github.com/rbubley/mirrors-prettier
@@ -131,7 +148,8 @@ repos:
         name: Run tools test suite (pytest)
         entry: python3 -m pytest
         language: system
-        files: '^tools/.*\.py$'
+        files: >-
+          ^(tools/|pyproject.toml|.pre-commit-config.yaml|.(github|claude)/)
         pass_filenames: false
         stages: [pre-push]
       # --- MD-specific hooks (manual by default) ---
@@ -147,9 +165,8 @@ repos:
         name: MD Standardize (auto-fix ideas/events/decisions/focuses)
         entry: python3 tools/standardize_staged.py
         language: system
-        files: '(common/national_focus|common/decisions|common/ideas|events)/.*\.txt$'
+        files: '(common/(national_focus|decisions|ideas)|events)/.*\.txt$'
         pass_filenames: true
-        stages: [manual]
       - id: md-validate-content
         name: MD Validate (commit-stage content validators, in parallel)
         # One process fans the run-on-commit validators out concurrently instead
@@ -163,28 +180,30 @@ repos:
         language: system
         files: '\.(txt|yml)$'
         pass_filenames: true
-      - id: check-common-mistakes
-        name: MD Common Mistakes (threat scale, value ranges, always=no, etc.)
-        entry: python3 tools/linting/check_common_mistakes.py --mode staged
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: false
       - id: md-validate-defines
         name: MD Validate defines against vanilla
-        entry: python3 tools/validation/validate_defines.py --staged --strict --no-color
+        entry: >-
+          python3 tools/validation/validate_defines.py --staged --strict
+          --no-color
         language: system
         files: 'common/defines/.*\.lua$'
+        pass_filenames: false
+      - id: md-validate-descriptors
+        name: MD Validate mod descriptors (replace_path sync)
+        entry: >-
+          python3 tools/validation/validate_mod_descriptors.py --staged
+          --strict --no-color
+        language: system
+        files: '\.mod$'
         pass_filenames: false
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)
         # Manual: full-repo scan is slow and currently reports ~22k legacy
-        # unreferenced textures. CI runs it informationally (no --strict) so
-        # the report is visible without gating PRs. Run before mod-size
-        # cleanup passes:
+        # unreferenced textures. CI cannot run it. Run before mod-size cleanup
+        # passes:
         #   pre-commit run md-validate-unused-textures --hook-stage manual
         entry: python3 tools/validation/validate_unused_textures.py --no-color
         language: system
-        files: '\.(gfx|asset|dds|tga|png)$'
+        always_run: true
         pass_filenames: false
         stages: [manual]

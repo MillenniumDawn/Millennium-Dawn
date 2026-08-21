@@ -23,17 +23,35 @@ class Issue:
     line: int = 0
     validator: str = ""
     detected_by: List[str] = field(default_factory=list)
+    # Set by baseline.classify(): "new" / "existing" when a baseline was
+    # available and the issue could be keyed; None otherwise.
+    baseline_status: Optional[str] = None
 
     @classmethod
     def from_dict(cls, d: dict, validator: str = "") -> "Issue":
+        try:
+            line = int(d.get("line", 0) or 0)
+        except (TypeError, ValueError):
+            line = 0
         return cls(
             severity=d.get("severity", Severity.ERROR),
             category=d.get("category", ""),
             message=d.get("message", ""),
             file=d.get("file", ""),
-            line=int(d.get("line", 0) or 0),
+            line=line,
             validator=d.get("validator", validator),
         )
+
+    def to_dict(self) -> dict:
+        return {
+            "severity": self.severity,
+            "category": self.category,
+            "message": self.message,
+            "file": self.file,
+            "line": self.line,
+            "validator": self.validator,
+            "detected_by": list(self.detected_by),
+        }
 
     @property
     def dedup_key(self) -> tuple:
@@ -77,3 +95,6 @@ class ReportContext:
     artifact_url: Optional[str] = None
     date_utc: Optional[str] = None
     repo: Optional[str] = None  # "owner/name", used to build blob links to file:line
+    # "partial" when only the validators covering the diff ran, which makes a
+    # clean report a weaker claim, so the rendered body has to say which.
+    validation_scope: str = "full"

@@ -711,6 +711,7 @@ country_event = {
 			}
 			set_country_flag = Second_Syrian_Civil_War
 		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.4 hours = 6 } }
 	}
 }
 
@@ -768,6 +769,7 @@ country_event = {
 			}
 			set_country_flag = Second_Syrian_Civil_War
 		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.4 hours = 6 } }
 	}
 }
 
@@ -814,6 +816,7 @@ country_event = {
 			}
 			set_country_flag = Second_Syrian_Civil_War
 		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.4 hours = 6 } }
 	}
 }
 
@@ -1686,7 +1689,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.36.a executed"
 		ai_chance = { base = 100 }
 		set_autonomy = { target = HEZ autonomy_state = autonomy_satellite_state }
-		hidden_effect = { HEZ = { add_ideas = subject_neutral } }
 		hidden_effect = { news_event = { id = SyriaFocusNews.7 hours = 6 } }
 	}
 
@@ -1723,13 +1725,18 @@ country_event = {
 	picture = GFX_Golan
 	is_triggered_only = yes
 
+	immediate = {
+		FROM = { save_event_target_as = golan_claimant }
+	}
+
 	option = {
 		name = SyriaFocus.38.a		#Never
-		log = "[GetDateText]: [This.GetName]: SyriaFocus.84.a executed"
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.38.a executed"
 		ai_chance = { base = 70 }
+		FROM = { country_event = { id = md4.20 hours = 6 } }
 	}
 	option = {
-		name = SyriaFocus.38.b		#In exchange for support for One-State solution
+		name = SyriaFocus.38.b		#In exchange for support over the Palestinians
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.38.b executed"
 		ai_chance = {
 			base = 20
@@ -1740,6 +1747,22 @@ country_event = {
 				}
 			}
 		}
+		if = {
+			limit = { owns_state = 587 }
+			587 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		remove_opinion_modifier = { target = FROM modifier = death_to_israel_ISR }
+		FROM = {
+			remove_opinion_modifier = { target = ROOT modifier = death_to_israel }
+		}
+		every_country = {
+			limit = {
+				has_opinion_modifier = death_to_israel
+				NOT = { original_tag = ISR }
+			}
+			add_opinion_modifier = { target = event_target:golan_claimant modifier = ISR_Arab_Conflict }
+		}
+		FROM = { country_event = { id = md4.19 hours = 6 } }
 	}
 	option = {
 		name = SyriaFocus.38.c		#Sure
@@ -1753,8 +1776,12 @@ country_event = {
 				}
 			}
 		}
+		if = {
+			limit = { owns_state = 587 }
+			587 = { set_state_flag = SET_STATE_FOR_TRANSFER }
+		}
+		FROM = { country_event = { id = md4.19 hours = 6 } }
 	}
-
 }
 
 #Death of Hafez Al-Assad
@@ -1788,7 +1815,7 @@ country_event = {
 		}
 		hidden_effect = { news_event = { id = SyriaFocusNews.11 hours = 6 } }
 		hidden_effect = { country_event = { id = SyriaFocus.43 hours = 12 } }
-		hidden_effect = { country_event = { id = SyriaFocus.45 days = 60 random = 1440 } }
+		hidden_effect = { country_event = { id = SyriaFocus.45 days = 60 random_hours = 1440 } }
 	}
 
 }
@@ -1942,9 +1969,11 @@ country_event = {
 		if = {
 			limit = {
 				NOT = {
-					has_country_flag = Rifaat_visited_saudi_arabia
-					has_country_flag = Rifaat_visited_Israel
-					has_country_flag = Rifaat_visited_USA
+					OR = {
+						has_country_flag = Rifaat_visited_saudi_arabia
+						has_country_flag = Rifaat_visited_Israel
+						has_country_flag = Rifaat_visited_USA
+					}
 				}
 			}
 			random_list = {
@@ -1966,8 +1995,10 @@ country_event = {
 			limit = {
 				has_country_flag = Rifaat_visited_saudi_arabia
 				NOT = {
-					has_country_flag = Rifaat_visited_Israel
-					has_country_flag = Rifaat_visited_USA
+					OR = {
+						has_country_flag = Rifaat_visited_Israel
+						has_country_flag = Rifaat_visited_USA
+					}
 				}
 			}
 			random_list = {
@@ -1985,8 +2016,10 @@ country_event = {
 			limit = {
 				has_country_flag = Rifaat_visited_Israel
 				NOT = {
-					has_country_flag = Rifaat_visited_saudi_arabia
-					has_country_flag = Rifaat_visited_USA
+					OR = {
+						has_country_flag = Rifaat_visited_saudi_arabia
+						has_country_flag = Rifaat_visited_USA
+					}
 				}
 			}
 			random_list = {
@@ -2004,8 +2037,10 @@ country_event = {
 			limit = {
 				has_country_flag = Rifaat_visited_USA
 				NOT = {
-					has_country_flag = Rifaat_visited_saudi_arabia
-					has_country_flag = Rifaat_visited_Israel
+					OR = {
+						has_country_flag = Rifaat_visited_saudi_arabia
+						has_country_flag = Rifaat_visited_Israel
+					}
 				}
 			}
 			random_list = {
@@ -2110,7 +2145,7 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		hidden_effect = { country_event = { id = SyriaFocus.46 days = 90 random = 1440 } }
+		hidden_effect = { country_event = { id = SyriaFocus.46 days = 90 random_hours = 1440 } }
 	}
 
 	option = {
@@ -2208,36 +2243,20 @@ country_event = {
 			min = 0
 			max = 100
 		}
-		set_temp_variable = { remaining_chance = 100 }
-		subtract_from_temp_variable = { remaining_chance = civil_war_chance }
-		clamp_temp_variable = {
-			var = remaining_chance
-			min = 0
-			max = 100
-		}
-		random_list = {
-			50 = {
-				modifier = {
-					factor = remaining_chance
-				}
+		random = {
+			chance = civil_war_chance
+			start_civil_war = {
+				ideology = communism
+				size = 0.3
 			}
-			50 = {
-				modifier = {
-					factor = civil_war_chance
+			set_global_flag = GLOBAL_syrian_civil_war_started
+			if = {
+				limit = {
+					LEB = { is_subject_of = ROOT }
 				}
-				start_civil_war = {
-					ideology = communism
-					size = 0.3
-				}
-				set_global_flag = SYR_civil_war_started_early
-				if = {
-					limit = {
-						LEB = { is_subject_of = ROOT }
-					}
-					set_autonomy = {
-						target = LEB
-						autonomy_state = autonomy_free
-					}
+				set_autonomy = {
+					target = LEB
+					autonomy_state = autonomy_free
 				}
 			}
 		}
@@ -2284,7 +2303,7 @@ country_event = {
 						set_country_flag = Syrian_rebels
 					}
 				}
-				set_global_flag = SYR_civil_war_started_early
+				set_global_flag = GLOBAL_syrian_civil_war_started
 				if = {
 					limit = {
 						LEB = { is_subject_of = ROOT }
@@ -2323,7 +2342,7 @@ country_event = {
 						set_country_flag = Syrian_rebels
 					}
 				}
-				set_global_flag = SYR_civil_war_started_early
+				set_global_flag = GLOBAL_syrian_civil_war_started
 				every_country_with_original_tag = {
 					original_tag_to_check = SYR
 					limit = {
@@ -5891,6 +5910,7 @@ country_event = {
 			limit = { owns_state = 193 }
 			ROJ = { transfer_state = 193 }
 		}
+		hidden_effect = { news_event = { id = SyriaDecisionsNews.2 hours = 6 } }
 	}
 }
 

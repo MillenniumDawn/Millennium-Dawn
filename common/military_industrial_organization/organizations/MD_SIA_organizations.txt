@@ -1,0 +1,4294 @@
+## Thailand: Thai Military Industrial Organizations
+## Eight MIOs covering the Royal Thai defence industry, each with a custom trait tree.
+## All equipment_type / research_categories / equipment_bonus / org-modifier tokens use
+## Millennium Dawn's native MIO vocabulary so the companies appear in the correct Defense
+## Companies window and their bonuses apply in-game.
+##
+## Design intent (v0.3): each org is a full branching trait tree in MD's enriched style —
+##   * task_capacity + tree_header_text category tabs group the tree into readable columns.
+##   * signature capstone traits hit 0.15–0.20 on the stat the real firm is known for.
+##   * branching trees offer real mutually_exclusive doctrine choices (saturation vs
+##     precision, survivability vs mobility, F-16 vs Gripen, ISR vs strike UAV, fast-attack
+##     vs low-observable, licensed vs indigenous rifle).
+##   * research/production trade-offs match each firm's identity: R&D houses (DTI, TAI,
+##     RV Connex) lead on research/funds; mass-production firms (Chaiseri, Marsun, DID)
+##     trade research for cheaper, faster output.
+##
+## Each org defines an initial_trait (required for custom, non-`include` orgs to load) and
+## every trait uses the standard free_trait_picks / small_expenditure completion cost,
+## matching MD's other custom-tree countries.
+## Art: all using generic GFX slots pending custom icons.
+
+## ── DTI — Defence Technology Institute ─────────────────────────
+## Founded 2008; modeled from game start for playability. National R&D agency — the
+## research powerhouse of the tree. Real programmes: DTI-1/DTI-2 guided MLRS, the
+## D-Eyes UAV family, and a domestic short-range air-defence R&D effort. Four branches:
+## guided rocket artillery (guided-MLRS vs short-range ballistic doctrine fork), loitering
+## munitions & C4ISR research, domestic small-arms R&D, and short/medium-range air defence
+## (SAM vs AA-gun doctrine fork).
+SIA_dti_materiel_manufacturer = {
+	allowed = { original_tag = SIA }
+	icon = GFX_idea_slot_materiel_manufacturer
+	name = SIA_dti_materiel_manufacturer
+
+	task_capacity = 14
+
+	equipment_type = { infantry_weapons_type cnc_equipment_type artillery_equipment util_vehicle_type guided_missile_equipment sam_missile_equipment AA_Equipment ballistic_missile_equipment }
+	research_categories = { CAT_inf CAT_arty CAT_artillery CAT_sp_r_arty CAT_drones CAT_util CAT_missile CAT_support_weapons CAT_sam CAT_aa CAT_l_aa CAT_aa_missiles CAT_irbm }
+	research_bonus = 0.08
+	ai_will_do = { base = 10 }
+
+	tree_header_text = {
+		text = SIA_dti_materiel_manufacturer_mio_header_guided_rocket_artillery
+		x = 1
+	}
+	tree_header_text = {
+		text = SIA_dti_materiel_manufacturer_mio_header_loitering_munitions_c4isr
+		x = 4
+	}
+	tree_header_text = {
+		text = SIA_dti_materiel_manufacturer_mio_header_infantry_munitions
+		x = 7
+	}
+	tree_header_text = {
+		text = SIA_dti_materiel_manufacturer_mio_header_air_defence_sam
+		x = 10
+	}
+
+	tree_header_text = {
+		text = SIA_dti_materiel_manufacturer_mio_header_institutional_capacity
+		x = 14
+	}
+	initial_trait = {
+		name = SIA_dti_trait
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.2
+		}
+		production_bonus = {
+			production_efficiency_cap_factor = 0.03
+		}
+	}
+
+	trait = {
+		token = SIA_dti_rocket_arty
+		name = SIA_dti_rocket_arty
+		icon = GFX_generic_mio_trait_icon_artillery
+		special_trait_background = yes
+		position = { x = 1 y = 0 }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_guided_mlrs
+		name = SIA_dti_guided_mlrs
+		icon = GFX_generic_mio_trait_icon_artillery_soft_attack
+		special_trait_background = yes
+		relative_position_id = SIA_dti_rocket_arty
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_dti_rocket_arty }
+		mutually_exclusive = { SIA_dti_ballistic_program }
+		limit_to_equipment_type = { artillery_equipment }
+		equipment_bonus = {
+			soft_attack = 0.15
+		}
+		production_bonus = {
+			production_cost_factor = -0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_dti1_saturation
+		name = SIA_dti_dti1_saturation
+		icon = GFX_generic_mio_trait_icon_artillery_breaktrough
+		special_trait_background = yes
+		relative_position_id = SIA_dti_guided_mlrs
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_dti_guided_mlrs }
+		mutually_exclusive = { SIA_dti_dti1g_precision }
+		limit_to_equipment_type = { artillery_equipment }
+		equipment_bonus = {
+			soft_attack = 0.1
+			breakthrough = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_dti1g_precision
+		name = SIA_dti_dti1g_precision
+		icon = GFX_generic_mio_trait_icon_artillery_hard_attack
+		special_trait_background = yes
+		relative_position_id = SIA_dti_guided_mlrs
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_dti_guided_mlrs }
+		mutually_exclusive = { SIA_dti_dti1_saturation }
+		limit_to_equipment_type = { artillery_equipment }
+		equipment_bonus = {
+			hard_attack = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_rocket_mobility
+		name = SIA_dti_rocket_mobility
+		icon = GFX_generic_mio_trait_icon_artillery_speed
+		special_trait_background = yes
+		relative_position_id = SIA_dti_guided_mlrs
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_dti_dti1_saturation SIA_dti_dti1g_precision }
+		limit_to_equipment_type = { artillery_equipment }
+		equipment_bonus = {
+			maximum_speed = 0.1
+		}
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_ballistic_program
+		name = SIA_dti_ballistic_program
+		icon = GFX_generic_mio_trait_icon_guided_missile_range
+		special_trait_background = yes
+		relative_position_id = SIA_dti_rocket_arty
+		position = { x = 2 y = 1 }
+		all_parents = { SIA_dti_rocket_arty }
+		mutually_exclusive = { SIA_dti_guided_mlrs }
+		limit_to_equipment_type = { ballistic_missile_equipment }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		equipment_bonus = {
+			reliability = 0.05
+			maximum_speed = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_srbm_precision
+		name = SIA_dti_srbm_precision
+		icon = GFX_generic_mio_trait_icon_guided_missile_strategic_attack
+		special_trait_background = yes
+		relative_position_id = SIA_dti_ballistic_program
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_dti_ballistic_program }
+		limit_to_equipment_type = { ballistic_missile_equipment }
+		equipment_bonus = {
+			maximum_speed = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_te_launcher
+		name = SIA_dti_te_launcher
+		icon = GFX_generic_mio_trait_icon_guided_missile_speed
+		special_trait_background = yes
+		relative_position_id = SIA_dti_ballistic_program
+		position = { x = 0 y = 2 }
+		all_parents = { SIA_dti_srbm_precision }
+		limit_to_equipment_type = { ballistic_missile_equipment }
+		equipment_bonus = {
+			maximum_speed = 0.15
+		}
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_uav_program
+		name = SIA_dti_uav_program
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		position = { x = 4 y = 0 }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_c4isr_research
+		name = SIA_dti_c4isr_research
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_dti_uav_program
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_dti_uav_program }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_loitering_munition
+		name = SIA_dti_loitering_munition
+		icon = GFX_generic_mio_trait_icon_guided_missile
+		special_trait_background = yes
+		relative_position_id = SIA_dti_uav_program
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_dti_uav_program }
+		limit_to_equipment_type = { guided_missile_equipment }
+		equipment_bonus = {
+			build_cost_ic = -0.1
+			reliability = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_datalink
+		name = SIA_dti_datalink
+		icon = GFX_generic_mio_trait_icon_guided_missile_agility
+		special_trait_background = yes
+		relative_position_id = SIA_dti_c4isr_research
+		position = { x = 0 y = 2 }
+		all_parents = { SIA_dti_c4isr_research }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		production_bonus = {
+			production_conversion_speed_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_loitering_isr
+		name = SIA_dti_loitering_isr
+		icon = GFX_generic_mio_trait_icon_guided_missile_reliability
+		special_trait_background = yes
+		relative_position_id = SIA_dti_loitering_munition
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_dti_loitering_munition }
+		mutually_exclusive = { SIA_dti_loitering_strike }
+		limit_to_equipment_type = { guided_missile_equipment }
+		equipment_bonus = {
+			air_agility = 0.1
+			build_cost_ic = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_loitering_strike
+		name = SIA_dti_loitering_strike
+		icon = GFX_generic_mio_trait_icon_guided_missile_speed
+		special_trait_background = yes
+		relative_position_id = SIA_dti_loitering_munition
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_dti_loitering_munition }
+		mutually_exclusive = { SIA_dti_loitering_isr }
+		limit_to_equipment_type = { guided_missile_equipment }
+		equipment_bonus = {
+			maximum_speed = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_networked_fires
+		name = SIA_dti_networked_fires
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		relative_position_id = SIA_dti_loitering_munition
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_dti_loitering_isr SIA_dti_loitering_strike }
+		limit_to_equipment_type = { guided_missile_equipment }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.1
+		}
+		equipment_bonus = {
+			air_agility = 0.08
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_domestic_rifle
+		name = SIA_dti_domestic_rifle
+		icon = GFX_generic_mio_trait_icon_smallarms_reliability
+		special_trait_background = yes
+		position = { x = 7 y = 0 }
+		limit_to_equipment_type = { infantry_weapons_type }
+		equipment_bonus = {
+			reliability = 0.1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_advanced_optics
+		name = SIA_dti_advanced_optics
+		icon = GFX_generic_mio_trait_icon_smallarms_attack
+		special_trait_background = yes
+		relative_position_id = SIA_dti_domestic_rifle
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_dti_domestic_rifle }
+		limit_to_equipment_type = { infantry_weapons_type }
+		equipment_bonus = {
+			soft_attack = 0.06
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_munitions_line
+		name = SIA_dti_munitions_line
+		icon = GFX_generic_mio_trait_icon_artillery_reliability
+		special_trait_background = yes
+		relative_position_id = SIA_dti_domestic_rifle
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_dti_domestic_rifle }
+		limit_to_equipment_type = { artillery_equipment }
+		equipment_bonus = {
+			reliability = 0.1
+		}
+		production_bonus = {
+			production_resource_need_factor = -0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_next_gen_carbine
+		name = SIA_dti_next_gen_carbine
+		icon = GFX_generic_mio_trait_icon_smallarms_hard_attack
+		special_trait_background = yes
+		relative_position_id = SIA_dti_advanced_optics
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_dti_advanced_optics }
+		limit_to_equipment_type = { infantry_weapons_type }
+		equipment_bonus = {
+			soft_attack = 0.08
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_smart_munitions
+		name = SIA_dti_smart_munitions
+		icon = GFX_generic_mio_trait_icon_artillery_hard_attack
+		special_trait_background = yes
+		relative_position_id = SIA_dti_advanced_optics
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_dti_advanced_optics }
+		limit_to_equipment_type = { artillery_equipment }
+		equipment_bonus = {
+			hard_attack = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_air_defence
+		name = SIA_dti_air_defence
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		position = { x = 1 y = 6 }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_sam_missile
+		name = SIA_dti_sam_missile
+		icon = GFX_generic_mio_trait_icon_sam_agility
+		special_trait_background = yes
+		relative_position_id = SIA_dti_air_defence
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_dti_air_defence }
+		mutually_exclusive = { SIA_dti_aa_gun }
+		limit_to_equipment_type = { sam_missile_equipment }
+		equipment_bonus = {
+			air_attack = 0.1
+			air_agility = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_aa_gun
+		name = SIA_dti_aa_gun
+		icon = GFX_generic_mio_trait_icon_aa_anti_air_attack
+		special_trait_background = yes
+		relative_position_id = SIA_dti_air_defence
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_dti_air_defence }
+		mutually_exclusive = { SIA_dti_sam_missile }
+		limit_to_equipment_type = { AA_Equipment }
+		equipment_bonus = {
+			air_attack = 0.1
+		}
+		production_bonus = {
+			production_resource_need_factor = -0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_integrated_radar
+		name = SIA_dti_integrated_radar
+		icon = GFX_generic_mio_trait_icon_defense
+		special_trait_background = yes
+		relative_position_id = SIA_dti_air_defence
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_dti_sam_missile SIA_dti_aa_gun }
+		limit_to_equipment_type = { sam_missile_equipment AA_Equipment }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		equipment_bonus = {
+			air_attack = 0.05
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_sam_capstone
+		name = SIA_dti_sam_capstone
+		icon = GFX_generic_mio_trait_icon_sam_reliability
+		special_trait_background = yes
+		relative_position_id = SIA_dti_air_defence
+		position = { x = 0 y = 3 }
+		all_parents = { SIA_dti_integrated_radar }
+		limit_to_equipment_type = { sam_missile_equipment }
+		equipment_bonus = {
+			air_attack = 0.15
+			air_range = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_dti_ic_institute
+		name = SIA_dti_ic_institute
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		position = { x = 5 y = 6 }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_dti_ic_research_wing
+		name = SIA_dti_ic_research_wing
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		relative_position_id = SIA_dti_ic_institute
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_dti_ic_institute }
+		mutually_exclusive = { SIA_dti_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_dti_ic_industrial_trust
+		name = SIA_dti_ic_industrial_trust
+		icon = GFX_generic_mio_trait_icon_production_capacity
+		special_trait_background = yes
+		relative_position_id = SIA_dti_ic_institute
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_dti_ic_institute }
+		mutually_exclusive = { SIA_dti_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.15
+		}
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_dti_ic_advanced_labs
+		name = SIA_dti_ic_advanced_labs
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		relative_position_id = SIA_dti_ic_research_wing
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_dti_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+			military_industrial_organization_design_team_assign_cost = -0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_dti_ic_state_subsidy
+		name = SIA_dti_ic_state_subsidy
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_dti_ic_industrial_trust
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_dti_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.20
+			military_industrial_organization_size_up_requirement = -0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_dti_ic_expanded_capacity
+		name = SIA_dti_ic_expanded_capacity
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_dti_ic_institute
+		position = { x = 0 y = 3 }
+		any_parent = { SIA_dti_ic_advanced_labs SIA_dti_ic_state_subsidy }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_dti_ic_parallel_lines
+		name = SIA_dti_ic_parallel_lines
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+		special_trait_background = yes
+		relative_position_id = SIA_dti_ic_institute
+		position = { x = 0 y = 4 }
+		all_parents = { SIA_dti_ic_expanded_capacity }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_dti_ic_national_champion
+		name = SIA_dti_ic_national_champion
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_dti_ic_institute
+		position = { x = 0 y = 5 }
+		all_parents = { SIA_dti_ic_parallel_lines }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+}
+
+## ── Chaiseri Metal & Rubber ──────────────────────────
+## Private AFV manufacturer; makes the First Win 4x4 MRAP / APC line. A world-EXPORTING
+## firm: identity is cheap, reliable mass production. Three branches: a mine-protected hull
+## branch with a survivability-vs-mobility doctrine fork and an amphibious-fording capstone;
+## an export branch that converts foreign orders into cheaper, faster domestic output; and a
+## turreted fire-support branch for Chaiseri's gun-armed First Win variants, forking between
+## autocannon direct fire and an anti-armour cannon.
+SIA_chaiseri_tank_manufacturer = {
+	allowed = { original_tag = SIA }
+	icon = GFX_idea_slot_tank_manufacturer
+	name = SIA_chaiseri_tank_manufacturer
+
+	task_capacity = 12
+
+	equipment_type = { medium_tank_chassis medium_tank_amphibious_chassis util_vehicle_type }
+	research_categories = { CAT_armor CAT_apc CAT_armour CAT_afv CAT_afv_weapons CAT_ifv }
+	research_bonus = 0.04
+	ai_will_do = { base = 10 }
+
+	tree_header_text = {
+		text = SIA_chaiseri_tank_manufacturer_mio_header_mine_protected_hulls
+		x = 1
+	}
+	tree_header_text = {
+		text = SIA_chaiseri_tank_manufacturer_mio_header_export_mass_production
+		x = 4
+	}
+	tree_header_text = {
+		text = SIA_chaiseri_tank_manufacturer_mio_header_turreted_fire_support
+		x = 7
+	}
+
+	tree_header_text = {
+		text = SIA_chaiseri_tank_manufacturer_mio_header_institutional_capacity
+		x = 11
+	}
+	initial_trait = {
+		name = SIA_chaiseri_trait
+		equipment_bonus = {
+			reliability = 0.05
+		}
+		production_bonus = {
+			production_efficiency_cap_factor = 0.05
+		}
+	}
+
+	trait = {
+		token = SIA_chaiseri_mrap_expertise
+		name = SIA_chaiseri_mrap_expertise
+		icon = GFX_generic_mio_trait_icon_apc
+		special_trait_background = yes
+		position = { x = 1 y = 0 }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			reliability = 0.1
+			defense = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_first_win
+		name = SIA_chaiseri_first_win
+		icon = GFX_generic_mio_trait_icon_apc_defense
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_mrap_expertise
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_chaiseri_mrap_expertise }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			defense = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_v_hull
+		name = SIA_chaiseri_v_hull
+		icon = GFX_generic_mio_trait_icon_apc_armor
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_first_win
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_chaiseri_first_win }
+		mutually_exclusive = { SIA_chaiseri_lightweight }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			defense = 0.08
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_lightweight
+		name = SIA_chaiseri_lightweight
+		icon = GFX_generic_mio_trait_icon_apc_speed
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_first_win
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_chaiseri_first_win }
+		mutually_exclusive = { SIA_chaiseri_v_hull }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			maximum_speed = 0.1
+			fuel_consumption = -0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_apc_line
+		name = SIA_chaiseri_apc_line
+		icon = GFX_generic_mio_trait_icon_apc_speed
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_first_win
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_chaiseri_v_hull SIA_chaiseri_lightweight }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			maximum_speed = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_crew_survivability
+		name = SIA_chaiseri_crew_survivability
+		icon = GFX_generic_mio_trait_icon_defense
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_apc_line
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_chaiseri_apc_line }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			defense = 0.08
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_ied_protection
+		name = SIA_chaiseri_ied_protection
+		icon = GFX_generic_mio_trait_icon_apc_reliability
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_crew_survivability
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_chaiseri_crew_survivability }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			defense = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_amphibious_fording
+		name = SIA_chaiseri_amphibious_fording
+		icon = GFX_generic_mio_trait_icon_maximum_speed
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_ied_protection
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_chaiseri_ied_protection }
+		limit_to_equipment_type = { medium_tank_amphibious_chassis util_vehicle_type }
+		equipment_bonus = {
+			reliability = 0.15
+			maximum_speed = 0.1
+			defense = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_export_drive
+		name = SIA_chaiseri_export_drive
+		icon = GFX_generic_mio_trait_icon_apc_buildcost
+		special_trait_background = yes
+		position = { x = 4 y = 0 }
+		production_bonus = {
+			production_cost_factor = -0.1
+			production_efficiency_gain_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_assembly_lines
+		name = SIA_chaiseri_assembly_lines
+		icon = GFX_generic_mio_trait_icon_apc_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_export_drive
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_chaiseri_export_drive }
+		production_bonus = {
+			production_efficiency_cap_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_resource_efficiency
+		name = SIA_chaiseri_resource_efficiency
+		icon = GFX_generic_mio_trait_icon_apc_resources
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_assembly_lines
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_chaiseri_assembly_lines }
+		equipment_bonus = {
+			build_cost_ic = -0.05
+		}
+		production_bonus = {
+			production_resource_need_factor = -0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_export_certification
+		name = SIA_chaiseri_export_certification
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_assembly_lines
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_chaiseri_assembly_lines }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.15
+		}
+		equipment_bonus = {
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_supply_localisation
+		name = SIA_chaiseri_supply_localisation
+		icon = GFX_generic_mio_trait_icon_resources
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_resource_efficiency
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_chaiseri_resource_efficiency }
+		production_bonus = {
+			production_resource_need_factor = -0.1
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_coproduction_offsets
+		name = SIA_chaiseri_coproduction_offsets
+		icon = GFX_generic_mio_trait_icon_production_capacity
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_export_certification
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_chaiseri_export_certification }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.15
+			military_industrial_organization_size_up_requirement = -0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_export_powerhouse
+		name = SIA_chaiseri_export_powerhouse
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_assembly_lines
+		position = { x = 0 y = 3 }
+		any_parent = { SIA_chaiseri_supply_localisation SIA_chaiseri_coproduction_offsets }
+		production_bonus = {
+			production_capacity_factor = 0.1
+			production_efficiency_cap_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_turret_integration
+		name = SIA_chaiseri_turret_integration
+		icon = GFX_generic_mio_trait_icon_tank_gun
+		special_trait_background = yes
+		position = { x = 7 y = 0 }
+		limit_to_equipment_type = { medium_tank_chassis }
+		equipment_bonus = {
+			soft_attack = 0.05
+			hard_attack = 0.05
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_autocannon
+		name = SIA_chaiseri_autocannon
+		icon = GFX_generic_mio_trait_icon_mbt_soft_attack
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_turret_integration
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_chaiseri_turret_integration }
+		mutually_exclusive = { SIA_chaiseri_anti_armour_cannon }
+		limit_to_equipment_type = { medium_tank_chassis }
+		equipment_bonus = {
+			soft_attack = 0.15
+			hard_attack = 0.08
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_anti_armour_cannon
+		name = SIA_chaiseri_anti_armour_cannon
+		icon = GFX_generic_mio_trait_icon_mbt_ap_attack
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_turret_integration
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_chaiseri_turret_integration }
+		mutually_exclusive = { SIA_chaiseri_autocannon }
+		limit_to_equipment_type = { medium_tank_chassis }
+		equipment_bonus = {
+			ap_attack = 0.15
+			breakthrough = 0.08
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_stabilised_optics
+		name = SIA_chaiseri_stabilised_optics
+		icon = GFX_generic_mio_trait_icon_mbt_hard_attack
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_turret_integration
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_chaiseri_autocannon SIA_chaiseri_anti_armour_cannon }
+		limit_to_equipment_type = { medium_tank_chassis }
+		equipment_bonus = {
+			soft_attack = 0.05
+			hard_attack = 0.05
+			ap_attack = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_turret_protection
+		name = SIA_chaiseri_turret_protection
+		icon = GFX_generic_mio_trait_icon_mbt_defense
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_stabilised_optics
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_chaiseri_stabilised_optics }
+		limit_to_equipment_type = { medium_tank_chassis }
+		equipment_bonus = {
+			defense = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_common_turret
+		name = SIA_chaiseri_common_turret
+		icon = GFX_generic_mio_trait_icon_mbt_efficiency_gain
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_turret_protection
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_chaiseri_turret_protection }
+		limit_to_equipment_type = { medium_tank_chassis }
+		equipment_bonus = {
+			build_cost_ic = -0.05
+		}
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+			production_cost_factor = -0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_chaiseri_ic_institute
+		name = SIA_chaiseri_ic_institute
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		position = { x = 4 y = 6 }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_chaiseri_ic_research_wing
+		name = SIA_chaiseri_ic_research_wing
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_ic_institute
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_chaiseri_ic_institute }
+		mutually_exclusive = { SIA_chaiseri_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_chaiseri_ic_industrial_trust
+		name = SIA_chaiseri_ic_industrial_trust
+		icon = GFX_generic_mio_trait_icon_production_capacity
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_ic_institute
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_chaiseri_ic_institute }
+		mutually_exclusive = { SIA_chaiseri_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.15
+		}
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_chaiseri_ic_advanced_labs
+		name = SIA_chaiseri_ic_advanced_labs
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_ic_research_wing
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_chaiseri_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+			military_industrial_organization_design_team_assign_cost = -0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_chaiseri_ic_state_subsidy
+		name = SIA_chaiseri_ic_state_subsidy
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_ic_industrial_trust
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_chaiseri_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.20
+			military_industrial_organization_size_up_requirement = -0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_chaiseri_ic_expanded_capacity
+		name = SIA_chaiseri_ic_expanded_capacity
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_ic_institute
+		position = { x = 0 y = 3 }
+		any_parent = { SIA_chaiseri_ic_advanced_labs SIA_chaiseri_ic_state_subsidy }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_chaiseri_ic_parallel_lines
+		name = SIA_chaiseri_ic_parallel_lines
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_ic_institute
+		position = { x = 0 y = 4 }
+		all_parents = { SIA_chaiseri_ic_expanded_capacity }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_chaiseri_ic_national_champion
+		name = SIA_chaiseri_ic_national_champion
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_chaiseri_ic_institute
+		position = { x = 0 y = 5 }
+		all_parents = { SIA_chaiseri_ic_parallel_lines }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+}
+
+## ── Panus Assembly ───────────────────────────────
+## R600 8x8 "Sea Tiger" for the Royal Thai Marines. A shared wheeled platform forks into
+## an amphibious-assault branch (beach breakthrough) and a wheeled fire-support branch
+## (turreted anti-armour, ATGM and recon variants). A separate Direct-Fire Armour branch
+## mounts a heavy medium-tank turret on the R600, splitting into a high-velocity anti-armour
+## cannon or an assault-gun HE line, with a common-chassis production capstone feeding both.
+SIA_panus_tank_manufacturer = {
+	allowed = { original_tag = SIA }
+	icon = GFX_idea_slot_tank_manufacturer
+	name = SIA_panus_tank_manufacturer
+
+	task_capacity = 12
+
+	equipment_type = { medium_tank_chassis medium_tank_amphibious_chassis util_vehicle_type }
+	research_categories = { CAT_afv CAT_afv_weapons CAT_ifv CAT_apc CAT_armour }
+	research_bonus = 0.06
+	ai_will_do = { base = 10 }
+
+	tree_header_text = {
+		text = SIA_panus_tank_manufacturer_mio_header_amphibious_assault
+		x = 1
+	}
+	tree_header_text = {
+		text = SIA_panus_tank_manufacturer_mio_header_wheeled_fire_support
+		x = 3
+	}
+	tree_header_text = {
+		text = SIA_panus_tank_manufacturer_mio_header_direct_fire_armour
+		x = 6
+	}
+
+	tree_header_text = {
+		text = SIA_panus_tank_manufacturer_mio_header_institutional_capacity
+		x = 10
+	}
+	initial_trait = {
+		name = SIA_panus_trait
+		equipment_bonus = {
+			reliability = 0.05
+		}
+		production_bonus = {
+			production_efficiency_cap_factor = 0.03
+		}
+	}
+
+	trait = {
+		token = SIA_panus_wheeled_platform
+		name = SIA_panus_wheeled_platform
+		icon = GFX_generic_mio_trait_icon_apc
+		special_trait_background = yes
+		position = { x = 2 y = 0 }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			maximum_speed = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_sea_tiger
+		name = SIA_panus_sea_tiger
+		icon = GFX_generic_mio_trait_icon_apc_armor
+		special_trait_background = yes
+		relative_position_id = SIA_panus_wheeled_platform
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_panus_wheeled_platform }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			reliability = 0.1
+			defense = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_amphibious_kit
+		name = SIA_panus_amphibious_kit
+		icon = GFX_generic_mio_trait_icon_apc_speed
+		special_trait_background = yes
+		relative_position_id = SIA_panus_sea_tiger
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_panus_sea_tiger }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			maximum_speed = 0.08
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_beach_mobility
+		name = SIA_panus_beach_mobility
+		icon = GFX_generic_mio_trait_icon_maximum_speed
+		special_trait_background = yes
+		relative_position_id = SIA_panus_sea_tiger
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_panus_sea_tiger }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			maximum_speed = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_marine_assault
+		name = SIA_panus_marine_assault
+		icon = GFX_generic_mio_trait_icon_apc_breakthrough
+		special_trait_background = yes
+		relative_position_id = SIA_panus_amphibious_kit
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_panus_amphibious_kit }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			breakthrough = 0.15
+			soft_attack = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_marine_firepower
+		name = SIA_panus_marine_firepower
+		icon = GFX_generic_mio_trait_icon_soft_attack
+		special_trait_background = yes
+		relative_position_id = SIA_panus_beach_mobility
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_panus_beach_mobility }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			soft_attack = 0.1
+			breakthrough = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_amphibious_survivability
+		name = SIA_panus_amphibious_survivability
+		icon = GFX_generic_mio_trait_icon_apc_defense
+		special_trait_background = yes
+		relative_position_id = SIA_panus_marine_assault
+		position = { x = 0 y = 1 }
+		any_parent = { SIA_panus_marine_assault SIA_panus_marine_firepower }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			defense = 0.18
+			reliability = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_wheeled_ifv
+		name = SIA_panus_wheeled_ifv
+		icon = GFX_generic_mio_trait_icon_ifv
+		special_trait_background = yes
+		relative_position_id = SIA_panus_wheeled_platform
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_panus_wheeled_platform }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			hard_attack = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_rws
+		name = SIA_panus_rws
+		icon = GFX_generic_mio_trait_icon_apc_soft_attack
+		special_trait_background = yes
+		relative_position_id = SIA_panus_wheeled_ifv
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_panus_wheeled_ifv }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			soft_attack = 0.08
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_scout_recon
+		name = SIA_panus_scout_recon
+		icon = GFX_generic_mio_trait_icon_ifv_speed
+		special_trait_background = yes
+		relative_position_id = SIA_panus_wheeled_ifv
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_panus_wheeled_ifv }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			maximum_speed = 0.1
+			defense = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_ifv_fire_support
+		name = SIA_panus_ifv_fire_support
+		icon = GFX_generic_mio_trait_icon_ifv_ap_attack
+		special_trait_background = yes
+		relative_position_id = SIA_panus_rws
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_panus_rws }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			hard_attack = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_atgm_carrier
+		name = SIA_panus_atgm_carrier
+		icon = GFX_generic_mio_trait_icon_atgm_ap_attack
+		special_trait_background = yes
+		relative_position_id = SIA_panus_scout_recon
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_panus_scout_recon }
+		limit_to_equipment_type = { util_vehicle_type medium_tank_amphibious_chassis }
+		equipment_bonus = {
+			hard_attack = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_common_chassis
+		name = SIA_panus_common_chassis
+		icon = GFX_generic_mio_trait_icon_apc_efficiency_growth
+		special_trait_background = yes
+		relative_position_id = SIA_panus_wheeled_platform
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_panus_wheeled_platform }
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_r600_export
+		name = SIA_panus_r600_export
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_panus_common_chassis
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_panus_common_chassis }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.1
+		}
+		equipment_bonus = {
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_dfa_gun_turret
+		name = SIA_panus_dfa_gun_turret
+		icon = GFX_generic_mio_trait_icon_mbt
+		special_trait_background = yes
+		position = { x = 6 y = 0 }
+		limit_to_equipment_type = { medium_tank_chassis }
+		equipment_bonus = {
+			hard_attack = 0.05
+			ap_attack = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_dfa_ap_cannon
+		name = SIA_panus_dfa_ap_cannon
+		icon = GFX_generic_mio_trait_icon_mbt_ap_attack
+		special_trait_background = yes
+		relative_position_id = SIA_panus_dfa_gun_turret
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_panus_dfa_gun_turret }
+		mutually_exclusive = { SIA_panus_dfa_assault_gun }
+		limit_to_equipment_type = { medium_tank_chassis }
+		equipment_bonus = {
+			ap_attack = 0.15
+			breakthrough = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_dfa_assault_gun
+		name = SIA_panus_dfa_assault_gun
+		icon = GFX_generic_mio_trait_icon_mbt_soft_attack
+		special_trait_background = yes
+		relative_position_id = SIA_panus_dfa_gun_turret
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_panus_dfa_gun_turret }
+		mutually_exclusive = { SIA_panus_dfa_ap_cannon }
+		limit_to_equipment_type = { medium_tank_chassis }
+		equipment_bonus = {
+			soft_attack = 0.15
+			hard_attack = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_dfa_fire_control
+		name = SIA_panus_dfa_fire_control
+		icon = GFX_generic_mio_trait_icon_mbt_defense
+		special_trait_background = yes
+		relative_position_id = SIA_panus_dfa_gun_turret
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_panus_dfa_ap_cannon SIA_panus_dfa_assault_gun }
+		limit_to_equipment_type = { medium_tank_chassis }
+		equipment_bonus = {
+			hard_attack = 0.08
+			defense = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_dfa_composite_armor
+		name = SIA_panus_dfa_composite_armor
+		icon = GFX_generic_mio_trait_icon_mbt_armor
+		special_trait_background = yes
+		relative_position_id = SIA_panus_dfa_gun_turret
+		position = { x = 0 y = 3 }
+		all_parents = { SIA_panus_dfa_fire_control }
+		limit_to_equipment_type = { medium_tank_chassis }
+		equipment_bonus = {
+			armor_value = 0.15
+			hardness = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_dfa_common_chassis
+		name = SIA_panus_dfa_common_chassis
+		icon = GFX_generic_mio_trait_icon_mbt_buildcost
+		special_trait_background = yes
+		relative_position_id = SIA_panus_dfa_gun_turret
+		position = { x = 0 y = 4 }
+		all_parents = { SIA_panus_dfa_composite_armor }
+		limit_to_equipment_type = { medium_tank_chassis }
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+			production_cost_factor = -0.05
+		}
+		equipment_bonus = {
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_panus_ic_institute
+		name = SIA_panus_ic_institute
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		position = { x = 4 y = 6 }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_panus_ic_research_wing
+		name = SIA_panus_ic_research_wing
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		relative_position_id = SIA_panus_ic_institute
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_panus_ic_institute }
+		mutually_exclusive = { SIA_panus_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_panus_ic_industrial_trust
+		name = SIA_panus_ic_industrial_trust
+		icon = GFX_generic_mio_trait_icon_production_capacity
+		special_trait_background = yes
+		relative_position_id = SIA_panus_ic_institute
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_panus_ic_institute }
+		mutually_exclusive = { SIA_panus_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.15
+		}
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_panus_ic_advanced_labs
+		name = SIA_panus_ic_advanced_labs
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		relative_position_id = SIA_panus_ic_research_wing
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_panus_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+			military_industrial_organization_design_team_assign_cost = -0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_panus_ic_state_subsidy
+		name = SIA_panus_ic_state_subsidy
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_panus_ic_industrial_trust
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_panus_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.20
+			military_industrial_organization_size_up_requirement = -0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_panus_ic_expanded_capacity
+		name = SIA_panus_ic_expanded_capacity
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_panus_ic_institute
+		position = { x = 0 y = 3 }
+		any_parent = { SIA_panus_ic_advanced_labs SIA_panus_ic_state_subsidy }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_panus_ic_parallel_lines
+		name = SIA_panus_ic_parallel_lines
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+		special_trait_background = yes
+		relative_position_id = SIA_panus_ic_institute
+		position = { x = 0 y = 4 }
+		all_parents = { SIA_panus_ic_expanded_capacity }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_panus_ic_national_champion
+		name = SIA_panus_ic_national_champion
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_panus_ic_institute
+		position = { x = 0 y = 5 }
+		all_parents = { SIA_panus_ic_parallel_lines }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+}
+
+## ── Bangkok Dock ─────────────────────────────
+## Built the Krabi-class OPVs. Thailand's primary surface warship builder. A coastal-patrol
+## branch (EEZ endurance, littoral gunnery, helicopter-deck boarding), an ocean-escort branch
+## (frigate ASW plus a VLS area-air-defence line) growing into a blue-water destroyer line, and
+## a new undersea-warfare branch building the S26T-era submarine force.
+SIA_bangkok_dock_naval_manufacturer = {
+	allowed = { original_tag = SIA }
+	icon = GFX_idea_slot_naval_manufacturer
+	name = SIA_bangkok_dock_naval_manufacturer
+
+	task_capacity = 14
+
+	equipment_type = { mio_cat_only_small_ships mio_cat_frigates mio_cat_destroyers submarine }
+	research_categories = { CAT_corvette CAT_frigate CAT_destroyer CAT_sub CAT_torpedoes CAT_naval_modules CAT_naval_all }
+	research_bonus = 0.05
+	ai_will_do = { base = 10 }
+
+	tree_header_text = {
+		text = SIA_bangkok_dock_naval_manufacturer_mio_header_coastal_patrol
+		x = 1
+	}
+	tree_header_text = {
+		text = SIA_bangkok_dock_naval_manufacturer_mio_header_ocean_escort
+		x = 4
+	}
+	tree_header_text = {
+		text = SIA_bangkok_dock_naval_manufacturer_mio_header_destroyer_line
+		x = 6
+	}
+	tree_header_text = {
+		text = SIA_bangkok_dock_naval_manufacturer_mio_header_undersea_warfare
+		x = 9
+	}
+
+	tree_header_text = {
+		text = SIA_bangkok_dock_naval_manufacturer_mio_header_institutional_capacity
+		x = 13
+	}
+	initial_trait = {
+		name = SIA_bdock_trait
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		production_bonus = {
+			production_efficiency_cap_factor = 0.05
+		}
+	}
+
+	trait = {
+		token = SIA_bdock_shipyard_expertise
+		name = SIA_bdock_shipyard_expertise
+		icon = GFX_generic_mio_trait_icon_frigate_buildcost
+		special_trait_background = yes
+		position = { x = 2 y = 0 }
+		production_bonus = {
+			production_efficiency_cap_factor = 0.05
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_opv_design
+		name = SIA_bdock_opv_design
+		icon = GFX_generic_mio_trait_icon_frigate
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_shipyard_expertise
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_bdock_shipyard_expertise }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			max_strength = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_coastal_patrol
+		name = SIA_bdock_coastal_patrol
+		icon = GFX_generic_mio_trait_icon_frigate_surface_detection
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_opv_design
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_bdock_opv_design }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			surface_detection = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_littoral_gun
+		name = SIA_bdock_littoral_gun
+		icon = GFX_generic_mio_trait_icon_frigate_lg_attack
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_coastal_patrol
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_bdock_coastal_patrol }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			lg_attack = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_eez_endurance
+		name = SIA_bdock_eez_endurance
+		icon = GFX_generic_mio_trait_icon_small_ship_range
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_littoral_gun
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_bdock_littoral_gun }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			naval_range = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_heli_deck
+		name = SIA_bdock_heli_deck
+		icon = GFX_generic_mio_trait_icon_small_ship_reliability
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_eez_endurance
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_bdock_eez_endurance }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			max_strength = 0.1
+			surface_detection = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_frigate_hull
+		name = SIA_bdock_frigate_hull
+		icon = GFX_generic_mio_trait_icon_frigate_armor
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_shipyard_expertise
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_bdock_shipyard_expertise }
+		limit_to_equipment_type = { mio_cat_frigates }
+		equipment_bonus = {
+			max_strength = 0.1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_asw_suite
+		name = SIA_bdock_asw_suite
+		icon = GFX_generic_mio_trait_icon_frigate_sub_attack
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_frigate_hull
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_bdock_frigate_hull }
+		limit_to_equipment_type = { mio_cat_frigates }
+		equipment_bonus = {
+			sub_detection = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_vls_cell
+		name = SIA_bdock_vls_cell
+		icon = GFX_generic_mio_trait_icon_frigate_anti_air
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_frigate_hull
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_bdock_frigate_hull }
+		limit_to_equipment_type = { mio_cat_frigates }
+		equipment_bonus = {
+			anti_air_attack = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_area_air_defence
+		name = SIA_bdock_area_air_defence
+		icon = GFX_generic_mio_trait_icon_destroyer_anti_air
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_vls_cell
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_bdock_vls_cell }
+		limit_to_equipment_type = { mio_cat_frigates mio_cat_destroyers }
+		equipment_bonus = {
+			anti_air_attack = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_destroyer_hull
+		name = SIA_bdock_destroyer_hull
+		icon = GFX_generic_mio_trait_icon_destroyer
+		special_trait_background = yes
+		position = { x = 6 y = 0 }
+		limit_to_equipment_type = { mio_cat_destroyers }
+		equipment_bonus = {
+			max_strength = 0.1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_destroyer_aaw
+		name = SIA_bdock_destroyer_aaw
+		icon = GFX_generic_mio_trait_icon_destroyer_anti_air
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_destroyer_hull
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_bdock_destroyer_hull }
+		limit_to_equipment_type = { mio_cat_destroyers }
+		equipment_bonus = {
+			anti_air_attack = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_destroyer_asm
+		name = SIA_bdock_destroyer_asm
+		icon = GFX_generic_mio_trait_icon_destroyer_hg_attack
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_destroyer_hull
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_bdock_destroyer_hull }
+		limit_to_equipment_type = { mio_cat_destroyers }
+		equipment_bonus = {
+			hg_attack = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_destroyer_flagship
+		name = SIA_bdock_destroyer_flagship
+		icon = GFX_generic_mio_trait_icon_destroyer_range
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_destroyer_hull
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_bdock_destroyer_aaw SIA_bdock_destroyer_asm }
+		limit_to_equipment_type = { mio_cat_destroyers }
+		equipment_bonus = {
+			max_strength = 0.15
+			naval_range = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_submarine_programme
+		name = SIA_bdock_submarine_programme
+		icon = GFX_generic_mio_trait_icon_submarine
+		special_trait_background = yes
+		position = { x = 8 y = 0 }
+		limit_to_equipment_type = { submarine }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		equipment_bonus = {
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_sub_torpedo
+		name = SIA_bdock_sub_torpedo
+		icon = GFX_generic_mio_trait_icon_submarine_torpedo
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_submarine_programme
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_bdock_submarine_programme }
+		mutually_exclusive = { SIA_bdock_sub_stealth }
+		limit_to_equipment_type = { submarine }
+		equipment_bonus = {
+			torpedo_attack = 0.15
+			sub_attack = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_sub_stealth
+		name = SIA_bdock_sub_stealth
+		icon = GFX_generic_mio_trait_icon_submarine_sub_visibility
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_submarine_programme
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_bdock_submarine_programme }
+		mutually_exclusive = { SIA_bdock_sub_torpedo }
+		limit_to_equipment_type = { submarine }
+		equipment_bonus = {
+			sub_visibility = -0.1
+			naval_range = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_sub_sonar
+		name = SIA_bdock_sub_sonar
+		icon = GFX_generic_mio_trait_icon_submarine_sub_detection
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_submarine_programme
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_bdock_sub_torpedo SIA_bdock_sub_stealth }
+		limit_to_equipment_type = { submarine }
+		equipment_bonus = {
+			sub_detection = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_sub_minelayer
+		name = SIA_bdock_sub_minelayer
+		icon = GFX_generic_mio_trait_icon_submarine_range
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_sub_sonar
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_bdock_sub_sonar }
+		limit_to_equipment_type = { submarine }
+		equipment_bonus = {
+			naval_range = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_sub_production
+		name = SIA_bdock_sub_production
+		icon = GFX_generic_mio_trait_icon_submarine_buildcost
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_sub_sonar
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_bdock_sub_sonar }
+		limit_to_equipment_type = { submarine }
+		equipment_bonus = {
+			max_strength = 0.15
+		}
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_modular_build
+		name = SIA_bdock_modular_build
+		icon = GFX_generic_mio_trait_icon_frigate_reliability
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_shipyard_expertise
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_bdock_shipyard_expertise }
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_bdock_ic_institute
+		name = SIA_bdock_ic_institute
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		position = { x = 4 y = 6 }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_bdock_ic_research_wing
+		name = SIA_bdock_ic_research_wing
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_ic_institute
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_bdock_ic_institute }
+		mutually_exclusive = { SIA_bdock_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_bdock_ic_industrial_trust
+		name = SIA_bdock_ic_industrial_trust
+		icon = GFX_generic_mio_trait_icon_production_capacity
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_ic_institute
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_bdock_ic_institute }
+		mutually_exclusive = { SIA_bdock_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.15
+		}
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_bdock_ic_advanced_labs
+		name = SIA_bdock_ic_advanced_labs
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_ic_research_wing
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_bdock_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+			military_industrial_organization_design_team_assign_cost = -0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_bdock_ic_state_subsidy
+		name = SIA_bdock_ic_state_subsidy
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_ic_industrial_trust
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_bdock_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.20
+			military_industrial_organization_size_up_requirement = -0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_bdock_ic_expanded_capacity
+		name = SIA_bdock_ic_expanded_capacity
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_ic_institute
+		position = { x = 0 y = 3 }
+		any_parent = { SIA_bdock_ic_advanced_labs SIA_bdock_ic_state_subsidy }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_bdock_ic_parallel_lines
+		name = SIA_bdock_ic_parallel_lines
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_ic_institute
+		position = { x = 0 y = 4 }
+		all_parents = { SIA_bdock_ic_expanded_capacity }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_bdock_ic_national_champion
+		name = SIA_bdock_ic_national_champion
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_bdock_ic_institute
+		position = { x = 0 y = 5 }
+		all_parents = { SIA_bdock_ic_parallel_lines }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+}
+
+## ── Marsun Shipyard ────────────────────────────
+## M58 patrol boats; specialist in cheap, fast small-hull attack and patrol craft. A tier-1
+## mutually_exclusive doctrine forks torpedo/missile fast-attack against low-observable
+## littoral patrol, with a serial-production capstone feeding both. Two further columns add
+## a riverine & special-operations branch (gunboat fire-support vs stealth insertion) and an
+## unmanned surface vessel line built around autonomy and low-cost attrition production.
+SIA_marsun_naval_manufacturer = {
+	allowed = { original_tag = SIA }
+	icon = GFX_idea_slot_naval_manufacturer
+	name = SIA_marsun_naval_manufacturer
+
+	task_capacity = 7
+
+	equipment_type = { mio_cat_only_small_ships }
+	research_categories = { CAT_corvette CAT_naval_all CAT_torpedoes }
+	research_bonus = 0.04
+	ai_will_do = { base = 10 }
+
+	tree_header_text = {
+		text = SIA_marsun_naval_manufacturer_mio_header_fast_attack_craft
+		x = 1
+	}
+	tree_header_text = {
+		text = SIA_marsun_naval_manufacturer_mio_header_littoral_patrol
+		x = 4
+	}
+	tree_header_text = {
+		text = SIA_marsun_naval_manufacturer_mio_header_riverine_and_special_operations
+		x = 6
+	}
+	tree_header_text = {
+		text = SIA_marsun_naval_manufacturer_mio_header_unmanned_surface_vessels
+		x = 9
+	}
+
+	tree_header_text = {
+		text = SIA_marsun_naval_manufacturer_mio_header_institutional_capacity
+		x = 12
+	}
+	initial_trait = {
+		name = SIA_marsun_trait
+		equipment_bonus = {
+			build_cost_ic = -0.05
+		}
+		production_bonus = {
+			production_efficiency_cap_factor = 0.05
+		}
+	}
+
+	trait = {
+		token = SIA_marsun_small_hull
+		name = SIA_marsun_small_hull
+		icon = GFX_generic_mio_trait_icon_frigate_buildcost
+		special_trait_background = yes
+		position = { x = 2 y = 0 }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			build_cost_ic = -0.1
+		}
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_fast_attack
+		name = SIA_marsun_fast_attack
+		icon = GFX_generic_mio_trait_icon_frigate_speed
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_small_hull
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_marsun_small_hull }
+		mutually_exclusive = { SIA_marsun_low_profile }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			naval_speed = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_torpedo_boat
+		name = SIA_marsun_torpedo_boat
+		icon = GFX_generic_mio_trait_icon_destroyer_torpedo
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_fast_attack
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_marsun_fast_attack }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			torpedo_attack = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_missile_boat
+		name = SIA_marsun_missile_boat
+		icon = GFX_generic_mio_trait_icon_frigate_lg_attack
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_fast_attack
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_marsun_fast_attack }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			lg_attack = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_asm_integration
+		name = SIA_marsun_asm_integration
+		icon = GFX_generic_mio_trait_icon_naval_strike_attack
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_missile_boat
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_marsun_missile_boat }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			lg_attack = 0.1
+			naval_range = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_rapid_strike
+		name = SIA_marsun_rapid_strike
+		icon = GFX_generic_mio_trait_icon_naval_speed
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_asm_integration
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_marsun_asm_integration }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			naval_speed = 0.15
+			lg_attack = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_wave_piercing
+		name = SIA_marsun_wave_piercing
+		icon = GFX_generic_mio_trait_icon_frigate_reliability
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_fast_attack
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_marsun_torpedo_boat SIA_marsun_missile_boat }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			naval_speed = 0.08
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_low_profile
+		name = SIA_marsun_low_profile
+		icon = GFX_generic_mio_trait_icon_frigate
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_small_hull
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_marsun_small_hull }
+		mutually_exclusive = { SIA_marsun_fast_attack }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			surface_visibility = -0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_coastal_radar
+		name = SIA_marsun_coastal_radar
+		icon = GFX_generic_mio_trait_icon_frigate_surface_detection
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_low_profile
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_marsun_low_profile }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			surface_detection = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_interdiction
+		name = SIA_marsun_interdiction
+		icon = GFX_generic_mio_trait_icon_destroyer_detection
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_coastal_radar
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_marsun_coastal_radar }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			surface_detection = 0.08
+			naval_speed = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_endurance_hull
+		name = SIA_marsun_endurance_hull
+		icon = GFX_generic_mio_trait_icon_frigate_range
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_low_profile
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_marsun_low_profile }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			naval_range = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_modular_bay
+		name = SIA_marsun_modular_bay
+		icon = GFX_generic_mio_trait_icon_small_ship_buildcost
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_endurance_hull
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_marsun_endurance_hull }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			build_cost_ic = -0.08
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_serial_production
+		name = SIA_marsun_serial_production
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_small_hull
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_marsun_small_hull }
+		equipment_bonus = {
+			build_cost_ic = -0.05
+		}
+		production_bonus = {
+			production_efficiency_cap_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_riverine
+		name = SIA_marsun_riverine
+		icon = GFX_generic_mio_trait_icon_destroyer
+		special_trait_background = yes
+		position = { x = 6 y = 0 }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			build_cost_ic = -0.05
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_gunboat_support
+		name = SIA_marsun_gunboat_support
+		icon = GFX_generic_mio_trait_icon_destroyer_lg_attack
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_riverine
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_marsun_riverine }
+		mutually_exclusive = { SIA_marsun_special_ops }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			lg_attack = 0.12
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_special_ops
+		name = SIA_marsun_special_ops
+		icon = GFX_generic_mio_trait_icon_submarine_speed
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_riverine
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_marsun_riverine }
+		mutually_exclusive = { SIA_marsun_gunboat_support }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			naval_speed = 0.1
+			surface_visibility = -0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_shallow_draft
+		name = SIA_marsun_shallow_draft
+		icon = GFX_generic_mio_trait_icon_destroyer_range
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_riverine
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_marsun_gunboat_support SIA_marsun_special_ops }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			naval_range = 0.12
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_usv
+		name = SIA_marsun_usv
+		icon = GFX_generic_mio_trait_icon_small_ship_reliability
+		special_trait_background = yes
+		position = { x = 9 y = 0 }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			build_cost_ic = -0.05
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_usv_autonomy
+		name = SIA_marsun_usv_autonomy
+		icon = GFX_generic_mio_trait_icon_naval_strike_targetting
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_usv
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_marsun_usv }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			surface_detection = 0.1
+		}
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_usv_attrition
+		name = SIA_marsun_usv_attrition
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_usv_autonomy
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_marsun_usv_autonomy }
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+		equipment_bonus = {
+			build_cost_ic = -0.15
+		}
+		production_bonus = {
+			production_capacity_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_marsun_ic_institute
+		name = SIA_marsun_ic_institute
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		position = { x = 4 y = 6 }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_marsun_ic_research_wing
+		name = SIA_marsun_ic_research_wing
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_ic_institute
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_marsun_ic_institute }
+		mutually_exclusive = { SIA_marsun_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_marsun_ic_industrial_trust
+		name = SIA_marsun_ic_industrial_trust
+		icon = GFX_generic_mio_trait_icon_production_capacity
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_ic_institute
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_marsun_ic_institute }
+		mutually_exclusive = { SIA_marsun_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.15
+		}
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_marsun_ic_advanced_labs
+		name = SIA_marsun_ic_advanced_labs
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_ic_research_wing
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_marsun_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+			military_industrial_organization_design_team_assign_cost = -0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_marsun_ic_state_subsidy
+		name = SIA_marsun_ic_state_subsidy
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_ic_industrial_trust
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_marsun_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.20
+			military_industrial_organization_size_up_requirement = -0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_marsun_ic_expanded_capacity
+		name = SIA_marsun_ic_expanded_capacity
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_ic_institute
+		position = { x = 0 y = 3 }
+		any_parent = { SIA_marsun_ic_advanced_labs SIA_marsun_ic_state_subsidy }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_marsun_ic_parallel_lines
+		name = SIA_marsun_ic_parallel_lines
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_ic_institute
+		position = { x = 0 y = 4 }
+		all_parents = { SIA_marsun_ic_expanded_capacity }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_marsun_ic_national_champion
+		name = SIA_marsun_ic_national_champion
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_marsun_ic_institute
+		position = { x = 0 y = 5 }
+		all_parents = { SIA_marsun_ic_parallel_lines }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+}
+
+## ── Thai Aviation Industries (TAI) ─────────────────────
+## F-16 / Gripen MRO and license-assembly centre. A mutually_exclusive fleet doctrine
+## forks the F-16 MRO/upgrade line against the Gripen license-assembly line, each now
+## deepened with a weapons-integration and a networked-warfare capstone. A depot MRO &
+## sustainment branch serves whichever fleet is chosen. Two new columns close the
+## rotary-wing and trainer gaps: a Rotary Wing branch (helicopter MRO/assembly forking
+## attack/scout against transport/utility, with a shared avionics and sustainment
+## capstone) and a Trainer & Light Attack branch built on the T-50TH programme.
+SIA_tai_air_manufacturer = {
+	allowed = { original_tag = SIA }
+	icon = GFX_idea_slot_aircraft_manufacturer
+	name = SIA_tai_air_manufacturer
+
+	task_capacity = 18
+
+	equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft mio_cat_eq_only_medium_aircraft mio_cat_helicopters }
+	research_categories = { CAT_air_eqp CAT_small_plane CAT_l_fighter CAT_avionics CAT_medium_plane CAT_fighter CAT_mr_fighter CAT_air_ground_weapons CAT_heli CAT_trans_heli CAT_h_air }
+	research_bonus = 0.07
+	ai_will_do = { base = 10 }
+
+	tree_header_text = {
+		text = SIA_tai_air_manufacturer_mio_header_f_16_fleet
+		x = 1
+	}
+	tree_header_text = {
+		text = SIA_tai_air_manufacturer_mio_header_gripen_fleet
+		x = 3
+	}
+	tree_header_text = {
+		text = SIA_tai_air_manufacturer_mio_header_mro_sustainment
+		x = 5
+	}
+	tree_header_text = {
+		text = SIA_tai_air_manufacturer_mio_header_rotary_wing
+		x = 8
+	}
+	tree_header_text = {
+		text = SIA_tai_air_manufacturer_mio_header_trainer_light_attack
+		x = 11
+	}
+
+	tree_header_text = {
+		text = SIA_tai_air_manufacturer_mio_header_institutional_capacity
+		x = 14
+	}
+	initial_trait = {
+		name = SIA_tai_trait
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		equipment_bonus = {
+			reliability = 0.05
+		}
+	}
+
+	trait = {
+		token = SIA_tai_licensed_assembly
+		name = SIA_tai_licensed_assembly
+		icon = GFX_generic_mio_trait_icon_light_aircraft
+		special_trait_background = yes
+		position = { x = 2 y = 0 }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft }
+		equipment_bonus = {
+			reliability = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_f16_mro
+		name = SIA_tai_f16_mro
+		icon = GFX_generic_mio_trait_icon_air_agility
+		special_trait_background = yes
+		relative_position_id = SIA_tai_licensed_assembly
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_tai_licensed_assembly }
+		mutually_exclusive = { SIA_tai_gripen_assembly }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft }
+		equipment_bonus = {
+			air_agility = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_f16_avionics
+		name = SIA_tai_f16_avionics
+		icon = GFX_generic_mio_trait_icon_air_superiority
+		special_trait_background = yes
+		relative_position_id = SIA_tai_f16_mro
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_f16_mro }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft }
+		equipment_bonus = {
+			air_attack = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_f16_falcon_up
+		name = SIA_tai_f16_falcon_up
+		icon = GFX_generic_mio_trait_icon_air_range
+		special_trait_background = yes
+		relative_position_id = SIA_tai_f16_avionics
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_f16_avionics }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft }
+		equipment_bonus = {
+			air_range = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_f16_weapons_integration
+		name = SIA_tai_f16_weapons_integration
+		icon = GFX_generic_mio_trait_icon_air_ground_attack
+		special_trait_background = yes
+		relative_position_id = SIA_tai_f16_falcon_up
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_f16_falcon_up }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft }
+		equipment_bonus = {
+			air_ground_attack = 0.12
+			air_attack = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_f16_radar_upgrade
+		name = SIA_tai_f16_radar_upgrade
+		icon = GFX_generic_mio_trait_icon_air_attack
+		special_trait_background = yes
+		relative_position_id = SIA_tai_f16_weapons_integration
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_f16_weapons_integration }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft }
+		equipment_bonus = {
+			air_attack = 0.15
+			air_range = 0.05
+		}
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_gripen_assembly
+		name = SIA_tai_gripen_assembly
+		icon = GFX_generic_mio_trait_icon_light_aircraft_speed
+		special_trait_background = yes
+		relative_position_id = SIA_tai_licensed_assembly
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_tai_licensed_assembly }
+		mutually_exclusive = { SIA_tai_f16_mro }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft }
+		equipment_bonus = {
+			maximum_speed = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_gripen_strike
+		name = SIA_tai_gripen_strike
+		icon = GFX_generic_mio_trait_icon_air_ground_attack
+		special_trait_background = yes
+		relative_position_id = SIA_tai_gripen_assembly
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_gripen_assembly }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft }
+		equipment_bonus = {
+			air_ground_attack = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_gripen_datalink
+		name = SIA_tai_gripen_datalink
+		icon = GFX_generic_mio_trait_icon_light_aircraft_agility
+		special_trait_background = yes
+		relative_position_id = SIA_tai_gripen_strike
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_gripen_strike }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		equipment_bonus = {
+			air_agility = 0.08
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_gripen_networked_c2
+		name = SIA_tai_gripen_networked_c2
+		icon = GFX_generic_mio_trait_icon_air_agility
+		special_trait_background = yes
+		relative_position_id = SIA_tai_gripen_datalink
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_gripen_datalink }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft }
+		equipment_bonus = {
+			air_agility = 0.06
+			air_defence = 0.06
+		}
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_gripen_maritime_strike
+		name = SIA_tai_gripen_maritime_strike
+		icon = GFX_generic_mio_trait_icon_air_range
+		special_trait_background = yes
+		relative_position_id = SIA_tai_gripen_networked_c2
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_gripen_networked_c2 }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft }
+		equipment_bonus = {
+			air_ground_attack = 0.12
+			air_range = 0.06
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_depot_maintenance
+		name = SIA_tai_depot_maintenance
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+		special_trait_background = yes
+		position = { x = 5 y = 0 }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft mio_cat_eq_only_medium_aircraft }
+		equipment_bonus = {
+			reliability = 0.08
+		}
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_domestic_spares
+		name = SIA_tai_domestic_spares
+		icon = GFX_generic_mio_trait_icon_light_aircraft_buildcost
+		special_trait_background = yes
+		relative_position_id = SIA_tai_depot_maintenance
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_tai_depot_maintenance }
+		equipment_bonus = {
+			build_cost_ic = -0.05
+		}
+		production_bonus = {
+			production_resource_need_factor = -0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_flight_test_centre
+		name = SIA_tai_flight_test_centre
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_tai_depot_maintenance
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_tai_depot_maintenance }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_fleet_availability
+		name = SIA_tai_fleet_availability
+		icon = GFX_generic_mio_trait_icon_light_aircraft_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_tai_flight_test_centre
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_flight_test_centre }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft mio_cat_eq_only_light_cv_aircraft mio_cat_eq_only_medium_aircraft }
+		equipment_bonus = {
+			reliability = 0.1
+		}
+		production_bonus = {
+			production_efficiency_cap_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_rotorcraft_line
+		name = SIA_tai_rotorcraft_line
+		icon = GFX_generic_mio_trait_icon_transport_heli
+		special_trait_background = yes
+		position = { x = 8 y = 0 }
+		limit_to_equipment_type = { mio_cat_helicopters }
+		equipment_bonus = {
+			reliability = 0.08
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_attack_rotorcraft
+		name = SIA_tai_attack_rotorcraft
+		icon = GFX_generic_mio_trait_icon_attackheli_hard_attack
+		special_trait_background = yes
+		relative_position_id = SIA_tai_rotorcraft_line
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_tai_rotorcraft_line }
+		mutually_exclusive = { SIA_tai_transport_rotorcraft }
+		limit_to_equipment_type = { mio_cat_helicopters }
+		equipment_bonus = {
+			soft_attack = 0.12
+			air_attack = 0.06
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_transport_rotorcraft
+		name = SIA_tai_transport_rotorcraft
+		icon = GFX_generic_mio_trait_icon_transport_heli_reliability
+		special_trait_background = yes
+		relative_position_id = SIA_tai_rotorcraft_line
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_tai_rotorcraft_line }
+		mutually_exclusive = { SIA_tai_attack_rotorcraft }
+		limit_to_equipment_type = { mio_cat_helicopters }
+		equipment_bonus = {
+			fuel_consumption = -0.1
+			reliability = 0.06
+			build_cost_ic = -0.06
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_rotary_avionics
+		name = SIA_tai_rotary_avionics
+		icon = GFX_generic_mio_trait_icon_heli_operator_defense
+		special_trait_background = yes
+		relative_position_id = SIA_tai_rotorcraft_line
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_tai_attack_rotorcraft SIA_tai_transport_rotorcraft }
+		limit_to_equipment_type = { mio_cat_helicopters }
+		equipment_bonus = {
+			defense = 0.08
+			maximum_speed = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_rotary_sustainment
+		name = SIA_tai_rotary_sustainment
+		icon = GFX_generic_mio_trait_icon_heli_operator_reliability
+		special_trait_background = yes
+		relative_position_id = SIA_tai_rotary_avionics
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_rotary_avionics }
+		limit_to_equipment_type = { mio_cat_helicopters }
+		equipment_bonus = {
+			reliability = 0.12
+			build_cost_ic = -0.05
+		}
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_trainer_assembly
+		name = SIA_tai_trainer_assembly
+		icon = GFX_generic_mio_trait_icon_medium_aircraft
+		special_trait_background = yes
+		position = { x = 1 y = 6 }
+		limit_to_equipment_type = { mio_cat_eq_only_medium_aircraft }
+		equipment_bonus = {
+			reliability = 0.08
+			build_cost_ic = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_lead_in_fighter
+		name = SIA_tai_lead_in_fighter
+		icon = GFX_generic_mio_trait_icon_air_agility
+		special_trait_background = yes
+		relative_position_id = SIA_tai_trainer_assembly
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_trainer_assembly }
+		limit_to_equipment_type = { mio_cat_eq_only_medium_aircraft }
+		equipment_bonus = {
+			air_agility = 0.1
+		}
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_light_attack_conversion
+		name = SIA_tai_light_attack_conversion
+		icon = GFX_generic_mio_trait_icon_air_ground_attack
+		special_trait_background = yes
+		relative_position_id = SIA_tai_lead_in_fighter
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_lead_in_fighter }
+		limit_to_equipment_type = { mio_cat_eq_only_medium_aircraft }
+		equipment_bonus = {
+			air_ground_attack = 0.15
+			air_attack = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_tai_ic_institute
+		name = SIA_tai_ic_institute
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		position = { x = 5 y = 6 }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_tai_ic_research_wing
+		name = SIA_tai_ic_research_wing
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		relative_position_id = SIA_tai_ic_institute
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_tai_ic_institute }
+		mutually_exclusive = { SIA_tai_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_tai_ic_industrial_trust
+		name = SIA_tai_ic_industrial_trust
+		icon = GFX_generic_mio_trait_icon_production_capacity
+		special_trait_background = yes
+		relative_position_id = SIA_tai_ic_institute
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_tai_ic_institute }
+		mutually_exclusive = { SIA_tai_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.15
+		}
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_tai_ic_advanced_labs
+		name = SIA_tai_ic_advanced_labs
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		relative_position_id = SIA_tai_ic_research_wing
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+			military_industrial_organization_design_team_assign_cost = -0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_tai_ic_state_subsidy
+		name = SIA_tai_ic_state_subsidy
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_tai_ic_industrial_trust
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_tai_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.20
+			military_industrial_organization_size_up_requirement = -0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_tai_ic_expanded_capacity
+		name = SIA_tai_ic_expanded_capacity
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_tai_ic_institute
+		position = { x = 0 y = 3 }
+		any_parent = { SIA_tai_ic_advanced_labs SIA_tai_ic_state_subsidy }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_tai_ic_parallel_lines
+		name = SIA_tai_ic_parallel_lines
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+		special_trait_background = yes
+		relative_position_id = SIA_tai_ic_institute
+		position = { x = 0 y = 4 }
+		all_parents = { SIA_tai_ic_expanded_capacity }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_tai_ic_national_champion
+		name = SIA_tai_ic_national_champion
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_tai_ic_institute
+		position = { x = 0 y = 5 }
+		all_parents = { SIA_tai_ic_parallel_lines }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+}
+
+## ── Defence Industries Department (DID) ──────────────────
+## The Royal Thai armed forces' in-house arsenal: small arms, ammunition, mortars,
+## recoilless/AT weapons, towed air defence and soldier systems. A state production
+## house. The small-arms branch forks LICENSED foreign rifles against an INDIGENOUS
+## programme and deepens into squad automatics and modern carbines; the support-weapons
+## branch builds out mortars, recoilless guns and licensed ATGMs toward heavy and guided
+## munitions; the air-defence branch forks towed AA guns against MANPADS, converges on
+## fire control, and closes on body armour and night-vision soldier systems.
+SIA_did_materiel_manufacturer = {
+	allowed = { original_tag = SIA }
+	icon = GFX_idea_slot_materiel_manufacturer
+	name = SIA_did_materiel_manufacturer
+
+	task_capacity = 14
+
+	equipment_type = { infantry_weapons_type cnc_equipment_type L_AT_Equipment artillery_equipment AA_Equipment }
+	research_categories = { CAT_inf CAT_inf_wep CAT_at CAT_arty CAT_support_weapons CAT_aa CAT_l_aa CAT_sp_aa CAT_art_ammo }
+	research_bonus = 0.04
+	ai_will_do = { base = 10 }
+
+	tree_header_text = {
+		text = SIA_did_materiel_manufacturer_mio_header_small_arms
+		x = 1
+	}
+	tree_header_text = {
+		text = SIA_did_materiel_manufacturer_mio_header_ammunition_support_weapons
+		x = 5
+	}
+	tree_header_text = {
+		text = SIA_did_materiel_manufacturer_mio_header_air_defence_soldier_systems
+		x = 9
+	}
+
+	tree_header_text = {
+		text = SIA_did_materiel_manufacturer_mio_header_institutional_capacity
+		x = 13
+	}
+	initial_trait = {
+		name = SIA_did_trait
+		equipment_bonus = {
+			reliability = 0.05
+		}
+		production_bonus = {
+			production_efficiency_cap_factor = 0.05
+		}
+	}
+
+	trait = {
+		token = SIA_did_state_arsenal
+		name = SIA_did_state_arsenal
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+		special_trait_background = yes
+		position = { x = 1 y = 0 }
+		limit_to_equipment_type = { infantry_weapons_type }
+		production_bonus = {
+			production_cost_factor = -0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_licensed_rifle
+		name = SIA_did_licensed_rifle
+		icon = GFX_generic_mio_trait_icon_smallarms_reliability
+		special_trait_background = yes
+		relative_position_id = SIA_did_state_arsenal
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_did_state_arsenal }
+		mutually_exclusive = { SIA_did_domestic_rifle }
+		limit_to_equipment_type = { infantry_weapons_type }
+		equipment_bonus = {
+			reliability = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_domestic_rifle
+		name = SIA_did_domestic_rifle
+		icon = GFX_generic_mio_trait_icon_smallarms_attack
+		special_trait_background = yes
+		relative_position_id = SIA_did_state_arsenal
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_did_state_arsenal }
+		mutually_exclusive = { SIA_did_licensed_rifle }
+		limit_to_equipment_type = { infantry_weapons_type }
+		equipment_bonus = {
+			soft_attack = 0.1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_ammunition_plant
+		name = SIA_did_ammunition_plant
+		icon = GFX_generic_mio_trait_icon_artillery_resources
+		special_trait_background = yes
+		relative_position_id = SIA_did_state_arsenal
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_did_licensed_rifle SIA_did_domestic_rifle }
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+			production_resource_need_factor = -0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_marksman_program
+		name = SIA_did_marksman_program
+		icon = GFX_generic_mio_trait_icon_soft_attack
+		special_trait_background = yes
+		relative_position_id = SIA_did_state_arsenal
+		position = { x = 0 y = 3 }
+		all_parents = { SIA_did_ammunition_plant }
+		limit_to_equipment_type = { infantry_weapons_type }
+		equipment_bonus = {
+			soft_attack = 0.06
+			reliability = 0.03
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_lmg_line
+		name = SIA_did_lmg_line
+		icon = GFX_generic_mio_trait_icon_smallarms_soft_attack
+		special_trait_background = yes
+		relative_position_id = SIA_did_marksman_program
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_did_marksman_program }
+		limit_to_equipment_type = { infantry_weapons_type }
+		equipment_bonus = {
+			soft_attack = 0.12
+			defense = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_modern_carbine
+		name = SIA_did_modern_carbine
+		icon = GFX_generic_mio_trait_icon_smallarms_buildcost
+		special_trait_background = yes
+		relative_position_id = SIA_did_marksman_program
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_did_marksman_program }
+		limit_to_equipment_type = { infantry_weapons_type }
+		equipment_bonus = {
+			soft_attack = 0.08
+			reliability = 0.05
+			build_cost_ic = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_support_weapons
+		name = SIA_did_support_weapons
+		icon = GFX_generic_mio_trait_icon_atgm_hard_attack
+		special_trait_background = yes
+		position = { x = 5 y = 0 }
+		limit_to_equipment_type = { L_AT_Equipment }
+		equipment_bonus = {
+			hard_attack = 0.2
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_mortar_line
+		name = SIA_did_mortar_line
+		icon = GFX_generic_mio_trait_icon_artillery_soft_attack
+		special_trait_background = yes
+		relative_position_id = SIA_did_support_weapons
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_did_support_weapons }
+		limit_to_equipment_type = { artillery_equipment }
+		equipment_bonus = {
+			soft_attack = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_recoilless
+		name = SIA_did_recoilless
+		icon = GFX_generic_mio_trait_icon_atgm_ap_attack
+		special_trait_background = yes
+		relative_position_id = SIA_did_support_weapons
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_did_support_weapons }
+		limit_to_equipment_type = { L_AT_Equipment }
+		equipment_bonus = {
+			ap_attack = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_atgm_license
+		name = SIA_did_atgm_license
+		icon = GFX_generic_mio_trait_icon_atgm
+		special_trait_background = yes
+		relative_position_id = SIA_did_support_weapons
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_did_support_weapons }
+		limit_to_equipment_type = { L_AT_Equipment }
+		equipment_bonus = {
+			hard_attack = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_field_workshops
+		name = SIA_did_field_workshops
+		icon = GFX_generic_mio_trait_icon_atgm_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_did_support_weapons
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_did_mortar_line SIA_did_recoilless SIA_did_atgm_license }
+		equipment_bonus = {
+			build_cost_ic = -0.05
+		}
+		production_bonus = {
+			production_efficiency_cap_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_heavy_mortar
+		name = SIA_did_heavy_mortar
+		icon = GFX_generic_mio_trait_icon_artillery_hard_attack
+		special_trait_background = yes
+		relative_position_id = SIA_did_field_workshops
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_did_field_workshops }
+		limit_to_equipment_type = { artillery_equipment }
+		equipment_bonus = {
+			soft_attack = 0.1
+			hard_attack = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_guided_mortar
+		name = SIA_did_guided_mortar
+		icon = GFX_generic_mio_trait_icon_batteries_hit_chance
+		special_trait_background = yes
+		relative_position_id = SIA_did_field_workshops
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_did_field_workshops }
+		limit_to_equipment_type = { artillery_equipment }
+		equipment_bonus = {
+			hard_attack = 0.15
+			soft_attack = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_air_defence
+		name = SIA_did_air_defence
+		icon = GFX_generic_mio_trait_icon_aa_reliability
+		special_trait_background = yes
+		position = { x = 8 y = 0 }
+		limit_to_equipment_type = { AA_Equipment }
+		equipment_bonus = {
+			reliability = 0.07
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_towed_aa
+		name = SIA_did_towed_aa
+		icon = GFX_generic_mio_trait_icon_aa_anti_air_attack
+		special_trait_background = yes
+		relative_position_id = SIA_did_air_defence
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_did_air_defence }
+		mutually_exclusive = { SIA_did_manpads }
+		limit_to_equipment_type = { AA_Equipment }
+		equipment_bonus = {
+			air_attack = 0.12
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_manpads
+		name = SIA_did_manpads
+		icon = GFX_generic_mio_trait_icon_sam
+		special_trait_background = yes
+		relative_position_id = SIA_did_air_defence
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_did_air_defence }
+		mutually_exclusive = { SIA_did_towed_aa }
+		limit_to_equipment_type = { AA_Equipment }
+		equipment_bonus = {
+			air_attack = 0.1
+			build_cost_ic = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_fire_control
+		name = SIA_did_fire_control
+		icon = GFX_generic_mio_trait_icon_detection
+		special_trait_background = yes
+		relative_position_id = SIA_did_air_defence
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_did_towed_aa SIA_did_manpads }
+		limit_to_equipment_type = { AA_Equipment }
+		equipment_bonus = {
+			air_attack = 0.12
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_body_armour
+		name = SIA_did_body_armour
+		icon = GFX_generic_mio_trait_icon_defense
+		special_trait_background = yes
+		relative_position_id = SIA_did_fire_control
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_did_fire_control }
+		limit_to_equipment_type = { infantry_weapons_type }
+		equipment_bonus = {
+			defense = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_night_vision
+		name = SIA_did_night_vision
+		icon = GFX_generic_mio_trait_icon_night_penalty
+		special_trait_background = yes
+		relative_position_id = SIA_did_fire_control
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_did_fire_control }
+		limit_to_equipment_type = { infantry_weapons_type }
+		equipment_bonus = {
+			soft_attack = 0.15
+			defense = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_did_ic_institute
+		name = SIA_did_ic_institute
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		position = { x = 4 y = 6 }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_did_ic_research_wing
+		name = SIA_did_ic_research_wing
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		relative_position_id = SIA_did_ic_institute
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_did_ic_institute }
+		mutually_exclusive = { SIA_did_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_did_ic_industrial_trust
+		name = SIA_did_ic_industrial_trust
+		icon = GFX_generic_mio_trait_icon_production_capacity
+		special_trait_background = yes
+		relative_position_id = SIA_did_ic_institute
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_did_ic_institute }
+		mutually_exclusive = { SIA_did_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.15
+		}
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_did_ic_advanced_labs
+		name = SIA_did_ic_advanced_labs
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		relative_position_id = SIA_did_ic_research_wing
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_did_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+			military_industrial_organization_design_team_assign_cost = -0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_did_ic_state_subsidy
+		name = SIA_did_ic_state_subsidy
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_did_ic_industrial_trust
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_did_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.20
+			military_industrial_organization_size_up_requirement = -0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_did_ic_expanded_capacity
+		name = SIA_did_ic_expanded_capacity
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_did_ic_institute
+		position = { x = 0 y = 3 }
+		any_parent = { SIA_did_ic_advanced_labs SIA_did_ic_state_subsidy }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_did_ic_parallel_lines
+		name = SIA_did_ic_parallel_lines
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+		special_trait_background = yes
+		relative_position_id = SIA_did_ic_institute
+		position = { x = 0 y = 4 }
+		all_parents = { SIA_did_ic_expanded_capacity }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_did_ic_national_champion
+		name = SIA_did_ic_national_champion
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_did_ic_institute
+		position = { x = 0 y = 5 }
+		all_parents = { SIA_did_ic_parallel_lines }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+}
+
+## ── RV Connex — Unmanned Systems ────────────────────
+## Thai defence-electronics firm; developer of the Sky Scout UAV and RTAF datalink/avionics
+## work. A drone, avionics and loitering-munition R&D house. The unmanned branch forks ISR
+## endurance against armed strike and now deepens into MALE and runway-independent airframes;
+## the avionics branch delivers indigenous datalink, AESA radar and mission computers; the new
+## third branch fields loitering munitions and counter-UAV electronic warfare.
+SIA_rvconnex_air_manufacturer = {
+	allowed = { original_tag = SIA }
+	icon = GFX_idea_slot_aircraft_manufacturer
+	name = SIA_rvconnex_air_manufacturer
+
+	task_capacity = 12
+
+	equipment_type = { mio_cat_eq_only_uav mio_cat_eq_only_light_aircraft guided_missile_equipment }
+	research_categories = { CAT_drones CAT_air_eqp CAT_a_uav CAT_avionics CAT_missile CAT_cm CAT_air_countermeasures CAT_l_drone }
+	research_bonus = 0.07
+	ai_will_do = { base = 10 }
+
+	tree_header_text = {
+		text = SIA_rvconnex_air_manufacturer_mio_header_unmanned_aircraft
+		x = 1
+	}
+	tree_header_text = {
+		text = SIA_rvconnex_air_manufacturer_mio_header_avionics_datalink
+		x = 4
+	}
+	tree_header_text = {
+		text = SIA_rvconnex_air_manufacturer_mio_header_loitering_munitions_electronic_warfare
+		x = 7
+	}
+
+	tree_header_text = {
+		text = SIA_rvconnex_air_manufacturer_mio_header_institutional_capacity
+		x = 12
+	}
+	initial_trait = {
+		name = SIA_rvconnex_trait
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		equipment_bonus = {
+			reliability = 0.05
+		}
+	}
+
+	trait = {
+		token = SIA_rvconnex_uav_design
+		name = SIA_rvconnex_uav_design
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		position = { x = 1 y = 0 }
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			air_range = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_endurance
+		name = SIA_rvconnex_endurance
+		icon = GFX_generic_mio_trait_icon_air_range
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_uav_design
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_rvconnex_uav_design }
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			air_range = 0.08
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_isr
+		name = SIA_rvconnex_isr
+		icon = GFX_generic_mio_trait_icon_detection
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_endurance
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_rvconnex_endurance }
+		mutually_exclusive = { SIA_rvconnex_strike_uav }
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			air_range = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_strike_uav
+		name = SIA_rvconnex_strike_uav
+		icon = GFX_generic_mio_trait_icon_air_ground_attack
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_endurance
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_rvconnex_endurance }
+		mutually_exclusive = { SIA_rvconnex_isr }
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			air_ground_attack = 0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_swarm
+		name = SIA_rvconnex_swarm
+		icon = GFX_generic_mio_trait_icon_light_aircraft_buildcost
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_endurance
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_rvconnex_isr SIA_rvconnex_strike_uav }
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			air_agility = 0.08
+			build_cost_ic = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_male
+		name = SIA_rvconnex_male
+		icon = GFX_generic_mio_trait_icon_air_range
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_swarm
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_rvconnex_swarm }
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			air_range = 0.12
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_runway_independent
+		name = SIA_rvconnex_runway_independent
+		icon = GFX_generic_mio_trait_icon_air_agility
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_swarm
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_rvconnex_swarm }
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			air_agility = 0.08
+			build_cost_ic = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_avionics
+		name = SIA_rvconnex_avionics
+		icon = GFX_generic_mio_trait_icon_air_agility
+		special_trait_background = yes
+		position = { x = 4 y = 0 }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		equipment_bonus = {
+			air_agility = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_datalink
+		name = SIA_rvconnex_datalink
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_avionics
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_rvconnex_avionics }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_eo_sensors
+		name = SIA_rvconnex_eo_sensors
+		icon = GFX_generic_mio_trait_icon_air_range
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_avionics
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_rvconnex_avionics }
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			air_range = 0.05
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_sdr
+		name = SIA_rvconnex_sdr
+		icon = GFX_generic_mio_trait_icon_light_aircraft_agility
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_datalink
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_rvconnex_datalink }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		equipment_bonus = {
+			air_agility = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_aesa
+		name = SIA_rvconnex_aesa
+		icon = GFX_generic_mio_trait_icon_detection
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_sdr
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_rvconnex_sdr }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft }
+		equipment_bonus = {
+			air_range = 0.08
+			air_attack = 0.05
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_mission_computer
+		name = SIA_rvconnex_mission_computer
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_sdr
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_rvconnex_sdr }
+		limit_to_equipment_type = { mio_cat_eq_only_light_aircraft }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		equipment_bonus = {
+			air_agility = 0.05
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_loitering_munition
+		name = SIA_rvconnex_loitering_munition
+		icon = GFX_generic_mio_trait_icon_guided_missile
+		special_trait_background = yes
+		position = { x = 7 y = 0 }
+		limit_to_equipment_type = { guided_missile_equipment }
+		equipment_bonus = {
+			air_ground_attack = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_lm_antiarmor
+		name = SIA_rvconnex_lm_antiarmor
+		icon = GFX_generic_mio_trait_icon_air_ground_attack
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_loitering_munition
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_rvconnex_loitering_munition }
+		mutually_exclusive = { SIA_rvconnex_lm_mass }
+		limit_to_equipment_type = { guided_missile_equipment }
+		equipment_bonus = {
+			air_ground_attack = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_lm_mass
+		name = SIA_rvconnex_lm_mass
+		icon = GFX_generic_mio_trait_icon_guided_missile_buildcost
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_loitering_munition
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_rvconnex_loitering_munition }
+		mutually_exclusive = { SIA_rvconnex_lm_antiarmor }
+		limit_to_equipment_type = { guided_missile_equipment }
+		equipment_bonus = {
+			build_cost_ic = -0.1
+		}
+		production_bonus = {
+			production_efficiency_gain_factor = 0.1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_lm_terminal_guidance
+		name = SIA_rvconnex_lm_terminal_guidance
+		icon = GFX_generic_mio_trait_icon_guided_missile_range
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_loitering_munition
+		position = { x = 0 y = 2 }
+		any_parent = { SIA_rvconnex_lm_antiarmor SIA_rvconnex_lm_mass }
+		limit_to_equipment_type = { guided_missile_equipment }
+		equipment_bonus = {
+			air_ground_attack = 0.15
+			air_range = 0.1
+			reliability = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_ew_jamming
+		name = SIA_rvconnex_ew_jamming
+		icon = GFX_generic_mio_trait_icon_air_defence
+		special_trait_background = yes
+		position = { x = 9 y = 0 }
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		equipment_bonus = {
+			air_defence = 0.08
+			build_cost_ic = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_cuav_sensor
+		name = SIA_rvconnex_cuav_sensor
+		icon = GFX_generic_mio_trait_icon_detection
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_ew_jamming
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_rvconnex_ew_jamming }
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+		equipment_bonus = {
+			air_agility = 0.08
+			air_defence = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+
+	trait = {
+		token = SIA_rvconnex_ic_institute
+		name = SIA_rvconnex_ic_institute
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		position = { x = 4 y = 6 }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_rvconnex_ic_research_wing
+		name = SIA_rvconnex_ic_research_wing
+		icon = GFX_generic_mio_trait_icon_research
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_ic_institute
+		position = { x = -1 y = 1 }
+		all_parents = { SIA_rvconnex_ic_institute }
+		mutually_exclusive = { SIA_rvconnex_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_rvconnex_ic_industrial_trust
+		name = SIA_rvconnex_ic_industrial_trust
+		icon = GFX_generic_mio_trait_icon_production_capacity
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_ic_institute
+		position = { x = 1 y = 1 }
+		all_parents = { SIA_rvconnex_ic_institute }
+		mutually_exclusive = { SIA_rvconnex_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.15
+		}
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_rvconnex_ic_advanced_labs
+		name = SIA_rvconnex_ic_advanced_labs
+		icon = GFX_generic_mio_trait_icon_design
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_ic_research_wing
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_rvconnex_ic_research_wing }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+			military_industrial_organization_design_team_assign_cost = -0.15
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_rvconnex_ic_state_subsidy
+		name = SIA_rvconnex_ic_state_subsidy
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_ic_industrial_trust
+		position = { x = 0 y = 1 }
+		all_parents = { SIA_rvconnex_ic_industrial_trust }
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.20
+			military_industrial_organization_size_up_requirement = -0.10
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_rvconnex_ic_expanded_capacity
+		name = SIA_rvconnex_ic_expanded_capacity
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_ic_institute
+		position = { x = 0 y = 3 }
+		any_parent = { SIA_rvconnex_ic_advanced_labs SIA_rvconnex_ic_state_subsidy }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_rvconnex_ic_parallel_lines
+		name = SIA_rvconnex_ic_parallel_lines
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_ic_institute
+		position = { x = 0 y = 4 }
+		all_parents = { SIA_rvconnex_ic_expanded_capacity }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+	trait = {
+		token = SIA_rvconnex_ic_national_champion
+		name = SIA_rvconnex_ic_national_champion
+		icon = GFX_generic_mio_trait_icon_funds
+		special_trait_background = yes
+		relative_position_id = SIA_rvconnex_ic_institute
+		position = { x = 0 y = 5 }
+		all_parents = { SIA_rvconnex_ic_parallel_lines }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.10
+			military_industrial_organization_task_capacity = 1
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+		ai_will_do = { base = 10 }
+	}
+}

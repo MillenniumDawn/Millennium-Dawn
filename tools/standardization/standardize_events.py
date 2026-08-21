@@ -15,6 +15,7 @@ from common_utils import (
     collapse_blank_runs,
     emit_comments,
     inject_log_after_brace,
+    join_groups,
     run_standardizer,
 )
 from shared_utils import (
@@ -35,13 +36,7 @@ _HEADER_SINGLE_PROPS = {
     "fire_only_once",
 }
 
-# Maps script property name -> (props key, section tag for comment placement)
-_BLOCK_PROPS = {
-    "mean_time_to_happen": ("mean_time_to_happen", "mtth"),
-    "trigger": ("trigger", "trigger"),
-    "immediate": ("immediate", "immediate"),
-    "option": ("option", "options"),
-}
+_BLOCK_PROPS = frozenset({"mean_time_to_happen", "trigger", "immediate", "option"})
 
 
 _OPTION_STATEMENT_RE = re.compile(r"[A-Za-z_]\w*\s*=")
@@ -197,11 +192,16 @@ class EventStandardizer(BaseStandardizer):
             "trigger": [],
             "immediate": [],
             "option": [],
-            "comments_after_header": [],
-            "comments_after_mtth": [],
-            "comments_after_trigger": [],
-            "comments_after_immediate": [],
-            "comments_after_options": [],
+            # A comment describes what comes next, so each block carries the
+            # comments written above it. Same order and length as the block list.
+            "mean_time_to_happen_comments": [],
+            "trigger_comments": [],
+            "immediate_comments": [],
+            "option_comments": [],
+            "comments_trailing": [],
+            # format_block rebuilds the header from scratch, so a comment
+            # trailing the opening brace has to be carried across explicitly.
+            "header_comment": "",
         }
 
         first_line = block_lines[0].strip()
@@ -210,8 +210,11 @@ class EventStandardizer(BaseStandardizer):
                 props["event_type"] = event_type
                 break
 
-        # Track which section we're in for comment placement
-        current_section = "header"
+        after_brace = first_line.partition("{")[2].strip()
+        if after_brace.startswith("#"):
+            props["header_comment"] = after_brace
+
+        pending: List[str] = []
 
         i = 1  # Skip opening brace
         while i < len(block_lines) - 1:  # Skip closing brace
@@ -221,99 +224,74 @@ class EventStandardizer(BaseStandardizer):
 
             if prop_name in _HEADER_SINGLE_PROPS:
                 props[prop_name] = line
-                current_section = "header"
             elif prop_name in ("title", "desc"):
                 if "{" in line:
                     block, next_i = extract_block(block_lines, i)
                     props[prop_name].append(block)
                     i = next_i
-                    current_section = "header"
                     continue
                 else:
                     props[prop_name].append(line)
-                    current_section = "header"
             elif prop_name in _BLOCK_PROPS:
-                key, section = _BLOCK_PROPS[prop_name]
                 block, next_i = extract_block(block_lines, i)
-                props[key].append(block)
+                props[prop_name].append(block)
+                props[f"{prop_name}_comments"].append(pending)
+                pending = []
                 i = next_i
-                current_section = section
                 continue
             else:
-                # Comment or unrecognized line: bucket it under the current section.
-                props[f"comments_after_{current_section}"].append(block_lines[i])
+                pending.append(block_lines[i])
 
             i += 1
 
+        props["comments_trailing"] = pending
         return props
 
     def format_block(self, props: Dict[str, Any]) -> List[str]:
         """Format event according to Millennium Dawn standard"""
-        lines = []
-        lines.append(f"{props['event_type']} = {{")
+        header = f"{props['event_type']} = {{"
+        if props["header_comment"]:
+            header += f" {props['header_comment']}"
 
-        # 1. ID (first line after opening brace)
+        # 1-7. Header properties: id, title, desc, picture, is_triggered_only,
+        # major, hidden, fire_only_once — one group, no blank lines between.
+        head: List[str] = []
         if props["id"]:
-            lines.append(f"\t{props['id']}")
+            head.append(f"\t{props['id']}")
 
-        # 2. Title and description (may repeat as conditional blocks)
-        for title_entry in props["title"]:
-            if isinstance(title_entry, list):
-                lines.extend(collapse_or_compact(title_entry[:]))
-            else:
-                lines.append(f"\t{title_entry}")
-        for desc_entry in props["desc"]:
-            if isinstance(desc_entry, list):
-                lines.extend(collapse_or_compact(desc_entry[:]))
-            else:
-                lines.append(f"\t{desc_entry}")
+        for key in ("title", "desc"):
+            for entry in props[key]:
+                if isinstance(entry, list):
+                    head.extend(collapse_or_compact(entry[:]))
+                else:
+                    head.append(f"\t{entry}")
 
-        # 3. Picture
         if props["picture"]:
-            lines.append(f"\t{props['picture']}")
+            head.append(f"\t{props['picture']}")
 
-        # 4. is_triggered_only (required for triggered events)
         if props["is_triggered_only"]:
-            lines.append(f"\t{props['is_triggered_only']}")
+            head.append(f"\t{props['is_triggered_only']}")
         elif not props["mean_time_to_happen"]:
-            lines.append("\tis_triggered_only = yes")
+            head.append("\tis_triggered_only = yes")
 
-        # 5. major flag (use sparingly)
-        if props["major"]:
-            lines.append(f"\t{props['major']}")
+        for key in ("major", "hidden", "fire_only_once"):
+            if props[key]:
+                head.append(f"\t{props[key]}")
 
-        # 6. hidden parameter
-        if props["hidden"]:
-            lines.append(f"\t{props['hidden']}")
+        groups: List[List[str]] = [head]
 
-        # 7. fire_only_once (use sparingly)
-        if props["fire_only_once"]:
-            lines.append(f"\t{props['fire_only_once']}")
-
-        lines.append("")
-
-        emit_comments(lines, props["comments_after_header"])
-
-        # 8. Mean time to happen
-        for mtth in props["mean_time_to_happen"]:
-            lines.extend(collapse_or_compact(mtth[:]))
-            lines.append("")
-        emit_comments(lines, props["comments_after_mtth"])
-
-        # 9. Trigger
-        for trigger in props["trigger"]:
-            lines.extend(collapse_or_compact(trigger[:]))
-            lines.append("")
-        emit_comments(lines, props["comments_after_trigger"])
-
-        # 10. Immediate effects
-        for immediate in props["immediate"]:
-            lines.extend(collapse_or_compact(immediate[:]))
-            lines.append("")
-        emit_comments(lines, props["comments_after_immediate"])
+        # 8-10. Mean time to happen, trigger, immediate effects.
+        for key in ("mean_time_to_happen", "trigger", "immediate"):
+            for comments, block in zip(props[f"{key}_comments"], props[key]):
+                group: List[str] = []
+                emit_comments(group, comments)
+                group.extend(collapse_or_compact(block[:]))
+                groups.append(group)
 
         # 11. Options
-        for option in props["option"]:
+        for comments, option in zip(props["option_comments"], props["option"]):
+            group = []
+            emit_comments(group, comments)
             if (
                 _option_has_effects(option)
                 and not block_has_log(option)
@@ -325,16 +303,14 @@ class EventStandardizer(BaseStandardizer):
                 log_line = _option_log_line(option)
                 option = inject_log_after_brace(option, log_line)
 
-            lines.extend(collapse_or_compact(option[:]))
-            lines.append("")
+            group.extend(collapse_or_compact(option[:]))
+            groups.append(group)
 
-        emit_comments(lines, props["comments_after_options"])
-        if props["comments_after_options"]:
-            lines.append("")
+        trailing: List[str] = []
+        emit_comments(trailing, props["comments_trailing"])
+        groups.append(trailing)
 
-        lines.append("}")
-
-        return collapse_blank_runs(lines)
+        return collapse_blank_runs([header] + join_groups(groups) + ["}"])
 
 
 def main():

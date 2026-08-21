@@ -30,14 +30,28 @@ from validator_common import (
 # gives margin while staying tight enough never to reach a prior statement.
 SET_LOOKBACK_WINDOW = 40
 
-_SET_SHORT_RE = re.compile(r"set_variable = ([^ \t\n\}]+)")
+# Variable-writing effects whose left-hand target is a tracked variable. The
+# unused-variable check must cover every effect that defines a variable, not
+# just set_variable: a var written only via add_to_variable/subtract_from_variable
+# (and never bound to a dynamic modifier or read) would otherwise be invisible
+# to the reference scan.
+_WRITE_EFFECTS = (
+    "set_variable",
+    "add_to_variable",
+    "subtract_from_variable",
+    "multiply_variable",
+    "divide_variable",
+)
+_WRITE_ALT = "|".join(_WRITE_EFFECTS)
+
+_SET_SHORT_RE = re.compile(rf"(?:{_WRITE_ALT}) = ([^ \t\n}}]+)")
 # `\w` (Unicode) keeps tag-prefixed targets whole (GER_event_counter_1_wot,
 # ITA_ageing_population_var) AND non-ASCII names like additional_income_GER_Ökosteuer.
 # An ASCII-only class split on the Ö and captured only the `kosteuer` tail, which
 # never matched its own reads and so was wrongly reported as unused. `@.^[]` stay
 # for indexed/array and scoped targets.
 _SET_LONG_RE = re.compile(
-    r"set_variable = \{[^}]*?([\w@\.\^\[\]]+)\s*=",
+    rf"(?:{_WRITE_ALT}) = \{{[^}}]*?([\w@\.\^\[\]]+)\s*=",
     flags=re.MULTILINE | re.DOTALL,
 )
 _SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
@@ -50,7 +64,9 @@ _SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
 # correctly counted as a read. The `(?:scope\.)*` tail lets the scope-stripped
 # target (see _strip_scope_prefix) still be recognised inside a scoped write
 # like `set_variable = { THIS.europeanism = ... }`.
-_SET_TARGET_PREFIX_RE = re.compile(r"set_variable\s*=\s*\{?\s*(?:[a-z_][a-z0-9_]*\.)*$")
+_SET_TARGET_PREFIX_RE = re.compile(
+    rf"(?:{_WRITE_ALT})\s*=\s*\{{?\s*(?:[a-z_][a-z0-9_]*\.)*$"
+)
 
 
 def _resolve_mod_root(path: str) -> str:
@@ -92,7 +108,7 @@ def _strip_scope_prefix(name: str) -> str:
 
 def _scan_set_variables(text: str) -> List[str]:
     variables: List[str] = []
-    if "set_variable =" in text:
+    if any(f"{e} =" in text for e in _WRITE_EFFECTS):
         variables.extend(_SET_SHORT_RE.findall(text))
         variables.extend(
             m for m in _SET_LONG_RE.findall(text) if m not in _SET_LONG_RESERVED
@@ -210,9 +226,18 @@ def _count_refs_in_text(text: str) -> Tuple[Dict[str, int], set]:
         run = m.group()
         base = m.start()
         if "." not in run:
-            orig = bare.get(run)
-            if orig is not None and not _is_definition(text, base):
-                counts[orig] = counts.get(orig, 0) + 1
+            if not _is_definition(text, base):
+                orig = bare.get(run)
+                if orig is not None:
+                    counts[orig] = counts.get(orig, 0) + 1
+                # The engine resolves an unqualified name to the global scope
+                # when no local one exists, so a bare read (a [?X|0] loc
+                # interpolation, a check_variable, an RHS) also satisfies a
+                # tracked global.X variable that is only ever written with its
+                # namespace prefix.
+                gorig = dotted.get("global." + run)
+                if gorig is not None:
+                    counts[gorig] = counts.get(gorig, 0) + 1
             continue
         # Dotted run: walk segments left-to-right, mirroring the old
         # alternation's non-overlapping match. A tracked global.X (the only
@@ -330,8 +355,11 @@ class Validator(BaseValidator):
             if var not in unique_vars:
                 unique_vars[var] = paths[var]
 
-        cleaned_vars = DataCleaner.clear_false_positives_partial_match(
-            list(unique_vars.keys()), tuple(false_positives)
+        cleaned_vars = (
+            DataCleaner.clear_false_positives_partial_match(
+                list(unique_vars.keys()), tuple(false_positives)
+            )
+            or []
         )
 
         self.log(f"Found {len(cleaned_vars)} unique variables set via set_variable")
@@ -385,7 +413,7 @@ class Validator(BaseValidator):
         tracked_hash = hashlib.sha1(
             "|".join(sorted(cleaned_vars)).encode("utf-8")
         ).hexdigest()[:16]
-        namespace = f"set_variables.counts.lc=2.{tracked_hash}"
+        namespace = f"set_variables.counts.lc=3.{tracked_hash}"
 
         var_ref_counts = {var: 0 for var in cleaned_vars}
         dynamic_patterns: set = set()
@@ -446,6 +474,9 @@ class Validator(BaseValidator):
             "var:",
             "temp_",
             "^",
+            # Used: read via check_variable in ZAM_political_leaders but the
+            # reference scan misses it; suppress rather than delete a live var.
+            "anarchist_communism_leader",
         ]
         self.validate_set_variables(FALSE_POSITIVES)
 

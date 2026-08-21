@@ -778,118 +778,72 @@ country_event = {
 
 	option = {
 		name = internal_factions_events.11.o1
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.0.o1 executed"	#Damn
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.11.o1 executed"
 		random_list = {
 			20 = {
 				if = {
 					limit = { NOT = { is_in_array = { ruling_party = 1 } } }
-					set_variable = { party_to_be_boosted = 1 }
+					set_temp_variable = { party_index = 1 }
 				}
 				else = {
-					set_variable = { party_to_be_boosted = 2 }
+					set_temp_variable = { party_index = 2 }
 				}
-				set_temp_variable = { party_index = party_to_be_boosted }
 				set_temp_variable = { party_popularity_increase = 0.02 }
+				set_temp_variable = { temp_outlook_increase = 0.02 }
 				change_relative_party_popularity = yes
-				clear_variable = party_to_be_boosted
 			}
 			20 = {
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 1 } } }
-					set_variable = { party_to_be_boosted = 2 }
+					limit = { NOT = { is_in_array = { ruling_party = 2 } } }
+					set_temp_variable = { party_index = 2 }
 				}
 				else = {
-					set_variable = { party_to_be_boosted = 14 }
+					set_temp_variable = { party_index = 14 }
 				}
-				set_temp_variable = { party_index = party_to_be_boosted }
 				set_temp_variable = { party_popularity_increase = 0.02 }
+				set_temp_variable = { temp_outlook_increase = 0.02 }
 				change_relative_party_popularity = yes
-				clear_variable = party_to_be_boosted
 			}
 			20 = {
 				if = {
 					limit = { NOT = { is_in_array = { ruling_party = 14 } } }
-					set_variable = { party_to_be_boosted = 14 }
+					set_temp_variable = { party_index = 14 }
 				}
 				else = {
-					set_variable = { party_to_be_boosted = 15 }
+					set_temp_variable = { party_index = 15 }
 				}
-				set_temp_variable = { party_index = party_to_be_boosted }
 				set_temp_variable = { party_popularity_increase = 0.02 }
+				set_temp_variable = { temp_outlook_increase = 0.02 }
 				change_relative_party_popularity = yes
-				clear_variable = party_to_be_boosted
 			}
 			20 = {
 				if = {
 					limit = { NOT = { is_in_array = { ruling_party = 15 } } }
-					set_variable = { party_to_be_boosted = 15 }
+					set_temp_variable = { party_index = 15 }
 				}
 				else = {
-					set_variable = { party_to_be_boosted = 16 }
+					set_temp_variable = { party_index = 16 }
 				}
-				set_temp_variable = { party_index = party_to_be_boosted }
 				set_temp_variable = { party_popularity_increase = 0.02 }
+				set_temp_variable = { temp_outlook_increase = 0.02 }
 				change_relative_party_popularity = yes
-				clear_variable = party_to_be_boosted
 			}
 			20 = {
 				if = {
 					limit = { NOT = { is_in_array = { ruling_party = 16 } } }
-					set_variable = { party_to_be_boosted = 16 }
+					set_temp_variable = { party_index = 16 }
 				}
 				else = {
-					set_variable = { party_to_be_boosted = 1 }
+					set_temp_variable = { party_index = 1 }
 				}
-				set_temp_variable = { party_index = party_to_be_boosted }
 				set_temp_variable = { party_popularity_increase = 0.02 }
+				set_temp_variable = { temp_outlook_increase = 0.02 }
 				change_relative_party_popularity = yes
-				clear_variable = party_to_be_boosted
 			}
 		}
-		country_event = internal_factions_events.1
 
 		ai_chance = {
-			factor = 1
-		}
-	}
-}
-country_event = {
-	id = internal_factions_events.12
-	title = internal_factions_events.12.t
-	desc = internal_factions_events.12.d
-
-	picture = GFX_internal_faction_political_conflict
-	is_triggered_only = yes
-
-	option = {
-		name = internal_factions_events.12.o1
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.12.o1 executed"	#Damn
-		if = {
-			limit = {
-				OR = {
-					check_variable = { party_to_be_boosted = 1 }
-					check_variable = { party_to_be_boosted = 2 }
-				}
-			}
-			add_popularity = { ideology = democratic popularity = 0.02 }
-		}
-		if = {
-			limit = {
-				OR = {
-					check_variable = { party_to_be_boosted = 14 }
-					check_variable = { party_to_be_boosted = 15 }
-					check_variable = { party_to_be_boosted = 16 }
-				}
-			}
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-		}
-		set_temp_variable = { party_index = party_to_be_boosted }
-		set_temp_variable = { party_popularity_increase = 0.02 }
-		change_relative_party_popularity = yes
-		clear_variable = party_to_be_boosted
-
-		ai_chance = {
-			factor = 1
+			base = 1
 		}
 	}
 }
@@ -911,8 +865,10 @@ country_event = {
 			has_idea = chaebols
 		}
 		NOT = {
-			has_country_flag = large_company_goes_bankrupt
-			has_country_flag = large_company_subsidies
+			OR = {
+				has_country_flag = large_company_goes_bankrupt
+				has_country_flag = large_company_subsidies
+			}
 		}
 	}
 
@@ -1033,10 +989,12 @@ country_event = {
 		has_idea = labour_unions
 		check_variable = { labour_unions_opinion > 49 }
 		NOT = {
-			has_country_flag = health_decrease_blocked
-			has_country_flag = health_increase_blocked
-			has_idea = health_06 # Can't have this if you are max
-		 }
+			OR = {
+				has_country_flag = health_decrease_blocked
+				has_country_flag = health_increase_blocked
+				has_idea = health_06 # Can't have this if you are max
+			}
+		}
 	}
 
 	option = { # Agree to the Demands
@@ -1083,9 +1041,11 @@ country_event = {
 		has_idea = labour_unions
 		check_variable = { labour_unions_opinion > 49 }
 		NOT = {
-			has_country_flag = social_decrease_blocked
-			has_country_flag = social_increase_blocked
-			has_idea = social_06
+			OR = {
+				has_country_flag = social_decrease_blocked
+				has_country_flag = social_increase_blocked
+				has_idea = social_06
+			}
 		}
 	}
 
@@ -1232,8 +1192,10 @@ country_event = {
 	trigger = {
 		has_idea = farmers
 		NOT = {
-			has_country_flag = lump_sum_farmer_subsidy
-			has_country_flag = farmer_subsidies
+			OR = {
+				has_country_flag = lump_sum_farmer_subsidy
+				has_country_flag = farmer_subsidies
+			}
 		}
 	}
 
@@ -1288,9 +1250,11 @@ country_event = {
 		}
 		has_idea = the_military
 		NOT = { # Can only demand if military spending is Large or lower but not abolished
-			has_idea = defence_09
-			has_idea = defence_08
-			has_idea = no_military
+			OR = {
+				has_idea = defence_09
+				has_idea = defence_08
+				has_idea = no_military
+			}
 		}
 		OR = {
 			has_tech = air_defense_non_got
@@ -1774,8 +1738,10 @@ country_event = {
 	trigger = {
 		has_idea = maritime_industry
 		NOT = {
-			has_country_flag = MAR_industry_subsidies
-			has_idea = internal_faction_subsidize_convoy_production
+			OR = {
+				has_country_flag = MAR_industry_subsidies
+				has_idea = internal_faction_subsidize_convoy_production
+			}
 		}
 	}
 
@@ -3539,9 +3505,11 @@ country_event = {
 			modifier = {
 				add = 5
 				NOT = {
-					emerging_hardline_shiite_are_in_power = yes
-					emerging_moderate_shiite_are_in_power = yes
-					salafist_kingdom_are_in_power = yes
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+						salafist_kingdom_are_in_power = yes
+					}
 				}
 			}
 		}
@@ -3602,9 +3570,11 @@ country_event = {
 			modifier = {
 				add = 5
 				NOT = {
-					emerging_hardline_shiite_are_in_power = yes
-					emerging_moderate_shiite_are_in_power = yes
-					salafist_kingdom_are_in_power = yes
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+						salafist_kingdom_are_in_power = yes
+					}
 				}
 			}
 		}
@@ -3662,9 +3632,11 @@ country_event = {
 			modifier = {
 				add = 5
 				NOT = {
-					emerging_hardline_shiite_are_in_power = yes
-					emerging_moderate_shiite_are_in_power = yes
-					salafist_kingdom_are_in_power = yes
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+						salafist_kingdom_are_in_power = yes
+					}
 				}
 			}
 		}
@@ -3685,9 +3657,11 @@ country_event = {
 			modifier = {
 				add = 5
 				NOT = {
-					emerging_hardline_shiite_are_in_power = yes
-					emerging_moderate_shiite_are_in_power = yes
-					salafist_kingdom_are_in_power = yes
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+						salafist_kingdom_are_in_power = yes
+					}
 				}
 			}
 		}
@@ -3756,9 +3730,11 @@ country_event = {
 			modifier = {
 				add = 5
 				NOT = {
-					emerging_hardline_shiite_are_in_power = yes
-					emerging_moderate_shiite_are_in_power = yes
-					salafist_kingdom_are_in_power = yes
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+						salafist_kingdom_are_in_power = yes
+					}
 				}
 			}
 		}
@@ -3817,9 +3793,11 @@ country_event = {
 			modifier = {
 				add = 5
 				NOT = {
-					emerging_hardline_shiite_are_in_power = yes
-					emerging_moderate_shiite_are_in_power = yes
-					salafist_kingdom_are_in_power = yes
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+						salafist_kingdom_are_in_power = yes
+					}
 				}
 			}
 		}

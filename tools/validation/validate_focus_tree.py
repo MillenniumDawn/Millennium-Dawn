@@ -5,12 +5,13 @@ import os
 import re
 import sys
 from collections import defaultdict
-from typing import Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from shared_utils import extract_block_from_text as _extract_block
+from shared_utils import read_text_under
 from sprite_index import build_sprite_index
 from validator_common import (
     BaseValidator,
@@ -60,6 +61,66 @@ _NAME_LINE_RE = re.compile(r"\bname\s*=\s*(\S+)")
 # they are not flagged.
 _EFFECT_TOOLTIP_START = re.compile(r"\beffect_tooltip\s*=\s*\{")
 _PP_MALUS_RE = re.compile(r"\badd_political_power\s*=\s*(-\d+(?:\.\d+)?)\b")
+
+# Focuses whose PP malus is the intended mechanic rather than an oversight: the
+# Italian technocrat policy tree charges PP to enact a policy and gates the
+# focus on having it banked (available = { ... has_political_power > N }).
+_PP_MALUS_EXEMPT_FOCUS_IDS = frozenset(
+    {
+        "ITA_a_devout_state",
+        "ITA_a_secular_state",
+        "ITA_abolish_perfect_bicameralism",
+        "ITA_abolish_school_religion_teaching",
+        "ITA_abolish_the_provinces",
+        "ITA_allow_euthanasia",
+        "ITA_allow_same_sex_marriage",
+        "ITA_anti_corruption_measures",
+        "ITA_build_waste_incinerators",
+        "ITA_carbon_tax",
+        "ITA_cash_bonus_to_18_year_olds",
+        "ITA_classical_education",
+        "ITA_constitutionalise_secularism",
+        "ITA_constitutionalise_social_rights",
+        "ITA_defund_school_laboratories",
+        "ITA_economic_support_for_the_church",
+        "ITA_encourage_immigration",
+        "ITA_european_speech",
+        "ITA_fire_excessive_government_employees",
+        "ITA_impose_better_checks_on_magistrates",
+        "ITA_increase_competition",
+        "ITA_increase_funding_for_research",
+        "ITA_increase_pension_age_requirements",
+        "ITA_introduce_meritocracy",
+        "ITA_italian_federation",
+        "ITA_ius_scholae",
+        "ITA_ius_soli",
+        "ITA_legalize_all_drugs",
+        "ITA_legalize_light_drugs",
+        "ITA_let_companies_fail",
+        "ITA_let_salaries_decrease",
+        "ITA_limit_8xmille",
+        "ITA_merge_small_municipalities",
+        "ITA_modern_education",
+        "ITA_modify_article_18",
+        "ITA_privatize_museum_system",
+        "ITA_privatize_water_distribution",
+        "ITA_protect_migrant_rights",
+        "ITA_protect_prisoners_rights",
+        "ITA_recalculate_baby_pensions",
+        "ITA_reduce_expenses",
+        "ITA_reduce_judgement_times",
+        "ITA_reopen_brothels",
+        "ITA_safeguard_teachers_privileges",
+        "ITA_school_mass_hiring",
+        "ITA_sell_government_shares_in_companies",
+        "ITA_shift_taxation_from_income_to_property",
+        "ITA_simplify_legal_code",
+        "ITA_stimulate_growth",
+        "ITA_stop_building_abuse",
+        "ITA_tax_church_property",
+        "ITA_with_europe",
+    }
+)
 
 # ai_will_do staffing/bankruptcy guards (issue #2233 + the AGENTS.md
 # convention). Building type -> the scripted trigger
@@ -120,7 +181,7 @@ _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 # mutates the running value in a way that can't be summed statically, so it
 # forces the segment unknown rather than being read as a fresh set.
 _TREASURY_CHANGE_RE = re.compile(
-    r"\btreasury_change\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_]\w*)"
+    r"\btreasury_change\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_][\w.]*)"
     r"|\bvar\s*=\s*treasury_change\b"
 )
 _TREASURY_SET_VERBS = frozenset({"set_temp_variable", "set_variable"})
@@ -138,6 +199,12 @@ _TREASURY_MUTATE_VERBS = frozenset(
         "divide_variable",
     }
 )
+# Scaling by a literal loses the magnitude but keeps the sign for a known
+# non-negative source such as gdp_total. Every other mutate loses the sign too.
+_TREASURY_SCALE_VERBS = frozenset({"multiply_temp_variable", "multiply_variable"})
+# Matched on the bare name: a source may be read out of another country
+# (GER.gdp_per_capita), and the scope qualifier does not change its sign.
+_TREASURY_NONNEGATIVE_VARIABLES = frozenset({"gdp_total", "gdp_per_capita"})
 _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # modify_treasury_effect and its variants (e.g. modify_treasury_effect_corruption,
 # which scales the applied amount by a corruption-level idea before adding it to
@@ -154,9 +221,18 @@ _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 # a completion_reward that fires a country_event into another nation's scope
 # should carry custom_effect_tooltip = TT_IF_THEY_ACCEPT so the player sees the
 # acceptance outcome. Foreignness is decided by the fire's nearest enclosing
-# scope-change (see _country_event_target_is_foreign).
+# scope-change (see _country_event_target_is_foreign). TT_EFFECTS_FROM_EVENT
+# also clears the check: it fronts the same effect_tooltip preview for an event
+# whose options are not an accept/decline pair (the target picks how to react,
+# and every branch lands on the sender), where "if they accept" would be a lie.
+# TT_IF_THIS_ACCEPTS and TT_IF_EACH_ACCEPTS are the same preview worded for one
+# named target and for a fan-out; the former renders [THIS.GetNameWithFlag], so
+# it sits inside the target's scope block rather than beside its effect_tooltip.
 _COUNTRY_EVENT_RE = re.compile(r"\bcountry_event\b")
-_TT_IF_THEY_ACCEPT_RE = re.compile(r"\bTT_IF_THEY_ACCEPT\b")
+_TT_IF_THEY_ACCEPT_RE = re.compile(
+    r"\b(?:TT_IF_THEY_ACCEPT|TT_IF_THIS_ACCEPTS"
+    r"|TT_IF_EACH_ACCEPTS|TT_EFFECTS_FROM_EVENT)\b"
+)
 # Target of a fire, in both `country_event = foo.1` and
 # `country_event = { id = foo.1 days = 3 }` form.
 _FIRE_TARGET_RE = re.compile(r"country_event\s*=\s*(?:\{[^{}]*?\bid\s*=\s*)?([\w.]+)")
@@ -169,6 +245,11 @@ _EVENT_OPTION_RE = re.compile(r"\boption\s*=\s*\{")
 _EVENT_HIDDEN_RE = re.compile(r"\bhidden\s*=\s*yes\b")
 _OPTION_TRIGGER_RE = re.compile(r"\btrigger\s*=\s*\{")
 _NEGATION_RE = re.compile(r"\bNOT\s*=\s*\{")
+# Option bookkeeping that is not an outcome: the label, the log line, the AI
+# weight and the visibility trigger. An option with nothing else does nothing.
+_OPTION_NAME_RE = re.compile(r"\bname\s*=\s*[\w.\"]+")
+_OPTION_LOG_RE = re.compile(r"\blog\s*=\s*\"[^\"]*\"")
+_OPTION_INERT_BLOCK_RE = re.compile(r"\b(?:ai_chance|trigger)\s*=\s*\{")
 # `tag = XXX` / `original_tag = XXX`, in a focus_tree's `country = { }` block
 # (the owner) and in an event option's `trigger = { }` (the recipient).
 _FT_COUNTRY_BLOCK_RE = re.compile(r"\bcountry\s*=\s*\{")
@@ -317,6 +398,8 @@ def _body_money_cost(
                treasury_change touched by anything other than a plain set, a
                debt change, a corruption-style modify_treasury_effect variant,
                or a called effect in *money_effects*).
+    An amount whose sign is still known to be positive after scaling is income,
+    not an unknown cost, so it counts as neither.
     Amounts inside effect_tooltip previews (outcomes applied elsewhere) are
     ignored.
     """
@@ -331,11 +414,18 @@ def _body_money_cost(
             continue
         verb, _ = _enclosing_block_label(body, m.start())
         if verb in _TREASURY_MUTATE_VERBS:
-            events.append((m.start(), "mutate", None))
-        elif verb in _TREASURY_SET_VERBS:
             val = m.group(1)
-            known = val is not None and _NUMERIC_LITERAL_RE.match(val)
-            events.append((m.start(), "set", val if known else None))
+            scaled = (
+                verb in _TREASURY_SCALE_VERBS
+                and val is not None
+                and _NUMERIC_LITERAL_RE.match(val)
+            )
+            if scaled:
+                events.append((m.start(), "scale", val))
+            else:
+                events.append((m.start(), "mutate", None))
+        elif verb in _TREASURY_SET_VERBS:
+            events.append((m.start(), "set", m.group(1)))
     for m in _MODIFY_TREASURY_RE.finditer(body):
         if not previewed(m.start()):
             events.append((m.start(), "apply", "variant" if m.group(1) else None))
@@ -357,35 +447,81 @@ def _body_money_cost(
     unknown = False
     cur_neg = 0.0
     cur_unknown = False
+    cur_income = False
     cur_init = False
     seg_max = 0.0
     seg_unknown = False
     seg_has_set = False
+    seg_neg = False
+    seg_sign_unknown = False
+    seg_var_base = False
     for _, kind, val in events:
         if kind == "set":
             seg_has_set = True
-            if val is None:
+            if val is not None and _NUMERIC_LITERAL_RE.match(val):
+                seg_var_base = False
+                try:
+                    amount = float(val)
+                except ValueError:
+                    seg_unknown = True
+                    seg_sign_unknown = True
+                else:
+                    if amount < 0:
+                        seg_neg = True
+                        seg_max = max(seg_max, -amount)
+            elif val is not None and val != "{":
+                # A bare variable reference is unknown. Only known non-negative
+                # sources retain their sign when scaled by a literal.
                 seg_unknown = True
-            elif float(val) < 0:
-                seg_max = max(seg_max, -float(val))
+                seg_sign_unknown = True
+                bare = val.rpartition(".")[2]
+                seg_var_base = bare in _TREASURY_NONNEGATIVE_VARIABLES
+            else:
+                seg_unknown = True
+                seg_sign_unknown = True
+                seg_var_base = False
+        elif kind == "scale":
+            seg_unknown = True
+            scale_is_negative = (
+                val is not None and val.startswith("-") and val.lstrip("-0.") != ""
+            )
+            if seg_var_base or (seg_has_set and not seg_sign_unknown):
+                # `treasury_change = gdp_total` then `* -0.08` is the MD idiom
+                # for a cost of unknown size, and `* 0.05` for income: a known
+                # non-negative base lets the literal carry the sign. Scales are
+                # not composed: sibling if/else branches scale the same set, so
+                # one negative anywhere in the segment keeps it negative.
+                seg_neg = seg_neg or scale_is_negative
+                seg_sign_unknown = False
+                seg_var_base = False
+            else:
+                seg_has_set = True
+                seg_sign_unknown = True
         elif kind == "mutate":
             seg_has_set = True
             seg_unknown = True
+            seg_sign_unknown = True
+            seg_var_base = False
         else:  # apply
             if seg_has_set:
                 cur_neg, cur_unknown, cur_init = seg_max, seg_unknown, True
+                cur_income = not seg_neg and not seg_sign_unknown
             elif not cur_init:
                 cur_unknown, cur_init = True, True  # treasury_change set elsewhere
+                cur_income = False
             if val == "variant":
                 cur_unknown = True
-            if cur_unknown:
-                has_cost = True
-                unknown = True
-            elif cur_neg > 0:
-                spend += cur_neg
-                has_cost = True
+                cur_income = False
             # a non-negative applied treasury_change is income, not a cost
+            if not cur_income:
+                if cur_unknown:
+                    has_cost = True
+                    unknown = True
+                elif cur_neg > 0:
+                    spend += cur_neg
+                    has_cost = True
             seg_max, seg_unknown, seg_has_set = 0.0, False, False
+            seg_neg, seg_sign_unknown, seg_var_base = False, False, False
 
     for m in _MODIFY_DEBT_RE.finditer(body):
         if not previewed(m.start()):
@@ -401,6 +537,89 @@ def _body_money_cost(
                 break
 
     return spend, has_cost, unknown
+
+
+def _read_mod_text(filepath: str, mod_path: str) -> str:
+    try:
+        return read_text_under(filepath, mod_path)
+    except (OSError, ValueError):
+        return ""
+
+
+def _read_scripted_effect_file(filepath: str, mod_path: str) -> str:
+    text = _read_mod_text(filepath, mod_path)
+    return strip_comments(text) if text else ""
+
+
+def _parse_scripted_effect_file(
+    text: str,
+) -> Tuple[Dict[str, str], Dict[str, FrozenSet[str]], FrozenSet[str]]:
+    bodies: Dict[str, str] = {}
+    staffable: Dict[str, FrozenSet[str]] = {}
+    money: Set[str] = set()
+    for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
+        body, _ = _extract_block(text, match.start())
+        if not body:
+            continue
+        name = match.group(1)
+        bodies[name] = body
+
+        types: Set[str] = set()
+        position = 0
+        while True:
+            building_match = _ADD_BUILDING_START.search(body, position)
+            if not building_match:
+                break
+            building_body, building_end = _extract_block(body, building_match.start())
+            if not building_body:
+                position = building_match.end()
+                continue
+            types.update(
+                building_type
+                for building_type in _TYPE_LINE_RE.findall(building_body)
+                if building_type in _STAFFABLE_TRIGGERS
+            )
+            position = building_end
+        if types:
+            staffable[name] = frozenset(types)
+        if _body_money_cost(body, frozenset())[1]:
+            money.add(name)
+    return bodies, staffable, frozenset(money)
+
+
+def _resolve_scripted_effect_chains(
+    effect_bodies: Dict[str, str],
+    direct_staffable: Dict[str, FrozenSet[str]],
+    direct_money: FrozenSet[str],
+) -> Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]:
+    known_effects = set(effect_bodies)
+    calls = {
+        name: set(_REWARD_KEY_RE.findall(body)) & known_effects
+        for name, body in effect_bodies.items()
+    }
+
+    staffable = dict(direct_staffable)
+    changed = True
+    while changed:
+        changed = False
+        for name, dependencies in calls.items():
+            types: Set[str] = set(direct_staffable.get(name, frozenset()))
+            for dependency in dependencies:
+                types.update(staffable.get(dependency, frozenset()))
+            resolved = frozenset(types)
+            if resolved and resolved != staffable.get(name):
+                staffable[name] = resolved
+                changed = True
+
+    money = set(direct_money)
+    changed = True
+    while changed:
+        changed = False
+        for name, dependencies in calls.items():
+            if name not in money and dependencies & money:
+                money.add(name)
+                changed = True
+    return staffable, frozenset(money)
 
 
 def _is_tag_routed(option_bodies: List[str]) -> bool:
@@ -426,6 +645,30 @@ def _is_tag_routed(option_bodies: List[str]) -> bool:
         if not tags or tags & claimed:
             return False
         claimed |= tags
+    return True
+
+
+def _is_flavor_only(option_bodies: List[str]) -> bool:
+    """True when no option carries an outcome — every one is just a label, a log
+    line, an ai_chance weight and maybe a visibility trigger.
+
+    `Liechtenstein.7` offers four ways to say "how interesting", none of which do
+    anything. An event like that is a reaction notification however many options
+    it lists, so there is no acceptance branch for a TT_IF_THEY_ACCEPT to preview.
+    """
+    for body in option_bodies:
+        rest = _OPTION_NAME_RE.sub("", body)
+        rest = _OPTION_LOG_RE.sub("", rest)
+        while True:
+            bm = _OPTION_INERT_BLOCK_RE.search(rest)
+            if not bm:
+                break
+            _, bend = _extract_block(rest, bm.start())
+            if bend == -1:
+                return False
+            rest = rest[: bm.start()] + rest[bend:]
+        if rest.strip():
+            return False
     return True
 
 
@@ -508,10 +751,8 @@ def _parse_focus_ids_from_block(block: str) -> List[Tuple[str, int, List[List[st
 def parse_focus_file(args: Tuple[str, str]) -> Dict:
     """Read one focus tree file and return its parsed structure, content-cached."""
     filepath, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return {"filepath": filepath, "trees": [], "shared_defs": {}}
     text = strip_comments(raw)
     return disk_cache.per_file_cached_by_content(
@@ -530,10 +771,8 @@ def _extract_focus_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, int
     Focuses that omit `icon` (or use a dynamic `[...]` value) are skipped.
     """
     filepath, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
 
@@ -572,10 +811,8 @@ def _extract_tech_bonuses(
     the block has no `name =` parameter.
     """
     filepath, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
 
@@ -634,7 +871,9 @@ def _extract_ai_guard_data(
     building types its rewards construct (directly or via a scripted effect
     from *staffable_map*, and never from inside an effect_tooltip, which only
     previews), the money its rewards spend (spend / has_cost / unknown, with
-    *money_effects* naming the scripted effects that spend money), and the
+    *money_effects* naming the scripted effects that spend money), whether an
+    effect_tooltip previews a cost the focus commits to but pays elsewhere
+    (a cross-country offer settled in the event), and the
     guard triggers present in factor = 0 ai_will_do modifiers (both the
     `X = no` and `NOT = { X = yes }` forms; guards hidden behind wrapper
     scripted triggers are not recognized). The staffable and money-effect maps
@@ -642,10 +881,8 @@ def _extract_ai_guard_data(
     definitions change.
     """
     filepath, mod_path, staffable_map, money_effects = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
     fingerprint = (
@@ -679,6 +916,7 @@ def _extract_ai_guard_data(
             spend = 0.0
             has_cost = False
             unknown_cost = False
+            previewed_cost = False
             rpos = fm.start()
             while True:
                 rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
@@ -718,6 +956,12 @@ def _extract_ai_guard_data(
                 spend += s
                 has_cost = has_cost or hc
                 unknown_cost = unknown_cost or u
+                previewed_cost = previewed_cost or any(
+                    _body_money_cost(
+                        rbody[rbody.index("{", s0) + 1 : e0 - 1], money_effects
+                    )[1]
+                    for s0, e0 in spans
+                )
                 rpos = rend
 
             guards: Set[str] = set()
@@ -763,6 +1007,7 @@ def _extract_ai_guard_data(
                     "spend": spend,
                     "has_cost": has_cost,
                     "unknown": unknown_cost,
+                    "previewed_cost": previewed_cost,
                 }
             )
             pos = fend
@@ -770,7 +1015,7 @@ def _extract_ai_guard_data(
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.ai_guards.v5",
+        "focus_tree.ai_guards.v7",
         filepath,
         text + "\x00" + fingerprint,
         _compute,
@@ -786,10 +1031,8 @@ def _extract_focus_search_filters(
     nested reward blocks.
     """
     filepath, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
 
@@ -830,10 +1073,8 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
     Returns one dict (id, file, line) per non-compliant focus.
     """
     filepath, mod_path, notifications = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
     fingerprint = ";".join(sorted(notifications))
@@ -872,7 +1113,13 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
                     rpos = rm.end()
                     continue
                 if not _TT_IF_THEY_ACCEPT_RE.search(rbody):
+                    # A fire inside an effect_tooltip is a preview of something
+                    # that happens elsewhere (a decision, another focus), not a
+                    # fire this reward makes, so it needs no tooltip of its own.
+                    preview_spans = _effect_tooltip_spans(rbody, 0, len(rbody))
                     for ce in _COUNTRY_EVENT_RE.finditer(rbody):
+                        if any(s <= ce.start() < e for s, e in preview_spans):
+                            continue
                         tm = _FIRE_TARGET_RE.match(rbody, ce.start())
                         if tm and tm.group(1) in notifications:
                             continue
@@ -896,7 +1143,7 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
 
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.cross_country_tt.v3",
+        "focus_tree.cross_country_tt.v6",
         filepath,
         text + "\x00" + fingerprint,
         _compute,
@@ -912,10 +1159,8 @@ def _extract_pp_malus(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     than executing the malus.
     """
     filepath, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except Exception:
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
         return []
     text = strip_comments(raw)
 
@@ -970,7 +1215,7 @@ def _parse_focus_text(text: str, filepath: str) -> Dict:
       "focuses"       — list of (focus_id, abs_line, prereq_groups)
       "shared_refs"   — set of shared_focus IDs referenced inside the tree
     """
-    result = {
+    result: Dict[str, Any] = {
         "filepath": filepath,
         "trees": [],
         "shared_defs": {},
@@ -1050,6 +1295,7 @@ class Validator(BaseValidator):
         super().__init__(mod_path, **kwargs)
         self._parsed_cache: Optional[List[Dict]] = None
         self._staged_paths: Optional[Set[str]] = None
+        self._scripted_effect_data = None
 
     # -----------------------------------------------------------------------
     # Data collection
@@ -1438,6 +1684,36 @@ class Validator(BaseValidator):
     # Check 5c: ai_will_do staffing / bankruptcy guards
     # -----------------------------------------------------------------------
 
+    def _scripted_effect_data_for_guards(self):
+        if self._scripted_effect_data is not None:
+            return self._scripted_effect_data
+
+        effect_bodies: Dict[str, str] = {}
+        direct_staffable: Dict[str, FrozenSet[str]] = {}
+        direct_money: Set[str] = set()
+        fx_files = self._collect_files(
+            ["common/scripted_effects/*.txt"], ignore_staged=True
+        )
+        for filepath in fx_files:
+            text = _read_scripted_effect_file(filepath, self.mod_path)
+            bodies, staffable, money = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "focus_tree.scripted_effects",
+                filepath,
+                text,
+                lambda text=text: _parse_scripted_effect_file(text),
+            )
+            effect_bodies.update(bodies)
+            direct_staffable.update(staffable)
+            direct_money.update(money)
+
+        self._scripted_effect_data = (
+            effect_bodies,
+            direct_staffable,
+            frozenset(direct_money),
+        )
+        return self._scripted_effect_data
+
     def _staffable_effect_map(self) -> Dict[str, FrozenSet[str]]:
         """Map scripted-effect name -> staffable building types it constructs.
 
@@ -1445,81 +1721,10 @@ class Validator(BaseValidator):
         add_building_construction of a staffable type, so new builder-effect
         variants are picked up without a hardcoded list.
         """
-        fx_files = self._collect_files(
-            ["common/scripted_effects/*.txt"], ignore_staged=True
+        effect_bodies, direct_staffable, _ = self._scripted_effect_data_for_guards()
+        mapping, _ = _resolve_scripted_effect_chains(
+            effect_bodies, direct_staffable, frozenset()
         )
-        mapping: Dict[str, FrozenSet[str]] = {}
-        for fp in fx_files:
-            try:
-                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
-                    text = strip_comments(fh.read())
-            except Exception:
-                continue
-
-            def _compute(text=text) -> Dict[str, FrozenSet[str]]:
-                found: Dict[str, FrozenSet[str]] = {}
-                for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
-                    body, _ = _extract_block(text, m.start())
-                    if not body:
-                        continue
-                    types: Set[str] = set()
-                    bpos = 0
-                    while True:
-                        bm = _ADD_BUILDING_START.search(body, bpos)
-                        if not bm:
-                            break
-                        bbody, bend = _extract_block(body, bm.start())
-                        if not bbody:
-                            bpos = bm.end()
-                            continue
-                        types.update(
-                            t
-                            for t in _TYPE_LINE_RE.findall(bbody)
-                            if t in _STAFFABLE_TRIGGERS
-                        )
-                        bpos = bend
-                    if types:
-                        found[m.group(1)] = frozenset(types)
-                return found
-
-            mapping.update(
-                disk_cache.per_file_cached_by_content(
-                    self.mod_path, "focus_tree.staffable_fx", fp, text, _compute
-                )
-            )
-
-        # Resolve scripted-effect chains to a fixed point so a builder wrapper
-        # remains visible through any number of intermediate effects.
-        direct = dict(mapping)
-        effect_bodies: Dict[str, str] = {}
-        for fp in fx_files:
-            try:
-                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
-                    text = strip_comments(fh.read())
-            except Exception:
-                continue
-            for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
-                body, _ = _extract_block(text, m.start())
-                if body:
-                    effect_bodies[m.group(1)] = body
-
-        known_effects = set(effect_bodies)
-        calls = {
-            name: set(_REWARD_KEY_RE.findall(body)) & known_effects
-            for name, body in effect_bodies.items()
-        }
-        mapping = dict(direct)
-        changed = True
-        while changed:
-            changed = False
-            for name, dependencies in calls.items():
-                types: Set[str] = set(direct.get(name, frozenset()))
-                for dependency in dependencies:
-                    types.update(mapping.get(dependency, frozenset()))
-                resolved = frozenset(types)
-                if resolved and resolved != mapping.get(name):
-                    mapping[name] = resolved
-                    changed = True
         return mapping
 
     def _money_cost_effect_names(self) -> FrozenSet[str]:
@@ -1532,50 +1737,9 @@ class Validator(BaseValidator):
         (non-literal) treasury_change is treated as a cost even though its sign
         is unknown, so a handful of computed-income effects may be included.
         """
-        fx_files = self._collect_files(
-            ["common/scripted_effects/*.txt"], ignore_staged=True
-        )
-        direct: Set[str] = set()
-        effect_bodies: Dict[str, str] = {}
-        for fp in fx_files:
-            try:
-                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
-                    text = strip_comments(fh.read())
-            except Exception:
-                continue
-
-            def _compute(text=text) -> List[str]:
-                found: List[str] = []
-                for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
-                    body, _ = _extract_block(text, m.start())
-                    if body and _body_money_cost(body, frozenset())[1]:
-                        found.append(m.group(1))
-                return found
-
-            direct.update(
-                disk_cache.per_file_cached_by_content(
-                    self.mod_path, "focus_tree.money_fx", fp, text, _compute
-                )
-            )
-            for m in _TOP_LEVEL_BLOCK_RE.finditer(text):
-                body, _ = _extract_block(text, m.start())
-                if body:
-                    effect_bodies[m.group(1)] = body
-
-        known_effects = set(effect_bodies)
-        calls = {
-            name: set(_REWARD_KEY_RE.findall(body)) & known_effects
-            for name, body in effect_bodies.items()
-        }
-        money = set(direct)
-        changed = True
-        while changed:
-            changed = False
-            for name, dependencies in calls.items():
-                if name not in money and dependencies & money:
-                    money.add(name)
-                    changed = True
-        return frozenset(money)
+        effect_bodies, _, direct_money = self._scripted_effect_data_for_guards()
+        _, money = _resolve_scripted_effect_chains(effect_bodies, {}, direct_money)
+        return money
 
     def validate_ai_will_do_guards(self):
         """Flag focuses missing (or carrying an unneeded) ai_will_do guard.
@@ -1652,7 +1816,7 @@ class Validator(BaseValidator):
                         )
                     elif d["unknown"]:
                         unknown_spend_by_file[rel].append((d["id"], d["line"]))
-                elif not d["has_cost"]:
+                elif not d["has_cost"] and not d["previewed_cost"]:
                     unneeded_by_file[rel].append((d["id"], d["line"]))
 
                 if (
@@ -1722,19 +1886,19 @@ class Validator(BaseValidator):
         )
 
     def _notification_event_ids(self) -> FrozenSet[str]:
-        """Event ids the target cannot answer: hidden, fewer than 2 options, or
-        options tag-routed one per recipient (see _is_tag_routed).
+        """Event ids the target cannot answer: hidden, fewer than 2 options,
+        options tag-routed one per recipient (see _is_tag_routed), or options
+        that are pure flavor with no outcome at all (see _is_flavor_only).
 
         Firing one of these into a foreign scope is a notification, not an
         offer, so it never needs a TT_IF_THEY_ACCEPT tooltip.
         """
         ids: Set[str] = set()
         for fp in self._collect_files(["events/*.txt"], ignore_staged=True):
-            try:
-                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
-                    text = strip_comments(fh.read())
-            except Exception:
+            raw = _read_mod_text(fp, self.mod_path)
+            if not raw:
                 continue
+            text = strip_comments(raw)
 
             def _compute(text=text) -> List[str]:
                 found: List[str] = []
@@ -1760,6 +1924,7 @@ class Validator(BaseValidator):
                         len(options) < 2
                         or _EVENT_HIDDEN_RE.search(body)
                         or _is_tag_routed(options)
+                        or _is_flavor_only(options)
                     ):
                         found.append(idm.group(1))
                 return found
@@ -1767,7 +1932,7 @@ class Validator(BaseValidator):
             ids.update(
                 disk_cache.per_file_cached_by_content(
                     self.mod_path,
-                    "focus_tree.notification_events.v3",
+                    "focus_tree.notification_events.v4",
                     fp,
                     text,
                     _compute,
@@ -1834,7 +1999,8 @@ class Validator(BaseValidator):
         balance choice needing per-site judgment, so this reports at WARNING
         only. Scope is the literal-negative-number pattern: variable forms
         and timed lose-PP ideas are not detected. effect_tooltip previews of
-        a PP change applied elsewhere (e.g. via select_effect) are skipped.
+        a PP change applied elsewhere (e.g. via select_effect) are skipped, as
+        are the focuses in _PP_MALUS_EXEMPT_FOCUS_IDS.
         """
         self._log_section("Checking for PP malus in focus completion_reward...")
 
@@ -1846,6 +2012,8 @@ class Validator(BaseValidator):
         results = []
         for sub in data_lists:
             for focus_id, fp, line in sub:
+                if focus_id in _PP_MALUS_EXEMPT_FOCUS_IDS:
+                    continue
                 if not self._is_reportable(fp):
                     continue
                 rel = os.path.relpath(fp, self.mod_path)

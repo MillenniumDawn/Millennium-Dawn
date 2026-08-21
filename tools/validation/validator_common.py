@@ -9,8 +9,9 @@ import re
 import sys
 import time
 from dataclasses import dataclass
-from multiprocessing import Pool, cpu_count
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from multiprocessing import cpu_count
+from multiprocessing.pool import Pool
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
@@ -19,6 +20,7 @@ from shared_utils import (
     Colors,
     DataCleaner,
     FileOpener,
+    atomic_write_text,
     clean_filepath,
     compute_line_offsets,
     create_validation_parser,
@@ -32,6 +34,9 @@ from shared_utils import (
     strip_comments,
     timing_enabled,
 )
+
+# Generic type for the cross-pass result cache accessor (see BaseValidator.cached).
+T = TypeVar("T")
 
 # Regex for meta_effect/meta_trigger template substitution patterns.
 # Matches identifiers containing at least one [VAR] placeholder with a non-empty
@@ -57,6 +62,13 @@ def _label_from_failmsg(fail_msg: str) -> str:
     return label or "OTHER"
 
 
+def _safe_int(value) -> int:
+    try:
+        return int(value) if value else 0
+    except (TypeError, ValueError):
+        return 0
+
+
 # Loc keys that live in vanilla HOI4 (not the mod's localisation/ tree) and are
 # inherited by MD decisions/events/focuses that override or reuse the vanilla
 # object. The base loc loader scans only the mod, so without this allowlist
@@ -79,6 +91,80 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "recruit_in_asia",
         "recruit_in_australia",
         "recruit_in_india",
+        # modifiers_l_english.yml — variable-effect tooltip rows inherited by
+        # MD focus, decision, event, and idea effects.
+        "acclimatization_cold_climate_gain_factor_tt",
+        "acclimatization_hot_climate_gain_factor_tt",
+        "ace_effectiveness_factor_tt",
+        "agency_upgrade_time_tt",
+        "air_ace_bonuses_factor_tt",
+        "air_chief_cost_factor_tt",
+        "air_fuel_consumption_factor_tt",
+        "air_home_defence_factor_tt",
+        "air_interception_detect_factor_tt",
+        "air_range_factor_tt",
+        "air_training_xp_gain_factor_tt",
+        "air_weather_penalty_tt",
+        "air_wing_xp_loss_when_killed_factor_tt",
+        "amphibious_invasion_tt",
+        "annex_cost_factor_tt",
+        "army_armor_speed_factor_tt",
+        "army_artillery_defence_factor_tt",
+        "army_attack_speed_factor_tt",
+        "army_leader_start_attack_level_tt",
+        "army_leader_start_defense_level_tt",
+        "army_leader_start_logistics_level_tt",
+        "army_leader_start_planning_level_tt",
+        "base_fuel_gain_factor_tt",
+        "cic_construction_boost_factor_tt",
+        "compliance_growth_on_our_occupied_states_tt",
+        "compliance_growth_tt",
+        "conversion_cost_civ_to_mil_factor_tt",
+        "convoy_escort_efficiency_tt",
+        "convoy_retreat_speed_tt",
+        "enemy_justify_war_goal_time_tt",
+        "equipment_conversion_speed_tt",
+        "experience_gain_navy_tt",
+        "fascism_drift_tt",
+        "heat_attrition_factor_tt",
+        "industry_free_repair_factor_tt",
+        "industry_repair_factor_tt",
+        "intel_from_combat_factor_tt",
+        "land_bunker_effectiveness_factor_tt",
+        "lend_lease_tension_tt",
+        "local_factories_tt",
+        "local_resource_gain_efficiency_per_infrastructure_tt",
+        "master_ideology_drift_tt",
+        "max_dig_in_factor_tt",
+        "max_dig_in_tt",
+        "mechanized_attack_factor_tt",
+        "military_industrial_organization_funds_gain_tt",
+        "military_industrial_organization_research_bonus_tt",
+        "military_leader_cost_factor_tt",
+        "minimum_training_level_tt",
+        "motorized_attack_factor_tt",
+        "naval_critical_score_chance_factor_tt",
+        "naval_enemy_fleet_size_ratio_penalty_factor_tt",
+        "naval_mines_damage_factor_tt",
+        "naval_mines_effect_reduction_tt",
+        "naval_strike_targetting_factor_tt",
+        "naval_torpedo_reveal_chance_factor_tt",
+        "naval_torpedo_screen_penetration_factor_tt",
+        "navy_intel_factor_tt",
+        "navy_intel_to_others_tt",
+        "navy_screen_attack_factor_tt",
+        "navy_screen_defence_factor_tt",
+        "non_core_manpower_tt",
+        "production_oil_factor_tt",
+        "production_speed_facility_factor_tt",
+        "production_speed_supply_node_factor_tt",
+        "recruitable_population_tt",
+        "resistance_activity_tt",
+        "resistance_target_tt",
+        "special_forces_min_tt",
+        "spotting_chance_tt",
+        "state_production_speed_supply_node_factor_tt",
+        "terrain_trait_xp_gain_factor_tt",
         # decisions_l_english.yml — shared cost-tooltip strings used as
         # custom_cost_text on MD decisions.
         "decision_cost_CP_15",
@@ -111,29 +197,31 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "RAJ_indian_national_congress_desc",
         "RAJ_industrial_expansion",
         "RAJ_industrial_expansion_desc",
-        # lar_events_l_english.yml — La Resistance operation events reused by
-        # MD's intel/raid systems.
-        "lar_bruneval_raid.1.a",
-        "lar_bruneval_raid.1.desc",
-        "lar_bruneval_raid.1.t",
-        "lar_bruneval_raid.2.desc",
-        "lar_bruneval_raid.2.t",
-        "lar_capture_tito.1.a",
-        "lar_capture_tito.1.desc",
-        "lar_capture_tito.1.t",
+        "SOV_raskovas_aviation_group",  # nsb_focus_l_english.yml
+        "SOV_raskovas_aviation_group_desc",
+        "SPA_a_great_spain",  # lar_focus_l_english.yml
+        "SPA_a_great_spain_desc",
+        "SPR_the_popular_front",  # lar_focus_l_english.yml
+        "SPR_the_popular_front_desc",
+        # lar_events_l_english.yml — live La Resistance systems reused by MD.
         "lar_collab_gov.1.d",
         "lar_collab_gov.1.t",
-        "lar_heavy_water.1.a",
-        "lar_heavy_water.1.t",
-        "lar_heavy_water.2.a",
-        "lar_heavy_water.2.desc",
-        "lar_heavy_water.2.t",
-        "lar_rescue_mussolini.1.a",
-        "lar_rescue_mussolini.1.desc",
-        "lar_rescue_mussolini.1.t",
-        "lar_rescue_mussolini.2.a",
-        "lar_rescue_mussolini.2.desc",
-        "lar_rescue_mussolini.2.t",
+        # lar_events_l_english.yml — agent-loss events reused by LaR_agent_events.txt.
+        "lar_operative_event.1.a",
+        "lar_operative_event.1.desc",
+        "lar_operative_event.1.t",
+        "lar_operative_event.2.a",
+        "lar_operative_event.2.desc",
+        "lar_operative_event.2.t",
+        "lar_operative_event.3.a",
+        "lar_operative_event.3.desc",
+        "lar_operative_event.3.t",
+        "lar_operative_event.4.a",
+        "lar_operative_event.4.desc",
+        "lar_operative_event.4.t",
+        "lar_operative_event.5.a",
+        "lar_operative_event.5.desc",
+        "lar_operative_event.5.t",
         "occupied_countries.1.a",
         "occupied_countries.1.b",
         "occupied_countries.1.desc",
@@ -410,7 +498,7 @@ class BaseValidator:
         output_file: Optional[str] = None,
         use_colors: bool = True,
         staged_only: bool = False,
-        workers: int = None,
+        workers: Optional[int] = None,
         no_cache: bool = False,
         **kwargs,
     ):
@@ -429,7 +517,7 @@ class BaseValidator:
         if no_cache:
             os.environ["MD_NO_CACHE"] = "1"
         self.staged_files = None
-        self.output_lines = []
+        self.output_lines: List[str] = []
         self._pool: Optional[Pool] = None
         self._shared_cache: Dict[str, object] = {}
         self._issues: List[Issue] = []
@@ -446,11 +534,11 @@ class BaseValidator:
             if not self.staged_files:
                 logging.warning("No staged files found")
 
-    def cached(self, key: str, factory_fn):
+    def cached(self, key: str, factory_fn: Callable[[], T]) -> T:
         # Pool workers don't see this cache; populate from the main process.
         if key not in self._shared_cache:
             self._shared_cache[key] = factory_fn()
-        return self._shared_cache[key]
+        return cast(T, self._shared_cache[key])
 
     def parse_files_cached(
         self,
@@ -473,12 +561,16 @@ class BaseValidator:
             text = FileOpener.open_text_file(
                 path, lowercase=lowercase, strip_comments_flag=strip_comments_flag
             )
+
+            def parse_cached() -> Any:
+                return parse_fn(text, path)
+
             results[path] = disk_cache.per_file_cached_by_content(
                 self.mod_path,
                 namespace,
                 path,
                 text,
-                lambda t=text, p=path: parse_fn(t, p),
+                parse_cached,
             )
         return results
 
@@ -588,26 +680,14 @@ class BaseValidator:
                     )
 
     def save_output(self):
-        if self.output_file and self.output_lines:
-            try:
-                with open(self.output_file, "w", encoding="utf-8") as f:
-                    f.write("\n".join(self.output_lines))
-                logging.info(f"Results saved to: {self.output_file}")
-            except Exception as e:
-                logging.error(f"Failed to write results to {self.output_file}: {e}")
-
-        json_file = (
-            os.path.splitext(self.output_file)[0] + ".json"
-            if self.output_file
-            else None
-        )
-        if json_file and self._issues:
-            try:
-                with open(json_file, "w", encoding="utf-8") as f:
-                    f.write(self.get_issues_json())
-                logging.info(f"JSON results saved to: {json_file}")
-            except Exception as e:
-                logging.error(f"Failed to serialize JSON to {json_file}: {e}")
+        if not self.output_file:
+            return
+        atomic_write_text(self.output_file, "\n".join(self.output_lines))
+        logging.info(f"Results saved to: {self.output_file}")
+        if self._issues:
+            json_file = os.path.splitext(self.output_file)[0] + ".json"
+            atomic_write_text(json_file, self.get_issues_json())
+            logging.info(f"JSON results saved to: {json_file}")
 
     def add_issue(
         self, severity: str, category: str, message: str, file: str = "", line: int = 0
@@ -665,7 +745,7 @@ class BaseValidator:
             if not m:
                 continue
             gd = m.groupdict()
-            line = int(gd["line"]) if gd.get("line") else 0
+            line = _safe_int(gd.get("line"))
             prefix = gd.get("prefix")
             msg = gd.get("msg", "")
             if prefix:
@@ -707,7 +787,7 @@ class BaseValidator:
                 # (message, file, line)
                 msg_t = str(r[0]) if len(r) > 0 else ""
                 file_t = str(r[1]) if len(r) > 1 else ""
-                line_t = int(r[2]) if len(r) > 2 and r[2] else 0
+                line_t = _safe_int(r[2]) if len(r) > 2 else 0
                 issue = Issue(
                     severity=severity,
                     category=group_label,
@@ -748,7 +828,7 @@ class BaseValidator:
         key = "_basename_index:" + "|".join(patterns)
         existing = self._shared_cache.get(key)
         if existing is not None:
-            return existing
+            return cast(Dict[str, List[str]], existing)
 
         tracked: List[str] = []
         seen: Set[str] = set()
@@ -805,7 +885,10 @@ class BaseValidator:
         # cost. The Pool is created lazily on the first batch that uses it.
         if self.workers == 1 or len(args_list) < 10:
             return [func(a) for a in args_list]
-        return self._get_pool().map(func, args_list, chunksize=chunksize)
+        pool = self._get_pool()
+        if pool is None:
+            return [func(a) for a in args_list]
+        return pool.map(func, args_list, chunksize=chunksize)
 
     def _pool_map_init(
         self,
@@ -880,11 +963,15 @@ class BaseValidator:
                     normalized.startswith(hint) or ("/" + hint) in normalized
                 )
 
-            files = [
+            matched = [
                 f
                 for f in self.staged_files
                 if any(f.endswith(ext) for ext in extensions)
                 and any(_matches_hint(f, hint) for hint in dir_hints)
+            ]
+            files = [
+                f if os.path.isabs(f) else os.path.join(self.mod_path, f)
+                for f in matched
             ]
         else:
             seen: Set[str] = set()

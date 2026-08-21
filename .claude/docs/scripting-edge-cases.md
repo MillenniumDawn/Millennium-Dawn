@@ -51,7 +51,55 @@ When a function uses `^index` array subscripts, the **meaning of the index varia
 
 **Rule:** Document an array-index parameter in the function comment. Verify every caller passes the right kind of index. See `.claude/docs/refactor-checklist.md` for the full verification steps.
 
+## damage_building / remove_building Need a Matching Presence Guard
+
+Both effects require the named building to exist in the scope they run in. Against a state that doesn't have it, the engine logs an error and does nothing. One stray call is invisible; MD fires these from raids and repeatable `random_list` decisions, so at campaign scale the log spam becomes a real cost (#2806).
+
+The guard must name the **same** building as the effect. An `if` that gates on something else — an idea, a flag, state control — reads like a guard and isn't one:
+
+```
+# Wrong — guarded, but on an idea; state 652 may hold no industrial_complex
+if = {
+    limit = { has_idea = SOV_foreign_cars_idea1 }
+    652 = { remove_building = { type = industrial_complex level = 2 } }
+}
+
+# Correct — the building's own count trigger, in state scope
+if = {
+    limit = { fuel_silo > 0 }
+    damage_building = { type = fuel_silo damage = 1 }
+}
+```
+
+Other accepted forms: `non_damaged_building_level = { building = X level > 0 }` (use this when damage matters, not just presence), a `random_list` bucket zeroed by `modifier = { factor = 0  X < 1 }`, and an `any_core_state = { X > N }` pre-selection before a `random_core_state` pick. Flagged (WARNING) by `validate_building_guards.py`.
+
 ## Guard Gates on Optional / Elected Office Holders — Worked Example
+
+## EU Game-Rule Guard on europeanism_change Calls
+
+When the EU game rule (`GAME_RULE_eu_disabled`) is active, the `europeanism`
+country variable is meaningless — the EU system is entirely disabled. Any effect
+that modifies `europeanism` (via `europeanism_change`, `EU_europeanism_change`,
+or `EU_potential_europeanism_change`) will show in tooltips as junk effects
+that do nothing at runtime.
+
+**Rule:** the guard is built directly into `europeanism_change`,
+`EU_europeanism_change`, and `EU_potential_europeanism_change` themselves.
+No wrapper or inline `if` block is needed at call sites — just call them
+normally:
+
+```
+set_temp_variable = { modify_europeanism = ... }
+set_temp_variable = { modify_europeanism_target = ... }  # if needed
+europeanism_change = yes
+```
+
+When `GAME_RULE_eu_disabled` is active, the `custom_effect_tooltip` and
+`hidden_effect` inside each scripted effect are skipped, so no junk tooltip
+entries appear. The guard applies regardless of whether the enclosing
+event/decision already has a `GAME_RULE_eu_disabled` trigger check — the
+`if` block inside the scripted effect is needed because tooltips evaluate
+`completion_reward` / `remove_effect` content independently of the trigger.
 
 The rule (`general-rules.md`): any gate on "the holder of office X" needs a defined branch for the vacant case, or it is unsatisfiable while nobody holds the office.
 
@@ -83,13 +131,13 @@ Mirror the vacant case in the tooltip (e.g. "if no office is filled, this requir
 
 Some effects accept `event_target:` / `tag` / scope tokens directly in their parameters; others require you to enter the target country as the current scope (typically `event_target:X = { ... }`) and reference the other party as `ROOT` / `PREV` / `THIS` inside the block. The behavior is per-effect, not per-mod.
 
-| Effect                              | `target =` accepts `event_target:`? | Pattern                                                                 |
-| ----------------------------------- | ----------------------------------- | ----------------------------------------------------------------------- |
-| `add_to_war`                        | yes                                 | `add_to_war = { targeted_alliance = event_target:X enemy = event_target:Y }` at executor scope |
-| `add_opinion_modifier`              | yes (in practice)                   | `add_opinion_modifier = { target = event_target:X modifier = foo }`     |
-| `reverse_add_opinion_modifier`      | yes (in practice)                   | `reverse_add_opinion_modifier = { target = event_target:X modifier = foo }` |
-| `add_relation_modifier`             | **no — tag literal only**          | enter scope: `event_target:X = { add_relation_modifier = { target = ROOT modifier = foo } }` |
-| `send_equipment`                    | yes                                 | `send_equipment = { target = event_target:X ... }`                      |
+| Effect                         | `target =` accepts `event_target:`? | Pattern                                                                                        |
+| ------------------------------ | ----------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `add_to_war`                   | yes                                 | `add_to_war = { targeted_alliance = event_target:X enemy = event_target:Y }` at executor scope |
+| `add_opinion_modifier`         | yes (in practice)                   | `add_opinion_modifier = { target = event_target:X modifier = foo }`                            |
+| `reverse_add_opinion_modifier` | yes (in practice)                   | `reverse_add_opinion_modifier = { target = event_target:X modifier = foo }`                    |
+| `add_relation_modifier`        | **no — tag literal only**           | enter scope: `event_target:X = { add_relation_modifier = { target = ROOT modifier = foo } }`   |
+| `send_equipment`               | yes                                 | `send_equipment = { target = event_target:X ... }`                                             |
 
 **Rule of thumb:** when an effect has both an executor side and a `target =` side and the two countries must differ, open a scope block on the side whose `target =` would otherwise need a non-tag token. The executor side becomes `ROOT` / `PREV` from inside the block; the `target =` field takes the simple `TAG` form and is unambiguous.
 

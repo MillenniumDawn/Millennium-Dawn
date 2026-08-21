@@ -13,6 +13,7 @@ import sys
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
 
+import precommit_validate as dispatcher  # noqa: E402
 from precommit_validate import _REGISTRY  # noqa: E402
 
 _BY_SCRIPT = {spec.script: spec for spec in _REGISTRY}
@@ -29,41 +30,137 @@ def _selected(path):
 # scripted_params, simplifications, localisation, factions, history_techs, ...)
 # are stages:[manual] in the config and intentionally absent here.
 _GOLDEN = {
-    "common/national_focus/france.txt": {"validate_style", "validate_ideas"},
-    "events/Syria.txt": {"validate_style", "validate_ideas", "validate_events"},
-    "common/decisions/Sudan.txt": {"validate_style", "validate_ideas"},
-    "common/on_actions/00_on_actions.txt": {"validate_style", "validate_ideas"},
-    "common/scripted_triggers/00_triggers.txt": {"validate_style", "validate_ideas"},
+    "common/national_focus/france.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_events",
+        "validate_oob_units",
+        "validate_characters",
+    },
+    "events/Syria.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_events",
+        "validate_oob_units",
+        "validate_characters",
+    },
+    "common/decisions/Sudan.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_events",
+        "validate_oob_units",
+        "validate_characters",
+    },
+    "common/on_actions/00_on_actions.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_oob_units",
+        "validate_events",
+        "validate_characters",
+    },
+    "common/operations/00_operations.txt": {
+        "validate_style",
+        "validate_events",
+        "validate_oob_units",
+    },
+    "common/resistance_compliance_modifiers/resistance_modifiers.txt": {
+        "validate_style",
+        "validate_events",
+        "validate_oob_units",
+    },
+    "common/scripted_guis/00_missiles_scripted_guis.txt": {
+        "validate_style",
+        "validate_events",
+        "validate_oob_units",
+    },
+    "common/scripted_triggers/00_triggers.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_events",
+    },
     "common/scripted_effects/00_x.txt": {
         "validate_style",
         "validate_oob_units",
         "validate_ideas",
+        "validate_events",
+        "validate_characters",
     },
     "common/units/MD_land_units.txt": {
         "validate_style",
         "validate_oob_units",
         "validate_ai_navy",
+        "validate_events",
     },
     "common/ai_templates/x.txt": {
         "validate_style",
         "validate_oob_units",
         "validate_ai_roles",
+        "validate_events",
     },
-    "common/ai_strategy/CAN.txt": {"validate_style", "validate_ai_roles"},
-    "common/ai_navy/x.txt": {"validate_style", "validate_ai_navy"},
-    "common/ai_equipment/x.txt": {"validate_style", "validate_ai_equipment"},
+    "common/ai_strategy/CAN.txt": {
+        "validate_style",
+        "validate_ai_roles",
+        "validate_events",
+    },
+    "common/ai_navy/x.txt": {
+        "validate_style",
+        "validate_ai_navy",
+        "validate_events",
+    },
+    "common/ai_equipment/x.txt": {
+        "validate_style",
+        "validate_ai_equipment",
+        "validate_events",
+    },
     "common/intelligence_agency_upgrades/x.txt": {
         "validate_style",
         "validate_agency_upgrades",
+        "validate_events",
     },
-    "localisation/english/MD_focus_SER_l_english.yml": {"validate_ideas"},
-    "common/factions/x.txt": {"validate_style"},
-    "history/countries/x.txt": {"validate_style", "validate_ideas"},
+    "localisation/english/MD_focus_SER_l_english.yml": {
+        "validate_ideas",
+        "validate_mios",
+    },
+    "common/factions/x.txt": {"validate_style", "validate_events"},
+    "common/military_industrial_organization/organizations/MD_ISR_organizations.txt": {
+        "validate_style",
+        "validate_mios",
+        "validate_events",
+    },
+    "common/military_industrial_organization/policies/_land_policies.txt": {
+        "validate_style",
+        "validate_mios",
+        "validate_events",
+    },
+    "common/units/equipment/MD_anti_air.txt": {
+        "validate_style",
+        "validate_mios",
+        "validate_events",
+        "validate_ai_navy",
+        "validate_oob_units",
+    },
+    "common/equipment_groups/mio_equipment_groups.txt": {
+        "validate_style",
+        "validate_mios",
+        "validate_events",
+    },
+    "history/countries/x.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_oob_units",
+        "validate_events",
+        "validate_characters",
+    },
 }
 
 
 def test_golden_selection():
     for path, expected in _GOLDEN.items():
+        expected = set(expected)
+        if path.endswith(".txt") and not any(
+            token in path for token in ("Changelog.txt", "AUTHORS.txt", "/descriptions")
+        ):
+            expected.add("validate_common_mistakes")
         assert _selected(path) == expected, path
 
 
@@ -111,6 +208,31 @@ def test_manual_validators_not_folded():
         "validate_simplifications",
     ):
         assert script not in folded
+
+
+def test_dispatcher_subprocess_contract(monkeypatch, tmp_path):
+    spec = dispatcher._Spec("validate_stub", [("events/", ".txt")], strict=True)
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        captured.update(kwargs)
+        return type(
+            "Result",
+            (),
+            {"returncode": 1, "stdout": "finding", "stderr": ""},
+        )()
+
+    monkeypatch.setattr(dispatcher.subprocess, "run", fake_run)
+    env = {"MD_STAGED_FILES": "events/test.txt"}
+    result = dispatcher._run(spec, str(tmp_path), env, True, 3)
+
+    assert "--staged" in captured["command"]
+    assert "--strict" in captured["command"]
+    assert captured["command"][-3:] == ["3", "--strict", "--no-color"]
+    assert captured["env"] is env
+    assert captured["timeout"] == 300
+    assert result[1] == 1
 
 
 def test_no_match_outside_scope():

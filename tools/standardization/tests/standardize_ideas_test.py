@@ -42,6 +42,36 @@ def test_body_comment_preserved():
     assert any("cost = 80" in line for line in out)
 
 
+def test_body_comment_follows_its_property_through_reordering():
+    block = _idea(
+        [
+            "\tTAG_test_idea = {",
+            "\t\t# scales with the coalition",
+            "\t\tmodifier = { stability_factor = 0.05 }",
+            "\t\tpicture = test_picture",
+            "\t}",
+        ]
+    )
+    out = _standardize(block)
+    comment = out.index("\t\t# scales with the coalition")
+    assert "modifier" in out[comment + 1]
+
+
+def test_comment_on_a_dropped_always_no_block_survives():
+    block = _idea(
+        [
+            "\tTAG_test_idea = {",
+            "\t\tpicture = test_picture",
+            "\t\t# why this was gated off",
+            "\t\tallowed = { always = no }",
+            "\t}",
+        ]
+    )
+    out = _standardize(block)
+    assert any("# why this was gated off" in line for line in out)
+    assert not any("always = no" in line for line in out)
+
+
 def test_unknown_nested_block_preserved_and_indented():
     block = _idea(
         [
@@ -154,6 +184,32 @@ def test_allowed_tag_rewritten_to_original_tag():
     text = "\n".join(out)
     assert "original_tag = TAG" in text
     assert not any(line.strip() == "tag = TAG" for line in out)
+
+
+def test_ledger_emitted_after_allowed_but_before_modifier():
+    block = _idea(
+        [
+            "\tTAG_test_idea = {",
+            "\t\tmodifier = { stability_factor = 0.05 }",
+            "\t\tledger = army",
+            "\t\tallowed = {",
+            "\t\t\toriginal_tag = TAG",
+            "\t\t}",
+            "\t\tai_will_do = { base = 1 }",
+            "\t}",
+        ]
+    )
+    out = _standardize(block)
+    allowed_idx = next(
+        i for i, line in enumerate(out) if line.strip().startswith("allowed")
+    )
+    ledger_idx = next(
+        i for i, line in enumerate(out) if line.strip() == "ledger = army"
+    )
+    modifier_idx = next(
+        i for i, line in enumerate(out) if line.strip().startswith("modifier")
+    )
+    assert allowed_idx < ledger_idx < modifier_idx
 
 
 def test_idempotent():
