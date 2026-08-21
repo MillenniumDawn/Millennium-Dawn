@@ -20,6 +20,7 @@ from shared_utils import (
     Colors,
     DataCleaner,
     FileOpener,
+    atomic_write_text,
     clean_filepath,
     compute_line_offsets,
     create_validation_parser,
@@ -680,26 +681,14 @@ class BaseValidator:
                     )
 
     def save_output(self):
-        if self.output_file and self.output_lines:
-            try:
-                with open(self.output_file, "w", encoding="utf-8", newline="") as f:
-                    f.write("\n".join(self.output_lines))
-                logging.info(f"Results saved to: {self.output_file}")
-            except Exception as e:
-                logging.error(f"Failed to write results to {self.output_file}: {e}")
-
-        json_file = (
-            os.path.splitext(self.output_file)[0] + ".json"
-            if self.output_file
-            else None
-        )
-        if json_file and self._issues:
-            try:
-                with open(json_file, "w", encoding="utf-8", newline="") as f:
-                    f.write(self.get_issues_json())
-                logging.info(f"JSON results saved to: {json_file}")
-            except Exception as e:
-                logging.error(f"Failed to serialize JSON to {json_file}: {e}")
+        if not self.output_file:
+            return
+        atomic_write_text(self.output_file, "\n".join(self.output_lines))
+        logging.info(f"Results saved to: {self.output_file}")
+        if self._issues:
+            json_file = os.path.splitext(self.output_file)[0] + ".json"
+            atomic_write_text(json_file, self.get_issues_json())
+            logging.info(f"JSON results saved to: {json_file}")
 
     def add_issue(
         self, severity: str, category: str, message: str, file: str = "", line: int = 0
@@ -975,11 +964,15 @@ class BaseValidator:
                     normalized.startswith(hint) or ("/" + hint) in normalized
                 )
 
-            files = [
+            matched = [
                 f
                 for f in self.staged_files
                 if any(f.endswith(ext) for ext in extensions)
                 and any(_matches_hint(f, hint) for hint in dir_hints)
+            ]
+            files = [
+                f if os.path.isabs(f) else os.path.join(self.mod_path, f)
+                for f in matched
             ]
         else:
             seen: Set[str] = set()

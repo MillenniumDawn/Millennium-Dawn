@@ -132,7 +132,9 @@ Total validators run: 12
 
 ## Pre-Commit Integration
 
-Validators are integrated into `.pre-commit-config.yaml` and run automatically on commit. The hook passes `--staged` so only the files being committed are checked, keeping commit times fast.
+Validators are integrated into `.pre-commit-config.yaml` and run automatically
+on commit. The hook passes `--staged` so only the files being committed are
+checked, keeping commit times fast.
 
 To bypass for a single commit (not recommended):
 
@@ -142,13 +144,27 @@ git commit --no-verify
 
 ### Pre-commit vs CI
 
-To keep commit latency low, only a fast subset of validators runs on `git commit`. The heavy cross-reference validators (`validate_scripted_gui`, `validate_localisation`, `validate_cosmetic_tags`, `validate_variables`, `validate_focus_tree`, and most others) run **CI-only** — they are gated by the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml`, not by pre-commit.
+To keep commit latency low, only a fast subset of validators runs on
+`git commit`. Heavy cross-reference validators such as
+`validate_scripted_gui`, `validate_localisation`, `validate_cosmetic_tags`,
+`validate_variables`, and `validate_focus_tree` run **CI-only**. The
+`validate-core` and `validate-targeted` matrices in
+`.github/workflows/coding-pipeline.yml` gate them instead of pre-commit.
 
-The commit-stage validators (`validate_style`, `validate_oob_units`, `validate_ai_roles`, `validate_ai_navy`, `validate_characters`, `validate_ai_equipment`, `validate_agency_upgrades`, `validate_ideas`, `validate_events`, `validate_mios`) run through a single pre-commit hook, `md-validate-content`, which fans them out in parallel via `tools/precommit_validate.py`. `check_common_mistakes` and `validate_defines` keep their own commit-stage hooks; `validate_unused_textures` keeps a `stages: [manual]` hook because CI cannot run it.
+The commit-stage validators (`validate_common_mistakes`, `validate_style`,
+`validate_oob_units`, `validate_ai_roles`, `validate_ai_navy`,
+`validate_characters`, `validate_ai_equipment`, `validate_agency_upgrades`,
+`validate_ideas`, `validate_events`, and `validate_mios`) run through the
+`md-validate-content` pre-commit hook. It fans them out in parallel through
+`tools/precommit_validate.py`. `validate_defines` keeps its own commit-stage
+hook. `validate_unused_textures` keeps a `stages: [manual]` hook because CI
+cannot run it.
 
-`validate_file_paths` runs CI-only in its own `validate-paths` job. It reads the git index rather than the working tree, so it sits outside both matrices — those restore a content bundle with no `.git` and no `map/`.
+`validate_file_paths` runs CI-only in its own `validate-paths` job. It reads
+the git index rather than the working tree, so it sits outside both matrices.
+Those restore a content bundle with no `.git` and no `map/`.
 
-To run any validator locally — including a CI-only one — invoke it directly:
+To run any validator locally, including a CI-only one, invoke it directly:
 
 ```bash
 python3 tools/validation/validate_scripted_gui.py --staged --no-color  # changed files only

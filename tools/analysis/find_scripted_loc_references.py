@@ -45,21 +45,20 @@ def extract_scripted_loc_names(filepath: Path) -> list[str]:
 
 
 def make_scripted_loc_searcher(search_dirs: list[Path], source_file: Path):
-    """Build a closure that searches for one scripted loc name across the given dirs.
+    """Build a closure that scans each candidate file once for all names."""
 
-    Skips the definition line in the source file. In localisation directories,
-    only counts `[name]`-bracketed references.
-    """
-
-    def search(name: str) -> list[tuple[str, int, str]]:
-        refs: list[tuple[str, int, str]] = []
-        definition_pattern = re.compile(rf"^\s*name\s*=\s*{re.escape(name)}\s*$")
+    def search(names: list[str]) -> dict[str, list[tuple[str, int, str]]]:
+        refs: dict[str, list[tuple[str, int, str]]] = {name: [] for name in names}
+        if not names:
+            return refs
+        token_re = re.compile(
+            r"(?<![\w])(?:" + "|".join(map(re.escape, names)) + r")(?![\w])"
+        )
         for search_dir in search_dirs:
             if not search_dir.is_dir():
                 continue
-            is_loc_dir = "localisation" in search_dir.name
+            is_loc_dir = "localisation" in search_dir.parts
             globs = ["*.yml"] if is_loc_dir else ["*.txt", "*.gui", "*.gfx", "*.yml"]
-
             for glob_pattern in globs:
                 for filepath in search_dir.rglob(glob_pattern):
                     try:
@@ -68,15 +67,16 @@ def make_scripted_loc_searcher(search_dirs: list[Path], source_file: Path):
                         ).splitlines()
                     except OSError:
                         continue
+                    rel = str(filepath.relative_to(REPO_ROOT))
                     for i, line in enumerate(lines, 1):
-                        if name not in line:
-                            continue
-                        if filepath == source_file and definition_pattern.match(line):
-                            continue
-                        if is_loc_dir and f"[{name}]" not in line:
-                            continue
-                        rel = filepath.relative_to(REPO_ROOT)
-                        refs.append((str(rel), i, line.strip()))
+                        for name in set(token_re.findall(line)):
+                            if filepath == source_file and re.fullmatch(
+                                rf"\s*name\s*=\s*{re.escape(name)}\s*", line
+                            ):
+                                continue
+                            if is_loc_dir and f"[{name}]" not in line:
+                                continue
+                            refs[name].append((rel, i, line.strip()))
         return refs
 
     return search
