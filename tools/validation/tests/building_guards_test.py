@@ -180,6 +180,36 @@ def test_any_core_state_preselection_guard_is_clean():
     assert _scan(script) == []
 
 
+def test_random_owned_state_limit_is_clean():
+    script = (
+        "random_owned_state = {\n"
+        "\tlimit = { dockyard > 0 }\n"
+        "\tremove_building = { type = dockyard level = 1 }\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+
+
+def test_every_owned_state_limit_is_clean():
+    script = (
+        "every_owned_state = {\n"
+        "\tlimit = { infrastructure > 0 }\n"
+        "\tdamage_building = { type = infrastructure damage = 1 }\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+
+
+def test_random_controlled_state_limit_is_clean():
+    script = (
+        "random_controlled_state = {\n"
+        "\tlimit = { arms_factory > 0 }\n"
+        "\tdamage_building = { type = arms_factory damage = 2 }\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+
+
 # --- guard must name the same building ------------------------------------
 
 
@@ -216,6 +246,61 @@ def test_guard_naming_a_different_building_still_flags():
     findings = _scan(script)
     assert len(findings) == 1
     assert "industrial_complex" in findings[0][2]
+
+
+def test_random_owned_state_limit_for_other_building_still_flags():
+    script = (
+        "random_owned_state = {\n"
+        "\tlimit = { dockyard > 0 }\n"
+        "\tremove_building = { type = arms_factory level = 1 }\n"
+        "}\n"
+    )
+    findings = _scan(script)
+    assert len(findings) == 1
+    assert "arms_factory" in findings[0][2]
+
+
+def test_unfiltered_random_owned_state_is_flagged():
+    script = (
+        "random_owned_state = {\n"
+        "\tdamage_building = { type = infrastructure damage = 1 }\n"
+        "}\n"
+    )
+    findings = _scan(script)
+    assert len(findings) == 1
+    assert "infrastructure" in findings[0][2]
+
+
+def test_event_trigger_does_not_guard_option_effects():
+    script = (
+        "country_event = {\n"
+        "\ttrigger = { any_owned_state = { industrial_complex > 0 } }\n"
+        "\toption = {\n"
+        "\t\t652 = {\n"
+        "\t\t\tremove_building = { type = industrial_complex level = 1 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _scan(script)
+    assert len(findings) == 1
+    assert "industrial_complex" in findings[0][2]
+
+
+def test_decision_available_does_not_guard_remove_effect():
+    script = (
+        "debt_default_dismantle_military_factories = {\n"
+        "\tavailable = { any_owned_state = { arms_factory > 0 } }\n"
+        "\tremove_effect = {\n"
+        "\t\t652 = {\n"
+        "\t\t\tremove_building = { type = arms_factory level = 1 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _scan(script)
+    assert len(findings) == 1
+    assert "arms_factory" in findings[0][2]
 
 
 # --- scan_file cache --------------------------------------------------------
