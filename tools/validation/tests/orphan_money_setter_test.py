@@ -63,7 +63,9 @@ def _setup(tmp_path):
     fx_dir = tmp_path / "common" / "scripted_effects"
     fx_dir.mkdir(parents=True, exist_ok=True)
     (fx_dir / "00_budget_effects.txt").write_text(BASE_EFFECTS, encoding="utf-8")
-    return build_money_consumer_map([str(fx_dir / "00_budget_effects.txt")])
+    return build_money_consumer_map(
+        [str(fx_dir / "00_budget_effects.txt")], str(tmp_path)
+    )
 
 
 def _lines(tmp_path, reward, consumer_map):

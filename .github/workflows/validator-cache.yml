@@ -46,7 +46,8 @@ jobs:
       # validators cache only what is present on disk, so a narrower checkout
       # would leave namespaces cold for every PR.
       - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 1
           sparse-checkout: |
@@ -85,7 +86,8 @@ jobs:
             md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.x"
 
@@ -94,7 +96,21 @@ jobs:
       # Non-strict findings on main exit 0, while a harness crash fails the job
       # and skips the save, leaving the previous night's entry in place for PRs.
       - name: Run cacheable validators (cache warm-up)
-        run: python3 tools/validation/run_all_validators.py --no-color
+        run: >-
+          python3 tools/validation/run_all_validators.py --no-color
+          --persist-results .validation_baseline_candidate
+
+      - name: Ensure validation result candidate directory exists
+        run: mkdir -p .validation_baseline_candidate
+
+      - name: Upload validation result candidate
+        # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: validation-baseline-candidate
+          path: .validation_baseline_candidate/
+          include-hidden-files: true
+          if-no-files-found: ignore
 
       # run_id suffix: keys are immutable and the nightly scheduled run fires
       # on an unchanged sha — without it the rebuild could never save. PR
@@ -131,8 +147,8 @@ jobs:
 
   # ───────────────────────────────────────────────────────────────
   # Validation baseline — the nightly regression alarm for main itself.
-  # Re-runs the suite (warm, against the cache build-cache just saved) and
-  # diffs the findings against the previous night's baseline. New errors
+  # Consumes the persisted candidate from build-cache and diffs its findings
+  # against the previous night's baseline. New errors
   # fail the job and leave the old baseline in place, so the run stays red
   # every night until the regression is fixed. A validator-code change moves
   # the toolshash, which instead establishes a fresh baseline. The baseline
@@ -150,7 +166,8 @@ jobs:
       # Same union as build-cache: validators only see what is on disk, so a
       # narrower checkout would produce a baseline missing whole namespaces.
       - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 1
           sparse-checkout: |
@@ -199,22 +216,26 @@ jobs:
             md-valcache-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
             github.run_id }}
-          restore-keys: |
-            md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ github.sha }}-
+          restore-keys: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}-
           fail-on-cache-miss: true
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.x"
 
-      # Non-strict: findings never fail this step — the diff below decides.
-      # A validator crash exits 1 and skips the diff, so a broken night
-      # keeps the previous baseline instead of promoting partial results.
-      - name: Run validators and persist results
-        run: >-
-          python3 tools/validation/run_all_validators.py --no-color
-          --persist-results .validation_baseline_candidate
+      - name: Download validation result candidate
+        # v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: validation-baseline-candidate
+          path: .validation_baseline_candidate/
+
+      - name: Verify validation result candidate completion
+        run: test -f .validation_baseline_candidate/.persist-complete
 
       - name: Diff against previous baseline
         id: diff

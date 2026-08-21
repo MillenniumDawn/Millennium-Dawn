@@ -13,6 +13,7 @@ from typing import Optional, Tuple
 
 REPORT_MARKER = "<!-- md-validation-report:v1 -->"
 _PAGE_SIZE = 100
+_REQUEST_TIMEOUT = 30
 
 
 def find_existing_comment(comments: list) -> Optional[dict]:
@@ -103,7 +104,7 @@ def delete_comment(
             headers=headers,
             method="DELETE",
         )
-        with urllib.request.urlopen(req):
+        with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT):
             pass
         return True, f"deleted comment #{existing['id']}"
     except urllib.error.HTTPError as e:
@@ -142,21 +143,21 @@ def _find_report_comment(api_base: str, pr_number: str, headers: dict):
 
 def _get(url: str, headers: dict) -> list:
     req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
         return _decode_json(resp)
 
 
 def _post(url: str, payload: dict, headers: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
         return _decode_json(resp)
 
 
 def _patch(url: str, payload: dict, headers: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=headers, method="PATCH")
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
         return _decode_json(resp)
 
 

@@ -1,7 +1,10 @@
 #!/usr/bin/python
 import argparse
 import collections
+import os
 import re
+
+from shared_utils import atomic_write_text, read_text_strict
 
 
 #############################
@@ -182,20 +185,13 @@ def main():
     args = parser.parse_args()
 
     parsed_file = readfile(args.input)
-    lines = list()
-    try:
-        with open(args.output, "r") as f:
-            lines = f.read().splitlines()
-    except Exception:
+    existing = ""
+    if os.path.exists(args.output):
         try:
-            with open(args.output, "r", encoding="utf-8") as f:
-                lines = f.read().splitlines()
-        except Exception:
-            try:
-                with open(args.output, "r", encoding="utf-8-sig") as f:
-                    lines = f.read().splitlines()
-            except Exception:
-                print("Could not read file " + args.output + "!")
+            existing = read_text_strict(args.output)
+        except (OSError, UnicodeError) as exc:
+            raise SystemExit(f"Could not read file {args.output}: {exc}") from exc
+    lines = existing.splitlines()
     output_lines = list()
     if len(lines) < 1:
         print(
@@ -228,9 +224,9 @@ def main():
                     y = y + i.capitalize() + " "
             print(y)
             output_lines.append(" " + line + ': "' + y + '"')
+        appended = "".join(str(line) + "\n" for line in output_lines)
         try:
-            with open(args.output, "a", encoding="utf-8", newline="") as f:
-                f.writelines(str(line) + "\n" for line in output_lines)
+            atomic_write_text(args.output, existing + appended, bom=True)
         except OSError as e:
             raise SystemExit(f"Could not write file {args.output}: {e}") from e
     print(

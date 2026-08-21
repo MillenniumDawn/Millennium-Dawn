@@ -47,7 +47,25 @@ def load_all(results_dir: str) -> List[ValidatorRun]:
 def _load_one(slug: str, artifact_dir: Path) -> ValidatorRun:
     title = _slug_to_title(slug)
     log_text = _read_first(artifact_dir, "*.log")
-    json_issues = _read_json_sidecar(artifact_dir, slug)
+    try:
+        json_issues = _read_json_sidecar(artifact_dir, slug)
+    except ValueError as exc:
+        return ValidatorRun(
+            name=slug,
+            title=title,
+            log_text=log_text,
+            issues=[
+                Issue(
+                    severity=Severity.ERROR,
+                    category="malformed-validator-sidecar",
+                    message=str(exc),
+                    validator=slug,
+                )
+            ],
+            status="failed",
+            errors=1,
+            had_json=True,
+        )
 
     run = ValidatorRun(name=slug, title=title, log_text=log_text)
 
@@ -112,24 +130,21 @@ def _read_first(artifact_dir: Path, pattern: str) -> Optional[str]:
 
 
 def _read_json_sidecar(artifact_dir: Path, slug: str) -> Optional[list]:
-    """Return the parsed JSON list of issue dicts, or None if not present.
-
-    Validators emit `<output_stem>.json` next to their `.log`. In CI the log
-    path is `validation-<slug>.log` so the sidecar is `validation-<slug>.json`.
-    We also search for any `*.json` in the artifact dir as a fallback.
-    """
+    """Return the validated JSON issue list, or None when no sidecar exists."""
     candidates = list(artifact_dir.glob(f"validation-{slug}.json"))
     if not candidates:
         candidates = list(artifact_dir.glob("*.json"))
-    for path in candidates:
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            if isinstance(data, list):
-                return data
-        except Exception:
-            continue
-    return None
+    if not candidates:
+        return None
+    path = sorted(candidates)[0]
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Malformed validator sidecar: {path.name}") from exc
+    if not isinstance(data, list) or not all(isinstance(item, dict) for item in data):
+        raise ValueError(f"Malformed validator sidecar: {path.name}")
+    return data
 
 
 _LOG_ISSUE_RE = re.compile(

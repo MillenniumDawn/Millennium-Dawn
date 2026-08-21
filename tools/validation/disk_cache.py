@@ -25,10 +25,14 @@ import os
 import pickle
 import shutil
 import sqlite3
+import sys
 import threading
 import time
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import write_text_under
 
 # Bump to invalidate every entry after a schema change. v5 replaced the
 # one-pickle-per-entry layout with a single SQLite db; prune_old_versions drops
@@ -39,30 +43,75 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 CACHE_VERSION = 8
 
 
-# Cache entries include this fingerprint so parser changes invalidate results
-# even when the source files themselves are unchanged.
-def _validator_code_fingerprint() -> str:
-    digest = hashlib.sha256()
-    source_dirs = (
-        Path(__file__).parent,
+# Cache entries include the owning validator and shared cache/parser code so a
+# change to one validator does not invalidate every unrelated namespace.
+_VALIDATOR_NAMESPACES = {
+    "agency": "validate_agency_upgrades.py",
+    "agency_upgrades": "validate_agency_upgrades.py",
+    "cosmetic": "validate_cosmetic_tags.py",
+    "decisions": "validate_decisions.py",
+    "dlc_guards": "validate_dlc_guards.py",
+    "events": "validate_events.py",
+    "focus_tree": "validate_focus_tree.py",
+    "gfx_ref": "validate_gfx_references.py",
+    "history_techs": "validate_history.py",
+    "ideas": "validate_ideas.py",
+    "loc": "validate_localisation.py",
+    "modifiers": "validate_modifiers.py",
+    "oob_units": "validate_oob_units.py",
+    "on_actions": "validate_on_actions.py",
+    "scripted_gui": "validate_scripted_gui.py",
+    "scripted_params": "validate_scripted_params.py",
+    "set_variables": "validate_set_variables.py",
+    "simplifications": "validate_simplifications.py",
+    "sprite_index": "sprite_index.py",
+    "style": "validate_style.py",
+    "unused_scripted": "validate_unused_scripted.py",
+    "unused_textures": "validate_unused_textures.py",
+    "variables": "validate_variables.py",
+}
+
+_FINGERPRINT_CACHE: Dict[str, Tuple[Tuple[Tuple[str, int, int], ...], str]] = {}
+
+
+def _fingerprint_paths(namespace: str) -> list[Path]:
+    paths = [
+        Path(__file__),
         Path(__file__).parent.parent / "shared_utils.py",
-    )
-    paths: list[Path] = []
-    for source in source_dirs:
-        if source.is_dir():
-            paths.extend(source.glob("*.py"))
-        elif source.is_file():
-            paths.append(source)
-    for path in sorted(paths):
+        Path(__file__).parent / "validator_common.py",
+    ]
+    owner = _VALIDATOR_NAMESPACES.get(namespace.split(".", 1)[0])
+    if owner:
+        paths.append(Path(__file__).parent / owner)
+    else:
+        paths.extend(Path(__file__).parent.glob("*.py"))
+    return sorted(set(paths))
+
+
+def _validator_code_fingerprint(namespace: str = "") -> str:
+    paths = _fingerprint_paths(namespace)
+    signatures = []
+    for path in paths:
         try:
-            digest.update(path.name.encode("utf-8"))
+            stat = path.stat()
+            signatures.append((str(path), stat.st_mtime_ns, stat.st_size))
+        except OSError:
+            signatures.append((str(path), 0, 0))
+    signature = tuple(signatures)
+    cached = _FINGERPRINT_CACHE.get(namespace)
+    if cached and cached[0] == signature:
+        return cached[1]
+    digest = hashlib.sha256()
+    for path in paths:
+        try:
+            digest.update(str(path).encode("utf-8"))
             digest.update(path.read_bytes())
         except OSError:
             continue
-    return digest.hexdigest()
+    result = digest.hexdigest()
+    _FINGERPRINT_CACHE[namespace] = (signature, result)
+    return result
 
-
-_CODE_FINGERPRINT = _validator_code_fingerprint()
 
 _CACHE_DIR_NAME = ".validation_cache"
 # Records when the cache was created / last cleared (one unix timestamp), so the
@@ -185,7 +234,7 @@ def per_file_cached(
     current_stat = _file_stat(source_path)
     if current_stat is None:
         return compute_fn()
-    tag = f"s:{_CODE_FINGERPRINT}:{current_stat[0]}:{current_stat[1]}"
+    tag = f"s:{_validator_code_fingerprint(namespace)}:{current_stat[0]}:{current_stat[1]}"
     hit, result = _get(mod_path, namespace, source_path, tag)
     if hit:
         return result
@@ -212,7 +261,7 @@ def per_file_cached_by_content(
     """
     if _cache_disabled():
         return compute_fn()
-    tag = f"c:{_CODE_FINGERPRINT}:{len(content)}:{hashlib.sha256(content.encode('utf-8')).hexdigest()}"
+    tag = f"c:{_validator_code_fingerprint(namespace)}:{len(content)}:{hashlib.sha256(content.encode('utf-8')).hexdigest()}"
     hit, result = _get(mod_path, namespace, source_path, tag)
     if hit:
         return result
@@ -221,14 +270,14 @@ def per_file_cached_by_content(
     return result
 
 
-def _stats_tag(stats: Dict[str, Optional[Tuple[int, int]]]) -> str:
+def _stats_tag(stats: Dict[str, Optional[Tuple[int, int]]], namespace: str = "") -> str:
     parts = []
     for p in sorted(stats):
         v = stats[p]
         parts.append(f"{p}={v[0]}:{v[1]}" if v else f"{p}=x")
     return (
         "a:"
-        + _CODE_FINGERPRINT
+        + _validator_code_fingerprint(namespace)
         + ":"
         + hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
     )
@@ -239,12 +288,14 @@ def aggregate_cached(
     key: str,
     tracked_files: Iterable[str],
     factory_fn: Callable[[], Any],
+    *,
+    namespace: str = "",
 ) -> Any:
     if _cache_disabled():
         return factory_fn()
     tracked: List[str] = list(tracked_files)
     current_stats = {p: _file_stat(p) for p in tracked}
-    tag = _stats_tag(current_stats)
+    tag = _stats_tag(current_stats, namespace)
     hit, result = _get(mod_path, "__aggregate__", key, tag)
     if hit:
         return result
@@ -322,9 +373,8 @@ def stamp_created(mod_path: str) -> None:
         return
     try:
         marker.parent.mkdir(parents=True, exist_ok=True)
-        with open(marker, "w", encoding="utf-8", newline="") as fh:
-            fh.write(str(time.time()))
-    except OSError:
+        write_text_under(str(marker), mod_path, str(time.time()))
+    except (OSError, ValueError):
         pass
 
 

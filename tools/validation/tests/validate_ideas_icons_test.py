@@ -201,6 +201,19 @@ def test_icon_no_picture_missing_auto():
     assert msg == "LONELY: auto-icon GFX_idea_LONELY (undefined)"
 
 
+def test_empty_idea_scope_skips_vanilla_manifest(monkeypatch, tmp_path):
+    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+    monkeypatch.setattr(
+        validator,
+        "_build_idea_sprite_set",
+        lambda: (_ for _ in ()).throw(AssertionError("sprite index loaded")),
+    )
+
+    validator.validate_missing_icons({})
+
+    assert validator.errors_found == 0
+
+
 def test_icon_no_picture_name_override_sprite():
     # Auto-icon by idea id is missing, but the name-override sprite exists.
     assert (

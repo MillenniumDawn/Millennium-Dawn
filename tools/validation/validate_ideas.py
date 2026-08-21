@@ -1052,6 +1052,16 @@ class Validator(BaseValidator):
         rename for the icon too.
         """
         self._log_section("Checking for ideas with missing icons...")
+        if not defined_ideas:
+            self.log("  No ideas in scope — skipping sprite index")
+            self._report(
+                [],
+                "✓ All idea picture sprites resolve to real art",
+                "Ideas with missing icons (undefined, case-mismatched or placeholder art):",
+                severity=Severity.WARNING,
+                category="missing-idea-icon",
+            )
+            return
 
         sprites = self._build_idea_sprite_set()
         hidden_cats = frozenset(

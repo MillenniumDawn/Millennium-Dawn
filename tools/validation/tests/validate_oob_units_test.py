@@ -5,6 +5,7 @@ Linux; a wrong-case division_types token or a dead vanilla ship_types token
 means the namelist silently never applies.
 """
 
+import validate_oob_units
 from validate_oob_units import Validator, _parse_canonical_units_file
 
 _LAND_UNITS = """sub_units = {
@@ -56,6 +57,35 @@ def _run_namelist_check(tmp_path, subdir, filename, body):
 def test_parse_canonical_units_file_extracts_sub_unit_names():
     canonical = _parse_canonical_units_file(_LAND_UNITS)
     assert canonical == {"Arm_Inf_Bat", "Mech_Inf_Bat"}
+
+
+def test_build_canonical_units_reads_each_source_once_for_both_indexes(
+    tmp_path, monkeypatch
+):
+    _make_units(tmp_path)
+    calls = []
+    original = validate_oob_units.disk_cache.per_file_cached_by_content
+
+    def cached(*args, **kwargs):
+        calls.append(args[1])
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        validate_oob_units.disk_cache, "per_file_cached_by_content", cached
+    )
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator._build_canonical_units()
+
+    assert calls == ["oob_units.composite", "oob_units.composite"]
+    assert validator.canonical == {"Arm_Inf_Bat", "Mech_Inf_Bat", "corvette"}
+    assert validator.namelist_canonical == {
+        "Arm_Inf_Bat",
+        "Mech_Inf_Bat",
+        "corvette",
+        "infantry_weapons",
+        "util_vehicle_equipment",
+        "ship_hull_corvette",
+    }
 
 
 def test_wrong_case_division_types_token_flagged(tmp_path):

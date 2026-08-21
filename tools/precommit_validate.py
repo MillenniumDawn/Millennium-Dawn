@@ -85,6 +85,11 @@ class _Spec:
 # tools/tests/precommit_validate_test.py guards against drift.
 _REGISTRY = [
     _Spec(
+        "validate_common_mistakes",
+        [("", TXT)],
+        exclude=r"Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$",
+    ),
+    _Spec(
         "validate_style",
         [("", TXT)],
         exclude=r"Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$",

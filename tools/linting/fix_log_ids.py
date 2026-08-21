@@ -20,11 +20,13 @@ from check_common_mistakes import (
 )
 from shared_utils import (
     Timer,
+    atomic_write_text,
     clean_filepath,
     collect_files_by_mode,
     create_linting_parser,
     get_root_dir,
     print_timing_summary,
+    read_text_strict,
     run_with_pool,
 )
 
@@ -58,8 +60,7 @@ def _apply(filepath, dry_run):
         return (filepath, 0)
 
     try:
-        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-            lines = f.readlines()
+        lines = read_text_strict(filepath).splitlines(keepends=True)
     except Exception:
         return (filepath, 0)
 
@@ -75,8 +76,7 @@ def _apply(filepath, dry_run):
         lines[line_idx] = _rewrite_line(lines[line_idx], spans)
 
     if not dry_run:
-        with open(filepath, "w", encoding="utf-8", newline="") as f:
-            f.writelines(lines)
+        atomic_write_text(filepath, "".join(lines))
 
     return (filepath, len(mismatches))
 

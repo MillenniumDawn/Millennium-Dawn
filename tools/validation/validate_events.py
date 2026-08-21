@@ -32,7 +32,7 @@ EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 # `operative_event`, and there is no `character_event`; because `operative` has
 # no word boundary before `_leader_event`, an `operative`/`_event` split never
 # matches the real keyword. Kept in sync with the definition keywords in
-# _EVENT_BLOCK_PATTERN / _EVENT_TYPE_PATTERN.
+# _EVENT_TYPE_PATTERN.
 _EVENT_CALL_KEYWORDS = (
     "country_event",
     "news_event",
@@ -485,39 +485,6 @@ def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
 # --- Event parsing ---
 
 
-_EVENT_BLOCK_PATTERN = re.compile(
-    r"^(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
-    r"\s*=\s*\{(.*?)^\}",
-    flags=re.DOTALL | re.MULTILINE,
-)
-
-
-def _parse_events(text: str, basename: str) -> Tuple[List[str], Dict[str, str]]:
-    events = []
-    paths = {}
-    for match in _EVENT_BLOCK_PATTERN.findall(text):
-        events.append(match)
-        paths[match] = basename
-    return events, paths
-
-
-def process_file_for_events(
-    args: Tuple[str, bool, str],
-) -> Tuple[List[str], Dict[str, str]]:
-    filename, lowercase, mod_path = args
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=lowercase, strip_comments_flag=True
-    )
-    basename = os.path.basename(filename)
-    return disk_cache.per_file_cached_by_content(
-        mod_path,
-        f"events.blocks.lc={int(lowercase)}",
-        filename,
-        text_file,
-        lambda: _parse_events(text_file, basename),
-    )
-
-
 _EVENT_TYPE_PATTERN = re.compile(
     r"^(country_event|news_event|state_event|unit_leader_event|operative_leader_event)\s*=\s*\{",
     re.MULTILINE,
@@ -530,12 +497,6 @@ _OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
 # Event-level (depth-1) title/desc fields — option-level name fields are
 # nested deeper and are not matched.
 _EVENT_TITLEDESC_PATTERN = re.compile(r"^\t(?:title|desc)\s*=\s*(.+)$", re.MULTILINE)
-
-# `id = X` line inside an event block (literal single-space form, distinct
-# from _EVENT_ID_PATTERN's \s* form used in metadata parsing). Reused across
-# validate_unsupported_title_desc / validate_missing_triggered_only /
-# validate_missing_localisation / validate_triggered_only_unreferenced.
-_EVENT_ID_LITERAL_RE = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
 
 # title/desc block-vs-inline detection (validate_unsupported_title_desc).
 _TITLE_DESC_BLOCK_RE = {
@@ -614,12 +575,11 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
         body_nc = blank_quoted_strings(strip_comments(body))
 
         id_match = _EVENT_ID_PATTERN.search(body)
-        if not id_match:
-            continue
 
         meta.append(
             {
-                "id": id_match.group(1),
+                "id": id_match.group(1) if id_match else None,
+                "body": body,
                 "type": event_type,
                 "file": basename,
                 "is_hidden": "hidden = yes" in body_nc,
@@ -641,7 +601,6 @@ class Validator(BaseValidator):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._events_cache: Optional[Tuple[List[str], Dict[str, str]]] = None
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
         self._random_events_cache: Optional[set] = None
         self._probability_rolled_cache: Optional[set] = None
@@ -649,27 +608,11 @@ class Validator(BaseValidator):
         self._fire_scan_args_cache: Optional[List[Tuple[str, frozenset]]] = None
         self._fires_cache: Optional[List[Tuple[str, str, int]]] = None
 
-    def _get_all_events(self) -> Tuple[List[str], Dict[str, str]]:
-        if self._events_cache is not None:
-            return self._events_cache
-        files = self._collect_files(["events/**/*.txt"])
-        args_list = [(f, False, self.mod_path) for f in files]
-        all_results = self._pool_map(process_file_for_events, args_list, chunksize=10)
-
-        events = []
-        paths = {}
-        for ev_list, ev_paths in all_results:
-            events.extend(ev_list)
-            paths.update(ev_paths)
-
-        self._events_cache = (events, paths)
-        return self._events_cache
-
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
-        Each metadata dict has: id, type, file, is_hidden,
-        is_triggered_only, fire_only_once, has_mtth, option_count,
+        Each metadata dict has: id (or None for malformed blocks), type, file,
+        is_hidden, is_triggered_only, fire_only_once, has_mtth, option_count,
         title_desc_refs.
         """
         if self._meta_cache is not None:
@@ -817,20 +760,18 @@ class Validator(BaseValidator):
             "Checking for events with unsupported title/desc combinations..."
         )
 
-        events, paths = self._get_all_events()
-        self.log(f"  Found {len(events)} events")
+        meta, _ = self._get_event_metadata()
+        self.log(f"  Found {len(meta)} events")
         results = []
 
-        for line_type in ["title", "desc"]:
-            block_pat = _TITLE_DESC_BLOCK_RE[line_type]
-            inline_pat = _TITLE_DESC_INLINE_RE[line_type]
-
-            for event in events:
-                if block_pat.search(event) and inline_pat.search(event):
-                    eid_match = _EVENT_ID_LITERAL_RE.findall(event)
-                    eid = eid_match[0] if eid_match else "unknown"
+        for ev in meta:
+            eid = ev["id"] or "unknown"
+            for line_type in ("title", "desc"):
+                if _TITLE_DESC_BLOCK_RE[line_type].search(
+                    ev["body"]
+                ) and _TITLE_DESC_INLINE_RE[line_type].search(ev["body"]):
                     results.append(
-                        f"{eid} - {paths.get(event, 'unknown')} - invalid {line_type} (has both block and inline forms)"
+                        f"{eid} - {ev['file']} - invalid {line_type} (has both block and inline forms)"
                     )
 
         self._report(
@@ -844,16 +785,13 @@ class Validator(BaseValidator):
     def validate_missing_triggered_only(self):
         self._log_section("Checking for events missing is_triggered_only = yes...")
 
-        events, paths = self._get_all_events()
-        self.log(f"  Found {len(events)} events")
-        results = []
-
-        for event in events:
-            if "is_triggered_only = yes" not in event:
-                event_id = _EVENT_ID_LITERAL_RE.findall(event)
-                eid = event_id[0] if event_id else "unknown"
-                filename = paths.get(event, "unknown")
-                results.append(f"{eid} - {filename}")
+        meta, _ = self._get_event_metadata()
+        self.log(f"  Found {len(meta)} events")
+        results = [
+            f"{ev['id'] or 'unknown'} - {ev['file']}"
+            for ev in meta
+            if not ev["is_triggered_only"]
+        ]
 
         self._report(
             results,
@@ -891,24 +829,20 @@ class Validator(BaseValidator):
     def validate_missing_localisation(self):
         self._log_section("Checking for events with missing localisation keys...")
 
-        events, paths = self._get_all_events()
+        meta, _ = self._get_event_metadata()
         loc_keys = self._load_localisation_keys()
-        self.log(f"  Found {len(events)} events, {len(loc_keys)} localisation keys")
+        self.log(f"  Found {len(meta)} events, {len(loc_keys)} localisation keys")
 
         results = []
-        for event in events:
+        for ev in meta:
             # Hidden events display no window, so their title/desc/option-name
             # loc is dead — never flag them for missing keys.
-            if "hidden = yes" in event:
+            if ev["is_hidden"]:
                 continue
-            eid_matches = _EVENT_ID_LITERAL_RE.findall(event)
-            eid = eid_matches[0] if eid_matches else "unknown"
-            filename = paths.get(event, "unknown")
-
-            loc_refs = [k for k in _LOC_REF_PATTERN.findall(event) if "." in k]
-            missing = [k for k in loc_refs if k not in loc_keys]
-            for key in missing:
-                results.append(f"{eid} - {filename}: missing loc key '{key}'")
+            eid = ev["id"] or "unknown"
+            for key in _LOC_REF_PATTERN.findall(ev["body"]):
+                if "." in key and key not in loc_keys:
+                    results.append(f"{eid} - {ev['file']}: missing loc key '{key}'")
 
         self._report(
             results,
@@ -923,15 +857,12 @@ class Validator(BaseValidator):
             "Checking for triggered-only events never referenced anywhere..."
         )
 
-        events, paths = self._get_all_events()
-
-        triggered_only_ids: Dict[str, str] = {}
-        for event in events:
-            if "is_triggered_only = yes" in event:
-                matches = _EVENT_ID_LITERAL_RE.findall(event)
-                if matches:
-                    eid = matches[0]
-                    triggered_only_ids[eid] = paths.get(event, "unknown")
+        meta, _ = self._get_event_metadata()
+        triggered_only_ids: Dict[str, str] = {
+            ev["id"]: ev["file"]
+            for ev in meta
+            if ev["id"] is not None and ev["is_triggered_only"]
+        }
 
         self.log(
             f"  Found {len(triggered_only_ids)} triggered-only events — scanning for references..."
@@ -1043,7 +974,7 @@ class Validator(BaseValidator):
             return None
 
         # Lookup pass: a staged event's parent almost always lives elsewhere.
-        graph_args = [
+        graph_args: List[Tuple[str, frozenset]] = [
             (f, frozenset())
             for f in self._collect_files(["events/**/*.txt"], ignore_staged=True)
         ]
@@ -1098,6 +1029,8 @@ class Validator(BaseValidator):
         for ev in meta:
             if not (ev["has_mtth"] and ev["is_triggered_only"]):
                 continue
+            if ev["id"] is None:
+                continue
             if ev["id"] in random_event_ids:
                 continue
             results.append(f"{ev['id']} - {ev['file']}")
@@ -1129,7 +1062,8 @@ class Validator(BaseValidator):
             detail = f"{count} option block{'s' if count != 1 else ''}"
             if count >= 2:
                 detail += " (only the first auto-fires — the rest are dead code)"
-            results.append(f"{ev['id']} - {ev['file']}: {detail}")
+            event_id = ev["id"] or "unknown"
+            results.append(f"{event_id} - {ev['file']}: {detail}")
 
         self._report(
             results,
@@ -1167,7 +1101,8 @@ class Validator(BaseValidator):
             if not real:
                 continue
             detail = "; ".join(real)
-            results.append(f"{ev['id']} - {ev['file']}: {detail}")
+            event_id = ev["id"] or "unknown"
+            results.append(f"{event_id} - {ev['file']}: {detail}")
 
         self._report(
             results,
@@ -1191,6 +1126,8 @@ class Validator(BaseValidator):
 
         for ev in meta:
             eid = ev["id"]
+            if eid is None:
+                continue
             if eid in seen:
                 results.append(f"{eid} - defined in {seen[eid]} and {ev['file']}")
             else:
@@ -1218,6 +1155,8 @@ class Validator(BaseValidator):
 
         for ev in meta:
             eid = ev["id"]
+            if eid is None:
+                continue
             last_dot = eid.rfind(".")
             if last_dot < 0:
                 continue

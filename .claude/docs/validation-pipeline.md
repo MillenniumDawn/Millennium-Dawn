@@ -22,9 +22,9 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
 
 ## The split
 
-- Most content validators run **CI-only**: the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml` are the gate. Their old `stages: [manual]` pre-commit hooks were removed (almost nobody ran them). On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `check_common_mistakes.py` and `validate_defines.py`. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
+- Most content validators run **CI-only**: the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml` are the gate. Their old `stages: [manual]` pre-commit hooks were removed (almost nobody ran them). On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `validate_defines.py`. Common scripting-mistake rules run once through `validate_common_mistakes.py` in that dispatcher and the CI validator matrix. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
 - `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
-- `fix_loc_yaml.py`, `validate_localization_encoding.py`, `validate_mod_encoding.py` (all `tools/linting/`) are **pre-commit-only** — never run on CI. Web-UI edits or contributors with hooks disabled can land BOM or encoding regressions. (The old `check_braces.py` hook was absorbed into `tools/validation/validate_style.py`.)
+- `fix_loc_yaml.py` is pre-commit-only. `validate_localization_encoding.py` and `validate_mod_encoding.py` also run in the coding pipeline, so web-UI edits and contributors with hooks disabled cannot bypass the encoding checks. (The old `check_braces.py` hook was absorbed into `tools/validation/validate_style.py`.)
 - `validate_defines.py` runs on pre-commit against the live install and on CI against the committed `tools/validation/vanilla_defines.txt` manifest. Regenerate it (and every other vanilla-derived file) with `refresh_vanilla_data.py` after a HOI4 version bump (see [Refreshing vanilla-derived data](#refreshing-vanilla-derived-data)).
 - `validate_ideas.py` is wired into both pre-commit (`--staged --strict`) and CI (`--strict`). Undefined idea references gate; the missing-icon audit is WARNING-only and always on, with no flag to disable it. It reports three distinct failures: the sprite is undefined, it exists only under a different case (a Linux-only bug — the message names the sprite that does exist), or it resolves to placeholder art (`WIP_idea.dds` and friends, listed in `_PLACEHOLDER_TEXTURES`). The placeholder rule is what keeps the audit honest: pointing an artless idea at the WIP box no longer clears the finding, and a mod placeholder that shadows a vanilla sprite name still reports, because the mod definition is the one that loads. Backlog: ~61 findings, all placeholder art awaiting real icons. CI resolves vanilla sprites from `tools/validation/vanilla_sprites.txt`.
 - `validate_mios.py` runs in both pre-commit (`--staged --strict`) and CI (`--strict`): org-id format, `allowed = { original_tag = TAG }`, initial-trait naming, trait-grid x ≤ 9, non-empty `on_complete`. The org-id, `allowed`, and `on_complete` checks gate; trait naming and x-bounds are WARNING-severity — that backlog surfaces in reports without gating. `generic_`/`GENERIC_` shared orgs are exempt, as are `generic_`-named initial traits (they reference shared traits in `MD_generic_organization.txt`). Negative x is the mod's standard organic-layout first column, so only the upper bound is a finding.
@@ -79,9 +79,10 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
 
 - `validate_events.py` carries a **date-gated scheduling** check (ERROR, `date-gated-not-scheduled`). MD fires its historical events from `common/scripted_effects/00_yearly_effects.txt` and uses the event's own `date >` check only as a guard, so an event carrying the guard with no scheduling entry is dead content: it is triggered-only, and nothing fires it. Only `date >` counts: a `date <` bound alone is an expiry guard on a chain event and says nothing about scheduling. Three exemptions: an event reachable from a scheduled ancestor in the event→event fire graph inherits that schedule; a fire from `common/national_focus/` or `common/decisions/` is a player-driven availability window with no scheduled moment to belong to; and if the scheduling file schedules nothing at all (a rename, or a scoping mistake) the check logs and skips rather than reporting all ~75 scheduled events. A fire from `common/on_actions/` is deliberately **not** exempt: a daily on_action waiting for a date is a poll, and the yearly effects are its intended home. Two on_action fire paths are modeled as schedules rather than dead content: a `random_events = { weight = ... }` pool weights its events by MTTH (the pool is the schedule), and a chance-rolled `random = { chance = N ... }` poll emulates MTTH and has no deterministic yearly slot. Both are exempt. The check ships as an **ERROR**.
 
-- `validate_oob_units.py` slot-checks every `create_equipment_variant` through
-  `tools/validation/equipment_module_slots.py` — ship, tank and plane designs alike,
-  resolving module-driven slot unlocks and `duplicate_archetypes` clones first.
+- `validate_oob_units.py` slot-checks ship `create_equipment_variant` blocks through
+  `tools/validation/equipment_module_slots.py`, resolving module-driven slot unlocks
+  and `duplicate_archetypes` clones first. Tank and plane variant slots are not
+  validated yet.
   All findings are ERROR. It also structurally checks `create_unit`
   effects: state scope, `owner`, block keys, a single-line division string
   naming a `division_template`, zero equipment/manpower factors, and the order
@@ -96,8 +97,7 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   both the pre-commit registry (`tools/precommit_validate.py`) and the CI
   `oob` path filter. `config_drift_test.py` derives both routes from
   `_CREATE_UNIT_SOURCE_PATTERNS`, so a new directory there fails the suite until
-  both are updated. Findings are **errors**. Non-ship variants are skipped by
-  design. Tank and plane slots are not validated anywhere yet. Their
+  both are updated. Findings are **errors**. Non-ship variants are skipped. Their
   `allowed_module_categories` blocks are often empty, so the naval resolver
   cannot be pointed at them as-is.
 

@@ -16,6 +16,7 @@ from typing import Any, Dict, List
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from _common import format_elapsed
 from shared_utils import (
+    atomic_write_text,
     create_backup,
     extract_block,
     log_message,
@@ -207,11 +208,8 @@ class BaseStandardizer(ABC):
             return True
 
         try:
-            tmp_path = output_file + ".tmp"
-            with open(tmp_path, "w", encoding="utf-8", newline="") as f:
-                for line in output_lines:
-                    f.write(normalize_spacing(line) + "\n")
-            os.replace(tmp_path, output_file)
+            output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
+            atomic_write_text(output_file, output)
 
             time_str = format_elapsed(time.time() - self.start_time)
 
@@ -221,11 +219,6 @@ class BaseStandardizer(ABC):
 
         except Exception as e:
             log_message("ERROR", f"Failed to write {output_file}: {e}")
-            try:
-                if os.path.exists(output_file + ".tmp"):
-                    os.remove(output_file + ".tmp")
-            except OSError:
-                pass
             return False
 
         return True

@@ -492,3 +492,19 @@ def test_single_child_multiline_clean():
 def test_block_child_beside_scalar_flagged():
     # An OR wrapper plus a trailing bare trigger is still two children.
     assert _not("NOT = { OR = { tag = USA tag = CHI } has_war = yes }\n") == [(1, 2)]
+
+
+def test_scan_pattern_matches_direct_common_file_only():
+    from validate_simplifications import _matches_relative_pattern
+
+    assert _matches_relative_pattern("common/test.txt", ["common/*.txt"])
+    assert not _matches_relative_pattern("common/nested/test.txt", ["common/*.txt"])
+
+
+def test_scan_patterns_preserve_recursive_overlap_without_absolute_prefix():
+    from validate_simplifications import _matches_relative_pattern
+
+    patterns = ["common/*.txt", "common/**/*.txt"]
+    assert _matches_relative_pattern("common/test.txt", patterns)
+    assert _matches_relative_pattern("common/nested/test.txt", patterns)
+    assert not _matches_relative_pattern("other/common/test.txt", patterns)

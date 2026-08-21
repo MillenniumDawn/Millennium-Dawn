@@ -7,6 +7,19 @@ def _validator(tmp_path):
     return V.Validator(str(tmp_path))
 
 
+def test_commented_org_blocks_are_not_parsed():
+    text = (
+        "# BAD_org = {\n"
+        "#   allowed = { original_tag = BAD }\n"
+        "# }\n"
+        "GENERIC_live_org = { allowed = { always = yes } }\n"
+    )
+    clean = V.blank_comments(text)
+    assert [org_id for _start, _end, org_id in V._block_spans(clean)] == [
+        "GENERIC_live_org"
+    ]
+
+
 def test_shared_org_ids_are_exempt(tmp_path):
     v = _validator(tmp_path)
     v._check_id("generic_tank_equipment_organization", "f.txt", 0)
