@@ -557,11 +557,7 @@ def test_nested_or_controller_not_flagged():
 
 
 def test_not_controller_not_flagged():
-    text = (
-        "random_state = {\n"
-        "  limit = { NOT = { controller = { tag = ROOT } } }\n"
-        "}\n"
-    )
+    text = "random_state = {\n  limit = { NOT = { controller = { tag = ROOT } } }\n}\n"
     assert _controlled(text) == []
 
 
@@ -572,9 +568,7 @@ def test_controller_original_tag_not_flagged():
 
 def test_controller_extra_condition_not_flagged():
     text = (
-        "random_state = {\n"
-        "  limit = { controller = { tag = ROOT has_war = yes } }\n"
-        "}\n"
+        "random_state = {\n  limit = { controller = { tag = ROOT has_war = yes } }\n}\n"
     )
     assert _controlled(text) == []
 
