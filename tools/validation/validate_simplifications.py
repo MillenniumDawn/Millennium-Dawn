@@ -18,11 +18,13 @@ Only deterministic scopes are flagged. Random scopes (`random_country`,
 `AND`, ...) are not scopes — merging any of those would change behaviour, so
 they are never suggested.
 
-Three more collapses are flagged on top of the same-scope merge:
+Four more collapses are flagged on top of the same-scope merge:
 
   * two-bucket `random_list` with one empty bucket -> `random = { chance = N }`
   * runs of identical adjacent `create_unit` blocks -> one block + `count = N`
   * empty `visible` / `available` / `allowed` blocks -> delete (engine default)
+  * `random_state` limited by `controller = { tag = X }` / `is_controlled_by = X`
+    -> `random_controlled_state` (drop the controller check; keep other limits)
 
 Output is WARNING-only.
 """
@@ -530,6 +532,86 @@ def _find_mergeable(text: str, base_line: int = 0, parent: str = ""):
     return results
 
 
+# random_state walks every state in the world. A limit whose only country
+# filter is `controller = { tag = X }` or `is_controlled_by = X` is the
+# engine-native `random_controlled_state` iterator (scoped to that country),
+# which skips the world scan. Nested under AND/OR/NOT is left alone: those
+# are not a plain controller filter. Extra sibling limits stay on the rewrite.
+_RANDOM_STATE_RE = re.compile(r"\brandom_state\s*=\s*\{")
+_CHILD_HEAD_RE = re.compile(r"([\w.:^@\[\]-]+)\s*(?:>=|<=|=|>|<)\s*")
+_TAG_ONLY_RE = re.compile(r"^tag\s*=\s*(\S+)$")
+
+
+def _iter_direct_assignments(body: str):
+    """Yield (name, value, is_block) for each direct child. Stops on
+    unparseable input rather than guessing."""
+    pos = 0
+    n = len(body)
+    while pos < n:
+        while pos < n and body[pos].isspace():
+            pos += 1
+        if pos >= n:
+            return
+        m = _CHILD_HEAD_RE.match(body, pos)
+        if not m:
+            return
+        name = m.group(1)
+        pos = m.end()
+        if pos < n and body[pos] == "{":
+            inner, end = extract_block_from_text(body, pos)
+            if end == -1:
+                return
+            yield name, inner, True
+            pos = end
+        elif pos < n and body[pos] == '"':
+            close = body.find('"', pos + 1)
+            if close == -1:
+                return
+            yield name, body[pos : close + 1], False
+            pos = close + 1
+        else:
+            vm = _VALUE_RE.match(body, pos)
+            if not vm:
+                return
+            yield name, vm.group(0), False
+            pos = vm.end()
+
+
+def _controller_limit_detail(limit_body: str):
+    """Return the controller-check text if *limit_body* has a direct
+    `controller = { tag = X }` or `is_controlled_by = X` child, else None."""
+    for name, value, is_block in _iter_direct_assignments(limit_body):
+        if is_block and name == "controller":
+            tm = _TAG_ONLY_RE.fullmatch(value.strip())
+            if tm:
+                return f"controller = {{ tag = {tm.group(1)} }}"
+        elif not is_block and name == "is_controlled_by":
+            return f"is_controlled_by = {value}"
+    return None
+
+
+def _find_random_controlled_shortcut(text: str):
+    """Return (line, detail) for each `random_state` whose own limit has a
+    controller-tag / is_controlled_by check that collapses to
+    `random_controlled_state`."""
+    results = []
+    for m in _RANDOM_STATE_RE.finditer(text):
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            continue
+        limit_body = None
+        for name, value, is_block in _iter_direct_assignments(body):
+            if is_block and name == "limit":
+                limit_body = value
+                break
+        if limit_body is None:
+            continue
+        detail = _controller_limit_detail(limit_body)
+        if detail:
+            results.append((text.count("\n", 0, m.start()) + 1, detail))
+    return results
+
+
 def _scan_file(text: str, path: str):
     """Return [(message, line)] for one comment-stripped file. Pure function of
     *text*, so parse_files_cached can content-cache it."""
@@ -566,6 +648,13 @@ def _scan_file(text: str, path: str):
         findings.append(
             (
                 f"ideology enumeration over all five governments; use `{replacement}`",
+                line,
+            )
+        )
+    for line, detail in _find_random_controlled_shortcut(text):
+        findings.append(
+            (
+                f"`random_state` limited by `{detail}`; use `random_controlled_state`",
                 line,
             )
         )

@@ -12,6 +12,7 @@ from validate_simplifications import (
     _find_empty_trigger_blocks,
     _find_government_match,
     _find_mergeable,
+    _find_random_controlled_shortcut,
     _find_scope_expansion,
     _find_two_bucket_random,
     strip_comments,
@@ -44,6 +45,10 @@ def _gov(text):
 
 def _not(text):
     return [(line, n) for line, n in _find_bare_not(strip_comments(text))]
+
+
+def _controlled(text):
+    return list(_find_random_controlled_shortcut(strip_comments(text)))
 
 
 def _all_five(target, scoped_tmpl):
@@ -492,6 +497,96 @@ def test_single_child_multiline_clean():
 def test_block_child_beside_scalar_flagged():
     # An OR wrapper plus a trailing bare trigger is still two children.
     assert _not("NOT = { OR = { tag = USA tag = CHI } has_war = yes }\n") == [(1, 2)]
+
+
+def test_random_state_controller_tag_root_collapses():
+    text = (
+        "random_state = {\n"
+        "  limit = { controller = { tag = ROOT } }\n"
+        "  add_stability = 0.1\n"
+        "}\n"
+    )
+    assert _controlled(text) == [(1, "controller = { tag = ROOT }")]
+
+
+def test_random_state_controller_tag_from_with_other_limit_collapses():
+    text = (
+        "random_state = {\n"
+        "  limit = {\n"
+        "    controller = { tag = FROM }\n"
+        "    free_building_slots = { building = dockyard size > 1 }\n"
+        "  }\n"
+        "}\n"
+    )
+    assert _controlled(text) == [(1, "controller = { tag = FROM }")]
+
+
+def test_random_state_is_controlled_by_collapses():
+    text = "random_state = { limit = { is_controlled_by = ROOT is_coastal = yes } }\n"
+    assert _controlled(text) == [(1, "is_controlled_by = ROOT")]
+
+
+def test_comparison_before_controller_still_flagged():
+    text = (
+        "random_state = {\n"
+        "  limit = {\n"
+        "    infrastructure > 0\n"
+        "    controller = { tag = ROOT }\n"
+        "  }\n"
+        "}\n"
+    )
+    assert _controlled(text) == [(1, "controller = { tag = ROOT }")]
+
+
+def test_random_state_without_controller_not_flagged():
+    assert _controlled("random_state = { limit = { is_owned_by = GER } }\n") == []
+
+
+def test_random_owned_state_controller_not_flagged():
+    text = "random_owned_state = { limit = { controller = { tag = ROOT } } }\n"
+    assert _controlled(text) == []
+
+
+def test_nested_or_controller_not_flagged():
+    text = (
+        "random_state = {\n"
+        "  limit = { OR = { controller = { tag = ROOT } is_coastal = yes } }\n"
+        "}\n"
+    )
+    assert _controlled(text) == []
+
+
+def test_not_controller_not_flagged():
+    text = (
+        "random_state = {\n"
+        "  limit = { NOT = { controller = { tag = ROOT } } }\n"
+        "}\n"
+    )
+    assert _controlled(text) == []
+
+
+def test_controller_original_tag_not_flagged():
+    text = "random_state = { limit = { controller = { original_tag = SUD } } }\n"
+    assert _controlled(text) == []
+
+
+def test_controller_extra_condition_not_flagged():
+    text = (
+        "random_state = {\n"
+        "  limit = { controller = { tag = ROOT has_war = yes } }\n"
+        "}\n"
+    )
+    assert _controlled(text) == []
+
+
+def test_controller_in_effect_body_not_flagged():
+    text = (
+        "random_state = {\n"
+        "  limit = { is_coastal = yes }\n"
+        "  controller = { add_stability = 0.1 }\n"
+        "}\n"
+    )
+    assert _controlled(text) == []
 
 
 def test_scan_pattern_matches_direct_common_file_only():
