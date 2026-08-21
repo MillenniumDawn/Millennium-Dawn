@@ -6,6 +6,8 @@ builds from a ValidatorRun matches our expectations (conclusion, annotation
 level, truncation).
 """
 
+import pytest
+
 from report_lib.checks_api import (
     MAX_ANNOTATIONS_PER_CHECK,
     _build_check_payload,
@@ -59,6 +61,17 @@ def test_conclusion_neutral_on_warnings_only():
         ]
     )
     assert _conclusion_for(run) == "neutral"
+
+
+@pytest.mark.parametrize("status", ["failed", "unknown"])
+def test_conclusion_failure_on_indeterminate_zero_count_run(status):
+    run = _run_with_issues([], status=status)
+    assert _conclusion_for(run) == "failure"
+
+
+def test_conclusion_skips_no_output():
+    run = _run_with_issues([], status="no_output")
+    assert _conclusion_for(run) == "skipped"
 
 
 def test_conclusion_failure_on_any_error():

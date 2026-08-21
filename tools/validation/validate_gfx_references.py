@@ -466,7 +466,11 @@ def _load_equipment_tree(mod_path: str) -> Tuple[FrozenSet[str], FrozenSet[str]]
         return frozenset(equipment), frozenset(modules)
 
     return disk_cache.aggregate_cached(
-        mod_path, "gfx_ref.equipment_tree.aggregate", tracked, _build
+        mod_path,
+        "gfx_ref.equipment_tree.aggregate",
+        tracked,
+        _build,
+        namespace="gfx_ref",
     )
 
 
@@ -594,6 +598,7 @@ def _declaration_engine_refs(
         "gfx_ref.declaration_engine_refs",
         _declaration_engine_source_files(mod_path),
         _build,
+        namespace="gfx_ref",
     )
 
 

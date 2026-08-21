@@ -97,11 +97,15 @@ def extract_idea_names(filepath: Path) -> list[str]:
 
 
 def make_idea_searcher(search_dirs: list[Path]):
-    """Build a closure that searches for one idea name across the given dirs."""
+    """Build a closure that scans each candidate file once for all ideas."""
 
-    def search(idea: str) -> list[tuple[str, int, str]]:
-        refs: list[tuple[str, int, str]] = []
-        token_re = re.compile(r"(?<![\w])" + re.escape(idea) + r"(?![\w])")
+    def search(names: list[str]) -> dict[str, list[tuple[str, int, str]]]:
+        refs: dict[str, list[tuple[str, int, str]]] = {name: [] for name in names}
+        if not names:
+            return refs
+        token_re = re.compile(
+            r"(?<![\w])(?:" + "|".join(map(re.escape, names)) + r")(?![\w])"
+        )
         for search_dir in search_dirs:
             if not search_dir.is_dir():
                 continue
@@ -112,20 +116,16 @@ def make_idea_searcher(search_dirs: list[Path]):
                     ).splitlines()
                 except OSError:
                     continue
-                # Depth of the innermost open add_ideas/remove_ideas/... block, so
-                # a bare idea name listed on its own line inside it still counts.
+                rel = str(txt_file.relative_to(REPO_ROOT))
                 block_depth = 0
                 for i, line in enumerate(lines, 1):
                     in_block = block_depth > 0
-                    if idea in line and (
-                        any(re.search(p, line) for p in PATTERNS)
-                        or (in_block and token_re.search(line))
-                    ):
-                        rel = txt_file.relative_to(REPO_ROOT)
-                        refs.append((str(rel), i, line.strip()))
+                    hits = set(token_re.findall(line))
+                    if hits and (any(re.search(p, line) for p in PATTERNS) or in_block):
+                        for name in hits:
+                            if any(re.search(p, line) for p in PATTERNS) or in_block:
+                                refs[name].append((rel, i, line.strip()))
                     if in_block or IDEA_BLOCK_RE.search(line):
-                        # Count braces on the code portion only: a `#` comment
-                        # may carry an unbalanced brace that would desync depth.
                         code = strip_inline_comment(line)
                         block_depth += code.count("{") - code.count("}")
                         if block_depth < 0:
