@@ -1,0 +1,414 @@
+scripted_gui = {
+	MD_automation_settings_topbar_button = {
+		context_type = player_context
+		window_name = "MD_automation_settings_topbar_button"
+		parent_window_token = politics_tab
+
+		visible = { is_ai = no }
+
+		effects = {
+			MD_automation_settings_open_button_click = {
+				if = {
+					limit = { has_country_flag = MD_automation_settings_open }
+					clr_country_flag = MD_automation_settings_open
+				}
+				else = {
+					set_country_flag = MD_automation_settings_open
+					if = {
+						limit = { NOT = { has_variable = automation_settings_page } }
+						set_variable = { automation_settings_page = 1 }
+					}
+					if = {
+						limit = { check_variable = { automation_settings_page = 2 } }
+						space_auto_preview = yes
+					}
+				}
+			}
+		}
+
+		ai_enabled = { always = no }
+	}
+
+	MD_automation_settings_panel = {
+		context_type = player_context
+		window_name = "MD_automation_settings_panel"
+		parent_window_token = politics_tab
+
+		visible = {
+			is_ai = no
+			has_country_flag = MD_automation_settings_open
+			NOT = { check_variable = { automation_settings_page = 2 } }
+		}
+
+		triggers = {
+			automation_fuel_purchase_checkbox_click_enabled = {
+				ROOT = {
+					OR = {
+						has_active_mission = energy_automatic_fuel_purchase
+						AND = {
+							NOT = { has_active_mission = bankruptcy_incoming_collapse }
+							NOT = { has_country_flag = recently_bought_fuel }
+						}
+					}
+				}
+			}
+
+			automation_settings_general_page_button_click_enabled = { always = no }
+			automation_settings_space_page_button_click_enabled = { always = yes }
+		}
+
+		effects = {
+			automation_settings_close_button_click = {
+				clr_country_flag = MD_automation_settings_open
+			}
+
+			automation_settings_space_page_button_click = {
+				set_variable = { automation_settings_page = 2 }
+				space_auto_preview = yes
+				international_systems_update = yes
+			}
+
+			automation_corruption_checkbox_click = {
+				if = {
+					limit = { has_country_flag = auto_decline_corruption }
+					clr_country_flag = auto_decline_corruption
+				}
+				else = {
+					set_country_flag = auto_decline_corruption
+				}
+				update_dirty_politicsview_expanded = yes
+			}
+
+			automation_foreign_election_checkbox_click = {
+				if = {
+					limit = { has_country_flag = block_foreign_election_notification }
+					clr_country_flag = block_foreign_election_notification
+				}
+				else = {
+					set_country_flag = block_foreign_election_notification
+				}
+				update_dirty_politicsview_expanded = yes
+			}
+
+			automation_raid_notifications_checkbox_click = {
+				if = {
+					limit = { has_country_flag = disable_raid_notification }
+					clr_country_flag = disable_raid_notification
+				}
+				else = {
+					set_country_flag = disable_raid_notification
+				}
+			}
+
+			automation_influence_report_checkbox_click = {
+				if = {
+					limit = { has_country_flag = disable_auto_influence_notification }
+					clr_country_flag = disable_auto_influence_notification
+				}
+				else = {
+					set_country_flag = disable_auto_influence_notification
+				}
+			}
+
+			automation_investment_rejection_checkbox_click = {
+				if = {
+					limit = { has_country_flag = int_auto_reject_investment_flag }
+					clr_country_flag = int_auto_reject_investment_flag
+				}
+				else = {
+					set_country_flag = int_auto_reject_investment_flag
+				}
+				ingame_update_setup = yes
+			}
+
+			automation_reinvest_off_checkbox_click = {
+				set_variable = { int_reinvest_mode = 0 }
+				ingame_update_setup = yes
+			}
+
+			automation_reinvest_full_checkbox_click = {
+				set_variable = { int_reinvest_mode = 1 }
+				ingame_update_setup = yes
+			}
+
+			automation_reinvest_split_checkbox_click = {
+				set_variable = { int_reinvest_mode = 2 }
+				ingame_update_setup = yes
+			}
+
+			automation_fuel_purchase_checkbox_click = {
+				if = {
+					limit = { has_active_mission = energy_automatic_fuel_purchase }
+					remove_mission = energy_automatic_fuel_purchase
+				}
+				else = {
+					buy_fuel_from_the_market_effect = yes
+					set_country_flag = { flag = recently_bought_fuel value = 1 days = 28 }
+					activate_mission = energy_automatic_fuel_purchase
+				}
+				update_global_energy_ui = yes
+			}
+
+			automation_sc_accept_checkbox_click = {
+				if = {
+					limit = { has_country_flag = auto_accept_all_sc_votes }
+					clr_country_flag = auto_accept_all_sc_votes
+					set_variable = { UN_SC_auto_accept_frame_var = 1 }
+				}
+				else = {
+					set_country_flag = auto_accept_all_sc_votes
+					set_variable = { UN_SC_auto_accept_frame_var = 2 }
+				}
+				clr_country_flag = auto_reject_all_sc_votes
+				clr_country_flag = auto_abstain_all_sc_votes
+				set_variable = { UN_SC_auto_reject_frame_var = 1 }
+				set_variable = { UN_SC_auto_abstain_frame_var = 1 }
+				international_systems_update = yes
+			}
+
+			automation_sc_reject_checkbox_click = {
+				if = {
+					limit = { has_country_flag = auto_reject_all_sc_votes }
+					clr_country_flag = auto_reject_all_sc_votes
+					set_variable = { UN_SC_auto_reject_frame_var = 1 }
+				}
+				else = {
+					set_country_flag = auto_reject_all_sc_votes
+					set_variable = { UN_SC_auto_reject_frame_var = 2 }
+				}
+				clr_country_flag = auto_accept_all_sc_votes
+				clr_country_flag = auto_abstain_all_sc_votes
+				set_variable = { UN_SC_auto_accept_frame_var = 1 }
+				set_variable = { UN_SC_auto_abstain_frame_var = 1 }
+				international_systems_update = yes
+			}
+
+			automation_sc_abstain_checkbox_click = {
+				if = {
+					limit = { has_country_flag = auto_abstain_all_sc_votes }
+					clr_country_flag = auto_abstain_all_sc_votes
+					set_variable = { UN_SC_auto_abstain_frame_var = 1 }
+				}
+				else = {
+					set_country_flag = auto_abstain_all_sc_votes
+					set_variable = { UN_SC_auto_abstain_frame_var = 2 }
+				}
+				clr_country_flag = auto_accept_all_sc_votes
+				clr_country_flag = auto_reject_all_sc_votes
+				set_variable = { UN_SC_auto_accept_frame_var = 1 }
+				set_variable = { UN_SC_auto_reject_frame_var = 1 }
+				international_systems_update = yes
+			}
+
+			automation_ga_accept_checkbox_click = {
+				if = {
+					limit = { has_country_flag = auto_accept_all_ga_votes }
+					clr_country_flag = auto_accept_all_ga_votes
+					set_variable = { UN_GA_auto_accept_frame_var = 1 }
+				}
+				else = {
+					set_country_flag = auto_accept_all_ga_votes
+					set_variable = { UN_GA_auto_accept_frame_var = 2 }
+				}
+				clr_country_flag = auto_reject_all_ga_votes
+				clr_country_flag = auto_abstain_all_ga_votes
+				set_variable = { UN_GA_auto_reject_frame_var = 1 }
+				set_variable = { UN_GA_auto_abstain_frame_var = 1 }
+				international_systems_update = yes
+			}
+
+			automation_ga_reject_checkbox_click = {
+				if = {
+					limit = { has_country_flag = auto_reject_all_ga_votes }
+					clr_country_flag = auto_reject_all_ga_votes
+					set_variable = { UN_GA_auto_reject_frame_var = 1 }
+				}
+				else = {
+					set_country_flag = auto_reject_all_ga_votes
+					set_variable = { UN_GA_auto_reject_frame_var = 2 }
+				}
+				clr_country_flag = auto_accept_all_ga_votes
+				clr_country_flag = auto_abstain_all_ga_votes
+				set_variable = { UN_GA_auto_accept_frame_var = 1 }
+				set_variable = { UN_GA_auto_abstain_frame_var = 1 }
+				international_systems_update = yes
+			}
+
+			automation_ga_abstain_checkbox_click = {
+				if = {
+					limit = { has_country_flag = auto_abstain_all_ga_votes }
+					clr_country_flag = auto_abstain_all_ga_votes
+					set_variable = { UN_GA_auto_abstain_frame_var = 1 }
+				}
+				else = {
+					set_country_flag = auto_abstain_all_ga_votes
+					set_variable = { UN_GA_auto_abstain_frame_var = 2 }
+				}
+				clr_country_flag = auto_accept_all_ga_votes
+				clr_country_flag = auto_reject_all_ga_votes
+				set_variable = { UN_GA_auto_accept_frame_var = 1 }
+				set_variable = { UN_GA_auto_reject_frame_var = 1 }
+				international_systems_update = yes
+			}
+
+			automation_satellite_rejection_checkbox_click = {
+				if = {
+					limit = { has_country_flag = MD_auto_reject_satellite_access }
+					clr_country_flag = MD_auto_reject_satellite_access
+				}
+				else = {
+					set_country_flag = MD_auto_reject_satellite_access
+				}
+				international_systems_update = yes
+			}
+		}
+
+		properties = {
+			automation_corruption_checkbox = { image = "[MD_automation_corruption_checkbox_icon]" }
+			automation_foreign_election_checkbox = { image = "[MD_automation_foreign_election_checkbox_icon]" }
+			automation_raid_notifications_checkbox = { image = "[MD_automation_raid_notifications_checkbox_icon]" }
+			automation_influence_report_checkbox = { image = "[MD_automation_influence_report_checkbox_icon]" }
+			automation_investment_rejection_checkbox = { image = "[MD_automation_investment_rejection_checkbox_icon]" }
+			automation_reinvest_off_checkbox = { image = "[MD_automation_reinvest_off_checkbox_icon]" }
+			automation_reinvest_full_checkbox = { image = "[MD_automation_reinvest_full_checkbox_icon]" }
+			automation_reinvest_split_checkbox = { image = "[MD_automation_reinvest_split_checkbox_icon]" }
+			automation_fuel_purchase_checkbox = { image = "[MD_automation_fuel_purchase_checkbox_icon]" }
+			automation_sc_accept_checkbox = { image = "[MD_automation_sc_accept_checkbox_icon]" }
+			automation_sc_reject_checkbox = { image = "[MD_automation_sc_reject_checkbox_icon]" }
+			automation_sc_abstain_checkbox = { image = "[MD_automation_sc_abstain_checkbox_icon]" }
+			automation_ga_accept_checkbox = { image = "[MD_automation_ga_accept_checkbox_icon]" }
+			automation_ga_reject_checkbox = { image = "[MD_automation_ga_reject_checkbox_icon]" }
+			automation_ga_abstain_checkbox = { image = "[MD_automation_ga_abstain_checkbox_icon]" }
+			automation_satellite_rejection_checkbox = { image = "[MD_automation_satellite_rejection_checkbox_icon]" }
+		}
+
+		ai_enabled = { always = no }
+	}
+
+	MD_automation_settings_space_panel = {
+		context_type = player_context
+		window_name = "MD_automation_settings_space_panel"
+		parent_window_token = politics_tab
+
+		visible = {
+			is_ai = no
+			has_country_flag = MD_automation_settings_open
+			check_variable = { automation_settings_page = 2 }
+		}
+
+		triggers = {
+			automation_space_general_page_button_click_enabled = { always = yes }
+			automation_space_space_page_button_click_enabled = { always = no }
+			automation_space_toggle_button_click_enabled = { ROOT = { has_completed_space_program = yes } }
+			automation_space_save_button_click_enabled = {
+				ROOT = {
+					custom_trigger_tooltip = {
+						tooltip = SPACE_AUTO_SAVE_TT_trigger_2
+						OR = {
+							NOT = { check_variable = { payload_types_array^0 = 1 } }
+							NOT = { check_variable = { payload_types_array^1 = 1 } }
+							NOT = { check_variable = { payload_types_array^2 = 1 } }
+							NOT = { check_variable = { payload_types_array^3 = 1 } }
+						}
+					}
+				}
+			}
+			automation_space_upgrade_button_click_enabled = { ROOT = { has_completed_space_program = yes } }
+			automation_space_flights_plus_button_click_enabled = { ROOT = { check_variable = { var_space_auto_flights < 10 } } }
+			automation_space_flights_minus_button_click_enabled = { ROOT = { check_variable = { var_space_auto_flights > 1 } } }
+		}
+
+		effects = {
+			automation_space_close_button_click = {
+				ROOT = { clr_country_flag = MD_automation_settings_open }
+			}
+
+			automation_space_general_page_button_click = {
+				ROOT = { set_variable = { automation_settings_page = 1 } }
+			}
+
+			automation_space_toggle_button_click = {
+				ROOT = {
+					space_auto_toggle = yes
+					international_systems_update = yes
+				}
+			}
+
+			automation_space_save_button_click = {
+				ROOT = {
+					space_auto_save_template = yes
+					international_systems_update = yes
+				}
+			}
+
+			automation_space_upgrade_button_click = {
+				ROOT = {
+					space_auto_upgrade_all = yes
+					international_systems_update = yes
+				}
+			}
+
+			automation_space_deficit_button_click = {
+				ROOT = {
+					space_auto_toggle_deficit = yes
+					international_systems_update = yes
+				}
+			}
+
+			automation_space_stockpile_button_click = {
+				ROOT = {
+					space_auto_toggle_stockpile = yes
+					international_systems_update = yes
+				}
+			}
+
+			automation_space_latest_olv_button_click = {
+				ROOT = {
+					space_auto_toggle_latest_olv = yes
+					international_systems_update = yes
+				}
+			}
+
+			automation_space_preset_plus_button_click = {
+				ROOT = {
+					space_auto_cycle_preset = yes
+					international_systems_update = yes
+				}
+			}
+
+			automation_space_preset_minus_button_click = {
+				ROOT = {
+					space_auto_cycle_preset_back = yes
+					international_systems_update = yes
+				}
+			}
+
+			automation_space_flights_plus_button_click = {
+				ROOT = {
+					add_to_variable = { var_space_auto_flights = 1 }
+					clamp_variable = { var = var_space_auto_flights min = 1 max = 10 }
+					space_auto_preview = yes
+					international_systems_update = yes
+				}
+			}
+
+			automation_space_flights_minus_button_click = {
+				ROOT = {
+					subtract_from_variable = { var_space_auto_flights = 1 }
+					clamp_variable = { var = var_space_auto_flights min = 1 max = 10 }
+					space_auto_preview = yes
+					international_systems_update = yes
+				}
+			}
+		}
+
+		properties = {
+			automation_space_toggle_button = { image = "[MD_automation_space_toggle_checkbox_icon]" }
+			automation_space_deficit_button = { image = "[MD_automation_space_deficit_checkbox_icon]" }
+			automation_space_stockpile_button = { image = "[MD_automation_space_stockpile_checkbox_icon]" }
+			automation_space_latest_olv_button = { image = "[MD_automation_space_latest_olv_checkbox_icon]" }
+		}
+
+		ai_enabled = { always = no }
+	}
+}
