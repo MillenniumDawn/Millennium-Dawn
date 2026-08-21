@@ -1,14 +1,15 @@
 """Render the validation report as Markdown.
 
 Two renderings come out of the same builder:
-  - PR comment (``include_validator_sections=False``): marker, verdict banner,
+  - PR comment (``include_validator_sections=False``): marker, verdict banner
+    (new errors and new warnings counted separately when a baseline is present),
     metadata strip, and a summary table of only the validators with findings
     (passing ones fold into a count line), plus a pointer to the step summary.
     Kept small so the comment doesn't drown the PR conversation in inline findings.
-  - Step summary (default): the full validator roster in the summary table plus
-    the per-validator <details> sections — failing ones open with issues grouped
-    by category, passing ones collapsed to a one-liner — and optionally the raw
-    per-validator logs.
+  - Step summary (default): the full validator roster in the summary table,
+    new findings split into error and warning groups, and per-validator
+    <details> only for validators that have findings. Clean validators collapse
+    to a single count line. Optionally the raw per-validator logs.
 """
 
 from collections import defaultdict
@@ -49,10 +50,10 @@ def render(
     detail for the step summary.
 
     ``baseline_stats`` (from ``baseline.classify``) adds the new-vs-existing
-    annotation: NEW/EXISTING counts in the verdict and, in the step summary,
-    a dedicated section listing new findings. ``Issue.baseline_status`` drives
-    the per-bullet NEW tag. Omit it (no baseline restored) and the report
-    renders as before.
+    annotation: new-error and new-warning counts in the verdict and, in the
+    step summary, those findings listed in separate groups.
+    ``Issue.baseline_status`` drives the per-bullet NEW tag. Omit it (no
+    baseline restored) and the report renders as before.
     """
     parts: List[str] = []
     parts.append(REPORT_MARKER)
@@ -142,6 +143,22 @@ def _count_label(errors: int, warnings: int) -> str:
     return ", ".join(parts) or "0 issues"
 
 
+def _new_count_label(errors: int, warnings: int) -> str:
+    parts = []
+    if errors:
+        parts.append(_plural(errors, "new error"))
+    if warnings:
+        parts.append(_plural(warnings, "new warning"))
+    return ", ".join(parts)
+
+
+def _new_findings_clause(stats: "BaselineStats") -> str:
+    """Verdict parenthetical: split new errors vs new warnings."""
+    if not stats.new_errors and not stats.new_warnings:
+        return " (none new against the main baseline.)"
+    return f" ({_new_count_label(stats.new_errors, stats.new_warnings)} against the main baseline.)"
+
+
 def _severity_icon(errors: int, warnings: int) -> str:
     if errors:
         return "❌"
@@ -166,10 +183,7 @@ def _render_verdict(
     if total_errors:
         line = f"{_plural(total_errors, 'error')} must be fixed before merge."
         if baseline_stats is not None:
-            if baseline_stats.new_errors:
-                line += f" ({baseline_stats.new_errors} new against the main baseline.)"
-            else:
-                line += " (none new against the main baseline.)"
+            line += _new_findings_clause(baseline_stats)
         if total_warnings:
             line += f" ({_plural(total_warnings, 'warning')}, advisory.)"
         return f"> [!CAUTION]\n> ❌ {line}"
@@ -177,12 +191,7 @@ def _render_verdict(
     if total_warnings:
         line = f"{_plural(total_warnings, 'warning')} to review. None block merge."
         if baseline_stats is not None:
-            if baseline_stats.new_warnings:
-                line += (
-                    f" ({baseline_stats.new_warnings} new against the main baseline.)"
-                )
-            else:
-                line += " (none new against the main baseline.)"
+            line += _new_findings_clause(baseline_stats)
         return f"> [!WARNING]\n> ⚠️ {line}"
 
     tail = (
@@ -257,6 +266,27 @@ def _render_summary_table(runs: List[ValidatorRun], show_passing: bool = True) -
 # ── Issues section ─────────────────────────────────────────────────────────────
 
 
+def _render_new_severity_group(
+    heading: str,
+    word: str,
+    issues: List[Issue],
+    ctx: ReportContext,
+    limit: int,
+) -> Tuple[List[str], int]:
+    """One New-errors or New-warnings block. Returns (lines, overflow)."""
+    if not issues:
+        return [], 0
+    sorted_issues = sorted(issues, key=lambda i: (i.file, i.line, i.message))
+    shown = sorted_issues[: max(limit, 0)]
+    overflow = len(sorted_issues) - len(shown)
+    lines = [f"### {heading} ({len(issues)})", ""]
+    lines.extend(_render_bullet(i, ctx) for i in shown)
+    if overflow:
+        lines.append(f"_…and {_plural(overflow, f'more new {word}')}._")
+    lines.append("")
+    return lines, overflow
+
+
 def _render_baseline_section(
     stats: "BaselineStats", ctx: ReportContext, max_visible: int
 ) -> str:
@@ -272,23 +302,18 @@ def _render_baseline_section(
             )
         return "\n".join(lines)
 
-    label = _count_label(stats.new_errors, stats.new_warnings)
-    lines.append(f"{label} not present on the latest main run:")
-    lines.append("")
-    sorted_new = sorted(
-        stats.new_issues,
-        key=lambda i: (
-            0 if i.severity == Severity.ERROR else 1,
-            i.file,
-            i.line,
-            i.message,
-        ),
+    new_errors = [i for i in stats.new_issues if i.severity == Severity.ERROR]
+    new_warnings = [i for i in stats.new_issues if i.severity != Severity.ERROR]
+    remaining = max_visible
+    error_lines, error_overflow = _render_new_severity_group(
+        "❌ New errors", "error", new_errors, ctx, remaining
     )
-    shown = sorted_new[:max_visible]
-    lines.extend(_render_bullet(i, ctx) for i in shown)
-    overflow = len(sorted_new) - len(shown)
-    if overflow:
-        lines.append(f"_…and {overflow:,} more new findings._")
+    remaining = max(0, remaining - (len(new_errors) - error_overflow))
+    warning_lines, _warning_overflow = _render_new_severity_group(
+        "⚠️ New warnings", "warning", new_warnings, ctx, remaining
+    )
+    lines.extend(error_lines)
+    lines.extend(warning_lines)
     if stats.unclassified:
         lines.append(
             f"_{stats.unclassified} finding(s) could not be compared (no file/line)._"
@@ -309,11 +334,11 @@ def _render_details_pointer(ctx: ReportContext) -> str:
 def _render_validator_sections(
     runs: List[ValidatorRun], issues: List[Issue], ctx: ReportContext, max_visible: int
 ) -> str:
-    """One collapsible <details> per validator (pass or fail).
+    """One collapsible <details> per validator that has findings.
 
     Failing validators open by default and list their issues grouped by
-    category; passing validators collapse to a single 'no issues' line, so the
-    full roster is browsable for review and debugging.
+    category. Clean validators are omitted and counted in a single line so the
+    summary is not a wall of empty dropdowns.
     """
     by_validator: Dict[str, Dict[str, List[Issue]]] = defaultdict(
         lambda: defaultdict(list)
@@ -346,15 +371,23 @@ def _render_validator_sections(
         rank = 0 if e else (1 if w else 2)
         return (rank, title.lower())
 
+    finding_names = [
+        name
+        for name in sorted(order, key=sort_key)
+        if counts[name][1] or counts[name][2]
+    ]
+    clean_count = len(order) - len(finding_names)
+    if not finding_names:
+        return ""
+
     sections: List[str] = ["## Validators", ""]
     rendered_count = 0
     overflow = 0
 
-    for name in sorted(order, key=sort_key):
+    for name in finding_names:
         title, errors, warnings = counts[name]
         icon = _severity_icon(errors, warnings)
         label = _count_label(errors, warnings)
-        has_findings = bool(errors or warnings)
 
         body: List[str] = []
         cat_map = by_validator.get(name, {})
@@ -392,19 +425,21 @@ def _render_validator_sections(
                 if cat_overflow:
                     body.append(f"_…and {cat_overflow:,} more in this category._")
                 body.append("")
-        elif has_findings:
+        else:
             body.append("_Findings reported in the summary line; see the raw log._")
             body.append("")
-        else:
-            body.append("✅ No issues found.")
-            body.append("")
 
-        open_attr = " open" if has_findings else ""
-        sections.append(f"<details{open_attr}>")
+        sections.append("<details open>")
         sections.append(f"<summary>{icon} {title} — {label}</summary>")
         sections.append("")
         sections.extend(body)
         sections.append("</details>")
+        sections.append("")
+
+    if clean_count:
+        sections.append(
+            f"✅ {_plural(clean_count, 'other validator')} completed successfully."
+        )
         sections.append("")
 
     if overflow:
