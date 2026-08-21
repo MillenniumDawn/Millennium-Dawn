@@ -348,5 +348,5 @@ def test_build_report_annotates_new_vs_existing(tmp_path):
     assert stats.new_errors == 1
     assert stats.existing_errors == 1
     assert "1 new error against the main baseline." in body
-    assert "## New findings vs main baseline" in step_body
+    assert "## New Findings Introduced by this branch." in step_body
     assert len(deduped) == 2
