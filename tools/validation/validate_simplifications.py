@@ -27,6 +27,7 @@ Three more collapses are flagged on top of the same-scope merge:
 Output is WARNING-only.
 """
 
+import fnmatch
 import os
 import re
 import sys
@@ -589,31 +590,62 @@ def _scan_bare_not(text: str, path: str):
     return findings
 
 
+_ALL_SCAN_PATTERNS = list(dict.fromkeys(_SCAN_PATTERNS + _NOT_SCAN_PATTERNS))
+
+
+def _matches_relative_pattern(path: str, patterns) -> bool:
+    path_parts = path.replace(os.sep, "/").split("/")
+
+    def matches(pattern_parts, path_index=0, pattern_index=0):
+        if pattern_index == len(pattern_parts):
+            return path_index == len(path_parts)
+        pattern_part = pattern_parts[pattern_index]
+        if pattern_part == "**":
+            return matches(pattern_parts, path_index, pattern_index + 1) or (
+                path_index < len(path_parts)
+                and matches(pattern_parts, path_index + 1, pattern_index)
+            )
+        return (
+            path_index < len(path_parts)
+            and fnmatch.fnmatchcase(path_parts[path_index], pattern_part)
+            and matches(pattern_parts, path_index + 1, pattern_index + 1)
+        )
+
+    return any(matches(pattern.replace(os.sep, "/").split("/")) for pattern in patterns)
+
+
+def _scan_composite(text: str, path: str):
+    """Run the two simplification passes after one content read/cache lookup."""
+    findings = []
+    if _matches_relative_pattern(path, _SCAN_PATTERNS):
+        findings.extend(_scan_file(text, path))
+    if _matches_relative_pattern(path, _NOT_SCAN_PATTERNS):
+        findings.extend(_scan_bare_not(text, path))
+    return findings
+
+
 class Validator(BaseValidator):
     TITLE = "SIMPLIFICATION SUGGESTIONS"
     STAGED_EXTENSIONS = [".txt"]
 
     def run_validations(self):
         self._log_section("Scanning for simplification opportunities...")
-        # parse_files_cached reads case-preserving + comment-stripped and
-        # content-caches each file's findings, so a warm run only re-scans
-        # changed files.
+        # Both passes use the same comment-stripped source on overlapping files.
         parsed = self.parse_files_cached(
-            _SCAN_PATTERNS, "simplifications.scan", _scan_file
+            _ALL_SCAN_PATTERNS,
+            "simplifications.composite",
+            lambda text, path: _scan_composite(
+                text, os.path.relpath(path, self.mod_path)
+            ),
         )
         self.log(f"Scanned {len(parsed)} files for simplification opportunities")
-        parsed_not = self.parse_files_cached(
-            _NOT_SCAN_PATTERNS, "simplifications.bare_not", _scan_bare_not
-        )
-        self.log(f"Scanned {len(parsed_not)} files for bare multi-child NOT")
 
         self._log_section("Collecting and reporting results...")
         results = []
-        for parsed_map in (parsed, parsed_not):
-            for path, findings in parsed_map.items():
-                rel = os.path.relpath(path, self.mod_path)
-                for message, line in findings:
-                    results.append((message, rel, line))
+        for path, findings in parsed.items():
+            rel = os.path.relpath(path, self.mod_path)
+            for message, line in findings:
+                results.append((message, rel, line))
 
         self._report(
             results,

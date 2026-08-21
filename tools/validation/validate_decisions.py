@@ -11,14 +11,16 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from shared_utils import (
+    atomic_write_text,
     blank_quoted_strings,
     extract_block_from_text,
+    read_text_strict,
     strip_comments,
     strip_inline_comment,
 )
@@ -157,11 +159,9 @@ def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, 
     """
     filepath, mod_path = args
     try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except OSError:
+        text = strip_comments(read_text_strict(filepath))
+    except FileNotFoundError:
         return []
-    text = strip_comments(raw)
     is_category = _is_category_file(filepath)
     icon_kind = "category_icon" if is_category else "decision"
 
@@ -718,7 +718,10 @@ def _top_level_neg_pp(block: str):
         if depth == 0:
             m = re.match(r"add_political_power\s*=\s*-(\d+)", inner[i:])
             if m:
-                return int(m.group(1))
+                try:
+                    return int(m.group(1))
+                except ValueError:
+                    return None
         i += 1
     return None
 
@@ -795,7 +798,7 @@ class DecisionFactory:
 
 
 # Decisions parsing cache - enabled by default, disabled via BaseValidator.no_cache
-_DECISION_CACHE = {"enabled": True, "data": {}}
+_DECISION_CACHE: Dict[str, Any] = {"enabled": True, "data": {}}
 
 
 def _set_cache_enabled(enabled: bool):
@@ -813,6 +816,7 @@ def _invalidate_decision_cache():
     validators see the patched contents instead of stale factories.
     """
     _DECISION_CACHE["data"].clear()
+    FileOpener.clear_cache()
 
 
 def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
@@ -1031,11 +1035,15 @@ class Validator(BaseValidator):
         super().__init__(*args, **kwargs)
         self.fix = fix
         self.missing_icons = missing_icons
-        self._activation_removal_cache = None
+        self._activation_removal_cache: Optional[
+            Tuple[Set[str], Set[str], Set[str]]
+        ] = None
         if self.no_cache:
             _set_cache_enabled(False)
 
-    def _get_activation_removal_scan(self) -> Tuple[set, set, set]:
+    def _get_activation_removal_scan(
+        self,
+    ) -> Tuple[Set[str], Set[str], Set[str]]:
         """Scan shipped content for decision activations and external removals."""
         if self._activation_removal_cache is not None:
             return self._activation_removal_cache
@@ -1046,15 +1054,15 @@ class Validator(BaseValidator):
                 os.path.join(self.mod_path, pattern), recursive=True
             )
         ]
-        activated_decisions: set = set()
-        activated_missions: set = set()
-        externally_removed: set = set()
-        for dec_set, mis_set, rem_set in self._pool_map(
+        activated_decisions: Set[str] = set()
+        activated_missions: Set[str] = set()
+        externally_removed: Set[str] = set()
+        for decision_set, mission_set, removed_set in self._pool_map(
             _scan_activations_and_removals, all_files, chunksize=30
         ):
-            activated_decisions |= dec_set
-            activated_missions |= mis_set
-            externally_removed |= rem_set
+            activated_decisions |= decision_set
+            activated_missions |= mission_set
+            externally_removed |= removed_set
         self._activation_removal_cache = (
             activated_decisions,
             activated_missions,
@@ -1082,8 +1090,7 @@ class Validator(BaseValidator):
                 self.log(f"  Could not locate file: {basename}", "warning")
                 continue
 
-            with open(target_file, "r", encoding="utf-8-sig") as f:
-                content = f.read()
+            content = read_text_strict(target_file)
 
             for token in tokens:
                 pattern = re.compile(
@@ -1105,8 +1112,7 @@ class Validator(BaseValidator):
                 else:
                     self.log(f"  Could not patch {token} in {basename}", "warning")
 
-            with open(target_file, "w", encoding="utf-8-sig") as f:
-                f.write(content)
+            atomic_write_text(target_file, content)
 
         self.log(
             f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC if self.use_colors else ''}"
@@ -1669,8 +1675,8 @@ class Validator(BaseValidator):
         """Flag decisions whose ``allowed`` is fully redundant with the parent
         category's ``allowed`` (same single-tag pin, no extra conditions).
 
-        E.g. a decision with ``allowed = { original_tag = SER }`` inside a
-        category that already declares ``allowed = { original_tag = SER }``.
+        E.g. a decision with ``allowed = { original_tag = TAG }`` inside a
+        category that already declares ``allowed = { original_tag = TAG }``.
         The decision-level allowed is dead weight — remove it.
         """
         self._log_section(
@@ -1885,8 +1891,7 @@ class Validator(BaseValidator):
                 self.log(f"  Could not locate file: {basename}", "warning")
                 continue
 
-            with open(target_file, "r", encoding="utf-8-sig") as f:
-                content = f.read()
+            content = read_text_strict(target_file)
 
             for token in tokens:
                 # Find the decision block, then remove its available = { ... }
@@ -1899,8 +1904,7 @@ class Validator(BaseValidator):
                 else:
                     self.log(f"  Could not patch {token} in {basename}", "warning")
 
-            with open(target_file, "w", encoding="utf-8-sig") as f:
-                f.write(content)
+            atomic_write_text(target_file, content)
 
         self.log(
             f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC if self.use_colors else ''}"
