@@ -310,6 +310,38 @@ def case_mismatch(ref: str, ci_index: dict):
     return hit if (hit is not None and hit != ref) else None
 
 
+# Trait definitions sit at one tab of indent inside the `leader_traits = { }`
+# wrapper. `-` is in the charset for `emerging_Communist-State`.
+LEADER_TRAIT_DEF_RE = re.compile(r"^\t([\w\-]+)\s*=\s*\{", re.MULTILINE)
+
+
+def parse_leader_trait_names(mod_path: str, subdir: str) -> Set[str]:
+    """Collect every trait defined in the ``common/<subdir>/`` trait files.
+
+    Covers both leader trait pools: ``country_leader`` (advisors and country
+    leaders) and ``unit_leader`` (generals, admirals, operatives). The hyphen is
+    part of the name charset because ``emerging_Communist-State`` exists.
+    """
+    names: Set[str] = set()
+    trait_dir = os.path.join(mod_path, "common", subdir)
+    if not os.path.isdir(trait_dir):
+        return names
+
+    try:
+        trait_files = sorted(os.listdir(trait_dir))
+    except OSError:
+        return names
+
+    for fname in trait_files:
+        if not fname.endswith(".txt"):
+            continue
+        content = FileOpener.open_text_file(
+            os.path.join(trait_dir, fname), lowercase=False, strip_comments_flag=True
+        )
+        names.update(match.group(1) for match in LEADER_TRAIT_DEF_RE.finditer(content))
+    return names
+
+
 def scan_meta_constructed_names(files, defined_names):
     """Return the subset of *defined_names* called via meta_effect/meta_trigger
     template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).

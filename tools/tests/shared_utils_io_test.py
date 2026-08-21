@@ -131,3 +131,29 @@ def test_atomic_write_rejects_symlinked_parent(tmp_path):
     with pytest.raises(OSError, match="symlinked parent"):
         U.atomic_write_text(str(link / "file.txt"), "changed")
     assert not (target / "file.txt").exists()
+
+
+def test_staged_files_drops_paths_that_are_no_longer_on_disk(tmp_path, monkeypatch):
+    """CI's MD_STAGED_FILES carries deletions and the old side of a rename.
+
+    Validators open every entry unguarded, so an unfiltered list crashes the
+    whole run with FileNotFoundError instead of validating the files that exist.
+    """
+    kept = tmp_path / "common" / "country_leader" / "01_high_command_traits.txt"
+    kept.parent.mkdir(parents=True)
+    kept.write_text("leader_traits = {\n}\n", encoding="utf-8")
+    monkeypatch.setenv(
+        "MD_STAGED_FILES",
+        "common/country_leader/01_high_command_traits.txt\n"
+        "common/country_leader/01_military_advisor_traits.txt",
+    )
+
+    staged = U.get_staged_files(str(tmp_path))
+
+    assert [os.path.normpath(f) for f in staged] == [os.path.normpath(str(kept))]
+
+
+def test_staged_files_returns_none_when_every_path_is_gone(tmp_path, monkeypatch):
+    monkeypatch.setenv("MD_STAGED_FILES", "common/country_leader/deleted.txt")
+
+    assert U.get_staged_files(str(tmp_path)) is None
