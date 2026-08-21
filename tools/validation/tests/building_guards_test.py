@@ -26,12 +26,7 @@ def _messages(script):
 
 def test_unguarded_damage_building_is_flagged():
     script = (
-        "652 = {\n"
-        "\tdamage_building = {\n"
-        "\t\ttype = fuel_silo\n"
-        "\t\tdamage = 1\n"
-        "\t}\n"
-        "}\n"
+        "652 = {\n\tdamage_building = {\n\t\ttype = fuel_silo\n\t\tdamage = 1\n\t}\n}\n"
     )
     findings = _scan(script)
     assert len(findings) == 1
