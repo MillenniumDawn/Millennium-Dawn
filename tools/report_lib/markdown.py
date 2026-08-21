@@ -6,10 +6,10 @@ Two renderings come out of the same builder:
     metadata strip, and a summary table of only the validators with findings
     (passing ones fold into a count line), plus a pointer to the step summary.
     Kept small so the comment doesn't drown the PR conversation in inline findings.
-  - Step summary (default): the full validator roster in the summary table,
-    new findings split into error and warning groups, and per-validator
-    <details> only for validators that have findings. Clean validators collapse
-    to a single count line. Optionally the raw per-validator logs.
+  - Step summary (default): new findings split into error and warning groups,
+    a summary table of only the validators with findings, and per-validator
+    <details> only for those. Clean validators collapse to a single count
+    line. Optionally the raw per-validator logs.
 """
 
 from collections import defaultdict
@@ -74,9 +74,7 @@ def render(
             parts.append(baseline_section)
             parts.append("")
 
-    # Concise comment hides passing validators (count note only); the step
-    # summary lists the full roster alongside the per-validator sections.
-    summary = _render_summary_table(runs, show_passing=include_validator_sections)
+    summary = _render_summary_table(runs)
     if summary:
         parts.append(summary)
         parts.append("")
@@ -229,7 +227,7 @@ def _run_sort_key(r: ValidatorRun) -> Tuple[int, str]:
     return (rank, r.title.lower())
 
 
-def _render_summary_table(runs: List[ValidatorRun], show_passing: bool = True) -> str:
+def _render_summary_table(runs: List[ValidatorRun]) -> str:
     if not runs:
         return "_No validator results found._"
 
@@ -239,20 +237,13 @@ def _render_summary_table(runs: List[ValidatorRun], show_passing: bool = True) -
         return ""
 
     sorted_runs = sorted(runs, key=_run_sort_key)
+    table_runs = [r for r in sorted_runs if r.errors or r.warnings]
+    passed = sum(1 for r in runs if not r.errors and not r.warnings)
     passed_note = ""
-    if show_passing:
-        # Step summary: every validator gets a row (passing ones included) so the
-        # table is the full at-a-glance roster; failures sort to the top.
-        table_runs = sorted_runs
-    else:
-        # Concise comment: only validators with findings get a row; the rest are
-        # folded into a single count line so the comment stays small.
-        table_runs = [r for r in sorted_runs if r.errors or r.warnings]
-        passed = sum(1 for r in runs if not r.errors and not r.warnings)
-        if passed:
-            passed_note = (
-                f"\n\n✅ {_plural(passed, 'validator')} passed with no issues."
-            )
+    if passed:
+        passed_note = (
+            f"\n\n✅ {_plural(passed, 'other validator')} completed successfully."
+        )
 
     header = "| Validator | Errors | Warnings |\n|-----------|-------:|---------:|"
     rows = [
@@ -376,7 +367,6 @@ def _render_validator_sections(
         for name in sorted(order, key=sort_key)
         if counts[name][1] or counts[name][2]
     ]
-    clean_count = len(order) - len(finding_names)
     if not finding_names:
         return ""
 
@@ -434,12 +424,6 @@ def _render_validator_sections(
         sections.append("")
         sections.extend(body)
         sections.append("</details>")
-        sections.append("")
-
-    if clean_count:
-        sections.append(
-            f"✅ {_plural(clean_count, 'other validator')} completed successfully."
-        )
         sections.append("")
 
     if overflow:

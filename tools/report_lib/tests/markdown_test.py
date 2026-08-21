@@ -37,9 +37,9 @@ def test_render_includes_summary_table_totals():
     ]
     body = render(runs, [], _ctx())
     assert "| **Total** | **3** | **1** |" in body
-    # Every validator gets a row now — passing ones included, failures first.
     assert "| ❌ Events | 3 | 1 |" in body
-    assert "| ✅ Variables | 0 | 0 |" in body
+    assert "| ✅ Variables | 0 | 0 |" not in body
+    assert "✅ 1 other validator completed successfully." in body
 
 
 def test_render_verdict_caution_when_errors():
@@ -237,19 +237,18 @@ def test_concise_comment_hides_passing_validators():
     assert "Variables |" not in body
     assert "Ideas |" not in body
     # ...but are summarised as a count.
-    assert "✅ 2 validators passed with no issues." in body
+    assert "✅ 2 other validators completed successfully." in body
 
 
-def test_step_summary_keeps_passing_validators_in_table():
+def test_step_summary_hides_passing_validators():
     runs = [
         ValidatorRun(name="events", title="Events", status="failed", errors=2),
         ValidatorRun(name="variables", title="Variables", status="passed"),
     ]
-    # Default render (step-summary mode) keeps the full roster.
     body = render(runs, [], _ctx())
-    assert "| ✅ Variables | 0 | 0 |" in body
-    assert "passed with no issues." not in body
+    assert "| ✅ Variables | 0 | 0 |" not in body
     assert "<summary>✅ Variables" not in body
+    assert "<summary>✅ Variables — 0 issues</summary>" not in body
     assert "✅ 1 other validator completed successfully." in body
 
 
