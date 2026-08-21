@@ -519,10 +519,12 @@ def process_file_for_available_flags(
     return _scan_available_file(args)[1]
 
 
-# A scripted trigger's body checking a flag directly is the one-hop-removed
-# case the unlocalised-available-flag check cannot see: `pak_raj_border_available
-# = yes` renders no tooltip of its own, so a caller in `available` with no
-# wrapper shows the player nothing at all where a requirement line belongs.
+# A scripted trigger's body checking a flag with no tooltip wrapper is the
+# one-hop-removed case the unlocalised-available-flag check cannot see:
+# `pak_raj_border_available = yes` renders no tooltip of its own, so a caller
+# in `available` with no wrapper shows the player nothing at all where a
+# requirement line belongs. Wrappers inside the definition already supply that
+# line, so those triggers stay out of the index.
 # Global-flag bodies only: a repo-wide measurement including has_country_flag
 # produced 270 pre-existing hits (mostly cooldown/eligibility helpers with a
 # stable name that already reads as a requirement), against ~2 for the
@@ -532,12 +534,41 @@ _HAS_FLAG_BODY_RE = re.compile(r"\bhas_global_flag\b")
 _BARE_TRIGGER_CALL_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=\s*yes\b")
 
 
+def _scripted_trigger_body_has_unwrapped_global_flag(body: str) -> bool:
+    """True when a has_global_flag sits outside every tooltip wrapper.
+
+    A wrapper around the check inside the definition already supplies the
+    requirement line (custom_trigger_tooltip / custom_override_tooltip) or
+    hides it (hidden_trigger), so the call site does not need another one.
+    """
+    if not _HAS_FLAG_BODY_RE.search(body):
+        return False
+    events: List[Tuple[int, int, str]] = []
+    for m in _SCOPE_OPEN_RE.finditer(body):
+        events.append((m.end() - 1, 0, m.group(1)))
+    for m in re.finditer(r"\}", body):
+        events.append((m.start(), 1, ""))
+    for m in _HAS_FLAG_BODY_RE.finditer(body):
+        events.append((m.start(), 2, ""))
+    events.sort(key=lambda e: (e[0], e[1]))
+    stack: List[str] = []
+    for _pos, kind, tok in events:
+        if kind == 0:
+            stack.append(tok)
+        elif kind == 1:
+            if stack:
+                stack.pop()
+        elif not any(t in _TOOLTIP_WRAPPER_TOKENS for t in stack):
+            return True
+    return False
+
+
 def process_file_for_untooltipped_available_scripted_trigger(
     args: Tuple[str, str, frozenset],
 ) -> List[Tuple[str, str, int]]:
     """Pool worker: flag bare `<name> = yes` in `available` that resolves to a
-    scripted trigger whose own body checks a flag directly, with no tooltip
-    wrapper around the call.
+    scripted trigger whose own body checks an unwrapped global flag, with no
+    tooltip wrapper around the call.
 
     Walks the enclosing block stack outward from each call so a wrapper at any
     depth above it counts, not just the direct parent - same machinery as
@@ -1714,8 +1745,11 @@ class Validator(BaseValidator):
 
     def _collect_scripted_trigger_flag_names(self) -> frozenset:
         """Names of common/scripted_triggers/** definitions whose body checks a
-        global flag directly.
+        global flag that is not already under a tooltip wrapper.
 
+        A `custom_trigger_tooltip` / `custom_override_tooltip` / `hidden_trigger`
+        around the flag inside the definition already renders or hides the
+        requirement line, so a bare `<name> = yes` call is not a finding.
         Narrowed to `has_global_flag` only (not `has_country_flag`): a
         repo-wide measurement against both produced 270 pre-existing hits
         outside the border-war files, versus ~2 for the sibling
@@ -1734,7 +1768,7 @@ class Validator(BaseValidator):
         for fp in files:
             try:
                 with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
-                    text = strip_comments(fh.read())
+                    text = blank_quoted_strings(strip_comments(fh.read()))
             except Exception:
                 continue
             for m in _SCRIPTED_EFFECT_DEF_RE.finditer(text):
@@ -1742,7 +1776,7 @@ class Validator(BaseValidator):
                 if name in HOI4_BUILTIN_BLOCKS:
                     continue
                 body, _ = extract_block_from_text(text, m.start())
-                if body and _HAS_FLAG_BODY_RE.search(body):
+                if body and _scripted_trigger_body_has_unwrapped_global_flag(body):
                     names.add(name)
 
         self._scripted_trigger_flag_names_memo = frozenset(names)
@@ -1750,13 +1784,15 @@ class Validator(BaseValidator):
 
     def validate_untooltipped_available_scripted_trigger(self):
         """Flag bare scripted-trigger calls in `available` whose body checks a
-        flag directly, with no tooltip wrapper (WARNING).
+        flag with no tooltip wrapper (WARNING).
 
         One hop further out than ``validate_unlocalised_available_flags``: a
         bare flag check at least renders the raw token, but a bare call to a
         scripted trigger wrapping that same check (``pak_raj_border_available
         = yes``) renders no tooltip line at all - the player sees nothing
-        where a requirement should be.
+        where a requirement should be. A wrapper around the flag inside the
+        scripted trigger itself already supplies the line, so that call is
+        not a finding.
         """
         self._log_section(
             "Checking for untooltipped scripted-trigger calls in available blocks..."
