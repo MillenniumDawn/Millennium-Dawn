@@ -96,12 +96,14 @@ def _build_patch_payload(run: ValidatorRun, annotations: List[Dict]) -> dict:
 
 
 def _conclusion_for(run: ValidatorRun) -> str:
-    if run.errors > 0:
+    if run.errors > 0 or run.status in {"failed", "unknown"}:
         return "failure"
     if run.warnings > 0:
         return "neutral"
     if run.status == "no_output":
         return "skipped"
+    if run.status != "passed":
+        return "failure"
     return "success"
 
 

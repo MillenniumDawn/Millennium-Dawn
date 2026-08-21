@@ -1,9 +1,9 @@
 """Regressions for the unlocalised-available-flag check in validate_variables.
 
-HOI4 renders the requirement line for a `has_country_flag` check inside a
-player-facing `available` block from a localisation key named after the flag
-itself. With no such key the player reads the raw flag token instead of a
-human-readable requirement.
+HOI4 renders the requirement line for a `has_country_flag` / `has_global_flag`
+check inside a player-facing `available` block from a localisation key named
+after the flag itself. With no such key the player reads the raw flag token
+instead of a human-readable requirement.
 
 `visible` is deliberately not covered, for the same reason as the
 untooltipped-`check_variable` check: a failing visible hides the object
@@ -27,6 +27,16 @@ def test_shorthand_flag_in_available_flagged(tmp_path):
     assert len(out) == 1
     assert out[0][0] == "ENG_deal_flag"
     assert out[0][2] == 3
+
+
+def test_shorthand_global_flag_in_available_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "my_decision = {\n\tavailable = {\n\t\thas_global_flag = GLOBAL_deal_flag\n\t}\n}\n",
+    )
+    assert len(out) == 1
+    assert out[0][0] == "GLOBAL_deal_flag"
+    assert out[0][3] == "global"
 
 
 def test_long_form_flag_in_available_flagged(tmp_path):
