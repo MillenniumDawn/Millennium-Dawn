@@ -71,9 +71,9 @@ UNIT_LEADER_TRAITS = """leader_traits = {
 
 POOL_FILES = {
     "01_high_command_traits.txt": HIGH_COMMAND_TRAITS,
-    "02_army_chief_traits.txt": ARMY_CHIEF_TRAITS,
-    "03_navy_chief_traits.txt": NAVY_CHIEF_TRAITS,
-    "04_air_chief_traits.txt": AIR_CHIEF_TRAITS,
+    "01_army_chief_traits.txt": ARMY_CHIEF_TRAITS,
+    "01_navy_chief_traits.txt": NAVY_CHIEF_TRAITS,
+    "01_air_chief_traits.txt": AIR_CHIEF_TRAITS,
 }
 
 
@@ -140,9 +140,9 @@ def test_parse_advisor_trait_slots_ignores_files_outside_the_pool_map(pool_dir):
 
 
 def test_missing_pool_files_lists_only_absent_files(tmp_path):
-    _write_fixture(tmp_path, _characters(), skip_pool_file="03_navy_chief_traits.txt")
+    _write_fixture(tmp_path, _characters(), skip_pool_file="01_navy_chief_traits.txt")
 
-    assert missing_pool_files(str(tmp_path)) == ["03_navy_chief_traits.txt"]
+    assert missing_pool_files(str(tmp_path)) == ["01_navy_chief_traits.txt"]
 
 
 def test_collect_advisor_uses_covers_both_trait_list_forms():
@@ -281,7 +281,7 @@ def test_validator_reports_a_missing_pool_file_and_skips_the_slot_check(tmp_path
         _characters(
             _advisor("TAG_high_command", "high_command", "army_chief_defensive_1")
         ),
-        skip_pool_file="03_navy_chief_traits.txt",
+        skip_pool_file="01_navy_chief_traits.txt",
     )
     validator = Validator(str(tmp_path), use_colors=False, workers=1)
 

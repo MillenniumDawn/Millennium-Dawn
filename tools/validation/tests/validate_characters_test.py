@@ -40,7 +40,7 @@ def _write_fixture(tmp_path, characters: str):
     advisor_dir.mkdir(parents=True)
     char_dir.mkdir(parents=True)
     (trait_dir / "01_army_leader_traits.txt").write_text(TRAITS, encoding="utf-8")
-    (advisor_dir / "02_army_chief_traits.txt").write_text(
+    (advisor_dir / "01_army_chief_traits.txt").write_text(
         ADVISOR_TRAITS, encoding="utf-8"
     )
     (char_dir / "TAG.txt").write_text(characters, encoding="utf-8")

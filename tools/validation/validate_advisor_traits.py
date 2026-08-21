@@ -28,9 +28,9 @@ TRAIT_DIR = "common/country_leader"
 # ...) -- they carry no `chief` in the name but are air chief traits.
 SLOT_POOL_FILES = {
     "01_high_command_traits.txt": "high_command",
-    "02_army_chief_traits.txt": "army_chief",
-    "03_navy_chief_traits.txt": "navy_chief",
-    "04_air_chief_traits.txt": "air_chief",
+    "01_army_chief_traits.txt": "army_chief",
+    "01_navy_chief_traits.txt": "navy_chief",
+    "01_air_chief_traits.txt": "air_chief",
 }
 
 # Country-specific traits (ENG_mike_jackson_trait, CHI_tank_general_advisor, ...)
@@ -152,7 +152,7 @@ class Validator(BaseValidator):
                         and slot in SLOT_POOL_FILES.values()
                         and expected != slot
                     ):
-                        self.add_warning(
+                        self.add_error(
                             "advisor-trait-slot-mismatch",
                             f"'{trait}' belongs to the {expected} pool but is "
                             f"assigned to slot {slot}",
