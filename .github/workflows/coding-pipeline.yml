@@ -130,6 +130,9 @@ jobs:
       scientist-traits: >-
         ${{ steps.filter.outputs.scientist-traits ||
         steps.dispatch.outputs.scientist-traits }}
+      advisor-traits: >-
+        ${{ steps.filter.outputs.advisor-traits ||
+        steps.dispatch.outputs.advisor-traits }}
       oob: >-
         ${{ steps.filter.outputs.oob ||
         steps.dispatch.outputs.oob }}
@@ -217,6 +220,19 @@ jobs:
               # The medal-sprite index is the other half of the check, so a
               # .gfx edit changes what resolves for every trait.
               - 'interface/**'
+            advisor-traits:
+              # The trait pools are the other half of the cross-reference, so a
+              # section moved in country_leader/ reclassifies every use of it.
+              - 'common/country_leader/**'
+              - 'common/unit_leader/**'
+              - 'common/characters/**'
+              # Sources of add_advisor_role.
+              - 'common/national_focus/**'
+              - 'common/decisions/**'
+              - 'common/scripted_effects/**'
+              - 'common/on_actions/**'
+              - 'events/**'
+              - 'history/countries/**'
             oob:
               - 'history/units/**'
               - 'common/units/**'
@@ -283,7 +299,7 @@ jobs:
         run: |
           for out in common events history localisation ai-strategy \
               ai-navy ai-equipment factions characters scientist-traits \
-              oob decisions scripted-loc scripted-guis interface \
+              advisor-traits oob decisions scripted-loc scripted-guis interface \
               national-focus on-actions scripted-effects mod content mios; do
             echo "$out=true" >> "$GITHUB_OUTPUT"
           done
@@ -663,6 +679,7 @@ jobs:
       needs.detect-changes.outputs.factions == 'true' ||
       needs.detect-changes.outputs.characters == 'true' ||
       needs.detect-changes.outputs.scientist-traits == 'true' ||
+      needs.detect-changes.outputs.advisor-traits == 'true' ||
       needs.detect-changes.outputs.scripted-guis == 'true' ||
       needs.detect-changes.outputs.interface == 'true' ||
       needs.detect-changes.outputs.national-focus == 'true' ||
@@ -722,6 +739,13 @@ jobs:
             # All findings are WARNING-severity: the 19-item missing-medal
             # backlog surfaces in reports without gating PRs.
             should_run: ${{ needs.detect-changes.outputs.scientist-traits }}
+          - script: validate_advisor_traits.py
+            name: advisor-traits
+            title: "Validate Advisor Trait Slots"
+            strict: true
+            # advisor-trait-slot-mismatch is WARNING-severity: the 87-item
+            # chief/high-command backlog surfaces in reports without gating PRs.
+            should_run: ${{ needs.detect-changes.outputs.advisor-traits }}
           - script: validate_mios.py
             name: mios
             title: "Validate MIO Organizations"
