@@ -124,6 +124,9 @@ _REGISTRY = [
         [
             ("common/characters/", TXT),
             ("common/unit_leader/", TXT),
+            # The other leader trait pool: a trait moved between the two changes
+            # whether it is legal on a unit leader.
+            ("common/country_leader/", TXT),
             # Sources of create_corps_commander and friends.
             ("common/national_focus/", TXT),
             ("common/decisions/", TXT),

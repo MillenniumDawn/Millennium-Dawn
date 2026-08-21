@@ -7,32 +7,37 @@
 import os
 import re
 import sys
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from shared_utils import extract_block_from_text
-from validator_common import BaseValidator, FileOpener, run_validator_main
+from validator_common import (
+    LEADER_TRAIT_DEF_RE,
+    BaseValidator,
+    FileOpener,
+    parse_leader_trait_names,
+    run_validator_main,
+)
 
-ADVISOR_TRAIT_FILE = "common/country_leader/01_military_advisor_traits.txt"
+TRAIT_DIR = "common/country_leader"
 
-# Section comments in ADVISOR_TRAIT_FILE are the authoritative pool boundary.
-# A name-prefix rule would misfile the eight vanilla-named air families
-# (air_air_superiority_*, air_close_air_support_*, ...): they carry no `chief`
-# in the name but sit under the Air Chief header and are used on air_chief 266
-# times against 37 on high_command, so the header records the real intent.
-SECTION_TO_SLOT = {
-    "Military High Command Traits": "high_command",
-    "Army Chief Traits": "army_chief",
-    "Navy Chief Traits": "navy_chief",
-    "Air Chief Traits": "air_chief",
+# One file per advisor slot pool: the filename is the classification, so a trait
+# is in the pool of the file it lives in. A name-prefix rule would misfile the
+# eight vanilla-named air families (air_air_superiority_*, air_close_air_support_*,
+# ...) -- they carry no `chief` in the name but are air chief traits.
+SLOT_POOL_FILES = {
+    "01_high_command_traits.txt": "high_command",
+    "02_army_chief_traits.txt": "army_chief",
+    "03_navy_chief_traits.txt": "navy_chief",
+    "04_air_chief_traits.txt": "air_chief",
 }
 
-# Headers are inconsistently indented, and the trailing ### is required so the
-# section-less `### Military Minister Traits` preamble is not treated as one.
-# \r is tolerated because a Windows working tree can hold the file as CRLF.
-SECTION_RE = re.compile(r"^[ \t]*###[ \t]*(.+?)[ \t]*###[ \t\r]*$", re.MULTILINE)
-TRAIT_DEF_RE = re.compile(r"^\t(\w+)\s*=\s*\{", re.MULTILINE)
+# Country-specific traits (ENG_mike_jackson_trait, CHI_tank_general_advisor, ...)
+# are written for one character and belong to no shared pool, so the slot check
+# skips them even when they sit in a pool file.
+TAG_TRAIT_RE = re.compile(r"^[A-Z]{3}_")
+
 ADVISOR_BLOCK_RE = re.compile(r"\badvisor\s*=\s*\{")
 SLOT_RE = re.compile(r"\bslot\s*=\s*(\w+)")
 TRAITS_RE = re.compile(r"\btraits\s*=\s*\{([^}]*)\}")
@@ -47,49 +52,29 @@ CONTENT_PATTERNS = [
     "history/countries/*.txt",
 ]
 
-# Guards against reporting the whole database when the trait file is missing or
-# its headers were reformatted. The real file classifies 150 traits.
-_MIN_CLASSIFIED = 50
 
-
-def parse_advisor_trait_slots(content: str) -> Dict[str, str]:
-    """Map each trait in the shared advisor pool to the slot its section names."""
-    sections = [
-        (match.start(), SECTION_TO_SLOT.get(match.group(1)))
-        for match in SECTION_RE.finditer(content)
-    ]
+def parse_advisor_trait_slots(mod_path: str) -> Dict[str, str]:
+    """Map each pooled advisor trait to the slot its file names."""
     slots: Dict[str, str] = {}
-    for match in TRAIT_DEF_RE.finditer(content):
-        slot = None
-        for start, section_slot in sections:
-            if start > match.start():
-                break
-            slot = section_slot
-        if slot:
+    for fname, slot in SLOT_POOL_FILES.items():
+        path = os.path.join(mod_path, *TRAIT_DIR.split("/"), fname)
+        if not os.path.isfile(path):
+            continue
+        content = FileOpener.open_text_file(
+            path, lowercase=False, strip_comments_flag=True
+        )
+        for match in LEADER_TRAIT_DEF_RE.finditer(content):
             slots[match.group(1)] = slot
     return slots
 
 
-def _parse_trait_names(mod_path: str, subdir: str) -> Set[str]:
-    """Collect every trait defined in a common/<subdir>/ trait file."""
-    names: Set[str] = set()
-    trait_dir = os.path.join(mod_path, "common", subdir)
-    if not os.path.isdir(trait_dir):
-        return names
-
-    try:
-        trait_files = sorted(os.listdir(trait_dir))
-    except OSError:
-        return names
-
-    for fname in trait_files:
-        if not fname.endswith(".txt"):
-            continue
-        content = FileOpener.open_text_file(
-            os.path.join(trait_dir, fname), lowercase=False, strip_comments_flag=True
-        )
-        names.update(match.group(1) for match in TRAIT_DEF_RE.finditer(content))
-    return names
+def missing_pool_files(mod_path: str) -> List[str]:
+    """Return the pool files SLOT_POOL_FILES names that are not on disk."""
+    return [
+        fname
+        for fname in SLOT_POOL_FILES
+        if not os.path.isfile(os.path.join(mod_path, *TRAIT_DIR.split("/"), fname))
+    ]
 
 
 def collect_advisor_uses(content: str) -> List[Tuple[str, str, int]]:
@@ -118,25 +103,31 @@ class Validator(BaseValidator):
     def _validate_advisor_traits(self):
         self._log_section("Checking advisor trait slot assignment...")
 
-        trait_path = os.path.join(self.mod_path, *ADVISOR_TRAIT_FILE.split("/"))
-        trait_slots: Dict[str, str] = {}
-        if os.path.isfile(trait_path):
-            trait_slots = parse_advisor_trait_slots(
-                FileOpener.open_text_file(trait_path, lowercase=False)
+        # A renamed or deleted pool file must fail loudly: silently dropping the
+        # slot check would hide every mismatch behind a green run.
+        missing = missing_pool_files(self.mod_path)
+        for fname in missing:
+            self.add_error(
+                "advisor-pool-file-missing",
+                f"{TRAIT_DIR}/{fname} defines the "
+                f"{SLOT_POOL_FILES[fname]} advisor pool but does not exist",
+                f"{TRAIT_DIR}/{fname}",
             )
-        if len(trait_slots) < _MIN_CLASSIFIED:
-            self.log(
-                f"  Warning: only {len(trait_slots)} advisor traits classified from "
-                f"{ADVISOR_TRAIT_FILE}; skipping advisor trait checks",
-                "warning",
-            )
-            return
+
+        trait_slots = {} if missing else parse_advisor_trait_slots(self.mod_path)
 
         # Country files (ENG_traits.txt, CHI_traits.txt, ...) define bespoke
         # advisor traits. They count as defined but stay unclassified, so they
         # never trip the slot check.
-        defined = _parse_trait_names(self.mod_path, "country_leader")
-        unit_leader_traits = _parse_trait_names(self.mod_path, "unit_leader")
+        defined = parse_leader_trait_names(self.mod_path, "country_leader")
+        unit_leader_traits = parse_leader_trait_names(self.mod_path, "unit_leader")
+        if not defined:
+            self.log(
+                "  Warning: no country leader traits parsed; skipping advisor "
+                "trait checks",
+                "warning",
+            )
+            return
 
         definitions_changed = self.staged_only and any(
             os.path.relpath(filepath, self.mod_path)
@@ -153,16 +144,21 @@ class Validator(BaseValidator):
             rel = os.path.relpath(filepath, self.mod_path)
             for slot, trait, line in collect_advisor_uses(content):
                 if trait in defined:
+                    if TAG_TRAIT_RE.match(trait):
+                        continue
                     expected = trait_slots.get(trait)
-                    if expected and slot in SECTION_TO_SLOT.values():
-                        if expected != slot:
-                            self.add_warning(
-                                "advisor-trait-slot-mismatch",
-                                f"'{trait}' belongs to the {expected} pool but is "
-                                f"assigned to slot {slot}",
-                                rel,
-                                line,
-                            )
+                    if (
+                        expected
+                        and slot in SLOT_POOL_FILES.values()
+                        and expected != slot
+                    ):
+                        self.add_warning(
+                            "advisor-trait-slot-mismatch",
+                            f"'{trait}' belongs to the {expected} pool but is "
+                            f"assigned to slot {slot}",
+                            rel,
+                            line,
+                        )
                 elif trait in unit_leader_traits:
                     self.add_error(
                         "unit-leader-trait-on-advisor",

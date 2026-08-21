@@ -24,12 +24,25 @@ TRAITS = """leader_traits = {
 """
 
 
+ADVISOR_TRAITS = """leader_traits = {
+\tarmy_chief_defensive_2 = {
+\t\tsprite = 7
+\t}
+}
+"""
+
+
 def _write_fixture(tmp_path, characters: str):
     trait_dir = tmp_path / "common" / "unit_leader"
+    advisor_dir = tmp_path / "common" / "country_leader"
     char_dir = tmp_path / "common" / "characters"
     trait_dir.mkdir(parents=True)
+    advisor_dir.mkdir(parents=True)
     char_dir.mkdir(parents=True)
     (trait_dir / "01_army_leader_traits.txt").write_text(TRAITS, encoding="utf-8")
+    (advisor_dir / "02_army_chief_traits.txt").write_text(
+        ADVISOR_TRAITS, encoding="utf-8"
+    )
     (char_dir / "TAG.txt").write_text(characters, encoding="utf-8")
 
 
@@ -110,6 +123,31 @@ def test_validator_reports_branch_mismatch_and_undefined_trait(tmp_path):
         category == "undefined-unit-leader-trait" and "made_up_trait" in message
         for category, _, message in issues
     )
+
+
+def test_validator_reports_an_advisor_trait_on_a_unit_leader(tmp_path):
+    _write_fixture(
+        tmp_path,
+        "characters = {\n"
+        "\tTAG_general = {\n"
+        "\t\tcorps_commander = {\n"
+        "\t\t\ttraits = { army_chief_defensive_2 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+
+    validator.run_validations()
+    issues = {(issue.category, issue.message) for issue in validator._issues}
+
+    assert issues == {
+        (
+            "advisor-trait-on-unit-leader",
+            "corps_commander uses 'army_chief_defensive_2', a "
+            "common/country_leader/ trait that does nothing on a unit leader",
+        )
+    }
 
 
 def test_validator_scans_all_uses_when_a_trait_definition_is_staged(

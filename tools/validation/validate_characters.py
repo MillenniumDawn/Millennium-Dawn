@@ -11,9 +11,14 @@ from typing import Dict, List, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from shared_utils import extract_block_from_text
-from validator_common import BaseValidator, FileOpener, run_validator_main
+from validator_common import (
+    LEADER_TRAIT_DEF_RE,
+    BaseValidator,
+    FileOpener,
+    parse_leader_trait_names,
+    run_validator_main,
+)
 
-TRAIT_DEF_RE = re.compile(r"^\t(\w+)\s*=\s*\{", re.MULTILINE)
 TYPE_RE = re.compile(r"(?<!trait_)\btype\s*=\s*(\{[^}]*\}|\w+)")
 TRAITS_RE = re.compile(r"\btraits\s*=\s*\{([^}]*)\}")
 
@@ -70,7 +75,7 @@ def parse_trait_types(mod_path: str) -> Dict[str, Set[str]]:
         content = FileOpener.open_text_file(
             os.path.join(trait_dir, fname), lowercase=False, strip_comments_flag=True
         )
-        for match in TRAIT_DEF_RE.finditer(content):
+        for match in LEADER_TRAIT_DEF_RE.finditer(content):
             body, _ = extract_block_from_text(content, match.end() - 1)
             type_match = TYPE_RE.search(body)
             if not type_match:
@@ -112,10 +117,14 @@ class Validator(BaseValidator):
             )
             return
 
+        # The other leader trait pool. It loads on advisors and country leaders,
+        # so a trait taken from it does nothing on a general or an admiral.
+        advisor_traits = parse_leader_trait_names(self.mod_path, "country_leader")
+
         trait_definitions_changed = self.staged_only and any(
             os.path.relpath(filepath, self.mod_path)
             .replace(os.sep, "/")
-            .startswith("common/unit_leader/")
+            .startswith(("common/unit_leader/", "common/country_leader/"))
             for filepath in self.staged_files or []
         )
         files = self._collect_files(
@@ -129,6 +138,15 @@ class Validator(BaseValidator):
             for role, trait, line in collect_trait_uses(content):
                 declared = trait_types.get(trait)
                 if declared is None:
+                    if trait in advisor_traits:
+                        self.add_error(
+                            "advisor-trait-on-unit-leader",
+                            f"{role} uses '{trait}', a common/country_leader/ trait "
+                            "that does nothing on a unit leader",
+                            rel,
+                            line,
+                        )
+                        continue
                     self.add_warning(
                         "undefined-unit-leader-trait",
                         f"{role} uses trait '{trait}', which is not defined in common/unit_leader/",
