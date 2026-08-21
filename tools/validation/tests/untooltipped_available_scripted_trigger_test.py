@@ -87,11 +87,7 @@ def test_custom_override_tooltip_ok(tmp_path):
 def test_visible_not_flagged(tmp_path):
     out = _findings(
         tmp_path,
-        "my_decision = {\n"
-        "\tvisible = {\n"
-        "\t\tpak_raj_border_available = yes\n"
-        "\t}\n"
-        "}\n",
+        "my_decision = {\n\tvisible = {\n\t\tpak_raj_border_available = yes\n\t}\n}\n",
     )
     assert out == []
 
@@ -117,11 +113,7 @@ def test_unknown_token_not_flagged(tmp_path):
     # (typo, or a trigger with no flag body) is out of scope.
     out = _findings(
         tmp_path,
-        "my_decision = {\n"
-        "\tavailable = {\n"
-        "\t\tsome_other_trigger = yes\n"
-        "\t}\n"
-        "}\n",
+        "my_decision = {\n\tavailable = {\n\t\tsome_other_trigger = yes\n\t}\n}\n",
     )
     assert out == []
 
