@@ -17,21 +17,30 @@ def run(cmd: list[str]) -> str:
 
 def main() -> None:
     base = sys.argv[1] if len(sys.argv) > 1 else "main"
+
+    # A bad/unknown base ref otherwise makes every git diff fail silently,
+    # printing empty sections and exiting 0.
+    verify = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", f"{base}^{{commit}}"],
+        capture_output=True,
+        text=True,
+    )
+    if verify.returncode != 0:
+        print(f"error: unknown base ref '{base}'", file=sys.stderr)
+        sys.exit(1)
+
     current = run(["git", "branch", "--show-current"])
 
     print("=" * 40)
     print(f"Branch:  {current}")
     print(f"Base:    {base}")
-    print("=" * 40)
-    print()
+    print("=" * 40 + "\n")
 
     print("--- Commits ---")
-    print(run(["git", "log", f"{base}..HEAD", "--oneline"]))
-    print()
+    print(run(["git", "log", f"{base}..HEAD", "--oneline"]) + "\n")
 
     print("--- Changed files ---")
-    print(run(["git", "diff", f"{base}...HEAD", "--stat"]))
-    print()
+    print(run(["git", "diff", f"{base}...HEAD", "--stat"]) + "\n")
 
     print("--- Changes by directory ---")
     names = run(["git", "diff", f"{base}...HEAD", "--name-only"])
@@ -43,7 +52,7 @@ def main() -> None:
             dir_counts[d] = dir_counts.get(d, 0) + 1
         for d, count in sorted(dir_counts.items(), key=lambda x: -x[1]):
             print(f"  {count:3d}  {d}")
-    print()
+        print()
 
     print("--- Full diff ---")
     print(run(["git", "diff", f"{base}...HEAD"]))

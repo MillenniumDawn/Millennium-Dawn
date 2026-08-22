@@ -1,25 +1,81 @@
-country_and_all_subjects = {
-	input = game:scope
-	operators = { country_and_all_subjects }
-	name = COLLECTION_COUNTRY_AND_ALL_SUBJECTS
+
+all_countries_collection = {
+	input = game:all_countries
 }
 
-gcc_members = {
+un_general_assembly_members_collection = {
 	input = game:all_countries
-	operators = {
-		limit = {
-			has_idea = idea_gcc_member_state
-		}
-	}
-	name = COLLECTION_GCC_MEMBERS
+	operators = { limit = { has_dynamic_modifier = { modifier = united_nations_member } } }
+	name = COLLECTION_UN_GENERAL_ASSEMBLY_MEMBERS
 }
 
-christian_countries_of_the_world = {
-	input = game:all_countries
+un_esco_recipients_collection = {
+	input = collection:un_general_assembly_members_collection
+	operators = { limit = { has_country_flag = is_getting_esco_subsidies } }
+	name = COLLECTION_UNESCO_RECIPIENTS
+}
+
+un_ido_recipients_collection = {
+	input = collection:un_general_assembly_members_collection
+	operators = { limit = { has_country_flag = is_getting_ido_subsidies } }
+	name = COLLECTION_UNIDO_RECIPIENTS
+}
+
+un_cdf_recipients_collection = {
+	input = collection:un_general_assembly_members_collection
+	operators = { limit = { has_country_flag = is_getting_cdf_subsidies } }
+	name = COLLECTION_UNCDF_RECIPIENTS
+}
+
+christian_countries_of_the_world_collection = {
+	input = collection:all_countries_collection
 	operators = {
 		limit = {
 			is_a_christian_nation = yes
 		}
 	}
 	name = COLLECTION_ALL_CHRISTIAN_NATIONS
+}
+
+controlled_states_collection = {
+	input = game:scope
+	operators = { controlled_states }
+	name = COLLECTION_ALL_CONTROLLED_STATES
+}
+
+country_and_all_subjects_collection = {
+	input = game:scope
+	operators = { country_and_all_subjects }
+	name = COLLECTION_COUNTRY_AND_ALL_SUBJECTS
+}
+
+neighbors_collection = {
+	input = game:scope
+	operators = { limit = { is_in_array = { neighbors = THIS.id } } }
+	name = COLLECTION_NEIGHBOR_NATIONS
+}
+
+middle_eastern_nations_collection = {
+	input = game:all_countries
+	operators = { limit = { is_in_array = { global.is_middle_eastern_africa_nations = THIS.id } } }
+	name = COLLECTION_MIDDLE_EASTERN_NATIONS
+}
+
+middle_eastern_refugee_source_nations_collection = {
+	input = collection:middle_eastern_nations_collection
+	operators = {
+		limit = {
+			OR = {
+				has_war = yes
+				salafist_caliphate_are_in_power = yes
+			}
+		}
+	}
+	name = COLLECTION_MIDDLE_EASTERN_REFUGEE_SOURCE_NATIONS
+}
+
+arabic_nations_collection = {
+	input = game:all_countries
+	operators = { limit = { is_in_array = { global.arabic_countries = THIS.id } } }
+	name = COLLECTION_ARABIC_NATIONS
 }

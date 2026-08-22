@@ -1,23 +1,15 @@
 #!/usr/bin/env python3
-"""
-HOI4 Localization Encoding Validator
-
-This script validates and fixes UTF-8 BOM encoding for Hearts of Iron IV localization files.
-HOI4 requires localization YAML files to be encoded as UTF-8 with BOM.
-
-Usage:
-    python validate_localization_encoding.py [--fix] [files...]
-
-Arguments:
-    --fix: Automatically add UTF-8 BOM to files that are missing it
-    files: List of files to check (if not provided, checks all English localization files)
-"""
+"""Validate and optionally fix UTF-8 BOM encoding for HOI4 localisation files."""
 
 import argparse
 import codecs
+import os
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import atomic_write_bytes
 
 
 class LocalizationValidator:
@@ -25,9 +17,9 @@ class LocalizationValidator:
 
     def __init__(self, fix_mode: bool = False):
         self.fix_mode = fix_mode
-        self.errors = []
-        self.fixed = []
-        self.valid = []
+        self.errors: List[str] = []
+        self.fixed: List[str] = []
+        self.valid: List[str] = []
 
     def validate_file(self, file_path: Path) -> bool:
         """
@@ -40,22 +32,24 @@ class LocalizationValidator:
             True if file is valid or was fixed, False if errors occurred
         """
         try:
-            # Read file in binary mode to check BOM
+            # Binary mode so the BOM bytes are visible rather than stripped on decode
             with open(file_path, "rb") as f:
                 content = f.read()
 
             has_bom = content.startswith(codecs.BOM_UTF8)
+            duplicate_bom = content.startswith(codecs.BOM_UTF8 * 2)
 
-            if not has_bom:
+            if not has_bom or duplicate_bom:
                 if self.fix_mode:
                     return self._fix_file(file_path, content)
-                else:
-                    self.errors.append(
-                        f"{file_path}: Missing UTF-8 BOM (required for HOI4 localization)"
-                    )
-                    return False
+                problem = (
+                    "Duplicate UTF-8 BOM" if duplicate_bom else "Missing UTF-8 BOM"
+                )
+                self.errors.append(
+                    f"{file_path}: {problem} (HOI4 requires exactly one)"
+                )
+                return False
 
-            # Verify the file is valid UTF-8
             try:
                 with open(file_path, "r", encoding="utf-8-sig") as f:
                     f.read()
@@ -82,14 +76,12 @@ class LocalizationValidator:
             True if file was fixed successfully, False otherwise
         """
         try:
-            # Verify content is valid UTF-8 before fixing
+            while content.startswith(codecs.BOM_UTF8):
+                content = content[len(codecs.BOM_UTF8) :]
             content.decode("utf-8")
+            atomic_write_bytes(str(file_path), codecs.BOM_UTF8 + content)
 
-            # Add BOM and write back
-            with open(file_path, "wb") as f:
-                f.write(codecs.BOM_UTF8 + content)
-
-            self.fixed.append(f"{file_path}: Added UTF-8 BOM")
+            self.fixed.append(f"{file_path}: Normalized UTF-8 BOM")
             return True
 
         except UnicodeDecodeError as e:
@@ -136,7 +128,6 @@ class LocalizationValidator:
             for msg in self.errors:
                 print(msg, file=sys.stderr)
 
-        # Print summary counts
         total = len(self.valid) + len(self.fixed) + len(self.errors)
         if total > 1:
             print(
@@ -152,7 +143,7 @@ def find_english_localization_files() -> List[Path]:
         "localisation/english/**/*.yml",  # Nested directories
     ]
 
-    files = []
+    files: List[Path] = []
     project_root = Path.cwd()
 
     for pattern in patterns:
@@ -189,7 +180,6 @@ Examples:
 
     args = parser.parse_args()
 
-    # Determine which files to check
     if args.files:
         files = [Path(f) for f in args.files]
     else:
@@ -202,7 +192,6 @@ Examples:
             )
             return 1
 
-    # Validate files
     validator = LocalizationValidator(fix_mode=args.fix)
     success = validator.validate_files(files)
     validator.print_summary()

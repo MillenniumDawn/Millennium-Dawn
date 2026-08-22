@@ -8,7 +8,162 @@ Standardizes HOI4 event files according to Millennium Dawn coding standards
 import re
 from typing import Any, Dict, List
 
-from common_utils import BaseStandardizer, run_standardizer
+from common_utils import (
+    PROP_NAME_RE,
+    BaseStandardizer,
+    block_has_log,
+    collapse_blank_runs,
+    emit_comments,
+    inject_log_after_brace,
+    join_groups,
+    run_standardizer,
+)
+from shared_utils import (
+    blank_quoted_strings,
+    collapse_or_compact,
+    extract_block,
+    strip_inline_comment,
+)
+
+_EVENT_TYPES = ("country_event", "province_event", "unit_leader_event", "news_event")
+
+_HEADER_SINGLE_PROPS = {
+    "id",
+    "picture",
+    "is_triggered_only",
+    "hidden",
+    "major",
+    "fire_only_once",
+}
+
+_BLOCK_PROPS = frozenset({"mean_time_to_happen", "trigger", "immediate", "option"})
+
+
+_OPTION_STATEMENT_RE = re.compile(r"[A-Za-z_]\w*\s*=")
+
+
+def _split_packed_body(body: str) -> List[str]:
+    """Split a packed one-line option body into its top-level ``key = value``
+    statements. Brace- and quote-aware so nested blocks and quoted values that
+    contain spaces or ``=`` are not split mid-statement."""
+    boundaries: List[int] = []
+    depth = 0
+    in_str = False
+    for i, c in enumerate(body):
+        if c == '"' and (i == 0 or body[i - 1] != "\\"):
+            in_str = not in_str
+        elif in_str:
+            continue
+        elif c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+        elif (
+            depth == 0
+            and (i == 0 or body[i - 1].isspace())
+            and _OPTION_STATEMENT_RE.match(body, i)
+        ):
+            boundaries.append(i)
+    if not boundaries:
+        stripped = body.strip()
+        return [stripped] if stripped else []
+    boundaries.append(len(body))
+    out: List[str] = []
+    for a, b in zip(boundaries, boundaries[1:]):
+        seg = body[a:b].strip()
+        if seg:
+            out.append(seg)
+    return out
+
+
+def _option_body(option_block: List[str]) -> List[str]:
+    """Statements between the option header's ``{`` and its matching ``}``.
+    A packed single-line option (`option = { name = x  add_pp = 10 }`) keeps
+    header, body, and closer on one physical line, so its body is split out of
+    that line rather than read as the empty slice between two list elements."""
+    if len(option_block) == 1:
+        code = strip_inline_comment(option_block[0])
+        open_idx = code.find("{")
+        close_idx = code.rfind("}")
+        if open_idx == -1 or close_idx <= open_idx:
+            return []
+        return _split_packed_body(code[open_idx + 1 : close_idx])
+    body = list(option_block[1:-1])
+    # A statement packed onto the closer line (`add_political_power = 10 }`) is
+    # invisible to a plain [1:-1] slice — recover the code before the trailing `}`.
+    last = strip_inline_comment(option_block[-1])
+    close_idx = last.rfind("}")
+    if close_idx != -1:
+        tail = last[:close_idx].strip()
+        if tail:
+            body.append(tail)
+    return body
+
+
+def _explode_packed_option(option_block: List[str]) -> List[str]:
+    """Expand a packed single-line option into header / body / closer lines so a
+    log can be injected inside its braces. Multi-line options pass through."""
+    if len(option_block) != 1:
+        return option_block
+    line = option_block[0].rstrip("\n")
+    code = strip_inline_comment(line)
+    comment = line[len(code) :].strip()
+    indent = line[: len(line) - len(line.lstrip("\t"))]
+    closer = f"{indent}}}" + (f" {comment}" if comment else "")
+    return (
+        [f"{indent}option = {{"]
+        + [f"{indent}\t{stmt}" for stmt in _option_body(option_block)]
+        + [closer]
+    )
+
+
+def _option_indent(option_block: List[str]) -> str:
+    """Leading-tab indent of the option body, from its first non-blank line.
+    Files with 2-tab option bodies get a 2-tab log line, 3-tab bodies get 3."""
+    for line in _option_body(option_block):
+        if line.strip():
+            return line[: len(line) - len(line.lstrip("\t"))] or "\t\t\t"
+    return "\t\t\t"
+
+
+def _option_log_line(option_block: List[str]) -> str:
+    """Build the log line for an event option. Uses the first `name = ...`
+    line found in the block (matches legacy behaviour); indent follows the body."""
+    option_name = "option"
+    for line in option_block:
+        stripped = line.strip()
+        if stripped.startswith("name ="):
+            option_name = stripped.split("=", 1)[1].strip()
+            break
+    indent = _option_indent(option_block)
+    return f'{indent}log = "[GetDateText]: [This.GetName]: {option_name} executed"'
+
+
+def _option_has_effects(option_block: List[str]) -> bool:
+    """Check whether an option's body has any meaningful effect lines. Scans only
+    the body so the `option = {` header line itself never trips detection. Each
+    body line is split into its packed statements so an effect jammed onto a
+    physical line after a skipped one (`name = x  add_pp = 10`) is still seen.
+
+    Brace depth is tracked across body lines so the inner lines of a multi-line
+    skipped block (`ai_chance = {` / `trigger = {`) are swallowed whole and not
+    misread as top-level effects."""
+    skip_prefixes = ("name =", "ai_chance =", "trigger =")
+    depth = 0
+    for line in _option_body(option_block):
+        for stripped in _split_packed_body(line.strip()):
+            if not stripped or stripped.startswith("#"):
+                continue
+            code = blank_quoted_strings(strip_inline_comment(stripped))
+            delta = code.count("{") - code.count("}")
+            if depth > 0:
+                depth = max(0, depth + delta)
+                continue
+            if stripped in ("{", "}") or stripped.startswith(skip_prefixes):
+                depth = max(0, depth + delta)
+                continue
+            return True
+    return False
 
 
 class EventStandardizer(BaseStandardizer):
@@ -16,15 +171,18 @@ class EventStandardizer(BaseStandardizer):
 
     def get_block_pattern(self) -> str:
         """Return regex pattern to identify event blocks"""
-        return r"\s*(country_event|province_event|unit_leader_event|news_event)\s*=\s*{"
+        return r"\s*(" + "|".join(_EVENT_TYPES) + r")\s*=\s*{"
 
     def extract_properties(self, block_lines: List[str]) -> Dict[str, Any]:
         """Extract properties from event block lines"""
-        props = {
+        props: Dict[str, Any] = {
             "event_type": "",
             "id": "",
-            "title": "",
-            "desc": "",
+            # title/desc: list of entries. Each entry is either a single-line
+            # string or a list[str] for `prop = { trigger = {...} text = ... }`
+            # conditional blocks (which can repeat).
+            "title": [],
+            "desc": [],
             "picture": "",
             "is_triggered_only": "",
             "hidden": "",
@@ -34,295 +192,125 @@ class EventStandardizer(BaseStandardizer):
             "trigger": [],
             "immediate": [],
             "option": [],
-            "comments_after_header": [],
-            "comments_after_mtth": [],
-            "comments_after_trigger": [],
-            "comments_after_immediate": [],
-            "comments_after_options": [],
+            # A comment describes what comes next, so each block carries the
+            # comments written above it. Same order and length as the block list.
+            "mean_time_to_happen_comments": [],
+            "trigger_comments": [],
+            "immediate_comments": [],
+            "option_comments": [],
+            "comments_trailing": [],
+            # format_block rebuilds the header from scratch, so a comment
+            # trailing the opening brace has to be carried across explicitly.
+            "header_comment": "",
         }
 
-        # Determine event type from first line
         first_line = block_lines[0].strip()
-        if "country_event" in first_line:
-            props["event_type"] = "country_event"
-        elif "province_event" in first_line:
-            props["event_type"] = "province_event"
-        elif "unit_leader_event" in first_line:
-            props["event_type"] = "unit_leader_event"
-        elif "news_event" in first_line:
-            props["event_type"] = "news_event"
+        for event_type in _EVENT_TYPES:
+            if event_type in first_line:
+                props["event_type"] = event_type
+                break
 
-        # Track which section we're in for comment placement
-        current_section = "header"
+        after_brace = first_line.partition("{")[2].strip()
+        if after_brace.startswith("#"):
+            props["header_comment"] = after_brace
+
+        pending: List[str] = []
 
         i = 1  # Skip opening brace
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
+            match = PROP_NAME_RE.match(line)
+            prop_name = match.group(1) if match else None
 
-            if line.startswith("id ="):
-                props["id"] = line
-                current_section = "header"
-            elif line.startswith("title ="):
-                props["title"] = line
-                current_section = "header"
-            elif line.startswith("desc ="):
-                # Check if this is a multi-line block or single line
+            if prop_name in _HEADER_SINGLE_PROPS:
+                props[prop_name] = line
+            elif prop_name in ("title", "desc"):
                 if "{" in line:
-                    # Multi-line block
-                    block_lines_block, next_i = self.extract_block(block_lines, i)
-                    props["desc"] = block_lines_block
+                    block, next_i = extract_block(block_lines, i)
+                    props[prop_name].append(block)
                     i = next_i
-                    current_section = "header"
                     continue
                 else:
-                    # Single line
-                    props["desc"] = line
-                    current_section = "header"
-            elif line.startswith("picture ="):
-                props["picture"] = line
-                current_section = "header"
-            elif line.startswith("is_triggered_only ="):
-                props["is_triggered_only"] = line
-                current_section = "header"
-            elif line.startswith("hidden ="):
-                props["hidden"] = line
-                current_section = "header"
-            elif line.startswith("major ="):
-                props["major"] = line
-                current_section = "header"
-            elif line.startswith("fire_only_once ="):
-                props["fire_only_once"] = line
-                current_section = "header"
-
-            elif line.startswith("mean_time_to_happen ="):
-                block_lines_block, next_i = self.extract_block(block_lines, i)
-                props["mean_time_to_happen"].append(block_lines_block)
+                    props[prop_name].append(line)
+            elif prop_name in _BLOCK_PROPS:
+                block, next_i = extract_block(block_lines, i)
+                props[prop_name].append(block)
+                props[f"{prop_name}_comments"].append(pending)
+                pending = []
                 i = next_i
-                current_section = "mtth"
-                continue
-            elif line.startswith("trigger ="):
-                block_lines_block, next_i = self.extract_block(block_lines, i)
-                props["trigger"].append(block_lines_block)
-                i = next_i
-                current_section = "trigger"
-                continue
-            elif line.startswith("immediate ="):
-                block_lines_block, next_i = self.extract_block(block_lines, i)
-                props["immediate"].append(block_lines_block)
-                i = next_i
-                current_section = "immediate"
-                continue
-            elif line.startswith("option ="):
-                block_lines_block, next_i = self.extract_block(block_lines, i)
-                props["option"].append(block_lines_block)
-                i = next_i
-                current_section = "options"
                 continue
             else:
-                # This is a comment or unrecognized line - add to current section
-                if current_section == "header":
-                    props["comments_after_header"].append(block_lines[i])
-                elif current_section == "mtth":
-                    props["comments_after_mtth"].append(block_lines[i])
-                elif current_section == "trigger":
-                    props["comments_after_trigger"].append(block_lines[i])
-                elif current_section == "immediate":
-                    props["comments_after_immediate"].append(block_lines[i])
-                elif current_section == "options":
-                    props["comments_after_options"].append(block_lines[i])
+                pending.append(block_lines[i])
 
             i += 1
 
+        props["comments_trailing"] = pending
         return props
-
-    def extract_block(
-        self, lines: List[str], start_index: int
-    ) -> tuple[List[str], int]:
-        """Extract a multi-line block by counting braces"""
-        if start_index >= len(lines):
-            return [], start_index
-
-        block_lines = []
-        brace_count = 0
-        i = start_index
-
-        while i < len(lines):
-            line = lines[i]
-            block_lines.append(line)
-
-            brace_count += line.count("{") - line.count("}")
-
-            if brace_count == 0 and "{" in lines[start_index]:
-                # We've closed all braces, block is complete
-                i += 1
-                break
-            elif brace_count < 0:
-                # More closing than opening braces - malformed
-                break
-
-            i += 1
-
-        return block_lines, i
 
     def format_block(self, props: Dict[str, Any]) -> List[str]:
         """Format event according to Millennium Dawn standard"""
-        lines = []
-        lines.append(f"{props['event_type']} = {{")
+        header = f"{props['event_type']} = {{"
+        if props["header_comment"]:
+            header += f" {props['header_comment']}"
 
-        # 1. ID (first line after opening brace)
+        # 1-7. Header properties: id, title, desc, picture, is_triggered_only,
+        # major, hidden, fire_only_once — one group, no blank lines between.
+        head: List[str] = []
         if props["id"]:
-            lines.append(f'\t{props["id"]}')
+            head.append(f"\t{props['id']}")
 
-        # 2. Title and description
-        if props["title"]:
-            lines.append(f'\t{props["title"]}')
-        if props["desc"]:
-            if isinstance(props["desc"], list):
-                compacted_desc = self.compact_block(props["desc"][:])
-                for line in compacted_desc:
-                    lines.append(line)
-            else:
-                lines.append(f'\t{props["desc"]}')
+        for key in ("title", "desc"):
+            for entry in props[key]:
+                if isinstance(entry, list):
+                    head.extend(collapse_or_compact(entry[:]))
+                else:
+                    head.append(f"\t{entry}")
 
-        # 3. Picture
         if props["picture"]:
-            lines.append(f'\t{props["picture"]}')
+            head.append(f"\t{props['picture']}")
 
-        # 4. is_triggered_only (required for triggered events)
         if props["is_triggered_only"]:
-            lines.append(f'\t{props["is_triggered_only"]}')
+            head.append(f"\t{props['is_triggered_only']}")
         elif not props["mean_time_to_happen"]:
-            lines.append("\tis_triggered_only = yes")
+            head.append("\tis_triggered_only = yes")
 
-        # 5. major flag (use sparingly)
-        if props["major"]:
-            lines.append(f'\t{props["major"]}')
+        for key in ("major", "hidden", "fire_only_once"):
+            if props[key]:
+                head.append(f"\t{props[key]}")
 
-        # 6. hidden parameter
-        if props["hidden"]:
-            lines.append(f'\t{props["hidden"]}')
+        groups: List[List[str]] = [head]
 
-        # 7. fire_only_once (use sparingly)
-        if props["fire_only_once"]:
-            lines.append(f'\t{props["fire_only_once"]}')
-
-        lines.append("")
-
-        # Comments after header section
-        for comment in props["comments_after_header"]:
-            if comment.strip():
-                lines.append(comment.rstrip())
-
-        # 8. Mean time to happen
-        for mtth in props["mean_time_to_happen"]:
-            compacted_mtth = self.compact_block(mtth[:])
-            for line in compacted_mtth:
-                lines.append(line)
-            lines.append("")
-
-        # Comments after MTTH section
-        for comment in props["comments_after_mtth"]:
-            if comment.strip():
-                lines.append(comment.rstrip())
-
-        # 9. Trigger
-        for trigger in props["trigger"]:
-            compacted_trigger = self.compact_block(trigger[:])
-            for line in compacted_trigger:
-                lines.append(line)
-            lines.append("")
-
-        # Comments after trigger section
-        for comment in props["comments_after_trigger"]:
-            if comment.strip():
-                lines.append(comment.rstrip())
-
-        # 10. Immediate effects
-        for immediate in props["immediate"]:
-            compacted_immediate = self.compact_block(immediate[:])
-            for line in compacted_immediate:
-                lines.append(line)
-            lines.append("")
-
-        # Comments after immediate section
-        for comment in props["comments_after_immediate"]:
-            if comment.strip():
-                lines.append(comment.rstrip())
+        # 8-10. Mean time to happen, trigger, immediate effects.
+        for key in ("mean_time_to_happen", "trigger", "immediate"):
+            for comments, block in zip(props[f"{key}_comments"], props[key]):
+                group: List[str] = []
+                emit_comments(group, comments)
+                group.extend(collapse_or_compact(block[:]))
+                groups.append(group)
 
         # 11. Options
-        for option in props["option"]:
-            has_log = any(line.strip().startswith("log =") for line in option)
+        for comments, option in zip(props["option_comments"], props["option"]):
+            group = []
+            emit_comments(group, comments)
+            if (
+                _option_has_effects(option)
+                and not block_has_log(option)
+                and props["id"]
+            ):
+                # Explode a packed single-line option first so the log lands
+                # inside its braces, not as a sibling after the close.
+                option = _explode_packed_option(option)
+                log_line = _option_log_line(option)
+                option = inject_log_after_brace(option, log_line)
 
-            # Only add log if there are actual effects in the option
-            has_effects = any(
-                line.strip()
-                and line.strip() not in ("{", "}")
-                and not line.strip().startswith("#")
-                and not line.strip().startswith("name =")
-                and not line.strip().startswith("ai_chance =")
-                and not line.strip().startswith("trigger =")
-                for line in option
-            )
+            group.extend(collapse_or_compact(option[:]))
+            groups.append(group)
 
-            if has_effects and not has_log and props["id"]:
-                # Add log after opening brace of option
-                event_id = props["id"].split("=")[1].strip()
-                modified_option = []
-                for j, line in enumerate(option):
-                    modified_option.append(line)
-                    if j == 0 and "{" in line:  # After opening brace
-                        # Extract option name for log message
-                        option_name = "option"
-                        for opt_line in option:
-                            if opt_line.strip().startswith("name ="):
-                                option_name = opt_line.split("=")[1].strip()
-                                break
-                        modified_option.append(
-                            f'\t\t\tlog = "[GetDateText]: [This.GetName]: {option_name} executed"'
-                        )
-                option = modified_option
+        trailing: List[str] = []
+        emit_comments(trailing, props["comments_trailing"])
+        groups.append(trailing)
 
-            compacted_option = self.compact_block(option[:])
-            for line in compacted_option:
-                lines.append(line)
-            lines.append("")
-
-        # Comments after options section
-        for comment in props["comments_after_options"]:
-            if comment.strip():
-                lines.append(comment.rstrip())
-        if props["comments_after_options"]:
-            lines.append("")
-
-        lines.append("}")
-
-        # Clean up excessive blank lines
-        cleaned_lines = []
-        blank_count = 0
-
-        for line in lines:
-            if line.strip() == "":
-                blank_count += 1
-                if blank_count <= 1:  # Only allow 1 consecutive blank line
-                    cleaned_lines.append(line)
-            else:
-                blank_count = 0
-                cleaned_lines.append(line)
-
-        return cleaned_lines
-
-    def compact_block(self, block_lines: List[str]) -> List[str]:
-        """Completely compact a block by removing all internal blank lines"""
-        if not block_lines:
-            return block_lines
-
-        compacted = []
-        for line in block_lines:
-            stripped = line.strip()
-            if stripped:
-                compacted.append(line.rstrip())
-
-        return compacted
+        return collapse_blank_runs([header] + join_groups(groups) + ["}"])
 
 
 def main():

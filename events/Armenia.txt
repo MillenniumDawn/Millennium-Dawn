@@ -34,10 +34,12 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.2.b executed"
 		trigger = {
 			NOT = {
-				tag = ARM
-				tag = NKR
-				tag = AZE
-				tag = TUR
+				OR = {
+					tag = ARM
+					tag = NKR
+					tag = AZE
+					tag = TUR
+				}
 			}
 		}
 	}
@@ -76,13 +78,10 @@ country_event = {
 			tag = ARM
 		}
 		hidden_effect = {
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}
-			add_to_variable = { party_pop_array^4 = 0.05 }
-			recalculate_party = yes
-			custom_effect_tooltip = FRA_communist_rise_5_TT
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			change_relative_party_popularity = yes
 		}
 	}
 	option = {
@@ -144,10 +143,10 @@ country_event = {
 		add_stability = -0.1
 		set_temp_variable = { party_index = 5 }
 		set_temp_variable = { party_popularity_increase = -0.1 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 21 }
 		set_temp_variable = { party_popularity_increase = -0.1 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 6 }
 		ban_party_scripted_call = yes
 		set_temp_variable = { party_index = 22 }
@@ -169,8 +168,8 @@ country_event = {
 	option = {
 		name = arme.6.a
 		log = "[GetDateText]: [This.GetName]: arme.6.a executed"
-		set_temp_variable = { modify_eurosceptic = 0.05 }
-		EU_eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = -0.05 }
+		EU_europeanism_change = yes
 		ARM = {
 			random_owned_controlled_state = {
 				add_extra_state_shared_building_slots = 1
@@ -244,8 +243,8 @@ country_event = {
 		name = arme.7.a
 		log = "[GetDateText]: [This.GetName]: arme.7.a executed"
 		effect_tooltip = {
-			set_temp_variable = { modify_eurosceptic = 0.05 }
-			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_europeanism = -0.05 }
+			EU_europeanism_change = yes
 			random_owned_controlled_state = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -411,10 +410,10 @@ country_event = {
 		add_coalition_members_effect = yes
 		set_temp_variable = { party_index = 5 }
 		set_temp_variable = { party_popularity_increase = 0.10 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 21 }
 		set_temp_variable = { party_popularity_increase = -0.10 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 2
 		}
@@ -425,10 +424,10 @@ country_event = {
 		add_political_power = 100
 		set_temp_variable = { party_index = 5 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 21 }
 		set_temp_variable = { party_popularity_increase = -0.10 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 1
 		}
@@ -485,7 +484,7 @@ country_event = {
 		set_temp_variable = {
 			temp_outlook_increase = -0.1
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 19 }
 		set_temp_variable = {
 			party_popularity_increase = -0.1
@@ -493,7 +492,7 @@ country_event = {
 		set_temp_variable = {
 			temp_outlook_increase = -0.1
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 2
 		}
@@ -511,8 +510,22 @@ country_event = {
 	option = {
 		name = arme.14.a
 		log = "[GetDateText]: [This.GetName]: arme.14.a executed"
-		set_country_flag = USR_armenia_create_union_state
-		add_ideas = USR_union_state_idea
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 50
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		ARM_unionstate_integration_effect = yes
+	}
+	option = {
+		name = arme.14.b
+		log = "[GetDateText]: [This.GetName]: arme.14.b executed"
+		ai_chance = {
+			base = 10
+		}
+		ARM = { country_event = union_state.15 }
 	}
 }
 
@@ -548,7 +561,7 @@ country_event = {
 			set_temp_variable = {
 				temp_outlook_increase = 0.1
 			}
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_temp_variable = { party_index = 19 }
 			set_temp_variable = {
 				party_popularity_increase = 0.1
@@ -556,13 +569,15 @@ country_event = {
 			set_temp_variable = {
 				temp_outlook_increase = 0.1
 			}
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		if = {
 			limit = {
 				NOT = {
-					has_idea = ARM_echoes_1999_pac
-					has_idea = ARM_echoes_1999
+					OR = {
+						has_idea = ARM_echoes_1999_pac
+						has_idea = ARM_echoes_1999
+					}
 				}
 			}
 			add_ideas = ARM_echoes_1999
@@ -846,6 +861,7 @@ country_event = {
 		set_temp_variable = { percent_change = -3 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = ARM }
+		change_influence_percentage = yes
 		ai_chance = {
 			base = 10
 			modifier = { # very high influence ensures acceptance
@@ -1878,7 +1894,7 @@ country_event = {
 		set_temp_variable = { party_index = 14 }
 		set_temp_variable = { party_popularity_increase = 0.50 }
 		set_temp_variable = { temp_outlook_increase = 0.50 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		create_country_leader = {
 			name = "Vardan Vardapetyan"
 			picture = "vardan_vardapetyan.dds"
@@ -1915,23 +1931,6 @@ country_event = {
 		set_temp_variable = { percent_change = 40 }
 		set_temp_variable = { tag_index = GEO }
 		set_temp_variable = { influence_target = ROOT }
-		change_influence_percentage = yes
-	}
-}
-
-country_event = {
-	id = arme.43
-	title = arme.43.t
-	desc = arme.43.d
-	picture = GFX_adjara_crisis_event
-	is_triggered_only = yes
-
-	option = {
-		name = arme.43.a
-		log = "[GetDateText]: [This.GetName]: arme.43.a executed"
-		set_temp_variable = { percent_change = 5 }
-		set_temp_variable = { tag_index = ARM }
-		set_temp_variable = { influence_target = GEO }
 		change_influence_percentage = yes
 	}
 }
@@ -3107,10 +3106,12 @@ country_event = {
 	option = {
 		name = arme.70.a
 		log = "[GetDateText]: [This.GetName]: arme.70.a executed"
-		swap_ideas = {
-			remove_idea = GRE_army_special_forces
-			add_idea = GRE_army_special_forces1
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = GRE_landforces_modifier
 		}
+		add_to_variable = { GRE_special_forces_cap_landforces = 0.05 tooltip = special_forces_cap_tt }
+		add_to_variable = { GRE_special_forces_training_time_factor_landforces = -0.025 tooltip = special_forces_training_time_factor_tt }
 		ARM = {
 			country_event = arme.71
 		}
@@ -3899,17 +3900,17 @@ country_event = {
 	option = {
 		name = arme.87.a
 		log = "[GetDateText]: [This.GetName]: arme.87.a executed"
-		set_temp_variable = { modify_eurosceptic = -0.05 }
-		set_temp_variable = { modify_eurosceptic_target = ARM }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = 0.05 }
+		set_temp_variable = { modify_europeanism_target = ARM }
+		europeanism_change = yes
 		add_opinion_modifier = { modifier = recent_actions_positive target = GRE }
 		reverse_add_opinion_modifier = { modifier = recent_actions_positive target = GRE }
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-				NOT = { tag = GRE }
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			if = { limit = { NOT = { tag = GRE } }
+				add_opinion_modifier = { target = ARM modifier = supports_us }
 			}
-			add_opinion_modifier = { target = ARM modifier = supports_us }
 		}
 	}
 }
@@ -4093,6 +4094,7 @@ country_event = {
 		newline = yes
 		1035 = {
 			set_temp_variable = { electric_addition = 1.53 }
+			set_temp_variable = { storage_addition = 0.30 }
 			add_hydroelectric_energy_production_effect = yes
 		}
 	}
@@ -4604,14 +4606,8 @@ country_event = {
 				type = annex_everything
 			}
 		}
-		add_opinion_modifier = {
-			modifier = recent_actions_negative
-			target = ARM
-		}
-		reverse_add_opinion_modifier = {
-			modifier = recent_actions_negative
-			target = ARM
-		}
+		add_opinion_modifier = { modifier = recent_actions_negative target = ARM }
+		reverse_add_opinion_modifier = { modifier = recent_actions_negative target = ARM }
 	}
 }
 
@@ -5164,7 +5160,13 @@ country_event = {
 	option = {
 		name = arme.116.a
 		log = "[GetDateText]: [This.GetName]: arme.116.a executed"
-		add_ideas = cfa_franc
+		if = {
+			limit = { FRA = { has_completed_focus = FRA_introduce_the_eco } }
+			add_ideas = the_eco
+		}
+		else = {
+			add_ideas = cfa_franc
+		}
 		add_opinion_modifier = { target = FRA modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = FRA modifier = recent_actions_positive }
 	}
@@ -5551,7 +5553,7 @@ country_event = {
 	option = {
 		name = arme.125.a
 		log = "[GetDateText]: [This.GetName]: arme.125.a executed"
-		add_ideas = Major_Non_NATO_Ally
+		NATO_major_non_nato_ally_join = yes
 		add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 	}
@@ -5970,7 +5972,6 @@ country_event = {
 		name = arme.135.a
 		log = "[GetDateText]: [This.GetName]: arme.135.a executed"
 		add_political_power = 75
-		modify_treasury_effect = yes
 		add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 	}
@@ -6024,9 +6025,9 @@ country_event = {
 			country_event = arme.139
 		}
 		add_political_power = -80
-		set_temp_variable = { modify_eurosceptic = -0.06 }
-		set_temp_variable = { modify_eurosceptic_target = ARM }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = 0.06 }
+		set_temp_variable = { modify_europeanism_target = ARM }
+		europeanism_change = yes
 		set_temp_variable = { percent_change = 4 }
 		set_temp_variable = { tag_index = ROOT }
 		set_temp_variable = { influence_target = ARM }
@@ -6113,10 +6114,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.138.a executed"
 		add_ideas = ARM_eu_coop_agreement
 		ARM_eu_ger_fra_check_script = yes
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			add_opinion_modifier = { target = ARM modifier = recent_actions_positive }
 		}
 		ai_chance = {
@@ -6156,9 +6156,9 @@ country_event = {
 			country_event = arme.142
 		}
 		add_political_power = -90
-		set_temp_variable = { modify_eurosceptic = -0.07 }
-		set_temp_variable = { modify_eurosceptic_target = ARM }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = 0.07 }
+		set_temp_variable = { modify_europeanism_target = ARM }
+		europeanism_change = yes
 		set_temp_variable = { percent_change = 5 }
 		set_temp_variable = { tag_index = ROOT }
 		set_temp_variable = { influence_target = ARM }
@@ -6245,10 +6245,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.141.a executed"
 		ARM_eu_cooperation_script = yes
 		ARM_eu_ger_fra_check_script = yes
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			add_opinion_modifier = { target = ARM modifier = recent_actions_positive }
 		}
 		ai_chance = {
@@ -6790,10 +6789,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.159.a executed"
 		add_ideas = ARM_eu_lgbt
 		ARM_eu_ger_fra_check_script = yes
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			add_opinion_modifier = { target = ARM modifier = recent_actions_positive }
 		}
 		ai_chance = {
@@ -6995,21 +6993,6 @@ country_event = {
 	}
 }
 
-#Join to NATO  - Agree
-country_event = {
-	id = arme.164
-	title = arme.164.t
-	desc = arme.164.d
-	picture = GFX_armenian_soldiers
-	is_triggered_only = yes
-
-	option = {
-		name = arme.164.a
-		log = "[GetDateText]: [This.GetName]: arme.164.a executed"
-		NATO_join = yes
-	}
-}
-
 #Join to NATO  - Disagree
 country_event = {
 	id = arme.165
@@ -7020,7 +7003,7 @@ country_event = {
 
 	option = {
 		name = arme.165.a
-		log = "[GetDateText]: [This.GetName]: arme.164.a executed"
+		log = "[GetDateText]: [This.GetName]: arme.165.a executed"
 
 	}
 }
@@ -7284,15 +7267,18 @@ country_event = {
 				owner = ROJ
 			}
 		}
-		create_corps_commander = {
-			name = "Nubar Ozanyan"
-			picture = "gfx/leaders/ARM/nubar_ozanyan.dds"
-			traits = { politically_connected guerrilla_officer }
-			skill = 4
-			attack_skill = 4
-			defense_skill = 1
-			planning_skill = 4
-			logistics_skill = 2
+		set_country_flag = ROJ_unlock_nubar_ozanyan
+		effect_tooltip = {
+			create_corps_commander = {
+				name = "Nubar Ozanyan"
+				portrait_path = "gfx/leaders/ARM/nubar_ozanyan.dds"
+				traits = { politically_connected guerrilla_officer }
+				skill = 4
+				attack_skill = 4
+				defense_skill = 1
+				planning_skill = 4
+				logistics_skill = 2
+			}
 		}
 		effect_tooltip = {
 			add_opinion_modifier = {
@@ -7422,14 +7408,13 @@ country_event = {
 	option = {
 		name = arme.176.b
 		log = "[GetDateText]: [This.GetName]: arme.176.b executed"
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = 0.1
 		}
 		set_temp_variable = {
 			temp_outlook_increase = 0.1
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_opinion_modifier = { target = TUR modifier = drama }
 		reverse_add_opinion_modifier = { target = TUR modifier = drama }
 		ai_chance = {
@@ -7554,14 +7539,13 @@ country_event = {
 		}
 		add_political_power = 150
 		add_stability = -0.25
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = -0.15
 		}
 		set_temp_variable = {
 			temp_outlook_increase = -0.15
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -7586,7 +7570,10 @@ country_event = {
 			idea = ARM_armenian_turkish_cooperation_idea
 			days = 2000
 		}
-		break_embargo = ARM
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			break_embargo = ARM
+		}
 		add_opinion_modifier = {
 			modifier = recent_actions_positive
 			target = ARM
@@ -7628,17 +7615,19 @@ country_event = {
 			idea = ARM_armenian_turkish_cooperation_idea
 			days = 2000
 		}
-		break_embargo = ARM
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			break_embargo = ARM
+		}
 		add_political_power = 150
 		add_war_support = -0.1
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = -0.1
 		}
 		set_temp_variable = {
 			temp_outlook_increase = -0.1
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 1
 		}
@@ -7687,7 +7676,6 @@ country_event = {
 			target = ARM
 		}
 		add_political_power = 150
-		set_party_index_to_ruling_party = yes
 		remove_opinion_modifier = {
 			target = ARM
 			modifier = refuse_to_apologize_for_warcrimes2
@@ -7971,14 +7959,13 @@ country_event = {
 	option = {
 		name = arme.191.a
 		log = "[GetDateText]: [This.GetName]: arme.191.a executed"
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = -0.15
 		}
 		set_temp_variable = {
 			temp_outlook_increase = -0.15
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		hold_election = ARM
 		trigger = {
 			has_country_flag = oppos_lived
@@ -8013,7 +8000,7 @@ country_event = {
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 }
 
@@ -8052,7 +8039,10 @@ country_event = {
 			modifier = drama
 			target = HUN
 		}
-		send_embargo = HUN
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			send_embargo = HUN
+		}
 		add_opinion_modifier = {
 			modifier = recent_actions_negative
 			target = AZE
@@ -8077,10 +8067,9 @@ country_event = {
 		add_political_power = 100
 		set_temp_variable = { treasury_change = -4 }
 		modify_treasury_effect = yes
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			add_opinion_modifier = { target = AZE modifier = recent_actions_negative }
 		}
 		HUN = {
@@ -8104,18 +8093,11 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.195.a executed"
 		set_temp_variable = { treasury_change = 4 }
 		modify_treasury_effect = yes
-		add_opinion_modifier = {
-			modifier = recent_actions_positive
-			target = AZE
-		}
-		reverse_add_opinion_modifier = {
-			modifier = recent_actions_positive
-			target = AZE
-		}
-		every_other_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		add_opinion_modifier = { modifier = recent_actions_positive target = AZE }
+		reverse_add_opinion_modifier = { modifier = recent_actions_positive target = AZE }
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			add_opinion_modifier = { target = HUN modifier = recent_actions_negative }
 		}
 	}
@@ -8134,14 +8116,13 @@ country_event = {
 		name = arme.196.a
 		log = "[GetDateText]: [This.GetName]: arme.196.a executed"
 		add_political_power = 50
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = 0.02
 		}
 		set_temp_variable = {
 			temp_outlook_increase = 0.02
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		hidden_effect = {
 			country_event = { id = arme.197 random_days = 60 }
 		}
@@ -8160,14 +8141,13 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.197.a executed"
 		set_temp_variable = { temp_opinion = 10 }
 		change_the_clergy_opinion = yes
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = 0.02
 		}
 		set_temp_variable = {
 			temp_outlook_increase = 0.02
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 }
 
@@ -8209,30 +8189,22 @@ country_event = {
 		hidden_effect = {
 			country_event = { id = arme.200 days = 35 }
 		}
-		trigger = {
-			emerging_reactionaries_are_in_power = yes
-			has_country_flag = oppos_killed
-		}
 		ai_chance = {
 			base = 1
 		}
 	}
+
 	option = {
 		name = arme.199.b
 		log = "[GetDateText]: [This.GetName]: arme.199.b executed"
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = -0.15
 		}
 		set_temp_variable = {
 			temp_outlook_increase = -0.15
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		hold_election = ARM
-		trigger = {
-			emerging_reactionaries_are_in_power = yes
-			has_country_flag = oppos_lived
-		}
 		ai_chance = {
 			base = 1
 		}
@@ -8288,59 +8260,13 @@ country_event = {
 			ideology = nationalist
 			popularity = 0.05
 		}
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = -0.05
 		}
 		set_temp_variable = {
 			temp_outlook_increase = -0.05
 		}
-		add_relative_party_popularity = yes
-	}
-}
-
-##Political prisoners release
-country_event = {
-	id = arme.202
-	title = arme.202.t
-	desc = arme.202.d
-	picture = GFX_eleven_prot_for_nikol
-	is_triggered_only = yes
-
-	option = {
-		name = arme.202.a
-		log = "[GetDateText]: [This.GetName]: arme.202.a executed"
-		add_political_power = 100
-		set_temp_variable = { modify_eurosceptic = -0.05 }
-		set_temp_variable = { modify_eurosceptic_target = ARM }
-		eurosceptic_change = yes
-		add_power_balance_value = {
-			id = ARM_soc_pac_bop
-			value = -0.1
-			tooltip_side = ARM_soc_pac_bop_left_side
-		}
-		ai_chance = {
-			base = 1
-		}
-	}
-	option = {
-		name = arme.202.b
-		log = "[GetDateText]: [This.GetName]: arme.202.b executed"
-		add_popularity = {
-			ideology = nationalist
-			popularity = 0.05
-		}
-		add_stability = 0.05
-		add_power_balance_value = {
-			id = ARM_soc_pac_bop
-			value = 0.05
-			tooltip_side = ARM_soc_pac_bop_right_side
-		}
-		set_temp_variable = { temp_opinion = 10 }
-		change_the_military_opinion = yes
-		ai_chance = {
-			base = 1
-		}
+		change_relative_party_popularity = yes
 	}
 }
 
@@ -8357,9 +8283,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arme.203.a executed"
 		set_temp_variable = { temp_productivity_change = 5 }
 		flat_productivity_change_effect = yes
-		set_temp_variable = { modify_eurosceptic = -0.05 }
-		set_temp_variable = { modify_eurosceptic_target = ARM }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = 0.05 }
+		set_temp_variable = { modify_europeanism_target = ARM }
+		europeanism_change = yes
 		ai_chance = {
 			base = 1
 		}
@@ -8368,14 +8294,13 @@ country_event = {
 		name = arme.203.b
 		log = "[GetDateText]: [This.GetName]: arme.203.b executed"
 		add_political_power = -100
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = -0.05
 		}
 		set_temp_variable = {
 			temp_outlook_increase = -0.05
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_temp_variable = { treasury_change = 4 }
 		modify_treasury_effect = yes
 		ai_chance = {
@@ -8405,14 +8330,13 @@ country_event = {
 	option = {
 		name = arme.204.b
 		log = "[GetDateText]: [This.GetName]: arme.204.a executed"
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = -0.15
 		}
 		set_temp_variable = {
 			temp_outlook_increase = -0.15
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		hold_election = ARM
 		ai_chance = {
 			base = 1
@@ -8431,14 +8355,13 @@ country_event = {
 		name = arme.205.a
 		log = "[GetDateText]: [This.GetName]: arme.205.a executed"
 		add_stability = -0.02
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = -0.02
 		}
 		set_temp_variable = {
 			temp_outlook_increase = -0.02
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = {
 			base = 1
 		}
@@ -8555,14 +8478,13 @@ country_event = {
 		name = arme.209.a
 		log = "[GetDateText]: [This.GetName]: arme.209.a executed"
 		add_political_power = 50
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = -0.02
 		}
 		set_temp_variable = {
 			temp_outlook_increase = -0.02
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 }
 
@@ -8646,7 +8568,7 @@ country_event = {
 		set_temp_variable = { party_index = 0 }
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 }
 
@@ -8666,7 +8588,7 @@ country_event = {
 		set_temp_variable = { party_index = 0 }
 		set_temp_variable = { party_popularity_increase = -0.15 }
 		set_temp_variable = { temp_outlook_increase = -0.15 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_country_flag = pavlik_dies
 	}
 }
@@ -8683,14 +8605,13 @@ country_event = {
 		name = arme.214.a
 		log = "[GetDateText]: [This.GetName]: arme.214.a executed"
 		add_political_power = 50
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = 0.05
 		}
 		set_temp_variable = {
 			temp_outlook_increase = 0.05
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 	}
 }
 
@@ -8709,44 +8630,9 @@ country_event = {
 		set_temp_variable = { party_index = 16 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
-	}
-}
-
-country_event = {
-	id = arme.216
-	title = arme.216.t
-	desc = arme.216.d
-	picture = GFX_pashinyan_protest
-	is_triggered_only = yes
-
-	option = {
-		name = arme.216.a
-		log = "[GetDateText]: [This.GetName]: arme.216.a executed"
-		add_stability = -0.01
-		set_temp_variable = { party_index = 16 }
-		set_temp_variable = { party_popularity_increase = 0.05 }
-		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
-		country_event = { id = arme.217 days = 10 random_days = 10 }
-		ai_chance = {
-			base = 1
-		}
-	}
-	option = {
-		name = arme.216.b
-		log = "[GetDateText]: [This.GetName]: arme.216.b executed"
-		add_political_power = -100
-		add_stability = 0.05
-		set_temp_variable = { party_index = 16 }
-		set_temp_variable = { party_popularity_increase = -0.15 }
-		set_temp_variable = { temp_outlook_increase = -0.15 }
-		add_relative_party_popularity = yes
-		trigger = {
-			has_completed_focus = ARM_fis
-		}
-		ai_chance = {
-			base = 1
+		change_relative_party_popularity = yes
+		hidden_effect = {
+			country_event = { id = arme.217 days = 38 }
 		}
 	}
 }
@@ -8766,7 +8652,7 @@ country_event = {
 		set_temp_variable = { party_index = 16 }
 		set_temp_variable = { party_popularity_increase = 0.40 }
 		set_temp_variable = { temp_outlook_increase = 0.40 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		hold_election = ARM
 	}
 }
@@ -8882,8 +8768,22 @@ country_event = {
 	option = {
 		name = arme.222.a
 		log = "[GetDateText]: [This.GetName]: arme.222.a executed"
-		set_country_flag = USR_armenia_create_union_state
-		add_ideas = USR_union_state_idea
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 50
+				has_government = communism
+			}
+		}
+		ARM_unionstate_integration_effect = yes
+	}
+	option = {
+		name = arme.222.b
+		log = "[GetDateText]: [This.GetName]: arme.222.b executed"
+		ai_chance = {
+			base = 10
+		}
+		ARM = { country_event = union_state.15 }
 	}
 }
 
@@ -9169,14 +9069,13 @@ country_event = {
 	option = {
 		name = arm_pashinyan.5.a
 		log = "[GetDateText]: [This.GetName]: arm_pashinyan.5.a executed"
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = -0.1
 		}
 		set_temp_variable = {
 			temp_outlook_increase = -0.1
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_stability = -0.05
 		ai_chance = {
 			base = 1
@@ -9194,14 +9093,13 @@ country_event = {
 	option = {
 		name = arm_pashinyan.6.a
 		log = "[GetDateText]: [This.GetName]: arm_pashinyan.6.a executed"
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = 0.05
 		}
 		set_temp_variable = {
 			temp_outlook_increase = 0.05
 		}
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_stability = 0.03
 		ai_chance = {
 			base = 1
@@ -9223,7 +9121,6 @@ country_event = {
 			ideology = nationalist
 			popularity = -0.05
 		}
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = {
 			party_popularity_increase = 0.07
 		}
@@ -9557,9 +9454,9 @@ country_event = {
 		name = arm_sargsyan.7.a
 		log = "[GetDateText]: [This.GetName]: arm_sargsyan.7.a executed"
 		ARM = {
-			set_temp_variable = { modify_eurosceptic = 0.06 }
-			set_temp_variable = { modify_eurosceptic_target = ARM }
-			eurosceptic_change = yes
+			set_temp_variable = { modify_europeanism = -0.06 }
+			set_temp_variable = { modify_europeanism_target = ARM }
+			europeanism_change = yes
 			add_offsite_building = { type = industrial_complex level = 2 }
 		}
 		SOV = {
@@ -9591,9 +9488,9 @@ country_event = {
 		name = arm_sargsyan.8.a
 		log = "[GetDateText]: [This.GetName]: arm_sargsyan.8.a executed"
 		ARM = {
-			set_temp_variable = { modify_eurosceptic = -0.08 }
-			set_temp_variable = { modify_eurosceptic_target = ARM }
-			eurosceptic_change = yes
+			set_temp_variable = { modify_europeanism = 0.08 }
+			set_temp_variable = { modify_europeanism_target = ARM }
+			europeanism_change = yes
 		}
 		SOV = {
 			set_temp_variable = { percent_change = 5 }
@@ -9648,9 +9545,9 @@ country_event = {
 		name = arm_sargsyan.10.a
 		log = "[GetDateText]: [This.GetName]: arm_sargsyan.10.a executed"
 		ARM = {
-			set_temp_variable = { modify_eurosceptic = -0.08 }
-			set_temp_variable = { modify_eurosceptic_target = ARM }
-			eurosceptic_change = yes
+			set_temp_variable = { modify_europeanism = 0.08 }
+			set_temp_variable = { modify_europeanism_target = ARM }
+			europeanism_change = yes
 			add_political_power = 100
 			add_stability = 0.03
 		}
@@ -9752,9 +9649,9 @@ country_event = {
 				instant_build = yes
 			}
 		}
-		set_temp_variable = { modify_eurosceptic = -0.02 }
-		set_temp_variable = { modify_eurosceptic_target = ARM }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = 0.02 }
+		set_temp_variable = { modify_europeanism_target = ARM }
+		europeanism_change = yes
 		set_temp_variable = { treasury_change = 9 }
 		modify_treasury_effect = yes
 		add_popularity = {
@@ -9778,9 +9675,9 @@ country_event = {
 	option = {
 		name = arm_sargsyan.14.a
 		log = "[GetDateText]: [This.GetName]: arm_sargsyan.14.a executed"
-		set_temp_variable = { modify_eurosceptic = 0.02 }
-		set_temp_variable = { modify_eurosceptic_target = ARM }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = -0.02 }
+		set_temp_variable = { modify_europeanism_target = ARM }
+		europeanism_change = yes
 		ai_chance = {
 			base = 2
 		}
@@ -9976,8 +9873,7 @@ country_event = {
 		ARM = {
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
-		}
-		ARM = {
+
 			puppet = SOO
 		}
 		SOO = {
@@ -9991,7 +9887,7 @@ country_event = {
 			set_temp_variable = { party_index = 21 }
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			set_temp_variable = { temp_outlook_increase = 0.10 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			create_country_leader = {
 				name = "Daurbek fyrt Khiutsau I"
 				picture = "gfx/leaders/SOO/daurbek_makeev2.dds"
@@ -10128,8 +10024,7 @@ country_event = {
 		ARM = {
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
-		}
-		ARM = {
+
 			puppet = SOO
 		}
 		SOO = {
@@ -10143,7 +10038,7 @@ country_event = {
 			set_temp_variable = { party_index = 21 }
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			set_temp_variable = { temp_outlook_increase = 0.10 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			create_country_leader = {
 				name = "Daurbek fyrt Khiutsau I"
 				picture = "gfx/leaders/SOO/daurbek_makeev2.dds"
@@ -10199,8 +10094,7 @@ country_event = {
 		ARM = {
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
-		}
-		ARM = {
+
 			puppet = SOO
 		}
 		SOO = {
@@ -10215,7 +10109,7 @@ country_event = {
 			set_temp_variable = { party_index = 21 }
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			set_temp_variable = { temp_outlook_increase = 0.10 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 
 			create_country_leader = {
 				name = "Daurbek fyrt Khiutsau I"
@@ -10337,23 +10231,6 @@ country_event = {
 }
 
 country_event = {
-	id = arm_empire.13
-	title = arm_empire.13.t
-	desc = arm_empire.13.d
-	picture = GFX_handshake_black
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = arm_empire.13.a
-		log = "[GetDateText]: [This.GetName]: arm_empire.13.a executed"
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-
-country_event = {
 	id = arm_empire.14
 	title = arm_empire.14.t
 	desc = arm_empire.14.d
@@ -10409,10 +10286,9 @@ country_event = {
 		set_temp_variable = { treasury_change = -10 }
 		modify_treasury_effect = yes
 		add_political_power = -100
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.09 }
 		set_temp_variable = { temp_outlook_increase = 0.09 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		hidden_effect = {
 			ARM_italian_revoult_script = yes
 		}
@@ -10536,7 +10412,7 @@ country_event = {
 				puppet = CHE
 			}
 			CHE = {
-				set_country_flag = SUB_subject_rebeliion_flag
+				set_country_flag = SUB_subject_rebellion_flag
 				ARM_chechen_battalions_script = yes
 				set_politics = {
 					ruling_party = nationalist
@@ -10574,7 +10450,7 @@ country_event = {
 				puppet = CHE
 			}
 			CHE = {
-				set_country_flag = SUB_subject_rebeliion_flag
+				set_country_flag = SUB_subject_rebellion_flag
 				ARM_chechen_battalions_script = yes
 				set_politics = {
 					ruling_party = nationalist
@@ -10649,10 +10525,9 @@ country_event = {
 		set_temp_variable = { treasury_change = -10 }
 		modify_treasury_effect = yes
 		add_political_power = -100
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.09 }
 		set_temp_variable = { temp_outlook_increase = 0.09 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		annex_country = { target = CHE transfer_troops = yes }
 		CHE = { every_core_state = { add_core_of = ARM } }
 		ARM = { change_tag_from = CHE }
@@ -10816,7 +10691,7 @@ country_event = {
 			set_temp_variable = { party_index = 22 }
 			set_temp_variable = { party_popularity_increase = 0.03 }
 			set_temp_variable = { temp_outlook_increase = 0.03 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 	}
 }
@@ -10850,7 +10725,7 @@ country_event = {
 			set_temp_variable = { party_index = 22 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 	}
 }
@@ -10938,7 +10813,7 @@ country_event = {
 			set_temp_variable = { party_index = 22 }
 			set_temp_variable = { party_popularity_increase = 0.25 }
 			set_temp_variable = { temp_outlook_increase = 0.25 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			set_temp_variable = { rul_party_temp = 22 }
 			change_ruling_party_effect = yes
 			clr_country_flag = SOV_did_not_allow_duma_to_speak
@@ -11433,13 +11308,11 @@ country_event = {
 		set_country_flag = peace_accepted_ura
 		if = {
 			limit = {
-				AND = {
-					SYR = {
-						has_country_flag = peace_accepted_ura
-					}
-					ISR = {
-						has_country_flag = peace_accepted_ura
-					}
+				SYR = {
+					has_country_flag = peace_accepted_ura
+				}
+				ISR = {
+					has_country_flag = peace_accepted_ura
 				}
 			}
 			ISR = {
@@ -11665,7 +11538,7 @@ country_event = {
 		add_coalition_members_effect = yes
 		set_temp_variable = { party_index = 16 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_power_balance_value = {
 			id = ARM_soc_pac_bop
 			value = -0.1
@@ -11682,7 +11555,7 @@ country_event = {
 		add_coalition_members_effect = yes
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_power_balance_value = {
 			id = ARM_soc_pac_bop
 			value = 0.05
@@ -11887,9 +11760,9 @@ country_event = {
 			value = 0.05
 			tooltip_side = ARM_soc_pac_bop_right_side
 		}
-		set_temp_variable = { modify_eurosceptic = 0.05 }
-		set_temp_variable = { modify_eurosceptic_target = ARM }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = -0.05 }
+		set_temp_variable = { modify_europeanism_target = ARM }
+		europeanism_change = yes
 		ai_chance = {
 			base = 2
 		}
@@ -11951,9 +11824,9 @@ country_event = {
 			set_temp_variable = { treasury_change = 10 }
 			modify_treasury_effect = yes
 		}
-		set_temp_variable = { modify_eurosceptic = -0.05 }
-		set_temp_variable = { modify_eurosceptic_target = ARM }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = 0.05 }
+		set_temp_variable = { modify_europeanism_target = ARM }
+		europeanism_change = yes
 	}
 }
 
@@ -11968,9 +11841,9 @@ country_event = {
 	option = {
 		name = arm_demirchyan.11.a
 		log = "[GetDateText]: [This.GetName]: arm_demirchyan.11.a executed"
-		set_temp_variable = { modify_eurosceptic = 0.05 }
-		set_temp_variable = { modify_eurosceptic_target = ARM }
-		eurosceptic_change = yes
+		set_temp_variable = { modify_europeanism = -0.05 }
+		set_temp_variable = { modify_europeanism_target = ARM }
+		europeanism_change = yes
 	}
 }
 
@@ -12138,6 +12011,7 @@ country_event = {
 		set_temp_variable = { percent_change = 8 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = ARM }
+		change_influence_percentage = yes
 		ai_chance = {
 			base = 1
 		}
@@ -12148,7 +12022,7 @@ country_event = {
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_political_power = 100
 		increase_corruption = yes
 		set_temp_variable = { temp_opinion = 15 }
@@ -12171,6 +12045,7 @@ country_event = {
 		set_temp_variable = { percent_change = 1 }
 		set_temp_variable = { tag_index = ARM }
 		set_temp_variable = { influence_target = NKR }
+		change_influence_percentage = yes
 	}
 }
 
@@ -12619,9 +12494,8 @@ country_event = {
 		}
 		set_temp_variable = { treasury_change = -9.00 }
 		modify_treasury_effect = yes
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_power_balance_value = {
 			id = ARM_soc_pac_bop
 			value = 0.05
@@ -12671,9 +12545,8 @@ country_event = {
 		}
 		set_temp_variable = { treasury_change = -1.875 }
 		modify_treasury_effect = yes
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_power_balance_value = {
 			id = ARM_soc_pac_bop
 			value = 0.05
@@ -12728,9 +12601,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arm_economic.10.a executed"
 		set_temp_variable = { treasury_change = -7.00 }
 		modify_treasury_effect = yes
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		custom_effect_tooltip = ARM_add_idea_to_economy_idea_tt
 		add_ideas = ARM_Eraz_idea1
 		add_power_balance_value = {
@@ -12785,9 +12657,8 @@ country_event = {
 		name = arm_economic.11.a
 		log = "[GetDateText]: [This.GetName]: arm_economic.11.a executed"
 		one_random_agriculture_district = yes
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_power_balance_value = {
 			id = ARM_soc_pac_bop
 			value = 0.05
@@ -12840,9 +12711,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arm_economic.12.a executed"
 		one_random_industrial_complex = yes
 		one_random_fossil_fuel_powerplant = yes
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_power_balance_value = {
 			id = ARM_soc_pac_bop
 			value = 0.05
@@ -12905,9 +12775,8 @@ country_event = {
 		set_temp_variable = { tag_index = FRA }
 		set_temp_variable = { influence_target = ARM }
 		change_influence_percentage = yes
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		add_power_balance_value = {
 			id = ARM_soc_pac_bop
 			value = 0.05
@@ -13251,8 +13120,7 @@ country_event = {
 		SOV = {
 			add_opinion_modifier = { target = ROOT modifier = military_cooperation }
 			reverse_add_opinion_modifier = { target = ROOT modifier = military_cooperation }
-		}
-		SOV = {
+
 			army_experience = 50
 			navy_experience = 50
 			air_experience = 50
@@ -13265,8 +13133,9 @@ country_event = {
 			air_experience = 50
 			add_command_power = 50
 			add_war_support = 0.05
+
+			country_event = arm_dashnak.3
 		}
-		ARM = { country_event = arm_dashnak.3 }
 		ai_chance = {
 			base = 5
 		}
@@ -14291,7 +14160,7 @@ country_event = {
 				add_ideas = {
 					stable_growth
 					eastern_church_arm
-					rampant_corruption
+					corruption_level_08
 					defence_04
 					edu_02
 					health_02
@@ -14306,7 +14175,7 @@ country_event = {
 					the_clergy
 					officer_military_school
 					nuclear_energy
-					Lacks_International_Recognition
+					lacks_international_recognition
 
 					# Armenian Unique
 					armenian_perseverance
@@ -14319,7 +14188,7 @@ country_event = {
 				set_variable = { domestic_influence_amount = 10 }
 				add_to_array = { influence_array = ARM.id }
 				add_to_array = { influence_array_val = 90 }
-				startup_influence = yes
+				sort_influence = yes
 
 				declare_war_on = {
 					target = TUR
@@ -14632,7 +14501,8 @@ country_event = {
 	}
 }
 
-#Armenia Leave from Puppet Status from Russia
+#Armenia Leaves the Russian Sphere
+
 #Russia Reaction: Armenia away
 country_event = {
 	id = arm_reaction.6
@@ -14682,34 +14552,15 @@ country_event = {
 		name = arm_reaction.6.b
 		log = "[GetDateText]: [This.GetName]: arm_reaction.6.b executed"
 		trigger = {
-			ARM = {
-				owns_state = 1034
-				influence_higher_60 = yes
+			OR = {
+				has_idea = SOV_fsb_idea
+				has_idea = SOV_fsb_idea2
+				has_idea = SOV_fsb_idea3
 			}
-			has_idea = SOV_gru1
 		}
-		add_political_power = -250
+		add_political_power = -200
 		ARM = {
 			country_event = arm_reaction.8
-		}
-		hidden_effect = {
-			if = {
-				limit = {
-					NOT = {
-						country_exists = AZE
-					}
-					ARM = {
-						influence_higher_60 = yes
-						owns_state = 713
-					}
-					SOV = {
-						has_idea = SOV_wagner
-					}
-				}
-				SOV = {
-					country_event = arm_reaction.11
-				}
-			}
 		}
 		ai_chance = {
 			base = 0
@@ -14736,6 +14587,7 @@ country_event = {
 		ARM = {
 			country_event = arm_reaction.9
 		}
+		country_event = { id = arm_reaction.11 days = 30 }
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -15022,7 +14874,7 @@ country_event = {
 		ai_chance = {
 			base = 0
 			modifier = {
-				factor = 50
+				add = 50
 				OR = {
 					has_government = nationalist
 					has_government = communism
@@ -15048,7 +14900,7 @@ country_event = {
 		ai_chance = {
 			base = 0
 			modifier = {
-				factor = 50
+				add = 50
 				OR = {
 					has_government = nationalist
 					has_government = communism
@@ -15073,7 +14925,7 @@ country_event = {
 		ai_chance = {
 			base = 0
 			modifier = {
-				factor = 50
+				add = 50
 				OR = {
 					emerging_reactionaries_are_in_power = yes
 					has_government = neutrality
@@ -15098,7 +14950,7 @@ country_event = {
 		ai_chance = {
 			base = 0
 			modifier = {
-				factor = 50
+				add = 50
 				has_government = nationalist
 			}
 		}

@@ -11,12 +11,14 @@ This guide outlines the quality expectations for Millennium Dawn content. It cov
 > - [Code Stylization Guide](/dev-resources/code-stylization-guide/)
 > - [Code Resource](/dev-resources/code-resource/)
 > - [New General Guidelines](/dev-resources/new-general-guidelines/)
+> - [Dynamic Modifiers](/dev-resources/dynamic-modifiers/)
+> - [Claude Code Skills](/dev-resources/claude-code-skills/)
 
 ---
 
 ## What Is a Content Review?
 
-A content review evaluates proposed content against the team's quality standards. It includes playtesting notes, writing expectations, and more. This process requires careful thought — compose your feedback thoroughly and ensure the content meets our standards.
+A content review evaluates proposed content against the team's quality standards. It includes playtesting notes, writing expectations, and more. This process requires careful thought, compose your feedback thoroughly and ensure the content meets our standards.
 
 ## Why Do We Do Content Reviews?
 
@@ -36,7 +38,7 @@ These are baseline expectations for all developers on the team:
 - **Ask when in doubt.** If you are unsure about a content decision, ask a lead developer or Council Member before proceeding.
 - **Review your own content first.** Complete this checklist and the standards in the [Code Resource](/dev-resources/code-resource/) before requesting a lead review.
 - **Read the [Focus Tree Design Principles](/dev-resources/focus-tree-design-principles/).** Familiarize yourself with the design philosophy for branch structure, pacing, and player choice.
-- **Set up your environment.** Run `python3 tools/setup.py` after cloning to install pre-commit hooks and tool dependencies. See the [Git Setup & Usage Guide](/player-tutorials/manual-install-instructions/) for full instructions.
+- **Set up your environment.** Run `python3 tools/dev_setup.py` after cloning to install pre-commit hooks and tool dependencies. See the [Git Setup & Usage Guide](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#development-setup) for full instructions.
 
 ---
 
@@ -45,7 +47,7 @@ These are baseline expectations for all developers on the team:
 ### Economic Guidelines
 
 - **Do all buildings that require a slot have one provided in effect?**
-  All shared buildings (industrial complexes, arms factories, office sectors) should include a supporting building slot, as the cost reflects this. This also helps foster growth for the nation. In some cases you may intentionally omit the slot — adjust the building cost accordingly.
+  All shared buildings (industrial complexes, arms factories, office sectors) should include a supporting building slot, as the cost reflects this. This also helps foster growth for the nation. In some cases you may intentionally omit the slot, adjust the building cost accordingly.
 
 - **Do all buildings/factories have a monetary cost?**
   All buildings should have their monetary cost as specified in the [Code Resource](/dev-resources/code-resource/). This ensures a balanced game.
@@ -60,7 +62,7 @@ These are baseline expectations for all developers on the team:
   The generic tree is the baseline for all economic effects. If your tree provides fewer benefits than the generic tree, it is likely too shallow. Revisit it and ensure it meets or exceeds the generic tree.
 
 - **Have I adjusted the starting economic situation for the country?**
-  You have free reign to change debt, treasury, national spirits, budget, etc. The only exception is starting factories — these are set to match IRL GDP PPP and must not be changed.
+  You have free reign to change debt, treasury, national spirits, budget, etc. The only exception is starting factories, these are set to match IRL GDP PPP and must not be changed.
 
 ### Political Guidelines
 
@@ -83,7 +85,7 @@ These are baseline expectations for all developers on the team:
   Ensure fictional or implausible content is locked behind a game rule (e.g., Scythia with Ossetia).
 
 - **Is the focus tree path linear?**
-  Avoid railroaded content. Millennium Dawn is a sandbox — ensure players have choices and dynamics within their game.
+  Avoid railroaded content. Millennium Dawn is a sandbox, ensure players have choices and dynamics within their game.
 
 - **Do effects from my country's content to another nation come from an event/choice?**
   Most permanent effects targeting another nation should come from an event. Give the target player agency to respond.
@@ -93,6 +95,31 @@ These are baseline expectations for all developers on the team:
 
 - **Have I added flavour events?**
   Aim for at least 10-15 flavour events. Gameplay should not be "click focus, wait, click focus, wait." Make the country feel alive.
+
+### Variety Guidelines
+
+A tree can be perfectly balanced and still feel formulaic. These questions catch reward-shape repetition that the balance questions miss. When reviewing a tree, cross-check it against a reference tree known for variety (Iran, `05_iran.txt`, or Spain, `05_spain.txt`) rather than judging it in isolation.
+
+- **Does one reward shape make up the whole reward too often?**
+  A variable or dynamic-modifier bump (`add_to_variable` plus `add_dynamic_modifier`) is fine at any frequency as seasoning on a substantive reward. It becomes formulaic when it _is_ the entire `completion_reward`. If more than roughly 20% of a tree's focuses reward nothing but `log` + `custom_effect_tooltip` + `add_to_variable`, the tree reads as one idea stretched thin. For contrast, Iran layers an economy bump into 61% of its focuses and never feels formulaic, because the bump always rides a building, resource, event, flag, or idea swap. Spain uses the shape zero times and builds its identity elsewhere.
+
+- **Is the same reward block copy-pasted verbatim?**
+  No `completion_reward` or `ai_will_do` block should repeat byte-for-byte across a branch. The same `variable = number` line appearing ten or more times with only the variable name changing is copy-paste, not design.
+
+- **Do mutually exclusive forks differ in reward _kind_, not just magnitude?**
+  A fork where sibling A adds 0.02 and sibling B adds 0.01 of the same variable is a fake choice. Real forks trade a building for a resource, an idea swap for an event, a stability gain for a drift. If the only difference between two paths is a number, it is not yet a choice.
+
+- **Does the tree have a signature mechanic of its own?**
+  Each tree should carry at least one bespoke modifier family, idea ladder, or scripted mechanic that no other tree shares (Iran's nuclear and missile tiers, Spain's per-culture opinion engine, Serbia's Yugoslav-confederation reunification). A tree whose only mechanic is incrementing the shared economy modifier is interchangeable with every other such tree.
+
+- **Are there enough distinct reward categories?**
+  Across the whole tree, aim for at least four distinct reward categories drawn from: dynamic modifier or variable, timed idea plus `swap_ideas`, treasury or expenditure cost, building or resource spawn, interest-group opinion, event with a player choice, country flag or bespoke mechanic, decision-category unlock, army or tech unlock. A tree hitting only two or three categories is formulaic regardless of size.
+
+- **Do capstone and terminal focuses deliver something new?**
+  A branch endpoint should unlock a decision category, release a subject, fire a defining event, or grant a bespoke idea, not just a bigger number of a variable the branch already used.
+
+- **Do political forks differ mechanically?**
+  Each political path should route to its own ideas, mechanics, or events, not just tick a different popularity up. Political focuses that only do `add_popularity` plus an economy bump are placeholder-grade. A `generic`-named political focus ID is a red flag that the branch leans on the shared minor-nation scaffold for its identity.
 
 ### Visual Appearance
 
@@ -115,7 +142,7 @@ These are baseline expectations for all developers on the team:
   All English grammar rules apply. Titles should be capitalised properly with consistent spelling and punctuation. Trees with significant grammar or spelling issues will not be accepted for merge until corrected.
 
 - **Is there any localisation showing up as non-localised?**
-  Ensure there are no unlocalised strings. Focus descriptions must not be blank or re-use the focus name. All starting national spirits must have descriptions — if negative and removable, explain how. Reference Iran or Libya starting spirits for examples.
+  Ensure there are no unlocalised strings. Focus descriptions must not be blank or re-use the focus name. All starting national spirits must have descriptions, if negative and removable, explain how. Reference Iran or Libya starting spirits for examples.
 
 - **Is the use of custom focus icons moderated?**
   Do not use custom focus icons for every other focus. Reserve them for major focuses (parties, key decisions, etc.).
@@ -149,7 +176,7 @@ These are baseline expectations for all developers on the team:
   Do not use `add_ai_strategy` in effects. It is harmful to AI performance. Consult the AI team if you need assistance.
 
 - **Do all events targeting another nation have AI weighting?**
-  For example, if an event asks Russia for a trade deal, ensure Russia's acceptance is based on opinion — not random chance.
+  For example, if an event asks Russia for a trade deal, ensure Russia's acceptance is based on opinion, not random chance.
 
 - **Have I added AI to any GUIs/mechanics I have made?**
   Ensure the AI can interact with any GUIs you create. Add game rules for AI interaction where applicable.
@@ -213,3 +240,9 @@ These are baseline expectations for all developers on the team:
 
 - **Are any references to the tag capitalised?**
   All tags should be capitalised, including at the start of script IDs (e.g., `SPR_focus_name_here`).
+
+- **Do high-cost focuses have a bankruptcy guard in `ai_will_do`?**
+  Focuses with `cost ≥ 8`, or `cost ≥ 5` tagged with military, economy, or research `search_filters`, must include a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse`. This is an AI-only measure, placing the guard in `available` would incorrectly block the player as well. See [Search Filters](/dev-resources/search-filters/) for which filters apply.
+
+- **Are `custom_effect_tooltip` + `effect_tooltip` + `for_each_scope_loop` duplicated?**
+  When a tooltip describes effects applied to every member of an array, use `tooltip = TT_ALL_*` inside the `for_each_scope_loop` instead. Duplicating the same logic in `effect_tooltip` and the loop causes double-evaluation and is a known performance anti-pattern. See the [Code Stylization Guide](/dev-resources/code-stylization-guide/) for the performance tip.

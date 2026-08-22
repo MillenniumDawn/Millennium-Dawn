@@ -15,16 +15,22 @@ recog_ai_monthly = {
 			limit = {
 				is_ai = yes
 				has_civil_war = no
-				has_idea = Lacks_International_Recognition
+				has_idea = lacks_international_recognition
 				NOT = { has_country_flag = recog_ai_cooldown }
 			}
-			recog_ai_evaluate_actions = yes
+			# Per-month action probability — staggers NSAs so they don't all campaign on the
+			# same tick. With the 90-day post-action cooldown, this works out to ~3 actions/year
+			# per NSA, spread evenly instead of bunched on month 1.
+			random = {
+				chance = 30
+				recog_ai_evaluate_actions = yes
+			}
 		}
 
 		if = {
 			limit = {
 				has_civil_war = no
-				has_idea = Lacks_International_Recognition
+				has_idea = lacks_international_recognition
 				country_exists = THIS
 			}
 			recog_ai_consider_grants = yes
@@ -34,7 +40,7 @@ recog_ai_monthly = {
 
 #determine what action you should do now
 recog_ai_evaluate_actions = {
-	set_temp_variable = { recog_threshold = global.UN_general_assembly^num }
+	set_temp_variable = { recog_threshold = { value = 0 every_collection = { named_collection = un_general_assembly_members_collection add = 1 } } }
 	multiply_temp_variable = { recog_threshold = 0.4 }
 
 	if = { limit = { has_political_power > 200 }
@@ -76,12 +82,9 @@ recog_ai_evaluate_actions = {
 			}
 			add_political_power = -200
 			set_country_flag = { flag = recent_global_recog_campaign days = 365 value = 1 }
-			for_each_loop = {
-				array = global.UN_general_assembly
-				value = v
-				var:v = {
-					add_opinion_modifier = { target = PREV modifier = improving_un_relations }
-				}
+			every_collection_element = {
+				input = { input = collection:un_general_assembly_members_collection }
+				add_opinion_modifier = { target = PREV modifier = improving_un_relations }
 			}
 			set_country_flag = { flag = recog_ai_cooldown days = 90 value = 1 }
 		}
@@ -123,10 +126,21 @@ recog_ai_consider_grants = {
 			add_political_power = -25
 			set_country_flag = Recognised_@PREV
 			set_country_flag = { flag = recog_ai_grant_cooldown days = 180 value = 1 }
+			save_event_target_as = recog_ai_recogniser
 
+			# PREV here is the breakaway (outer every_country scope); target = PREV makes the modifier apply to the breakaway.
 			PREV = {
 				add_opinion_modifier = { target = PREV modifier = recognises_us }
-				add_to_variable = { Granted_Recognition = 1 }
+				recognition_grant_increment = yes
+
+				random_scope_in_array = {
+					array = global.UN_general_assembly
+					limit = {
+						has_country_flag = original_owner_@PREV
+						NOT = { has_country_flag = Recognised_@PREV }
+					}
+					add_opinion_modifier = { target = event_target:recog_ai_recogniser modifier = recognises_them }
+				}
 			}
 
 			if = {

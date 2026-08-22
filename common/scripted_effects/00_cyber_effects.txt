@@ -74,7 +74,9 @@ calculate_cyber_capability = {
 
 	set_variable = { cyber_max_targets = cyber_capability }
 	set_variable = { cyber_op_max_targets = cyber_targets_num }
-	missile_ui_update = yes
+	set_variable = { cyber_capability = modifier@cyber_capability_modifier }
+
+	international_systems_update = yes
 }
 
 # Adds country to the active targets array. Called via script or the change_scope enabled button
@@ -170,7 +172,7 @@ cyber_rebuild_potential_targets = {
 		}
 	}
 
-	missile_ui_update = yes
+	international_systems_update = yes
 }
 
 # Rolls the dice for attacking the target nation when the decision is completed
@@ -191,7 +193,7 @@ cyber_two_roll = {
 
 	# Grab the target nations basic value for their nation, and apply it to the math
 	var:cur_target_nation = {
-		set_temp_variable = { def_pen = cyber_defense_power }
+		set_temp_variable = { def_pen = cyber_defense_rating }
 	}
 	multiply_temp_variable = { def_pen = -0.6 }
 	add_to_temp_variable = { eff_offense = def_pen }
@@ -252,7 +254,7 @@ cyber_two_roll = {
 		add_to_temp_variable = { stealth_chance = decrypt_stealth }
 
 		var:cur_target_nation = {
-			set_temp_variable = { def_pen = cyber_defense_power }
+			set_temp_variable = { def_pen = cyber_defense_rating }
 		}
 		multiply_temp_variable = { def_pen = -0.3 }
 		add_to_temp_variable = { stealth_chance = def_pen }
@@ -351,31 +353,31 @@ cyber_execute_operation = {
 		limit = {
 			check_variable = { cyber_roll_result > 0 }
 		}
-		ROOT = { country_event = { id = MD_cyber.1 } }
+		ROOT = { country_event = MD_cyber.1 }
 		var:cur_target_nation = {
 			if = { limit = { check_variable = { cyber_op_cur_type = 9 } }
 				set_country_flag = {
 					flag = has_industrial_espionage_tracking_access_from_@ROOT
-					days = 120
+					days = 120 value = 1
 				}
 			}
 			else_if = { limit = { check_variable = { cyber_op_cur_type = 10 } }
 				set_country_flag = {
 					flag = has_comms_intercept_tracking_access_from_@ROOT
-					days = 180
+					days = 180 value = 1
 				}
 			}
 			else_if = {
 				limit = { check_variable = { cyber_op_cur_type = 13 } }
 				set_country_flag = {
 					flag = has_sleeper_network_tracking_access_from_@ROOT
-					days = 365
+					days = 365 value = 1
 				}
 			}
 			#executes the proper event based on the mission type
 			meta_effect = {
 				text = {
-					country_event = { id = MD_cyber.1[TYPE] }
+					country_event = MD_cyber.1[TYPE]
 				}
 				TYPE = "[?cyber_op_cur_type]"
 			}
@@ -387,7 +389,7 @@ cyber_execute_operation = {
 				check_variable = { cyber_roll_result = 2 }
 			}
 			var:cur_target_nation = {
-				country_event = { id = MD_cyber.2 }
+				country_event = MD_cyber.2
 			}
 		} else_if = {
 			limit = {
@@ -399,7 +401,7 @@ cyber_execute_operation = {
 					modifier = cyber_hostile_attack_opinion
 				}
 				set_variable = { disp_name_agressor = ROOT }
-				country_event = { id = MD_cyber.3 }
+				country_event = MD_cyber.3
 			}
 		} else_if = {
 			limit = {
@@ -408,7 +410,7 @@ cyber_execute_operation = {
 			var:cur_target_nation = {
 				random_scope_in_array = {
 					array = ROOT.cyber_active_targets
-					limit = { NOT = { tag = PREV } }
+					limit = { NOT = { tag = ROOT } }
 					set_variable = { PREV.disp_name_agressor = THIS }
 				}
 
@@ -429,12 +431,12 @@ cyber_execute_operation = {
 					}
 				}
 
-				country_event = { id = MD_cyber.3 }
+				country_event = MD_cyber.3
 			}
 		}
 	}
 	else = {
-		ROOT = { country_event = { id = MD_cyber.4 } }
+		ROOT = { country_event = MD_cyber.4 }
 		#TODO: add an event here where nations can detect a failed cyber attack and react accordingly
 	}
 
@@ -548,7 +550,7 @@ cyber_execute_operation = {
 
 	add_to_variable = { cyber_ongoing_operations = -1 }
 
-	missile_ui_update = yes
+	international_systems_update = yes
 }
 
 # This executes the operations
@@ -595,5 +597,5 @@ cyber_launch_operation = {
 		}
 	}
 
-	missile_ui_update = yes
+	international_systems_update = yes
 }

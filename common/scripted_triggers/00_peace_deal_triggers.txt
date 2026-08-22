@@ -12,28 +12,59 @@
 				option = no
 			}
 		}
-	# CHAOTIC PEACE DEALS
-		CPC_is_on = {
-			has_game_rule = {
-				rule = allow_chaotic_PC
-				option = yes
-			}
-		}
-		CPC_is_off = {
-			has_game_rule = {
-				rule = allow_chaotic_PC
-				option = no
-			}
-		}
 # CONDITIONAL PEACE DEAL TRIGGERS
 	# AI SPECIFIC TRIGGERS
-		CPD_AI_will_offer_peace = { always = no }
-		# Just for display shit
-		CPD_AI_will_accept_calculation = {
-			# BASE ACCEPTANCE
-			set_temp_variable = { CPD_acceptance_temp = -50 }
+		# Posture detection — used by CPD_AI_build_peace_deal to pick a branch.
+		# Called from inside random_enemy_country: ROOT = the AI, THIS = its target enemy.
+		CPD_AI_is_losing = {
+			ROOT = {
+				OR = {
+					surrender_progress > 0.5
+					enemies_strength_ratio > 1.7
+					has_active_mission = debt_default_main_mission
+				}
+			}
+		}
+		CPD_AI_is_stalemated = {
+			ROOT = {
+				check_variable = { months_at_war > 18 }
+				surrender_progress < 0.4
+				check_variable = { strength_ratio@THIS < 1.3 }
+				check_variable = { strength_ratio@THIS > 0.7 }
+			}
+			THIS = { surrender_progress < 0.4 }
+		}
 
-			# OTHER CHECKS IN HERE
+		CPD_AI_will_offer_peace = {
+			NOT = { has_country_flag = CPD_AI_peace_cooldown }
+			is_ai = yes
+			has_war = yes
+			OR = {
+				# Long war with low war support
+				AND = {
+					has_war_support < 0.3
+					check_variable = { months_at_war > 12 }
+				}
+				# High surrender progress
+				AND = {
+					surrender_progress > 0.3
+					check_variable = { months_at_war > 6 }
+				}
+				# Economic collapse
+				has_active_mission = debt_default_main_mission
+				# Massively outgunned
+				AND = {
+					enemies_strength_ratio > 2.0
+					check_variable = { months_at_war > 6 }
+				}
+				# Stalemate — long indecisive war
+				check_variable = { months_at_war > 18 }
+			}
+		}
+		CPD_AI_will_accept_calculation = {
+			set_temp_variable = { var = CPD_acceptance_temp value = -100 }
+			set_temp_variable = { CPD_cost_raw_temp = ROOT.CPD_total_cost_of_built_peace_deal }
+
 			# ECONOMIC FACTORING
 				set_temp_variable = { CPD_IR_temp = var:THIS.interest_rate }
 				if = {
@@ -59,47 +90,63 @@
 				else_if = {
 					limit = { check_variable = { CPD_IR_temp > 4.99 } }
 					add_to_temp_variable = { CPD_IR_temp = 2 }
-				}
-				add_to_temp_variable = { CPD_acceptance_temp = CPD_IR_temp }
+			}
 			# WAR SUPPORT
-				set_temp_variable = { CPD_WS_temp = var:THIS.has_war_support }
-				multiply_temp_variable = { CPD_WS_temp = -200 }
-				round_temp_variable = CPD_WS_temp
-				add_to_temp_variable = { CPD_WS_temp = 101 }
-				add_to_temp_variable = { CPD_acceptance_temp = CPD_WS_temp }
+				set_temp_variable = {
+					var = CPD_WS_temp
+					value = {
+						value = var:THIS.has_war_support
+						multiply = -200
+						round = yes
+						add = 101
+					}
+				}
 			# RELATIVE STRENGTH
-				set_temp_variable = { CPD_RSB_temp = THIS.enemies_strength_ratio@ROOT }
-				multiply_temp_variable = { CPD_RSB_temp = 100 }
-				round_temp_variable = CPD_RSB_temp
-				subtract_from_temp_variable = { CPD_RSB_temp = 100 }
-				clamp_temp_variable = {
+				set_temp_variable = {
 					var = CPD_RSB_temp
-					max = 1000
+					value = {
+						value = THIS.enemies_strength_ratio@ROOT
+						multiply = 100
+						round = yes
+						subtract = 100
+						clamp = { min = -500 max = 200 }
+					}
 				}
-				add_to_temp_variable = { CPD_acceptance_temp = CPD_RSB_temp }
-			# CLOSE TO SURRENDER
-				set_temp_variable = { CPD_SP_temp = var:THIS.surrender_progress }
-				multiply_temp_variable = { CPD_SP_temp = 200 }
-				round_temp_variable = CPD_SP_temp
-				subtract_from_temp_variable = { CPD_SP_temp = 100 }
-				clamp_temp_variable = {
+				# Dampen when ROOT has no faction — engine metric includes all
+				# co-belligerents, which massively inflates the ratio for solo senders.
+				if = {
+					limit = { ROOT = { NOT = { is_in_faction = yes } } }
+					multiply_temp_variable = { CPD_RSB_temp = 0.25 }
+					round_temp_variable = CPD_RSB_temp
+				}
+			# CLOSE TO SURRENDER — threshold shifted so 50 % surrender gives +50 instead of 0
+				set_temp_variable = {
 					var = CPD_SP_temp
-					min = 0
-					max = 100
+					value = {
+						value = var:THIS.surrender_progress
+						multiply = 200
+						round = yes
+						subtract = 50
+						clamp = { min = 0 max = 100 }
+					}
 				}
-				add_to_temp_variable = { CPD_acceptance_temp = CPD_SP_temp }
-			# BATTLES WON
-				set_temp_variable = { CPD_RBW_temp = ROOT.CPD_VP@PREV }
-				set_temp_variable = { CPD_TBW_temp = THIS.CPD_VP@ROOT }
-				subtract_from_temp_variable = { CPD_RBW_temp = CPD_TBW_temp }
-				round_temp_variable = CPD_RBW_temp
-				add_to_temp_variable = { CPD_acceptance_temp = CPD_RBW_temp }
+			# BATTLES WON — clamp the differential to keep long back-and-forth fronts
+			# from producing runaway acceptance scores.
+				set_temp_variable = {
+					var = CPD_RBW_temp
+					value = {
+						value = ROOT.CPD_VP@PREV
+						subtract = THIS.CPD_VP@ROOT
+						round = yes
+						clamp = { min = -150 max = 150 }
+					}
+				}
 			# SENDER WAR CONTRIBUTION
 				set_temp_variable = { CPD_SWC_temp = 0 }
 				if = {
 					limit = {
 						NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-						check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 0 }
+						check_variable = { CPD_cost_raw_temp > 0 }
 						check_variable = { ROOT.CPD_VP@PREV < 1 }
 					}
 					set_temp_variable = { CPD_SWC_temp = -100 }
@@ -107,7 +154,7 @@
 				else_if = {
 					limit = {
 						NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-						check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 5 }
+						check_variable = { CPD_cost_raw_temp > 5 }
 						check_variable = { ROOT.CPD_VP@PREV < 10 }
 					}
 					set_temp_variable = { CPD_SWC_temp = -50 }
@@ -115,13 +162,13 @@
 				else_if = {
 					limit = {
 						NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-						check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 10 }
+						check_variable = { CPD_cost_raw_temp > 10 }
 						check_variable = { ROOT.CPD_VP@PREV < 25 }
 					}
 					set_temp_variable = { CPD_SWC_temp = -25 }
 				}
-				add_to_temp_variable = { CPD_acceptance_temp = CPD_SWC_temp }
 			# POWER RANKING
+				set_temp_variable = { CPD_PR_temp = 0 }
 				if = {
 					limit = { THIS = { has_idea = super_power } }
 					set_temp_variable = { CPD_PR_temp = -60 }
@@ -142,8 +189,8 @@
 					limit = { THIS = { has_idea = non_power } }
 					set_temp_variable = { CPD_PR_temp = 15 }
 				}
-				add_to_temp_variable = { CPD_acceptance_temp = CPD_PR_temp }
 			# FACTION BACKING
+				set_temp_variable = { CPD_FB_temp = 0 }
 				if = {
 					limit = { THIS = { has_idea = NATO_member } }
 					add_to_temp_variable = { CPD_FB_temp = -25 }
@@ -160,50 +207,227 @@
 					limit = { THIS = { is_sco = yes } }
 					add_to_temp_variable = { CPD_FB_temp = -25 }
 				}
-				add_to_temp_variable = { CPD_acceptance_temp = CPD_FB_temp }
 
-			# Time at War
-			set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
-			multiply_temp_variable = { months_at_war_tmp = 2 }
-			add_to_temp_variable = { CPD_acceptance_temp = months_at_war_tmp }
+			# Time at War (capped at 120 to prevent runaway acceptance in very long wars)
+			set_temp_variable = {
+				var = months_at_war_tmp
+				value = {
+					value = THIS.months_at_war
+					multiply = 2
+					clamp = { min = 0 max = 120 }
+				}
+			}
+			# Dug-in stubbornness — opposite-sign of months_at_war_tmp.
+			# Long wars make AI more reluctant to accept the offerer's terms.
+			# Gated on surrender < 50 %: a clearly losing nation drops the
+			# stubbornness and wants out regardless of war length.
+			set_temp_variable = {
+				var = CPD_WW_temp
+				value = {
+					value = 0
+					if = {
+						limit = { value = THIS.months_at_war greater_than = 12 }
+						subtract = 15
+					}
+					if = {
+						limit = { value = THIS.months_at_war greater_than = 24 }
+						subtract = 15
+					}
+					if = {
+						limit = { value = THIS.months_at_war greater_than = 48 }
+						subtract = 30
+					}
+				}
+			}
+			# Zero out when surrender >= 50% — losing nations drop stubbornness
+			if = {
+				limit = { NOT = { surrender_progress < 0.5 } }
+				set_temp_variable = { var = CPD_WW_temp value = 0 }
+			}
 
-			if = { limit = { difficulty < 1 }
-				add_to_temp_variable = { CPD_acceptance_temp = -15 }
-			}
-			if = { limit = { difficulty > 1 }
-				add_to_temp_variable = { CPD_acceptance_temp = 15 }
-			}
-			if = { limit = { difficulty > 2 }
-				add_to_temp_variable = { CPD_acceptance_temp = 15 }
+			# Desperation bonus — when surrender passes 50 % the AI becomes
+			# progressively more willing to end the war, offsetting power-rank
+			# pride, faction confidence, and sender-contribution penalties.
+			set_temp_variable = {
+				var = CPD_DESP_temp
+				value = {
+					value = 0
+					if = {
+						limit = { value = var:THIS.surrender_progress greater_than = 0.5 }
+						add = 25
+					}
+					if = {
+						limit = { value = var:THIS.surrender_progress greater_than = 0.75 }
+						add = 25
+					}
+				}
 			}
 
-			# Cost of Peace Deal
-			set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
-			multiply_temp_variable = { v = -5 }
-			add_to_temp_variable = { CPD_acceptance_temp = v }
+			# Difficulty adjustments folded into the consolidated accumulation below
+
+			# Cost of Peace Deal (capped: concessions bonus maxes at +50)
+			set_temp_variable = {
+				var = v
+				value = {
+					value = CPD_cost_raw_temp
+					multiply = -5
+					clamp = { min = -500 max = 50 }
+				}
+			}
 			# DEAL FAIRNESS
-				set_temp_variable = { CPD_DF_temp = 0 }
-				if = {
-					limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 20 } }
-					add_to_temp_variable = { CPD_DF_temp = -25 }
+				set_temp_variable = {
+					var = CPD_DF_temp
+					value = {
+						value = 0
+						if = {
+							limit = {
+								value = CPD_cost_raw_temp
+								greater_than = 20
+							}
+							subtract = 25
+						}
+						if = {
+							limit = {
+								value = CPD_cost_raw_temp
+								greater_than = 40
+							}
+							subtract = 50
+						}
+						if = {
+							limit = {
+								value = CPD_cost_raw_temp
+								greater_than = 60
+							}
+							subtract = 75
+						}
+						if = {
+							limit = {
+								value = CPD_cost_raw_temp
+								greater_than = 100
+							}
+							subtract = 100
+						}
+					}
 				}
+			# TERM-SPECIFIC AVERSIONS — mirror ai_acceptance modifiers in 01_peace_deal_diplomatic_actions.txt
+				set_temp_variable = { CPD_FP_aversion_temp = 0 }
 				if = {
-					limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 40 } }
-					add_to_temp_variable = { CPD_DF_temp = -50 }
+					limit = { ROOT = { has_country_flag = CPD_full_puppet_demand } }
+					set_temp_variable = { CPD_FP_aversion_temp = -200 }
+					if = { limit = { THIS = { is_subject = yes } }
+						add_to_temp_variable = { CPD_FP_aversion_temp = 100 }
+					}
 				}
+				# Full annexation — receiver refuses to sign away its entire country.
+				# Mirrors CPD_full_annexation_aversion in 01_peace_deal_diplomatic_actions.txt.
+				set_temp_variable = { CPD_receiver_controlled_states = THIS.num_of_controlled_states }
+				set_temp_variable = { CPD_FA_aversion_temp = 0 }
 				if = {
-					limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 60 } }
-					add_to_temp_variable = { CPD_DF_temp = -75 }
+					limit = {
+						ROOT = { check_variable = { CPD_annex_state_DEMANDS^num > 0 } }
+						NOT = { check_variable = { ROOT.CPD_annex_state_DEMANDS^num < CPD_receiver_controlled_states } }
+					}
+					set_temp_variable = { CPD_FA_aversion_temp = -200 }
 				}
+				set_temp_variable = { CPD_RC_aversion_temp = 0 }
 				if = {
-					limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 100 } }
-					add_to_temp_variable = { CPD_DF_temp = -100 }
+					limit = { ROOT = { has_country_flag = CPD_regime_change_demand } }
+					set_temp_variable = { CPD_RC_aversion_temp = -80 }
+					if = {
+						limit = { THIS = { check_variable = { party_pop_array^ruling_party^0 < 0.4 } } }
+						add_to_temp_variable = { CPD_RC_aversion_temp = 30 }
+					}
 				}
-				add_to_temp_variable = { CPD_acceptance_temp = CPD_DF_temp }
+				set_temp_variable = { CPD_FN_aversion_temp = 0 }
+				if = {
+					limit = { ROOT = { has_country_flag = CPD_forced_neutrality_demand } }
+					if = { limit = { THIS = { is_in_faction = yes } }
+						set_temp_variable = { CPD_FN_aversion_temp = -60 }
+					}
+					else = { set_temp_variable = { CPD_FN_aversion_temp = -20 } }
+				}
+				set_temp_variable = { CPD_MB_aversion_temp = 0 }
+				if = {
+					limit = { ROOT = { has_country_flag = CPD_military_basing_demand } }
+					set_temp_variable = { CPD_MB_aversion_temp = -25 }
+				}
+				set_temp_variable = {
+					var = CPD_RR_aversion_temp
+					value = {
+						value = 0
+						if = {
+							limit = { value = ROOT.CPD_resource_rights_DEMANDS^num greater_than = 0 }
+							subtract = 15
+						}
+						if = {
+							limit = { value = ROOT.CPD_resource_rights_DEMANDS^num greater_than = 3 }
+							subtract = 25
+						}
+					}
+				}
+				set_temp_variable = { CPD_CF_acceptance_temp = 0 }
+				if = {
+					limit = {
+						ROOT = { has_country_flag = CPD_ceasefire_demand }
+						THIS = {
+							check_variable = { months_at_war > 18 }
+							surrender_progress < 0.4
+						}
+					}
+					set_temp_variable = { CPD_CF_acceptance_temp = 40 }
+				}
+
+				# Consolidated accumulation — all intermediate temps rolled into one add
+				add_to_temp_variable = {
+					var = CPD_acceptance_temp
+					value = {
+						value = CPD_IR_temp
+						add = CPD_WS_temp
+						add = CPD_RSB_temp
+						add = CPD_SP_temp
+						add = CPD_RBW_temp
+						add = CPD_SWC_temp
+						add = CPD_PR_temp
+						add = CPD_FB_temp
+						add = months_at_war_tmp
+						add = CPD_WW_temp
+						add = CPD_DESP_temp
+						add = v
+						add = CPD_DF_temp
+						add = CPD_FP_aversion_temp
+						add = CPD_FA_aversion_temp
+						add = CPD_RC_aversion_temp
+						add = CPD_FN_aversion_temp
+						add = CPD_MB_aversion_temp
+						add = CPD_RR_aversion_temp
+						add = CPD_CF_acceptance_temp
+						# Difficulty adjustments
+						if = {
+							limit = {
+								value = difficulty
+								less_than = 1
+							}
+							add = 15
+						}
+						if = {
+							limit = {
+								value = difficulty
+								greater_than = 1
+							}
+							subtract = 15
+						}
+						if = {
+							limit = {
+								value = difficulty
+								greater_than = 2
+							}
+							subtract = 15
+						}
+					}
+				}
 		}
-		CPD_AI_will_accept = { # this is just for some display shit, will make this work later
+		CPD_AI_will_accept = {
 			CPD_AI_will_accept_calculation = yes
-			# FINAL CHECK
 			check_variable = { CPD_acceptance_temp > 0 }
 		}
 	# WAR CONTRIBUTION CHECK
@@ -217,13 +441,64 @@
 			}
 		}
 		CPD_has_demands_in_deal = {
+			custom_trigger_tooltip = {
+				tooltip = CPD_has_demands_in_deal_TT
+				ROOT = {
+					OR = {
+						check_variable = { CPD_annex_state_DEMANDS^num > 0 }
+						check_variable = { CPD_puppet_in_state_DEMANDS^num > 0 }
+						check_variable = { CPD_demilitarise_state_DEMANDS^num > 0 }
+						check_variable = { CPD_liberate_state_DEMANDS^num > 0 }
+						check_variable = { CPD_resource_rights_DEMANDS^num > 0 }
+						has_country_flag = CPD_ceasefire_demand
+						has_country_flag = CPD_war_reparations_demand
+						has_country_flag = CPD_forced_neutrality_demand
+						has_country_flag = CPD_regime_change_demand
+						has_country_flag = CPD_military_basing_demand
+						has_country_flag = CPD_full_puppet_demand
+					}
+				}
+			}
+		}
+		# Inverse of CPD_has_demands_in_deal — used by CPD_deal_is_sendable so
+		# the [!] tooltip reads as a positive condition ("Deal contains no demands").
+		CPD_deal_has_no_demands = {
+			custom_trigger_tooltip = {
+				tooltip = CPD_deal_has_no_demands_TT
+				NOT = { CPD_has_demands_in_deal = yes }
+			}
+		}
+		# Canonical send-gate. Single source of truth — referenced by
+		# can_be_sent, the send-status icon visibility triggers, and the
+		# dummy scripted-GUI element whose [!click_enabled] feeds the icon TT.
+		CPD_deal_is_sendable = {
+			OR = {
+				CPD_deal_has_no_demands = yes
+				CPD_has_war_contribution = yes
+				CPD_is_ceasefire_only_deal = yes
+			}
+		}
+		# A deal composed only of a ceasefire with no territorial or political
+		# demands. Blocked by CPD_deal_has_no_demands (ceasefire IS a demand) and
+		# CPD_has_war_contribution (no VP gain or months-at-war threshold met),
+		# so it needs its own exemption.
+		CPD_is_ceasefire_only_deal = {
+			has_war = yes
 			ROOT = {
 				OR = {
-					check_variable = { CPD_annex_state_DEMANDS^num > 0 }
-					check_variable = { CPD_puppet_in_state_DEMANDS^num > 0 }
-					check_variable = { CPD_demilitarise_state_DEMANDS^num > 0 }
-					check_variable = { CPD_liberate_state_DEMANDS^num > 0 }
+					has_country_flag = CPD_ceasefire_demand
+					has_country_flag = CPD_ceasefire_concession
 				}
+				NOT = { has_country_flag = CPD_war_reparations_demand }
+				NOT = { has_country_flag = CPD_forced_neutrality_demand }
+				NOT = { has_country_flag = CPD_regime_change_demand }
+				NOT = { has_country_flag = CPD_military_basing_demand }
+				NOT = { has_country_flag = CPD_full_puppet_demand }
+				check_variable = { CPD_annex_state_DEMANDS^num = 0 }
+				check_variable = { CPD_puppet_in_state_DEMANDS^num = 0 }
+				check_variable = { CPD_demilitarise_state_DEMANDS^num = 0 }
+				check_variable = { CPD_liberate_state_DEMANDS^num = 0 }
+				check_variable = { CPD_resource_rights_DEMANDS^num = 0 }
 			}
 		}
 	# OTHER TRIGGERS
@@ -238,7 +513,7 @@
 					# CALIPHATE
 						has_autonomy_state = autonomy_terrorist_branch
 					# DANISH
-						has_autonomy_state = danish_crown_holding
+						has_autonomy_state = autonomy_danish_crown_holding
 					# ISRAELI-PALESTINIAN
 						has_autonomy_state = autonomy_authority_of_palestine
 						has_autonomy_state = autonomy_authority_of_palestine_1
@@ -265,7 +540,7 @@
 					# CALIPHATE
 						has_autonomy_state = autonomy_terrorist_branch
 					# DANISH
-						has_autonomy_state = danish_crown_holding
+						has_autonomy_state = autonomy_danish_crown_holding
 					# IRAQI
 						has_autonomy_state = autonomy_fifty_first_state_iraq
 					# ISRAELI-PALESTINIAN
@@ -289,12 +564,13 @@
 			CPD_calculate_province_cost = {
 				if = {
 					limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
-					# COST CALCULATION
-						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-						round_temp_variable = CPD_VP_temp
-						clamp_temp_variable = {
+						set_temp_variable = {
 							var = CPD_VP_temp
-							min = 1
+							value = {
+								value = THIS.state_strategic_value
+								round = yes
+								clamp = { min = 1 max = 100 }
+							}
 						}
 					# COST MODIFIERS
 						if = {
@@ -314,35 +590,50 @@
 				}
 				else_if = {
 					limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
-					# COST CALCULATION
-						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-						multiply_temp_variable = { CPD_VP_temp = 0.5 }
-						round_temp_variable = CPD_VP_temp
-						clamp_temp_variable = {
-							var = CPD_VP_temp
-							min = 1
+					set_temp_variable = {
+						var = CPD_VP_temp
+						value = {
+							value = THIS.state_strategic_value
+							multiply = 0.5
+							round = yes
+							clamp = { min = 1 max = 100 }
 						}
+					}
 				}
 				else_if = {
 					limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
-					# COST CALCULATION
-						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-						multiply_temp_variable = { CPD_VP_temp = 0.25 }
-						round_temp_variable = CPD_VP_temp
-						clamp_temp_variable = {
+						set_temp_variable = {
 							var = CPD_VP_temp
-							min = 1
+							value = {
+								value = THIS.state_strategic_value
+								multiply = 0.25
+								round = yes
+								clamp = { min = 1 max = 100 }
+							}
 						}
 				}
 				else_if = {
 					limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
-					# COST CALCULATION
-						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-						multiply_temp_variable = { CPD_VP_temp = 0.3333 }
-						round_temp_variable = CPD_VP_temp
-						clamp_temp_variable = {
+						set_temp_variable = {
 							var = CPD_VP_temp
-							min = 1
+							value = {
+								value = THIS.state_strategic_value
+								multiply = 0.3333
+								round = yes
+								clamp = { min = 1 max = 100 }
+							}
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
+						set_temp_variable = {
+							var = CPD_VP_temp
+							value = {
+								value = THIS.state_strategic_value
+								multiply = 0.15
+								round = yes
+								clamp = { min = 1 max = 100 }
+							}
 						}
 				}
 				if = {
@@ -352,100 +643,22 @@
 				always = yes
 			}
 			CPD_calculate_province_cost_loc = {
-				if = {
-					limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
-					# COST CALCULATION
-						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-						round_temp_variable = CPD_VP_temp
-						clamp_temp_variable = {
-							var = CPD_VP_temp
-							min = 1
-						}
-					# COST MODIFIERS
-						if = {
-							limit = {
-								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-								is_core_of = ROOT
-							}
-							multiply_temp_variable = { CPD_VP_temp = 0.5 }
-						}
-						else_if = {
-							limit = {
-								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-								is_claimed_by = ROOT
-							}
-							multiply_temp_variable = { CPD_VP_temp = 0.3333 }
-						}
-				}
-				else_if = {
-					limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
-					# COST CALCULATION
-					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-					multiply_temp_variable = { CPD_VP_temp = 0.5 }
-					round_temp_variable = CPD_VP_temp
-					clamp_temp_variable = { var = CPD_VP_temp min = 1 }
-				}
-				else_if = {
-					limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
-					# COST CALCULATION
-						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-						multiply_temp_variable = { CPD_VP_temp = 0.25 }
-						round_temp_variable = CPD_VP_temp
-						clamp_temp_variable = {
-							var = CPD_VP_temp
-							min = 1
-						}
-				}
-				else_if = {
-					limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
-					# COST CALCULATION
-						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-						multiply_temp_variable = { CPD_VP_temp = 0.3333 }
-						round_temp_variable = CPD_VP_temp
-						clamp_temp_variable = {
-							var = CPD_VP_temp
-							min = 1
-						}
-				}
-				if = {
-					limit = { is_owned_and_controlled_by = THIS.owner }
-					multiply_temp_variable = { CPD_VP_temp = 2 }
-				}
+				CPD_calculate_province_cost = yes
 				if = {
 					limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
 					if = {
-						limit = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
-						multiply_temp_variable = { CPD_VP_temp = 1 }
+						limit = { ROOT = { NOT = { is_in_array = { CPD_current_deal_list = PREV } } } }
+						multiply_temp_variable = { CPD_VP_temp = -1 }
 					}
-					else = { multiply_temp_variable = { CPD_VP_temp = -1 } }
 				}
 				else = {
 					if = {
 						limit = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
 						multiply_temp_variable = { CPD_VP_temp = -1 }
 					}
-					else = { multiply_temp_variable = { CPD_VP_temp = 1 } }
 				}
 				always = yes
 			}
-			# CPD_cost_of_state_loc = {
-			# 	if = {
-			# 		limit = {
-			# 			OR = {
-			# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
-			# 				ROOT = { is_in_array = { CPD_puppet_in_state_DEMANDS = PREV } }
-			# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
-			# 				ROOT = { is_in_array = { CPD_liberate_state_DEMANDS = PREV } }
-			# 			}
-			# 		}
-			# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
-			# 		multiply_temp_variable = { CPD_value_of_state_display = -1 }
-			# 	}
-			# 	else = {
-			# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
-			# 		multiply_temp_variable = { CPD_value_of_state_display = 1 }
-			# 	}
-			# }
 # FOR COUNTRY SPECIFIC PEACE DEALS WITH TOTAL WARS
 	# ERITREA
 		# unsure why it was commented out but will leave it as such
@@ -659,25 +872,15 @@ CPD_is_a_custom_civil_war = {
 		}
 	}
 	else_if = {
-		limit = { ROOT = { original_tag = LUR } }
-		NOT = {
-			OR = {
-				original_tag = AFR
-				original_tag = LIB
+		limit = {
+			ROOT = {
+				OR = {
+					original_tag = LUR
+					original_tag = SIE
+					original_tag = GUI
+				}
 			}
 		}
-	}
-	else_if = {
-		limit = { ROOT = { original_tag = SIE } }
-		NOT = {
-			OR = {
-				original_tag = AFR
-				original_tag = LIB
-			}
-		}
-	}
-	else_if = {
-		limit = { ROOT = { original_tag = GUI } }
 		NOT = {
 			OR = {
 				original_tag = AFR

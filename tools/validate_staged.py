@@ -10,12 +10,24 @@ files themselves (CI handles the full cross-reference validation).
   - events/*.txt                      -> validate_events.py
   - common/decisions/*.txt            -> validate_decisions.py
   - localisation/*.yml                -> validate_localisation.py
-  - history/countries/*.txt           -> validate_history_techs.py
+  - history/countries/*.txt           -> validate_history.py
   - common/, events/, history/        -> validate_variables.py
   - common/scripted_localisation/     -> validate_scripted_localisation.py
   - common/                           -> validate_cosmetic_tags.py
   - common/scripted_effects/,
     common/scripted_triggers/         -> validate_unused_scripted.py
+  - history/units/, common/units/,
+    common/ai_templates/,
+    common/scripted_effects/          -> validate_oob_units.py
+  - common/ideas/, common/national_focus/,
+    common/decisions/, events/        -> validate_ideas.py
+  - common/factions/                  -> validate_factions.py
+  - common/national_focus/            -> validate_focus_tree.py
+  - common/on_actions/                -> validate_on_actions.py
+  - common/scripted_effects/,
+    common/national_focus/,
+    common/decisions/, events/        -> validate_scripted_params.py
+  - interface/*.gui                   -> validate_gfx_references.py
 
 Opt-out via environment variable:
     MD_SKIP_VALIDATE=1 git commit -m "..."
@@ -24,6 +36,10 @@ Opt-out via environment variable:
 import os
 import subprocess
 import sys
+import time
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+from shared_utils import timing_enabled
 
 VALIDATORS = [
     {
@@ -68,7 +84,7 @@ VALIDATORS = [
         "suffix": ".txt",
         "cmd": [
             "python3",
-            "tools/validation/validate_history_techs.py",
+            "tools/validation/validate_history.py",
             "--staged",
             "--strict",
             "--no-color",
@@ -84,6 +100,8 @@ VALIDATORS = [
             "--staged",
             "--strict",
             "--no-color",
+            "--workers",
+            "4",
         ],
     },
     {
@@ -96,6 +114,8 @@ VALIDATORS = [
             "--staged",
             "--strict",
             "--no-color",
+            "--workers",
+            "4",
         ],
     },
     {
@@ -108,6 +128,8 @@ VALIDATORS = [
             "--staged",
             "--strict",
             "--no-color",
+            "--workers",
+            "4",
         ],
     },
     {
@@ -139,6 +161,104 @@ VALIDATORS = [
             "--no-color",
         ],
     },
+    {
+        "name": "ideas",
+        "prefixes": [
+            "common/ideas/",
+            "common/national_focus/",
+            "common/decisions/",
+            "events/",
+        ],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_ideas.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+            "--workers",
+            "4",
+        ],
+    },
+    {
+        "name": "scripted GUI",
+        "prefixes": ["common/scripted_guis/"],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_scripted_gui.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "factions",
+        "prefixes": [
+            "common/factions/",
+        ],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_factions.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "focus tree",
+        "prefixes": ["common/national_focus/"],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_focus_tree.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "on actions",
+        "prefixes": ["common/on_actions/"],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_on_actions.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "scripted params",
+        "prefixes": [
+            "common/scripted_effects/",
+            "common/national_focus/",
+            "common/decisions/",
+            "events/",
+        ],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_scripted_params.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "gfx references",
+        "prefixes": ["interface/"],
+        "suffix": ".gui",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_gfx_references.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
 ]
 
 
@@ -156,8 +276,13 @@ def main():
     if os.environ.get("MD_SKIP_VALIDATE", "") == "1":
         return 0
 
+    show_timing = timing_enabled()
+    total_start = time.perf_counter()
+
     staged = get_staged_files()
+    os.environ["MD_STAGED_FILES"] = "\n".join(staged)
     failed = False
+    timings = []
 
     for v in VALIDATORS:
         has_matching = any(
@@ -168,9 +293,33 @@ def main():
             continue
 
         print(f"Running {v['name']} validator...")
-        result = subprocess.run(v["cmd"])
+        t0 = time.perf_counter()
+        try:
+            result = subprocess.run(v["cmd"], timeout=300)
+        except subprocess.TimeoutExpired:
+            print(f"ERROR: {v['name']} validator timed out after 5 minutes")
+            failed = True
+            timings.append((v["name"], 300.0))
+            continue
+        elapsed = time.perf_counter() - t0
+        timings.append((v["name"], elapsed))
         if result.returncode != 0:
             failed = True
+
+    if show_timing and timings:
+        total = time.perf_counter() - total_start
+        max_label = max(len(name) for name, _ in timings)
+        print(f"\n\033[90m{'─' * (max_label + 18)}", file=sys.stderr)
+        print("  Validator timing:", file=sys.stderr)
+        for name, elapsed in timings:
+            bar_len = int(elapsed / total * 20) if total > 0 else 0
+            bar = "█" * bar_len + "░" * (20 - bar_len)
+            print(
+                f"  {name:<{max_label}}  {elapsed:6.3f}s  {bar}",
+                file=sys.stderr,
+            )
+        print(f"  {'total':<{max_label}}  {total:6.3f}s", file=sys.stderr)
+        print(f"{'─' * (max_label + 18)}\033[0m", file=sys.stderr)
 
     return 1 if failed else 0
 

@@ -5,65 +5,58 @@ country_event = { # Protests Erupt in Capital
 	title = protests.100.t
 	desc = protests.100.d
 	picture = GFX_politics_demands
-
 	is_triggered_only = yes
+
 	trigger = {
+		has_country_flag = MD_protest_revolt_pending
 		NOT = { has_country_flag = MD_protest_cooldown }
 		NOT = { tag = ZOM }
 		NOT = { tag = ALN }
 		NOT = { has_war_with = ZOM }
 		NOT = { has_war_with = ALN }
 	}
+
 	option = {
 		name = protests.100.a
 		log = "[GetDateText]: [This.GetName]: protests.100.a executed"
-		activate_mission = MD_incoming_revolt
-		set_country_flag = MD_protests_began
+		clr_country_flag = MD_protest_revolt_pending
+		set_variable = { protest_spread_exhaustion = 0 }
 		every_owned_state = {
 			limit = {
 				is_capital = yes
+				is_core_of = ROOT
+				is_controlled_by = ROOT
 			}
+			set_state_flag = MD_protests_active@ROOT
 			force_enable_resistance = ROOT
 			start_resistance = yes
 			set_compliance = 30
 			set_resistance = 50
 			set_garrison_strength = 1.0
 		}
+		activate_mission = MD_incoming_revolt
 		ai_chance = { base = 10 }
 	}
 }
-
-# Repetitive
 
 country_event = { # Protests Spread
 	id = protests.101
 	title = protests.101.t
 	desc = protests.101.d
 	picture = GFX_politics_demands
-
 	is_triggered_only = yes
 
 	trigger = {
+		has_active_mission = MD_incoming_revolt
 		NOT = { has_country_flag = MD_protest_cooldown }
-		NOT = {
-			all_core_state = {
-				has_resistance = yes
-			}
-		}
-		any_core_state = {
+		check_variable = { protest_strength > 0 }
+		any_owned_state = {
+			is_capital = no
+			is_core_of = ROOT
+			is_controlled_by = ROOT
 			has_resistance = no
-			NOT = { has_state_flag = MD_dont_protest_again }
-		}
-	}
-
-	immediate = {
-		hidden_effect = {
-			random_core_state = {
-			limit = {
-				has_resistance = no
-				NOT = { has_state_flag = MD_dont_protest_again }
-			}
-			set_state_flag = MD_protests_are_here }
+			NOT = { has_state_flag = MD_protests_active@ROOT }
+			NOT = { has_state_flag = MD_protests_resolved@ROOT }
 		}
 	}
 
@@ -71,14 +64,15 @@ country_event = { # Protests Spread
 		name = protests.101.a
 		log = "[GetDateText]: [This.GetName]: protests.101.a executed"
 		set_temp_variable = { temp_productivity_change = -30 }
-		every_owned_state = {
+		random_owned_controlled_state = {
 			limit = {
 				is_capital = no
 				is_core_of = ROOT
 				has_resistance = no
-				has_state_flag = MD_protests_are_here
+				NOT = { has_state_flag = MD_protests_active@ROOT }
+				NOT = { has_state_flag = MD_protests_resolved@ROOT }
 			}
-			clr_state_flag = MD_protests_are_here
+			set_state_flag = MD_protests_active@ROOT
 			force_enable_resistance = ROOT
 			start_resistance = yes
 			set_compliance = 20
@@ -95,13 +89,15 @@ country_event = { # Regional Protests Put Down
 	title = protests.102.t
 	desc = protests.102.d
 	picture = GFX_politics_demands
-
 	is_triggered_only = yes
 
 	trigger = {
+		has_active_mission = MD_incoming_revolt
 		NOT = { has_country_flag = MD_protest_cooldown }
 		any_owned_state = {
 			is_core_of = ROOT
+			is_controlled_by = ROOT
+			has_state_flag = MD_protests_active@ROOT
 			has_resistance = yes
 			compliance > 49
 			resistance < 40
@@ -115,11 +111,14 @@ country_event = { # Regional Protests Put Down
 			limit = {
 				has_resistance = yes
 				is_core_of = ROOT
+				is_controlled_by = ROOT
+				has_state_flag = MD_protests_active@ROOT
 				compliance > 49
 				resistance < 40
 			}
 			cancel_resistance = yes
-			set_state_flag = MD_dont_protest_again
+			clr_state_flag = MD_protests_active@ROOT
+			set_state_flag = MD_protests_resolved@ROOT
 		}
 		ai_chance = { base = 10 }
 	}
@@ -130,34 +129,32 @@ country_event = { # Protests Die Down Nation-wide
 	title = protests.103.t
 	desc = protests.103.d
 	picture = GFX_politics_demands
-
 	is_triggered_only = yes
 
-	trigger = {
-		NOT = { has_country_flag = MD_protest_cooldown }
-	}
+	trigger = { NOT = { has_country_flag = MD_protest_cooldown } }
 
 	option = {
 		name = protests.103.a
 		log = "[GetDateText]: [This.GetName]: protests.103.a executed"
 		every_owned_state = {
 			limit = {
+				is_core_of = ROOT
+				has_state_flag = MD_protests_active@ROOT
 				has_resistance = yes
 			}
 			cancel_resistance = yes
 		}
-		every_owned_state = {
-			limit = {
-				has_state_flag = MD_dont_protest_again
-			}
-			clr_state_flag = MD_dont_protest_again
+		every_core_state = {
+			clr_state_flag = MD_protests_active@ROOT
+			clr_state_flag = MD_protests_resolved@ROOT
 		}
 		set_country_flag = {
 			flag = MD_protest_cooldown
 			days = 1000
 			value = 1
 		}
-		clr_country_flag = MD_protests_began
+		clear_variable = protest_spread_exhaustion
+		clr_country_flag = MD_protest_revolt_pending
 		ai_chance = { base = 10 }
 	}
 }
@@ -168,14 +165,16 @@ country_event = { # Protesters Set Industrial Assets Ablaze
 	title = protests.104.t
 	desc = protests.104.d
 	picture = GFX_politics_demands
-
 	is_triggered_only = yes
 
 	trigger = {
+		has_active_mission = MD_incoming_revolt
 		NOT = { has_country_flag = MD_protest_cooldown }
 		any_owned_state = {
 			has_resistance = yes
 			is_core_of = ROOT
+			is_controlled_by = ROOT
+			has_state_flag = MD_protests_active@ROOT
 			industrial_complex > 0
 		}
 	}
@@ -183,10 +182,11 @@ country_event = { # Protesters Set Industrial Assets Ablaze
 	option = {
 		name = protests.104.a
 		log = "[GetDateText]: [This.GetName]: protests.104.a executed"
-		random_owned_state = {
+		random_owned_controlled_state = {
 			limit = {
 				has_resistance = yes
 				is_core_of = ROOT
+				has_state_flag = MD_protests_active@ROOT
 				industrial_complex > 0
 			}
 			remove_building = {
@@ -203,10 +203,11 @@ country_event = { # Protesters Set Industrial Assets Ablaze
 	option = {
 		name = protests.104.b
 		log = "[GetDateText]: [This.GetName]: protests.104.b executed"
-		random_owned_state = {
+		random_owned_controlled_state = {
 			limit = {
 				has_resistance = yes
 				is_core_of = ROOT
+				has_state_flag = MD_protests_active@ROOT
 				industrial_complex > 0
 			}
 			damage_building = {
@@ -229,14 +230,16 @@ country_event = { # Protesters Set Business Parks
 	title = protests.105.t
 	desc = protests.105.d
 	picture = GFX_politics_demands
-
 	is_triggered_only = yes
 
 	trigger = {
+		has_active_mission = MD_incoming_revolt
 		NOT = { has_country_flag = MD_protest_cooldown }
 		any_owned_state = {
 			has_resistance = yes
 			is_core_of = ROOT
+			is_controlled_by = ROOT
+			has_state_flag = MD_protests_active@ROOT
 			offices > 0
 		}
 	}
@@ -244,10 +247,11 @@ country_event = { # Protesters Set Business Parks
 	option = {
 		name = protests.105.a
 		log = "[GetDateText]: [This.GetName]: protests.105.a executed"
-		random_owned_state = {
+		random_owned_controlled_state = {
 			limit = {
 				has_resistance = yes
 				is_core_of = ROOT
+				has_state_flag = MD_protests_active@ROOT
 				offices > 0
 			}
 			remove_building = {
@@ -264,10 +268,11 @@ country_event = { # Protesters Set Business Parks
 	option = {
 		name = protests.105.b
 		log = "[GetDateText]: [This.GetName]: protests.105.b executed"
-		random_owned_state = {
+		random_owned_controlled_state = {
 			limit = {
 				has_resistance = yes
 				is_core_of = ROOT
+				has_state_flag = MD_protests_active@ROOT
 				offices > 0
 			}
 			damage_building = {
@@ -290,24 +295,28 @@ country_event = { # Protesters Set Arms Factories
 	title = protests.106.t
 	desc = protests.106.d
 	picture = GFX_politics_demands
-
 	is_triggered_only = yes
 
 	trigger = {
+		has_active_mission = MD_incoming_revolt
 		NOT = { has_country_flag = MD_protest_cooldown }
 		any_owned_state = {
-			arms_factory > 0
+			is_core_of = ROOT
+			is_controlled_by = ROOT
+			has_state_flag = MD_protests_active@ROOT
 			has_resistance = yes
+			arms_factory > 0
 		}
 	}
 
 	option = {
 		name = protests.106.a
 		log = "[GetDateText]: [This.GetName]: protests.106.a executed"
-		random_owned_state = {
+		random_owned_controlled_state = {
 			limit = {
 				has_resistance = yes
 				is_core_of = ROOT
+				has_state_flag = MD_protests_active@ROOT
 				arms_factory > 0
 			}
 			remove_building = {
@@ -324,10 +333,11 @@ country_event = { # Protesters Set Arms Factories
 	option = {
 		name = protests.106.b
 		log = "[GetDateText]: [This.GetName]: protests.106.b executed"
-		random_owned_state = {
+		random_owned_controlled_state = {
 			limit = {
 				has_resistance = yes
 				is_core_of = ROOT
+				has_state_flag = MD_protests_active@ROOT
 				arms_factory > 0
 			}
 			damage_building = {
@@ -350,19 +360,16 @@ country_event = {
 	title = protests.200.t
 	desc = protests.200.d
 	picture = GFX_politics_demands
+	is_triggered_only = yes
 
 	trigger = {
 		NOT = { has_country_flag = MD_protest_cooldown }
-		NOT = { has_country_flag = MD_protests_began }
+		has_active_mission = MD_incoming_protest_movement
 	}
-
-	is_triggered_only = yes
 
 	option = {
 		name = protests.200.a
 		log = "[GetDateText]: [This.GetName]: protests.200.a executed"
-
 		ai_chance = { base = 10 }
 	}
-
 }

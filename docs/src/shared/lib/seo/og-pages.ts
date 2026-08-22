@@ -1,5 +1,6 @@
-import { getCollection, getEntry } from "astro:content";
-import { CONTENT_PAGE_ROUTES, STATIC_PAGE_META } from "./page-meta";
+import { getCollection } from "astro:content";
+import { STATIC_PAGE_META } from "./page-meta";
+import { getGenericPagePermalink } from "@/shared/lib/routing/generic-page-routes";
 import { SITE_DESCRIPTION } from "@/shared/config/site";
 import {
   getChangelogPath,
@@ -28,15 +29,14 @@ async function getStaticPages(): Promise<OgPageData[]> {
     })),
   ];
 
-  for (const [id, route] of Object.entries(CONTENT_PAGE_ROUTES)) {
-    const entry = await getEntry("pages", id);
-    if (entry) {
-      pages.push({
-        slug: getLastPathSegment(route),
-        title: entry.data.title,
-        description: entry.data.description ?? DEFAULT_DESCRIPTION,
-      });
-    }
+  const contentPages = await getCollection("pages");
+  for (const entry of contentPages) {
+    const permalink = getGenericPagePermalink(entry);
+    pages.push({
+      slug: getLastPathSegment(permalink),
+      title: entry.data.title,
+      description: entry.data.description ?? DEFAULT_DESCRIPTION,
+    });
   }
 
   return pages;

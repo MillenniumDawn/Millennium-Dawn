@@ -4,7 +4,7 @@ KUR_war_on_terror_category = {
 
 		visible = {
 			USA = {
-				has_country_flag = Operation_iraqi_freedom
+				has_country_flag = USA_wot_iraqi_freedom
 				has_war_with = IRQ
 			}
 		}
@@ -27,10 +27,11 @@ KUR_war_on_terror_category = {
 
 		war_with_on_remove = IRQ
 
+		cost = 55
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove KUR_join_invasion_of_iraq"
 			set_country_flag = KUR_joined_the_invasion_of_iraq
-			add_political_power = -55
 			if = {
 				limit = { is_subject_of = IRQ }
 				IRQ = { release = KUR }
@@ -61,6 +62,9 @@ KUR_the_great_divide = {
 		}
 
 		days_remove = 50
+		cancel_trigger = {
+			NOT = { country_exists = PUK }
+		}
 
 		available = {
 			has_stability > 0.50
@@ -100,6 +104,16 @@ KUR_the_great_divide = {
 			has_stability > 0.30
 		}
 
+		cancel_trigger = {
+			OR = {
+				NOT = { country_exists = IEK }
+				IEK = { is_subject = yes }
+				NOT = {
+					630 = { is_owned_and_controlled_by = ROOT }
+				}
+			}
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove PUK_stomp_out_the_iek"
 			IEK = {
@@ -130,6 +144,8 @@ KUR_the_great_divide = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove KUR_declare_kurdistan"
 			hidden_effect = {
+				set_country_flag = KUR_peshmerga_unified
+				news_event = { id = KurdistanNews.12 hours = 6 }
 				if = {
 					limit = {
 						original_tag = KUR
@@ -137,8 +153,8 @@ KUR_the_great_divide = {
 					drop_cosmetic_tag = yes
 				}
 				else = {
+					clr_country_flag = dynamic_flag
 					set_cosmetic_tag = KUR_neutrality
-					set_country_flag = disabled_cosmetic_tags
 				}
 				641 = { add_core_of = ROOT }
 				166 = { add_core_of = ROOT }
@@ -154,6 +170,49 @@ KUR_the_great_divide = {
 
 		ai_will_do = {
 			base = 100
+		}
+	}
+}
+
+KUR_independence_category = {
+	KUR_hold_independence_referendum = {
+		cost = 75
+		fire_only_once = yes
+		days_remove = 30
+
+		visible = {
+			has_country_flag = KUR_peshmerga_unified
+			country_exists = IRQ
+		}
+
+		available = {
+			has_stability > 0.40
+			NOT = { has_war_with = IRQ }
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { country_exists = IRQ }
+				has_war_with = IRQ
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision KUR_hold_independence_referendum"
+			news_event = { id = KurdistanNews.2 hours = 6 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove KUR_hold_independence_referendum"
+			country_event = { id = Kurdistan.3 hours = 6 }
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				date > 2017.1.1
+				add = 25
+			}
 		}
 	}
 }

@@ -4,10 +4,29 @@ ideas = {
 		use_list_view = yes
 
 		bureau_01 = {
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea bureau_01 added"
+				custom_effect_tooltip = bureau_01_TT
+				set_variable = { bureau_law = 1 }
+				ingame_update_setup = yes
+				PER_centralized_change = yes
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea bureau_01 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_buru_cool_down
+						}
+					}
+					set_country_flag = PER_removed_bureau_01
+				}
+			}
 			cost = 200
 			removal_cost = -1
 			level = 1
-
 			available = {
 				if = {
 					limit = { original_tag = UKR }
@@ -48,13 +67,41 @@ ideas = {
 					NOT = { has_idea = FRA_idea_central }
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 50
+					has_idea = bureau_02
+					check_variable = { expected_adm_spending = 1 }
+				}
+				# Killswitch for the AI
+				# reference 00_desire_law_triggers.txt
+				modifier = {
+					factor = 0
+					OR = {
+						check_variable = { expected_adm_spending > 1 }
+						has_bureau_idea_law_desired = yes
+					}
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		bureau_02 = {
+			modifier = {
+				political_power_gain = 0.25
+				production_speed_buildings_factor = -0.05
+			}
 			on_add = {
-				custom_effect_tooltip = bureau_01_TT
-				set_variable = { bureaucracy = 1 }
+				log = "[GetDateText]: [Root.GetName]: Idea bureau_02 added"
+				custom_effect_tooltip = bureau_02_TT
+				set_variable = { bureau_law = 2 }
 				ingame_update_setup = yes
 				PER_centralized_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea bureau_02 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -62,32 +109,9 @@ ideas = {
 							has_country_flag = PER_buru_cool_down
 						}
 					}
-					set_country_flag = PER_removed_bureau_01
+					set_country_flag = PER_removed_bureau_02
 				}
 			}
-
-			ai_will_do = {
-				base = 1
-				modifier = { # Make law more appealing to reduce if is above desired level
-					add = 50
-					has_idea = bureau_02
-					has_country_flag = wants_bureau_01
-				}
-				# Killswitch for the AI
-				# reference 00_desire_law_triggers.txt
-				modifier = {
-					factor = 0
-					OR = {
-						NOT = { has_country_flag = wants_bureau_01 }
-						has_bureau_idea_law_desired = yes
-					}
-				}
-			}
-
-			cancel_if_invalid = no
-		}
-
-		bureau_02 = {
 			cost = 80
 			removal_cost = -1
 			level = 2
@@ -142,13 +166,41 @@ ideas = {
 					NOT = { has_idea = FRA_idea_central }
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = bureau_01
+					check_variable = { expected_adm_spending > 1 }
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = bureau_03
+					check_variable = { expected_adm_spending < 3 }
+				}
+				modifier = {
+					factor = 0
+					has_bureau_idea_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		bureau_03 = {
+			modifier = {
+				political_power_gain = 0.50
+				production_speed_buildings_factor = -0.1
+			}
 			on_add = {
-				custom_effect_tooltip = bureau_02_TT
-				set_variable = { bureaucracy = 2 }
+				log = "[GetDateText]: [Root.GetName]: Idea bureau_03 added"
+				custom_effect_tooltip = bureau_03_TT
+				set_variable = { bureau_law = 3 }
 				ingame_update_setup = yes
 				PER_centralized_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea bureau_03 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -156,49 +208,12 @@ ideas = {
 							has_country_flag = PER_buru_cool_down
 						}
 					}
-					set_country_flag = PER_removed_bureau_02
+					set_country_flag = PER_removed_bureau_03
 				}
 			}
-
-			modifier = {
-				political_power_gain = 0.25
-				production_speed_buildings_factor = -0.05
-			}
-
-			ai_will_do = {
-				base = 1
-				modifier = { # Make law more appealing to raise if is below desired level
-					add = 25
-					has_idea = bureau_01
-					OR = {
-						has_country_flag = wants_bureau_02
-						has_country_flag = wants_bureau_03
-						has_country_flag = wants_bureau_04
-						has_country_flag = wants_bureau_05
-					}
-				}
-				modifier = { # Make law more appealing to reduce if is above desired level
-					add = 25
-					has_idea = bureau_03
-					OR = {
-						has_country_flag = wants_bureau_01
-						has_country_flag = wants_bureau_02
-					}
-				}
-				modifier = {
-					factor = 0
-					has_bureau_idea_law_desired = yes
-				}
-			}
-
-			cancel_if_invalid = no
-		}
-
-		bureau_03 = {
 			default = yes
 			removal_cost = -1
 			level = 3
-
 			available = {
 				if = {
 					limit = { original_tag = UKR }
@@ -251,13 +266,41 @@ ideas = {
 					NOT = { has_idea = DEN_direct_governance_idea }
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = bureau_02
+					check_variable = { expected_adm_spending > 2 }
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = bureau_04
+					check_variable = { expected_adm_spending < 4 }
+				}
+				modifier = {
+					factor = 0
+					has_bureau_idea_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		bureau_04 = {
+			modifier = {
+				political_power_gain = 0.75
+				production_speed_buildings_factor = -0.15
+			}
 			on_add = {
-				custom_effect_tooltip = bureau_03_TT
-				set_variable = { bureaucracy = 3 }
+				log = "[GetDateText]: [Root.GetName]: Idea bureau_04 added"
+				custom_effect_tooltip = bureau_04_TT
+				set_variable = { bureau_law = 4 }
 				ingame_update_setup = yes
 				PER_centralized_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea bureau_04 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -265,48 +308,12 @@ ideas = {
 							has_country_flag = PER_buru_cool_down
 						}
 					}
-					set_country_flag = PER_removed_bureau_03
+					set_country_flag = PER_removed_bureau_04
 				}
 			}
-			modifier = {
-				political_power_gain = 0.50
-				production_speed_buildings_factor = -0.1
-			}
-
-			ai_will_do = {
-				base = 1
-				modifier = { # Make law more appealing to raise if is below desired level
-					add = 25
-					has_idea = bureau_02
-					OR = {
-						has_country_flag = wants_bureau_03
-						has_country_flag = wants_bureau_04
-						has_country_flag = wants_bureau_05
-					}
-				}
-				modifier = { # Make law more appealing to reduce if is above desired level
-					add = 25
-					has_idea = bureau_04
-					OR = {
-						has_country_flag = wants_bureau_01
-						has_country_flag = wants_bureau_02
-						has_country_flag = wants_bureau_03
-					}
-				}
-				modifier = {
-					factor = 0
-					has_bureau_idea_law_desired = yes
-				}
-			}
-
-			cancel_if_invalid = no
-		}
-
-		bureau_04 = {
 			cost = 30
 			removal_cost = -1
 			level = 4
-
 			available = {
 				if = {
 					limit = { original_tag = UKR }
@@ -376,13 +383,41 @@ ideas = {
 					NOT = { has_idea = FRA_idea_decentral }
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = bureau_03
+					check_variable = { expected_adm_spending > 3 }
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = bureau_05
+					check_variable = { expected_adm_spending < 5 }
+				}
+				modifier = {
+					factor = 0
+					has_bureau_idea_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		bureau_05 = {
+			modifier = {
+				political_power_gain = 1.0
+				production_speed_buildings_factor = -0.2
+			}
 			on_add = {
-				custom_effect_tooltip = bureau_04_TT
-				set_variable = { bureaucracy = 4 }
+				log = "[GetDateText]: [Root.GetName]: Idea bureau_05 added"
+				custom_effect_tooltip = bureau_05_TT
+				set_variable = { bureau_law = 5 }
 				ingame_update_setup = yes
 				PER_centralized_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea bureau_05 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -390,49 +425,12 @@ ideas = {
 							has_country_flag = PER_buru_cool_down
 						}
 					}
-					set_country_flag = PER_removed_bureau_04
+					set_country_flag = PER_removed_bureau_05
 				}
 			}
-
-			modifier = {
-				political_power_gain = 0.75
-				production_speed_buildings_factor = -0.15
-			}
-
-			ai_will_do = {
-				base = 1
-				modifier = { # Make law more appealing to raise if is below desired level
-					add = 25
-					has_idea = bureau_03
-					OR = {
-						has_country_flag = wants_bureau_04
-						has_country_flag = wants_bureau_05
-					}
-				}
-				modifier = { # Make law more appealing to reduce if is above desired level
-					add = 25
-					has_idea = bureau_05
-					OR = {
-						has_country_flag = wants_bureau_01
-						has_country_flag = wants_bureau_02
-						has_country_flag = wants_bureau_03
-						has_country_flag = wants_bureau_04
-					}
-				}
-				modifier = {
-					factor = 0
-					has_bureau_idea_law_desired = yes
-				}
-			}
-
-			cancel_if_invalid = no
-		}
-
-		bureau_05 = {
 			cost = 10
 			removal_cost = -1
 			level = 5
-
 			available = {
 				if = {
 					limit = { original_tag = UKR }
@@ -455,11 +453,7 @@ ideas = {
 					limit = { original_tag = GER }
 					custom_trigger_tooltip = {
 						tooltip = GER_Grundgesetz_tt
-					}
-					NOT = {
-						hidden_trigger = {
-							has_country_flag = GER_Grundgesetz
-						}
+						NOT = { has_country_flag = GER_Grundgesetz }
 					}
 				}
 				if = {
@@ -501,42 +495,18 @@ ideas = {
 					NOT = { has_idea = FRA_idea_decentral }
 				}
 			}
-			on_add = {
-				custom_effect_tooltip = bureau_05_TT
-				set_variable = { bureaucracy = 5 }
-				ingame_update_setup = yes
-				PER_centralized_change = yes
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_buru_cool_down
-						}
-					}
-					set_country_flag = PER_removed_bureau_05
-				}
-			}
-
-			modifier = {
-				political_power_gain = 1.0
-				production_speed_buildings_factor = -0.2
-			}
-
 			ai_will_do = {
 				base = 1
 				modifier = { # Make law more appealing to raise if is below desired level
 					add = 25
 					has_idea = bureau_04
-					has_country_flag = wants_bureau_05
+					check_variable = { expected_adm_spending > 4 }
 				}
 				modifier = {
 					factor = 0
 					has_bureau_idea_law_desired = yes
 				}
 			}
-
 			cancel_if_invalid = no
 		}
 	}
@@ -545,6 +515,31 @@ ideas = {
 		use_list_view = yes
 
 		police_01 = {
+			modifier = { terror_threat_base_defense_modifier = 5 }
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea police_01 added"
+				custom_effect_tooltip = police_01_TT
+				set_variable = { police_law = 1 }
+				ingame_update_setup = yes
+				PER_police_change = yes
+				if = {
+					limit = { original_tag = BOT }
+					BOT_update_anti_poaching = yes
+				}
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea police_01 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_police_cool_down
+						}
+					}
+					set_country_flag = PER_removed_police_01
+				}
+			}
 			removal_cost = -1
 			level = 1
 			available = {
@@ -585,17 +580,48 @@ ideas = {
 					police_decrease_blocked = no
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = { # Make law more appealing to reduce if is above desired level
+					factor = 15
+					has_idea = police_02
+					check_variable = { expected_police_spending = 1 }
+				}
+				modifier = {
+					factor = 0
+					has_police_idea_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		police_02 = {
+			modifier = {
+				command_power_gain = 0.25
+				political_power_gain = -0.1
+				stability_factor = 0.05
+				foreign_subversive_activites = -0.15
+				decryption = 1
+				planning_speed = 0.10
+				foreign_influence_defense_modifier = 0.05
+				required_garrison_factor = -0.1
+				terror_threat_base_detect_modifier = 6
+				terror_threat_base_defense_modifier = 10
+			}
 			on_add = {
-				custom_effect_tooltip = police_01_TT
-				set_variable = { crime_fighting = 1 }
+				log = "[GetDateText]: [Root.GetName]: Idea police_02 added"
+				custom_effect_tooltip = police_02_TT
+				set_variable = { police_law = 2 }
 				ingame_update_setup = yes
 				PER_police_change = yes
 				if = {
 					limit = { original_tag = BOT }
 					BOT_update_anti_poaching = yes
 				}
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea police_02 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -603,31 +629,9 @@ ideas = {
 							has_country_flag = PER_police_cool_down
 						}
 					}
-					set_country_flag = PER_removed_police_01
+					set_country_flag = PER_removed_police_02
 				}
 			}
-
-			modifier = {
-				terror_threat_base_defense_modifier = 5
-			}
-
-			ai_will_do = {
-				base = 1
-				modifier = { # Make law more appealing to reduce if is above desired level
-					factor = 15
-					has_idea = police_02
-					has_country_flag = wants_police_01
-				}
-				modifier = {
-					factor = 0
-					has_police_idea_law_desired = yes
-				}
-			}
-
-			cancel_if_invalid = no
-		}
-
-		police_02 = {
 			default = yes
 			removal_cost = -1
 			level = 2
@@ -675,17 +679,55 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = police_01
+					check_variable = { expected_police_spending > 1 }
+				}
+				modifier = {
+					add = 25
+					has_idea = police_03
+					check_variable = { expected_police_spending < 3 }
+				}
+				modifier = {
+					factor = 0
+					has_police_idea_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		police_03 = {
+			modifier = {
+				command_power_gain = 0.5
+				political_power_gain = -0.2
+				stability_factor = 0.10
+				drift_defence_factor = 0.30
+				foreign_subversive_activites = -0.35
+				decryption = 1
+				encryption = 1
+				planning_speed = 0.15
+				foreign_influence_defense_modifier = 0.10
+				required_garrison_factor = -0.2
+				terror_threat_base_detect_modifier = 8
+				terror_threat_base_defense_modifier = 15
+			}
 			on_add = {
-				custom_effect_tooltip = police_02_TT
-				set_variable = { crime_fighting = 2 }
+				log = "[GetDateText]: [Root.GetName]: Idea police_03 added"
+				custom_effect_tooltip = police_03_TT
+				set_variable = { police_law = 3 }
 				ingame_update_setup = yes
 				PER_police_change = yes
 				if = {
 					limit = { original_tag = BOT }
 					BOT_update_anti_poaching = yes
 				}
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea police_03 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -693,51 +735,9 @@ ideas = {
 							has_country_flag = PER_police_cool_down
 						}
 					}
-					set_country_flag = PER_removed_police_02
+					set_country_flag = PER_removed_police_03
 				}
 			}
-			modifier = {
-				command_power_gain = 0.25
-				political_power_gain = -0.1
-				stability_factor = 0.05
-				foreign_subversive_activites = -0.15
-				decryption = 1
-				planning_speed = 0.10
-				foreign_influence_defense_modifier = 0.05
-				required_garrison_factor = -0.1
-				terror_threat_base_detect_modifier = 6
-				terror_threat_base_defense_modifier = 10
-			}
-			ai_will_do = {
-				base = 1
-				modifier = { # Make law more appealing to raise if is below desired level
-					add = 25
-					has_idea = police_01
-					OR = {
-						has_country_flag = wants_police_02
-						has_country_flag = wants_police_03
-						has_country_flag = wants_police_04
-						has_country_flag = wants_police_05
-					}
-				}
-				modifier = {
-					add = 25
-					has_idea = police_03
-					OR = {
-						has_country_flag = wants_police_01
-						has_country_flag = wants_police_02
-					}
-				}
-				modifier = {
-					factor = 0
-					has_police_idea_law_desired = yes
-				}
-			}
-
-			cancel_if_invalid = no
-		}
-
-		police_03 = {
 			removal_cost = -1
 			level = 3
 			available = {
@@ -789,62 +789,17 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
-			on_add = {
-				custom_effect_tooltip = police_03_TT
-				set_variable = { crime_fighting = 3 }
-				ingame_update_setup = yes
-				PER_police_change = yes
-				if = {
-					limit = { original_tag = BOT }
-					BOT_update_anti_poaching = yes
-				}
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_police_cool_down
-						}
-					}
-					set_country_flag = PER_removed_police_03
-				}
-			}
-
-			modifier = {
-				command_power_gain = 0.5
-				political_power_gain = -0.2
-				stability_factor = 0.10
-				drift_defence_factor = 0.30
-				foreign_subversive_activites = -0.35
-				decryption = 1
-				encryption = 1
-				planning_speed = 0.15
-				foreign_influence_defense_modifier = 0.10
-				required_garrison_factor = -0.2
-				terror_threat_base_detect_modifier = 8
-				terror_threat_base_defense_modifier = 15
-			}
-
 			ai_will_do = {
 				base = 1
 				modifier = { #Make law more appealing to raise if is below desired level
 					add = 25
 					has_idea = police_02
-					OR = {
-						has_country_flag = wants_police_03
-						has_country_flag = wants_police_04
-						has_country_flag = wants_police_05
-					}
+					check_variable = { expected_police_spending > 2 }
 				}
 				modifier = {
 					add = 25
 					has_idea = police_04
-					OR = {
-						has_country_flag = wants_police_01
-						has_country_flag = wants_police_02
-						has_country_flag = wants_police_03
-					}
+					check_variable = { expected_police_spending < 4 }
 				}
 				modifier = {
 					factor = 0
@@ -855,6 +810,44 @@ ideas = {
 		}
 
 		police_04 = {
+			modifier = {
+				command_power_gain = 0.75
+				political_power_gain = -0.3
+				stability_factor = 0.15
+				drift_defence_factor = 0.80
+				foreign_subversive_activites = -0.50
+				decryption = 2
+				encryption = 1
+				planning_speed = 0.20
+				foreign_influence_defense_modifier = 0.15
+				required_garrison_factor = -0.3
+				terror_threat_base_detect_modifier = 10
+				terror_threat_base_defense_modifier = 20
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea police_04 added"
+				custom_effect_tooltip = police_04_TT
+				set_variable = { police_law = 4 }
+				ingame_update_setup = yes
+				PER_police_change = yes
+				if = {
+					limit = { original_tag = BOT }
+					BOT_update_anti_poaching = yes
+				}
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea police_04 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_police_cool_down
+						}
+					}
+					set_country_flag = PER_removed_police_04
+				}
+			}
 			removal_cost = -1
 			level = 4
 			available = {
@@ -905,17 +898,55 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 25
+					has_idea = police_03
+					check_variable = { expected_police_spending > 3 }
+				}
+				modifier = {
+					add = 25
+					has_idea = police_05
+					check_variable = { expected_police_spending < 5 }
+				}
+				modifier = {
+					factor = 0
+					has_police_idea_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		police_05 = {
+			modifier = {
+				command_power_gain = 1
+				political_power_gain = -0.5
+				stability_factor = 0.20
+				drift_defence_factor = 1.50
+				foreign_subversive_activites = -0.90
+				decryption = 2
+				encryption = 2
+				planning_speed = 0.20
+				foreign_influence_defense_modifier = 0.20
+				required_garrison_factor = -0.4
+				terror_threat_base_detect_modifier = 12
+				terror_threat_base_defense_modifier = 25
+			}
 			on_add = {
-				custom_effect_tooltip = police_04_TT
-				set_variable = { crime_fighting = 4 }
+				log = "[GetDateText]: [Root.GetName]: Idea police_05 added"
+				custom_effect_tooltip = police_05_TT
+				set_variable = { police_law = 5 }
 				ingame_update_setup = yes
 				PER_police_change = yes
 				if = {
 					limit = { original_tag = BOT }
 					BOT_update_anti_poaching = yes
 				}
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea police_05 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -923,55 +954,9 @@ ideas = {
 							has_country_flag = PER_police_cool_down
 						}
 					}
-					set_country_flag = PER_removed_police_04
+					set_country_flag = PER_removed_police_05
 				}
 			}
-
-			modifier = {
-				command_power_gain = 0.75
-				political_power_gain = -0.3
-				stability_factor = 0.15
-				drift_defence_factor = 0.80
-				foreign_subversive_activites = -0.50
-				decryption = 2
-				encryption = 1
-				planning_speed = 0.20
-				foreign_influence_defense_modifier = 0.15
-				required_garrison_factor = -0.3
-				terror_threat_base_detect_modifier = 10
-				terror_threat_base_defense_modifier = 20
-			}
-
-			ai_will_do = {
-				base = 1
-				modifier = {
-					add = 25
-					has_idea = police_03
-					OR = {
-						has_country_flag = wants_police_04
-						has_country_flag = wants_police_05
-					}
-				}
-				modifier = {
-					add = 25
-					has_idea = police_05
-					OR = {
-						has_country_flag = wants_police_01
-						has_country_flag = wants_police_02
-						has_country_flag = wants_police_03
-						has_country_flag = wants_police_04
-					}
-				}
-				modifier = {
-					factor = 0
-					has_police_idea_law_desired = yes
-				}
-			}
-
-			cancel_if_invalid = no
-		}
-
-		police_05 = {
 			removal_cost = -1
 			level = 5
 			available = {
@@ -1017,55 +1002,18 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
-			on_add = {
-				custom_effect_tooltip = police_05_TT
-				set_variable = { crime_fighting = 5 }
-				ingame_update_setup = yes
-				PER_police_change = yes
-				if = {
-					limit = { original_tag = BOT }
-					BOT_update_anti_poaching = yes
-				}
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_police_cool_down
-						}
-					}
-					set_country_flag = PER_removed_police_05
-				}
-			}
-			modifier = {
-				command_power_gain = 1
-				political_power_gain = -0.5
-				stability_factor = 0.20
-				drift_defence_factor = 1.50
-				foreign_subversive_activites = -0.90
-				decryption = 2
-				encryption = 2
-				planning_speed = 0.20
-				foreign_influence_defense_modifier = 0.20
-				required_garrison_factor = -0.4
-				terror_threat_base_detect_modifier = 12
-				terror_threat_base_defense_modifier = 25
-			}
-
 			ai_will_do = {
 				base = 1
 				modifier = {
 					add = 25
 					has_idea = police_04
-					has_country_flag = wants_police_05
+					check_variable = { expected_police_spending > 4 }
 				}
 				modifier = {
 					factor = 0
 					has_police_idea_law_desired = yes
 				}
 			}
-
 			cancel_if_invalid = no
 		}
 	}
@@ -1075,6 +1023,31 @@ ideas = {
 		use_list_view = yes
 
 		edu_01 = {
+			modifier = {
+				research_speed_factor = 0.02
+				literacy_rate_education_modifier = 0.02
+				productivity_growth_modifier = -0.2
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea edu_01 added"
+				custom_effect_tooltip = edu_01_TT
+				set_variable = { education_law = 1 }
+				ingame_update_setup = yes
+				PER_education_change = yes
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea edu_01 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_edu_cool_down
+						}
+					}
+					set_country_flag = PER_removed_edu_01
+				}
+			}
 			cost = 200
 			removal_cost = -1
 			level = 1
@@ -1119,13 +1092,41 @@ ideas = {
 					}
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 25
+					has_idea = edu_02
+					check_variable = { expected_edu_spending = 1 }
+				}
+				modifier = {
+					factor = 0
+					has_education_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		edu_02 = {
+			modifier = {
+				research_speed_factor = 0.05
+				production_speed_buildings_factor = 0.02
+				special_project_speed_factor = 0.04
+				stability_factor = 0.01
+				foreign_influence_modifier = 0.05
+				productivity_growth_modifier = -0.1
+				literacy_rate_education_modifier = 0.04
+			}
 			on_add = {
-				custom_effect_tooltip = edu_01_TT
-				set_variable = { education_budget = 1 }
+				log = "[GetDateText]: [Root.GetName]: Idea edu_02 added"
+				custom_effect_tooltip = edu_02_TT
+				set_variable = { education_law = 2 }
 				ingame_update_setup = yes
 				PER_education_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea edu_02 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -1133,33 +1134,9 @@ ideas = {
 							has_country_flag = PER_edu_cool_down
 						}
 					}
-					set_country_flag = PER_removed_edu_01
+					set_country_flag = PER_removed_edu_02
 				}
 			}
-
-			ai_will_do = {
-				base = 1
-				modifier = {
-					add = 25
-					has_idea = edu_02
-					has_country_flag = wants_edu_01
-				}
-				modifier = {
-					factor = 0
-					has_education_law_desired = yes
-				}
-			}
-
-			modifier = {
-				research_speed_factor = 0.02
-				literacy_rate_education_modifier = 0.02
-				productivity_growth_modifier = -0.2
-			}
-
-			cancel_if_invalid = no
-		}
-
-		edu_02 = {
 			default = yes
 			cost = 80
 			removal_cost = -1
@@ -1218,13 +1195,48 @@ ideas = {
 					}
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 25
+					has_idea = edu_03
+					check_variable = { expected_edu_spending < 3 }
+				}
+				modifier = {
+					add = 25
+					has_idea = edu_01
+					check_variable = { expected_edu_spending > 1 }
+				}
+				modifier = {
+					factor = 0
+					has_education_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		edu_03 = {
+			modifier = {
+				political_power_gain = -0.05
+				foreign_influence_defense_modifier = -0.05
+				research_speed_factor = 0.10
+				production_speed_buildings_factor = 0.03
+				special_project_speed_factor = 0.08
+				stability_factor = 0.02
+				foreign_influence_modifier = 0.10
+				productivity_growth_modifier = 0.05
+				literacy_rate_education_modifier = 0.06
+			}
 			on_add = {
-				custom_effect_tooltip = edu_02_TT
-				set_variable = { education_budget = 2 }
+				log = "[GetDateText]: [Root.GetName]: Idea edu_03 added"
+				custom_effect_tooltip = edu_03_TT
+				set_variable = { education_law = 3 }
 				ingame_update_setup = yes
 				PER_education_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea edu_03 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -1232,50 +1244,9 @@ ideas = {
 							has_country_flag = PER_edu_cool_down
 						}
 					}
-					set_country_flag = PER_removed_edu_02
+					set_country_flag = PER_removed_edu_03
 				}
 			}
-
-			ai_will_do = {
-				base = 1
-				modifier = {
-					add = 25
-					has_idea = edu_03
-					OR = {
-						has_country_flag = wants_edu_02
-						has_country_flag = wants_edu_01
-					}
-				}
-				modifier = {
-					add = 25
-					has_idea = edu_01
-					OR = {
-						has_country_flag = wants_edu_02
-						has_country_flag = wants_edu_03
-						has_country_flag = wants_edu_04
-						has_country_flag = wants_edu_05
-					}
-				}
-				modifier = {
-					factor = 0
-					has_education_law_desired = yes
-				}
-			}
-
-			modifier = {
-				research_speed_factor = 0.05
-				production_speed_buildings_factor = 0.02
-				special_project_speed_factor = 0.04
-				stability_factor = 0.01
-				foreign_influence_modifier = 0.05
-				productivity_growth_modifier = -0.1
-				literacy_rate_education_modifier = 0.04
-			}
-
-			cancel_if_invalid = no
-		}
-
-		edu_03 = {
 			removal_cost = -1
 			level = 3
 			available = {
@@ -1327,13 +1298,48 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = edu_02
+					check_variable = { expected_edu_spending > 2 }
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = edu_04
+					check_variable = { expected_edu_spending < 4 }
+				}
+				modifier = {
+					factor = 0
+					has_education_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		edu_04 = {
+			modifier = {
+				political_power_gain = -0.15
+				foreign_influence_defense_modifier = -0.10
+				research_speed_factor = 0.15
+				production_speed_buildings_factor = 0.04
+				special_project_speed_factor = 0.12
+				stability_factor = 0.03
+				foreign_influence_modifier = 0.15
+				productivity_growth_modifier = 0.25
+				literacy_rate_education_modifier = 0.08
+			}
 			on_add = {
-				custom_effect_tooltip = edu_03_TT
-				set_variable = { education_budget = 3 }
+				log = "[GetDateText]: [Root.GetName]: Idea edu_04 added"
+				custom_effect_tooltip = edu_04_TT
+				set_variable = { education_law = 4 }
 				ingame_update_setup = yes
 				PER_education_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea edu_04 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -1341,52 +1347,9 @@ ideas = {
 							has_country_flag = PER_edu_cool_down
 						}
 					}
-					set_country_flag = PER_removed_edu_03
+					set_country_flag = PER_removed_edu_04
 				}
 			}
-
-			ai_will_do = {
-				base = 1
-				modifier = { # Make law more appealing to raise if is below desired level
-					add = 25
-					has_idea = edu_02
-					OR = {
-						has_country_flag = wants_edu_03
-						has_country_flag = wants_edu_04
-						has_country_flag = wants_edu_05
-					}
-				}
-				modifier = { # Make law more appealing to reduce if is above desired level
-				add = 25
-					has_idea = edu_04
-					OR = {
-						has_country_flag = wants_edu_01
-						has_country_flag = wants_edu_02
-						has_country_flag = wants_edu_03
-					}
-				}
-				modifier = {
-					factor = 0
-					has_education_law_desired = yes
-				}
-			}
-
-			modifier = {
-				political_power_gain = -0.05
-				foreign_influence_defense_modifier = -0.05
-				research_speed_factor = 0.10
-				production_speed_buildings_factor = 0.03
-				special_project_speed_factor = 0.08
-				stability_factor = 0.02
-				foreign_influence_modifier = 0.10
-				productivity_growth_modifier = 0.05
-				literacy_rate_education_modifier = 0.06
-			}
-
-			cancel_if_invalid = no
-		}
-
-		edu_04 = {
 			cost = 30
 			removal_cost = -1
 			level = 4
@@ -1410,9 +1373,7 @@ ideas = {
 				}
 				if = {
 					limit = {
-						OR = {
-							has_idea = edu_05
-						}
+						has_idea = edu_05
 						edu_decrease_blocked = yes
 					}
 					edu_decrease_blocked = no
@@ -1440,57 +1401,18 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
-			on_add = {
-				custom_effect_tooltip = edu_04_TT
-				set_variable = { education_budget = 4 }
-				ingame_update_setup = yes
-				PER_education_change = yes
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_edu_cool_down
-						}
-					}
-					set_country_flag = PER_removed_edu_04
-				}
-			}
-
-			modifier = {
-				political_power_gain = -0.15
-				foreign_influence_defense_modifier = -0.10
-				research_speed_factor = 0.15
-				production_speed_buildings_factor = 0.04
-				special_project_speed_factor = 0.12
-				stability_factor = 0.03
-				foreign_influence_modifier = 0.15
-				productivity_growth_modifier = 0.25
-				literacy_rate_education_modifier = 0.08
-			}
-
 			cancel_if_invalid = no
-
 			ai_will_do = {
 				base = 1
 				modifier = { # Make law more appealing to raise if is below desired level
 					add = 25
 					has_idea = edu_03
-					OR = {
-						has_country_flag = wants_edu_04
-						has_country_flag = wants_edu_05
-					}
+					check_variable = { expected_edu_spending > 3 }
 				}
 				modifier = { # Make law more appealing to reduce if is above desired level
 					add = 25
 					has_idea = edu_05
-					OR = {
-						has_country_flag = wants_edu_01
-						has_country_flag = wants_edu_02
-						has_country_flag = wants_edu_03
-						has_country_flag = wants_edu_04
-					}
+					check_variable = { expected_edu_spending < 5 }
 				}
 				modifier = { # no money
 					factor = 0
@@ -1499,6 +1421,37 @@ ideas = {
 			}
 		}
 		edu_05 = {
+			modifier = {
+				political_power_gain = -0.20
+				foreign_influence_defense_modifier = -0.15
+				research_speed_factor = 0.20
+				production_speed_buildings_factor = 0.05
+				special_project_speed_factor = 0.16
+				stability_factor = 0.05
+				foreign_influence_modifier = 0.20
+				productivity_growth_modifier = 0.5
+				literacy_rate_education_modifier = 0.10
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea edu_05 added"
+				custom_effect_tooltip = edu_05_TT
+				set_variable = { education_law = 5 }
+				ingame_update_setup = yes
+				PER_education_change = yes
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea edu_05 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_edu_cool_down
+						}
+					}
+					set_country_flag = PER_removed_edu_05
+				}
+			}
 			cost = 10
 			removal_cost = -1
 			level = 5
@@ -1545,49 +1498,18 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
-			on_add = {
-				custom_effect_tooltip = edu_05_TT
-				set_variable = { education_budget = 5 }
-				ingame_update_setup = yes
-				PER_education_change = yes
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_edu_cool_down
-						}
-					}
-					set_country_flag = PER_removed_edu_05
-				}
-			}
-
 			ai_will_do = {
 				base = 1
 				modifier = { # Make law more appealing to raise if is below desired level
 					add = 25
 					has_idea = edu_04
-					has_country_flag = wants_edu_05
+					check_variable = { expected_edu_spending > 4 }
 				}
 				modifier = { #for BRIKS members
 					factor = 0
 					has_education_law_desired = yes
 				}
 			}
-
-			modifier = {
-				political_power_gain = -0.20
-				foreign_influence_defense_modifier = -0.15
-				research_speed_factor = 0.20
-				production_speed_buildings_factor = 0.05
-				special_project_speed_factor = 0.16
-				stability_factor = 0.05
-				foreign_influence_modifier = 0.20
-				productivity_growth_modifier = 0.5
-				literacy_rate_education_modifier = 0.10
-			}
-
 			cancel_if_invalid = no
 		}
 	}
@@ -1596,13 +1518,35 @@ ideas = {
 		law = yes
 		use_list_view = yes
 		health_01 = {
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea health_01 added"
+				custom_effect_tooltip = health_01_TT
+				set_variable = { health_law = 1 }
+				ingame_update_setup = yes
+				PER_health_change = yes
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea health_01 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_health_cool_down
+						}
+					}
+					set_country_flag = PER_removed_health_01
+				}
+			}
 			cost = 200
 			removal_cost = -1
 			level = 1
 			available = {
 				NOT = {
-					has_idea = fully_nationalized_healthcare
-					has_idea = partially_nationalized_healthcare
+					OR = {
+						has_idea = fully_nationalized_healthcare
+						has_idea = partially_nationalized_healthcare
+					}
 				}
 				if = {
 					limit = { original_tag = UKR }
@@ -1635,13 +1579,39 @@ ideas = {
 					health_decrease_blocked = no
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 25
+					has_idea = health_02
+					check_variable = { expected_health_spending = 1 }
+				}
+				modifier = {
+					factor = 0
+					has_health_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		health_02 = {
+			modifier = {
+				political_power_gain = 0.05
+				monthly_population = 0.1
+				weekly_casualties_war_support = 0.005
+				army_morale_factor = 0.025
+				stability_factor = 0.03
+			}
 			on_add = {
-				custom_effect_tooltip = health_01_TT
-				set_variable = { health_budget = 1 }
+				log = "[GetDateText]: [Root.GetName]: Idea health_02 added"
+				custom_effect_tooltip = health_02_TT
+				set_variable = { health_law = 2 }
 				ingame_update_setup = yes
 				PER_health_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea health_02 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -1649,35 +1619,19 @@ ideas = {
 							has_country_flag = PER_health_cool_down
 						}
 					}
-					set_country_flag = PER_removed_health_01
+					set_country_flag = PER_removed_health_02
 				}
 			}
-
-			ai_will_do = {
-				base = 1
-				modifier = {
-					add = 25
-					has_idea = health_02
-					has_country_flag = wants_health_01
-				}
-				modifier = {
-					factor = 0
-					has_health_law_desired = yes
-				}
-			}
-
-			cancel_if_invalid = no
-		}
-
-		health_02 = {
 			cost = 80
 			default = yes
 			removal_cost = -1
 			level = 2
 			available = {
 				NOT = {
-					has_idea = fully_nationalized_healthcare
-					has_idea = partially_nationalized_healthcare
+					OR = {
+						has_idea = fully_nationalized_healthcare
+						has_idea = partially_nationalized_healthcare
+					}
 				}
 				if = {
 					limit = { original_tag = UKR }
@@ -1723,13 +1677,45 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = health_01
+					check_variable = { expected_health_spending > 1 }
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = health_03
+					check_variable = { expected_health_spending < 3 }
+				}
+				modifier = {
+					factor = 0
+					has_health_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		health_03 = {
+			modifier = {
+				political_power_gain = 0.1
+				monthly_population = 0.25
+				weekly_casualties_war_support = 0.010
+				army_morale_factor = 0.05
+				consumer_goods_factor = -0.01
+				stability_factor = 0.06
+			}
 			on_add = {
-				custom_effect_tooltip = health_02_TT
-				set_variable = { health_budget = 2 }
+				log = "[GetDateText]: [Root.GetName]: Idea health_03 added"
+				custom_effect_tooltip = health_03_TT
+				set_variable = { health_law = 3 }
 				ingame_update_setup = yes
 				PER_health_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea health_03 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -1737,49 +1723,9 @@ ideas = {
 							has_country_flag = PER_health_cool_down
 						}
 					}
-					set_country_flag = PER_removed_health_02
+					set_country_flag = PER_removed_health_03
 				}
 			}
-
-			ai_will_do = {
-				base = 1
-				modifier = { # Make law more appealing to raise if is below desired level
-					add = 25
-					has_idea = health_01
-					OR = {
-						has_country_flag = wants_health_02
-						has_country_flag = wants_health_03
-						has_country_flag = wants_health_04
-						has_country_flag = wants_health_05
-						has_country_flag = wants_health_06
-					}
-				}
-				modifier = { # Make law more appealing to reduce if is above desired level
-					add = 25
-					has_idea = health_03
-					OR = {
-						has_country_flag = wants_health_01
-						has_country_flag = wants_health_02
-					}
-				}
-				modifier = {
-					factor = 0
-					has_health_law_desired = yes
-				}
-			}
-
-			modifier = {
-				political_power_gain = 0.05
-				monthly_population = 0.1
-				weekly_casualties_war_support = 0.005
-				army_morale_factor = 0.025
-				stability_factor = 0.03
-			}
-
-			cancel_if_invalid = no
-		}
-
-		health_03 = {
 			removal_cost = -1
 			level = 3
 			available = {
@@ -1835,13 +1781,45 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 10
+					has_idea = health_02
+					check_variable = { expected_health_spending > 2 }
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					factor = 10
+					has_idea = health_04
+					check_variable = { expected_health_spending < 4 }
+				}
+				modifier = {
+					factor = 0
+					has_health_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		health_04 = {
+			modifier = {
+				political_power_gain = 0.15
+				monthly_population = 0.40
+				weekly_casualties_war_support = 0.015
+				army_morale_factor = 0.075
+				consumer_goods_factor = -0.02
+				stability_factor = 0.09
+			}
 			on_add = {
-				custom_effect_tooltip = health_03_TT
-				set_variable = { health_budget = 3 }
+				log = "[GetDateText]: [Root.GetName]: Idea health_04 added"
+				custom_effect_tooltip = health_04_TT
+				set_variable = { health_law = 4 }
 				ingame_update_setup = yes
 				PER_health_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea health_04 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -1849,50 +1827,9 @@ ideas = {
 							has_country_flag = PER_health_cool_down
 						}
 					}
-					set_country_flag = PER_removed_health_03
+					set_country_flag = PER_removed_health_04
 				}
 			}
-
-			ai_will_do = {
-				base = 1
-				modifier = { # Make law more appealing to raise if is below desired level
-					factor = 10
-					has_idea = health_02
-					OR = {
-						has_country_flag = wants_health_03
-						has_country_flag = wants_health_04
-						has_country_flag = wants_health_05
-						has_country_flag = wants_health_06
-					}
-				}
-				modifier = { # Make law more appealing to reduce if is above desired level
-					factor = 10
-					has_idea = health_04
-					OR = {
-						has_country_flag = wants_health_01
-						has_country_flag = wants_health_02
-						has_country_flag = wants_health_03
-					}
-				}
-				modifier = {
-					factor = 0
-					has_health_law_desired = yes
-				}
-			}
-
-			modifier = {
-				political_power_gain = 0.1
-				monthly_population = 0.25
-				weekly_casualties_war_support = 0.010
-				army_morale_factor = 0.05
-				consumer_goods_factor = -0.01
-				stability_factor = 0.06
-			}
-
-			cancel_if_invalid = no
-		}
-
-		health_04 = {
 			cost = 40
 			removal_cost = -1
 			level = 4
@@ -1950,13 +1887,45 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
+			ai_will_do = {
+				base = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 10
+					has_idea = health_03
+					check_variable = { expected_health_spending > 3 }
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					factor = 10
+					has_idea = health_05
+					check_variable = { expected_health_spending < 5 }
+				}
+				modifier = {
+					factor = 0
+					has_health_law_desired = yes
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		health_05 = {
+			modifier = {
+				political_power_gain = 0.2
+				monthly_population = 0.55
+				weekly_casualties_war_support = 0.020
+				army_morale_factor = 0.100
+				consumer_goods_factor = -0.03
+				stability_factor = 0.12
+			}
 			on_add = {
-				custom_effect_tooltip = health_04_TT
-				set_variable = { health_budget = 4 }
+				log = "[GetDateText]: [Root.GetName]: Idea health_05 added"
+				custom_effect_tooltip = health_05_TT
+				set_variable = { health_law = 5 }
 				ingame_update_setup = yes
 				PER_health_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea health_05 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -1964,57 +1933,18 @@ ideas = {
 							has_country_flag = PER_health_cool_down
 						}
 					}
-					set_country_flag = PER_removed_health_04
+					set_country_flag = PER_removed_health_05
 				}
 			}
-
-			ai_will_do = {
-				base = 1
-				modifier = { # Make law more appealing to raise if is below desired level
-					factor = 10
-					has_idea = health_03
-					OR = {
-						has_country_flag = wants_health_04
-						has_country_flag = wants_health_05
-						has_country_flag = wants_health_06
-					}
-				}
-				modifier = { # Make law more appealing to reduce if is above desired level
-					factor = 10
-					has_idea = health_05
-					OR = {
-						has_country_flag = wants_health_01
-						has_country_flag = wants_health_02
-						has_country_flag = wants_health_03
-						has_country_flag = wants_health_04
-					}
-				}
-				modifier = {
-					factor = 0
-					has_health_law_desired = yes
-				}
-			}
-
-			modifier = {
-				political_power_gain = 0.15
-				monthly_population = 0.40
-				weekly_casualties_war_support = 0.015
-				army_morale_factor = 0.075
-				consumer_goods_factor = -0.02
-				stability_factor = 0.09
-			}
-
-			cancel_if_invalid = no
-		}
-
-		health_05 = {
 			cost = 30
 			removal_cost = -1
 			level = 5
 			available = {
 				NOT = {
-					has_idea = fully_privatized_healthcare
-					has_idea = partially_privatized_healthcare
+					OR = {
+						has_idea = fully_privatized_healthcare
+						has_idea = partially_privatized_healthcare
+					}
 				}
 				if = {
 					limit = { original_tag = UKR }
@@ -2035,9 +1965,7 @@ ideas = {
 				}
 				if = {
 					limit = {
-						OR = {
-							has_idea = health_06
-						}
+						has_idea = health_06
 						health_decrease_blocked = yes
 					}
 					health_decrease_blocked = no
@@ -2066,18 +1994,45 @@ ideas = {
 					}
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
-				if = {
-					limit = { original_tag = ENG }
-					NOT = { has_idea = ENG_idea_privatized_nhs }
+			}
+			ai_will_do = {
+				base = 1
+				modifier = { # Make law more appealing to raise if is below desired level
+					add = 25
+					has_idea = health_04
+					check_variable = { expected_health_spending > 4 }
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 25
+					has_idea = health_06
+					check_variable = { expected_health_spending < 6 }
+				}
+				modifier = {
+					factor = 0
+					has_health_law_desired = yes
 				}
 			}
+			cancel_if_invalid = no
+		}
+		health_06 = {
+			modifier = {
+				political_power_gain = 0.25
+				monthly_population = 0.75
+				weekly_casualties_war_support = 0.025
+				army_morale_factor = 0.125
+				consumer_goods_factor = -0.04
+				stability_factor = 0.15
+			}
 			on_add = {
-				custom_effect_tooltip = health_05_TT
-				set_variable = { health_budget = 5 }
+				log = "[GetDateText]: [Root.GetName]: Idea health_06 added"
+				custom_effect_tooltip = health_06_TT
+				set_variable = { health_law = 6 }
 				ingame_update_setup = yes
 				PER_health_change = yes
+				update_protest_dirty_var = yes
 			}
 			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea health_06 removed"
 				if = {
 					limit = {
 						original_tag = PER
@@ -2085,56 +2040,18 @@ ideas = {
 							has_country_flag = PER_health_cool_down
 						}
 					}
-					set_country_flag = PER_removed_health_05
+					set_country_flag = PER_removed_health_06
 				}
 			}
-
-			ai_will_do = {
-				base = 1
-				modifier = { # Make law more appealing to raise if is below desired level
-					add = 25
-					has_idea = health_04
-					OR = {
-						has_country_flag = wants_health_05
-						has_country_flag = wants_health_06
-					}
-				}
-				modifier = { # Make law more appealing to reduce if is above desired level
-					add = 25
-					has_idea = health_06
-					OR = {
-						has_country_flag = wants_health_01
-						has_country_flag = wants_health_02
-						has_country_flag = wants_health_03
-						has_country_flag = wants_health_04
-						has_country_flag = wants_health_05
-					}
-				}
-				modifier = {
-					factor = 0
-					has_health_law_desired = yes
-				}
-			}
-
-			modifier = {
-				political_power_gain = 0.2
-				monthly_population = 0.55
-				weekly_casualties_war_support = 0.020
-				army_morale_factor = 0.100
-				consumer_goods_factor = -0.03
-				stability_factor = 0.12
-			}
-
-			cancel_if_invalid = no
-		}
-		health_06 = {
 			cost = 10
 			removal_cost = -1
 			level = 6
 			available = {
 				NOT = {
-					has_idea = fully_privatized_healthcare
-					has_idea = partially_privatized_healthcare
+					OR = {
+						has_idea = fully_privatized_healthcare
+						has_idea = partially_privatized_healthcare
+					}
 				}
 				if = {
 					limit = { original_tag = UKR }
@@ -2179,51 +2096,19 @@ ideas = {
 					}
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
-				if = {
-					limit = { original_tag = ENG }
-					NOT = { has_idea = ENG_idea_privatized_nhs }
-				}
 			}
-			on_add = {
-				custom_effect_tooltip = health_06_TT
-				set_variable = { health_budget = 6 }
-				ingame_update_setup = yes
-				PER_health_change = yes
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_health_cool_down
-						}
-					}
-					set_country_flag = PER_removed_health_06
-				}
-			}
-
 			ai_will_do = {
 				base = 1
 				modifier = {
 					add = 25
 					has_idea = health_05
-					has_country_flag = wants_health_06
+					check_variable = { expected_health_spending > 5 }
 				}
 				modifier = {
 					factor = 0
 					has_health_law_desired = yes
 				}
 			}
-
-			modifier = {
-				political_power_gain = 0.25
-				monthly_population = 0.75
-				weekly_casualties_war_support = 0.025
-				army_morale_factor = 0.125
-				consumer_goods_factor = -0.04
-				stability_factor = 0.15
-			}
-
 			cancel_if_invalid = no
 		}
 	}
@@ -2233,6 +2118,26 @@ ideas = {
 		use_list_view = yes
 
 		social_01 = {
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_01 added"
+				custom_effect_tooltip = social_01_TT
+				set_variable = { social_law = 1 }
+				ingame_update_setup = yes
+				PER_social_change = yes
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_01 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_01
+				}
+			}
 			cost = 200
 			removal_cost = -1
 			level = 1
@@ -2277,32 +2182,13 @@ ideas = {
 					}
 				}
 			}
-			on_add = {
-				custom_effect_tooltip = social_01_TT
-				set_variable = { social_budget = 1 }
-				ingame_update_setup = yes
-				PER_social_change = yes
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_social_cool_down
-						}
-					}
-					set_country_flag = PER_removed_social_01
-				}
-			}
-
 			cancel_if_invalid = no
-
 			ai_will_do = {
 				base = 1
 				modifier = { # Make law more appealing to reduce if is above desired level
 					add = 25
 					has_idea = social_02
-					has_country_flag = wants_social_01
+					check_variable = { expected_welfare_spending = 1 }
 				}
 				modifier = {
 					factor = 0
@@ -2312,6 +2198,32 @@ ideas = {
 		}
 
 		social_02 = {
+			modifier = {
+				political_power_gain = 0.06
+				political_power_factor = 0.10
+				stability_factor = 0.03
+				high_unemployment_threshold_modifier = 0.01
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_02 added"
+				custom_effect_tooltip = social_02_TT
+				set_variable = { social_law = 2 }
+				ingame_update_setup = yes
+				PER_social_change = yes
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_02 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_02
+				}
+			}
 			default = yes
 			cost = 80
 			removal_cost = -1
@@ -2361,53 +2273,18 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
-			on_add = {
-				custom_effect_tooltip = social_02_TT
-				set_variable = { social_budget = 2 }
-				ingame_update_setup = yes
-				PER_social_change = yes
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_social_cool_down
-						}
-					}
-					set_country_flag = PER_removed_social_02
-				}
-			}
-
-			modifier = {
-				political_power_gain = 0.06
-				political_power_factor = 0.10
-				stability_factor = 0.03
-				high_unemployment_threshold_modifier = 0.01
-			}
-
 			cancel_if_invalid = no
-
 			ai_will_do = {
 				base = 1
 				modifier = { # Make law more appealing to raise if is below desired level
 					add = 25
 					has_idea = social_01
-					OR = {
-						has_country_flag = wants_social_02
-						has_country_flag = wants_social_03
-						has_country_flag = wants_social_04
-						has_country_flag = wants_social_05
-						has_country_flag = wants_social_06
-					}
+					check_variable = { expected_welfare_spending > 1 }
 				}
 				modifier = { # Make law more appealing to reduce if is above desired level
 					add = 25
 					has_idea = social_03
-					OR = {
-						has_country_flag = wants_social_01
-						has_country_flag = wants_social_02
-					}
+					check_variable = { expected_welfare_spending < 3 }
 				}
 				modifier = {
 					factor = 0
@@ -2417,6 +2294,32 @@ ideas = {
 		}
 
 		social_03 = {
+			modifier = {
+				political_power_gain = 0.14
+				political_power_factor = 0.14
+				stability_factor = 0.06
+				high_unemployment_threshold_modifier = 0.02
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_03 added"
+				custom_effect_tooltip = social_03_TT
+				set_variable = { social_law = 3 }
+				ingame_update_setup = yes
+				PER_social_change = yes
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_03 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_03
+				}
+			}
 			removal_cost = -1
 			level = 3
 			available = {
@@ -2469,53 +2372,18 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
-			on_add = {
-				custom_effect_tooltip = social_03_TT
-				set_variable = { social_budget = 3 }
-				ingame_update_setup = yes
-				PER_social_change = yes
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_social_cool_down
-						}
-					}
-					set_country_flag = PER_removed_social_03
-				}
-			}
-
-			modifier = {
-				political_power_gain = 0.14
-				political_power_factor = 0.14
-				stability_factor = 0.06
-				high_unemployment_threshold_modifier = 0.02
-			}
-
 			cancel_if_invalid = no
-
 			ai_will_do = {
 				base = 1
 				modifier = { # Make law more appealing to raise if is below desired level
 					add = 25
 					has_idea = social_02
-					OR = {
-						has_country_flag = wants_social_03
-						has_country_flag = wants_social_04
-						has_country_flag = wants_social_05
-						has_country_flag = wants_social_06
-					}
+					check_variable = { expected_welfare_spending > 2 }
 				}
 				modifier = { # Make law more appealing to reduce if is above desired level
 					add = 25
 					has_idea = social_04
-					OR = {
-						has_country_flag = wants_social_01
-						has_country_flag = wants_social_02
-						has_country_flag = wants_social_03
-					}
+					check_variable = { expected_welfare_spending < 4 }
 				}
 				modifier = {
 					factor = 0
@@ -2525,6 +2393,33 @@ ideas = {
 		}
 
 		social_04 = {
+			modifier = {
+				political_power_gain = 0.20
+				political_power_factor = 0.20
+				monthly_population = 0.05
+				stability_factor = 0.09
+				high_unemployment_threshold_modifier = 0.03
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_04 added"
+				custom_effect_tooltip = social_04_TT
+				set_variable = { social_law = 4 }
+				ingame_update_setup = yes
+				PER_social_change = yes
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_04 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_04
+				}
+			}
 			cost = 40
 			removal_cost = -1
 			level = 4
@@ -2579,54 +2474,18 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
-			on_add = {
-				custom_effect_tooltip = social_04_TT
-				set_variable = { social_budget = 4 }
-				ingame_update_setup = yes
-				PER_social_change = yes
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_social_cool_down
-						}
-					}
-					set_country_flag = PER_removed_social_04
-				}
-			}
-
-			modifier = {
-				political_power_gain = 0.20
-				political_power_factor = 0.20
-				monthly_population = 0.05
-				stability_factor = 0.09
-				high_unemployment_threshold_modifier = 0.03
-			}
-
 			cancel_if_invalid = no
-
 			ai_will_do = {
 				base = 1
 				modifier = {
 					add = 25
 					has_idea = social_03
-					OR = {
-						has_country_flag = wants_social_04
-						has_country_flag = wants_social_05
-						has_country_flag = wants_social_06
-					}
+					check_variable = { expected_welfare_spending > 3 }
 				}
 				modifier = { # Make law more appealing to reduce if is above desired level
 					add = 10
 					has_idea = social_05
-					OR = {
-						has_country_flag = wants_social_01
-						has_country_flag = wants_social_02
-						has_country_flag = wants_social_03
-						has_country_flag = wants_social_04
-					}
+					check_variable = { expected_welfare_spending < 5 }
 				}
 				modifier = {
 					factor = 0
@@ -2636,6 +2495,33 @@ ideas = {
 		}
 
 		social_05 = {
+			modifier = {
+				political_power_gain = 0.24
+				political_power_factor = 0.24
+				monthly_population = 0.15
+				stability_factor = 0.12
+				high_unemployment_threshold_modifier = 0.04
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_05 added"
+				custom_effect_tooltip = social_05_TT
+				set_variable = { social_law = 5 }
+				ingame_update_setup = yes
+				PER_social_change = yes
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_05 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_05
+				}
+			}
 			cost = 30
 			removal_cost = -1
 			level = 5
@@ -2659,9 +2545,7 @@ ideas = {
 				}
 				if = {
 					limit = {
-						OR = {
-							has_idea = social_06
-						}
+						has_idea = social_06
 						social_decrease_blocked = yes
 					}
 					social_decrease_blocked = no
@@ -2691,54 +2575,18 @@ ideas = {
 					NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 				}
 			}
-			on_add = {
-				custom_effect_tooltip = social_05_TT
-				set_variable = { social_budget = 5 }
-				ingame_update_setup = yes
-				PER_social_change = yes
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_social_cool_down
-						}
-					}
-					set_country_flag = PER_removed_social_05
-				}
-			}
-
-			modifier = {
-				political_power_gain = 0.24
-				political_power_factor = 0.24
-				monthly_population = 0.15
-				stability_factor = 0.12
-				high_unemployment_threshold_modifier = 0.04
-			}
-
 			cancel_if_invalid = no
-
 			ai_will_do = {
 				base = 1
 				modifier = { # Make law more appealing to raise if is below desired level
 					add = 25
 					has_idea = social_04
-					OR = {
-						has_country_flag = wants_social_05
-						has_country_flag = wants_social_06
-					}
+					check_variable = { expected_welfare_spending > 4 }
 				}
 				modifier = { # Make law more appealing to reduce if is above desired level
 					add = 25
 					has_idea = social_06
-					OR = {
-						has_country_flag = wants_social_01
-						has_country_flag = wants_social_02
-						has_country_flag = wants_social_03
-						has_country_flag = wants_social_04
-						has_country_flag = wants_social_05
-					}
+					check_variable = { expected_welfare_spending < 6 }
 				}
 				modifier = {
 					factor = 0
@@ -2748,6 +2596,33 @@ ideas = {
 		}
 
 		social_06 = {
+			modifier = {
+				political_power_gain = 0.3
+				political_power_factor = 0.3
+				monthly_population = 0.30
+				stability_factor = 0.15
+				high_unemployment_threshold_modifier = 0.05
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_06 added"
+				custom_effect_tooltip = social_06_TT
+				set_variable = { social_law = 6 }
+				ingame_update_setup = yes
+				PER_social_change = yes
+				update_protest_dirty_var = yes
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea social_06 removed"
+				if = {
+					limit = {
+						original_tag = PER
+						NOT = {
+							has_country_flag = PER_social_cool_down
+						}
+					}
+					set_country_flag = PER_removed_social_06
+				}
+			}
 			cost = 10
 			removal_cost = -1
 			level = 6
@@ -2783,40 +2658,13 @@ ideas = {
 					social_increase_blocked = no
 				}
 			}
-			on_add = {
-				custom_effect_tooltip = social_06_TT
-				set_variable = { social_budget = 6 }
-				ingame_update_setup = yes
-				PER_social_change = yes
-			}
-			on_remove = {
-				if = {
-					limit = {
-						original_tag = PER
-						NOT = {
-							has_country_flag = PER_social_cool_down
-						}
-					}
-					set_country_flag = PER_removed_social_06
-				}
-			}
-
-			modifier = {
-				political_power_gain = 0.3
-				political_power_factor = 0.3
-				monthly_population = 0.30
-				stability_factor = 0.15
-				high_unemployment_threshold_modifier = 0.05
-			}
-
 			cancel_if_invalid = no
-
 			ai_will_do = {
 				base = 1
 				modifier = {
 					add = 25
 					has_idea = social_05
-					has_country_flag = wants_social_06
+					check_variable = { expected_welfare_spending > 5 }
 				}
 				modifier = {
 					factor = 0

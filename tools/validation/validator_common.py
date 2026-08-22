@@ -1,45 +1,526 @@
 #!/usr/bin/env python3
-##########################
-# Shared Validation Infrastructure
-# Common classes, functions, and base validator used by all validation scripts
-##########################
+"""Shared validation infrastructure: common classes, helpers, and the base validator."""
+
 import glob
+import json
 import logging
 import os
 import re
 import sys
-from multiprocessing import Pool, cpu_count
-from typing import Callable, Dict, List, Optional, Set
+import time
+from dataclasses import dataclass
+from multiprocessing import cpu_count
+from multiprocessing.pool import Pool
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 from shared_utils import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
+    Colors,
     DataCleaner,
     FileOpener,
+    atomic_write_text,
+    clean_filepath,
+    compute_line_offsets,
     create_validation_parser,
     find_line_number,
     get_staged_files,
+    line_for_offset,
     log_message,
+    print_timing_summary,
     run_validator_main,
     should_skip_file,
     strip_comments,
+    timing_enabled,
 )
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+# Generic type for the cross-pass result cache accessor (see BaseValidator.cached).
+T = TypeVar("T")
+
+# Regex for meta_effect/meta_trigger template substitution patterns.
+# Matches identifiers containing at least one [VAR] placeholder with a non-empty
+# constant prefix (e.g. "set_leader_[IDEOLOGY]", "tooltip_EU_[EUXXX]_approve").
+_META_TEMPLATE_RE = re.compile(
+    r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+)"
+)
+
+# Quoted meta-substitution value carrying the constant anchor, where the
+# placeholder may lead (e.g. `TRIG = "[?global.tokens^v.GetTokenKey]_unlock_btn_enabled"`).
+# The `text` block holds a bare `[TRIG] = yes` and the real prefix/suffix lives in
+# the quoted assignment, so a leading placeholder with only a trailing constant must
+# still resolve. The suffix anchor keeps the match from over-firing.
+_QUOTED_META_TEMPLATE_RE = re.compile(r'"([^"]*\[[^\]]+\][^"]*)"')
+
+_ANSI_RE = re.compile(r"\033\[[0-9;]+m")
 
 
-class Colors:
-    HEADER = "\033[95m"
-    BLUE = "\033[94m"
-    CYAN = "\033[96m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    RED = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
+def _label_from_failmsg(fail_msg: str) -> str:
+    """Derive an issue group label from a _report fail message. Strips color
+    codes and a trailing colon so 'Undefined idea references:' groups cleanly."""
+    label = _ANSI_RE.sub("", fail_msg or "").strip().rstrip(":").strip()
+    return label or "OTHER"
+
+
+def _safe_int(value) -> int:
+    try:
+        return int(value) if value else 0
+    except (TypeError, ValueError):
+        return 0
+
+
+# Loc keys that live in vanilla HOI4 (not the mod's localisation/ tree) and are
+# inherited by MD decisions/events/focuses that override or reuse the vanilla
+# object. The base loc loader scans only the mod, so without this allowlist
+# these resolve fine at runtime but get flagged as "missing loc key".
+#
+# Verified against vanilla install at
+# steamapps/common/Hearts of Iron IV/localisation/english/.
+KNOWN_VANILLA_LOC_KEYS = frozenset(
+    {
+        # lar_decisions_l_english.yml — La Resistance agent recruitment.
+        # MD's 99_lar_agent_recruitment_decisions.txt redefines all 16 decisions;
+        # the seven non-Europe _state variants use `name = recruit_in_europe_state`
+        # to share the vanilla string.
+        "recruit_in_europe",
+        "recruit_in_europe_state",
+        "recruit_in_north_america",
+        "recruit_in_south_america",
+        "recruit_in_africa",
+        "recruit_in_middle_east",
+        "recruit_in_asia",
+        "recruit_in_australia",
+        "recruit_in_india",
+        # modifiers_l_english.yml — variable-effect tooltip rows inherited by
+        # MD focus, decision, event, and idea effects.
+        "acclimatization_cold_climate_gain_factor_tt",
+        "acclimatization_hot_climate_gain_factor_tt",
+        "ace_effectiveness_factor_tt",
+        "agency_upgrade_time_tt",
+        "air_ace_bonuses_factor_tt",
+        "air_chief_cost_factor_tt",
+        "air_fuel_consumption_factor_tt",
+        "air_home_defence_factor_tt",
+        "air_interception_detect_factor_tt",
+        "air_range_factor_tt",
+        "air_training_xp_gain_factor_tt",
+        "air_weather_penalty_tt",
+        "air_wing_xp_loss_when_killed_factor_tt",
+        "amphibious_invasion_tt",
+        "annex_cost_factor_tt",
+        "army_armor_speed_factor_tt",
+        "army_artillery_defence_factor_tt",
+        "army_attack_speed_factor_tt",
+        "army_leader_start_attack_level_tt",
+        "army_leader_start_defense_level_tt",
+        "army_leader_start_logistics_level_tt",
+        "army_leader_start_planning_level_tt",
+        "base_fuel_gain_factor_tt",
+        "cic_construction_boost_factor_tt",
+        "compliance_growth_on_our_occupied_states_tt",
+        "compliance_growth_tt",
+        "conversion_cost_civ_to_mil_factor_tt",
+        "convoy_escort_efficiency_tt",
+        "convoy_retreat_speed_tt",
+        "enemy_justify_war_goal_time_tt",
+        "equipment_conversion_speed_tt",
+        "experience_gain_navy_tt",
+        "fascism_drift_tt",
+        "heat_attrition_factor_tt",
+        "industry_free_repair_factor_tt",
+        "industry_repair_factor_tt",
+        "intel_from_combat_factor_tt",
+        "land_bunker_effectiveness_factor_tt",
+        "lend_lease_tension_tt",
+        "local_factories_tt",
+        "local_resource_gain_efficiency_per_infrastructure_tt",
+        "master_ideology_drift_tt",
+        "max_dig_in_factor_tt",
+        "max_dig_in_tt",
+        "mechanized_attack_factor_tt",
+        "military_industrial_organization_funds_gain_tt",
+        "military_industrial_organization_research_bonus_tt",
+        "military_leader_cost_factor_tt",
+        "minimum_training_level_tt",
+        "motorized_attack_factor_tt",
+        "naval_critical_score_chance_factor_tt",
+        "naval_enemy_fleet_size_ratio_penalty_factor_tt",
+        "naval_mines_damage_factor_tt",
+        "naval_mines_effect_reduction_tt",
+        "naval_strike_targetting_factor_tt",
+        "naval_torpedo_reveal_chance_factor_tt",
+        "naval_torpedo_screen_penetration_factor_tt",
+        "navy_intel_factor_tt",
+        "navy_intel_to_others_tt",
+        "navy_screen_attack_factor_tt",
+        "navy_screen_defence_factor_tt",
+        "non_core_manpower_tt",
+        "production_oil_factor_tt",
+        "production_speed_facility_factor_tt",
+        "production_speed_supply_node_factor_tt",
+        "recruitable_population_tt",
+        "resistance_activity_tt",
+        "resistance_target_tt",
+        "special_forces_min_tt",
+        "spotting_chance_tt",
+        "state_production_speed_supply_node_factor_tt",
+        "terrain_trait_xp_gain_factor_tt",
+        # decisions_l_english.yml — shared cost-tooltip strings used as
+        # custom_cost_text on MD decisions.
+        "decision_cost_CP_15",
+        "decision_cost_CP_25_pp_50",
+        "decision_cost_civ_factory_1",
+        # mtg_decisions_l_english.yml — MtG USA political decisions reused
+        # verbatim by MD's USA content.
+        "USA_amend_the_budget",
+        "USA_beat_up_opposition",
+        "USA_give_tax_break",
+        "USA_medium_lobby_effort",
+        "USA_pay_farm_subsidies",
+        "USA_research_grants",
+        "USA_small_lobby_effort",
+        "USA_special_measures",
+        "USA_statehood_for_puerto_rico",
+        # Vanilla focus names reused intact by MD focus trees (string fits the
+        # in-game label — e.g. "Greater Finland", "Worker's Rights").
+        "EST_new_economic_policy",  # ideas_l_english.yml
+        "FIN_greater_finland",  # aat_focus_l_english.yml
+        "GER_workers_rights",  # wuw_focus_l_english.yml
+        "GER_workers_rights_desc",
+        "ITA_all_roads_lead_to_rome",  # bba_focus_l_english.yml
+        "ITA_all_roads_lead_to_rome_desc",
+        "POL_armia_ludowa",  # focus_poland_l_english.yml
+        "POL_armia_ludowa_desc",
+        "RAJ_agrarian_society",  # ideas_l_english.yml
+        "RAJ_agrarian_society_desc",
+        "RAJ_indian_national_congress",
+        "RAJ_indian_national_congress_desc",
+        "RAJ_industrial_expansion",
+        "RAJ_industrial_expansion_desc",
+        "SOV_raskovas_aviation_group",  # nsb_focus_l_english.yml
+        "SOV_raskovas_aviation_group_desc",
+        "SPA_a_great_spain",  # lar_focus_l_english.yml
+        "SPA_a_great_spain_desc",
+        "SPR_the_popular_front",  # lar_focus_l_english.yml
+        "SPR_the_popular_front_desc",
+        # lar_events_l_english.yml — live La Resistance systems reused by MD.
+        "lar_collab_gov.1.d",
+        "lar_collab_gov.1.t",
+        # lar_events_l_english.yml — agent-loss events reused by LaR_agent_events.txt.
+        "lar_operative_event.1.a",
+        "lar_operative_event.1.desc",
+        "lar_operative_event.1.t",
+        "lar_operative_event.2.a",
+        "lar_operative_event.2.desc",
+        "lar_operative_event.2.t",
+        "lar_operative_event.3.a",
+        "lar_operative_event.3.desc",
+        "lar_operative_event.3.t",
+        "lar_operative_event.4.a",
+        "lar_operative_event.4.desc",
+        "lar_operative_event.4.t",
+        "lar_operative_event.5.a",
+        "lar_operative_event.5.desc",
+        "lar_operative_event.5.t",
+        "occupied_countries.1.a",
+        "occupied_countries.1.b",
+        "occupied_countries.1.desc",
+        "occupied_countries.1.title",
+        # Vanilla strategic-project / scientist tooltip keys.
+        "SP_UNLOCK_PROJECT",
+        "SP_UNLOCK_TECH",
+        "available_scientist_one_line_tt",
+        # Vanilla HOI4 building name keys (mod overrides only the _desc variants).
+        "air_base",
+        "infrastructure",
+        "nuclear_reactor",
+        "radar_station",
+        # Vanilla US Congress tooltip keys borrowed from MtG.
+        "mtg_usa_congress_add_state_tt",
+        "mtg_usa_congress_large_opposition_tt",
+        "mtg_usa_congress_large_support_tt",
+        "mtg_usa_congress_medium_opposition_tt",
+        "mtg_usa_congress_medium_support_tt",
+        "mtg_usa_congress_remove_state_tt",
+        "mtg_usa_congress_small_opposition_tt",
+        "mtg_usa_congress_small_support_tt",
+        "mtg_usa_house_large_opposition_tt",
+        "mtg_usa_house_large_support_tt",
+        "mtg_usa_house_medium_opposition_tt",
+        "mtg_usa_house_medium_support_tt",
+        "mtg_usa_house_small_opposition_tt",
+        "mtg_usa_house_small_support_tt",
+        "mtg_usa_senate_large_opposition_tt",
+        "mtg_usa_senate_large_support_tt",
+        "mtg_usa_senate_medium_opposition_tt",
+        "mtg_usa_senate_medium_support_tt",
+        "mtg_usa_senate_small_opposition_tt",
+        "mtg_usa_senate_small_support_tt",
+        "free_agency_upgrade_tt",
+        # Vanilla operative mission tooltip keys.
+        "OPERATIVE_MISSION_BOOST_IDEOLOGY_TT",
+        "OPERATIVE_MISSION_BUILD_INTEL_NETWORK_TT",
+        "OPERATIVE_MISSION_CONTROL_TRADE_TT",
+        "OPERATIVE_MISSION_COUNTER_INTELLIGENCE_TT",
+        "OPERATIVE_MISSION_DIPLOMATIC_PRESSURE_TT",
+        "OPERATIVE_MISSION_NO_MISSION_TT",
+        "OPERATIVE_MISSION_PROPAGANDA_TT",
+        "OPERATIVE_MISSION_QUIET_INTEL_NETWORK_TT",
+        "OPERATIVE_MISSION_ROOT_OUT_RESISTANCE_TT",
+        # Vanilla diplomatic action rule tooltip keys.
+        "RULE_ALLOW_GUARANTEES_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_GUARANTEES_SAME_IDEOLOGY_TOOLTIP",
+        "RULE_ALLOW_LEAVE_FACTION_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_LEND_LEASE_BLOCKED_TT",
+        "RULE_ALLOW_LEND_LEASE_SAME_FACTION_TT",
+        "RULE_ALLOW_LEND_LEASE_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_LICENSING_BLOCKED_TT",
+        "RULE_ALLOW_LICENSING_SAME_FACTION_TT",
+        "RULE_ALLOW_LICENSING_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_MILITARY_ACCESS_BLOCKED_TT",
+        "RULE_ALLOW_MILITARY_ACCESS_SAME_IDEOLOGY_TT",
+        "RULE_ALLOW_RELEASE_NATIONS_BLOCKED_TOOLTIP",
+        "RULE_ALLOW_REVOKE_GUARANTEES_BLOCKED_TOOLTIP",
+        "RULE_ASSUME_LEADERSHIP_BLOCKED_TOOLTIP",
+        "RULE_BOOST_PARTY_AI_ONLY_TT",
+        "RULE_BOOST_PARTY_BLOCKED_TT",
+        "RULE_BOOST_PARTY_PLAYER_ONLY_TT",
+        "RULE_COUP_AI_ONLY_TT",
+        "RULE_COUP_BLOCKED_TT",
+        "RULE_KICK_FROM_FACTION_BLOCKED_TOOLTIP",
+        "RULE_VOLUNTEERS_BLOCKED_TT",
+        "RULE_VOLUNTEERS_SAME_IDEOLOGY_TT",
+        "RULE_WARGOALS_BLOCKED_TT",
+    }
+)
+
+
+def casefold_index(names) -> dict:
+    """Return a dict mapping each name lowercased to its canonical form.
+
+    Used to build a case-insensitive lookup for Linux case-mismatch detection.
+    """
+    return {n.lower(): n for n in names}
+
+
+def case_mismatch(ref: str, ci_index: dict):
+    """Return the canonical name when *ref* matches case-insensitively but not
+    exactly (a Linux-only bug), else None."""
+    hit = ci_index.get(ref.lower())
+    return hit if (hit is not None and hit != ref) else None
+
+
+# Trait definitions sit at one tab of indent inside the `leader_traits = { }`
+# wrapper. `-` is in the charset for `emerging_Communist-State`.
+LEADER_TRAIT_DEF_RE = re.compile(r"^\t([\w\-]+)\s*=\s*\{", re.MULTILINE)
+
+
+def parse_leader_trait_names(mod_path: str, subdir: str) -> Set[str]:
+    """Collect every trait defined in the ``common/<subdir>/`` trait files.
+
+    Covers both leader trait pools: ``country_leader`` (advisors and country
+    leaders) and ``unit_leader`` (generals, admirals, operatives). The hyphen is
+    part of the name charset because ``emerging_Communist-State`` exists.
+    """
+    names: Set[str] = set()
+    trait_dir = os.path.join(mod_path, "common", subdir)
+    if not os.path.isdir(trait_dir):
+        return names
+
+    try:
+        trait_files = sorted(os.listdir(trait_dir))
+    except OSError:
+        return names
+
+    for fname in trait_files:
+        if not fname.endswith(".txt"):
+            continue
+        content = FileOpener.open_text_file(
+            os.path.join(trait_dir, fname), lowercase=False, strip_comments_flag=True
+        )
+        names.update(match.group(1) for match in LEADER_TRAIT_DEF_RE.finditer(content))
+    return names
+
+
+def scan_meta_constructed_names(files, defined_names):
+    """Return the subset of *defined_names* called via meta_effect/meta_trigger
+    template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
+
+    For every file containing ``meta_effect`` or ``meta_trigger``, extracts
+    identifier templates of the form ``prefix_[VAR]_suffix`` — both bare
+    identifiers and quoted meta-substitution values (tooltips/templates such as
+    ``"[?var]_unlock_btn_enabled"``) — splits on ``[VAR]`` segments, and matches
+    any defined name whose lower-cased form starts with *prefix* and ends with
+    *suffix*.
+    """
+    defined_lower = {n.lower(): n for n in defined_names}
+    used = set()
+
+    for filepath in files:
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as fh:
+                content = fh.read()
+        except Exception:
+            continue
+
+        if "meta_effect" not in content and "meta_trigger" not in content:
+            continue
+
+        content_clean = strip_comments(content)
+
+        templates = {m.group(1) for m in _META_TEMPLATE_RE.finditer(content_clean)}
+        templates.update(
+            m.group(1) for m in _QUOTED_META_TEMPLATE_RE.finditer(content_clean)
+        )
+
+        for template in templates:
+            parts = re.split(r"\[[^\]]+\]", template)
+            prefix = parts[0].lower()
+            suffix = parts[-1].lower() if len(parts) > 1 else ""
+
+            if not prefix and not suffix:
+                continue
+
+            for name_lower, name_orig in defined_lower.items():
+                if name_orig in used:
+                    continue
+                if name_lower.startswith(prefix) and name_lower.endswith(suffix):
+                    if len(name_lower) > len(prefix) + len(suffix):
+                        used.add(name_orig)
+
+    return used
+
+
+# Output verbosity across all validators. MD_LOG_LEVEL=ERROR shows only errors,
+# WARNING (default) shows errors and warnings, INFO shows full output.
+_LOG_LEVEL = os.environ.get("MD_LOG_LEVEL", "WARNING").upper()
+if _LOG_LEVEL == "ERROR":
+    logging.basicConfig(level=logging.ERROR, format="%(levelname)s: %(message)s")
+elif _LOG_LEVEL == "INFO":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+else:
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
+
+
+class Severity:
+    ERROR = "error"
+    WARNING = "warning"
+
+
+@dataclass
+class Issue:
+    severity: str
+    category: str
+    message: str
+    file: str = ""
+    line: int = 0
+
+    def to_dict(self) -> dict:
+        return {
+            "severity": self.severity,
+            "category": self.category,
+            "message": self.message,
+            "file": self.file,
+            "line": self.line,
+        }
+
+
+HOI4_BUILTIN_BLOCKS = frozenset(
+    {
+        "if",
+        "else",
+        "else_if",
+        "limit",
+        "AND",
+        "OR",
+        "NOT",
+        "hidden_effect",
+        "random_list",
+        "tooltip",
+        "custom_effect_tooltip",
+        "custom_trigger_tooltip",
+        "modifier",
+        "random",
+        "every_country",
+        "random_country",
+        "every_state",
+        "random_state",
+        "every_owned_state",
+        "random_owned_state",
+        "every_neighbor_country",
+        "random_neighbor_country",
+        "every_enemy_country",
+        "random_enemy_country",
+        "every_other_country",
+        "random_other_country",
+        "capital_scope",
+        "owner",
+        "controller",
+        "ROOT",
+        "PREV",
+        "FROM",
+        "country_event",
+        "news_event",
+        "state_event",
+        "every_army_leader",
+        "random_army_leader",
+        "every_unit_leader",
+        "random_unit_leader",
+        "every_navy_leader",
+        "random_navy_leader",
+        "every_possible_country",
+        "random_possible_country",
+        "all_of",
+        "any_of",
+        "for_each_scope_loop",
+        "while_loop_effect",
+        "for_loop_effect",
+        "effect_tooltip",
+        "add_to_array",
+        "remove_from_array",
+        "overlord",
+        "faction_leader",
+        "any_country",
+        "any_state",
+        "any_owned_state",
+        "any_neighbor_country",
+        "any_enemy_country",
+        "any_other_country",
+        "any_allied_country",
+        "any_country_with_original_tag",
+        "any_army_leader",
+        "any_navy_leader",
+        "any_unit_leader",
+        "any_possible_country",
+        "every_allied_country",
+        "random_allied_country",
+        "every_occupied_country",
+        "random_occupied_country",
+        "any_occupied_country",
+        "every_country_with_original_tag",
+        "random_country_with_original_tag",
+        "meta_effect",
+        "meta_trigger",
+    }
+)
 
 
 class BaseValidator:
+    """Base class for all HOI4 content validators.
+
+    Subclass and implement ``run_validations(files)``. Use ``add_error()``
+    for structured issues (picked up by the PR report renderer) or
+    ``_report()`` for free-form output lines.
+
+    Common workflow in ``run_validations``:
+      1. Iterate over ``files``.
+      2. Call ``should_skip_file(path, EXTRA_SKIP_PATTERNS)`` to filter.
+      3. Use ``disk_cache.per_file_cached_by_content()`` for expensive per-file work.
+      4. Call ``self.add_error(category, message, file, line)`` for each issue found.
+
+    Entry point: ``run_validator_main(MyValidator, "description")`` in ``__main__``.
+    """
+
     TITLE = "VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
@@ -49,20 +530,34 @@ class BaseValidator:
         output_file: Optional[str] = None,
         use_colors: bool = True,
         staged_only: bool = False,
-        workers: int = None,
+        workers: Optional[int] = None,
+        no_cache: bool = False,
         **kwargs,
     ):
-        if not mod_path.endswith("/"):
-            mod_path += "/"
+        if not mod_path.endswith(os.sep):
+            mod_path += os.sep
         self.mod_path = mod_path
         self.errors_found = 0
+        self.warnings_found = 0
         self.output_file = output_file
         self.use_colors = use_colors
         self.staged_only = staged_only
         self.workers = workers if workers else max(1, cpu_count() // 2)
+        self.no_cache = no_cache
+        # Pool workers call disk_cache at module level and never see `self`, so the
+        # env var is the only channel that reaches them (fork inherits it).
+        if no_cache:
+            os.environ["MD_NO_CACHE"] = "1"
         self.staged_files = None
-        self.output_lines = []
+        self.output_lines: List[str] = []
         self._pool: Optional[Pool] = None
+        self._shared_cache: Dict[str, object] = {}
+        self._issues: List[Issue] = []
+        self._section_timings: List[Tuple[str, float]] = []
+        self._section_start: Optional[float] = None
+        self._section_title: str = ""
+        self._show_timing = timing_enabled()
+        self._timing_printed = False
 
         if staged_only:
             self.staged_files = (
@@ -71,11 +566,66 @@ class BaseValidator:
             if not self.staged_files:
                 logging.warning("No staged files found")
 
+    def cached(self, key: str, factory_fn: Callable[[], T]) -> T:
+        # Pool workers don't see this cache; populate from the main process.
+        if key not in self._shared_cache:
+            self._shared_cache[key] = factory_fn()
+        return cast(T, self._shared_cache[key])
+
+    def parse_files_cached(
+        self,
+        patterns: List[str],
+        namespace: str,
+        parse_fn: Callable[[str, str], Any],
+        *,
+        lowercase: bool = False,
+        strip_comments_flag: bool = True,
+        ignore_staged: bool = False,
+    ) -> Dict[str, Any]:
+        """Parse files matching *patterns* -> ``{path: parse_fn(text, path)}``.
+
+        Reads case-preserving (HOI4 is case-sensitive on Linux), strips comments
+        by default, and disk-caches each parse keyed on content. *namespace*
+        keys the cache per validator/pass; give each call a distinct one.
+        """
+        results: Dict[str, Any] = {}
+        for path in self._collect_files(patterns, ignore_staged=ignore_staged):
+            text = FileOpener.open_text_file(
+                path, lowercase=lowercase, strip_comments_flag=strip_comments_flag
+            )
+
+            def parse_cached() -> Any:
+                return parse_fn(text, path)
+
+            results[path] = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                namespace,
+                path,
+                text,
+                parse_cached,
+            )
+        return results
+
     def log(self, message: str, level: str = "info"):
+        # Respect MD_LOG_LEVEL — skip messages below the configured threshold.
+        # level="always" bypasses the filter (used for section headers and
+        # the positive "all clear" messages that must be visible regardless
+        # of verbosity).
+        if level == "always":
+            pass
+        elif level == "info" and _LOG_LEVEL != "INFO":
+            return
+        elif level == "warning" and _LOG_LEVEL == "ERROR":
+            return
+
         display_msg = (
             message if self.use_colors else re.sub(r"\033\[[0-9;]+m", "", message)
         )
-        if level == "info":
+        if level == "always":
+            # Bypass the logging threshold entirely; the root logger defaults to
+            # WARNING, so logging.info would drop these. Same stream as logging.
+            print(display_msg, file=sys.stderr)
+        elif level == "info":
             logging.info(display_msg)
         elif level == "warning":
             logging.warning(display_msg)
@@ -84,140 +634,483 @@ class BaseValidator:
         file_msg = re.sub(r"\033\[[0-9;]+m", "", message)
         self.output_lines.append(file_msg)
 
-    def save_output(self):
-        if self.output_file and self.output_lines:
-            try:
-                with open(self.output_file, "w", encoding="utf-8") as f:
-                    f.write("\n".join(self.output_lines))
-                logging.info(f"Results saved to: {self.output_file}")
-            except Exception as e:
-                logging.error(f"Failed to save output to {self.output_file}: {e}")
+    def _log_section(self, title: str):
+        """Emit the section header and start timing this section.
 
-    def _report(self, results: list, ok_msg: str, fail_msg: str):
-        if len(results) > 0:
+        Each call closes the previous section's timer (if any). Call
+        ``_finish_sections`` after all checks to close the last section.
+        """
+        if self._section_start is not None:
+            elapsed = time.perf_counter() - self._section_start
+            self._section_timings.append((self._section_title, elapsed))
+        self._section_title = title
+        self._section_start = time.perf_counter()
+        # The 3-line banner per section drowned out the actual findings. Section
+        # progress is only useful when profiling, so show a one-line marker then.
+        if self._show_timing:
             self.log(
-                f"{Colors.RED if self.use_colors else ''}{fail_msg}{Colors.ENDC if self.use_colors else ''}",
-                "error",
+                f"{Colors.CYAN if self.use_colors else ''}── {title}{Colors.ENDC if self.use_colors else ''}",
+                "always",
             )
-            for r in results:
-                self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}{r}{Colors.ENDC if self.use_colors else ''}",
-                    "error",
-                )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
+
+    def _finish_sections(self):
+        """Close the last section timer and print a timing summary (once)."""
+        if self._section_start is not None:
+            elapsed = time.perf_counter() - self._section_start
+            self._section_timings.append((self._section_title, elapsed))
+            self._section_start = None
+        if self._show_timing and self._section_timings and not self._timing_printed:
+            print_timing_summary(self._section_timings)
+            self._timing_printed = True
+
+    # Console cap per category — keeps one runaway check (e.g. a 1k+ backlog
+    # audit) from drowning the rest of the output. The JSON sidecar always
+    # carries the full list.
+    MAX_RENDERED_PER_CATEGORY = 50
+
+    def _render_issues(self):
+        """Render every collected issue once, grouped by category (errors first,
+        then warnings), each category sorted by file then line. Findings reach the
+        console and the -o output file through self.log."""
+        if not self._issues:
+            return
+        for severity, sev_color, noun in (
+            (Severity.ERROR, Colors.RED, "error"),
+            (Severity.WARNING, Colors.YELLOW, "warning"),
+        ):
+            by_cat: Dict[str, List[Issue]] = {}
+            for issue in self._issues:
+                if issue.severity != severity:
+                    continue
+                by_cat.setdefault(issue.category or "OTHER", []).append(issue)
+            if not by_cat:
+                continue
+            # Largest categories first, ties broken alphabetically.
+            for cat in sorted(by_cat, key=lambda c: (-len(by_cat[c]), c)):
+                items = sorted(by_cat[cat], key=lambda i: (i.file or "", i.line))
+                n = len(items)
+                head = f"{cat}  ({n} {noun}{'s' if n != 1 else ''})"
+                c0 = sev_color if self.use_colors else ""
+                c1 = Colors.ENDC if self.use_colors else ""
+                self.log(f"\n{c0}{head}{c1}", "always")
+                shown = items[: self.MAX_RENDERED_PER_CATEGORY]
+                for issue in shown:
+                    # "  file:line - message" matches report_lib's text-fallback
+                    # parser (loader._LOG_ISSUE_RE) so non-JSON runs still parse.
+                    if issue.file and issue.line > 0:
+                        self.log(
+                            f"  {issue.file}:{issue.line} - {issue.message}", "always"
+                        )
+                    elif issue.file:
+                        self.log(f"  {issue.file} - {issue.message}", "always")
+                    else:
+                        self.log(f"  {issue.message}", "always")
+                if n > len(shown):
+                    self.log(
+                        f"  ... and {n - len(shown)} more (full list in the JSON sidecar)",
+                        "always",
+                    )
+
+    def save_output(self):
+        if not self.output_file:
+            return
+        atomic_write_text(self.output_file, "\n".join(self.output_lines))
+        logging.info(f"Results saved to: {self.output_file}")
+        if self._issues:
+            json_file = os.path.splitext(self.output_file)[0] + ".json"
+            atomic_write_text(json_file, self.get_issues_json())
+            logging.info(f"JSON results saved to: {json_file}")
+
+    def add_issue(
+        self, severity: str, category: str, message: str, file: str = "", line: int = 0
+    ):
+        """Add an issue to the internal list for later deduplication and reporting."""
+        issue = Issue(
+            severity=severity, category=category, message=message, file=file, line=line
+        )
+        self._issues.append(issue)
+        if severity == Severity.ERROR:
+            self.errors_found += 1
+        elif severity == Severity.WARNING:
+            self.warnings_found += 1
+
+    def add_error(self, category: str, message: str, file: str = "", line: int = 0):
+        """Add an ERROR-level issue."""
+        self.add_issue(Severity.ERROR, category, message, file, line)
+
+    def add_warning(self, category: str, message: str, file: str = "", line: int = 0):
+        """Add a WARNING-level issue."""
+        self.add_issue(Severity.WARNING, category, message, file, line)
+
+    # Regex patterns for auto-extracting (file, line) from common result string
+    # formats. Tried in order; first match wins. Patterns cover every format
+    # currently emitted by the validators:
+    #   - "path/to/file.ext:42 - something"           (standard colon form)
+    #   - "path/to/file.ext:42: something"            (colon+colon variant)
+    #   - "file.ext - line 42 - something"            (localisation dash form)
+    #   - "file.ext, line 42, something"              (localisation comma form)
+    #   - "id - path/to/file.ext - description"       (two-segment dash form,
+    #                                                  captures file only)
+    # File-name groups allow spaces (e.g. "common/decisions/Hong Kong.txt") and
+    # rely on the surrounding anchor (":line", " - line", ", line", " - ") to
+    # bound the path rather than a no-whitespace class.
+    _LOC_PATTERNS = (
+        re.compile(r"^(?P<file>[^:\n]+?\.\w+):(?P<line>\d+)\s*[-:]\s*(?P<msg>.+)$"),
+        re.compile(
+            r"^(?P<file>[^\n]+?\.\w+)\s*-\s*line\s*(?P<line>\d+)\s*-\s*(?P<msg>.+)$"
+        ),
+        re.compile(r"^(?P<file>[^,\n]+?\.\w+),\s*line\s*(?P<line>\d+),\s*(?P<msg>.+)$"),
+        re.compile(
+            r"^(?P<prefix>[^\s].*?)\s*-\s*(?P<file>[^\n]+?\.\w+)\s*-\s*(?P<msg>.+)$"
+        ),
+    )
+
+    @classmethod
+    def _parse_result_location(cls, text: str) -> tuple:
+        """Best-effort extraction of (message, file, line) from a result string.
+
+        Returns the original string as the message when no known format matches.
+        The ``line`` value is 0 when the pattern matched a file-only format.
+        """
+        for pat in cls._LOC_PATTERNS:
+            m = pat.match(text)
+            if not m:
+                continue
+            gd = m.groupdict()
+            line = _safe_int(gd.get("line"))
+            prefix = gd.get("prefix")
+            msg = gd.get("msg", "")
+            if prefix:
+                msg = f"{prefix}: {msg}" if msg else prefix
+            return msg, gd.get("file", ""), line
+        return text, "", 0
+
+    def _report(
+        self,
+        results: list,
+        ok_msg: str,
+        fail_msg: str,
+        severity: str = Severity.ERROR,
+        category: str = "",
+    ):
+        """Record results from str / (message, file, line) / Issue entries.
+
+        Single source of truth for counting and recording issues — do NOT call
+        add_error/add_warning separately for results passed here. Display is
+        deferred: every finding is rendered once, grouped, by ``_render_issues``
+        at the end of the run. When a result carries no category, the (cleaned)
+        ``fail_msg`` becomes its group label so these issues still group sensibly.
+        ``ok_msg`` only shows at MD_LOG_LEVEL=INFO — per-check all-clear lines
+        are progress noise at the default verbosity.
+        """
+        if not results:
             self.log(
                 f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
             )
+            return
+        group_label = category or _label_from_failmsg(fail_msg)
+        for r in results:
+            if isinstance(r, Issue):
+                issue = r
+                if not issue.category:
+                    issue.category = group_label
+                actual_severity = issue.severity
+            elif isinstance(r, tuple):
+                # (message, file, line)
+                msg_t = str(r[0]) if len(r) > 0 else ""
+                file_t = str(r[1]) if len(r) > 1 else ""
+                line_t = _safe_int(r[2]) if len(r) > 2 else 0
+                issue = Issue(
+                    severity=severity,
+                    category=group_label,
+                    message=msg_t,
+                    file=file_t,
+                    line=line_t,
+                )
+                actual_severity = severity
+            else:
+                text = str(r)
+                msg_p, file_p, line_p = self._parse_result_location(text)
+                issue = Issue(
+                    severity=severity,
+                    category=group_label,
+                    message=msg_p,
+                    file=file_p,
+                    line=line_p,
+                )
+                actual_severity = severity
+
+            # Always record the issue so the JSON sidecar (and the CI report
+            # built from it) reflects every finding. Count by the issue's own
+            # severity so a pre-built WARNING Issue passed via a severity=ERROR
+            # call doesn't corrupt the counters.
+            self._issues.append(issue)
+            if actual_severity == Severity.ERROR:
+                self.errors_found += 1
+            else:
+                self.warnings_found += 1
+
+    def get_issues_json(self) -> str:
+        """Get issues as JSON string."""
+        return json.dumps([issue.to_dict() for issue in self._issues], indent=2)
+
+    def _basename_index(self, patterns: Tuple[str, ...]) -> Dict[str, List[str]]:
+        # Without this cache, get_full_path() re-globs **/*.txt for every call —
+        # validate_variables makes hundreds of those per run.
+        key = "_basename_index:" + "|".join(patterns)
+        existing = self._shared_cache.get(key)
+        if existing is not None:
+            return cast(Dict[str, List[str]], existing)
+
+        tracked: List[str] = []
+        seen: Set[str] = set()
+        for pattern in patterns:
+            for filename in glob.iglob(
+                os.path.join(self.mod_path, pattern), recursive=True
+            ):
+                if filename not in seen:
+                    seen.add(filename)
+                    tracked.append(filename)
+
+        def _build():
+            index: Dict[str, List[str]] = {}
+            for filename in tracked:
+                if should_skip_file(filename):
+                    continue
+                index.setdefault(os.path.basename(filename), []).append(filename)
+            return index
+
+        index = disk_cache.aggregate_cached(self.mod_path, key, tracked, _build)
+        self._shared_cache[key] = index
+        return index
 
     def get_full_path(
         self, basename: str, item: str, file_patterns: Optional[List[str]] = None
     ) -> Optional[str]:
-        if file_patterns is None:
-            file_patterns = ["**/*.txt"]
-        for pattern in file_patterns:
-            for filename in glob.iglob(self.mod_path + pattern, recursive=True):
-                if os.path.basename(filename) == basename:
-                    if should_skip_file(filename):
-                        continue
-                    try:
-                        with open(filename, "r", encoding="utf-8-sig") as f:
-                            content = f.read()
-                            if item in content:
-                                return filename
-                    except Exception:
-                        pass
+        patterns = tuple(file_patterns) if file_patterns else ("**/*.txt",)
+        index = self._basename_index(patterns)
+        for filename in index.get(basename, ()):
+            try:
+                content = FileOpener.open_text_file(filename, lowercase=False)
+                if item in content:
+                    return filename
+            except Exception:
+                pass
         return None
 
-    def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
-        """Run func over args_list using the validator's shared worker pool."""
+    def _get_pool(self) -> Optional[Pool]:
+        """Lazily create the shared worker pool on first parallel use.
+
+        Tiny staged commits never reach a parallel code path, so the Pool is
+        never spawned and they don't pay the fork+teardown cost. Created once,
+        memoized, and torn down by run_all_validations().
+        """
+        if self.workers <= 1:
+            return None
         if self._pool is None:
-            raise RuntimeError("_pool_map called outside run_all_validations")
-        return self._pool.map(func, args_list, chunksize=chunksize)
+            self._pool = Pool(processes=self.workers)
+        return self._pool
+
+    def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
+        # Falls back to sequential when workers == 1 or the batch is small, so
+        # low-end machines and tiny staged commits don't eat the Pool startup
+        # cost. The Pool is created lazily on the first batch that uses it.
+        if self.workers == 1 or len(args_list) < 10:
+            return [func(a) for a in args_list]
+        pool = self._get_pool()
+        if pool is None:
+            return [func(a) for a in args_list]
+        return pool.map(func, args_list, chunksize=chunksize)
+
+    def _pool_map_init(
+        self,
+        func: Callable,
+        items: List,
+        initializer: Callable,
+        initargs: tuple,
+        chunksize: int = 50,
+    ) -> List:
+        # Like _pool_map, but each worker gets initargs once via initializer
+        # rather than in every task. Use when the per-file worker needs a large
+        # read-only payload (a membership set or lookup map): shipping it per
+        # task re-pickles it once per chunk, which can dominate runtime. Spins a
+        # dedicated pool since the shared one carries no initializer.
+        if self.workers == 1 or len(items) < 10:
+            initializer(*initargs)
+            return [func(it) for it in items]
+        with Pool(
+            processes=self.workers, initializer=initializer, initargs=initargs
+        ) as pool:
+            return pool.map(func, items, chunksize=chunksize)
 
     def _collect_files(
         self,
         patterns: List[str],
         extra_skip: Optional[Callable[[str], bool]] = None,
+        ignore_staged: bool = False,
     ) -> List[str]:
         """Collect mod files matching glob patterns, with staged-file support.
 
-        In staged mode, filters self.staged_files by extension and a coarse
-        directory hint derived from each pattern's first non-wildcard segment.
-        In full mode, expands each pattern via glob.iglob relative to mod_path.
-        Always applies should_skip_file; extra_skip adds validator-local filtering.
+        Pass ``ignore_staged=True`` for definition-lookup passes that must scan
+        the full repo even in staged mode (e.g. confirming a tag or idea is
+        defined somewhere, not just in the staged change set).
         """
         extensions = list(
             {os.path.splitext(p)[1] for p in patterns if os.path.splitext(p)[1]}
         ) or [".txt"]
 
-        if self.staged_only:
+        if self.staged_only and not ignore_staged:
             if not self.staged_files:
                 return []
-            dir_hints = [
-                next((s for s in p.split("/") if "*" not in s), "") for p in patterns
-            ]
-            files = [
+
+            # Build a precise directory-prefix hint per pattern by joining all
+            # leading segments before the first wildcard. For
+            # `common/ai_templates/*.txt` the hint becomes `common/ai_templates/`,
+            # so an unrelated staged file in `common/national_focus/` won't match.
+            dir_hints = []
+            for p in patterns:
+                segments = p.replace("\\", "/").split("/")
+                leading = []
+                for s in segments:
+                    if "*" in s:
+                        break
+                    leading.append(s)
+                # If the pattern has no wildcard (exact file), the full path
+                # is the hint. Otherwise the directory prefix followed by `/`.
+                if leading == segments:
+                    dir_hints.append("/".join(leading))
+                else:
+                    dir_hints.append("/".join(leading) + "/" if leading else "")
+
+            def _matches_hint(path: str, hint: str) -> bool:
+                if hint == "":
+                    return True
+                normalized = path.replace("\\", "/")
+                # Exact-file hint (no trailing slash): require exact suffix match
+                if not hint.endswith("/"):
+                    return normalized == hint or normalized.endswith("/" + hint)
+                # Directory-prefix hint: path must start with the prefix (possibly
+                # after a leading mod-path component)
+                return hint in normalized and (
+                    normalized.startswith(hint) or ("/" + hint) in normalized
+                )
+
+            matched = [
                 f
                 for f in self.staged_files
                 if any(f.endswith(ext) for ext in extensions)
-                and any(hint == "" or hint in f for hint in dir_hints)
+                and any(_matches_hint(f, hint) for hint in dir_hints)
+            ]
+            files = [
+                f if os.path.isabs(f) else os.path.join(self.mod_path, f)
+                for f in matched
             ]
         else:
             seen: Set[str] = set()
             files = []
             for pattern in patterns:
-                for f in glob.iglob(self.mod_path + pattern, recursive=True):
+                for f in glob.iglob(
+                    os.path.join(self.mod_path, pattern), recursive=True
+                ):
                     if f not in seen:
                         seen.add(f)
                         files.append(f)
 
-        result = [f for f in files if not should_skip_file(f)]
+        # should_skip_file matches on path segments, and unconditionally skips
+        # any ".claude"/".git" segment. Checking against the mod_path-relative
+        # path (not the absolute one) keeps that rule scoped to a nested
+        # worktree/config dir *discovered while scanning* — it must not also
+        # trigger just because mod_path itself lives under .claude/worktrees/
+        # (this environment's own worktree convention).
+        result = [
+            f for f in files if not should_skip_file(os.path.relpath(f, self.mod_path))
+        ]
         if extra_skip is not None:
             result = [f for f in result if not extra_skip(f)]
         return result
+
+    def _load_localisation_keys(self) -> frozenset:
+        """Load all defined keys from English localisation yml files.
+
+        Also includes vanilla-provided keys that MD decisions/events override
+        but reuse the vanilla loc string for (see ``KNOWN_VANILLA_LOC_KEYS``).
+
+        Always scans the full repo: in staged mode the referencing .txt is
+        staged but its loc .yml usually is not, and a staged-only key set
+        makes every unchanged key report as missing.
+        """
+        memo = getattr(self, "_loc_keys_memo", None)
+        if memo is not None:
+            return memo
+        yml_files = self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        )
+        key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
+        all_keys: set = set()
+        for filepath in yml_files:
+            try:
+                with open(filepath, encoding="utf-8-sig", errors="replace") as f:
+                    text = f.read()
+            except Exception:
+                continue
+            all_keys.update(key_pattern.findall(text))
+        all_keys.update(KNOWN_VANILLA_LOC_KEYS)
+        self._loc_keys_memo = frozenset(all_keys)
+        return self._loc_keys_memo
 
     def run_validations(self):
         raise NotImplementedError("Subclasses must implement run_validations()")
 
     def run_all_validations(self):
-        self.log(f"\n{'#'*80}")
+        self.log(f"\n{'#' * 80}", "always")
         self.log(
-            f"{Colors.BOLD if self.use_colors else ''}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.BOLD if self.use_colors else ''}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC if self.use_colors else ''}",
+            "always",
         )
-        self.log(f"{'#'*80}")
-        self.log(f"Mod path: {self.mod_path}")
-        self.log(f"Worker processes: {self.workers}")
+        self.log(f"{'#' * 80}", "always")
+        self.log(f"Mod path: {self.mod_path}", "always")
+        self.log(f"Worker processes: {self.workers}", "always")
         if self.staged_only:
             self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}"
+                f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}",
+                "always",
             )
         if self.output_file:
-            self.log(f"Output file: {self.output_file}")
+            self.log(f"Output file: {self.output_file}", "always")
 
-        self._pool = Pool(processes=self.workers)
         try:
             self.run_validations()
         finally:
-            self._pool.terminate()
-            self._pool.join()
-            self._pool = None
+            self._finish_sections()
+            if self._pool is not None:
+                self._pool.terminate()
+                self._pool.join()
+                self._pool = None
 
-        self.log(f"\n{'#'*80}")
-        if self.errors_found == 0:
+        self._render_issues()
+
+        self.log(f"\n{'#' * 80}", "always")
+        if self.errors_found == 0 and self.warnings_found == 0:
             self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}"
+                f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}",
+                "always",
             )
         else:
+            # Keep the "VALIDATION COMPLETE - N ERROR(S) - M WARNING(S)" tokens
+            # verbatim — tools/report_lib/loader.py parses them for the CI report.
+            error_msg = "✗ VALIDATION COMPLETE"
+            if self.errors_found > 0:
+                error_msg += f" - {self.errors_found} ERROR(S)"
+            if self.warnings_found > 0:
+                error_msg += f" - {self.warnings_found} WARNING(S)"
+            n_files = len({i.file for i in self._issues if i.file})
+            if n_files:
+                error_msg += f" in {n_files} file{'s' if n_files != 1 else ''}"
             self.log(
-                f"{Colors.RED if self.use_colors else ''}✗ VALIDATION COMPLETE - {self.errors_found} TOTAL ISSUES FOUND{Colors.ENDC if self.use_colors else ''}",
-                "error",
+                f"{Colors.RED if self.use_colors else ''}{error_msg}{Colors.ENDC if self.use_colors else ''}",
+                "always",
             )
-        self.log(f"{'#'*80}\n")
+        self.log(f"{'#' * 80}\n", "always")
 
         self.save_output()
         return self.errors_found

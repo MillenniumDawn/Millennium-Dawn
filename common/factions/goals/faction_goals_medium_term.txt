@@ -1,11 +1,11 @@
 #category = short_term medium_term or long_term
 
 faction_goal_secure_european_continent = {
+	allowed = { original_tag = GER }
 	name = secure_european_continent_goal_name
 	description = secure_european_continent_goal_desc
 	category = medium_term
 	group = FOCUS_FILTER_ANNEXATION
-	visible = { ROOT = { original_tag = GER } }
 	completed = {
 		collection_size = {
 			input = {
@@ -62,14 +62,28 @@ faction_goal_high_seas_fleet = {
 	}
 	completed = {
 		has_war_with_major = yes
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_capital_ships_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_ships_with_type@battleship
+						add = num_ships_with_type@battle_cruiser
+						add = num_ships_with_type@cruiser
+						add = num_ships_with_type@stealth_destroyer
+						add = num_ships_with_type@destroyer
+						add = num_ships_with_type@heavy_frigate
+					}
+				}
 			}
-			unit = capital_ship
-			size > 19
+		}
+		check_variable = {
+			var = num_capital_ships_faction
+			value = 20
+			compare = greater_than_or_equals
+			tooltip = faction_goal_capital_ships_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -78,13 +92,7 @@ faction_goal_high_seas_fleet = {
 		custom_effect_tooltip = THE_FACTION_LEADER
 		add_faction_initiative = 1
 		every_collection_element = {
-			input = {
-				input = game:scope
-				operators = {
-					faction_members
-				}
-				name = ALL_FACTION_MEMBERS
-			}
+			input = collection:faction_members_collection
 			navy_experience = 50
 			add_tech_bonus = {
 				name = high_seas_fleet_tech_bonus
@@ -112,13 +120,8 @@ faction_goal_secure_the_oil_supply = {
 		tag = JAP
 	}
 	completed = {
-
 		has_resources_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
-			}
+			collection = collection:faction_members_collection
 			resource = oil
 			amount > 199
 		}
@@ -126,9 +129,8 @@ faction_goal_secure_the_oil_supply = {
 	complete_effect = {
 		every_collection_element = {
 			input = {
-				input = game:scope
+				input = collection:faction_members_collection
 				operators = {
-					faction_members
 					limit = {
 						has_resources_in_country = {
 							resource = oil
@@ -136,7 +138,6 @@ faction_goal_secure_the_oil_supply = {
 						}
 					}
 				}
-
 				name = AT_LEAST_70_OIL
 			}
 			custom_effect_tooltip = AT_LEAST_70_OIL
@@ -218,17 +219,13 @@ faction_goal_crush_the_democracy = {
 	category = medium_term
 	group = FOCUS_FILTER_CONSOLIDATION
 	visible = {
-		any_country = {
-			has_government = communism
-		}
 		has_elections = no
 	}
 	completed = {
 		collection_size = {
 			input = {
-				input = game:scope
+				input = collection:faction_members_collection
 				operators = {
-					faction_members
 					limit = {
 						democratic < 0.3
 					}
@@ -253,11 +250,11 @@ faction_goal_crush_the_democracy = {
 }
 
 faction_goal_secure_east_asia_continent = {
+	allowed = { original_tag = JAP }
 	name = secure_east_asia_continent_goal_name
 	description = secure_east_asia_continent_goal_desc
 	category = medium_term
 	group = FOCUS_FILTER_ANNEXATION
-	visible = { ROOT = { original_tag = JAP } }
 	completed = {
 		collection_size = {
 			input = {
@@ -272,7 +269,7 @@ faction_goal_secure_east_asia_continent = {
 						}
 					}
 				}
-				name = COLLECTION_CONTINENTAL_EUROPE_DEFEATED_OR_FACTION_MEMBERS
+				name = COLLECTION_CONTINENTAL_EAST_ASIA_DEFEATED_OR_FACTION_MEMBERS
 			}
 			value > 16
 		}
@@ -332,40 +329,58 @@ faction_goal_marine_corps = {
 	category = medium_term
 	group = FOCUS_FILTER_NAVY_XP
 	available = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_marine_battalions_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_battalions_with_type@L_Marine_Bat
+						add = num_battalions_with_type@L_Marine_Cdo_Bat
+						add = num_battalions_with_type@Mot_Marine_Bat
+						add = num_battalions_with_type@Mech_Marine_Bat
+						add = num_battalions_with_type@Arm_Marine_Bat
+					}
+				}
 			}
-			unit_category = { L_Marine_Bat L_Marine_Cdo_Bat Mot_Marine_Bat Mech_Marine_Bat Arm_Marine_Bat }
-			equipment_ratio = 0.9
-			size < 150
+		}
+		check_variable = {
+			var = num_marine_battalions_faction
+			value = 150
+			compare = less_than
+			tooltip = faction_goal_marine_bats_below_tt
 		}
 	}
 	completed = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_marine_battalions_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_battalions_with_type@L_Marine_Bat
+						add = num_battalions_with_type@L_Marine_Cdo_Bat
+						add = num_battalions_with_type@Mot_Marine_Bat
+						add = num_battalions_with_type@Mech_Marine_Bat
+						add = num_battalions_with_type@Arm_Marine_Bat
+					}
+				}
 			}
-			unit_category = { L_Marine_Bat L_Marine_Cdo_Bat Mot_Marine_Bat Mech_Marine_Bat Arm_Marine_Bat }
-			equipment_ratio = 0.9
-			size > 149
+		}
+		check_variable = {
+			var = num_marine_battalions_faction
+			value = 150
+			compare = greater_than_or_equals
+			tooltip = faction_goal_marine_bats_at_least_tt
 		}
 	}
 	complete_effect = {
 		add_faction_power_projection = 100
 		newline = yes
 		every_collection_element = {
-			input = {
-				input = game:scope
-				operators = {
-					faction_members
-				}
-				name = ALL_FACTION_MEMBERS_WITH_1_AMPHIBIOUS
-			}
+			input = collection:faction_members_collection
 			random_character = {
 				tooltip = ONE_GENERAL
 				visible_when_empty = yes
@@ -416,27 +431,49 @@ faction_goal_airborne_corps = {
 	category = medium_term
 	group = FOCUS_FILTER_AIR_XP
 	available = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_airborne_battalions_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_battalions_with_type@Arm_Air_Inf_Bat
+						add = num_battalions_with_type@Mech_Air_Inf_Bat
+						add = num_battalions_with_type@Mot_Air_Inf_Bat
+						add = num_battalions_with_type@L_Air_Inf_Bat
+					}
+				}
 			}
-			unit_category = { Arm_Air_Inf_Bat Mech_Air_Inf_Bat Mot_Air_Inf_Bat L_Air_Inf_Bat }
-			equipment_ratio = 0.9
-			size < 100
+		}
+		check_variable = {
+			var = num_airborne_battalions_faction
+			value = 100
+			compare = less_than
+			tooltip = faction_goal_airborne_bats_below_tt
 		}
 	}
 	completed = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_airborne_battalions_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_battalions_with_type@Arm_Air_Inf_Bat
+						add = num_battalions_with_type@Mech_Air_Inf_Bat
+						add = num_battalions_with_type@Mot_Air_Inf_Bat
+						add = num_battalions_with_type@L_Air_Inf_Bat
+					}
+				}
 			}
-			unit_category = { Arm_Air_Inf_Bat Mech_Air_Inf_Bat Mot_Air_Inf_Bat L_Air_Inf_Bat }
-			equipment_ratio = 0.9
-			size > 99
+		}
+		check_variable = {
+			var = num_airborne_battalions_faction
+			value = 100
+			compare = greater_than_or_equals
+			tooltip = faction_goal_airborne_bats_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -497,25 +534,45 @@ faction_goal_submarine_force = {
 	category = medium_term
 	group = FOCUS_FILTER_NAVY_XP
 	available = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_submarines_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_ships_with_type@missile_submarine
+						add = num_ships_with_type@attack_submarine
+					}
+				}
 			}
-			unit = submarine
-			size < 100
+		}
+		check_variable = {
+			var = num_submarines_faction
+			value = 100
+			compare = less_than
+			tooltip = faction_goal_submarines_below_tt
 		}
 	}
 	completed = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_submarines_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_ships_with_type@missile_submarine
+						add = num_ships_with_type@attack_submarine
+					}
+				}
 			}
-			unit = submarine
-			size > 99
+		}
+		check_variable = {
+			var = num_submarines_faction
+			value = 100
+			compare = greater_than_or_equals
+			tooltip = faction_goal_submarines_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -523,9 +580,8 @@ faction_goal_submarine_force = {
 		newline = yes
 		every_collection_element = {
 			input = {
-				input = game:scope
+				input = collection:faction_members_collection
 				operators = {
-					faction_members
 					limit = {
 						has_army_size = {
 							size > 24
@@ -593,25 +649,53 @@ faction_goal_convoy_escort_force = {
 	category = medium_term
 	group = FOCUS_FILTER_NAVY_XP
 	available = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_screen_ships_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_ships_with_type@screen_destroyer
+						add = num_ships_with_type@stealth_frigate
+						add = num_ships_with_type@frigate
+						add = num_ships_with_type@corvette
+						add = num_ships_with_type@stealth_corvette
+						add = num_ships_with_type@patrol_boat
+					}
+				}
 			}
-			unit = screen_ship
-			size < 100
+		}
+		check_variable = {
+			var = num_screen_ships_faction
+			value = 100
+			compare = less_than
+			tooltip = faction_goal_screen_ships_below_tt
 		}
 	}
 	completed = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_screen_ships_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_ships_with_type@screen_destroyer
+						add = num_ships_with_type@stealth_frigate
+						add = num_ships_with_type@frigate
+						add = num_ships_with_type@corvette
+						add = num_ships_with_type@stealth_corvette
+						add = num_ships_with_type@patrol_boat
+					}
+				}
 			}
-			unit = screen_ship
-			size > 99
+		}
+		check_variable = {
+			var = num_screen_ships_faction
+			value = 100
+			compare = greater_than_or_equals
+			tooltip = faction_goal_screen_ships_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -619,9 +703,8 @@ faction_goal_convoy_escort_force = {
 		newline = yes
 		every_collection_element = {
 			input = {
-				input = game:scope
+				input = collection:faction_members_collection
 				operators = {
-					faction_members
 					limit = {
 						has_army_size = {
 							size > 24
@@ -682,25 +765,45 @@ faction_goal_air_superiority = {
 	category = medium_term
 	group = FOCUS_FILTER_AIR_XP
 	available = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_fighters_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_deployed_planes_with_type@small_plane_airframe
+						add = num_deployed_planes_with_type@cv_small_plane_airframe
+					}
+				}
 			}
-			unit = fighter
-			size < 1000
+		}
+		check_variable = {
+			var = num_fighters_faction
+			value = 1000
+			compare = less_than
+			tooltip = faction_goal_fighters_below_tt
 		}
 	}
 	completed = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_fighters_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_deployed_planes_with_type@small_plane_airframe
+						add = num_deployed_planes_with_type@cv_small_plane_airframe
+					}
+				}
 			}
-			unit = fighter
-			size > 999
+		}
+		check_variable = {
+			var = num_fighters_faction
+			value = 1000
+			compare = greater_than_or_equals
+			tooltip = faction_goal_fighters_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -708,9 +811,8 @@ faction_goal_air_superiority = {
 		newline = yes
 		every_collection_element = {
 			input = {
-				input = game:scope
+				input = collection:faction_members_collection
 				operators = {
-					faction_members
 					limit = {
 						has_army_size = {
 							size > 249
@@ -745,14 +847,13 @@ faction_goal_air_superiority = {
 		}
 		modifier = {
 			add = 1 # Factions with decent number of military factories should probably start caring a lot about contesting air superiority - because they can
-			count_in_collection = {
-				collection = {
-					input = game:scope
-					operators = { faction_members }
-					name = FACTION_NAME
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					add = num_of_military_factories
 				}
-				buildings = { arms_factory }
-				size > 149
+				greater_than = 149
 			}
 		}
 	}
@@ -767,22 +868,14 @@ faction_goal_industrial_expansion = {
 	group = FOCUS_FILTER_INDUSTRY
 	visible = {
 		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION_NAME
-			}
+			collection = collection:faction_members_collection
 			buildings = { industrial_complex }
 			size > 49
 		}
 	}
 	completed = {
 		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION_NAME
-			}
+			collection = collection:faction_members_collection
 			buildings = { industrial_complex }
 			size > 149
 		}
@@ -807,15 +900,11 @@ faction_goal_industrial_expansion = {
 	ai_will_do = {
 		base = 1
 		modifier = {
-			add = 1 # If already big it's easy to grow
+			add = 2
 			is_major = yes
 		}
 		modifier = {
-			add = 1 # If already big it's easy to grow
-			is_major = yes
-		}
-		modifier = {
-			add = 1 # Prioritize more earlier on - more pay-off
+			add = 1
 			date < 1938.1.1
 		}
 	}
@@ -828,22 +917,14 @@ faction_goal_a_military_base = {
 	group = FOCUS_FILTER_INDUSTRY
 	visible = {
 		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION_NAME
-			}
+			collection = collection:faction_members_collection
 			buildings = { arms_factory }
 			size > 49
 		}
 	}
 	completed = {
 		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION_NAME
-			}
+			collection = collection:faction_members_collection
 			buildings = { arms_factory }
 			size > 149
 		}
@@ -886,7 +967,7 @@ faction_goal_war_on_communism = {
 	category = medium_term
 	group = FOCUS_FILTER_POLITICAL_CHARACTER
 	visible = {
-		any_country = {
+		any_other_country = {
 			has_government = communism
 			is_on_same_continent_as = ROOT
 		}
@@ -915,84 +996,6 @@ faction_goal_war_on_communism = {
 	}
 }
 
-
-### Strategic Resources
-
-# Ill leave it as an example
-# Iraqi Oil
-# faction_goal_control_iraqi_oil = {
-# 	name = control_iraqi_oil_goal_name
-# 	description = control_iraqi_oil_goal_desc
-# 	category = medium_term
-
-# 	allowed = {
-# 		NOT = {
-# 			original_tag = IRQ
-# 			is_in_faction_with = IRQ
-# 		}
-# 	}
-# 	visible = {
-# 		any_collection_element = {
-# 			collection = {
-# 				input = game:scope
-# 				operators = { faction_members controlled_states }
-# 				name = FACTION_CONTROLLED_STATES
-# 			}
-# 			distance_to = {
-# 				target = 291
-# 				value < 2000
-# 			}
-# 		}
-# 	}
-# 	available = {
-# 		OR = {
-# 			291 = { is_controlled_by_ROOT_or_ally = no }
-# 			676 = {	is_controlled_by_ROOT_or_ally = no }
-# 			1010 = { is_controlled_by_ROOT_or_ally = no }
-# 		}
-# 	}
-# 	completed = {
-# 		291 = { is_controlled_by_ROOT_or_ally = yes }
-# 		676 = {	is_controlled_by_ROOT_or_ally = yes }
-# 		1010 = { is_controlled_by_ROOT_or_ally = yes }
-# 	}
-# 	complete_effect = {
-# 		add_faction_power_projection = 100
-# 		newline = yes
-# 		custom_effect_tooltip = TARGET_STATE_CONTROLLERS
-# 		every_faction_member = {
-# 			visible_when_empty = yes
-# 			limit = {
-# 				OR = {
-# 					controls_state = 291
-# 					controls_state = 676
-# 					controls_state = 1010
-# 				}
-# 			}
-# 			add_faction_initiative = 1
-# 		}
-# 		every_state = {
-# 			limit = {
-# 				OR = {
-# 					state = 291
-# 					state = 676
-# 					state = 1010
-# 				}
-# 			}
-# 			if = {
-# 				limit = {
-# 					infrastructure < 5
-# 				}
-# 				add_building_construction = {
-# 					type = infrastructure
-# 					level = 1
-# 					instant_build = yes
-# 				}
-# 			}
-# 		}
-# 	}
-# }
-
 ### Strategic Bases
 
 # Ill leave it as an example
@@ -1004,18 +1007,16 @@ faction_goal_control_panama_canal = {
 	group = FOCUS_FILTER_NAVY_XP
 	allowed = {
 		NOT = {
-			original_tag = USA
-			is_in_faction_with = USA
+			OR = {
+				original_tag = USA
+				is_in_faction_with = USA
+			}
 		}
 	}
 	visible = {
 		OR = {
 			any_collection_element = {
-				collection = {
-					input = game:scope
-					operators = { faction_members controlled_states }
-					name = FACTION_CONTROLLED_STATES # a custom loc string that will be displayed
-				}
+				collection = collection:faction_controlled_states_collection
 				distance_to = {
 					target = 853
 					value < 2000
@@ -1025,11 +1026,7 @@ faction_goal_control_panama_canal = {
 				853 = { is_controlled_by = USA }
 				has_war_with = USA
 				any_collection_element = {
-					collection = {
-						input = game:scope
-						operators = { faction_members controlled_states }
-						name = FACTION_CONTROLLED_STATES # a custom loc string that will be displayed
-					}
+					collection = collection:faction_controlled_states_collection
 					distance_to = {
 						target = 853
 						value < 6000
@@ -1097,17 +1094,15 @@ faction_goal_control_gibraltar = {
 	group = FOCUS_FILTER_NAVY_XP
 	allowed = {
 		NOT = {
-			original_tag = ENG
-			is_in_faction_with = ENG
+			OR = {
+				original_tag = ENG
+				is_in_faction_with = ENG
+			}
 		}
 	}
 	visible = {
 		any_collection_element = {
-			collection = {
-				input = game:scope
-				operators = { faction_members controlled_states }
-				name = FACTION_CONTROLLED_STATES
-			}
+			collection = collection:faction_controlled_states_collection
 			distance_to = {
 				target = 19
 				value < 2000
@@ -1156,17 +1151,15 @@ faction_goal_control_bosporus = {
 	group = FOCUS_FILTER_ANNEXATION
 	allowed = {
 		NOT = {
-			original_tag = TUR
-			is_in_faction_with = TUR
+			OR = {
+				original_tag = TUR
+				is_in_faction_with = TUR
+			}
 		}
 	}
 	visible = {
 		any_collection_element = {
-			collection = {
-				input = game:scope
-				operators = { faction_members controlled_states }
-				name = FACTION_CONTROLLED_STATES
-			}
+			collection = collection:faction_controlled_states_collection
 			distance_to = {
 				target = 155
 				value < 2000
@@ -1233,19 +1226,17 @@ faction_goal_control_suez_canal = {
 	group = FOCUS_FILTER_NAVY_XP
 	allowed = {
 		NOT = {
-			original_tag = ENG
-			is_in_faction_with = ENG
-			original_tag = EGY
-			is_in_faction_with = EGY
+			OR = {
+				original_tag = ENG
+				is_in_faction_with = ENG
+				original_tag = EGY
+				is_in_faction_with = EGY
+			}
 		}
 	}
 	visible = {
 		any_collection_element = {
-			collection = {
-				input = game:scope
-				operators = { faction_members controlled_states }
-				name = FACTION_CONTROLLED_STATES
-			}
+			collection = collection:faction_controlled_states_collection
 			distance_to = {
 				target = 214
 				value < 2000
@@ -1283,6 +1274,7 @@ faction_goal_control_suez_canal = {
 				add_building_construction = {
 					type = naval_base
 					level = 1
+					province = { all_provinces = yes limit_to_coastal = yes limit_to_naval_base = yes first = yes }
 				}
 			}
 		}
@@ -1303,24 +1295,22 @@ faction_goal_control_suez_canal = {
 # mandeb
 faction_goal_control_mandeb = {
 	name = control_mandeb_goal_name
-	description = control_mandeb_goal_desc
+	description = control_mandeb_goal_name_desc
 	category = medium_term
 	group = FOCUS_FILTER_NAVY_XP
 	allowed = {
 		NOT = {
-			original_tag = YEM
-			is_in_faction_with = YEM
-			original_tag = DJI
-			is_in_faction_with = DJI
+			OR = {
+				original_tag = YEM
+				is_in_faction_with = YEM
+				original_tag = DJI
+				is_in_faction_with = DJI
+			}
 		}
 	}
 	visible = {
 		any_collection_element = {
-			collection = {
-				input = game:scope
-				operators = { faction_members controlled_states }
-				name = FACTION_CONTROLLED_STATES
-			}
+			collection = collection:faction_controlled_states_collection
 			distance_to = {
 				target = 1020
 				value < 2000
@@ -1375,3 +1365,4 @@ faction_goal_control_mandeb = {
 		}
 	}
 }
+

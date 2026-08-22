@@ -20,25 +20,13 @@ types = {
 				has_wargoal_against = FROM
 				is_justifying_wargoal_against = FROM
 			}
+			FROM = { MD_special_countries = no }
 		}
 
 		# Can prepare
 		available = {
 			raid_target_eligible = yes
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 			OR = {
 				has_wargoal_against = FROM
 				has_war_with = FROM
@@ -46,6 +34,7 @@ types = {
 					has_country_flag = promised_retaliation_against@FROM
 				}
 			}
+			raid_target_eligible_from = yes
 		}
 
 		unit_requirements = {
@@ -122,24 +111,6 @@ types = {
 
 		success_levels = {
 			failure = {
-				victim_effects = {
-					var:target_state = {
-						meta_effect = {
-							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
-								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
-								}
-							}
-							DAM = "[?building_damage_by_missile]"
-						}
-					}
-
-				}
 				actor_effects = {
 					raid_damage_units = {
 						org_damage = 0.30
@@ -155,7 +126,6 @@ types = {
 				}
 			}
 			limited_success = {
-				victim_effects = { }
 				actor_effects = {
 					var:actor_country = {
 						add_timed_idea = {
@@ -171,28 +141,9 @@ types = {
 					}
 
 					raid_add_unit_experience = 0.25
-
 				}
-
 			}
 			success = {
-				victim_effects = {
-					var:target_state = {
-						meta_effect = {
-							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
-								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
-								}
-							}
-							DAM = "[?building_damage_by_missile]"
-						}
-					}
-				}
 				actor_effects = {
 					raid_damage_units = {
 						org_damage = 0.2
@@ -212,34 +163,9 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
-				victim_effects = {
-					var:target_state = {
-						meta_effect = {
-							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
-								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
-								}
-							}
-							DAM = "[?building_damage_by_missile]"
-						}
-					}
-					var:victim_country = {
-
-					}
-				}
 				actor_effects = {
 					raid_damage_units = {
 						org_damage = 0.1
@@ -254,17 +180,11 @@ types = {
 						}
 					}
 
-					# Unit Experience
 					raid_add_unit_experience = 0.25
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -272,11 +192,9 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
-				NOT = {
-					has_war_with = FROM
-					is_neighbor_of = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				NOT = { has_war_with = FROM }
+				NOT = { is_neighbor_of = FROM }
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
 				add = -100
 			}
 			modifier = {
@@ -297,16 +215,13 @@ types = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value > -150
+					value < -50
 				}
 			}
 			modifier = {
 				factor = 0
 				threat < 0.10
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0.05
@@ -320,10 +235,7 @@ types = {
 			modifier = {
 				factor = 0
 				date < 2001.1.1
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				NOT = {
@@ -331,8 +243,33 @@ types = {
 				}
 				factor = 0
 				FROM = {
-					has_idea = NATO_member
+					OR = {
+						has_idea = NATO_member
+						has_idea = CSTO_member
+						has_idea = EU_member
+						has_idea = faction_resistance_axis_member
+					}
 				}
+			}
+			# Alliance gate — back off when target is in a faction and our alliance ratio is weak (<0.7)
+			modifier = {
+				factor = 0
+				raid_alliance_unfavorable = yes
+			}
+			# Doctrinal reach gate — isolation/local_security/limited interventionism can't reach.
+			# Bypassed by the rule_raid_doctrine_reach game rule.
+			modifier = {
+				factor = 0
+				raid_intervention_doctrine_reach_block = yes
+			}
+			# Major-power target dampener — AI minors are 4× less likely to raid super/great powers while at peace.
+			modifier = {
+				factor = 0.25
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = {
+					OR = { has_idea = super_power has_idea = great_power }
+				}
+				NOT = { OR = { has_idea = super_power has_idea = great_power } }
 			}
 			modifier = {
 				has_country_flag = promised_retaliation_against@FROM
@@ -357,10 +294,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -372,19 +306,13 @@ types = {
 			modifier = {
 				# Don't raid nations we have influence in
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				FROM = { is_influencer = yes }
 			}
 			modifier = {
 				# Don't raid if heavily in debt
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				check_variable = { debt_ratio > 0.25 }
 			}
 			modifier = {
@@ -411,25 +339,13 @@ types = {
 		# Specific Target is visible
 		show_target = {
 			raid_show_target_specops_hostile = yes
+			FROM = { MD_special_countries = no }
 		}
 
 		# Can prepare
 		available = {
 			raid_target_eligible = yes
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 			OR = {
 				has_wargoal_against = FROM
 				has_war_with = FROM
@@ -446,6 +362,7 @@ types = {
 					has_country_flag = promised_retaliation_against@FROM
 				}
 			}
+			raid_target_eligible_from = yes
 		}
 
 		launchable = {
@@ -459,7 +376,8 @@ types = {
 					FROM = {
 						has_war = yes
 					}
-					has_political_power > 100
+					set_temp_variable = { cost = 100 }
+					raid_can_launch = yes
 				}
 			}
 		}
@@ -471,10 +389,6 @@ types = {
 		}
 		target_icon = GFX_other_target_icon
 		launch_sound = raid_launch_marine
-
-		essential_equipment = {
-
-		}
 
 		additional_equipment = {
 			# list of equipment archetypes and numbers
@@ -578,32 +492,36 @@ types = {
 							for_loop_effect = {
 								end = num_supply_node
 								value = temp_hold
-								damage_building = {
-								type = supply_node
-								damage = 0.25
-							}
+								if = {
+									limit = { supply_node > 0 }
+									damage_building = {
+									type = supply_node
+									damage = 0.25
+								}
+								}
 						}
 						set_temp_variable = { num_rail_way = THIS.building_level@rail_way }
 						for_loop_effect = {
 							end = num_rail_way
 							value = temp_hold
-							damage_building = {
-								type = rail_way
-								damage = 0.25
+							if = {
+								limit = { rail_way > 0 }
+								damage_building = {
+									type = rail_way
+									damage = 0.25
+								}
 							}
 						}
 					}
 					send_raid_event_to_victim = yes
 				}
 				actor_effects = {
-					# Damage to unit
 					raid_damage_units = {
 						org_damage = 0.2
 						str_damage = 0.05
 						ratio = yes
 					}
 
-					# Unit Experience
 					raid_add_unit_experience = 0.25
 
 					var:actor_country = {
@@ -625,18 +543,24 @@ types = {
 							for_loop_effect = {
 								end = num_supply_node
 								value = temp_hold
-								damage_building = {
-									type = supply_node
-									damage = 0.5 # levels of damage
+								if = {
+									limit = { supply_node > 0 }
+									damage_building = {
+										type = supply_node
+										damage = 0.5 # levels of damage
+									}
 								}
 							}
 							set_temp_variable = { num_rail_way = THIS.building_level@rail_way }
 							for_loop_effect = {
 								end = num_rail_way
 								value = temp_hold
-								damage_building = {
-									type = rail_way
-									damage = 0.5 # levels of damage
+								if = {
+									limit = { rail_way > 0 }
+									damage_building = {
+										type = rail_way
+										damage = 0.5 # levels of damage
+									}
 								}
 							}
 						}
@@ -664,11 +588,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -678,18 +597,24 @@ types = {
 						for_loop_effect = {
 							end = num_supply_node
 							value = temp_hold
-							damage_building = {
-								type = supply_node
-								damage = 1.00 # levels of damage
+							if = {
+								limit = { supply_node > 0 }
+								damage_building = {
+									type = supply_node
+									damage = 1.00 # levels of damage
+								}
 							}
 						}
 						set_temp_variable = { num_rail_way = THIS.building_level@rail_way }
 						for_loop_effect = {
 							end = num_rail_way
 							value = temp_hold
-							damage_building = {
-								type = rail_way
-								damage = 1.0 # levels of damage
+							if = {
+								limit = { rail_way > 0 }
+								damage_building = {
+									type = rail_way
+									damage = 1.0 # levels of damage
+								}
 							}
 						}
 						send_raid_event_to_victim = yes
@@ -716,11 +641,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -728,11 +648,9 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
-				NOT = {
-					has_war_with = FROM
-					is_neighbor_of = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				NOT = { has_war_with = FROM }
+				NOT = { is_neighbor_of = FROM }
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
 				add = -100
 			}
 			modifier = {
@@ -753,7 +671,7 @@ types = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value > -150
+					value < -50
 				}
 			}
 			modifier = {
@@ -768,23 +686,37 @@ types = {
 			modifier = {
 				factor = 0
 				date < 2001.1.1
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
 				threat < 0.10
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
 				NOT = { has_country_flag = promised_retaliation_against@FROM }
 				FROM = { has_idea = NATO_member }
+			}
+			# Alliance gate — back off when target is in a faction and our alliance ratio is weak (<0.7)
+			modifier = {
+				factor = 0
+				raid_alliance_unfavorable = yes
+			}
+			# Doctrinal reach gate — isolation/local_security/limited interventionism can't reach.
+			# Bypassed by the rule_raid_doctrine_reach game rule.
+			modifier = {
+				factor = 0
+				raid_intervention_doctrine_reach_block = yes
+			}
+			# Major-power target dampener — AI minors are 4× less likely to raid super/great powers while at peace.
+			modifier = {
+				factor = 0.25
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = {
+					OR = { has_idea = super_power has_idea = great_power }
+				}
+				NOT = { OR = { has_idea = super_power has_idea = great_power } }
 			}
 			modifier = {
 				has_country_flag = promised_retaliation_against@FROM
@@ -809,10 +741,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -824,19 +753,13 @@ types = {
 			modifier = {
 				# Don't raid nations we have influence in
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				FROM = { is_influencer = yes }
 			}
 			modifier = {
 				# Don't raid if heavily in debt
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				check_variable = { debt_ratio > 0.25 }
 			}
 			modifier = {
@@ -863,25 +786,13 @@ types = {
 		# Specific Target is visible
 		show_target = {
 			raid_show_target_specops_hostile = yes
+			FROM = { MD_special_countries = no }
 		}
 
 		# Can prepare
 		available = {
 			raid_target_eligible = yes
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 			OR = {
 				has_wargoal_against = FROM
 				has_war_with = FROM
@@ -898,6 +809,7 @@ types = {
 					has_country_flag = promised_retaliation_against@FROM
 				}
 			}
+			raid_target_eligible_from = yes
 		}
 
 		launchable = {
@@ -1021,9 +933,12 @@ types = {
 						for_loop_effect = {
 							end = num_air_base
 							value = temp_hold
-							damage_building = {
-								type = air_base
-								damage = 0.25 # levels of damage
+							if = {
+								limit = { air_base > 0 }
+								damage_building = {
+									type = air_base
+									damage = 0.25 # levels of damage
+								}
 							}
 						}
 					}
@@ -1056,9 +971,12 @@ types = {
 						for_loop_effect = {
 							end = num_air_base
 							value = temp_hold
-							damage_building = {
-								type = air_base
-								damage = 0.5 # levels of damage
+							if = {
+								limit = { air_base > 0 }
+								damage_building = {
+									type = air_base
+									damage = 0.5 # levels of damage
+								}
 							}
 						}
 					}
@@ -1085,11 +1003,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -1099,9 +1012,12 @@ types = {
 						for_loop_effect = {
 							end = num_air_base
 							value = temp_hold
-							damage_building = {
-								type = air_base
-								damage = 1.00 # levels of damage
+							if = {
+								limit = { air_base > 0 }
+								damage_building = {
+									type = air_base
+									damage = 1.00 # levels of damage
+								}
 							}
 						}
 					}
@@ -1128,11 +1044,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -1140,11 +1051,9 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
-				NOT = {
-					has_war_with = FROM
-					is_neighbor_of = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				NOT = { has_war_with = FROM }
+				NOT = { is_neighbor_of = FROM }
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
 				add = -100
 			}
 			modifier = {
@@ -1165,16 +1074,13 @@ types = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value > -150
+					value < -50
 				}
 			}
 			modifier = {
 				factor = 0
 				threat < 0.10
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0.05
@@ -1188,10 +1094,7 @@ types = {
 			modifier = {
 				factor = 0
 				date < 2001.1.1
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				NOT = {
@@ -1199,8 +1102,33 @@ types = {
 				}
 				factor = 0
 				FROM = {
-					has_idea = NATO_member
+					OR = {
+						has_idea = NATO_member
+						has_idea = CSTO_member
+						has_idea = EU_member
+						has_idea = faction_resistance_axis_member
+					}
 				}
+			}
+			# Alliance gate — back off when target is in a faction and our alliance ratio is weak (<0.7)
+			modifier = {
+				factor = 0
+				raid_alliance_unfavorable = yes
+			}
+			# Doctrinal reach gate — isolation/local_security/limited interventionism can't reach.
+			# Bypassed by the rule_raid_doctrine_reach game rule.
+			modifier = {
+				factor = 0
+				raid_intervention_doctrine_reach_block = yes
+			}
+			# Major-power target dampener — AI minors are 4× less likely to raid super/great powers while at peace.
+			modifier = {
+				factor = 0.25
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = {
+					OR = { has_idea = super_power has_idea = great_power }
+				}
+				NOT = { OR = { has_idea = super_power has_idea = great_power } }
 			}
 			modifier = {
 				has_country_flag = promised_retaliation_against@FROM
@@ -1225,10 +1153,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -1240,19 +1165,13 @@ types = {
 			modifier = {
 				# Don't raid nations we have influence in
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				FROM = { is_influencer = yes }
 			}
 			modifier = {
 				# Don't raid if heavily in debt
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				check_variable = { debt_ratio > 0.25 }
 			}
 			modifier = {
@@ -1279,10 +1198,12 @@ types = {
 		# Specific Target is visible
 		show_target = {
 			raid_show_target_specops_hostile = yes
+			FROM = { MD_special_countries = no }
 		}
 
 		# Can prepare
 		available = {
+			raid_target_eligible = yes
 			any_owned_state = {
 				is_coastal = yes
 			}
@@ -1290,16 +1211,10 @@ types = {
 			custom_trigger_tooltip = {
 				tooltip = has_modern_landing_craft_TT
 				if = {
-					if = {
-						limit = {
-							NOT = {
-								has_tech = tech_landing_craft_4
-							}
-						}
-						FROM = {
-							is_on_same_continent_as = PREV
-						}
+					limit = {
+						NOT = { has_tech = tech_landing_craft_4 }
 					}
+					FROM = { is_on_same_continent_as = PREV }
 				}
 			}
 			OR = {
@@ -1318,6 +1233,7 @@ types = {
 					has_country_flag = promised_retaliation_against@FROM
 				}
 			}
+			raid_target_eligible_from = yes
 		}
 
 		launchable = {
@@ -1409,17 +1325,7 @@ types = {
 		success_levels = {
 			failure = {
 				victim_effects = {
-					var:target_state = {
-						meta_effect = {
-							text = {
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
-								}
-							}
-							DAM = "[?building_damage_by_missile]"
-						}
-					}
+					send_raid_event_to_victim = yes
 				}
 				actor_effects = {
 					raid_damage_units = {
@@ -1451,9 +1357,12 @@ types = {
 						for_loop_effect = {
 							end = num_naval_base
 							value = temp_hold
-							damage_building = {
-								type = naval_base
-								damage = 0.25
+							if = {
+								limit = { naval_base > 0 }
+								damage_building = {
+									type = naval_base
+									damage = 0.25
+								}
 							}
 						}
 					}
@@ -1486,9 +1395,12 @@ types = {
 						for_loop_effect = {
 							end = num_naval_base
 							value = temp_hold
-							damage_building = {
-								type = naval_base
-								damage = 0.5
+							if = {
+								limit = { naval_base > 0 }
+								damage_building = {
+									type = naval_base
+									damage = 0.5
+								}
 							}
 						}
 					}
@@ -1515,11 +1427,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -1529,9 +1436,12 @@ types = {
 						for_loop_effect = {
 							end = num_naval_base
 							value = temp_hold
-							damage_building = {
-								type = naval_base
-								damage = 1.00 # levels of damage
+							if = {
+								limit = { naval_base > 0 }
+								damage_building = {
+									type = naval_base
+									damage = 1.00 # levels of damage
+								}
 							}
 						}
 					}
@@ -1558,11 +1468,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -1570,11 +1475,9 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
-				NOT = {
-					has_war_with = FROM
-					is_neighbor_of = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				NOT = { has_war_with = FROM }
+				NOT = { is_neighbor_of = FROM }
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
 				add = -100
 			}
 			modifier = {
@@ -1595,16 +1498,13 @@ types = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value > -150
+					value < -50
 				}
 			}
 			modifier = {
 				factor = 0
 				threat < 0.10
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0.05
@@ -1618,10 +1518,7 @@ types = {
 			modifier = {
 				factor = 0
 				date < 2001.1.1
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				NOT = {
@@ -1629,8 +1526,33 @@ types = {
 				}
 				factor = 0
 				FROM = {
-					has_idea = NATO_member
+					OR = {
+						has_idea = NATO_member
+						has_idea = CSTO_member
+						has_idea = EU_member
+						has_idea = faction_resistance_axis_member
+					}
 				}
+			}
+			# Alliance gate — back off when target is in a faction and our alliance ratio is weak (<0.7)
+			modifier = {
+				factor = 0
+				raid_alliance_unfavorable = yes
+			}
+			# Doctrinal reach gate — isolation/local_security/limited interventionism can't reach.
+			# Bypassed by the rule_raid_doctrine_reach game rule.
+			modifier = {
+				factor = 0
+				raid_intervention_doctrine_reach_block = yes
+			}
+			# Major-power target dampener — AI minors are 4× less likely to raid super/great powers while at peace.
+			modifier = {
+				factor = 0.25
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = {
+					OR = { has_idea = super_power has_idea = great_power }
+				}
+				NOT = { OR = { has_idea = super_power has_idea = great_power } }
 			}
 			modifier = {
 				has_country_flag = promised_retaliation_against@FROM
@@ -1655,10 +1577,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -1670,19 +1589,13 @@ types = {
 			modifier = {
 				# Don't raid nations we have influence in
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				FROM = { is_influencer = yes }
 			}
 			modifier = {
 				# Don't raid if heavily in debt
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				check_variable = { debt_ratio > 0.25 }
 			}
 			modifier = {
@@ -1706,34 +1619,17 @@ types = {
 			type = line
 		}
 
-		allowed = {
-		}
 		# Raid Type is visible
-		visible = {
-
-		}
 		# Specific Target is visible
 		show_target = {
 			raid_show_target_specops_hostile = yes
+			FROM = { MD_special_countries = no }
 		}
 
 		# Can prepare
 		available = {
 			raid_target_eligible = yes
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 			OR = {
 				has_wargoal_against = FROM
 				has_war_with = FROM
@@ -1745,13 +1641,12 @@ types = {
 					has_country_flag = promised_retaliation_against@FROM
 				}
 			}
+			raid_target_eligible_from = yes
 		}
 
 		launchable = {
-			OR = {
-				has_war_with = FROM
-				has_political_power > 300
-			}
+			set_temp_variable = { cost = 300 }
+			raid_can_launch = yes
 		}
 
 		target_type = {
@@ -1840,16 +1735,6 @@ types = {
 					var:actor_country = {
 						if = {
 							limit = {
-								NOT = {
-									has_war_with = var:ROOT.victim_country
-								}
-							}
-						}
-					}
-
-					var:actor_country = {
-						if = {
-							limit = {
 								NOT = { has_war_with = var:ROOT.victim_country }
 							}
 							add_political_power = -100
@@ -1909,7 +1794,6 @@ types = {
 					}
 				}
 				actor_effects = {
-					# Damage to unit
 					raid_damage_units = {
 						org_damage = 0.15
 						str_damage = 0.05
@@ -1919,7 +1803,6 @@ types = {
 					var:actor_country = {
 					}
 
-					# Unit Experience
 					raid_add_unit_experience = 0.25
 
 					var:actor_country = {
@@ -1934,11 +1817,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -1972,7 +1850,6 @@ types = {
 						}
 					}
 
-					# Unit Experience
 					raid_add_unit_experience = 0.25
 					var:actor_country = {
 						if = {
@@ -1986,11 +1863,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -1998,11 +1870,9 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
-				NOT = {
-					has_war_with = FROM
-					is_neighbor_of = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				NOT = { has_war_with = FROM }
+				NOT = { is_neighbor_of = FROM }
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
 				add = -100
 			}
 			modifier = {
@@ -2023,26 +1893,13 @@ types = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value > -150
+					value < -50
 				}
 			}
 			modifier = {
 				add = -10
 				NOT = { has_war_with = FROM }
-				OR = {
-					AND = {
-						FROM = { has_government = democratic }
-						THIS = { has_government = democratic }
-					}
-					AND = {
-						FROM = { has_government = neutrality }
-						THIS = { has_government = neutrality }
-					}
-					AND = {
-						FROM = { has_government = communism }
-						THIS = { has_government = communism }
-					}
-				}
+				has_government = FROM
 			}
 			modifier = {
 				NOT = {
@@ -2050,8 +1907,33 @@ types = {
 				}
 				factor = 0
 				FROM = {
-					has_idea = NATO_member
+					OR = {
+						has_idea = NATO_member
+						has_idea = CSTO_member
+						has_idea = EU_member
+						has_idea = faction_resistance_axis_member
+					}
 				}
+			}
+			# Alliance gate — back off when target is in a faction and our alliance ratio is weak (<0.7)
+			modifier = {
+				factor = 0
+				raid_alliance_unfavorable = yes
+			}
+			# Doctrinal reach gate — isolation/local_security/limited interventionism can't reach.
+			# Bypassed by the rule_raid_doctrine_reach game rule.
+			modifier = {
+				factor = 0
+				raid_intervention_doctrine_reach_block = yes
+			}
+			# Major-power target dampener — AI minors are 4× less likely to raid super/great powers while at peace.
+			modifier = {
+				factor = 0.25
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = {
+					OR = { has_idea = super_power has_idea = great_power }
+				}
+				NOT = { OR = { has_idea = super_power has_idea = great_power } }
 			}
 			modifier = {
 				factor = 100
@@ -2068,16 +1950,13 @@ types = {
 			modifier = {
 				factor = 0
 				threat < 0.10
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				# Don't target anyone who is not a potential enemy
 				factor = 0
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
 				NOT = {
-					has_country_flag = promised_retaliation_against@FROM
 					is_in_array = {
 						array = potential_and_current_enemies
 						value = FROM  # Target country
@@ -2087,10 +1966,7 @@ types = {
 			modifier = {
 				factor = 0
 				has_war = yes
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -2113,10 +1989,7 @@ types = {
 			modifier = {
 				factor = 0
 				date < 2001.1.1
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				has_country_flag = conceded_to@FROM
@@ -2137,10 +2010,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -2152,19 +2022,13 @@ types = {
 			modifier = {
 				# Don't raid nations we have influence in
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				FROM = { is_influencer = yes }
 			}
 			modifier = {
 				# Don't raid if heavily in debt
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				check_variable = { debt_ratio > 0.25 }
 			}
 			modifier = {
@@ -2174,6 +2038,332 @@ types = {
 				check_variable = { debt_ratio > 0.15 }
 			}
 			#do some checks for nations here, like someone going for nukes will likely be targeted by enemies
+		}
+	}
+	#Direct action mission to free a captured spy / operative
+	free_captured_operative_mission = {
+		days_to_prepare = 30
+		days_re_enable = 50
+
+		category = special_forces_raids
+
+		command_power = 20 # command power allocation cost
+
+		arrow = {
+			type = line
+		}
+
+		# Raid Type is visible
+		# Specific Target is visible
+		show_target = {
+			raid_show_target_specops_hostile = yes
+			FROM = { MD_special_countries = no }
+		}
+
+		# Can prepare
+		available = {
+			raid_target_eligible = yes
+			raid_special_forces_tech_available = yes
+			# Target country must be holding one of our operatives captive
+			FROM = { has_captured_operative = ROOT }
+			raid_target_eligible_from = yes
+		}
+
+		launchable = {
+			FROM = { has_captured_operative = ROOT }
+			set_temp_variable = { cost = 200 }
+			raid_can_launch = yes
+		}
+
+		target_type = {
+			state = {
+				is_capital = yes
+			}
+		}
+
+		unit_requirements = {
+			battalion_types = {
+				Special_Forces = { min = 5 }
+			}
+		}
+
+		launch_sound = raid_launch_marine
+		target_icon = GFX_other_target_icon
+		starting_point = {
+			types = { air_base naval_base }
+		}
+		success_factors = {
+			success = {
+				base = 0.25
+
+				# Raiding unit modifiers
+				experience = {
+					weight = 0.50
+					start_weight = -0.25
+					reference = 0.75
+				}
+
+				organisation = {
+					weight = 0.20
+					start_weight = -0.10
+					reference = 100
+				}
+
+				strength = {
+					weight = 0.15
+					start_weight = -0.05
+					reference = 1
+				}
+
+				recon = {
+					weight = 0.25
+					start_weight = -0.25
+					reference = 10
+				}
+
+				### Target Modifiers
+				resistance = {
+					reference = 100
+					start_reference = 20 # Resistance below 20 doesn't help
+					weight = 0.2
+				}
+				intel = {
+					weight = 0.5
+					start_weight = -0.1
+					reference = 100
+					start_reference = 10
+				}
+			}
+
+			critical = {
+				base = 0.05
+			}
+
+			disaster = {
+				base = 0.05
+			}
+		}
+
+		# Only two outcomes: failure and success
+		success_levels = {
+			failure = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+				}
+				actor_effects = {
+					raid_damage_units = {
+						org_damage = 0.40
+						str_damage = 0.20
+						ratio = yes
+					}
+
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						random_operative = {
+							limit = {
+								is_operative_captured = yes
+							}
+							kill_operative = { killed_by = var:ROOT.victim_country }
+						}
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 50
+				}
+			}
+			success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+				}
+				actor_effects = {
+					raid_damage_units = {
+						org_damage = 0.15
+						str_damage = 0.05
+						ratio = yes
+					}
+
+					raid_add_unit_experience = 0.25
+
+					# Spring our operative
+					var:actor_country = {
+						free_random_operative = {
+							captured_by = var:ROOT.victim_country
+						}
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 250
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				factor = 0
+				NOT = { FROM = { has_captured_operative = ROOT } }
+			}
+			modifier = {
+				NOT = { has_war_with = FROM }
+				NOT = { is_neighbor_of = FROM }
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+				add = -100
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -95
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -125
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -50
+				}
+			}
+			modifier = {
+				add = -10
+				NOT = { has_war_with = FROM }
+				has_government = FROM
+			}
+			modifier = {
+				NOT = {
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				factor = 0
+				FROM = {
+					OR = {
+						has_idea = NATO_member
+						has_idea = CSTO_member
+						has_idea = EU_member
+						has_idea = faction_resistance_axis_member
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				raid_alliance_unfavorable = yes
+			}
+			modifier = {
+				factor = 0
+				raid_intervention_doctrine_reach_block = yes
+			}
+			modifier = {
+				factor = 0.25
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = {
+					OR = { has_idea = super_power has_idea = great_power }
+				}
+				NOT = { OR = { has_idea = super_power has_idea = great_power } }
+			}
+			modifier = {
+				factor = 100
+				has_country_flag = promised_retaliation_against@FROM
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_idea = super_power
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				factor = 0
+				threat < 0.10
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+				NOT = {
+					is_in_array = {
+						array = potential_and_current_enemies
+						value = FROM
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0.05
+				OR = {
+					has_government = democratic
+					has_government = neutrality
+					has_elections = yes
+				}
+				FROM = { has_added_tension_amount < 5 }
+			}
+			modifier = {
+				has_country_flag = conceded_to@FROM
+				factor = 0
+			}
+			modifier = {
+				NOT = {
+					FROM = {
+						is_on_same_continent_as = PREV
+					}
+				}
+				strength_ratio = {
+					tag = FROM
+					ratio > 0.35
+				}
+				factor = 0
+			}
+			modifier = {
+				factor = 0
+				is_ally_with = FROM
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					FROM = { is_subject_of = ROOT }
+					is_subject_of = FROM
+				}
+			}
+			modifier = {
+				factor = 0
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = { is_influencer = yes }
+			}
+			modifier = {
+				factor = 0
+				raid_skip_target_non_hostile_no_retaliation = yes
+				check_variable = { debt_ratio > 0.25 }
+			}
+			modifier = {
+				factor = 0.25
+				NOT = { has_war_with = FROM }
+				check_variable = { debt_ratio > 0.15 }
+			}
 		}
 	}
 	# [USA] Capture Venezuelan Leader
@@ -2203,20 +2393,7 @@ types = {
 
 		# Can prepare
 		available = {
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 		}
 
 		unit_requirements = {
@@ -2290,13 +2467,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -2324,7 +2507,6 @@ types = {
 				}
 			}
 			limited_success = {
-				victim_effects = { }
 				actor_effects = {
 					var:actor_country = {
 						add_timed_idea = {
@@ -2349,13 +2531,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -2387,11 +2575,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -2399,13 +2582,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -2435,17 +2624,11 @@ types = {
 						}
 					}
 
-					# Unit Experience
 					raid_add_unit_experience = 0.25
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -2455,10 +2638,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -2482,31 +2662,10 @@ types = {
 			type = line
 		}
 
-		allowed = {
-		}
 		# Raid Type is visible
-		visible = {
-		}
 		# Specific Target is visible
 		show_target = {
-			AND = {
-				if = {
-					limit = {
-						has_idea = intervention_limited_interventionism
-					}
-					is_neighbor_of = FROM
-				} else_if = {
-					limit = {
-						has_idea = intervention_regional_interventionism
-					}
-					custom_trigger_tooltip = {
-						tooltip = nation_on_same_continent
-						FROM = {
-							is_on_same_continent_as = PREV
-						}
-					}
-				}
-			}
+			raid_show_target_intervention_check = yes
 			FROM = {
 				has_country_flag = ct_hvt_target_found_by@ROOT
 			}
@@ -2514,24 +2673,12 @@ types = {
 
 		# Can prepare
 		available = {
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 		}
 
 		launchable = {
-			has_political_power > 150
+			set_temp_variable = { cost = 150 }
+			raid_can_launch = yes
 		}
 
 		target_type = {
@@ -2623,7 +2770,7 @@ types = {
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 					}
-					missile_ui_update = yes
+					international_systems_update = yes
 				}
 				# Other unit effects
 				division_effects = {
@@ -2660,7 +2807,7 @@ types = {
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
-						missile_ui_update = yes
+						international_systems_update = yes
 					}
 				}
 			}
@@ -2694,17 +2841,12 @@ types = {
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
-						missile_ui_update = yes
+						international_systems_update = yes
 					}
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -2737,17 +2879,12 @@ types = {
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
-						missile_ui_update = yes
+						international_systems_update = yes
 					}
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -2776,10 +2913,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -2803,31 +2937,10 @@ types = {
 			type = line
 		}
 
-		allowed = {
-		}
 		# Raid Type is visible
-		visible = {
-		}
 		# Specific Target is visible
 		show_target = {
-			AND = {
-				if = {
-					limit = {
-						has_idea = intervention_limited_interventionism
-					}
-					is_neighbor_of = FROM
-				} else_if = {
-					limit = {
-						has_idea = intervention_regional_interventionism
-					}
-					custom_trigger_tooltip = {
-						tooltip = nation_on_same_continent
-						FROM = {
-							is_on_same_continent_as = PREV
-						}
-					}
-				}
-			}
+			raid_show_target_intervention_check = yes
 			FROM = {
 				has_country_flag = ct_cache_target_found_by@ROOT
 			}
@@ -2835,24 +2948,12 @@ types = {
 
 		# Can prepare
 		available = {
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 		}
 
 		launchable = {
-			has_political_power > 150
+			set_temp_variable = { cost = 150 }
+			raid_can_launch = yes
 		}
 
 		target_type = {
@@ -2944,7 +3045,7 @@ types = {
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 					}
-					missile_ui_update = yes
+					international_systems_update = yes
 				}
 				# Other unit effects
 				division_effects = {
@@ -2981,7 +3082,7 @@ types = {
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
-						missile_ui_update = yes
+						international_systems_update = yes
 					}
 				}
 			}
@@ -3015,17 +3116,12 @@ types = {
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
-						missile_ui_update = yes
+						international_systems_update = yes
 					}
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -3058,17 +3154,12 @@ types = {
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
-						missile_ui_update = yes
+						international_systems_update = yes
 					}
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -3095,10 +3186,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -3124,24 +3212,7 @@ types = {
 
 		# Specific Target is visible
 		show_target = {
-			AND = {
-				if = {
-					limit = {
-						has_idea = intervention_limited_interventionism
-					}
-					is_neighbor_of = FROM
-				} else_if = {
-					limit = {
-						has_idea = intervention_regional_interventionism
-					}
-					custom_trigger_tooltip = {
-						tooltip = nation_on_same_continent
-						FROM = {
-							is_on_same_continent_as = PREV
-						}
-					}
-				}
-			}
+			raid_show_target_intervention_check = yes
 			FROM = {
 				has_country_flag = ct_training_target_found_by@ROOT
 			}
@@ -3149,24 +3220,12 @@ types = {
 
 		# Can prepare
 		available = {
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 		}
 
 		launchable = {
-			has_political_power > 150
+			set_temp_variable = { cost = 150 }
+			raid_can_launch = yes
 		}
 
 		target_type = {
@@ -3258,7 +3317,7 @@ types = {
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 					}
-					missile_ui_update = yes
+					international_systems_update = yes
 				}
 				# Other unit effects
 				division_effects = {
@@ -3295,7 +3354,7 @@ types = {
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
-						missile_ui_update = yes
+						international_systems_update = yes
 					}
 				}
 			}
@@ -3329,17 +3388,12 @@ types = {
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
-						missile_ui_update = yes
+						international_systems_update = yes
 					}
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -3372,17 +3426,12 @@ types = {
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
-						missile_ui_update = yes
+						international_systems_update = yes
 					}
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -3409,10 +3458,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -3436,31 +3482,10 @@ types = {
 			type = line
 		}
 
-		allowed = {
-		}
 		# Raid Type is visible
-		visible = {
-		}
 		# Specific Target is visible
 		show_target = {
-			AND = {
-				if = {
-					limit = {
-						has_idea = intervention_limited_interventionism
-					}
-					is_neighbor_of = FROM
-				} else_if = {
-					limit = {
-						has_idea = intervention_regional_interventionism
-					}
-					custom_trigger_tooltip = {
-						tooltip = nation_on_same_continent
-						FROM = {
-							is_on_same_continent_as = PREV
-						}
-					}
-				}
-			}
+			raid_show_target_intervention_check = yes
 			FROM = {
 				has_country_flag = ct_elim_raid_prepared_by@ROOT
 			}
@@ -3468,24 +3493,12 @@ types = {
 
 		# Can prepare
 		available = {
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 		}
 
 		launchable = {
-			has_political_power > 150
+			set_temp_variable = { cost = 150 }
+			raid_can_launch = yes
 		}
 
 		target_type = {
@@ -3640,11 +3653,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -3676,11 +3684,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -3702,10 +3705,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -3743,20 +3743,7 @@ types = {
 
 		# Can prepare
 		available = {
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 		}
 
 		unit_requirements = {
@@ -3830,13 +3817,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -3864,7 +3857,6 @@ types = {
 				}
 			}
 			limited_success = {
-				victim_effects = { }
 				actor_effects = {
 					var:actor_country = {
 						add_timed_idea = {
@@ -3889,13 +3881,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -3927,11 +3925,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -3939,13 +3932,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -3975,17 +3974,11 @@ types = {
 						}
 					}
 
-					# Unit Experience
 					raid_add_unit_experience = 0.25
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -3995,10 +3988,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -4036,20 +4026,7 @@ types = {
 
 		# Can prepare
 		available = {
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 		}
 
 		unit_requirements = {
@@ -4123,13 +4100,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -4157,7 +4140,6 @@ types = {
 				}
 			}
 			limited_success = {
-				victim_effects = { }
 				actor_effects = {
 					var:actor_country = {
 						add_timed_idea = {
@@ -4182,13 +4164,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -4220,11 +4208,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -4232,13 +4215,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -4268,17 +4257,11 @@ types = {
 						}
 					}
 
-					# Unit Experience
 					raid_add_unit_experience = 0.25
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -4288,10 +4271,206 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					FROM = { is_subject_of = ROOT }
+					is_subject_of = FROM
 				}
+			}
+		}
+	}
+
+	ENG_Wonga_Coup = {
+		allowed = { original_tag = ENG }
+		days_to_prepare = 30
+		days_re_enable = 120
+
+		category = special_forces_raids
+
+		command_power = 20
+
+		arrow = {
+			type = line
+		}
+
+		# Specific Target is visible
+		visible = {
+			has_completed_focus = ENG_the_wonga_coup
+		}
+		# Specific Target is visible
+		show_target = {
+			FROM = {
+				original_tag = EGU
+			}
+		}
+
+		# Can prepare
+		available = {
+			raid_special_forces_tech_available = yes
+		}
+
+		unit_requirements = {
+			battalion_types = {
+				Special_Forces = { min = 1  max = 5 }
+			}
+		}
+		target_icon = GFX_other_target_icon
+		launch_sound = raid_launch_marine
+
+		target_type = {
+			state = {
+				is_capital = yes
+				infrastructure > 0
+				is_owned_by = EGU
+			}
+		}
+
+		starting_point = {
+			types = { air_base naval_base }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.05
+
+				# Raiding unit modifiers
+				experience = {
+					weight = 0.15
+					start_weight = -0.15
+					reference = 0.5
+				}
+				organisation = {
+					weight = 0.15
+					start_weight = -0.15
+					reference = 60
+				}
+				strength = {
+					weight = 0.05
+					start_weight = -0.05
+					reference = 1
+				}
+				recon = {
+					weight = 0.20
+					reference = 10
+				}
+
+				### Target Modifiers
+				resistance = {
+					reference = 100
+					start_reference = 20 # Resistance below 20 doesn't help
+					weight = 0.2
+				}
+				intel = {
+					weight = 0.3
+					#start_reference = 50
+					reference = 100
+				}
+			}
+			critical = {
+				base = 0.05
+			}
+			disaster = {
+				base = 0.25
+			}
+		}
+
+		success_levels = {
+			failure = {
+				victim_effects = {
+					ZIM = {
+						country_event = britain_md.40
+					}
+				}
+				actor_effects = {
+					raid_damage_units = {
+						org_damage = 0.30
+						str_damage = 0.15
+						ratio = yes
+					}
+					raid_add_unit_experience = 0.25
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 50
+				}
+			}
+			limited_success = {
+				actor_effects = {
+					ENG = {
+						country_event = britain_md.42
+					}
+					EGU = {
+						country_event = britain_md.44
+					}
+				}
+
+			}
+			success = {
+				actor_effects = {
+					ENG = {
+						country_event = britain_md.42
+					}
+					EGU = {
+						country_event = britain_md.44
+					}
+
+					raid_add_unit_experience = 0.25
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 250
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					var:target_state = {
+						meta_effect = {
+							text = {
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
+								}
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
+					}
+				}
+				actor_effects = {
+					ENG = {
+						country_event = britain_md.42
+					}
+					EGU = {
+						country_event = britain_md.44
+					}
+
+					raid_add_unit_experience = 0.25
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 500
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_ally_with = FROM
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -4329,20 +4508,7 @@ types = {
 
 		# Can prepare
 		available = {
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 		}
 
 		unit_requirements = {
@@ -4415,13 +4581,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -4446,7 +4618,6 @@ types = {
 				}
 			}
 			limited_success = {
-				victim_effects = { }
 				actor_effects = {
 					var:actor_country = {
 						add_timed_idea = {
@@ -4471,13 +4642,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -4506,11 +4683,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -4518,13 +4690,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -4548,17 +4726,11 @@ types = {
 						}
 					}
 
-					# Unit Experience
 					raid_add_unit_experience = 0.25
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -4568,10 +4740,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -4841,20 +5010,7 @@ types = {
 			FROM = {
 				is_subject_of = ROOT
 			}
-			has_tech = special_forces_tech_1
-			custom_trigger_tooltip = {
-				tooltip = has_spec_ops_4_TT
-				if = {
-					limit = {
-						NOT = {
-							has_tech = special_forces_tech_4
-						}
-					}
-					FROM = {
-						is_on_same_continent_as = PREV
-					}
-				}
-			}
+			raid_special_forces_tech_available = yes
 		}
 
 		unit_requirements = {
@@ -4948,13 +5104,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -4965,9 +5127,7 @@ types = {
 							}
 							clr_state_flag = IRQ_saddam_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.10
-								}
+								country_event = iraqi_MNF.10
 							}
 						}
 						if = {
@@ -4976,9 +5136,7 @@ types = {
 							}
 							clr_state_flag = IRQ_qusay_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.11
-								}
+								country_event = iraqi_MNF.11
 							}
 						}
 						if = {
@@ -4987,9 +5145,7 @@ types = {
 							}
 							clr_state_flag = IRQ_uday_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.12
-								}
+								country_event = iraqi_MNF.12
 							}
 						}
 						if = {
@@ -4998,9 +5154,7 @@ types = {
 							}
 							clr_state_flag = IRQ_abid_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.13
-								}
+								country_event = iraqi_MNF.13
 							}
 						}
 					}
@@ -5021,7 +5175,6 @@ types = {
 				}
 			}
 			limited_success = {
-				victim_effects = { }
 				actor_effects = {
 					var:actor_country = {
 						add_timed_idea = {
@@ -5046,13 +5199,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -5063,9 +5222,7 @@ types = {
 							}
 							clr_state_flag = IRQ_saddam_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.10
-								}
+								country_event = iraqi_MNF.10
 							}
 						}
 						if = {
@@ -5074,9 +5231,7 @@ types = {
 							}
 							clr_state_flag = IRQ_qusay_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.11
-								}
+								country_event = iraqi_MNF.11
 							}
 						}
 						if = {
@@ -5085,9 +5240,7 @@ types = {
 							}
 							clr_state_flag = IRQ_uday_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.12
-								}
+								country_event = iraqi_MNF.12
 							}
 						}
 						if = {
@@ -5096,9 +5249,7 @@ types = {
 							}
 							clr_state_flag = IRQ_abid_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.13
-								}
+								country_event = iraqi_MNF.13
 							}
 						}
 					}
@@ -5122,11 +5273,6 @@ types = {
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 250
-					add_history_entry = {
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 			critical_success = {
@@ -5134,13 +5280,19 @@ types = {
 					var:target_state = {
 						meta_effect = {
 							text = {
-								damage_building = {
-									type = air_base
-									damage = [DAM]
+								if = {
+									limit = { air_base > 0 }
+									damage_building = {
+										type = air_base
+										damage = [DAM]
+									}
 								}
-								damage_building = {
-									type = naval_base
-									damage = [DAM]
+								if = {
+									limit = { naval_base > 0 }
+									damage_building = {
+										type = naval_base
+										damage = [DAM]
+									}
 								}
 							}
 							DAM = "[?building_damage_by_missile]"
@@ -5151,9 +5303,7 @@ types = {
 							}
 							clr_state_flag = IRQ_saddam_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.10
-								}
+								country_event = iraqi_MNF.10
 							}
 						}
 						if = {
@@ -5162,9 +5312,7 @@ types = {
 							}
 							clr_state_flag = IRQ_qusay_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.11
-								}
+								country_event = iraqi_MNF.11
 							}
 						}
 						if = {
@@ -5173,9 +5321,7 @@ types = {
 							}
 							clr_state_flag = IRQ_uday_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.12
-								}
+								country_event = iraqi_MNF.12
 							}
 						}
 						if = {
@@ -5184,9 +5330,7 @@ types = {
 							}
 							clr_state_flag = IRQ_abid_here
 							USA = {
-								country_event = {
-									id = iraqi_MNF.13
-								}
+								country_event = iraqi_MNF.13
 							}
 						}
 					}
@@ -5208,17 +5352,11 @@ types = {
 						}
 					}
 
-					# Unit Experience
 					raid_add_unit_experience = 0.25
 				}
 				# Other unit effects
 				division_effects = {
 					add_divisional_commander_xp = 500
-					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
-						key = commando_port_raid_history_entry
-						subject = "Test entry"
-						allow = yes
-					}
 				}
 			}
 		}
@@ -5228,10 +5366,7 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -5310,7 +5445,10 @@ types = {
 							}
 							50 = {
 								var:victim_country = {
-									send_embargo = JAP
+									if = {
+										limit = { has_dlc = "By Blood Alone" }
+										send_embargo = JAP
+									}
 									diplomatic_relation = {
 										country = JAP
 										relation = naval_blockade
