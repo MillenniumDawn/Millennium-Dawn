@@ -51,6 +51,10 @@ jobs:
         run: |
           python tools/validate_tools.py --strict --no-color --output \
             tools_validation.log
+      - name: Validate Corporate History contract against live content
+        run: |
+          python tools/validation/validate_corporate_history_contract.py \
+            --strict --no-color
       - name: Upload validation report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
@@ -80,7 +84,8 @@ jobs:
       # wiring around them. pyproject.toml supplies the pytest testpaths so all
       # six test dirs are collected. typo-watchlist.md is read by
       # loc_typo_watchlist_test's doc-sync guard, and modifiers_documentation.md
-      # by validate_modifiers_test's parse guard. common/national_focus is
+      # by validate_modifiers_test's parse guard. Corporate History state-model
+      # tests read their live content surfaces, while common/national_focus is
       # walked by focus_pp_malus_test's exemption-freshness guard.
       - name: Checkout (unit tests)
         if: matrix.check.id == 'unit'
@@ -94,7 +99,13 @@ jobs:
             .pre-commit-config.yaml
             .claude/docs/typo-watchlist.md
             resources/documentation/modifiers_documentation.md
+            common
             common/national_focus
+            events
+            localisation
+            interface
+            gfx
+            docs/src/content/resources/corporate-history-framework.md
             .github/workflows/coding-pipeline.yml
             .github/workflows/nightly-pr-validation.yml
             .github/workflows/tools-validation.yml

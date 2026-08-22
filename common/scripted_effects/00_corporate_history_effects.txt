@@ -1,0 +1,731 @@
+# Corporate-history framework. Docs: docs/src/content/resources/corporate-history-framework.md
+#
+# Chains: IBM, Sun/Microsoft, HP, Apple, NVIDIA, Dell, TI, Micron, Motorola (USA),
+# Lenovo and Huawei (CHI), Sony (JAP), ATI/AMD and Matrox (CAN), Nokia (FIN), TSMC and Foxconn (TAI),
+# Industrial Sovereignty (POL), Siemens (GER), Ericsson (SWE), and BlackBerry (CAN/USA).
+# The rule_corporate_history game rule gates the country-owned dispatchers, monthly
+# outcome drivers, and popup event triggers. Event-level gates also stop a queued
+# Full-mode popup if the rule is no longer Full when delivery occurs.
+#
+# Start-date invariant: milestone day offsets are scheduled only from a January
+# window. Where a chain has local recovery, it reconstructs elapsed milestones
+# first, then queues due unresolved events with a short delay; it never replays a
+# January offset from a mid-year date.
+
+# Effect: corporate_history_apply_delta
+# Purpose: Applies a signed delta to a corporate state value and clamps it to the
+#          framework band. The 0..10 bounds live only here.
+# Parameters:
+# - corp_delta: The signed delta to add before clamping
+# - corp_value: The state value, read and written back as a temp variable (optional here only when chained from corporate_history_clamp_value; direct callers must set it)
+corporate_history_apply_delta = {
+	add_to_temp_variable = { corp_value = corp_delta }
+	clamp_temp_variable = { var = corp_value min = 0 max = 10 }
+}
+
+# Effect: corporate_history_clamp_value
+# Purpose: Clamps a corporate state value to the framework band without changing it.
+# Parameters:
+# - corp_value: The state value, read and written back as a temp variable
+corporate_history_clamp_value = {
+	set_temp_variable = { corp_delta = 0 }
+	corporate_history_apply_delta = yes
+}
+
+USA_blackberry_reconstruct_history = {
+	if = {
+		limit = { NOT = { has_country_flag = USA_blackberry_reconstruct_complete } }
+		if = {
+			limit = {
+				date > 2006.3.7
+				NOT = { OR = { has_country_flag = USA_blackberry_federal_continuity has_country_flag = USA_blackberry_patent_case_closed } }
+			}
+			set_country_flag = USA_blackberry_federal_continuity
+		}
+		if = {
+			limit = { date > 2009.1.26 }
+			set_country_flag = USA_blackberry_reconstruct_complete
+		}
+	}
+}
+
+CAN_blackberry_reconstruct_history = {
+	if = {
+		limit = { NOT = { has_country_flag = CAN_blackberry_reconstruct_complete } }
+		if = {
+			limit = {
+				date > 2002.3.31
+				NOT = { OR = { has_country_flag = CAN_blackberry_private_expansion has_country_flag = CAN_blackberry_waterloo_support } }
+			}
+			set_country_flag = CAN_blackberry_private_expansion
+		}
+		if = {
+			limit = {
+				date > 2007.7.3
+				NOT = { OR = { has_country_flag = CAN_blackberry_enterprise_hardware has_country_flag = CAN_blackberry_application_ecosystem } }
+			}
+			set_country_flag = CAN_blackberry_enterprise_hardware
+		}
+		if = {
+			limit = {
+				date > 2010.4.13
+				NOT = { OR = { has_country_flag = CAN_blackberry_qnx_mobile has_country_flag = CAN_blackberry_qnx_embedded } }
+			}
+			set_country_flag = CAN_blackberry_qnx_mobile
+		}
+		if = {
+			limit = {
+				date > 2013.2.3
+				NOT = { OR = { has_country_flag = CAN_blackberry_bb10_backed has_country_flag = CAN_blackberry_enterprise_services_prioritized } }
+			}
+			set_country_flag = CAN_blackberry_bb10_backed
+		}
+		if = {
+			limit = { date > 2016.10.2 }
+			set_country_flag = CAN_blackberry_reconstruct_complete
+		}
+	}
+}
+
+SWE_ericsson_reconstruct_history = {
+	if = {
+		limit = { NOT = { has_country_flag = SWE_ericsson_reconstruct_complete } }
+		if = {
+			limit = {
+				date > 2001.9.30
+				NOT = { OR = { has_country_flag = SWE_sony_ericsson_joint_venture has_country_flag = SWE_ericsson_retained_handsets } }
+			}
+			set_country_flag = SWE_sony_ericsson_joint_venture
+		}
+		if = {
+			limit = {
+				date > 2009.12.13
+				NOT = { OR = { has_country_flag = SWE_ericsson_lte_network_leadership has_country_flag = SWE_ericsson_lte_device_ecosystem } }
+			}
+			set_country_flag = SWE_ericsson_lte_network_leadership
+		}
+		if = {
+			limit = {
+				date > 2012.2.14
+				NOT = { OR = { has_country_flag = SWE_ericsson_exited_handsets has_country_flag = SWE_ericsson_full_handset_control } }
+			}
+			set_country_flag = SWE_ericsson_exited_handsets
+		}
+		if = {
+			limit = {
+				date > 2018.12.4
+				NOT = { OR = { has_country_flag = SWE_ericsson_5g_testbed has_country_flag = SWE_ericsson_5g_export_drive } }
+			}
+			set_country_flag = SWE_ericsson_5g_testbed
+		}
+		if = {
+			limit = {
+				date > 2022.7.20
+				NOT = { OR = { has_country_flag = SWE_ericsson_vonage_platform has_country_flag = SWE_ericsson_radio_network_focus } }
+			}
+			set_country_flag = SWE_ericsson_vonage_platform
+		}
+		if = {
+			limit = { date > 2022.7.20 }
+			set_country_flag = SWE_ericsson_reconstruct_complete
+		}
+	}
+}
+
+GER_siemens_reconstruct_history = {
+	if = {
+		limit = { NOT = { has_country_flag = GER_siemens_reconstruct_complete } }
+		if = {
+			limit = {
+				date > 2000.4.29
+				NOT = { OR = { has_country_flag = GER_siemens_integrated_conglomerate has_country_flag = GER_siemens_digital_industry_strategy } }
+			}
+			set_country_flag = GER_siemens_integrated_conglomerate
+		}
+		if = {
+			limit = {
+				date > 2007.4.2
+				NOT = { OR = { has_country_flag = GER_siemens_networks_strategy has_country_flag = GER_siemens_automation_strategy } }
+			}
+			set_country_flag = GER_siemens_networks_strategy
+		}
+		if = {
+			limit = {
+				date > 2013.8.8
+				country_exists = FIN
+				FIN = { has_country_flag = FIN_nokia_networks_wholly_owned }
+				NOT = { has_country_flag = GER_nokia_siemens_sale_proceeds_applied }
+			}
+			set_country_flag = GER_nokia_siemens_sale_proceeds_applied
+		}
+		if = {
+			limit = {
+				date > 2018.3.15
+				NOT = { OR = { has_country_flag = GER_siemens_healthineers_listed has_country_flag = GER_siemens_healthineers_integrated } }
+			}
+			set_country_flag = GER_siemens_healthineers_listed
+		}
+		if = {
+			limit = {
+				date > 2020.9.27
+				NOT = { OR = { has_country_flag = GER_siemens_energy_spun_off has_country_flag = GER_siemens_energy_integrated } }
+			}
+			set_country_flag = GER_siemens_energy_spun_off
+		}
+		if = {
+			limit = { date > 2025.11.11 }
+			set_country_flag = GER_siemens_reconstruct_complete
+		}
+	}
+}
+
+# Effect: USA_corporate_history_monthly_outcomes
+# Purpose: Outcomes Only driver for USA corporate chains on the first monthly tick
+#          after each historical milestone (<= ~31 days lag). In Full mode it owns
+#          visible Google/Oracle catch-up, retries the IBM-to-Lenovo handoff, and
+#          recovers missed TI/Micron/Motorola/Dell terminal outcomes.
+USA_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+	USA_oem_legacy_monthly_driver = yes
+	USA_oem_storage_monthly_driver = yes
+
+	if = {
+		limit = {
+			original_tag = USA
+			NOT = { has_country_flag = collapsed_nation }
+		}
+
+		if = {
+			limit = { corporate_history_full_enabled = yes }
+			USA_ibm_schedule_pc_decision = yes
+			USA_ibm_schedule_x86_decision = yes
+			USA_google_reconstruct_extension_prerequisite = yes
+			if = {
+				limit = {
+					NOT = { OR = {
+						has_country_flag = USA_google_antitrust_settlement
+						has_country_flag = USA_google_antitrust_litigation
+						has_country_flag = USA_google_antitrust_structural_separation
+					} }
+				}
+				USA_google_extension_catchup = yes
+			}
+			if = {
+				limit = { NOT = { has_country_flag = USA_oracle_event_12_resolved } }
+				USA_oracle_chain_catchup = yes
+			}
+			if = {
+				limit = {
+					country_exists = CHI
+					OR = {
+						has_country_flag = USA_ibm_pc_divested
+						has_country_flag = USA_ibm_pc_retained
+						has_country_flag = USA_ibm_pc_spinout
+					}
+					CHI = {
+						original_tag = CHI
+						NOT = { has_country_flag = CHI_lenovo_pc_path_chosen }
+					}
+				}
+				USA_ibm_notify_lenovo_pc_path = yes
+			}
+		}
+
+		if = {
+			limit = {
+				corporate_history_outcomes_only_enabled = yes
+				OR = {
+					NOT = { has_country_flag = USA_microsoft_reconstruct_complete }
+					NOT = { has_country_flag = USA_apple_reconstruct_complete }
+					NOT = { has_country_flag = USA_ibm_reconstruct_complete }
+					NOT = { has_country_flag = USA_nvidia_reconstruct_complete }
+					NOT = { has_country_flag = USA_google_reconstruct_complete }
+					NOT = { has_country_flag = USA_oracle_reconstruct_complete }
+					NOT = { has_country_flag = USA_hp_reconstruct_complete }
+					NOT = { has_country_flag = USA_e3_reconstruct_complete }
+					NOT = { has_country_flag = USA_dell_reconstruct_complete }
+					NOT = { has_country_flag = USA_ti_reconstruct_complete }
+					NOT = { has_country_flag = USA_micron_reconstruct_complete }
+					NOT = { has_country_flag = USA_motorola_reconstruct_complete }
+					NOT = { has_country_flag = USA_aig_reconstruct_complete }
+					NOT = { has_country_flag = USA_xbox_reconstruct_complete }
+					NOT = { has_country_flag = USA_blackberry_reconstruct_complete }
+				}
+			}
+			USA_microsoft_reconstruct_history = yes
+			USA_apple_reconstruct_history = yes
+			USA_ibm_reconstruct_history = yes
+			USA_nvidia_reconstruct_history = yes
+			USA_google_reconstruct_history = yes
+			USA_oracle_reconstruct_history = yes
+			USA_hp_reconstruct_history = yes
+			USA_e3_reconstruct_history = yes
+			USA_dell_reconstruct_history = yes
+			USA_micron_reconstruct_history = yes
+			USA_ti_reconstruct_history = yes
+			USA_motorola_reconstruct_history = yes
+			USA_aig_reconstruct_history = yes
+			USA_xbox_reconstruct_history = yes
+			USA_blackberry_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				date > 2009.1.26
+				NOT = { has_country_flag = USA_blackberry_reconstruct_complete }
+			}
+			USA_blackberry_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				date > 2025.6.12
+				NOT = { has_country_flag = USA_micron_reconstruct_complete }
+				NOT = { has_country_flag = USA_micron_capstone_choice_pending }
+			}
+			USA_micron_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				date > 2025.8.6
+				NOT = { has_country_flag = USA_motorola_reconstruct_complete }
+				NOT = { has_country_flag = USA_motorola_capstone_choice_pending }
+			}
+			USA_motorola_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				date > 2026.2.4
+				NOT = { has_country_flag = USA_ti_reconstruct_complete }
+				NOT = { has_country_flag = USA_ti_capstone_choice_pending }
+			}
+			USA_ti_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				date > 2026.6.15
+				NOT = { has_country_flag = USA_dell_reconstruct_complete }
+			}
+			USA_dell_reconstruct_history = yes
+		}
+
+		# MD's Great Financial Crisis is mean-time-to-happen driven, so the 2008 dispatcher
+		# can reach AIG's opening date before the Lehman gate is satisfiable.
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				date > 2008.9.16
+				date < 2010.1.1
+				NOT = { has_country_flag = USA_aig_event_1_resolved }
+			}
+			set_temp_variable = { aig_schedule_mode = 1 }
+			USA_aig_schedule_current_year_events = yes
+		}
+	}
+
+	if = {
+		limit = { corporate_history_enabled = yes }
+		USA_corporate_systems_update_economic_bridge = yes
+	}
+}
+
+# Effect: CHI_corporate_history_monthly_outcomes
+# Purpose: Outcomes Only reconstruction plus Full-mode recovery for missed
+#          Lenovo delivery windows and Huawei's terminal outcome.
+CHI_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+
+	if = {
+		limit = {
+			original_tag = CHI
+			NOT = { has_country_flag = collapsed_nation }
+		}
+
+		if = {
+			limit = {
+				corporate_history_outcomes_only_enabled = yes
+				NOT = { has_country_flag = CHI_lenovo_reconstruct_complete }
+			}
+			CHI_lenovo_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_outcomes_only_enabled = yes
+				NOT = { has_country_flag = CHI_huawei_reconstruct_complete }
+			}
+			CHI_huawei_reconstruct_history = yes
+		}
+
+		if = {
+			limit = { corporate_history_full_enabled = yes }
+			CHI_lenovo_schedule_current_year_events = yes
+			if = {
+				limit = {
+					date > 2014.7.9
+					has_country_flag = CHI_lenovo_brand_path_chosen
+					NOT = { has_country_flag = CHI_lenovo_systemx_path_chosen }
+					NOT = { has_country_flag = CHI_lenovo_event_7_delivered }
+					NOT = { has_country_flag = CHI_lenovo_event_7_pending }
+					country_exists = USA
+					NOT = { has_war_with = USA }
+					USA = {
+						NOT = { has_country_flag = collapsed_nation }
+						OR = {
+							has_country_flag = USA_ibm_x86_divested
+							has_country_flag = USA_ibm_x86_retained
+							has_country_flag = USA_ibm_silicon_retained
+						}
+					}
+				}
+				set_country_flag = { flag = CHI_lenovo_event_7_pending value = 1 days = 40 }
+				country_event = { id = CHI_lenovo_events.7 days = 5 }
+			}
+			CHI_lenovo_recover_interrupted_stages = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				date > 2026.4.30
+				NOT = { has_country_flag = CHI_huawei_reconstruct_complete }
+			}
+			CHI_huawei_reconstruct_history = yes
+		}
+	}
+}
+
+# Effect: JAP_corporate_history_monthly_outcomes
+# Purpose: Outcomes Only driver for the Sony and Nintendo chains; each terminates once its
+#          ladder sets its completion flag (Sony 2024.5.22, Nintendo 2025.6.5). In Full mode
+#          it advances Nintendo milestones a non-January start skipped and recovers a
+#          Nintendo delivery that was queued but never arrived.
+JAP_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+
+	if = {
+		limit = {
+			original_tag = JAP
+			NOT = { has_country_flag = collapsed_nation }
+		}
+
+		if = {
+			limit = {
+				corporate_history_outcomes_only_enabled = yes
+				NOT = { has_country_flag = JAP_sony_reconstruct_complete }
+			}
+			JAP_sony_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_outcomes_only_enabled = yes
+				NOT = { has_country_flag = JAP_nintendo_reconstruct_complete }
+			}
+			JAP_nintendo_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				NOT = { has_country_flag = JAP_nintendo_capstone_resolved }
+			}
+			JAP_nintendo_advance_startup_skipped = yes
+			JAP_nintendo_recover_missing_events = yes
+		}
+	}
+}
+
+# Effect: CAN_corporate_history_monthly_outcomes
+# Purpose: Outcomes Only driver for ATI/AMD and Matrox, plus Full-mode recovery
+#          for ATI/AMD's terminal outcome.
+CAN_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+
+	if = {
+		limit = {
+			original_tag = CAN
+			NOT = { has_country_flag = collapsed_nation }
+		}
+
+		if = {
+			limit = {
+				corporate_history_outcomes_only_enabled = yes
+				NOT = { has_country_flag = CAN_ati_reconstruct_complete }
+			}
+			CAN_ati_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_outcomes_only_enabled = yes
+				NOT = { has_country_flag = CAN_matrox_reconstruct_complete }
+			}
+			CAN_matrox_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				date > 2026.9.1
+				NOT = { has_country_flag = CAN_ati_reconstruct_complete }
+			}
+			CAN_ati_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_outcomes_only_enabled = yes
+				NOT = { has_country_flag = CAN_blackberry_reconstruct_complete }
+			}
+			CAN_blackberry_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				date > 2016.10.2
+				NOT = { has_country_flag = CAN_blackberry_reconstruct_complete }
+			}
+			CAN_blackberry_reconstruct_history = yes
+		}
+	}
+}
+
+# Effect: FIN_corporate_history_monthly_outcomes
+# Purpose: Reconstructs Nokia in Outcomes Only and processes externally confirmed
+#          future stages in Full mode.
+FIN_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+
+	if = {
+		limit = {
+			original_tag = FIN
+			NOT = { has_country_flag = collapsed_nation }
+		}
+
+		if = {
+			limit = {
+				corporate_history_outcomes_only_enabled = yes
+				NOT = { has_country_flag = FIN_nokia_reconstruct_complete }
+			}
+			FIN_nokia_reconstruct_history = yes
+		}
+
+		if = {
+			limit = { corporate_history_full_enabled = yes }
+			FIN_nokia_process_external_confirmations = yes
+		}
+	}
+}
+
+GER_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+
+	if = {
+		limit = {
+			OR = {
+				corporate_history_outcomes_only_enabled = yes
+				AND = {
+					corporate_history_full_enabled = yes
+					date > 2025.11.11
+				}
+			}
+			original_tag = GER
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = GER_siemens_reconstruct_complete }
+		}
+		GER_siemens_reconstruct_history = yes
+	}
+}
+
+SWE_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+
+	if = {
+		limit = {
+			corporate_history_full_enabled = yes
+			original_tag = SWE
+			NOT = { has_country_flag = collapsed_nation }
+		}
+		SWE_ericsson_schedule_current_year_events = yes
+	}
+
+	if = {
+		limit = {
+			OR = {
+				corporate_history_outcomes_only_enabled = yes
+				AND = {
+					corporate_history_full_enabled = yes
+					date > 2022.7.20
+				}
+			}
+			original_tag = SWE
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = SWE_ericsson_reconstruct_complete }
+		}
+		SWE_ericsson_reconstruct_history = yes
+	}
+}
+
+# Effect: TAI_corporate_history_monthly_outcomes
+# Purpose: Outcomes Only driver for the TSMC, Foxconn, and PC-industry chains,
+#          plus bounded Full-mode recovery for queued PC-industry milestones.
+TAI_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+
+	if = {
+		limit = {
+			original_tag = TAI
+			NOT = { has_country_flag = collapsed_nation }
+		}
+
+		if = {
+			limit = {
+				corporate_history_outcomes_only_enabled = yes
+				OR = {
+					NOT = { has_country_flag = TAI_tsmc_reconstruct_complete }
+					NOT = { has_country_flag = TAI_foxconn_reconstruct_complete }
+					NOT = { has_country_flag = TAI_pc_industry_reconstruct_complete }
+				}
+			}
+			TAI_tsmc_reconstruct_history = yes
+			TAI_foxconn_reconstruct_history = yes
+			TAI_pc_industry_reconstruct_history = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				NOT = { has_country_flag = TAI_pc_industry_reconstruct_complete }
+			}
+			TAI_pc_industry_monthly_driver = yes
+		}
+
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				date > 2026.5.31
+				NOT = { has_country_flag = TAI_foxconn_reconstruct_complete }
+				NOT = { has_country_flag = TAI_foxconn_capstone_choice_pending }
+			}
+			TAI_foxconn_reconstruct_history = yes
+		}
+	}
+}
+
+# Effect: POL_corporate_history_monthly_outcomes
+# Purpose: Retries the silent Polish Industrial Sovereignty reconstruction only in
+#          Outcomes Only mode until its dated 2026 terminal result exists.
+POL_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+
+	if = {
+		limit = {
+			corporate_history_full_enabled = yes
+			original_tag = POL
+			NOT = { has_country_flag = collapsed_nation }
+		}
+		POL_industrial_sovereignty_recover_due_events = yes
+	}
+
+	if = {
+		limit = {
+			corporate_history_outcomes_only_enabled = yes
+			original_tag = POL
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = POL_industrial_sovereignty_reconstruct_complete }
+		}
+		POL_industrial_sovereignty_reconstruct_history = yes
+	}
+}
+
+# Effect: FRA_corporate_history_monthly_outcomes
+# Purpose: Advances silent reconstruction in Outcomes Only and retries expected
+#          France Corporate Systems deliveries in Full mode.
+FRA_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+
+	if = {
+		limit = {
+			original_tag = FRA
+			NOT = { has_country_flag = collapsed_nation }
+		}
+
+		if = {
+			limit = {
+				corporate_history_outcomes_only_enabled = yes
+				NOT = { has_country_flag = FRA_corporate_systems_reconstruct_complete }
+			}
+			FRA_corporate_systems_reconstruct_history = yes
+		}
+
+		if = {
+			limit = { corporate_history_full_enabled = yes }
+			FRA_corporate_systems_schedule_current_year_events = yes
+			FRA_corporate_systems_sync_nokia_response = yes
+			FRA_corporate_systems_recover_missing_events = yes
+			FRA_corporate_systems_complete_terminal_state = yes
+		}
+	}
+}
+
+# Effect: ENG_corporate_history_monthly_outcomes
+# Purpose: Reconstructs Arm milestones in Outcomes Only and recovers visible
+# deliveries in Full mode.
+ENG_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+
+	if = {
+		limit = {
+			corporate_history_outcomes_only_enabled = yes
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_reconstruct_complete }
+		}
+		ENG_arm_holdings_reconstruct_history = yes
+	}
+	if = {
+		limit = {
+			corporate_history_full_enabled = yes
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+		}
+		ENG_arm_holdings_schedule_current_year_events = yes
+		ENG_arm_holdings_monthly_driver = yes
+	}
+}
+
+# Effect: UKR_corporate_history_monthly_outcomes
+# Purpose: Runs state-led rupture, war, peace, and recovery progression in Full
+# mode while Outcomes Only remains on silent reconstruction.
+UKR_corporate_history_monthly_outcomes = {
+	corporate_history_monthly_dispatch = yes
+
+	if = {
+		limit = {
+			corporate_history_full_enabled = yes
+			original_tag = UKR
+			NOT = { has_country_flag = collapsed_nation }
+		}
+		UKR_strategic_industry_schedule_current_year_events = yes
+		UKR_strategic_industry_monthly_driver = yes
+	}
+	if = {
+		limit = {
+			corporate_history_outcomes_only_enabled = yes
+			original_tag = UKR
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = UKR_strategic_industry_reconstruct_complete }
+		}
+		UKR_strategic_industry_reconstruct_history = yes
+	}
+}
