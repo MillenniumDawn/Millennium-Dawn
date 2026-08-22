@@ -1,0 +1,758 @@
+USA_micron_initialize_state = {
+	if = {
+		limit = { NOT = { has_country_flag = USA_micron_state_initialized } }
+
+		set_variable = { USA_micron_process_lead = 5 }
+		set_variable = { USA_micron_cycle_discipline = 5 }
+		set_variable = { USA_micron_us_fab_commitment = 5 }
+		set_variable = { USA_micron_hbm_position = 5 }
+		set_country_flag = USA_micron_state_initialized
+	}
+
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_country_flag = USA_stack_txn_lehi_sold_to_ti
+					has_country_flag = USA_stack_txn_lehi_retained_by_micron
+					has_country_flag = USA_stack_txn_lehi_shared_reserve
+				}
+			}
+		}
+		set_country_flag = USA_stack_txn_lehi_retained_by_micron
+	}
+
+	USA_micron_clamp_state = yes
+	USA_micron_normalize_state = yes
+}
+
+USA_micron_clamp_state = {
+	clamp_variable = { var = USA_micron_process_lead min = 0 max = 10 }
+	clamp_variable = { var = USA_micron_cycle_discipline min = 0 max = 10 }
+	clamp_variable = { var = USA_micron_us_fab_commitment min = 0 max = 10 }
+	clamp_variable = { var = USA_micron_hbm_position min = 0 max = 10 }
+}
+
+USA_micron_normalize_state = {
+	if = {
+		limit = { has_country_flag = USA_stack_txn_lehi_sold_to_ti }
+		clr_country_flag = USA_stack_txn_lehi_retained_by_micron
+		clr_country_flag = USA_stack_txn_lehi_shared_reserve
+	}
+	else_if = {
+		limit = { has_country_flag = USA_stack_txn_lehi_shared_reserve }
+		clr_country_flag = USA_stack_txn_lehi_retained_by_micron
+	}
+	else_if = {
+		limit = { NOT = { has_country_flag = USA_stack_txn_lehi_retained_by_micron } }
+		set_country_flag = USA_stack_txn_lehi_retained_by_micron
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_ti_memory_integrated }
+		clr_country_flag = USA_micron_ti_memory_federated
+		clr_country_flag = USA_micron_ti_memory_consortium
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_ti_memory_federated }
+		clr_country_flag = USA_micron_ti_memory_consortium
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_ti_memory_consortium }
+		clr_country_flag = USA_micron_ti_memory_integrated
+		clr_country_flag = USA_micron_ti_memory_federated
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_6_resolved }
+		set_country_flag = USA_micron_ti_memory_integrated
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_ddr_standard }
+		clr_country_flag = USA_micron_alternative_interface
+		clr_country_flag = USA_micron_specialty_memory_hedge
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_alternative_interface }
+		clr_country_flag = USA_micron_specialty_memory_hedge
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_specialty_memory_hedge }
+		clr_country_flag = USA_micron_ddr_standard
+		clr_country_flag = USA_micron_alternative_interface
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_7_resolved }
+		set_country_flag = USA_micron_ddr_standard
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_imflash_deep }
+		clr_country_flag = USA_micron_imflash_balanced
+		clr_country_flag = USA_micron_nand_independent
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_imflash_balanced }
+		clr_country_flag = USA_micron_nand_independent
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_nand_independent }
+		clr_country_flag = USA_micron_imflash_deep
+		clr_country_flag = USA_micron_imflash_balanced
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_8_resolved }
+		set_country_flag = USA_micron_imflash_balanced
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_lexar_consumer_brand }
+		clr_country_flag = USA_micron_lexar_component_supplier
+		clr_country_flag = USA_micron_lexar_storage_systems
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_lexar_component_supplier }
+		clr_country_flag = USA_micron_lexar_storage_systems
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_9_resolved }
+		set_country_flag = USA_micron_lexar_consumer_brand
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_downcycle_cuts }
+		clr_country_flag = USA_micron_downcycle_consolidation
+		clr_country_flag = USA_micron_downcycle_public_bridge
+		clr_country_flag = USA_micron_downcycle_countercyclical
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_downcycle_consolidation }
+		clr_country_flag = USA_micron_downcycle_public_bridge
+		clr_country_flag = USA_micron_downcycle_countercyclical
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_downcycle_public_bridge }
+		clr_country_flag = USA_micron_downcycle_countercyclical
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_downcycle_countercyclical }
+		clr_country_flag = USA_micron_downcycle_cuts
+		clr_country_flag = USA_micron_downcycle_consolidation
+		clr_country_flag = USA_micron_downcycle_public_bridge
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_10_resolved }
+		set_country_flag = USA_micron_downcycle_cuts
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_elpida_integrated }
+		clr_country_flag = USA_micron_elpida_federation
+		clr_country_flag = USA_micron_elpida_declined
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_elpida_federation }
+		clr_country_flag = USA_micron_elpida_declined
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_elpida_declined }
+		clr_country_flag = USA_micron_elpida_integrated
+		clr_country_flag = USA_micron_elpida_federation
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_11_resolved }
+		set_country_flag = USA_micron_elpida_integrated
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_xpoint_patient }
+		clr_country_flag = USA_micron_xpoint_accelerated
+		clr_country_flag = USA_micron_xpoint_deprioritized
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_xpoint_accelerated }
+		clr_country_flag = USA_micron_xpoint_deprioritized
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_xpoint_deprioritized }
+		clr_country_flag = USA_micron_xpoint_patient
+		clr_country_flag = USA_micron_xpoint_accelerated
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_12_resolved }
+		set_country_flag = USA_micron_xpoint_patient
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_inotera_control }
+		clr_country_flag = USA_micron_inotera_autonomy
+		clr_country_flag = USA_micron_inotera_compact
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_inotera_autonomy }
+		clr_country_flag = USA_micron_inotera_compact
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_13_resolved }
+		set_country_flag = USA_micron_inotera_control
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_lexar_sold }
+		clr_country_flag = USA_micron_lexar_retained
+		clr_country_flag = USA_micron_lexar_expanded
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_lexar_retained }
+		clr_country_flag = USA_micron_lexar_expanded
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_14_resolved }
+		set_country_flag = USA_micron_lexar_sold
+	}
+
+	if = {
+		limit = {
+			has_country_flag = USA_micron_event_15_resolved
+			has_country_flag = USA_stack_txn_lehi_sold_to_ti
+		}
+		clr_country_flag = USA_micron_xpoint_retained
+		clr_country_flag = USA_micron_xpoint_reserve
+	}
+	else_if = {
+		limit = {
+			has_country_flag = USA_micron_event_15_resolved
+			has_country_flag = USA_stack_txn_lehi_retained_by_micron
+		}
+		set_country_flag = USA_micron_xpoint_retained
+		clr_country_flag = USA_micron_xpoint_reserve
+	}
+	else_if = {
+		limit = {
+			has_country_flag = USA_micron_event_15_resolved
+			has_country_flag = USA_stack_txn_lehi_shared_reserve
+		}
+		clr_country_flag = USA_micron_xpoint_retained
+		set_country_flag = USA_micron_xpoint_reserve
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_us_megafab }
+		clr_country_flag = USA_micron_us_fabs_staged
+		clr_country_flag = USA_micron_global_fab_priority
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_us_fabs_staged }
+		clr_country_flag = USA_micron_global_fab_priority
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_global_fab_priority }
+		clr_country_flag = USA_micron_us_megafab
+		clr_country_flag = USA_micron_us_fabs_staged
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_16_resolved }
+		set_country_flag = USA_micron_us_fabs_staged
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_china_retrench }
+		clr_country_flag = USA_micron_china_localized
+		clr_country_flag = USA_micron_china_contested
+		clr_country_flag = USA_micron_china_diversified
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_china_localized }
+		clr_country_flag = USA_micron_china_contested
+		clr_country_flag = USA_micron_china_diversified
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_china_contested }
+		clr_country_flag = USA_micron_china_diversified
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_china_diversified }
+		clr_country_flag = USA_micron_china_retrench
+		clr_country_flag = USA_micron_china_localized
+		clr_country_flag = USA_micron_china_contested
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_17_resolved }
+		set_country_flag = USA_micron_china_diversified
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_chips_public_capacity }
+		clr_country_flag = USA_micron_chips_workforce
+		clr_country_flag = USA_micron_chips_corporate
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_chips_workforce }
+		clr_country_flag = USA_micron_chips_corporate
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_chips_corporate }
+		clr_country_flag = USA_micron_chips_public_capacity
+		clr_country_flag = USA_micron_chips_workforce
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_18_resolved }
+		set_country_flag = USA_micron_chips_workforce
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_hbm_anchor }
+		clr_country_flag = USA_micron_hbm_broad_market
+		clr_country_flag = USA_micron_hbm_strategic_reserve
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_hbm_broad_market }
+		clr_country_flag = USA_micron_hbm_strategic_reserve
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_19_resolved }
+		set_country_flag = USA_micron_hbm_anchor
+	}
+
+	if = {
+		limit = { has_country_flag = USA_micron_us_arsenal }
+		clr_country_flag = USA_micron_global_balance
+		clr_country_flag = USA_micron_capex_disciplined
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_global_balance }
+		clr_country_flag = USA_micron_capex_disciplined
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_capex_disciplined }
+		clr_country_flag = USA_micron_us_arsenal
+		clr_country_flag = USA_micron_global_balance
+	}
+	else_if = {
+		limit = { has_country_flag = USA_micron_event_20_resolved }
+		set_country_flag = USA_micron_capex_disciplined
+	}
+}
+
+USA_micron_reconstruct_history = {
+	USA_micron_initialize_state = yes
+
+	if = {
+		limit = {
+			date > 1998.12.31
+			NOT = { has_country_flag = USA_micron_event_6_resolved }
+		}
+		set_country_flag = USA_micron_event_6_resolved
+		set_country_flag = USA_micron_ti_memory_integrated
+		add_to_variable = { USA_micron_process_lead = 1 }
+		add_to_variable = { USA_micron_us_fab_commitment = 1 }
+	}
+	if = {
+		limit = {
+			date > 1999.12.31
+			NOT = { has_country_flag = USA_micron_event_7_resolved }
+		}
+		set_country_flag = USA_micron_event_7_resolved
+		set_country_flag = USA_micron_ddr_standard
+		add_to_variable = { USA_micron_process_lead = 1 }
+		add_to_variable = { USA_micron_cycle_discipline = 1 }
+	}
+	if = {
+		limit = {
+			date > 2005.11.21
+			NOT = { has_country_flag = USA_micron_event_8_resolved }
+		}
+		set_country_flag = USA_micron_event_8_resolved
+		set_country_flag = USA_micron_imflash_balanced
+		add_to_variable = { USA_micron_process_lead = 1 }
+		add_to_variable = { USA_micron_cycle_discipline = 1 }
+	}
+	if = {
+		limit = {
+			date > 2006.6.30
+			NOT = { has_country_flag = USA_micron_event_9_resolved }
+		}
+		set_country_flag = USA_micron_event_9_resolved
+		set_country_flag = USA_micron_lexar_consumer_brand
+		add_to_variable = { USA_micron_cycle_discipline = -1 }
+	}
+	if = {
+		limit = {
+			date > 2009.1.1
+			NOT = { has_country_flag = USA_micron_event_10_resolved }
+		}
+		set_country_flag = USA_micron_event_10_resolved
+		set_country_flag = USA_micron_downcycle_cuts
+		add_to_variable = { USA_micron_process_lead = -1 }
+		add_to_variable = { USA_micron_cycle_discipline = 2 }
+	}
+	if = {
+		limit = {
+			date > 2013.7.31
+			NOT = { has_country_flag = USA_micron_event_11_resolved }
+		}
+		set_country_flag = USA_micron_event_11_resolved
+		set_country_flag = USA_micron_elpida_integrated
+		add_to_variable = { USA_micron_process_lead = 1 }
+		add_to_variable = { USA_micron_cycle_discipline = 1 }
+	}
+	if = {
+		limit = {
+			date > 2015.7.28
+			NOT = { has_country_flag = USA_micron_event_12_resolved }
+		}
+		set_country_flag = USA_micron_event_12_resolved
+		set_country_flag = USA_micron_xpoint_patient
+		add_to_variable = { USA_micron_process_lead = 1 }
+		add_to_variable = { USA_micron_cycle_discipline = -1 }
+	}
+	if = {
+		limit = {
+			date > 2016.12.6
+			NOT = { has_country_flag = USA_micron_event_13_resolved }
+		}
+		set_country_flag = USA_micron_event_13_resolved
+		set_country_flag = USA_micron_inotera_control
+		add_to_variable = { USA_micron_process_lead = 1 }
+		add_to_variable = { USA_micron_cycle_discipline = 1 }
+	}
+	if = {
+		limit = {
+			date > 2017.8.31
+			NOT = { has_country_flag = USA_micron_event_14_resolved }
+		}
+		set_country_flag = USA_micron_event_14_resolved
+		set_country_flag = USA_micron_lexar_sold
+		add_to_variable = { USA_micron_cycle_discipline = 2 }
+	}
+	if = {
+		limit = {
+			date > 2021.6.30
+			NOT = { has_country_flag = USA_micron_event_15_resolved }
+		}
+		set_country_flag = USA_micron_event_15_resolved
+		set_country_flag = USA_stack_txn_lehi_sold_to_ti
+		clr_country_flag = USA_stack_txn_lehi_retained_by_micron
+		clr_country_flag = USA_stack_txn_lehi_shared_reserve
+		add_to_variable = { USA_micron_process_lead = -1 }
+		add_to_variable = { USA_micron_cycle_discipline = 2 }
+		add_to_variable = { USA_micron_us_fab_commitment = -2 }
+	}
+	if = {
+		limit = {
+			date > 2022.10.4
+			NOT = { has_country_flag = USA_micron_event_16_resolved }
+		}
+		set_country_flag = USA_micron_event_16_resolved
+		set_country_flag = USA_micron_us_fabs_staged
+		set_country_flag = USA_micron_us_fabs_announced
+		add_to_variable = { USA_micron_cycle_discipline = 1 }
+		add_to_variable = { USA_micron_us_fab_commitment = 2 }
+	}
+	if = {
+		limit = {
+			date > 2023.5.21
+			NOT = { has_country_flag = USA_micron_event_17_resolved }
+		}
+		set_country_flag = USA_micron_event_17_resolved
+		set_country_flag = USA_micron_china_diversified
+		set_country_flag = USA_micron_china_sales_restricted
+		set_country_flag = USA_micron_china_operations_continue
+		add_to_variable = { USA_micron_cycle_discipline = 1 }
+	}
+	if = {
+		limit = {
+			date > 2024.12.10
+			NOT = { has_country_flag = USA_micron_event_18_resolved }
+		}
+		set_country_flag = USA_micron_event_18_resolved
+		set_country_flag = USA_micron_chips_workforce
+		set_country_flag = USA_stack_micron_chips_award
+		set_country_flag = USA_micron_us_fab_under_construction
+		add_to_variable = { USA_micron_process_lead = 1 }
+		add_to_variable = { USA_micron_us_fab_commitment = 2 }
+	}
+	if = {
+		limit = {
+			date > 2025.3.20
+			NOT = { has_country_flag = USA_micron_event_19_resolved }
+		}
+		set_country_flag = USA_micron_event_19_resolved
+		set_country_flag = USA_micron_hbm_anchor
+		add_to_variable = { USA_micron_cycle_discipline = -1 }
+		add_to_variable = { USA_micron_hbm_position = 3 }
+	}
+	if = {
+		limit = {
+			date > 2025.6.12
+			NOT = { has_country_flag = USA_micron_event_20_resolved }
+			NOT = { has_country_flag = USA_micron_capstone_choice_pending }
+		}
+		set_country_flag = USA_micron_event_20_resolved
+		set_country_flag = USA_micron_capex_disciplined
+		add_to_variable = { USA_micron_cycle_discipline = 2 }
+		add_to_variable = { USA_micron_us_fab_commitment = -1 }
+	}
+	if = {
+		limit = {
+			date > 2025.6.12
+			NOT = { has_country_flag = USA_micron_capstone_choice_pending }
+		}
+		set_country_flag = USA_micron_reconstruct_complete
+	}
+
+	USA_micron_normalize_state = yes
+	USA_micron_clamp_state = yes
+	if = {
+		limit = { NOT = { has_country_flag = USA_micron_capstone_choice_pending } }
+		USA_micron_resolve_capstone = yes
+	}
+}
+
+USA_micron_schedule_current_year_events = {
+	if = {
+		limit = { NOT = { has_country_flag = USA_micron_start_year_events_scheduled } }
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2005.1.1 }
+				has_start_date < 2005.1.2
+				NOT = { has_country_flag = USA_micron_event_8_resolved }
+			}
+			country_event = { id = USA_micron_events.8 days = 324 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2006.1.1 }
+				has_start_date < 2006.1.2
+				NOT = { has_country_flag = USA_micron_event_9_resolved }
+			}
+			country_event = { id = USA_micron_events.9 days = 180 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2009.1.1 }
+				has_start_date < 2009.1.2
+				NOT = { has_country_flag = USA_micron_event_10_resolved }
+			}
+			country_event = { id = USA_micron_events.10 days = 1 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2013.1.1 }
+				has_start_date < 2013.1.2
+				NOT = { has_country_flag = USA_micron_event_11_resolved }
+			}
+			country_event = { id = USA_micron_events.11 days = 211 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2015.1.1 }
+				has_start_date < 2015.1.2
+				NOT = { has_country_flag = USA_micron_event_12_resolved }
+			}
+			country_event = { id = USA_micron_events.12 days = 208 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2016.1.1 }
+				has_start_date < 2016.1.2
+				NOT = { has_country_flag = USA_micron_event_13_resolved }
+			}
+			country_event = { id = USA_micron_events.13 days = 340 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2017.1.1 }
+				has_start_date < 2017.1.2
+				NOT = { has_country_flag = USA_micron_event_14_resolved }
+			}
+			country_event = { id = USA_micron_events.14 days = 242 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2021.1.1 }
+				has_start_date < 2021.1.2
+				NOT = { has_country_flag = USA_micron_event_15_resolved }
+			}
+			country_event = { id = USA_micron_events.15 days = 180 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2022.1.1 }
+				has_start_date < 2022.1.2
+				NOT = { has_country_flag = USA_micron_event_16_resolved }
+			}
+			country_event = { id = USA_micron_events.16 days = 276 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2023.1.1 }
+				has_start_date < 2023.1.2
+				NOT = { has_country_flag = USA_micron_event_17_resolved }
+			}
+			country_event = { id = USA_micron_events.17 days = 140 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2024.1.1 }
+				has_start_date < 2024.1.2
+				NOT = { has_country_flag = USA_micron_event_18_resolved }
+			}
+			country_event = { id = USA_micron_events.18 days = 344 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2025.1.1 }
+				has_start_date < 2025.1.2
+				NOT = { has_country_flag = USA_micron_event_19_resolved }
+			}
+			country_event = { id = USA_micron_events.19 days = 78 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2025.1.1 }
+				has_start_date < 2025.1.2
+				NOT = { has_country_flag = USA_micron_event_20_resolved }
+			}
+			country_event = { id = USA_micron_events.20 days = 162 }
+		}
+	}
+
+	set_country_flag = USA_micron_start_year_events_scheduled
+}
+
+USA_micron_clear_capstone = {
+	remove_ideas = {
+		USA_micron_memory_scale_discipline
+		USA_micron_american_memory_arsenal
+		USA_micron_hbm_state
+		USA_micron_nonvolatile_future
+		USA_micron_global_memory_federation
+		USA_micron_consumer_memory_house
+	}
+
+}
+
+USA_micron_resolve_capstone = {
+	USA_micron_initialize_state = yes
+
+	if = {
+		limit = {
+			has_country_flag = USA_micron_event_20_resolved
+			has_country_flag = USA_micron_china_sales_restricted
+			has_country_flag = USA_micron_china_operations_continue
+		}
+
+		USA_micron_normalize_state = yes
+		USA_micron_clamp_state = yes
+		USA_micron_clear_capstone = yes
+		clr_country_flag = USA_stack_micron_memory_viable
+		if = {
+			limit = {
+				check_variable = { var = USA_micron_process_lead value = 7 compare = greater_than_or_equals }
+				check_variable = { var = USA_micron_cycle_discipline value = 6 compare = greater_than_or_equals }
+				has_country_flag = USA_micron_us_fabs_announced
+				has_country_flag = USA_micron_us_fab_under_construction
+			}
+			set_country_flag = USA_stack_micron_memory_viable
+		}
+
+		if = {
+			limit = {
+				has_country_flag = USA_micron_us_arsenal
+				has_country_flag = USA_stack_micron_chips_award
+				check_variable = { var = USA_micron_us_fab_commitment value = 8 compare = greater_than_or_equals }
+			}
+			add_ideas = USA_micron_american_memory_arsenal
+		}
+		else_if = {
+			limit = {
+				has_country_flag = USA_micron_global_balance
+				OR = {
+					has_country_flag = USA_micron_hbm_anchor
+					has_country_flag = USA_micron_hbm_strategic_reserve
+				}
+				check_variable = { var = USA_micron_process_lead value = 7 compare = greater_than_or_equals }
+				check_variable = { var = USA_micron_hbm_position value = 8 compare = greater_than_or_equals }
+			}
+			add_ideas = USA_micron_hbm_state
+		}
+		else_if = {
+			limit = {
+				OR = {
+					has_country_flag = USA_micron_xpoint_retained
+					has_country_flag = USA_micron_xpoint_reserve
+				}
+				OR = {
+					has_country_flag = USA_micron_xpoint_patient
+					has_country_flag = USA_micron_xpoint_accelerated
+				}
+				check_variable = { var = USA_micron_process_lead value = 7 compare = greater_than_or_equals }
+			}
+			add_ideas = USA_micron_nonvolatile_future
+		}
+		else_if = {
+			limit = {
+				has_country_flag = USA_micron_global_balance
+				has_country_flag = USA_micron_elpida_federation
+				OR = {
+					has_country_flag = USA_micron_inotera_autonomy
+					has_country_flag = USA_micron_inotera_compact
+				}
+				check_variable = { var = USA_micron_cycle_discipline value = 6 compare = greater_than_or_equals }
+			}
+			add_ideas = USA_micron_global_memory_federation
+		}
+		else_if = {
+			limit = {
+				OR = {
+					has_country_flag = USA_micron_lexar_retained
+					has_country_flag = USA_micron_lexar_expanded
+				}
+				OR = {
+					has_country_flag = USA_micron_lexar_consumer_brand
+					has_country_flag = USA_micron_lexar_storage_systems
+				}
+			}
+			add_ideas = USA_micron_consumer_memory_house
+		}
+		else = {
+			add_ideas = USA_micron_memory_scale_discipline
+		}
+
+		set_country_flag = USA_micron_capstone_resolved
+	}
+
+	USA_physical_compute_stack_resolve = yes
+}
+
+USA_micron_apply_domestic_capacity_grants = {
+	if = {
+		limit = { has_country_flag = USA_micron_state_initialized }
+		add_to_variable = { USA_micron_us_fab_commitment = 1 }
+		add_to_variable = { USA_micron_process_lead = 1 }
+		USA_micron_clamp_state = yes
+	}
+}
+
+USA_micron_apply_advanced_computing_consortium = {
+	if = {
+		limit = { has_country_flag = USA_micron_state_initialized }
+		add_to_variable = { USA_micron_process_lead = 1 }
+		add_to_variable = { USA_micron_hbm_position = 1 }
+		USA_micron_clamp_state = yes
+	}
+}

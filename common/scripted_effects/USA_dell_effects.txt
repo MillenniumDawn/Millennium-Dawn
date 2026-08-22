@@ -1,0 +1,1158 @@
+# Dell corporate-history wrappers. Framework: 00_corporate_history_effects.txt
+# Docs: docs/src/content/resources/corporate-history-framework.md
+# Bounded state 0..10: direct-sales model health, enterprise transformation,
+# balance-sheet leverage, founder control, governance legitimacy.
+
+USA_dell_initialize_state = {
+	if = {
+		limit = { NOT = { has_country_flag = USA_dell_state_initialized } }
+
+		set_variable = { USA_dell_direct_model_strength = 6 }
+		set_variable = { USA_dell_enterprise_pivot = 1 }
+		set_variable = { USA_dell_balance_sheet_leverage = 1 }
+		set_variable = { USA_dell_founder_control = 5 }
+		set_variable = { USA_dell_governance_legitimacy = 4 }
+		set_country_flag = USA_dell_state_initialized
+	}
+	if = {
+		limit = {
+			date < 2015.12.11
+			NOT = { has_country_flag = USA_dell_storage_bridge_initialized }
+		}
+		set_country_flag = USA_dell_storage_bridge_initialized
+	}
+
+	USA_dell_clamp_state = yes
+}
+
+USA_dell_clamp_state = {
+	set_temp_variable = { corp_value = USA_dell_direct_model_strength }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_dell_direct_model_strength = corp_value }
+	set_temp_variable = { corp_value = USA_dell_enterprise_pivot }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_dell_enterprise_pivot = corp_value }
+	set_temp_variable = { corp_value = USA_dell_balance_sheet_leverage }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_dell_balance_sheet_leverage = corp_value }
+	set_temp_variable = { corp_value = USA_dell_founder_control }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_dell_founder_control = corp_value }
+	set_temp_variable = { corp_value = USA_dell_governance_legitimacy }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_dell_governance_legitimacy = corp_value }
+}
+
+USA_dell_apply_perot_services_path = {
+	USA_dell_initialize_state = yes
+
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_perot_services_arm
+					has_country_flag = USA_dell_hardware_focus
+				}
+			}
+		}
+		set_country_flag = USA_dell_perot_services_arm
+		add_to_variable = { USA_dell_enterprise_pivot = 2 }
+		add_to_variable = { USA_dell_direct_model_strength = -1 }
+		USA_dell_clamp_state = yes
+	}
+
+	set_country_flag = USA_oem_services_pivot
+}
+
+USA_dell_apply_hardware_focus_path = {
+	USA_dell_initialize_state = yes
+
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_perot_services_arm
+					has_country_flag = USA_dell_hardware_focus
+				}
+			}
+		}
+		set_country_flag = USA_dell_hardware_focus
+		add_to_variable = { USA_dell_direct_model_strength = 1 }
+		USA_dell_clamp_state = yes
+	}
+
+	set_country_flag = USA_oem_hardware_core
+}
+
+USA_oem_storage_import_legacy_linux_state = {
+	if = {
+		limit = {
+			linux_system_enabled = yes
+			corporate_history_enabled = yes
+			original_tag = USA
+			NOT = { has_country_flag = linux_system_usa_storage_legacy_imported }
+		}
+		clr_country_flag = linux_system_usa_storage_legacy_route_upstream
+		clr_country_flag = linux_system_usa_storage_legacy_route_enterprise
+		set_variable = { linux_system_usa_storage_legacy_import_level = 0 }
+		if = {
+			limit = { check_variable = { USA_oem_storage_policy > 0 } }
+			set_variable = { linux_system_usa_storage_legacy_import_level = USA_oem_storage_policy }
+			clamp_variable = { var = linux_system_usa_storage_legacy_import_level min = 1 max = 2 }
+			set_country_flag = linux_system_usa_storage_legacy_route_upstream
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_storage_policy < 0 } }
+			subtract_from_variable = { linux_system_usa_storage_legacy_import_level = USA_oem_storage_policy }
+			clamp_variable = { var = linux_system_usa_storage_legacy_import_level min = 1 max = 2 }
+			set_country_flag = linux_system_usa_storage_legacy_route_enterprise
+		}
+		set_country_flag = linux_system_usa_storage_legacy_imported
+		linux_system_mark_dirty = yes
+	}
+}
+
+USA_oem_storage_repair_delivery_markers = {
+	if = {
+		limit = {
+			has_country_flag = USA_oem_storage_event_16_pending
+			NOT = { has_country_flag = USA_oem_storage_event_16_expected }
+			NOT = { has_country_flag = USA_oem_storage_event_16_resolved }
+		}
+		set_country_flag = USA_oem_storage_event_16_expected
+	}
+	if = {
+		limit = {
+			has_country_flag = USA_oem_storage_event_17_pending
+			NOT = { has_country_flag = USA_oem_storage_event_17_expected }
+			NOT = { has_country_flag = USA_oem_storage_event_17_resolved }
+		}
+		set_country_flag = USA_oem_storage_event_17_expected
+	}
+	if = {
+		limit = {
+			has_country_flag = USA_oem_storage_event_18_pending
+			NOT = { has_country_flag = USA_oem_storage_event_18_expected }
+			NOT = { has_country_flag = USA_oem_storage_event_18_resolved }
+		}
+		set_country_flag = USA_oem_storage_event_18_expected
+	}
+	if = {
+		limit = {
+			has_country_flag = USA_oem_storage_event_19_pending
+			NOT = { has_country_flag = USA_oem_storage_event_19_expected }
+			NOT = { has_country_flag = USA_oem_storage_event_19_resolved }
+		}
+		set_country_flag = USA_oem_storage_event_19_expected
+	}
+	if = {
+		limit = {
+			has_country_flag = USA_oem_storage_event_20_pending
+			NOT = { has_country_flag = USA_oem_storage_event_20_expected }
+			NOT = { has_country_flag = USA_oem_storage_event_20_resolved }
+		}
+		set_country_flag = USA_oem_storage_event_20_expected
+	}
+	if = {
+		limit = {
+			has_country_flag = USA_oem_storage_event_21_pending
+			NOT = { has_country_flag = USA_oem_storage_event_21_expected }
+			NOT = { has_country_flag = USA_oem_storage_event_21_resolved }
+		}
+		set_country_flag = USA_oem_storage_event_21_expected
+	}
+	if = {
+		limit = {
+			has_country_flag = USA_oem_storage_event_22_pending
+			NOT = { has_country_flag = USA_oem_storage_event_22_expected }
+			NOT = { has_country_flag = USA_oem_storage_event_22_resolved }
+		}
+		set_country_flag = USA_oem_storage_event_22_expected
+	}
+	if = {
+		limit = {
+			has_country_flag = USA_oem_storage_event_23_pending
+			NOT = { has_country_flag = USA_oem_storage_event_23_expected }
+			NOT = { has_country_flag = USA_oem_storage_event_23_resolved }
+		}
+		set_country_flag = USA_oem_storage_event_23_expected
+	}
+}
+
+USA_oem_storage_recover_pending_events = {
+	USA_oem_storage_repair_delivery_markers = yes
+
+	if = {
+		limit = {
+			corporate_history_full_enabled = yes
+			original_tag = USA
+			NOT = { has_country_flag = collapsed_nation }
+		}
+		if = {
+			limit = {
+				date > 2001.12.20
+				has_country_flag = USA_oem_storage_event_16_expected
+				NOT = { has_country_flag = USA_oem_storage_event_16_pending }
+				NOT = { has_country_flag = USA_oem_storage_event_16_resolved }
+			}
+			set_country_flag = { flag = USA_oem_storage_event_16_pending value = 1 days = 60 }
+			country_event = { id = USA_oem_events.16 days = 1 }
+		}
+		if = {
+			limit = {
+				date > 2005.2.14
+				has_country_flag = USA_oem_storage_event_17_expected
+				NOT = { has_country_flag = USA_oem_storage_event_17_pending }
+				NOT = { has_country_flag = USA_oem_storage_event_17_resolved }
+			}
+			set_country_flag = { flag = USA_oem_storage_event_17_pending value = 1 days = 60 }
+			country_event = { id = USA_oem_events.17 days = 1 }
+		}
+		if = {
+			limit = {
+				date > 2012.10.25
+				has_country_flag = USA_oem_storage_event_18_expected
+				NOT = { has_country_flag = USA_oem_storage_event_18_pending }
+				NOT = { has_country_flag = USA_oem_storage_event_18_resolved }
+			}
+			set_country_flag = { flag = USA_oem_storage_event_18_pending value = 1 days = 60 }
+			country_event = { id = USA_oem_events.18 days = 1 }
+		}
+		if = {
+			limit = {
+				date > 2015.12.9
+				has_country_flag = USA_oem_storage_event_19_expected
+				NOT = { has_country_flag = USA_oem_storage_event_19_pending }
+				NOT = { has_country_flag = USA_oem_storage_event_19_resolved }
+			}
+			set_country_flag = { flag = USA_oem_storage_event_19_pending value = 1 days = 60 }
+			country_event = { id = USA_oem_events.19 days = 1 }
+		}
+		if = {
+			limit = {
+				date > 2019.11.5
+				has_country_flag = USA_oem_storage_event_20_expected
+				NOT = { has_country_flag = USA_oem_storage_event_20_pending }
+				NOT = { has_country_flag = USA_oem_storage_event_20_resolved }
+			}
+			set_country_flag = { flag = USA_oem_storage_event_20_pending value = 1 days = 60 }
+			country_event = { id = USA_oem_events.20 days = 1 }
+		}
+		if = {
+			limit = {
+				date > 2022.10.24
+				has_country_flag = USA_oem_storage_event_21_expected
+				NOT = { has_country_flag = USA_oem_storage_event_21_pending }
+				NOT = { has_country_flag = USA_oem_storage_event_21_resolved }
+			}
+			set_country_flag = { flag = USA_oem_storage_event_21_pending value = 1 days = 60 }
+			country_event = { id = USA_oem_events.21 days = 1 }
+		}
+		if = {
+			limit = {
+				date > 2024.5.16
+				has_country_flag = USA_oem_storage_event_22_expected
+				NOT = { has_country_flag = USA_oem_storage_event_22_pending }
+				NOT = { has_country_flag = USA_oem_storage_event_22_resolved }
+			}
+			set_country_flag = { flag = USA_oem_storage_event_22_pending value = 1 days = 60 }
+			country_event = { id = USA_oem_events.22 days = 1 }
+		}
+		if = {
+			limit = {
+				date > 2026.5.7
+				has_country_flag = USA_oem_storage_event_23_expected
+				NOT = { has_country_flag = USA_oem_storage_event_23_pending }
+				NOT = { has_country_flag = USA_oem_storage_event_23_resolved }
+			}
+			set_country_flag = { flag = USA_oem_storage_event_23_pending value = 1 days = 60 }
+			country_event = { id = USA_oem_events.23 days = 1 }
+		}
+	}
+}
+
+USA_oem_storage_clear_linux_pending_markers = {
+	clr_country_flag = USA_oem_storage_event_16_expected
+	clr_country_flag = USA_oem_storage_event_16_pending
+	clr_country_flag = USA_oem_storage_event_17_expected
+	clr_country_flag = USA_oem_storage_event_17_pending
+	clr_country_flag = USA_oem_storage_event_18_expected
+	clr_country_flag = USA_oem_storage_event_18_pending
+	clr_country_flag = USA_oem_storage_event_19_expected
+	clr_country_flag = USA_oem_storage_event_19_pending
+	clr_country_flag = USA_oem_storage_event_20_expected
+	clr_country_flag = USA_oem_storage_event_20_pending
+	clr_country_flag = USA_oem_storage_event_21_expected
+	clr_country_flag = USA_oem_storage_event_21_pending
+	clr_country_flag = USA_oem_storage_event_22_expected
+	clr_country_flag = USA_oem_storage_event_22_pending
+	clr_country_flag = USA_oem_storage_event_23_expected
+	clr_country_flag = USA_oem_storage_event_23_pending
+}
+
+USA_oem_storage_clear_legacy_linux_adapter_state = {
+	clr_country_flag = linux_system_usa_storage_legacy_imported
+	clr_country_flag = linux_system_usa_storage_legacy_route_upstream
+	clr_country_flag = linux_system_usa_storage_legacy_route_enterprise
+	clear_variable = linux_system_usa_storage_legacy_import_level
+}
+
+USA_oem_storage_reconstruct_history = {
+	if = {
+		limit = {
+			corporate_history_enabled = yes
+			original_tag = USA
+			NOT = { has_country_flag = collapsed_nation }
+		}
+
+		set_temp_variable = { USA_oem_storage_history_changed = 0 }
+		if = {
+			limit = { NOT = { has_country_flag = linux_system_initialized } }
+			set_temp_variable = { USA_oem_storage_history_changed = 1 }
+		}
+		linux_system_initialize_state = yes
+		if = {
+			limit = { NOT = { has_country_flag = linux_system_usa_storage_legacy_imported } }
+			set_temp_variable = { USA_oem_storage_history_changed = 1 }
+		}
+		USA_oem_storage_import_legacy_linux_state = yes
+
+		if = {
+			limit = {
+				date > 2001.12.20
+				NOT = { has_country_flag = USA_oem_storage_event_16_resolved }
+				OR = {
+					corporate_history_outcomes_only_enabled = yes
+					AND = {
+						NOT = { has_country_flag = USA_oem_storage_event_16_expected }
+						NOT = { has_country_flag = USA_oem_storage_event_16_pending }
+					}
+				}
+			}
+			clr_country_flag = USA_oem_storage_event_16_route_upstream
+			clr_country_flag = USA_oem_storage_event_16_route_enterprise
+			set_country_flag = USA_oem_storage_event_16_route_upstream
+			clr_country_flag = USA_oem_storage_event_16_expected
+			clr_country_flag = USA_oem_storage_event_16_pending
+			set_country_flag = USA_oem_storage_event_16_resolved
+			set_temp_variable = { USA_oem_storage_history_changed = 1 }
+		}
+
+		if = {
+			limit = {
+				date > 2005.2.14
+				NOT = { has_country_flag = USA_oem_storage_event_17_resolved }
+				OR = {
+					corporate_history_outcomes_only_enabled = yes
+					AND = {
+						NOT = { has_country_flag = USA_oem_storage_event_17_expected }
+						NOT = { has_country_flag = USA_oem_storage_event_17_pending }
+					}
+				}
+			}
+			clr_country_flag = USA_oem_storage_event_17_route_upstream
+			clr_country_flag = USA_oem_storage_event_17_route_enterprise
+			set_country_flag = USA_oem_storage_event_17_route_upstream
+			clr_country_flag = USA_oem_storage_event_17_expected
+			clr_country_flag = USA_oem_storage_event_17_pending
+			set_country_flag = USA_oem_storage_event_17_resolved
+			set_temp_variable = { USA_oem_storage_history_changed = 1 }
+		}
+
+		if = {
+			limit = {
+				date > 2012.10.25
+				NOT = { has_country_flag = USA_oem_storage_event_18_resolved }
+				OR = {
+					corporate_history_outcomes_only_enabled = yes
+					AND = {
+						NOT = { has_country_flag = USA_oem_storage_event_18_expected }
+						NOT = { has_country_flag = USA_oem_storage_event_18_pending }
+					}
+				}
+			}
+			clr_country_flag = USA_oem_storage_event_18_route_upstream
+			clr_country_flag = USA_oem_storage_event_18_route_enterprise
+			set_country_flag = USA_oem_storage_event_18_route_enterprise
+			clr_country_flag = USA_oem_storage_event_18_expected
+			clr_country_flag = USA_oem_storage_event_18_pending
+			set_country_flag = USA_oem_storage_event_18_resolved
+			set_temp_variable = { USA_oem_storage_history_changed = 1 }
+		}
+
+		if = {
+			limit = {
+				date > 2015.12.9
+				NOT = { has_country_flag = USA_oem_storage_event_19_resolved }
+				OR = {
+					corporate_history_outcomes_only_enabled = yes
+					AND = {
+						NOT = { has_country_flag = USA_oem_storage_event_19_expected }
+						NOT = { has_country_flag = USA_oem_storage_event_19_pending }
+					}
+				}
+			}
+			clr_country_flag = USA_oem_storage_event_19_route_upstream
+			clr_country_flag = USA_oem_storage_event_19_route_enterprise
+			set_country_flag = USA_oem_storage_event_19_route_upstream
+			clr_country_flag = USA_oem_storage_event_19_expected
+			clr_country_flag = USA_oem_storage_event_19_pending
+			set_country_flag = USA_oem_storage_event_19_resolved
+			set_temp_variable = { USA_oem_storage_history_changed = 1 }
+		}
+
+		if = {
+			limit = {
+				date > 2019.11.5
+				NOT = { has_country_flag = USA_oem_storage_event_20_resolved }
+				OR = {
+					corporate_history_outcomes_only_enabled = yes
+					AND = {
+						NOT = { has_country_flag = USA_oem_storage_event_20_expected }
+						NOT = { has_country_flag = USA_oem_storage_event_20_pending }
+					}
+				}
+			}
+			clr_country_flag = USA_oem_storage_event_20_route_upstream
+			clr_country_flag = USA_oem_storage_event_20_route_enterprise
+			set_country_flag = USA_oem_storage_event_20_route_upstream
+			clr_country_flag = USA_oem_storage_event_20_expected
+			clr_country_flag = USA_oem_storage_event_20_pending
+			set_country_flag = USA_oem_storage_event_20_resolved
+			set_temp_variable = { USA_oem_storage_history_changed = 1 }
+		}
+
+		if = {
+			limit = {
+				date > 2022.10.24
+				NOT = { has_country_flag = USA_oem_storage_event_21_resolved }
+				OR = {
+					corporate_history_outcomes_only_enabled = yes
+					AND = {
+						NOT = { has_country_flag = USA_oem_storage_event_21_expected }
+						NOT = { has_country_flag = USA_oem_storage_event_21_pending }
+					}
+				}
+			}
+			clr_country_flag = USA_oem_storage_event_21_route_upstream
+			clr_country_flag = USA_oem_storage_event_21_route_enterprise
+			set_country_flag = USA_oem_storage_event_21_route_upstream
+			clr_country_flag = USA_oem_storage_event_21_expected
+			clr_country_flag = USA_oem_storage_event_21_pending
+			set_country_flag = USA_oem_storage_event_21_resolved
+			set_temp_variable = { USA_oem_storage_history_changed = 1 }
+		}
+
+		if = {
+			limit = {
+				date > 2024.5.16
+				NOT = { has_country_flag = USA_oem_storage_event_22_resolved }
+				OR = {
+					corporate_history_outcomes_only_enabled = yes
+					AND = {
+						NOT = { has_country_flag = USA_oem_storage_event_22_expected }
+						NOT = { has_country_flag = USA_oem_storage_event_22_pending }
+					}
+				}
+			}
+			clr_country_flag = USA_oem_storage_event_22_route_upstream
+			clr_country_flag = USA_oem_storage_event_22_route_enterprise
+			set_country_flag = USA_oem_storage_event_22_route_upstream
+			clr_country_flag = USA_oem_storage_event_22_expected
+			clr_country_flag = USA_oem_storage_event_22_pending
+			set_country_flag = USA_oem_storage_event_22_resolved
+			set_temp_variable = { USA_oem_storage_history_changed = 1 }
+		}
+
+		if = {
+			limit = {
+				date > 2026.5.7
+				NOT = { has_country_flag = USA_oem_storage_event_23_resolved }
+				OR = {
+					corporate_history_outcomes_only_enabled = yes
+					AND = {
+						NOT = { has_country_flag = USA_oem_storage_event_23_expected }
+						NOT = { has_country_flag = USA_oem_storage_event_23_pending }
+					}
+				}
+			}
+			clr_country_flag = USA_oem_storage_event_23_route_upstream
+			clr_country_flag = USA_oem_storage_event_23_route_enterprise
+			set_country_flag = USA_oem_storage_event_23_route_upstream
+			clr_country_flag = USA_oem_storage_event_23_expected
+			clr_country_flag = USA_oem_storage_event_23_pending
+			set_country_flag = USA_oem_storage_event_23_resolved
+			set_temp_variable = { USA_oem_storage_history_changed = 1 }
+		}
+
+		if = {
+			limit = { check_variable = { USA_oem_storage_history_changed > 0 } }
+			linux_system_mark_dirty = yes
+			linux_system_recalculate_state = yes
+		}
+	}
+}
+
+USA_dell_reconstruct_history = {
+	USA_dell_initialize_state = yes
+
+	if = {
+		limit = {
+			date > 2000.3.31
+			NOT = {
+				OR = {
+					has_country_flag = USA_texas_oem_supplier_network
+					has_country_flag = USA_texas_oem_globalized_direct_model
+				}
+			}
+		}
+		set_country_flag = USA_texas_oem_globalized_direct_model
+	}
+
+	if = {
+		limit = {
+			date > 2001.5.1
+			NOT = {
+				OR = {
+					has_country_flag = USA_lone_star_server_ecosystem
+					has_country_flag = USA_oem_global_supply_chain
+				}
+			}
+		}
+		set_country_flag = USA_lone_star_server_ecosystem
+	}
+
+	if = {
+		limit = {
+			date > 2004.7.16
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_rollins_direct_machine
+					has_country_flag = USA_dell_founder_stays_ceo
+				}
+			}
+		}
+		set_country_flag = USA_dell_rollins_direct_machine
+		add_to_variable = { USA_dell_direct_model_strength = 2 }
+		add_to_variable = { USA_dell_founder_control = -2 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2005.9.1
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_cost_discipline_defense
+					has_country_flag = USA_dell_premium_retail_shift
+					has_country_flag = USA_dell_reinvest_experience
+				}
+			}
+		}
+		set_country_flag = USA_dell_cost_discipline_defense
+		add_to_variable = { USA_dell_direct_model_strength = 1 }
+		add_to_variable = { USA_dell_governance_legitimacy = -1 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2006.3.22
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_alienware_distinct_brand
+					has_country_flag = USA_dell_alienware_absorbed
+				}
+			}
+		}
+		set_country_flag = USA_dell_alienware_distinct_brand
+		add_to_variable = { USA_dell_governance_legitimacy = 1 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2007.1.31
+			has_country_flag = USA_dell_rollins_direct_machine
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_founder_returns
+					has_country_flag = USA_dell_professional_management
+				}
+			}
+		}
+		set_country_flag = USA_dell_founder_returns
+		add_to_variable = { USA_dell_founder_control = 3 }
+		add_to_variable = { USA_dell_direct_model_strength = -1 }
+		add_to_variable = { USA_dell_enterprise_pivot = 1 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2007.8.16
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_restate_and_settle
+					has_country_flag = USA_dell_contest_findings
+					has_country_flag = USA_dell_governance_overhaul
+				}
+			}
+		}
+		set_country_flag = USA_dell_restate_and_settle
+		add_to_variable = { USA_dell_governance_legitimacy = 2 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = { date > 2009.9.21 }
+
+		if = {
+			limit = { has_country_flag = USA_dell_perot_services_arm }
+			USA_dell_apply_perot_services_path = yes
+		}
+		else_if = {
+			limit = { has_country_flag = USA_dell_hardware_focus }
+			USA_dell_apply_hardware_focus_path = yes
+		}
+		else_if = {
+			limit = { has_country_flag = USA_oem_services_pivot }
+			USA_dell_apply_perot_services_path = yes
+		}
+		else_if = {
+			limit = { has_country_flag = USA_oem_hardware_core }
+			USA_dell_apply_hardware_focus_path = yes
+		}
+		else = { USA_dell_apply_perot_services_path = yes }
+	}
+
+	if = {
+		limit = {
+			date > 2013.2.5
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_go_private_silver_lake
+					has_country_flag = USA_dell_stay_public
+					has_country_flag = USA_dell_leveraged_recap_alternative
+				}
+			}
+		}
+		set_country_flag = USA_dell_go_private_silver_lake
+		add_to_variable = { USA_dell_founder_control = 3 }
+		add_to_variable = { USA_dell_balance_sheet_leverage = 4 }
+		add_to_variable = { USA_dell_governance_legitimacy = -1 }
+		add_to_variable = { USA_dell_enterprise_pivot = 1 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2013.9.12
+			has_country_flag = USA_dell_go_private_silver_lake
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_defeat_activists
+					has_country_flag = USA_dell_concede_to_activists
+				}
+			}
+		}
+		set_country_flag = USA_dell_defeat_activists
+		add_to_variable = { USA_dell_governance_legitimacy = -1 }
+		add_to_variable = { USA_dell_founder_control = 1 }
+		add_to_variable = { USA_dell_balance_sheet_leverage = 1 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2014.6.9
+			OR = {
+				has_country_flag = USA_dell_alienware_distinct_brand
+				has_country_flag = USA_dell_alienware_absorbed
+			}
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_alienware_premium_push
+					has_country_flag = USA_dell_gaming_mainstream
+				}
+			}
+		}
+		set_country_flag = USA_dell_alienware_premium_push
+		add_to_variable = { USA_dell_governance_legitimacy = 1 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2015.10.12
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_emc_full_integration
+					has_country_flag = USA_dell_emc_preserve_federation
+					has_country_flag = USA_dell_forgo_emc
+				}
+			}
+		}
+		set_country_flag = USA_dell_emc_full_integration
+		add_to_variable = { USA_dell_enterprise_pivot = 3 }
+		add_to_variable = { USA_dell_balance_sheet_leverage = 3 }
+		add_to_variable = { USA_dell_direct_model_strength = -1 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2015.12.10
+			NOT = { has_country_flag = USA_oem_storage_firmware_2015_resolved }
+		}
+		set_country_flag = USA_dell_storage_bridge_initialized
+		set_country_flag = USA_oem_storage_firmware_2015_resolved
+	}
+
+	if = {
+		limit = {
+			date > 2018.7.2
+			has_country_flag = USA_dell_go_private_silver_lake
+			OR = {
+				has_country_flag = USA_dell_emc_full_integration
+				has_country_flag = USA_dell_emc_preserve_federation
+			}
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_relist_via_tracking_buyback
+					has_country_flag = USA_dell_stay_private_longer
+				}
+			}
+		}
+		set_country_flag = USA_dell_relist_via_tracking_buyback
+		add_to_variable = { USA_dell_governance_legitimacy = 2 }
+		add_to_variable = { USA_dell_founder_control = -1 }
+		add_to_variable = { USA_dell_balance_sheet_leverage = 1 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2021.4.14
+			OR = {
+				has_country_flag = USA_dell_emc_full_integration
+				has_country_flag = USA_dell_emc_preserve_federation
+			}
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_spinoff_vmware_deleverage
+					has_country_flag = USA_dell_retain_vmware_integrated
+				}
+			}
+		}
+		set_country_flag = USA_dell_spinoff_vmware_deleverage
+		add_to_variable = { USA_dell_balance_sheet_leverage = -4 }
+		add_to_variable = { USA_dell_enterprise_pivot = -1 }
+		add_to_variable = { USA_dell_governance_legitimacy = 1 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2024.5.20
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_ai_server_buildout
+					has_country_flag = USA_dell_ai_selective_margin
+					has_country_flag = USA_dell_ai_full_stack
+				}
+			}
+		}
+		set_country_flag = USA_dell_ai_server_buildout
+		add_to_variable = { USA_dell_enterprise_pivot = 2 }
+		add_to_variable = { USA_dell_direct_model_strength = 1 }
+		USA_dell_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2025.1.6
+			OR = {
+				has_country_flag = USA_dell_alienware_distinct_brand
+				has_country_flag = USA_dell_alienware_absorbed
+			}
+			OR = {
+				has_country_flag = USA_dell_alienware_premium_push
+				has_country_flag = USA_dell_gaming_mainstream
+			}
+			NOT = {
+				OR = {
+					has_country_flag = USA_dell_alienware_flagship_defended
+					has_country_flag = USA_dell_alienware_fully_consolidated
+				}
+			}
+		}
+		set_country_flag = USA_dell_alienware_flagship_defended
+		add_to_variable = { USA_dell_governance_legitimacy = 1 }
+		USA_dell_clamp_state = yes
+	}
+
+	USA_dell_clamp_state = yes
+
+	if = {
+		limit = { date > 2026.6.15 }
+		USA_dell_resolve_capstone = yes
+		set_country_flag = USA_dell_reconstruct_complete
+	}
+}
+
+# Queue unelapsed Dell milestones for January 1 starts skipped by the yearly dispatcher.
+USA_dell_schedule_current_year_events = {
+	if = {
+		limit = { NOT = { has_country_flag = USA_dell_start_year_events_scheduled } }
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2004.1.1 }
+				has_start_date < 2004.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_rollins_direct_machine
+						has_country_flag = USA_dell_founder_stays_ceo
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.1 days = 197 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2005.1.1 }
+				has_start_date < 2005.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_cost_discipline_defense
+						has_country_flag = USA_dell_premium_retail_shift
+						has_country_flag = USA_dell_reinvest_experience
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.2 days = 243 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2006.1.1 }
+				has_start_date < 2006.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_alienware_distinct_brand
+						has_country_flag = USA_dell_alienware_absorbed
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.3 days = 80 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2007.1.1 }
+				has_start_date < 2007.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_founder_returns
+						has_country_flag = USA_dell_professional_management
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.4 days = 30 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2007.1.1 }
+				has_start_date < 2007.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_restate_and_settle
+						has_country_flag = USA_dell_contest_findings
+						has_country_flag = USA_dell_governance_overhaul
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.5 days = 227 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2009.1.1 }
+				has_start_date < 2009.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_perot_services_arm
+						has_country_flag = USA_dell_hardware_focus
+					}
+				}
+				NOT = {
+					OR = {
+						has_country_flag = USA_oem_services_pivot
+						has_country_flag = USA_oem_hardware_core
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.6 days = 263 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2013.1.1 }
+				has_start_date < 2013.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_go_private_silver_lake
+						has_country_flag = USA_dell_stay_public
+						has_country_flag = USA_dell_leveraged_recap_alternative
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.7 days = 35 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2013.1.1 }
+				has_start_date < 2013.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_defeat_activists
+						has_country_flag = USA_dell_concede_to_activists
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.8 days = 254 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2014.1.1 }
+				has_start_date < 2014.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_alienware_premium_push
+						has_country_flag = USA_dell_gaming_mainstream
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.9 days = 159 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2015.1.1 }
+				has_start_date < 2015.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_emc_full_integration
+						has_country_flag = USA_dell_emc_preserve_federation
+						has_country_flag = USA_dell_forgo_emc
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.10 days = 284 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2018.1.1 }
+				has_start_date < 2018.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_relist_via_tracking_buyback
+						has_country_flag = USA_dell_stay_private_longer
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.11 days = 182 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2021.1.1 }
+				has_start_date < 2021.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_spinoff_vmware_deleverage
+						has_country_flag = USA_dell_retain_vmware_integrated
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.12 days = 103 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2024.1.1 }
+				has_start_date < 2024.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_ai_server_buildout
+						has_country_flag = USA_dell_ai_selective_margin
+						has_country_flag = USA_dell_ai_full_stack
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.13 days = 140 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2025.1.1 }
+				has_start_date < 2025.1.2
+				NOT = {
+					OR = {
+						has_country_flag = USA_dell_alienware_flagship_defended
+						has_country_flag = USA_dell_alienware_fully_consolidated
+					}
+				}
+			}
+			country_event = { id = USA_dell_events.14 days = 5 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2026.1.1 }
+				has_start_date < 2026.1.2
+				NOT = { has_country_flag = USA_dell_capstone_resolved }
+				NOT = { has_country_flag = USA_dell_outcome_ai_backbone }
+				NOT = { has_country_flag = USA_dell_outcome_integrated_federation }
+				NOT = { has_country_flag = USA_dell_outcome_founder_empire }
+				NOT = { has_country_flag = USA_dell_outcome_direct_manufacturer }
+				NOT = { has_country_flag = USA_dell_outcome_leveraged_restructurer }
+			}
+			country_event = { id = USA_dell_events.15 days = 165 }
+		}
+	}
+
+	set_country_flag = USA_dell_start_year_events_scheduled
+}
+
+USA_dell_clear_capstone_outcome = {
+	remove_ideas = {
+		USA_dell_ai_infrastructure_backbone
+		USA_dell_integrated_infrastructure_federation
+		USA_dell_founder_private_empire
+		USA_dell_disciplined_direct_manufacturer
+		USA_dell_leveraged_restructurer
+	}
+
+	if = {
+		limit = { has_country_flag = USA_dell_outcome_ai_backbone }
+		clr_country_flag = USA_dell_outcome_ai_backbone
+	}
+	if = {
+		limit = { has_country_flag = USA_dell_outcome_integrated_federation }
+		clr_country_flag = USA_dell_outcome_integrated_federation
+	}
+	if = {
+		limit = { has_country_flag = USA_dell_outcome_founder_empire }
+		clr_country_flag = USA_dell_outcome_founder_empire
+	}
+	if = {
+		limit = { has_country_flag = USA_dell_outcome_direct_manufacturer }
+		clr_country_flag = USA_dell_outcome_direct_manufacturer
+	}
+	if = {
+		limit = { has_country_flag = USA_dell_outcome_leveraged_restructurer }
+		clr_country_flag = USA_dell_outcome_leveraged_restructurer
+	}
+	if = {
+		limit = { has_country_flag = USA_dell_capstone_resolved }
+		clr_country_flag = USA_dell_capstone_resolved
+	}
+}
+
+USA_dell_apply_ai_backbone_capstone = {
+	USA_dell_clear_capstone_outcome = yes
+	add_ideas = USA_dell_ai_infrastructure_backbone
+	set_country_flag = USA_dell_outcome_ai_backbone
+	set_country_flag = USA_dell_capstone_resolved
+	USA_corporate_systems_update_economic_bridge = yes
+}
+
+USA_dell_apply_integrated_capstone = {
+	USA_dell_clear_capstone_outcome = yes
+	add_ideas = USA_dell_integrated_infrastructure_federation
+	set_country_flag = USA_dell_outcome_integrated_federation
+	set_country_flag = USA_dell_capstone_resolved
+	USA_corporate_systems_update_economic_bridge = yes
+}
+
+USA_dell_apply_founder_empire_capstone = {
+	USA_dell_clear_capstone_outcome = yes
+	add_ideas = USA_dell_founder_private_empire
+	set_country_flag = USA_dell_outcome_founder_empire
+	set_country_flag = USA_dell_capstone_resolved
+	USA_corporate_systems_update_economic_bridge = yes
+}
+
+USA_dell_apply_direct_manufacturer_capstone = {
+	USA_dell_clear_capstone_outcome = yes
+	add_ideas = USA_dell_disciplined_direct_manufacturer
+	set_country_flag = USA_dell_outcome_direct_manufacturer
+	set_country_flag = USA_dell_capstone_resolved
+	USA_corporate_systems_update_economic_bridge = yes
+}
+
+USA_dell_apply_leveraged_restructurer_capstone = {
+	USA_dell_clear_capstone_outcome = yes
+	add_ideas = USA_dell_leveraged_restructurer
+	set_country_flag = USA_dell_outcome_leveraged_restructurer
+	set_country_flag = USA_dell_capstone_resolved
+	USA_corporate_systems_update_economic_bridge = yes
+}
+
+USA_dell_resolve_capstone = {
+	USA_dell_initialize_state = yes
+
+	if = {
+		limit = { NOT = { has_country_flag = USA_dell_capstone_resolved } }
+
+		if = {
+			limit = {
+				check_variable = { var = USA_dell_enterprise_pivot value = 8 compare = greater_than_or_equals }
+				OR = {
+					has_country_flag = USA_dell_ai_server_buildout
+					has_country_flag = USA_dell_ai_full_stack
+				}
+			}
+			USA_dell_apply_ai_backbone_capstone = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { var = USA_dell_enterprise_pivot value = 7 compare = greater_than_or_equals }
+				check_variable = { var = USA_dell_governance_legitimacy value = 6 compare = greater_than_or_equals }
+			}
+			USA_dell_apply_integrated_capstone = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { var = USA_dell_founder_control value = 8 compare = greater_than_or_equals }
+				check_variable = { var = USA_dell_balance_sheet_leverage value = 6 compare = greater_than_or_equals }
+				has_country_flag = USA_dell_go_private_silver_lake
+				NOT = { has_country_flag = USA_dell_relist_via_tracking_buyback }
+			}
+			USA_dell_apply_founder_empire_capstone = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { var = USA_dell_direct_model_strength value = 7 compare = greater_than_or_equals }
+			}
+			USA_dell_apply_direct_manufacturer_capstone = yes
+		}
+		else = { USA_dell_apply_leveraged_restructurer_capstone = yes }
+
+	}
+}
+
+USA_dell_apply_secure_federal_systems = {
+	if = {
+		limit = { has_country_flag = USA_dell_state_initialized }
+		add_to_variable = { USA_dell_enterprise_pivot = 1 }
+		USA_dell_clamp_state = yes
+	}
+}

@@ -1,0 +1,343 @@
+USA_aig_initialize_state = {
+	if = {
+		limit = { NOT = { has_country_flag = USA_aig_state_initialized } }
+
+		set_variable = { USA_aig_financial_panic = 2 }
+		set_variable = { USA_aig_banking_capital = 7 }
+		set_variable = { USA_aig_public_anger = 2 }
+		set_variable = { USA_aig_federal_exposure = 0 }
+		set_country_flag = USA_aig_state_initialized
+	}
+
+	USA_aig_clamp_state = yes
+}
+
+USA_aig_clamp_state = {
+	set_temp_variable = { corp_value = USA_aig_financial_panic }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_aig_financial_panic = corp_value }
+	set_temp_variable = { corp_value = USA_aig_banking_capital }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_aig_banking_capital = corp_value }
+	set_temp_variable = { corp_value = USA_aig_public_anger }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_aig_public_anger = corp_value }
+	set_temp_variable = { corp_value = USA_aig_federal_exposure }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_aig_federal_exposure = corp_value }
+}
+
+USA_aig_clear_capstone_outcome = {
+	remove_ideas = {
+		USA_aig_creditor_bail_in_precedent
+		USA_aig_taxpayer_vindication
+		USA_aig_orderly_resolution_regime
+		USA_aig_liquidationist_precedent
+		USA_aig_moral_hazard_settlement
+	}
+
+	if = {
+		limit = { has_country_flag = USA_aig_outcome_creditor_bail_in }
+		clr_country_flag = USA_aig_outcome_creditor_bail_in
+	}
+	if = {
+		limit = { has_country_flag = USA_aig_outcome_taxpayer_vindication }
+		clr_country_flag = USA_aig_outcome_taxpayer_vindication
+	}
+	if = {
+		limit = { has_country_flag = USA_aig_outcome_orderly_resolution }
+		clr_country_flag = USA_aig_outcome_orderly_resolution
+	}
+	if = {
+		limit = { has_country_flag = USA_aig_outcome_liquidationist }
+		clr_country_flag = USA_aig_outcome_liquidationist
+	}
+	if = {
+		limit = { has_country_flag = USA_aig_outcome_moral_hazard }
+		clr_country_flag = USA_aig_outcome_moral_hazard
+	}
+	if = {
+		limit = { has_country_flag = USA_aig_capstone_resolved }
+		clr_country_flag = USA_aig_capstone_resolved
+	}
+}
+
+USA_aig_apply_creditor_bail_in_precedent = {
+	USA_aig_clear_capstone_outcome = yes
+	add_ideas = USA_aig_creditor_bail_in_precedent
+	set_country_flag = USA_aig_outcome_creditor_bail_in
+	set_country_flag = USA_aig_capstone_resolved
+	USA_aig_clamp_state = yes
+}
+
+USA_aig_apply_taxpayer_vindication = {
+	USA_aig_clear_capstone_outcome = yes
+	add_ideas = USA_aig_taxpayer_vindication
+	set_country_flag = USA_aig_outcome_taxpayer_vindication
+	set_country_flag = USA_aig_capstone_resolved
+	USA_aig_clamp_state = yes
+}
+
+USA_aig_apply_orderly_resolution_regime = {
+	USA_aig_clear_capstone_outcome = yes
+	add_ideas = USA_aig_orderly_resolution_regime
+	set_country_flag = USA_aig_outcome_orderly_resolution
+	set_country_flag = USA_aig_capstone_resolved
+	USA_aig_clamp_state = yes
+}
+
+USA_aig_apply_liquidationist_precedent = {
+	USA_aig_clear_capstone_outcome = yes
+	add_ideas = USA_aig_liquidationist_precedent
+	set_country_flag = USA_aig_outcome_liquidationist
+	set_country_flag = USA_aig_capstone_resolved
+	USA_aig_clamp_state = yes
+}
+
+USA_aig_apply_moral_hazard_settlement = {
+	USA_aig_clear_capstone_outcome = yes
+	add_ideas = USA_aig_moral_hazard_settlement
+	set_country_flag = USA_aig_outcome_moral_hazard
+	set_country_flag = USA_aig_capstone_resolved
+	USA_aig_clamp_state = yes
+}
+
+USA_aig_resolve_capstone = {
+	USA_aig_initialize_state = yes
+
+	if = {
+		limit = { NOT = { has_country_flag = USA_aig_capstone_resolved } }
+		if = {
+			limit = { has_country_flag = USA_aig_ml3_concession_path }
+			USA_aig_apply_creditor_bail_in_precedent = yes
+		}
+		else_if = {
+			limit = {
+				has_country_flag = USA_aig_fed_repaid
+				has_country_flag = USA_aig_methodical_divestment
+				NOT = { has_country_flag = USA_aig_ml3_concession_path }
+				check_variable = { var = USA_aig_federal_exposure value = 2 compare = less_than_or_equals }
+				check_variable = { var = USA_aig_public_anger value = 4 compare = less_than_or_equals }
+			}
+			USA_aig_apply_taxpayer_vindication = yes
+		}
+		else_if = {
+			limit = {
+				has_country_flag = USA_aig_counterparties_disclosed
+				has_country_flag = USA_aig_bonuses_clawed_back
+				check_variable = { var = USA_aig_banking_capital value = 7 compare = greater_than_or_equals }
+			}
+			USA_aig_apply_orderly_resolution_regime = yes
+		}
+		else_if = {
+			limit = { has_country_flag = USA_aig_bankruptcy_path }
+			USA_aig_apply_liquidationist_precedent = yes
+		}
+		else = { USA_aig_apply_moral_hazard_settlement = yes }
+	}
+}
+
+USA_aig_reconstruct_history = {
+	USA_aig_initialize_state = yes
+
+	# A queued-but-unanswered opening belongs to the recovery scheduler, not here:
+	# reconstructing over it would let the popup re-apply a conflicting opening.
+	if = {
+		limit = {
+			date > 2008.9.16
+			has_global_flag = USA_great_financial_crisis
+			NOT = { has_country_flag = USA_aig_event_1_pending }
+			NOT = { has_country_flag = USA_aig_direct_rescue_chosen }
+			NOT = { has_country_flag = USA_aig_consortium_attempted }
+			NOT = { has_country_flag = USA_aig_no_bailout }
+			NOT = { has_country_flag = USA_aig_bankruptcy_path }
+			NOT = { has_country_flag = USA_aig_equity_stake }
+			NOT = { has_country_flag = USA_aig_creditor_only }
+		}
+		set_country_flag = USA_aig_event_1_resolved
+		set_country_flag = USA_aig_direct_rescue_chosen
+		set_country_flag = USA_aig_rescue_active
+		set_country_flag = USA_aig_equity_stake
+		add_to_variable = { USA_aig_financial_panic = -2 }
+		add_to_variable = { USA_aig_banking_capital = 2 }
+		add_to_variable = { USA_aig_public_anger = 1 }
+		add_to_variable = { USA_aig_federal_exposure = 3 }
+		USA_aig_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2008.10.8
+			has_country_flag = USA_aig_rescue_active
+			NOT = { has_country_flag = USA_aig_securities_facility }
+			NOT = { has_country_flag = USA_aig_facility_refused }
+		}
+		set_country_flag = USA_aig_securities_facility
+		add_to_variable = { USA_aig_financial_panic = -1 }
+		add_to_variable = { USA_aig_banking_capital = 1 }
+		add_to_variable = { USA_aig_federal_exposure = 1 }
+		USA_aig_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2008.11.10
+			has_country_flag = USA_aig_rescue_active
+			NOT = { has_country_flag = USA_aig_restructured }
+			NOT = { has_country_flag = USA_aig_original_terms }
+		}
+		set_country_flag = USA_aig_restructured
+		add_to_variable = { USA_aig_financial_panic = -1 }
+		add_to_variable = { USA_aig_banking_capital = 1 }
+		add_to_variable = { USA_aig_public_anger = 1 }
+		add_to_variable = { USA_aig_federal_exposure = 1 }
+		USA_aig_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2008.12.3
+			has_country_flag = USA_aig_rescue_active
+			NOT = { has_country_flag = USA_aig_ml3_par_path }
+			NOT = { has_country_flag = USA_aig_ml3_concession_path }
+			NOT = { has_country_flag = USA_aig_haircuts_attempted }
+		}
+		set_country_flag = USA_aig_ml3_par_path
+		add_to_variable = { USA_aig_financial_panic = -2 }
+		add_to_variable = { USA_aig_banking_capital = 1 }
+		add_to_variable = { USA_aig_public_anger = 1 }
+		add_to_variable = { USA_aig_federal_exposure = 1 }
+		USA_aig_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2008.12.16
+			has_country_flag = USA_aig_rescue_active
+			NOT = { has_country_flag = USA_aig_ml2_active }
+			NOT = { has_country_flag = USA_aig_ml2_declined }
+		}
+		set_country_flag = USA_aig_ml2_active
+		add_to_variable = { USA_aig_financial_panic = -1 }
+		add_to_variable = { USA_aig_banking_capital = 1 }
+		add_to_variable = { USA_aig_federal_exposure = 1 }
+		USA_aig_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2009.3.15
+			has_country_flag = USA_aig_rescue_active
+			NOT = { has_country_flag = USA_aig_counterparties_disclosed }
+			NOT = { has_country_flag = USA_aig_disclosure_delayed }
+		}
+		set_country_flag = USA_aig_counterparties_disclosed
+		add_to_variable = { USA_aig_public_anger = 1 }
+		USA_aig_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2009.3.17
+			has_country_flag = USA_aig_rescue_active
+			NOT = { has_country_flag = USA_aig_bonuses_honored }
+			NOT = { has_country_flag = USA_aig_bonuses_clawed_back }
+		}
+		set_country_flag = USA_aig_bonuses_honored
+		add_to_variable = { USA_aig_public_anger = 1 }
+		USA_aig_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2010.3.1
+			has_country_flag = USA_aig_rescue_active
+			NOT = { has_country_flag = USA_aig_methodical_divestment }
+			NOT = { has_country_flag = USA_aig_rapid_divestment }
+		}
+		set_country_flag = USA_aig_methodical_divestment
+		add_to_variable = { USA_aig_public_anger = -1 }
+		add_to_variable = { USA_aig_federal_exposure = -1 }
+		USA_aig_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2011.1.14
+			has_country_flag = USA_aig_rescue_active
+			NOT = { has_country_flag = USA_aig_fed_repaid }
+			NOT = { has_country_flag = USA_aig_facility_extended }
+		}
+		set_country_flag = USA_aig_fed_repaid
+		add_to_variable = { USA_aig_financial_panic = -1 }
+		add_to_variable = { USA_aig_federal_exposure = -2 }
+		USA_aig_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2012.12.14
+			has_country_flag = USA_aig_fed_repaid
+			NOT = { has_country_flag = USA_aig_treasury_divested }
+		}
+		set_country_flag = USA_aig_treasury_divested
+		add_to_variable = { USA_aig_financial_panic = -1 }
+		add_to_variable = { USA_aig_public_anger = -1 }
+		add_to_variable = { USA_aig_federal_exposure = -2 }
+		USA_aig_clamp_state = yes
+	}
+
+	USA_aig_clamp_state = yes
+
+	if = {
+		limit = {
+			date > 2012.12.14
+			has_global_flag = USA_great_financial_crisis
+			NOT = { has_country_flag = USA_aig_capstone_resolved }
+		}
+		USA_aig_resolve_capstone = yes
+	}
+	if = {
+		limit = { date > 2012.12.14 }
+		set_country_flag = USA_aig_reconstruct_complete
+	}
+}
+
+# aig_schedule_mode: 0 = January-1 startup scheduling, 1 = monthly recovery for a
+# campaign whose MTTH-driven Great Financial Crisis fired after 2008.9.16.
+USA_aig_schedule_current_year_events = {
+	if = {
+		limit = {
+			check_variable = { aig_schedule_mode = 0 }
+			NOT = { has_country_flag = USA_aig_start_year_events_scheduled }
+			NOT = { has_start_date < 2008.1.1 }
+			has_start_date < 2008.1.2
+			date < 2008.9.16
+			NOT = { has_country_flag = USA_aig_event_1_resolved }
+		}
+		set_country_flag = { flag = USA_aig_event_1_pending value = 1 days = 320 }
+		country_event = { id = USA_aig_events.1 days = 259 }
+	}
+	if = {
+		limit = { check_variable = { aig_schedule_mode = 0 } }
+		set_country_flag = USA_aig_start_year_events_scheduled
+	}
+
+	if = {
+		limit = {
+			check_variable = { aig_schedule_mode = 1 }
+			date > 2008.9.16
+			date < 2010.1.1
+			has_global_flag = USA_great_financial_crisis
+			OR = {
+				has_country_flag = usa_nationalize_one
+				has_country_flag = usa_bailout_one
+				has_country_flag = usa_nothing_one
+			}
+			NOT = { has_country_flag = USA_aig_event_1_resolved }
+			NOT = { has_country_flag = USA_aig_event_1_pending }
+		}
+		set_country_flag = { flag = USA_aig_event_1_pending value = 1 days = 60 }
+		country_event = { id = USA_aig_events.1 days = 5 }
+	}
+}

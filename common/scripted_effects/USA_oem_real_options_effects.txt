@@ -1,0 +1,1053 @@
+USA_oem_real_options_evaluate_cdf = {
+	set_temp_variable = { USA_oem_cdf_absolute_input = USA_oem_cdf_input }
+	if = {
+		limit = { check_variable = { USA_oem_cdf_input < 0 } }
+		multiply_temp_variable = { USA_oem_cdf_absolute_input = -1 }
+	}
+
+	if = {
+		limit = { check_variable = { USA_oem_cdf_absolute_input > 2.999 } }
+		set_temp_variable = { USA_oem_cdf_output = 0.99865 }
+	}
+	else_if = {
+		limit = { check_variable = { USA_oem_cdf_absolute_input > 2.499 } }
+		set_temp_variable = {
+			USA_oem_cdf_output = {
+				value = USA_oem_cdf_absolute_input
+				subtract = 2.5
+				multiply = 0.00972
+				add = 0.99379
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { USA_oem_cdf_absolute_input > 1.999 } }
+		set_temp_variable = {
+			USA_oem_cdf_output = {
+				value = USA_oem_cdf_absolute_input
+				subtract = 2
+				multiply = 0.03308
+				add = 0.97725
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { USA_oem_cdf_absolute_input > 1.499 } }
+		set_temp_variable = {
+			USA_oem_cdf_output = {
+				value = USA_oem_cdf_absolute_input
+				subtract = 1.5
+				multiply = 0.08812
+				add = 0.93319
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { USA_oem_cdf_absolute_input > 0.999 } }
+		set_temp_variable = {
+			USA_oem_cdf_output = {
+				value = USA_oem_cdf_absolute_input
+				subtract = 1
+				multiply = 0.18370
+				add = 0.84134
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { USA_oem_cdf_absolute_input > 0.499 } }
+		set_temp_variable = {
+			USA_oem_cdf_output = {
+				value = USA_oem_cdf_absolute_input
+				subtract = 0.5
+				multiply = 0.29976
+				add = 0.69146
+			}
+		}
+	}
+	else = {
+		set_temp_variable = {
+			USA_oem_cdf_output = {
+				value = USA_oem_cdf_absolute_input
+				multiply = 0.38292
+				add = 0.5
+			}
+		}
+	}
+
+	if = {
+		limit = { check_variable = { USA_oem_cdf_input < 0 } }
+		set_temp_variable = {
+			USA_oem_cdf_output = {
+				value = 1
+				subtract = USA_oem_cdf_output
+			}
+		}
+	}
+	clamp_temp_variable = { var = USA_oem_cdf_output min = 0 max = 1 }
+}
+
+USA_oem_update_real_options_economy = {
+	if = {
+		limit = {
+			corporate_history_enabled = yes
+			original_tag = USA
+			NOT = { has_country_flag = collapsed_nation }
+			has_country_flag = USA_ibm_state_initialized
+			USA_corporate_systems_has_meaningful_state = yes
+			has_variable = USA_oem_effective_open_standards
+			has_variable = USA_oem_effective_vertical_integration
+			has_variable = USA_oem_effective_supply_resilience
+			has_variable = USA_oem_effective_security_control
+			has_variable = USA_oem_effective_national_compute_stack
+		}
+		set_country_flag = USA_oem_real_options_initialized
+
+		set_temp_variable = {
+			USA_oem_underlying_value = {
+				value = 15
+				add = { value = USA_oem_effective_open_standards multiply = 3 }
+				add = { value = USA_oem_effective_national_compute_stack multiply = 2 }
+				add = USA_oem_effective_supply_resilience
+				add = {
+					value = overall_productivity
+					subtract = 500
+					multiply = 0.015
+					clamp = { min = 0 max = 20 }
+				}
+			}
+		}
+		if = {
+			limit = { has_idea = USA_oem_open_systems_procurement_program }
+			add_to_temp_variable = { USA_oem_underlying_value = 4 }
+		}
+		if = {
+			limit = { has_idea = USA_oem_domestic_capacity_grants_program }
+			add_to_temp_variable = { USA_oem_underlying_value = 3 }
+		}
+		if = {
+			limit = { has_idea = USA_oem_secure_federal_systems_program }
+			add_to_temp_variable = { USA_oem_underlying_value = 2 }
+		}
+		if = {
+			limit = { has_idea = USA_oem_advanced_computing_consortium_program }
+			add_to_temp_variable = { USA_oem_underlying_value = 6 }
+		}
+		clamp_temp_variable = { var = USA_oem_underlying_value min = 1 max = 100 }
+		set_variable = { USA_oem_option_underlying_value = USA_oem_underlying_value }
+
+		set_temp_variable = {
+			USA_oem_fiscal_cost = {
+				value = debt_ratio
+				multiply = 15
+				clamp = { min = 0 max = 25 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_treasury_relief = {
+				value = treasury
+				multiply = 0.05
+				clamp = { min = 0 max = 10 }
+			}
+		}
+		set_variable = {
+			USA_oem_option_irreversible_cost = {
+				value = 70
+				subtract = { value = USA_oem_effective_vertical_integration multiply = 2 }
+				subtract = { value = USA_oem_effective_supply_resilience multiply = 2 }
+				subtract = USA_oem_effective_security_control
+				add = USA_oem_fiscal_cost
+				subtract = USA_oem_treasury_relief
+				clamp = { min = 1 max = 100 }
+			}
+		}
+		set_variable = {
+			USA_oem_option_discount_rate = {
+				value = interest_rate
+				multiply = 0.01
+				clamp = { min = 0 max = 0.25 }
+			}
+		}
+
+		set_temp_variable = {
+			USA_oem_energy_volatility = {
+				value = 1
+				subtract = energy_balance_value_display
+				clamp = { min = 0 max = 1 }
+				multiply = 0.2
+			}
+		}
+		set_temp_variable = {
+			USA_oem_debt_volatility = {
+				value = debt_ratio
+				multiply = 0.05
+				clamp = { min = 0 max = 0.15 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_employment_volatility = {
+				value = total_unemployed_percentage_display
+				multiply = 0.5
+				clamp = { min = 0 max = 0.1 }
+			}
+		}
+		set_variable = {
+			USA_oem_option_volatility = {
+				value = 0.65
+				subtract = { value = USA_oem_effective_supply_resilience multiply = 0.03 }
+				subtract = { value = USA_oem_effective_security_control multiply = 0.02 }
+				subtract = { value = USA_oem_effective_open_standards multiply = 0.01 }
+				add = USA_oem_energy_volatility
+				add = USA_oem_debt_volatility
+				add = USA_oem_employment_volatility
+				clamp = { min = 0.05 max = 1 }
+			}
+		}
+
+		set_temp_variable = {
+			USA_oem_option_horizon_score = {
+				value = USA_oem_effective_vertical_integration
+				add = USA_oem_effective_national_compute_stack
+				clamp = { min = 0 max = 20 }
+			}
+		}
+		if = {
+			limit = { has_idea = USA_oem_advanced_computing_consortium_program }
+			add_to_temp_variable = { USA_oem_option_horizon_score = 2 }
+			clamp_temp_variable = { var = USA_oem_option_horizon_score min = 0 max = 20 }
+		}
+		if = {
+			limit = { check_variable = { USA_oem_option_horizon_score < 4 } }
+			set_variable = { USA_oem_option_horizon = 1 }
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_option_horizon_score < 8 } }
+			set_variable = { USA_oem_option_horizon = 2 }
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_option_horizon_score < 12 } }
+			set_variable = { USA_oem_option_horizon = 3 }
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_option_horizon_score < 16 } }
+			set_variable = { USA_oem_option_horizon = 4 }
+		}
+		else = { set_variable = { USA_oem_option_horizon = 5 } }
+
+		set_temp_variable = {
+			USA_oem_option_ratio = {
+				value = USA_oem_option_underlying_value
+				divide = USA_oem_option_irreversible_cost
+				clamp = { min = 0.25 max = 4 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_log_z = {
+				value = USA_oem_option_ratio
+				subtract = 1
+				divide = { value = USA_oem_option_ratio add = 1 }
+			}
+		}
+		set_temp_variable = { USA_oem_log_z_squared = { value = USA_oem_log_z multiply = USA_oem_log_z } }
+		set_temp_variable = { USA_oem_log_z_fourth = { value = USA_oem_log_z_squared multiply = USA_oem_log_z_squared } }
+		set_temp_variable = { USA_oem_log_z_sixth = { value = USA_oem_log_z_fourth multiply = USA_oem_log_z_squared } }
+		set_temp_variable = { USA_oem_log_z_eighth = { value = USA_oem_log_z_fourth multiply = USA_oem_log_z_fourth } }
+		set_temp_variable = {
+			USA_oem_log_series = {
+				value = 1
+				add = { value = USA_oem_log_z_squared divide = 3 }
+				add = { value = USA_oem_log_z_fourth divide = 5 }
+				add = { value = USA_oem_log_z_sixth divide = 7 }
+				add = { value = USA_oem_log_z_eighth divide = 9 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_log_ratio = {
+				value = USA_oem_log_z
+				multiply = 2
+				multiply = USA_oem_log_series
+			}
+		}
+
+		if = {
+			limit = { check_variable = { USA_oem_option_horizon < 2 } }
+			set_temp_variable = { USA_oem_sqrt_horizon = 1 }
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_option_horizon < 3 } }
+			set_temp_variable = { USA_oem_sqrt_horizon = 1.41421 }
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_option_horizon < 4 } }
+			set_temp_variable = { USA_oem_sqrt_horizon = 1.73205 }
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_option_horizon < 5 } }
+			set_temp_variable = { USA_oem_sqrt_horizon = 2 }
+		}
+		else = { set_temp_variable = { USA_oem_sqrt_horizon = 2.23607 } }
+
+		set_temp_variable = {
+			USA_oem_discount_x = {
+				value = USA_oem_option_discount_rate
+				multiply = USA_oem_option_horizon
+				clamp = { min = 0 max = 1.25 }
+			}
+		}
+		set_temp_variable = { USA_oem_discount_x_squared = { value = USA_oem_discount_x multiply = USA_oem_discount_x } }
+		set_temp_variable = {
+			USA_oem_discount_numerator = {
+				value = 1
+				subtract = { value = USA_oem_discount_x multiply = 0.5 }
+				add = { value = USA_oem_discount_x_squared divide = 12 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_discount_denominator = {
+				value = 1
+				add = { value = USA_oem_discount_x multiply = 0.5 }
+				add = { value = USA_oem_discount_x_squared divide = 12 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_discount_factor = {
+				value = USA_oem_discount_numerator
+				divide = USA_oem_discount_denominator
+				clamp = { min = 0 max = 1 }
+			}
+		}
+
+		set_temp_variable = {
+			USA_oem_sigma_sqrt_horizon = {
+				value = USA_oem_option_volatility
+				multiply = USA_oem_sqrt_horizon
+				clamp = { min = 0.05 max = 2.23607 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_option_drift = {
+				value = USA_oem_option_volatility
+				multiply = USA_oem_option_volatility
+				multiply = 0.5
+				add = USA_oem_option_discount_rate
+				multiply = USA_oem_option_horizon
+			}
+		}
+		set_temp_variable = {
+			USA_oem_option_d1 = {
+				value = USA_oem_log_ratio
+				add = USA_oem_option_drift
+				divide = USA_oem_sigma_sqrt_horizon
+				clamp = { min = -3 max = 3 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_option_d2 = {
+				value = USA_oem_option_d1
+				subtract = USA_oem_sigma_sqrt_horizon
+				clamp = { min = -3 max = 3 }
+			}
+		}
+
+		set_temp_variable = { USA_oem_cdf_input = USA_oem_option_d1 }
+		USA_oem_real_options_evaluate_cdf = yes
+		set_temp_variable = { USA_oem_option_cdf_d1 = USA_oem_cdf_output }
+		set_temp_variable = { USA_oem_cdf_input = USA_oem_option_d2 }
+		USA_oem_real_options_evaluate_cdf = yes
+		set_temp_variable = { USA_oem_option_cdf_d2 = USA_oem_cdf_output }
+
+		set_temp_variable = {
+			USA_oem_call_value = {
+				value = USA_oem_option_underlying_value
+				multiply = USA_oem_option_cdf_d1
+				subtract = {
+					value = USA_oem_option_irreversible_cost
+					multiply = USA_oem_discount_factor
+					multiply = USA_oem_option_cdf_d2
+				}
+			}
+		}
+		clamp_temp_variable = { var = USA_oem_call_value min = 0 max = USA_oem_option_underlying_value }
+		set_variable = { USA_oem_option_call_value = USA_oem_call_value }
+		set_variable = {
+			USA_oem_option_value = {
+				value = USA_oem_call_value
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		set_variable = {
+			USA_oem_option_value_normalized = {
+				value = USA_oem_call_value
+				clamp = { min = 0 max = 100 }
+			}
+		}
+
+		set_temp_variable = {
+			USA_oem_productivity_diffusion = {
+				value = overall_productivity
+				subtract = 500
+				multiply = 0.02
+				clamp = { min = 0 max = 25 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_internet_diffusion = {
+				value = internet_station_total
+				multiply = 0.1
+				clamp = { min = 0 max = 15 }
+			}
+		}
+		set_variable = {
+			USA_oem_innovation_diffusion = {
+				value = USA_oem_effective_open_standards
+				multiply = 4
+				add = { value = USA_oem_effective_national_compute_stack multiply = 2 }
+				add = USA_oem_productivity_diffusion
+				add = USA_oem_internet_diffusion
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		if = {
+			limit = { has_idea = USA_oem_open_systems_procurement_program }
+			add_to_variable = { USA_oem_innovation_diffusion = 8 }
+		}
+		if = {
+			limit = { has_idea = USA_oem_advanced_computing_consortium_program }
+			add_to_variable = { USA_oem_innovation_diffusion = 8 }
+		}
+		clamp_variable = { var = USA_oem_innovation_diffusion min = 0 max = 100 }
+
+		set_temp_variable = {
+			USA_oem_industrial_facility_depth = {
+				value = industrial_complex_total
+				multiply = 0.15
+				clamp = { min = 0 max = 20 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_microchip_depth = {
+				value = microchip_plant_total
+				multiply = 0.75
+				clamp = { min = 0 max = 30 }
+			}
+		}
+		set_variable = {
+			USA_oem_industrial_depth = {
+				value = USA_oem_effective_vertical_integration
+				multiply = 3
+				add = { value = USA_oem_effective_supply_resilience multiply = 3 }
+				add = USA_oem_industrial_facility_depth
+				add = USA_oem_microchip_depth
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		if = {
+			limit = { has_idea = USA_oem_domestic_capacity_grants_program }
+			add_to_variable = { USA_oem_industrial_depth = 10 }
+		}
+		clamp_variable = { var = USA_oem_industrial_depth min = 0 max = 100 }
+
+		set_temp_variable = {
+			USA_oem_office_demand = {
+				value = office_park_total
+				multiply = 0.2
+				clamp = { min = 0 max = 25 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_microchip_demand = {
+				value = country_base_civilian_microchip_consumption_var
+				multiply = 0.2
+				clamp = { min = 0 max = 25 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_productivity_demand = {
+				value = overall_productivity
+				subtract = 500
+				multiply = 0.015
+				clamp = { min = 0 max = 20 }
+			}
+		}
+		set_variable = {
+			USA_oem_compute_infrastructure_demand = {
+				value = USA_oem_effective_national_compute_stack
+				multiply = 3
+				add = USA_oem_office_demand
+				add = USA_oem_microchip_demand
+				add = USA_oem_productivity_demand
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		if = {
+			limit = { has_idea = USA_oem_open_systems_procurement_program }
+			add_to_variable = { USA_oem_compute_infrastructure_demand = 4 }
+		}
+		if = {
+			limit = { has_idea = USA_oem_domestic_capacity_grants_program }
+			add_to_variable = { USA_oem_compute_infrastructure_demand = 6 }
+		}
+		if = {
+			limit = { has_idea = USA_oem_advanced_computing_consortium_program }
+			add_to_variable = { USA_oem_compute_infrastructure_demand = 8 }
+		}
+		clamp_variable = { var = USA_oem_compute_infrastructure_demand min = 0 max = 100 }
+
+		set_temp_variable = {
+			USA_oem_microchip_capacity = {
+				value = microchip_plant_total
+				multiply = 1
+				clamp = { min = 0 max = 40 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_internet_capacity = {
+				value = internet_station_total
+				multiply = 0.1
+				clamp = { min = 0 max = 15 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_energy_capacity = {
+				value = energy_balance_value_display
+				multiply = 10
+				clamp = { min = 0 max = 10 }
+			}
+		}
+		set_variable = {
+			USA_oem_compute_infrastructure_capacity = {
+				value = USA_oem_effective_supply_resilience
+				multiply = 3
+				add = { value = USA_oem_effective_security_control multiply = 2 }
+				add = USA_oem_microchip_capacity
+				add = USA_oem_internet_capacity
+				add = USA_oem_energy_capacity
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		if = {
+			limit = { has_idea = USA_oem_domestic_capacity_grants_program }
+			add_to_variable = { USA_oem_compute_infrastructure_capacity = 10 }
+		}
+		if = {
+			limit = { has_idea = USA_oem_secure_federal_systems_program }
+			add_to_variable = { USA_oem_compute_infrastructure_capacity = 8 }
+		}
+		clamp_variable = { var = USA_oem_compute_infrastructure_capacity min = 0 max = 100 }
+
+		set_variable = {
+			USA_oem_infrastructure_pressure = {
+				value = USA_oem_compute_infrastructure_demand
+				subtract = USA_oem_compute_infrastructure_capacity
+				add = 50
+				clamp = { min = 0 max = 100 }
+			}
+		}
+
+		set_temp_variable = {
+			USA_oem_automation_productivity = {
+				value = overall_productivity
+				subtract = 500
+				multiply = 0.01
+				clamp = { min = 0 max = 15 }
+			}
+		}
+		set_temp_variable = {
+			USA_oem_automation_offices = {
+				value = office_park_total
+				multiply = 0.1
+				clamp = { min = 0 max = 15 }
+			}
+		}
+		set_variable = {
+			USA_oem_automation_pressure = {
+				value = USA_oem_effective_national_compute_stack
+				multiply = 4
+				add = { value = USA_oem_innovation_diffusion multiply = 0.3 }
+				add = USA_oem_automation_productivity
+				add = USA_oem_automation_offices
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		set_variable = {
+			USA_oem_labor_displacement_pressure = {
+				value = USA_oem_automation_pressure
+				multiply = 0.5
+				add = {
+					value = total_unemployed_percentage_display
+					multiply = 500
+					clamp = { min = 0 max = 50 }
+				}
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		set_variable = {
+			USA_oem_high_skill_labor_demand = {
+				value = USA_oem_innovation_diffusion
+				multiply = 0.35
+				add = { value = USA_oem_effective_national_compute_stack multiply = 3 }
+				add = { value = USA_oem_compute_infrastructure_demand multiply = 0.25 }
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		if = {
+			limit = { has_idea = USA_oem_advanced_computing_consortium_program }
+			add_to_variable = { USA_oem_high_skill_labor_demand = 10 }
+		}
+		clamp_variable = { var = USA_oem_high_skill_labor_demand min = 0 max = 100 }
+
+		set_temp_variable = {
+			USA_oem_pressure_readiness_penalty = {
+				value = USA_oem_infrastructure_pressure
+				subtract = 50
+				multiply = 0.2
+				clamp = { min = 0 max = 10 }
+			}
+		}
+		set_variable = {
+			USA_oem_investment_readiness = {
+				value = USA_oem_option_value
+				multiply = 0.35
+				add = { value = USA_oem_innovation_diffusion multiply = 0.2 }
+				add = { value = USA_oem_industrial_depth multiply = 0.2 }
+				add = { value = USA_oem_compute_infrastructure_capacity multiply = 0.15 }
+				add = USA_oem_effective_security_control
+				subtract = USA_oem_pressure_readiness_penalty
+				clamp = { min = 0 max = 100 }
+			}
+		}
+
+		# Contract surface: keep explicit output clamps aligned with tools/corporate_history_contract.json.
+		clamp_variable = { var = USA_oem_option_underlying_value min = 1 max = 100 }
+		clamp_variable = { var = USA_oem_option_irreversible_cost min = 1 max = 100 }
+		clamp_variable = { var = USA_oem_option_discount_rate min = 0 max = 0.25 }
+		clamp_variable = { var = USA_oem_option_volatility min = 0.05 max = 1 }
+		clamp_variable = { var = USA_oem_option_horizon min = 1 max = 5 }
+		clamp_variable = { var = USA_oem_option_call_value min = 0 max = 100 }
+		clamp_variable = { var = USA_oem_option_value min = 0 max = 100 }
+		clamp_variable = { var = USA_oem_option_value_normalized min = 0 max = 100 }
+		clamp_variable = { var = USA_oem_innovation_diffusion min = 0 max = 100 }
+		clamp_variable = { var = USA_oem_industrial_depth min = 0 max = 100 }
+		clamp_variable = { var = USA_oem_compute_infrastructure_demand min = 0 max = 100 }
+		clamp_variable = { var = USA_oem_compute_infrastructure_capacity min = 0 max = 100 }
+		clamp_variable = { var = USA_oem_infrastructure_pressure min = 0 max = 100 }
+		clamp_variable = { var = USA_oem_investment_readiness min = 0 max = 100 }
+		clamp_variable = { var = USA_oem_automation_pressure min = 0 max = 100 }
+		clamp_variable = { var = USA_oem_labor_displacement_pressure min = 0 max = 100 }
+		clamp_variable = { var = USA_oem_high_skill_labor_demand min = 0 max = 100 }
+
+		set_variable = { USA_oem_option_value_display = { value = USA_oem_option_value round = yes } }
+		set_variable = { USA_oem_option_value_normalized_display = { value = USA_oem_option_value_normalized round = yes } }
+		set_variable = { USA_oem_innovation_diffusion_display = { value = USA_oem_innovation_diffusion round = yes } }
+		set_variable = { USA_oem_industrial_depth_display = { value = USA_oem_industrial_depth round = yes } }
+		set_variable = { USA_oem_compute_infrastructure_demand_display = { value = USA_oem_compute_infrastructure_demand round = yes } }
+		set_variable = { USA_oem_compute_infrastructure_capacity_display = { value = USA_oem_compute_infrastructure_capacity round = yes } }
+		set_variable = { USA_oem_infrastructure_pressure_display = { value = USA_oem_infrastructure_pressure round = yes } }
+		set_variable = { USA_oem_investment_readiness_display = { value = USA_oem_investment_readiness round = yes } }
+		set_variable = { USA_oem_automation_pressure_display = { value = USA_oem_automation_pressure round = yes } }
+		set_variable = { USA_oem_labor_displacement_pressure_display = { value = USA_oem_labor_displacement_pressure round = yes } }
+		set_variable = { USA_oem_high_skill_labor_demand_display = { value = USA_oem_high_skill_labor_demand round = yes } }
+
+		if = {
+			limit = { check_variable = { USA_oem_investment_readiness < 20 } }
+			if = {
+				limit = {
+					OR = {
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_investment_climate_1 } }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_2 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_3 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_4 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_5 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_4 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_5 }
+				add_dynamic_modifier = { modifier = USA_oem_investment_climate_1 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_investment_readiness < 40 } }
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_1 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_investment_climate_2 } }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_3 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_4 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_5 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_4 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_5 }
+				add_dynamic_modifier = { modifier = USA_oem_investment_climate_2 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_investment_readiness < 60 } }
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_1 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_2 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_investment_climate_3 } }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_4 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_5 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_4 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_5 }
+				add_dynamic_modifier = { modifier = USA_oem_investment_climate_3 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_investment_readiness < 80 } }
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_1 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_2 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_3 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_investment_climate_4 } }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_5 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_4 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_5 }
+				add_dynamic_modifier = { modifier = USA_oem_investment_climate_4 }
+			}
+		}
+		else = {
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_1 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_2 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_3 }
+						has_dynamic_modifier = { modifier = USA_oem_investment_climate_4 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_investment_climate_5 } }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_4 }
+				remove_dynamic_modifier = { modifier = USA_oem_investment_climate_5 }
+				add_dynamic_modifier = { modifier = USA_oem_investment_climate_5 }
+			}
+		}
+
+		if = {
+			limit = { check_variable = { USA_oem_innovation_diffusion < 25 } }
+			if = {
+				limit = {
+					OR = {
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_1 } }
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_2 }
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_3 }
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_4 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_4 }
+				add_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_1 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_innovation_diffusion < 50 } }
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_1 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_2 } }
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_3 }
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_4 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_4 }
+				add_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_2 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_innovation_diffusion < 75 } }
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_1 }
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_2 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_3 } }
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_4 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_4 }
+				add_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_3 }
+			}
+		}
+		else = {
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_1 }
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_2 }
+						has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_3 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_4 } }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_4 }
+				add_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_4 }
+			}
+		}
+
+		if = {
+			limit = { check_variable = { USA_oem_industrial_depth < 25 } }
+			if = {
+				limit = {
+					OR = {
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_industrial_depth_1 } }
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_2 }
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_3 }
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_4 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_4 }
+				add_dynamic_modifier = { modifier = USA_oem_industrial_depth_1 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_industrial_depth < 50 } }
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_1 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_industrial_depth_2 } }
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_3 }
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_4 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_4 }
+				add_dynamic_modifier = { modifier = USA_oem_industrial_depth_2 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_industrial_depth < 75 } }
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_1 }
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_2 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_industrial_depth_3 } }
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_4 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_4 }
+				add_dynamic_modifier = { modifier = USA_oem_industrial_depth_3 }
+			}
+		}
+		else = {
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_1 }
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_2 }
+						has_dynamic_modifier = { modifier = USA_oem_industrial_depth_3 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_industrial_depth_4 } }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_4 }
+				add_dynamic_modifier = { modifier = USA_oem_industrial_depth_4 }
+			}
+		}
+
+		if = {
+			limit = { check_variable = { USA_oem_infrastructure_pressure < 20 } }
+			if = {
+				limit = {
+					OR = {
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 } }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 }
+				add_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_infrastructure_pressure < 40 } }
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 } }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 }
+				add_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_infrastructure_pressure < 60 } }
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 } }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 }
+				add_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { USA_oem_infrastructure_pressure < 80 } }
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 } }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 }
+				add_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 }
+			}
+		}
+		else = {
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 }
+						has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 }
+						NOT = { has_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 } }
+					}
+				}
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 }
+				remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 }
+				add_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 }
+			}
+		}
+	}
+	else = {
+		if = {
+			limit = { has_country_flag = USA_oem_real_options_initialized }
+			clr_country_flag = USA_oem_real_options_initialized
+			remove_ideas = {
+				USA_oem_open_systems_procurement_program
+				USA_oem_domestic_capacity_grants_program
+				USA_oem_secure_federal_systems_program
+				USA_oem_advanced_computing_consortium_program
+			}
+			clear_variable = USA_oem_option_underlying_value
+			clear_variable = USA_oem_option_irreversible_cost
+			clear_variable = USA_oem_option_discount_rate
+			clear_variable = USA_oem_option_volatility
+			clear_variable = USA_oem_option_horizon
+			clear_variable = USA_oem_option_call_value
+			clear_variable = USA_oem_option_value
+			clear_variable = USA_oem_option_value_normalized
+			clear_variable = USA_oem_innovation_diffusion
+			clear_variable = USA_oem_industrial_depth
+			clear_variable = USA_oem_compute_infrastructure_demand
+			clear_variable = USA_oem_compute_infrastructure_capacity
+			clear_variable = USA_oem_infrastructure_pressure
+			clear_variable = USA_oem_investment_readiness
+			clear_variable = USA_oem_automation_pressure
+			clear_variable = USA_oem_labor_displacement_pressure
+			clear_variable = USA_oem_high_skill_labor_demand
+			clear_variable = USA_oem_option_value_display
+			clear_variable = USA_oem_option_value_normalized_display
+			clear_variable = USA_oem_innovation_diffusion_display
+			clear_variable = USA_oem_industrial_depth_display
+			clear_variable = USA_oem_compute_infrastructure_demand_display
+			clear_variable = USA_oem_compute_infrastructure_capacity_display
+			clear_variable = USA_oem_infrastructure_pressure_display
+			clear_variable = USA_oem_investment_readiness_display
+			clear_variable = USA_oem_automation_pressure_display
+			clear_variable = USA_oem_labor_displacement_pressure_display
+			clear_variable = USA_oem_high_skill_labor_demand_display
+
+			remove_dynamic_modifier = { modifier = USA_oem_investment_climate_1 }
+			remove_dynamic_modifier = { modifier = USA_oem_investment_climate_2 }
+			remove_dynamic_modifier = { modifier = USA_oem_investment_climate_3 }
+			remove_dynamic_modifier = { modifier = USA_oem_investment_climate_4 }
+			remove_dynamic_modifier = { modifier = USA_oem_investment_climate_5 }
+			remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_1 }
+			remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_2 }
+			remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_3 }
+			remove_dynamic_modifier = { modifier = USA_oem_innovation_diffusion_4 }
+			remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_1 }
+			remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_2 }
+			remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_3 }
+			remove_dynamic_modifier = { modifier = USA_oem_industrial_depth_4 }
+			remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_1 }
+			remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_2 }
+			remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_3 }
+			remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_4 }
+			remove_dynamic_modifier = { modifier = USA_oem_infrastructure_pressure_5 }
+		}
+	}
+}

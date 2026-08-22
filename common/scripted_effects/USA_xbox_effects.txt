@@ -1,0 +1,359 @@
+# Xbox corporate-history scripted effects
+# Chain: USA_xbox_events (events/USA_xbox_events.txt)
+# Variables: USA_xbox_platform_strength, USA_xbox_developer_ecosystem,
+#            USA_xbox_digital_services, USA_xbox_hardware_resilience  [0..10]
+
+USA_xbox_initialize_state = {
+	if = {
+		limit = { NOT = { has_country_flag = USA_xbox_state_initialized } }
+
+		set_variable = { USA_xbox_platform_strength = 3 }
+		set_variable = { USA_xbox_developer_ecosystem = 3 }
+		set_variable = { USA_xbox_digital_services = 0 }
+		set_variable = { USA_xbox_hardware_resilience = 3 }
+		set_country_flag = USA_xbox_state_initialized
+	}
+
+	USA_xbox_clamp_state = yes
+}
+
+USA_xbox_clamp_state = {
+	set_temp_variable = { corp_value = USA_xbox_platform_strength }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_xbox_platform_strength = corp_value }
+
+	set_temp_variable = { corp_value = USA_xbox_developer_ecosystem }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_xbox_developer_ecosystem = corp_value }
+
+	set_temp_variable = { corp_value = USA_xbox_digital_services }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_xbox_digital_services = corp_value }
+
+	set_temp_variable = { corp_value = USA_xbox_hardware_resilience }
+	corporate_history_clamp_value = yes
+	set_variable = { USA_xbox_hardware_resilience = corp_value }
+}
+
+USA_xbox_clear_capstone_outcome = {
+	remove_ideas = {
+		USA_xbox_platform_consolidator
+		USA_xbox_hardware_innovator
+		USA_xbox_developer_platform
+		USA_xbox_cloud_native_platform
+		USA_xbox_resilient_games_publisher
+	}
+
+	if = {
+		limit = { has_country_flag = USA_xbox_outcome_platform_consolidator }
+		clr_country_flag = USA_xbox_outcome_platform_consolidator
+	}
+	if = {
+		limit = { has_country_flag = USA_xbox_outcome_hardware_innovator }
+		clr_country_flag = USA_xbox_outcome_hardware_innovator
+	}
+	if = {
+		limit = { has_country_flag = USA_xbox_outcome_developer_platform }
+		clr_country_flag = USA_xbox_outcome_developer_platform
+	}
+	if = {
+		limit = { has_country_flag = USA_xbox_outcome_cloud_native_platform }
+		clr_country_flag = USA_xbox_outcome_cloud_native_platform
+	}
+	if = {
+		limit = { has_country_flag = USA_xbox_outcome_resilient_games_publisher }
+		clr_country_flag = USA_xbox_outcome_resilient_games_publisher
+	}
+	if = {
+		limit = { has_country_flag = USA_xbox_capstone_resolved }
+		clr_country_flag = USA_xbox_capstone_resolved
+	}
+}
+
+USA_xbox_apply_platform_consolidator = {
+	USA_xbox_clear_capstone_outcome = yes
+	add_ideas = USA_xbox_platform_consolidator
+	set_country_flag = USA_xbox_outcome_platform_consolidator
+	set_country_flag = USA_xbox_capstone_resolved
+	USA_xbox_clamp_state = yes
+}
+
+USA_xbox_apply_hardware_innovator = {
+	USA_xbox_clear_capstone_outcome = yes
+	add_ideas = USA_xbox_hardware_innovator
+	set_country_flag = USA_xbox_outcome_hardware_innovator
+	set_country_flag = USA_xbox_capstone_resolved
+	USA_xbox_clamp_state = yes
+}
+
+USA_xbox_apply_developer_platform = {
+	USA_xbox_clear_capstone_outcome = yes
+	add_ideas = USA_xbox_developer_platform
+	set_country_flag = USA_xbox_outcome_developer_platform
+	set_country_flag = USA_xbox_capstone_resolved
+	USA_xbox_clamp_state = yes
+}
+
+USA_xbox_apply_cloud_native_platform = {
+	USA_xbox_clear_capstone_outcome = yes
+	add_ideas = USA_xbox_cloud_native_platform
+	set_country_flag = USA_xbox_outcome_cloud_native_platform
+	set_country_flag = USA_xbox_capstone_resolved
+	USA_xbox_clamp_state = yes
+}
+
+USA_xbox_apply_resilient_games_publisher = {
+	USA_xbox_clear_capstone_outcome = yes
+	add_ideas = USA_xbox_resilient_games_publisher
+	set_country_flag = USA_xbox_outcome_resilient_games_publisher
+	set_country_flag = USA_xbox_capstone_resolved
+	USA_xbox_clamp_state = yes
+}
+
+USA_xbox_resolve_capstone = {
+	USA_xbox_initialize_state = yes
+
+	if = {
+		limit = { NOT = { has_country_flag = USA_xbox_capstone_resolved } }
+		if = {
+			limit = {
+				check_variable = { var = USA_xbox_platform_strength value = 8 compare = greater_than_or_equals }
+				check_variable = { var = USA_xbox_digital_services value = 7 compare = greater_than_or_equals }
+			}
+			USA_xbox_apply_platform_consolidator = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { var = USA_xbox_hardware_resilience value = 8 compare = greater_than_or_equals }
+				check_variable = { var = USA_xbox_platform_strength value = 7 compare = greater_than_or_equals }
+			}
+			USA_xbox_apply_hardware_innovator = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { var = USA_xbox_developer_ecosystem value = 8 compare = greater_than_or_equals }
+				check_variable = { var = USA_xbox_digital_services value = 6 compare = greater_than_or_equals }
+			}
+			USA_xbox_apply_developer_platform = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { var = USA_xbox_digital_services value = 9 compare = greater_than_or_equals }
+			}
+			USA_xbox_apply_cloud_native_platform = yes
+		}
+		else = {
+			USA_xbox_apply_resilient_games_publisher = yes
+		}
+	}
+}
+
+USA_xbox_reconstruct_history = {
+	USA_xbox_initialize_state = yes
+
+	# Event 1 (2001-11-15): The Original Xbox Launches
+	if = {
+		limit = {
+			date > 2001.11.15
+			NOT = {
+				OR = {
+					has_country_flag = USA_xbox_halo_platform_anchor
+					has_country_flag = USA_xbox_pc_licensing_strategy
+					has_country_flag = USA_xbox_delayed_partnership_launch
+				}
+			}
+		}
+		set_country_flag = USA_xbox_halo_platform_anchor
+		set_country_flag = USA_xbox_event_1_resolved
+		add_to_variable = { USA_xbox_platform_strength = 1 }
+		add_to_variable = { USA_xbox_hardware_resilience = 1 }
+		USA_xbox_clamp_state = yes
+	}
+
+	# Event 2 (2002-11-15): Xbox Live Goes Online
+	if = {
+		limit = {
+			date > 2002.11.15
+			NOT = {
+				OR = {
+					has_country_flag = USA_xbox_live_paid_tier
+					has_country_flag = USA_xbox_live_free_service
+					has_country_flag = USA_xbox_live_no_network
+				}
+			}
+		}
+		set_country_flag = USA_xbox_live_paid_tier
+		set_country_flag = USA_xbox_event_2_resolved
+		add_to_variable = { USA_xbox_digital_services = 2 }
+		add_to_variable = { USA_xbox_platform_strength = 1 }
+		USA_xbox_clamp_state = yes
+	}
+
+	# Event 3 (2005-11-22): The Xbox 360 Launch
+	if = {
+		limit = {
+			date > 2005.11.22
+			NOT = {
+				OR = {
+					has_country_flag = USA_xbox_360_early_launch
+					has_country_flag = USA_xbox_360_delayed_quality
+					has_country_flag = USA_xbox_360_budget_focus
+				}
+			}
+		}
+		set_country_flag = USA_xbox_360_early_launch
+		set_country_flag = USA_xbox_event_3_resolved
+		add_to_variable = { USA_xbox_platform_strength = 2 }
+		add_to_variable = { USA_xbox_developer_ecosystem = 1 }
+		USA_xbox_clamp_state = yes
+	}
+
+	# Event 4 (2007-07-05): The Red Ring Crisis
+	if = {
+		limit = {
+			date > 2007.7.5
+			NOT = {
+				OR = {
+					has_country_flag = USA_xbox_rrod_ignored
+					has_country_flag = USA_xbox_rrod_warranty_extension
+					has_country_flag = USA_xbox_rrod_full_recall
+				}
+			}
+		}
+		set_country_flag = USA_xbox_rrod_warranty_extension
+		set_country_flag = USA_xbox_event_4_resolved
+		add_to_variable = { USA_xbox_hardware_resilience = 2 }
+		USA_xbox_clamp_state = yes
+	}
+
+	# Event 5 (2010-11-04): Kinect: Motion Gaming
+	if = {
+		limit = {
+			date > 2010.11.4
+			NOT = {
+				OR = {
+					has_country_flag = USA_xbox_kinect_platform_bet
+					has_country_flag = USA_xbox_kinect_peripheral_only
+					has_country_flag = USA_xbox_kinect_core_focus
+				}
+			}
+		}
+		set_country_flag = USA_xbox_kinect_platform_bet
+		set_country_flag = USA_xbox_event_5_resolved
+		add_to_variable = { USA_xbox_platform_strength = 1 }
+		add_to_variable = { USA_xbox_developer_ecosystem = 1 }
+		add_to_variable = { USA_xbox_hardware_resilience = -1 }
+		USA_xbox_clamp_state = yes
+	}
+
+	# Event 6 (2013-05-21): Xbox One: An Awkward Reveal
+	if = {
+		limit = {
+			date > 2013.5.21
+			NOT = {
+				OR = {
+					has_country_flag = USA_xbox_one_drm_reversal_immediate
+					has_country_flag = USA_xbox_one_clean_launch
+					has_country_flag = USA_xbox_one_delayed_launch
+				}
+			}
+		}
+		set_country_flag = USA_xbox_one_drm_reversal_immediate
+		set_country_flag = USA_xbox_event_6_resolved
+		add_to_variable = { USA_xbox_platform_strength = 1 }
+		add_to_variable = { USA_xbox_developer_ecosystem = -1 }
+		add_to_variable = { USA_xbox_digital_services = 1 }
+		USA_xbox_clamp_state = yes
+	}
+
+	# Event 7 (2014-03-31): Phil Spencer and the Platform Reset
+	if = {
+		limit = {
+			date > 2014.3.31
+			NOT = {
+				OR = {
+					has_country_flag = USA_xbox_spencer_games_first
+					has_country_flag = USA_xbox_entertainment_box_strategy
+					has_country_flag = USA_xbox_cost_cutting_focus
+				}
+			}
+		}
+		set_country_flag = USA_xbox_spencer_games_first
+		set_country_flag = USA_xbox_event_7_resolved
+		add_to_variable = { USA_xbox_developer_ecosystem = 2 }
+		add_to_variable = { USA_xbox_platform_strength = 1 }
+		USA_xbox_clamp_state = yes
+	}
+
+	# Event 8 (2017-06-01): Xbox Game Pass
+	if = {
+		limit = {
+			date > 2017.6.1
+			NOT = {
+				OR = {
+					has_country_flag = USA_xbox_game_pass_launch
+					has_country_flag = USA_xbox_traditional_sales_model
+					has_country_flag = USA_xbox_indie_episodic_model
+				}
+			}
+		}
+		set_country_flag = USA_xbox_game_pass_launch
+		set_country_flag = USA_xbox_event_8_resolved
+		add_to_variable = { USA_xbox_digital_services = 3 }
+		add_to_variable = { USA_xbox_developer_ecosystem = 1 }
+		USA_xbox_clamp_state = yes
+	}
+
+	# Event 9 (2020-11-10): Xbox Series X and S
+	if = {
+		limit = {
+			date > 2020.11.10
+			NOT = {
+				OR = {
+					has_country_flag = USA_xbox_series_dual_launch
+					has_country_flag = USA_xbox_series_premium_only
+					has_country_flag = USA_xbox_series_pc_bridge
+				}
+			}
+		}
+		set_country_flag = USA_xbox_series_dual_launch
+		set_country_flag = USA_xbox_event_9_resolved
+		add_to_variable = { USA_xbox_platform_strength = 2 }
+		add_to_variable = { USA_xbox_hardware_resilience = 1 }
+		add_to_variable = { USA_xbox_digital_services = 1 }
+		USA_xbox_clamp_state = yes
+	}
+
+	# Event 10 (2022-06-09): Xbox Cloud Gaming Goes Global
+	if = {
+		limit = {
+			date > 2022.6.9
+			NOT = {
+				OR = {
+					has_country_flag = USA_xbox_cloud_hybrid
+					has_country_flag = USA_xbox_cloud_standalone
+					has_country_flag = USA_xbox_cloud_deferred
+				}
+			}
+		}
+		set_country_flag = USA_xbox_cloud_hybrid
+		set_country_flag = USA_xbox_event_10_resolved
+		add_to_variable = { USA_xbox_digital_services = 3 }
+		add_to_variable = { USA_xbox_developer_ecosystem = 1 }
+		USA_xbox_clamp_state = yes
+	}
+
+	USA_xbox_clamp_state = yes
+
+	if = {
+		limit = {
+			date > 2022.6.9
+			NOT = { has_country_flag = USA_xbox_capstone_resolved }
+		}
+		USA_xbox_resolve_capstone = yes
+	}
+	if = {
+		limit = { date > 2022.6.9 }
+		set_country_flag = USA_xbox_reconstruct_complete
+	}
+}
