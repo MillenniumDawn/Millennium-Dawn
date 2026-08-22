@@ -36,3 +36,98 @@ PHI_update_the_effects_of_islamic_strength = {
 
 	force_update_dynamic_modifier = yes
 }
+
+PHI_change_corruption = {
+	custom_effect_tooltip = PHI_change_corruption_tt
+	add_to_variable = { PHI_corruption_influence = temp_corruption_change }
+	clamp_variable = {
+		min = 0
+		max = 100
+		var = PHI_corruption_influence
+	}
+	PHI_update_corruption_effects = yes
+}
+
+PHI_update_corruption_effects = {
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = PHI_corruption_dynamic_modifier } } }
+		add_dynamic_modifier = { modifier = PHI_corruption_dynamic_modifier }
+	}
+
+	# Calculate modifier effects based on corruption level
+	set_variable = { var = PHI_stability_factor_effect value = PHI_corruption_influence }
+	set_variable = { var = PHI_political_power_factor_effect value = PHI_corruption_influence }
+	set_variable = { var = PHI_tax_gain_multiplier_effect value = PHI_corruption_influence }
+	set_variable = { var = PHI_production_factor_effect value = PHI_corruption_influence }
+	set_variable = { var = PHI_army_morale_factor_effect value = PHI_corruption_influence }
+	set_variable = { var = PHI_army_org_factor_effect value = PHI_corruption_influence }
+	set_variable = { var = PHI_bureaucracy_cost_effect value = PHI_corruption_influence }
+	set_variable = { var = PHI_corruption_law_cost_effect value = PHI_corruption_influence }
+	set_variable = { var = PHI_personnel_cost_effect value = PHI_corruption_influence }
+
+	# Apply scaling multipliers (negative effects)
+	multiply_variable = { var = PHI_stability_factor_effect value = -0.002 } # Max -0.20 at 100
+	multiply_variable = { var = PHI_political_power_factor_effect value = -0.004 } # Max -0.40 at 100
+	multiply_variable = { var = PHI_tax_gain_multiplier_effect value = -0.003 } # Max -0.30 at 100
+	multiply_variable = { var = PHI_production_factor_effect value = -0.002 } # Max -0.20 at 100
+	multiply_variable = { var = PHI_army_morale_factor_effect value = -0.001 } # Max -0.10 at 100
+	multiply_variable = { var = PHI_army_org_factor_effect value = -0.001 } # Max -0.10 at 100
+	multiply_variable = { var = PHI_bureaucracy_cost_effect value = 0.002 } # Max 0.20 at 100
+	multiply_variable = { var = PHI_corruption_law_cost_effect value = 0.01 } # Max 1.0 at 100
+	multiply_variable = { var = PHI_personnel_cost_effect value = 0.001 } # Max 0.10 at 100
+
+	# Update corruption stage ideas
+	if = {
+		limit = {
+			check_variable = { PHI_corruption_influence > 0 }
+			check_variable = { PHI_corruption_influence < 25 }
+		}
+		if = { limit = { NOT = { has_idea = PHI_idea_corruption_stage_one } }
+			remove_ideas = {
+				PHI_idea_corruption_stage_two
+				PHI_idea_corruption_stage_three
+				PHI_idea_corruption_stage_four
+			}
+			add_ideas = PHI_idea_corruption_stage_one
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { PHI_corruption_influence > 24 }
+			check_variable = { PHI_corruption_influence < 50 }
+		}
+		if = { limit = { NOT = { has_idea = PHI_idea_corruption_stage_two } }
+			remove_ideas = {
+				PHI_idea_corruption_stage_one
+				PHI_idea_corruption_stage_three
+				PHI_idea_corruption_stage_four
+			}
+			add_ideas = PHI_idea_corruption_stage_two
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { PHI_corruption_influence > 49 }
+			check_variable = { PHI_corruption_influence < 75 }
+		}
+		if = { limit = { NOT = { has_idea = PHI_idea_corruption_stage_three } }
+			remove_ideas = {
+				PHI_idea_corruption_stage_one
+				PHI_idea_corruption_stage_two
+				PHI_idea_corruption_stage_four
+			}
+			add_ideas = PHI_idea_corruption_stage_three
+		}
+	}
+	else_if = {
+		limit = { check_variable = { PHI_corruption_influence > 74 } }
+		if = { limit = { NOT = { has_idea = PHI_idea_corruption_stage_four } }
+			remove_ideas = {
+				PHI_idea_corruption_stage_one
+				PHI_idea_corruption_stage_two
+				PHI_idea_corruption_stage_three
+			}
+			add_ideas = PHI_idea_corruption_stage_four
+		}
+	}
+	force_update_dynamic_modifier = yes
+}
