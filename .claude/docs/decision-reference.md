@@ -139,6 +139,28 @@ A decision that can fire more than once and rolls randomness (`random_list = { .
 
 The engine seeds the roll from the save state, so without it every repeat of the decision returns the same branch. `fire_only_once = yes` decisions are exempt, since their roll only ever resolves once. Write `fixed_random_seed = yes` when the repeat _should_ be deterministic; `validate_decisions.py` treats an explicit value either way as intentional and only flags the field being absent.
 
+## Formable Commitment Ratchet
+
+The AI commits to one formable at a time via two country variables: `formable_committed_id` (unique ordinal per formable) and `formable_committed_size` (that formable's full `update_flag` state count). Without this, a country holding territory for two formables alternates their zero-cost `update_flag` decisions forever.
+
+Every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate — *blocked when committed to a different formable that is not strictly smaller*:
+
+```
+	modifier = {
+		factor = 0
+		NOT = { check_variable = { formable_committed_id = <ID> } }
+		check_variable = {
+			var = formable_committed_size
+			value = <SIZE>
+			compare = greater_than_or_equals
+		}
+	}
+```
+
+Commit writes (`hidden_effect` setting both variables) live in every `integrate_start` and `update_flag` `complete_effect`; IBR/ANZ (which have no `integrate_start`) commit from their integrate decisions' `remove_effect`, and Spain's `SPR_solidify_the_iberian_union` focus commits IBR — those delayed/ungated sites guard the write with `compare = less_than` so they never downgrade a larger commitment. NORDEM/AVG/ANZ gates carry an extra exemption so a CANZUK commitment stranded by the EU guard cannot block its fallback formables, and `CANZUK_integrate_start` is AI-blocked while EU-blocked.
+
+A **new formable** must wire all of this: gate on every decision, commit in `integrate_start`/`update_flag`, a fresh unique id, and size = its `update_flag` state-list count. **Editing an `update_flag` state list requires updating that formable's size literal at every gate/commit site.** `validate_decisions.py` (`validate_formable_commitment_sync`) recomputes the counts and gates on any drift, missing gate, or id collision — including the Spain focus literals.
+
 ## Example: Basic Decision
 
 ```
