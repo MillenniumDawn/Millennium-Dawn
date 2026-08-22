@@ -426,7 +426,10 @@ un_recog_setup_check = {
 		}
 	} else_if = {
 		# SWI is a recognized non-member until the 2002 referendum decision (SWI_join_the_united_nations)
-		limit = { NOT = { original_tag = SWI } }
+		limit = {
+			NOT = { original_tag = SWI }
+			NOT = { original_tag = HLS }
+		}
 		add_to_array = { global.UN_general_assembly = THIS }
 		add_dynamic_modifier = { modifier = united_nations_member }
 	}
@@ -802,6 +805,8 @@ update_security_council_peeps = {
 				var:v = {
 					exists = yes
 					has_capitulated = no
+					NOT = { has_idea = lacks_international_recognition }
+					NOT = { has_idea = non_state_actor }
 				}
 			}
 			add_to_array = { md_valid_confirmed_members = v }
@@ -888,6 +893,8 @@ un_sc_new_members_step_next = {
 			var:global.current_ga_vote_nation = {
 				exists = yes
 				has_capitulated = no
+				NOT = { has_idea = lacks_international_recognition }
+				NOT = { has_idea = non_state_actor }
 			}
 		}
 		add_to_array = { global.confirmed_new_council_members = global.current_ga_vote_nation }
@@ -2852,6 +2859,14 @@ clear_united_nations_member_state = {
 	if = {
 		limit = { is_in_array = { global.security_council_vote_abstain = THIS } }
 		remove_from_array = { global.security_council_vote_abstain = THIS }
+	}
+	if = {
+		limit = { is_in_array = { global.p5_sc_members = THIS } }
+		remove_from_array = { global.p5_sc_members = THIS }
+	}
+	if = {
+		limit = { has_idea = p5_member }
+		remove_ideas = p5_member
 	}
 	if = {
 		limit = { has_dynamic_modifier = { modifier = united_nations_member } }
