@@ -48,6 +48,7 @@ Effect snippets (treasury, debt, buildings, factions, influence, party managemen
 
 - [Scripted Effects Reference](/dev-resources/scripted-effects-reference/) - the full effects library and how-to guides
 - [Dynamic Modifiers](/dev-resources/dynamic-modifiers/) - applying modifiers through tooltips and dynamic systems
+- [Corporate History Framework](/dev-resources/corporate-history-framework/) - rules, lifecycle, ownership, and extension contract
 - [Code Stylization Guide](/dev-resources/code-stylization-guide/) - formatting and code structure
 - [Search Filters](/dev-resources/search-filters/) - focus `search_filters` reference
 
