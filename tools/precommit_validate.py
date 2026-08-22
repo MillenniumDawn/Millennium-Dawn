@@ -85,6 +85,11 @@ class _Spec:
 # tools/tests/precommit_validate_test.py guards against drift.
 _REGISTRY = [
     _Spec(
+        "validate_common_mistakes",
+        [("", TXT)],
+        exclude=r"Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$",
+    ),
+    _Spec(
         "validate_style",
         [("", TXT)],
         exclude=r"Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$",
@@ -119,7 +124,11 @@ _REGISTRY = [
         [
             ("common/characters/", TXT),
             ("common/unit_leader/", TXT),
-            # Sources of create_corps_commander and friends.
+            # The other leader trait pool. A trait moved between the two
+            # changes whether it is legal on a unit leader, and a trait moved
+            # between pool files reclassifies every advisor slot using it.
+            ("common/country_leader/", TXT),
+            # Sources of create_corps_commander and add_advisor_role.
             ("common/national_focus/", TXT),
             ("common/decisions/", TXT),
             ("common/scripted_effects/", TXT),
@@ -160,6 +169,12 @@ _REGISTRY = [
         "validate_mios",
         [
             ("common/military_industrial_organization/organizations/", TXT),
+            ("common/military_industrial_organization/policies/", TXT),
+            ("common/country_leader/", TXT),
+            # Equipment and its groups are the other half of the dead-bonus
+            # check: dropping a base stat there kills bonuses elsewhere.
+            ("common/units/equipment/", TXT),
+            ("common/equipment_groups/", TXT),
             ("localisation/english/", YML),
         ],
     ),

@@ -116,7 +116,7 @@ def _extract_swap_idea_refs(text: str) -> List[str]:
 
 
 _NAME_OVERRIDE_LINE = re.compile(r"^\s+name\s*=\s*([A-Za-z0-9_.]+)", re.MULTILINE)
-_PICTURE_VALUE_LINE = re.compile(r"^\s+picture\s*=\s*([A-Za-z0-9_.-]+)", re.MULTILINE)
+_PICTURE_VALUE_LINE = re.compile(r"^\s+picture\s*=\s*([^\s#]+)", re.MULTILINE)
 _ALLOWED_ALWAYS_NO = re.compile(r"\ballowed\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _ALLOWED_BLOCK_START = re.compile(r"\ballowed\s*=\s*\{")
@@ -158,12 +158,55 @@ def _blank_nested_braces(text: str) -> str:
     return "".join(out)
 
 
+# Stand-in textures: the sprite loads, but the idea still shows no real art.
+_PLACEHOLDER_TEXTURES = frozenset({"wip_idea.dds"})
+
+
+def _is_placeholder_texture(texture: str) -> bool:
+    base = texture.replace("\\", "/").rsplit("/", 1)[-1]
+    return base.lower() in _PLACEHOLDER_TEXTURES
+
+
+@dataclass
+class SpriteSet:
+    """Sprite names that render real art, and those stuck on placeholder art."""
+
+    defined: frozenset
+    placeholders: frozenset
+    by_lower: Dict[str, str]
+
+    @classmethod
+    def build(cls, defined, placeholders) -> "SpriteSet":
+        return cls(
+            frozenset(defined),
+            frozenset(placeholders),
+            casefold_index(sorted(set(defined) | set(placeholders))),
+        )
+
+
+def _sprite_verdict(sprite: str, sprites: SpriteSet) -> Optional[str]:
+    """Return why `sprite` does not render real art, or None if it does.
+
+    The engine is case-sensitive on Linux, so a sprite that only exists under a
+    different case renders nothing — reported separately because the fix is a
+    rename rather than new art.
+    """
+    if sprite in sprites.placeholders:
+        return "placeholder art"
+    if sprite in sprites.defined:
+        return None
+    canonical = case_mismatch(sprite, sprites.by_lower)
+    if canonical:
+        return f"case mismatch, defined as {canonical}"
+    return "undefined"
+
+
 def _missing_icon_message(
     idea_name: str,
     cat: str,
     name_override: Optional[str],
     picture: Optional[str],
-    defined_sprites: frozenset,
+    sprites: SpriteSet,
     hidden_cats: frozenset,
 ) -> Optional[str]:
     """Return a finding message if this idea's icon sprite is undefined, else None.
@@ -180,19 +223,21 @@ def _missing_icon_message(
         if "[" in picture or "]" in picture:
             return None
         sprite = f"GFX_idea_{picture}"
-        if sprite in defined_sprites:
+        verdict = _sprite_verdict(sprite, sprites)
+        if verdict is None:
             return None
-        return f"{idea_name}: picture = {picture} -> {sprite} (undefined)"
+        return f"{idea_name}: picture = {picture} -> {sprite} ({verdict})"
 
-    accepted = {f"GFX_idea_{idea_name}"}
+    accepted = [f"GFX_idea_{idea_name}"]
     if name_override:
-        accepted.add(f"GFX_idea_{name_override}")
-    if accepted & defined_sprites:
+        accepted.append(f"GFX_idea_{name_override}")
+    verdicts = [_sprite_verdict(s, sprites) for s in accepted]
+    if any(v is None for v in verdicts):
         return None
-    return f"{idea_name}: no picture and no auto-icon GFX_idea_{idea_name}"
+    return f"{idea_name}: auto-icon {accepted[0]} ({verdicts[0]})"
 
 
-def _idea_categories_frame_count(gfx_dirs: List[str]) -> Optional[int]:
+def _idea_categories_frame_count(gfx_dirs: List[Optional[str]]) -> Optional[int]:
     """Return noOfFrames of the GFX_idea_categories sprite, or None if absent.
 
     Scans the given interface dirs in order (mod first, then vanilla) and
@@ -342,7 +387,7 @@ def _parse_ideas_from_text(
                         issues.append(
                             IdeaIssue(
                                 current_idea,
-                                category_name,
+                                cat,
                                 current_idea_line,
                                 "allowed-always-no",
                             )
@@ -352,7 +397,7 @@ def _parse_ideas_from_text(
                     issues.append(
                         IdeaIssue(
                             current_idea,
-                            category_name,
+                            cat,
                             current_idea_line,
                             "cancel-always-no",
                         )
@@ -380,7 +425,7 @@ def _parse_ideas_from_text(
                         issues.append(
                             IdeaIssue(
                                 current_idea,
-                                category_name,
+                                cat,
                                 current_idea_line,
                                 kind,
                                 detail=detail,
@@ -391,7 +436,7 @@ def _parse_ideas_from_text(
                     issues.append(
                         IdeaIssue(
                             current_idea,
-                            category_name,
+                            cat,
                             current_idea_line,
                             "on-add-log-only",
                         )
@@ -609,7 +654,6 @@ class Validator(BaseValidator):
 
     def __init__(self, *args, **kwargs):
         self.missing_loc = kwargs.pop("missing_loc", False)
-        self.missing_icons = kwargs.pop("missing_icons", False)
         self.unused_ideas = kwargs.pop("unused_ideas", True)
         self.suggest_consolidation = kwargs.pop("suggest_consolidation", False)
         super().__init__(*args, **kwargs)
@@ -928,16 +972,20 @@ class Validator(BaseValidator):
             category="missing-idea-localisation",
         )
 
-    def _build_idea_sprite_set(self) -> frozenset:
-        """Return every GFX sprite name defined across mod + vanilla interface/*.gfx.
+    def _build_idea_sprite_set(self) -> SpriteSet:
+        """Return the GFX sprite names defined across mod + vanilla interface/*.gfx.
 
         Reuses the .gfx parser from validate_gfx_references so the icon check
         and the gfx-reference check agree on what counts as "defined". Vanilla
-        sprites are folded in when a HOI4 install is discoverable, so ideas that
-        point at vanilla pictures (e.g. `picture = generic_military_reform`)
-        don't false-positive.
+        sprites come from a discoverable HOI4 install or the committed manifest,
+        so ideas that point at vanilla pictures (e.g.
+        `picture = generic_military_reform`) don't false-positive in CI.
+
+        Sprites whose texture is a work-in-progress placeholder are tracked
+        separately: they parse and load, but the idea still shows no real art.
         """
         from validate_gfx_references import (
+            _load_vanilla_sprite_manifest,
             _parse_gfx_file,
             _vanilla_gfx_files,
         )
@@ -947,10 +995,16 @@ class Validator(BaseValidator):
             _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
         )
         defined: Set[str] = set()
-        for s in results:
-            defined.update(s)
+        placeholders: Set[str] = set()
+        for batch in results:
+            for name, _file, texture, _line in batch:
+                if _is_placeholder_texture(texture):
+                    placeholders.add(name)
+                else:
+                    defined.add(name)
         self.log(
-            f"  Found {len(defined)} GFX sprites across {len(gfx_files)} mod .gfx files"
+            f"  Found {len(defined)} GFX sprites across {len(gfx_files)} mod .gfx "
+            f"files ({len(placeholders)} on placeholder art)"
         )
 
         vanilla_gfx = _vanilla_gfx_files()
@@ -958,15 +1012,25 @@ class Validator(BaseValidator):
             vanilla_results = self._pool_map(
                 _parse_gfx_file, [(f, self.mod_path) for f in vanilla_gfx]
             )
-            for s in vanilla_results:
-                defined.update(s)
+            for batch in vanilla_results:
+                defined.update(name for name, _file, _texture, _line in batch)
             self.log(f"  Added vanilla sprites from {len(vanilla_gfx)} .gfx files")
         else:
-            self.log(
-                "  No vanilla HOI4 install detected — ideas using vanilla "
-                "pictures may be reported (set HOI4_PATH to suppress)"
-            )
-        return frozenset(defined)
+            manifest = _load_vanilla_sprite_manifest()
+            if manifest:
+                defined.update(manifest)
+                self.log(
+                    f"  Loaded {len(manifest)} vanilla GFX sprites from "
+                    "vanilla_sprites.txt"
+                )
+            else:
+                self.log(
+                    "  No vanilla HOI4 install or vanilla_sprites.txt manifest "
+                    "detected — ideas using vanilla pictures may be reported"
+                )
+        # A mod sprite on placeholder art still shadows the vanilla name it
+        # duplicates, so it stays a finding even when vanilla defines it.
+        return SpriteSet.build(defined - placeholders, placeholders)
 
     def validate_missing_icons(
         self, defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]]
@@ -977,8 +1041,9 @@ class Validator(BaseValidator):
           * `picture = X` present  -> `GFX_idea_X`
           * `picture` omitted      -> `GFX_idea_<idea_name>`, which the engine
             auto-registers when a sprite of that name exists.
-        Either way, if the resolved sprite isn't defined (mod or vanilla) the
-        idea renders a blank/placeholder icon.
+        Either way, if the resolved sprite isn't defined (mod or vanilla), only
+        exists under a different case, or points at placeholder art, the idea
+        renders no real icon.
 
         Hidden categories (`hidden = yes`, e.g. hidden_ideas) never display an
         icon, and character idea_tokens use the character portrait, so both are
@@ -987,8 +1052,18 @@ class Validator(BaseValidator):
         rename for the icon too.
         """
         self._log_section("Checking for ideas with missing icons...")
+        if not defined_ideas:
+            self.log("  No ideas in scope — skipping sprite index")
+            self._report(
+                [],
+                "✓ All idea picture sprites resolve to real art",
+                "Ideas with missing icons (undefined, case-mismatched or placeholder art):",
+                severity=Severity.WARNING,
+                category="missing-idea-icon",
+            )
+            return
 
-        defined_sprites = self._build_idea_sprite_set()
+        sprites = self._build_idea_sprite_set()
         hidden_cats = frozenset(
             c["name"] for c in get_all_idea_categories(self.mod_path) if c["hidden"]
         )
@@ -1002,7 +1077,7 @@ class Validator(BaseValidator):
                 continue
             checked += 1
             msg = _missing_icon_message(
-                idea_name, cat, name_override, picture, defined_sprites, hidden_cats
+                idea_name, cat, name_override, picture, sprites, hidden_cats
             )
             if msg:
                 grouped[cat].append(msg)
@@ -1010,8 +1085,8 @@ class Validator(BaseValidator):
         self.log(f"  Checked {checked} idea icons (explicit picture + auto-registered)")
         self._report_grouped(
             grouped,
-            "✓ All idea picture sprites are defined",
-            "Ideas with missing icons (picture sprite not defined in interface/*.gfx):",
+            "✓ All idea picture sprites resolve to real art",
+            "Ideas with missing icons (undefined, case-mismatched or placeholder art):",
             severity=Severity.WARNING,
             category="missing-idea-icon",
         )
@@ -1216,12 +1291,7 @@ class Validator(BaseValidator):
                 "Skipping missing localisation check (pass --missing-loc to enable)"
             )
 
-        if self.missing_icons:
-            self.validate_missing_icons(defined_ideas)
-        else:
-            self._log_section(
-                "Skipping missing icon check (pass --missing-icons to enable)"
-            )
+        self.validate_missing_icons(defined_ideas)
 
         if self.unused_ideas:
             self.validate_unused_ideas(defined_ideas, ideas_by_file)
@@ -1237,12 +1307,6 @@ def _add_extra_args(parser):
         action="store_true",
         dest="missing_loc",
         help="Enable the missing localisation check (noisy until backlog is cleared)",
-    )
-    parser.add_argument(
-        "--missing-icons",
-        action="store_true",
-        dest="missing_icons",
-        help="Enable the missing icon check (flags ideas whose picture sprite is undefined)",
     )
     parser.add_argument(
         "--unused-ideas",

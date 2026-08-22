@@ -2328,6 +2328,16 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = CPD_reparations_weekly }
 	}
 }
+
+# Effect: update_tension_premium
+# Purpose: Weekly decay of the tension-cause borrowing premium, plus intake of newly generated tension
+update_tension_premium = {
+	set_temp_variable = { recent_threat = { value = has_added_tension_amount subtract = tracked_threat } }
+	# 3.5%/week: 20 weeks to decay 50%, 66 weeks to decay 90%
+	set_variable = { tension_premium = { value = tension_premium multiply = 0.965 add = recent_threat } }
+	set_variable = { tracked_threat = has_added_tension_amount }
+}
+
 # Effect: calculate_interest_rate
 # Purpose: Computes daily interest rate on debt based on debt-to-GDP ratio, monetary policy, and world threat
 calculate_interest_rate = {
@@ -2368,12 +2378,8 @@ calculate_interest_rate = {
 
 		# World tension cause premium - Countries which cause world tension are chaotic and less
 		# stable.
-		set_temp_variable = { recent_threat = { value = has_added_tension_amount subtract = tracked_threat } }
-		# Decay by 0.5% each day, 140 days to decay 50%, 460 days to decay 90%, then add new tension
-		set_variable = { tension_premium = { value = tension_premium multiply = 0.995 add = recent_threat } }
 		set_variable = { adjusted_tension_premium = { value = tension_premium multiply = 0.1 } } # 100% tension -> 10% interest rate
 		add_to_variable = { interest_rate = adjusted_tension_premium }
-		set_variable = { tracked_threat = has_added_tension_amount }
 
 		set_temp_variable = { pre_clamp_interest_rate = interest_rate }
 		clamp_variable = { var = interest_rate min = 0.8 max = 50 } #Min is 0.8% on debt max is 50%
@@ -4180,12 +4186,8 @@ calculate_additional_expense_rate = {
 # Effect: calculate_int_investments_rate
 # Purpose: Computes weekly ROI from international investments and splits it into treasury vs reinvested shares
 calculate_int_investments_rate = {
-	# Set base ROI rate
-	set_variable = { roi_rate = 0.06 }	#6%
-
-	# Modifier for ROI
-	add_to_variable = { roi_rate = modifier@return_on_investment_modifier }
-	clamp_variable = { var = roi_rate min = 0 max = 0.20 }
+	# Base ROI + stacked return_on_investment_modifier, clamped to the engine-wide ceiling
+	set_variable = { roi_rate = { value = 0.06 add = modifier@return_on_investment_modifier clamp = { min = 0 max = 0.20 } } }
 
 	#This is how much money we get back in a year, converted to weekly
 	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate multiply = 0.019 clamp = { min = 0 max = @math_expressions_max } } }

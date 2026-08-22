@@ -89,7 +89,7 @@ def test_main_annotates_new_vs_existing_from_baseline(tmp_path, monkeypatch, cap
 
     assert code == 0
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
-    assert "1 new against the main baseline." in report
+    assert "1 new error against the main baseline." in report
     err = capsys.readouterr().err
     assert "vs main baseline: 1 new error(s), 0 new warning(s)" in err
 
