@@ -1,0 +1,177 @@
+add_namespace = GER_nokia_response_events
+
+country_event = {
+	id = GER_nokia_response_events.1
+	title = GER_nokia_response_events.1.t
+	desc = GER_nokia_response_events.1.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GER
+		NOT = { has_country_flag = collapsed_nation }
+		country_exists = FIN
+		FIN = { has_country_flag = FIN_nokia_nsn_proposal_pending }
+		NOT = { has_country_flag = GER_nokia_nsn_jv_accepted }
+		NOT = { has_country_flag = GER_nokia_nsn_jv_declined }
+	}
+
+	option = {
+		name = GER_nokia_response_events.1.a
+		log = "[GetDateText]: [Root.GetName]: GER_nokia_response_events.1.a executed"
+		set_country_flag = GER_nokia_nsn_jv_accepted
+		hidden_effect = {
+			FIN = { country_event = { id = FIN_nokia_events.91 days = 285 } }
+		}
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		effect_tooltip = { custom_effect_tooltip = GER_nokia_nsn_accept_tt }
+
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 15
+				has_opinion = { target = FIN value > 25 }
+			}
+			modifier = {
+				factor = 2
+				sender_influence_higher_5 = yes
+			}
+		}
+	}
+
+	option = {
+		name = GER_nokia_response_events.1.b
+		log = "[GetDateText]: [Root.GetName]: GER_nokia_response_events.1.b executed"
+		set_country_flag = GER_nokia_nsn_jv_declined
+		hidden_effect = { FIN = { country_event = { id = FIN_nokia_events.92 days = 1 } } }
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		effect_tooltip = { custom_effect_tooltip = GER_nokia_nsn_decline_tt }
+
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_opinion = { target = FIN value < 0 }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = GER_nokia_response_events.2
+	title = GER_nokia_response_events.2.t
+	desc = GER_nokia_response_events.2.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GER
+		NOT = { has_country_flag = collapsed_nation }
+		country_exists = FIN
+		FIN = { has_country_flag = FIN_nokia_siemens_buyout_pending }
+		NOT = { has_country_flag = GER_nokia_siemens_sale_accepted }
+		NOT = { has_country_flag = GER_nokia_siemens_sale_declined }
+	}
+
+	option = {
+		name = GER_nokia_response_events.2.a
+		log = "[GetDateText]: [Root.GetName]: GER_nokia_response_events.2.a executed"
+		set_country_flag = GER_nokia_siemens_sale_accepted
+		hidden_effect = {
+			FIN = { country_event = { id = FIN_nokia_events.93 days = 36 } }
+		}
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		effect_tooltip = { custom_effect_tooltip = GER_nokia_siemens_sale_accept_tt }
+
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 15
+				has_opinion = { target = FIN value > 25 }
+			}
+			modifier = {
+				factor = 2
+				sender_influence_higher_5 = yes
+			}
+		}
+	}
+
+	option = {
+		name = GER_nokia_response_events.2.b
+		log = "[GetDateText]: [Root.GetName]: GER_nokia_response_events.2.b executed"
+		set_country_flag = GER_nokia_siemens_sale_declined
+		hidden_effect = { FIN = { country_event = { id = FIN_nokia_events.94 days = 1 } } }
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		effect_tooltip = { custom_effect_tooltip = GER_nokia_siemens_sale_decline_tt }
+
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_opinion = { target = FIN value < 0 }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = GER_nokia_response_events.90
+	is_triggered_only = yes
+	fire_only_once = yes
+	hidden = yes
+
+	trigger = {
+		original_tag = GER
+		NOT = { has_country_flag = collapsed_nation }
+		country_exists = FIN
+		FIN = { has_country_flag = FIN_nokia_nsn_formation_closed }
+	}
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_country_flag = GER_nokia_nsn_jv_closed } }
+			set_country_flag = GER_nokia_nsn_jv_closed
+		}
+		if = {
+			limit = {
+				NOT = { has_country_flag = GER_siemens_networks_strategy }
+				NOT = { has_country_flag = GER_siemens_automation_strategy }
+			}
+			country_event = { id = GER_siemens_events.2 days = 1 }
+		}
+	}
+}
+
+country_event = {
+	id = GER_nokia_response_events.91
+	is_triggered_only = yes
+	fire_only_once = yes
+	hidden = yes
+
+	trigger = {
+		original_tag = GER
+		NOT = { has_country_flag = collapsed_nation }
+		country_exists = FIN
+		FIN = { has_country_flag = FIN_nokia_siemens_buyout_closed }
+	}
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_country_flag = GER_nokia_siemens_sale_proceeds_applied } }
+			set_temp_variable = { treasury_change = 4.00 }
+			modify_treasury_effect = yes
+			set_country_flag = GER_nokia_siemens_sale_proceeds_applied
+		}
+		country_event = { id = GER_siemens_events.3 days = 1 }
+	}
+}

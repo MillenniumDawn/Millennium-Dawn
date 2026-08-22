@@ -1,0 +1,92 @@
+add_namespace = FRA_nokia_response_events
+
+country_event = {
+	id = FRA_nokia_response_events.1
+	title = FRA_nokia_response_events.1.t
+	desc = FRA_nokia_response_events.1.d
+	picture = GFX_FRA_corporate_alcatel
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = FRA
+		NOT = { has_country_flag = collapsed_nation }
+		country_exists = FIN
+		FIN = { has_country_flag = FIN_nokia_alu_proposal_pending }
+		NOT = { has_country_flag = FRA_nokia_alu_commitments_accepted }
+		NOT = { has_country_flag = FRA_nokia_alu_commitments_enhanced }
+		NOT = { has_country_flag = FRA_nokia_alu_transaction_blocked }
+		OR = {
+			NOT = { has_country_flag = FRA_corporate_systems_state_initialized }
+			FRA_corporate_systems_nokia_offer_eligible = yes
+		}
+	}
+
+	option = {
+		name = FRA_nokia_response_events.1.a
+		log = "[GetDateText]: [Root.GetName]: FRA_nokia_response_events.1.a executed"
+		set_country_flag = FRA_nokia_alu_commitments_accepted
+		hidden_effect = {
+			FRA_corporate_systems_record_nokia_acceptance = yes
+			FIN = { country_event = { id = FIN_nokia_events.95 days = 1 } }
+		}
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		effect_tooltip = { custom_effect_tooltip = FRA_nokia_alu_accept_tt }
+
+		ai_chance = {
+			base = 45
+			modifier = {
+				add = 15
+				has_opinion = { target = FIN value > 25 }
+			}
+			modifier = {
+				factor = 2
+				sender_influence_higher_5 = yes
+			}
+		}
+	}
+
+	option = {
+		name = FRA_nokia_response_events.1.b
+		log = "[GetDateText]: [Root.GetName]: FRA_nokia_response_events.1.b executed"
+		set_country_flag = FRA_nokia_alu_commitments_enhanced
+		hidden_effect = {
+			FRA_corporate_systems_record_nokia_enhanced_commitments = yes
+			FIN = { country_event = { id = FIN_nokia_events.95 days = 1 } }
+		}
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		effect_tooltip = { custom_effect_tooltip = FRA_nokia_alu_enhance_tt }
+
+		ai_chance = {
+			base = 45
+			modifier = {
+				add = 25
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 15
+				has_opinion = { target = FIN value > 25 }
+			}
+		}
+	}
+
+	option = {
+		name = FRA_nokia_response_events.1.c
+		log = "[GetDateText]: [Root.GetName]: FRA_nokia_response_events.1.c executed"
+		set_country_flag = FRA_nokia_alu_transaction_blocked
+		hidden_effect = {
+			FRA_corporate_systems_record_nokia_block = yes
+			FIN = { country_event = { id = FIN_nokia_events.96 days = 1 } }
+		}
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		effect_tooltip = { custom_effect_tooltip = FRA_nokia_alu_block_tt }
+
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 25
+				has_opinion = { target = FIN value < 0 }
+			}
+		}
+	}
+}

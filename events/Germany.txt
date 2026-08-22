@@ -6469,34 +6469,76 @@ country_event = {
 	title = germany_yearly.9.t
 	desc = germany_yearly.9.d
 	is_triggered_only = yes
-	fire_only_once = yes
 
-	# Oh well
-	option = {
-		name = germany_yearly.9.a
-		log = "[GetDateText]: [This.GetName]: germany_yearly.9.a executed"
-		random_owned_state = {
-			add_extra_state_shared_building_slots = -1
-			add_building_construction = {
-				type = industrial_complex
-				level = -1
-				instant_build = yes
+	trigger = {
+		owns_state = 39
+		country_exists = FIN
+		FIN = { has_country_flag = FIN_nokia_bochum_restructuring_announced }
+		NOT = {
+			OR = {
+				has_country_flag = nokia_bochum_closed
+				has_country_flag = nokia_bochum_supported
+				has_country_flag = nokia_bochum_orderly_transition
 			}
-		}
-		ai_chance = {
-			base = 5
 		}
 	}
 
-	# Give them some funding to stay open
+	option = {
+		name = germany_yearly.9.a
+		log = "[GetDateText]: [This.GetName]: germany_yearly.9.a executed"
+		set_country_flag = nokia_bochum_closed
+		add_stability = -0.01
+		39 = {
+			if = {
+				limit = { check_variable = { building_level@industrial_complex > 0 } }
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
 	option = {
 		name = germany_yearly.9.b
 		log = "[GetDateText]: [This.GetName]: germany_yearly.9.b executed"
+		set_country_flag = nokia_bochum_supported
 		add_stability = 0.01
 		set_temp_variable = { treasury_change = -15.00 }
 		modify_treasury_effect = yes
 		ai_chance = {
-			base = 5
+			base = 50
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = germany_yearly.9.c
+		log = "[GetDateText]: [This.GetName]: germany_yearly.9.c executed"
+		set_country_flag = nokia_bochum_orderly_transition
+		add_political_power = -5
+		add_stability = -0.005
+		39 = {
+			if = {
+				limit = { check_variable = { building_level@industrial_complex > 0 } }
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 100
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -11380,7 +11422,7 @@ country_event = {
 		custom_effect_tooltip = GER_Coldwar_18
 		HUN = {
 			random_controlled_state = {
-				limit = { 
+				limit = {
 					free_building_slots = {
 						building = arms_factory
 						size > 0

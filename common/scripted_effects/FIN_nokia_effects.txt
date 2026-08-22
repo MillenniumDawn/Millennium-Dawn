@@ -1,0 +1,1138 @@
+FIN_nokia_initialize_state = {
+	if = {
+		limit = { NOT = { has_country_flag = FIN_nokia_state_initialized } }
+		set_variable = { FIN_nokia_device_position = 9 }
+		set_variable = { FIN_nokia_platform_autonomy = 5 }
+		set_variable = { FIN_nokia_network_capability = 7 }
+		set_variable = { FIN_nokia_standards_leverage = 7 }
+		set_variable = { FIN_nokia_platform_debt_stage = 0 }
+		set_variable = { FIN_nokia_service_platform_stage = 0 }
+		set_variable = { FIN_nokia_nsn_integration_stage = 0 }
+		FIN_nokia_apply_legacy_state = yes
+		set_country_flag = FIN_nokia_state_initialized
+	}
+	FIN_nokia_clamp_state = yes
+}
+
+FIN_nokia_clamp_state = {
+	set_temp_variable = { corp_value = FIN_nokia_device_position }
+	corporate_history_clamp_value = yes
+	set_variable = { FIN_nokia_device_position = corp_value }
+	set_temp_variable = { corp_value = FIN_nokia_platform_autonomy }
+	corporate_history_clamp_value = yes
+	set_variable = { FIN_nokia_platform_autonomy = corp_value }
+	set_temp_variable = { corp_value = FIN_nokia_network_capability }
+	corporate_history_clamp_value = yes
+	set_variable = { FIN_nokia_network_capability = corp_value }
+	set_temp_variable = { corp_value = FIN_nokia_standards_leverage }
+	corporate_history_clamp_value = yes
+	set_variable = { FIN_nokia_standards_leverage = corp_value }
+	clamp_variable = { var = FIN_nokia_platform_debt_stage min = 0 max = 3 }
+	clamp_variable = { var = FIN_nokia_service_platform_stage min = 0 max = 4 }
+	clamp_variable = { var = FIN_nokia_nsn_integration_stage min = 0 max = 4 }
+}
+
+FIN_nokia_set_handset_era = {
+	remove_ideas = FIN_nokia_platform_transition
+	remove_ideas = FIN_nokia_networks_and_licensing
+	remove_ideas = FIN_nokia_integrated_devices_and_networks
+	if = {
+		limit = { NOT = { has_idea = FIN_nokia_handset_in_every_pocket } }
+		add_ideas = FIN_nokia_handset_in_every_pocket
+	}
+}
+
+FIN_nokia_set_platform_transition_era = {
+	remove_ideas = FIN_nokia_handset_in_every_pocket
+	remove_ideas = FIN_nokia_networks_and_licensing
+	remove_ideas = FIN_nokia_integrated_devices_and_networks
+	if = {
+		limit = { NOT = { has_idea = FIN_nokia_platform_transition } }
+		add_ideas = FIN_nokia_platform_transition
+	}
+}
+
+FIN_nokia_set_networks_licensing_era = {
+	remove_ideas = FIN_nokia_handset_in_every_pocket
+	remove_ideas = FIN_nokia_platform_transition
+	remove_ideas = FIN_nokia_integrated_devices_and_networks
+	if = {
+		limit = { NOT = { has_idea = FIN_nokia_networks_and_licensing } }
+		add_ideas = FIN_nokia_networks_and_licensing
+	}
+}
+
+FIN_nokia_set_integrated_devices_era = {
+	remove_ideas = FIN_nokia_handset_in_every_pocket
+	remove_ideas = FIN_nokia_platform_transition
+	remove_ideas = FIN_nokia_networks_and_licensing
+	if = {
+		limit = { NOT = { has_idea = FIN_nokia_integrated_devices_and_networks } }
+		add_ideas = FIN_nokia_integrated_devices_and_networks
+	}
+}
+
+FIN_nokia_apply_legacy_state = {
+	if = {
+		limit = { NOT = { has_country_flag = FIN_nokia_legacy_state_applied } }
+
+		if = {
+			limit = {
+				has_country_flag = FIN_nokia_mass_market_scale
+				has_country_flag = FIN_nokia_software_ecosystem
+			}
+			clr_country_flag = FIN_nokia_mass_market_scale
+		}
+		if = {
+			limit = {
+				has_country_flag = FIN_nokia_windows_phone_strategy
+				has_country_flag = FIN_nokia_native_platform_strategy
+			}
+			clr_country_flag = FIN_nokia_windows_phone_strategy
+		}
+		if = {
+			limit = {
+				has_country_flag = FIN_nokia_networks_independent
+				has_country_flag = FIN_nokia_networks_wholly_owned
+			}
+			clr_country_flag = FIN_nokia_networks_wholly_owned
+			set_country_flag = FIN_nokia_independent_networks_consolidated
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_exited_networks }
+			clr_country_flag = FIN_nokia_networks_wholly_owned
+			clr_country_flag = FIN_nokia_independent_networks_consolidated
+		}
+		if = {
+			limit = {
+				has_country_flag = FIN_nokia_devices_sold
+				has_country_flag = FIN_nokia_devices_retained
+			}
+			clr_country_flag = FIN_nokia_devices_retained
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = FIN_nokia_devices_business_rebuilt
+					has_country_flag = FIN_nokia_integrated_devices_retained
+				}
+				has_country_flag = FIN_nokia_hmd_brand_licensed
+			}
+			clr_country_flag = FIN_nokia_hmd_brand_licensed
+			clr_country_flag = FIN_nokia_device_production_licensed
+		}
+		if = {
+			limit = {
+				has_country_flag = FIN_nokia_alcatel_lucent_acquired
+				has_country_flag = FIN_nokia_organic_network_growth
+				date > 2016.1.3
+			}
+			clr_country_flag = FIN_nokia_organic_network_growth
+		}
+		if = {
+			limit = {
+				has_country_flag = FIN_nokia_alcatel_lucent_acquired
+				has_country_flag = FIN_nokia_organic_network_growth
+				NOT = { date > 2016.1.3 }
+			}
+			clr_country_flag = FIN_nokia_alcatel_lucent_acquired
+			set_country_flag = FIN_nokia_alcatel_lucent_proposed
+		}
+
+		if = {
+			limit = { has_country_flag = FIN_nokia_mass_market_scale }
+			add_to_variable = { FIN_nokia_device_position = 1 }
+			set_country_flag = FIN_nokia_device_scale_priority
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_software_ecosystem }
+			add_to_variable = { FIN_nokia_platform_autonomy = 1 }
+			set_country_flag = FIN_nokia_platform_priority
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_siemens_networks_formed }
+			set_country_flag = FIN_nokia_nsn_formation_closed
+			set_variable = { FIN_nokia_nsn_integration_stage = 0 }
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_windows_phone_strategy }
+			set_variable = { FIN_nokia_device_position = 8 }
+			set_variable = { FIN_nokia_platform_autonomy = 3 }
+			set_variable = { FIN_nokia_platform_debt_stage = 3 }
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_native_platform_strategy }
+			add_to_variable = { FIN_nokia_platform_autonomy = 1 }
+		}
+		if = {
+			limit = {
+				has_country_flag = FIN_nokia_networks_wholly_owned
+				has_country_flag = FIN_nokia_siemens_networks_formed
+			}
+			add_to_variable = { FIN_nokia_network_capability = 1 }
+			set_country_flag = FIN_nokia_siemens_buyout_closed
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_exited_networks }
+			add_to_variable = { FIN_nokia_network_capability = -5 }
+			add_to_variable = { FIN_nokia_standards_leverage = -1 }
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_devices_sold }
+			set_variable = { FIN_nokia_device_position = 1 }
+			set_variable = { FIN_nokia_platform_autonomy = 2 }
+			set_country_flag = FIN_nokia_device_sale_announced
+			set_country_flag = FIN_nokia_microsoft_patent_license_granted
+		}
+		if = {
+			limit = {
+				has_country_flag = FIN_nokia_devices_retained
+				NOT = { has_country_flag = FIN_nokia_devices_sold }
+			}
+			add_to_variable = { FIN_nokia_device_position = 1 }
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_organic_network_growth }
+			add_to_variable = { FIN_nokia_network_capability = 1 }
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_devices_business_rebuilt }
+			add_to_variable = { FIN_nokia_device_position = 2 }
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_integrated_devices_retained }
+			add_to_variable = { FIN_nokia_device_position = 1 }
+			add_to_variable = { FIN_nokia_platform_autonomy = 1 }
+		}
+
+		if = {
+			limit = {
+				has_country_flag = FIN_nokia_windows_phone_strategy
+				date > 2013.8.6
+				NOT = { has_country_flag = FIN_nokia_devices_sold }
+			}
+			set_variable = { FIN_nokia_device_position = 6 }
+			set_variable = { FIN_nokia_platform_autonomy = 3 }
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_alcatel_lucent_acquired }
+			set_country_flag = FIN_nokia_alcatel_lucent_proposed
+			if = {
+				limit = { date > 2016.1.3 }
+				set_country_flag = FIN_nokia_alcatel_lucent_control
+			}
+			if = {
+				limit = { date > 2016.1.13 }
+				set_country_flag = FIN_nokia_alcatel_lucent_combined_operations
+			}
+			if = {
+				limit = { date > 2016.11.1 }
+				set_country_flag = FIN_nokia_alcatel_lucent_full_ownership
+			}
+			if = {
+				limit = { date > 2017.12.31 }
+				set_country_flag = FIN_nokia_alcatel_lucent_integrated
+				set_variable = { FIN_nokia_nsn_integration_stage = 4 }
+			}
+		}
+		if = {
+			limit = { has_country_flag = FIN_nokia_hmd_brand_licensed }
+			set_country_flag = FIN_nokia_hmd_license_announced
+			if = {
+				limit = { date > 2016.11.30 }
+				set_country_flag = FIN_nokia_hmd_license_effective
+			}
+		}
+		if = {
+			limit = {
+				date > 2020.12.31
+				has_country_flag = FIN_nokia_hmd_license_effective
+			}
+			set_country_flag = FIN_nokia_hmd_minority_stake
+		}
+		if = {
+			limit = {
+				date > 2024.4.24
+				has_country_flag = FIN_nokia_microsoft_patent_license_granted
+			}
+		}
+		if = {
+			limit = {
+				date > 2026.3.31
+				has_country_flag = FIN_nokia_hmd_license_effective
+			}
+			set_country_flag = FIN_nokia_hmd_smartphone_exclusivity_ended
+		}
+
+		if = {
+			limit = { has_country_flag = FIN_nokia_devices_sold }
+			FIN_nokia_set_networks_licensing_era = yes
+		}
+		else_if = {
+			limit = {
+				OR = {
+					has_country_flag = FIN_nokia_devices_retained
+					has_country_flag = FIN_nokia_devices_business_rebuilt
+					has_country_flag = FIN_nokia_integrated_devices_retained
+				}
+			}
+			FIN_nokia_set_integrated_devices_era = yes
+		}
+		else_if = {
+			limit = {
+				OR = {
+					has_country_flag = FIN_nokia_windows_phone_strategy
+					has_country_flag = FIN_nokia_native_platform_strategy
+				}
+			}
+			FIN_nokia_set_platform_transition_era = yes
+		}
+		else_if = {
+			limit = {
+				OR = {
+					has_country_flag = FIN_nokia_mass_market_scale
+					has_country_flag = FIN_nokia_software_ecosystem
+				}
+			}
+			FIN_nokia_set_handset_era = yes
+		}
+
+		set_country_flag = FIN_nokia_legacy_state_applied
+		FIN_nokia_clamp_state = yes
+	}
+}
+
+FIN_nokia_clear_capstone_outcome = {
+	remove_ideas = FIN_nokia_handset_in_every_pocket
+	remove_ideas = FIN_nokia_platform_transition
+	remove_ideas = FIN_nokia_networks_and_licensing
+	remove_ideas = FIN_nokia_integrated_devices_and_networks
+	remove_ideas = FIN_nokia_carrier_cycle_stress
+	remove_ideas = FIN_nokia_platform_debt_burden
+	remove_ideas = FIN_nokia_network_integration_burden
+	remove_ideas = FIN_nokia_5g_execution_burden
+	remove_ideas = FIN_nokia_geopolitical_writeoff
+	remove_ideas = FIN_nokia_customer_concentration_shock
+	remove_ideas = FIN_nokia_ai_ran_investment
+	remove_ideas = FIN_nokia_trusted_network_state
+	remove_ideas = FIN_nokia_open_mobile_commonwealth
+	remove_ideas = FIN_nokia_integrated_device_network_group
+	remove_ideas = FIN_nokia_ai_optical_backbone
+	remove_ideas = FIN_nokia_patent_research_house
+	remove_ideas = FIN_nokia_resilient_communications_federation
+	clr_country_flag = FIN_nokia_capstone_resolved
+}
+
+FIN_nokia_apply_trusted_network_capstone = {
+	FIN_nokia_clear_capstone_outcome = yes
+	add_ideas = FIN_nokia_trusted_network_state
+	set_country_flag = FIN_nokia_capstone_resolved
+}
+
+FIN_nokia_apply_open_mobile_capstone = {
+	FIN_nokia_clear_capstone_outcome = yes
+	add_ideas = FIN_nokia_open_mobile_commonwealth
+	set_country_flag = FIN_nokia_capstone_resolved
+}
+
+FIN_nokia_apply_integrated_group_capstone = {
+	FIN_nokia_clear_capstone_outcome = yes
+	add_ideas = FIN_nokia_integrated_device_network_group
+	set_country_flag = FIN_nokia_capstone_resolved
+}
+
+FIN_nokia_apply_ai_optical_capstone = {
+	FIN_nokia_clear_capstone_outcome = yes
+	add_ideas = FIN_nokia_ai_optical_backbone
+	set_country_flag = FIN_nokia_capstone_resolved
+}
+
+FIN_nokia_apply_patent_house_capstone = {
+	FIN_nokia_clear_capstone_outcome = yes
+	add_ideas = FIN_nokia_patent_research_house
+	set_country_flag = FIN_nokia_capstone_resolved
+}
+
+FIN_nokia_apply_resilient_federation_capstone = {
+	FIN_nokia_clear_capstone_outcome = yes
+	add_ideas = FIN_nokia_resilient_communications_federation
+	set_country_flag = FIN_nokia_capstone_resolved
+}
+
+FIN_nokia_resolve_capstone = {
+	FIN_nokia_initialize_state = yes
+	if = {
+		limit = { NOT = { has_country_flag = FIN_nokia_capstone_resolved } }
+		if = {
+			limit = { FIN_nokia_can_resolve_trusted_network_state = yes }
+			FIN_nokia_apply_trusted_network_capstone = yes
+		}
+		else_if = {
+			limit = { FIN_nokia_can_resolve_ai_optical_backbone = yes }
+			FIN_nokia_apply_ai_optical_capstone = yes
+		}
+		else_if = {
+			limit = { FIN_nokia_can_resolve_patent_research_house = yes }
+			FIN_nokia_apply_patent_house_capstone = yes
+		}
+		else_if = {
+			limit = { FIN_nokia_can_resolve_open_mobile_commonwealth = yes }
+			FIN_nokia_apply_open_mobile_capstone = yes
+		}
+		else_if = {
+			limit = { FIN_nokia_can_resolve_integrated_device_network_group = yes }
+			FIN_nokia_apply_integrated_group_capstone = yes
+		}
+		else = { FIN_nokia_apply_resilient_federation_capstone = yes }
+	}
+}
+
+FIN_nokia_reconstruct_history = {
+	FIN_nokia_initialize_state = yes
+
+	if = {
+		limit = {
+			date > 2000.1.2
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_device_scale_priority
+					has_country_flag = FIN_nokia_platform_priority
+					has_country_flag = FIN_nokia_integrated_mobile_systems
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_device_scale_priority
+		set_variable = { FIN_nokia_device_position = 10 }
+		FIN_nokia_set_handset_era = yes
+	}
+	if = {
+		limit = {
+			date > 2003.10.15
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_mass_market_scale
+					has_country_flag = FIN_nokia_software_ecosystem
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_mass_market_scale
+		set_variable = { FIN_nokia_device_position = 10 }
+		set_variable = { FIN_nokia_platform_debt_stage = 2 }
+		set_variable = { FIN_nokia_service_platform_stage = 1 }
+	}
+	if = {
+		limit = {
+			date > 2006.6.18
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_siemens_networks_formed
+					has_country_flag = FIN_nokia_networks_independent
+					has_country_flag = FIN_nokia_exited_networks
+					has_country_flag = FIN_nokia_nsn_proposal_pending
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_nsn_proposal_pending
+		set_country_flag = FIN_nokia_nsn_approval_received
+	}
+	if = {
+		limit = {
+			date > 2007.3.31
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_siemens_networks_formed
+					has_country_flag = FIN_nokia_networks_independent
+					has_country_flag = FIN_nokia_exited_networks
+				}
+			}
+		}
+		clr_country_flag = FIN_nokia_nsn_proposal_pending
+		set_country_flag = FIN_nokia_siemens_networks_formed
+		set_country_flag = FIN_nokia_nsn_formation_closed
+		set_country_flag = FIN_nokia_nsn_formation_cost_applied
+		set_variable = { FIN_nokia_nsn_integration_stage = 0 }
+	}
+	if = {
+		limit = {
+			date > 2008.1.14
+			NOT = { has_country_flag = FIN_nokia_shipping_mobile_ecosystem }
+			NOT = { has_country_flag = FIN_nokia_bochum_restructuring_announced }
+		}
+		set_country_flag = FIN_nokia_bochum_restructuring_announced
+	}
+	if = {
+		limit = {
+			date > 2011.2.10
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_windows_phone_strategy
+					has_country_flag = FIN_nokia_native_platform_strategy
+					has_country_flag = FIN_nokia_android_strategy
+					has_country_flag = FIN_nokia_platform_agnostic_strategy
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_windows_phone_strategy
+		set_variable = { FIN_nokia_device_position = 8 }
+		set_variable = { FIN_nokia_platform_autonomy = 3 }
+		set_variable = { FIN_nokia_platform_debt_stage = 3 }
+		FIN_nokia_set_platform_transition_era = yes
+	}
+	if = {
+		limit = {
+			date > 2013.6.30
+			has_country_flag = FIN_nokia_siemens_networks_formed
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_networks_wholly_owned
+					has_country_flag = FIN_nokia_siemens_jv_continued
+					has_country_flag = FIN_nokia_exited_networks
+					has_country_flag = FIN_nokia_siemens_buyout_pending
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_siemens_buyout_pending
+		set_country_flag = FIN_nokia_siemens_buyout_approval_received
+	}
+	if = {
+		limit = {
+			date > 2013.8.6
+			has_country_flag = FIN_nokia_siemens_networks_formed
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_networks_wholly_owned
+					has_country_flag = FIN_nokia_siemens_jv_continued
+					has_country_flag = FIN_nokia_exited_networks
+				}
+			}
+		}
+		clr_country_flag = FIN_nokia_siemens_buyout_pending
+		set_country_flag = FIN_nokia_networks_wholly_owned
+		set_country_flag = FIN_nokia_siemens_buyout_closed
+		set_country_flag = FIN_nokia_siemens_buyout_cash_applied
+		set_variable = { FIN_nokia_device_position = 6 }
+		set_variable = { FIN_nokia_network_capability = 8 }
+	}
+	if = {
+		limit = {
+			date > 2013.9.2
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_device_sale_announced
+					has_country_flag = FIN_nokia_devices_retained
+					has_country_flag = FIN_nokia_devices_finnish_affiliate
+					has_country_flag = FIN_nokia_device_minority_partner
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_device_sale_announced
+	}
+	if = {
+		limit = {
+			date > 2014.4.24
+			has_country_flag = FIN_nokia_device_sale_announced
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_devices_sold
+					has_country_flag = FIN_nokia_devices_retained
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_devices_sold
+		set_country_flag = FIN_nokia_device_sale_cash_applied
+		set_country_flag = FIN_nokia_microsoft_patent_license_granted
+		set_variable = { FIN_nokia_device_position = 1 }
+		set_variable = { FIN_nokia_platform_autonomy = 2 }
+		FIN_nokia_set_networks_licensing_era = yes
+	}
+	if = {
+		limit = {
+			date > 2015.4.14
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_alcatel_lucent_proposed
+					has_country_flag = FIN_nokia_organic_network_growth
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_alcatel_lucent_proposed
+		set_country_flag = FIN_nokia_alcatel_lucent_acquired
+		set_country_flag = FIN_nokia_alu_approval_received
+		set_country_flag = FIN_nokia_here_divestiture_announced
+	}
+	if = {
+		limit = {
+			date > 2015.12.3
+			has_country_flag = FIN_nokia_here_divestiture_announced
+			NOT = { has_country_flag = FIN_nokia_here_divested }
+		}
+		set_country_flag = FIN_nokia_here_divested
+		set_country_flag = FIN_nokia_here_sale_proceeds_applied
+	}
+	if = {
+		limit = {
+			date > 2016.1.3
+			has_country_flag = FIN_nokia_alu_approval_received
+			NOT = { has_country_flag = FIN_nokia_alcatel_lucent_control }
+		}
+		set_country_flag = FIN_nokia_alcatel_lucent_control
+		set_country_flag = FIN_nokia_alu_transaction_cost_applied
+		set_variable = { FIN_nokia_network_capability = 9 }
+		set_variable = { FIN_nokia_standards_leverage = 8 }
+	}
+	if = {
+		limit = {
+			date > 2016.1.13
+			has_country_flag = FIN_nokia_alcatel_lucent_control
+			NOT = { has_country_flag = FIN_nokia_alcatel_lucent_combined_operations }
+		}
+		set_country_flag = FIN_nokia_alcatel_lucent_combined_operations
+	}
+	if = {
+		limit = {
+			date > 2016.5.17
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_hmd_brand_licensed
+					has_country_flag = FIN_nokia_devices_business_rebuilt
+					has_country_flag = FIN_nokia_device_production_licensed
+					has_country_flag = FIN_nokia_integrated_devices_retained
+					has_country_flag = FIN_nokia_consumer_device_name_retired
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_hmd_license_announced
+		set_country_flag = FIN_nokia_hmd_brand_licensed
+		set_country_flag = FIN_nokia_balanced_patent_enforcement
+	}
+	if = {
+		limit = {
+			date > 2016.11.1
+			has_country_flag = FIN_nokia_alcatel_lucent_control
+			NOT = { has_country_flag = FIN_nokia_alcatel_lucent_full_ownership }
+		}
+		set_country_flag = FIN_nokia_alcatel_lucent_full_ownership
+	}
+	if = {
+		limit = {
+			date > 2016.11.30
+			has_country_flag = FIN_nokia_hmd_license_announced
+			NOT = { has_country_flag = FIN_nokia_hmd_license_effective }
+		}
+		set_country_flag = FIN_nokia_hmd_license_effective
+	}
+	if = {
+		limit = {
+			date > 2017.12.31
+			has_country_flag = FIN_nokia_alcatel_lucent_combined_operations
+			NOT = { has_country_flag = FIN_nokia_alcatel_lucent_integrated }
+		}
+		set_country_flag = FIN_nokia_alcatel_lucent_integrated
+		set_variable = { FIN_nokia_nsn_integration_stage = 4 }
+	}
+	if = {
+		limit = {
+			date > 2018.3.12
+			NOT = { has_country_flag = FIN_nokia_solidium_anchor }
+		}
+		set_country_flag = FIN_nokia_solidium_anchor
+	}
+	if = {
+		limit = {
+			date > 2018.7.29
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_reefshark_scale
+					has_country_flag = FIN_nokia_5g_supplier_diversified
+					has_country_flag = FIN_nokia_cloud_ran_priority
+					has_country_flag = FIN_nokia_5g_radio_scale_defended
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_reefshark_scale
+		set_country_flag = FIN_nokia_secure_network_doctrine
+		set_country_flag = FIN_nokia_trusted_vendor_qualified
+		set_variable = { FIN_nokia_network_capability = 8 }
+	}
+	if = {
+		limit = {
+			date > 2020.7.31
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_multi_vendor_open_ran
+					has_country_flag = FIN_nokia_open_ran_integrator
+					has_country_flag = FIN_nokia_single_vendor_stack
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_open_ran_integrator
+		set_variable = { FIN_nokia_platform_autonomy = 3 }
+	}
+	if = {
+		limit = {
+			date > 2020.12.31
+			has_country_flag = FIN_nokia_hmd_license_effective
+			NOT = { has_country_flag = FIN_nokia_hmd_minority_stake }
+		}
+		set_country_flag = FIN_nokia_hmd_minority_stake
+	}
+	if = {
+		limit = {
+			date > 2022.4.11
+			NOT = {
+				OR = {
+					has_country_flag = FIN_nokia_russia_orderly_exit
+					has_country_flag = FIN_nokia_russia_rapid_exit
+					has_country_flag = FIN_nokia_russia_maintenance_only
+				}
+			}
+		}
+		set_country_flag = FIN_nokia_russia_orderly_exit
+		set_variable = { FIN_nokia_standards_leverage = 9 }
+	}
+	if = {
+		limit = {
+			date > 2023.12.3
+			NOT = { has_country_flag = FIN_nokia_att_response_resolved }
+		}
+		set_country_flag = FIN_nokia_att_response_resolved
+		set_variable = { FIN_nokia_platform_autonomy = 4 }
+	}
+	if = {
+		limit = {
+			date > 2024.6.26
+			NOT = { has_country_flag = FIN_nokia_optical_turn_resolved }
+		}
+		set_country_flag = FIN_nokia_optical_turn_resolved
+		set_country_flag = FIN_nokia_asn_sale_announced
+		set_country_flag = FIN_nokia_infinera_proposed
+	}
+	if = {
+		limit = {
+			date > 2024.12.30
+			has_country_flag = FIN_nokia_asn_sale_announced
+			NOT = { has_country_flag = FIN_nokia_asn_control_sold }
+		}
+		set_country_flag = FIN_nokia_asn_control_sold
+		set_country_flag = FIN_nokia_asn_proceeds_applied
+	}
+	if = {
+		limit = {
+			date > 2025.2.27
+			has_country_flag = FIN_nokia_infinera_proposed
+			NOT = { has_country_flag = FIN_nokia_infinera_acquired }
+		}
+		set_country_flag = FIN_nokia_infinera_acquired
+		set_country_flag = FIN_nokia_infinera_transaction_cost_applied
+		set_variable = { FIN_nokia_network_capability = 9 }
+	}
+	if = {
+		limit = {
+			date > 2025.10.27
+			NOT = { has_country_flag = FIN_nokia_nvidia_strategy_resolved }
+		}
+		set_country_flag = FIN_nokia_nvidia_strategy_resolved
+		set_country_flag = FIN_nokia_nvidia_ai_ran_partnership
+		set_country_flag = FIN_nokia_nvidia_share_issue_resolved
+	}
+	if = {
+		limit = {
+			date > 2025.12.30
+			has_country_flag = FIN_nokia_infinera_acquired
+			NOT = { has_country_flag = FIN_nokia_infinera_integrated }
+		}
+		set_country_flag = FIN_nokia_infinera_integrated
+	}
+	if = {
+		limit = {
+			date > 2025.12.30
+			has_country_flag = FIN_nokia_nvidia_share_issue_resolved
+			NOT = { has_country_flag = FIN_nokia_nvidia_shares_delivered }
+		}
+		set_country_flag = FIN_nokia_nvidia_shares_delivered
+		set_country_flag = FIN_nokia_nvidia_proceeds_applied
+	}
+	if = {
+		limit = {
+			date > 2025.12.31
+			NOT = { has_country_flag = FIN_nokia_2026_operating_model }
+		}
+		set_country_flag = FIN_nokia_2026_operating_model
+	}
+	if = {
+		limit = {
+			date > 2026.3.31
+			has_country_flag = FIN_nokia_hmd_license_effective
+			NOT = { has_country_flag = FIN_nokia_hmd_smartphone_exclusivity_ended }
+		}
+		set_country_flag = FIN_nokia_hmd_smartphone_exclusivity_ended
+	}
+	if = {
+		limit = {
+			date > 2026.4.22
+			NOT = { has_country_flag = FIN_nokia_ai_cloud_revenue_scale }
+		}
+		set_country_flag = FIN_nokia_ai_cloud_design_wins
+		set_country_flag = FIN_nokia_ai_cloud_order_milestone
+		set_country_flag = FIN_nokia_ai_cloud_revenue_scale
+	}
+	if = {
+		limit = {
+			date > 2026.4.29
+			NOT = { has_country_flag = FIN_nokia_fwa_cpe_sale_agreed }
+		}
+		set_country_flag = FIN_nokia_fwa_cpe_sale_agreed
+	}
+	if = {
+		limit = {
+			date > 2026.6.15
+			NOT = { has_country_flag = FIN_nokia_allentown_atp_expansion_announced }
+		}
+		set_country_flag = FIN_nokia_allentown_atp_expansion_announced
+	}
+	if = {
+		limit = {
+			date > 2026.7.22
+			NOT = { has_country_flag = FIN_nokia_ai_ran_platform_announced }
+		}
+		set_country_flag = FIN_nokia_ai_ran_platform_announced
+	}
+
+	FIN_nokia_clamp_state = yes
+	if = {
+		limit = {
+			date > 2026.7.22
+			NOT = { has_country_flag = FIN_nokia_capstone_resolved }
+		}
+		FIN_nokia_resolve_capstone = yes
+	}
+	if = {
+		limit = {
+			date > 2026.7.22
+			has_country_flag = FIN_nokia_capstone_resolved
+		}
+		set_country_flag = FIN_nokia_reconstruct_complete
+	}
+}
+
+FIN_nokia_process_external_confirmations = {
+	if = {
+		limit = { NOT = { has_country_flag = FIN_nokia_state_initialized } }
+		FIN_nokia_initialize_state = yes
+	}
+	else_if = {
+		limit = { NOT = { has_country_flag = FIN_nokia_legacy_state_applied } }
+		FIN_nokia_apply_legacy_state = yes
+	}
+	if = {
+		limit = {
+			original_tag = FIN
+			NOT = { has_country_flag = collapsed_nation }
+			has_country_flag = FIN_nokia_fwa_cpe_sale_agreed
+			NOT = { has_country_flag = FIN_nokia_fwa_cpe_sale_closed }
+		}
+		country_event = { id = FIN_nokia_events.106 days = 1 }
+	}
+	if = {
+		limit = {
+			original_tag = FIN
+			NOT = { has_country_flag = collapsed_nation }
+			has_country_flag = FIN_nokia_ai_ran_platform_announced
+			NOT = { has_country_flag = FIN_nokia_ai_ran_trial_complete }
+		}
+		country_event = { id = FIN_nokia_events.107 days = 1 }
+	}
+}
+
+FIN_nokia_schedule_current_year_events = {
+	if = {
+		limit = {
+			original_tag = FIN
+			NOT = { has_country_flag = FIN_nokia_start_year_events_scheduled }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2000.1.1 }
+				has_start_date < 2000.1.2
+				NOT = {
+					OR = {
+						has_country_flag = FIN_nokia_device_scale_priority
+						has_country_flag = FIN_nokia_platform_priority
+						has_country_flag = FIN_nokia_integrated_mobile_systems
+					}
+				}
+			}
+			country_event = { id = FIN_nokia_events.0 days = 2 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2003.1.1 }
+				has_start_date < 2003.1.2
+				NOT = {
+					OR = {
+						has_country_flag = FIN_nokia_mass_market_scale
+						has_country_flag = FIN_nokia_software_ecosystem
+					}
+				}
+			}
+			country_event = { id = FIN_nokia_events.1 days = 288 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2006.1.1 }
+				has_start_date < 2006.1.2
+				NOT = {
+					OR = {
+						has_country_flag = FIN_nokia_nsn_proposal_pending
+						has_country_flag = FIN_nokia_siemens_networks_formed
+						has_country_flag = FIN_nokia_networks_independent
+					}
+				}
+			}
+			country_event = { id = FIN_nokia_events.2 days = 169 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2007.1.1 }
+				has_start_date < 2007.1.2
+				NOT = { has_country_flag = FIN_nokia_nsn_formation_closed }
+				NOT = { has_country_flag = FIN_nokia_networks_independent }
+			}
+			country_event = { id = FIN_nokia_events.91 days = 90 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2008.1.1 }
+				has_start_date < 2008.1.2
+				NOT = { has_country_flag = FIN_nokia_shipping_mobile_ecosystem }
+				NOT = { has_country_flag = FIN_nokia_bochum_restructuring_announced }
+			}
+			country_event = { id = FIN_nokia_events.116 days = 14 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2011.1.1 }
+				has_start_date < 2011.1.2
+				NOT = {
+					OR = {
+						has_country_flag = FIN_nokia_windows_phone_strategy
+						has_country_flag = FIN_nokia_native_platform_strategy
+						has_country_flag = FIN_nokia_android_strategy
+						has_country_flag = FIN_nokia_platform_agnostic_strategy
+					}
+				}
+			}
+			country_event = { id = FIN_nokia_events.3 days = 41 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2013.1.1 }
+				has_start_date < 2013.1.2
+				NOT = {
+					OR = {
+						has_country_flag = FIN_nokia_networks_wholly_owned
+						has_country_flag = FIN_nokia_independent_networks_consolidated
+						has_country_flag = FIN_nokia_siemens_jv_continued
+						has_country_flag = FIN_nokia_exited_networks
+					}
+				}
+			}
+			country_event = { id = FIN_nokia_events.4 days = 181 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2013.1.1 }
+				has_start_date < 2013.1.2
+				NOT = {
+					OR = {
+						has_country_flag = FIN_nokia_device_sale_announced
+						has_country_flag = FIN_nokia_devices_retained
+						has_country_flag = FIN_nokia_devices_finnish_affiliate
+						has_country_flag = FIN_nokia_device_minority_partner
+					}
+				}
+			}
+			country_event = { id = FIN_nokia_events.5 days = 245 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2014.1.1 }
+				has_start_date < 2014.1.2
+				NOT = { has_country_flag = FIN_nokia_devices_sold }
+				NOT = { has_country_flag = FIN_nokia_devices_retained }
+			}
+			country_event = { id = FIN_nokia_events.101 days = 114 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2015.1.1 }
+				has_start_date < 2015.1.2
+				NOT = {
+					OR = {
+						has_country_flag = FIN_nokia_alcatel_lucent_proposed
+						has_country_flag = FIN_nokia_organic_network_growth
+					}
+				}
+			}
+			country_event = { id = FIN_nokia_events.6 days = 104 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2016.1.1 }
+				has_start_date < 2016.1.2
+				NOT = { has_country_flag = FIN_nokia_alcatel_lucent_control }
+				NOT = { has_country_flag = FIN_nokia_organic_network_growth }
+			}
+			country_event = { id = FIN_nokia_events.97 days = 3 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2016.1.1 }
+				has_start_date < 2016.1.2
+				NOT = {
+					OR = {
+						has_country_flag = FIN_nokia_hmd_brand_licensed
+						has_country_flag = FIN_nokia_devices_business_rebuilt
+						has_country_flag = FIN_nokia_device_production_licensed
+						has_country_flag = FIN_nokia_integrated_devices_retained
+						has_country_flag = FIN_nokia_consumer_device_name_retired
+					}
+				}
+			}
+			country_event = { id = FIN_nokia_events.7 days = 138 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2018.1.1 }
+				has_start_date < 2018.1.2
+				NOT = { has_country_flag = FIN_nokia_alcatel_lucent_integrated }
+			}
+			country_event = { id = FIN_nokia_events.115 days = 1 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2018.1.1 }
+				has_start_date < 2018.1.2
+				NOT = { has_country_flag = FIN_nokia_solidium_anchor }
+			}
+			country_event = { id = FIN_nokia_events.109 days = 71 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2018.1.1 }
+				has_start_date < 2018.1.2
+				NOT = {
+					OR = {
+						has_country_flag = FIN_nokia_reefshark_scale
+						has_country_flag = FIN_nokia_5g_supplier_diversified
+						has_country_flag = FIN_nokia_cloud_ran_priority
+						has_country_flag = FIN_nokia_5g_radio_scale_defended
+					}
+				}
+			}
+			country_event = { id = FIN_nokia_events.8 days = 210 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2020.1.1 }
+				has_start_date < 2020.1.2
+				NOT = {
+					OR = {
+						has_country_flag = FIN_nokia_multi_vendor_open_ran
+						has_country_flag = FIN_nokia_open_ran_integrator
+						has_country_flag = FIN_nokia_single_vendor_stack
+					}
+				}
+			}
+			country_event = { id = FIN_nokia_events.9 days = 213 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2022.1.1 }
+				has_start_date < 2022.1.2
+				NOT = {
+					OR = {
+						has_country_flag = FIN_nokia_russia_orderly_exit
+						has_country_flag = FIN_nokia_russia_rapid_exit
+						has_country_flag = FIN_nokia_russia_maintenance_only
+					}
+				}
+			}
+			country_event = { id = FIN_nokia_events.10 days = 101 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2023.1.1 }
+				has_start_date < 2023.1.2
+				NOT = { has_country_flag = FIN_nokia_att_response_resolved }
+			}
+			country_event = { id = FIN_nokia_events.11 days = 337 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2024.1.1 }
+				has_start_date < 2024.1.2
+				NOT = { has_country_flag = FIN_nokia_optical_turn_resolved }
+			}
+			country_event = { id = FIN_nokia_events.12 days = 178 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2025.1.1 }
+				has_start_date < 2025.1.2
+				NOT = { has_country_flag = FIN_nokia_infinera_acquired }
+				NOT = { has_country_flag = FIN_nokia_organic_optical_growth }
+			}
+			country_event = { id = FIN_nokia_events.103 days = 58 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2025.1.1 }
+				has_start_date < 2025.1.2
+				NOT = { has_country_flag = FIN_nokia_nvidia_strategy_resolved }
+			}
+			country_event = { id = FIN_nokia_events.13 days = 300 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2026.1.1 }
+				has_start_date < 2026.1.2
+				NOT = { has_country_flag = FIN_nokia_2026_operating_model }
+			}
+			country_event = { id = FIN_nokia_events.111 days = 1 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2026.1.1 }
+				has_start_date < 2026.1.2
+				NOT = { has_country_flag = FIN_nokia_ai_cloud_revenue_scale }
+			}
+			country_event = { id = FIN_nokia_events.112 days = 112 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2026.1.1 }
+				has_start_date < 2026.1.2
+				NOT = { has_country_flag = FIN_nokia_fwa_cpe_sale_agreed }
+			}
+			country_event = { id = FIN_nokia_events.113 days = 119 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2026.1.1 }
+				has_start_date < 2026.1.2
+				NOT = { has_country_flag = FIN_nokia_allentown_atp_expansion_announced }
+			}
+			country_event = { id = FIN_nokia_events.114 days = 166 }
+		}
+		if = {
+			limit = {
+				NOT = { has_start_date < 2026.1.1 }
+				has_start_date < 2026.1.2
+				NOT = { has_country_flag = FIN_nokia_capstone_resolved }
+			}
+			country_event = { id = FIN_nokia_events.14 days = 202 }
+		}
+		set_country_flag = FIN_nokia_start_year_events_scheduled
+	}
+}

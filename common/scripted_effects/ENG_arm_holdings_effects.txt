@@ -1,0 +1,799 @@
+# Arm Holdings Corporate History: bounded state, route ownership, and terminal resolution.
+
+ENG_arm_holdings_initialize_state = {
+	if = {
+		limit = { NOT = { has_country_flag = ENG_arm_holdings_state_initialized } }
+		set_variable = { ENG_arm_holdings_ecosystem_strength = 3 }
+		set_variable = { ENG_arm_holdings_domestic_value_capture = 3 }
+		set_variable = { ENG_arm_holdings_strategic_control = 1 }
+		set_country_flag = ENG_arm_holdings_state_initialized
+	}
+	ENG_arm_holdings_clamp_state = yes
+}
+
+ENG_arm_holdings_clamp_state = {
+	set_temp_variable = { corp_value = ENG_arm_holdings_ecosystem_strength }
+	corporate_history_clamp_value = yes
+	set_variable = { ENG_arm_holdings_ecosystem_strength = corp_value }
+	set_temp_variable = { corp_value = ENG_arm_holdings_domestic_value_capture }
+	corporate_history_clamp_value = yes
+	set_variable = { ENG_arm_holdings_domestic_value_capture = corp_value }
+	set_temp_variable = { corp_value = ENG_arm_holdings_strategic_control }
+	corporate_history_clamp_value = yes
+	set_variable = { ENG_arm_holdings_strategic_control = corp_value }
+}
+
+ENG_arm_holdings_clear_opening_route = {
+	clr_country_flag = ENG_arm_holdings_strategic_infrastructure
+}
+
+ENG_arm_holdings_clear_ownership_route = {
+	clr_country_flag = ENG_arm_holdings_softbank_light
+	clr_country_flag = ENG_arm_holdings_softbank_undertakings
+	clr_country_flag = ENG_arm_holdings_british_consortium
+	clr_country_flag = ENG_arm_holdings_golden_share
+	clr_country_flag = ENG_arm_holdings_nvidia_control
+}
+
+ENG_arm_holdings_clear_nvidia_proposal_route = {
+	clr_country_flag = ENG_arm_holdings_nvidia_support
+	clr_country_flag = ENG_arm_holdings_nvidia_conditions
+	clr_country_flag = ENG_arm_holdings_nvidia_full_review
+	clr_country_flag = ENG_arm_holdings_nvidia_rejection
+}
+
+ENG_arm_holdings_clear_nvidia_resolution = {
+	clr_country_flag = ENG_arm_holdings_nvidia_completed
+	clr_country_flag = ENG_arm_holdings_nvidia_completed_with_remedies
+	clr_country_flag = ENG_arm_holdings_nvidia_abandoned
+	clr_country_flag = ENG_arm_holdings_nvidia_rejected
+}
+
+# Each external ecosystem can contribute at most one point, and none is a route gate.
+ENG_arm_holdings_apply_external_ecosystem_signals = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = ENG_arm_holdings_apple_signal_integrated }
+			country_exists = USA
+			USA = {
+				OR = {
+					has_country_flag = USA_apple_carrier_iphone
+					has_country_flag = USA_apple_open_mobile_platform
+				}
+			}
+		}
+		add_to_variable = { ENG_arm_holdings_ecosystem_strength = 1 }
+		set_country_flag = ENG_arm_holdings_apple_signal_integrated
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ENG_arm_holdings_nokia_signal_integrated }
+			country_exists = FIN
+			FIN = {
+				OR = {
+					has_country_flag = FIN_nokia_device_scale_priority
+					has_country_flag = FIN_nokia_mass_market_scale
+				}
+			}
+		}
+		add_to_variable = { ENG_arm_holdings_ecosystem_strength = 1 }
+		set_country_flag = ENG_arm_holdings_nokia_signal_integrated
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ENG_arm_holdings_tsmc_signal_integrated }
+			country_exists = TAI
+			TAI = {
+				OR = {
+					has_country_flag = TAI_tsmc_pure_play_foundry
+					has_country_flag = TAI_tsmc_open_innovation_platform
+					has_country_flag = TAI_tsmc_mobile_anchor_strategy
+				}
+			}
+		}
+		add_to_variable = { ENG_arm_holdings_ecosystem_strength = 1 }
+		set_country_flag = ENG_arm_holdings_tsmc_signal_integrated
+	}
+	ENG_arm_holdings_clamp_state = yes
+}
+
+ENG_arm_holdings_clear_terminal_outcome = {
+	remove_ideas = {
+		ENG_arm_holdings_british_founded_global_platform
+		ENG_arm_holdings_british_golden_share_settlement
+		ENG_arm_holdings_sovereign_architecture_champion
+		ENG_arm_holdings_nvidia_arm_compute_platform
+	}
+	clr_country_flag = ENG_arm_holdings_terminal_resolved
+	clr_country_flag = ENG_arm_holdings_reconstruct_complete
+}
+
+ENG_arm_holdings_apply_british_founded_capstone = {
+	ENG_arm_holdings_clear_terminal_outcome = yes
+	add_ideas = ENG_arm_holdings_british_founded_global_platform
+	set_country_flag = ENG_arm_holdings_terminal_resolved
+}
+
+ENG_arm_holdings_apply_golden_share_capstone = {
+	ENG_arm_holdings_clear_terminal_outcome = yes
+	add_ideas = ENG_arm_holdings_british_golden_share_settlement
+	set_country_flag = ENG_arm_holdings_terminal_resolved
+}
+
+ENG_arm_holdings_apply_sovereign_champion_capstone = {
+	ENG_arm_holdings_clear_terminal_outcome = yes
+	add_ideas = ENG_arm_holdings_sovereign_architecture_champion
+	set_country_flag = ENG_arm_holdings_terminal_resolved
+}
+
+ENG_arm_holdings_apply_nvidia_control_capstone = {
+	ENG_arm_holdings_clear_terminal_outcome = yes
+	add_ideas = ENG_arm_holdings_nvidia_arm_compute_platform
+	set_country_flag = ENG_arm_holdings_terminal_resolved
+}
+
+ENG_arm_holdings_resolve_terminal = {
+	ENG_arm_holdings_initialize_state = yes
+	if = {
+		limit = { NOT = { ENG_arm_holdings_has_terminal_outcome = yes } }
+		if = {
+			limit = { ENG_arm_holdings_can_resolve_nvidia_control = yes }
+			ENG_arm_holdings_apply_nvidia_control_capstone = yes
+		}
+		else_if = {
+			limit = { ENG_arm_holdings_can_resolve_golden_share = yes }
+			ENG_arm_holdings_apply_golden_share_capstone = yes
+		}
+		else_if = {
+			limit = { ENG_arm_holdings_can_resolve_sovereign_champion = yes }
+			ENG_arm_holdings_apply_sovereign_champion_capstone = yes
+		}
+		else = { ENG_arm_holdings_apply_british_founded_capstone = yes }
+	}
+}
+
+# Historical reconstruction records state only. It does not repeat treasury changes or temporary rewards.
+ENG_arm_holdings_reconstruct_history = {
+	ENG_arm_holdings_initialize_state = yes
+
+	if = {
+		limit = {
+			date > 2000.3.15
+			NOT = { has_country_flag = ENG_arm_holdings_event_01_resolved }
+		}
+		ENG_arm_holdings_clear_opening_route = yes
+		set_country_flag = ENG_arm_holdings_event_01_resolved
+		clr_country_flag = ENG_arm_holdings_event_01_pending
+		clr_country_flag = ENG_arm_holdings_event_01_delivery_expected
+		add_to_variable = { ENG_arm_holdings_ecosystem_strength = 2 }
+	}
+	if = {
+		limit = {
+			date > 2002.7.1
+			NOT = { has_country_flag = ENG_arm_holdings_event_02_resolved }
+		}
+		set_country_flag = ENG_arm_holdings_event_02_resolved
+		clr_country_flag = ENG_arm_holdings_event_02_pending
+		clr_country_flag = ENG_arm_holdings_event_02_delivery_expected
+		add_to_variable = { ENG_arm_holdings_ecosystem_strength = 2 }
+	}
+	if = {
+		limit = {
+			date > 2007.6.29
+			NOT = { has_country_flag = ENG_arm_holdings_event_03_resolved }
+		}
+		set_country_flag = ENG_arm_holdings_event_03_resolved
+		clr_country_flag = ENG_arm_holdings_event_03_pending
+		clr_country_flag = ENG_arm_holdings_event_03_delivery_expected
+		add_to_variable = { ENG_arm_holdings_ecosystem_strength = 2 }
+		add_to_variable = { ENG_arm_holdings_strategic_control = -1 }
+	}
+	if = {
+		limit = {
+			date > 2010.6.1
+			NOT = { has_country_flag = ENG_arm_holdings_event_04_resolved }
+		}
+		set_country_flag = ENG_arm_holdings_event_04_resolved
+		clr_country_flag = ENG_arm_holdings_event_04_pending
+		clr_country_flag = ENG_arm_holdings_event_04_delivery_expected
+		add_to_variable = { ENG_arm_holdings_ecosystem_strength = 1 }
+		add_to_variable = { ENG_arm_holdings_domestic_value_capture = 2 }
+	}
+	if = {
+		limit = {
+			date > 2016.7.18
+			NOT = { has_country_flag = ENG_arm_holdings_event_05_resolved }
+		}
+		ENG_arm_holdings_clear_ownership_route = yes
+		set_country_flag = ENG_arm_holdings_softbank_undertakings
+		set_country_flag = ENG_arm_holdings_event_05_resolved
+		clr_country_flag = ENG_arm_holdings_event_05_pending
+		clr_country_flag = ENG_arm_holdings_event_05_delivery_expected
+		add_to_variable = { ENG_arm_holdings_ecosystem_strength = 1 }
+		add_to_variable = { ENG_arm_holdings_domestic_value_capture = 1 }
+		add_to_variable = { ENG_arm_holdings_strategic_control = 2 }
+	}
+	if = {
+		limit = {
+			date > 2018.10.1
+			NOT = { has_country_flag = ENG_arm_holdings_event_06_resolved }
+		}
+		set_country_flag = ENG_arm_holdings_event_06_resolved
+		clr_country_flag = ENG_arm_holdings_event_06_pending
+		clr_country_flag = ENG_arm_holdings_event_06_delivery_expected
+		add_to_variable = { ENG_arm_holdings_ecosystem_strength = 2 }
+		add_to_variable = { ENG_arm_holdings_strategic_control = 1 }
+		ENG_arm_holdings_apply_external_ecosystem_signals = yes
+	}
+	if = {
+		limit = {
+			date > 2020.9.13
+			NOT = { has_country_flag = ENG_arm_holdings_event_07_resolved }
+		}
+		ENG_arm_holdings_clear_nvidia_proposal_route = yes
+		set_country_flag = ENG_arm_holdings_nvidia_full_review
+		set_country_flag = ENG_arm_holdings_event_07_resolved
+		clr_country_flag = ENG_arm_holdings_event_07_pending
+		clr_country_flag = ENG_arm_holdings_event_07_delivery_expected
+		add_to_variable = { ENG_arm_holdings_strategic_control = 2 }
+	}
+	if = {
+		limit = {
+			date > 2021.4.19
+			NOT = { has_country_flag = ENG_arm_holdings_event_08_resolved }
+		}
+		set_country_flag = ENG_arm_holdings_event_08_resolved
+		clr_country_flag = ENG_arm_holdings_event_08_pending
+		clr_country_flag = ENG_arm_holdings_event_08_delivery_expected
+		add_to_variable = { ENG_arm_holdings_strategic_control = 2 }
+	}
+	if = {
+		limit = {
+			date > 2022.2.8
+			NOT = { has_country_flag = ENG_arm_holdings_event_09_resolved }
+		}
+		ENG_arm_holdings_clear_nvidia_resolution = yes
+		set_country_flag = ENG_arm_holdings_nvidia_abandoned
+		set_country_flag = ENG_arm_holdings_event_09_resolved
+		clr_country_flag = ENG_arm_holdings_event_09_pending
+		clr_country_flag = ENG_arm_holdings_event_09_delivery_expected
+		remove_ideas = ENG_arm_holdings_bid_uncertainty
+	}
+	if = {
+		limit = {
+			date > 2023.9.14
+			NOT = { has_country_flag = ENG_arm_holdings_event_10_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_terminal_resolved }
+		}
+		set_country_flag = ENG_arm_holdings_nasdaq_softbank_control
+		set_country_flag = ENG_arm_holdings_event_10_resolved
+		clr_country_flag = ENG_arm_holdings_event_10_pending
+		clr_country_flag = ENG_arm_holdings_event_10_delivery_expected
+		add_to_variable = { ENG_arm_holdings_ecosystem_strength = 1 }
+		add_to_variable = { ENG_arm_holdings_domestic_value_capture = 1 }
+		add_to_variable = { ENG_arm_holdings_strategic_control = -1 }
+		ENG_arm_holdings_apply_british_founded_capstone = yes
+	}
+	if = {
+		limit = {
+			date > 2023.9.14
+			has_country_flag = ENG_arm_holdings_event_10_resolved
+			NOT = { ENG_arm_holdings_has_terminal_outcome = yes }
+		}
+		ENG_arm_holdings_resolve_terminal = yes
+	}
+	if = {
+		limit = {
+			date > 2023.9.14
+			ENG_arm_holdings_has_terminal_outcome = yes
+			NOT = { has_country_flag = ENG_arm_holdings_reconstruct_complete }
+		}
+		set_country_flag = ENG_arm_holdings_reconstruct_complete
+	}
+	ENG_arm_holdings_clamp_state = yes
+}
+
+ENG_arm_holdings_schedule_event_01 = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_event_01_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_event_01_delivery_expected }
+			NOT = { has_country_flag = ENG_arm_holdings_event_01_pending }
+		}
+		set_country_flag = ENG_arm_holdings_event_01_delivery_expected
+		set_country_flag = { flag = ENG_arm_holdings_event_01_pending value = 1 days = 134 }
+		country_event = { id = ENG_arm_holdings_events.1 days = 74 }
+	}
+}
+
+ENG_arm_holdings_schedule_event_02 = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_event_02_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_event_02_delivery_expected }
+			NOT = { has_country_flag = ENG_arm_holdings_event_02_pending }
+			has_country_flag = ENG_arm_holdings_event_01_resolved
+		}
+		set_country_flag = ENG_arm_holdings_event_02_delivery_expected
+		set_country_flag = { flag = ENG_arm_holdings_event_02_pending value = 1 days = 241 }
+		country_event = { id = ENG_arm_holdings_events.2 days = 181 }
+	}
+}
+
+ENG_arm_holdings_schedule_event_03 = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_event_03_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_event_03_delivery_expected }
+			NOT = { has_country_flag = ENG_arm_holdings_event_03_pending }
+			has_country_flag = ENG_arm_holdings_event_02_resolved
+		}
+		set_country_flag = ENG_arm_holdings_event_03_delivery_expected
+		set_country_flag = { flag = ENG_arm_holdings_event_03_pending value = 1 days = 239 }
+		country_event = { id = ENG_arm_holdings_events.3 days = 179 }
+	}
+}
+
+ENG_arm_holdings_schedule_event_04 = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_event_04_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_event_04_delivery_expected }
+			NOT = { has_country_flag = ENG_arm_holdings_event_04_pending }
+			has_country_flag = ENG_arm_holdings_event_03_resolved
+		}
+		set_country_flag = ENG_arm_holdings_event_04_delivery_expected
+		set_country_flag = { flag = ENG_arm_holdings_event_04_pending value = 1 days = 211 }
+		country_event = { id = ENG_arm_holdings_events.4 days = 151 }
+	}
+}
+
+ENG_arm_holdings_schedule_event_05 = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_event_05_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_event_05_delivery_expected }
+			NOT = { has_country_flag = ENG_arm_holdings_event_05_pending }
+			has_country_flag = ENG_arm_holdings_event_04_resolved
+		}
+		set_country_flag = ENG_arm_holdings_event_05_delivery_expected
+		set_country_flag = { flag = ENG_arm_holdings_event_05_pending value = 1 days = 259 }
+		country_event = { id = ENG_arm_holdings_events.5 days = 199 }
+	}
+}
+
+ENG_arm_holdings_schedule_event_06 = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_event_06_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_event_06_delivery_expected }
+			NOT = { has_country_flag = ENG_arm_holdings_event_06_pending }
+			has_country_flag = ENG_arm_holdings_event_05_resolved
+		}
+		set_country_flag = ENG_arm_holdings_event_06_delivery_expected
+		set_country_flag = { flag = ENG_arm_holdings_event_06_pending value = 1 days = 333 }
+		country_event = { id = ENG_arm_holdings_events.6 days = 273 }
+	}
+}
+
+ENG_arm_holdings_schedule_event_07 = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_event_07_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_event_07_delivery_expected }
+			NOT = { has_country_flag = ENG_arm_holdings_event_07_pending }
+			has_country_flag = ENG_arm_holdings_event_06_resolved
+		}
+		set_country_flag = ENG_arm_holdings_event_07_delivery_expected
+		set_country_flag = { flag = ENG_arm_holdings_event_07_pending value = 1 days = 316 }
+		country_event = { id = ENG_arm_holdings_events.7 days = 256 }
+	}
+}
+
+ENG_arm_holdings_schedule_event_08 = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_event_08_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_event_08_delivery_expected }
+			NOT = { has_country_flag = ENG_arm_holdings_event_08_pending }
+			has_country_flag = ENG_arm_holdings_event_07_resolved
+			NOT = { has_country_flag = ENG_arm_holdings_nvidia_rejection }
+		}
+		set_country_flag = ENG_arm_holdings_event_08_delivery_expected
+		set_country_flag = { flag = ENG_arm_holdings_event_08_pending value = 1 days = 168 }
+		country_event = { id = ENG_arm_holdings_events.8 days = 108 }
+	}
+}
+
+ENG_arm_holdings_schedule_event_09 = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_event_09_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_event_09_delivery_expected }
+			NOT = { has_country_flag = ENG_arm_holdings_event_09_pending }
+			OR = {
+				has_country_flag = ENG_arm_holdings_event_08_resolved
+				has_country_flag = ENG_arm_holdings_event_08_not_applicable
+			}
+		}
+		set_country_flag = ENG_arm_holdings_event_09_delivery_expected
+		set_country_flag = { flag = ENG_arm_holdings_event_09_pending value = 1 days = 98 }
+		country_event = { id = ENG_arm_holdings_events.9 days = 38 }
+	}
+}
+
+ENG_arm_holdings_schedule_event_10 = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_event_10_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_event_10_delivery_expected }
+			NOT = { has_country_flag = ENG_arm_holdings_event_10_pending }
+			NOT = { has_country_flag = ENG_arm_holdings_terminal_resolved }
+			has_country_flag = ENG_arm_holdings_event_09_resolved
+			OR = {
+				has_country_flag = ENG_arm_holdings_nvidia_abandoned
+				has_country_flag = ENG_arm_holdings_nvidia_rejected
+			}
+		}
+		set_country_flag = ENG_arm_holdings_event_10_delivery_expected
+		set_country_flag = { flag = ENG_arm_holdings_event_10_pending value = 1 days = 315 }
+		country_event = { id = ENG_arm_holdings_events.10 days = 255 }
+	}
+}
+
+ENG_arm_holdings_schedule_current_year_events = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+		}
+		ENG_arm_holdings_initialize_state = yes
+	}
+	if = {
+			limit = {
+				original_tag = ENG
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = ENG_arm_holdings_start_year_events_scheduled }
+				NOT = { has_start_date < 2000.1.1 }
+				has_start_date < 2000.1.2
+				NOT = { has_country_flag = ENG_arm_holdings_event_01_resolved }
+				NOT = { has_country_flag = ENG_arm_holdings_event_01_delivery_expected }
+				NOT = { has_country_flag = ENG_arm_holdings_event_01_pending }
+			}
+			set_country_flag = ENG_arm_holdings_event_01_delivery_expected
+			set_country_flag = { flag = ENG_arm_holdings_event_01_pending value = 1 days = 134 }
+			country_event = { id = ENG_arm_holdings_events.1 days = 74 }
+		}
+		if = {
+			limit = {
+				original_tag = ENG
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = ENG_arm_holdings_start_year_events_scheduled }
+				NOT = { has_start_date < 2002.1.1 }
+				has_start_date < 2002.1.2
+				NOT = { has_country_flag = ENG_arm_holdings_event_02_resolved }
+				NOT = { has_country_flag = ENG_arm_holdings_event_02_delivery_expected }
+				NOT = { has_country_flag = ENG_arm_holdings_event_02_pending }
+				has_country_flag = ENG_arm_holdings_event_01_resolved
+			}
+			set_country_flag = ENG_arm_holdings_event_02_delivery_expected
+			set_country_flag = { flag = ENG_arm_holdings_event_02_pending value = 1 days = 241 }
+			country_event = { id = ENG_arm_holdings_events.2 days = 181 }
+		}
+		if = {
+			limit = {
+				original_tag = ENG
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = ENG_arm_holdings_start_year_events_scheduled }
+				NOT = { has_start_date < 2007.1.1 }
+				has_start_date < 2007.1.2
+				NOT = { has_country_flag = ENG_arm_holdings_event_03_resolved }
+				NOT = { has_country_flag = ENG_arm_holdings_event_03_delivery_expected }
+				NOT = { has_country_flag = ENG_arm_holdings_event_03_pending }
+				has_country_flag = ENG_arm_holdings_event_02_resolved
+			}
+			set_country_flag = ENG_arm_holdings_event_03_delivery_expected
+			set_country_flag = { flag = ENG_arm_holdings_event_03_pending value = 1 days = 239 }
+			country_event = { id = ENG_arm_holdings_events.3 days = 179 }
+		}
+		if = {
+			limit = {
+				original_tag = ENG
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = ENG_arm_holdings_start_year_events_scheduled }
+				NOT = { has_start_date < 2010.1.1 }
+				has_start_date < 2010.1.2
+				NOT = { has_country_flag = ENG_arm_holdings_event_04_resolved }
+				NOT = { has_country_flag = ENG_arm_holdings_event_04_delivery_expected }
+				NOT = { has_country_flag = ENG_arm_holdings_event_04_pending }
+				has_country_flag = ENG_arm_holdings_event_03_resolved
+			}
+			set_country_flag = ENG_arm_holdings_event_04_delivery_expected
+			set_country_flag = { flag = ENG_arm_holdings_event_04_pending value = 1 days = 211 }
+			country_event = { id = ENG_arm_holdings_events.4 days = 151 }
+		}
+		if = {
+			limit = {
+				original_tag = ENG
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = ENG_arm_holdings_start_year_events_scheduled }
+				NOT = { has_start_date < 2016.1.1 }
+				has_start_date < 2016.1.2
+				NOT = { has_country_flag = ENG_arm_holdings_event_05_resolved }
+				NOT = { has_country_flag = ENG_arm_holdings_event_05_delivery_expected }
+				NOT = { has_country_flag = ENG_arm_holdings_event_05_pending }
+				has_country_flag = ENG_arm_holdings_event_04_resolved
+			}
+			set_country_flag = ENG_arm_holdings_event_05_delivery_expected
+			set_country_flag = { flag = ENG_arm_holdings_event_05_pending value = 1 days = 259 }
+			country_event = { id = ENG_arm_holdings_events.5 days = 199 }
+		}
+		if = {
+			limit = {
+				original_tag = ENG
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = ENG_arm_holdings_start_year_events_scheduled }
+				NOT = { has_start_date < 2018.1.1 }
+				has_start_date < 2018.1.2
+				NOT = { has_country_flag = ENG_arm_holdings_event_06_resolved }
+				NOT = { has_country_flag = ENG_arm_holdings_event_06_delivery_expected }
+				NOT = { has_country_flag = ENG_arm_holdings_event_06_pending }
+				has_country_flag = ENG_arm_holdings_event_05_resolved
+			}
+			set_country_flag = ENG_arm_holdings_event_06_delivery_expected
+			set_country_flag = { flag = ENG_arm_holdings_event_06_pending value = 1 days = 333 }
+			country_event = { id = ENG_arm_holdings_events.6 days = 273 }
+		}
+		if = {
+			limit = {
+				original_tag = ENG
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = ENG_arm_holdings_start_year_events_scheduled }
+				NOT = { has_start_date < 2020.1.1 }
+				has_start_date < 2020.1.2
+				NOT = { has_country_flag = ENG_arm_holdings_event_07_resolved }
+				NOT = { has_country_flag = ENG_arm_holdings_event_07_delivery_expected }
+				NOT = { has_country_flag = ENG_arm_holdings_event_07_pending }
+				has_country_flag = ENG_arm_holdings_event_06_resolved
+			}
+			set_country_flag = ENG_arm_holdings_event_07_delivery_expected
+			set_country_flag = { flag = ENG_arm_holdings_event_07_pending value = 1 days = 316 }
+			country_event = { id = ENG_arm_holdings_events.7 days = 256 }
+		}
+		if = {
+			limit = {
+				original_tag = ENG
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = ENG_arm_holdings_start_year_events_scheduled }
+				NOT = { has_start_date < 2021.1.1 }
+				has_start_date < 2021.1.2
+				NOT = { has_country_flag = ENG_arm_holdings_event_08_resolved }
+				NOT = { has_country_flag = ENG_arm_holdings_event_08_delivery_expected }
+				NOT = { has_country_flag = ENG_arm_holdings_event_08_pending }
+				has_country_flag = ENG_arm_holdings_event_07_resolved
+				NOT = { has_country_flag = ENG_arm_holdings_nvidia_rejection }
+			}
+			set_country_flag = ENG_arm_holdings_event_08_delivery_expected
+			set_country_flag = { flag = ENG_arm_holdings_event_08_pending value = 1 days = 168 }
+			country_event = { id = ENG_arm_holdings_events.8 days = 108 }
+		}
+		if = {
+			limit = {
+				original_tag = ENG
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = ENG_arm_holdings_start_year_events_scheduled }
+				NOT = { has_start_date < 2022.1.1 }
+				has_start_date < 2022.1.2
+				NOT = { has_country_flag = ENG_arm_holdings_event_09_resolved }
+				NOT = { has_country_flag = ENG_arm_holdings_event_09_delivery_expected }
+				NOT = { has_country_flag = ENG_arm_holdings_event_09_pending }
+				OR = {
+					has_country_flag = ENG_arm_holdings_event_08_resolved
+					has_country_flag = ENG_arm_holdings_event_08_not_applicable
+				}
+			}
+			set_country_flag = ENG_arm_holdings_event_09_delivery_expected
+			set_country_flag = { flag = ENG_arm_holdings_event_09_pending value = 1 days = 98 }
+			country_event = { id = ENG_arm_holdings_events.9 days = 38 }
+		}
+		if = {
+			limit = {
+				original_tag = ENG
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = ENG_arm_holdings_start_year_events_scheduled }
+				NOT = { has_start_date < 2023.1.1 }
+				has_start_date < 2023.1.2
+				NOT = { has_country_flag = ENG_arm_holdings_event_10_resolved }
+				NOT = { has_country_flag = ENG_arm_holdings_event_10_delivery_expected }
+				NOT = { has_country_flag = ENG_arm_holdings_event_10_pending }
+				NOT = { has_country_flag = ENG_arm_holdings_terminal_resolved }
+				has_country_flag = ENG_arm_holdings_event_09_resolved
+				OR = {
+					has_country_flag = ENG_arm_holdings_nvidia_abandoned
+					has_country_flag = ENG_arm_holdings_nvidia_rejected
+				}
+			}
+			set_country_flag = ENG_arm_holdings_event_10_delivery_expected
+			set_country_flag = { flag = ENG_arm_holdings_event_10_pending value = 1 days = 315 }
+			country_event = { id = ENG_arm_holdings_events.10 days = 255 }
+		}
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = ENG_arm_holdings_start_year_events_scheduled }
+		}
+		set_country_flag = ENG_arm_holdings_start_year_events_scheduled
+	}
+}
+
+ENG_arm_holdings_recover_missing_events = {
+	if = {
+		limit = {
+			date > 2000.3.15
+			has_country_flag = ENG_arm_holdings_event_01_delivery_expected
+			NOT = { has_country_flag = ENG_arm_holdings_event_01_pending }
+			NOT = { has_country_flag = ENG_arm_holdings_event_01_resolved }
+		}
+		set_country_flag = { flag = ENG_arm_holdings_event_01_pending value = 1 days = 65 }
+		country_event = { id = ENG_arm_holdings_events.1 days = 5 }
+	}
+	else_if = {
+		limit = {
+			date > 2002.7.1
+			has_country_flag = ENG_arm_holdings_event_02_delivery_expected
+			NOT = { has_country_flag = ENG_arm_holdings_event_02_pending }
+			NOT = { has_country_flag = ENG_arm_holdings_event_02_resolved }
+			has_country_flag = ENG_arm_holdings_event_01_resolved
+		}
+		set_country_flag = { flag = ENG_arm_holdings_event_02_pending value = 1 days = 65 }
+		country_event = { id = ENG_arm_holdings_events.2 days = 5 }
+	}
+	else_if = {
+		limit = {
+			date > 2007.6.29
+			has_country_flag = ENG_arm_holdings_event_03_delivery_expected
+			NOT = { has_country_flag = ENG_arm_holdings_event_03_pending }
+			NOT = { has_country_flag = ENG_arm_holdings_event_03_resolved }
+			has_country_flag = ENG_arm_holdings_event_02_resolved
+		}
+		set_country_flag = { flag = ENG_arm_holdings_event_03_pending value = 1 days = 65 }
+		country_event = { id = ENG_arm_holdings_events.3 days = 5 }
+	}
+	else_if = {
+		limit = {
+			date > 2010.6.1
+			has_country_flag = ENG_arm_holdings_event_04_delivery_expected
+			NOT = { has_country_flag = ENG_arm_holdings_event_04_pending }
+			NOT = { has_country_flag = ENG_arm_holdings_event_04_resolved }
+			has_country_flag = ENG_arm_holdings_event_03_resolved
+		}
+		set_country_flag = { flag = ENG_arm_holdings_event_04_pending value = 1 days = 65 }
+		country_event = { id = ENG_arm_holdings_events.4 days = 5 }
+	}
+	else_if = {
+		limit = {
+			date > 2016.7.18
+			has_country_flag = ENG_arm_holdings_event_05_delivery_expected
+			NOT = { has_country_flag = ENG_arm_holdings_event_05_pending }
+			NOT = { has_country_flag = ENG_arm_holdings_event_05_resolved }
+			has_country_flag = ENG_arm_holdings_event_04_resolved
+		}
+		set_country_flag = { flag = ENG_arm_holdings_event_05_pending value = 1 days = 65 }
+		country_event = { id = ENG_arm_holdings_events.5 days = 5 }
+	}
+	else_if = {
+		limit = {
+			date > 2018.10.1
+			has_country_flag = ENG_arm_holdings_event_06_delivery_expected
+			NOT = { has_country_flag = ENG_arm_holdings_event_06_pending }
+			NOT = { has_country_flag = ENG_arm_holdings_event_06_resolved }
+			has_country_flag = ENG_arm_holdings_event_05_resolved
+		}
+		set_country_flag = { flag = ENG_arm_holdings_event_06_pending value = 1 days = 65 }
+		country_event = { id = ENG_arm_holdings_events.6 days = 5 }
+	}
+	else_if = {
+		limit = {
+			date > 2020.9.13
+			has_country_flag = ENG_arm_holdings_event_07_delivery_expected
+			NOT = { has_country_flag = ENG_arm_holdings_event_07_pending }
+			NOT = { has_country_flag = ENG_arm_holdings_event_07_resolved }
+			has_country_flag = ENG_arm_holdings_event_06_resolved
+		}
+		set_country_flag = { flag = ENG_arm_holdings_event_07_pending value = 1 days = 65 }
+		country_event = { id = ENG_arm_holdings_events.7 days = 5 }
+	}
+	else_if = {
+		limit = {
+			date > 2021.4.19
+			has_country_flag = ENG_arm_holdings_event_08_delivery_expected
+			NOT = { has_country_flag = ENG_arm_holdings_event_08_pending }
+			NOT = { has_country_flag = ENG_arm_holdings_event_08_resolved }
+			has_country_flag = ENG_arm_holdings_event_07_resolved
+			NOT = { has_country_flag = ENG_arm_holdings_nvidia_rejection }
+		}
+		set_country_flag = { flag = ENG_arm_holdings_event_08_pending value = 1 days = 65 }
+		country_event = { id = ENG_arm_holdings_events.8 days = 5 }
+	}
+	else_if = {
+		limit = {
+			date > 2022.2.8
+			has_country_flag = ENG_arm_holdings_event_09_delivery_expected
+			NOT = { has_country_flag = ENG_arm_holdings_event_09_pending }
+			NOT = { has_country_flag = ENG_arm_holdings_event_09_resolved }
+			OR = {
+				has_country_flag = ENG_arm_holdings_event_08_resolved
+				has_country_flag = ENG_arm_holdings_event_08_not_applicable
+			}
+		}
+		set_country_flag = { flag = ENG_arm_holdings_event_09_pending value = 1 days = 65 }
+		country_event = { id = ENG_arm_holdings_events.9 days = 5 }
+	}
+	else_if = {
+		limit = {
+			date > 2023.9.13
+			has_country_flag = ENG_arm_holdings_event_10_delivery_expected
+			NOT = { has_country_flag = ENG_arm_holdings_event_10_pending }
+			NOT = { has_country_flag = ENG_arm_holdings_event_10_resolved }
+			NOT = { has_country_flag = ENG_arm_holdings_terminal_resolved }
+			has_country_flag = ENG_arm_holdings_event_09_resolved
+			OR = {
+				has_country_flag = ENG_arm_holdings_nvidia_abandoned
+				has_country_flag = ENG_arm_holdings_nvidia_rejected
+			}
+		}
+		set_country_flag = { flag = ENG_arm_holdings_event_10_pending value = 1 days = 65 }
+		country_event = { id = ENG_arm_holdings_events.10 days = 5 }
+	}
+}
+
+ENG_arm_holdings_monthly_driver = {
+	if = {
+		limit = {
+			original_tag = ENG
+			NOT = { has_country_flag = collapsed_nation }
+		}
+		ENG_arm_holdings_initialize_state = yes
+		ENG_arm_holdings_recover_missing_events = yes
+		if = {
+			limit = {
+				has_country_flag = ENG_arm_holdings_event_07_resolved
+				NOT = { has_country_flag = ENG_arm_holdings_event_09_resolved }
+				NOT = { has_idea = ENG_arm_holdings_bid_uncertainty }
+			}
+			add_ideas = ENG_arm_holdings_bid_uncertainty
+		}
+		if = {
+			limit = {
+				has_idea = ENG_arm_holdings_bid_uncertainty
+				OR = {
+					has_country_flag = ENG_arm_holdings_event_09_resolved
+					has_country_flag = ENG_arm_holdings_terminal_resolved
+				}
+			}
+			remove_ideas = ENG_arm_holdings_bid_uncertainty
+		}
+		ENG_arm_holdings_clamp_state = yes
+	}
+}
