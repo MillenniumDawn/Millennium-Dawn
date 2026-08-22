@@ -1,0 +1,436 @@
+SWE_ericsson_ensure_digital_modifier = {
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = SWE_digital_modifier } } }
+		add_dynamic_modifier = { modifier = SWE_digital_modifier }
+	}
+}
+
+SWE_ericsson_complete_event_1 = {
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = SWE_sony_ericsson_joint_venture
+				has_country_flag = SWE_ericsson_retained_handsets
+			}
+		}
+		clr_country_flag = SWE_ericsson_event_1_pending
+		set_country_flag = SWE_ericsson_event_1_resolved
+	}
+}
+
+SWE_ericsson_complete_event_2 = {
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = SWE_ericsson_exited_handsets
+				has_country_flag = SWE_ericsson_full_handset_control
+			}
+		}
+		clr_country_flag = SWE_ericsson_event_2_pending
+		set_country_flag = SWE_ericsson_event_2_resolved
+	}
+}
+
+SWE_ericsson_complete_event_3 = {
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = SWE_ericsson_vonage_platform
+				has_country_flag = SWE_ericsson_radio_network_focus
+			}
+		}
+		clr_country_flag = SWE_ericsson_event_3_pending
+		set_country_flag = SWE_ericsson_event_3_resolved
+	}
+}
+
+SWE_ericsson_apply_joint_venture_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_sony_ericsson_joint_venture }
+			NOT = { has_country_flag = SWE_ericsson_retained_handsets }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_receiving_investment_cost_modifier = -0.01 tooltip = receiving_investment_cost_modifier_tt }
+		set_country_flag = SWE_sony_ericsson_joint_venture
+	}
+}
+
+SWE_ericsson_apply_retained_handsets_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_sony_ericsson_joint_venture }
+			NOT = { has_country_flag = SWE_ericsson_retained_handsets }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_productivity_growth_modifier = 0.01 tooltip = productivity_growth_modifier_tt }
+		set_country_flag = SWE_ericsson_retained_handsets
+	}
+}
+
+SWE_ericsson_apply_handset_exit_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_ericsson_exited_handsets }
+			NOT = { has_country_flag = SWE_ericsson_full_handset_control }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_projects_cost_modifier = 0.01 tooltip = projects_cost_modifier_tt }
+		set_country_flag = SWE_ericsson_exited_handsets
+	}
+}
+
+SWE_ericsson_apply_full_handset_control_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_ericsson_exited_handsets }
+			NOT = { has_country_flag = SWE_ericsson_full_handset_control }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_research_speed_factor = 0.01 tooltip = research_speed_factor_tt }
+		set_country_flag = SWE_ericsson_full_handset_control
+	}
+}
+
+SWE_ericsson_apply_vonage_platform_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_ericsson_vonage_platform }
+			NOT = { has_country_flag = SWE_ericsson_radio_network_focus }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_office_park_income_tax_modifier = 0.01 tooltip = office_park_income_tax_modifier_tt }
+		add_to_variable = { SWE_Digital_receiving_investment_cost_modifier = -0.01 tooltip = receiving_investment_cost_modifier_tt }
+		set_country_flag = SWE_ericsson_vonage_platform
+	}
+}
+
+SWE_ericsson_apply_radio_network_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_ericsson_vonage_platform }
+			NOT = { has_country_flag = SWE_ericsson_radio_network_focus }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_research_speed_factor = 0.01 tooltip = research_speed_factor_tt }
+		add_to_variable = { SWE_Digital_productivity_growth_modifier = 0.01 tooltip = productivity_growth_modifier_tt }
+		set_country_flag = SWE_ericsson_radio_network_focus
+	}
+}
+
+# Later starts receive persistent historical outcomes without one-time rewards.
+SWE_ericsson_reconstruct_event_1 = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_sony_ericsson_joint_venture }
+			NOT = { has_country_flag = SWE_ericsson_retained_handsets }
+		}
+		SWE_ericsson_apply_joint_venture_outcome = yes
+	}
+	set_country_flag = SWE_ericsson_event_1_expected
+	clr_country_flag = SWE_ericsson_event_1_pending
+	set_country_flag = SWE_ericsson_event_1_resolved
+}
+
+SWE_ericsson_reconstruct_event_2 = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_ericsson_exited_handsets }
+			NOT = { has_country_flag = SWE_ericsson_full_handset_control }
+		}
+		SWE_ericsson_apply_handset_exit_outcome = yes
+	}
+	set_country_flag = SWE_ericsson_event_2_expected
+	clr_country_flag = SWE_ericsson_event_2_pending
+	set_country_flag = SWE_ericsson_event_2_resolved
+}
+
+SWE_ericsson_reconstruct_event_3 = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_ericsson_vonage_platform }
+			NOT = { has_country_flag = SWE_ericsson_radio_network_focus }
+		}
+		SWE_ericsson_apply_vonage_platform_outcome = yes
+	}
+	set_country_flag = SWE_ericsson_event_3_expected
+	clr_country_flag = SWE_ericsson_event_3_pending
+	set_country_flag = SWE_ericsson_event_3_resolved
+}
+
+SWE_ericsson_reconstruct_reached_history = {
+	if = {
+		limit = {
+			date > 2001.9.30
+			NOT = { has_country_flag = SWE_ericsson_event_1_resolved }
+		}
+		SWE_ericsson_reconstruct_event_1 = yes
+	}
+	if = {
+		limit = {
+			date > 2012.2.14
+			NOT = { has_country_flag = SWE_ericsson_event_2_resolved }
+		}
+		SWE_ericsson_reconstruct_event_2 = yes
+	}
+	if = {
+		limit = {
+			date > 2022.7.20
+			NOT = { has_country_flag = SWE_ericsson_event_3_resolved }
+		}
+		SWE_ericsson_reconstruct_event_3 = yes
+	}
+}
+
+SWE_ericsson_reconstruct_start_history = {
+	if = {
+		limit = {
+			NOT = { has_start_date < 2001.10.1 }
+			NOT = { has_country_flag = SWE_ericsson_event_1_resolved }
+		}
+		SWE_ericsson_reconstruct_event_1 = yes
+	}
+	if = {
+		limit = {
+			NOT = { has_start_date < 2012.2.15 }
+			NOT = { has_country_flag = SWE_ericsson_event_2_resolved }
+		}
+		SWE_ericsson_reconstruct_event_2 = yes
+	}
+	if = {
+		limit = {
+			NOT = { has_start_date < 2022.7.21 }
+			NOT = { has_country_flag = SWE_ericsson_event_3_resolved }
+		}
+		SWE_ericsson_reconstruct_event_3 = yes
+	}
+}
+
+SWE_ericsson_schedule_event_1 = {
+	if = {
+		limit = {
+			corporate_history_full_enabled = yes
+			original_tag = SWE
+			NOT = { has_country_flag = SWE_ericsson_event_1_expected }
+			NOT = { has_country_flag = SWE_ericsson_event_1_resolved }
+			NOT = { has_country_flag = SWE_sony_ericsson_joint_venture }
+			NOT = { has_country_flag = SWE_ericsson_retained_handsets }
+		}
+		set_country_flag = SWE_ericsson_event_1_expected
+		if = {
+			limit = { NOT = { has_country_flag = collapsed_nation } }
+			if = {
+				limit = { has_country_flag = SWE_ericsson_schedule_immediately }
+				set_country_flag = { flag = SWE_ericsson_event_1_pending days = 32 value = 1 }
+				country_event = { id = SWE_ericsson_events.1 days = 1 }
+			}
+			else = {
+				set_country_flag = { flag = SWE_ericsson_event_1_pending days = 305 value = 1 }
+				country_event = { id = SWE_ericsson_events.1 days = 273 }
+			}
+		}
+	}
+}
+
+SWE_ericsson_schedule_event_2 = {
+	if = {
+		limit = {
+			corporate_history_full_enabled = yes
+			original_tag = SWE
+			NOT = { has_country_flag = SWE_ericsson_event_2_expected }
+			NOT = { has_country_flag = SWE_ericsson_event_2_resolved }
+			OR = {
+				has_country_flag = SWE_sony_ericsson_joint_venture
+				has_country_flag = SWE_ericsson_retained_handsets
+			}
+			NOT = { has_country_flag = SWE_ericsson_exited_handsets }
+			NOT = { has_country_flag = SWE_ericsson_full_handset_control }
+		}
+		set_country_flag = SWE_ericsson_event_2_expected
+		if = {
+			limit = { NOT = { has_country_flag = collapsed_nation } }
+			if = {
+				limit = { has_country_flag = SWE_ericsson_schedule_immediately }
+				set_country_flag = { flag = SWE_ericsson_event_2_pending days = 32 value = 1 }
+				country_event = { id = SWE_ericsson_events.2 days = 1 }
+			}
+			else = {
+				set_country_flag = { flag = SWE_ericsson_event_2_pending days = 77 value = 1 }
+				country_event = { id = SWE_ericsson_events.2 days = 45 }
+			}
+		}
+	}
+}
+
+SWE_ericsson_schedule_event_3 = {
+	if = {
+		limit = {
+			corporate_history_full_enabled = yes
+			original_tag = SWE
+			NOT = { has_country_flag = SWE_ericsson_event_3_expected }
+			NOT = { has_country_flag = SWE_ericsson_event_3_resolved }
+			OR = {
+				has_country_flag = SWE_ericsson_exited_handsets
+				has_country_flag = SWE_ericsson_full_handset_control
+			}
+			NOT = { has_country_flag = SWE_ericsson_vonage_platform }
+			NOT = { has_country_flag = SWE_ericsson_radio_network_focus }
+		}
+		set_country_flag = SWE_ericsson_event_3_expected
+		if = {
+			limit = { NOT = { has_country_flag = collapsed_nation } }
+			if = {
+				limit = { has_country_flag = SWE_ericsson_schedule_immediately }
+				set_country_flag = { flag = SWE_ericsson_event_3_pending days = 32 value = 1 }
+				country_event = { id = SWE_ericsson_events.3 days = 1 }
+			}
+			else = {
+				set_country_flag = { flag = SWE_ericsson_event_3_pending days = 233 value = 1 }
+				country_event = { id = SWE_ericsson_events.3 days = 201 }
+			}
+		}
+	}
+}
+
+# A milestone crossed after campaign start remains a choice instead of silent history.
+SWE_ericsson_schedule_current_year_event = {
+	if = {
+		limit = {
+			date > 2001.9.30
+			has_start_date < 2001.10.1
+			NOT = { has_country_flag = SWE_ericsson_event_1_expected }
+			NOT = { has_country_flag = SWE_ericsson_event_1_resolved }
+		}
+		set_country_flag = SWE_ericsson_schedule_immediately
+		SWE_ericsson_schedule_event_1 = yes
+		clr_country_flag = SWE_ericsson_schedule_immediately
+	}
+	else_if = {
+		limit = {
+			date > 2012.2.14
+			has_start_date < 2012.2.15
+			NOT = { has_country_flag = SWE_ericsson_event_2_expected }
+			NOT = { has_country_flag = SWE_ericsson_event_2_resolved }
+		}
+		set_country_flag = SWE_ericsson_schedule_immediately
+		SWE_ericsson_schedule_event_2 = yes
+		clr_country_flag = SWE_ericsson_schedule_immediately
+	}
+	else_if = {
+		limit = {
+			date > 2022.7.20
+			has_start_date < 2022.7.21
+			NOT = { has_country_flag = SWE_ericsson_event_3_expected }
+			NOT = { has_country_flag = SWE_ericsson_event_3_resolved }
+		}
+		set_country_flag = SWE_ericsson_schedule_immediately
+		SWE_ericsson_schedule_event_3 = yes
+		clr_country_flag = SWE_ericsson_schedule_immediately
+	}
+}
+
+# A delayed predecessor can register the next milestone without monthly polling.
+SWE_ericsson_schedule_due_successor = {
+	if = {
+		limit = {
+			date > 2012.2.14
+			OR = {
+				has_country_flag = SWE_sony_ericsson_joint_venture
+				has_country_flag = SWE_ericsson_retained_handsets
+			}
+			NOT = { has_country_flag = SWE_ericsson_event_2_expected }
+			NOT = { has_country_flag = SWE_ericsson_event_2_resolved }
+		}
+		SWE_ericsson_schedule_event_2 = yes
+	}
+	else_if = {
+		limit = {
+			date > 2022.7.20
+			OR = {
+				has_country_flag = SWE_ericsson_exited_handsets
+				has_country_flag = SWE_ericsson_full_handset_control
+			}
+			NOT = { has_country_flag = SWE_ericsson_event_3_expected }
+			NOT = { has_country_flag = SWE_ericsson_event_3_resolved }
+		}
+		SWE_ericsson_schedule_event_3 = yes
+	}
+}
+
+# Recovery only requeues deliveries whose normal yearly schedule was interrupted.
+SWE_ericsson_recover_interrupted_events = {
+	if = {
+		limit = {
+			date > 2001.9.30
+			has_country_flag = SWE_ericsson_event_1_expected
+			NOT = { has_country_flag = SWE_ericsson_event_1_pending }
+			NOT = { has_country_flag = SWE_ericsson_event_1_resolved }
+			NOT = { has_country_flag = SWE_ericsson_event_1_recovery_used }
+			NOT = { has_country_flag = SWE_sony_ericsson_joint_venture }
+			NOT = { has_country_flag = SWE_ericsson_retained_handsets }
+		}
+		set_country_flag = SWE_ericsson_event_1_recovery_used
+		country_event = SWE_ericsson_events.1
+	}
+	else_if = {
+		limit = {
+			date > 2012.2.14
+			has_country_flag = SWE_ericsson_event_2_expected
+			NOT = { has_country_flag = SWE_ericsson_event_2_pending }
+			NOT = { has_country_flag = SWE_ericsson_event_2_resolved }
+			NOT = { has_country_flag = SWE_ericsson_event_2_recovery_used }
+			NOT = { has_country_flag = SWE_ericsson_exited_handsets }
+			NOT = { has_country_flag = SWE_ericsson_full_handset_control }
+		}
+		set_country_flag = SWE_ericsson_event_2_recovery_used
+		country_event = SWE_ericsson_events.2
+	}
+	else_if = {
+		limit = {
+			date > 2022.7.20
+			has_country_flag = SWE_ericsson_event_3_expected
+			NOT = { has_country_flag = SWE_ericsson_event_3_pending }
+			NOT = { has_country_flag = SWE_ericsson_event_3_resolved }
+			NOT = { has_country_flag = SWE_ericsson_event_3_recovery_used }
+			NOT = { has_country_flag = SWE_ericsson_vonage_platform }
+			NOT = { has_country_flag = SWE_ericsson_radio_network_focus }
+		}
+		set_country_flag = SWE_ericsson_event_3_recovery_used
+		country_event = SWE_ericsson_events.3
+	}
+}
+
+SWE_ericsson_monthly_driver = {
+	if = {
+		limit = {
+			corporate_history_enabled = yes
+			original_tag = SWE
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = {
+				OR = {
+					has_country_flag = SWE_ericsson_vonage_platform
+					has_country_flag = SWE_ericsson_radio_network_focus
+				}
+			}
+		}
+		if = {
+			limit = { corporate_history_outcomes_only_enabled = yes }
+			SWE_ericsson_reconstruct_reached_history = yes
+		}
+		else = {
+			if = {
+				limit = { NOT = { has_country_flag = SWE_ericsson_history_initialized } }
+				set_country_flag = SWE_ericsson_history_initialized
+				SWE_ericsson_reconstruct_start_history = yes
+			}
+			SWE_ericsson_schedule_current_year_event = yes
+			SWE_ericsson_recover_interrupted_events = yes
+		}
+	}
+}
