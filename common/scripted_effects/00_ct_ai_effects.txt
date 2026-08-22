@@ -152,6 +152,10 @@ ct_ai_select_target_org = {
 		if = {
 			limit = {
 				check_variable = { ct_ai_org_score > ct_ai_best_score }
+				OR = {
+					check_variable = { ct_ai_exclude_self_hq = 0 }
+					NOT = { check_variable = { ct_ai_hq_country = THIS } }
+				}
 			}
 			set_variable = { ct_ai_best_score = ct_ai_org_score }
 			set_variable = { selected_org = i }
@@ -432,13 +436,17 @@ ct_ai_increase_funding = {
 
 
 ct_ai_major_power_actions = {
+	set_temp_variable = { ct_ai_exclude_self_hq = 1 }
+	ct_ai_select_target_org = yes
+	set_temp_variable = { ct_ai_exclude_self_hq = 0 }
+
 	if = {
 		limit = { NOT = { check_variable = { selected_org = -1 } } }
 
 		if = {
 			limit = {
 				has_political_power > 150
-				NOT = { check_variable = { selected_ct_nation = THIS } }
+				has_valid_ct_nation_selected = yes
 				var:selected_ct_nation = {
 					NOT = { has_country_flag = has_ct_advisor_from@PREV }
 					NOT = { has_country_flag = refused_ct_advisors_from@PREV }
@@ -457,7 +465,7 @@ ct_ai_major_power_actions = {
 			limit = {
 				has_political_power > 150
 				check_variable = { international_terror_org_intel^selected_org > 24 }
-				NOT = { check_variable = { selected_ct_nation = THIS } }
+				has_valid_ct_nation_selected = yes
 				var:selected_ct_nation = {
 					NOT = { has_country_flag = ct_drone_op_prepared_by@PREV }
 				}

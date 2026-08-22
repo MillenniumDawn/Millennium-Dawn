@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-# Run all validation scripts in parallel (cross-platform).
+# Run auto-runnable validation scripts in parallel (cross-platform).
 # Usage: python run_all_validators.py [--staged] [--strict] [--no-color] [--format json]
 import argparse
 import glob
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,14 +15,23 @@ from typing import Dict, List, Optional, TextIO, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import disk_cache
+from report_lib.dedupe import dedupe
+from report_lib.models import Issue
 from shared_utils import Colors
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+PERSISTENCE_MARKER = ".persist-complete"
 TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 
 
-_NON_VALIDATOR_SCRIPTS = frozenset(
-    ("validate_tools.py", "validate_staged.py", "run_all_validators.py")
+# The manual texture audit needs the full gfx tree, which cache warm-up omits.
+_AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
+    (
+        "validate_tools.py",
+        "validate_staged.py",
+        "run_all_validators.py",
+        "validate_unused_textures.py",
+    )
 )
 
 # Opt-in flags that only one validator understands, applied by its discovered
@@ -29,17 +39,16 @@ _NON_VALIDATOR_SCRIPTS = frozenset(
 # these surface as warnings without gating. --missing-loc is intentionally left
 # off — its ~7.8k backlog would drown the report; run it on demand instead.
 _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
-    "ideas": ["--missing-icons"],
     "focus-tree": ["--missing-icons"],
 }
 
 
 def discover_validators() -> List[Tuple[str, str, str]]:
-    """Return (name, script_name, label) for every validate_*.py in this dir."""
+    """Return (name, script_name, label) for each auto-runnable validator."""
     validators = []
     for script_path in glob.glob(os.path.join(SCRIPTS_DIR, "validate_*.py")):
         script_name = os.path.basename(script_path)
-        if script_name in _NON_VALIDATOR_SCRIPTS:
+        if script_name in _AUTO_RUN_EXCLUDED_SCRIPTS:
             continue
         name = script_name.replace("validate_", "").replace(".py", "").replace("_", "-")
         label = _extract_label_from_script(script_path, name)
@@ -93,7 +102,7 @@ def launch_validator(
     # previously DEVNULL made crashes undiagnosable from the suite output.
     stderr_path = os.path.join(output_dir, f"{name}.stderr.log")
     try:
-        stderr_fh = open(stderr_path, "w", encoding="utf-8")
+        stderr_fh = open(stderr_path, "w", encoding="utf-8", newline="")
     except OSError:
         raise
     try:
@@ -155,40 +164,24 @@ def _issue_sort_key(issue: Dict):
 def collect_all_issues(
     output_dir: str, validators: List[Tuple[str, str, str]]
 ) -> List[Dict]:
-    """Collect all issues from validator output files."""
-    all_issues = []
-    seen_keys = set()
-
+    """Collect and semantically deduplicate validator sidecar issues."""
+    collected: List[Issue] = []
     for name, _, _ in validators:
         json_path = os.path.join(output_dir, f"{name}.json")
-        if os.path.exists(json_path):
-            try:
-                with open(json_path, "r", encoding="utf-8") as f:
-                    issues = json.load(f)
-                    # Sort before the first-seen dedup: some validators emit
-                    # same-key (file/line/severity/category) issues in
-                    # nondeterministic order, which would otherwise make the
-                    # surviving representative vary between runs.
-                    issues.sort(key=_issue_sort_key)
-                    for issue in issues:
-                        # Message is part of the key — distinct findings on the
-                        # same line (e.g. two missing loc keys) must both survive.
-                        # Matches report_lib's dedupe key.
-                        key = (
-                            issue.get("file", ""),
-                            issue.get("line", 0),
-                            issue.get("severity", ""),
-                            issue.get("category", ""),
-                            issue.get("message", ""),
-                        )
-                        if key not in seen_keys:
-                            seen_keys.add(key)
-                            issue["validator"] = name
-                            all_issues.append(issue)
-            except Exception:
-                pass
-
-    return all_issues
+        if not os.path.exists(json_path):
+            continue
+        try:
+            with open(json_path, "r", encoding="utf-8") as handle:
+                raw_issues = json.load(handle)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"Malformed validator sidecar: {json_path}") from exc
+        if not isinstance(raw_issues, list) or not all(
+            isinstance(issue, dict) for issue in raw_issues
+        ):
+            raise ValueError(f"Malformed validator sidecar: {json_path}")
+        raw_issues.sort(key=_issue_sort_key)
+        collected.extend(Issue.from_dict(issue, validator=name) for issue in raw_issues)
+    return [issue.to_dict() for issue in dedupe(collected)]
 
 
 def _format_issues_by_file(issues: List[Dict], lines: List[str]) -> None:
@@ -255,6 +248,49 @@ def generate_combined_report(
     return "\n".join(lines)
 
 
+def _persist_sidecars(output_dir: str, persist_dir: str) -> None:
+    """Copy every validator's JSON sidecar into persist_dir.
+
+    The suite runs inside a TemporaryDirectory that is deleted on exit; the
+    copies are the only per-validator results that survive. A validator that
+    passed clean writes no sidecar, which is exactly the empty findings set a
+    baseline wants from it. Copy errors raise: a silent partial persist would
+    save a truncated baseline under a valid-looking meta.
+    """
+    try:
+        os.makedirs(persist_dir, exist_ok=True)
+    except OSError:
+        raise
+    marker_path = os.path.join(persist_dir, PERSISTENCE_MARKER)
+    try:
+        os.unlink(marker_path)
+    except FileNotFoundError:
+        pass
+    for stale_path in glob.glob(os.path.join(persist_dir, "*.json")):
+        try:
+            os.unlink(stale_path)
+        except FileNotFoundError:
+            pass
+    copied = 0
+    for json_path in glob.glob(os.path.join(output_dir, "*.json")):
+        try:
+            shutil.copyfile(
+                json_path, os.path.join(persist_dir, os.path.basename(json_path))
+            )
+        except OSError:
+            raise
+        copied += 1
+    try:
+        with open(marker_path, "w", encoding="utf-8", newline="") as marker:
+            marker.write("complete\n")
+    except OSError:
+        raise
+    print(
+        f"Persisted {copied} validator result sidecar(s) to {persist_dir}",
+        file=sys.stderr,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run all MD validators in parallel")
     parser.add_argument("--staged", action="store_true")
@@ -296,6 +332,17 @@ def main():
         type=str,
         default=".",
         help="Path to the mod folder (default: current directory)",
+    )
+    parser.add_argument(
+        "--persist-results",
+        type=str,
+        default=None,
+        help=(
+            "Copy each validator's JSON sidecar into this directory before "
+            "the run's temporary output is deleted. Used by the nightly "
+            "baseline job to keep the per-validator results after the suite "
+            "completes."
+        ),
     )
     args = parser.parse_args()
 
@@ -379,8 +426,6 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             script, extra_flags, output_dir, name, mod_path
         )
 
-    total_errors = 0
-    total_warnings = 0
     crashed_validators = []
 
     for name, _script, label in VALIDATORS:
@@ -394,8 +439,6 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
                 f"{Colors.RED}✗ {label}{Colors.ENDC} ({error_count} errors, {warning_count} warnings)",
                 file=human_stream,
             )
-            total_errors += error_count
-            total_warnings += warning_count
         elif returncode != 0:
             # Non-zero exit with no JSON output means the validator itself crashed
             print(
@@ -404,7 +447,6 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             )
             _print_stderr_tail(output_dir, name, stream=human_stream)
             crashed_validators.append(label)
-            total_errors += 1
         else:
             print(f"{Colors.GREEN}✓ {label}{Colors.ENDC}", file=human_stream)
 
@@ -413,13 +455,20 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     report = generate_combined_report(
         output_dir, VALIDATORS, crashed_validators, not args.no_color
     )
+    combined_issues = collect_all_issues(output_dir, VALIDATORS)
+    total_errors = sum(
+        1 for issue in combined_issues if issue.get("severity") == "error"
+    ) + len(crashed_validators)
+    total_warnings = sum(
+        1 for issue in combined_issues if issue.get("severity") == "warning"
+    )
 
     if args.format in ("json", "both"):
         combined_json = {
             "validators": len(VALIDATORS),
             "total_errors": total_errors,
             "total_warnings": total_warnings,
-            "issues": collect_all_issues(output_dir, VALIDATORS),
+            "issues": combined_issues,
         }
         json_output = json.dumps(combined_json, indent=2)
         if args.output:
@@ -433,7 +482,7 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
                     else f"{args.output}.json"
                 )
             try:
-                with open(json_path, "w", encoding="utf-8") as f:
+                with open(json_path, "w", encoding="utf-8", newline="") as f:
                     f.write(json_output)
             except OSError:
                 raise
@@ -443,7 +492,7 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     if args.format in ("text", "both"):
         if args.output:
             try:
-                with open(args.output, "w", encoding="utf-8") as f:
+                with open(args.output, "w", encoding="utf-8", newline="") as f:
                     f.write(report)
             except OSError:
                 raise
@@ -453,6 +502,15 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             )
         else:
             print(f"\n{report}")
+
+    # Persist before the TemporaryDirectory cleanup in main() reclaims the
+    # sidecars. Runs even when validators crashed so a failing night still
+    # leaves the partial results to inspect (the nightly baseline job gates
+    # its diff on this step's exit code, so a partial persist never becomes
+    # the baseline).
+    persist_dir = getattr(args, "persist_results", None)
+    if persist_dir:
+        _persist_sidecars(output_dir, persist_dir)
 
     if total_errors == 0 and total_warnings == 0:
         print(f"{Colors.GREEN}✓ ALL VALIDATIONS PASSED{Colors.ENDC}", file=human_stream)

@@ -1,0 +1,4494 @@
+## Thailand: decisions. Deep South insurgency, Greater Thailand integration, and the SIA/CBD
+## Preah Vihear border ladder.
+
+SIA_deep_south_category = {
+	SIA_ds_security_operations = {
+		icon = GFX_decision_generic_civil_support
+		cost = 25
+		days_remove = 90
+		days_re_enable = 180
+		fire_only_once = no
+		fixed_random_seed = no
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_security_operations"
+			add_stability = 0.01
+			set_temp_variable = { ds_delta = -10 }
+			SIA_ds_set_intensity = yes
+			set_temp_variable = { ds_grievance_delta = 3 }
+			SIA_ds_set_grievance = yes
+			custom_effect_tooltip = SIA_ds_force_track_increase_tt
+			add_to_variable = { SIA_ds_force_track = 1 }
+			random_list = {
+				70 = {
+					add_political_power = 25
+				}
+				30 = {
+					country_event = { id = thailand.152 days = 3 }
+				}
+			}
+			# A forced resolution only sticks once the grievance behind the revolt has ALSO been worked
+			# down — pure force can no longer silently end (and hide) the conflict while the South still.
+			if = {
+				limit = {
+					check_variable = { SIA_ds_force_track > 3 }
+					check_variable = { SIA_insurgency_intensity < 30 }
+					check_variable = { SIA_ds_grievance < 30 }
+				}
+				set_country_flag = SIA_ds_resolved_force
+				SIA_ds_cleanup_effect = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_ds_development_fund = {
+		icon = GFX_decision_generic_construction
+		days_remove = 120
+		days_re_enable = 180
+		fire_only_once = no
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_development_fund"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_southern_development_levy days = 365 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_ds_development_fund"
+			add_stability = 0.02
+			# Twin-meter: development money is a real concession — it cuts hard at the grievance behind
+			# the insurgency, lowering the floor the violence sits on.
+			set_temp_variable = { ds_grievance_delta = -8 }
+			SIA_ds_set_grievance = yes
+			set_temp_variable = { ds_delta = -8 }
+			SIA_ds_set_intensity = yes
+			510 = {
+				if = {
+					limit = {
+						OR = {
+							NOT = { has_variable = SIA_granted_shared_slots }
+							check_variable = { SIA_granted_shared_slots < 8 }
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_to_variable = { SIA_granted_shared_slots = 1 }
+				}
+			}
+			custom_effect_tooltip = SIA_ds_peace_track_increase_tt
+			add_to_variable = { SIA_ds_peace_track = 1 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	# The always-on community-outreach lever (modelled on China's always-available Xinjiang
+	# toggles).
+	SIA_ds_hearts_and_minds = {
+		icon = GFX_decision_generic_speech
+		cost = 50
+		days_remove = 45
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_hearts_and_minds"
+			add_timed_idea = { idea = SIA_hearts_minds_education_strain days = 365 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_ds_hearts_and_minds"
+			add_stability = 0.01
+			# Twin-meter: steady outreach slowly eases grievance. Grievance (floor) down first, then
+			# intensity, so the cut lands.
+			set_temp_variable = { ds_grievance_delta = -3 }
+			SIA_ds_set_grievance = yes
+			set_temp_variable = { ds_delta = -5 }
+			SIA_ds_set_intensity = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_ds_emergency_decree = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 100
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_emergency_decree"
+			add_stability = 0.03
+			set_temp_variable = { ds_delta = -15 }
+			SIA_ds_set_intensity = yes
+			set_temp_variable = { ds_grievance_delta = 6 }
+			SIA_ds_set_grievance = yes
+			custom_effect_tooltip = SIA_ds_force_track_increase_tt
+			add_to_variable = { SIA_ds_force_track = 1 }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	SIA_ds_peace_dialogue = {
+		icon = GFX_decision_generic_speech
+		cost = 50
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			OR = {
+				has_country_flag = SIA_path_reform
+				check_variable = { SIA_ds_peace_track > 1 }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_peace_dialogue_intensity
+				check_variable = { SIA_insurgency_intensity < 50 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_peace_dialogue"
+			country_event = { id = thailand.153 days = 10 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_ds_peace_dialogue"
+			country_event = { id = thailand.154 days = 5 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_isr_persistent_sweep = {
+		icon = GFX_decision_generic_military
+		cost = 25
+		days_remove = 90
+		days_re_enable = 90
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = SIA_eyes_in_the_sky
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_isr_persistent_sweep"
+			set_temp_variable = { ds_delta = -3 }
+			SIA_ds_set_intensity = yes
+			# Twin-meter: persistent sweeps grind the violence down but feed grievance.
+			set_temp_variable = { ds_grievance_delta = 2 }
+			SIA_ds_set_grievance = yes
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	SIA_isoc_surveillance_sweep = {
+		icon = GFX_decision_generic_military
+		cost = 25
+		days_remove = 90
+		days_re_enable = 90
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = SIA_isoc_state
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_isoc_surveillance_sweep"
+			set_temp_variable = { ds_delta = -5 }
+			SIA_ds_set_intensity = yes
+			set_temp_variable = { ds_grievance_delta = 3 }
+			SIA_ds_set_grievance = yes
+			add_stability = -0.01
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	SIA_isoc_grid_disruption = {
+		icon = GFX_decision_generic_military
+		cost = 50
+		days_remove = 120
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = SIA_isoc_state
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_isoc_grid_disruption"
+			set_temp_variable = { ds_delta = -8 }
+			SIA_ds_set_intensity = yes
+			set_temp_variable = { ds_grievance_delta = 4 }
+			SIA_ds_set_grievance = yes
+			add_command_power = 25
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+
+	# Extra HEAVY-HANDED lever (China/Xinjiang "raid_militant_hideouts" analogue): cordon- and-
+	# search sweeps of the three provinces.
+	SIA_ds_cordon_and_search = {
+		icon = GFX_decision_generic_military
+		cost = 40
+		days_remove = 30
+		days_re_enable = 90
+		fire_only_once = no
+
+		available = {
+			command_power > 25
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_cordon_and_search"
+			add_command_power = -25
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_ds_cordon_and_search"
+			set_temp_variable = { ds_delta = -12 }
+			SIA_ds_set_intensity = yes
+			set_temp_variable = { ds_grievance_delta = 6 }
+			SIA_ds_set_grievance = yes
+			custom_effect_tooltip = SIA_ds_force_track_increase_tt
+			add_to_variable = { SIA_ds_force_track = 1 }
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	# Extra NON-HEAVY-HANDED lever (China/Xinjiang "build_mosques" analogue): state funding for
+	# the pondok religious schools and Malay-Muslim cultural life.
+	SIA_ds_fund_religious_schools = {
+		icon = GFX_decision_generic_construction
+		days_remove = 60
+		days_re_enable = 120
+		fire_only_once = no
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.4 }
+		}
+		custom_cost_text = SIA_cost_1_5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_fund_religious_schools"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_ds_fund_religious_schools"
+			add_stability = 0.01
+			# Concession: a strong cut to the root grievance. Grievance (floor) down first, then
+			# intensity, so the cut lands.
+			set_temp_variable = { ds_grievance_delta = -8 }
+			SIA_ds_set_grievance = yes
+			set_temp_variable = { ds_delta = -4 }
+			SIA_ds_set_intensity = yes
+			custom_effect_tooltip = SIA_ds_peace_track_increase_tt
+			add_to_variable = { SIA_ds_peace_track = 1 }
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+
+	SIA_contain_the_crisis = {
+		icon = GFX_decision_generic_operation
+
+		activation = {
+			has_country_flag = SIA_ds_active
+			check_variable = { SIA_insurgency_intensity > 59 }
+			NOT = { has_country_flag = SIA_ds_crisis_mission_done }
+		}
+		is_good = no
+		days_mission_timeout = 180
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_ds_intensity_below_60_tt
+				check_variable = { SIA_insurgency_intensity < 60 }
+			}
+		}
+
+		cancel_trigger = {
+			OR = {
+				has_country_flag = SIA_ds_resolved_force
+				has_country_flag = SIA_ds_resolved_peace
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_contain_the_crisis"
+			set_country_flag = SIA_ds_crisis_mission_done
+			add_stability = 0.03
+			add_political_power = 50
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_contain_the_crisis"
+			set_country_flag = SIA_ds_crisis_mission_done
+			country_event = { id = thailand.155 hours = 6 }
+			set_temp_variable = { ds_delta = 10 }
+			SIA_ds_set_intensity = yes
+		}
+	}
+
+	SIA_choose_a_path = {
+		icon = GFX_decision_generic_operation
+
+		activation = {
+			has_country_flag = SIA_ds_active
+			NOT = { has_completed_focus = SIA_iron_fist_doctrine }
+			NOT = { has_completed_focus = SIA_royal_development_projects }
+			NOT = { has_completed_focus = SIA_peace_dialogue_initiative }
+			NOT = { has_country_flag = SIA_ds_path_mission_done }
+			OR = {
+				has_country_flag = SIA_path_populist
+				has_country_flag = SIA_path_royalist
+				has_country_flag = SIA_path_democrat
+			}
+		}
+		is_good = no
+		days_mission_timeout = 365
+
+		available = {
+			OR = {
+				has_completed_focus = SIA_iron_fist_doctrine
+				has_completed_focus = SIA_royal_development_projects
+				has_completed_focus = SIA_peace_dialogue_initiative
+			}
+		}
+
+		cancel_trigger = {
+			OR = {
+				has_country_flag = SIA_ds_resolved_force
+				has_country_flag = SIA_ds_resolved_peace
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_choose_a_path"
+			set_country_flag = SIA_ds_path_mission_done
+			add_stability = 0.02
+			add_political_power = 25
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_choose_a_path"
+			set_country_flag = SIA_ds_path_mission_done
+			add_stability = -0.03
+			add_political_power = -50
+			country_event = { id = thailand.155 hours = 6 }
+		}
+	}
+}
+
+# Consolidated into SIA_economy_category ("Thai Strategic and Economic Decisions"). HOI4
+# merges decision blocks sharing a category key.
+SIA_economy_category = {
+	# Post-settlement Deep South governance. Lives here because SIA_deep_south_category is gated on
+	# the conflict still being live, which completing SIA_deep_south_peace ends.
+	SIA_ds_autonomy_framework = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 50
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_deep_south_peace
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_ds_autonomy_framework"
+			add_stability = 0.02
+			510 = {
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { ds_grievance_delta = -12 }
+			SIA_ds_set_grievance = yes
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	SIA_asean_rotating_summit = {
+		icon = GFX_decision_generic_speech
+		cost = 50
+		days_remove = 120
+		days_re_enable = 365
+		fire_only_once = no
+
+		available = {
+			has_idea = SIA_bamboo_diplomacy		# SIA_asean_chair merged → SIA_bamboo_diplomacy
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_asean_rotating_summit"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_asean_rotating_summit"
+			add_stability = 0.02
+			add_political_power = 25
+			# 180 days in the regional spotlight: cheaper relations and faster goodwill while Bangkok
+			# holds the gavel.
+			add_timed_idea = { idea = SIA_asean_chair_spotlight days = 180 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_asean_mediate_myanmar = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 75
+		days_remove = 90
+		days_re_enable = 270
+		fire_only_once = no
+
+		visible = {
+			country_exists = BRM
+		}
+		available = {
+			has_idea = SIA_bamboo_diplomacy		# SIA_asean_chair merged → SIA_bamboo_diplomacy
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_asean_mediate_myanmar"
+			if = {
+				limit = { country_exists = BRM }
+				add_opinion_modifier = { target = BRM modifier = medium_increase }
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { influence_target = BRM }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	SIA_asean_free_trade_push = {
+		icon = GFX_decision_generic_construction
+		cost = 50
+		days_remove = 180
+		days_re_enable = 365
+		fire_only_once = no
+
+		available = {
+			has_idea = SIA_bamboo_diplomacy		# SIA_asean_chair merged → SIA_bamboo_diplomacy
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_asean_free_trade_push"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_asean_free_trade_push"
+			set_temp_variable = { treasury_change = 6 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_aec_tailwind days = 730 }
+			add_political_power = 25
+			if = {
+				limit = { country_exists = MAY }
+				add_opinion_modifier = { target = MAY modifier = medium_increase }
+			}
+			if = {
+				limit = { country_exists = IND }
+				add_opinion_modifier = { target = IND modifier = medium_increase }
+			}
+			if = {
+				limit = { country_exists = VIE }
+				add_opinion_modifier = { target = VIE modifier = medium_increase }
+			}
+			if = {
+				limit = { country_exists = PHI }
+				add_opinion_modifier = { target = PHI modifier = medium_increase }
+			}
+			if = {
+				limit = { country_exists = SIN }
+				add_opinion_modifier = { target = SIN modifier = medium_increase }
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+}
+
+SIA_economy_category = {
+	SIA_family_holdings = {
+		icon = GFX_decision_generic_fundraising
+		days_remove = 120
+		days_re_enable = 365
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_shinawatra_dynasty
+			# Only while the Thaksinite party (Pheu Thai, idx 18) actually governs — the family's state-
+			# business nexus dries up the moment it loses power.
+			custom_trigger_tooltip = {
+				tooltip = SIA_thaksinite_party_governs_tt
+				is_in_array = { ruling_party = 18 }
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_family_holdings"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_family_holdings"
+			set_temp_variable = { treasury_change = 6 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_country_flag = SIA_path_populist }
+				set_temp_variable = { coup_delta = 5 }
+				SIA_coup_set_risk = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_royal_projects = {
+		icon = GFX_decision_generic_construction
+		days_remove = 90
+		days_re_enable = 270
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_sufficiency_economy
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.4 }
+		}
+		custom_cost_text = SIA_cost_1_5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_royal_projects"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_royal_projects"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			# Sustained rural development: resource extraction + a steadier countryside for 540 days,
+			# against the consumer-goods draw of the works themselves.
+			add_timed_idea = { idea = SIA_royal_development_lands days = 540 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_medical_tourism_campaign = {
+		icon = GFX_decision_generic_research
+		days_remove = 90
+		days_re_enable = 365
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_medical_wellness_hub
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.4 }
+		}
+		custom_cost_text = SIA_cost_1_5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_medical_tourism_campaign"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+			add_stability = 0.01
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_medical_tourism_campaign"
+			# A sustained tourism wave rather than a one-off cheque: trade receipts and inbound patients
+			# build over 365 days, with hospital capacity diverted from locals (consumer goods).
+			add_timed_idea = { idea = SIA_medical_tourism_boom days = 365 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_eec_investment_phase = {
+		icon = GFX_decision_generic_construction
+		days_remove = 120
+		days_re_enable = 360
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_eastern_economic_corridor
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 4.9 }
+		}
+		custom_cost_text = SIA_cost_5_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_eec_investment_phase"
+			# The corridor's next tranche is real money out the door before the works pay off.
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_eec_construction_boom days = 365 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_canal_tolls = {
+		icon = GFX_decision_generic_fundraising
+		days_remove = 180
+		days_re_enable = 180
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_two_oceans_one_kingdom
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_canal_tolls"
+			if = {
+				limit = { has_idea = SIA_kra_lease_concession }
+				set_temp_variable = { treasury_change = 3 }
+			}
+			else_if = {
+				limit = { has_idea = SIA_kra_neutral_transit }
+				set_temp_variable = { treasury_change = 9 }
+			}
+			else = {
+				set_temp_variable = { treasury_change = 6 }
+			}
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 15
+		}
+	}
+
+	SIA_asean_arms_export = {
+		icon = GFX_decision_generic_military
+		cost = 50
+		days_remove = 365
+		days_re_enable = 365
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_arms_exporter
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_asean_arms_export remove"
+			# Down-payment on the contract, then a year-long order book: full arms lines and trade
+			# standing, paid for in the diplomatic friction of arming the region.
+			set_temp_variable = { treasury_change = 4 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_arms_export_orders days = 365 }
+		}
+
+		ai_will_do = {
+			base = 15
+		}
+	}
+
+	# defense-industrial export engine, unlocked by the N4 focus SIA_defense_export_office (which
+	# sets SIA_defense_exports_active).
+	SIA_defense_export_contract = {
+		icon = GFX_decision_generic_military
+		days_remove = 180
+		days_re_enable = 180
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_defense_export_office
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		cost = 75
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_defense_export_contract"
+			# Hard export revenue up front, plus a year-long order book that keeps the Arsenal's lines
+			# running — refreshed (180-day re-enable) each new contract.
+			set_temp_variable = { treasury_change = 3 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_arms_export_orders days = 365 }
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 2
+				check_variable = { political_power > 150 }
+			}
+		}
+	}
+
+	SIA_host_major_international_event = {
+		icon = GFX_decision_generic_political_rally
+		days_remove = 180
+		days_re_enable = 730
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_tourism_capital
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 5.9 }
+		}
+		custom_cost_text = SIA_cost_6_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_host_major_international_event"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			add_political_power = 75
+			add_timed_idea = { idea = SIA_tourism_boom days = 365 }
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	SIA_new_resort_zone = {
+		icon = GFX_decision_generic_construction
+		days_remove = 120
+		days_re_enable = 240
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_phuket_andaman
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 3.9 }
+		}
+		custom_cost_text = SIA_cost_4_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_new_resort_zone"
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_tourism_boom days = 240 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_global_amazing_thailand_campaign = {
+		icon = GFX_decision_generic_speech
+		cost = 60
+		days_remove = 90
+		days_re_enable = 180
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_amazing_thailand
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_global_amazing_thailand_campaign"
+			add_timed_idea = { idea = SIA_tourism_boom days = 180 }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 2
+				check_variable = { political_power > 150 }
+			}
+		}
+	}
+}
+
+SIA_overseas_acquisitions_category = {
+	SIA_scout_overseas_targets = {
+		icon = GFX_decision_generic_fundraising
+		days_remove = 60
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = SIA_outbound_statecraft
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_scout_overseas_targets"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_overseas_deal_boom days = 180 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_close_the_deal = {
+		icon = GFX_decision_generic_fundraising
+		days_remove = 90
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = SIA_outbound_statecraft
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 6.9 }
+		}
+		custom_cost_text = SIA_cost_7_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_close_the_deal"
+			set_temp_variable = { treasury_change = -7 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_overseas_deal_boom days = 365 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_global_ma_roadshow = {
+		icon = GFX_decision_generic_fundraising
+		cost = 75
+		days_remove = 90
+		days_re_enable = 270
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = SIA_outbound_statecraft
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_global_ma_roadshow"
+			add_timed_idea = { idea = SIA_overseas_deal_boom days = 270 }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 2
+				check_variable = { political_power > 150 }
+			}
+		}
+	}
+}
+
+# Folded into SIA_kra_construction ("Kra Canal") — the post-canal naval lever lives alongside
+# the construction phases. HOI4 merges same-key decision blocks.
+SIA_kra_construction = {
+	SIA_strait_patrol = {
+		icon = GFX_decision_generic_military
+		cost = 25
+		days_remove = 90
+		days_re_enable = 90
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = SIA_gateway_of_asia
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strait_patrol remove"
+			navy_experience = 25
+			add_timed_idea = { idea = SIA_strait_patrol_posture days = 90 }
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+}
+
+SIA_kra_construction = {
+	SIA_kra_phase_1 = {
+		icon = GFX_decision_generic_construction
+
+		activation = {
+			has_country_flag = SIA_kra_feasibility_open
+			check_variable = { SIA_kra_phase = 1 }
+		}
+		is_good = no
+		# No fire_only_once — on timeout the mission must re-arm (activation SIA_kra_phase = N stays
+		# true).
+		days_mission_timeout = 270
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_kra_phase_1_funding_tt
+				NOT = { has_country_flag = SIA_kra_phase_timer }
+				check_variable = { treasury > SIA_kra_upkeep }
+				check_variable = { treasury > 20 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_kra_phase_1"
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			add_to_variable = { SIA_kra_progress = 33 }
+			set_variable = { SIA_kra_phase = 2 }
+			set_country_flag = { flag = SIA_kra_phase_timer value = 1 days = 180 }
+			country_event = { id = thailand.382 days = 3 }
+			if = {
+				limit = { has_country_flag = SIA_ds_active }
+				country_event = { id = thailand.385 days = 30 }
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_kra_phase_1"
+			country_event = { id = thailand.383 days = 1 }
+		}
+	}
+
+	SIA_kra_phase_2 = {
+		icon = GFX_decision_generic_construction
+
+		activation = {
+			has_country_flag = SIA_kra_feasibility_open
+			check_variable = { SIA_kra_phase = 2 }
+		}
+		is_good = no
+		# No fire_only_once — on timeout the mission must re-arm (activation SIA_kra_phase = N stays
+		# true).
+		days_mission_timeout = 270
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_kra_phase_2_funding_tt
+				NOT = { has_country_flag = SIA_kra_phase_timer }
+				check_variable = { treasury > SIA_kra_upkeep }
+				check_variable = { treasury > 30 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_kra_phase_2"
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+			add_to_variable = { SIA_kra_progress = 33 }
+			set_variable = { SIA_kra_phase = 3 }
+			set_country_flag = { flag = SIA_kra_phase_timer value = 1 days = 180 }
+			country_event = { id = thailand.382 days = 3 }
+			if = {
+				limit = { has_country_flag = SIA_ds_active }
+				country_event = { id = thailand.385 days = 30 }
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_kra_phase_2"
+			country_event = { id = thailand.383 days = 1 }
+		}
+	}
+
+	SIA_kra_phase_3 = {
+		icon = GFX_decision_generic_construction
+
+		activation = {
+			has_country_flag = SIA_kra_feasibility_open
+			check_variable = { SIA_kra_phase = 3 }
+		}
+		is_good = no
+		# No fire_only_once — on timeout the mission must re-arm (activation SIA_kra_phase = N stays
+		# true).
+		days_mission_timeout = 270
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_kra_phase_3_funding_tt
+				NOT = { has_country_flag = SIA_kra_phase_timer }
+				check_variable = { treasury > SIA_kra_upkeep }
+				check_variable = { treasury > 40 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_kra_phase_3"
+			set_temp_variable = { treasury_change = -40 }
+			modify_treasury_effect = yes
+			set_variable = { SIA_kra_progress = 100 }
+			# Terminal: phase 4 matches no activation, so this mission cannot re-arm and re-fire
+			# thailand.384 / re-drain the treasury.
+			set_variable = { SIA_kra_phase = 4 }
+			country_event = { id = thailand.384 days = 3 }
+			if = {
+				limit = { has_country_flag = SIA_ds_active }
+				country_event = { id = thailand.385 days = 30 }
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_kra_phase_3"
+			country_event = { id = thailand.383 days = 1 }
+		}
+	}
+}
+
+SIA_greater_thailand_category = {
+	SIA_arm_shan_militias = {
+		icon = GFX_decision_generic_military
+		days_remove = 90
+		days_re_enable = 90
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = SIA_thai_yai
+			country_exists = SHN
+			NOT = { check_variable = { SIA_shan_militia_support > 59 } }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.9 }
+		}
+		custom_cost_text = SIA_cost_1_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_arm_shan_militias"
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_arm_shan_militias"
+			add_to_variable = { SIA_shan_militia_support = 20 }
+			add_equipment_to_stockpile = {
+				type = infantry_weapons_type
+				amount = -2000
+			}
+			add_equipment_to_stockpile = {
+				type = cnc_equipment_type
+				amount = -200
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_shan_client_state = {
+		icon = GFX_decision_generic_form_nation
+		cost = 100
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_thai_yai
+			country_exists = SHN
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_shan_militia_support
+				check_variable = { SIA_shan_militia_support > 59 }
+			}
+			NOT = { has_war_with = SHN }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_shan_client_state"
+			if = {
+				limit = { country_exists = SHN }
+				SHN = { country_event = { id = thailand.273 days = 1 } }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				puppet = SHN
+				add_opinion_modifier = { target = BRM modifier = large_decrease }
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_integrate_shan = {
+		icon = GFX_decision_generic_form_nation
+		cost = 200
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_suwannaphum
+			NOT = { has_country_flag = SIA_integrated_shan }
+		}
+
+		available = {
+			controls_state = 498
+			controls_state = 930
+			has_war = no
+			498 = {
+				compliance > 80
+				resistance < 10
+			}
+			930 = {
+				compliance > 80
+				resistance < 10
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_integrate_shan"
+			country_event = { id = thailand.106 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_integrate_laos = {
+		icon = GFX_decision_generic_form_nation
+		cost = 200
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_suwannaphum
+			NOT = { has_country_flag = SIA_integrated_laos }
+		}
+
+		available = {
+			controls_state = 517
+			if = {
+				limit = { has_country_flag = SIA_all_laos_claimed }
+				controls_state = 515
+				controls_state = 516
+				515 = { compliance > 80 resistance < 10 }
+				516 = { compliance > 80 resistance < 10 }
+			}
+			has_war = no
+			517 = {
+				compliance > 80
+				resistance < 10
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_integrate_laos"
+			country_event = { id = thailand.107 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_integrate_cambodia = {
+		icon = GFX_decision_generic_form_nation
+		cost = 200
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_suwannaphum
+			NOT = { has_country_flag = SIA_integrated_cambodia }
+		}
+
+		available = {
+			controls_state = 512
+			controls_state = 513
+			has_war = no
+			512 = {
+				compliance > 80
+				resistance < 10
+			}
+			513 = {
+				compliance > 80
+				resistance < 10
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_integrate_cambodia"
+			country_event = { id = thailand.108 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	SIA_integrate_malaya = {
+		icon = GFX_decision_generic_form_nation
+		cost = 200
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = SIA_suwannaphum
+			NOT = { has_country_flag = SIA_integrated_malaya }
+		}
+
+		available = {
+			controls_state = 529
+			if = {
+				limit = { has_country_flag = SIA_full_1909_demand }
+				controls_state = 528
+				528 = { compliance > 80 resistance < 10 }
+			}
+			has_war = no
+			529 = {
+				compliance > 80
+				resistance < 10
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_integrate_malaya"
+			country_event = { id = thailand.109 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+}
+
+# Folded into SIA_political_gambits_category — the reform-path amendment retry sits with the
+# other political levers. HOI4 merges same-key decision blocks.
+SIA_political_gambits_category = {
+	SIA_retry_section_112 = {
+		icon = GFX_decision_category_generic_political_actions
+		cost = 100
+		days_remove = 60
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = SIA_path_reform
+			has_country_flag = SIA_112_retry_available
+			NOT = { has_country_flag = SIA_112_amended }
+		}
+
+		available = {
+			has_completed_focus = SIA_amend_section_112
+			NOT = { has_country_flag = SIA_112_amended }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_retry_section_112 remove"
+			country_event = { id = thailand.10 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+}
+
+SIA_political_gambits_category = {
+
+	SIA_cabinet_reshuffle = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 50
+		days_re_enable = 365
+		fire_only_once = no
+
+		# Both removable ideas are royalist-trunk content, so the decision was dead weight on the
+		# populist and reform paths - hide it where it cannot fire.
+		visible = {
+			NOT = { has_idea = SIA_junta_government }
+			has_country_flag = SIA_path_royalist
+		}
+
+		available = {
+			OR = {
+				has_idea = SIA_uncle_tu_fatigue
+				has_idea = SIA_judicialization
+			}
+		}
+
+		# Kept in complete_effect: behind days_remove the removal never showed up in the decision's
+		# own tooltip, so it read as a bare 50 PP charge.
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_cabinet_reshuffle"
+			if = {
+				limit = { has_idea = SIA_uncle_tu_fatigue }
+				remove_ideas = SIA_uncle_tu_fatigue
+			}
+			else_if = {
+				limit = { has_idea = SIA_judicialization }
+				remove_ideas = SIA_judicialization
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	# (c) Lèse-Majesté Lever — royalist only; −5% opp pop (index 3); +SIA_reform_radicalization.
+	SIA_lese_majeste_lever = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 50
+		days_remove = 1
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_path_royalist
+			NOT = { has_idea = SIA_junta_government }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_lese_majeste_lever"
+			# Suppress reform/opposition party (index 3 = Move Forward / reform)
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			if = {
+				limit = { has_variable = SIA_reform_radicalization }
+				add_to_variable = { SIA_reform_radicalization = 1 }
+			}
+			else = {
+				set_variable = { SIA_reform_radicalization = 1 }
+			}
+			set_country_flag = SIA_reform_radicalized
+			# The lid goes down but the grievance does not vent: a crackdown fills the reform-pressure
+			# cooker (SIA_political_drift_update -> thailand.363).
+			set_temp_variable = { reform_delta = 10 }
+			SIA_reform_pressure_set = yes
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = {
+				factor = 2
+				has_country_flag = SIA_reform_radicalized
+			}
+		}
+	}
+
+	# (e) Engage the Reform Movement — the vent valve: spend political capital to cool the reform-
+	# pressure cooker.
+	SIA_engage_reform_movement = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 100
+		days_remove = 1
+		days_re_enable = 200
+		fire_only_once = no
+
+		visible = {
+			NOT = { has_idea = SIA_junta_government }
+			OR = {
+				has_country_flag = SIA_path_populist
+				has_country_flag = SIA_path_royalist
+				has_country_flag = SIA_path_reform
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_reform_pressure
+				check_variable = { SIA_reform_pressure > 20 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_engage_reform_movement"
+			set_temp_variable = { reform_delta = -25 }
+			SIA_reform_pressure_set = yes
+			add_stability = 0.02
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			change_relative_party_popularity = yes
+			custom_effect_tooltip = SIA_outlook_western_tt
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 3 check_variable = { SIA_reform_pressure > 55 } }
+			modifier = { factor = 2 has_country_flag = SIA_path_reform }
+		}
+	}
+
+	SIA_rural_development_package = {
+		icon = GFX_decision_generic_construction
+		days_remove = 1
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			NOT = { has_idea = SIA_junta_government }
+			has_country_flag = SIA_path_democrat
+		}
+
+		available = {
+			NOT = { has_idea = SIA_rural_package_active }
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_populist_tide_20
+				check_variable = { SIA_pheu_thai_pressure > 20 }
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 5.9 }
+		}
+		custom_cost_text = SIA_cost_6_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_rural_development_package"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			add_stability = 0.02
+			set_temp_variable = { pt_delta = -15 }
+			SIA_pt_pressure_set = yes
+			add_timed_idea = { idea = SIA_rural_package_active days = 365 }
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 3 check_variable = { SIA_pheu_thai_pressure > 55 } }
+		}
+	}
+}
+
+## Coup-watch — the army's patience meter (SIA_coup_risk 0-100).
+SIA_democrat_machine_category = {
+
+	SIA_constituency_machine = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 60
+		days_re_enable = 90
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_constituency_machine"
+			add_stability = -0.01
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -8 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 6 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
+	}
+
+	SIA_match_the_populists = {
+		icon = GFX_decision_generic_political_rally
+		cost = 50
+		days_re_enable = 150
+		fire_only_once = no
+
+		custom_cost_trigger = { check_variable = { treasury > 5.9 } }
+		custom_cost_text = SIA_cost_6_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_match_the_populists"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			add_stability = 0.01
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.01 }
+			change_relative_party_popularity = yes
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -12 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 5 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
+	}
+
+	SIA_counter_messaging = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 65
+		days_re_enable = 120
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_counter_messaging"
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.01 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -10 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 5 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
+	}
+
+	SIA_expose_corruption = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 90
+		days_re_enable = 180
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_expose_corruption"
+			add_stability = -0.02
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.02 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -25 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 4 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 55 } } }
+	}
+
+	# Buy a parliamentary firewall. Sizeable one-shot relief, but the coalition's price is a
+	# standing drag (SIA_coalition_price), so it cannot just be spammed.
+	SIA_broaden_the_coalition = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 120
+		days_re_enable = 240
+		fire_only_once = no
+
+		visible = { has_country_flag = SIA_democrat_machine_active }
+		available = {
+			has_country_flag = SIA_democrat_machine_active
+			NOT = { has_idea = SIA_broad_coalition_idea }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_broaden_the_coalition"
+			add_timed_idea = { idea = SIA_broad_coalition_idea days = 365 }
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.02 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -35 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 3 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 65 } } }
+	}
+
+}
+
+SIA_coup_watch_category = {
+
+	SIA_shin_corp_tax_holiday = {
+		icon = GFX_decision_generic_fundraising
+		cost = 50
+		days_re_enable = 540
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_shin_corp_tax_holiday"
+			set_temp_variable = { treasury_change = 8 }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 10 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	SIA_school_milk_contract = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 40
+		days_re_enable = 365
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_school_milk_contract"
+			add_stability = 0.03
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 8 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+
+	SIA_otpc_tablet_procurement = {
+		icon = GFX_decision_generic_political_discourse
+		days_re_enable = 365
+		fire_only_once = no
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.9 }
+		}
+		custom_cost_text = SIA_cost_2_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_otpc_tablet_procurement"
+			# A flashy, popular modernization drive bought with cash, not political capital:
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = SIA_otpc_education_strain days = 180 }
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 8 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	# Family business favours — crony capitalism: money now, suspicion later.
+	SIA_family_business_favors = {
+		icon = GFX_decision_generic_fundraising
+		cost = 40
+		days_re_enable = 180
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_family_business_favors"
+			set_temp_variable = { treasury_change = 6 }
+			modify_treasury_effect = yes
+			add_political_power = 50
+			add_stability = -0.02
+			set_temp_variable = { coup_delta = 10 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	SIA_court_the_generals = {
+		icon = GFX_decision_generic_military
+		days_re_enable = 180
+		fire_only_once = no
+		fixed_random_seed = no
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_court_the_generals"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			add_command_power = 25
+			set_temp_variable = { coup_delta = -15 }
+			SIA_coup_set_risk = yes
+			random = {
+				chance = 15
+				random_list = {
+					30 = { increase_corruption = yes }
+					70 = { add_timed_idea = { idea = SIA_army_wage_inflation days = 180 } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 3
+				check_variable = { SIA_coup_risk > 60 }
+			}
+		}
+	}
+
+	SIA_military_budget_boost = {
+		icon = GFX_decision_generic_military
+		days_re_enable = 180
+		fire_only_once = no
+		fixed_random_seed = no
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 5.9 }
+		}
+		custom_cost_text = SIA_cost_6_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_military_budget_boost"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			add_stability = -0.01
+			set_temp_variable = { coup_delta = -12 }
+			SIA_coup_set_risk = yes
+			random = {
+				chance = 15
+				random_list = {
+					30 = { increase_corruption = yes }
+					70 = { add_timed_idea = { idea = SIA_army_wage_inflation days = 180 } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 3
+				check_variable = { SIA_coup_risk > 70 }
+			}
+		}
+	}
+
+	SIA_anti_corruption_gesture = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 100
+		days_re_enable = 540
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_anti_corruption_gesture"
+			add_stability = 0.01
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.03 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = -12 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 2
+				check_variable = { SIA_coup_risk > 60 }
+			}
+		}
+	}
+
+	SIA_promote_loyalists = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 125
+		days_re_enable = 180
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_promote_loyalists"
+			add_command_power = 25
+			set_temp_variable = { coup_delta = -10 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 3
+				check_variable = { SIA_coup_risk > 70 }
+			}
+		}
+	}
+
+	SIA_reassure_high_command = {
+		icon = GFX_decision_generic_operation
+
+		activation = {
+			SIA_coup_machinery_live = yes
+			check_variable = { SIA_coup_risk > 84 }
+		}
+		is_good = no
+		days_mission_timeout = 90
+
+		# Losing the coup machinery mid-mission (palace bargain, civilian control) must retire the
+		# clock, or it times out into a coup against a government that can no longer be couped.
+		cancel_trigger = {
+			NOT = { SIA_coup_machinery_live = yes }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_coup_risk_below_70_tt
+				check_variable = { SIA_coup_risk < 70 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete SIA_reassure_high_command"
+			add_stability = 0.02
+			add_political_power = 50
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout SIA_reassure_high_command"
+			# Drop below the activation bar so the mission cannot re-arm while thailand.70 -> .216
+			# is still resolving and install a second junta.
+			set_temp_variable = { coup_delta = -25 }
+			SIA_coup_set_risk = yes
+			country_event = { id = thailand.70 hours = 6 }
+		}
+	}
+}
+
+SIA_red_path_category = {
+
+	SIA_spread_flame_isaan = {
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			has_completed_focus = SIA_isaan_soviets
+		}
+
+		available = {
+			has_completed_focus = SIA_isaan_soviets
+			controls_state = 506
+		}
+
+		days_remove = 90
+		days_re_enable = 90
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_spread_flame_isaan remove"
+			# Grow the emerging (communist) outlook too, else the party share caps out.
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			add_stability = -0.02
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	SIA_spread_flame_north = {
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			has_completed_focus = SIA_isaan_soviets
+		}
+
+		available = {
+			has_completed_focus = SIA_isaan_soviets
+			controls_state = 507
+		}
+
+		days_remove = 90
+		days_re_enable = 90
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_spread_flame_north remove"
+			# Grow the emerging (communist) outlook too, else the party share caps out.
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			add_stability = -0.02
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+
+	SIA_mass_education_campaign = {
+		icon = GFX_decision_generic_speech
+
+		visible = {
+			has_completed_focus = SIA_isaan_soviets
+			has_completed_focus = SIA_isaan_soviets
+		}
+
+		available = {
+			has_completed_focus = SIA_isaan_soviets
+		}
+
+		cost = 50
+
+		days_remove = 180
+		days_re_enable = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_mass_education_campaign remove"
+			# Grow the emerging (communist) outlook too, else the party share caps out.
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			add_stability = -0.02
+			add_political_power = 50
+		}
+
+		ai_will_do = {
+			base = 4
+		}
+	}
+}
+
+# Folded into SIA_economy_category ("Thai Strategic and Economic Decisions") — the counter-
+# influence levers join the strategic hub. HOI4 merges same-key decision blocks.
+SIA_economy_category = {
+	SIA_counter_chinese_influence = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 75
+		days_remove = 180
+		days_re_enable = 180
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_protector_of_the_realm_focus
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_counter_chinese_influence"
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = SIA }
+			set_temp_variable = { percent_change = -10 }
+			change_influence_percentage = yes
+			add_political_power = 25
+			add_opinion_modifier = { target = CHI modifier = medium_decrease }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	SIA_counter_indian_influence = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 75
+		days_remove = 180
+		days_re_enable = 180
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_protector_of_the_realm_focus
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_counter_indian_influence"
+			set_temp_variable = { tag_index = RAJ }
+			set_temp_variable = { influence_target = SIA }
+			set_temp_variable = { percent_change = -10 }
+			change_influence_percentage = yes
+			add_political_power = 25
+			add_opinion_modifier = { target = RAJ modifier = medium_decrease }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+}
+
+## Economy / Energy / Strategic decisions — consolidated into SIA_economy_category ("Thai
+## Strategic and Economic Decisions").
+SIA_economy_category = {
+
+	SIA_renegotiate_china_contracts = {
+		icon = GFX_decision_generic_fundraising
+
+		available = {
+			has_completed_focus = SIA_eec_take_off
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_china_contracts_renegotiated
+				NOT = { has_country_flag = SIA_china_contracts_renegotiated }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_renegotiate_china_contracts"
+			set_country_flag = SIA_china_contracts_renegotiated
+			country_event = { id = thailand.313 days = 3 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_us_security_review = {
+		icon = GFX_decision_generic_military
+
+		available = {
+			has_completed_focus = SIA_treaty_ally
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_us_security_reviewed
+				NOT = { has_country_flag = SIA_us_security_reviewed }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_us_security_review"
+			set_country_flag = SIA_us_security_reviewed
+			country_event = { id = thailand.314 days = 3 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_strategic_fuel_reserve = {
+		icon = GFX_decision_generic_construction
+		visible = {
+			date > 2007.1.1
+		}
+
+		days_remove = 365
+		days_re_enable = 365
+		fire_only_once = no
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.9 }
+		}
+		custom_cost_text = SIA_cost_3_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strategic_fuel_reserve"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_strategic_fuel_reserve"
+			add_timed_idea = { idea = SIA_fuel_reserves days = 365 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_anti_corruption_drive = {
+		icon = GFX_decision_generic_political_discourse
+		visible = {
+			date > 2005.1.1
+		}
+
+		cost = 75
+		days_remove = 365
+		days_re_enable = 365
+		fire_only_once = no
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_anti_corruption_drive"
+			decrease_corruption = yes
+			add_stability = 0.02
+			# The clean-up snarls procurement and rattles patronage networks for 90 days before the long-
+			# run dividend settles in — clean contracting is slower first.
+			add_timed_idea = { idea = SIA_purge_disruption days = 90 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_tax_modernization = {
+		icon = GFX_decision_generic_fundraising
+		# Single-run via the available flag-gate (not fire_only_once), so it greys out in place
+		# instead of vanishing.
+
+		# Own date gate: the parent category now surfaces earlier for other levers, so this keeps tax
+		# modernization to the mid-2000s window it was written for.
+		visible = {
+			date > 2005.1.1
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_tax_modernized
+				NOT = { has_country_flag = SIA_tax_modernized }
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 11.9 }
+		}
+		custom_cost_text = cost_12_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_tax_modernization"
+			set_country_flag = SIA_tax_modernized
+			# SIA_clean_revenue merged → SIA_debt_free_credibility; also granted by SIA_repay_the_imf -
+			# guard so the two sources never stack.
+			if = {
+				limit = { NOT = { has_country_flag = SIA_debt_free_credibility_active } }
+				set_country_flag = SIA_debt_free_credibility_active
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+				add_to_variable = { SIA_econ_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+				add_to_variable = { SIA_econ_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
+				add_to_variable = { SIA_econ_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+				add_to_variable = { SIA_econ_corporate_tax_income_multiplier_modifier = 0.05 tooltip = corporate_tax_income_multiplier_modifier_tt }
+				add_to_variable = { SIA_econ_population_tax_income_multiplier_modifier = 0.05 tooltip = population_tax_income_multiplier_modifier_tt }
+			}
+			# Tighter collection is a permanent +3 effective corporate-tax rate:
+			set_temp_variable = { corp_change = 3 }
+			modify_corporate_tax_rate_effect = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_gripen_ef_upgrade = {
+		icon = GFX_decision_generic_air
+
+		visible = {
+			date > 2025.8.1
+		}
+
+		available = {
+			has_completed_focus = SIA_gripen_ef_program
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_gripen_ef_contracted
+				NOT = { has_country_flag = SIA_gripen_ef_contracted }
+			}
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_gripen_ef_upgrade"
+			set_country_flag = SIA_gripen_ef_contracted
+			add_tech_bonus = { name = SIA_gripen_ef_upgrade_bonus bonus = 0.5 uses = 1 category = CAT_air_eqp }
+			air_experience = 25
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+}
+
+# PLAYER-DRIVEN REALIGNMENT — deliberately change the ruling party.
+SIA_political_gambits_category = {
+
+	# Strike a palace bargain: bring the network-monarchy establishment (House of Mahidol.
+	SIA_palace_bargain = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 200
+		days_re_enable = 730
+		fire_only_once = no
+
+		# Path flag lags the party switch by up to a week: check ruling_party directly too. NOT
+		# communist / NOT republic preserved from the former realignment category.
+		visible = {
+			NOT = { has_country_flag = SIA_path_royalist }
+			NOT = { has_country_flag = SIA_path_democrat }
+			NOT = { is_in_array = { ruling_party = 23 } }
+			NOT = { has_country_flag = SIA_path_communist }
+			NOT = { has_country_flag = SIA_republic_declared }
+		}
+
+		available = {
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_completed_focus = SIA_civilian_control }
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_palace_bargain_support
+				check_variable = { party_pop_array^23 > 0.15 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_palace_bargain"
+			set_temp_variable = { rul_party_temp = 23 }
+			change_ruling_party_effect = yes
+			# update_party_name previews the party we are leaving, not the one we are joining - hide it
+			# rather than show the player a wrong name.
+			hidden_effect = {
+				update_party_name = yes
+				set_leader_SIA = yes
+			}
+			add_stability = 0.03
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	SIA_face_the_court = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 100
+		days_re_enable = 1095
+		fire_only_once = no
+
+		visible = {
+			NOT = { has_country_flag = SIA_path_democrat }
+			NOT = { is_in_array = { ruling_party = 23 } }
+			NOT = { has_country_flag = SIA_path_communist }
+			NOT = { has_country_flag = SIA_republic_declared }
+		}
+
+		available = {
+			NOT = { has_idea = SIA_junta_government }
+			NOT = { has_completed_focus = SIA_civilian_control }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_face_the_court"
+			country_event = { id = thailand.423 days = 2 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+}
+
+SIA_coup_watch_category = {
+
+	SIA_pack_the_senate = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 60
+		days_re_enable = 540
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pack_the_senate"
+			# A captured upper house rubber-stamps the government's legislation rather than handing it a
+			# cash bonus.
+			add_timed_idea = { idea = SIA_packed_senate days = 180 }
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 14 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 4
+		}
+	}
+
+	SIA_telecom_excise_favor = {
+		icon = GFX_decision_generic_fundraising
+		cost = 50
+		days_re_enable = 540
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_telecom_excise_favor"
+			set_temp_variable = { treasury_change = 7 }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 20 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	SIA_exim_myanmar_loan = {
+		icon = GFX_decision_generic_fundraising
+		cost = 40
+		days_re_enable = 730
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_exim_myanmar_loan"
+			set_temp_variable = { int_investment_change = 8 }
+			modify_international_investment_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 15 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 4
+		}
+	}
+
+	SIA_state_lottery_scheme = {
+		icon = GFX_decision_generic_fundraising
+		cost = 40
+		days_re_enable = 540
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_state_lottery_scheme"
+			set_temp_variable = { treasury_change = 5 }
+			modify_treasury_effect = yes
+			add_stability = 0.02
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { coup_delta = 12 }
+			SIA_coup_set_risk = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+}
+
+SIA_reconstruction_category = {
+
+	SIA_reconstruction_pacify = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 75
+		days_re_enable = 90
+
+		visible = {
+			has_country_flag = SIA_reconstruction_unlocked
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_has_unpacified_reclaimed
+				check_variable = { SIA_reclaimed_unpacified_count > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_reconstruction_pacify"
+			every_owned_state = {
+				limit = { SIA_is_reclaimed_state = yes }
+				add_compliance = 8
+			}
+			add_stability = 0.02
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	SIA_reconstruction_develop = {
+		icon = GFX_decision_generic_construction
+		days_re_enable = 180
+
+		visible = {
+			has_country_flag = SIA_reconstruction_unlocked
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_has_reclaimed
+				check_variable = { SIA_reclaimed_count > 0 }
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 4.9 }
+		}
+		custom_cost_text = SIA_cost_5_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_reconstruction_develop"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			every_owned_state = {
+				limit = { SIA_is_reclaimed_state = yes }
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				if = {
+					limit = {
+						OR = {
+							NOT = { has_variable = SIA_granted_shared_slots }
+							check_variable = { SIA_granted_shared_slots < 8 }
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_to_variable = { SIA_granted_shared_slots = 1 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	SIA_reconstruction_integrate = {
+		icon = GFX_decision_generic_form_nation
+		cost = 100
+		days_re_enable = 120
+
+		visible = {
+			has_country_flag = SIA_reconstruction_unlocked
+		}
+
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = SIA_tt_has_corable_reclaimed
+				check_variable = { SIA_reclaimed_ready_count > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_reconstruction_integrate"
+			every_owned_state = {
+				limit = {
+					SIA_is_reclaimed_state = yes
+					compliance > 80
+				}
+				add_core_of = SIA
+			}
+			add_stability = 0.03
+			add_political_power = 50
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+}
+
+# ─── General Strike push (communist urban road, 180-day window) ─── Raise SIA_strike_momentum
+# toward 100 to force the government to capitulate (thailand.250, peaceful road).
+SIA_general_strike_category = {
+
+	SIA_strike_mass_pickets = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 40
+		days_re_enable = 15
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_strike_active
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_mass_pickets"
+			set_temp_variable = { strike_delta = 8 }
+			SIA_strike_add_momentum = yes
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+
+	SIA_strike_paralyze_transport = {
+		icon = GFX_decision_generic_construction
+		days_re_enable = 30
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_strike_active
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 3.9 }
+		}
+		custom_cost_text = SIA_cost_4_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_paralyze_transport"
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			set_temp_variable = { strike_delta = 15 }
+			SIA_strike_add_momentum = yes
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+
+	SIA_strike_win_the_conscripts = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 75
+		days_re_enable = 30
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = SIA_strike_active
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_win_the_conscripts"
+			set_temp_variable = { strike_delta = 12 }
+			SIA_strike_add_momentum = yes
+		}
+
+		ai_will_do = {
+			base = 6
+		}
+	}
+}
+
+## Royalist no-coup path (SIA_the_establishment_consensus capstone) — the day-to-day levers of
+## a network monarchy that manages politics through institutions rather than tanks.
+SIA_establishment_category = {
+
+	# Whip the appointed chamber into line behind a measure the elected house would never pass.
+	# PP-for-stability trade.
+	SIA_senate_procedural_vote = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 60
+		days_re_enable = 90
+		fire_only_once = no
+
+		available = { SIA_royalist_trunk_open = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_senate_procedural_vote"
+			add_stability = 0.02
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 2 has_stability < 0.5 }
+		}
+	}
+
+	SIA_court_referral = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 60
+		days_re_enable = 180
+		fire_only_once = no
+
+		available = { SIA_royalist_trunk_open = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_court_referral"
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.06 }
+			change_relative_party_popularity = yes
+			recalculate_party = yes
+			set_temp_variable = { reform_delta = 4 }
+			SIA_reform_pressure_set = yes
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 2 check_variable = { party_pop_array^18 > 0.30 } }
+		}
+	}
+
+	SIA_palace_audience = {
+		icon = GFX_decision_generic_speech
+		cost = 50
+		days_re_enable = 150
+		fire_only_once = no
+
+		available = { SIA_royalist_trunk_open = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_palace_audience"
+			set_temp_variable = { temp_opinion = 3 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 3 }
+			change_landowners_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 3
+		}
+	}
+}
+
+## Resource-sovereignty capstone levers (SIA_resource_sovereignty, 05_thailand.txt) - the new
+## reward kind the capstone unlocks instead of bigger accumulator numbers.
+SIA_economy_category = {
+
+	# Repeatable SWF allocation: pay treasury now, the fund's returns feed back in as a self-
+	# expiring idea once the cycle completes - same shape as SIA_strategic_fuel_reserve above.
+	SIA_sovereign_wealth_fund_allocation = {
+		icon = GFX_decision_generic_fundraising
+
+		available = {
+			has_completed_focus = SIA_resource_sovereignty
+		}
+
+		days_remove = 365
+		days_re_enable = 365
+		fire_only_once = no
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 9.9 }
+		}
+		custom_cost_text = cost_10_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_sovereign_wealth_fund_allocation"
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SIA_sovereign_wealth_fund_allocation"
+			add_timed_idea = { idea = SIA_swf_windfall days = 365 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_state_resource_stake = {
+		icon = GFX_decision_generic_fundraising
+		cost = 60
+		days_re_enable = 270
+		fire_only_once = no
+
+		available = {
+			has_completed_focus = SIA_resource_sovereignty
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_state_resource_stake"
+			set_temp_variable = { treasury_change = 8 }
+			modify_treasury_effect = yes
+			increase_corruption = yes
+			if = {
+				limit = { has_idea = landowners }
+				set_temp_variable = { temp_opinion = -5 }
+				change_landowners_opinion = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+		}
+	}
+}
+
+preah_vihear_decisions_category = {
+
+	SIA_pv_prepare_infantry_training = {
+		icon = GFX_decision_generic_military
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		available = {
+			has_war = no
+			has_equipment = { infantry_weapons_type > 30 }
+			has_equipment = { cnc_equipment_type > 7 }
+		}
+
+		days_remove = 15
+		fixed_random_seed = no
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_15
+		custom_cost_trigger = {
+			command_power > 15
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_prepare_infantry_training"
+			add_command_power = -15
+			custom_effect_tooltip = preah_vihear_increase_readiness_TT
+			add_equipment_to_stockpile = {
+				type = infantry_weapons_type
+				amount = -30
+			}
+			add_equipment_to_stockpile = {
+				type = cnc_equipment_type
+				amount = -7
+			}
+			hidden_effect = {
+				random_list = {
+					3 = { country_event = { id = preah_vihear.40 days = 1 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 5 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 10 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 20 } }
+				}
+				clamp_variable = {
+					var = THIS.preah_vihear_readiness
+					min = 0
+					max = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				threat < 0.15
+			}
+			modifier = {
+				factor = 0
+				check_variable = { THIS.preah_vihear_readiness > 80 }
+			}
+		}
+	}
+
+	SIA_pv_prepare_armor_training = {
+		icon = GFX_decision_generic_military
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		available = {
+			has_war = no
+			has_equipment = { medium_tank_amphibious_chassis > 5 }
+			has_equipment = { medium_tank_chassis > 3 }
+		}
+
+		days_remove = 15
+		fixed_random_seed = no
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_15
+		custom_cost_trigger = {
+			command_power > 15
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_prepare_armor_training"
+			add_command_power = -15
+			custom_effect_tooltip = preah_vihear_increase_readiness_TT
+			add_equipment_to_stockpile = {
+				type = medium_tank_amphibious_chassis
+				amount = -5
+			}
+			add_equipment_to_stockpile = {
+				type = medium_tank_chassis
+				amount = -3
+			}
+			hidden_effect = {
+				random_list = {
+					3 = { country_event = { id = preah_vihear.40 days = 1 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 10 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 20 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 30 } }
+				}
+				clamp_variable = {
+					var = THIS.preah_vihear_readiness
+					min = 0
+					max = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				threat < 0.15
+			}
+			modifier = {
+				factor = 0
+				check_variable = { THIS.preah_vihear_readiness > 80 }
+			}
+		}
+	}
+
+	SIA_pv_prepare_artillery_training = {
+		icon = GFX_decision_generic_military
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		available = {
+			has_war = no
+			has_equipment = { artillery_equipment > 5 }
+		}
+
+		days_remove = 15
+		fixed_random_seed = no
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_15
+		custom_cost_trigger = {
+			command_power > 15
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_prepare_artillery_training"
+			add_command_power = -15
+			custom_effect_tooltip = preah_vihear_increase_readiness_TT
+			add_equipment_to_stockpile = {
+				type = artillery_equipment
+				amount = -5
+			}
+			hidden_effect = {
+				random_list = {
+					3 = { country_event = { id = preah_vihear.40 days = 1 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 5 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 10 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 15 } }
+				}
+				clamp_variable = {
+					var = THIS.preah_vihear_readiness
+					min = 0
+					max = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				threat < 0.15
+			}
+			modifier = {
+				factor = 0
+				check_variable = { THIS.preah_vihear_readiness > 80 }
+			}
+		}
+	}
+
+	CBD_pv_prepare_infantry_training = {
+		icon = GFX_decision_generic_military
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		available = {
+			has_war = no
+			has_equipment = { infantry_weapons_type > 30 }
+			has_equipment = { cnc_equipment_type > 7 }
+		}
+
+		days_remove = 15
+		fixed_random_seed = no
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_15
+		custom_cost_trigger = {
+			command_power > 15
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_prepare_infantry_training"
+			add_command_power = -15
+			custom_effect_tooltip = preah_vihear_increase_readiness_TT
+			add_equipment_to_stockpile = {
+				type = infantry_weapons_type
+				amount = -30
+			}
+			add_equipment_to_stockpile = {
+				type = cnc_equipment_type
+				amount = -7
+			}
+			hidden_effect = {
+				random_list = {
+					3 = { country_event = { id = preah_vihear.40 days = 1 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 5 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 10 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 20 } }
+				}
+				clamp_variable = {
+					var = THIS.preah_vihear_readiness
+					min = 0
+					max = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				threat < 0.15
+			}
+			modifier = {
+				factor = 0
+				check_variable = { THIS.preah_vihear_readiness > 80 }
+			}
+		}
+	}
+
+	CBD_pv_prepare_armor_training = {
+		icon = GFX_decision_generic_military
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		available = {
+			has_war = no
+			has_equipment = { medium_tank_amphibious_chassis > 5 }
+			has_equipment = { medium_tank_chassis > 3 }
+		}
+
+		days_remove = 15
+		fixed_random_seed = no
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_15
+		custom_cost_trigger = {
+			command_power > 15
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_prepare_armor_training"
+			add_command_power = -15
+			custom_effect_tooltip = preah_vihear_increase_readiness_TT
+			add_equipment_to_stockpile = {
+				type = medium_tank_amphibious_chassis
+				amount = -5
+			}
+			add_equipment_to_stockpile = {
+				type = medium_tank_chassis
+				amount = -3
+			}
+			hidden_effect = {
+				random_list = {
+					3 = { country_event = { id = preah_vihear.40 days = 1 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 10 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 20 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 30 } }
+				}
+				clamp_variable = {
+					var = THIS.preah_vihear_readiness
+					min = 0
+					max = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				threat < 0.15
+			}
+			modifier = {
+				factor = 0
+				check_variable = { THIS.preah_vihear_readiness > 80 }
+			}
+		}
+	}
+
+	CBD_pv_prepare_artillery_training = {
+		icon = GFX_decision_generic_military
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		available = {
+			has_war = no
+			has_equipment = { artillery_equipment > 5 }
+		}
+
+		days_remove = 15
+		fixed_random_seed = no
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_15
+		custom_cost_trigger = {
+			command_power > 15
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_prepare_artillery_training"
+			add_command_power = -15
+			custom_effect_tooltip = preah_vihear_increase_readiness_TT
+			add_equipment_to_stockpile = {
+				type = artillery_equipment
+				amount = -5
+			}
+			hidden_effect = {
+				random_list = {
+					3 = { country_event = { id = preah_vihear.40 days = 1 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 5 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 10 } }
+					10 = { add_to_variable = { THIS.preah_vihear_readiness = 15 } }
+				}
+				clamp_variable = {
+					var = THIS.preah_vihear_readiness
+					min = 0
+					max = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				threat < 0.15
+			}
+			modifier = {
+				factor = 0
+				check_variable = { THIS.preah_vihear_readiness > 80 }
+			}
+		}
+	}
+
+	SIA_escalate_preah_vihear_tensions = {
+		icon = GFX_decision_generic_planted_spear
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		fire_only_once = yes
+		cost = 25
+
+		visible = {
+			NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+			check_variable = { GLOBAL.preah_vihear_tension < 25 }
+		}
+
+		available = {
+			has_war = no
+			date > 2008.7.1
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_escalate_preah_vihear_tensions"
+			add_war_support = 0.03
+			custom_effect_tooltip = preah_vihear_increase_tension_TT
+			add_to_variable = { GLOBAL.preah_vihear_tension = 10 }
+			clamp_variable = {
+				var = GLOBAL.preah_vihear_tension
+				min = 0
+				max = 100
+			}
+			if = {
+				limit = { country_exists = CBD }
+				CBD = { country_event = preah_vihear.1 }
+			}
+			if = {
+				limit = { has_idea = SIA_cambodia_partnership }
+				remove_ideas = SIA_cambodia_partnership
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 3
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 2
+				date > 2008.1.1
+				date < 2012.1.1
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+
+	SIA_pv_nationalist_rhetoric = {
+		icon = GFX_decision_generic_nationalism
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		available = {
+			has_war = no
+			NOT = { has_decision = SIA_pv_military_posturing }
+		}
+
+		days_remove = 15
+		fixed_random_seed = no
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_15
+		custom_cost_trigger = {
+			command_power > 15
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_nationalist_rhetoric"
+			add_command_power = -15
+			if = {
+				limit = { has_idea = SIA_cambodia_partnership }
+				remove_ideas = SIA_cambodia_partnership
+			}
+			custom_effect_tooltip = preah_vihear_increase_tension_TT
+			hidden_effect = {
+				set_temp_variable = { pv_tension_delta = 0 }
+				random_list = {
+					3 = { country_event = { id = preah_vihear.41 days = 1 } }
+					10 = { set_temp_variable = { pv_tension_delta = 10 } }
+					10 = { set_temp_variable = { pv_tension_delta = 15 } }
+					10 = { set_temp_variable = { pv_tension_delta = 20 } }
+				}
+				if = {
+					limit = { has_idea = preah_vihear_observers }
+					multiply_temp_variable = { pv_tension_delta = 0.5 }
+				}
+				add_to_variable = { GLOBAL.preah_vihear_tension = pv_tension_delta }
+				clamp_variable = {
+					var = GLOBAL.preah_vihear_tension
+					min = 0
+					max = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 2
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0
+				threat < 0.15
+			}
+			modifier = {
+				factor = 0
+				check_variable = { GLOBAL.preah_vihear_tension > 80 }
+			}
+		}
+	}
+
+	SIA_pv_military_posturing = {
+		icon = GFX_decision_generic_planted_spear
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		available = {
+			has_war = no
+			NOT = { has_decision = SIA_pv_nationalist_rhetoric }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_recent_escalation_TT
+				NOT = { has_country_flag = preah_vihear_escalation_recent }
+			}
+		}
+
+		days_remove = 15
+		fixed_random_seed = no
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_15
+		custom_cost_trigger = {
+			command_power > 15
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_military_posturing"
+			add_command_power = -15
+			if = {
+				limit = { has_idea = SIA_cambodia_partnership }
+				remove_ideas = SIA_cambodia_partnership
+			}
+			set_country_flag = {
+				flag = preah_vihear_escalation_recent
+				days = 180
+				value = 1
+			}
+			custom_effect_tooltip = preah_vihear_increase_tension_TT
+			hidden_effect = {
+				set_temp_variable = { pv_tension_delta = 0 }
+				random_list = {
+					3 = { country_event = { id = preah_vihear.41 days = 1 } }
+					10 = { set_temp_variable = { pv_tension_delta = 10 } }
+					10 = { set_temp_variable = { pv_tension_delta = 15 } }
+					10 = { set_temp_variable = { pv_tension_delta = 20 } }
+				}
+				if = {
+					limit = { has_idea = preah_vihear_observers }
+					multiply_temp_variable = { pv_tension_delta = 0.5 }
+				}
+				add_to_variable = { GLOBAL.preah_vihear_tension = pv_tension_delta }
+				clamp_variable = {
+					var = GLOBAL.preah_vihear_tension
+					min = 0
+					max = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 3
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0
+				threat < 0.15
+			}
+			modifier = {
+				factor = 0
+				check_variable = { GLOBAL.preah_vihear_tension > 80 }
+			}
+		}
+	}
+
+	CBD_pv_nationalist_rhetoric = {
+		icon = GFX_decision_generic_nationalism
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		available = {
+			has_war = no
+			NOT = { has_decision = CBD_pv_military_posturing }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_recent_protest_TT
+				NOT = { has_country_flag = preah_vihear_protest_recent }
+			}
+		}
+
+		days_remove = 15
+		fixed_random_seed = no
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_15
+		custom_cost_trigger = {
+			command_power > 15
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_nationalist_rhetoric"
+			add_command_power = -15
+			set_country_flag = {
+				flag = preah_vihear_protest_recent
+				days = 120
+				value = 1
+			}
+			custom_effect_tooltip = preah_vihear_increase_tension_TT
+			hidden_effect = {
+				set_temp_variable = { pv_tension_delta = 0 }
+				random_list = {
+					3 = { country_event = { id = preah_vihear.41 days = 1 } }
+					10 = { set_temp_variable = { pv_tension_delta = 10 } }
+					10 = { set_temp_variable = { pv_tension_delta = 15 } }
+					10 = { set_temp_variable = { pv_tension_delta = 20 } }
+				}
+				if = {
+					limit = { has_idea = preah_vihear_observers }
+					multiply_temp_variable = { pv_tension_delta = 0.5 }
+				}
+				add_to_variable = { GLOBAL.preah_vihear_tension = pv_tension_delta }
+				clamp_variable = {
+					var = GLOBAL.preah_vihear_tension
+					min = 0
+					max = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 2
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0
+				threat < 0.15
+			}
+			modifier = {
+				factor = 0
+				check_variable = { GLOBAL.preah_vihear_tension > 80 }
+			}
+		}
+	}
+
+	CBD_pv_military_posturing = {
+		icon = GFX_decision_generic_planted_spear
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		available = {
+			has_war = no
+			NOT = { has_decision = CBD_pv_nationalist_rhetoric }
+		}
+
+		days_remove = 15
+		fixed_random_seed = no
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_15
+		custom_cost_trigger = {
+			command_power > 15
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_military_posturing"
+			add_command_power = -15
+			custom_effect_tooltip = preah_vihear_increase_tension_TT
+			hidden_effect = {
+				set_temp_variable = { pv_tension_delta = 0 }
+				random_list = {
+					3 = { country_event = { id = preah_vihear.41 days = 1 } }
+					10 = { set_temp_variable = { pv_tension_delta = 10 } }
+					10 = { set_temp_variable = { pv_tension_delta = 15 } }
+					10 = { set_temp_variable = { pv_tension_delta = 20 } }
+				}
+				if = {
+					limit = { has_idea = preah_vihear_observers }
+					multiply_temp_variable = { pv_tension_delta = 0.5 }
+				}
+				add_to_variable = { GLOBAL.preah_vihear_tension = pv_tension_delta }
+				clamp_variable = {
+					var = GLOBAL.preah_vihear_tension
+					min = 0
+					max = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 3
+				has_government = communism
+			}
+			modifier = {
+				factor = 0
+				threat < 0.15
+			}
+			modifier = {
+				factor = 0
+				check_variable = { GLOBAL.preah_vihear_tension > 80 }
+			}
+		}
+	}
+
+	SIA_pv_attack_preah_vihear = {
+		icon = GFX_decision_generic_military
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 512
+			}
+		}
+
+		visible = {
+			controls_state = 506
+		}
+
+		cost = 0
+		days_remove = 10
+		days_re_enable = 45
+
+		available = {
+			NOT = { has_war_with = CBD }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_clash_TT
+				NOT = { has_country_flag = preah_vihear_clash_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_not_settled_TT
+				NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_tension_TT
+				check_variable = { GLOBAL.preah_vihear_tension > 40 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_readiness_TT
+				check_variable = { preah_vihear_readiness > 50 }
+			}
+			OR = {
+				has_government = nationalist
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_attack_preah_vihear"
+			add_threat = 1
+			if = {
+				limit = { has_idea = SIA_cambodia_partnership }
+				remove_ideas = SIA_cambodia_partnership
+			}
+			set_country_flag = preah_vihear_clash_active
+			CBD = {
+				country_event = preah_vihear.5
+			}
+			news_event = preah_vihear_news.3
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Remove decision SIA_pv_attack_preah_vihear"
+			if = {
+				limit = {
+					OR = {
+						506 = { has_border_war = yes }
+						512 = { has_border_war = yes }
+					}
+				}
+				clr_country_flag = preah_vihear_clash_active
+			}
+			else = {
+				if = {
+					limit = {
+						controls_state = 506
+					}
+					start_border_war = {
+						change_state_after_war = no
+						attacker = {
+							state = 506
+							num_provinces = 1
+							on_win = preah_vihear.10
+							on_lose = preah_vihear.11
+							on_cancel = preah_vihear.12
+							dig_in_factor = 1
+							terrain_factor = 1
+						}
+						defender = {
+							state = 512
+							num_provinces = 1
+							on_win = preah_vihear.11
+							on_lose = preah_vihear.10
+							on_cancel = preah_vihear.12
+						}
+					}
+				}
+				else = {
+					clr_country_flag = preah_vihear_clash_active
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 2
+				date > 2008.1.1
+				date < 2012.1.1
+			}
+			modifier = {
+				factor = 0.1
+				has_war = yes
+			}
+		}
+	}
+
+	CBD_pv_attack_preah_vihear = {
+		icon = GFX_decision_generic_military
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 506
+			}
+		}
+
+		visible = {
+			controls_state = 512
+		}
+
+		cost = 0
+		days_remove = 10
+		days_re_enable = 45
+
+		available = {
+			NOT = { has_war_with = SIA }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_clash_TT
+				NOT = { has_country_flag = preah_vihear_clash_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_not_settled_TT
+				NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_tension_TT
+				check_variable = { GLOBAL.preah_vihear_tension > 40 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_readiness_TT
+				check_variable = { preah_vihear_readiness > 50 }
+			}
+			OR = {
+				has_government = nationalist
+				has_government = communism
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_attack_preah_vihear"
+			add_threat = 1
+			set_country_flag = preah_vihear_clash_active
+			SIA = {
+				country_event = preah_vihear.6
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Remove decision CBD_pv_attack_preah_vihear"
+			if = {
+				limit = {
+					OR = {
+						512 = { has_border_war = yes }
+						506 = { has_border_war = yes }
+					}
+				}
+				clr_country_flag = preah_vihear_clash_active
+			}
+			else = {
+				if = {
+					limit = {
+						controls_state = 512
+					}
+					start_border_war = {
+						change_state_after_war = no
+						attacker = {
+							state = 512
+							num_provinces = 1
+							on_win = preah_vihear.13
+							on_lose = preah_vihear.14
+							on_cancel = preah_vihear.12
+							dig_in_factor = 1
+							terrain_factor = 1
+						}
+						defender = {
+							state = 506
+							num_provinces = 1
+							on_win = preah_vihear.14
+							on_lose = preah_vihear.13
+							on_cancel = preah_vihear.12
+						}
+					}
+				}
+				else = {
+					clr_country_flag = preah_vihear_clash_active
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 0.1
+				has_war = yes
+			}
+		}
+	}
+
+	SIA_pv_extort_xp = {
+		icon = GFX_decision_generic_military
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_progress_25_TT
+				check_variable = { THIS.preah_vihear_war_progress > 24 }
+			}
+		}
+
+		days_remove = 30
+		days_re_enable = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_extort_xp"
+			custom_effect_tooltip = preah_vihear_decrease_progress_25_TT
+			subtract_from_variable = { THIS.preah_vihear_war_progress = 25 }
+			clamp_variable = {
+				var = THIS.preah_vihear_war_progress
+				min = 0
+				max = 100
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Remove decision SIA_pv_extort_xp"
+			army_experience = 25
+			add_war_support = 0.03
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	CBD_pv_extort_xp = {
+		icon = GFX_decision_generic_military
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_progress_25_TT
+				check_variable = { THIS.preah_vihear_war_progress > 24 }
+			}
+		}
+
+		days_remove = 30
+		days_re_enable = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_extort_xp"
+			custom_effect_tooltip = preah_vihear_decrease_progress_25_TT
+			subtract_from_variable = { THIS.preah_vihear_war_progress = 25 }
+			clamp_variable = {
+				var = THIS.preah_vihear_war_progress
+				min = 0
+				max = 100
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Remove decision CBD_pv_extort_xp"
+			army_experience = 25
+			add_war_support = 0.03
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	SIA_pv_decisive_victory = {
+		icon = GFX_decision_generic_nationalism
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		visible = {
+			NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+		}
+
+		cost = 75
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_not_settled_TT
+				NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_progress_50_TT
+				check_variable = { THIS.preah_vihear_war_progress > 49 }
+			}
+		}
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_decisive_victory"
+			custom_effect_tooltip = preah_vihear_decrease_progress_50_TT
+			subtract_from_variable = { THIS.preah_vihear_war_progress = 50 }
+			clamp_variable = {
+				var = THIS.preah_vihear_war_progress
+				min = 0
+				max = 100
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Remove decision SIA_pv_decisive_victory"
+			if = { limit = { has_idea = SIA_preah_vihear_humiliation } remove_ideas = SIA_preah_vihear_humiliation }
+			add_ideas = SIA_preah_vihear_vindicated
+			add_political_power = 50
+			add_war_support = 0.05
+			army_experience = 20
+			set_global_flag = GLOBAL_preah_vihear_de_facto_SIA
+			clr_global_flag = GLOBAL_preah_vihear_de_facto_CBD
+			set_country_flag = {
+				flag = preah_vihear_settled_cooldown
+				days = 1825
+				value = 1
+			}
+			news_event = preah_vihear_news.4
+			if = {
+				limit = { country_exists = CBD }
+				CBD = {
+					if = { limit = { has_idea = CBD_preah_vihear_vindicated } remove_ideas = CBD_preah_vihear_vindicated }
+					add_ideas = CBD_preah_vihear_humiliation
+					set_country_flag = {
+						flag = preah_vihear_settled_cooldown
+						days = 1825
+						value = 1
+					}
+					country_event = preah_vihear.130
+				}
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	CBD_pv_decisive_victory = {
+		icon = GFX_decision_generic_nationalism
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		visible = {
+			NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+		}
+
+		cost = 75
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_not_settled_TT
+				NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_progress_50_TT
+				check_variable = { THIS.preah_vihear_war_progress > 49 }
+			}
+		}
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_decisive_victory"
+			custom_effect_tooltip = preah_vihear_decrease_progress_50_TT
+			subtract_from_variable = { THIS.preah_vihear_war_progress = 50 }
+			clamp_variable = {
+				var = THIS.preah_vihear_war_progress
+				min = 0
+				max = 100
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Remove decision CBD_pv_decisive_victory"
+			if = { limit = { has_idea = CBD_preah_vihear_humiliation } remove_ideas = CBD_preah_vihear_humiliation }
+			add_ideas = CBD_preah_vihear_vindicated
+			add_political_power = 50
+			add_war_support = 0.05
+			army_experience = 20
+			set_global_flag = GLOBAL_preah_vihear_de_facto_CBD
+			clr_global_flag = GLOBAL_preah_vihear_de_facto_SIA
+			set_country_flag = {
+				flag = preah_vihear_settled_cooldown
+				days = 1825
+				value = 1
+			}
+			news_event = preah_vihear_news.4
+			if = {
+				limit = { country_exists = SIA }
+				SIA = {
+					if = { limit = { has_idea = SIA_preah_vihear_vindicated } remove_ideas = SIA_preah_vihear_vindicated }
+					add_ideas = SIA_preah_vihear_humiliation
+					set_country_flag = {
+						flag = preah_vihear_settled_cooldown
+						days = 1825
+						value = 1
+					}
+					country_event = preah_vihear.130
+				}
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	SIA_pv_capture_northern_khmer = {
+		icon = GFX_decision_generic_planted_spear
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 512
+			}
+		}
+
+		visible = {
+			NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+			NOT = { controls_state = 512 }
+			country_exists = CBD
+			512 = { is_owned_by = CBD }
+		}
+
+		cost = 75
+		days_remove = 30
+
+		available = {
+			NOT = { has_war_with = CBD }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_clash_TT
+				NOT = { has_country_flag = preah_vihear_clash_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_not_settled_TT
+				NOT = { has_country_flag = preah_vihear_settled_cooldown }
+			}
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_progress_80_TT
+				check_variable = { THIS.preah_vihear_war_progress > 79 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_capture_northern_khmer"
+			custom_effect_tooltip = preah_vihear_decrease_progress_80_TT
+			subtract_from_variable = { THIS.preah_vihear_war_progress = 80 }
+			clamp_variable = {
+				var = THIS.preah_vihear_war_progress
+				min = 0
+				max = 100
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Remove decision SIA_pv_capture_northern_khmer"
+			transfer_state = 512
+			set_global_flag = GLOBAL_preah_vihear_resolved
+			custom_effect_tooltip = preah_vihear_tension_resolved_TT
+			set_variable = { GLOBAL.preah_vihear_tension = 0 }
+			clamp_variable = {
+				var = GLOBAL.preah_vihear_tension
+				min = 0
+				max = 100
+			}
+			if = { limit = { has_idea = SIA_preah_vihear_humiliation } remove_ideas = SIA_preah_vihear_humiliation }
+			add_ideas = SIA_preah_vihear_vindicated
+			add_political_power = 75
+			add_war_support = 0.05
+			news_event = preah_vihear_news.4
+			if = {
+				limit = { country_exists = CBD }
+				CBD = {
+					if = { limit = { has_idea = CBD_preah_vihear_vindicated } remove_ideas = CBD_preah_vihear_vindicated }
+					add_ideas = CBD_preah_vihear_humiliation
+					country_event = preah_vihear.131
+				}
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	SIA_pv_de_escalate = {
+		icon = GFX_decision_generic_political_discourse
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		visible = {
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_deescalation_uses_remaining_TT
+				check_variable = {
+					var = SIA_pv_deescalation_uses
+					value = 5
+					compare = less_than
+				}
+			}
+		}
+
+		available = {
+			NOT = { has_war_with = CBD }
+		}
+
+		cost = 25
+		days_remove = 30
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_pv_de_escalate"
+			if = {
+				limit = { country_exists = CBD }
+				CBD = {
+					add_opinion_modifier = {
+						target = SIA
+						modifier = preah_vihear_deescalation_goodwill
+					}
+				}
+			}
+			custom_effect_tooltip = preah_vihear_decrease_tension_10_TT
+			subtract_from_variable = { GLOBAL.preah_vihear_tension = 10 }
+			clamp_variable = {
+				var = GLOBAL.preah_vihear_tension
+				min = 0
+				max = 100
+			}
+			custom_effect_tooltip = preah_vihear_deescalation_used_TT
+			add_to_variable = { SIA_pv_deescalation_uses = 1 }
+			clamp_variable = {
+				var = SIA_pv_deescalation_uses
+				min = 0
+				max = 5
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_war_with = CBD
+			}
+			modifier = {
+				add = 5
+				check_variable = { GLOBAL.preah_vihear_tension > 60 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = {
+					var = SIA_pv_deescalation_uses
+					value = 5
+					compare = greater_than_or_equals
+				}
+			}
+		}
+	}
+
+	CBD_pv_de_escalate = {
+		icon = GFX_decision_generic_political_discourse
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		visible = {
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_deescalation_uses_remaining_TT
+				check_variable = {
+					var = CBD_pv_deescalation_uses
+					value = 5
+					compare = less_than
+				}
+			}
+		}
+
+		available = {
+			NOT = { has_war_with = SIA }
+		}
+
+		cost = 25
+		days_remove = 30
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_pv_de_escalate"
+			if = {
+				limit = { country_exists = SIA }
+				SIA = {
+					add_opinion_modifier = {
+						target = CBD
+						modifier = preah_vihear_deescalation_goodwill
+					}
+				}
+			}
+			custom_effect_tooltip = preah_vihear_decrease_tension_10_TT
+			subtract_from_variable = { GLOBAL.preah_vihear_tension = 10 }
+			clamp_variable = {
+				var = GLOBAL.preah_vihear_tension
+				min = 0
+				max = 100
+			}
+			custom_effect_tooltip = preah_vihear_deescalation_used_TT
+			add_to_variable = { CBD_pv_deescalation_uses = 1 }
+			clamp_variable = {
+				var = CBD_pv_deescalation_uses
+				min = 0
+				max = 5
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_war_with = SIA
+			}
+			modifier = {
+				add = 5
+				check_variable = { GLOBAL.preah_vihear_tension > 60 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = {
+					var = CBD_pv_deescalation_uses
+					value = 5
+					compare = greater_than_or_equals
+				}
+			}
+		}
+	}
+
+	CBD_protest_thai_actions = {
+		icon = GFX_decision_generic_political_address
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		cost = 25
+		days_remove = 20
+		days_re_enable = 40
+
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_protest_grievance_TT
+				OR = {
+					check_variable = { GLOBAL.preah_vihear_tension > 10 }
+					has_country_flag = preah_vihear_attacked_by_sia
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_protest_thai_actions"
+			add_political_power = 25
+			add_stability = 0.02
+			if = {
+				limit = { country_exists = SIA }
+				add_opinion_modifier = { target = SIA modifier = preah_vihear_dispute }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	SIA_request_asean_mediation = {
+		icon = GFX_decision_generic_political_address
+		cost = 125
+		fire_only_once = yes
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		visible = {
+			NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+			has_idea = ASEAN_Member
+		}
+
+		available = {
+			NOT = { has_war_with = CBD }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_mediation_tension_TT
+				check_variable = { GLOBAL.preah_vihear_tension > 20 }
+			}
+			CBD = { has_idea = ASEAN_Member }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_request_asean_mediation"
+			CBD = {
+				country_event = preah_vihear.20
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 2
+				NOT = { has_government = nationalist }
+			}
+		}
+	}
+
+	CBD_request_asean_mediation = {
+		icon = GFX_decision_generic_political_address
+		cost = 125
+		fire_only_once = yes
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		visible = {
+			NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+			has_idea = ASEAN_Member
+		}
+
+		available = {
+			NOT = { has_war_with = SIA }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_mediation_tension_TT
+				check_variable = { GLOBAL.preah_vihear_tension > 20 }
+			}
+			SIA = { has_idea = ASEAN_Member }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_request_asean_mediation"
+			SIA = {
+				country_event = preah_vihear.21
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	CBD_appeal_to_icj = {
+		icon = GFX_decision_generic_form_nation
+		cost = 175
+		fire_only_once = yes
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		visible = {
+			NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+		}
+
+		available = {
+			NOT = { has_war_with = SIA }
+			date > 2010.1.1
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_icj_grounds_TT
+				OR = {
+					has_country_flag = preah_vihear_attacked_by_sia
+					check_variable = { GLOBAL.preah_vihear_tension > 74 }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_appeal_to_icj"
+			SIA = {
+				country_event = preah_vihear.30
+			}
+			hidden_effect = {
+				country_event = { id = preah_vihear.31 days = 365 }
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	SIA_accept_icj_ruling = {
+		icon = GFX_decision_generic_political_address
+		cost = 150
+		fire_only_once = yes
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		visible = {
+			has_global_flag = GLOBAL_preah_vihear_icj_ruling
+			NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+		}
+
+		available = {
+			NOT = { has_war_with = CBD }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_clash_TT
+				NOT = { has_country_flag = preah_vihear_clash_active }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_accept_icj_ruling"
+			add_stability = -0.05
+			set_global_flag = GLOBAL_preah_vihear_resolved
+			custom_effect_tooltip = preah_vihear_tension_resolved_TT
+			set_variable = { GLOBAL.preah_vihear_tension = 0 }
+			clamp_variable = {
+				var = GLOBAL.preah_vihear_tension
+				min = 0
+				max = 100
+			}
+			remove_opinion_modifier = { target = CBD modifier = minor_border_dispute }
+			remove_opinion_modifier = { target = CBD modifier = preah_vihear_dispute }
+			CBD = {
+				remove_opinion_modifier = { target = SIA modifier = minor_border_dispute }
+				remove_opinion_modifier = { target = SIA modifier = preah_vihear_dispute }
+				country_event = preah_vihear.35
+			}
+			news_event = preah_vihear_news.1
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 3
+				NOT = { has_government = nationalist }
+			}
+		}
+	}
+
+	SIA_reject_icj_ruling = {
+		icon = GFX_decision_generic_break_treaty
+		cost = 25
+		fire_only_once = yes
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		visible = {
+			has_global_flag = GLOBAL_preah_vihear_icj_ruling
+			NOT = { has_global_flag = GLOBAL_preah_vihear_resolved }
+		}
+
+		available = {
+			NOT = { has_war_with = CBD }
+			custom_trigger_tooltip = {
+				tooltip = preah_vihear_no_clash_TT
+				NOT = { has_country_flag = preah_vihear_clash_active }
+			}
+			OR = {
+				has_government = nationalist
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_reject_icj_ruling"
+			add_political_power = 50
+			add_war_support = 0.1
+			add_threat = 3
+			custom_effect_tooltip = preah_vihear_increase_tension_TT
+			add_to_variable = { GLOBAL.preah_vihear_tension = 30 }
+			clamp_variable = {
+				var = GLOBAL.preah_vihear_tension
+				min = 0
+				max = 100
+			}
+			CBD = {
+				country_event = preah_vihear.36
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				has_government = nationalist
+			}
+		}
+	}
+}
+
+SIA_seato_accession_category = {
+
+	# The vanilla invite-to-faction action is gated on world tension against the target's foreign
+	# intervention law, so SEATO recruits through SIA_seato_score_update instead.
+	SIA_renew_seato_invitation = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 150
+		days_re_enable = 180
+		fire_only_once = no
+
+		targets = { VIE LAO CBD BRM IND PHI MAY SIN BRU SHN KAR WAA }
+
+		# Only the existence check filters the list. Everything else lives in available so a
+		# blocked country stays on screen with its reason and its cooldown.
+		target_trigger = {
+			country_exists = FROM
+		}
+
+		available = {
+			FROM = { is_in_faction = no }
+			NOT = { has_war_with = FROM }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_renew_seato_invitation"
+			FROM = {
+				SIA_seato_score_update = yes
+				country_event = { id = thailand.431 days = 2 }
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = { factor = 3 FROM = { check_variable = { SIA_seato_score > 59 } } }
+		}
+	}
+
+	# Courtship: buy the goodwill the score is built on rather than re-rolling the invitation.
+	# Split by weight rather than priced in treasury: a fixed cash sum buys wildly different
+	# leverage in Jakarta and in Wa State.
+	SIA_seato_charm_offensive_major = {
+		icon = GFX_decision_generic_form_nation
+		cost = 100
+		days_remove = 30
+		days_re_enable = 180
+		fire_only_once = no
+
+		targets = { BRM IND MAY PHI VIE }
+
+		target_trigger = {
+			country_exists = FROM
+		}
+
+		available = {
+			NOT = { has_idea = SIA_courting_mission }
+			NOT = { is_in_faction_with = FROM }
+			NOT = { has_war_with = FROM }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_seato_charm_offensive_major"
+			add_ideas = SIA_courting_mission
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_seato_charm_offensive_major completed"
+			if = { limit = { has_idea = SIA_courting_mission } remove_ideas = SIA_courting_mission }
+			add_opinion_modifier = { target = FROM modifier = medium_increase }
+			FROM = {
+				add_opinion_modifier = { target = ROOT modifier = medium_increase }
+				SIA_seato_score_update = yes
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { influence_target = FROM.id }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 3
+		}
+	}
+
+	SIA_seato_charm_offensive_minor = {
+		icon = GFX_decision_generic_form_nation
+		cost = 50
+		days_remove = 30
+		days_re_enable = 180
+		fire_only_once = no
+
+		targets = { BRU CBD KAR LAO SHN SIN WAA }
+
+		target_trigger = {
+			country_exists = FROM
+		}
+
+		available = {
+			NOT = { has_idea = SIA_courting_mission }
+			NOT = { is_in_faction_with = FROM }
+			NOT = { has_war_with = FROM }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_seato_charm_offensive_minor"
+			add_ideas = SIA_courting_mission
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_seato_charm_offensive_minor completed"
+			if = { limit = { has_idea = SIA_courting_mission } remove_ideas = SIA_courting_mission }
+			add_opinion_modifier = { target = FROM modifier = medium_increase }
+			FROM = {
+				add_opinion_modifier = { target = ROOT modifier = medium_increase }
+				SIA_seato_score_update = yes
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { influence_target = FROM.id }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 3
+		}
+	}
+}

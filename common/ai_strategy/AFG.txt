@@ -70,17 +70,6 @@ AFG_hates_taliban = {
 	ai_strategy = { type = contain id = "TAL" value = 50 }
 }
 
-AFG_claim_pashtunistan = {
-	allowed = { original_tag = AFG }
-	enable = {
-		country_exists = PAK
-		has_country_flag = AFG_claimed_pashtunistan
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = antagonize id = "PAK" value = 50 }
-}
-
 AFG_fight_the_insurgency = {
 	allowed = { original_tag = AFG }
 	enable = {
@@ -107,4 +96,309 @@ AFG_insurgency_is_winning = {
 	ai_strategy = { type = pp_spend_priority id = decision value = 400 }
 	ai_strategy = { type = pp_spend_amount id = decision value = 400 }
 	ai_strategy = { type = garrison value = 50 }
+}
+
+### Neighbourly relations ###
+
+AFG_regional_neighbours = {
+	allowed = { original_tag = AFG }
+	enable = {
+		has_war = no
+		NOT = { country_exists = TAL }
+		NOT = { has_country_flag = AFG_claimed_pashtunistan }
+	}
+	abort_when_not_enabled = yes
+
+	# Landlocked and dependent on transit, so the northern neighbours matter more than ideology
+	ai_strategy = { type = befriend id = "UZB" value = 60 }
+	ai_strategy = { type = befriend id = "TAJ" value = 60 }
+	ai_strategy = { type = befriend id = "TRK" value = 50 }
+	ai_strategy = { type = befriend id = "CHI" value = 40 }
+	ai_strategy = { type = avoid_starting_wars value = 50 }
+}
+
+AFG_pakistan_rapprochement = {
+	allowed = { original_tag = AFG }
+	enable = {
+		has_war = no
+		country_exists = PAK
+		has_country_flag = trade_agreement@PAK
+		NOT = { has_country_flag = AFG_claimed_pashtunistan }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "PAK" value = 120 }
+	ai_strategy = { type = antagonize id = "PAK" value = -150 }
+	ai_strategy = { type = avoid_starting_wars value = 50 }
+}
+
+AFG_pakistan_confrontation = {
+	allowed = { original_tag = AFG }
+	enable = {
+		country_exists = PAK
+		OR = {
+			has_country_flag = AFG_claimed_pashtunistan
+			has_war_with = PAK
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "PAK" value = 100 }
+	ai_strategy = { type = contain id = "PAK" value = 100 }
+	ai_strategy = { type = befriend id = "PAK" value = -100 }
+	# Pakistan's rivals are the natural backers of a Pashtunistan claim
+	ai_strategy = { type = befriend id = "RAJ" value = 80 }
+	ai_strategy = { type = befriend id = "PER" value = 40 }
+}
+
+AFG_no_suicide_taj = {
+	allowed = { original_tag = AFG }
+	enable = {
+		country_exists = TAJ
+		OR = {
+			has_wargoal_against = TAJ
+			TAJ = { has_wargoal_against = AFG }
+		}
+		strength_ratio = {
+			tag = TAJ
+			ratio < 1
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = "TAJ" value = -100 }
+	ai_strategy = { type = prepare_for_war id = "TAJ" value = 50 }
+}
+
+AFG_no_suicide_per = {
+	allowed = { original_tag = AFG }
+	enable = {
+		country_exists = PER
+		OR = {
+			has_wargoal_against = PER
+			PER = { has_wargoal_against = AFG }
+		}
+		strength_ratio = {
+			tag = PER
+			ratio < 1
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = "PER" value = -100 }
+	ai_strategy = { type = prepare_for_war id = "PER" value = 50 }
+}
+
+AFG_western_alignment = {
+	allowed = { original_tag = AFG }
+	enable = {
+		OR = {
+			has_completed_focus = AFG_pro_western
+			has_completed_focus = AFG_approaching_nato
+			has_completed_focus = AFG_atlanticism
+			has_completed_focus = AFG_endorse_the_american_candidate
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "USA" value = 200 }
+	ai_strategy = { type = alliance id = "USA" value = 100 }
+	ai_strategy = { type = befriend id = "ENG" value = 80 }
+	ai_strategy = { type = befriend id = "GER" value = 60 }
+	ai_strategy = { type = antagonize id = "SOV" value = 30 }
+}
+
+AFG_iranian_alignment = {
+	allowed = { original_tag = AFG }
+	enable = {
+		country_exists = PER
+		OR = {
+			has_completed_focus = AFG_hezb_i_wahdat
+			has_completed_focus = AFG_join_axis_of_resistance
+			has_completed_focus = AFG_mission_to_tehran
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "PER" value = 200 }
+	ai_strategy = { type = alliance id = "PER" value = 100 }
+	ai_strategy = { type = befriend id = "USA" value = -80 }
+	ai_strategy = { type = contain id = "PAK" value = 50 }
+}
+
+AFG_non_aligned_neighbourhood = {
+	allowed = { original_tag = AFG }
+	enable = {
+		has_war = no
+		has_completed_focus = AFG_remain_neutral
+	}
+	abort_when_not_enabled = yes
+
+	# Neutrality here means courting everyone rather than picking a bloc
+	ai_strategy = { type = befriend id = "PER" value = 60 }
+	ai_strategy = { type = befriend id = "PAK" value = 40 }
+	ai_strategy = { type = befriend id = "CHI" value = 60 }
+	ai_strategy = { type = befriend id = "RAJ" value = 40 }
+	ai_strategy = { type = avoid_starting_wars value = 50 }
+}
+
+### Territorial defence ###
+
+AFG_defend_the_core = {
+	allowed = { original_tag = AFG }
+	enable = {
+		has_war = no
+		NOT = { has_country_flag = AFG_claimed_pashtunistan }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = garrison value = 60 }
+	ai_strategy = { type = area_priority id = asia value = 200 }
+	ai_strategy = {
+		type = put_unit_buffers
+		ratio = 0.35
+		states = {
+			409
+			411
+			414
+			415
+		}
+		subtract_invasions_from_need = yes
+		subtract_fronts_from_need = yes
+	}
+}
+
+AFG_hold_the_pakistani_border = {
+	allowed = { original_tag = AFG }
+	enable = {
+		country_exists = PAK
+		NOT = { has_country_flag = AFG_claimed_pashtunistan }
+		NOT = { has_completed_focus = AFG_preparing_invasion }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = front_control
+		country_trigger = { tag = PAK }
+		ordertype = front
+		execute_order = yes
+		execution_type = careful
+	}
+	ai_strategy = { type = front_unit_request tag = PAK value = 60 }
+}
+
+AFG_fortress_afghanistan = {
+	allowed = { original_tag = AFG }
+	enable = {
+		has_war = no
+		OR = {
+			has_completed_focus = AFG_isolism
+			has_completed_focus = AFG_defending_our_borders
+			has_completed_focus = AFG_the_swiss_way
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = garrison value = 120 }
+	ai_strategy = { type = avoid_starting_wars value = 50 }
+	ai_strategy = { type = build_building id = bunker value = 100 }
+	ai_strategy = {
+		type = put_unit_buffers
+		ratio = 0.50
+		states = {
+			409
+			410
+			411
+			412
+			414
+			415
+		}
+		subtract_invasions_from_need = yes
+		subtract_fronts_from_need = yes
+	}
+}
+
+### Wartime conduct ###
+
+AFG_do_not_declare_additional_wars = {
+	allowed = { original_tag = AFG }
+	enable = {
+		has_war = yes
+	}
+	abort_when_not_enabled = yes
+
+	# Same shape as RAJ_do_not_declare_additional_wars: suppress new fronts while one is open
+	ai_strategy = { type = avoid_starting_wars value = -100 }
+}
+
+AFG_civil_war_mobilisation = {
+	allowed = { original_tag = AFG }
+	enable = {
+		OR = {
+			has_war_with = TAL
+			has_civil_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	# Survival war: build whatever can hold a line, and buy the guns rather than wait on industry
+	ai_strategy = { type = force_build_armies value = 150 }
+	ai_strategy = { type = role_ratio id = Militia value = 60 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 60 }
+	ai_strategy = { type = build_army id = infantry value = 200 }
+	ai_strategy = { type = equipment_market_buying_threshold id = infantry_weapons_type value = -100 }
+	ai_strategy = { type = equipment_market_buying_threshold id = artillery_equipment value = -50 }
+	ai_strategy = { type = front_unit_request tag = TAL value = 150 }
+}
+
+AFG_concentrate_against_the_taliban = {
+	allowed = { original_tag = AFG }
+	enable = {
+		has_war_with = TAL
+		TAL = { controls_state = 414 }
+	}
+	abort_when_not_enabled = yes
+
+	# Hindu Kush and Kabul are the decisive ground, not the northern rear
+	ai_strategy = {
+		type = theatre_distribution_demand_increase
+		id = 414
+		value = 30
+	}
+	ai_strategy = {
+		type = theatre_distribution_demand_increase
+		id = 411
+		value = 15
+	}
+	ai_strategy = { type = consider_weak id = "TAL" value = 50 }
+}
+
+AFG_counter_insurgency_footing = {
+	allowed = { original_tag = AFG }
+	enable = {
+		has_country_flag = AFG_active_taliban_insurgency
+		no_jihadist_government = yes
+	}
+	abort_when_not_enabled = yes
+
+	# An insurgency is a garrison problem, not an armoured one
+	ai_strategy = { type = role_ratio id = garrison value = 60 }
+	ai_strategy = { type = role_ratio id = Militia value = 40 }
+	ai_strategy = { type = role_ratio id = armor value = -40 }
+	ai_strategy = { type = operative_mission value = 80 mission = build_intel_network mission_target = PAK }
+}
+
+AFG_prepare_the_pakistani_campaign = {
+	allowed = { original_tag = AFG }
+	enable = {
+		country_exists = PAK
+		has_completed_focus = AFG_preparing_invasion
+		NOT = { has_war_with = PAK }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = "PAK" value = 100 }
+	ai_strategy = { type = force_build_armies value = 100 }
+	ai_strategy = { type = role_ratio id = armor value = 40 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 30 }
 }

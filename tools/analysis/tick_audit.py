@@ -38,6 +38,7 @@ Usage
     python3 tools/run.py tick_audit --cadence weekly
     python3 tools/run.py tick_audit --top 25        # heaviest-country table size
     python3 tools/run.py tick_audit --json out.json # machine-readable dump
+    python3 tools/run.py tick_audit --spot-check    # static hotspot findings
 
     # Drill down into EXACTLY what is flagged (each item with file:line):
     python3 tools/run.py tick_audit --list all
@@ -60,7 +61,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from shared_utils import (  # noqa: E402
     Colors,
+    atomic_write_text,
     extract_block_from_text,
+    read_text_strict,
+    read_text_under,
     strip_comments,
 )
 
@@ -106,6 +110,13 @@ def count_statements(body):
     return len(STMT_RE.findall(body))
 
 
+def _parse_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def bucket_for_days(days):
     """Map a raw day count onto a cadence bucket, keeping the exact value."""
     if days is None:
@@ -132,8 +143,7 @@ def _iter_txt(subdir):
             if name.endswith(".txt"):
                 path = os.path.join(root, name)
                 try:
-                    with open(path, "r", encoding="utf-8-sig", errors="replace") as fh:
-                        yield path, fh.read()
+                    yield path, read_text_under(path, REPO_ROOT)
                 except OSError:
                     continue
 
@@ -276,7 +286,7 @@ def extract_direct_event_fires(body):
             if not idm:
                 continue
             dm = re.search(r"\bdays\s*=\s*(\d+)", block)
-            fires.append((idm.group(1), int(dm.group(1)) if dm else None))
+            fires.append((idm.group(1), _parse_int(dm.group(1)) if dm else None))
         # verb = X   (bare id, no block)
         for m in re.finditer(verb + r"\s*=\s*(" + IDENT + r")", body):
             fires.append((m.group(1), None))
@@ -442,9 +452,11 @@ def collect_timed_decisions():
                     continue
                 # Choose the shortest literal timer as the effective period;
                 # if none are literal, mark the decision variable-timed.
-                literals = {
-                    f: int(v) for f, v in timers.items() if v.lstrip("-").isdigit()
-                }
+                literals = {}
+                for timer_field, raw_value in timers.items():
+                    parsed_value = _parse_int(raw_value)
+                    if parsed_value is not None:
+                        literals[timer_field] = parsed_value
                 if literals:
                     field, days = min(literals.items(), key=lambda kv: kv[1])
                     bucket = bucket_for_days(days)
@@ -651,8 +663,7 @@ def write_flamegraph(root, out_path, repo_root):
         .replace("__REPO__", abs_root)
         .replace("__TOTAL__", str(root["total"]))
     )
-    with open(out_path, "w", encoding="utf-8") as fh:
-        fh.write(html)
+    atomic_write_text(out_path, html)
 
 
 # aggregation ----------------------------------------------------------------
@@ -1078,8 +1089,8 @@ _FLAMEGRAPH_HTML = r"""<!doctype html>
 <header>
   <h1>Millennium&nbsp;Dawn — recurring tick profiler</h1>
   <div class="sub"><span class="warn">Static estimate.</span> The in-game
-  profiler crashes on a mod this large, so this reconstructs what each recurring
-  tick runs by reading the scripts. Every node is sized by <b>ops</b> — the
+  profiler is useful for bounded in-game spot tests, while this reconstructs
+  what each recurring tick runs by reading the scripts. Every node is sized by <b>ops</b> — the
   count of <code>key = …</code> statements it runs (effects <i>and</i>
   limit/trigger checks), including everything it calls. It's a proxy for cost,
   not measured milliseconds. Click a row to open what it calls; click a file to
@@ -1249,7 +1260,748 @@ document.getElementById('clear').addEventListener('click',()=>{q.value='';locati
 </script></body></html>"""
 
 
+# --- static spot checks -----------------------------------------------------
+
+SPOT_DEFAULT_PATHS = (
+    "common/on_actions",
+    "common/scripted_effects",
+    "common/decisions",
+    "common/scripted_guis",
+    "common/national_focus",
+    "events",
+)
+SPOT_SEVERITIES = ("critical", "high", "medium", "low")
+SPOT_SEVERITY_RANK = {name: i for i, name in enumerate(SPOT_SEVERITIES)}
+SPOT_REFERENCES = [".claude/docs/performance-patterns.md"]
+SPOT_LOOP_OPS = ("every_country", "every_state", "random_country", "while_loop_effect")
+SPOT_ASSUMPTIONS = (
+    "Native profile supplies measured timings; static ops are a source-level proxy.",
+    "on_startup and on_country_created are one-shot, not recurring tick hooks.",
+    "Focus completion loops are one-shot and capped at Medium severity.",
+    "can_staff_* trigger reads are O(1) and are not performance findings.",
+    "Fixed-tag scope opens are not treated as unbounded country loops.",
+    "Array equivalence and allow_branch replacement quality require manual review.",
+)
+
+
+def _spot_context(kind="unknown", name=None, cadence=None, reachability="unknown"):
+    return {
+        "kind": kind,
+        "name": name,
+        "cadence": cadence,
+        "scope": None,
+        "reachability": reachability,
+    }
+
+
+def _spot_finding(
+    rule, operation, severity, confidence, file, line, context, evidence, suggestion
+):
+    return {
+        "rule": rule,
+        "id": rule,
+        "severity": severity,
+        "confidence": confidence,
+        "file": file,
+        "line": line,
+        "context": context,
+        "execution_context": context,
+        "operation": operation,
+        "evidence": evidence,
+        "suggestion": suggestion,
+        "references": list(SPOT_REFERENCES),
+    }
+
+
+def _spot_sort(findings):
+    return sorted(
+        findings,
+        key=lambda f: (
+            SPOT_SEVERITY_RANK[f["severity"]],
+            f["file"],
+            f["line"],
+            f["rule"],
+            f["operation"],
+        ),
+    )
+
+
+def _spot_paths(requested):
+    explicit = bool(requested)
+    paths = requested if explicit else list(SPOT_DEFAULT_PATHS)
+    result = []
+    errors = []
+    root = os.path.realpath(REPO_ROOT)
+    for value in paths:
+        raw_candidate = (
+            value if os.path.isabs(value) else os.path.join(REPO_ROOT, value)
+        )
+        candidate = os.path.realpath(raw_candidate)
+        try:
+            inside = os.path.commonpath((root, candidate)) == root
+        except ValueError:
+            inside = False
+        rel = os.path.relpath(candidate, REPO_ROOT).replace("\\", "/")
+        if (
+            not inside
+            or rel == "."
+            or rel == "resources"
+            or rel.startswith("resources/")
+            or rel == ".claude/worktrees"
+            or rel.startswith(".claude/worktrees/")
+            or os.path.islink(raw_candidate)
+        ):
+            errors.append(
+                {
+                    "file": rel,
+                    "line": 1,
+                    "message": "path is outside the supported repository scan scope",
+                    "fatal": True,
+                }
+            )
+            continue
+        if os.path.isdir(candidate):
+            for base, dirs, files in os.walk(candidate):
+                dirs[:] = sorted(
+                    directory
+                    for directory in dirs
+                    if not os.path.islink(os.path.join(base, directory))
+                    and directory not in {"resources", ".git", ".claude"}
+                )
+                result.extend(
+                    os.path.join(base, filename)
+                    for filename in sorted(files)
+                    if filename.endswith(".txt")
+                    and not os.path.islink(os.path.join(base, filename))
+                )
+        elif os.path.isfile(candidate) and candidate.endswith(".txt"):
+            result.append(candidate)
+        elif explicit:
+            errors.append(
+                {
+                    "file": rel,
+                    "line": 1,
+                    "message": "missing or unsupported path",
+                    "fatal": True,
+                }
+            )
+    return sorted(set(result)), errors
+
+
+def render_spot_checks(report, limit=50):
+    out = [
+        "== STATIC PERFORMANCE SPOT CHECKS ==",
+        "Reachability is proven only through known recurring hooks. Ops are not milliseconds; use native profile for bounded measured spot tests.",
+        "",
+    ]
+    for finding in report["findings"][:limit]:
+        context = finding["context"]
+        context_bits = [context.get("kind"), context.get("name")]
+        if context.get("cadence"):
+            context_bits.append(context["cadence"])
+        if context.get("scope"):
+            context_bits.append(context["scope"])
+        context_label = ", ".join(bit for bit in context_bits if bit)
+        out.extend(
+            [
+                f"{finding['severity'].upper()} {finding['file']}:{finding['line']}",
+                f"  {finding['rule']}: {finding['operation']} ({context['reachability']})",
+                f"  context: {context_label}",
+                f"  impact: {finding['evidence']}",
+                f"  fix: {finding['suggestion']}",
+                "",
+            ]
+        )
+    out.append(
+        "Summary: " + ", ".join(f"{s}={report['summary'][s]}" for s in SPOT_SEVERITIES)
+    )
+    return "\n".join(out)
+
+
+# --- corrected spot-check traversal ----------------------------------------
+
+
+def _spot_mask(source):
+    """Blank comments and quoted text without changing source offsets."""
+    masked = list(source)
+    in_quote = False
+    in_comment = False
+    for index, char in enumerate(source):
+        if char == "\n":
+            in_comment = False
+            continue
+        if in_comment:
+            masked[index] = " "
+            continue
+        if char == "#" and not in_quote:
+            in_comment = True
+            masked[index] = " "
+            continue
+        if char == '"' and (index == 0 or source[index - 1] != "\\"):
+            in_quote = not in_quote
+            continue
+        if in_quote:
+            masked[index] = " "
+    return "".join(masked)
+
+
+def _spot_named_blocks(source, base=0, diagnostics=None, file="?", full_source=None):
+    full_source = source if full_source is None else full_source
+    clean = _spot_mask(source)
+    pattern = re.compile(r"(?m)(?<![A-Za-z0-9_.@])(" + IDENT + r")\s*=\s*\{")
+    cursor = 0
+    while True:
+        match = pattern.search(clean, cursor)
+        if not match:
+            break
+        _masked_body, end = extract_block_from_text(clean, match.end() - 1)
+        if end == -1:
+            if diagnostics is not None:
+                diagnostics.append(
+                    {
+                        "file": file,
+                        "line": _line_of(full_source, base + match.start()),
+                        "message": "malformed unclosed block",
+                    }
+                )
+            break
+        open_pos = clean.find("{", match.start(), match.end())
+        body = source[open_pos + 1 : end - 1]
+        yield match.group(1), body, base + match.start(), base + open_pos + 1
+        cursor = end
+
+
+def _spot_context_at(name, parent):
+    context = dict(parent)
+    if name.startswith("on_"):
+        match = re.fullmatch(r"on_(daily|weekly|monthly)(?:_([A-Z0-9]{2,4}))?", name)
+        if match:
+            context.update(
+                kind="on_action",
+                name=name,
+                cadence=match.group(1),
+                scope=match.group(2) or "GLOBAL",
+                reachability="recurring",
+            )
+        elif name in ("on_startup", "on_country_created"):
+            context.update(kind="on_action", name=name, reachability="one-shot")
+    return context
+
+
+def _spot_repeated_foreign_scopes(loop_body):
+    pseudo_scopes = {"ROOT", "PREV", "FROM", "THIS"}
+    repeated = {}
+    for name, child, start, _child_abs in _spot_named_blocks(loop_body):
+        if not re.fullmatch(r"[A-Z0-9]{2,4}", name) or name in pseudo_scopes:
+            continue
+        normalized = re.sub(r"\s+", " ", strip_comments(child)).strip()
+        repeated.setdefault((name, normalized), []).append(start)
+    return [
+        (name, starts[1])
+        for (name, _normalized), starts in repeated.items()
+        if len(starts) > 1
+    ]
+
+
+def _spot_scan_context_body(
+    full_source, body, file, body_abs, context, findings, diagnostics
+):
+    clean = _spot_mask(body)
+    loop_records = []
+    for op in SPOT_LOOP_OPS + (
+        "force_update_dynamic_modifier",
+        "divide_variable",
+        "divide_temp_variable",
+    ):
+        for match in re.finditer(r"\b" + re.escape(op) + r"\s*=", clean):
+            line = _line_of(full_source, body_abs + match.start())
+            if op in SPOT_LOOP_OPS:
+                if context.get("reachability") == "recurring":
+                    severity = (
+                        "medium"
+                        if op == "while_loop_effect"
+                        else (
+                            "critical"
+                            if context.get("scope") == "GLOBAL"
+                            and context.get("cadence") == "daily"
+                            else "high"
+                        )
+                    )
+                elif context.get("kind") == "focus_completion":
+                    severity = "medium"
+                elif context.get("kind") in (
+                    "decision_visible",
+                    "decision_available",
+                ):
+                    severity = "high"
+                elif context.get("kind") == "decision_ai_will_do":
+                    severity = "medium"
+                elif context.get("reachability") == "one-shot" and context.get(
+                    "kind"
+                ) in ("on_action", "scripted_effect"):
+                    diagnostics.append(
+                        {
+                            "file": file,
+                            "line": line,
+                            "message": "suppressed loop in one-shot on_action",
+                            "suppressed": True,
+                        }
+                    )
+                    continue
+                else:
+                    severity = "medium"
+                findings.append(
+                    _spot_finding(
+                        "unbounded-scope-loop",
+                        op,
+                        severity,
+                        "high",
+                        file,
+                        line,
+                        dict(context),
+                        op + " in " + str(context.get("name") or "unknown"),
+                        "Use a maintained engine array or move the work off the hot path.",
+                    )
+                )
+                loop_body, loop_end = extract_block_from_text(body, match.end() - 1)
+                if loop_end != -1:
+                    loop_open = clean.find("{", match.start(), match.end())
+                    loop_records.append(
+                        (op, loop_body, body_abs + loop_open + 1, context)
+                    )
+            elif op == "force_update_dynamic_modifier":
+                severity = (
+                    "high"
+                    if context.get("reachability") == "recurring"
+                    else (
+                        "medium"
+                        if context.get("kind", "").startswith("decision_")
+                        or context.get("kind") == "scripted_gui"
+                        else "low"
+                    )
+                )
+                findings.append(
+                    _spot_finding(
+                        "force-update-dynamic-modifier",
+                        op,
+                        severity,
+                        "high",
+                        file,
+                        line,
+                        dict(context),
+                        "dynamic modifier is forcibly refreshed",
+                        "Refresh when backing data changes instead of polling.",
+                    )
+                )
+            else:
+                division_body, division_end = extract_block_from_text(
+                    clean, match.end() - 1
+                )
+                if division_end == -1:
+                    diagnostics.append(
+                        {
+                            "file": file,
+                            "line": line,
+                            "message": "malformed division block",
+                        }
+                    )
+                    continue
+                assignment = re.search(
+                    r"^\s*([A-Za-z_][A-Za-z0-9_.@^]*)\s*=\s*([^\s}]+)",
+                    division_body,
+                )
+                if not assignment:
+                    continue
+                denominator = assignment.group(2)
+                if re.fullmatch(r"-?(?:\d+(?:\.\d*)?|\.\d+)", denominator):
+                    continue
+                before = clean[: match.start()]
+                clamp = re.search(
+                    r"\bclamp_(?:temp_)?variable\s*=\s*\{[^}]*\bvar\s*=\s*"
+                    + re.escape(denominator)
+                    + r"\b",
+                    before,
+                )
+                if not clamp:
+                    severity = (
+                        "high"
+                        if context.get("reachability") == "recurring"
+                        else "medium"
+                    )
+                    findings.append(
+                        _spot_finding(
+                            "unclamped-division",
+                            op,
+                            severity,
+                            "medium",
+                            file,
+                            line,
+                            dict(context),
+                            "variable denominator has no preceding clamp in the same context",
+                            "Clamp the denominator to a safe minimum before division.",
+                        )
+                    )
+
+    for _op, loop_body, loop_abs, loop_context in loop_records:
+        for name, second_start in _spot_repeated_foreign_scopes(loop_body):
+            findings.append(
+                _spot_finding(
+                    "repeated-invariant-scope",
+                    name,
+                    (
+                        "high"
+                        if loop_context.get("reachability") == "recurring"
+                        else "medium"
+                    ),
+                    "medium",
+                    file,
+                    _line_of(full_source, loop_abs + second_start),
+                    dict(loop_context),
+                    f"identical {name} scope read repeats inside one loop",
+                    "Hoist the invariant lookup before the loop.",
+                )
+            )
+
+    for match in re.finditer(r"\bcan_staff_[A-Za-z0-9_]+\s*=\s*\{", clean):
+        trigger_body, trigger_end = extract_block_from_text(clean, match.end() - 1)
+        if (
+            trigger_end != -1
+            and re.search(r"\bcheck_variable\s*=", trigger_body)
+            and not re.search(r"\b(?:every_|random_|any_)", trigger_body)
+        ):
+            diagnostics.append(
+                {
+                    "file": file,
+                    "line": _line_of(full_source, body_abs + match.start()),
+                    "message": "suppressed O(1) can_staff trigger",
+                    "suppressed": True,
+                }
+            )
+
+
+def scan_spot_checks(paths=None, scope=None):
+    files, diagnostics = _spot_paths(paths)
+    texts = {}
+    for filename in files:
+        try:
+            texts[filename] = read_text_strict(filename)
+        except (OSError, UnicodeDecodeError) as exc:
+            diagnostics.append(
+                {
+                    "file": _rel(filename),
+                    "line": 1,
+                    "message": f"unreadable file: {exc}",
+                    "fatal": True,
+                }
+            )
+
+    findings = []
+    effects = {}
+    hook_records = []
+    for filename, source in sorted(texts.items()):
+        rel = _rel(filename)
+        blocks = list(
+            _spot_named_blocks(
+                source,
+                diagnostics=diagnostics,
+                file=rel,
+                full_source=source,
+            )
+        )
+        if rel.startswith("common/scripted_effects/"):
+            for name, body, _start, body_abs in blocks:
+                effects.setdefault(name, (filename, body, body_abs))
+            continue
+
+        if rel.startswith("common/on_actions/"):
+            hooks = []
+            for name, body, start, body_abs in blocks:
+                if name == "on_actions":
+                    hooks.extend(
+                        _spot_named_blocks(
+                            body,
+                            body_abs,
+                            diagnostics,
+                            rel,
+                            full_source=source,
+                        )
+                    )
+                else:
+                    hooks.append((name, body, start, body_abs))
+            for name, body, _start, body_abs in hooks:
+                context = _spot_context_at(name, _spot_context())
+                if context.get("reachability") not in ("recurring", "one-shot"):
+                    continue
+                hook_records.append((body, context))
+                _spot_scan_context_body(
+                    source, body, rel, body_abs, context, findings, diagnostics
+                )
+            continue
+
+        if rel.startswith("common/national_focus/"):
+            focus_blocks = []
+            for name, body, start, body_abs in blocks:
+                if name == "focus_tree":
+                    focus_blocks.extend(
+                        _spot_named_blocks(
+                            body,
+                            body_abs,
+                            diagnostics,
+                            rel,
+                            full_source=source,
+                        )
+                    )
+                else:
+                    focus_blocks.append((name, body, start, body_abs))
+            for block_name, focus_body, _start, focus_abs in focus_blocks:
+                focus_id = re.search(r"(?m)^\s*id\s*=\s*(" + IDENT + r")", focus_body)
+                focus_name = focus_id.group(1) if focus_id else block_name
+                for child, body, _child_start, child_abs in _spot_named_blocks(
+                    focus_body,
+                    focus_abs,
+                    diagnostics,
+                    rel,
+                    full_source=source,
+                ):
+                    if child != "completion_reward":
+                        continue
+                    context = _spot_context(
+                        "focus_completion", focus_name, reachability="one-shot"
+                    )
+                    _spot_scan_context_body(
+                        source, body, rel, child_abs, context, findings, diagnostics
+                    )
+            continue
+
+        if rel.startswith("common/decisions/"):
+            categories = []
+            for name, body, start, body_abs in blocks:
+                if name == "decisions":
+                    categories.extend(
+                        _spot_named_blocks(
+                            body,
+                            body_abs,
+                            diagnostics,
+                            rel,
+                            full_source=source,
+                        )
+                    )
+                else:
+                    categories.append((name, body, start, body_abs))
+            for _category, category_body, _start, category_abs in categories:
+                for (
+                    decision,
+                    decision_body,
+                    _decision_start,
+                    decision_abs,
+                ) in _spot_named_blocks(
+                    category_body,
+                    category_abs,
+                    diagnostics,
+                    rel,
+                    full_source=source,
+                ):
+                    for key, body, _key_start, key_abs in _spot_named_blocks(
+                        decision_body,
+                        decision_abs,
+                        diagnostics,
+                        rel,
+                        full_source=source,
+                    ):
+                        if key not in ("visible", "available", "ai_will_do"):
+                            continue
+                        context = _spot_context(
+                            "decision_" + key,
+                            decision,
+                            reachability="ui" if key != "ai_will_do" else "ai",
+                        )
+                        _spot_scan_context_body(
+                            source, body, rel, key_abs, context, findings, diagnostics
+                        )
+            continue
+
+        if rel.startswith("common/scripted_guis/"):
+            guis = []
+            for name, body, start, body_abs in blocks:
+                if name == "scripted_gui":
+                    guis.extend(
+                        _spot_named_blocks(
+                            body,
+                            body_abs,
+                            diagnostics,
+                            rel,
+                            full_source=source,
+                        )
+                    )
+                else:
+                    guis.append((name, body, start, body_abs))
+            for gui, body, gui_start, body_abs in guis:
+                context = _spot_context("scripted_gui", gui, reachability="redraw")
+                clean_body = _spot_mask(body)
+                dirty = re.search(
+                    r"\bdirty\s*=\s*(global\.(?:date|num_days)\b)", clean_body
+                )
+                if dirty:
+                    findings.append(
+                        _spot_finding(
+                            "gui-date-dirty",
+                            "dirty",
+                            "critical",
+                            "high",
+                            rel,
+                            _line_of(source, body_abs + dirty.start()),
+                            context,
+                            "dirty is bound to " + dirty.group(1),
+                            "Use a mutation counter that changes only when backing data changes.",
+                        )
+                    )
+                else:
+                    context_type = re.search(
+                        r"(?m)^\s*context_type\s*=\s*(" + IDENT + r")",
+                        clean_body,
+                    )
+                    stateful = re.search(
+                        r"\b(?:effects|triggers|properties|dynamic_lists)\s*=\s*\{",
+                        clean_body,
+                    )
+                    if (
+                        context_type
+                        and context_type.group(1) == "decision_category"
+                        and stateful
+                        and not re.search(r"(?m)^\s*dirty\s*=", clean_body)
+                    ):
+                        findings.append(
+                            _spot_finding(
+                                "gui-missing-dirty",
+                                "dirty",
+                                "high",
+                                "medium",
+                                rel,
+                                _line_of(source, gui_start),
+                                context,
+                                "stateful decision-category GUI has no dirty binding",
+                                "Bind dirty to a mutation counter for the GUI backing data.",
+                            )
+                        )
+                _spot_scan_context_body(
+                    source, body, rel, body_abs, context, findings, diagnostics
+                )
+            continue
+
+        if rel.startswith("events/"):
+            for event_type, event_body, _event_start, event_abs in blocks:
+                event_id = re.search(r"(?m)^\s*id\s*=\s*(" + IDENT + r")", event_body)
+                event_name = event_id.group(1) if event_id else event_type
+                for child, body, _child_start, child_abs in _spot_named_blocks(
+                    event_body,
+                    event_abs,
+                    diagnostics,
+                    rel,
+                    full_source=source,
+                ):
+                    if child not in ("immediate", "option"):
+                        continue
+                    context = _spot_context(
+                        "event_" + child, event_name, reachability="event-driven"
+                    )
+                    _spot_scan_context_body(
+                        source, body, rel, child_abs, context, findings, diagnostics
+                    )
+
+    queue = []
+    for body, context in hook_records:
+        queue.extend(
+            (callee, context) for callee in extract_scripted_calls(body, effects)
+        )
+    seen_contexts = set()
+    while queue:
+        name, context = queue.pop(0)
+        key = (
+            name,
+            context.get("cadence"),
+            context.get("scope"),
+            context.get("reachability"),
+        )
+        if key in seen_contexts or name not in effects:
+            continue
+        seen_contexts.add(key)
+        filename, body, body_abs = effects[name]
+        derived = dict(context, kind="scripted_effect", name=name)
+        _spot_scan_context_body(
+            texts[filename],
+            body,
+            _rel(filename),
+            body_abs,
+            derived,
+            findings,
+            diagnostics,
+        )
+        queue.extend(
+            (callee, context) for callee in extract_scripted_calls(body, effects)
+        )
+
+    if scope:
+        findings = [
+            item for item in findings if item["context"].get("cadence") == scope
+        ]
+    unique_findings = {}
+    for finding in findings:
+        key = (
+            finding["file"],
+            finding["line"],
+            finding["rule"],
+            finding["operation"],
+            json.dumps(finding["context"], sort_keys=True),
+        )
+        unique_findings[key] = finding
+    findings = _spot_sort(list(unique_findings.values()))
+
+    unique_diagnostics = {}
+    for diagnostic in diagnostics:
+        key = (
+            diagnostic.get("file", ""),
+            diagnostic.get("line", 0),
+            diagnostic.get("message", ""),
+            bool(diagnostic.get("suppressed")),
+        )
+        unique_diagnostics[key] = diagnostic
+    diagnostics = sorted(
+        unique_diagnostics.values(),
+        key=lambda item: (
+            item.get("file", ""),
+            item.get("line", 0),
+            item.get("message", ""),
+        ),
+    )
+
+    summary = {
+        severity: sum(item["severity"] == severity for item in findings)
+        for severity in SPOT_SEVERITIES
+    }
+    summary["suppressed"] = sum(item.get("suppressed", False) for item in diagnostics)
+    summary["parse_errors"] = sum(
+        "malformed" in item.get("message", "") for item in diagnostics
+    )
+    actual_paths = [
+        value.replace("\\", "/") for value in (paths if paths else SPOT_DEFAULT_PATHS)
+    ]
+    return {
+        "schema_version": 1,
+        "tool": "tick_audit",
+        "mode": "spot-check",
+        "filters": {"paths": actual_paths, "scope": scope, "severity": "low"},
+        "assumptions": list(SPOT_ASSUMPTIONS),
+        "summary": summary,
+        "findings": findings,
+        "diagnostics": diagnostics,
+    }
+
+
 # --- CLI --------------------------------------------------------------------
+
+
+def _write_json_atomic(path, payload):
+    atomic_write_text(path, json.dumps(payload, indent=2) + "\n")
 
 
 def main(argv=None):
@@ -1284,6 +2036,24 @@ def main(argv=None):
     )
     parser.add_argument("--json", metavar="PATH", help="Write the full report as JSON.")
     parser.add_argument(
+        "--spot-check",
+        nargs="*",
+        metavar="PATH",
+        help="Run deterministic static performance findings on selected paths.",
+    )
+    parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Spot-check output format.",
+    )
+    parser.add_argument(
+        "--fail-on",
+        choices=SPOT_SEVERITIES + ("none",),
+        default="none",
+        help="Fail when spot-check findings meet this severity.",
+    )
+    parser.add_argument(
         "--flamegraph",
         metavar="PATH",
         help="Write a self-contained interactive HTML call-tree (profiler-style "
@@ -1295,6 +2065,30 @@ def main(argv=None):
     parser.add_argument("--no-color", action="store_true", help="Disable ANSI colors.")
     args = parser.parse_args(argv)
 
+    if args.spot_check is not None:
+        spot_report = scan_spot_checks(args.spot_check, scope=args.cadence)
+        if args.json:
+            _write_json_atomic(args.json, spot_report)
+            print(f"Wrote {args.json}")
+        if args.format == "json":
+            print(json.dumps(spot_report, indent=2))
+        else:
+            print(render_spot_checks(spot_report, args.limit))
+        if any(
+            diagnostic.get("fatal")
+            or diagnostic.get("message", "").startswith(
+                ("path is outside", "missing or unsupported", "unsupported file")
+            )
+            for diagnostic in spot_report["diagnostics"]
+        ):
+            return 2
+        if args.fail_on != "none" and any(
+            SPOT_SEVERITY_RANK[f["severity"]] <= SPOT_SEVERITY_RANK[args.fail_on]
+            for f in spot_report["findings"]
+        ):
+            return 1
+        return 0
+
     # The call-tree outputs re-parse the mod once and are independent of the
     # text report, so handle them first and return if that's all that's asked.
     if args.flamegraph or args.tree:
@@ -1303,8 +2097,7 @@ def main(argv=None):
         loc = index_effect_locations()
         root = build_call_tree(effects, events, loc)
         if args.tree:
-            with open(args.tree, "w", encoding="utf-8") as fh:
-                json.dump(root, fh, indent=1)
+            _write_json_atomic(args.tree, root)
             print(f"Wrote {args.tree}")
         if args.flamegraph:
             write_flamegraph(root, args.flamegraph, REPO_ROOT)
@@ -1315,8 +2108,7 @@ def main(argv=None):
     report = build_report(tag_filter=args.tag)
 
     if args.json:
-        with open(args.json, "w", encoding="utf-8") as fh:
-            json.dump(report, fh, indent=2)
+        _write_json_atomic(args.json, report)
         print(f"Wrote {args.json}")
 
     use_colors = not args.no_color and sys.stdout.isatty()

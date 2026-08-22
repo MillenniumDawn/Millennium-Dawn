@@ -21,6 +21,148 @@ calculate_energy_use = {
 	energy_calc_fuel = yes
 }
 
+# Effect: update_energy_policy_change
+# Purpose: Refreshes only the values affected by an Energy consumption policy
+update_energy_policy_change = {
+	if = {
+		limit = { has_country_flag = energy_state_bases_initialized }
+		calculate_energy_use = yes
+	}
+	else = {
+		update_state_variables = yes
+	}
+	calculate_tax_gain = yes
+	update_display = yes
+
+	if = {
+		limit = { is_ai = no }
+		update_money_dirty_variable = yes
+		refresh_investment_gui = yes
+	}
+}
+
+automation_energy_consumption_policy_weekly = {
+	set_temp_variable = { automation_energy_net_ratio = 1 }
+	if = {
+		limit = { check_variable = { energy_consumption > 0.01 } }
+		set_temp_variable = {
+			automation_energy_net_ratio = {
+				value = energy_consumption
+				add = energy_balance
+				divide = energy_consumption
+				clamp = { min = 0 max = 999999999 }
+			}
+		}
+	}
+
+	set_temp_variable = { current_energy_consumption_policy = 0 }
+	if = {
+		limit = { has_idea = heavy_power_restrictions_spirit }
+		set_temp_variable = { current_energy_consumption_policy = -2 }
+	}
+	else_if = {
+		limit = { has_idea = some_power_restrictions_spirit }
+		set_temp_variable = { current_energy_consumption_policy = -1 }
+	}
+	else_if = {
+		limit = { has_idea = some_additional_consumption_spirit }
+		set_temp_variable = { current_energy_consumption_policy = 1 }
+	}
+	else_if = {
+		limit = { has_idea = heavy_additional_consumption_spirit }
+		set_temp_variable = { current_energy_consumption_policy = 2 }
+	}
+	set_temp_variable = { desired_energy_consumption_policy = current_energy_consumption_policy }
+	set_temp_variable = {
+		automation_energy_storage_threshold = {
+			value = max_stored_energy
+			multiply = 0.95
+		}
+	}
+
+	if = {
+		limit = {
+			check_variable = { automation_energy_net_ratio < 0.95 }
+			check_variable = { current_energy_consumption_policy > -2 }
+		}
+		subtract_from_temp_variable = { desired_energy_consumption_policy = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { automation_energy_net_ratio > 1.10 }
+			check_variable = { current_energy_consumption_policy < 0 }
+		}
+		add_to_temp_variable = { desired_energy_consumption_policy = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { automation_energy_net_ratio > 1.10 }
+			check_variable = { current_energy_consumption_policy > -1 }
+			check_variable = { current_energy_consumption_policy < 2 }
+			OR = {
+				check_variable = { max_stored_energy < 0.01 }
+				check_variable = { var = stored_energy value = automation_energy_storage_threshold compare = greater_than_or_equals }
+			}
+		}
+		add_to_temp_variable = { desired_energy_consumption_policy = 1 }
+	}
+
+	if = {
+		limit = { NOT = { check_variable = { desired_energy_consumption_policy = current_energy_consumption_policy } } }
+		if = {
+			limit = { check_variable = { desired_energy_consumption_policy = -2 } }
+			swap_ideas = {
+				add_idea = heavy_power_restrictions_spirit
+				remove_idea = some_power_restrictions_spirit
+			}
+		}
+		else_if = {
+			limit = { check_variable = { desired_energy_consumption_policy = -1 } }
+			if = {
+				limit = { check_variable = { current_energy_consumption_policy = -2 } }
+				swap_ideas = {
+					add_idea = some_power_restrictions_spirit
+					remove_idea = heavy_power_restrictions_spirit
+				}
+			}
+			else = { add_ideas = some_power_restrictions_spirit }
+		}
+		else_if = {
+			limit = {
+				check_variable = { desired_energy_consumption_policy = 0 }
+				check_variable = { current_energy_consumption_policy = -1 }
+			}
+			remove_ideas = some_power_restrictions_spirit
+		}
+		else_if = {
+			limit = {
+				check_variable = { desired_energy_consumption_policy = 0 }
+				check_variable = { current_energy_consumption_policy = 1 }
+			}
+			remove_ideas = some_additional_consumption_spirit
+		}
+		else_if = {
+			limit = { check_variable = { desired_energy_consumption_policy = 1 } }
+			if = {
+				limit = { check_variable = { current_energy_consumption_policy = 2 } }
+				swap_ideas = {
+					add_idea = some_additional_consumption_spirit
+					remove_idea = heavy_additional_consumption_spirit
+				}
+			}
+			else = { add_ideas = some_additional_consumption_spirit }
+		}
+		else_if = {
+			limit = { check_variable = { desired_energy_consumption_policy = 2 } }
+			swap_ideas = {
+				add_idea = heavy_additional_consumption_spirit
+				remove_idea = some_additional_consumption_spirit
+			}
+		}
+		update_energy_policy_change = yes
+	}
+}
+
 # Effect: energy_calc_consumption
 # Purpose: Population, building, and static energy consumption, computed straight into the per-type display vars
 # Produces (temp): temp_total_energy_use (consumed by energy_calc_balance)
@@ -164,29 +306,34 @@ energy_calc_generation = {
 	}
 
 	set_variable = { energy_sum = { value = state_renewable_energy_var multiply = temp_renewable_energy_gain_m } }
-	multiply_variable = { minimum_renewable_energy_var = temp_renewable_energy_gain_m }
-	multiply_variable = { maximum_renewable_energy_var = temp_renewable_energy_gain_m }
+	set_variable = { minimum_renewable_energy_var = { value = minimum_renewable_energy_var_base multiply = temp_renewable_energy_gain_m } }
+	set_variable = { maximum_renewable_energy_var = { value = maximum_renewable_energy_var_base multiply = temp_renewable_energy_gain_m } }
 
 	set_variable = { renewable_energy_display_var = energy_sum }
 
 	# Base amount of GW/h one battery park can store, scaled by storage size modifier
-	add_to_variable = {
+	set_variable = {
 		max_stored_energy = {
-			value = number_of_battery_parks
-			multiply = 100
-			multiply = { value = 1 add = modifier@battery_park_storage_size_modifier }
+			value = max_stored_energy_base
+			add = {
+				value = number_of_battery_parks
+				multiply = 100
+				multiply = { value = 1 add = modifier@battery_park_storage_size_modifier }
+			}
 		}
 	}
 
-	multiply_variable = {
+	set_variable = {
 		hydroelectric_energy_generation = {
-			value = temp_energy_gain_m
+			value = hydroelectric_energy_generation_base
+			multiply = temp_energy_gain_m
 			multiply = { value = 1 add = modifier@hydroelectric_power_generation_modifier }
 		}
 	}
-	multiply_variable = {
+	set_variable = {
 		geothermal_energy_generation = {
-			value = temp_energy_gain_m
+			value = geothermal_energy_generation_base
+			multiply = temp_energy_gain_m
 			multiply = { value = 1 add = modifier@geothermal_power_generation_modifier }
 		}
 	}
@@ -484,6 +631,14 @@ update_global_energy_ui = {
 # TODO: This right now is limited to one way agreements for now. We can expand this to more bilateral agreements later on when we have more details on it.
 calculate_energy_load_sharing = {
 	if = { limit = { NOT = { check_variable = { energy_load_sharing_nations^0 = 0 } } }
+		set_temp_variable = {
+			available_energy_to_share = {
+				value = energy_difference_variable
+				add = energy_load_sharing_use_var
+				max = 0
+			}
+		}
+
 		# Reset the amount of energy load shared to 0
 		set_variable = { energy_load_sharing_use_var = 0 }
 		set_variable = { energy_load_sharing_gain_var = 0 }
@@ -491,13 +646,14 @@ calculate_energy_load_sharing = {
 		for_each_scope_loop = {
 			array = energy_load_sharing_nations
 			if = { limit = { check_variable = { energy_difference_variable < 0 } }
-				add_to_temp_variable = { PREV.needed_energy_for_nations = energy_difference_variable }
+				set_temp_variable = { energy_required = { value = energy_difference_variable multiply = -1 } }
+				add_to_temp_variable = { PREV.needed_energy_for_nations = energy_required }
 			}
 		}
 
 		# Calculate the Energy Shared
 		# Assume that if you are sharing energy that you have to maintain more energy otherwise the loading sharing has gotta stop
-		if = { limit = { check_variable = { energy_difference_variable > needed_energy_for_nations } }
+		if = { limit = { NOT = { check_variable = { available_energy_to_share < needed_energy_for_nations } } }
 			resize_array = { array = energy_load_sharing_nations_value size = energy_load_sharing_nations^num }
 
 			for_each_loop = {
@@ -639,7 +795,7 @@ change_reactor_grade_material_effect = {
 # Effect: buy_fuel_from_the_market_effect
 # Purpose: Adds 50k units of fuel when buying it from the energy screen
 buy_fuel_from_the_market_effect = {
-	add_fuel = 50000
+	add_fuel = 100000
 	set_temp_variable = { treasury_change = -0.1 }
 	modify_treasury_effect = yes
 }
