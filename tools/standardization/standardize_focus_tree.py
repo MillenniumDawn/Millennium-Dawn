@@ -1036,8 +1036,10 @@ def standardize_focus_tree(
         return False
 
     try:
+        if output_lines and output_lines[0].startswith("\ufeff"):
+            output_lines[0] = output_lines[0][1:]
         output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
-        atomic_write_text(output_file, output)
+        atomic_write_text(output_file, output, bom=False)
 
         time_str = format_elapsed(time.time() - start_time)
 
