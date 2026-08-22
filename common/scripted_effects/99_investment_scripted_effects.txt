@@ -89,12 +89,8 @@ send_pending_investment_offer = {
 }
 
 initialize_pending_investment_offer = {
-	set_variable = {
-		investor_cost = {
-			value = FROM.project_monetary_cost_effect
-			multiply = 0.1
-		}
-	}
+	set_variable = { investor_cost = FROM.project_monetary_cost_effect }
+	multiply_variable = { investor_cost = 0.1 }
 	set_variable = { pending_offer_total_cost = FROM.project_monetary_cost^-1 }
 	set_variable = { pending_offer_duration = FROM.project_construction_duration^-1 }
 	set_variable = { pending_offer_amount = FROM.project_build_amount^-1 }
@@ -770,20 +766,31 @@ state_owned_concurrent_investment_limit_implement = {
 
 calculate_internal_investment_costs = {
 	ROOT = {
-		set_temp_variable = { internal_investment_pp_cost = pp_cost_temp }
-		set_temp_variable = { pp_cost_modifier = 1 }
-		add_to_temp_variable = { pp_cost_modifier = modifier@internal_investments_pp_cost_modifier }
-		multiply_temp_variable = { internal_investment_pp_cost = pp_cost_modifier }
-		clamp_temp_variable = { var = internal_investment_pp_cost min = 25 }
+		set_temp_variable = {
+			internal_investment_pp_cost = {
+				value = pp_cost_temp
+				multiply = {
+					value = 1
+					add = modifier@internal_investments_pp_cost_modifier
+				}
+				clamp = { min = 25 }
+			}
+		}
 
-		set_temp_variable = { internal_investment_money_cost = gdp_total }
-		multiply_temp_variable = { internal_investment_money_cost = ii_cost }
-		set_temp_variable = { ii_cost_modifier = 1 }
-		add_to_temp_variable = { ii_cost_modifier = modifier@internal_investments_money_cost_modifier }
-		set_temp_variable = { min_ii_cost = gdp_total }
-		multiply_temp_variable = { min_ii_cost = 0.001 }
-		multiply_temp_variable = { internal_investment_money_cost = ii_cost_modifier }
-		clamp_temp_variable = { var = internal_investment_money_cost min = min_ii_cost }
+		set_temp_variable = {
+			internal_investment_money_cost = {
+				value = gdp_total
+				multiply = ii_cost
+				multiply = {
+					value = 1
+					add = modifier@internal_investments_money_cost_modifier
+				}
+				max = {
+					value = gdp_total
+					multiply = 0.001
+				}
+			}
+		}
 	}
 }
 
@@ -791,12 +798,20 @@ calculate_internal_investment_costs = {
 calculate_internal_investments_costs = {
 	calculate_internal_investment_costs = yes
 	ROOT = {
-		set_temp_variable = { pp_cost = internal_investment_pp_cost }
-		multiply_temp_variable = { pp_cost = -1 }
+		set_temp_variable = {
+			pp_cost = {
+				value = internal_investment_pp_cost
+				multiply = -1
+			}
+		}
 		add_political_power = pp_cost
 
-		set_temp_variable = { treasury_change = internal_investment_money_cost }
-		multiply_temp_variable = { treasury_change = -1 }
+		set_temp_variable = {
+			treasury_change = {
+				value = internal_investment_money_cost
+				multiply = -1
+			}
+		}
 		modify_treasury_effect = yes
 		state_owned_concurrent_investment_limit_implement = yes
 	}

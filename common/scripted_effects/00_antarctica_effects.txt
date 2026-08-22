@@ -2275,10 +2275,14 @@ antarctica_auto_resupply_station = {
 				check_variable = { delivery_fuel_pending < 1 }
 				check_variable = { max_capacity > 0 }
 			}
-			set_temp_variable = { delivery_cost = max_capacity }
-			multiply_temp_variable = { delivery_cost = 0.00025 }
-			multiply_temp_variable = { delivery_cost = cost_multiplier }
-			round_variable = delivery_cost
+			set_temp_variable = {
+				delivery_cost = {
+					value = max_capacity
+					multiply = 0.00025
+					multiply = cost_multiplier
+					round = yes
+				}
+			}
 			if = {
 				limit = {
 					check_variable = {
@@ -2287,6 +2291,7 @@ antarctica_auto_resupply_station = {
 						compare = greater_than_or_equals
 					}
 				}
+				set_temp_variable = { automation_antarctica_resupply = 1 }
 				antarctica_send_supplies_to_selected_station = yes
 			}
 		}
@@ -2303,7 +2308,10 @@ antarctica_send_supplies_to_selected_station = {
 		limit = { check_variable = { selected_antarctica_station > 0 } }
 
 		set_temp_variable = { station_id = selected_antarctica_station }
-		antarctica_recalculate_station_module_outputs = yes
+		if = {
+			limit = { NOT = { check_variable = { automation_antarctica_resupply = 1 } } }
+			antarctica_recalculate_station_module_outputs = yes
+		}
 		set_temp_variable = { delivery_days_remaining = 0 }
 		set_temp_variable = { delivery_fuel_pending = 0 }
 		set_temp_variable = { delivery_days_remaining = global.antarctica_station_delivery_days_remaining^station_id }
@@ -2329,15 +2337,18 @@ antarctica_send_supplies_to_selected_station = {
 			}
 
 			# Calculate cost: 0.25b per 1000 fuel = max_capacity * 0.00025 * multiplier
-			set_temp_variable = { delivery_cost = max_capacity }
-			multiply_temp_variable = { delivery_cost = 0.00025 }
-			multiply_temp_variable = { delivery_cost = cost_multiplier }
-			round_variable = delivery_cost
+			set_temp_variable = {
+				delivery_cost = {
+					value = max_capacity
+					multiply = 0.00025
+					multiply = cost_multiplier
+					round = yes
+				}
+			}
 
 			# Deduct cost from treasury using MD's treasury system
 			custom_effect_tooltip = antarctica_fuel_delivery_cost_TT
-			set_temp_variable = { treasury_change = delivery_cost }
-			multiply_temp_variable = { treasury_change = -1 }
+			set_temp_variable = { treasury_change = { value = delivery_cost multiply = -1 } }
 			modify_treasury_effect = yes
 
 			# Start delivery queue
