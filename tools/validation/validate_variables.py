@@ -71,22 +71,26 @@ def _scan_flags_in_file(
     cleared_list: List[str] = []
 
     if f"set_{flag_type}_flag =" in text:
-        set_list.extend(re.findall(r"set_" + flag_type + r"_flag = ([^ \t\n]+)", text))
+        set_list.extend(
+            re.findall(r"set_" + flag_type + r"_flag = ([^ \t\n\r]+)", text)
+        )
         set_list.extend(
             re.findall(
-                r"set_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
+                r"set_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\r\}]+).*?\}",
                 text,
                 flags=re.MULTILINE | re.DOTALL,
             )
         )
 
     if f"has_{flag_type}_flag =" in text or f"modify_{flag_type}_flag =" in text:
-        used_list.extend(re.findall(r"has_" + flag_type + r"_flag = ([^ \t\n]+)", text))
+        used_list.extend(
+            re.findall(r"has_" + flag_type + r"_flag = ([^ \t\n\r]+)", text)
+        )
         used_list.extend(
             re.findall(
                 r"(?:has|modify)_"
                 + flag_type
-                + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
+                + r"_flag = \{.*?flag = ([^ \t\n\r\}]+).*?\}",
                 text,
                 flags=re.MULTILINE | re.DOTALL,
             )
@@ -94,7 +98,7 @@ def _scan_flags_in_file(
 
     if f"clr_{flag_type}_flag =" in text:
         cleared_list.extend(
-            re.findall(r"clr_" + flag_type + r"_flag = ([^ \t\n]+)", text)
+            re.findall(r"clr_" + flag_type + r"_flag = ([^ \t\n\r]+)", text)
         )
 
     return set_list, used_list, cleared_list
@@ -1161,30 +1165,30 @@ def _scan_targets_in_text(
     # used — event_target: references and has_event_target
     if "tag_aliases" in filename:
         if "global_event_target =" in text_file:
-            for m in re.findall(r'global_event_target = ([^ \n\t\#"]+)', text_file):
+            for m in re.findall(r'global_event_target = ([^ \n\t\r\#"]+)', text_file):
                 used_paths[m] = basename
     else:
         if "event_target:" in text_file:
-            for m in re.findall(r'event_target:([^ \n\t\#"]+)', text_file):
+            for m in re.findall(r'event_target:([^ \n\t\r\#"]+)', text_file):
                 used_paths[m] = basename
         if "has_event_target =" in text_file:
-            for m in re.findall(r'has_event_target = ([^ \n\t"]+)', text_file):
+            for m in re.findall(r'has_event_target = ([^ \n\t\r"]+)', text_file):
                 used_paths[m] = basename
 
     # set — save_global_event_target_as / save_event_target_as (not in tag_aliases)
     if "tag_aliases" not in filename:
         if "save_global_event_target_as =" in text_file:
             for m in re.findall(
-                r'save_global_event_target_as = ([^ \n\t\#"]+)', text_file
+                r'save_global_event_target_as = ([^ \n\t\r\#"]+)', text_file
             ):
                 set_paths[m] = basename
         if "save_event_target_as =" in text_file:
-            for m in re.findall(r'save_event_target_as = ([^ \n\t\#"]+)', text_file):
+            for m in re.findall(r'save_event_target_as = ([^ \n\t\r\#"]+)', text_file):
                 set_paths[m] = basename
 
     # cleared — clear_global_event_target
     if "clear_global_event_target =" in text_file:
-        for m in re.findall(r'clear_global_event_target = ([^ \n\t\#"]+)', text_file):
+        for m in re.findall(r'clear_global_event_target = ([^ \n\t\r\#"]+)', text_file):
             cleared_paths[m] = basename
 
     return (set_paths, used_paths, cleared_paths)
