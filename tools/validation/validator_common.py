@@ -158,6 +158,7 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "production_oil_factor_tt",
         "production_speed_facility_factor_tt",
         "production_speed_supply_node_factor_tt",
+        "production_speed_synthetic_refinery_factor_tt",
         "recruitable_population_tt",
         "resistance_activity_tt",
         "resistance_target_tt",
@@ -308,6 +309,38 @@ def case_mismatch(ref: str, ci_index: dict):
     exactly (a Linux-only bug), else None."""
     hit = ci_index.get(ref.lower())
     return hit if (hit is not None and hit != ref) else None
+
+
+# Trait definitions sit at one tab of indent inside the `leader_traits = { }`
+# wrapper. `-` is in the charset for `emerging_Communist-State`.
+LEADER_TRAIT_DEF_RE = re.compile(r"^\t([\w\-]+)\s*=\s*\{", re.MULTILINE)
+
+
+def parse_leader_trait_names(mod_path: str, subdir: str) -> Set[str]:
+    """Collect every trait defined in the ``common/<subdir>/`` trait files.
+
+    Covers both leader trait pools: ``country_leader`` (advisors and country
+    leaders) and ``unit_leader`` (generals, admirals, operatives). The hyphen is
+    part of the name charset because ``emerging_Communist-State`` exists.
+    """
+    names: Set[str] = set()
+    trait_dir = os.path.join(mod_path, "common", subdir)
+    if not os.path.isdir(trait_dir):
+        return names
+
+    try:
+        trait_files = sorted(os.listdir(trait_dir))
+    except OSError:
+        return names
+
+    for fname in trait_files:
+        if not fname.endswith(".txt"):
+            continue
+        content = FileOpener.open_text_file(
+            os.path.join(trait_dir, fname), lowercase=False, strip_comments_flag=True
+        )
+        names.update(match.group(1) for match in LEADER_TRAIT_DEF_RE.finditer(content))
+    return names
 
 
 def scan_meta_constructed_names(files, defined_names):
@@ -984,7 +1017,15 @@ class BaseValidator:
                         seen.add(f)
                         files.append(f)
 
-        result = [f for f in files if not should_skip_file(f)]
+        # should_skip_file matches on path segments, and unconditionally skips
+        # any ".claude"/".git" segment. Checking against the mod_path-relative
+        # path (not the absolute one) keeps that rule scoped to a nested
+        # worktree/config dir *discovered while scanning* — it must not also
+        # trigger just because mod_path itself lives under .claude/worktrees/
+        # (this environment's own worktree convention).
+        result = [
+            f for f in files if not should_skip_file(os.path.relpath(f, self.mod_path))
+        ]
         if extra_skip is not None:
             result = [f for f in result if not extra_skip(f)]
         return result

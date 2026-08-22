@@ -630,3 +630,41 @@ def test_parse_loc_refs_strips_sentence_final_period(tmp_path):
     loc.write_text(' a: "Costs £command_power."\n', encoding="utf-8")
 
     assert _loc_ref_names(loc, tmp_path) == ["GFX_command_power"]
+
+
+# ---------------------------------------------------------------------------
+# Bug: flag/target scanning regexes excluded space/tab/newline from a
+# captured name but not \r. A CRLF-file capture at end-of-line baked a
+# trailing \r into the flag/target name, so the same flag read from a CRLF
+# file and an LF file produced two different dict keys, causing false
+# positive missing-flag / unused-flag reports.
+# File: validate_variables.py (_scan_flags_in_file, _scan_targets_in_text)
+# ---------------------------------------------------------------------------
+
+
+def test_scan_flags_in_file_strips_trailing_cr():
+    from validate_variables import _scan_flags_in_file
+
+    set_list, used_list, cleared_list = _scan_flags_in_file(
+        "set_global_flag = FOO\n", "global"
+    )
+    assert set_list == ["FOO"]
+
+    set_list, used_list, cleared_list = _scan_flags_in_file(
+        "has_global_flag = FOO\r\n", "global"
+    )
+    assert used_list == ["FOO"]
+
+
+def test_scan_targets_in_text_strips_trailing_cr():
+    from validate_variables import _scan_targets_in_text
+
+    set_paths, _used_paths, _cleared_paths = _scan_targets_in_text(
+        "save_event_target_as = FOO\r\n", "test.txt"
+    )
+    assert set_paths == {"FOO": "test.txt"}
+
+    _set_paths, used_paths, _cleared_paths = _scan_targets_in_text(
+        "event_target:FOO\r\n", "test.txt"
+    )
+    assert used_paths == {"FOO": "test.txt"}
