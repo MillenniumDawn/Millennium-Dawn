@@ -260,12 +260,12 @@ influence_decisions = {
 				tooltip = influence_government_not_lobbied_tt
 				NOT = { has_country_flag = influence_government_lobbied }
 			}
+			hidden_trigger = { NOT = { has_country_flag = automation_combat_foreign_influence_cooldown } }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_foreign_influence"
-			set_temp_variable = { percent_change = 2.5 }
-			change_domestic_influence_percentage = yes
+			automation_combat_foreign_influence_execute = yes
 		}
 
 		ai_will_do = {
@@ -390,6 +390,10 @@ influence_decisions = {
 			}
 			NOT = { has_decision = combat_second_influencer_decision }
 			NOT = { has_decision = combat_third_influencer_decision }
+			hidden_trigger = {
+				NOT = { has_country_flag = automation_combat_biggest_influencer_cooldown }
+				var:influence_array^0 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+			}
 			custom_trigger_tooltip = {
 				tooltip = influence_government_not_lobbied_by_tt
 				NOT = {
@@ -406,18 +410,15 @@ influence_decisions = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_biggest_influencer_decision"
-			if = { limit = { check_variable = { combat_big_influencer = 0 } }
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { tag_index = influence_array^0 }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
+			set_temp_variable = { combat_influencer_target = combat_big_influencer }
+			automation_combat_influencer_attack_complete = yes
+			set_country_flag = { flag = automation_combat_biggest_influencer_cooldown value = 1 days = 30 }
+			if = {
+				limit = { var:combat_influencer_target = { exists = yes } }
+				var:combat_influencer_target = {
+					set_country_flag = { flag = automation_influence_attack_cooldown_@ROOT value = 1 days = 30 }
+				}
 			}
-			else = {
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { influencer_index = 0 }
-				change_current_influencer_index_percentage = yes
-			}
-
 			clear_variable = combat_big_influencer
 		}
 
@@ -559,10 +560,14 @@ influence_decisions = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = has_foreign_influence
-				check_variable = { influence_array^0 > 0 }
+				check_variable = { influence_array^1 > 0 }
 			}
 			NOT = { has_decision = combat_biggest_influencer_decision }
 			NOT = { has_decision = combat_third_influencer_decision }
+			hidden_trigger = {
+				NOT = { has_country_flag = automation_combat_second_influencer_cooldown }
+				var:influence_array^1 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+			}
 			custom_trigger_tooltip = {
 				tooltip = influence_government_not_lobbied_by_tt
 				NOT = {
@@ -579,18 +584,15 @@ influence_decisions = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_second_influencer_decision"
-			if = { limit = { check_variable = { combat_second_big_influencer = 0 } }
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { tag_index = influence_array^1 }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
+			set_temp_variable = { combat_influencer_target = combat_second_big_influencer }
+			automation_combat_influencer_attack_complete = yes
+			set_country_flag = { flag = automation_combat_second_influencer_cooldown value = 1 days = 30 }
+			if = {
+				limit = { var:combat_influencer_target = { exists = yes } }
+				var:combat_influencer_target = {
+					set_country_flag = { flag = automation_influence_attack_cooldown_@ROOT value = 1 days = 30 }
+				}
 			}
-			else = {
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { influencer_index = 1 }
-				change_current_influencer_index_percentage = yes
-			}
-
 			clear_variable = combat_second_big_influencer
 		}
 
@@ -733,10 +735,14 @@ influence_decisions = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = has_foreign_influence
-				check_variable = { influence_array^0 > 0 }
+				check_variable = { influence_array^2 > 0 }
 			}
 			NOT = { has_decision = combat_biggest_influencer_decision }
 			NOT = { has_decision = combat_second_influencer_decision }
+			hidden_trigger = {
+				NOT = { has_country_flag = automation_combat_third_influencer_cooldown }
+				var:influence_array^2 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+			}
 			custom_trigger_tooltip = {
 				tooltip = influence_government_not_lobbied_by_tt
 				NOT = {
@@ -753,18 +759,15 @@ influence_decisions = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_third_influencer_decision"
-			if = { limit = { check_variable = { combat_third_big_influencer = 0 } }
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { tag_index = influence_array^2 }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
+			set_temp_variable = { combat_influencer_target = combat_third_big_influencer }
+			automation_combat_influencer_attack_complete = yes
+			set_country_flag = { flag = automation_combat_third_influencer_cooldown value = 1 days = 30 }
+			if = {
+				limit = { var:combat_influencer_target = { exists = yes } }
+				var:combat_influencer_target = {
+					set_country_flag = { flag = automation_influence_attack_cooldown_@ROOT value = 1 days = 30 }
+				}
 			}
-			else = {
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { influencer_index = 2 }
-				change_current_influencer_index_percentage = yes
-			}
-
 			clear_variable = combat_third_big_influencer
 		}
 

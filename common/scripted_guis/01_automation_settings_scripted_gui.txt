@@ -37,7 +37,7 @@ scripted_gui = {
 		visible = {
 			is_ai = no
 			has_country_flag = MD_automation_settings_open
-			NOT = { check_variable = { automation_settings_page = 2 } }
+			check_variable = { automation_settings_page = 1 }
 		}
 
 		triggers = {
@@ -55,6 +55,16 @@ scripted_gui = {
 
 			automation_settings_general_page_button_click_enabled = { always = no }
 			automation_settings_space_page_button_click_enabled = { always = yes }
+			automation_settings_influence_page_button_click_enabled = { always = yes }
+			automation_pp_reserve_plus_button_click_enabled = { check_variable = { automation_pp_reserve < 500 } }
+			automation_pp_reserve_minus_button_click_enabled = { check_variable = { automation_pp_reserve > 0 } }
+			automation_nato_header_visible = { has_idea = NATO_member }
+			automation_nato_ratification_checkbox_visible = { has_idea = NATO_member }
+			automation_nato_ratification_label_visible = { has_idea = NATO_member }
+			automation_nato_ratification_checkbox_click_enabled = { has_idea = NATO_member }
+			automation_antarctica_resupply_checkbox_visible = { has_country_flag = antarctica_has_active_station }
+			automation_antarctica_resupply_label_visible = { has_country_flag = antarctica_has_active_station }
+			automation_antarctica_resupply_checkbox_click_enabled = { has_country_flag = antarctica_has_active_station }
 		}
 
 		effects = {
@@ -66,6 +76,34 @@ scripted_gui = {
 				set_variable = { automation_settings_page = 2 }
 				space_auto_preview = yes
 				international_systems_update = yes
+			}
+
+			automation_settings_influence_page_button_click = {
+				set_variable = { automation_settings_page = 3 }
+			}
+
+			automation_pp_reserve_plus_button_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve add = 1 clamp = { min = 0 max = 500 } } }
+			}
+
+			automation_pp_reserve_plus_button_control_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve add = 10 clamp = { min = 0 max = 500 } } }
+			}
+
+			automation_pp_reserve_plus_button_shift_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve add = 100 clamp = { min = 0 max = 500 } } }
+			}
+
+			automation_pp_reserve_minus_button_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve subtract = 1 clamp = { min = 0 max = 500 } } }
+			}
+
+			automation_pp_reserve_minus_button_control_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve subtract = 10 clamp = { min = 0 max = 500 } } }
+			}
+
+			automation_pp_reserve_minus_button_shift_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve subtract = 100 clamp = { min = 0 max = 500 } } }
 			}
 
 			automation_corruption_checkbox_click = {
@@ -117,6 +155,19 @@ scripted_gui = {
 				}
 				else = {
 					set_country_flag = int_auto_reject_investment_flag
+					clr_country_flag = int_auto_accept_investment_flag
+				}
+				ingame_update_setup = yes
+			}
+
+			automation_investment_acceptance_checkbox_click = {
+				if = {
+					limit = { has_country_flag = int_auto_accept_investment_flag }
+					clr_country_flag = int_auto_accept_investment_flag
+				}
+				else = {
+					set_country_flag = int_auto_accept_investment_flag
+					clr_country_flag = int_auto_reject_investment_flag
 				}
 				ingame_update_setup = yes
 			}
@@ -147,6 +198,43 @@ scripted_gui = {
 					activate_mission = energy_automatic_fuel_purchase
 				}
 				update_global_energy_ui = yes
+			}
+
+			automation_internal_investments_checkbox_click = {
+				if = {
+					limit = { has_country_flag = automation_internal_investments }
+					clr_country_flag = automation_internal_investments
+					clr_country_flag = automation_internal_investment_upkeep_paid
+				}
+				else = {
+					set_country_flag = automation_internal_investments
+				}
+			}
+
+			automation_settings_energy_consumption_policy_checkbox_click = {
+				if = {
+					limit = { has_country_flag = automation_energy_consumption_policy }
+					clr_country_flag = automation_energy_consumption_policy
+				}
+				else = {
+					set_country_flag = automation_energy_consumption_policy
+					if = {
+						limit = { has_country_flag = energy_state_bases_initialized }
+						calculate_energy_use = yes
+						automation_energy_consumption_policy_weekly = yes
+					}
+				}
+				update_global_energy_ui = yes
+			}
+
+			automation_antarctica_resupply_checkbox_click = {
+				if = {
+					limit = { has_country_flag = auto_resupply_antarctica_station }
+					clr_country_flag = auto_resupply_antarctica_station
+				}
+				else = {
+					set_country_flag = auto_resupply_antarctica_station
+				}
 			}
 
 			automation_sc_accept_checkbox_click = {
@@ -261,6 +349,16 @@ scripted_gui = {
 				}
 				international_systems_update = yes
 			}
+
+			automation_nato_ratification_checkbox_click = {
+				if = {
+					limit = { has_country_flag = MD_auto_ratify_nato_accession }
+					clr_country_flag = MD_auto_ratify_nato_accession
+				}
+				else = {
+					set_country_flag = MD_auto_ratify_nato_accession
+				}
+			}
 		}
 
 		properties = {
@@ -269,10 +367,14 @@ scripted_gui = {
 			automation_raid_notifications_checkbox = { image = "[MD_automation_raid_notifications_checkbox_icon]" }
 			automation_influence_report_checkbox = { image = "[MD_automation_influence_report_checkbox_icon]" }
 			automation_investment_rejection_checkbox = { image = "[MD_automation_investment_rejection_checkbox_icon]" }
+			automation_investment_acceptance_checkbox = { image = "[MD_automation_investment_acceptance_checkbox_icon]" }
 			automation_reinvest_off_checkbox = { image = "[MD_automation_reinvest_off_checkbox_icon]" }
 			automation_reinvest_full_checkbox = { image = "[MD_automation_reinvest_full_checkbox_icon]" }
 			automation_reinvest_split_checkbox = { image = "[MD_automation_reinvest_split_checkbox_icon]" }
 			automation_fuel_purchase_checkbox = { image = "[MD_automation_fuel_purchase_checkbox_icon]" }
+			automation_internal_investments_checkbox = { image = "[MD_automation_internal_investments_checkbox_icon]" }
+			automation_settings_energy_consumption_policy_checkbox = { image = "[automation_energy_consumption_policy_checkbox_icon]" }
+			automation_antarctica_resupply_checkbox = { image = "[MD_automation_antarctica_resupply_checkbox_icon]" }
 			automation_sc_accept_checkbox = { image = "[MD_automation_sc_accept_checkbox_icon]" }
 			automation_sc_reject_checkbox = { image = "[MD_automation_sc_reject_checkbox_icon]" }
 			automation_sc_abstain_checkbox = { image = "[MD_automation_sc_abstain_checkbox_icon]" }
@@ -280,6 +382,7 @@ scripted_gui = {
 			automation_ga_reject_checkbox = { image = "[MD_automation_ga_reject_checkbox_icon]" }
 			automation_ga_abstain_checkbox = { image = "[MD_automation_ga_abstain_checkbox_icon]" }
 			automation_satellite_rejection_checkbox = { image = "[MD_automation_satellite_rejection_checkbox_icon]" }
+			automation_nato_ratification_checkbox = { image = "[MD_automation_nato_ratification_checkbox_icon]" }
 		}
 
 		ai_enabled = { always = no }
@@ -299,6 +402,7 @@ scripted_gui = {
 		triggers = {
 			automation_space_general_page_button_click_enabled = { always = yes }
 			automation_space_space_page_button_click_enabled = { always = no }
+			automation_space_influence_page_button_click_enabled = { always = yes }
 			automation_space_toggle_button_click_enabled = { ROOT = { has_completed_space_program = yes } }
 			automation_space_save_button_click_enabled = {
 				ROOT = {
@@ -325,6 +429,10 @@ scripted_gui = {
 
 			automation_space_general_page_button_click = {
 				ROOT = { set_variable = { automation_settings_page = 1 } }
+			}
+
+			automation_space_influence_page_button_click = {
+				ROOT = { set_variable = { automation_settings_page = 3 } }
 			}
 
 			automation_space_toggle_button_click = {
@@ -407,6 +515,93 @@ scripted_gui = {
 			automation_space_deficit_button = { image = "[MD_automation_space_deficit_checkbox_icon]" }
 			automation_space_stockpile_button = { image = "[MD_automation_space_stockpile_checkbox_icon]" }
 			automation_space_latest_olv_button = { image = "[MD_automation_space_latest_olv_checkbox_icon]" }
+		}
+
+		ai_enabled = { always = no }
+	}
+
+	MD_automation_settings_influence_panel = {
+		context_type = player_context
+		window_name = "MD_automation_settings_influence_panel"
+		parent_window_token = politics_tab
+
+		visible = {
+			is_ai = no
+			has_country_flag = MD_automation_settings_open
+			check_variable = { automation_settings_page = 3 }
+		}
+
+		triggers = {
+			automation_influence_general_page_button_click_enabled = { always = yes }
+			automation_influence_space_page_button_click_enabled = { always = yes }
+			automation_influence_influence_page_button_click_enabled = { always = no }
+			automation_influence_pp_reserve_plus_button_click_enabled = { check_variable = { automation_pp_reserve < 500 } }
+			automation_influence_pp_reserve_minus_button_click_enabled = { check_variable = { automation_pp_reserve > 0 } }
+		}
+
+		effects = {
+			automation_influence_close_button_click = {
+				clr_country_flag = MD_automation_settings_open
+			}
+
+			automation_influence_general_page_button_click = {
+				set_variable = { automation_settings_page = 1 }
+			}
+
+			automation_influence_space_page_button_click = {
+				set_variable = { automation_settings_page = 2 }
+				space_auto_preview = yes
+				international_systems_update = yes
+			}
+
+			automation_influence_pp_reserve_plus_button_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve add = 1 clamp = { min = 0 max = 500 } } }
+			}
+
+			automation_influence_pp_reserve_plus_button_control_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve add = 10 clamp = { min = 0 max = 500 } } }
+			}
+
+			automation_influence_pp_reserve_plus_button_shift_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve add = 100 clamp = { min = 0 max = 500 } } }
+			}
+
+			automation_influence_pp_reserve_minus_button_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve subtract = 1 clamp = { min = 0 max = 500 } } }
+			}
+
+			automation_influence_pp_reserve_minus_button_control_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve subtract = 10 clamp = { min = 0 max = 500 } } }
+			}
+
+			automation_influence_pp_reserve_minus_button_shift_click = {
+				set_variable = { automation_pp_reserve = { value = automation_pp_reserve subtract = 100 clamp = { min = 0 max = 500 } } }
+			}
+
+			automation_combat_foreign_influence_checkbox_click = {
+				if = {
+					limit = { has_country_flag = automation_combat_foreign_influence }
+					clr_country_flag = automation_combat_foreign_influence
+				}
+				else = {
+					set_country_flag = automation_combat_foreign_influence
+				}
+			}
+
+			automation_attack_foreign_influencers_checkbox_click = {
+				if = {
+					limit = { has_country_flag = automation_attack_foreign_influencers }
+					clr_country_flag = automation_attack_foreign_influencers
+				}
+				else = {
+					set_country_flag = automation_attack_foreign_influencers
+				}
+			}
+		}
+
+		properties = {
+			automation_combat_foreign_influence_checkbox = { image = "[MD_automation_combat_foreign_influence_checkbox_icon]" }
+			automation_attack_foreign_influencers_checkbox = { image = "[MD_automation_attack_foreign_influencers_checkbox_icon]" }
 		}
 
 		ai_enabled = { always = no }
