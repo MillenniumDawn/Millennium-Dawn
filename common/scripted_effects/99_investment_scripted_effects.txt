@@ -78,6 +78,76 @@ refresh_investment_gui = {
 	}
 }
 
+send_pending_investment_offer = {
+	if = {
+		limit = { has_country_flag = int_auto_accept_investment_flag }
+		country_event = investments_event.12
+	}
+	else = {
+		country_event = investments_event.10
+	}
+}
+
+initialize_pending_investment_offer = {
+	set_variable = {
+		investor_cost = {
+			value = FROM.project_monetary_cost_effect
+			multiply = 0.1
+		}
+	}
+	set_variable = { pending_offer_total_cost = FROM.project_monetary_cost^-1 }
+	set_variable = { pending_offer_duration = FROM.project_construction_duration^-1 }
+	set_variable = { pending_offer_amount = FROM.project_build_amount^-1 }
+	set_variable = { pending_offer_type = FROM.project_building_type^-1 }
+	set_variable = { pending_offer_state = FROM.investments_state_target }
+}
+
+accept_pending_investment_offer = {
+	FROM = {
+		set_variable = { project_building_type^-1 = PREV.pending_offer_type }
+		set_variable = { project_build_amount^-1 = PREV.pending_offer_amount }
+		set_variable = { project_monetary_cost^-1 = PREV.pending_offer_total_cost }
+		set_variable = { project_construction_duration^-1 = PREV.pending_offer_duration }
+		set_variable = { investments_state_target = PREV.pending_offer_state }
+		set_variable = {
+			project_monetary_cost_effect = {
+				value = PREV.pending_offer_total_cost
+				multiply = -1
+			}
+		}
+
+		start_project_two = yes
+		clr_country_flag = this_investment_offer_pending@PREV
+		clr_country_flag = investments_ai_pending
+	}
+	if = {
+		limit = { NOT = { has_country_flag = influence_gained_@FROM } }
+		set_temp_variable = { percent_change = global.investment_percent_change_value }
+		set_temp_variable = { tag_index = FROM.id }
+		change_influence_percentage = yes
+		newline = yes
+
+		if = { limit = { has_game_rule = { rule = rule_influence_cooldown_limits option = day_14_cooldown } }
+			set_country_flag = { flag = influence_gained_@FROM value = 1 days = 14 }
+			custom_effect_tooltip = cooldown_influence_limit_14_tooltip
+		}
+		else_if = { limit = { has_game_rule = { rule = rule_influence_cooldown_limits option = day_30_cooldown } }
+			set_country_flag = { flag = influence_gained_@FROM value = 1 days = 30 }
+			custom_effect_tooltip = cooldown_influence_limit_30_tooltip
+		}
+	}
+
+	set_temp_variable = { treasury_change = FROM.project_monetary_cost_effect }
+	multiply_temp_variable = { treasury_change = 0.1 }
+	modify_treasury_effect = yes
+	clear_variable = investor_cost
+	clear_variable = pending_offer_total_cost
+	clear_variable = pending_offer_duration
+	clear_variable = pending_offer_amount
+	clear_variable = pending_offer_type
+	clear_variable = pending_offer_state
+}
+
 # Recomputes staging-slot (^-1) cost/duration when player tweaks GUI.
 # Scope: ROOT = investor, PREV = selected state.
 update_gui = {
@@ -410,7 +480,7 @@ calculate_project_duration = {
 
 
 # Start project: allocate slot, deduct treasury, activate decisions.
-# Called from investments_event.10 inside FROM = { }: THIS = the investor and
+# Called from accept_pending_investment_offer inside FROM = { }: THIS = the investor and
 # ROOT = the target country. Investor variables live on THIS/PREV, never ROOT.
 start_project_two = {
 	# Get available project
@@ -698,32 +768,35 @@ state_owned_concurrent_investment_limit_implement = {
 	}
 }
 
-# Calculate internal investment PP + money cost, set flags.
-calculate_internal_investments_costs = {
+calculate_internal_investment_costs = {
 	ROOT = {
-		set_temp_variable = { pp_cost = pp_cost_temp }
-
+		set_temp_variable = { internal_investment_pp_cost = pp_cost_temp }
 		set_temp_variable = { pp_cost_modifier = 1 }
 		add_to_temp_variable = { pp_cost_modifier = modifier@internal_investments_pp_cost_modifier }
+		multiply_temp_variable = { internal_investment_pp_cost = pp_cost_modifier }
+		clamp_temp_variable = { var = internal_investment_pp_cost min = 25 }
 
-		multiply_temp_variable = { pp_cost = pp_cost_modifier }
-		clamp_temp_variable = { var = pp_cost min = 25 }
+		set_temp_variable = { internal_investment_money_cost = gdp_total }
+		multiply_temp_variable = { internal_investment_money_cost = ii_cost }
+		set_temp_variable = { ii_cost_modifier = 1 }
+		add_to_temp_variable = { ii_cost_modifier = modifier@internal_investments_money_cost_modifier }
+		set_temp_variable = { min_ii_cost = gdp_total }
+		multiply_temp_variable = { min_ii_cost = 0.001 }
+		multiply_temp_variable = { internal_investment_money_cost = ii_cost_modifier }
+		clamp_temp_variable = { var = internal_investment_money_cost min = min_ii_cost }
+	}
+}
+
+# Calculate internal investment PP + money cost, set flags.
+calculate_internal_investments_costs = {
+	calculate_internal_investment_costs = yes
+	ROOT = {
+		set_temp_variable = { pp_cost = internal_investment_pp_cost }
 		multiply_temp_variable = { pp_cost = -1 }
 		add_political_power = pp_cost
 
-		set_temp_variable = { treasury_change = gdp_total }
-		multiply_temp_variable = { treasury_change = ii_cost }
-
-		set_temp_variable = { ii_cost_modifier = 1 }
-		add_to_temp_variable = { ii_cost_modifier = modifier@internal_investments_money_cost_modifier }
-
-		set_temp_variable = { min_ii_cost = gdp_total }
-		multiply_temp_variable = { min_ii_cost = 0.001 }
-
-		multiply_temp_variable = { treasury_change = ii_cost_modifier }
-		clamp_temp_variable = { var = treasury_change min = min_ii_cost }
+		set_temp_variable = { treasury_change = internal_investment_money_cost }
 		multiply_temp_variable = { treasury_change = -1 }
-
 		modify_treasury_effect = yes
 		state_owned_concurrent_investment_limit_implement = yes
 	}

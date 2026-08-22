@@ -1,0 +1,441 @@
+internal_investment_prepare_payment = {
+	calculate_internal_investment_costs = yes
+	ROOT = {
+		set_temp_variable = { automation_internal_investment_can_pay = 1 }
+		if = {
+			limit = { check_variable = { automation_internal_investment_attempt = 1 } }
+			set_temp_variable = { automation_internal_investment_available_pp = political_power }
+			subtract_from_temp_variable = { automation_internal_investment_available_pp = automation_pp_reserve }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { var = automation_internal_investment_available_pp value = internal_investment_pp_cost compare = less_than }
+						check_variable = { var = treasury value = internal_investment_money_cost compare = less_than }
+					}
+				}
+				set_temp_variable = { automation_internal_investment_can_pay = 0 }
+			}
+		}
+	}
+}
+
+internal_investment_mark_started = {
+	ROOT = {
+		if = {
+			limit = { check_variable = { automation_internal_investment_attempt = 1 } }
+			set_temp_variable = { automation_internal_investment_started = 1 }
+		}
+	}
+}
+
+internal_investment_apply_encourage_investments = {
+	set_temp_variable = { ii_cost = 0.006 }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = currently_encouraged_investments value = 1 days = 160 }
+		calculate_internal_investments_costs = yes
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_encourage_productivity = {
+	set_temp_variable = { ii_cost = 0.009 }
+	set_temp_variable = { var = temp_pop value = state_population_k }
+	multiply_temp_variable = { var = temp_pop value = 0.0001 }
+	multiply_temp_variable = { ii_cost = temp_pop }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = encourage_productivity_in_state value = 1 days = 160 }
+		add_dynamic_modifier = { modifier = state_owned_encouraged_productivity days = 160 }
+		calculate_internal_investments_costs = yes
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_expand_building_capacity = {
+	set_temp_variable = { ii_cost = 0.007 }
+	set_temp_variable = { ii_cost_multiplier = expanded_building_slot_times }
+	add_to_temp_variable = { ii_cost_multiplier = 1 }
+	multiply_temp_variable = { ii_cost = ii_cost_multiplier }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = expand_local_building_capacity value = 1 days = 120 }
+		add_extra_state_shared_building_slots = 1
+		calculate_internal_investments_costs = yes
+		add_to_variable = { expanded_building_slot_times = 1 }
+		if = {
+			limit = { check_variable = { expanded_building_slot_times = 5 } }
+			set_state_flag = block_future_expand_local_building_capacity
+			clr_state_flag = auto_repeat_internal_expand_building_capacity_@ROOT
+		}
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_expand_renewable_capacity = {
+	set_temp_variable = { ii_cost = 0.001 }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = expand_local_renewable_capacity value = 1 days = 180 }
+		add_dynamic_modifier = { modifier = state_owned_local_renewable_capacity_modifier days = 180 }
+		calculate_internal_investments_costs = yes
+		ROOT = {
+			set_temp_variable = { temp_opinion = -3 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_expand_infrastructure = {
+	set_temp_variable = { ii_cost = 0.002 }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = expand_local_infrastructure value = 1 days = 180 }
+		add_dynamic_modifier = { modifier = state_owned_local_infrastructure_modifier days = 180 }
+		calculate_internal_investments_costs = yes
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_expand_military_infrastructure = {
+	set_temp_variable = { ii_cost = 0.002 }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = expand_local_military_infrastructure value = 1 days = 180 }
+		add_dynamic_modifier = { modifier = state_owned_local_military_infrastructure_modifier days = 180 }
+		calculate_internal_investments_costs = yes
+		ROOT = {
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			change_intelligence_community_opinion = yes
+		}
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_expand_energy_infrastructure = {
+	set_temp_variable = { ii_cost = 0.003 }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = expand_local_energy_infrastructure value = 1 days = 180 }
+		add_dynamic_modifier = { modifier = state_owned_local_energy_infrastructure_modifier days = 180 }
+		calculate_internal_investments_costs = yes
+		ROOT = {
+			set_temp_variable = { temp_opinion = 5 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_build_logistics_base = {
+	set_temp_variable = { ii_cost = 0.004 }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = build_forward_logistics_base value = 1 days = 180 }
+		add_dynamic_modifier = { modifier = state_owned_build_forward_logistics_base_modifier days = 180 }
+		calculate_internal_investments_costs = yes
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_improve_rebuilding = {
+	set_temp_variable = { ii_cost = 0.004 }
+	set_temp_variable = { var = temp_pop value = state_population_k }
+	multiply_temp_variable = { var = temp_pop value = 0.0001 }
+	multiply_temp_variable = { ii_cost = temp_pop }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = improve_rebuilding_efforts value = 1 days = 180 }
+		add_dynamic_modifier = { modifier = state_owned_improve_rebuilding_efforts_modifier days = 180 }
+		calculate_internal_investments_costs = yes
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_hire_primary_workers = {
+	set_temp_variable = { ii_cost = 0.006 }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = hire_extra_primary_sector_workers value = 1 days = 180 }
+		add_dynamic_modifier = { modifier = state_owned_hire_extra_primary_sector_workers_modifier days = 180 }
+		calculate_internal_investments_costs = yes
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_expand_coastal_infrastructure = {
+	set_temp_variable = { ii_cost = 0.005 }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = expand_local_coastal_infrastructure value = 1 days = 180 }
+		add_dynamic_modifier = { modifier = state_owned_local_naval_infrastructure_modifier days = 180 }
+		calculate_internal_investments_costs = yes
+		ROOT = {
+			set_temp_variable = { temp_opinion = 5 }
+			change_maritime_industry_opinion = yes
+			change_the_military_opinion = yes
+		}
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_expand_fortifications = {
+	set_temp_variable = { ii_cost = 0.005 }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = expand_local_fortification_efforts value = 1 days = 180 }
+		add_dynamic_modifier = { modifier = state_owned_local_fortification_efforts_modifier days = 180 }
+		calculate_internal_investments_costs = yes
+		ROOT = {
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+		}
+		internal_investment_mark_started = yes
+	}
+}
+
+internal_investment_apply_conservation = {
+	set_temp_variable = { ii_cost = 0.002 }
+	set_temp_variable = { pp_cost_temp = 75 }
+	internal_investment_prepare_payment = yes
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_can_pay = 1 } } }
+		set_state_flag = { flag = improve_local_conservation_efforts value = 1 days = 180 }
+		calculate_internal_investments_costs = yes
+		hidden_effect = { ROOT = { BRA_calculate_amazon_system = yes } }
+		internal_investment_mark_started = yes
+	}
+}
+
+update_automated_internal_investment_state_queue = {
+	if = {
+		limit = { has_automated_internal_investment_request = yes }
+		ROOT = {
+			if = {
+				limit = { NOT = { is_in_array = { array = automated_internal_investment_states value = PREV.id } } }
+				add_to_array = { array = automated_internal_investment_states value = PREV.id }
+			}
+		}
+	}
+	else = {
+		ROOT = { remove_from_array = { array = automated_internal_investment_states value = PREV.id } }
+	}
+	refresh_investment_gui = yes
+}
+
+clear_automated_internal_investment_requests = {
+	clr_state_flag = auto_repeat_internal_encourage_investments_@ROOT
+	clr_state_flag = auto_repeat_internal_encourage_productivity_@ROOT
+	clr_state_flag = auto_repeat_internal_expand_building_capacity_@ROOT
+	clr_state_flag = auto_repeat_internal_expand_renewable_capacity_@ROOT
+	clr_state_flag = auto_repeat_internal_expand_infrastructure_@ROOT
+	clr_state_flag = auto_repeat_internal_expand_military_infrastructure_@ROOT
+	clr_state_flag = auto_repeat_internal_expand_energy_infrastructure_@ROOT
+	clr_state_flag = auto_repeat_internal_build_logistics_base_@ROOT
+	clr_state_flag = auto_repeat_internal_improve_rebuilding_@ROOT
+	clr_state_flag = auto_repeat_internal_hire_primary_workers_@ROOT
+	clr_state_flag = auto_repeat_internal_expand_coastal_infrastructure_@ROOT
+	clr_state_flag = auto_repeat_internal_expand_fortifications_@ROOT
+	clr_state_flag = auto_repeat_internal_conservation_@ROOT
+}
+
+automation_try_internal_investment_state = {
+	ROOT = {
+		set_temp_variable = { automation_internal_investment_attempt = 1 }
+		set_temp_variable = { automation_internal_investment_started = 0 }
+	}
+	if = {
+		limit = {
+			has_state_flag = auto_repeat_internal_encourage_investments_@ROOT
+			NOT = { has_state_flag = currently_encouraged_investments }
+		}
+		internal_investment_apply_encourage_investments = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_encourage_productivity_@ROOT
+			NOT = { has_state_flag = encourage_productivity_in_state }
+		}
+		internal_investment_apply_encourage_productivity = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_expand_building_capacity_@ROOT
+			NOT = { has_state_flag = expand_local_building_capacity }
+			NOT = { has_state_flag = block_future_expand_local_building_capacity }
+		}
+		internal_investment_apply_expand_building_capacity = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_expand_renewable_capacity_@ROOT
+			NOT = { has_state_flag = expand_local_renewable_capacity }
+		}
+		internal_investment_apply_expand_renewable_capacity = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_expand_infrastructure_@ROOT
+			NOT = { has_state_flag = expand_local_infrastructure }
+		}
+		internal_investment_apply_expand_infrastructure = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_expand_military_infrastructure_@ROOT
+			NOT = { has_state_flag = expand_local_military_infrastructure }
+		}
+		internal_investment_apply_expand_military_infrastructure = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_expand_energy_infrastructure_@ROOT
+			NOT = { has_state_flag = expand_local_energy_infrastructure }
+		}
+		internal_investment_apply_expand_energy_infrastructure = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_build_logistics_base_@ROOT
+			NOT = { has_state_flag = build_forward_logistics_base }
+		}
+		internal_investment_apply_build_logistics_base = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_improve_rebuilding_@ROOT
+			NOT = { has_state_flag = improve_rebuilding_efforts }
+		}
+		internal_investment_apply_improve_rebuilding = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_hire_primary_workers_@ROOT
+			NOT = { has_state_flag = hire_extra_primary_sector_workers }
+		}
+		internal_investment_apply_hire_primary_workers = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_expand_coastal_infrastructure_@ROOT
+			NOT = { has_state_flag = expand_local_coastal_infrastructure }
+			is_coastal = yes
+		}
+		internal_investment_apply_expand_coastal_infrastructure = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_expand_fortifications_@ROOT
+			NOT = { has_state_flag = expand_local_fortification_efforts }
+		}
+		internal_investment_apply_expand_fortifications = yes
+	}
+	if = {
+		limit = {
+			ROOT = { check_variable = { automation_internal_investment_started = 0 } }
+			has_state_flag = auto_repeat_internal_conservation_@ROOT
+			NOT = { has_state_flag = improve_local_conservation_efforts }
+			has_dynamic_modifier = { modifier = BRA_amazon_modifier }
+			ROOT = { original_tag = BRA }
+		}
+		internal_investment_apply_conservation = yes
+	}
+	ROOT = { set_temp_variable = { automation_internal_investment_attempt = 0 } }
+	if = {
+		limit = { ROOT = { check_variable = { automation_internal_investment_started = 1 } } }
+		ROOT = { add_to_temp_array = { automated_internal_investment_rotate = PREV.id } }
+	}
+}
+
+automation_internal_investments_weekly = {
+	clear_temp_array = automated_internal_investment_remove
+	clear_temp_array = automated_internal_investment_rotate
+	for_each_scope_loop = {
+		array = automated_internal_investment_states
+		if = {
+			limit = {
+				OR = {
+					NOT = {
+						OR = {
+							is_owned_by = ROOT
+							is_controlled_by = ROOT
+						}
+					}
+					NOT = { has_automated_internal_investment_request = yes }
+				}
+			}
+			clear_automated_internal_investment_requests = yes
+			ROOT = { add_to_temp_array = { automated_internal_investment_remove = PREV.id } }
+		}
+		else_if = {
+			limit = { automated_internal_investment_state_available = yes }
+			automation_try_internal_investment_state = yes
+		}
+	}
+	for_each_loop = {
+		array = automated_internal_investment_remove
+		value = automated_internal_investment_state
+		remove_from_array = { array = automated_internal_investment_states value = automated_internal_investment_state }
+	}
+	for_each_loop = {
+		array = automated_internal_investment_rotate
+		value = automated_internal_investment_state
+		remove_from_array = { array = automated_internal_investment_states value = automated_internal_investment_state }
+		add_to_array = { array = automated_internal_investment_states value = automated_internal_investment_state }
+	}
+	clear_temp_array = automated_internal_investment_remove
+	clear_temp_array = automated_internal_investment_rotate
+}
+
+automation_internal_investments_daily = {
+	set_temp_variable = { automation_internal_investment_available_pp = political_power }
+	subtract_from_temp_variable = { automation_internal_investment_available_pp = automation_pp_reserve }
+	if = {
+		limit = {
+			check_variable = {
+				var = automation_internal_investment_available_pp
+				value = 0.15
+				compare = greater_than_or_equals
+			}
+		}
+		add_political_power = -0.15
+		set_country_flag = { flag = automation_internal_investment_upkeep_paid value = 1 days = 2 }
+	}
+}
