@@ -124,6 +124,75 @@ class LifecycleMixin:
                 possible.add(mode)
         return possible if has_mode_atom else None
 
+    @staticmethod
+    def _participant_tags_are_valid(raw_tags: object) -> bool:
+        return (
+            isinstance(raw_tags, list)
+            and bool(raw_tags)
+            and all(isinstance(tag, str) for tag in raw_tags)
+            and len(raw_tags) == len(set(raw_tags))
+            and all(re.fullmatch(r"[A-Z0-9]{3}", tag) for tag in raw_tags)
+        )
+
+    def _participant_trigger_is_exact(
+        self, trigger_text: str, trigger_name: str, participant_tags: Sequence[str]
+    ) -> bool:
+        blocks = []
+        for match in _TOP_LEVEL_BLOCK_RE.finditer(trigger_text):
+            if match.group(1) != trigger_name:
+                continue
+            body, end = extract_block_from_text(trigger_text, match.end() - 1)
+            if end != -1:
+                blocks.append(strip_comments(body))
+        if len(blocks) != 1:
+            return False
+
+        children = list(self._iter_direct_child_blocks(blocks[0]))
+        if len(children) != 1 or children[0][0] != "OR":
+            return False
+        _name, start, end, body = children[0]
+        if (blocks[0][:start] + blocks[0][end:]).strip():
+            return False
+
+        tag_pattern = re.compile(r"\boriginal_tag\s*=\s*([A-Z0-9]{3})\b")
+        observed_tags = tag_pattern.findall(body)
+        return (
+            observed_tags == list(participant_tags)
+            and not tag_pattern.sub("", body).strip()
+        )
+
+    def _participant_driver_hosts(
+        self, on_action_texts: Mapping[str, str], driver_name: str
+    ) -> List[str]:
+        driver_pattern = re.compile(rf"\b{re.escape(driver_name)}\s*=\s*yes\b")
+        hosts: List[str] = []
+        for text in on_action_texts.values():
+            for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
+                if match.group(1) != "on_actions":
+                    continue
+                outer_body, end = extract_block_from_text(text, match.end() - 1)
+                if end == -1:
+                    continue
+                for host, _start, _child_end, body in self._iter_direct_child_blocks(
+                    outer_body
+                ):
+                    hosts.extend(
+                        [host] * len(driver_pattern.findall(strip_comments(body)))
+                    )
+        return hosts
+
+    def _participant_dispatch_is_exact(
+        self,
+        on_action_texts: Mapping[str, str],
+        driver_name: str,
+        participant_tags: Sequence[str],
+    ) -> bool:
+        driver_hosts = self._participant_driver_hosts(on_action_texts, driver_name)
+        expected_hosts = {f"on_monthly_{tag}" for tag in participant_tags}
+        return set(driver_hosts) == expected_hosts and len(driver_hosts) == len(
+            expected_hosts
+        )
+
     def _independent_mode_graph(
         self,
         effect_defs: Dict[str, List[BlockDef]],
@@ -1048,7 +1117,12 @@ class LifecycleMixin:
                     )
                 )
                 continue
-            missing = [field for field in required_fields if field not in raw_system]
+            versioned_required_fields = required_fields + (
+                ("participant_tags",) if schema_version >= 6 else ()
+            )
+            missing = [
+                field for field in versioned_required_fields if field not in raw_system
+            ]
             if missing:
                 findings.append(
                     (
@@ -1448,6 +1522,12 @@ class LifecycleMixin:
                     )
                 )
             participant_array = str(raw_system["participant_array"])
+            raw_participant_tags = raw_system.get("participant_tags", [])
+            participant_tags = (
+                [str(tag) for tag in raw_participant_tags]
+                if isinstance(raw_participant_tags, list)
+                else []
+            )
             on_action_text = declared_text.get("on_action", "")
             dispatcher_host = str(raw_system["dispatcher_host"])
             if schema_version >= 6:
@@ -1461,21 +1541,85 @@ class LifecycleMixin:
                             1,
                         )
                     )
+
+                participant_tags_are_valid = self._participant_tags_are_valid(
+                    raw_participant_tags
+                )
+                if not participant_tags_are_valid:
+                    findings.append(
+                        (
+                            f"{name} must declare a non-empty list of unique three-character participant tags",
+                            "tools/corporate_history_contract.json",
+                            1,
+                        )
+                    )
+
+                on_action_texts: Dict[str, str] = {}
+                on_action_dir = self._root / "common" / "on_actions"
+                for path in sorted(on_action_dir.glob("*.txt")):
+                    try:
+                        on_action_texts[str(path)] = path.read_text(
+                            encoding="utf-8-sig", errors="replace"
+                        )
+                    except OSError as exc:
+                        findings.append(
+                            (
+                                f"{name} cannot read on-action file {path}: {exc}",
+                                str(path),
+                                1,
+                            )
+                        )
+
+                driver_name = f"{root}_monthly_driver"
+                participant_trigger_name = f"{root}_is_participant"
+                monthly_defs = effect_defs.get(driver_name, [])
+                participant_gate_is_present = len(monthly_defs) == 1 and bool(
+                    re.search(
+                        rf"\b{re.escape(participant_trigger_name)}\s*=\s*yes\b",
+                        monthly_defs[0].body,
+                    )
+                )
+                if dispatcher_host != "country_local":
+                    findings.append(
+                        (
+                            f"{name} dispatcher_host must be country_local",
+                            "tools/corporate_history_contract.json",
+                            1,
+                        )
+                    )
                 if (
-                    dispatcher_host != "country_local"
-                    or not re.search(
-                        r"\bon_monthly\s*=\s*\{[\s\S]*?\blinux_system_monthly_driver\s*=\s*yes\b",
-                        on_action_text,
+                    participant_tags_are_valid
+                    and not self._participant_dispatch_is_exact(
+                        on_action_texts, driver_name, participant_tags
                     )
-                    or re.search(
-                        r"\bon_(?:startup|daily)(?:_[A-Z0-9]+)?\s*=", on_action_text
-                    )
-                    or re.search(r"\bABK\s*=", on_action_text)
                 ):
                     findings.append(
                         (
-                            f"{name} must use its country-local on_monthly driver with no startup, daily, or ABK host",
-                            str(files["on_action"]),
+                            f"{name} must call {driver_name} exactly once from each declared on_monthly_TAG host and nowhere else",
+                            "common/on_actions",
+                            1,
+                        )
+                    )
+                if (
+                    participant_tags_are_valid
+                    and not self._participant_trigger_is_exact(
+                        declared_text.get("trigger", ""),
+                        participant_trigger_name,
+                        participant_tags,
+                    )
+                ):
+                    findings.append(
+                        (
+                            f"{participant_trigger_name} must contain exactly the declared participant tags",
+                            str(files["trigger"]),
+                            1,
+                        )
+                    )
+                if not participant_gate_is_present:
+                    findings.append(
+                        (
+                            f"{driver_name} must require {participant_trigger_name}",
+                            str(files["effect"]),
                             1,
                         )
                     )

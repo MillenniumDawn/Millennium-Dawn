@@ -3,13 +3,23 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 ISR_EFFECTS_PATH = ROOT / "common" / "scripted_effects" / "ISR_oem_effects.txt"
-LINUX_ON_ACTIONS_PATH = (
-    ROOT / "common" / "on_actions" / "02_linux_system_on_actions.txt"
-)
+ON_ACTIONS_DIR = ROOT / "common" / "on_actions"
 ISR_ON_ACTIONS_PATH = ROOT / "common" / "on_actions" / "99_ISR_on_actions.txt"
 ISR_EVENTS_PATH = ROOT / "events" / "ISR_oem_events.txt"
 USA_DECISIONS_PATH = (
     ROOT / "common" / "decisions" / "USA_corporate_systems_dashboard.txt"
+)
+LINUX_PARTICIPANT_TAGS = (
+    "BRA",
+    "CHI",
+    "ENG",
+    "FRA",
+    "GER",
+    "POL",
+    "RAJ",
+    "SOV",
+    "USA",
+    "VEN",
 )
 
 
@@ -58,12 +68,30 @@ def test_isr_dispatch_respects_corporate_history_modes():
 
 def test_country_local_hooks_replace_abk_singleton_dispatchers():
     isr = ISR_ON_ACTIONS_PATH.read_text(encoding="utf-8")
-    linux = LINUX_ON_ACTIONS_PATH.read_text(encoding="utf-8")
+    linux_blocks = []
+    for path in sorted(ON_ACTIONS_DIR.glob("*.txt")):
+        text = path.read_text(encoding="utf-8")
+        for host in re.findall(r"(?m)^\s*(on_[A-Za-z0-9_]+)\s*=\s*\{", text):
+            if host == "on_actions":
+                continue
+            linux_blocks.extend(
+                block
+                for block in _blocks(text, host)
+                if "linux_system_monthly_driver = yes" in block
+            )
+    linux = "\n".join(linux_blocks)
 
     assert len(_blocks(isr, "on_monthly_ISR")) == 1
-    assert len(_blocks(linux, "on_monthly")) == 1
+    assert not _blocks(linux, "on_monthly")
+    assert {
+        tag
+        for tag in LINUX_PARTICIPANT_TAGS
+        if len(_blocks(linux, f"on_monthly_{tag}")) == 1
+    } == set(LINUX_PARTICIPANT_TAGS)
     assert "ISR_oem_monthly_driver = yes" in isr
-    assert "linux_system_monthly_driver = yes" in linux
+    assert linux.count("linux_system_monthly_driver = yes") == len(
+        LINUX_PARTICIPANT_TAGS
+    )
     assert "ABK" not in isr
     assert "ABK" not in linux
 

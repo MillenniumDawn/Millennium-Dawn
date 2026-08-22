@@ -1,6 +1,7 @@
 """Regression tests for Corporate History rule-mode and lifecycle checks."""
 
 from .corporate_history_contract_support_test import (
+    Validator,
     _build_fixture,
     _enable_economic_layer_fixture,
     _enable_reusable_lifecycle_fixture,
@@ -49,6 +50,97 @@ def test_repeatable_decision_requires_an_active_no_declaration(text, expected):
 )
 def test_active_decision_cleanup_requires_an_executable_removal(text, expected):
     assert _removes_active_decision(text, "linux_system_program") is expected
+
+
+def _participant_on_actions(tags):
+    return {
+        tag: (
+            "on_actions = {\n"
+            f"\ton_monthly_{tag} = {{\n"
+            "\t\teffect = { linux_system_monthly_driver = yes }\n"
+            "\t}\n"
+            "}\n"
+        )
+        for tag in tags
+    }
+
+
+def _participant_trigger(tags):
+    assignments = "".join(f"\t\toriginal_tag = {tag}\n" for tag in tags)
+    return f"linux_system_is_participant = {{\n\tOR = {{\n{assignments}\t}}\n}}\n"
+
+
+def test_schema_v6_requires_participant_tags(tmp_path):
+    validator = Validator(str(tmp_path))
+    validator._manifest_payload = {"schema_version": 6, "shared_systems": [{}]}
+    messages = {
+        message for message, _file, _line in validator._validate_shared_systems({}, {})
+    }
+    assert any("participant_tags" in message for message in messages)
+
+
+@pytest.mark.parametrize(
+    "raw_tags",
+    (None, [], ["US"], ["USA", "USA"], ["usa"], [123], [{}]),
+)
+def test_participant_tags_reject_missing_malformed_or_duplicate_values(raw_tags):
+    assert not Validator._participant_tags_are_valid(raw_tags)
+
+
+def test_participant_dispatch_requires_one_exact_country_host(tmp_path):
+    tags = ["BRA", "USA"]
+    validator = Validator(str(tmp_path))
+    valid = _participant_on_actions(tags)
+    assert validator._participant_dispatch_is_exact(
+        valid, "linux_system_monthly_driver", tags
+    )
+
+    missing = dict(valid)
+    del missing["BRA"]
+    assert not validator._participant_dispatch_is_exact(
+        missing, "linux_system_monthly_driver", tags
+    )
+
+    extra = dict(valid)
+    extra["CAN"] = _participant_on_actions(["CAN"])["CAN"]
+    assert not validator._participant_dispatch_is_exact(
+        extra, "linux_system_monthly_driver", tags
+    )
+
+    duplicate = dict(valid)
+    duplicate["USA"] = duplicate["USA"].replace(
+        "linux_system_monthly_driver = yes",
+        "linux_system_monthly_driver = yes linux_system_monthly_driver = yes",
+    )
+    assert not validator._participant_dispatch_is_exact(
+        duplicate, "linux_system_monthly_driver", tags
+    )
+
+    global_host = dict(valid)
+    global_host["USA"] = global_host["USA"].replace("on_monthly_USA", "on_monthly")
+    assert not validator._participant_dispatch_is_exact(
+        global_host, "linux_system_monthly_driver", tags
+    )
+
+
+def test_participant_trigger_must_match_contract_exactly(tmp_path):
+    tags = ["BRA", "USA"]
+    validator = Validator(str(tmp_path))
+    valid = _participant_trigger(tags)
+    assert validator._participant_trigger_is_exact(
+        valid, "linux_system_is_participant", tags
+    )
+
+    for invalid in (
+        _participant_trigger(["USA"]),
+        _participant_trigger(["BRA", "CAN", "USA"]),
+        _participant_trigger(["BRA", "BRA", "USA"]),
+        valid.replace("original_tag = BRA", "tag = BRA"),
+        valid.replace("\t}\n}", "\thas_country_flag = extra_gate\n\t}\n}"),
+    ):
+        assert not validator._participant_trigger_is_exact(
+            invalid, "linux_system_is_participant", tags
+        )
 
 
 def test_option_mutating_bounded_variable_without_clamp(tmp_path):

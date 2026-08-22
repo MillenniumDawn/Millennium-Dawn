@@ -10,6 +10,7 @@ RULE_PATH = ROOT / "common" / "game_rules" / "00_game_rules.txt"
 TRIGGERS_PATH = ROOT / "common" / "scripted_triggers" / "MD_linux_system_triggers.txt"
 EFFECTS_PATH = ROOT / "common" / "scripted_effects" / "MD_linux_system_effects.txt"
 ON_ACTIONS_PATH = ROOT / "common" / "on_actions" / "02_linux_system_on_actions.txt"
+ON_ACTIONS_DIR = ROOT / "common" / "on_actions"
 EVENTS_PATH = ROOT / "events" / "MD_linux_system_events.txt"
 IDEAS_PATH = ROOT / "common" / "ideas" / "MD_linux_system_ideas.txt"
 DECISIONS_PATH = ROOT / "common" / "decisions" / "MD_linux_system_decisions.txt"
@@ -64,6 +65,19 @@ HISTORICAL_ROUTES = {
     "USA": "enterprise",
 }
 
+PARTICIPANT_TAGS = [
+    "BRA",
+    "CHI",
+    "ENG",
+    "FRA",
+    "GER",
+    "POL",
+    "RAJ",
+    "SOV",
+    "USA",
+    "VEN",
+]
+
 EVENT_DELTAS = {
     1: [(1, 2, 0, 1), (2, 0, 1, 2), (0, -1, -1, 0)],
     2: [(1, 1, 1, 1), (1, 0, 2, 2), (1, 0, 2, 3), (0, 0, -1, 0)],
@@ -102,6 +116,20 @@ def _named_block(text: str, name: str) -> str:
     match = re.search(rf"(?m)^\s*{re.escape(name)}\s*=\s*\{{", text)
     assert match, f"Missing block {name}"
     return _extract_block(text, text.index("{", match.start()))
+
+
+def _linux_driver_hosts() -> list[tuple[str, str]]:
+    hosts = []
+    pattern = re.compile(r"(?m)^\s*(on_[A-Za-z0-9_]+)\s*=\s*\{")
+    for path in sorted(ON_ACTIONS_DIR.glob("*.txt")):
+        text = path.read_text(encoding="utf-8")
+        for match in pattern.finditer(text):
+            if match.group(1) == "on_actions":
+                continue
+            block = _extract_block(text, text.index("{", match.start()))
+            if "linux_system_monthly_driver = yes" in block:
+                hosts.append((match.group(1), block))
+    return hosts
 
 
 def _event_map(text: str, namespace: str) -> dict[int, str]:
@@ -166,6 +194,7 @@ def test_schema_v6_declares_the_public_linux_contract_exactly():
     assert system["root"] == "linux_system"
     assert system["dispatcher_host"] == "country_local"
     assert system["participant_array"] == ""
+    assert system["participant_tags"] == PARTICIPANT_TAGS
     assert system["game_rule"] == {
         "id": "rule_linux_ecosystem",
         "options": ["full", "outcomes_only", "off"],
@@ -228,9 +257,10 @@ def test_rule_modes_and_public_effect_surface_are_stable():
         assert len(re.findall(rf"(?m)^{re.escape(effect)}\s*=\s*\{{", effects)) == 1
 
 
-def test_driver_is_country_local_monthly_and_has_no_global_registry():
+def test_driver_uses_only_declared_country_monthly_hosts():
     effects = EFFECTS_PATH.read_text(encoding="utf-8")
-    on_actions = ON_ACTIONS_PATH.read_text(encoding="utf-8")
+    driver_hosts = _linux_driver_hosts()
+    on_actions = "\n".join(block for _host, block in driver_hosts)
     combined = effects + on_actions
 
     assert "every_country" not in combined
@@ -238,11 +268,26 @@ def test_driver_is_country_local_monthly_and_has_no_global_registry():
     assert "global.linux_system_participants" not in combined
     assert not re.search(r"\b(?:add_to|remove_from|clear)_array\b", combined)
 
-    monthly_host = _named_block(on_actions, "on_monthly")
-    assert monthly_host.count("linux_system_monthly_driver = yes") == 1
-    for forbidden_host in ("on_startup", "on_daily", "on_weekly", "on_daily_ABK"):
-        assert forbidden_host not in on_actions
-    assert "ABK =" not in on_actions
+    assert {host for host, _block in driver_hosts} == {
+        f"on_monthly_{tag}" for tag in PARTICIPANT_TAGS
+    }
+    assert len(driver_hosts) == len(PARTICIPANT_TAGS)
+    assert on_actions.count("linux_system_monthly_driver = yes") == len(
+        PARTICIPANT_TAGS
+    )
+    for tag in PARTICIPANT_TAGS:
+        monthly_host = next(
+            block for host, block in driver_hosts if host == f"on_monthly_{tag}"
+        )
+        assert monthly_host.count("linux_system_monthly_driver = yes") == 1
+
+    triggers = TRIGGERS_PATH.read_text(encoding="utf-8")
+    participant_trigger = _named_block(triggers, "linux_system_is_participant")
+    assert (
+        re.findall(r"\boriginal_tag\s*=\s*([A-Z0-9]{3})\b", participant_trigger)
+        == PARTICIPANT_TAGS
+    )
+    assert not re.search(r"(?<!original_)\btag\s*=", participant_trigger)
 
     monthly = _named_block(effects, "linux_system_monthly_driver")
     for excluded in (
@@ -253,6 +298,7 @@ def test_driver_is_country_local_monthly_and_has_no_global_registry():
     ):
         assert excluded in monthly
     assert "linux_system_initialize_state = yes" in monthly
+    assert "linux_system_is_participant = yes" in monthly
     assert "linux_system_reconstruct_country = yes" in monthly
     assert "linux_system_full_enabled = yes" in monthly
     assert "linux_system_schedule_year_events = yes" in monthly
@@ -493,11 +539,12 @@ def test_late_start_events_always_have_a_non_usa_description():
 
 def test_dispatch_and_recovery_own_every_expected_pending_resolved_marker():
     effects = EFFECTS_PATH.read_text(encoding="utf-8")
-    on_actions = ON_ACTIONS_PATH.read_text(encoding="utf-8")
+    on_actions = "\n".join(block for _host, block in _linux_driver_hosts())
     system = _shared_system()
 
-    assert "on_monthly" in on_actions
-    assert on_actions.count("linux_system_monthly_driver = yes") == 1
+    assert on_actions.count("linux_system_monthly_driver = yes") == len(
+        PARTICIPANT_TAGS
+    )
     assert "on_daily" not in on_actions
     assert "on_startup" not in on_actions
     assert "ABK =" not in on_actions

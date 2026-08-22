@@ -16,6 +16,8 @@ Four independent systems complement the chain catalogue: cross-tag GPU developme
 
 Linux remains independent from Corporate History. All nine rule combinations are valid. Disabling Corporate History does not disable native Belt and Road content, change the Linux setting, or create Linux state.
 
+Linux lifecycle work is bounded to its declared participant countries: Brazil, China, France, Germany, India, Poland, Russia, the United Kingdom, the United States, and Venezuela. Each participant uses its own monthly country on-action; no global country callback or registry is used.
+
 ## Scheduling and reconstruction lifecycle
 
 Each chain runs only in its owning country. Native country on-actions host the monthly driver where one already exists; the framework adds a country-specific host only when necessary. There is no global country scan.
