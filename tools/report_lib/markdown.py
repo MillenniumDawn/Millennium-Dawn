@@ -6,10 +6,10 @@ Two renderings come out of the same builder:
     metadata strip, and a summary table of only the validators with findings
     (passing ones fold into a count line), plus a pointer to the step summary.
     Kept small so the comment doesn't drown the PR conversation in inline findings.
-  - Step summary (default): new findings split into error and warning groups,
-    a summary table of only the validators with findings, and per-validator
-    <details> only for those. Clean validators collapse to a single count
-    line. Optionally the raw per-validator logs.
+  - Step summary (default): new findings in two collapsible error/warning
+    groups, a summary table of only the validators with findings, and
+    per-validator <details> only for those. Clean validators collapse to a
+    single count line. Optionally the raw per-validator logs.
 """
 
 from collections import defaultdict
@@ -31,6 +31,7 @@ MAX_PER_CATEGORY = 100
 
 # Shown once above the issue list when there is anything to fix.
 _LEGEND = "_Errors block merge. Warnings are advisory and won't fail CI._"
+_NEW_FINDINGS_HEADING = "New Findings Introduced by this branch."
 
 
 def render(
@@ -263,17 +264,25 @@ def _render_new_severity_group(
     issues: List[Issue],
     ctx: ReportContext,
     limit: int,
+    open_by_default: bool,
 ) -> Tuple[List[str], int]:
-    """One New-errors or New-warnings block. Returns (lines, overflow)."""
+    """One New-errors or New-warnings <details> block. Returns (lines, overflow)."""
     if not issues:
         return [], 0
     sorted_issues = sorted(issues, key=lambda i: (i.file, i.line, i.message))
     shown = sorted_issues[: max(limit, 0)]
     overflow = len(sorted_issues) - len(shown)
-    lines = [f"### {heading} ({len(issues)})", ""]
+    open_attr = " open" if open_by_default else ""
+    lines = [
+        f"<details{open_attr}>",
+        f"<summary>{heading} ({len(issues)})</summary>",
+        "",
+    ]
     lines.extend(_render_bullet(i, ctx) for i in shown)
     if overflow:
         lines.append(f"_…and {_plural(overflow, f'more new {word}')}._")
+    lines.append("")
+    lines.append("</details>")
     lines.append("")
     return lines, overflow
 
@@ -281,8 +290,8 @@ def _render_new_severity_group(
 def _render_baseline_section(
     stats: "BaselineStats", ctx: ReportContext, max_visible: int
 ) -> str:
-    """The step-summary 'New findings vs main baseline' section."""
-    lines: List[str] = ["## New findings vs main baseline", ""]
+    """The step-summary new-findings section."""
+    lines: List[str] = [f"## {_NEW_FINDINGS_HEADING}", ""]
 
     if not stats.new_issues:
         lines.append("✅ No new findings against the main baseline.")
@@ -297,11 +306,16 @@ def _render_baseline_section(
     new_warnings = [i for i in stats.new_issues if i.severity != Severity.ERROR]
     remaining = max_visible
     error_lines, error_overflow = _render_new_severity_group(
-        "❌ New errors", "error", new_errors, ctx, remaining
+        "❌ New errors", "error", new_errors, ctx, remaining, open_by_default=True
     )
     remaining = max(0, remaining - (len(new_errors) - error_overflow))
     warning_lines, _warning_overflow = _render_new_severity_group(
-        "⚠️ New warnings", "warning", new_warnings, ctx, remaining
+        "⚠️ New warnings",
+        "warning",
+        new_warnings,
+        ctx,
+        remaining,
+        open_by_default=not new_errors,
     )
     lines.extend(error_lines)
     lines.extend(warning_lines)
