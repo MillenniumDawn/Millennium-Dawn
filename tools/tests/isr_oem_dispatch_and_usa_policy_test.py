@@ -9,6 +9,7 @@ ISR_EVENTS_PATH = ROOT / "events" / "ISR_oem_events.txt"
 USA_DECISIONS_PATH = (
     ROOT / "common" / "decisions" / "USA_corporate_systems_dashboard.txt"
 )
+POL_DECISIONS_PATH = ROOT / "common" / "decisions" / "POL_industrial_sovereignty.txt"
 LINUX_PARTICIPANT_TAGS = (
     "BRA",
     "CHI",
@@ -134,3 +135,36 @@ def test_usa_policy_visibility_keeps_ibm_outside_recipient_or():
         assert visible.count("has_country_flag = USA_ibm_state_initialized") == 1
         assert "USA_ibm_state_initialized" not in flags
         assert flags == expected_recipients
+
+
+def test_policy_costs_charge_pp_once_and_preserve_treasury_payments():
+    policy_costs = {
+        USA_DECISIONS_PATH: {
+            "USA_corporate_policy_open_systems_procurement": (50, 10),
+            "USA_corporate_policy_domestic_capacity_grants": (75, 25),
+            "USA_corporate_policy_secure_federal_systems": (50, 15),
+            "USA_corporate_policy_advanced_computing_consortium": (50, 20),
+        },
+        POL_DECISIONS_PATH: {
+            "POL_industrial_sovereignty_policy_industrial_credit": (50, 10),
+            "POL_industrial_sovereignty_policy_strategic_procurement": (75, 25),
+            "POL_industrial_sovereignty_policy_regional_export_finance": (50, 15),
+            "POL_industrial_sovereignty_policy_applied_research_consortium": (50, 20),
+        },
+    }
+
+    for path, decisions in policy_costs.items():
+        text = path.read_text(encoding="utf-8")
+        for decision_id, (pp_cost, treasury_cost) in decisions.items():
+            decision = _named_block(text, decision_id)
+            complete_effect = _named_block(decision, "complete_effect")
+
+            assert re.search(rf"(?m)^\s*cost = {pp_cost}$", decision)
+            assert f"ai_hint_pp_cost = {pp_cost}" in decision
+            assert f"has_political_power > {pp_cost - 1}" in decision
+            assert "add_political_power" not in complete_effect
+            assert (
+                f"set_temp_variable = {{ treasury_change = -{treasury_cost} }}"
+                in complete_effect
+            )
+            assert "modify_treasury_effect = yes" in complete_effect
