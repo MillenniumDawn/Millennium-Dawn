@@ -159,10 +159,10 @@ def test_policy_costs_charge_pp_once_and_preserve_treasury_payments():
             decision = _named_block(text, decision_id)
             complete_effect = _named_block(decision, "complete_effect")
 
-            assert re.search(rf"(?m)^\s*cost = {pp_cost}$", decision)
+            assert not re.search(r"(?m)^\s*cost\s*=", decision)
             assert f"ai_hint_pp_cost = {pp_cost}" in decision
             assert f"has_political_power > {pp_cost - 1}" in decision
-            assert "add_political_power" not in complete_effect
+            assert complete_effect.count(f"add_political_power = -{pp_cost}") == 1
             assert (
                 f"set_temp_variable = {{ treasury_change = -{treasury_cost} }}"
                 in complete_effect
