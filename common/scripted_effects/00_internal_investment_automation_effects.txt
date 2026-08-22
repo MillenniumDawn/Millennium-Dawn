@@ -251,13 +251,13 @@ update_automated_internal_investment_state_queue = {
 		limit = { has_automated_internal_investment_request = yes }
 		ROOT = {
 			if = {
-				limit = { NOT = { is_in_array = { array = automated_internal_investment_states value = PREV.id } } }
-				add_to_array = { array = automated_internal_investment_states value = PREV.id }
+				limit = { NOT = { is_in_array = { array = automated_internal_investment_states value = PREV } } }
+				add_to_array = { array = automated_internal_investment_states value = PREV }
 			}
 		}
 	}
 	else = {
-		ROOT = { remove_from_array = { array = automated_internal_investment_states value = PREV.id } }
+		ROOT = { remove_from_array = { array = automated_internal_investment_states value = PREV } }
 	}
 	refresh_investment_gui = yes
 }
@@ -393,7 +393,7 @@ automation_try_internal_investment_state = {
 	ROOT = { set_temp_variable = { automation_internal_investment_attempt = 0 } }
 	if = {
 		limit = { ROOT = { check_variable = { automation_internal_investment_started = 1 } } }
-		ROOT = { add_to_temp_array = { automated_internal_investment_rotate = PREV.id } }
+		ROOT = { add_to_temp_array = { automated_internal_investment_rotate = PREV } }
 	}
 }
 
@@ -415,23 +415,23 @@ automation_internal_investments_weekly = {
 				}
 			}
 			clear_automated_internal_investment_requests = yes
-			ROOT = { add_to_temp_array = { automated_internal_investment_remove = PREV.id } }
+			ROOT = { add_to_temp_array = { automated_internal_investment_remove = PREV } }
 		}
 		else_if = {
 			limit = { automated_internal_investment_state_available = yes }
 			automation_try_internal_investment_state = yes
 		}
 	}
-	for_each_loop = {
+	for_each_scope_loop = {
 		array = automated_internal_investment_remove
-		value = automated_internal_investment_state
-		remove_from_array = { array = automated_internal_investment_states value = automated_internal_investment_state }
+		ROOT = { remove_from_array = { array = automated_internal_investment_states value = PREV } }
 	}
-	for_each_loop = {
+	for_each_scope_loop = {
 		array = automated_internal_investment_rotate
-		value = automated_internal_investment_state
-		remove_from_array = { array = automated_internal_investment_states value = automated_internal_investment_state }
-		add_to_array = { array = automated_internal_investment_states value = automated_internal_investment_state }
+		ROOT = {
+			remove_from_array = { array = automated_internal_investment_states value = PREV }
+			add_to_array = { array = automated_internal_investment_states value = PREV }
+		}
 	}
 	clear_temp_array = automated_internal_investment_remove
 	clear_temp_array = automated_internal_investment_rotate
