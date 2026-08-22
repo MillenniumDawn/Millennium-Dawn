@@ -1,0 +1,654 @@
+SOV_computing_sovereignty_category = {
+	SOV_computing_sovereignty_dashboard_state = {
+		icon = generic_decision
+		cost = 0
+		visible = { has_country_flag = SOV_computing_sovereignty_state_initialized }
+		available = { always = no }
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_dashboard_foundry_route = {
+		icon = generic_factory
+		cost = 0
+		visible = { has_country_flag = SOV_computing_sovereignty_state_initialized }
+		available = { always = no }
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_dashboard_fabrication_stage = {
+		icon = generic_factory
+		cost = 0
+		visible = { has_country_flag = SOV_computing_sovereignty_state_initialized }
+		available = { always = no }
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_dashboard_processor_status = {
+		icon = generic_decision
+		cost = 0
+		visible = { has_country_flag = SOV_computing_sovereignty_state_initialized }
+		available = { always = no }
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_dashboard_terminal_outcome = {
+		icon = generic_decision
+		cost = 0
+		visible = { has_country_flag = SOV_computing_sovereignty_state_initialized }
+		available = { always = no }
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_project_180nm = {
+		icon = generic_factory
+		cost = 25
+		days_re_enable = 30
+		fire_only_once = no
+		fixed_random_seed = no
+
+		visible = {
+			corporate_history_full_enabled = yes
+			has_tech = SOV_computing_sovereignty_fab_180nm
+			NOT = {
+				OR = {
+					has_idea = SOV_computing_sovereignty_domestic_180nm_capacity
+					has_idea = SOV_computing_sovereignty_domestic_90nm_capacity
+					has_idea = SOV_computing_sovereignty_65nm_pilot_capability
+					has_idea = SOV_computing_sovereignty_65nm_hvm_capacity
+					has_idea = SOV_computing_sovereignty_28nm_hvm_capacity
+					has_idea = SOV_computing_sovereignty_16nm_hvm_capacity
+				}
+			}
+		}
+
+		available = {
+			SOV_computing_sovereignty_project_slot_available = yes
+			OR = {
+				AND = {
+					hidden_trigger = { NOT = { has_country_flag = SOV_computing_sovereignty_project_180nm_failed } }
+					check_expr = { value = gdp_total multiply = 0.001 less_than = { value = treasury } }
+				}
+				AND = {
+					hidden_trigger = { has_country_flag = SOV_computing_sovereignty_project_180nm_failed }
+					check_expr = { value = gdp_total multiply = 0.00125 less_than = { value = treasury } }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_180nm"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_started_tt
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.001 } }
+			if = { limit = { has_country_flag = SOV_computing_sovereignty_project_180nm_failed } multiply_temp_variable = { treasury_change = 1.25 } }
+			modify_treasury_effect = yes
+			SOV_computing_sovereignty_launch_project_180nm = yes
+		}
+
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	SOV_computing_sovereignty_project_90nm = {
+		icon = generic_factory
+		cost = 50
+		days_re_enable = 30
+		fire_only_once = no
+		fixed_random_seed = no
+
+		visible = {
+			corporate_history_full_enabled = yes
+			has_tech = SOV_computing_sovereignty_fab_90nm
+			NOT = {
+				OR = {
+					has_idea = SOV_computing_sovereignty_domestic_90nm_capacity
+					has_idea = SOV_computing_sovereignty_65nm_pilot_capability
+					has_idea = SOV_computing_sovereignty_65nm_hvm_capacity
+					has_idea = SOV_computing_sovereignty_28nm_hvm_capacity
+					has_idea = SOV_computing_sovereignty_16nm_hvm_capacity
+				}
+			}
+		}
+
+		available = {
+			SOV_computing_sovereignty_project_slot_available = yes
+			OR = {
+				AND = { hidden_trigger = { NOT = { has_country_flag = SOV_computing_sovereignty_project_90nm_failed } } check_expr = { value = gdp_total multiply = 0.0025 less_than = { value = treasury } } }
+				AND = { hidden_trigger = { has_country_flag = SOV_computing_sovereignty_project_90nm_failed } check_expr = { value = gdp_total multiply = 0.0025 less_than = { value = treasury divide = 1.25 } } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_90nm"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_started_tt
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.0025 } }
+			if = { limit = { has_country_flag = SOV_computing_sovereignty_project_90nm_failed } multiply_temp_variable = { treasury_change = 1.25 } }
+			modify_treasury_effect = yes
+			SOV_computing_sovereignty_launch_project_90nm = yes
+		}
+
+		ai_will_do = { base = 55 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }
+	}
+
+	SOV_computing_sovereignty_project_65nm_pilot = {
+		icon = generic_factory
+		cost = 75
+		days_re_enable = 30
+		fire_only_once = no
+		fixed_random_seed = no
+
+		visible = {
+			corporate_history_full_enabled = yes
+			NOT = { has_country_flag = SOV_computing_sovereignty_mature_node_route }
+			has_tech = SOV_computing_sovereignty_fab_65nm_research
+			has_idea = SOV_computing_sovereignty_domestic_90nm_capacity
+			NOT = {
+				OR = {
+					has_idea = SOV_computing_sovereignty_65nm_pilot_capability
+					has_idea = SOV_computing_sovereignty_65nm_hvm_capacity
+					has_idea = SOV_computing_sovereignty_28nm_hvm_capacity
+					has_idea = SOV_computing_sovereignty_16nm_hvm_capacity
+				}
+			}
+		}
+
+		available = {
+			SOV_computing_sovereignty_project_slot_available = yes
+			OR = {
+				AND = { hidden_trigger = { NOT = { has_country_flag = SOV_computing_sovereignty_project_65nm_pilot_failed } } check_expr = { value = gdp_total multiply = 0.005 less_than = { value = treasury } } }
+				AND = { hidden_trigger = { has_country_flag = SOV_computing_sovereignty_project_65nm_pilot_failed } check_expr = { value = gdp_total multiply = 0.00625 less_than = { value = treasury } } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_65nm_pilot"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_started_tt
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.005 } }
+			if = { limit = { has_country_flag = SOV_computing_sovereignty_project_65nm_pilot_failed } multiply_temp_variable = { treasury_change = 1.25 } }
+			modify_treasury_effect = yes
+			SOV_computing_sovereignty_launch_project_65nm_pilot = yes
+		}
+
+		ai_will_do = { base = 50 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }
+	}
+
+	SOV_computing_sovereignty_project_65nm_hvm = {
+		icon = generic_factory
+		cost = 75
+		days_re_enable = 30
+		fire_only_once = no
+		fixed_random_seed = no
+
+		visible = {
+			corporate_history_full_enabled = yes
+			NOT = { has_country_flag = SOV_computing_sovereignty_mature_node_route }
+			has_tech = SOV_computing_sovereignty_fab_65nm_hvm_engineering
+			has_idea = SOV_computing_sovereignty_65nm_pilot_capability
+			NOT = {
+				OR = {
+					has_idea = SOV_computing_sovereignty_65nm_hvm_capacity
+					has_idea = SOV_computing_sovereignty_28nm_hvm_capacity
+					has_idea = SOV_computing_sovereignty_16nm_hvm_capacity
+				}
+			}
+		}
+
+		available = {
+			SOV_computing_sovereignty_project_slot_available = yes
+			OR = {
+				AND = { hidden_trigger = { NOT = { has_country_flag = SOV_computing_sovereignty_project_65nm_hvm_failed } } check_expr = { value = gdp_total multiply = 0.004 less_than = { value = treasury } } }
+				AND = { hidden_trigger = { has_country_flag = SOV_computing_sovereignty_project_65nm_hvm_failed } check_expr = { value = gdp_total multiply = 0.005 less_than = { value = treasury } } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_65nm_hvm"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_started_tt
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.004 } }
+			if = { limit = { has_country_flag = SOV_computing_sovereignty_project_65nm_hvm_failed } multiply_temp_variable = { treasury_change = 1.25 } }
+			modify_treasury_effect = yes
+			SOV_computing_sovereignty_launch_project_65nm_hvm = yes
+		}
+
+		ai_will_do = { base = 45 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }
+	}
+
+	SOV_computing_sovereignty_project_28nm_hvm = {
+		icon = generic_factory
+		cost = 150
+		days_re_enable = 30
+		fire_only_once = no
+		fixed_random_seed = no
+
+		visible = {
+			corporate_history_full_enabled = yes
+			NOT = { has_country_flag = SOV_computing_sovereignty_mature_node_route }
+			has_tech = SOV_computing_sovereignty_fab_28nm_hvm_engineering
+			OR = {
+				has_idea = SOV_computing_sovereignty_65nm_hvm_capacity
+				has_country_flag = SOV_computing_sovereignty_emergency_fabrication_program
+			}
+			NOT = {
+				OR = {
+					has_idea = SOV_computing_sovereignty_28nm_hvm_capacity
+					has_idea = SOV_computing_sovereignty_16nm_hvm_capacity
+				}
+			}
+		}
+
+		available = {
+			SOV_computing_sovereignty_project_slot_available = yes
+			OR = {
+				AND = { hidden_trigger = { NOT = { has_country_flag = SOV_computing_sovereignty_project_28nm_hvm_failed } } check_expr = { value = gdp_total multiply = 0.012 less_than = { value = treasury } } }
+				AND = { hidden_trigger = { has_country_flag = SOV_computing_sovereignty_project_28nm_hvm_failed } check_expr = { value = gdp_total multiply = 0.015 less_than = { value = treasury } } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_28nm_hvm"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_started_tt
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.012 } }
+			if = { limit = { has_country_flag = SOV_computing_sovereignty_project_28nm_hvm_failed } multiply_temp_variable = { treasury_change = 1.25 } }
+			modify_treasury_effect = yes
+			SOV_computing_sovereignty_launch_project_28nm_hvm = yes
+		}
+
+		ai_will_do = { base = 35 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }
+	}
+
+	SOV_computing_sovereignty_project_16nm_hvm = {
+		icon = generic_factory
+		cost = 200
+		days_re_enable = 30
+		fire_only_once = no
+		fixed_random_seed = no
+
+		visible = {
+			corporate_history_full_enabled = yes
+			NOT = { has_country_flag = SOV_computing_sovereignty_mature_node_route }
+			has_tech = SOV_computing_sovereignty_fab_16nm_hvm_engineering
+			has_idea = SOV_computing_sovereignty_28nm_hvm_capacity
+			NOT = { has_idea = SOV_computing_sovereignty_16nm_hvm_capacity }
+		}
+
+		available = {
+			SOV_computing_sovereignty_project_slot_available = yes
+			OR = {
+				AND = { hidden_trigger = { NOT = { has_country_flag = SOV_computing_sovereignty_project_16nm_hvm_failed } } check_expr = { value = gdp_total multiply = 0.02 less_than = { value = treasury } } }
+				AND = { hidden_trigger = { has_country_flag = SOV_computing_sovereignty_project_16nm_hvm_failed } check_expr = { value = gdp_total multiply = 0.025 less_than = { value = treasury } } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_16nm_hvm"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_started_tt
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.02 } }
+			if = { limit = { has_country_flag = SOV_computing_sovereignty_project_16nm_hvm_failed } multiply_temp_variable = { treasury_change = 1.25 } }
+			modify_treasury_effect = yes
+			SOV_computing_sovereignty_launch_project_16nm_hvm = yes
+		}
+
+		ai_will_do = { base = 20 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }
+	}
+
+	SOV_computing_sovereignty_project_angstrem_t = {
+		icon = generic_factory
+		cost = 0
+		days_re_enable = 30
+		fire_only_once = no
+		fixed_random_seed = no
+
+		visible = {
+			corporate_history_full_enabled = yes
+			OR = {
+				has_country_flag = SOV_computing_sovereignty_angstrem_t_financing_authorized
+				has_country_flag = SOV_computing_sovereignty_project_angstrem_t_retry
+			}
+			NOT = { has_idea = SOV_computing_sovereignty_angstrem_t_operational }
+			NOT = { has_country_flag = SOV_computing_sovereignty_angstrem_t_liquidated }
+		}
+
+		available = {
+			SOV_computing_sovereignty_project_slot_available = yes
+			OR = {
+				hidden_trigger = { has_country_flag = SOV_computing_sovereignty_angstrem_t_financing_authorized }
+				AND = {
+					hidden_trigger = { has_country_flag = SOV_computing_sovereignty_project_angstrem_t_retry }
+					has_political_power > 49.999
+					check_expr = { value = gdp_total multiply = 0.0075 less_than = { value = treasury } }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_angstrem_t"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_started_tt
+			if = {
+				limit = { NOT = { has_country_flag = SOV_computing_sovereignty_angstrem_t_financing_authorized } }
+				add_political_power = -50
+				set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.0075 } }
+				modify_treasury_effect = yes
+			}
+			SOV_computing_sovereignty_launch_project_angstrem_t = yes
+		}
+
+		ai_will_do = { base = 50 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }
+	}
+
+	SOV_computing_sovereignty_project_foreign_8c_tapeout = {
+		icon = generic_factory
+		cost = 25
+		days_re_enable = 30
+		fire_only_once = no
+		fixed_random_seed = no
+
+		visible = {
+			corporate_history_full_enabled = yes
+			has_tech = SOV_computing_sovereignty_elbrus_8c
+			NOT = { has_country_flag = SOV_computing_sovereignty_elbrus_8c_deployable }
+		}
+
+		available = {
+			SOV_computing_sovereignty_8c_tapeout_available = yes
+			OR = {
+				AND = { hidden_trigger = { NOT = { has_country_flag = SOV_computing_sovereignty_project_foreign_8c_tapeout_failed } } check_expr = { value = gdp_total multiply = 0.0005 less_than = { value = treasury } } }
+				AND = { hidden_trigger = { has_country_flag = SOV_computing_sovereignty_project_foreign_8c_tapeout_failed } check_expr = { value = gdp_total multiply = 0.0005 less_than = { value = treasury divide = 1.25 } } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_foreign_8c_tapeout"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_started_tt
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.0005 } }
+			if = { limit = { has_country_flag = SOV_computing_sovereignty_project_foreign_8c_tapeout_failed } multiply_temp_variable = { treasury_change = 1.25 } }
+			modify_treasury_effect = yes
+			SOV_computing_sovereignty_launch_project_foreign_8c_tapeout = yes
+		}
+
+		ai_will_do = { base = 80 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }
+	}
+
+	SOV_computing_sovereignty_project_foreign_16c_tapeout = {
+		icon = generic_factory
+		cost = 50
+		days_re_enable = 30
+		fire_only_once = no
+		fixed_random_seed = no
+
+		visible = {
+			corporate_history_full_enabled = yes
+			has_tech = SOV_computing_sovereignty_elbrus_16c
+			NOT = { has_country_flag = SOV_computing_sovereignty_elbrus_16c_deployable }
+		}
+
+		available = {
+			SOV_computing_sovereignty_16c_tapeout_available = yes
+			OR = {
+				AND = { hidden_trigger = { NOT = { has_country_flag = SOV_computing_sovereignty_project_foreign_16c_tapeout_failed } } check_expr = { value = gdp_total multiply = 0.0015 less_than = { value = treasury } } }
+				AND = { hidden_trigger = { has_country_flag = SOV_computing_sovereignty_project_foreign_16c_tapeout_failed } check_expr = { value = gdp_total multiply = 0.0015 less_than = { value = treasury divide = 1.25 } } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_foreign_16c_tapeout"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_started_tt
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.0015 } }
+			if = { limit = { has_country_flag = SOV_computing_sovereignty_project_foreign_16c_tapeout_failed } multiply_temp_variable = { treasury_change = 1.25 } }
+			modify_treasury_effect = yes
+			SOV_computing_sovereignty_launch_project_foreign_16c_tapeout = yes
+		}
+
+		ai_will_do = { base = 75 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }
+	}
+
+	SOV_computing_sovereignty_project_180nm_mission = {
+		icon = generic_factory
+		is_good = yes
+		selectable_mission = no
+		days_mission_timeout = 360
+		fixed_random_seed = no
+		activation = { always = no }
+		available = { always = no }
+		cancel_trigger = { OR = { NOT = { corporate_history_full_enabled = yes } has_country_flag = collapsed_nation } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_180nm_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_completed_tt
+			SOV_computing_sovereignty_resolve_industrial_project = yes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_180nm_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_cancelled_tt
+			SOV_computing_sovereignty_cancel_industrial_project = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_project_90nm_mission = {
+		icon = generic_factory
+		is_good = yes
+		selectable_mission = no
+		days_mission_timeout = 540
+		fixed_random_seed = no
+		activation = { always = no }
+		available = { always = no }
+		cancel_trigger = { OR = { NOT = { corporate_history_full_enabled = yes } has_country_flag = collapsed_nation } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_90nm_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_completed_tt
+			SOV_computing_sovereignty_resolve_industrial_project = yes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_90nm_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_cancelled_tt
+			SOV_computing_sovereignty_cancel_industrial_project = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_project_65nm_pilot_mission = {
+		icon = generic_factory
+		is_good = yes
+		selectable_mission = no
+		days_mission_timeout = 720
+		fixed_random_seed = no
+		activation = { always = no }
+		available = { always = no }
+		cancel_trigger = { OR = { NOT = { corporate_history_full_enabled = yes } has_country_flag = collapsed_nation } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_65nm_pilot_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_completed_tt
+			SOV_computing_sovereignty_resolve_industrial_project = yes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_65nm_pilot_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_cancelled_tt
+			SOV_computing_sovereignty_cancel_industrial_project = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_project_65nm_hvm_mission = {
+		icon = generic_factory
+		is_good = yes
+		selectable_mission = no
+		days_mission_timeout = 720
+		fixed_random_seed = no
+		activation = { always = no }
+		available = { always = no }
+		cancel_trigger = { OR = { NOT = { corporate_history_full_enabled = yes } has_country_flag = collapsed_nation } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_65nm_hvm_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_completed_tt
+			SOV_computing_sovereignty_resolve_industrial_project = yes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_65nm_hvm_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_cancelled_tt
+			SOV_computing_sovereignty_cancel_industrial_project = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_project_28nm_hvm_mission = {
+		icon = generic_factory
+		is_good = yes
+		selectable_mission = no
+		days_mission_timeout = 1200
+		fixed_random_seed = no
+		activation = { always = no }
+		available = { always = no }
+		cancel_trigger = { OR = { NOT = { corporate_history_full_enabled = yes } has_country_flag = collapsed_nation } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_28nm_hvm_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_completed_tt
+			SOV_computing_sovereignty_resolve_industrial_project = yes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_28nm_hvm_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_cancelled_tt
+			SOV_computing_sovereignty_cancel_industrial_project = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_project_16nm_hvm_mission = {
+		icon = generic_factory
+		is_good = yes
+		selectable_mission = no
+		days_mission_timeout = 1500
+		fixed_random_seed = no
+		activation = { always = no }
+		available = { always = no }
+		cancel_trigger = { OR = { NOT = { corporate_history_full_enabled = yes } has_country_flag = collapsed_nation } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_16nm_hvm_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_completed_tt
+			SOV_computing_sovereignty_resolve_industrial_project = yes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_16nm_hvm_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_cancelled_tt
+			SOV_computing_sovereignty_cancel_industrial_project = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_project_angstrem_t_mission = {
+		icon = generic_factory
+		is_good = yes
+		selectable_mission = no
+		days_mission_timeout = 900
+		fixed_random_seed = no
+		activation = { always = no }
+		available = { always = no }
+		cancel_trigger = { OR = { NOT = { corporate_history_full_enabled = yes } has_country_flag = collapsed_nation } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_angstrem_t_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_completed_tt
+			SOV_computing_sovereignty_resolve_industrial_project = yes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_angstrem_t_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_cancelled_tt
+			SOV_computing_sovereignty_cancel_industrial_project = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_project_foreign_8c_tapeout_mission = {
+		icon = generic_factory
+		is_good = yes
+		selectable_mission = no
+		days_mission_timeout = 180
+		fixed_random_seed = no
+		activation = { always = no }
+		available = { always = no }
+		cancel_trigger = { OR = { NOT = { corporate_history_full_enabled = yes } has_country_flag = collapsed_nation } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_foreign_8c_tapeout_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_completed_tt
+			SOV_computing_sovereignty_resolve_industrial_project = yes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_foreign_8c_tapeout_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_cancelled_tt
+			SOV_computing_sovereignty_cancel_industrial_project = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_project_foreign_16c_tapeout_mission = {
+		icon = generic_factory
+		is_good = yes
+		selectable_mission = no
+		days_mission_timeout = 180
+		fixed_random_seed = no
+		activation = { always = no }
+		available = { always = no }
+		cancel_trigger = { OR = { NOT = { corporate_history_full_enabled = yes } has_country_flag = collapsed_nation } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_foreign_16c_tapeout_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_completed_tt
+			SOV_computing_sovereignty_resolve_industrial_project = yes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_project_foreign_16c_tapeout_mission"
+			custom_effect_tooltip = SOV_computing_sovereignty_project_cancelled_tt
+			SOV_computing_sovereignty_cancel_industrial_project = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	SOV_computing_sovereignty_sovereignty_program = {
+		icon = generic_factory
+		is_good = yes
+		selectable_mission = no
+		days_mission_timeout = 365
+		fixed_random_seed = no
+		activation = { always = no }
+		available = { always = no }
+		cancel_trigger = { OR = { NOT = { corporate_history_full_enabled = yes } has_country_flag = collapsed_nation } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_sovereignty_program"
+			custom_effect_tooltip = SOV_computing_sovereignty_sovereignty_program_payment_tt
+			SOV_computing_sovereignty_advance_sovereignty_program = yes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_computing_sovereignty_sovereignty_program"
+			custom_effect_tooltip = SOV_computing_sovereignty_sovereignty_program_cancelled_tt
+			SOV_computing_sovereignty_default_sovereignty_program = yes
+		}
+
+		ai_will_do = { base = 0 }
+	}
+}

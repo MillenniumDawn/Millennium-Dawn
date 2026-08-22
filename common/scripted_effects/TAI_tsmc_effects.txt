@@ -1,0 +1,637 @@
+TAI_tsmc_initialize_state = {
+	if = {
+		limit = { NOT = { has_country_flag = TAI_tsmc_state_initialized } }
+
+		set_variable = { TAI_tsmc_process_leadership = 6 }
+		set_variable = { TAI_tsmc_capacity_depth = 5 }
+		set_variable = { TAI_tsmc_customer_neutrality = 8 }
+		set_variable = { TAI_tsmc_geographic_resilience = 1 }
+		set_country_flag = TAI_tsmc_state_initialized
+	}
+
+	TAI_tsmc_clamp_state = yes
+}
+
+TAI_tsmc_clamp_state = {
+	set_temp_variable = { corp_value = TAI_tsmc_process_leadership }
+	corporate_history_clamp_value = yes
+	set_variable = { TAI_tsmc_process_leadership = corp_value }
+	set_temp_variable = { corp_value = TAI_tsmc_capacity_depth }
+	corporate_history_clamp_value = yes
+	set_variable = { TAI_tsmc_capacity_depth = corp_value }
+	set_temp_variable = { corp_value = TAI_tsmc_customer_neutrality }
+	corporate_history_clamp_value = yes
+	set_variable = { TAI_tsmc_customer_neutrality = corp_value }
+	set_temp_variable = { corp_value = TAI_tsmc_geographic_resilience }
+	corporate_history_clamp_value = yes
+	set_variable = { TAI_tsmc_geographic_resilience = corp_value }
+}
+
+TAI_tsmc_mark_esmc_ground_broken = {
+	TAI_tsmc_initialize_state = yes
+
+	if = {
+		limit = {
+			has_country_flag = TAI_tsmc_overseas_network
+			NOT = { has_country_flag = TAI_tsmc_esmc_ground_broken }
+		}
+		set_country_flag = TAI_tsmc_esmc_ground_broken
+		TAI_tsmc_clamp_state = yes
+	}
+}
+
+TAI_tsmc_mark_arizona_fab1_volume = {
+	TAI_tsmc_initialize_state = yes
+
+	if = {
+		limit = {
+			has_country_flag = TAI_tsmc_arizona_program_announced
+			NOT = { has_country_flag = TAI_tsmc_arizona_fab1_volume_production }
+		}
+		set_country_flag = TAI_tsmc_arizona_fab1_volume_production
+		if = {
+			limit = { has_country_flag = TAI_tsmc_selective_satellites }
+			add_to_variable = { TAI_tsmc_geographic_resilience = 3 }
+		}
+		else = { add_to_variable = { TAI_tsmc_geographic_resilience = 2 } }
+		TAI_tsmc_clamp_state = yes
+	}
+}
+
+TAI_tsmc_mark_kumamoto_fab1_volume = {
+	TAI_tsmc_initialize_state = yes
+
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = TAI_tsmc_overseas_network
+				has_country_flag = TAI_tsmc_selective_satellites
+			}
+			NOT = { has_country_flag = TAI_tsmc_kumamoto_fab1_volume_production }
+		}
+		set_country_flag = TAI_tsmc_kumamoto_fab1_volume_production
+		if = {
+			limit = { has_country_flag = TAI_tsmc_selective_satellites }
+			add_to_variable = { TAI_tsmc_geographic_resilience = 3 }
+		}
+		else = { add_to_variable = { TAI_tsmc_geographic_resilience = 2 } }
+		TAI_tsmc_clamp_state = yes
+	}
+}
+
+TAI_tsmc_mark_n2_volume = {
+	TAI_tsmc_initialize_state = yes
+
+	if = {
+		limit = { NOT = { has_country_flag = TAI_tsmc_n2_volume_production } }
+		set_country_flag = TAI_tsmc_n2_volume_production
+		if = {
+			limit = { check_variable = { var = TAI_tsmc_process_leadership value = 9 compare = less_than } }
+			add_to_variable = { TAI_tsmc_process_leadership = 1 }
+		}
+		TAI_tsmc_clamp_state = yes
+	}
+}
+
+TAI_tsmc_clear_capstones = {
+	remove_ideas = {
+		TAI_the_great_chip_empire
+		TAI_tsmc_pure_play_common_foundry
+		TAI_tsmc_frontier_island_fortress
+		TAI_tsmc_trusted_allied_foundry_network
+		TAI_tsmc_systems_foundry_platform
+		TAI_tsmc_disciplined_pure_play_foundry
+	}
+
+	if = {
+		limit = { has_country_flag = TAI_tsmc_outcome_pure_play_common_foundry }
+		clr_country_flag = TAI_tsmc_outcome_pure_play_common_foundry
+	}
+	if = {
+		limit = { has_country_flag = TAI_tsmc_outcome_frontier_island_fortress }
+		clr_country_flag = TAI_tsmc_outcome_frontier_island_fortress
+	}
+	if = {
+		limit = { has_country_flag = TAI_tsmc_outcome_trusted_allied_network }
+		clr_country_flag = TAI_tsmc_outcome_trusted_allied_network
+	}
+	if = {
+		limit = { has_country_flag = TAI_tsmc_outcome_systems_foundry_platform }
+		clr_country_flag = TAI_tsmc_outcome_systems_foundry_platform
+	}
+	if = {
+		limit = { has_country_flag = TAI_tsmc_outcome_disciplined_pure_play }
+		clr_country_flag = TAI_tsmc_outcome_disciplined_pure_play
+	}
+	if = {
+		limit = { has_country_flag = TAI_tsmc_capstone_resolved }
+		clr_country_flag = TAI_tsmc_capstone_resolved
+	}
+}
+
+TAI_tsmc_apply_pure_play_capstone = {
+	TAI_tsmc_clear_capstones = yes
+	add_ideas = TAI_tsmc_pure_play_common_foundry
+	set_country_flag = TAI_tsmc_outcome_pure_play_common_foundry
+	set_country_flag = TAI_tsmc_capstone_resolved
+	TAI_tsmc_clamp_state = yes
+}
+
+TAI_tsmc_apply_frontier_island_capstone = {
+	TAI_tsmc_clear_capstones = yes
+	add_ideas = TAI_tsmc_frontier_island_fortress
+	set_country_flag = TAI_tsmc_outcome_frontier_island_fortress
+	set_country_flag = TAI_tsmc_capstone_resolved
+	TAI_tsmc_clamp_state = yes
+}
+
+TAI_tsmc_apply_trusted_allied_capstone = {
+	TAI_tsmc_clear_capstones = yes
+	add_ideas = TAI_tsmc_trusted_allied_foundry_network
+	set_country_flag = TAI_tsmc_outcome_trusted_allied_network
+	set_country_flag = TAI_tsmc_capstone_resolved
+	TAI_tsmc_clamp_state = yes
+}
+
+TAI_tsmc_apply_systems_foundry_capstone = {
+	TAI_tsmc_clear_capstones = yes
+	add_ideas = TAI_tsmc_systems_foundry_platform
+	set_country_flag = TAI_tsmc_outcome_systems_foundry_platform
+	set_country_flag = TAI_tsmc_capstone_resolved
+	TAI_tsmc_clamp_state = yes
+}
+
+TAI_tsmc_apply_disciplined_capstone = {
+	TAI_tsmc_clear_capstones = yes
+	add_ideas = TAI_tsmc_disciplined_pure_play_foundry
+	set_country_flag = TAI_tsmc_outcome_disciplined_pure_play
+	set_country_flag = TAI_tsmc_capstone_resolved
+	TAI_tsmc_clamp_state = yes
+}
+
+TAI_tsmc_resolve_capstone = {
+	TAI_tsmc_initialize_state = yes
+
+	if = {
+		limit = { NOT = { has_country_flag = TAI_tsmc_capstone_resolved } }
+		if = {
+			limit = { TAI_tsmc_can_resolve_trusted_allied_network = yes }
+			TAI_tsmc_apply_trusted_allied_capstone = yes
+		}
+		else_if = {
+			limit = { TAI_tsmc_can_resolve_systems_foundry_platform = yes }
+			TAI_tsmc_apply_systems_foundry_capstone = yes
+		}
+		else_if = {
+			limit = { TAI_tsmc_can_resolve_frontier_island_fortress = yes }
+			TAI_tsmc_apply_frontier_island_capstone = yes
+		}
+		else_if = {
+			limit = { TAI_tsmc_can_resolve_pure_play_common_foundry = yes }
+			TAI_tsmc_apply_pure_play_capstone = yes
+		}
+		else = { TAI_tsmc_apply_disciplined_capstone = yes }
+	}
+}
+
+TAI_tsmc_reconstruct_history = {
+	TAI_tsmc_initialize_state = yes
+
+	if = {
+		limit = {
+			date > 2000.1.31
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_pure_play_foundry
+					has_country_flag = TAI_tsmc_anchor_client_strategy
+					has_country_flag = TAI_tsmc_state_directed_foundry
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_pure_play_foundry
+		add_to_variable = { TAI_tsmc_customer_neutrality = 1 }
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2001.3.2
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_countercyclical_capex
+					has_country_flag = TAI_tsmc_capacity_discipline
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_countercyclical_capex
+		add_to_variable = { TAI_tsmc_process_leadership = 1 }
+		add_to_variable = { TAI_tsmc_capacity_depth = 1 }
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2004.8.28
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_300mm_aggressive_scale
+					has_country_flag = TAI_tsmc_300mm_conservative_ramp
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_300mm_aggressive_scale
+		add_to_variable = { TAI_tsmc_process_leadership = 1 }
+		add_to_variable = { TAI_tsmc_capacity_depth = 1 }
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2008.10.27
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_open_innovation_platform
+					has_country_flag = TAI_tsmc_tighter_anchor_ecosystem
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_open_innovation_platform
+		add_to_variable = { TAI_tsmc_customer_neutrality = 1 }
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2009.6.30
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_founder_return
+					has_country_flag = TAI_tsmc_institutional_capex_governance
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_founder_return
+		add_to_variable = { TAI_tsmc_capacity_depth = 1 }
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2014.7.30
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_mobile_anchor_strategy
+					has_country_flag = TAI_tsmc_balanced_customer_portfolio
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_mobile_anchor_strategy
+		add_to_variable = { TAI_tsmc_capacity_depth = 1 }
+		add_to_variable = { TAI_tsmc_customer_neutrality = -1 }
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2017.9.18
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_euv_committed
+					has_country_flag = TAI_tsmc_euv_staged
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_euv_committed
+		add_to_variable = { TAI_tsmc_process_leadership = 1 }
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2018.6.30
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_professional_succession
+					has_country_flag = TAI_tsmc_strategic_recentralization
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_professional_succession
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2020.5.15
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_arizona_program_announced
+					has_country_flag = TAI_tsmc_arizona_deferred
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_arizona_program_announced
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2020.9.15
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_export_control_compliance
+					has_country_flag = TAI_tsmc_export_license_strategy
+					has_country_flag = TAI_tsmc_export_control_defiance
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_export_control_compliance
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2021.7.20
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_broad_allocation
+					has_country_flag = TAI_tsmc_anchor_allocation
+					has_country_flag = TAI_tsmc_strategic_allocation
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_broad_allocation
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2022.8.9
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_chips_terms_integrated
+					has_country_flag = TAI_tsmc_chips_terms_limited
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_chips_terms_integrated
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2023.8.19
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_advanced_packaging_expanded
+					has_country_flag = TAI_tsmc_balanced_packaging
+					has_country_flag = TAI_tsmc_wafer_first_discipline
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_advanced_packaging_qualified
+		set_country_flag = TAI_tsmc_cowos_expansion
+		set_country_flag = TAI_tsmc_advanced_packaging_expanded
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = {
+			date > 2024.8.20
+			NOT = {
+				OR = {
+					has_country_flag = TAI_tsmc_overseas_network
+					has_country_flag = TAI_tsmc_selective_satellites
+					has_country_flag = TAI_tsmc_taiwan_capacity_core
+				}
+			}
+		}
+		set_country_flag = TAI_tsmc_overseas_network
+		set_country_flag = TAI_tsmc_taiwan_capacity_core
+		TAI_tsmc_clamp_state = yes
+	}
+
+	if = {
+		limit = { date > 2024.8.21 }
+		TAI_tsmc_mark_esmc_ground_broken = yes
+	}
+	if = {
+		limit = { date > 2024.11.1 }
+		TAI_tsmc_mark_arizona_fab1_volume = yes
+	}
+	if = {
+		limit = { date > 2024.12.1 }
+		TAI_tsmc_mark_kumamoto_fab1_volume = yes
+	}
+	if = {
+		limit = { date > 2025.10.28 }
+		TAI_tsmc_mark_n2_volume = yes
+	}
+
+	TAI_tsmc_clamp_state = yes
+
+	if = {
+		limit = {
+			date > 2026.7.22
+			NOT = { has_country_flag = TAI_tsmc_capstone_resolved }
+		}
+		TAI_tsmc_resolve_capstone = yes
+	}
+	if = {
+		limit = { date > 2026.7.22 }
+		set_country_flag = TAI_tsmc_reconstruct_complete
+	}
+}
+
+TAI_tsmc_schedule_current_year_events = {
+	if = {
+		limit = { NOT = { has_country_flag = TAI_tsmc_start_year_events_scheduled } }
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2000.1.1 }
+				has_start_date < 2000.1.2
+				NOT = {
+					OR = {
+						has_country_flag = TAI_tsmc_pure_play_foundry
+						has_country_flag = TAI_tsmc_anchor_client_strategy
+						has_country_flag = TAI_tsmc_state_directed_foundry
+					}
+				}
+			}
+			country_event = { id = TAI_tsmc_events.1 days = 30 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2001.1.1 }
+				has_start_date < 2001.1.2
+				NOT = { has_country_flag = TAI_tsmc_countercyclical_capex }
+				NOT = { has_country_flag = TAI_tsmc_capacity_discipline }
+			}
+			country_event = { id = TAI_tsmc_events.2 days = 60 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2004.1.1 }
+				has_start_date < 2004.1.2
+				NOT = { has_country_flag = TAI_tsmc_300mm_aggressive_scale }
+				NOT = { has_country_flag = TAI_tsmc_300mm_conservative_ramp }
+			}
+			country_event = { id = TAI_tsmc_events.3 days = 240 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2008.1.1 }
+				has_start_date < 2008.1.2
+				NOT = { has_country_flag = TAI_tsmc_open_innovation_platform }
+				NOT = { has_country_flag = TAI_tsmc_tighter_anchor_ecosystem }
+			}
+			country_event = { id = TAI_tsmc_events.4 days = 300 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2009.1.1 }
+				has_start_date < 2009.1.2
+				NOT = { has_country_flag = TAI_tsmc_founder_return }
+				NOT = { has_country_flag = TAI_tsmc_institutional_capex_governance }
+			}
+			country_event = { id = TAI_tsmc_events.5 days = 180 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2014.1.1 }
+				has_start_date < 2014.1.2
+				NOT = { has_country_flag = TAI_tsmc_mobile_anchor_strategy }
+				NOT = { has_country_flag = TAI_tsmc_balanced_customer_portfolio }
+			}
+			country_event = { id = TAI_tsmc_events.6 days = 210 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2017.1.1 }
+				has_start_date < 2017.1.2
+				NOT = { has_country_flag = TAI_tsmc_euv_committed }
+				NOT = { has_country_flag = TAI_tsmc_euv_staged }
+			}
+			country_event = { id = TAI_tsmc_events.7 days = 260 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2018.1.1 }
+				has_start_date < 2018.1.2
+				NOT = { has_country_flag = TAI_tsmc_professional_succession }
+				NOT = { has_country_flag = TAI_tsmc_strategic_recentralization }
+			}
+			country_event = { id = TAI_tsmc_events.8 days = 180 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2020.1.1 }
+				has_start_date < 2020.1.2
+				NOT = { has_country_flag = TAI_tsmc_arizona_program_announced }
+				NOT = { has_country_flag = TAI_tsmc_arizona_deferred }
+			}
+			country_event = { id = TAI_tsmc_events.9 days = 135 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2020.1.1 }
+				has_start_date < 2020.1.2
+				NOT = { has_country_flag = TAI_tsmc_export_control_compliance }
+				NOT = { has_country_flag = TAI_tsmc_export_license_strategy }
+				NOT = { has_country_flag = TAI_tsmc_export_control_defiance }
+			}
+			country_event = { id = TAI_tsmc_events.10 days = 258 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2021.1.1 }
+				has_start_date < 2021.1.2
+				NOT = { has_country_flag = TAI_tsmc_broad_allocation }
+				NOT = { has_country_flag = TAI_tsmc_anchor_allocation }
+				NOT = { has_country_flag = TAI_tsmc_strategic_allocation }
+			}
+			country_event = { id = TAI_tsmc_events.11 days = 200 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2022.1.1 }
+				has_start_date < 2022.1.2
+				NOT = { has_country_flag = TAI_tsmc_chips_terms_integrated }
+				NOT = { has_country_flag = TAI_tsmc_chips_terms_limited }
+			}
+			country_event = { id = TAI_tsmc_events.12 days = 220 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2023.1.1 }
+				has_start_date < 2023.1.2
+				NOT = { has_country_flag = TAI_tsmc_advanced_packaging_expanded }
+				NOT = { has_country_flag = TAI_tsmc_balanced_packaging }
+				NOT = { has_country_flag = TAI_tsmc_wafer_first_discipline }
+			}
+			country_event = { id = TAI_tsmc_events.13 days = 230 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2024.1.1 }
+				has_start_date < 2024.1.2
+				NOT = { has_country_flag = TAI_tsmc_overseas_network }
+				NOT = { has_country_flag = TAI_tsmc_selective_satellites }
+				NOT = { has_country_flag = TAI_tsmc_taiwan_capacity_core }
+			}
+			country_event = { id = TAI_tsmc_events.14 days = 232 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2024.1.1 }
+				has_start_date < 2024.1.2
+				NOT = { has_country_flag = TAI_tsmc_arizona_fab1_volume_production }
+			}
+			country_event = { id = TAI_tsmc_events.92 days = 305 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2024.1.1 }
+				has_start_date < 2024.1.2
+				NOT = { has_country_flag = TAI_tsmc_kumamoto_fab1_volume_production }
+			}
+			country_event = { id = TAI_tsmc_events.93 days = 335 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2025.1.1 }
+				has_start_date < 2025.1.2
+				NOT = { has_country_flag = TAI_tsmc_n2_volume_production }
+			}
+			country_event = { id = TAI_tsmc_events.94 days = 300 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_start_date < 2026.1.1 }
+				has_start_date < 2026.1.2
+				NOT = { has_country_flag = TAI_tsmc_capstone_resolved }
+			}
+			country_event = { id = TAI_tsmc_events.15 days = 202 }
+		}
+	}
+
+	set_country_flag = TAI_tsmc_start_year_events_scheduled
+}

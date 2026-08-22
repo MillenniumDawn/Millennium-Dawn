@@ -1,0 +1,417 @@
+ISR_oem_initialize_state = {
+	if = {
+		limit = { NOT = { has_country_flag = ISR_oem_state_initialized } }
+
+		set_variable = { ISR_oem_startup_nation_score = 0 }
+		set_variable = { ISR_oem_national_champions_score = 0 }
+		set_variable = { ISR_oem_strategic_consolidation_score = 0 }
+		add_ideas = ISR_oem_specialized_electronics_export_base
+		add_ideas = ISR_oem_defense_civilian_spillover
+		add_ideas = ISR_oem_foreign_acquisition_magnet
+		add_ideas = ISR_oem_fragmented_industrial_champions
+		set_country_flag = ISR_oem_state_initialized
+	}
+
+	ISR_oem_clamp_scores = yes
+}
+
+ISR_oem_clamp_scores = {
+	clamp_variable = { var = ISR_oem_startup_nation_score min = 0 max = 10 }
+	clamp_variable = { var = ISR_oem_national_champions_score min = 0 max = 10 }
+	clamp_variable = { var = ISR_oem_strategic_consolidation_score min = 0 max = 10 }
+}
+
+ISR_oem_support_startup_nation = {
+	add_to_variable = { ISR_oem_startup_nation_score = 1 }
+	ISR_oem_clamp_scores = yes
+	ISR_oem_resolve_strategy = yes
+}
+
+ISR_oem_support_national_champions = {
+	add_to_variable = { ISR_oem_national_champions_score = 1 }
+	ISR_oem_clamp_scores = yes
+	ISR_oem_resolve_strategy = yes
+}
+
+ISR_oem_support_strategic_consolidation = {
+	add_to_variable = { ISR_oem_strategic_consolidation_score = 1 }
+	ISR_oem_clamp_scores = yes
+	ISR_oem_resolve_strategy = yes
+}
+
+ISR_oem_resolve_strategy = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_strategy_resolved }
+			has_country_flag = ISR_oem_eci_resolved
+			has_country_flag = ISR_oem_indigo_resolved
+			has_country_flag = ISR_oem_msystems_resolved
+			has_country_flag = ISR_oem_tower_resolved
+			has_country_flag = ISR_oem_gilat_resolved
+			has_country_flag = ISR_oem_scitex_resolved
+			has_country_flag = ISR_oem_alvarion_resolved
+			has_country_flag = ISR_oem_galileo_resolved
+			has_country_flag = ISR_oem_elbit_elop_resolved
+			has_country_flag = ISR_oem_mellanox_resolved
+		}
+
+		set_country_flag = ISR_oem_strategy_resolved
+		remove_ideas = ISR_oem_fragmented_industrial_champions
+		remove_ideas = ISR_oem_startup_nation_network
+		remove_ideas = ISR_oem_national_champions
+		remove_ideas = ISR_oem_strategic_consolidation
+		if = {
+			limit = {
+				check_variable = { var = ISR_oem_startup_nation_score value = ISR_oem_national_champions_score compare = greater_than_or_equals }
+				check_variable = { var = ISR_oem_startup_nation_score value = ISR_oem_strategic_consolidation_score compare = greater_than_or_equals }
+			}
+			add_ideas = ISR_oem_startup_nation_network
+		}
+		else_if = {
+			limit = { check_variable = { var = ISR_oem_national_champions_score value = ISR_oem_strategic_consolidation_score compare = greater_than_or_equals } }
+			remove_ideas = ISR_oem_foreign_acquisition_magnet
+			add_ideas = ISR_oem_national_champions
+		}
+		else = {
+			remove_ideas = ISR_oem_foreign_acquisition_magnet
+			add_ideas = ISR_oem_strategic_consolidation
+		}
+	}
+}
+
+ISR_oem_schedule_2000_events = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_eci_scheduled }
+			NOT = { has_country_flag = ISR_oem_eci_resolved }
+		}
+		set_country_flag = ISR_oem_eci_scheduled
+		set_country_flag = { flag = ISR_oem_eci_pending days = 120 value = 1 }
+		country_event = { id = ISR_oem_events.1 days = 60 }
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_scitex_scheduled }
+			NOT = { has_country_flag = ISR_oem_scitex_resolved }
+		}
+		set_country_flag = ISR_oem_scitex_scheduled
+		set_country_flag = { flag = ISR_oem_scitex_pending days = 154 value = 1 }
+		country_event = { id = ISR_oem_events.6 days = 94 }
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_elbit_elop_scheduled }
+			NOT = { has_country_flag = ISR_oem_elbit_elop_resolved }
+		}
+		set_country_flag = ISR_oem_elbit_elop_scheduled
+		set_country_flag = { flag = ISR_oem_elbit_elop_pending days = 210 value = 1 }
+		country_event = { id = ISR_oem_events.9 days = 150 }
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_indigo_scheduled }
+			NOT = { has_country_flag = ISR_oem_indigo_resolved }
+		}
+		set_country_flag = ISR_oem_indigo_scheduled
+		set_country_flag = { flag = ISR_oem_indigo_pending days = 345 value = 1 }
+		country_event = { id = ISR_oem_events.2 days = 285 }
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_galileo_scheduled }
+			NOT = { has_country_flag = ISR_oem_galileo_resolved }
+		}
+		set_country_flag = ISR_oem_galileo_scheduled
+		set_country_flag = { flag = ISR_oem_galileo_pending days = 350 value = 1 }
+		country_event = { id = ISR_oem_events.8 days = 290 }
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_msystems_scheduled }
+			NOT = { has_country_flag = ISR_oem_msystems_resolved }
+		}
+		set_country_flag = ISR_oem_msystems_scheduled
+		set_country_flag = { flag = ISR_oem_msystems_pending days = 380 value = 1 }
+		country_event = { id = ISR_oem_events.3 days = 320 }
+	}
+}
+
+ISR_oem_schedule_2001_events = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_tower_scheduled }
+			NOT = { has_country_flag = ISR_oem_tower_resolved }
+		}
+		set_country_flag = ISR_oem_tower_scheduled
+		set_country_flag = { flag = ISR_oem_tower_pending days = 120 value = 1 }
+		country_event = { id = ISR_oem_events.4 days = 60 }
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_gilat_scheduled }
+			NOT = { has_country_flag = ISR_oem_gilat_resolved }
+		}
+		set_country_flag = ISR_oem_gilat_scheduled
+		set_country_flag = { flag = ISR_oem_gilat_pending days = 190 value = 1 }
+		country_event = { id = ISR_oem_events.5 days = 130 }
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_alvarion_scheduled }
+			NOT = { has_country_flag = ISR_oem_alvarion_resolved }
+		}
+		set_country_flag = ISR_oem_alvarion_scheduled
+		set_country_flag = { flag = ISR_oem_alvarion_pending days = 273 value = 1 }
+		country_event = { id = ISR_oem_events.7 days = 213 }
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_mellanox_scheduled }
+			NOT = { has_country_flag = ISR_oem_mellanox_resolved }
+		}
+		set_country_flag = ISR_oem_mellanox_scheduled
+		set_country_flag = { flag = ISR_oem_mellanox_pending days = 360 value = 1 }
+		country_event = { id = ISR_oem_events.10 days = 300 }
+	}
+}
+
+ISR_oem_schedule_2001_events_from_2000 = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_tower_scheduled }
+			NOT = { has_country_flag = ISR_oem_tower_resolved }
+		}
+		set_country_flag = ISR_oem_tower_scheduled
+		set_country_flag = { flag = ISR_oem_tower_pending days = 486 value = 1 }
+		country_event = { id = ISR_oem_events.4 days = 426 }
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_gilat_scheduled }
+			NOT = { has_country_flag = ISR_oem_gilat_resolved }
+		}
+		set_country_flag = ISR_oem_gilat_scheduled
+		set_country_flag = { flag = ISR_oem_gilat_pending days = 556 value = 1 }
+		country_event = { id = ISR_oem_events.5 days = 496 }
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_alvarion_scheduled }
+			NOT = { has_country_flag = ISR_oem_alvarion_resolved }
+		}
+		set_country_flag = ISR_oem_alvarion_scheduled
+		set_country_flag = { flag = ISR_oem_alvarion_pending days = 639 value = 1 }
+		country_event = { id = ISR_oem_events.7 days = 579 }
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = ISR_oem_mellanox_scheduled }
+			NOT = { has_country_flag = ISR_oem_mellanox_resolved }
+		}
+		set_country_flag = ISR_oem_mellanox_scheduled
+		set_country_flag = { flag = ISR_oem_mellanox_pending days = 726 value = 1 }
+		country_event = { id = ISR_oem_events.10 days = 666 }
+	}
+}
+ISR_oem_schedule_due_events = {
+	if = {
+		limit = { corporate_history_full_enabled = yes date > 2000.2.29 NOT = { has_country_flag = ISR_oem_eci_pending } NOT = { has_country_flag = ISR_oem_eci_resolved } }
+		set_country_flag = ISR_oem_eci_scheduled
+		set_country_flag = { flag = ISR_oem_eci_pending days = 60 value = 1 }
+		country_event = { id = ISR_oem_events.1 days = 1 }
+	}
+	if = {
+		limit = { corporate_history_full_enabled = yes date > 2000.4.3 NOT = { has_country_flag = ISR_oem_scitex_pending } NOT = { has_country_flag = ISR_oem_scitex_resolved } }
+		set_country_flag = ISR_oem_scitex_scheduled
+		set_country_flag = { flag = ISR_oem_scitex_pending days = 60 value = 1 }
+		country_event = { id = ISR_oem_events.6 days = 1 }
+	}
+	if = {
+		limit = { corporate_history_full_enabled = yes date > 2000.5.29 NOT = { has_country_flag = ISR_oem_elbit_elop_pending } NOT = { has_country_flag = ISR_oem_elbit_elop_resolved } }
+		set_country_flag = ISR_oem_elbit_elop_scheduled
+		set_country_flag = { flag = ISR_oem_elbit_elop_pending days = 60 value = 1 }
+		country_event = { id = ISR_oem_events.9 days = 1 }
+	}
+	if = {
+		limit = { corporate_history_full_enabled = yes date > 2000.10.11 NOT = { has_country_flag = ISR_oem_indigo_pending } NOT = { has_country_flag = ISR_oem_indigo_resolved } }
+		set_country_flag = ISR_oem_indigo_scheduled
+		set_country_flag = { flag = ISR_oem_indigo_pending days = 60 value = 1 }
+		country_event = { id = ISR_oem_events.2 days = 1 }
+	}
+	if = {
+		limit = { corporate_history_full_enabled = yes date > 2000.10.16 NOT = { has_country_flag = ISR_oem_galileo_pending } NOT = { has_country_flag = ISR_oem_galileo_resolved } }
+		set_country_flag = ISR_oem_galileo_scheduled
+		set_country_flag = { flag = ISR_oem_galileo_pending days = 60 value = 1 }
+		country_event = { id = ISR_oem_events.8 days = 1 }
+	}
+	if = {
+		limit = { corporate_history_full_enabled = yes date > 2000.11.15 NOT = { has_country_flag = ISR_oem_msystems_pending } NOT = { has_country_flag = ISR_oem_msystems_resolved } }
+		set_country_flag = ISR_oem_msystems_scheduled
+		set_country_flag = { flag = ISR_oem_msystems_pending days = 60 value = 1 }
+		country_event = { id = ISR_oem_events.3 days = 1 }
+	}
+	if = {
+		limit = { corporate_history_full_enabled = yes date > 2001.3.1 NOT = { has_country_flag = ISR_oem_tower_pending } NOT = { has_country_flag = ISR_oem_tower_resolved } }
+		set_country_flag = ISR_oem_tower_scheduled
+		set_country_flag = { flag = ISR_oem_tower_pending days = 60 value = 1 }
+		country_event = { id = ISR_oem_events.4 days = 1 }
+	}
+	if = {
+		limit = { corporate_history_full_enabled = yes date > 2001.5.10 NOT = { has_country_flag = ISR_oem_gilat_pending } NOT = { has_country_flag = ISR_oem_gilat_resolved } }
+		set_country_flag = ISR_oem_gilat_scheduled
+		set_country_flag = { flag = ISR_oem_gilat_pending days = 60 value = 1 }
+		country_event = { id = ISR_oem_events.5 days = 1 }
+	}
+	if = {
+		limit = { corporate_history_full_enabled = yes date > 2001.8.1 NOT = { has_country_flag = ISR_oem_alvarion_pending } NOT = { has_country_flag = ISR_oem_alvarion_resolved } }
+		set_country_flag = ISR_oem_alvarion_scheduled
+		set_country_flag = { flag = ISR_oem_alvarion_pending days = 60 value = 1 }
+		country_event = { id = ISR_oem_events.7 days = 1 }
+	}
+	if = {
+		limit = { corporate_history_full_enabled = yes date > 2001.10.27 NOT = { has_country_flag = ISR_oem_mellanox_pending } NOT = { has_country_flag = ISR_oem_mellanox_resolved } }
+		set_country_flag = ISR_oem_mellanox_scheduled
+		set_country_flag = { flag = ISR_oem_mellanox_pending days = 60 value = 1 }
+		country_event = { id = ISR_oem_events.10 days = 1 }
+	}
+}
+
+
+ISR_oem_schedule_current_year_events = {
+	if = {
+		limit = {
+			NOT = { has_start_date < 2000.1.1 }
+			has_start_date < 2000.1.2
+		}
+		ISR_oem_schedule_2000_events = yes
+		ISR_oem_schedule_2001_events_from_2000 = yes
+	}
+	else_if = {
+		limit = {
+			NOT = { has_start_date < 2001.1.1 }
+			has_start_date < 2001.1.2
+		}
+		ISR_oem_schedule_2001_events = yes
+	}
+}
+
+ISR_oem_reconstruct_history = {
+	ISR_oem_initialize_state = yes
+
+	if = {
+		limit = {
+			date > 2000.2.29
+			NOT = { has_country_flag = ISR_oem_eci_resolved }
+		}
+		set_country_flag = ISR_oem_eci_resolved
+		ISR_oem_support_national_champions = yes
+	}
+	if = {
+		limit = {
+			date > 2000.4.3
+			NOT = { has_country_flag = ISR_oem_scitex_resolved }
+		}
+		set_country_flag = ISR_oem_scitex_resolved
+		ISR_oem_support_startup_nation = yes
+	}
+	if = {
+		limit = {
+			date > 2000.5.29
+			NOT = { has_country_flag = ISR_oem_elbit_elop_resolved }
+		}
+		set_country_flag = ISR_oem_elbit_elop_resolved
+		ISR_oem_support_national_champions = yes
+	}
+	if = {
+		limit = {
+			date > 2000.10.11
+			NOT = { has_country_flag = ISR_oem_indigo_resolved }
+		}
+		set_country_flag = ISR_oem_indigo_resolved
+		ISR_oem_support_startup_nation = yes
+	}
+	if = {
+		limit = {
+			date > 2000.10.16
+			NOT = { has_country_flag = ISR_oem_galileo_resolved }
+		}
+		set_country_flag = ISR_oem_galileo_resolved
+		ISR_oem_support_startup_nation = yes
+	}
+	if = {
+		limit = {
+			date > 2000.11.15
+			NOT = { has_country_flag = ISR_oem_msystems_resolved }
+		}
+		set_country_flag = ISR_oem_msystems_resolved
+		ISR_oem_support_startup_nation = yes
+	}
+	if = {
+		limit = {
+			date > 2001.3.1
+			NOT = { has_country_flag = ISR_oem_tower_resolved }
+		}
+		set_country_flag = ISR_oem_tower_resolved
+		ISR_oem_support_startup_nation = yes
+	}
+	if = {
+		limit = {
+			date > 2001.5.10
+			NOT = { has_country_flag = ISR_oem_gilat_resolved }
+		}
+		set_country_flag = ISR_oem_gilat_resolved
+		ISR_oem_support_startup_nation = yes
+	}
+	if = {
+		limit = {
+			date > 2001.8.1
+			NOT = { has_country_flag = ISR_oem_alvarion_resolved }
+		}
+		set_country_flag = ISR_oem_alvarion_resolved
+		ISR_oem_support_strategic_consolidation = yes
+	}
+	if = {
+		limit = {
+			date > 2001.10.27
+			NOT = { has_country_flag = ISR_oem_mellanox_resolved }
+		}
+		set_country_flag = ISR_oem_mellanox_resolved
+		ISR_oem_support_startup_nation = yes
+	}
+
+	ISR_oem_clamp_scores = yes
+	ISR_oem_resolve_strategy = yes
+}
+
+ISR_oem_monthly_driver = {
+	if = {
+		limit = {
+			corporate_history_enabled = yes
+			original_tag = ISR
+			NOT = { has_country_flag = collapsed_nation }
+		}
+		if = {
+			limit = { NOT = { has_country_flag = ISR_oem_country_bootstrapped } }
+			ISR_oem_reconstruct_history = yes
+			set_country_flag = ISR_oem_country_bootstrapped
+		}
+		else_if = {
+			limit = { corporate_history_outcomes_only_enabled = yes }
+			ISR_oem_reconstruct_history = yes
+		}
+		if = {
+			limit = {
+				corporate_history_full_enabled = yes
+				OR = {
+					AND = { date > 1999.12.31 date < 2000.2.1 }
+					AND = { date > 2000.12.31 date < 2001.2.1 }
+				}
+			}
+			ISR_oem_schedule_current_year_events = yes
+		}
+		if = {
+			limit = { corporate_history_full_enabled = yes }
+			ISR_oem_schedule_due_events = yes
+		}
+	}
+}

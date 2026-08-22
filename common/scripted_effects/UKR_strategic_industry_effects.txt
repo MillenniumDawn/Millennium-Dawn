@@ -1,0 +1,960 @@
+UKR_strategic_industry_initialize_state = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_state_initialized } }
+		set_variable = { UKR_strategic_industry_strategic_capacity = 4 }
+		set_variable = { UKR_strategic_industry_post_soviet_exposure = 7 }
+		set_variable = { UKR_strategic_industry_workforce_retention = 4 }
+		set_variable = { UKR_strategic_industry_distributed_production = 0 }
+		set_country_flag = UKR_strategic_industry_state_initialized
+	}
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_clamp_state = {
+	set_temp_variable = { corp_value = UKR_strategic_industry_strategic_capacity }
+	corporate_history_clamp_value = yes
+	set_variable = { UKR_strategic_industry_strategic_capacity = corp_value }
+	set_temp_variable = { corp_value = UKR_strategic_industry_post_soviet_exposure }
+	corporate_history_clamp_value = yes
+	set_variable = { UKR_strategic_industry_post_soviet_exposure = corp_value }
+	set_temp_variable = { corp_value = UKR_strategic_industry_workforce_retention }
+	corporate_history_clamp_value = yes
+	set_variable = { UKR_strategic_industry_workforce_retention = corp_value }
+	set_temp_variable = { corp_value = UKR_strategic_industry_distributed_production }
+	corporate_history_clamp_value = yes
+	set_variable = { UKR_strategic_industry_distributed_production = corp_value }
+}
+
+UKR_strategic_industry_clear_governance = {
+	clr_country_flag = UKR_strategic_industry_governance_preserved
+	clr_country_flag = UKR_strategic_industry_governance_corporatized
+	clr_country_flag = UKR_strategic_industry_governance_managed_mixed
+	clr_country_flag = UKR_strategic_industry_governance_fragmented_private
+	clr_country_flag = UKR_strategic_industry_governance_neglected
+}
+
+UKR_strategic_industry_clear_partner = {
+	clr_country_flag = UKR_strategic_industry_partner_post_soviet
+	clr_country_flag = UKR_strategic_industry_partner_western
+	clr_country_flag = UKR_strategic_industry_partner_chinese
+	clr_country_flag = UKR_strategic_industry_partner_multivector
+	clr_country_flag = UKR_strategic_industry_partner_independent
+}
+
+UKR_strategic_industry_clear_motor_sich_ownership = {
+	clr_country_flag = UKR_strategic_industry_motor_sich_state_control
+	clr_country_flag = UKR_strategic_industry_motor_sich_domestic_private
+	clr_country_flag = UKR_strategic_industry_motor_sich_chinese_control
+	clr_country_flag = UKR_strategic_industry_motor_sich_security_seized
+	clr_country_flag = UKR_strategic_industry_motor_sich_fragmented
+}
+
+UKR_strategic_industry_clear_wartime_priority = {
+	clr_country_flag = UKR_strategic_industry_wartime_priority_dispersed
+	clr_country_flag = UKR_strategic_industry_wartime_priority_centralized
+	clr_country_flag = UKR_strategic_industry_wartime_priority_allied_repair
+	clr_country_flag = UKR_strategic_industry_wartime_priority_workforce_preservation
+}
+
+UKR_strategic_industry_clear_rupture_ideas = {
+	remove_ideas = {
+		UKR_strategic_industry_rupture_mild
+		UKR_strategic_industry_rupture_moderate
+		UKR_strategic_industry_rupture_severe
+	}
+}
+
+UKR_strategic_industry_clear_wartime_ideas = {
+	remove_ideas = {
+		UKR_strategic_industry_wartime_dispersal
+		UKR_strategic_industry_wartime_centralization
+		UKR_strategic_industry_allied_repair_networks
+	}
+}
+
+UKR_strategic_industry_apply_rupture_shock = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_rupture_shock_applied } }
+		set_country_flag = UKR_strategic_industry_rupture_shock_applied
+		UKR_strategic_industry_clear_rupture_ideas = yes
+		if = {
+			limit = { check_variable = { UKR_strategic_industry_post_soviet_exposure < 4 } }
+			add_to_variable = { UKR_strategic_industry_strategic_capacity = -1 }
+			add_timed_idea = { idea = UKR_strategic_industry_rupture_mild days = 365 }
+		}
+		else_if = {
+			limit = { check_variable = { UKR_strategic_industry_post_soviet_exposure < 8 } }
+			add_to_variable = { UKR_strategic_industry_strategic_capacity = -2 }
+			add_to_variable = { UKR_strategic_industry_workforce_retention = -1 }
+			add_timed_idea = { idea = UKR_strategic_industry_rupture_moderate days = 730 }
+		}
+		else = {
+			add_to_variable = { UKR_strategic_industry_strategic_capacity = -3 }
+			add_to_variable = { UKR_strategic_industry_workforce_retention = -1 }
+			add_timed_idea = { idea = UKR_strategic_industry_rupture_severe days = 1095 }
+		}
+		UKR_strategic_industry_clamp_state = yes
+	}
+}
+
+UKR_strategic_industry_apply_war_disruption = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_war_disruption_applied } }
+		set_country_flag = UKR_strategic_industry_war_observed
+		set_country_flag = UKR_strategic_industry_war_disruption_applied
+		add_to_variable = { UKR_strategic_industry_strategic_capacity = -2 }
+		add_to_variable = { UKR_strategic_industry_workforce_retention = -1 }
+		set_country_flag = UKR_strategic_industry_sustained_war_window_started
+	set_country_flag = { flag = UKR_strategic_industry_sustained_war_window_active value = 1 days = 730 }
+		UKR_strategic_industry_clamp_state = yes
+	}
+}
+
+UKR_strategic_industry_record_event_01_historical = {
+	UKR_strategic_industry_clear_governance = yes
+	set_country_flag = UKR_strategic_industry_governance_managed_mixed
+	set_country_flag = UKR_strategic_industry_event_01_resolved
+	add_to_variable = { UKR_strategic_industry_strategic_capacity = 1 }
+	add_to_variable = { UKR_strategic_industry_workforce_retention = 1 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_02_historical = {
+	set_country_flag = UKR_strategic_industry_event_02_resolved
+	add_to_variable = { UKR_strategic_industry_strategic_capacity = 1 }
+	add_to_variable = { UKR_strategic_industry_workforce_retention = 1 }
+	add_to_variable = { UKR_strategic_industry_post_soviet_exposure = 1 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_03_historical = {
+	UKR_strategic_industry_clear_partner = yes
+	set_country_flag = UKR_strategic_industry_partner_post_soviet
+	set_country_flag = UKR_strategic_industry_event_03_resolved
+	add_to_variable = { UKR_strategic_industry_strategic_capacity = 1 }
+	add_to_variable = { UKR_strategic_industry_workforce_retention = 1 }
+	add_to_variable = { UKR_strategic_industry_post_soviet_exposure = 2 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_04_historical = {
+	set_country_flag = UKR_strategic_industry_event_04_resolved
+	add_to_variable = { UKR_strategic_industry_strategic_capacity = 1 }
+	add_to_variable = { UKR_strategic_industry_workforce_retention = 1 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_05_historical = {
+	UKR_strategic_industry_clear_partner = yes
+	set_country_flag = UKR_strategic_industry_partner_multivector
+	set_country_flag = UKR_strategic_industry_event_05_resolved
+	add_to_variable = { UKR_strategic_industry_post_soviet_exposure = -2 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_06_historical = {
+	UKR_strategic_industry_apply_rupture_shock = yes
+	UKR_strategic_industry_clear_partner = yes
+	set_country_flag = UKR_strategic_industry_partner_independent
+	set_country_flag = UKR_strategic_industry_event_06_resolved
+	add_to_variable = { UKR_strategic_industry_strategic_capacity = 1 }
+	add_to_variable = { UKR_strategic_industry_post_soviet_exposure = -3 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_07_historical = {
+	UKR_strategic_industry_clear_motor_sich_ownership = yes
+	set_country_flag = UKR_strategic_industry_motor_sich_security_seized
+	set_country_flag = UKR_strategic_industry_event_07_resolved
+}
+
+UKR_strategic_industry_record_event_08_historical = {
+	UKR_strategic_industry_clear_governance = yes
+	set_country_flag = UKR_strategic_industry_governance_corporatized
+	UKR_strategic_industry_clear_partner = yes
+	set_country_flag = UKR_strategic_industry_partner_western
+	set_country_flag = UKR_strategic_industry_event_08_resolved
+	add_to_variable = { UKR_strategic_industry_strategic_capacity = 1 }
+	add_to_variable = { UKR_strategic_industry_workforce_retention = 1 }
+	add_to_variable = { UKR_strategic_industry_post_soviet_exposure = -1 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_09_historical = {
+	UKR_strategic_industry_apply_war_disruption = yes
+	UKR_strategic_industry_clear_wartime_priority = yes
+	set_country_flag = UKR_strategic_industry_wartime_priority_dispersed
+	set_country_flag = UKR_strategic_industry_dispersal_occurred
+	set_country_flag = UKR_strategic_industry_event_09_resolved
+	add_to_variable = { UKR_strategic_industry_workforce_retention = 1 }
+	add_to_variable = { UKR_strategic_industry_distributed_production = 3 }
+	UKR_strategic_industry_clear_wartime_ideas = yes
+	add_ideas = UKR_strategic_industry_wartime_dispersal
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_10_historical = {
+	UKR_strategic_industry_clear_motor_sich_ownership = yes
+	set_country_flag = UKR_strategic_industry_motor_sich_state_control
+	set_country_flag = UKR_strategic_industry_event_10_resolved
+	add_to_variable = { UKR_strategic_industry_strategic_capacity = 1 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_11_historical = {
+	set_country_flag = UKR_strategic_industry_event_11_resolved
+	add_to_variable = { UKR_strategic_industry_strategic_capacity = 1 }
+	add_to_variable = { UKR_strategic_industry_workforce_retention = 1 }
+	add_to_variable = { UKR_strategic_industry_distributed_production = 2 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_12_historical = {
+	set_country_flag = UKR_strategic_industry_event_12_resolved
+	add_to_variable = { UKR_strategic_industry_workforce_retention = 1 }
+	add_to_variable = { UKR_strategic_industry_distributed_production = 3 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_13_historical = {
+	UKR_strategic_industry_clear_governance = yes
+	set_country_flag = UKR_strategic_industry_governance_corporatized
+	set_country_flag = UKR_strategic_industry_event_13_resolved
+	add_to_variable = { UKR_strategic_industry_strategic_capacity = 1 }
+	add_to_variable = { UKR_strategic_industry_workforce_retention = 1 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_record_event_14_historical = {
+	UKR_strategic_industry_clear_partner = yes
+	set_country_flag = UKR_strategic_industry_partner_western
+	set_country_flag = UKR_strategic_industry_event_14_resolved
+	add_to_variable = { UKR_strategic_industry_strategic_capacity = 2 }
+	add_to_variable = { UKR_strategic_industry_workforce_retention = 1 }
+	UKR_strategic_industry_clamp_state = yes
+}
+
+UKR_strategic_industry_resolve_prewar_for_war = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_01_resolved } }
+		UKR_strategic_industry_clear_governance = yes
+		set_country_flag = UKR_strategic_industry_governance_managed_mixed
+		set_country_flag = UKR_strategic_industry_event_01_resolved
+	}
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_02_resolved } }
+		set_country_flag = UKR_strategic_industry_event_02_resolved
+	}
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_03_resolved } }
+		UKR_strategic_industry_clear_partner = yes
+		set_country_flag = UKR_strategic_industry_partner_independent
+		set_country_flag = UKR_strategic_industry_event_03_resolved
+	}
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_04_resolved } }
+		set_country_flag = UKR_strategic_industry_event_04_resolved
+	}
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_05_resolved } }
+		set_country_flag = UKR_strategic_industry_event_05_resolved
+	}
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_06_resolved } }
+		set_country_flag = UKR_strategic_industry_event_06_resolved
+	}
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_07_resolved } }
+		UKR_strategic_industry_clear_motor_sich_ownership = yes
+		set_country_flag = UKR_strategic_industry_motor_sich_security_seized
+		set_country_flag = UKR_strategic_industry_event_07_resolved
+	}
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_08_resolved } }
+		set_country_flag = UKR_strategic_industry_event_08_resolved
+	}
+}
+
+UKR_strategic_industry_clear_terminal_outcome = {
+	remove_ideas = {
+		UKR_strategic_industry_restored_aerospace_power
+		UKR_strategic_industry_western_integrated_defense_industry
+		UKR_strategic_industry_independent_distributed_industry
+		UKR_strategic_industry_chinese_capital_corridor
+		UKR_strategic_industry_renewed_post_soviet_integration
+		UKR_strategic_industry_diminished_specialist_base
+	}
+}
+
+UKR_strategic_industry_finalize_terminal_state = {
+	set_country_flag = UKR_strategic_industry_event_15_resolved
+}
+
+UKR_strategic_industry_apply_restored_aerospace_power = {
+	UKR_strategic_industry_clear_terminal_outcome = yes
+	add_ideas = UKR_strategic_industry_restored_aerospace_power
+	UKR_strategic_industry_finalize_terminal_state = yes
+}
+
+UKR_strategic_industry_apply_western_integrated_defense_industry = {
+	UKR_strategic_industry_clear_terminal_outcome = yes
+	add_ideas = UKR_strategic_industry_western_integrated_defense_industry
+	UKR_strategic_industry_finalize_terminal_state = yes
+}
+
+UKR_strategic_industry_apply_independent_distributed_industry = {
+	UKR_strategic_industry_clear_terminal_outcome = yes
+	add_ideas = UKR_strategic_industry_independent_distributed_industry
+	UKR_strategic_industry_finalize_terminal_state = yes
+}
+
+UKR_strategic_industry_apply_chinese_capital_corridor = {
+	UKR_strategic_industry_clear_terminal_outcome = yes
+	add_ideas = UKR_strategic_industry_chinese_capital_corridor
+	UKR_strategic_industry_finalize_terminal_state = yes
+}
+
+UKR_strategic_industry_apply_renewed_post_soviet_integration = {
+	UKR_strategic_industry_clear_terminal_outcome = yes
+	add_ideas = UKR_strategic_industry_renewed_post_soviet_integration
+	UKR_strategic_industry_finalize_terminal_state = yes
+}
+
+UKR_strategic_industry_apply_diminished_specialist_base = {
+	UKR_strategic_industry_clear_terminal_outcome = yes
+	add_ideas = UKR_strategic_industry_diminished_specialist_base
+	UKR_strategic_industry_finalize_terminal_state = yes
+}
+
+UKR_strategic_industry_resolve_terminal = {
+	UKR_strategic_industry_initialize_state = yes
+	if = {
+		limit = { NOT = { UKR_strategic_industry_terminal_outcome_present = yes } }
+		if = {
+			limit = { UKR_strategic_industry_western_integration_qualified = yes }
+			UKR_strategic_industry_apply_western_integrated_defense_industry = yes
+		}
+		else_if = {
+			limit = { UKR_strategic_industry_restored_aerospace_qualified = yes }
+			UKR_strategic_industry_apply_restored_aerospace_power = yes
+		}
+		else_if = {
+			limit = { UKR_strategic_industry_independent_distribution_qualified = yes }
+			UKR_strategic_industry_apply_independent_distributed_industry = yes
+		}
+		else_if = {
+			limit = { UKR_strategic_industry_chinese_corridor_qualified = yes }
+			UKR_strategic_industry_apply_chinese_capital_corridor = yes
+		}
+		else_if = {
+			limit = { UKR_strategic_industry_post_soviet_integration_qualified = yes }
+			UKR_strategic_industry_apply_renewed_post_soviet_integration = yes
+		}
+		else = { UKR_strategic_industry_apply_diminished_specialist_base = yes }
+	}
+}
+
+UKR_strategic_industry_complete_event_09 = {
+	set_country_flag = UKR_strategic_industry_event_09_resolved
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_10_pending } }
+		set_country_flag = UKR_strategic_industry_event_10_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_10_pending value = 1 days = 120 }
+		country_event = { id = UKR_strategic_industry_events.10 days = 60 }
+	}
+}
+
+UKR_strategic_industry_complete_event_10 = {
+	set_country_flag = UKR_strategic_industry_event_10_resolved
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_11_pending } }
+		set_country_flag = UKR_strategic_industry_event_11_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_11_pending value = 1 days = 150 }
+		country_event = { id = UKR_strategic_industry_events.11 days = 90 }
+	}
+}
+
+UKR_strategic_industry_complete_event_11 = {
+	set_country_flag = UKR_strategic_industry_event_11_resolved
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_12_pending } }
+		set_country_flag = UKR_strategic_industry_event_12_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_12_pending value = 1 days = 240 }
+		country_event = { id = UKR_strategic_industry_events.12 days = 180 }
+	}
+}
+
+UKR_strategic_industry_complete_event_12 = {
+	set_country_flag = UKR_strategic_industry_event_12_resolved
+}
+
+UKR_strategic_industry_complete_event_13 = {
+	set_country_flag = UKR_strategic_industry_event_13_resolved
+	if = {
+		limit = { date < 2023.10.23 }
+		set_country_flag = UKR_strategic_industry_event_14_calendar_wait
+	}
+	else = {
+		set_country_flag = UKR_strategic_industry_event_14_delay_started
+		set_country_flag = { flag = UKR_strategic_industry_event_14_delay_active value = 1 days = 180 }
+	}
+}
+
+UKR_strategic_industry_complete_event_14 = {
+	set_country_flag = UKR_strategic_industry_event_14_resolved
+}
+
+UKR_strategic_industry_reconstruct_history = {
+	UKR_strategic_industry_initialize_state = yes
+	if = {
+		limit = { date > 2000.3.20 NOT = { has_country_flag = UKR_strategic_industry_event_01_resolved } }
+		UKR_strategic_industry_record_event_01_historical = yes
+	}
+	if = {
+		limit = { date > 2001.6.15 NOT = { has_country_flag = UKR_strategic_industry_event_02_resolved } }
+		UKR_strategic_industry_record_event_02_historical = yes
+	}
+	if = {
+		limit = { date > 2003.9.1 NOT = { has_country_flag = UKR_strategic_industry_event_03_resolved } }
+		UKR_strategic_industry_record_event_03_historical = yes
+	}
+	if = {
+		limit = { date > 2005.4.15 NOT = { has_country_flag = UKR_strategic_industry_event_04_resolved } }
+		UKR_strategic_industry_record_event_04_historical = yes
+	}
+	if = {
+		limit = { date > 2008.6.1 NOT = { has_country_flag = UKR_strategic_industry_event_05_resolved } }
+		UKR_strategic_industry_record_event_05_historical = yes
+	}
+	if = {
+		limit = { UKR_strategic_industry_russian_rupture_trigger = yes NOT = { has_country_flag = UKR_strategic_industry_event_06_resolved } }
+		UKR_strategic_industry_record_event_06_historical = yes
+	}
+	if = {
+		limit = {
+			date > 2016.7.1
+			NOT = { has_country_flag = UKR_strategic_industry_event_07_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_war_observed }
+		}
+		UKR_strategic_industry_record_event_07_historical = yes
+	}
+	if = {
+		limit = { date > 2020.8.1 NOT = { has_country_flag = UKR_strategic_industry_event_08_resolved } }
+		UKR_strategic_industry_record_event_08_historical = yes
+	}
+	if = {
+		limit = {
+			UKR_strategic_industry_qualifying_major_war_trigger = yes
+			NOT = { has_country_flag = UKR_strategic_industry_event_09_resolved }
+		}
+		UKR_strategic_industry_resolve_prewar_for_war = yes
+		UKR_strategic_industry_record_event_09_historical = yes
+	}
+	if = {
+		limit = {
+			date > 2023.1.1
+			has_country_flag = UKR_strategic_industry_war_observed
+			NOT = { has_country_flag = UKR_strategic_industry_event_10_resolved }
+		}
+		UKR_strategic_industry_record_event_10_historical = yes
+	}
+	if = {
+		limit = {
+			date > 2023.1.1
+			has_country_flag = UKR_strategic_industry_event_10_resolved
+			NOT = { has_country_flag = UKR_strategic_industry_event_11_resolved }
+		}
+		UKR_strategic_industry_record_event_11_historical = yes
+	}
+	if = {
+		limit = {
+			date > 2023.1.1
+			has_country_flag = UKR_strategic_industry_event_11_resolved
+			NOT = { has_country_flag = UKR_strategic_industry_event_12_resolved }
+		}
+		UKR_strategic_industry_record_event_12_historical = yes
+	}
+	if = {
+		limit = {
+			date > 2023.6.29
+			has_country_flag = UKR_strategic_industry_event_08_resolved
+			NOT = { has_country_flag = UKR_strategic_industry_event_13_resolved }
+			OR = {
+				NOT = { has_country_flag = UKR_strategic_industry_war_observed }
+				has_country_flag = UKR_strategic_industry_event_10_resolved
+			}
+		}
+		UKR_strategic_industry_record_event_13_historical = yes
+	}
+	if = {
+		limit = {
+			date > 2023.10.23
+			has_country_flag = UKR_strategic_industry_event_13_resolved
+			NOT = { has_country_flag = UKR_strategic_industry_event_14_resolved }
+		}
+		UKR_strategic_industry_record_event_14_historical = yes
+	}
+	if = {
+		limit = {
+			date > 2026.1.1
+			has_country_flag = UKR_strategic_industry_event_14_resolved
+			OR = {
+				NOT = { has_country_flag = UKR_strategic_industry_war_observed }
+				has_country_flag = UKR_strategic_industry_event_12_resolved
+			}
+		}
+		if = {
+			limit = { NOT = { UKR_strategic_industry_terminal_outcome_present = yes } }
+			UKR_strategic_industry_resolve_terminal = yes
+		}
+		set_country_flag = UKR_strategic_industry_reconstruct_complete
+	}
+}
+
+UKR_strategic_industry_schedule_event_01 = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_01_resolved } NOT = { has_country_flag = UKR_strategic_industry_event_01_pending } }
+		set_country_flag = UKR_strategic_industry_event_01_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_01_pending value = 1 days = 139 }
+		country_event = { id = UKR_strategic_industry_events.1 days = 79 }
+	}
+}
+
+UKR_strategic_industry_schedule_event_02 = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_02_resolved } NOT = { has_country_flag = UKR_strategic_industry_event_02_pending } }
+		set_country_flag = UKR_strategic_industry_event_02_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_02_pending value = 1 days = 225 }
+		country_event = { id = UKR_strategic_industry_events.2 days = 165 }
+	}
+}
+
+UKR_strategic_industry_schedule_event_03 = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_03_resolved } NOT = { has_country_flag = UKR_strategic_industry_event_03_pending } }
+		set_country_flag = UKR_strategic_industry_event_03_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_03_pending value = 1 days = 303 }
+		country_event = { id = UKR_strategic_industry_events.3 days = 243 }
+	}
+}
+
+UKR_strategic_industry_schedule_event_04 = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_04_resolved } NOT = { has_country_flag = UKR_strategic_industry_event_04_pending } }
+		set_country_flag = UKR_strategic_industry_event_04_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_04_pending value = 1 days = 164 }
+		country_event = { id = UKR_strategic_industry_events.4 days = 104 }
+	}
+}
+
+UKR_strategic_industry_schedule_event_05 = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_05_resolved } NOT = { has_country_flag = UKR_strategic_industry_event_05_pending } }
+		set_country_flag = UKR_strategic_industry_event_05_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_05_pending value = 1 days = 212 }
+		country_event = { id = UKR_strategic_industry_events.5 days = 152 }
+	}
+}
+
+UKR_strategic_industry_schedule_event_07 = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = UKR_strategic_industry_event_07_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_07_pending }
+			NOT = { has_country_flag = UKR_strategic_industry_war_observed }
+		}
+		set_country_flag = UKR_strategic_industry_event_07_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_07_pending value = 1 days = 242 }
+		country_event = { id = UKR_strategic_industry_events.7 days = 182 }
+	}
+}
+
+UKR_strategic_industry_schedule_event_08 = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_08_resolved } NOT = { has_country_flag = UKR_strategic_industry_event_08_pending } }
+		set_country_flag = UKR_strategic_industry_event_08_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_08_pending value = 1 days = 273 }
+		country_event = { id = UKR_strategic_industry_events.8 days = 213 }
+	}
+}
+
+UKR_strategic_industry_schedule_event_13 = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_13_resolved } NOT = { has_country_flag = UKR_strategic_industry_event_13_pending } }
+		set_country_flag = UKR_strategic_industry_event_13_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_13_pending value = 1 days = 239 }
+		country_event = { id = UKR_strategic_industry_events.13 days = 179 }
+	}
+}
+
+UKR_strategic_industry_schedule_event_14 = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_14_resolved } NOT = { has_country_flag = UKR_strategic_industry_event_14_pending } }
+		set_country_flag = UKR_strategic_industry_event_14_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_14_pending value = 1 days = 355 }
+		country_event = { id = UKR_strategic_industry_events.14 days = 295 }
+	}
+}
+
+UKR_strategic_industry_schedule_event_15 = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_strategic_industry_event_15_resolved } NOT = { has_country_flag = UKR_strategic_industry_event_15_pending } }
+		set_country_flag = UKR_strategic_industry_event_15_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_15_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.15 days = 1 }
+	}
+}
+
+UKR_strategic_industry_schedule_current_year_events = {
+	if = {
+		limit = {
+			NOT = { has_start_date < 2000.1.1 }
+			has_start_date < 2000.1.2
+			NOT = { has_country_flag = UKR_strategic_industry_event_01_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_01_pending }
+		}
+		set_country_flag = UKR_strategic_industry_event_01_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_01_pending value = 1 days = 139 }
+		country_event = { id = UKR_strategic_industry_events.1 days = 79 }
+	}
+	if = {
+		limit = {
+			NOT = { has_start_date < 2001.1.1 }
+			has_start_date < 2001.1.2
+			NOT = { has_country_flag = UKR_strategic_industry_event_02_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_02_pending }
+		}
+		set_country_flag = UKR_strategic_industry_event_02_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_02_pending value = 1 days = 225 }
+		country_event = { id = UKR_strategic_industry_events.2 days = 165 }
+	}
+	if = {
+		limit = {
+			NOT = { has_start_date < 2003.1.1 }
+			has_start_date < 2003.1.2
+			NOT = { has_country_flag = UKR_strategic_industry_event_03_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_03_pending }
+		}
+		set_country_flag = UKR_strategic_industry_event_03_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_03_pending value = 1 days = 303 }
+		country_event = { id = UKR_strategic_industry_events.3 days = 243 }
+	}
+	if = {
+		limit = {
+			NOT = { has_start_date < 2005.1.1 }
+			has_start_date < 2005.1.2
+			NOT = { has_country_flag = UKR_strategic_industry_event_04_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_04_pending }
+		}
+		set_country_flag = UKR_strategic_industry_event_04_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_04_pending value = 1 days = 164 }
+		country_event = { id = UKR_strategic_industry_events.4 days = 104 }
+	}
+	if = {
+		limit = {
+			NOT = { has_start_date < 2008.1.1 }
+			has_start_date < 2008.1.2
+			NOT = { has_country_flag = UKR_strategic_industry_event_05_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_05_pending }
+		}
+		set_country_flag = UKR_strategic_industry_event_05_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_05_pending value = 1 days = 212 }
+		country_event = { id = UKR_strategic_industry_events.5 days = 152 }
+	}
+	if = {
+		limit = {
+			NOT = { has_start_date < 2016.1.1 }
+			has_start_date < 2016.1.2
+			NOT = { has_country_flag = UKR_strategic_industry_event_07_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_07_pending }
+			NOT = { has_country_flag = UKR_strategic_industry_war_observed }
+		}
+		set_country_flag = UKR_strategic_industry_event_07_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_07_pending value = 1 days = 242 }
+		country_event = { id = UKR_strategic_industry_events.7 days = 182 }
+	}
+	if = {
+		limit = {
+			NOT = { has_start_date < 2020.1.1 }
+			has_start_date < 2020.1.2
+			NOT = { has_country_flag = UKR_strategic_industry_event_08_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_08_pending }
+		}
+		set_country_flag = UKR_strategic_industry_event_08_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_08_pending value = 1 days = 273 }
+		country_event = { id = UKR_strategic_industry_events.8 days = 213 }
+	}
+	if = {
+		limit = {
+			NOT = { has_start_date < 2023.1.1 }
+			has_start_date < 2023.1.2
+			NOT = { has_country_flag = UKR_strategic_industry_event_13_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_13_pending }
+		}
+		set_country_flag = UKR_strategic_industry_event_13_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_13_pending value = 1 days = 239 }
+		country_event = { id = UKR_strategic_industry_events.13 days = 179 }
+	}
+	if = {
+		limit = {
+			NOT = { has_start_date < 2023.1.1 }
+			has_start_date < 2023.1.2
+			NOT = { has_country_flag = UKR_strategic_industry_event_14_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_14_pending }
+		}
+		set_country_flag = UKR_strategic_industry_event_14_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_14_pending value = 1 days = 355 }
+		country_event = { id = UKR_strategic_industry_events.14 days = 295 }
+	}
+	if = {
+		limit = {
+			NOT = { has_start_date < 2026.1.1 }
+			has_start_date < 2026.1.2
+			NOT = { has_country_flag = UKR_strategic_industry_event_15_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_15_pending }
+		}
+		set_country_flag = UKR_strategic_industry_event_15_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_15_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.15 days = 1 }
+	}
+}
+
+UKR_strategic_industry_clear_resolved_delivery_markers = {
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_01_resolved } clr_country_flag = UKR_strategic_industry_event_01_pending clr_country_flag = UKR_strategic_industry_event_01_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_02_resolved } clr_country_flag = UKR_strategic_industry_event_02_pending clr_country_flag = UKR_strategic_industry_event_02_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_03_resolved } clr_country_flag = UKR_strategic_industry_event_03_pending clr_country_flag = UKR_strategic_industry_event_03_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_04_resolved } clr_country_flag = UKR_strategic_industry_event_04_pending clr_country_flag = UKR_strategic_industry_event_04_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_05_resolved } clr_country_flag = UKR_strategic_industry_event_05_pending clr_country_flag = UKR_strategic_industry_event_05_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_06_resolved } clr_country_flag = UKR_strategic_industry_event_06_pending clr_country_flag = UKR_strategic_industry_event_06_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_07_resolved } clr_country_flag = UKR_strategic_industry_event_07_pending clr_country_flag = UKR_strategic_industry_event_07_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_08_resolved } clr_country_flag = UKR_strategic_industry_event_08_pending clr_country_flag = UKR_strategic_industry_event_08_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_09_resolved } clr_country_flag = UKR_strategic_industry_event_09_pending clr_country_flag = UKR_strategic_industry_event_09_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_10_resolved } clr_country_flag = UKR_strategic_industry_event_10_pending clr_country_flag = UKR_strategic_industry_event_10_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_11_resolved } clr_country_flag = UKR_strategic_industry_event_11_pending clr_country_flag = UKR_strategic_industry_event_11_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_12_resolved } clr_country_flag = UKR_strategic_industry_event_12_pending clr_country_flag = UKR_strategic_industry_event_12_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_13_resolved } clr_country_flag = UKR_strategic_industry_event_13_pending clr_country_flag = UKR_strategic_industry_event_13_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_14_resolved } clr_country_flag = UKR_strategic_industry_event_14_pending clr_country_flag = UKR_strategic_industry_event_14_delivery_expected }
+	if = { limit = { has_country_flag = UKR_strategic_industry_event_15_resolved } clr_country_flag = UKR_strategic_industry_event_15_pending clr_country_flag = UKR_strategic_industry_event_15_delivery_expected }
+}
+
+UKR_strategic_industry_recover_missing_events = {
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_01_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_01_pending } NOT = { has_country_flag = UKR_strategic_industry_event_01_resolved } }
+		set_country_flag = { flag = UKR_strategic_industry_event_01_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.1 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_02_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_02_pending } NOT = { has_country_flag = UKR_strategic_industry_event_02_resolved } has_country_flag = UKR_strategic_industry_event_01_resolved }
+		set_country_flag = { flag = UKR_strategic_industry_event_02_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.2 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_03_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_03_pending } NOT = { has_country_flag = UKR_strategic_industry_event_03_resolved } has_country_flag = UKR_strategic_industry_event_02_resolved }
+		set_country_flag = { flag = UKR_strategic_industry_event_03_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.3 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_04_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_04_pending } NOT = { has_country_flag = UKR_strategic_industry_event_04_resolved } has_country_flag = UKR_strategic_industry_event_03_resolved }
+		set_country_flag = { flag = UKR_strategic_industry_event_04_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.4 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_05_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_05_pending } NOT = { has_country_flag = UKR_strategic_industry_event_05_resolved } has_country_flag = UKR_strategic_industry_event_04_resolved }
+		set_country_flag = { flag = UKR_strategic_industry_event_05_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.5 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_06_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_06_pending } NOT = { has_country_flag = UKR_strategic_industry_event_06_resolved } has_country_flag = UKR_strategic_industry_event_05_resolved UKR_strategic_industry_russian_rupture_trigger = yes }
+		set_country_flag = { flag = UKR_strategic_industry_event_06_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.6 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_07_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_07_pending } NOT = { has_country_flag = UKR_strategic_industry_event_07_resolved } has_country_flag = UKR_strategic_industry_event_05_resolved NOT = { has_country_flag = UKR_strategic_industry_war_observed } }
+		set_country_flag = { flag = UKR_strategic_industry_event_07_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.7 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_08_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_08_pending } NOT = { has_country_flag = UKR_strategic_industry_event_08_resolved } has_country_flag = UKR_strategic_industry_event_07_resolved }
+		set_country_flag = { flag = UKR_strategic_industry_event_08_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.8 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_09_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_09_pending } NOT = { has_country_flag = UKR_strategic_industry_event_09_resolved } has_country_flag = UKR_strategic_industry_event_08_resolved UKR_strategic_industry_qualifying_major_war_trigger = yes }
+		set_country_flag = { flag = UKR_strategic_industry_event_09_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.9 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_10_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_10_pending } NOT = { has_country_flag = UKR_strategic_industry_event_10_resolved } has_country_flag = UKR_strategic_industry_event_09_resolved UKR_strategic_industry_qualifying_major_war_trigger = yes }
+		set_country_flag = { flag = UKR_strategic_industry_event_10_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.10 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_11_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_11_pending } NOT = { has_country_flag = UKR_strategic_industry_event_11_resolved } has_country_flag = UKR_strategic_industry_event_10_resolved }
+		set_country_flag = { flag = UKR_strategic_industry_event_11_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.11 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_12_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_12_pending } NOT = { has_country_flag = UKR_strategic_industry_event_12_resolved } has_country_flag = UKR_strategic_industry_event_11_resolved }
+		set_country_flag = { flag = UKR_strategic_industry_event_12_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.12 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_13_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_13_pending } NOT = { has_country_flag = UKR_strategic_industry_event_13_resolved } has_country_flag = UKR_strategic_industry_event_08_resolved OR = { NOT = { has_country_flag = UKR_strategic_industry_war_observed } has_country_flag = UKR_strategic_industry_event_10_resolved } }
+		set_country_flag = { flag = UKR_strategic_industry_event_13_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.13 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_14_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_14_pending } NOT = { has_country_flag = UKR_strategic_industry_event_14_resolved } has_country_flag = UKR_strategic_industry_event_13_resolved }
+		set_country_flag = { flag = UKR_strategic_industry_event_14_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.14 days = 1 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_strategic_industry_event_15_delivery_expected NOT = { has_country_flag = UKR_strategic_industry_event_15_pending } NOT = { has_country_flag = UKR_strategic_industry_event_15_resolved } UKR_strategic_industry_terminal_timing_qualified = yes }
+		set_country_flag = { flag = UKR_strategic_industry_event_15_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.15 days = 1 }
+	}
+}
+
+UKR_strategic_industry_monthly_driver = {
+	UKR_strategic_industry_initialize_state = yes
+	UKR_strategic_industry_clear_resolved_delivery_markers = yes
+	UKR_strategic_industry_recover_missing_events = yes
+	if = {
+		limit = {
+			UKR_strategic_industry_russian_rupture_trigger = yes
+			NOT = { has_country_flag = UKR_strategic_industry_event_06_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_06_pending }
+		}
+		set_country_flag = UKR_strategic_industry_event_06_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_06_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.6 days = 1 }
+	}
+	if = {
+		limit = { UKR_strategic_industry_qualifying_major_war_trigger = yes }
+		UKR_strategic_industry_resolve_prewar_for_war = yes
+		if = {
+			limit = {
+				NOT = { has_country_flag = UKR_strategic_industry_event_09_resolved }
+				NOT = { has_country_flag = UKR_strategic_industry_event_09_pending }
+			}
+			set_country_flag = UKR_strategic_industry_event_09_delivery_expected
+			set_country_flag = { flag = UKR_strategic_industry_event_09_pending value = 1 days = 61 }
+			country_event = { id = UKR_strategic_industry_events.9 days = 1 }
+		}
+		if = {
+			limit = {
+				has_country_flag = UKR_strategic_industry_event_09_resolved
+				NOT = { has_country_flag = UKR_strategic_industry_sustained_war_window_complete }
+				NOT = { has_country_flag = UKR_strategic_industry_sustained_war_window_started }
+			}
+			set_country_flag = UKR_strategic_industry_sustained_war_window_started
+			set_country_flag = { flag = UKR_strategic_industry_sustained_war_window_active value = 1 days = 730 }
+		}
+		if = {
+			limit = {
+				has_country_flag = UKR_strategic_industry_sustained_war_window_started
+				NOT = { has_country_flag = UKR_strategic_industry_sustained_war_window_active }
+			}
+			set_country_flag = UKR_strategic_industry_sustained_war_window_complete
+		}
+		if = {
+			limit = { NOT = { UKR_strategic_industry_terminal_outcome_present = yes } }
+			clr_country_flag = UKR_strategic_industry_terminal_peace_window_active
+			clr_country_flag = UKR_strategic_industry_terminal_peace_window_started
+			clr_country_flag = UKR_strategic_industry_terminal_peace_window_complete
+		}
+	}
+	else = {
+		UKR_strategic_industry_clear_wartime_ideas = yes
+		if = {
+			limit = { has_country_flag = UKR_strategic_industry_motor_sich_wartime_transfer }
+			clr_country_flag = UKR_strategic_industry_motor_sich_wartime_transfer
+		}
+		if = {
+			limit = {
+				has_country_flag = UKR_strategic_industry_event_09_resolved
+				NOT = { has_country_flag = UKR_strategic_industry_event_10_resolved }
+			}
+			set_country_flag = UKR_strategic_industry_event_10_resolved
+			if = {
+				limit = { NOT = { has_country_flag = UKR_strategic_industry_event_11_pending } }
+				set_country_flag = UKR_strategic_industry_event_11_delivery_expected
+				set_country_flag = { flag = UKR_strategic_industry_event_11_pending value = 1 days = 150 }
+				country_event = { id = UKR_strategic_industry_events.11 days = 90 }
+			}
+		}
+		if = {
+			limit = { NOT = { has_country_flag = UKR_strategic_industry_sustained_war_window_complete } }
+			clr_country_flag = UKR_strategic_industry_sustained_war_window_active
+			clr_country_flag = UKR_strategic_industry_sustained_war_window_started
+		}
+		if = {
+			limit = {
+				has_country_flag = UKR_strategic_industry_event_14_resolved
+				NOT = { UKR_strategic_industry_terminal_outcome_present = yes }
+				NOT = { has_country_flag = UKR_strategic_industry_terminal_peace_window_complete }
+				NOT = { has_country_flag = UKR_strategic_industry_terminal_peace_window_started }
+			}
+			set_country_flag = UKR_strategic_industry_terminal_peace_window_started
+			set_country_flag = { flag = UKR_strategic_industry_terminal_peace_window_active value = 1 days = 180 }
+		}
+		if = {
+			limit = {
+				has_country_flag = UKR_strategic_industry_terminal_peace_window_started
+				NOT = { has_country_flag = UKR_strategic_industry_terminal_peace_window_active }
+			}
+			set_country_flag = UKR_strategic_industry_terminal_peace_window_complete
+		}
+	}
+	if = {
+		limit = {
+			date > 2023.6.28
+			has_country_flag = UKR_strategic_industry_event_08_resolved
+			NOT = { has_country_flag = UKR_strategic_industry_event_13_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_13_pending }
+			OR = {
+				NOT = { has_country_flag = UKR_strategic_industry_war_observed }
+				has_country_flag = UKR_strategic_industry_event_10_resolved
+			}
+		}
+		set_country_flag = UKR_strategic_industry_event_13_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_13_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.13 days = 1 }
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_strategic_industry_event_13_resolved
+			NOT = { has_country_flag = UKR_strategic_industry_event_14_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_14_pending }
+			OR = {
+				AND = {
+					has_country_flag = UKR_strategic_industry_event_14_calendar_wait
+					date > 2023.10.22
+				}
+				AND = {
+					has_country_flag = UKR_strategic_industry_event_14_delay_started
+					NOT = { has_country_flag = UKR_strategic_industry_event_14_delay_active }
+				}
+				AND = {
+					date > 2023.10.22
+					NOT = { has_country_flag = UKR_strategic_industry_event_14_calendar_wait }
+					NOT = { has_country_flag = UKR_strategic_industry_event_14_delay_started }
+				}
+			}
+		}
+		set_country_flag = UKR_strategic_industry_event_14_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_14_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.14 days = 1 }
+	}
+	if = {
+		limit = {
+			UKR_strategic_industry_terminal_timing_qualified = yes
+			NOT = { has_country_flag = UKR_strategic_industry_event_15_resolved }
+			NOT = { has_country_flag = UKR_strategic_industry_event_15_pending }
+		}
+		set_country_flag = UKR_strategic_industry_event_15_delivery_expected
+		set_country_flag = { flag = UKR_strategic_industry_event_15_pending value = 1 days = 61 }
+		country_event = { id = UKR_strategic_industry_events.15 days = 1 }
+	}
+	UKR_strategic_industry_clear_resolved_delivery_markers = yes
+}
