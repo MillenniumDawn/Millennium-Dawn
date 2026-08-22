@@ -41,6 +41,101 @@ update_energy_policy_change = {
 	}
 }
 
+set_energy_consumption_policy = {
+	remove_ideas = {
+		heavy_power_restrictions_spirit
+		some_power_restrictions_spirit
+		some_additional_consumption_spirit
+		heavy_additional_consumption_spirit
+	}
+	if = {
+		limit = { check_variable = { desired_energy_consumption_policy = -2 } }
+		add_ideas = heavy_power_restrictions_spirit
+	}
+	else_if = {
+		limit = { check_variable = { desired_energy_consumption_policy = -1 } }
+		add_ideas = some_power_restrictions_spirit
+	}
+	else_if = {
+		limit = { check_variable = { desired_energy_consumption_policy = 1 } }
+		add_ideas = some_additional_consumption_spirit
+	}
+	else_if = {
+		limit = { check_variable = { desired_energy_consumption_policy = 2 } }
+		add_ideas = heavy_additional_consumption_spirit
+	}
+	update_energy_policy_change = yes
+}
+
+automation_energy_consumption_policy_weekly = {
+	set_temp_variable = {
+		automation_energy_net_generation = {
+			value = energy_consumption
+			add = energy_balance
+		}
+	}
+	set_temp_variable = { automation_energy_net_ratio = 1 }
+	if = {
+		limit = { check_variable = { energy_consumption > 0.01 } }
+		set_temp_variable = { automation_energy_net_ratio = automation_energy_net_generation }
+		divide_temp_variable = { automation_energy_net_ratio = energy_consumption }
+		clamp_temp_variable = { var = automation_energy_net_ratio min = 0 }
+	}
+
+	set_temp_variable = { current_energy_consumption_policy = 0 }
+	if = {
+		limit = { has_idea = heavy_power_restrictions_spirit }
+		set_temp_variable = { current_energy_consumption_policy = -2 }
+	}
+	else_if = {
+		limit = { has_idea = some_power_restrictions_spirit }
+		set_temp_variable = { current_energy_consumption_policy = -1 }
+	}
+	else_if = {
+		limit = { has_idea = some_additional_consumption_spirit }
+		set_temp_variable = { current_energy_consumption_policy = 1 }
+	}
+	else_if = {
+		limit = { has_idea = heavy_additional_consumption_spirit }
+		set_temp_variable = { current_energy_consumption_policy = 2 }
+	}
+	set_temp_variable = { desired_energy_consumption_policy = current_energy_consumption_policy }
+	set_temp_variable = { automation_energy_storage_threshold = max_stored_energy }
+	multiply_temp_variable = { automation_energy_storage_threshold = 0.95 }
+
+	if = {
+		limit = {
+			check_variable = { automation_energy_net_ratio < 0.95 }
+			check_variable = { current_energy_consumption_policy > -2 }
+		}
+		subtract_from_temp_variable = { desired_energy_consumption_policy = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { automation_energy_net_ratio > 1.10 }
+			check_variable = { current_energy_consumption_policy < 0 }
+		}
+		add_to_temp_variable = { desired_energy_consumption_policy = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { automation_energy_net_ratio > 1.10 }
+			check_variable = { current_energy_consumption_policy > -1 }
+			check_variable = { current_energy_consumption_policy < 2 }
+			OR = {
+				check_variable = { max_stored_energy < 0.01 }
+				check_variable = { var = stored_energy value = automation_energy_storage_threshold compare = greater_than_or_equals }
+			}
+		}
+		add_to_temp_variable = { desired_energy_consumption_policy = 1 }
+	}
+
+	if = {
+		limit = { NOT = { check_variable = { desired_energy_consumption_policy = current_energy_consumption_policy } } }
+		set_energy_consumption_policy = yes
+	}
+}
+
 # Effect: energy_calc_consumption
 # Purpose: Population, building, and static energy consumption, computed straight into the per-type display vars
 # Produces (temp): temp_total_energy_use (consumed by energy_calc_balance)
