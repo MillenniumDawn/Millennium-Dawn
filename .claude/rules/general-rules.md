@@ -66,6 +66,24 @@ grep -r "modifier_name_here" common/ideas/*.txt common/national_focus/*.txt | he
 
 No results = wrong name. Copy the exact spelling from an existing use, or check `.claude/docs/md-custom-modifiers.md`.
 
+## Sprite names
+
+Never invent a `GFX_` name. An undefined sprite is a commit-blocking error, not a silent no-op: `validate_events` reports every `picture =` that resolves to nothing as `missing-event-picture`, and MD must not fall back on vanilla event pictures. Verify before writing the reference:
+
+```bash
+grep -rn 'name = "GFX_the_name"' interface/
+```
+
+No results = the sprite does not exist. Pick an existing one (event pictures: `interface/MD_eventpictures.gfx`) or add a `spriteType` whose `texturefile` points at a texture that is actually on disk.
+
+## Ruling-party gating
+
+There is no `has_idea = democratic_*`. The democratic subideologies are `conservatism`, `liberalism`, `socialism`, and `Western_Autocracy` (`common/ideologies/00_ideologies.txt`); gate on the ruling party with the matching scripted trigger — `western_conservatism_are_in_power`, `western_liberals_are_in_power`, `western_social_democrats_are_in_power`, `western_autocrats_are_in_power`. List the full set for any ideology:
+
+```bash
+grep -rhoE '^[a-z_]+_are_in_power = \{' common/scripted_triggers/
+```
+
 ## threat scale
 
 `threat` is a decimal 0.0–1.0, never a percentage: `threat > 0.40`, not `threat > 40` (always false).
