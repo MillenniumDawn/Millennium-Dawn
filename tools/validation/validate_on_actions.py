@@ -58,7 +58,7 @@ _SHORT_FORM_EVENT_RE = re.compile(
 _DATE_LOWER_BOUND_RE = re.compile(r"\bdate\s*>\s*\d{4}\.\d{1,2}\.\d{1,2}")
 _IF_BLOCK_RE = re.compile(r"\b(?:if|else_if)\s*=\s*\{")
 _DIRECT_LIMIT_RE = re.compile(r"\s*limit\s*=\s*\{")
-_RANDOM_BLOCK_RE = re.compile(r"\brandom\s*=\s*\{")
+_RANDOM_BLOCK_RE = re.compile(r"\b(random(?:_list)?)\s*=\s*\{")
 _CHANCE_FIELD_RE = re.compile(r"\bchance\s*=")
 _PULSE_ON_ACTIONS = ("on_daily", "on_weekly", "on_monthly")
 # Dated polls intentionally kept as retries outside the yearly event table.
@@ -344,19 +344,21 @@ def scan_deterministic_date_polls(
             if if_end == -1:
                 continue
 
-            chance_spans = []
+            stochastic_spans = []
             for random_match in _RANDOM_BLOCK_RE.finditer(if_body):
                 random_body, random_end = extract_block_from_text(
                     if_body, random_match.end() - 1
                 )
                 if random_end == -1:
                     continue
-                if _CHANCE_FIELD_RE.search(random_body):
-                    chance_spans.append((random_match.start(), random_end))
+                if random_match.group(1) == "random_list" or _CHANCE_FIELD_RE.search(
+                    random_body
+                ):
+                    stochastic_spans.append((random_match.start(), random_end))
 
             line_offset = block_line_offset + block_body[: if_match.end()].count("\n")
             for eid, pos in _iter_event_call_positions(if_body):
-                if any(start <= pos < end for start, end in chance_spans):
+                if any(start <= pos < end for start, end in stochastic_spans):
                     continue
                 if eid in _DATE_POLL_EXEMPT_IDS:
                     continue
