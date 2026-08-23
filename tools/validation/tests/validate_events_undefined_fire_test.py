@@ -14,7 +14,14 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from validate_events import scan_event_definitions, scan_event_fires
+from validate_events import (
+    Validator,
+    scan_event_definition_types,
+    scan_event_definitions,
+    scan_event_fires,
+    scan_invalid_event_calls,
+    scan_typed_event_fires,
+)
 
 
 def _write(tmp_path, name, body):
@@ -74,6 +81,58 @@ def test_fires_short_and_block_form(tmp_path):
         "block.1",
         "reordered.1",
     }
+
+
+def test_definition_and_fire_types_are_retained(tmp_path):
+    definition = _write(
+        tmp_path,
+        "events/Ev.txt",
+        DEFINITION.replace("country_event", "news_event"),
+    )
+    caller = _write(tmp_path, "common/f.txt", "country_event = foo.1\n")
+
+    assert scan_event_definition_types((definition, frozenset())) == [
+        ("foo.1", "news_event")
+    ]
+    assert scan_typed_event_fires((caller, frozenset())) == [
+        ("foo.1", "country_event", caller, 1)
+    ]
+
+
+def test_type_mismatch_report_keeps_file_and_line(tmp_path):
+    caller = _write(tmp_path, "common/f.txt", "country_event = foo.1\n")
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator._definition_types_cache = {"foo.1": "news_event"}
+    validator._typed_fires_cache = [("foo.1", "country_event", caller, 1)]
+
+    validator.validate_event_fire_types()
+
+    assert len(validator._issues) == 1
+    assert validator._issues[0].file == "common/f.txt"
+    assert validator._issues[0].line == 1
+
+
+def test_malformed_call_scan_uses_staged_scope(tmp_path):
+    staged = _write(tmp_path, "common/staged.txt", "country_event = foo.1\n")
+    _write(tmp_path, "common/unstaged.txt", "event_country = foo.2\n")
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.staged_only = True
+    validator.staged_files = [staged]
+
+    assert validator._get_scoped_fire_scan_args() == [(staged, frozenset())]
+
+
+def test_reversed_and_missing_equals_calls_detected(tmp_path):
+    caller = _write(
+        tmp_path,
+        "common/f.txt",
+        "event_country = foo.1\ncountry_event { id = foo.2 days = 3 }\n",
+    )
+
+    assert scan_invalid_event_calls((caller, frozenset())) == [
+        ("reversed", "event_country", "foo.1", caller, 1),
+        ("missing-equals", "country_event", "foo.2", caller, 2),
+    ]
 
 
 def test_interpolated_id_skipped(tmp_path):
