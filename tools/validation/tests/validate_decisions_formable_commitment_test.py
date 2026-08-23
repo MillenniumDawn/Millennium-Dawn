@@ -80,10 +80,10 @@ def test_missing_gate_flagged():
         "\t\tai_will_do = { base = 10 }\n"
         "\t\tcomplete_effect = {\n\t\t\tadd_political_power = 1\n\t\t}\n\t}"
     )
-    rows = V._find_formable_commitment_rows(
-        [_update_flag("AAA", 1, 3, 3), ungated], {}
+    rows = V._find_formable_commitment_rows([_update_flag("AAA", 1, 3, 3), ungated], {})
+    assert any(
+        "AAA_integrate_BBB" in r and "missing commitment gate" in r for r in rows
     )
-    assert any("AAA_integrate_BBB" in r and "missing commitment gate" in r for r in rows)
 
 
 def test_id_collision_flagged():
@@ -95,9 +95,7 @@ def test_id_collision_flagged():
 
 def test_gate_id_mismatch_flagged():
     # Gate cites id 2 but the formable's commits establish id 1.
-    bad_gate = _factory(
-        "\tAAA_integrate_BBB = {\n" + _gate(2, 3) + "\t}"
-    )
+    bad_gate = _factory("\tAAA_integrate_BBB = {\n" + _gate(2, 3) + "\t}")
     rows = V._find_formable_commitment_rows(
         [_update_flag("AAA", 1, 3, 3), bad_gate], {}
     )

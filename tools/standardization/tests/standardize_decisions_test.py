@@ -9,7 +9,13 @@ order, and never drop or split content.
 
 import pytest
 from shared_utils import collapse_or_compact
-from standardize_decisions import DecisionStandardizer, format_decision
+from standardize_decisions import (
+    DecisionStandardizer,
+    ensure_missing_ai_will_do,
+    format_decision,
+    inject_missing_decision_logs,
+    strip_sole_decision_allowed,
+)
 
 
 def _decision(lines):
@@ -112,6 +118,23 @@ def test_existing_complete_effect_log_not_duplicated():
     out = format_decision(block)
     text = "\n".join(out)
     assert text.count("log =") == 1
+
+
+def test_nested_effect_log_does_not_suppress_direct_log():
+    block = _decision(
+        [
+            "\tCHI_build_decision = {",
+            "\t\tcomplete_effect = {",
+            "\t\t\tif = {",
+            '\t\t\t\tlog = "conditional"',
+            "\t\t\t}",
+            "\t\t}",
+            "\t}",
+        ]
+    )
+    text = "\n".join(format_decision(block))
+    assert text.count("log =") == 2
+    assert text.index('Decision CHI_build_decision"') < text.index("if = {")
 
 
 def test_single_leaf_block_collapsed():
@@ -479,3 +502,109 @@ def test_unreadable_category_header_raises_instead_of_guessing():
     )
     with pytest.raises(ValueError):
         DecisionStandardizer().extract_properties(category)
+
+
+def test_log_injected_into_remove_effect_when_missing():
+    block = _decision(
+        [
+            "\tCHI_build_decision = {",
+            "\t\tremove_effect = {",
+            "\t\t\tadd_political_power = 10",
+            "\t\t}",
+            "\t}",
+        ]
+    )
+    out = format_decision(block)
+    text = "\n".join(out)
+    assert 'log = "[GetDateText]: [Root.GetName]: Decision CHI_build_decision"' in text
+    assert text.index("log =") < text.index("add_political_power")
+
+
+def test_single_line_remove_effect_expanded_and_logged():
+    block = _decision(
+        [
+            "\tCHI_visit = {",
+            "\t\tremove_effect = { country_event = foo.1 }",
+            "\t}",
+        ]
+    )
+    out = format_decision(block)
+    text = "\n".join(out)
+    assert 'log = "[GetDateText]: [Root.GetName]: Decision CHI_visit"' in text
+    assert "country_event = foo.1" in text
+
+
+def test_logs_only_leaves_unrelated_formatting_alone():
+    src = [
+        "CHI_cat = {\n",
+        "\tCHI_visit = {\n",
+        "\t\tallowed = { tag = CHI }\n",
+        "\t\tremove_effect = { country_event = foo.1 }\n",
+        "\t}\n",
+        "}\n",
+    ]
+    out = inject_missing_decision_logs(src)
+    text = "".join(out)
+    assert "allowed = { tag = CHI }" in text
+    assert 'log = "[GetDateText]: [Root.GetName]: Decision CHI_visit"' in text
+    assert "country_event = foo.1" in text
+    assert text.count("log =") == 1
+
+
+def test_strip_sole_decision_allowed_keeps_category_allowed():
+    src = [
+        "CHI_cat = {\n",
+        "\tallowed = { tag = CHI }\n",
+        "\tCHI_visit = {\n",
+        "\t\tallowed = { tag = CHI }\n",
+        "\t\ticon = generic_decision\n",
+        "\t}\n",
+        "}\n",
+    ]
+    out = "".join(strip_sole_decision_allowed(src))
+    assert "\tallowed = { tag = CHI }" in out
+    assert "\t\tallowed = { tag = CHI }" not in out
+    assert "icon = generic_decision" in out
+
+
+def test_strip_sole_decision_allowed_keeps_nonidentical_category_gate():
+    src = [
+        "CHI_cat = {\n",
+        "\tallowed = { original_tag = CHI }\n",
+        "\tCHI_visit = {\n",
+        "\t\tallowed = { tag = CHI }\n",
+        "\t\ticon = generic_decision\n",
+        "\t}\n",
+        "}\n",
+    ]
+    out = "".join(strip_sole_decision_allowed(src))
+    assert "\t\tallowed = { tag = CHI }" in out
+
+
+def test_ensure_ai_will_do_skips_decisions_that_already_have_it():
+    src = [
+        "CHI_cat = {\n",
+        "\tCHI_ready = {\n",
+        "\t\tai_will_do = { base = 5 }\n",
+        "\t}\n",
+        "\tCHI_bare = {\n",
+        "\t\ticon = generic_decision\n",
+        "\t}\n",
+        "}\n",
+    ]
+    out = "".join(ensure_missing_ai_will_do(src))
+    assert out.count("ai_will_do = { base = 5 }") == 1
+    assert "ai_will_do = { base = 10 }" in out
+
+
+def test_ensure_ai_will_do_skips_missions():
+    src = [
+        "CHI_cat = {\n",
+        "\tCHI_timer = {\n",
+        "\t\tdays_mission_timeout = 30\n",
+        "\t\ttimeout_effect = { add_stability = -0.01 }\n",
+        "\t}\n",
+        "}\n",
+    ]
+    out = "".join(ensure_missing_ai_will_do(src))
+    assert "ai_will_do" not in out
