@@ -1365,7 +1365,6 @@ calculate_additional_income_rate = {
 		}
 		if = {
 			limit = {
-				has_country_flag = FRA_new_frontiers
 				has_completed_focus = FRA_the_space_program
 				is_subject = no
 				has_capitulated = no
@@ -3318,6 +3317,8 @@ update_infra_rate = {
 				value = 1
 				add = modifier@infrastructure_cost_multiplier_modifier
 				multiply = common_money_modifier
+				add = modifier@internet_infra_cost_multiplier_modifier
+				clamp = { min = 0 max = 100000000 }
 			}
 			multiply = infra_size_scaling
 		}
@@ -4186,12 +4187,8 @@ calculate_additional_expense_rate = {
 # Effect: calculate_int_investments_rate
 # Purpose: Computes weekly ROI from international investments and splits it into treasury vs reinvested shares
 calculate_int_investments_rate = {
-	# Set base ROI rate
-	set_variable = { roi_rate = 0.06 }	#6%
-
-	# Modifier for ROI
-	add_to_variable = { roi_rate = modifier@return_on_investment_modifier }
-	clamp_variable = { var = roi_rate min = 0 max = 0.20 }
+	# Base ROI + stacked return_on_investment_modifier, clamped to the engine-wide ceiling
+	set_variable = { roi_rate = { value = 0.06 add = modifier@return_on_investment_modifier clamp = { min = 0 max = 0.20 } } }
 
 	#This is how much money we get back in a year, converted to weekly
 	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate multiply = 0.019 clamp = { min = 0 max = @math_expressions_max } } }

@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Fix mixed line endings by converting CRLF to LF."""
 
+import os
 import sys
 from pathlib import Path
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import atomic_write_bytes
 
 
 def fix_line_endings(file_path: Path) -> bool:
@@ -22,8 +26,7 @@ def fix_line_endings(file_path: Path) -> bool:
 
         fixed_content = original_content.replace(b"\r\n", b"\n")
 
-        with open(file_path, "wb") as f:
-            f.write(fixed_content)
+        atomic_write_bytes(str(file_path), fixed_content)
 
         print(f"🔧 {file_path}: Fixed mixed line endings (CRLF → LF)")
         return True

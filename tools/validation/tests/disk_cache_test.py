@@ -13,6 +13,109 @@ def clear_env(monkeypatch):
     monkeypatch.delenv("MD_NO_CACHE", raising=False)
 
 
+def test_code_fingerprints_are_scoped_to_owner_and_shared_code():
+    events = disk_cache._fingerprint_paths("events.metadata")
+    focus = disk_cache._fingerprint_paths("focus_tree.parse")
+
+    assert any(path.name == "validate_events.py" for path in events)
+    assert any(path.name == "shared_utils.py" for path in events)
+    assert any(path.name == "validator_common.py" for path in events)
+    assert not any(path.name == "validate_focus_tree.py" for path in events)
+    assert any(path.name == "validate_focus_tree.py" for path in focus)
+
+
+def test_namespace_mapping_covers_all_real_cache_prefixes():
+    expected = {
+        "agency",
+        "cosmetic",
+        "decisions",
+        "dlc_guards",
+        "events",
+        "focus_tree",
+        "gfx_ref",
+        "history_techs",
+        "ideas",
+        "loc",
+        "modifiers",
+        "oob_units",
+        "on_actions",
+        "scripted_gui",
+        "scripted_params",
+        "set_variables",
+        "simplifications",
+        "sprite_index",
+        "style",
+        "unused_scripted",
+        "unused_textures",
+        "variables",
+    }
+    assert expected <= set(disk_cache._VALIDATOR_NAMESPACES)
+
+
+def test_fingerprints_are_memoized_until_source_changes(tmp_path, monkeypatch):
+    source = tmp_path / "owner.py"
+    source.write_text("one", encoding="utf-8")
+    monkeypatch.setattr(disk_cache, "_fingerprint_paths", lambda _namespace: [source])
+    disk_cache._FINGERPRINT_CACHE.clear()
+    calls = []
+    original = type(source).read_bytes
+    monkeypatch.setattr(
+        type(source),
+        "read_bytes",
+        lambda path: (calls.append(path), original(path))[1],
+    )
+
+    first = disk_cache._validator_code_fingerprint("memoized")
+    second = disk_cache._validator_code_fingerprint("memoized")
+
+    assert first == second
+    assert len(calls) == 1
+
+    source.write_text("two", encoding="utf-8")
+    changed = disk_cache._validator_code_fingerprint("memoized")
+    assert changed != first
+    assert len(calls) == 2
+
+
+def test_owner_source_change_invalidates_only_that_namespace(tmp_path, monkeypatch):
+    owner = tmp_path / "owner.py"
+    other_owner = tmp_path / "other_owner.py"
+    owner.write_text("one", encoding="utf-8")
+    other_owner.write_text("other", encoding="utf-8")
+    monkeypatch.setattr(
+        disk_cache,
+        "_fingerprint_paths",
+        lambda namespace: [owner] if namespace.startswith("owned") else [other_owner],
+    )
+    disk_cache._FINGERPRINT_CACHE.clear()
+    calls = {"owned": 0, "other": 0}
+
+    def compute(namespace):
+        def run():
+            calls[namespace] += 1
+            return calls[namespace]
+
+        return run
+
+    first_owned = disk_cache.per_file_cached_by_content(
+        str(tmp_path), "owned.result", "source.txt", "body", compute("owned")
+    )
+    first_other = disk_cache.per_file_cached_by_content(
+        str(tmp_path), "other.result", "source.txt", "body", compute("other")
+    )
+    owner.write_text("changed owner", encoding="utf-8")
+    second_owned = disk_cache.per_file_cached_by_content(
+        str(tmp_path), "owned.result", "source.txt", "body", compute("owned")
+    )
+    second_other = disk_cache.per_file_cached_by_content(
+        str(tmp_path), "other.result", "source.txt", "body", compute("other")
+    )
+
+    assert (first_owned, second_owned) == (1, 2)
+    assert (first_other, second_other) == (1, 1)
+    assert calls == {"owned": 2, "other": 1}
+
+
 def test_per_file_cached_hits_on_unchanged_file(tmp_path):
     src = tmp_path / "data.txt"
     src.write_text("hello")
@@ -55,7 +158,11 @@ def test_per_file_cached_recomputes_when_file_changes(tmp_path):
 
 def test_per_file_content_cache_recomputes_after_code_change(tmp_path, monkeypatch):
     src = tmp_path / "data.txt"
+    owner = tmp_path / "owner.py"
     src.write_text("hello")
+    owner.write_text("one", encoding="utf-8")
+    monkeypatch.setattr(disk_cache, "_fingerprint_paths", lambda _namespace: [owner])
+    disk_cache._FINGERPRINT_CACHE.clear()
     calls = []
 
     def compute():
@@ -65,7 +172,7 @@ def test_per_file_content_cache_recomputes_after_code_change(tmp_path, monkeypat
     disk_cache.per_file_cached_by_content(
         str(tmp_path), "parse", str(src), "hello", compute
     )
-    monkeypatch.setattr(disk_cache, "_CODE_FINGERPRINT", "changed-validator-source")
+    owner.write_text("two", encoding="utf-8")
     result = disk_cache.per_file_cached_by_content(
         str(tmp_path), "parse", str(src), "hello", compute
     )

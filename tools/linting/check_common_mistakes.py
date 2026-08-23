@@ -53,11 +53,19 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     scope's faction; it takes a country tag or scope ref, never a faction name.
   - create_faction = X (deprecated; use create_faction_from_template = TEMPLATE
     for DLC compatibility)
+  - add_building_construction of a provincial building (naval_base, supply_node,
+    rail_way, bunker, the special-project facilities ...) with no province key --
+    the engine rejects the effect and the building is never placed
+  - NOR = { ... } (not a HOI4 trigger keyword; silently never matches)
+  - max_iterations inside while_loop_effect (silently ignored by the engine)
+  - var:x^i array-index shorthand (needs the full variable name)
 """
 
+import json
 import os
 import re
 import sys
+from functools import lru_cache
 
 _RE_THREAT = re.compile(r"(?<!\w)threat\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_WAR_SUPPORT = re.compile(r"(?<!\w)has_war_support\s*([><]=?)\s*(\d+\.?\d*)")
@@ -85,6 +93,36 @@ _RE_CHECK_EXPR_BAD_OPERAND = re.compile(
     r"not_equals|equals)\s*([><])\s*\S"
 )
 _RE_EVERY_OWNED_CONTROLLED_STATE = re.compile(r"\bevery_owned_controlled_state\b")
+_RE_NOR = re.compile(r"\bNOR\s*=\s*\{")
+_RE_WHILE_LOOP_OPEN = re.compile(r"\bwhile_loop_effect\s*=\s*\{")
+_RE_MAX_ITERATIONS = re.compile(r"\bmax_iterations\s*=")
+# var:x^i needs the full variable name; a one-letter base is the shorthand the
+# engine silently resolves to nothing.
+_RE_VAR_INDEX_SHORTHAND = re.compile(r"\bvar:([A-Za-z])\^")
+_RE_ADD_BUILDING_OPEN = re.compile(r"\badd_building_construction\s*=\s*\{")
+_RE_BUILDING_TYPE = re.compile(r"\btype\s*=\s*(\w+)")
+_RE_BUILDING_PROVINCE = re.compile(r"\bprovince\s*=")
+_RE_BUILDING_ENTRY = re.compile(r"^\t(\w+)\s*=\s*\{", re.M)
+_RE_PROVINCE_MAX = re.compile(r"\bprovince_max\s*=")
+# Used only when common/buildings/ can't be read; the live parse is authoritative.
+_PROVINCIAL_BUILDINGS_FALLBACK = frozenset(
+    {
+        "naval_base",
+        "bunker",
+        "coastal_bunker",
+        "supply_node",
+        "rail_way",
+        "naval_facility",
+        "land_facility",
+        "air_facility",
+        "nuclear_facility",
+        "naval_supply_hub",
+        "naval_headquarters",
+        "dam",
+        "dam_mountain",
+        "canal_locks",
+    }
+)
 _RE_RANDOM_SELECT_AMOUNT = re.compile(r"\brandom_select_amount\s*=\s*([^\s}]+)")
 _RE_BARE_INT = re.compile(r"^-?\d+$")
 # Tautological OR covering both polarities of one trigger (X = yes / X = no) is
@@ -1793,6 +1831,151 @@ def _check_every_owned_controlled_state(lines):
     return issues
 
 
+def _check_nor_block(lines):
+    """Flag NOR, which is not a HOI4 trigger keyword.
+
+    It parses as an unknown trigger and silently never matches. "Neither A nor
+    B" is separate NOT blocks, or NOT = { OR = { A B } }.
+    """
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if "NOR" not in line or line.strip().startswith("#"):
+            continue
+        code_part = strip_inline_comment(line) if "#" in line else line
+        if _RE_NOR.search(code_part):
+            issues.append(
+                (
+                    line_num,
+                    "NOR is not a HOI4 trigger keyword -- use separate NOT blocks "
+                    "or NOT = { OR = { ... } }",
+                )
+            )
+    return issues
+
+
+def _check_while_loop_max_iterations(lines):
+    """Flag max_iterations inside while_loop_effect -- the engine ignores it.
+
+    The loop keeps running on its own break condition, so the key reads as a
+    safety bound that isn't there. Use `break = <var>` instead.
+    """
+    issues = []
+    text = "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
+    for match in _RE_WHILE_LOOP_OPEN.finditer(text):
+        depth, i = 0, match.end() - 1
+        while i < len(text):
+            depth += (text[i] == "{") - (text[i] == "}")
+            if not depth:
+                break
+            i += 1
+        body = text[match.end() : i]
+        found = _RE_MAX_ITERATIONS.search(body)
+        if found:
+            issues.append(
+                (
+                    text.count("\n", 0, match.end() + found.start()) + 1,
+                    "max_iterations is not a valid while_loop_effect key -- the "
+                    "engine ignores it; bound the loop with its break variable",
+                )
+            )
+    return issues
+
+
+def _check_var_index_shorthand(lines):
+    """Flag var:x^i shorthand -- an array read needs the full variable name."""
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if "var:" not in line or line.strip().startswith("#"):
+            continue
+        code_part = strip_inline_comment(line) if "#" in line else line
+        for match in _RE_VAR_INDEX_SHORTHAND.finditer(code_part):
+            issues.append(
+                (
+                    line_num,
+                    f"var:{match.group(1)}^ is the shorthand form -- write the "
+                    f"full array name, e.g. var:my_array^i",
+                )
+            )
+    return issues
+
+
+@lru_cache(maxsize=None)
+def _provincial_building_types(mod_root=None):
+    """Building types placed on a province rather than a state, read from
+    common/buildings/. A `level_cap = { province_max = N }` entry is the marker.
+
+    Falls back to the known list if the directory can't be read, so a hiccup
+    downgrades the check to a fixed list rather than silently disabling it.
+    """
+    if mod_root is None:
+        # Anchored on this file, not get_root_dir(): that reads sys.argv[0],
+        # which points at pytest rather than the linter when the tests import
+        # this. realpath so a symlinked checkout still lands on the real root.
+        mod_root = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
+        )
+    types = set()
+    buildings_dir = os.path.join(mod_root, "common", "buildings")
+    try:
+        filenames = sorted(os.listdir(buildings_dir))
+    except OSError:
+        return _PROVINCIAL_BUILDINGS_FALLBACK
+    for fname in filenames:
+        if not fname.endswith(".txt"):
+            continue
+        try:
+            with open(os.path.join(buildings_dir, fname), encoding="utf-8") as f:
+                lines = f.readlines()
+        except OSError:
+            continue
+        for i, line in enumerate(lines):
+            entry = _RE_BUILDING_ENTRY.match(_code_for_depth(line))
+            if not entry:
+                continue
+            block = "".join(_code_for_depth(bl) for bl in _get_block(lines, i)[0])
+            if _RE_PROVINCE_MAX.search(block):
+                types.add(entry.group(1))
+    return frozenset(types) or _PROVINCIAL_BUILDINGS_FALLBACK
+
+
+def _check_building_missing_province(lines, mod_root=None):
+    """Flag add_building_construction of a provincial building with no province.
+
+    A provincial building sits on a province, not a state, so the effect needs
+    `province = <id>` or a `province = { all_provinces = yes ... }` selector.
+    Without one the engine rejects the whole effect (state_effect_implementation.cpp)
+    and the building is never placed -- the focus or decision silently does nothing.
+    """
+    issues = []
+    provincial = _provincial_building_types(mod_root)
+    # Brace-matched over the whole file rather than per line: a construction
+    # block spans lines, and two single-line blocks can share one line.
+    text = "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
+    for match in _RE_ADD_BUILDING_OPEN.finditer(text):
+        depth, i = 0, match.end() - 1
+        while i < len(text):
+            depth += (text[i] == "{") - (text[i] == "}")
+            if not depth:
+                break
+            i += 1
+        body = text[match.end() : i]
+        type_match = _RE_BUILDING_TYPE.search(body)
+        if not type_match or type_match.group(1) not in provincial:
+            continue
+        if _RE_BUILDING_PROVINCE.search(body):
+            continue
+        issues.append(
+            (
+                text.count("\n", 0, match.start()) + 1,
+                f"add_building_construction type = {type_match.group(1)} has no "
+                f"province -- it is a provincial building, so the engine rejects "
+                f"the effect and nothing is built; add province = <id> or "
+                f"province = {{ all_provinces = yes ... }}",
+            )
+        )
+    return issues
+
+
 def _add_to_faction_value_ok(value):
     """True when value is a country add_to_faction can take: a 3-letter tag, a
     country scope keyword or dotted scope chain (PREV.PREV), a var:/event_target:
@@ -2740,14 +2923,55 @@ def check_file(filepath):
     issues.extend(_check_tautological_or(lines))
     issues.extend(_check_check_expr_bad_operand(lines))
     issues.extend(_check_random_select_amount_literal(lines))
+    issues.extend(_check_nor_block(lines))
+    issues.extend(_check_while_loop_max_iterations(lines))
+    issues.extend(_check_var_index_shorthand(lines))
     if is_common_or_events_file:
         issues.extend(_check_every_owned_controlled_state(lines))
+        issues.extend(_check_building_missing_province(lines))
 
     return [(filepath, ln, msg) for ln, msg in issues]
 
 
+_JSON_CATEGORY = "common-mistakes"
+
+
+def _add_output_arg(parser):
+    parser.add_argument(
+        "--output",
+        "-o",
+        help="Write the findings to this log file and a matching .json sidecar",
+    )
+
+
+def _write_report(output_path, lines, issues):
+    """Mirror BaseValidator: a text log plus a `<stem>.json` issue sidecar.
+
+    newline="" keeps Windows from turning the log into CRLF.
+    """
+    with open(output_path, "w", encoding="utf-8", newline="") as handle:
+        handle.write("\n".join(lines) + "\n")
+
+    payload = [
+        {
+            "severity": "error",
+            "category": _JSON_CATEGORY,
+            "message": message,
+            "file": clean_filepath(filepath).replace(os.sep, "/"),
+            "line": line_num,
+            "validator": _JSON_CATEGORY,
+        }
+        for filepath, line_num, message in issues
+    ]
+    sidecar = os.path.splitext(output_path)[0] + ".json"
+    with open(sidecar, "w", encoding="utf-8", newline="") as handle:
+        json.dump(payload, handle, indent=2)
+
+
 def main():
-    parser = create_linting_parser("Check for common HOI4 scripting mistakes")
+    parser = create_linting_parser(
+        "Check for common HOI4 scripting mistakes", extra_args_fn=_add_output_arg
+    )
     args = parser.parse_args()
 
     timings = []
@@ -2759,6 +2983,16 @@ def main():
 
     if not files_list:
         print("No files to check")
+        if args.output:
+            _write_report(
+                args.output,
+                [
+                    "COMMON MISTAKES CHECK",
+                    "",
+                    "✓ VALIDATION COMPLETE - 0 ERROR(S) - 0 WARNING(S)",
+                ],
+                [],
+            )
         return 0
 
     # The available=always-no and is_X_nation checks need completion refs and
@@ -2800,10 +3034,27 @@ def main():
 
     all_issues = [issue for file_issues in results for issue in file_issues]
 
-    for filepath, line_num, message in sorted(all_issues):
+    sorted_issues = sorted(all_issues)
+    for filepath, line_num, message in sorted_issues:
         print(f"{clean_filepath(filepath)}:{line_num}: {message}")
     # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")
+
+    if args.output:
+        # "  file:line - message" plus the VALIDATION COMPLETE tokens match what
+        # tools/report_lib/loader.py parses when a JSON sidecar is unavailable.
+        report_lines = ["COMMON MISTAKES CHECK", ""]
+        report_lines += [
+            f"  {clean_filepath(filepath).replace(os.sep, '/')}:{line_num} - {message}"
+            for filepath, line_num, message in sorted_issues
+        ]
+        marker = "✗" if sorted_issues else "✓"
+        report_lines += [
+            "",
+            f"{marker} VALIDATION COMPLETE - {len(sorted_issues)} ERROR(S) - 0 WARNING(S)",
+        ]
+        _write_report(args.output, report_lines, sorted_issues)
+
     if all_issues:
         print(f"Found {len(all_issues)} issue(s)")
         print("Issues found - fix them before committing")

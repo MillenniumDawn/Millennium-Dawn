@@ -67,9 +67,10 @@ def test_delete_comment_removes_marker_comment(monkeypatch):
     monkeypatch.setattr(C, "_get", lambda *a, **k: comments)
     deleted = []
 
-    def fake_urlopen(req):
+    def fake_urlopen(req, timeout):
         deleted.append(req.full_url)
         assert req.method == "DELETE"
+        assert timeout == C._REQUEST_TIMEOUT
         return nullcontext()
 
     monkeypatch.setattr(C.urllib.request, "urlopen", fake_urlopen)
@@ -82,10 +83,51 @@ def test_delete_comment_removes_marker_comment(monkeypatch):
 def test_delete_comment_falls_back_to_legacy_title(monkeypatch):
     comments = [_comment("# Validation Report\nlegacy, no marker", cid=9)]
     monkeypatch.setattr(C, "_get", lambda *a, **k: comments)
-    monkeypatch.setattr(C.urllib.request, "urlopen", lambda _req: nullcontext())
+    monkeypatch.setattr(
+        C.urllib.request,
+        "urlopen",
+        lambda _req, timeout: (
+            nullcontext()
+            if timeout == C._REQUEST_TIMEOUT
+            else (_ for _ in ()).throw(AssertionError("wrong timeout"))
+        ),
+    )
     success, message = delete_comment("owner", "repo", "7", "token")
     assert success
     assert "deleted comment #9" in message
+
+
+def test_all_comment_requests_have_timeout(monkeypatch):
+    calls = []
+
+    class Response:
+        def __init__(self, body):
+            self.body = body
+
+        def read(self):
+            return self.body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+    def fake_urlopen(req, timeout):
+        method = req.get_method()
+        calls.append((method, timeout))
+        body = b"[]" if method == "GET" else b"{}"
+        return Response(body)
+
+    monkeypatch.setattr(C.urllib.request, "urlopen", fake_urlopen)
+    C._get("https://example.invalid", {})
+    C._post("https://example.invalid", {}, {})
+    C._patch("https://example.invalid", {}, {})
+    assert calls == [
+        ("GET", C._REQUEST_TIMEOUT),
+        ("POST", C._REQUEST_TIMEOUT),
+        ("PATCH", C._REQUEST_TIMEOUT),
+    ]
 
 
 def test_update_only_does_not_create_a_comment(monkeypatch):
