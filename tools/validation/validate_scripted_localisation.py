@@ -249,7 +249,10 @@ class ScriptedLocalisation:
                 glob.iglob(os.path.join(mod_path, "**", "*.gui"), recursive=True)
             )
             yml_files = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.yml"), recursive=True)
+                glob.iglob(
+                    os.path.join(mod_path, "localisation", "english", "**", "*.yml"),
+                    recursive=True,
+                )
             )
             txt_files = list(
                 glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)

@@ -151,6 +151,28 @@ def test_text_fallback_summary_counts_override_parsed(tmp_path):
     assert run.status == "failed"
 
 
+def test_malformed_json_sidecar_fails_closed(tmp_path):
+    root = make_results_tree(
+        tmp_path,
+        {"events": {"log": "✓ VALIDATION COMPLETE - NO ISSUES FOUND\n"}},
+    )
+    artifact = root / "validation-events-results"
+    (artifact / "validation-events.json").write_text("{truncated", encoding="utf-8")
+
+    run = load_all(str(root))[0]
+
+    assert run.status == "failed"
+    assert run.errors == 1
+    assert run.issues[0].category == "malformed-validator-sidecar"
+
+
+def test_non_list_json_sidecar_fails_closed(tmp_path):
+    root = make_results_tree(tmp_path, {"events": {"log": "incomplete\n"}})
+    artifact = root / "validation-events-results"
+    (artifact / "validation-events.json").write_text("{}", encoding="utf-8")
+    assert load_all(str(root))[0].status == "failed"
+
+
 def test_empty_results_dir(tmp_path):
     empty = tmp_path / "empty"
     empty.mkdir()
