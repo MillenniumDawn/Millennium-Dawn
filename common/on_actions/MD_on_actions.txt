@@ -32,8 +32,19 @@ on_actions = {
 				set_country_flag = economic_project_flags_migrated
 			}
 
+			# Per-week decay; must stay out of ingame_update_setup, which re-runs on demand (focuses, events, economy refresh button)
+			update_tension_premium = yes
 			ingame_update_setup = yes
 			calculate_energy_load_sharing = yes
+			if = {
+				limit = {
+					is_ai = no
+					has_country_flag = automation_energy_consumption_policy
+					has_country_flag = energy_state_bases_initialized
+				}
+				calculate_energy_use = yes
+				automation_energy_consumption_policy_weekly = yes
+			}
 			nuclear_reactor_fuel_consumption = yes
 
 			# Must follow ingame_update_setup — it charges the week via space_prod_weekly_expense, and the accrual here has to read the same var_space_paid_1X to bill the same amount
@@ -50,6 +61,19 @@ on_actions = {
 					}
 				}
 				space_automation_weekly = yes
+			}
+			if = {
+				limit = {
+					is_ai = no
+					has_country_flag = automation_internal_investments
+					has_country_flag = automation_internal_investment_upkeep_paid
+				}
+				automation_internal_investments_weekly = yes
+			}
+
+			# Banked here, not in ingame_update_setup, which re-runs on demand
+			if = { limit = { check_variable = { EU_seigniorage_weekly > 0 } }
+				add_to_variable = { global.EU_seigniorage_pool = EU_seigniorage_weekly }
 			}
 
 			add_to_variable = { int_investments = int_investments_reinvest_rate }
@@ -354,7 +378,6 @@ on_actions = {
 					set_variable = { global.current_active_agenda_disp = 0 }
 					set_variable = { global.current_active_vote_disp = 0 }
 					set_variable = { global.EUXXX_council_agenda = global.current_active_vote_disp }
-					set_variable = { global.EU_active_vote_yes = 0 }
 					clear_array = global.EU_active_vote_supporters
 					clear_array = global.EU_active_vote_rejecters
 					EU_emergency_vote_clear = yes
@@ -477,6 +500,16 @@ on_actions = {
 					dismiss_all_pmc_units = yes
 				}
 				# Antarctica Research Station blackout
+				if = {
+					limit = { has_country_flag = antarctica_station_setup_capacity_reserved }
+					add_to_variable = { global.antarctica_station_display_capacity_remaining = 1 }
+					clamp_variable = { var = global.antarctica_station_display_capacity_remaining min = 0 max = 70 }
+					clr_country_flag = antarctica_station_setup_capacity_reserved
+					set_variable = { antarctica_station_setup_in_progress = 0 }
+					set_variable = { antarctica_station_setup_days_remaining = 0 }
+					set_variable = { antarctica_station_setup_x = 0 }
+					set_variable = { antarctica_station_setup_y = 0 }
+				}
 				if = {
 					limit = { has_country_flag = antarctica_has_active_station }
 					antarctica_remove_research_station = yes
@@ -1331,6 +1364,8 @@ on_actions = {
 
 				counter_terror_global = yes
 
+				recount_global_reserve_currency = yes
+
 				# On Monthly Flag:
 				# Set this to 27 days to time out so that way February isn't missed
 				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
@@ -1363,7 +1398,13 @@ on_actions = {
 				limit = {
 					is_ai = yes
 					FROM = { tag = CHI }
-					NOT = { has_idea = chinese_yuan }
+					NOT = {
+						OR = {
+							has_idea = chinese_yuan
+							has_idea = chinese_yuan_2
+							has_idea = chinese_yuan_3
+						}
+					}
 				}
 				add_ideas = chinese_yuan
 			}
@@ -1388,7 +1429,11 @@ on_actions = {
 			if = {
 				limit = {
 					is_ai = yes
-					has_idea = chinese_yuan
+					OR = {
+						has_idea = chinese_yuan
+						has_idea = chinese_yuan_2
+						has_idea = chinese_yuan_3
+					}
 					NOT = { is_in_faction_with = CHI }
 					NOT = { tag = CHI }
 				}

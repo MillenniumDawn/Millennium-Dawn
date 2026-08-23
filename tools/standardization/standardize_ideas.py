@@ -13,14 +13,16 @@ from typing import Any, Dict, List
 from _common import format_elapsed
 from common_utils import PROP_NAME_RE, BaseStandardizer, run_standardizer
 from shared_utils import (
+    atomic_write_text,
     blank_quoted_strings,
     collapse_or_compact,
     extract_block,
     log_message,
+    normalize_spacing,
     strip_inline_comment,
 )
 
-_SINGLE_LINE_PROPS = {"name", "picture"}
+_SINGLE_LINE_PROPS = {"name", "picture", "ledger"}
 
 _BLOCK_PROPS = {
     "allowed",
@@ -132,6 +134,7 @@ class IdeaStandardizer(BaseStandardizer):
             "allowed": [],
             "allowed_civil_war": [],
             "picture": "",
+            "ledger": "",
             "cancel": [],
             "modifier": [],
             "targeted_modifier": [],
@@ -394,11 +397,23 @@ class IdeaStandardizer(BaseStandardizer):
             emit_comments("picture")
             lines.append(prop_indent + props["picture"])
 
-        # 3-10. Simple blocks emitted in order
+        # 3. allowed-family blocks (gates evaluated once at game start)
         for key in (
             "allowed",
             "allowed_civil_war",
             "cancel",
+        ):
+            for index, block in enumerate(props[key]):
+                emit_comments(key, index)
+                lines.extend(self._reindent_or_collapse(block, prop_indent))
+
+        # 4. ledger (single-line categorisation, sits above the effect blocks)
+        if props["ledger"]:
+            emit_comments("ledger")
+            lines.append(prop_indent + props["ledger"])
+
+        # 5-10. Effect blocks emitted in order
+        for key in (
             "modifier",
             "targeted_modifier",
             "research_bonus",
@@ -478,9 +493,8 @@ class IdeaStandardizer(BaseStandardizer):
         output_lines = self._process_lines(lines, depth=0)
 
         try:
-            with open(output_file, "w", encoding="utf-8") as f:
-                for line in output_lines:
-                    f.write(line + "\n")
+            output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
+            atomic_write_text(output_file, output)
 
             time_str = format_elapsed(time.time() - self.start_time)
 
