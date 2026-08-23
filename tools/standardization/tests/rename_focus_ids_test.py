@@ -1,4 +1,11 @@
-from tools.standardization.rename_focus_ids import extract_focus_ids, rename_focus_ids
+import sys
+
+import tools.standardization.rename_focus_ids as rename_focus_ids_module
+from tools.standardization.rename_focus_ids import (
+    extract_focus_ids,
+    main,
+    rename_focus_ids,
+)
 
 
 def _write(path, text):
@@ -64,3 +71,43 @@ def test_renames_focus_references_and_preserves_unrelated_tokens(tmp_path):
     assert event_file.read_text(encoding="utf-8") == "\tfocus = AST_first\n"
     assert 'AST_first: "new"' in localisation_file.read_text(encoding="utf-8")
     assert 'AST_first_desc: "desc"' in localisation_file.read_text(encoding="utf-8")
+
+
+def test_cli_defaults_to_repo_root_from_standardization_directory(
+    tmp_path, monkeypatch
+):
+    root = tmp_path / "repo"
+    standardization_dir = root / "tools" / "standardization"
+    focus_file = root / "common" / "national_focus" / "05_Australia.txt"
+    event_file = root / "events" / "australia.txt"
+    localisation_file = root / "localisation" / "english" / "MD_focus_AST_l_english.yml"
+    standardization_dir.mkdir(parents=True)
+    focus_file.parent.mkdir(parents=True)
+    event_file.parent.mkdir(parents=True)
+    localisation_file.parent.mkdir(parents=True)
+    _write(focus_file, "focus = {\n\tid = ast_first\n}\n")
+    _write(event_file, "focus = ast_first\n")
+    _write(localisation_file, 'l_english:\n ast_first: "Focus"\n')
+
+    monkeypatch.setattr(
+        rename_focus_ids_module,
+        "__file__",
+        str(standardization_dir / "rename_focus_ids.py"),
+    )
+    monkeypatch.chdir(standardization_dir)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "rename_focus_ids.py",
+            "--focus-file",
+            "../../common/national_focus/05_Australia.txt",
+            "--localisation-file",
+            "../../localisation/english/MD_focus_AST_l_english.yml",
+            "--tag",
+            "AST",
+        ],
+    )
+
+    assert main() == 0
+    assert event_file.read_text(encoding="utf-8") == "focus = AST_first\n"

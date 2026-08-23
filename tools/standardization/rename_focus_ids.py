@@ -21,6 +21,10 @@ NAME_RE = re.compile(r"(\bname\s*=\s*)([A-Za-z0-9_?]+)(?![A-Za-z0-9_.])")
 LOG_RE = re.compile(r"(\bFocus\s+)([A-Za-z0-9_?]+)(?![A-Za-z0-9_.])")
 
 
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
 def _read(path: Path, encoding: str) -> str:
     with path.open("r", encoding=encoding, newline="") as handle:
         return handle.read()
@@ -156,7 +160,7 @@ def rename_focus_ids(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path.cwd())
+    parser.add_argument("--root", type=Path, default=_repo_root())
     parser.add_argument("--focus-file", type=Path, required=True)
     parser.add_argument("--localisation-file", type=Path, required=True)
     parser.add_argument("--tag", required=True)

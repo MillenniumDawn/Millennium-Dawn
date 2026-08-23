@@ -26,6 +26,23 @@ def test_deterministic_monthly_date_poll_detected():
     ]
 
 
+def test_deterministic_else_if_date_poll_detected():
+    text = """on_actions = {
+	on_monthly_TAG = {
+		effect = {
+			else_if = {
+				limit = { date > 2005.1.1 }
+				country_event = historical.1
+			}
+		}
+	}
+}
+"""
+
+    assert scan_deterministic_date_polls(text, "common/on_actions/test.txt") == [
+        ("historical.1", "on_monthly_TAG", 6, "common/on_actions/test.txt")
+    ]
+
 def test_non_pulse_date_gate_ignored():
     text = """on_actions = {
 	on_new_term_election = {

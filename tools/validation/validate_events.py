@@ -126,11 +126,11 @@ _DEFINITION_ONLY_RE = re.compile(
 )
 _EVENT_BLOCK_OPEN_RE = re.compile(r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{")
 _REVERSED_EVENT_CALL_RE = re.compile(
-    r"\b(event_(?:country|news|state|unit_leader|operative_leader))"
-    r"\s*=\s*(?:\{\s*id\s*=\s*)?([A-Za-z_][\w.]*)"
+    r"\b(event_(?:country|news|state|unit_leader|operative_leader))\s*=\s*"
+    r"(?:\{[^{}]*?\bid\s*=\s*([A-Za-z_][\w.]*)|([A-Za-z_][\w.]*))"
 )
 _MISSING_EVENT_CALL_EQUALS_RE = re.compile(
-    r"\b(" + _EVENT_CALL_ALT + r")\s+\{\s*id\s*=\s*([A-Za-z_][\w.]*)"
+    r"\b(" + _EVENT_CALL_ALT + r")\s+\{[^{}]*?\bid\s*=\s*([A-Za-z_][\w.]*)"
 )
 
 
@@ -275,7 +275,7 @@ def scan_invalid_event_calls(
             (
                 "reversed",
                 m.group(1),
-                m.group(2),
+                m.group(2) or m.group(3),
                 filename,
                 cleaned.count("\n", 0, m.start()) + 1,
             )
@@ -290,6 +290,7 @@ def scan_invalid_event_calls(
                 cleaned.count("\n", 0, m.start()) + 1,
             )
         )
+    results.sort(key=lambda result: result[-1])
     return results
 
 

@@ -13,7 +13,6 @@ from typing import Any, Dict, List
 from common_utils import (
     PROP_NAME_RE,
     BaseStandardizer,
-    block_has_log,
     collapse_blank_runs,
     inject_log_after_brace,
     join_groups,
@@ -149,7 +148,7 @@ def _split_one_line_effect(line: str) -> List[str] | None:
 
 def ensure_effect_log(block_lines: List[str], decision_id: str) -> List[str]:
     """Insert the decision log as the first statement of an effect block."""
-    if not block_lines or block_has_log(block_lines):
+    if not block_lines:
         return block_lines
     block = block_lines
     if len(block) == 1:
@@ -160,6 +159,12 @@ def ensure_effect_log(block_lines: List[str], decision_id: str) -> List[str]:
     open_line = block[0]
     raw = open_line[:-1] if open_line.endswith("\n") else open_line
     tabs = len(raw) - len(raw.lstrip("\t"))
+    if any(
+        len(line) - len(line.lstrip("\t")) == tabs + 1
+        and line.lstrip("\t").startswith("log =")
+        for line in block[1:]
+    ):
+        return block
     indent = "\t" * (tabs + 1)
     log_line = f'{indent}log = "[GetDateText]: [Root.GetName]: Decision {decision_id}"'
     if open_line.endswith("\n"):
@@ -227,13 +232,60 @@ def _ensure_ai_in_decision(decision_lines: List[str], base: int) -> List[str]:
 
 
 def strip_sole_decision_allowed(lines: List[str]) -> List[str]:
-    """Drop a 2-tab ``allowed = { tag = TAG }`` that only repeats the category pin."""
+    """Drop an allowed line only when it exactly repeats its category pin."""
     out: List[str] = []
-    for line in lines:
-        tabs = len(line) - len(line.lstrip("\t"))
-        if tabs == 2 and _SOLE_ALLOWED_RE.match(line.strip()):
+    i = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+        tabs = len(lines[i]) - len(lines[i].lstrip("\t"))
+        header = _HEADER_ID_RE.match(stripped)
+        opens, closes = _count_braces(stripped)
+        if tabs == 0 and header and opens > closes:
+            category, next_i = extract_block(lines, i)
+            out.extend(_strip_category_decision_allowed(category))
+            i = next_i
             continue
-        out.append(line)
+        out.append(lines[i])
+        i += 1
+    return out
+
+
+def _strip_category_decision_allowed(category_lines: List[str]) -> List[str]:
+    category_allowed = {
+        line.strip()
+        for line in category_lines
+        if len(line) - len(line.lstrip("\t")) == 1
+        and _SOLE_ALLOWED_RE.match(line.strip())
+    }
+    if not category_allowed:
+        return category_lines
+
+    out = [category_lines[0]]
+    i = 1
+    while i < len(category_lines) - 1:
+        stripped = category_lines[i].strip()
+        tabs = len(category_lines[i]) - len(category_lines[i].lstrip("\t"))
+        header = _HEADER_ID_RE.match(stripped)
+        opens, closes = _count_braces(stripped)
+        if tabs == 1 and header and opens > closes:
+            name = header.group(1)
+            block, next_i = extract_block(category_lines, i)
+            if name in _CATEGORY_BLOCK_PROPS or name == "priority":
+                out.extend(block)
+            else:
+                out.extend(
+                    line
+                    for line in block
+                    if not (
+                        len(line) - len(line.lstrip("\t")) == 2
+                        and line.strip() in category_allowed
+                    )
+                )
+            i = next_i
+            continue
+        out.append(category_lines[i])
+        i += 1
+    out.append(category_lines[-1])
     return out
 
 

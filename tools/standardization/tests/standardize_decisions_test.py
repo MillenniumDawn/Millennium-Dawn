@@ -120,6 +120,23 @@ def test_existing_complete_effect_log_not_duplicated():
     assert text.count("log =") == 1
 
 
+def test_nested_effect_log_does_not_suppress_direct_log():
+    block = _decision(
+        [
+            "\tCHI_build_decision = {",
+            "\t\tcomplete_effect = {",
+            "\t\t\tif = {",
+            '\t\t\t\tlog = "conditional"',
+            "\t\t\t}",
+            "\t\t}",
+            "\t}",
+        ]
+    )
+    text = "\n".join(format_decision(block))
+    assert text.count("log =") == 2
+    assert text.index('Decision CHI_build_decision"') < text.index("if = {")
+
+
 def test_single_leaf_block_collapsed():
     block = _decision(
         [
@@ -548,6 +565,20 @@ def test_strip_sole_decision_allowed_keeps_category_allowed():
     assert "\tallowed = { tag = CHI }" in out
     assert "\t\tallowed = { tag = CHI }" not in out
     assert "icon = generic_decision" in out
+
+
+def test_strip_sole_decision_allowed_keeps_nonidentical_category_gate():
+    src = [
+        "CHI_cat = {\n",
+        "\tallowed = { original_tag = CHI }\n",
+        "\tCHI_visit = {\n",
+        "\t\tallowed = { tag = CHI }\n",
+        "\t\ticon = generic_decision\n",
+        "\t}\n",
+        "}\n",
+    ]
+    out = "".join(strip_sole_decision_allowed(src))
+    assert "\t\tallowed = { tag = CHI }" in out
 
 
 def test_ensure_ai_will_do_skips_decisions_that_already_have_it():

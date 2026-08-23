@@ -56,7 +56,7 @@ _SHORT_FORM_EVENT_RE = re.compile(
     r"\s*=\s*([A-Za-z_]\w*\.[A-Za-z0-9_.]+)"
 )
 _DATE_LOWER_BOUND_RE = re.compile(r"\bdate\s*>\s*\d{4}\.\d{1,2}\.\d{1,2}")
-_IF_BLOCK_RE = re.compile(r"\bif\s*=\s*\{")
+_IF_BLOCK_RE = re.compile(r"\b(?:if|else_if)\s*=\s*\{")
 _DIRECT_LIMIT_RE = re.compile(r"\s*limit\s*=\s*\{")
 _RANDOM_BLOCK_RE = re.compile(r"\brandom\s*=\s*\{")
 _CHANCE_FIELD_RE = re.compile(r"\bchance\s*=")
@@ -294,9 +294,7 @@ def _iter_on_action_blocks(text_clean: str):
             pos = body_end
 
 
-def _parse_on_actions_text(
-    text_clean: str, filepath: str
-) -> Tuple[
+def _parse_on_actions_text(text_clean: str, filepath: str) -> Tuple[
     List[Tuple[str, str, int, str]],
     List[Tuple[str, str, int, str]],
 ]:

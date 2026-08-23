@@ -33,6 +33,7 @@ python3 standardize_focus_tree.py input.txt -o output.txt --backup --verbose
 ### Focus ID Prefixes (`rename_focus_ids.py`)
 
 Renames country focus IDs and their references without rewriting unrelated focus formatting.
+It scans the repository containing the tool by default; use `--root` for another checkout.
 
 **Usage:**
 

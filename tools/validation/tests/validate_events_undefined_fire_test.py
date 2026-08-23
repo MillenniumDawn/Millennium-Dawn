@@ -126,12 +126,17 @@ def test_reversed_and_missing_equals_calls_detected(tmp_path):
     caller = _write(
         tmp_path,
         "common/f.txt",
-        "event_country = foo.1\ncountry_event { id = foo.2 days = 3 }\n",
+        "event_country = foo.1\n"
+        "country_event { id = foo.2 days = 3 }\n"
+        "event_news = { days = 3 id = foo.3 }\n"
+        "country_event { days = 3 id = foo.4 }\n",
     )
 
     assert scan_invalid_event_calls((caller, frozenset())) == [
         ("reversed", "event_country", "foo.1", caller, 1),
         ("missing-equals", "country_event", "foo.2", caller, 2),
+        ("reversed", "event_news", "foo.3", caller, 3),
+        ("missing-equals", "country_event", "foo.4", caller, 4),
     ]
 
 
