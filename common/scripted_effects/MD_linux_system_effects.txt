@@ -1,5 +1,6 @@
-# Shared Linux-system authority. ABK dispatches dates, while every durable value
-# and lifecycle marker remains on the participant country.
+# Linux-system authority. Every durable value and lifecycle marker lives on the
+# participant country; the monthly driver gates its recomputes so a country with
+# no national adapter and no delivery in flight does almost no recurring work.
 
 linux_system_pay_gdp_0_1_percent = {
 	set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.001 } }
@@ -532,20 +533,6 @@ linux_system_reconstruct_country = {
 	}
 }
 
-linux_system_register_country = {
-	if = {
-		limit = {
-			linux_system_enabled = yes
-			exists = yes
-			NOT = { tag = ABK }
-			NOT = { tag = ZOM }
-			NOT = { MD_special_countries = yes }
-			NOT = { has_country_flag = collapsed_nation }
-		}
-		linux_system_initialize_state = yes
-	}
-}
-
 linux_system_schedule_event_1 = {
 	if = {
 		limit = {
@@ -776,7 +763,10 @@ linux_system_repair_delivery_markers = {
 }
 
 linux_system_recover_due_events = {
-	linux_system_repair_delivery_markers = yes
+	if = {
+		limit = { linux_system_has_pending_delivery = yes }
+		linux_system_repair_delivery_markers = yes
+	}
 
 	if = {
 		limit = { date > 2001.1.3 NOT = { has_country_flag = linux_system_event_1_resolved } }
@@ -927,7 +917,10 @@ linux_system_monthly_driver = {
 			limit = { linux_system_outcomes_only_enabled = yes }
 			linux_system_reconstruct_country = yes
 		}
-		linux_system_refresh_adapter_if_changed = yes
+		if = {
+			limit = { linux_system_has_national_adapter = yes }
+			linux_system_refresh_adapter_if_changed = yes
+		}
 		if = {
 			limit = { linux_system_full_enabled = yes }
 			linux_system_schedule_year_events = yes
