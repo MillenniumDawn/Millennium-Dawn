@@ -170,6 +170,62 @@ def ensure_effect_log(block_lines: List[str], decision_id: str) -> List[str]:
 _SOLE_ALLOWED_RE = re.compile(r"^allowed = \{ (?:original_)?tag = [A-Z]{3} \}$")
 
 
+def ensure_missing_ai_will_do(lines: List[str], base: int = 10) -> List[str]:
+    """Add ``ai_will_do = { base = N }`` to decisions that have none."""
+    out: List[str] = []
+    i = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+        tabs = len(lines[i]) - len(lines[i].lstrip("\t"))
+        if tabs == 0 and _HEADER_ID_RE.match(stripped) and "{" in lines[i]:
+            category, next_i = extract_block(lines, i)
+            if category:
+                out.extend(_ensure_ai_in_category(category, base))
+                i = next_i
+                continue
+        out.append(lines[i])
+        i += 1
+    return out
+
+
+def _ensure_ai_in_category(category_lines: List[str], base: int) -> List[str]:
+    out = [category_lines[0]]
+    i = 1
+    while i < len(category_lines) - 1:
+        stripped = category_lines[i].strip()
+        tabs = len(category_lines[i]) - len(category_lines[i].lstrip("\t"))
+        header = _HEADER_ID_RE.match(stripped)
+        opens, closes = _count_braces(stripped)
+        if tabs == 1 and header and opens > closes:
+            name = header.group(1)
+            block, next_i = extract_block(category_lines, i)
+            if name in _CATEGORY_BLOCK_PROPS or name == "priority":
+                out.extend(block)
+            else:
+                out.extend(_ensure_ai_in_decision(block, base))
+            i = next_i
+            continue
+        out.append(category_lines[i])
+        i += 1
+    out.append(category_lines[-1])
+    return out
+
+
+def _ensure_ai_in_decision(decision_lines: List[str], base: int) -> List[str]:
+    if any("ai_will_do" in line for line in decision_lines):
+        return decision_lines
+    if any("days_mission_timeout" in line for line in decision_lines):
+        return decision_lines
+    out = list(decision_lines[:-1])
+    if out and out[-1].strip():
+        if not out[-1].endswith("\n"):
+            out[-1] += "\n"
+        out.append("\n")
+    out.append(f"\t\tai_will_do = {{ base = {base} }}\n")
+    out.append(decision_lines[-1])
+    return out
+
+
 def strip_sole_decision_allowed(lines: List[str]) -> List[str]:
     """Drop a 2-tab ``allowed = { tag = TAG }`` that only repeats the category pin."""
     out: List[str] = []
@@ -448,6 +504,11 @@ def main():
         action="store_true",
         help="Remove decision-level allowed = { tag = TAG } lines",
     )
+    parser.add_argument(
+        "--ensure-ai-will-do",
+        action="store_true",
+        help="Add ai_will_do = { base = 10 } to decisions that have none",
+    )
     args = parser.parse_args(sys.argv[1:])
 
     if not os.path.exists(args.input_file):
@@ -461,7 +522,7 @@ def main():
         if not backup_file:
             sys.exit(1)
 
-    if args.logs_only or args.strip_sole_allowed:
+    if args.logs_only or args.strip_sole_allowed or args.ensure_ai_will_do:
         try:
             with open(args.input_file, encoding="utf-8", newline="") as handle:
                 lines = handle.readlines()
@@ -473,6 +534,8 @@ def main():
             new_lines = inject_missing_decision_logs(new_lines)
         if args.strip_sole_allowed:
             new_lines = strip_sole_decision_allowed(new_lines)
+        if args.ensure_ai_will_do:
+            new_lines = ensure_missing_ai_will_do(new_lines)
         atomic_write_text(output_file, "".join(new_lines))
         log_message("SUCCESS", f"Updated decision file: {output_file}")
         return

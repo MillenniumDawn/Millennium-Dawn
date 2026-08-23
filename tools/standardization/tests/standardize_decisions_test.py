@@ -11,6 +11,7 @@ import pytest
 from shared_utils import collapse_or_compact
 from standardize_decisions import (
     DecisionStandardizer,
+    ensure_missing_ai_will_do,
     format_decision,
     inject_missing_decision_logs,
     strip_sole_decision_allowed,
@@ -547,3 +548,32 @@ def test_strip_sole_decision_allowed_keeps_category_allowed():
     assert "\tallowed = { tag = CHI }" in out
     assert "\t\tallowed = { tag = CHI }" not in out
     assert "icon = generic_decision" in out
+
+
+def test_ensure_ai_will_do_skips_decisions_that_already_have_it():
+    src = [
+        "CHI_cat = {\n",
+        "\tCHI_ready = {\n",
+        "\t\tai_will_do = { base = 5 }\n",
+        "\t}\n",
+        "\tCHI_bare = {\n",
+        "\t\ticon = generic_decision\n",
+        "\t}\n",
+        "}\n",
+    ]
+    out = "".join(ensure_missing_ai_will_do(src))
+    assert out.count("ai_will_do = { base = 5 }") == 1
+    assert "ai_will_do = { base = 10 }" in out
+
+
+def test_ensure_ai_will_do_skips_missions():
+    src = [
+        "CHI_cat = {\n",
+        "\tCHI_timer = {\n",
+        "\t\tdays_mission_timeout = 30\n",
+        "\t\ttimeout_effect = { add_stability = -0.01 }\n",
+        "\t}\n",
+        "}\n",
+    ]
+    out = "".join(ensure_missing_ai_will_do(src))
+    assert "ai_will_do" not in out
