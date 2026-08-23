@@ -30,6 +30,19 @@ Standardizes national focus files according to Millennium Dawn standards.
 python3 standardize_focus_tree.py input.txt -o output.txt --backup --verbose
 ```
 
+### Focus ID Prefixes (`rename_focus_ids.py`)
+
+Renames country focus IDs and their references without rewriting unrelated focus formatting.
+
+**Usage:**
+
+```bash
+python3 rename_focus_ids.py \
+  --focus-file ../../common/national_focus/05_Australia.txt \
+  --localisation-file ../../localisation/english/MD_focus_AST_l_english.yml \
+  --tag AST
+```
+
 ### Events (`standardize_events.py`)
 
 Standardizes event files according to Millennium Dawn standards.
