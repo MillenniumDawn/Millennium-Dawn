@@ -9,7 +9,11 @@ order, and never drop or split content.
 
 import pytest
 from shared_utils import collapse_or_compact
-from standardize_decisions import DecisionStandardizer, format_decision
+from standardize_decisions import (
+    DecisionStandardizer,
+    format_decision,
+    inject_missing_decision_logs,
+)
 
 
 def _decision(lines):
@@ -479,3 +483,50 @@ def test_unreadable_category_header_raises_instead_of_guessing():
     )
     with pytest.raises(ValueError):
         DecisionStandardizer().extract_properties(category)
+
+
+def test_log_injected_into_remove_effect_when_missing():
+    block = _decision(
+        [
+            "\tCHI_build_decision = {",
+            "\t\tremove_effect = {",
+            "\t\t\tadd_political_power = 10",
+            "\t\t}",
+            "\t}",
+        ]
+    )
+    out = format_decision(block)
+    text = "\n".join(out)
+    assert 'log = "[GetDateText]: [Root.GetName]: Decision CHI_build_decision"' in text
+    assert text.index("log =") < text.index("add_political_power")
+
+
+def test_single_line_remove_effect_expanded_and_logged():
+    block = _decision(
+        [
+            "\tCHI_visit = {",
+            "\t\tremove_effect = { country_event = foo.1 }",
+            "\t}",
+        ]
+    )
+    out = format_decision(block)
+    text = "\n".join(out)
+    assert 'log = "[GetDateText]: [Root.GetName]: Decision CHI_visit"' in text
+    assert "country_event = foo.1" in text
+
+
+def test_logs_only_leaves_unrelated_formatting_alone():
+    src = [
+        "CHI_cat = {\n",
+        "\tCHI_visit = {\n",
+        "\t\tallowed = { tag = CHI }\n",
+        "\t\tremove_effect = { country_event = foo.1 }\n",
+        "\t}\n",
+        "}\n",
+    ]
+    out = inject_missing_decision_logs(src)
+    text = "".join(out)
+    assert "allowed = { tag = CHI }" in text
+    assert 'log = "[GetDateText]: [Root.GetName]: Decision CHI_visit"' in text
+    assert "country_event = foo.1" in text
+    assert text.count("log =") == 1
