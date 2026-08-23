@@ -11,6 +11,8 @@ Usage:
 """
 
 import argparse
+import builtins
+import functools
 import io
 import os
 import re
@@ -19,7 +21,44 @@ import time
 from os import listdir
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from shared_utils import strip_inline_comment
+from shared_utils import atomic_write_text, strip_inline_comment
+
+_builtin_open = builtins.open
+_pending_outputs: list["_AtomicOutput"] = []
+
+
+class _AtomicOutput(io.StringIO):
+    def __init__(self, path, encoding):
+        super().__init__()
+        self.path = path
+        self.encoding = encoding
+        _pending_outputs.append(self)
+
+    def close(self):
+        if not self.closed:
+            atomic_write_text(self.path, self.getvalue(), encoding=self.encoding)
+        super().close()
+
+
+def open(path, mode="r", *args, **kwargs):
+    if "w" in mode and "b" not in mode:
+        return _AtomicOutput(path, kwargs.get("encoding", "utf-8"))
+    return _builtin_open(path, mode, *args, **kwargs)
+
+
+def _flush_atomic_outputs(function):
+    @functools.wraps(function)
+    def wrapped(*args, **kwargs):
+        start = len(_pending_outputs)
+        try:
+            return function(*args, **kwargs)
+        finally:
+            outputs = _pending_outputs[start:]
+            del _pending_outputs[start:]
+            for output in outputs:
+                output.close()
+
+    return wrapped
 
 
 def _read_lines(path, encoding="utf-8"):
@@ -55,6 +94,7 @@ def check_triggered(line_number, lines):
     return False
 
 
+@_flush_atomic_outputs
 def focus_add(cpath, dry_run=False):
     changes = 0
     for filename in listdir(os.path.join(cpath, "common", "national_focus")):
@@ -116,6 +156,7 @@ def focus_add(cpath, dry_run=False):
                     os.path.join(cpath, "common", "national_focus", filename),
                     "w",
                     encoding="utf-8",
+                    newline="",
                 )
             )
             outputfile.truncate()
@@ -156,6 +197,7 @@ def focus_add(cpath, dry_run=False):
     return changes
 
 
+@_flush_atomic_outputs
 def focus_remove(cpath, dry_run=False):
     changes = 0
     for filename in listdir(os.path.join(cpath, "common", "national_focus")):
@@ -179,6 +221,7 @@ def focus_remove(cpath, dry_run=False):
                     os.path.join(cpath, "common", "national_focus", filename),
                     "w",
                     encoding="utf-8",
+                    newline="",
                 )
             )
             outputfile.truncate()
@@ -191,6 +234,7 @@ def focus_remove(cpath, dry_run=False):
     return changes
 
 
+@_flush_atomic_outputs
 def event_add(cpath, dry_run=False):
     changes = 0
     for filename in listdir(os.path.join(cpath, "events")):
@@ -255,7 +299,10 @@ def event_add(cpath, dry_run=False):
                 io.StringIO()
                 if dry_run
                 else open(
-                    os.path.join(cpath, "events", filename), "w", encoding="utf-8"
+                    os.path.join(cpath, "events", filename),
+                    "w",
+                    encoding="utf-8",
+                    newline="",
                 )
             )
             outputfile.truncate()
@@ -284,6 +331,7 @@ def event_add(cpath, dry_run=False):
     return changes
 
 
+@_flush_atomic_outputs
 def event_remove(cpath, dry_run=False):
     changes = 0
     for filename in listdir(os.path.join(cpath, "events")):
@@ -304,7 +352,10 @@ def event_remove(cpath, dry_run=False):
                 io.StringIO()
                 if dry_run
                 else open(
-                    os.path.join(cpath, "events", filename), "w", encoding="utf-8"
+                    os.path.join(cpath, "events", filename),
+                    "w",
+                    encoding="utf-8",
+                    newline="",
                 )
             )
             outputfile.truncate()
@@ -320,6 +371,7 @@ def event_remove(cpath, dry_run=False):
     return changes
 
 
+@_flush_atomic_outputs
 def idea_add(cpath, dry_run=False):
     changes = 0
     for filename in listdir(os.path.join(cpath, "common", "ideas")):
@@ -362,6 +414,7 @@ def idea_add(cpath, dry_run=False):
                         os.path.join(cpath, "common", "ideas", filename),
                         "w",
                         encoding="utf-8",
+                        newline="",
                     )
                 )
             except OSError as e:
@@ -392,6 +445,7 @@ def idea_add(cpath, dry_run=False):
     return changes
 
 
+@_flush_atomic_outputs
 def idea_remove(cpath, dry_run=False):
     changes = 0
     for filename in listdir(os.path.join(cpath, "common", "ideas")):
@@ -408,7 +462,9 @@ def idea_remove(cpath, dry_run=False):
                 continue
             try:
                 outputfile = (
-                    io.StringIO() if dry_run else open(path, "w", encoding="utf-8")
+                    io.StringIO()
+                    if dry_run
+                    else open(path, "w", encoding="utf-8", newline="")
                 )
             except OSError as e:
                 print(f"Could not write {filename}: {e}")
@@ -423,6 +479,7 @@ def idea_remove(cpath, dry_run=False):
     return changes
 
 
+@_flush_atomic_outputs
 def decision_add(cpath, dry_run=False):
     changes = 0
     for filename in listdir(os.path.join(cpath, "common", "decisions")):
@@ -481,6 +538,7 @@ def decision_add(cpath, dry_run=False):
                         os.path.join(cpath, "common", "decisions", filename),
                         "w",
                         encoding="utf-8",
+                        newline="",
                     )
                 )
             except OSError as e:
@@ -556,6 +614,7 @@ def decision_add(cpath, dry_run=False):
     return changes
 
 
+@_flush_atomic_outputs
 def decision_remove(cpath, dry_run=False):
     changes = 0
     for filename in listdir(os.path.join(cpath, "common", "decisions")):
@@ -584,6 +643,7 @@ def decision_remove(cpath, dry_run=False):
                         os.path.join(cpath, "common", "decisions", filename),
                         "w",
                         encoding="utf-8",
+                        newline="",
                     )
                 )
             except OSError as e:
@@ -602,6 +662,7 @@ def decision_remove(cpath, dry_run=False):
     return changes
 
 
+@_flush_atomic_outputs
 def tech_add(cpath, dry_run=False):
     changes = 0
     for filename in listdir(os.path.join(cpath, "common", "technologies")):
@@ -649,6 +710,7 @@ def tech_add(cpath, dry_run=False):
                         os.path.join(cpath, "common", "technologies", filename),
                         "w",
                         encoding="utf-8",
+                        newline="",
                     )
                 )
             except OSError as e:
@@ -678,6 +740,7 @@ def tech_add(cpath, dry_run=False):
     return changes
 
 
+@_flush_atomic_outputs
 def tech_remove(cpath, dry_run=False):
     changes = 0
     for filename in listdir(os.path.join(cpath, "common", "technologies")):
@@ -706,6 +769,7 @@ def tech_remove(cpath, dry_run=False):
                         os.path.join(cpath, "common", "technologies", filename),
                         "w",
                         encoding="utf-8",
+                        newline="",
                     )
                 )
             except OSError as e:

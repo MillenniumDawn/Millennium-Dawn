@@ -81,6 +81,8 @@ The math expression is the **value** of the effect. Wrap it in `{ ... }` so the 
 - **Control flow** — takes a block: `if = { limit = { ... } add = 100 } else = { subtract = 1 }`.
 - **Collection iterator** — scopes to each element of a named collection and applies statements: `every_collection = { ... }`.
 
+The full statement list, with per-statement examples, is in `resources/documentation/script_math_functions.md`.
+
 **`set_variable` / `set_temp_variable`**, two equivalent shapes:
 
 ```

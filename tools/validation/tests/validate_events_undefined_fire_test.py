@@ -85,3 +85,17 @@ def test_interpolated_id_skipped(tmp_path):
 def test_commented_fire_ignored(tmp_path):
     p = _write(tmp_path, "common/f.txt", "x = {\n\t#country_event = dead.1\n}\n")
     assert scan_event_fires((p, frozenset())) == []
+
+
+def test_metadata_retains_event_without_id():
+    from validate_events import _parse_event_metadata
+
+    metadata, namespaces = _parse_event_metadata(
+        "country_event = {\n\tis_triggered_only = yes\n\toption = { name = missing.id.a }\n}\n",
+        "broken.txt",
+    )
+
+    assert namespaces == set()
+    assert len(metadata) == 1
+    assert metadata[0]["id"] is None
+    assert metadata[0]["file"] == "broken.txt"

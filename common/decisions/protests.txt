@@ -51,13 +51,21 @@ MD_protests_forming = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout MD_incoming_protest_movement"
 			add_stability = 0.02
-			clr_country_flag = MD_protest_mission_active
 		}
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout MD_incoming_protest_movement"
-			clr_country_flag = MD_protest_mission_active
-			country_event = protests.100
+			if = {
+				limit = {
+					NOT = { has_country_flag = MD_protest_cooldown }
+					NOT = { tag = ZOM }
+					NOT = { tag = ALN }
+					NOT = { has_war_with = ZOM }
+					NOT = { has_war_with = ALN }
+				}
+				set_country_flag = MD_protest_revolt_pending
+				country_event = protests.100
+			}
 		}
 	}
 
@@ -65,10 +73,15 @@ MD_protests_forming = {
 		activation = { always = no }
 
 		available = {
-			NOT = {
-				any_controlled_state = {
-					is_core_of = ROOT
-					has_resistance = yes
+			custom_trigger_tooltip = {
+				tooltip = MD_incoming_revolt_available_tt
+				NOT = {
+					any_owned_state = {
+						is_core_of = ROOT
+						is_controlled_by = ROOT
+						has_state_flag = MD_protests_active@ROOT
+						has_resistance = yes
+					}
 				}
 			}
 		}
@@ -78,29 +91,33 @@ MD_protests_forming = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout MD_incoming_revolt"
-			clr_country_flag = MD_protest_mission_active
 			country_event = protests.103
 		}
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout MD_incoming_revolt"
-			clr_country_flag = MD_protest_mission_active
-			start_civil_war_with_no_leader_change = yes
 			hidden_effect = {
 				every_owned_state = {
 					limit = {
+						is_core_of = ROOT
+						has_state_flag = MD_protests_active@ROOT
 						has_resistance = yes
 					}
 					cancel_resistance = yes
-					clr_state_flag = MD_dont_protest_again
 				}
-				clr_country_flag = MD_protests_began
+				every_core_state = {
+					clr_state_flag = MD_protests_active@ROOT
+					clr_state_flag = MD_protests_resolved@ROOT
+				}
+				clr_country_flag = MD_protest_revolt_pending
+				clear_variable = protest_spread_exhaustion
 				set_country_flag = {
 					flag = MD_protest_cooldown
 					days = 1000
 					value = 1
 				}
 			}
+			start_civil_war_with_no_leader_change = yes
 		}
 	}
 
@@ -108,7 +125,13 @@ MD_protests_forming = {
 	MD_appease_protesters = {
 		days_re_enable = 700
 		cost = 100
-		visible = { has_country_flag = MD_protest_mission_active }
+
+		visible = {
+			OR = {
+				has_active_mission = MD_incoming_protest_movement
+				has_active_mission = MD_incoming_revolt
+			}
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision MD_appease_protesters"
@@ -164,6 +187,15 @@ MD_protests_forming = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision MD_hearts_and_minds_campaign"
 			add_stability = 0.01
+			random_owned_controlled_state = {
+				limit = {
+					is_core_of = ROOT
+					has_state_flag = MD_protests_active@ROOT
+					has_resistance = yes
+				}
+				add_compliance = 10
+				add_resistance = -10
+			}
 		}
 
 		modifier = {
@@ -233,7 +265,10 @@ MD_protests_forming = {
 		cost = 50
 
 		visible = {
-			has_country_flag = MD_protest_mission_active
+			OR = {
+				has_active_mission = MD_incoming_protest_movement
+				has_active_mission = MD_incoming_revolt
+			}
 			NOT = { has_country_flag = MD_police_funding_active }
 		}
 
@@ -316,7 +351,10 @@ MD_protests_forming = {
 		cost = 75
 
 		visible = {
-			has_country_flag = MD_protest_mission_active
+			OR = {
+				has_active_mission = MD_incoming_protest_movement
+				has_active_mission = MD_incoming_revolt
+			}
 			NOT = { has_country_flag = MD_tax_relief_active }
 		}
 
@@ -402,7 +440,10 @@ MD_protests_forming = {
 		cost = 75
 
 		visible = {
-			has_country_flag = MD_protest_mission_active
+			OR = {
+				has_active_mission = MD_incoming_protest_movement
+				has_active_mission = MD_incoming_revolt
+			}
 			NOT = { has_country_flag = MD_jobs_program_active }
 		}
 

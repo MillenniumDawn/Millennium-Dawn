@@ -21,12 +21,14 @@ from common_utils import (
     join_groups,
 )
 from shared_utils import (
+    atomic_write_text,
     blank_quoted_strings,
     collapse_or_compact,
     convert_root_factor_to_base,
     create_backup,
     extract_block,
     log_message,
+    normalize_spacing,
     strip_inline_comment,
 )
 
@@ -1033,14 +1035,11 @@ def standardize_focus_tree(
         )
         return False
 
-    # Written via a temp file + os.replace so an interrupted or failing write
-    # never leaves a truncated focus tree behind.
-    tmp_path = f"{output_file}.tmp"
     try:
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            for line in output_lines:
-                f.write(line + "\n")
-        os.replace(tmp_path, output_file)
+        if output_lines and output_lines[0].startswith("\ufeff"):
+            output_lines[0] = output_lines[0][1:]
+        output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
+        atomic_write_text(output_file, output, bom=False)
 
         time_str = format_elapsed(time.time() - start_time)
 
@@ -1057,10 +1056,6 @@ def standardize_focus_tree(
 
     except Exception as e:
         log_message("ERROR", f"Failed to write {output_file}: {e}")
-        try:
-            os.remove(tmp_path)
-        except OSError:
-            pass
         return False
 
     return True

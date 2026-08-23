@@ -59,6 +59,7 @@ FALSE_POSITIVE_NAMES = frozenset(
         "has_md_alert",
         # 00_continent_triggers.txt
         "is_in_the_americas",
+        "is_in_the_caribbean",
         # 00_cyber_triggers.txt
         "cyber_target_not_on_cooldown",
         # 00_debt_ratio_triggers.txt
@@ -75,7 +76,6 @@ FALSE_POSITIVE_NAMES = frozenset(
         "antarctica_is_life_support_slot_selected",
         "antarctica_is_fuel_storage_slot_selected",
         "antarctica_is_laboratory_slot_selected",
-        "antarctica_dynamic_station_matches_selected_filter",
         # 00_budget_effects.txt
         "disable_debt_rate_payments",
         "enable_debt_rate_payments",

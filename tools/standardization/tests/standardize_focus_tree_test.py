@@ -481,6 +481,15 @@ _INVALID_MODIFIER_TREE = """focus_tree = {
 """
 
 
+def test_leading_bom_is_removed_from_focus_output(tmp_path):
+    source = tmp_path / "focus.txt"
+    source.write_text("\ufefffocus_tree = {\n}\n", encoding="utf-8")
+
+    assert standardize_focus_tree(str(source), str(source)) is True
+    assert not source.read_bytes().startswith(b"\xef\xbb\xbf")
+    assert source.read_text(encoding="utf-8").startswith("focus_tree = {")
+
+
 def test_invalid_modifier_name_rejects_standardization_without_writing(tmp_path):
     source = tmp_path / "focus.txt"
     output = tmp_path / "output.txt"
@@ -615,10 +624,10 @@ def test_failed_write_leaves_original_intact_and_no_temp_file(tmp_path, monkeypa
     original = "focus_tree = {\n\tfocus = {\n\t\tid = TST_x\n\t}\n}\n"
     target.write_text(original, encoding="utf-8")
 
-    def _boom(src, dst):
+    def _boom(_path, _text):
         raise OSError("disk full")
 
-    monkeypatch.setattr(focus_tree_module.os, "replace", _boom)
+    monkeypatch.setattr(focus_tree_module, "atomic_write_text", _boom)
 
     assert standardize_focus_tree(str(target), str(target)) is False
     assert target.read_text(encoding="utf-8") == original

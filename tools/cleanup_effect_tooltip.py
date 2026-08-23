@@ -191,7 +191,7 @@ def process_file(filepath, check_only=False):
     new_lines, collapsed = simplify_effect_tooltip_block(lines)
     if collapsed and not check_only and new_lines != lines:
         try:
-            with open(filepath, "w", encoding="utf-8") as f:
+            with open(filepath, "w", encoding="utf-8", newline="") as f:
                 f.writelines(new_lines)
         except OSError as e:
             print(f"ERROR: {filepath}: could not write file ({e})", file=sys.stderr)

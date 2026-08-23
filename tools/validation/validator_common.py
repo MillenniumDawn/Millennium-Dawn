@@ -20,6 +20,7 @@ from shared_utils import (
     Colors,
     DataCleaner,
     FileOpener,
+    atomic_write_text,
     clean_filepath,
     compute_line_offsets,
     create_validation_parser,
@@ -61,6 +62,13 @@ def _label_from_failmsg(fail_msg: str) -> str:
     return label or "OTHER"
 
 
+def _safe_int(value) -> int:
+    try:
+        return int(value) if value else 0
+    except (TypeError, ValueError):
+        return 0
+
+
 # Loc keys that live in vanilla HOI4 (not the mod's localisation/ tree) and are
 # inherited by MD decisions/events/focuses that override or reuse the vanilla
 # object. The base loc loader scans only the mod, so without this allowlist
@@ -83,6 +91,81 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "recruit_in_asia",
         "recruit_in_australia",
         "recruit_in_india",
+        # modifiers_l_english.yml — variable-effect tooltip rows inherited by
+        # MD focus, decision, event, and idea effects.
+        "acclimatization_cold_climate_gain_factor_tt",
+        "acclimatization_hot_climate_gain_factor_tt",
+        "ace_effectiveness_factor_tt",
+        "agency_upgrade_time_tt",
+        "air_ace_bonuses_factor_tt",
+        "air_chief_cost_factor_tt",
+        "air_fuel_consumption_factor_tt",
+        "air_home_defence_factor_tt",
+        "air_interception_detect_factor_tt",
+        "air_range_factor_tt",
+        "air_training_xp_gain_factor_tt",
+        "air_weather_penalty_tt",
+        "air_wing_xp_loss_when_killed_factor_tt",
+        "amphibious_invasion_tt",
+        "annex_cost_factor_tt",
+        "army_armor_speed_factor_tt",
+        "army_artillery_defence_factor_tt",
+        "army_attack_speed_factor_tt",
+        "army_leader_start_attack_level_tt",
+        "army_leader_start_defense_level_tt",
+        "army_leader_start_logistics_level_tt",
+        "army_leader_start_planning_level_tt",
+        "base_fuel_gain_factor_tt",
+        "cic_construction_boost_factor_tt",
+        "compliance_growth_on_our_occupied_states_tt",
+        "compliance_growth_tt",
+        "conversion_cost_civ_to_mil_factor_tt",
+        "convoy_escort_efficiency_tt",
+        "convoy_retreat_speed_tt",
+        "enemy_justify_war_goal_time_tt",
+        "equipment_conversion_speed_tt",
+        "experience_gain_navy_tt",
+        "fascism_drift_tt",
+        "heat_attrition_factor_tt",
+        "industry_free_repair_factor_tt",
+        "industry_repair_factor_tt",
+        "intel_from_combat_factor_tt",
+        "land_bunker_effectiveness_factor_tt",
+        "lend_lease_tension_tt",
+        "local_factories_tt",
+        "local_resource_gain_efficiency_per_infrastructure_tt",
+        "master_ideology_drift_tt",
+        "max_dig_in_factor_tt",
+        "max_dig_in_tt",
+        "mechanized_attack_factor_tt",
+        "military_industrial_organization_funds_gain_tt",
+        "military_industrial_organization_research_bonus_tt",
+        "military_leader_cost_factor_tt",
+        "minimum_training_level_tt",
+        "motorized_attack_factor_tt",
+        "naval_critical_score_chance_factor_tt",
+        "naval_enemy_fleet_size_ratio_penalty_factor_tt",
+        "naval_mines_damage_factor_tt",
+        "naval_mines_effect_reduction_tt",
+        "naval_strike_targetting_factor_tt",
+        "naval_torpedo_reveal_chance_factor_tt",
+        "naval_torpedo_screen_penetration_factor_tt",
+        "navy_intel_factor_tt",
+        "navy_intel_to_others_tt",
+        "navy_screen_attack_factor_tt",
+        "navy_screen_defence_factor_tt",
+        "non_core_manpower_tt",
+        "production_oil_factor_tt",
+        "production_speed_facility_factor_tt",
+        "production_speed_supply_node_factor_tt",
+        "production_speed_synthetic_refinery_factor_tt",
+        "recruitable_population_tt",
+        "resistance_activity_tt",
+        "resistance_target_tt",
+        "special_forces_min_tt",
+        "spotting_chance_tt",
+        "state_production_speed_supply_node_factor_tt",
+        "terrain_trait_xp_gain_factor_tt",
         # decisions_l_english.yml — shared cost-tooltip strings used as
         # custom_cost_text on MD decisions.
         "decision_cost_CP_15",
@@ -115,6 +198,12 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "RAJ_indian_national_congress_desc",
         "RAJ_industrial_expansion",
         "RAJ_industrial_expansion_desc",
+        "SOV_raskovas_aviation_group",  # nsb_focus_l_english.yml
+        "SOV_raskovas_aviation_group_desc",
+        "SPA_a_great_spain",  # lar_focus_l_english.yml
+        "SPA_a_great_spain_desc",
+        "SPR_the_popular_front",  # lar_focus_l_english.yml
+        "SPR_the_popular_front_desc",
         # lar_events_l_english.yml — live La Resistance systems reused by MD.
         "lar_collab_gov.1.d",
         "lar_collab_gov.1.t",
@@ -220,6 +309,38 @@ def case_mismatch(ref: str, ci_index: dict):
     exactly (a Linux-only bug), else None."""
     hit = ci_index.get(ref.lower())
     return hit if (hit is not None and hit != ref) else None
+
+
+# Trait definitions sit at one tab of indent inside the `leader_traits = { }`
+# wrapper. `-` is in the charset for `emerging_Communist-State`.
+LEADER_TRAIT_DEF_RE = re.compile(r"^\t([\w\-]+)\s*=\s*\{", re.MULTILINE)
+
+
+def parse_leader_trait_names(mod_path: str, subdir: str) -> Set[str]:
+    """Collect every trait defined in the ``common/<subdir>/`` trait files.
+
+    Covers both leader trait pools: ``country_leader`` (advisors and country
+    leaders) and ``unit_leader`` (generals, admirals, operatives). The hyphen is
+    part of the name charset because ``emerging_Communist-State`` exists.
+    """
+    names: Set[str] = set()
+    trait_dir = os.path.join(mod_path, "common", subdir)
+    if not os.path.isdir(trait_dir):
+        return names
+
+    try:
+        trait_files = sorted(os.listdir(trait_dir))
+    except OSError:
+        return names
+
+    for fname in trait_files:
+        if not fname.endswith(".txt"):
+            continue
+        content = FileOpener.open_text_file(
+            os.path.join(trait_dir, fname), lowercase=False, strip_comments_flag=True
+        )
+        names.update(match.group(1) for match in LEADER_TRAIT_DEF_RE.finditer(content))
+    return names
 
 
 def scan_meta_constructed_names(files, defined_names):
@@ -592,26 +713,14 @@ class BaseValidator:
                     )
 
     def save_output(self):
-        if self.output_file and self.output_lines:
-            try:
-                with open(self.output_file, "w", encoding="utf-8") as f:
-                    f.write("\n".join(self.output_lines))
-                logging.info(f"Results saved to: {self.output_file}")
-            except Exception as e:
-                logging.error(f"Failed to write results to {self.output_file}: {e}")
-
-        json_file = (
-            os.path.splitext(self.output_file)[0] + ".json"
-            if self.output_file
-            else None
-        )
-        if json_file and self._issues:
-            try:
-                with open(json_file, "w", encoding="utf-8") as f:
-                    f.write(self.get_issues_json())
-                logging.info(f"JSON results saved to: {json_file}")
-            except Exception as e:
-                logging.error(f"Failed to serialize JSON to {json_file}: {e}")
+        if not self.output_file:
+            return
+        atomic_write_text(self.output_file, "\n".join(self.output_lines))
+        logging.info(f"Results saved to: {self.output_file}")
+        if self._issues:
+            json_file = os.path.splitext(self.output_file)[0] + ".json"
+            atomic_write_text(json_file, self.get_issues_json())
+            logging.info(f"JSON results saved to: {json_file}")
 
     def add_issue(
         self, severity: str, category: str, message: str, file: str = "", line: int = 0
@@ -669,7 +778,7 @@ class BaseValidator:
             if not m:
                 continue
             gd = m.groupdict()
-            line = int(gd["line"]) if gd.get("line") else 0
+            line = _safe_int(gd.get("line"))
             prefix = gd.get("prefix")
             msg = gd.get("msg", "")
             if prefix:
@@ -711,7 +820,7 @@ class BaseValidator:
                 # (message, file, line)
                 msg_t = str(r[0]) if len(r) > 0 else ""
                 file_t = str(r[1]) if len(r) > 1 else ""
-                line_t = int(r[2]) if len(r) > 2 and r[2] else 0
+                line_t = _safe_int(r[2]) if len(r) > 2 else 0
                 issue = Issue(
                     severity=severity,
                     category=group_label,
@@ -887,11 +996,15 @@ class BaseValidator:
                     normalized.startswith(hint) or ("/" + hint) in normalized
                 )
 
-            files = [
+            matched = [
                 f
                 for f in self.staged_files
                 if any(f.endswith(ext) for ext in extensions)
                 and any(_matches_hint(f, hint) for hint in dir_hints)
+            ]
+            files = [
+                f if os.path.isabs(f) else os.path.join(self.mod_path, f)
+                for f in matched
             ]
         else:
             seen: Set[str] = set()
@@ -904,7 +1017,15 @@ class BaseValidator:
                         seen.add(f)
                         files.append(f)
 
-        result = [f for f in files if not should_skip_file(f)]
+        # should_skip_file matches on path segments, and unconditionally skips
+        # any ".claude"/".git" segment. Checking against the mod_path-relative
+        # path (not the absolute one) keeps that rule scoped to a nested
+        # worktree/config dir *discovered while scanning* — it must not also
+        # trigger just because mod_path itself lives under .claude/worktrees/
+        # (this environment's own worktree convention).
+        result = [
+            f for f in files if not should_skip_file(os.path.relpath(f, self.mod_path))
+        ]
         if extra_skip is not None:
             result = [f for f in result if not extra_skip(f)]
         return result

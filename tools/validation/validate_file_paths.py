@@ -221,7 +221,7 @@ class Validator(BaseValidator):
             self.add_error(
                 "paths-setup",
                 "No vanilla path list: install HOI4 via Steam, set $HOI4_PATH, or "
-                "regenerate vanilla_paths.txt with gen_vanilla_paths_manifest.py "
+                "regenerate vanilla_paths.txt with refresh_vanilla_data.py "
                 "on a machine with the game.",
             )
             return
