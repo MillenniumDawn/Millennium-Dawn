@@ -158,6 +158,7 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "production_oil_factor_tt",
         "production_speed_facility_factor_tt",
         "production_speed_supply_node_factor_tt",
+        "production_speed_synthetic_refinery_factor_tt",
         "recruitable_population_tt",
         "resistance_activity_tt",
         "resistance_target_tt",
@@ -1016,7 +1017,15 @@ class BaseValidator:
                         seen.add(f)
                         files.append(f)
 
-        result = [f for f in files if not should_skip_file(f)]
+        # should_skip_file matches on path segments, and unconditionally skips
+        # any ".claude"/".git" segment. Checking against the mod_path-relative
+        # path (not the absolute one) keeps that rule scoped to a nested
+        # worktree/config dir *discovered while scanning* — it must not also
+        # trigger just because mod_path itself lives under .claude/worktrees/
+        # (this environment's own worktree convention).
+        result = [
+            f for f in files if not should_skip_file(os.path.relpath(f, self.mod_path))
+        ]
         if extra_skip is not None:
             result = [f for f in result if not extra_skip(f)]
         return result
