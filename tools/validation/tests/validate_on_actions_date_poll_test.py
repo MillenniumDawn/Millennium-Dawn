@@ -43,7 +43,6 @@ def test_deterministic_else_if_date_poll_detected():
         ("historical.1", "on_monthly_TAG", 6, "common/on_actions/test.txt")
     ]
 
-
 def test_non_pulse_date_gate_ignored():
     text = """on_actions = {
 	on_new_term_election = {
