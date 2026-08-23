@@ -113,9 +113,7 @@ _DYNAMIC_EVENT_NS_PATTERN = re.compile(
 _EVENT_FIRE_SHORT_RE = re.compile(
     r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*([A-Za-z_][\w.]*)"
 )
-_EVENT_FIRE_BLOCK_RE = re.compile(
-    r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{([^{}]*)\}"
-)
+_EVENT_FIRE_BLOCK_RE = re.compile(r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{([^{}]*)\}")
 _FIRE_ID_RE = re.compile(r"\bid\s*=\s*([A-Za-z_][\w.]*)")
 
 
@@ -126,9 +124,7 @@ _DEFINITION_ONLY_RE = re.compile(
     r"\b(?:title|desc|picture|is_triggered_only|fire_only_once|hidden|option|"
     r"immediate|major|trigger|mean_time_to_happen|timeout_days)\s*="
 )
-_EVENT_BLOCK_OPEN_RE = re.compile(
-    r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{"
-)
+_EVENT_BLOCK_OPEN_RE = re.compile(r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{")
 _REVERSED_EVENT_CALL_RE = re.compile(
     r"\b(event_(?:country|news|state|unit_leader|operative_leader))"
     r"\s*=\s*(?:\{\s*id\s*=\s*)?([A-Za-z_][\w.]*)"

@@ -324,9 +324,7 @@ def scan_deterministic_date_polls(
     polls: List[Tuple[str, str, int, str]] = []
     seen: Set[Tuple[str, str, int]] = set()
 
-    for block_name, block_body, block_line_offset in _iter_on_action_blocks(
-        text_clean
-    ):
+    for block_name, block_body, block_line_offset in _iter_on_action_blocks(text_clean):
         if not any(
             block_name == pulse or block_name.startswith(f"{pulse}_")
             for pulse in _PULSE_ON_ACTIONS
@@ -342,9 +340,7 @@ def scan_deterministic_date_polls(
             )
             if limit_end == -1 or not _DATE_LOWER_BOUND_RE.search(limit_body):
                 continue
-            if_body, if_end = extract_block_from_text(
-                block_body, if_match.end() - 1
-            )
+            if_body, if_end = extract_block_from_text(block_body, if_match.end() - 1)
             if if_end == -1:
                 continue
 
@@ -358,9 +354,7 @@ def scan_deterministic_date_polls(
                 if _CHANCE_FIELD_RE.search(random_body):
                     chance_spans.append((random_match.start(), random_end))
 
-            line_offset = (
-                block_line_offset + block_body[: if_match.end()].count("\n")
-            )
+            line_offset = block_line_offset + block_body[: if_match.end()].count("\n")
             for eid, pos in _iter_event_call_positions(if_body):
                 if any(start <= pos < end for start, end in chance_spans):
                     continue
