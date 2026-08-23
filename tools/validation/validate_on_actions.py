@@ -294,7 +294,9 @@ def _iter_on_action_blocks(text_clean: str):
             pos = body_end
 
 
-def _parse_on_actions_text(text_clean: str, filepath: str) -> Tuple[
+def _parse_on_actions_text(
+    text_clean: str, filepath: str
+) -> Tuple[
     List[Tuple[str, str, int, str]],
     List[Tuple[str, str, int, str]],
 ]:
