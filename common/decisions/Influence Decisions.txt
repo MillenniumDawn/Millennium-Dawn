@@ -56,8 +56,10 @@ influence_decisions = {
 				}
 			}
 			NOT = {
-				country_exists = BLC
-				has_country_flag = SAU_be_nice_to_iran
+				OR = {
+					country_exists = BLC
+					has_country_flag = SAU_be_nice_to_iran
+				}
 			}
 		}
 
@@ -108,8 +110,10 @@ influence_decisions = {
 				}
 			}
 			NOT = {
-				country_exists = BLC
-				has_country_flag = USA_iranian_friendship
+				OR = {
+					country_exists = BLC
+					has_country_flag = USA_iranian_friendship
+				}
 			}
 		}
 
@@ -141,8 +145,10 @@ influence_decisions = {
 				}
 			}
 			NOT = {
-				country_exists = ARA
-				has_country_flag = SAU_be_nice_to_iran
+				OR = {
+					country_exists = ARA
+					has_country_flag = SAU_be_nice_to_iran
+				}
 			}
 		}
 
@@ -250,12 +256,16 @@ influence_decisions = {
 				tooltip = has_foreign_influence
 				check_variable = { influence_array^0 > 0 }
 			}
+			custom_trigger_tooltip = {
+				tooltip = influence_government_not_lobbied_tt
+				NOT = { has_country_flag = influence_government_lobbied }
+			}
+			hidden_trigger = { NOT = { has_country_flag = automation_combat_foreign_influence_cooldown } }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_foreign_influence"
-			set_temp_variable = { percent_change = 2.5 }
-			change_domestic_influence_percentage = yes
+			automation_combat_foreign_influence_execute = yes
 		}
 
 		ai_will_do = {
@@ -285,22 +295,24 @@ influence_decisions = {
 					var:influence_array^2 = { has_idea = NATO_member }
 				}
 				NOT = {
-					var:influence_array^0 = {
-						OR = {
-							original_tag = SOV
-							original_tag = CHI
+					OR = {
+						var:influence_array^0 = {
+							OR = {
+								original_tag = SOV
+								original_tag = CHI
+							}
 						}
-					}
-					var:influence_array^1 = {
-						OR = {
-							original_tag = SOV
-							original_tag = CHI
+						var:influence_array^1 = {
+							OR = {
+								original_tag = SOV
+								original_tag = CHI
+							}
 						}
-					}
-					var:influence_array^2 = {
-						OR = {
-							original_tag = SOV
-							original_tag = CHI
+						var:influence_array^2 = {
+							OR = {
+								original_tag = SOV
+								original_tag = CHI
+							}
 						}
 					}
 				}
@@ -378,24 +390,35 @@ influence_decisions = {
 			}
 			NOT = { has_decision = combat_second_influencer_decision }
 			NOT = { has_decision = combat_third_influencer_decision }
+			hidden_trigger = {
+				NOT = { has_country_flag = automation_combat_biggest_influencer_cooldown }
+				var:influence_array^0 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = influence_government_not_lobbied_by_tt
+				NOT = {
+					AND = {
+						has_country_flag = influence_government_lobbied
+						check_variable = { influence_lobbied_by = influence_array^0 }
+					}
+				}
+			}
 		}
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision combat_biggest_influencer_decision"
 			set_variable = { combat_big_influencer = influence_array^0 }
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_biggest_influencer_decision"
-			if = { limit = { check_variable = { combat_big_influencer = 0 } }
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { tag_index = influence_array^0 }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
+			set_temp_variable = { combat_influencer_target = combat_big_influencer }
+			automation_combat_influencer_attack_complete = yes
+			set_country_flag = { flag = automation_combat_biggest_influencer_cooldown value = 1 days = 30 }
+			if = {
+				limit = { var:combat_influencer_target = { exists = yes } }
+				var:combat_influencer_target = {
+					set_country_flag = { flag = automation_influence_attack_cooldown_@ROOT value = 1 days = 30 }
+				}
 			}
-			else = {
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { influencer_index = 0 }
-				change_current_influencer_index_percentage = yes
-			}
-
 			clear_variable = combat_big_influencer
 		}
 
@@ -537,28 +560,39 @@ influence_decisions = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = has_foreign_influence
-				check_variable = { influence_array^0 > 0 }
+				check_variable = { influence_array^1 > 0 }
 			}
 			NOT = { has_decision = combat_biggest_influencer_decision }
 			NOT = { has_decision = combat_third_influencer_decision }
+			hidden_trigger = {
+				NOT = { has_country_flag = automation_combat_second_influencer_cooldown }
+				var:influence_array^1 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = influence_government_not_lobbied_by_tt
+				NOT = {
+					AND = {
+						has_country_flag = influence_government_lobbied
+						check_variable = { influence_lobbied_by = influence_array^1 }
+					}
+				}
+			}
 		}
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision combat_second_influencer_decision"
 			set_variable = { combat_second_big_influencer = influence_array^1 }
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_second_influencer_decision"
-			if = { limit = { check_variable = { combat_second_big_influencer = 0 } }
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { tag_index = influence_array^1 }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
+			set_temp_variable = { combat_influencer_target = combat_second_big_influencer }
+			automation_combat_influencer_attack_complete = yes
+			set_country_flag = { flag = automation_combat_second_influencer_cooldown value = 1 days = 30 }
+			if = {
+				limit = { var:combat_influencer_target = { exists = yes } }
+				var:combat_influencer_target = {
+					set_country_flag = { flag = automation_influence_attack_cooldown_@ROOT value = 1 days = 30 }
+				}
 			}
-			else = {
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { influencer_index = 1 }
-				change_current_influencer_index_percentage = yes
-			}
-
 			clear_variable = combat_second_big_influencer
 		}
 
@@ -701,28 +735,39 @@ influence_decisions = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = has_foreign_influence
-				check_variable = { influence_array^0 > 0 }
+				check_variable = { influence_array^2 > 0 }
 			}
 			NOT = { has_decision = combat_biggest_influencer_decision }
 			NOT = { has_decision = combat_second_influencer_decision }
+			hidden_trigger = {
+				NOT = { has_country_flag = automation_combat_third_influencer_cooldown }
+				var:influence_array^2 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = influence_government_not_lobbied_by_tt
+				NOT = {
+					AND = {
+						has_country_flag = influence_government_lobbied
+						check_variable = { influence_lobbied_by = influence_array^2 }
+					}
+				}
+			}
 		}
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision combat_third_influencer_decision"
 			set_variable = { combat_third_big_influencer = influence_array^2 }
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_third_influencer_decision"
-			if = { limit = { check_variable = { combat_third_big_influencer = 0 } }
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { tag_index = influence_array^2 }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
+			set_temp_variable = { combat_influencer_target = combat_third_big_influencer }
+			automation_combat_influencer_attack_complete = yes
+			set_country_flag = { flag = automation_combat_third_influencer_cooldown value = 1 days = 30 }
+			if = {
+				limit = { var:combat_influencer_target = { exists = yes } }
+				var:combat_influencer_target = {
+					set_country_flag = { flag = automation_influence_attack_cooldown_@ROOT value = 1 days = 30 }
+				}
 			}
-			else = {
-				set_temp_variable = { percent_change = -5 }
-				set_temp_variable = { influencer_index = 2 }
-				change_current_influencer_index_percentage = yes
-			}
-
 			clear_variable = combat_third_big_influencer
 		}
 
@@ -862,21 +907,22 @@ influence_decisions = {
 			FROM = {
 				is_subject_of = ROOT
 				NOT = {
-					has_autonomy_state = autonomy_special_administrative_region_HKG
-					has_autonomy_state = autonomy_special_administrative_region_MAC
-					has_autonomy_state = autonomy_special_administrative_region_TAI
-					has_autonomy_state = autonomy_special_administrative_region_TIB
-					has_autonomy_state = autonomy_special_administrative_region_ETK
-					has_autonomy_state = autonomy_special_administrative_region_MON
-					has_autonomy_state = autonomy_warsaw
-					has_autonomy_state = autonomy_state_rf
-					has_autonomy_state = autonomy_republic_rf
-					has_autonomy_state = autonomy_kray_rf
-					has_autonomy_state = autonomy_oblast_rf
-					has_autonomy_state = autonomy_okrug_rf
-					has_autonomy_state = autonomy_governorate_rf
-					has_autonomy_state = autonomy_pmc_wagner
-					has_autonomy_state = autonomy_state_cis
+					OR = {
+						has_autonomy_state = autonomy_special_administrative_region_HKG
+						has_autonomy_state = autonomy_special_administrative_region_MAC
+						has_autonomy_state = autonomy_special_administrative_region_TAI
+						has_autonomy_state = autonomy_special_administrative_region_TIB
+						has_autonomy_state = autonomy_special_administrative_region_ETK
+						has_autonomy_state = autonomy_special_administrative_region_MON
+						has_autonomy_state = autonomy_warsaw
+						has_autonomy_state = autonomy_state_rf
+						has_autonomy_state = autonomy_republic_rf
+						has_autonomy_state = autonomy_kray_rf
+						has_autonomy_state = autonomy_oblast_rf
+						has_autonomy_state = autonomy_okrug_rf
+						has_autonomy_state = autonomy_governorate_rf
+						has_autonomy_state = autonomy_state_cis
+					}
 				}
 			}
 		}
@@ -989,6 +1035,8 @@ influence_decisions = {
 			check_variable = { BNL_aswf_delivered < 2 }
 		}
 
+		available = { hidden_trigger = { always = no } }
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BNL_lay_down_aswf_frigate"
 			if = {
@@ -1033,6 +1081,7 @@ influence_decisions = {
 			has_country_flag = BNL_aswf_program_complete
 			NOT = { has_country_flag = BNL_aswf_updated }
 		}
+		available = { hidden_trigger = { always = no } }
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BNL_aswf_capability_update"
@@ -1045,17 +1094,108 @@ influence_decisions = {
 					fixed_ship_engine_slot = module_light_surface_jet_turbine_power3
 					fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
 					fixed_ship_radar_slot = module_sonar_5
-					fixed_ship_auxillary_slot_2 = module_vls_sam_3
-					fixed_ship_auxillary_slot_1 = module_vls_lam_2
+					fixed_ship_auxillary_slot_2 = module_naval_vls_cells_16
+					fixed_ship_auxillary_slot_1 = module_naval_vls_cells_16
 					fixed_ship_auxillary_slot = module_chain_gun
 					fixed_ship_battery_slot = module_76mm_gun_4
-					front_1_custom_slot = module_asm_3
+					front_1_custom_slot = module_naval_missile_mount_quad
 					rear_1_custom_slot = module_light_helipad_2
+					fixed_ship_missile_ammo_slot = module_naval_ammo_balanced_3
 				}
 			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BNL_dynmod_union }
 			add_to_variable = { BNL_naval_morale_factor = 0.05 tooltip = naval_morale_factor_tt }
 			set_country_flag = BNL_aswf_updated
 		}
+	}
+
+	BNL_retry_treaty_of_union_BEL = {
+		allowed = { OR = { original_tag = HOL original_tag = LUX } }
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 60
+
+		visible = {
+			BEL = { exists = yes has_country_flag = BNL_treaty_of_union_rejected@ROOT }
+		}
+
+		available = {
+			BEL = { is_subject = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BNL_retry_treaty_of_union_BEL"
+			custom_effect_tooltip = BNL_retry_shared_outlook_tt
+			custom_effect_tooltip = BNL_retry_influence_tt
+			custom_effect_tooltip = BNL_retry_opinion_tt
+			BEL = {
+				clr_country_flag = BNL_treaty_of_union_rejected@ROOT
+				country_event = { id = benelux.1 days = 1 }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { puppet = BEL }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	BNL_retry_treaty_of_union_HOL = {
+		allowed = { OR = { original_tag = BEL original_tag = LUX } }
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 60
+
+		visible = {
+			HOL = { exists = yes has_country_flag = BNL_treaty_of_union_rejected@ROOT }
+		}
+
+		available = {
+			HOL = { is_subject = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BNL_retry_treaty_of_union_HOL"
+			custom_effect_tooltip = BNL_retry_shared_outlook_tt
+			custom_effect_tooltip = BNL_retry_influence_tt
+			custom_effect_tooltip = BNL_retry_opinion_tt
+			HOL = {
+				clr_country_flag = BNL_treaty_of_union_rejected@ROOT
+				country_event = { id = benelux.4 days = 1 }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { puppet = HOL }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	BNL_retry_treaty_of_union_LUX = {
+		allowed = { OR = { original_tag = BEL original_tag = HOL } }
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 60
+
+		visible = {
+			LUX = { exists = yes has_country_flag = BNL_treaty_of_union_rejected@ROOT }
+		}
+
+		available = {
+			LUX = { is_subject = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BNL_retry_treaty_of_union_LUX"
+			custom_effect_tooltip = BNL_retry_shared_outlook_tt
+			custom_effect_tooltip = BNL_retry_influence_tt
+			custom_effect_tooltip = BNL_retry_opinion_tt
+			LUX = {
+				clr_country_flag = BNL_treaty_of_union_rejected@ROOT
+				country_event = { id = benelux.5 days = 1 }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { puppet = LUX }
+		}
+
+		ai_will_do = { base = 3 }
 	}
 }

@@ -7,10 +7,14 @@ import bisect
 import logging
 import os
 import re
+import stat
+import subprocess
 import sys
+import tempfile
 import time
 from collections import OrderedDict
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -51,8 +55,11 @@ def log_message(
 
     timestamp = datetime.now().strftime("%H:%M:%S")
 
-    color = _LEVEL_COLORS.get(level, "") if use_colors else ""
-    reset = Colors.ENDC if use_colors else ""
+    # Honor the NO_COLOR convention (https://no-color.org) so CI logs stay
+    # escape-free even when a caller left use_colors at its default.
+    colors_on = use_colors and not os.environ.get("NO_COLOR")
+    color = _LEVEL_COLORS.get(level, "") if colors_on else ""
+    reset = Colors.ENDC if colors_on else ""
 
     formatted_message = f"{color}[{timestamp}] {level}: {message}{reset}"
     print(formatted_message, file=sys.stderr)
@@ -136,29 +143,44 @@ def strip_inline_comment(line: str) -> str:
 def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
     """Extract a multi-line block by counting braces.
 
-    Inline comments are stripped before counting so a ``#`` comment containing an
-    unbalanced brace does not corrupt the depth.
+    Inline comments are stripped and quoted-string interiors blanked before
+    counting, so a ``#`` comment or a ``{`` / ``}`` inside a ``"..."`` string
+    does not corrupt the depth.
     """
     if start_index >= len(lines):
         return [], start_index
 
     block_lines = []
     brace_count = 0
+    opened = False
     i = start_index
 
     while i < len(lines):
         line = lines[i]
         block_lines.append(line)
 
-        code = strip_inline_comment(line)
+        code = blank_quoted_strings(strip_inline_comment(line))
+        if "{" in code:
+            opened = True
         brace_count += code.count("{") - code.count("}")
 
-        if brace_count == 0 and "{" in strip_inline_comment(lines[start_index]):
+        # `opened` lets the block terminate once braces balance even when the
+        # opening `{` sits on a later line than the name; without it a next-line
+        # brace never satisfies the old "{ on start line" check and the block
+        # ran to EOF.
+        if opened and brace_count == 0:
             i += 1
             break
         elif brace_count < 0:
-            # Malformed: more closing than opening braces.
-            break
+            if opened:
+                # Over-closing line (e.g. `} }` or a stray extra `}`) after the
+                # block opened: keep the accumulated lines with this line as the
+                # closer so the consumer never silently drops source lines.
+                return block_lines, i + 1
+            # Malformed: a stray `}` before any `{`. Advance past it (returning
+            # no block) so a caller looping on the returned index still makes
+            # forward progress instead of spinning on an unchanged start index.
+            return [], i + 1
 
         i += 1
 
@@ -209,6 +231,30 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+def collapse_ws_outside_quotes(text: str) -> str:
+    """Collapse runs of whitespace outside double-quoted spans to single spaces,
+    leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
+    unquoted text, but a `log`/tooltip string keeps its internal spacing."""
+    result: List[str] = []
+    in_str = False
+    prev_space = False
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            in_str = not in_str
+            result.append(c)
+            prev_space = False
+        elif in_str:
+            result.append(c)
+        elif c.isspace():
+            if not prev_space:
+                result.append(" ")
+            prev_space = True
+        else:
+            result.append(c)
+            prev_space = False
+    return "".join(result).strip()
+
+
 def _normalize_oneline_braces(text: str) -> str:
     """Collapse whitespace and put single spaces around ``{``/``}``, leaving the
     contents of double-quoted strings untouched."""
@@ -224,24 +270,52 @@ def _normalize_oneline_braces(text: str) -> str:
             out.append(" ")
         else:
             out.append(c)
-    # Collapse runs of whitespace that sit outside string literals.
-    result: List[str] = []
+    return collapse_ws_outside_quotes("".join(out))
+
+
+_COMPARISON_OPS = {"!=", "==", ">=", "<="}
+
+
+def normalize_spacing(line: str) -> str:
+    """Put single spaces around ``{``, ``}`` and ``=`` in one line of script.
+
+    Leading indentation, ``"..."`` string interiors and any trailing ``#``
+    comment are left byte-exact; a whole-line comment is returned unchanged.
+    ``!=``/``==``/``>=``/``<=`` are padded as one operator, and an empty block
+    keeps the spacing it was written with (``{}`` and ``{ }`` both survive).
+    Idempotent.
+    """
+    code = strip_inline_comment(line)
+    comment = line[len(code) :].strip()
+    stripped = code.strip()
+    if not stripped or stripped.startswith("#"):
+        return line.rstrip()
+
+    indent = code[: len(code) - len(code.lstrip())]
+
+    out: List[str] = []
     in_str = False
-    prev_space = False
-    joined = "".join(out)
-    for i, c in enumerate(joined):
-        if c == '"' and (i == 0 or joined[i - 1] != "\\"):
+    i = 0
+    n = len(code)
+    while i < n:
+        c = code[i]
+        if c == '"' and (i == 0 or code[i - 1] != "\\"):
             in_str = not in_str
-            result.append(c)
-            prev_space = False
-        elif not in_str and c.isspace():
-            if not prev_space:
-                result.append(" ")
-            prev_space = True
+            out.append(c)
+        elif in_str:
+            out.append(c)
+        elif code[i : i + 2] in _COMPARISON_OPS or code[i : i + 2] == "{}":
+            out.append(f" {code[i : i + 2]} ")
+            i += 2
+            continue
+        elif c in "{}=":
+            out.append(f" {c} ")
         else:
-            result.append(c)
-            prev_space = False
-    return "".join(result).strip()
+            out.append(c)
+        i += 1
+
+    body = collapse_ws_outside_quotes("".join(out))
+    return f"{indent}{body} {comment}".rstrip() if comment else f"{indent}{body}"
 
 
 def collapse_or_compact(
@@ -338,8 +412,8 @@ def create_backup(filename: str) -> str:
     backup_filename = f"{filename}.backup.{timestamp}"
 
     try:
-        with open(filename, "r", encoding="utf-8") as src:
-            with open(backup_filename, "w", encoding="utf-8") as dst:
+        with open(filename, "r", encoding="utf-8", newline="") as src:
+            with open(backup_filename, "w", encoding="utf-8", newline="") as dst:
                 dst.write(src.read())
         log_message("INFO", f"Backup created: {backup_filename}")
         return backup_filename
@@ -351,20 +425,134 @@ def create_backup(filename: str) -> str:
 def should_skip_file(
     filename: str, extra_skip_patterns: Optional[List[str]] = None
 ) -> bool:
-    """Check if a file should be skipped during processing"""
-    IGNORED_DIRS = ["gfx", "tools", "resources", "docs", "map"]
-
-    normalized_path = filename.replace("\\", "/")
-    for ignored_dir in IGNORED_DIRS:
-        if f"/{ignored_dir}/" in normalized_path or normalized_path.startswith(
-            f"{ignored_dir}/"
-        ):
+    """Check if a file should be skipped during processing."""
+    ignored_dirs = {".git", ".claude", "gfx", "tools", "resources", "docs", "map"}
+    content_roots = {"common", "events", "history", "interface", "localisation"}
+    normalized_path = filename.replace("\\", "/").strip("/")
+    parts = normalized_path.split("/")
+    for index, part in enumerate(parts):
+        if part not in ignored_dirs:
+            continue
+        if part in {".git", ".claude"} or not content_roots.intersection(parts[:index]):
             return True
     if extra_skip_patterns:
         for pattern in extra_skip_patterns:
-            if pattern in filename:
+            if pattern in normalized_path:
                 return True
     return False
+
+
+def _reject_symlink_path(path: Path) -> None:
+    if path.is_symlink():
+        raise OSError(f"Refusing to access symlink: {path}")
+    for parent in path.absolute().parents:
+        if parent == parent.parent:
+            break
+        if parent.is_symlink():
+            raise OSError(f"Refusing to access symlinked parent: {parent}")
+
+
+def read_text_strict(
+    filename: str,
+    encoding: str = "utf-8-sig",
+    *,
+    reject_symlink: bool = True,
+) -> str:
+    """Read repository text without replacing malformed bytes."""
+    path = Path(filename)
+    if reject_symlink:
+        _reject_symlink_path(path)
+    with path.open("r", encoding=encoding, errors="strict", newline="") as handle:
+        return handle.read()
+
+
+def resolve_under(path: str, under: str) -> Path:
+    """Resolve *path* and raise if it is not inside *under*."""
+    root = Path(under).resolve()
+    resolved = Path(path).resolve()
+    if resolved != root and root not in resolved.parents:
+        raise ValueError(f"path {path} is not under {under}")
+    _reject_symlink_path(resolved)
+    return resolved
+
+
+def read_text_under(
+    path: str,
+    under: str,
+    encoding: str = "utf-8-sig",
+    *,
+    errors: str = "replace",
+) -> str:
+    """Read a text file after proving it lives under *under*."""
+    resolved = resolve_under(path, under)
+    return Path(os.fspath(resolved)).read_text(encoding=encoding, errors=errors)
+
+
+def atomic_write_bytes(filename: str, data: bytes) -> None:
+    """Replace a regular file atomically, preserving mode and old contents."""
+    path = Path(filename)
+    _reject_symlink_path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    existing_mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else None
+    temp_name = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb", dir=path.parent, prefix=f".{path.name}.", delete=False
+        ) as handle:
+            temp_name = handle.name
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temp_name, existing_mode if existing_mode is not None else 0o644)
+        os.replace(temp_name, path)
+        opener = globals().get("FileOpener")
+        if opener is not None:
+            opener.invalidate(str(path))
+        temp_name = None
+    finally:
+        if temp_name is not None:
+            try:
+                os.unlink(temp_name)
+            except FileNotFoundError:
+                pass
+
+
+def atomic_write_text(
+    filename: str,
+    text: str,
+    encoding: str = "utf-8",
+    *,
+    bom: Optional[bool] = None,
+) -> None:
+    """Atomically write text, preserving an existing UTF-8 BOM by default."""
+    path = Path(filename)
+    _reject_symlink_path(path)
+    existing = b""
+    if path.exists():
+        try:
+            existing = path.read_bytes()
+        except OSError:
+            existing = b""
+    if bom is None:
+        bom = existing.startswith(b"\xef\xbb\xbf")
+    if b"\r\n" in existing and "\n" in text:
+        text = text.replace("\r\n", "\n").replace("\n", "\r\n")
+    text = text.removeprefix("\ufeff")
+    if bom:
+        text = "\ufeff" + text
+    output_encoding = "utf-8" if encoding == "utf-8-sig" else encoding
+    atomic_write_bytes(filename, text.encode(output_encoding, errors="strict"))
+
+
+def write_text_under(
+    path: str,
+    under: str,
+    text: str,
+    encoding: str = "utf-8",
+) -> None:
+    """Write text after proving *path* lives under *under*."""
+    resolved = resolve_under(path, under)
+    atomic_write_text(str(resolved), text, encoding=encoding)
 
 
 def clean_filepath(filepath: str) -> str:
@@ -433,8 +621,12 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
         return []
 
     out: List[Dict] = []
+    try:
+        filenames = sorted(os.listdir(tags_dir))
+    except OSError:
+        return out
 
-    for fname in sorted(os.listdir(tags_dir)):
+    for fname in filenames:
         if not fname.endswith(".txt"):
             continue
         fpath = os.path.join(tags_dir, fname)
@@ -493,20 +685,8 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
     return out
 
 
-def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:
-    """Parse common/idea_tags/*.txt and return non-selectable idea category names.
-
-    A category is non-selectable if it has `hidden = yes` or has neither
-    `slot =` nor `character_slot =` entries (like `country` with
-    `type = national_spirit`). These are categories where ideas are only
-    added/removed via script (add_ideas/remove_ideas), never picked in the UI,
-    so `allowed = { always = no }` is always redundant.
-
-    Args:
-        mod_root: Path to the mod root (auto-detected if None).
-    Returns:
-        frozenset of non-selectable category names (e.g. {'country', 'hidden_ideas'}).
-    """
+@lru_cache(maxsize=None)
+def _non_selectable_idea_categories_cached(mod_root: str) -> frozenset:
     categories = {
         c["name"]
         for c in get_all_idea_categories(mod_root)
@@ -515,6 +695,14 @@ def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozen
     return (
         frozenset(categories) if categories else frozenset({"country", "hidden_ideas"})
     )
+
+
+def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:
+    """Return non-selectable idea categories for one normalized mod root."""
+    if mod_root is None:
+        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    normalized = os.path.normcase(os.path.abspath(os.path.normpath(mod_root)))
+    return _non_selectable_idea_categories_cached(normalized)
 
 
 def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int:
@@ -538,8 +726,10 @@ def strip_comments(text: str) -> str:
     lines = text.split("\n")
     result = []
     for line in lines:
-        stripped = line.lstrip()
-        if stripped.startswith("#"):
+        if "#" not in line:
+            result.append(line)
+            continue
+        if line.lstrip().startswith("#"):
             result.append("")
             continue
         in_quote = False
@@ -551,6 +741,36 @@ def strip_comments(text: str) -> str:
                 break
         result.append(line)
     return "\n".join(result)
+
+
+def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> str:
+    """Replace the interior of double-quoted strings with spaces.
+
+    Quotes, string length, and newlines are preserved so byte offsets and line
+    numbers stay valid; only interior characters are blanked. Neutralizes
+    braces / ``#`` / ``=`` inside a quoted log string that would otherwise
+    desync a brace-depth or token scan. Run AFTER comment stripping — a stray
+    ``"`` in a ``#`` comment would otherwise flip the in-string state.
+
+    ``keep_start``, if given, is a set of offsets of opening ``"`` characters
+    whose string contents are left untouched — for a caller that must preserve
+    specific quoted values (e.g. a ``has_dlc = "X"`` name) while still handling
+    escaped quotes (``\\"``) correctly everywhere else.
+    """
+    if '"' not in text:
+        return text
+    out = list(text)
+    in_str = False
+    start = -1
+    keep = keep_start or ()
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            if not in_str:
+                start = i
+            in_str = not in_str
+        elif in_str and c != "\n" and start not in keep:
+            out[i] = " "
+    return "".join(out)
 
 
 class FileOpener:
@@ -571,20 +791,28 @@ class FileOpener:
         if cached is not None:
             cls._cache.move_to_end(cache_key)
             return cached
-        try:
-            with open(filename, "r", encoding="utf-8-sig") as text_file:
-                content = text_file.read()
-                if strip_comments_flag:
-                    content = strip_comments(content)
-                if lowercase:
-                    content = content.lower()
-        except Exception as ex:
-            log_message("WARNING", f"Skipping file {filename}: {ex}")
-            return ""
+        content = read_text_strict(filename)
+        if strip_comments_flag:
+            content = strip_comments(content)
+        if lowercase:
+            content = content.lower()
         cls._cache[cache_key] = content
         if len(cls._cache) > cls._MAX_CACHE_SIZE:
             cls._cache.popitem(last=False)
         return content
+
+    @classmethod
+    def invalidate(cls, filename: str) -> None:
+        """Drop every cached representation of one file."""
+        target = os.path.abspath(os.fspath(filename))
+        for key in [
+            key for key in cls._cache if os.path.abspath(os.fspath(key[0])) == target
+        ]:
+            del cls._cache[key]
+
+    @classmethod
+    def clear_cache(cls) -> None:
+        cls._cache.clear()
 
 
 class DataCleaner:
@@ -666,7 +894,7 @@ class Timer:
         self.start()
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
         return False
 
@@ -703,7 +931,7 @@ def print_timing_summary(timings: List[Tuple[str, float]]):
     print(f"\n{dim}{'─' * (max_label + 18)}", file=sys.stderr)
     print("  Timing summary:", file=sys.stderr)
     for label, elapsed in timings:
-        bar_len = int(elapsed / total * 20) if total > 0 else 0
+        bar_len = round(elapsed / total * 20) if total > 0 else 0
         bar = "█" * bar_len + "░" * (20 - bar_len)
         print(
             f"  {label:<{max_label}}  {elapsed:6.3f}s  {bar}",
@@ -794,7 +1022,7 @@ def run_with_pool(
     func,
     items: list,
     workers: int,
-    chunksize: int = None,
+    chunksize: Optional[int] = None,
     initializer=None,
     initargs=(),
 ):
@@ -918,19 +1146,22 @@ def get_staged_files(
     if extensions is None:
         extensions = [".txt"]
 
+    # A change list can name paths that are no longer on disk: CI builds
+    # MD_STAGED_FILES from a paths-filter output that includes deletions and
+    # the old side of a rename, and validators open every entry unguarded.
     def _filter(names: list) -> list:
-        return [
+        paths = [
             os.path.join(mod_path, f)
             for f in names
             if f and any(f.endswith(ext) for ext in extensions)
         ]
+        return [p for p in paths if os.path.isfile(p)]
 
     env_files = _read_staged_from_env()
     if env_files is not None:
         return _filter(env_files) or None
 
     try:
-        import subprocess
 
         def _git_diff(*args):
             result = subprocess.run(
@@ -954,10 +1185,7 @@ def get_staged_files(
             return files
 
         return None
-    except subprocess.CalledProcessError:
-        return None
-    except ImportError:
-        log_message("WARNING", "Git not available, skipping staged file detection")
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
 
 

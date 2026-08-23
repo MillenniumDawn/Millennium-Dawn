@@ -2,6 +2,9 @@
 on_actions = {
 	on_weekly = {
 		effect = {
+			if = { limit = { NOT = { has_variable = last_quarter_gdp_total } }
+				ingame_startup_nations_effect = yes
+			}
 			worker_requirements_variable_gdpc_converging = yes
 
 			if = { limit = { NOT = { has_global_flag = on_weekly_global_done } }
@@ -11,27 +14,73 @@ on_actions = {
 				if = { limit = { check_variable = { global.md_gui_dirty > 1000000 } }
 					set_variable = { global.md_gui_dirty = 1 }
 				}
+				if = {
+					limit = {
+						has_global_flag = NATO_CSTO_treaty_ratified
+						NOT = { has_global_flag = NATO_CSTO_treaty_adandoned }
+					}
+					NATO_CSTO_calculate_number_of_batallions = yes
+				}
 			}
 
 			microchip_update = yes
 			composite_update = yes
 
+			# Save migration — active_economic_project replaced five per-project flags; on_startup never refires for saves already in progress
+			if = { limit = { NOT = { has_country_flag = economic_project_flags_migrated } }
+				resync_economic_project_flag = yes
+				set_country_flag = economic_project_flags_migrated
+			}
+
+			# Per-week decay; must stay out of ingame_update_setup, which re-runs on demand (focuses, events, economy refresh button)
+			update_tension_premium = yes
 			ingame_update_setup = yes
 			calculate_energy_load_sharing = yes
+			if = {
+				limit = {
+					is_ai = no
+					has_country_flag = automation_energy_consumption_policy
+					has_country_flag = energy_state_bases_initialized
+				}
+				calculate_energy_use = yes
+				automation_energy_consumption_policy_weekly = yes
+			}
 			nuclear_reactor_fuel_consumption = yes
 
-			# Remove weekly rate from treasury
-			if = { limit = { check_variable = { int_reinvest_mode = 1 } }
-				add_to_variable = { int_investments = int_investments_rate }
+			# Must follow ingame_update_setup — it charges the week via space_prod_weekly_expense, and the accrual here has to read the same var_space_paid_1X to bill the same amount
+			space_prod_weekly_bill = yes
+			if = {
+				limit = {
+					is_ai = no
+					OR = {
+						has_country_flag = space_auto_active
+						has_country_flag = space_auto_line_10
+						has_country_flag = space_auto_line_11
+						has_country_flag = space_auto_line_12
+						has_country_flag = space_auto_line_13
+					}
+				}
+				space_automation_weekly = yes
 			}
-			else_if = { limit = { check_variable = { int_reinvest_mode = 2 } }
-				set_temp_variable = { _split_reinvest = int_investments_rate }
-				multiply_temp_variable = { _split_reinvest = 0.5 }
-				add_to_variable = { int_investments = _split_reinvest }
+			if = {
+				limit = {
+					is_ai = no
+					has_country_flag = automation_internal_investments
+					has_country_flag = automation_internal_investment_upkeep_paid
+				}
+				automation_internal_investments_weekly = yes
 			}
+
+			# Banked here, not in ingame_update_setup, which re-runs on demand
+			if = { limit = { check_variable = { EU_seigniorage_weekly > 0 } }
+				add_to_variable = { global.EU_seigniorage_pool = EU_seigniorage_weekly }
+			}
+
+			add_to_variable = { int_investments = int_investments_reinvest_rate }
 
 			# No longer subject stop paying for subsidies
 			if = { limit = { NOT = { check_variable = { subject_subsidization^0 = 0 } } }
+				clear_array = subject_subsidization_to_remove
 				for_each_scope_loop = {
 					array = subject_subsidization
 					if = {
@@ -53,13 +102,21 @@ on_actions = {
 						PREV = {
 							set_country_flag = { flag = canceled_overlord_subsidies_@PREV value = 1 days = 30 }
 							clr_country_flag = overlord_is_subsidizing_us_@PREV
-							remove_from_array = { subject_subsidization = PREV.id }
+							# Staged, not removed in place: removing while the loop walks the same array shifts later entries
+							add_to_array = { array = subject_subsidization_to_remove value = PREV }
 						}
 					}
 				}
+				for_each_scope_loop = {
+					array = subject_subsidization_to_remove
+					PREV = { remove_from_array = { array = subject_subsidization value = PREV } }
+				}
+				clear_array = subject_subsidization_to_remove
 			}
 
 			if = { limit = { NOT = { has_country_flag = disabled_economic_system } }
+				set_temp_variable = { treasury_rate_gain = treasury_rate }
+
 				# Pay down debt automatically this weekly tick
 				if = {
 					limit = {
@@ -67,9 +124,13 @@ on_actions = {
 						check_variable = { treasury_rate > 0 }
 						check_variable = { debt > 0 }
 					}
-					set_temp_variable = { treasury_rate_debt_payment = treasury_rate }
-					multiply_temp_variable = { treasury_rate_debt_payment = 0.25 }
+					set_temp_variable = { treasury_rate_debt_payment = { value = treasury_rate multiply = 0.25 } }
+					# Clamp to the remainder, or the overpayment is taken from the treasury without clearing any debt
+					if = { limit = { check_variable = { treasury_rate_debt_payment > debt } }
+						set_temp_variable = { treasury_rate_debt_payment = debt }
+					}
 					subtract_from_variable = { debt = treasury_rate_debt_payment }
+					subtract_from_temp_variable = { treasury_rate_gain = treasury_rate_debt_payment }
 
 					if = {
 						limit = { check_variable = { debt < 0.001 } }
@@ -78,10 +139,11 @@ on_actions = {
 					}
 				}
 
-				set_temp_variable = { treasury_rate_gain = treasury_rate }
-				subtract_from_temp_variable = { treasury_rate_gain = treasury_rate_debt_payment }
-
 				add_to_variable = { treasury = treasury_rate_gain }
+
+				# Must sit after the accrual and before automated_debt_taker, or the two fight over the same treasury
+				if = { limit = { is_ai = yes } ai_repay_debt = yes }
+
 				#Automated taking debt - has calculate_interest_rate at the end
 				automated_debt_taker = yes
 			}
@@ -131,15 +193,6 @@ on_actions = {
 						33 = { }
 					}
 				}
-			}
-
-			if = {
-				limit = {
-					has_global_flag = NATO_CSTO_treaty_ratified
-					NOT = { has_global_flag = NATO_CSTO_treaty_adandoned }
-				}
-
-				NATO_CSTO_calculate_number_of_batallions = yes
 			}
 
 			if = {
@@ -288,9 +341,18 @@ on_actions = {
 		}
 	}
 
+	on_monthly_TAL = {
+		effect = {
+			AFG_reapply_taliban_opinion_modifiers = yes
+		}
+	}
+
 	#ROOT is winner #FROM gets annexed - For civil wars on_civil_war_end is also fired
 	on_annex = {
 		effect = {
+			update_neighbors_effects = yes
+			civil_war_cleanup_hooks = yes
+
 			if = {
 				limit = {
 					ROOT = { original_tag = CAN }
@@ -316,8 +378,6 @@ on_actions = {
 					set_variable = { global.current_active_agenda_disp = 0 }
 					set_variable = { global.current_active_vote_disp = 0 }
 					set_variable = { global.EUXXX_council_agenda = global.current_active_vote_disp }
-					set_variable = { global.EU_active_vote_yes = 0 }
-					set_variable = { global.EU_active_vote_no = 0 }
 					clear_array = global.EU_active_vote_supporters
 					clear_array = global.EU_active_vote_rejecters
 					EU_emergency_vote_clear = yes
@@ -441,6 +501,16 @@ on_actions = {
 				}
 				# Antarctica Research Station blackout
 				if = {
+					limit = { has_country_flag = antarctica_station_setup_capacity_reserved }
+					add_to_variable = { global.antarctica_station_display_capacity_remaining = 1 }
+					clamp_variable = { var = global.antarctica_station_display_capacity_remaining min = 0 max = 70 }
+					clr_country_flag = antarctica_station_setup_capacity_reserved
+					set_variable = { antarctica_station_setup_in_progress = 0 }
+					set_variable = { antarctica_station_setup_days_remaining = 0 }
+					set_variable = { antarctica_station_setup_x = 0 }
+					set_variable = { antarctica_station_setup_y = 0 }
+				}
+				if = {
 					limit = { has_country_flag = antarctica_has_active_station }
 					antarctica_remove_research_station = yes
 					ROOT = { country_event = MD_antarctica.10 }
@@ -504,21 +574,95 @@ on_actions = {
 			}
 
 			log = "[GetDateText]: [ROOT.GetName] annexed [FROM.GetName] - Inflation blended to [?ROOT.inflation_rate_var|%], GDP/C tracker reset to [?ROOT.last_quarter_gdpc_total]"
+
+			# Free operatives held by the annexed country.
+			every_country = {
+				limit = {
+					FROM = { has_captured_operative = PREV }
+				}
+				free_random_operative = {
+					captured_by = FROM
+					all = yes
+				}
+			}
+
+			# Clear operation assets targeting the annexed country.
+			every_country = {
+				limit = {
+					OR = {
+						has_operation_token = { tag = FROM token = token_airforce }
+						has_operation_token = { tag = FROM token = token_army }
+						has_operation_token = { tag = FROM token = token_civilian }
+						has_operation_token = { tag = FROM token = token_navy }
+						has_operation_token = { tag = FROM token = token_resistance_contacts }
+						has_operation_token = { tag = FROM token = token_hvt }
+						has_operation_token = { tag = FROM token = token_arms_cache }
+						has_operation_token = { tag = FROM token = token_training_camps }
+						has_operation_token = { tag = FROM token = token_regional_headquarters }
+						has_operation_token = { tag = FROM token = token_foreign_advisors }
+					}
+				}
+				remove_operation_token = { tag = FROM token = token_airforce }
+				remove_operation_token = { tag = FROM token = token_army }
+				remove_operation_token = { tag = FROM token = token_civilian }
+				remove_operation_token = { tag = FROM token = token_navy }
+				remove_operation_token = { tag = FROM token = token_resistance_contacts }
+				remove_operation_token = { tag = FROM token = token_hvt }
+				remove_operation_token = { tag = FROM token = token_arms_cache }
+				remove_operation_token = { tag = FROM token = token_training_camps }
+				remove_operation_token = { tag = FROM token = token_regional_headquarters }
+				remove_operation_token = { tag = FROM token = token_foreign_advisors }
+			}
+		}
+	}
+
+	# ROOT is capitulated country, FROM is winner
+	on_capitulation_immediate = {
+		effect = {
+			civil_war_cleanup_hooks = yes
+
+			if = {
+				limit = {
+					ROOT = {
+						original_tag = AQY
+						is_in_faction = yes
+					}
+					NOT = { has_global_flag = GLOBAL_yemeni_civil_war_over }
+				}
+				remove_from_faction = AQY
+			}
 		}
 	}
 
 	#ROOT is winner #FROM gets annexed
 	on_civil_war_end = {
 		effect = {
+			ROOT = {
+				civil_war_cleanup_ivory_coast = yes
+				civil_war_cleanup_senegal = yes
+				civil_war_cleanup_haiti = yes
+				civil_war_cleanup_car_bush_war = yes
+				civil_war_cleanup_mali = yes
+			}
+
 			if = {
 				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
 				EU_resync_member_array = yes
 			}
+			resync_economic_project_flag = yes
 		}
 	}
 
 	on_peaceconference_ended = {
 		effect = {
+			update_neighbors_effects = yes
+			FROM = {
+				if = { limit = { exists = yes }
+					update_neighbors_effects = yes
+				}
+			}
+			civil_war_cleanup_hooks = yes
+
 			if = {
 				limit = {
 					ROOT = { original_tag = USA }
@@ -678,23 +822,18 @@ on_actions = {
 						EU_update_vars = yes
 					}
 
-					# Calculate the Migrant Trigger
-					if = { limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
-						set_temp_variable = { total_population_refugees = 0 }
-						for_each_loop = {
-							array = global.is_middle_eastern_africa_nations
-							value = v
-							var:v = {
-								if = {
-									limit = {
-										OR = {
-											has_war = yes
-											salafist_caliphate_are_in_power = yes
-										}
+					# Calculate Migrant Trigger
+					if = {
+						limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
+						set_temp_variable = {
+							total_population_refugees = {
+								value = 0
+								every_collection = {
+									named_collection = middle_eastern_refugee_source_nations_collection
+									add = {
+										value = population_total
+										multiply = 0.025
 									}
-									set_temp_variable = { population_refugees = population_total }
-									multiply_temp_variable = { population_refugees = 0.025 }
-									add_to_temp_variable = { PREV.total_population_refugees = population_refugees }
 								}
 							}
 						}
@@ -854,8 +993,25 @@ on_actions = {
 
 					AGRI_plow_the_fields = yes
 					monthly_tick_internal_factions_opinion = yes
-					# Event fire rebases ROOT per country; the satellite effects are ROOT-relative and recompute onto the wrong country under every_country.
-					country_event = satellites.9
+					if = {
+						limit = {
+							OR = {
+								has_completed_space_program = yes
+								check_variable = { var_GNSS_sat_total > 0 }
+								check_variable = { var_COM_sat_total > 0 }
+								check_variable = { var_SPY_sat_total > 0 }
+								check_variable = { var_KILL_sat_total > 0 }
+								check_variable = { GNSS_mil_access_array^num > 0 }
+								check_variable = { GNSS_civ_access_array^num > 0 }
+								check_variable = { COM_mil_access_array^num > 0 }
+								check_variable = { COM_civ_access_array^num > 0 }
+								check_variable = { SPY_mil_access_array^num > 0 }
+								check_variable = { SPY_civ_access_array^num > 0 }
+								check_variable = { spy_mission_array^num > 0 }
+							}
+						}
+						country_event = satellites.9
+					}
 
 					calculate_expected_spending = yes
 					apply_protest_effects = yes
@@ -890,38 +1046,31 @@ on_actions = {
 							# Dense report list: auto_influence_array is sparse (removals zero the slot in place)
 							clear_array = auto_influence_target_array
 
+							# Unique iterator names: change_influence_percentage's nested loops write the shared temp v/i.
 							for_each_loop = {
 								array = auto_influence_array
-								value = v
+								value = auto_target
+								index = auto_slot
 								if = {
 									limit = {
-										NOT = { check_variable = { v = 0 } }
-										var:v = { exists = yes }
-										NOT = { var:v = { PREV = { has_country_flag = spread_influence@PREV } } }
+										NOT = { check_variable = { auto_target = 0 } }
+										var:auto_target = { exists = yes }
+										NOT = { var:auto_target = { PREV = { has_country_flag = spread_influence@PREV } } }
 									}
 									if = { limit = { is_debug = yes }
-										log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:v.GetName]"
+										log = "[GetDateText]: [THIS.GetName]: Index:[?auto_slot], Auto influencing [?var:auto_target.GetName]"
 									}
-									set_temp_variable = { influence_target = v }
+									set_temp_variable = { influence_target = auto_target }
 									change_influence_percentage = yes
 									add_to_variable = { nations_influenced = 1 }
-									add_to_array = { auto_influence_target_array = v }
-
-									# Cooldown lives on the influencer keyed by target (shared with the manual-influence GUI);
-									# var:v -> PREV puts the target into PREV so spread_influence@PREV resolves to its tag.
-									if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
-										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 } } }
-									}
-									else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
-										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 } } }
-									}
-									else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
-										var:v = { PREV = { set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 } } }
+									add_to_array = { auto_influence_target_array = auto_target }
+									var:auto_target = {
+										PREV = { spread_influence_cooldown_effect = yes }
 									}
 								}
 								else = {
 									if = { limit = { is_debug = yes }
-										log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing failed to influence on index [?i]"
+										log = "[GetDateText]: [THIS.GetName]: Index:[?auto_slot], Auto influencing failed to influence on index [?auto_slot]"
 									}
 								}
 							}
@@ -1053,16 +1202,19 @@ on_actions = {
 							difficulty > 1
 							has_game_rule = { rule = rule_monthly_domestic_independence_tick option = yes }
 						}
-						set_temp_variable = { percent_change = global.rule_monthly_domestic_independence_gain_amount }
-						add_to_temp_variable = { percent_change = modifier@foreign_influence_monthly_domestic_independence_gain_modifier }
-						set_temp_variable = { temp_percentage_modifier = 1 }
-						add_to_temp_variable = { temp_percentage_modifier = modifier@foreign_influence_monthly_domestic_independence_gain_factor }
-						multiply_temp_variable = { percent_change = temp_percentage_modifier }
+						set_temp_variable = {
+							percent_change = {
+								value = global.rule_monthly_domestic_independence_gain_amount
+								add = modifier@foreign_influence_monthly_domestic_independence_gain_modifier
+								multiply = {
+									value = 1
+									add = modifier@foreign_influence_monthly_domestic_independence_gain_factor
+								}
+							}
+						}
 						change_domestic_influence_percentage = yes
 					}
-
 					productivity_growth_effect = yes
-
 				}
 
 				international_systems_update = yes
@@ -1175,18 +1327,7 @@ on_actions = {
 								NOT = { has_country_flag = united_neo_baathist_uar }
 								NOT = { has_country_flag = united_baathist_uar }
 							}
-							#Calculate the total GDP of all Arabic countries
-							set_variable = { total_arabic_gdp = 0 }
-							for_each_scope_loop = {
-								array = global.arabic_countries
-								add_to_variable = { ROOT.total_arabic_gdp = THIS.gdp_total }
-							}
-							#Calculate the GDP of UAR and their puppets
-							set_variable = { total_uar_gdp = gdp_total }
-							for_each_scope_loop = {
-								array = ROOT.subjects
-								add_to_variable = { ROOT.total_uar_gdp = THIS.gdp_total }
-							}
+							update_arabic_country_gdp_total_effect = yes
 						}
 					}
 				}
@@ -1223,6 +1364,8 @@ on_actions = {
 
 				counter_terror_global = yes
 
+				recount_global_reserve_currency = yes
+
 				# On Monthly Flag:
 				# Set this to 27 days to time out so that way February isn't missed
 				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
@@ -1233,6 +1376,13 @@ on_actions = {
 
 			# Currency system — runs for every country every month
 			calculate_currency_strength = yes
+
+			if = { limit = { is_ai = no }
+				space_automation_monthly = yes
+			}
+			else = {
+				space_auto_ai_monthly = yes
+			}
 		}
 	}
 }
@@ -1248,7 +1398,13 @@ on_actions = {
 				limit = {
 					is_ai = yes
 					FROM = { tag = CHI }
-					NOT = { has_idea = chinese_yuan }
+					NOT = {
+						OR = {
+							has_idea = chinese_yuan
+							has_idea = chinese_yuan_2
+							has_idea = chinese_yuan_3
+						}
+					}
 				}
 				add_ideas = chinese_yuan
 			}
@@ -1273,7 +1429,11 @@ on_actions = {
 			if = {
 				limit = {
 					is_ai = yes
-					has_idea = chinese_yuan
+					OR = {
+						has_idea = chinese_yuan
+						has_idea = chinese_yuan_2
+						has_idea = chinese_yuan_3
+					}
 					NOT = { is_in_faction_with = CHI }
 					NOT = { tag = CHI }
 				}

@@ -1070,6 +1070,80 @@ one_random_energy_infrastructure = {
 		modify_treasury_effect = yes
 	}
 }
+one_state_energy_infrastructure = {
+	if = {
+		limit = { free_shared_building_slots = yes }
+		add_building_construction = {
+			type = energy_infrastructure
+			level = 1
+			instant_build = yes
+		}
+		add_extra_state_shared_building_slots = 1
+	}
+	else = {
+		ROOT = {
+			every_controlled_state = {
+				limit = { free_shared_building_slots = yes }
+				random_select_amount = 1
+				add_building_construction = {
+					type = energy_infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+		custom_effect_tooltip = no_building_construction_TT
+	}
+	CONTROLLER = {
+		if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+			set_temp_variable = { treasury_change = -6.5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+one_state_rail_terminal = {
+	if = {
+		limit = {
+			free_building_slots = {
+				building = rail_terminal
+				size > 0
+			}
+		}
+		add_building_construction = {
+			type = rail_terminal
+			level = 1
+			instant_build = yes
+		}
+	}
+	else = {
+		ROOT = {
+			every_controlled_state = {
+				limit = {
+					free_building_slots = {
+						building = rail_terminal
+						size > 0
+					}
+				}
+				random_select_amount = 1
+				add_building_construction = {
+					type = rail_terminal
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		custom_effect_tooltip = no_building_construction_TT
+	}
+	CONTROLLER = {
+		if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+			set_temp_variable = { treasury_change = -2.5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
 one_random_industrial_infrastructure = {
 	every_controlled_state = {
 		limit = { free_shared_building_slots = yes }
@@ -2118,13 +2192,19 @@ decrease_HIV_prevalence = {
 }
 
 SF_marine_modern_demolition_effect = { #When changing this, update the research tooltip
-	damage_building = {
-		type = coastal_bunker
-		damage = 3
+	if = {
+		limit = { coastal_bunker > 0 }
+		damage_building = {
+			type = coastal_bunker
+			damage = 3
+		}
 	}
-	damage_building = {
-		type = bunker
-		damage = 3
+	if = {
+		limit = { bunker > 0 }
+		damage_building = {
+			type = bunker
+			damage = 3
+		}
 	}
 	set_state_flag = {
 		flag = marines_commando_effect
@@ -2134,32 +2214,50 @@ SF_marine_modern_demolition_effect = { #When changing this, update the research 
 }
 
 SF_marine_logistics_raiding_effect = {
-	damage_building = {
-		type = infrastructure
-		damage = 5
+	if = {
+		limit = { non_damaged_building_level = { building = infrastructure level > 0 } }
+		damage_building = {
+			type = infrastructure
+			damage = 5
+		}
 	}
-	damage_building = {
-		type = fuel_silo
-		damage = 3
+	if = {
+		limit = { non_damaged_building_level = { building = fuel_silo level > 0 } }
+		damage_building = {
+			type = fuel_silo
+			damage = 3
+		}
 	}
 }
 
 SF_PARA_sabotage_effect = { #When changing this, update the research tooltip
-	damage_building = {
-		type = air_base
-		damage = 4
+	if = {
+		limit = { non_damaged_building_level = { building = air_base level > 0 } }
+		damage_building = {
+			type = air_base
+			damage = 4
+		}
 	}
-	damage_building = {
-		type = radar_station
-		damage = 2
+	if = {
+		limit = { non_damaged_building_level = { building = radar_station level > 0 } }
+		damage_building = {
+			type = radar_station
+			damage = 2
+		}
 	}
-	damage_building = {
-		type = supply_node
-		damage = 2
+	if = {
+		limit = { supply_node > 0 }
+		damage_building = {
+			type = supply_node
+			damage = 2
+		}
 	}
-	damage_building = {
-		type = rail_way
-		damage = 2
+	if = {
+		limit = { rail_way > 0 }
+		damage_building = {
+			type = rail_way
+			damage = 2
+		}
 	}
 	set_state_flag = {
 		flag = para_drop_effect
@@ -2252,9 +2350,20 @@ one_random_nuclear_facility = {
 # Null
 ingame_startup_nations_effect = {
 	hidden_effect = {
+		set_temp_variable = { fresh_nation_temp = 0 }
+		if = { limit = { NOT = { has_variable = last_quarter_gdp_total } }
+			set_temp_variable = { fresh_nation_temp = 1 }
+		}
 		setup_employment_variables = yes
-		set_variable = { gdpc_converging_var = PREV.gdpc_converging_var }
-		inherit_technology = PREV
+		if = { limit = { PREV = { has_variable = gdpc_converging_var } }
+			set_variable = { gdpc_converging_var = PREV.gdpc_converging_var }
+			inherit_technology = PREV
+		}
+		else_if = { limit = { NOT = { has_variable = gdpc_converging_var } }
+			set_variable = { gdpc_converging_var = overall_productivity }
+			multiply_variable = { gdpc_converging_var = 0.05 }
+			clamp_variable = { var = gdpc_converging_var min = 2 }
+		}
 		if = {
 			limit = {
 				NOT = { has_variable = domestic_influence_amount }
@@ -2274,7 +2383,17 @@ ingame_startup_nations_effect = {
 		calculate_influence_percentage = yes #set alignment drifts from influence
 		startup_politics = yes
 		set_law_vars = yes	 #vars for change laws secondary effects
+		if = { limit = { NOT = { has_variable = cyber_capability } }
+			cyber_nation_startup = yes #must precede ingame_update_setup so cyber_capability is set before update_military_rate checks it
+		}
+		currency_startup = yes
 		ingame_update_setup = yes	 #money system
+		if = { limit = { NOT = { has_variable = last_quarter_gdp_total } }
+			set_variable = { last_quarter_gdp_total = gdp_total }
+		}
+		if = { limit = { NOT = { has_variable = last_quarter_gdpc_total } }
+			set_variable = { last_quarter_gdpc_total = gdp_per_capita }
+		}
 		setup_init_factions = yes	 #flags for int. factions
 		update_neighbors_effects = yes # Updates Neighbor Effects
 		economic_cycle_drift_popularity = yes #drift from neighbor
@@ -2282,9 +2401,25 @@ ingame_startup_nations_effect = {
 		ingame_init_investment_system = yes
 		research_slot_init_for_country = yes
 		calculate_expected_spending = yes
+		recalculate_law_desires = yes
+		un_recog_setup_check = yes
+		if = { limit = { NOT = { has_variable = steel_in_storage } }
+			resource_storage_system_setup = yes
+		}
+		IP_idea_configuration = yes
 		setup_missile_configuration_effect = yes
 		microchip_startup = yes
 		add_country_to_power_ranking = yes
+		#Init protest variables, this should stop error spam
+		if = { limit = { NOT = { has_variable = protest_strength } }
+			set_variable = { protest_strength = 0 }
+		}
+		if = { limit = { NOT = { has_variable = protest_radicalisation } }
+			set_variable = { protest_radicalisation = 0 }
+		}
+		if = { limit = { NOT = { has_variable = anti_bully_wars } }
+			set_variable = { anti_bully_wars = 0 }
+		}
 		# Released nations skip on_startup, so enroll them in the counter-terror staggered
 		# cycle. That cycle is also what re-applies each nation's power ranking idea every
 		# quarter, so without this their Power Status idea would freeze at its release value.
@@ -2295,12 +2430,26 @@ ingame_startup_nations_effect = {
 			counter_terror_nation_startup = yes
 			add_on_creation = yes
 		}
+		if = { limit = { check_variable = { fresh_nation_temp = 1 } }
+			increment_global_reserve_currency = yes
+			calculate_starting_utility_stockpile = yes
+			calculate_starting_mio_size = yes
+			AGRI_plant_the_seeds = yes
+			EDU_learn_your_ABCs_with_dread = yes
+			if = {
+				limit = { original_tag = TAL }
+				AFG_reapply_taliban_opinion_modifiers = yes
+			}
+		}
 	}
 }
 
 # Civil War Replication Effect
-# Purpose:
+# Purpose: full init plus politics/taxes/influence/faction copy from PREV onto a
+# freshly split-off nation (civil wars, dynamic peace-deal splinters)
 civil_war_replication_effect = {
+	ingame_startup_nations_effect = yes
+
 	set_temp_variable = { nation_to_copy_from = PREV.id }
 	replicate_configure_politics = yes
 
@@ -2308,6 +2457,9 @@ civil_war_replication_effect = {
 	set_variable = { var = corporate_tax_rate value = PREV.corporate_tax_rate }
 	set_variable = { var = population_tax_rate value = PREV.population_tax_rate }
 	set_variable = { treasury = PREV.treasury }
+
+	set_temp_variable = { nation_to_copy_from = PREV.id }
+	setup_employment_variables = yes
 
 	#don't get values of original yet - REMINDER -> add it on_civil_war_end
 	set_variable = { debt = 0 }
@@ -2344,16 +2496,8 @@ civil_war_replication_effect = {
 	copy_subideolgy_leader_throughput = yes
 
 	calculate_influence_percentage = yes #set alignment drifts from influence
-	set_law_vars = yes	 #vars for change laws secondary effects
 	ingame_update_setup = yes	 #money system
-	setup_init_factions = yes	 #flags for int. factions
-	update_neighbors_effects = yes # Updates Neighbor Effects
-	economic_cycle_drift_popularity = yes #drift from neighbor
-	init_auto_influence_array = yes
-	ingame_init_investment_system = yes
-	research_slot_init_for_country = yes
 	calculate_expected_spending = yes
-	setup_missile_configuration_effect = yes
 
 	mb_refresh_relations_effect = yes
 }
@@ -2588,6 +2732,235 @@ add_space_program_progress = {
 		limit = { has_completed_space_program = no }
 		sp:sp_space_program = {
 			add_project_progress_ratio = 0.15
+		}
+	}
+}
+
+
+######### Set law to specific law (Using levels because we are going to standardise them soon)
+set_intervention_to_lvl_1 = {
+	if = {
+		limit = { has_idea = intervention_local_security }
+		swap_ideas = {
+			remove_idea = intervention_local_security
+			add_idea = intervention_isolation
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_limited_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_limited_interventionism
+			add_idea = intervention_isolation
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_regional_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_regional_interventionism
+			add_idea = intervention_isolation
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_global_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_global_interventionism
+			add_idea = intervention_isolation
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_neo_imperialism }
+		swap_ideas = {
+			remove_idea = intervention_neo_imperialism
+			add_idea = intervention_isolation
+		}
+	}
+}
+set_intervention_to_lvl_2 = {
+	if = {
+		limit = { has_idea = intervention_isolation }
+		swap_ideas = {
+			remove_idea = intervention_isolation
+			add_idea = intervention_local_security
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_limited_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_limited_interventionism
+			add_idea = intervention_local_security
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_regional_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_regional_interventionism
+			add_idea = intervention_local_security
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_global_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_global_interventionism
+			add_idea = intervention_local_security
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_neo_imperialism }
+		swap_ideas = {
+			remove_idea = intervention_neo_imperialism
+			add_idea = intervention_local_security
+		}
+	}
+}
+
+set_intervention_to_lvl_3 = {
+	if = {
+		limit = { has_idea = intervention_isolation }
+		swap_ideas = {
+			remove_idea = intervention_isolation
+			add_idea = intervention_limited_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_local_security }
+		swap_ideas = {
+			remove_idea = intervention_local_security
+			add_idea = intervention_limited_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_regional_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_regional_interventionism
+			add_idea = intervention_limited_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_global_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_global_interventionism
+			add_idea = intervention_limited_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_neo_imperialism }
+		swap_ideas = {
+			remove_idea = intervention_neo_imperialism
+			add_idea = intervention_limited_interventionism
+		}
+	}
+}
+
+set_intervention_to_lvl_4 = {
+	if = {
+		limit = { has_idea = intervention_isolation }
+		swap_ideas = {
+			remove_idea = intervention_isolation
+			add_idea = intervention_regional_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_local_security }
+		swap_ideas = {
+			remove_idea = intervention_local_security
+			add_idea = intervention_regional_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_limited_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_limited_interventionism
+			add_idea = intervention_regional_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_global_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_global_interventionism
+			add_idea = intervention_regional_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_neo_imperialism }
+		swap_ideas = {
+			remove_idea = intervention_neo_imperialism
+			add_idea = intervention_regional_interventionism
+		}
+	}
+}
+
+set_intervention_to_lvl_5 = {
+	if = {
+		limit = { has_idea = intervention_isolation }
+		swap_ideas = {
+			remove_idea = intervention_isolation
+			add_idea = intervention_global_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_local_security }
+		swap_ideas = {
+			remove_idea = intervention_local_security
+			add_idea = intervention_global_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_limited_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_limited_interventionism
+			add_idea = intervention_global_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_regional_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_regional_interventionism
+			add_idea = intervention_global_interventionism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_neo_imperialism }
+		swap_ideas = {
+			remove_idea = intervention_neo_imperialism
+			add_idea = intervention_global_interventionism
+		}
+	}
+}
+
+set_intervention_to_lvl_6 = {
+	if = {
+		limit = { has_idea = intervention_isolation }
+		swap_ideas = {
+			remove_idea = intervention_isolation
+			add_idea = intervention_neo_imperialism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_local_security }
+		swap_ideas = {
+			remove_idea = intervention_local_security
+			add_idea = intervention_neo_imperialism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_limited_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_limited_interventionism
+			add_idea = intervention_neo_imperialism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_regional_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_regional_interventionism
+			add_idea = intervention_neo_imperialism
+		}
+	}
+	else_if = {
+		limit = { has_idea = intervention_global_interventionism }
+		swap_ideas = {
+			remove_idea = intervention_global_interventionism
+			add_idea = intervention_neo_imperialism
 		}
 	}
 }

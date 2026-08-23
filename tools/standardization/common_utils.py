@@ -14,10 +14,13 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from _common import format_elapsed
 from shared_utils import (
+    atomic_write_text,
     create_backup,
     extract_block,
     log_message,
+    normalize_spacing,
     run_tool_main,
 )
 
@@ -75,6 +78,28 @@ def collapse_blank_runs(lines: List[str], max_blank: int = 1) -> List[str]:
             blank_count = 0
             result.append(line)
     return result
+
+
+def join_groups(groups: List[List[str]]) -> List[str]:
+    """Join line groups with exactly one blank line between them.
+
+    A blank line separates two groups rather than terminating one, so an absent
+    property contributes no gap and the last group is not followed by a blank.
+    Emitting a trailing blank per section is what left a dead line before every
+    closing brace and a stray gap wherever a property was missing."""
+    out: List[str] = []
+    for group in groups:
+        body = list(group)
+        while body and not body[0].strip():
+            body.pop(0)
+        while body and not body[-1].strip():
+            body.pop()
+        if not body:
+            continue
+        if out:
+            out.append("")
+        out.extend(body)
+    return out
 
 
 def block_has_log(block_lines: List[str]) -> bool:
@@ -183,21 +208,10 @@ class BaseStandardizer(ABC):
             return True
 
         try:
-            tmp_path = output_file + ".tmp"
-            with open(tmp_path, "w", encoding="utf-8") as f:
-                for line in output_lines:
-                    f.write(line + "\n")
-            os.replace(tmp_path, output_file)
+            output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
+            atomic_write_text(output_file, output)
 
-            end_time = time.time()
-            elapsed_time = end_time - self.start_time
-
-            if elapsed_time < 60:
-                time_str = f"{elapsed_time:.2f} seconds"
-            else:
-                minutes = int(elapsed_time // 60)
-                seconds = elapsed_time % 60
-                time_str = f"{minutes}m {seconds:.2f}s"
+            time_str = format_elapsed(time.time() - self.start_time)
 
             log_message("SUCCESS", f"Standardization completed in {time_str}")
             log_message("SUCCESS", f"Processed {self.processed_count} blocks")
@@ -205,11 +219,6 @@ class BaseStandardizer(ABC):
 
         except Exception as e:
             log_message("ERROR", f"Failed to write {output_file}: {e}")
-            try:
-                if os.path.exists(output_file + ".tmp"):
-                    os.remove(output_file + ".tmp")
-            except OSError:
-                pass
             return False
 
         return True

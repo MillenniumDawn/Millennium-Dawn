@@ -1,5 +1,21 @@
 # Collections
 
+eu_potential_countries_collection = {
+	input = constant:country_groups.all_eu_available_countries
+	operators = {
+		limit = { NOT = { has_idea = EU_member } }
+	}
+	name = COLLECTION_EU_POTENTIAL_COUNTRIES
+}
+
+eu_members_collection = {
+	input = constant:country_groups.all_eu_available_countries
+	operators = {
+		limit = { has_idea = EU_member }
+	}
+	name = COLLECTION_EU_MEMBERS
+}
+
 world_at_peace_countries_collection = {
 	input = game:all_countries
 	operators = {
@@ -60,16 +76,6 @@ world_communist_countries_collection = {
 		}
 	}
 }
-
-#countries_china = {
-#	input = game:all_countries
-#	name = COLLECTION_COUNTRIES_CHINA
-#	operators = {
-#		limit = {
-#			WTT_is_chinese_country = yes
-#		}
-#	}
-#}
 
 # New Order in Asia etc
 
@@ -148,9 +154,8 @@ FRA_cfa_franc_nations_collection = {
 
 # States
 faction_owned_core_states_collection = {
-	input = game:scope
+	input = collection:faction_members_collection
 	operators = {
-		faction_members
 		owned_states
 		limit = {
 			is_core_of = PREV
@@ -160,9 +165,8 @@ faction_owned_core_states_collection = {
 }
 
 faction_controlled_non_core_states_collection = {
-	input = game:scope
+	input = collection:faction_members_collection
 	operators = {
-		faction_members
 		controlled_states
 		limit = {
 			NOT = { is_core_of = PREV }
@@ -205,19 +209,32 @@ states_in_africa_collection = {
 	input = game:all_states
 	operators = {
 		limit = {
-			is_on_continent = africa
+			OR = {
+				is_on_continent = africa
+				region = 151
+				region = 127
+				region = 150
+				region = 126
+				region = 128
+			}
 		}
 	}
 	name = COLLECTION_STATES_IN_AFRICA
 }
 
 faction_states_in_africa_collection = {
-	input = game:scope
+	input = collection:faction_members_collection
 	operators = {
-		faction_members
 		controlled_states
 		limit = {
-			is_on_continent = africa
+			OR = {
+				is_on_continent = africa
+				region = 151
+				region = 127
+				region = 150
+				region = 126
+				region = 128
+			}
 		}
 	}
 	name = COLLECTION_FACTION_CONTROLLED_STATES_IN_AFRICA
@@ -237,9 +254,8 @@ states_in_americas_collection = {
 }
 
 faction_states_in_americas_collection = {
-	input = game:scope
+	input = collection:faction_members_collection
 	operators = {
-		faction_members
 		controlled_states
 		limit = {
 			OR = {
@@ -262,9 +278,8 @@ states_in_europe_collection = {
 }
 
 faction_states_in_europe_collection = {
-	input = game:scope
+	input = collection:faction_members_collection
 	operators = {
-		faction_members
 		controlled_states
 		limit = {
 			is_on_continent = europe
@@ -284,9 +299,8 @@ states_in_asia_collection = {
 }
 
 faction_states_in_asia_collection = {
-	input = game:scope
+	input = collection:faction_members_collection
 	operators = {
-		faction_members
 		controlled_states
 		limit = {
 			is_on_continent = asia
@@ -306,15 +320,22 @@ states_in_middle_east_collection = {
 }
 
 faction_states_in_middle_east_collection = {
-	input = game:scope
+	input = collection:faction_members_collection
 	operators = {
-		faction_members
 		controlled_states
 		limit = {
 			is_on_continent = middle_east
 		}
 	}
 	name = COLLECTION_FACTION_CONTROLLED_STATES_IN_MIDDLE_EAST
+}
+
+faction_controlled_states_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		controlled_states
+	}
+	name = COLLECTION_FACTION_CONTROLLED_STATES
 }
 
 states_on_my_continent_collection = {
@@ -336,43 +357,12 @@ non_fascist_controlled_states_on_my_continent_collection = {
 	name = COLLECTION_NON_FASCIST_STATES_MY_CONTINENT
 }
 
-#the_northern_mandate_states = {
-# 	input = game:all_states
-# 	operators = {
-# 		limit = {
-# 			CHI_northern_mandate_states = yes
-# 		}
-# 	}
-# 	name = COLLECTION_STATES_IN_ASIA_AND_IN_OCEANIA
-# }
-
-# the_southern_mandate_states = {
-# 	input = game:all_states
-# 	operators = {
-# 		limit = {
-# 			CHI_southern_mandate_states = yes
-# 		}
-# 	}
-# 	name = COLLECTION_STATES_IN_ASIA_AND_IN_OCEANIA
-# }
-
-# the_greater_game_states = {
-# 	input = game:all_states
-# 	operators = {
-# 		limit = {
-# 			CHI_greater_game_states = yes
-# 		}
-# 	}
-# 	name = COLLECTION_STATES_IN_ASIA_AND_IN_OCEANIA
-# }
-
 # New Order in east Asia
 communist_controlled_states_my_continent_collection = {
-	input = game:all_states
+	input = collection:states_on_my_continent_collection
 	name = COLLECTION_AMOUNT_OF_COMMUNIST_CONTROLLED_STATES_SAME_CONTINENT
 	operators = {
 		limit = {
-			is_on_same_continent_as = ROOT
 			controller = {
 				has_government = communism
 			}
@@ -381,11 +371,10 @@ communist_controlled_states_my_continent_collection = {
 }
 
 fascist_controlled_states_my_continent_collection = {
-	input = game:all_states
+	input = collection:states_on_my_continent_collection
 	name = COLLECTION_AMOUNT_OF_FASCIST_CONTROLLED_STATES_SAME_CONTINENT
 	operators = {
 		limit = {
-			is_on_same_continent_as = ROOT
 			controller = {
 				has_government = fascism
 			}
@@ -394,11 +383,10 @@ fascist_controlled_states_my_continent_collection = {
 }
 
 anti_communist_controlled_states_my_continent_collection = {
-	input = game:all_states
+	input = collection:states_on_my_continent_collection
 	name = COLLECTION_STATES_MY_CONTINENT_CONTROLLED_DEMOCRATIC_FASCIST
 	operators = {
 		limit = {
-			is_on_same_continent_as = ROOT
 			controller = {
 				OR = {
 					has_government = fascism
@@ -421,32 +409,6 @@ african_states_collection = {
 	}
 }
 
-# non_colonial_power_controlled_african_states = {
-# 	input = collection:african_states_collection
-# 	operators = {
-# 		limit = {
-# 			controller = {
-# 				AND = {
-# 					capital_scope = {
-# 						is_on_continent = africa
-# 					}
-# 					NOT = {
-# 						any_country = {
-# 							has_subject = PREV
-# 							capital_scope = {
-# 								NOT = {
-# 									is_on_continent = africa
-# 								}
-# 							}
-# 						}
-# 					}
-# 				}
-# 			}
-# 		}
-# 	}
-# 	name = COLLECTION_NON_COLONIAL_CONTROLLED_AFRICAN_STATES
-# }
-
 # Islamic World
 
 all_islamic_countries_collection = {
@@ -457,7 +419,6 @@ all_islamic_countries_collection = {
 islamic_faction_members_collection = {
 	input = constant:country_groups.islamic_world
 	operators = {
-		#faction_members
 		limit = {
 			OR = {
 				tag = ROOT
@@ -468,23 +429,22 @@ islamic_faction_members_collection = {
 	name = COLLECTION_ISLAMIC_FACTION_MEMBERS
 }
 
-# Soviet Union related
-comintern_controllable_border_states_collection = {
-	input = constant:state_groups.comintern_starting_border
-	name = COLLECTION_COMINTERN_BORDER_STATES
+# Southeast Asia
 
+all_asean_countries_collection = {
+	input = constant:country_groups.asean_members
+	name = COLLECTION_ASEAN_COUNTRIES
 }
 
-neighboring_states_to_leader_collection = {
-	input = game:all_states
-	name = COLLECTION_NEIGHBORING_STATES
+asean_faction_members_collection = {
+	input = constant:country_groups.asean_members
 	operators = {
 		limit = {
-			any_neighbor_state = {
-				is_owned_by = ROOT
+			OR = {
+				tag = ROOT
+				is_in_faction_with = ROOT
 			}
 		}
 	}
+	name = COLLECTION_ASEAN_FACTION_MEMBERS
 }
-
-# Faction Goals

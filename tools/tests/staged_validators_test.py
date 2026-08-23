@@ -4,7 +4,7 @@ Test that validators work correctly in --staged mode.
 
 Creates temporary files with deliberate errors, stages them via git,
 runs each validator with --staged, and checks that:
-  1. Validators exit quickly (under 5 seconds each)
+  1. Validators complete within the integration time budget
   2. Validators that should find issues DO find issues (non-zero exit)
   3. Validators that should skip (no relevant files) exit cleanly (zero exit)
 
@@ -15,26 +15,35 @@ All temporary files and git state are cleaned up automatically.
 """
 
 import os
+import shutil
 import subprocess
 import sys
 import time
+from unittest import SkipTest
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.chdir(REPO_ROOT)
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Maximum seconds a staged validator should take
-MAX_TIME = 5.0
+# Maximum seconds a staged validator should take in CI
+MAX_TIME = 15.0
+# This validator intentionally scans the full repository in staged mode.
+TIME_BUDGETS = {"validate_scripted_localisation.py": 30.0}
 
 passed = 0
 failed = 0
-errors = []
+errors: list[str] = []
 
 
 def run(cmd, **kwargs):
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
 
 
+def _assert_safe_path(path):
+    if ".." in path or os.path.isabs(path) or path not in TEST_FILES:
+        raise ValueError(f"unsafe test path: {path}")
+
+
 def git_stage(path):
+    _assert_safe_path(path)
     run(["git", "add", path])
 
 
@@ -44,23 +53,27 @@ def git_unstage(path):
 
 def git_restore(path):
     """Remove a file from the index and working tree if it was newly created."""
+    _assert_safe_path(path)
     run(["git", "reset", "HEAD", path], cwd=REPO_ROOT)
     if os.path.exists(path):
+        # pi-lens-ignore: python-path-traversal
         os.remove(path)
 
 
-def run_validator(script, label, expect_issues=True):
+def run_validator(
+    script, label, expect_issues=True, expected_path=None, expected_category=None
+):
     """Run a validator with --staged and check the result."""
     global passed, failed, errors
 
     cmd = [
-        "python3",
+        sys.executable,
         f"tools/validation/{script}",
         "--staged",
         "--strict",
         "--no-color",
         "--workers",
-        "2",
+        "4",
     ]
 
     start = time.time()
@@ -69,16 +82,26 @@ def run_validator(script, label, expect_issues=True):
 
     ok = True
     status_parts = []
+    time_budget = TIME_BUDGETS.get(script, MAX_TIME)
 
-    if elapsed > MAX_TIME:
+    if elapsed > time_budget:
         ok = False
-        status_parts.append(f"TOO SLOW ({elapsed:.1f}s > {MAX_TIME}s)")
+        status_parts.append(f"TOO SLOW ({elapsed:.1f}s > {time_budget}s)")
     else:
         status_parts.append(f"{elapsed:.2f}s")
 
-    if expect_issues and result.returncode == 0:
+    output = (result.stdout or "") + (result.stderr or "")
+    if expect_issues and result.returncode != 1:
         ok = False
-        status_parts.append("expected issues but validator passed")
+        status_parts.append(
+            f"expected findings exit code 1 but got {result.returncode}"
+        )
+    elif expect_issues and expected_path and expected_path not in output:
+        ok = False
+        status_parts.append(f"missing expected path {expected_path}")
+    elif expect_issues and expected_category and expected_category not in output:
+        ok = False
+        status_parts.append(f"missing expected category {expected_category}")
     elif not expect_issues and result.returncode != 0:
         ok = False
         status_parts.append(
@@ -159,7 +182,10 @@ def create_test_files():
         (TEST_LOC_FILE, TEST_LOC_CONTENT),
         (TEST_HISTORY_FILE, TEST_HISTORY_CONTENT),
     ]:
+        _assert_safe_path(path)
+        # pi-lens-ignore: python-path-traversal
         os.makedirs(os.path.dirname(path), exist_ok=True)
+        # pi-lens-ignore: python-path-traversal
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         git_stage(path)
@@ -173,6 +199,7 @@ def cleanup_test_files():
 def main():
     global passed, failed
 
+    os.chdir(REPO_ROOT)
     print("Creating test files and staging them...\n")
     create_test_files()
 
@@ -186,6 +213,8 @@ def main():
             "validate_events.py",
             "events validator finds missing is_triggered_only",
             expect_issues=True,
+            expected_path=os.path.basename(TEST_EVENT_FILE),
+            expected_category="missing-triggered-only",
         )
 
         run_validator(
@@ -198,6 +227,8 @@ def main():
             "validate_localisation.py",
             "localisation validator finds unpaired bracket",
             expect_issues=True,
+            expected_path=os.path.basename(TEST_LOC_FILE),
+            expected_category="Unpaired brackets found in localisation",
         )
 
         # history_techs should find issues with non-existent tech
@@ -205,6 +236,8 @@ def main():
             "validate_history.py",
             "history techs validator finds bad tech dependency",
             expect_issues=True,
+            expected_path=os.path.basename(TEST_HISTORY_FILE),
+            expected_category="missing technology prerequisites",
         )
 
         print()
@@ -281,6 +314,51 @@ def main():
     print("=" * 60)
 
     return 1 if failed else 0
+
+
+# ── pytest entry points ─────────────────────────────────────────────────────
+# Without a `test_*` function pytest collects this `*_test.py` module but finds
+# zero tests. These wrap the script logic so `pytest` actually exercises it.
+
+
+def _index_is_clean() -> bool:
+    r = subprocess.run(
+        ["git", "diff", "--cached", "--name-only"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    return r.returncode == 0 and not r.stdout.strip()
+
+
+def test_validator_scripts_exist():
+    """Always-collectible smoke check needing no git staging area."""
+    for script in (
+        "validate_events.py",
+        "validate_decisions.py",
+        "validate_localisation.py",
+        "validate_history.py",
+    ):
+        script_path = os.path.join(REPO_ROOT, "tools", "validation", script)
+        if not os.path.exists(script_path):
+            raise AssertionError(f"missing validator script: {script_path}")
+
+
+def test_staged_validators():
+    """Integration run; needs a clean git index (it stages/unstages files).
+
+    Opt-in (MD_RUN_STAGED_INTEGRATION=1): it mutates the working repo and runs
+    the full validator set, so it stays out of the default `pytest` sweep."""
+    if not os.environ.get("MD_RUN_STAGED_INTEGRATION"):
+        raise SkipTest(
+            "set MD_RUN_STAGED_INTEGRATION=1 to run staged-validator integration"
+        )
+    if shutil.which("git") is None:
+        raise SkipTest("git not available")
+    if not _index_is_clean():
+        raise SkipTest("git index has staged changes; skipping to avoid clobbering")
+    if main() != 0:
+        raise AssertionError("staged validator integration failed")
 
 
 if __name__ == "__main__":

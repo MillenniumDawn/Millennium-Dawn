@@ -11,7 +11,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -73,9 +73,9 @@ _MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
 _MANGLED_SINGLE_QUOTE_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*'.*'\s*$")
 
 
-def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List:
+def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[Issue | str]:
     filename, valid_colors, subst_keys = args
-    results = []
+    results: List[Issue | str] = []
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
@@ -125,32 +125,151 @@ def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List:
                     f"{os.path.basename(filename)}, line {line_idx + 2}, colors - expected {expected} \u00a7! but got {actual}"
                 )
             else:
-                try:
-                    for idx, ch in enumerate(color_line):
-                        if ch == "\u00a7" and idx + 1 < len(color_line):
-                            next_ch = color_line[idx + 1]
-                            if next_ch not in valid_colors and next_ch not in [
-                                "!",
-                                "[",
-                                "$",
-                            ]:
-                                results.append(
-                                    f"{os.path.basename(filename)}, line {line_idx + 2}, colors - unsupported color '{next_ch}'"
-                                )
-                except Exception:
-                    continue
+                for idx, ch in enumerate(color_line):
+                    if ch == "\u00a7" and idx + 1 < len(color_line):
+                        next_ch = color_line[idx + 1]
+                        if next_ch not in valid_colors and next_ch not in [
+                            "!",
+                            "[",
+                            "$",
+                        ]:
+                            results.append(
+                                f"{os.path.basename(filename)}, line {line_idx + 2}, colors - unsupported color '{next_ch}'"
+                            )
     return results
 
 
 def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
     filename = args[0]
-    results = []
+    results: List[str] = []
     text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
     lines = text_file.split("\n")
     if lines == [""]:
         return results
     if not any("l_english:" in line for line in lines):
         results.append(f"{os.path.basename(filename)} - l_english: line is absent")
+    return results
+
+
+# .claude/docs/typo-watchlist.md's catalogued misspellings, lowered. `it's`
+# (possessive-rule, context-dependent) and `civilisation` (legitimate British
+# spelling) are excluded; `civillisation` (double-L) has no legitimate reading
+# and stays in.
+_TYPO_WATCHLIST: Dict[str, str] = {
+    "estabilish": "establish",
+    "innvoations": "innovations",
+    "irreperable": "irreparable",
+    "irrepairable": "irreparable",
+    "unrepairable": "irreparable",
+    "unenmployed": "unemployed",
+    "existance": "existence",
+    "effectivness": "effectiveness",
+    "disproportinate": "disproportionate",
+    "tarditions": "traditions",
+    "contrats": "by contrast",
+    "airforce": "Air Force",
+    "miltiary": "military",
+    "coaltion": "coalition",
+    "tumultous": "tumultuous",
+    "recgonized": "recognized",
+    "propgramme": "Programme",
+    "poeple": "people",
+    "unloyal": "disloyal",
+    "isreal": "Israel",
+    "bocme": "become",
+    "hovewer": "however",
+    "acomplish": "accomplish",
+    "endevours": "Endeavours",
+    "quiantified": "Quantified",
+    "convering": "converting",
+    "encomapassing": "encompassing",
+    "fundamnetals": "fundamentals",
+    "civillian": "civilian",
+    "civillisation": "civilization",
+    "suprised": "surprised",
+    "alledged": "alleged",
+    "succesful": "successful",
+    "succesfull": "successful",
+    "huminliating": "humiliating",
+    "reffered": "referred",
+    "stronly": "strongly",
+    "togeather": "together",
+    "disasterous": "disastrous",
+    "religous": "religious",
+    "suzerainity": "suzerainty",
+    "seperation": "separation",
+    "seperate": "separate",
+    "seperated": "separated",
+}
+
+# Exact-phrase substrings exempt from typo flagging (populate as intentional uses surface).
+_TYPO_EXEMPTIONS: Set[str] = set()
+
+_TYPO_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(t) for t in _TYPO_WATCHLIST) + r")\b",
+    re.IGNORECASE,
+)
+_TYPO_VALUE_RE = re.compile(r'^\s*[\w.\-]+:\d*\s*"(.*)"')
+_TYPO_RUNTIME_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$[\w.@|+\-]+\$|£[\w.@\-]+")
+
+
+def process_yml_for_typos(args: Tuple[str]) -> List[str]:
+    filename = args[0]
+    results = []
+    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
+    lines = text_file.split("\n")[1:]
+    for line_idx, line in enumerate(lines):
+        if not line.strip():
+            continue
+        value_match = _TYPO_VALUE_RE.match(line)
+        if not value_match:
+            continue
+        value = value_match.group(1)
+        if any(exempt in value for exempt in _TYPO_EXEMPTIONS):
+            continue
+        prose = _TYPO_RUNTIME_REFERENCE_RE.sub("", value)
+        for m in _TYPO_RE.finditer(prose):
+            correction = _TYPO_WATCHLIST[m.group(0).lower()]
+            results.append(
+                f"{os.path.basename(filename)} - line {line_idx + 2} - "
+                f"'{m.group(0)}' -> '{correction}'"
+            )
+    return results
+
+
+def process_yml_for_prose(args: Tuple[str]) -> List[Issue]:
+    filename = args[0]
+    results: List[Issue] = []
+    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
+    lines = text_file.split("\n")[1:]
+    basename = os.path.basename(filename)
+    for line_idx, line in enumerate(lines):
+        if not line.strip():
+            continue
+        value_match = _TYPO_VALUE_RE.match(line)
+        if not value_match:
+            continue
+        value = value_match.group(1)
+        for _ in range(value.count("\u2014")):
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-em-dash",
+                    message="Em dash in loc value: replace with a period, comma, or colon (see .claude/docs/localisation-rules.md)",
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
+        for _ in range(value.count("`")):
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-backtick-apostrophe",
+                    message="Backtick used as apostrophe in loc value: use ' instead",
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
     return results
 
 
@@ -177,7 +296,7 @@ def get_all_loc_keys(
     filepath = str(Path(mod_path) / "localisation" / "english") + "/"
     loc_dict: Dict[str, str] = {}
     duplicated_keys: List[str] = []
-    namespace = f"loc.keys.lc={int(lowercase)}"
+    namespace = f"loc.keys.lc={'1' if lowercase else '0'}"
 
     for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
         text_file = FileOpener.open_text_file(
@@ -495,6 +614,60 @@ class Validator(BaseValidator):
             "Missing l_english: line in localisation files:",
         )
 
+    def validate_typo_watchlist(self):
+        self._log_section("Checking localisation values against the typo watchlist...")
+
+        yml_files = self._get_yml_files()
+        args_list = [(f,) for f in yml_files]
+
+        all_results = self._pool_map(process_yml_for_typos, args_list, chunksize=10)
+
+        results = []
+        for file_results in all_results:
+            results.extend(file_results)
+
+        self._report(
+            results,
+            "✓ No typo-watchlist matches in localisation",
+            "Typo-watchlist matches in localisation values:",
+            severity=Severity.WARNING,
+            category="loc-typo-watchlist",
+        )
+
+    def validate_prose_conventions(self):
+        self._log_section(
+            "Checking localisation prose conventions (em dashes, backtick apostrophes)..."
+        )
+
+        yml_files = self._get_yml_files()
+        args_list = [(f,) for f in yml_files]
+
+        all_results = self._pool_map(process_yml_for_prose, args_list, chunksize=10)
+
+        em_dash_results: List[Issue] = []
+        backtick_results: List[Issue] = []
+        for file_results in all_results:
+            for issue in file_results:
+                if issue.category == "loc-em-dash":
+                    em_dash_results.append(issue)
+                else:
+                    backtick_results.append(issue)
+
+        self._report(
+            em_dash_results,
+            "✓ No em dashes in localisation values",
+            "Em dashes in localisation values:",
+            severity=Severity.WARNING,
+            category="loc-em-dash",
+        )
+        self._report(
+            backtick_results,
+            "✓ No backtick-as-apostrophe in localisation values",
+            "Backtick used as apostrophe in localisation values:",
+            severity=Severity.WARNING,
+            category="loc-backtick-apostrophe",
+        )
+
     def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):
         """Scan txt files with a worker that needs the valid/scripted key sets,
         shipped once per worker (loc_keys is ~200k entries; per-task shipping
@@ -658,10 +831,7 @@ class Validator(BaseValidator):
                 r"[A-Za-z0-9_]+",
                 esc,
             )
-            try:
-                dynamic_ref_patterns.append(re.compile(f"^{esc}$"))
-            except re.error:
-                pass
+            dynamic_ref_patterns.append(re.compile(f"^{esc}$"))
 
         def _matches_dynamic_ref(key: str) -> bool:
             return any(p.match(key) for p in dynamic_ref_patterns)
@@ -716,6 +886,8 @@ class Validator(BaseValidator):
         self.validate_brackets()
         self.validate_syntax()
         self.validate_mandatory_line()
+        self.validate_typo_watchlist()
+        self.validate_prose_conventions()
 
         # Cross-reference checks scan all .txt/.gui files — skip in staged mode
         if not self.staged_only:

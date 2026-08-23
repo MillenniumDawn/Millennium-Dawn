@@ -369,6 +369,8 @@ A country with MBT bonuses does NOT automatically get APC or IFV bonuses — eac
 
 15. **BBA/non-BBA event consistency**: Events that add aircraft should have both BBA and non-BBA branches. Use `if = { limit = { has_dlc = "By Blood Alone" } }` for BBA variants with `variant_name`, and `else` for legacy types like `MR_Fighter3`. Don't only add the legacy type — BBA players get nothing.
 
+16. **Modules in a slot the hull rejects**: A module assigned to a slot the hull does not have, or whose category that slot does not accept, is dropped at load with no error. Applies to ships, tanks and planes alike. See [Equipment Slot Validation](#equipment-slot-validation).
+
 ## Module Technology Validation
 
 Pitfalls 2, 3, and 14 above are enforced automatically. `validate_history.py` builds a module → enabling-tech map from every `enable_equipment_modules` block in `common/technologies/` and reports any `create_equipment_variant` using a module without the enabling tech in the country's `set_technology` block. It also checks each granted tech's prerequisite chain, is DLC-aware, checks OOB references and capital definitions, and runs in CI.
@@ -388,6 +390,31 @@ python3 tools/validation/validate_history.py --strict
 ### Inherited-Technology Countries
 
 The release-only nations Alaska (ASK), Confederate States (CSA), Great Lakes Confederation (GLC) and New England (NEN) inherit their technology from the United States when they spawn. Their history files still carry an explicit `set_technology` block matching the equipment variants they define, so the designs stay valid and the validator passes whether the country is inspected at game start or after release. Keep that block in sync with their variants — inheritance happens at spawn and does not satisfy the static check.
+
+## Equipment Slot Validation
+
+A design can only use slots its hull defines, and each slot only accepts modules from its `allowed_module_categories`. Break either rule and the engine drops that module at load with no error in `error.log`. The design still shows up, so the only symptom is a stat that quietly is not there. If the slot was `fixed_ship_engine_slot` (`required = yes` on every surface hull), the ship has no engine at all.
+
+Ship hulls, tank chassis and plane airframes all follow the same rules. The slot list and its allowed categories live per archetype in `common/units/equipment/` (`MD_mtg_ships.txt`, `MD_tank_chassis.txt`, `MD_plane_airframes.txt`). Hulls either inherit them (`module_slots = inherit`) or replace the block wholesale, so check the hull the variant actually names, not the archetype.
+
+Three rules decide what actually fits:
+
+- **An absent `allowed_module_categories` is unconstrained. An empty one is not.** `allowed_module_categories = { }` means the hull permits nothing there on its own, and the slot is filled entirely by what the equipped modules unlock. Most tank and helicopter slots are written this way.
+- **Modules widen each other's slots.** A module's own `allowed_module_categories` is keyed by slot and adds those categories while it is equipped: `tank_small_medium_cannon_2` is what lets `main_gun_ammo` into `ammunition_load_slot`, `small_autocannon_2` puts `autocannon_ammo` there instead, and `tank_base_tank_turret` is what lets NERA armor into `armor_type_slot`. Drop the module and everything it unlocked stops fitting — a helicopter with no `chassis_type_slot` and no `helicopter_body_layout` has no engine, no armor and no weapons, because those slots are empty on the chassis and nothing unlocked them.
+- **`duplicate_archetypes` clones whole families.** `medium_tank_destroyer_chassis_2` and `small_plane_cas_airframe_3` exist in game with the slots of `medium_tank_chassis_2` and `small_plane_airframe_3`, but appear in no equipment file. `MD_x_tank_chassis.txt` and `MD_x_plane_airframes.txt` list what is cloned from what.
+
+Two traps worth naming:
+
+- **Tank and plane slot names in a ship design.** `turret_type_slot`, `engine_type_slot` and `fixed_auxiliary_weapon_slot_1` are chassis and airframe slots. They look plausible and are silently ignored on a hull.
+- **Corvettes have one aux slot.** `fixed_ship_auxillary_slot`, not `_1` / `_2` / `_3`. Frigates have three, helicopter operators have `_2` and `_3` but no `_1`. Two modules assigned to the same slot means one of them is dropped.
+
+`validate_oob_units.py` checks every `create_equipment_variant` in `history/countries/`, `common/national_focus/`, `events/`, `common/decisions/`, `common/special_projects/` and `common/scripted_effects/` against the hull it names — ship, tank and plane designs alike. It runs on commit and in CI, and errors block merge.
+
+The equivalent check for AI `target_variant` designs in `common/ai_equipment/` lives in `validate_ai_equipment.py`, covering `category = naval`, `land` and `air` alike. Both share `tools/validation/equipment_module_slots.py`.
+
+```bash
+python3 tools/validation/validate_oob_units.py --strict
+```
 
 ## Stockpile Equipment Types (NSB vs Non-NSB)
 

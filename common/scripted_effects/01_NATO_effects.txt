@@ -11,6 +11,45 @@ update_nato_dirty_variable = {
 	}
 }
 
+NATO_auto_ratify_accession = {
+	if = {
+		limit = { has_country_flag = NATO_Accession_Voting }
+		for_each_scope_loop = {
+			array = global.nato_members
+			if = {
+				limit = {
+					exists = yes
+					has_idea = NATO_member
+					has_country_flag = MD_auto_ratify_nato_accession
+					NOT = { has_country_flag = NATO_Ratified_@ROOT }
+				}
+				set_temp_variable = {
+					automation_available_pp = {
+						value = political_power
+						subtract = automation_pp_reserve
+					}
+				}
+				if = {
+					limit = {
+						check_variable = {
+							var = automation_available_pp
+							value = 20
+							compare = greater_than_or_equals
+						}
+					}
+					log = "[GetDateText]: [THIS.GetName]: Automatic NATO accession ratification target: [ROOT.GetName]"
+					add_political_power = -20
+					set_country_flag = NATO_Ratified_@ROOT
+					if = {
+						limit = { is_ai = no }
+						update_nato_dirty_variable = yes
+					}
+				}
+			}
+		}
+	}
+}
+
 # Effect: NATO_join
 # Purpose: Admits ROOT to NATO full membership (mutual opinion boost, military access, NATO_member idea, tech sharing, faction join) when can_join_NATO passes; otherwise routes eligible non-members to Major Non-NATO Ally status.
 NATO_join = {
@@ -352,5 +391,53 @@ NATO_major_non_nato_ally_join = {
 		tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
 		add_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally }
 		reverse_add_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally }
+	}
+}
+
+# Effect: NATO_coup_response_pulse
+# Purpose: Fires the NATO-coup dilemma (department_of_state.233) on the current NATO faction leader when ROOT (the coup mastermind) successfully overthrows a NATO member (FROM). Picks the first eligible leader from global.nato_members so the content works whether the USA still leads NATO or another member has taken over. Sets a 365-day per-leader cooldown so the same leader isn't spammed by repeated coups. Skips ROOT if it is democratic, is the USA itself, or is not one of the designated hostile sponsors (CHI / SOV / PER). Skips entirely when NATO is disabled by game rule or has no members yet.
+NATO_coup_response_pulse = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GAME_RULE_nato_disabled }
+			check_variable = { global.nato_members^num > 0 }
+			FROM = {
+				has_idea = NATO_member
+				NOT = { original_tag = USA }
+			}
+			NOT = { has_government = democratic }
+			NOT = { original_tag = USA }
+			OR = {
+				original_tag = CHI
+				original_tag = SOV
+				original_tag = PER
+			}
+			any_of_scopes = {
+				array = global.nato_members
+				is_faction_leader = yes
+				exists = yes
+				has_idea = NATO_member
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = nato_coup_cooldown }
+			}
+		}
+		FROM = { save_event_target_as = nato_coup_victim }
+		save_event_target_as = nato_coup_aggressor
+		random_scope_in_array = {
+			array = global.nato_members
+			limit = {
+				is_faction_leader = yes
+				exists = yes
+				has_idea = NATO_member
+				NOT = { has_country_flag = collapsed_nation }
+				NOT = { has_country_flag = nato_coup_cooldown }
+			}
+			set_country_flag = {
+				flag = nato_coup_cooldown
+				days = 365
+				value = 1
+			}
+			country_event = { id = department_of_state.233 days = 3 }
+		}
 	}
 }
