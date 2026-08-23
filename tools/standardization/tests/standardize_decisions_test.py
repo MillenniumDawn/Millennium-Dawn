@@ -13,6 +13,7 @@ from standardize_decisions import (
     DecisionStandardizer,
     format_decision,
     inject_missing_decision_logs,
+    strip_sole_decision_allowed,
 )
 
 
@@ -530,3 +531,19 @@ def test_logs_only_leaves_unrelated_formatting_alone():
     assert 'log = "[GetDateText]: [Root.GetName]: Decision CHI_visit"' in text
     assert "country_event = foo.1" in text
     assert text.count("log =") == 1
+
+
+def test_strip_sole_decision_allowed_keeps_category_allowed():
+    src = [
+        "CHI_cat = {\n",
+        "\tallowed = { tag = CHI }\n",
+        "\tCHI_visit = {\n",
+        "\t\tallowed = { tag = CHI }\n",
+        "\t\ticon = generic_decision\n",
+        "\t}\n",
+        "}\n",
+    ]
+    out = "".join(strip_sole_decision_allowed(src))
+    assert "\tallowed = { tag = CHI }" in out
+    assert "\t\tallowed = { tag = CHI }" not in out
+    assert "icon = generic_decision" in out

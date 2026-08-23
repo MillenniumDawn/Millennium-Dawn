@@ -167,6 +167,20 @@ def ensure_effect_log(block_lines: List[str], decision_id: str) -> List[str]:
     return inject_log_after_brace(block, log_line)
 
 
+_SOLE_ALLOWED_RE = re.compile(r"^allowed = \{ (?:original_)?tag = [A-Z]{3} \}$")
+
+
+def strip_sole_decision_allowed(lines: List[str]) -> List[str]:
+    """Drop a 2-tab ``allowed = { tag = TAG }`` that only repeats the category pin."""
+    out: List[str] = []
+    for line in lines:
+        tabs = len(line) - len(line.lstrip("\t"))
+        if tabs == 2 and _SOLE_ALLOWED_RE.match(line.strip()):
+            continue
+        out.append(line)
+    return out
+
+
 def inject_missing_decision_logs(lines: List[str]) -> List[str]:
     """Inject missing effect logs without reformatting the rest of the file."""
     out: List[str] = []
@@ -429,6 +443,11 @@ def main():
         action="store_true",
         help="Inject missing effect logs without reformatting",
     )
+    parser.add_argument(
+        "--strip-sole-allowed",
+        action="store_true",
+        help="Remove decision-level allowed = { tag = TAG } lines",
+    )
     args = parser.parse_args(sys.argv[1:])
 
     if not os.path.exists(args.input_file):
@@ -442,16 +461,20 @@ def main():
         if not backup_file:
             sys.exit(1)
 
-    if args.logs_only:
+    if args.logs_only or args.strip_sole_allowed:
         try:
             with open(args.input_file, encoding="utf-8", newline="") as handle:
                 lines = handle.readlines()
         except OSError as exc:
             log_message("ERROR", f"Failed to read {args.input_file}: {exc}")
             sys.exit(1)
-        new_lines = inject_missing_decision_logs(lines)
+        new_lines = lines
+        if args.logs_only:
+            new_lines = inject_missing_decision_logs(new_lines)
+        if args.strip_sole_allowed:
+            new_lines = strip_sole_decision_allowed(new_lines)
         atomic_write_text(output_file, "".join(new_lines))
-        log_message("SUCCESS", f"Injected missing decision logs: {output_file}")
+        log_message("SUCCESS", f"Updated decision file: {output_file}")
         return
 
     standardizer = detect_file_type(args.input_file)
