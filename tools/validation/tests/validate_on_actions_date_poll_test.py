@@ -60,13 +60,13 @@ def test_non_pulse_date_gate_ignored():
     assert scan_deterministic_date_polls(text, "common/on_actions/test.txt") == []
 
 
-def test_state_driven_australia_date_poll_exempt():
+def test_state_driven_date_poll_ignored():
     text = """on_actions = {
 	on_monthly_AST = {
 		effect = {
 			if = {
 				limit = { date > 2011.8.10 has_focus_tree = ruddgov_focus }
-				country_event = the_new_look_rudd.1
+				country_event = state_driven.1
 			}
 		}
 	}
@@ -74,6 +74,40 @@ def test_state_driven_australia_date_poll_exempt():
 """
 
     assert scan_deterministic_date_polls(text, "common/on_actions/test.txt") == []
+
+
+def test_custom_state_date_poll_ignored():
+    text = """on_actions = {
+	on_weekly_TAG = {
+		effect = {
+			if = {
+				limit = { date > 2005.1.1 TAG_system_live = yes }
+				country_event = state_driven.1
+			}
+		}
+	}
+}
+"""
+
+    assert scan_deterministic_date_polls(text, "common/on_actions/test.txt") == []
+
+
+def test_static_dlc_date_poll_detected():
+    text = """on_actions = {
+	on_monthly_TAG = {
+		effect = {
+			if = {
+				limit = { date > 2005.1.1 has_dlc = "Arms Against Tyranny" }
+				country_event = historical.1
+			}
+		}
+	}
+}
+"""
+
+    assert scan_deterministic_date_polls(text, "common/on_actions/test.txt") == [
+        ("historical.1", "on_monthly_TAG", 6, "common/on_actions/test.txt")
+    ]
 
 
 def test_chance_rolled_date_poll_ignored():

@@ -60,6 +60,15 @@ _IF_BLOCK_RE = re.compile(r"\b(?:if|else_if)\s*=\s*\{")
 _DIRECT_LIMIT_RE = re.compile(r"\s*limit\s*=\s*\{")
 _RANDOM_BLOCK_RE = re.compile(r"\b(random(?:_list)?)\s*=\s*\{")
 _CHANCE_FIELD_RE = re.compile(r"\bchance\s*=")
+_STATE_DRIVEN_DATE_POLL_GATE_RE = re.compile(
+    r"\b(?:"
+    r"check_variable|"
+    r"has_(?!dlc\b)\w*|"
+    r"(?:is|gives|owns|controls)_\w+|"
+    r"country_exists|"
+    r"[A-Za-z_]\w*\s*=\s*yes"
+    r")\b"
+)
 _PULSE_ON_ACTIONS = ("on_daily", "on_weekly", "on_monthly")
 # Dated polls intentionally kept as retries outside the yearly event table.
 _DATE_POLL_EXEMPT_IDS = frozenset(
@@ -339,6 +348,8 @@ def scan_deterministic_date_polls(
                 block_body, limit_match.end() - 1
             )
             if limit_end == -1 or not _DATE_LOWER_BOUND_RE.search(limit_body):
+                continue
+            if _STATE_DRIVEN_DATE_POLL_GATE_RE.search(limit_body):
                 continue
             if_body, if_end = extract_block_from_text(block_body, if_match.end() - 1)
             if if_end == -1:
