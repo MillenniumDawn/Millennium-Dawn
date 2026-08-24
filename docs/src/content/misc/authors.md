@@ -13,7 +13,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 - [Voice Lines](#voice-lines)
 - [3D Models](#3d-models)
 - [Musicians](#musicians)
-	- [Asia Radio Station](#asia-radio-station)
+  - [Asia Radio Station](#asia-radio-station)
 
 # Individuals
 
