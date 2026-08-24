@@ -6092,3 +6092,70 @@ UKR_renewable_energy = {
 		ai_will_do = { base = 1 }
 	}
 }
+
+UKR_amber_wars_category = {
+	UKR_amber_crackdown = {
+		icon = GFX_decision_generic_police_action
+
+		cost = 100
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_amber_crackdown"
+			set_temp_variable = { treasury_change = -3.50 }
+			modify_treasury_effect = yes
+			hidden_effect = {
+				clr_country_flag = UKR_amber_tolerated_once
+				clr_country_flag = UKR_amber_tolerated_twice
+			}
+			1248 = {
+				if = {
+					limit = { has_dynamic_modifier = UKR_amber_resentment }
+					remove_dynamic_modifier = { modifier = UKR_amber_resentment }
+				}
+			}
+		}
+
+		ai_will_do = { base = 80 }
+	}
+
+	UKR_amber_tolerate = {
+		icon = GFX_decision_drug_smuggling
+
+		cost = 20
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_amber_tolerate"
+			set_temp_variable = { treasury_change = 1.20 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { NOT = { 1248 = { has_dynamic_modifier = UKR_amber_resentment } } }
+				custom_effect_tooltip = { localization_key = adds_dynamic_modifier_tt MODIFIER = UKR_amber_resentment }
+				1248 = {
+					add_dynamic_modifier = { modifier = UKR_amber_resentment }
+				}
+			}
+			hidden_effect = {
+				if = {
+					limit = { has_country_flag = UKR_amber_tolerated_once }
+					set_country_flag = UKR_amber_tolerated_twice
+				}
+				else = {
+					set_country_flag = UKR_amber_tolerated_once
+				}
+				if = {
+					limit = {
+						has_country_flag = UKR_amber_tolerated_twice
+						has_civil_war = yes
+						NOT = { has_country_flag = UKR_kopach_republic_declared }
+					}
+					set_country_flag = UKR_kopach_republic_declared
+					country_event = { id = ukraine_amber.1 days = 1 }
+				}
+			}
+		}
+
+		ai_will_do = { base = 2 }
+	}
+}
