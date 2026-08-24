@@ -277,12 +277,12 @@ _COMPARISON_OPS = {"!=", "==", ">=", "<="}
 
 
 def normalize_spacing(line: str) -> str:
-    """Put single spaces around ``{``, ``}`` and ``=`` in one line of script.
+    """Put single spaces around braces, assignments and comparisons in one line.
 
     Leading indentation, ``"..."`` string interiors and any trailing ``#``
     comment are left byte-exact; a whole-line comment is returned unchanged.
-    ``!=``/``==``/``>=``/``<=`` are padded as one operator, and an empty block
-    keeps the spacing it was written with (``{}`` and ``{ }`` both survive).
+    Comparison operators are padded without splitting their two-character forms,
+    and an empty block keeps its written spacing (``{}`` and ``{ }`` both survive).
     Idempotent.
     """
     code = strip_inline_comment(line)
@@ -308,7 +308,7 @@ def normalize_spacing(line: str) -> str:
             out.append(f" {code[i : i + 2]} ")
             i += 2
             continue
-        elif c in "{}=":
+        elif c in "{}=<>":
             out.append(f" {c} ")
         else:
             out.append(c)
@@ -1146,16 +1146,12 @@ def get_staged_files(
     if extensions is None:
         extensions = [".txt"]
 
-    # A change list can name paths that are no longer on disk: CI builds
-    # MD_STAGED_FILES from a paths-filter output that includes deletions and
-    # the old side of a rename, and validators open every entry unguarded.
     def _filter(names: list) -> list:
-        paths = [
+        return [
             os.path.join(mod_path, f)
             for f in names
             if f and any(f.endswith(ext) for ext in extensions)
         ]
-        return [p for p in paths if os.path.isfile(p)]
 
     env_files = _read_staged_from_env()
     if env_files is not None:

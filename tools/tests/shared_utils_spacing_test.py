@@ -86,6 +86,11 @@ def test_comparison_operators_not_split():
     assert normalize_spacing("\thas_war_support > 0.5") == "\thas_war_support > 0.5"
 
 
+def test_pads_bare_single_character_comparisons():
+    assert normalize_spacing("\thas_war_support>0.5") == "\thas_war_support > 0.5"
+    assert normalize_spacing("\tvalue<3") == "\tvalue < 3"
+
+
 def test_collapses_extra_whitespace_outside_strings():
     assert normalize_spacing("\tcost   =    10") == "\tcost = 10"
 
