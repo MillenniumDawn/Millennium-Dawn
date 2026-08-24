@@ -340,7 +340,9 @@ _FROM_WORD_RE = re.compile(r"\bFROM\b")
 
 # Formable commitment ratchet sync (validate_formable_commitment_sync).
 _FORMABLE_DECISIONS_BASENAME = "formable_nation_decisions.txt"
-_FORMABLE_TAG_RE = re.compile(r"^([A-Z0-9]+)_(?:integrate_|buy_core_state$|update_flag$)")
+_FORMABLE_TAG_RE = re.compile(
+    r"^([A-Z0-9]+)_(?:integrate_|buy_core_state$|update_flag$)"
+)
 _STATE_ENTRY_RE = re.compile(r"\b\d+\s*=\s*\{")
 _SIZE_SET_RE = re.compile(r"formable_committed_size\s*=\s*(\d+)")
 _SIZE_CMP_RE = re.compile(r"var\s*=\s*formable_committed_size\s+value\s*=\s*(\d+)")
