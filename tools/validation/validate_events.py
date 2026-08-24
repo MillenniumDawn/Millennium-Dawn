@@ -1335,7 +1335,7 @@ class Validator(BaseValidator):
             results,
             "✓ Event call types match their declarations",
             "Event calls using the wrong effect type:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="event-fire-type-mismatch",
         )
 
