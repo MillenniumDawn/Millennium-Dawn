@@ -583,6 +583,14 @@ def test_tools_tests_checkout_consumed_configuration():
         # focus_pp_malus_test walks the real tree to prove every exemption still
         # applies a malus; absent, it reads every one of them as stale.
         "common/national_focus",
+        # check_common_mistakes_test asserts its script_enums, equipment,
+        # decision and modifier loaders against the real files; absent, each
+        # returns None and the module-level assertions raise at collection time.
+        "common/script_enums.txt",
+        "common/units/equipment",
+        "common/decisions",
+        "common/opinion_modifiers",
+        "common/modifiers",
         ".github/workflows/coding-pipeline.yml",
         ".github/workflows/validator-cache.yml",
         ".github/workflows/nightly-pr-validation.yml",

@@ -59,6 +59,20 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - NOR = { ... } (not a HOI4 trigger keyword; silently never matches)
   - max_iterations inside while_loop_effect (silently ignored by the engine)
   - var:x^i array-index shorthand (needs the full variable name)
+  - limit as a direct child of an else block (else takes no condition, so the
+    engine rejects the block and the branch never runs; the author meant else_if)
+  - province = { province = <id> } in add_building_construction (the block form
+    takes a selector, not a bare id, so nothing is built)
+  - a log string carrying a second quoted run (a swallowed `# "comment"` closes
+    the value early and the remainder parses as effects)
+  - add_equipment_bonus with no name/project, or a bonus type outside
+    script_enum_equipment_bonus_type -- either way the engine drops the effect
+  - add_equipment_to_stockpile / send_equipment / add_equipment_production /
+    add_equipment_subsidy naming equipment that common/units/equipment/ doesn't
+    define (a vanilla archetype MD renamed, or a miscased variant)
+  - has_active_mission / has_active_decision / has_active_timed_decision naming
+    no decision (the trigger reads false forever)
+  - add_opinion_modifier / add_relation_modifier naming an undefined modifier
 """
 
 import json
@@ -123,6 +137,33 @@ _PROVINCIAL_BUILDINGS_FALLBACK = frozenset(
         "canal_locks",
     }
 )
+_RE_ELSE_OPEN = re.compile(r"(?<!_)\belse\s*=\s*\{")
+_RE_LIMIT_OPEN = re.compile(r"\blimit\s*=\s*\{")
+_RE_LOG_MULTI_QUOTE = re.compile(r'\blog\s*=\s*"[^"]*"[^"]*"')
+_RE_NESTED_PROVINCE = re.compile(r"\bprovince\s*=\s*\{([^{}]*)\}")
+_RE_PROVINCE_ID_ONLY = re.compile(r"^\s*province\s*=\s*\d+\s*$", re.M)
+_RE_EQUIPMENT_BONUS_OPEN = re.compile(r"\badd_equipment_bonus\s*=\s*\{")
+_RE_BONUS_OPEN = re.compile(r"\bbonus\s*=\s*\{")
+_RE_BLOCK_ENTRY = re.compile(r"(\w+)\s*=\s*\{")
+_RE_EQUIPMENT_BONUS_NAME = re.compile(r"\b(?:name|project)\s*=")
+# Effects whose `type =` names an equipment definition rather than a building,
+# a mission, or any of the other things `type` is overloaded for.
+_RE_EQUIPMENT_EFFECT_OPEN = re.compile(
+    r"\b(add_equipment_to_stockpile|send_equipment|add_equipment_production|"
+    r"add_equipment_subsidy)\s*=\s*\{"
+)
+_RE_EQUIPMENT_ENTRY = re.compile(r"^\t(\w+)\s*=\s*\{", re.M)
+_RE_DUPLICATE_ARCHETYPES_OPEN = re.compile(r"\bduplicate_archetypes\s*=\s*\{")
+_RE_ARCHETYPE = re.compile(r"\barchetype\s*=\s*([A-Za-z_]\w*)")
+_RE_ACTIVE_DECISION = re.compile(
+    r"\b(has_active_mission|has_active_decision|has_active_timed_decision)"
+    r"\s*=\s*([A-Za-z_]\w*)"
+)
+_RE_DECISION_ENTRY = re.compile(r"^\t(\w+)\s*=\s*\{", re.M)
+_RE_RELATION_MODIFIER = re.compile(
+    r"\badd_(relation|opinion)_modifier\s*=\s*\{[^{}]*?\bmodifier\s*=\s*([A-Za-z_]\w*)"
+)
+_RE_MODIFIER_ENTRY = re.compile(r"^(\w+)\s*=\s*\{", re.M)
 _RE_RANDOM_SELECT_AMOUNT = re.compile(r"\brandom_select_amount\s*=\s*([^\s}]+)")
 _RE_BARE_INT = re.compile(r"^-?\d+$")
 # Tautological OR covering both polarities of one trigger (X = yes / X = no) is
@@ -1976,6 +2017,337 @@ def _check_building_missing_province(lines, mod_root=None):
     return issues
 
 
+def _joined_code(lines):
+    """Comment-stripped, quote-blanked text of the file, one line per line."""
+    return "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
+
+
+def _block_body(text, body_start):
+    """Body of the block whose opening brace is the character before body_start."""
+    depth, i = 0, body_start - 1
+    while i < len(text):
+        depth += (text[i] == "{") - (text[i] == "}")
+        if not depth:
+            break
+        i += 1
+    return text[body_start:i]
+
+
+def _direct_child_matches(body, pattern):
+    """Matches of pattern sitting at depth 0 of body -- its direct children."""
+    found, depth, pos = [], 0, 0
+    for match in pattern.finditer(body):
+        segment = body[pos : match.start()]
+        depth += segment.count("{") - segment.count("}")
+        pos = match.start()
+        if depth == 0:
+            found.append(match)
+    return found
+
+
+@lru_cache(maxsize=None)
+def _mod_root():
+    """Repo root anchored on this file, not sys.argv[0] -- pytest imports this."""
+    return os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
+    )
+
+
+def _read_dir_text(*parts):
+    """Concatenated text of every .txt directly under the given mod directory."""
+    directory = os.path.join(_mod_root(), *parts)
+    chunks = []
+    try:
+        filenames = sorted(os.listdir(directory))
+    except OSError:
+        return None
+    for fname in filenames:
+        if not fname.endswith(".txt"):
+            continue
+        try:
+            with open(os.path.join(directory, fname), encoding="utf-8") as f:
+                chunks.append(f.read())
+        except OSError:
+            continue
+    return "\n".join(chunks)
+
+
+@lru_cache(maxsize=None)
+def _equipment_bonus_enum():
+    """Tokens script_enum_equipment_bonus_type accepts, from common/script_enums.txt.
+
+    Returns None when the file can't be read, which disables the check rather
+    than reporting every bonus as unknown.
+    """
+    path = os.path.join(_mod_root(), "common", "script_enums.txt")
+    try:
+        with open(path, encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return None
+    match = re.search(r"\bscript_enum_equipment_bonus_type\s*=\s*\{", text)
+    if not match:
+        return None
+    return frozenset(re.findall(r"[A-Za-z_]\w*", _block_body(text, match.end())))
+
+
+@lru_cache(maxsize=None)
+def _equipment_names():
+    """Every equipment id the engine ends up with from common/units/equipment/.
+
+    Archetypes, their numbered variants and duplicate_archetypes clone bases all
+    sit one tab in, so one pattern covers what the files spell out. A clone is
+    then generated once per variant of the archetype it copies, so
+    medium_tank_destroyer_chassis (cloning medium_tank_chassis) also yields
+    medium_tank_destroyer_chassis_0 .. _6 -- names nothing declares but history
+    files legitimately use. The directory is replace_path'd, so this is the whole
+    universe. None when it can't be read.
+    """
+    text = _read_dir_text("common", "units", "equipment")
+    if text is None:
+        return None
+    declared = set(_RE_EQUIPMENT_ENTRY.findall(text))
+    names = set(declared)
+    for match in _RE_DUPLICATE_ARCHETYPES_OPEN.finditer(text):
+        body = _block_body(text, match.end())
+        for clone in _direct_child_matches(body, _RE_BLOCK_ENTRY):
+            base = _RE_ARCHETYPE.search(_block_body(body, clone.end()))
+            if not base:
+                continue
+            prefix = base.group(1) + "_"
+            names.update(
+                clone.group(1) + name[len(base.group(1)) :]
+                for name in declared
+                if name.startswith(prefix)
+            )
+    return frozenset(names)
+
+
+@lru_cache(maxsize=None)
+def _decision_ids():
+    """Every decision id in common/decisions/ (one tab in, under its category)."""
+    text = _read_dir_text("common", "decisions")
+    if text is None:
+        return None
+    return frozenset(_RE_DECISION_ENTRY.findall(text))
+
+
+@lru_cache(maxsize=None)
+def _opinion_modifier_names():
+    """Every opinion modifier in common/opinion_modifiers/ (one tab in)."""
+    text = _read_dir_text("common", "opinion_modifiers")
+    if text is None:
+        return None
+    return frozenset(_RE_EQUIPMENT_ENTRY.findall(text))
+
+
+@lru_cache(maxsize=None)
+def _static_modifier_names():
+    """Every static modifier in common/modifiers/ (column 0).
+
+    Vanilla's own static modifiers load alongside these, so this set only backs
+    the relation-modifier check, where every name MD uses is its own.
+    """
+    text = _read_dir_text("common", "modifiers")
+    if text is None:
+        return None
+    return frozenset(_RE_MODIFIER_ENTRY.findall(text))
+
+
+def _check_else_with_limit(lines):
+    """Flag a limit as a direct child of an else block.
+
+    else carries no condition of its own, so the engine rejects the block
+    ("Unexpected limit in an else block") and the branch never runs -- the
+    author meant else_if.
+    """
+    issues = []
+    text = _joined_code(lines)
+    for match in _RE_ELSE_OPEN.finditer(text):
+        body = _block_body(text, match.end())
+        for limit in _direct_child_matches(body, _RE_LIMIT_OPEN):
+            issues.append(
+                (
+                    text.count("\n", 0, match.end() + limit.start()) + 1,
+                    "limit inside an else block -- else takes no condition, so the "
+                    "engine rejects the block and the branch never runs; use else_if",
+                )
+            )
+    return issues
+
+
+def _check_nested_province_block(lines):
+    """Flag province = { province = <id> } in add_building_construction.
+
+    The block form of province takes a selector (all_provinces, limit_to_*), not
+    a bare id, so the engine rejects the whole token and nothing is built. A
+    single province is `province = <id>`.
+    """
+    issues = []
+    text = _joined_code(lines)
+    for match in _RE_ADD_BUILDING_OPEN.finditer(text):
+        body = _block_body(text, match.end())
+        for nested in _RE_NESTED_PROVINCE.finditer(body):
+            if not _RE_PROVINCE_ID_ONLY.search(nested.group(1)):
+                continue
+            issues.append(
+                (
+                    text.count("\n", 0, match.end() + nested.start()) + 1,
+                    "province = { province = <id> } is not a valid selector -- the "
+                    "engine rejects the add_building token and nothing is built; "
+                    "write province = <id>",
+                )
+            )
+    return issues
+
+
+def _check_log_nested_quote(lines):
+    """Flag a log string carrying a second quoted run.
+
+    A trailing `# "comment"` swallowed into the value closes the string early,
+    and the engine reads the rest as effect tokens ("Unknown effect-type:
+    Excellent"). The log line takes one quoted string and nothing else.
+    """
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if "log" not in line or line.strip().startswith("#"):
+            continue
+        if _RE_LOG_MULTI_QUOTE.search(line):
+            issues.append(
+                (
+                    line_num,
+                    "log string contains a second quoted run -- it closes the value "
+                    "early and the engine parses the remainder as effects; keep the "
+                    "log to one quoted string",
+                )
+            )
+    return issues
+
+
+def _check_equipment_bonus(lines):
+    """Flag add_equipment_bonus with no name/project, or an unknown bonus type.
+
+    Without `name` (a loc key) or `project` the engine drops the whole effect
+    ("Name or special project need to be set"), and a bonus keyed on anything
+    outside script_enum_equipment_bonus_type is rejected the same way. Vanilla
+    archetype names (infantry_equipment, util_vehicle_equipment) are the usual
+    culprit -- MD renamed them.
+    """
+    issues = []
+    text = _joined_code(lines)
+    for match in _RE_EQUIPMENT_BONUS_OPEN.finditer(text):
+        enum = _equipment_bonus_enum()
+        body = _block_body(text, match.end())
+        line_num = text.count("\n", 0, match.start()) + 1
+        if not _RE_EQUIPMENT_BONUS_NAME.search(body):
+            issues.append(
+                (
+                    line_num,
+                    "add_equipment_bonus has no name = <loc key> (or project) -- the "
+                    "engine drops the whole effect",
+                )
+            )
+        if enum is None:
+            continue
+        for bonus in _direct_child_matches(body, _RE_BONUS_OPEN):
+            bonus_body = _block_body(body, bonus.end())
+            for entry in _direct_child_matches(bonus_body, _RE_BLOCK_ENTRY):
+                if entry.group(1) not in enum:
+                    issues.append(
+                        (
+                            line_num,
+                            f"add_equipment_bonus bonus type '{entry.group(1)}' is "
+                            f"not in script_enum_equipment_bonus_type -- the engine "
+                            f"rejects the bonus",
+                        )
+                    )
+    return issues
+
+
+def _check_equipment_type_defined(lines):
+    """Flag an equipment effect naming equipment nothing defines.
+
+    add_equipment_to_stockpile and friends take an id from
+    common/units/equipment/; a vanilla archetype MD renamed (infantry_equipment,
+    support_equipment) or a miscased variant is a silent no-op.
+    """
+    issues = []
+    text = _joined_code(lines)
+    for match in _RE_EQUIPMENT_EFFECT_OPEN.finditer(text):
+        body = _block_body(text, match.end())
+        type_match = _RE_BUILDING_TYPE.search(body)
+        if not type_match:
+            continue
+        # Resolved only once a candidate is in hand (and cached from there), so a
+        # file with no equipment effect never pays for the directory read.
+        names = _equipment_names()
+        if names is None or type_match.group(1) in names:
+            continue
+        issues.append(
+            (
+                text.count("\n", 0, match.end() + type_match.start()) + 1,
+                f"{match.group(1)} type = {type_match.group(1)} is not defined in "
+                f"common/units/equipment/ -- the effect is a silent no-op",
+            )
+        )
+    return issues
+
+
+def _check_active_decision_defined(lines):
+    """Flag has_active_mission / has_active_decision naming no decision.
+
+    The trigger resolves against common/decisions/; an id that isn't there logs
+    "Invalid decision in has_active_timed_decision trigger" and reads as false
+    forever, so whatever it guards fires unconditionally.
+    """
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if "has_active_" not in line or line.strip().startswith("#"):
+            continue
+        for match in _RE_ACTIVE_DECISION.finditer(_code_for_depth(line)):
+            ids = _decision_ids()
+            if ids is None or match.group(2) in ids:
+                continue
+            issues.append(
+                (
+                    line_num,
+                    f"{match.group(1)} = {match.group(2)} names no decision in "
+                    f"common/decisions/ -- the trigger is always false",
+                )
+            )
+    return issues
+
+
+def _check_modifier_ref_defined(lines):
+    """Flag add_opinion_modifier / add_relation_modifier naming nothing.
+
+    Opinion modifiers come from the replace_path'd common/opinion_modifiers/,
+    relation modifiers from common/modifiers/; either way the engine logs
+    "missing static modifier definition" and applies nothing. Case counts on
+    Linux, which is how UKR_World_Economical_Relations died beside the
+    lowercase definition.
+    """
+    issues = []
+    sources = {
+        "opinion": ("common/opinion_modifiers/", _opinion_modifier_names),
+        "relation": ("common/modifiers/", _static_modifier_names),
+    }
+    text = _joined_code(lines)
+    for match in _RE_RELATION_MODIFIER.finditer(text):
+        directory, load = sources[match.group(1)]
+        names = load()
+        if names is None or match.group(2) in names:
+            continue
+        issues.append(
+            (
+                text.count("\n", 0, match.start(2)) + 1,
+                f"add_{match.group(1)}_modifier modifier = {match.group(2)} is not "
+                f"defined in {directory} -- nothing is applied",
+            )
+        )
+    return issues
+
+
 def _add_to_faction_value_ok(value):
     """True when value is a country add_to_faction can take: a 3-letter tag, a
     country scope keyword or dotted scope chain (PREV.PREV), a var:/event_target:
@@ -2926,9 +3298,16 @@ def check_file(filepath):
     issues.extend(_check_nor_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
     issues.extend(_check_var_index_shorthand(lines))
+    issues.extend(_check_else_with_limit(lines))
+    issues.extend(_check_log_nested_quote(lines))
+    issues.extend(_check_equipment_bonus(lines))
+    issues.extend(_check_equipment_type_defined(lines))
+    issues.extend(_check_active_decision_defined(lines))
+    issues.extend(_check_modifier_ref_defined(lines))
     if is_common_or_events_file:
         issues.extend(_check_every_owned_controlled_state(lines))
         issues.extend(_check_building_missing_province(lines))
+        issues.extend(_check_nested_province_block(lines))
 
     return [(filepath, ln, msg) for ln, msg in issues]
 
