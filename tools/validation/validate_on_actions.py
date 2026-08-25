@@ -10,7 +10,7 @@ from typing import List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text
+from shared_utils import extract_block_from_text, find_unquoted_block_end
 from validator_common import (
     BaseValidator,
     Severity,
@@ -225,14 +225,7 @@ def _scan_on_action_block(
     # the same event listed twice in the same random_events body, which IS a bug.
     for m in _RANDOM_EVENTS_BLOCK_RE.finditer(text):
         start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
+        i, _ = find_unquoted_block_end(text, start)
         body = text[start : i - 1]
         body_offset = start
         for entry in _RANDOM_EVENT_ENTRY_RE.finditer(body):
