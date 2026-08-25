@@ -101,8 +101,13 @@ class Validator(BaseValidator):
         self._log_section("Checking technology category references...")
         if not known:
             self._report(
-                [("No technology categories found under common/technology_tags/",
-                  "common/technology_tags", 0)],
+                [
+                    (
+                        "No technology categories found under common/technology_tags/",
+                        "common/technology_tags",
+                        0,
+                    )
+                ],
                 "",
                 "Technology category set is empty:",
                 severity=Severity.ERROR,
@@ -132,9 +137,7 @@ class Validator(BaseValidator):
         ):
             close = difflib.get_close_matches(name, known, n=1, cutoff=0.6)
             hint = f", did you mean '{close[0]}'?" if close else ""
-            formatted.append(
-                (f"Unknown technology category '{name}'{hint}", rel, line)
-            )
+            formatted.append((f"Unknown technology category '{name}'{hint}", rel, line))
 
         self._report(
             formatted,

@@ -135,7 +135,6 @@ def test_references_reads_only_category_assignments_and_research_bonus_keys():
 
 def test_research_bonus_stops_at_its_closing_brace():
     text = (
-        "research_bonus = { CAT_one = 0.1 }\n"
-        "equipment_bonus = { CAT_two = 0.2 }\n"
+        "research_bonus = { CAT_one = 0.1 }\n" "equipment_bonus = { CAT_two = 0.2 }\n"
     )
     assert [n for n, _ in _references(text)] == ["CAT_one"]
