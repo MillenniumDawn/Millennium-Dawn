@@ -47,7 +47,6 @@ import shutil
 import sys
 import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from check_common_mistakes import (
     _RE_IS_X_NATION,
     _check_active_decision_defined,
@@ -2815,12 +2814,18 @@ def _isx_nation_matches(lines):
     ]
 
 
-def _run_check_file(rel_path, text):
+def _write_temp_file(rel_path, text):
+    """Write `text` to a fresh temp dir at `rel_path`; returns (root, filepath)."""
     root = tempfile.mkdtemp()
     fp = os.path.join(root, rel_path)
     os.makedirs(os.path.dirname(fp), exist_ok=True)
     with open(fp, "w", encoding="utf-8") as f:
         f.write(text)
+    return root, fp
+
+
+def _run_check_file(rel_path, text):
+    root, fp = _write_temp_file(rel_path, text)
     try:
         return check_file(fp)
     finally:
@@ -3078,11 +3083,7 @@ print("\n── _files_need_global_refs whitespace-flexible gate ──")
 
 
 def _needs_global_refs(rel_path, text):
-    root = tempfile.mkdtemp()
-    fp = os.path.join(root, rel_path)
-    os.makedirs(os.path.dirname(fp), exist_ok=True)
-    with open(fp, "w", encoding="utf-8") as f:
-        f.write(text)
+    root, fp = _write_temp_file(rel_path, text)
     try:
         return _files_need_global_refs([fp])
     finally:

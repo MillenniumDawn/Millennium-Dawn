@@ -31,6 +31,20 @@ def _write_meta(base, toolshash="h"):
     )
 
 
+def _previous_with_one_old_error(tmp_path):
+    previous = tmp_path / "prev"
+    _write_meta(previous)
+    _write_sidecar(previous, "events", [_issue_dict("error", message="old")])
+    return previous
+
+
+def _identical_previous_and_current(tmp_path):
+    previous = _previous_with_one_old_error(tmp_path)
+    current = tmp_path / "current"
+    _write_sidecar(current, "events", [_issue_dict("error", message="old")])
+    return previous, current
+
+
 def _run(
     tmp_path, previous, current, toolshash="h", monkeypatch=None, summary_path=None
 ):
@@ -104,9 +118,7 @@ def test_establishing_baseline_when_previous_missing(tmp_path, monkeypatch, caps
 
 
 def test_new_errors_fail_and_keep_old_baseline(tmp_path, monkeypatch, capsys):
-    previous = tmp_path / "prev"
-    _write_meta(previous)
-    _write_sidecar(previous, "events", [_issue_dict("error", message="old")])
+    previous = _previous_with_one_old_error(tmp_path)
     current = tmp_path / "current"
     _write_sidecar(
         current,
@@ -126,11 +138,7 @@ def test_new_errors_fail_and_keep_old_baseline(tmp_path, monkeypatch, capsys):
 
 
 def test_clean_diff_promotes_baseline(tmp_path, monkeypatch, capsys):
-    previous = tmp_path / "prev"
-    _write_meta(previous)
-    _write_sidecar(previous, "events", [_issue_dict("error", message="old")])
-    current = tmp_path / "current"
-    _write_sidecar(current, "events", [_issue_dict("error", message="old")])
+    previous, current = _identical_previous_and_current(tmp_path)
 
     code = _run(tmp_path, previous, current, monkeypatch=monkeypatch)
 
@@ -201,11 +209,7 @@ def test_red_night_step_summary_reports_new_errors(tmp_path, monkeypatch):
 
 
 def test_clean_night_step_summary_confirms_update(tmp_path, monkeypatch):
-    previous = tmp_path / "prev"
-    _write_meta(previous)
-    _write_sidecar(previous, "events", [_issue_dict("error", message="old")])
-    current = tmp_path / "current"
-    _write_sidecar(current, "events", [_issue_dict("error", message="old")])
+    previous, current = _identical_previous_and_current(tmp_path)
     summary_path = tmp_path / "summary.md"
 
     code = _run(

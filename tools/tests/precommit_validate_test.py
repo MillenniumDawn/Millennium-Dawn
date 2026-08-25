@@ -7,14 +7,8 @@ could silently stop running on some paths. These tests pin which validators a
 given staged path selects, so an unintended coverage change fails CI.
 """
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-import precommit_validate as dispatcher  # noqa: E402
-from precommit_validate import _REGISTRY  # noqa: E402
+import precommit_validate as dispatcher
+from precommit_validate import _REGISTRY
 
 _BY_SCRIPT = {spec.script: spec for spec in _REGISTRY}
 

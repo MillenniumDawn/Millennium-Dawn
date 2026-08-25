@@ -18,10 +18,8 @@ from validate_gfx_references import Validator as GfxReferenceValidator
 
 
 @pytest.fixture(autouse=True)
-def _no_vanilla_install(monkeypatch):
-    monkeypatch.setattr(vg, "_vanilla_gfx_files", lambda: [])
-    monkeypatch.setattr(vg, "_load_vanilla_sprite_manifest", lambda: frozenset())
-    monkeypatch.setattr(vg, "_vanilla_gui_ref_index", lambda: {})
+def _no_vanilla_install(no_vanilla_gfx):
+    return no_vanilla_gfx
 
 
 def _sprite(name, texture):
@@ -507,11 +505,10 @@ def test_only_a_placeholder_template_resolves_nothing(tmp_path):
     assert v._resolve_engine_refs({"GFX_anything_at_all"}) == set()
 
 
-def test_resolver_logs_notices_when_the_data_dirs_are_missing(tmp_path, monkeypatch):
-    logged = []
-    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
-    monkeypatch.setattr(v, "log", lambda msg, *a, **k: logged.append(msg))
-    v._resolve_engine_refs(set())
+def test_resolver_logs_notices_when_the_data_dirs_are_missing(tmp_path, gfx_notices):
+    logged = gfx_notices(
+        tmp_path, lambda validator: validator._resolve_engine_refs(set())
+    )
     for expected in (
         "search_filters",
         "equipment modules",

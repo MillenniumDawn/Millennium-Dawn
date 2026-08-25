@@ -6,16 +6,13 @@ casing (quadtexturesprite = "GFX_Bundeswehr_bar") false-positives a live sprite.
 """
 
 import pytest
-import validate_gfx_references as vg
 from validate_gfx_references import Validator as GfxReferenceValidator
 from validate_gfx_references import _parse_gui_file
 
 
 @pytest.fixture(autouse=True)
-def _no_vanilla_install(monkeypatch):
-    monkeypatch.setattr(vg, "_vanilla_gfx_files", lambda: [])
-    monkeypatch.setattr(vg, "_load_vanilla_sprite_manifest", lambda: frozenset())
-    monkeypatch.setattr(vg, "_vanilla_gui_ref_index", lambda: {})
+def _no_vanilla_install(no_vanilla_gfx):
+    return no_vanilla_gfx
 
 
 def _names(gui, tmp_path):

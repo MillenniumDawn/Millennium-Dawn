@@ -268,88 +268,6 @@ class Validator(BaseValidator):
 
         return definitions
 
-    def _find_unused(
-        self, definitions: List[Tuple[str, str, int]], kind: str, def_subdir: str
-    ) -> List[str]:
-        """Find definitions that are never used outside their own definition.
-
-        For each definition, we check if the name appears in ANY file outside
-        the definition directory. We also check if it's used within the same
-        directory but in a different definition block (i.e., called by another
-        scripted effect/trigger).
-        """
-        if not definitions:
-            return []
-
-        # Build a set of all definition names
-        all_names = {d[0] for d in definitions}
-
-        # Scan all txt files for usages
-        all_files = self._collect_files(
-            [
-                "common/**/*.txt",
-                "events/**/*.txt",
-                "history/**/*.txt",
-            ]
-        )
-
-        # Split files into "definition files" and "other files"
-        def_dir = f"common/{def_subdir}/"
-        other_files, def_files = [], []
-        for f in all_files:
-            (def_files if def_dir in f.replace("\\", "/") else other_files).append(f)
-
-        # First pass: find all names used in non-definition files
-        args_list = [(f, all_names, self.mod_path) for f in other_files]
-        results = self._pool_map(scan_file_for_usages, args_list)
-
-        used_names = set()
-        for found in results:
-            used_names.update(found)
-
-        # Second pass: for names not yet found, check if they're used
-        # within definition files (called by other scripted effects/triggers)
-        remaining = all_names - used_names
-        if remaining:
-            args_list = [(f, remaining, self.mod_path) for f in def_files]
-            results = self._pool_map(scan_file_for_usages, args_list, chunksize=10)
-
-            # For each name found in definition files, check if it appears
-            # more than just its own definition (i.e., it's called somewhere)
-            potentially_used = set()
-            for found in results:
-                potentially_used.update(found)
-
-            # Read each def file once and check all potentially-used names
-            # for call patterns (name = yes/no or custom tooltip references)
-            for def_file in def_files:
-                try:
-                    with open(def_file, "r", encoding="utf-8-sig") as f:
-                        content = strip_comments(f.read())
-                except Exception:
-                    continue
-                called = set(_CALL_YES_NO_RE.findall(content))
-                called.update(_CUSTOM_TT_REF_RE.findall(content))
-                used_names |= called & potentially_used
-
-        # Build results for unused definitions
-        unused = []
-        # Build a lookup: name -> (file, line_number)
-        name_to_location = {}
-        for name, filepath, line_num in definitions:
-            if name not in name_to_location:
-                name_to_location[name] = []
-            name_to_location[name].append((filepath, line_num))
-
-        for name in sorted(all_names - used_names):
-            locations = name_to_location.get(name, [])
-            for filepath, line_num in locations:
-                if _is_false_positive(name, filepath):
-                    continue
-                unused.append(f"{filepath}:{line_num} - {name}")
-
-        return unused
-
     def _find_unused_combined(
         self,
         effect_defs: List[Tuple[str, str, int]],
@@ -380,7 +298,8 @@ class Validator(BaseValidator):
         # Split files into definition files and other files
         effect_dir = "common/scripted_effects/"
         trigger_dir = "common/scripted_triggers/"
-        other_files, def_files = [], []
+        other_files: List[str] = []
+        def_files: List[str] = []
         for f in all_files:
             norm = f.replace("\\", "/")
             if effect_dir in norm or trigger_dir in norm:
@@ -408,9 +327,9 @@ class Validator(BaseValidator):
 
             for def_file in def_files:
                 try:
-                    with open(def_file, "r", encoding="utf-8-sig") as f:
-                        content = strip_comments(f.read())
-                except Exception:
+                    with open(def_file, "r", encoding="utf-8-sig") as definition_file:
+                        content = strip_comments(definition_file.read())
+                except (OSError, UnicodeError):
                     continue
                 called = set(_CALL_YES_NO_RE.findall(content))
                 called.update(_CUSTOM_TT_REF_RE.findall(content))

@@ -214,14 +214,19 @@ def test_load_baseline_returns_none_on_unreadable_meta(tmp_path):
     assert load_baseline(str(tmp_path), "h") is None
 
 
-def test_classify_with_empty_baseline_marks_everything_new(tmp_path):
-    # An all-clean main run stores only meta (no sidecars): any PR finding
-    # is new by definition.
+def _empty_baseline(tmp_path):
     (tmp_path / META_FILENAME).write_text(
         json.dumps({"toolshash": "h"}), encoding="utf-8"
     )
     baseline = load_baseline(str(tmp_path), "h")
     assert baseline is not None
+    return baseline
+
+
+def test_classify_with_empty_baseline_marks_everything_new(tmp_path):
+    # An all-clean main run stores only meta (no sidecars): any PR finding
+    # is new by definition.
+    baseline = _empty_baseline(tmp_path)
 
     stats = classify(
         [
@@ -243,11 +248,7 @@ def test_classify_with_empty_baseline_marks_everything_new(tmp_path):
 
 
 def test_classify_counts_mixed_unclassified_and_new(tmp_path):
-    (tmp_path / META_FILENAME).write_text(
-        json.dumps({"toolshash": "h"}), encoding="utf-8"
-    )
-    baseline = load_baseline(str(tmp_path), "h")
-    assert baseline is not None
+    baseline = _empty_baseline(tmp_path)
 
     stats = classify(
         [

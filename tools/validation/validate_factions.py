@@ -271,22 +271,27 @@ class Validator(BaseValidator):
             "Templates with invalid manifest references:",
         )
 
-    def _validate_template_goals(self):
-        """Check that every goal listed in a template exists."""
-        self._log_section("Checking template goal references...")
-
-        results = []
+    def _iter_templates(self):
+        """Yield each template block with its source filename."""
         template_dir = self._faction_path("templates")
         for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
             content = read_file(filepath)
             fname = os.path.basename(filepath)
             for template_id in extract_block_ids(content):
-                goals = extract_goals_block(content, template_id)
-                for goal_id in goals:
-                    if goal_id not in self.goal_ids:
-                        results.append(
-                            f"{fname} ({template_id}): goal '{goal_id}' not found"
-                        )
+                yield fname, template_id, content
+
+    def _validate_template_goals(self):
+        """Check that every goal listed in a template exists."""
+        self._log_section("Checking template goal references...")
+
+        results = []
+        for fname, template_id, content in self._iter_templates():
+            goals = extract_goals_block(content, template_id)
+            for goal_id in goals:
+                if goal_id not in self.goal_ids:
+                    results.append(
+                        f"{fname} ({template_id}): goal '{goal_id}' not found"
+                    )
 
         self._report(
             results,
@@ -299,26 +304,22 @@ class Validator(BaseValidator):
         self._log_section("Checking template goal category limits...")
 
         results = []
-        template_dir = self._faction_path("templates")
-        for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
-            content = read_file(filepath)
-            fname = os.path.basename(filepath)
-            for template_id in extract_block_ids(content):
-                goals = extract_goals_block(content, template_id)
-                counts = Counter(self.goal_categories.get(goal_id) for goal_id in goals)
-                for category in GOAL_CATEGORIES:
-                    if counts[category] <= MAX_TEMPLATE_GOALS_PER_CATEGORY:
-                        continue
-                    category_goals = [
-                        goal_id
-                        for goal_id in goals
-                        if self.goal_categories.get(goal_id) == category
-                    ]
-                    results.append(
-                        f"{fname} ({template_id}): {len(category_goals)} {category} goals "
-                        f"(maximum {MAX_TEMPLATE_GOALS_PER_CATEGORY}): "
-                        f"{', '.join(category_goals)}"
-                    )
+        for fname, template_id, content in self._iter_templates():
+            goals = extract_goals_block(content, template_id)
+            counts = Counter(self.goal_categories.get(goal_id) for goal_id in goals)
+            for category in GOAL_CATEGORIES:
+                if counts[category] <= MAX_TEMPLATE_GOALS_PER_CATEGORY:
+                    continue
+                category_goals = [
+                    goal_id
+                    for goal_id in goals
+                    if self.goal_categories.get(goal_id) == category
+                ]
+                results.append(
+                    f"{fname} ({template_id}): {len(category_goals)} {category} goals "
+                    f"(maximum {MAX_TEMPLATE_GOALS_PER_CATEGORY}): "
+                    f"{', '.join(category_goals)}"
+                )
 
         self._report(
             results,
@@ -331,17 +332,13 @@ class Validator(BaseValidator):
         self._log_section("Checking template default_rules references...")
 
         results = []
-        template_dir = self._faction_path("templates")
-        for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
-            content = read_file(filepath)
-            fname = os.path.basename(filepath)
-            for template_id in extract_block_ids(content):
-                rules = extract_default_rules_block(content, template_id)
-                for rule_id in rules:
-                    if rule_id not in self.rule_ids:
-                        results.append(
-                            f"{fname} ({template_id}): rule '{rule_id}' not found"
-                        )
+        for fname, template_id, content in self._iter_templates():
+            rules = extract_default_rules_block(content, template_id)
+            for rule_id in rules:
+                if rule_id not in self.rule_ids:
+                    results.append(
+                        f"{fname} ({template_id}): rule '{rule_id}' not found"
+                    )
 
         self._report(
             results,

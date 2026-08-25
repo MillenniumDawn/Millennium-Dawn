@@ -18,17 +18,22 @@ def _run_validator(tmp_path, content):
     return v
 
 
-def test_validator_flags_focus_without_search_filters(tmp_path):
-    content = """focus_tree = {
+def _focus(search_filters=""):
+    return f"""focus_tree = {{
 \tid = test_tree
-\tfocus = {
+\tfocus = {{
 \t\tid = TAG_focus_a
 \t\tx = 1
 \t\ty = 1
 \t\tcost = 1
-\t}
-}
+\t\t{search_filters}
+\t}}
+}}
 """
+
+
+def test_validator_flags_focus_without_search_filters(tmp_path):
+    content = _focus()
     v = _run_validator(tmp_path, content)
 
     issues = [i.message for i in v._issues if i.category == "missing-search-filters"]
@@ -38,17 +43,7 @@ def test_validator_flags_focus_without_search_filters(tmp_path):
 
 
 def test_validator_allows_focus_with_search_filters(tmp_path):
-    content = """focus_tree = {
-\tid = test_tree
-\tfocus = {
-\t\tid = TAG_focus_a
-\t\tx = 1
-\t\ty = 1
-\t\tcost = 1
-\t\tsearch_filters = { FOCUS_FILTER_POLITICAL }
-\t}
-}
-"""
+    content = _focus("search_filters = { FOCUS_FILTER_POLITICAL }")
     v = _run_validator(tmp_path, content)
 
     assert [

@@ -6,13 +6,7 @@ Covers the core transform (single- and multi-line), the must-NOT-touch cases
 rewritten, via both a file path and a directory entry point.
 """
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-import cleanup_effect_tooltip as cet  # noqa: E402
+import cleanup_effect_tooltip as cet
 
 _WRAP_SINGLE = "foo = {\n\teffect_tooltip = { custom_effect_tooltip = bar_tt }\n}\n"
 _WRAP_MULTI = (

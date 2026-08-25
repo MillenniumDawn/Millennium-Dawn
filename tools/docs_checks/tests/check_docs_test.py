@@ -107,19 +107,23 @@ def _dist_stub(calls):
     return stub
 
 
-def test_astro_check_failure_does_not_skip_dist_when_build_passes(monkeypatch):
+def _assert_dist_ran_with_links(monkeypatch, checks):
     calls = []
     monkeypatch.setattr(check_docs, "_run_dist_parallel", _dist_stub(calls))
-    checks = [
-        Check("astro check", "build", lambda: _result("astro check", False, "boom")),
-        Check("build", "build", lambda: _result("build", True)),
-        Check("links", "dist", lambda: _result("links", True)),
-    ]
 
     results = run_checks(checks)
 
     assert calls == [["links"]]
     assert not any(r.output == "skipped: build failed" for r in results)
+
+
+def test_astro_check_failure_does_not_skip_dist_when_build_passes(monkeypatch):
+    checks = [
+        Check("astro check", "build", lambda: _result("astro check", False, "boom")),
+        Check("build", "build", lambda: _result("build", True)),
+        Check("links", "dist", lambda: _result("links", True)),
+    ]
+    _assert_dist_ran_with_links(monkeypatch, checks)
 
 
 def test_build_failure_skips_dist(monkeypatch):
@@ -138,14 +142,8 @@ def test_build_failure_skips_dist(monkeypatch):
 
 
 def test_astro_check_failure_without_build_selected_still_runs_dist(monkeypatch):
-    calls = []
-    monkeypatch.setattr(check_docs, "_run_dist_parallel", _dist_stub(calls))
     checks = [
         Check("astro check", "build", lambda: _result("astro check", False, "boom")),
         Check("links", "dist", lambda: _result("links", True)),
     ]
-
-    results = run_checks(checks)
-
-    assert calls == [["links"]]
-    assert not any(r.output == "skipped: build failed" for r in results)
+    _assert_dist_ran_with_links(monkeypatch, checks)

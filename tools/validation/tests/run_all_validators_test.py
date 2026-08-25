@@ -26,6 +26,11 @@ def _args(format_, output=None, strict=False, persist_results=None):
     )
 
 
+def _run_stub(tmp_path, args):
+    validators = [("stub", "validate_stub.py", "Stub")]
+    return runner._run_suite(args, [], str(tmp_path), validators, str(tmp_path))
+
+
 def _launcher_with(issues, returncode=0):
     def launch(_script, _flags, output_dir, name, _mod_path):
         # Mirror BaseValidator.save_output: a validator with no findings
@@ -104,13 +109,7 @@ def test_clean_both_writes_text_and_json_reports(tmp_path, monkeypatch):
     report_path = tmp_path / "report.txt"
     monkeypatch.setattr(runner, "launch_validator", _launcher_with([]))
 
-    code = runner._run_suite(
-        _args("both", str(report_path)),
-        [],
-        str(tmp_path),
-        [("stub", "validate_stub.py", "Stub")],
-        str(tmp_path),
-    )
+    code = _run_stub(tmp_path, _args("both", str(report_path)))
 
     assert code == 0
     assert "ALL VALIDATIONS PASSED" in report_path.read_text(encoding="utf-8")
@@ -130,13 +129,7 @@ def test_json_output_honors_exact_output_path(tmp_path, monkeypatch):
     report_path = tmp_path / "report.json"
     monkeypatch.setattr(runner, "launch_validator", _launcher_with([]))
 
-    code = runner._run_suite(
-        _args("json", str(report_path)),
-        [],
-        str(tmp_path),
-        [("stub", "validate_stub.py", "Stub")],
-        str(tmp_path),
-    )
+    code = _run_stub(tmp_path, _args("json", str(report_path)))
 
     assert code == 0
     assert report_path.exists()
@@ -152,13 +145,7 @@ def test_both_output_without_extension_uses_distinct_files(tmp_path, monkeypatch
     report_path = tmp_path / "report"
     monkeypatch.setattr(runner, "launch_validator", _launcher_with([]))
 
-    code = runner._run_suite(
-        _args("both", str(report_path)),
-        [],
-        str(tmp_path),
-        [("stub", "validate_stub.py", "Stub")],
-        str(tmp_path),
-    )
+    code = _run_stub(tmp_path, _args("both", str(report_path)))
 
     assert code == 0
     assert "COMBINED VALIDATION REPORT" in report_path.read_text(encoding="utf-8")
@@ -181,13 +168,7 @@ def test_json_without_output_prints_json_for_findings(tmp_path, monkeypatch, cap
     ]
     monkeypatch.setattr(runner, "launch_validator", _launcher_with(issues, 1))
 
-    code = runner._run_suite(
-        _args("json", strict=True),
-        [],
-        str(tmp_path),
-        [("stub", "validate_stub.py", "Stub")],
-        str(tmp_path),
-    )
+    code = _run_stub(tmp_path, _args("json", strict=True))
 
     captured = capsys.readouterr()
     try:
@@ -213,13 +194,7 @@ def test_persist_results_copies_json_sidecars(tmp_path, monkeypatch):
     monkeypatch.setattr(runner, "launch_validator", _launcher_with(issues))
     persist_dir = tmp_path / "persisted"
 
-    code = runner._run_suite(
-        _args("both", persist_results=str(persist_dir)),
-        [],
-        str(tmp_path),
-        [("stub", "validate_stub.py", "Stub")],
-        str(tmp_path),
-    )
+    code = _run_stub(tmp_path, _args("both", persist_results=str(persist_dir)))
 
     assert code == 0
     try:
@@ -238,13 +213,7 @@ def test_persist_results_writes_completion_marker_when_clean(tmp_path, monkeypat
     persist_dir.mkdir()
     (persist_dir / "stale.json").write_text("[]", encoding="utf-8")
 
-    code = runner._run_suite(
-        _args("both", persist_results=str(persist_dir)),
-        [],
-        str(tmp_path),
-        [("stub", "validate_stub.py", "Stub")],
-        str(tmp_path),
-    )
+    code = _run_stub(tmp_path, _args("both", persist_results=str(persist_dir)))
 
     assert code == 0
     assert list(persist_dir.glob("*.json")) == []
@@ -274,13 +243,7 @@ def test_persist_results_copy_failure_propagates(tmp_path, monkeypatch):
     persist_dir = tmp_path / "persisted"
 
     with pytest.raises(OSError, match="disk full"):
-        runner._run_suite(
-            _args("both", persist_results=str(persist_dir)),
-            [],
-            str(tmp_path),
-            [("stub", "validate_stub.py", "Stub")],
-            str(tmp_path),
-        )
+        _run_stub(tmp_path, _args("both", persist_results=str(persist_dir)))
 
 
 def test_crashed_validator_fails_run_without_strict(tmp_path, monkeypatch, capsys):
@@ -288,13 +251,7 @@ def test_crashed_validator_fails_run_without_strict(tmp_path, monkeypatch, capsy
     # infrastructure failure and must fail the run even when --strict is off.
     monkeypatch.setattr(runner, "launch_validator", _launcher_with([], returncode=2))
 
-    code = runner._run_suite(
-        _args("both", strict=False),
-        [],
-        str(tmp_path),
-        [("stub", "validate_stub.py", "Stub")],
-        str(tmp_path),
-    )
+    code = _run_stub(tmp_path, _args("both", strict=False))
 
     captured = capsys.readouterr()
     assert code == 1
@@ -304,13 +261,7 @@ def test_crashed_validator_fails_run_without_strict(tmp_path, monkeypatch, capsy
 def test_clean_run_passes_without_strict(tmp_path, monkeypatch):
     monkeypatch.setattr(runner, "launch_validator", _launcher_with([], returncode=0))
 
-    code = runner._run_suite(
-        _args("both", strict=False),
-        [],
-        str(tmp_path),
-        [("stub", "validate_stub.py", "Stub")],
-        str(tmp_path),
-    )
+    code = _run_stub(tmp_path, _args("both", strict=False))
 
     assert code == 0
 
@@ -331,13 +282,7 @@ def test_findings_without_strict_do_not_fail(tmp_path, monkeypatch):
         runner, "launch_validator", _launcher_with(issues, returncode=0)
     )
 
-    code = runner._run_suite(
-        _args("both", strict=False),
-        [],
-        str(tmp_path),
-        [("stub", "validate_stub.py", "Stub")],
-        str(tmp_path),
-    )
+    code = _run_stub(tmp_path, _args("both", strict=False))
 
     assert code == 0
 
@@ -347,13 +292,7 @@ def test_both_without_output_prints_json_and_human_report(
 ):
     monkeypatch.setattr(runner, "launch_validator", _launcher_with([]))
 
-    code = runner._run_suite(
-        _args("both"),
-        [],
-        str(tmp_path),
-        [("stub", "validate_stub.py", "Stub")],
-        str(tmp_path),
-    )
+    code = _run_stub(tmp_path, _args("both"))
 
     stdout = capsys.readouterr().out
     assert code == 0

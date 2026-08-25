@@ -5,20 +5,22 @@ Millennium Dawn Idea Standardizer
 Standardizes HOI4 idea files according to Millennium Dawn coding standards
 """
 
-import os
 import re
 import time
 from typing import Any, Dict, List
 
-from _common import format_elapsed
-from common_utils import PROP_NAME_RE, BaseStandardizer, run_standardizer
+from common_utils import (
+    PROP_NAME_RE,
+    BaseStandardizer,
+    read_lines_for_standardization,
+    run_standardizer,
+    write_standardized_output,
+)
 from shared_utils import (
-    atomic_write_text,
     blank_quoted_strings,
     collapse_or_compact,
     extract_block,
     log_message,
-    normalize_spacing,
     strip_inline_comment,
 )
 
@@ -474,39 +476,19 @@ class IdeaStandardizer(BaseStandardizer):
     def standardize_file(self, input_file: str, output_file: str) -> bool:
         """Standardize ideas file by handling nested structure properly"""
         self.start_time = time.time()
-        log_message("INFO", f"Starting standardization of {input_file}", self.verbose)
-
-        if not os.path.exists(input_file):
-            log_message("ERROR", f"Input file not found: {input_file}")
-            return False
-
-        try:
-            with open(input_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-            log_message(
-                "INFO", f"Read {len(lines)} lines from {input_file}", self.verbose
-            )
-        except Exception as e:
-            log_message("ERROR", f"Failed to read {input_file}: {e}")
+        lines = read_lines_for_standardization(input_file, verbose=self.verbose)
+        if lines is None:
             return False
 
         output_lines = self._process_lines(lines, depth=0)
 
-        try:
-            output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
-            atomic_write_text(output_file, output)
-
-            time_str = format_elapsed(time.time() - self.start_time)
-
-            log_message("SUCCESS", f"Standardization completed in {time_str}")
-            log_message("SUCCESS", f"Processed {self.processed_count} ideas")
-            log_message("SUCCESS", f"Output written to: {output_file}")
-
-        except Exception as e:
-            log_message("ERROR", f"Failed to write {output_file}: {e}")
-            return False
-
-        return True
+        return write_standardized_output(
+            output_file,
+            output_lines,
+            start_time=self.start_time,
+            processed_count=self.processed_count,
+            unit_label="ideas",
+        )
 
     def _process_lines(
         self, lines: List[str], depth: int, mode: str = "root"

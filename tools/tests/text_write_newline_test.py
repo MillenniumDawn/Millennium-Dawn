@@ -12,11 +12,9 @@ required instead.
 
 import ast
 import os
-import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TOOLS_ROOT = os.path.join(REPO_ROOT, "tools")
-sys.path.insert(0, TOOLS_ROOT)
 from shared_utils import read_text_under
 
 # Deliberate exemptions, as "<repo-relative path>:<line>". Add an entry only for

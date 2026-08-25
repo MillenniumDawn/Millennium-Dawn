@@ -1,12 +1,6 @@
 """Failure handling tests for the logging tool."""
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-import logging_tool  # noqa: E402
+import logging_tool
 
 
 def test_idea_add_fails_when_output_cannot_be_written(tmp_path, monkeypatch):

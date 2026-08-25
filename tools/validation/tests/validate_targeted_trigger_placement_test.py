@@ -1,29 +1,6 @@
 """Tests for the targeted-decision trigger-placement performance checks."""
 
-import validate_decisions as V
-
-
-class _FakeValidator(V.Validator):
-    """Validator whose _report collects results instead of rendering."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.collected = []
-
-    def _report(self, results, ok_msg, fail_msg, severity=None, category=""):
-        self.collected.extend(results)
-
-
-def _results_for(factories, monkeypatch, check):
-    validator = _FakeValidator("/tmp")
-    monkeypatch.setattr(V, "parse_all_decision_factories", lambda mod_path: factories)
-    getattr(validator, check)()
-    return validator.collected
-
-
-def _factory(body):
-    return V.DecisionFactory(body, source_basename="X.txt")
-
+from .conftest import _factory, results_for
 
 TARGETS_BLOCK = "\ttargets = {\n\t\tTAG\n\t}\n"
 TARGET_ROOT_TRIGGER_BLOCK = "\ttarget_root_trigger = {\n\t\thas_capital = yes\n\t}\n"
@@ -51,14 +28,14 @@ def _dec(token, *field_blocks):
 def test_root_only_check_skips_visible_referencing_from(monkeypatch):
     factory = _factory(_dec("dec_c1_clean", TARGETS_BLOCK, VISIBLE_WITH_FROM))
     assert (
-        _results_for([factory], monkeypatch, "validate_root_only_visible_on_targeted")
+        results_for([factory], monkeypatch, "validate_root_only_visible_on_targeted")
         == []
     )
 
 
 def test_root_only_visible_flagged(monkeypatch):
     factory = _factory(_dec("dec_c1_violation", TARGETS_BLOCK, VISIBLE_ROOT_ONLY))
-    results = _results_for(
+    results = results_for(
         [factory], monkeypatch, "validate_root_only_visible_on_targeted"
     )
     assert len(results) == 1
@@ -71,7 +48,7 @@ def test_root_only_check_exempts_allowed_always_no(monkeypatch):
         _dec("dec_c1_alwaysno", TARGETS_BLOCK, VISIBLE_ROOT_ONLY, ALLOWED_ALWAYS_NO)
     )
     assert (
-        _results_for([factory], monkeypatch, "validate_root_only_visible_on_targeted")
+        results_for([factory], monkeypatch, "validate_root_only_visible_on_targeted")
         == []
     )
 
@@ -81,7 +58,7 @@ def test_root_only_check_exempts_state_target(monkeypatch):
         _dec("dec_c1_statetarget", TARGETS_BLOCK, VISIBLE_ROOT_ONLY, STATE_TARGET_YES)
     )
     assert (
-        _results_for([factory], monkeypatch, "validate_root_only_visible_on_targeted")
+        results_for([factory], monkeypatch, "validate_root_only_visible_on_targeted")
         == []
     )
 
@@ -89,7 +66,7 @@ def test_root_only_check_exempts_state_target(monkeypatch):
 def test_root_only_check_ignores_non_targeted_decision(monkeypatch):
     factory = _factory(_dec("dec_c1_nontargeted", VISIBLE_ROOT_ONLY))
     assert (
-        _results_for([factory], monkeypatch, "validate_root_only_visible_on_targeted")
+        results_for([factory], monkeypatch, "validate_root_only_visible_on_targeted")
         == []
     )
 
@@ -104,7 +81,7 @@ def test_root_only_check_skips_when_target_root_trigger_present(monkeypatch):
         )
     )
     assert (
-        _results_for([factory], monkeypatch, "validate_root_only_visible_on_targeted")
+        results_for([factory], monkeypatch, "validate_root_only_visible_on_targeted")
         == []
     )
 
@@ -114,14 +91,14 @@ def test_root_only_check_skips_when_target_root_trigger_present(monkeypatch):
 
 def test_from_in_visible_check_skips_visible_without_from(monkeypatch):
     factory = _factory(_dec("dec_c2_clean", TARGET_TRIGGER_NO_FROM, VISIBLE_ROOT_ONLY))
-    assert _results_for([factory], monkeypatch, "validate_from_checks_in_visible") == []
+    assert results_for([factory], monkeypatch, "validate_from_checks_in_visible") == []
 
 
 def test_from_in_visible_flagged_with_move_advice(monkeypatch):
     factory = _factory(
         _dec("dec_c2_violation", TARGET_TRIGGER_NO_FROM, VISIBLE_WITH_FROM)
     )
-    results = _results_for([factory], monkeypatch, "validate_from_checks_in_visible")
+    results = results_for([factory], monkeypatch, "validate_from_checks_in_visible")
     assert len(results) == 1
     assert "dec_c2_violation" in results[0]
     assert "move" in results[0]
@@ -136,7 +113,7 @@ def test_from_in_visible_check_exempts_allowed_always_no(monkeypatch):
             ALLOWED_ALWAYS_NO,
         )
     )
-    assert _results_for([factory], monkeypatch, "validate_from_checks_in_visible") == []
+    assert results_for([factory], monkeypatch, "validate_from_checks_in_visible") == []
 
 
 def test_from_in_visible_check_exempts_state_target(monkeypatch):
@@ -148,12 +125,12 @@ def test_from_in_visible_check_exempts_state_target(monkeypatch):
             STATE_TARGET_YES,
         )
     )
-    assert _results_for([factory], monkeypatch, "validate_from_checks_in_visible") == []
+    assert results_for([factory], monkeypatch, "validate_from_checks_in_visible") == []
 
 
 def test_from_in_visible_check_ignores_decision_without_target_trigger(monkeypatch):
     factory = _factory(_dec("dec_c2_nontargeted", VISIBLE_WITH_FROM))
-    assert _results_for([factory], monkeypatch, "validate_from_checks_in_visible") == []
+    assert results_for([factory], monkeypatch, "validate_from_checks_in_visible") == []
 
 
 def test_from_in_visible_identical_to_target_trigger_gets_deletion_advice(
@@ -162,7 +139,7 @@ def test_from_in_visible_identical_to_target_trigger_gets_deletion_advice(
     factory = _factory(
         _dec("dec_c2_duplicate", TARGET_TRIGGER_WITH_FROM, VISIBLE_WITH_FROM)
     )
-    results = _results_for([factory], monkeypatch, "validate_from_checks_in_visible")
+    results = results_for([factory], monkeypatch, "validate_from_checks_in_visible")
     assert len(results) == 1
     assert "dec_c2_duplicate" in results[0]
     assert "delete" in results[0]

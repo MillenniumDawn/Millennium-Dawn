@@ -85,6 +85,28 @@ def _guard_data(fpath, tmp_path, staffable=STAFFABLE_MAP, money=frozenset()):
     return _extract_ai_guard_data((str(fpath), str(tmp_path), staffable, money))
 
 
+def _write_worker_focus(tmp_path, reward, modifiers=""):
+    return _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=modifiers),
+    )
+
+
+def _worker_data(tmp_path, reward, modifiers="", *, money=frozenset()):
+    return _guard_data(
+        _write_worker_focus(tmp_path, reward, modifiers), tmp_path, money=money
+    )
+
+
+def _run_focus_guard_check(tmp_path, reward, modifiers="", *, effects=""):
+    _write_effects_file(tmp_path, extra=effects)
+    _write_focus_file(
+        tmp_path,
+        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=modifiers),
+    )
+    return _run_check(tmp_path)
+
+
 def _spend(amount):
     """A reward that sets treasury_change and applies it via the budget effect."""
     return (
@@ -157,16 +179,7 @@ def test_scripted_effect_sources_are_read_once_for_both_indexes(tmp_path, monkey
 
 
 def test_worker_rejects_or_guard_form(tmp_path):
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(
-            cost=2,
-            extra="",
-            reward="one_random_industrial_complex = yes",
-            modifiers=GUARD_OR_FORM,
-        ),
-    )
-    out = _guard_data(fpath, tmp_path)
+    out = _worker_data(tmp_path, "one_random_industrial_complex = yes", GUARD_OR_FORM)
     assert len(out) == 1
     d = out[0]
     assert d["buildings"] == {"industrial_complex"}
@@ -181,14 +194,8 @@ def test_worker_credits_and_guard_form(tmp_path):
 					can_staff_an_industrial_complex = no
 				}
 			}"""
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(
-            cost=2,
-            extra="",
-            reward="one_random_industrial_complex = yes",
-            modifiers=modifiers,
-        ),
+    fpath = _write_worker_focus(
+        tmp_path, "one_random_industrial_complex = yes", modifiers
     )
     out = _guard_data(fpath, tmp_path)
     assert out[0]["guards"] == {
@@ -205,10 +212,7 @@ def test_worker_detects_direct_add_building_construction(tmp_path):
         "				instant_build = yes\n"
         "			}"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     out = _guard_data(fpath, tmp_path)
     assert out[0]["buildings"] == {"arms_factory"}
     assert out[0]["guards"] == set()
@@ -230,10 +234,7 @@ def test_worker_ignores_building_inside_effect_tooltip(tmp_path):
         "				}\n"
         "			}"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     out = _guard_data(fpath, tmp_path)
     assert out[0]["buildings"] == set()
 
@@ -241,10 +242,7 @@ def test_worker_ignores_building_inside_effect_tooltip(tmp_path):
 def test_worker_ignores_builder_effect_inside_effect_tooltip(tmp_path):
     """Same rule for a scripted builder effect named inside the preview."""
     reward = "effect_tooltip = {\n				one_random_industrial_complex = yes\n			}"
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     out = _guard_data(fpath, tmp_path)
     assert out[0]["buildings"] == set()
 
@@ -261,10 +259,7 @@ def test_worker_still_sees_building_outside_effect_tooltip(tmp_path):
         "				one_random_industrial_complex = yes\n"
         "			}"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     out = _guard_data(fpath, tmp_path)
     assert out[0]["buildings"] == {"arms_factory"}
 
@@ -274,14 +269,8 @@ def test_worker_ignores_nonzero_factor_modifiers(tmp_path):
 				factor = 0.5
 				can_staff_an_industrial_complex = no
 			}"""
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(
-            cost=2,
-            extra="",
-            reward="one_random_industrial_complex = yes",
-            modifiers=modifiers,
-        ),
+    fpath = _write_worker_focus(
+        tmp_path, "one_random_industrial_complex = yes", modifiers
     )
     out = _guard_data(fpath, tmp_path)
     assert out[0]["guards"] == set()
@@ -292,14 +281,8 @@ def test_worker_credits_not_yes_guard_form(tmp_path):
 				factor = 0
 				NOT = { can_staff_an_industrial_complex = yes }
 			}"""
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(
-            cost=2,
-            extra="",
-            reward="one_random_industrial_complex = yes",
-            modifiers=modifiers,
-        ),
+    fpath = _write_worker_focus(
+        tmp_path, "one_random_industrial_complex = yes", modifiers
     )
     out = _guard_data(fpath, tmp_path)
     assert "can_staff_an_industrial_complex" in out[0]["guards"]
@@ -312,10 +295,7 @@ def test_worker_credits_not_yes_guard_form(tmp_path):
 
 def test_worker_sums_negative_treasury_spend(tmp_path):
     reward = _spend(-7) + "\n			" + _spend(-3)
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["spend"] == 10.0
     assert d["has_cost"] is True
@@ -323,11 +303,7 @@ def test_worker_sums_negative_treasury_spend(tmp_path):
 
 
 def test_worker_ignores_positive_treasury_income(tmp_path):
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=_spend(50), modifiers=""),
-    )
-    d = _guard_data(fpath, tmp_path)[0]
+    d = _worker_data(tmp_path, _spend(50))[0]
     assert d["spend"] == 0.0
     assert d["has_cost"] is False
 
@@ -337,10 +313,7 @@ def test_worker_computed_treasury_change_is_unknown(tmp_path):
         "set_temp_variable = { treasury_change = { value = 5 multiply = -1 } }\n"
         "			modify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["spend"] == 0.0
     assert d["has_cost"] is True
@@ -355,10 +328,7 @@ def test_worker_gdp_multiply_idiom_is_unknown(tmp_path):
         "			multiply_temp_variable = { treasury_change = -0.05 }\n"
         "			modify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["has_cost"] is True
     assert d["unknown"] is True
@@ -369,10 +339,7 @@ def test_worker_bare_identifier_set_is_unknown(tmp_path):
         "set_temp_variable = { treasury_change = needed_money }\n"
         "			modify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["has_cost"] is True
     assert d["unknown"] is True
@@ -380,10 +347,7 @@ def test_worker_bare_identifier_set_is_unknown(tmp_path):
 
 def test_worker_ignores_spend_inside_effect_tooltip(tmp_path):
     reward = "effect_tooltip = {\n			" + _spend(-20) + "\n			}"
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["spend"] == 0.0
     assert d["has_cost"] is False
@@ -391,13 +355,7 @@ def test_worker_ignores_spend_inside_effect_tooltip(tmp_path):
 
 def test_worker_detects_money_scripted_effect(tmp_path):
     d_effects = frozenset({"spend_money_effect"})
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(
-            cost=2, extra="", reward="spend_money_effect = yes", modifiers=""
-        ),
-    )
-    d = _guard_data(fpath, tmp_path, money=d_effects)[0]
+    d = _worker_data(tmp_path, "spend_money_effect = yes", money=d_effects)[0]
     assert d["has_cost"] is True
     assert d["unknown"] is True
 
@@ -407,10 +365,7 @@ def test_worker_detects_treasury_effect_corruption_variant(tmp_path):
         "set_temp_variable = { treasury_change = -7 }\n"
         "			modify_treasury_effect_corruption = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["has_cost"] is True
     assert d["unknown"] is True
@@ -425,10 +380,7 @@ def test_worker_takes_max_spend_across_if_else(tmp_path):
         "			else = { set_temp_variable = { treasury_change = -3.5 } }\n"
         "			modify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["spend"] == 14.0
     assert d["has_cost"] is True
@@ -440,10 +392,7 @@ def test_worker_apply_twice_reuses_treasury_change(tmp_path):
         "			modify_treasury_effect = yes\n"
         "			modify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["spend"] == 6.0
 
@@ -608,10 +557,7 @@ def test_worker_gdp_multiply_by_positive_is_income(tmp_path):
         "			multiply_temp_variable = { treasury_change = 0.05 }\n"
         "			modify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["spend"] == 0.0
     assert d["has_cost"] is False
@@ -624,10 +570,7 @@ def test_worker_signed_variable_positive_multiply_is_unknown(tmp_path):
         "\t\t\tmultiply_temp_variable = { treasury_change = 0.05 }\n"
         "\t\t\tmodify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["has_cost"] is True
     assert d["unknown"] is True
@@ -641,10 +584,7 @@ def test_worker_gdp_per_capita_multiply_by_positive_is_income(tmp_path):
         "\t\t\tmultiply_temp_variable = { treasury_change = 0.18 }\n"
         "\t\t\tmodify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["has_cost"] is False
     assert d["unknown"] is False
@@ -658,10 +598,7 @@ def test_worker_scoped_gdp_source_keeps_its_sign(tmp_path):
         "\t\t\tmultiply_temp_variable = { treasury_change = 0.02 }\n"
         "\t\t\tmodify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["has_cost"] is False
     assert d["unknown"] is False
@@ -673,10 +610,7 @@ def test_worker_scoped_unknown_source_stays_unknown(tmp_path):
         "\t\t\tmultiply_temp_variable = { treasury_change = 0.07 }\n"
         "\t\t\tmodify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["has_cost"] is True
     assert d["unknown"] is True
@@ -697,10 +631,7 @@ def test_worker_branching_negative_scales_do_not_cancel(tmp_path):
         "			}\n"
         "			modify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["has_cost"] is True
     assert d["unknown"] is True
@@ -720,10 +651,7 @@ def test_worker_negative_branch_survives_a_later_gdp_income_branch(tmp_path):
         "			}\n"
         "			modify_treasury_effect = yes"
     )
-    fpath = _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=""),
-    )
+    fpath = _write_worker_focus(tmp_path, reward, "")
     d = _guard_data(fpath, tmp_path)[0]
     assert d["has_cost"] is True
     assert d["unknown"] is True

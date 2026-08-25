@@ -375,28 +375,28 @@ def test_step_summary_baseline_section_when_nothing_new():
     assert "✅ No new findings against the main baseline." in body
 
 
-def test_warning_verdict_counts_new_against_baseline():
+def _warning_verdict_body(new_warnings):
     runs = [
         ValidatorRun(
             name="events", title="Events", status="warnings", errors=0, warnings=5
         )
     ]
-    body = render(
-        [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=0, new_warnings=3)
+    return render(
+        [runs[0]],
+        [],
+        _ctx(),
+        baseline_stats=_stats(new_errors=0, new_warnings=new_warnings),
     )
+
+
+def test_warning_verdict_counts_new_against_baseline():
+    body = _warning_verdict_body(3)
     assert "5 warnings to review. None block merge." in body
     assert "(3 new warnings against the main baseline.)" in body
 
 
 def test_warning_verdict_says_none_new():
-    runs = [
-        ValidatorRun(
-            name="events", title="Events", status="warnings", errors=0, warnings=5
-        )
-    ]
-    body = render(
-        [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=0, new_warnings=0)
-    )
+    body = _warning_verdict_body(0)
     assert "(none new against the main baseline.)" in body
 
 
