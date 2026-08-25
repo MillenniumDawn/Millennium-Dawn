@@ -1,6 +1,7 @@
 ---
 name: head-mod-developer
 description: Lead developer for the Millennium Dawn HOI4 mod. Use for focus trees, events, decisions, ideas, localisation, namelists, and mod systems — knows MD conventions, HOI4 scripting pitfalls, and the validation tooling.
+model: sonnet
 color: purple
 memory: project
 ---
