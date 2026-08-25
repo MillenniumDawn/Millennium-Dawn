@@ -119,11 +119,13 @@ def test_shape_match_without_real_archetype_stays_reported(tmp_path):
     assert any("GFX_ALG_Autocracy_small" in i.message for i in v._issues)
 
 
-def test_unused_check_logs_notice_when_equipment_dir_missing(tmp_path, monkeypatch):
-    logged = []
-    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
-    monkeypatch.setattr(v, "log", lambda msg, *a, **k: logged.append(msg))
-    v._check_unused_sprites(defined=set(), all_refs=set())
+def test_unused_check_logs_notice_when_equipment_dir_missing(tmp_path, gfx_notices):
+    logged = gfx_notices(
+        tmp_path,
+        lambda validator: validator._check_unused_sprites(
+            defined=set(), all_refs=set()
+        ),
+    )
     assert any("equipment" in msg for msg in logged)
 
 
@@ -147,11 +149,13 @@ def test_load_technology_names_refresh_after_edit(tmp_path, monkeypatch):
     assert vg._load_technology_names(str(tmp_path)) == frozenset({"MBT_2"})
 
 
-def test_unused_check_logs_notice_when_technology_dir_missing(tmp_path, monkeypatch):
-    logged = []
-    v = GfxReferenceValidator(str(tmp_path), use_colors=False)
-    monkeypatch.setattr(v, "log", lambda msg, *a, **k: logged.append(msg))
-    v._check_unused_sprites(defined=set(), all_refs=set())
+def test_unused_check_logs_notice_when_technology_dir_missing(tmp_path, gfx_notices):
+    logged = gfx_notices(
+        tmp_path,
+        lambda validator: validator._check_unused_sprites(
+            defined=set(), all_refs=set()
+        ),
+    )
     assert any("technologies" in msg for msg in logged)
 
 

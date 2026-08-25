@@ -9,16 +9,9 @@ nothing was never in the set and the check was dead.
 from validate_unused_textures import Validator
 
 
-def _write(mod_path, rel_path, content=""):
-    p = mod_path / rel_path
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(content, encoding="utf-8")
-    return p
-
-
-def test_referenced_but_missing_texture_is_reported(tmp_path):
-    _write(tmp_path, "gfx/present/real.dds")
-    _write(
+def test_referenced_but_missing_texture_is_reported(tmp_path, write_path):
+    write_path(tmp_path, "gfx/present/real.dds")
+    write_path(
         tmp_path,
         "interface/test.gfx",
         "spriteTypes = {\n"

@@ -43,11 +43,14 @@ def _should_skip(filename: str) -> bool:
 # --- Multiprocessing helpers ---
 
 
+def _loc_body_lines(filename: str) -> List[str]:
+    return FileOpener.open_text_file(filename, strip_comments_flag=True).split("\n")[1:]
+
+
 def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    lines = text_file.split("\n")[1:]
+    lines = _loc_body_lines(filename)
     for line_idx, line in enumerate(lines):
         if line.count("[") != line.count("]"):
             results.append(
@@ -216,8 +219,7 @@ _TYPO_RUNTIME_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$[\w.@|+\-]+\$|£[\w.@\-]+
 def process_yml_for_typos(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    lines = text_file.split("\n")[1:]
+    lines = _loc_body_lines(filename)
     for line_idx, line in enumerate(lines):
         if not line.strip():
             continue
