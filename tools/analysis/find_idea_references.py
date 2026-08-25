@@ -7,15 +7,17 @@ Usage:
     python3 tools/find_idea_references.py common/ideas/American.txt --show-all
 """
 
-import os
 import re
-import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+from _shared import (  # noqa: E402
+    REPO_ROOT,
+    compile_token_regex,
+    configure_import_paths,
+    iter_readable_files,
+)
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, str(REPO_ROOT / "tools"))
+configure_import_paths()
 
 from _reference_finder import build_parser, run_reference_search  # noqa: E402
 from shared_utils import strip_inline_comment  # noqa: E402
@@ -103,33 +105,22 @@ def make_idea_searcher(search_dirs: list[Path]):
         refs: dict[str, list[tuple[str, int, str]]] = {name: [] for name in names}
         if not names:
             return refs
-        token_re = re.compile(
-            r"(?<![\w])(?:" + "|".join(map(re.escape, names)) + r")(?![\w])"
-        )
-        for search_dir in search_dirs:
-            if not search_dir.is_dir():
-                continue
-            for txt_file in search_dir.rglob("*.txt"):
-                try:
-                    lines = txt_file.read_text(
-                        encoding="utf-8", errors="replace"
-                    ).splitlines()
-                except OSError:
-                    continue
-                rel = str(txt_file.relative_to(REPO_ROOT))
-                block_depth = 0
-                for i, line in enumerate(lines, 1):
-                    in_block = block_depth > 0
-                    hits = set(token_re.findall(line))
-                    if hits and (any(re.search(p, line) for p in PATTERNS) or in_block):
-                        for name in hits:
-                            if any(re.search(p, line) for p in PATTERNS) or in_block:
-                                refs[name].append((rel, i, line.strip()))
-                    if in_block or IDEA_BLOCK_RE.search(line):
-                        code = strip_inline_comment(line)
-                        block_depth += code.count("{") - code.count("}")
-                        if block_depth < 0:
-                            block_depth = 0
+        token_re = compile_token_regex(names)
+        for txt_file, lines in iter_readable_files(search_dirs, ("*.txt",)):
+            rel = str(txt_file.relative_to(REPO_ROOT))
+            block_depth = 0
+            for i, line in enumerate(lines, 1):
+                in_block = block_depth > 0
+                hits = set(token_re.findall(line))
+                if hits and (any(re.search(p, line) for p in PATTERNS) or in_block):
+                    for name in hits:
+                        if any(re.search(p, line) for p in PATTERNS) or in_block:
+                            refs[name].append((rel, i, line.strip()))
+                if in_block or IDEA_BLOCK_RE.search(line):
+                    code = strip_inline_comment(line)
+                    block_depth += code.count("{") - code.count("}")
+                    if block_depth < 0:
+                        block_depth = 0
         return refs
 
     return search

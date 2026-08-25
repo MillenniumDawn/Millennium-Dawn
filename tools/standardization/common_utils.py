@@ -132,6 +132,81 @@ def emit_comments(lines: List[str], comments: List[str]) -> None:
             lines.append(comment.rstrip())
 
 
+def read_lines_for_standardization(
+    input_file: str, *, verbose: bool = False
+) -> List[str] | None:
+    """Log the start of standardization and read input_file's lines.
+
+    Returns None (after logging the failure) if the file is missing or
+    unreadable, so callers can propagate that as a standardize_file False.
+    """
+    log_message("INFO", f"Starting standardization of {input_file}", verbose)
+
+    if not os.path.exists(input_file):
+        log_message("ERROR", f"Input file not found: {input_file}")
+        return None
+
+    try:
+        with open(input_file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        log_message("INFO", f"Read {len(lines)} lines from {input_file}", verbose)
+    except Exception as e:
+        log_message("ERROR", f"Failed to read {input_file}: {e}")
+        return None
+
+    return lines
+
+
+def write_standardized_output(
+    output_file: str,
+    output_lines: List[str],
+    *,
+    start_time: float,
+    processed_count: int,
+    unit_label: str = "blocks",
+) -> bool:
+    """Join, write, and log the result of a standardizer's output lines.
+
+    Returns True on success, False (after logging) if the write fails.
+    """
+    try:
+        output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
+        atomic_write_text(output_file, output)
+
+        time_str = format_elapsed(time.time() - start_time)
+
+        log_message("SUCCESS", f"Standardization completed in {time_str}")
+        log_message("SUCCESS", f"Processed {processed_count} {unit_label}")
+        log_message("SUCCESS", f"Output written to: {output_file}")
+
+    except Exception as e:
+        log_message("ERROR", f"Failed to write {output_file}: {e}")
+        return False
+
+    return True
+
+
+def resolve_output_file_and_backup(args: argparse.Namespace) -> str:
+    """Validate args.input_file exists, optionally back it up, and return the
+    resolved output path (args.output, or args.input_file if unset).
+
+    Exits the process (sys.exit(1)) if the input file is missing or the
+    backup fails, matching every standardizer CLI's existing behavior.
+    """
+    if not os.path.exists(args.input_file):
+        log_message("ERROR", f"File '{args.input_file}' does not exist")
+        sys.exit(1)
+
+    output_file = args.output if args.output else args.input_file
+
+    if args.backup:
+        backup_file = create_backup(args.input_file)
+        if not backup_file:
+            sys.exit(1)
+
+    return output_file
+
+
 class BaseStandardizer(ABC):
     """Base class for all standardizers"""
 
@@ -157,20 +232,8 @@ class BaseStandardizer(ABC):
 
     def standardize_file(self, input_file: str, output_file: str) -> bool:
         """Standardize file by processing blocks of the target type"""
-        log_message("INFO", f"Starting standardization of {input_file}", self.verbose)
-
-        if not os.path.exists(input_file):
-            log_message("ERROR", f"Input file not found: {input_file}")
-            return False
-
-        try:
-            with open(input_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-            log_message(
-                "INFO", f"Read {len(lines)} lines from {input_file}", self.verbose
-            )
-        except Exception as e:
-            log_message("ERROR", f"Failed to read {input_file}: {e}")
+        lines = read_lines_for_standardization(input_file, verbose=self.verbose)
+        if lines is None:
             return False
 
         output_lines = []
@@ -207,21 +270,12 @@ class BaseStandardizer(ABC):
             log_message("INFO", "No blocks matched — skipping file write")
             return True
 
-        try:
-            output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
-            atomic_write_text(output_file, output)
-
-            time_str = format_elapsed(time.time() - self.start_time)
-
-            log_message("SUCCESS", f"Standardization completed in {time_str}")
-            log_message("SUCCESS", f"Processed {self.processed_count} blocks")
-            log_message("SUCCESS", f"Output written to: {output_file}")
-
-        except Exception as e:
-            log_message("ERROR", f"Failed to write {output_file}: {e}")
-            return False
-
-        return True
+        return write_standardized_output(
+            output_file,
+            output_lines,
+            start_time=self.start_time,
+            processed_count=self.processed_count,
+        )
 
 
 def create_standardizer_parser(description: str) -> argparse.ArgumentParser:

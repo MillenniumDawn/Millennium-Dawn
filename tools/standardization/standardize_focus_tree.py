@@ -6,7 +6,6 @@ Reformats focus blocks and focus tree properties (shortcuts, inlay windows, offs
 """
 
 import argparse
-import os
 import re
 import sys
 import time
@@ -19,13 +18,14 @@ from common_utils import (
     compact_icon,
     compact_search_filters,
     join_groups,
+    read_lines_for_standardization,
+    resolve_output_file_and_backup,
 )
 from shared_utils import (
     atomic_write_text,
     blank_quoted_strings,
     collapse_or_compact,
     convert_root_factor_to_base,
-    create_backup,
     extract_block,
     log_message,
     normalize_spacing,
@@ -403,15 +403,10 @@ def _passthrough_single_line(block_lines, indent):
     return [f"{indent}{block_lines[0].strip()}"]
 
 
-def format_focus_offset_block(block_lines):
-    """Format offset block within a focus (with 2-tab base indentation)"""
-    passthrough = _passthrough_single_line(block_lines, "\t\t")
-    if passthrough is not None:
-        return passthrough
-
-    lines = []
-    lines.append("\t\toffset = {")
-
+def _extract_offset_fields(block_lines):
+    """Scan an offset block's inner lines for x, y, and trigger, collecting
+    everything else in source order. Shared by every offset-shaped block
+    (top-level and the one nested inside a focus)."""
     x_val = ""
     y_val = ""
     trigger_lines = []
@@ -435,21 +430,12 @@ def format_focus_offset_block(block_lines):
 
         i += 1
 
-    if x_val:
-        lines.append(f"\t\t\t{x_val}")
-    if y_val:
-        lines.append(f"\t\t\t{y_val}")
+    return x_val, y_val, trigger_lines, other_lines
 
-    if trigger_lines:
-        for line in collapse_or_compact(trigger_lines[:], indent="\t\t\t"):
-            lines.append(line)
 
-    for line in other_lines:
-        if line.strip():
-            lines.append(line)
-
-    lines.append("\t\t}")
-    return lines
+def format_focus_offset_block(block_lines):
+    """Format an offset block within a focus."""
+    return _format_offset_block(block_lines, "\t\t")
 
 
 def _emit_comments(lines, props, key, index=None):
@@ -642,6 +628,34 @@ def reindent_by_brace_depth(block_lines, base_tabs=0):
     return out
 
 
+def _finish_block_with_trigger(
+    lines, trigger_lines, other_lines, close_indent="\t", trigger_indent=None
+):
+    """Append compacted trigger lines, other lines, and a closing brace."""
+    if trigger_lines:
+        lines.extend(collapse_or_compact(trigger_lines[:], indent=trigger_indent))
+
+    lines.extend(line for line in other_lines if line.strip())
+    lines.append(f"{close_indent}}}")
+    return lines
+
+
+def _format_offset_block(block_lines, indent):
+    passthrough = _passthrough_single_line(block_lines, indent)
+    if passthrough is not None:
+        return passthrough
+
+    x_val, y_val, trigger_lines, other_lines = _extract_offset_fields(block_lines)
+    lines = [f"{indent}offset = {{"]
+    if x_val:
+        lines.append(f"{indent}\t{x_val}")
+    if y_val:
+        lines.append(f"{indent}\t{y_val}")
+    return _finish_block_with_trigger(
+        lines, trigger_lines, other_lines, indent, f"{indent}\t"
+    )
+
+
 def format_shortcut_block(block_lines):
     """Format shortcut block according to standard"""
     passthrough = _passthrough_single_line(block_lines, "\t")
@@ -684,17 +698,7 @@ def format_shortcut_block(block_lines):
     if scroll_wheel_factor:
         lines.append(f"\t\t{scroll_wheel_factor}")
 
-    if trigger_lines:
-        compacted_trigger = collapse_or_compact(trigger_lines[:])
-        for line in compacted_trigger:
-            lines.append(line)
-
-    for line in other_lines:
-        if line.strip():
-            lines.append(line)
-
-    lines.append("\t}")
-    return lines
+    return _finish_block_with_trigger(lines, trigger_lines, other_lines)
 
 
 def format_inlay_window_block(block_lines):
@@ -754,53 +758,8 @@ def format_inlay_window_block(block_lines):
 
 
 def format_offset_block(block_lines):
-    """Format offset block according to standard"""
-    passthrough = _passthrough_single_line(block_lines, "\t")
-    if passthrough is not None:
-        return passthrough
-
-    lines = []
-    lines.append("\toffset = {")
-
-    x_val = ""
-    y_val = ""
-    trigger_lines = []
-    other_lines = []
-
-    i = 1  # Skip opening brace
-    while i < len(block_lines) - 1:  # Skip closing brace
-        line = block_lines[i].strip()
-
-        if line.startswith("x ="):
-            x_val = line
-        elif line.startswith("y ="):
-            y_val = line
-        elif line.startswith("trigger ="):
-            trigger_block, next_i = extract_block(block_lines, i)
-            trigger_lines = trigger_block
-            i = next_i
-            continue
-        else:
-            other_lines.append(block_lines[i])
-
-        i += 1
-
-    if x_val:
-        lines.append(f"\t\t{x_val}")
-    if y_val:
-        lines.append(f"\t\t{y_val}")
-
-    if trigger_lines:
-        compacted_trigger = collapse_or_compact(trigger_lines[:])
-        for line in compacted_trigger:
-            lines.append(line)
-
-    for line in other_lines:
-        if line.strip():
-            lines.append(line)
-
-    lines.append("\t}")
-    return lines
+    """Format a top-level offset block."""
+    return _format_offset_block(block_lines, "\t")
 
 
 def format_continuous_focus_position_block(block_lines):
@@ -858,14 +817,15 @@ def format_initial_show_position_block(block_lines):
             elif key == "focus":
                 focus_val = f"focus = {value}"
 
+    if len(block_lines) > 1:
+        x_val, y_val, _, _ = _extract_offset_fields(block_lines)
+
     i = 1  # Skip opening brace
     while i < len(block_lines) - 1:  # Skip closing brace
         line = block_lines[i].strip()
 
-        if line.startswith("x ="):
-            x_val = line
-        elif line.startswith("y ="):
-            y_val = line
+        if line.startswith(("x =", "y =")):
+            pass
         elif line.startswith("focus ="):
             focus_val = line
         elif line.startswith("offset ="):
@@ -949,18 +909,8 @@ def standardize_focus_tree(
     """Standardize focus tree by reformatting focus blocks and all focus tree properties"""
     start_time = time.time()
 
-    log_message("INFO", f"Starting standardization of {input_file}", verbose)
-
-    if not os.path.exists(input_file):
-        log_message("ERROR", f"Input file not found: {input_file}")
-        return False
-
-    try:
-        with open(input_file, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-        log_message("INFO", f"Read {len(lines)} lines from {input_file}", verbose)
-    except Exception as e:
-        log_message("ERROR", f"Failed to read {input_file}: {e}")
+    lines = read_lines_for_standardization(input_file, verbose=verbose)
+    if lines is None:
         return False
 
     output_lines = []
@@ -1077,16 +1027,7 @@ def main():
 
     args = parser.parse_args()
 
-    if not os.path.exists(args.input_file):
-        log_message("ERROR", f"File '{args.input_file}' does not exist")
-        sys.exit(1)
-
-    output_file = args.output if args.output else args.input_file
-
-    if args.backup:
-        backup_file = create_backup(args.input_file)
-        if not backup_file:
-            sys.exit(1)
+    output_file = resolve_output_file_and_backup(args)
 
     log_message(
         "INFO",
