@@ -100,9 +100,7 @@ def test_tech_bonus_name_is_not_a_category_reference(tmp_path):
 
 
 def test_each_unknown_name_is_reported_once(tmp_path):
-    body = "\n".join(
-        f"\tadd_tech_bonus = {{ category = CAT_nope }}" for _ in range(4)
-    )
+    body = "\n".join("\tadd_tech_bonus = { category = CAT_nope }" for _ in range(4))
     v = _run(tmp_path, "events/Test.txt", "country_event = {\n" + body + "\n}\n")
     assert len(_messages(v)) == 1
 
