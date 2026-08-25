@@ -514,7 +514,7 @@ class Validator(BaseValidator):
             results,
             "Pulse on-actions contain no deterministic historical event polling",
             "Dated events polled from pulse on-actions:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="deterministic-date-poll",
         )
 

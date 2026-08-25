@@ -239,7 +239,7 @@ ROM_vadim_struggle = {
 		}
 	}
 	ROM_promote_patriotic_views = {
-		icon = GFX_decision_fascism
+		icon = GFX_decision_fascism_button
 		days_remove = 30
 
 		available = {
@@ -314,6 +314,63 @@ ROM_vadim_struggle = {
 		}
 		ai_will_do = {
 			base = 150
+		}
+	}
+	ROM_ukrainian_ultimatum = {
+		icon = GFX_decision_border_war
+		fire_only_once = yes
+		days_remove = 15
+
+		available = {
+			date > 2013.12.31
+			country_exists = UKR
+			NOT = { has_war_with = UKR }
+			has_capitulated = no
+			OR = {
+				333 = { is_owned_by = UKR is_controlled_by = UKR }
+				335 = { is_owned_by = UKR is_controlled_by = UKR }
+			}
+		}
+		visible = {
+			has_completed_focus = ROM_greater_romania_party
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_ukrainian_ultimatum"
+			add_named_threat = {
+				threat = 3
+				name = ROM_ukrainian_ultimatum
+			}
+			add_opinion_modifier = {
+				target = UKR
+				modifier = imminent_danger_to_national_security
+			}
+			UKR = {
+				country_event = romania_politics.16
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = ROM_ukr_cede_tt
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			custom_effect_tooltip = ROM_ukr_refuse_tt
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = {
+					OR = {
+						UKR = { has_civil_war = yes }
+						UKR = { surrender_progress > 0.2 }
+					}
+				}
+			}
 		}
 	}
 	ROM_vadim_timer = {
@@ -404,6 +461,105 @@ ROM_romanianization_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ROM_122_return"
 			add_state_core = 122
+			add_stability = -0.05
+		}
+
+		ai_will_do = {
+			base = 355
+		}
+	}
+}
+
+ROM_ukrainian_border_lands_category = {
+	ROM_annex_bukovina_budjak = {
+		icon = GFX_decision_annex
+		days_remove = 30
+
+		available = {
+			has_capitulated = no
+			country_exists = UKR
+			NOT = {
+				AND = {
+					owns_state = 333
+					owns_state = 335
+				}
+			}
+			OR = {
+				333 = { is_owned_by = UKR }
+				335 = { is_owned_by = UKR }
+			}
+		}
+		visible = {
+			date > 2013.12.31
+			OR = {
+				AND = {
+					country_exists = UKR
+					UKR = { UKR_border_claim_window = yes }
+				}
+				country_exists = NOV
+			}
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_annex_bukovina_budjak"
+			country_event = { id = romania_misc.20 days = 3 }
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+	ROM_333_return = {
+		icon = GFX_decision_romania
+		fire_only_once = yes
+		days_remove = 120
+
+		cost = 70
+
+		visible = {
+			owns_state = 333
+			NOT = { is_in_array = { core_states = 333 } }
+		}
+
+		available = {
+			333 = { compliance > 79 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_333_return"
+			add_state_core = 333
+			add_stability = -0.05
+		}
+
+		ai_will_do = {
+			base = 355
+		}
+	}
+	ROM_335_return = {
+		icon = GFX_decision_romania
+		fire_only_once = yes
+		days_remove = 120
+
+		cost = 70
+
+		visible = {
+			owns_state = 335
+			NOT = { is_in_array = { core_states = 335 } }
+		}
+
+		available = {
+			335 = { compliance > 79 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_335_return"
+			add_state_core = 335
 			add_stability = -0.05
 		}
 
