@@ -4,13 +4,7 @@ Guards the MD style rule (AGENTS.md) that ``{``, ``}`` and ``=`` carry single
 spaces, while string interiors, comments and indentation stay byte-exact.
 """
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-from shared_utils import normalize_spacing  # noqa: E402
+from shared_utils import normalize_spacing
 
 
 def test_pads_inline_block():
