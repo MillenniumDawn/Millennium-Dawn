@@ -71,8 +71,9 @@ MD_auto_agency_verify_queue = {
 			add_to_variable = { agency_upgrades_in_queue_count^agency_selected_upgrade = 1 }
 		}
 
-		# Forward for_loop_effect: for_each_loop iterates back-to-front, and
-		# appending survivors in that order would reverse the queue every pass.
+		# Compacts in place with a forward for_loop_effect: for_each_loop
+		# iterates back-to-front and would reverse the queue every pass.
+		set_temp_variable = { write_idx = 0 }
 		for_loop_effect = {
 			end = agency_queue^num
 			value = v2
@@ -85,24 +86,14 @@ MD_auto_agency_verify_queue = {
 					MD_auto_agency_v_not_maxed_in_queue = yes
 				}
 
-				add_to_array = { agency_queue_hold = v }
+				set_variable = { agency_queue^write_idx = v }
 				add_to_variable = { agency_upgrades_in_queue_count^v = 1 }
+				add_to_temp_variable = { write_idx = 1 }
 			}
 		}
 
+		resize_array = { array = agency_queue size = write_idx }
 		clear_array = agency_upgrades_in_queue_count
-		clear_array = agency_queue
-
-		resize_array = { array = agency_queue value = 0 size = agency_queue_hold^num }
-		for_each_loop = {
-			array = agency_queue_hold
-			value = v
-			index = i
-
-			set_variable = { agency_queue^i = v }
-		}
-
-		clear_array = agency_queue_hold
 	}
 }
 
