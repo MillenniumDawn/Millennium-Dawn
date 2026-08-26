@@ -346,7 +346,7 @@ def _normalize_multiline_set_temp(text: str) -> str:
 
         normalized.append(text[cursor : match.start()])
         normalized.append(f"set_temp_variable = {{ {name_match.group(1)} = 0 }}")
-        normalized.append("\n" * text[match.start():block_end].count("\n"))
+        normalized.append("\n" * text[match.start() : block_end].count("\n"))
         cursor = block_end
 
     normalized.append(text[cursor:])
@@ -391,9 +391,11 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
                     m.start(),
                     1,
                     (
-                        "scope_open"
-                        if kw.lower() in SCOPE_CHANGING_KEYWORDS
-                        else "plain_open",
+                        (
+                            "scope_open"
+                            if kw.lower() in SCOPE_CHANGING_KEYWORDS
+                            else "plain_open"
+                        ),
                         lineno,
                         kw,
                         "",
