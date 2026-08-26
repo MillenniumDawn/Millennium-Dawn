@@ -23,6 +23,7 @@ stale entry gets removed.
 """
 
 import re
+from fnmatch import fnmatch
 from pathlib import Path
 
 import pytest
@@ -31,6 +32,8 @@ from precommit_validate import _REGISTRY
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import _CREATE_UNIT_SOURCE_PATTERNS
+from validate_scripted_params import _CALLER_PATTERNS
+from validate_staged import VALIDATORS as STAGED_VALIDATORS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 VALIDATION_DIR = Path(__file__).resolve().parents[1]
@@ -666,6 +669,29 @@ def test_ci_idea_icon_check_is_enabled():
     paths = set(workflow["env"]["WORKSPACE_PATHS"].split())
     assert {"interface", "tools"} <= paths
     assert (VALIDATION_DIR / "vanilla_sprites.txt").is_file()
+
+
+def test_scripted_param_routes_cover_every_caller_source():
+    caller_dirs = {pattern.split("*", 1)[0] for pattern in _CALLER_PATTERNS}
+    staged = next(
+        spec for spec in STAGED_VALIDATORS if spec["name"] == "scripted params"
+    )
+    assert caller_dirs <= set(staged["prefixes"])
+
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    entry = next(
+        entry
+        for job in ("validate-core", "validate-targeted")
+        for entry in workflow["jobs"][job]["strategy"]["matrix"]["validator"]
+        if entry["script"] == "validate_scripted_params.py"
+    )
+    _, filters = _filter_definitions()
+    expression = entry["should_run"]
+    for directory in caller_dirs:
+        output = directory.rstrip("/").rsplit("/", 1)[-1].replace("_", "-")
+        sample = directory + "_scripted_param_probe.txt"
+        assert any(fnmatch(sample, pattern) for pattern in filters[output])
+        assert f"needs.detect-changes.outputs.{output} == 'true'" in expression
 
 
 def test_oob_routes_cover_every_create_unit_source():

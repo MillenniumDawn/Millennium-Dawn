@@ -25,6 +25,16 @@ from validator_common import (
 # additional contracts from "# Parameters:" comment blocks.
 
 # Mapping: effect_name -> { "required": [...], "optional": [...] }
+_CALLER_PATTERNS = [
+    "common/national_focus/*.txt",
+    "common/scripted_effects/*.txt",
+    "common/decisions/*.txt",
+    "common/decisions/**/*.txt",
+    "common/on_actions/*.txt",
+    "common/scripted_guis/*.txt",
+    "events/*.txt",
+]
+
 HARDCODED_CONTRACTS: Dict[str, Dict[str, List[str]]] = {
     "change_influence_percentage": {
         "required": ["percent_change"],
@@ -598,14 +608,7 @@ class Validator(BaseValidator):
             self.log("  No contracts found — nothing to validate")
             return
 
-        scan_patterns = [
-            "common/national_focus/*.txt",
-            "common/scripted_effects/*.txt",
-            "common/decisions/*.txt",
-            "common/decisions/**/*.txt",
-            "events/*.txt",
-        ]
-        files = self._collect_files(scan_patterns)
+        files = self._collect_files(_CALLER_PATTERNS)
         self.log(f"  Scanning {len(files)} files for effect calls")
 
         args_list = [

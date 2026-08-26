@@ -26,7 +26,8 @@ files themselves (CI handles the full cross-reference validation).
   - common/on_actions/                -> validate_on_actions.py
   - common/scripted_effects/,
     common/national_focus/,
-    common/decisions/, events/        -> validate_scripted_params.py
+    common/decisions/, common/on_actions/,
+    common/scripted_guis/, events/    -> validate_scripted_params.py
   - interface/*.gui                   -> validate_gfx_references.py
 
 Opt-out via environment variable:
@@ -37,6 +38,8 @@ import os
 import subprocess
 import sys
 import time
+from math import floor
+from subprocess import TimeoutExpired
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from shared_utils import timing_enabled
@@ -236,6 +239,8 @@ VALIDATORS = [
             "common/scripted_effects/",
             "common/national_focus/",
             "common/decisions/",
+            "common/on_actions/",
+            "common/scripted_guis/",
             "events/",
         ],
         "suffix": ".txt",
@@ -296,7 +301,7 @@ def main():
         t0 = time.perf_counter()
         try:
             result = subprocess.run(v["cmd"], timeout=300)
-        except subprocess.TimeoutExpired:
+        except TimeoutExpired:
             print(f"ERROR: {v['name']} validator timed out after 5 minutes")
             failed = True
             timings.append((v["name"], 300.0))
@@ -312,7 +317,7 @@ def main():
         print(f"\n\033[90m{'─' * (max_label + 18)}", file=sys.stderr)
         print("  Validator timing:", file=sys.stderr)
         for name, elapsed in timings:
-            bar_len = int(elapsed / total * 20) if total > 0 else 0
+            bar_len = floor(elapsed / total * 20) if total > 0 else 0
             bar = "█" * bar_len + "░" * (20 - bar_len)
             print(
                 f"  {name:<{max_label}}  {elapsed:6.3f}s  {bar}",
