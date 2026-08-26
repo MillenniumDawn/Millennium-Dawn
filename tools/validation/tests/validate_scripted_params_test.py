@@ -482,6 +482,40 @@ def test_compact_scope_boundary_hides_set_after_close(tmp_path, cip_contract):
     )
 
 
+def test_uppercase_controller_scope_hides_temp_after_close(tmp_path, cip_contract):
+    body = (
+        "shared_focus = { completion_reward = { "
+        "CONTROLLER = { set_temp_variable = { percent_change = 5 } } "
+        "change_influence_percentage = yes } }\n"
+    )
+    issues = _issues(body, cip_contract, tmp_path)
+    assert any(
+        category == "missing-required-param" and "percent_change" in message
+        for category, message in issues
+    )
+
+
+def test_multiline_temp_and_controller_target_pass(tmp_path, cip_contract):
+    body = (
+        "shared_focus = {\n"
+        "    completion_reward = {\n"
+        "        CONTROLLER = { set_temp_variable = { influence_target = THIS } }\n"
+        "        ROOT = {\n"
+        "            set_temp_variable = {\n"
+        "                percent_change = {\n"
+        "                    value = 5\n"
+        "                    multiply = -1\n"
+        "                }\n"
+        "            }\n"
+        "            set_temp_variable = { tag_index = THIS.id }\n"
+        "            change_influence_percentage = yes\n"
+        "        }\n"
+        "    }\n"
+        "}\n"
+    )
+    assert _issues(body, cip_contract, tmp_path) == []
+
+
 def test_hardcoded_cip_contract_keeps_optional_secondary_params():
     """Guard rail: HARDCODED_CONTRACTS must keep tag_index/influence_target optional.
 
