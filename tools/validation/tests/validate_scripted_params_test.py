@@ -85,10 +85,7 @@ def test_contract_parser_reads_parameter_after_header(tmp_path):
     effect_path = tmp_path / "common" / "scripted_effects" / "test_effect.txt"
     _write(
         effect_path,
-        "# Parameter:\n"
-        "# - required_param: country id\n"
-        "test_contracted_effect = {\n"
-        "}\n",
+        "# Parameter:\n# - required_param: country id\ntest_contracted_effect = {\n}\n",
     )
 
     assert vsp._parse_effect_contracts_from_file(str(effect_path)) == {
@@ -105,10 +102,7 @@ def test_validator_scans_all_scripted_effect_caller_directories(tmp_path, caller
     caller_path = tmp_path / caller_dir / "test_caller.txt"
     _write(
         effect_path,
-        "# Parameter:\n"
-        "# - required_param: country id\n"
-        "test_contracted_effect = {\n"
-        "}\n",
+        "# Parameter:\n# - required_param: country id\ntest_contracted_effect = {\n}\n",
     )
     _write(caller_path, "test_contracted_effect = yes\n")
 
