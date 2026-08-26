@@ -21,20 +21,21 @@ from validator_common import (
     strip_comments,
 )
 
-# Hardcoded contracts for well-documented effects. Auto-discovery fills in
-# additional contracts from "# Parameters:" comment blocks.
-
-# Mapping: effect_name -> { "required": [...], "optional": [...] }
+# Every tree the engine runs script from, not a per-directory caller list: that
+# list drifted past operations, scripted_diplomatic_actions, ideas, MIOs,
+# factions and bop, all of which already call contracted effects, and any new
+# common/ subdirectory would be missed the same way. _validate_call_sites_in_file
+# drops a file that names no contract before parsing it, so the extra breadth
+# costs a read per file.
 _CALLER_PATTERNS = [
-    "common/national_focus/*.txt",
-    "common/scripted_effects/*.txt",
-    "common/decisions/*.txt",
-    "common/decisions/**/*.txt",
-    "common/on_actions/*.txt",
-    "common/scripted_guis/*.txt",
-    "events/*.txt",
+    "common/**/*.txt",
+    "events/**/*.txt",
+    "history/**/*.txt",
 ]
 
+# Hardcoded contracts for well-documented effects. Auto-discovery fills in
+# additional contracts from "# Parameters:" comment blocks.
+# Mapping: effect_name -> { "required": [...], "optional": [...] }
 HARDCODED_CONTRACTS: Dict[str, Dict[str, List[str]]] = {
     "change_influence_percentage": {
         "required": ["percent_change"],

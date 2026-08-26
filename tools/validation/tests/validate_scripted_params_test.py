@@ -96,7 +96,21 @@ def test_contract_parser_reads_parameter_after_header(tmp_path):
     }
 
 
-@pytest.mark.parametrize("caller_dir", ["common/on_actions", "common/scripted_guis"])
+@pytest.mark.parametrize(
+    "caller_dir",
+    [
+        "common/on_actions",
+        "common/scripted_guis",
+        "common/operations",
+        "common/scripted_diplomatic_actions",
+        "common/ideas",
+        "common/military_industrial_organization/organizations",
+        "common/factions/goals",
+        "common/bop",
+        "events",
+        "history/countries",
+    ],
+)
 def test_validator_scans_all_scripted_effect_caller_directories(tmp_path, caller_dir):
     effect_path = tmp_path / "common" / "scripted_effects" / "test_effect.txt"
     caller_path = tmp_path / caller_dir / "test_caller.txt"

@@ -24,10 +24,7 @@ files themselves (CI handles the full cross-reference validation).
   - common/factions/                  -> validate_factions.py
   - common/national_focus/            -> validate_focus_tree.py
   - common/on_actions/                -> validate_on_actions.py
-  - common/scripted_effects/,
-    common/national_focus/,
-    common/decisions/, common/on_actions/,
-    common/scripted_guis/, events/    -> validate_scripted_params.py
+  - common/, events/, history/        -> validate_scripted_params.py
   - interface/*.gui                   -> validate_gfx_references.py
 
 Opt-out via environment variable:
@@ -235,14 +232,7 @@ VALIDATORS = [
     },
     {
         "name": "scripted params",
-        "prefixes": [
-            "common/scripted_effects/",
-            "common/national_focus/",
-            "common/decisions/",
-            "common/on_actions/",
-            "common/scripted_guis/",
-            "events/",
-        ],
+        "prefixes": ["common/", "events/", "history/"],
         "suffix": ".txt",
         "cmd": [
             "python3",
