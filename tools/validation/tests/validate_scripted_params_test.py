@@ -55,12 +55,17 @@ _TEST_VALID_TAGS = frozenset(
 )
 
 
+def _write(path, content):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="") as file:
+        file.write(content)
+
+
 def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
     """Run the per-file validator against a one-shot focus file."""
     focus_dir = mod_path / "common" / "national_focus"
-    focus_dir.mkdir(parents=True, exist_ok=True)
     fpath = focus_dir / "test_focus.txt"
-    fpath.write_text(caller_body, encoding="utf-8-sig")
+    _write(fpath, caller_body)
     results = _validate_call_sites_in_file(
         (str(fpath), contracts, str(mod_path), frozenset(valid_tags))
     )
@@ -74,6 +79,57 @@ def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
         elif cat == "invalid-influence-tag":
             out.append((cat, msg))
     return out
+
+
+def test_contract_parser_reads_parameter_after_header(tmp_path):
+    effect_path = tmp_path / "common" / "scripted_effects" / "test_effect.txt"
+    _write(
+        effect_path,
+        "# Parameter:\n# - required_param: country id\ntest_contracted_effect = {\n}\n",
+    )
+
+    assert vsp._parse_effect_contracts_from_file(str(effect_path)) == {
+        "test_contracted_effect": {
+            "required": ["required_param"],
+            "optional": [],
+        }
+    }
+
+
+@pytest.mark.parametrize(
+    "caller_dir",
+    [
+        "common/on_actions",
+        "common/scripted_guis",
+        "common/operations",
+        "common/scripted_diplomatic_actions",
+        "common/ideas",
+        "common/military_industrial_organization/organizations",
+        "common/factions/goals",
+        "common/bop",
+        "events",
+        "history/countries",
+    ],
+)
+def test_validator_scans_all_scripted_effect_caller_directories(tmp_path, caller_dir):
+    effect_path = tmp_path / "common" / "scripted_effects" / "test_effect.txt"
+    caller_path = tmp_path / caller_dir / "test_caller.txt"
+    _write(
+        effect_path,
+        "# Parameter:\n# - required_param: country id\ntest_contracted_effect = {\n}\n",
+    )
+    _write(caller_path, "test_contracted_effect = yes\n")
+
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    issues = [
+        issue
+        for issue in validator._issues
+        if issue.category == "missing-required-param"
+    ]
+    assert len(issues) == 1
+    assert issues[0].file == f"{caller_dir}/test_caller.txt"
 
 
 def test_change_influence_percentage_with_only_percent_change_passes(
@@ -438,6 +494,40 @@ def test_compact_scope_boundary_hides_set_after_close(tmp_path, cip_contract):
         category == "missing-required-param" and "percent_change" in message
         for category, message in issues
     )
+
+
+def test_uppercase_controller_scope_hides_temp_after_close(tmp_path, cip_contract):
+    body = (
+        "shared_focus = { completion_reward = { "
+        "CONTROLLER = { set_temp_variable = { percent_change = 5 } } "
+        "change_influence_percentage = yes } }\n"
+    )
+    issues = _issues(body, cip_contract, tmp_path)
+    assert any(
+        category == "missing-required-param" and "percent_change" in message
+        for category, message in issues
+    )
+
+
+def test_multiline_temp_and_controller_target_pass(tmp_path, cip_contract):
+    body = (
+        "shared_focus = {\n"
+        "    completion_reward = {\n"
+        "        CONTROLLER = { set_temp_variable = { influence_target = THIS } }\n"
+        "        ROOT = {\n"
+        "            set_temp_variable = {\n"
+        "                percent_change = {\n"
+        "                    value = 5\n"
+        "                    multiply = -1\n"
+        "                }\n"
+        "            }\n"
+        "            set_temp_variable = { tag_index = THIS.id }\n"
+        "            change_influence_percentage = yes\n"
+        "        }\n"
+        "    }\n"
+        "}\n"
+    )
+    assert _issues(body, cip_contract, tmp_path) == []
 
 
 def test_hardcoded_cip_contract_keeps_optional_secondary_params():
