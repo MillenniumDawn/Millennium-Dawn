@@ -7,24 +7,12 @@ constant text around each `[...]` instead of literally.
 
 import validate_decisions as V
 
-
-class _FakeValidator(V.Validator):
-    """Validator whose _report collects results instead of rendering."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.collected = []
-
-    def _report(self, results, ok_msg, fail_msg, severity=None, category=""):
-        self.collected.extend(results)
+from .conftest import _factory, _FakeValidator
 
 
 def _unused(tokens, activated_decisions, activated_missions, monkeypatch):
     factories = [
-        V.DecisionFactory(
-            f"{token} = {{\n\tallowed = {{ always = no }}\n}}", source_basename="X.txt"
-        )
-        for token in tokens
+        _factory(f"{token} = {{\n\tallowed = {{ always = no }}\n}}") for token in tokens
     ]
     validator = _FakeValidator("/tmp")
     monkeypatch.setattr(V, "parse_all_decision_factories", lambda mod_path: factories)

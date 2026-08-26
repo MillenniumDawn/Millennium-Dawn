@@ -1,12 +1,6 @@
 """Behavior tests for developer environment checks."""
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-import dev_setup  # noqa: E402
+import dev_setup
 
 
 def test_check_node_rejects_unparseable_version(monkeypatch):
