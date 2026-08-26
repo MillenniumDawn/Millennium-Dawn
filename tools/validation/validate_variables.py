@@ -8,6 +8,7 @@ import os
 import re
 import sys
 from multiprocessing import Pool
+from pathlib import Path
 from typing import Dict, List, Set, Tuple, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -61,6 +62,26 @@ _MATH_PRECISION_RE = re.compile(
 _MATH_PRECISION_SHORTHAND_RE = re.compile(
     r"\b\w*_variable\s*=\s*\{[^{}]*?\b\w+\s*=\s*[-+]?\d*\.\d{6,}"
 )
+
+
+def _read_script_text(filename: str, *, blank_strings: bool = True) -> str | None:
+    if should_skip_file(filename):
+        return None
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return None
+    text = strip_comments(text)
+    return blank_quoted_strings(text) if blank_strings else text
+
+
+def _scope_events(text: str) -> List[Tuple[int, int, object]]:
+    events: List[Tuple[int, int, object]] = []
+    for match in _SCOPE_OPEN_RE.finditer(text):
+        events.append((match.end() - 1, 0, match.group(1)))
+    for match in re.finditer(r"\}", text):
+        events.append((match.start(), 1, ""))
+    return events
 
 
 def _scan_flags_in_file(
@@ -446,22 +467,11 @@ def _scan_available_file(
 ) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str]]]:
     """Extract both available-block checks from one comment-stripped source."""
     filename, mod_path = args
-    if should_skip_file(filename):
+    cleaned = _read_script_text(filename)
+    if cleaned is None:
         return [], []
-    try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return [], []
-
-    cleaned = blank_quoted_strings(strip_comments(text))
     rel = os.path.relpath(filename, mod_path)
-    events: List[Tuple[int, int, object]] = []
-    for m in _SCOPE_OPEN_RE.finditer(cleaned):
-        events.append((m.end() - 1, 0, m.group(1)))
-    for m in re.finditer(r"\}", cleaned):
-        events.append((m.start(), 1, ""))
+    events: List[Tuple[int, int, object]] = _scope_events(cleaned)
     for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
         open_idx = m.end() - 1
         body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
@@ -547,18 +557,14 @@ def _scripted_trigger_body_has_unwrapped_global_flag(body: str) -> bool:
     """
     if not _HAS_FLAG_BODY_RE.search(body):
         return False
-    events: List[Tuple[int, int, str]] = []
-    for m in _SCOPE_OPEN_RE.finditer(body):
-        events.append((m.end() - 1, 0, m.group(1)))
-    for m in re.finditer(r"\}", body):
-        events.append((m.start(), 1, ""))
+    events = _scope_events(body)
     for m in _HAS_FLAG_BODY_RE.finditer(body):
         events.append((m.start(), 2, ""))
     events.sort(key=lambda e: (e[0], e[1]))
     stack: List[str] = []
     for _pos, kind, tok in events:
         if kind == 0:
-            stack.append(tok)
+            stack.append(cast(str, tok))
         elif kind == 1:
             if stack:
                 stack.pop()
@@ -581,16 +587,9 @@ def process_file_for_untooltipped_available_scripted_trigger(
     filename, mod_path, flagged_names = args
     if not flagged_names:
         return []
-    if should_skip_file(filename):
+    cleaned = _read_script_text(filename)
+    if cleaned is None:
         return []
-    try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-
-    cleaned = blank_quoted_strings(strip_comments(text))
     call_matches = [
         (m.start(), m.group(1))
         for m in _BARE_TRIGGER_CALL_RE.finditer(cleaned)
@@ -722,16 +721,9 @@ def process_file_for_missing_variable_tooltips(
     write swallows the tooltip, so it wins over the enclosing rendered block.
     """
     filename, mod_path, backing = args
-    if should_skip_file(filename):
+    cleaned = _read_script_text(filename)
+    if cleaned is None:
         return []
-    try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-
-    cleaned = blank_quoted_strings(strip_comments(text))
     if "_variable" not in cleaned:
         return []
 
@@ -853,16 +845,9 @@ def process_file_for_treasury_scope(
     owner/CONTROLLER/tag/ROOT opener suppresses the finding.
     """
     filename, mod_path = args
-    if should_skip_file(filename):
+    cleaned = _read_script_text(filename, blank_strings=False)
+    if cleaned is None:
         return []
-    try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-
-    cleaned = strip_comments(text)
     if not any(k in cleaned for k in _TREASURY_EFFECT_KEYWORDS):
         return []
 

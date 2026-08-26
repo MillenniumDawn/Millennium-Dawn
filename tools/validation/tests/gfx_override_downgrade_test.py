@@ -48,6 +48,18 @@ def _severity_by_file(v):
     return {os.path.basename(i.file): i.severity for i in v._issues}
 
 
+def _undefined_gui_severities(tmp_path, refs):
+    validator = _validator(tmp_path)
+    validator._check_undefined_refs(
+        refs,
+        set(),
+        source_label=".gui files",
+        category="undefined-sprite",
+        gui_mode=True,
+    )
+    return _severity_by_file(validator)
+
+
 def test_vanilla_parent_basename_resolves_variant():
     assert _vanilla_parent_basename("a/b/" + MD_VARIANT) == VANILLA_BASE
 
@@ -58,20 +70,14 @@ def test_vanilla_parent_basename_none_for_unrelated_md_file():
 
 
 def test_inherited_ref_from_parent_is_downgraded(tmp_path):
-    v = _validator(tmp_path)
     sprite = "GFX_dead_vanilla_ref"
-    refs = [
-        (sprite, _iface(tmp_path, VANILLA_BASE), 10),
-        (sprite, _iface(tmp_path, MD_VARIANT), 20),
-    ]
-    v._check_undefined_refs(
-        refs,
-        set(),
-        source_label=".gui files",
-        category="undefined-sprite",
-        gui_mode=True,
+    sev = _undefined_gui_severities(
+        tmp_path,
+        [
+            (sprite, _iface(tmp_path, VANILLA_BASE), 10),
+            (sprite, _iface(tmp_path, MD_VARIANT), 20),
+        ],
     )
-    sev = _severity_by_file(v)
     assert sev[VANILLA_BASE] == Severity.WARNING
     assert sev[MD_VARIANT] == Severity.WARNING
 
@@ -79,20 +85,14 @@ def test_inherited_ref_from_parent_is_downgraded(tmp_path):
 def test_coincidental_ref_in_unrelated_md_file_stays_error(tmp_path):
     # Same dead sprite name appears in a vanilla-override file, but the MD file
     # is not a variant of it — the old repo-wide downgrade wrongly silenced this.
-    v = _validator(tmp_path)
     sprite = "GFX_dead_vanilla_ref"
-    refs = [
-        (sprite, _iface(tmp_path, VANILLA_BASE), 10),
-        (sprite, _iface(tmp_path, "MD_unique_feature.gui"), 20),
-    ]
-    v._check_undefined_refs(
-        refs,
-        set(),
-        source_label=".gui files",
-        category="undefined-sprite",
-        gui_mode=True,
+    sev = _undefined_gui_severities(
+        tmp_path,
+        [
+            (sprite, _iface(tmp_path, VANILLA_BASE), 10),
+            (sprite, _iface(tmp_path, "MD_unique_feature.gui"), 20),
+        ],
     )
-    sev = _severity_by_file(v)
     assert sev[VANILLA_BASE] == Severity.WARNING
     assert sev["MD_unique_feature.gui"] == Severity.ERROR
 
@@ -100,18 +100,9 @@ def test_coincidental_ref_in_unrelated_md_file_stays_error(tmp_path):
 def test_variant_ref_not_carried_by_parent_stays_error(tmp_path):
     # The MD file is a variant of a real vanilla file, but the parent does not
     # reference this sprite — so it is not inherited and must stay an ERROR.
-    v = _validator(tmp_path)
-    refs = [
-        ("GFX_only_in_variant", _iface(tmp_path, MD_VARIANT), 20),
-    ]
-    v._check_undefined_refs(
-        refs,
-        set(),
-        source_label=".gui files",
-        category="undefined-sprite",
-        gui_mode=True,
+    sev = _undefined_gui_severities(
+        tmp_path, [("GFX_only_in_variant", _iface(tmp_path, MD_VARIANT), 20)]
     )
-    sev = _severity_by_file(v)
     assert sev[MD_VARIANT] == Severity.ERROR
 
 
@@ -130,34 +121,17 @@ def test_vanilla_inherited_variant_without_override_not_error(tmp_path, monkeypa
     # must stay a WARNING, not regress to a false-positive ERROR.
     sprite = "GFX_dead_vanilla_ref"
     monkeypatch.setattr(vg, "_vanilla_gui_ref_index", lambda: {VANILLA_BASE: {sprite}})
-    v = _validator(tmp_path)
-    refs = [
-        (sprite, _iface(tmp_path, MD_VARIANT), 20),
-    ]
-    v._check_undefined_refs(
-        refs,
-        set(),
-        source_label=".gui files",
-        category="undefined-sprite",
-        gui_mode=True,
+    sev = _undefined_gui_severities(
+        tmp_path, [(sprite, _iface(tmp_path, MD_VARIANT), 20)]
     )
-    sev = _severity_by_file(v)
     assert sev[MD_VARIANT] == Severity.WARNING
 
 
 def test_undefined_md_ref_without_vanilla_parent_stays_error(tmp_path):
     # Genuinely-undefined ref in a standalone MD file: no vanilla parent, empty
     # vanilla index (autouse default) — must remain an ERROR.
-    v = _validator(tmp_path)
-    refs = [
-        ("GFX_md_typo_sprite", _iface(tmp_path, "MD_unique_feature.gui"), 12),
-    ]
-    v._check_undefined_refs(
-        refs,
-        set(),
-        source_label=".gui files",
-        category="undefined-sprite",
-        gui_mode=True,
+    sev = _undefined_gui_severities(
+        tmp_path,
+        [("GFX_md_typo_sprite", _iface(tmp_path, "MD_unique_feature.gui"), 12)],
     )
-    sev = _severity_by_file(v)
     assert sev["MD_unique_feature.gui"] == Severity.ERROR

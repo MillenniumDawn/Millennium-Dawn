@@ -5,7 +5,7 @@ import os
 import re
 import sys
 from collections import defaultdict
-from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -803,6 +803,54 @@ def _extract_focus_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, int
     )
 
 
+def _iter_focus_blocks_with_id(
+    text: str,
+) -> Iterator[Tuple[Optional[str], str, int, int]]:
+    """Yield (focus_id, body, start, end) for each focus/shared/joint block in
+    *text*.
+
+    focus_id is None when the block has no `id =` line — callers decide for
+    themselves whether that means skip the block or fall back to a default.
+    start/end are the block's absolute offsets in *text*, valid both for
+    line-number reporting and as search bounds for a nested walk (e.g.
+    _iter_reward_blocks).
+    """
+    pos = 0
+    while True:
+        m = _FOCUS_BLOCK_START.search(text, pos)
+        if not m:
+            return
+        body, end = _extract_block(text, m.start())
+        if not body:
+            pos = m.end()
+            continue
+        idm = _ID_LINE_RE.search(body)
+        yield (idm.group(1) if idm else None), body, m.start(), end
+        pos = end
+
+
+def _iter_reward_blocks(
+    text: str, start: int, end: int
+) -> Iterator[Tuple[str, int, int]]:
+    """Yield (body, start, end) for each completion_reward* block in
+    text[start:end].
+
+    Searched over the focus's absolute span in *text* rather than a copy of
+    its body, so the yielded offsets stay valid for line-number reporting.
+    """
+    pos = start
+    while True:
+        m = _REWARD_BLOCK_RE.search(text, pos, end)
+        if not m:
+            return
+        body, body_end = _extract_block(text, m.start())
+        if not body or body_end > end:
+            pos = m.end()
+            continue
+        yield body, m.start(), body_end
+        pos = body_end
+
+
 def _extract_tech_bonuses(
     args: Tuple[str, str],
 ) -> List[Tuple[str, Optional[str], str, int]]:
@@ -818,29 +866,10 @@ def _extract_tech_bonuses(
 
     def _compute() -> List[Tuple[str, Optional[str], str, int]]:
         out: List[Tuple[str, Optional[str], str, int]] = []
-        pos = 0
-        while True:
-            fm = _FOCUS_BLOCK_START.search(text, pos)
-            if not fm:
-                break
-            fbody, fend = _extract_block(text, fm.start())
-            if not fbody:
-                pos = fm.end()
-                continue
-            idm = _ID_LINE_RE.search(fbody)
-            focus_id = idm.group(1) if idm else "?"
-            # Search within the focus block's absolute span so reported line
-            # numbers stay accurate.
-            rpos = fm.start()
-            while True:
-                rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
-                if not rm:
-                    break
-                rbody, rend = _extract_block(text, rm.start())
-                if not rbody or rend > fend:
-                    rpos = rm.end()
-                    continue
-                bpos = rm.start()
+        for focus_id, _, fstart, fend in _iter_focus_blocks_with_id(text):
+            focus_id = focus_id if focus_id is not None else "?"
+            for _, rstart, rend in _iter_reward_blocks(text, fstart, fend):
+                bpos = rstart
                 while True:
                     bm = _TECH_BONUS_START.search(text, bpos, rend)
                     if not bm:
@@ -853,8 +882,6 @@ def _extract_tech_bonuses(
                     name = nm.group(1).strip('"') if nm else None
                     out.append((focus_id, name, filepath, _line_of(text, bm.start())))
                     bpos = bend
-                rpos = rend
-            pos = fend
         return out
 
     return disk_cache.per_file_cached_by_content(
@@ -896,18 +923,8 @@ def _extract_ai_guard_data(
 
     def _compute() -> List[Dict]:
         out: List[Dict] = []
-        pos = 0
-        while True:
-            fm = _FOCUS_BLOCK_START.search(text, pos)
-            if not fm:
-                break
-            fbody, fend = _extract_block(text, fm.start())
-            if not fbody:
-                pos = fm.end()
-                continue
-            idm = _ID_LINE_RE.search(fbody)
-            if not idm:
-                pos = fend
+        for focus_id, fbody, fstart, fend in _iter_focus_blocks_with_id(text):
+            if focus_id is None:
                 continue
 
             sf = _top_level_search_filters(fbody)
@@ -917,15 +934,7 @@ def _extract_ai_guard_data(
             has_cost = False
             unknown_cost = False
             previewed_cost = False
-            rpos = fm.start()
-            while True:
-                rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
-                if not rm:
-                    break
-                rbody, rend = _extract_block(text, rm.start())
-                if not rbody or rend > fend:
-                    rpos = rm.end()
-                    continue
+            for rbody, _, _ in _iter_reward_blocks(text, fstart, fend):
                 # An effect_tooltip previewing someone else's construction is
                 # not this focus building anything.
                 spans = _effect_tooltip_spans(rbody, 0, len(rbody))
@@ -962,7 +971,6 @@ def _extract_ai_guard_data(
                     )[1]
                     for s0, e0 in spans
                 )
-                rpos = rend
 
             guards: Set[str] = set()
             am = _AI_WILL_DO_START.search(fbody)
@@ -998,9 +1006,9 @@ def _extract_ai_guard_data(
 
             out.append(
                 {
-                    "id": idm.group(1),
+                    "id": focus_id,
                     "file": filepath,
-                    "line": _line_of(text, fm.start()),
+                    "line": _line_of(text, fstart),
                     "filters": sf,
                     "buildings": buildings,
                     "guards": guards,
@@ -1010,7 +1018,6 @@ def _extract_ai_guard_data(
                     "previewed_cost": previewed_cost,
                 }
             )
-            pos = fend
         return out
 
     return disk_cache.per_file_cached_by_content(
@@ -1022,6 +1029,27 @@ def _extract_ai_guard_data(
     )
 
 
+def _cached_focus_scan(args: Tuple[str, str], cache_tag: str, scan):
+    filepath, mod_path = args
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
+        return []
+    text = strip_comments(raw)
+    return disk_cache.per_file_cached_by_content(
+        mod_path, cache_tag, filepath, text, lambda: scan(text, filepath)
+    )
+
+
+def _scan_missing_search_filters(
+    text: str, filepath: str
+) -> List[Tuple[str, str, int]]:
+    return [
+        (focus_id, filepath, _line_of(text, fstart))
+        for focus_id, fbody, fstart, _ in _iter_focus_blocks_with_id(text)
+        if focus_id is not None and not _top_level_search_filters(fbody)
+    ]
+
+
 def _extract_focus_search_filters(
     args: Tuple[str, str],
 ) -> List[Tuple[str, str, int]]:
@@ -1030,34 +1058,8 @@ def _extract_focus_search_filters(
     The focus standard is checked on the focus block itself and not inside
     nested reward blocks.
     """
-    filepath, mod_path = args
-    raw = _read_mod_text(filepath, mod_path)
-    if not raw:
-        return []
-    text = strip_comments(raw)
-
-    def _compute() -> List[Tuple[str, str, int]]:
-        out: List[Tuple[str, str, int]] = []
-        pos = 0
-        while True:
-            fm = _FOCUS_BLOCK_START.search(text, pos)
-            if not fm:
-                break
-            fbody, fend = _extract_block(text, fm.start())
-            if not fbody:
-                pos = fm.end()
-                continue
-            idm = _ID_LINE_RE.search(fbody)
-            if not idm:
-                pos = fend
-                continue
-            if not _top_level_search_filters(fbody):
-                out.append((idm.group(1), filepath, _line_of(text, fm.start())))
-            pos = fend
-        return out
-
-    return disk_cache.per_file_cached_by_content(
-        mod_path, "focus_tree.search_filters.v1", filepath, text, _compute
+    return _cached_focus_scan(
+        args, "focus_tree.search_filters.v1", _scan_missing_search_filters
     )
 
 
@@ -1088,30 +1090,12 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
         owner_frozen = frozenset(owner_tags)
 
         out: List[Dict] = []
-        pos = 0
-        while True:
-            fm = _FOCUS_BLOCK_START.search(text, pos)
-            if not fm:
-                break
-            fbody, fend = _extract_block(text, fm.start())
-            if not fbody:
-                pos = fm.end()
-                continue
-            idm = _ID_LINE_RE.search(fbody)
-            if not idm:
-                pos = fend
+        for focus_id, _, fstart, fend in _iter_focus_blocks_with_id(text):
+            if focus_id is None:
                 continue
 
             flagged = False
-            rpos = fm.start()
-            while not flagged:
-                rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
-                if not rm:
-                    break
-                rbody, rend = _extract_block(text, rm.start())
-                if not rbody or rend > fend:
-                    rpos = rm.end()
-                    continue
+            for rbody, _, _ in _iter_reward_blocks(text, fstart, fend):
                 if not _TT_IF_THEY_ACCEPT_RE.search(rbody):
                     # A fire inside an effect_tooltip is a preview of something
                     # that happens elsewhere (a decision, another focus), not a
@@ -1128,17 +1112,17 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
                         ):
                             flagged = True
                             break
-                rpos = rend
+                if flagged:
+                    break
 
             if flagged:
                 out.append(
                     {
-                        "id": idm.group(1),
+                        "id": focus_id,
                         "file": filepath,
-                        "line": _line_of(text, fm.start()),
+                        "line": _line_of(text, fstart),
                     }
                 )
-            pos = fend
         return out
 
     return disk_cache.per_file_cached_by_content(
@@ -1150,6 +1134,20 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
     )
 
 
+def _scan_pp_malus(text: str, filepath: str) -> List[Tuple[str, str, int]]:
+    out: List[Tuple[str, str, int]] = []
+    for focus_id, _, fstart, fend in _iter_focus_blocks_with_id(text):
+        focus_id = focus_id if focus_id is not None else "?"
+        for _, rstart, rend in _iter_reward_blocks(text, fstart, fend):
+            tooltip_spans = _effect_tooltip_spans(text, rstart, rend)
+            for match in _PP_MALUS_RE.finditer(text, rstart, rend):
+                if not any(
+                    start <= match.start() < end for start, end in tooltip_spans
+                ):
+                    out.append((focus_id, filepath, _line_of(text, match.start())))
+    return out
+
+
 def _extract_pp_malus(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Pool worker: return (focus_id, filepath, line) for each negative,
     literal add_political_power inside a focus's completion_reward.
@@ -1158,49 +1156,7 @@ def _extract_pp_malus(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     preview a PP change applied elsewhere (e.g. a select_effect) rather
     than executing the malus.
     """
-    filepath, mod_path = args
-    raw = _read_mod_text(filepath, mod_path)
-    if not raw:
-        return []
-    text = strip_comments(raw)
-
-    def _compute() -> List[Tuple[str, str, int]]:
-        out: List[Tuple[str, str, int]] = []
-        pos = 0
-        while True:
-            fm = _FOCUS_BLOCK_START.search(text, pos)
-            if not fm:
-                break
-            fbody, fend = _extract_block(text, fm.start())
-            if not fbody:
-                pos = fm.end()
-                continue
-            idm = _ID_LINE_RE.search(fbody)
-            focus_id = idm.group(1) if idm else "?"
-
-            rpos = fm.start()
-            while True:
-                rm = _REWARD_BLOCK_RE.search(text, rpos, fend)
-                if not rm:
-                    break
-                rbody, rend = _extract_block(text, rm.start())
-                if not rbody or rend > fend:
-                    rpos = rm.end()
-                    continue
-
-                tooltip_spans = _effect_tooltip_spans(text, rm.start(), rend)
-                for pm in _PP_MALUS_RE.finditer(text, rm.start(), rend):
-                    if any(s <= pm.start() < e for s, e in tooltip_spans):
-                        continue
-                    out.append((focus_id, filepath, _line_of(text, pm.start())))
-
-                rpos = rend
-            pos = fend
-        return out
-
-    return disk_cache.per_file_cached_by_content(
-        mod_path, "focus_tree.pp_malus", filepath, text, _compute
-    )
+    return _cached_focus_scan(args, "focus_tree.pp_malus", _scan_pp_malus)
 
 
 def _parse_focus_text(text: str, filepath: str) -> Dict:
@@ -1327,6 +1283,18 @@ class Validator(BaseValidator):
             return True
         rel = os.path.relpath(filepath, self.mod_path)
         return rel in staged
+
+    def _iter_reportable_dicts(
+        self, data_lists: List[List[Dict]]
+    ) -> Iterator[Tuple[Dict, str]]:
+        """Yield (d, rel_path) for each dict in *data_lists* whose file is
+        reportable, flattening the per-file sublists from a pool map.
+        """
+        for sub in data_lists:
+            for d in sub:
+                if not self._is_reportable(d["file"]):
+                    continue
+                yield d, os.path.relpath(d["file"], self.mod_path)
 
     def _get_parsed_files(self) -> List[Dict]:
         if self._parsed_cache is not None:
@@ -1783,48 +1751,39 @@ class Validator(BaseValidator):
         unknown_spend_by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
         unneeded_by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
         miscategorized_by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
-        for sub in data_lists:
-            for d in sub:
-                if not self._is_reportable(d["file"]):
-                    continue
-                rel = os.path.relpath(d["file"], self.mod_path)
-
-                unguarded = sorted(
-                    b
-                    for b in d["buildings"]
-                    if _STAFFABLE_TRIGGERS[b] not in d["guards"]
+        for d, rel in self._iter_reportable_dicts(data_lists):
+            unguarded = sorted(
+                b for b in d["buildings"] if _STAFFABLE_TRIGGERS[b] not in d["guards"]
+            )
+            if unguarded:
+                triggers = ", ".join(
+                    f"{_STAFFABLE_TRIGGERS[b]} = no" for b in unguarded
                 )
-                if unguarded:
-                    triggers = ", ".join(
-                        f"{_STAFFABLE_TRIGGERS[b]} = no" for b in unguarded
+                staff_results.append(
+                    (
+                        f"Focus '{d['id']}' builds {', '.join(unguarded)} but"
+                        f" its ai_will_do has no factor = 0 modifier with"
+                        f" {triggers}",
+                        rel,
+                        d["line"],
                     )
-                    staff_results.append(
-                        (
-                            f"Focus '{d['id']}' builds {', '.join(unguarded)} but"
-                            f" its ai_will_do has no factor = 0 modifier with"
-                            f" {triggers}",
-                            rel,
-                            d["line"],
-                        )
-                    )
+                )
 
-                has_guard = "bankruptcy_incoming_collapse" in d["guards"]
-                if not has_guard:
-                    if d["spend"] >= _MONEY_SPEND_THRESHOLD:
-                        underguarded_by_file[rel].append(
-                            (d["id"], d["line"], d["spend"])
-                        )
-                    elif d["unknown"]:
-                        unknown_spend_by_file[rel].append((d["id"], d["line"]))
-                elif not d["has_cost"] and not d["previewed_cost"]:
-                    unneeded_by_file[rel].append((d["id"], d["line"]))
+            has_guard = "bankruptcy_incoming_collapse" in d["guards"]
+            if not has_guard:
+                if d["spend"] >= _MONEY_SPEND_THRESHOLD:
+                    underguarded_by_file[rel].append((d["id"], d["line"], d["spend"]))
+                elif d["unknown"]:
+                    unknown_spend_by_file[rel].append((d["id"], d["line"]))
+            elif not d["has_cost"] and not d["previewed_cost"]:
+                unneeded_by_file[rel].append((d["id"], d["line"]))
 
-                if (
-                    d["filters"]
-                    and (d["buildings"] or d["spend"] >= _MONEY_SPEND_THRESHOLD)
-                    and not (d["filters"] & _MIL_ECON_RESEARCH_FILTERS)
-                ):
-                    miscategorized_by_file[rel].append((d["id"], d["line"]))
+            if (
+                d["filters"]
+                and (d["buildings"] or d["spend"] >= _MONEY_SPEND_THRESHOLD)
+                and not (d["filters"] & _MIL_ECON_RESEARCH_FILTERS)
+            ):
+                miscategorized_by_file[rel].append((d["id"], d["line"]))
 
         def _aggregate(by_file: Dict[str, List[Tuple]], noun: str) -> List[Tuple]:
             rows = []
@@ -1962,12 +1921,8 @@ class Validator(BaseValidator):
         )
 
         by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
-        for sub in data_lists:
-            for d in sub:
-                if not self._is_reportable(d["file"]):
-                    continue
-                rel = os.path.relpath(d["file"], self.mod_path)
-                by_file[rel].append((d["id"], d["line"]))
+        for d, rel in self._iter_reportable_dicts(data_lists):
+            by_file[rel].append((d["id"], d["line"]))
 
         results = []
         for rel, hits in sorted(by_file.items()):
