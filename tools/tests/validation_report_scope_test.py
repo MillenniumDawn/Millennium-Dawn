@@ -6,14 +6,8 @@ a validator that did not run this time can still have live findings from an
 earlier push.
 """
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-from generate_validation_report import should_delete_comment  # noqa: E402
-from report_lib import Issue, Severity, ValidatorRun  # noqa: E402
+from generate_validation_report import should_delete_comment
+from report_lib import Issue, Severity, ValidatorRun
 
 
 def _passed():

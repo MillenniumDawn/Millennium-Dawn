@@ -56,15 +56,22 @@ def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
 
 
-def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
-    """Pool worker: return (sprite, filename, line) for each event picture ref."""
-    if _should_skip(filename):
-        return []
+def _read_cleaned_text(filename: str, *, skip: bool = True) -> Optional[str]:
+    """Read a mod file and strip ``#`` comments, or return ``None`` on failure."""
+    if skip and _should_skip(filename):
+        return None
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+    except OSError:
+        return None
+    return re.sub(r"#[^\n]*", "", text)
+
+
+def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
+    """Pool worker: return (sprite, filename, line) for each event picture ref."""
+    text = _read_cleaned_text(filename)
+    if text is None:
         return []
-    text = re.sub(r"#[^\n]*", "", text)
     out: List[Tuple[str, str, int]] = []
     for m in _EVENT_PICTURE_REF.finditer(text):
         line = text.count("\n", 0, m.start()) + 1
@@ -85,13 +92,9 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     inflate each other's counts.
     """
     filename, tracked_ids = args
-    if _should_skip(filename):
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
         return {}
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return {}
-    cleaned = re.sub(r"#[^\n]*", "", text)
     counts = Counter(_ID_TOKEN_PATTERN.findall(cleaned))
     return {eid: counts[eid] for eid in tracked_ids if eid in counts}
 
@@ -168,11 +171,9 @@ def _iter_event_bodies(cleaned: str):
 def scan_event_definitions(args: Tuple[str, frozenset]) -> Set[str]:
     """Pool worker: event IDs *defined* in one file."""
     filename = args[0]
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+    cleaned = _read_cleaned_text(filename, skip=False)
+    if cleaned is None:
         return set()
-    cleaned = re.sub(r"#[^\n]*", "", text)
     return {eid for eid, _body, _start in _iter_event_bodies(cleaned)}
 
 
@@ -181,11 +182,9 @@ def scan_event_definition_types(
 ) -> List[Tuple[str, str]]:
     """Pool worker: event IDs and their declaration keywords."""
     filename = args[0]
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+    cleaned = _read_cleaned_text(filename, skip=False)
+    if cleaned is None:
         return []
-    cleaned = re.sub(r"#[^\n]*", "", text)
     return [
         (eid, event_type)
         for eid, event_type, _body, _start in _iter_typed_event_bodies(cleaned)
@@ -225,13 +224,9 @@ def scan_event_fires(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
     literal form to resolve, so it is skipped rather than guessed at.
     """
     filename = args[0]
-    if _should_skip(filename):
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
         return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    cleaned = re.sub(r"#[^\n]*", "", text)
 
     return [
         (eid, filename, cleaned.count("\n", 0, pos) + 1)
@@ -244,13 +239,9 @@ def scan_typed_event_fires(
 ) -> List[Tuple[str, str, str, int]]:
     """Pool worker: literal event fires with their call keywords."""
     filename = args[0]
-    if _should_skip(filename):
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
         return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    cleaned = re.sub(r"#[^\n]*", "", text)
     return [
         (eid, call_type, filename, cleaned.count("\n", 0, pos) + 1)
         for eid, call_type, pos in _iter_typed_fires(cleaned)
@@ -301,13 +292,9 @@ def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
     dispatch and must not be reported as unreferenced.
     """
     filename = args[0]
-    if _should_skip(filename):
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
         return set()
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return set()
-    cleaned = re.sub(r"#[^\n]*", "", text)
     return set(_DYNAMIC_EVENT_NS_PATTERN.findall(cleaned))
 
 
@@ -348,13 +335,9 @@ def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, 
     Returns (id, file, line) so a finding can point at the definition.
     """
     filename = args[0]
-    if _should_skip(filename):
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
         return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    cleaned = re.sub(r"#[^\n]*", "", text)
 
     out: List[Tuple[str, str, int]] = []
     for eid, body, start in _iter_event_bodies(cleaned):
@@ -371,13 +354,9 @@ def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
     of a chain needs a scheduling entry.
     """
     filename = args[0]
-    if _should_skip(filename):
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
         return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    cleaned = re.sub(r"#[^\n]*", "", text)
 
     out: List[Tuple[str, str]] = []
     for parent, body, _start in _iter_event_bodies(cleaned):
@@ -1335,7 +1314,7 @@ class Validator(BaseValidator):
             results,
             "✓ Event call types match their declarations",
             "Event calls using the wrong effect type:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="event-fire-type-mismatch",
         )
 
