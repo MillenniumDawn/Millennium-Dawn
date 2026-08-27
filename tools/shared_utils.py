@@ -1213,27 +1213,29 @@ def get_all_txt_files(
 
 
 def get_staged_files(
-    mod_path: str, extensions: Optional[List[str]] = None
+    mod_path: str,
+    extensions: Optional[List[str]] = None,
+    include_missing: bool = False,
 ) -> Optional[List[str]]:
     """Get list of git changed files for validation.
 
     First checks for staged (cached) files — used in pre-commit hook context.
     Falls back to the branch diff vs main when nothing is staged, so that
     running --staged on a feature branch validates only the changed files.
+    Set include_missing to retain deleted paths for cross-reference checks.
     """
     if extensions is None:
         extensions = [".txt"]
 
-    # A change list can name paths that are no longer on disk: CI builds
-    # MD_STAGED_FILES from a paths-filter output that includes deletions and
-    # the old side of a rename, and validators open every entry unguarded.
+    # Most validators open every changed path, so missing files are filtered
+    # unless a cross-reference check needs to observe a deleted target.
     def _filter(names: list) -> list:
         paths = [
             os.path.join(mod_path, f)
             for f in names
             if f and any(f.endswith(ext) for ext in extensions)
         ]
-        return [p for p in paths if os.path.isfile(p)]
+        return paths if include_missing else [p for p in paths if os.path.isfile(p)]
 
     env_files = _read_staged_from_env()
     if env_files is not None:
@@ -1242,8 +1244,11 @@ def get_staged_files(
     try:
 
         def _git_diff(*args):
+            diff_filter = "ACMRD" if include_missing else "ACM"
             result = subprocess.run(
-                ["git", "diff"] + list(args) + ["--name-only", "--diff-filter=ACM"],
+                ["git", "diff"]
+                + list(args)
+                + ["--name-only", f"--diff-filter={diff_filter}"],
                 cwd=mod_path,
                 capture_output=True,
                 text=True,

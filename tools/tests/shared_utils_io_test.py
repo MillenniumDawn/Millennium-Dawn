@@ -1,5 +1,6 @@
 import os
 import stat
+import subprocess
 
 import pytest
 import shared_utils as U
@@ -150,6 +151,7 @@ def test_staged_files_drops_paths_that_are_no_longer_on_disk(tmp_path, monkeypat
 
     staged = U.get_staged_files(str(tmp_path))
 
+    assert staged is not None
     assert [os.path.normpath(f) for f in staged] == [os.path.normpath(str(kept))]
 
 
@@ -157,3 +159,49 @@ def test_staged_files_returns_none_when_every_path_is_gone(tmp_path, monkeypatch
     monkeypatch.setenv("MD_STAGED_FILES", "common/country_leader/deleted.txt")
 
     assert U.get_staged_files(str(tmp_path)) is None
+
+
+def test_staged_files_retains_missing_paths_when_requested(tmp_path, monkeypatch):
+    deleted = tmp_path / "common" / "country_leader" / "deleted.txt"
+    monkeypatch.setenv("MD_STAGED_FILES", "common/country_leader/deleted.txt")
+
+    assert U.get_staged_files(str(tmp_path), include_missing=True) == [str(deleted)]
+
+
+def test_staged_files_includes_deleted_git_paths_when_requested(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    units = tmp_path / "history" / "units"
+    units.mkdir(parents=True)
+    deleted = units / "deleted.txt"
+    renamed_from = units / "renamed-from.txt"
+    for path, content in (
+        (deleted, "units = { deleted = yes }\n"),
+        (renamed_from, "units = { renamed = yes }\n"),
+    ):
+        with path.open("w", encoding="utf-8", newline="") as output_file:
+            output_file.write(content)
+
+    def git(*args):
+        return subprocess.run(
+            ["git", *args],
+            cwd=tmp_path,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    git("init")
+    git("config", "user.email", "test@example.com")
+    git("config", "user.name", "Test User")
+    git("add", "history/units")
+    git("commit", "-m", "initial")
+    deleted.unlink()
+    renamed_to = units / "renamed-to.txt"
+    renamed_from.rename(renamed_to)
+    git("add", "-A")
+
+    staged = U.get_staged_files(str(tmp_path), include_missing=True)
+
+    assert staged is not None
+    assert str(deleted) in staged
+    assert str(renamed_to) in staged
