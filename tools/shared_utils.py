@@ -1197,12 +1197,16 @@ def get_staged_files(
     if extensions is None:
         extensions = [".txt"]
 
+    # A change list can name paths that are no longer on disk: CI builds
+    # MD_STAGED_FILES from a paths-filter output that includes deletions and
+    # the old side of a rename, and validators open every entry unguarded.
     def _filter(names: list) -> list:
-        return [
+        paths = [
             os.path.join(mod_path, f)
             for f in names
             if f and any(f.endswith(ext) for ext in extensions)
         ]
+        return [p for p in paths if os.path.isfile(p)]
 
     env_files = _read_staged_from_env()
     if env_files is not None:
