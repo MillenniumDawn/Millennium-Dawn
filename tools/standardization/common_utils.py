@@ -330,6 +330,19 @@ class BaseStandardizer(ABC):
         )
 
 
+def create_gate_sweep_parser(
+    description: str, files_help: str
+) -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("files", nargs="*", help=files_help)
+    parser.add_argument("--root", default=None, help="mod root (default: auto)")
+    parser.add_argument("--dry-run", action="store_true", help="report, do not write")
+    parser.add_argument(
+        "-b", "--backup", action="store_true", help="back each file up before writing"
+    )
+    return parser
+
+
 def create_standardizer_parser(description: str) -> argparse.ArgumentParser:
     """Create a standard argument parser for all standardizers"""
     parser = argparse.ArgumentParser(description=description)

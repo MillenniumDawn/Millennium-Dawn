@@ -11,7 +11,7 @@ new slotless category is covered without editing this script.
 Rewrites in place, touching nothing but the blocks it removes.
 """
 
-import argparse
+import glob
 import os
 import re
 import sys
@@ -19,7 +19,7 @@ from typing import List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from common_utils import apply_brace_stack, code_of_line, find_block_span  # noqa: E402
+import common_utils  # noqa: E402
 from shared_utils import (  # noqa: E402
     atomic_write_text,
     create_backup,
@@ -47,17 +47,19 @@ def strip_allowed_blocks(
     i = 0
 
     while i < len(lines):
-        code = code_of_line(lines[i])
+        code = common_utils.code_of_line(lines[i])
         opener = (
             _ALLOWED_OPEN_RE.match(code)
             if len(stack) == 3 and stack[0] == "ideas" and stack[1] in slotless
             else None
         )
 
-        span = find_block_span(lines, i, code.index("{")) if opener else None
+        span = (
+            common_utils.find_block_span(lines, i, code.index("{")) if opener else None
+        )
         if opener and span is None:
             skipped += 1
-        elif span:
+        elif opener and span:
             end, close_col = span
             # Slice around the block instead of dropping whole lines: the
             # closer can share a line with the idea's own `}`.
@@ -68,7 +70,7 @@ def strip_allowed_blocks(
                 out.append(merged)
                 # The idea's own `}` can ride along on the closer line, so the
                 # stack has to see what was emitted, not what was read.
-                apply_brace_stack(code_of_line(merged), stack)
+                common_utils.apply_brace_stack(common_utils.code_of_line(merged), stack)
                 continue
             # Collapse the blank pair a removed block can leave behind.
             if out and not out[-1].strip() and i < len(lines) and not lines[i].strip():
@@ -76,7 +78,7 @@ def strip_allowed_blocks(
             continue
 
         out.append(lines[i])
-        apply_brace_stack(code, stack)
+        common_utils.apply_brace_stack(code, stack)
         i += 1
 
     return out, removed, skipped
@@ -84,9 +86,13 @@ def strip_allowed_blocks(
 
 def process_file(
     path: str, slotless: frozenset, dry_run: bool, backup: bool
-) -> Tuple[int, int]:
-    with open(path, "r", encoding="utf-8-sig", newline="") as handle:
-        text = handle.read()
+) -> Tuple[int, int, bool]:
+    try:
+        with open(path, "r", encoding="utf-8-sig", newline="") as handle:
+            text = handle.read()
+    except OSError as exc:
+        log_message("ERROR", f"{path}: {exc}")
+        return 0, 0, True
     lines = text.split("\n")
 
     stripped, removed, skipped = strip_allowed_blocks(lines, slotless)
@@ -94,18 +100,13 @@ def process_file(
         if backup:
             create_backup(path)
         atomic_write_text(path, "\n".join(stripped))
-    return removed, skipped
+    return removed, skipped, False
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("files", nargs="*", help="idea files (default: common/ideas/)")
-    parser.add_argument("--root", default=None, help="mod root (default: auto)")
-    parser.add_argument("--dry-run", action="store_true", help="report, do not write")
-    parser.add_argument(
-        "-b", "--backup", action="store_true", help="back each file up before writing"
-    )
-    args = parser.parse_args()
+    args = common_utils.create_gate_sweep_parser(
+        __doc__ or "", "idea files (default: common/ideas/)"
+    ).parse_args()
 
     root = args.root or os.path.normpath(
         os.path.join(os.path.dirname(__file__), "..", "..")
@@ -115,18 +116,25 @@ def main() -> int:
     files = args.files
     if not files:
         ideas_dir = os.path.join(root, "common", "ideas")
-        files = [
-            os.path.join(ideas_dir, name)
-            for name in sorted(os.listdir(ideas_dir))
-            if name.endswith(".txt")
-        ]
+        if not os.path.isdir(ideas_dir):
+            log_message("ERROR", f"directory not found: {ideas_dir}")
+            return 1
+        files = sorted(
+            glob.iglob(os.path.join(ideas_dir, "**", "*.txt"), recursive=True)
+        )
 
     total = 0
     touched = 0
     unbalanced = 0
+    failed = 0
     for path in files:
-        removed, skipped = process_file(path, slotless, args.dry_run, args.backup)
+        removed, skipped, read_failed = process_file(
+            path, slotless, args.dry_run, args.backup
+        )
         rel = os.path.relpath(path, root)
+        if read_failed:
+            failed += 1
+            continue
         if skipped:
             unbalanced += skipped
             log_message("WARNING", f"{rel}: {skipped} allowed blocks never close")
@@ -136,8 +144,12 @@ def main() -> int:
             log_message("INFO", f"{rel}: {removed} removed")
 
     verb = "would remove" if args.dry_run else "removed"
-    log_message("SUCCESS", f"{verb} {total} allowed blocks across {touched} files")
-    return 1 if unbalanced else 0
+    level = "ERROR" if failed or unbalanced else "SUCCESS"
+    message = f"{verb} {total} allowed blocks across {touched} files"
+    if failed:
+        message += f"; {failed} files could not be read"
+    log_message(level, message)
+    return 1 if unbalanced or failed else 0
 
 
 if __name__ == "__main__":

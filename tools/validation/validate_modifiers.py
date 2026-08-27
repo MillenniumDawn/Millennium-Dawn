@@ -8,7 +8,7 @@ definitions. Targeted modifiers (XXX_opinion, XXX_autonomy_gain) are skipped.
 import os
 import re
 import sys
-from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Dict, FrozenSet, Iterator, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -754,6 +754,21 @@ class Validator(BaseValidator):
             category="unknown-modifier",
         )
 
+    def _iter_dynamic_modifier_files(
+        self, ignore_staged: bool = False
+    ) -> Iterator[Tuple[str, str, str]]:
+        files = self._collect_files(
+            ["common/dynamic_modifiers/**/*.txt"], ignore_staged=ignore_staged
+        )
+        for filepath in files:
+            if should_skip_file(filepath):
+                continue
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if text:
+                yield filepath, os.path.relpath(filepath, self.mod_path), text
+
     def validate_dynamic_modifier_name_loc(self):
         """Check that dynamic modifiers with a _TT/_desc loc entry also have a
         bare-name loc key — the in-game modifier header renders the bare key,
@@ -761,21 +776,11 @@ class Validator(BaseValidator):
         self._log_section("Checking dynamic modifier name loc references...")
 
         loc_keys = self._load_localisation_keys()
-        files = self._collect_files(
-            ["common/dynamic_modifiers/**/*.txt"], ignore_staged=True
-        )
+        files = list(self._iter_dynamic_modifier_files(ignore_staged=True))
         self.log(f"  Found {len(files)} dynamic modifier files to check")
 
         results = []
-        for filepath in files:
-            if should_skip_file(filepath):
-                continue
-            text = FileOpener.open_text_file(
-                filepath, lowercase=False, strip_comments_flag=True
-            )
-            if not text:
-                continue
-            rel = os.path.relpath(filepath, self.mod_path)
+        for filepath, rel, text in files:
             names = disk_cache.per_file_cached_by_content(
                 self.mod_path,
                 "modifiers.dynamic_names",
@@ -807,17 +812,8 @@ class Validator(BaseValidator):
         """Check dynamic modifier `enable` blocks for triggers that never fail."""
         self._log_section("Checking dynamic modifier enable gates...")
 
-        files = self._collect_files(["common/dynamic_modifiers/**/*.txt"])
         results = []
-        for filepath in files:
-            if should_skip_file(filepath):
-                continue
-            text = FileOpener.open_text_file(
-                filepath, lowercase=False, strip_comments_flag=True
-            )
-            if not text:
-                continue
-            rel = os.path.relpath(filepath, self.mod_path)
+        for _filepath, rel, text in self._iter_dynamic_modifier_files():
             for name, block_line, body in _extract_top_level_definition_blocks(text):
                 for message, offset in _redundant_enable_gates(body):
                     results.append((f"'{name}': {message}", rel, block_line + offset))
@@ -826,7 +822,7 @@ class Validator(BaseValidator):
             results,
             "✓ No redundant dynamic modifier enable gates",
             "Redundant enable gates (re-evaluated every tick, never false):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="redundant-enable-gate",
         )
 

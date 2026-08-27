@@ -20,7 +20,7 @@ Every strip is reported, because "only X ever attaches it" is a claim about the
 rest of the repo that this script does not verify.
 """
 
-import argparse
+import glob
 import os
 import re
 import sys
@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common_utils import (  # noqa: E402
     apply_brace_stack,
     code_of_line,
+    create_gate_sweep_parser,
     find_block_span,
 )
 from shared_utils import atomic_write_text, create_backup, log_message  # noqa: E402
@@ -178,27 +179,26 @@ def _strip_packed_body(inner: str) -> Tuple[str, int]:
     return "".join(pieces), stripped
 
 
-def process_file(path: str, dry_run: bool, backup: bool) -> Tuple[int, int, int]:
-    with open(path, "r", encoding="utf-8-sig", newline="") as handle:
-        lines = handle.read().split("\n")
+def process_file(path: str, dry_run: bool, backup: bool) -> Tuple[int, int, int, bool]:
+    try:
+        with open(path, "r", encoding="utf-8-sig", newline="") as handle:
+            lines = handle.read().split("\n")
+    except OSError as exc:
+        log_message("ERROR", f"{path}: {exc}")
+        return 0, 0, 0, True
 
     stripped, removed, trimmed, skipped = strip_enable_gates(lines)
     if (removed or trimmed) and not dry_run:
         if backup:
             create_backup(path)
         atomic_write_text(path, "\n".join(stripped))
-    return removed, trimmed, skipped
+    return removed, trimmed, skipped, False
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("files", nargs="*", help="files (default: dynamic_modifiers/)")
-    parser.add_argument("--root", default=None, help="mod root (default: auto)")
-    parser.add_argument("--dry-run", action="store_true", help="report, do not write")
-    parser.add_argument(
-        "-b", "--backup", action="store_true", help="back each file up before writing"
-    )
-    args = parser.parse_args()
+    args = create_gate_sweep_parser(
+        __doc__ or "", "files (default: dynamic_modifiers/)"
+    ).parse_args()
 
     root = args.root or os.path.normpath(
         os.path.join(os.path.dirname(__file__), "..", "..")
@@ -207,18 +207,23 @@ def main() -> int:
     files = args.files
     if not files:
         mod_dir = os.path.join(root, "common", "dynamic_modifiers")
-        files = [
-            os.path.join(mod_dir, name)
-            for name in sorted(os.listdir(mod_dir))
-            if name.endswith(".txt")
-        ]
+        if not os.path.isdir(mod_dir):
+            log_message("ERROR", f"directory not found: {mod_dir}")
+            return 1
+        files = sorted(glob.iglob(os.path.join(mod_dir, "**", "*.txt"), recursive=True))
 
     total_removed = 0
     total_trimmed = 0
     total_skipped = 0
+    total_failed = 0
     for path in files:
-        removed, trimmed, skipped = process_file(path, args.dry_run, args.backup)
+        removed, trimmed, skipped, failed = process_file(
+            path, args.dry_run, args.backup
+        )
         rel = os.path.relpath(path, root)
+        if failed:
+            total_failed += 1
+            continue
         if skipped:
             total_skipped += skipped
             log_message("WARNING", f"{rel}: {skipped} enable blocks never close")
@@ -228,10 +233,12 @@ def main() -> int:
             log_message("INFO", f"{rel}: {removed} removed, {trimmed} trimmed")
 
     verb = "would remove" if args.dry_run else "removed"
-    log_message(
-        "SUCCESS", f"{verb} {total_removed} enable blocks, trimmed {total_trimmed}"
-    )
-    return 1 if total_skipped else 0
+    level = "ERROR" if total_failed or total_skipped else "SUCCESS"
+    message = f"{verb} {total_removed} enable blocks, trimmed {total_trimmed}"
+    if total_failed:
+        message += f"; {total_failed} files could not be read"
+    log_message(level, message)
+    return 1 if total_skipped or total_failed else 0
 
 
 if __name__ == "__main__":

@@ -2,12 +2,13 @@
 """Validate idea definitions and usage in Millennium Dawn."""
 
 import argparse
+import hashlib
 import os
 import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -85,26 +86,16 @@ _HOI4_IDEA_INNER_KEYS: frozenset = HOI4_BUILTIN_BLOCKS | frozenset(
 # Categories where `allowed = { always = no }` is flagged as redundant
 # Dynamically parsed from common/idea_tags/*.txt — non-selectable categories
 # (those without slot=/character_slot= or with hidden=yes)
-from shared_utils import (
-    extract_block_from_text,  # noqa: E402
-    get_all_idea_categories,  # noqa: E402
-)
 from shared_utils import (  # noqa: E402
+    extract_block_from_text,
+    get_all_idea_categories,
+)
+from shared_utils import (
     get_non_selectable_idea_categories as _get_non_selectable_idea_categories,
 )
-from shared_utils import (  # noqa: E402
+from shared_utils import (
     get_slotless_idea_categories as _get_slotless_idea_categories,
 )
-
-# An idea with no slot of any kind can only arrive through add_idea, which
-# never consults `allowed`, so the whole block goes. A hidden category that
-# still has a slot keeps its `allowed`; only the dead `always = no` form is
-# flagged there. The two sets overlap and each falls back to
-# {country, hidden_ideas} when idea_tags is unreadable, so the slotless case is
-# excluded at the check rather than by subtracting here — that fallback would
-# otherwise leave an empty set and silently retire the always-no rule.
-_SLOTLESS_CATEGORIES = _get_slotless_idea_categories()
-_ALWAYS_NO_CATEGORIES = _get_non_selectable_idea_categories()
 
 # Vanilla idea prefixes that we skip for undefined-reference checks
 # (game-engine built-ins, vanilla ideas, etc.)
@@ -258,7 +249,11 @@ def _idea_categories_frame_count(gfx_dirs: List[Optional[str]]) -> Optional[int]
     for gfx_dir in gfx_dirs:
         if not gfx_dir or not os.path.isdir(gfx_dir):
             continue
-        for fname in sorted(os.listdir(gfx_dir)):
+        try:
+            filenames = sorted(os.listdir(gfx_dir))
+        except OSError:
+            continue
+        for fname in filenames:
             if not fname.endswith(".gfx"):
                 continue
             try:
@@ -273,7 +268,12 @@ def _idea_categories_frame_count(gfx_dirs: List[Optional[str]]) -> Optional[int]
                 continue
             block, _ = extract_block_from_text(text, text.rfind("{", 0, m.start()))
             fm = _NO_OF_FRAMES.search(block)
-            return int(fm.group(1)) if fm else 1
+            if not fm:
+                return 1
+            try:
+                return int(fm.group(1))
+            except ValueError:
+                return 1
     return None
 
 
@@ -312,7 +312,10 @@ class IdeaIssue:
 
 
 def _parse_ideas_from_file(
-    filepath: str, mod_path: str
+    filepath: str,
+    mod_path: str,
+    slotless_categories: FrozenSet[str],
+    always_no_categories: FrozenSet[str],
 ) -> Tuple[Dict[str, Tuple[str, Optional[str], Optional[str]]], List[IdeaIssue]]:
     """Read one ideas file and return (defined_ideas, issues), content-cached."""
     text = FileOpener.open_text_file(
@@ -320,13 +323,24 @@ def _parse_ideas_from_file(
     )
     if not text:
         return {}, []
+    category_key = hashlib.sha256(
+        repr(
+            (tuple(sorted(slotless_categories)), tuple(sorted(always_no_categories)))
+        ).encode("utf-8")
+    ).hexdigest()
     return disk_cache.per_file_cached_by_content(
-        mod_path, "ideas.defs.v2", filepath, text, lambda: _parse_ideas_from_text(text)
+        mod_path,
+        f"ideas.defs.v3.{category_key}",
+        filepath,
+        text,
+        lambda: _parse_ideas_from_text(text, slotless_categories, always_no_categories),
     )
 
 
 def _parse_ideas_from_text(
     text: str,
+    slotless_categories: FrozenSet[str],
+    always_no_categories: FrozenSet[str],
 ) -> Tuple[Dict[str, Tuple[str, Optional[str], Optional[str]]], List[IdeaIssue]]:
     """Parse ideas-file text and return (defined_ideas, issues).
 
@@ -394,8 +408,8 @@ def _parse_ideas_from_text(
                 defined[current_idea] = (cat, name_override, picture)
 
                 if (
-                    category_name in _ALWAYS_NO_CATEGORIES
-                    and category_name not in _SLOTLESS_CATEGORIES
+                    category_name in always_no_categories
+                    and category_name not in slotless_categories
                 ):
                     if _ALLOWED_ALWAYS_NO.search(idea_text):
                         issues.append(
@@ -419,7 +433,7 @@ def _parse_ideas_from_text(
 
                 allowed_start = _ALLOWED_BLOCK_START.search(idea_text)
                 if allowed_start:
-                    if category_name in _SLOTLESS_CATEGORIES:
+                    if category_name in slotless_categories:
                         issues.append(
                             IdeaIssue(
                                 current_idea,
@@ -680,6 +694,8 @@ class Validator(BaseValidator):
         self.unused_ideas = kwargs.pop("unused_ideas", True)
         self.suggest_consolidation = kwargs.pop("suggest_consolidation", False)
         super().__init__(*args, **kwargs)
+        self.slotless_categories = _get_slotless_idea_categories(self.mod_path)
+        self.always_no_categories = _get_non_selectable_idea_categories(self.mod_path)
 
     def _parse_all_ideas(
         self,
@@ -705,7 +721,12 @@ class Validator(BaseValidator):
         ideas_by_file: Dict[str, List[str]] = {}
 
         for filepath in idea_files:
-            defined, issues = _parse_ideas_from_file(filepath, self.mod_path)
+            defined, issues = _parse_ideas_from_file(
+                filepath,
+                self.mod_path,
+                self.slotless_categories,
+                self.always_no_categories,
+            )
             all_defined.update(defined)
             ideas_by_file[filepath] = list(defined.keys())
             if issues:
@@ -812,10 +833,15 @@ class Validator(BaseValidator):
 
         findings: List[Issue] = []
 
-        def _add(filepath: str, line: int, message: str):
+        def _add(
+            filepath: str,
+            line: int,
+            message: str,
+            severity: str = Severity.WARNING,
+        ):
             findings.append(
                 Issue(
-                    severity=Severity.WARNING,
+                    severity=severity,
                     category="idea-quality",
                     message=message,
                     file=os.path.relpath(filepath, self.mod_path),
@@ -846,6 +872,7 @@ class Validator(BaseValidator):
                         f"'{issue.idea_name}' has an allowed block in {issue.category}"
                         " (that category has no slot, so add_idea is the only way in"
                         " and the gate is never consulted — delete it)",
+                        Severity.ERROR,
                     )
                 elif issue.issue_type == "allowed-always-no":
                     _add(
@@ -1294,7 +1321,13 @@ class Validator(BaseValidator):
                 for fp, ids in ideas_by_file.items()
                 if any(fp.endswith(sf) for sf in staged_files_set)
             }
-            if staged_issues:
+            idea_tags_changed = any(
+                path.startswith("common/idea_tags/") and path.endswith(".txt")
+                for path in staged_files_set
+            )
+            if idea_tags_changed:
+                self.validate_idea_quality(issues_by_file)
+            elif staged_issues:
                 self.validate_idea_quality(staged_issues)
             else:
                 self.log("  No staged idea files — skipping quality checks")

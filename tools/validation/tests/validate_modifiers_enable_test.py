@@ -7,7 +7,7 @@ survive are the ones that go false while the modifier is still attached:
 so its `has_idea` gates are the only thing switching a lost faction off.
 """
 
-from validate_modifiers import _redundant_enable_gates
+from validate_modifiers import Validator, _redundant_enable_gates
 
 
 def _messages(body):
@@ -87,3 +87,16 @@ def test_line_offset_points_at_the_gate():
     body = "\n\ticon = GFX_idea_x\n\tenable = {\n\t\toriginal_tag = FOO\n\t}\n"
     _message, line = _redundant_enable_gates(body)[0]
     assert body.split("\n")[line].strip() == "original_tag = FOO"
+
+
+def test_validator_reports_redundant_gate_as_error(tmp_path):
+    path = tmp_path / "common" / "dynamic_modifiers" / "test.txt"
+    path.parent.mkdir(parents=True)
+    with open(path, "w", encoding="utf-8", newline="") as handle:
+        handle.write("FOO_modifier = {\n\tenable = { always = yes }\n}\n")
+
+    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.validate_redundant_enable_gates()
+
+    assert validator.errors_found == 1
+    assert validator.warnings_found == 0
