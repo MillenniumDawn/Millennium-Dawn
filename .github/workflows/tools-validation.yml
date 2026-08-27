@@ -83,13 +83,12 @@ jobs:
       # wiring around them. pyproject.toml supplies the pytest testpaths so all
       # six test dirs are collected. typo-watchlist.md is read by
       # loc_typo_watchlist_test's doc-sync guard, and modifiers_documentation.md
-      # by validate_modifiers_test's parse guard. The three script trees are
-      # walked whole by config_drift_test's scripted-effect caller scan, which
-      # derives the caller directories from the corpus rather than from the
-      # validator's pattern list; they also carry the files focus_pp_malus_test
-      # and check_common_mistakes_test read (national_focus, script_enums,
-      # equipment, decisions, modifiers), which return None and blow up at
-      # collection time when absent.
+      # by validate_modifiers_test's parse guard. common/national_focus is
+      # walked by focus_pp_malus_test's exemption-freshness guard.
+      # check_common_mistakes_test asserts its script_enums, equipment, decision
+      # and modifier loaders against the real files those loaders read; without
+      # them each returns None and the module-level assertions blow up at
+      # collection time.
       - name: Checkout (unit tests)
         if: matrix.check.id == 'unit'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -102,9 +101,12 @@ jobs:
             .pre-commit-config.yaml
             .claude/docs/typo-watchlist.md
             resources/documentation/modifiers_documentation.md
-            common
-            events
-            history
+            common/national_focus
+            common/script_enums.txt
+            common/units/equipment
+            common/decisions
+            common/opinion_modifiers
+            common/modifiers
             .github/workflows/coding-pipeline.yml
             .github/workflows/nightly-pr-validation.yml
             .github/workflows/tools-validation.yml
