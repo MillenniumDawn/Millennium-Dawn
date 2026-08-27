@@ -11,18 +11,86 @@ import re
 import sys
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from _common import format_elapsed
 from shared_utils import (
     atomic_write_text,
+    blank_quoted_strings,
     create_backup,
     extract_block,
     log_message,
     normalize_spacing,
     run_tool_main,
+    strip_inline_comment,
 )
+
+# A named block opener, or a bare brace. Ordering matters: `foo = {` has to win
+# over the lone `{` alternative so the name reaches the stack.
+_BRACE_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{|\{|\}")
+
+
+def code_of_line(line: str) -> str:
+    """Strip a line down to what the parser sees: no comment, no quoted text."""
+    return blank_quoted_strings(strip_inline_comment(line))
+
+
+def find_block_span(
+    lines: List[str], start: int, open_col: int
+) -> Optional[Tuple[int, int]]:
+    """Locate the `}` closing the `{` at (start, open_col).
+
+    Returns `(end_line, close_col)`, or None when the braces never balance.
+    Column-accurate on purpose: a per-line depth counter that stops at "depth
+    reached zero" cannot tell `}` from `} }`, so it swallows the enclosing
+    block's closer along with the one it wanted. Callers slice around the
+    returned position instead. None means "leave this alone" — an unbalanced
+    source file must not be rewritten from the opener to EOF.
+    """
+    depth = 0
+    for index in range(start, len(lines)):
+        code = code_of_line(lines[index])
+        begin = open_col if index == start else 0
+        for col in range(begin, len(code)):
+            if code[col] == "{":
+                depth += 1
+            elif code[col] == "}":
+                depth -= 1
+                if depth == 0:
+                    return index, col
+    return None
+
+
+def apply_brace_stack(code: str, stack: List[str]) -> None:
+    """Advance a stack of enclosing block names across one line of code.
+
+    A named opener pushes its name, a bare `{` pushes an empty string, and `}`
+    pops, so `len(stack)` is the nesting depth and `stack[n]` names the block at
+    each level.
+    """
+    for match in _BRACE_RE.finditer(code):
+        if match.group(0) == "}":
+            if stack:
+                stack.pop()
+        else:
+            stack.append(match.group(1) or "")
+
+
+def collapse_blank_gap(out: List[str], lines: List[str], index: int) -> int:
+    """Close the hole a removed block leaves, returning the next index to read.
+
+    A block that vanishes takes its separator blank line with it only when that
+    would otherwise leave two in a row, or leave one pinned against the parent's
+    own brace. Anything else is a real separator between surviving elements.
+    """
+    before_blank = bool(out) and not out[-1].strip()
+    after_blank = index < len(lines) and not lines[index].strip()
+    if after_blank and (before_blank or out and out[-1].rstrip().endswith("{")):
+        return index + 1
+    if before_blank and index < len(lines) and lines[index].lstrip().startswith("}"):
+        out.pop()
+    return index
 
 
 def compact_search_filters(block_lines: List[str]) -> str:
@@ -276,6 +344,19 @@ class BaseStandardizer(ABC):
             start_time=self.start_time,
             processed_count=self.processed_count,
         )
+
+
+def create_gate_sweep_parser(
+    description: str, files_help: str
+) -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("files", nargs="*", help=files_help)
+    parser.add_argument("--root", default=None, help="mod root (default: auto)")
+    parser.add_argument("--dry-run", action="store_true", help="report, do not write")
+    parser.add_argument(
+        "-b", "--backup", action="store_true", help="back each file up before writing"
+    )
+    return parser
 
 
 def create_standardizer_parser(description: str) -> argparse.ArgumentParser:

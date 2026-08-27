@@ -31,6 +31,11 @@ _GOLDEN = {
         "validate_oob_units",
         "validate_characters",
     },
+    "common/idea_tags/00_idea.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_events",
+    },
     "events/Syria.txt": {
         "validate_style",
         "validate_ideas",
