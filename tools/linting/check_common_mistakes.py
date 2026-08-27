@@ -59,6 +59,20 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - NOR = { ... } (not a HOI4 trigger keyword; silently never matches)
   - max_iterations inside while_loop_effect (silently ignored by the engine)
   - var:x^i array-index shorthand (needs the full variable name)
+  - limit as a direct child of an else block (else takes no condition, so the
+    engine rejects the block and the branch never runs; the author meant else_if)
+  - province = { province = <id> } in add_building_construction (the block form
+    takes a selector, not a bare id, so nothing is built)
+  - a log string carrying a second quoted run (a swallowed `# "comment"` closes
+    the value early and the remainder parses as effects)
+  - add_equipment_bonus with no name/project, or a bonus type outside
+    script_enum_equipment_bonus_type -- either way the engine drops the effect
+  - add_equipment_to_stockpile / send_equipment / add_equipment_production /
+    add_equipment_subsidy naming equipment that common/units/equipment/ doesn't
+    define (a vanilla archetype MD renamed, or a miscased variant)
+  - has_active_mission / has_active_decision / has_active_timed_decision naming
+    no decision (the trigger reads false forever)
+  - add_opinion_modifier / add_relation_modifier naming an undefined modifier
 """
 
 import json
@@ -123,6 +137,33 @@ _PROVINCIAL_BUILDINGS_FALLBACK = frozenset(
         "canal_locks",
     }
 )
+_RE_ELSE_OPEN = re.compile(r"(?<!_)\belse\s*=\s*\{")
+_RE_LIMIT_OPEN = re.compile(r"\blimit\s*=\s*\{")
+_RE_LOG_MULTI_QUOTE = re.compile(r'\blog\s*=\s*"[^"]*"[^"]*"')
+_RE_NESTED_PROVINCE = re.compile(r"\bprovince\s*=\s*\{([^{}]*)\}")
+_RE_PROVINCE_ID_ONLY = re.compile(r"^\s*province\s*=\s*\d+\s*$", re.M)
+_RE_EQUIPMENT_BONUS_OPEN = re.compile(r"\badd_equipment_bonus\s*=\s*\{")
+_RE_BONUS_OPEN = re.compile(r"\bbonus\s*=\s*\{")
+_RE_BLOCK_ENTRY = re.compile(r"(\w+)\s*=\s*\{")
+_RE_EQUIPMENT_BONUS_NAME = re.compile(r"\b(?:name|project)\s*=")
+# Effects whose `type =` names an equipment definition rather than a building,
+# a mission, or any of the other things `type` is overloaded for.
+_RE_EQUIPMENT_EFFECT_OPEN = re.compile(
+    r"\b(add_equipment_to_stockpile|send_equipment|add_equipment_production|"
+    r"add_equipment_subsidy)\s*=\s*\{"
+)
+_RE_EQUIPMENT_ENTRY = re.compile(r"^\t(\w+)\s*=\s*\{", re.M)
+_RE_DUPLICATE_ARCHETYPES_OPEN = re.compile(r"\bduplicate_archetypes\s*=\s*\{")
+_RE_ARCHETYPE = re.compile(r"\barchetype\s*=\s*([A-Za-z_]\w*)")
+_RE_ACTIVE_DECISION = re.compile(
+    r"\b(has_active_mission|has_active_decision|has_active_timed_decision)"
+    r"\s*=\s*([A-Za-z_]\w*)"
+)
+_RE_DECISION_ENTRY = re.compile(r"^\t(\w+)\s*=\s*\{", re.M)
+_RE_RELATION_MODIFIER = re.compile(
+    r"\badd_(relation|opinion)_modifier\s*=\s*\{[^{}]*?\bmodifier\s*=\s*([A-Za-z_]\w*)"
+)
+_RE_MODIFIER_ENTRY = re.compile(r"^(\w+)\s*=\s*\{", re.M)
 _RE_RANDOM_SELECT_AMOUNT = re.compile(r"\brandom_select_amount\s*=\s*([^\s}]+)")
 _RE_BARE_INT = re.compile(r"^-?\d+$")
 # Tautological OR covering both polarities of one trigger (X = yes / X = no) is
@@ -606,143 +647,98 @@ def _check_focus_missing_war_hint(lines):
     return issues
 
 
-def _check_mutually_exclusive_contradictions(lines):
-    """Flag blocks with multiple values of a single-valued trigger at the same AND depth.
+def _push_not_or_frame(stack, code, last_end, match_start):
+    """Push a new (is_or, is_not, {}) frame for an opening brace onto `stack`.
 
-    Example bug:
-        SOV = {
-            has_government = communism
-            has_government = nationalist
-        }
-    A country has exactly one government, so this evaluates to false forever.
-    Caller meant OR = { has_government = communism has_government = nationalist }.
-
-    Inside NOT the inverse bug appears:
-        NOT = {
-            tag = USA
-            tag = CHI
-        }
-    which is NOT(A AND B) — always true since a country is only one tag at a
-    time. Caller meant separate NOT blocks or NOT = { OR = { ... } }.
+    `is_not`/`is_or` come from whichever of NOT=/OR= immediately precedes the
+    brace in the text since `last_end`. Shared by the mutex-contradiction
+    scanners below, which differ only in what they collect per frame.
     """
-    issues = []
-    # Stack entries: (is_or, is_not, {trigger: [(line_num, value), ...]})
-    stack = [(False, False, {})]
+    preceding = code[last_end:match_start]
+    is_not = bool(_RE_NOT_EQ.search(preceding))
+    is_or = bool(_RE_OR_EQ.search(preceding))
+    stack.append((is_or, is_not, {}))
 
-    for i, line in enumerate(lines):
-        code = _RE_QUOTED_STRING.sub('""', strip_inline_comment(line))
+
+def _iter_mutex_conflicts(lines, token_pattern, clean_line, entry_for_match):
+    """Yield (line, group, values, is_not) for conflicting AND-frame entries."""
+    stack = [(False, False, {})]
+    for line_number, line in enumerate(lines, 1):
+        code = clean_line(line)
         if not code.strip():
             continue
 
         last_end = 0
-        for m in _RE_MUTEX_TRIGGER_TOKEN.finditer(code):
-            tok = m.group(0)
-            if tok == "{":
-                preceding = code[last_end : m.start()]
-                is_not = bool(_RE_NOT_EQ.search(preceding))
-                is_or = bool(_RE_OR_EQ.search(preceding))
-                stack.append((is_or, is_not, {}))
-            elif tok == "}":
-                if len(stack) > 1:
-                    popped_or, popped_not, popped_triggers = stack.pop()
-                    if popped_or:
-                        last_end = m.end()
-                        continue
-                    for trigger, entries in popped_triggers.items():
-                        values = {v for _, v in entries}
-                        if len(values) < 2:
-                            continue
-                        first_line = entries[0][0]
-                        vals_str = ", ".join(sorted(values))
-                        if popped_not:
-                            msg = (
-                                f"NOT = {{ }} contains multiple '{trigger}' values"
-                                f" ({vals_str}) -- always true since a country has"
-                                f" only one {trigger}; use separate NOT blocks or"
-                                f" NOT = {{ OR = {{ ... }} }}"
-                            )
-                        else:
-                            msg = (
-                                f"multiple '{trigger}' values in same AND block"
-                                f" ({vals_str}) -- always false since a country has"
-                                f" only one {trigger}; wrap in OR = {{ }} to match any"
-                            )
-                        issues.append((first_line, msg))
-            else:
-                stack[-1][2].setdefault(m.group(1), []).append((i + 1, m.group(2)))
-            last_end = m.end()
+        for match in token_pattern.finditer(code):
+            token = match.group(0)
+            if token == "{":
+                _push_not_or_frame(stack, code, last_end, match.start())
+            elif token == "}" and len(stack) > 1:
+                is_or, is_not, entries_by_group = stack.pop()
+                if not is_or:
+                    for group, entries in entries_by_group.items():
+                        values = {value for _, value in entries}
+                        if len(values) > 1:
+                            yield entries[0][0], group, values, is_not
+            elif token != "}":
+                entry = entry_for_match(match)
+                if entry is not None:
+                    group, value = entry
+                    stack[-1][2].setdefault(group, []).append((line_number, value))
+            last_end = match.end()
 
+
+def _check_mutually_exclusive_contradictions(lines):
+    """Flag blocks with multiple values of a single-valued trigger at the same AND depth."""
+    issues = []
+    for line, trigger, values, is_not in _iter_mutex_conflicts(
+        lines,
+        _RE_MUTEX_TRIGGER_TOKEN,
+        lambda value: _RE_QUOTED_STRING.sub('""', strip_inline_comment(value)),
+        lambda match: (match.group(1), match.group(2)),
+    ):
+        values_text = ", ".join(sorted(values))
+        if is_not:
+            message = (
+                f"NOT = {{ }} contains multiple '{trigger}' values ({values_text}) -- "
+                f"always true since a country has only one {trigger}; use separate NOT "
+                "blocks or NOT = { OR = { ... } }"
+            )
+        else:
+            message = (
+                f"multiple '{trigger}' values in same AND block ({values_text}) -- "
+                f"always false since a country has only one {trigger}; wrap in OR = {{ }} "
+                "to match any"
+            )
+        issues.append((line, message))
     return issues
 
 
 def _check_has_idea_mutex_in_not_block(lines):
-    """Flag NOT/AND blocks containing 2+ has_idea checks from the same mutex group.
-
-    Example bug (from raid_target_eligible before fix):
-        NOT = {
-            has_idea = intervention_local_security
-            has_idea = intervention_isolation
-        }
-    Both ideas are in the intervention-doctrine mutex group. A country can hold
-    at most one at a time, so the AND inside NOT is always false, and the NOT
-    is always true — the gate it was supposed to enforce is silently bypassed.
-    Caller almost always meant `NOT = { OR = { ... } }` or separate NOT blocks.
-
-    Inside a non-NOT AND block, two same-group has_idea checks are always false
-    (a country can't be in both slots), so the entire surrounding modifier or
-    trigger never fires — usually also a bug.
-    """
+    """Flag NOT/AND blocks containing 2+ has_idea checks from the same mutex group."""
     issues = []
-    # Stack entries: (is_or, is_not, {group_name: [(line_num, idea_name), ...]})
-    stack = [(False, False, {})]
 
-    for i, line in enumerate(lines):
-        code = strip_inline_comment(line)
-        if not code.strip():
-            continue
+    def idea_entry(match):
+        idea = match.group(1)
+        group = _IDEA_TO_MUTEX_GROUP.get(idea)
+        return (group, idea) if group is not None else None
 
-        last_end = 0
-        for m in _RE_MUTEX_TOKEN.finditer(code):
-            tok = m.group(0)
-            if tok == "{":
-                preceding = code[last_end : m.start()]
-                is_not = bool(_RE_NOT_EQ.search(preceding))
-                is_or = bool(_RE_OR_EQ.search(preceding))
-                stack.append((is_or, is_not, {}))
-            elif tok == "}":
-                if len(stack) > 1:
-                    popped_or, popped_not, popped_groups = stack.pop()
-                    # OR is the intended way to express "any of these mutex ideas"
-                    if popped_or:
-                        last_end = m.end()
-                        continue
-                    for group_name, entries in popped_groups.items():
-                        ideas_set = {idea for _, idea in entries}
-                        if len(ideas_set) < 2:
-                            continue
-                        first_line = entries[0][0]
-                        ideas_str = ", ".join(sorted(ideas_set))
-                        if popped_not:
-                            msg = (
-                                f"NOT = {{ }} contains multiple {group_name} ideas "
-                                f"({ideas_str}) -- always true since they're mutually "
-                                f"exclusive; use NOT = {{ OR = {{ ... }} }} or "
-                                f"separate NOT blocks per idea"
-                            )
-                        else:
-                            msg = (
-                                f"AND block contains multiple {group_name} ideas "
-                                f"({ideas_str}) -- always false since they're mutually "
-                                f"exclusive; wrap in OR = {{ }} to match any"
-                            )
-                        issues.append((first_line, msg))
-            else:
-                idea = m.group(1)
-                group = _IDEA_TO_MUTEX_GROUP.get(idea)
-                if group is not None:
-                    stack[-1][2].setdefault(group, []).append((i + 1, idea))
-            last_end = m.end()
-
+    for line, group, ideas, is_not in _iter_mutex_conflicts(
+        lines, _RE_MUTEX_TOKEN, strip_inline_comment, idea_entry
+    ):
+        ideas_text = ", ".join(sorted(ideas))
+        if is_not:
+            message = (
+                f"NOT = {{ }} contains multiple {group} ideas ({ideas_text}) -- always "
+                "true since they're mutually exclusive; use NOT = { OR = { ... } } or "
+                "separate NOT blocks per idea"
+            )
+        else:
+            message = (
+                f"AND block contains multiple {group} ideas ({ideas_text}) -- always "
+                "false since they're mutually exclusive; wrap in OR = { } to match any"
+            )
+        issues.append((line, message))
     return issues
 
 
@@ -1015,16 +1011,13 @@ def _check_decision_available_always_no(lines):
     return issues
 
 
-def _check_decision_allowed_dynamic(lines):
-    """Flag dynamic triggers inside decision allowed blocks.
+def _iter_decision_subblocks(lines):
+    """Yield (cat_start, k, cat_block, dec_block) for each decision sub-block.
 
-    Decision `allowed` is evaluated once at game start and locked. Dynamic
-    game-state conditions (factory counts, opinion, government, flags, variables)
-    belong in `available` or `visible` instead.
-
-    Only checks files in common/decisions/.
+    Walks toplevel category blocks and, one level in, every indented child
+    block -- the category/decision layout of common/decisions/ files. Shared
+    by _check_decision_allowed_dynamic and _find_decision_log_mismatches.
     """
-    issues = []
     i = 0
     n = len(lines)
     while i < n:
@@ -1042,48 +1035,60 @@ def _check_decision_allowed_dynamic(lines):
                 bl_code = strip_inline_comment(bl)
                 if _RE_INDENTED_WORD.match(bl) and "{" in bl_code:
                     dec_block, next_k = _get_block(cat_block, k)
-                    norm = _RE_WHITESPACE_COLLAPSE.sub(" ", "".join(dec_block))
-                    if not _RE_DECISION_MARKER.search(norm):
-                        k = next_k
-                        continue
-                    in_allowed = False
-                    allowed_depth = 0
-                    for p, dbl in enumerate(dec_block):
-                        dbl_code = strip_inline_comment(dbl)
-                        delta = dbl_code.count("{") - dbl_code.count("}")
-                        # if/else, not two ifs: the opening line's delta must
-                        # only be counted once (via the entry branch), or
-                        # allowed_depth never returns to <=0 at the block's
-                        # real close and in_allowed leaks into the rest of the
-                        # decision.
-                        if not in_allowed:
-                            if (
-                                _RE_ALLOWED_OPEN_WB.search(dbl_code)
-                                and "allowed_civil_war" not in dbl_code
-                            ):
-                                in_allowed = True
-                                allowed_depth = delta
-                        else:
-                            allowed_depth += delta
-                        if in_allowed:
-                            if _RE_DECISION_ALLOWED_DYNAMIC.search(dbl_code):
-                                trigger = _RE_DECISION_ALLOWED_DYNAMIC.search(
-                                    dbl_code
-                                ).group()
-                                if trigger not in ("original_tag", "tag"):
-                                    issues.append(
-                                        (
-                                            cat_start + k + p + 1,
-                                            f"dynamic trigger '{trigger}' in decision allowed block -- allowed is evaluated once at game start; move to available",
-                                        )
-                                    )
-                            if allowed_depth <= 0:
-                                in_allowed = False
+                    yield cat_start, k, cat_block, dec_block
                     k = next_k
                 else:
                     k += 1
         else:
             i += 1
+
+
+def _check_decision_allowed_dynamic(lines):
+    """Flag dynamic triggers inside decision allowed blocks.
+
+    Decision `allowed` is evaluated once at game start and locked. Dynamic
+    game-state conditions (factory counts, opinion, government, flags, variables)
+    belong in `available` or `visible` instead.
+
+    Only checks files in common/decisions/.
+    """
+    issues = []
+    for cat_start, k, _cat_block, dec_block in _iter_decision_subblocks(lines):
+        norm = _RE_WHITESPACE_COLLAPSE.sub(" ", "".join(dec_block))
+        if not _RE_DECISION_MARKER.search(norm):
+            continue
+        in_allowed = False
+        allowed_depth = 0
+        for p, dbl in enumerate(dec_block):
+            dbl_code = strip_inline_comment(dbl)
+            delta = dbl_code.count("{") - dbl_code.count("}")
+            # if/else, not two ifs: the opening line's delta must
+            # only be counted once (via the entry branch), or
+            # allowed_depth never returns to <=0 at the block's
+            # real close and in_allowed leaks into the rest of the
+            # decision.
+            if not in_allowed:
+                if (
+                    _RE_ALLOWED_OPEN_WB.search(dbl_code)
+                    and "allowed_civil_war" not in dbl_code
+                ):
+                    in_allowed = True
+                    allowed_depth = delta
+            else:
+                allowed_depth += delta
+            if in_allowed:
+                dynamic_trigger = _RE_DECISION_ALLOWED_DYNAMIC.search(dbl_code)
+                if dynamic_trigger:
+                    trigger = dynamic_trigger.group()
+                    if trigger not in ("original_tag", "tag"):
+                        issues.append(
+                            (
+                                cat_start + k + p + 1,
+                                f"dynamic trigger '{trigger}' in decision allowed block -- allowed is evaluated once at game start; move to available",
+                            )
+                        )
+                if allowed_depth <= 0:
+                    in_allowed = False
     return issues
 
 
@@ -1168,9 +1173,8 @@ def _check_consecutive_scope_blocks(lines):
                 closed_tag, closed_depth, closed_open_line = stack.pop()
                 if closed_tag:
                     prev_tag = closed_tag
-                    prev_indent = _RE_LEADING_INDENT.match(
-                        lines[closed_open_line - 1]
-                    ).group(1)
+                    indent_match = _RE_LEADING_INDENT.match(lines[closed_open_line - 1])
+                    prev_indent = indent_match.group(1) if indent_match else ""
                     prev_open = closed_open_line
                     prev_close = lineno
                     prev_close_depth = depth + opens - (k + 1)
@@ -1189,7 +1193,8 @@ def _check_consecutive_scope_blocks(lines):
 
         # Non-blank, non-scope lines reset prev_tag at the same indent
         if stripped and not m_tag_open and not _RE_CLOSE_BRACE_LINE.match(line):
-            line_indent = _RE_LEADING_INDENT.match(line).group(1)
+            indent_match = _RE_LEADING_INDENT.match(line)
+            line_indent = indent_match.group(1) if indent_match else ""
             if line_indent == prev_indent:
                 prev_tag = None
 
@@ -1853,6 +1858,22 @@ def _check_nor_block(lines):
     return issues
 
 
+def _find_brace_close(text, open_pos):
+    """Return the index in `text` of the brace matching the one at `open_pos`.
+
+    Depth-counts every `{`/`}` from `open_pos` onward with no quote
+    awareness. Returns `len(text)` if the braces never balance. Shared by
+    the whole-file brace scans below.
+    """
+    depth, i = 0, open_pos
+    while i < len(text):
+        depth += (text[i] == "{") - (text[i] == "}")
+        if not depth:
+            break
+        i += 1
+    return i
+
+
 def _check_while_loop_max_iterations(lines):
     """Flag max_iterations inside while_loop_effect -- the engine ignores it.
 
@@ -1862,12 +1883,7 @@ def _check_while_loop_max_iterations(lines):
     issues = []
     text = "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
     for match in _RE_WHILE_LOOP_OPEN.finditer(text):
-        depth, i = 0, match.end() - 1
-        while i < len(text):
-            depth += (text[i] == "{") - (text[i] == "}")
-            if not depth:
-                break
-            i += 1
+        i = _find_brace_close(text, match.end() - 1)
         body = text[match.end() : i]
         found = _RE_MAX_ITERATIONS.search(body)
         if found:
@@ -1952,12 +1968,7 @@ def _check_building_missing_province(lines, mod_root=None):
     # block spans lines, and two single-line blocks can share one line.
     text = "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
     for match in _RE_ADD_BUILDING_OPEN.finditer(text):
-        depth, i = 0, match.end() - 1
-        while i < len(text):
-            depth += (text[i] == "{") - (text[i] == "}")
-            if not depth:
-                break
-            i += 1
+        i = _find_brace_close(text, match.end() - 1)
         body = text[match.end() : i]
         type_match = _RE_BUILDING_TYPE.search(body)
         if not type_match or type_match.group(1) not in provincial:
@@ -1971,6 +1982,337 @@ def _check_building_missing_province(lines, mod_root=None):
                 f"province -- it is a provincial building, so the engine rejects "
                 f"the effect and nothing is built; add province = <id> or "
                 f"province = {{ all_provinces = yes ... }}",
+            )
+        )
+    return issues
+
+
+def _joined_code(lines):
+    """Comment-stripped, quote-blanked text of the file, one line per line."""
+    return "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
+
+
+def _block_body(text, body_start):
+    """Body of the block whose opening brace is the character before body_start."""
+    depth, i = 0, body_start - 1
+    while i < len(text):
+        depth += (text[i] == "{") - (text[i] == "}")
+        if not depth:
+            break
+        i += 1
+    return text[body_start:i]
+
+
+def _direct_child_matches(body, pattern):
+    """Matches of pattern sitting at depth 0 of body -- its direct children."""
+    found, depth, pos = [], 0, 0
+    for match in pattern.finditer(body):
+        segment = body[pos : match.start()]
+        depth += segment.count("{") - segment.count("}")
+        pos = match.start()
+        if depth == 0:
+            found.append(match)
+    return found
+
+
+@lru_cache(maxsize=None)
+def _mod_root():
+    """Repo root anchored on this file, not sys.argv[0] -- pytest imports this."""
+    return os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
+    )
+
+
+def _read_dir_text(*parts):
+    """Concatenated text of every .txt directly under the given mod directory."""
+    directory = os.path.join(_mod_root(), *parts)
+    chunks = []
+    try:
+        filenames = sorted(os.listdir(directory))
+    except OSError:
+        return None
+    for fname in filenames:
+        if not fname.endswith(".txt"):
+            continue
+        try:
+            with open(os.path.join(directory, fname), encoding="utf-8") as f:
+                chunks.append(f.read())
+        except OSError:
+            continue
+    return "\n".join(chunks)
+
+
+@lru_cache(maxsize=None)
+def _equipment_bonus_enum():
+    """Tokens script_enum_equipment_bonus_type accepts, from common/script_enums.txt.
+
+    Returns None when the file can't be read, which disables the check rather
+    than reporting every bonus as unknown.
+    """
+    path = os.path.join(_mod_root(), "common", "script_enums.txt")
+    try:
+        with open(path, encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return None
+    match = re.search(r"\bscript_enum_equipment_bonus_type\s*=\s*\{", text)
+    if not match:
+        return None
+    return frozenset(re.findall(r"[A-Za-z_]\w*", _block_body(text, match.end())))
+
+
+@lru_cache(maxsize=None)
+def _equipment_names():
+    """Every equipment id the engine ends up with from common/units/equipment/.
+
+    Archetypes, their numbered variants and duplicate_archetypes clone bases all
+    sit one tab in, so one pattern covers what the files spell out. A clone is
+    then generated once per variant of the archetype it copies, so
+    medium_tank_destroyer_chassis (cloning medium_tank_chassis) also yields
+    medium_tank_destroyer_chassis_0 .. _6 -- names nothing declares but history
+    files legitimately use. The directory is replace_path'd, so this is the whole
+    universe. None when it can't be read.
+    """
+    text = _read_dir_text("common", "units", "equipment")
+    if text is None:
+        return None
+    declared = set(_RE_EQUIPMENT_ENTRY.findall(text))
+    names = set(declared)
+    for match in _RE_DUPLICATE_ARCHETYPES_OPEN.finditer(text):
+        body = _block_body(text, match.end())
+        for clone in _direct_child_matches(body, _RE_BLOCK_ENTRY):
+            base = _RE_ARCHETYPE.search(_block_body(body, clone.end()))
+            if not base:
+                continue
+            prefix = base.group(1) + "_"
+            names.update(
+                clone.group(1) + name[len(base.group(1)) :]
+                for name in declared
+                if name.startswith(prefix)
+            )
+    return frozenset(names)
+
+
+@lru_cache(maxsize=None)
+def _decision_ids():
+    """Every decision id in common/decisions/ (one tab in, under its category)."""
+    text = _read_dir_text("common", "decisions")
+    if text is None:
+        return None
+    return frozenset(_RE_DECISION_ENTRY.findall(text))
+
+
+@lru_cache(maxsize=None)
+def _opinion_modifier_names():
+    """Every opinion modifier in common/opinion_modifiers/ (one tab in)."""
+    text = _read_dir_text("common", "opinion_modifiers")
+    if text is None:
+        return None
+    return frozenset(_RE_EQUIPMENT_ENTRY.findall(text))
+
+
+@lru_cache(maxsize=None)
+def _static_modifier_names():
+    """Every static modifier in common/modifiers/ (column 0).
+
+    Vanilla's own static modifiers load alongside these, so this set only backs
+    the relation-modifier check, where every name MD uses is its own.
+    """
+    text = _read_dir_text("common", "modifiers")
+    if text is None:
+        return None
+    return frozenset(_RE_MODIFIER_ENTRY.findall(text))
+
+
+def _check_else_with_limit(lines):
+    """Flag a limit as a direct child of an else block.
+
+    else carries no condition of its own, so the engine rejects the block
+    ("Unexpected limit in an else block") and the branch never runs -- the
+    author meant else_if.
+    """
+    issues = []
+    text = _joined_code(lines)
+    for match in _RE_ELSE_OPEN.finditer(text):
+        body = _block_body(text, match.end())
+        for limit in _direct_child_matches(body, _RE_LIMIT_OPEN):
+            issues.append(
+                (
+                    text.count("\n", 0, match.end() + limit.start()) + 1,
+                    "limit inside an else block -- else takes no condition, so the "
+                    "engine rejects the block and the branch never runs; use else_if",
+                )
+            )
+    return issues
+
+
+def _check_nested_province_block(lines):
+    """Flag province = { province = <id> } in add_building_construction.
+
+    The block form of province takes a selector (all_provinces, limit_to_*), not
+    a bare id, so the engine rejects the whole token and nothing is built. A
+    single province is `province = <id>`.
+    """
+    issues = []
+    text = _joined_code(lines)
+    for match in _RE_ADD_BUILDING_OPEN.finditer(text):
+        body = _block_body(text, match.end())
+        for nested in _RE_NESTED_PROVINCE.finditer(body):
+            if not _RE_PROVINCE_ID_ONLY.search(nested.group(1)):
+                continue
+            issues.append(
+                (
+                    text.count("\n", 0, match.end() + nested.start()) + 1,
+                    "province = { province = <id> } is not a valid selector -- the "
+                    "engine rejects the add_building token and nothing is built; "
+                    "write province = <id>",
+                )
+            )
+    return issues
+
+
+def _check_log_nested_quote(lines):
+    """Flag a log string carrying a second quoted run.
+
+    A trailing `# "comment"` swallowed into the value closes the string early,
+    and the engine reads the rest as effect tokens ("Unknown effect-type:
+    Excellent"). The log line takes one quoted string and nothing else.
+    """
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if "log" not in line or line.strip().startswith("#"):
+            continue
+        if _RE_LOG_MULTI_QUOTE.search(line):
+            issues.append(
+                (
+                    line_num,
+                    "log string contains a second quoted run -- it closes the value "
+                    "early and the engine parses the remainder as effects; keep the "
+                    "log to one quoted string",
+                )
+            )
+    return issues
+
+
+def _check_equipment_bonus(lines):
+    """Flag add_equipment_bonus with no name/project, or an unknown bonus type.
+
+    Without `name` (a loc key) or `project` the engine drops the whole effect
+    ("Name or special project need to be set"), and a bonus keyed on anything
+    outside script_enum_equipment_bonus_type is rejected the same way. Vanilla
+    archetype names (infantry_equipment, util_vehicle_equipment) are the usual
+    culprit -- MD renamed them.
+    """
+    issues = []
+    text = _joined_code(lines)
+    for match in _RE_EQUIPMENT_BONUS_OPEN.finditer(text):
+        enum = _equipment_bonus_enum()
+        body = _block_body(text, match.end())
+        line_num = text.count("\n", 0, match.start()) + 1
+        if not _RE_EQUIPMENT_BONUS_NAME.search(body):
+            issues.append(
+                (
+                    line_num,
+                    "add_equipment_bonus has no name = <loc key> (or project) -- the "
+                    "engine drops the whole effect",
+                )
+            )
+        if enum is None:
+            continue
+        for bonus in _direct_child_matches(body, _RE_BONUS_OPEN):
+            bonus_body = _block_body(body, bonus.end())
+            for entry in _direct_child_matches(bonus_body, _RE_BLOCK_ENTRY):
+                if entry.group(1) not in enum:
+                    issues.append(
+                        (
+                            line_num,
+                            f"add_equipment_bonus bonus type '{entry.group(1)}' is "
+                            f"not in script_enum_equipment_bonus_type -- the engine "
+                            f"rejects the bonus",
+                        )
+                    )
+    return issues
+
+
+def _check_equipment_type_defined(lines):
+    """Flag an equipment effect naming equipment nothing defines.
+
+    add_equipment_to_stockpile and friends take an id from
+    common/units/equipment/; a vanilla archetype MD renamed (infantry_equipment,
+    support_equipment) or a miscased variant is a silent no-op.
+    """
+    issues = []
+    text = _joined_code(lines)
+    for match in _RE_EQUIPMENT_EFFECT_OPEN.finditer(text):
+        body = _block_body(text, match.end())
+        type_match = _RE_BUILDING_TYPE.search(body)
+        if not type_match:
+            continue
+        # Resolved only once a candidate is in hand (and cached from there), so a
+        # file with no equipment effect never pays for the directory read.
+        names = _equipment_names()
+        if names is None or type_match.group(1) in names:
+            continue
+        issues.append(
+            (
+                text.count("\n", 0, match.end() + type_match.start()) + 1,
+                f"{match.group(1)} type = {type_match.group(1)} is not defined in "
+                f"common/units/equipment/ -- the effect is a silent no-op",
+            )
+        )
+    return issues
+
+
+def _check_active_decision_defined(lines):
+    """Flag has_active_mission / has_active_decision naming no decision.
+
+    The trigger resolves against common/decisions/; an id that isn't there logs
+    "Invalid decision in has_active_timed_decision trigger" and reads as false
+    forever, so whatever it guards fires unconditionally.
+    """
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if "has_active_" not in line or line.strip().startswith("#"):
+            continue
+        for match in _RE_ACTIVE_DECISION.finditer(_code_for_depth(line)):
+            ids = _decision_ids()
+            if ids is None or match.group(2) in ids:
+                continue
+            issues.append(
+                (
+                    line_num,
+                    f"{match.group(1)} = {match.group(2)} names no decision in "
+                    f"common/decisions/ -- the trigger is always false",
+                )
+            )
+    return issues
+
+
+def _check_modifier_ref_defined(lines):
+    """Flag add_opinion_modifier / add_relation_modifier naming nothing.
+
+    Opinion modifiers come from the replace_path'd common/opinion_modifiers/,
+    relation modifiers from common/modifiers/; either way the engine logs
+    "missing static modifier definition" and applies nothing. Case counts on
+    Linux, which is how UKR_World_Economical_Relations died beside the
+    lowercase definition.
+    """
+    issues = []
+    sources = {
+        "opinion": ("common/opinion_modifiers/", _opinion_modifier_names),
+        "relation": ("common/modifiers/", _static_modifier_names),
+    }
+    text = _joined_code(lines)
+    for match in _RE_RELATION_MODIFIER.finditer(text):
+        directory, load = sources[match.group(1)]
+        names = load()
+        if names is None or match.group(2) in names:
+            continue
+        issues.append(
+            (
+                text.count("\n", 0, match.start(2)) + 1,
+                f"add_{match.group(1)}_modifier modifier = {match.group(2)} is not "
+                f"defined in {directory} -- nothing is applied",
             )
         )
     return issues
@@ -2170,46 +2512,18 @@ def _find_decision_log_mismatches(lines):
     Shared by _check_decision_log_id and fix_log_ids.py.
     """
     results = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        code = strip_inline_comment(lines[i])
-        if (
-            _RE_TOPLEVEL_WORD.match(lines[i])
-            and "{" in code
-            and not lines[i].lstrip().startswith("#")
-        ):
-            cat_start = i
-            cat_block, i = _get_block(lines, cat_start)
-            k = 1
-            while k < len(cat_block) - 1:
-                bl = cat_block[k]
-                bl_code = strip_inline_comment(bl)
-                if _RE_INDENTED_WORD.match(bl) and "{" in bl_code:
-                    dec_block, next_k = _get_block(cat_block, k)
-                    dec_id_match = _RE_BLOCK_ID.match(cat_block[k])
-                    dec_id = dec_id_match.group(1) if dec_id_match else None
-                    if dec_id:
-                        for p, dbl in enumerate(dec_block):
-                            dbl_code = strip_inline_comment(dbl)
-                            token_span = _decision_log_token_span(dbl_code)
-                            if token_span:
-                                token, tstart, tend = token_span
-                                if token != dec_id:
-                                    results.append(
-                                        (
-                                            cat_start + k + p,
-                                            tstart,
-                                            tend,
-                                            dec_id,
-                                            token,
-                                        )
-                                    )
-                    k = next_k
-                else:
-                    k += 1
-        else:
-            i += 1
+    for cat_start, k, cat_block, dec_block in _iter_decision_subblocks(lines):
+        dec_id_match = _RE_BLOCK_ID.match(cat_block[k])
+        dec_id = dec_id_match.group(1) if dec_id_match else None
+        if not dec_id:
+            continue
+        for p, dbl in enumerate(dec_block):
+            dbl_code = strip_inline_comment(dbl)
+            token_span = _decision_log_token_span(dbl_code)
+            if token_span:
+                token, tstart, tend = token_span
+                if token != dec_id:
+                    results.append((cat_start + k + p, tstart, tend, dec_id, token))
     return results
 
 
@@ -2474,7 +2788,7 @@ def _branch_flag(node):
 
 def _branch_discriminates(node, flag):
     limit = _first_child(node, "limit")
-    return any(
+    return limit is not None and any(
         not (child.key == "has_country_flag" and child.value == flag)
         for child in limit.children
     )
@@ -2487,6 +2801,8 @@ def _collect_leader_tiers(node, guarded, tiers):
     them in date blocks) -- a container's own limit discriminates every tier below it,
     so the same tier number appearing under two containers is not a duplicate.
     """
+    if node is None:
+        return
     for child in node.children:
         if child.key not in _TIER_KEYWORDS or _branch_flag(child):
             continue
@@ -2926,9 +3242,16 @@ def check_file(filepath):
     issues.extend(_check_nor_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
     issues.extend(_check_var_index_shorthand(lines))
+    issues.extend(_check_else_with_limit(lines))
+    issues.extend(_check_log_nested_quote(lines))
+    issues.extend(_check_equipment_bonus(lines))
+    issues.extend(_check_equipment_type_defined(lines))
+    issues.extend(_check_active_decision_defined(lines))
+    issues.extend(_check_modifier_ref_defined(lines))
     if is_common_or_events_file:
         issues.extend(_check_every_owned_controlled_state(lines))
         issues.extend(_check_building_missing_province(lines))
+        issues.extend(_check_nested_province_block(lines))
 
     return [(filepath, ln, msg) for ln, msg in issues]
 

@@ -1,26 +1,6 @@
-"""Tests for validate_events.py: date-gated events must be scheduled.
-
-MD fires its historical events from
-`common/scripted_effects/00_yearly_effects.txt` and uses the event's own
-`date >` check only as a guard. An event carrying the guard with no scheduling
-entry is dead content: it is triggered-only, so nothing ever fires it.
-
-A `date <` bound alone is an expiry guard on a chain event and says nothing
-about scheduling, so only `date >` counts. Chain events inherit whatever
-schedules an ancestor.
-"""
-
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+"""Regression tests for date-gated event scheduling."""
 
 import validate_events as V
-from validate_events import (
-    scan_date_gated_events,
-    scan_event_fire_graph,
-    scan_probability_rolled_fires,
-)
 
 
 def _write(tmp_path, name, body):
@@ -33,7 +13,7 @@ def _write(tmp_path, name, body):
 def _gated(tmp_path, body, name="events/Ev.txt"):
     return {
         e[0]
-        for e in scan_date_gated_events((_write(tmp_path, name, body), frozenset()))
+        for e in V.scan_date_gated_events((_write(tmp_path, name, body), frozenset()))
     }
 
 
@@ -145,7 +125,7 @@ def test_fire_graph_pairs(tmp_path):
 }
 """
     p = _write(tmp_path, "events/Ev.txt", body)
-    assert set(scan_event_fire_graph((p, frozenset()))) == {
+    assert set(V.scan_event_fire_graph((p, frozenset()))) == {
         ("parent.1", "child.1"),
         ("parent.1", "child.2"),
     }
@@ -161,7 +141,7 @@ def test_fire_graph_pairs(tmp_path):
 
 
 def _poll_ids(tmp_path, body, name="common/on_actions/99_GER.txt"):
-    return scan_probability_rolled_fires((_write(tmp_path, name, body), frozenset()))
+    return V.scan_probability_rolled_fires((_write(tmp_path, name, body), frozenset()))
 
 
 def test_poll_short_form_detected(tmp_path):

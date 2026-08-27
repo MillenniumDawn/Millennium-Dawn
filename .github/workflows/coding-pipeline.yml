@@ -762,11 +762,13 @@ jobs:
             name: scripted-params
             title: "Validate Scripted Effect Parameters"
             strict: true
+            # Contracted effects are called from every script tree, so the
+            # gate is the tree, not a per-directory output that goes stale
+            # when a new caller directory appears.
             should_run: >-
-              ${{ (needs.detect-changes.outputs.scripted-effects == 'true' ||
-              needs.detect-changes.outputs.national-focus == 'true' ||
-              needs.detect-changes.outputs.decisions == 'true' ||
-              needs.detect-changes.outputs.events == 'true') && 'true' ||
+              ${{ (needs.detect-changes.outputs.common == 'true' ||
+              needs.detect-changes.outputs.events == 'true' ||
+              needs.detect-changes.outputs.history == 'true') && 'true' ||
               'false' }}
           - script: validate_gfx_references.py
             name: gfx-references
@@ -784,12 +786,22 @@ jobs:
               needs.detect-changes.outputs.history == 'true' ||
               needs.detect-changes.outputs.localisation == 'true') && 'true' ||
               'false' }}
+          - script: validate_tech_categories.py
+            name: tech-categories
+            title: "Validate Technology Categories"
+            # Strict: an unknown category compiles silently and grants nothing,
+            # so the content promises a research bonus it never delivers.
+            strict: true
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.common == 'true' ||
+              needs.detect-changes.outputs.events == 'true') && 'true' ||
+              'false' }}
           - script: validate_modifiers.py
             name: modifiers
             title: "Validate Modifier Names"
-            # Informational: frequency-based detection has inherent false
-            # positives for rarely-used but valid vanilla modifiers
-            strict: false
+            # Unknown-name findings remain warnings; redundant enable gates are
+            # errors because their backlog was cleared in the same change.
+            strict: true
             should_run: ${{ needs.detect-changes.outputs.common }}
           - script: validate_simplifications.py
             name: simplifications

@@ -34,7 +34,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import strip_comments, strip_inline_comment
+from shared_utils import find_matching_brace, strip_comments, strip_inline_comment
 
 # Ship hulls live only in files carrying one of these engine hull-type markers,
 # so the ship/land-air split needs no per-hull annotation.
@@ -43,28 +43,6 @@ _SHIP_HULL_MARKERS = ("screen_ship", "capital_ship", "= submarine", "= carrier")
 _NAME_BLOCK_RE = re.compile(r"([A-Za-z_][\w.]*)\s*=\s*\{")
 _ASSIGN_RE = re.compile(r"([A-Za-z_]\w*)\s*=\s*")
 _CATEGORY_TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
-
-
-def _match_brace(text: str, open_idx: int) -> int:
-    """Index of the ``}`` matching the ``{`` at *open_idx*, or -1 if unbalanced.
-    Braces inside double-quoted strings are ignored."""
-    depth = 0
-    in_str = False
-    i = open_idx
-    n = len(text)
-    while i < n:
-        c = text[i]
-        if c == '"' and text[i - 1] != "\\":
-            in_str = not in_str
-        elif not in_str:
-            if c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    return i
-        i += 1
-    return -1
 
 
 def _iter_blocks(text: str, lo: int, hi: int):
@@ -76,7 +54,7 @@ def _iter_blocks(text: str, lo: int, hi: int):
         if not m:
             return
         open_idx = text.index("{", m.end() - 1)
-        close = _match_brace(text, open_idx)
+        close = find_matching_brace(text, open_idx)
         if close == -1 or close > hi:
             return
         yield m.group(1), open_idx + 1, close, m.start()
@@ -330,7 +308,7 @@ def _refs_from_block(text: str, lo: int, hi: int) -> List[str]:
     ao = re.search(r"any_of\s*=\s*\{", body)
     if ao:
         inner_open = lo + ao.end() - 1
-        inner_close = _match_brace(text, inner_open)
+        inner_close = find_matching_brace(text, inner_open)
         return re.findall(r"[A-Za-z_]\w*", text[inner_open + 1 : inner_close])
     mm = re.search(r"\bmodule\s*=\s*(?:[<>]\s*)?([A-Za-z_]\w*)", body)
     if mm:
@@ -354,7 +332,7 @@ def _parse_module_assignments(
         while j < hi and text[j] in " \t\r\n":
             j += 1
         if j < hi and text[j] == "{":
-            close = _match_brace(text, j)
+            close = find_matching_brace(text, j)
             if close == -1:
                 break
             out.append((slot, _refs_from_block(text, j + 1, close), m.start()))
