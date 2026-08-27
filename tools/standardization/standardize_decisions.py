@@ -5,24 +5,23 @@ Millennium Dawn Decision Standardizer
 Standardizes HOI4 decision and decision category files according to Millennium Dawn coding standards
 """
 
-import argparse
-import os
 import re
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 from common_utils import (
     PROP_NAME_RE,
     BaseStandardizer,
     collapse_blank_runs,
+    create_standardizer_parser,
     inject_log_after_brace,
     join_groups,
+    resolve_output_file_and_backup,
 )
 from shared_utils import (
     atomic_write_text,
     collapse_or_compact,
     collapse_ws_outside_quotes,
     convert_root_factor_to_base,
-    create_backup,
     extract_block,
     log_message,
     strip_inline_comment,
@@ -175,8 +174,11 @@ def ensure_effect_log(block_lines: List[str], decision_id: str) -> List[str]:
 _SOLE_ALLOWED_RE = re.compile(r"^allowed = \{ (?:original_)?tag = [A-Z]{3} \}$")
 
 
-def ensure_missing_ai_will_do(lines: List[str], base: int = 10) -> List[str]:
-    """Add ``ai_will_do = { base = N }`` to decisions that have none."""
+def _walk_top_level_categories(
+    lines: List[str], process_category: Callable[[List[str]], List[str]]
+) -> List[str]:
+    """Apply `process_category` to every column-0 category block in *lines*,
+    passing every other line through unchanged."""
     out: List[str] = []
     i = 0
     while i < len(lines):
@@ -185,7 +187,7 @@ def ensure_missing_ai_will_do(lines: List[str], base: int = 10) -> List[str]:
         if tabs == 0 and _HEADER_ID_RE.match(stripped) and "{" in lines[i]:
             category, next_i = extract_block(lines, i)
             if category:
-                out.extend(_ensure_ai_in_category(category, base))
+                out.extend(process_category(category))
                 i = next_i
                 continue
         out.append(lines[i])
@@ -193,7 +195,12 @@ def ensure_missing_ai_will_do(lines: List[str], base: int = 10) -> List[str]:
     return out
 
 
-def _ensure_ai_in_category(category_lines: List[str], base: int) -> List[str]:
+def _walk_category_decisions(
+    category_lines: List[str], process_decision: Callable[[List[str]], List[str]]
+) -> List[str]:
+    """Apply `process_decision` to every one-tab decision block inside a
+    category, passing category-level properties (`_CATEGORY_BLOCK_PROPS`,
+    ``priority``) through unchanged."""
     out = [category_lines[0]]
     i = 1
     while i < len(category_lines) - 1:
@@ -207,13 +214,26 @@ def _ensure_ai_in_category(category_lines: List[str], base: int) -> List[str]:
             if name in _CATEGORY_BLOCK_PROPS or name == "priority":
                 out.extend(block)
             else:
-                out.extend(_ensure_ai_in_decision(block, base))
+                out.extend(process_decision(block))
             i = next_i
             continue
         out.append(category_lines[i])
         i += 1
     out.append(category_lines[-1])
     return out
+
+
+def ensure_missing_ai_will_do(lines: List[str], base: int = 10) -> List[str]:
+    """Add ``ai_will_do = { base = N }`` to decisions that have none."""
+    return _walk_top_level_categories(
+        lines, lambda category: _ensure_ai_in_category(category, base)
+    )
+
+
+def _ensure_ai_in_category(category_lines: List[str], base: int) -> List[str]:
+    return _walk_category_decisions(
+        category_lines, lambda block: _ensure_ai_in_decision(block, base)
+    )
 
 
 def _ensure_ai_in_decision(decision_lines: List[str], base: int) -> List[str]:
@@ -233,21 +253,7 @@ def _ensure_ai_in_decision(decision_lines: List[str], base: int) -> List[str]:
 
 def strip_sole_decision_allowed(lines: List[str]) -> List[str]:
     """Drop an allowed line only when it exactly repeats its category pin."""
-    out: List[str] = []
-    i = 0
-    while i < len(lines):
-        stripped = lines[i].strip()
-        tabs = len(lines[i]) - len(lines[i].lstrip("\t"))
-        header = _HEADER_ID_RE.match(stripped)
-        opens, closes = _count_braces(stripped)
-        if tabs == 0 and header and opens > closes:
-            category, next_i = extract_block(lines, i)
-            out.extend(_strip_category_decision_allowed(category))
-            i = next_i
-            continue
-        out.append(lines[i])
-        i += 1
-    return out
+    return _walk_top_level_categories(lines, _strip_category_decision_allowed)
 
 
 def _strip_category_decision_allowed(category_lines: List[str]) -> List[str]:
@@ -260,74 +266,26 @@ def _strip_category_decision_allowed(category_lines: List[str]) -> List[str]:
     if not category_allowed:
         return category_lines
 
-    out = [category_lines[0]]
-    i = 1
-    while i < len(category_lines) - 1:
-        stripped = category_lines[i].strip()
-        tabs = len(category_lines[i]) - len(category_lines[i].lstrip("\t"))
-        header = _HEADER_ID_RE.match(stripped)
-        opens, closes = _count_braces(stripped)
-        if tabs == 1 and header and opens > closes:
-            name = header.group(1)
-            block, next_i = extract_block(category_lines, i)
-            if name in _CATEGORY_BLOCK_PROPS or name == "priority":
-                out.extend(block)
-            else:
-                out.extend(
-                    line
-                    for line in block
-                    if not (
-                        len(line) - len(line.lstrip("\t")) == 2
-                        and line.strip() in category_allowed
-                    )
-                )
-            i = next_i
-            continue
-        out.append(category_lines[i])
-        i += 1
-    out.append(category_lines[-1])
-    return out
+    def strip_block(block: List[str]) -> List[str]:
+        return [
+            line
+            for line in block
+            if not (
+                len(line) - len(line.lstrip("\t")) == 2
+                and line.strip() in category_allowed
+            )
+        ]
+
+    return _walk_category_decisions(category_lines, strip_block)
 
 
 def inject_missing_decision_logs(lines: List[str]) -> List[str]:
     """Inject missing effect logs without reformatting the rest of the file."""
-    out: List[str] = []
-    i = 0
-    while i < len(lines):
-        stripped = lines[i].strip()
-        tabs = len(lines[i]) - len(lines[i].lstrip("\t"))
-        if tabs == 0 and _HEADER_ID_RE.match(stripped) and "{" in lines[i]:
-            category, next_i = extract_block(lines, i)
-            if category:
-                out.extend(_inject_logs_in_category(category))
-                i = next_i
-                continue
-        out.append(lines[i])
-        i += 1
-    return out
+    return _walk_top_level_categories(lines, _inject_logs_in_category)
 
 
 def _inject_logs_in_category(category_lines: List[str]) -> List[str]:
-    out = [category_lines[0]]
-    i = 1
-    while i < len(category_lines) - 1:
-        stripped = category_lines[i].strip()
-        tabs = len(category_lines[i]) - len(category_lines[i].lstrip("\t"))
-        header = _HEADER_ID_RE.match(stripped)
-        opens, closes = _count_braces(stripped)
-        if tabs == 1 and header and opens > closes:
-            name = header.group(1)
-            block, next_i = extract_block(category_lines, i)
-            if name in _CATEGORY_BLOCK_PROPS or name == "priority":
-                out.extend(block)
-            else:
-                out.extend(_inject_logs_in_decision(block))
-            i = next_i
-            continue
-        out.append(category_lines[i])
-        i += 1
-    out.append(category_lines[-1])
-    return out
+    return _walk_category_decisions(category_lines, _inject_logs_in_decision)
 
 
 def _inject_logs_in_decision(decision_lines: List[str]) -> List[str]:
@@ -537,15 +495,7 @@ def main():
         print("Detects file type automatically based on content.")
         sys.exit(0)
 
-    parser = argparse.ArgumentParser(description="Standardize decision files")
-    parser.add_argument("input_file", help="Input file to standardize")
-    parser.add_argument(
-        "-o", "--output", help="Output file (default: overwrites input)"
-    )
-    parser.add_argument(
-        "-b", "--backup", action="store_true", help="Create backup before modifying"
-    )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    parser = create_standardizer_parser("Standardize decision files")
     parser.add_argument(
         "--logs-only",
         action="store_true",
@@ -563,16 +513,7 @@ def main():
     )
     args = parser.parse_args(sys.argv[1:])
 
-    if not os.path.exists(args.input_file):
-        log_message("ERROR", f"File '{args.input_file}' does not exist")
-        sys.exit(1)
-
-    output_file = args.output if args.output else args.input_file
-
-    if args.backup:
-        backup_file = create_backup(args.input_file)
-        if not backup_file:
-            sys.exit(1)
+    output_file = resolve_output_file_and_backup(args)
 
     if args.logs_only or args.strip_sole_allowed or args.ensure_ai_will_do:
         try:

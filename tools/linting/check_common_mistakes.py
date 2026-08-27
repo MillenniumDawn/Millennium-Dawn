@@ -647,143 +647,98 @@ def _check_focus_missing_war_hint(lines):
     return issues
 
 
-def _check_mutually_exclusive_contradictions(lines):
-    """Flag blocks with multiple values of a single-valued trigger at the same AND depth.
+def _push_not_or_frame(stack, code, last_end, match_start):
+    """Push a new (is_or, is_not, {}) frame for an opening brace onto `stack`.
 
-    Example bug:
-        SOV = {
-            has_government = communism
-            has_government = nationalist
-        }
-    A country has exactly one government, so this evaluates to false forever.
-    Caller meant OR = { has_government = communism has_government = nationalist }.
-
-    Inside NOT the inverse bug appears:
-        NOT = {
-            tag = USA
-            tag = CHI
-        }
-    which is NOT(A AND B) — always true since a country is only one tag at a
-    time. Caller meant separate NOT blocks or NOT = { OR = { ... } }.
+    `is_not`/`is_or` come from whichever of NOT=/OR= immediately precedes the
+    brace in the text since `last_end`. Shared by the mutex-contradiction
+    scanners below, which differ only in what they collect per frame.
     """
-    issues = []
-    # Stack entries: (is_or, is_not, {trigger: [(line_num, value), ...]})
-    stack = [(False, False, {})]
+    preceding = code[last_end:match_start]
+    is_not = bool(_RE_NOT_EQ.search(preceding))
+    is_or = bool(_RE_OR_EQ.search(preceding))
+    stack.append((is_or, is_not, {}))
 
-    for i, line in enumerate(lines):
-        code = _RE_QUOTED_STRING.sub('""', strip_inline_comment(line))
+
+def _iter_mutex_conflicts(lines, token_pattern, clean_line, entry_for_match):
+    """Yield (line, group, values, is_not) for conflicting AND-frame entries."""
+    stack = [(False, False, {})]
+    for line_number, line in enumerate(lines, 1):
+        code = clean_line(line)
         if not code.strip():
             continue
 
         last_end = 0
-        for m in _RE_MUTEX_TRIGGER_TOKEN.finditer(code):
-            tok = m.group(0)
-            if tok == "{":
-                preceding = code[last_end : m.start()]
-                is_not = bool(_RE_NOT_EQ.search(preceding))
-                is_or = bool(_RE_OR_EQ.search(preceding))
-                stack.append((is_or, is_not, {}))
-            elif tok == "}":
-                if len(stack) > 1:
-                    popped_or, popped_not, popped_triggers = stack.pop()
-                    if popped_or:
-                        last_end = m.end()
-                        continue
-                    for trigger, entries in popped_triggers.items():
-                        values = {v for _, v in entries}
-                        if len(values) < 2:
-                            continue
-                        first_line = entries[0][0]
-                        vals_str = ", ".join(sorted(values))
-                        if popped_not:
-                            msg = (
-                                f"NOT = {{ }} contains multiple '{trigger}' values"
-                                f" ({vals_str}) -- always true since a country has"
-                                f" only one {trigger}; use separate NOT blocks or"
-                                f" NOT = {{ OR = {{ ... }} }}"
-                            )
-                        else:
-                            msg = (
-                                f"multiple '{trigger}' values in same AND block"
-                                f" ({vals_str}) -- always false since a country has"
-                                f" only one {trigger}; wrap in OR = {{ }} to match any"
-                            )
-                        issues.append((first_line, msg))
-            else:
-                stack[-1][2].setdefault(m.group(1), []).append((i + 1, m.group(2)))
-            last_end = m.end()
+        for match in token_pattern.finditer(code):
+            token = match.group(0)
+            if token == "{":
+                _push_not_or_frame(stack, code, last_end, match.start())
+            elif token == "}" and len(stack) > 1:
+                is_or, is_not, entries_by_group = stack.pop()
+                if not is_or:
+                    for group, entries in entries_by_group.items():
+                        values = {value for _, value in entries}
+                        if len(values) > 1:
+                            yield entries[0][0], group, values, is_not
+            elif token != "}":
+                entry = entry_for_match(match)
+                if entry is not None:
+                    group, value = entry
+                    stack[-1][2].setdefault(group, []).append((line_number, value))
+            last_end = match.end()
 
+
+def _check_mutually_exclusive_contradictions(lines):
+    """Flag blocks with multiple values of a single-valued trigger at the same AND depth."""
+    issues = []
+    for line, trigger, values, is_not in _iter_mutex_conflicts(
+        lines,
+        _RE_MUTEX_TRIGGER_TOKEN,
+        lambda value: _RE_QUOTED_STRING.sub('""', strip_inline_comment(value)),
+        lambda match: (match.group(1), match.group(2)),
+    ):
+        values_text = ", ".join(sorted(values))
+        if is_not:
+            message = (
+                f"NOT = {{ }} contains multiple '{trigger}' values ({values_text}) -- "
+                f"always true since a country has only one {trigger}; use separate NOT "
+                "blocks or NOT = { OR = { ... } }"
+            )
+        else:
+            message = (
+                f"multiple '{trigger}' values in same AND block ({values_text}) -- "
+                f"always false since a country has only one {trigger}; wrap in OR = {{ }} "
+                "to match any"
+            )
+        issues.append((line, message))
     return issues
 
 
 def _check_has_idea_mutex_in_not_block(lines):
-    """Flag NOT/AND blocks containing 2+ has_idea checks from the same mutex group.
-
-    Example bug (from raid_target_eligible before fix):
-        NOT = {
-            has_idea = intervention_local_security
-            has_idea = intervention_isolation
-        }
-    Both ideas are in the intervention-doctrine mutex group. A country can hold
-    at most one at a time, so the AND inside NOT is always false, and the NOT
-    is always true — the gate it was supposed to enforce is silently bypassed.
-    Caller almost always meant `NOT = { OR = { ... } }` or separate NOT blocks.
-
-    Inside a non-NOT AND block, two same-group has_idea checks are always false
-    (a country can't be in both slots), so the entire surrounding modifier or
-    trigger never fires — usually also a bug.
-    """
+    """Flag NOT/AND blocks containing 2+ has_idea checks from the same mutex group."""
     issues = []
-    # Stack entries: (is_or, is_not, {group_name: [(line_num, idea_name), ...]})
-    stack = [(False, False, {})]
 
-    for i, line in enumerate(lines):
-        code = strip_inline_comment(line)
-        if not code.strip():
-            continue
+    def idea_entry(match):
+        idea = match.group(1)
+        group = _IDEA_TO_MUTEX_GROUP.get(idea)
+        return (group, idea) if group is not None else None
 
-        last_end = 0
-        for m in _RE_MUTEX_TOKEN.finditer(code):
-            tok = m.group(0)
-            if tok == "{":
-                preceding = code[last_end : m.start()]
-                is_not = bool(_RE_NOT_EQ.search(preceding))
-                is_or = bool(_RE_OR_EQ.search(preceding))
-                stack.append((is_or, is_not, {}))
-            elif tok == "}":
-                if len(stack) > 1:
-                    popped_or, popped_not, popped_groups = stack.pop()
-                    # OR is the intended way to express "any of these mutex ideas"
-                    if popped_or:
-                        last_end = m.end()
-                        continue
-                    for group_name, entries in popped_groups.items():
-                        ideas_set = {idea for _, idea in entries}
-                        if len(ideas_set) < 2:
-                            continue
-                        first_line = entries[0][0]
-                        ideas_str = ", ".join(sorted(ideas_set))
-                        if popped_not:
-                            msg = (
-                                f"NOT = {{ }} contains multiple {group_name} ideas "
-                                f"({ideas_str}) -- always true since they're mutually "
-                                f"exclusive; use NOT = {{ OR = {{ ... }} }} or "
-                                f"separate NOT blocks per idea"
-                            )
-                        else:
-                            msg = (
-                                f"AND block contains multiple {group_name} ideas "
-                                f"({ideas_str}) -- always false since they're mutually "
-                                f"exclusive; wrap in OR = {{ }} to match any"
-                            )
-                        issues.append((first_line, msg))
-            else:
-                idea = m.group(1)
-                group = _IDEA_TO_MUTEX_GROUP.get(idea)
-                if group is not None:
-                    stack[-1][2].setdefault(group, []).append((i + 1, idea))
-            last_end = m.end()
-
+    for line, group, ideas, is_not in _iter_mutex_conflicts(
+        lines, _RE_MUTEX_TOKEN, strip_inline_comment, idea_entry
+    ):
+        ideas_text = ", ".join(sorted(ideas))
+        if is_not:
+            message = (
+                f"NOT = {{ }} contains multiple {group} ideas ({ideas_text}) -- always "
+                "true since they're mutually exclusive; use NOT = { OR = { ... } } or "
+                "separate NOT blocks per idea"
+            )
+        else:
+            message = (
+                f"AND block contains multiple {group} ideas ({ideas_text}) -- always "
+                "false since they're mutually exclusive; wrap in OR = { } to match any"
+            )
+        issues.append((line, message))
     return issues
 
 
@@ -1056,16 +1011,13 @@ def _check_decision_available_always_no(lines):
     return issues
 
 
-def _check_decision_allowed_dynamic(lines):
-    """Flag dynamic triggers inside decision allowed blocks.
+def _iter_decision_subblocks(lines):
+    """Yield (cat_start, k, cat_block, dec_block) for each decision sub-block.
 
-    Decision `allowed` is evaluated once at game start and locked. Dynamic
-    game-state conditions (factory counts, opinion, government, flags, variables)
-    belong in `available` or `visible` instead.
-
-    Only checks files in common/decisions/.
+    Walks toplevel category blocks and, one level in, every indented child
+    block -- the category/decision layout of common/decisions/ files. Shared
+    by _check_decision_allowed_dynamic and _find_decision_log_mismatches.
     """
-    issues = []
     i = 0
     n = len(lines)
     while i < n:
@@ -1083,48 +1035,60 @@ def _check_decision_allowed_dynamic(lines):
                 bl_code = strip_inline_comment(bl)
                 if _RE_INDENTED_WORD.match(bl) and "{" in bl_code:
                     dec_block, next_k = _get_block(cat_block, k)
-                    norm = _RE_WHITESPACE_COLLAPSE.sub(" ", "".join(dec_block))
-                    if not _RE_DECISION_MARKER.search(norm):
-                        k = next_k
-                        continue
-                    in_allowed = False
-                    allowed_depth = 0
-                    for p, dbl in enumerate(dec_block):
-                        dbl_code = strip_inline_comment(dbl)
-                        delta = dbl_code.count("{") - dbl_code.count("}")
-                        # if/else, not two ifs: the opening line's delta must
-                        # only be counted once (via the entry branch), or
-                        # allowed_depth never returns to <=0 at the block's
-                        # real close and in_allowed leaks into the rest of the
-                        # decision.
-                        if not in_allowed:
-                            if (
-                                _RE_ALLOWED_OPEN_WB.search(dbl_code)
-                                and "allowed_civil_war" not in dbl_code
-                            ):
-                                in_allowed = True
-                                allowed_depth = delta
-                        else:
-                            allowed_depth += delta
-                        if in_allowed:
-                            if _RE_DECISION_ALLOWED_DYNAMIC.search(dbl_code):
-                                trigger = _RE_DECISION_ALLOWED_DYNAMIC.search(
-                                    dbl_code
-                                ).group()
-                                if trigger not in ("original_tag", "tag"):
-                                    issues.append(
-                                        (
-                                            cat_start + k + p + 1,
-                                            f"dynamic trigger '{trigger}' in decision allowed block -- allowed is evaluated once at game start; move to available",
-                                        )
-                                    )
-                            if allowed_depth <= 0:
-                                in_allowed = False
+                    yield cat_start, k, cat_block, dec_block
                     k = next_k
                 else:
                     k += 1
         else:
             i += 1
+
+
+def _check_decision_allowed_dynamic(lines):
+    """Flag dynamic triggers inside decision allowed blocks.
+
+    Decision `allowed` is evaluated once at game start and locked. Dynamic
+    game-state conditions (factory counts, opinion, government, flags, variables)
+    belong in `available` or `visible` instead.
+
+    Only checks files in common/decisions/.
+    """
+    issues = []
+    for cat_start, k, _cat_block, dec_block in _iter_decision_subblocks(lines):
+        norm = _RE_WHITESPACE_COLLAPSE.sub(" ", "".join(dec_block))
+        if not _RE_DECISION_MARKER.search(norm):
+            continue
+        in_allowed = False
+        allowed_depth = 0
+        for p, dbl in enumerate(dec_block):
+            dbl_code = strip_inline_comment(dbl)
+            delta = dbl_code.count("{") - dbl_code.count("}")
+            # if/else, not two ifs: the opening line's delta must
+            # only be counted once (via the entry branch), or
+            # allowed_depth never returns to <=0 at the block's
+            # real close and in_allowed leaks into the rest of the
+            # decision.
+            if not in_allowed:
+                if (
+                    _RE_ALLOWED_OPEN_WB.search(dbl_code)
+                    and "allowed_civil_war" not in dbl_code
+                ):
+                    in_allowed = True
+                    allowed_depth = delta
+            else:
+                allowed_depth += delta
+            if in_allowed:
+                dynamic_trigger = _RE_DECISION_ALLOWED_DYNAMIC.search(dbl_code)
+                if dynamic_trigger:
+                    trigger = dynamic_trigger.group()
+                    if trigger not in ("original_tag", "tag"):
+                        issues.append(
+                            (
+                                cat_start + k + p + 1,
+                                f"dynamic trigger '{trigger}' in decision allowed block -- allowed is evaluated once at game start; move to available",
+                            )
+                        )
+                if allowed_depth <= 0:
+                    in_allowed = False
     return issues
 
 
@@ -1209,9 +1173,8 @@ def _check_consecutive_scope_blocks(lines):
                 closed_tag, closed_depth, closed_open_line = stack.pop()
                 if closed_tag:
                     prev_tag = closed_tag
-                    prev_indent = _RE_LEADING_INDENT.match(
-                        lines[closed_open_line - 1]
-                    ).group(1)
+                    indent_match = _RE_LEADING_INDENT.match(lines[closed_open_line - 1])
+                    prev_indent = indent_match.group(1) if indent_match else ""
                     prev_open = closed_open_line
                     prev_close = lineno
                     prev_close_depth = depth + opens - (k + 1)
@@ -1230,7 +1193,8 @@ def _check_consecutive_scope_blocks(lines):
 
         # Non-blank, non-scope lines reset prev_tag at the same indent
         if stripped and not m_tag_open and not _RE_CLOSE_BRACE_LINE.match(line):
-            line_indent = _RE_LEADING_INDENT.match(line).group(1)
+            indent_match = _RE_LEADING_INDENT.match(line)
+            line_indent = indent_match.group(1) if indent_match else ""
             if line_indent == prev_indent:
                 prev_tag = None
 
@@ -1894,6 +1858,22 @@ def _check_nor_block(lines):
     return issues
 
 
+def _find_brace_close(text, open_pos):
+    """Return the index in `text` of the brace matching the one at `open_pos`.
+
+    Depth-counts every `{`/`}` from `open_pos` onward with no quote
+    awareness. Returns `len(text)` if the braces never balance. Shared by
+    the whole-file brace scans below.
+    """
+    depth, i = 0, open_pos
+    while i < len(text):
+        depth += (text[i] == "{") - (text[i] == "}")
+        if not depth:
+            break
+        i += 1
+    return i
+
+
 def _check_while_loop_max_iterations(lines):
     """Flag max_iterations inside while_loop_effect -- the engine ignores it.
 
@@ -1903,12 +1883,7 @@ def _check_while_loop_max_iterations(lines):
     issues = []
     text = "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
     for match in _RE_WHILE_LOOP_OPEN.finditer(text):
-        depth, i = 0, match.end() - 1
-        while i < len(text):
-            depth += (text[i] == "{") - (text[i] == "}")
-            if not depth:
-                break
-            i += 1
+        i = _find_brace_close(text, match.end() - 1)
         body = text[match.end() : i]
         found = _RE_MAX_ITERATIONS.search(body)
         if found:
@@ -1993,12 +1968,7 @@ def _check_building_missing_province(lines, mod_root=None):
     # block spans lines, and two single-line blocks can share one line.
     text = "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
     for match in _RE_ADD_BUILDING_OPEN.finditer(text):
-        depth, i = 0, match.end() - 1
-        while i < len(text):
-            depth += (text[i] == "{") - (text[i] == "}")
-            if not depth:
-                break
-            i += 1
+        i = _find_brace_close(text, match.end() - 1)
         body = text[match.end() : i]
         type_match = _RE_BUILDING_TYPE.search(body)
         if not type_match or type_match.group(1) not in provincial:
@@ -2542,46 +2512,18 @@ def _find_decision_log_mismatches(lines):
     Shared by _check_decision_log_id and fix_log_ids.py.
     """
     results = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        code = strip_inline_comment(lines[i])
-        if (
-            _RE_TOPLEVEL_WORD.match(lines[i])
-            and "{" in code
-            and not lines[i].lstrip().startswith("#")
-        ):
-            cat_start = i
-            cat_block, i = _get_block(lines, cat_start)
-            k = 1
-            while k < len(cat_block) - 1:
-                bl = cat_block[k]
-                bl_code = strip_inline_comment(bl)
-                if _RE_INDENTED_WORD.match(bl) and "{" in bl_code:
-                    dec_block, next_k = _get_block(cat_block, k)
-                    dec_id_match = _RE_BLOCK_ID.match(cat_block[k])
-                    dec_id = dec_id_match.group(1) if dec_id_match else None
-                    if dec_id:
-                        for p, dbl in enumerate(dec_block):
-                            dbl_code = strip_inline_comment(dbl)
-                            token_span = _decision_log_token_span(dbl_code)
-                            if token_span:
-                                token, tstart, tend = token_span
-                                if token != dec_id:
-                                    results.append(
-                                        (
-                                            cat_start + k + p,
-                                            tstart,
-                                            tend,
-                                            dec_id,
-                                            token,
-                                        )
-                                    )
-                    k = next_k
-                else:
-                    k += 1
-        else:
-            i += 1
+    for cat_start, k, cat_block, dec_block in _iter_decision_subblocks(lines):
+        dec_id_match = _RE_BLOCK_ID.match(cat_block[k])
+        dec_id = dec_id_match.group(1) if dec_id_match else None
+        if not dec_id:
+            continue
+        for p, dbl in enumerate(dec_block):
+            dbl_code = strip_inline_comment(dbl)
+            token_span = _decision_log_token_span(dbl_code)
+            if token_span:
+                token, tstart, tend = token_span
+                if token != dec_id:
+                    results.append((cat_start + k + p, tstart, tend, dec_id, token))
     return results
 
 
@@ -2846,7 +2788,7 @@ def _branch_flag(node):
 
 def _branch_discriminates(node, flag):
     limit = _first_child(node, "limit")
-    return any(
+    return limit is not None and any(
         not (child.key == "has_country_flag" and child.value == flag)
         for child in limit.children
     )
@@ -2859,6 +2801,8 @@ def _collect_leader_tiers(node, guarded, tiers):
     them in date blocks) -- a container's own limit discriminates every tier below it,
     so the same tier number appearing under two containers is not a duplicate.
     """
+    if node is None:
+        return
     for child in node.children:
         if child.key not in _TIER_KEYWORDS or _branch_flag(child):
             continue

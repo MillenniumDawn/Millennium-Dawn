@@ -822,6 +822,27 @@ def _parse_gfx_fonts(args: Tuple[str, str]) -> List[str]:
     )
 
 
+def _refs_from_raw_text(
+    raw: str, filepath: str, pattern: "re.Pattern[str]"
+) -> List[Tuple[str, str, int]]:
+    """Return (sprite_name, filepath, line) for each `pattern` match's group(1).
+
+    Scans `raw` directly rather than comment-stripped text: scripted_gui .txt
+    and scripted_localisation .txt both use # for Clausewitz-script comments,
+    but a scripted loc key can itself start with #, so stripping would corrupt
+    a legitimate reference. Dynamic names are skipped.
+    """
+    offsets = compute_line_offsets(raw)
+    results = []
+    for m in pattern.finditer(raw):
+        sprite = m.group(1)
+        if _is_dynamic(sprite):
+            continue
+        line = line_for_offset(offsets, m.start())
+        results.append((sprite, filepath, line))
+    return results
+
+
 def _parse_sgui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a scripted_gui .txt file."""
     filepath, mod_path = args
@@ -829,22 +850,12 @@ def _parse_sgui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     if raw is None:
         return []
 
-    def _compute():
-        # scripted_gui .txt files use # comments (Clausewitz script style) but the
-        # image = "GFX_xxx" attribute pattern is the same. We don't strip # comments
-        # here to avoid stripping scripted loc keys that start with # — use raw text.
-        offsets = compute_line_offsets(raw)
-        results = []
-        for m in _SGUI_IMAGE_REF.finditer(raw):
-            sprite = m.group(1)
-            if _is_dynamic(sprite):
-                continue
-            line = line_for_offset(offsets, m.start())
-            results.append((sprite, filepath, line))
-        return results
-
     return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.sgui", filepath, raw, _compute
+        mod_path,
+        "gfx_ref.sgui",
+        filepath,
+        raw,
+        lambda: _refs_from_raw_text(raw, filepath, _SGUI_IMAGE_REF),
     )
 
 
@@ -932,19 +943,12 @@ def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     if raw is None:
         return []
 
-    def _compute():
-        offsets = compute_line_offsets(raw)
-        results = []
-        for m in _SLOC_KEY_REF.finditer(raw):
-            sprite = m.group(1)
-            if _is_dynamic(sprite):
-                continue
-            line = line_for_offset(offsets, m.start())
-            results.append((sprite, filepath, line))
-        return results
-
     return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.sloc", filepath, raw, _compute
+        mod_path,
+        "gfx_ref.sloc",
+        filepath,
+        raw,
+        lambda: _refs_from_raw_text(raw, filepath, _SLOC_KEY_REF),
     )
 
 
