@@ -33,6 +33,13 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   30. add_to_faction with a non-country argument (a faction name)
   31. create_faction is deprecated (use create_faction_from_template)
   32. add_building_construction of a provincial building with no province
+  33. limit as a direct child of an else block
+  34. province = { province = <id> } in add_building_construction
+  35. log string carrying a second quoted run
+  36. add_equipment_bonus without name/project, or an unknown bonus type
+  37. equipment effects naming equipment nothing defines
+  38. has_active_mission / has_active_decision naming no decision
+  39. add_opinion_modifier / add_relation_modifier naming no modifier
 """
 
 import os
@@ -40,9 +47,9 @@ import shutil
 import sys
 import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from check_common_mistakes import (
     _RE_IS_X_NATION,
+    _check_active_decision_defined,
     _check_add_to_faction_country,
     _check_any_country_member_array,
     _check_building_missing_province,
@@ -55,7 +62,10 @@ from check_common_mistakes import (
     _check_decision_log_id,
     _check_divide_variable_zero_guard,
     _check_duplicate_add_to_variable,
+    _check_else_with_limit,
     _check_embargo_dlc_guard,
+    _check_equipment_bonus,
+    _check_equipment_type_defined,
     _check_event_log_id,
     _check_every_country_member_array,
     _check_every_owned_controlled_state,
@@ -65,10 +75,15 @@ from check_common_mistakes import (
     _check_hidden_trigger_in_ctt,
     _check_influence_setter_scope,
     _check_leader_rotation,
+    _check_log_nested_quote,
+    _check_modifier_ref_defined,
     _check_mutually_exclusive_contradictions,
+    _check_nested_province_block,
     _check_on_add_array_symmetry,
     _check_random_select_amount_literal,
     _check_tautological_or,
+    _equipment_bonus_enum,
+    _equipment_names,
     _files_need_global_refs,
     _get_block,
     _provincial_building_types,
@@ -2799,12 +2814,18 @@ def _isx_nation_matches(lines):
     ]
 
 
-def _run_check_file(rel_path, text):
+def _write_temp_file(rel_path, text):
+    """Write `text` to a fresh temp dir at `rel_path`; returns (root, filepath)."""
     root = tempfile.mkdtemp()
     fp = os.path.join(root, rel_path)
     os.makedirs(os.path.dirname(fp), exist_ok=True)
     with open(fp, "w", encoding="utf-8") as f:
         f.write(text)
+    return root, fp
+
+
+def _run_check_file(rel_path, text):
+    root, fp = _write_temp_file(rel_path, text)
     try:
         return check_file(fp)
     finally:
@@ -3062,11 +3083,7 @@ print("\n── _files_need_global_refs whitespace-flexible gate ──")
 
 
 def _needs_global_refs(rel_path, text):
-    root = tempfile.mkdtemp()
-    fp = os.path.join(root, rel_path)
-    os.makedirs(os.path.dirname(fp), exist_ok=True)
-    with open(fp, "w", encoding="utf-8") as f:
-        f.write(text)
+    root, fp = _write_temp_file(rel_path, text)
     try:
         return _files_need_global_refs([fp])
     finally:
@@ -3300,6 +3317,292 @@ assert_finds(
     "check still fires under the fallback list",
 )
 shutil.rmtree(_fixture_root)
+
+
+# 33. limit as a direct child of an else block
+
+print("\n── else with limit ──")
+
+assert_finds(
+    _check_else_with_limit,
+    [
+        "\t\t\telse = {\n",
+        "\t\t\t\tlimit = { has_idea = boat_arrivals_ast_4 }\n",
+        "\t\t\t\tadd_stability = 0.02\n",
+        "\t\t\t}\n",
+    ],
+    1,
+    "limit directly inside else flagged",
+)
+assert_finds(
+    _check_else_with_limit,
+    [
+        "\t\t\telse_if = {\n",
+        "\t\t\t\tlimit = { has_idea = boat_arrivals_ast_4 }\n",
+        "\t\t\t}\n",
+    ],
+    0,
+    "else_if with a limit not flagged",
+)
+# A limit belonging to a nested scope inside else is correct.
+assert_finds(
+    _check_else_with_limit,
+    [
+        "\telse = { random_country = { limit = { owns_state = 835 } "
+        "country_event = { id = pandemic_events.1 } } }\n"
+    ],
+    0,
+    "limit on a scope nested in else not flagged",
+)
+assert_finds(
+    _check_else_with_limit,
+    ["\t\t\telse = {\n", "\t\t\t\tadd_stability = 0.02\n", "\t\t\t}\n"],
+    0,
+    "plain else not flagged",
+)
+
+
+# 34. province = { province = <id> } in add_building_construction
+
+print("\n── nested province block ──")
+
+assert_finds(
+    _check_nested_province_block,
+    [
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = coastal_bunker\n",
+        "\t\t\t\tlevel = 4\n",
+        "\t\t\t\tprovince = {\n",
+        "\t\t\t\t\tprovince = 1269\n",
+        "\t\t\t\t}\n",
+        "\t\t\t}\n",
+    ],
+    1,
+    "province = { province = <id> } flagged",
+)
+assert_finds(
+    _check_nested_province_block,
+    [
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = coastal_bunker\n",
+        "\t\t\t\tprovince = 1269\n",
+        "\t\t\t}\n",
+    ],
+    0,
+    "bare province id not flagged",
+)
+assert_finds(
+    _check_nested_province_block,
+    [
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = bunker\n",
+        "\t\t\t\tprovince = {\n",
+        "\t\t\t\t\tall_provinces = yes\n",
+        "\t\t\t\t\tlimit_to_border = yes\n",
+        "\t\t\t\t}\n",
+        "\t\t\t}\n",
+    ],
+    0,
+    "province selector block not flagged",
+)
+
+
+# 35. log string carrying a second quoted run
+
+print("\n── log string quoting ──")
+
+assert_finds(
+    _check_log_nested_quote,
+    [
+        '\t\t\tlog = "[GetDateText]: [This.GetName]: pacific_solution.3.a # '
+        '"Excellent news." executed"\n'
+    ],
+    1,
+    "comment swallowed into a log string flagged",
+)
+assert_finds(
+    _check_log_nested_quote,
+    ['\t\tlog = "[GetDateText]: [Root.GetName]: Focus AST_old_reliable"\n'],
+    0,
+    "well-formed log line not flagged",
+)
+assert_finds(
+    _check_log_nested_quote,
+    [
+        '\t\tcompletion_reward = { log = "[GetDateText]: [Root.GetName]: '
+        'Focus AZE_gaz_iran_deal" remove_ideas = { AZE_lack_of_gas } }\n'
+    ],
+    0,
+    "log followed by another effect on the same line not flagged",
+)
+
+
+# 36. add_equipment_bonus name / bonus type
+
+print("\n── add_equipment_bonus ──")
+
+assert_eq(
+    "util_vehicle_type" in _equipment_bonus_enum()
+    and "util_vehicle_equipment" not in _equipment_bonus_enum(),
+    True,
+    "equipment bonus enum read from common/script_enums.txt",
+)
+assert_finds(
+    _check_equipment_bonus,
+    [
+        "\t\t\tadd_equipment_bonus = { name = AST_old_reliable bonus = { "
+        "infantry_weapons_type = { build_cost_ic = -0.10 } } }\n"
+    ],
+    0,
+    "named bonus on a real enum token not flagged",
+)
+assert_finds(
+    _check_equipment_bonus,
+    [
+        "\t\t\tadd_equipment_bonus = { bonus = { infantry_weapons_type = "
+        "{ build_cost_ic = -0.10 } } }\n"
+    ],
+    1,
+    "add_equipment_bonus without name flagged",
+)
+assert_finds(
+    _check_equipment_bonus,
+    [
+        "\t\t\tadd_equipment_bonus = { name = AST_old_reliable bonus = { "
+        "infantry_equipment = { build_cost_ic = -0.10 } } }\n"
+    ],
+    1,
+    "vanilla archetype as a bonus type flagged",
+)
+assert_finds(
+    _check_equipment_bonus,
+    [
+        "\t\t\tadd_equipment_bonus = { project = FROM bonus = { "
+        "fighter = { build_cost_ic = 0.15 } } }\n"
+    ],
+    0,
+    "project stands in for name",
+)
+
+
+# 37. equipment type resolves to a real equipment definition
+
+print("\n── equipment type ──")
+
+assert_eq(
+    "infantry_weapons_type" in _equipment_names()
+    and "medium_tank_destroyer_chassis_0" in _equipment_names()
+    and "infantry_equipment" not in _equipment_names(),
+    True,
+    "equipment names cover archetypes, variants and duplicate_archetypes clones",
+)
+assert_finds(
+    _check_equipment_type_defined,
+    [
+        "\t\t\tadd_equipment_to_stockpile = {\n",
+        "\t\t\t\ttype = infantry_equipment\n",
+        "\t\t\t\tamount = -2200\n",
+        "\t\t\t}\n",
+    ],
+    1,
+    "vanilla archetype MD renamed flagged",
+)
+assert_finds(
+    _check_equipment_type_defined,
+    [
+        "\t\t\tadd_equipment_to_stockpile = {\n",
+        "\t\t\t\ttype = infantry_weapons_type\n",
+        "\t\t\t\tamount = -2200\n",
+        "\t\t\t}\n",
+    ],
+    0,
+    "defined archetype not flagged",
+)
+# Case is load-bearing on Linux: Anti_air_2 is not Anti_Air_2.
+assert_finds(
+    _check_equipment_type_defined,
+    ["\t\t\tsend_equipment = { type = Anti_air_2 amount = 50 target = LEB }\n"],
+    1,
+    "miscased equipment name flagged",
+)
+assert_finds(
+    _check_equipment_type_defined,
+    [
+        "\t\t\tadd_equipment_to_stockpile = { type = medium_tank_destroyer_chassis_0 "
+        "amount = 10 }\n"
+    ],
+    0,
+    "engine-generated clone variant not flagged",
+)
+# `type` is overloaded; only the equipment-taking effects are in scope.
+assert_finds(
+    _check_equipment_type_defined,
+    ["\t\t\tadd_building_construction = { type = air_base level = 2 }\n"],
+    0,
+    "building type left alone",
+)
+
+
+# 38. has_active_mission / has_active_decision naming a real decision
+
+print("\n── active decision reference ──")
+
+assert_finds(
+    _check_active_decision_defined,
+    ["\t\t\t\thas_active_mission = EH_europe_defense_line_destruction_2\n"],
+    1,
+    "mission naming no decision flagged",
+)
+assert_finds(
+    _check_active_decision_defined,
+    ["\t\t\t\thas_active_mission = EH_europe_defense_line_destruction\n"],
+    0,
+    "mission naming a real decision not flagged",
+)
+assert_finds(
+    _check_active_decision_defined,
+    ["\t\t\t\t# has_active_mission = EH_nope\n"],
+    0,
+    "commented-out trigger not flagged",
+)
+
+
+# 39. add_opinion_modifier / add_relation_modifier reference
+
+print("\n── modifier reference ──")
+
+assert_finds(
+    _check_modifier_ref_defined,
+    [
+        "\tadd_relation_modifier = { target = UKR modifier = UKR_World_Economical_Relations }\n"
+    ],
+    1,
+    "miscased relation modifier flagged",
+)
+assert_finds(
+    _check_modifier_ref_defined,
+    [
+        "\tadd_relation_modifier = { target = UKR modifier = UKR_world_economical_relations }\n"
+    ],
+    0,
+    "defined relation modifier not flagged",
+)
+assert_finds(
+    _check_modifier_ref_defined,
+    [
+        "\t\t\t\tadd_opinion_modifier = { target = BRM modifier = Military_Partnership }\n"
+    ],
+    1,
+    "miscased opinion modifier flagged",
+)
+assert_finds(
+    _check_modifier_ref_defined,
+    [
+        "\t\t\t\tadd_opinion_modifier = { target = BRM modifier = military_partnership }\n"
+    ],
+    0,
+    "defined opinion modifier not flagged",
+)
 
 
 # Summary

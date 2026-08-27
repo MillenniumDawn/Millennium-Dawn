@@ -23,6 +23,7 @@ stale entry gets removed.
 """
 
 import re
+from fnmatch import fnmatch
 from pathlib import Path
 
 import pytest
@@ -31,6 +32,8 @@ from precommit_validate import _REGISTRY
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import _CREATE_UNIT_SOURCE_PATTERNS
+from validate_scripted_params import _CALLER_PATTERNS
+from validate_staged import VALIDATORS as STAGED_VALIDATORS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 VALIDATION_DIR = Path(__file__).resolve().parents[1]
@@ -39,6 +42,11 @@ CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "coding-pipeline.yml"
 TOOLS_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "tools-validation.yml"
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
 NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
+
+# Every tree the engine runs script from. Deliberately not derived from a
+# validator's own pattern list: it is the independent expectation the caller
+# patterns are checked against.
+SCRIPT_ROOTS = ("common", "events", "history")
 
 
 def _checks_matrix_steps(check_id: str) -> list:
@@ -580,9 +588,17 @@ def test_tools_tests_checkout_consumed_configuration():
         # validate_modifiers_test parses the shipped doc to catch a Paradox
         # format change; without it here the test reads an absent file.
         "resources/documentation/modifiers_documentation.md",
-        # focus_pp_malus_test walks the real tree to prove every exemption still
-        # applies a malus; absent, it reads every one of them as stale.
+        # common/national_focus is walked by focus_pp_malus_test's
+        # exemption-freshness guard. check_common_mistakes_test asserts its
+        # script_enums, equipment, decision and modifier loaders against the
+        # real files those loaders read; without them each returns None and the
+        # module-level assertions blow up at collection time.
         "common/national_focus",
+        "common/script_enums.txt",
+        "common/units/equipment",
+        "common/decisions",
+        "common/opinion_modifiers",
+        "common/modifiers",
         ".github/workflows/coding-pipeline.yml",
         ".github/workflows/validator-cache.yml",
         ".github/workflows/nightly-pr-validation.yml",
@@ -658,6 +674,48 @@ def test_ci_idea_icon_check_is_enabled():
     paths = set(workflow["env"]["WORKSPACE_PATHS"].split())
     assert {"interface", "tools"} <= paths
     assert (VALIDATION_DIR / "vanilla_sprites.txt").is_file()
+
+
+def test_scripted_param_patterns_scan_every_script_root():
+    """Each script tree must be scanned whole, not by named subdirectories.
+
+    The hand-maintained caller list this replaced missed six live directories.
+    Any narrowing back to `common/<dir>/**` reintroduces that blind spot, so
+    assert the patterns still cover each root wholesale.
+    """
+    whole_tree = {
+        pattern.split("/", 1)[0]
+        for pattern in _CALLER_PATTERNS
+        if pattern.split("/", 1)[1:] == ["**/*.txt"]
+    }
+    missed = sorted(root for root in SCRIPT_ROOTS if root not in whole_tree)
+    assert not missed, (
+        f"_CALLER_PATTERNS no longer scans {missed} whole, so callers in any "
+        f"directory it does not name are never validated: {_CALLER_PATTERNS}"
+    )
+
+
+def test_scripted_param_routes_cover_every_caller_source():
+    caller_dirs = {pattern.split("*", 1)[0] for pattern in _CALLER_PATTERNS}
+    staged = next(
+        spec for spec in STAGED_VALIDATORS if spec["name"] == "scripted params"
+    )
+    assert caller_dirs <= set(staged["prefixes"])
+
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    entry = next(
+        entry
+        for job in ("validate-core", "validate-targeted")
+        for entry in workflow["jobs"][job]["strategy"]["matrix"]["validator"]
+        if entry["script"] == "validate_scripted_params.py"
+    )
+    _, filters = _filter_definitions()
+    expression = entry["should_run"]
+    for directory in caller_dirs:
+        output = directory.rstrip("/").rsplit("/", 1)[-1].replace("_", "-")
+        sample = directory + "_scripted_param_probe.txt"
+        assert any(fnmatch(sample, pattern) for pattern in filters[output])
+        assert f"needs.detect-changes.outputs.{output} == 'true'" in expression
 
 
 def test_oob_routes_cover_every_create_unit_source():

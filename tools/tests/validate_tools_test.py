@@ -4,13 +4,7 @@ Runs against a synthetic tools/ tree under tmp_path — the validator derives
 its scan root from mod_path, so no production files are touched.
 """
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-from validate_tools import ToolsValidator  # noqa: E402
+from validate_tools import ToolsValidator
 
 _HEALTHY = (
     "#!/usr/bin/env python3\n"
