@@ -35,8 +35,6 @@ import os
 import subprocess
 import sys
 import time
-from math import floor
-from subprocess import TimeoutExpired
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from shared_utils import timing_enabled
@@ -291,7 +289,7 @@ def main():
         t0 = time.perf_counter()
         try:
             result = subprocess.run(v["cmd"], timeout=300)
-        except TimeoutExpired:
+        except subprocess.TimeoutExpired:
             print(f"ERROR: {v['name']} validator timed out after 5 minutes")
             failed = True
             timings.append((v["name"], 300.0))
@@ -307,7 +305,7 @@ def main():
         print(f"\n\033[90m{'─' * (max_label + 18)}", file=sys.stderr)
         print("  Validator timing:", file=sys.stderr)
         for name, elapsed in timings:
-            bar_len = floor(elapsed / total * 20) if total > 0 else 0
+            bar_len = int(elapsed / total * 20) if total > 0 else 0
             bar = "█" * bar_len + "░" * (20 - bar_len)
             print(
                 f"  {name:<{max_label}}  {elapsed:6.3f}s  {bar}",
