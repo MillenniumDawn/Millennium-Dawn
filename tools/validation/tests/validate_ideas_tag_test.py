@@ -4,19 +4,24 @@
 (their runtime tag changes); `original_tag` is stable. The check must:
 - extract the `allowed` block with brace balancing (so a `tag =` after a
   nested block is still seen),
-- fire in selectable categories too (not only non-selectable ones),
+- fire in a slotless category too, where the whole block is redundant anyway,
 - flag a redundant `original_tag` + `tag` pair.
+
+Cases default to `political_reforms` because that is where an `allowed` block
+still belongs; a slotless category has none left to check.
 """
 
 from validate_ideas import _parse_ideas_from_text
 
+SLOTLESS_CATEGORIES = frozenset({"country", "hidden_ideas"})
+
 
 def _issue_types(text):
-    _defined, issues = _parse_ideas_from_text(text)
+    _defined, issues = _parse_ideas_from_text(text, SLOTLESS_CATEGORIES)
     return {i.issue_type for i in issues}
 
 
-def _wrap(body, category="country"):
+def _wrap(body, category="political_reforms"):
     return "ideas = {\n\t" + category + " = {\n" + body + "\n\t}\n}\n"
 
 
@@ -74,15 +79,16 @@ def test_redundant_tag_and_original_tag_flagged():
     assert "redundant-tag-and-original-tag" in _issue_types(text)
 
 
-def test_bare_tag_flagged_in_selectable_category():
-    # `country` is non-selectable; the check must also fire in a selectable
-    # category (one with a slot), e.g. political_reforms.
+def test_bare_tag_flagged_in_slotless_category():
+    # The cases above use political_reforms, the only category where an
+    # `allowed` block belongs. The check must still fire in a slotless one,
+    # where the whole block is redundant but the tag is the worse problem.
     text = _wrap(
         "\t\tmy_idea = {\n"
         "\t\t\tallowed = { tag = ISR }\n"
         "\t\t\tpicture = GFX_idea_x\n"
         "\t\t}",
-        category="political_reforms",
+        category="country",
     )
     assert "tag-not-original-tag" in _issue_types(text)
 
