@@ -2245,6 +2245,62 @@ antarctica_process_station_research_progress = {
 	}
 }
 
+antarctica_auto_resupply_station = {
+	set_temp_variable = { previous_selected_antarctica_station = selected_antarctica_station }
+	antarctica_find_player_station = yes
+
+	if = {
+		limit = { check_variable = { player_station_id > 0 } }
+		set_variable = { selected_antarctica_station = player_station_id }
+		antarctica_set_selected_station_controller = yes
+		set_temp_variable = { station_id = player_station_id }
+		set_temp_variable = { fuel_usage = global.antarctica_station_output_fuel_usage^station_id }
+		set_temp_variable = { fuel_capacity_days = global.antarctica_station_output_fuel_capacity_days^station_id }
+		set_temp_variable = { delivery_days_remaining = global.antarctica_station_delivery_days_remaining^station_id }
+		set_temp_variable = { delivery_fuel_pending = global.antarctica_station_delivery_fuel_pending^station_id }
+		set_temp_variable = { max_capacity = global.antarctica_station_output_capacity^station_id }
+		set_temp_variable = { resupply_threshold = 16 }
+		set_temp_variable = { cost_multiplier = 1 }
+		if = {
+			limit = { OR = { check_variable = { global.month = 4 } check_variable = { global.month = 5 } check_variable = { global.month = 6 } check_variable = { global.month = 7 } check_variable = { global.month = 8 } check_variable = { global.month = 9 } check_variable = { global.month = 10 } } }
+			set_temp_variable = { resupply_threshold = 31 }
+			set_temp_variable = { cost_multiplier = 2 }
+		}
+
+		if = {
+			limit = {
+				check_variable = { fuel_usage > 0 }
+				check_variable = { fuel_capacity_days < resupply_threshold }
+				check_variable = { delivery_days_remaining < 1 }
+				check_variable = { delivery_fuel_pending < 1 }
+				check_variable = { max_capacity > 0 }
+			}
+			set_temp_variable = {
+				delivery_cost = {
+					value = max_capacity
+					multiply = 0.00025
+					multiply = cost_multiplier
+					round = yes
+				}
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = treasury
+						value = delivery_cost
+						compare = greater_than_or_equals
+					}
+				}
+				set_temp_variable = { automation_antarctica_resupply = 1 }
+				antarctica_send_supplies_to_selected_station = yes
+			}
+		}
+	}
+
+	set_variable = { selected_antarctica_station = previous_selected_antarctica_station }
+	antarctica_set_selected_station_controller = yes
+}
+
 # Usage
 # antarctica_send_supplies_to_selected_station = yes
 antarctica_send_supplies_to_selected_station = {
@@ -2252,7 +2308,10 @@ antarctica_send_supplies_to_selected_station = {
 		limit = { check_variable = { selected_antarctica_station > 0 } }
 
 		set_temp_variable = { station_id = selected_antarctica_station }
-		antarctica_recalculate_station_module_outputs = yes
+		if = {
+			limit = { NOT = { check_variable = { automation_antarctica_resupply = 1 } } }
+			antarctica_recalculate_station_module_outputs = yes
+		}
 		set_temp_variable = { delivery_days_remaining = 0 }
 		set_temp_variable = { delivery_fuel_pending = 0 }
 		set_temp_variable = { delivery_days_remaining = global.antarctica_station_delivery_days_remaining^station_id }
@@ -2278,15 +2337,18 @@ antarctica_send_supplies_to_selected_station = {
 			}
 
 			# Calculate cost: 0.25b per 1000 fuel = max_capacity * 0.00025 * multiplier
-			set_temp_variable = { delivery_cost = max_capacity }
-			multiply_temp_variable = { delivery_cost = 0.00025 }
-			multiply_temp_variable = { delivery_cost = cost_multiplier }
-			round_variable = delivery_cost
+			set_temp_variable = {
+				delivery_cost = {
+					value = max_capacity
+					multiply = 0.00025
+					multiply = cost_multiplier
+					round = yes
+				}
+			}
 
 			# Deduct cost from treasury using MD's treasury system
 			custom_effect_tooltip = antarctica_fuel_delivery_cost_TT
-			set_temp_variable = { treasury_change = delivery_cost }
-			multiply_temp_variable = { treasury_change = -1 }
+			set_temp_variable = { treasury_change = { value = delivery_cost multiply = -1 } }
 			modify_treasury_effect = yes
 
 			# Start delivery queue
