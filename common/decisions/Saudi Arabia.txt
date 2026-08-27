@@ -821,13 +821,14 @@ SAU_Intelligence_category = {
 		}
 		available = { has_intelligence_agency = yes }
 
-		cost = 100
+		cost = 40
 		fire_only_once = yes
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SAU_intel_surveillance_tech"
-			set_temp_variable = { treasury_change = -150 }
+			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
+			custom_effect_tooltip = SAU_intel_surveillance_bypass_tt
 			upgrade_intelligence_agency = upgrade_computer_servers
 			add_stability = 0.02
 		}
@@ -838,21 +839,29 @@ SAU_Intelligence_category = {
 	SAU_intel_counterintel_sweep = {
 		icon = generic_intelligence_operation
 
-		visible = {
-			has_country_flag = creation_of_GIP
-			NOT = { has_done_agency_upgrade = upgrade_passive_defense }
-		}
+		visible = { has_country_flag = creation_of_GIP }
 		available = { has_intelligence_agency = yes }
 
-		cost = 75
-		fire_only_once = yes
+		cost = 50
+		days_remove = 90
+		days_re_enable = 90
+		fire_only_once = no
+
+		modifier = {
+			foreign_subversive_activites = -0.15
+			encryption_factor = 0.05
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SAU_intel_counterintel_sweep"
-			set_temp_variable = { treasury_change = -80 }
+			set_temp_variable = { treasury_change = -25 }
 			modify_treasury_effect = yes
-			upgrade_intelligence_agency = upgrade_passive_defense
-			add_political_power = 25
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SAU_intel_counterintel_sweep"
+			set_temp_variable = { temp_opinion = 10 }
+			change_intelligence_community_opinion = yes
 		}
 
 		ai_will_do = { base = 1 }
@@ -1458,7 +1467,7 @@ SAU_Foregin_affairs_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SAU_east_belt_road"
-			random_owned_state = { one_random_infrastructure = yes }
+			one_random_infrastructure = yes
 			random_owned_state = { add_building_construction = { type = internet_station level = 1 instant_build = yes } }
 			if = {
 				limit = { country_exists = CHI }
@@ -1633,9 +1642,7 @@ SAU_Foregin_affairs_category = {
 					add_stability = 0.05
 					add_political_power = 50
 					add_opinion_modifier = { target = ROOT modifier = SAU_funds_the_cause }
-					random_owned_state = {
-						one_random_infrastructure = yes
-					}
+					one_random_infrastructure = yes
 				}
 			}
 			clr_country_flag = SAU_pal_dev_locked

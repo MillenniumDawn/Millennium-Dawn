@@ -718,19 +718,21 @@ focus_tree = {
 		bypass = {
 			custom_trigger_tooltip = {
 				tooltip = gcc_focus_completed_tt
-				has_global_flag = SAU_unif_military_union_completed
+				has_global_flag = GCC_military_union_completed
 			}
 			has_idea = idea_gcc_member_state
 		}
 
 		completion_reward = {
-			set_global_flag = SAU_unif_military_union_completed
-			for_each_scope_loop = { array = global.gcc_member_state
-				army_experience = 15
-				navy_experience = 15
-				air_experience = 15
-				add_war_support = 0.025
-			}
+		set_global_flag = GCC_military_union_completed
+		for_each_scope_loop = {
+			array = global.gcc_member_state
+			tooltip = TT_ALL_GCC_MEMBER_NATIONS_GAIN
+			army_experience = 15
+			navy_experience = 15
+			air_experience = 15
+			add_war_support = 0.025
+		}
 			log = "[GetDateText]: [This.GetName]: focus SAU_unif_military_union executed"
 		}
 
@@ -1194,17 +1196,12 @@ focus_tree = {
 		prerequisite = { focus = SAU_unif_political_union }
 
 		search_filters = { FOCUS_FILTER_GCC_UNIFICATION }
-
+		mutually_exclusive = { focus = SAU_unif_increase_autonomy }
+		mutually_exclusive = { focus = SAU_unif_new_partners }
 		available = {
 			has_idea = idea_gcc_member_state
 			gcc_dominant_member = yes
 			gcc_unity_greater_50 = yes
-			NOT = {
-				OR = {
-					has_completed_focus = SAU_unif_increase_autonomy
-					has_completed_focus = SAU_unif_new_partners
-				}
-			}
 		}
 
 		bypass = {
@@ -1218,12 +1215,15 @@ focus_tree = {
 		completion_reward = {
 			set_global_flag = SAU_unif_pro_american_completed
 			USA = { country_event = { days = 1 id = gcc.11 } }
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			set_temp_variable = { temp_opinion = 5 }
 			change_saudi_royal_family_opinion = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_the_wahabi_ulema_opinion = yes
 			change_the_ulema_opinion = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				USA = { give_guarantee = ROOT }
+			}
 			log = "[GetDateText]: [This.GetName]: focus SAU_unif_pro_american executed"
 		}
 
@@ -1245,29 +1245,42 @@ focus_tree = {
 		prerequisite = { focus = SAU_unif_political_union }
 
 		search_filters = { FOCUS_FILTER_GCC_UNIFICATION }
-
+		mutually_exclusive = { focus = SAU_unif_pro_american }
+		mutually_exclusive = { focus = SAU_unif_new_partners }
 		available = {
 			has_idea = idea_gcc_member_state
 			gcc_dominant_member = yes
 			gcc_unity_greater_50 = yes
-			NOT = {
-				OR = {
-					has_completed_focus = GCC_turkish_bases
-					has_completed_focus = GCC_non_aggression_pact
-					has_completed_focus = GCC_mass_arms_purchases
-					has_completed_focus = GCC_invite_russian_advisors
-					has_completed_focus = GCC_security_guarantees
-					has_completed_focus = GCC_indian_bases
-					has_completed_focus = GCC_foreign_procurement
+			custom_trigger_tooltip = {
+				tooltip = SAU_unif_no_member_aligned_tt
+				NOT = {
+					any_of_scopes = {
+						array = global.gcc_member_state
+						OR = {
+							has_completed_focus = GCC_turkish_bases
+							has_completed_focus = GCC_non_aggression_pact
+							has_completed_focus = GCC_mass_arms_purchases
+							has_completed_focus = GCC_invite_russian_advisors
+							has_completed_focus = GCC_security_guarantees
+							has_completed_focus = GCC_indian_bases
+							has_completed_focus = GCC_foreign_procurement
+						}
+					}
 				}
 			}
-			OR = {
-				NOT = { has_completed_focus = SAU_unif_pro_american }
-				has_global_flag = gcc_usa_rejected
+			custom_trigger_tooltip = {
+				tooltip = SAU_unif_usa_refused_tt
+				OR = {
+					NOT = { has_completed_focus = SAU_unif_pro_american }
+					has_global_flag = gcc_usa_rejected
+				}
 			}
-			OR = {
-				NOT = { has_completed_focus = SAU_unif_new_partners }
-				has_global_flag = gcc_new_partner_rejected
+			custom_trigger_tooltip = {
+				tooltip = SAU_unif_partners_refused_tt
+				OR = {
+					NOT = { has_completed_focus = SAU_unif_new_partners }
+					has_global_flag = gcc_new_partner_rejected
+				}
 			}
 		}
 
@@ -1317,13 +1330,16 @@ focus_tree = {
 			gcc_dominant_member = yes
 			gcc_unity_greater_75 = yes
 			NOT = {
-				OR = {
-					has_completed_focus = GCC_turkish_bases
-					has_completed_focus = GCC_non_aggression_pact
-					has_completed_focus = GCC_mass_arms_purchases
-					has_completed_focus = GCC_invite_russian_advisors
-					has_completed_focus = GCC_security_guarantees
-					has_completed_focus = GCC_indian_bases
+				any_of_scopes = {
+					array = global.gcc_member_state
+					OR = {
+						has_completed_focus = GCC_turkish_bases
+						has_completed_focus = GCC_non_aggression_pact
+						has_completed_focus = GCC_mass_arms_purchases
+						has_completed_focus = GCC_invite_russian_advisors
+						has_completed_focus = GCC_security_guarantees
+						has_completed_focus = GCC_indian_bases
+					}
 				}
 			}
 		}
@@ -1377,13 +1393,16 @@ focus_tree = {
 			gcc_dominant_member = yes
 			gcc_unity_greater_90 = yes
 			NOT = {
-				OR = {
-					has_completed_focus = GCC_turkish_bases
-					has_completed_focus = GCC_non_aggression_pact
-					has_completed_focus = GCC_mass_arms_purchases
-					has_completed_focus = GCC_invite_russian_advisors
-					has_completed_focus = GCC_security_guarantees
-					has_completed_focus = GCC_indian_bases
+				any_of_scopes = {
+					array = global.gcc_member_state
+					OR = {
+						has_completed_focus = GCC_turkish_bases
+						has_completed_focus = GCC_non_aggression_pact
+						has_completed_focus = GCC_mass_arms_purchases
+						has_completed_focus = GCC_invite_russian_advisors
+						has_completed_focus = GCC_security_guarantees
+						has_completed_focus = GCC_indian_bases
+					}
 				}
 			}
 			custom_trigger_tooltip = {
@@ -1518,13 +1537,16 @@ focus_tree = {
 			gcc_dominant_member = yes
 			gcc_unity_greater_90 = yes
 			NOT = {
-				OR = {
-					has_completed_focus = GCC_turkish_bases
-					has_completed_focus = GCC_non_aggression_pact
-					has_completed_focus = GCC_mass_arms_purchases
-					has_completed_focus = GCC_invite_russian_advisors
-					has_completed_focus = GCC_security_guarantees
-					has_completed_focus = GCC_indian_bases
+				any_of_scopes = {
+					array = global.gcc_member_state
+					OR = {
+						has_completed_focus = GCC_turkish_bases
+						has_completed_focus = GCC_non_aggression_pact
+						has_completed_focus = GCC_mass_arms_purchases
+						has_completed_focus = GCC_invite_russian_advisors
+						has_completed_focus = GCC_security_guarantees
+						has_completed_focus = GCC_indian_bases
+					}
 				}
 			}
 			custom_trigger_tooltip = {
@@ -1638,16 +1660,23 @@ focus_tree = {
 		prerequisite = { focus = SAU_unif_political_union }
 
 		search_filters = { FOCUS_FILTER_GCC_UNIFICATION }
-
+		mutually_exclusive = { focus = SAU_unif_pro_american }
+		mutually_exclusive = { focus = SAU_unif_pro_american }
 		available = {
 			has_idea = idea_gcc_member_state
 			gcc_dominant_member = yes
 			gcc_unity_greater_50 = yes
-			OR = {
-				NOT = { has_completed_focus = SAU_unif_pro_american }
-				has_global_flag = gcc_usa_rejected
+			custom_trigger_tooltip = {
+				tooltip = SAU_unif_usa_refused_tt
+				OR = {
+					NOT = { has_completed_focus = SAU_unif_pro_american }
+					has_global_flag = gcc_usa_rejected
+				}
 			}
-			NOT = { has_completed_focus = SAU_unif_increase_autonomy }
+			custom_trigger_tooltip = {
+				tooltip = SAU_unif_not_yet_autonomous_tt
+				NOT = { has_completed_focus = SAU_unif_increase_autonomy }
+			}
 		}
 
 		bypass = {
@@ -1861,10 +1890,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_army_07"
-			add_political_power = 20
+			add_political_power = 35
 			add_stability = 0.03
-			add_political_power = 15
-			one_state_arms_factory = yes
+			one_random_arms_factory = yes
 		}
 
 		ai_will_do = {
@@ -2057,10 +2085,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_army_14"
-			add_political_power = 20
-			add_political_power = 20
+			add_political_power = 40
 			add_war_support = 0.05
-			one_state_arms_factory = yes
+			one_random_arms_factory = yes
 		}
 
 		ai_will_do = {
@@ -2635,8 +2662,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_air_09"
 			custom_effect_tooltip = SAU_unlock_awacs_tt
-			add_political_power = 20
-			add_political_power = 10
+			add_political_power = 30
 		}
 
 		ai_will_do = {
@@ -2908,7 +2934,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -2954,7 +2980,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -2992,7 +3018,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -3051,7 +3077,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -3103,7 +3129,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -3150,7 +3176,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -3202,7 +3228,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -3246,7 +3272,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -3288,7 +3314,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 177 }
 			}
 		}
@@ -3333,7 +3359,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -3405,7 +3431,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 177 }
 			}
 		}
@@ -3447,7 +3473,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -3491,7 +3517,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -3535,7 +3561,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -3578,7 +3604,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 177 }
 			}
 		}
@@ -3622,7 +3648,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -3667,7 +3693,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -3892,7 +3918,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -3937,7 +3963,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 177 }
 			}
 		}
@@ -3979,7 +4005,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4022,7 +4048,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4066,7 +4092,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4182,7 +4208,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -4226,7 +4252,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4311,7 +4337,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -4351,7 +4377,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4398,7 +4424,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4441,7 +4467,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4484,7 +4510,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 177 }
 			}
 		}
@@ -4585,7 +4611,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4659,7 +4685,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 933 }
 			}
 		}
@@ -4699,7 +4725,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4737,7 +4763,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4774,7 +4800,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4815,7 +4841,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4855,7 +4881,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4900,7 +4926,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -4967,7 +4993,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5010,7 +5036,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5077,7 +5103,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5118,7 +5144,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5166,7 +5192,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5204,7 +5230,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5252,7 +5278,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5299,7 +5325,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5343,7 +5369,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5396,7 +5422,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5440,7 +5466,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5494,7 +5520,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5547,7 +5573,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5607,7 +5633,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 176 }
 			}
 		}
@@ -5650,7 +5676,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -5697,7 +5723,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -5743,7 +5769,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -5810,7 +5836,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -5867,7 +5893,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -5907,7 +5933,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -5983,7 +6009,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
-				has_civil_war = yes
+				 has_civil_war = yes
 				NOT = { controls_state = 174 }
 			}
 		}
@@ -10450,15 +10476,11 @@ focus_tree = {
 			add_political_power = 50
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SAU_nda_state }
 			add_to_variable = { SAU_nda_build = 0.01 tooltip = production_speed_buildings_factor_tt }
-			random_controlled_state = {
-				one_random_industrial_complex = yes
-			}
-			random_controlled_state = {
-				one_random_industrial_complex = yes
-			}
+			one_random_industrial_complex = yes
+			one_random_industrial_complex = yes
 			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = SAU }
-			set_temp_variable = { influence_target = ENG }
+			set_temp_variable = { tag_index = ENG }
+			set_temp_variable = { influence_target = SAU }
 			change_influence_percentage = yes
 		}
 
@@ -10528,9 +10550,7 @@ focus_tree = {
 			add_political_power = 50
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SAU_nda_state }
 			add_to_variable = { SAU_nda_build = 0.04 tooltip = production_speed_buildings_factor_tt }
-			random_controlled_state = {
-				one_random_industrial_complex = yes
-			}
+			one_random_industrial_complex = yes
 			one_office_construction = yes
 		}
 
@@ -10829,8 +10849,8 @@ focus_tree = {
 			set_temp_variable = { international_bankers_opinion = 5 }
 			change_labour_unions_opinion = yes
 			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = SAU }
-			set_temp_variable = { influence_target = USA }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = SAU }
 			change_influence_percentage = yes
 		}
 
@@ -15129,11 +15149,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_Cooperation_Export_Oil_To_USA"
 			add_political_power = 20
-			custom_effect_tooltip = SAU_oil_for_security_focus_tt
 			USA = {
 				country_event = SAU_events.11
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_stability = 0.03
+				one_random_fossil_fuel_powerplant = yes
+				add_ideas = SAU_oil_for_security_pact
+				add_political_power = 10
+			}
 		}
 
 		ai_will_do = {
@@ -15761,7 +15786,7 @@ focus_tree = {
 					set_temp_variable = { treasury_change = 20 }
 					modify_treasury_effect = yes
 					add_stability = 0.03
-					random_owned_state = { one_random_infrastructure = yes }
+					one_random_industrial_complex = yes
 				}
 				if = {
 					limit = { NOT = { has_global_flag = SAU_ISR_normalized } }
@@ -16179,11 +16204,15 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_Open_deal_with_SK"
 			add_political_power = 30
-			custom_effect_tooltip = SAU_Saudi_SouthKorea_deal_tt
 			KOR = {
 				country_event = SAU_events.7
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				one_random_network_infrastructure = yes
+				one_random_network_infrastructure = yes
+				add_political_power = 10
+			}
 		}
 
 		ai_will_do = {
@@ -16206,11 +16235,15 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_IMEC_India"
 			add_political_power = 25
-			custom_effect_tooltip = SAU_IMEC_india_focus_tt
 			RAJ = {
 				country_event = SAU_events.6
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_ideas = SAU_IMEC_india_deal_new
+				random_owned_state = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				add_political_power = 10
+			}
 		}
 
 		ai_will_do = {
@@ -16234,11 +16267,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_Never_Trust_French"
 			add_war_support = 0.03
 			add_political_power = 20
-			custom_effect_tooltip = SAU_never_trust_french_focus_tt
 			FRA = {
 				country_event = SAU_events.13
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_political_power = 100
+				add_ideas = SAU_french_investment_pact
+			}
 		}
 
 		ai_will_do = {
@@ -16262,11 +16298,16 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_UK_Strategic_Partnership"
 			add_political_power = 25
 			add_war_support = 0.02
-			custom_effect_tooltip = SAU_UK_partnership_focus_tt
 			ENG = {
 				country_event = SAU_events.12
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				one_random_arms_factory = yes
+				air_experience = 15
+				add_ideas = SAU_UK_stratgic_friendship
+				add_political_power = 10
+			}
 		}
 
 		ai_will_do = {
@@ -16291,11 +16332,18 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_The_Strategic_Defense_USA"
 			add_war_support = 0.04
 			add_stability = 0.02
-			custom_effect_tooltip = SAU_american_shield_focus_tt
 			USA = {
 				country_event = SAU_events.16
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				176 = { add_building_construction = { type = anti_air_building level = 2 instant_build = yes } }
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = SAU }
+				change_influence_percentage = yes
+				add_political_power = 10
+			}
 		}
 
 		ai_will_do = {
@@ -16319,11 +16367,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_Comprehensive_Strategic_China"
 			add_political_power = 25
-			custom_effect_tooltip = SAU_Saudi_China_partnership_tt
 			CHI = {
 				country_event = SAU_events.9
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				one_office_construction = yes
+				one_office_construction = yes
+				one_random_nuclear_reactor = yes
+				add_political_power = 10
+			}
 		}
 
 		ai_will_do = {
@@ -16352,7 +16405,6 @@ focus_tree = {
 			USA = {
 				country_event = SAU_events.14
 			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			FRA = {
 				country_event = SAU_events.14
 			}
@@ -16361,6 +16413,11 @@ focus_tree = {
 			}
 			GER = {
 				country_event = SAU_events.14
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				one_random_arms_factory = yes
+				add_political_power = 10
 			}
 		}
 
@@ -16386,11 +16443,15 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_focus_Defensiv_Deal_with_Pakistan"
 			add_manpower = 20000
 			add_war_support = 0.02
-			custom_effect_tooltip = SAU_Pakistan_defense_pact_tt
 			PAK = {
 				country_event = SAU_events.8
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				give_guarantee = PAK
+				give_military_access = PAK
+				add_political_power = 10
+			}
 		}
 
 		ai_will_do = {
@@ -16413,11 +16474,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_Saudi_Spanish_Parthnership"
 			add_political_power = 20
-			custom_effect_tooltip = SAU_spain_partnership_focus_tt
 			SPR = {
 				country_event = SAU_events.15
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				set_temp_variable = { treasury_change = -50 }
+				modify_treasury_effect = yes
+				174 = { one_state_dockyard = yes }
+				add_political_power = 10
+			}
 		}
 
 		ai_will_do = {
@@ -16442,11 +16508,14 @@ focus_tree = {
 			add_political_power = 30
 			set_temp_variable = { treasury_change = 30 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = SAU_Saudi_Russia_OPEC_Plus_tt
 			SOV = {
 				country_event = SAU_events.10
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_ideas = SAU_OPEC_Russia_deal_new
+				add_political_power = 10
+			}
 		}
 
 		ai_will_do = {
@@ -16469,11 +16538,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_Open_trade__China"
-			custom_effect_tooltip = SAU_Open_trade_china_focus_tt
 			CHI = {
 				country_event = SAU_events.3
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_stability = 0.03
+				random_owned_state = { add_building_construction = { type = fossil_powerplant level = 1 instant_build = yes } }
+				random_owned_state = { add_building_construction = { type = agriculture_district level = 1 instant_build = yes } }
+				add_political_power = 10
+			}
 		}
 
 		ai_will_do = {
@@ -18111,7 +18185,7 @@ focus_tree = {
 				limit = { country_exists = IRQ }
 				IRQ = {
 					add_stability = 0.03
-					random_owned_state = { one_random_infrastructure = yes }
+					one_random_infrastructure = yes
 					set_temp_variable = { percent_change = -10 }
 					set_temp_variable = { tag_index = PER.id }
 					change_influence_percentage = yes
@@ -19217,9 +19291,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SAU_rep_shia_civil_rights"
-			add_political_power = 50
+			add_political_power = 100
 			add_stability = 0.02
-			add_political_power = 50
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SAU_rep_shia_state }
 			add_to_variable = { SAU_rep_shia_pp = 0.01 tooltip = political_power_factor_tt }
 			add_to_variable = { SAU_rep_shia_stab = 0.01 tooltip = stability_factor_tt }
