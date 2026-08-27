@@ -91,11 +91,16 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   `tools/validation/equipment_module_slots.py`, resolving module-driven slot unlocks
   and `duplicate_archetypes` clones first. Tank and plane variant slots are not
   validated yet.
-  All findings are ERROR. It also structurally checks `create_unit`
+  Ship-variant findings are ERROR. It also structurally checks `create_unit`
   effects: state scope, `owner`, block keys, a single-line division string
-  naming a `division_template`, zero equipment/manpower factors, and the order
-  of a template defined in the same file and effect path as the `create_unit`
-  using it. It does not check that a referenced template is defined anywhere, so
+  that parses as army data (documented inner keys, quoted `name` /
+  `division_template`, numeric factors, `force_equipment_variants` shape),
+  zero equipment/manpower factors, and the order of a template defined in the
+  same file and effect path as the `create_unit` using it. German/Danish letters
+  in that string (`äöüßæøå`) are WARNING (`out-of-bounds-division`): the inner
+  parser rejects them even inside quotes (Sweden `militärdistriktet`). Romance,
+  Slavic, and Kurdish accents are allowed; they render in game. Schema failures
+  gate. It does not check that a referenced template is defined anywhere, so
   a template that only ever exists for the wrong country, or a `has_template`
   guard naming a template nothing defines, still passes. Its combined run gate
   covers `history/countries/`, `common/national_focus/`, `events/`,
@@ -105,7 +110,7 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   both the pre-commit registry (`tools/precommit_validate.py`) and the CI
   `oob` path filter. `config_drift_test.py` derives both routes from
   `_CREATE_UNIT_SOURCE_PATTERNS`, so a new directory there fails the suite until
-  both are updated. Findings are **errors**. Non-ship variants are skipped. Their
+  both are updated. Non-ship variants are skipped. Their
   `allowed_module_categories` blocks are often empty, so the naval resolver
   cannot be pointed at them as-is.
 

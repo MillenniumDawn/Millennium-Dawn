@@ -671,9 +671,9 @@ def validate_oob_division_groups_file(
 #
 # A create_unit only spawns units inside a state scope (capital_scope, a
 # state-scope effect, a numeric state-ID block, or a state-scoped decision).
-# Its division string must live on one physical line and name a
-# division_template. A template defined in the same country/effect path must
-# appear before the create_unit that uses it.
+# Its division string must live on one physical line, parse as army data, and
+# name a division_template. A template defined in the same country/effect path
+# must appear before the create_unit that uses it.
 
 # Documented create_unit block keys; anything else is a typo.
 _CREATE_UNIT_KEYS = frozenset(
@@ -711,7 +711,6 @@ _STATE_SCOPE_LABELS = frozenset(
 )
 
 _DIVISION_VALUE_RE = re.compile(r'\bdivision\s*=\s*"((?:[^"\\]|\\.)*)"', re.S)
-_TEMPLATE_REF_RE = re.compile(r'\bdivision_template\s*=\s*"([^"]*)"')
 _TEMPLATE_NAME_RE = re.compile(r'\bname\s*=\s*"([^"]*)"')
 _KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _OWNER_RE = re.compile(r"\bowner\s*=")
@@ -766,9 +765,41 @@ _CREATE_UNIT_CATEGORIES = {
     "missing-owner": "CREATE UNIT: missing owner",
     "missing-template": "CREATE UNIT: division string lacks division_template",
     "unknown-key": "CREATE UNIT: unknown key",
+    "unknown-division-key": "CREATE UNIT: unknown key in division string",
+    "unquoted-value": "CREATE UNIT: division string value must be quoted",
+    "malformed-division": "CREATE UNIT: division string does not parse",
+    "out-of-bounds-division": "CREATE UNIT: division string has German/Danish letters",
     "zero-factor": "CREATE UNIT: equipment/manpower factor is zero",
     "template-order": "CREATE UNIT: template defined after create_unit",
 }
+_CREATE_UNIT_WARNING_KINDS = frozenset({"out-of-bounds-division"})
+# persistent.cpp rejects these even inside quotes (Sweden militärdistriktet).
+# Romance/Slavic/Kurdish accents (é, á, š, ş, …) render in game and are allowed.
+_OUT_OF_BOUNDS_LETTERS = frozenset("äöüßæøåÄÖÜÆØÅ")
+
+# Inner army-data keys. create_unit re-parses `division = "..."` through
+# persistent.cpp (not the file parser), so this set is the wiki/OOB subset
+# that path actually accepts.
+_DIVISION_STRING_KEYS = frozenset(
+    {
+        "name",
+        "division_template",
+        "start_experience_factor",
+        "start_equipment_factor",
+        "start_manpower_factor",
+        "force_equipment_variants",
+    }
+)
+_DIVISION_QUOTED_KEYS = frozenset({"name", "division_template"})
+_DIVISION_NUMBER_KEYS = frozenset(
+    {
+        "start_experience_factor",
+        "start_equipment_factor",
+        "start_manpower_factor",
+    }
+)
+_FEV_ENTRY_KEYS = frozenset({"owner", "amount", "version_name", "creator"})
+_NUMBER_RE = re.compile(r"^[+-]?(?:\d+\.\d*|\.\d+|\d+)$")
 
 
 class _CreateUnitChecks:
@@ -781,9 +812,15 @@ class _CreateUnitChecks:
         self.file = file
 
     def error(self, kind: str, message: str, line: int):
+        self._add(kind, message, line, Severity.ERROR)
+
+    def warn(self, kind: str, message: str, line: int):
+        self._add(kind, message, line, Severity.WARNING)
+
+    def _add(self, kind: str, message: str, line: int, severity: str):
         self.issues.append(
             Issue(
-                severity=Severity.ERROR,
+                severity=severity,
                 category=_CREATE_UNIT_CATEGORIES[kind],
                 message=message,
                 file=self.file,
@@ -1030,6 +1067,299 @@ def _in_state_scope(nodes: List[Dict], text: str, idx: int) -> bool:
     return False
 
 
+def _division_tokens(text: str) -> List[Tuple[str, str]]:
+    tokens: List[Tuple[str, str]] = []
+    i = 0
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c in " \t\r\n":
+            i += 1
+            continue
+        if c in "{}=":
+            tokens.append(("punct", c))
+            i += 1
+            continue
+        if c == '"':
+            j = i + 1
+            while j < n and text[j] != '"':
+                j += 1
+            if j >= n:
+                tokens.append(("error", "unclosed quote"))
+                return tokens
+            tokens.append(("string", text[i + 1 : j]))
+            i = j + 1
+            continue
+        j = i + 1
+        while j < n and text[j] not in ' \t\r\n{}="':
+            j += 1
+        raw = text[i:j]
+        kind = "number" if _NUMBER_RE.fullmatch(raw) else "ident"
+        tokens.append((kind, raw))
+        i = j
+    return tokens
+
+
+def _out_of_bounds_chunks(text: str) -> List[str]:
+    chunks: List[str] = []
+    seen = set()
+    for kind, value in _division_tokens(text):
+        if kind == "error" or value in seen:
+            continue
+        if _OUT_OF_BOUNDS_LETTERS.isdisjoint(value):
+            continue
+        seen.add(value)
+        chunks.append(value)
+    return chunks
+
+
+def _parse_fev_entry(
+    tokens: List[Tuple[str, str]], start: int, equipment: str
+) -> Tuple[int, List[Tuple[str, str]]]:
+    issues: List[Tuple[str, str]] = []
+    i = start
+    if i >= len(tokens) or tokens[i] != ("punct", "{"):
+        issues.append(
+            (
+                "malformed-division",
+                f"division string force_equipment_variants '{equipment}' is not a block",
+            )
+        )
+        return i, issues
+    i += 1
+    unknown: List[str] = []
+    while i < len(tokens) and tokens[i] != ("punct", "}"):
+        kind, value = tokens[i]
+        if kind != "ident":
+            issues.append(
+                (
+                    "malformed-division",
+                    f"division string force_equipment_variants '{equipment}' does not parse",
+                )
+            )
+            return i, issues
+        key = value
+        i += 1
+        if i >= len(tokens) or tokens[i] != ("punct", "="):
+            issues.append(
+                (
+                    "malformed-division",
+                    f"division string force_equipment_variants '{equipment}' does not parse",
+                )
+            )
+            return i, issues
+        i += 1
+        if i >= len(tokens):
+            issues.append(
+                (
+                    "malformed-division",
+                    f"division string force_equipment_variants '{equipment}' does not parse",
+                )
+            )
+            return i, issues
+        vkind, vval = tokens[i]
+        i += 1
+        if key not in _FEV_ENTRY_KEYS:
+            unknown.append(key)
+            continue
+        if key == "version_name" and vkind != "string":
+            issues.append(
+                (
+                    "unquoted-value",
+                    "division string version_name must be a quoted string",
+                )
+            )
+        elif key == "amount" and vkind != "number":
+            issues.append(
+                (
+                    "malformed-division",
+                    f"division string force_equipment_variants '{equipment}' amount must be a number",
+                )
+            )
+        elif key in {"owner", "creator"} and vkind not in {"ident", "string"}:
+            issues.append(
+                (
+                    "malformed-division",
+                    f"division string force_equipment_variants '{equipment}' {key} must be a tag",
+                )
+            )
+        elif vkind == "punct":
+            issues.append(
+                (
+                    "malformed-division",
+                    f"division string force_equipment_variants '{equipment}' does not parse",
+                )
+            )
+            return i, issues
+    if i >= len(tokens):
+        issues.append(
+            (
+                "malformed-division",
+                f"division string force_equipment_variants '{equipment}' is not a block",
+            )
+        )
+        return i, issues
+    i += 1
+    if unknown:
+        issues.append(
+            (
+                "unknown-division-key",
+                "division string force_equipment_variants '"
+                f"{equipment}' unknown key(s): {', '.join(sorted(set(unknown)))}",
+            )
+        )
+    return i, issues
+
+
+def _parse_division_string(
+    text: str,
+) -> Tuple[List[Tuple[str, str]], Optional[str]]:
+    """Schema-check a create_unit division string. Returns (issues, template)."""
+    issues: List[Tuple[str, str]] = []
+    chunks = _out_of_bounds_chunks(text)
+    if chunks:
+        issues.append(
+            (
+                "out-of-bounds-division",
+                "division string out-of-bounds letter in: " + "; ".join(chunks),
+            )
+        )
+
+    tokens = _division_tokens(text)
+    i = 0
+    unknown: List[str] = []
+    template: Optional[str] = None
+    saw_template = False
+    while i < len(tokens):
+        kind, value = tokens[i]
+        if kind == "error":
+            issues.append(("malformed-division", f"division string {value}"))
+            return issues, template
+        if kind != "ident":
+            issues.append(
+                (
+                    "malformed-division",
+                    f"division string leftover token: {value}",
+                )
+            )
+            return issues, template
+        key = value
+        i += 1
+        if i >= len(tokens) or tokens[i] != ("punct", "="):
+            issues.append(
+                (
+                    "malformed-division",
+                    f"division string leftover token: {key}",
+                )
+            )
+            return issues, template
+        i += 1
+        if i >= len(tokens):
+            issues.append(
+                (
+                    "malformed-division",
+                    f"division string {key} is missing a value",
+                )
+            )
+            return issues, template
+        vkind, vval = tokens[i]
+        i += 1
+        if key not in _DIVISION_STRING_KEYS:
+            unknown.append(key)
+            if vkind == "punct" and vval == "{":
+                depth = 1
+                while i < len(tokens) and depth:
+                    if tokens[i] == ("punct", "{"):
+                        depth += 1
+                    elif tokens[i] == ("punct", "}"):
+                        depth -= 1
+                    i += 1
+            continue
+        if key in _DIVISION_QUOTED_KEYS:
+            if key == "division_template":
+                saw_template = True
+            if vkind != "string":
+                issues.append(
+                    (
+                        "unquoted-value",
+                        f"division string {key} must be a quoted string",
+                    )
+                )
+            elif key == "division_template":
+                template = vval or None
+        elif key in _DIVISION_NUMBER_KEYS:
+            if vkind != "number":
+                issues.append(
+                    (
+                        "malformed-division",
+                        f"division string {key} must be a number",
+                    )
+                )
+        elif key == "force_equipment_variants":
+            if vkind != "punct" or vval != "{":
+                issues.append(
+                    (
+                        "malformed-division",
+                        "division string force_equipment_variants is not a block",
+                    )
+                )
+                continue
+            while i < len(tokens) and tokens[i] != ("punct", "}"):
+                ekind, eval_ = tokens[i]
+                if ekind != "ident":
+                    issues.append(
+                        (
+                            "malformed-division",
+                            "division string force_equipment_variants does not parse",
+                        )
+                    )
+                    return issues, template
+                i += 1
+                if i >= len(tokens) or tokens[i] != ("punct", "="):
+                    issues.append(
+                        (
+                            "malformed-division",
+                            "division string force_equipment_variants does not parse",
+                        )
+                    )
+                    return issues, template
+                i += 1
+                i, extra = _parse_fev_entry(tokens, i, eval_)
+                issues.extend(extra)
+            if i >= len(tokens):
+                issues.append(
+                    (
+                        "malformed-division",
+                        "division string force_equipment_variants is not a block",
+                    )
+                )
+                return issues, template
+            i += 1
+
+    if unknown:
+        issues.append(
+            (
+                "unknown-division-key",
+                f"division string unknown key(s): {', '.join(sorted(set(unknown)))}",
+            )
+        )
+    if not saw_template:
+        issues.append(
+            (
+                "missing-template",
+                'division string lacks division_template="..."',
+            )
+        )
+    elif not template:
+        issues.append(
+            (
+                "missing-template",
+                'division string lacks division_template="..."',
+            )
+        )
+    return issues, template
+
+
 def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
     """Validate every create_unit block in one file. Returns error Issues."""
     filepath, rel, mod_path = args
@@ -1102,15 +1432,15 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
                 line,
             )
 
-        tm = _TEMPLATE_REF_RE.search(dval_clean)
-        if not tm:
-            out.error(
-                "missing-template",
-                f'{cu["line"]}: division string lacks division_template="..."',
-                line,
-            )
+        parsed_issues, tname = _parse_division_string(dval_clean)
+        for kind, message in parsed_issues:
+            prefixed = f"{cu['line']}: {message}"
+            if kind in _CREATE_UNIT_WARNING_KINDS:
+                out.warn(kind, prefixed, line)
+            else:
+                out.error(kind, prefixed, line)
+        if not tname:
             continue
-        tname = tm.group(1)
 
         if _in_has_template_guard(nodes, content, cu_idx, tname):
             continue
