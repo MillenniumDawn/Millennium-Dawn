@@ -7,11 +7,13 @@ could silently stop running on some paths. These tests pin which validators a
 given staged path selects, so an unintended coverage change fails CI.
 """
 
-import subprocess
+import importlib
 import sys
 
 import precommit_validate as dispatcher
 from precommit_validate import _REGISTRY
+
+git_test_utils = importlib.import_module("git_test_utils")
 
 _BY_SCRIPT = {spec.script: spec for spec in _REGISTRY}
 
@@ -246,23 +248,9 @@ def test_precommit_dispatcher_selects_oob_for_a_moved_history_target(
     with target.open("w", encoding="utf-8", newline="") as output_file:
         output_file.write("units = { }\n")
 
-    def git(*args):
-        return subprocess.run(
-            ["git", *args],
-            cwd=tmp_path,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-
-    git("init")
-    git("config", "user.email", "test@example.com")
-    git("config", "user.name", "Test User")
-    git("config", "diff.renames", "true")
-    git("add", "history/units")
-    git("commit", "-m", "initial")
+    git_test_utils.initialize_git_repository(tmp_path, "history/units")
     target.rename(tmp_path / "target.txt")
-    git("add", "-A")
+    git_test_utils.run_git(tmp_path, "add", "-A")
 
     destination = str(tmp_path / "target.txt")
     paths = dispatcher._discover_staged(str(tmp_path), [destination])

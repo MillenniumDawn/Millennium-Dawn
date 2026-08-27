@@ -1,8 +1,10 @@
 """Tests for runtime load_oob reference validation."""
 
-import subprocess
+import importlib
 
 from validate_oob_units import Validator, find_load_oob_references
+
+git_test_utils = importlib.import_module("git_test_utils")
 
 
 def _write(path, content):
@@ -81,23 +83,9 @@ def test_full_validator_rescans_unchanged_callers_when_a_target_moves(
     _write(target, "units = { }\n")
     _write(tmp_path / "events/unchanged.txt", "load_oob = target\n")
 
-    def git(*args):
-        return subprocess.run(
-            ["git", *args],
-            cwd=tmp_path,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-
-    git("init")
-    git("config", "user.email", "test@example.com")
-    git("config", "user.name", "Test User")
-    git("config", "diff.renames", "true")
-    git("add", "history/units", "events")
-    git("commit", "-m", "initial")
+    git_test_utils.initialize_git_repository(tmp_path, "history/units", "events")
     target.rename(tmp_path / "target.txt")
-    git("add", "-A")
+    git_test_utils.run_git(tmp_path, "add", "-A")
     monkeypatch.setenv("MD_STAGED_FILES", "target.txt")
 
     validator = _validator(tmp_path, staged_only=True)

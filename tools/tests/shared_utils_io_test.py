@@ -1,9 +1,11 @@
+import importlib
 import os
 import stat
-import subprocess
 
 import pytest
 import shared_utils as U
+
+git_test_utils = importlib.import_module("git_test_utils")
 
 
 def test_normalized_traversal_exclusions_handle_both_separators():
@@ -183,26 +185,12 @@ def test_staged_files_includes_deleted_git_paths_when_requested(tmp_path, monkey
         with path.open("w", encoding="utf-8", newline="") as output_file:
             output_file.write(content)
 
-    def git(*args):
-        return subprocess.run(
-            ["git", *args],
-            cwd=tmp_path,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-
-    git("init")
-    git("config", "user.email", "test@example.com")
-    git("config", "user.name", "Test User")
-    git("config", "diff.renames", "true")
-    git("add", "history/units")
-    git("commit", "-m", "initial")
+    git_test_utils.initialize_git_repository(tmp_path, "history/units")
     deleted.unlink()
     renamed_to = units / "renamed-to.txt"
     renamed_from.rename(renamed_to)
     moved_from.rename(tmp_path / "moved-out.txt")
-    git("add", "-A")
+    git_test_utils.run_git(tmp_path, "add", "-A")
 
     staged = U.get_staged_files(str(tmp_path), include_missing=True)
 
