@@ -7,8 +7,13 @@ could silently stop running on some paths. These tests pin which validators a
 given staged path selects, so an unintended coverage change fails CI.
 """
 
+import importlib
+import sys
+
 import precommit_validate as dispatcher
 from precommit_validate import _REGISTRY
+
+git_test_utils = importlib.import_module("git_test_utils")
 
 _BY_SCRIPT = {spec.script: spec for spec in _REGISTRY}
 
@@ -232,6 +237,46 @@ def test_dispatcher_subprocess_contract(monkeypatch, tmp_path):
     assert captured["env"] is env
     assert captured["timeout"] == 300
     assert result[1] == 1
+
+
+def test_precommit_dispatcher_selects_oob_for_a_moved_history_target(
+    tmp_path, monkeypatch
+):
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    target = tmp_path / "history" / "units" / "target.txt"
+    target.parent.mkdir(parents=True)
+    with target.open("w", encoding="utf-8", newline="") as output_file:
+        output_file.write("units = { }\n")
+
+    git_test_utils.initialize_git_repository(tmp_path, "history/units")
+    target.rename(tmp_path / "target.txt")
+    git_test_utils.run_git(tmp_path, "add", "-A")
+
+    destination = str(tmp_path / "target.txt")
+    paths = dispatcher._discover_staged(str(tmp_path), [destination])
+
+    assert "history/units/target.txt" in paths
+    assert "validate_oob_units" in {
+        spec.script for spec in _REGISTRY if spec.matches(paths)
+    }
+
+    calls = []
+
+    def run(spec, _mod_path, env, _no_color, _inner_workers):
+        calls.append((spec.script, env["MD_STAGED_FILES"]))
+        return (spec.script, 0, "", "", 0.0)
+
+    monkeypatch.setattr(dispatcher, "_run", run)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["precommit_validate.py", "--path", str(tmp_path), destination],
+    )
+
+    dispatcher.main()
+
+    oob_calls = [env for script, env in calls if script == "validate_oob_units"]
+    assert oob_calls == ["target.txt\nhistory/units/target.txt"]
 
 
 def test_no_match_outside_scope():

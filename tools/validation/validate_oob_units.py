@@ -27,7 +27,7 @@ from equipment_module_slots import (
     check_created_variants,
     parse_variant_names,
 )
-from shared_utils import read_text_under
+from shared_utils import get_staged_files, read_text_under
 from validator_common import (
     BaseValidator,
     Issue,
@@ -80,8 +80,9 @@ _VERSION_NAME_RE = re.compile(r'\bversion_name\s*=\s*"([^"]*)"')
 _OOB_CREATOR_RE = re.compile(r'\bcreator\s*=\s*"?([A-Za-z_]\w*)"?')
 _OOB_OWNER_RE = re.compile(r'\bowner\s*=\s*"?([A-Za-z_]\w*)"?')
 _PRODUCER_RE = re.compile(r'\b(?:creator|producer)\s*=\s*"?([A-Za-z_]\w*)"?')
+_LOAD_OOB_RE = re.compile(r'\bload_oob\s*=\s*(?:"([^"]+)"|([A-Za-z_]\w*))')
 
-# create_unit also appears in these runtime effect sources.
+# create_unit and runtime load_oob appear in these sources.
 _CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
     "common/on_actions/*.txt",
     "common/operations/*.txt",
@@ -95,6 +96,18 @@ def _read_text(filepath: str, under: str) -> str:
         return read_text_under(filepath, under)
     except (OSError, ValueError):
         return ""
+
+
+def find_load_oob_references(content: str) -> List[Tuple[str, int]]:
+    """Return literal load_oob targets and their line numbers."""
+    refs = []
+    content = strip_comments(content)
+    for match in _LOAD_OOB_RE.finditer(content):
+        target = match.group(1) or match.group(2)
+        if "$" in target or "[" in target:
+            continue
+        refs.append((target, content.count("\n", 0, match.start()) + 1))
+    return refs
 
 
 def _parse_canonical_units_file(content: str) -> Set[str]:
@@ -1437,6 +1450,52 @@ class Validator(BaseValidator):
             "Equipment references with no matching variant:",
         )
 
+    def validate_load_oob_references(self):
+        """Check that runtime OOB loads name an existing history file."""
+        self._log_section("Checking runtime OOB references...")
+
+        target_paths = self._collect_files(["history/units/*.txt"], ignore_staged=True)
+        targets = {
+            os.path.splitext(os.path.basename(filepath))[0] for filepath in target_paths
+        }
+        changed_targets = self.staged_only and any(
+            os.path.relpath(filepath, self.mod_path)
+            .replace(os.sep, "/")
+            .startswith("history/units/")
+            for filepath in get_staged_files(
+                self.mod_path, extensions=self.STAGED_EXTENSIONS, include_missing=True
+            )
+            or []
+        )
+        source_paths = self._collect_files(
+            _CREATE_UNIT_SOURCE_PATTERNS, ignore_staged=changed_targets
+        )
+
+        results = []
+        for filepath in source_paths:
+            content = _read_text(filepath, self.mod_path)
+            rel = os.path.relpath(filepath, self.mod_path)
+            for target, line in find_load_oob_references(content):
+                if target not in targets:
+                    results.append(
+                        Issue(
+                            severity=Severity.ERROR,
+                            category="unknown-load-oob",
+                            message=(
+                                f'load_oob references "{target}", but no '
+                                f"history/units/{target}.txt file exists"
+                            ),
+                            file=rel,
+                            line=line,
+                        )
+                    )
+
+        self._report(
+            results,
+            "✓ All runtime OOB references resolve",
+            "Runtime OOB references with no matching history file:",
+        )
+
     def validate_created_units(self):
         """Check every create_unit effect source for proper form."""
         self._log_section("Checking create_unit effects across the mod...")
@@ -1470,6 +1529,7 @@ class Validator(BaseValidator):
         self.validate_air_wing_names_template_loc()
         self.validate_created_variant_modules()
         self.validate_oob_variant_references()
+        self.validate_load_oob_references()
         self.validate_created_units()
 
 
