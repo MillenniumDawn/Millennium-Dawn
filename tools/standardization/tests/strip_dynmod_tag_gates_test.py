@@ -10,8 +10,13 @@ from strip_dynmod_tag_gates import strip_enable_gates
 
 
 def _strip(text):
-    out, removed, trimmed = strip_enable_gates(text.split("\n"))
+    out, removed, trimmed, _skipped = strip_enable_gates(text.split("\n"))
     return "\n".join(out), removed, trimmed
+
+
+def _strip_full(text):
+    out, removed, trimmed, skipped = strip_enable_gates(text.split("\n"))
+    return "\n".join(out), removed, trimmed, skipped
 
 
 def test_removes_always_yes():
@@ -166,6 +171,90 @@ def test_ignores_commented_template_line():
     out, removed, trimmed = _strip(text)
     assert (removed, trimmed) == (0, 0)
     assert "#\t\tenable = { always = yes } #optional" in out
+
+
+def test_packed_body_keeps_a_nested_trigger_intact():
+    # Splitting this on statements drops the nested block's braces; splicing
+    # the gate out of the raw text copies them through.
+    text = "\n".join(
+        [
+            "FOO_modifier = {",
+            "\tenable = { original_tag = FOO OR = { has_idea = a has_idea = b } }",
+            "\tstability_factor = FOO_stab",
+            "}",
+        ]
+    )
+    out, removed, trimmed, skipped = _strip_full(text)
+    assert (removed, trimmed, skipped) == (0, 1, 0)
+    assert out.count("{") == out.count("}")
+    assert "OR = { has_idea = a has_idea = b }" in out
+    assert "original_tag" not in out
+
+
+def test_tag_inside_a_packed_nested_branch_is_not_spliced():
+    text = "\n".join(
+        [
+            "FOO_modifier = {",
+            "\tenable = { OR = { original_tag = SOV original_tag = TAJ } }",
+            "\tstability_factor = FOO_stab",
+            "}",
+        ]
+    )
+    out, removed, trimmed, skipped = _strip_full(text)
+    assert (removed, trimmed, skipped) == (0, 0, 0)
+    assert out == text
+
+
+def test_closer_shared_with_the_modifier_own_brace_keeps_that_brace():
+    text = "\n".join(
+        [
+            "FOO_modifier = {",
+            "\tstability_factor = FOO_stab",
+            "\tenable = { original_tag = FOO } }",
+            "BAR_modifier = {",
+            "\tenable = { original_tag = BAR }",
+            "\tstability_factor = BAR_stab",
+            "}",
+        ]
+    )
+    out, removed, trimmed = _strip(text)
+    # The second block proves the definition stack did not drift a level
+    # deeper when the shared closer was emitted.
+    assert (removed, trimmed) == (2, 0)
+    assert out.count("{") == out.count("}")
+    assert "BAR_modifier" in out
+    assert "original_tag" not in out
+
+
+def test_gate_packed_onto_a_multiline_opener_is_stripped():
+    text = "\n".join(
+        [
+            "FOO_modifier = {",
+            "\tenable = { original_tag = FOO",
+            "\t\thas_idea = the_military",
+            "\t}",
+            "\tstability_factor = FOO_stab",
+            "}",
+        ]
+    )
+    out, removed, trimmed, skipped = _strip_full(text)
+    assert (removed, trimmed, skipped) == (0, 1, 0)
+    assert "original_tag" not in out
+    assert "has_idea = the_military" in out
+    assert out.count("{") == out.count("}")
+
+
+def test_unbalanced_block_is_left_alone():
+    text = "\n".join(
+        [
+            "FOO_modifier = {",
+            "\tenable = {",
+            "\t\toriginal_tag = FOO",
+        ]
+    )
+    out, removed, trimmed, skipped = _strip_full(text)
+    assert (removed, trimmed, skipped) == (0, 0, 1)
+    assert out == text
 
 
 def test_is_idempotent():

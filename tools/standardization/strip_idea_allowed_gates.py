@@ -19,48 +19,57 @@ from typing import List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from common_utils import apply_brace_stack, code_of_line  # noqa: E402
+from common_utils import apply_brace_stack, code_of_line, find_block_span  # noqa: E402
 from shared_utils import (  # noqa: E402
     atomic_write_text,
+    create_backup,
     get_slotless_idea_categories,
     log_message,
 )
 
+_ALLOWED_OPEN_RE = re.compile(r"\s*allowed\s*=\s*\{")
+
 
 def strip_allowed_blocks(
     lines: List[str], slotless: frozenset
-) -> Tuple[List[str], int]:
+) -> Tuple[List[str], int, int]:
     """Drop every `allowed` block sitting directly inside a slotless-category idea.
 
-    Returns the rewritten lines and the number of blocks removed. Only the
+    Returns the rewritten lines, the number of blocks removed, and the number
+    skipped because their braces never balanced. Only the
     ideas > category > idea nesting is touched, so an `allowed` somewhere
     unexpected is left alone rather than guessed at.
     """
     out: List[str] = []
     stack: List[str] = []
     removed = 0
+    skipped = 0
     i = 0
 
     while i < len(lines):
         code = code_of_line(lines[i])
-        opens_allowed = (
-            len(stack) == 3
-            and stack[0] == "ideas"
-            and stack[1] in slotless
-            and re.match(r"\s*allowed\s*=\s*\{", code)
+        opener = (
+            _ALLOWED_OPEN_RE.match(code)
+            if len(stack) == 3 and stack[0] == "ideas" and stack[1] in slotless
+            else None
         )
 
-        if opens_allowed:
-            depth = 0
-            j = i
-            while True:
-                depth += code.count("{") - code.count("}")
-                if depth <= 0 or j + 1 >= len(lines):
-                    break
-                j += 1
-                code = code_of_line(lines[j])
+        span = find_block_span(lines, i, code.index("{")) if opener else None
+        if opener and span is None:
+            skipped += 1
+        elif span:
+            end, close_col = span
+            # Slice around the block instead of dropping whole lines: the
+            # closer can share a line with the idea's own `}`.
+            merged = lines[i][: opener.start()] + lines[end][close_col + 1 :]
             removed += 1
-            i = j + 1
+            i = end + 1
+            if merged.strip():
+                out.append(merged)
+                # The idea's own `}` can ride along on the closer line, so the
+                # stack has to see what was emitted, not what was read.
+                apply_brace_stack(code_of_line(merged), stack)
+                continue
             # Collapse the blank pair a removed block can leave behind.
             if out and not out[-1].strip() and i < len(lines) and not lines[i].strip():
                 i += 1
@@ -70,18 +79,22 @@ def strip_allowed_blocks(
         apply_brace_stack(code, stack)
         i += 1
 
-    return out, removed
+    return out, removed, skipped
 
 
-def process_file(path: str, slotless: frozenset, dry_run: bool) -> int:
+def process_file(
+    path: str, slotless: frozenset, dry_run: bool, backup: bool
+) -> Tuple[int, int]:
     with open(path, "r", encoding="utf-8-sig", newline="") as handle:
         text = handle.read()
     lines = text.split("\n")
 
-    stripped, removed = strip_allowed_blocks(lines, slotless)
+    stripped, removed, skipped = strip_allowed_blocks(lines, slotless)
     if removed and not dry_run:
+        if backup:
+            create_backup(path)
         atomic_write_text(path, "\n".join(stripped))
-    return removed
+    return removed, skipped
 
 
 def main() -> int:
@@ -89,6 +102,9 @@ def main() -> int:
     parser.add_argument("files", nargs="*", help="idea files (default: common/ideas/)")
     parser.add_argument("--root", default=None, help="mod root (default: auto)")
     parser.add_argument("--dry-run", action="store_true", help="report, do not write")
+    parser.add_argument(
+        "-b", "--backup", action="store_true", help="back each file up before writing"
+    )
     args = parser.parse_args()
 
     root = args.root or os.path.normpath(
@@ -107,16 +123,21 @@ def main() -> int:
 
     total = 0
     touched = 0
+    unbalanced = 0
     for path in files:
-        removed = process_file(path, slotless, args.dry_run)
+        removed, skipped = process_file(path, slotless, args.dry_run, args.backup)
+        rel = os.path.relpath(path, root)
+        if skipped:
+            unbalanced += skipped
+            log_message("WARNING", f"{rel}: {skipped} allowed blocks never close")
         if removed:
             touched += 1
             total += removed
-            log_message("INFO", f"{os.path.relpath(path, root)}: {removed} removed")
+            log_message("INFO", f"{rel}: {removed} removed")
 
     verb = "would remove" if args.dry_run else "removed"
     log_message("SUCCESS", f"{verb} {total} allowed blocks across {touched} files")
-    return 0
+    return 1 if unbalanced else 0
 
 
 if __name__ == "__main__":

@@ -66,6 +66,23 @@ def test_no_enable_block_is_not_a_finding():
     assert _redundant_enable_gates("\n\tstability_factor = FOO_stab\n") == []
 
 
+def test_enable_nested_in_remove_trigger_not_flagged():
+    # The stripper only touches a direct child of the modifier; the validator
+    # has to agree or it reports a finding no tool will ever fix.
+    body = "\n\tremove_trigger = {\n\t\tenable = { always = yes }\n\t}\n"
+    assert _messages(body) == []
+
+
+def test_top_level_enable_found_after_an_earlier_nested_block():
+    body = (
+        "\n\tremove_trigger = {\n"
+        "\t\tNOT = { has_idea = x }\n"
+        "\t}\n"
+        "\tenable = { original_tag = FOO }\n"
+    )
+    assert len(_messages(body)) == 1
+
+
 def test_line_offset_points_at_the_gate():
     body = "\n\ticon = GFX_idea_x\n\tenable = {\n\t\toriginal_tag = FOO\n\t}\n"
     _message, line = _redundant_enable_gates(body)[0]

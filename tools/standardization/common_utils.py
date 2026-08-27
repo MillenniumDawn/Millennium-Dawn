@@ -11,7 +11,7 @@ import re
 import sys
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from _common import format_elapsed
@@ -34,6 +34,32 @@ _BRACE_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{|\{|\}")
 def code_of_line(line: str) -> str:
     """Strip a line down to what the parser sees: no comment, no quoted text."""
     return blank_quoted_strings(strip_inline_comment(line))
+
+
+def find_block_span(
+    lines: List[str], start: int, open_col: int
+) -> Optional[Tuple[int, int]]:
+    """Locate the `}` closing the `{` at (start, open_col).
+
+    Returns `(end_line, close_col)`, or None when the braces never balance.
+    Column-accurate on purpose: a per-line depth counter that stops at "depth
+    reached zero" cannot tell `}` from `} }`, so it swallows the enclosing
+    block's closer along with the one it wanted. Callers slice around the
+    returned position instead. None means "leave this alone" — an unbalanced
+    source file must not be rewritten from the opener to EOF.
+    """
+    depth = 0
+    for index in range(start, len(lines)):
+        code = code_of_line(lines[index])
+        begin = open_col if index == start else 0
+        for col in range(begin, len(code)):
+            if code[col] == "{":
+                depth += 1
+            elif code[col] == "}":
+                depth -= 1
+                if depth == 0:
+                    return index, col
+    return None
 
 
 def apply_brace_stack(code: str, stack: List[str]) -> None:

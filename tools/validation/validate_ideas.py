@@ -99,9 +99,12 @@ from shared_utils import (  # noqa: E402
 # An idea with no slot of any kind can only arrive through add_idea, which
 # never consults `allowed`, so the whole block goes. A hidden category that
 # still has a slot keeps its `allowed`; only the dead `always = no` form is
-# flagged there.
+# flagged there. The two sets overlap and each falls back to
+# {country, hidden_ideas} when idea_tags is unreadable, so the slotless case is
+# excluded at the check rather than by subtracting here — that fallback would
+# otherwise leave an empty set and silently retire the always-no rule.
 _SLOTLESS_CATEGORIES = _get_slotless_idea_categories()
-_ALWAYS_NO_CATEGORIES = _get_non_selectable_idea_categories() - _SLOTLESS_CATEGORIES
+_ALWAYS_NO_CATEGORIES = _get_non_selectable_idea_categories()
 
 # Vanilla idea prefixes that we skip for undefined-reference checks
 # (game-engine built-ins, vanilla ideas, etc.)
@@ -390,7 +393,10 @@ def _parse_ideas_from_text(
                 cat, _, _ = defined[current_idea]
                 defined[current_idea] = (cat, name_override, picture)
 
-                if category_name in _ALWAYS_NO_CATEGORIES:
+                if (
+                    category_name in _ALWAYS_NO_CATEGORIES
+                    and category_name not in _SLOTLESS_CATEGORIES
+                ):
                     if _ALLOWED_ALWAYS_NO.search(idea_text):
                         issues.append(
                             IdeaIssue(

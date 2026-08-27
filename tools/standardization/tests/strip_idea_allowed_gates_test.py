@@ -11,8 +11,13 @@ SLOTLESS = frozenset({"country", "hidden_ideas"})
 
 
 def _strip(text):
-    out, removed = strip_allowed_blocks(text.split("\n"), SLOTLESS)
+    out, removed, _skipped = strip_allowed_blocks(text.split("\n"), SLOTLESS)
     return "\n".join(out), removed
+
+
+def _strip_full(text):
+    out, removed, skipped = strip_allowed_blocks(text.split("\n"), SLOTLESS)
+    return "\n".join(out), removed, skipped
 
 
 def test_removes_one_line_allowed_in_country():
@@ -176,6 +181,50 @@ def test_removes_every_allowed_in_a_multi_idea_file():
     assert "original_tag = BAZ" in out
     assert "original_tag = FOO" not in out
     assert "original_tag = BAR" not in out
+
+
+def test_closer_shared_with_the_idea_own_brace_keeps_that_brace():
+    # `allowed = { ... } }` puts the idea's own closer on the same line. A
+    # per-line depth counter stops at "reached zero" and eats both, renesting
+    # every block after it.
+    text = "\n".join(
+        [
+            "ideas = {",
+            "\tcountry = {",
+            "\t\tFOO_idea = {",
+            "\t\t\tallowed = { original_tag = FOO } }",
+            "\t\tBAR_idea = {",
+            "\t\t\tallowed = { original_tag = BAR }",
+            "\t\t\tpicture = gold",
+            "\t\t}",
+            "\t}",
+            "}",
+        ]
+    )
+    out, removed = _strip(text)
+    # The second block proves the category stack did not drift a level deeper
+    # when the shared closer was emitted.
+    assert removed == 2
+    assert out.count("{") == out.count("}")
+    assert "BAR_idea" in out
+    assert "original_tag" not in out
+
+
+def test_unbalanced_block_is_left_alone():
+    # A source file whose braces never close must not be rewritten from the
+    # opener to EOF.
+    text = "\n".join(
+        [
+            "ideas = {",
+            "\tcountry = {",
+            "\t\tFOO_idea = {",
+            "\t\t\tallowed = {",
+            "\t\t\t\toriginal_tag = FOO",
+        ]
+    )
+    out, removed, skipped = _strip_full(text)
+    assert (removed, skipped) == (0, 1)
+    assert out == text
 
 
 def test_is_idempotent():

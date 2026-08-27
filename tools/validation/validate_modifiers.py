@@ -390,9 +390,30 @@ def _load_documented_modifiers(
 
 _IDEA_SLOT_RE = re.compile(r"^\s*(?:character_)?slot\s*=\s*([A-Za-z][A-Za-z0-9_]*)")
 
-_ENABLE_BLOCK_RE = re.compile(r"\benable\s*=\s*\{")
+_BRACE_OR_ENABLE_RE = re.compile(r"\benable\s*=\s*\{|\{|\}")
 _ALWAYS_YES_RE = re.compile(r"^\s*always\s*=\s*yes\s*$")
 _TAG_GATE_RE = re.compile(r"^\s*(?:original_tag|tag)\s*=\s*([A-Z]{3})\s*$")
+
+
+def _find_top_level_enable(body: str):
+    """Match the modifier's own `enable` block, ignoring any nested one.
+
+    `enable` inside `remove_trigger` is a different gate on a different
+    schedule; flagging its contents would contradict the stripper, which only
+    touches a direct child of the modifier.
+    """
+    depth = 0
+    for match in _BRACE_OR_ENABLE_RE.finditer(body):
+        token = match.group(0)
+        if token == "}":
+            depth -= 1
+        elif token == "{":
+            depth += 1
+        else:
+            if depth == 0:
+                return match
+            depth += 1
+    return None
 
 
 def _redundant_enable_gates(body: str) -> List[Tuple[str, int]]:
@@ -402,7 +423,7 @@ def _redundant_enable_gates(body: str) -> List[Tuple[str, int]]:
     trigger that can never be false costs something every time. Only top-level
     triggers count: one inside OR / NOT is an alternative or an exclusion.
     """
-    match = _ENABLE_BLOCK_RE.search(body)
+    match = _find_top_level_enable(body)
     if not match:
         return []
     enable_body, _ = extract_block_from_text(body, match.start())

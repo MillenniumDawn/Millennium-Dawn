@@ -70,8 +70,7 @@ def test_allowed_civil_war_alone_not_flagged():
 
 
 def test_always_no_in_slotless_reports_only_the_broader_rule():
-    # The two rules partition the categories, so a slotless idea never gets
-    # both findings for the same block.
+    # A slotless idea never gets both findings for the same block.
     text = _wrap(
         "\t\tmy_idea = {\n"
         "\t\t\tallowed = { always = no }\n"
@@ -81,3 +80,19 @@ def test_always_no_in_slotless_reports_only_the_broader_rule():
     types = _issue_types(text)
     assert SLOTLESS in types
     assert "allowed-always-no" not in types
+
+
+def test_always_no_still_fires_in_a_hidden_but_slotted_category():
+    # dynamic_modifier_slots is hidden yet has a slot, so it keeps its
+    # `allowed` and only the dead always = no form is redundant. Guards the
+    # always-no rule against being retired by the slotless one.
+    text = _wrap(
+        "\t\tmy_idea = {\n"
+        "\t\t\tallowed = { always = no }\n"
+        "\t\t\tpicture = GFX_idea_x\n"
+        "\t\t}",
+        category="dynamic_modifier_slots",
+    )
+    types = _issue_types(text)
+    assert "allowed-always-no" in types
+    assert SLOTLESS not in types
