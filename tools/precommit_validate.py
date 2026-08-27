@@ -151,6 +151,7 @@ _REGISTRY = [
         "validate_ideas",
         [
             ("common/ideas/", TXT),
+            ("common/idea_tags/", TXT),
             ("common/national_focus/", TXT),
             ("common/decisions/", TXT),
             ("common/on_actions/", TXT),

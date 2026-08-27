@@ -17,6 +17,8 @@ from validate_ideas import (
     _parse_ideas_from_text,
 )
 
+NO_CATEGORIES: frozenset[str] = frozenset()
+
 
 def _refs(text):
     out = set(_IDEA_REF_GENEROUS.findall(text))
@@ -241,13 +243,16 @@ def test_icon_dynamic_picture_skipped():
 
 
 def test_parser_preserves_dynamic_picture():
-    defined, _ = _parse_ideas_from_text("""ideas = {
+    defined, _ = _parse_ideas_from_text(
+        """ideas = {
  country = {
   DYNAMIC = {
    picture = [GetIcon]
   }
  }
-}""")
+}""",
+        NO_CATEGORIES,
+    )
     cat, name_override, picture = defined["DYNAMIC"]
 
     assert picture == "[GetIcon]"
@@ -273,7 +278,7 @@ def test_parser_captures_picture():
   }
  }
 }"""
-    defined, _ = _parse_ideas_from_text(text)
+    defined, _ = _parse_ideas_from_text(text, NO_CATEGORIES)
     assert defined["WITH_pic"] == ("country", None, "some_pic")
     assert defined["NO_pic"] == ("country", None, None)
     assert defined["RENAMED"] == ("country", "SHARED_key", "pic_two")
@@ -288,7 +293,7 @@ def test_picture_with_hyphen():
   }
  }
 }"""
-    defined, _ = _parse_ideas_from_text(text)
+    defined, _ = _parse_ideas_from_text(text, NO_CATEGORIES)
     assert defined["CO"][2] == "Colt-Defense"
 
 

@@ -640,6 +640,18 @@ def test_ci_run_steps_default_to_strict():
         ), f"{job}'s Run step must default to --strict when `strict:` is absent."
 
 
+def test_ci_redundant_modifier_gate_is_strict():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    entry = next(
+        entry
+        for entry in workflow["jobs"]["validate-targeted"]["strategy"]["matrix"][
+            "validator"
+        ]
+        if entry["script"] == "validate_modifiers.py"
+    )
+    assert entry.get("strict") is True
+
+
 def test_ci_idea_icon_check_is_enabled():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     entry = next(
