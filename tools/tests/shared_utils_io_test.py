@@ -174,9 +174,11 @@ def test_staged_files_includes_deleted_git_paths_when_requested(tmp_path, monkey
     units.mkdir(parents=True)
     deleted = units / "deleted.txt"
     renamed_from = units / "renamed-from.txt"
+    moved_from = units / "moved-out.txt"
     for path, content in (
         (deleted, "units = { deleted = yes }\n"),
         (renamed_from, "units = { renamed = yes }\n"),
+        (moved_from, "units = { moved = yes }\n"),
     ):
         with path.open("w", encoding="utf-8", newline="") as output_file:
             output_file.write(content)
@@ -193,11 +195,13 @@ def test_staged_files_includes_deleted_git_paths_when_requested(tmp_path, monkey
     git("init")
     git("config", "user.email", "test@example.com")
     git("config", "user.name", "Test User")
+    git("config", "diff.renames", "true")
     git("add", "history/units")
     git("commit", "-m", "initial")
     deleted.unlink()
     renamed_to = units / "renamed-to.txt"
     renamed_from.rename(renamed_to)
+    moved_from.rename(tmp_path / "moved-out.txt")
     git("add", "-A")
 
     staged = U.get_staged_files(str(tmp_path), include_missing=True)
@@ -205,3 +209,4 @@ def test_staged_files_includes_deleted_git_paths_when_requested(tmp_path, monkey
     assert staged is not None
     assert str(deleted) in staged
     assert str(renamed_to) in staged
+    assert str(moved_from) in staged

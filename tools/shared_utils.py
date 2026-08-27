@@ -1237,26 +1237,45 @@ def get_staged_files(
         ]
         return paths if include_missing else [p for p in paths if os.path.isfile(p)]
 
-    env_files = _read_staged_from_env()
-    if env_files is not None:
-        return _filter(env_files) or None
-
-    try:
-
-        def _git_diff(*args):
-            diff_filter = "ACMRD" if include_missing else "ACM"
-            result = subprocess.run(
-                ["git", "diff"]
-                + list(args)
-                + ["--name-only", f"--diff-filter={diff_filter}"],
-                cwd=mod_path,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=15,
-            )
+    def _git_diff(*args):
+        diff_filter = "ACMRD" if include_missing else "ACM"
+        output_format = "--name-status" if include_missing else "--name-only"
+        command = ["git", "diff"] + list(args) + [output_format]
+        if include_missing:
+            command.append("--find-renames")
+        command.append(f"--diff-filter={diff_filter}")
+        result = subprocess.run(
+            command,
+            cwd=mod_path,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=15,
+        )
+        if not include_missing:
             return result.stdout.strip().split("\n")
 
+        names = []
+        for line in result.stdout.splitlines():
+            status, *paths = line.split("\t")
+            if status.startswith(("R", "C")):
+                names.extend(paths)
+            elif paths:
+                names.append(paths[0])
+        return names
+
+    env_files = _read_staged_from_env()
+    if env_files is not None:
+        files = _filter(env_files)
+        if not include_missing:
+            return files or None
+        try:
+            files.extend(_filter(_git_diff("--cached")))
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            pass
+        return list(dict.fromkeys(files)) or None
+
+    try:
         # Pre-commit hook context: files added to the index
         files = _filter(_git_diff("--cached"))
         if files:
