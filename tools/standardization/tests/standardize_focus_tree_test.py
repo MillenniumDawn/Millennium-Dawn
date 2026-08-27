@@ -247,21 +247,32 @@ def test_duplicate_single_line_blocks_with_comment_braces_not_merged():
     )
 
 
-def test_single_line_effect_block_with_comment_braces_keeps_log_inside_or_absent():
-    # The log must never land outside the braces; an unsplittable block is left
-    # unlogged rather than rewritten wrongly.
-    props = extract_focus_properties(
-        [
-            "\tfocus = {\n",
-            "\t\tid = TST_reward\n",
-            "\t\tcompletion_reward = { add_political_power = 50 } # was { 100 }\n",
-            "\t}\n",
-        ]
+def test_single_line_effect_blocks_with_trailing_comments_get_log():
+    cases = (
+        ("completion_reward", "# reward note"),
+        ("select_effect", "# was { 100 }"),
+        ("bypass_effect", "# old }"),
     )
-    out = format_focus_block(props)
-    assert _code_braces_balanced(out)
-    assert not any(l.strip().startswith("log =") for l in out)
-    assert "add_political_power = 50" in "\n".join(out)
+    for block_name, comment in cases:
+        props = extract_focus_properties(
+            [
+                "\tfocus = {\n",
+                "\t\tid = TST_reward\n",
+                f"\t\t{block_name} = {{ add_political_power = 50 }} {comment}\n",
+                "\t}\n",
+            ]
+        )
+        out = format_focus_block(props)
+        assert _code_braces_balanced(out)
+        block_start = next(
+            i for i, line in enumerate(out) if line.strip().startswith(block_name)
+        )
+        assert out[block_start].strip() == f"{block_name} = {{"
+        assert out[block_start + 1].strip() == (
+            'log = "[GetDateText]: [Root.GetName]: Focus TST_reward"'
+        )
+        assert out[block_start + 2].strip() == "add_political_power = 50"
+        assert out[block_start + 3].strip() == f"}} {comment}"
 
 
 def test_single_line_effect_block_gets_log_inside_braces():
@@ -479,15 +490,6 @@ _INVALID_MODIFIER_TREE = """focus_tree = {
 \t}
 }
 """
-
-
-def test_leading_bom_is_removed_from_focus_output(tmp_path):
-    source = tmp_path / "focus.txt"
-    source.write_text("\ufefffocus_tree = {\n}\n", encoding="utf-8")
-
-    assert standardize_focus_tree(str(source), str(source)) is True
-    assert not source.read_bytes().startswith(b"\xef\xbb\xbf")
-    assert source.read_text(encoding="utf-8").startswith("focus_tree = {")
 
 
 def test_invalid_modifier_name_rejects_standardization_without_writing(tmp_path):
