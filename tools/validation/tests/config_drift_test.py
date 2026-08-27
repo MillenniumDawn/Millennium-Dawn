@@ -23,6 +23,7 @@ stale entry gets removed.
 """
 
 import re
+from fnmatch import fnmatch
 from pathlib import Path
 
 import pytest
@@ -31,6 +32,13 @@ from precommit_validate import _REGISTRY
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import _CREATE_UNIT_SOURCE_PATTERNS
+from validate_scripted_params import (
+    _CALLER_PATTERNS,
+    HARDCODED_CONTRACTS,
+    _parse_effect_contracts_from_file,
+)
+from validate_staged import VALIDATORS as STAGED_VALIDATORS
+from validator_common import strip_comments
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 VALIDATION_DIR = Path(__file__).resolve().parents[1]
@@ -39,6 +47,11 @@ CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "coding-pipeline.yml"
 TOOLS_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "tools-validation.yml"
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
 NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
+
+# Every tree the engine runs script from. Deliberately not derived from a
+# validator's own pattern list: the caller scan below has to be able to find a
+# call site that the list under test does not cover.
+SCRIPT_ROOTS = ("common", "events", "history")
 
 
 def _checks_matrix_steps(check_id: str) -> list:
@@ -580,17 +593,12 @@ def test_tools_tests_checkout_consumed_configuration():
         # validate_modifiers_test parses the shipped doc to catch a Paradox
         # format change; without it here the test reads an absent file.
         "resources/documentation/modifiers_documentation.md",
-        # focus_pp_malus_test walks the real tree to prove every exemption still
-        # applies a malus; absent, it reads every one of them as stale.
-        "common/national_focus",
-        # check_common_mistakes_test asserts its script_enums, equipment,
-        # decision and modifier loaders against the real files; absent, each
-        # returns None and the module-level assertions raise at collection time.
-        "common/script_enums.txt",
-        "common/units/equipment",
-        "common/decisions",
-        "common/opinion_modifiers",
-        "common/modifiers",
+        # The scripted-effect caller scan walks these whole; a missing tree
+        # reads as "no callers here" and passes on nothing. They also carry
+        # what focus_pp_malus_test and check_common_mistakes_test read
+        # (national_focus, script_enums, equipment, decisions, modifiers),
+        # which raise at collection time when absent.
+        *SCRIPT_ROOTS,
         ".github/workflows/coding-pipeline.yml",
         ".github/workflows/validator-cache.yml",
         ".github/workflows/nightly-pr-validation.yml",
@@ -666,6 +674,88 @@ def test_ci_idea_icon_check_is_enabled():
     paths = set(workflow["env"]["WORKSPACE_PATHS"].split())
     assert {"interface", "tools"} <= paths
     assert (VALIDATION_DIR / "vanilla_sprites.txt").is_file()
+
+
+def _contracted_effect_names():
+    """The effect names validate_scripted_params builds contracts for."""
+    names = set(HARDCODED_CONTRACTS)
+    effects_dir = REPO_ROOT / "common" / "scripted_effects"
+    for path in sorted(effects_dir.glob("*.txt")):
+        for effect, contract in _parse_effect_contracts_from_file(str(path)).items():
+            if contract["required"]:
+                names.add(effect)
+    return names
+
+
+def _actual_caller_dirs():
+    """Directories that really call a contracted effect, read off the corpus.
+
+    Deriving this from the tree rather than from _CALLER_PATTERNS is the whole
+    point: a caller directory the pattern list never named is exactly the drift
+    being guarded, and a test that re-read the list could not see it.
+    """
+    names = _contracted_effect_names()
+    encoded = [name.encode() for name in names]
+    call_re = re.compile(r"\b([a-z][a-z0-9_]*)\s*=\s*yes\b")
+    dirs = set()
+    caller_files = 0
+    for root in SCRIPT_ROOTS:
+        base = REPO_ROOT / root
+        assert base.is_dir(), (
+            f"{root}/ is absent from this checkout, so the scan below would "
+            "find no callers there and pass on nothing"
+        )
+        for path in base.rglob("*.txt"):
+            raw = path.read_bytes()
+            if not any(name in raw for name in encoded):
+                continue
+            text = strip_comments(raw.decode("utf-8-sig", errors="ignore"))
+            if {m.group(1) for m in call_re.finditer(text)} & names:
+                caller_files += 1
+                dirs.add(path.parent.relative_to(REPO_ROOT).as_posix() + "/")
+    assert caller_files >= 100, (
+        f"only {caller_files} files call a contracted effect across "
+        f"{list(SCRIPT_ROOTS)} — the corpus has hundreds, so this checkout is "
+        "too sparse for the scan to prove anything"
+    )
+    return dirs
+
+
+def test_scripted_param_patterns_scan_every_actual_caller():
+    prefixes = [pattern.split("*", 1)[0] for pattern in _CALLER_PATTERNS]
+    missed = sorted(
+        directory
+        for directory in _actual_caller_dirs()
+        if not any(directory.startswith(prefix) for prefix in prefixes)
+    )
+    assert not missed, (
+        "these directories call a contracted scripted effect but no "
+        f"_CALLER_PATTERNS entry scans them, so edits there are never "
+        f"validated: {missed}"
+    )
+
+
+def test_scripted_param_routes_cover_every_caller_source():
+    caller_dirs = {pattern.split("*", 1)[0] for pattern in _CALLER_PATTERNS}
+    staged = next(
+        spec for spec in STAGED_VALIDATORS if spec["name"] == "scripted params"
+    )
+    assert caller_dirs <= set(staged["prefixes"])
+
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    entry = next(
+        entry
+        for job in ("validate-core", "validate-targeted")
+        for entry in workflow["jobs"][job]["strategy"]["matrix"]["validator"]
+        if entry["script"] == "validate_scripted_params.py"
+    )
+    _, filters = _filter_definitions()
+    expression = entry["should_run"]
+    for directory in caller_dirs:
+        output = directory.rstrip("/").rsplit("/", 1)[-1].replace("_", "-")
+        sample = directory + "_scripted_param_probe.txt"
+        assert any(fnmatch(sample, pattern) for pattern in filters[output])
+        assert f"needs.detect-changes.outputs.{output} == 'true'" in expression
 
 
 def test_oob_routes_cover_every_create_unit_source():
