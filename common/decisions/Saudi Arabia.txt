@@ -706,7 +706,14 @@ SAU_Intelligence_category = {
 		icon = recruit_operative
 
 		visible = { has_country_flag = creation_of_GIP }
-		available = { has_intelligence_agency = yes }
+
+		available = {
+			has_intelligence_agency = yes
+			custom_trigger_tooltip = {
+				tooltip = SAU_gip_slots_cap_tt
+				check_variable = { SAU_gip_slots < 3 }
+			}
+		}
 
 		cost = 75
 		days_re_enable = 180
@@ -714,23 +721,16 @@ SAU_Intelligence_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SAU_intel_expand_gip"
-			set_temp_variable = { treasury_change = -60 }
-			modify_treasury_effect = yes
-			if = {
-				limit = { num_of_operatives < num_operative_slots }
-				custom_effect_tooltip = SAU_intel_recruit_operative_tt
-				hidden_effect = {
-					create_operative_leader = {
-						bypass_recruitment = yes
-						nationalities = { SAU }
-						portrait_tag_override = SAU
-					}
+			hidden_effect = {
+				if = {
+					limit = { NOT = { has_dynamic_modifier = { modifier = SAU_gip_network } } }
+					add_dynamic_modifier = { modifier = SAU_gip_network }
 				}
 			}
-			else = {
-				custom_effect_tooltip = SAU_intel_agency_full_tt
-				add_political_power = 25
-			}
+			set_temp_variable = { treasury_change = -60 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SAU_gip_network }
+			add_to_variable = { SAU_gip_slots = 1 tooltip = operative_slot_tt }
 			add_stability = 0.01
 		}
 
