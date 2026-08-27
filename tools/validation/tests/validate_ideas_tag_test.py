@@ -17,9 +17,7 @@ SLOTLESS_CATEGORIES = frozenset({"country", "hidden_ideas"})
 
 
 def _issue_types(text):
-    _defined, issues = _parse_ideas_from_text(
-        text, SLOTLESS_CATEGORIES, SLOTLESS_CATEGORIES
-    )
+    _defined, issues = _parse_ideas_from_text(text, SLOTLESS_CATEGORIES)
     return {i.issue_type for i in issues}
 
 

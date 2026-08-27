@@ -43,7 +43,7 @@ Two shapes are always wrong:
 - `enable = { always = yes }`. That is the default. Delete it.
 - `enable = { original_tag = TAG }`. `add_dynamic_modifier` already picked who gets the modifier, so gating on the same country restates the call site. Worse, `tag = TAG` (rather than `original_tag`) goes false for a civil-war split-off and silently switches the modifier off for them.
 
-Both are flagged by `validate_modifiers.py` (`redundant-enable-gate`).
+Both are flagged by `validate_modifiers.py` (`redundant-enable-gate`). That validator is CI-only, so a bad gate passes `git commit` and turns up as a red PR. Run it yourself before pushing: `python3 tools/validation/validate_modifiers.py --strict`.
 
 Write one only when the condition can go false **while the modifier stays attached**. The internal factions system is the worked example: `initialize_internal_faction_dynamic_modifiers` (`common/scripted_effects/00_internal_faction_effects.txt`) attaches a faction's modifier when the country has the faction idea, but nothing ever calls `remove_dynamic_modifier` for it, and focuses do remove those ideas. `enable = { has_idea = the_military }` is the only thing that turns a lost faction's modifier off. `country_exists = ISR` on the Israeli settlement modifiers is the same pattern: state-attached modifiers that have to stop applying if Israel is annexed.
 
@@ -53,7 +53,7 @@ The alternative is to pair every `add_dynamic_modifier` with a `remove_dynamic_m
 
 A dynamic modifier can be attached to a country **or** to a state, and that choice governs two things that fail silently when they are wrong:
 
-1. **Variables resolve in the attach scope.** A state-attached modifier looks up a bare variable name on the *state*; a country-attached one looks it up on the *country*. To read a country variable from a state-attached modifier, prefix it with the tag: `local_building_slots_factor = SPR.SPR_canaries_local^0` (`99_SPR_dynamic_modifiers.txt:19`). Otherwise write the variable inside the state block that owns the modifier (`common/decisions/05_GRE_decisions.txt:1173`).
+1. **Variables resolve in the attach scope.** A state-attached modifier looks up a bare variable name on the _state_; a country-attached one looks it up on the _country_. To read a country variable from a state-attached modifier, prefix it with the tag: `local_building_slots_factor = SPR.SPR_canaries_local^0` (`99_SPR_dynamic_modifiers.txt:19`). Otherwise write the variable inside the state block that owns the modifier (`common/decisions/05_GRE_decisions.txt:1173`).
 2. **Country-category modifier fields do nothing on a state-attached modifier.** Check the field's category in `common/modifier_definitions/` or `resources/documentation/modifiers_documentation.md`. When a region needs both kinds, split it into a state modifier and a country twin, as `GRE_archipelagos_defense_plan` / `GRE_archipelagos_defense_plan_country` do (`99_GRE_dynamic_modifiers.txt:109-129`).
 
 ### Step 2: Attach the Modifier to a Country

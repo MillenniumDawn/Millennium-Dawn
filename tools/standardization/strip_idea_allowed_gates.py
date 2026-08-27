@@ -19,7 +19,13 @@ from typing import List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-import common_utils  # noqa: E402
+from common_utils import (  # noqa: E402
+    apply_brace_stack,
+    code_of_line,
+    collapse_blank_gap,
+    create_gate_sweep_parser,
+    find_block_span,
+)
 from shared_utils import (  # noqa: E402
     atomic_write_text,
     create_backup,
@@ -27,7 +33,7 @@ from shared_utils import (  # noqa: E402
     log_message,
 )
 
-_ALLOWED_OPEN_RE = re.compile(r"\s*allowed\s*=\s*\{")
+_ALLOWED_OPEN_RE = re.compile(r"^(\s*)allowed\s*=\s*\{")
 
 
 def strip_allowed_blocks(
@@ -47,38 +53,34 @@ def strip_allowed_blocks(
     i = 0
 
     while i < len(lines):
-        code = common_utils.code_of_line(lines[i])
+        code = code_of_line(lines[i])
         opener = (
             _ALLOWED_OPEN_RE.match(code)
             if len(stack) == 3 and stack[0] == "ideas" and stack[1] in slotless
             else None
         )
 
-        span = (
-            common_utils.find_block_span(lines, i, code.index("{")) if opener else None
-        )
+        span = find_block_span(lines, i, code.index("{")) if opener else None
         if opener and span is None:
             skipped += 1
         elif opener and span:
             end, close_col = span
             # Slice around the block instead of dropping whole lines: the
             # closer can share a line with the idea's own `}`.
-            merged = lines[i][: opener.start()] + lines[end][close_col + 1 :]
+            merged = opener.group(1) + lines[end][close_col + 1 :]
             removed += 1
             i = end + 1
             if merged.strip():
                 out.append(merged)
                 # The idea's own `}` can ride along on the closer line, so the
                 # stack has to see what was emitted, not what was read.
-                common_utils.apply_brace_stack(common_utils.code_of_line(merged), stack)
+                apply_brace_stack(code_of_line(merged), stack)
                 continue
-            # Collapse the blank pair a removed block can leave behind.
-            if out and not out[-1].strip() and i < len(lines) and not lines[i].strip():
-                i += 1
+            i = collapse_blank_gap(out, lines, i)
             continue
 
         out.append(lines[i])
-        common_utils.apply_brace_stack(code, stack)
+        apply_brace_stack(code, stack)
         i += 1
 
     return out, removed, skipped
@@ -90,7 +92,7 @@ def process_file(
     try:
         with open(path, "r", encoding="utf-8-sig", newline="") as handle:
             text = handle.read()
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         log_message("ERROR", f"{path}: {exc}")
         return 0, 0, True
     lines = text.split("\n")
@@ -104,7 +106,7 @@ def process_file(
 
 
 def main() -> int:
-    args = common_utils.create_gate_sweep_parser(
+    args = create_gate_sweep_parser(
         __doc__ or "", "idea files (default: common/ideas/)"
     ).parse_args()
 

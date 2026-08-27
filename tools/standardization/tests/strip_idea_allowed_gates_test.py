@@ -5,7 +5,7 @@ load-bearing: an `allowed` in a slotted category filters the pool that slot
 draws from, so removing it there would change what the player can pick.
 """
 
-from strip_idea_allowed_gates import strip_allowed_blocks
+from strip_idea_allowed_gates import process_file, strip_allowed_blocks
 
 SLOTLESS = frozenset({"country", "hidden_ideas"})
 
@@ -208,6 +208,37 @@ def test_closer_shared_with_the_idea_own_brace_keeps_that_brace():
     assert out.count("{") == out.count("}")
     assert "BAR_idea" in out
     assert "original_tag" not in out
+    # The surviving `}` keeps the opener's indent, not column zero.
+    assert out.split("\n")[3] == "\t\t\t }"
+
+
+def test_removed_block_leaves_no_blank_against_the_idea_braces():
+    text = "\n".join(
+        [
+            "ideas = {",
+            "\tcountry = {",
+            "\t\tFOO_idea = {",
+            "\t\t\tallowed = { original_tag = FOO }",
+            "",
+            "\t\t\tpicture = gold",
+            "",
+            "\t\t}",
+            "\t}",
+            "}",
+        ]
+    )
+    out, removed = _strip(text)
+    assert removed == 1
+    assert out.split("\n") == [
+        "ideas = {",
+        "\tcountry = {",
+        "\t\tFOO_idea = {",
+        "\t\t\tpicture = gold",
+        "",
+        "\t\t}",
+        "\t}",
+        "}",
+    ]
 
 
 def test_unbalanced_block_is_left_alone():
@@ -244,3 +275,45 @@ def test_is_idempotent():
     twice, removed = _strip(once)
     assert removed == 0
     assert twice == once
+
+
+_SAMPLE = (
+    "ideas = {\n\tcountry = {\n\t\tFOO_idea = {\n"
+    "\t\t\tallowed = { original_tag = FOO }\n"
+    "\t\t\tpicture = gold\n\t\t}\n\t}\n}\n"
+)
+
+
+def _write(path, text, newline=""):
+    with open(path, "w", encoding="utf-8", newline=newline) as handle:
+        handle.write(text)
+
+
+def test_dry_run_reports_without_writing(tmp_path):
+    path = tmp_path / "test.txt"
+    _write(path, _SAMPLE)
+
+    assert process_file(str(path), SLOTLESS, dry_run=True, backup=False) == (
+        1,
+        0,
+        False,
+    )
+    with open(path, "r", encoding="utf-8", newline="") as handle:
+        assert handle.read() == _SAMPLE
+
+
+def test_crlf_survives_the_rewrite(tmp_path):
+    path = tmp_path / "test.txt"
+    _write(path, _SAMPLE.replace("\n", "\r\n"))
+
+    process_file(str(path), SLOTLESS, dry_run=False, backup=False)
+    with open(path, "rb") as handle:
+        data = handle.read()
+    assert b"\r\n" in data
+    assert b"\n" not in data.replace(b"\r\n", b"")
+    assert b"allowed" not in data
+
+
+def test_unreadable_file_is_reported_not_raised(tmp_path):
+    missing = str(tmp_path / "missing.txt")
+    assert process_file(missing, SLOTLESS, False, False) == (0, 0, True)

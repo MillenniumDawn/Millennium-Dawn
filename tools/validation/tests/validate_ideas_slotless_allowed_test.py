@@ -15,13 +15,10 @@ from validate_ideas import (
 
 SLOTLESS = "allowed-in-slotless-category"
 SLOTLESS_CATEGORIES = frozenset({"country", "hidden_ideas"})
-ALWAYS_NO_CATEGORIES = frozenset({"country", "hidden_ideas", "dynamic_modifier_slots"})
 
 
 def _issue_types(text):
-    _defined, issues = _parse_ideas_from_text(
-        text, SLOTLESS_CATEGORIES, ALWAYS_NO_CATEGORIES
-    )
+    _defined, issues = _parse_ideas_from_text(text, SLOTLESS_CATEGORIES)
     return {i.issue_type for i in issues}
 
 
@@ -79,32 +76,29 @@ def test_allowed_civil_war_alone_not_flagged():
 
 
 def test_always_no_in_slotless_reports_only_the_broader_rule():
-    # A slotless idea never gets both findings for the same block.
+    # A slotless idea never gets two findings for the same block.
     text = _wrap(
         "\t\tmy_idea = {\n"
         "\t\t\tallowed = { always = no }\n"
         "\t\t\tpicture = GFX_idea_x\n"
         "\t\t}"
     )
-    types = _issue_types(text)
-    assert SLOTLESS in types
-    assert "allowed-always-no" not in types
+    assert _issue_types(text) == {SLOTLESS}
 
 
-def test_always_no_still_fires_in_a_hidden_but_slotted_category():
-    # dynamic_modifier_slots is hidden yet has a slot, so it keeps its
-    # `allowed` and only the dead always = no form is redundant. Guards the
-    # always-no rule against being retired by the slotless one.
+def test_always_no_in_a_slotted_category_is_not_this_parsers_job():
+    # An ideas file groups slotted ideas by SLOT name, never by category, so a
+    # group key can only ever be a slot or a slotless category. That leaves no
+    # reachable input for an always-no rule keyed on the category, and
+    # check_common_mistakes.py covers the half that is reachable.
     text = _wrap(
         "\t\tmy_idea = {\n"
         "\t\t\tallowed = { always = no }\n"
         "\t\t\tpicture = GFX_idea_x\n"
         "\t\t}",
-        category="dynamic_modifier_slots",
+        category="political_advisor",
     )
-    types = _issue_types(text)
-    assert "allowed-always-no" in types
-    assert SLOTLESS not in types
+    assert _issue_types(text) == set()
 
 
 def _write(path, text):
@@ -138,7 +132,7 @@ def test_validator_uses_target_root_and_reports_error(tmp_path):
     assert validator.errors_found == 1
 
 
-def test_category_sets_are_part_of_parser_cache_key(tmp_path):
+def test_category_set_is_part_of_parser_cache_key(tmp_path):
     idea_file = tmp_path / "common" / "ideas" / "test.txt"
     _write(
         idea_file,
@@ -148,14 +142,9 @@ def test_category_sets_are_part_of_parser_cache_key(tmp_path):
         ),
     )
 
-    _defined, first = _parse_ideas_from_file(
-        str(idea_file), str(tmp_path), frozenset(), frozenset()
-    )
+    _defined, first = _parse_ideas_from_file(str(idea_file), str(tmp_path), frozenset())
     _defined, second = _parse_ideas_from_file(
-        str(idea_file),
-        str(tmp_path),
-        frozenset({"custom_slotless"}),
-        frozenset({"custom_slotless"}),
+        str(idea_file), str(tmp_path), frozenset({"custom_slotless"})
     )
 
     assert first == []

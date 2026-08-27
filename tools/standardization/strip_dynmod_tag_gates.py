@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common_utils import (  # noqa: E402
     apply_brace_stack,
     code_of_line,
+    collapse_blank_gap,
     create_gate_sweep_parser,
     find_block_span,
 )
@@ -38,9 +39,12 @@ from shared_utils import atomic_write_text, create_backup, log_message  # noqa: 
 
 _TAG_GATE_RE = re.compile(r"^\s*(?:original_tag|tag)\s*=\s*[A-Z]{3}\s*$")
 _ALWAYS_YES_RE = re.compile(r"^\s*always\s*=\s*yes\s*$")
-_ENABLE_OPEN_RE = re.compile(r"^\s*enable\s*=\s*\{")
+_ENABLE_OPEN_RE = re.compile(r"^(\s*)enable\s*=\s*\{")
+# Unlike the line-anchored pair above this one matches mid-string, so it needs
+# the lookbehind to stay off the tail of `has_cosmetic_tag = ISR`.
 _PACKED_GATE_RE = re.compile(
-    r"\s*(?:(?:original_tag|tag)\s*=\s*[A-Z]{3}|always\s*=\s*yes)(?=\s|$)"
+    r"\s*(?<![A-Za-z0-9_])"
+    r"(?:(?:original_tag|tag)\s*=\s*[A-Z]{3}|always\s*=\s*yes)(?=\s|$)"
 )
 
 
@@ -71,19 +75,26 @@ def _rewrite_enable_block(
     end, close_col = span
     opener = lines[start]
     packed = end == start
-    head = opener[: opener_match.start()]
+    head = opener_match.group(1)
     tail = lines[end][close_col + 1 :]
+    closer = lines[end]
 
     if packed:
         rest, stripped = _strip_packed_body(opener[opener_match.end() : close_col])
         empty = not rest.strip()
         body: List[str] = []
     else:
-        # Anything after the `{` on the opener is body, not scaffolding.
+        # Anything either side of the braces on the opener and closer lines is
+        # body, not scaffolding — the validator counts a gate there too.
         lead = opener[opener_match.end() :]
+        trail = lines[end][:close_col]
         body, stripped = _strip_enable_body(
-            ([lead] if lead.strip() else []) + lines[start + 1 : end]
+            ([lead] if lead.strip() else [])
+            + lines[start + 1 : end]
+            + ([trail] if trail.strip() else [])
         )
+        if trail.strip():
+            closer = f"{head}}}{tail}"
         rest = ""
         empty = not [line for line in body if code_of_line(line).strip()]
 
@@ -94,7 +105,7 @@ def _rewrite_enable_block(
         return ([merged] if merged.strip() else []), True, False
     if packed:
         return [f"{head}enable = {{{rest.rstrip()} }}{tail}"], False, True
-    return [head + "enable = {"] + body + [lines[end]], False, True
+    return [head + "enable = {"] + body + [closer], False, True
 
 
 def strip_enable_gates(lines: List[str]) -> Tuple[List[str], int, int, int]:
@@ -132,15 +143,8 @@ def strip_enable_gates(lines: List[str]) -> Tuple[List[str], int, int, int]:
             # line, so the stack has to see what was emitted, not what was read.
             for line in replacement:
                 apply_brace_stack(code_of_line(line), stack)
-            # Collapse the blank pair a vanished block leaves behind.
-            if (
-                not replacement
-                and out
-                and not out[-1].strip()
-                and i < len(lines)
-                and not lines[i].strip()
-            ):
-                i += 1
+            if not replacement:
+                i = collapse_blank_gap(out, lines, i)
             continue
 
         out.append(lines[i])
@@ -183,7 +187,7 @@ def process_file(path: str, dry_run: bool, backup: bool) -> Tuple[int, int, int,
     try:
         with open(path, "r", encoding="utf-8-sig", newline="") as handle:
             lines = handle.read().split("\n")
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         log_message("ERROR", f"{path}: {exc}")
         return 0, 0, 0, True
 

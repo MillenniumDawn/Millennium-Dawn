@@ -40,6 +40,22 @@ def test_tag_gate_flagged_alongside_a_real_trigger():
     assert len(_messages(body)) == 1
 
 
+def test_gate_sharing_a_line_with_a_real_trigger_flagged():
+    # Line-anchored matching let a gate hide behind a second trigger on the
+    # same line, which packs it past the check the stripper would still strip.
+    body = "\n\tenable = { original_tag = FOO has_idea = the_military }\n"
+    assert len(_messages(body)) == 1
+    assert "FOO" in _messages(body)[0]
+
+
+def test_cosmetic_tag_trigger_not_flagged():
+    # `tag` is a suffix of `has_cosmetic_tag`; only a word boundary keeps a
+    # token scan off it.
+    body = "\n\tenable = { has_cosmetic_tag = ISR_isratine }\n"
+    assert _messages(body) == []
+    assert _messages("\n\tenable = { has_cosmetic_tag = ISR }\n") == []
+
+
 def test_has_idea_gate_not_flagged():
     body = "\n\tenable = { has_idea = the_military }\n\tstability_factor = x\n"
     assert _messages(body) == []
@@ -71,6 +87,17 @@ def test_enable_nested_in_remove_trigger_not_flagged():
     # has to agree or it reports a finding no tool will ever fix.
     body = "\n\tremove_trigger = {\n\t\tenable = { always = yes }\n\t}\n"
     assert _messages(body) == []
+
+
+def test_brace_inside_a_quoted_value_does_not_shift_the_depth_scan():
+    # A quoted `}` used to drive depth negative, promoting the nested enable to
+    # top level and reporting the one shape the stripper leaves alone.
+    body = (
+        '\n\tname = "x } y"\n\tremove_trigger = {\n\t\tenable = { always = yes }\n\t}\n'
+    )
+    assert _messages(body) == []
+    mirror = '\n\ticon = "x { y"\n\tenable = { always = yes }\n'
+    assert len(_messages(mirror)) == 1
 
 
 def test_top_level_enable_found_after_an_earlier_nested_block():

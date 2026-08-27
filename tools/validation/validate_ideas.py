@@ -83,9 +83,6 @@ _HOI4_IDEA_INNER_KEYS: frozenset = HOI4_BUILTIN_BLOCKS | frozenset(
     }
 )
 
-# Categories where `allowed = { always = no }` is flagged as redundant
-# Dynamically parsed from common/idea_tags/*.txt — non-selectable categories
-# (those without slot=/character_slot= or with hidden=yes)
 from shared_utils import (  # noqa: E402
     extract_block_from_text,
     get_all_idea_categories,
@@ -119,7 +116,6 @@ def _extract_swap_idea_refs(text: str) -> List[str]:
 
 _NAME_OVERRIDE_LINE = re.compile(r"^\s+name\s*=\s*([A-Za-z0-9_.]+)", re.MULTILINE)
 _PICTURE_VALUE_LINE = re.compile(r"^\s+picture\s*=\s*([^\s#]+)", re.MULTILINE)
-_ALLOWED_ALWAYS_NO = re.compile(r"\ballowed\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _ALLOWED_BLOCK_START = re.compile(r"\ballowed\s*=\s*\{")
 # `\btag` does not match inside `original_tag` (the preceding `_` is a word char),
@@ -315,7 +311,6 @@ def _parse_ideas_from_file(
     filepath: str,
     mod_path: str,
     slotless_categories: FrozenSet[str],
-    always_no_categories: FrozenSet[str],
 ) -> Tuple[Dict[str, Tuple[str, Optional[str], Optional[str]]], List[IdeaIssue]]:
     """Read one ideas file and return (defined_ideas, issues), content-cached."""
     text = FileOpener.open_text_file(
@@ -324,23 +319,23 @@ def _parse_ideas_from_file(
     if not text:
         return {}, []
     category_key = hashlib.sha256(
-        repr(
-            (tuple(sorted(slotless_categories)), tuple(sorted(always_no_categories)))
-        ).encode("utf-8")
+        repr(tuple(sorted(slotless_categories))).encode("utf-8")
     ).hexdigest()
+    # The category set belongs in the content tag, not the namespace: a
+    # namespace is a cache column, so varying it strands a full set of rows
+    # per category set instead of replacing them in place.
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        f"ideas.defs.v3.{category_key}",
+        "ideas.defs.v4",
         filepath,
-        text,
-        lambda: _parse_ideas_from_text(text, slotless_categories, always_no_categories),
+        f"{text}\x00{category_key}",
+        lambda: _parse_ideas_from_text(text, slotless_categories),
     )
 
 
 def _parse_ideas_from_text(
     text: str,
     slotless_categories: FrozenSet[str],
-    always_no_categories: FrozenSet[str],
 ) -> Tuple[Dict[str, Tuple[str, Optional[str], Optional[str]]], List[IdeaIssue]]:
     """Parse ideas-file text and return (defined_ideas, issues).
 
@@ -406,20 +401,6 @@ def _parse_ideas_from_text(
                 picture = pm.group(1) if pm else None
                 cat, _, _ = defined[current_idea]
                 defined[current_idea] = (cat, name_override, picture)
-
-                if (
-                    category_name in always_no_categories
-                    and category_name not in slotless_categories
-                ):
-                    if _ALLOWED_ALWAYS_NO.search(idea_text):
-                        issues.append(
-                            IdeaIssue(
-                                current_idea,
-                                cat,
-                                current_idea_line,
-                                "allowed-always-no",
-                            )
-                        )
 
                 if _CANCEL_ALWAYS_NO.search(idea_text):
                     issues.append(
@@ -695,7 +676,6 @@ class Validator(BaseValidator):
         self.suggest_consolidation = kwargs.pop("suggest_consolidation", False)
         super().__init__(*args, **kwargs)
         self.slotless_categories = _get_slotless_idea_categories(self.mod_path)
-        self.always_no_categories = _get_non_selectable_idea_categories(self.mod_path)
 
     def _parse_all_ideas(
         self,
@@ -725,7 +705,6 @@ class Validator(BaseValidator):
                 filepath,
                 self.mod_path,
                 self.slotless_categories,
-                self.always_no_categories,
             )
             all_defined.update(defined)
             ideas_by_file[filepath] = list(defined.keys())
@@ -829,6 +808,9 @@ class Validator(BaseValidator):
         """Validate redundant patterns and misuse found during parsing."""
         self._log_section("Checking idea definition quality...")
 
+        if not self.slotless_categories:
+            self.log("  No idea categories parsed — allowed-block check is off")
+
         idea_files = self._collect_files(["common/ideas/**/*.txt"])
 
         findings: List[Issue] = []
@@ -873,13 +855,6 @@ class Validator(BaseValidator):
                         " (that category has no slot, so add_idea is the only way in"
                         " and the gate is never consulted — delete it)",
                         Severity.ERROR,
-                    )
-                elif issue.issue_type == "allowed-always-no":
-                    _add(
-                        filepath,
-                        issue.line,
-                        f"'{issue.idea_name}' has allowed = {{ always = no }} in {issue.category}"
-                        " (redundant; removing trades slightly more memory for faster load times)",
                     )
                 elif issue.issue_type == "cancel-always-no":
                     _add(

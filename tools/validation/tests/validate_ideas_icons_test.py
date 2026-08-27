@@ -252,7 +252,6 @@ def test_parser_preserves_dynamic_picture():
  }
 }""",
         NO_CATEGORIES,
-        NO_CATEGORIES,
     )
     cat, name_override, picture = defined["DYNAMIC"]
 
@@ -279,7 +278,7 @@ def test_parser_captures_picture():
   }
  }
 }"""
-    defined, _ = _parse_ideas_from_text(text, NO_CATEGORIES, NO_CATEGORIES)
+    defined, _ = _parse_ideas_from_text(text, NO_CATEGORIES)
     assert defined["WITH_pic"] == ("country", None, "some_pic")
     assert defined["NO_pic"] == ("country", None, None)
     assert defined["RENAMED"] == ("country", "SHARED_key", "pic_two")
@@ -294,7 +293,7 @@ def test_picture_with_hyphen():
   }
  }
 }"""
-    defined, _ = _parse_ideas_from_text(text, NO_CATEGORIES, NO_CATEGORIES)
+    defined, _ = _parse_ideas_from_text(text, NO_CATEGORIES)
     assert defined["CO"][2] == "Colt-Defense"
 
 

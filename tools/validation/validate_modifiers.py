@@ -13,7 +13,12 @@ from typing import Dict, FrozenSet, Iterator, List, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import compute_line_offsets, extract_block_from_text, line_for_offset
+from shared_utils import (
+    blank_quoted_strings,
+    compute_line_offsets,
+    extract_block_from_text,
+    line_for_offset,
+)
 from validator_common import (
     BaseValidator,
     FileOpener,
@@ -391,8 +396,13 @@ def _load_documented_modifiers(
 _IDEA_SLOT_RE = re.compile(r"^\s*(?:character_)?slot\s*=\s*([A-Za-z][A-Za-z0-9_]*)")
 
 _BRACE_OR_ENABLE_RE = re.compile(r"\benable\s*=\s*\{|\{|\}")
-_ALWAYS_YES_RE = re.compile(r"^\s*always\s*=\s*yes\s*$")
-_TAG_GATE_RE = re.compile(r"^\s*(?:original_tag|tag)\s*=\s*([A-Z]{3})\s*$")
+# The lookbehind keeps `tag` off the tail of `has_cosmetic_tag`; matching a
+# token rather than a whole line is what stops a gate hiding on a shared line.
+_GATE_RE = re.compile(
+    r"(?<![A-Za-z0-9_])"
+    r"(?:(?:original_tag|tag)\s*=\s*(?P<tag>[A-Z]{3})|always\s*=\s*yes)"
+    r"(?=\s|$)"
+)
 
 
 def _find_top_level_enable(body: str):
@@ -423,6 +433,9 @@ def _redundant_enable_gates(body: str) -> List[Tuple[str, int]]:
     trigger that can never be false costs something every time. Only top-level
     triggers count: one inside OR / NOT is an alternative or an exclusion.
     """
+    # Blanking keeps offsets and line counts intact while stopping a brace
+    # inside a quoted name from throwing the depth scan off by one.
+    body = blank_quoted_strings(body)
     match = _find_top_level_enable(body)
     if not match:
         return []
@@ -430,31 +443,34 @@ def _redundant_enable_gates(body: str) -> List[Tuple[str, int]]:
     if not enable_body:
         return []
 
+    depths = []
+    depth = 0
+    for char in enable_body:
+        depths.append(depth)
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+
     base = body[: match.start()].count("\n")
     findings: List[Tuple[str, int]] = []
-    depth = 0
-    for offset, line in enumerate(enable_body.split("\n")):
-        if depth == 0:
-            if _ALWAYS_YES_RE.match(line):
-                findings.append(
-                    (
-                        "enable = { always = yes } is what an absent enable block "
-                        "already means — delete it",
-                        base + offset,
-                    )
-                )
-            else:
-                tag = _TAG_GATE_RE.match(line)
-                if tag:
-                    findings.append(
-                        (
-                            f"enable gates on {tag.group(1)}, but add_dynamic_modifier "
-                            "already chose who gets this modifier — drop the tag check "
-                            "unless another country is meant to hold it inert",
-                            base + offset,
-                        )
-                    )
-        depth += line.count("{") - line.count("}")
+    for gate in _GATE_RE.finditer(enable_body):
+        if depths[gate.start()] != 0:
+            continue
+        tag = gate.group("tag")
+        if tag:
+            message = (
+                f"enable gates on {tag}, but add_dynamic_modifier already chose "
+                "who gets this modifier — delete the tag check; if a second "
+                "country really is meant to hold it inert, gate on the state "
+                "that differs between them instead"
+            )
+        else:
+            message = (
+                "enable = { always = yes } is what an absent enable block "
+                "already means — delete it"
+            )
+        findings.append((message, base + enable_body.count("\n", 0, gate.start())))
     return findings
 
 

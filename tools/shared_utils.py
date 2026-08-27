@@ -758,13 +758,10 @@ def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozen
 
 @lru_cache(maxsize=None)
 def _slotless_idea_categories_cached(mod_root: str) -> frozenset:
-    categories = {
+    return frozenset(
         c["name"]
         for c in get_all_idea_categories(mod_root)
         if not c["has_slot"] and not c["has_char_slot"]
-    }
-    return (
-        frozenset(categories) if categories else frozenset({"country", "hidden_ideas"})
     )
 
 
@@ -775,6 +772,10 @@ def get_slotless_idea_categories(mod_root: Optional[str] = None) -> frozenset:
     category that still has a slot (dynamic_modifier_slots). An idea here can
     only arrive through add_idea, so its `allowed` gate is never consulted; one
     in a slotted category still filters the pool the slot draws from.
+
+    Empty when common/idea_tags/ is missing or unparseable. This backs an
+    ERROR-severity check, so it guesses at nothing: no categories means the
+    check goes quiet rather than blocking a PR on a hardcoded assumption.
     """
     if mod_root is None:
         mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))

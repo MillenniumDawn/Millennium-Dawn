@@ -77,6 +77,22 @@ def apply_brace_stack(code: str, stack: List[str]) -> None:
             stack.append(match.group(1) or "")
 
 
+def collapse_blank_gap(out: List[str], lines: List[str], index: int) -> int:
+    """Close the hole a removed block leaves, returning the next index to read.
+
+    A block that vanishes takes its separator blank line with it only when that
+    would otherwise leave two in a row, or leave one pinned against the parent's
+    own brace. Anything else is a real separator between surviving elements.
+    """
+    before_blank = bool(out) and not out[-1].strip()
+    after_blank = index < len(lines) and not lines[index].strip()
+    if after_blank and (before_blank or out and out[-1].rstrip().endswith("{")):
+        return index + 1
+    if before_blank and index < len(lines) and lines[index].lstrip().startswith("}"):
+        out.pop()
+    return index
+
+
 def compact_search_filters(block_lines: List[str]) -> str:
     """Compact search_filters block into a single line with spaces between entities"""
     if not block_lines:

@@ -6,7 +6,9 @@ while the modifier is still attached, which is the only reason `enable` exists:
 so its `has_idea` gates are all that neutralise a faction the country lost.
 """
 
-from strip_dynmod_tag_gates import strip_enable_gates
+import sys
+
+from strip_dynmod_tag_gates import main, process_file, strip_enable_gates
 
 
 def _strip(text):
@@ -191,6 +193,98 @@ def test_packed_body_keeps_a_nested_trigger_intact():
     assert "original_tag" not in out
 
 
+def test_trimmed_block_keeps_its_indentation():
+    # The opener regex matches from column 0, so a `head` sliced at match.start()
+    # is always empty and every trimmed block lands flush left.
+    text = "\n".join(
+        [
+            "FOO_modifier = {",
+            "\tenable = {",
+            "\t\toriginal_tag = FOO",
+            "\t\thas_idea = the_military",
+            "\t}",
+            "}",
+        ]
+    )
+    out, _removed, trimmed = _strip(text)
+    assert trimmed == 1
+    assert out.split("\n")[1] == "\tenable = {"
+
+
+def test_gate_on_the_closing_line_is_stripped():
+    # The validator counts a gate here, so the stripper has to reach it too or
+    # it reports a finding no tool will fix.
+    text = "\n".join(
+        [
+            "FOO_modifier = {",
+            "\tenable = {",
+            "\t\thas_idea = the_military",
+            "\t\talways = yes }",
+            "\tstability_factor = FOO_stab",
+            "}",
+        ]
+    )
+    out, removed, trimmed, skipped = _strip_full(text)
+    assert (removed, trimmed, skipped) == (0, 1, 0)
+    assert "always" not in out
+    assert "has_idea = the_military" in out
+    assert out.count("{") == out.count("}")
+
+
+def test_removing_the_first_child_leaves_no_blank_under_the_opener():
+    text = "\n".join(
+        [
+            "FOO_modifier = {",
+            "\tenable = { always = yes }",
+            "",
+            "\tstability_factor = FOO_stab",
+            "}",
+        ]
+    )
+    out, removed, _trimmed = _strip(text)
+    assert removed == 1
+    assert out.split("\n") == [
+        "FOO_modifier = {",
+        "\tstability_factor = FOO_stab",
+        "}",
+    ]
+
+
+def test_removing_the_last_child_leaves_no_blank_above_the_closer():
+    text = "\n".join(
+        [
+            "FOO_modifier = {",
+            "\tstability_factor = FOO_stab",
+            "",
+            "\tenable = { always = yes }",
+            "}",
+        ]
+    )
+    out, removed, _trimmed = _strip(text)
+    assert removed == 1
+    assert out.split("\n") == [
+        "FOO_modifier = {",
+        "\tstability_factor = FOO_stab",
+        "}",
+    ]
+
+
+def test_packed_body_keeps_a_trigger_whose_name_ends_in_tag():
+    # `tag = ISR` is a substring of `has_cosmetic_tag = ISR`; without a word
+    # boundary the splice eats a live trigger and leaves `has_cosmetic_`.
+    text = "\n".join(
+        [
+            "FOO_modifier = {",
+            "\tenable = { has_cosmetic_tag = ISR }",
+            "\tstability_factor = FOO_stab",
+            "}",
+        ]
+    )
+    out, removed, trimmed, skipped = _strip_full(text)
+    assert (removed, trimmed, skipped) == (0, 0, 0)
+    assert out == text
+
+
 def test_tag_inside_a_packed_nested_branch_is_not_spliced():
     text = "\n".join(
         [
@@ -273,3 +367,46 @@ def test_is_idempotent():
     twice, removed, trimmed = _strip(once)
     assert (removed, trimmed) == (0, 0)
     assert twice == once
+
+
+_SAMPLE = "FOO_modifier = {\n\tenable = { always = yes }\n\tstability_factor = x\n}\n"
+
+
+def _write(path, text, newline=""):
+    with open(path, "w", encoding="utf-8", newline=newline) as handle:
+        handle.write(text)
+
+
+def test_dry_run_reports_without_writing(tmp_path):
+    path = tmp_path / "test.txt"
+    _write(path, _SAMPLE)
+
+    assert process_file(str(path), dry_run=True, backup=False) == (1, 0, 0, False)
+    with open(path, "r", encoding="utf-8", newline="") as handle:
+        assert handle.read() == _SAMPLE
+
+
+def test_crlf_survives_the_rewrite(tmp_path):
+    path = tmp_path / "test.txt"
+    _write(path, _SAMPLE.replace("\n", "\r\n"))
+
+    process_file(str(path), dry_run=False, backup=False)
+    with open(path, "rb") as handle:
+        data = handle.read()
+    assert b"\r\n" in data
+    assert b"\n" not in data.replace(b"\r\n", b"")
+    assert b"enable" not in data
+
+
+def test_unreadable_file_is_reported_not_raised(tmp_path):
+    assert process_file(str(tmp_path / "missing.txt"), False, False) == (0, 0, 0, True)
+
+
+def test_main_exits_non_zero_on_an_unbalanced_block(tmp_path, monkeypatch):
+    path = tmp_path / "test.txt"
+    _write(path, "FOO_modifier = {\n\tenable = {\n\t\toriginal_tag = FOO\n")
+    monkeypatch.setattr(
+        sys, "argv", ["strip_dynmod_tag_gates.py", "--root", str(tmp_path), str(path)]
+    )
+
+    assert main() == 1
