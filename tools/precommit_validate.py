@@ -151,6 +151,7 @@ _REGISTRY = [
         "validate_ideas",
         [
             ("common/ideas/", TXT),
+            ("common/idea_tags/", TXT),
             ("common/national_focus/", TXT),
             ("common/decisions/", TXT),
             ("common/on_actions/", TXT),
@@ -182,17 +183,21 @@ _REGISTRY = [
 
 
 def _discover_staged(mod_path, argv_files):
-    """Staged paths relative to *mod_path*. Prefer the filenames pre-commit
-    already matched (argv); fall back to git for manual invocation."""
-    if argv_files:
-        out = []
-        for f in argv_files:
-            out.append(os.path.relpath(os.path.abspath(f), mod_path))
-        return out
+    """Return staged paths relative to *mod_path*, including rename origins."""
     from shared_utils import get_staged_files
 
-    staged = get_staged_files(mod_path, extensions=[TXT, YML]) or []
-    return [os.path.relpath(f, mod_path) for f in staged]
+    staged = (
+        get_staged_files(
+            mod_path, extensions=[TXT, YML], include_missing=bool(argv_files)
+        )
+        or []
+    )
+    discovered = [os.path.relpath(f, mod_path) for f in staged]
+    if not argv_files:
+        return discovered
+
+    passed = [os.path.relpath(os.path.abspath(f), mod_path) for f in argv_files]
+    return list(dict.fromkeys(passed + discovered))
 
 
 def _run(spec, mod_path, env, no_color, inner_workers):
