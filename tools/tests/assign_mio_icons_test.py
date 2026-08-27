@@ -1,12 +1,6 @@
 """Behavior tests for MIO trait modifier selection."""
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-from assign_mio_icons import winning_modifier  # noqa: E402
+from assign_mio_icons import winning_modifier
 
 
 def test_winning_modifier_uses_absolute_value():
