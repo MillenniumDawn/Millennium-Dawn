@@ -36071,3 +36071,761 @@ country_event = {
 		ai_chance = { base = 100 }
 	}
 }
+
+# The AIG rescue, September 2008 onward. Hangs off the existing financial-crisis flags.
+country_event = {
+	id = usa_economic_events.460
+	title = usa_economic_events.460.t
+	desc = usa_economic_events.460.d
+	picture = GFX_aig_headquarters
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		has_global_flag = USA_great_financial_crisis
+		OR = {
+			has_country_flag = usa_nationalize_one
+			has_country_flag = usa_bailout_one
+			has_country_flag = usa_nothing_one
+		}
+		NOT = {
+			OR = {
+				has_country_flag = USA_aig_direct_rescue_chosen
+				has_country_flag = USA_aig_consortium_attempted
+				has_country_flag = USA_aig_no_bailout
+			}
+		}
+	}
+	
+	option = {
+		name = usa_economic_events.460.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.460.a executed"
+		set_country_flag = USA_aig_direct_rescue_chosen
+		set_temp_variable = { treasury_change = -40 }
+		modify_treasury_effect = yes
+		add_stability = 0.02
+		hidden_effect = { country_event = { id = usa_economic_events.461 days = 1 } }
+		ai_chance = {
+			base = 60
+			modifier = { factor = 10 is_historical_focus_on = yes }
+			modifier = { factor = 2 has_country_flag = usa_bailout_one }
+			modifier = { factor = 0.5 check_variable = { treasury < 40 } }
+			modifier = { factor = 1.5 check_variable = { treasury > 80 } }
+		}
+	}
+	
+	option = {
+		name = usa_economic_events.460.b
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.460.b executed"
+		set_country_flag = USA_aig_consortium_attempted
+		hidden_effect = { country_event = { id = usa_economic_events.461 days = 1 } }
+		ai_chance = {
+			base = 20
+			modifier = { factor = 0.1 is_historical_focus_on = yes }
+			modifier = { add = 10 check_variable = { treasury < 40 } }
+		}
+	}
+	
+	option = {
+		name = usa_economic_events.460.c
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.460.c executed"
+		set_country_flag = USA_aig_no_bailout
+		recession = yes
+		add_stability = -0.03
+		hidden_effect = { country_event = { id = usa_economic_events.463 days = 2 } }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.1 is_historical_focus_on = yes }
+			modifier = { factor = 3 has_country_flag = usa_nothing_one }
+		}
+	}
+}
+
+# Hidden weekend router: resolves the private-consortium attempt so the federal rescue
+# and the bankruptcy branch each keep a single visible caller.
+country_event = {
+	id = usa_economic_events.461
+	is_triggered_only = yes
+	hidden = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+	}
+
+	immediate = {
+		if = {
+			limit = { has_country_flag = USA_aig_consortium_attempted }
+			random_list = {
+				35 = {
+					set_country_flag = USA_aig_consortium_succeeded
+					set_country_flag = USA_aig_rescue_active
+					country_event = { id = usa_economic_events.464 days = 14 }
+				}
+				65 = { country_event = { id = usa_economic_events.462 days = 1 } }
+			}
+		}
+		else = { country_event = { id = usa_economic_events.462 days = 1 } }
+	}
+}
+
+country_event = {
+	id = usa_economic_events.462
+	title = usa_economic_events.462.t
+	desc = usa_economic_events.462.d
+	picture = GFX_aig_headquarters
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		NOT = {
+			OR = {
+				has_country_flag = USA_aig_equity_stake
+				has_country_flag = USA_aig_creditor_only
+			}
+		}
+	}
+
+	# The rescue marker belongs to the event, not to either option: .464 fires on a fixed
+	# offset and must not depend on the player having answered this popup first.
+	immediate = {
+		set_country_flag = USA_aig_rescue_active
+		country_event = { id = usa_economic_events.464 days = 13 }
+	}
+
+	option = {
+		name = usa_economic_events.462.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.462.a executed"
+		set_country_flag = USA_aig_equity_stake
+		add_stability = 0.01
+		ai_chance = {
+			base = 70
+			modifier = { factor = 5 is_historical_focus_on = yes }
+		}
+	}
+
+	option = {
+		name = usa_economic_events.462.b
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.462.b executed"
+		set_country_flag = USA_aig_creditor_only
+		add_political_power = 25
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0.1 is_historical_focus_on = yes }
+		}
+	}
+}
+
+country_event = {
+	id = usa_economic_events.463
+	title = usa_economic_events.463.t
+	desc = usa_economic_events.463.d
+	picture = GFX_world_aig
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		NOT = { has_country_flag = USA_aig_bankruptcy_path }
+	}
+
+	option = {
+		name = usa_economic_events.463.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.463.a executed"
+		set_country_flag = USA_aig_bankruptcy_path
+		set_temp_variable = { treasury_change = -25 }
+		modify_treasury_effect = yes
+		add_stability = -0.01
+		hidden_effect = { country_event = { id = usa_economic_events.474 days = 30 } }
+		ai_chance = {
+			base = 70
+			modifier = { factor = 0.5 check_variable = { treasury < 25 } }
+			modifier = { factor = 1.5 check_variable = { treasury > 50 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 0 } }
+		}
+	}
+
+	option = {
+		name = usa_economic_events.463.b
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.463.b executed"
+		set_country_flag = USA_aig_bankruptcy_path
+		recession = yes
+		add_stability = -0.03
+		hidden_effect = { country_event = { id = usa_economic_events.474 days = 30 } }
+		ai_chance = {
+			base = 30
+			modifier = { add = 40 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { add = 40 check_variable = { treasury < 0 } }
+		}
+	}
+}
+
+country_event = {
+	id = usa_economic_events.464
+	title = usa_economic_events.464.t
+	desc = usa_economic_events.464.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		has_country_flag = USA_aig_rescue_active
+	}
+
+	option = {
+		name = usa_economic_events.464.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.464.a executed"
+		add_stability = -0.01
+		hidden_effect = { country_event = { id = usa_economic_events.465 days = 7 } }
+		ai_chance = { base = 100 }
+	}
+}
+
+country_event = {
+	id = usa_economic_events.465
+	title = usa_economic_events.465.t
+	desc = usa_economic_events.465.d
+	picture = GFX_aig_headquarters
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		has_country_flag = USA_aig_rescue_active
+		NOT = {
+			OR = {
+				has_country_flag = USA_aig_securities_facility
+				has_country_flag = USA_aig_facility_refused
+			}
+		}
+	}
+
+	immediate = { country_event = { id = usa_economic_events.466 days = 33 } }
+
+	option = {
+		name = usa_economic_events.465.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.465.a executed"
+		set_country_flag = USA_aig_securities_facility
+		set_temp_variable = { treasury_change = -15 }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		ai_chance = {
+			base = 75
+			modifier = { factor = 5 is_historical_focus_on = yes }
+			modifier = { factor = 0.5 check_variable = { treasury < 15 } }
+			modifier = { factor = 1.5 check_variable = { treasury > 30 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 0 } }
+		}
+	}
+
+	option = {
+		name = usa_economic_events.465.b
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.465.b executed"
+		set_country_flag = USA_aig_facility_refused
+		add_stability = -0.02
+		ai_chance = {
+			base = 25
+			modifier = { factor = 0.1 is_historical_focus_on = yes }
+			modifier = { factor = 3 has_country_flag = USA_aig_consortium_succeeded }
+			modifier = { add = 30 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { add = 30 check_variable = { treasury < 0 } }
+		}
+	}
+}
+
+country_event = {
+	id = usa_economic_events.466
+	title = usa_economic_events.466.t
+	desc = usa_economic_events.466.d
+	picture = GFX_aig_headquarters
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		has_country_flag = USA_aig_rescue_active
+		NOT = {
+			OR = {
+				has_country_flag = USA_aig_restructured
+				has_country_flag = USA_aig_original_terms
+			}
+		}
+	}
+
+	immediate = { country_event = { id = usa_economic_events.467 days = 23 } }
+
+	option = {
+		name = usa_economic_events.466.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.466.a executed"
+		set_country_flag = USA_aig_restructured
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		ai_chance = {
+			base = 75
+			modifier = { factor = 5 is_historical_focus_on = yes }
+			modifier = { factor = 0.5 check_variable = { treasury < 20 } }
+			modifier = { factor = 1.5 check_variable = { treasury > 40 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 0 } }
+		}
+	}
+
+	option = {
+		name = usa_economic_events.466.b
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.466.b executed"
+		set_country_flag = USA_aig_original_terms
+		add_political_power = 25
+		ai_chance = {
+			base = 25
+			modifier = { factor = 0.1 is_historical_focus_on = yes }
+			modifier = { add = 30 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { add = 30 check_variable = { treasury < 0 } }
+		}
+	}
+}
+
+country_event = {
+	id = usa_economic_events.467
+	title = usa_economic_events.467.t
+	desc = usa_economic_events.467.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		has_country_flag = USA_aig_rescue_active
+		NOT = {
+			OR = {
+				has_country_flag = USA_aig_ml3_par_path
+				has_country_flag = USA_aig_haircuts_attempted
+			}
+		}
+	}
+
+	option = {
+		name = usa_economic_events.467.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.467.a executed"
+		set_country_flag = USA_aig_ml3_par_path
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
+		add_stability = 0.02
+		hidden_effect = { country_event = { id = usa_economic_events.469 days = 13 } }
+		ai_chance = {
+			base = 75
+			modifier = { factor = 5 is_historical_focus_on = yes }
+			modifier = { factor = 0.5 check_variable = { treasury < 20 } }
+			modifier = { factor = 1.5 check_variable = { treasury > 40 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 0 } }
+		}
+	}
+
+	option = {
+		name = usa_economic_events.467.b
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.467.b executed"
+		set_country_flag = USA_aig_haircuts_attempted
+		add_political_power = 25
+		hidden_effect = {
+			every_country = {
+				limit = {
+					OR = {
+						original_tag = FRA
+						original_tag = GER
+						original_tag = SWI
+						original_tag = ENG
+					}
+				}
+				add_opinion_modifier = { target = ROOT modifier = note_of_protest }
+			}
+			country_event = { id = usa_economic_events.468 days = 5 }
+		}
+		ai_chance = {
+			base = 25
+			modifier = { factor = 0.1 is_historical_focus_on = yes }
+			modifier = { add = 40 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { add = 40 check_variable = { treasury < 0 } }
+		}
+	}
+}
+
+# Hidden roll first, then the visible option each result allows: the negotiation
+# outcome is not the player's to pick.
+country_event = {
+	id = usa_economic_events.468
+	title = usa_economic_events.468.t
+	desc = usa_economic_events.468.d
+	picture = GFX_world_aig
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		has_country_flag = USA_aig_haircuts_attempted
+	}
+
+	immediate = {
+		random_list = {
+			20 = { set_country_flag = USA_aig_haircuts_partial }
+			80 = { set_country_flag = USA_aig_haircuts_failed }
+		}
+		country_event = { id = usa_economic_events.469 days = 8 }
+	}
+
+	option = {
+		name = usa_economic_events.468.a
+		trigger = { has_country_flag = USA_aig_haircuts_failed }
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.468.a executed"
+		set_country_flag = USA_aig_ml3_par_path
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = usa_economic_events.468.b
+		trigger = { has_country_flag = USA_aig_haircuts_partial }
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.468.b executed"
+		set_country_flag = USA_aig_ml3_concession_path
+		set_temp_variable = { treasury_change = -12 }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		ai_chance = { base = 100 }
+	}
+}
+
+country_event = {
+	id = usa_economic_events.469
+	title = usa_economic_events.469.t
+	desc = usa_economic_events.469.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		has_country_flag = USA_aig_rescue_active
+		NOT = {
+			OR = {
+				has_country_flag = USA_aig_ml2_active
+				has_country_flag = USA_aig_ml2_declined
+			}
+		}
+	}
+
+	immediate = { country_event = { id = usa_economic_events.470 days = 88 } }
+
+	option = {
+		name = usa_economic_events.469.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.469.a executed"
+		set_country_flag = USA_aig_ml2_active
+		set_temp_variable = { treasury_change = -15 }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		ai_chance = {
+			base = 75
+			modifier = { factor = 5 is_historical_focus_on = yes }
+			modifier = { factor = 0.5 check_variable = { treasury < 15 } }
+			modifier = { factor = 1.5 check_variable = { treasury > 30 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 0 } }
+		}
+	}
+
+	option = {
+		name = usa_economic_events.469.b
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.469.b executed"
+		set_country_flag = USA_aig_ml2_declined
+		add_stability = -0.01
+		ai_chance = {
+			base = 25
+			modifier = { factor = 0.1 is_historical_focus_on = yes }
+			modifier = { add = 30 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { add = 30 check_variable = { treasury < 0 } }
+		}
+	}
+}
+
+country_event = {
+	id = usa_economic_events.470
+	title = usa_economic_events.470.t
+	desc = usa_economic_events.470.d
+	picture = GFX_world_aig
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		has_country_flag = USA_aig_rescue_active
+		NOT = {
+			OR = {
+				has_country_flag = USA_aig_counterparties_disclosed
+				has_country_flag = USA_aig_disclosure_delayed
+			}
+		}
+	}
+
+	immediate = { country_event = { id = usa_economic_events.471 days = 2 } }
+
+	option = {
+		name = usa_economic_events.470.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.470.a executed"
+		set_country_flag = USA_aig_counterparties_disclosed
+		add_political_power = -50
+		ai_chance = {
+			base = 70
+			modifier = { factor = 5 is_historical_focus_on = yes }
+		}
+	}
+
+	option = {
+		name = usa_economic_events.470.b
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.470.b executed"
+		set_country_flag = USA_aig_disclosure_delayed
+		add_stability = 0.01
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0.1 is_historical_focus_on = yes }
+		}
+	}
+}
+
+country_event = {
+	id = usa_economic_events.471
+	title = usa_economic_events.471.t
+	desc = usa_economic_events.471.d
+	picture = GFX_aig_headquarters
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		has_country_flag = USA_aig_rescue_active
+		NOT = {
+			OR = {
+				has_country_flag = USA_aig_bonuses_honored
+				has_country_flag = USA_aig_bonuses_clawed_back
+			}
+		}
+	}
+
+	# Sealed counterparty names surface alongside the bonuses, not instead of them.
+	immediate = {
+		if = {
+			limit = { has_country_flag = USA_aig_disclosure_delayed }
+			add_stability = -0.02
+		}
+		country_event = { id = usa_economic_events.472 days = 348 }
+	}
+
+	option = {
+		name = usa_economic_events.471.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.471.a executed"
+		set_country_flag = USA_aig_bonuses_honored
+		add_political_power = -75
+		ai_chance = {
+			base = 60
+			modifier = { factor = 5 is_historical_focus_on = yes }
+		}
+	}
+
+	option = {
+		name = usa_economic_events.471.b
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.471.b executed"
+		set_country_flag = USA_aig_bonuses_clawed_back
+		add_political_power = -25
+		ai_chance = {
+			base = 40
+			modifier = { factor = 0.1 is_historical_focus_on = yes }
+		}
+	}
+}
+
+country_event = {
+	id = usa_economic_events.472
+	title = usa_economic_events.472.t
+	desc = usa_economic_events.472.d
+	picture = GFX_aig_headquarters
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		has_country_flag = USA_aig_rescue_active
+		NOT = {
+			OR = {
+				has_country_flag = USA_aig_methodical_divestment
+				has_country_flag = USA_aig_rapid_divestment
+			}
+		}
+	}
+
+	immediate = { country_event = { id = usa_economic_events.473 days = 319 } }
+
+	option = {
+		name = usa_economic_events.472.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.472.a executed"
+		set_country_flag = USA_aig_methodical_divestment
+		add_political_power = 25
+		ai_chance = {
+			base = 65
+			modifier = { factor = 5 is_historical_focus_on = yes }
+		}
+	}
+
+	option = {
+		name = usa_economic_events.472.b
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.472.b executed"
+		set_country_flag = USA_aig_rapid_divestment
+		add_stability = -0.01
+		ai_chance = {
+			base = 35
+			modifier = { factor = 0.1 is_historical_focus_on = yes }
+		}
+	}
+}
+
+country_event = {
+	id = usa_economic_events.473
+	title = usa_economic_events.473.t
+	desc = usa_economic_events.473.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		has_country_flag = USA_aig_rescue_active
+		NOT = {
+			OR = {
+				has_country_flag = USA_aig_fed_repaid
+				has_country_flag = USA_aig_facility_extended
+			}
+		}
+	}
+
+	immediate = { country_event = { id = usa_economic_events.474 days = 700 } }
+
+	option = {
+		name = usa_economic_events.473.a
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.473.a executed"
+		set_country_flag = USA_aig_fed_repaid
+		set_temp_variable = { treasury_change = 30 }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		ai_chance = {
+			base = 80
+			modifier = { factor = 5 is_historical_focus_on = yes }
+		}
+	}
+
+	option = {
+		name = usa_economic_events.473.b
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.473.b executed"
+		set_country_flag = USA_aig_facility_extended
+		ai_chance = {
+			base = 20
+			modifier = { factor = 0.1 is_historical_focus_on = yes }
+		}
+	}
+}
+
+country_event = {
+	id = usa_economic_events.474
+	title = usa_economic_events.474.t
+	desc = usa_economic_events.474.d
+	picture = GFX_world_aig
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+		NOT = {
+			OR = {
+				has_country_flag = USA_aig_outcome_creditor_bail_in
+				has_country_flag = USA_aig_outcome_taxpayer_vindication
+				has_country_flag = USA_aig_outcome_orderly_resolution
+				has_country_flag = USA_aig_outcome_liquidationist
+				has_country_flag = USA_aig_outcome_moral_hazard
+			}
+		}
+	}
+
+	option = {
+		name = usa_economic_events.474.a
+		trigger = { has_country_flag = USA_aig_ml3_concession_path }
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.474.a executed"
+		set_country_flag = USA_aig_outcome_creditor_bail_in
+		add_ideas = USA_aig_creditor_bail_in_precedent
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = usa_economic_events.474.b
+		trigger = {
+			has_country_flag = USA_aig_fed_repaid
+			has_country_flag = USA_aig_methodical_divestment
+			NOT = { has_country_flag = USA_aig_ml3_concession_path }
+		}
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.474.b executed"
+		set_country_flag = USA_aig_outcome_taxpayer_vindication
+		add_ideas = USA_aig_taxpayer_vindication
+		ai_chance = {
+			base = 50
+			modifier = { factor = 10 is_historical_focus_on = yes }
+		}
+	}
+
+	option = {
+		name = usa_economic_events.474.c
+		trigger = {
+			has_country_flag = USA_aig_counterparties_disclosed
+			has_country_flag = USA_aig_bonuses_clawed_back
+			NOT = { has_country_flag = USA_aig_ml3_concession_path }
+		}
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.474.c executed"
+		set_country_flag = USA_aig_outcome_orderly_resolution
+		add_ideas = USA_aig_orderly_resolution_regime
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = usa_economic_events.474.d_option
+		trigger = { has_country_flag = USA_aig_bankruptcy_path }
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.474.d_option executed"
+		set_country_flag = USA_aig_outcome_liquidationist
+		add_ideas = USA_aig_liquidationist_precedent
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = usa_economic_events.474.e
+		trigger = { has_country_flag = USA_aig_rescue_active }
+		log = "[GetDateText]: [Root.GetName]: usa_economic_events.474.e executed"
+		set_country_flag = USA_aig_outcome_moral_hazard
+		add_ideas = USA_aig_moral_hazard_settlement
+		ai_chance = { base = 25 }
+	}
+}
