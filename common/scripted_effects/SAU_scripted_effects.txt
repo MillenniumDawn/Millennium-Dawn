@@ -1275,3 +1275,85 @@ SAU_water_pride_set_tier = {
 		else = { add_ideas = SAU_national_water_pride_plus4 }
 	}
 }
+
+# The Presidency's standing capability. Kept in one effect so the founding focus and the
+# save-repair path in SAU_intel_expand_gip can never drift apart.
+SAU_found_gip_network = {
+	add_dynamic_modifier = { modifier = SAU_gip_network }
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SAU_gip_network }
+	add_to_variable = { SAU_gip_agency_defense = 0.5 tooltip = intelligence_agency_defense_tt }
+	add_to_variable = { SAU_gip_network_gain = 0.1 tooltip = intel_network_gain_factor_tt }
+	add_to_variable = { SAU_gip_detection = 0.1 tooltip = enemy_operative_detection_chance_tt }
+	add_to_variable = { SAU_gip_encryption = 0.05 tooltip = encryption_factor_tt }
+	add_to_variable = { SAU_gip_decryption = 0.05 tooltip = decryption_factor_tt }
+	add_to_variable = { SAU_gip_subversion = -0.1 tooltip = foreign_subversive_activites_tt }
+}
+
+# The standing standard is what the Council asks for; a province can only give what it has
+# room for. Factories first, then offices, out of the slots that actually exist there.
+SAU_pc_set_mandate = {
+	set_temp_variable = { SAU_pc_room = 0 }
+	if = {
+		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = industrial_complex size > 0 include_locked = yes } } }
+		add_to_temp_variable = { SAU_pc_room = 1 }
+	}
+	if = {
+		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = industrial_complex size > 1 include_locked = yes } } }
+		add_to_temp_variable = { SAU_pc_room = 1 }
+	}
+	if = {
+		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = industrial_complex size > 2 include_locked = yes } } }
+		add_to_temp_variable = { SAU_pc_room = 1 }
+	}
+	if = {
+		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = industrial_complex size > 3 include_locked = yes } } }
+		add_to_temp_variable = { SAU_pc_room = 1 }
+	}
+	if = {
+		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = industrial_complex size > 4 include_locked = yes } } }
+		add_to_temp_variable = { SAU_pc_room = 1 }
+	}
+	if = {
+		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = industrial_complex size > 5 include_locked = yes } } }
+		add_to_temp_variable = { SAU_pc_room = 1 }
+	}
+	set_temp_variable = { SAU_pc_have_civ = event_target:SAU_pc_works_province.building_level@industrial_complex }
+	set_temp_variable = { SAU_pc_have_off = event_target:SAU_pc_works_province.building_level@offices }
+
+	set_temp_variable = { SAU_pc_need_civ = SAU_pc_req_civ }
+	subtract_from_temp_variable = { SAU_pc_need_civ = SAU_pc_have_civ }
+	clamp_temp_variable = { var = SAU_pc_need_civ min = 0 max = 3 }
+	set_temp_variable = { SAU_pc_need_off = SAU_pc_req_off }
+	subtract_from_temp_variable = { SAU_pc_need_off = SAU_pc_have_off }
+	clamp_temp_variable = { var = SAU_pc_need_off min = 0 max = 3 }
+
+	set_temp_variable = { SAU_pc_give_civ = SAU_pc_need_civ }
+	clamp_temp_variable = { var = SAU_pc_give_civ min = 0 max = SAU_pc_room }
+	set_temp_variable = { SAU_pc_left = SAU_pc_room }
+	subtract_from_temp_variable = { SAU_pc_left = SAU_pc_give_civ }
+	set_temp_variable = { SAU_pc_give_off = SAU_pc_need_off }
+	clamp_temp_variable = { var = SAU_pc_give_off min = 0 max = SAU_pc_left }
+
+	set_variable = { SAU_pc_mandate_civ = SAU_pc_have_civ }
+	add_to_variable = { SAU_pc_mandate_civ = SAU_pc_give_civ }
+	set_variable = { SAU_pc_mandate_off = SAU_pc_have_off }
+	add_to_variable = { SAU_pc_mandate_off = SAU_pc_give_off }
+
+	set_temp_variable = { SAU_pc_inf_room = 0 }
+	if = {
+		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = infrastructure size > 0 include_locked = yes } } }
+		add_to_temp_variable = { SAU_pc_inf_room = 1 }
+	}
+	if = {
+		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = infrastructure size > 1 include_locked = yes } } }
+		add_to_temp_variable = { SAU_pc_inf_room = 1 }
+	}
+	set_temp_variable = { SAU_pc_have_inf = event_target:SAU_pc_works_province.building_level@infrastructure }
+	set_temp_variable = { SAU_pc_need_inf = SAU_pc_req_inf }
+	subtract_from_temp_variable = { SAU_pc_need_inf = SAU_pc_have_inf }
+	clamp_temp_variable = { var = SAU_pc_need_inf min = 0 max = 2 }
+	set_temp_variable = { SAU_pc_give_inf = SAU_pc_need_inf }
+	clamp_temp_variable = { var = SAU_pc_give_inf min = 0 max = SAU_pc_inf_room }
+	set_variable = { SAU_pc_mandate_inf = SAU_pc_have_inf }
+	add_to_variable = { SAU_pc_mandate_inf = SAU_pc_give_inf }
+}
