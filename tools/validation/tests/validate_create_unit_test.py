@@ -1,13 +1,17 @@
 """Tests for the create_unit effect structural checks in validate_oob_units.py.
 
 A create_unit only spawns units in a state scope, needs a single-line division
-string naming a division_template, and must set owner. When it defines the
-template itself, the template must come first.
+string that parses as army data and names a division_template, and must set
+owner. When it defines the template itself, the template must come first.
 """
 
 from textwrap import indent
 
-from validate_oob_units import Validator, _check_created_units
+from validate_oob_units import (
+    Validator,
+    _check_created_units,
+    _parse_division_string,
+)
 from validator_common import Severity
 
 # The engine stores inner quotes in the division string as backslash-escaped
@@ -403,4 +407,125 @@ def test_other_event_option_does_not_mask_late_definition(tmp_path):
 """.replace("{DIV}", div)
     assert "CREATE UNIT: template defined after create_unit" in _cats(
         _run(content, tmp_path, filename="events.txt")
+    )
+
+
+def _kinds(issues):
+    return [kind for kind, _ in issues]
+
+
+def test_parse_division_string_wiki_examples_are_clean():
+    issues, tname = _parse_division_string(
+        'name = "Infantry Division" division_template = "Infantry Division" '
+        "start_experience_factor = 0.5"
+    )
+    assert issues == []
+    assert tname == "Infantry Division"
+
+    issues, tname = _parse_division_string(
+        'name = "Artie" division_template = "Artillery Division" '
+        "start_manpower_factor = 0.3"
+    )
+    assert issues == []
+    assert tname == "Artillery Division"
+
+    issues, tname = _parse_division_string(
+        'name = "Tank division" division_template = "Tank Division" '
+        "start_manpower_factor = 1 force_equipment_variants = { "
+        'medium_tank_chassis_2 = { owner = "USA" amount = 100 '
+        'version_name = "M4 Sherman" }}'
+    )
+    assert issues == []
+    assert tname == "Tank Division"
+
+
+def test_parse_division_string_unquoted_owner_in_fev_is_clean():
+    issues, tname = _parse_division_string(
+        'name = "Al-Saiqa" division_template = "Al-Saiqa" '
+        "start_experience_factor = 0.8 start_equipment_factor = 1.0 "
+        "force_equipment_variants = { infantry_weapons_1 = { owner = SOV } "
+        "cnc_equipment_1 = { owner = SOV } }"
+    )
+    assert issues == []
+    assert tname == "Al-Saiqa"
+
+
+def test_parse_division_string_rejects_german_danish_letters():
+    issues, tname = _parse_division_string(
+        'division_template = "militärdistriktet" start_experience_factor = 0.2 '
+        "start_equipment_factor = 0.01"
+    )
+    assert "out-of-bounds-division" in _kinds(issues)
+    assert any("out-of-bounds letter in: militärdistriktet" in msg for _, msg in issues)
+    assert tname == "militärdistriktet"
+
+
+def test_parse_division_string_allows_romance_accents():
+    issues, tname = _parse_division_string(
+        'name = "Québécois Infanterie" division_template = "Brigada de Liberación" '
+        "start_experience_factor = 0.5"
+    )
+    assert issues == []
+    assert tname == "Brigada de Liberación"
+
+
+def test_parse_division_string_rejects_unknown_inner_key():
+    issues, tname = _parse_division_string(
+        'division_template = "Infantry Division" location = 6040'
+    )
+    assert "unknown-division-key" in _kinds(issues)
+    assert tname == "Infantry Division"
+
+
+def test_parse_division_string_rejects_unquoted_template():
+    issues, tname = _parse_division_string(
+        "division_template = Infantry start_experience_factor = 0.5"
+    )
+    assert "unquoted-value" in _kinds(issues)
+    assert tname is None
+
+
+def test_parse_division_string_rejects_missing_template():
+    issues, tname = _parse_division_string('name = "Infantry Division"')
+    assert "missing-template" in _kinds(issues)
+    assert tname is None
+
+
+def test_parse_division_string_rejects_non_numeric_factor():
+    issues, _tname = _parse_division_string(
+        'division_template = "Infantry Division" start_experience_factor = yes'
+    )
+    assert "malformed-division" in _kinds(issues)
+    assert any("must be a number" in msg for _, msg in issues)
+
+
+def test_parse_division_string_rejects_unknown_fev_key():
+    issues, tname = _parse_division_string(
+        'division_template = "Tank Division" force_equipment_variants = { '
+        'medium_tank_chassis_2 = { owner = "USA" slot = 1 } }'
+    )
+    assert "unknown-division-key" in _kinds(issues)
+    assert tname == "Tank Division"
+
+
+def test_parse_division_string_rejects_unquoted_version_name():
+    issues, _tname = _parse_division_string(
+        'division_template = "Tank Division" force_equipment_variants = { '
+        "medium_tank_chassis_2 = { owner = USA amount = 100 version_name = Sherman } }"
+    )
+    assert "unquoted-value" in _kinds(issues)
+
+
+def test_umlaut_create_unit_is_flagged(tmp_path):
+    div = _div_for("militärdistriktet", "militärdistriktet")
+    content = _guarded_focus(div).replace(
+        "Territorial Defense Brigade", "militärdistriktet"
+    )
+    issues = _run(content, tmp_path)
+    assert "CREATE UNIT: division string has German/Danish letters" in _cats(issues)
+    assert any(
+        "out-of-bounds letter in: militärdistriktet" in i.message for i in issues
+    )
+    assert all(
+        i.severity == Severity.WARNING for i in issues if "German/Danish" in i.category
     )
