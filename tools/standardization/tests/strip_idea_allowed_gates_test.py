@@ -277,41 +277,35 @@ def test_is_idempotent():
     assert twice == once
 
 
-_SAMPLE = (
+_IDEA_SAMPLE = (
     "ideas = {\n\tcountry = {\n\t\tFOO_idea = {\n"
     "\t\t\tallowed = { original_tag = FOO }\n"
     "\t\t\tpicture = gold\n\t\t}\n\t}\n}\n"
 )
 
 
-def _write(path, text, newline=""):
-    with open(path, "w", encoding="utf-8", newline=newline) as handle:
-        handle.write(text)
-
-
 def test_dry_run_reports_without_writing(tmp_path):
-    path = tmp_path / "test.txt"
-    _write(path, _SAMPLE)
+    idea_path = tmp_path / "ideas.txt"
+    with open(idea_path, "w", encoding="utf-8", newline="") as out:
+        out.write(_IDEA_SAMPLE)
 
-    assert process_file(str(path), SLOTLESS, dry_run=True, backup=False) == (
-        1,
-        0,
-        False,
+    removed, skipped, failed = process_file(
+        str(idea_path), SLOTLESS, dry_run=True, backup=False
     )
-    with open(path, "r", encoding="utf-8", newline="") as handle:
-        assert handle.read() == _SAMPLE
+    assert (removed, skipped, failed) == (1, 0, False)
+    assert idea_path.read_text(encoding="utf-8") == _IDEA_SAMPLE
 
 
 def test_crlf_survives_the_rewrite(tmp_path):
-    path = tmp_path / "test.txt"
-    _write(path, _SAMPLE.replace("\n", "\r\n"))
+    idea_path = tmp_path / "ideas.txt"
+    with open(idea_path, "w", encoding="utf-8", newline="") as out:
+        out.write(_IDEA_SAMPLE.replace("\n", "\r\n"))
 
-    process_file(str(path), SLOTLESS, dry_run=False, backup=False)
-    with open(path, "rb") as handle:
-        data = handle.read()
-    assert b"\r\n" in data
-    assert b"\n" not in data.replace(b"\r\n", b"")
-    assert b"allowed" not in data
+    process_file(str(idea_path), SLOTLESS, dry_run=False, backup=False)
+    payload = idea_path.read_bytes()
+    assert b"\r\n" in payload
+    assert b"\n" not in payload.replace(b"\r\n", b"")
+    assert b"allowed" not in payload
 
 
 def test_unreadable_file_is_reported_not_raised(tmp_path):

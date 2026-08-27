@@ -369,33 +369,33 @@ def test_is_idempotent():
     assert twice == once
 
 
-_SAMPLE = "FOO_modifier = {\n\tenable = { always = yes }\n\tstability_factor = x\n}\n"
+_MOD_SAMPLE = (
+    "FOO_modifier = {\n\tenable = { always = yes }\n\tstability_factor = x\n}\n"
+)
 
 
-def _write(path, text, newline=""):
+def _write_mod(path, text, newline=""):
     with open(path, "w", encoding="utf-8", newline=newline) as handle:
         handle.write(text)
 
 
 def test_dry_run_reports_without_writing(tmp_path):
-    path = tmp_path / "test.txt"
-    _write(path, _SAMPLE)
+    mod_path = tmp_path / "dynmod.txt"
+    _write_mod(mod_path, _MOD_SAMPLE)
 
-    assert process_file(str(path), dry_run=True, backup=False) == (1, 0, 0, False)
-    with open(path, "r", encoding="utf-8", newline="") as handle:
-        assert handle.read() == _SAMPLE
+    assert process_file(str(mod_path), dry_run=True, backup=False) == (1, 0, 0, False)
+    assert mod_path.read_text(encoding="utf-8") == _MOD_SAMPLE
 
 
 def test_crlf_survives_the_rewrite(tmp_path):
-    path = tmp_path / "test.txt"
-    _write(path, _SAMPLE.replace("\n", "\r\n"))
+    mod_path = tmp_path / "dynmod.txt"
+    _write_mod(mod_path, _MOD_SAMPLE.replace("\n", "\r\n"))
 
-    process_file(str(path), dry_run=False, backup=False)
-    with open(path, "rb") as handle:
-        data = handle.read()
-    assert b"\r\n" in data
-    assert b"\n" not in data.replace(b"\r\n", b"")
-    assert b"enable" not in data
+    process_file(str(mod_path), dry_run=False, backup=False)
+    payload = mod_path.read_bytes()
+    assert b"\r\n" in payload
+    assert b"\n" not in payload.replace(b"\r\n", b"")
+    assert b"enable" not in payload
 
 
 def test_unreadable_file_is_reported_not_raised(tmp_path):
@@ -404,7 +404,7 @@ def test_unreadable_file_is_reported_not_raised(tmp_path):
 
 def test_main_exits_non_zero_on_an_unbalanced_block(tmp_path, monkeypatch):
     path = tmp_path / "test.txt"
-    _write(path, "FOO_modifier = {\n\tenable = {\n\t\toriginal_tag = FOO\n")
+    _write_mod(path, "FOO_modifier = {\n\tenable = {\n\t\toriginal_tag = FOO\n")
     monkeypatch.setattr(
         sys, "argv", ["strip_dynmod_tag_gates.py", "--root", str(tmp_path), str(path)]
     )

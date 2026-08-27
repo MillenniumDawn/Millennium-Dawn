@@ -15,18 +15,11 @@ import glob
 import os
 import re
 import sys
-from typing import List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from common_utils import (  # noqa: E402
-    apply_brace_stack,
-    code_of_line,
-    collapse_blank_gap,
-    create_gate_sweep_parser,
-    find_block_span,
-)
-from shared_utils import (  # noqa: E402
+import common_utils
+from shared_utils import (
     atomic_write_text,
     create_backup,
     get_slotless_idea_categories,
@@ -37,8 +30,8 @@ _ALLOWED_OPEN_RE = re.compile(r"^(\s*)allowed\s*=\s*\{")
 
 
 def strip_allowed_blocks(
-    lines: List[str], slotless: frozenset
-) -> Tuple[List[str], int, int]:
+    lines: list[str], slotless: frozenset
+) -> tuple[list[str], int, int]:
     """Drop every `allowed` block sitting directly inside a slotless-category idea.
 
     Returns the rewritten lines, the number of blocks removed, and the number
@@ -46,21 +39,23 @@ def strip_allowed_blocks(
     ideas > category > idea nesting is touched, so an `allowed` somewhere
     unexpected is left alone rather than guessed at.
     """
-    out: List[str] = []
-    stack: List[str] = []
+    out: list[str] = []
+    stack: list[str] = []
     removed = 0
     skipped = 0
     i = 0
 
     while i < len(lines):
-        code = code_of_line(lines[i])
+        code = common_utils.code_of_line(lines[i])
         opener = (
             _ALLOWED_OPEN_RE.match(code)
             if len(stack) == 3 and stack[0] == "ideas" and stack[1] in slotless
             else None
         )
 
-        span = find_block_span(lines, i, code.index("{")) if opener else None
+        span = (
+            common_utils.find_block_span(lines, i, code.index("{")) if opener else None
+        )
         if opener and span is None:
             skipped += 1
         elif opener and span:
@@ -74,13 +69,13 @@ def strip_allowed_blocks(
                 out.append(merged)
                 # The idea's own `}` can ride along on the closer line, so the
                 # stack has to see what was emitted, not what was read.
-                apply_brace_stack(code_of_line(merged), stack)
+                common_utils.apply_brace_stack(common_utils.code_of_line(merged), stack)
                 continue
-            i = collapse_blank_gap(out, lines, i)
+            i = common_utils.collapse_blank_gap(out, lines, i)
             continue
 
         out.append(lines[i])
-        apply_brace_stack(code, stack)
+        common_utils.apply_brace_stack(code, stack)
         i += 1
 
     return out, removed, skipped
@@ -88,7 +83,7 @@ def strip_allowed_blocks(
 
 def process_file(
     path: str, slotless: frozenset, dry_run: bool, backup: bool
-) -> Tuple[int, int, bool]:
+) -> tuple[int, int, bool]:
     try:
         with open(path, "r", encoding="utf-8-sig", newline="") as handle:
             text = handle.read()
@@ -106,7 +101,7 @@ def process_file(
 
 
 def main() -> int:
-    args = create_gate_sweep_parser(
+    args = common_utils.create_gate_sweep_parser(
         __doc__ or "", "idea files (default: common/ideas/)"
     ).parse_args()
 
