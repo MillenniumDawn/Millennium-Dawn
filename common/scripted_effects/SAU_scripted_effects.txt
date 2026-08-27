@@ -490,17 +490,23 @@ SAU_recompute_crown_shares = {
 	add_to_temp_variable = { var = SAU_crown_total value = SAU_mutaib_points }
 	if = { limit = { check_variable = { SAU_crown_total < 1 } } set_temp_variable = { SAU_crown_total = 1 } }
 
+	# Hold the pool at 100. The princes' free monthly manoeuvres used to inflate the total
+	# as fast as anyone climbed, so paid gains were divided away and the share barely moved.
+	multiply_variable = { SAU_salman_points = 100 }
+	divide_variable = { var = SAU_salman_points value = SAU_crown_total }
+	clamp_variable = { var = SAU_salman_points min = 1 }
+	multiply_variable = { SAU_mbn_points = 100 }
+	divide_variable = { var = SAU_mbn_points value = SAU_crown_total }
+	clamp_variable = { var = SAU_mbn_points min = 1 }
+	multiply_variable = { SAU_mutaib_points = 100 }
+	divide_variable = { var = SAU_mutaib_points value = SAU_crown_total }
+	clamp_variable = { var = SAU_mutaib_points min = 1 }
+
 	set_variable = { SAU_salman_share = SAU_salman_points }
-	multiply_variable = { SAU_salman_share = 100 }
-	divide_variable = { var = SAU_salman_share value = SAU_crown_total }
 
 	set_variable = { SAU_mbn_share = SAU_mbn_points }
-	multiply_variable = { SAU_mbn_share = 100 }
-	divide_variable = { var = SAU_mbn_share value = SAU_crown_total }
 
 	set_variable = { SAU_mutaib_share = SAU_mutaib_points }
-	multiply_variable = { SAU_mutaib_share = 100 }
-	divide_variable = { var = SAU_mutaib_share value = SAU_crown_total }
 }
 
 # temp args: prince (1/2/3), amount (may be negative). Points clamp at a floor of 1 so the pie is never empty.
@@ -585,13 +591,17 @@ SAU_recompute_heir_shares = {
 	add_to_temp_variable = { var = SAU_heir_total value = SAU_mbn_points }
 	if = { limit = { check_variable = { SAU_heir_total < 1 } } set_temp_variable = { SAU_heir_total = 1 } }
 
+	# Same reason as the three-way race: keep the pool at 100.
+	multiply_variable = { SAU_mbs_points = 100 }
+	divide_variable = { var = SAU_mbs_points value = SAU_heir_total }
+	clamp_variable = { var = SAU_mbs_points min = 1 }
+	multiply_variable = { SAU_mbn_points = 100 }
+	divide_variable = { var = SAU_mbn_points value = SAU_heir_total }
+	clamp_variable = { var = SAU_mbn_points min = 1 }
+
 	set_variable = { SAU_heir_mbs_share = SAU_mbs_points }
-	multiply_variable = { SAU_heir_mbs_share = 100 }
-	divide_variable = { var = SAU_heir_mbs_share value = SAU_heir_total }
 
 	set_variable = { SAU_heir_mbn_share = SAU_mbn_points }
-	multiply_variable = { SAU_heir_mbn_share = 100 }
-	divide_variable = { var = SAU_heir_mbn_share value = SAU_heir_total }
 }
 
 # temp args: heir (1 MBS / 2 MBN), amount (may be negative). Floor of 1 keeps the pie non-empty.
@@ -1290,7 +1300,7 @@ SAU_found_gip_network = {
 }
 
 # The standing standard is what the Council asks for; a province can only give what it has
-# room for. Factories first, then offices, out of the slots that actually exist there.
+# room for. Factories take the shared slots first, offices what is left, infrastructure its own.
 SAU_pc_set_mandate = {
 	set_temp_variable = { SAU_pc_room = 0 }
 	if = {
@@ -1305,55 +1315,44 @@ SAU_pc_set_mandate = {
 		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = industrial_complex size > 2 include_locked = yes } } }
 		add_to_temp_variable = { SAU_pc_room = 1 }
 	}
-	if = {
-		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = industrial_complex size > 3 include_locked = yes } } }
-		add_to_temp_variable = { SAU_pc_room = 1 }
-	}
-	if = {
-		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = industrial_complex size > 4 include_locked = yes } } }
-		add_to_temp_variable = { SAU_pc_room = 1 }
-	}
-	if = {
-		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = industrial_complex size > 5 include_locked = yes } } }
-		add_to_temp_variable = { SAU_pc_room = 1 }
-	}
 	set_temp_variable = { SAU_pc_have_civ = event_target:SAU_pc_works_province.building_level@industrial_complex }
 	set_temp_variable = { SAU_pc_have_off = event_target:SAU_pc_works_province.building_level@offices }
 
-	set_temp_variable = { SAU_pc_need_civ = SAU_pc_req_civ }
-	subtract_from_temp_variable = { SAU_pc_need_civ = SAU_pc_have_civ }
-	clamp_temp_variable = { var = SAU_pc_need_civ min = 0 max = 3 }
-	set_temp_variable = { SAU_pc_need_off = SAU_pc_req_off }
-	subtract_from_temp_variable = { SAU_pc_need_off = SAU_pc_have_off }
-	clamp_temp_variable = { var = SAU_pc_need_off min = 0 max = 3 }
+	set_temp_variable = { SAU_pc_cap_civ = SAU_pc_have_civ }
+	add_to_temp_variable = { var = SAU_pc_cap_civ value = SAU_pc_room }
+	set_variable = { SAU_pc_mandate_civ = SAU_pc_req_civ }
+	clamp_variable = { var = SAU_pc_mandate_civ min = 0 max = SAU_pc_cap_civ }
 
-	set_temp_variable = { SAU_pc_give_civ = SAU_pc_need_civ }
-	clamp_temp_variable = { var = SAU_pc_give_civ min = 0 max = SAU_pc_room }
+	set_temp_variable = { SAU_pc_used = SAU_pc_mandate_civ }
+	subtract_from_temp_variable = { SAU_pc_used = SAU_pc_have_civ }
+	clamp_temp_variable = { var = SAU_pc_used min = 0 max = SAU_pc_room }
 	set_temp_variable = { SAU_pc_left = SAU_pc_room }
-	subtract_from_temp_variable = { SAU_pc_left = SAU_pc_give_civ }
-	set_temp_variable = { SAU_pc_give_off = SAU_pc_need_off }
-	clamp_temp_variable = { var = SAU_pc_give_off min = 0 max = SAU_pc_left }
+	subtract_from_temp_variable = { SAU_pc_left = SAU_pc_used }
 
-	set_variable = { SAU_pc_mandate_civ = SAU_pc_have_civ }
-	add_to_variable = { SAU_pc_mandate_civ = SAU_pc_give_civ }
-	set_variable = { SAU_pc_mandate_off = SAU_pc_have_off }
-	add_to_variable = { SAU_pc_mandate_off = SAU_pc_give_off }
+	set_temp_variable = { SAU_pc_cap_off = SAU_pc_have_off }
+	add_to_temp_variable = { var = SAU_pc_cap_off value = SAU_pc_left }
+	set_variable = { SAU_pc_mandate_off = SAU_pc_req_off }
+	clamp_variable = { var = SAU_pc_mandate_off min = 0 max = SAU_pc_cap_off }
 
 	set_temp_variable = { SAU_pc_inf_room = 0 }
 	if = {
-		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = infrastructure size > 0 include_locked = yes } } }
+		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = infrastructure size > 0 } } }
 		add_to_temp_variable = { SAU_pc_inf_room = 1 }
 	}
 	if = {
-		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = infrastructure size > 1 include_locked = yes } } }
+		limit = { event_target:SAU_pc_works_province = { free_building_slots = { building = infrastructure size > 1 } } }
 		add_to_temp_variable = { SAU_pc_inf_room = 1 }
 	}
 	set_temp_variable = { SAU_pc_have_inf = event_target:SAU_pc_works_province.building_level@infrastructure }
-	set_temp_variable = { SAU_pc_need_inf = SAU_pc_req_inf }
-	subtract_from_temp_variable = { SAU_pc_need_inf = SAU_pc_have_inf }
-	clamp_temp_variable = { var = SAU_pc_need_inf min = 0 max = 2 }
-	set_temp_variable = { SAU_pc_give_inf = SAU_pc_need_inf }
-	clamp_temp_variable = { var = SAU_pc_give_inf min = 0 max = SAU_pc_inf_room }
-	set_variable = { SAU_pc_mandate_inf = SAU_pc_have_inf }
-	add_to_variable = { SAU_pc_mandate_inf = SAU_pc_give_inf }
+	set_temp_variable = { SAU_pc_cap_inf = SAU_pc_have_inf }
+	add_to_temp_variable = { var = SAU_pc_cap_inf value = SAU_pc_inf_room }
+	set_variable = { SAU_pc_mandate_inf = SAU_pc_req_inf }
+	clamp_variable = { var = SAU_pc_mandate_inf min = 0 max = SAU_pc_cap_inf }
 }
+
+
+# manoeuvres inflated the point total as fast as anyone climbed, so the player's paid
+# gains were divided away by a growing denominator and the share barely moved.
+
+# Same idea with only two claimants, so the whole gain comes out of the other one.
+
