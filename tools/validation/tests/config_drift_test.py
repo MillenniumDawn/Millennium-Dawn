@@ -32,13 +32,8 @@ from precommit_validate import _REGISTRY
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import _CREATE_UNIT_SOURCE_PATTERNS
-from validate_scripted_params import (
-    _CALLER_PATTERNS,
-    HARDCODED_CONTRACTS,
-    _parse_effect_contracts_from_file,
-)
+from validate_scripted_params import _CALLER_PATTERNS
 from validate_staged import VALIDATORS as STAGED_VALIDATORS
-from validator_common import strip_comments
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 VALIDATION_DIR = Path(__file__).resolve().parents[1]
@@ -49,8 +44,8 @@ VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cach
 NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
 
 # Every tree the engine runs script from. Deliberately not derived from a
-# validator's own pattern list: the caller scan below has to be able to find a
-# call site that the list under test does not cover.
+# validator's own pattern list: it is the independent expectation the caller
+# patterns are checked against.
 SCRIPT_ROOTS = ("common", "events", "history")
 
 
@@ -593,12 +588,17 @@ def test_tools_tests_checkout_consumed_configuration():
         # validate_modifiers_test parses the shipped doc to catch a Paradox
         # format change; without it here the test reads an absent file.
         "resources/documentation/modifiers_documentation.md",
-        # The scripted-effect caller scan walks these whole; a missing tree
-        # reads as "no callers here" and passes on nothing. They also carry
-        # what focus_pp_malus_test and check_common_mistakes_test read
-        # (national_focus, script_enums, equipment, decisions, modifiers),
-        # which raise at collection time when absent.
-        *SCRIPT_ROOTS,
+        # common/national_focus is walked by focus_pp_malus_test's
+        # exemption-freshness guard. check_common_mistakes_test asserts its
+        # script_enums, equipment, decision and modifier loaders against the
+        # real files those loaders read; without them each returns None and the
+        # module-level assertions blow up at collection time.
+        "common/national_focus",
+        "common/script_enums.txt",
+        "common/units/equipment",
+        "common/decisions",
+        "common/opinion_modifiers",
+        "common/modifiers",
         ".github/workflows/coding-pipeline.yml",
         ".github/workflows/validator-cache.yml",
         ".github/workflows/nightly-pr-validation.yml",
@@ -676,62 +676,22 @@ def test_ci_idea_icon_check_is_enabled():
     assert (VALIDATION_DIR / "vanilla_sprites.txt").is_file()
 
 
-def _contracted_effect_names():
-    """The effect names validate_scripted_params builds contracts for."""
-    names = set(HARDCODED_CONTRACTS)
-    effects_dir = REPO_ROOT / "common" / "scripted_effects"
-    for path in sorted(effects_dir.glob("*.txt")):
-        for effect, contract in _parse_effect_contracts_from_file(str(path)).items():
-            if contract["required"]:
-                names.add(effect)
-    return names
+def test_scripted_param_patterns_scan_every_script_root():
+    """Each script tree must be scanned whole, not by named subdirectories.
 
-
-def _actual_caller_dirs():
-    """Directories that really call a contracted effect, read off the corpus.
-
-    Deriving this from the tree rather than from _CALLER_PATTERNS is the whole
-    point: a caller directory the pattern list never named is exactly the drift
-    being guarded, and a test that re-read the list could not see it.
+    The hand-maintained caller list this replaced missed six live directories.
+    Any narrowing back to `common/<dir>/**` reintroduces that blind spot, so
+    assert the patterns still cover each root wholesale.
     """
-    names = _contracted_effect_names()
-    encoded = [name.encode() for name in names]
-    call_re = re.compile(r"\b([a-z][a-z0-9_]*)\s*=\s*yes\b")
-    dirs = set()
-    caller_files = 0
-    for root in SCRIPT_ROOTS:
-        base = REPO_ROOT / root
-        assert base.is_dir(), (
-            f"{root}/ is absent from this checkout, so the scan below would "
-            "find no callers there and pass on nothing"
-        )
-        for path in base.rglob("*.txt"):
-            raw = path.read_bytes()
-            if not any(name in raw for name in encoded):
-                continue
-            text = strip_comments(raw.decode("utf-8-sig", errors="ignore"))
-            if {m.group(1) for m in call_re.finditer(text)} & names:
-                caller_files += 1
-                dirs.add(path.parent.relative_to(REPO_ROOT).as_posix() + "/")
-    assert caller_files >= 100, (
-        f"only {caller_files} files call a contracted effect across "
-        f"{list(SCRIPT_ROOTS)} — the corpus has hundreds, so this checkout is "
-        "too sparse for the scan to prove anything"
-    )
-    return dirs
-
-
-def test_scripted_param_patterns_scan_every_actual_caller():
-    prefixes = [pattern.split("*", 1)[0] for pattern in _CALLER_PATTERNS]
-    missed = sorted(
-        directory
-        for directory in _actual_caller_dirs()
-        if not any(directory.startswith(prefix) for prefix in prefixes)
-    )
+    whole_tree = {
+        pattern.split("/", 1)[0]
+        for pattern in _CALLER_PATTERNS
+        if pattern.split("/", 1)[1:] == ["**/*.txt"]
+    }
+    missed = sorted(root for root in SCRIPT_ROOTS if root not in whole_tree)
     assert not missed, (
-        "these directories call a contracted scripted effect but no "
-        f"_CALLER_PATTERNS entry scans them, so edits there are never "
-        f"validated: {missed}"
+        f"_CALLER_PATTERNS no longer scans {missed} whole, so callers in any "
+        f"directory it does not name are never validated: {_CALLER_PATTERNS}"
     )
 
 
