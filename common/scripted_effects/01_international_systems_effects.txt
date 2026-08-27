@@ -316,6 +316,15 @@ on_startup_international = {
 	}
 }
 
+international_systems_force_update = {
+	if = { limit = { check_variable = { global.international_systems_updated > 1000000 } }
+		set_variable = { global.international_systems_updated = 1 }
+	}
+	else = {
+		add_to_variable = { global.international_systems_updated = 1 }
+	}
+}
+
 international_systems_update = {
 	# Bump the GUI dirty counter for player paths, or for any path while a GA/SC vote is live so open vote screens refresh; AI idle paths skip it to avoid ~190 wakes per GA cycle.
 	if = {
@@ -326,12 +335,7 @@ international_systems_update = {
 				has_global_flag = current_ongoing_sc_vote
 			}
 		}
-		if = { limit = { check_variable = { global.international_systems_updated > 1000000 } }
-			set_variable = { global.international_systems_updated = 1 }
-		}
-		else = {
-			add_to_variable = { global.international_systems_updated = 1 }
-		}
+		international_systems_force_update = yes
 	}
 }
 
@@ -432,6 +436,11 @@ un_recog_setup_check = {
 		}
 		add_to_array = { global.UN_general_assembly = THIS }
 		add_dynamic_modifier = { modifier = united_nations_member }
+		if = {
+			limit = { has_global_flag = international_systems_initialized }
+			recompute_un_2_3_number = yes
+			international_systems_force_update = yes
+		}
 	}
 }
 
@@ -2835,6 +2844,8 @@ clear_united_nations_member_state = {
 	if = {
 		limit = { is_in_array = { global.UN_general_assembly = THIS } }
 		remove_from_array = { global.UN_general_assembly = THIS }
+		recompute_un_2_3_number = yes
+		international_systems_force_update = yes
 	}
 	if = {
 		limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
