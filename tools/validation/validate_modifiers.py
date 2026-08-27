@@ -390,6 +390,52 @@ def _load_documented_modifiers(
 
 _IDEA_SLOT_RE = re.compile(r"^\s*(?:character_)?slot\s*=\s*([A-Za-z][A-Za-z0-9_]*)")
 
+_ENABLE_BLOCK_RE = re.compile(r"\benable\s*=\s*\{")
+_ALWAYS_YES_RE = re.compile(r"^\s*always\s*=\s*yes\s*$")
+_TAG_GATE_RE = re.compile(r"^\s*(?:original_tag|tag)\s*=\s*([A-Z]{3})\s*$")
+
+
+def _redundant_enable_gates(body: str) -> List[Tuple[str, int]]:
+    """Return (message, line offset) for triggers an `enable` block never needs.
+
+    `enable` is re-evaluated at runtime, unlike an idea's `allowed`, so a
+    trigger that can never be false costs something every time. Only top-level
+    triggers count: one inside OR / NOT is an alternative or an exclusion.
+    """
+    match = _ENABLE_BLOCK_RE.search(body)
+    if not match:
+        return []
+    enable_body, _ = extract_block_from_text(body, match.start())
+    if not enable_body:
+        return []
+
+    base = body[: match.start()].count("\n")
+    findings: List[Tuple[str, int]] = []
+    depth = 0
+    for offset, line in enumerate(enable_body.split("\n")):
+        if depth == 0:
+            if _ALWAYS_YES_RE.match(line):
+                findings.append(
+                    (
+                        "enable = { always = yes } is what an absent enable block "
+                        "already means — delete it",
+                        base + offset,
+                    )
+                )
+            else:
+                tag = _TAG_GATE_RE.match(line)
+                if tag:
+                    findings.append(
+                        (
+                            f"enable gates on {tag.group(1)}, but add_dynamic_modifier "
+                            "already chose who gets this modifier — drop the tag check "
+                            "unless another country is meant to hold it inert",
+                            base + offset,
+                        )
+                    )
+        depth += line.count("{") - line.count("}")
+    return findings
+
 
 def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
     """Every idea slot auto-generates a `<slot>_cost_factor` modifier.
@@ -736,10 +782,38 @@ class Validator(BaseValidator):
             category="dynamic-modifier-name-loc",
         )
 
+    def validate_redundant_enable_gates(self):
+        """Check dynamic modifier `enable` blocks for triggers that never fail."""
+        self._log_section("Checking dynamic modifier enable gates...")
+
+        files = self._collect_files(["common/dynamic_modifiers/**/*.txt"])
+        results = []
+        for filepath in files:
+            if should_skip_file(filepath):
+                continue
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not text:
+                continue
+            rel = os.path.relpath(filepath, self.mod_path)
+            for name, block_line, body in _extract_top_level_definition_blocks(text):
+                for message, offset in _redundant_enable_gates(body):
+                    results.append((f"'{name}': {message}", rel, block_line + offset))
+
+        self._report(
+            results,
+            "✓ No redundant dynamic modifier enable gates",
+            "Redundant enable gates (re-evaluated every tick, never false):",
+            severity=Severity.WARNING,
+            category="redundant-enable-gate",
+        )
+
     def run_validations(self):
         known_good = self._build_known_good_set()
         self.validate_modifier_names(known_good)
         self.validate_dynamic_modifier_name_loc()
+        self.validate_redundant_enable_gates()
 
 
 if __name__ == "__main__":

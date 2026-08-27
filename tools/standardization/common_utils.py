@@ -17,12 +17,38 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from _common import format_elapsed
 from shared_utils import (
     atomic_write_text,
+    blank_quoted_strings,
     create_backup,
     extract_block,
     log_message,
     normalize_spacing,
     run_tool_main,
+    strip_inline_comment,
 )
+
+# A named block opener, or a bare brace. Ordering matters: `foo = {` has to win
+# over the lone `{` alternative so the name reaches the stack.
+_BRACE_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{|\{|\}")
+
+
+def code_of_line(line: str) -> str:
+    """Strip a line down to what the parser sees: no comment, no quoted text."""
+    return blank_quoted_strings(strip_inline_comment(line))
+
+
+def apply_brace_stack(code: str, stack: List[str]) -> None:
+    """Advance a stack of enclosing block names across one line of code.
+
+    A named opener pushes its name, a bare `{` pushes an empty string, and `}`
+    pops, so `len(stack)` is the nesting depth and `stack[n]` names the block at
+    each level.
+    """
+    for match in _BRACE_RE.finditer(code):
+        if match.group(0) == "}":
+            if stack:
+                stack.pop()
+        else:
+            stack.append(match.group(1) or "")
 
 
 def compact_search_filters(block_lines: List[str]) -> str:

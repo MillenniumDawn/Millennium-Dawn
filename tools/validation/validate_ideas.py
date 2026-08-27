@@ -92,8 +92,16 @@ from shared_utils import (
 from shared_utils import (  # noqa: E402
     get_non_selectable_idea_categories as _get_non_selectable_idea_categories,
 )
+from shared_utils import (  # noqa: E402
+    get_slotless_idea_categories as _get_slotless_idea_categories,
+)
 
-_ALWAYS_NO_CATEGORIES = _get_non_selectable_idea_categories()
+# An idea with no slot of any kind can only arrive through add_idea, which
+# never consults `allowed`, so the whole block goes. A hidden category that
+# still has a slot keeps its `allowed`; only the dead `always = no` form is
+# flagged there.
+_SLOTLESS_CATEGORIES = _get_slotless_idea_categories()
+_ALWAYS_NO_CATEGORIES = _get_non_selectable_idea_categories() - _SLOTLESS_CATEGORIES
 
 # Vanilla idea prefixes that we skip for undefined-reference checks
 # (game-engine built-ins, vanilla ideas, etc.)
@@ -405,6 +413,15 @@ def _parse_ideas_from_text(
 
                 allowed_start = _ALLOWED_BLOCK_START.search(idea_text)
                 if allowed_start:
+                    if category_name in _SLOTLESS_CATEGORIES:
+                        issues.append(
+                            IdeaIssue(
+                                current_idea,
+                                cat,
+                                current_idea_line,
+                                "allowed-in-slotless-category",
+                            )
+                        )
                     allowed_block, _ = extract_block_from_text(
                         idea_text, allowed_start.end() - 1
                     )
@@ -816,7 +833,15 @@ class Validator(BaseValidator):
 
         for filepath, file_issues in issues_by_file.items():
             for issue in file_issues:
-                if issue.issue_type == "allowed-always-no":
+                if issue.issue_type == "allowed-in-slotless-category":
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' has an allowed block in {issue.category}"
+                        " (that category has no slot, so add_idea is the only way in"
+                        " and the gate is never consulted — delete it)",
+                    )
+                elif issue.issue_type == "allowed-always-no":
                     _add(
                         filepath,
                         issue.line,
