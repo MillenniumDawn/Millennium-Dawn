@@ -316,6 +316,15 @@ on_startup_international = {
 	}
 }
 
+international_systems_force_update = {
+	if = { limit = { check_variable = { global.international_systems_updated > 1000000 } }
+		set_variable = { global.international_systems_updated = 1 }
+	}
+	else = {
+		add_to_variable = { global.international_systems_updated = 1 }
+	}
+}
+
 international_systems_update = {
 	# Bump the GUI dirty counter for player paths, or for any path while a GA/SC vote is live so open vote screens refresh; AI idle paths skip it to avoid ~190 wakes per GA cycle.
 	if = {
@@ -326,12 +335,7 @@ international_systems_update = {
 				has_global_flag = current_ongoing_sc_vote
 			}
 		}
-		if = { limit = { check_variable = { global.international_systems_updated > 1000000 } }
-			set_variable = { global.international_systems_updated = 1 }
-		}
-		else = {
-			add_to_variable = { global.international_systems_updated = 1 }
-		}
+		international_systems_force_update = yes
 	}
 }
 
@@ -426,9 +430,17 @@ un_recog_setup_check = {
 		}
 	} else_if = {
 		# SWI is a recognized non-member until the 2002 referendum decision (SWI_join_the_united_nations)
-		limit = { NOT = { original_tag = SWI } }
+		limit = {
+			NOT = { original_tag = SWI }
+			NOT = { original_tag = HLS }
+		}
 		add_to_array = { global.UN_general_assembly = THIS }
 		add_dynamic_modifier = { modifier = united_nations_member }
+		if = {
+			limit = { has_global_flag = international_systems_initialized }
+			recompute_un_2_3_number = yes
+			international_systems_force_update = yes
+		}
 	}
 }
 
@@ -802,6 +814,8 @@ update_security_council_peeps = {
 				var:v = {
 					exists = yes
 					has_capitulated = no
+					NOT = { has_idea = lacks_international_recognition }
+					NOT = { has_idea = non_state_actor }
 				}
 			}
 			add_to_array = { md_valid_confirmed_members = v }
@@ -888,6 +902,8 @@ un_sc_new_members_step_next = {
 			var:global.current_ga_vote_nation = {
 				exists = yes
 				has_capitulated = no
+				NOT = { has_idea = lacks_international_recognition }
+				NOT = { has_idea = non_state_actor }
 			}
 		}
 		add_to_array = { global.confirmed_new_council_members = global.current_ga_vote_nation }
@@ -2828,6 +2844,8 @@ clear_united_nations_member_state = {
 	if = {
 		limit = { is_in_array = { global.UN_general_assembly = THIS } }
 		remove_from_array = { global.UN_general_assembly = THIS }
+		recompute_un_2_3_number = yes
+		international_systems_force_update = yes
 	}
 	if = {
 		limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
@@ -2852,6 +2870,14 @@ clear_united_nations_member_state = {
 	if = {
 		limit = { is_in_array = { global.security_council_vote_abstain = THIS } }
 		remove_from_array = { global.security_council_vote_abstain = THIS }
+	}
+	if = {
+		limit = { is_in_array = { global.p5_sc_members = THIS } }
+		remove_from_array = { global.p5_sc_members = THIS }
+	}
+	if = {
+		limit = { has_idea = p5_member }
+		remove_ideas = p5_member
 	}
 	if = {
 		limit = { has_dynamic_modifier = { modifier = united_nations_member } }

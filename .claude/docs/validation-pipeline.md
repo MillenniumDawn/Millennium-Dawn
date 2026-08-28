@@ -62,6 +62,7 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   - Sprite names in the generator-managed `.gfx` files come from the texture filename (`tools/gfx_entry_generator.py` builds `GFX_<stem>`), so a name fixed only in the `.gfx` is undone on the next generator run. Rename the `.dds`/`.png` and update `texturefile` instead.
 - `validate_set_variables.py` runs **CI-only**, `--strict` (its unused-variable backlog was cleared). No pre-commit hook; run it directly (`python3 tools/validation/validate_set_variables.py`) for a local check.
 - `validate_scripted_localisation.py` runs **CI-only**, `--strict` (its missing/unused scripted-loc backlog was cleared). No pre-commit hook; run it directly for a local check.
+- `validate_modifiers.py` runs **CI-only**, `--strict` since #3228. It is not in `precommit_validate.py`'s registry, so `common/dynamic_modifiers/` edits get no local signal — run it directly before pushing. Only `redundant-enable-gate` is ERROR and gates; `unknown-modifier` and `dynamic-modifier-name-loc` stay WARNING, which is why `--strict` is safe here despite the frequency heuristic's known false positives. `redundant-enable-gate` flags a top-level `always = yes` or `original_tag` / `tag` inside a dynamic modifier's own `enable` (never one nested in `OR` / `NOT`, nor one inside `remove_trigger`) — see `common/dynamic_modifiers/README.md` for when a gate is genuinely load-bearing. `tools/standardization/strip_dynmod_tag_gates.py` clears them in bulk. There is deliberately no exemption list: add one only when a real case appears.
 - `validate_file_paths.py` runs **CI-only**, `--strict`, in its own `validate-paths` job rather than either matrix. It reads path names from the git index (`git ls-files`), so it needs a checkout with `.git`; the workspace bundle the matrix jobs restore has neither `.git` nor `map/`. The job checks out with `filter: blob:none` and a sparse `tools` cone — the index already names every shipped path, so no content is fetched. `descriptor.mod` is read for `replace_path` directives, and a missing descriptor is a hard setup error: reading it as "nothing is replaced" would turn every inert case clash into a blocking one. Cross-references the committed `vanilla_paths.txt` manifest (CI has no HOI4 install); regenerate it after a game update via `refresh_vanilla_data.py`. Its within-mod case-collision check overlaps the pre-commit `check-case-conflict` hook on purpose — that hook only sees staged files on machines with hooks enabled, so web-UI edits and hook-less contributors bypass it exactly like the BOM fixers below.
 
 - `validate_characters.py` runs in both pre-commit and CI (`--strict`, `characters` path filter) and covers **both leader trait pools** over one file walk — unit leader roles and advisor slots. They are checked together because they cross: deciding whether a trait is legal on a general or on an advisor needs both pools loaded, and each pool's traits are dead in the other's blocks. Its `trait-role-mismatch` check is ERROR and gates: a unit leader trait declares `type = land` / `navy` / `operative` (or `all`, or a `{ land navy }` list), and one from the wrong branch loads silently and never applies, so the leader ships with fewer traits than the script promises. Only the branch is compared — vanilla itself puts `type = corps_commander` traits on field marshals and `type = field_marshal` traits on corps commanders, so that split is not a finding (checking it produced 185 false positives). The `bold`-on-a-general backlog was cleared in the same change. `undefined-unit-leader-trait` is WARNING: 9 ALG/PHI references to traits nothing defines need content decisions, not a mechanical fix. `common/unit_leader` is `replace_path`'d, so the mod's files are the complete trait universe and no vanilla manifest is needed. `country_leader` blocks (the country leader's own traits, not an advisor's) draw from a third pool and are not scanned.
@@ -90,11 +91,16 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   `tools/validation/equipment_module_slots.py`, resolving module-driven slot unlocks
   and `duplicate_archetypes` clones first. Tank and plane variant slots are not
   validated yet.
-  All findings are ERROR. It also structurally checks `create_unit`
+  Ship-variant findings are ERROR. It also structurally checks `create_unit`
   effects: state scope, `owner`, block keys, a single-line division string
-  naming a `division_template`, zero equipment/manpower factors, and the order
-  of a template defined in the same file and effect path as the `create_unit`
-  using it. It does not check that a referenced template is defined anywhere, so
+  that parses as army data (documented inner keys, quoted `name` /
+  `division_template`, numeric factors, `force_equipment_variants` shape),
+  zero equipment/manpower factors, and the order of a template defined in the
+  same file and effect path as the `create_unit` using it. German/Danish letters
+  in that string (`äöüßæøå`) are WARNING (`out-of-bounds-division`): the inner
+  parser rejects them even inside quotes (Sweden `militärdistriktet`). Romance,
+  Slavic, and Kurdish accents are allowed; they render in game. Schema failures
+  gate. It does not check that a referenced template is defined anywhere, so
   a template that only ever exists for the wrong country, or a `has_template`
   guard naming a template nothing defines, still passes. Its combined run gate
   covers `history/countries/`, `common/national_focus/`, `events/`,
@@ -104,7 +110,7 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   both the pre-commit registry (`tools/precommit_validate.py`) and the CI
   `oob` path filter. `config_drift_test.py` derives both routes from
   `_CREATE_UNIT_SOURCE_PATTERNS`, so a new directory there fails the suite until
-  both are updated. Findings are **errors**. Non-ship variants are skipped. Their
+  both are updated. Non-ship variants are skipped. Their
   `allowed_module_categories` blocks are often empty, so the naval resolver
   cannot be pointed at them as-is.
 
