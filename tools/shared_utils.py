@@ -45,6 +45,34 @@ _LEVEL_COLORS = {
 # extend this list with their own patterns.
 DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
 
+# Leave a quarter of the machine to whoever is using it. A full suite run
+# fans out over every validator and each of those keeps its own pool, so
+# without a shared ceiling the tooling oversubscribes the box and everything
+# else on it stalls.
+CPU_BUDGET_FRACTION = 0.75
+
+
+def cpu_budget() -> int:
+    """Cores this repo's tooling may occupy at once, never the whole machine.
+
+    ``MD_MAX_WORKERS`` overrides the share outright. CI runners have the box to
+    themselves, so there the budget is every core.
+    """
+    override = os.environ.get("MD_MAX_WORKERS", "").strip()
+    if override.isdigit() and int(override) > 0:
+        return int(override)
+    cores = os.cpu_count() or 1
+    if os.environ.get("CI", "").strip().lower() in ("1", "true"):
+        return cores
+    return max(1, int(cores * CPU_BUDGET_FRACTION))
+
+
+def split_cpu_budget(tasks: int) -> Tuple[int, int]:
+    """Split the budget into (concurrent tasks, workers each), product capped."""
+    budget = cpu_budget()
+    parallel = max(1, min(tasks, budget))
+    return parallel, max(1, budget // parallel)
+
 
 def log_message(
     level: str, message: str, verbose: bool = False, use_colors: bool = True
@@ -310,12 +338,12 @@ _COMPARISON_OPS = {"!=", "==", ">=", "<="}
 
 
 def normalize_spacing(line: str) -> str:
-    """Put single spaces around ``{``, ``}`` and ``=`` in one line of script.
+    """Put single spaces around braces, assignments and comparisons in one line.
 
     Leading indentation, ``"..."`` string interiors and any trailing ``#``
     comment are left byte-exact; a whole-line comment is returned unchanged.
-    ``!=``/``==``/``>=``/``<=`` are padded as one operator, and an empty block
-    keeps the spacing it was written with (``{}`` and ``{ }`` both survive).
+    Comparison operators are padded without splitting their two-character forms,
+    and an empty block keeps its written spacing (``{}`` and ``{ }`` both survive).
     Idempotent.
     """
     code = strip_inline_comment(line)
@@ -341,7 +369,7 @@ def normalize_spacing(line: str) -> str:
             out.append(f" {code[i : i + 2]} ")
             i += 2
             continue
-        elif c in "{}=":
+        elif c in "{}=<>":
             out.append(f" {c} ")
         else:
             out.append(c)
@@ -1047,8 +1075,8 @@ def create_linting_parser(
     parser.add_argument(
         "--workers",
         type=int,
-        default=max(1, min(os.cpu_count() or 2, 4)),
-        help="Number of parallel workers (default: min(CPU count, 4))",
+        default=max(1, min(cpu_budget(), 4)),
+        help="Number of parallel workers (default: min(CPU budget, 4))",
     )
     parser.add_argument(
         "filenames",
@@ -1213,45 +1241,69 @@ def get_all_txt_files(
 
 
 def get_staged_files(
-    mod_path: str, extensions: Optional[List[str]] = None
+    mod_path: str,
+    extensions: Optional[List[str]] = None,
+    include_missing: bool = False,
 ) -> Optional[List[str]]:
     """Get list of git changed files for validation.
 
     First checks for staged (cached) files — used in pre-commit hook context.
     Falls back to the branch diff vs main when nothing is staged, so that
     running --staged on a feature branch validates only the changed files.
+    Set include_missing to retain deleted paths for cross-reference checks.
     """
     if extensions is None:
         extensions = [".txt"]
 
-    # A change list can name paths that are no longer on disk: CI builds
-    # MD_STAGED_FILES from a paths-filter output that includes deletions and
-    # the old side of a rename, and validators open every entry unguarded.
+    # Most validators open every changed path, so missing files are filtered
+    # unless a cross-reference check needs to observe a deleted target.
     def _filter(names: list) -> list:
         paths = [
             os.path.join(mod_path, f)
             for f in names
             if f and any(f.endswith(ext) for ext in extensions)
         ]
-        return [p for p in paths if os.path.isfile(p)]
+        return paths if include_missing else [p for p in paths if os.path.isfile(p)]
+
+    def _git_diff(*args):
+        diff_filter = "ACMRD" if include_missing else "ACM"
+        output_format = "--name-status" if include_missing else "--name-only"
+        command = ["git", "diff"] + list(args) + [output_format]
+        if include_missing:
+            command.append("--find-renames")
+        command.append(f"--diff-filter={diff_filter}")
+        result = subprocess.run(
+            command,
+            cwd=mod_path,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=15,
+        )
+        if not include_missing:
+            return result.stdout.strip().split("\n")
+
+        names = []
+        for line in result.stdout.splitlines():
+            status, *paths = line.split("\t")
+            if status.startswith(("R", "C")):
+                names.extend(paths)
+            elif paths:
+                names.append(paths[0])
+        return names
 
     env_files = _read_staged_from_env()
     if env_files is not None:
-        return _filter(env_files) or None
+        files = _filter(env_files)
+        if not include_missing:
+            return files or None
+        try:
+            files.extend(_filter(_git_diff("--cached")))
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            pass
+        return list(dict.fromkeys(files)) or None
 
     try:
-
-        def _git_diff(*args):
-            result = subprocess.run(
-                ["git", "diff"] + list(args) + ["--name-only", "--diff-filter=ACM"],
-                cwd=mod_path,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=15,
-            )
-            return result.stdout.strip().split("\n")
-
         # Pre-commit hook context: files added to the index
         files = _filter(_git_diff("--cached"))
         if files:

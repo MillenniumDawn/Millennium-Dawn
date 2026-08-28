@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
+          persist-credentials: false
           sparse-checkout: |
             docs
             tools/docs_checks
@@ -46,13 +47,10 @@ jobs:
         working-directory: docs
         run: bun install
 
-      # The checkers' own self-tests (validate the checker logic, not content).
       - name: Checker self-tests
         run: |
           python3 tools/docs_checks/check_link_syntax.py --self-test
           python3 tools/docs_checks/check_accessibility_basics.py --self-test
 
-      # Single orchestrator: source checks, then the build, then dist checks.
-      # The check list lives only in tools/docs_checks/check_docs.py.
       - name: Docs checks (lint, build, links, a11y, perf, ...)
         run: python3 tools/docs_checks/check_docs.py
