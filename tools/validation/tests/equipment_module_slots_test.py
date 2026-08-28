@@ -175,6 +175,9 @@ duplicate_archetypes = {
 \tlim_clone = {
 \t\tarchetype = lim_tank
 \t\ttype = { armor amphibious }
+\t\tfor_each = {
+\t\t\tvariant_name = { find_and_replace = { chassis equipment } }
+\t\t}
 \t}
 }
 """

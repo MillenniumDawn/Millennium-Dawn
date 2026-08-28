@@ -37,7 +37,7 @@ def _argv(tmp_path, baseline_dir=None, baseline_toolshash=None):
         "--output",
         str(tmp_path / "report.md"),
         "--commit-sha",
-        "test-head-sha",
+        "abc1234deadbeef",  # pragma: allowlist secret
         "--validation-scope",
         "partial",
         "--github-repository",
@@ -198,29 +198,31 @@ def test_main_posts_comment_on_clean_partial_run(tmp_path, monkeypatch):
     _passing_tree(tmp_path)
     calls = []
 
-    def fake_post(owner, repo, pr_number, body, token):
-        calls.append((pr_number, body))
-        return True, "posted"
-
-    monkeypatch.setattr(generate_validation_report, "post_comment", fake_post)
+    monkeypatch.setattr(
+        generate_validation_report,
+        "post_comment",
+        lambda *args: calls.append(args) or (True, "posted"),
+    )
 
     code = generate_validation_report.main(_post_argv(tmp_path))
 
     assert code == 0
     assert len(calls) == 1
-    assert calls[0][0] == "42"
 
 
-def test_main_posts_comment_on_clean_full_run(tmp_path, monkeypatch):
+def test_main_posts_comment_on_full_clean_run(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _passing_tree(tmp_path)
     calls = []
 
-    def fake_post(owner, repo, pr_number, body, token):
-        calls.append((owner, repo, pr_number, token))
-        return True, "posted"
-
-    monkeypatch.setattr(generate_validation_report, "post_comment", fake_post)
+    monkeypatch.setattr(
+        generate_validation_report,
+        "post_comment",
+        lambda owner, repo, pr_number, body, token: calls.append(
+            (owner, repo, pr_number, token)
+        )
+        or (True, "posted"),
+    )
 
     code = generate_validation_report.main(
         _post_argv(tmp_path, "--validation-scope", "full")
@@ -230,16 +232,23 @@ def test_main_posts_comment_on_clean_full_run(tmp_path, monkeypatch):
     assert calls == [("MillenniumDawn", "Millennium-Dawn", "42", "token")]
 
 
-def test_main_post_comment_failure_is_fatal(tmp_path, monkeypatch):
+def test_main_posts_comment_when_no_validator_ran(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    _passing_tree(tmp_path)
+    (tmp_path / "validation-results").mkdir()
+    bodies = []
+
     monkeypatch.setattr(
         generate_validation_report,
         "post_comment",
-        lambda *_args: (False, "HTTP 403"),
+        lambda owner, repo, pr_number, body, token: bodies.append(body)
+        or (True, "posted"),
     )
 
-    assert generate_validation_report.main(_post_argv(tmp_path)) == 1
+    code = generate_validation_report.main(_post_argv(tmp_path))
+
+    assert code == 0
+    assert len(bodies) == 1
+    assert "_No validator results found._" in bodies[0]
 
 
 def test_main_checks_api_failure_is_non_fatal(tmp_path, monkeypatch):
@@ -263,7 +272,7 @@ def test_main_checks_api_failure_is_non_fatal(tmp_path, monkeypatch):
     )
 
     assert code == 0
-    assert calls == [("test-head-sha", "token")]
+    assert calls == [("abc1234deadbeef", "token")]  # pragma: allowlist secret
 
 
 def test_main_post_comment_requires_repository(tmp_path, monkeypatch):

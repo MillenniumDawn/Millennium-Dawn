@@ -1,7 +1,11 @@
 """Tests for `report_lib.comment` discovery and posting."""
 
 from report_lib import comment as C
-from report_lib.comment import REPORT_MARKER, find_existing_comment, post_comment
+from report_lib.comment import (
+    REPORT_MARKER,
+    find_existing_comment,
+    post_comment,
+)
 
 
 def _comment(body, bot=True, cid=1):
@@ -81,7 +85,9 @@ def test_all_comment_requests_have_timeout(monkeypatch):
     ]
 
 
-def test_post_comment_creates_when_absent(monkeypatch):
+def test_creates_a_comment_when_the_pr_has_none(monkeypatch):
+    # A clean run still opens a comment: silence is indistinguishable from a
+    # pipeline that never reached the PR.
     monkeypatch.setattr(C, "_get", lambda *a, **k: [])
     posted = []
     monkeypatch.setattr(
@@ -89,29 +95,25 @@ def test_post_comment_creates_when_absent(monkeypatch):
         "_post",
         lambda url, payload, headers: posted.append((url, payload)) or {"id": 7},
     )
-
-    success, message = post_comment("owner", "repo", "7", "body", "token")
-
+    success, message = post_comment("owner", "repo", "7", "clean body", "token")
     assert success
     assert "created comment #7" in message
     assert posted == [
         (
             "https://api.github.com/repos/owner/repo/issues/7/comments",
-            {"body": "body"},
+            {"body": "clean body"},
         )
     ]
 
 
-def test_post_comment_updates_existing_report(monkeypatch):
+def test_refreshes_an_existing_comment(monkeypatch):
     comments = [_comment(f"{REPORT_MARKER}\n# Validation Report\nold", cid=42)]
     monkeypatch.setattr(C, "_get", lambda *a, **k: comments)
     patched = []
     monkeypatch.setattr(
         C, "_patch", lambda url, payload, headers: patched.append((url, payload)) or {}
     )
-
     success, message = post_comment("owner", "repo", "7", "fresh body", "token")
-
     assert success
     assert "updated comment #42" in message
     assert patched == [
