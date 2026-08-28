@@ -40,6 +40,8 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   37. equipment effects naming equipment nothing defines
   38. has_active_mission / has_active_decision naming no decision
   39. add_opinion_modifier / add_relation_modifier naming no modifier
+  40. event AI choices cannot all be zero under historical bankruptcy
+  41. is_at_war is not a valid trigger (use has_war)
 """
 
 import os
@@ -49,6 +51,7 @@ import tempfile
 
 from check_common_mistakes import (
     _RE_IS_X_NATION,
+    _ai_zero_modifier_conditions,
     _check_active_decision_defined,
     _check_add_to_faction_country,
     _check_any_country_member_array,
@@ -66,6 +69,7 @@ from check_common_mistakes import (
     _check_embargo_dlc_guard,
     _check_equipment_bonus,
     _check_equipment_type_defined,
+    _check_event_ai_historical_bankruptcy_fallback,
     _check_event_log_id,
     _check_every_country_member_array,
     _check_every_owned_controlled_state,
@@ -74,6 +78,7 @@ from check_common_mistakes import (
     _check_has_idea_mutex_in_not_block,
     _check_hidden_trigger_in_ctt,
     _check_influence_setter_scope,
+    _check_invalid_is_at_war,
     _check_leader_rotation,
     _check_log_nested_quote,
     _check_modifier_ref_defined,
@@ -3317,6 +3322,118 @@ assert_finds(
     "check still fires under the fallback list",
 )
 shutil.rmtree(_fixture_root)
+
+# 33. A bankruptcy guard on the historical option needs a surviving fallback.
+
+print("\n── event historical-bankruptcy AI fallback ──")
+
+assert_finds(
+    _check_event_ai_historical_bankruptcy_fallback,
+    [
+        "country_event = {\n",
+        "\tid = test_events.1\n",
+        "\toption = {\n",
+        "\t\tname = test_events.1.a\n",
+        "\t\tai_chance = {\n",
+        "\t\t\tbase = 50\n",
+        "\t\t\tmodifier = {\n",
+        "\t\t\t\tfactor = 0\n",
+        "\t\t\t\thas_active_mission = bankruptcy_incoming_collapse\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "\toption = {\n",
+        "\t\tname = test_events.1.b\n",
+        "\t\tai_chance = {\n",
+        "\t\t\tbase = 50\n",
+        "\t\t\tmodifier = {\n",
+        "\t\t\t\tfactor = 0\n",
+        "\t\t\t\tis_historical_focus_on = yes\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "all event options zero under historical bankruptcy flagged",
+)
+
+assert_finds(
+    _check_event_ai_historical_bankruptcy_fallback,
+    [
+        "country_event = {\n",
+        "\tid = test_events.2\n",
+        "\toption = {\n",
+        "\t\tname = test_events.2.a\n",
+        "\t\tai_chance = {\n",
+        "\t\t\tbase = 50\n",
+        "\t\t\tmodifier = {\n",
+        "\t\t\t\tfactor = 0\n",
+        "\t\t\t\thas_active_mission = bankruptcy_incoming_collapse\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "\toption = {\n",
+        "\t\tname = test_events.2.b\n",
+        "\t\tai_chance = { base = 50 }\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "eligible fallback keeps historical bankruptcy event valid",
+)
+
+assert_eq(
+    _ai_zero_modifier_conditions(
+        [
+            "modifier = {\n",
+            "\tfactor = 0\n",
+            "\tNAND = {\n",
+            "\t\tis_historical_focus_on = yes\n",
+            "\t\thas_active_mission = bankruptcy_incoming_collapse\n",
+            "\t}\n",
+            "}\n",
+        ]
+    ),
+    (False, False),
+    "brace-valued conditions are not treated as unconditional zero modifiers",
+)
+
+# 34. is_at_war is not a valid trigger.
+
+print("\n── invalid is_at_war trigger ──")
+
+assert_finds(
+    _check_invalid_is_at_war,
+    ["\tlimit = { is_at_war = yes }\n", "\tis_at_war = no\n"],
+    2,
+    "is_at_war assignments flagged",
+)
+
+assert_finds(
+    _check_invalid_is_at_war,
+    [
+        "\t# is_at_war = yes\n",
+        '\tlog = "is_at_war = no"\n',
+        "\thas_war = yes\n",
+    ],
+    0,
+    "comments, quoted strings, and has_war are not flagged",
+)
+
+with tempfile.NamedTemporaryFile(
+    mode="w", encoding="utf-8", newline="", suffix=".txt", delete=False
+) as _invalid_war_fixture:
+    _invalid_war_fixture.write("trigger = { is_at_war = yes }\n")
+try:
+    _invalid_war_issues = check_file(_invalid_war_fixture.name)
+finally:
+    os.unlink(_invalid_war_fixture.name)
+assert_eq(
+    len(_invalid_war_issues),
+    1,
+    "check_file dispatches the invalid is_at_war check",
+)
 
 
 # 33. limit as a direct child of an else block
