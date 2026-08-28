@@ -14,6 +14,15 @@ from standardize_events import (
 )
 
 
+def test_standardize_file_writes_lf_on_every_platform(tmp_path):
+    source = tmp_path / "events.txt"
+    source.write_bytes("\n".join(_EVENT).encode("utf-8") + b"\n")
+
+    assert EventStandardizer().standardize_file(str(source), str(source))
+
+    assert b"\r\n" not in source.read_bytes()
+
+
 def _option(lines):
     return [line + "\n" for line in lines]
 

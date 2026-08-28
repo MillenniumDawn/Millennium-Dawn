@@ -185,22 +185,36 @@ def validate_modifier_naming(lines, filepath, check_naming=True):
     return violations
 
 
-def _split_block(block_lines):
+def _split_block(block_lines, *, allow_trailing_comment=False):
     """Split an extracted block into (header, inner_lines, close_line).
-    Returns None when the shape isn't a recognizable block."""
+
+    Returns ``None`` when the shape is not recognizable. A trailing
+    inline comment is split only when explicitly allowed: duplicate
+    block merging keeps commented lines opaque so braces inside the
+    comment cannot change merge semantics.
+    """
     first = block_lines[0]
     if len(block_lines) == 1:
-        code = strip_inline_comment(first)
-        # A trailing comment may carry its own braces, so the split indices
-        # would land inside it — bail and let the caller keep the line intact.
-        if code != first or "{" not in code or code.count("{") != code.count("}"):
+        raw_code = strip_inline_comment(first)
+        has_comment = raw_code != first
+        if has_comment and not allow_trailing_comment:
             return None
-        open_idx = first.index("{")
-        close_idx = first.rindex("}")
-        indent = first[: len(first) - len(first.lstrip())]
-        inner = first[open_idx + 1 : close_idx].strip()
+
+        code = raw_code.rstrip("\r\n")
+        if "{" not in code or code.count("{") != code.count("}"):
+            return None
+
+        open_idx = code.index("{")
+        close_idx = code.rindex("}")
+        indent = code[: len(code) - len(code.lstrip())]
+        inner = code[open_idx + 1 : close_idx].strip()
         inner_lines = [f"{indent}\t{inner}"] if inner else []
-        return first[: open_idx + 1], inner_lines, f"{indent}}}"
+        close = f"{indent}}}"
+        if has_comment:
+            comment = first[len(raw_code) :].rstrip("\r\n")
+            if comment:
+                close = f"{close} {comment.lstrip()}"
+        return code[: open_idx + 1], inner_lines, close
     if block_lines[-1].strip() != "}":
         return None
     return first, block_lines[1:-1], block_lines[-1]
@@ -375,7 +389,7 @@ def effect_block_with_log(effect_block, focus_id):
             # Expand `prop = { ... }` so the log lands INSIDE the braces, not
             # after them. _split_block bails on an inline comment (whose braces
             # would misplace the split), leaving such a block unlogged.
-            split = _split_block(effect_block)
+            split = _split_block(effect_block, allow_trailing_comment=True)
             if split is not None:
                 header, inner_lines, close = split
                 effect_block = [header, log_line, *inner_lines, close]
@@ -986,10 +1000,8 @@ def standardize_focus_tree(
         return False
 
     try:
-        if output_lines and output_lines[0].startswith("\ufeff"):
-            output_lines[0] = output_lines[0][1:]
         output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
-        atomic_write_text(output_file, output, bom=False)
+        atomic_write_text(output_file, output)
 
         time_str = format_elapsed(time.time() - start_time)
 

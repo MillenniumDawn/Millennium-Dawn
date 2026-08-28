@@ -39,6 +39,8 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - random_select_amount set to a variable/decimal instead of an integer literal
   - log = "...Focus X" / "...Decision X" / "...Event X" where X doesn't match the
     enclosing focus/decision/event id (copy-paste bug from duplicating a neighbor)
+  - Event AI choices that all reach factor 0 when historical focus and the
+    bankruptcy mission are both active
   - hidden_trigger = { } directly inside custom_trigger_tooltip (redundant nesting)
   - Malformed leader rotations in common/scripted_effects/*_political_leaders.txt:
     a tier that advances its counter by anything but 1, a do_not_retire guard that
@@ -57,6 +59,7 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     rail_way, bunker, the special-project facilities ...) with no province key --
     the engine rejects the effect and the building is never placed
   - NOR = { ... } (not a HOI4 trigger keyword; silently never matches)
+  - is_at_war = yes/no (not a HOI4 trigger; use has_war)
   - max_iterations inside while_loop_effect (silently ignored by the engine)
   - var:x^i array-index shorthand (needs the full variable name)
   - limit as a direct child of an else block (else takes no condition, so the
@@ -108,6 +111,7 @@ _RE_CHECK_EXPR_BAD_OPERAND = re.compile(
 )
 _RE_EVERY_OWNED_CONTROLLED_STATE = re.compile(r"\bevery_owned_controlled_state\b")
 _RE_NOR = re.compile(r"\bNOR\s*=\s*\{")
+_RE_IS_AT_WAR = re.compile(r"\bis_at_war\s*=")
 _RE_WHILE_LOOP_OPEN = re.compile(r"\bwhile_loop_effect\s*=\s*\{")
 _RE_MAX_ITERATIONS = re.compile(r"\bmax_iterations\s*=")
 # var:x^i needs the full variable name; a one-letter base is the shorthand the
@@ -224,6 +228,9 @@ _RE_EVENT_DEF_OPEN = re.compile(
 )
 _RE_EVENT_ID_IN_BLOCK = re.compile(r"^\s*id\s*=\s*([\w.]+)")
 _RE_OPTION_NAME_IN_BLOCK = re.compile(r"^\s*name\s*=\s*([\w.]+)")
+_RE_AI_CHANCE_OPEN = re.compile(r"\bai_chance\s*=\s*\{")
+_RE_AI_MODIFIER_OPEN = re.compile(r"\bmodifier\s*=\s*\{")
+_RE_AI_ASSIGNMENT = re.compile(r"\b([A-Za-z_]+)\s*=\s*([-A-Za-z0-9_.]+)")
 # Two log conventions coexist: the bare event id followed by a separate
 # "Option <letter>" phrase ("Event HKG_contract.1 Option a"), and the option's
 # own full dotted name standing in for the id ("event satellites.2.a" ==
@@ -1874,6 +1881,20 @@ def _find_brace_close(text, open_pos):
     return i
 
 
+def _check_invalid_is_at_war(lines):
+    """Flag is_at_war, which the engine rejects as an unknown trigger."""
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if _RE_IS_AT_WAR.search(_code_for_depth(line)):
+            issues.append(
+                (
+                    line_num,
+                    "is_at_war is not a HOI4 trigger -- use has_war = yes/no",
+                )
+            )
+    return issues
+
+
 def _check_while_loop_max_iterations(lines):
     """Flag max_iterations inside while_loop_effect -- the engine ignores it.
 
@@ -2635,6 +2656,119 @@ def _check_event_log_id(lines):
     return issues
 
 
+def _direct_child_blocks(lines, opener):
+    """Yield direct child blocks matching opener as (offset, block)."""
+    i = 1
+    while i < len(lines) - 1:
+        code = strip_inline_comment(lines[i])
+        if opener.search(code):
+            block, i_next = _get_block(lines, i)
+            yield i, block
+            i = i_next
+        elif "{" in _code_for_depth(lines[i]):
+            _block, i = _get_block(lines, i)
+        else:
+            i += 1
+
+
+def _ai_zero_modifier_conditions(modifier_block):
+    """Return whether a factor-zero modifier is guaranteed by the target state."""
+    code = " ".join(strip_inline_comment(line) for line in modifier_block)
+    if re.search(r"\bNOT\s*=", code):
+        return False, False
+
+    body_start = code.find("{")
+    body_end = code.rfind("}")
+    if body_start < 0 or body_end <= body_start:
+        return False, False
+
+    body = code[body_start + 1 : body_end]
+    assignments = []
+    cursor = 0
+    for match in _RE_AI_ASSIGNMENT.finditer(body):
+        if body[cursor : match.start()].strip():
+            return False, False
+        assignments.append(match.groups())
+        cursor = match.end()
+    if body[cursor:].strip():
+        return False, False
+
+    factor_zero = False
+    has_target_condition = False
+    has_bankruptcy_condition = False
+    for key, value in assignments:
+        if key == "factor" and value in {"0", "0.0", "0.00"}:
+            factor_zero = True
+        elif key == "is_historical_focus_on" and value == "yes":
+            has_target_condition = True
+        elif key == "has_active_mission" and value == "bankruptcy_incoming_collapse":
+            has_target_condition = True
+            has_bankruptcy_condition = True
+        else:
+            return False, False
+
+    zeroes_option = factor_zero and has_target_condition
+    return zeroes_option, zeroes_option and has_bankruptcy_condition
+
+
+def _event_option_zeroes_historical_bankruptcy(option_block):
+    for _offset, ai_block in _direct_child_blocks(option_block, _RE_AI_CHANCE_OPEN):
+        zeroes_option = False
+        has_bankruptcy_zero = False
+        for _modifier_offset, modifier_block in _direct_child_blocks(
+            ai_block, _RE_AI_MODIFIER_OPEN
+        ):
+            zeroes, bankruptcy_zero = _ai_zero_modifier_conditions(modifier_block)
+            zeroes_option = zeroes_option or zeroes
+            has_bankruptcy_zero = has_bankruptcy_zero or bankruptcy_zero
+        return zeroes_option, has_bankruptcy_zero
+    return False, False
+
+
+def _check_event_ai_historical_bankruptcy_fallback(lines):
+    """Require an eligible AI fallback when bankruptcy disables event spending."""
+    issues = []
+    i = 0
+    while i < len(lines):
+        if not _RE_EVENT_DEF_OPEN.match(lines[i]):
+            i += 1
+            continue
+
+        start = i
+        event_block, i = _get_block(lines, start)
+        event_id = None
+        for line in event_block:
+            match = _RE_EVENT_ID_IN_BLOCK.match(strip_inline_comment(line))
+            if match:
+                event_id = match.group(1)
+                break
+
+        option_states = []
+        for _offset, option_block in _direct_child_blocks(
+            event_block, _RE_OPTION_BLOCK_OPEN
+        ):
+            option_states.append(
+                _event_option_zeroes_historical_bankruptcy(option_block)
+            )
+
+        if (
+            event_id
+            and option_states
+            and all(zeroes for zeroes, _bankruptcy in option_states)
+            and any(bankruptcy for _zeroes, bankruptcy in option_states)
+        ):
+            issues.append(
+                (
+                    start + 1,
+                    f"event {event_id} gives every AI option factor 0 under "
+                    "historical focus plus bankruptcy -- keep at least one "
+                    "sub-$5 or non-spending fallback eligible",
+                )
+            )
+
+    return issues
+
+
 def _check_hidden_trigger_in_ctt(lines):
     """Flag hidden_trigger = { } at relative depth 1 inside
     custom_trigger_tooltip.
@@ -3024,15 +3158,15 @@ def check_file(filepath):
     except Exception:
         return issues
 
-    is_ideas = "common/ideas" in filepath
-    is_focus_file = "common/national_focus" in filepath
-    is_decision_file = "common/decisions" in filepath
+    normalized_filepath = filepath.replace("\\", "/")
+    is_ideas = "common/ideas" in normalized_filepath
+    is_focus_file = "common/national_focus" in normalized_filepath
+    is_decision_file = "common/decisions" in normalized_filepath
     is_ai_file = (
         is_focus_file
         or is_decision_file
-        or "common/military_industrial_organization" in filepath
+        or "common/military_industrial_organization" in normalized_filepath
     )
-    normalized_filepath = filepath.replace("\\", "/")
     is_common_or_events_file = (
         "common/" in normalized_filepath or "events/" in normalized_filepath
     )
@@ -3218,6 +3352,7 @@ def check_file(filepath):
         issues.extend(_check_decision_allowed_dynamic(lines))
         issues.extend(_check_decision_log_id(lines))
     if is_event_file:
+        issues.extend(_check_event_ai_historical_bankruptcy_fallback(lines))
         issues.extend(_check_event_log_id(lines))
     if is_political_leaders_file:
         issues.extend(_check_leader_rotation(lines))
@@ -3240,6 +3375,7 @@ def check_file(filepath):
     issues.extend(_check_check_expr_bad_operand(lines))
     issues.extend(_check_random_select_amount_literal(lines))
     issues.extend(_check_nor_block(lines))
+    issues.extend(_check_invalid_is_at_war(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
     issues.extend(_check_var_index_shorthand(lines))
     issues.extend(_check_else_with_limit(lines))
