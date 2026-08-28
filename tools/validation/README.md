@@ -74,14 +74,23 @@ These cross-reference the entire codebase. A disk cache under `.validation_cache
 
 All validators accept the same set of flags:
 
-| Flag                       | Description                                                  |
-| -------------------------- | ------------------------------------------------------------ |
-| `--path PATH`              | Path to the mod root (default: current directory)            |
-| `--staged`                 | Only validate files currently staged in git                  |
-| `--strict`                 | Exit with code `1` if any issues are found                   |
-| `--output FILE`, `-o FILE` | Write results to a file in addition to stdout                |
-| `--no-color`               | Disable ANSI color codes                                     |
-| `--workers N`              | Number of parallel worker processes (default: CPU count / 2) |
+| Flag                       | Description                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------------- |
+| `--path PATH`              | Path to the mod root (default: current directory)                                       |
+| `--staged`                 | Only validate files currently staged in git                                             |
+| `--strict`                 | Exit with code `1` if any issues are found                                              |
+| `--output FILE`, `-o FILE` | Write results to a file in addition to stdout                                           |
+| `--no-color`               | Disable ANSI color codes                                                                |
+| `--workers N`              | Number of parallel worker processes (default: CPU count / 2, clamped to the CPU budget) |
+
+### CPU budget
+
+Tooling takes 75% of the cores and leaves the rest, so a run does not lock up
+the machine someone is working on. Everything that fans out draws on the same
+ceiling (`cpu_budget` in `tools/shared_utils.py`): the suite caps how many
+validators run at once and passes each a share of the workers, the pre-commit
+hook splits the same budget across its fan-out, and `--workers N` is clamped to
+it. CI runners get every core. `MD_MAX_WORKERS=N` overrides both.
 
 ---
 
