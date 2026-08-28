@@ -190,8 +190,11 @@ def _workflow_trigger(workflow):
 
 
 def _pull_request_paths(workflow):
+    # coding-pipeline runs on pull_request_target so fork PRs get a writable
+    # token for the report comment; tools-validation stays on pull_request.
     trigger = _workflow_trigger(workflow)
-    return set(trigger.get("pull_request", {}).get("paths", []))
+    on_pr = trigger.get("pull_request") or trigger.get("pull_request_target") or {}
+    return set(on_pr.get("paths", []))
 
 
 def _filter_definitions():
