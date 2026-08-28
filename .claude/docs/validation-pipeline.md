@@ -126,7 +126,11 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   filter. `config_drift_test.py` derives those routes from
   `_CREATE_UNIT_SOURCE_PATTERNS`, `_DELETE_TEMPLATE_SOURCE_PATTERNS`, and
   `_VARIANT_SOURCE_PATTERNS`, so a new directory there fails the suite until
-  both are updated.
+  every route is updated. `parent_version` is not resolved: each block is
+  checked on the modules it writes, so a design that inherits a required slot
+  from its parent reads as missing it, and a parent-supplied module does not
+  count toward a `module_count_limit`. A clean run on a `parent_version > 0`
+  design is not proof the runtime design is legal.
 
 - `validate_decisions.py` carries a **missing icon** check (WARNING, `missing-decision-icon`), opt-in behind `--missing-icons` and **not** wired into CI. Resolution follows the engine and differs per site: a decision `icon = X` is accepted if `X`, `GFX_decision_X` or `GFX_X` is defined (a bare name is the dominant MD convention and is **not** a bug — see `.claude/docs/decision-reference.md`); a category `icon = X` takes the `GFX_decision_category_` prefix instead, so a sprite that only exists as `GFX_decision_X` does not satisfy it; a category `picture` is always the full sprite name. Values already starting with `GFX_` are only tried verbatim, never double-prefixed. Dynamic `icon = { key = ... trigger = ... }` blocks contribute one check per `key`, and `[...]` values are skipped as runtime-resolved. Backlog on main: 355 decision + 79 category findings with vanilla sprites in view (596 without, see `sprite_index.py` below); flip to ERROR once cleared. The same `--missing-icons` flag drives the sibling check in `validate_focus_tree.py`; `validate_ideas.py` no longer takes the flag, since its audit is always on. `validate_decisions.py` and `validate_focus_tree.py` remain manual. `run_all_validators.py` carries the flag for focus-tree only.
 

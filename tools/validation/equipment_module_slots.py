@@ -201,10 +201,7 @@ def _parse_count_limits(text: str, lo: int, hi: int) -> Dict[Tuple[str, str], in
         cnt = re.search(r"\bcount\s*<\s*(\d+)", body)
         if not cnt:
             continue
-        try:
-            n = int(cnt.group(1))
-        except ValueError:
-            continue
+        n = int(cnt.group(1))
         cat = re.search(r"\bcategory\s*=\s*(\w+)", body)
         mod = re.search(r"\bmodule\s*=\s*(\w+)", body)
         if cat:

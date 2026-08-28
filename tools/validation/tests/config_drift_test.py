@@ -736,9 +736,9 @@ def test_scripted_param_routes_cover_every_caller_source():
 
 def test_oob_routes_cover_every_create_unit_and_variant_source():
     # Derived from the validator's own glob lists, not a copy of them: a
-    # directory added there must reach both routes or a PR touching only it
-    # never runs. The delete list is wider than the create_unit list, and a
-    # deletion is exactly what the missing-template-ensure check keys off.
+    # directory added there must reach every route or a PR touching only it
+    # never runs. The three lists nest today (variant < create_unit < delete),
+    # so the union is only insurance against them being decoupled later.
     dirs = {
         p.rsplit("/", 1)[0] + "/"
         for p in (
