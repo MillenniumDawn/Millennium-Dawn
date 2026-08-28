@@ -41,6 +41,7 @@ _VARIANT_SLOT_CATEGORIES = {
     "unknown_slot": "SHIP VARIANT: slot not on hull",
     "unknown_module": "SHIP VARIANT: unknown module reference",
     "category_mismatch": "SHIP VARIANT: module category not allowed in slot",
+    "missing_required_module": "SHIP VARIANT: required slot left empty",
 }
 
 _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
@@ -48,6 +49,7 @@ _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
     "unknown_slot": "EQUIPMENT VARIANT: slot not on hull",
     "unknown_module": "EQUIPMENT VARIANT: unknown module reference",
     "category_mismatch": "EQUIPMENT VARIANT: module category not allowed in slot",
+    "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
 }
 
 # Every directory where a create_equipment_variant effect actually appears.
@@ -1816,9 +1818,12 @@ class Validator(BaseValidator):
         A module in a slot the hull does not have, or whose category that slot
         rejects, is dropped at load with no error. The design still appears, so
         the loss only shows as missing stats — a Type 32 Guardian naming the
-        tank slot `engine_type_slot` shipped with no engine at all. Ship hulls,
-        tank chassis and plane airframes all follow the same rules, so every
-        design is checked, whatever it builds.
+        tank slot `engine_type_slot` shipped with no engine at all. A design
+        that also leaves a `required = yes` slot without a module is worse: the
+        engine refuses the variant outright at effect time
+        (equipment_effects.cpp: 'Invalid module setup. Design lacks one or more
+        required modules'). Ship hulls, tank chassis and plane airframes all
+        follow the same rules, so every design is checked, whatever it builds.
         """
         self._log_section(
             "Checking created equipment variants against hull slot rules..."

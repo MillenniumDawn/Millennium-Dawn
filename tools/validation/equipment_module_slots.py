@@ -15,6 +15,12 @@ A slot value in ``target_variant.modules`` references either a concrete module
 means "current best module of this category"). Both are legal references; the
 category — resolved or literal — must appear in the slot's allowed set.
 
+Slots marked ``required = yes`` are enforced on top of the category rules: a
+design that leaves one without a module — omitted, or an explicit ``= empty`` —
+is refused outright. ``create_equipment_variant`` fails at effect time with
+equipment_effects.cpp's 'Design lacks one or more required modules', and an AI
+template that does it can never be matched by any design the AI produces.
+
 Three things have to be resolved before a slot's allowed set is known. A module's
 own ``allowed_module_categories`` is keyed by slot and widens that slot while the
 module is equipped, which is how a tank's gun picks its own ammunition. An empty
@@ -121,29 +127,40 @@ def blank_comments(text: str) -> str:
 # ---- hull slot rules -------------------------------------------------------
 
 
-def _parse_slot_categories(
-    text: str, lo: int, hi: int
-) -> Dict[str, Optional[Set[str]]]:
-    """slot name -> allowed category set (None when the slot declares no
-    ``allowed_module_categories``, meaning unconstrained).
+@dataclass
+class _Slot:
+    """One module_slots entry: its allowed categories and required-ness."""
+
+    allowed: Optional[Set[str]]  # None when the slot declares no allowed set
+    required: bool
+
+
+def _parse_slot_categories(text: str, lo: int, hi: int) -> Dict[str, Optional[_Slot]]:
+    """slot name -> :class:`_Slot` (allowed category set, required flag).
+
+    ``allowed`` is None when the slot declares no
+    ``allowed_module_categories``, meaning unconstrained.
 
     An empty block is not the same as an absent one: it means the hull permits
     nothing on its own and the slot is filled entirely by what the equipped
     modules unlock, which is how a tank's gun picks its own ammunition.
     """
-    slots: Dict[str, Optional[Set[str]]] = {}
+    slots: Dict[str, Optional[_Slot]] = {}
     for slot, blo, bhi, _ in _iter_blocks(text, lo, hi):
         cats: Optional[Set[str]] = None
+        required = bool(
+            re.search(r"\brequired\s*=\s*yes\b", _depth0_text(text, blo, bhi))
+        )
         for key, clo, chi, _ in _iter_blocks(text, blo, bhi):
             if key == "allowed_module_categories":
                 cats = set(_CATEGORY_TOKEN_RE.findall(text[clo:chi]))
-        slots[slot] = cats
+        slots[slot] = _Slot(cats, required)
     return slots
 
 
 @dataclass
 class _Hull:
-    slots: Optional[Dict[str, Optional[Set[str]]]]
+    slots: Optional[Dict[str, Optional[_Slot]]]
     archetype: Optional[str]
     inherit: bool
 
@@ -200,10 +217,10 @@ def parse_duplicate_archetypes(text: str) -> Dict[str, str]:
 
 def resolve_hull_slots(
     hulls: Dict[str, _Hull],
-) -> Dict[str, Optional[Dict[str, Optional[Set[str]]]]]:
+) -> Dict[str, Optional[Dict[str, Optional[_Slot]]]]:
     """hull -> resolved slot map, chasing ``module_slots = inherit`` to the
     archetype. None marks a hull whose slots cannot be resolved."""
-    resolved: Dict[str, Optional[Dict[str, Optional[Set[str]]]]] = {}
+    resolved: Dict[str, Optional[Dict[str, Optional[_Slot]]]] = {}
 
     def resolve(name: str, seen: frozenset):
         if name in resolved:
@@ -291,7 +308,7 @@ def parse_equipment_modules(
 class EquipmentIndex:
     """Everything a variant check needs about the equipment tree."""
 
-    hull_slots: Dict[str, Optional[Dict[str, Optional[Set[str]]]]]
+    hull_slots: Dict[str, Optional[Dict[str, Optional[_Slot]]]]
     module_category: Dict[str, str]
     known_categories: Set[str]
     # Keyed by module *and* by category: a generic AI design names the category
@@ -360,9 +377,39 @@ def _iter_named_blocks(text: str, lo: int, hi: int, name: str):
 @dataclass
 class Finding:
     line: int
-    kind: str  # unknown_hull | unknown_slot | unknown_module | category_mismatch
+    kind: str  # unknown_hull | unknown_slot | unknown_module | category_mismatch | missing_required_module
     message: str
     hull: str = ""
+
+
+def _flag_required_slots(
+    findings: List[Finding],
+    slots: Dict[str, Optional[_Slot]],
+    hull: str,
+    line: int,
+    filled: Optional[Set[str]] = None,
+) -> None:
+    """Findings for every required slot the design leaves without a module.
+
+    ``slot = empty`` leaves the slot without a module just like an omitted
+    slot, so neither satisfies a ``required = yes`` entry.
+    """
+    for slot in sorted(slots):
+        entry = slots[slot]
+        if not entry or not entry.required:
+            continue
+        if filled is not None and slot in filled:
+            continue
+        findings.append(
+            Finding(
+                line,
+                "missing_required_module",
+                f"hull '{hull}' requires slot '{slot}' and the design leaves "
+                f"it empty — the engine refuses the variant ('Design lacks one "
+                f"or more required modules')",
+                hull,
+            )
+        )
 
 
 def _check_variant(
@@ -373,12 +420,16 @@ def _check_variant(
     findings: List[Finding],
     *,
     require_known_hull: bool,
+    require_filled_slots: bool,
 ) -> None:
     """Validate one variant body's ``modules`` block against its hull's slots.
 
     With *require_known_hull* an unresolvable ``type`` is a real error. Without
     it the variant is skipped, which is what a caller indexing only part of the
-    equipment tree needs.
+    equipment tree needs. With *require_filled_slots* every ``required = yes``
+    slot of the hull must receive a module — the engine refuses the variant
+    otherwise (equipment_effects.cpp, 'Design lacks one or more required
+    modules').
     """
     hull = _scalar(text, vlo, vhi, "type")
     mods_span = None
@@ -386,7 +437,15 @@ def _check_variant(
         if key == "modules":
             mods_span = (mlo, mhi)
             break
-    if mods_span is None or hull is None:
+    if mods_span is None:
+        if require_filled_slots and hull is not None:
+            slots = index.hull_slots.get(hull)
+            if slots is not None:
+                _flag_required_slots(
+                    findings, slots, hull, text.count("\n", 0, vlo) + 1
+                )
+        return
+    if hull is None:
         return
     if hull not in index.hull_slots:
         if require_known_hull:
@@ -425,7 +484,8 @@ def _check_variant(
                 )
             )
             continue
-        allowed = slots[slot]
+        entry = slots[slot]
+        allowed = entry.allowed if entry else None
         if allowed is not None and slot in unlocked:
             allowed = allowed | unlocked[slot]
         for ref in refs:
@@ -458,15 +518,34 @@ def _check_variant(
                     )
                 )
 
+    if require_filled_slots:
+        filled = {
+            slot for slot, refs, _ in assignments if any(ref != "empty" for ref in refs)
+        }
+        _flag_required_slots(
+            findings, slots, hull, text.count("\n", 0, mods_span[0]) + 1, filled
+        )
+
 
 def _check_all(
-    content: str, index: EquipmentIndex, block: str, *, require_known_hull: bool
+    content: str,
+    index: EquipmentIndex,
+    block: str,
+    *,
+    require_known_hull: bool,
+    require_filled_slots: bool,
 ) -> List[Finding]:
     text = blank_comments(content)
     findings: List[Finding] = []
     for vlo, vhi in _iter_named_blocks(text, 0, len(text), block):
         _check_variant(
-            text, vlo, vhi, index, findings, require_known_hull=require_known_hull
+            text,
+            vlo,
+            vhi,
+            index,
+            findings,
+            require_known_hull=require_known_hull,
+            require_filled_slots=require_filled_slots,
         )
     findings.sort(key=lambda f: f.line)
     return findings
@@ -477,9 +556,17 @@ def check_target_variants(content: str, index: EquipmentIndex) -> List[Finding]:
     hull's slot rules. Returns findings sorted by line.
 
     These are AI equipment templates, whose ``type`` always names a hull the mod
-    defines, so an unresolvable one is reported rather than skipped.
+    defines, so an unresolvable one is reported rather than skipped. Required
+    slots are checked too: a template that leaves one empty cannot be matched
+    by any design the AI produces, so the roles it covers quietly degrade.
     """
-    return _check_all(content, index, "target_variant", require_known_hull=True)
+    return _check_all(
+        content,
+        index,
+        "target_variant",
+        require_known_hull=True,
+        require_filled_slots=True,
+    )
 
 
 def check_created_variants(content: str, index: EquipmentIndex) -> List[Finding]:
@@ -489,9 +576,19 @@ def check_created_variants(content: str, index: EquipmentIndex) -> List[Finding]
     These blocks sit at arbitrary depth inside effect scopes. A variant whose
     ``type`` is not indexed is skipped: unlike an AI template, the effect is also
     used for equipment archetypes that declare no ``module_slots`` at all.
+
+    A design that leaves a ``required = yes`` slot without a module — an omitted
+    slot or an explicit ``= empty`` — is refused by the engine at effect time
+    (equipment_effects.cpp: 'Invalid module setup. Design lacks one or more
+    required modules'), so every required slot of a resolvable hull must be
+    filled, including when the block carries no ``modules`` at all.
     """
     return _check_all(
-        content, index, "create_equipment_variant", require_known_hull=False
+        content,
+        index,
+        "create_equipment_variant",
+        require_known_hull=False,
+        require_filled_slots=True,
     )
 
 
@@ -512,7 +609,7 @@ def parse_variant_names(content: str) -> List[Tuple[str, str, int]]:
 
 
 def _add_duplicate_hulls(
-    resolved: Dict[str, Optional[Dict[str, Optional[Set[str]]]]],
+    resolved: Dict[str, Optional[Dict[str, Optional[_Slot]]]],
     duplicates: Dict[str, str],
 ) -> None:
     """Register each cloned archetype and its whole numbered family.
@@ -562,9 +659,9 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
                 categories.update(cats)
 
     for slots in resolved.values():
-        for slot_categories in (slots or {}).values():
-            if slot_categories:
-                categories.update(slot_categories)
+        for slot_entry in (slots or {}).values():
+            if slot_entry and slot_entry.allowed:
+                categories.update(slot_entry.allowed)
     return EquipmentIndex(
         resolved, module_category, categories, slot_unlocks, ship_hulls
     )
