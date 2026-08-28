@@ -166,15 +166,24 @@ def _parse_slot_categories(text: str, lo: int, hi: int) -> Dict[str, Optional[_S
 
 
 def _named_type_tokens(text: str, lo: int, hi: int, key: str) -> Set[str]:
-    """Tokens from ``key = X`` or ``key = { X Y }`` at this block's top level."""
+    """Tokens from ``key = X`` or ``key = { X Y }`` at this block's top level.
+
+    A ``key = { ... }`` block wins. Depth-0 stripping removes that block, so a
+    scalar scan afterwards would swallow the next identifier (``for_each`` on
+    duplicate_archetypes) as if it were the type.
+    """
     tokens: Set[str] = set()
+    found_block = False
+    for name, blo, bhi, _ in _iter_blocks(text, lo, hi):
+        if name == key:
+            found_block = True
+            tokens.update(_CATEGORY_TOKEN_RE.findall(text[blo:bhi]))
+    if found_block:
+        return tokens
     body = _depth0_text(text, lo, hi)
     m = re.search(r"\b" + re.escape(key) + r"\s*=\s*([A-Za-z_]\w*)", body)
     if m:
         tokens.add(m.group(1))
-    for name, blo, bhi, _ in _iter_blocks(text, lo, hi):
-        if name == key:
-            tokens.update(_CATEGORY_TOKEN_RE.findall(text[blo:bhi]))
     return tokens
 
 
@@ -192,7 +201,10 @@ def _parse_count_limits(text: str, lo: int, hi: int) -> Dict[Tuple[str, str], in
         cnt = re.search(r"\bcount\s*<\s*(\d+)", body)
         if not cnt:
             continue
-        n = int(cnt.group(1))
+        try:
+            n = int(cnt.group(1))
+        except ValueError:
+            continue
         cat = re.search(r"\bcategory\s*=\s*(\w+)", body)
         mod = re.search(r"\bmodule\s*=\s*(\w+)", body)
         if cat:
