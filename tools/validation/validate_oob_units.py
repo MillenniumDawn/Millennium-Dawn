@@ -1091,14 +1091,13 @@ def _has_prior_covering_template(
     stack = list(nodes[container]["children"])
     while stack:
         i = stack.pop()
-        if (
-            nodes[i]["label"] == "division_template"
-            and nodes[i]["start"] < cu_start
-        ):
+        if nodes[i]["label"] == "division_template" and nodes[i]["start"] < cu_start:
             body = text[nodes[i]["start"] : nodes[i]["end"]]
             m = _TEMPLATE_NAME_RE.search(body)
-            if m and m.group(1) == name and _template_covers_create(
-                nodes, i, cu_path, owner
+            if (
+                m
+                and m.group(1) == name
+                and _template_covers_create(nodes, i, cu_path, owner)
             ):
                 return True
         stack.extend(nodes[i]["children"])

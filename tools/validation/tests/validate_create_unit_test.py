@@ -38,9 +38,7 @@ def _run(content, tmp_path, filename="test.txt", deleted_names=frozenset()):
     target = tmp_path / "common" / "national_focus" / filename
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8")
-    return _check_created_units(
-        (str(target), filename, str(tmp_path), deleted_names)
-    )
+    return _check_created_units((str(target), filename, str(tmp_path), deleted_names))
 
 
 def _cats(issues):
@@ -209,10 +207,10 @@ def test_has_template_guard_else_pattern_is_clean(tmp_path):
 
 def test_unguarded_create_unit_without_template_is_flagged(tmp_path):
     div = _div_for("Tip-e Piade Nezam", "Niru")
-    content = _focus_with_effect(_block("capital_scope", _create_unit(div, owner="PER")))
-    issues = _run(
-        content, tmp_path, deleted_names=frozenset({"Tip-e Piade Nezam"})
+    content = _focus_with_effect(
+        _block("capital_scope", _create_unit(div, owner="PER"))
     )
+    issues = _run(content, tmp_path, deleted_names=frozenset({"Tip-e Piade Nezam"}))
     assert (
         "CREATE UNIT: template not created or has_template-guarded in this effect"
         in _cats(issues)
@@ -222,7 +220,9 @@ def test_unguarded_create_unit_without_template_is_flagged(tmp_path):
 
 def test_oob_template_without_delete_is_clean(tmp_path):
     div = _div_for("Tip-e Piade Nezam", "Niru")
-    content = _focus_with_effect(_block("capital_scope", _create_unit(div, owner="PER")))
+    content = _focus_with_effect(
+        _block("capital_scope", _create_unit(div, owner="PER"))
+    )
     assert _run(content, tmp_path) == []
 
 
@@ -248,11 +248,14 @@ def test_owner_scoped_template_covers_state_spawn(tmp_path):
             _block("406", _create_unit(div, owner="PER")),
         )
     )
-    assert _run(
-        _focus_with_effect(effect),
-        tmp_path,
-        deleted_names=frozenset({"Tip-e Piade Nezam"}),
-    ) == []
+    assert (
+        _run(
+            _focus_with_effect(effect),
+            tmp_path,
+            deleted_names=frozenset({"Tip-e Piade Nezam"}),
+        )
+        == []
+    )
 
 
 def test_foreign_template_does_not_satisfy_ensure(tmp_path):
