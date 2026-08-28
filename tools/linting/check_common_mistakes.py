@@ -111,7 +111,7 @@ _RE_CHECK_EXPR_BAD_OPERAND = re.compile(
 )
 _RE_EVERY_OWNED_CONTROLLED_STATE = re.compile(r"\bevery_owned_controlled_state\b")
 _RE_NOR = re.compile(r"\bNOR\s*=\s*\{")
-_RE_IS_AT_WAR = re.compile(r"\bis_at_war\s*=")
+_RE_IS_AT_WAR = re.compile(r"\bis_at_war\s*=\s*(?:yes|no)\b")
 _RE_WHILE_LOOP_OPEN = re.compile(r"\bwhile_loop_effect\s*=\s*\{")
 _RE_MAX_ITERATIONS = re.compile(r"\bmax_iterations\s*=")
 # var:x^i needs the full variable name; a one-letter base is the shorthand the
@@ -297,6 +297,7 @@ _RE_HAS_IDEA = re.compile(r"has_idea\s*=\s*(\w+)")
 _RE_OR_CONTENT = re.compile(r"OR\s*=\s*\{([^}]*)\}")
 _RE_LOG_ONLY_EFFECT = re.compile(r"log\s*=\s*\"[^\"]+\"\s*$")
 _RE_OPTION_BLOCK_OPEN = re.compile(r"\boption\s*=\s*\{")
+_RE_TRIGGER_BLOCK_OPEN = re.compile(r"\btrigger\s*=\s*\{")
 _RE_COMPLETE_EFFECT_OPEN = re.compile(r"\bcomplete_effect\s*=\s*\{")
 _RE_REMOVE_EFFECT_OPEN = re.compile(r"\bremove_effect\s*=\s*\{")
 _RE_IS_IN_FACTION_TAG = re.compile(r"\bis_in_faction\s*=\s*(?!yes\b|no\b)(\w+)")
@@ -2656,8 +2657,28 @@ def _check_event_log_id(lines):
     return issues
 
 
+def _explode_braces(line):
+    """Split one line into pseudo-lines at every brace.
+
+    `ai_chance = { base = 5 modifier = { factor = 2 has_war = no } }` is valid
+    and appears in events/, but a one-element block hides its children from the
+    scan below. Exploding on braces gives those children a line each.
+    """
+    out, buf = [], ""
+    for ch in line:
+        buf += ch
+        if ch in "{}":
+            out.append(buf)
+            buf = ""
+    if buf.strip():
+        out.append(buf)
+    return out
+
+
 def _direct_child_blocks(lines, opener):
     """Yield direct child blocks matching opener as (offset, block)."""
+    if len(lines) == 1:
+        lines = _explode_braces(lines[0])
     i = 1
     while i < len(lines) - 1:
         code = strip_inline_comment(lines[i])
@@ -2672,57 +2693,96 @@ def _direct_child_blocks(lines, opener):
 
 
 def _ai_zero_modifier_conditions(modifier_block):
-    """Return whether a factor-zero modifier is guaranteed by the target state."""
+    """Classify one ai_chance modifier as it applies under the target state.
+
+    Returns (kind, is_bankruptcy) where kind is "zero" for a factor = 0 gated on
+    historical focus or bankruptcy, "add" for a positive addition gated the same
+    way, and "none" for anything this check cannot reason about.
+    """
     code = " ".join(strip_inline_comment(line) for line in modifier_block)
     if re.search(r"\bNOT\s*=", code):
-        return False, False
+        return "none", False
 
     body_start = code.find("{")
     body_end = code.rfind("}")
     if body_start < 0 or body_end <= body_start:
-        return False, False
+        return "none", False
 
     body = code[body_start + 1 : body_end]
     assignments = []
     cursor = 0
     for match in _RE_AI_ASSIGNMENT.finditer(body):
         if body[cursor : match.start()].strip():
-            return False, False
+            return "none", False
         assignments.append(match.groups())
         cursor = match.end()
     if body[cursor:].strip():
-        return False, False
+        return "none", False
 
     factor_zero = False
+    positive_add = False
     has_target_condition = False
     has_bankruptcy_condition = False
     for key, value in assignments:
         if key == "factor" and value in {"0", "0.0", "0.00"}:
             factor_zero = True
+        elif key == "add":
+            try:
+                positive_add = float(value) > 0
+            except ValueError:
+                return "none", False
+            if not positive_add:
+                return "none", False
         elif key == "is_historical_focus_on" and value == "yes":
             has_target_condition = True
         elif key == "has_active_mission" and value == "bankruptcy_incoming_collapse":
             has_target_condition = True
             has_bankruptcy_condition = True
         else:
-            return False, False
+            return "none", False
 
-    zeroes_option = factor_zero and has_target_condition
-    return zeroes_option, zeroes_option and has_bankruptcy_condition
+    if not has_target_condition:
+        return "none", False
+    if factor_zero:
+        return "zero", has_bankruptcy_condition
+    if positive_add:
+        return "add", has_bankruptcy_condition
+    return "none", False
 
 
 def _event_option_zeroes_historical_bankruptcy(option_block):
     for _offset, ai_block in _direct_child_blocks(option_block, _RE_AI_CHANCE_OPEN):
+        # AI weight operations apply in order, so a later addition undoes an
+        # earlier factor = 0 and the option stays selectable.
         zeroes_option = False
         has_bankruptcy_zero = False
         for _modifier_offset, modifier_block in _direct_child_blocks(
             ai_block, _RE_AI_MODIFIER_OPEN
         ):
-            zeroes, bankruptcy_zero = _ai_zero_modifier_conditions(modifier_block)
-            zeroes_option = zeroes_option or zeroes
-            has_bankruptcy_zero = has_bankruptcy_zero or bankruptcy_zero
+            kind, is_bankruptcy = _ai_zero_modifier_conditions(modifier_block)
+            if kind == "zero":
+                zeroes_option = True
+                has_bankruptcy_zero = has_bankruptcy_zero or is_bankruptcy
+            elif kind == "add":
+                zeroes_option = False
+                has_bankruptcy_zero = False
         return zeroes_option, has_bankruptcy_zero
     return False, False
+
+
+def _option_unavailable_under_bankruptcy(option_block):
+    """Whether the option's own trigger rules it out under bankruptcy.
+
+    Such an option is not a usable fallback, so it must not suppress the
+    finding just because its AI weight was never zeroed.
+    """
+    for _offset, trigger_block in _direct_child_blocks(
+        option_block, _RE_TRIGGER_BLOCK_OPEN
+    ):
+        code = " ".join(strip_inline_comment(line) for line in trigger_block)
+        if "NOT" in code and "has_active_mission = bankruptcy_incoming_collapse" in code:
+            return True
+    return False
 
 
 def _check_event_ai_historical_bankruptcy_fallback(lines):
@@ -2747,9 +2807,12 @@ def _check_event_ai_historical_bankruptcy_fallback(lines):
         for _offset, option_block in _direct_child_blocks(
             event_block, _RE_OPTION_BLOCK_OPEN
         ):
-            option_states.append(
-                _event_option_zeroes_historical_bankruptcy(option_block)
+            zeroes, bankruptcy = _event_option_zeroes_historical_bankruptcy(
+                option_block
             )
+            if _option_unavailable_under_bankruptcy(option_block):
+                zeroes = True
+            option_states.append((zeroes, bankruptcy))
 
         if (
             event_id
