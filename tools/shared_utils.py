@@ -45,6 +45,34 @@ _LEVEL_COLORS = {
 # extend this list with their own patterns.
 DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
 
+# Leave a quarter of the machine to whoever is using it. A full suite run
+# fans out over every validator and each of those keeps its own pool, so
+# without a shared ceiling the tooling oversubscribes the box and everything
+# else on it stalls.
+CPU_BUDGET_FRACTION = 0.75
+
+
+def cpu_budget() -> int:
+    """Cores this repo's tooling may occupy at once, never the whole machine.
+
+    ``MD_MAX_WORKERS`` overrides the share outright. CI runners have the box to
+    themselves, so there the budget is every core.
+    """
+    override = os.environ.get("MD_MAX_WORKERS", "").strip()
+    if override.isdigit() and int(override) > 0:
+        return int(override)
+    cores = os.cpu_count() or 1
+    if os.environ.get("CI", "").strip().lower() in ("1", "true"):
+        return cores
+    return max(1, int(cores * CPU_BUDGET_FRACTION))
+
+
+def split_cpu_budget(tasks: int) -> Tuple[int, int]:
+    """Split the budget into (concurrent tasks, workers each), product capped."""
+    budget = cpu_budget()
+    parallel = max(1, min(tasks, budget))
+    return parallel, max(1, budget // parallel)
+
 
 def log_message(
     level: str, message: str, verbose: bool = False, use_colors: bool = True
@@ -1047,8 +1075,8 @@ def create_linting_parser(
     parser.add_argument(
         "--workers",
         type=int,
-        default=max(1, min(os.cpu_count() or 2, 4)),
-        help="Number of parallel workers (default: min(CPU count, 4))",
+        default=max(1, min(cpu_budget(), 4)),
+        help="Number of parallel workers (default: min(CPU budget, 4))",
     )
     parser.add_argument(
         "filenames",

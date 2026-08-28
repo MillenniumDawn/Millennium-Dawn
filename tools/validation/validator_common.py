@@ -23,6 +23,7 @@ from shared_utils import (
     atomic_write_text,
     clean_filepath,
     compute_line_offsets,
+    cpu_budget,
     create_validation_parser,
     find_line_number,
     get_staged_files,
@@ -577,7 +578,9 @@ class BaseValidator:
         self.output_file = output_file
         self.use_colors = use_colors
         self.staged_only = staged_only
-        self.workers = workers if workers else max(1, cpu_count() // 2)
+        # Half the cores by default, and never more than the shared budget:
+        # a caller that asks for more must not be able to take the whole box.
+        self.workers = min(workers or max(1, cpu_count() // 2), cpu_budget())
         self.no_cache = no_cache
         # Pool workers call disk_cache at module level and never see `self`, so the
         # env var is the only channel that reaches them (fork inherits it).

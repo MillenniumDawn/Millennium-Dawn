@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import disk_cache
 from report_lib.dedupe import dedupe
 from report_lib.models import Issue
-from shared_utils import Colors
+from shared_utils import Colors, split_cpu_budget
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 PERSISTENCE_MARKER = ".persist-complete"
@@ -417,21 +417,38 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
 
     print(file=human_stream)
 
-    # Unbounded subprocess fan-out is intentional: capping concurrency or
-    # forcing per-child --workers starves the regex-heavy slow validators
-    # (verified slower in practice; the suite is I/O-bound, not CPU-bound).
-    processes = {}
-    for name, script, _label in VALIDATORS:
-        processes[name] = launch_validator(
-            script, extra_flags, output_dir, name, mod_path
-        )
+    # The fan-out used to be unbounded, which is faster (the suite is largely
+    # I/O-bound) but launches every validator at once and each keeps its own
+    # pool, so the run took over the machine. Concurrency and per-child workers
+    # now come out of the shared budget; MD_MAX_WORKERS buys the speed back.
+    max_parallel, inner_workers = split_cpu_budget(len(VALIDATORS))
+    child_flags = extra_flags + ["--workers", str(inner_workers)]
+    print(
+        f"Running up to {max_parallel} at a time ({inner_workers} worker(s) each)\n",
+        file=human_stream,
+    )
 
+    processes: Dict[str, Tuple[subprocess.Popen, TextIO]] = {}
+    pending = list(VALIDATORS)
     crashed_validators = []
+
+    def launch_next() -> None:
+        # Results are consumed in VALIDATORS order and launched in the same
+        # order, so whatever is waited on next has always started already.
+        if pending:
+            name, script, _label = pending.pop(0)
+            processes[name] = launch_validator(
+                script, child_flags, output_dir, name, mod_path
+            )
+
+    for _ in range(max_parallel):
+        launch_next()
 
     for name, _script, label in VALIDATORS:
         proc, stderr_fh = processes[name]
         returncode = proc.wait()
         stderr_fh.close()
+        launch_next()
         error_count, warning_count = read_validator_counts(output_dir, name)
 
         if error_count > 0 or warning_count > 0:

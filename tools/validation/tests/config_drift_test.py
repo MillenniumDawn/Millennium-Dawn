@@ -31,7 +31,10 @@ import yaml
 from precommit_validate import _REGISTRY
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_ideas import Validator as IdeaValidator
-from validate_oob_units import _CREATE_UNIT_SOURCE_PATTERNS
+from validate_oob_units import (
+    _CREATE_UNIT_SOURCE_PATTERNS,
+    _DELETE_TEMPLATE_SOURCE_PATTERNS,
+)
 from validate_scripted_params import _CALLER_PATTERNS
 from validate_staged import VALIDATORS as STAGED_VALIDATORS
 
@@ -731,9 +734,14 @@ def test_scripted_param_routes_cover_every_caller_source():
 
 
 def test_oob_routes_cover_every_create_unit_source():
-    # Derived from the validator's own glob list, not a copy of it: a directory
-    # added there must reach both routes or a PR touching only it never runs.
-    dirs = {p.rsplit("/", 1)[0] + "/" for p in _CREATE_UNIT_SOURCE_PATTERNS}
+    # Derived from the validator's own glob lists, not a copy of them: a
+    # directory added there must reach both routes or a PR touching only it
+    # never runs. The delete list is wider than the create_unit list, and a
+    # deletion is exactly what the missing-template-ensure check keys off.
+    dirs = {
+        p.rsplit("/", 1)[0] + "/"
+        for p in _CREATE_UNIT_SOURCE_PATTERNS + _DELETE_TEMPLATE_SOURCE_PATTERNS
+    }
     _, filters = _filter_definitions()
     assert {d + "**" for d in dirs} <= set(filters["oob"])
     spec = next(s for s in _REGISTRY if s.script == "validate_oob_units")
