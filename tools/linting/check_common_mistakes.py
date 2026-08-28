@@ -2780,7 +2780,10 @@ def _option_unavailable_under_bankruptcy(option_block):
         option_block, _RE_TRIGGER_BLOCK_OPEN
     ):
         code = " ".join(strip_inline_comment(line) for line in trigger_block)
-        if "NOT" in code and "has_active_mission = bankruptcy_incoming_collapse" in code:
+        if (
+            "NOT" in code
+            and "has_active_mission = bankruptcy_incoming_collapse" in code
+        ):
             return True
     return False
 
