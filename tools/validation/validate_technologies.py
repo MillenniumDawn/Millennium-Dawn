@@ -15,7 +15,7 @@ Rules from .claude/docs/focus-tree-reference.md + AGENTS.md category rules:
 import glob
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from validator_common import BaseValidator, run_validator_main, strip_comments
 
@@ -91,11 +91,9 @@ class Validator(BaseValidator):
             for child in t["leads"]:
                 parents.setdefault(child, []).append(tid)
 
-        staged = (
-            {Path(f).resolve() for f in self.staged_files or []}
-            if self.staged_only
-            else None
-        )
+        staged: Optional[Set[Path]] = None
+        if self.staged_only:
+            staged = {Path(f).resolve() for f in self.staged_files or []}
         findings = 0
         for tid in sorted(all_techs):
             rel = _path_for(tid, file_techs)
