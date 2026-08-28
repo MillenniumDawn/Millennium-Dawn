@@ -41,7 +41,10 @@ def post_comment(
     body: str,
     github_token: str,
 ) -> Tuple[bool, str]:
-    """Create or update the validation report PR comment."""
+    """Create or update the validation report PR comment.
+
+    Returns (success, message).
+    """
     api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
     headers = _auth_headers(github_token)
 

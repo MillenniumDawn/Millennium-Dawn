@@ -234,6 +234,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                     file=sys.stderr,
                 )
                 return 1
+            # Every run posts, findings or not: a PR with no comment is
+            # indistinguishable from one the pipeline never reached, and the
+            # rendered body names its own scope, so a clean partial run reads
+            # as "the groups that ran are clean" rather than a verdict.
             success, message = post_comment(
                 repo_owner,
                 repo_name,
@@ -242,9 +246,14 @@ def main(argv: Optional[List[str]] = None) -> int:
                 args.github_token,
             )
             (print if success else _err)(f"PR comment: {message}")
+            # A read-only GITHUB_TOKEN can't write comments. Don't fail the
+            # job over it — the report still uploads as an artifact. Mirrors the
+            # Checks API handling below.
             if not success:
-                _err("PR comment could not be updated.")
-                return 1
+                _err(
+                    "PR comment could not be updated; continuing. "
+                    "See the validation-report artifact for the full report."
+                )
 
         if args.checks_api:
             if not args.commit_sha:
