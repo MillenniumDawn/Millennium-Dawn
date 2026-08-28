@@ -43,11 +43,12 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import cpu_count
 
 _TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 if _TOOLS_DIR not in sys.path:
     sys.path.insert(0, _TOOLS_DIR)
+
+from shared_utils import split_cpu_budget  # noqa: E402 — needs the path tweak above
 
 TXT = ".txt"
 YML = ".yml"
@@ -112,6 +113,8 @@ _REGISTRY = [
             ("common/operations/", TXT),
             ("common/resistance_compliance_modifiers/", TXT),
             ("common/scripted_guis/", TXT),
+            # Idea removal effects delete templates that create_unit uses.
+            ("common/ideas/", TXT),
         ],
     ),
     _Spec(
@@ -183,17 +186,21 @@ _REGISTRY = [
 
 
 def _discover_staged(mod_path, argv_files):
-    """Staged paths relative to *mod_path*. Prefer the filenames pre-commit
-    already matched (argv); fall back to git for manual invocation."""
-    if argv_files:
-        out = []
-        for f in argv_files:
-            out.append(os.path.relpath(os.path.abspath(f), mod_path))
-        return out
+    """Return staged paths relative to *mod_path*, including rename origins."""
     from shared_utils import get_staged_files
 
-    staged = get_staged_files(mod_path, extensions=[TXT, YML]) or []
-    return [os.path.relpath(f, mod_path) for f in staged]
+    staged = (
+        get_staged_files(
+            mod_path, extensions=[TXT, YML], include_missing=bool(argv_files)
+        )
+        or []
+    )
+    discovered = [os.path.relpath(f, mod_path) for f in staged]
+    if not argv_files:
+        return discovered
+
+    passed = [os.path.relpath(os.path.abspath(f), mod_path) for f in argv_files]
+    return list(dict.fromkeys(passed + discovered))
 
 
 def _run(spec, mod_path, env, no_color, inner_workers):
@@ -270,13 +277,10 @@ def main():
     env = dict(os.environ)
     env["MD_STAGED_FILES"] = "\n".join(rel_paths)
 
-    cores = max(1, cpu_count())
-    max_parallel = min(len(selected), cores)
-    # Split cores between the outer fan-out and each validator's own worker pool.
-    # Floor of 2 so the heavy full-repo scanners (cosmetic_tags, focus_tree)
-    # keep some internal parallelism even on low-core machines, where dividing
-    # cores evenly would otherwise starve them back to single-threaded.
-    inner_workers = max(2, cores // max_parallel)
+    # The old split floored inner workers at 2, so the outer fan-out times the
+    # inner pools could reach twice the core count and stall the machine mid
+    # commit. split_cpu_budget keeps the product inside the shared budget.
+    max_parallel, inner_workers = split_cpu_budget(len(selected))
     print(
         f"MD content validation: {len(rel_paths)} staged file(s), "
         f"{len(selected)} validator(s), up to {max_parallel} in parallel "

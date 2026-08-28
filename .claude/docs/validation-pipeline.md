@@ -23,6 +23,7 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
 ## The split
 
 - Most content validators run **CI-only**: the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml` are the gate. Their old `stages: [manual]` pre-commit hooks were removed (almost nobody ran them). On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `validate_defines.py`. Common scripting-mistake rules run once through `validate_common_mistakes.py` in that dispatcher and the CI validator matrix. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
+- Everything that fans out draws on one CPU ceiling: `cpu_budget()` in `tools/shared_utils.py` hands out 75% of the cores and leaves the rest to whoever is using the machine. `run_all_validators.py` caps how many validators run at once and passes each `--workers`; `precommit_validate.py` splits the same budget across its fan-out (it used to floor inner workers at 2, so fan-out times pools could reach twice the core count); `BaseValidator` clamps whatever `--workers` it is given. CI runners get every core, and `MD_MAX_WORKERS=N` overrides both. The unbounded suite fan-out that this replaced was measurably faster — the suite is largely I/O-bound — so a run that needs the old speed sets `MD_MAX_WORKERS`.
 - `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
 - `fix_loc_yaml.py` is pre-commit-only. `validate_localization_encoding.py` and `validate_mod_encoding.py` also run in the coding pipeline, so web-UI edits and contributors with hooks disabled cannot bypass the encoding checks. (The old `check_braces.py` hook was absorbed into `tools/validation/validate_style.py`.)
 - `validate_defines.py` runs on pre-commit against the live install and on CI against the committed `tools/validation/vanilla_defines.txt` manifest. Regenerate it (and every other vanilla-derived file) with `refresh_vanilla_data.py` after a HOI4 version bump (see [Refreshing vanilla-derived data](#refreshing-vanilla-derived-data)).
@@ -91,21 +92,37 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   `tools/validation/equipment_module_slots.py`, resolving module-driven slot unlocks
   and `duplicate_archetypes` clones first. Tank and plane variant slots are not
   validated yet.
-  All findings are ERROR. It also structurally checks `create_unit`
+  Ship-variant findings are ERROR. It also structurally checks `create_unit`
   effects: state scope, `owner`, block keys, a single-line division string
-  naming a `division_template`, zero equipment/manpower factors, and the order
-  of a template defined in the same file and effect path as the `create_unit`
-  using it. It does not check that a referenced template is defined anywhere, so
-  a template that only ever exists for the wrong country, or a `has_template`
-  guard naming a template nothing defines, still passes. Its combined run gate
-  covers `history/countries/`, `common/national_focus/`, `events/`,
-  `common/decisions/`, `common/special_projects/`, `common/scripted_effects/`,
-  `common/on_actions/`, `common/operations/`,
-  `common/resistance_compliance_modifiers/`, and `common/scripted_guis/`, in
-  both the pre-commit registry (`tools/precommit_validate.py`) and the CI
-  `oob` path filter. `config_drift_test.py` derives both routes from
-  `_CREATE_UNIT_SOURCE_PATTERNS`, so a new directory there fails the suite until
-  both are updated. Findings are **errors**. Non-ship variants are skipped. Their
+  that parses as army data (documented inner keys, quoted `name` /
+  `division_template`, numeric factors, `force_equipment_variants` shape),
+  zero equipment/manpower factors, and the order of a template defined in the
+  same file and effect path as the `create_unit` using it. German/Danish letters
+  in that string (`äöüßæøå`) are WARNING (`out-of-bounds-division`): the inner
+  parser rejects them even inside quotes (Sweden `militärdistriktet`). Romance,
+  Slavic, and Kurdish accents are allowed; they render in game. Schema failures
+  gate. If a `create_unit` names a template that `delete_unit_template_and_units`
+  removes anywhere, and this effect neither creates that template earlier nor
+  sits behind a `has_template` guard, that is WARNING (`missing-template-ensure`).
+  persistent.cpp reports the missing template as `Malformed token: <name>`.
+  Requiring the ensure pattern on every `create_unit` is 544 findings, mostly
+  legal OOB spawns, so the check is limited to names that are also deleted.
+  A `<effect> = yes` call earlier in the same effect also counts when that
+  scripted effect creates or guards the template, followed transitively, so the
+  ensure block can be factored out instead of inlined at every call site.
+  The backlog was cleared in the same change and the check is clean on main.
+  It stays WARNING because the covering-template resolver is a heuristic: a
+  bare `ROOT`-scope definition is taken to cover the whole effect, and a
+  `has_template` guard naming a template nothing defines still passes. Its
+  combined run gate covers `history/countries/`, `common/national_focus/`,
+  `events/`, `common/decisions/`, `common/special_projects/`,
+  `common/scripted_effects/`, `common/on_actions/`, `common/operations/`,
+  `common/resistance_compliance_modifiers/`, `common/scripted_guis/`, and
+  `common/ideas/` (deletions live in idea removal effects), in both the
+  pre-commit registry (`tools/precommit_validate.py`) and the CI `oob` path
+  filter. `config_drift_test.py` derives both routes from
+  `_CREATE_UNIT_SOURCE_PATTERNS` and `_DELETE_TEMPLATE_SOURCE_PATTERNS`, so a
+  new directory there fails the suite until both are updated. Non-ship variants are skipped. Their
   `allowed_module_categories` blocks are often empty, so the naval resolver
   cannot be pointed at them as-is.
 

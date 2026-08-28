@@ -221,9 +221,9 @@ def _hull_module_stats(
         if not slots:
             continue
         categories: Set[str] = set()
-        for allowed in slots.values():
-            if allowed:
-                categories |= allowed
+        for slot in slots.values():
+            if slot and slot.allowed:
+                categories |= slot.allowed
         pending = set(categories)
         while pending:
             category = pending.pop()
