@@ -34,6 +34,7 @@ from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import (
     _CREATE_UNIT_SOURCE_PATTERNS,
     _DELETE_TEMPLATE_SOURCE_PATTERNS,
+    _VARIANT_SOURCE_PATTERNS,
 )
 from validate_scripted_params import _CALLER_PATTERNS
 from validate_staged import VALIDATORS as STAGED_VALIDATORS
@@ -45,6 +46,7 @@ CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "coding-pipeline.yml"
 TOOLS_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "tools-validation.yml"
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
 NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
+PR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "pr-cache-cleanup.yml"
 
 # Every tree the engine runs script from. Deliberately not derived from a
 # validator's own pattern list: it is the independent expectation the caller
@@ -189,8 +191,11 @@ def _workflow_trigger(workflow):
 
 
 def _pull_request_paths(workflow):
+    # coding-pipeline runs on pull_request_target so fork PRs get a writable
+    # token for the report comment; tools-validation stays on pull_request.
     trigger = _workflow_trigger(workflow)
-    return set(trigger.get("pull_request", {}).get("paths", []))
+    on_pr = trigger.get("pull_request") or trigger.get("pull_request_target") or {}
+    return set(on_pr.get("paths", []))
 
 
 def _filter_definitions():
@@ -388,6 +393,20 @@ def test_validator_cache_runs_suite_once_and_reuses_results():
     )
     assert verify["run"] == "test -f .validation_baseline_candidate/.persist-complete"
     assert "--current .validation_baseline_candidate" in workflow
+    for job in config["jobs"].values():
+        checkout = next(
+            step
+            for step in job["steps"]
+            if step.get("uses", "").startswith("actions/checkout@")
+        )
+        assert checkout["with"]["persist-credentials"] is False
+    baseline_diff = next(
+        step
+        for step in config["jobs"]["check-baseline"]["steps"]
+        if step.get("name") == "Diff against previous baseline"
+    )
+    assert baseline_diff["env"]["TOOLSHASH"] == "${{ steps.toolshash.outputs.hash }}"
+    assert '--toolshash "$TOOLSHASH"' in baseline_diff["run"]
 
 
 def test_validator_cache_restore_is_source_hash_scoped():
@@ -425,28 +444,6 @@ def test_validator_cache_restore_is_source_hash_scoped():
             f"{path} is restored with a key outside the current validator "
             "source-hash generation"
         )
-
-
-def test_nightly_keys_the_bundle_on_the_live_base_tip():
-    # WORKSPACE_KEY's base component is the only thing that invalidates the
-    # bundle when main advances under a PR that got no pushes. Cache keys are
-    # immutable, so a base that doesn't move makes cache/save a no-op and every
-    # validator restores the previous run's tree while the run reports green.
-    config = yaml.safe_load(NIGHTLY_WORKFLOW.read_text(encoding="utf-8"))
-    step = next(
-        step
-        for step in config["jobs"]["revalidate-open-prs"]["steps"]
-        if "gh workflow run" in step.get("run", "")
-    )
-    script = "\n".join(
-        line for line in step["run"].splitlines() if not line.lstrip().startswith("#")
-    )
-    assert (
-        "commits/main" in script
-    ), "the nightly must resolve main's live head for base_sha"
-    assert (
-        ".base.sha" not in script
-    ), "the PR list's .base.sha does not track main, so it cannot key the bundle"
 
 
 def test_mio_validator_runs_for_localisation_changes():
@@ -517,6 +514,7 @@ def test_tools_validation_triggers_for_consumed_configuration():
         "pyproject.toml",
         ".github/workflows/coding-pipeline.yml",
         ".github/workflows/nightly-pr-validation.yml",
+        ".github/workflows/pr-cache-cleanup.yml",
         ".github/workflows/validator-cache.yml",
     } <= paths
 
@@ -605,6 +603,7 @@ def test_tools_tests_checkout_consumed_configuration():
         ".github/workflows/coding-pipeline.yml",
         ".github/workflows/validator-cache.yml",
         ".github/workflows/nightly-pr-validation.yml",
+        ".github/workflows/pr-cache-cleanup.yml",
         ".github/workflows/tools-validation.yml",
         "pyproject.toml",
     }
@@ -733,14 +732,18 @@ def test_scripted_param_routes_cover_every_caller_source():
         assert f"needs.detect-changes.outputs.{output} == 'true'" in expression
 
 
-def test_oob_routes_cover_every_create_unit_source():
+def test_oob_routes_cover_every_create_unit_and_variant_source():
     # Derived from the validator's own glob lists, not a copy of them: a
-    # directory added there must reach both routes or a PR touching only it
-    # never runs. The delete list is wider than the create_unit list, and a
-    # deletion is exactly what the missing-template-ensure check keys off.
+    # directory added there must reach every route or a PR touching only it
+    # never runs. The three lists nest today (variant < create_unit < delete),
+    # so the union is only insurance against them being decoupled later.
     dirs = {
         p.rsplit("/", 1)[0] + "/"
-        for p in _CREATE_UNIT_SOURCE_PATTERNS + _DELETE_TEMPLATE_SOURCE_PATTERNS
+        for p in (
+            _CREATE_UNIT_SOURCE_PATTERNS
+            + _DELETE_TEMPLATE_SOURCE_PATTERNS
+            + _VARIANT_SOURCE_PATTERNS
+        )
     }
     _, filters = _filter_definitions()
     assert {d + "**" for d in dirs} <= set(filters["oob"])
@@ -775,10 +778,214 @@ def test_scripted_localisation_core_runs_for_interface_changes():
     assert "validate_scripted_localisation.py" in scripts
 
 
+def test_pr_target_pipeline_runs_for_conflicted_and_clean_prs():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    trigger = _workflow_trigger(CI_WORKFLOW)
+    assert "pull_request" not in trigger
+    assert set(trigger["pull_request_target"]["types"]) == {
+        "opened",
+        "synchronize",
+        "reopened",
+        "ready_for_review",
+    }
+    assert "paths" not in trigger["pull_request_target"]
+    report = workflow["jobs"]["validation-report"]
+    assert report["if"] == "${{ always() && !cancelled() }}"
+    assert report["permissions"]["pull-requests"] == "write"
+    report_checkout = next(
+        step
+        for step in report["steps"]
+        if step.get("name") == "Checkout report tooling"
+    )
+    assert report_checkout["with"]["repository"] == "${{ github.repository }}"
+    report_ref = report_checkout["with"]["ref"]
+    assert "needs.detect-changes.outputs.base-sha" in report_ref
+    assert "github.event.pull_request.base.sha" in report_ref
+    assert "github.event.pull_request.head.sha" not in report_ref
+
+
+def test_validation_checkout_uses_the_live_pr_head():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    detect = workflow["jobs"]["detect-changes"]
+    resolver = next(step for step in detect["steps"] if step.get("id") == "resolve-ref")
+    script = resolver["run"]
+    assert ".merge_commit_sha" not in script
+    assert "git/ref/pull/" not in script
+    assert 'head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"' in script
+    assert 'head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"' in script
+    assert 'base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"' in script
+    assert 'echo "repository=$head_repository"' in script
+    assert 'echo "ref=$head_sha"' in script
+    assert 'echo "head-sha=$head_sha"' in script
+    assert 'echo "base-sha=$base_sha"' in script
+    assert detect["outputs"]["head-sha"] == "${{ steps.resolve-ref.outputs.head-sha }}"
+    assert detect["outputs"]["base-sha"] == "${{ steps.resolve-ref.outputs.base-sha }}"
+    assert detect["outputs"]["checkout-ref"] == "${{ steps.resolve-ref.outputs.ref }}"
+    trigger = _workflow_trigger(CI_WORKFLOW)
+    assert trigger["workflow_dispatch"]["inputs"]["pr_number"]["required"] is False
+
+    for job_name in ("prepare-workspace", "validate-paths"):
+        job = workflow["jobs"][job_name]
+        checkout = next(
+            step
+            for step in job["steps"]
+            if step.get("uses", "").startswith("actions/checkout@")
+        )
+        assert (
+            checkout["with"]["ref"]
+            == "${{ needs.detect-changes.outputs.checkout-ref }}"
+        )
+        assert checkout["with"]["repository"] == (
+            "${{ needs.detect-changes.outputs.checkout-repository }}"
+        )
+        assert checkout["with"]["persist-credentials"] is False
+
+
+def test_prepare_workspace_uses_trusted_tools_and_run_artifact():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    prepare = workflow["jobs"]["prepare-workspace"]
+    checkouts = [
+        step
+        for step in prepare["steps"]
+        if step.get("uses", "").startswith("actions/checkout@")
+    ]
+    assert len(checkouts) == 2
+    pr_checkout, trusted_checkout = checkouts
+    assert "tools" not in pr_checkout["with"]["sparse-checkout"]
+    assert "*.mod" in pr_checkout["with"]["sparse-checkout"]
+    assert pr_checkout["with"]["sparse-checkout-cone-mode"] is False
+    link_guard = next(
+        step
+        for step in prepare["steps"]
+        if step.get("name") == "Reject links in PR content"
+    )
+    assert "120000|160000" in link_guard["run"]
+    assert trusted_checkout["with"]["path"] == "trusted"
+    assert trusted_checkout["with"]["repository"] == "${{ github.repository }}"
+    assert (
+        trusted_checkout["with"]["ref"]
+        == "${{ needs.detect-changes.outputs.base-sha }}"
+    )
+    assert set(trusted_checkout["with"]["sparse-checkout"].split()) >= {
+        "tools",
+        "resources/documentation",
+        ".claude",
+        "CLAUDE.md",
+    }
+    install = next(
+        step
+        for step in prepare["steps"]
+        if step.get("name") == "Install trusted tooling"
+    )
+    assert "cp -a trusted/tools ." in install["run"]
+    upload = next(
+        step
+        for step in prepare["steps"]
+        if step.get("name") == "Upload prepared workspace"
+    )
+    assert upload["with"]["name"] == "prepared-workspace"
+    workflow_text = CI_WORKFLOW.read_text(encoding="utf-8")
+    assert "actions/cache/save@" not in workflow_text
+    assert "actions/cache@" not in workflow_text
+
+    report = workflow["jobs"]["validation-report"]
+    assert "prepare-workspace" in report["needs"]
+    assert prepare["env"]["HEAD_SHA"] == "${{ needs.detect-changes.outputs.head-sha }}"
+    manifest = next(
+        step["run"]
+        for step in prepare["steps"]
+        if step.get("name") == "Write workspace manifest"
+    )
+    assert "head_sha=$HEAD_SHA" in manifest
+    assert "needs.detect-changes.outputs.head-sha" in report["env"]["HEAD_SHA"]
+    download = next(
+        step
+        for step in report["steps"]
+        if step.get("name") == "Download all validation results"
+    )
+    assert download["id"] == "download-results"
+    assert download["continue-on-error"] is True
+    failure_step = next(
+        step
+        for step in report["steps"]
+        if step.get("name") == "Record failed validation jobs"
+    )
+    assert "steps.download-results.outcome == 'failure'" in failure_step["if"]
+    assert "needs.prepare-workspace.result == 'failure'" in failure_step["if"]
+    assert "pipeline-job-failed" in failure_step["run"]
+    command = next(
+        step["run"]
+        for step in report["steps"]
+        if step.get("name") == "Generate and post validation report"
+    )
+    assert '--commit-sha "$HEAD_SHA"' in command
+    assert "--checks-api" in command
+
+    paths = workflow["jobs"]["validate-paths"]
+    path_checkouts = [
+        step
+        for step in paths["steps"]
+        if step.get("uses", "").startswith("actions/checkout@")
+    ]
+    assert path_checkouts[0]["with"]["path"] == "pr-tree"
+    assert path_checkouts[1]["with"]["path"] == "trusted"
+    assert path_checkouts[1]["with"]["repository"] == "${{ github.repository }}"
+    assert (
+        path_checkouts[1]["with"]["ref"]
+        == "${{ needs.detect-changes.outputs.base-sha }}"
+    )
+    link_guard = next(
+        step for step in paths["steps"] if step.get("name") == "Reject links in PR tree"
+    )
+    assert link_guard["working-directory"] == "pr-tree"
+    assert "120000|160000" in link_guard["run"]
+    upload = next(
+        step for step in paths["steps"] if step.get("name") == "Upload results"
+    )
+    assert "pr-tree/validation-file-paths.log" in upload["with"]["path"]
+    run = next(step for step in paths["steps"] if step.get("name") == "Run validation")
+    assert run["working-directory"] == "pr-tree"
+    assert "../trusted/tools/validation/validate_file_paths.py" in run["run"]
+
+
+def test_nightly_dispatches_every_open_pr_from_trusted_main():
+    config = yaml.safe_load(NIGHTLY_WORKFLOW.read_text(encoding="utf-8"))
+    job = config["jobs"]["revalidate-open-prs"]
+    assert config["permissions"]["pull-requests"] == "read"
+    assert job["env"]["GH_REPO"] == "${{ github.repository }}"
+    step = next(
+        step for step in job["steps"] if "gh workflow run" in step.get("run", "")
+    )
+    script = "\n".join(
+        line for line in step["run"].splitlines() if not line.lstrip().startswith("#")
+    )
+    assert "--repo" not in script
+    assert "commits/main" in script
+    assert "--paginate" in script
+    assert "state=open&base=main" in script
+    assert "--ref main" in script
+    assert '-f pr_number="$num"' in script
+    assert '-f base_sha="$base_sha"' in script
+    assert "refs/pull/" not in script
+    assert "merge ref" not in script
+    assert ".head.repo.full_name" not in script
+    assert 'if [ "$failed" -gt 0 ]; then' in script
+    assert "failed=$((failed + 1))" in script
+    assert "exit 1" in script
+
+
+def test_pr_cache_cleanup_lists_before_deleting():
+    workflow = PR_CACHE_WORKFLOW.read_text(encoding="utf-8")
+    assert '"${cache_url}?ref=${ref}&per_page=100"' in workflow
+    assert workflow.count("cache_ids=$(gh api --paginate") == 2
+    assert workflow.count('done <<< "$cache_ids"') == 2
+    assert workflow.count('gh api -X DELETE "${cache_url}/${id}"') == 2
+    assert "| while read -r id" not in workflow
+    assert '"actions/caches/"\\\n' not in workflow
+
+
 def test_mod_changes_reach_structural_lint():
     detect, filters = _filter_definitions()
-    workflow_paths = _pull_request_paths(CI_WORKFLOW)
-    assert "*.mod" in workflow_paths
     assert "mod" in detect["outputs"]
     assert filters["mod"] == ["*.mod"]
     assert "*.mod" in filters["content"]
