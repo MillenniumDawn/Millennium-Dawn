@@ -232,6 +232,25 @@ def test_main_posts_comment_on_full_clean_run(tmp_path, monkeypatch):
     assert calls == [("MillenniumDawn", "Millennium-Dawn", "42", "token")]
 
 
+def test_main_posts_comment_when_no_validator_ran(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    (tmp_path / "validation-results").mkdir()
+    bodies = []
+
+    monkeypatch.setattr(
+        generate_validation_report,
+        "post_comment",
+        lambda owner, repo, pr_number, body, token: bodies.append(body)
+        or (True, "posted"),
+    )
+
+    code = generate_validation_report.main(_post_argv(tmp_path))
+
+    assert code == 0
+    assert len(bodies) == 1
+    assert "_No validator results found._" in bodies[0]
+
+
 def test_main_checks_api_failure_is_non_fatal(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _findings_tree(tmp_path)
