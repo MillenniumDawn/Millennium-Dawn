@@ -14,6 +14,7 @@ name: Tools Validation
       - ".jscpd.json"
       - ".github/workflows/coding-pipeline.yml"
       - ".github/workflows/nightly-pr-validation.yml"
+      - ".github/workflows/pr-cache-cleanup.yml"
       - ".github/workflows/tools-validation.yml"
       - ".github/workflows/validator-cache.yml"
 
@@ -29,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 1
           persist-credentials: false
@@ -43,7 +44,7 @@ jobs:
             interface
             gfx/flags
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.x"
       - name: Install dependencies
@@ -55,7 +56,6 @@ jobs:
           python tools/validate_tools.py --strict --no-color --output \
             tools_validation.log
       - name: Upload validation report
-        # v7.0.1
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
@@ -79,21 +79,11 @@ jobs:
           - name: ruff lint (tools)
             id: lint
     steps:
-      # config_drift_test reads the pre-commit config and these workflows to
-      # compare the validator set declared in each, and to check the pipeline
-      # wiring around them. pyproject.toml supplies the pytest testpaths so all
-      # six test dirs are collected. typo-watchlist.md is read by
-      # loc_typo_watchlist_test's doc-sync guard, and modifiers_documentation.md
-      # by validate_modifiers_test's parse guard. common/national_focus is
-      # walked by focus_pp_malus_test's exemption-freshness guard, and
-      # common/idea_tags supplies validate_ideas' category definitions.
-      # check_common_mistakes_test asserts its script_enums, equipment, decision
-      # and modifier loaders against the real files those loaders read; without
-      # them each returns None and the module-level assertions blow up at
-      # collection time.
+      # The unit-test checkout must include every config and fixture that the
+      # tests read; config_drift_test enforces this list.
       - name: Checkout (unit tests)
         if: matrix.check.id == 'unit'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 1
           persist-credentials: false
@@ -112,13 +102,14 @@ jobs:
             common/modifiers
             .github/workflows/coding-pipeline.yml
             .github/workflows/nightly-pr-validation.yml
+            .github/workflows/pr-cache-cleanup.yml
             .github/workflows/tools-validation.yml
             .github/workflows/validator-cache.yml
           sparse-checkout-cone-mode: false
 
       - name: Checkout (staged integration)
         if: matrix.check.id == 'staged'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 1
           persist-credentials: false
@@ -133,7 +124,7 @@ jobs:
 
       - name: Checkout (lint)
         if: matrix.check.id == 'lint'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 1
           persist-credentials: false
@@ -143,7 +134,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.x"
 
@@ -208,7 +199,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 1
           persist-credentials: false
@@ -218,7 +209,7 @@ jobs:
             bun.lock
             .jscpd.json
       - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
           bun-version: "1.3.14"
       - name: Install dependencies
