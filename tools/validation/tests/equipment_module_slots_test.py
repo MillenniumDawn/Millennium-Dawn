@@ -14,7 +14,9 @@ from equipment_module_slots import (
 )
 from validate_ai_equipment import Validator
 
-# Archetype with two slots; hull_1 inherits, hull_2 overrides and adds a slot.
+# Archetype with three slots; hull_1 inherits, hull_2 overrides and adds a slot.
+# Nothing here is `required = yes`: the required-slot rule has its own fixture
+# (REQUIRED_HULLS below) so these tests stay about slot/category rules.
 HULLS = """
 equipments = {
 \ttest_ship = {
@@ -22,7 +24,7 @@ equipments = {
 \t\ttype = screen_ship
 \t\tmodule_slots = {
 \t\t\tfixed_ship_battery_slot = {
-\t\t\t\trequired = yes
+\t\t\t\trequired = no
 \t\t\t\tallowed_module_categories = { module_light_guns_category }
 \t\t\t}
 \t\t\tfixed_ship_fire_control_system_slot = {
@@ -30,7 +32,7 @@ equipments = {
 \t\t\t\tallowed_module_categories = { module_screen_fire_control_system_category }
 \t\t\t}
 \t\t\tfixed_ship_ammo_slot = {
-\t\t\t\trequired = yes
+\t\t\t\trequired = no
 \t\t\t\tallowed_module_categories = {
 \t\t\t\t}
 \t\t\t}
@@ -64,6 +66,47 @@ duplicate_archetypes = {
 }
 """
 
+# The required-slot rule: battery and ammo are `required = yes`, the sensor slot
+# is not. The ammo slot's empty allowed set means the gun module must unlock it,
+# which is how a tank's main gun picks its ammunition (the Challenger 2 shape).
+# hull_2 re-declares battery without a `required` line, which must default to
+# not required.
+REQUIRED_HULLS = """
+equipments = {
+\treq_ship = {
+\t\tis_archetype = yes
+\t\ttype = screen_ship
+\t\tmodule_slots = {
+\t\t\tfixed_ship_battery_slot = {
+\t\t\t\trequired = yes
+\t\t\t\tallowed_module_categories = { module_light_guns_category }
+\t\t\t}
+\t\t\tfixed_ship_ammo_slot = {
+\t\t\t\trequired = yes
+\t\t\t\tallowed_module_categories = {
+\t\t\t\t}
+\t\t\t}
+\t\t\toptional_sensor_slot = {
+\t\t\t\trequired = no
+\t\t\t\tallowed_module_categories = { module_screen_fire_control_system_category }
+\t\t\t}
+\t\t}
+\t}
+\treq_ship_hull_1 = {
+\t\tarchetype = req_ship
+\t\tmodule_slots = inherit
+\t}
+\treq_ship_hull_2 = {
+\t\tarchetype = req_ship
+\t\tmodule_slots = {
+\t\t\tfixed_ship_battery_slot = {
+\t\t\t\tallowed_module_categories = { module_light_guns_category }
+\t\t\t}
+\t\t}
+\t}
+}
+"""
+
 MODULES = """
 equipment_modules = {
 \tmodule_test_gun = {
@@ -83,14 +126,62 @@ equipment_modules = {
 \t\tcategory = module_light_helipad_category
 \t}
 \tmodule_test_gun_ammo = {
-\t\tcategory = module_gun_ammo_category
+		category = module_gun_ammo_category
+	}
+	module_test_banned = {
+		category = module_light_guns_category
+	}
+	module_test_amphib_gun = {
+		category = module_light_guns_category
+		forbid_equipment_type = { amphibious }
+	}
+	module_test_exact_gun = {
+		category = module_light_guns_category
+		forbid_equipment_type_exact_match = armor
+	}
+}
+"""
+
+
+LIMIT_HULLS = """
+equipments = {
+\tlim_tank = {
+\t\tis_archetype = yes
+\t\ttype = armor
+\t\tmodule_slots = {
+\t\t\tgun_slot = {
+\t\t\t\trequired = no
+\t\t\t\tallowed_module_categories = { module_light_guns_category }
+\t\t\t}
+\t\t\textra_gun_slot = {
+\t\t\t\trequired = no
+\t\t\t\tallowed_module_categories = { module_light_guns_category }
+\t\t\t}
+\t\t}
+\t\tmodule_count_limit = { category = module_light_guns_category count < 2 }
+\t\tmodule_count_limit = { module = module_test_banned count < 1 }
+\t}
+\tlim_tank_hull_1 = {
+\t\tarchetype = lim_tank
+\t\tmodule_slots = inherit
+\t}
+\tlim_amphib_hull_1 = {
+\t\tarchetype = lim_tank
+\t\ttype = { armor amphibious }
+\t\tmodule_slots = inherit
+\t}
+}
+duplicate_archetypes = {
+\tlim_clone = {
+\t\tarchetype = lim_tank
+\t\ttype = { armor amphibious }
 \t}
 }
 """
 
 
 def _indexes():
-    return build_indexes([HULLS, DUPLICATES], [MODULES])
+    return build_indexes([HULLS, DUPLICATES, REQUIRED_HULLS, LIMIT_HULLS], [MODULES])
 
 
 def _variant(hull, modules_body):
@@ -123,11 +214,23 @@ def test_build_indexes_resolves_inheritance_and_categories():
     # can_convert_from's module_category must not be mistaken for the module's own.
     assert index.module_category["module_test_gun"] == "module_light_guns_category"
     # hull_1 inherits the archetype's three slots.
-    assert set(index.hull_slots["test_ship_hull_1"]) == {
+    assert set(index.hull_slots["test_ship_hull_1"] or {}) == {
         "fixed_ship_battery_slot",
         "fixed_ship_fire_control_system_slot",
         "fixed_ship_ammo_slot",
     }
+    # The required fixture's hull inherits its slots with the required flags.
+    req_slots = index.hull_slots["req_ship_hull_1"] or {}
+    battery = req_slots["fixed_ship_battery_slot"]
+    ammo = req_slots["fixed_ship_ammo_slot"]
+    sensor = req_slots["optional_sensor_slot"]
+    assert battery and battery.required
+    assert ammo and ammo.required
+    assert sensor is not None and not sensor.required
+    # A slot re-declared without a `required` line defaults to not required.
+    hull2_slots = index.hull_slots["req_ship_hull_2"] or {}
+    hull2_battery = hull2_slots["fixed_ship_battery_slot"]
+    assert hull2_battery is not None and not hull2_battery.required
     assert "module_screen_fire_control_system_category" in index.known_categories
     # A module's own allowed_module_categories is a slot unlock, not its category.
     assert index.slot_unlocks["module_test_gun"]["fixed_ship_ammo_slot"] == {
@@ -363,6 +466,83 @@ def test_created_variant_comment_does_not_hide_finding():
     assert _created_kinds(content) == ["unknown_slot"]
 
 
+def test_created_variant_missing_required_slot_flagged():
+    # The battery is filled, so only the required ammo slot is left empty — the
+    # runtime error this validator exists for (equipment_effects.cpp).
+    content = _created(
+        "req_ship_hull_1",
+        "\t\t\t\t\t\tfixed_ship_battery_slot = module_test_gun\n"
+        "\t\t\t\t\t\toptional_sensor_slot = module_test_screen_fc\n",
+    )
+    findings = check_created_variants(content, _indexes())
+    assert [f.kind for f in findings] == ["missing_required_module"]
+    assert "fixed_ship_ammo_slot" in findings[0].message
+    assert findings[0].hull == "req_ship_hull_1"
+
+
+def test_created_variant_empty_does_not_fill_required_slot():
+    # `= empty` leaves the slot without a module, same as omitting it.
+    content = _created(
+        "req_ship_hull_1",
+        "\t\t\t\t\t\tfixed_ship_battery_slot = empty\n",
+    )
+    assert _created_kinds(content) == [
+        "missing_required_module",
+        "missing_required_module",
+    ]
+
+
+def test_created_variant_required_slot_via_unlock_passes():
+    # The ammo slot's allowed set is empty, but the equipped gun unlocks it —
+    # the Challenger 2 shape, and every required slot is filled.
+    content = _created(
+        "req_ship_hull_1",
+        "\t\t\t\t\t\tfixed_ship_battery_slot = module_test_gun\n"
+        "\t\t\t\t\t\tfixed_ship_ammo_slot = module_test_gun_ammo\n",
+    )
+    assert _created_kinds(content) == []
+
+
+def test_created_variant_without_modules_block_flagged():
+    # No modules at all means every required slot is missing.
+    content = (
+        "focus_tree = {\n"
+        "\tfocus = {\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tcreate_equipment_variant = {\n"
+        '\t\t\t\tname = "Test Class"\n'
+        "\t\t\t\ttype = req_ship_hull_1\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = check_created_variants(content, _indexes())
+    assert [f.kind for f in findings] == [
+        "missing_required_module",
+        "missing_required_module",
+    ]
+
+
+def test_created_variant_absent_required_defaults_to_optional():
+    # req_ship_hull_2 re-declares battery without a `required` line; the
+    # engine default is not required, so no finding.
+    content = _created(
+        "req_ship_hull_2",
+        "\t\t\t\t\t\tfixed_ship_battery_slot = module_test_gun\n",
+    )
+    assert _created_kinds(content) == []
+
+
+def test_target_variant_missing_required_slot_flagged():
+    # AI templates are held to the same rule: a template no design can match.
+    content = _variant(
+        "req_ship_hull_1",
+        "\t\t\t\tfixed_ship_battery_slot = module_test_gun\n",
+    )
+    assert _kinds(content) == ["missing_required_module"]
+
+
 def _write(tmp_path, rel, body):
     p = tmp_path / rel
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -370,47 +550,188 @@ def _write(tmp_path, rel, body):
     return p
 
 
+def _variant_issues(tmp_path, hulls, rel, content, validator_cls, prefix):
+    _write(tmp_path, "common/units/equipment/MD_test_ships.txt", hulls)
+    _write(tmp_path, "common/units/equipment/modules/MD_test_modules.txt", MODULES)
+    _write(tmp_path, rel, content)
+    validator = validator_cls(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    return [i for i in validator._issues if i.category.startswith(prefix)]
+
+
 def test_oob_validator_integration_reports_errors(tmp_path):
     from validate_oob_units import Validator as OobValidator
 
-    _write(tmp_path, "common/units/equipment/MD_test_ships.txt", HULLS)
-    _write(tmp_path, "common/units/equipment/modules/MD_test_modules.txt", MODULES)
-    _write(
+    issues = _variant_issues(
         tmp_path,
+        HULLS,
         "common/national_focus/05_test.txt",
         _created(
             "test_ship_hull_1",
             "\t\t\t\t\t\tfixed_ship_fire_control_system_slot = module_test_plain_fc\n",
         ),
+        OobValidator,
+        "SHIP VARIANT",
     )
-    validator = OobValidator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-    variant = [i for i in validator._issues if i.category.startswith("SHIP VARIANT")]
-    assert len(variant) == 1
-    assert variant[0].severity == "error"
-    assert variant[0].file == "common/national_focus/05_test.txt"
-    assert "module_test_plain_fc" in variant[0].message
+    assert len(issues) == 1
+    assert issues[0].severity == "error"
+    assert issues[0].file == "common/national_focus/05_test.txt"
+    assert "module_test_plain_fc" in issues[0].message
 
 
 def test_validator_integration_reports_warnings(tmp_path):
-    _write(tmp_path, "common/units/equipment/MD_test_ships.txt", HULLS)
-    _write(tmp_path, "common/units/equipment/modules/MD_test_modules.txt", MODULES)
-    _write(
+    issues = _variant_issues(
         tmp_path,
+        HULLS,
         "common/ai_equipment/TST_naval.txt",
         _variant(
             "test_ship_hull_1",
             "\t\t\t\tfixed_ship_battery_slot = module_test_gun\n"
             "\t\t\t\tfixed_ship_fire_control_system_slot = module_test_plain_fc\n",
         ),
+        Validator,
+        "NAVAL VARIANT",
     )
-    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-    naval = [i for i in validator._issues if i.category.startswith("NAVAL VARIANT")]
-    assert len(naval) == 1
-    assert naval[0].severity == "warning"
-    assert naval[0].file == "common/ai_equipment/TST_naval.txt"
-    assert "module_test_plain_fc" in naval[0].message
+    assert len(issues) == 1
+    assert issues[0].severity == "warning"
+    assert issues[0].file == "common/ai_equipment/TST_naval.txt"
+    assert "module_test_plain_fc" in issues[0].message
+
+
+def test_oob_validator_reports_missing_required_slot(tmp_path):
+    from validate_oob_units import Validator as OobValidator
+
+    issues = _variant_issues(
+        tmp_path,
+        REQUIRED_HULLS,
+        "common/national_focus/06_test.txt",
+        _created(
+            "req_ship_hull_1",
+            "\t\t\t\t\t\tfixed_ship_battery_slot = module_test_gun\n",
+        ),
+        OobValidator,
+        "SHIP VARIANT",
+    )
+    assert len(issues) == 1
+    assert issues[0].severity == "error"
+    assert issues[0].file == "common/national_focus/06_test.txt"
+    assert "fixed_ship_ammo_slot" in issues[0].message
+
+
+def test_ai_validator_missing_required_slot_is_error(tmp_path):
+    # A template that leaves a required slot empty can never be matched, so the
+    # AI validator escalates it above its usual slot-rule warning.
+    issues = _variant_issues(
+        tmp_path,
+        REQUIRED_HULLS,
+        "common/ai_equipment/TST_naval.txt",
+        _variant(
+            "req_ship_hull_1",
+            "\t\t\t\tfixed_ship_battery_slot = module_test_gun\n"
+            "\t\t\t\toptional_sensor_slot = module_test_screen_fc\n",
+        ),
+        Validator,
+        "NAVAL VARIANT",
+    )
+    assert len(issues) == 1
+    assert issues[0].severity == "error"
+    assert issues[0].file == "common/ai_equipment/TST_naval.txt"
+    assert "fixed_ship_ammo_slot" in issues[0].message
+
+
+def test_ai_validator_count_limit_is_error(tmp_path):
+    issues = _variant_issues(
+        tmp_path,
+        LIMIT_HULLS,
+        "common/ai_equipment/TST_land.txt",
+        _variant(
+            "lim_tank_hull_1",
+            "\t\t\t\tgun_slot = module_test_gun\n"
+            "\t\t\t\textra_gun_slot = module_test_gun\n",
+        ),
+        Validator,
+        "EQUIPMENT VARIANT",
+    )
+    assert len(issues) == 1
+    assert issues[0].severity == "error"
+    assert "module_light_guns_category" in issues[0].message
+
+
+def test_two_guns_exceed_category_count_limit():
+    content = _variant(
+        "lim_tank_hull_1",
+        "\t\t\t\tgun_slot = module_test_gun\n"
+        "\t\t\t\textra_gun_slot = module_test_gun\n",
+    )
+    assert _kinds(content) == ["count_limit_exceeded"]
+
+
+def test_one_gun_respects_category_count_limit():
+    content = _variant(
+        "lim_tank_hull_1",
+        "\t\t\t\tgun_slot = module_test_gun\n",
+    )
+    assert _kinds(content) == []
+
+
+def test_banned_module_hits_module_count_limit():
+    content = _variant(
+        "lim_tank_hull_1",
+        "\t\t\t\tgun_slot = module_test_banned\n",
+    )
+    assert _kinds(content) == ["count_limit_exceeded"]
+
+
+def test_mixed_any_of_does_not_count_toward_limit():
+    content = _variant(
+        "lim_tank_hull_1",
+        "\t\t\t\tgun_slot = module_test_gun\n"
+        "\t\t\t\textra_gun_slot = { any_of = { module_test_gun module_test_helipad } }\n",
+    )
+    assert _kinds(content) == ["category_mismatch"]
+
+
+def test_amphibious_forbid_flags_on_amphib_hull():
+    content = _variant(
+        "lim_amphib_hull_1",
+        "\t\t\t\tgun_slot = module_test_amphib_gun\n",
+    )
+    assert _kinds(content) == ["forbidden_equipment_type"]
+
+
+def test_amphibious_forbid_allows_armor_hull():
+    content = _variant(
+        "lim_tank_hull_1",
+        "\t\t\t\tgun_slot = module_test_amphib_gun\n",
+    )
+    assert _kinds(content) == []
+
+
+def test_exact_match_forbids_armor_only_hull():
+    content = _variant(
+        "lim_tank_hull_1",
+        "\t\t\t\tgun_slot = module_test_exact_gun\n",
+    )
+    assert _kinds(content) == ["forbidden_equipment_type"]
+
+
+def test_exact_match_allows_amphibious_hull():
+    content = _variant(
+        "lim_amphib_hull_1",
+        "\t\t\t\tgun_slot = module_test_exact_gun\n",
+    )
+    assert _kinds(content) == []
+
+
+def test_duplicate_clone_carries_extra_types():
+    index = _indexes()
+    assert index.hull_types["lim_clone_hull_1"] == {"armor", "amphibious"}
+    assert index.hull_types["lim_tank_hull_1"] == {"armor"}
+    content = _variant(
+        "lim_clone_hull_1",
+        "\t\t\t\tgun_slot = module_test_amphib_gun\n",
+    )
+    assert _kinds(content) == ["forbidden_equipment_type"]
 
 
 def _group(designs):

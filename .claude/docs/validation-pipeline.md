@@ -23,6 +23,7 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
 ## The split
 
 - Most content validators run **CI-only**: the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml` are the gate. Their old `stages: [manual]` pre-commit hooks were removed (almost nobody ran them). On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `validate_defines.py`. Common scripting-mistake rules run once through `validate_common_mistakes.py` in that dispatcher and the CI validator matrix. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
+- Everything that fans out draws on one CPU ceiling: `cpu_budget()` in `tools/shared_utils.py` hands out 75% of the cores and leaves the rest to whoever is using the machine. `run_all_validators.py` caps how many validators run at once and passes each `--workers`; `precommit_validate.py` splits the same budget across its fan-out (it used to floor inner workers at 2, so fan-out times pools could reach twice the core count); `BaseValidator` clamps whatever `--workers` it is given. CI runners get every core, and `MD_MAX_WORKERS=N` overrides both. The unbounded suite fan-out that this replaced was measurably faster — the suite is largely I/O-bound — so a run that needs the old speed sets `MD_MAX_WORKERS`.
 - `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
 - `fix_loc_yaml.py` is pre-commit-only. `validate_localization_encoding.py` and `validate_mod_encoding.py` also run in the coding pipeline, so web-UI edits and contributors with hooks disabled cannot bypass the encoding checks. (The old `check_braces.py` hook was absorbed into `tools/validation/validate_style.py`.)
 - `validate_defines.py` runs on pre-commit against the live install and on CI against the committed `tools/validation/vanilla_defines.txt` manifest. Regenerate it (and every other vanilla-derived file) with `refresh_vanilla_data.py` after a HOI4 version bump (see [Refreshing vanilla-derived data](#refreshing-vanilla-derived-data)).
@@ -62,6 +63,7 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   - Sprite names in the generator-managed `.gfx` files come from the texture filename (`tools/gfx_entry_generator.py` builds `GFX_<stem>`), so a name fixed only in the `.gfx` is undone on the next generator run. Rename the `.dds`/`.png` and update `texturefile` instead.
 - `validate_set_variables.py` runs **CI-only**, `--strict` (its unused-variable backlog was cleared). No pre-commit hook; run it directly (`python3 tools/validation/validate_set_variables.py`) for a local check.
 - `validate_scripted_localisation.py` runs **CI-only**, `--strict` (its missing/unused scripted-loc backlog was cleared). No pre-commit hook; run it directly for a local check.
+- `validate_modifiers.py` runs **CI-only**, `--strict` since #3228. It is not in `precommit_validate.py`'s registry, so `common/dynamic_modifiers/` edits get no local signal — run it directly before pushing. Only `redundant-enable-gate` is ERROR and gates; `unknown-modifier` and `dynamic-modifier-name-loc` stay WARNING, which is why `--strict` is safe here despite the frequency heuristic's known false positives. `redundant-enable-gate` flags a top-level `always = yes` or `original_tag` / `tag` inside a dynamic modifier's own `enable` (never one nested in `OR` / `NOT`, nor one inside `remove_trigger`) — see `common/dynamic_modifiers/README.md` for when a gate is genuinely load-bearing. `tools/standardization/strip_dynmod_tag_gates.py` clears them in bulk. There is deliberately no exemption list: add one only when a real case appears.
 - `validate_file_paths.py` runs **CI-only**, `--strict`, in its own `validate-paths` job rather than either matrix. It reads path names from the git index (`git ls-files`), so it needs a checkout with `.git`; the workspace bundle the matrix jobs restore has neither `.git` nor `map/`. The job checks out with `filter: blob:none` and a sparse `tools` cone — the index already names every shipped path, so no content is fetched. `descriptor.mod` is read for `replace_path` directives, and a missing descriptor is a hard setup error: reading it as "nothing is replaced" would turn every inert case clash into a blocking one. Cross-references the committed `vanilla_paths.txt` manifest (CI has no HOI4 install); regenerate it after a game update via `refresh_vanilla_data.py`. Its within-mod case-collision check overlaps the pre-commit `check-case-conflict` hook on purpose — that hook only sees staged files on machines with hooks enabled, so web-UI edits and hook-less contributors bypass it exactly like the BOM fixers below.
 
 - `validate_characters.py` runs in both pre-commit and CI (`--strict`, `characters` path filter) and covers **both leader trait pools** over one file walk — unit leader roles and advisor slots. They are checked together because they cross: deciding whether a trait is legal on a general or on an advisor needs both pools loaded, and each pool's traits are dead in the other's blocks. Its `trait-role-mismatch` check is ERROR and gates: a unit leader trait declares `type = land` / `navy` / `operative` (or `all`, or a `{ land navy }` list), and one from the wrong branch loads silently and never applies, so the leader ships with fewer traits than the script promises. Only the branch is compared — vanilla itself puts `type = corps_commander` traits on field marshals and `type = field_marshal` traits on corps commanders, so that split is not a finding (checking it produced 185 false positives). The `bold`-on-a-general backlog was cleared in the same change. `undefined-unit-leader-trait` is WARNING: 9 ALG/PHI references to traits nothing defines need content decisions, not a mechanical fix. `common/unit_leader` is `replace_path`'d, so the mod's files are the complete trait universe and no vanilla manifest is needed. `country_leader` blocks (the country leader's own traits, not an advisor's) draw from a third pool and are not scanned.
@@ -90,21 +92,37 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   `tools/validation/equipment_module_slots.py`, resolving module-driven slot unlocks
   and `duplicate_archetypes` clones first. Tank and plane variant slots are not
   validated yet.
-  All findings are ERROR. It also structurally checks `create_unit`
+  Ship-variant findings are ERROR. It also structurally checks `create_unit`
   effects: state scope, `owner`, block keys, a single-line division string
-  naming a `division_template`, zero equipment/manpower factors, and the order
-  of a template defined in the same file and effect path as the `create_unit`
-  using it. It does not check that a referenced template is defined anywhere, so
-  a template that only ever exists for the wrong country, or a `has_template`
-  guard naming a template nothing defines, still passes. Its combined run gate
-  covers `history/countries/`, `common/national_focus/`, `events/`,
-  `common/decisions/`, `common/special_projects/`, `common/scripted_effects/`,
-  `common/on_actions/`, `common/operations/`,
-  `common/resistance_compliance_modifiers/`, and `common/scripted_guis/`, in
-  both the pre-commit registry (`tools/precommit_validate.py`) and the CI
-  `oob` path filter. `config_drift_test.py` derives both routes from
-  `_CREATE_UNIT_SOURCE_PATTERNS`, so a new directory there fails the suite until
-  both are updated. Findings are **errors**. Non-ship variants are skipped. Their
+  that parses as army data (documented inner keys, quoted `name` /
+  `division_template`, numeric factors, `force_equipment_variants` shape),
+  zero equipment/manpower factors, and the order of a template defined in the
+  same file and effect path as the `create_unit` using it. German/Danish letters
+  in that string (`äöüßæøå`) are WARNING (`out-of-bounds-division`): the inner
+  parser rejects them even inside quotes (Sweden `militärdistriktet`). Romance,
+  Slavic, and Kurdish accents are allowed; they render in game. Schema failures
+  gate. If a `create_unit` names a template that `delete_unit_template_and_units`
+  removes anywhere, and this effect neither creates that template earlier nor
+  sits behind a `has_template` guard, that is WARNING (`missing-template-ensure`).
+  persistent.cpp reports the missing template as `Malformed token: <name>`.
+  Requiring the ensure pattern on every `create_unit` is 544 findings, mostly
+  legal OOB spawns, so the check is limited to names that are also deleted.
+  A `<effect> = yes` call earlier in the same effect also counts when that
+  scripted effect creates or guards the template, followed transitively, so the
+  ensure block can be factored out instead of inlined at every call site.
+  The backlog was cleared in the same change and the check is clean on main.
+  It stays WARNING because the covering-template resolver is a heuristic: a
+  bare `ROOT`-scope definition is taken to cover the whole effect, and a
+  `has_template` guard naming a template nothing defines still passes. Its
+  combined run gate covers `history/countries/`, `common/national_focus/`,
+  `events/`, `common/decisions/`, `common/special_projects/`,
+  `common/scripted_effects/`, `common/on_actions/`, `common/operations/`,
+  `common/resistance_compliance_modifiers/`, `common/scripted_guis/`, and
+  `common/ideas/` (deletions live in idea removal effects), in both the
+  pre-commit registry (`tools/precommit_validate.py`) and the CI `oob` path
+  filter. `config_drift_test.py` derives both routes from
+  `_CREATE_UNIT_SOURCE_PATTERNS` and `_DELETE_TEMPLATE_SOURCE_PATTERNS`, so a
+  new directory there fails the suite until both are updated. Non-ship variants are skipped. Their
   `allowed_module_categories` blocks are often empty, so the naval resolver
   cannot be pointed at them as-is.
 
