@@ -42,6 +42,8 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   39. add_opinion_modifier / add_relation_modifier naming no modifier
   40. event AI choices cannot all be zero under historical bankruptcy
   41. is_at_war is not a valid trigger (use has_war)
+  42. review regressions: add-after-zero, excluded fallback, single-line ai_chance
+  43. windows path separators keep the directory-scoped checks enabled
 """
 
 import os
@@ -91,8 +93,10 @@ from check_common_mistakes import (
     _equipment_names,
     _files_need_global_refs,
     _get_block,
+    _negates_bankruptcy_mission,
     _provincial_building_types,
     check_file,
+    classify_file_path,
 )
 
 passed = 0
@@ -3395,7 +3399,7 @@ assert_eq(
             "}\n",
         ]
     ),
-    (False, False),
+    ("none", False),
     "brace-valued conditions are not treated as unconditional zero modifiers",
 )
 
@@ -3408,6 +3412,166 @@ assert_finds(
     ["\tlimit = { is_at_war = yes }\n", "\tis_at_war = no\n"],
     2,
     "is_at_war assignments flagged",
+)
+
+
+assert_finds(
+    _check_invalid_is_at_war,
+    [
+        "\tset_variable = { is_at_war = 1 }\n",
+        "\tcheck_variable = { is_at_war > 0 }\n",
+    ],
+    0,
+    "a variable named is_at_war is not a trigger and is not flagged",
+)
+
+# 42. Regressions from the review of the two checks above.
+
+print("\n── ai fallback edge cases ──")
+
+assert_finds(
+    _check_event_ai_historical_bankruptcy_fallback,
+    [
+        "country_event = {\n",
+        "\tid = test_events.3\n",
+        "\toption = {\n",
+        "\t\tname = test_events.3.a\n",
+        "\t\tai_chance = {\n",
+        "\t\t\tbase = 50\n",
+        "\t\t\tmodifier = {\n",
+        "\t\t\t\tfactor = 0\n",
+        "\t\t\t\thas_active_mission = bankruptcy_incoming_collapse\n",
+        "\t\t\t}\n",
+        "\t\t\tmodifier = {\n",
+        "\t\t\t\tadd = 30\n",
+        "\t\t\t\thas_active_mission = bankruptcy_incoming_collapse\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "\toption = {\n",
+        "\t\tname = test_events.3.b\n",
+        "\t\tai_chance = {\n",
+        "\t\t\tbase = 50\n",
+        "\t\t\tmodifier = {\n",
+        "\t\t\t\tfactor = 0\n",
+        "\t\t\t\tis_historical_focus_on = yes\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "an add after factor = 0 restores the option and clears the finding",
+)
+
+assert_finds(
+    _check_event_ai_historical_bankruptcy_fallback,
+    [
+        "country_event = {\n",
+        "\tid = test_events.4\n",
+        "\toption = {\n",
+        "\t\tname = test_events.4.a\n",
+        "\t\tai_chance = {\n",
+        "\t\t\tbase = 50\n",
+        "\t\t\tmodifier = {\n",
+        "\t\t\t\tfactor = 0\n",
+        "\t\t\t\thas_active_mission = bankruptcy_incoming_collapse\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+        "\toption = {\n",
+        "\t\tname = test_events.4.b\n",
+        "\t\ttrigger = { NOT = { has_active_mission = bankruptcy_incoming_collapse } }\n",
+        "\t\tai_chance = { base = 50 }\n",
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "an option its own trigger rules out is not a usable fallback",
+)
+
+assert_finds(
+    _check_event_ai_historical_bankruptcy_fallback,
+    [
+        "country_event = {\n",
+        "\tid = test_events.5\n",
+        "\toption = {\n",
+        "\t\tname = test_events.5.a\n",
+        "\t\tai_chance = { base = 50 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }\n",
+        "\t}\n",
+        "\toption = {\n",
+        "\t\tname = test_events.5.b\n",
+        "\t\tai_chance = { base = 50 modifier = { factor = 0 is_historical_focus_on = yes } }\n",
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "single-line ai_chance blocks are parsed for modifiers",
+)
+
+
+assert_finds(
+    _check_event_ai_historical_bankruptcy_fallback,
+    [
+        "country_event = {\n",
+        "\tid = test_events.6\n",
+        "\toption = {\n",
+        "\t\tname = test_events.6.a\n",
+        "\t\tai_chance = {\n",
+        "\t\t\tbase = 50\n",
+        "\t\t\tmodifier = {\n",
+        "\t\t\t\tfactor = 0\n",
+        "\t\t\t\thas_active_mission = bankruptcy_incoming_collapse\n",
+        "\t\t\t}\n",
+        "\t\t\tmodifier = { add = 30 }\n",
+        "\t\t}\n",
+        "\t}\n",
+        "\toption = {\n",
+        "\t\tname = test_events.6.b\n",
+        "\t\tai_chance = { base = 50 modifier = { factor = 0 is_historical_focus_on = yes } }\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "an unconditional add also restores a zeroed option",
+)
+
+assert_eq(
+    _negates_bankruptcy_mission(
+        "NOT = { has_war = yes } has_active_mission = bankruptcy_incoming_collapse"
+    ),
+    False,
+    "an unrelated NOT beside a positive mission check is not a negation",
+)
+
+assert_eq(
+    _negates_bankruptcy_mission(
+        "NOT = { has_active_mission = bankruptcy_incoming_collapse }"
+    ),
+    True,
+    "the mission negated inside its own NOT is recognised",
+)
+
+# 43. Windows path separators must not disable the directory-scoped checks.
+
+print("\n── windows path classification ──")
+
+assert_eq(
+    classify_file_path("common\\ideas\\united_states.txt"),
+    classify_file_path("common/ideas/united_states.txt"),
+    "a backslash ideas path classifies the same as a forward-slash one",
+)
+
+assert_eq(
+    classify_file_path("common\\national_focus\\usa.txt")[1],
+    True,
+    "a backslash national_focus path is still a focus file",
+)
+
+assert_eq(
+    classify_file_path("events\\United States.txt")[5],
+    True,
+    "a backslash events path is still an event file",
 )
 
 assert_finds(
