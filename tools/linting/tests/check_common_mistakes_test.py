@@ -43,6 +43,7 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   40. event AI choices cannot all be zero under historical bankruptcy
   41. is_at_war is not a valid trigger (use has_war)
   42. review regressions: add-after-zero, excluded fallback, single-line ai_chance
+  43. windows path separators keep the directory-scoped checks enabled
 """
 
 import os
@@ -51,6 +52,8 @@ import sys
 import tempfile
 
 from check_common_mistakes import (
+    classify_file_path,
+    _negates_bankruptcy_mission,
     _RE_IS_X_NATION,
     _ai_zero_modifier_conditions,
     _check_active_decision_defined,
@@ -3504,6 +3507,71 @@ assert_finds(
     ],
     1,
     "single-line ai_chance blocks are parsed for modifiers",
+)
+
+
+assert_finds(
+    _check_event_ai_historical_bankruptcy_fallback,
+    [
+        "country_event = {\n",
+        "\tid = test_events.6\n",
+        "\toption = {\n",
+        "\t\tname = test_events.6.a\n",
+        "\t\tai_chance = {\n",
+        "\t\t\tbase = 50\n",
+        "\t\t\tmodifier = {\n",
+        "\t\t\t\tfactor = 0\n",
+        "\t\t\t\thas_active_mission = bankruptcy_incoming_collapse\n",
+        "\t\t\t}\n",
+        "\t\t\tmodifier = { add = 30 }\n",
+        "\t\t}\n",
+        "\t}\n",
+        "\toption = {\n",
+        "\t\tname = test_events.6.b\n",
+        "\t\tai_chance = { base = 50 modifier = { factor = 0 is_historical_focus_on = yes } }\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "an unconditional add also restores a zeroed option",
+)
+
+assert_eq(
+    _negates_bankruptcy_mission(
+        "NOT = { has_war = yes } has_active_mission = bankruptcy_incoming_collapse"
+    ),
+    False,
+    "an unrelated NOT beside a positive mission check is not a negation",
+)
+
+assert_eq(
+    _negates_bankruptcy_mission(
+        "NOT = { has_active_mission = bankruptcy_incoming_collapse }"
+    ),
+    True,
+    "the mission negated inside its own NOT is recognised",
+)
+
+# 43. Windows path separators must not disable the directory-scoped checks.
+
+print("\n── windows path classification ──")
+
+assert_eq(
+    classify_file_path("common\\ideas\\united_states.txt"),
+    classify_file_path("common/ideas/united_states.txt"),
+    "a backslash ideas path classifies the same as a forward-slash one",
+)
+
+assert_eq(
+    classify_file_path("common\\national_focus\\usa.txt")[1],
+    True,
+    "a backslash national_focus path is still a focus file",
+)
+
+assert_eq(
+    classify_file_path("events\\United States.txt")[5],
+    True,
+    "a backslash events path is still an event file",
 )
 
 assert_finds(

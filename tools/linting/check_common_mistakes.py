@@ -2741,11 +2741,11 @@ def _ai_zero_modifier_conditions(modifier_block):
         else:
             return "none", False
 
-    if not has_target_condition:
-        return "none", False
-    if factor_zero:
+    if factor_zero and has_target_condition:
         return "zero", has_bankruptcy_condition
-    if positive_add:
+    if positive_add and (has_target_condition or len(assignments) == 1):
+        # An addition with no condition of its own applies under the target
+        # state as well, so it restores an option an earlier factor = 0 zeroed.
         return "add", has_bankruptcy_condition
     return "none", False
 
@@ -2770,6 +2770,30 @@ def _event_option_zeroes_historical_bankruptcy(option_block):
     return False, False
 
 
+_RE_NOT_BLOCK_OPEN = re.compile(r"\bNOT\s*=\s*\{")
+
+
+def _negates_bankruptcy_mission(code):
+    """Whether the bankruptcy mission sits inside a NOT block in `code`.
+
+    Testing for a NOT and for the mission independently would also match an
+    unrelated negation standing beside a positive mission check.
+    """
+    cursor = 0
+    while True:
+        match = _RE_NOT_BLOCK_OPEN.search(code, cursor)
+        if not match:
+            return False
+        open_pos = code.index("{", match.start())
+        close_pos = _find_brace_close(code, open_pos)
+        if (
+            "has_active_mission = bankruptcy_incoming_collapse"
+            in code[open_pos:close_pos]
+        ):
+            return True
+        cursor = match.end()
+
+
 def _option_unavailable_under_bankruptcy(option_block):
     """Whether the option's own trigger rules it out under bankruptcy.
 
@@ -2780,10 +2804,7 @@ def _option_unavailable_under_bankruptcy(option_block):
         option_block, _RE_TRIGGER_BLOCK_OPEN
     ):
         code = " ".join(strip_inline_comment(line) for line in trigger_block)
-        if (
-            "NOT" in code
-            and "has_active_mission = bankruptcy_incoming_collapse" in code
-        ):
+        if _negates_bankruptcy_mission(code):
             return True
     return False
 
@@ -3214,6 +3235,36 @@ def _check_leader_rotation(lines):
     return sorted(issues)
 
 
+def classify_file_path(filepath):
+    """Return which per-directory checks apply to `filepath`.
+
+    Separators are normalised first: on Windows the paths arrive with
+    backslashes, and matching "common/ideas" against them would silently
+    disable every directory-scoped check.
+    """
+    normalized = filepath.replace("\\", "/")
+    is_ideas = "common/ideas" in normalized
+    is_focus_file = "common/national_focus" in normalized
+    is_decision_file = "common/decisions" in normalized
+    is_ai_file = (
+        is_focus_file
+        or is_decision_file
+        or "common/military_industrial_organization" in normalized
+    )
+    is_common_or_events_file = "common/" in normalized or "events/" in normalized
+    is_event_file = "events/" in normalized
+    is_political_leaders_file = normalized.endswith("_political_leaders.txt")
+    return (
+        is_ideas,
+        is_focus_file,
+        is_decision_file,
+        is_ai_file,
+        is_common_or_events_file,
+        is_event_file,
+        is_political_leaders_file,
+    )
+
+
 def check_file(filepath):
     """Check a single file for common mistakes. Returns list of (filepath, line_num, message) tuples."""
     issues = []
@@ -3224,20 +3275,15 @@ def check_file(filepath):
     except Exception:
         return issues
 
-    normalized_filepath = filepath.replace("\\", "/")
-    is_ideas = "common/ideas" in normalized_filepath
-    is_focus_file = "common/national_focus" in normalized_filepath
-    is_decision_file = "common/decisions" in normalized_filepath
-    is_ai_file = (
-        is_focus_file
-        or is_decision_file
-        or "common/military_industrial_organization" in normalized_filepath
-    )
-    is_common_or_events_file = (
-        "common/" in normalized_filepath or "events/" in normalized_filepath
-    )
-    is_event_file = "events/" in normalized_filepath
-    is_political_leaders_file = normalized_filepath.endswith("_political_leaders.txt")
+    (
+        is_ideas,
+        is_focus_file,
+        is_decision_file,
+        is_ai_file,
+        is_common_or_events_file,
+        is_event_file,
+        is_political_leaders_file,
+    ) = classify_file_path(filepath)
 
     # Only track idea categories for idea files (non-selectable vs selectable)
     # Dynamically parsed from common/idea_tags/*.txt
