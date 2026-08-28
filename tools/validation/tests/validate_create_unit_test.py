@@ -3,9 +3,11 @@
 A create_unit only spawns units in a state scope, needs a single-line division
 string that parses as army data and names a division_template, and must set
 owner. When it defines the template itself, the template must come first.
-A create_unit that names a template must create it earlier in the same effect
+When the template it names is also removed by delete_unit_template_and_units
+somewhere in the mod, the create_unit must create it earlier in the same effect
 or sit behind a has_template guard — persistent.cpp reports a missing runtime
-template as a malformed token.
+template as a malformed token. Templates nothing deletes are not required to
+carry that ensure pattern.
 """
 
 from textwrap import indent
@@ -13,6 +15,8 @@ from textwrap import indent
 from validate_oob_units import (
     Validator,
     _check_created_units,
+    _deleted_template_names,
+    _effect_template_closure,
     _parse_division_string,
 )
 from validator_common import Severity
@@ -34,11 +38,15 @@ def _div_for(tname, unitname):
     )
 
 
-def _run(content, tmp_path, filename="test.txt", deleted_names=frozenset()):
+def _run(
+    content, tmp_path, filename="test.txt", deleted_names=frozenset(), closure=None
+):
     target = tmp_path / "common" / "national_focus" / filename
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8")
-    return _check_created_units((str(target), filename, str(tmp_path), deleted_names))
+    return _check_created_units(
+        (str(target), filename, str(tmp_path), deleted_names, closure or {})
+    )
 
 
 def _cats(issues):
@@ -362,6 +370,107 @@ def test_extra_create_unit_sources_are_checked(tmp_path):
     assert validator.errors_found == len(sources)
     assert {issue.file for issue in validator._issues} == set(sources)
     assert all(issue.severity == Severity.ERROR for issue in validator._issues)
+
+
+def test_deleted_template_names_reads_delete_blocks(tmp_path):
+    target = tmp_path / "common" / "ideas" / "test.txt"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        'on_remove = {\n\tdelete_unit_template_and_units = {\n\t\tdivision_template = "OMON"\n'
+        "\t\tdisband = yes\n\t}\n}\n"
+        '# delete_unit_template_and_units = { division_template = "Commented" }\n',
+        encoding="utf-8",
+    )
+    assert _deleted_template_names(str(tmp_path), [str(target)]) == frozenset({"OMON"})
+
+
+def test_ideas_deletion_drives_missing_template_ensure(tmp_path):
+    div = _div_for("OMON", "OMON Chechnya")
+    idea = tmp_path / "common" / "ideas" / "test.txt"
+    idea.parent.mkdir(parents=True, exist_ok=True)
+    idea.write_text(
+        'on_remove = {\n\tdelete_unit_template_and_units = {\n\t\tdivision_template = "OMON"\n\t}\n}\n',
+        encoding="utf-8",
+    )
+    focus = tmp_path / "common" / "national_focus" / "test.txt"
+    focus.parent.mkdir(parents=True, exist_ok=True)
+    focus.write_text(
+        _focus_with_effect(_block("capital_scope", _create_unit(div))),
+        encoding="utf-8",
+    )
+
+    validator = Validator(str(tmp_path), workers=1)
+    validator.validate_created_units()
+
+    assert [issue.category for issue in validator._issues] == [
+        "CREATE UNIT: template not created or has_template-guarded in this effect"
+    ]
+    assert validator._issues[0].severity == Severity.WARNING
+
+
+def test_effect_closure_follows_nested_calls(tmp_path):
+    target = tmp_path / "common" / "scripted_effects" / "test.txt"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        _block("TAG_ensure_militia", _division_template("Militia"))
+        + "\n"
+        + _block("TAG_setup", "\tTAG_ensure_militia = yes")
+        + "\n",
+        encoding="utf-8",
+    )
+    closure = _effect_template_closure(str(tmp_path), [str(target)])
+    assert closure["TAG_ensure_militia"] == frozenset({"Militia"})
+    assert closure["TAG_setup"] == frozenset({"Militia"})
+
+
+def test_prior_ensure_effect_call_satisfies_the_guard(tmp_path):
+    div = _div_for("Militia", "Militia")
+    content = _focus_with_effect(
+        "TAG_setup = yes\n" + _block("capital_scope", _create_unit(div))
+    )
+    closure = {"TAG_setup": frozenset({"Militia"})}
+    assert _run(content, tmp_path, deleted_names=frozenset({"Militia"})) != []
+    assert (
+        _run(content, tmp_path, deleted_names=frozenset({"Militia"}), closure=closure)
+        == []
+    )
+
+
+def test_ensure_effect_call_after_create_unit_does_not_count(tmp_path):
+    div = _div_for("Militia", "Militia")
+    content = _focus_with_effect(
+        _block("capital_scope", _create_unit(div)) + "\nTAG_setup = yes"
+    )
+    closure = {"TAG_setup": frozenset({"Militia"})}
+    cats = _cats(
+        _run(content, tmp_path, deleted_names=frozenset({"Militia"}), closure=closure)
+    )
+    assert (
+        "CREATE UNIT: template not created or has_template-guarded in this effect"
+        in cats
+    )
+
+
+def test_force_equipment_variants_owner_is_not_the_block_owner(tmp_path):
+    # The donor tag inside force_equipment_variants must not be mistaken for
+    # the create_unit's own owner when resolving which country's template covers.
+    div = (
+        _div_for("Militia", "Militia")
+        + " force_equipment_variants = { infantry_weapons_1 = { owner = SOV } }"
+    )
+    content = _focus_with_effect(
+        "\n".join(
+            (
+                _block("SOV", _division_template("Militia")),
+                _block("capital_scope", _create_unit(div)),
+            )
+        )
+    )
+    cats = _cats(_run(content, tmp_path, deleted_names=frozenset({"Militia"})))
+    assert (
+        "CREATE UNIT: template not created or has_template-guarded in this effect"
+        in cats
+    )
 
 
 def test_foreign_template_does_not_mask_late_local_definition(tmp_path):

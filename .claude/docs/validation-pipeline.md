@@ -106,16 +106,22 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   persistent.cpp reports the missing template as `Malformed token: <name>`.
   Requiring the ensure pattern on every `create_unit` is 544 findings, mostly
   legal OOB spawns, so the check is limited to names that are also deleted.
-  Backlog on main: ~182. Flip to ERROR once cleared. A `has_template` guard
-  naming a template nothing defines still passes. Its combined run gate
-  covers `history/countries/`, `common/national_focus/`, `events/`,
-  `common/decisions/`, `common/special_projects/`, `common/scripted_effects/`,
-  `common/on_actions/`, `common/operations/`,
-  `common/resistance_compliance_modifiers/`, and `common/scripted_guis/`, in
-  both the pre-commit registry (`tools/precommit_validate.py`) and the CI
-  `oob` path filter. `config_drift_test.py` derives both routes from
-  `_CREATE_UNIT_SOURCE_PATTERNS`, so a new directory there fails the suite until
-  both are updated. Non-ship variants are skipped. Their
+  A `<effect> = yes` call earlier in the same effect also counts when that
+  scripted effect creates or guards the template, followed transitively, so the
+  ensure block can be factored out instead of inlined at every call site.
+  The backlog was cleared in the same change and the check is clean on main.
+  It stays WARNING because the covering-template resolver is a heuristic: a
+  bare `ROOT`-scope definition is taken to cover the whole effect, and a
+  `has_template` guard naming a template nothing defines still passes. Its
+  combined run gate covers `history/countries/`, `common/national_focus/`,
+  `events/`, `common/decisions/`, `common/special_projects/`,
+  `common/scripted_effects/`, `common/on_actions/`, `common/operations/`,
+  `common/resistance_compliance_modifiers/`, `common/scripted_guis/`, and
+  `common/ideas/` (deletions live in idea removal effects), in both the
+  pre-commit registry (`tools/precommit_validate.py`) and the CI `oob` path
+  filter. `config_drift_test.py` derives both routes from
+  `_CREATE_UNIT_SOURCE_PATTERNS` and `_DELETE_TEMPLATE_SOURCE_PATTERNS`, so a
+  new directory there fails the suite until both are updated. Non-ship variants are skipped. Their
   `allowed_module_categories` blocks are often empty, so the naval resolver
   cannot be pointed at them as-is.
 

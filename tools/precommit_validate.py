@@ -112,6 +112,8 @@ _REGISTRY = [
             ("common/operations/", TXT),
             ("common/resistance_compliance_modifiers/", TXT),
             ("common/scripted_guis/", TXT),
+            # Idea removal effects delete templates that create_unit uses.
+            ("common/ideas/", TXT),
         ],
     ),
     _Spec(

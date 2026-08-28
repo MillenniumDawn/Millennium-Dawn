@@ -12,7 +12,7 @@ import os
 import re
 import sys
 from difflib import get_close_matches
-from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -88,6 +88,11 @@ _CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
     "common/operations/*.txt",
     "common/resistance_compliance_modifiers/*.txt",
     "common/scripted_guis/*.txt",
+]
+# delete_unit_template_and_units also lives in idea removal effects, so the
+# deleted-name set is drawn from a wider file list than the create_unit sources.
+_DELETE_TEMPLATE_SOURCE_PATTERNS = _CREATE_UNIT_SOURCE_PATTERNS + [
+    "common/ideas/*.txt",
 ]
 
 
@@ -719,7 +724,7 @@ _KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _OWNER_RE = re.compile(r"\bowner\s*=")
 _OWNER_VALUE_RE = re.compile(r"\bowner\s*=\s*([A-Za-z0-9_]+)")
 _DELETE_TEMPLATE_BLOCK_RE = re.compile(
-    r"delete_unit_template_and_units\s*=\s*\{([^{}]*)\}", re.S
+    r"delete_unit_template_and_units\s*=\s*\{([^{}]*)\}"
 )
 _DELETE_TEMPLATE_NAME_RE = re.compile(r'\bdivision_template\s*=\s*"([^"]*)"')
 _ZERO_FACTOR_RE = re.compile(
@@ -783,9 +788,7 @@ _CREATE_UNIT_CATEGORIES = {
         "CREATE UNIT: template not created or has_template-guarded in this effect"
     ),
 }
-_CREATE_UNIT_WARNING_KINDS = frozenset(
-    {"out-of-bounds-division", "missing-template-ensure"}
-)
+_CREATE_UNIT_WARNING_KINDS = frozenset({"out-of-bounds-division"})
 # persistent.cpp rejects these even inside quotes (Sweden militärdistriktet).
 # Romance/Slavic/Kurdish accents (é, á, š, ş, …) render in game and are allowed.
 _OUT_OF_BOUNDS_LETTERS = frozenset("äöüßæøåÄÖÜÆØÅ")
@@ -1046,24 +1049,29 @@ def _top_level_keys(text: str, start: int, end: int) -> List[str]:
     return keys
 
 
+def _templates_named(
+    nodes: List[Dict], text: str, container: int, name: str
+) -> Iterator[int]:
+    """Indices of division_template blocks named *name* anywhere under *container*."""
+    stack = list(nodes[container]["children"])
+    while stack:
+        i = stack.pop()
+        if nodes[i]["label"] == "division_template":
+            m = _TEMPLATE_NAME_RE.search(text[nodes[i]["start"] : nodes[i]["end"]])
+            if m and m.group(1) == name:
+                yield i
+        stack.extend(nodes[i]["children"])
+
+
 def _template_defs_named(
     nodes: List[Dict], text: str, container: int, name: str, scope_path: Tuple[str, ...]
 ) -> List[int]:
     """Indices of same-scope division_template blocks named *name*."""
-    out = []
-    stack = list(nodes[container]["children"])
-    while stack:
-        i = stack.pop()
-        if (
-            nodes[i]["label"] == "division_template"
-            and _country_scope_path(nodes, i) == scope_path
-        ):
-            body = text[nodes[i]["start"] : nodes[i]["end"]]
-            m = _TEMPLATE_NAME_RE.search(body)
-            if m and m.group(1) == name:
-                out.append(i)
-        stack.extend(nodes[i]["children"])
-    return out
+    return [
+        i
+        for i in _templates_named(nodes, text, container, name)
+        if _country_scope_path(nodes, i) == scope_path
+    ]
 
 
 def _template_covers_create(
@@ -1075,6 +1083,9 @@ def _template_covers_create(
     def_path = _country_scope_path(nodes, def_idx)
     if def_path == cu_path:
         return True
+    # A bare ROOT-scope definition is treated as covering the whole effect: the
+    # effect's own country almost always owns the spawn. This under-reports a
+    # create_unit nested in an unrelated TAG scope with a different owner.
     if def_path == ("ROOT",):
         return True
     if owner and def_path and def_path[-1] == owner:
@@ -1088,20 +1099,11 @@ def _has_prior_covering_template(
     container = _container_for(nodes, cu_idx)
     cu_start = nodes[cu_idx]["start"]
     cu_path = _country_scope_path(nodes, cu_idx)
-    stack = list(nodes[container]["children"])
-    while stack:
-        i = stack.pop()
-        if nodes[i]["label"] == "division_template" and nodes[i]["start"] < cu_start:
-            body = text[nodes[i]["start"] : nodes[i]["end"]]
-            m = _TEMPLATE_NAME_RE.search(body)
-            if (
-                m
-                and m.group(1) == name
-                and _template_covers_create(nodes, i, cu_path, owner)
-            ):
-                return True
-        stack.extend(nodes[i]["children"])
-    return False
+    return any(
+        nodes[i]["start"] < cu_start
+        and _template_covers_create(nodes, i, cu_path, owner)
+        for i in _templates_named(nodes, text, container, name)
+    )
 
 
 def _in_state_scope(nodes: List[Dict], text: str, idx: int) -> bool:
@@ -1411,6 +1413,71 @@ def _parse_division_string(
     return issues, template
 
 
+_EFFECT_CALL_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*)\s*=\s*yes\b")
+
+
+def _effect_template_closure(
+    mod_path: str, files: List[str]
+) -> Dict[str, FrozenSet[str]]:
+    """Map each scripted effect to the template names calling it guarantees.
+
+    An ensure block is routinely factored into its own effect and invoked
+    before the create_unit, so a same-effect scan alone reports those as
+    unguarded. Calls are followed transitively.
+    """
+    ensures: Dict[str, Set[str]] = {}
+    calls: Dict[str, Set[str]] = {}
+    for filepath in files:
+        content = strip_comments(_read_text(filepath, mod_path))
+        if not content:
+            continue
+        nodes = _build_block_nodes(content)
+        for i, node in enumerate(nodes):
+            if node["parent"] != -1 or not node["label"]:
+                continue
+            body = content[node["start"] : node["end"]]
+            names = set(_TEMPLATE_NAME_RE.findall(body))
+            names.update(_HAS_TEMPLATE_RE.findall(body))
+            ensures.setdefault(node["label"], set()).update(names)
+            calls.setdefault(node["label"], set()).update(_EFFECT_CALL_RE.findall(body))
+
+    resolved: Dict[str, FrozenSet[str]] = {}
+
+    def resolve(name: str, seen: Set[str]) -> FrozenSet[str]:
+        if name in resolved:
+            return resolved[name]
+        if name in seen or name not in ensures:
+            return frozenset()
+        seen.add(name)
+        out = set(ensures[name])
+        for callee in calls.get(name, ()):
+            out.update(resolve(callee, seen))
+        seen.discard(name)
+        result = frozenset(out)
+        resolved[name] = result
+        return result
+
+    for name in ensures:
+        resolve(name, set())
+    return resolved
+
+
+def _prior_effect_ensures(
+    text: str,
+    container: int,
+    nodes: List[Dict],
+    cu_start: int,
+    name: str,
+    closure: Dict[str, FrozenSet[str]],
+) -> bool:
+    """True if an effect invoked before the create_unit guarantees *name*."""
+    start = nodes[container]["start"] if container != -1 else 0
+    for m in _EFFECT_CALL_RE.finditer(text, start, cu_start):
+        if name in closure.get(m.group(1), ()):
+            return True
+    return False
+
+
 def _deleted_template_names(mod_path: str, files: List[str]) -> FrozenSet[str]:
     names: Set[str] = set()
     for filepath in files:
@@ -1425,10 +1492,10 @@ def _deleted_template_names(mod_path: str, files: List[str]) -> FrozenSet[str]:
 
 
 def _check_created_units(
-    args: Tuple[str, str, str, FrozenSet[str]],
+    args: Tuple[str, str, str, FrozenSet[str], Dict[str, FrozenSet[str]]],
 ) -> List[Issue]:
     """Validate every create_unit block in one file. Returns error Issues."""
-    filepath, rel, mod_path, deleted_names = args
+    filepath, rel, mod_path, deleted_names, effect_closure = args
     raw = _read_text(filepath, mod_path)
     if not raw:
         return []
@@ -1536,8 +1603,15 @@ def _check_created_units(
             continue
         if tname not in deleted_names:
             continue
-        owner_m = _OWNER_VALUE_RE.search(body)
+        # force_equipment_variants entries carry their own `owner =`; only the
+        # keys outside the division string belong to the create_unit block.
+        outer = body[: dm.start()] + body[dm.end() :]
+        owner_m = _OWNER_VALUE_RE.search(outer)
         owner = owner_m.group(1) if owner_m else None
+        if _prior_effect_ensures(
+            content, container, nodes, cu["start"], tname, effect_closure
+        ):
+            continue
         if not _has_prior_covering_template(nodes, content, cu_idx, tname, owner):
             out.warn(
                 "missing-template-ensure",
@@ -1919,12 +1993,31 @@ class Validator(BaseValidator):
         self.log(f"  Found {len(files)} files to check")
 
         delete_files = self._collect_files(
-            _CREATE_UNIT_SOURCE_PATTERNS + ["common/ideas/*.txt"],
-            ignore_staged=True,
+            _DELETE_TEMPLATE_SOURCE_PATTERNS, ignore_staged=True
         )
-        deleted_names = _deleted_template_names(self.mod_path, delete_files)
+        deleted_names = disk_cache.aggregate_cached(
+            self.mod_path,
+            "oob_units.deleted_templates",
+            delete_files,
+            lambda: _deleted_template_names(self.mod_path, delete_files),
+        )
+        effect_files = self._collect_files(
+            ["common/scripted_effects/*.txt"], ignore_staged=True
+        )
+        effect_closure = disk_cache.aggregate_cached(
+            self.mod_path,
+            "oob_units.effect_templates",
+            effect_files,
+            lambda: _effect_template_closure(self.mod_path, effect_files),
+        )
         args_list = [
-            (f, os.path.relpath(f, self.mod_path), self.mod_path, deleted_names)
+            (
+                f,
+                os.path.relpath(f, self.mod_path),
+                self.mod_path,
+                deleted_names,
+                effect_closure,
+            )
             for f in files
         ]
         all_results = self._pool_map(_check_created_units, args_list, chunksize=20)
