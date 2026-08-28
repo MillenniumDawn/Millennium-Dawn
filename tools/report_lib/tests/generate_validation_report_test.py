@@ -172,7 +172,7 @@ def test_main_posts_comment_for_new_findings(tmp_path, monkeypatch):
     _findings_tree(tmp_path)
     calls = []
 
-    def fake_post(owner, repo, pr_number, body, token, update_only):
+    def fake_post(owner, repo, pr_number, body, token):
         calls.append(
             {
                 "owner": owner,
@@ -180,7 +180,6 @@ def test_main_posts_comment_for_new_findings(tmp_path, monkeypatch):
                 "pr_number": pr_number,
                 "body": body,
                 "token": token,
-                "update_only": update_only,
             }
         )
         return True, "posted"
@@ -191,47 +190,39 @@ def test_main_posts_comment_for_new_findings(tmp_path, monkeypatch):
 
     assert code == 0
     assert len(calls) == 1
-    assert calls[0]["update_only"] is False
     assert calls[0]["pr_number"] == "42"
 
 
-def test_main_updates_existing_comment_on_clean_partial_run(tmp_path, monkeypatch):
+def test_main_posts_comment_on_clean_partial_run(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _passing_tree(tmp_path)
     calls = []
 
-    def fake_post(owner, repo, pr_number, body, token, update_only):
-        calls.append(update_only)
-        return True, "posted"
-
-    def fake_delete(*_args, **_kwargs):
-        raise AssertionError("delete_comment must not be called on a clean partial run")
-
-    monkeypatch.setattr(generate_validation_report, "post_comment", fake_post)
-    monkeypatch.setattr(generate_validation_report, "delete_comment", fake_delete)
+    monkeypatch.setattr(
+        generate_validation_report,
+        "post_comment",
+        lambda *args: calls.append(args) or (True, "posted"),
+    )
 
     code = generate_validation_report.main(_post_argv(tmp_path))
 
     assert code == 0
-    # A clean partial run refreshes the existing comment but never opens a
-    # new one (it cannot clear findings an unrun validator would report).
-    assert calls == [True]
+    assert len(calls) == 1
 
 
-def test_main_deletes_comment_on_full_clean_run(tmp_path, monkeypatch):
+def test_main_posts_comment_on_full_clean_run(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _passing_tree(tmp_path)
     calls = []
 
-    def fake_delete(owner, repo, pr_number, token):
-        calls.append((owner, repo, pr_number, token))
-        return True, "deleted"
-
-    def fake_post(*args, **kwargs):
-        raise AssertionError("post_comment must not be called on a full clean run")
-
-    monkeypatch.setattr(generate_validation_report, "delete_comment", fake_delete)
-    monkeypatch.setattr(generate_validation_report, "post_comment", fake_post)
+    monkeypatch.setattr(
+        generate_validation_report,
+        "post_comment",
+        lambda owner, repo, pr_number, body, token: calls.append(
+            (owner, repo, pr_number, token)
+        )
+        or (True, "posted"),
+    )
 
     code = generate_validation_report.main(
         _post_argv(tmp_path, "--validation-scope", "full")
@@ -262,7 +253,7 @@ def test_main_checks_api_failure_is_non_fatal(tmp_path, monkeypatch):
     )
 
     assert code == 0
-    assert calls == [("abc1234deadbeef", "token")]
+    assert calls == [("abc1234deadbeef", "token")]  # pragma: allowlist secret
 
 
 def test_main_post_comment_requires_repository(tmp_path, monkeypatch):
@@ -276,7 +267,6 @@ def test_main_post_comment_requires_repository(tmp_path, monkeypatch):
         raise AssertionError("API must not be called when the repository guard fails")
 
     monkeypatch.setattr(generate_validation_report, "post_comment", never_call)
-    monkeypatch.setattr(generate_validation_report, "delete_comment", never_call)
 
     _findings_tree(tmp_path)
     argv = _post_argv(tmp_path)
@@ -298,7 +288,6 @@ def test_main_post_comment_requires_pr_number(tmp_path, monkeypatch):
         raise AssertionError("API must not be called when the pr-number guard fails")
 
     monkeypatch.setattr(generate_validation_report, "post_comment", never_call)
-    monkeypatch.setattr(generate_validation_report, "delete_comment", never_call)
 
     _findings_tree(tmp_path)
     argv = _post_argv(tmp_path)

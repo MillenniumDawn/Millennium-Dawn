@@ -1,7 +1,13 @@
 name: Code Standards & Validation
 
 on:
-  pull_request:
+  # pull_request_target, not pull_request: a fork PR's pull_request run gets a
+  # read-only GITHUB_TOKEN no matter what the permissions block asks for, so
+  # validation-report's comment and check runs both 403 and fork authors see a
+  # bare red X. pull_request_target runs the base branch's workflow with a
+  # writable token. The trust boundary that makes that safe is below: nothing
+  # the PR authored executes in a job holding write scope.
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
     paths:
@@ -25,11 +31,14 @@ on:
       # detect-changes (content groups), so a tooling-only PR would trigger the
       # workflow but skip every validator, posting an empty report.
       # Changes under tools/ are smoke-tested by tools-validation.yml instead.
+      # A PR editing this file is validated by main's copy of it, not its own —
+      # pull_request_target always runs the base branch's workflow. Merge
+      # pipeline changes on their own and watch the next PR.
       - ".github/workflows/coding-pipeline.yml"
   # Manual re-runs for open PRs (e.g. after main advanced) and the periodic
   # revalidation dispatched by nightly-pr-validation.yml. Dispatched runs are
-  # keyed on the PR's head branch (ref), so the same pull_request context is
-  # rebuilt from the inputs — see PR_NUMBER/BASE_SHA below.
+  # keyed on the PR's head branch (ref), so the same PR context is rebuilt
+  # from the inputs — see PR_NUMBER/BASE_SHA below.
   workflow_dispatch:
     inputs:
       pr_number:
@@ -51,7 +60,11 @@ concurrency:
   cancel-in-progress: true
 
 # Least privilege: validator jobs run PR-authored code and only need to read.
-# The validation-report job declares its own pull-requests/checks write scope.
+# Under pull_request_target that default is the whole trust boundary — a fork
+# PR can rewrite anything under tools/, and those rewritten validators do run
+# here, so no job that executes the merge ref may raise its scope above this.
+# validation-report is the one job with write scope, and it checks out the base
+# branch's tooling instead of the PR's for exactly that reason.
 permissions:
   contents: read
 
@@ -62,16 +75,20 @@ permissions:
 # modifier list validate_modifiers.py needs (~4000 names it would otherwise
 # false-positive on).
 # The bundle key identifies the PR's exact merge tree as (pr, head sha, base
-# revision). On pull_request the base component is github.sha, the merge commit
-# itself. A workflow_dispatch run has no merge commit in context, so the caller
-# supplies the base branch's *current* head instead. Cache keys are immutable,
+# revision). On pull_request_target the base component is github.sha, which is
+# the base branch's head at event time. A workflow_dispatch run has no PR
+# context, so the caller supplies that head instead. Cache keys are immutable,
 # so a key that doesn't move when main moves makes cache/save a no-op and hands
 # every validator the previous run's bundle; nightly-pr-validation.yml resolves
 # that head live for exactly this reason.
+# pull_request_target checks out the base branch by default, so every job that
+# needs the PR's content asks for the merge ref by number. A bare dispatch
+# names no PR and falls back to the dispatched branch's own head.
 env:
   CHECKOUT_REF: >-
-    ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number &&
-    format('refs/pull/{0}/merge', inputs.pr_number) || github.sha }}
+    ${{ (inputs.pr_number || github.event.pull_request.number) &&
+    format('refs/pull/{0}/merge', inputs.pr_number ||
+    github.event.pull_request.number) || github.sha }}
   WORKSPACE_KEY: >-
     md-workspace-v2-${{ inputs.pr_number ||
     github.event.pull_request.number }}-${{
@@ -157,7 +174,7 @@ jobs:
       style: >-
         ${{ steps.filter.outputs.style ||
         steps.dispatch.outputs.style }}
-      # Diff file list — only meaningful on pull_request; dispatch runs have
+      # Diff file list — only meaningful on a PR event; dispatch runs have
       # no diff, so the style job is skipped outright (see dispatch step).
       style-files: ${{ steps.filter.outputs.style_files }}
       mod: >-
@@ -170,11 +187,11 @@ jobs:
         ${{ steps.filter.outputs.mios ||
         steps.dispatch.outputs.mios }}
     steps:
-      # No checkout — on pull_request events dorny/paths-filter fetches the
-      # changed-file list straight from the GitHub API, so cloning the repo
-      # just to diff locally is pure overhead.
+      # No checkout — on PR events dorny/paths-filter fetches the changed-file
+      # list straight from the GitHub API, so cloning the repo just to diff
+      # locally is pure overhead.
       - name: Detect changed file groups
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request_target'
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d
         id: filter
         with:
@@ -945,9 +962,9 @@ jobs:
     if: ${{ !cancelled() }}
     # PR context rebuilt for workflow_dispatch runs — see prepare-workspace.
     # VALIDATION_SCOPE is `full` only on a dispatch where every validator ran
-    # and passed. A pull_request run gates validators on the changed file
-    # groups, so its "no findings" may only refresh an existing report comment,
-    # never delete one.
+    # and passed. A PR run gates validators on the changed file groups, so its
+    # "no findings" may only refresh an existing report comment, never delete
+    # one.
     # styling-check is deliberately absent below: detect-changes forces
     # style=false on dispatch, so the job is always skipped there and a
     # `== 'success'` test would pin the scope to `partial` forever.
@@ -964,10 +981,19 @@ jobs:
       # Checkout the report generator + the report_lib package it imports,
       # plus tools/validation for the hashFiles baseline key below. Stays
       # much smaller than a full checkout — we skip everything else.
+      #
+      # The base branch's tooling, NOT the merge ref every other job uses: this
+      # is the only job holding pull-requests/checks write, and a fork PR that
+      # edited tools/ would otherwise run its own Python against that token.
+      # Cost of pinning to base: a PR touching tools/validation hashes
+      # differently from prepare-workspace, so its baseline cache misses and the
+      # report loses NEW/EXISTING tags — degraded annotation, never a failure.
       - name: Checkout report tooling
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ env.CHECKOUT_REF }}
+          ref: >-
+            ${{ github.event.pull_request.base.sha ||
+            inputs.base_sha || github.sha }}
           fetch-depth: 1
           sparse-checkout: |
             tools/generate_validation_report.py
