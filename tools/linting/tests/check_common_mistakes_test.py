@@ -52,8 +52,6 @@ import sys
 import tempfile
 
 from check_common_mistakes import (
-    classify_file_path,
-    _negates_bankruptcy_mission,
     _RE_IS_X_NATION,
     _ai_zero_modifier_conditions,
     _check_active_decision_defined,
@@ -95,8 +93,10 @@ from check_common_mistakes import (
     _equipment_names,
     _files_need_global_refs,
     _get_block,
+    _negates_bankruptcy_mission,
     _provincial_building_types,
     check_file,
+    classify_file_path,
 )
 
 passed = 0
