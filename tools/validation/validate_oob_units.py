@@ -42,6 +42,8 @@ _VARIANT_SLOT_CATEGORIES = {
     "unknown_module": "SHIP VARIANT: unknown module reference",
     "category_mismatch": "SHIP VARIANT: module category not allowed in slot",
     "missing_required_module": "SHIP VARIANT: required slot left empty",
+    "count_limit_exceeded": "SHIP VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "SHIP VARIANT: module forbidden on hull type",
 }
 
 _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
@@ -50,6 +52,8 @@ _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
     "unknown_module": "EQUIPMENT VARIANT: unknown module reference",
     "category_mismatch": "EQUIPMENT VARIANT: module category not allowed in slot",
     "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
+    "count_limit_exceeded": "EQUIPMENT VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
 }
 
 # Every directory where a create_equipment_variant effect actually appears.

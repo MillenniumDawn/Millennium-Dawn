@@ -22,6 +22,8 @@ _NAVAL_SLOT_CATEGORIES = {
     "unknown_module": "NAVAL VARIANT: unknown module reference",
     "category_mismatch": "NAVAL VARIANT: module category not allowed in slot",
     "missing_required_module": "NAVAL VARIANT: required slot left empty",
+    "count_limit_exceeded": "NAVAL VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "NAVAL VARIANT: module forbidden on hull type",
 }
 
 _EQUIPMENT_SLOT_CATEGORIES = {
@@ -30,6 +32,14 @@ _EQUIPMENT_SLOT_CATEGORIES = {
     "unknown_module": "EQUIPMENT VARIANT: unknown module reference",
     "category_mismatch": "EQUIPMENT VARIANT: module category not allowed in slot",
     "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
+    "count_limit_exceeded": "EQUIPMENT VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
+}
+
+_SLOT_ERROR_KINDS = {
+    "missing_required_module",
+    "count_limit_exceeded",
+    "forbidden_equipment_type",
 }
 
 ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
@@ -214,8 +224,9 @@ class Validator(BaseValidator):
     # engines on destroyers, ESM on subs, mineclearing on corvettes, engine
     # modules in weapon slots) untouched; the tank and plane templates came into
     # scope later and carry their own share.
-    # A template that leaves a `required = yes` slot empty is different: no
-    # design can match it, so it is always a hard error regardless of backlog.
+    # A template that leaves a `required = yes` slot empty, exceeds a hull
+    # `module_count_limit`, or equips a module forbidden on that hull's types
+    # cannot be matched, so those are always hard errors regardless of backlog.
     SLOT_SEVERITY = Severity.WARNING
 
     def run_validations(self):
@@ -260,7 +271,7 @@ class Validator(BaseValidator):
                     Issue(
                         severity=(
                             Severity.ERROR
-                            if f.kind == "missing_required_module"
+                            if f.kind in _SLOT_ERROR_KINDS
                             else self.SLOT_SEVERITY
                         ),
                         category=labels[f.kind],
