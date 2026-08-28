@@ -74,6 +74,35 @@ def test_collect_all_issues_rejects_malformed_sidecar(tmp_path):
         runner.collect_all_issues(str(tmp_path), [("stub", "stub.py", "Stub")])
 
 
+def test_suite_bounds_concurrency_and_passes_a_worker_budget(tmp_path, monkeypatch):
+    # Six validators on a budget that allows two at a time: the suite must not
+    # launch all six at once, each with a pool of its own.
+    monkeypatch.setattr(runner, "split_cpu_budget", lambda tasks: (2, 3))
+
+    live = []
+    peak = []
+    flags = []
+
+    def launch(_script, child_flags, _output_dir, name, _mod_path):
+        flags.append(list(child_flags))
+        live.append(name)
+        peak.append(len(live))
+
+        class _Tracked(_Process):
+            def wait(self):
+                live.remove(name)
+                return 0
+
+        return _Tracked(), io.StringIO()
+
+    monkeypatch.setattr(runner, "launch_validator", launch)
+    validators = [(f"v{i}", f"v{i}.py", f"V{i}") for i in range(6)]
+    runner._run_suite(_args("text"), [], str(tmp_path), validators, str(tmp_path))
+
+    assert max(peak) == 2
+    assert all(f[-2:] == ["--workers", "3"] for f in flags)
+
+
 def test_manual_texture_audit_is_not_auto_discovered():
     scripts = {script for _name, script, _label in runner.discover_validators()}
     assert "validate_unused_textures.py" not in scripts
