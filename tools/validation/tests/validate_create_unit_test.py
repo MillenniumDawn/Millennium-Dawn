@@ -3,6 +3,9 @@
 A create_unit only spawns units in a state scope, needs a single-line division
 string that parses as army data and names a division_template, and must set
 owner. When it defines the template itself, the template must come first.
+A create_unit that names a template must create it earlier in the same effect
+or sit behind a has_template guard — persistent.cpp reports a missing runtime
+template as a malformed token.
 """
 
 from textwrap import indent
@@ -31,11 +34,13 @@ def _div_for(tname, unitname):
     )
 
 
-def _run(content, tmp_path, filename="test.txt"):
+def _run(content, tmp_path, filename="test.txt", deleted_names=frozenset()):
     target = tmp_path / "common" / "national_focus" / filename
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8")
-    return _check_created_units((str(target), filename, str(tmp_path)))
+    return _check_created_units(
+        (str(target), filename, str(tmp_path), deleted_names)
+    )
 
 
 def _cats(issues):
@@ -200,6 +205,70 @@ def test_has_template_guard_else_pattern_is_clean(tmp_path):
 }
 """.replace("{DIV}", div)
     assert _run(content, tmp_path) == []
+
+
+def test_unguarded_create_unit_without_template_is_flagged(tmp_path):
+    div = _div_for("Tip-e Piade Nezam", "Niru")
+    content = _focus_with_effect(_block("capital_scope", _create_unit(div, owner="PER")))
+    issues = _run(
+        content, tmp_path, deleted_names=frozenset({"Tip-e Piade Nezam"})
+    )
+    assert (
+        "CREATE UNIT: template not created or has_template-guarded in this effect"
+        in _cats(issues)
+    )
+    assert all(i.severity == Severity.WARNING for i in issues)
+
+
+def test_oob_template_without_delete_is_clean(tmp_path):
+    div = _div_for("Tip-e Piade Nezam", "Niru")
+    content = _focus_with_effect(_block("capital_scope", _create_unit(div, owner="PER")))
+    assert _run(content, tmp_path) == []
+
+
+def test_owner_scoped_template_covers_state_spawn(tmp_path):
+    div = _div_for("Tip-e Piade Nezam", "Niru")
+    effect = "\n".join(
+        (
+            _block(
+                "PER",
+                _block(
+                    "if",
+                    "\n".join(
+                        (
+                            _block(
+                                "limit",
+                                _block("NOT", 'has_template = "Tip-e Piade Nezam"'),
+                            ),
+                            _division_template("Tip-e Piade Nezam"),
+                        )
+                    ),
+                ),
+            ),
+            _block("406", _create_unit(div, owner="PER")),
+        )
+    )
+    assert _run(
+        _focus_with_effect(effect),
+        tmp_path,
+        deleted_names=frozenset({"Tip-e Piade Nezam"}),
+    ) == []
+
+
+def test_foreign_template_does_not_satisfy_ensure(tmp_path):
+    div = _div_for("Militia", "Militia")
+    content = _focus_with_effect(
+        "\n".join(
+            (
+                _block("FSA", _division_template("Militia")),
+                _block("capital_scope", _create_unit(div)),
+            )
+        )
+    )
+    assert (
+        "CREATE UNIT: template not created or has_template-guarded in this effect"
+        in _cats(_run(content, tmp_path, deleted_names=frozenset({"Militia"})))
+    )
 
 
 # A template defined before the create_unit is fine even when a second,

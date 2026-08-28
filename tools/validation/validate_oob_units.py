@@ -12,7 +12,7 @@ import os
 import re
 import sys
 from difflib import get_close_matches
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -673,7 +673,10 @@ def validate_oob_division_groups_file(
 # state-scope effect, a numeric state-ID block, or a state-scoped decision).
 # Its division string must live on one physical line, parse as army data, and
 # name a division_template. A template defined in the same country/effect path
-# must appear before the create_unit that uses it.
+# must appear before the create_unit that uses it. persistent.cpp reports a
+# missing runtime template as "Malformed token: <name>". If that name is also
+# deleted via delete_unit_template_and_units anywhere, the effect must create
+# the template earlier or sit behind a has_template guard.
 
 # Documented create_unit block keys; anything else is a typo.
 _CREATE_UNIT_KEYS = frozenset(
@@ -714,6 +717,11 @@ _DIVISION_VALUE_RE = re.compile(r'\bdivision\s*=\s*"((?:[^"\\]|\\.)*)"', re.S)
 _TEMPLATE_NAME_RE = re.compile(r'\bname\s*=\s*"([^"]*)"')
 _KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _OWNER_RE = re.compile(r"\bowner\s*=")
+_OWNER_VALUE_RE = re.compile(r"\bowner\s*=\s*([A-Za-z0-9_]+)")
+_DELETE_TEMPLATE_BLOCK_RE = re.compile(
+    r"delete_unit_template_and_units\s*=\s*\{([^{}]*)\}", re.S
+)
+_DELETE_TEMPLATE_NAME_RE = re.compile(r'\bdivision_template\s*=\s*"([^"]*)"')
 _ZERO_FACTOR_RE = re.compile(
     r"\b(?:start_equipment_factor|start_manpower_factor)\s*=\s*0(?![.\d])"
 )
@@ -771,8 +779,13 @@ _CREATE_UNIT_CATEGORIES = {
     "out-of-bounds-division": "CREATE UNIT: division string has German/Danish letters",
     "zero-factor": "CREATE UNIT: equipment/manpower factor is zero",
     "template-order": "CREATE UNIT: template defined after create_unit",
+    "missing-template-ensure": (
+        "CREATE UNIT: template not created or has_template-guarded in this effect"
+    ),
 }
-_CREATE_UNIT_WARNING_KINDS = frozenset({"out-of-bounds-division"})
+_CREATE_UNIT_WARNING_KINDS = frozenset(
+    {"out-of-bounds-division", "missing-template-ensure"}
+)
 # persistent.cpp rejects these even inside quotes (Sweden militärdistriktet).
 # Romance/Slavic/Kurdish accents (é, á, š, ş, …) render in game and are allowed.
 _OUT_OF_BOUNDS_LETTERS = frozenset("äöüßæøåÄÖÜÆØÅ")
@@ -1051,6 +1064,45 @@ def _template_defs_named(
                 out.append(i)
         stack.extend(nodes[i]["children"])
     return out
+
+
+def _template_covers_create(
+    nodes: List[Dict],
+    def_idx: int,
+    cu_path: Tuple[str, ...],
+    owner: Optional[str],
+) -> bool:
+    def_path = _country_scope_path(nodes, def_idx)
+    if def_path == cu_path:
+        return True
+    if def_path == ("ROOT",):
+        return True
+    if owner and def_path and def_path[-1] == owner:
+        return True
+    return False
+
+
+def _has_prior_covering_template(
+    nodes: List[Dict], text: str, cu_idx: int, name: str, owner: Optional[str]
+) -> bool:
+    container = _container_for(nodes, cu_idx)
+    cu_start = nodes[cu_idx]["start"]
+    cu_path = _country_scope_path(nodes, cu_idx)
+    stack = list(nodes[container]["children"])
+    while stack:
+        i = stack.pop()
+        if (
+            nodes[i]["label"] == "division_template"
+            and nodes[i]["start"] < cu_start
+        ):
+            body = text[nodes[i]["start"] : nodes[i]["end"]]
+            m = _TEMPLATE_NAME_RE.search(body)
+            if m and m.group(1) == name and _template_covers_create(
+                nodes, i, cu_path, owner
+            ):
+                return True
+        stack.extend(nodes[i]["children"])
+    return False
 
 
 def _in_state_scope(nodes: List[Dict], text: str, idx: int) -> bool:
@@ -1360,9 +1412,24 @@ def _parse_division_string(
     return issues, template
 
 
-def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
+def _deleted_template_names(mod_path: str, files: List[str]) -> FrozenSet[str]:
+    names: Set[str] = set()
+    for filepath in files:
+        raw = _read_text(filepath, mod_path)
+        if not raw:
+            continue
+        for block in _DELETE_TEMPLATE_BLOCK_RE.finditer(strip_comments(raw)):
+            m = _DELETE_TEMPLATE_NAME_RE.search(block.group(1))
+            if m and m.group(1):
+                names.add(m.group(1))
+    return frozenset(names)
+
+
+def _check_created_units(
+    args: Tuple[str, str, str, FrozenSet[str]],
+) -> List[Issue]:
     """Validate every create_unit block in one file. Returns error Issues."""
-    filepath, rel, mod_path = args
+    filepath, rel, mod_path, deleted_names = args
     raw = _read_text(filepath, mod_path)
     if not raw:
         return []
@@ -1447,12 +1514,14 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
 
         scope_path = _country_scope_path(nodes, cu_idx)
         container = _container_for(nodes, cu_idx)
+        found_same_scope = False
         for a in _ancestors(nodes, cu_idx):
             defs = _template_defs_named(nodes, content, a, tname, scope_path)
             if not defs:
                 if a == container:
                     break
                 continue
+            found_same_scope = True
             # A name can be defined multiple times in one country/effect path.
             # Only the earliest definition can make this create_unit valid.
             t = nodes[min(defs, key=lambda d: nodes[d]["start"])]
@@ -1463,6 +1532,20 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
                     line,
                 )
             break
+
+        if found_same_scope:
+            continue
+        if tname not in deleted_names:
+            continue
+        owner_m = _OWNER_VALUE_RE.search(body)
+        owner = owner_m.group(1) if owner_m else None
+        if not _has_prior_covering_template(nodes, content, cu_idx, tname, owner):
+            out.warn(
+                "missing-template-ensure",
+                f"{cu['line']}: create_unit uses division_template '{tname}' which is deleted "
+                f"elsewhere, with no prior division_template or has_template guard in this effect",
+                line,
+            )
 
     return out.issues
 
@@ -1836,8 +1919,14 @@ class Validator(BaseValidator):
             return
         self.log(f"  Found {len(files)} files to check")
 
+        delete_files = self._collect_files(
+            _CREATE_UNIT_SOURCE_PATTERNS + ["common/ideas/*.txt"],
+            ignore_staged=True,
+        )
+        deleted_names = _deleted_template_names(self.mod_path, delete_files)
         args_list = [
-            (f, os.path.relpath(f, self.mod_path), self.mod_path) for f in files
+            (f, os.path.relpath(f, self.mod_path), self.mod_path, deleted_names)
+            for f in files
         ]
         all_results = self._pool_map(_check_created_units, args_list, chunksize=20)
 

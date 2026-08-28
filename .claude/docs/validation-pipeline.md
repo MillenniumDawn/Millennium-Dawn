@@ -100,9 +100,14 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
   in that string (`äöüßæøå`) are WARNING (`out-of-bounds-division`): the inner
   parser rejects them even inside quotes (Sweden `militärdistriktet`). Romance,
   Slavic, and Kurdish accents are allowed; they render in game. Schema failures
-  gate. It does not check that a referenced template is defined anywhere, so
-  a template that only ever exists for the wrong country, or a `has_template`
-  guard naming a template nothing defines, still passes. Its combined run gate
+  gate. If a `create_unit` names a template that `delete_unit_template_and_units`
+  removes anywhere, and this effect neither creates that template earlier nor
+  sits behind a `has_template` guard, that is WARNING (`missing-template-ensure`).
+  persistent.cpp reports the missing template as `Malformed token: <name>`.
+  Requiring the ensure pattern on every `create_unit` is 544 findings, mostly
+  legal OOB spawns, so the check is limited to names that are also deleted.
+  Backlog on main: ~182. Flip to ERROR once cleared. A `has_template` guard
+  naming a template nothing defines still passes. Its combined run gate
   covers `history/countries/`, `common/national_focus/`, `events/`,
   `common/decisions/`, `common/special_projects/`, `common/scripted_effects/`,
   `common/on_actions/`, `common/operations/`,
