@@ -1,7 +1,7 @@
 name: Nightly PR Revalidation
 
 # Re-runs the coding pipeline for every open PR against its head branch, so
-# validation tracks the PR's merge ref after main advances. pull_request
+# validation tracks the PR's merge ref after main advances. pull_request_target
 # events only fire on pushes: a PR that sits open while main moves gets stale
 # checks with no way to refresh them short of a re-push. This workflow
 # dispatches coding-pipeline.yml (workflow_dispatch) for each open PR, which
@@ -9,7 +9,7 @@ name: Nightly PR Revalidation
 #
 # Fork PRs are skipped: workflow_dispatch refs must live in this repo, so a
 # fork's head branch cannot be dispatched. Fork PRs still validate on every
-# push via the normal pull_request trigger.
+# push via the pull_request_target trigger, comment included.
 #
 # A dispatch runs the workflow file as it exists on the PR's head branch, so a
 # branch that predates the workflow_dispatch trigger cannot be revalidated
@@ -36,6 +36,12 @@ jobs:
       - name: Dispatch validation for open PRs
         env:
           GH_TOKEN: ${{ github.token }}
+          # `gh workflow run` resolves the repo from git remotes, and this job
+          # deliberately never checks out — without GH_REPO every dispatch died
+          # on "fatal: not a git repository" and the sweep sent zero runs while
+          # reporting success. `gh api` calls below name the repo in the path
+          # and were never affected.
+          GH_REPO: ${{ github.repository }}
         run: |
           # main's live head, not each PR's `.base.sha`: that field is the base
           # tip from the PR's last synchronize and does not move when main does,
@@ -61,13 +67,15 @@ jobs:
               continue
             fi
             # A branch predating the trigger (or its inputs) is rejected with a
-            # 422, and `bash -e` would end the sweep at the first one.
+            # 422, and `bash -e` would end the sweep at the first one. The
+            # warning stays generic: gh prints its own reason above, and naming
+            # only the 422 case once masked a repo-resolution failure for weeks.
             if gh workflow run "coding-pipeline.yml" --ref "$ref" \
                 -f pr_number="$num" -f base_sha="$base_sha"; then
               sent=$((sent + 1))
             else
-              echo "::warning::PR #$num ($ref) could not be dispatched; rebase" \
-                "onto main to pick up the workflow_dispatch trigger"
+              echo "::warning::PR #$num ($ref) could not be dispatched" \
+                "(see the gh error above)"
               skipped=$((skipped + 1))
             fi
           done <<< "$prs"
