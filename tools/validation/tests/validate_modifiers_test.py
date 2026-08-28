@@ -10,6 +10,7 @@ from validate_modifiers import (
     _DOC_REL_PATH,
     Validator,
     _check_file_for_unknown_modifiers,
+    _extract_top_level_definition_blocks,
     _is_parametric_modifier,
     _load_documented_modifiers,
 )
@@ -254,3 +255,26 @@ def test_md_prefixed_modifiers_always_valid(tmp_path):
     validator.validate_modifier_names(frozenset())
     assert validator.warnings_found == 0
     assert path.exists()
+
+
+def test_body_line_tracks_the_opening_brace():
+    """A brace on its own line must not shift findings inside the block."""
+    text = (
+        "FOO_modifier =\n"
+        "{\n"
+        "\tenable = {\n"
+        "\t\toriginal_tag = FRA\n"
+        "\t}\n"
+        "}\n"
+    )
+    name, name_line, body_line, _body = _extract_top_level_definition_blocks(text)[0]
+    assert name == "FOO_modifier"
+    assert name_line == 1
+    assert body_line == 2
+
+
+def test_body_line_matches_name_line_on_the_usual_shape():
+    """The common `FOO = {` form keeps both lines identical."""
+    text = "FOO_modifier = {\n\tenable = { always = yes }\n}\n"
+    _name, name_line, body_line, _body = _extract_top_level_definition_blocks(text)[0]
+    assert name_line == body_line == 1
