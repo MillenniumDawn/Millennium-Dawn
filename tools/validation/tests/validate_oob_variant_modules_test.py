@@ -146,9 +146,15 @@ def test_module_unlock_keeps_legal_design_quiet(tmp_path):
 
 
 def test_unknown_slot_on_tank_chassis_flagged(tmp_path):
+    # The required turret slot is filled so the unknown-slot finding stands alone.
     issues = _run(
         tmp_path,
-        {"events/05_test.txt": _variant("\t\tfixed_ship_battery_slot = test_turret\n")},
+        {
+            "events/05_test.txt": _variant(
+                "\t\tfixed_ship_battery_slot = test_turret\n"
+                "\t\tturret_type_slot = test_turret\n"
+            )
+        },
     )
     assert len(issues) == 1
     assert issues[0].category == "EQUIPMENT VARIANT: slot not on hull"
