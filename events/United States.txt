@@ -2124,6 +2124,8 @@ country_event = {
 	immediate = {
 		set_global_flag = USA_great_financial_crisis #Global Flag for other Content Designing
 		country_event = { id = usa_economic_events.1 days = 10 random_hours = 5 }
+		# The AIG rescue
+		country_event = { id = usa_economic_events.460 days = 30 }
 		# The American Automotive Industrial Crisis
 		country_event = { id = usa_economic_events.37 days = 45 random_days = 40 }
 		# Luigi Event Chains
@@ -36080,16 +36082,12 @@ country_event = {
 	picture = GFX_aig_headquarters
 	is_triggered_only = yes
 	fire_only_once = yes
-	
+
 	trigger = {
 		original_tag = USA
 		NOT = { has_country_flag = collapsed_nation }
+		has_game_rule = { rule = rule_corporate_history option = full }
 		has_global_flag = USA_great_financial_crisis
-		OR = {
-			has_country_flag = usa_nationalize_one
-			has_country_flag = usa_bailout_one
-			has_country_flag = usa_nothing_one
-		}
 		NOT = {
 			OR = {
 				has_country_flag = USA_aig_direct_rescue_chosen
@@ -36098,7 +36096,7 @@ country_event = {
 			}
 		}
 	}
-	
+
 	option = {
 		name = usa_economic_events.460.a
 		log = "[GetDateText]: [Root.GetName]: usa_economic_events.460.a executed"
@@ -36115,7 +36113,7 @@ country_event = {
 			modifier = { factor = 1.5 check_variable = { treasury > 80 } }
 		}
 	}
-	
+
 	option = {
 		name = usa_economic_events.460.b
 		log = "[GetDateText]: [Root.GetName]: usa_economic_events.460.b executed"
@@ -36127,7 +36125,7 @@ country_event = {
 			modifier = { add = 10 check_variable = { treasury < 40 } }
 		}
 	}
-	
+
 	option = {
 		name = usa_economic_events.460.c
 		log = "[GetDateText]: [Root.GetName]: usa_economic_events.460.c executed"
@@ -36441,16 +36439,21 @@ country_event = {
 		set_country_flag = USA_aig_haircuts_attempted
 		add_political_power = 25
 		hidden_effect = {
-			every_country = {
-				limit = {
-					OR = {
-						original_tag = FRA
-						original_tag = GER
-						original_tag = SWI
-						original_tag = ENG
-					}
-				}
-				add_opinion_modifier = { target = ROOT modifier = note_of_protest }
+			if = {
+				limit = { country_exists = FRA }
+				FRA = { add_opinion_modifier = { target = ROOT modifier = note_of_protest } }
+			}
+			if = {
+				limit = { country_exists = GER }
+				GER = { add_opinion_modifier = { target = ROOT modifier = note_of_protest } }
+			}
+			if = {
+				limit = { country_exists = SWI }
+				SWI = { add_opinion_modifier = { target = ROOT modifier = note_of_protest } }
+			}
+			if = {
+				limit = { country_exists = ENG }
+				ENG = { add_opinion_modifier = { target = ROOT modifier = note_of_protest } }
 			}
 			country_event = { id = usa_economic_events.468 days = 5 }
 		}
