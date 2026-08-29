@@ -6,14 +6,9 @@ ignores nested `days`, and the immediate-vs-option loop classification. They do
 not touch the live mod, so they stay fast and deterministic.
 """
 
-import os
-import sys
-
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "analysis"))
-
-from tools.analysis import tick_audit as ta  # noqa: E402
+from tools.analysis import tick_audit as ta
 
 # --- brace-depth field reading ---------------------------------------------
 

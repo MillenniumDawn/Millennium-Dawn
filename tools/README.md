@@ -53,7 +53,7 @@ tools/
 ├── publishing/        Steam Workshop publishing
 ├── report_lib/        PR validation report renderer + GitHub Checks API client
 ├── standardization/   Auto-standardizers for focuses, events, decisions, ideas
-├── tests/             Test suites for validators
+├── tests/             All Python tests for tools/ (root scripts plus domain subdirs)
 ├── validation/        Content validators (events, decisions, variables, etc.)
 ├── shared_utils.py    Shared utilities (Colors, FileOpener, path helpers, arg parsers)
 ├── loc.py             Localisation utilities
@@ -81,7 +81,7 @@ tools/
 4. Use `DEFAULT_EXTRA_SKIP_PATTERNS` from `validator_common` for `EXTRA_SKIP_PATTERNS` (extend with domain-specific patterns if needed).
 5. Wire into CI: add an entry to `.github/workflows/coding-pipeline.yml` in the `validate-core` or `validate-targeted` matrix. This is the gate for most validators — they run CI-only.
 6. Decide if it should also run on `git commit`. Heavy cross-reference validators stay CI-only. A fast validator can join the commit-stage set: add it to the `_REGISTRY` in `tools/precommit_validate.py` (with its path rules and `--strict` flag) and pin its selection in `tools/tests/precommit_validate_test.py`. The `config_drift_test` enforces that every validator runs on pre-commit or CI.
-7. Add tests in `tools/validation/tests/`.
+7. Add tests in `tools/tests/validation/`.
 
 ```python
 #!/usr/bin/env python3
@@ -223,7 +223,7 @@ Internal package used by `generate_validation_report.py` to render PR comments a
 | **comment.py**    | Find-by-marker + PATCH/POST logic for the bot-authored PR comment       |
 | **checks_api.py** | One Check Run per validator with up to 50 annotations per run           |
 
-Tests live in `report_lib/tests/` and run on every PR via the `tools-validation.yml` workflow.
+Tests live in `tests/report_lib/` and run on every PR via the `tools-validation.yml` workflow.
 
 ### Tests (`tests/`)
 
@@ -232,7 +232,7 @@ Tests live in `report_lib/tests/` and run on every PR via the `tools-validation.
 | **staged_validators_test.py**      | Tests staged validators using synthetic temporary files          |
 | **staged_validators_real_test.py** | Tests staged validators against real mod files with known issues |
 
-Tests for individual validators live in `validation/tests/`:
+Tests for individual validators live in `tests/validation/`:
 
 | Script                               | Description                                                                                                              |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
