@@ -1,82 +1,36 @@
 name: Code Standards & Validation
 
 on:
-  pull_request:
+  # Runs for fork and conflicted PRs with base-owned tooling against PR data.
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
-    paths:
-      - "common/**"
-      - "events/**"
-      - "history/**"
-      - "localisation/**"
-      - "interface/**"
-      - "gfx/**"
-      # The remaining shipped roots carry no validator of their own, but
-      # validate-paths checks every tracked path for cross-platform hazards.
-      - "map/**"
-      - "music/**"
-      - "portraits/**"
-      - "sound/**"
-      - "descriptions/**"
-      - "scenario_tests/**"
-      - "tutorial/**"
-      - "*.mod"
-      # Tooling paths are intentionally absent: the validator jobs gate on
-      # detect-changes (content groups), so a tooling-only PR would trigger the
-      # workflow but skip every validator, posting an empty report.
-      # Changes under tools/ are smoke-tested by tools-validation.yml instead.
-      - ".github/workflows/coding-pipeline.yml"
-  # Manual re-runs for open PRs (e.g. after main advanced) and the periodic
-  # revalidation dispatched by nightly-pr-validation.yml. Dispatched runs are
-  # keyed on the PR's head branch (ref), so the same pull_request context is
-  # rebuilt from the inputs — see PR_NUMBER/BASE_SHA below.
   workflow_dispatch:
     inputs:
       pr_number:
-        description: "PR number to validate (nightly revalidation)"
+        description: "PR number to validate (omit for the current ref)"
         required: false
         type: string
       base_sha:
         description: >-
-          Current head of the PR's base branch (workspace cache key)
+          Base branch SHA for trusted tooling and validation baseline
         required: false
         type: string
 
 concurrency:
-  # Same group for a push-triggered run and a dispatched run of the same PR:
-  # the periodic revalidation cancels an in-flight run instead of doubling it.
+  # Keep PR-triggered and dispatched runs for one PR in the same group.
   group: >-
     ${{ github.workflow }}-${{ inputs.pr_number ||
     github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-# Least privilege: validator jobs run PR-authored code and only need to read.
-# The validation-report job declares its own pull-requests/checks write scope.
+# Validator jobs use base-owned tooling against PR data. The report job alone
+# has write access and also checks out base-branch tooling.
 permissions:
   contents: read
 
-# Single source of truth for the bundled workspace cache. The cache "version"
-# hashes the path list, so the save (prepare-workspace) and every restore must
-# use a byte-identical WORKSPACE_PATHS — any drift is a silent 100% miss.
-# resources/documentation carries modifiers_documentation.md, the vanilla
-# modifier list validate_modifiers.py needs (~4000 names it would otherwise
-# false-positive on).
-# The bundle key identifies the PR's exact merge tree as (pr, head sha, base
-# revision). On pull_request the base component is github.sha, the merge commit
-# itself. A workflow_dispatch run has no merge commit in context, so the caller
-# supplies the base branch's *current* head instead. Cache keys are immutable,
-# so a key that doesn't move when main moves makes cache/save a no-op and hands
-# every validator the previous run's bundle; nightly-pr-validation.yml resolves
-# that head live for exactly this reason.
+# Workspace contents are distributed to downstream jobs as a same-run artifact.
 env:
-  CHECKOUT_REF: >-
-    ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number &&
-    format('refs/pull/{0}/merge', inputs.pr_number) || github.sha }}
-  WORKSPACE_KEY: >-
-    md-workspace-v2-${{ inputs.pr_number ||
-    github.event.pull_request.number }}-${{
-    github.event.pull_request.head.sha || github.sha }}-${{
-    inputs.base_sha || github.sha }}
   WORKSPACE_PATHS: |
     common
     events
@@ -93,12 +47,13 @@ env:
     .validation_cache
 
 jobs:
-  # ───────────────────────────────────────────────────────────────
-  # Detect which file groups changed so downstream jobs can skip
-  # ───────────────────────────────────────────────────────────────
+  # Detect changed file groups for downstream job conditions.
   detect-changes:
     name: Detect Changes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       common: >-
         ${{ steps.filter.outputs.common ||
@@ -157,9 +112,10 @@ jobs:
       style: >-
         ${{ steps.filter.outputs.style ||
         steps.dispatch.outputs.style }}
-      # Diff file list — only meaningful on pull_request; dispatch runs have
-      # no diff, so the style job is skipped outright (see dispatch step).
+      # The file list is available only on PR events; dispatch runs skip style.
       style-files: ${{ steps.filter.outputs.style_files }}
+      head-sha: ${{ steps.resolve-ref.outputs.head-sha }}
+      base-sha: ${{ steps.resolve-ref.outputs.base-sha }}
       mod: >-
         ${{ steps.filter.outputs.mod ||
         steps.dispatch.outputs.mod }}
@@ -169,12 +125,53 @@ jobs:
       mios: >-
         ${{ steps.filter.outputs.mios ||
         steps.dispatch.outputs.mios }}
+      checkout-repository: ${{ steps.resolve-ref.outputs.repository }}
+      checkout-ref: ${{ steps.resolve-ref.outputs.ref }}
     steps:
-      # No checkout — on pull_request events dorny/paths-filter fetches the
-      # changed-file list straight from the GitHub API, so cloning the repo
-      # just to diff locally is pure overhead.
+      - name: Resolve validation ref
+        id: resolve-ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_HEAD_REPOSITORY: >-
+            ${{ github.event.pull_request.head.repo.full_name }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_BASE_SHA: ${{ inputs.base_sha }}
+        run: |
+          pr_number="${INPUT_PR_NUMBER:-$EVENT_PR_NUMBER}"
+          head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"
+          head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"
+          base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"
+          if [ -n "$pr_number" ]; then
+            pr_url="repos/$GITHUB_REPOSITORY/pulls/$pr_number"
+            pr_json=$(gh api "$pr_url")
+            head_repository=$(printf '%s' "$pr_json" \
+              | jq -r '.head.repo.full_name // empty')
+            head_sha=$(printf '%s' "$pr_json" \
+              | jq -r '.head.sha // empty')
+            if [ -z "$base_sha" ]; then
+              base_ref=$(printf '%s' "$pr_json" | jq -r '.base.ref')
+              base_sha=$(gh api \
+                "repos/$GITHUB_REPOSITORY/commits/$base_ref" --jq '.sha')
+            fi
+          fi
+          base_sha="${base_sha:-$GITHUB_SHA}"
+          if [ -z "$head_repository" ] || [ -z "$head_sha" ]; then
+            echo "::error::Unable to resolve the PR head repository and SHA"
+            exit 1
+          fi
+          {
+            echo "repository=$head_repository"
+            echo "ref=$head_sha"
+            echo "head-sha=$head_sha"
+            echo "base-sha=$base_sha"
+          } >> "$GITHUB_OUTPUT"
+
+      # dorny/paths-filter reads the PR file list through the API.
       - name: Detect changed file groups
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request_target'
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d
         id: filter
         with:
@@ -279,10 +276,7 @@ jobs:
               - 'interface/**'
               - '*.mod'
 
-      # workflow_dispatch runs have no PR diff to filter, and paths-filter
-      # would need a checkout (plus a base ref) to diff anything — this job
-      # deliberately checks out nothing. Treat every group as changed so the
-      # full validation set runs; the job outputs above fall back to these.
+      # Dispatches have no diff, so run every full-repo group and skip style.
       - name: Treat all groups as changed on dispatch
         if: github.event_name == 'workflow_dispatch'
         id: dispatch
@@ -298,12 +292,7 @@ jobs:
           # instead of running it against an empty file list.
           echo "style=false" >> "$GITHUB_OUTPUT"
 
-  # ───────────────────────────────────────────────────────────────
-  # Prepare workspace — the run's single checkout. Bundles the validated
-  # directories plus the shared .validation_cache (warmed on main by
-  # validator-cache.yml) into one cache entry that every downstream job
-  # restores instead of checking out (~35s checkout → ~5-10s restore).
-  # ───────────────────────────────────────────────────────────────
+  # Prepare an artifact with PR data and trusted validation tools.
   prepare-workspace:
     name: Prepare Workspace
     needs: [detect-changes]
@@ -311,23 +300,23 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # actions: read lets the post-save step verify the bundle exists.
       actions: read
-    # PR context rebuilt for workflow_dispatch runs (inputs are null on
-    # pull_request, the event fields are null on dispatch — the `||` picks
-    # whichever is populated).
+    # Inputs supply the PR context for workflow_dispatch; PR events supply it
+    # directly.
     env:
       PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
-      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      HEAD_SHA: ${{ needs.detect-changes.outputs.head-sha }}
     steps:
-      # Checkout precedes the cache steps: hashFiles() below needs tools/ on
-      # disk. Cone mode also materialises root files (CLAUDE.md, *.mod).
-      - name: Checkout code
+      # Check out PR data without its executable tooling.
+      - name: Checkout PR content
         id: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ env.CHECKOUT_REF }}
+          repository: ${{ needs.detect-changes.outputs.checkout-repository }}
+          ref: ${{ needs.detect-changes.outputs.checkout-ref }}
           fetch-depth: 1
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
           sparse-checkout: |
             common
             events
@@ -335,19 +324,48 @@ jobs:
             localisation
             interface
             gfx/flags
+            *.mod
+          sparse-checkout-cone-mode: false
+
+      # Do not let PR-controlled links escape the data-only checkout.
+      - name: Reject links in PR content
+        run: |
+          if git ls-files --stage | grep -Eq '^(120000|160000) '; then
+            echo "::error::PR content contains a symbolic link or submodule"
+            exit 1
+          fi
+
+      # Validator code and reference data must come from the base branch.
+      - name: Checkout trusted tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ needs.detect-changes.outputs.base-sha }}
+          path: trusted
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
             tools
             resources/documentation
             .claude
+            CLAUDE.md
+          sparse-checkout-cone-mode: false
 
-      # Shared validator disk cache, built on main by validator-cache.yml.
-      # The source hash is a cache-generation boundary: a changed validator
-      # or parser can only restore a cache from the same generation.
+      - name: Install trusted tooling
+        run: |
+          cp -a trusted/tools .
+          mkdir -p resources
+          cp -a trusted/resources/documentation resources/
+          cp -a trusted/.claude .
+          cp -a trusted/CLAUDE.md .
+
       - name: Compute validator code hash
         id: toolshash
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**',
           'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
 
+      # The shared cache is read-only here; the workspace uses an artifact.
       - name: Restore shared validator disk cache
         id: valcache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
@@ -356,56 +374,35 @@ jobs:
           key: >-
             md-valcache-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{
-            inputs.base_sha || github.event.pull_request.base.sha }}
+            needs.detect-changes.outputs.base-sha }}
           restore-keys: |
             md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
 
-      # mkdir guarantees the .validation_cache path exists on a cold restore
-      # (a missing path would degrade the bundle for every consumer).
       - name: Write workspace manifest
+        env:
+          CACHE_KEY: ${{ steps.valcache.outputs.cache-matched-key }}
+          CHECKOUT_SHA: ${{ steps.checkout.outputs.commit }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           mkdir -p .validation_cache
           {
             echo "pr=$PR_NUMBER"
             echo "head_sha=$HEAD_SHA"
-            echo "merge_sha=${{ steps.checkout.outputs.commit }}"
-            echo "run_id=${{ github.run_id }}"
-            echo "cache=${{ steps.valcache.outputs.cache-matched-key }}"
+            echo "checkout_sha=$CHECKOUT_SHA"
+            echo "run_id=$RUN_ID"
+            echo "cache=$CACHE_KEY"
           } | tee .workspace-manifest
 
-      # Explicit save (not the combined action's post-job save): the upload
-      # completes inside this step, so `needs: prepare-workspace` fully
-      # orders save-before-restore for every consumer.
-      - name: Save bundled workspace cache
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - name: Upload prepared workspace
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
+          name: prepared-workspace
           path: ${{ env.WORKSPACE_PATHS }}
-          key: ${{ env.WORKSPACE_KEY }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
 
-      # cache/save only warns on failure. Without this check a failed save
-      # leaves this job green while every consumer dies on
-      # fail-on-cache-miss, and "Re-run failed jobs" can never recover
-      # because the green prepare-workspace won't re-run. An entry left by an
-      # earlier run satisfies this check, which is correct: the key identifies
-      # the merge tree, so a same-key survivor holds the same content.
-      - name: Verify the bundle exists
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          cache_url="repos/${{ github.repository }}/actions/caches"
-          cache_url="${cache_url}?key=$WORKSPACE_KEY&per_page=1"
-          count=$(gh api "$cache_url" --jq '.total_count')
-          if [ "$count" -eq 0 ]; then
-            echo "::error::Workspace bundle ${WORKSPACE_KEY} was not saved"
-            exit 1
-          fi
-          echo "Workspace bundle ${WORKSPACE_KEY} confirmed"
-
-  # ───────────────────────────────────────────────────────────────
-  # Style & common-mistakes — diff-scoped to the changed .txt files only,
-  # so a PR is flagged for the style it introduced, not the repo-wide
-  # backlog. The changed-file list comes from detect-changes (style_files).
-  # ───────────────────────────────────────────────────────────────
+  # Style and common-mistakes checks for changed .txt files.
   styling-check:
     name: Style Check
     needs: [detect-changes, prepare-workspace]
@@ -413,14 +410,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Built by prepare-workspace this run. If eviction broke a "Re-run
-      # failed jobs", use "Re-run all jobs" so the bundle is rebuilt.
-      - name: Restore prepared workspace
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - name: Download prepared workspace
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          path: ${{ env.WORKSPACE_PATHS }}
-          key: ${{ env.WORKSPACE_KEY }}
-          fail-on-cache-miss: true
+          name: prepared-workspace
+          path: .
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
@@ -447,9 +441,7 @@ jobs:
             echo "has-files=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # Both tools run in their own step so a --strict style failure doesn't
-      # stop check_common_mistakes.py, and so each uploads its findings to the
-      # validation report even when the other one fails.
+      # Keep the tools independent so both results reach the report.
       - name: Run style check
         if: steps.style-files.outputs.has-files == 'true'
         run: |
@@ -490,11 +482,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  # ───────────────────────────────────────────────────────────────
-  # Structural lint — file-integrity checks that otherwise only run as
-  # local pre-commit hooks. Catches regressions from commits made via the
-  # GitHub web UI or with hooks disabled (loc BOM, .mod encoding).
-  # ───────────────────────────────────────────────────────────────
+  # Structural checks that are otherwise only local pre-commit hooks.
   structural-lint:
     name: Structural Lint
     needs: [detect-changes, prepare-workspace]
@@ -506,12 +494,11 @@ jobs:
       needs.detect-changes.outputs.mod == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Restore prepared workspace
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - name: Download prepared workspace
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          path: ${{ env.WORKSPACE_PATHS }}
-          key: ${{ env.WORKSPACE_KEY }}
-          fail-on-cache-miss: true
+          name: prepared-workspace
+          path: .
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
@@ -535,9 +522,7 @@ jobs:
           python3 tools/validation/validate_mod_descriptors.py --strict
           --no-color
 
-  # ───────────────────────────────────────────────────────────────
-  # Core validators — broad scope, run when most game files change
-  # ───────────────────────────────────────────────────────────────
+  # Core validators for broad content changes.
   validate-core:
     name: Validate ${{ matrix.validator.title }}
     needs: [detect-changes, prepare-workspace]
@@ -609,14 +594,11 @@ jobs:
           # `pre-commit run md-validate-unused-textures --hook-stage manual`.
 
     steps:
-      # Bundle includes the shared .validation_cache — one restore replaces
-      # both the old checkout and per-validator cache steps.
-      - name: Restore prepared workspace
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - name: Download prepared workspace
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          path: ${{ env.WORKSPACE_PATHS }}
-          key: ${{ env.WORKSPACE_KEY }}
-          fail-on-cache-miss: true
+          name: prepared-workspace
+          path: .
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
@@ -651,12 +633,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  # ───────────────────────────────────────────────────────────────
-  # Targeted validators — one matrix entry per validator, each gated
-  # on the specific detect-changes output it cares about. We keep the
-  # display names identical to the old per-job names so branch protection
-  # rules referencing them keep working.
-  # ───────────────────────────────────────────────────────────────
+  # Targeted validators gated by their changed-file groups.
   validate-targeted:
     name: ${{ matrix.validator.title }}
     needs: [detect-changes, prepare-workspace]
@@ -840,17 +817,13 @@ jobs:
             strict: true
             should_run: ${{ needs.detect-changes.outputs.common }}
     steps:
-      # Per-entry gate: only restore + run when this validator's file group
-      # changed. Steps below each carry the same `if` so a skipped entry
-      # reports cleanly as "success with no work done" instead of
-      # bulk-skipping the whole job.
-      - name: Restore prepared workspace
+      # Keep skipped matrix entries from downloading or running.
+      - name: Download prepared workspace
         if: matrix.validator.should_run == 'true'
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          path: ${{ env.WORKSPACE_PATHS }}
-          key: ${{ env.WORKSPACE_KEY }}
-          fail-on-cache-miss: true
+          name: prepared-workspace
+          path: .
       - name: Set up Python
         if: matrix.validator.should_run == 'true'
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
@@ -879,28 +852,58 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  # ───────────────────────────────────────────────────────────────
-  # File paths — a mod path differing from a vanilla one only in case
-  # overrides it on Windows but loads beside it on Linux, so the two
-  # platforms checksum different file sets and cannot play together.
-  # Stands apart from the workspace bundle: that bundle carries no .git
-  # and no map/, and this check reads path names straight from the index.
-  # ───────────────────────────────────────────────────────────────
+  # File paths and cross-platform case collisions.
   validate-paths:
     name: File Paths
+    needs: [detect-changes]
     runs-on: ubuntu-latest
     steps:
-      # blob:none fetches trees plus the tools/ blobs only — the index already
-      # names every shipped path, so materialising the content buys nothing.
-      # Cone mode also materialises root files, descriptor.mod among them.
-      - name: Checkout tooling
+      # Keep the PR index separate from the trusted validator code.
+      - name: Checkout PR tree
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ env.CHECKOUT_REF }}
+          repository: ${{ needs.detect-changes.outputs.checkout-repository }}
+          ref: ${{ needs.detect-changes.outputs.checkout-ref }}
+          path: pr-tree
           fetch-depth: 1
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
           filter: blob:none
           sparse-checkout: |
-            tools
+            common
+            descriptions
+            events
+            gfx
+            history
+            interface
+            localisation
+            map
+            music
+            portraits
+            scenario_tests
+            sound
+            tutorial
+            descriptor.mod
+          sparse-checkout-cone-mode: false
+
+      - name: Reject links in PR tree
+        working-directory: pr-tree
+        run: |
+          if git ls-files --stage | grep -Eq '^(120000|160000) '; then
+            echo "::error::PR tree contains a symbolic link or submodule"
+            exit 1
+          fi
+
+      - name: Checkout trusted tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ needs.detect-changes.outputs.base-sha }}
+          path: trusted
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: tools
+          sparse-checkout-cone-mode: false
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
@@ -908,9 +911,10 @@ jobs:
           python-version: "3.x"
 
       - name: Run validation
+        working-directory: pr-tree
         run: |
-          python3 tools/validation/validate_file_paths.py \
-            --strict --no-color --output validation-file-paths.log
+          python3 ../trusted/tools/validation/validate_file_paths.py \
+            --path . --strict --no-color --output validation-file-paths.log
 
       - name: Upload results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -918,18 +922,18 @@ jobs:
         with:
           name: validation-file-paths-results
           path: |
-            validation-file-paths.log
-            validation-file-paths.json
+            pr-tree/validation-file-paths.log
+            pr-tree/validation-file-paths.json
           if-no-files-found: ignore
           retention-days: 7
 
-  # ───────────────────────────────────────────────────────────────
-  # Validation report — collects all results and posts PR comment
-  # ───────────────────────────────────────────────────────────────
+  # Collect results and post the PR report.
   validation-report:
     name: Generate Validation Report
     runs-on: ubuntu-latest
     needs:
+      - detect-changes
+      - prepare-workspace
       - styling-check
       - structural-lint
       - validate-core
@@ -939,21 +943,14 @@ jobs:
       contents: read
       pull-requests: write
       checks: write
-    # Run the report whether validators passed or failed, but not if the run
-    # was cancelled. Both triggers land here; the PR-specific steps are gated
-    # on PR_NUMBER, which a manual dispatch without pr_number leaves empty.
-    if: ${{ !cancelled() }}
-    # PR context rebuilt for workflow_dispatch runs — see prepare-workspace.
-    # VALIDATION_SCOPE is `full` only on a dispatch where every validator ran
-    # and passed. A pull_request run gates validators on the changed file
-    # groups, so its "no findings" may only refresh an existing report comment,
-    # never delete one.
-    # styling-check is deliberately absent below: detect-changes forces
-    # style=false on dispatch, so the job is always skipped there and a
-    # `== 'success'` test would pin the scope to `partial` forever.
+    if: ${{ always() && !cancelled() }}
+    # Dispatches run the full validator set except diff-scoped style. PR events
+    # scope content validators to changed file groups.
     env:
       PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
-      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      HEAD_SHA: >-
+        ${{ needs.detect-changes.outputs.head-sha ||
+        github.event.pull_request.head.sha || github.sha }}
       VALIDATION_SCOPE: >-
         ${{ github.event_name == 'workflow_dispatch' &&
         needs.structural-lint.result == 'success' &&
@@ -961,14 +958,16 @@ jobs:
         needs.validate-targeted.result == 'success' &&
         needs.validate-paths.result == 'success' && 'full' || 'partial' }}
     steps:
-      # Checkout the report generator + the report_lib package it imports,
-      # plus tools/validation for the hashFiles baseline key below. Stays
-      # much smaller than a full checkout — we skip everything else.
       - name: Checkout report tooling
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ env.CHECKOUT_REF }}
+          repository: ${{ github.repository }}
+          ref: >-
+            ${{ needs.detect-changes.outputs.base-sha ||
+            github.event.pull_request.base.sha || inputs.base_sha ||
+            github.sha }}
           fetch-depth: 1
+          persist-credentials: false
           sparse-checkout: |
             tools/generate_validation_report.py
             tools/report_lib
@@ -990,14 +989,15 @@ jobs:
       # validator generation changed) only drops the NEW/EXISTING annotation
       # in the report — never a failure.
       - name: Restore validation baseline
-        # v6.1.0
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .validation_baseline
           key: >-
             md-baseline-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{
-            inputs.base_sha || github.event.pull_request.base.sha }}
+            needs.detect-changes.outputs.base-sha ||
+            github.event.pull_request.base.sha || inputs.base_sha ||
+            github.sha }}
           restore-keys: |
             md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
 
@@ -1007,14 +1007,35 @@ jobs:
           python-version: "3.x"
 
       - name: Download all validation results
+        id: download-results
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        continue-on-error: true
         with:
           pattern: validation-*-results
           path: validation-results
 
+      - name: Record failed validation jobs
+        if: >-
+          steps.download-results.outcome == 'failure' ||
+          needs.detect-changes.result == 'failure' ||
+          needs.prepare-workspace.result == 'failure' ||
+          needs.styling-check.result == 'failure' ||
+          needs.structural-lint.result == 'failure' ||
+          needs.validate-core.result == 'failure' ||
+          needs.validate-targeted.result == 'failure' ||
+          needs.validate-paths.result == 'failure'
+        run: |
+          pipeline_dir="validation-results/validation-pipeline-results"
+          mkdir -p "$pipeline_dir"
+          printf '%s\n' \
+            '[{"severity":"error","category":"pipeline-job-failed",' \
+            '"message":"Validation jobs failed. Review the workflow run."}]' \
+            > "$pipeline_dir/validation-pipeline.json"
+
       - name: Generate and post validation report
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          TOOLSHASH: ${{ steps.toolshash.outputs.hash }}
         run: |
           workflow_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
           workflow_url="$workflow_url/actions/runs/$GITHUB_RUN_ID"
@@ -1029,11 +1050,10 @@ jobs:
             --checks-api
             --print
           )
-          # Missing/stale baseline just renders without NEW/EXISTING tags.
           if [ -f .validation_baseline/baseline-meta.json ]; then
             args+=(
               --baseline-dir .validation_baseline
-              --baseline-toolshash "${{ steps.toolshash.outputs.hash }}"
+              --baseline-toolshash "$TOOLSHASH"
             )
           fi
           if [ -n "$PR_NUMBER" ]; then
