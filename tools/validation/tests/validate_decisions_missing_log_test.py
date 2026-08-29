@@ -2,27 +2,7 @@
 
 import validate_decisions as V
 
-
-class _FakeValidator(V.Validator):
-    """Validator whose _report collects results instead of rendering."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.collected = []
-
-    def _report(self, results, ok_msg, fail_msg, severity=None, category=""):
-        self.collected.extend(results)
-
-
-def _results_for(factories, monkeypatch, check="validate_missing_log"):
-    validator = _FakeValidator("/tmp")
-    monkeypatch.setattr(V, "parse_all_decision_factories", lambda mod_path: factories)
-    getattr(validator, check)()
-    return validator.collected
-
-
-def _factory(body):
-    return V.DecisionFactory(body, source_basename="X.txt")
+from .conftest import _factory, results_for
 
 
 def test_logged_decision_not_flagged(monkeypatch):
@@ -31,14 +11,14 @@ def test_logged_decision_not_flagged(monkeypatch):
         '\t\tlog = "[GetDateText]: [Root.GetName]: Decision dec_one"\n'
         "\t}\n}"
     )
-    assert _results_for([factory], monkeypatch) == []
+    assert results_for([factory], monkeypatch) == []
 
 
 def test_effect_without_log_flagged(monkeypatch):
     factory = _factory(
         "dec_two = {\n\tcomplete_effect = {\n\t\tadd_political_power = 10\n\t}\n}"
     )
-    results = _results_for([factory], monkeypatch)
+    results = results_for([factory], monkeypatch)
     assert len(results) == 1
     assert "dec_two" in results[0]
     assert "no log" in results[0]
@@ -46,7 +26,7 @@ def test_effect_without_log_flagged(monkeypatch):
 
 def test_empty_complete_effect_skipped(monkeypatch):
     factory = _factory("dec_three = {\n}")
-    assert _results_for([factory], monkeypatch) == []
+    assert results_for([factory], monkeypatch) == []
 
 
 def test_log_requires_quote(monkeypatch):
@@ -54,7 +34,7 @@ def test_log_requires_quote(monkeypatch):
     factory = _factory(
         "dec_four = {\n\tcomplete_effect = {\n\t\tlog = some_unquoted_thing\n\t}\n}"
     )
-    results = _results_for([factory], monkeypatch)
+    results = results_for([factory], monkeypatch)
     assert len(results) == 1
 
 
@@ -65,7 +45,7 @@ def test_log_matches_inside_multiline_effect(monkeypatch):
         '\t\tlog = "[GetDateText]: [Root.GetName]: Decision dec_five"\n'
         "\t}\n}"
     )
-    assert _results_for([factory], monkeypatch) == []
+    assert results_for([factory], monkeypatch) == []
 
 
 def test_remove_timeout_cancel_effects_need_logs(monkeypatch):
@@ -76,7 +56,7 @@ def test_remove_timeout_cancel_effects_need_logs(monkeypatch):
         "\tcancel_effect = {\n\t\tadd_war_support = 0.05\n\t}\n"
         "}"
     )
-    results = _results_for([factory], monkeypatch)
+    results = results_for([factory], monkeypatch)
     assert len(results) == 3
     flagged = {r.split(": ")[1].split(" has")[0] for r in results}
     assert flagged == {"remove_effect", "timeout_effect", "cancel_effect"}
@@ -92,7 +72,7 @@ def test_each_effect_block_logs_for_itself(monkeypatch):
         "\tremove_effect = {\n\t\tadd_political_power = -10\n\t}\n"
         "}"
     )
-    results = _results_for([factory], monkeypatch)
+    results = results_for([factory], monkeypatch)
     assert len(results) == 1
     assert "remove_effect" in results[0]
 
@@ -102,7 +82,7 @@ def test_single_line_effect_block_with_log_not_flagged(monkeypatch):
         "dec_eight = {\n\tremove_effect = "
         '{ log = "[GetDateText]: [Root.GetName]: Decision dec_eight" }\n}'
     )
-    assert _results_for([factory], monkeypatch) == []
+    assert results_for([factory], monkeypatch) == []
 
 
 def test_log_first_not_flagged(monkeypatch):
@@ -111,7 +91,7 @@ def test_log_first_not_flagged(monkeypatch):
         '\t\tlog = "[GetDateText]: [Root.GetName]: Decision dec_nine"\n'
         "\t\tadd_political_power = 10\n\t}\n}"
     )
-    assert _results_for([factory], monkeypatch, "validate_log_not_first") == []
+    assert results_for([factory], monkeypatch, "validate_log_not_first") == []
 
 
 def test_log_after_an_effect_flagged(monkeypatch):
@@ -121,7 +101,7 @@ def test_log_after_an_effect_flagged(monkeypatch):
         '\t\tlog = "[GetDateText]: [Root.GetName]: Decision dec_ten"\n'
         "\t}\n}"
     )
-    results = _results_for([factory], monkeypatch, "validate_log_not_first")
+    results = results_for([factory], monkeypatch, "validate_log_not_first")
     assert len(results) == 1
     assert "timeout_effect" in results[0]
     assert "add_political_power" in results[0]
@@ -136,7 +116,7 @@ def test_nested_log_left_alone(monkeypatch):
         '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision dec_eleven"\n'
         "\t\t}\n\t}\n}"
     )
-    assert _results_for([factory], monkeypatch, "validate_log_not_first") == []
+    assert results_for([factory], monkeypatch, "validate_log_not_first") == []
 
 
 def test_comment_before_log_not_flagged(monkeypatch):
@@ -146,7 +126,7 @@ def test_comment_before_log_not_flagged(monkeypatch):
         '\t\tlog = "[GetDateText]: [Root.GetName]: Decision dec_twelve"\n'
         "\t\tadd_political_power = 10\n\t}\n}"
     )
-    assert _results_for([factory], monkeypatch, "validate_log_not_first") == []
+    assert results_for([factory], monkeypatch, "validate_log_not_first") == []
 
 
 def test_quoted_brace_does_not_desync_statement_scan(monkeypatch):
@@ -156,7 +136,7 @@ def test_quoted_brace_does_not_desync_statement_scan(monkeypatch):
         '\t\tlog = "[GetDateText]: [Root.GetName]: Decision dec_thirteen"\n'
         "\t}\n}"
     )
-    results = _results_for([factory], monkeypatch, "validate_log_not_first")
+    results = results_for([factory], monkeypatch, "validate_log_not_first")
     assert len(results) == 1
     assert "custom_effect_tooltip" in results[0]
 

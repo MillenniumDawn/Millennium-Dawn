@@ -1,12 +1,8 @@
 """Failure handling tests for the localization helper."""
 
-import os
 import sys
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-import loc  # noqa: E402
+import loc
 
 
 def test_main_fails_when_localisation_output_cannot_be_written(tmp_path, monkeypatch):

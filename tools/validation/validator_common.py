@@ -23,6 +23,7 @@ from shared_utils import (
     atomic_write_text,
     clean_filepath,
     compute_line_offsets,
+    cpu_budget,
     create_validation_parser,
     find_line_number,
     get_staged_files,
@@ -295,6 +296,40 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
     }
 )
 
+# Object header opening a `{` block. Numeric names so `random_list` weight
+# buckets (`50 = { ... }`) and state ids (`652 = { ... }`) parse as blocks.
+_BLOCK_RE = re.compile(r"([A-Za-z_0-9@][A-Za-z0-9_.@]*(?::[A-Za-z0-9_]+)?)\s*=\s*\{")
+
+
+def _match_brace(text: str, open_pos: int) -> int:
+    """Return the index of the `}` closing the `{` at ``open_pos``, or -1."""
+    depth = 0
+    for i in range(open_pos, len(text)):
+        char = text[i]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+    return -1
+
+
+def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, int]]:
+    """Direct child blocks of a body as (name, name_start, body_start, body_end)."""
+    blocks = []
+    i = start
+    while i < end:
+        match = _BLOCK_RE.search(text, i, end)
+        if not match:
+            break
+        close = _match_brace(text, match.end() - 1)
+        if close < 0 or close > end:
+            break
+        blocks.append((match.group(1), match.start(), match.end(), close))
+        i = close + 1
+    return blocks
+
 
 def casefold_index(names) -> dict:
     """Return a dict mapping each name lowercased to its canonical form.
@@ -543,7 +578,9 @@ class BaseValidator:
         self.output_file = output_file
         self.use_colors = use_colors
         self.staged_only = staged_only
-        self.workers = workers if workers else max(1, cpu_count() // 2)
+        # Half the cores by default, and never more than the shared budget:
+        # a caller that asks for more must not be able to take the whole box.
+        self.workers = min(workers or max(1, cpu_count() // 2), cpu_budget())
         self.no_cache = no_cache
         # Pool workers call disk_cache at module level and never see `self`, so the
         # env var is the only channel that reaches them (fork inherits it).

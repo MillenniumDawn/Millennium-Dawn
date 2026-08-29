@@ -30,6 +30,20 @@ Standardizes national focus files according to Millennium Dawn standards.
 python3 standardize_focus_tree.py input.txt -o output.txt --backup --verbose
 ```
 
+### Focus ID Prefixes (`rename_focus_ids.py`)
+
+Renames country focus IDs and their references without rewriting unrelated focus formatting.
+It scans the repository containing the tool by default; use `--root` for another checkout.
+
+**Usage:**
+
+```bash
+python3 rename_focus_ids.py \
+  --focus-file ../../common/national_focus/05_Australia.txt \
+  --localisation-file ../../localisation/english/MD_focus_AST_l_english.yml \
+  --tag AST
+```
+
 ### Events (`standardize_events.py`)
 
 Standardizes event files according to Millennium Dawn standards.
@@ -79,6 +93,25 @@ Standardizes idea files according to Millennium Dawn standards.
 
 ```bash
 python3 standardize_ideas.py input.txt -o output.txt --backup --verbose
+```
+
+### Redundant Gate Blocks (`strip_idea_allowed_gates.py`, `strip_dynmod_tag_gates.py`)
+
+Surgical sweeps for two gates that never fail. Unlike the standardizers above they rewrite only the blocks they remove, so the diff carries no reformatting.
+
+`strip_idea_allowed_gates.py` drops the `allowed` block from every idea in a category with no slot. Nothing picks from `country` or `hidden_ideas`, so `add_idea` is the only way in and it never consults `allowed`. Categories come from `common/idea_tags/`, so a new slotless one is covered without editing the script.
+
+`strip_dynmod_tag_gates.py` drops `always = yes` and top-level `original_tag` / `tag` triggers from a dynamic modifier's `enable` block, removing the block when that empties it. `enable` is re-evaluated at runtime, so these cost something every pass. Only top-level triggers are touched: one inside `OR` / `NOT` is an alternative or an exclusion, and `country_exists`, `has_idea` and `has_completed_focus` stay, because those go false while the modifier is still attached. Every strip is reported — "only this country ever attaches it" is a claim about the rest of the repo that the script does not verify.
+
+Both find a block's closing brace by column, not by "the line where depth hit zero" — a closer sharing a line with the enclosing block's own `}` would otherwise be swallowed along with it. A block whose braces never balance is reported and left alone, and the run exits non-zero, rather than rewriting from the opener to EOF.
+
+`validate_ideas.py` and `validate_modifiers.py` flag both patterns, so neither grows back silently.
+
+**Usage:**
+
+```bash
+python3 strip_idea_allowed_gates.py --dry-run
+python3 strip_dynmod_tag_gates.py --backup
 ```
 
 ### Military Industrial Organizations (`standardize_mio.py`)
