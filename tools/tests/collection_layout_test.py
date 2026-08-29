@@ -1,6 +1,7 @@
 """Guards the unified tools test layout and shared import-root config."""
 
 import re
+from collections import Counter
 from pathlib import Path
 
 from shared.paths import (
@@ -57,9 +58,22 @@ def test_no_conventional_test_module_names():
     conventional = sorted(
         path for path in TOOLS_DIR.rglob("test_*.py") if "__pycache__" not in path.parts
     )
-    assert conventional == [], (
-        "rename conventional test_*.py modules to *_test.py: " f"{conventional}"
+    assert (
+        conventional == []
+    ), f"rename conventional test_*.py modules to *_test.py: {conventional}"
+
+
+def test_no_duplicate_test_basenames():
+    # No __init__.py under tools/tests + prepend import mode: a repeated
+    # basename across subdirs breaks collection with "import file mismatch".
+    tests_dir = TOOLS_DIR / "tests"
+    counts = Counter(
+        p.name for p in tests_dir.rglob("*_test.py") if "__pycache__" not in p.parts
     )
+    duplicates = sorted(name for name, n in counts.items() if n > 1)
+    assert (
+        duplicates == []
+    ), f"duplicate test basenames under tools/tests/: {duplicates}"
 
 
 def test_pytest_pythonpath_matches_shared_paths(pytestconfig):

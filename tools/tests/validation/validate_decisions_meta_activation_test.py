@@ -6,14 +6,15 @@ constant text around each `[...]` instead of literally.
 """
 
 import validate_decisions as V
-from shared.suite import _factory, _FakeValidator
+from shared.suite import decision_factory, fake_decisions_validator
 
 
 def _unused(tokens, activated_decisions, activated_missions, monkeypatch):
     factories = [
-        _factory(f"{token} = {{\n\tallowed = {{ always = no }}\n}}") for token in tokens
+        decision_factory(f"{token} = {{\n\tallowed = {{ always = no }}\n}}")
+        for token in tokens
     ]
-    validator = _FakeValidator("/tmp")
+    validator = fake_decisions_validator("/tmp")
     monkeypatch.setattr(V, "parse_all_decision_factories", lambda mod_path: factories)
     monkeypatch.setattr(
         validator,

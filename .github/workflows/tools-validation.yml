@@ -124,6 +124,7 @@ jobs:
 
       - name: Install dependencies (staged integration)
         if: matrix.check.id == 'staged'
+        id: staged-deps
         run: |
           python -m pip install --upgrade pip
           pip install --group dev --group runtime
@@ -156,14 +157,19 @@ jobs:
             tools/tests/staged_validators_test.py \
             tools/tests/staged_validators_real_test.py -q
 
+      # Run even when the staged tests failed, but not on broken setup or cancel.
       - name: Run tools validation
-        if: always() && matrix.check.id == 'staged'
+        if: >-
+          !cancelled() && matrix.check.id == 'staged' &&
+          steps.staged-deps.outcome == 'success'
         run: |
           python tools/validate_tools.py --strict --no-color --output \
             tools_validation.log
 
       - name: Upload tools validation report
-        if: always() && matrix.check.id == 'staged'
+        if: >-
+          !cancelled() && matrix.check.id == 'staged' &&
+          steps.staged-deps.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: tools-validation-report

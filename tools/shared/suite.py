@@ -12,6 +12,7 @@ def run_git(repository, *args):
         check=True,
         capture_output=True,
         text=True,
+        timeout=30,
     )
 
 
@@ -40,23 +41,26 @@ def collecting_validator(cls):
     return _Collecting
 
 
-def _FakeValidator(*args, **kwargs):
+def fake_decisions_validator(*args, **kwargs):
     import validate_decisions as V
 
     return collecting_validator(V.Validator)(*args, **kwargs)
 
 
-def _factory(body):
+def decision_factory(body):
     import validate_decisions as V
 
     return V.DecisionFactory(body, source_basename="X.txt")
 
 
-def results_for(factories, monkeypatch, check="validate_missing_log"):
-    """Run `check` on a `_FakeValidator` fed `factories`; return its collected results."""
+def decisions_results_for(factories, monkeypatch, check="validate_missing_log"):
+    """Run a `validate_decisions.Validator` check on `factories`; return its results.
+
+    Bound to validate_decisions only — use `collecting_validator` for other validators.
+    """
     import validate_decisions as V
 
-    validator = _FakeValidator("/tmp")
+    validator = fake_decisions_validator("/tmp")
     monkeypatch.setattr(V, "parse_all_decision_factories", lambda mod_path: factories)
     getattr(validator, check)()
     return validator.collected

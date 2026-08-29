@@ -754,10 +754,10 @@ class BaseValidator:
             return
         atomic_write_text(self.output_file, "\n".join(self.output_lines))
         logging.info(f"Results saved to: {self.output_file}")
-        if self._issues:
-            json_file = os.path.splitext(self.output_file)[0] + ".json"
-            atomic_write_text(json_file, self.get_issues_json())
-            logging.info(f"JSON results saved to: {json_file}")
+        # CI verifies the sidecar exists even on clean runs — always write it.
+        json_file = os.path.splitext(self.output_file)[0] + ".json"
+        atomic_write_text(json_file, self.get_issues_json())
+        logging.info(f"JSON results saved to: {json_file}")
 
     def add_issue(
         self, severity: str, category: str, message: str, file: str = "", line: int = 0

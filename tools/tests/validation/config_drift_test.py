@@ -572,7 +572,9 @@ def test_staged_validator_integration_runs_in_isolated_worktree():
     assert "staged_validators_real_test.py" in run_step["run"]
 
     tools_step = next(s for s in steps if s.get("name") == "Run tools validation")
-    assert "always()" in tools_step["if"]
+    # Runs even when the staged tests fail, but not on broken setup or cancel.
+    assert "!cancelled()" in tools_step["if"]
+    assert "steps.staged-deps.outcome == 'success'" in tools_step["if"]
     assert "tools/validate_tools.py --strict" in tools_step["run"]
     assert steps.index(tools_step) > steps.index(run_step)
 

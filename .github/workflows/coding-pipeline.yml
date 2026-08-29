@@ -422,6 +422,7 @@ jobs:
           path: .
 
       - name: Set up Python
+        id: setup-python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
           python-version: "3.x"
@@ -496,8 +497,9 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      # Run even when a style step failed, but not on broken setup or cancel.
       - name: Check localisation UTF-8 BOM
-        if: always()
+        if: "!cancelled() && steps.setup-python.outcome == 'success'"
         run: python3 tools/linting/validate_localization_encoding.py
 
       # find, not `git ls-files`: the restored bundle has no .git. Only the
@@ -505,13 +507,13 @@ jobs:
       # `*.mod` cache path); resources/ isn't, so the exclusion is belt-and-
       # braces against future path-list additions.
       - name: Check .mod file encoding
-        if: always()
+        if: "!cancelled() && steps.setup-python.outcome == 'success'"
         run: |
           find . -name '*.mod' -not -path './resources/*' -print0 \
             | xargs -0 -r python3 tools/linting/validate_mod_encoding.py
 
       - name: Check mod descriptor replace_path sync
-        if: always()
+        if: "!cancelled() && steps.setup-python.outcome == 'success'"
         run: >-
           python3 tools/validation/validate_mod_descriptors.py --strict
           --no-color

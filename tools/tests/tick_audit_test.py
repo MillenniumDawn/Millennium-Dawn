@@ -7,8 +7,7 @@ not touch the live mod, so they stay fast and deterministic.
 """
 
 import pytest
-
-from tools.analysis import tick_audit as ta
+import tick_audit as ta
 
 # --- brace-depth field reading ---------------------------------------------
 
