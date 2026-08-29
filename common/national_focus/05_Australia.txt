@@ -1277,16 +1277,12 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus AST_stop_panicking"
 		set_temp_variable = { treasury_change = -10.00 }
 		modify_treasury_effect = yes
+		newline = yes
+		add_stability = 0.03
 		custom_effect_tooltip = tfc_fixing_tt
 	}
 
-	ai_will_do = {
-		base = 1
-		modifier = {
-			factor = 0
-			has_active_mission = bankruptcy_incoming_collapse
-		}
-	}
+	ai_will_do = { base = 1 }
 }
 
 shared_focus = {
@@ -1306,22 +1302,24 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus AST_guarantee_the_banks"
 		set_temp_variable = { treasury_change = -20.00 }
 		modify_treasury_effect = yes
-		hidden_effect = {
+		newline = yes
+		if = {
+			limit = { has_idea = tfc_1 }
 			swap_ideas = {
 				remove_idea = tfc_1
 				add_idea = tfc_2
 			}
 		}
+		else = {
+			swap_ideas = {
+				remove_idea = tfc_2
+				add_idea = tfc_3
+			}
+		}
 		custom_effect_tooltip = tfc_fixing_tt
 	}
 
-	ai_will_do = {
-		base = 1
-		modifier = {
-			factor = 0
-			has_active_mission = bankruptcy_incoming_collapse
-		}
-	}
+	ai_will_do = { base = 1 }
 }
 
 shared_focus = {
@@ -1341,16 +1339,24 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus AST_grab_the_securities"
 		set_temp_variable = { treasury_change = -8.00 }
 		modify_treasury_effect = yes
+		newline = yes
+		if = {
+			limit = { has_idea = tfc_1 }
+			swap_ideas = {
+				remove_idea = tfc_1
+				add_idea = tfc_2
+			}
+		}
+		else = {
+			swap_ideas = {
+				remove_idea = tfc_2
+				add_idea = tfc_3
+			}
+		}
 		custom_effect_tooltip = tfc_fixing_tt
 	}
 
-	ai_will_do = {
-		base = 1
-		modifier = {
-			factor = 0
-			has_active_mission = bankruptcy_incoming_collapse
-		}
-	}
+	ai_will_do = { base = 1 }
 }
 
 shared_focus = {
@@ -1372,23 +1378,38 @@ shared_focus = {
 		set_temp_variable = { treasury_change = -42.00 }
 		modify_treasury_effect = yes
 		newline = yes
-		custom_effect_tooltip = tfc_fixing_2_tt
+		swap_ideas = {
+				remove_idea = tfc_3
+				add_idea = tfc_4
+			}
 		newline = yes
 		increase_economic_growth = yes
 		hidden_effect = {
 			country_event = a_global_financial_crisis.4
 			clr_country_flag = tfc_ast_flag
 			clr_country_flag = the_nation_is_in_crisis_ast
+			remove_ideas = tfc_4
+			if = {
+				limit = { has_country_flag = negative_gearing_diminished_ast }
+				hidden_effect = {
+					add_timed_idea = {
+						idea = tfc_4
+						days = 290
+					}
+				}
+			}
+			else = {
+				hidden_effect = {
+					add_timed_idea = {
+						idea = tfc_4
+						days = 760
+					}
+				}
+			}
 		}
 	}
 
-	ai_will_do = {
-		base = 1
-		modifier = {
-			factor = 0
-			has_active_mission = bankruptcy_incoming_collapse
-		}
-	}
+	ai_will_do = { base = 1 }
 }
 
 #navy
@@ -2535,9 +2556,7 @@ focus_tree = {
 			add_stability = -0.15
 			set_temp_variable = { temp_opinion = -50 }
 			change_landowners_opinion = yes
-			hidden_effect = {
-				set_country_flag = negative_gearing_diminished_ast
-			}
+			set_country_flag = negative_gearing_diminished_ast
 		}
 
 		ai_will_do = { base = 1 }

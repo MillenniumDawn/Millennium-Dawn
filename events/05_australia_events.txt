@@ -4893,6 +4893,11 @@ country_event = {
 	desc = ast_elections.1.d
 	is_triggered_only = yes
 
+	trigger = {
+		tag = AST
+		is_ai = yes
+	}
+
 	option = {
 		log = "[GetDateText]: [This.GetName]: ast_elections.1.a executed"
 		name = ast_elections.1.a
@@ -5166,6 +5171,10 @@ country_event = {
 				}
 			}
 		}
+	}
+
+	option = {
+		name = ast_elections.4.a
 		if = {
 			limit = {
 				western_social_democrats_are_in_power = yes
@@ -5191,10 +5200,10 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				western_conservatism_are_in_power = yes
+				western_social_democrats_are_in_power = yes
 				date > 2011.01.01
 				date < 2014.01.01
-				has_country_flag = liberals_previously_in
+				NOT = { has_country_flag = labor_previously_in }
 			}
 			set_politics = {
 					ruling_party = democratic
@@ -5224,7 +5233,7 @@ country_event = {
 		else_if = {
 			limit = {
 				western_conservatism_are_in_power = yes
-				date > 2007.01.01
+				date > 2010.01.01
 				date < 2014.01.01
 				NOT = {
 					has_country_flag = liberals_previously_in
@@ -5545,20 +5554,20 @@ country_event = {
 	hidden = yes
 
 	immediate = {
-		add_to_array = { ruling_party = 0 }
-		set_temp_variable = { ruling_party_popularity = party_pop_array^0 }
-		for_each_loop = {
-			array = party_pop_array
-			value = v
-			index = i
-			break = break
-			if = {
-				limit = { check_variable = { ruling_party_popularity < party_pop_array^i } }
-				set_temp_variable = { ruling_party_popularity = party_pop_array^i }
-				clear_array = ruling_party
-				add_to_array = { ruling_party = i }
+		clear_array = ruling_party
+			set_temp_variable = { ruling_party_popularity = party_pop_array^0 }
+			add_to_array = { ruling_party = 0 }
+			for_each_loop = {
+				array = party_pop_array
+				value = v
+				index = i
+				if = {
+					limit = { check_variable = { ruling_party_popularity < party_pop_array^i } }
+					set_temp_variable = { ruling_party_popularity = party_pop_array^i }
+					clear_array = ruling_party
+					add_to_array = { ruling_party = i }
+				}
 			}
-		}
 		#gillard wins
 		if = {
 			limit = {
@@ -7521,7 +7530,7 @@ country_event = {
 		}
 		set_country_flag = {
 					flag = election_cooldown_ast
-					days = 435
+					days = 680
 					value = 1
 				}
 	}
@@ -8463,19 +8472,11 @@ country_event = {
 	immediate = {
 		if = {
 				limit = { has_country_flag = negative_gearing_diminished_ast }
-				swap_ideas = {
-					remove_idea = tfc_2
-					add_idea = tfc_3
-				}
 				hidden_effect = {
 					country_event = { id = a_global_financial_crisis.3 days = 280 }
 				}
 			}
 			else = {
-				swap_ideas = {
-					remove_idea = tfc_2
-					add_idea = tfc_3
-				}
 				hidden_effect = {
 					country_event = { id = a_global_financial_crisis.3 days = 760 }
 				}
