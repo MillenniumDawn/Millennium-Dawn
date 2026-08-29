@@ -66,7 +66,12 @@ def _checks_matrix_steps(check_id: str) -> list:
         "its steps are present but never run"
     )
     guard = f"matrix.check.id == '{check_id}'"
-    return [s for s in job["steps"] if "if" not in s or guard in s["if"]]
+    family_guard = f"startsWith(matrix.check.id, '{check_id}')"
+    return [
+        step
+        for step in job["steps"]
+        if "if" not in step or guard in step["if"] or family_guard in step["if"]
+    ]
 
 
 def _sole_checkout(steps: list) -> dict:
@@ -578,12 +583,36 @@ def test_tools_checks_share_one_matrix():
     jobs = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))["jobs"]
     assert set(jobs) == {"checks"}
     entries = jobs["checks"]["strategy"]["matrix"]["check"]
-    assert {entry["id"] for entry in entries} == {
+    by_id = {entry["id"]: entry for entry in entries}
+    assert set(by_id) == {
         "unit",
+        "unit-macos",
+        "unit-windows",
         "staged",
         "lint",
         "duplication",
     }
+    assert by_id["unit"]["runner"] == "ubuntu-latest"
+    assert by_id["unit-macos"]["runner"] == "macos-latest"
+    assert by_id["unit-windows"]["runner"] == "windows-latest"
+
+
+def test_unit_tests_run_on_all_supported_platforms():
+    job = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))["jobs"]["checks"]
+    steps = {step["name"]: step for step in job["steps"] if "name" in step}
+    for name in (
+        "Checkout (unit tests)",
+        "Install dependencies (unit tests)",
+        "Verify pytest collection configuration",
+    ):
+        assert "startsWith(matrix.check.id, 'unit')" in steps[name]["if"]
+
+    cross_platform = steps["Run cross-platform unit tests"]
+    assert "unit-macos" in cross_platform["if"]
+    assert "unit-windows" in cross_platform["if"]
+    assert "pytest tools/tests" in cross_platform["run"]
+    assert "-o addopts=" in cross_platform["run"]
+    assert "python_files=*_test.py" in cross_platform["run"]
 
 
 def test_staged_validator_integration_runs_in_isolated_worktree():
