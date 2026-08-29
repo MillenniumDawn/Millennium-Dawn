@@ -135,10 +135,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install --group dev
 
+      - name: Verify pytest collection configuration
+        if: matrix.check.id == 'unit'
+        run: >-
+          python -m pytest tools/tests/collection_layout_test.py
+          -o addopts= -q
+
       - name: Run unit tests
         if: matrix.check.id == 'unit'
         run: |
-          python -m coverage run --branch -m pytest -v
+          python -m coverage run --branch -m pytest tools/tests \
+            -o addopts= -o 'python_files=*_test.py' -v
           python -m coverage report
 
       - name: Create isolated test worktree
@@ -157,7 +164,7 @@ jobs:
             tools/tests/staged_validators_test.py \
             tools/tests/staged_validators_real_test.py -q
 
-      # Run even when the staged tests failed, but not on broken setup or cancel.
+      # Run after test failures, but not broken setup or cancellation.
       - name: Run tools validation
         if: >-
           !cancelled() && matrix.check.id == 'staged' &&

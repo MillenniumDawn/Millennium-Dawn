@@ -545,6 +545,35 @@ def test_python_quality_checks_are_wired_in_precommit_and_ci():
         assert package in pyproject
 
 
+def test_pytest_collection_gate_cannot_self_exclude():
+    config = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
+    hooks = {
+        hook["id"]: hook for repo in config["repos"] for hook in repo.get("hooks", [])
+    }
+    prepush_guard = hooks["tools-pytest-config"]["entry"]
+    prepush_suite = hooks["tools-pytest"]["entry"]
+    assert "tools/tests/collection_layout_test.py" in prepush_guard
+    assert "-o addopts=" in prepush_guard
+    assert "pytest tools/tests" in prepush_suite
+    assert "-o addopts=" in prepush_suite
+    assert "python_files=*_test.py" in prepush_suite
+
+    steps = _checks_matrix_steps("unit")
+    ci_guard = next(
+        step
+        for step in steps
+        if step.get("name") == "Verify pytest collection configuration"
+    )["run"]
+    ci_suite = next(step for step in steps if step.get("name") == "Run unit tests")[
+        "run"
+    ]
+    assert "tools/tests/collection_layout_test.py" in ci_guard
+    assert "-o addopts=" in ci_guard
+    assert "pytest tools/tests" in ci_suite
+    assert "-o addopts=" in ci_suite
+    assert "python_files=*_test.py" in ci_suite
+
+
 def test_tools_checks_share_one_matrix():
     jobs = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))["jobs"]
     assert set(jobs) == {"checks"}

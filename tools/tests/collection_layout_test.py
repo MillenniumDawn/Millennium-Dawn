@@ -23,12 +23,22 @@ def _quoted_list(text, key):
     return re.findall(r'"([^"]+)"', match.group(1))
 
 
+def _quoted_scalar(text, key):
+    match = re.search(rf'^\s*{re.escape(key)}\s*=\s*"([^"]*)"\s*$', text, re.M)
+    assert match, f"pyproject.toml has no {key} string"
+    return match.group(1)
+
+
 def test_testpaths_is_tools_tests(pytestconfig):
     assert pytestconfig.getini("testpaths") == ["tools/tests"]
 
 
 def test_python_files_are_star_test_py(pytestconfig):
     assert pytestconfig.getini("python_files") == ["*_test.py"]
+
+
+def test_addopts_cannot_exclude_tests():
+    assert _quoted_scalar(_pyproject_text(), "addopts") == "-q"
 
 
 def _has_non_pycache_file(path):

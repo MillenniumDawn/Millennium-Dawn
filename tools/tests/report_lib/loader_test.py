@@ -1,7 +1,7 @@
 """Tests for `report_lib.loader`."""
 
 from report_lib import load_all
-from shared.suite import make_results_tree
+from shared.suite import make_results_tree, write_log, write_sidecar
 
 
 def test_load_passed_validator(tmp_path):
@@ -22,6 +22,19 @@ def test_load_passed_validator(tmp_path):
     assert run.errors == 0
     assert run.warnings == 0
     assert run.had_json is True
+
+
+def test_load_single_flat_artifact(tmp_path):
+    root = tmp_path / "validation-results"
+    root.mkdir()
+    write_log(root, "file-paths", "✓ VALIDATION COMPLETE - NO ISSUES FOUND\n")
+    write_sidecar(root, "file-paths", [])
+
+    runs = load_all(str(root))
+
+    assert len(runs) == 1
+    assert runs[0].name == "file-paths"
+    assert runs[0].status == "passed"
 
 
 def test_load_failed_from_json_sidecar(tmp_path):
