@@ -95,7 +95,7 @@ news_event = {
 	picture = GFX_national_apology_image
 	is_triggered_only = yes
 
-	option = { name = the_national_apology.1.a }
+	option = { name = the_national_apology.1.a add_stability = 0.03 }
 
 }
 
@@ -2048,7 +2048,10 @@ country_event = {
 				add_idea = boat_arrivals_ast
 			}
 		}
-		add_ideas = detention_centre_emergency_funding_ast
+		add_timed_idea = {
+			idea = detention_centre_emergency_funding_ast
+			days = 230
+		}
 	}
 
 }
@@ -4893,6 +4896,11 @@ country_event = {
 	desc = ast_elections.1.d
 	is_triggered_only = yes
 
+	trigger = {
+		tag = AST
+		is_ai = yes
+	}
+
 	option = {
 		log = "[GetDateText]: [This.GetName]: ast_elections.1.a executed"
 		name = ast_elections.1.a
@@ -5166,6 +5174,17 @@ country_event = {
 				}
 			}
 		}
+		country_event = ast_elections.5 #chooses government
+	}
+
+}
+
+country_event = {
+	id = ast_elections.5
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
 		if = {
 			limit = {
 				western_social_democrats_are_in_power = yes
@@ -5191,10 +5210,10 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				western_conservatism_are_in_power = yes
+				western_social_democrats_are_in_power = yes
 				date > 2011.01.01
 				date < 2014.01.01
-				has_country_flag = liberals_previously_in
+				NOT = { has_country_flag = labor_previously_in }
 			}
 			set_politics = {
 					ruling_party = democratic
@@ -5224,7 +5243,7 @@ country_event = {
 		else_if = {
 			limit = {
 				western_conservatism_are_in_power = yes
-				date > 2007.01.01
+				date > 2010.01.01
 				date < 2014.01.01
 				NOT = {
 					has_country_flag = liberals_previously_in
@@ -5267,14 +5286,14 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			country_event = { id = ast_elections.5 days = 1 } #election day after effects
+			country_event = { id = ast_elections.6 days = 1 } #election day after effects
 		}
 	}
 
 }
 
 country_event = {
-	id = ast_elections.5
+	id = ast_elections.6
 	is_triggered_only = yes
 	hidden = yes
 
@@ -5545,20 +5564,20 @@ country_event = {
 	hidden = yes
 
 	immediate = {
-		add_to_array = { ruling_party = 0 }
-		set_temp_variable = { ruling_party_popularity = party_pop_array^0 }
-		for_each_loop = {
-			array = party_pop_array
-			value = v
-			index = i
-			break = break
-			if = {
-				limit = { check_variable = { ruling_party_popularity < party_pop_array^i } }
-				set_temp_variable = { ruling_party_popularity = party_pop_array^i }
-				clear_array = ruling_party
-				add_to_array = { ruling_party = i }
+		clear_array = ruling_party
+			set_temp_variable = { ruling_party_popularity = party_pop_array^0 }
+			add_to_array = { ruling_party = 0 }
+			for_each_loop = {
+				array = party_pop_array
+				value = v
+				index = i
+				if = {
+					limit = { check_variable = { ruling_party_popularity < party_pop_array^i } }
+					set_temp_variable = { ruling_party_popularity = party_pop_array^i }
+					clear_array = ruling_party
+					add_to_array = { ruling_party = i }
+				}
 			}
-		}
 		#gillard wins
 		if = {
 			limit = {
@@ -7521,7 +7540,7 @@ country_event = {
 		}
 		set_country_flag = {
 					flag = election_cooldown_ast
-					days = 435
+					days = 680
 					value = 1
 				}
 	}
@@ -8233,7 +8252,7 @@ country_event = {
 	id = embassy_attacked.1
 	title = embassy_attacked.1.t
 	desc = embassy_attacked.1.d
-	picture = GFX_bali_bombings
+	picture = GFX_embasyattack
 	is_triggered_only = yes
 
 	trigger = {
@@ -8463,19 +8482,11 @@ country_event = {
 	immediate = {
 		if = {
 				limit = { has_country_flag = negative_gearing_diminished_ast }
-				swap_ideas = {
-					remove_idea = tfc_2
-					add_idea = tfc_3
-				}
 				hidden_effect = {
 					country_event = { id = a_global_financial_crisis.3 days = 280 }
 				}
 			}
 			else = {
-				swap_ideas = {
-					remove_idea = tfc_2
-					add_idea = tfc_3
-				}
 				hidden_effect = {
 					country_event = { id = a_global_financial_crisis.3 days = 760 }
 				}
