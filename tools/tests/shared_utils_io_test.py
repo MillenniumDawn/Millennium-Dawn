@@ -108,7 +108,7 @@ def test_excluded_path_ignores_different_drives(monkeypatch):
 
     monkeypatch.setattr(U.os.path, "relpath", raise_cross_drive)
     assert not U.is_excluded_path("C:/tmp/file.txt", {"resources"}, "D:/repo")
-    assert not U.is_excluded_path("C:/resources/file.txt", {"resources"}, "D:/repo")
+    assert U.is_excluded_path("C:/resources/file.txt", {"resources"}, "D:/repo")
 
 
 def test_write_text_under_rejects_escape(tmp_path):

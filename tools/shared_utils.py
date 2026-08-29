@@ -518,7 +518,8 @@ def is_excluded_path(path: str, excluded_dirs: Container[str], repo_root: str) -
     try:
         rel = os.path.relpath(os.path.abspath(path), os.path.abspath(repo_root))
     except ValueError:
-        return False
+        rel = normalize_path_separators(os.path.abspath(path)).strip("/")
+        return any(part in excluded_dirs for part in rel.split("/"))
     return any(part in excluded_dirs for part in rel.split(os.sep))
 
 
