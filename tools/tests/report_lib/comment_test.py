@@ -1,5 +1,6 @@
 """Tests for `report_lib.comment` discovery and posting."""
 
+import pytest
 from report_lib import comment as C
 from report_lib.comment import (
     REPORT_MARKER,
@@ -155,22 +156,17 @@ def test_clear_reports_delete_failure(monkeypatch):
     assert message == "delete comment: boom"
 
 
-def test_clean_run_without_a_report_comment_writes_nothing(monkeypatch):
-    monkeypatch.setattr(C, "_get", lambda *a, **k: [])
-    monkeypatch.setattr(
-        C,
-        "_delete",
-        lambda *args: (_ for _ in ()).throw(AssertionError("must not delete")),
-    )
-
-    success, message = clear_comment("owner", "repo", "7", "token")
-
-    assert success
-    assert message == "no report comment to remove"
-
-
-def test_clear_never_deletes_a_human_comment(monkeypatch):
-    comments = [_comment(f"{REPORT_MARKER}\nquoted report", bot=False, cid=42)]
+@pytest.mark.parametrize(
+    "comments",
+    [
+        pytest.param([], id="no-report"),
+        pytest.param(
+            [_comment(f"{REPORT_MARKER}\nquoted report", bot=False, cid=42)],
+            id="human-report",
+        ),
+    ],
+)
+def test_clear_leaves_unowned_comments_untouched(monkeypatch, comments):
     monkeypatch.setattr(C, "_get", lambda *a, **k: comments)
     monkeypatch.setattr(
         C,

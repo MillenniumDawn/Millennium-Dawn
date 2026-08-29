@@ -168,149 +168,97 @@ def _warnings_tree(tmp_path):
     )
 
 
-def test_main_posts_comment_for_new_findings(tmp_path, monkeypatch):
-    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    _findings_tree(tmp_path)
-    calls = []
-
-    def fake_post(owner, repo, pr_number, body, token):
-        calls.append(
-            {
-                "owner": owner,
-                "repo": repo,
-                "pr_number": pr_number,
-                "body": body,
-                "token": token,
-            }
-        )
-        return True, "posted"
-
-    monkeypatch.setattr(generate_validation_report, "post_comment", fake_post)
-    monkeypatch.setattr(
-        generate_validation_report,
-        "clear_comment",
-        lambda *args: (_ for _ in ()).throw(AssertionError("must not clear")),
-    )
-
-    code = generate_validation_report.main(_post_argv(tmp_path))
-
-    assert code == 0
-    assert len(calls) == 1
-    assert calls[0]["pr_number"] == "42"
-
-
-def test_main_posts_comment_for_warnings(tmp_path, monkeypatch):
-    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    _warnings_tree(tmp_path)
-    calls = []
-    monkeypatch.setattr(
-        generate_validation_report,
-        "post_comment",
-        lambda *args: calls.append(args) or (True, "posted"),
-    )
-    monkeypatch.setattr(
-        generate_validation_report,
-        "clear_comment",
-        lambda *args: (_ for _ in ()).throw(AssertionError("must not clear")),
-    )
-
-    code = generate_validation_report.main(_post_argv(tmp_path))
-
-    assert code == 0
-    assert len(calls) == 1
-
-
-def test_main_clears_comment_on_clean_partial_run(tmp_path, monkeypatch):
-    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    _passing_tree(tmp_path)
+def _comment_spies(monkeypatch):
+    posted = []
     cleared = []
     monkeypatch.setattr(
         generate_validation_report,
         "post_comment",
-        lambda *args: (_ for _ in ()).throw(AssertionError("must not post")),
+        lambda *args: posted.append(args) or (True, "posted"),
     )
     monkeypatch.setattr(
         generate_validation_report,
         "clear_comment",
         lambda *args: cleared.append(args) or (True, "cleared"),
     )
+    return posted, cleared
+
+
+def test_main_posts_comment_for_new_findings(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _findings_tree(tmp_path)
+    posted, cleared = _comment_spies(monkeypatch)
 
     code = generate_validation_report.main(_post_argv(tmp_path))
 
     assert code == 0
+    assert len(posted) == 1
+    assert posted[0][2] == "42"
+    assert not cleared
+
+
+def test_main_posts_comment_for_warnings(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _warnings_tree(tmp_path)
+    posted, cleared = _comment_spies(monkeypatch)
+
+    code = generate_validation_report.main(_post_argv(tmp_path))
+
+    assert code == 0
+    assert len(posted) == 1
+    assert not cleared
+
+
+def test_main_clears_comment_on_clean_partial_run(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _passing_tree(tmp_path)
+    posted, cleared = _comment_spies(monkeypatch)
+
+    code = generate_validation_report.main(_post_argv(tmp_path))
+
+    assert code == 0
+    assert not posted
     assert len(cleared) == 1
 
 
 def test_main_clears_comment_on_clean_full_run(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _passing_tree(tmp_path)
-    cleared = []
-    monkeypatch.setattr(
-        generate_validation_report,
-        "post_comment",
-        lambda *args: (_ for _ in ()).throw(AssertionError("must not post")),
-    )
-    monkeypatch.setattr(
-        generate_validation_report,
-        "clear_comment",
-        lambda *args: cleared.append(args) or (True, "cleared"),
-    )
+    posted, cleared = _comment_spies(monkeypatch)
 
     code = generate_validation_report.main(
         _post_argv(tmp_path, "--validation-scope", "full")
     )
 
     assert code == 0
+    assert not posted
     assert cleared == [("MillenniumDawn", "Millennium-Dawn", "42", "token")]
 
 
 def test_main_posts_comment_for_unknown_run(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     make_results_tree(tmp_path, {"events": {"log": "validator started"}})
-    bodies = []
-    monkeypatch.setattr(
-        generate_validation_report,
-        "post_comment",
-        lambda owner, repo, pr_number, body, token: (
-            bodies.append(body) or (True, "posted")
-        ),
-    )
-    monkeypatch.setattr(
-        generate_validation_report,
-        "clear_comment",
-        lambda *args: (_ for _ in ()).throw(AssertionError("must not clear")),
-    )
+    posted, cleared = _comment_spies(monkeypatch)
 
     code = generate_validation_report.main(_post_argv(tmp_path))
 
     assert code == 0
-    assert len(bodies) == 1
-    assert "did not produce a complete result" in bodies[0]
+    assert len(posted) == 1
+    assert "did not produce a complete result" in posted[0][3]
+    assert not cleared
 
 
 def test_main_posts_comment_when_no_validator_ran(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     (tmp_path / "validation-results").mkdir()
-    bodies = []
-
-    monkeypatch.setattr(
-        generate_validation_report,
-        "post_comment",
-        lambda owner, repo, pr_number, body, token: (
-            bodies.append(body) or (True, "posted")
-        ),
-    )
-    monkeypatch.setattr(
-        generate_validation_report,
-        "clear_comment",
-        lambda *args: (_ for _ in ()).throw(AssertionError("must not clear")),
-    )
+    posted, cleared = _comment_spies(monkeypatch)
 
     code = generate_validation_report.main(_post_argv(tmp_path))
 
     assert code == 0
-    assert len(bodies) == 1
-    assert "_No validator results found._" in bodies[0]
+    assert len(posted) == 1
+    assert "_No validator results found._" in posted[0][3]
+    assert not cleared
 
 
 def test_main_checks_api_failure_is_non_fatal(tmp_path, monkeypatch):
