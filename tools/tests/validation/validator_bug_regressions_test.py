@@ -287,6 +287,33 @@ def test_report_issue_with_category_and_severity(dummy_validator):
     assert v.errors_found == 0
 
 
+def test_report_normalizes_windows_file_separators(dummy_validator):
+    dummy_validator._report(
+        [("finding", r"common\national_focus\foo.txt", 3)],
+        ok_msg="OK",
+        fail_msg="Findings:",
+    )
+
+    assert dummy_validator._issues[0].file == "common/national_focus/foo.txt"
+
+
+def test_report_does_not_mutate_prebuilt_issue(dummy_validator):
+    source = Issue(
+        severity=Severity.WARNING,
+        category="",
+        message="finding",
+        file=r"common\decisions\foo.txt",
+        line=3,
+    )
+
+    dummy_validator._report([source], ok_msg="OK", fail_msg="Findings:")
+
+    assert source.category == ""
+    assert source.file == r"common\decisions\foo.txt"
+    assert dummy_validator._issues[0].category == "Findings"
+    assert dummy_validator._issues[0].file == "common/decisions/foo.txt"
+
+
 def test_report_counts_mixed_severities_correctly(dummy_validator):
     """When _report receives a mix of pre-built Issues and tuples, each entry
     must increment the counter matching its own severity."""
@@ -471,7 +498,10 @@ def test_scan_captures_non_ascii_target_whole(tmp_path):
     additional_income_GER_Ökosteuer) must be captured whole, not truncated to the
     post-Ö tail (`kosteuer`), which never matched its own reads."""
     f = tmp_path / "x.txt"
-    f.write_text("set_variable = { additional_income_GER_Ökosteuer = 1 }\n")
+    f.write_text(
+        "set_variable = { additional_income_GER_Ökosteuer = 1 }\n",
+        encoding="utf-8",
+    )
     variables = _scan_set_vars(str(f))
     assert "additional_income_GER_Ökosteuer" in variables
     assert "kosteuer" not in variables
@@ -483,7 +513,8 @@ def test_non_ascii_var_set_and_read_not_flagged(tmp_path):
     f = tmp_path / "x.txt"
     f.write_text(
         "set_variable = { additional_income_GER_Ökosteuer = GER.gdp_per_capita }\n"
-        "add_to_variable = { additional_income_rate = additional_income_GER_Ökosteuer }\n"
+        "add_to_variable = { additional_income_rate = additional_income_GER_Ökosteuer }\n",
+        encoding="utf-8",
     )
     counts = _count_refs(str(f), frozenset(["additional_income_GER_Ökosteuer"]))
     assert counts.get("additional_income_GER_Ökosteuer", 0) == 1

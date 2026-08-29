@@ -28,7 +28,8 @@ SPRITES = frozenset(
 
 def _write(tmp_path, name, text):
     p = tmp_path / name
-    p.write_text(text, encoding="utf-8")
+    with open(p, "w", encoding="utf-8", newline="") as f:
+        f.write(text)
     return str(p)
 
 
@@ -126,6 +127,17 @@ def test_extract_ignores_commented_icon(tmp_path):
     )
     values = [r[2] for r in _extract_decision_icons((f, str(tmp_path)))]
     assert values == ["money"]
+
+
+def test_extract_accepts_crlf_lines(tmp_path):
+    f = _write(
+        tmp_path,
+        "d.txt",
+        "cat = {\r\n\tfirst = {\r\n\t\ticon = money\r\n\t}\r\n}\r\n",
+    )
+    assert _extract_decision_icons((f, str(tmp_path))) == [
+        ("first", "decision", "money", 3)
+    ]
 
 
 def test_extract_keeps_dot_and_hyphen_in_name(tmp_path):
