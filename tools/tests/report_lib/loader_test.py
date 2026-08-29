@@ -1,7 +1,7 @@
 """Tests for `report_lib.loader`."""
 
 from report_lib import load_all
-from suite_helpers import make_results_tree
+from shared.suite import make_results_tree
 
 
 def test_load_passed_validator(tmp_path):

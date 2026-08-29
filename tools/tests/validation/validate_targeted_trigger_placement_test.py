@@ -1,6 +1,6 @@
 """Tests for the targeted-decision trigger-placement performance checks."""
 
-from suite_helpers import _factory, results_for
+from shared.suite import _factory, results_for
 
 TARGETS_BLOCK = "\ttargets = {\n\t\tTAG\n\t}\n"
 TARGET_ROOT_TRIGGER_BLOCK = "\ttarget_root_trigger = {\n\t\thas_capital = yes\n\t}\n"

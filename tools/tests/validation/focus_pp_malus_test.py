@@ -7,15 +7,13 @@ bypass) are not.
 """
 
 import re
-from pathlib import Path
 
+from shared.paths import REPO_ROOT as _MOD_ROOT
 from validate_focus_tree import (
     _PP_MALUS_EXEMPT_FOCUS_IDS,
     Validator,
     _extract_pp_malus,
 )
-
-_MOD_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _write_focus_file(tmp_path, content):

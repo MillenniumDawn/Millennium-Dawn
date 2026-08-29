@@ -6,7 +6,7 @@ constant text around each `[...]` instead of literally.
 """
 
 import validate_decisions as V
-from suite_helpers import _factory, _FakeValidator
+from shared.suite import _factory, _FakeValidator
 
 
 def _unused(tokens, activated_decisions, activated_missions, monkeypatch):

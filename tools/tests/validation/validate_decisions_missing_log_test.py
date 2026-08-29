@@ -1,7 +1,7 @@
 """Tests for the decision effect-block log checks."""
 
 import validate_decisions as V
-from suite_helpers import _factory, results_for
+from shared.suite import _factory, results_for
 
 
 def test_logged_decision_not_flagged(monkeypatch):

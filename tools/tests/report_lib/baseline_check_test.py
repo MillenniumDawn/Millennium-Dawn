@@ -6,8 +6,8 @@ import json
 import baseline_check
 from report_lib import load_baseline
 from report_lib.baseline import META_FILENAME
-from suite_helpers import issue_dict as _issue_dict
-from suite_helpers import write_slug_json as _write_sidecar
+from shared.suite import issue_dict as _issue_dict
+from shared.suite import write_slug_json as _write_sidecar
 
 
 def _write_meta(base, toolshash="h"):

@@ -52,6 +52,7 @@ tools/
 ├── linting/           Style checkers, formatters, encoding validators
 ├── publishing/        Steam Workshop publishing
 ├── report_lib/        PR validation report renderer + GitHub Checks API client
+├── shared/            Test harness helpers and repo-anchored paths
 ├── standardization/   Auto-standardizers for focuses, events, decisions, ideas
 ├── tests/             All Python tests for tools/ (root scripts plus domain subdirs)
 ├── validation/        Content validators (events, decisions, variables, etc.)

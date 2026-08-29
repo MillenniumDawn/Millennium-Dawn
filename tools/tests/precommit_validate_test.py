@@ -11,7 +11,7 @@ import sys
 
 import precommit_validate as dispatcher
 from precommit_validate import _REGISTRY
-from suite_helpers import initialize_git_repository, run_git
+from shared.suite import initialize_git_repository, run_git
 
 _BY_SCRIPT = {spec.script: spec for spec in _REGISTRY}
 

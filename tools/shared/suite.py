@@ -4,8 +4,6 @@ import json
 import subprocess
 from pathlib import Path
 
-import validate_decisions as V
-
 
 def run_git(repository, *args):
     return subprocess.run(
@@ -42,15 +40,22 @@ def collecting_validator(cls):
     return _Collecting
 
 
-_FakeValidator = collecting_validator(V.Validator)
+def _FakeValidator(*args, **kwargs):
+    import validate_decisions as V
+
+    return collecting_validator(V.Validator)(*args, **kwargs)
 
 
 def _factory(body):
+    import validate_decisions as V
+
     return V.DecisionFactory(body, source_basename="X.txt")
 
 
 def results_for(factories, monkeypatch, check="validate_missing_log"):
     """Run `check` on a `_FakeValidator` fed `factories`; return its collected results."""
+    import validate_decisions as V
+
     validator = _FakeValidator("/tmp")
     monkeypatch.setattr(V, "parse_all_decision_factories", lambda mod_path: factories)
     getattr(validator, check)()
@@ -67,23 +72,24 @@ def issue_dict(severity, file="a.txt", line=1, message="m", category="c"):
     }
 
 
-def _write_text(path: Path, content: str) -> None:
+def write_text(path: Path, content: str) -> Path:
+    path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
         handle.write(content)
+    return path
 
 
 def write_slug_json(base: Path, slug: str, issues: list) -> None:
-    base.mkdir(parents=True, exist_ok=True)
-    _write_text(base / f"{slug}.json", json.dumps(issues))
+    write_text(Path(base) / f"{slug}.json", json.dumps(issues))
 
 
 def write_log(artifact_dir: Path, slug: str, content: str) -> None:
-    _write_text(artifact_dir / f"validation-{slug}.log", content)
+    write_text(Path(artifact_dir) / f"validation-{slug}.log", content)
 
 
 def write_sidecar(artifact_dir: Path, slug: str, issues: list) -> None:
-    _write_text(artifact_dir / f"validation-{slug}.json", json.dumps(issues))
+    write_text(Path(artifact_dir) / f"validation-{slug}.json", json.dumps(issues))
 
 
 def make_results_tree(tmp_path: Path, specs: dict) -> Path:
@@ -97,7 +103,7 @@ def make_results_tree(tmp_path: Path, specs: dict) -> Path:
           },
       }
     """
-    root = tmp_path / "validation-results"
+    root = Path(tmp_path) / "validation-results"
     root.mkdir(parents=True, exist_ok=True)
     for slug, data in specs.items():
         sub = root / f"validation-{slug}-results"

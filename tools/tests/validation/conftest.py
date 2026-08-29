@@ -14,12 +14,10 @@ def no_vanilla_gfx(monkeypatch):
 
 @pytest.fixture
 def write_path():
+    from shared.suite import write_text
+
     def write(root, relative_path, content=""):
-        path = root / relative_path
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w", encoding="utf-8", newline="") as file:
-            file.write(content)
-        return path
+        return write_text(root / relative_path, content)
 
     return write
 

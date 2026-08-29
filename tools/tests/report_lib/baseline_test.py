@@ -11,8 +11,8 @@ from report_lib import (
     write_baseline,
 )
 from report_lib.baseline import META_FILENAME, issue_key
-from suite_helpers import issue_dict
-from suite_helpers import write_slug_json as _write_sidecar
+from shared.suite import issue_dict
+from shared.suite import write_slug_json as _write_sidecar
 
 
 def _issue(**overrides):

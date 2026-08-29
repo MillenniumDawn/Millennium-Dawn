@@ -7,9 +7,10 @@ run every emitted line through normalize_spacing, so a hand-written
 
 import subprocess
 import sys
-from pathlib import Path
 
-_CLI = Path(__file__).resolve().parents[2] / "standardization" / "standardize.py"
+from shared.paths import STANDARDIZATION_DIR
+
+_CLI = STANDARDIZATION_DIR / "standardize.py"
 
 _IDEA_FILE = """ideas = {
 \tcountry = {

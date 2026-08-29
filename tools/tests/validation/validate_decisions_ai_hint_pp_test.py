@@ -1,6 +1,6 @@
 """Tests for the decision ai_hint_pp_cost check."""
 
-from suite_helpers import _factory, results_for
+from shared.suite import _factory, results_for
 
 
 def test_custom_cost_trigger_pp_without_hint_flagged(monkeypatch):

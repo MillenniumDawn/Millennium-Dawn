@@ -1,7 +1,7 @@
 """Regression tests for date-gated event scheduling."""
 
 import validate_events as V
-from suite_helpers import collecting_validator
+from shared.suite import collecting_validator
 
 
 def _write(tmp_path, name, body):

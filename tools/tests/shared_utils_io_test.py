@@ -3,7 +3,7 @@ import stat
 
 import pytest
 import shared_utils as U
-from suite_helpers import initialize_git_repository, run_git
+from shared.suite import initialize_git_repository, run_git
 
 
 def test_normalized_traversal_exclusions_handle_both_separators():

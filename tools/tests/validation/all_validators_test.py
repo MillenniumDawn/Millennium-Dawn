@@ -7,12 +7,11 @@ and crashes on absent input — the cheapest broad safety net we have).
 """
 
 import importlib
-from pathlib import Path
 
 import pytest
+from shared.paths import VALIDATION_DIR
 from validator_common import BaseValidator
 
-VALIDATION_DIR = Path(__file__).resolve().parents[2] / "validation"
 VALIDATORS = sorted(p.stem for p in VALIDATION_DIR.glob("validate_*.py"))
 
 

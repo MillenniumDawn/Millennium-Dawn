@@ -1,6 +1,6 @@
 """Tests for runtime load_oob reference validation."""
 
-from suite_helpers import initialize_git_repository, run_git
+from shared.suite import initialize_git_repository, run_git
 from validate_oob_units import Validator, find_load_oob_references
 
 

@@ -24,11 +24,11 @@ stale entry gets removed.
 
 import re
 from fnmatch import fnmatch
-from pathlib import Path
 
 import pytest
 import yaml
 from precommit_validate import _REGISTRY
+from shared.paths import REPO_ROOT, VALIDATION_DIR
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import (
@@ -39,8 +39,6 @@ from validate_oob_units import (
 from validate_scripted_params import _CALLER_PATTERNS
 from validate_staged import VALIDATORS as STAGED_VALIDATORS
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-VALIDATION_DIR = Path(__file__).resolve().parents[2] / "validation"
 PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "coding-pipeline.yml"
 TOOLS_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "tools-validation.yml"

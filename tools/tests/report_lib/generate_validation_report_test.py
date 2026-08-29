@@ -7,8 +7,8 @@ import json
 
 import generate_validation_report
 from report_lib.baseline import META_FILENAME
-from suite_helpers import issue_dict as _issue_dict
-from suite_helpers import make_results_tree
+from shared.suite import issue_dict as _issue_dict
+from shared.suite import make_results_tree
 
 
 def _write_baseline(base, toolshash, issues):
@@ -207,10 +207,9 @@ def test_main_posts_comment_on_full_clean_run(tmp_path, monkeypatch):
     monkeypatch.setattr(
         generate_validation_report,
         "post_comment",
-        lambda owner, repo, pr_number, body, token: calls.append(
-            (owner, repo, pr_number, token)
-        )
-        or (True, "posted"),
+        lambda owner, repo, pr_number, body, token: (
+            calls.append((owner, repo, pr_number, token)) or (True, "posted")
+        ),
     )
 
     code = generate_validation_report.main(
@@ -229,8 +228,9 @@ def test_main_posts_comment_when_no_validator_ran(tmp_path, monkeypatch):
     monkeypatch.setattr(
         generate_validation_report,
         "post_comment",
-        lambda owner, repo, pr_number, body, token: bodies.append(body)
-        or (True, "posted"),
+        lambda owner, repo, pr_number, body, token: (
+            bodies.append(body) or (True, "posted")
+        ),
     )
 
     code = generate_validation_report.main(_post_argv(tmp_path))

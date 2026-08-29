@@ -4,8 +4,7 @@ Invalid modifier names compile silently and do nothing in-game, so this check
 is the only guard against typo'd modifiers in ideas/focuses/decisions.
 """
 
-from pathlib import Path
-
+from shared.paths import REPO_ROOT
 from validate_modifiers import (
     _DOC_REL_PATH,
     Validator,
@@ -14,8 +13,6 @@ from validate_modifiers import (
     _is_parametric_modifier,
     _load_documented_modifiers,
 )
-
-REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _write_idea_file(tmp_path, modifier_body):

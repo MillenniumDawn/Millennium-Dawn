@@ -6,9 +6,10 @@ CLI even when the underlying standardizer supports it.
 
 import subprocess
 import sys
-from pathlib import Path
 
-_STD_DIR = Path(__file__).resolve().parents[2] / "standardization"
+from shared.paths import STANDARDIZATION_DIR
+
+_STD_DIR = STANDARDIZATION_DIR
 _CLI = _STD_DIR / "standardize.py"
 
 _LEGACY_MODIFIER_FOCUS = """focus_tree = {

@@ -6,7 +6,6 @@ VALUES only -- keys are never scanned. Context-dependent entries ("it's",
 """
 
 import re
-from pathlib import Path
 
 from validate_localisation import _TYPO_WATCHLIST, process_yml_for_typos
 
@@ -70,7 +69,9 @@ def test_typo_watchlist_covers_every_doc_token():
     # "it's" is possessive-rule context-dependent; "civilisation" is a
     # legitimate British spelling -- both are excluded from the watchlist.
     excluded = {"it's", "civilisation"}
-    doc = Path(__file__).resolve().parents[3] / ".claude" / "docs" / "typo-watchlist.md"
+    from shared.paths import REPO_ROOT
+
+    doc = REPO_ROOT / ".claude" / "docs" / "typo-watchlist.md"
     text = doc.read_text(encoding="utf-8")
     tokens = set()
     for line in text.splitlines():

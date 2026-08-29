@@ -1,6 +1,6 @@
 """Tests for the decision fixed_random_seed check."""
 
-from suite_helpers import _factory, results_for
+from shared.suite import _factory, results_for
 
 
 def test_random_list_without_seed_flagged(monkeypatch):
