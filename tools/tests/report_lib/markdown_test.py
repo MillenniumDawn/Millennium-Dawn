@@ -49,6 +49,14 @@ def test_render_verdict_caution_when_errors():
     assert "2 errors must be fixed before merge." in body
 
 
+def test_render_verdict_caution_when_a_run_is_incomplete():
+    runs = [ValidatorRun(name="events", title="Events", status="unknown")]
+    body = render(runs, [], _ctx())
+    assert "> [!CAUTION]" in body
+    assert "1 validator did not produce a complete result" in body
+    assert "All 1 validator passed" not in body
+
+
 def test_render_verdict_note_when_all_pass():
     runs = [
         ValidatorRun(name="events", title="Events", status="passed"),

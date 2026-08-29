@@ -178,6 +178,7 @@ def _render_verdict(
     if not runs:
         return ""
     total_errors, total_warnings = _totals(runs)
+    incomplete = sum(1 for run in runs if run.status in {"unknown", "no_output"})
 
     if total_errors:
         line = f"{_plural(total_errors, 'error')} must be fixed before merge."
@@ -185,13 +186,21 @@ def _render_verdict(
             line += _new_findings_clause(baseline_stats)
         if total_warnings:
             line += f" ({_plural(total_warnings, 'warning')}, advisory.)"
+        if incomplete:
+            line += f" {_plural(incomplete, 'validator')} did not complete."
         return f"> [!CAUTION]\n> ❌ {line}"
 
     if total_warnings:
         line = f"{_plural(total_warnings, 'warning')} to review. None block merge."
         if baseline_stats is not None:
             line += _new_findings_clause(baseline_stats)
+        if incomplete:
+            line += f" {_plural(incomplete, 'validator')} did not complete."
         return f"> [!WARNING]\n> ⚠️ {line}"
+
+    if incomplete:
+        line = f"{_plural(incomplete, 'validator')} did not produce a complete result."
+        return f"> [!CAUTION]\n> ❌ {line} Review the workflow run."
 
     tail = (
         "Nothing to fix."

@@ -156,6 +156,18 @@ def _passing_tree(tmp_path):
     )
 
 
+def _warnings_tree(tmp_path):
+    return make_results_tree(
+        tmp_path,
+        {
+            "events": {
+                "log": "VALIDATION COMPLETE",
+                "issues": [_issue_dict("warning", message="warning")],
+            }
+        },
+    )
+
+
 def test_main_posts_comment_for_new_findings(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _findings_tree(tmp_path)
@@ -174,6 +186,11 @@ def test_main_posts_comment_for_new_findings(tmp_path, monkeypatch):
         return True, "posted"
 
     monkeypatch.setattr(generate_validation_report, "post_comment", fake_post)
+    monkeypatch.setattr(
+        generate_validation_report,
+        "clear_comment",
+        lambda *args: (_ for _ in ()).throw(AssertionError("must not clear")),
+    )
 
     code = generate_validation_report.main(_post_argv(tmp_path))
 
@@ -182,15 +199,19 @@ def test_main_posts_comment_for_new_findings(tmp_path, monkeypatch):
     assert calls[0]["pr_number"] == "42"
 
 
-def test_main_posts_comment_on_clean_partial_run(tmp_path, monkeypatch):
+def test_main_posts_comment_for_warnings(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    _passing_tree(tmp_path)
+    _warnings_tree(tmp_path)
     calls = []
-
     monkeypatch.setattr(
         generate_validation_report,
         "post_comment",
         lambda *args: calls.append(args) or (True, "posted"),
+    )
+    monkeypatch.setattr(
+        generate_validation_report,
+        "clear_comment",
+        lambda *args: (_ for _ in ()).throw(AssertionError("must not clear")),
     )
 
     code = generate_validation_report.main(_post_argv(tmp_path))
@@ -199,17 +220,40 @@ def test_main_posts_comment_on_clean_partial_run(tmp_path, monkeypatch):
     assert len(calls) == 1
 
 
-def test_main_posts_comment_on_full_clean_run(tmp_path, monkeypatch):
+def test_main_clears_comment_on_clean_partial_run(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _passing_tree(tmp_path)
-    calls = []
-
+    cleared = []
     monkeypatch.setattr(
         generate_validation_report,
         "post_comment",
-        lambda owner, repo, pr_number, body, token: (
-            calls.append((owner, repo, pr_number, token)) or (True, "posted")
-        ),
+        lambda *args: (_ for _ in ()).throw(AssertionError("must not post")),
+    )
+    monkeypatch.setattr(
+        generate_validation_report,
+        "clear_comment",
+        lambda *args: cleared.append(args) or (True, "cleared"),
+    )
+
+    code = generate_validation_report.main(_post_argv(tmp_path))
+
+    assert code == 0
+    assert len(cleared) == 1
+
+
+def test_main_clears_comment_on_clean_full_run(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _passing_tree(tmp_path)
+    cleared = []
+    monkeypatch.setattr(
+        generate_validation_report,
+        "post_comment",
+        lambda *args: (_ for _ in ()).throw(AssertionError("must not post")),
+    )
+    monkeypatch.setattr(
+        generate_validation_report,
+        "clear_comment",
+        lambda *args: cleared.append(args) or (True, "cleared"),
     )
 
     code = generate_validation_report.main(
@@ -217,7 +261,31 @@ def test_main_posts_comment_on_full_clean_run(tmp_path, monkeypatch):
     )
 
     assert code == 0
-    assert calls == [("MillenniumDawn", "Millennium-Dawn", "42", "token")]
+    assert cleared == [("MillenniumDawn", "Millennium-Dawn", "42", "token")]
+
+
+def test_main_posts_comment_for_unknown_run(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    make_results_tree(tmp_path, {"events": {"log": "validator started"}})
+    bodies = []
+    monkeypatch.setattr(
+        generate_validation_report,
+        "post_comment",
+        lambda owner, repo, pr_number, body, token: (
+            bodies.append(body) or (True, "posted")
+        ),
+    )
+    monkeypatch.setattr(
+        generate_validation_report,
+        "clear_comment",
+        lambda *args: (_ for _ in ()).throw(AssertionError("must not clear")),
+    )
+
+    code = generate_validation_report.main(_post_argv(tmp_path))
+
+    assert code == 0
+    assert len(bodies) == 1
+    assert "did not produce a complete result" in bodies[0]
 
 
 def test_main_posts_comment_when_no_validator_ran(tmp_path, monkeypatch):
@@ -231,6 +299,11 @@ def test_main_posts_comment_when_no_validator_ran(tmp_path, monkeypatch):
         lambda owner, repo, pr_number, body, token: (
             bodies.append(body) or (True, "posted")
         ),
+    )
+    monkeypatch.setattr(
+        generate_validation_report,
+        "clear_comment",
+        lambda *args: (_ for _ in ()).throw(AssertionError("must not clear")),
     )
 
     code = generate_validation_report.main(_post_argv(tmp_path))

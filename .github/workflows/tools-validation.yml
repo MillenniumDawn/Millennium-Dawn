@@ -26,43 +26,6 @@ permissions:
   contents: read
 
 jobs:
-  validate-tools:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 1
-          persist-credentials: false
-          sparse-checkout: |
-            tools
-            pyproject.toml
-            common
-            events
-            history
-            localisation
-            interface
-            gfx/flags
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
-        with:
-          python-version: "3.x"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install --group runtime
-      - name: Run tools validation
-        run: |
-          python tools/validate_tools.py --strict --no-color --output \
-            tools_validation.log
-      - name: Upload validation report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always()
-        with:
-          name: tools-validation-report
-          path: tools_validation.log
-          retention-days: 7
-
   checks:
     name: ${{ matrix.check.name }}
     runs-on: ubuntu-latest
@@ -78,6 +41,8 @@ jobs:
             id: staged
           - name: ruff lint (tools)
             id: lint
+          - name: Code duplication (jscpd)
+            id: duplication
     steps:
       # The unit-test checkout must include every config and fixture that the
       # tests read; config_drift_test enforces this list.
@@ -133,7 +98,20 @@ jobs:
             pyproject.toml
           sparse-checkout-cone-mode: false
 
+      - name: Checkout (duplication)
+        if: matrix.check.id == 'duplication'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            tools
+            package.json
+            bun.lock
+            .jscpd.json
+
       - name: Set up Python
+        if: matrix.check.id != 'duplication'
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.x"
@@ -178,6 +156,21 @@ jobs:
             tools/tests/staged_validators_test.py \
             tools/tests/staged_validators_real_test.py -q
 
+      - name: Run tools validation
+        if: always() && matrix.check.id == 'staged'
+        run: |
+          python tools/validate_tools.py --strict --no-color --output \
+            tools_validation.log
+
+      - name: Upload tools validation report
+        if: always() && matrix.check.id == 'staged'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tools-validation-report
+          path: tools_validation.log
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Run ruff
         if: matrix.check.id == 'lint'
         run: ruff check tools --output-format=github
@@ -194,25 +187,16 @@ jobs:
         if: matrix.check.id == 'lint'
         run: mypy
 
-  check-duplication:
-    name: Code duplication (jscpd)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 1
-          persist-credentials: false
-          sparse-checkout: |
-            tools
-            package.json
-            bun.lock
-            .jscpd.json
       - name: Setup Bun
+        if: matrix.check.id == 'duplication'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
           bun-version: "1.3.14"
-      - name: Install dependencies
+
+      - name: Install duplication dependencies
+        if: matrix.check.id == 'duplication'
         run: bun install --frozen-lockfile
+
       - name: Run jscpd
+        if: matrix.check.id == 'duplication'
         run: bun run jscpd

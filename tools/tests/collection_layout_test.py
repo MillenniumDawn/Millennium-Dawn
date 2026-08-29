@@ -53,6 +53,15 @@ def test_no_stray_test_modules_outside_tools_tests():
     assert stray == [], f"move *_test.py under tools/tests/: {stray}"
 
 
+def test_no_conventional_test_module_names():
+    conventional = sorted(
+        path for path in TOOLS_DIR.rglob("test_*.py") if "__pycache__" not in path.parts
+    )
+    assert conventional == [], (
+        "rename conventional test_*.py modules to *_test.py: " f"{conventional}"
+    )
+
+
 def test_pytest_pythonpath_matches_shared_paths(pytestconfig):
     got = {Path(p).resolve() for p in pytestconfig.getini("pythonpath")}
     expected = {

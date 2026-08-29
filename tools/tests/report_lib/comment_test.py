@@ -3,6 +3,7 @@
 from report_lib import comment as C
 from report_lib.comment import (
     REPORT_MARKER,
+    clear_comment,
     find_existing_comment,
     post_comment,
 )
@@ -48,6 +49,8 @@ def test_returns_none_when_no_match():
     comments = [
         _comment("something unrelated", cid=1),
         _comment("another bot saying something", cid=2),
+        _comment("Summary of the Validation Report", cid=3),
+        _comment("# Validation Report for another tool", cid=4),
     ]
     assert find_existing_comment(comments) is None
 
@@ -78,16 +81,16 @@ def test_all_comment_requests_have_timeout(monkeypatch):
     C._get("https://example.invalid", {})
     C._post("https://example.invalid", {}, {})
     C._patch("https://example.invalid", {}, {})
+    C._delete("https://example.invalid", {})
     assert calls == [
         ("GET", C._REQUEST_TIMEOUT),
         ("POST", C._REQUEST_TIMEOUT),
         ("PATCH", C._REQUEST_TIMEOUT),
+        ("DELETE", C._REQUEST_TIMEOUT),
     ]
 
 
 def test_creates_a_comment_when_the_pr_has_none(monkeypatch):
-    # A clean run still opens a comment: silence is indistinguishable from a
-    # pipeline that never reached the PR.
     monkeypatch.setattr(C, "_get", lambda *a, **k: [])
     posted = []
     monkeypatch.setattr(
@@ -95,13 +98,13 @@ def test_creates_a_comment_when_the_pr_has_none(monkeypatch):
         "_post",
         lambda url, payload, headers: posted.append((url, payload)) or {"id": 7},
     )
-    success, message = post_comment("owner", "repo", "7", "clean body", "token")
+    success, message = post_comment("owner", "repo", "7", "finding body", "token")
     assert success
     assert "created comment #7" in message
     assert posted == [
         (
             "https://api.github.com/repos/owner/repo/issues/7/comments",
-            {"body": "clean body"},
+            {"body": "finding body"},
         )
     ]
 
@@ -122,3 +125,60 @@ def test_refreshes_an_existing_comment(monkeypatch):
             {"body": "fresh body"},
         )
     ]
+
+
+def test_clears_an_existing_report_comment(monkeypatch):
+    comments = [_comment(f"{REPORT_MARKER}\n# Validation Report\nold", cid=42)]
+    monkeypatch.setattr(C, "_get", lambda *a, **k: comments)
+    deleted = []
+    monkeypatch.setattr(C, "_delete", lambda url, headers: deleted.append(url))
+
+    success, message = clear_comment("owner", "repo", "7", "token")
+
+    assert success
+    assert message == "deleted comment #42"
+    assert deleted == ["https://api.github.com/repos/owner/repo/issues/comments/42"]
+
+
+def test_clear_reports_delete_failure(monkeypatch):
+    comments = [_comment(f"{REPORT_MARKER}\n# Validation Report\nold", cid=42)]
+    monkeypatch.setattr(C, "_get", lambda *a, **k: comments)
+
+    def fail_delete(*_args):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(C, "_delete", fail_delete)
+
+    success, message = clear_comment("owner", "repo", "7", "token")
+
+    assert not success
+    assert message == "delete comment: boom"
+
+
+def test_clean_run_without_a_report_comment_writes_nothing(monkeypatch):
+    monkeypatch.setattr(C, "_get", lambda *a, **k: [])
+    monkeypatch.setattr(
+        C,
+        "_delete",
+        lambda *args: (_ for _ in ()).throw(AssertionError("must not delete")),
+    )
+
+    success, message = clear_comment("owner", "repo", "7", "token")
+
+    assert success
+    assert message == "no report comment to remove"
+
+
+def test_clear_never_deletes_a_human_comment(monkeypatch):
+    comments = [_comment(f"{REPORT_MARKER}\nquoted report", bot=False, cid=42)]
+    monkeypatch.setattr(C, "_get", lambda *a, **k: comments)
+    monkeypatch.setattr(
+        C,
+        "_delete",
+        lambda *args: (_ for _ in ()).throw(AssertionError("must not delete")),
+    )
+
+    success, message = clear_comment("owner", "repo", "7", "token")
+
+    assert success
+    assert message == "no report comment to remove"

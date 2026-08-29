@@ -79,7 +79,7 @@ def _sole_checkout(steps: list) -> dict:
 
 # Validators intentionally absent from the CI matrices. Each needs a reason.
 CI_EXEMPT = {
-    # Runs in the standalone styling-check job, diff-scoped to the changed
+    # Runs in the content-checks job, diff-scoped to the changed
     # .txt files (MD_STAGED_FILES from detect-changes' style_files output) so a
     # PR is gated on the style it introduced, not the repo-wide backlog. Can't
     # join the validate-core/validate-targeted matrices: those run full-repo
@@ -92,7 +92,7 @@ CI_EXEMPT = {
     # git index, which the matrix jobs don't have: they restore a content
     # bundle that carries no .git and omits map/.
     "validate_file_paths.py",
-    # Runs in structural-lint because descriptors are root files in the
+    # Runs in content-checks because descriptors are root files in the
     # prepared workspace and only need checking when a .mod file changes.
     "validate_mod_descriptors.py",
 }
@@ -166,7 +166,7 @@ def _parse_ci_standalone():
     """Map validate_*.py -> {'strict': bool} for jobs that invoke one directly.
 
     The matrices name their script through `${{ matrix.validator.script }}`, so
-    only the standalone jobs (styling-check, validate-paths) match here."""
+    only the standalone jobs (content-checks, validate-paths) match here."""
     wf = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     result = {}
     for job in wf["jobs"].values():
@@ -545,6 +545,18 @@ def test_python_quality_checks_are_wired_in_precommit_and_ci():
         assert package in pyproject
 
 
+def test_tools_checks_share_one_matrix():
+    jobs = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))["jobs"]
+    assert set(jobs) == {"checks"}
+    entries = jobs["checks"]["strategy"]["matrix"]["check"]
+    assert {entry["id"] for entry in entries} == {
+        "unit",
+        "staged",
+        "lint",
+        "duplication",
+    }
+
+
 def test_staged_validator_integration_runs_in_isolated_worktree():
     steps = _checks_matrix_steps("staged")
     worktree_step = next(
@@ -559,6 +571,14 @@ def test_staged_validator_integration_runs_in_isolated_worktree():
     assert "staged_validators_test.py" in run_step["run"]
     assert "staged_validators_real_test.py" in run_step["run"]
 
+    tools_step = next(s for s in steps if s.get("name") == "Run tools validation")
+    assert "always()" in tools_step["if"]
+    assert "tools/validate_tools.py --strict" in tools_step["run"]
+    assert steps.index(tools_step) > steps.index(run_step)
+
+    upload = next(s for s in steps if s.get("name") == "Upload tools validation report")
+    assert upload["with"]["if-no-files-found"] == "error"
+
     # The integration stages files under these trees; a sparse checkout that
     # drops one makes every real-file test skip instead of fail.
     checkout = _sole_checkout(steps)
@@ -567,6 +587,17 @@ def test_staged_validator_integration_runs_in_isolated_worktree():
         assert {"events", "common", "localisation", "history", "tools"} <= set(
             sparse.split()
         )
+
+
+def test_duplication_check_is_a_matrix_entry():
+    steps = _checks_matrix_steps("duplication")
+    checkout = _sole_checkout(steps)
+    assert {"tools", "package.json", "bun.lock", ".jscpd.json"} <= set(
+        checkout["with"]["sparse-checkout"].split()
+    )
+    commands = "\n".join(step.get("run", "") for step in steps)
+    assert "bun install --frozen-lockfile" in commands
+    assert "bun run jscpd" in commands
 
 
 def test_tools_tests_checkout_consumed_configuration():
@@ -977,13 +1008,52 @@ def test_pr_cache_cleanup_lists_before_deleting():
     assert '"actions/caches/"\\\n' not in workflow
 
 
-def test_mod_changes_reach_structural_lint():
+def test_validation_jobs_require_complete_report_files():
+    jobs = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))["jobs"]
+    expected = {
+        "content-checks": {
+            "validation-style-check.log",
+            "validation-style-check.json",
+            "validation-common-mistakes.log",
+            "validation-common-mistakes.json",
+        },
+        "validate-core": {
+            "validation-${{ matrix.validator.name }}.log",
+            "validation-${{ matrix.validator.name }}.json",
+        },
+        "validate-targeted": {
+            "validation-${{ matrix.validator.name }}.log",
+            "validation-${{ matrix.validator.name }}.json",
+        },
+        "validate-paths": {
+            "pr-tree/validation-file-paths.log",
+            "pr-tree/validation-file-paths.json",
+        },
+    }
+    for job_name, paths in expected.items():
+        steps = jobs[job_name]["steps"]
+        commands = "\n".join(
+            step.get("run", "") for step in steps if step["name"].startswith("Verify")
+        )
+        assert {f"test -f {path}" for path in paths} <= set(commands.splitlines())
+        uploads = [
+            step
+            for step in steps
+            if step.get("uses", "").startswith("actions/upload-artifact@")
+        ]
+        assert uploads
+        assert all(
+            upload["with"].get("if-no-files-found") == "error" for upload in uploads
+        )
+
+
+def test_mod_changes_reach_content_checks():
     detect, filters = _filter_definitions()
     assert "mod" in detect["outputs"]
     assert filters["mod"] == ["*.mod"]
     assert "*.mod" in filters["content"]
 
-    structural = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))["jobs"][
-        "structural-lint"
+    content_checks = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))["jobs"][
+        "content-checks"
     ]
-    assert "needs.detect-changes.outputs.mod == 'true'" in structural["if"]
+    assert "needs.detect-changes.outputs.mod == 'true'" in content_checks["if"]
