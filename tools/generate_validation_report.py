@@ -235,8 +235,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                     file=sys.stderr,
                 )
                 return 1
-            has_report = not runs or any(run.status != "passed" for run in runs)
-            if has_report:
+            # An empty run list means the pipeline didn't finish, not clean —
+            # still posts instead of clearing.
+            should_post = not runs or any(run.status != "passed" for run in runs)
+            if should_post:
                 success, message = post_comment(
                     repo_owner,
                     repo_name,
@@ -252,6 +254,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                     args.github_token,
                 )
             (print if success else _err)(f"PR comment: {message}")
+            # A read-only GITHUB_TOKEN can't write comments — log and continue,
+            # mirroring the Checks API handling below.
             if not success:
                 _err(
                     "PR comment could not be synchronized; continuing. "

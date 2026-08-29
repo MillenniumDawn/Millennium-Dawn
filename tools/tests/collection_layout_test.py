@@ -31,7 +31,16 @@ def test_python_files_are_star_test_py(pytestconfig):
     assert pytestconfig.getini("python_files") == ["*_test.py"]
 
 
+def _has_non_pycache_file(path):
+    return any(
+        f.is_file() and "__pycache__" not in f.relative_to(path).parts
+        for f in path.rglob("*")
+    )
+
+
 def test_no_nested_tests_dirs_outside_tools_tests():
+    # git pull leaves the pre-move tests dirs behind holding only __pycache__;
+    # flag a dir only when it still has a real file.
     allowed = (TOOLS_DIR / "tests").resolve()
     stray = sorted(
         p
@@ -40,6 +49,7 @@ def test_no_nested_tests_dirs_outside_tools_tests():
         and p.resolve() != allowed
         and "__pycache__" not in p.parts
         and allowed not in p.resolve().parents
+        and _has_non_pycache_file(p)
     )
     assert stray == [], f"move nested tests under tools/tests/: {stray}"
 
