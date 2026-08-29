@@ -256,14 +256,7 @@ def test_md_prefixed_modifiers_always_valid(tmp_path):
 
 def test_body_line_tracks_the_opening_brace():
     """A brace on its own line must not shift findings inside the block."""
-    text = (
-        "FOO_modifier =\n"
-        "{\n"
-        "\tenable = {\n"
-        "\t\toriginal_tag = FRA\n"
-        "\t}\n"
-        "}\n"
-    )
+    text = "FOO_modifier =\n{\n\tenable = {\n\t\toriginal_tag = FRA\n\t}\n}\n"
     name, name_line, body_line, _body = _extract_top_level_definition_blocks(text)[0]
     assert name == "FOO_modifier"
     assert name_line == 1

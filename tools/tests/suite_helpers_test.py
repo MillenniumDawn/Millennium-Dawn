@@ -1,5 +1,7 @@
 """Behaviour tests for tools/shared/suite.py."""
 
+import json
+
 from shared.paths import TOOLS_DIR
 from shared.suite import (
     collecting_validator,
@@ -43,24 +45,28 @@ def test_write_text_creates_parents_and_returns_path(tmp_path):
     assert path == tmp_path / "nested" / "file.txt"
 
 
-def test_write_slug_json_and_results_tree(tmp_path):
-    write_slug_json(tmp_path, "events", [{"severity": "error"}])
-    assert (tmp_path / "events.json").read_text(encoding="utf-8") == (
-        '[{"severity": "error"}]'
-    )
+def test_write_slug_json_writes_the_array(tmp_path):
+    payload = [{"severity": "error"}]
+    write_slug_json(tmp_path, "events", payload)
+    assert json.loads((tmp_path / "events.json").read_text(encoding="utf-8")) == payload
 
-    root = make_results_tree(
-        tmp_path,
-        {
-            "events": {
-                "log": "ok\n",
-                "issues": [{"severity": "warning"}],
-            }
-        },
-    )
+
+def test_make_results_tree_writes_log_and_sidecar(tmp_path):
+    issues = [{"severity": "warning", "message": "m"}]
+    root = make_results_tree(tmp_path, {"events": {"log": "ok\n", "issues": issues}})
     sub = root / "validation-events-results"
     assert (sub / "validation-events.log").read_text(encoding="utf-8") == "ok\n"
-    assert "warning" in (sub / "validation-events.json").read_text(encoding="utf-8")
+    assert (
+        json.loads((sub / "validation-events.json").read_text(encoding="utf-8"))
+        == issues
+    )
+
+
+def test_make_results_tree_log_only_skips_sidecar(tmp_path):
+    root = make_results_tree(tmp_path, {"events": {"log": "ok\n"}})
+    sub = root / "validation-events-results"
+    assert (sub / "validation-events.log").is_file()
+    assert not (sub / "validation-events.json").exists()
 
 
 def test_initialize_git_repository_commits_added_paths(tmp_path):
