@@ -8616,7 +8616,14 @@ CHI_pacific_pla_training = {
 
 		available = {
 			has_navy_experience > 24
-			any_other_country = { has_country_flag = oceania_nation_flag has_opinion_modifier = CHI_pacific_pivot_partner }
+			custom_trigger_tooltip = {
+				tooltip = CHI_pacific_pivot_partner_exists_tt
+				any_of_scopes = {
+					array = global.oceania_nations
+					exists = yes
+					has_opinion_modifier = CHI_pacific_pivot_partner
+				}
+			}
 		}
 
 		cost = 50
@@ -8627,13 +8634,19 @@ CHI_pacific_pla_training = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_pla_joint_maritime_exercise"
 			navy_experience = -25
-			every_other_country = {
-				limit = { has_country_flag = oceania_nation_flag has_opinion_modifier = CHI_pacific_pivot_partner }
-				navy_experience = 10
-				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = CHI }
-				set_temp_variable = { influence_target = THIS }
-				change_influence_percentage = yes
+			for_each_scope_loop = {
+				array = global.oceania_nations
+				if = {
+					limit = {
+						exists = yes
+						has_opinion_modifier = CHI_pacific_pivot_partner
+					}
+					navy_experience = 10
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
 			}
 		}
 

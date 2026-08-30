@@ -11,46 +11,7 @@ on_actions = {
 			if = { limit = { NOT = { has_global_flag = on_weekly_global_done } }
 				set_global_flag = { flag = on_weekly_global_done value = 1 days = 7 }
 
-				# Cache canal closures here so pathfinding only reads one global flag.
-				if = {
-					limit = {
-						OR = {
-							EGY = { has_idea = suez_canal_blocked }
-							214 = {
-								has_dynamic_modifier = {
-									modifier = canal_damaged_modifier
-									scope = THIS
-								}
-							}
-						}
-					}
-					set_global_flag = SUEZ_CANAL_BLOCKED
-				}
-				else = { clr_global_flag = SUEZ_CANAL_BLOCKED }
-				if = {
-					limit = {
-						853 = {
-							has_dynamic_modifier = {
-								modifier = canal_damaged_modifier
-								scope = THIS
-							}
-						}
-					}
-					set_global_flag = PANAMA_CANAL_BLOCKED
-				}
-				else = { clr_global_flag = PANAMA_CANAL_BLOCKED }
-				if = {
-					limit = {
-						37 = {
-							has_dynamic_modifier = {
-								modifier = canal_damaged_modifier
-								scope = THIS
-							}
-						}
-					}
-					set_global_flag = GLOBAL_KIEL_CANAL_BLOCKED
-				}
-				else = { clr_global_flag = GLOBAL_KIEL_CANAL_BLOCKED }
+				update_canal_blockage_flags = yes
 
 				international_systems_update = yes
 				add_to_variable = { global.md_gui_dirty = 1 }
@@ -380,35 +341,6 @@ on_actions = {
 					}
 				}
 				calculate_un_program_budgets = yes
-			}
-
-			if = {
-				limit = { check_variable = { guaranteeing_nations^num > 0 } }
-				clear_array = guaranteeing_nations
-				every_country = {
-					limit = { has_guaranteed = ROOT }
-					add_to_array = { ROOT.guaranteeing_nations = THIS.id }
-				}
-			}
-			if = {
-				limit = { check_variable = { nations_with_military_access^num > 0 } }
-				clear_array = nations_with_military_access
-				every_country = {
-					limit = { has_military_access_to = ROOT }
-					add_to_array = { ROOT.nations_with_military_access = THIS.id }
-				}
-			}
-			if = {
-				limit = { check_variable = { nations_who_sent_us_volunteers^num > 0 } }
-				clear_array = nations_who_sent_us_volunteers
-				every_country = {
-					limit = {
-						ROOT = {
-							has_volunteers_amount_from = { tag = PREV count > 0 }
-						}
-					}
-					add_to_array = { ROOT.nations_who_sent_us_volunteers = THIS.id }
-				}
 			}
 		}
 	}
@@ -849,6 +781,40 @@ on_actions = {
 
 	on_monthly = {
 		effect = {
+			# Authoritative resync of the cached diplomatic-relation arrays. Runs unconditionally
+			# because scripted give_guarantee / give_military_access never fire the on_actions that
+			# feed them, so a gated rebuild could only ever prune, never discover.
+			clear_array = guaranteeing_nations
+			clear_array = nations_with_military_access
+			clear_array = nations_who_sent_us_volunteers
+			clear_array = nations_we_sent_volunteers_to
+			every_country = {
+				limit = {
+					OR = {
+						has_guaranteed = ROOT
+						has_military_access_to = ROOT
+						ROOT = { has_volunteers_amount_from = { tag = PREV count > 0 } }
+						has_volunteers_amount_from = { tag = ROOT count > 0 }
+					}
+				}
+				if = {
+					limit = { has_guaranteed = ROOT }
+					add_to_array = { ROOT.guaranteeing_nations = THIS.id }
+				}
+				if = {
+					limit = { has_military_access_to = ROOT }
+					add_to_array = { ROOT.nations_with_military_access = THIS.id }
+				}
+				if = {
+					limit = { ROOT = { has_volunteers_amount_from = { tag = PREV count > 0 } } }
+					add_to_array = { ROOT.nations_who_sent_us_volunteers = THIS.id }
+				}
+				if = {
+					limit = { has_volunteers_amount_from = { tag = ROOT count > 0 } }
+					add_to_array = { ROOT.nations_we_sent_volunteers_to = THIS.id }
+				}
+			}
+
 			# Triggers for one nation
 			if = { limit = { NOT = { has_global_flag = on_monthly_done } }
 				# Jan = 1, Feb = 2, March = 3, April = 4, May = 5, June = 6, July = 7
@@ -1590,14 +1556,17 @@ on_actions = {
 
 	on_startup = {
 		effect = {
+			update_canal_blockage_flags = yes
 			every_country = {
 				every_country = {
-					limit = { has_guaranteed = PREV }
-					add_to_array = { PREV.guaranteeing_nations = THIS.id }
-				}
-				every_country = {
-					limit = { has_military_access_to = PREV }
-					add_to_array = { PREV.nations_with_military_access = THIS.id }
+					if = {
+						limit = { has_guaranteed = PREV }
+						add_to_array = { PREV.guaranteeing_nations = THIS.id }
+					}
+					if = {
+						limit = { has_military_access_to = PREV }
+						add_to_array = { PREV.nations_with_military_access = THIS.id }
+					}
 				}
 			}
 		}
