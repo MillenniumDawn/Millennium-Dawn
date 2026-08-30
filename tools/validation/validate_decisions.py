@@ -11,7 +11,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
+from typing import AbstractSet, Any, Dict, Iterator, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -345,6 +345,23 @@ def _unactivated(candidates: set, activated: set) -> list:
     for name in activated:
         remaining.difference_update(_DYNAMIC_ACTIVATION_EXPANSIONS.get(name, ()))
     return sorted(remaining)
+
+
+_UNLOCK_CATEGORY_RE = re.compile(
+    r"unlock_decision_category_tooltip\s*=\s*([A-Za-z0-9_]+)"
+)
+
+
+def _scan_unlocked_categories(filename: str) -> Set[str]:
+    """Category names named by `unlock_decision_category_tooltip` in one file."""
+    if _should_skip(filename):
+        return set()
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if "unlock_decision_category_tooltip" not in text_file:
+        return set()
+    return set(_UNLOCK_CATEGORY_RE.findall(text_file))
 
 
 def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set]:
@@ -1123,6 +1140,31 @@ def parse_decision_categories(
     return _get_cached(cache_key, mod_path, lowercase, _parse)
 
 
+def _category_source_basenames(mod_path: str, names: Set[str]) -> Dict[str, str]:
+    """Map each requested category name to the basename of the file defining it.
+
+    `parse_decision_categories` keys on the name and drops the filename, so the
+    lookup is done here — only for the handful of names a finding needs to cite.
+    """
+    found: Dict[str, str] = {}
+    if not names:
+        return found
+    filepath = str(Path(mod_path) / "common" / "decisions" / "categories")
+    for filename in sorted(glob.iglob(filepath + "/**/*.txt", recursive=True)):
+        text_file = FileOpener.open_text_file(
+            filename, lowercase=False, strip_comments_flag=True
+        )
+        basename = os.path.basename(filename)
+        for name in names:
+            if name in found:
+                continue
+            if re.search(rf"^{re.escape(name)} = \{{", text_file, flags=re.MULTILINE):
+                found[name] = basename
+        if len(found) == len(names):
+            break
+    return found
+
+
 def parse_categories_with_decisions(
     mod_path: str, lowercase: bool = False, visible_when_empty: bool = True
 ) -> Dict[str, List[str]]:
@@ -1235,16 +1277,18 @@ class Validator(BaseValidator):
             Tuple[Set[str], Set[str], Set[str]]
         ] = None
         self._ai_only_by_category: Optional[Set[str]] = None
+        self._ai_only_categories: Optional[Set[str]] = None
+        self._unlocked_categories: Optional[Set[str]] = None
         if self.no_cache:
             _set_cache_enabled(False)
 
-    def _get_ai_only_by_category(self) -> Set[str]:
-        """Return decision ids that are AI-only because their category is."""
-        if self._ai_only_by_category is not None:
-            return self._ai_only_by_category
+    def _get_ai_only_categories(self) -> Set[str]:
+        """Return decision category names that are themselves AI-only."""
+        if self._ai_only_categories is not None:
+            return self._ai_only_categories
 
         categories = parse_decision_categories(self.mod_path, lowercase=False)
-        ai_categories = {
+        self._ai_only_categories = {
             name
             for name, block in categories.items()
             if any(
@@ -1252,6 +1296,38 @@ class Validator(BaseValidator):
                 for field in ("visible", "available", "allowed")
             )
         }
+        return self._ai_only_categories
+
+    def _get_unlocked_categories(self) -> Set[str]:
+        """Category names named by `unlock_decision_category_tooltip` anywhere.
+
+        That effect renders a category's name key inside a focus or decision
+        tooltip, which is the one place a player sees it outside the category's
+        own tab.
+        """
+        if self._unlocked_categories is not None:
+            return self._unlocked_categories
+
+        all_files = [
+            filename
+            for pattern in _DECISION_REFERENCE_SOURCE_PATTERNS
+            for filename in glob.iglob(
+                os.path.join(self.mod_path, pattern), recursive=True
+            )
+        ]
+        unlocked: Set[str] = set()
+        scans = self._pool_map(_scan_unlocked_categories, all_files, chunksize=30)
+        for names in scans:
+            unlocked |= names
+        self._unlocked_categories = unlocked
+        return unlocked
+
+    def _get_ai_only_by_category(self) -> Set[str]:
+        """Return decision ids that are AI-only because their category is."""
+        if self._ai_only_by_category is not None:
+            return self._ai_only_by_category
+
+        ai_categories = self._get_ai_only_categories()
         members: Set[str] = set()
         if ai_categories:
             # parse_categories_with_decisions matches every indented `X = {`,
@@ -2197,6 +2273,8 @@ class Validator(BaseValidator):
             for key in missing:
                 results.append(f"{dec_id} - {filename}: missing loc key '{key}'")
 
+        ai_results.extend(self._ai_only_category_loc(loc_keys))
+
         self._report(
             results,
             "✓ All decision localisation keys are defined",
@@ -2206,11 +2284,43 @@ class Validator(BaseValidator):
         )
         self._report(
             ai_results,
-            "✓ No AI-only decision carries dead localisation",
-            "AI-only decisions with localisation keys:",
+            "✓ No AI-only decision or category carries dead localisation",
+            "AI-only decisions and categories with localisation keys:",
             Severity.WARNING,
             category="ai-only-decision-localisation",
         )
+
+    def _ai_only_category_loc(self, loc_keys: AbstractSet[str]) -> List[str]:
+        """Findings for AI-only decision categories that still carry loc keys.
+
+        The category header is drawn in the same tab as its decisions, so an
+        AI-only category needs no `<id>` or `<id>_desc` either. Categories carry
+        no `name =` / `desc =` override, so those two are the whole surface.
+        The full-repo `unlock_decision_category_tooltip` sweep only runs when a
+        category would otherwise be reported.
+        """
+        flagged: Dict[str, List[str]] = {}
+        for name in self._get_ai_only_categories():
+            keys = [key for key in (name, f"{name}_desc") if key in loc_keys]
+            if keys:
+                flagged[name] = keys
+        if not flagged:
+            return []
+
+        unlocked = self._get_unlocked_categories()
+        for name in list(flagged):
+            if name in unlocked:
+                del flagged[name]
+        if not flagged:
+            return []
+
+        sources = _category_source_basenames(self.mod_path, set(flagged))
+        return [
+            f"{name} - {sources.get(name, 'decisions/categories')}: AI-only "
+            f"decision category has localisation key '{key}'"
+            for name in sorted(flagged)
+            for key in flagged[name]
+        ]
 
     def validate_missing_log(self):
         """Flag decision effect blocks that carry no log line.

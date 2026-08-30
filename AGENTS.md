@@ -56,7 +56,7 @@ Every text-mode write in `tools/` must pass `newline=""`. Without it, Python's t
 - Logging: `log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"` as the first statement of every effect block the engine runs (`complete_effect`, `remove_effect`, `timeout_effect`, `cancel_effect`). A log nested inside an `if`/`hidden_effect` records which branch ran and stays there
 - `ai_will_do = { base = N }` — `base` not `factor` at root
 - Don't repeat category `allowed` in decisions — put nation gate on category, dynamic checks in `available`/`visible`
-- AI-only decisions get **no localisation**. A decision is AI-only when an unconditional `is_ai = yes` sits at the top level of its `visible`/`available`/`allowed`, or its category is gated that way — no human sees it, so a loc key is dead weight and is flagged
+- AI-only decisions get **no localisation**. A decision is AI-only when an unconditional `is_ai = yes` sits at the top level of its `visible`/`available`/`allowed`, or its category is gated that way — no human sees it, so a loc key is dead weight and is flagged. An AI-only category's own key is flagged the same way
 - Ref: `.claude/docs/decision-reference.md`
 
 ## Events

@@ -145,7 +145,7 @@ A decision is **AI-only** when the engine can never show it to a human player. T
 
 **An AI-only decision takes no localisation.** Nothing renders its name or tooltip, so a key for it is dead weight that later has to be translated. The raw ID surfacing in the decision UI is harmless because no human ever opens that tab. `validate_decisions.py` enforces both directions: an AI-only decision is exempt from `missing-decision-localisation`, and a key that does exist for one is reported as `ai-only-decision-localisation`. Both are WARNING-severity. `custom_cost_text` is exempt from the reverse check, since it can point at a scripted-loc key shared with player-facing decisions.
 
-Decision **categories** are not covered — nothing validates category localisation at all, in either direction.
+The same holds for an **AI-only category** — one whose own `visible` / `available` / `allowed` carries that unconditional `is_ai = yes`. Its header is drawn in the same tab as its decisions, so its `<id>` and `<id>_desc` are dead weight too and are reported under `ai-only-decision-localisation` as well. The one exemption is a category named by `unlock_decision_category_tooltip` in a focus or decision, which renders the name key outside that tab. Categories are still never *required* to carry localisation — the missing-key direction does not apply to them.
 
 ## Randomised Effects
 
