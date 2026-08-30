@@ -92,9 +92,7 @@ def test_empty_block_not_detected():
 
 
 def test_factory_ai_only_from_visible():
-    factory = decision_factory(
-        "dec_one = {\n\tvisible = {\n\t\tis_ai = yes\n\t}\n}"
-    )
+    factory = decision_factory("dec_one = {\n\tvisible = {\n\t\tis_ai = yes\n\t}\n}")
     assert factory.ai_only
 
 
