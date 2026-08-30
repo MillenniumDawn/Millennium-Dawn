@@ -19,11 +19,14 @@ import validate_variables as V
 _FLAGGED = frozenset({"pak_raj_border_available"})
 
 
-def _findings(tmp_path, text, flagged=_FLAGGED):
-    f = tmp_path / "src.txt"
+def _findings(
+    tmp_path, text, flagged=_FLAGGED, ai_categories=frozenset(), rel="src.txt"
+):
+    f = tmp_path / rel
+    f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(text, encoding="utf-8")
     return V.process_file_for_untooltipped_available_scripted_trigger(
-        (str(f), str(tmp_path), flagged)
+        (str(f), str(tmp_path), flagged, ai_categories)
     )
 
 
@@ -287,3 +290,38 @@ def test_wrapped_body_bare_call_not_flagged(tmp_path):
     v.validate_untooltipped_available_scripted_trigger()
 
     assert v._issues == []
+
+
+# --- AI-only exemption -------------------------------------------------------
+
+
+def test_ai_only_decision_call_not_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "some_category = {\n"
+        "\tmy_decision = {\n"
+        "\t\tvisible = { is_ai = yes }\n"
+        "\t\tavailable = {\n"
+        "\t\t\tpak_raj_border_available = yes\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        rel="common/decisions/src.txt",
+    )
+    assert out == []
+
+
+def test_ai_only_category_call_not_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "ai_category = {\n"
+        "\tmy_decision = {\n"
+        "\t\tavailable = {\n"
+        "\t\t\tpak_raj_border_available = yes\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        ai_categories=frozenset({"ai_category"}),
+        rel="common/decisions/src.txt",
+    )
+    assert out == []

@@ -147,6 +147,17 @@ A decision is **AI-only** when the engine can never show it to a human player. T
 
 The same holds for an **AI-only category** — one whose own `visible` / `available` / `allowed` carries that unconditional `is_ai = yes`. Its header is drawn in the same tab as its decisions, so its `<id>` and `<id>_desc` are dead weight too and are reported under `ai-only-decision-localisation` as well. The one exemption is a category named by `unlock_decision_category_tooltip` in a focus or decision, which renders the name key outside that tab. Categories are still never *required* to carry localisation — the missing-key direction does not apply to them.
 
+**An AI-only decision takes no tooltip wrappers either.** `custom_trigger_tooltip` exists to give a requirement line a human can read, and `custom_effect_tooltip` to describe an effect the player is about to trigger; on an AI-only decision both render to nobody and only keep a loc key alive. Write the trigger bare:
+
+```
+		available = {
+			nationalist_monarchists_are_in_power = no
+			check_variable = { party_pop_array^23 < 0.35 }
+		}
+```
+
+`validate_variables.py` backs this: its three `available`-block checks — `untooltipped-available-check`, `unlocalised-available-flag` and `untooltipped-available-scripted-trigger` — skip AI-only decisions and every decision inside an AI-only category, using the same depth-0 `is_ai = yes` rule as above.
+
 ## Randomised Effects
 
 A decision that can fire more than once and rolls randomness (`random_list = { ... }` or `random = { chance = N ... }`) needs `fixed_random_seed = no` at decision top level:

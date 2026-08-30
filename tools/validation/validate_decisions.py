@@ -11,16 +11,19 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import AbstractSet, Any, Dict, Iterator, List, Optional, Set, Tuple
+from typing import AbstractSet, Any, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from image_size import read_image_size
 from shared_utils import (
+    ai_only_decision_categories,
     atomic_write_text,
     blank_quoted_strings,
     extract_block_from_text,
+    has_flat_is_ai,
+    iter_flat_offsets,
     read_text_strict,
     strip_comments,
     strip_inline_comment,
@@ -488,57 +491,6 @@ _BARE_TRIGGER_RE = re.compile(
 )
 
 
-def _flat_block_text(block: str) -> str:
-    """Remove an optional outer block brace pair before a flat token scan."""
-    inner = block.strip()
-    if inner.startswith("{"):
-        inner = inner[1:]
-    if inner.endswith("}"):
-        inner = inner[:-1]
-    return inner
-
-
-def _iter_flat_offsets(block: str) -> Iterator[Tuple[str, int]]:
-    """Yield offsets at brace depth zero, skipping comments and nested blocks."""
-    inner = _flat_block_text(block)
-    depth = 0
-    index = 0
-    while index < len(inner):
-        char = inner[index]
-        if char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-        elif char == "#":
-            while index < len(inner) and inner[index] != "\n":
-                index += 1
-            continue
-        elif depth == 0:
-            yield inner, index
-        index += 1
-
-
-_IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
-
-
-def _has_flat_is_ai(block: str) -> bool:
-    """Return True when `is_ai = yes` sits unconditionally at depth 0 of a trigger block.
-
-    Nested inside OR/AND/if/limit or a scoped `TAG = { }` the token is
-    conditional, so the object is not AI-only and must not be exempted from
-    localisation. `_iter_flat_offsets` yields every depth-0 character position,
-    hence the preceding-whitespace guard against matching mid-token.
-    """
-    if not block:
-        return False
-    for inner, index in _iter_flat_offsets(block):
-        if index and not inner[index - 1].isspace():
-            continue
-        if _IS_AI_YES_RE.match(inner, index):
-            return True
-    return False
-
-
 def _flat_tag_pins_with_kind(block: str) -> set:
     """Return {(keyword, tag), ...} for flat (non-nested), depth-0 tag/original_tag tokens.
 
@@ -552,7 +504,7 @@ def _flat_tag_pins_with_kind(block: str) -> set:
     if not block:
         return set()
     pins = set()
-    for inner, index in _iter_flat_offsets(block):
+    for inner, index in iter_flat_offsets(block):
         match = _TAG_TOKEN_PATTERN.match(inner, index)
         if match:
             pins.add((match.group(1), match.group(2)))
@@ -624,7 +576,7 @@ def _scan_top_level(block: str):
     """
     if not block:
         return
-    for inner, index in _iter_flat_offsets(block):
+    for inner, index in iter_flat_offsets(block):
         char = inner[index]
         if not (char.isalpha() or char == "_"):
             continue
@@ -923,7 +875,7 @@ def _top_level_neg_pp(block: str):
     ignored (they are gameplay outcomes, not entry costs)."""
     if not block:
         return None
-    for inner, index in _iter_flat_offsets(block):
+    for inner, index in iter_flat_offsets(block):
         match = re.match(r"add_political_power\s*=\s*-(\d+)", inner[index:])
         if match:
             return _int_literal(match.group(1))
@@ -1004,9 +956,9 @@ class DecisionFactory:
         # resolved by the validator, which is the only side that knows the
         # decision's parent category.
         self.ai_only = (
-            _has_flat_is_ai(self.visible)
-            or _has_flat_is_ai(self.available)
-            or _has_flat_is_ai(self.allowed)
+            has_flat_is_ai(self.visible)
+            or has_flat_is_ai(self.available)
+            or has_flat_is_ai(self.allowed)
         )
 
 
@@ -1287,15 +1239,7 @@ class Validator(BaseValidator):
         if self._ai_only_categories is not None:
             return self._ai_only_categories
 
-        categories = parse_decision_categories(self.mod_path, lowercase=False)
-        self._ai_only_categories = {
-            name
-            for name, block in categories.items()
-            if any(
-                _has_flat_is_ai(extract_value_multi_line(block, field))
-                for field in ("visible", "available", "allowed")
-            )
-        }
+        self._ai_only_categories = ai_only_decision_categories(self.mod_path)
         return self._ai_only_categories
 
     def _get_unlocked_categories(self) -> Set[str]:

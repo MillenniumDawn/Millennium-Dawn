@@ -895,6 +895,122 @@ def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> st
     return "".join(out)
 
 
+def flat_block_text(block: str) -> str:
+    """Remove an optional outer block brace pair before a flat token scan."""
+    inner = block.strip()
+    if inner.startswith("{"):
+        inner = inner[1:]
+    if inner.endswith("}"):
+        inner = inner[:-1]
+    return inner
+
+
+def iter_flat_offsets(block: str) -> Iterator[Tuple[str, int]]:
+    """Yield offsets at brace depth zero, skipping comments and nested blocks."""
+    inner = flat_block_text(block)
+    depth = 0
+    index = 0
+    while index < len(inner):
+        char = inner[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+        elif char == "#":
+            while index < len(inner) and inner[index] != "\n":
+                index += 1
+            continue
+        elif depth == 0:
+            yield inner, index
+        index += 1
+
+
+_IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
+# The three trigger blocks that can hide a decision or category from a player.
+_AI_GATE_FIELDS = ("visible", "available", "allowed")
+_TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+
+
+def has_flat_is_ai(block: str) -> bool:
+    """Return True when `is_ai = yes` sits unconditionally at depth 0 of a trigger block.
+
+    Nested inside OR/AND/if/limit or a scoped `TAG = { }` the token is
+    conditional, so the object is not AI-only and must not be exempted from
+    localisation or tooltip requirements. ``iter_flat_offsets`` yields every
+    depth-0 character position, hence the preceding-whitespace guard against
+    matching mid-token.
+    """
+    if not block:
+        return False
+    for inner, index in iter_flat_offsets(block):
+        if index and not inner[index - 1].isspace():
+            continue
+        if _IS_AI_YES_RE.match(inner, index):
+            return True
+    return False
+
+
+def direct_child_block(body: str, name: str) -> str:
+    """Return the `name = { ... }` block at depth 0 of *body*, braces included.
+
+    Returns "" when there is no such block. Depth-aware so a nested `visible`
+    inside a `modifier` or an effect's `limit` is never mistaken for the
+    object's own trigger block.
+    """
+    opener = re.compile(r"\b" + re.escape(name) + r"\s*=\s*\{")
+    depth = 0
+    index = 0
+    while index < len(body):
+        char = body[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+        elif depth == 0:
+            match = opener.match(body, index)
+            if match:
+                close = find_matching_brace(body, match.end() - 1)
+                return body[match.end() - 1 : close + 1] if close != -1 else ""
+        index += 1
+    return ""
+
+
+def is_ai_only_block(body: str) -> bool:
+    """True when a decision or category body is gated on an unconditional `is_ai = yes`.
+
+    Accepts the body with or without its outer braces. Unlike
+    ``flat_block_text`` the pair is only stripped when it actually matches — a
+    bare body ending in the `}` of its last child must stay intact.
+    """
+    inner = body.strip()
+    if inner.startswith("{") and find_matching_brace(inner, 0) == len(inner) - 1:
+        inner = inner[1:-1]
+    return any(has_flat_is_ai(direct_child_block(inner, f)) for f in _AI_GATE_FIELDS)
+
+
+def ai_only_decision_categories(mod_path: str) -> Set[str]:
+    """Names of decision categories no human player ever sees.
+
+    Every decision inside one inherits that: it needs no localisation and no
+    tooltip wrapper, because there is nobody to read either.
+    """
+    root = Path(mod_path) / "common" / "decisions" / "categories"
+    names: Set[str] = set()
+    for path in sorted(root.rglob("*.txt")):
+        try:
+            text = path.read_text(encoding="utf-8-sig", errors="replace")
+        except OSError:
+            continue
+        if "is_ai" not in text:
+            continue
+        text = strip_comments(text)
+        for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
+            body, _end = extract_block_from_text(text, match.end() - 1)
+            if body and is_ai_only_block(body):
+                names.add(match.group(1))
+    return names
+
+
 class FileOpener:
     # LRU bound sized for common/ (~3600 files) plus localisation, so a broad
     # scan stays cached without evicting on every overflow.

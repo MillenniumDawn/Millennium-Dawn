@@ -9,7 +9,7 @@ import re
 import sys
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, cast
+from typing import AbstractSet, Dict, List, Set, Tuple, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -19,9 +19,11 @@ import disk_cache
 # or the orphaned quote desyncs extract_block_from_text's in-string tracking
 # and container spans are silently lost.
 from shared_utils import (
+    ai_only_decision_categories,
     blank_quoted_strings,
     compute_line_offsets,
     extract_block_from_text,
+    is_ai_only_block,
     line_for_offset,
     read_text_under,
     strip_comments,
@@ -269,6 +271,8 @@ _TOOLTIP_WRAPPER_TOKENS = frozenset(
 # requirement line a wrapper would. `\b` does not match custom_trigger_tooltip.
 _INLINE_TOOLTIP_RE = re.compile(r"\btooltip\s*=")
 _PLAYER_FACING_BLOCK = "available"
+# Column-0 blocks in a decisions file are the decision categories.
+_CATEGORY_OPEN_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
 # Both `available` scans cover the same player-facing object types.
 _PLAYER_FACING_GLOBS = [
     "common/decisions/**/*.txt",
@@ -462,15 +466,66 @@ def process_file_for_clamp_conflicts(args) -> List[str]:
     return issues
 
 
+def _is_decision_source(rel: str) -> bool:
+    """True for a decisions file, excluding the category definitions beside it."""
+    parts = rel.replace("\\", "/").split("/")
+    return parts[:2] == ["common", "decisions"] and "categories" not in parts
+
+
+def _ai_only_spans(
+    cleaned: str, ai_categories: AbstractSet[str]
+) -> List[Tuple[int, int]]:
+    """Offset spans of decisions no human player ever sees.
+
+    Depth-0 blocks in a decisions file are categories and depth-1 the decisions
+    themselves. A decision is AI-only when its category is, or when one of its
+    own trigger blocks carries an unconditional `is_ai = yes`. Nothing inside
+    such a span renders to a player, so every tooltip requirement is moot.
+    """
+    spans: List[Tuple[int, int]] = []
+    for category in _CATEGORY_OPEN_RE.finditer(cleaned):
+        open_idx = category.end() - 1
+        close_idx = _matching_brace(cleaned, open_idx)
+        if category.group(1) in ai_categories:
+            spans.append((open_idx, close_idx))
+            continue
+        inner_start = open_idx + 1
+        inner = cleaned[inner_start:close_idx]
+        depth = 0
+        index = 0
+        while index < len(inner):
+            char = inner[index]
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+            elif depth == 0:
+                match = _SCOPE_OPEN_RE.match(inner, index)
+                if match:
+                    dec_open = match.end() - 1
+                    dec_close = _matching_brace(inner, dec_open)
+                    if is_ai_only_block(inner[dec_open : dec_close + 1]):
+                        spans.append((inner_start + dec_open, inner_start + dec_close))
+                    index = dec_close
+                    continue
+            index += 1
+    return spans
+
+
+def _in_spans(pos: int, spans: List[Tuple[int, int]]) -> bool:
+    return any(start <= pos <= end for start, end in spans)
+
+
 def _scan_available_file(
-    args: Tuple[str, str],
+    args: Tuple[str, str, AbstractSet[str]],
 ) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str]]]:
     """Extract both available-block checks from one comment-stripped source."""
-    filename, mod_path = args
+    filename, mod_path, ai_categories = args
     cleaned = _read_script_text(filename)
     if cleaned is None:
         return [], []
     rel = os.path.relpath(filename, mod_path)
+    exempt = _ai_only_spans(cleaned, ai_categories) if _is_decision_source(rel) else []
     events: List[Tuple[int, int, object]] = _scope_events(cleaned)
     for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
         open_idx = m.end() - 1
@@ -491,6 +546,8 @@ def _scan_available_file(
         if kind == 1:
             if stack:
                 stack.pop()
+            continue
+        if _in_spans(pos, exempt):
             continue
         if kind == 2:
             for token in reversed(stack):
@@ -522,13 +579,13 @@ def _scan_available_file(
 
 
 def process_file_for_untooltipped_available_checks(
-    args: Tuple[str, str],
+    args: Tuple[str, str, AbstractSet[str]],
 ) -> List[Tuple[str, str, int]]:
     return _scan_available_file(args)[0]
 
 
 def process_file_for_available_flags(
-    args: Tuple[str, str],
+    args: Tuple[str, str, AbstractSet[str]],
 ) -> List[Tuple[str, str, int, str]]:
     return _scan_available_file(args)[1]
 
@@ -574,7 +631,7 @@ def _scripted_trigger_body_has_unwrapped_global_flag(body: str) -> bool:
 
 
 def process_file_for_untooltipped_available_scripted_trigger(
-    args: Tuple[str, str, frozenset],
+    args: Tuple[str, str, frozenset, AbstractSet[str]],
 ) -> List[Tuple[str, str, int]]:
     """Pool worker: flag bare `<name> = yes` in `available` that resolves to a
     scripted trigger whose own body checks an unwrapped global flag, with no
@@ -584,7 +641,7 @@ def process_file_for_untooltipped_available_scripted_trigger(
     depth above it counts, not just the direct parent - same machinery as
     ``process_file_for_untooltipped_available_checks``.
     """
-    filename, mod_path, flagged_names = args
+    filename, mod_path, flagged_names, ai_categories = args
     if not flagged_names:
         return []
     cleaned = _read_script_text(filename)
@@ -608,6 +665,7 @@ def process_file_for_untooltipped_available_scripted_trigger(
     events.sort(key=lambda e: (e[0], e[1]))
 
     rel = os.path.relpath(filename, mod_path)
+    exempt = _ai_only_spans(cleaned, ai_categories) if _is_decision_source(rel) else []
     stack: List[str] = []
     issues: List[Tuple[str, str, int]] = []
     for pos, kind, tok in events:
@@ -616,7 +674,7 @@ def process_file_for_untooltipped_available_scripted_trigger(
         elif kind == 1:
             if stack:
                 stack.pop()
-        else:
+        elif not _in_spans(pos, exempt):
             for token in reversed(stack):
                 if token in _TOOLTIP_WRAPPER_TOKENS:
                     break
@@ -1648,6 +1706,18 @@ class Validator(BaseValidator):
             category="clamp-range-conflict",
         )
 
+    def _get_ai_only_categories(self) -> frozenset:
+        """Decision categories gated on an unconditional `is_ai = yes`.
+
+        Every `available` check inside one is exempt from the tooltip and
+        localisation requirements: no human player ever opens the tab.
+        """
+        memo = getattr(self, "_ai_only_categories_memo", None)
+        if memo is None:
+            memo = frozenset(ai_only_decision_categories(self.mod_path))
+            self._ai_only_categories_memo = memo
+        return memo
+
     def _get_available_scan(self):
         """Return both available-block scans from one per-file worker pass."""
         memo = getattr(self, "_available_scan_memo", None)
@@ -1657,9 +1727,10 @@ class Validator(BaseValidator):
         if not files:
             self._available_scan_memo = []
             return self._available_scan_memo
+        ai_categories = self._get_ai_only_categories()
         self._available_scan_memo = self._pool_map(
             _scan_available_file,
-            [(f, self.mod_path) for f in files],
+            [(f, self.mod_path, ai_categories) for f in files],
             chunksize=30,
         )
         return self._available_scan_memo
@@ -1797,7 +1868,10 @@ class Validator(BaseValidator):
             self.log("✓ No untooltipped scripted-trigger calls in available blocks")
             return
 
-        args_list = [(f, self.mod_path, flagged_names) for f in txt_files]
+        ai_categories = self._get_ai_only_categories()
+        args_list = [
+            (f, self.mod_path, flagged_names, ai_categories) for f in txt_files
+        ]
         all_results = self._pool_map(
             process_file_for_untooltipped_available_scripted_trigger,
             args_list,
