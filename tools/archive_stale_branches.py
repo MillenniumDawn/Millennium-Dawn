@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Archive diverging files from stale branches into resources/archived-branches/.
+"""Archive diverging files from stale branches into the millennium-dawn-resources repo.
 
 Uses 3-dot diff (main...branch) so we only see changes made on the branch
 relative to its merge base with main, not the full diverged history.
@@ -43,6 +43,9 @@ BRANCHES = [
 
 # Files we never want to archive regardless of diff (unrelated noise)
 SKIP_FILES = {".gitignore"}
+
+# The archive lives in the sibling millennium-dawn-resources checkout, not this repo.
+DEFAULT_OUTPUT = Path("../millennium-dawn-resources/archive/branches")
 
 
 def find_repo_root() -> Path:
@@ -160,12 +163,24 @@ def main():
         default=BRANCHES,
         help=f"Branches to archive (default: the {len(BRANCHES)} in BRANCHES)",
     )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT,
+        help=f"Archive destination, absolute or relative to this repo (default: {DEFAULT_OUTPUT})",
+    )
     args = parser.parse_args()
 
     repo = find_repo_root()
-    archive_root = repo / "resources" / "archived-branches"
+    archive_root = args.output.expanduser()
+    if not archive_root.is_absolute():
+        archive_root = (repo / archive_root).resolve()
+    # _mkdir_owned needs an existing ancestor to walk down from.
+    anchor = archive_root
+    while not anchor.exists():
+        anchor = anchor.parent
     temp_root = repo / ".tmp-archive"
-    _mkdir_owned(archive_root, repo)
+    _mkdir_owned(archive_root, anchor)
     _mkdir_owned(temp_root, repo)
     _reject_symlinks(archive_root)
 
