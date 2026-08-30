@@ -17,6 +17,8 @@ def test_adjacency_rules_count_as_game_logic_but_map_stays_ignored():
     assert not U.should_skip_file("map/adjacency_rules.txt")
     assert U.should_skip_file("map/colors.txt")
     assert not U.should_skip_file("map\\adjacency_rules.txt")
+    assert U.should_skip_file(".claude/worktrees/wt/map/adjacency_rules.txt")
+    assert U.should_skip_file("resources/vanilla/map/adjacency_rules.txt")
 
 
 def test_strict_read_rejects_malformed_bytes(tmp_path):
