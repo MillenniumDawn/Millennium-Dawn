@@ -125,6 +125,28 @@ Log first so the game log reads in firing order, and use the decision's own ID: 
 
 `validate_decisions.py` reports a block with no log as `missing-decision-log` and a block-level log that is not first as `decision-log-not-first`. A log that is the _only_ content of a `complete_effect` is a separate mistake: `check_common_mistakes.py` rejects it, because the block does nothing but log. Delete the dead block instead.
 
+## AI-Only Decisions
+
+A decision is **AI-only** when the engine can never show it to a human player. Two forms count:
+
+- an unconditional `is_ai = yes` at the top level of the decision's own `visible`, `available` or `allowed` block, or
+- membership in a decision **category** whose `visible` / `available` / `allowed` carries that same unconditional `is_ai = yes`.
+
+```
+	SOV_nuke_europe = {
+		allowed = { original_tag = SOV }
+
+		visible = {
+			is_ai = yes
+		}
+```
+
+"Unconditional" means the token sits at brace depth zero of the trigger block. Nested inside `OR`, `AND`, `if = { limit = }` or a scoped `TAG = { }` it is conditional and the decision is **not** AI-only — `allowed = { OR = { is_ai = yes  is_debug = yes } }` still shows to a player in debug, and `GRE = { is_ai = yes }` asks about a different country entirely.
+
+**An AI-only decision takes no localisation.** Nothing renders its name or tooltip, so a key for it is dead weight that later has to be translated. The raw ID surfacing in the decision UI is harmless because no human ever opens that tab. `validate_decisions.py` enforces both directions: an AI-only decision is exempt from `missing-decision-localisation`, and a key that does exist for one is reported as `ai-only-decision-localisation`. Both are WARNING-severity. `custom_cost_text` is exempt from the reverse check, since it can point at a scripted-loc key shared with player-facing decisions.
+
+Decision **categories** are not covered — nothing validates category localisation at all, in either direction.
+
 ## Randomised Effects
 
 A decision that can fire more than once and rolls randomness (`random_list = { ... }` or `random = { chance = N ... }`) needs `fixed_random_seed = no` at decision top level:

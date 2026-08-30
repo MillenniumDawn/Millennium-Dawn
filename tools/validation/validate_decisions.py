@@ -501,6 +501,27 @@ def _iter_flat_offsets(block: str) -> Iterator[Tuple[str, int]]:
         index += 1
 
 
+_IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
+
+
+def _has_flat_is_ai(block: str) -> bool:
+    """Return True when `is_ai = yes` sits unconditionally at depth 0 of a trigger block.
+
+    Nested inside OR/AND/if/limit or a scoped `TAG = { }` the token is
+    conditional, so the object is not AI-only and must not be exempted from
+    localisation. `_iter_flat_offsets` yields every depth-0 character position,
+    hence the preceding-whitespace guard against matching mid-token.
+    """
+    if not block:
+        return False
+    for inner, index in _iter_flat_offsets(block):
+        if index and not inner[index - 1].isspace():
+            continue
+        if _IS_AI_YES_RE.match(inner, index):
+            return True
+    return False
+
+
 def _flat_tag_pins_with_kind(block: str) -> set:
     """Return {(keyword, tag), ...} for flat (non-nested), depth-0 tag/original_tag tokens.
 
@@ -961,6 +982,15 @@ class DecisionFactory:
         # effect sub-blocks.
         self.name_override = _top_level_field_value(dec, "name")
         self.desc_override = _top_level_field_value(dec, "desc")
+        # An unconditional `is_ai = yes` hides the decision from every human
+        # player, so it needs no localisation. Category-level AI gating is
+        # resolved by the validator, which is the only side that knows the
+        # decision's parent category.
+        self.ai_only = (
+            _has_flat_is_ai(self.visible)
+            or _has_flat_is_ai(self.available)
+            or _has_flat_is_ai(self.allowed)
+        )
 
 
 # Decisions parsing cache - enabled by default, disabled via BaseValidator.no_cache
@@ -1204,8 +1234,41 @@ class Validator(BaseValidator):
         self._activation_removal_cache: Optional[
             Tuple[Set[str], Set[str], Set[str]]
         ] = None
+        self._ai_only_by_category: Optional[Set[str]] = None
         if self.no_cache:
             _set_cache_enabled(False)
+
+    def _get_ai_only_by_category(self) -> Set[str]:
+        """Return decision ids that are AI-only because their category is."""
+        if self._ai_only_by_category is not None:
+            return self._ai_only_by_category
+
+        categories = parse_decision_categories(self.mod_path, lowercase=False)
+        ai_categories = {
+            name
+            for name, block in categories.items()
+            if any(
+                _has_flat_is_ai(extract_value_multi_line(block, field))
+                for field in ("visible", "available", "allowed")
+            )
+        }
+        members: Set[str] = set()
+        if ai_categories:
+            # parse_categories_with_decisions matches every indented `X = {`,
+            # so its lists also carry nested block names (visible, available,
+            # complete_effect). Intersect with the real decision names.
+            known, _ = parse_all_decision_names(self.mod_path, lowercase=False)
+            known_set = set(known)
+            by_category = parse_categories_with_decisions(
+                self.mod_path, lowercase=False
+            )
+            for category in ai_categories:
+                members.update(
+                    name for name in by_category.get(category, []) if name in known_set
+                )
+
+        self._ai_only_by_category = members
+        return members
 
     def _get_activation_removal_scan(
         self,
@@ -2092,17 +2155,34 @@ class Validator(BaseValidator):
             f"  Found {len(factories)} decisions, {len(loc_keys)} localisation keys"
         )
 
+        ai_only_by_category = self._get_ai_only_by_category()
+
         results = []
+        ai_results = []
         for dec in factories:
             dec_id = dec.token
             filename = dec.source_basename
-            missing = []
             # Decisions can redirect the engine's loc lookup via top-level
             # `name = X` / `desc = X` fields. Validate the override key when
             # present; otherwise check the default `<id>` for the name. The
             # default `<id>_desc` is *not* checked when no override is set —
             # many decisions intentionally omit a description tooltip.
             name_key = dec.name_override if dec.name_override else dec_id
+
+            if dec.ai_only or dec_id in ai_only_by_category:
+                # No human ever sees an AI-only decision, so its loc is dead
+                # weight — the check runs in reverse and reports keys that
+                # exist. `custom_cost_text` is exempt: it can point at a
+                # scripted-loc key shared with player-facing decisions.
+                for key in (name_key, f"{dec_id}_desc", dec.desc_override):
+                    if key and key in loc_keys:
+                        ai_results.append(
+                            f"{dec_id} - {filename}: AI-only decision has "
+                            f"localisation key '{key}'"
+                        )
+                continue
+
+            missing = []
             if name_key not in loc_keys:
                 missing.append(name_key)
             if dec.desc_override and dec.desc_override not in loc_keys:
@@ -2123,6 +2203,13 @@ class Validator(BaseValidator):
             "Decisions with missing localisation keys:",
             Severity.WARNING,
             category="missing-decision-localisation",
+        )
+        self._report(
+            ai_results,
+            "✓ No AI-only decision carries dead localisation",
+            "AI-only decisions with localisation keys:",
+            Severity.WARNING,
+            category="ai-only-decision-localisation",
         )
 
     def validate_missing_log(self):
