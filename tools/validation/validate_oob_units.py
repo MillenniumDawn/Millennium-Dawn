@@ -27,7 +27,11 @@ from equipment_module_slots import (
     check_created_variants,
     parse_variant_names,
 )
-from shared_utils import get_staged_files, read_text_under
+from shared_utils import (
+    get_staged_files,
+    normalize_path_separators,
+    read_text_under,
+)
 from validator_common import (
     BaseValidator,
     Issue,
@@ -1808,7 +1812,7 @@ class Validator(BaseValidator):
         files = self._collect_files(_VARIANT_SOURCE_PATTERNS, ignore_staged=full_scope)
         sources = [
             (
-                os.path.relpath(filepath, self.mod_path),
+                normalize_path_separators(os.path.relpath(filepath, self.mod_path)),
                 _read_text(filepath, self.mod_path),
             )
             for filepath in files
@@ -1911,7 +1915,7 @@ class Validator(BaseValidator):
             content = _read_text(filepath, self.mod_path)
             if "version_name" not in content:
                 continue
-            rel = os.path.relpath(filepath, self.mod_path)
+            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
             for f in check_oob_variant_refs(content, by_tag, wildcard):
                 results.append(
                     Issue(
@@ -1927,7 +1931,7 @@ class Validator(BaseValidator):
             content = _read_text(filepath, self.mod_path)
             if "add_equipment_" not in content:
                 continue
-            rel = os.path.relpath(filepath, self.mod_path)
+            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
             for f in check_attributed_archetypes(content, archetypes):
                 results.append(
                     Issue(
@@ -1954,9 +1958,9 @@ class Validator(BaseValidator):
             os.path.splitext(os.path.basename(filepath))[0] for filepath in target_paths
         }
         changed_targets = self.staged_only and any(
-            os.path.relpath(filepath, self.mod_path)
-            .replace(os.sep, "/")
-            .startswith("history/units/")
+            normalize_path_separators(
+                os.path.relpath(filepath, self.mod_path)
+            ).startswith("history/units/")
             for filepath in get_staged_files(
                 self.mod_path, extensions=self.STAGED_EXTENSIONS, include_missing=True
             )
@@ -1969,7 +1973,7 @@ class Validator(BaseValidator):
         results = []
         for filepath in source_paths:
             content = _read_text(filepath, self.mod_path)
-            rel = os.path.relpath(filepath, self.mod_path)
+            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
             for target, line in find_load_oob_references(content):
                 if target not in targets:
                     results.append(
@@ -2022,7 +2026,7 @@ class Validator(BaseValidator):
         args_list = [
             (
                 f,
-                os.path.relpath(f, self.mod_path),
+                normalize_path_separators(os.path.relpath(f, self.mod_path)),
                 self.mod_path,
                 deleted_names,
                 effect_closure,

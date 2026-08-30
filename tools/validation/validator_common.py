@@ -29,6 +29,7 @@ from shared_utils import (
     get_staged_files,
     line_for_offset,
     log_message,
+    normalize_path_separators,
     print_timing_summary,
     run_validator_main,
     should_skip_file,
@@ -754,17 +755,21 @@ class BaseValidator:
             return
         atomic_write_text(self.output_file, "\n".join(self.output_lines))
         logging.info(f"Results saved to: {self.output_file}")
-        if self._issues:
-            json_file = os.path.splitext(self.output_file)[0] + ".json"
-            atomic_write_text(json_file, self.get_issues_json())
-            logging.info(f"JSON results saved to: {json_file}")
+        # CI verifies the sidecar exists even on clean runs — always write it.
+        json_file = os.path.splitext(self.output_file)[0] + ".json"
+        atomic_write_text(json_file, self.get_issues_json())
+        logging.info(f"JSON results saved to: {json_file}")
 
     def add_issue(
         self, severity: str, category: str, message: str, file: str = "", line: int = 0
     ):
         """Add an issue to the internal list for later deduplication and reporting."""
         issue = Issue(
-            severity=severity, category=category, message=message, file=file, line=line
+            severity=severity,
+            category=category,
+            message=message,
+            file=normalize_path_separators(file),
+            line=line,
         )
         self._issues.append(issue)
         if severity == Severity.ERROR:
@@ -849,14 +854,23 @@ class BaseValidator:
         group_label = category or _label_from_failmsg(fail_msg)
         for r in results:
             if isinstance(r, Issue):
-                issue = r
-                if not issue.category:
-                    issue.category = group_label
+                normalized_category = r.category or group_label
+                normalized_file = normalize_path_separators(r.file)
+                if normalized_category == r.category and normalized_file == r.file:
+                    issue = r
+                else:
+                    issue = Issue(
+                        severity=r.severity,
+                        category=normalized_category,
+                        message=r.message,
+                        file=normalized_file,
+                        line=r.line,
+                    )
                 actual_severity = issue.severity
             elif isinstance(r, tuple):
                 # (message, file, line)
                 msg_t = str(r[0]) if len(r) > 0 else ""
-                file_t = str(r[1]) if len(r) > 1 else ""
+                file_t = normalize_path_separators(str(r[1])) if len(r) > 1 else ""
                 line_t = _safe_int(r[2]) if len(r) > 2 else 0
                 issue = Issue(
                     severity=severity,
@@ -873,7 +887,7 @@ class BaseValidator:
                     severity=severity,
                     category=group_label,
                     message=msg_p,
-                    file=file_p,
+                    file=normalize_path_separators(file_p),
                     line=line_p,
                 )
                 actual_severity = severity

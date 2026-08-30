@@ -1,11 +1,5 @@
 """Unit tests for merge_gfx_entries de-duplication in gfx_entry_generator."""
 
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-
 from gfx_entry_generator import (
     _build_scripted_gui_text,
     _extract_manual_body,

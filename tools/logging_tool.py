@@ -31,12 +31,12 @@ class _AtomicOutput(io.StringIO):
     def __init__(self, path, encoding):
         super().__init__()
         self.path = path
-        self.encoding = encoding
+        self._encoding = encoding
         _pending_outputs.append(self)
 
     def close(self):
         if not self.closed:
-            atomic_write_text(self.path, self.getvalue(), encoding=self.encoding)
+            atomic_write_text(self.path, self.getvalue(), encoding=self._encoding)
         super().close()
 
 
@@ -473,6 +473,7 @@ def decision_add(cpath, dry_run=False):
                 if ("= {" in line or "={" in line) and level == 1:
                     latest_found = line_number
                     found_decisions[line_number] = [0, 0, 0, False]
+                level = _update_brace_level(level, line)
                 if latest_found is None:
                     continue
                 if "complete_effect" in line:
@@ -483,7 +484,6 @@ def decision_add(cpath, dry_run=False):
                     found_decisions[latest_found][2] = line_number
                 elif "target_trigger" in line or "targets" in line:
                     found_decisions[latest_found][3] = True
-                level = _update_brace_level(level, line)
 
             if found_decisions == {}:
                 continue

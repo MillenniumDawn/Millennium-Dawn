@@ -1,11 +1,12 @@
 import importlib.util
-from pathlib import Path
 
 import pytest
 
 
 def _module():
-    path = Path(__file__).resolve().parents[1] / "assets" / "state_gfx.py"
+    from shared.paths import ASSETS_DIR
+
+    path = ASSETS_DIR / "state_gfx.py"
     spec = importlib.util.spec_from_file_location("state_gfx", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

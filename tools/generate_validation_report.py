@@ -10,7 +10,7 @@ Pipeline:
   4. Render two bodies: a concise PR comment (summary table + step-summary
      pointer) and a detailed step summary (full per-validator issue list).
   5. Truncate the comment if over GitHub's 65 536-byte limit.
-  6. Optionally post the comment as a PR comment and/or emit Checks API annotations.
+  6. Optionally sync a findings-only PR comment and/or emit Checks API annotations.
 
 All heavy lifting lives in `tools/report_lib/`; this file is just a CLI.
 """
@@ -31,6 +31,7 @@ from report_lib import (  # noqa: E402
     MAX_ISSUES_STEP_SUMMARY,
     ReportContext,
     classify,
+    clear_comment,
     dedupe,
     load_all,
     load_baseline,
@@ -234,24 +235,30 @@ def main(argv: Optional[List[str]] = None) -> int:
                     file=sys.stderr,
                 )
                 return 1
-            # Every run posts, findings or not: a PR with no comment is
-            # indistinguishable from one the pipeline never reached, and the
-            # rendered body names its own scope, so a clean partial run reads
-            # as "the groups that ran are clean" rather than a verdict.
-            success, message = post_comment(
-                repo_owner,
-                repo_name,
-                args.pr_number,
-                body,
-                args.github_token,
-            )
+            # An empty run list means the pipeline didn't finish, not clean —
+            # still posts instead of clearing.
+            should_post = not runs or any(run.status != "passed" for run in runs)
+            if should_post:
+                success, message = post_comment(
+                    repo_owner,
+                    repo_name,
+                    args.pr_number,
+                    body,
+                    args.github_token,
+                )
+            else:
+                success, message = clear_comment(
+                    repo_owner,
+                    repo_name,
+                    args.pr_number,
+                    args.github_token,
+                )
             (print if success else _err)(f"PR comment: {message}")
-            # A read-only GITHUB_TOKEN can't write comments. Don't fail the
-            # job over it — the report still uploads as an artifact. Mirrors the
-            # Checks API handling below.
+            # A read-only GITHUB_TOKEN can't write comments — log and continue,
+            # mirroring the Checks API handling below.
             if not success:
                 _err(
-                    "PR comment could not be updated; continuing. "
+                    "PR comment could not be synchronized; continuing. "
                     "See the validation-report artifact for the full report."
                 )
 
