@@ -607,6 +607,11 @@ def test_unit_tests_run_on_all_supported_platforms():
     ):
         assert "startsWith(matrix.check.id, 'unit')" in steps[name]["if"]
 
+    assert (
+        "--group dev --group runtime"
+        in steps["Install dependencies (unit tests)"]["run"]
+    )
+
     cross_platform = steps["Run cross-platform unit tests"]
     assert "unit-macos" in cross_platform["if"]
     assert "unit-windows" in cross_platform["if"]
