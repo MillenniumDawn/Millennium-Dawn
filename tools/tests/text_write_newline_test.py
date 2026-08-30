@@ -13,8 +13,8 @@ required instead.
 import ast
 import os
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-TOOLS_ROOT = os.path.join(REPO_ROOT, "tools")
+from shared.paths import REPO_ROOT
+from shared.paths import TOOLS_DIR as TOOLS_ROOT
 from shared_utils import read_text_under
 
 # Deliberate exemptions, as "<repo-relative path>:<line>". Add an entry only for
@@ -78,7 +78,7 @@ def _offenders():
             if not isinstance(node, ast.Call):
                 continue
             name = _callee_name(node)
-            if name == "write_text":
+            if isinstance(node.func, ast.Attribute) and name == "write_text":
                 reason = "Path.write_text — use open(..., newline='') instead"
             elif (
                 name == "open" and _is_text_write(node) and not _has_newline_kwarg(node)
