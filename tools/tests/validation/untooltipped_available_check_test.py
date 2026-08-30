@@ -10,7 +10,6 @@ outright, so no tooltip renders either way.
 
 import validate_variables as V
 
-
 # The AI-only exemption keys off the decisions path, so a test that wants it
 # has to write the file where decisions actually live.
 _DECISION_REL = "common/decisions/src.txt"
