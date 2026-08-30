@@ -860,47 +860,6 @@ FRA_french_africa_decision_category = {
 			}
 		}
 	}
-
-	# TODO: Fix the Extension NEPAD Program
-	# FRA_extend_the_NEPAD_program_decision = {
-	# 	visible = {
-	# 		has_completed_focus = FRA_NEPAD_development
-	# 		has_global_flag = AFRICA_nepad_focus
-	# 	}
-	# 	cost = 100
-	# 	icon = political_actions
-	# 	available = {
-	# 		custom_trigger_tooltip = {
-	# 			tooltip = FRA_nepad_program_counter_currently_tt
-	# 			has_global_flag = AFRICA_nepad_focus
-	# 		}
-	# 	}
-	# 	days_remove = 70
-	# 	complete_effect = {
-	# 		log = "[GetDateText]: [Root.GetName]: Decision FRA_extend_the_NEPAD_program_decision"
-	# 		set_temp_variable = { temp_change = 0.45 }
-	# 		FRA_nepad_cost_increase_cost_effect = yes
-	# 		set_temp_variable = { treasury_change = gdp_total }
-	# 		multiply_temp_variable = { treasury_change = -0.03 }
-	# 		modify_treasury_effect = yes
-	# 		hidden_effect = {
-	# 			FRA = {
-	# 				modify_timed_idea = { idea = FRA_nepad_idea days = 365 }
-	# 			}
-	# 		}
-	# 	}
-	# 	ai_will_do = {
-	# 		base = 1
-	# 		modifier = {
-	# 			factor = 0
-	# 			NOT = {
-	# 				has_global_flag = FRA_CHAOS_PATH
-	# 				has_government = communism
-	# 				has_government = nationalist
-	# 			}
-	# 		}
-	# 	}
-	# }
 }
 
 FRA_french_communism_expansionism_decision_category = {
@@ -2424,29 +2383,38 @@ FRA_french_communism_expansionism_decision_category = {
 		war_with_on_remove = SPR
 		war_with_on_remove = SOV
 
-		available = {
-			is_subject = no
-			any_other_country = {
-				is_in_europe = yes
+		visible = {
+			any_of_scopes = {
+				array = global.european_nations
+				exists = yes
+				NOT = { tag = ROOT }
 				NOT = { is_in_faction_with = FRA }
 				NOT = { is_subject_of = FRA }
 			}
+		}
+
+		available = {
+			is_subject = no
 		}
 
 		icon = GFX_decision_generic_civil_support
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision FRA_red_Europe"
-			every_other_country = {
-				limit = {
-					is_in_europe = yes
-					NOT = { is_in_faction_with = FRA }
-					NOT = { is_subject_of = FRA }
-				}
-				FRA = {
-					create_wargoal = {
-						type = puppet_wargoal_focus
-						target = PREV
+			for_each_scope_loop = {
+				array = global.european_nations
+				if = {
+					limit = {
+						exists = yes
+						NOT = { tag = ROOT }
+						NOT = { is_in_faction_with = FRA }
+						NOT = { is_subject_of = FRA }
+					}
+					FRA = {
+						create_wargoal = {
+							type = puppet_wargoal_focus
+							target = PREV
+						}
 					}
 				}
 			}
@@ -6537,7 +6505,6 @@ FRA_extremist_foreign_policy_category = {
 		}
 
 		available = {
-			has_political_power > 100
 			NOT = { has_idea = NATO_member }
 		}
 

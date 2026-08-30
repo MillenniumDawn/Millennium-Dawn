@@ -132,7 +132,7 @@ ai_acceptance = {
 		base = 0
 		modifier = {
 			add = 5
-			is_same_government = yes
+			has_government = ROOT
 		}
 	}
 	# Opinion scaling pattern:
