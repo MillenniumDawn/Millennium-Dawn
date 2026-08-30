@@ -332,17 +332,38 @@ def test_state_merge_provinces_uses_pillow_pixels(tmp_path):
     assert state_gfx.rgb_to_hex((1, 2, 255)) == "#0102ff"
 
 
-def _configure_state_module(root):
+def _configure_state_module(root, monkeypatch, desktop=None):
+    """Create the map/history tree state_gfx reads and point the module at it."""
     states = root / "history" / "states"
     states.mkdir(parents=True, exist_ok=True)
     definition = root / "map" / "definition.csv"
     bitmap = root / "map" / "provinces.bmp"
     definition.parent.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(state_gfx, "REPO_ROOT", str(root))
+    monkeypatch.setattr(state_gfx, "states_dir", str(states))
+    monkeypatch.setattr(state_gfx, "definition_file", str(definition))
+    monkeypatch.setattr(state_gfx, "provinces_bmp", str(bitmap))
+    if desktop is not None:
+        monkeypatch.setattr(state_gfx, "desktop_path", str(desktop))
     return states, definition, bitmap
 
 
+def _run_state_selection(monkeypatch, root, state_file):
+    """Run state_gfx.main() over a one-province state whose color never matches."""
+    states, definition, bitmap = _configure_state_module(
+        root, monkeypatch, root / "Desktop"
+    )
+    _write_text(states / state_file, "provinces = { 1 }\n")
+    _write_text(definition, "id;r;g;b\n1;1;2;3\n")
+    _image(bitmap, (1, 1), {(0, 0): (99, 99, 99)}, mode="RGB")
+    monkeypatch.setattr("builtins.input", _inputs("12", "1"))
+    state_gfx.main()
+
+
 def test_state_main_writes_scaled_selection_from_real_bitmap(tmp_path, monkeypatch):
-    states, definition, bitmap = _configure_state_module(tmp_path)
+    desktop = tmp_path / "Desktop"
+    desktop.mkdir()
+    states, definition, bitmap = _configure_state_module(tmp_path, monkeypatch, desktop)
     _write_text(
         states / "12-Test State.txt",
         "state = {\n\tprovinces = { 1 2 }\n}\n",
@@ -362,13 +383,6 @@ def test_state_main_writes_scaled_selection_from_real_bitmap(tmp_path, monkeypat
         {(1, 1): (10, 20, 30), (2, 2): (40, 50, 60)},
         mode="RGB",
     )
-    desktop = tmp_path / "Desktop"
-    desktop.mkdir()
-    monkeypatch.setattr(state_gfx, "REPO_ROOT", str(tmp_path))
-    monkeypatch.setattr(state_gfx, "states_dir", str(states))
-    monkeypatch.setattr(state_gfx, "definition_file", str(definition))
-    monkeypatch.setattr(state_gfx, "provinces_bmp", str(bitmap))
-    monkeypatch.setattr(state_gfx, "desktop_path", str(desktop))
     answers = iter(["12", "2"])
     monkeypatch.setattr("builtins.input", lambda _prompt: next(answers))
 
@@ -391,14 +405,10 @@ def test_state_main_reports_required_input_and_filesystem_errors(tmp_path, monke
     with pytest.raises(SystemExit, match="required path not found"):
         state_gfx.main()
 
-    states, definition, bitmap = _configure_state_module(tmp_path)
+    states, definition, bitmap = _configure_state_module(tmp_path, monkeypatch)
     _write_text(states / "12-State.txt", "provinces = { 1 }\n")
     _write_text(definition, "id;r;g;b\n1;1;2;3\n")
     _image(bitmap, (1, 1), {(0, 0): (1, 2, 3)}, mode="RGB")
-    monkeypatch.setattr(state_gfx, "REPO_ROOT", str(tmp_path))
-    monkeypatch.setattr(state_gfx, "states_dir", str(states))
-    monkeypatch.setattr(state_gfx, "definition_file", str(definition))
-    monkeypatch.setattr(state_gfx, "provinces_bmp", str(bitmap))
     monkeypatch.setattr("builtins.input", _inputs("12", "bad"))
     with pytest.raises(SystemExit, match="Scale must be an integer"):
         state_gfx.main()
@@ -436,36 +446,14 @@ def test_state_main_reports_required_input_and_filesystem_errors(tmp_path, monke
 def test_state_main_handles_unparseable_name_and_empty_selection(
     tmp_path, monkeypatch, capsys
 ):
-    states, definition, bitmap = _configure_state_module(tmp_path)
-    _write_text(states / "12.txt", "provinces = { 1 }\n")
-    _write_text(definition, "id;r;g;b\n1;1;2;3\n")
-    _image(bitmap, (1, 1), {(0, 0): (99, 99, 99)}, mode="RGB")
-    monkeypatch.setattr(state_gfx, "REPO_ROOT", str(tmp_path))
-    monkeypatch.setattr(state_gfx, "states_dir", str(states))
-    monkeypatch.setattr(state_gfx, "definition_file", str(definition))
-    monkeypatch.setattr(state_gfx, "provinces_bmp", str(bitmap))
-    monkeypatch.setattr(state_gfx, "desktop_path", str(tmp_path / "Desktop"))
-    monkeypatch.setattr("builtins.input", _inputs("12", "1"))
-
-    state_gfx.main()
+    _run_state_selection(monkeypatch, tmp_path, "12.txt")
 
     assert "Could not extract state name" in capsys.readouterr().out
     assert not (tmp_path / "Desktop").exists()
 
 
 def test_state_main_skips_output_when_no_province_color_matches(tmp_path, monkeypatch):
-    states, definition, bitmap = _configure_state_module(tmp_path)
-    _write_text(states / "12-State.txt", "provinces = { 1 }\n")
-    _write_text(definition, "id;r;g;b\n1;1;2;3\n")
-    _image(bitmap, (1, 1), {(0, 0): (99, 99, 99)}, mode="RGB")
-    monkeypatch.setattr(state_gfx, "REPO_ROOT", str(tmp_path))
-    monkeypatch.setattr(state_gfx, "states_dir", str(states))
-    monkeypatch.setattr(state_gfx, "definition_file", str(definition))
-    monkeypatch.setattr(state_gfx, "provinces_bmp", str(bitmap))
-    monkeypatch.setattr(state_gfx, "desktop_path", str(tmp_path / "Desktop"))
-    monkeypatch.setattr("builtins.input", _inputs("12", "1"))
-
-    state_gfx.main()
+    _run_state_selection(monkeypatch, tmp_path, "12-State.txt")
 
     assert not (tmp_path / "Desktop").exists()
 

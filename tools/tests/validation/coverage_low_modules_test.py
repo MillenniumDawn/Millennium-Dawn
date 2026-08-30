@@ -693,9 +693,11 @@ effect_one = { }
 effect_two = { nested = { } }
 """,
     )
+    # extract_definitions reports os.path.relpath output — native separators.
+    relative = str(Path("common/scripted_effects/effects.txt"))
     assert unused.extract_definitions((str(source), str(tmp_path))) == [
-        ("effect_one", "common/scripted_effects/effects.txt", 2),
-        ("effect_two", "common/scripted_effects/effects.txt", 3),
+        ("effect_one", relative, 2),
+        ("effect_two", relative, 3),
     ]
     assert unused.scan_file_for_usages(
         (str(source), {"effect_one", "missing"}, str(tmp_path))
@@ -1087,6 +1089,18 @@ cat_ai_disabled = {
         tmp_path,
         "localisation/english/decisions_l_english.yml",
         'l_english:\nmissing_ai:0 "Missing AI"\n',
+    )
+    # validate_missing_icons skips itself below 1000 indexed sprites. Without a
+    # mod-side index the check only ran where a vanilla install is discoverable,
+    # so it passed locally and reported nothing on CI.
+    _write(
+        tmp_path,
+        "interface/filler.gfx",
+        "spriteTypes = {\n"
+        + "".join(
+            f'\tspriteType = {{ name = "GFX_filler_{i}" }}\n' for i in range(1000)
+        )
+        + "}\n",
     )
 
     validator = _validator(decisions.Validator, tmp_path)

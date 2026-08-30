@@ -13,6 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import assign_mio_icons
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -159,23 +160,19 @@ class TestArchiveStaleBranches:
 class TestSyncDynamicTokens:
     """Tests for tools/sync_dynamic_tokens.py — log parsing and token sync."""
 
+    def _sync(self, log, out=None):
+        argv = [sys.executable, str(TOOLS / "sync_dynamic_tokens.py"), str(log)]
+        if out is not None:
+            argv += ["-o", str(out)]
+        return subprocess.run(argv, capture_output=True, text=True)
+
     def test_no_tokens_in_log_prints_message(self, tmp_path):
         """When the log has no 'dynamic token' lines, script exits 0."""
         log = tmp_path / "error.log"
         write_text(log, "some other HOI4 message\n")
-        out = tmp_path / "tokens.txt"
 
-        result = subprocess.run(
-            [
-                sys.executable,
-                str(TOOLS / "sync_dynamic_tokens.py"),
-                str(log),
-                "-o",
-                str(out),
-            ],
-            capture_output=True,
-            text=True,
-        )
+        result = self._sync(log, tmp_path / "tokens.txt")
+
         assert result.returncode == 0
         assert "No dynamic-token warnings found" in result.stdout
 
@@ -186,17 +183,8 @@ class TestSyncDynamicTokens:
         out = tmp_path / "tokens.txt"
         write_text(out, "MY_TOKEN\n")
 
-        result = subprocess.run(
-            [
-                sys.executable,
-                str(TOOLS / "sync_dynamic_tokens.py"),
-                str(log),
-                "-o",
-                str(out),
-            ],
-            capture_output=True,
-            text=True,
-        )
+        result = self._sync(log, out)
+
         assert result.returncode == 0
         assert "already present" in result.stdout
         # File unchanged
@@ -213,17 +201,8 @@ class TestSyncDynamicTokens:
         out = tmp_path / "tokens.txt"
         write_text(out, "EXISTING_TOKEN\n")
 
-        result = subprocess.run(
-            [
-                sys.executable,
-                str(TOOLS / "sync_dynamic_tokens.py"),
-                str(log),
-                "-o",
-                str(out),
-            ],
-            capture_output=True,
-            text=True,
-        )
+        result = self._sync(log, out)
+
         assert result.returncode == 0
         assert "Added 2 new token(s)" in result.stdout
         content = out.read_text()
@@ -233,15 +212,8 @@ class TestSyncDynamicTokens:
 
     def test_missing_log_file_exits_nonzero(self, tmp_path):
         """A missing log file causes an argparse error and exits non-zero."""
-        result = subprocess.run(
-            [
-                sys.executable,
-                str(TOOLS / "sync_dynamic_tokens.py"),
-                str(tmp_path / "does_not_exist.log"),
-            ],
-            capture_output=True,
-            text=True,
-        )
+        result = self._sync(tmp_path / "does_not_exist.log")
+
         assert result.returncode != 0
         assert "Log file not found" in result.stderr
 
@@ -249,19 +221,9 @@ class TestSyncDynamicTokens:
         """Log mentions 'dynamic token' but format doesn't match — reports change."""
         log = tmp_path / "error.log"
         write_text(log, "Found a dynamic token (unknown format)\n")
-        out = tmp_path / "tokens.txt"
 
-        result = subprocess.run(
-            [
-                sys.executable,
-                str(TOOLS / "sync_dynamic_tokens.py"),
-                str(log),
-                "-o",
-                str(out),
-            ],
-            capture_output=True,
-            text=True,
-        )
+        result = self._sync(log, tmp_path / "tokens.txt")
+
         assert result.returncode == 0
         assert "none matched the expected format" in result.stdout
 
@@ -272,58 +234,92 @@ class TestSyncDynamicTokens:
 
 
 class TestAssignMioIcons:
-    """Tests for tools/assign_mio_icons.py — MIO trait icon assignment."""
+    """Tests for tools/assign_mio_icons.py — MIO trait icon assignment.
 
-    def test_help_exits_zero(self):
-        """--help is accepted and exits 0."""
-        result = subprocess.run(
-            [sys.executable, str(TOOLS / "assign_mio_icons.py"), "--help"],
-            capture_output=True,
-            text=True,
-        )
-        assert result.returncode == 0
+    The tool reads its sprite list from a fixed path under the repo root, so
+    every case points GFX (and ROOT) at a temp tree instead: the CI unit-test
+    checkout does not include interface/.
+    """
 
-    def test_write_creates_modified_file(self, tmp_path):
-        """--write causes the file to be rewritten with resolved icons."""
-        mio = tmp_path / "test_mio.txt"
+    TRAIT = (
+        "token = TEST_MIO_TEST\n\n"
+        "trait = {\n"
+        "    token = test_trait\n"
+        "    icon = x\n"
+        "    limit_to_equipment_type = { infantry_weapons_type }\n"
+        "    organization_modifier = { infantry_weapons_type = 1.0 }\n"
+        "}\n"
+    )
+
+    def _sprites(self, tmp_path, *names):
+        gfx = tmp_path / "traits.gfx"
         write_text(
-            mio,
-            "token = TEST_MIO_TEST\n\n"
-            "trait = {\n"
-            "    token = test_trait\n"
-            "    icon = x\n"
-            "    limit_to_equipment_type = infantry_weapons_type\n"
-            "    organization_modifier = { infantry_weapons_type = 1.0 }\n"
-            "}\n",
+            gfx,
+            "".join(f'\tspriteType = {{ name = "{name}" }}\n' for name in names),
         )
+        return gfx
 
-        result = subprocess.run(
-            [sys.executable, str(TOOLS / "assign_mio_icons.py"), str(mio), "--write"],
-            capture_output=True,
-            text=True,
-            cwd=REPO_ROOT,
-        )
-        # Should not crash; the sprite file may not contain matching sprites,
-        # in which case it falls back to "unique". That is valid behavior.
-        assert result.returncode == 0, result.stderr
-        content = mio.read_text()
-        # icon = x must have been replaced with something
-        assert "icon = x" not in content
-        assert "icon = GFX_" in content
+    def _run(self, monkeypatch, tmp_path, gfx, *argv):
+        monkeypatch.setattr(assign_mio_icons, "ROOT", tmp_path)
+        monkeypatch.setattr(assign_mio_icons, "GFX", gfx)
+        monkeypatch.setattr(sys, "argv", ["assign_mio_icons.py", *argv])
+        assign_mio_icons.main()
 
-    def test_missing_file_exits_nonzero(self, tmp_path):
-        """A non-existent input path exits non-zero with an error message."""
-        result = subprocess.run(
-            [
-                sys.executable,
-                str(TOOLS / "assign_mio_icons.py"),
-                str(tmp_path / "does_not_exist.txt"),
-            ],
-            capture_output=True,
-            text=True,
+    def test_write_resolves_the_placeholder_to_the_family_icon(
+        self, tmp_path, monkeypatch
+    ):
+        """--write rewrites `icon = x` with the equipment family's sprite."""
+        gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_smallarms")
+        mio = tmp_path / "test_mio.txt"
+        write_text(mio, self.TRAIT)
+
+        self._run(monkeypatch, tmp_path, gfx, str(mio), "--write")
+
+        assert (
+            "icon = GFX_generic_mio_trait_icon_smallarms" in mio.read_text()
+        ), "the family sprite exists, so the unique fallback must not win"
+
+    def test_write_falls_back_to_unique_when_no_sprite_matches(
+        self, tmp_path, monkeypatch
+    ):
+        """With no candidate sprite defined the placeholder becomes `unique`."""
+        gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_unrelated")
+        mio = tmp_path / "test_mio.txt"
+        write_text(mio, self.TRAIT)
+
+        self._run(monkeypatch, tmp_path, gfx, str(mio), "--write")
+
+        assert "icon = GFX_generic_mio_trait_icon_unique" in mio.read_text()
+
+    def test_no_argument_targets_the_hol_organization_file(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        """Without a path the tool reads the default HOL organization file."""
+        gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_smallarms")
+        default = (
+            tmp_path
+            / "common/military_industrial_organization/organizations/MD_HOL_organizations.txt"
         )
-        assert result.returncode > 0
-        assert "No such file or directory" in result.stderr
+        default.parent.mkdir(parents=True, exist_ok=True)
+        write_text(default, self.TRAIT)
+
+        self._run(monkeypatch, tmp_path, gfx)
+
+        assert "Total placeholders resolved: 1" in capsys.readouterr().out
+        assert "icon = x" in default.read_text(), "no --write means no rewrite"
+
+    def test_missing_sprite_file_exits_nonzero(self, tmp_path, monkeypatch):
+        """An unreadable sprite file aborts before any input is parsed."""
+        with pytest.raises(SystemExit) as excinfo:
+            self._run(monkeypatch, tmp_path, tmp_path / "absent.gfx")
+        assert "cannot read sprite file" in str(excinfo.value)
+
+    def test_missing_input_file_exits_nonzero(self, tmp_path, monkeypatch):
+        """A non-existent input path exits with an error message."""
+        gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_smallarms")
+        with pytest.raises(SystemExit) as excinfo:
+            self._run(monkeypatch, tmp_path, gfx, str(tmp_path / "does_not_exist.txt"))
+        assert "No such file or directory" in str(excinfo.value)
 
 
 # ---------------------------------------------------------------------------

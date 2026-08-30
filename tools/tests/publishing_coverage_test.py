@@ -105,7 +105,7 @@ def test_format_size(n, expected):
         ('say "hello"', 'say \\"hello\\"'),
         ("line1\rline2", "line1\\rline2"),
         ("line1\nline2", "line1\\nline2"),
-        (Path("/tmp/mod"), "/tmp/mod"),
+        (PurePosixPath("/tmp/mod"), "/tmp/mod"),
         ('"quoted"\\npath', '\\"quoted\\"\\\\npath'),
     ],
 )

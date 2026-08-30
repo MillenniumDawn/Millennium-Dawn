@@ -71,7 +71,10 @@ def test_fingerprints_are_memoized_until_source_changes(tmp_path, monkeypatch):
     assert first == second
     assert len(calls) == 1
 
-    source.write_text("two", encoding="utf-8")
+    # Different length, not just different bytes: Windows clock granularity can
+    # leave two writes this close together sharing an mtime, and the memo keys
+    # on (path, mtime_ns, size).
+    source.write_text("two lines", encoding="utf-8")
     changed = disk_cache._validator_code_fingerprint("memoized")
     assert changed != first
     assert len(calls) == 2
@@ -172,7 +175,7 @@ def test_per_file_content_cache_recomputes_after_code_change(tmp_path, monkeypat
     disk_cache.per_file_cached_by_content(
         str(tmp_path), "parse", str(src), "hello", compute
     )
-    owner.write_text("two", encoding="utf-8")
+    owner.write_text("two lines", encoding="utf-8")
     result = disk_cache.per_file_cached_by_content(
         str(tmp_path), "parse", str(src), "hello", compute
     )
