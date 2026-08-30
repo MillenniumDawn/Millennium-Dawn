@@ -71,8 +71,8 @@ Every text-mode write in `tools/` must pass `newline=""`. Without it, Python's t
 
 ## Ideas
 
-- Always `picture = sprite_name` (no picture = blank icon); `original_tag` not `tag` in `allowed` blocks
-- Category-specific `allowed`-block scoping and removable defaults (`cancel`, `on_add`, `allowed_civil_war`): `.claude/docs/idea-reference.md`
+- Always `picture = sprite_name` (no picture = blank icon); `original_tag` not `tag` in `allowed` blocks; no `available` in `country`/`hidden_ideas`
+- Category-specific `allowed`/`available`-block scoping and removable defaults (`cancel`, `on_add`, `allowed_civil_war`): `.claude/docs/idea-reference.md`
 
 ## MIOs
 

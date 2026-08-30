@@ -1,8 +1,9 @@
-"""Tests for the slotless-category `allowed` stripper.
+"""Tests for the slotless-category `allowed`/`available` stripper.
 
 The blocks it removes are unreachable gates, but the ones it leaves alone are
-load-bearing: an `allowed` in a slotted category filters the pool that slot
-draws from, so removing it there would change what the player can pick.
+load-bearing: an `allowed` or `available` in a slotted category filters the
+pool that slot draws from, so removing it there would change what the player
+can pick.
 """
 
 from strip_idea_allowed_gates import process_file, strip_allowed_blocks
@@ -36,6 +37,63 @@ def test_removes_one_line_allowed_in_country():
     out, removed = _strip(text)
     assert removed == 1
     assert "allowed" not in out
+    assert "picture = gold" in out
+
+
+def test_removes_one_line_available_in_country():
+    text = "\n".join(
+        [
+            "ideas = {",
+            "\tcountry = {",
+            "\t\tFOO_idea = {",
+            "\t\t\tavailable = { always = yes }",
+            "\t\t\tpicture = gold",
+            "\t\t}",
+            "\t}",
+            "}",
+        ]
+    )
+    out, removed = _strip(text)
+    assert removed == 1
+    assert "available" not in out
+    assert "picture = gold" in out
+
+
+def test_keeps_available_in_slotted_category():
+    text = "\n".join(
+        [
+            "ideas = {",
+            "\ttank_manufacturer = {",
+            "\t\tFOO_designer = {",
+            "\t\t\tavailable = { original_tag = FOO }",
+            "\t\t}",
+            "\t}",
+            "}",
+        ]
+    )
+    out, removed = _strip(text)
+    assert removed == 0
+    assert "available = { original_tag = FOO }" in out
+
+
+def test_removes_allowed_and_available_together():
+    text = "\n".join(
+        [
+            "ideas = {",
+            "\tcountry = {",
+            "\t\tFOO_idea = {",
+            "\t\t\tallowed = { original_tag = FOO }",
+            "\t\t\tavailable = { always = yes }",
+            "\t\t\tpicture = gold",
+            "\t\t}",
+            "\t}",
+            "}",
+        ]
+    )
+    out, removed = _strip(text)
+    assert removed == 2
+    assert "allowed" not in out
+    assert "available" not in out
     assert "picture = gold" in out
 
 
