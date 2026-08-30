@@ -491,6 +491,13 @@ def should_skip_file(
     content_roots = {"common", "events", "history", "interface", "localisation"}
     normalized_path = filename.replace("\\", "/").strip("/")
     parts = normalized_path.split("/")
+    # Canal/strait closures set flags read here, so this file is game logic
+    # that must count for variables validation. Stale worktree and reference
+    # copies stay ignored.
+    if parts[-2:] == ["map", "adjacency_rules.txt"] and not (
+        ignored_dirs - {"map"}
+    ).intersection(parts[:-2]):
+        return False
     for index, part in enumerate(parts):
         if part not in ignored_dirs:
             continue

@@ -38,6 +38,7 @@ env:
     localisation
     interface
     gfx/flags
+    map/adjacency_rules.txt
     tools
     resources/documentation
     .claude
@@ -127,6 +128,9 @@ jobs:
         steps.dispatch.outputs.mios }}
       checkout-repository: ${{ steps.resolve-ref.outputs.repository }}
       checkout-ref: ${{ steps.resolve-ref.outputs.ref }}
+      map-adjacency: >-
+        ${{ steps.filter.outputs.map-adjacency ||
+        steps.dispatch.outputs.map-adjacency }}
     steps:
       - name: Resolve validation ref
         id: resolve-ref
@@ -274,6 +278,9 @@ jobs:
               - 'history/**'
               - 'localisation/**'
               - 'interface/**'
+              # The variables validator counts global flags read by canal
+              # closures, so a change here must rebuild the workspace.
+              - 'map/adjacency_rules.txt'
               - '*.mod'
 
       # Dispatches have no diff, so run every full-repo group and skip style.
@@ -284,7 +291,8 @@ jobs:
           for out in common events history localisation ai-strategy \
               ai-navy ai-equipment factions characters scientist-traits \
               oob decisions scripted-loc scripted-guis interface \
-              national-focus on-actions scripted-effects mod content mios; do
+              national-focus on-actions scripted-effects mod content mios \
+              map-adjacency; do
             echo "$out=true" >> "$GITHUB_OUTPUT"
           done
           # style is diff-scoped (MD_STAGED_FILES from the changed-file
@@ -324,6 +332,9 @@ jobs:
             localisation
             interface
             gfx/flags
+            # Canal/strait closure logic; the variables validator counts the
+            # global flags read here as consumers.
+            map/adjacency_rules.txt
             *.mod
           sparse-checkout-cone-mode: false
 
@@ -527,7 +538,8 @@ jobs:
       needs.detect-changes.outputs.events == 'true' ||
       needs.detect-changes.outputs.history == 'true' ||
       needs.detect-changes.outputs.localisation == 'true' ||
-      needs.detect-changes.outputs.interface == 'true'
+      needs.detect-changes.outputs.interface == 'true' ||
+      needs.detect-changes.outputs.map-adjacency == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
