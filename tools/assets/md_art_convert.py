@@ -38,7 +38,7 @@ def imagemagick() -> list[str]:
 def image_size(path: Path) -> tuple[int, int]:
     identify = shutil.which("identify") or shutil.which("magick")
     argv = [identify]
-    if Path(identify).name == "magick":
+    if Path(identify).stem.lower() == "magick":
         argv.append("identify")
     out = subprocess.run(
         argv + ["-format", "%w %h", str(path)],
@@ -84,7 +84,7 @@ def write_tga(src: Path, dest: Path, size: tuple[int, int], resize: bool) -> Non
 
 def pixels_match(a: Path, b: Path) -> bool:
     argv = imagemagick()
-    if Path(argv[0]).name == "magick":
+    if Path(argv[0]).stem.lower() == "magick":
         argv.append("compare")
     else:
         argv = [shutil.which("compare") or "compare"]

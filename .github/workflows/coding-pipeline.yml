@@ -402,11 +402,16 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  # Style and common-mistakes checks for changed .txt files.
-  styling-check:
-    name: Style Check
+  # Diff-scoped style checks and structural content checks share one workspace.
+  content-checks:
+    name: Content Checks
     needs: [detect-changes, prepare-workspace]
-    if: needs.detect-changes.outputs.style == 'true'
+    if: >-
+      needs.detect-changes.outputs.common == 'true' ||
+      needs.detect-changes.outputs.events == 'true' ||
+      needs.detect-changes.outputs.history == 'true' ||
+      needs.detect-changes.outputs.localisation == 'true' ||
+      needs.detect-changes.outputs.mod == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -417,11 +422,13 @@ jobs:
           path: .
 
       - name: Set up Python
+        id: setup-python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
           python-version: "3.x"
 
       - name: Collect style-relevant files
+        if: needs.detect-changes.outputs.style == 'true'
         id: style-files
         env:
           # JSON array of changed .txt files under common/events/history.
@@ -460,52 +467,39 @@ jobs:
             python3 tools/linting/check_common_mistakes.py \
               --output validation-common-mistakes.log
 
+      - name: Verify style result files
+        if: always() && steps.style-files.outputs.has-files == 'true'
+        run: |
+          test -f validation-style-check.log
+          test -f validation-style-check.json
+          test -f validation-common-mistakes.log
+          test -f validation-common-mistakes.json
+
       - name: Upload style check results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always()
+        if: always() && steps.style-files.outputs.has-files == 'true'
         with:
           name: validation-style-check-results
           path: |
             validation-style-check.log
             validation-style-check.json
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
 
       - name: Upload common-mistakes results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always()
+        if: always() && steps.style-files.outputs.has-files == 'true'
         with:
           name: validation-common-mistakes-results
           path: |
             validation-common-mistakes.log
             validation-common-mistakes.json
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
 
-  # Structural checks that are otherwise only local pre-commit hooks.
-  structural-lint:
-    name: Structural Lint
-    needs: [detect-changes, prepare-workspace]
-    if: >-
-      needs.detect-changes.outputs.common == 'true' ||
-      needs.detect-changes.outputs.events == 'true' ||
-      needs.detect-changes.outputs.history == 'true' ||
-      needs.detect-changes.outputs.localisation == 'true' ||
-      needs.detect-changes.outputs.mod == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download prepared workspace
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: prepared-workspace
-          path: .
-
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
-        with:
-          python-version: "3.x"
-
+      # Run even when a style step failed, but not on broken setup or cancel.
       - name: Check localisation UTF-8 BOM
+        if: "!cancelled() && steps.setup-python.outcome == 'success'"
         run: python3 tools/linting/validate_localization_encoding.py
 
       # find, not `git ls-files`: the restored bundle has no .git. Only the
@@ -513,11 +507,13 @@ jobs:
       # `*.mod` cache path); resources/ isn't, so the exclusion is belt-and-
       # braces against future path-list additions.
       - name: Check .mod file encoding
+        if: "!cancelled() && steps.setup-python.outcome == 'success'"
         run: |
           find . -name '*.mod' -not -path './resources/*' -print0 \
             | xargs -0 -r python3 tools/linting/validate_mod_encoding.py
 
       - name: Check mod descriptor replace_path sync
+        if: "!cancelled() && steps.setup-python.outcome == 'success'"
         run: >-
           python3 tools/validation/validate_mod_descriptors.py --strict
           --no-color
@@ -622,6 +618,12 @@ jobs:
               --output validation-${{ matrix.validator.name }}.log
           fi
 
+      - name: Verify result files
+        if: always()
+        run: |
+          test -f validation-${{ matrix.validator.name }}.log
+          test -f validation-${{ matrix.validator.name }}.json
+
       - name: Upload results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
@@ -630,7 +632,7 @@ jobs:
           path: |
             validation-${{ matrix.validator.name }}.log
             validation-${{ matrix.validator.name }}.json
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
 
   # Targeted validators gated by their changed-file groups.
@@ -841,6 +843,12 @@ jobs:
               --no-color --workers 4 \
               --output validation-${{ matrix.validator.name }}.log
           fi
+      - name: Verify result files
+        if: always() && matrix.validator.should_run == 'true'
+        run: |
+          test -f validation-${{ matrix.validator.name }}.log
+          test -f validation-${{ matrix.validator.name }}.json
+
       - name: Upload results
         if: always() && matrix.validator.should_run == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -849,7 +857,7 @@ jobs:
           path: |
             validation-${{ matrix.validator.name }}.log
             validation-${{ matrix.validator.name }}.json
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
 
   # File paths and cross-platform case collisions.
@@ -916,6 +924,12 @@ jobs:
           python3 ../trusted/tools/validation/validate_file_paths.py \
             --path . --strict --no-color --output validation-file-paths.log
 
+      - name: Verify result files
+        if: always()
+        run: |
+          test -f pr-tree/validation-file-paths.log
+          test -f pr-tree/validation-file-paths.json
+
       - name: Upload results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
@@ -924,7 +938,7 @@ jobs:
           path: |
             pr-tree/validation-file-paths.log
             pr-tree/validation-file-paths.json
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
 
   # Collect results and post the PR report.
@@ -934,8 +948,7 @@ jobs:
     needs:
       - detect-changes
       - prepare-workspace
-      - styling-check
-      - structural-lint
+      - content-checks
       - validate-core
       - validate-targeted
       - validate-paths
@@ -953,7 +966,7 @@ jobs:
         github.event.pull_request.head.sha || github.sha }}
       VALIDATION_SCOPE: >-
         ${{ github.event_name == 'workflow_dispatch' &&
-        needs.structural-lint.result == 'success' &&
+        needs.content-checks.result == 'success' &&
         needs.validate-core.result == 'success' &&
         needs.validate-targeted.result == 'success' &&
         needs.validate-paths.result == 'success' && 'full' || 'partial' }}
@@ -1019,8 +1032,7 @@ jobs:
           steps.download-results.outcome == 'failure' ||
           needs.detect-changes.result == 'failure' ||
           needs.prepare-workspace.result == 'failure' ||
-          needs.styling-check.result == 'failure' ||
-          needs.structural-lint.result == 'failure' ||
+          needs.content-checks.result == 'failure' ||
           needs.validate-core.result == 'failure' ||
           needs.validate-targeted.result == 'failure' ||
           needs.validate-paths.result == 'failure'
