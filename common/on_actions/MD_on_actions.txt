@@ -781,39 +781,7 @@ on_actions = {
 
 	on_monthly = {
 		effect = {
-			# Authoritative resync of the cached diplomatic-relation arrays. Runs unconditionally
-			# because scripted give_guarantee / give_military_access never fire the on_actions that
-			# feed them, so a gated rebuild could only ever prune, never discover.
-			clear_array = guaranteeing_nations
-			clear_array = nations_with_military_access
-			clear_array = nations_who_sent_us_volunteers
-			clear_array = nations_we_sent_volunteers_to
-			every_country = {
-				limit = {
-					OR = {
-						has_guaranteed = ROOT
-						has_military_access_to = ROOT
-						ROOT = { has_volunteers_amount_from = { tag = PREV count > 0 } }
-						has_volunteers_amount_from = { tag = ROOT count > 0 }
-					}
-				}
-				if = {
-					limit = { has_guaranteed = ROOT }
-					add_to_array = { ROOT.guaranteeing_nations = THIS.id }
-				}
-				if = {
-					limit = { has_military_access_to = ROOT }
-					add_to_array = { ROOT.nations_with_military_access = THIS.id }
-				}
-				if = {
-					limit = { ROOT = { has_volunteers_amount_from = { tag = PREV count > 0 } } }
-					add_to_array = { ROOT.nations_who_sent_us_volunteers = THIS.id }
-				}
-				if = {
-					limit = { has_volunteers_amount_from = { tag = ROOT count > 0 } }
-					add_to_array = { ROOT.nations_we_sent_volunteers_to = THIS.id }
-				}
-			}
+			diplomatic_action_cached_array_resync = yes
 
 			# Triggers for one nation
 			if = { limit = { NOT = { has_global_flag = on_monthly_done } }

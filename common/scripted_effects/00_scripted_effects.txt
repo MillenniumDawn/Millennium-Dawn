@@ -3007,3 +3007,29 @@ update_canal_blockage_flags = {
 	}
 	else = { clr_global_flag = GLOBAL_KIEL_CANAL_BLOCKED }
 }
+
+# Purpose: Resyncs the diplomatic actions arrays for use in replacing various functions
+diplomatic_action_cached_array_resync = {
+	clear_array = guaranteeing_nations
+	clear_array = nations_with_military_access
+	clear_array = nations_who_sent_us_volunteers
+	clear_array = nations_we_sent_volunteers_to
+	every_country = {
+		if = {
+			limit = { has_guaranteed = ROOT }
+			add_to_array = { ROOT.guaranteeing_nations = THIS.id }
+		}
+		if = {
+			limit = { has_military_access_to = ROOT }
+			add_to_array = { ROOT.nations_with_military_access = THIS.id }
+		}
+		if = {
+			limit = { ROOT = { has_volunteers_amount_from = { tag = PREV count > 0 } } }
+			add_to_array = { ROOT.nations_who_sent_us_volunteers = THIS.id }
+		}
+		if = {
+			limit = { has_volunteers_amount_from = { tag = ROOT count > 0 } }
+			add_to_array = { ROOT.nations_we_sent_volunteers_to = THIS.id }
+		}
+	}
+}
