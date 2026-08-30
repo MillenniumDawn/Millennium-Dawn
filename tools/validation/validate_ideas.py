@@ -118,6 +118,7 @@ _NAME_OVERRIDE_LINE = re.compile(r"^\s+name\s*=\s*([A-Za-z0-9_.]+)", re.MULTILIN
 _PICTURE_VALUE_LINE = re.compile(r"^\s+picture\s*=\s*([^\s#]+)", re.MULTILINE)
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _ALLOWED_BLOCK_START = re.compile(r"\ballowed\s*=\s*\{")
+_AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
 # `\btag` does not match inside `original_tag` (the preceding `_` is a word char),
 # so these two are disjoint. The capture spans 3+ chars so runtime civil-war
 # tags (`ISR_CW_0`) are caught, not just the 3-letter base tag.
@@ -326,7 +327,7 @@ def _parse_ideas_from_file(
     # per category set instead of replacing them in place.
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "ideas.defs.v4",
+        "ideas.defs.v5",
         filepath,
         f"{text}\x00{category_key}",
         lambda: _parse_ideas_from_text(text, slotless_categories),
@@ -449,6 +450,19 @@ def _parse_ideas_from_text(
                                 detail=detail,
                             )
                         )
+
+                if (
+                    category_name in slotless_categories
+                    and _AVAILABLE_BLOCK_START.search(idea_text)
+                ):
+                    issues.append(
+                        IdeaIssue(
+                            current_idea,
+                            cat,
+                            current_idea_line,
+                            "available-in-slotless-category",
+                        )
+                    )
 
                 if _on_add_is_log_only(idea_text):
                     issues.append(
@@ -809,7 +823,7 @@ class Validator(BaseValidator):
         self._log_section("Checking idea definition quality...")
 
         if not self.slotless_categories:
-            self.log("  No idea categories parsed — allowed-block check is off")
+            self.log("  No idea categories parsed — slotless-gate checks are off")
 
         idea_files = self._collect_files(["common/ideas/**/*.txt"])
 
@@ -854,6 +868,16 @@ class Validator(BaseValidator):
                         f"'{issue.idea_name}' has an allowed block in {issue.category}"
                         " (that category has no slot, so add_idea is the only way in"
                         " and the gate is never consulted — delete it)",
+                        Severity.ERROR,
+                    )
+                elif issue.issue_type == "available-in-slotless-category":
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' has an available block in {issue.category}"
+                        " (that category has no slot, so add_idea is the only way in"
+                        " and the gate is never consulted — delete it;"
+                        " use cancel if the idea should remove itself)",
                         Severity.ERROR,
                     )
                 elif issue.issue_type == "cancel-always-no":

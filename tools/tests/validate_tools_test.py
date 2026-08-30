@@ -4,6 +4,9 @@ Runs against a synthetic tools/ tree under tmp_path — the validator derives
 its scan root from mod_path, so no production files are touched.
 """
 
+import os
+
+import validate_tools as V
 from validate_tools import ToolsValidator
 
 _HEALTHY = (
@@ -53,6 +56,27 @@ def test_syntax_error_flagged(tmp_path):
     assert "broken_script.py" in validator._issues[0].message
 
 
+def test_index_mode_controls_executable_check(tmp_path, monkeypatch):
+    executable = _write_script(tmp_path, "executable.py", _HEALTHY)
+    regular = _write_script(tmp_path, "regular.py", _HEALTHY)
+
+    def indexed_files(*args, **kwargs):
+        return V.subprocess.CompletedProcess(
+            args[0],
+            0,
+            "100755 hash 0\ttools/executable.py\n" "100644 hash 0\ttools/regular.py\n",
+            "",
+        )
+
+    monkeypatch.setattr(V.subprocess, "run", indexed_files)
+    validator = ToolsValidator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    indexed = validator._indexed_executable_paths()
+
+    assert indexed == {executable.resolve()}
+    assert validator._is_executable(executable, indexed)
+    assert not validator._is_executable(regular, indexed)
+
+
 def test_style_warnings_for_bare_script(tmp_path):
     # No shebang, no main guard, not executable — warnings only, not errors.
     _write_script(tmp_path, "bare_script.py", "x = 1\n", mode=0o644)
@@ -60,7 +84,10 @@ def test_style_warnings_for_bare_script(tmp_path):
     assert validator.errors_found == 0
     output = "\n".join(validator.output_lines)
     assert "missing python shebang" in output
-    assert "not executable" in output
+    if os.name == "nt":
+        assert "not executable" not in output
+    else:
+        assert "not executable" in output
     assert "no main guard" in output
 
 
@@ -117,7 +144,10 @@ def test_guarded_script_checked_even_when_imported(tmp_path):
     )
     validator = _run(tmp_path)
     output = "\n".join(validator.output_lines)
-    assert "not executable — dual_use.py" in output
+    if os.name == "nt":
+        assert "not executable" not in output
+    else:
+        assert "not executable — dual_use.py" in output
     assert "no main guard or main() — dual_use.py" not in output
     assert "missing python shebang — dual_use.py" not in output
 

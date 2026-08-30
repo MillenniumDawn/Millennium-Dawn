@@ -17790,7 +17790,8 @@ focus_tree = {
 				}
 			}
 			else = {
-				any_country = {
+				any_country_with_original_tag = {
+					original_tag_to_check = CDI
 					has_country_flag = CDI_victor_of_the_ivory_coast_war
 					has_cosmetic_tag = CDI
 					has_civil_war = yes
@@ -18455,8 +18456,13 @@ focus_tree = {
 					has_idea = non_power
 				}
 			}
-			any_country = {
-				has_idea = cfa_franc
+			custom_trigger_tooltip = {
+				tooltip = FRA_cfa_franc_user_exists_tt
+				any_of_scopes = {
+					array = global.sub_saharan_nations
+					exists = yes
+					has_idea = cfa_franc
+				}
 			}
 		}
 
@@ -18618,10 +18624,15 @@ focus_tree = {
 					has_government = nationalist
 				}
 			}
-			any_country = {
-				OR = {
-					has_idea = cfa_franc
-					has_idea = cfa_franc_2
+			custom_trigger_tooltip = {
+				tooltip = FRA_eco_candidate_exists_tt
+				any_of_scopes = {
+					array = global.sub_saharan_nations
+					exists = yes
+					OR = {
+						has_idea = cfa_franc
+						has_idea = cfa_franc_2
+					}
 				}
 			}
 		}
@@ -18635,45 +18646,49 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_introduce_the_eco"
-			every_other_country = {
-				limit = {
-					OR = {
-						has_idea = cfa_franc
-						has_idea = cfa_franc_2
-					}
-					influence_higher_15 = yes
-				}
-				country_event = { id = france_md.509 days = 1 }
-				newline = yes
-				custom_effect_tooltip = TT_IF_THEY_ACCEPT
-				effect_tooltip = {
-					if = {
-						limit = { has_idea = cfa_franc }
-						swap_ideas = {
-							remove_idea = cfa_franc
-							add_idea = the_eco
+			for_each_scope_loop = {
+				array = global.sub_saharan_nations
+				if = {
+					limit = {
+						exists = yes
+						OR = {
+							has_idea = cfa_franc
+							has_idea = cfa_franc_2
 						}
+						influence_higher_15 = yes
 					}
-					else_if = {
-						limit = { has_idea = cfa_franc_2 }
-						swap_ideas = {
-							remove_idea = cfa_franc_2
-							add_idea = the_eco
+					country_event = { id = france_md.509 days = 1 }
+					newline = yes
+					custom_effect_tooltip = TT_IF_THEY_ACCEPT
+					effect_tooltip = {
+						if = {
+							limit = { has_idea = cfa_franc }
+							swap_ideas = {
+								remove_idea = cfa_franc
+								add_idea = the_eco
+							}
 						}
+						else_if = {
+							limit = { has_idea = cfa_franc_2 }
+							swap_ideas = {
+								remove_idea = cfa_franc_2
+								add_idea = the_eco
+							}
+						}
+						add_opinion_modifier = {
+							target = FRA
+							modifier = FRA_supported_financial_independence
+						}
+						set_temp_variable = { percent_change = 0.5 }
+						set_temp_variable = { tag_index = FRA.id }
+						change_influence_percentage = yes
 					}
-					add_opinion_modifier = {
-						target = FRA
-						modifier = FRA_supported_financial_independence
-					}
-					set_temp_variable = { percent_change = 0.5 }
-					set_temp_variable = { tag_index = FRA.id }
-					change_influence_percentage = yes
-				}
-				custom_effect_tooltip = TT_IF_THEY_REJECT
-				effect_tooltip = {
-					add_opinion_modifier = {
-						target = FRA
-						modifier = FRA_rejected_financial_independence
+					custom_effect_tooltip = TT_IF_THEY_REJECT
+					effect_tooltip = {
+						add_opinion_modifier = {
+							target = FRA
+							modifier = FRA_rejected_financial_independence
+						}
 					}
 				}
 			}

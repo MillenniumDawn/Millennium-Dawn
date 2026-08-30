@@ -497,7 +497,6 @@ CHI_sco_category = {
 
 		available = {
 			NOT = { has_war = yes }
-			has_political_power > 50
 			has_stability > 0.25
 		}
 
@@ -1894,7 +1893,6 @@ CHI_subcontinent_strategy = {
 
 		available = {
 			NOT = { has_war_with = PAK }
-			has_political_power > 25
 		}
 
 		cost = 25
@@ -1932,7 +1930,6 @@ CHI_subcontinent_strategy = {
 				NOT = { has_war_with = CHI }
 				influence_higher_30 = yes
 			}
-			has_political_power > 30
 		}
 
 		cost = 30
@@ -1961,7 +1958,6 @@ CHI_subcontinent_strategy = {
 
 		available = {
 			NOT = { has_war_with = RAJ }
-			has_political_power > 30
 			RAJ = {
 				has_opinion = { target = CHI value > 24 }
 			}
@@ -6522,7 +6518,6 @@ CHI_japan_strategy = {
 
 		available = {
 			NOT = { has_war_with = CHI }
-			has_political_power > 99
 		}
 
 		cost = 100
@@ -7662,7 +7657,6 @@ CHI_BRI_management = {
 
 		target_root_trigger = {
 			has_completed_focus = CHI_Win_Win_Cooperation
-			has_political_power > 99
 		}
 
 		target_array = CHI_bri_debtors
@@ -7700,7 +7694,6 @@ CHI_BRI_management = {
 
 		target_root_trigger = {
 			has_completed_focus = CHI_Predatory_Lending_Doctrine
-			has_political_power > 49
 		}
 
 		target_array = CHI_bri_debtors
@@ -7791,7 +7784,6 @@ CHI_BRI_management = {
 
 		target_root_trigger = {
 			has_completed_focus = CHI_Digital_Silk_Road_Initiative
-			has_political_power > 74
 			has_war = no
 			check_variable = { var = CHI_bri_treasury value = 80 compare = greater_than_or_equals }
 			check_variable = { var = treasury value = 80 compare = greater_than_or_equals }
@@ -8408,7 +8400,6 @@ CHI_VEN_petrocaribe_program = {
 		visible = { country_exists = VEN VEN = { has_opinion_modifier = CHI_loans_for_oil_partner } }
 
 		available = {
-			has_political_power > 74
 			custom_trigger_tooltip = {
 				tooltip = CHI_bri_treasury_gt_49_tt
 				check_variable = { CHI_bri_treasury > 49 }
@@ -8442,7 +8433,6 @@ CHI_VEN_petrocaribe_program = {
 		visible = { country_exists = VEN }
 
 		available = {
-			has_political_power > 49
 			custom_trigger_tooltip = {
 				tooltip = CHI_bri_treasury_gt_29_tt
 				check_variable = { CHI_bri_treasury > 29 }
@@ -8479,7 +8469,6 @@ CHI_VEN_petrocaribe_program = {
 		}
 
 		available = {
-			has_political_power > 74
 			custom_trigger_tooltip = {
 				tooltip = CHI_bri_treasury_gt_49_tt
 				check_variable = { CHI_bri_treasury > 49 }
@@ -8508,12 +8497,10 @@ CHI_LATAM_security_options = {
 		icon = SWI_support_humanitarian_efforts
 
 		available = {
-			has_political_power > 49
 			custom_trigger_tooltip = {
 				tooltip = CHI_bri_treasury_gt_19_tt
 				check_variable = { CHI_bri_treasury > 19 }
 			}
-			any_other_country = { is_South_America = yes has_opinion_modifier = CHI_security_umbrella }
 		}
 
 		cost = 50
@@ -8544,9 +8531,7 @@ CHI_LATAM_security_options = {
 		icon = generic_army_support
 
 		available = {
-			has_political_power > 74
 			has_army_experience > 49
-			any_other_country = { is_South_America = yes has_opinion_modifier = CHI_security_umbrella }
 		}
 
 		cost = 75
@@ -8572,11 +8557,6 @@ CHI_LATAM_security_options = {
 
 	CHI_LATAM_intel_sharing_pact = {
 		icon = recruit_operative
-
-		available = {
-			has_political_power > 49
-			any_other_country = { is_South_America = yes has_opinion_modifier = CHI_security_umbrella }
-		}
 
 		cost = 50
 		days_remove = 90
@@ -8605,7 +8585,6 @@ CHI_pacific_pla_training = {
 		visible = { country_exists = SOL }
 
 		available = {
-			has_political_power > 49
 			has_army_experience > 24
 		}
 
@@ -8633,9 +8612,15 @@ CHI_pacific_pla_training = {
 		icon = generic_naval
 
 		available = {
-			has_political_power > 49
 			has_navy_experience > 24
-			any_other_country = { has_country_flag = oceania_nation_flag has_opinion_modifier = CHI_pacific_pivot_partner }
+			custom_trigger_tooltip = {
+				tooltip = CHI_pacific_pivot_partner_exists_tt
+				any_of_scopes = {
+					array = global.oceania_nations
+					exists = yes
+					has_opinion_modifier = CHI_pacific_pivot_partner
+				}
+			}
 		}
 
 		cost = 50
@@ -8646,13 +8631,19 @@ CHI_pacific_pla_training = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_pla_joint_maritime_exercise"
 			navy_experience = -25
-			every_other_country = {
-				limit = { has_country_flag = oceania_nation_flag has_opinion_modifier = CHI_pacific_pivot_partner }
-				navy_experience = 10
-				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = CHI }
-				set_temp_variable = { influence_target = THIS }
-				change_influence_percentage = yes
+			for_each_scope_loop = {
+				array = global.oceania_nations
+				if = {
+					limit = {
+						exists = yes
+						has_opinion_modifier = CHI_pacific_pivot_partner
+					}
+					navy_experience = 10
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
 			}
 		}
 
@@ -9478,7 +9469,6 @@ CHI_industrial_investment_category = {
 		icon = generic_construction
 		fire_only_once = yes
 		visible = { has_completed_focus = CHI_caojing_seven_chem_bases }
-		available = { has_political_power > 99 }
 		cost = 100
 
 		complete_effect = {
@@ -9510,7 +9500,6 @@ CHI_industrial_investment_category = {
 		icon = hol_exchange_intelligence_data
 		fire_only_once = yes
 		visible = { has_completed_focus = CHI_caojing_seven_chem_bases }
-		available = { has_political_power > 74 }
 		cost = 75
 
 		complete_effect = {
@@ -9542,7 +9531,6 @@ CHI_industrial_investment_category = {
 		icon = hol_exchange_intelligence_data
 		fire_only_once = yes
 		visible = { has_completed_focus = CHI_caojing_seven_chem_bases }
-		available = { has_political_power > 74 }
 		cost = 75
 
 		complete_effect = {
@@ -9574,7 +9562,6 @@ CHI_industrial_investment_category = {
 		icon = hol_exchange_intelligence_data
 		fire_only_once = yes
 		visible = { has_completed_focus = CHI_caojing_seven_chem_bases }
-		available = { has_political_power > 74 }
 		cost = 75
 
 		complete_effect = {
@@ -9600,7 +9587,6 @@ CHI_industrial_investment_category = {
 		icon = sau_oil
 		fire_only_once = yes
 		visible = { has_completed_focus = CHI_caojing_seven_chem_bases }
-		available = { has_political_power > 74 }
 		cost = 75
 
 		complete_effect = {
@@ -9641,7 +9627,6 @@ CHI_industrial_investment_category = {
 			}
 		}
 
-		available = { has_political_power > 39 }
 		cost = 40
 		days_re_enable = 60
 
@@ -9683,7 +9668,6 @@ CHI_industrial_investment_category = {
 			}
 		}
 
-		available = { has_political_power > 49 }
 		cost = 50
 		days_re_enable = 180
 
@@ -9714,7 +9698,6 @@ CHI_industrial_investment_category = {
 		icon = generic_merge_plant_materiel
 		fire_only_once = yes
 		visible = { has_completed_focus = CHI_domestic_eda }
-		available = { has_political_power > 74 }
 		cost = 75
 
 		complete_effect = {
@@ -9747,7 +9730,6 @@ CHI_industrial_investment_category = {
 		icon = generic_decision
 		fire_only_once = yes
 		visible = { has_completed_focus = CHI_smee_lithography }
-		available = { has_political_power > 99 }
 		cost = 100
 
 		complete_effect = {
@@ -9797,7 +9779,6 @@ CHI_industrial_investment_category = {
 	CHI_critical_minerals_export_license_decision = {
 		icon = generic_decision
 		visible = { has_completed_focus = CHI_strategic_materials }
-		available = { has_political_power > 99 }
 		cost = 100
 		days_remove = 90
 		days_re_enable = 365
@@ -9832,7 +9813,6 @@ CHI_industrial_investment_category = {
 		icon = generic_decision
 		fire_only_once = yes
 		visible = { has_completed_focus = CHI_memory_independence }
-		available = { has_political_power > 149 }
 		cost = 150
 
 		complete_effect = {
@@ -9881,7 +9861,6 @@ CHI_industrial_investment_category = {
 		}
 
 		available = {
-			has_political_power > 49
 			check_variable = {
 				tooltip = CHI_big_fund_iii_allocate_tranche_decision_tt
 				var = CHI_bfiii_stacks
@@ -9922,7 +9901,6 @@ CHI_industrial_investment_category = {
 
 		available = {
 			country_exists = USA
-			has_political_power > 119
 		}
 
 		cost = 120
@@ -9946,6 +9924,478 @@ CHI_industrial_investment_category = {
 				factor = 0
 				has_political_power < 120
 			}
+		}
+	}
+
+	# The frontier AI laboratories. Each choice funds a one-year programme, and only one programme can run at a time.
+	CHI_ernie_national_champion_decision = {
+		icon = GFX_decision_generic_form_nation
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_ernie_structure_set }
+			date > 2023.3.16
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			has_stability > 0.50
+			has_war = no
+		}
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_ernie_national_champion_decision"
+			set_country_flag = CHI_ernie_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			add_timed_idea = {
+				idea = CHI_ernie_national_champion
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = { factor = 0 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	CHI_ernie_consumer_search_decision = {
+		icon = GFX_decision_generic_factory
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_ernie_structure_set }
+			date > 2023.3.16
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			custom_trigger_tooltip = {
+				tooltip = CHI_ai_lab_treasury_20_tt
+				check_variable = { treasury > 20 }
+			}
+			has_war = no
+		}
+
+		cost = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_ernie_consumer_search_decision"
+			set_country_flag = CHI_ernie_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			set_temp_variable = { treasury_change = -20.00 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = CHI_ernie_consumer_search
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 5 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 20 } }
+		}
+	}
+
+	CHI_qwen_open_ecosystem_decision = {
+		icon = GFX_decision_generic_research
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_qwen_structure_set }
+			date > 2023.8.1
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			custom_trigger_tooltip = {
+				tooltip = CHI_ai_lab_treasury_15_tt
+				check_variable = { treasury > 15 }
+			}
+			num_of_civilian_factories > 50
+			has_war = no
+		}
+
+		cost = 70
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_qwen_open_ecosystem_decision"
+			set_country_flag = CHI_qwen_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			set_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = CHI_qwen_open_ecosystem
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = { factor = 5 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 15 } }
+		}
+	}
+
+	CHI_qwen_cloud_captive_decision = {
+		icon = GFX_decision_generic_factory
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_qwen_structure_set }
+			date > 2023.4.1
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			custom_trigger_tooltip = {
+				tooltip = CHI_ai_lab_treasury_20_tt
+				check_variable = { treasury > 20 }
+			}
+			has_war = no
+		}
+
+		cost = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_qwen_cloud_captive_decision"
+			set_country_flag = CHI_qwen_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			set_temp_variable = { treasury_change = -20.00 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = CHI_qwen_cloud_captive
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 0 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 20 } }
+		}
+	}
+
+	CHI_zhipu_academic_pipeline_decision = {
+		icon = GFX_decision_generic_research
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_zhipu_structure_set }
+			date > 2020.1.1
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			has_stability > 0.50
+			has_war = no
+		}
+
+		cost = 65
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_zhipu_academic_pipeline_decision"
+			set_country_flag = CHI_zhipu_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			add_timed_idea = {
+				idea = CHI_zhipu_academic_pipeline
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = { factor = 5 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	CHI_zhipu_state_procurement_decision = {
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_zhipu_structure_set }
+			date > 2020.1.1
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			custom_trigger_tooltip = {
+				tooltip = CHI_ai_lab_treasury_20_tt
+				check_variable = { treasury > 20 }
+			}
+			has_war = no
+		}
+
+		cost = 55
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_zhipu_state_procurement_decision"
+			set_country_flag = CHI_zhipu_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			set_temp_variable = { treasury_change = -20.00 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = CHI_zhipu_state_procurement
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 0 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 20 } }
+		}
+	}
+
+	CHI_doubao_consumer_scale_decision = {
+		icon = GFX_decision_generic_factory
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_doubao_structure_set }
+			date > 2023.8.1
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			custom_trigger_tooltip = {
+				tooltip = CHI_ai_lab_treasury_20_tt
+				check_variable = { treasury > 20 }
+			}
+			has_war = no
+		}
+
+		cost = 70
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_doubao_consumer_scale_decision"
+			set_country_flag = CHI_doubao_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			set_temp_variable = { treasury_change = -20.00 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = CHI_doubao_consumer_scale
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = { factor = 5 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 20 } }
+		}
+	}
+
+	CHI_doubao_recommendation_core_decision = {
+		icon = GFX_decision_generic_research
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_doubao_structure_set }
+			date > 2023.8.1
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			has_stability > 0.50
+			has_war = no
+		}
+
+		cost = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_doubao_recommendation_core_decision"
+			set_country_flag = CHI_doubao_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			add_timed_idea = {
+				idea = CHI_doubao_recommendation_core
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 0 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	CHI_deepseek_open_weight_release_decision = {
+		icon = GFX_decision_generic_research
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_deepseek_structure_set }
+			date > 2023.7.1
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			custom_trigger_tooltip = {
+				tooltip = CHI_ai_lab_treasury_15_tt
+				check_variable = { treasury > 15 }
+			}
+			num_of_civilian_factories > 50
+			has_war = no
+		}
+
+		cost = 70
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_deepseek_open_weight_release_decision"
+			set_country_flag = CHI_deepseek_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			set_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = CHI_deepseek_open_weight_release
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = { factor = 5 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 15 } }
+		}
+	}
+
+	CHI_deepseek_state_aligned_lab_decision = {
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_deepseek_structure_set }
+			date > 2023.7.1
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			has_stability > 0.50
+			has_war = no
+		}
+
+		cost = 80
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_deepseek_state_aligned_lab_decision"
+			set_country_flag = CHI_deepseek_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			add_timed_idea = {
+				idea = CHI_deepseek_state_aligned_lab
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = { factor = 0 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	CHI_moonshot_long_context_decision = {
+		icon = GFX_decision_generic_research
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_moonshot_structure_set }
+			date > 2023.10.1
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			custom_trigger_tooltip = {
+				tooltip = CHI_ai_lab_treasury_15_tt
+				check_variable = { treasury > 15 }
+			}
+			num_of_civilian_factories > 50
+			has_war = no
+		}
+
+		cost = 65
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_moonshot_long_context_decision"
+			set_country_flag = CHI_moonshot_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			set_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = CHI_moonshot_long_context
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = { factor = 5 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 15 } }
+		}
+	}
+
+	CHI_moonshot_enterprise_pivot_decision = {
+		icon = GFX_decision_generic_factory
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = CHI_ai_lab_program_active }
+			NOT = { has_country_flag = CHI_moonshot_structure_set }
+			date > 2023.10.1
+		}
+
+		available = {
+			has_tech = artificial_intelligence_8
+			custom_trigger_tooltip = {
+				tooltip = CHI_ai_lab_treasury_20_tt
+				check_variable = { treasury > 20 }
+			}
+			has_war = no
+		}
+
+		cost = 55
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_moonshot_enterprise_pivot_decision"
+			set_country_flag = CHI_moonshot_structure_set
+			set_country_flag = { flag = CHI_ai_lab_program_active value = 1 days = 365 }
+			set_temp_variable = { treasury_change = -20.00 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = CHI_moonshot_enterprise_pivot
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 0 is_historical_focus_on = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 20 } }
 		}
 	}
 }
@@ -10547,7 +10997,7 @@ CHI_megaprojects = {
 
 		custom_cost_trigger = { check_variable = { treasury > 26 } }
 		custom_cost_text = cost_26_0
-		cost = 0
+
 		fire_only_once = yes
 		days_remove = 1095
 		modifier = { civilian_factory_use = 7 }
