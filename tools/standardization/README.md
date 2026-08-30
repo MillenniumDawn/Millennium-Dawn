@@ -99,7 +99,7 @@ python3 standardize_ideas.py input.txt -o output.txt --backup --verbose
 
 Surgical sweeps for two gates that never fail. Unlike the standardizers above they rewrite only the blocks they remove, so the diff carries no reformatting.
 
-`strip_idea_allowed_gates.py` drops the `allowed` block from every idea in a category with no slot. Nothing picks from `country` or `hidden_ideas`, so `add_idea` is the only way in and it never consults `allowed`. Categories come from `common/idea_tags/`, so a new slotless one is covered without editing the script.
+`strip_idea_allowed_gates.py` drops `allowed` and `available` blocks from every idea in a category with no slot. Nothing picks from `country` or `hidden_ideas`, so `add_idea` is the only way in and it never consults either gate. Use `cancel` if the idea should remove itself. Categories come from `common/idea_tags/`, so a new slotless one is covered without editing the script.
 
 `strip_dynmod_tag_gates.py` drops `always = yes` and top-level `original_tag` / `tag` triggers from a dynamic modifier's `enable` block, removing the block when that empties it. `enable` is re-evaluated at runtime, so these cost something every pass. Only top-level triggers are touched: one inside `OR` / `NOT` is an alternative or an exclusion, and `country_exists`, `has_idea` and `has_completed_focus` stay, because those go false while the modifier is still attached. Every strip is reported — "only this country ever attaches it" is a claim about the rest of the repo that the script does not verify.
 
