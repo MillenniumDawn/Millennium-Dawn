@@ -8,12 +8,17 @@ definitions. Targeted modifiers (XXX_opinion, XXX_autonomy_gain) are skipped.
 import os
 import re
 import sys
-from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Dict, FrozenSet, Iterator, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import compute_line_offsets, extract_block_from_text, line_for_offset
+from shared_utils import (
+    blank_quoted_strings,
+    compute_line_offsets,
+    extract_block_from_text,
+    line_for_offset,
+)
 from validator_common import (
     BaseValidator,
     FileOpener,
@@ -390,6 +395,84 @@ def _load_documented_modifiers(
 
 _IDEA_SLOT_RE = re.compile(r"^\s*(?:character_)?slot\s*=\s*([A-Za-z][A-Za-z0-9_]*)")
 
+_BRACE_OR_ENABLE_RE = re.compile(r"\benable\s*=\s*\{|\{|\}")
+# The lookbehind keeps `tag` off the tail of `has_cosmetic_tag`; matching a
+# token rather than a whole line is what stops a gate hiding on a shared line.
+_GATE_RE = re.compile(
+    r"(?<![A-Za-z0-9_])"
+    r"(?:(?:original_tag|tag)\s*=\s*(?P<tag>[A-Z]{3})|always\s*=\s*yes)"
+    r"(?=\s|$)"
+)
+
+
+def _find_top_level_enable(body: str):
+    """Match the modifier's own `enable` block, ignoring any nested one.
+
+    `enable` inside `remove_trigger` is a different gate on a different
+    schedule; flagging its contents would contradict the stripper, which only
+    touches a direct child of the modifier.
+    """
+    depth = 0
+    for match in _BRACE_OR_ENABLE_RE.finditer(body):
+        token = match.group(0)
+        if token == "}":
+            depth -= 1
+        elif token == "{":
+            depth += 1
+        else:
+            if depth == 0:
+                return match
+            depth += 1
+    return None
+
+
+def _redundant_enable_gates(body: str) -> List[Tuple[str, int]]:
+    """Return (message, line offset) for triggers an `enable` block never needs.
+
+    `enable` is re-evaluated at runtime, unlike an idea's `allowed`, so a
+    trigger that can never be false costs something every time. Only top-level
+    triggers count: one inside OR / NOT is an alternative or an exclusion.
+    """
+    # Blanking keeps offsets and line counts intact while stopping a brace
+    # inside a quoted name from throwing the depth scan off by one.
+    body = blank_quoted_strings(body)
+    match = _find_top_level_enable(body)
+    if not match:
+        return []
+    enable_body, _ = extract_block_from_text(body, match.start())
+    if not enable_body:
+        return []
+
+    depths = []
+    depth = 0
+    for char in enable_body:
+        depths.append(depth)
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+
+    base = body[: match.start()].count("\n")
+    findings: List[Tuple[str, int]] = []
+    for gate in _GATE_RE.finditer(enable_body):
+        if depths[gate.start()] != 0:
+            continue
+        tag = gate.group("tag")
+        if tag:
+            message = (
+                f"enable gates on {tag}, but add_dynamic_modifier already chose "
+                "who gets this modifier — delete the tag check; if a second "
+                "country really is meant to hold it inert, gate on the state "
+                "that differs between them instead"
+            )
+        else:
+            message = (
+                "enable = { always = yes } is what an absent enable block "
+                "already means — delete it"
+            )
+        findings.append((message, base + enable_body.count("\n", 0, gate.start())))
+    return findings
+
 
 def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
     """Every idea slot auto-generates a `<slot>_cost_factor` modifier.
@@ -411,9 +494,17 @@ def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
     return names
 
 
-def _extract_top_level_definition_blocks(text: str) -> List[Tuple[str, int, str]]:
-    """Return (name, line, body) for blocks assigned at file scope."""
-    blocks: List[Tuple[str, int, str]] = []
+def _extract_top_level_definition_blocks(
+    text: str,
+) -> List[Tuple[str, int, int, str]]:
+    """Return (name, name_line, body_line, body) for file-scope blocks.
+
+    `body` starts after the opening brace, so a caller adding an offset
+    within the body must add it to `body_line`. The two lines differ when
+    the brace sits on its own line, and using `name_line` there reports
+    every finding short by the gap.
+    """
+    blocks: List[Tuple[str, int, int, str]] = []
     cursor = 0
     in_string = False
     while cursor < len(text):
@@ -447,8 +538,9 @@ def _extract_top_level_definition_blocks(text: str) -> List[Tuple[str, int, str]
         body, end = extract_block_from_text(text, opener)
         if end == -1:
             break
-        line = text.count("\n", 0, cursor) + 1
-        blocks.append((text[cursor:end_name], line, body))
+        name_line = text.count("\n", 0, cursor) + 1
+        body_line = text.count("\n", 0, opener) + 1
+        blocks.append((text[cursor:end_name], name_line, body_line, body))
         cursor = end
     return blocks
 
@@ -457,7 +549,7 @@ def _extract_top_level_definition_names(text: str) -> Set[str]:
     """Return valid names assigned to blocks at the file's top level."""
     return {
         name
-        for name, _line, _body in _extract_top_level_definition_blocks(text)
+        for name, _nl, _bl, _body in _extract_top_level_definition_blocks(text)
         if _MODIFIER_NAME_RE.match(name) and name not in _NON_MODIFIER_KEYS
     }
 
@@ -475,10 +567,10 @@ def _harvest_md_sub_unit_names(unit_files: List[str]) -> Set[str]:
         )
         if not text or "sub_units" not in text:
             continue
-        for name, _line, body in _extract_top_level_definition_blocks(text):
+        for name, _nl, _bl, body in _extract_top_level_definition_blocks(text):
             if name != "sub_units":
                 continue
-            for sub_name, _l, _b in _extract_top_level_definition_blocks(body):
+            for sub_name, _nl, _bl, _b in _extract_top_level_definition_blocks(body):
                 names.add(sub_name)
     return names
 
@@ -492,7 +584,7 @@ def _harvest_md_operation_names(operation_files: List[str]) -> Set[str]:
         )
         if not text:
             continue
-        for name, _line, _body in _extract_top_level_definition_blocks(text):
+        for name, _nl, _bl, _body in _extract_top_level_definition_blocks(text):
             names.add(name)
     return names
 
@@ -500,7 +592,8 @@ def _harvest_md_operation_names(operation_files: List[str]) -> Set[str]:
 def _extract_dynamic_modifier_names(text: str) -> List[Tuple[str, int]]:
     """Return names and lines of top-level dynamic modifier definitions."""
     return [
-        (name, line) for name, line, _body in _extract_top_level_definition_blocks(text)
+        (name, name_line)
+        for name, name_line, _bl, _body in _extract_top_level_definition_blocks(text)
     ]
 
 
@@ -530,9 +623,11 @@ def _check_file_for_unknown_modifiers(
         if is_dynamic:
             # Dynamic modifier blocks can run to dozens of keys — report each
             # key's own line instead of the enclosing block's header line.
-            for _name, block_line, body in _extract_top_level_definition_blocks(text):
+            for _name, _nl, body_line, body in _extract_top_level_definition_blocks(
+                text
+            ):
                 for name, offset in _extract_modifier_entries_from_body(body):
-                    parsed.append((name, rel, block_line + offset))
+                    parsed.append((name, rel, body_line + offset))
         else:
             for lineno, body in _extract_modifier_blocks(text):
                 if _is_ai_weight_block(body):
@@ -687,6 +782,21 @@ class Validator(BaseValidator):
             category="unknown-modifier",
         )
 
+    def _iter_dynamic_modifier_files(
+        self, ignore_staged: bool = False
+    ) -> Iterator[Tuple[str, str, str]]:
+        files = self._collect_files(
+            ["common/dynamic_modifiers/**/*.txt"], ignore_staged=ignore_staged
+        )
+        for filepath in files:
+            if should_skip_file(filepath):
+                continue
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if text:
+                yield filepath, os.path.relpath(filepath, self.mod_path), text
+
     def validate_dynamic_modifier_name_loc(self):
         """Check that dynamic modifiers with a _TT/_desc loc entry also have a
         bare-name loc key — the in-game modifier header renders the bare key,
@@ -694,21 +804,11 @@ class Validator(BaseValidator):
         self._log_section("Checking dynamic modifier name loc references...")
 
         loc_keys = self._load_localisation_keys()
-        files = self._collect_files(
-            ["common/dynamic_modifiers/**/*.txt"], ignore_staged=True
-        )
+        files = list(self._iter_dynamic_modifier_files(ignore_staged=True))
         self.log(f"  Found {len(files)} dynamic modifier files to check")
 
         results = []
-        for filepath in files:
-            if should_skip_file(filepath):
-                continue
-            text = FileOpener.open_text_file(
-                filepath, lowercase=False, strip_comments_flag=True
-            )
-            if not text:
-                continue
-            rel = os.path.relpath(filepath, self.mod_path)
+        for filepath, rel, text in files:
             names = disk_cache.per_file_cached_by_content(
                 self.mod_path,
                 "modifiers.dynamic_names",
@@ -736,10 +836,31 @@ class Validator(BaseValidator):
             category="dynamic-modifier-name-loc",
         )
 
+    def validate_redundant_enable_gates(self):
+        """Check dynamic modifier `enable` blocks for triggers that never fail."""
+        self._log_section("Checking dynamic modifier enable gates...")
+
+        results = []
+        for _filepath, rel, text in self._iter_dynamic_modifier_files():
+            for name, _nl, body_line, body in _extract_top_level_definition_blocks(
+                text
+            ):
+                for message, offset in _redundant_enable_gates(body):
+                    results.append((f"'{name}': {message}", rel, body_line + offset))
+
+        self._report(
+            results,
+            "✓ No redundant dynamic modifier enable gates",
+            "Redundant enable gates (re-evaluated every tick, never false):",
+            severity=Severity.ERROR,
+            category="redundant-enable-gate",
+        )
+
     def run_validations(self):
         known_good = self._build_known_good_set()
         self.validate_modifier_names(known_good)
         self.validate_dynamic_modifier_name_loc()
+        self.validate_redundant_enable_gates()
 
 
 if __name__ == "__main__":

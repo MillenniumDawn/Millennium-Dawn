@@ -43,11 +43,14 @@ def _should_skip(filename: str) -> bool:
 # --- Multiprocessing helpers ---
 
 
+def _loc_body_lines(filename: str) -> List[str]:
+    return FileOpener.open_text_file(filename, strip_comments_flag=True).split("\n")[1:]
+
+
 def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    lines = text_file.split("\n")[1:]
+    lines = _loc_body_lines(filename)
     for line_idx, line in enumerate(lines):
         if line.count("[") != line.count("]"):
             results.append(
@@ -216,8 +219,7 @@ _TYPO_RUNTIME_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$[\w.@|+\-]+\$|£[\w.@\-]+
 def process_yml_for_typos(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    lines = text_file.split("\n")[1:]
+    lines = _loc_body_lines(filename)
     for line_idx, line in enumerate(lines):
         if not line.strip():
             continue
@@ -233,6 +235,42 @@ def process_yml_for_typos(args: Tuple[str]) -> List[str]:
             results.append(
                 f"{os.path.basename(filename)} - line {line_idx + 2} - "
                 f"'{m.group(0)}' -> '{correction}'"
+            )
+    return results
+
+
+def process_yml_for_prose(args: Tuple[str]) -> List[Issue]:
+    filename = args[0]
+    results: List[Issue] = []
+    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
+    lines = text_file.split("\n")[1:]
+    basename = os.path.basename(filename)
+    for line_idx, line in enumerate(lines):
+        if not line.strip():
+            continue
+        value_match = _TYPO_VALUE_RE.match(line)
+        if not value_match:
+            continue
+        value = value_match.group(1)
+        for _ in range(value.count("\u2014")):
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-em-dash",
+                    message="Em dash in loc value: replace with a period, comma, or colon (see .claude/docs/localisation-rules.md)",
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
+        for _ in range(value.count("`")):
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-backtick-apostrophe",
+                    message="Backtick used as apostrophe in loc value: use ' instead",
+                    file=basename,
+                    line=line_idx + 2,
+                )
             )
     return results
 
@@ -598,6 +636,40 @@ class Validator(BaseValidator):
             category="loc-typo-watchlist",
         )
 
+    def validate_prose_conventions(self):
+        self._log_section(
+            "Checking localisation prose conventions (em dashes, backtick apostrophes)..."
+        )
+
+        yml_files = self._get_yml_files()
+        args_list = [(f,) for f in yml_files]
+
+        all_results = self._pool_map(process_yml_for_prose, args_list, chunksize=10)
+
+        em_dash_results: List[Issue] = []
+        backtick_results: List[Issue] = []
+        for file_results in all_results:
+            for issue in file_results:
+                if issue.category == "loc-em-dash":
+                    em_dash_results.append(issue)
+                else:
+                    backtick_results.append(issue)
+
+        self._report(
+            em_dash_results,
+            "✓ No em dashes in localisation values",
+            "Em dashes in localisation values:",
+            severity=Severity.WARNING,
+            category="loc-em-dash",
+        )
+        self._report(
+            backtick_results,
+            "✓ No backtick-as-apostrophe in localisation values",
+            "Backtick used as apostrophe in localisation values:",
+            severity=Severity.WARNING,
+            category="loc-backtick-apostrophe",
+        )
+
     def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):
         """Scan txt files with a worker that needs the valid/scripted key sets,
         shipped once per worker (loc_keys is ~200k entries; per-task shipping
@@ -817,6 +889,7 @@ class Validator(BaseValidator):
         self.validate_syntax()
         self.validate_mandatory_line()
         self.validate_typo_watchlist()
+        self.validate_prose_conventions()
 
         # Cross-reference checks scan all .txt/.gui files — skip in staged mode
         if not self.staged_only:

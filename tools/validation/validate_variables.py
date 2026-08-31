@@ -8,7 +8,8 @@ import os
 import re
 import sys
 from multiprocessing import Pool
-from typing import Dict, List, Set, Tuple
+from pathlib import Path
+from typing import Dict, List, Set, Tuple, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -22,9 +23,11 @@ from shared_utils import (
     compute_line_offsets,
     extract_block_from_text,
     line_for_offset,
+    read_text_under,
     strip_comments,
 )
 from validator_common import (
+    HOI4_BUILTIN_BLOCKS,
     BaseValidator,
     DataCleaner,
     FileOpener,
@@ -61,6 +64,26 @@ _MATH_PRECISION_SHORTHAND_RE = re.compile(
 )
 
 
+def _read_script_text(filename: str, *, blank_strings: bool = True) -> str | None:
+    if should_skip_file(filename):
+        return None
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return None
+    text = strip_comments(text)
+    return blank_quoted_strings(text) if blank_strings else text
+
+
+def _scope_events(text: str) -> List[Tuple[int, int, object]]:
+    events: List[Tuple[int, int, object]] = []
+    for match in _SCOPE_OPEN_RE.finditer(text):
+        events.append((match.end() - 1, 0, match.group(1)))
+    for match in re.finditer(r"\}", text):
+        events.append((match.start(), 1, ""))
+    return events
+
+
 def _scan_flags_in_file(
     text: str, flag_type: str
 ) -> Tuple[List[str], List[str], List[str]]:
@@ -69,22 +92,26 @@ def _scan_flags_in_file(
     cleared_list: List[str] = []
 
     if f"set_{flag_type}_flag =" in text:
-        set_list.extend(re.findall(r"set_" + flag_type + r"_flag = ([^ \t\n]+)", text))
+        set_list.extend(
+            re.findall(r"set_" + flag_type + r"_flag = ([^ \t\n\r]+)", text)
+        )
         set_list.extend(
             re.findall(
-                r"set_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
+                r"set_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\r\}]+).*?\}",
                 text,
                 flags=re.MULTILINE | re.DOTALL,
             )
         )
 
     if f"has_{flag_type}_flag =" in text or f"modify_{flag_type}_flag =" in text:
-        used_list.extend(re.findall(r"has_" + flag_type + r"_flag = ([^ \t\n]+)", text))
+        used_list.extend(
+            re.findall(r"has_" + flag_type + r"_flag = ([^ \t\n\r]+)", text)
+        )
         used_list.extend(
             re.findall(
                 r"(?:has|modify)_"
                 + flag_type
-                + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
+                + r"_flag = \{.*?flag = ([^ \t\n\r\}]+).*?\}",
                 text,
                 flags=re.MULTILINE | re.DOTALL,
             )
@@ -92,7 +119,7 @@ def _scan_flags_in_file(
 
     if f"clr_{flag_type}_flag =" in text:
         cleared_list.extend(
-            re.findall(r"clr_" + flag_type + r"_flag = ([^ \t\n]+)", text)
+            re.findall(r"clr_" + flag_type + r"_flag = ([^ \t\n\r]+)", text)
         )
 
     return set_list, used_list, cleared_list
@@ -252,9 +279,11 @@ _PLAYER_FACING_GLOBS = [
     "common/special_projects/**/*.txt",
     "common/scripted_diplomatic_actions/*.txt",
 ]
-# Shorthand and long form: `has_country_flag = X` / `= { flag = X value > 0 }`.
+# Shorthand and long form, both flag types: `has_country_flag = X` /
+# `has_global_flag = { flag = X value > 0 }`. Group 1 is the flag kind
+# ("country"|"global"), group 2 the flag name.
 _AVAILABLE_FLAG_RE = re.compile(
-    r"\bhas_country_flag\s*=\s*(?:\{\s*flag\s*=\s*)?([A-Za-z_][A-Za-z0-9_.@]*)"
+    r"\bhas_(country|global)_flag\s*=\s*(?:\{\s*flag\s*=\s*)?([A-Za-z_][A-Za-z0-9_.@]*)"
 )
 
 
@@ -433,27 +462,140 @@ def process_file_for_clamp_conflicts(args) -> List[str]:
     return issues
 
 
+def _scan_available_file(
+    args: Tuple[str, str],
+) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str]]]:
+    """Extract both available-block checks from one comment-stripped source."""
+    filename, mod_path = args
+    cleaned = _read_script_text(filename)
+    if cleaned is None:
+        return [], []
+    rel = os.path.relpath(filename, mod_path)
+    events: List[Tuple[int, int, object]] = _scope_events(cleaned)
+    for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
+        open_idx = m.end() - 1
+        body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
+        if not _INLINE_TOOLTIP_RE.search(body):
+            events.append((m.start(), 2, ""))
+    for m in _AVAILABLE_FLAG_RE.finditer(cleaned):
+        events.append((m.start(), 3, (m.group(1), m.group(2))))
+    events.sort(key=lambda e: (e[0], e[1]))
+
+    stack: List[str] = []
+    untooltipped: List[Tuple[str, str, int]] = []
+    flags: List[Tuple[str, str, int, str]] = []
+    for pos, kind, tok in events:
+        if kind == 0:
+            stack.append(cast(str, tok))
+            continue
+        if kind == 1:
+            if stack:
+                stack.pop()
+            continue
+        if kind == 2:
+            for token in reversed(stack):
+                if token in _TOOLTIP_WRAPPER_TOKENS:
+                    break
+                if token == _PLAYER_FACING_BLOCK:
+                    line = cleaned[:pos].count("\n") + 1
+                    untooltipped.append(
+                        (
+                            "check_variable in `available` renders no tooltip line"
+                            " - the player sees a blank requirement; wrap it in"
+                            " custom_trigger_tooltip = { tooltip = KEY ... }",
+                            rel,
+                            line,
+                        )
+                    )
+                    break
+        elif kind == 3:
+            flag_kind, flag = cast(Tuple[str, str], tok)
+            if "@" in flag:
+                continue
+            for token in reversed(stack):
+                if token in _TOOLTIP_WRAPPER_TOKENS:
+                    break
+                if token == _PLAYER_FACING_BLOCK:
+                    flags.append((flag, rel, cleaned[:pos].count("\n") + 1, flag_kind))
+                    break
+    return untooltipped, flags
+
+
 def process_file_for_untooltipped_available_checks(
     args: Tuple[str, str],
 ) -> List[Tuple[str, str, int]]:
-    """Pool worker: flag check_variable inside `available` with no tooltip wrapper.
+    return _scan_available_file(args)[0]
 
-    Walks the enclosing block stack outward from each check so a wrapper at any
-    depth above it counts, not just the direct parent. A check carrying its own
-    inline ``tooltip = KEY`` needs no wrapper.
+
+def process_file_for_available_flags(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int, str]]:
+    return _scan_available_file(args)[1]
+
+
+# A scripted trigger's body checking a flag with no tooltip wrapper is the
+# one-hop-removed case the unlocalised-available-flag check cannot see:
+# `pak_raj_border_available = yes` renders no tooltip of its own, so a caller
+# in `available` with no wrapper shows the player nothing at all where a
+# requirement line belongs. Wrappers inside the definition already supply that
+# line, so those triggers stay out of the index.
+# Global-flag bodies only: a repo-wide measurement including has_country_flag
+# produced 270 pre-existing hits (mostly cooldown/eligibility helpers with a
+# stable name that already reads as a requirement), against ~2 for the
+# unlocalised-flag sibling check. Narrowed here per the border-war plan
+# rather than shipping with `--strict` gating a backlog this size.
+_HAS_FLAG_BODY_RE = re.compile(r"\bhas_global_flag\b")
+_BARE_TRIGGER_CALL_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=\s*yes\b")
+
+
+def _scripted_trigger_body_has_unwrapped_global_flag(body: str) -> bool:
+    """True when a has_global_flag sits outside every tooltip wrapper.
+
+    A wrapper around the check inside the definition already supplies the
+    requirement line (custom_trigger_tooltip / custom_override_tooltip) or
+    hides it (hidden_trigger), so the call site does not need another one.
     """
-    filename, mod_path = args
-    if should_skip_file(filename):
-        return []
-    try:
-        from pathlib import Path as _Path
+    if not _HAS_FLAG_BODY_RE.search(body):
+        return False
+    events = _scope_events(body)
+    for m in _HAS_FLAG_BODY_RE.finditer(body):
+        events.append((m.start(), 2, ""))
+    events.sort(key=lambda e: (e[0], e[1]))
+    stack: List[str] = []
+    for _pos, kind, tok in events:
+        if kind == 0:
+            stack.append(cast(str, tok))
+        elif kind == 1:
+            if stack:
+                stack.pop()
+        elif not any(t in _TOOLTIP_WRAPPER_TOKENS for t in stack):
+            return True
+    return False
 
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
 
-    cleaned = blank_quoted_strings(strip_comments(text))
-    if "check_variable" not in cleaned:
+def process_file_for_untooltipped_available_scripted_trigger(
+    args: Tuple[str, str, frozenset],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: flag bare `<name> = yes` in `available` that resolves to a
+    scripted trigger whose own body checks an unwrapped global flag, with no
+    tooltip wrapper around the call.
+
+    Walks the enclosing block stack outward from each call so a wrapper at any
+    depth above it counts, not just the direct parent - same machinery as
+    ``process_file_for_untooltipped_available_checks``.
+    """
+    filename, mod_path, flagged_names = args
+    if not flagged_names:
+        return []
+    cleaned = _read_script_text(filename)
+    if cleaned is None:
+        return []
+    call_matches = [
+        (m.start(), m.group(1))
+        for m in _BARE_TRIGGER_CALL_RE.finditer(cleaned)
+        if m.group(1) in flagged_names
+    ]
+    if not call_matches:
         return []
 
     events: List[Tuple[int, int, str]] = []
@@ -461,12 +603,8 @@ def process_file_for_untooltipped_available_checks(
         events.append((m.end() - 1, 0, m.group(1)))
     for m in re.finditer(r"\}", cleaned):
         events.append((m.start(), 1, ""))
-    for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
-        open_idx = m.end() - 1
-        body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
-        if _INLINE_TOOLTIP_RE.search(body):
-            continue
-        events.append((m.start(), 2, ""))
+    for pos, name in call_matches:
+        events.append((pos, 2, name))
     events.sort(key=lambda e: (e[0], e[1]))
 
     rel = os.path.relpath(filename, mod_path)
@@ -486,68 +624,14 @@ def process_file_for_untooltipped_available_checks(
                     line = cleaned[:pos].count("\n") + 1
                     issues.append(
                         (
-                            "check_variable in `available` renders no tooltip line"
-                            " - the player sees a blank requirement; wrap it in"
+                            f"{tok} = yes in `available` resolves to a scripted"
+                            " trigger that checks a flag directly - the player"
+                            " sees no requirement line at all; wrap it in"
                             " custom_trigger_tooltip = { tooltip = KEY ... }",
                             rel,
                             line,
                         )
                     )
-                    break
-    return issues
-
-
-def process_file_for_available_flags(
-    args: Tuple[str, str],
-) -> List[Tuple[str, str, int]]:
-    """Pool worker: collect `has_country_flag` names checked inside `available`.
-
-    Returns (flag, relative path, line) triples; the parent owns the loc index
-    and does the missing-key filtering.
-    """
-    filename, mod_path = args
-    if should_skip_file(filename):
-        return []
-    try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-
-    cleaned = blank_quoted_strings(strip_comments(text))
-    if "has_country_flag" not in cleaned:
-        return []
-
-    events: List[Tuple[int, int, str]] = []
-    for m in _SCOPE_OPEN_RE.finditer(cleaned):
-        events.append((m.end() - 1, 0, m.group(1)))
-    for m in re.finditer(r"\}", cleaned):
-        events.append((m.start(), 1, ""))
-    for m in _AVAILABLE_FLAG_RE.finditer(cleaned):
-        events.append((m.start(), 2, m.group(1)))
-    events.sort(key=lambda e: (e[0], e[1]))
-
-    rel = os.path.relpath(filename, mod_path)
-    stack: List[str] = []
-    issues: List[Tuple[str, str, int]] = []
-    for pos, kind, tok in events:
-        if kind == 0:
-            stack.append(tok)
-        elif kind == 1:
-            if stack:
-                stack.pop()
-        else:
-            if "@" in tok:
-                # Runtime-substituted flag names (e.g. trade_agreement@PREV)
-                # cannot be resolved to a loc key statically.
-                continue
-            for token in reversed(stack):
-                if token in _TOOLTIP_WRAPPER_TOKENS:
-                    break
-                if token == _PLAYER_FACING_BLOCK:
-                    line = cleaned[:pos].count("\n") + 1
-                    issues.append((tok, rel, line))
                     break
     return issues
 
@@ -637,16 +721,9 @@ def process_file_for_missing_variable_tooltips(
     write swallows the tooltip, so it wins over the enclosing rendered block.
     """
     filename, mod_path, backing = args
-    if should_skip_file(filename):
+    cleaned = _read_script_text(filename)
+    if cleaned is None:
         return []
-    try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-
-    cleaned = blank_quoted_strings(strip_comments(text))
     if "_variable" not in cleaned:
         return []
 
@@ -768,16 +845,9 @@ def process_file_for_treasury_scope(
     owner/CONTROLLER/tag/ROOT opener suppresses the finding.
     """
     filename, mod_path = args
-    if should_skip_file(filename):
+    cleaned = _read_script_text(filename, blank_strings=False)
+    if cleaned is None:
         return []
-    try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-
-    cleaned = strip_comments(text)
     if not any(k in cleaned for k in _TREASURY_EFFECT_KEYWORDS):
         return []
 
@@ -862,7 +932,9 @@ _MONEY_WRITE_RES = {
 }
 
 
-def build_money_consumer_map(effect_files: List[str]) -> Dict[str, frozenset]:
+def build_money_consumer_map(
+    effect_files: List[str], under: str
+) -> Dict[str, frozenset]:
     """Map each money input variable to the scripted effects that consume it.
 
     An effect consumes a variable when the variable's first appearance in its
@@ -874,9 +946,8 @@ def build_money_consumer_map(effect_files: List[str]) -> Dict[str, frozenset]:
     bodies: Dict[str, str] = {}
     for fp in effect_files:
         try:
-            with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
-                text = strip_comments(fh.read())
-        except Exception:
+            text = strip_comments(read_text_under(fp, under))
+        except (OSError, ValueError):
             continue
         for m in _SCRIPTED_EFFECT_DEF_RE.finditer(text):
             body, _ = extract_block_from_text(text, m.start())
@@ -1079,30 +1150,30 @@ def _scan_targets_in_text(
     # used — event_target: references and has_event_target
     if "tag_aliases" in filename:
         if "global_event_target =" in text_file:
-            for m in re.findall(r'global_event_target = ([^ \n\t\#"]+)', text_file):
+            for m in re.findall(r'global_event_target = ([^ \n\t\r\#"]+)', text_file):
                 used_paths[m] = basename
     else:
         if "event_target:" in text_file:
-            for m in re.findall(r'event_target:([^ \n\t\#"]+)', text_file):
+            for m in re.findall(r'event_target:([^ \n\t\r\#"]+)', text_file):
                 used_paths[m] = basename
         if "has_event_target =" in text_file:
-            for m in re.findall(r'has_event_target = ([^ \n\t"]+)', text_file):
+            for m in re.findall(r'has_event_target = ([^ \n\t\r"]+)', text_file):
                 used_paths[m] = basename
 
     # set — save_global_event_target_as / save_event_target_as (not in tag_aliases)
     if "tag_aliases" not in filename:
         if "save_global_event_target_as =" in text_file:
             for m in re.findall(
-                r'save_global_event_target_as = ([^ \n\t\#"]+)', text_file
+                r'save_global_event_target_as = ([^ \n\t\r\#"]+)', text_file
             ):
                 set_paths[m] = basename
         if "save_event_target_as =" in text_file:
-            for m in re.findall(r'save_event_target_as = ([^ \n\t\#"]+)', text_file):
+            for m in re.findall(r'save_event_target_as = ([^ \n\t\r\#"]+)', text_file):
                 set_paths[m] = basename
 
     # cleared — clear_global_event_target
     if "clear_global_event_target =" in text_file:
-        for m in re.findall(r'clear_global_event_target = ([^ \n\t\#"]+)', text_file):
+        for m in re.findall(r'clear_global_event_target = ([^ \n\t\r\#"]+)', text_file):
             cleared_paths[m] = basename
 
     return (set_paths, used_paths, cleared_paths)
@@ -1469,7 +1540,7 @@ class Validator(BaseValidator):
         effect_files = self._collect_files(
             ["common/scripted_effects/**/*.txt"], ignore_staged=True
         )
-        consumer_map = build_money_consumer_map(effect_files)
+        consumer_map = build_money_consumer_map(effect_files, self.mod_path)
         args_list = [(f, self.mod_path, consumer_map) for f in txt_files]
         all_results = self._pool_map(
             process_file_for_orphan_money, args_list, chunksize=30
@@ -1577,6 +1648,22 @@ class Validator(BaseValidator):
             category="clamp-range-conflict",
         )
 
+    def _get_available_scan(self):
+        """Return both available-block scans from one per-file worker pass."""
+        memo = getattr(self, "_available_scan_memo", None)
+        if memo is not None:
+            return memo
+        files = self._collect_files(_PLAYER_FACING_GLOBS)
+        if not files:
+            self._available_scan_memo = []
+            return self._available_scan_memo
+        self._available_scan_memo = self._pool_map(
+            _scan_available_file,
+            [(f, self.mod_path) for f in files],
+            chunksize=30,
+        )
+        return self._available_scan_memo
+
     def validate_untooltipped_available_checks(self):
         """Flag bare check_variable inside `available` blocks (WARNING).
 
@@ -1587,16 +1674,12 @@ class Validator(BaseValidator):
             "Checking for untooltipped check_variable in available blocks..."
         )
 
-        txt_files = self._collect_files(_PLAYER_FACING_GLOBS)
-        if not txt_files:
+        available = self._get_available_scan()
+        if not available:
             self.log("✓ No untooltipped check_variable in available blocks")
             return
 
-        args_list = [(f, self.mod_path) for f in txt_files]
-        all_results = self._pool_map(
-            process_file_for_untooltipped_available_checks, args_list, chunksize=30
-        )
-        issues = [issue for file_issues in all_results for issue in file_issues]
+        issues = [issue for untooltipped, _flags in available for issue in untooltipped]
         self._report(
             issues,
             "✓ No untooltipped check_variable in available blocks",
@@ -1606,30 +1689,25 @@ class Validator(BaseValidator):
         )
 
     def validate_unlocalised_available_flags(self):
-        """Flag `has_country_flag` in `available` whose flag has no loc key (WARNING).
+        """Flag `has_country_flag` / `has_global_flag` in `available` whose flag
+        has no loc key (WARNING).
 
         HOI4 renders the requirement line from a loc key named after the flag;
         with no key the player reads the raw token.
         """
-        self._log_section(
-            "Checking for unlocalised country flags in available blocks..."
-        )
+        self._log_section("Checking for unlocalised flags in available blocks...")
 
-        txt_files = self._collect_files(_PLAYER_FACING_GLOBS)
-        if not txt_files:
-            self.log("✓ No unlocalised country flags in available blocks")
+        available = self._get_available_scan()
+        if not available:
+            self.log("✓ No unlocalised flags in available blocks")
             return
 
-        args_list = [(f, self.mod_path) for f in txt_files]
-        all_results = self._pool_map(
-            process_file_for_available_flags, args_list, chunksize=30
-        )
         loc_keys = self._load_localisation_keys()
 
         seen: Set[Tuple[str, str]] = set()
         issues = []
-        for file_results in all_results:
-            for flag, rel, line in file_results:
+        for _unt, file_results in available:
+            for flag, rel, line, flag_kind in file_results:
                 if flag in loc_keys:
                     continue
                 key = (flag, rel)
@@ -1638,7 +1716,7 @@ class Validator(BaseValidator):
                 seen.add(key)
                 issues.append(
                     (
-                        f"has_country_flag = {flag} in `available` has no localisation"
+                        f"has_{flag_kind}_flag = {flag} in `available` has no localisation"
                         " key - the player sees the raw flag name; add a loc key named"
                         " after the flag",
                         rel,
@@ -1648,10 +1726,90 @@ class Validator(BaseValidator):
 
         self._report(
             issues,
-            "✓ No unlocalised country flags in available blocks",
-            "country flags checked in `available` with no localisation key (the player sees the raw token):",
+            "✓ No unlocalised flags in available blocks",
+            "flags checked in `available` with no localisation key (the player sees the raw token):",
             severity=Severity.WARNING,
             category="unlocalised-available-flag",
+        )
+
+    def _collect_scripted_trigger_flag_names(self) -> frozenset:
+        """Names of common/scripted_triggers/** definitions whose body checks a
+        global flag that is not already under a tooltip wrapper.
+
+        A `custom_trigger_tooltip` / `custom_override_tooltip` / `hidden_trigger`
+        around the flag inside the definition already renders or hides the
+        requirement line, so a bare `<name> = yes` call is not a finding.
+        Narrowed to `has_global_flag` only (not `has_country_flag`): a
+        repo-wide measurement against both produced 270 pre-existing hits
+        outside the border-war files, versus ~2 for the sibling
+        unlocalised-available-flag check. Harvested repo-wide even in staged
+        mode: the scripted trigger's own definition and the decision/focus
+        that calls it bare in `available` are almost never in the same file.
+        """
+        memo = getattr(self, "_scripted_trigger_flag_names_memo", None)
+        if memo is not None:
+            return memo
+
+        files = self._collect_files(
+            ["common/scripted_triggers/**/*.txt"], ignore_staged=True
+        )
+        names: Set[str] = set()
+        for fp in files:
+            try:
+                with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
+                    text = blank_quoted_strings(strip_comments(fh.read()))
+            except Exception:
+                continue
+            for m in _SCRIPTED_EFFECT_DEF_RE.finditer(text):
+                name = m.group(1)
+                if name in HOI4_BUILTIN_BLOCKS:
+                    continue
+                body, _ = extract_block_from_text(text, m.start())
+                if body and _scripted_trigger_body_has_unwrapped_global_flag(body):
+                    names.add(name)
+
+        self._scripted_trigger_flag_names_memo = frozenset(names)
+        return self._scripted_trigger_flag_names_memo
+
+    def validate_untooltipped_available_scripted_trigger(self):
+        """Flag bare scripted-trigger calls in `available` whose body checks a
+        flag with no tooltip wrapper (WARNING).
+
+        One hop further out than ``validate_unlocalised_available_flags``: a
+        bare flag check at least renders the raw token, but a bare call to a
+        scripted trigger wrapping that same check (``pak_raj_border_available
+        = yes``) renders no tooltip line at all - the player sees nothing
+        where a requirement should be. A wrapper around the flag inside the
+        scripted trigger itself already supplies the line, so that call is
+        not a finding.
+        """
+        self._log_section(
+            "Checking for untooltipped scripted-trigger calls in available blocks..."
+        )
+
+        flagged_names = self._collect_scripted_trigger_flag_names()
+        if not flagged_names:
+            self.log("✓ No untooltipped scripted-trigger calls in available blocks")
+            return
+
+        txt_files = self._collect_files(_PLAYER_FACING_GLOBS)
+        if not txt_files:
+            self.log("✓ No untooltipped scripted-trigger calls in available blocks")
+            return
+
+        args_list = [(f, self.mod_path, flagged_names) for f in txt_files]
+        all_results = self._pool_map(
+            process_file_for_untooltipped_available_scripted_trigger,
+            args_list,
+            chunksize=30,
+        )
+        issues = [issue for file_issues in all_results for issue in file_issues]
+        self._report(
+            issues,
+            "✓ No untooltipped scripted-trigger calls in available blocks",
+            "bare scripted-trigger call in `available` whose body checks a flag directly, with no tooltip wrapper (the player sees no requirement line at all):",
+            severity=Severity.WARNING,
+            category="untooltipped-available-scripted-trigger",
         )
 
     def _collect_dynamic_modifier_vars(self) -> Dict[str, Tuple[str, ...]]:
@@ -1963,6 +2121,7 @@ class Validator(BaseValidator):
         self.validate_clamp_range_conflicts()
         self.validate_untooltipped_available_checks()
         self.validate_unlocalised_available_flags()
+        self.validate_untooltipped_available_scripted_trigger()
         self.validate_variable_tooltip_keys()
         self.validate_missing_variable_tooltips()
 

@@ -92,11 +92,19 @@ bin_laden_relocate_hideout = {
 	}
 }
 
-#Keeps GLOBAL_bin_laden_hideout and wot_sheltering_bin_laden: wotnews.16 renders the target days later,
-#and its option does the final cleanup and applies the shelterer fallout.
+#Keeps GLOBAL_bin_laden_hideout: wotnews.16 renders the target days later and its option clears it.
+#The shelterer's fallout lands here, not in that option, which never runs if they are annexed inside the delay.
 bin_laden_clear_hideout = {
 	clr_global_flag = GLOBAL_bin_laden_at_large
 	set_global_flag = GLOBAL_bin_laden_killed_or_captured
+
+	event_target:GLOBAL_bin_laden_hideout = {
+		if = {
+			limit = { has_country_flag = wot_sheltering_bin_laden }
+			add_popularity = { ideology = democratic popularity = -0.10 }
+			clr_country_flag = wot_sheltering_bin_laden
+		}
+	}
 
 	#Decapitation. The network survives him, but it is badly degraded and far more exposed.
 	set_temp_variable = { wot_aq_threat_change = -30 }

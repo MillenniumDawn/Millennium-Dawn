@@ -28,6 +28,7 @@ from validate_gfx_references import (
     _read_raw,
     _vanilla_gfx_files,
     _vanilla_gui_files,
+    font_names_from_gfx_text,
     sprite_names_from_gfx_text,
 )
 
@@ -58,7 +59,7 @@ def _write_manifest(
         "",
     ]
     lines = sorted(entries)
-    with open(os.path.join(_HERE, filename), "w", encoding="utf-8") as fh:
+    with open(os.path.join(_HERE, filename), "w", encoding="utf-8", newline="") as fh:
         fh.write("\n".join(header) + "\n".join(lines) + "\n")
     return f"{filename}: {len(lines)} entries"
 
@@ -151,9 +152,30 @@ def _refresh_sprites() -> str:
     )
 
 
+def _refresh_fonts() -> str:
+    gfx_files = _vanilla_gfx_files()
+    if not gfx_files:
+        raise RefreshError("no interface .gfx files found")
+    names = set()
+    for gfx in gfx_files:
+        raw = _read_raw(gfx)
+        if raw is not None:
+            names.update(font_names_from_gfx_text(raw))
+    return _write_manifest(
+        "vanilla_fonts.txt",
+        [
+            "# Vanilla Hearts of Iron IV bitmapfont names (base + DLC interface .gfx).",
+            "# Used by validate_gfx_references.py when no live install is present",
+            '# (CI) so a .gui font = "x" naming a vanilla face is not flagged.',
+        ],
+        names,
+    )
+
+
 _TARGETS: Dict[str, Callable[[], str]] = {
     "defines": _refresh_defines,
     "docs": _refresh_docs,
+    "fonts": _refresh_fonts,
     "gui": _refresh_gui,
     "paths": _refresh_paths,
     "sprites": _refresh_sprites,

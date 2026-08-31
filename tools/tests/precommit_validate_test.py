@@ -7,13 +7,11 @@ could silently stop running on some paths. These tests pin which validators a
 given staged path selects, so an unintended coverage change fails CI.
 """
 
-import os
 import sys
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-from precommit_validate import _REGISTRY  # noqa: E402
+import precommit_validate as dispatcher
+from precommit_validate import _REGISTRY
+from shared.suite import initialize_git_repository, run_git
 
 _BY_SCRIPT = {spec.script: spec for spec in _REGISTRY}
 
@@ -35,6 +33,11 @@ _GOLDEN = {
         "validate_events",
         "validate_oob_units",
         "validate_characters",
+    },
+    "common/idea_tags/00_idea.txt": {
+        "validate_style",
+        "validate_ideas",
+        "validate_events",
     },
     "events/Syria.txt": {
         "validate_style",
@@ -155,6 +158,11 @@ _GOLDEN = {
 
 def test_golden_selection():
     for path, expected in _GOLDEN.items():
+        expected = set(expected)
+        if path.endswith(".txt") and not any(
+            token in path for token in ("Changelog.txt", "AUTHORS.txt", "/descriptions")
+        ):
+            expected.add("validate_common_mistakes")
         assert _selected(path) == expected, path
 
 
@@ -202,6 +210,71 @@ def test_manual_validators_not_folded():
         "validate_simplifications",
     ):
         assert script not in folded
+
+
+def test_dispatcher_subprocess_contract(monkeypatch, tmp_path):
+    spec = dispatcher._Spec("validate_stub", [("events/", ".txt")], strict=True)
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        captured.update(kwargs)
+        return type(
+            "Result",
+            (),
+            {"returncode": 1, "stdout": "finding", "stderr": ""},
+        )()
+
+    monkeypatch.setattr(dispatcher.subprocess, "run", fake_run)
+    env = {"MD_STAGED_FILES": "events/test.txt"}
+    result = dispatcher._run(spec, str(tmp_path), env, True, 3)
+
+    assert "--staged" in captured["command"]
+    assert "--strict" in captured["command"]
+    assert captured["command"][-3:] == ["3", "--strict", "--no-color"]
+    assert captured["env"] is env
+    assert captured["timeout"] == 300
+    assert result[1] == 1
+
+
+def test_precommit_dispatcher_selects_oob_for_a_moved_history_target(
+    tmp_path, monkeypatch
+):
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    target = tmp_path / "history" / "units" / "target.txt"
+    target.parent.mkdir(parents=True)
+    with target.open("w", encoding="utf-8", newline="") as output_file:
+        output_file.write("units = { }\n")
+
+    initialize_git_repository(tmp_path, "history/units")
+    target.rename(tmp_path / "target.txt")
+    run_git(tmp_path, "add", "-A")
+
+    destination = str(tmp_path / "target.txt")
+    paths = dispatcher._discover_staged(str(tmp_path), [destination])
+
+    assert "history/units/target.txt" in paths
+    assert "validate_oob_units" in {
+        spec.script for spec in _REGISTRY if spec.matches(paths)
+    }
+
+    calls = []
+
+    def run(spec, _mod_path, env, _no_color, _inner_workers):
+        calls.append((spec.script, env["MD_STAGED_FILES"]))
+        return (spec.script, 0, "", "", 0.0)
+
+    monkeypatch.setattr(dispatcher, "_run", run)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["precommit_validate.py", "--path", str(tmp_path), destination],
+    )
+
+    dispatcher.main()
+
+    oob_calls = [env for script, env in calls if script == "validate_oob_units"]
+    assert oob_calls == ["target.txt\nhistory/units/target.txt"]
 
 
 def test_no_match_outside_scope():

@@ -11,18 +11,21 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from image_size import read_image_size
 from shared_utils import (
+    atomic_write_text,
     blank_quoted_strings,
     extract_block_from_text,
+    read_text_strict,
     strip_comments,
     strip_inline_comment,
 )
-from sprite_index import build_sprite_index
+from sprite_index import build_sprite_index, build_sprite_texture_index
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -69,12 +72,12 @@ _STATEMENT_NAME_RE = re.compile(r"([A-Za-z_]\w*)\s*=")
 # (GFX_CTC.5, GFX_MIG-29-GER), a regression sprite_reference_test.py pins.
 _SPRITE_VALUE = r'"?([A-Za-z0-9_.\-]+)"?'
 _DEC_ICON_SIMPLE_RE = re.compile(
-    r"^[ \t]*icon\s*=\s*(?!\{)" + _SPRITE_VALUE + r"[ \t]*$", re.MULTILINE
+    r"^[ \t]*icon\s*=\s*(?!\{)" + _SPRITE_VALUE + r"[ \t]*\r?$", re.MULTILINE
 )
 _DEC_ICON_BLOCK_RE = re.compile(r"^[ \t]*icon\s*=\s*\{", re.MULTILINE)
 _DEC_ICON_KEY_RE = re.compile(r"\bkey\s*=\s*" + _SPRITE_VALUE)
 _DEC_PICTURE_RE = re.compile(
-    r"^[ \t]*picture\s*=\s*" + _SPRITE_VALUE + r"[ \t]*$", re.MULTILINE
+    r"^[ \t]*picture\s*=\s*" + _SPRITE_VALUE + r"[ \t]*\r?$", re.MULTILINE
 )
 # The token naming a block, read backwards from its opening brace.
 _DEC_OWNER_RE = re.compile(r"([A-Za-z0-9_.]+)\s*=\s*$")
@@ -144,6 +147,75 @@ def _missing_sprite_message(
     )
 
 
+_SLOT_LABEL = {
+    "decision": "decision icon",
+    "category_icon": "category icon",
+    "category_picture": "category picture",
+}
+
+# The decision UI draws each sprite at its texture's native size — the category
+# tab's `icon` (interface/countrydecisionview.gui:97) and the decision row's
+# (:411) both declare a position and no size — so art from the wrong slot renders
+# oversized or shrunken instead of being scaled to fit. MD's decision art comes in
+# three size families, keyed here by longest edge. The gaps between the bands are
+# deliberate: MD has a handful of in-between textures (a 38x38 category icon, a
+# 38x40 decision icon) that read as either family, and reporting those would bury
+# the real swaps, so a size that lands in a gap identifies no slot at all.
+_SLOT_EDGE_RANGES = (
+    ("decision", 0, 36),
+    ("category_icon", 48, 79),
+    ("category_picture", 80, None),
+)
+_SLOT_TYPICAL_SIZE = {
+    "decision": "32x31",
+    "category_icon": "52x40",
+    "category_picture": "114x101",
+}
+
+
+def _slot_for_size(width: int, height: int) -> Optional[str]:
+    """Return the icon slot a texture of this size is drawn for, if unambiguous."""
+    longest = max(width, height)
+    for slot, low, high in _SLOT_EDGE_RANGES:
+        if low <= longest and (high is None or longest <= high):
+            return slot
+    return None
+
+
+def _resolved_sprite(kind: str, value: str, textures: Dict[str, str]) -> Optional[str]:
+    """Return the sprite name the engine renders for one icon/picture value."""
+    for candidate in _sprite_candidates(kind, value):
+        if candidate in textures:
+            return candidate
+    return None
+
+
+def _icon_type_message(
+    kind: str, owner: str, value: str, textures: Dict[str, str]
+) -> Optional[str]:
+    """Return a finding when the value's art belongs to a different slot.
+
+    Values that resolve to nothing, or to a texture whose size cannot be read,
+    are left to the missing-icon check rather than reported twice.
+    """
+    if "[" in value or "]" in value:
+        return None
+    sprite = _resolved_sprite(kind, value, textures)
+    if sprite is None:
+        return None
+    size = read_image_size(textures[sprite])
+    if size is None:
+        return None
+    actual = _slot_for_size(*size)
+    if actual is None or actual == kind:
+        return None
+    return (
+        f"{owner}: {_ICON_KIND_FIELD[kind]} = {value} -> {sprite} is "
+        f"{size[0]}x{size[1]}, which is {_SLOT_LABEL[actual]} art; a "
+        f"{_SLOT_LABEL[kind]} is {_SLOT_TYPICAL_SIZE[kind]}"
+    )
+
+
 def _is_category_file(filepath: str) -> bool:
     return "decisions/categories/" in filepath.replace("\\", "/")
 
@@ -157,11 +229,9 @@ def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, 
     """
     filepath, mod_path = args
     try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as fh:
-            raw = fh.read()
-    except OSError:
+        text = strip_comments(read_text_strict(filepath))
+    except FileNotFoundError:
         return []
-    text = strip_comments(raw)
     is_category = _is_category_file(filepath)
     icon_kind = "category_icon" if is_category else "decision"
 
@@ -338,6 +408,23 @@ _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILIN
 _FROM_BLOCK_RE = re.compile(r"\bFROM\s*=\s*\{")
 _FROM_WORD_RE = re.compile(r"\bFROM\b")
 
+# Formable commitment ratchet sync (validate_formable_commitment_sync).
+_FORMABLE_DECISIONS_BASENAME = "formable_nation_decisions.txt"
+_FORMABLE_TAG_RE = re.compile(
+    r"^([A-Z0-9]+)_(?:integrate_|buy_core_state$|update_flag$)"
+)
+_STATE_ENTRY_RE = re.compile(r"\b\d+\s*=\s*\{")
+_SIZE_SET_RE = re.compile(r"formable_committed_size\s*=\s*(\d+)")
+_SIZE_CMP_RE = re.compile(r"var\s*=\s*formable_committed_size\s+value\s*=\s*(\d+)")
+_COMMIT_PAIR_RE = re.compile(
+    r"set_variable\s*=\s*\{\s*formable_committed_id\s*=\s*(\d+)\s*\}\s*"
+    r"set_variable\s*=\s*\{\s*formable_committed_size\s*=\s*(\d+)\s*\}"
+)
+_OWN_GATE_ID_RE = re.compile(
+    r"NOT\s*=\s*\{\s*check_variable\s*=\s*\{\s*formable_committed_id\s*=\s*(\d+)\s*\}\s*\}"
+)
+_ID_LITERAL_RE = re.compile(r"formable_committed_id\s*=\s*(\d+)")
+
 
 def _is_targeted_decision(d: "DecisionFactory") -> bool:
     """True if targets/target_array/target_trigger/target_root_trigger is present."""
@@ -384,6 +471,36 @@ _BARE_TRIGGER_RE = re.compile(
 )
 
 
+def _flat_block_text(block: str) -> str:
+    """Remove an optional outer block brace pair before a flat token scan."""
+    inner = block.strip()
+    if inner.startswith("{"):
+        inner = inner[1:]
+    if inner.endswith("}"):
+        inner = inner[:-1]
+    return inner
+
+
+def _iter_flat_offsets(block: str) -> Iterator[Tuple[str, int]]:
+    """Yield offsets at brace depth zero, skipping comments and nested blocks."""
+    inner = _flat_block_text(block)
+    depth = 0
+    index = 0
+    while index < len(inner):
+        char = inner[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+        elif char == "#":
+            while index < len(inner) and inner[index] != "\n":
+                index += 1
+            continue
+        elif depth == 0:
+            yield inner, index
+        index += 1
+
+
 def _flat_tag_pins_with_kind(block: str) -> set:
     """Return {(keyword, tag), ...} for flat (non-nested), depth-0 tag/original_tag tokens.
 
@@ -396,36 +513,11 @@ def _flat_tag_pins_with_kind(block: str) -> set:
     """
     if not block:
         return set()
-    inner = block.strip()
-    if inner.startswith("{"):
-        inner = inner[1:]
-    if inner.endswith("}"):
-        inner = inner[:-1]
     pins = set()
-    depth = 0
-    i = 0
-    n = len(inner)
-    while i < n:
-        ch = inner[i]
-        if ch == "{":
-            depth += 1
-            i += 1
-            continue
-        if ch == "}":
-            depth -= 1
-            i += 1
-            continue
-        if ch == "#":
-            while i < n and inner[i] != "\n":
-                i += 1
-            continue
-        if depth == 0:
-            m = _TAG_TOKEN_PATTERN.match(inner, i)
-            if m:
-                pins.add((m.group(1), m.group(2)))
-                i = m.end()
-                continue
-        i += 1
+    for inner, index in _iter_flat_offsets(block):
+        match = _TAG_TOKEN_PATTERN.match(inner, index)
+        if match:
+            pins.add((match.group(1), match.group(2)))
     return pins
 
 
@@ -494,65 +586,28 @@ def _scan_top_level(block: str):
     """
     if not block:
         return
-    inner = block.strip()
-    if inner.startswith("{"):
-        inner = inner[1:]
-    if inner.endswith("}"):
-        inner = inner[:-1]
-
-    depth = 0
-    i = 0
-    n = len(inner)
-    while i < n:
-        ch = inner[i]
-        if ch == "{":
-            depth += 1
-            i += 1
+    for inner, index in _iter_flat_offsets(block):
+        char = inner[index]
+        if not (char.isalpha() or char == "_"):
             continue
-        if ch == "}":
-            depth -= 1
-            i += 1
+        previous = inner[index - 1] if index > 0 else "\n"
+        if previous.isalnum() or previous == "_":
             continue
-        if ch == "#":
-            while i < n and inner[i] != "\n":
-                i += 1
+        match = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*", inner[index:])
+        if not match:
             continue
-        if depth == 0:
-            # An identifier-start char only counts if it begins on a
-            # word boundary (preceded by start-of-block or whitespace),
-            # otherwise we'd misread `has_cosmetic_tag = MAU` as a
-            # `tag = MAU` token.
-            if ch.isalpha() or ch == "_":
-                prev = inner[i - 1] if i > 0 else "\n"
-                if prev.isalnum() or prev == "_":
-                    i += 1
-                    continue
-                m = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*", inner[i:])
-                if m:
-                    ident = m.group(1)
-                    after = i + m.end()
-                    # `tag = X` / `original_tag = X` token
-                    if ident in ("tag", "original_tag"):
-                        tm = re.match(r"([A-Z][A-Z0-9_]{1,7})\b", inner[after:])
-                        if tm:
-                            yield ("tag", tm.group(1))
-                            i = after + tm.end()
-                            continue
-                    # `TAG = { ... }` self-scope (3-letter caps tag)
-                    if (
-                        re.match(r"^[A-Z][A-Z0-9_]{1,7}$", ident)
-                        and after < n
-                        and inner[after] == "{"
-                    ):
-                        yield ("scope", ident)
-                        # Don't consume the brace, let the outer loop dive in
-                        i = after
-                        continue
-                    # Skip past the entire identifier so we don't
-                    # re-scan its tail and falsely match nested tokens.
-                    i = after
-                    continue
-        i += 1
+        ident = match.group(1)
+        after = index + match.end()
+        if ident in ("tag", "original_tag"):
+            tag_match = re.match(r"([A-Z][A-Z0-9_]{1,7})\b", inner[after:])
+            if tag_match:
+                yield ("tag", tag_match.group(1))
+        elif (
+            re.match(r"^[A-Z][A-Z0-9_]{1,7}$", ident)
+            and after < len(inner)
+            and inner[after] == "{"
+        ):
+            yield ("scope", ident)
 
 
 def _find_category_redundant_rows(
@@ -638,6 +693,143 @@ def _find_category_redundant_rows(
     return results
 
 
+def _group_fixes_by_basename(fixes: list) -> Dict[str, List[str]]:
+    grouped: Dict[str, List[str]] = {}
+    for token, basename in fixes:
+        grouped.setdefault(basename, []).append(token)
+    return grouped
+
+
+def _find_decision_file(mod_path: str, basename: str) -> str | None:
+    pattern = str(Path(mod_path) / "common" / "decisions" / "**" / "*.txt")
+    return next(
+        (
+            filepath
+            for filepath in glob.iglob(pattern, recursive=True)
+            if os.path.basename(filepath) == basename
+        ),
+        None,
+    )
+
+
+def _int_literal(value: str) -> int:
+    """Convert a regex-captured decimal literal to an integer."""
+    try:
+        return int(value)
+    except ValueError:
+        raise ValueError(f"invalid decimal literal: {value}") from None
+
+
+def _find_formable_commitment_rows(
+    factories: List["DecisionFactory"], focus_texts: Dict[str, str]
+) -> List[str]:
+    """Drift check for the formable commitment ratchet.
+
+    Every decision in the formables file carries an ``ai_will_do`` gate
+    comparing ``formable_committed_size`` against that formable's full state
+    count, and the commit sites (integrate_start / update_flag complete_effect,
+    the IBR/ANZ remove_effects, Spain's focus tree) store the same id/size
+    pair. The counts exist only as inlined literals, so editing an
+    update_flag's state list silently corrupts the ratchet ordering — this
+    recomputes each count from the update_flag ``available`` block and diffs
+    it against every literal.
+
+    ``factories`` must already be restricted to the formables file;
+    ``focus_texts`` maps basename -> text for focus files mentioning
+    ``formable_committed_``.
+    """
+    rows: List[str] = []
+    by_tag: Dict[str, List["DecisionFactory"]] = {}
+    for d in factories:
+        m = _FORMABLE_TAG_RE.match(d.token)
+        if not m:
+            rows.append(
+                f"{d.token:<55}{d.source_basename} - not a formable decision shape"
+            )
+            continue
+        by_tag.setdefault(m.group(1), []).append(d)
+
+    canonical: Dict[str, int] = {}
+    for tag, decs in by_tag.items():
+        uf = next((d for d in decs if d.token == f"{tag}_update_flag"), None)
+        if uf is None or not uf.available:
+            rows.append(f"{tag}: no update_flag available block - cannot derive size")
+            continue
+        canonical[tag] = len(_STATE_ENTRY_RE.findall(uf.available))
+
+    commit_ids: Dict[str, int] = {}
+    for tag, decs in by_tag.items():
+        if tag not in canonical:
+            continue
+        size = canonical[tag]
+        ids = set()
+        for d in decs:
+            literals = [
+                _int_literal(v)
+                for regex in (_SIZE_SET_RE, _SIZE_CMP_RE)
+                for v in regex.findall(d.raw)
+            ]
+            if not literals:
+                rows.append(
+                    f"{d.token:<55}{d.source_basename} - missing commitment gate (no formable_committed_size literal)"
+                )
+            for v in literals:
+                if v != size:
+                    rows.append(
+                        f"{d.token:<55}{d.source_basename} - size literal {v} != {tag} update_flag state count {size}"
+                    )
+            for i, _ in _COMMIT_PAIR_RE.findall(d.raw):
+                ids.add(_int_literal(i))
+        if len(ids) > 1:
+            rows.append(f"{tag}: conflicting commit ids {sorted(ids)}")
+        elif ids:
+            commit_ids[tag] = next(iter(ids))
+        else:
+            rows.append(f"{tag}: no commit write (set_variable formable_committed_id)")
+
+    id_owner: Dict[int, str] = {}
+    for tag in sorted(commit_ids):
+        commit_id = commit_ids[tag]
+        if commit_id in id_owner:
+            rows.append(
+                f"{tag}: commit id {commit_id} collides with {id_owner[commit_id]}"
+            )
+        else:
+            id_owner[commit_id] = tag
+
+    for tag, decs in by_tag.items():
+        fid = commit_ids.get(tag)
+        for d in decs:
+            for g in _OWN_GATE_ID_RE.findall(d.raw):
+                if fid is not None and _int_literal(g) != fid:
+                    rows.append(
+                        f"{d.token:<55}{d.source_basename} - gate id {g} != {tag} commit id {fid}"
+                    )
+            for ref in _ID_LITERAL_RE.findall(d.raw):
+                if id_owner and _int_literal(ref) not in id_owner:
+                    rows.append(
+                        f"{d.token:<55}{d.source_basename} - references unknown formable id {ref}"
+                    )
+
+    size_by_id = {commit_ids[t]: canonical[t] for t in commit_ids if t in canonical}
+    for basename, text in focus_texts.items():
+        for i, s in _COMMIT_PAIR_RE.findall(text):
+            if _int_literal(i) not in size_by_id:
+                rows.append(
+                    f"{basename}: focus commit references unknown formable id {i}"
+                )
+            elif _int_literal(s) != size_by_id[_int_literal(i)]:
+                rows.append(
+                    f"{basename}: focus commit size {s} != update_flag state count {size_by_id[_int_literal(i)]} for id {i}"
+                )
+        for v in _SIZE_CMP_RE.findall(text):
+            if size_by_id and _int_literal(v) not in set(size_by_id.values()):
+                rows.append(
+                    f"{basename}: focus guard size {v} matches no formable state count"
+                )
+    return rows
+
+
 def extract_value_single_line(obj: str, s: str) -> str:
     pattern = r"\t+" + s + r" = (\S*)"
     matches = re.findall(pattern, obj)
@@ -693,33 +885,10 @@ def _top_level_neg_pp(block: str):
     ignored (they are gameplay outcomes, not entry costs)."""
     if not block:
         return None
-    inner = block.strip()
-    if inner.startswith("{"):
-        inner = inner[1:]
-    if inner.endswith("}"):
-        inner = inner[:-1]
-    depth = 0
-    i = 0
-    n = len(inner)
-    while i < n:
-        ch = inner[i]
-        if ch == "{":
-            depth += 1
-            i += 1
-            continue
-        if ch == "}":
-            depth -= 1
-            i += 1
-            continue
-        if ch == "#":
-            while i < n and inner[i] != "\n":
-                i += 1
-            continue
-        if depth == 0:
-            m = re.match(r"add_political_power\s*=\s*-(\d+)", inner[i:])
-            if m:
-                return int(m.group(1))
-        i += 1
+    for inner, index in _iter_flat_offsets(block):
+        match = re.match(r"add_political_power\s*=\s*-(\d+)", inner[index:])
+        if match:
+            return _int_literal(match.group(1))
     return None
 
 
@@ -795,7 +964,7 @@ class DecisionFactory:
 
 
 # Decisions parsing cache - enabled by default, disabled via BaseValidator.no_cache
-_DECISION_CACHE = {"enabled": True, "data": {}}
+_DECISION_CACHE: Dict[str, Any] = {"enabled": True, "data": {}}
 
 
 def _set_cache_enabled(enabled: bool):
@@ -813,6 +982,7 @@ def _invalidate_decision_cache():
     validators see the patched contents instead of stale factories.
     """
     _DECISION_CACHE["data"].clear()
+    FileOpener.clear_cache()
 
 
 def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
@@ -1031,11 +1201,15 @@ class Validator(BaseValidator):
         super().__init__(*args, **kwargs)
         self.fix = fix
         self.missing_icons = missing_icons
-        self._activation_removal_cache = None
+        self._activation_removal_cache: Optional[
+            Tuple[Set[str], Set[str], Set[str]]
+        ] = None
         if self.no_cache:
             _set_cache_enabled(False)
 
-    def _get_activation_removal_scan(self) -> Tuple[set, set, set]:
+    def _get_activation_removal_scan(
+        self,
+    ) -> Tuple[Set[str], Set[str], Set[str]]:
         """Scan shipped content for decision activations and external removals."""
         if self._activation_removal_cache is not None:
             return self._activation_removal_cache
@@ -1046,15 +1220,15 @@ class Validator(BaseValidator):
                 os.path.join(self.mod_path, pattern), recursive=True
             )
         ]
-        activated_decisions: set = set()
-        activated_missions: set = set()
-        externally_removed: set = set()
-        for dec_set, mis_set, rem_set in self._pool_map(
+        activated_decisions: Set[str] = set()
+        activated_missions: Set[str] = set()
+        externally_removed: Set[str] = set()
+        for decision_set, mission_set, removed_set in self._pool_map(
             _scan_activations_and_removals, all_files, chunksize=30
         ):
-            activated_decisions |= dec_set
-            activated_missions |= mis_set
-            externally_removed |= rem_set
+            activated_decisions |= decision_set
+            activated_missions |= mission_set
+            externally_removed |= removed_set
         self._activation_removal_cache = (
             activated_decisions,
             activated_missions,
@@ -1062,51 +1236,44 @@ class Validator(BaseValidator):
         )
         return self._activation_removal_cache
 
-    def _apply_ai_factor_fixes(self, fixes: list):
-        """Insert a default ai_will_do = { base = 0 } block into decisions missing one."""
-        dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
-
-        by_file: Dict[str, List[str]] = {}
-        for token, basename in fixes:
-            by_file.setdefault(basename, []).append(token)
-
+    def _apply_decision_file_fixes(self, fixes, patch):
         fixed_total = 0
-        for basename, tokens in by_file.items():
-            target_file = None
-            for filepath in glob.iglob(dec_filepath + "/**/*.txt", recursive=True):
-                if os.path.basename(filepath) == basename:
-                    target_file = filepath
-                    break
-
-            if not target_file:
+        for basename, tokens in _group_fixes_by_basename(fixes).items():
+            target_file = _find_decision_file(self.mod_path, basename)
+            if target_file is None:
                 self.log(f"  Could not locate file: {basename}", "warning")
                 continue
-
-            with open(target_file, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-
+            content = read_text_strict(target_file)
             for token in tokens:
-                pattern = re.compile(
-                    r"(^\t" + re.escape(token) + r" = \{.*?)(^\t\})",
-                    flags=re.MULTILINE | re.DOTALL,
+                patched = patch(content, token)
+                if patched is None or patched == content:
+                    self.log(f"  Could not patch {token} in {basename}", "warning")
+                    continue
+                content = patched
+                fixed_total += 1
+            atomic_write_text(target_file, content)
+        return fixed_total
+
+    def _apply_ai_factor_fixes(self, fixes: list):
+        """Insert a default ai_will_do = { base = 0 } block into decisions missing one."""
+
+        def patch(content, token):
+            pattern = re.compile(
+                r"(^\t" + re.escape(token) + r" = \{.*?)(^\t\})",
+                flags=re.MULTILINE | re.DOTALL,
+            )
+
+            def insert(match):
+                return (
+                    match.group(1)
+                    + "\t\tai_will_do = {\n\t\t\tbase = 0\n\t\t}\n"
+                    + match.group(2)
                 )
 
-                def _inserter(m):
-                    return (
-                        m.group(1)
-                        + "\t\tai_will_do = {\n\t\t\tbase = 0\n\t\t}\n"
-                        + m.group(2)
-                    )
+            patched, count = pattern.subn(insert, content)
+            return patched if count else None
 
-                new_content, count = pattern.subn(_inserter, content)
-                if count:
-                    content = new_content
-                    fixed_total += 1
-                else:
-                    self.log(f"  Could not patch {token} in {basename}", "warning")
-
-            with open(target_file, "w", encoding="utf-8-sig") as f:
-                f.write(content)
+        fixed_total = self._apply_decision_file_fixes(fixes, patch)
 
         self.log(
             f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC if self.use_colors else ''}"
@@ -1669,8 +1836,8 @@ class Validator(BaseValidator):
         """Flag decisions whose ``allowed`` is fully redundant with the parent
         category's ``allowed`` (same single-tag pin, no extra conditions).
 
-        E.g. a decision with ``allowed = { original_tag = SER }`` inside a
-        category that already declares ``allowed = { original_tag = SER }``.
+        E.g. a decision with ``allowed = { original_tag = TAG }`` inside a
+        category that already declares ``allowed = { original_tag = TAG }``.
         The decision-level allowed is dead weight — remove it.
         """
         self._log_section(
@@ -1867,40 +2034,9 @@ class Validator(BaseValidator):
 
     def _apply_visible_to_available_fixes(self, fixes: list):
         """Replace identical available blocks with the visible content and remove available."""
-        dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
-
-        by_file: Dict[str, List[str]] = {}
-        for token, basename in fixes:
-            by_file.setdefault(basename, []).append(token)
-
-        fixed_total = 0
-        for basename, tokens in by_file.items():
-            target_file = None
-            for filepath in glob.iglob(dec_filepath + "/**/*.txt", recursive=True):
-                if os.path.basename(filepath) == basename:
-                    target_file = filepath
-                    break
-
-            if not target_file:
-                self.log(f"  Could not locate file: {basename}", "warning")
-                continue
-
-            with open(target_file, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-
-            for token in tokens:
-                # Find the decision block, then remove its available = { ... }
-                # sub-block using brace-balanced matching so nested blocks
-                # (NOT = { ... }, AND = { ... }, etc.) don't break the patch.
-                new_content = _remove_available_block_for_token(content, token)
-                if new_content is not None and new_content != content:
-                    content = new_content
-                    fixed_total += 1
-                else:
-                    self.log(f"  Could not patch {token} in {basename}", "warning")
-
-            with open(target_file, "w", encoding="utf-8-sig") as f:
-                f.write(content)
+        fixed_total = self._apply_decision_file_fixes(
+            fixes, _remove_available_block_for_token
+        )
 
         self.log(
             f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC if self.use_colors else ''}"
@@ -2390,6 +2526,41 @@ class Validator(BaseValidator):
             "Decisions with targets_dynamic/target_non_existing but no targets (meaningless — add targets or remove):",
         )
 
+    def validate_formable_commitment_sync(self):
+        """Flag formable commitment-ratchet literals out of sync with state lists.
+
+        See ``_find_formable_commitment_rows`` for the rule set. New formables
+        must wire the ratchet (gate on every decision, commit in
+        integrate_start/update_flag) or this check reports them.
+        """
+        self._log_section(
+            "Checking formable commitment ratchet id/size literals for drift..."
+        )
+
+        factories = [
+            d
+            for d in parse_all_decision_factories(self.mod_path)
+            if d.source_basename == _FORMABLE_DECISIONS_BASENAME
+        ]
+
+        focus_texts: Dict[str, str] = {}
+        pattern = os.path.join(self.mod_path, "common", "national_focus", "*.txt")
+        for filename in glob.iglob(pattern):
+            if _should_skip(filename):
+                continue
+            text = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
+            if "formable_committed_" in text:
+                focus_texts[os.path.basename(filename)] = text
+
+        results = _find_formable_commitment_rows(factories, focus_texts)
+        self._report(
+            results,
+            "✓ Formable commitment ids/sizes in sync",
+            "Formable commitment ratchet drift (gate/commit literals out of sync with update_flag state lists — update every size literal for the formable):",
+        )
+
     def validate_missing_icons(self):
         """Flag decisions/categories whose icon or picture sprite is undefined.
 
@@ -2437,6 +2608,47 @@ class Validator(BaseValidator):
             category="missing-decision-icon",
         )
 
+    def validate_icon_types(self):
+        """Flag icons whose art belongs to a different decision-UI slot.
+
+        Sprite names do not tell the slot apart — MD categories use both
+        `GFX_decision_category_*` and `GFX_decisions_category_*`, and category
+        `picture` banners use the plain `GFX_decision_*` prefix — so the texture's
+        pixel size is what identifies the art. Nothing here overlaps the
+        missing-icon check: a value that resolves to no sprite is skipped.
+        """
+        self._log_section("Checking decision icons match their UI slot...")
+
+        textures = build_sprite_texture_index(self.mod_path)
+        if len(textures) < 1000:
+            self.log(
+                f"  Only {len(textures)} GFX textures loaded — sprite definitions "
+                "did not load; skipping the icon type check",
+                "warning",
+            )
+            return
+
+        files = self._collect_files(["common/decisions/**/*.txt"], ignore_staged=True)
+        ref_lists = self._pool_map(
+            _extract_decision_icons, [(f, self.mod_path) for f in files]
+        )
+
+        results = []
+        for filepath, refs in zip(files, ref_lists):
+            for owner, kind, value, line in refs:
+                msg = _icon_type_message(kind, owner, value, textures)
+                if not msg:
+                    continue
+                results.append((msg, os.path.relpath(filepath, self.mod_path), line))
+
+        self._report(
+            results,
+            "✓ All decision icons use art sized for their slot",
+            "Decision icons using art from the wrong slot:",
+            Severity.WARNING,
+            category="decision-icon-slot-mismatch",
+        )
+
     def run_validations(self):
         if self.staged_only:
             # Decision checks parse all 200+ decision files even for structural
@@ -2478,6 +2690,8 @@ class Validator(BaseValidator):
         self.validate_mission_only_attributes()
         self.validate_orphaned_remove_effect()
         self.validate_orphaned_target_modifiers()
+        self.validate_formable_commitment_sync()
+        self.validate_icon_types()
 
         if self.missing_icons:
             self.validate_missing_icons()

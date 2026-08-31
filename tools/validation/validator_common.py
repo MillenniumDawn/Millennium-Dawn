@@ -20,13 +20,16 @@ from shared_utils import (
     Colors,
     DataCleaner,
     FileOpener,
+    atomic_write_text,
     clean_filepath,
     compute_line_offsets,
+    cpu_budget,
     create_validation_parser,
     find_line_number,
     get_staged_files,
     line_for_offset,
     log_message,
+    normalize_path_separators,
     print_timing_summary,
     run_validator_main,
     should_skip_file,
@@ -157,6 +160,7 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "production_oil_factor_tt",
         "production_speed_facility_factor_tt",
         "production_speed_supply_node_factor_tt",
+        "production_speed_synthetic_refinery_factor_tt",
         "recruitable_population_tt",
         "resistance_activity_tt",
         "resistance_target_tt",
@@ -293,6 +297,40 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
     }
 )
 
+# Object header opening a `{` block. Numeric names so `random_list` weight
+# buckets (`50 = { ... }`) and state ids (`652 = { ... }`) parse as blocks.
+_BLOCK_RE = re.compile(r"([A-Za-z_0-9@][A-Za-z0-9_.@]*(?::[A-Za-z0-9_]+)?)\s*=\s*\{")
+
+
+def _match_brace(text: str, open_pos: int) -> int:
+    """Return the index of the `}` closing the `{` at ``open_pos``, or -1."""
+    depth = 0
+    for i in range(open_pos, len(text)):
+        char = text[i]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+    return -1
+
+
+def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, int]]:
+    """Direct child blocks of a body as (name, name_start, body_start, body_end)."""
+    blocks = []
+    i = start
+    while i < end:
+        match = _BLOCK_RE.search(text, i, end)
+        if not match:
+            break
+        close = _match_brace(text, match.end() - 1)
+        if close < 0 or close > end:
+            break
+        blocks.append((match.group(1), match.start(), match.end(), close))
+        i = close + 1
+    return blocks
+
 
 def casefold_index(names) -> dict:
     """Return a dict mapping each name lowercased to its canonical form.
@@ -307,6 +345,38 @@ def case_mismatch(ref: str, ci_index: dict):
     exactly (a Linux-only bug), else None."""
     hit = ci_index.get(ref.lower())
     return hit if (hit is not None and hit != ref) else None
+
+
+# Trait definitions sit at one tab of indent inside the `leader_traits = { }`
+# wrapper. `-` is in the charset for `emerging_Communist-State`.
+LEADER_TRAIT_DEF_RE = re.compile(r"^\t([\w\-]+)\s*=\s*\{", re.MULTILINE)
+
+
+def parse_leader_trait_names(mod_path: str, subdir: str) -> Set[str]:
+    """Collect every trait defined in the ``common/<subdir>/`` trait files.
+
+    Covers both leader trait pools: ``country_leader`` (advisors and country
+    leaders) and ``unit_leader`` (generals, admirals, operatives). The hyphen is
+    part of the name charset because ``emerging_Communist-State`` exists.
+    """
+    names: Set[str] = set()
+    trait_dir = os.path.join(mod_path, "common", subdir)
+    if not os.path.isdir(trait_dir):
+        return names
+
+    try:
+        trait_files = sorted(os.listdir(trait_dir))
+    except OSError:
+        return names
+
+    for fname in trait_files:
+        if not fname.endswith(".txt"):
+            continue
+        content = FileOpener.open_text_file(
+            os.path.join(trait_dir, fname), lowercase=False, strip_comments_flag=True
+        )
+        names.update(match.group(1) for match in LEADER_TRAIT_DEF_RE.finditer(content))
+    return names
 
 
 def scan_meta_constructed_names(files, defined_names):
@@ -509,7 +579,9 @@ class BaseValidator:
         self.output_file = output_file
         self.use_colors = use_colors
         self.staged_only = staged_only
-        self.workers = workers if workers else max(1, cpu_count() // 2)
+        # Half the cores by default, and never more than the shared budget:
+        # a caller that asks for more must not be able to take the whole box.
+        self.workers = min(workers or max(1, cpu_count() // 2), cpu_budget())
         self.no_cache = no_cache
         # Pool workers call disk_cache at module level and never see `self`, so the
         # env var is the only channel that reaches them (fork inherits it).
@@ -679,33 +751,25 @@ class BaseValidator:
                     )
 
     def save_output(self):
-        if self.output_file and self.output_lines:
-            try:
-                with open(self.output_file, "w", encoding="utf-8") as f:
-                    f.write("\n".join(self.output_lines))
-                logging.info(f"Results saved to: {self.output_file}")
-            except Exception as e:
-                logging.error(f"Failed to write results to {self.output_file}: {e}")
-
-        json_file = (
-            os.path.splitext(self.output_file)[0] + ".json"
-            if self.output_file
-            else None
-        )
-        if json_file and self._issues:
-            try:
-                with open(json_file, "w", encoding="utf-8") as f:
-                    f.write(self.get_issues_json())
-                logging.info(f"JSON results saved to: {json_file}")
-            except Exception as e:
-                logging.error(f"Failed to serialize JSON to {json_file}: {e}")
+        if not self.output_file:
+            return
+        atomic_write_text(self.output_file, "\n".join(self.output_lines))
+        logging.info(f"Results saved to: {self.output_file}")
+        # CI verifies the sidecar exists even on clean runs — always write it.
+        json_file = os.path.splitext(self.output_file)[0] + ".json"
+        atomic_write_text(json_file, self.get_issues_json())
+        logging.info(f"JSON results saved to: {json_file}")
 
     def add_issue(
         self, severity: str, category: str, message: str, file: str = "", line: int = 0
     ):
         """Add an issue to the internal list for later deduplication and reporting."""
         issue = Issue(
-            severity=severity, category=category, message=message, file=file, line=line
+            severity=severity,
+            category=category,
+            message=message,
+            file=normalize_path_separators(file),
+            line=line,
         )
         self._issues.append(issue)
         if severity == Severity.ERROR:
@@ -790,14 +854,23 @@ class BaseValidator:
         group_label = category or _label_from_failmsg(fail_msg)
         for r in results:
             if isinstance(r, Issue):
-                issue = r
-                if not issue.category:
-                    issue.category = group_label
+                normalized_category = r.category or group_label
+                normalized_file = normalize_path_separators(r.file)
+                if normalized_category == r.category and normalized_file == r.file:
+                    issue = r
+                else:
+                    issue = Issue(
+                        severity=r.severity,
+                        category=normalized_category,
+                        message=r.message,
+                        file=normalized_file,
+                        line=r.line,
+                    )
                 actual_severity = issue.severity
             elif isinstance(r, tuple):
                 # (message, file, line)
                 msg_t = str(r[0]) if len(r) > 0 else ""
-                file_t = str(r[1]) if len(r) > 1 else ""
+                file_t = normalize_path_separators(str(r[1])) if len(r) > 1 else ""
                 line_t = _safe_int(r[2]) if len(r) > 2 else 0
                 issue = Issue(
                     severity=severity,
@@ -814,7 +887,7 @@ class BaseValidator:
                     severity=severity,
                     category=group_label,
                     message=msg_p,
-                    file=file_p,
+                    file=normalize_path_separators(file_p),
                     line=line_p,
                 )
                 actual_severity = severity
@@ -974,11 +1047,15 @@ class BaseValidator:
                     normalized.startswith(hint) or ("/" + hint) in normalized
                 )
 
-            files = [
+            matched = [
                 f
                 for f in self.staged_files
                 if any(f.endswith(ext) for ext in extensions)
                 and any(_matches_hint(f, hint) for hint in dir_hints)
+            ]
+            files = [
+                f if os.path.isabs(f) else os.path.join(self.mod_path, f)
+                for f in matched
             ]
         else:
             seen: Set[str] = set()
@@ -991,7 +1068,15 @@ class BaseValidator:
                         seen.add(f)
                         files.append(f)
 
-        result = [f for f in files if not should_skip_file(f)]
+        # should_skip_file matches on path segments, and unconditionally skips
+        # any ".claude"/".git" segment. Checking against the mod_path-relative
+        # path (not the absolute one) keeps that rule scoped to a nested
+        # worktree/config dir *discovered while scanning* — it must not also
+        # trigger just because mod_path itself lives under .claude/worktrees/
+        # (this environment's own worktree convention).
+        result = [
+            f for f in files if not should_skip_file(os.path.relpath(f, self.mod_path))
+        ]
         if extra_skip is not None:
             result = [f for f in result if not extra_skip(f)]
         return result
