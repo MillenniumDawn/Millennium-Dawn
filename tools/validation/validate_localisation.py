@@ -871,6 +871,48 @@ class Validator(BaseValidator):
             "Orphaned tooltip keys (defined in loc but never referenced):",
         )
 
+    def validate_opinion_modifiers(
+        self, loc_keys: Dict, scripted_loc_keys: set
+    ):
+        self._log_section("Checking opinion modifier localisation...")
+
+        modifier_files = self._collect_files(
+            ["common/opinion_modifiers/**/*.txt"], ignore_staged=True
+        )
+        modifiers: Dict[str, str] = {}
+        pattern = re.compile(r"^\t([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
+        for filepath in modifier_files:
+            try:
+                text = FileOpener.open_text_file(
+                    filepath, lowercase=False, strip_comments_flag=True
+                )
+            except Exception:
+                continue
+            basename = os.path.basename(filepath)
+            for match in pattern.finditer(text):
+                name = match.group(1)
+                if name not in modifiers:
+                    modifiers[name] = basename
+
+        missing = []
+        for name, basename in sorted(modifiers.items()):
+            if (
+                name in loc_keys
+                or name in scripted_loc_keys
+                or name in VANILLA_LOC_KEYS
+            ):
+                continue
+            missing.append(
+                f"{name} - {basename}: opinion modifier without localisation"
+            )
+        self._report(
+            missing,
+            "\u2713 All opinion modifiers have localisation",
+            "Opinion modifiers without localisation:",
+            severity=Severity.WARNING,
+            category="missing-opinion-modifier-localisation",
+        )
+
     def run_validations(self):
         if self.staged_only and not self.staged_files:
             self.log(
@@ -899,6 +941,7 @@ class Validator(BaseValidator):
             self.validate_orphaned_tooltip_keys(
                 loc_keys, skipped_keys, scripted_loc_keys
             )
+            self.validate_opinion_modifiers(loc_keys, scripted_loc_keys)
 
 
 if __name__ == "__main__":
