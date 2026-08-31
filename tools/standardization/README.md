@@ -84,7 +84,7 @@ Standardizes idea files according to Millennium Dawn standards.
 
 **Key features:**
 
-- Removes redundant default properties (`allowed = { always = no }`, `cancel = { always = no }`)
+- Removes redundant default properties (`cancel = { always = no }`). Keeps `allowed = { always = no }` (hides a slotted idea from the picker; `add_idea` still applies it)
 - Adds logging to on_add/on_remove when they have effects
 - Preserves allowed_civil_war for civil war tags
 - Maintains proper formatting
@@ -194,7 +194,7 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 
 ### Ideas
 
-- Remove `allowed = { always = no }` (redundant default; `allowed` checked once at load, bypassed by `add_ideas`)
+- Keep `allowed = { always = no }` on slotted ideas (hides them from the picker; `add_idea` still applies them)
 - Remove `cancel = { always = no }` (redundant default; checked hourly, never true)
 - Remove empty `on_add = { log = "" }`
 - Include `allowed_civil_war = { always = yes }` for civil war tags
