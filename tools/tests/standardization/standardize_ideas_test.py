@@ -63,13 +63,26 @@ def test_comment_on_a_dropped_always_no_block_survives():
             "\tTAG_test_idea = {",
             "\t\tpicture = test_picture",
             "\t\t# why this was gated off",
-            "\t\tallowed = { always = no }",
+            "\t\tcancel = { always = no }",
             "\t}",
         ]
     )
     out = _standardize(block)
     assert any("# why this was gated off" in line for line in out)
     assert not any("always = no" in line for line in out)
+
+
+def test_allowed_always_no_is_kept():
+    block = _idea(
+        [
+            "\tTAG_test_idea = {",
+            "\t\tpicture = test_picture",
+            "\t\tallowed = { always = no }",
+            "\t}",
+        ]
+    )
+    out = _standardize(block)
+    assert any("allowed = { always = no }" in line for line in out)
 
 
 def test_unknown_nested_block_preserved_and_indented():
