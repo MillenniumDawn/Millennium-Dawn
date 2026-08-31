@@ -129,9 +129,7 @@ faction_goal_spy_master = {
 			limit = {
 				has_intelligence_agency = yes
 				NOT = { agency_upgrade_number > 30 }
-				OR = {
-					has_done_agency_upgrade = upgrade_crypto_strength_2
-				}
+				has_done_agency_upgrade = upgrade_crypto_strength_2
 			}
 			add_faction_initiative = 1
 			gain_random_agency_upgrade = yes
@@ -163,40 +161,25 @@ faction_goal_ensure_military_r_d = {
 	visible = {
 		collection_size = {
 			input = {
-				input = game:all_states
-				operators = {
-					limit = {
-						is_controlled_by_ROOT_or_ally = yes
-						land_facility > 0
-					}
-				}
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { land_facility > 0 } }
 				name = COLLECTION_FACTION_LAND_FACILITY
 			}
 			value < 1
 		}
 		collection_size = {
 			input = {
-				input = game:all_states
-				operators = {
-					limit = {
-						is_controlled_by_ROOT_or_ally = yes
-						naval_facility > 0
-					}
-				}
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { naval_facility > 0 } }
 				name = COLLECTION_FACTION_NAVAL_FACILITY
 			}
 			value < 1
 		}
 		collection_size = {
 			input = {
-				input = game:all_states
-				operators = {
-					limit = {
-						is_controlled_by_ROOT_or_ally = yes
-						air_facility > 0
-					}
-				}
-				name = COLLECTION_FACTION_LAND_FACILITY
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { air_facility > 0 } }
+				name = COLLECTION_FACTION_AIR_FACILITY
 			}
 			value < 1
 		}
@@ -204,40 +187,25 @@ faction_goal_ensure_military_r_d = {
 	completed = {
 		collection_size = {
 			input = {
-				input = game:all_states
-				operators = {
-					limit = {
-						is_controlled_by_ROOT_or_ally = yes
-						land_facility > 0
-					}
-				}
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { land_facility > 0 } }
 				name = COLLECTION_FACTION_LAND_FACILITY
 			}
 			value > 0
 		}
 		collection_size = {
 			input = {
-				input = game:all_states
-				operators = {
-					limit = {
-						is_controlled_by_ROOT_or_ally = yes
-						naval_facility > 0
-					}
-				}
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { naval_facility > 0 } }
 				name = COLLECTION_FACTION_NAVAL_FACILITY
 			}
 			value > 0
 		}
 		collection_size = {
 			input = {
-				input = game:all_states
-				operators = {
-					limit = {
-						is_controlled_by_ROOT_or_ally = yes
-						air_facility > 0
-					}
-				}
-				name = COLLECTION_FACTION_LAND_FACILITY
+				input = collection:faction_controlled_states_collection
+				operators = { limit = { air_facility > 0 } }
+				name = COLLECTION_FACTION_AIR_FACILITY
 			}
 			value > 0
 		}
@@ -248,18 +216,17 @@ faction_goal_ensure_military_r_d = {
 		custom_effect_tooltip = ALL_FACTION_MEMBERS
 		every_collection_element = {
 			input = {
-				input = game:all_states
+				input = collection:faction_controlled_states_collection
 				operators = {
 					limit = {
-						is_controlled_by_ROOT_or_ally = yes
 						OR = {
-							air_facility > 0
 							land_facility > 0
 							naval_facility > 0
+							air_facility > 0
 						}
 					}
 				}
-				name = OWNS_LISTED_STATE
+				name = COLLECTION_FACTION_ANY_FACILITY
 			}
 			custom_effect_tooltip = OWNS_LISTED_STATE
 			add_faction_influence_ratio = 0.05
@@ -317,81 +284,18 @@ faction_goal_ensure_military_r_d = {
 
 ### Industry
 
-faction_goal_military_infrastructure = {
-	name = military_infrastructure_goal_name
-	description = military_infrastructure_goal_desc
-	category = short_term
-	group = FOCUS_FILTER_CONSOLIDATION
-	visible = {
-		collection_size = {
-			input = {
-				input = game:all_states
-				operators = {
-					limit = {
-						is_core_of = CONTROLLER
-						is_controlled_by_ROOT_or_ally = yes
-						any_neighbor_state = {
-							controller = {
-								NOT = { is_in_faction_with = ROOT }
-							}
-						}
-						infrastructure < 5
-					}
-				}
-				name = COLLECTION_FACTION_BORDER_STATES_FULL_INFRASTRUCTURE
-			}
-			value > 0
-		}
-	}
-	completed = {
-		collection_size = {
-			input = {
-				input = game:all_states
-				operators = {
-					limit = {
-						is_controlled_by_ROOT_or_ally = yes
-						any_neighbor_state = {
-							controller = {
-								NOT = { is_in_faction_with = ROOT }
-							}
-						}
-						infrastructure < 5
-					}
-				}
-				name = COLLECTION_FACTION_BORDER_STATES_FULL_INFRASTRUCTURE
-			}
-			value < 1
-		}
-	}
-	complete_effect = {
-		add_faction_power_projection = 100
-		newline = yes
-		custom_effect_tooltip = ALL_FACTION_MEMBERS
-		every_faction_member = {
-			army_experience = 50
-		}
-	}
-	ai_will_do = {
-		base = 0
-		modifier = {
-			add = 1
-			has_war = no
-		}
-	}
-}
-
 faction_goal_a_great_fortress = {
 	name = a_great_fortress_goal_name
 	description = a_great_fortress_goal_desc
 	category = short_term
 	group = FOCUS_FILTER_CONSOLIDATION
 	visible = {
-		always = yes
+		threat > 0.10
 	}
 	available = {
 		collection_size = {
 			input = {
-				input = collection:faction_owned_core_states
+				input = collection:faction_owned_core_states_collection
 				operators = {
 					limit = {
 						NOT = { is_fully_controlled_by = OWNER }
@@ -404,11 +308,7 @@ faction_goal_a_great_fortress = {
 	}
 	completed = {
 		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION_NAME
-			}
+			collection = collection:faction_members_collection
 			buildings = { bunker coastal_bunker }
 			size > 29
 		}
@@ -443,14 +343,25 @@ faction_goal_an_armored_fist = {
 	visible = {
 	}
 	completed = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_tank_battalions_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_battalions_with_type@armor_Bat
+						add = num_battalions_with_type@L_arm_Bat
+						add = num_battalions_with_type@A_L_arm_Bat
+					}
+				}
 			}
-			unit = armor
-			size > 9
+		}
+		check_variable = {
+			var = num_tank_battalions_faction
+			value = 10
+			compare = greater_than_or_equals
+			tooltip = faction_goal_tank_bats_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -484,17 +395,35 @@ faction_goal_an_infantry_army = {
 	category = short_term
 	group = FOCUS_FILTER_ARMY_XP
 	completed = {
-
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_infantry_battalions_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_battalions_with_type@Militia_Bat
+						add = num_battalions_with_type@L_Inf_Bat
+						add = num_battalions_with_type@L_Air_Inf_Bat
+						add = num_battalions_with_type@Mot_Air_Inf_Bat
+						add = num_battalions_with_type@Mech_Air_Inf_Bat
+						add = num_battalions_with_type@Arm_Air_Inf_Bat
+						add = num_battalions_with_type@L_Marine_Bat
+						add = num_battalions_with_type@L_Air_assault_Bat
+						add = num_battalions_with_type@L_Ranger_Bat
+						add = num_battalions_with_type@L_Marine_Cdo_Bat
+						add = num_battalions_with_type@Special_Forces
+						add = num_battalions_with_type@fake_intel_unit
+					}
+				}
 			}
-			unit = infantry
-			size > 249
 		}
-
+		check_variable = {
+			var = num_infantry_battalions_faction
+			value = 250
+			compare = greater_than_or_equals
+			tooltip = faction_goal_infantry_bats_at_least_tt
+		}
 	}
 	complete_effect = {
 		add_faction_power_projection = 200
@@ -521,19 +450,21 @@ faction_goal_an_infantry_army = {
 	}
 }
 
-# TODO: Needs to be updated w/ new system
 faction_goal_no_terrorism = {
 	name = faction_goal_no_terrorism_name
 	description = faction_goal_no_terrorism_desc
 	category = short_term
 	group = FOCUS_FILTER_CONSOLIDATION
+	allowed = {
+		has_dlc = "La Resistance"
+	}
 	completed = {
-		check_variable = { global.active_terror_orgs^num < 1 }
 		has_intelligence_agency = yes
 	}
 	complete_effect = {
 		add_faction_power_projection = 200
 		every_faction_member = {
+			limit = { has_intelligence_agency = yes }
 			army_experience = 50
 			upgrade_intelligence_agency = upgrade_anti_partisan
 			upgrade_intelligence_agency = upgrade_passive_defense
@@ -546,29 +477,30 @@ faction_goal_unlock_research = {
 	description = faction_goal_unlock_research_desc
 	category = short_term
 	group = FOCUS_FILTER_INTERNAL_AFFAIRS
-	available = {
-		FROM = { num_faction_members > 2 }
-	}
-	visible = {
-		FROM = { NOT = { has_faction_research_unlocked = yes } }
-	}
+	available = { num_faction_members > 2 }
+	visible = { NOT = { has_faction_research_unlocked = yes } }
 	select_effect = {
-		set_temp_variable = { total_techs = 0 }
-		every_collection_element = {
-			input = {
-				input = game:scope
-				operators = {
-					faction_members
+		scope:faction = {
+			set_temp_variable = {
+				total_techs = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = {
+							value = num_researched_technologies
+							multiply = {
+								value = 0
+								if = { limit = { value = num_researched_technologies  less_than = 50 }  add = 1.25 }
+								else_if = { limit = { value = num_researched_technologies  less_than = 75 }  add = 1.2 }
+								else_if = { limit = { value = num_researched_technologies  less_than = 100 }  add = 1.15 }
+								else_if = { limit = { value = num_researched_technologies  less_than = 150 }  add = 1.1 }
+								else_if = { limit = { value = num_researched_technologies  less_than = 200 }  add = 1.05 }
+							}
+						}
+					}
+					round = yes
 				}
 			}
-			add_to_temp_variable = { total_techs = num_researched_technologies }
-		}
-
-		multiply_temp_variable = {
-			var = total_techs
-			value = 1.20
-		}
-		scope:faction = {
 			set_variable = { unlock_military_techs_researched_target = total_techs }
 		}
 	}
@@ -576,23 +508,23 @@ faction_goal_unlock_research = {
 		scope:faction = {
 			hidden_trigger = {
 				tooltip_evaluation = eval
-				set_temp_variable = { unlock_military_techs_researched_compare = 0 }
-				all_collection_elements = {
-					collection = {
-						input = game:scope
-						operators = { faction_members }
+				set_temp_variable = {
+					unlock_military_techs_researched_compare_temp_target = {
+						value = 0
+						every_collection = {
+							named_collection = faction_members_collection
+							add = num_researched_technologies
+						}
 					}
-					add_to_temp_variable = { unlock_military_techs_researched_compare = num_researched_technologies }
 				}
-				set_temp_variable = { unlock_military_techs_researched_compare_temp_target = unlock_military_techs_researched_compare }
-				multiply_temp_variable = { unlock_military_techs_researched_compare_temp_target = 1.20 }
 			}
+
 			if = {
 				limit = {
 					has_variable = unlock_military_techs_researched_target
 				}
 				check_variable = {
-					var = unlock_military_techs_researched_compare
+					var = unlock_military_techs_researched_compare_temp_target
 					value = unlock_military_techs_researched_target
 					compare = greater_than
 					tooltip = "GOAL_T_TRIGGER_A"
@@ -600,8 +532,8 @@ faction_goal_unlock_research = {
 			}
 			else = {
 				check_variable = {
-					var = unlock_military_techs_researched_compare
-					value = unlock_military_techs_researched_compare_temp_target
+					var = unlock_military_techs_researched_compare_temp_target
+					value = 0
 					compare = greater_than
 					tooltip = "GOAL_T_TRIGGER_A"
 				}
@@ -622,29 +554,20 @@ faction_goal_unlock_military = {
 	description = faction_goal_unlock_military_desc
 	category = short_term
 	group = FOCUS_FILTER_INTERNAL_AFFAIRS
-	available = {
-		FROM = { num_faction_members > 2 }
-	}
-	visible = {
-		FROM = { NOT = { has_faction_military_unlocked = yes } }
-	}
+	available = { num_faction_members > 2 }
+	visible = { NOT = { has_faction_military_unlocked = yes } }
 	select_effect = {
-		set_temp_variable = { total_divs = 0 }
-		every_collection_element = {
-			input = {
-				input = game:scope
-				operators = {
-					faction_members
+		scope:faction = {
+			set_temp_variable = {
+				total_divs = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_armies
+					}
+					multiply = 1.20
 				}
 			}
-			add_to_temp_variable = { total_divs = num_armies }
-		}
-
-		multiply_temp_variable = {
-			var = total_divs
-			value = 1.20
-		}
-		scope:faction = {
 			set_variable = { unlock_target = total_divs }
 		}
 	}
@@ -652,15 +575,14 @@ faction_goal_unlock_military = {
 		scope:faction = {
 			hidden_trigger = {
 				tooltip_evaluation = eval
-				set_temp_variable = { unlock_compare = 0 }
-				all_collection_elements = {
-					collection = {
-						input = game:scope
-						operators = { faction_members }
+				set_temp_variable = {
+					unlock_compare = {
+						value = 0
+						every_collection = {
+							named_collection = faction_members_collection
+							add = num_armies
+						}
 					}
-					add_to_temp_variable = { unlock_compare = num_armies }
-					set_temp_variable = { unlock_military_techs_researched_compare_temp_target = unlock_compare }
-					multiply_temp_variable = { unlock_military_techs_researched_compare_temp_target = 1.20 }
 				}
 			}
 			if = {
@@ -677,7 +599,7 @@ faction_goal_unlock_military = {
 			else = {
 				check_variable = {
 					var = unlock_compare
-					value = unlock_military_techs_researched_compare_temp_target
+					value = 0
 					compare = greater_than
 					tooltip = "GOAL_T_TRIGGER_B"
 				}
@@ -692,3 +614,5 @@ faction_goal_unlock_military = {
 		base = 1000 # They should always do this if they can
 	}
 }
+
+

@@ -19,6 +19,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 
 | Name                 | Discord                         | GitHub         | PDX           | Email                         |
 | -------------------- | ------------------------------- | -------------- | ------------- | ----------------------------- |
+| Jason Breen          | -                               | @JasonBreen    | -             | -                             |
 | kotru21              | -                               | @kotru21       | -             | -                             |
 | Ted52                | @Ted52                          | @Ted52         | -             | -                             |
 | Angriest Bird        | @Angriest Bird                  | @AngriestBird  | -             | -                             |
@@ -55,6 +56,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | Mahhouse             | @mahhouse                       | -              | -             | -                             |
 | Ddraig/Kanthier      | -                               | -              | -             | -                             |
 | MrPotter             | -                               | -              | -             | -                             |
+| MrPunk               | -                               | -              | -             | -                             |
 | Cybergev             | -                               | -              | -             | -                             |
 | FGR_UNN              | -                               | -              | -             | -                             |
 | Tanktema             | -                               | -              | -             | -                             |
@@ -181,6 +183,15 @@ The following page is a non-exhaustive list of contributors from over the years 
 | BigRobbo             | @BigRobbo                       | @BigRobbo919   | -             | -                             |
 | pastandrey           | @pastandrey                     | @pastandrey    | -             | -                             |
 | altair6407           | @altair6407                     | @altair6407    | -             | -                             |
+| polski_oski          | @polski_oski                    |                | -             | -                             |
+| Ebby                 | -                               | -              | -             | -                             |
+| Raun139              | -                               | @Raun139       | -             | -                             |
+| Karandash1984        | @karandash1984                  | @Karandash1984 | -             | -                             |
+| Natin                | @nothing4182                    | @NothingMD     | -             | -                             |
+| Ironfury             | -                               | -              | -             | -                             |
+| Calvin C.            | -                               | @cal-chu       | -             | -                             |
+| Imperialist          | @x_imperialist                  | @imperialistx2 | -             | -                             |
+| Barracuda            | @Barracuda                      | @SBeausoleil   | -             | -                             |
 
 # Fellow Modders/Teams
 
@@ -188,22 +199,32 @@ The following page is a non-exhaustive list of contributors from over the years 
 - **libra** from the [Cold War: Iron Curtain](https://steamcommunity.com/sharedfiles/filedetails/?id=1458561226)
 - **Tallcastle** - Agency Submod creator
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2428791468)_
+- **TheGamerCant** - Automated Agency Upgrades submod creator
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3698041064)_
+- **Fight For The Fatherland Team** - Original Automated Agency Upgrades system, later released as a standalone submod
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3698041064)_
 - **Orphanmaker** - Indian icons
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1852163517), [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2814175841)_
-- **Stjern** - Total War mod for adaptation of Counter UI
-  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=806209426&searchtext=total+war)_
 - **KaiserRedux Team** - For sharing icons
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2076426030)_
+- **Truck Gaming** - "Modifier Icons" submod (101 vanilla-style modifier texticons integrated into `gfx/texticons/modifier_icons/` and wired in `interface/modifiericons_texticons.gfx`)
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2668048070)_
 - **Sinuiju chan** - MD PLA general resetting
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3138331129)_
-- **Millennium Dawn: Director's Cut (MD:DC)**
-  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3543352335)_
 - **Doomsday Series: Zombies modern day subnmod**
   \*Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1204955863)
 - **AIGFX: Visible Railroads: Supply Map Mode**
   \*Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2698816291)
 - **AI Rework: Attaché's**
   \*Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3164040395)
+- **Ebby** - AI behavior, naval, performance, and warfare overhaul submods
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2877723086), [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3698291549), [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3698288121)_
+- **Vanilla Navy Rework (VNR)** - Goal-based AI navy fleet/taskforce structure and historical naval design philosophy (the "Lasagna method" fleet tiering in `common/ai_navy/`). Adapted as reference, not copied, all ship types use MD hulls, no vanilla classes. Originated from Kaiserreich Navy Rework.
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2993766165)_
+- **Better Mechanics : Namelists** - Division namelist inspiration (native-language unit-type vocabulary and categorical unit type variety beyond the standard 7 groups). Used as reference only, no copy-paste; all integrations adapted to MD's `L_Inf_Bat`/`armor_Bat`/`Special_Forces` tokens. WW2-themed entries deliberately excluded.
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3413087807)_
+- **Black ICE** - Cooperation with modding, coding and for their customizable top bar.
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1137372539)_
 
 # Voice Lines
 

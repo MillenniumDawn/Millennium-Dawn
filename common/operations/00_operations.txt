@@ -50,8 +50,6 @@ operation_rescue_operative = { ### 0 1/35
 				captured_by = FROM
 				all = yes
 			}
-		}
-		ROOT = {
 			hidden_effect = {
 				set_country_flag = just_freed_operative_flag
 			}
@@ -118,6 +116,88 @@ operation_rescue_operative = { ### 0 1/35
 		exfiltration_border = { base = 30 }
 		exfiltration_go_to_ground = { base = 30 }
 		exfiltration_submarine_pickup = { base = 25 }
+	}
+}
+
+
+operation_rescue_general = { ### 0 1/35
+	icon = GFX_operations_rescue_captured_operative # TODO_JACK: new art req
+	map_icon = GFX_operations_rescue_captured_operative_map
+	name = operation_rescue_general
+	desc = operation_rescue_general_desc
+	priority = 1
+
+
+	days = 35
+	network_strength = 30
+	operatives = 1
+
+	visible = {
+
+		has_any_general_captured_by = FROM
+	}
+
+	available = {
+
+	}
+
+	requirements = {
+		has_any_general_captured_by = FROM
+	}
+
+
+	equipment = {
+
+	}
+	risk_chance = 0.1
+	experience = 2
+	cost_multiplier = 0 # we dont scale in cost for rescues
+
+	outcome_execute = { # SCOPE_OPERATION
+		FROM = {
+			release_captured_generals_from = ROOT
+		}
+	}
+
+	outcome_potential = {
+		FROM = {
+			release_captured_generals_from = ROOT
+		}
+	}
+
+	phases = { #infiltration
+		infiltration_border = { base = 25 }
+		infiltration_paradrop = {
+			base = 25
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0
+			}
+		}
+	}
+	phases = {
+		free_general_free_in_transit = { base = 33 }
+		free_general_assault_holding_area = { base = 33 }
+		free_general_disguise_and_extract = { base = 33 }
+	}
+	phases = { #exfiltration
+		exfiltration_air_pickup = {
+			base = 15
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0
+			}
+		}
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
 	}
 }
 
@@ -322,7 +402,7 @@ operation_fake_intel = { ### 2 1/40
 				if = {
 					# create template if not exist
 					limit = {
-						not = {
+						NOT = {
 							has_country_flag = fake_intel_template_created
 						}
 					}
@@ -1032,7 +1112,7 @@ operation_coup_government = { ### 7 1/70
 		targets = { FROM }
 	}
 	allowed = {
-		has_global_flag = GAME_RULE_allow_coups_free
+		has_game_rule = { rule = allow_coups option = FREE }
 	}
 
 	available = {
@@ -1086,12 +1166,10 @@ operation_coup_government = { ### 7 1/70
 			}
 		}
 		OR = {
-			has_global_flag = GAME_RULE_allow_coups_free
+			has_game_rule = { rule = allow_coups option = FREE }
 			AND = {
-				has_global_flag = GAME_RULE_allow_coups_ai_only
-				FROM = {
-					is_ai = yes
-				}
+				has_game_rule = { rule = allow_coups option = AI_ONLY }
+				FROM = { is_ai = yes }
 			}
 		}
 	}
@@ -1809,10 +1887,6 @@ operation_steal_tech_civilian = { ### 12 3/35
 		}
 	}
 
-	equipment = {
-
-	}
-
 	required_tokens = {
 		token_civilian
 	}
@@ -1835,9 +1909,24 @@ operation_steal_tech_civilian = { ### 12 3/35
 				instant = yes
 				uses = 1
 			}
-			remove_operation_token = {
-				tag = FROM
-				token = token_civilian
+			remove_operation_token = { tag = FROM token = token_civilian }
+		}
+		hidden_effect = {
+			ROOT = {
+				if = {
+					limit = {
+						NOT = { is_special_project_completed = sp:sp_composite_production }
+						has_tech = composite_production_1
+					}
+					complete_special_project = sp:sp_composite_production
+				}
+				if = {
+					limit = {
+						NOT = { is_special_project_completed = sp:sp_microchip_production }
+						has_tech = composite_production_1
+					}
+					complete_special_project = sp:sp_composite_production
+				}
 			}
 		}
 	}
@@ -1870,6 +1959,24 @@ operation_steal_tech_civilian = { ### 12 3/35
 						target = FROM
 						uses = 1
 					}
+				}
+			}
+		}
+		hidden_effect = {
+			ROOT = {
+				if = {
+					limit = {
+						NOT = { is_special_project_completed = sp:sp_composite_production }
+						has_tech = composite_production_1
+					}
+					complete_special_project = sp:sp_composite_production
+				}
+				if = {
+					limit = {
+						NOT = { is_special_project_completed = sp:sp_microchip_production }
+						has_tech = composite_production_1
+					}
+					complete_special_project = sp:sp_composite_production
 				}
 			}
 		}

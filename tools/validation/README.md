@@ -1,413 +1,231 @@
 # Millennium Dawn Validation Tools
 
-Comprehensive validation tools for Millennium Dawn mod that check for issues with flags, event targets, and scripted localisation.
+Content validators for the Millennium Dawn mod. All validators share a common CLI interface. Cacheable validators can be run all at once via `run_all_validators.py`.
 
 ## Quick Start
 
-Run all validators at once:
-
 ```bash
-# Run all validators
-./tools/validation/run_all_validators.sh
+# Run all cacheable validators (from the mod root)
+python3 tools/validation/run_all_validators.py
 
-# Run all validators with strict mode (exit with error if issues found)
-./tools/validation/run_all_validators.sh --strict
+# Strict mode: exit non-zero if any issues found (used in CI)
+python3 tools/validation/run_all_validators.py --strict
 
-# Run all validators on staged files only (for pre-commit)
-./tools/validation/run_all_validators.sh --staged --strict
+# Only check staged files (pre-commit mode)
+python3 tools/validation/run_all_validators.py --staged --strict
+
+# Save combined report to a file
+python3 tools/validation/run_all_validators.py --output report.txt
 ```
 
-Individual validators can also be run separately (see sections below).
+Output is color-coded. Pass `--no-color` for plain text (e.g. in log files).
 
 ---
 
-# Variable and Event Target Validation
+## Validators
 
-## Features
+### Standard (run by default)
 
-- **Line Numbers**: Shows exact line numbers where issues occur
-- **Colored Output**: Color-coded results for easy reading (can be disabled)
-- **File Output**: Save results to a file for later review
-- **Git Integration**: Validate only staged files for pre-commit hooks
-- **Comprehensive Checks**: Validates country/state/global flags and event targets
-- **Case Sensitive**: Ensures Linux and macOS compatibility by validating exact case matching
+| Validator                             | Checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **validate_agency_upgrades.py**       | Intelligence agency upgrade prerequisites and capability references are defined; no duplicate upgrade IDs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **validate_ai_equipment.py**          | Nations blocked from generic AI equipment roles without custom coverage; duplicate role names                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **validate_ai_navy.py**               | Naval taskforce ship types, fleet template references, mission types, composition sizes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **validate_ai_roles.py**              | `role_ratio`/`build_army` references match defined roles in `common/ai_templates/`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **validate_characters.py**            | Unit leader traits match the branch of the role they are assigned to (a navy trait on a general never applies); `common/country_leader/` advisor traits on a unit leader, which load silently and never apply; traits that no `common/unit_leader/` file defines (WARNING). Advisor slots share the same pass: a trait is used on the slot whose `common/country_leader/` pool file defines it, is defined at all, and is not a `common/unit_leader/` trait that does nothing on an advisor; a pool file named in `SLOT_POOL_FILES` that is missing. `TAG_`-prefixed traits are exempt from the slot check                                                                     |
+| **validate_cosmetic_tags.py**         | Missing cosmetic tags (used but never set); unused cosmetic tag colors                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **validate_decisions.py**             | Duplicate decisions; unused categories; missing AI weight; custom cost tooltip presence; repeatable decisions rolling `random_list` / `random` without an explicit `fixed_random_seed`; icons drawn from the wrong slot's art (a category-sized sprite on a decision, and the reverse). Opt-in: `--missing-icons` (decisions/categories whose icon or picture sprite is undefined)                                                                                                                                                                                                                                                                                             |
+| **validate_defines.py**               | MD defines exist in vanilla with correct namespace; duplicate defines within MD                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **validate_events.py**                | Events missing `is_triggered_only = yes`; unsupported title/desc combinations; redundant long-form event calls; every `picture` resolves to an MD-defined sprite (vanilla event pictures are not allowed, so this gates in CI without the game installed); events with a `date >` guard that nothing schedules from `00_yearly_effects.txt`                                                                                                                                                                                                                                                                                                                                    |
+| **validate_factions.py**              | Faction template/goal/rule/icon references exist; no duplicate IDs; valid rule types                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **validate_file_paths.py**            | Tracked paths that differ from a vanilla one only in case (Windows overrides it, Linux loads both — multiplayer checksum mismatch); case collisions inside the mod; names Windows cannot check out. Reads the git index, so it covers `map/` and `sound/` too                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **validate_focus_tree.py**            | Duplicate focus IDs; orphan focuses; missing prerequisite targets; missing loc keys; dependency cycles. Opt-in: `--missing-icons` (focuses whose `icon` sprite is undefined)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **validate_gfx_references.py**        | Sprite names in `.gui` and scripted-GUI files are defined in `interface/*.gfx`; English `£name` loc refs that match a sprite only case-insensitively (ERROR — no icon on Linux); one name defined twice, and names differing only in case (WARNING). Opt-in: `--report-unused` (sprites defined but never referenced). Sprites the engine builds from mod data are resolved into the reference set — focus search-filter icons, `GFX_EMI_<module>`, ace portraits, and anything a `[...]` scripted-loc/GUI template can produce — while equipment/tech icons and vanilla-name overrides are exempted outright. `MD_GFX_HIDE_UNUSED=1` drops just the orphan list from that run |
+| **validate_history.py**               | History files: technology dependencies, equipment variant modules, DLC-gated techs, OOB references, capital definitions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **validate_ideas.py**                 | Idea `allowed`/`visible` blocks reference defined ideas; no duplicate idea IDs; `GFX_idea_categories` has enough frames for the politics-view categories. Unused-ideas check is enabled by default (pass `--no-unused-ideas` to disable). The missing-icon audit runs by default as WARNING and flags three cases: the picture sprite is undefined, it differs only in case from one that is defined, or it resolves to placeholder art. Opt-in: `--missing-loc` (ideas without name/desc loc keys), `--suggest-consolidation` (advisory loc consolidation hints)                                                                                                              |
+| **validate_localisation.py**          | Duplicate keys; unpaired brackets; color code mismatches; orphaned `_tt` tooltip keys                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **validate_mios.py**                  | MIO org id format; `allowed = { original_tag = TAG }`; initial-trait naming; trait grid x ≤ 9; non-empty `on_complete`; `tree_header_text` uses a localisation key rather than a literal string; header keys and trait/`initial_trait` names resolve to an English loc key (all localisation failures are errors)                                                                                                                                                                                                                                                                                                                                                              |
+| **validate_mod_descriptors.py**       | replace_path entries in descriptor.mod and Millennium_Dawn.mod must match (checksum safety); duplicate replace_path within a file flagged                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **validate_modifiers.py**             | Modifier references in focuses/decisions/ideas exist in the defines or vanilla; no duplicate modifier definitions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **validate_oob_units.py**             | Unit names in OOB files and AI templates match canonical names in `common/units/`; every `create_equipment_variant` ship design uses slots its hull has and modules those slots accept; `create_unit` `division = "..."` strings parse as army data (inner keys, quotes, factors, `force_equipment_variants`); German/Danish letters in that string are WARNING; a `create_unit` of a template that `delete_unit_template_and_units` also removes, with no in-effect create, `has_template` guard, or prior call to a scripted effect that ensures it, is WARNING                                                                                                              |
+| **validate_on_actions.py**            | Events referenced in `on_actions` are defined; `is_triggered_only` enforced; no duplicate refs in the same trigger block                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **validate_scientist_traits.py**      | Every scientist trait resolves to a medal sprite MD defines (`icon = X`, else `GFX_<token>`); sprites declared only in the vanilla file MD replaces; stale `#TODO: ICON` markers (all WARNING)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **validate_scripted_gui.py**          | Scripted GUI window/property names are defined; referenced effects/triggers exist                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **validate_scripted_localisation.py** | Scripted loc keys used but not defined; defined but never referenced; missing GFX icons                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **validate_scripted_params.py**       | Every call site of a scripted effect that documents required temp variables sets them, in a scope the call can still see them from. Call sites are scanned across `common/`, `events/` and `history/`                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **validate_style.py**                 | Brace matching, indent/bracket balance, spacing/quotes, focus ID format, event log standards                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **validate_simplifications.py**       | Suggests merging consecutive same-scope blocks (`TAG = { } TAG = { }`, state ids, `PREV`, `var:`); WARNING-only, skips OR/random_list contexts                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **validate_technologies.py**          | Tech generation chains (ids identical after stripping digits/underscores) must carry every category their parent carries; a gen dropping a category its lineage has is flagged. Distinct-subtype branches (e.g. `countermeasures` vs `air_weapons`, `Anti_Air` vs `AA_upgrade`) are intentionally different and skipped                                                                                                                                                                                                                                                                                                                                                        |
 
-## Installation
+### Heavy validators
 
-No installation required. The script is self-contained in `validate_variables.py`.
+These cross-reference the entire codebase. A disk cache under `.validation_cache/` keeps re-runs fast — see [DISK_CACHE.md](DISK_CACHE.md).
 
-## Usage
+| Validator                       | Checks                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **validate_set_variables.py**   | Variables set with `set_variable` are actually used somewhere                                                                                                                                                                                                                                                                                                                    |
+| **validate_unused_scripted.py** | Scripted effects/triggers defined but never called                                                                                                                                                                                                                                                                                                                               |
+| **validate_unused_textures.py** | Texture files not referenced in any `.gfx` file; `.gfx` entries with missing files. Manual-only.                                                                                                                                                                                                                                                                                 |
+| **validate_variables.py**       | Country/state/global flags and event targets: cleared-but-not-set, missing, unused; untooltipped `check_variable` in `available` (warning); country flags checked in `available` with no localisation key (warning); variable-effect `tooltip =` keys with no localisation entry (warning); dynamic-modifier writes in player-facing effect blocks with no `tooltip =` (warning) |
 
-### Basic Usage
+---
+
+## Common Flags
+
+All validators accept the same set of flags:
+
+| Flag                       | Description                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------------- |
+| `--path PATH`              | Path to the mod root (default: current directory)                                       |
+| `--staged`                 | Only validate files currently staged in git                                             |
+| `--strict`                 | Exit with code `1` if any issues are found                                              |
+| `--output FILE`, `-o FILE` | Write results to a file in addition to stdout                                           |
+| `--no-color`               | Disable ANSI color codes                                                                |
+| `--workers N`              | Number of parallel worker processes (default: CPU count / 2, clamped to the CPU budget) |
+
+### CPU budget
+
+Tooling takes 75% of the cores and leaves the rest, so a run does not lock up
+the machine someone is working on. Everything that fans out draws on the same
+ceiling (`cpu_budget` in `tools/shared_utils.py`): the suite caps how many
+validators run at once and passes each a share of the workers, the pre-commit
+hook splits the same budget across its fan-out, and `--workers N` is clamped to
+it. CI runners get every core. `MD_MAX_WORKERS=N` overrides both.
+
+---
+
+## Running a Single Validator
+
+Every validator can be run standalone with the same flags:
 
 ```bash
-# Validate current directory
-python tools/validation/validate_variables.py
-
-# Validate specific mod directory
-python tools/validation/validate_variables.py --path /path/to/mod
+python3 tools/validation/validate_events.py --path .
+python3 tools/validation/validate_localisation.py --path . --staged --strict
+python3 tools/validation/validate_ai_roles.py --path . --output ai-roles.txt
 ```
 
-### Advanced Options
-
-```bash
-# Exit with error code if issues found (useful for CI/CD)
-python tools/validation/validate_variables.py --strict
-
-# Save output to file
-python tools/validation/validate_variables.py --output report.txt
-
-# Validate only git staged files (for pre-commit hook)
-python tools/validation/validate_variables.py --staged --strict
-
-# Disable colored output
-python tools/validation/validate_variables.py --no-color
-
-# Combine options
-python tools/validation/validate_variables.py --staged --strict --output validation.log --no-color
-```
-
-## What It Checks
-
-### Flags (Country, State, Global)
-
-1. **Cleared but not set**: Flags that are cleared with `clr_X_flag` but never set with `set_X_flag`
-2. **Missing**: Flags that are used with `has_X_flag` but never set with `set_X_flag`
-3. **Unused**: Flags that are set with `set_X_flag` but never checked with `has_X_flag`
-
-**Important**: All flag checks are **case-sensitive**. This means:
-
-- `my_flag` and `My_Flag` are considered different flags
-- This ensures proper compatibility across Linux, macOS, and Windows
-- Helps catch potential bugs from inconsistent casing
-
-### Event Targets
-
-1. **Cleared but not set**: Event targets cleared but never saved
-2. **Missing**: Event targets used but never saved
-3. **Unused**: Event targets saved but never used (checks both .txt and .yml files)
-
-**Important**: All event target checks are **case-sensitive** for cross-platform compatibility.
+---
 
 ## Output Format
 
-Results include:
-
-- **File path** (relative to mod root)
-- **Line number** where the issue occurs
-- **Variable/target name**
-
-Example output:
+When validators find issues they print a grouped summary and write a `.json` sidecar file (used by `run_all_validators.py` to build the combined report):
 
 ```
 ================================================================================
-Checking missing country flags (used but not set)...
+Checking events missing is_triggered_only = yes...
 ================================================================================
-ERROR: Missing country flags were encountered - they are not set via 'set_country_flag'. Flags with @ are skipped.
-ERROR:   events/example.txt:42 - my_test_flag
-ERROR:   events/another.txt:156 - some_other_flag
-ERROR: 2 issues found
+  events/example.txt:42 - some_event.1 is missing is_triggered_only = yes
+1 issue(s) found
+
+################################################################################
+✗ VALIDATION COMPLETE - 1 ERROR(S)
+################################################################################
 ```
 
-## Pre-Commit Hook
+When `run_all_validators.py` detects failures it prints a **combined report** grouped by file with line numbers:
 
-The validator is **already integrated** into `.pre-commit-config.yaml` and runs automatically on commit.
+```
+================================================================================
+COMBINED VALIDATION REPORT
+================================================================================
+Total validators run: 12
 
-**How it works:**
+✗ 2 ERROR(S)
 
-- When you `git commit`, the validator runs with `--staged` flag
-- It **only scans the files you're committing** (not the entire mod)
-- Validates the **full content** of staged files for any issues
-- If issues are found, the commit is blocked until they're fixed
+  events/example.txt (2 issue(s))
+    - events/example.txt:42: [events] some_event.1 is missing is_triggered_only = yes
+    - events/example.txt:87: [events] some_event.2 is missing is_triggered_only = yes
+```
 
-**Note:** The staged mode validates the complete content of staged files, not just the changed lines. This ensures:
+---
 
-- New issues aren't introduced by your changes
-- Existing issues in files you're modifying are caught
-- Cross-file references are properly validated
+## Pre-Commit Integration
 
-To bypass the validator for a single commit (not recommended):
+Validators are integrated into `.pre-commit-config.yaml` and run automatically
+on commit. The hook passes `--staged` so only the files being committed are
+checked, keeping commit times fast.
+
+To bypass for a single commit (not recommended):
 
 ```bash
 git commit --no-verify
 ```
 
-## Ignored Directories
+### Pre-commit vs CI
 
-The following directories are automatically skipped:
+To keep commit latency low, only a fast subset of validators runs on
+`git commit`. Heavy cross-reference validators such as
+`validate_scripted_gui`, `validate_localisation`, `validate_cosmetic_tags`,
+`validate_variables`, and `validate_focus_tree` run
+**CI-only**. The
+`validate-core` and `validate-targeted` matrices in
+`.github/workflows/coding-pipeline.yml` gate them instead of pre-commit.
 
-- `gfx/`
-- `tools/`
-- `resources/`
-- `docs/`
-- `map/`
+The commit-stage validators (`validate_common_mistakes`, `validate_style`,
+`validate_oob_units`, `validate_ai_roles`, `validate_ai_navy`,
+`validate_characters`, `validate_ai_equipment`, `validate_agency_upgrades`,
+`validate_ideas`, `validate_events`, and `validate_mios`) run through the
+`md-validate-content` pre-commit hook. It fans them out in parallel through
+`tools/precommit_validate.py`. `validate_defines` keeps its own commit-stage
+hook. `validate_unused_textures` keeps a `stages: [manual]` hook because CI
+cannot run it.
 
-## Command-Line Arguments
+`validate_file_paths` runs CI-only in its own `validate-paths` job. It reads
+the git index rather than the working tree, so it sits outside both matrices.
+Those restore a content bundle with no `.git` and no `map/`.
 
-| Argument                   | Description                                     |
-| -------------------------- | ----------------------------------------------- |
-| `--path PATH`              | Path to mod folder (default: current directory) |
-| `--strict`                 | Exit with error code if issues found            |
-| `--output FILE`, `-o FILE` | Save results to file                            |
-| `--no-color`               | Disable ANSI color codes                        |
-| `--staged`                 | Only validate git staged files                  |
-
-## Exit Codes
-
-- `0`: Validation passed or no strict mode
-- `1`: Validation failed (only in strict mode)
-
-## False Positives
-
-The validator has built-in lists of known false positives that are automatically skipped. These include:
-
-- Variables with `@` (templates)
-- Variables with `[` (dynamic variables)
-- Specific known exceptions (like `kr_current_version`)
-
-## Example Workflows
-
-### Local Development
+To run any validator locally, including a CI-only one, invoke it directly:
 
 ```bash
-# Quick check before committing
-python tools/validation/validate_variables.py --staged
-
-# Full validation with detailed report
-python tools/validation/validate_variables.py --output validation-report.txt
-```
-
-### CI/CD Pipeline
-
-```bash
-# Fail the build if validation fails
-python tools/validation/validate_variables.py --strict --no-color --output ci-report.txt
-```
-
-### Pre-Commit Hook
-
-```bash
-# Automatically validate staged files
-python tools/validation/validate_variables.py --staged --strict --no-color
-```
-
-## Troubleshooting
-
-### No staged files found
-
-If using `--staged` and getting "No staged .txt or .yml files found", make sure you have staged your changes:
-
-```bash
-git add your_file.txt
-python tools/validation/validate_variables.py --staged
-```
-
-### Colors not showing
-
-Some terminals may not support ANSI colors. Use `--no-color` to disable them.
-
-### Performance
-
-For large mods, the validator may take a minute or two to scan all files. The `--staged` option significantly speeds this up by only checking modified files.
-
----
-
-# Scripted Localisation Validation
-
-Validation tool for scripted localisation definitions in `common/scripted_localisation/`.
-
-## Features
-
-- **Line Numbers**: Shows exact line numbers where issues occur
-- **Colored Output**: Color-coded results for easy reading (can be disabled)
-- **File Output**: Save results to a file for later review
-- **Git Integration**: Validate only staged files for pre-commit hooks
-- **Comprehensive Checks**: Validates both defined and used scripted localisations
-- **Interface Support**: Scans both game files (`.txt`) and interface files (`.gui`)
-
-## What It Checks
-
-### Scripted Localisation
-
-1. **Missing**: Scripted localisations that are used/referenced but not defined in `common/scripted_localisation/`
-2. **Unused**: Scripted localisations that are defined but never referenced anywhere
-
-The validator scans:
-
-- All `.txt` game files for `localization_key = <name>` references (used in scripted localisation definitions)
-- All `.gui` interface files for `text = "[name]"` patterns (used in GUI)
-- All `.yml` localisation files for `"[name_scripted_loc]"` or `"[name_scl]"` patterns (scripted loc references)
-- All scripted localisation definitions in `common/scripted_localisation/`
-
-**Important**: The validator correctly distinguishes between:
-
-- **Scripted localisation** (dynamic): Defined in `common/scripted_localisation/`, ends with `_scripted_loc` or `_scl`
-- **Regular localisation** (static): Defined in `.yml` files, regular `[key]` without scripted loc suffixes
-
-The validator only flags keys ending with `_scripted_loc` or `_scl` in `.yml` files, avoiding false positives for regular localisation.
-
-## Usage
-
-### Basic Usage
-
-```bash
-# Validate current directory
-python tools/validation/validate_scripted_localisation.py
-
-# Validate specific mod directory
-python tools/validation/validate_scripted_localisation.py --path /path/to/mod
-```
-
-### Advanced Options
-
-```bash
-# Exit with error code if issues found (useful for CI/CD)
-python tools/validation/validate_scripted_localisation.py --strict
-
-# Save output to file
-python tools/validation/validate_scripted_localisation.py --output report.txt
-
-# Validate only git staged files (for pre-commit hook)
-python tools/validation/validate_scripted_localisation.py --staged --strict
-
-# Disable colored output
-python tools/validation/validate_scripted_localisation.py --no-color
-```
-
-## Output Format
-
-Results include:
-
-- **File path** (relative to mod root)
-- **Line number** where the issue occurs
-- **Scripted localisation name**
-
-Example output:
-
-```
-================================================================================
-Checking missing scripted localisations (used but not defined)...
-================================================================================
-ERROR: Missing scripted localisations were encountered - they are referenced but not defined in common/scripted_localisation/.
-WARNING: Note: Some of these may be regular localisation keys rather than scripted localisation. Verify manually.
-ERROR:   events/example.txt:42 - debt_display
-ERROR: 1 issues found
-```
-
-## How It Works
-
-The validator specifically looks for scripted localisation in these contexts:
-
-### In Game Files (`.txt`)
-
-Checks `localization_key = <name>` patterns, which appear in:
-
-- Scripted localisation definitions (`defined_text` blocks)
-- NOT in bracketed form `[key]` (those are regular localisation)
-
-### In Interface Files (`.gui`)
-
-Checks `text = "[name]"` patterns, which is how scripted loc is referenced in GUI
-
-### In Localisation Files (`.yml`)
-
-Checks `"[name_scripted_loc]"` or `"[name_scl]"` patterns only
-
-- Only keys ending with `_scripted_loc` or `_scl` are considered scripted localisation
-- This naming convention distinguishes them from regular localisation keys
-
-### What It Ignores
-
-The validator automatically ignores:
-
-- Regular bracketed keys in `.yml` files (without `_scripted_loc` or `_scl` suffix)
-- Scope references with dots (`Root.GetName`, `THIS.GetAdjective`)
-- Variables with special characters (`?`, `@`, etc.)
-
-## Command-Line Arguments
-
-| Argument                   | Description                                     |
-| -------------------------- | ----------------------------------------------- |
-| `--path PATH`              | Path to mod folder (default: current directory) |
-| `--strict`                 | Exit with error code if issues found            |
-| `--output FILE`, `-o FILE` | Save results to file                            |
-| `--no-color`               | Disable ANSI color codes                        |
-| `--staged`                 | Only validate git staged files                  |
-
-## Example Workflows
-
-### Local Development
-
-```bash
-# Quick check before committing
-python tools/validation/validate_scripted_localisation.py --staged
-
-# Full validation with detailed report
-python tools/validation/validate_scripted_localisation.py --output scripted-loc-report.txt
-```
-
-### CI/CD Pipeline
-
-```bash
-# Fail the build if validation fails
-python tools/validation/validate_scripted_localisation.py --strict --no-color --output ci-report.txt
+python3 tools/validation/validate_scripted_gui.py --staged --no-color  # changed files only
+python3 tools/validation/validate_scripted_gui.py --no-color           # full-repo scan
 ```
 
 ---
 
-# History Technology Dependency Validation
+## Refreshing Vanilla Data
 
-Validation tool that checks country history files for missing technology prerequisites.
-
-## Features
-
-- **Dependency Graph**: Builds a complete technology dependency graph from `common/technologies/`
-- **DLC-Aware**: Handles DLC conditional branches (NSB, BBA, LaR, etc.) correctly
-- **Deduplication**: Collapses errors that appear across all DLC combinations
-- **Multiprocessing**: Validates all 392+ history files in parallel
-
-## What It Checks
-
-For each `set_technology` block in `history/countries/`, the validator ensures that when a technology is granted, all of its prerequisite technologies (defined by `path = { leads_to_tech = ... }` in tech files) are also granted.
-
-For example, if `infantry_weapons_2` requires `infantry_weapons_1` (because `infantry_weapons_1` has `leads_to_tech = infantry_weapons_2`), then any history file granting `infantry_weapons_2` must also grant `infantry_weapons_1`.
-
-## Usage
+CI has no HOI4 install, so `validate_defines`, `validate_file_paths`, `validate_gfx_references` and `validate_modifiers` read checked-in copies of vanilla data instead: `vanilla_defines.txt`, `vanilla_gui_files.txt`, `vanilla_paths.txt`, `vanilla_sprites.txt`, and `resources/documentation/*.md`. `refresh_vanilla_data.py` rebuilds all five from a local install (auto-detected, or set `$HOI4_PATH`):
 
 ```bash
-# Validate current directory
-python tools/validation/validate_history_techs.py
-
-# Validate with strict mode
-python tools/validation/validate_history_techs.py --strict
-
-# Validate only staged files
-python tools/validation/validate_history_techs.py --staged --strict
+python3 tools/validation/refresh_vanilla_data.py
+python3 tools/validation/refresh_vanilla_data.py --only docs sprites
 ```
 
-## Output Format
+Run it after every HOI4 version bump and commit the diff. Stale data never fails CI. It produces false positives instead, which is worse: a modifier or sprite Paradox added after the last refresh reads as a typo. Details in `.claude/docs/validation-pipeline.md`.
 
-```
-ABK - Abkhazia.txt: fuel_refining requires fuel_silos
-ARA - Arabistan.txt: infantry_weapons_3 requires infantry_weapons_2
-ALB - Albania.txt: countermeasures_1 requires air_weapons_1 [No Step Back + By Blood Alone]
-```
+---
 
-Errors without a DLC context tag are unconditional (present regardless of DLCs). Errors with a DLC context tag only occur in that specific DLC combination.
+## Architecture
 
-## Command-Line Arguments
+All validators extend `BaseValidator` from `validator_common.py`. To add a new validator:
 
-| Argument                   | Description                                     |
-| -------------------------- | ----------------------------------------------- |
-| `--path PATH`              | Path to mod folder (default: current directory) |
-| `--strict`                 | Exit with error code if issues found            |
-| `--output FILE`, `-o FILE` | Save results to file                            |
-| `--no-color`               | Disable ANSI color codes                        |
-| `--staged`                 | Only validate git staged files                  |
-| `--workers N`              | Number of worker processes                      |
+1. Create `validate_<name>.py` in this directory
+2. Subclass `BaseValidator`, set `TITLE = "..."`, implement `run_validations()`
+3. Use `self.add_error(category, message, file, line)` / `self.add_warning(...)` to record issues
+4. To parse many files, call `self.parse_files_cached(patterns, namespace, parse_fn)` — it's staged-aware, case-preserving, and disk-caches each parse keyed on file content. Use a unique `namespace` string per call to avoid cache collisions.
+5. Call `run_validator_main(YourValidator, "Description")` at the bottom
+6. `run_all_validators.py` auto-discovers it on the next run unless it is intentionally manual-only
+
+`validator_common.py` also provides `strip_comments()`, `FileOpener`, `DataCleaner`, `HOI4_BUILTIN_BLOCKS`, and `scan_meta_constructed_names()` for use in validators.
+
+Module-level constants and pool-worker functions (those passed to `_pool_map`) must be defined at the **top level** — not inside the validator class — so `multiprocessing.Pool` can pickle them. Classmethods on a validator subclass are not directly picklable; use standalone functions for pool dispatch.
+
+### `validator_common.py` public API
+
+| Symbol                                                                                                                               | Type      | Description                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BaseValidator`                                                                                                                      | class     | Base for all validators. Provides `_pool_map`, `_collect_files`, `_report`, `_log_section`, timing, and JSON output                                                                                                                                        |
+| `BaseValidator.parse_files_cached(patterns, namespace, parse_fn, *, lowercase=False, strip_comments_flag=True, ignore_staged=False)` | method    | Collect files matching glob patterns (staged-aware), read each case-preserving, strip comments, and per-file disk-cache the result keyed on content; returns `{path: parse_fn(text, path)}`. Use this as the standard way to parse many files of one kind. |
+| `scan_meta_constructed_names(files, defined_names)`                                                                                  | function  | Scan files for `meta_effect`/`meta_trigger` template patterns and match against defined names                                                                                                                                                              |
+| `HOI4_BUILTIN_BLOCKS`                                                                                                                | frozenset | All known HOI4 built-in effect/trigger block names                                                                                                                                                                                                         |
+| `Colors`                                                                                                                             | class     | ANSI escape codes for colored output (`HEADER`, `BLUE`, `CYAN`, `GREEN`, `YELLOW`, `RED`, `ENDC`, `BOLD`, `UNDERLINE`)                                                                                                                                     |
+| `Severity`                                                                                                                           | class     | String constants: `Severity.ERROR = "error"`, `Severity.WARNING = "warning"`                                                                                                                                                                               |
+| `Issue`                                                                                                                              | dataclass | Structured issue with `severity`, `category`, `message`, `file`, `line` fields and `to_dict()` / `to_key()` methods                                                                                                                                        |
+| `MD_LOG_LEVEL`                                                                                                                       | env var   | Set to `ERROR` / `WARNING` (default) / `INFO` to control per-validator verbosity                                                                                                                                                                           |
 
 ---
 
 ## Credits
 
-Based on Kaiserreich Autotests by [Pelmen323](https://github.com/Pelmen323)
+Based on Kaiserreich Autotests by [Pelmen323](https://github.com/Pelmen323), adapted for Millennium Dawn.

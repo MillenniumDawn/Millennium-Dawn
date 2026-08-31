@@ -1,16 +1,31 @@
-libya_update_nationalisation = {
-	set_temp_variable = { lba_oil_nationalisation_temp = lba_oil_nationalisation }
-	multiply_temp_variable = { lba_oil_nationalisation_temp = -1 }
-	set_variable = { oil_nationalisation_productivity_effect = lba_oil_nationalisation_temp }
-	clear_variable = lba_oil_nationalisation_temp
+# Must run in the rebel country's scope; the protester flag lives on ROOT, which is whoever ran the civil-war event.
+LBA_nato_support_libyan_rebels = {
+	if = {
+		limit = {
+			ROOT = { has_country_flag = LBA_military_used_on_protesters }
+			OR = {
+				has_government = democratic
+				has_government = neutrality
+			}
+		}
+		for_each_scope_loop = {
+			array = global.nato_members
+			if = {
+				limit = { has_country_flag = european_nation_flag }
+				add_ai_strategy = { type = support id = PREV value = 200 }
+			}
+		}
+	}
+}
 
-	set_variable = { lba_oil_nationalisation_temp = lba_oil_nationalisation }
-	multiply_variable = { lba_oil_nationalisation_temp = -1 }
-	set_variable = { oil_nationalisation_productivity_effect = lba_oil_nationalisation_temp }
-	set_variable = { oil_nationalisation_export_effect = lba_oil_nationalisation_temp }
+libya_update_nationalisation = {
+	set_temp_variable = { lba_oil_nationalisation_neg = lba_oil_nationalisation }
+	multiply_temp_variable = { lba_oil_nationalisation_neg = -1 }
+	set_variable = { oil_nationalisation_productivity_effect = lba_oil_nationalisation_neg }
+	set_variable = { oil_nationalisation_export_effect = lba_oil_nationalisation_neg }
+
 	set_variable = { oil_nationalisation_income = 0.014 }
 	multiply_variable = { oil_nationalisation_income = lba_oil_nationalisation }
-	clear_variable = lba_oil_nationalisation_temp
 
 	set_variable = { libya_oil_nationalisation_additional_income = resource_produced@oil }
 	multiply_variable = { libya_oil_nationalisation_additional_income = oil_nationalisation_income }
@@ -49,8 +64,10 @@ libya_find_next_gaddafi_heir = {
 	if = {
 		limit = {
 			NOT = {
-				has_country_flag = muhammad_muammar_gaddafi_exile
-				has_country_flag = muhammad_muammar_gaddafi_dead
+				OR = {
+					has_country_flag = muhammad_muammar_gaddafi_exile
+					has_country_flag = muhammad_muammar_gaddafi_dead
+				}
 			}
 			check_variable = { Autocracy_leader < 1 }
 		}
@@ -59,8 +76,10 @@ libya_find_next_gaddafi_heir = {
 	else_if = {
 		limit = {
 			NOT = {
-				has_country_flag = saif_al_islam_gaddafi_exile
-				has_country_flag = saif_al_islam_gaddafi_dead
+				OR = {
+					has_country_flag = saif_al_islam_gaddafi_exile
+					has_country_flag = saif_al_islam_gaddafi_dead
+				}
 			}
 			check_variable = { Autocracy_leader < 2 }
 		}
@@ -69,8 +88,10 @@ libya_find_next_gaddafi_heir = {
 	else_if = {
 		limit = {
 			NOT = {
-				has_country_flag = al_saadi_gaddafi_exile
-				has_country_flag = al_saadi_gaddafi_dead
+				OR = {
+					has_country_flag = al_saadi_gaddafi_exile
+					has_country_flag = al_saadi_gaddafi_dead
+				}
 			}
 			check_variable = { Autocracy_leader < 3 }
 		}
@@ -79,8 +100,10 @@ libya_find_next_gaddafi_heir = {
 	else_if = {
 		limit = {
 			NOT = {
-				has_country_flag = mutassim_gaddafi_exile
-				has_country_flag = mutassim_gaddafi_dead
+				OR = {
+					has_country_flag = mutassim_gaddafi_exile
+					has_country_flag = mutassim_gaddafi_dead
+				}
 			}
 			check_variable = { Autocracy_leader < 4 }
 		}
@@ -89,8 +112,10 @@ libya_find_next_gaddafi_heir = {
 	else_if = {
 		limit = {
 			NOT = {
-				has_country_flag = hannibal_gaddafi_exile
-				has_country_flag = hannibal_gaddafi_dead
+				OR = {
+					has_country_flag = hannibal_gaddafi_exile
+					has_country_flag = hannibal_gaddafi_dead
+				}
 			}
 			check_variable = { Autocracy_leader < 5 }
 		}
@@ -99,8 +124,10 @@ libya_find_next_gaddafi_heir = {
 	else_if = {
 		limit = {
 			NOT = {
-				has_country_flag = ayesha_gaddafi_exile
-				has_country_flag = ayesha_gaddafi_dead
+				OR = {
+					has_country_flag = ayesha_gaddafi_exile
+					has_country_flag = ayesha_gaddafi_dead
+				}
 			}
 			check_variable = { Autocracy_leader < 6 }
 		}
@@ -109,8 +136,10 @@ libya_find_next_gaddafi_heir = {
 	else_if = {
 		limit = {
 			NOT = {
-				has_country_flag = saif_al_arab_gaddafi_exile
-				has_country_flag = saif_al_arab_gaddafi_dead
+				OR = {
+					has_country_flag = saif_al_arab_gaddafi_exile
+					has_country_flag = saif_al_arab_gaddafi_dead
+				}
 			}
 			check_variable = { Autocracy_leader < 7 }
 		}
@@ -119,8 +148,10 @@ libya_find_next_gaddafi_heir = {
 	else_if = {
 		limit = {
 			NOT = {
-				has_country_flag = khamis_gaddafi_exile
-				has_country_flag = khamis_gaddafi_dead
+				OR = {
+					has_country_flag = khamis_gaddafi_exile
+					has_country_flag = khamis_gaddafi_dead
+				}
 			}
 			check_variable = { Autocracy_leader < 7 }
 		}
@@ -329,7 +360,11 @@ update_gaddafi_family_ideas = {
 libya_gaddafi_family_modify_instability = {
 	custom_effect_tooltip = libya_gaddafi_family_modify_instability_tt
 	add_to_variable = { gaddafi_family_instability = family_instability_change }
-	clamp_variable = { var = gaddafi_family_instability min = 0 }
+	update_gaddafi_family_stability_effect = yes
+}
+
+update_gaddafi_family_stability_effect = {
+	clamp_variable = { var = gaddafi_family_instability min = 0 max = 200 }
 	set_variable = { gaddafi_family_stability_effect = gaddafi_family_instability }
 	multiply_variable = { gaddafi_family_stability_effect = -0.005 }
 }
@@ -925,11 +960,12 @@ libya_update_casablanca_accords_acceptance = {
 			add_to_variable = { Morocco_acceptance = 40 }
 		}
 		else_if = {
-			limit = { has_country_flag = libya_western_sahara_peace_plan_independence }
-			add_to_variable = { Morocco_acceptance = 5 }
-		}
-		else_if = {
-			limit = { has_country_flag = libya_western_sahara_peace_plan_mauritania }
+			limit = {
+				OR = {
+					has_country_flag = libya_western_sahara_peace_plan_independence
+					has_country_flag = libya_western_sahara_peace_plan_mauritania
+				}
+			}
 			add_to_variable = { Morocco_acceptance = 5 }
 		}
 		if = {
@@ -1235,15 +1271,13 @@ libya_update_casablanca_accords_acceptance = {
 	}
 	else = {
 		if = {
-			limit = { has_country_flag = libya_western_sahara_peace_plan_annexation }
-			add_to_variable = { Mauritania_acceptance = 50 }
-		}
-		else_if = {
-			limit = { has_country_flag = libya_western_sahara_peace_plan_autonomy }
-			add_to_variable = { Mauritania_acceptance = 50 }
-		}
-		else_if = {
-			limit = { has_country_flag = libya_western_sahara_peace_plan_independence }
+			limit = {
+				OR = {
+					has_country_flag = libya_western_sahara_peace_plan_annexation
+					has_country_flag = libya_western_sahara_peace_plan_autonomy
+					has_country_flag = libya_western_sahara_peace_plan_independence
+				}
+			}
 			add_to_variable = { Mauritania_acceptance = 50 }
 		}
 		else_if = {
@@ -1407,7 +1441,7 @@ libya_add_tribal_independence = {
 	set_temp_variable = { party_index = 14 }
 	set_temp_variable = { party_popularity_increase = 0.02 }
 	set_temp_variable = { temp_outlook_increase = 0.02 }
-	add_relative_party_popularity = yes
+	change_relative_party_popularity = yes
 	if = {
 		limit = { NOT = { has_dynamic_modifier = { modifier = LBA_tribal_militias } } }
 		hidden_effect = { add_dynamic_modifier = { modifier = LBA_tribal_militias } }
@@ -1457,7 +1491,7 @@ libya_add_jihadist_independence = {
 	set_temp_variable = { party_index = 10 }
 	set_temp_variable = { party_popularity_increase = 0.02 }
 	set_temp_variable = { temp_outlook_increase = 0.02 }
-	add_relative_party_popularity = yes
+	change_relative_party_popularity = yes
 	if = {
 		limit = { NOT = { has_dynamic_modifier = { modifier = LBA_jihadist_militias } } }
 		hidden_effect = { add_dynamic_modifier = { modifier = LBA_jihadist_militias } }
@@ -1507,7 +1541,7 @@ libya_add_islamist_independence = {
 	set_temp_variable = { party_index = 12 }
 	set_temp_variable = { party_popularity_increase = 0.02 }
 	set_temp_variable = { temp_outlook_increase = 0.02 }
-	add_relative_party_popularity = yes
+	change_relative_party_popularity = yes
 	if = {
 		limit = { NOT = { has_dynamic_modifier = { modifier = LBA_islamist_militias } } }
 		hidden_effect = { add_dynamic_modifier = { modifier = LBA_islamist_militias } }
@@ -1564,7 +1598,7 @@ libya_add_secularist_independence = {
 	set_temp_variable = { party_index = 22 }
 	set_temp_variable = { party_popularity_increase = 0.02 }
 	set_temp_variable = { temp_outlook_increase = 0.02 }
-	add_relative_party_popularity = yes
+	change_relative_party_popularity = yes
 	if = {
 		limit = { NOT = { has_dynamic_modifier = { modifier = LBA_secularist_militias } } }
 		hidden_effect = { add_dynamic_modifier = { modifier = LBA_secularist_militias } }
@@ -1614,7 +1648,7 @@ libya_add_reformist_independence = {
 	set_temp_variable = { party_index = 3 }
 	set_temp_variable = { party_popularity_increase = 0.02 }
 	set_temp_variable = { temp_outlook_increase = 0.02 }
-	add_relative_party_popularity = yes
+	change_relative_party_popularity = yes
 	if = {
 		limit = { NOT = { has_dynamic_modifier = { modifier = LBA_reformist_militias } } }
 		hidden_effect = { add_dynamic_modifier = { modifier = LBA_reformist_militias } }
@@ -1757,7 +1791,7 @@ libya_copy_country_flags = {
 
 LBA_civil_war_cleanup_effect = {
 		#Civil war is over
-	set_global_flag = Libya_Civil_War_Over
+	set_global_flag = GLOBAL_libyan_civil_war_over
 	#Clear core status
 	391 = {
 		remove_core_of = LBA
@@ -1850,8 +1884,8 @@ LBA_civil_war_cleanup_effect = {
 	add_state_core = 1101
 	set_capital = { state = 391 }
 	if = {
-		limit = { has_idea = Non_State_Actor }
-		remove_ideas = Non_State_Actor
+		limit = { has_idea = non_state_actor }
+		remove_ideas = non_state_actor
 	}
 	news_event = { id = LibyaNews.1 hours = 18 random_hours = 24 }
 }

@@ -7,7 +7,7 @@ This guide covers all game rules available in Millennium Dawn for customizing yo
 
 ---
 
-# Game Rule Groups
+## Game Rule Groups
 
 ## AI Options (`MD_AI_RULES`)
 
@@ -44,11 +44,10 @@ Country-specific focus tree options and alternate paths.
 
 Controls special nation formation options.
 
-| Rule                            | Options | Default | Description                    |
-| ------------------------------- | ------- | ------- | ------------------------------ |
-| `rule_disable_formable_nations` | yes/no  | no      | Disable all formable nations   |
-| `allow_multiple_formables`      | yes/no  | no      | Allow forming multiple nations |
-| `allow_edgy_flags`              | yes/no  | no      | Allow alternate flag designs   |
+| Rule                            | Options | Default | Description                  |
+| ------------------------------- | ------- | ------- | ---------------------------- |
+| `rule_disable_formable_nations` | yes/no  | no      | Disable all formable nations |
+| `allow_edgy_flags`              | yes/no  | no      | Allow alternate flag designs |
 
 ## Organization Options (`MD_ORGANISATION_RULES`)
 
@@ -83,14 +82,14 @@ Controls influence system mechanics.
 
 Performance-related settings.
 
-| Rule                                   | Options               | Default | Description                      |
-| -------------------------------------- | --------------------- | ------- | -------------------------------- |
-| `allow_mp_optimizations`               | yes/no                | no      | Enable multiplayer optimizations |
-| `allow_division_limiter`               | yes/no/potato_edition | yes     | Division count limiter           |
-| `remove_mp_states`                     | yes/no                | no      | Remove small nations             |
-| `rule_disable_generals_getting_killed` | yes/no                | no      | Prevent general deaths           |
-| `rule_allow_free_factories`            | yes/no                | no      | Free factories in MP             |
-| `rule_allow_MP_enhancements`           | yes/no                | no      | MP enhancements                  |
+| Rule                                   | Options               | Default | Description                        |
+| -------------------------------------- | --------------------- | ------- | ---------------------------------- |
+| `allow_mp_optimizations`               | yes/no                | no      | Enable multiplayer optimizations   |
+| `allow_division_limiter`               | yes/no/potato_edition | yes     | Division count limiter             |
+| `remove_mp_states`                     | yes/no                | no      | Remove small nations               |
+| `rule_disable_generals_getting_killed` | yes/no                | no      | Prevent general deaths             |
+| `rule_free_factories_amount`           | off/1/2/3/5           | off     | Free factories to players at start |
+| `rule_allow_MP_enhancements`           | yes/no                | no      | MP enhancements                    |
 
 ## Nuclear Rules (`MD_NUCLEAR_RULES`)
 
@@ -147,7 +146,7 @@ Chaos mode options for randomized gameplay.
 
 ---
 
-# Vanilla Rules
+## Vanilla Rules
 
 Millennium Dawn inherits many vanilla HOI4 game rules:
 

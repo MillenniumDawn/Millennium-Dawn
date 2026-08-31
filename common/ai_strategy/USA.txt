@@ -413,26 +413,33 @@ USA_default_naval_breakdown = { #Fleet in Being - Naval Strength on the High Sea
 
 	ai_strategy = { type = role_ratio id = naval_corvettes value = 5 }
 	ai_strategy = { type = role_ratio id = naval_frigate value = 10 }
-	ai_strategy = { type = role_ratio id = naval_destroyer value = 25 }
+	ai_strategy = { type = role_ratio id = naval_destroyer value = 15 }
+	ai_strategy = { type = role_ratio id = naval_screen_destroyer value = 15 }
 	ai_strategy = { type = role_ratio id = naval_stealth_destroyer value = 6 }
 	ai_strategy = { type = role_ratio id = naval_attack_submarine value = 25 }
 	ai_strategy = { type = role_ratio id = naval_missile_submarine value = 9 }
 	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 8 }
 	ai_strategy = { type = role_ratio id = naval_carrier value = 4 }
+	ai_strategy = { type = role_ratio id = naval_battlecruiser value = 2 }
+	ai_strategy = { type = role_ratio id = naval_battleship value = 1 }
 	ai_strategy = { type = role_ratio id = naval_cruiser value = 8 }
 }
 
+# Armor-heavy professional doctrine shared by USA and UKR (identical composition).
 USA_army_breakdown = {
-	allowed = { original_tag = USA }
-	enable = { original_tag = USA }
+	allowed = { OR = { original_tag = USA original_tag = UKR } }
+	enable = { always = yes }
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = role_ratio id = mechanized value = 38 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 10 }
+	ai_strategy = { type = role_ratio id = infantry value = 25 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 19 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 19 }
 	ai_strategy = { type = role_ratio id = armor value = 38 }
 	ai_strategy = { type = role_ratio id = marines value = 20 }
 	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
 	ai_strategy = { type = role_ratio id = Air_mech value = 3 }
-	ai_strategy = { type = role_ratio id = Special_Forces value = 11 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 6 }
 	ai_strategy = { type = force_build_armies value = 50 } #Keep American AI building Units
 }
 USA_default_stockpile_management = {
@@ -466,8 +473,7 @@ USA_air_force_breakdown_crysis = {
 	ai_strategy = { type = unit_ratio id = cas value = 4 }
 	ai_strategy = { type = unit_ratio id = naval_bomber value = 2 }
 	ai_strategy = { type = unit_ratio id = tactical_bomber value = 8 }
-	ai_strategy = { type = unit_ratio id = heavy_fighter value = 8 }
-	ai_strategy = { type = unit_ratio id = interceptor value = 8 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 16 }
 	ai_strategy = { type = unit_ratio id = scout_plane value = 2 }
 	ai_strategy = { type = unit_ratio id = suicide value = 4 }
 	ai_strategy = { type = unit_ratio id = strategic_bomber value = 5 }
@@ -501,16 +507,19 @@ USA_air_force_breakdown_crysis = {
 	ai_strategy = { type = equipment_variant_production_factor id = large_plane_cas_airframe value = -95 }
 	ai_strategy = { type = equipment_variant_production_factor id = large_plane_maritime_patrol_airframe value = -70 }
 
-	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_airframe value = -90 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_strike_airframe value = -90 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_cas_airframe value = -90 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_naval_bomber_airframe value = -90 }
+	# CV small planes: suppress entirely (MD uses medium CV planes)
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_strike_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_naval_bomber_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_suicide_airframe value = -100 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_airframe value = -95 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_fighter_airframe value = 25 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = 25 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -80 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = -95 }
+	# CV medium planes: boost fighters and MPA, moderate others to fill carrier decks
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_airframe value = -25 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_fighter_airframe value = 50 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_cas_airframe value = 25 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = 50 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -50 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = 25 }
 
 	ai_strategy = { type = air_factory_balance value = 100 }
 }
@@ -524,11 +533,6 @@ USA_air_force_stop_building_all_planes_at_once_its_dumb_missing_lights = {
 			has_equipment = { small_plane_cas_airframe < 500 }
 			has_equipment = { small_plane_naval_bomber_airframe < 500 }
 			has_equipment = { small_plane_suicide_airframe < 200 }
-			has_equipment = { cv_small_plane_airframe < 500 }
-			has_equipment = { cv_small_plane_strike_airframe < 500 }
-			has_equipment = { cv_small_plane_cas_airframe < 500 }
-			has_equipment = { cv_small_plane_naval_bomber_airframe < 500 }
-			has_equipment = { cv_small_plane_suicide_airframe < 200 }
 		}
 	}
 	abort_when_not_enabled = yes
@@ -549,10 +553,6 @@ USA_air_force_stop_building_all_planes_at_once_its_dumb_missing_meds = {
 			has_equipment = { medium_plane_cas_airframe < 500 }
 			has_equipment = { medium_plane_maritime_patrol_airframe < 500 }
 			has_equipment = { medium_plane_suicide_airframe < 200 }
-			has_equipment = { cv_medium_plane_airframe < 500 }
-			has_equipment = { cv_medium_plane_fighter_airframe < 500 }
-			has_equipment = { cv_medium_plane_cas_airframe < 500 }
-			has_equipment = { cv_medium_plane_maritime_patrol_airframe < 500 }
 		}
 	}
 	abort_when_not_enabled = yes
@@ -567,11 +567,6 @@ USA_air_force_stop_building_all_planes_at_once_its_dumb_missing_meds = {
 	ai_strategy = { type = equipment_variant_production_factor id = small_plane_cas_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = small_plane_suicide_airframe value = -100 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_airframe value = -100 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_strike_airframe value = -100 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_cas_airframe value = -100 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_naval_bomber_airframe value = -100 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_suicide_airframe value = -100 }
 }
 
 USA_air_force_breakdown = {
@@ -586,8 +581,7 @@ USA_air_force_breakdown = {
 	ai_strategy = { type = unit_ratio id = cas value = 4 }
 	ai_strategy = { type = unit_ratio id = naval_bomber value = 2 }
 	ai_strategy = { type = unit_ratio id = tactical_bomber value = 8 }
-	ai_strategy = { type = unit_ratio id = heavy_fighter value = 8 }
-	ai_strategy = { type = unit_ratio id = interceptor value = 8 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 16 }
 	ai_strategy = { type = unit_ratio id = scout_plane value = 2 }
 	ai_strategy = { type = unit_ratio id = suicide value = 4 }
 	ai_strategy = { type = unit_ratio id = strategic_bomber value = 5 }
@@ -636,16 +630,19 @@ USA_air_force_breakdown = {
 	ai_strategy = { type = equipment_variant_production_factor id = large_plane_cas_airframe value = -95 }
 	ai_strategy = { type = equipment_variant_production_factor id = large_plane_maritime_patrol_airframe value = -80 }
 
+	# CV small planes: suppress entirely (MD uses medium CV planes)
 	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_strike_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_cas_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_naval_bomber_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_suicide_airframe value = -100 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_airframe value = -95 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_fighter_airframe value = 25 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = 25 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -80 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = -95 }
+	# CV medium planes: boost fighters and MPA, moderate others to fill carrier decks
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_airframe value = -25 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_fighter_airframe value = 50 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_cas_airframe value = 25 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = 50 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -50 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = 25 }
 
 	ai_strategy = { type = air_factory_balance value = 100 }
 }
@@ -682,8 +679,10 @@ USA_canadians_scary = {
 	enable = {
 		CAN = {
 			NOT = {
-				has_government = democratic
-				has_idea = NATO_member
+				OR = {
+					has_government = democratic
+					has_idea = NATO_member
+				}
 			}
 		}
 	}
@@ -702,10 +701,12 @@ USA_reduce_mexico_garrison_when_cartels_are_in_mexico = {
 	enable = {
 		MEX = {
 			NOT = {
-				has_war_with = SLA
-				has_war_with = TAM
-				has_war_with = TRC
-				has_war_with = USA
+				OR = {
+					has_war_with = SLA
+					has_war_with = TAM
+					has_war_with = TRC
+					has_war_with = USA
+				}
 			}
 		}
 	}
@@ -796,7 +797,7 @@ USA_eu_relations = {
 	ai_strategy = { type = befriend id = "LUX" value = 30 }
 	ai_strategy = { type = befriend id = "GER" value = 30 }
 	ai_strategy = { type = befriend id = "DEN" value = 30 }
-	ai_strategy = { type = befriend id = "NOR" value = 30 }
+	ai_strategy = { type = befriend id = "NRY" value = 30 }
 	ai_strategy = { type = befriend id = "SWE" value = 30 }
 	ai_strategy = { type = befriend id = "FIN" value = 30 }
 	ai_strategy = { type = befriend id = "POL" value = 30 }
@@ -1068,7 +1069,7 @@ USA_operation_enduring_freedom = {
 	allowed = { original_tag = USA }
 	enable = {
 		has_country_leader_with_trait = war_on_terror_leader
-		NOT = { has_country_flag = Operation_enduring_freedom }
+		NOT = { has_country_flag = USA_wot_enduring_freedom }
 	}
 	abort_when_not_enabled = yes
 
@@ -1085,7 +1086,7 @@ USA_operation_iraqi_campaign = {
 	allowed = { original_tag = USA }
 	enable = {
 		has_country_leader_with_trait = war_on_terror_leader
-		NOT = { has_country_flag = Operation_iraqi_freedom }
+		NOT = { has_country_flag = USA_wot_iraqi_freedom }
 		IRQ = { NOT = { has_country_flag = IRQ_victory_against_america } }
 	}
 	abort_when_not_enabled = yes
@@ -1102,7 +1103,7 @@ USA_operation_iraqi_campaign = {
 USA_operation_iraqi_freedom = {
 	allowed = { original_tag = USA }
 	enable = {
-		has_country_flag = Operation_iraqi_freedom
+		has_country_flag = USA_wot_iraqi_freedom
 		has_wargoal_against = IRQ
 	}
 	abort_when_not_enabled = yes
@@ -1121,8 +1122,8 @@ USA_army_focus = {
 
 	ai_strategy = { type = role_ratio id = marines value = 250 }
 	ai_strategy = { type = build_army id = marines value = 200 }
-	ai_strategy = { type = role_ratio id = Special_Forces value = 200 }
-	ai_strategy = { type = build_army id = Special_Forces value = 200 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 100 }
+	ai_strategy = { type = build_army id = Special_Forces value = 100 }
 }
 
 #52 54 56 88 89 90 170 171
@@ -1148,14 +1149,14 @@ USA_support_bosnian_against_rsk = {
 	enable = {
 		country_exists = BOS
 		BOS = {
-			has_country_flag = defeat_all_serbs
+			has_country_flag = BOS_defeat_all_serbs
 			OR = {
 				has_idea = BOS_EUFOR
 				has_idea = BOS_SFOR
 			}
 		}
 		RSK = { has_war_with = BOS }
-		has_idea = bos_sfor_vol_troops
+		has_idea = BOS_sfor_vol_troops
 	}
 	abort_when_not_enabled = yes
 
@@ -1171,11 +1172,13 @@ USA_prepare_to_attack_IRQ = {
 		owns_state = 488
 		country_exists = IRQ
 		OR = {
-			has_country_flag = us_prepare_for_iraq_invasion
+			has_country_flag = USA_wot_iraq_invasion_prepared
 			IRQ = { has_completed_focus = IRQ_an_era_of_saddam }
 		}
-		IRQ = { NOT = { has_country_flag = IRQ_victory_against_america } }
-		IRQ = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
+		IRQ = {
+			NOT = { has_country_flag = IRQ_victory_against_america }
+			has_country_leader = { name = "Saddam Hussein" ruling_only = yes }
+		}
 	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = prepare_for_war id = IRQ value = 100 }
@@ -1186,7 +1189,7 @@ USA_support_afghanistan_enduring_freedom = {
 	enable = {
 		AFG = { NOT = { has_country_flag = AFG_new_war } }
 		country_exists = AFG
-		has_country_flag = Operation_enduring_freedom
+		has_country_flag = USA_wot_enduring_freedom
 		AFG = { has_war_with = TAL }
 	}
 	abort_when_not_enabled = yes
@@ -1304,5 +1307,36 @@ USA_construct_additional_microchips = {
 	}
 	abort_when_not_enabled = yes
 
+	ai_strategy = { type = build_building id = microchip_plant value = 50 }
 	ai_strategy = { type = building_target id = microchip_plant value = 350 }
+}
+
+USA_extradition_diplomacy = {
+	allowed = { original_tag = USA }
+	enable = {
+		has_country_flag = USA_wot_speech_given
+		NOT = { has_country_flag = USA_wot_enduring_freedom }
+		country_exists = TAL
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = pp_spend_priority id = decision value = 250 }
+	ai_strategy = { type = pp_spend_amount id = decision value = 250 }
+	ai_strategy = { type = befriend id = "PAK" value = 100 }
+	ai_strategy = { type = befriend id = "SAU" value = 100 }
+}
+
+USA_wot_peaceful_settlement = {
+	allowed = { original_tag = USA }
+	enable = {
+		has_country_flag = USA_wot_extradition_accepted
+		NOT = { has_country_flag = USA_wot_enduring_freedom }
+		NOT = { has_country_flag = USA_wot_afghan_settlement }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = pp_spend_priority id = decision value = 300 }
+	ai_strategy = { type = pp_spend_amount id = decision value = 300 }
+	ai_strategy = { type = influence id = "AFG" value = 200 }
+	ai_strategy = { type = declare_war id = "TAL" value = -200 }
 }

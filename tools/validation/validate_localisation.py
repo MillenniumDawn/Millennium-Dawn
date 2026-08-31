@@ -1,63 +1,39 @@
 #!/usr/bin/env python3
-##########################
-# Localisation Validation Script (Multiprocessing Optimized)
-# Validates localisation files for common issues
-# Checks for:
-#   1. Duplicated localisation keys
-#   2. Unpaired brackets in loc values
-#   3. Loc syntax issues (color symbol pairing)
-#   4. Missing mandatory l_english: line
-#   5. Invalid localization_key references
-#   6. Missing custom_effect_tooltip / custom_trigger_tooltip keys
-#   7. add_resistance_target tooltip issues
-#   8. Orphaned _tt tooltip keys (defined in loc but never referenced)
-# Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
-# Adapted for Millennium Dawn with multiprocessing
-##########################
+"""Validate localisation files for common issues in Millennium Dawn.
+
+Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
+adapted for Millennium Dawn with multiprocessing.
+"""
+
 import glob
+import logging
 import os
 import re
+import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+import disk_cache
+from shared_utils import extract_block_from_text
 from validator_common import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
+    KNOWN_VANILLA_LOC_KEYS,
     BaseValidator,
-    Colors,
     FileOpener,
+    Issue,
+    Severity,
     run_validator_main,
     should_skip_file,
 )
 
-EXTRA_SKIP_PATTERNS = ["FR_loc", "00_operations", "MD_dm_modifiers"]
+EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS + ["00_operations", "MD_dm_modifiers"]
 
-# Vanilla or known loc keys that are valid but not defined in mod localisation files
-VANILLA_LOC_KEYS = {
-    "SP_UNLOCK_PROJECT",
-    "SP_UNLOCK_TECH",
-    "available_scientist_one_line_tt",
-    # Vanilla US Congress keys borrowed from MTG
-    "mtg_usa_congress_add_state_tt",
-    "mtg_usa_congress_large_opposition_tt",
-    "mtg_usa_congress_large_support_tt",
-    "mtg_usa_congress_medium_opposition_tt",
-    "mtg_usa_congress_medium_support_tt",
-    "mtg_usa_congress_remove_state_tt",
-    "mtg_usa_congress_small_opposition_tt",
-    "mtg_usa_congress_small_support_tt",
-    "mtg_usa_house_large_opposition_tt",
-    "mtg_usa_house_large_support_tt",
-    "mtg_usa_house_medium_opposition_tt",
-    "mtg_usa_house_medium_support_tt",
-    "mtg_usa_house_small_opposition_tt",
-    "mtg_usa_house_small_support_tt",
-    "mtg_usa_senate_large_opposition_tt",
-    "mtg_usa_senate_large_support_tt",
-    "mtg_usa_senate_medium_opposition_tt",
-    "mtg_usa_senate_medium_support_tt",
-    "mtg_usa_senate_small_opposition_tt",
-    "mtg_usa_senate_small_support_tt",
-    "free_agency_upgrade_tt",
-}
+# Vanilla / reused-vanilla loc keys that are valid but not defined in the mod's
+# localisation files. Single source of truth lives in validator_common so the
+# focus/idea loc loaders and this reference checker share one allowlist.
+VANILLA_LOC_KEYS = KNOWN_VANILLA_LOC_KEYS
 
 
 def _should_skip(filename: str) -> bool:
@@ -67,11 +43,14 @@ def _should_skip(filename: str) -> bool:
 # --- Multiprocessing helpers ---
 
 
+def _loc_body_lines(filename: str) -> List[str]:
+    return FileOpener.open_text_file(filename, strip_comments_flag=True).split("\n")[1:]
+
+
 def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    lines = text_file.split("\n")[1:]
+    lines = _loc_body_lines(filename)
     for line_idx, line in enumerate(lines):
         if line.count("[") != line.count("]"):
             results.append(
@@ -80,9 +59,26 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
     return results
 
 
-def process_yml_for_syntax(args: Tuple[str, List[str]]) -> List[str]:
-    filename, valid_colors = args
-    results = []
+_SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
+_LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
+_NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
+# A § followed by whitespace and a digit is a prose section sign (e.g. a legal
+# citation like "15 U.S.C. § 1"), never a color code; game markup never puts a
+# space after §. Requiring the digit keeps a dangling/broken code (§ before a
+# word, quote, or line end) flagged instead of silently exempted.
+_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
+
+# A formatter (Prettier/pre-commit --all-files) once split Paradox loc
+# `KEY:0 "value"` lines across two lines and rewrote double quotes to single
+# quotes. Paradox YAML is not real YAML — both mangle silently in-game rather
+# than erroring, so they must be caught here.
+_MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
+_MANGLED_SINGLE_QUOTE_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*'.*'\s*$")
+
+
+def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[Issue | str]:
+    filename, valid_colors, subst_keys = args
+    results: List[Issue | str] = []
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
@@ -90,39 +86,65 @@ def process_yml_for_syntax(args: Tuple[str, List[str]]) -> List[str]:
     for line_idx, line in enumerate(lines):
         if "#" in line or line.strip() in ["", "l_english:"]:
             continue
-        if "\u00a7" in line and "desc_end" not in line and "U.S.C." not in line:
-            count = line.count("\u00a7")
+        if _MANGLED_SINGLE_QUOTE_VALUE_RE.match(line):
+            results.append(
+                Issue(
+                    severity=Severity.ERROR,
+                    category="mangled-loc-line",
+                    message="Loc value uses single quotes instead of double quotes (formatter-mangled, breaks in-game)",
+                    file=os.path.basename(filename),
+                    line=line_idx + 2,
+                )
+            )
+        elif _MANGLED_KEY_NO_VALUE_RE.match(line):
+            results.append(
+                Issue(
+                    severity=Severity.ERROR,
+                    category="mangled-loc-line",
+                    message="Loc key has no value on the same line (formatter-mangled, breaks in-game)",
+                    file=os.path.basename(filename),
+                    line=line_idx + 2,
+                )
+            )
+        if "\u00a7" in line:
+            # Skip \u00a7-balance checks for keys consumed via $KEY$ substitution: those
+            # keys intentionally split their \u00a7 codes across multiple values (one ends
+            # with \u00a7Y, another supplies \u00a7!) so only the merged result is balanced.
+            key_match = _LINE_KEY_RE.match(line)
+            if key_match and key_match.group(1) in subst_keys:
+                continue
+            color_line = _PROSE_SECTION_SIGN_RE.sub("", line)
+            if "\u00a7" not in color_line:
+                continue
+            count = color_line.count("\u00a7")
             if count % 2 != 0:
                 results.append(
                     f"{os.path.basename(filename)}, line {line_idx + 2}, colors - odd number of \u00a7 symbols ({count})"
                 )
-            elif count != line.count("\u00a7!") * 2:
+            elif count != color_line.count("\u00a7!") * 2:
                 expected = count // 2
-                actual = line.count("\u00a7!")
+                actual = color_line.count("\u00a7!")
                 results.append(
                     f"{os.path.basename(filename)}, line {line_idx + 2}, colors - expected {expected} \u00a7! but got {actual}"
                 )
             else:
-                try:
-                    for idx, ch in enumerate(line):
-                        if ch == "\u00a7" and idx + 1 < len(line):
-                            next_ch = line[idx + 1]
-                            if next_ch not in valid_colors and next_ch not in [
-                                "!",
-                                "[",
-                                "$",
-                            ]:
-                                results.append(
-                                    f"{os.path.basename(filename)}, line {line_idx + 2}, colors - unsupported color '{next_ch}'"
-                                )
-                except Exception:
-                    continue
+                for idx, ch in enumerate(color_line):
+                    if ch == "\u00a7" and idx + 1 < len(color_line):
+                        next_ch = color_line[idx + 1]
+                        if next_ch not in valid_colors and next_ch not in [
+                            "!",
+                            "[",
+                            "$",
+                        ]:
+                            results.append(
+                                f"{os.path.basename(filename)}, line {line_idx + 2}, colors - unsupported color '{next_ch}'"
+                            )
     return results
 
 
 def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
     filename = args[0]
-    results = []
+    results: List[str] = []
     text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
     lines = text_file.split("\n")
     if lines == [""]:
@@ -132,13 +154,151 @@ def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
     return results
 
 
+# .claude/docs/typo-watchlist.md's catalogued misspellings, lowered. `it's`
+# (possessive-rule, context-dependent) and `civilisation` (legitimate British
+# spelling) are excluded; `civillisation` (double-L) has no legitimate reading
+# and stays in.
+_TYPO_WATCHLIST: Dict[str, str] = {
+    "estabilish": "establish",
+    "innvoations": "innovations",
+    "irreperable": "irreparable",
+    "irrepairable": "irreparable",
+    "unrepairable": "irreparable",
+    "unenmployed": "unemployed",
+    "existance": "existence",
+    "effectivness": "effectiveness",
+    "disproportinate": "disproportionate",
+    "tarditions": "traditions",
+    "contrats": "by contrast",
+    "airforce": "Air Force",
+    "miltiary": "military",
+    "coaltion": "coalition",
+    "tumultous": "tumultuous",
+    "recgonized": "recognized",
+    "propgramme": "Programme",
+    "poeple": "people",
+    "unloyal": "disloyal",
+    "isreal": "Israel",
+    "bocme": "become",
+    "hovewer": "however",
+    "acomplish": "accomplish",
+    "endevours": "Endeavours",
+    "quiantified": "Quantified",
+    "convering": "converting",
+    "encomapassing": "encompassing",
+    "fundamnetals": "fundamentals",
+    "civillian": "civilian",
+    "civillisation": "civilization",
+    "suprised": "surprised",
+    "alledged": "alleged",
+    "succesful": "successful",
+    "succesfull": "successful",
+    "huminliating": "humiliating",
+    "reffered": "referred",
+    "stronly": "strongly",
+    "togeather": "together",
+    "disasterous": "disastrous",
+    "religous": "religious",
+    "suzerainity": "suzerainty",
+    "seperation": "separation",
+    "seperate": "separate",
+    "seperated": "separated",
+}
+
+# Exact-phrase substrings exempt from typo flagging (populate as intentional uses surface).
+_TYPO_EXEMPTIONS: Set[str] = set()
+
+_TYPO_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(t) for t in _TYPO_WATCHLIST) + r")\b",
+    re.IGNORECASE,
+)
+_TYPO_VALUE_RE = re.compile(r'^\s*[\w.\-]+:\d*\s*"(.*)"')
+_TYPO_RUNTIME_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$[\w.@|+\-]+\$|£[\w.@\-]+")
+
+
+def process_yml_for_typos(args: Tuple[str]) -> List[str]:
+    filename = args[0]
+    results = []
+    lines = _loc_body_lines(filename)
+    for line_idx, line in enumerate(lines):
+        if not line.strip():
+            continue
+        value_match = _TYPO_VALUE_RE.match(line)
+        if not value_match:
+            continue
+        value = value_match.group(1)
+        if any(exempt in value for exempt in _TYPO_EXEMPTIONS):
+            continue
+        prose = _TYPO_RUNTIME_REFERENCE_RE.sub("", value)
+        for m in _TYPO_RE.finditer(prose):
+            correction = _TYPO_WATCHLIST[m.group(0).lower()]
+            results.append(
+                f"{os.path.basename(filename)} - line {line_idx + 2} - "
+                f"'{m.group(0)}' -> '{correction}'"
+            )
+    return results
+
+
+def process_yml_for_prose(args: Tuple[str]) -> List[Issue]:
+    filename = args[0]
+    results: List[Issue] = []
+    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
+    lines = text_file.split("\n")[1:]
+    basename = os.path.basename(filename)
+    for line_idx, line in enumerate(lines):
+        if not line.strip():
+            continue
+        value_match = _TYPO_VALUE_RE.match(line)
+        if not value_match:
+            continue
+        value = value_match.group(1)
+        for _ in range(value.count("\u2014")):
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-em-dash",
+                    message="Em dash in loc value: replace with a period, comma, or colon (see .claude/docs/localisation-rules.md)",
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
+        for _ in range(value.count("`")):
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-backtick-apostrophe",
+                    message="Backtick used as apostrophe in loc value: use ' instead",
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
+    return results
+
+
+def _parse_loc_keys_from_text(text: str) -> List[Tuple[str, str]]:
+    """Return (key, value) pairs in file order. Pairs (not a dict) so the caller
+    can still detect within-file and cross-file duplicates exactly as before."""
+    pairs: List[Tuple[str, str]] = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if ":" not in line or "l_english:" in line or (line and line[0] == "#"):
+            continue
+        colon_idx = line.find(":")
+        if colon_idx < 0:
+            continue
+        key = line[:colon_idx].strip()
+        value = line[colon_idx + 2 :].strip()
+        pairs.append((key, value))
+    return pairs
+
+
 def get_all_loc_keys(
     mod_path: str, lowercase: bool = False
 ) -> Tuple[Dict[str, str], List[str]]:
     filepath = str(Path(mod_path) / "localisation" / "english") + "/"
-    results = []
-    loc_dict = {}
-    duplicated_keys = []
+    loc_dict: Dict[str, str] = {}
+    duplicated_keys: List[str] = []
+    namespace = f"loc.keys.lc={'1' if lowercase else '0'}"
 
     for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
         text_file = FileOpener.open_text_file(
@@ -146,23 +306,18 @@ def get_all_loc_keys(
         )
         if "l_english" not in text_file:
             continue
-        lines = text_file.split("\n")
-        for line in lines:
-            line = line.strip()
-            if ":" not in line or "l_english:" in line or (line and line[0] == "#"):
-                continue
-            results.append(line)
-
-    for line in results:
-        try:
-            key = line[: line.index(":")].strip()
-            value = line[line.index(":") + 2 :].strip()
+        pairs = disk_cache.per_file_cached_by_content(
+            mod_path,
+            namespace,
+            filename,
+            text_file,
+            lambda: _parse_loc_keys_from_text(text_file),
+        )
+        for key, value in pairs:
             if key in loc_dict:
                 duplicated_keys.append(key)
             else:
                 loc_dict[key] = value
-        except (ValueError, IndexError):
-            continue
 
     return loc_dict, duplicated_keys
 
@@ -170,6 +325,9 @@ def get_all_loc_keys(
 def get_all_colors(mod_path: str) -> List[str]:
     filepath = Path(mod_path) / "interface" / "core.gfx"
     if not filepath.exists():
+        logging.warning(
+            "interface/core.gfx not found — color validation will use fallback set"
+        )
         return list("WGRBYCMwgrbycm!")
     text_file = FileOpener.open_text_file(
         str(filepath), lowercase=False, strip_comments_flag=True
@@ -183,7 +341,147 @@ def get_all_colors(mod_path: str) -> List[str]:
         )
         return colors
     except (IndexError, Exception):
+        logging.warning(
+            "Failed to parse interface/core.gfx — color validation will use fallback set"
+        )
         return list("WGRBYCMwgrbycm!")
+
+
+# The valid/scripted loc key sets are ~200k entries; shipping them with every
+# pool task pickled ~23 MB per chunk and dominated this validator's runtime.
+# _txt_refs_init plants them as worker globals once per worker instead.
+_W_VALID_KEYS: frozenset = frozenset()
+_W_SCRIPTED_KEYS: frozenset = frozenset()
+
+
+def _txt_refs_init(valid_keys: frozenset, scripted_keys: frozenset) -> None:
+    global _W_VALID_KEYS, _W_SCRIPTED_KEYS
+    _W_VALID_KEYS = valid_keys
+    _W_SCRIPTED_KEYS = scripted_keys
+
+
+def process_txt_for_loc_key_refs(filename: str) -> List[str]:
+    """Pool worker: check localization_key = VALUE references in one .txt file.
+
+    Reads the valid/scripted key sets from worker globals (set by
+    _txt_refs_init), so the large set is shipped once per worker, not per task.
+    """
+    if _should_skip(filename):
+        return []
+    valid_keys, scripted_keys = _W_VALID_KEYS, _W_SCRIPTED_KEYS
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if "localization_key =" not in text_file:
+        return []
+    pattern = r"localization_key = ([^ \t\n]*)"
+    results = []
+    for k in re.findall(pattern, text_file, flags=re.MULTILINE | re.DOTALL):
+        if k in valid_keys or k in scripted_keys or k in VANILLA_LOC_KEYS:
+            continue
+        if "[" in k and "]" in k:
+            continue
+        if "|" in k or '"' in k:
+            continue
+        if k.startswith("GFX_"):
+            continue
+        if "EFFECT_" in k or "TRIGGER_" in k:
+            continue
+        if "EUXXX_EP_agenda" in k:
+            continue
+        if re.match(r"^EU\d+$", k):
+            continue
+        results.append(k)
+    return results
+
+
+def process_txt_for_custom_tt_refs(filename: str) -> List[str]:
+    """Pool worker: check custom_effect_tooltip / custom_trigger_tooltip keys in one .txt file.
+
+    Valid/scripted key sets come from worker globals set by _txt_refs_init.
+    """
+    if _should_skip(filename):
+        return []
+    valid_keys, scripted_keys = _W_VALID_KEYS, _W_SCRIPTED_KEYS
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if (
+        "custom_effect_tooltip" not in text_file
+        and "custom_trigger_tooltip" not in text_file
+    ):
+        return []
+    simple_pattern = r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)"
+    trigger_pattern = r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(?!\{)(\S+)"
+    basename = os.path.basename(filename)
+    results = []
+    for pattern in [simple_pattern, trigger_pattern]:
+        for key in re.findall(pattern, text_file):
+            if key in valid_keys or key in VANILLA_LOC_KEYS or key in scripted_keys:
+                continue
+            if "[" in key or "|" in key or '"' in key:
+                continue
+            if key.startswith("GFX_"):
+                continue
+            if key.startswith("cannot_go_higher_than_") or key.startswith(
+                "cannot_go_lower_than_"
+            ):
+                continue
+            results.append(f"{key} - {basename}")
+    return results
+
+
+def _extract_not_blocks(text: str) -> List[str]:
+    """Return the bodies of every ``NOT = { ... }`` block in ``text``,
+    brace-balanced so nested trigger blocks are kept intact."""
+    out: List[str] = []
+    i = 0
+    while True:
+        m = _NOT_OPEN_RE.search(text, i)
+        if not m:
+            break
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            break
+        out.append(body)
+        i = end
+    return out
+
+
+def process_file_for_orphan_tt_refs(
+    args: Tuple,
+) -> Tuple[set, List[str], set]:
+    """Pool worker: collect tooltip references and dynamic patterns from one file.
+
+    Returns ``(referenced, dynamic_raw, negated_refs)`` where ``negated_refs``
+    is the subset of tooltip references that appear inside a ``NOT = { ... }``
+    block. Callers use ``negated_refs`` to decide whether ``_NOT``-suffixed
+    tooltip keys can be treated as implicitly referenced via HOI4's automatic
+    negation lookup.
+    """
+    filename, patterns = args
+    if _should_skip(filename):
+        return set(), [], set()
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    referenced = set()
+    dynamic_raw = []
+    for pat in patterns:
+        for m in re.findall(pat, text_file, re.DOTALL):
+            token = m.strip('"')
+            referenced.add(token)
+            if "[" in token and "]" in token:
+                dynamic_raw.append(token)
+
+    negated_refs: set = set()
+    if "NOT" in text_file:
+        for block_body in _extract_not_blocks(text_file):
+            for pat in patterns:
+                for m in re.findall(pat, block_body, re.DOTALL):
+                    negated_refs.add(m.strip('"'))
+
+    return referenced, dynamic_raw, negated_refs
 
 
 def _get_skipped_loc_keys(mod_path: str) -> set:
@@ -203,9 +501,9 @@ def _get_skipped_loc_keys(mod_path: str) -> set:
             if ":" not in line or "l_english:" in line or (line and line[0] == "#"):
                 continue
             try:
-                key = line[: line.index(":")].strip()
-                keys.add(key)
-            except (ValueError, IndexError):
+                colon_idx = line.index(":")
+                keys.add(line[:colon_idx].strip())
+            except ValueError:
                 continue
     return keys
 
@@ -233,28 +531,37 @@ class Validator(BaseValidator):
             ["localisation/english/**/*.yml"], extra_skip=_should_skip
         )
 
-    def validate_duplicated_keys(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for duplicated localisation keys...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+    def _collect_substitution_keys(self, yml_files: List[str]) -> frozenset:
+        """Return loc keys referenced via $KEY$ string interpolation.
 
-        _, duplicated = get_all_loc_keys(self.mod_path, lowercase=False)
-        skipped_keys = _get_skipped_loc_keys(self.mod_path)
-        duplicated = [k for k in duplicated if k not in skipped_keys]
+        These keys intentionally split § color codes across multiple values
+        (e.g. `gip` ends with §Y and `gis` supplies §!) so the per-key
+        §-balance check produces false positives. Caller skips that check
+        for any key in this set.
+        """
+        keys: set = set()
+        for filepath in yml_files:
+            try:
+                text = FileOpener.open_text_file(
+                    filepath, lowercase=False, strip_comments_flag=True
+                )
+            except Exception:
+                continue
+            keys.update(_SUBST_KEY_RE.findall(text))
+        return frozenset(keys)
+
+    def validate_duplicated_keys(self, duplicated: List[str], skipped_keys: set):
+        self._log_section("Checking for duplicated localisation keys...")
+
+        filtered = [k for k in duplicated if k not in skipped_keys]
         self._report(
-            duplicated,
+            filtered,
             "✓ No duplicated localisation keys",
             "Duplicated localisation keys:",
         )
 
     def validate_brackets(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for unpaired brackets in localisation...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for unpaired brackets in localisation...")
 
         yml_files = self._get_yml_files()
         args_list = [(f,) for f in yml_files]
@@ -272,15 +579,12 @@ class Validator(BaseValidator):
         )
 
     def validate_syntax(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking localisation color syntax...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking localisation color syntax...")
 
         valid_colors = get_all_colors(self.mod_path)
         yml_files = self._get_yml_files()
-        args_list = [(f, valid_colors) for f in yml_files]
+        subst_keys = self._collect_substitution_keys(yml_files)
+        args_list = [(f, valid_colors, subst_keys) for f in yml_files]
 
         all_results = self._pool_map(process_yml_for_syntax, args_list, chunksize=10)
 
@@ -295,11 +599,7 @@ class Validator(BaseValidator):
         )
 
     def validate_mandatory_line(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking mandatory l_english: line in loc files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking mandatory l_english: line in loc files...")
 
         yml_files = self._get_yml_files()
         args_list = [(f,) for f in yml_files]
@@ -316,123 +616,115 @@ class Validator(BaseValidator):
             "Missing l_english: line in localisation files:",
         )
 
-    def validate_localization_key_references(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking localization_key references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+    def validate_typo_watchlist(self):
+        self._log_section("Checking localisation values against the typo watchlist...")
 
-        loc_keys, _ = get_all_loc_keys(self.mod_path, lowercase=False)
-        scripted_loc_keys = _get_scripted_loc_keys(self.mod_path)
-        pattern = r"localization_key = ([^ \t\n]*)"
+        yml_files = self._get_yml_files()
+        args_list = [(f,) for f in yml_files]
+
+        all_results = self._pool_map(process_yml_for_typos, args_list, chunksize=10)
+
         results = []
+        for file_results in all_results:
+            results.extend(file_results)
 
-        for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
-            if _should_skip(filename):
-                continue
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
-            )
-            if "localization_key =" not in text_file:
-                continue
+        self._report(
+            results,
+            "✓ No typo-watchlist matches in localisation",
+            "Typo-watchlist matches in localisation values:",
+            severity=Severity.WARNING,
+            category="loc-typo-watchlist",
+        )
 
-            matches = re.findall(pattern, text_file, flags=re.MULTILINE | re.DOTALL)
-            for match in matches:
-                k = match
-                if k in loc_keys or k in scripted_loc_keys:
-                    continue
-                if "[" in k and "]" in k:
-                    continue
-                if "|" in k:
-                    continue
-                if '"' in k:
-                    continue
-                if k.startswith("GFX_"):
-                    continue
-                if "EFFECT_" in k or "TRIGGER_" in k:
-                    continue
-                if "EUXXX_EP_agenda" in k:
-                    continue
-                if re.match(r"^EU\d+$", k):
-                    continue
-                if k in VANILLA_LOC_KEYS:
-                    continue
-                results.append(k)
+    def validate_prose_conventions(self):
+        self._log_section(
+            "Checking localisation prose conventions (em dashes, backtick apostrophes)..."
+        )
 
-        results = sorted(set(results))
+        yml_files = self._get_yml_files()
+        args_list = [(f,) for f in yml_files]
+
+        all_results = self._pool_map(process_yml_for_prose, args_list, chunksize=10)
+
+        em_dash_results: List[Issue] = []
+        backtick_results: List[Issue] = []
+        for file_results in all_results:
+            for issue in file_results:
+                if issue.category == "loc-em-dash":
+                    em_dash_results.append(issue)
+                else:
+                    backtick_results.append(issue)
+
+        self._report(
+            em_dash_results,
+            "✓ No em dashes in localisation values",
+            "Em dashes in localisation values:",
+            severity=Severity.WARNING,
+            category="loc-em-dash",
+        )
+        self._report(
+            backtick_results,
+            "✓ No backtick-as-apostrophe in localisation values",
+            "Backtick used as apostrophe in localisation values:",
+            severity=Severity.WARNING,
+            category="loc-backtick-apostrophe",
+        )
+
+    def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):
+        """Scan txt files with a worker that needs the valid/scripted key sets,
+        shipped once per worker (loc_keys is ~200k entries; per-task shipping
+        pickled it ~23 MB per chunk)."""
+        return self._pool_map_init(
+            worker,
+            txt_files,
+            _txt_refs_init,
+            (frozenset(loc_keys), frozenset(scripted_loc_keys)),
+            chunksize=30,
+        )
+
+    def validate_localization_key_references(
+        self, loc_keys: Dict, scripted_loc_keys: set
+    ):
+        self._log_section("Checking localization_key references...")
+
+        txt_files = self._collect_files(["**/*.txt"])
+        all_results = self._scan_txt_refs(
+            process_txt_for_loc_key_refs, txt_files, loc_keys, scripted_loc_keys
+        )
+
+        results = sorted({k for file_res in all_results for k in file_res})
         self._report(
             results,
             "✓ All localization_key references are valid",
             "Invalid localization_key references (key not found in loc files):",
         )
 
-    def validate_custom_tooltip_references(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking custom tooltip references...{Colors.ENDC if self.use_colors else ''}"
+    def validate_custom_tooltip_references(
+        self, loc_keys: Dict, scripted_loc_keys: set
+    ):
+        self._log_section("Checking custom tooltip references...")
+
+        txt_files = self._collect_files(["**/*.txt"])
+        all_results = self._scan_txt_refs(
+            process_txt_for_custom_tt_refs, txt_files, loc_keys, scripted_loc_keys
         )
-        self.log(f"{'='*80}")
 
-        loc_keys, _ = get_all_loc_keys(self.mod_path, lowercase=False)
-        scripted_loc_keys = _get_scripted_loc_keys(self.mod_path)
-        results = []
-
-        # Pattern 1: custom_effect_tooltip = KEY (simple form, no brace)
-        simple_pattern = r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)"
-        # Pattern 2: custom_trigger_tooltip = { tooltip = KEY }
-        trigger_pattern = r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(\S+)"
-
-        for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
-            if _should_skip(filename):
-                continue
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
-            )
-            if (
-                "custom_effect_tooltip" not in text_file
-                and "custom_trigger_tooltip" not in text_file
-            ):
-                continue
-
-            for pattern in [simple_pattern, trigger_pattern]:
-                matches = re.findall(pattern, text_file)
-                for key in matches:
-                    if (
-                        key in loc_keys
-                        or key in VANILLA_LOC_KEYS
-                        or key in scripted_loc_keys
-                    ):
-                        continue
-                    if "[" in key or "|" in key or '"' in key:
-                        continue
-                    if key.startswith("GFX_"):
-                        continue
-                    if key.startswith("cannot_go_higher_than_") or key.startswith(
-                        "cannot_go_lower_than_"
-                    ):
-                        continue
-                    results.append(f"{key} - {os.path.basename(filename)}")
-
-        results = sorted(set(results))
+        results = sorted({r for file_res in all_results for r in file_res})
         self._report(
             results,
             "✓ All custom tooltip references are valid",
             "Custom tooltip references not found in localisation:",
         )
 
-    def validate_add_resistance_tooltip(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking add_resistance_target tooltip localisation...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+    def validate_add_resistance_tooltip(self, loc_keys: Dict):
+        self._log_section("Checking add_resistance_target tooltip localisation...")
 
-        loc_keys, _ = get_all_loc_keys(self.mod_path, lowercase=False)
         pattern = r"^(\t+)add_resistance_target = (\{\n.*?)^\1\}"
         results = []
 
-        for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
+        for filename in glob.iglob(
+            os.path.join(self.mod_path, "**", "*.txt"), recursive=True
+        ):
             if _should_skip(filename):
                 continue
             text_file = FileOpener.open_text_file(
@@ -469,22 +761,22 @@ class Validator(BaseValidator):
             "add_resistance_target tooltip issues:",
         )
 
-    def validate_orphaned_tooltip_keys(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for orphaned tooltip keys...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+    def validate_orphaned_tooltip_keys(
+        self, loc_keys: Dict, skipped_keys: set, scripted_loc_keys: set
+    ):
+        self._log_section("Checking for orphaned tooltip keys...")
 
-        loc_keys, _ = get_all_loc_keys(self.mod_path, lowercase=False)
-        skipped_keys = _get_skipped_loc_keys(self.mod_path)
+        # Tooltip-named keys: anything ending in _tt/_TT or starting with `tooltip_`.
+        # The latter catches modder-named explicit tooltip strings like
+        # `tooltip_influence_on_all_other_EU_members_25_percent` that aren't suffixed.
         tt_keys = {
             k
             for k in loc_keys
-            if (k.endswith("_tt") or k.endswith("_TT"))
+            if (k.endswith("_tt") or k.endswith("_TT") or k.startswith("tooltip_"))
             and k not in skipped_keys
             and not k.startswith("cannot_go_higher_than_")
             and not k.startswith("cannot_go_lower_than_")
+            and not k.startswith("OPERATIVE_MISSION_")
         }
 
         if not tt_keys:
@@ -495,10 +787,8 @@ class Validator(BaseValidator):
             )
             return
 
-        # 1. Collect all tooltip keys referenced in script, GUI, and scripted loc files
-        referenced_in_scripts = set()
-        scripted_loc_keys = _get_scripted_loc_keys(self.mod_path)
-        referenced_in_scripts.update(scripted_loc_keys)
+        # 1. Collect all tooltip keys referenced in script, GUI, and scripted loc files.
+        referenced_in_scripts: set = set(scripted_loc_keys)
         txt_patterns = [
             r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)",
             r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(\S+)",
@@ -510,16 +800,55 @@ class Validator(BaseValidator):
             r"(?:tooltip|text|buttonText)\s*=\s*(\S+)",
         ]
 
-        for ext, pats in (("**/*.txt", txt_patterns), ("**/*.gui", gui_patterns)):
-            for filename in glob.iglob(self.mod_path + ext, recursive=True):
-                if _should_skip(filename):
-                    continue
-                text = FileOpener.open_text_file(
-                    filename, lowercase=False, strip_comments_flag=True
-                )
-                for pat in pats:
-                    for m in re.findall(pat, text, re.DOTALL):
-                        referenced_in_scripts.add(m.strip('"'))
+        txt_files = self._collect_files(["**/*.txt"])
+        gui_files = self._collect_files(["**/*.gui"])
+        args_list = [(f, txt_patterns) for f in txt_files] + [
+            (f, gui_patterns) for f in gui_files
+        ]
+        all_scan_results = self._pool_map(
+            process_file_for_orphan_tt_refs, args_list, chunksize=30
+        )
+
+        # Dynamic-key patterns (compiled regexes) collected from meta_effect
+        # substitutions like `tooltip_EU_parliament_focus_[EUXXX]_approve`.
+        # A literal tooltip_*_approve key matching this pattern is considered
+        # referenced even though the call site uses runtime substitution.
+        raw_dynamic_tokens: List[str] = []
+        negated_script_refs: set = set()
+        for referenced, dynamic_raw, negated in all_scan_results:
+            referenced_in_scripts.update(referenced)
+            raw_dynamic_tokens.extend(dynamic_raw)
+            negated_script_refs.update(negated)
+
+        # Compile dynamic patterns once, deduplicating raw tokens first.
+        dynamic_ref_patterns = []
+        seen_raw = set()
+        for token in raw_dynamic_tokens:
+            if token in seen_raw:
+                continue
+            seen_raw.add(token)
+            esc = re.escape(token)
+            esc = re.sub(
+                r"\\\[[A-Za-z_][A-Za-z0-9_]*\\\]",
+                r"[A-Za-z0-9_]+",
+                esc,
+            )
+            dynamic_ref_patterns.append(re.compile(f"^{esc}$"))
+
+        def _matches_dynamic_ref(key: str) -> bool:
+            return any(p.match(key) for p in dynamic_ref_patterns)
+
+        # HOI4 auto-looks-up `_NOT` variants only for tooltip keys whose base
+        # is referenced *inside* a ``NOT = { ... }`` block. A `foo_tt` only
+        # used in positive context never causes the engine to look up
+        # `foo_tt_NOT`, so we must not suppress the orphan warning for those.
+        def _has_not_base_referenced(key: str) -> bool:
+            if not key.endswith("_NOT"):
+                return False
+            base = key[: -len("_NOT")]
+            if base in negated_script_refs:
+                return True
+            return False
 
         # 2. Collect _tt keys referenced by other loc values via $KEY$
         referenced_in_loc = set()
@@ -530,7 +859,11 @@ class Validator(BaseValidator):
 
         # 3. Report orphans
         all_referenced = referenced_in_scripts | referenced_in_loc
-        orphaned = sorted(tt_keys - all_referenced)
+        orphaned = sorted(
+            k
+            for k in (tt_keys - all_referenced)
+            if not _matches_dynamic_ref(k) and not _has_not_base_referenced(k)
+        )
 
         self._report(
             orphaned,
@@ -539,14 +872,33 @@ class Validator(BaseValidator):
         )
 
     def run_validations(self):
-        self.validate_duplicated_keys()
+        if self.staged_only and not self.staged_files:
+            self.log(
+                "No staged files found — skipping localisation validation",
+                "warning",
+            )
+            return
+
+        # Pre-compute shared data once — avoids re-reading all loc files for each check.
+        loc_keys, duplicated = get_all_loc_keys(self.mod_path, lowercase=False)
+        skipped_keys = _get_skipped_loc_keys(self.mod_path)
+        scripted_loc_keys = _get_scripted_loc_keys(self.mod_path)
+
+        self.validate_duplicated_keys(duplicated, skipped_keys)
         self.validate_brackets()
         self.validate_syntax()
         self.validate_mandatory_line()
-        self.validate_localization_key_references()
-        self.validate_custom_tooltip_references()
-        self.validate_add_resistance_tooltip()
-        self.validate_orphaned_tooltip_keys()
+        self.validate_typo_watchlist()
+        self.validate_prose_conventions()
+
+        # Cross-reference checks scan all .txt/.gui files — skip in staged mode
+        if not self.staged_only:
+            self.validate_localization_key_references(loc_keys, scripted_loc_keys)
+            self.validate_custom_tooltip_references(loc_keys, scripted_loc_keys)
+            self.validate_add_resistance_tooltip(loc_keys)
+            self.validate_orphaned_tooltip_keys(
+                loc_keys, skipped_keys, scripted_loc_keys
+            )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,50 @@
+name: Nightly PR Revalidation
+
+# Re-runs the trusted coding pipeline for every open PR after main moves.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: read
+  actions: write
+
+concurrency:
+  group: nightly-pr-revalidation
+  cancel-in-progress: true
+
+jobs:
+  revalidate-open-prs:
+    runs-on: ubuntu-latest
+    env:
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Dispatch validation for open PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Resolve main's live head so each run uses current base data.
+          base_sha=$(gh api "repos/$GH_REPO/commits/main" --jq '.sha')
+          pulls_url="repos/$GH_REPO/pulls?state=open&base=main&per_page=100"
+          # Pagination keeps open PRs after the first 100 in the sweep.
+          prs=$(gh api --paginate "$pulls_url" --jq '.[].number')
+          sent=0
+          failed=0
+          while IFS= read -r num; do
+            [ -z "$num" ] && continue
+            if gh workflow run coding-pipeline.yml --ref main \
+                -f pr_number="$num" -f base_sha="$base_sha"; then
+              sent=$((sent + 1))
+            else
+              echo "::warning::PR #$num could not be dispatched"
+              failed=$((failed + 1))
+            fi
+          done <<< "$prs"
+          echo "Dispatched coding-pipeline for $sent open PR(s)," \
+            "$failed dispatch failure(s)"
+          if [ "$failed" -gt 0 ]; then
+            exit 1
+          fi

@@ -11,7 +11,25 @@ country_event = {
 
 	option = {
 		name = MD_nuclear_energy.1.a
-		log = "[GetDateText]: [This.GetName]: MD_nuclear_energy.1.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = MD_nuclear_energy.1.b
+		log = "[GetDateText]: [This.GetName]: MD_nuclear_energy.1.b executed"
+		add_political_power = -50
+		if = {
+			limit = {
+				has_idea = non_nuclear_power
+			}
+			swap_ideas = {
+				remove_idea = non_nuclear_power
+				add_idea = nuclear_energy
+			}
+		}
 
 		ai_chance = {
 			base = 1
@@ -53,7 +71,7 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			news_event = { id = MD_raid.17 }
+			news_event = MD_raid.17
 		}
 		if = {
 			limit = {
@@ -124,7 +142,7 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			news_event = { id = MD_raid.16 }
+			news_event = MD_raid.16
 		}
 		if = {
 			limit = {
@@ -310,7 +328,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD_raid.1.c executed"
 		trigger = {
 			OR = {
-				NOT = { has_idea = Non_State_Actor }
+				NOT = { has_idea = non_state_actor }
 				NOT = { original_tag = ISI }
 				salafist_caliphate_are_in_power = no
 			}
@@ -427,7 +445,10 @@ country_event = {
 			modifier = violated_territorial_sovereignty
 		}
 		hidden_effect = { FROM = { country_event = MD_raid.15 } }
-		send_embargo = FROM
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			send_embargo = FROM
+		}
 		ai_chance = {
 			base = 50
 			# If absolutely weaker, completely avoid conflict
@@ -471,9 +492,7 @@ country_event = {
 		name = MD_raid.2.a
 		log = "[GetDateText]: [This.GetName]: MD_raid.2.a executed"
 		FROM = {
-			country_event = {
-				id = MD_raid.4
-			}
+			country_event = MD_raid.4
 		}
 		ai_chance = {
 			base = 5
@@ -506,23 +525,30 @@ country_event = {
 		}
 		effect_tooltip = {
 			FROM = {
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = 0.02 }
+				set_temp_variable = {
+					treasury_change = {
+						value = gdp_total
+						multiply = 0.02
+					}
+				}
 				clamp_temp_variable = { var = treasury_change min = 0 max = 200 }
-
-				set_temp_variable = { temp_reparation = treasury_change }
 				modify_treasury_effect = yes
 			}
 			ROOT = {
-				set_temp_variable = { treasury_change = temp_reparation }
-				multiply_temp_variable = { treasury_change = -1 }
+				set_temp_variable = { raider_gdp = FROM.gdp_total }
+				set_temp_variable = {
+					treasury_change = {
+						value = raider_gdp
+						multiply = 0.02
+						clamp = { min = 0 max = 200 }
+						multiply = -1
+					}
+				}
 				modify_treasury_effect = yes
 			}
 		}
 		FROM = {
-			country_event = {
-				id = MD_raid.3
-			}
+			country_event = MD_raid.3
 		}
 		ai_chance = {
 			base = 5
@@ -580,15 +606,25 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD_raid.3.a executed"
 		custom_effect_tooltip = MD_reparation2_TT
 		ROOT = {
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = 0.02 }
+			set_temp_variable = {
+				treasury_change = {
+					value = gdp_total
+					multiply = 0.02
+				}
+			}
 			clamp_temp_variable = { var = treasury_change min = 0 max = 200 }
-			set_temp_variable = { temp_reparation = treasury_change }
 			modify_treasury_effect = yes
 		}
 		FROM = {
-			set_temp_variable = { treasury_change = temp_reparation }
-			multiply_temp_variable = { treasury_change = -1 }
+			set_temp_variable = { raider_gdp = ROOT.gdp_total }
+			set_temp_variable = {
+				treasury_change = {
+					value = raider_gdp
+					multiply = 0.02
+					clamp = { min = 0 max = 200 }
+					multiply = -1
+				}
+			}
 			modify_treasury_effect = yes
 		}
 
@@ -611,7 +647,7 @@ country_event = {
 	option = {
 		name = MD_raid.4.a
 		log = "[GetDateText]: [This.GetName]: MD_raid.4.a executed"
-		news_event = { id = MD_raid.16 }
+		news_event = MD_raid.16
 		set_temp_variable = { wargoal_on = FROM }
 		add_threat_from_wargoal_effect = yes
 		create_wargoal = { type = puppet_wargoal_focus target = FROM expire = 120 }
@@ -648,12 +684,14 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD_raid.4.c executed"
 		trigger = {
 			NOT = {
-				has_idea = Non_State_Actor
+				has_idea = non_state_actor
 			}
 			NOT = {
-				has_country_flag = is_raid_sanctioning@FROM
-				FROM = {
-					has_country_flag = promised_retaliation_against@ROOT
+				OR = {
+					has_country_flag = is_raid_sanctioning@FROM
+					FROM = {
+						has_country_flag = promised_retaliation_against@ROOT
+					}
 				}
 			}
 		}
@@ -662,9 +700,7 @@ country_event = {
 		set_temp_variable = { ga_new_vote_nation = FROM }
 		update_ga_vote = yes
 
-		set_country_flag = {
-			flag = is_raid_sanctioning@FROM
-		}
+		set_country_flag = is_raid_sanctioning@FROM
 
 		ai_chance = {
 			base = 20
@@ -698,6 +734,8 @@ country_event = {
 		ai_chance = {
 			base = 55
 		}
+
+		country_event = { id = MD_raid.5 days = 3 }
 	}
 }
 
@@ -742,11 +780,9 @@ country_event = {
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		log = "Starting Raid for [THIS.GetTag] To [ROOT.actor_country.GetTag]"
+		log = "Starting Raid for [THIS.GetTag] To [?ROOT.actor_country.GetTag]"
 		var:ROOT.actor_country = {
-			country_event = {
-				id = MD_raid.9
-			}
+			country_event = MD_raid.9
 			set_country_flag = {
 				flag = temp_flag_raids
 				days = 2
@@ -762,11 +798,9 @@ country_event = {
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		log = "Starting Raid for [ROOT.target_country.GetTag] FROM [FROM.GetTag]"
+		log = "Starting Raid for [?ROOT.target_country.GetTag] FROM [FROM.GetTag]"
 		var:ROOT.target_country = {
-			country_event = {
-				id = MD_raid.1
-			}
+			country_event = MD_raid.1
 		}
 	}
 }
@@ -780,8 +814,10 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
-			has_country_flag = temp_flag_raids
-			has_country_flag = disable_raid_notification
+			OR = {
+				has_country_flag = temp_flag_raids
+				has_country_flag = disable_raid_notification
+			}
 		}
 	}
 
@@ -828,78 +864,6 @@ country_event = {
 		set_country_flag = waived_notif_warning
 		ai_chance = {
 			base = 5
-		}
-	}
-}
-
-#Event to nations that dont share government with the raider
-country_event = {
-	id = MD_raid.11
-	title = MD_raid.11.t
-	desc = MD_raid.11.d
-	picture = GFX_raid_city_fire
-	is_triggered_only = yes
-	trigger = {
-		NOT = {
-			has_country_flag = temp_flag_raids
-			has_country_flag = disable_raid_notification
-		}
-		NOT = {
-			is_neighbor_of = FROM
-		}
-	}
-
-	option = {
-		name = MD_raid.11.a
-		log = "[GetDateText]: [This.GetName]: MD_raid.11.a executed"
-		add_opinion_modifier = {
-			target = FROM
-			modifier = dislike_when_they_do_stuff
-		}
-		if = {
-			limit = {
-				NOT = {
-					has_country_flag = waived_notif_warning
-				}
-			}
-			custom_effect_tooltip = disable_raid_notifs_TT
-		}
-		set_country_flag = waived_notif_warning
-		ai_chance = {
-			base = 1
-			modifier = {
-				add = 2
-				NOT = { has_government = FROM }
-			}
-			modifier = {
-				has_opinion = { target = FROM value < -10 }
-				add = 10
-			}
-			modifier = {
-				is_in_faction_with = FROM
-				add = -20
-			}
-		}
-	}
-
-	option = {
-		name = MD_raid.11.b
-		log = "[GetDateText]: [This.GetName]: MD_raid.11.b executed"
-		if = {
-			limit = {
-				NOT = {
-					has_country_flag = waived_notif_warning
-				}
-			}
-			custom_effect_tooltip = disable_raid_notifs_TT
-		}
-		set_country_flag = waived_notif_warning
-		ai_chance = {
-			base = 1
-			modifier = {
-				add = 2
-				has_government = FROM
-			}
 		}
 	}
 }
@@ -960,7 +924,7 @@ country_event = { # I will bite your fucking ear off if you touch this
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		log = "Starting Raid for [THIS.GetTag] To [ROOT.actor_country.GetTag]"
+		log = "Starting Raid for [THIS.GetTag] To [?ROOT.actor_country.GetTag]"
 		send_events_to_others = yes
 	}
 }

@@ -1,0 +1,238 @@
+name: Validator Cache (main)
+
+# Builds the shared validator cache on main for PR runs.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "common/**"
+      - "events/**"
+      - "history/**"
+      - "localisation/**"
+      - "interface/**"
+      - "gfx/flags/**"
+      - "tools/**"
+      - ".github/workflows/validator-cache.yml"
+  # Rebuild nightly so quiet periods and cache eviction do not leave PRs cold.
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: validator-cache-main
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  # Needed to verify cache entries through the API.
+  actions: read
+
+jobs:
+  build-cache:
+    name: Build validator disk cache
+    runs-on: ubuntu-latest
+    steps:
+      # Match the prepare-workspace checkout so all validator namespaces warm.
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            common
+            events
+            history
+            localisation
+            interface
+            gfx/flags
+            tools
+            resources/documentation
+            .claude
+
+      # Hash before the run creates __pycache__ files under tools/.
+      - name: Compute validator code hash
+        id: toolshash
+        run: >-
+          echo "hash=${{ hashFiles('tools/validation/**',
+          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+
+      # Restore the newest compatible entry for an incremental rebuild.
+      - name: Restore previous validator disk cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_cache
+          key: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}
+          restore-keys: |
+            md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.x"
+
+      # Non-strict findings do not block the cache; harness failures do.
+      - name: Run cacheable validators (cache warm-up)
+        run: >-
+          python3 tools/validation/run_all_validators.py --no-color
+          --persist-results .validation_baseline_candidate
+
+      - name: Ensure validation result candidate directory exists
+        run: mkdir -p .validation_baseline_candidate
+
+      - name: Upload validation result candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: validation-baseline-candidate
+          path: .validation_baseline_candidate/
+          include-hidden-files: true
+          if-no-files-found: ignore
+
+      # The run ID makes each immutable cache key unique on unchanged commits.
+      - name: Save validator disk cache
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_cache
+          key: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
+            github.run_id }}
+
+      # Confirm this run's exact key so a failed save cannot leave PRs cold.
+      - name: Verify this run's cache entry exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_KEY: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
+            github.run_id }}
+        run: |
+          cache_url="repos/${{ github.repository }}/actions/caches"
+          cache_url="${cache_url}?key=$EXPECTED_KEY&per_page=1"
+          count=$(gh api "$cache_url" --jq '.total_count')
+          if [ "$count" -eq 0 ]; then
+            echo "::error::Cache entry ${EXPECTED_KEY} was not saved"
+            exit 1
+          fi
+          echo "Cache entry ${EXPECTED_KEY} confirmed"
+
+  # Compare the nightly validator baseline for regressions on main.
+  check-baseline:
+    name: Check validation baseline
+    needs: [build-cache]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      # Match build-cache so the baseline contains every validator namespace.
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            common
+            events
+            history
+            localisation
+            interface
+            gfx/flags
+            tools
+            resources/documentation
+            .claude
+
+      - name: Compute validator code hash
+        id: toolshash
+        run: >-
+          echo "hash=${{ hashFiles('tools/validation/**',
+          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+
+      # Ignore baselines from older validator generations.
+      - name: Restore previous validation baseline
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_baseline
+          key: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}
+          restore-keys: |
+            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
+
+      # Restore this run's cache, or a same-commit entry for reruns.
+      - name: Restore validator disk cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_cache
+          key: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
+            github.run_id }}
+          restore-keys: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}-
+          fail-on-cache-miss: true
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.x"
+
+      - name: Download validation result candidate
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: validation-baseline-candidate
+          path: .validation_baseline_candidate/
+
+      - name: Verify validation result candidate completion
+        run: test -f .validation_baseline_candidate/.persist-complete
+
+      - name: Diff against previous baseline
+        id: diff
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
+          TOOLSHASH: ${{ steps.toolshash.outputs.hash }}
+        run: |
+          workflow_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          workflow_url="$workflow_url/actions/runs/$GITHUB_RUN_ID"
+          python3 tools/baseline_check.py \
+            --previous .validation_baseline \
+            --current .validation_baseline_candidate \
+            --output .validation_baseline \
+            --toolshash "$TOOLSHASH" \
+            --commit-sha "$COMMIT_SHA" \
+            --workflow-run-url "$workflow_url" \
+            --github-repository "$REPOSITORY"
+
+      # Save only when the baseline diff has no new errors.
+      - name: Save validation baseline
+        if: steps.diff.outcome == 'success'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_baseline
+          key: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
+            github.run_id }}
+
+      # Make a failed save visible instead of leaving PRs on an old baseline.
+      - name: Verify this run's baseline entry exists
+        if: steps.diff.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_KEY: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
+            github.run_id }}
+        run: |
+          cache_url="repos/${{ github.repository }}/actions/caches"
+          cache_url="${cache_url}?key=$EXPECTED_KEY&per_page=1"
+          count=$(gh api "$cache_url" --jq '.total_count')
+          if [ "$count" -eq 0 ]; then
+            echo "::error::Baseline entry ${EXPECTED_KEY} was not saved"
+            exit 1
+          fi
+          echo "Baseline entry ${EXPECTED_KEY} confirmed"

@@ -2,8 +2,6 @@
 
 For full lists of effects, triggers, modifiers, and dynamic variables, see the corresponding files in `resources/documentation/`.
 
----
-
 ## Variable Types
 
 ### Persistent variables
@@ -17,7 +15,7 @@ SOV.my_var         # read from another scope
 
 ### Temporary variables
 
-Exist only for the duration of the current scripted block. Prefixed with `temp_` in effects but accessed by name.
+Exist only for the current scripted block. Prefixed with `temp_` in effects but accessed by name.
 
 ```
 set_temp_variable = { var = my_temp value = 10 }
@@ -34,15 +32,13 @@ global.global_my_var   # read globally
 
 ### Array elements
 
-Accessed via `^` subscript (zero-indexed):
+Accessed via `^` subscript (zero-indexed). Arrays cap at **1000 elements** — `add_to_array` beyond index 999 silently does nothing.
 
 ```
 my_array^0       # first element
 my_array^3       # fourth element
 my_array^i       # element at index i (dynamic index from a loop variable)
 ```
-
----
 
 ## Variable Access Syntax
 
@@ -58,14 +54,7 @@ var:v = { ... }                 # scope into the country stored in loop value v 
 var:v^i = { ... }               # WRONG — v is a scalar value, not an array
 ```
 
-**Key rule:** `value = v` in a loop stores the **scalar element** (e.g. a country tag number) into `v`. It is NOT an array reference. To scope into the country at position `i`, use either:
-
-- `var:v = { ... }` (v holds the country reference directly)
-- `var:ARRAYNAME^i = { ... }` (explicit array name + dynamic index)
-
-Never use `var:v^i` — `v` is a scalar and `^i` subscripting does not apply.
-
----
+**Key rule:** `value = v` in a loop stores the **scalar element** (e.g. a country tag number) into `v`. It is NOT an array reference. To scope into the country at position `i`, use either `var:v = { ... }` (v holds the country reference) or `var:ARRAYNAME^i = { ... }` (explicit array name + dynamic index). Never `var:v^i` — `v` is a scalar and `^i` does not apply.
 
 ## Variable & Array Effects
 
@@ -77,7 +66,142 @@ All use `{ var = X value = Y }` syntax. All have `_temp_` equivalents (e.g. `add
 
 Short forms: `add_to_array = { my_array = 42 }`, `remove_from_array = { my_array = 42 }`, `is_in_array = { my_array = 42 }`
 
----
+## Math Expressions
+
+**Preferred over scratch temp variables for pure arithmetic.** An inline calculator that reads constants, scoped variables, and dynamic game variables, then applies a sequence of operations. Supported as the value argument of every variable/temp-variable effect **except** `modulo_variable` and `clamp_variable`.
+
+**Default to a math expression instead of a chain of `set_temp_variable` + `add_to_variable` + `multiply_variable` whenever the goal is a calculated value.** One expression replaces several temp-var writes, and the engine evaluates it in a single pass — it is the more performance-friendly form, not just the shorter one. The win compounds with frequency: the hotter the path (per-tick GUI, daily on_action, AI evaluation), the more a math expression saves over scratch temp variables. Reach for temp variables only when you need to reuse an intermediate result across several later effects, or when an operation the expression syntax doesn't support (`modulo_variable`, `clamp_variable`) is involved.
+
+### Syntax
+
+The math expression is the **value** of the effect. Wrap it in `{ ... }` so the parser can tell where the expression ends and the effect's own keywords begin. The expression is a base `value = ...` followed by sequential statements that mutate an accumulator. Each statement is one of:
+
+- **No-argument** — applies an operation to the accumulator: `round = yes`.
+- **Simple** — takes one or more sub-expressions: `add = 5`, `clamp = { min = 0 max = 100 }`.
+- **Control flow** — takes a block: `if = { limit = { ... } add = 100 } else = { subtract = 1 }`.
+- **Collection iterator** — scopes to each element of a named collection and applies statements: `every_collection = { ... }`.
+
+The full statement list, with per-statement examples, is in `resources/documentation/script_math_functions.md`.
+
+**`set_variable` / `set_temp_variable`**, two equivalent shapes:
+
+```
+# Long form: var name as the key, math expression as its value
+set_temp_variable = {
+    foo = {
+        value = bar
+        multiply = 2
+        add = baz
+    }
+}
+```
+
+```
+# Short form: var = X plus value = { ... }
+set_temp_variable = {
+    var = foo
+    value = {
+        value = bar
+        multiply = 2
+        add = baz
+    }
+}
+```
+
+Both compile to the same result. The long form is one block shallower (no `var =` line). The short form reads more like the accumulate shape below and is the one to reach for when a tool or surrounding context expects `var =` to be explicit.
+
+**Do not write the math expression as siblings of `var = X`.** That form silently parses to 0.0 (no error, no log) and is the most common cause of "my `set_temp_variable` is mysteriously producing 0" reports:
+
+```
+# WRONG, silently evaluates to 0.0
+set_variable = {
+    var = combined_units
+    value = num_cavalry
+    add = num_motorized
+    add = num_mechanized
+}
+```
+
+The fix is to wrap the expression inside `value = { ... }` (short form) or use `var_name = { ... }` (long form). Every math expression in the mod follows one of these two shapes; copy from `00_money_system.txt`, `99_eu_scripted_effects.txt`, `00_productivity_effects.txt`, `!_energy_effects.txt`, `01_missiles_scripted_localisation.txt`, or `01_money_scripted_localisation.txt` if in doubt.
+
+The expression is also the `value` of an **accumulate** effect (`add_to_variable`,
+`subtract_from_variable`, `multiply_variable`, `divide_variable`), not just
+`set_variable`. This is rare in the codebase (vanilla and MD historically used a
+scratch temp instead) but confirmed working in-engine. Prefer it to fold a
+single-use temp straight into the accumulate:
+
+```
+# Instead of: set_temp_variable = { tmp = { ...expr... } }  then  add_to_variable = { X = tmp }
+add_to_variable = {
+    var = global.cumulative_world_productivity
+    value = {
+        value = overall_productivity
+        multiply = 0.001
+        multiply = population_total_m
+    }
+}
+```
+
+For a self-referencing accumulate (`X = X + expr`) the equivalent
+`set_variable = { X = { value = X  add = { ...expr... } } }` also works and reads
+the pre-write value, since the full RHS evaluates before assignment.
+
+### Semantics
+
+- **Fixed-point arithmetic** throughout (same as HOI4 variables).
+- **Booleans:** `0.0` is false, any other value is true. Comparison/boolean operators return `1.0` (true) or `0.0` (false).
+- **Parse failure → `0.0`.** A malformed expression evaluates to zero. It is silent in-game (no tooltip, no crash, the calculation just reads 0), but it **does** log at load: `script_math.cpp:350: Errors occurred while reading math expression defaulting to 0`. Watch for this when a calculation mysteriously reads 0.
+- **One bad expression cascades through the rest of the file.** The parser mis-consumes a brace and reads everything after it one level off, so later `set_variable` blocks in unrelated effects report bogus errors (`invalid left side variable: {`, `Math program must start with value =: <token>`). Always fix the **first** `script_math` error in a file and re-run before chasing the others. Brace counts still balance, so a text-level check will not catch it.
+
+### Operators
+
+| Statement                                          | Effect                                                |
+| -------------------------------------------------- | ----------------------------------------------------- |
+| `add`, `subtract`, `multiply`, `divide`            | Arithmetic on the accumulator                         |
+| `min`, `max`                                       | Accumulator becomes min/max of itself and value       |
+| `clamp = { min = X max = Y }`                      | Bound the accumulator (argument order matters)        |
+| `greater_than`, `less_than`                        | Return `1.0`/`0.0`                                    |
+| `round = yes`                                      | Round to nearest integer                              |
+| `if = { limit = { ... } ... } else = { ... }`      | `limit` is itself an expression; true if non-zero     |
+| `every_collection = { named_collection = X  ... }` | Iterate a collection, applying statements per element |
+
+Each operator's argument is itself a full expression, so they nest:
+
+```
+greater_than = { value = num_units  multiply = 0.4 }   # accumulator > (num_units * 0.4)
+```
+
+**Only `greater_than` and `less_than` are safe comparators.** `equals`, `not_equals`, `greater_than_or_equals`, and `less_than_or_equals` appear in Paradox-adjacent references, but the mod's one use of `equals` inside an `if`'s `limit` (`00_ct_effects.txt`, counter-terror `ambition_chance`) threw a load-time `script_math` error and zeroed the expression, killing every terror-org attack roll. Vanilla never uses anything but `less_than` here (10 uses, zero `equals`), and MD has 29 `greater_than` / 7 `less_than`.
+
+For an equality test, either rewrite as a strict inequality on an integer variable (`equals = 0` on a 0/1/2 value becomes `less_than = 1`), or hoist the branch out of the expression entirely and use a normal effect-level `if` with `check_variable`:
+
+```
+# Inside the expression: works, but only with < and >
+if = { limit = { value = global.active_terror_org_reach^i  less_than = 1 }  add = 15 }
+
+# Hoisted out: unambiguous, and what to reach for when in doubt
+set_temp_variable = { ambition_chance = { value = v  subtract = { ... } } }
+if = {
+    limit = { check_variable = { global.active_terror_org_reach^i = 0 } }
+    add_to_temp_variable = { ambition_chance = 15 }
+}
+set_temp_variable = { ambition_chance = { value = ambition_chance  multiply = 0.2  round = yes } }
+```
+
+Re-assigning a variable from itself (`value = ambition_chance` above) is the standard way to continue an expression after a hoisted branch.
+
+### Verifying a new construct
+
+The engine accepts a construct or silently zeroes it, so **grep for precedent before using anything unfamiliar** in a math expression:
+
+```bash
+grep -rn "your_construct" common/ | head        # does MD already ship it?
+grep -rn "your_construct" "$HOI4/common/" | head # does vanilla?
+```
+
+No hits in either means no evidence it parses. Confirmed working in MD: `^num` as an operand (`01_BRICS_effects.txt:104`), nested operand blocks (`!_energy_effects.txt:254`, `00_influence_scripted_effects.txt:258`), `round = yes` (`bankruptcy_decisions.txt:139`), `clamp = { min max }` (`00_scripted_triggers.txt:494`), dynamic array indices (`array^i`), and `if` inside an expression (vanilla `factions/goals/faction_goals_short_term.txt:266`).
+
+Known broken: reading a variable through the event/on_action `FROM` binding (`value = FROM.debt_bailout`) inside a math expression. It parses cleanly (no `script_math` error) but reads 0 at runtime, zeroing the whole expression (#2464, bailout donors paid $0 but still gained influence); neither vanilla nor MD has a verified working use. `ROOT.`/`THIS.`/`PREV.` reads inside expressions do have working precedent (`00_money_system.txt:920`, `99_eu_scripted_effects.txt:1441`, `00_productivity_effects.txt:33`). Keep the math expression and hoist the FROM read into a plain temp copy it can reference: `set_temp_variable = { bailout_cost = FROM.debt_bailout }` then `set_temp_variable = { treasury_change = { value = bailout_cost  multiply = -0.75 } }`.
 
 ## Loop Effects
 
@@ -125,7 +249,16 @@ for_loop_effect = {
 }
 ```
 
----
+### `while_loop_effect` — conditional loop
+
+```
+while_loop_effect = {
+    limit = { check_variable = { counter < target } }
+    # body — must advance the condition or loop exits at 1000
+}
+```
+
+Engine hard-caps at **1000 iterations** (not configurable). `max_iterations` is **not** a valid key and is silently ignored. Design loops so the realistic worst case stays well below 1000.
 
 ## Array / Variable Triggers
 
@@ -171,19 +304,91 @@ Compare values: `less_than`, `less_than_or_equals`, `greater_than`, `greater_tha
 - `is_in_array = { my_array = 42 }` — check membership
 - `var:my_var = { exists = yes }` — check if country in variable actually exists in-game
 
----
-
 ## Dynamic Variables (Read-Only)
 
-Computed by the game engine. Full list in `resources/documentation/dynamic_variables_documentation.md`.
+Computed by the engine. Full list in `resources/documentation/dynamic_variables_documentation.md` or the [Paradox Wiki — Game variables](https://hoi4.paradoxwikis.com/Data_structures#Game_variables).
 
 Common: `global.countries`, `global.majors`, `global.states`, `global.year`, `global.threat`, `num_of_civilian_factories`, `num_of_military_factories`, `stability`, `war_support`, `political_power`, `manpower`, `faction_members`, `allies`, `subjects`.
 
----
+## Built-in Game Arrays
+
+Engine-provided scope arrays. Usable anywhere an array name is accepted: `target_array = X` on decisions, `array = X` inside `for_each_scope_loop` / `every_country` / `any_of_scopes`, and inside collection operators. Full list on the [Paradox Wiki — Game arrays](https://hoi4.paradoxwikis.com/Data_structures#Game_arrays).
+
+### Global-scoped
+
+| Array                         | Contents                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------- |
+| `global.countries`            | Every country in the game, including non-existing dynamic tags                        |
+| `global.majors`               | Every country currently marked major                                                  |
+| `global.states`               | Every state in the game                                                               |
+| `global.ideology_groups`      | Every ideology group                                                                  |
+| `global.operations`           | Every operation                                                                       |
+| `global.technology`           | Every technology                                                                      |
+| `global.province_controllers` | Province ID → controller (indexed by province ID: `global.province_controllers^1234`) |
+
+### Country-scoped
+
+| Array                                        | Contents                                                      |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| `allies`                                     | Fellow faction members + subjects + overlord                  |
+| `faction_members`                            | All members of the current country's faction                  |
+| `subjects`                                   | Current country's subjects                                    |
+| `occupied_countries`                         | Countries currently occupied by this one                      |
+| `enemies`                                    | Countries currently at war with the current country           |
+| `potential_and_current_enemies`              | Current enemies + allies-of-enemies + countries with wargoals |
+| `enemies_of_allies`                          | Enemies of any of the current country's allies                |
+| `neighbors`                                  | Countries sharing a border via **controlled** provinces       |
+| `neighbors_owned`                            | Countries sharing a border via **owned** states               |
+| `owned_states`                               | States owned (but not necessarily controlled)                 |
+| `controlled_states`                          | States controlled (but not necessarily owned)                 |
+| `owned_controlled_states`                    | States both owned and controlled                              |
+| `core_states`                                | States considered national territory                          |
+| `army_leaders`, `navy_leaders`, `operatives` | Recruited characters/operatives                               |
+| `researched_techs`                           | Technologies already researched                               |
+| `exiles`                                     | Exiled governments this country is hosting                    |
+
+### State-scoped
+
+| Array            | Contents                                              |
+| ---------------- | ----------------------------------------------------- |
+| `core_countries` | Countries that consider this state national territory |
+
+### Usage
+
+**For `target_array` on decisions** — the canonical way to scope a targeted decision to a narrow, engine-maintained set of countries. Prefer these over `target_array = global.countries` + a filter trigger, which iterates every country in the game daily.
+
+```
+# Good — iterates only current subjects, target_trigger filters within them
+target_array = subjects
+target_trigger = {
+    FROM = { influence_higher_5 = yes }
+}
+
+# Good — iterates only land-bordering neighbors
+target_array = neighbors
+target_trigger = {
+    FROM = { check_variable = { FROM.gdp_total > ROOT.gdp_total } }
+}
+
+# Worse — iterates every country in the game, relies on trigger to filter
+target_array = global.countries
+target_trigger = {
+    FROM = { is_neighbor_of = ROOT }
+}
+```
+
+**For `any_of_scopes` / `every_country` / `for_each_scope_loop`** — pass the array name via `array = X`.
+
+```
+any_of_scopes = {
+    array = faction_members
+    NOT = { has_war = yes }
+}
+```
 
 ## Script Collections
 
-Collections are sets of game objects that support chained operators for filtering and expansion — more efficient than manual array loops for many use cases.
+Sets of game objects supporting chained operators for filtering and expansion — more efficient than manual array loops for many use cases.
 
 ### Structure
 
@@ -227,13 +432,9 @@ my_collection = game:all_states   # equivalent to { input = game:all_states }
 
 For full collection docs, see `resources/documentation/script_collection_input.md` and `script_collection_operator.md`.
 
----
-
 ## Script Constants
 
 Reusable constants usable across all script files (unlike file-local `@` macros). No runtime cost. Usage: `constant:numeric_constants.pi`. See `resources/documentation/script_concept_documentation.md`.
-
----
 
 ## Formatted Localization
 

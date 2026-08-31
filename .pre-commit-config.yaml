@@ -1,108 +1,221 @@
 # Pre-commit configuration for Millennium Dawn HOI4 mod
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+#
+# !! DO NOT RUN `pre-commit run --all-files` !!
+# The auto-fixer hooks (trailing-whitespace, end-of-file-fixer,
+# mixed-line-ending, fix-byte-order-marker) will rewrite every matching file in
+# the repo and produce hundreds of whitespace-only modifications unrelated to
+# your actual work. Always scope runs to specific files:
+#   pre-commit run --files path/to/file1 path/to/file2
+# The normal `git commit` flow already runs hooks against just the staged
+# files, which is what you want.
+#
+# md-standardize runs on commit so focus, event, decision, and idea files cannot
+# bypass the project's formatter. The remaining MD-specific hooks are manual:
+#   pre-commit run --hook-stage manual           # all manual hooks
+#   pre-commit run md-fix-styling --hook-stage manual  # single hook
+
+# Global exclude. resources/ is a holding area for unintegrated submods and
+# external contributions — its contents are not subject to MD style rules and
+# must not be auto-modified by any hook. Any hook can still re-include a path
+# inside resources/ by setting its own `files:` pattern explicitly.
+exclude: "^resources/"
 
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
     hooks:
+      - id: detect-secrets
+        name: Detect secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: '(^localisation/|\.secrets\.baseline$)'
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Asset-only directories (gfx/, map/, interface/, music/, sound/) are
+      # excluded from the auto-fixers below — these files use significant
+      # tab/whitespace alignment that the fixers shouldn't rewrite.
       - id: trailing-whitespace
-        exclude: '\.mod$'  # Exclude mod files which might need specific formatting
+        exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: end-of-file-fixer
-        exclude: '\.mod$'
+        exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: mixed-line-ending
         args: [--fix=lf]
-        exclude: '\.mod$'
+        exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: check-yaml
         files: 'localisation/english/.*\.yml$'
       - id: check-json
         files: '\.json$'
       - id: check-merge-conflict
       - id: check-added-large-files
-        args: ['--maxkb=100000']  # Prevent files larger than 100MB
+        args: ["--maxkb=100000"] # Prevent files larger than 100MB
       - id: check-case-conflict
       - id: check-executables-have-shebangs
-        exclude: '\.txt$|\.mod$'
+        files: "^tools/"
       - id: check-shebang-scripts-are-executable
-      - id: fix-encoding-pragma
-        args: [--remove]
-        exclude: 'localisation/.*\.yml$'
+        files: "^tools/"
+      - id: fix-byte-order-marker
+        exclude: 'localisation/.*\.yml$|^(gfx|map|interface|music|sound)/'
       - id: check-ast
         files: '\.py$'
       - id: debug-statements
         files: '\.py$'
       - id: name-tests-test
         files: 'tools/.*test.*\.py$'
-  - repo: https://github.com/psf/black
-    rev: 24.8.0
+  # Ruff owns lint (E/F) and import order (I). Config (select, ignores,
+  # per-file-ignores, and isort) lives in pyproject.toml.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.17
     hooks:
-      - id: black
+      - id: ruff
+        name: Lint Python (ruff)
         files: '^tools/.*\.py$'
-        args: [--line-length=88]
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+        args: [--fix]
+  # Black is the single canonical formatter. It runs after Ruff so a commit
+  # cannot leave the two formatters fighting over the same file.
+  - repo: local
     hooks:
-      - id: isort
+      - id: black-tools
+        name: Format Python (black)
+        entry: black
+        language: python
+        additional_dependencies: [black==26.5.1]
         files: '^tools/.*\.py$'
-        args: [--profile=black]
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
+      - id: pylint-tools
+        name: Check Python correctness (pylint)
+        entry: pylint tools --reports=no --score=no
+        language: python
+        additional_dependencies: [pylint==4.0.6]
+        files: '^tools/.*\.py$'
+        pass_filenames: false
+      - id: mypy-tools
+        name: Type-check typed tools (mypy)
+        entry: mypy
+        language: python
+        additional_dependencies: [mypy==2.3.0]
+        files: '^tools/.*\.py$'
+        pass_filenames: false
+  # pre-commit/mirrors-prettier was archived upstream — using rbubley's
+  # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.8.3
     hooks:
       - id: prettier
         name: Format Markdown files
         files: '\.md$'
         args: [--prose-wrap=preserve, --print-width=120]
+        additional_dependencies:
+          - prettier@3.8.3
+          - prettier-plugin-astro@0.14.1
       - id: prettier
         name: Format docs content YAML (Astro)
         types: [yaml]
         files: '^docs/.*\.yml$'
         args: [--print-width=120]
+        additional_dependencies:
+          - prettier@3.8.3
+          - prettier-plugin-astro@0.14.1
   - repo: local
     hooks:
-      - id: md-fix-styling
-        name: MD Fix Styling (auto-fix spaces/tabs/braces)
-        entry: python3 tools/fix_styling.py --mode staged
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: false
-        stages: [pre-commit]
       - id: fix-localization-encoding
         name: Validate and fix HOI4 localization UTF-8 BOM
-        entry: python3 tools/validate_localization_encoding.py --fix
+        entry: python3 tools/linting/validate_localization_encoding.py --fix
         language: system
         files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
         pass_filenames: true
       - id: fix-loc-yaml
         name: Fix localisation YAML issues (quotes, tabs, colon-space, key:0)
-        entry: python3 tools/fix_loc_yaml.py --fix
+        entry: python3 tools/linting/fix_loc_yaml.py --fix
         language: system
         files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
         pass_filenames: true
+      - id: check-mod-file-encoding
+        name: Check .mod file UTF-8 encoding
+        entry: python3 tools/linting/validate_mod_encoding.py
+        language: system
+        files: '\.mod$'
+        pass_filenames: true
+      - id: docs-link-syntax
+        name: Check docs Markdown link syntax (no unclosed links)
+        entry: python3 tools/docs_checks/check_link_syntax.py
+        language: system
+        files: '^docs/src/content/.*\.(md|mdx)$'
+        pass_filenames: true
+      # Runs the full tools test suite before push (not on every commit).
+      # Enable with: pre-commit install --hook-type pre-push
+      - id: tools-pytest-config
+        name: Verify tools pytest collection configuration
+        entry: >-
+          python3 -m pytest tools/tests/collection_layout_test.py
+          -o addopts= -q
+        language: system
+        files: >-
+          ^(tools/|pyproject.toml|.pre-commit-config.yaml|.(github|claude)/)
+        pass_filenames: false
+        stages: [pre-push]
+      - id: tools-pytest
+        name: Run tools test suite (pytest)
+        entry: >-
+          python3 -m pytest tools/tests -o addopts=
+          -o python_files=*_test.py
+        language: system
+        files: >-
+          ^(tools/|pyproject.toml|.pre-commit-config.yaml|.(github|claude)/)
+        pass_filenames: false
+        stages: [pre-push]
+      # --- MD-specific hooks (manual by default) ---
+      - id: md-fix-styling
+        name: MD Fix Styling (auto-fix spaces/tabs/braces)
+        entry: python3 tools/linting/fix_styling.py --mode staged
+        language: system
+        files: '\.(txt)$'
+        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
       # - id: md-standardize
       #   name: MD Standardize (auto-fix ideas/events/decisions/focuses)
       #   entry: python3 tools/standardize_staged.py
       #   language: system
-      #   files: '(common/national_focus|common/decisions|common/ideas|events)/.*\.txt$'
+      #   files: '(common/(national_focus|decisions|ideas)|events)/.*\.txt$'
       #   pass_filenames: true
-      #   stages: [pre-commit]
-      - id: check-mod-file-encoding
-        name: Check .mod file UTF-8 encoding
-        entry: python3 tools/validate_mod_encoding.py
+      - id: md-validate-content
+        name: MD Validate (commit-stage content validators, in parallel)
+        # One process fans the run-on-commit validators out concurrently instead
+        # of running ~8 separate hooks serially: ~3x faster on a content commit,
+        # and the staged-file list is discovered once and shared via
+        # MD_STAGED_FILES so none of them shells out to git. The expensive
+        # cross-reference validators stay stages:[manual] below. Routing and the
+        # per-validator --strict flags live in tools/precommit_validate.py;
+        # tools/tests/precommit_validate_test.py pins coverage against drift.
+        entry: python3 tools/precommit_validate.py --no-color
+        language: system
+        files: '\.(txt|yml)$'
+        pass_filenames: true
+      - id: md-validate-defines
+        name: MD Validate defines against vanilla
+        entry: >-
+          python3 tools/validation/validate_defines.py --staged --strict
+          --no-color
+        language: system
+        files: 'common/defines/.*\.lua$'
+        pass_filenames: false
+      - id: md-validate-descriptors
+        name: MD Validate mod descriptors (replace_path sync)
+        entry: >-
+          python3 tools/validation/validate_mod_descriptors.py --staged
+          --strict --no-color
         language: system
         files: '\.mod$'
-        pass_filenames: true
-      - id: check-braces
-        name: Check for missing braces
-        entry: python3 tools/check_braces.py
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: true
-      - id: validate-staged
-        name: Validate staged files (opt-in, set MD_VALIDATE=1)
-        entry: python3 tools/validate_staged.py
-        language: system
-        files: '(events/.*\.txt|common/decisions/.*\.txt|localisation/.*\.yml)$'
         pass_filenames: false
-        stages: [pre-commit]
+      - id: md-validate-unused-textures
+        name: MD Validate unused textures (slow; manual)
+        # Manual: full-repo scan is slow and currently reports ~22k legacy
+        # unreferenced textures. CI cannot run it. Run before mod-size cleanup
+        # passes:
+        #   pre-commit run md-validate-unused-textures --hook-stage manual
+        entry: python3 tools/validation/validate_unused_textures.py --no-color
+        language: system
+        always_run: true
+        pass_filenames: false
+        stages: [manual]

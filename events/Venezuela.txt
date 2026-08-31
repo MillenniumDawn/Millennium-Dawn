@@ -34,12 +34,19 @@ country_event = {
 	}
 }
 
-# Recall Election Allowed Path
-# Opposition Party Gains Ground
+# 2004 - Recall Referendum Results
 country_event = {
 	id = venezuela.2
 	title = venezuela.2.t
-	desc = venezuela.2.d
+	desc = {
+		text = venezuela.2.d1
+		trigger = { has_country_flag = VEN_2004_recall_chavez_survives }
+	}
+	desc = {
+		text = venezuela.2.d2
+		trigger = { has_country_flag = VEN_2004_recall_chavez_recalled }
+	}
+	picture = GFX_election_day
 	is_triggered_only = yes
 	fire_only_once = yes
 
@@ -51,22 +58,65 @@ country_event = {
 		has_country_flag = VEN_2004_recall_referendum_engaged
 	}
 
-	# SAD!
+	immediate = {
+		random_list = {
+			60 = {
+				modifier = {
+					add = 40
+					has_completed_focus = VEN_mission_florentino
+				}
+				modifier = {
+					factor = 0.6
+					has_idea = VEN_opposition_strengthened
+				}
+				modifier = {
+					factor = 0.75
+					check_variable = { party_pop_array^2 > 0.20 }
+				}
+				set_country_flag = VEN_2004_recall_chavez_survives
+			}
+			40 = {
+				modifier = {
+					add = 20
+					has_idea = VEN_opposition_strengthened
+				}
+				modifier = {
+					add = 15
+					check_variable = { party_pop_array^2 > 0.20 }
+				}
+				set_country_flag = VEN_2004_recall_chavez_recalled
+			}
+		}
+	}
+
 	option = {
 		name = venezuela.2.a
-		log = "[GetDateText]: [This.GetName]:venezuela.2.a executed"
+		trigger = { has_country_flag = VEN_2004_recall_chavez_survives }
+		log = "[GetDateText]: [This.GetName]: venezuela.2.a executed"
+		add_stability = 0.05
+		add_political_power = 50
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		change_relative_party_popularity = yes
+		hidden_effect = {
+			clr_country_flag = VEN_2004_recall_referendum_engaged
+			clr_country_flag = VEN_2004_recall_campaign_active
+			clr_country_flag = VEN_2004_recall_chavez_survives
+		}
 	}
 
-	# Slander the Opposition
 	option = {
 		name = venezuela.2.b
-		log = "[GetDateText]: [This.GetName]:venezuela.2.b executed"
-	}
-
-	# Crackdown on the Opposition
-	option = {
-		name = venezuela.2.c
-		log = "[GetDateText]: [This.GetName]:venezuela.2.c executed"
+		trigger = { has_country_flag = VEN_2004_recall_chavez_recalled }
+		log = "[GetDateText]: [This.GetName]: venezuela.2.b executed"
+		add_stability = -0.10
+		add_political_power = -50
+		country_event = { id = MD4_election_campaign.0 days = 1 }
+		hidden_effect = {
+			clr_country_flag = VEN_2004_recall_referendum_engaged
+			clr_country_flag = VEN_2004_recall_campaign_active
+			clr_country_flag = VEN_2004_recall_chavez_recalled
+		}
 	}
 }
 
@@ -121,7 +171,13 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: gca.1.a executed"
 		VEN = {
 			country_event = { id = gca.2 days = 1 }
-			add_to_faction = PREV
+			if = {
+				limit = {
+					is_faction_leader = yes
+					PREV = { is_in_faction = no }
+				}
+				add_to_faction = PREV
+			}
 		}
 		ai_chance = {
 			base = 5
@@ -146,7 +202,7 @@ country_event = {
 	# No we wont join
 	option = {
 		name = gca.1.b
-		log = "[GetDateText]: [This.GetName]: gca.1.a executed"
+		log = "[GetDateText]: [This.GetName]: gca.1.b executed"
 
 		VEN = {
 			country_event = { id = gca.3 days = 1 }
@@ -187,19 +243,13 @@ country_event = {
 # [FROM.GetName] Refuses to Join the GCA
 country_event = {
 	id = gca.3
-	title = gca.2.t
-	desc = gca.2.d
+	title = gca.3.t
+	desc = gca.3.d
 	is_triggered_only = yes
 	picture = GFX_handshake_black
 
-	# Great they joined
 	option = {
-		name = gca.2.a
-		log = "[GetDateText]: [This.GetName]: gca.2.a executed"
-		VEN = {
-			add_to_faction = FROM
-		}
-		ai_chance = { base = 5 }
+		name = gca.3.a
 	}
 }
 # Curacao Return
@@ -214,9 +264,7 @@ country_event = {
 		name = venezuela.8.a
 		log = "[GetDateText]: [This.GetName]: venezuela.8.a executed"
 		VEN = {
-			country_event = {
-				id = venezuela.9
-			}
+			country_event = venezuela.9
 		}
 		ai_chance = {
 			base = 5
@@ -234,9 +282,7 @@ country_event = {
 		name = venezuela.8.b
 		log = "[GetDateText]: [This.GetName]: venezuela.8.b executed"
 		VEN = {
-			country_event = {
-				id = venezuela.10
-			}
+			country_event = venezuela.10
 		}
 		ai_chance = { base = 5 }
 		VEN = {
@@ -360,8 +406,8 @@ country_event = {
 						target = PRU
 						type = puppet_wargoal_focus
 					}
+					add_opinion_modifier = { target = PRU modifier = threat_to_our_independence }
 				}
-				VEN = { add_opinion_modifier = { target = PRU modifier = threat_to_our_independence } }
 			}
 
 			ai_chance = {
@@ -414,9 +460,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: venezuela.17.o1 executed"
 		if = {
 			limit = { PAN = { NOT = { is_subject_of = VEN } } }
-			effect_tooltip = {
-				VEN = { puppet = PAN }
-			}
+			VEN = { puppet = PAN }
 		}
 		ai_chance = {
 			base = 50
@@ -442,8 +486,8 @@ country_event = {
 					target = PAN
 					type = puppet_wargoal_focus
 				}
+				add_opinion_modifier = { target = PAN modifier = threat_to_our_independence }
 			}
-			VEN = { add_opinion_modifier = { target = PAN modifier = threat_to_our_independence } }
 		}
 		ai_chance = {
 			base = 50
@@ -663,12 +707,14 @@ country_event = {
 	title = venezuela.101.t
 	desc = venezuela.101.d
 	is_triggered_only = yes
+	fire_only_once = yes
 	# picture =
 
 	trigger = {
 		original_tag = VEN
 		emerging_anarchist_communism_in_power_or_coalition = yes
 		has_country_leader = { name = "Hugo Chávez" ruling_only = yes }
+		NOT = { has_country_flag = VEN_2004_recall_referendum_engaged }
 	}
 
 	# Signatures Collected... a crisis is coming
@@ -678,11 +724,12 @@ country_event = {
 		set_temp_variable = { party_index = 2 }
 		set_temp_variable = { party_popularity_increase = 0.03 }
 		set_temp_variable = { temp_outlook_increase = 0.03 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		set_country_flag = VEN_2004_recall_referendum_engaged
+		set_country_flag = { flag = VEN_2004_recall_campaign_active days = 240 value = 1 }
+		country_event = { id = venezuela.1 days = 245 }
 	}
 }
-
 
 # Trade Deal with China
 country_event = {
@@ -708,7 +755,6 @@ country_event = {
 			VEN = {
 				set_temp_variable = { percent_change = 2 }
 				set_temp_variable = { tag_index = SOV.id }
-				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 				add_ideas = russian_trade_deal
 				875 = {
@@ -741,7 +787,6 @@ country_event = {
 				add_ideas = china_trade_deal
 				set_temp_variable = { percent_change = 2 }
 				set_temp_variable = { tag_index = CHI.id }
-				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 				create_import = {
 					resource = steel
@@ -814,7 +859,6 @@ country_event = {
 				VEN = {
 					set_temp_variable = { percent_change = 2 }
 					set_temp_variable = { tag_index = SOV.id }
-					set_temp_variable = { influence_target = THIS.id }
 					change_influence_percentage = yes
 					add_ideas = russian_trade_deal
 					875 = {
@@ -847,7 +891,6 @@ country_event = {
 					add_ideas = china_trade_deal
 					set_temp_variable = { percent_change = 2 }
 					set_temp_variable = { tag_index = CHI.id }
-					set_temp_variable = { influence_target = THIS.id }
 					change_influence_percentage = yes
 					create_import = {
 						resource = steel

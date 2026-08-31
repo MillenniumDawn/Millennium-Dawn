@@ -1,143 +1,1094 @@
 name: Code Standards & Validation
 
 on:
-  pull_request:
+  # Runs for fork and conflicted PRs with base-owned tooling against PR data.
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches: [ main ]
-    paths:
-    - 'common/**'
-    - 'events/**'
-    - 'history/**'
-    - 'localisation/**'
-    - 'interface/**'
-    - 'gfx/**'
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to validate (omit for the current ref)"
+        required: false
+        type: string
+      base_sha:
+        description: >-
+          Base branch SHA for trusted tooling and validation baseline
+        required: false
+        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Keep PR-triggered and dispatched runs for one PR in the same group.
+  group: >-
+    ${{ github.workflow }}-${{ inputs.pr_number ||
+    github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Validator jobs use base-owned tooling against PR data. The report job alone
+# has write access and also checks out base-branch tooling.
 permissions:
   contents: read
-  pull-requests: write
+
+# Workspace contents are distributed to downstream jobs as a same-run artifact.
+env:
+  WORKSPACE_PATHS: |
+    common
+    events
+    history
+    localisation
+    interface
+    gfx/flags
+    map/adjacency_rules.txt
+    tools
+    resources/documentation
+    .claude
+    CLAUDE.md
+    *.mod
+    .workspace-manifest
+    .validation_cache
 
 jobs:
-  coding-standards:
-    name: Coding Standards
-    if: github.event.pull_request.draft == false
+  # Detect changed file groups for downstream job conditions.
+  detect-changes:
+    name: Detect Changes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      common: >-
+        ${{ steps.filter.outputs.common ||
+        steps.dispatch.outputs.common }}
+      events: >-
+        ${{ steps.filter.outputs.events ||
+        steps.dispatch.outputs.events }}
+      history: >-
+        ${{ steps.filter.outputs.history ||
+        steps.dispatch.outputs.history }}
+      localisation: >-
+        ${{ steps.filter.outputs.localisation ||
+        steps.dispatch.outputs.localisation }}
+      ai-strategy: >-
+        ${{ steps.filter.outputs.ai-strategy ||
+        steps.dispatch.outputs.ai-strategy }}
+      ai-navy: >-
+        ${{ steps.filter.outputs.ai-navy ||
+        steps.dispatch.outputs.ai-navy }}
+      ai-equipment: >-
+        ${{ steps.filter.outputs.ai-equipment ||
+        steps.dispatch.outputs.ai-equipment }}
+      factions: >-
+        ${{ steps.filter.outputs.factions ||
+        steps.dispatch.outputs.factions }}
+      characters: >-
+        ${{ steps.filter.outputs.characters ||
+        steps.dispatch.outputs.characters }}
+      scientist-traits: >-
+        ${{ steps.filter.outputs.scientist-traits ||
+        steps.dispatch.outputs.scientist-traits }}
+      oob: >-
+        ${{ steps.filter.outputs.oob ||
+        steps.dispatch.outputs.oob }}
+      decisions: >-
+        ${{ steps.filter.outputs.decisions ||
+        steps.dispatch.outputs.decisions }}
+      scripted-loc: >-
+        ${{ steps.filter.outputs.scripted-loc ||
+        steps.dispatch.outputs.scripted-loc }}
+      scripted-guis: >-
+        ${{ steps.filter.outputs.scripted-guis ||
+        steps.dispatch.outputs.scripted-guis }}
+      interface: >-
+        ${{ steps.filter.outputs.interface ||
+        steps.dispatch.outputs.interface }}
+      national-focus: >-
+        ${{ steps.filter.outputs.national-focus ||
+        steps.dispatch.outputs.national-focus }}
+      on-actions: >-
+        ${{ steps.filter.outputs.on-actions ||
+        steps.dispatch.outputs.on-actions }}
+      scripted-effects: >-
+        ${{ steps.filter.outputs.scripted-effects ||
+        steps.dispatch.outputs.scripted-effects }}
+      style: >-
+        ${{ steps.filter.outputs.style ||
+        steps.dispatch.outputs.style }}
+      # The file list is available only on PR events; dispatch runs skip style.
+      style-files: ${{ steps.filter.outputs.style_files }}
+      head-sha: ${{ steps.resolve-ref.outputs.head-sha }}
+      base-sha: ${{ steps.resolve-ref.outputs.base-sha }}
+      mod: >-
+        ${{ steps.filter.outputs.mod ||
+        steps.dispatch.outputs.mod }}
+      content: >-
+        ${{ steps.filter.outputs.content ||
+        steps.dispatch.outputs.content }}
+      mios: >-
+        ${{ steps.filter.outputs.mios ||
+        steps.dispatch.outputs.mios }}
+      checkout-repository: ${{ steps.resolve-ref.outputs.repository }}
+      checkout-ref: ${{ steps.resolve-ref.outputs.ref }}
+      map-adjacency: >-
+        ${{ steps.filter.outputs.map-adjacency ||
+        steps.dispatch.outputs.map-adjacency }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
+      - name: Resolve validation ref
+        id: resolve-ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_HEAD_REPOSITORY: >-
+            ${{ github.event.pull_request.head.repo.full_name }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_BASE_SHA: ${{ inputs.base_sha }}
+        run: |
+          pr_number="${INPUT_PR_NUMBER:-$EVENT_PR_NUMBER}"
+          head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"
+          head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"
+          base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"
+          if [ -n "$pr_number" ]; then
+            pr_url="repos/$GITHUB_REPOSITORY/pulls/$pr_number"
+            pr_json=$(gh api "$pr_url")
+            head_repository=$(printf '%s' "$pr_json" \
+              | jq -r '.head.repo.full_name // empty')
+            head_sha=$(printf '%s' "$pr_json" \
+              | jq -r '.head.sha // empty')
+            if [ -z "$base_sha" ]; then
+              base_ref=$(printf '%s' "$pr_json" | jq -r '.base.ref')
+              base_sha=$(gh api \
+                "repos/$GITHUB_REPOSITORY/commits/$base_ref" --jq '.sha')
+            fi
+          fi
+          base_sha="${base_sha:-$GITHUB_SHA}"
+          if [ -z "$head_repository" ] || [ -z "$head_sha" ]; then
+            echo "::error::Unable to resolve the PR head repository and SHA"
+            exit 1
+          fi
+          {
+            echo "repository=$head_repository"
+            echo "ref=$head_sha"
+            echo "head-sha=$head_sha"
+            echo "base-sha=$base_sha"
+          } >> "$GITHUB_OUTPUT"
 
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
+      # dorny/paths-filter reads the PR file list through the API.
+      - name: Detect changed file groups
+        if: github.event_name == 'pull_request_target'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d
+        id: filter
+        with:
+          # `style_files` (from list-files: json) carries the changed .txt paths
+          # so the style job validates only the diff, not the whole repo. JSON,
+          # not shell, so paths with spaces/apostrophes ("Cote D'Ivoire.txt")
+          # survive jq parsing instead of being word-split into garbage.
+          list-files: json
+          filters: |
+            common:
+              - 'common/**'
+            events:
+              - 'events/**'
+            history:
+              - 'history/**'
+            localisation:
+              - 'localisation/**'
+            ai-strategy:
+              - 'common/ai_strategy/**'
+              - 'common/ai_templates/**'
+            ai-navy:
+              - 'common/ai_navy/**'
+              - 'common/units/**'
+            ai-equipment:
+              - 'common/ai_equipment/**'
+            factions:
+              - 'common/factions/**'
+            characters:
+              - 'common/characters/**'
+              - 'common/unit_leader/**'
+              # The other leader trait pool. A trait moved between the two
+              # changes whether it is legal on a unit leader, and a trait moved
+              # between pool files reclassifies every advisor slot using it.
+              - 'common/country_leader/**'
+              # Sources of create_corps_commander and add_advisor_role.
+              - 'common/national_focus/**'
+              - 'common/decisions/**'
+              - 'common/scripted_effects/**'
+              - 'common/on_actions/**'
+              - 'events/**'
+              - 'history/countries/**'
+            scientist-traits:
+              - 'common/scientist_traits/**'
+              # The medal-sprite index is the other half of the check, so a
+              # .gfx edit changes what resolves for every trait.
+              - 'interface/**'
+            oob:
+              - 'history/units/**'
+              - 'common/units/**'
+              - 'common/ai_templates/**'
+              - 'common/scripted_effects/**'
+              # Sources of create_equipment_variant, slot-checked against
+              # the hull.
+              - 'history/countries/**'
+              - 'common/national_focus/**'
+              - 'events/**'
+              - 'common/decisions/**'
+              - 'common/special_projects/**'
+              - 'common/on_actions/**'
+              - 'common/operations/**'
+              - 'common/resistance_compliance_modifiers/**'
+              - 'common/scripted_guis/**'
+              # Idea removal effects delete templates that create_unit uses.
+              - 'common/ideas/**'
+            decisions:
+              - 'common/**/*.txt'
+              - 'events/**/*.txt'
+              - 'history/**/*.txt'
+            scripted-loc:
+              - 'common/scripted_localisation/**'
+            scripted-guis:
+              - 'common/scripted_guis/**'
+            interface:
+              - 'interface/**'
+            national-focus:
+              - 'common/national_focus/**'
+            on-actions:
+              - 'common/on_actions/**'
+            mios:
+              - 'common/military_industrial_organization/**'
+              - 'common/country_leader/**'
+              # Equipment and its groups are the other half of the dead-bonus
+              # check: dropping a base stat there kills bonuses elsewhere.
+              - 'common/units/equipment/**'
+              - 'common/equipment_groups/**'
+            scripted-effects:
+              - 'common/scripted_effects/**'
+            style:
+              - 'common/**/*.txt'
+              - 'events/**/*.txt'
+              - 'history/**/*.txt'
+            mod:
+              - '*.mod'
+            # Union of everything any validator job consumes — gates
+            # prepare-workspace so a gfx-only or workflow-only PR doesn't
+            # build a ~200MB bundle no job will restore.
+            content:
+              - 'common/**'
+              - 'events/**'
+              - 'history/**'
+              - 'localisation/**'
+              - 'interface/**'
+              # The variables validator counts global flags read by canal
+              # closures, so a change here must rebuild the workspace.
+              - 'map/adjacency_rules.txt'
+              - '*.mod'
 
-    - name: Run coding standards check
-      run: python tools/coding_standards.py
+      # Dispatches have no diff, so run every full-repo group and skip style.
+      - name: Treat all groups as changed on dispatch
+        if: github.event_name == 'workflow_dispatch'
+        id: dispatch
+        run: |
+          for out in common events history localisation ai-strategy \
+              ai-navy ai-equipment factions characters scientist-traits \
+              oob decisions scripted-loc scripted-guis interface \
+              national-focus on-actions scripted-effects mod content mios \
+              map-adjacency; do
+            echo "$out=true" >> "$GITHUB_OUTPUT"
+          done
+          # style is diff-scoped (MD_STAGED_FILES from the changed-file
+          # list); there is no diff on dispatch, so skip the style job
+          # instead of running it against an empty file list.
+          echo "style=false" >> "$GITHUB_OUTPUT"
 
-  styling-check:
-    name: Style Check
-    if: github.event.pull_request.draft == false
+  # Prepare an artifact with PR data and trusted validation tools.
+  prepare-workspace:
+    name: Prepare Workspace
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.content == 'true'
     runs-on: ubuntu-latest
-    needs: [coding-standards]
+    permissions:
+      contents: read
+      actions: read
+    # Inputs supply the PR context for workflow_dispatch; PR events supply it
+    # directly.
+    env:
+      PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+      HEAD_SHA: ${{ needs.detect-changes.outputs.head-sha }}
+    steps:
+      # Check out PR data without its executable tooling.
+      - name: Checkout PR content
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ needs.detect-changes.outputs.checkout-repository }}
+          ref: ${{ needs.detect-changes.outputs.checkout-ref }}
+          fetch-depth: 1
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
+          sparse-checkout: |
+            common
+            events
+            history
+            localisation
+            interface
+            gfx/flags
+            # Canal/strait closure logic; the variables validator counts the
+            # global flags read here as consumers.
+            map/adjacency_rules.txt
+            *.mod
+          sparse-checkout-cone-mode: false
+
+      # Do not let PR-controlled links escape the data-only checkout.
+      - name: Reject links in PR content
+        run: |
+          if git ls-files --stage | grep -Eq '^(120000|160000) '; then
+            echo "::error::PR content contains a symbolic link or submodule"
+            exit 1
+          fi
+
+      # Validator code and reference data must come from the base branch.
+      - name: Checkout trusted tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ needs.detect-changes.outputs.base-sha }}
+          path: trusted
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            tools
+            resources/documentation
+            .claude
+            CLAUDE.md
+          sparse-checkout-cone-mode: false
+
+      - name: Install trusted tooling
+        run: |
+          cp -a trusted/tools .
+          mkdir -p resources
+          cp -a trusted/resources/documentation resources/
+          cp -a trusted/.claude .
+          cp -a trusted/CLAUDE.md .
+
+      - name: Compute validator code hash
+        id: toolshash
+        run: >-
+          echo "hash=${{ hashFiles('tools/validation/**',
+          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+
+      # The shared cache is read-only here; the workspace uses an artifact.
+      - name: Restore shared validator disk cache
+        id: valcache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_cache
+          key: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{
+            needs.detect-changes.outputs.base-sha }}
+          restore-keys: |
+            md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
+
+      - name: Write workspace manifest
+        env:
+          CACHE_KEY: ${{ steps.valcache.outputs.cache-matched-key }}
+          CHECKOUT_SHA: ${{ steps.checkout.outputs.commit }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          mkdir -p .validation_cache
+          {
+            echo "pr=$PR_NUMBER"
+            echo "head_sha=$HEAD_SHA"
+            echo "checkout_sha=$CHECKOUT_SHA"
+            echo "run_id=$RUN_ID"
+            echo "cache=$CACHE_KEY"
+          } | tee .workspace-manifest
+
+      - name: Upload prepared workspace
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: prepared-workspace
+          path: ${{ env.WORKSPACE_PATHS }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  # Diff-scoped style checks and structural content checks share one workspace.
+  content-checks:
+    name: Content Checks
+    needs: [detect-changes, prepare-workspace]
+    if: >-
+      needs.detect-changes.outputs.common == 'true' ||
+      needs.detect-changes.outputs.events == 'true' ||
+      needs.detect-changes.outputs.history == 'true' ||
+      needs.detect-changes.outputs.localisation == 'true' ||
+      needs.detect-changes.outputs.mod == 'true'
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
+      - name: Download prepared workspace
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: prepared-workspace
+          path: .
 
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        with:
+          python-version: "3.x"
 
-    - name: Run style check
-      run: |
-        python tools/check_basic_style.py --mode diff
-        python tools/check_basic_style_2.py --mode diff
+      - name: Collect style-relevant files
+        if: needs.detect-changes.outputs.style == 'true'
+        id: style-files
+        env:
+          # JSON array of changed .txt files under common/events/history.
+          STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style-files }}
+        run: |
+          # Newline-delimit the JSON array.
+          # Newlines cannot appear in these paths.
+          # Drop the files the pre-commit md-validate-style hook also excludes.
+          printf '%s' "$STYLE_FILES_JSON" | jq -r '.[]' \
+            | grep -vE \
+              '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
+            > style_files.txt || true
+          if [ -s style_files.txt ]; then
+            echo "has-files=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No style-relevant files changed"
+            echo "has-files=false" >> "$GITHUB_OUTPUT"
+          fi
 
-  validate:
+      # Keep the tools independent so both results reach the report.
+      - name: Run style check
+        if: steps.style-files.outputs.has-files == 'true'
+        run: |
+          # validate_style.py reads the diff list from MD_STAGED_FILES.
+          # Newline-separated paths keep spaces and apostrophes safe.
+          MD_STAGED_FILES="$(cat style_files.txt)" \
+            python3 tools/validation/validate_style.py \
+              --staged --strict --no-color \
+              --output validation-style-check.log
+
+      - name: Run common-mistakes check
+        if: always() && steps.style-files.outputs.has-files == 'true'
+        run: |
+          # Feed check_common_mistakes.py NUL-delimited paths through xargs.
+          tr '\n' '\0' < style_files.txt | xargs -0 -r \
+            python3 tools/linting/check_common_mistakes.py \
+              --output validation-common-mistakes.log
+
+      - name: Verify style result files
+        if: always() && steps.style-files.outputs.has-files == 'true'
+        run: |
+          test -f validation-style-check.log
+          test -f validation-style-check.json
+          test -f validation-common-mistakes.log
+          test -f validation-common-mistakes.json
+
+      - name: Upload style check results
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.style-files.outputs.has-files == 'true'
+        with:
+          name: validation-style-check-results
+          path: |
+            validation-style-check.log
+            validation-style-check.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload common-mistakes results
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.style-files.outputs.has-files == 'true'
+        with:
+          name: validation-common-mistakes-results
+          path: |
+            validation-common-mistakes.log
+            validation-common-mistakes.json
+          if-no-files-found: error
+          retention-days: 7
+
+      # Run even when a style step failed, but not on broken setup or cancel.
+      - name: Check localisation UTF-8 BOM
+        if: "!cancelled() && steps.setup-python.outcome == 'success'"
+        run: python3 tools/linting/validate_localization_encoding.py
+
+      # find, not `git ls-files`: the restored bundle has no .git. Only the
+      # root Millennium_Dawn.mod/descriptor.mod are in the bundle (via the
+      # `*.mod` cache path); resources/ isn't, so the exclusion is belt-and-
+      # braces against future path-list additions.
+      - name: Check .mod file encoding
+        if: "!cancelled() && steps.setup-python.outcome == 'success'"
+        run: |
+          find . -name '*.mod' -not -path './resources/*' -print0 \
+            | xargs -0 -r python3 tools/linting/validate_mod_encoding.py
+
+      - name: Check mod descriptor replace_path sync
+        if: "!cancelled() && steps.setup-python.outcome == 'success'"
+        run: >-
+          python3 tools/validation/validate_mod_descriptors.py --strict
+          --no-color
+
+  # Core validators for broad content changes.
+  validate-core:
     name: Validate ${{ matrix.validator.title }}
-    if: github.event.pull_request.draft == false
+    needs: [detect-changes, prepare-workspace]
+    if: >-
+      needs.detect-changes.outputs.common == 'true' ||
+      needs.detect-changes.outputs.events == 'true' ||
+      needs.detect-changes.outputs.history == 'true' ||
+      needs.detect-changes.outputs.localisation == 'true' ||
+      needs.detect-changes.outputs.interface == 'true' ||
+      needs.detect-changes.outputs.map-adjacency == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         validator:
-          - { script: validate_variables.py,            name: variables,            title: "Variables" }
-          - { script: validate_scripted_localisation.py, name: scripted-localisation, title: "Scripted Localisation" }
-          - { script: validate_cosmetic_tags.py,         name: cosmetic-tags,        title: "Cosmetic Tags" }
-          - { script: validate_decisions.py,             name: decisions,            title: "Decisions" }
-          - { script: validate_localisation.py,          name: localisation,         title: "Localisation" }
-          - { script: validate_events.py,                name: events,               title: "Events" }
-          - { script: validate_history_techs.py,         name: history-techs,        title: "History Technology Dependencies" }
-          - { script: validate_unused_scripted.py,       name: unused-scripted,      title: "Unused Scripted Effects & Triggers" }
+          - script: validate_common_mistakes.py
+            name: common-mistakes
+            title: "Common Scripting Mistakes"
+            strict: true
+          - script: validate_variables.py
+            name: variables
+            title: "Variables"
+            strict: true
+          - script: validate_scripted_localisation.py
+            name: scripted-localisation
+            title: "Scripted Localisation"
+            strict: true
+          - script: validate_cosmetic_tags.py
+            name: cosmetic-tags
+            title: "Cosmetic Tags"
+            strict: true
+          - script: validate_localisation.py
+            name: localisation
+            title: "Localisation"
+            strict: true
+          - script: validate_events.py
+            name: events
+            title: "Events"
+            strict: true
+          - script: validate_history.py
+            name: history-files
+            title: "History Files"
+            strict: true
+          - script: validate_unused_scripted.py
+            name: unused-scripted
+            title: "Unused Scripted Effects & Triggers"
+            strict: true
+          - script: validate_agency_upgrades.py
+            name: agency-upgrades
+            title: "Intelligence Agency Upgrades"
+            strict: true
+          - script: validate_ideas.py
+            name: ideas
+            title: "Idea References"
+            strict: true
+          - script: validate_set_variables.py
+            name: set-variables
+            title: "Set Variable References"
+            strict: true
+          - script: validate_defines.py
+            name: defines
+            title: "Defines"
+            strict: true
+            # cross-references the committed vanilla_defines.txt manifest (CI
+            # has no HOI4 install); regenerate it after a game update via
+            # refresh_vanilla_data.py.
+          # NOTE: validate_unused_textures.py is intentionally not wired here
+          # — ~22k pre-existing unreferenced textures make it a periodic
+          # mod-size audit, not a per-PR signal. Run manually via
+          # `pre-commit run md-validate-unused-textures --hook-stage manual`.
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
+      - name: Download prepared workspace
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: prepared-workspace
+          path: .
 
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        with:
+          python-version: "3.x"
 
-    - name: Run validation
-      run: |
-        python3 tools/validation/${{ matrix.validator.script }} --strict --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
+      # Per-matrix opt-out: `strict: false` makes the validator informational
+      # (still produces the log + PR comment but exits 0 on findings). An entry
+      # that omits the field keeps gating behavior — never fail open by default.
+      # The idea missing-icon audit is WARNING severity, so it reports its
+      # backlog without blocking a PR.
+      - name: Run validation
+        run: |
+          if [ "${{ matrix.validator.strict }}" != "false" ]; then
+            python3 tools/validation/${{ matrix.validator.script }} \
+              --strict --no-color --workers 4 \
+              --output validation-${{ matrix.validator.name }}.log
+          else
+            python3 tools/validation/${{ matrix.validator.script }} \
+              --no-color --workers 4 \
+              --output validation-${{ matrix.validator.name }}.log
+          fi
 
-    - name: Upload results
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-      if: always()
-      with:
-        name: validation-${{ matrix.validator.name }}-results
-        path: validation-${{ matrix.validator.name }}.log
-        retention-days: 7
+      - name: Verify result files
+        if: always()
+        run: |
+          test -f validation-${{ matrix.validator.name }}.log
+          test -f validation-${{ matrix.validator.name }}.json
 
+      - name: Upload results
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: validation-${{ matrix.validator.name }}-results
+          path: |
+            validation-${{ matrix.validator.name }}.log
+            validation-${{ matrix.validator.name }}.json
+          if-no-files-found: error
+          retention-days: 7
+
+  # Targeted validators gated by their changed-file groups.
+  validate-targeted:
+    name: ${{ matrix.validator.title }}
+    needs: [detect-changes, prepare-workspace]
+    if: >-
+      needs.detect-changes.outputs.decisions == 'true' ||
+      needs.detect-changes.outputs.oob == 'true' ||
+      needs.detect-changes.outputs.ai-strategy == 'true' ||
+      needs.detect-changes.outputs.ai-navy == 'true' ||
+      needs.detect-changes.outputs.ai-equipment == 'true' ||
+      needs.detect-changes.outputs.factions == 'true' ||
+      needs.detect-changes.outputs.characters == 'true' ||
+      needs.detect-changes.outputs.scientist-traits == 'true' ||
+      needs.detect-changes.outputs.scripted-guis == 'true' ||
+      needs.detect-changes.outputs.interface == 'true' ||
+      needs.detect-changes.outputs.national-focus == 'true' ||
+      needs.detect-changes.outputs.on-actions == 'true' ||
+      needs.detect-changes.outputs.scripted-effects == 'true' ||
+      needs.detect-changes.outputs.mios == 'true' ||
+      needs.detect-changes.outputs.events == 'true' ||
+      needs.detect-changes.outputs.history == 'true' ||
+      needs.detect-changes.outputs.localisation == 'true' ||
+      needs.detect-changes.outputs.common == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        validator:
+          - script: validate_decisions.py
+            name: decisions
+            title: "Validate Decisions"
+            strict: true
+            should_run: ${{ needs.detect-changes.outputs.decisions }}
+          - script: validate_oob_units.py
+            name: oob-units
+            title: "Validate OOB Unit Names"
+            strict: true
+            should_run: ${{ needs.detect-changes.outputs.oob }}
+          - script: validate_ai_roles.py
+            name: ai-roles
+            title: "Validate AI Role References"
+            strict: true
+            should_run: ${{ needs.detect-changes.outputs.ai-strategy }}
+          - script: validate_ai_navy.py
+            name: ai-navy
+            title: "Validate AI Navy"
+            strict: true
+            should_run: ${{ needs.detect-changes.outputs.ai-navy }}
+          - script: validate_ai_equipment.py
+            name: ai-equipment
+            title: "Validate AI Equipment Coverage"
+            strict: true
+            should_run: ${{ needs.detect-changes.outputs.ai-equipment }}
+          - script: validate_factions.py
+            name: factions
+            title: "Validate Faction System"
+            strict: true
+            should_run: ${{ needs.detect-changes.outputs.factions }}
+          - script: validate_characters.py
+            name: characters
+            title: "Validate Character and Advisor Traits"
+            strict: true
+            # undefined-unit-leader-trait is WARNING-severity: the 9-item
+            # ALG/PHI backlog surfaces in reports without gating PRs. Every
+            # advisor-slot category gates.
+            should_run: ${{ needs.detect-changes.outputs.characters }}
+          - script: validate_scientist_traits.py
+            name: scientist-traits
+            title: "Validate Scientist Traits"
+            strict: true
+            # All findings are WARNING-severity: the 19-item missing-medal
+            # backlog surfaces in reports without gating PRs.
+            should_run: ${{ needs.detect-changes.outputs.scientist-traits }}
+          - script: validate_mios.py
+            name: mios
+            title: "Validate MIO Organizations"
+            strict: true
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.mios == 'true' ||
+              needs.detect-changes.outputs.localisation == 'true') &&
+              'true' || 'false' }}
+          - script: validate_scripted_gui.py
+            name: scripted-gui
+            title: "Validate Scripted GUIs"
+            strict: true
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.scripted-guis == 'true' ||
+              needs.detect-changes.outputs.interface == 'true') &&
+              'true' || 'false' }}
+          - script: validate_focus_tree.py
+            name: focus-tree
+            title: "Validate Focus Tree Structure"
+            strict: true
+            # the ai_will_do guard checks (#2233) are WARNING-severity: the
+            # ~1900-focus backlog surfaces in reports without gating PRs.
+            should_run: ${{ needs.detect-changes.outputs.national-focus }}
+          - script: validate_on_actions.py
+            name: on-actions
+            title: "Validate On Actions"
+            strict: true
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.on-actions == 'true' ||
+              needs.detect-changes.outputs.events == 'true') &&
+              'true' || 'false' }}
+          - script: validate_scripted_params.py
+            name: scripted-params
+            title: "Validate Scripted Effect Parameters"
+            strict: true
+            # Contracted effects are called from every script tree, so the
+            # gate is the tree, not a per-directory output that goes stale
+            # when a new caller directory appears.
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.common == 'true' ||
+              needs.detect-changes.outputs.events == 'true' ||
+              needs.detect-changes.outputs.history == 'true') && 'true' ||
+              'false' }}
+          - script: validate_gfx_references.py
+            name: gfx-references
+            title: "Validate GFX Sprite References"
+            strict: true
+            # Gating: undefined-sprite errors are clean on main. Vanilla sprite
+            # names come from the committed tools/validation/vanilla_sprites.txt
+            # manifest (regenerate with refresh_vanilla_data.py after a
+            # HOI4 version bump). The unused-sprite check is opt-in
+            # (--report-unused) and never runs here.
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.interface == 'true' ||
+              needs.detect-changes.outputs.common == 'true' ||
+              needs.detect-changes.outputs.events == 'true' ||
+              needs.detect-changes.outputs.history == 'true' ||
+              needs.detect-changes.outputs.localisation == 'true') && 'true' ||
+              'false' }}
+          - script: validate_tech_categories.py
+            name: tech-categories
+            title: "Validate Technology Categories"
+            # Strict: an unknown category compiles silently and grants nothing,
+            # so the content promises a research bonus it never delivers.
+            strict: true
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.common == 'true' ||
+              needs.detect-changes.outputs.events == 'true') && 'true' ||
+              'false' }}
+          - script: validate_modifiers.py
+            name: modifiers
+            title: "Validate Modifier Names"
+            # Unknown-name findings remain warnings; redundant enable gates are
+            # errors because their backlog was cleared in the same change.
+            strict: true
+            should_run: ${{ needs.detect-changes.outputs.common }}
+          - script: validate_simplifications.py
+            name: simplifications
+            title: "Suggest Scope Merges"
+            # informational: WARNING-only simplification hints, never gates a PR
+            strict: false
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.scripted-effects == 'true' ||
+              needs.detect-changes.outputs.national-focus == 'true' ||
+              needs.detect-changes.outputs.decisions == 'true' ||
+              needs.detect-changes.outputs.on-actions == 'true' ||
+              needs.detect-changes.outputs.events == 'true') && 'true' ||
+              'false' }}
+          - script: validate_building_guards.py
+            name: building-guards
+            title: "Validate Building Guards"
+            # informational: WARNING-only, ~660-item backlog, never gates a PR
+            strict: false
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.common == 'true' ||
+              needs.detect-changes.outputs.events == 'true') && 'true' ||
+              'false' }}
+          - script: validate_dlc_guards.py
+            name: dlc-guards
+            title: "Validate DLC Guards"
+            strict: true
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.common == 'true' ||
+              needs.detect-changes.outputs.events == 'true') && 'true' ||
+              'false' }}
+          - script: validate_technologies.py
+            name: technologies
+            title: "Validate Tech Category Consistency"
+            strict: true
+            should_run: ${{ needs.detect-changes.outputs.common }}
+    steps:
+      # Keep skipped matrix entries from downloading or running.
+      - name: Download prepared workspace
+        if: matrix.validator.should_run == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: prepared-workspace
+          path: .
+      - name: Set up Python
+        if: matrix.validator.should_run == 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        with:
+          python-version: "3.x"
+      - name: Run validation
+        if: matrix.validator.should_run == 'true'
+        run: |
+          if [ "${{ matrix.validator.strict }}" != "false" ]; then
+            python3 tools/validation/${{ matrix.validator.script }} \
+              --strict --no-color --workers 4 \
+              --output validation-${{ matrix.validator.name }}.log
+          else
+            python3 tools/validation/${{ matrix.validator.script }} \
+              --no-color --workers 4 \
+              --output validation-${{ matrix.validator.name }}.log
+          fi
+      - name: Verify result files
+        if: always() && matrix.validator.should_run == 'true'
+        run: |
+          test -f validation-${{ matrix.validator.name }}.log
+          test -f validation-${{ matrix.validator.name }}.json
+
+      - name: Upload results
+        if: always() && matrix.validator.should_run == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: validation-${{ matrix.validator.name }}-results
+          path: |
+            validation-${{ matrix.validator.name }}.log
+            validation-${{ matrix.validator.name }}.json
+          if-no-files-found: error
+          retention-days: 7
+
+  # File paths and cross-platform case collisions.
+  validate-paths:
+    name: File Paths
+    needs: [detect-changes]
+    runs-on: ubuntu-latest
+    steps:
+      # Keep the PR index separate from the trusted validator code.
+      - name: Checkout PR tree
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ needs.detect-changes.outputs.checkout-repository }}
+          ref: ${{ needs.detect-changes.outputs.checkout-ref }}
+          path: pr-tree
+          fetch-depth: 1
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
+          filter: blob:none
+          sparse-checkout: |
+            common
+            descriptions
+            events
+            gfx
+            history
+            interface
+            localisation
+            map
+            music
+            portraits
+            scenario_tests
+            sound
+            tutorial
+            descriptor.mod
+          sparse-checkout-cone-mode: false
+
+      - name: Reject links in PR tree
+        working-directory: pr-tree
+        run: |
+          if git ls-files --stage | grep -Eq '^(120000|160000) '; then
+            echo "::error::PR tree contains a symbolic link or submodule"
+            exit 1
+          fi
+
+      - name: Checkout trusted tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ needs.detect-changes.outputs.base-sha }}
+          path: trusted
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: tools
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        with:
+          python-version: "3.x"
+
+      - name: Run validation
+        working-directory: pr-tree
+        run: |
+          python3 ../trusted/tools/validation/validate_file_paths.py \
+            --path . --strict --no-color --output validation-file-paths.log
+
+      - name: Verify result files
+        if: always()
+        run: |
+          test -f pr-tree/validation-file-paths.log
+          test -f pr-tree/validation-file-paths.json
+
+      - name: Upload results
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: validation-file-paths-results
+          path: |
+            pr-tree/validation-file-paths.log
+            pr-tree/validation-file-paths.json
+          if-no-files-found: error
+          retention-days: 7
+
+  # Collect results and post the PR report.
   validation-report:
     name: Generate Validation Report
     runs-on: ubuntu-latest
-    needs: [validate]
-    if: always() && github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.validate.result != 'cancelled'
-
+    needs:
+      - detect-changes
+      - prepare-workspace
+      - content-checks
+      - validate-core
+      - validate-targeted
+      - validate-paths
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    if: ${{ always() && !cancelled() }}
+    # Dispatches run the full validator set except diff-scoped style. PR events
+    # scope content validators to changed file groups.
+    env:
+      PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+      HEAD_SHA: >-
+        ${{ needs.detect-changes.outputs.head-sha ||
+        github.event.pull_request.head.sha || github.sha }}
+      VALIDATION_SCOPE: >-
+        ${{ github.event_name == 'workflow_dispatch' &&
+        needs.content-checks.result == 'success' &&
+        needs.validate-core.result == 'success' &&
+        needs.validate-targeted.result == 'success' &&
+        needs.validate-paths.result == 'success' && 'full' || 'partial' }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
+      - name: Checkout report tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ${{ github.repository }}
+          ref: >-
+            ${{ needs.detect-changes.outputs.base-sha ||
+            github.event.pull_request.base.sha || inputs.base_sha ||
+            github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            tools/generate_validation_report.py
+            tools/report_lib
+            tools/validation
+            tools/shared_utils.py
+          sparse-checkout-cone-mode: false
 
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
+      # Same source hash as prepare-workspace: the baseline cache entry is
+      # keyed on it, so a report can only restore a baseline built by the
+      # current validator generation.
+      - name: Compute validator code hash
+        id: toolshash
+        run: >-
+          echo "hash=${{ hashFiles('tools/validation/**',
+          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
 
-    - name: Download all validation results
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-      with:
-        path: validation-results
+      # Latest main-side validation baseline (saved nightly by
+      # validator-cache.yml's check-baseline job). A miss (cold cache,
+      # validator generation changed) only drops the NEW/EXISTING annotation
+      # in the report — never a failure.
+      - name: Restore validation baseline
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_baseline
+          key: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{
+            needs.detect-changes.outputs.base-sha ||
+            github.event.pull_request.base.sha || inputs.base_sha ||
+            github.sha }}
+          restore-keys: |
+            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
 
-    - name: Generate and post validation report
-      run: |
-        python3 tools/generate_validation_report.py \
-          --results-dir validation-results \
-          --output report.md \
-          --pr-number "${{ github.event.pull_request.number }}" \
-          --commit-sha "${{ github.sha }}" \
-          --github-repository "${{ github.repository }}" \
-          --post-comment \
-          --print
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.x"
 
-    - name: Upload combined report
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-      if: always()
-      with:
-        name: validation-report
-        path: report.md
-        retention-days: 30
+      - name: Download all validation results
+        id: download-results
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        continue-on-error: true
+        with:
+          pattern: validation-*-results
+          path: validation-results
+
+      - name: Record failed validation jobs
+        if: >-
+          steps.download-results.outcome == 'failure' ||
+          needs.detect-changes.result == 'failure' ||
+          needs.prepare-workspace.result == 'failure' ||
+          needs.content-checks.result == 'failure' ||
+          needs.validate-core.result == 'failure' ||
+          needs.validate-targeted.result == 'failure' ||
+          needs.validate-paths.result == 'failure'
+        run: |
+          pipeline_dir="validation-results/validation-pipeline-results"
+          mkdir -p "$pipeline_dir"
+          printf '%s\n' \
+            '[{"severity":"error","category":"pipeline-job-failed",' \
+            '"message":"Validation jobs failed. Review the workflow run."}]' \
+            > "$pipeline_dir/validation-pipeline.json"
+
+      - name: Generate and post validation report
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TOOLSHASH: ${{ steps.toolshash.outputs.hash }}
+        run: |
+          workflow_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          workflow_url="$workflow_url/actions/runs/$GITHUB_RUN_ID"
+          args=(
+            --results-dir validation-results
+            --output report.md
+            --pr-number "$PR_NUMBER"
+            --commit-sha "$HEAD_SHA"
+            --workflow-run-url "$workflow_url"
+            --github-repository "${{ github.repository }}"
+            --validation-scope "$VALIDATION_SCOPE"
+            --checks-api
+            --print
+          )
+          if [ -f .validation_baseline/baseline-meta.json ]; then
+            args+=(
+              --baseline-dir .validation_baseline
+              --baseline-toolshash "$TOOLSHASH"
+            )
+          fi
+          if [ -n "$PR_NUMBER" ]; then
+            args+=(--post-comment)
+          fi
+          python3 tools/generate_validation_report.py "${args[@]}"
+
+      - name: Upload combined report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: validation-report
+          path: report.md
+          retention-days: 30

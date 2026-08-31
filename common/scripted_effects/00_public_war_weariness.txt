@@ -11,9 +11,21 @@ AB_war_main = {
 		country_event = { id = anti_bully.3 days = 45 } #delay the next increase in AB penalty for x days
 	}
 	else = {
-		add_to_variable = { penalty_factor = -2 }
-		public_war_weariness_penalty_effect = yes
-		country_event = { id = anti_bully.3 days = 45 }
+		if = { #No active AB war: wind the accumulated penalty back down, then stop
+			limit = { check_variable = { penalty_factor > 0 } }
+			add_to_variable = { penalty_factor = -2 }
+			if = { #Never overshoot below zero
+				limit = { check_variable = { penalty_factor < 0 } }
+				set_variable = { penalty_factor = 0 }
+			}
+			public_war_weariness_penalty_effect = yes
+			country_event = { id = anti_bully.3 days = 45 }
+			else = { #Penalty fully wound down: end the recurring event and reset the counters
+				set_variable = { penalty_factor = 0 }
+				set_variable = { anti_bully_wars = 0 }
+				set_variable = { war_support_factor_var = 0 }
+			}
+		}
 	}
 }
 
@@ -30,20 +42,6 @@ AB_war_second = {
 
 public_war_weariness_effect = {
 	if = { limit = { NOT = { has_global_flag = GAME_RULE_disable_anti_bully } }
-		hidden_effect = {
-			add_timed_idea = { idea = three_months_of_war days = 90 }
-			add_timed_idea = { idea = six_months_of_war days = 180 }
-			add_timed_idea = { idea = nine_months_of_war days = 270 }
-			add_timed_idea = { idea = twelve_months_of_war days = 365 }
-		}
-		FROM = {
-			hidden_effect = {
-				add_timed_idea = { idea = three_months_of_war days = 90 }
-				add_timed_idea = { idea = six_months_of_war days = 180 }
-				add_timed_idea = { idea = nine_months_of_war days = 270 }
-				add_timed_idea = { idea = twelve_months_of_war days = 365 }
-			}
-		}
 		# Initializes the Anti-Bully (Public War Weariness) system
 		if = {
 			limit = {
@@ -67,7 +65,7 @@ public_war_weariness_effect = {
 			hidden_effect = {
 				save_event_target_as = AB_ATT
 				FROM = { save_event_target_as = AB_DEFF }
-				country_event = { id = anti_bully.1 }
+				country_event = anti_bully.1
 			}
 		}
 	}

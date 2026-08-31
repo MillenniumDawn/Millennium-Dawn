@@ -23,13 +23,8 @@ on_actions = {
 				var:v = {
 					if = {
 						limit = {
-							OR = {
-								has_autonomy_state = autonomy_state_rf
-								has_autonomy_state = autonomy_republic_rf
-								has_autonomy_state = autonomy_kray_rf
-								has_autonomy_state = autonomy_oblast_rf
-								has_autonomy_state = autonomy_okrug_rf
-							}
+							exists = yes
+							SUB_is_rf_subject = yes
 						}
 						if = {
 							limit = { NOT = { has_idea = CHE_republic_rf } }
@@ -76,6 +71,10 @@ on_actions = {
 			150 = sov_economic.27
 		}
 		effect = {
+			every_subject_country = {
+				limit = { SUB_is_soviet_sphere_subject = yes }
+				SOV_subject_taxation_payment = yes
+			}
 			if = {
 				limit = {
 					NOT = { has_country_flag = SOV_loss_dissoultion }
@@ -187,9 +186,40 @@ on_actions = {
 				}
 			}
 			#SEPARATIST UPDATE
-			if = { limit = { is_ai = no }
+			if = {
+				limit = { is_ai = no }
 				SUB_update_separatism_stability = yes
 				SUB_update_separatism_rebellion = yes
+			}
+		}
+	}
+	# Deferred handoff for Warsaw Pact coup decisions. The coup decision flags the
+	# target with SOV_warsaw_pact_pending_puppet and stores the overlord's id so the
+	# overlord can puppet the country only after the communist side wins the civil
+	# war. This avoids creating an unwinnable mid-civil-war puppet relationship.
+	on_civil_war_end = {
+		effect = {
+			if = {
+				limit = {
+					has_country_flag = SOV_warsaw_pact_pending_puppet
+				}
+				ROOT = {
+					clr_country_flag = SOV_warsaw_pact_pending_puppet
+					news_event = {
+						hours = 1
+						id = sov_warsaw_pact.4
+					}
+					var:SOV_warsaw_pact_overlord_id = {
+						set_autonomy = {
+							target = PREV
+							autonomy_state = autonomy_warsaw
+							end_wars = no
+							end_civil_wars = yes
+						}
+						country_event = sov_warsaw_pact.5
+					}
+					clear_variable = SOV_warsaw_pact_overlord_id
+				}
 			}
 		}
 	}

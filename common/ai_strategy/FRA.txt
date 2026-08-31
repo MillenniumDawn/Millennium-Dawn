@@ -1,7 +1,6 @@
 FRA_we_want_modern_armor = { #tell FRA AI to research modern composite for the Leclerc SXXI
 	allowed = { original_tag = FRA }
 	enable = {
-		country_exists = FRA
 		NOT = { has_tech = armor_tech_3 }
 	}
 	abort_when_not_enabled = yes
@@ -11,7 +10,13 @@ FRA_we_want_modern_armor = { #tell FRA AI to research modern composite for the L
 FRA_befriend_the_francosphere = {
 	allowed = { original_tag = FRA }
 	enable = {
-		NOT = { has_completed_focus = FRA_aggressive_expansionism } #France going this route should prevent all from befriending
+		NOT = {
+			OR = {
+				has_completed_focus = FRA_cold_war_round2
+				has_completed_focus = FRA_crusade #France going this route should prevent all from befriending
+				has_completed_focus = FRA_reclaim_empire
+			}
+		}
 	}
 	abort_when_not_enabled = yes
 
@@ -118,7 +123,7 @@ FRA_intervene_in_central_african_republic = {
 				has_civil_war = yes
 				has_war_with = SEL
 				has_war_with = BAL
-				has_war_with = LOG
+				has_war_with = LGN
 			}
 		}
 		has_completed_focus = FRA_CAR_intervention
@@ -168,7 +173,6 @@ FRA_support_egypt_against_jihadists = {
 FRA_factory_target = {
 	allowed = { original_tag = FRA }
 	enable = {
-		original_tag = FRA
 		num_of_civilian_factories < 130
 	}
 	abort_when_not_enabled = yes
@@ -188,7 +192,6 @@ FRA_focus_on_europe = {
 FRA_office_target = {
 	allowed = { original_tag = FRA }
 	enable = {
-		original_tag = FRA
 		num_of_available_civilian_factories > 29
 		check_variable = { office_park_total < 30 }
 	}
@@ -211,16 +214,24 @@ FRA_default_naval_breakdown = {
 	ai_strategy = { type = role_ratio id = naval_missile_submarine value = 8 }
 	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 12 }
 	ai_strategy = { type = role_ratio id = naval_carrier value = 3 }
+	ai_strategy = { type = role_ratio id = naval_battlecruiser value = 2 }
+	ai_strategy = { type = role_ratio id = naval_battleship value = 1 }
 	ai_strategy = { type = role_ratio id = naval_cruiser value = 1 }
 }
 
 FRA_protect_andorra_monaco = {
 	allowed = {
 		original_tag = FRA
-		NOT = { has_global_flag = GAME_RULE_microstates_removed }
+		NOT = {
+			OR = {
+				has_game_rule = { rule = remove_micro_states option = tiny }
+				has_game_rule = { rule = remove_micro_states option = smaller }
+				has_game_rule = { rule = remove_micro_states option = insignificant }
+			}
+		}
 	}
 	enable = {
-		FRA = { has_government = democratic }
+		has_government = democratic
 		OR = {
 			country_exists = ADO
 			country_exists = MNC
@@ -237,11 +248,9 @@ FRA_protect_andorra_monaco = {
 FRA_united_kingdom_french_relations = {
 	allowed = { original_tag = FRA }
 	enable = {
-		NOT = {
-			has_government = nationalist
-			has_government = fascism
-		}
 		country_exists = ENG
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
 		NOT = { ENG = { has_government = nationalist } }
 	}
 	abort_when_not_enabled = yes
@@ -454,14 +463,16 @@ FRA_support_afghanistan_against_taliban = {
 	allowed = { original_tag = FRA }
 	enable = {
 		NOT = { has_war_with = AFG }
-		AFG = { NOT = { has_government = fascism } }
-		AFG = { NOT = { has_country_flag = AFG_new_war } }
+		AFG = {
+			NOT = { has_government = fascism }
+			NOT = { has_country_flag = AFG_new_war }
+		}
 		OR = {
 			AND = {
-				USA = { has_country_flag = Operation_enduring_freedom }
+				USA = { has_country_flag = USA_wot_enduring_freedom }
 				OR = {
-					has_country_flag = partially_supported_us_nine_eleven
-					has_country_flag = fully_supported_us_nine_eleven
+					has_country_flag = wot_supported_us_partially
+					has_country_flag = wot_supported_us_fully
 				}
 			}
 			date > 2002.6.1
@@ -575,8 +586,8 @@ FRA_construct_additional_microchips = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = build_building id = microchip_plant value = 15 }
-	ai_strategy = { type = building_target id = microchip_plant value = 75 }
+	ai_strategy = { type = build_building id = microchip_plant value = 50 }
+	ai_strategy = { type = building_target id = microchip_plant value = 50 }
 }
 
 FRA_comoros_guarantee = {
@@ -593,4 +604,133 @@ FRA_comoros_guarantee = {
 	ai_strategy = { type = befriend id = "COM" value = 50 }
 	ai_strategy = { type = support id = "COM" value = 50 }
 	ai_strategy = { type = diplo_action_desire id = "COM" value = 50 target = guarantee }
+}
+
+# FRA Air Doctrine — Rafale-dominant multirole, balanced coverage
+FRA_air_doctrine = {
+	allowed = { original_tag = FRA }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = fighter value = 8 }
+	ai_strategy = { type = unit_ratio id = cas value = 12 }
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 15 }
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 25 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 30 }
+	ai_strategy = { type = unit_ratio id = scout_plane value = 3 }
+	ai_strategy = { type = unit_ratio id = suicide value = 5 }
+	ai_strategy = { type = unit_ratio id = strategic_bomber value = 8 }
+}
+
+# FRA Army Doctrine — balanced armor, expeditionary marines, professional force
+FRA_army_doctrine = {
+	allowed = { original_tag = FRA }
+	enable = { num_of_military_factories > 10 }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = infantry value = 20 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 25 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 35 }
+	ai_strategy = { type = role_ratio id = armor value = 35 }
+	ai_strategy = { type = role_ratio id = marines value = 30 }
+	ai_strategy = { type = role_ratio id = Air_mech value = 10 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 20 }
+	ai_strategy = { type = force_build_armies value = 35 }
+}
+FRA_commune_confront_the_west = {
+	allowed = { original_tag = FRA }
+	enable = {
+		OR = {
+			has_global_flag = FRA_COMMUNE_FOCUS_PATH
+			has_idea = FRA_commune_reborn_idea
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "USA" value = 200 }
+	ai_strategy = { type = antagonize id = "ENG" value = 100 }
+	ai_strategy = { type = antagonize id = "GER" value = 75 }
+	ai_strategy = { type = befriend id = "CHI" value = 150 }
+	ai_strategy = { type = befriend id = "SOV" value = 100 }
+	ai_strategy = { type = befriend id = "CUB" value = 100 }
+	ai_strategy = { type = befriend id = "VEN" value = 75 }
+}
+FRA_restoration_break_with_europe = {
+	allowed = { original_tag = FRA }
+	enable = {
+		OR = {
+			has_global_flag = FRA_KINGDOM_FOCUS_PATH
+			has_global_flag = FRA_EMPIRE_FOCUS_PATH
+			has_idea = FRA_kingdom_restored_idea
+			has_idea = FRA_empire_restored_idea
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "GER" value = 150 }
+	ai_strategy = { type = antagonize id = "ENG" value = 100 }
+	ai_strategy = { type = antagonize id = "USA" value = 100 }
+	ai_strategy = { type = antagonize id = "BEL" value = 50 }
+	ai_strategy = { type = antagonize id = "HOL" value = 50 }
+	ai_strategy = { type = befriend id = "SPR" value = 50 }
+}
+FRA_nationalist_republic_alignment = {
+	allowed = { original_tag = FRA }
+	enable = {
+		OR = {
+			has_global_flag = FRA_RN_FOCUS_PATH
+			has_completed_focus = FRA_FN
+		}
+		NOT = {
+			OR = {
+				has_idea = FRA_kingdom_restored_idea
+				has_idea = FRA_empire_restored_idea
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "SOV" value = 100 }
+	ai_strategy = { type = antagonize id = "USA" value = 75 }
+	ai_strategy = { type = antagonize id = "GER" value = 50 }
+	ai_strategy = { type = befriend id = "HUN" value = 75 }
+}
+FRA_atlanticist_alignment = {
+	allowed = { original_tag = FRA }
+	enable = {
+		OR = {
+			has_global_flag = FRA_WESTERN_FOCUS_PATH
+			has_global_flag = FRA_HISTORICAL_FOCUS_PATH
+		}
+		NOT = {
+			OR = {
+				has_global_flag = FRA_AI_RPF_FOCUS_PATH
+				has_global_flag = FRA_AI_LFI_FOCUS_PATH
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "USA" value = 100 }
+	ai_strategy = { type = befriend id = "GER" value = 150 }
+	ai_strategy = { type = befriend id = "ENG" value = 100 }
+	ai_strategy = { type = befriend id = "ITA" value = 75 }
+	ai_strategy = { type = antagonize id = "SOV" value = 50 }
+}
+FRA_sovereignist_distance_from_the_bloc = {
+	allowed = { original_tag = FRA }
+	enable = {
+		OR = {
+			has_global_flag = FRA_AI_RPF_FOCUS_PATH
+			has_global_flag = FRA_AI_LFI_FOCUS_PATH
+			has_completed_focus = FRA_RPF
+			has_completed_focus = FRA_LFI
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "USA" value = 100 }
+	ai_strategy = { type = antagonize id = "GER" value = 50 }
+	ai_strategy = { type = befriend id = "BRA" value = 50 }
+	ai_strategy = { type = befriend id = "MEX" value = 25 }
 }

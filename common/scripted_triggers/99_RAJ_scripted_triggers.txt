@@ -1,33 +1,1856 @@
-mao_pol_above_50 = {
-	custom_trigger_tooltip = {
-		tooltip = RAJ_focus_mao_pol_above_fifty_TT
-		check_variable = {
-			from.maoist_political_influence > 49
-		}
+RAJ_state_has_any_naxalite = {
+	OR = {
+		has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+		has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+		has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+		has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+		has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 }
 	}
 }
-mao_str_above_50 = {
+
+# Country-scope: cheap check via the 10 state-id naxalite vars.
+# Runs in O(10) variable lookups instead of any_controlled_state × 5 modifier checks.
+RAJ_country_has_any_naxalite_states = {
 	custom_trigger_tooltip = {
-		tooltip = RAJ_focus_mao_str_above_fifty_TT
-		check_variable = {
-			from.strength_of_maoists > 49
+		tooltip = RAJ_country_has_any_naxalite_states_TT
+		OR = {
+			456 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+			459 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+			991 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+			989 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+			451 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+			452 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+			447 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+			458 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+			988 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
+			470 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } }
 		}
 	}
 }
 
-mao_pol_below_10 = {
+# Severe = display tier 1 (severe) or 2 (high), i.e. RAJ_naxalite_presence in {1,2}.
+RAJ_has_severe_naxalite_states_trigger = {
 	custom_trigger_tooltip = {
-		tooltip = RAJ_focus_mao_pol_below_ten_TT
-		check_variable = {
-			from.maoist_political_influence < 10
+		tooltip = RAJ_has_severe_naxalite_states_trigger_TT
+		OR = {
+			456 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+			459 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+			991 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+			989 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+			451 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+			452 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+			447 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+			458 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+			988 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
+			470 = { is_controlled_by = RAJ check_variable = { RAJ_naxalite_presence > 0 } check_variable = { RAJ_naxalite_presence < 3 } }
 		}
 	}
 }
-mao_str_below_10 = {
-	custom_trigger_tooltip = {
-		tooltip = RAJ_focus_mao_str_below_ten_TT
-		check_variable = {
-			from.strength_of_maoists < 10
+
+BRICS_valid_invite_target = {
+	NOT = { is_in_faction_with = ROOT }
+	NOT = { has_idea = RAJ_BRICS }
+	NOT = { has_idea = RAJ_BRICS_associate }
+	NOT = { has_idea = RAJ_BRICS_observer }
+	BRICS_focus_requirement_met = yes
+}
+
+# Nations with a dedicated BRICS-joining focus only become eligible once they complete it.
+# Every other nation passes automatically. Used by both the self-application and leader-invite paths.
+BRICS_focus_requirement_met = {
+	if = { limit = { original_tag = VEN } has_completed_focus = VEN_joining_brics }
+	if = { limit = { original_tag = ALG } has_completed_focus = ALG_joining_brics }
+	if = { limit = { original_tag = CUB } has_completed_focus = CUB_enter_brics }
+	if = { limit = { original_tag = SIN } has_completed_focus = SIN_join_brics }
+	if = { limit = { original_tag = DEN } has_completed_focus = DEN_joining_brics }
+	if = { limit = { original_tag = SWE } has_completed_focus = SWE_join_brics_new_development_bank }
+}
+
+# Evaluate in target country scope; ROOT = BRICS leader
+BRICS_can_full_member = {
+	has_opinion = { target = ROOT value > 100 }
+	influence_higher_20 = yes
+	NOT = { has_government = fascism }
+	NOT = { has_government = nationalist }
+}
+
+# Evaluate in target country scope; ROOT = BRICS leader
+BRICS_can_associate_member = {
+	has_opinion = { target = ROOT value > 50 }
+	influence_higher_10 = yes
+	NOT = { has_government = fascism }
+	NOT = { has_government = nationalist }
+}
+
+# Evaluate in target country scope; ROOT = BRICS leader
+BRICS_can_observer = {
+	influence_higher_5 = yes
+	has_opinion = { target = ROOT value > 0 }
+}
+
+RAJ_all_faiths_content = {
+	check_variable = { RAJ_hindus_opinion > 80 }
+	check_variable = { RAJ_muslim_opinion > 80 }
+	check_variable = { RAJ_sikh_opinion > 80 }
+	check_variable = { RAJ_christians_opinion > 80 }
+	check_variable = { RAJ_buddhist_opinion > 80 }
+}
+
+RAJ_rebel_opinion_collapsed = {
+	if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 993 } }
+		check_variable = { RAJ_muslim_opinion < 5 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { RAJ_rebel_target_state = 980 }
+				check_variable = { RAJ_rebel_target_state = 477 }
+			}
 		}
+		check_variable = { RAJ_christians_opinion < 5 }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 982 } }
+		check_variable = { RAJ_buddhist_opinion < 5 }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_rebel_target_state = 429 } }
+		check_variable = { RAJ_sikh_opinion < 5 }
+	}
+}
+
+# india_religious_events only ever sets the conflict pair to (a=2,b=1), (a=2,b=3) or (a=1,b=3),
+# so side_a is 1 or 2, side_b is 1 or 3, and a=1 implies b=3. Other side values never reach these triggers.
+RAJ_side_a_opinion_lower_than_b = {
+	if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 1 } }
+		check_variable = { RAJ_hindus_opinion < RAJ_christians_opinion }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 2 } }
+		if = {
+			limit = { check_variable = { RAJ_conflict_side_b = 1 } }
+			check_variable = { RAJ_muslim_opinion < RAJ_hindus_opinion }
+		}
+		else_if = {
+			limit = { check_variable = { RAJ_conflict_side_b = 3 } }
+			check_variable = { RAJ_muslim_opinion < RAJ_christians_opinion }
+		}
+	}
+}
+
+RAJ_side_b_opinion_lower_than_a = {
+	if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 1 } }
+		check_variable = { RAJ_hindus_opinion < RAJ_muslim_opinion }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 3 } }
+		if = {
+			limit = { check_variable = { RAJ_conflict_side_a = 1 } }
+			check_variable = { RAJ_christians_opinion < RAJ_hindus_opinion }
+		}
+		else_if = {
+			limit = { check_variable = { RAJ_conflict_side_a = 2 } }
+			check_variable = { RAJ_christians_opinion < RAJ_muslim_opinion }
+		}
+	}
+}
+
+RAJ_both_conflict_sides_below_35 = {
+	if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 1 } }
+		check_variable = { RAJ_hindus_opinion < 35 }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_a = 2 } }
+		check_variable = { RAJ_muslim_opinion < 35 }
+	}
+	if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 1 } }
+		check_variable = { RAJ_hindus_opinion < 35 }
+	}
+	else_if = {
+		limit = { check_variable = { RAJ_conflict_side_b = 3 } }
+		check_variable = { RAJ_christians_opinion < 35 }
+	}
+}
+
+pak_raj_border_pair_valid = {
+	OR = {
+		tag = RAJ
+		tag = PAK
+	}
+	country_exists = RAJ
+	country_exists = PAK
+	RAJ = {
+		is_subject = no
+		has_capitulated = no
+		has_war = no
+	}
+	PAK = {
+		is_subject = no
+		has_capitulated = no
+		has_war = no
+	}
+	NOT = { RAJ = { is_in_faction_with = PAK } }
+	RAJ = {
+		OR = {
+			owns_state = 420
+			owns_state = 426
+			owns_state = 427
+			owns_state = 429
+			owns_state = 563
+			owns_state = 573
+			owns_state = 984
+			owns_state = 987
+		}
+	}
+	PAK = {
+		OR = {
+			owns_state = 420
+			owns_state = 426
+			owns_state = 427
+			owns_state = 429
+			owns_state = 563
+			owns_state = 573
+			owns_state = 984
+			owns_state = 987
+		}
+	}
+}
+
+raj_chi_border_pair_valid = {
+	OR = {
+		tag = RAJ
+		tag = CHI
+	}
+	country_exists = RAJ
+	country_exists = CHI
+	RAJ = {
+		is_subject = no
+		has_capitulated = no
+		has_war = no
+	}
+	CHI = {
+		is_subject = no
+		has_capitulated = no
+		has_war = no
+	}
+	NOT = { RAJ = { is_in_faction_with = CHI } }
+	RAJ = {
+		OR = {
+			owns_state = 475
+			owns_state = 591
+			owns_state = 982
+			owns_state = 993
+		}
+	}
+	CHI = {
+		OR = {
+			owns_state = 475
+			owns_state = 591
+			owns_state = 982
+			owns_state = 993
+		}
+	}
+}
+
+pak_raj_border_no_operation_active = {
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_attack_pending }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_war_active }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_capture_pending }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_claim_pending }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_crisis_active }
+}
+
+raj_chi_border_no_operation_active = {
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_attack_pending }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_war_active }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_pending }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_active }
+}
+
+pak_raj_border_no_claim_cooldown = {
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_capture_cooldown }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_crisis_cooldown }
+}
+
+raj_chi_border_no_claim_cooldown = {
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_cooldown }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_cooldown }
+}
+
+pak_raj_border_attack_thresholds = {
+	check_variable = { pak_raj_border_readiness > 60 }
+	check_variable = { global.pak_raj_border_tension > 79 }
+	has_border_war = no
+}
+
+raj_chi_border_attack_thresholds = {
+	check_variable = { raj_chi_border_readiness > 60 }
+	check_variable = { global.raj_chi_border_tension > 79 }
+	has_border_war = no
+}
+
+pak_raj_border_available = {
+	pak_raj_border_no_operation_active = yes
+	pak_raj_border_pair_valid = yes
+}
+
+raj_chi_border_available = {
+	raj_chi_border_no_operation_active = yes
+	raj_chi_border_pair_valid = yes
+}
+
+pak_raj_border_attack_available = {
+	pak_raj_border_no_operation_active = yes
+	pak_raj_border_pair_valid = yes
+	pak_raj_border_attack_thresholds = yes
+}
+
+raj_chi_border_attack_available = {
+	raj_chi_border_no_operation_active = yes
+	raj_chi_border_pair_valid = yes
+	raj_chi_border_attack_thresholds = yes
+}
+
+pak_raj_border_attack_revalidate = {
+	pak_raj_border_pair_valid = yes
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_war_active }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_capture_pending }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_claim_pending }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_crisis_active }
+	has_border_war = no
+}
+
+raj_chi_border_attack_revalidate = {
+	raj_chi_border_pair_valid = yes
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_war_active }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_pending }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_active }
+	has_border_war = no
+}
+
+pak_raj_border_capture_available = {
+	pak_raj_border_no_operation_active = yes
+	pak_raj_border_no_claim_cooldown = yes
+	pak_raj_border_pair_valid = yes
+	has_border_war = no
+}
+
+raj_chi_border_capture_available = {
+	raj_chi_border_no_operation_active = yes
+	raj_chi_border_no_claim_cooldown = yes
+	raj_chi_border_pair_valid = yes
+	has_border_war = no
+}
+
+pak_raj_border_capture_revalidate = {
+	pak_raj_border_pair_valid = yes
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_attack_pending }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_war_active }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_claim_pending }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_crisis_active }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_capture_cooldown }
+	NOT = { has_global_flag = GLOBAL_pak_raj_border_crisis_cooldown }
+	has_border_war = no
+}
+
+raj_chi_border_capture_revalidate = {
+	raj_chi_border_pair_valid = yes
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_attack_pending }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_war_active }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_active }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_capture_cooldown }
+	NOT = { has_global_flag = GLOBAL_raj_chi_border_crisis_cooldown }
+	has_border_war = no
+}
+
+border_war_state_mechanized = {
+	OR = {
+		divisions_in_state = { size > 2 state = FROM unit = Mech_Inf_Bat }
+		divisions_in_state = { size > 2 state = FROM unit = Arm_Inf_Bat }
+		divisions_in_state = { size > 2 state = FROM unit = Mot_Inf_Bat }
+		divisions_in_state = { size > 2 state = FROM unit = Hvy_Mot_Inf_Bat }
+	}
+}
+
+border_war_state_artillery = {
+	OR = {
+		divisions_in_state = { size > 2 state = FROM unit = Arty_Bat }
+		divisions_in_state = { size > 2 state = FROM unit = SP_Arty_Bat }
+		divisions_in_state = { size > 2 state = FROM unit = SP_R_Arty_Bat }
+		divisions_in_state = { size > 2 state = FROM unit = air_assault_Arty_Bat }
+	}
+}
+
+pak_raj_border_has_sector = {
+	OR = {
+		420 = { is_controlled_by = PREV has_state_flag = pak_raj_border_sector }
+		426 = { is_controlled_by = PREV has_state_flag = pak_raj_border_sector }
+		427 = { is_controlled_by = PREV has_state_flag = pak_raj_border_sector }
+		429 = { is_controlled_by = PREV has_state_flag = pak_raj_border_sector }
+		563 = { is_controlled_by = PREV has_state_flag = pak_raj_border_sector }
+		573 = { is_controlled_by = PREV has_state_flag = pak_raj_border_sector }
+		984 = { is_controlled_by = PREV has_state_flag = pak_raj_border_sector }
+		987 = { is_controlled_by = PREV has_state_flag = pak_raj_border_sector }
+	}
+}
+
+raj_chi_border_has_sector = {
+	OR = {
+		475 = { is_controlled_by = PREV has_state_flag = raj_chi_border_sector }
+		589 = { is_controlled_by = PREV has_state_flag = raj_chi_border_sector }
+		591 = { is_controlled_by = PREV has_state_flag = raj_chi_border_sector }
+		982 = { is_controlled_by = PREV has_state_flag = raj_chi_border_sector }
+		993 = { is_controlled_by = PREV has_state_flag = raj_chi_border_sector }
+	}
+}
+
+pak_raj_border_ai_should_prepare = {
+	pak_raj_border_available = yes
+	is_ai = yes
+	OR = {
+		is_historical_focus_on = no
+		date > 2001.6.1
+	}
+	OR = {
+		AND = { original_tag = RAJ has_opinion = { target = PAK value < 0 } }
+		AND = { original_tag = PAK has_opinion = { target = RAJ value < 0 } }
+	}
+}
+
+raj_chi_border_ai_should_prepare = {
+	raj_chi_border_available = yes
+	is_ai = yes
+	OR = {
+		is_historical_focus_on = no
+		date > 2001.6.1
+	}
+	OR = {
+		AND = { original_tag = RAJ has_opinion = { target = CHI value < 0 } }
+		AND = { original_tag = CHI has_opinion = { target = RAJ value < 0 } }
+	}
+}
+
+pak_raj_border_ai_should_attack = {
+	pak_raj_border_attack_available = yes
+	is_ai = yes
+	OR = {
+		is_historical_focus_on = no
+		AND = {
+			date > 2003.1.1
+			check_variable = { pak_raj_border_readiness > 75 }
+			check_variable = { global.pak_raj_border_tension > 89 }
+		}
+	}
+}
+
+raj_chi_border_ai_should_attack = {
+	raj_chi_border_attack_available = yes
+	is_ai = yes
+	OR = {
+		is_historical_focus_on = no
+		AND = {
+			date > 2003.1.1
+			check_variable = { raj_chi_border_readiness > 75 }
+			check_variable = { global.raj_chi_border_tension > 89 }
+		}
+	}
+}
+
+pak_raj_border_ai_should_capture = {
+	pak_raj_border_capture_available = yes
+	is_ai = yes
+}
+
+raj_chi_border_ai_should_capture = {
+	raj_chi_border_capture_available = yes
+	is_ai = yes
+}
+
+pak_raj_border_axis_427_from_420_valid = {
+	420 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 420
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			427 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			427 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	427 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_420_from_427_valid = {
+	427 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 427
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			420 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			420 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	420 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_420_from_418_valid = {
+	418 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 418
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			420 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			420 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	420 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_429_from_563_valid = {
+	563 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 563
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			429 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			429 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	429 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_563_from_429_valid = {
+	429 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 429
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			563 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			563 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	563 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_427_from_428_valid = {
+	428 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 428
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			427 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			427 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	427 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_429_from_431_valid = {
+	431 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 431
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			429 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			429 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	429 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_563_from_422_valid = {
+	422 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 422
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			563 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			563 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	563 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_573_from_984_valid = {
+	984 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 984
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			573 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			573 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	573 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_984_from_573_valid = {
+	573 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 573
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			984 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			984 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	984 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_573_from_422_valid = {
+	422 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 422
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			573 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			573 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	573 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_426_from_984_valid = {
+	984 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 984
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			426 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			426 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	426 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_984_from_426_valid = {
+	426 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 426
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			984 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			984 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	984 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_426_from_416_valid = {
+	416 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 416
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			426 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			426 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	426 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_426_from_987_valid = {
+	987 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 987
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			426 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			426 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	426 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_987_from_426_valid = {
+	426 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 426
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			987 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			987 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	987 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_987_from_436_valid = {
+	436 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 436
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			987 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			987 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	987 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_axis_984_from_432_valid = {
+	432 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 432
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			984 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			984 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	984 = { NOT = { has_border_war = yes } }
+}
+
+pak_raj_border_capture_420_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			420 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			420 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	420 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			427 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 427
+			}
+		}
+		AND = {
+			418 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 418
+			}
+		}
+	}
+}
+
+pak_raj_border_capture_427_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			427 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			427 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	427 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			420 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 420
+			}
+		}
+		AND = {
+			428 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 428
+			}
+		}
+	}
+}
+
+pak_raj_border_capture_429_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			429 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			429 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	429 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			563 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 563
+			}
+		}
+		AND = {
+			431 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 431
+			}
+		}
+	}
+}
+
+pak_raj_border_capture_563_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			563 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			563 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	563 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			429 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 429
+			}
+		}
+		AND = {
+			422 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 422
+			}
+		}
+	}
+}
+
+pak_raj_border_capture_573_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			573 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			573 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	573 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			984 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 984
+			}
+		}
+		AND = {
+			422 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 422
+			}
+		}
+	}
+}
+
+pak_raj_border_capture_426_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			426 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			426 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	426 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			984 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 984
+			}
+		}
+		AND = {
+			987 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 987
+			}
+		}
+		AND = {
+			416 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 416
+			}
+		}
+	}
+}
+
+pak_raj_border_capture_987_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			987 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			987 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	987 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			426 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 426
+			}
+		}
+		AND = {
+			436 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 436
+			}
+		}
+	}
+}
+
+pak_raj_border_capture_984_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			984 = {
+				is_owned_by = PAK
+				is_controlled_by = PAK
+			}
+		}
+		AND = {
+			original_tag = PAK
+			984 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	984 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			573 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 573
+			}
+		}
+		AND = {
+			426 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 426
+			}
+		}
+		AND = {
+			432 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 432
+			}
+		}
+	}
+}
+
+raj_chi_border_axis_475_from_589_valid = {
+	589 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 589
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			475 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			475 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	475 = { NOT = { has_border_war = yes } }
+	OR = {
+		NOT = { original_tag = CHI }
+		has_completed_focus = CHI_Strike_Across_the_Himalayas
+	}
+}
+
+raj_chi_border_axis_475_from_473_valid = {
+	473 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 473
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			475 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			475 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	475 = { NOT = { has_border_war = yes } }
+	OR = {
+		NOT = { original_tag = CHI }
+		has_completed_focus = CHI_Strike_Across_the_Himalayas
+	}
+}
+
+raj_chi_border_axis_982_from_589_valid = {
+	589 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 589
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			982 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			982 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	982 = { NOT = { has_border_war = yes } }
+	OR = {
+		NOT = { original_tag = CHI }
+		has_completed_focus = CHI_Strike_Across_the_Himalayas
+	}
+}
+
+raj_chi_border_axis_982_from_455_valid = {
+	455 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 455
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			982 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			982 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	982 = { NOT = { has_border_war = yes } }
+	OR = {
+		NOT = { original_tag = CHI }
+		has_completed_focus = CHI_Strike_Across_the_Himalayas
+	}
+}
+
+raj_chi_border_axis_591_from_993_valid = {
+	993 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 993
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			591 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			591 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	591 = { NOT = { has_border_war = yes } }
+}
+
+raj_chi_border_axis_993_from_591_valid = {
+	591 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 591
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			993 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			993 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	993 = { NOT = { has_border_war = yes } }
+	OR = {
+		NOT = { original_tag = CHI }
+		has_completed_focus = CHI_Strike_Across_the_Himalayas
+	}
+}
+
+raj_chi_border_axis_993_from_589_valid = {
+	589 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 589
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			993 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			993 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	993 = { NOT = { has_border_war = yes } }
+	OR = {
+		NOT = { original_tag = CHI }
+		has_completed_focus = CHI_Strike_Across_the_Himalayas
+	}
+}
+
+raj_chi_border_axis_993_from_428_valid = {
+	428 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 428
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			993 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			993 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	993 = { NOT = { has_border_war = yes } }
+	OR = {
+		NOT = { original_tag = CHI }
+		has_completed_focus = CHI_Strike_Across_the_Himalayas
+	}
+}
+
+raj_chi_border_axis_591_from_589_valid = {
+	589 = {
+		is_owned_by = ROOT
+		is_controlled_by = ROOT
+		NOT = { has_border_war = yes }
+	}
+	divisions_in_state = {
+		size > 0
+		state = 589
+	}
+	OR = {
+		AND = {
+			original_tag = RAJ
+			591 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			591 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	591 = { NOT = { has_border_war = yes } }
+}
+
+raj_chi_border_capture_475_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			475 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			475 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	475 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			589 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 589
+			}
+		}
+		AND = {
+			473 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 473
+			}
+		}
+	}
+	OR = {
+		NOT = { original_tag = CHI }
+		has_completed_focus = CHI_Strike_Across_the_Himalayas
+	}
+}
+
+raj_chi_border_capture_982_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			982 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			982 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	982 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			589 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 589
+			}
+		}
+		AND = {
+			455 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 455
+			}
+		}
+	}
+	OR = {
+		NOT = { original_tag = CHI }
+		has_completed_focus = CHI_Strike_Across_the_Himalayas
+	}
+}
+
+raj_chi_border_capture_591_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			591 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			591 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	591 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			993 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 993
+			}
+		}
+		AND = {
+			589 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 589
+			}
+		}
+	}
+}
+
+raj_chi_border_capture_993_valid = {
+	OR = {
+		AND = {
+			original_tag = RAJ
+			993 = {
+				is_owned_by = CHI
+				is_controlled_by = CHI
+			}
+		}
+		AND = {
+			original_tag = CHI
+			993 = {
+				is_owned_by = RAJ
+				is_controlled_by = RAJ
+			}
+		}
+	}
+	993 = { NOT = { has_border_war = yes } }
+	OR = {
+		AND = {
+			591 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 591
+			}
+		}
+		AND = {
+			589 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 589
+			}
+		}
+		AND = {
+			428 = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+				NOT = { has_border_war = yes }
+			}
+			divisions_in_state = {
+				size > 0
+				state = 428
+			}
+		}
+	}
+	OR = {
+		NOT = { original_tag = CHI }
+		has_completed_focus = CHI_Strike_Across_the_Himalayas
 	}
 }

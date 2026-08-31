@@ -1,4 +1,4 @@
-﻿add_namespace = econvent
+add_namespace = econvent
 add_namespace = extended_econevent
 add_namespace = News_bankruptcy
 add_namespace = diplo_action_tools
@@ -23,7 +23,7 @@ country_event = {
 	id = econvent.1
 	title = econvent.1.t
 	desc = econvent.1.d
-	picture = GFX_foreclosure
+	picture = GFX_news_housing_warning
 	is_triggered_only = yes
 
 	mean_time_to_happen = {
@@ -52,7 +52,6 @@ country_event = {
 		name = econvent.1.a
 		log = "[GetDateText]: [This.GetName]: econvent.1.a executed"
 		small_expenditure = yes
-
 		random_list = {
 			40 = {
 				modifier = {
@@ -65,11 +64,8 @@ country_event = {
 				}
 				decrease_economic_growth = yes
 			}
-			60 = {
-				# No EFfect
-			}
+			60 = { }
 		}
-
 		set_temp_variable = { temp_opinion = -10 }
 		change_wall_street_opinion = yes
 		change_international_bankers_opinion = yes
@@ -77,7 +73,6 @@ country_event = {
 		change_small_medium_business_owners_opinion = yes
 		change_the_donju_opinion = yes
 		change_chaebols_opinion = yes
-
 		ai_chance = {
 			base = 1
 		}
@@ -88,7 +83,6 @@ country_event = {
 		name = econvent.1.b
 		log = "[GetDateText]: [This.GetName]: econvent.1.b executed"
 		custom_effect_tooltip = econvent.1.b_tt
-
 		set_country_flag = possible_housing_bubble
 		set_temp_variable = { temp_opinion = 5 }
 		change_wall_street_opinion = yes
@@ -97,11 +91,11 @@ country_event = {
 		change_small_medium_business_owners_opinion = yes
 		change_the_donju_opinion = yes
 		change_chaebols_opinion = yes
-
 		ai_chance = {
 			base = 0
 		}
 	}
+
 }
 
 #### Collapsing housing prices ####
@@ -109,14 +103,8 @@ country_event = {
 	id = econvent.2
 	title = econvent.2.t
 	desc = econvent.2.d
-	picture = GFX_foreclosure
+	picture = GFX_news_housing_crash
 	is_triggered_only = yes
-	trigger = {
-		NOT = {
-			has_country_flag = bank_crisis
-			has_country_flag = stock_market_crash
-		}
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -136,13 +124,22 @@ country_event = {
 			has_country_flag = possible_housing_bubble
 		}
 		modifier = {
-			factor = 0
+			factor = 0.5
 			OR = {
-				has_idea = depression
 				has_idea = recession
 				has_idea = stagnation
 			}
 		}
+	}
+
+	trigger = {
+		NOT = {
+			OR = {
+				has_country_flag = bank_crisis
+				has_country_flag = stock_market_crash
+			}
+		}
+		NOT = { has_idea = depression }
 	}
 
 	#Lower interest-rates and demand banks increase lending
@@ -150,128 +147,54 @@ country_event = {
 		name = econvent.2.a
 		log = "[GetDateText]: [This.GetName]: econvent.2.a executed"
 		set_country_flag = { flag = housing_crash value = 1 days = 180 }
-		clr_country_flag = possible_housing_bubble
-
-		set_country_flag = { flag = voodoo_economics value = 1 days = 365 }
-		custom_effect_tooltip = econvent.from_booming_tt
-		if = { limit = { has_idea = economic_boom }
+		if = { limit = { OR = { has_idea = economic_boom has_idea = fast_growth has_idea = stable_growth } }
 			random_list = {
 				70 = {
-					custom_effect_tooltip = econvent.list.fast_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = economic_boom
-						add_ideas = fast_growth
-					}
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
-				20 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = economic_boom
-						add_ideas = stable_growth
+				30 = {
+					modifier = {
+						factor = 1.5
+						has_country_flag = possible_housing_bubble
 					}
-					clr_country_flag = disable_cycle_costs
-				}
-				10 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = economic_boom
-						add_ideas = stagnation
+					modifier = {
+						factor = 1.5
+						has_country_flag = voodoo_economics
 					}
-					clr_country_flag = disable_cycle_costs
-				}
-			}
-		}
-		else_if = { limit = { has_idea = fast_growth }
-			random_list = {
-				70 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = fast_growth
-						add_ideas = stable_growth
+					modifier = {
+						factor = 1.5
+						has_country_flag = consumption_slowdown
 					}
-					clr_country_flag = disable_cycle_costs
-				}
-				20 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = fast_growth
-						add_ideas = stagnation
-					}
-					clr_country_flag = disable_cycle_costs
-				}
-				10 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = fast_growth
-						add_ideas = recession
-					}
-					clr_country_flag = disable_cycle_costs
-				}
-			}
-		}
-		else_if = { limit = { has_idea = stable_growth }
-			random_list = {
-				80 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = stable_growth
-						add_ideas = stagnation
-					}
-					clr_country_flag = disable_cycle_costs
-				}
-				20 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = stable_growth
-						add_ideas = recession
-					}
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stagnation }
 			random_list = {
 				50 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
-				50 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = stagnation
-						add_ideas = recession
-					}
-					clr_country_flag = disable_cycle_costs
+				40 = {
+					decrease_economic_growth = yes
+				}
+				10 = {
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = recession }
 			random_list = {
 				60 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				40 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = recession
-						add_ideas = depression
-					}
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
+		clr_country_flag = possible_housing_bubble
+		set_country_flag = { flag = voodoo_economics value = 1 days = 365 }
 		custom_effect_tooltip = econvent.voodoo_economics_tt
-
 		set_temp_variable = { temp_opinion = -5 }
 		change_small_medium_business_owners_opinion = yes
 		change_industrial_conglomerates_opinion = yes
@@ -279,7 +202,6 @@ country_event = {
 		change_the_donju_opinion = yes
 		change_chaebols_opinion = yes
 		change_wall_street_opinion = yes
-
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -307,117 +229,39 @@ country_event = {
 		name = econvent.2.b
 		log = "[GetDateText]: [This.GetName]: econvent.2.b executed"
 		set_country_flag = { flag = housing_crash value = 2  days = 365 }
-
-		custom_effect_tooltip = econvent.from_booming_tt
-		if = { limit = { has_idea = economic_boom }
+		if = { limit = { OR = { has_idea = economic_boom has_idea = fast_growth has_idea = stable_growth } }
 			random_list = {
-				65 = {
-					custom_effect_tooltip = econvent.list.fast_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = economic_boom
-						add_ideas = fast_growth
-					}
-					clr_country_flag = disable_cycle_costs
+				50 = {
+					decrease_economic_growth = yes
 				}
-				20 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = economic_boom
-						add_ideas = stable_growth
+				50 = {
+					modifier = {
+						factor = 1.5
+						has_country_flag = voodoo_economics
 					}
-					clr_country_flag = disable_cycle_costs
-				}
-				15 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = economic_boom
-						add_ideas = stagnation
+					modifier = {
+						factor = 1.5
+						has_country_flag = possible_housing_bubble
 					}
-					clr_country_flag = disable_cycle_costs
-				}
-			}
-		}
-		else_if = { limit = { has_idea = fast_growth }
-			random_list = {
-				65 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = fast_growth
-						add_ideas = stable_growth
-					}
-					clr_country_flag = disable_cycle_costs
-				}
-				35 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = fast_growth
-						add_ideas = stagnation
-					}
-					clr_country_flag = disable_cycle_costs
-				}
-			}
-		}
-		else_if = { limit = { has_idea = stable_growth }
-			random_list = {
-				65 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = stable_growth
-						add_ideas = stagnation
-					}
-					clr_country_flag = disable_cycle_costs
-				}
-				35 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = stable_growth
-						add_ideas = recession
-					}
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stagnation }
 			random_list = {
-				90 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = stagnation
-						add_ideas = recession
-					}
-					clr_country_flag = disable_cycle_costs
+				70 = {
+					decrease_economic_growth = yes
 				}
-				10 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = {
-						remove_ideas = stagnation
-						add_ideas = depression
-					}
-					clr_country_flag = disable_cycle_costs
+				30 = {
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = recession }
-			custom_effect_tooltip = econvent.list.depression_tt
-			set_country_flag = disable_cycle_costs
-			hidden_effect = {
-				remove_ideas = recession
-				add_ideas = depression
-			}
-			clr_country_flag = disable_cycle_costs
-			custom_effect_tooltip = econvent.2.b_tt
+			decrease_economic_growth = yes
 		}
+		clr_country_flag = possible_housing_bubble
 		custom_effect_tooltip = econvent.2.b_tt
-
 		set_temp_variable = { temp_opinion = -10 }
 		change_small_medium_business_owners_opinion = yes
 		change_industrial_conglomerates_opinion = yes
@@ -427,11 +271,11 @@ country_event = {
 		change_wall_street_opinion = yes
 		change_farmers_opinion = yes
 		change_landowners_opinion = yes
-
 		ai_chance = {
 			base = 100
 		}
 	}
+
 }
 
 # Stock Market Crash
@@ -441,12 +285,6 @@ country_event = {
 	desc = econvent.3.d
 	picture = GFX_economy_crisis
 	is_triggered_only = yes
-	trigger = {
-		NOT = {
-			has_country_flag = bank_crisis
-			has_country_flag = housing_crash
-		}
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -483,9 +321,24 @@ country_event = {
 		modifier = {
 			factor = 0
 			NOT = {
+				OR = {
+					has_country_flag = housing_crash
+					has_country_flag = stock_market_boom_accelerate
+					has_country_flag = stock_market_boom
+				}
+			}
+		}
+		modifier = {
+			add = -1
+			has_idea = FRA_regulation
+		}
+	}
+
+	trigger = {
+		NOT = {
+			OR = {
+				has_country_flag = bank_crisis
 				has_country_flag = housing_crash
-				has_country_flag = stock_market_boom_accelerate
-				has_country_flag = stock_market_boom
 			}
 		}
 	}
@@ -495,84 +348,49 @@ country_event = {
 		name = econvent.3.a
 		log = "[GetDateText]: [This.GetName]: econvent.3.a executed"
 		set_country_flag = { flag = stock_market_crash value = 1 days = 365 }
-
 		if = { limit = { has_idea = economic_boom }
-			custom_effect_tooltip = econvent.from_booming_tt
 			random_list = {
 				70 = {
-					custom_effect_tooltip = econvent.list.fast_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = fast_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				30 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = fast_growth }
-			custom_effect_tooltip = econvent.from_fast_growth_tt
 			random_list = {
 				75 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				25 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stable_growth }
-			custom_effect_tooltip = econvent.from_stable_growth_tt
 			random_list = {
 				80 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				20 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stagnation }
-			custom_effect_tooltip = econvent.from_stagnation_tt
 			random_list = {
 				90 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				10 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = depression }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = recession }
-			custom_effect_tooltip = econvent.from_stagnation_tt
-			custom_effect_tooltip = econvent.from_recession2_tt
-			custom_effect_tooltip = econvent.list.depression_tt
-			set_country_flag = disable_cycle_costs
-			hidden_effect = { add_ideas = depression }
-			clr_country_flag = disable_cycle_costs
+			decrease_economic_growth = yes
 		}
-
 		set_temp_variable = { temp_opinion = -15 }
 		change_small_medium_business_owners_opinion = yes
 		change_the_donju_opinion = yes
@@ -585,7 +403,6 @@ country_event = {
 		change_oligarchs_opinion = yes
 		change_fossil_fuel_industry_opinion = yes
 		change_labour_unions_opinion = yes
-
 		ai_chance = {
 			base = 2.0
 		}
@@ -596,10 +413,8 @@ country_event = {
 		name = econvent.3.b
 		log = "[GetDateText]: [This.GetName]: econvent.3.b executed"
 		set_country_flag = { flag = stock_market_crash value = 1 days = 180 }
-
 		medium_expenditure = yes
 		decrease_economic_growth = yes
-
 		set_temp_variable = { temp_opinion = -10 }
 		change_small_medium_business_owners_opinion = yes
 		change_the_donju_opinion = yes
@@ -612,11 +427,11 @@ country_event = {
 		change_oligarchs_opinion = yes
 		change_fossil_fuel_industry_opinion = yes
 		change_labour_unions_opinion = yes
-
 		ai_chance = {
 			base = 0.25
 		}
 	}
+
 }
 
 # Bank Crisis
@@ -624,14 +439,8 @@ country_event = {
 	id = econvent.4
 	title = econvent.4.t
 	desc = econvent.4.d
-	picture = GFX_united_states_dollar
+	picture = GFX_world_foreclosure
 	is_triggered_only = yes
-	trigger = {
-		NOT = {
-			has_country_flag = housing_crash
-			has_country_flag = stock_market_crash
-		}
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -650,10 +459,18 @@ country_event = {
 			factor = 0.5
 			has_country_flag = consumption_slowdown
 		}
-
 		modifier = {
 			factor = 1.15
 			has_country_flag = temp_increase_major_hike_in_corp_taxes
+		}
+	}
+
+	trigger = {
+		NOT = {
+			OR = {
+				has_country_flag = housing_crash
+				has_country_flag = stock_market_crash
+			}
 		}
 	}
 
@@ -662,86 +479,63 @@ country_event = {
 		name = econvent.4.a
 		log = "[GetDateText]: [This.GetName]: econvent.4.a executed"
 		set_country_flag = { flag = bank_crisis value = 1 days = 365 }
-
 		small_expenditure = yes
 		if = { limit = { has_idea = economic_boom }
-			custom_effect_tooltip = econvent.from_booming_tt
 			random_list = {
 				60 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				40 = {
-					custom_effect_tooltip = econvent.list.fast_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = fast_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = fast_growth }
-			custom_effect_tooltip = econvent.from_fast_growth_tt
 			random_list = {
 				60 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				40 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stable_growth }
-			custom_effect_tooltip = econvent.from_stable_growth_tt
 			random_list = {
 				70 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				30 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stagnation }
-			custom_effect_tooltip = econvent.from_stagnation_tt
 			random_list = {
 				80 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				20 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = recession }
-			custom_effect_tooltip = econvent.from_recession_tt
 			random_list = {
 				90 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				10 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = depression }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
-
 		set_temp_variable = { temp_opinion = 5 }
 		change_small_medium_business_owners_opinion = yes
 		change_the_donju_opinion = yes
 		change_chaebols_opinion = yes
 		change_wall_street_opinion = yes
 		change_international_bankers_opinion = yes
-
 		ai_chance = {
 			base = 0
 		}
@@ -752,94 +546,60 @@ country_event = {
 		name = econvent.4.b
 		log = "[GetDateText]: [This.GetName]: econvent.4.b executed"
 		set_country_flag = { flag = bank_crisis value = 2 days = 365 }
-
 		add_political_power = -75
 		if = { limit = { has_idea = economic_boom }
-			custom_effect_tooltip = econvent.from_booming_tt
 			random_list = {
 				80 = {
-					custom_effect_tooltip = econvent.list.fast_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = fast_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				20 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = fast_growth }
-			custom_effect_tooltip = econvent.from_fast_growth_tt
 			random_list = {
 				85 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				15 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stable_growth }
-			custom_effect_tooltip = econvent.from_stable_growth_tt
 			random_list = {
 				90 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				10 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stagnation }
-			custom_effect_tooltip = econvent.from_stagnation_tt
 			random_list = {
 				20 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				70 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				10 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = depression }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = recession }
-			custom_effect_tooltip = econvent.from_recession_tt
 			random_list = {
 				30 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				70 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = depression }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
-
 		set_temp_variable = { temp_opinion = 5 }
 		change_small_medium_business_owners_opinion = yes
 		change_the_donju_opinion = yes
@@ -847,7 +607,6 @@ country_event = {
 		set_temp_variable = { temp_opinion = -10 }
 		change_wall_street_opinion = yes
 		change_international_bankers_opinion = yes
-
 		ai_chance = {
 			base = 0
 		}
@@ -858,95 +617,61 @@ country_event = {
 		name = econvent.4.c
 		log = "[GetDateText]: [This.GetName]: econvent.4.c executed"
 		set_country_flag = { flag = bank_crisis value = 2 days = 365 }
-
 		if = { limit = { has_idea = economic_boom }
-			custom_effect_tooltip = econvent.from_booming_tt
 			random_list = {
 				60 = {
-					custom_effect_tooltip = econvent.list.fast_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = fast_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				40 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = fast_growth }
-			custom_effect_tooltip = econvent.from_fast_growth_tt
 			random_list = {
 				65 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				35 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stable_growth }
-			custom_effect_tooltip = econvent.from_stable_growth_tt
 			random_list = {
 				70 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				30 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stagnation }
-			custom_effect_tooltip = econvent.from_stagnation_tt
 			random_list = {
 				80 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				20 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = depression }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = recession }
-			custom_effect_tooltip = econvent.from_recession2_tt
-			custom_effect_tooltip = econvent.list.depression_tt
-			set_country_flag = disable_cycle_costs
-			hidden_effect = { add_ideas = depression }
-			clr_country_flag = disable_cycle_costs
+			decrease_economic_growth = yes
 			ingame_update_setup = yes
 		}
-
 		set_temp_variable = { temp_opinion = -10 }
 		change_small_medium_business_owners_opinion = yes
 		change_the_donju_opinion = yes
 		change_chaebols_opinion = yes
 		change_wall_street_opinion = yes
 		change_international_bankers_opinion = yes
-
 		ai_chance = {
 			base = 1
 		}
 	}
+
 }
 
 
@@ -1006,77 +731,16 @@ country_event = {
 		name = econvent.5.a
 		log = "[GetDateText]: [This.GetName]: econvent.5.a executed"
 		set_country_flag = { flag = consumption_slowdown value = 1 days = 365 }
-		if = { limit = { has_idea = economic_boom }
-			custom_effect_tooltip = econvent.from_booming_tt
+		if = { limit = { NOT = { has_idea = depression } }
 			random_list = {
 				60 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				40 = {
-					custom_effect_tooltip = econvent.list.fast_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = fast_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
-		else_if = { limit = { has_idea = fast_growth }
-			custom_effect_tooltip = econvent.from_fast_growth_tt
-			random_list = {
-				60 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
-				}
-				40 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
-				}
-			}
-		}
-		else_if = { limit = { has_idea = stable_growth }
-			custom_effect_tooltip = econvent.from_stable_growth_tt
-			random_list = {
-				60 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
-				}
-				40 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
-				}
-			}
-		}
-		else_if = { limit = { has_idea = stagnation }
-			custom_effect_tooltip = econvent.from_stagnation_tt
-			random_list = {
-				60 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
-				}
-				40 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
-				}
-			}
-		}
-		else_if = { limit = { has_idea = recession }
-			custom_effect_tooltip = econvent.from_recession_tt
-			random_list = {
-				60 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
-				}
-				40 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = depression }
-					clr_country_flag = disable_cycle_costs
-				}
-			}
-		}
-
 		set_temp_variable = { temp_opinion = 5 }
 		change_small_medium_business_owners_opinion = yes
 		change_the_donju_opinion = yes
@@ -1088,98 +752,65 @@ country_event = {
 		name = econvent.5.b
 		log = "[GetDateText]: [This.GetName]: econvent.5.b executed"
 		set_country_flag = { flag = consumption_slowdown value = 1 days = 365 }
-
 		if = { limit = { has_idea = economic_boom }
-			custom_effect_tooltip = econvent.from_booming_tt
 			random_list = {
 				80 = {
-					custom_effect_tooltip = econvent.list.fast_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = fast_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				20 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = fast_growth }
-			custom_effect_tooltip = econvent.from_fast_growth_tt
 			random_list = {
 				85 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				15 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stable_growth }
-			custom_effect_tooltip = econvent.from_stable_growth_tt
 			random_list = {
 				90 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				10 = {
-				custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stagnation }
-			custom_effect_tooltip = econvent.from_stagnation_tt
 			random_list = {
 				10 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				80 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				10 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = depression }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = recession }
-			custom_effect_tooltip = econvent.from_recession_tt
 			random_list = {
 				20 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				80 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = depression }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
-
 		set_temp_variable = { temp_opinion = -5 }
 		change_small_medium_business_owners_opinion = yes
 		change_the_donju_opinion = yes
 		change_chaebols_opinion = yes
 	}
+
 }
 
 ### Lower demand for our goods in int. markets
@@ -1228,88 +859,63 @@ country_event = {
 		name = econvent.6.a
 		log = "[GetDateText]: [This.GetName]: econvent.6.a executed"
 		if = { limit = { has_idea = economic_boom }
-			custom_effect_tooltip = econvent.from_booming_tt
 			random_list = {
 				20 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				70 = {
-					custom_effect_tooltip = econvent.list.fast_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = fast_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				10 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = fast_growth }
-			custom_effect_tooltip = econvent.from_fast_growth_tt
 			random_list = {
 				20 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				75 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				5 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stable_growth }
-			custom_effect_tooltip = econvent.from_stable_growth_tt
 			random_list = {
 				20 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				80 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stagnation }
-			custom_effect_tooltip = econvent.from_stagnation_tt
 			random_list = {
 				25 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				75 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = recession }
-			custom_effect_tooltip = econvent.from_recession_tt
 			random_list = {
 				50 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				50 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = depression }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 	}
+
 }
 
 #### Things for poor countries ####
@@ -1321,11 +927,6 @@ country_event = {
 	title = econvent.7.t
 	desc = econvent.7.d
 	is_triggered_only = yes
-
-	trigger = {
-		is_arid_nation = yes
-		NOT = { has_country_flag = drought }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -1347,94 +948,74 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		has_country_flag = arid_nation_flag
+		NOT = { has_country_flag = drought }
+	}
+
 	#Not much to do about this
 	option = {
 		name = econvent.7.a
 		log = "[GetDateText]: [This.GetName]: econvent.7.a executed"
 		set_country_flag = { flag = drought value = 1 days = 120 }
 		if = { limit = { has_idea = economic_boom }
-			custom_effect_tooltip = econvent.from_booming_tt
 			random_list = {
 				20 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				70 = {
-					custom_effect_tooltip = econvent.list.fast_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = fast_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				10 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = fast_growth }
-			custom_effect_tooltip = econvent.from_fast_growth_tt
 			random_list = {
 				20 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				75 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				5 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stable_growth }
-			custom_effect_tooltip = econvent.from_stable_growth_tt
 			random_list = {
 				20 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				80 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stagnation }
-			custom_effect_tooltip = econvent.from_stagnation_tt
 			random_list = {
 				25 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				75 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = recession }
-			custom_effect_tooltip = econvent.from_recession_tt
 			random_list = {
 				50 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				50 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = depression }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 	}
+
 }
 
 ### Drought causes famine
@@ -1443,10 +1024,6 @@ country_event = {
 	title = econvent.8.t
 	desc = econvent.8.d
 	is_triggered_only = yes
-	trigger = {
-		has_country_flag = drought
-		NOT = { has_idea = depression }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -1464,97 +1041,76 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		has_country_flag = drought
+		NOT = { has_idea = depression }
+	}
+
 	#Not much to do about this
 	option = {
 		name = econvent.8.a
 		log = "[GetDateText]: [This.GetName]: econvent.8.a executed"
 		set_country_flag = { flag = famine value = 1 days = 200 }
 		if = { limit = { has_idea = economic_boom }
-			custom_effect_tooltip = econvent.from_booming_tt
 			random_list = {
 				20 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				70 = {
-					custom_effect_tooltip = econvent.list.fast_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = fast_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				10 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = fast_growth }
-			custom_effect_tooltip = econvent.from_fast_growth_tt
 			random_list = {
 				20 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				75 = {
-					custom_effect_tooltip = econvent.list.stable_growth_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stable_growth }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 				5 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_two_level_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stable_growth }
-			custom_effect_tooltip = econvent.from_stable_growth_tt
 			random_list = {
 				20 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				80 = {
-					custom_effect_tooltip = econvent.list.stagnation_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = stagnation }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = stagnation }
-			custom_effect_tooltip = econvent.from_stagnation_tt
 			random_list = {
 				25 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				75 = {
-					custom_effect_tooltip = econvent.list.recession_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = recession }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
 		else_if = { limit = { has_idea = recession }
-			custom_effect_tooltip = econvent.from_recession_tt
 			random_list = {
 				50 = {
-					custom_effect_tooltip = econvent.list.no_effect_tt
+					custom_effect_tooltip = NO_EFFECT_TT
 				}
 				50 = {
-					custom_effect_tooltip = econvent.list.depression_tt
-					set_country_flag = disable_cycle_costs
-					hidden_effect = { add_ideas = depression }
-					clr_country_flag = disable_cycle_costs
+					decrease_economic_growth = yes
 				}
 			}
 		}
-
 		set_temp_variable = { temp_opinion = -15 }
 		change_farmers_opinion = yes
 	}
+
 }
 
 ##Positive Economic Events
@@ -1565,17 +1121,6 @@ country_event = {
 	desc = econvent.9.d
 	picture = GFX_stock_market
 	is_triggered_only = yes
-	trigger = {
-		NOT = {
-			has_country_flag = increased_consumer_confidence
-			has_idea = economic_boom
-			has_active_mission = debt_default_main_mission
-			#JAP
-			has_idea = JAP_entrenched_demand_shortfall_idea_1
-			has_idea = JAP_entrenched_demand_shortfall_idea_2
-			has_idea = JAP_entrenched_demand_shortfall_idea_3
-		}
-	}
 
 	mean_time_to_happen = {
 		# Economically Liberal trying to spurn economic growth
@@ -1621,6 +1166,20 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		NOT = {
+			OR = {
+				has_country_flag = increased_consumer_confidence
+				has_idea = economic_boom
+				has_active_mission = debt_default_main_mission
+				#JAP
+				has_idea = JAP_entrenched_demand_shortfall_idea_1
+				has_idea = JAP_entrenched_demand_shortfall_idea_2
+				has_idea = JAP_entrenched_demand_shortfall_idea_3
+			}
+		}
+	}
+
 	option = {
 		name = econvent.9.a
 		log = "[GetDateText]: [Root.GetName]: event econvent.9.a"
@@ -1638,9 +1197,9 @@ country_event = {
 		change_international_bankers_opinion = yes
 		change_wall_street_opinion = yes
 		change_maritime_industry_opinion = yes
-
 		set_country_flag = { flag = increased_consumer_confidence value = 1 days = 180 }
 	}
+
 }
 
 #Stock Market Boom
@@ -1649,22 +1208,6 @@ country_event = {
 	title = econvent.10.t
 	desc = econvent.10.d
 	is_triggered_only = yes
-	trigger = {
-		NOT = {
-			has_idea = economic_boom
-			has_active_mission = debt_default_main_mission
-			has_country_flag = stock_market_boom_accelerate
-			has_country_flag = stock_market_boom_slowed
-			has_country_flag = stock_market_boom
-			#JAP
-			has_idea = JAP_entrenched_demand_shortfall_idea_1
-			has_idea = JAP_entrenched_demand_shortfall_idea_2
-			has_idea = JAP_entrenched_demand_shortfall_idea_3
-
-			# Communists cannot get stock market boom...
-			has_communist_government_or_in_coalition = yes
-		}
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -1712,6 +1255,23 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		NOT = {
+			OR = {
+				has_idea = economic_boom
+				has_active_mission = debt_default_main_mission
+				has_country_flag = stock_market_boom_accelerate
+				has_country_flag = stock_market_boom_slowed
+				has_country_flag = stock_market_boom
+				#JAP
+				has_idea = JAP_entrenched_demand_shortfall_idea_1
+				has_idea = JAP_entrenched_demand_shortfall_idea_2
+				has_idea = JAP_entrenched_demand_shortfall_idea_3
+				# Communists cannot get stock market boom...
+				has_communist_government_or_in_coalition = yes
+			}
+		}
+	}
 
 	option = {
 		name = econvent.10.a
@@ -1727,6 +1287,7 @@ country_event = {
 			base = 0
 		}
 	}
+
 	option = {
 		name = econvent.10.b
 		log = "[GetDateText]: [Root.GetName]: event econvent.10.b"
@@ -1740,6 +1301,7 @@ country_event = {
 			base = 1
 		}
 	}
+
 	option = {
 		name = econvent.10.c
 		log = "[GetDateText]: [Root.GetName]: event econvent.10.c"
@@ -1752,6 +1314,7 @@ country_event = {
 			base = 0
 		}
 	}
+
 }
 
 # Major Financial Institution Requires a Bailout
@@ -1759,16 +1322,8 @@ country_event = {
 	id = econvent.11
 	title = econvent.11.t
 	desc = econvent.11.d
-	is_triggered_only = yes
 	picture = GFX_banking_crisis
-	trigger = {
-		NOT = { has_country_flag = ECON_recent_financial_institution_crash }
-		OR = {
-			has_idea = economic_boom
-			has_idea = fast_growth
-			has_idea = stable_growth
-		}
-	}
+	is_triggered_only = yes
 
 	mean_time_to_happen = {
 		# Communists Lower Chances -- Sim more market economy control
@@ -1795,15 +1350,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		NOT = { has_country_flag = ECON_recent_financial_institution_crash }
+		OR = {
+			has_idea = economic_boom
+			has_idea = fast_growth
+			has_idea = stable_growth
+		}
+	}
+
 	# Too Big to Fail
 	option = {
 		name = econvent.11.a
-		log = "[GetDateText]: [Root.GetName]: event econvent.10.a"
-
+		log = "[GetDateText]: [Root.GetName]: event econvent.11.a"
 		set_temp_variable = { treasury_change = gdp_total }
 		multiply_temp_variable = { treasury_change = -0.05 }
 		modify_treasury_effect = yes
-
 		set_temp_variable = { temp_opinion = -5 }
 		change_international_bankers_opinion = yes
 		change_wall_street_opinion = yes
@@ -1817,40 +1379,66 @@ country_event = {
 		change_oligarchs_opinion = yes
 		change_defense_industry_opinion = yes
 		change_maritime_industry_opinion = yes
-
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = -0.03 }
 		set_temp_variable = { temp_outlook_increase = -0.03 }
-		add_relative_party_popularity = yes
-
+		change_relative_party_popularity = yes
 		# Reduce only one level
 		decrease_economic_growth = yes
 		every_country = {
 			limit = {
 				influence_higher_10 = yes
 			}
-			random_list = {
-				10 = {
-					modifier = {
-						factor = 5
-						is_subject_of = ROOT
+			if = {
+				limit = { is_subject_of = ROOT }
+				if = {
+					limit = {
+						OR = {
+							is_in_faction_with = ROOT
+							is_neighbor_of = ROOT
+						}
 					}
-					modifier = {
-						factor = 3
-						is_in_faction_with = ROOT
+					random = {
+						chance = 100
+						country_event = { id = econvent.12 random_days = 100 }
 					}
-					modifier = {
-						factor = 2
-						is_neighbor_of = ROOT
+				}
+				else = {
+					random = {
+						chance = 50
+						country_event = { id = econvent.12 random_days = 100 }
 					}
+				}
+			}
+			else_if = {
+				limit = { is_in_faction_with = ROOT }
+				if = {
+					limit = { is_neighbor_of = ROOT }
+					random = {
+						chance = 60
+						country_event = { id = econvent.12 random_days = 100 }
+					}
+				}
+				else = {
+					random = {
+						chance = 30
+						country_event = { id = econvent.12 random_days = 100 }
+					}
+				}
+			}
+			else_if = {
+				limit = { is_neighbor_of = ROOT }
+				random = {
+					chance = 20
 					country_event = { id = econvent.12 random_days = 100 }
 				}
-				90 = {
-
+			}
+			else = {
+				random = {
+					chance = 10
+					country_event = { id = econvent.12 random_days = 100 }
 				}
 			}
 		}
-
 		set_country_flag = { flag = ECON_recent_financial_institution_crash days = 365 value = 1 }
 		ai_chance = {
 			base = 1
@@ -1860,8 +1448,7 @@ country_event = {
 	# Let it fail..
 	option = {
 		name = econvent.11.b
-		log = "[GetDateText]: [Root.GetName]: event econvent.10.b"
-
+		log = "[GetDateText]: [Root.GetName]: event econvent.11.b"
 		set_temp_variable = { temp_opinion = -15 }
 		change_international_bankers_opinion = yes
 		change_wall_street_opinion = yes
@@ -1875,12 +1462,9 @@ country_event = {
 		change_oligarchs_opinion = yes
 		change_defense_industry_opinion = yes
 		change_maritime_industry_opinion = yes
-
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
-
+		change_relative_party_popularity = yes
 		hidden_effect = {
 			remove_ideas = {
 				economic_boom
@@ -1900,29 +1484,42 @@ country_event = {
 				add_ideas = depression
 			}
 		}
-		random_list = {
-			10 = {
-				modifier = {
-					factor = 5
-					is_subject_of = ROOT
+		if = {
+			limit = { is_subject_of = ROOT }
+			if = {
+				limit = { is_in_faction_with = ROOT }
+				random = {
+					chance = 100
+					country_event = { id = econvent.12 random_days = 100 }
 				}
-				modifier = {
-					factor = 3
-					is_in_faction_with = ROOT
+			}
+			else = {
+				random = {
+					chance = 50
+					country_event = { id = econvent.12 random_days = 100 }
 				}
+			}
+		}
+		else_if = {
+			limit = { is_in_faction_with = ROOT }
+			random = {
+				chance = 30
 				country_event = { id = econvent.12 random_days = 100 }
 			}
-			90 = {
-
+		}
+		else = {
+			random = {
+				chance = 10
+				country_event = { id = econvent.12 random_days = 100 }
 			}
 		}
 		clr_country_flag = disable_cycle_costs
-
 		set_country_flag = { flag = ECON_recent_financial_institution_crash days = 365 value = 1 }
 		ai_chance = {
 			base = 0
 		}
 	}
+
 }
 
 # [FROM.GetName] Recent Economic Crisis has rippled through our nation
@@ -1936,11 +1533,9 @@ country_event = {
 	option = {
 		name = econvent.12.a
 		log = "[GetDateText]: [This.GetName]: econvent.12.a executed"
-
 		set_temp_variable = { treasury_change = gdp_total }
 		multiply_temp_variable = { treasury_change = -0.05 }
 		modify_treasury_effect = yes
-
 		set_temp_variable = { temp_opinion = -5 }
 		change_international_bankers_opinion = yes
 		set_temp_variable = { temp_opinion = -3 }
@@ -1953,11 +1548,9 @@ country_event = {
 		change_oligarchs_opinion = yes
 		change_defense_industry_opinion = yes
 		change_maritime_industry_opinion = yes
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = -0.03 }
 		set_temp_variable = { temp_outlook_increase = -0.03 }
-		add_relative_party_popularity = yes
-
+		change_relative_party_popularity = yes
 		decrease_economic_growth = yes
 		ai_chance = {
 			base = 1
@@ -1967,7 +1560,6 @@ country_event = {
 	option = {
 		name = econvent.12.b
 		log = "[GetDateText]: [This.GetName]: econvent.12.b executed"
-
 		set_temp_variable = { temp_opinion = -15 }
 		change_international_bankers_opinion = yes
 		set_temp_variable = { temp_opinion = -10 }
@@ -1980,17 +1572,15 @@ country_event = {
 		change_oligarchs_opinion = yes
 		change_defense_industry_opinion = yes
 		change_maritime_industry_opinion = yes
-
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = -0.03 }
 		set_temp_variable = { temp_outlook_increase = -0.03 }
-		add_relative_party_popularity = yes
-
+		change_relative_party_popularity = yes
 		decrease_economic_growth = yes
 		ai_chance = {
 			base = 0
 		}
 	}
+
 }
 
 # High Debt Causes Companies to Leave
@@ -2000,15 +1590,6 @@ country_event = {
 	desc = econvent.13.d
 	picture = GFX_banking_crisis
 	is_triggered_only = yes
-	immediate = {
-		set_country_flag = { flag = high_debt_company_closure value = 1 days = 180 }
-	}
-
-	trigger = {
-		check_variable = { industrial_complex_total > 1 }
-		gdp_debt_ratio_higher_125 = yes
-		NOT = { has_country_flag = high_debt_company_closure }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -2041,12 +1622,20 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { industrial_complex_total > 1 }
+		gdp_debt_ratio_higher_125 = yes
+		NOT = { has_country_flag = high_debt_company_closure }
+	}
+
+	immediate = {
+		set_country_flag = { flag = high_debt_company_closure value = 1 days = 180 }
+	}
 
 	# Allow the Loss
 	option = {
 		name = econvent.13.a
 		log = "[GetDateText]: [This.GetName]: econvent.13.a executed"
-
 		random_owned_controlled_state = {
 			limit = {
 				check_variable = { building_level@industrial_complex > 0 }
@@ -2056,7 +1645,6 @@ country_event = {
 				level = -1
 			}
 		}
-
 		set_temp_variable = { temp_opinion = -5 }
 		change_international_bankers_opinion = yes
 		change_small_medium_business_owners_opinion = yes
@@ -2068,7 +1656,6 @@ country_event = {
 		change_oligarchs_opinion = yes
 		change_defense_industry_opinion = yes
 		change_maritime_industry_opinion = yes
-
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -2085,7 +1672,6 @@ country_event = {
 		set_temp_variable = { treasury_change = gdp_total }
 		multiply_temp_variable = { treasury_change = -0.025 }
 		modify_treasury_effect = yes
-
 		set_temp_variable = { temp_opinion = 5 }
 		change_international_bankers_opinion = yes
 		change_small_medium_business_owners_opinion = yes
@@ -2097,7 +1683,6 @@ country_event = {
 		change_oligarchs_opinion = yes
 		change_defense_industry_opinion = yes
 		change_maritime_industry_opinion = yes
-
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -2106,6 +1691,7 @@ country_event = {
 			}
 		}
 	}
+
 }
 
 # Private Investors Invest Civilian Industry
@@ -2115,17 +1701,6 @@ country_event = {
 	desc = econvent.14.d
 	picture = GFX_stock_market
 	is_triggered_only = yes
-	trigger = {
-		NOT = { has_idea = Non_State_Actor }
-		NOT = { has_country_flag = private_investor_civilian_industry }
-		any_owned_state = {
-			free_building_slots = {
-				building = industrial_complex
-				size > 0
-				include_locked = yes
-			}
-		}
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -2176,38 +1751,27 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = private_investor_civilian_industry }
+		any_owned_state = {
+			free_building_slots = {
+				building = industrial_complex
+				size > 0
+				include_locked = yes
+			}
+		}
+	}
+
 	option = {
 		name = econvent.14.a
 		log = "[GetDateText]: [This.GetName]: econvent.14.a executed"
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.03 }
 		set_temp_variable = { temp_outlook_increase = 0.03 }
-		add_relative_party_popularity = yes
-
+		change_relative_party_popularity = yes
 		# Free Industrial Complex
 		random_owned_controlled_state = {
-			limit = {
-				free_building_slots = {
-					building = industrial_complex
-					size > 0
-					include_locked = yes
-				}
-				OR = {
-					is_in_home_area = yes
-					NOT = {
-						owner = {
-							any_owned_state = {
-								free_building_slots = {
-									building = industrial_complex
-									size > 0
-									include_locked = yes
-								}
-								is_in_home_area = yes
-							}
-						}
-					}
-				}
-			}
+			limit = { free_shared_building_slots = yes }
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
 				type = industrial_complex
@@ -2215,9 +1779,9 @@ country_event = {
 				instant_build = yes
 			}
 		}
-
 		set_country_flag = { flag = private_investor_civilian_industry value = 1 days = 365 }
 	}
+
 }
 
 # Private Investors Invest in Office Park
@@ -2227,17 +1791,6 @@ country_event = {
 	desc = econvent.15.d
 	picture = GFX_stock_market
 	is_triggered_only = yes
-	trigger = {
-		NOT = { has_idea = Non_State_Actor }
-		NOT = { has_country_flag = private_investor_office_park }
-		any_owned_state = {
-			free_building_slots = {
-				building = offices
-				size > 0
-				include_locked = yes
-			}
-		}
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -2270,7 +1823,7 @@ country_event = {
 			has_idea = economic_boom
 		}
 		modifier = {
-			factor = 2.
+			factor = 2.0
 			has_idea = fast_growth
 		}
 		modifier = {
@@ -2291,38 +1844,27 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = private_investor_office_park }
+		any_owned_state = {
+			free_building_slots = {
+				building = offices
+				size > 0
+				include_locked = yes
+			}
+		}
+	}
+
 	option = {
 		name = econvent.15.a
 		log = "[GetDateText]: [This.GetName]: econvent.15.a executed"
-		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.03 }
 		set_temp_variable = { temp_outlook_increase = 0.03 }
-		add_relative_party_popularity = yes
-
+		change_relative_party_popularity = yes
 		# Free Industrial Complex
 		random_owned_controlled_state = {
-			limit = {
-				free_building_slots = {
-					building = offices
-					size > 0
-					include_locked = yes
-				}
-				OR = {
-					is_in_home_area = yes
-					NOT = {
-						owner = {
-							any_owned_state = {
-								free_building_slots = {
-									building = offices
-									size > 0
-									include_locked = yes
-								}
-								is_in_home_area = yes
-							}
-						}
-					}
-				}
-			}
+			limit = { free_shared_building_slots = yes }
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
 				type = offices
@@ -2330,65 +1872,445 @@ country_event = {
 				instant_build = yes
 			}
 		}
-
 		set_country_flag = { flag = private_investor_office_park value = 1 days = 365 }
 	}
+
 }
 
-# Generic Loss of Industry
+# Modern Production Methods Spread
 country_event = {
-	id = econvent.100
-	title = econvent.100.t
-	desc = econvent.100.d
-
+	id = econvent.16
+	title = econvent.16.t
+	desc = econvent.16.d
+	picture = GFX_generic_factory
 	is_triggered_only = yes
 
-	option = {
-		name = econvent.100.a
-		set_variable = { reduction_factor = 0.1 }
-		remove_civilian_industry_effect = yes
-		log = "[GetDateText]: [This.GetName]: econvent.100.a executed"
-	}
-}
-
-# Industry Relocates
-country_event = {
-	id = econvent.101
-	title = econvent.101.t
-	desc = econvent.101.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = econvent.101.a
-		set_variable = { reduction_factor = 0.1 }
-		#log = "2Lose §R[?reduction_factor|%0]§! of civilian factories."
-		#log = "Ind: [?reduction_factor] [?reduction_factor|%0]"
-		migrate_industry_to_random_effect = yes
-		log = "[GetDateText]: [This.GetName]: econvent.101.a executed"
-	}
-}
-
-country_event = {
-	id = econvent.102
-	title = econvent.102.t
-	desc = econvent.102.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = econvent.102.a
-		custom_effect_tooltip = factories_migrated_to_us_tt # <ind_factories> Factories from <FROM> have relocate somewhere in <ROOT>.
-		hidden_effect = {
-			FROM = {
-				set_variable = { iterations = 0 }
-			}
-			civ_factory_relocate_from_from_build_loop_effect = yes
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			has_idea = economic_boom
 		}
-		log = "[GetDateText]: [This.GetName]: econvent.102.a executed"
+		modifier = {
+			factor = 1.75
+			has_idea = fast_growth
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = stable_growth
+		}
+		modifier = {
+			factor = 1.5
+			check_variable = { overall_productivity < 750 }
+		}
+		modifier = {
+			factor = 1.5
+			check_variable = { overall_productivity < 500 }
+		}
 	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_productivity_gain }
+		check_variable = { overall_productivity < global.average_world_productivity }
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_productivity_gain value = 1 days = 365 }
+	}
+
+	option = {
+		name = econvent.16.a
+		log = "[GetDateText]: [This.GetName]: econvent.16.a executed"
+		set_temp_variable = { temp_productivity_change = 10 }
+		flat_productivity_change_effect = yes
+	}
+
 }
 
+# Education Investments Bear Fruit
+country_event = {
+	id = econvent.17
+	title = econvent.17.t
+	desc = econvent.17.d
+	picture = GFX_generic_education_event_picture
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.5
+			check_variable = { education_law > 3 }
+		}
+		modifier = {
+			factor = 1.5
+			check_variable = { education_law > 4 }
+		}
+		modifier = {
+			factor = 1.5
+			OR = {
+				has_idea = economic_boom
+				has_idea = fast_growth
+				has_idea = stable_growth
+			}
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_productivity_gain }
+		check_variable = { overall_productivity < global.average_world_productivity }
+		check_variable = { education_law > 2 }
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_productivity_gain value = 1 days = 365 }
+	}
+
+	option = {
+		name = econvent.17.a
+		log = "[GetDateText]: [This.GetName]: econvent.17.a executed"
+		set_temp_variable = { temp_productivity_change = 10 }
+		flat_productivity_change_effect = yes
+	}
+
+}
+
+# Foreign Technology Spreads Domestically
+country_event = {
+	id = econvent.18
+	title = econvent.18.t
+	desc = econvent.18.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.75
+			has_idea = globalized_trade_economy
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = international_bankers
+			check_variable = { international_bankers_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = industrial_conglomerates
+			check_variable = { industrial_conglomerates_opinion > 60 }
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_productivity_gain }
+		check_variable = { overall_productivity < global.average_world_productivity }
+		OR = {
+			has_idea = export_economy
+			has_idea = globalized_trade_economy
+		}
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_productivity_gain value = 1 days = 365 }
+	}
+
+	option = {
+		name = econvent.18.a
+		log = "[GetDateText]: [This.GetName]: econvent.18.a executed"
+		set_temp_variable = { temp_productivity_change = 10 }
+		flat_productivity_change_effect = yes
+	}
+
+}
+
+# Semiconductor Foundry Investment
+country_event = {
+	id = econvent.19
+	title = econvent.19.t
+	desc = econvent.19.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			check_variable = { resource@microchips < 0 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = international_bankers
+			check_variable = { international_bankers_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = industrial_conglomerates
+			check_variable = { industrial_conglomerates_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			OR = {
+				has_idea = economic_boom
+				has_idea = fast_growth
+				has_idea = stable_growth
+			}
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_advanced_industry_investment }
+		has_tech = microchip_production_1
+		check_variable = { resource@chromium > 0 }
+		check_variable = { resource@tungsten > 0 }
+		check_variable = { energy_difference_variable > 0 }
+		any_controlled_state = {
+			is_owned_by = ROOT
+			free_building_slots = {
+				building = microchip_plant
+				size > 0
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_advanced_industry_investment value = 1 days = 730 }
+	}
+
+	option = {
+		name = econvent.19.a
+		log = "[GetDateText]: [This.GetName]: econvent.19.a executed"
+		random_owned_controlled_state = {
+			limit = {
+				free_building_slots = {
+					building = microchip_plant
+					size > 0
+				}
+			}
+			add_building_construction = {
+				type = microchip_plant
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+}
+
+# Composite Industry Expansion
+country_event = {
+	id = econvent.20
+	title = econvent.20.t
+	desc = econvent.20.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			check_variable = { resource@composites < 0 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = defense_industry
+			check_variable = { defense_industry_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = industrial_conglomerates
+			check_variable = { industrial_conglomerates_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			OR = {
+				check_variable = { military_factory_total > 0 }
+				check_variable = { naval_factory_total > 0 }
+			}
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_advanced_industry_investment }
+		has_tech = composite_production_1
+		check_variable = { resource@chromium > 0 }
+		check_variable = { resource@rubber > 0 }
+		check_variable = { resource@oil > 0 }
+		check_variable = { energy_difference_variable > 0 }
+		any_controlled_state = {
+			is_owned_by = ROOT
+			free_building_slots = {
+				building = composite_plant
+				size > 0
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_advanced_industry_investment value = 1 days = 730 }
+	}
+
+	option = {
+		name = econvent.20.a
+		log = "[GetDateText]: [This.GetName]: econvent.20.a executed"
+		random_owned_controlled_state = {
+			limit = {
+				free_building_slots = {
+					building = composite_plant
+					size > 0
+				}
+			}
+			add_building_construction = {
+				type = composite_plant
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+}
+
+# Defense Contracts Expand Production
+country_event = {
+	id = econvent.21
+	title = econvent.21.t
+	desc = econvent.21.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			has_war = yes
+		}
+		modifier = {
+			factor = 1.5
+			check_variable = { military_law > 7 }
+		}
+		modifier = {
+			factor = 2
+			has_idea = defense_industry
+			check_variable = { defense_industry_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			OR = {
+				has_idea = economic_boom
+				has_idea = fast_growth
+				has_idea = stable_growth
+			}
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_idea = no_military }
+		NOT = { has_country_flag = econ_recent_strategic_industry_expansion }
+		check_variable = { military_law > 4 }
+		check_variable = { total_unemployed_percentage_display > 0.01 }
+		check_variable = { energy_difference_variable > 0 }
+		any_controlled_state = {
+			is_owned_by = ROOT
+			free_building_slots = {
+				building = arms_factory
+				size > 0
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_strategic_industry_expansion value = 1 days = 730 }
+	}
+
+	option = {
+		name = econvent.21.a
+		log = "[GetDateText]: [This.GetName]: econvent.21.a executed"
+		random_owned_controlled_state = {
+			limit = {
+				free_building_slots = {
+					building = arms_factory
+					size > 0
+				}
+			}
+			add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+}
+
+# Commercial Shipbuilding Orders Surge
+country_event = {
+	id = econvent.22
+	title = econvent.22.t
+	desc = econvent.22.d
+	picture = GFX_cargo_ship
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.5
+			check_variable = { naval_factory_total > 0 }
+		}
+		modifier = {
+			factor = 2
+			has_idea = maritime_industry
+			check_variable = { maritime_industry_opinion > 60 }
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = globalized_trade_economy
+		}
+	}
+
+	trigger = {
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_country_flag = econ_recent_strategic_industry_expansion }
+		check_variable = { total_unemployed_percentage_display > 0.01 }
+		check_variable = { energy_difference_variable > 0 }
+		OR = {
+			has_idea = export_economy
+			has_idea = globalized_trade_economy
+			AND = {
+				has_idea = maritime_industry
+				check_variable = { maritime_industry_opinion > 60 }
+			}
+		}
+		any_controlled_state = {
+			is_owned_by = ROOT
+			is_coastal = yes
+			free_building_slots = {
+				building = dockyard
+				size > 0
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = { flag = econ_recent_strategic_industry_expansion value = 1 days = 730 }
+	}
+
+	option = {
+		name = econvent.22.a
+		log = "[GetDateText]: [This.GetName]: econvent.22.a executed"
+		random_owned_controlled_state = {
+			limit = {
+				is_coastal = yes
+				free_building_slots = {
+					building = dockyard
+					size > 0
+				}
+			}
+			add_building_construction = {
+				type = dockyard
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+}
 
 # Bailout Requested
 country_event = {
@@ -2402,16 +2324,25 @@ country_event = {
 	option = {
 		name = bankruptcy.1.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.1.a executed"
-		set_temp_variable = { our_cost = FROM.debt_bailout }
-		multiply_temp_variable = { our_cost = 0.75 }
-		subtract_from_variable = { treasury = our_cost }
-		custom_effect_tooltip = bankruptcy_bailout_sum_TT
-		custom_effect_tooltip = bankruptcy_bailout_influence_TT
-		FROM = { news_event = { id = News_bankruptcy.1 hours = 3 } }
-
-		set_temp_variable = { treasury_quarter = treasury }
-		multiply_temp_variable = { treasury_quarter = 0.25 }
-
+		if = {
+			limit = { FROM = { check_variable = { debt_bailout > 0 } } }
+			set_temp_variable = { bailout_cost = FROM.debt_bailout }
+			set_temp_variable = { treasury_change = { value = bailout_cost  multiply = -0.75 } }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = bankruptcy_bailout_influence_TT
+			FROM = {
+				set_temp_variable = { debt_change = { value = debt_bailout  multiply = -1 } }
+				modify_debt_effect = yes
+				set_temp_variable = { percent_change = 15 }
+				change_influence_percentage = yes
+				hidden_effect = { clear_variable = debt_bailout }
+				ingame_update_setup = yes
+				news_event = { id = News_bankruptcy.1 hours = 3 }
+			}
+		}
+		else = {
+			custom_effect_tooltip = bankruptcy_bailout_lapsed_TT
+		}
 		ai_chance = {
 			base = 90
 			modifier = {
@@ -2447,20 +2378,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 1.05
-				OR = {
-					AND = {
-						FROM = { has_government = democratic }
-						has_government = democratic
-					}
-					AND = {
-						FROM = { has_government = neutrality }
-						has_government = neutrality
-					}
-					AND = {
-						FROM = { has_government = communism }
-						has_government = communism
-					}
-				}
+				has_government = FROM
 			}
 			modifier = {
 				factor = 1.25
@@ -2481,7 +2399,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 0
-				check_variable = { our_cost > gdp_total }
+				check_variable = { FROM.debt_bailout > gdp_total }
 			}
 			modifier = {
 				factor = 0
@@ -2499,10 +2417,11 @@ country_event = {
 			}
 			modifier = {
 				factor = 0.1
-				check_variable = { our_cost > treasury_quarter }
+				check_variable = { FROM.debt_bailout > treasury }
 			}
 		}
 	}
+
 	# We have no help to offer
 	option = {
 		name = bankruptcy.1.b
@@ -2510,7 +2429,6 @@ country_event = {
 		FROM = {
 			country_event = { id = bankruptcy.4 hours = 3 }
 		}
-
 		ai_chance = {
 			base = 10
 			modifier = {
@@ -2563,6 +2481,7 @@ country_event = {
 			}
 		}
 	}
+
 }
 
 ##Bailout Requested from 2nd biggest influencer###
@@ -2570,24 +2489,33 @@ country_event = {
 	id = bankruptcy.2
 	title = bankruptcy.2.t
 	desc = bankruptcy.2.d
-	is_triggered_only = yes
 	picture = GFX_stock_market
+	is_triggered_only = yes
 
 	#Give it
 	option = {
 		name = bankruptcy.2.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.2.a executed"
-		set_temp_variable = { our_cost = FROM.debt_bailout }
-		multiply_temp_variable = { our_cost = 0.33333 }
-		multiply_temp_variable = { our_cost = 2 }
-		subtract_from_variable = { treasury = our_cost }
-		custom_effect_tooltip = bankruptcy_bailout_sum_TT
-		custom_effect_tooltip = bankruptcy_bailout_influence_second_biggest_TT
-		FROM = { news_event = { id = News_bankruptcy.2 hours = 3 } }
-
-		set_temp_variable = { treasury_quarter = treasury }
-		multiply_temp_variable = { treasury_quarter = 0.25 }
-
+		if = {
+			limit = { FROM = { check_variable = { debt_bailout > 0 } } }
+			set_temp_variable = { bailout_cost = FROM.debt_bailout }
+			set_temp_variable = { treasury_change = { value = bailout_cost  multiply = -0.66666 } }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = bankruptcy_bailout_influence_second_biggest_TT
+			FROM = {
+				set_temp_variable = { debt_change = { value = debt_bailout  multiply = -1 } }
+				modify_debt_effect = yes
+				set_temp_variable = { percent_change = 10 }
+				change_influence_percentage = yes
+				hidden_effect = { clear_variable = debt_bailout }
+				add_opinion_modifier = { target = ROOT modifier = granted_bailout }
+				ingame_update_setup = yes
+				news_event = { id = News_bankruptcy.2 hours = 3 }
+			}
+		}
+		else = {
+			custom_effect_tooltip = bankruptcy_bailout_lapsed_TT
+		}
 		ai_chance = {
 			base = 90
 			modifier = {
@@ -2620,7 +2548,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 0
-				check_variable = { our_cost > gdp_total }
+				check_variable = { FROM.debt_bailout > gdp_total }
 			}
 			modifier = {
 				factor = 0.15
@@ -2628,16 +2556,16 @@ country_event = {
 			}
 			modifier = {
 				factor = 0.1
-				check_variable = { our_cost > treasury_quarter }
+				check_variable = { FROM.debt_bailout > treasury }
 			}
 		}
 	}
+
 	#We have no help to offer
 	option = {
 		name = bankruptcy.2.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.2.b executed"
 		FROM = { country_event = { id = bankruptcy.4 hours = 3 } }
-
 		ai_chance = {
 			base = 10
 			modifier = {
@@ -2651,6 +2579,7 @@ country_event = {
 			}
 		}
 	}
+
 }
 
 ##Bailout Requested from neigbhour###
@@ -2658,23 +2587,33 @@ country_event = {
 	id = bankruptcy.3
 	title = bankruptcy.3.t
 	desc = bankruptcy.3.d
-	is_triggered_only = yes
 	picture = GFX_stock_market
+	is_triggered_only = yes
 
 	#Give it
 	option = {
 		name = bankruptcy.3.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.3.a executed"
-		set_temp_variable = { our_cost = FROM.debt_bailout }
-		multiply_temp_variable = { our_cost = 0.5 }
-		subtract_from_variable = { treasury = our_cost }
-		custom_effect_tooltip = bankruptcy_bailout_sum_TT
-		custom_effect_tooltip = bankruptcy_bailout_influence_neighbour_TT
-		FROM = { news_event = { id = News_bankruptcy.3 hours = 3 } }
-
-		set_temp_variable = { treasury_quarter = treasury }
-		multiply_temp_variable = { treasury_quarter = 0.25 }
-
+		if = {
+			limit = { FROM = { check_variable = { debt_bailout > 0 } } }
+			set_temp_variable = { bailout_cost = FROM.debt_bailout }
+			set_temp_variable = { treasury_change = { value = bailout_cost  multiply = -0.5 } }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = bankruptcy_bailout_influence_neighbour_TT
+			FROM = {
+				set_temp_variable = { debt_change = { value = debt_bailout  multiply = -1 } }
+				modify_debt_effect = yes
+				set_temp_variable = { percent_change = 5 }
+				change_influence_percentage = yes
+				hidden_effect = { clear_variable = debt_bailout }
+				add_opinion_modifier = { target = ROOT modifier = granted_bailout }
+				ingame_update_setup = yes
+				news_event = { id = News_bankruptcy.3 hours = 3 }
+			}
+		}
+		else = {
+			custom_effect_tooltip = bankruptcy_bailout_lapsed_TT
+		}
 		ai_chance = {
 			base = 90
 			modifier = {
@@ -2707,7 +2646,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 0
-				check_variable = { our_cost > gdp_total }
+				check_variable = { FROM.debt_bailout > gdp_total }
 			}
 			modifier = {
 				factor = 0.15
@@ -2715,10 +2654,11 @@ country_event = {
 			}
 			modifier = {
 				factor = 0.1
-				check_variable = { our_cost > treasury_quarter }
+				check_variable = { FROM.debt_bailout > treasury }
 			}
 		}
 	}
+
 	#We have no help to offer
 	option = {
 		name = bankruptcy.3.b
@@ -2737,6 +2677,7 @@ country_event = {
 			}
 		}
 	}
+
 }
 
 #We were denied the bailout
@@ -2744,8 +2685,8 @@ country_event = {
 	id = bankruptcy.4
 	title = bankruptcy.4.t
 	desc = bankruptcy.4.d
-	is_triggered_only = yes
 	picture = GFX_banking_crisis
+	is_triggered_only = yes
 
 	#We were denied our bailout
 	option = {
@@ -2753,8 +2694,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: bankruptcy.4.a executed"
 		add_opinion_modifier = { modifier = did_not_support_us target = FROM }
 		clear_variable = debt_bailout
-		ai_chance = { base = 100 }
 	}
+
 }
 
 ##Bailout Requested from overlord###
@@ -2762,30 +2703,40 @@ country_event = {
 	id = bankruptcy.5
 	title = bankruptcy.5.t
 	desc = bankruptcy.5.d
-	is_triggered_only = yes
 	picture = GFX_stock_market
+	is_triggered_only = yes
 
 	#Give it
 	option = {
 		name = bankruptcy.5.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.5.a executed"
-		set_temp_variable = { our_cost = FROM.debt_bailout }
-		multiply_temp_variable = { our_cost = 0.5 }
-		subtract_from_variable = { treasury = our_cost }
-		custom_effect_tooltip = bankruptcy_bailout_sum_TT
-		custom_effect_tooltip = bankruptcy_bailout_influence_neighbour_TT
 		if = {
-			limit = { FROM = { is_subject_of = PREV } }
-			add_autonomy_ratio = {
-				value = -0.35
-				localization = granted_bailout
+			limit = { FROM = { check_variable = { debt_bailout > 0 } } }
+			set_temp_variable = { bailout_cost = FROM.debt_bailout }
+			set_temp_variable = { treasury_change = { value = bailout_cost  multiply = -0.5 } }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = bankruptcy_bailout_influence_neighbour_TT
+			FROM = {
+				set_temp_variable = { debt_change = { value = debt_bailout  multiply = -1 } }
+				modify_debt_effect = yes
+				set_temp_variable = { percent_change = 5 }
+				change_influence_percentage = yes
+				hidden_effect = { clear_variable = debt_bailout }
+				add_opinion_modifier = { target = ROOT modifier = granted_bailout }
+				if = {
+					limit = { is_subject_of = ROOT }
+					add_autonomy_ratio = {
+						value = -0.35
+						localization = granted_bailout
+					}
+				}
+				ingame_update_setup = yes
+				news_event = { id = News_bankruptcy.3 hours = 3 }
 			}
 		}
-		FROM = { news_event = { id = News_bankruptcy.3 hours = 3 } }
-
-		set_temp_variable = { treasury_quarter = treasury }
-		multiply_temp_variable = { treasury_quarter = 0.25 }
-
+		else = {
+			custom_effect_tooltip = bankruptcy_bailout_lapsed_TT
+		}
 		ai_chance = {
 			base = 90
 			modifier = {
@@ -2813,7 +2764,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 0
-				check_variable = { our_cost > gdp_total }
+				check_variable = { FROM.debt_bailout > gdp_total }
 			}
 			modifier = {
 				factor = 0.15
@@ -2821,10 +2772,11 @@ country_event = {
 			}
 			modifier = {
 				factor = 0.1
-				check_variable = { our_cost > treasury_quarter }
+				check_variable = { FROM.debt_bailout > treasury }
 			}
 		}
 	}
+
 	#We have no help to offer
 	option = {
 		name = bankruptcy.5.b
@@ -2843,6 +2795,7 @@ country_event = {
 			}
 		}
 	}
+
 }
 
 ### Financial Collapse ###
@@ -2851,8 +2804,8 @@ country_event = {
 	id = bankruptcy.10
 	title = bankruptcy.10.t
 	desc = bankruptcy.10.d
-	is_triggered_only = yes
 	picture = GFX_election_rally
+	is_triggered_only = yes
 
 	#Allow new elections
 	option = {
@@ -2882,13 +2835,14 @@ country_event = {
 			base = 95
 		}
 	}
+
 	#Block new elections
 	option = {
 		name = bankruptcy.10.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.10.b executed"
 		country_event = { id = bankruptcy.11 days = 1 }
 		ai_chance = { # AI won't block for the time being
-			factor = 5
+			base = 5
 		}
 	}
 
@@ -2899,8 +2853,8 @@ country_event = {
 	id = bankruptcy.11
 	title = bankruptcy.11.t
 	desc = bankruptcy.11.d
-	is_triggered_only = yes
 	picture = GFX_election_rally
+	is_triggered_only = yes
 
 	#Side with the coup
 	option = {
@@ -2924,6 +2878,7 @@ country_event = {
 		}
 		ai_chance = { base = 50 }
 	}
+
 	#Against the coup
 	option = {
 		name = bankruptcy.11.b
@@ -2951,8 +2906,8 @@ country_event = {
 	id = bankruptcy.12
 	title = bankruptcy.12.t
 	desc = bankruptcy.12.d
-	is_triggered_only = yes
 	picture = GFX_election_rally
+	is_triggered_only = yes
 
 	#Relinquish power
 	option = {
@@ -2980,6 +2935,7 @@ country_event = {
 			base = 95
 		}
 	}
+
 	#Block new elections
 	option = {
 		name = bankruptcy.12.b
@@ -3007,7 +2963,7 @@ country_event = {
 			FROM = {
 				NOT = {
 					OR = {
-						has_idea = Non_State_Actor
+						has_idea = non_state_actor
 						is_in_array = { global.Unrecognised_States = THIS }
 					}
 				}
@@ -3101,7 +3057,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 0
-				NOT = { has_global_flag = GAME_RULE_nato_disabled }
+				has_game_rule = { rule = rule_disable_nato option = yes }
 				FROM = {
 					OR = {
 						any_of_scopes = {
@@ -3124,12 +3080,10 @@ country_event = {
 				OR = {
 					any_state_in = {
 						ai_area = 12 # Mediterranean Sea
-
 						is_controlled_by = PREV
 					}
 					any_state_in = {
 						ai_area = 15 # Exit to Atlantic Ocean
-
 						is_controlled_by = PREV
 					}
 				}
@@ -3141,7 +3095,6 @@ country_event = {
 	option = {
 		name = bankruptcy.13.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.13.b executed"
-
 		ai_chance = {
 			base = 60
 			modifier = {
@@ -3158,6 +3111,7 @@ country_event = {
 			}
 		}
 	}
+
 }
 
 # Subject fails to pay on defaulted debt
@@ -3181,6 +3135,7 @@ country_event = {
 			}
 		}
 	}
+
 }
 
 
@@ -3212,11 +3167,7 @@ country_event = {
 		change_small_medium_business_owners_opinion = yes
 		change_international_bankers_opinion = yes
 		change_oligarchs_opinion = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
 
@@ -3224,16 +3175,15 @@ country_event = {
 	option = {
 		name = bankruptcy.100.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.100.b executed"
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_industrial_conglomerates_opinion = yes
 		change_small_medium_business_owners_opinion = yes
 		change_international_bankers_opinion = yes
 		change_oligarchs_opinion = yes
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 
 #downsize military
@@ -3259,23 +3209,19 @@ country_event = {
 		block_defence_increase = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_the_military_opinion = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.101.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.101.b executed"
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_the_military_opinion = yes
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #downsize police
 country_event = {
@@ -3300,23 +3246,19 @@ country_event = {
 		block_police_increase = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_intelligence_community_opinion = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.102.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.102.b executed"
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_intelligence_community_opinion = yes
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #cut education spending
 country_event = {
@@ -3343,13 +3285,10 @@ country_event = {
 		change_farmers_opinion = yes
 		change_labour_unions_opinion = yes
 		change_small_medium_business_owners_opinion = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.103.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.103.b executed"
@@ -3357,11 +3296,10 @@ country_event = {
 		change_farmers_opinion = yes
 		change_labour_unions_opinion = yes
 		change_small_medium_business_owners_opinion = yes
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_rejected_effect = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #cut health spending
 country_event = {
@@ -3387,24 +3325,20 @@ country_event = {
 		set_temp_variable = { temp_opinion = -5 }
 		change_communist_cadres_opinion = yes
 		change_labour_unions_opinion = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.104.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.104.b executed"
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_communist_cadres_opinion = yes
 		change_labour_unions_opinion = yes
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #cut social spending
 country_event = {
@@ -3430,24 +3364,20 @@ country_event = {
 		set_temp_variable = { temp_opinion = -5 }
 		change_communist_cadres_opinion = yes
 		change_labour_unions_opinion = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.105.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.105.b executed"
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_communist_cadres_opinion = yes
 		change_labour_unions_opinion = yes
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #increase resource exports
 country_event = {
@@ -3474,25 +3404,21 @@ country_event = {
 		change_fossil_fuel_industry_opinion = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_oligarchs_opinion = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.106.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.106.b executed"
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_fossil_fuel_industry_opinion = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_oligarchs_opinion = yes
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 # Corruption
 country_event = {
@@ -3502,24 +3428,23 @@ country_event = {
 	picture = GFX_stock_market
 	is_triggered_only = yes
 
+	# Agree
 	option = {
-		name = bankruptcy.107.a	#Agree
+		name = bankruptcy.107.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.107.a executed"
 		lose_pp_for_month = yes
 		increase_corruption = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.107.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.107.b executed"
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #land reform
 country_event = {
@@ -3574,13 +3499,10 @@ country_event = {
 		change_farmers_opinion = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_landowners_opinion = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.108.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.108.b executed"
@@ -3588,11 +3510,10 @@ country_event = {
 		change_farmers_opinion = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_landowners_opinion = yes
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #bankers in government
 country_event = {
@@ -3618,23 +3539,19 @@ country_event = {
 		}
 		set_temp_variable = { temp_opinion = 5 }
 		change_international_bankers_opinion = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.109.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.109.b executed"
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_international_bankers_opinion = yes
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #confiscate church funds
 country_event = {
@@ -3652,26 +3569,22 @@ country_event = {
 		change_the_priesthood_opinion = yes
 		change_the_ulema_opinion = yes
 		change_the_wahabi_ulema_opinion = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.110.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.110.b executed"
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_the_clergy_opinion = yes
 		change_the_priesthood_opinion = yes
 		change_the_ulema_opinion = yes
 		change_the_wahabi_ulema_opinion = yes
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #dismantle military factories
 country_event = {
@@ -3706,31 +3619,25 @@ country_event = {
 				}
 			}
 		}
-
 		# Internal Faction Effect
 		set_temp_variable = { temp_opinion = -10 }
 		change_the_military_opinion = yes
 		change_defense_industry_opinion = yes
-
 		# Economic Stuff
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.111.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.111.b executed"
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_the_military_opinion = yes
 		change_defense_industry_opinion = yes
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #dismantle naval dockyards
 country_event = {
@@ -3743,7 +3650,6 @@ country_event = {
 	option = {
 		name = bankruptcy.112.a	#Agree
 		log = "[GetDateText]: [This.GetName]: bankruptcy.112.a executed"
-
 		# Dismantles the Dockyards
 		if = { limit = { check_variable = { gdp_per_capita < 5 } }
 			random_owned_state = {
@@ -3767,29 +3673,23 @@ country_event = {
 				}
 			}
 		}
-
 		# Maritime Industry No likey
 		set_temp_variable = { temp_opinion = -10 }
 		change_maritime_industry_opinion = yes
-
 		# Economic Effects
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.112.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.112.b executed"
-		clear_variable = debt_bailout
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_maritime_industry_opinion = yes
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #raise taxes
 country_event = {
@@ -3807,20 +3707,18 @@ country_event = {
 			modify_corporate_tax_rate_effect = yes
 			set_temp_variable = { pop_change = 10 }
 			modify_population_tax_rate_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.10 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		else = {
 			set_temp_variable = { corp_change = 5 }
 			modify_corporate_tax_rate_effect = yes
 			set_temp_variable = { pop_change = 5 }
 			modify_population_tax_rate_effect = yes
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		clr_country_flag = no_personal_tax_rate_change
 		set_country_flag = {
@@ -3835,10 +3733,7 @@ country_event = {
 			value = 1
 		}
 		calculate_tax_rate = yes
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-
+		imf_debt_relief_accepted_effect = yes
 		#Internal Faction Effects
 		set_temp_variable = { temp_opinion = -5 }
 		change_wall_street_opinion = yes
@@ -3851,16 +3746,13 @@ country_event = {
 		change_landowners_opinion = yes
 		change_farmers_opinion = yes
 		change_labour_unions_opinion = yes
-
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.113.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.113.b executed"
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_wall_street_opinion = yes
 		change_the_donju_opinion = yes
@@ -3872,10 +3764,9 @@ country_event = {
 		change_landowners_opinion = yes
 		change_farmers_opinion = yes
 		change_labour_unions_opinion = yes
-
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 #sell international investments
 country_event = {
@@ -3884,9 +3775,8 @@ country_event = {
 	desc = bankruptcy.114.d
 	picture = GFX_stock_market
 	is_triggered_only = yes
-	trigger = {
-		check_variable = { int_investments > 0 }
-	}
+
+	trigger = { check_variable = { int_investments > 0 } }
 
 	option = {
 		name = bankruptcy.114.a	#Agree
@@ -3925,16 +3815,16 @@ country_event = {
 		ingame_update_setup = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.114.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.114.b executed"
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		imf_debt_relief_rejected_effect = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_international_bankers_opinion = yes
-		ingame_update_setup = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 # Dismantle State Owned industry
 country_event = {
@@ -3969,21 +3859,17 @@ country_event = {
 				}
 			}
 		}
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_accepted_effect = yes
 		ai_chance = { base = 90 }
 	}
+
 	option = {
 		name = bankruptcy.115.b	#Reject offer
 		log = "[GetDateText]: [This.GetName]: bankruptcy.115.b executed"
-		clear_variable = debt_bailout
-		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
-		ingame_update_setup = yes
+		imf_debt_relief_rejected_effect = yes
 		ai_chance = { base = 10 }
 	}
+
 }
 
 ##Financial collapse stuff
@@ -3994,12 +3880,6 @@ country_event = {
 	desc = bankruptcy.200.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 0 } }
-		NOT = { is_in_array = { gov_coalition_array = 0 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4016,15 +3896,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 0 } }
+		NOT = { is_in_array = { gov_coalition_array = 0 } }
+	}
+
 	option = {
 		name = bankruptcy.200.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.200.a executed"
 		set_temp_variable = { party_index = 0 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.200.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.200.b executed"
@@ -4032,9 +3919,10 @@ country_event = {
 		set_temp_variable = { party_index = 0 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #conservatism makes a speech
 country_event = {
@@ -4043,12 +3931,6 @@ country_event = {
 	desc = bankruptcy.201.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 1 } }
-		NOT = { is_in_array = { gov_coalition_array = 1 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4065,15 +3947,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 1 } }
+		NOT = { is_in_array = { gov_coalition_array = 1 } }
+	}
+
 	option = {
 		name = bankruptcy.201.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.201.a executed"
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.201.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.201.b executed"
@@ -4081,9 +3970,10 @@ country_event = {
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #liberalism makes a speech
 country_event = {
@@ -4092,12 +3982,6 @@ country_event = {
 	desc = bankruptcy.202.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 2 } }
-		NOT = { is_in_array = { gov_coalition_array = 2 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4114,15 +3998,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 2 } }
+		NOT = { is_in_array = { gov_coalition_array = 2 } }
+	}
+
 	option = {
 		name = bankruptcy.202.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.202.a executed"
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.202.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.202.b executed"
@@ -4130,9 +4021,10 @@ country_event = {
 		set_temp_variable = { party_index = 2 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #socialism makes a speech
 country_event = {
@@ -4141,12 +4033,6 @@ country_event = {
 	desc = bankruptcy.203.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 3 } }
-		NOT = { is_in_array = { gov_coalition_array = 3 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4163,15 +4049,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 3 } }
+		NOT = { is_in_array = { gov_coalition_array = 3 } }
+	}
+
 	option = {
 		name = bankruptcy.203.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.203.a executed"
 		set_temp_variable = { party_index = 3 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.203.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.203.b executed"
@@ -4179,9 +4072,10 @@ country_event = {
 		set_temp_variable = { party_index = 3 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Communist-State makes a speech
 country_event = {
@@ -4190,12 +4084,6 @@ country_event = {
 	desc = bankruptcy.204.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 4 } }
-		NOT = { is_in_array = { gov_coalition_array = 4 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4212,15 +4100,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 4 } }
+		NOT = { is_in_array = { gov_coalition_array = 4 } }
+	}
+
 	option = {
 		name = bankruptcy.204.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.204.a executed"
 		set_temp_variable = { party_index = 4 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.204.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.204.b executed"
@@ -4228,9 +4123,10 @@ country_event = {
 		set_temp_variable = { party_index = 4 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #anarchist_communism makes a speech
 country_event = {
@@ -4239,12 +4135,6 @@ country_event = {
 	desc = bankruptcy.205.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 5 } }
-		NOT = { is_in_array = { gov_coalition_array = 5 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4261,15 +4151,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 5 } }
+		NOT = { is_in_array = { gov_coalition_array = 5 } }
+	}
+
 	option = {
 		name = bankruptcy.205.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.205.a executed"
 		set_temp_variable = { party_index = 5 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.205.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.205.b executed"
@@ -4277,9 +4174,10 @@ country_event = {
 		set_temp_variable = { party_index = 5 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Conservative makes a speech
 country_event = {
@@ -4288,12 +4186,6 @@ country_event = {
 	desc = bankruptcy.206.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 6 } }
-		NOT = { is_in_array = { gov_coalition_array = 6 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4310,15 +4202,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 6 } }
+		NOT = { is_in_array = { gov_coalition_array = 6 } }
+	}
+
 	option = {
 		name = bankruptcy.206.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.206.a executed"
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.206.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.206.b executed"
@@ -4326,9 +4225,10 @@ country_event = {
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Autocracy makes a speech
 country_event = {
@@ -4337,12 +4237,6 @@ country_event = {
 	desc = bankruptcy.207.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 7 } }
-		NOT = { is_in_array = { gov_coalition_array = 7 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4359,15 +4253,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 7 } }
+		NOT = { is_in_array = { gov_coalition_array = 7 } }
+	}
+
 	option = {
 		name = bankruptcy.207.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.207.a executed"
 		set_temp_variable = { party_index = 7 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.207.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.207.b executed"
@@ -4375,9 +4276,10 @@ country_event = {
 		set_temp_variable = { party_index = 7 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Mod_Vilayat_e_Faqih makes a speech
 country_event = {
@@ -4386,6 +4288,21 @@ country_event = {
 	desc = bankruptcy.208.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 0.25
+			has_country_flag = party9_banned
+		}
+		modifier = {
+			factor = 2
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+		modifier = {
+			factor = 0.25
+			check_variable = { party_pop_array^8 < 0.01 }
+		}
+	}
 
 	trigger = {
 		OR = {
@@ -4417,30 +4334,16 @@ country_event = {
 		NOT = { is_in_array = { gov_coalition_array = 8 } }
 	}
 
-	mean_time_to_happen = {
-		modifier = {
-			factor = 0.25
-			has_country_flag = party9_banned
-		}
-		modifier = {
-			factor = 2
-			has_active_mission = bankruptcy_incoming_collapse
-		}
-		modifier = {
-			factor = 0.25
-			check_variable = { party_pop_array^8 < 0.01 }
-		}
-	}
-
 	option = {
 		name = bankruptcy.208.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.208.a executed"
 		set_temp_variable = { party_index = 8 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.208.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.208.b executed"
@@ -4448,9 +4351,10 @@ country_event = {
 		set_temp_variable = { party_index = 8 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Vilayat_e_Faqih makes a speech
 country_event = {
@@ -4459,6 +4363,21 @@ country_event = {
 	desc = bankruptcy.209.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 0.25
+			has_country_flag = party10_banned
+		}
+		modifier = {
+			factor = 2
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+		modifier = {
+			factor = 0.25
+			check_variable = { party_pop_array^9 < 0.01 }
+		}
+	}
 
 	trigger = {
 		OR = {
@@ -4490,30 +4409,16 @@ country_event = {
 		NOT = { is_in_array = { gov_coalition_array = 9 } }
 	}
 
-	mean_time_to_happen = {
-		modifier = {
-			factor = 0.25
-			has_country_flag = party10_banned
-		}
-		modifier = {
-			factor = 2
-			has_active_mission = bankruptcy_incoming_collapse
-		}
-		modifier = {
-			factor = 0.25
-			check_variable = { party_pop_array^9 < 0.01 }
-		}
-	}
-
 	option = {
 		name = bankruptcy.209.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.209.a executed"
 		set_temp_variable = { party_index = 9 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.209.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.209.b executed"
@@ -4521,9 +4426,10 @@ country_event = {
 		set_temp_variable = { party_index = 9 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Kingdom makes a speech
 country_event = {
@@ -4532,19 +4438,6 @@ country_event = {
 	desc = bankruptcy.210.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		OR = {
-			has_idea = sunni
-			has_idea = sufi_islam
-			has_idea = ibadi
-			has_idea = shia
-			has_idea = pluralist
-		}
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 10 } }
-		NOT = { is_in_array = { gov_coalition_array = 10 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4561,34 +4454,6 @@ country_event = {
 		}
 	}
 
-	option = {
-		name = bankruptcy.210.a	#Do nothing
-		log = "[GetDateText]: [This.GetName]: bankruptcy.210.a executed"
-		set_temp_variable = { party_index = 10 }
-		set_temp_variable = { party_popularity_increase = 0.05 }
-		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
-		ai_chance = { base = 30 }
-	}
-	option = {
-		name = bankruptcy.210.b	#Counter-campaign
-		log = "[GetDateText]: [This.GetName]: bankruptcy.210.b executed"
-		lose_pp_for_15_days = yes
-		set_temp_variable = { party_index = 10 }
-		set_temp_variable = { party_popularity_increase = 0.02 }
-		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
-		ai_chance = { base = 70 }
-	}
-}
-#Caliphate makes a speech
-country_event = {
-	id = bankruptcy.211
-	title = bankruptcy.211.t
-	desc = bankruptcy.211.d
-	picture = GFX_election_rally
-	is_triggered_only = yes
-
 	trigger = {
 		OR = {
 			has_idea = sunni
@@ -4598,9 +4463,39 @@ country_event = {
 			has_idea = pluralist
 		}
 		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 11 } }
-		NOT = { is_in_array = { gov_coalition_array = 11 } }
+		NOT = { is_in_array = { ruling_party = 10 } }
+		NOT = { is_in_array = { gov_coalition_array = 10 } }
 	}
+
+	option = {
+		name = bankruptcy.210.a	#Do nothing
+		log = "[GetDateText]: [This.GetName]: bankruptcy.210.a executed"
+		set_temp_variable = { party_index = 10 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		change_relative_party_popularity = yes
+		ai_chance = { base = 30 }
+	}
+
+	option = {
+		name = bankruptcy.210.b	#Counter-campaign
+		log = "[GetDateText]: [This.GetName]: bankruptcy.210.b executed"
+		lose_pp_for_15_days = yes
+		set_temp_variable = { party_index = 10 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		change_relative_party_popularity = yes
+		ai_chance = { base = 70 }
+	}
+
+}
+#Caliphate makes a speech
+country_event = {
+	id = bankruptcy.211
+	title = bankruptcy.211.t
+	desc = bankruptcy.211.d
+	picture = GFX_election_rally
+	is_triggered_only = yes
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4617,34 +4512,6 @@ country_event = {
 		}
 	}
 
-	option = {
-		name = bankruptcy.211.a	#Do nothing
-		log = "[GetDateText]: [This.GetName]: bankruptcy.211.a executed"
-		set_temp_variable = { party_index = 11 }
-		set_temp_variable = { party_popularity_increase = 0.05 }
-		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
-		ai_chance = { base = 30 }
-	}
-	option = {
-		name = bankruptcy.211.b	#Counter-campaign
-		log = "[GetDateText]: [This.GetName]: bankruptcy.211.b executed"
-		lose_pp_for_15_days = yes
-		set_temp_variable = { party_index = 11 }
-		set_temp_variable = { party_popularity_increase = 0.02 }
-		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
-		ai_chance = { base = 70 }
-	}
-}
-#Neutral_Muslim_Brotherhood makes a speech
-country_event = {
-	id = bankruptcy.212
-	title = bankruptcy.212.t
-	desc = bankruptcy.212.d
-	picture = GFX_election_rally
-	is_triggered_only = yes
-
 	trigger = {
 		OR = {
 			has_idea = sunni
@@ -4654,9 +4521,39 @@ country_event = {
 			has_idea = pluralist
 		}
 		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 12 } }
-		NOT = { is_in_array = { gov_coalition_array = 12 } }
+		NOT = { is_in_array = { ruling_party = 11 } }
+		NOT = { is_in_array = { gov_coalition_array = 11 } }
 	}
+
+	option = {
+		name = bankruptcy.211.a	#Do nothing
+		log = "[GetDateText]: [This.GetName]: bankruptcy.211.a executed"
+		set_temp_variable = { party_index = 11 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		change_relative_party_popularity = yes
+		ai_chance = { base = 30 }
+	}
+
+	option = {
+		name = bankruptcy.211.b	#Counter-campaign
+		log = "[GetDateText]: [This.GetName]: bankruptcy.211.b executed"
+		lose_pp_for_15_days = yes
+		set_temp_variable = { party_index = 11 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		change_relative_party_popularity = yes
+		ai_chance = { base = 70 }
+	}
+
+}
+#Neutral_Muslim_Brotherhood makes a speech
+country_event = {
+	id = bankruptcy.212
+	title = bankruptcy.212.t
+	desc = bankruptcy.212.d
+	picture = GFX_election_rally
+	is_triggered_only = yes
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4673,15 +4570,29 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		OR = {
+			has_idea = sunni
+			has_idea = sufi_islam
+			has_idea = ibadi
+			has_idea = shia
+			has_idea = pluralist
+		}
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 12 } }
+		NOT = { is_in_array = { gov_coalition_array = 12 } }
+	}
+
 	option = {
 		name = bankruptcy.212.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.212.a executed"
 		set_temp_variable = { party_index = 12 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.212.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.212.b executed"
@@ -4689,9 +4600,10 @@ country_event = {
 		set_temp_variable = { party_index = 12 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Neutral_Autocracy makes a speech
 country_event = {
@@ -4700,12 +4612,6 @@ country_event = {
 	desc = bankruptcy.213.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 13 } }
-		NOT = { is_in_array = { gov_coalition_array = 13 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4722,15 +4628,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 13 } }
+		NOT = { is_in_array = { gov_coalition_array = 13 } }
+	}
+
 	option = {
 		name = bankruptcy.213.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.213.a executed"
 		set_temp_variable = { party_index = 13 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.213.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.213.b executed"
@@ -4738,9 +4651,10 @@ country_event = {
 		set_temp_variable = { party_index = 13 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Neutral_conservatism makes a speech
 country_event = {
@@ -4749,12 +4663,6 @@ country_event = {
 	desc = bankruptcy.214.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 14 } }
-		NOT = { is_in_array = { gov_coalition_array = 14 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4771,15 +4679,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 14 } }
+		NOT = { is_in_array = { gov_coalition_array = 14 } }
+	}
+
 	option = {
 		name = bankruptcy.214.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.214.a executed"
 		set_temp_variable = { party_index = 14 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.214.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.214.b executed"
@@ -4787,9 +4702,10 @@ country_event = {
 		set_temp_variable = { party_index = 14 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #oligarchism makes a speech
 country_event = {
@@ -4798,12 +4714,6 @@ country_event = {
 	desc = bankruptcy.215.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 15 } }
-		NOT = { is_in_array = { gov_coalition_array = 15 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4820,15 +4730,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 15 } }
+		NOT = { is_in_array = { gov_coalition_array = 15 } }
+	}
+
 	option = {
 		name = bankruptcy.215.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.215.a executed"
 		set_temp_variable = { party_index = 15 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.215.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.215.b executed"
@@ -4836,9 +4753,10 @@ country_event = {
 		set_temp_variable = { party_index = 15 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Neutral_Libertarian makes a speech
 country_event = {
@@ -4847,12 +4765,6 @@ country_event = {
 	desc = bankruptcy.216.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 16 } }
-		NOT = { is_in_array = { gov_coalition_array = 16 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4869,15 +4781,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 16 } }
+		NOT = { is_in_array = { gov_coalition_array = 16 } }
+	}
+
 	option = {
 		name = bankruptcy.216.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.216.a executed"
 		set_temp_variable = { party_index = 16 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.216.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.216.b executed"
@@ -4885,9 +4804,10 @@ country_event = {
 		set_temp_variable = { party_index = 16 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Neutral_green makes a speech
 country_event = {
@@ -4896,12 +4816,6 @@ country_event = {
 	desc = bankruptcy.217.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 17 } }
-		NOT = { is_in_array = { gov_coalition_array = 17 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4918,15 +4832,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 17 } }
+		NOT = { is_in_array = { gov_coalition_array = 17 } }
+	}
+
 	option = {
 		name = bankruptcy.217.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.217.a executed"
 		set_temp_variable = { party_index = 17 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.217.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.217.b executed"
@@ -4934,9 +4855,10 @@ country_event = {
 		set_temp_variable = { party_index = 17 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #neutral_Social makes a speech
 country_event = {
@@ -4945,12 +4867,6 @@ country_event = {
 	desc = bankruptcy.218.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 18 } }
-		NOT = { is_in_array = { gov_coalition_array = 18 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -4967,15 +4883,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 18 } }
+		NOT = { is_in_array = { gov_coalition_array = 18 } }
+	}
+
 	option = {
 		name = bankruptcy.218.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.218.a executed"
 		set_temp_variable = { party_index = 18 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.218.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.218.b executed"
@@ -4983,9 +4906,10 @@ country_event = {
 		set_temp_variable = { party_index = 18 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Neutral_Communism makes a speech
 country_event = {
@@ -4994,12 +4918,6 @@ country_event = {
 	desc = bankruptcy.219.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 19 } }
-		NOT = { is_in_array = { gov_coalition_array = 19 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -5016,15 +4934,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 19 } }
+		NOT = { is_in_array = { gov_coalition_array = 19 } }
+	}
+
 	option = {
 		name = bankruptcy.219.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.219.a executed"
 		set_temp_variable = { party_index = 19 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.219.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.219.b executed"
@@ -5032,9 +4957,10 @@ country_event = {
 		set_temp_variable = { party_index = 19 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Nat_Populism makes a speech
 country_event = {
@@ -5043,12 +4969,6 @@ country_event = {
 	desc = bankruptcy.220.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 20 } }
-		NOT = { is_in_array = { gov_coalition_array = 20 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -5065,15 +4985,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 20 } }
+		NOT = { is_in_array = { gov_coalition_array = 20 } }
+	}
+
 	option = {
 		name = bankruptcy.220.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.220.a executed"
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.220.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.220.b executed"
@@ -5081,9 +5008,10 @@ country_event = {
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Nat_Fascism makes a speech
 country_event = {
@@ -5092,12 +5020,6 @@ country_event = {
 	desc = bankruptcy.221.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 21 } }
-		NOT = { is_in_array = { gov_coalition_array = 21 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -5114,15 +5036,22 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 21 } }
+		NOT = { is_in_array = { gov_coalition_array = 21 } }
+	}
+
 	option = {
 		name = bankruptcy.221.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.221.a executed"
 		set_temp_variable = { party_index = 21 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.221.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.221.b executed"
@@ -5130,9 +5059,10 @@ country_event = {
 		set_temp_variable = { party_index = 21 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Nat_Autocracy makes a speech
 country_event = {
@@ -5141,13 +5071,6 @@ country_event = {
 	desc = bankruptcy.222.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		NOT = { has_idea = no_military }
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 22 } }
-		NOT = { is_in_array = { gov_coalition_array = 22 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -5164,15 +5087,23 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		NOT = { has_idea = no_military }
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 22 } }
+		NOT = { is_in_array = { gov_coalition_array = 22 } }
+	}
+
 	option = {
 		name = bankruptcy.222.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.222.a executed"
 		set_temp_variable = { party_index = 22 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.222.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.222.b executed"
@@ -5180,9 +5111,10 @@ country_event = {
 		set_temp_variable = { party_index = 22 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 #Monarchist makes a speech
 country_event = {
@@ -5191,13 +5123,6 @@ country_event = {
 	desc = bankruptcy.223.d
 	picture = GFX_election_rally
 	is_triggered_only = yes
-
-	trigger = {
-		NOT = { has_idea = no_military }
-		check_variable = { interest_rate > 14.999 }
-		NOT = { is_in_array = { ruling_party = 23 } }
-		NOT = { is_in_array = { gov_coalition_array = 23 } }
-	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -5214,15 +5139,23 @@ country_event = {
 		}
 	}
 
+	trigger = {
+		NOT = { has_idea = no_military }
+		check_variable = { interest_rate > 14.999 }
+		NOT = { is_in_array = { ruling_party = 23 } }
+		NOT = { is_in_array = { gov_coalition_array = 23 } }
+	}
+
 	option = {
 		name = bankruptcy.223.a	#Do nothing
 		log = "[GetDateText]: [This.GetName]: bankruptcy.223.a executed"
 		set_temp_variable = { party_index = 23 }
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 30 }
 	}
+
 	option = {
 		name = bankruptcy.223.b	#Counter-campaign
 		log = "[GetDateText]: [This.GetName]: bankruptcy.223.b executed"
@@ -5230,9 +5163,10 @@ country_event = {
 		set_temp_variable = { party_index = 23 }
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 		ai_chance = { base = 70 }
 	}
+
 }
 
 ### we got the bailout - biggest influencer
@@ -5241,22 +5175,10 @@ news_event = {
 	title = News_bankruptcy.1.t
 	desc = News_bankruptcy.1.d
 	picture = GFX_world_stockmarket
-
 	is_triggered_only = yes
 
-	#yeah...
-	option = {
-		name = News_bankruptcy.1.a
-		log = "[GetDateText]: [This.GetName]: News_bankruptcy.1.a executed"
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		set_temp_variable = { percent_change = 15 }
-		set_temp_variable = { tag_index = FROM.id }
-		set_temp_variable = { influence_target = THIS.id }
-		change_influence_percentage = yes
-		ingame_update_setup = yes
-	}
+	option = { name = News_bankruptcy.1.a }
+
 }
 
 ### we got the bailout - 2nd biggest influencer
@@ -5265,23 +5187,10 @@ news_event = {
 	title = News_bankruptcy.2.t
 	desc = News_bankruptcy.2.d
 	picture = GFX_world_stockmarket
-
 	is_triggered_only = yes
 
-	#yeah...
-	option = {
-		name = News_bankruptcy.2.a
-		log = "[GetDateText]: [This.GetName]: News_bankruptcy.2.a executed"
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		set_temp_variable = { percent_change = 10 }
-		set_temp_variable = { tag_index = FROM.id }
-		set_temp_variable = { influence_target = THIS.id }
-		change_influence_percentage = yes
-		ingame_update_setup = yes
-		add_opinion_modifier = { target = FROM modifier = granted_bailout }
-	}
+	option = { name = News_bankruptcy.2.a }
+
 }
 ### we got the bailout - neighbour
 news_event = {
@@ -5289,24 +5198,10 @@ news_event = {
 	title = News_bankruptcy.3.t
 	desc = News_bankruptcy.3.d
 	picture = GFX_world_stockmarket
-
 	is_triggered_only = yes
 
-	#yeah...
-	option = {
-		name = News_bankruptcy.3.a
-		log = "[GetDateText]: [This.GetName]: News_bankruptcy.3.a executed"
-		custom_effect_tooltip = bailout_given_tt
-		subtract_from_variable = { debt = debt_bailout }
-		clear_variable = debt_bailout
-		set_temp_variable = { percent_change = 5 }
-		set_temp_variable = { tag_index = FROM.id }
-		set_temp_variable = { influence_target = THIS.id }
-		change_influence_percentage = yes
-		ingame_update_setup = yes
+	option = { name = News_bankruptcy.3.a }
 
-		add_opinion_modifier = { target = FROM modifier = granted_bailout }
-	}
 }
 ###[FROM.GetNameDef] Prepares for New Elections
 news_event = {
@@ -5314,12 +5209,10 @@ news_event = {
 	title = News_bankruptcy.4.t
 	desc = News_bankruptcy.4.d
 	picture = GFX_news_press_conference
-
 	is_triggered_only = yes
 
-	option = {
-		name = News_bankruptcy.4.a
-	}
+	option = { name = News_bankruptcy.4.a }
+
 }
 ###Radical Political Shift in [FROM.GetNameDef]
 news_event = {
@@ -5329,9 +5222,8 @@ news_event = {
 	picture = GFX_news_press_conference
 	is_triggered_only = yes
 
-	option = {
-		name = News_bankruptcy.5.a
-	}
+	option = { name = News_bankruptcy.5.a }
+
 }
 ###Financial Collapse Leads to Conflict in [FROM.GetNameDef]
 news_event = {
@@ -5341,7 +5233,6 @@ news_event = {
 	picture = GFX_news_press_conference
 	is_triggered_only = yes
 
-	option = {
-		name = News_bankruptcy.6.a
-	}
+	option = { name = News_bankruptcy.6.a }
+
 }

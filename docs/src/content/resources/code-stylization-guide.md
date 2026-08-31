@@ -36,6 +36,7 @@ These guidelines help keep the mod running smoothly:
 - **On Actions**: Use tag-specific variants (`on_daily_TAG`) instead of global triggers
 - **Dynamic Modifiers**: Use sparingly. Avoid `force_update_dynamic_modifier` as it causes lag
 - **Arrays**: Replace `every_country`/`random_country` with specific array triggers
+- **Tooltip Duplication**: Never duplicate logic in `effect_tooltip` + `for_each_scope_loop`. Use `tooltip = TT_ALL_*` inside the loop instead, this eliminates double-evaluation and prevents drift between tooltip text and actual execution.
 - **Cleanup**: Remove unused code and commented-out blocks
 
 ---
@@ -93,28 +94,23 @@ focus = {
 
     cost = 5
 
-    # allow_branch = { }
     prerequisite = { focus = SER_western_approach }
-    # mutually_exclusive = { }
+
     search_filters = { FOCUS_FILTER_POLITICAL }
 
-    available = {
-        western_liberals_are_in_power = yes
-    }
-    # bypass = { }
-    # cancel = { }
+    available = { western_liberals_are_in_power = yes }
 
     completion_reward = {
         log = "[GetDateText]: [Root.GetName]: Focus SER_free_market_capitalism"
         add_ideas = SER_free_market_idea
     }
-    # bypass_effect = { }
 
-    ai_will_do = {
-        base = 1
-    }
+    ai_will_do = { base = 1 }
 }
 ```
+
+Write only the properties the focus uses. An empty commented-out slot marker
+(`# bypass = { }`) is dead code, and `standardize.py focus` deletes it.
 
 ---
 
@@ -152,9 +148,7 @@ URA_world_opr = {
         OPR = { country_event = { id = subject_rus.121 days = 1 } }
     }
 
-    ai_will_do = {
-        factor = 10
-    }
+    ai_will_do = { base = 10 }
 }
 ```
 
@@ -182,7 +176,6 @@ country_event = {
     option = {
         name = france_md.504.a
         log = "[GetDateText]: [This.GetName]: france_md.504.a executed"
-        set_party_index_to_ruling_party = yes
         set_temp_variable = { party_popularity_increase = -0.01 }
         add_relative_party_popularity = yes
 
@@ -207,8 +200,9 @@ country_event = {
 ## Best Practices
 
 - Include `allowed_civil_war = { always = yes }` for civil war tags
-- **Remove** `allowed = { always = no }` - this is the default and hurts performance
-- **Remove** `cancel = { always = no }` - checked hourly, never true
+- **Remove** the whole `allowed` block from an idea in a category with no slot (`country`, `hidden_ideas`). Nothing picks from those categories, so `add_idea` is the only way in and it never consults `allowed`. The gate does nothing no matter what is inside it
+- **Remove** `allowed = { always = no }` in the categories that do have a slot - this is the default, and `allowed` is checked once at game start/load. Tradeoff: `has_available_idea_with_trait` builds a list of every idea that passes `allowed`, then evaluates their `available` triggers at runtime. Removing `allowed = { always = no }` lets more ideas into that pool (more runtime checks), while keeping it filters them out. MD does not use that trigger, so the tradeoff is moot here
+- **Remove** `cancel = { always = no }` - checked hourly, never true; redundant default
 - **Remove** empty `on_add = { log = "" }` unless you're actually doing something
 - Log in `on_add` only when making changes
 
@@ -217,9 +211,8 @@ country_event = {
 ```hoiscript
 BRA_idea_higher_minimum_wage_1 = {
     name = BRA_idea_higher_minimum_wage
-	picture = gold
+    picture = gold
     allowed_civil_war = { always = yes }
-
     modifier = {
         political_power_factor = 0.1
         stability_factor = 0.05
@@ -319,5 +312,7 @@ CHI_norinco_manufacturer = {
 
 # Related Resources
 
-- [Code Resources](/dev-resources/code-resource) - Modifiers and effects
-- [Game Rules](/player-tutorials/game-rules) - Game rule reference
+- [Code Resources](/dev-resources/code-resource/) - Modifiers and effects
+- [Dynamic Modifiers](/dev-resources/dynamic-modifiers/) - Dynamic modifier tooltip usage
+- [Claude Code Skills](/dev-resources/claude-code-skills/) - AI-assisted development tools
+- [Game Rules](/player-tutorials/game-rules/) - Game rule reference

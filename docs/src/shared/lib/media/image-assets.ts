@@ -1,6 +1,6 @@
 import type { ImageMetadata } from "astro";
 
-const imageAssets = import.meta.glob<ImageMetadata>("../../assets/images/**/*.{png,jpg,jpeg,webp,avif,gif,svg}", {
+const imageAssets = import.meta.glob<ImageMetadata>("/src/assets/images/**/*.{png,jpg,jpeg,webp,avif,gif,svg}", {
   eager: true,
   import: "default",
 });
@@ -13,14 +13,18 @@ function modulePathToAssetUrl(modulePath: string): string | null {
   if (i !== -1) {
     return `/assets/images/${posixPath.slice(i + fromSrc.length)}`;
   }
-  const rel = posixPath.replace(/^\.\.\/\.\.\/assets\/images\/?/, "/assets/images/");
+  const rel = posixPath.replace(/^(\.\.\/){2,3}assets\/images\/?/, "/assets/images/");
   return rel.startsWith("/assets/images/") ? rel : null;
 }
 
 const assetMap = new Map<string, ImageMetadata>();
+const rootUrlByMetadata = new WeakMap<ImageMetadata, string>();
 for (const [modulePath, metadata] of Object.entries(imageAssets)) {
   const key = modulePathToAssetUrl(modulePath);
-  if (key) assetMap.set(key, metadata);
+  if (key) {
+    assetMap.set(key, metadata);
+    rootUrlByMetadata.set(metadata, key);
+  }
 }
 
 export function getInternalImageAsset(src: string): ImageMetadata | undefined {
@@ -29,10 +33,7 @@ export function getInternalImageAsset(src: string): ImageMetadata | undefined {
 
 /** Root-relative `/assets/images/...` URL for an imported metadata object, if it is in the asset map. */
 export function getRootRelativeUrlForMetadata(meta: ImageMetadata): string | undefined {
-  for (const [url, m] of assetMap) {
-    if (m === meta) return url;
-  }
-  return undefined;
+  return rootUrlByMetadata.get(meta);
 }
 
 export function resolveImageSource(src: string | ImageMetadata): string | ImageMetadata {

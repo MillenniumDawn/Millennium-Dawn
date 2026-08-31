@@ -1,0 +1,459 @@
+add_namespace = lithuania
+add_namespace = lithuania_news
+
+### Mažeikiai Refinery Privatization ###
+
+country_event = {
+	id = lithuania.1
+	title = lithuania.1.t
+	desc = lithuania.1.d
+	picture = GFX_oil_refinery
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	# Sell to PKN Orlen (Poland)
+	option = {
+		name = lithuania.1.a
+		log = "[GetDateText]: [This.GetName]: lithuania.1.a executed"
+		set_country_flag = LIT_sold_to_poland
+		add_timed_idea = { idea = LIT_refinery_sale_revenue days = 365 }
+		add_opinion_modifier = { target = POL modifier = large_increase }
+		hidden_effect = {
+			POL = {
+				add_opinion_modifier = { target = LIT modifier = large_increase }
+				country_event = { id = lithuania.2 days = 5 }
+			}
+			news_event = { id = lithuania_news.1 days = 2 }
+		}
+		reverse_add_opinion_modifier = { target = RUS modifier = medium_decrease }
+		ai_chance = { base = 70 }
+	}
+
+	# Sell to Russian consortium
+	option = {
+		name = lithuania.1.b
+		log = "[GetDateText]: [This.GetName]: lithuania.1.b executed"
+		set_country_flag = LIT_sold_to_russia
+		add_timed_idea = { idea = LIT_refinery_sale_revenue days = 365 }
+		add_ideas = LIT_russian_energy_leverage
+		add_opinion_modifier = { target = RUS modifier = medium_increase }
+		reverse_add_opinion_modifier = { target = POL modifier = medium_decrease }
+		hidden_effect = {
+			country_event = { id = lithuania.3 days = 120 random_days = 90 }
+			news_event = { id = lithuania_news.1 days = 2 }
+		}
+		ai_chance = { base = 15 }
+	}
+
+	# Keep it nationalized
+	option = {
+		name = lithuania.1.c
+		log = "[GetDateText]: [This.GetName]: lithuania.1.c executed"
+		add_political_power = -50
+		add_stability = -0.03
+		add_ideas = LIT_nationalized_refinery
+		ai_chance = { base = 15 }
+	}
+}
+
+# Poland learns of the purchase
+country_event = {
+	id = lithuania.2
+	title = lithuania.2.t
+	desc = lithuania.2.d
+	picture = GFX_oil_refinery
+	is_triggered_only = yes
+
+	option = {
+		name = lithuania.2.a
+		log = "[GetDateText]: [This.GetName]: lithuania.2.a executed"
+		add_political_power = 25
+		ai_chance = { base = 1 }
+	}
+}
+
+# Fire at the refinery (if sold to Russia)
+country_event = {
+	id = lithuania.3
+	title = lithuania.3.t
+	desc = lithuania.3.d
+	picture = GFX_burning_oil_refinery
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	# Blame Russia
+	option = {
+		name = lithuania.3.a
+		log = "[GetDateText]: [This.GetName]: lithuania.3.a executed"
+		reverse_add_opinion_modifier = { target = RUS modifier = medium_decrease }
+		add_stability = 0.03
+		ai_chance = { base = 40 }
+	}
+
+	# Investigate quietly
+	option = {
+		name = lithuania.3.b
+		log = "[GetDateText]: [This.GetName]: lithuania.3.b executed"
+		add_political_power = -25
+		ai_chance = { base = 60 }
+	}
+}
+
+### Ignalina Nuclear Power Plant ###
+
+country_event = {
+	id = lithuania.10
+	title = lithuania.10.t
+	desc = lithuania.10.d
+	picture = GFX_nuclear_power_plant
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		controls_state = 109
+	}
+
+	# Negotiate with Poland and Baltic States
+	option = {
+		name = lithuania.10.a
+		log = "[GetDateText]: [This.GetName]: lithuania.10.a executed"
+		add_political_power = -25
+		hidden_effect = {
+			POL = { country_event = { id = lithuania.11 days = 14 } }
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Keep it running
+	option = {
+		name = lithuania.10.b
+		log = "[GetDateText]: [This.GetName]: lithuania.10.b executed"
+		set_country_flag = LIT_ignalina_kept_open
+		add_stability = -0.05
+		reverse_add_opinion_modifier = { target = POL modifier = small_decrease }
+		reverse_add_opinion_modifier = { target = LAT modifier = small_decrease }
+		reverse_add_opinion_modifier = { target = EST modifier = small_decrease }
+		hidden_effect = {
+			country_event = { id = lithuania.16 days = 730 }
+		}
+		ai_chance = { base = 15 }
+	}
+
+	# Close without replacement
+	option = {
+		name = lithuania.10.c
+		log = "[GetDateText]: [This.GetName]: lithuania.10.c executed"
+		remove_ideas = nuclear_energy
+		add_ideas = LIT_energy_deficit
+		hidden_effect = {
+			news_event = { id = lithuania_news.2 days = 3 }
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+# Poland responds to cooperation proposal
+country_event = {
+	id = lithuania.11
+	title = lithuania.11.t
+	desc = lithuania.11.d
+	picture = GFX_nuclear_power_plant
+	is_triggered_only = yes
+
+	# Agree to co-fund
+	option = {
+		name = lithuania.11.a
+		log = "[GetDateText]: [This.GetName]: lithuania.11.a executed"
+		add_political_power = -50
+		add_opinion_modifier = { target = LIT modifier = medium_increase }
+		hidden_effect = {
+			LIT = { country_event = { id = lithuania.12 days = 7 } }
+		}
+		ai_chance = { base = 75 }
+	}
+
+	# Decline
+	option = {
+		name = lithuania.11.b
+		log = "[GetDateText]: [This.GetName]: lithuania.11.b executed"
+		add_political_power = 25
+		hidden_effect = {
+			LIT = { country_event = { id = lithuania.13 days = 7 } }
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+# Poland agrees
+country_event = {
+	id = lithuania.12
+	title = lithuania.12.t
+	desc = lithuania.12.d
+	picture = GFX_nuclear_power_plant_accept
+	is_triggered_only = yes
+
+	option = {
+		name = lithuania.12.a
+		log = "[GetDateText]: [This.GetName]: lithuania.12.a executed"
+		add_political_power = -75
+		add_opinion_modifier = { target = POL modifier = large_increase }
+		hidden_effect = {
+			country_event = { id = lithuania.14 days = 1095 }
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# Poland declines
+country_event = {
+	id = lithuania.13
+	title = lithuania.13.t
+	desc = lithuania.13.d
+	picture = GFX_nuclear_power_plant
+	is_triggered_only = yes
+
+	# Keep Ignalina running
+	option = {
+		name = lithuania.13.a
+		log = "[GetDateText]: [This.GetName]: lithuania.13.a executed"
+		set_country_flag = LIT_ignalina_kept_open
+		add_stability = -0.05
+		reverse_add_opinion_modifier = { target = POL modifier = small_decrease }
+		reverse_add_opinion_modifier = { target = LAT modifier = small_decrease }
+		reverse_add_opinion_modifier = { target = EST modifier = small_decrease }
+		hidden_effect = {
+			country_event = { id = lithuania.16 days = 730 }
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Close without replacement
+	option = {
+		name = lithuania.13.b
+		log = "[GetDateText]: [This.GetName]: lithuania.13.b executed"
+		remove_ideas = nuclear_energy
+		add_ideas = LIT_energy_deficit
+		hidden_effect = {
+			news_event = { id = lithuania_news.2 days = 3 }
+		}
+		ai_chance = { base = 50 }
+	}
+}
+
+# Visaginas referendum
+country_event = {
+	id = lithuania.14
+	title = lithuania.14.t
+	desc = lithuania.14.d
+	picture = GFX_nuclear_power_plant
+	is_triggered_only = yes
+
+	# People approve
+	option = {
+		name = lithuania.14.a
+		log = "[GetDateText]: [This.GetName]: lithuania.14.a executed"
+		add_stability = 0.05
+		if = {
+			limit = { has_idea = LIT_energy_deficit }
+			remove_ideas = LIT_energy_deficit
+		}
+		if = {
+			limit = { NOT = { has_idea = nuclear_energy } }
+			add_ideas = nuclear_energy
+		}
+		add_ideas = LIT_visaginas_nuclear_plant
+		hidden_effect = {
+			POL = { country_event = { id = lithuania.15 days = 3 } }
+			news_event = { id = lithuania_news.3 days = 5 }
+		}
+		ai_chance = { base = 40 }
+	}
+
+	# People reject
+	option = {
+		name = lithuania.14.b
+		log = "[GetDateText]: [This.GetName]: lithuania.14.b executed"
+		add_stability = -0.05
+		add_political_power = -50
+		add_ideas = LIT_energy_deficit
+		ai_chance = { base = 60 }
+	}
+}
+
+# Visaginas completed — Poland notified
+country_event = {
+	id = lithuania.15
+	title = lithuania.15.t
+	desc = lithuania.15.d
+	picture = GFX_nuclear_power_plant_accept
+	is_triggered_only = yes
+
+	option = {
+		name = lithuania.15.a
+		log = "[GetDateText]: [This.GetName]: lithuania.15.a executed"
+		add_political_power = 25
+		add_opinion_modifier = { target = LIT modifier = small_increase }
+		ai_chance = { base = 1 }
+	}
+}
+
+# International pressure if Ignalina kept open
+country_event = {
+	id = lithuania.16
+	title = lithuania.16.t
+	desc = lithuania.16.d
+	picture = GFX_nuclear_power_plant
+	is_triggered_only = yes
+
+	trigger = {
+		has_country_flag = LIT_ignalina_kept_open
+	}
+
+	# Finally close it
+	option = {
+		name = lithuania.16.a
+		log = "[GetDateText]: [This.GetName]: lithuania.16.a executed"
+		clr_country_flag = LIT_ignalina_kept_open
+		remove_ideas = nuclear_energy
+		add_ideas = LIT_energy_deficit
+		hidden_effect = {
+			news_event = { id = lithuania_news.2 days = 3 }
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Resist pressure
+	option = {
+		name = lithuania.16.b
+		log = "[GetDateText]: [This.GetName]: lithuania.16.b executed"
+		clr_country_flag = LIT_ignalina_kept_open
+		add_stability = -0.05
+		reverse_add_opinion_modifier = { target = POL modifier = small_decrease }
+		reverse_add_opinion_modifier = { target = LAT modifier = small_decrease }
+		ai_chance = { base = 30 }
+	}
+}
+
+### News Events ###
+
+news_event = {
+	id = lithuania_news.1
+	title = lithuania_news.1.t
+	desc = {
+		text = lithuania_news.1.d_poland
+		trigger = { LIT = { has_country_flag = LIT_sold_to_poland } }
+	}
+	desc = {
+		text = lithuania_news.1.d_russia
+		trigger = { LIT = { has_country_flag = LIT_sold_to_russia } }
+	}
+	picture = GFX_oil_refinery
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = lithuania_news.1.a
+		trigger = { original_tag = LIT }
+		hidden_effect = {
+			clr_country_flag = LIT_sold_to_poland
+			clr_country_flag = LIT_sold_to_russia
+		}
+	}
+
+	option = {
+		name = lithuania_news.1.b
+		trigger = { original_tag = POL }
+	}
+
+	option = {
+		name = lithuania_news.1.c
+		trigger = { original_tag = RUS }
+	}
+
+	option = {
+		name = lithuania_news.1.d
+		trigger = {
+			NOT = { original_tag = LIT }
+			NOT = { original_tag = POL }
+			NOT = { original_tag = RUS }
+			capital_scope = { is_on_continent = europe }
+		}
+	}
+
+	option = {
+		name = lithuania_news.1.e
+		trigger = {
+			NOT = { original_tag = LIT }
+			NOT = { original_tag = POL }
+			NOT = { original_tag = RUS }
+			NOT = { capital_scope = { is_on_continent = europe } }
+		}
+	}
+}
+
+news_event = {
+	id = lithuania_news.2
+	title = lithuania_news.2.t
+	desc = lithuania_news.2.d
+	picture = GFX_nuclear_power_plant
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = lithuania_news.2.a
+		trigger = { original_tag = LIT }
+	}
+
+	option = {
+		name = lithuania_news.2.b
+		trigger = {
+			NOT = { original_tag = LIT }
+			capital_scope = { is_on_continent = europe }
+		}
+	}
+
+	option = {
+		name = lithuania_news.2.c
+		trigger = {
+			NOT = { original_tag = LIT }
+			NOT = { capital_scope = { is_on_continent = europe } }
+		}
+	}
+}
+
+news_event = {
+	id = lithuania_news.3
+	title = lithuania_news.3.t
+	desc = lithuania_news.3.desc
+	picture = GFX_nuclear_power_plant_accept
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = lithuania_news.3.a
+		trigger = { original_tag = LIT }
+	}
+
+	option = {
+		name = lithuania_news.3.b
+		trigger = { original_tag = POL }
+	}
+
+	option = {
+		name = lithuania_news.3.c
+		trigger = {
+			NOT = { original_tag = LIT }
+			NOT = { original_tag = POL }
+			capital_scope = { is_on_continent = europe }
+		}
+	}
+
+	option = {
+		name = lithuania_news.3.d
+		trigger = {
+			NOT = { original_tag = LIT }
+			NOT = { original_tag = POL }
+			NOT = { capital_scope = { is_on_continent = europe } }
+		}
+	}
+}

@@ -30,9 +30,29 @@ The app will be brought up when saving a copy of a file when using it as a plugi
 
 Some textures, such as flags, require the TGA format instead. Be mindful of what you’re working on.
 
+### When block compression hurts
+
+DXT1 and DXT5 are lossy. On photographs the damage is usually invisible, but on flat colour and hard edges (a logo, a map, a heraldic device) it blocks up badly. Measured on real event art, DXT5 lands around 26 dB PSNR on a two-colour logo against 30 dB on an oil painting.
+
+Save those as uncompressed B8R8A8G8 instead. It is four times the file size and bit-exact, and the game loads it fine: several hundred event pictures and leader portraits already ship that way. Use your judgement, and prefer uncompressed whenever the art has large flat areas.
+
+### Flags
+
+Flags are uncompressed TGA at three sizes, and the game finds each one by the same filename in a different directory:
+
+- `gfx/flags/NAME.tga` at 82x52
+- `gfx/flags/medium/NAME.tga` at 41x26
+- `gfx/flags/small/NAME.tga` at 10x7
+
+Never put the size in the filename. `PER_federation_m.tga` in `medium/` will never load, because the game is looking for `medium/PER_federation.tga`.
+
+For a cosmetic tag, `NAME` is the tag exactly as `set_cosmetic_tag` spells it, case included.
+
+Most tools write TGA with a top-left origin descriptor. Nearly every flag in the repo uses bottom-left, so match it: in ImageMagick that means `-flip -orient bottom-left -compress None`.
+
 ## Placing Files
 
-Ensure that you are in the gfx-input branch on the GitLab repository before dropping anything into the mod. This is where all graphics go regardless of what they are being made for.
+Ensure that you are in the gfx-input branch on the GitHub repository before dropping anything into the mod. This is where all graphics go regardless of what they are being made for.
 
 You can usually find the location where your graphics need to go relatively easily just by looking at the names of the folders. Compare them to what you’re working on. Folder layouts might vary; some are deeper in the files than others. Here are just some examples.
 
@@ -49,6 +69,29 @@ Try to follow what everything else in the folder is named, and don’t put “gf
 
 DO: GER_Icon_Name
 DO NOT: GFX_Germany_Icon_Name
+
+## Converting
+
+`tools/assets/md_art_convert.py` writes the formats above so you don’t have to remember the flags. It needs ImageMagick on PATH.
+
+```bash
+# Event pictures, 217x163 for a country event or 397x153 for a news event
+python3 tools/assets/md_art_convert.py event art/*.png --out-dir "gfx/event_pictures/europe/france - FRA"
+
+# Leader portraits, 156x210
+python3 tools/assets/md_art_convert.py portrait art/leader.png --out-dir gfx/leaders/FRA
+
+# A flag, written to all three sizes at once
+python3 tools/assets/md_art_convert.py flag art/flag.png --name FRA_commune
+```
+
+It refuses art that is the wrong size rather than silently rescaling it, and checks each same-size result against its source so a bad conversion can’t reach the branch. Pass `--resize` if you really do want it scaled.
+
+`normalise` rewrites any TGA that was saved with a top-left origin. It moves rows and clears one header bit, so the image itself is untouched:
+
+```bash
+python3 tools/assets/md_art_convert.py normalise gfx/flags --check
+```
 
 ## Implementation
 

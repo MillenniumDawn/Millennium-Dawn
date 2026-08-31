@@ -20,22 +20,57 @@ on_actions = {
 			}
 		}
 	}
+	on_startup = {
+		effect = {
+			UKR = {
+				if = {
+					limit = { is_ai = yes }
+					set_country_flag = UKR_open_bureu_laws
+					set_country_flag = UKR_open_military_laws
+					set_country_flag = UKR_open_police_laws
+					set_country_flag = UKR_open_education_laws
+					set_country_flag = UKR_open_medical_laws
+					set_country_flag = UKR_open_pension_laws
+				}
+			}
+		}
+	}
 	on_monthly_UKR = {
 		effect = {
-			#SUBJECTS AUTORITY
+			UKR_rework_monthly_cleanup = yes
 			if = {
 				limit = {
-					OR = {
-						original_tag = DPR
-						original_tag = HPR
-						original_tag = CRM
-						original_tag = LRP
-						original_tag = VRP
-					}
-					has_autonomy_state = autonomy_republic_ukr
+					NOT = { has_country_flag = UKR_zelensky_formed }
 				}
-				set_temp_variable = { modify_subjectautoritet = 2 }
-				modify_subjectautoritet_support = yes
+				if = {
+					limit = {
+						OR = {
+							has_completed_focus = UKR_our_ukraine_parliamentary_republic
+							has_completed_focus = UKR_our_ukraine_president_republic
+						}
+					}
+					random = {
+						chance = 39
+						country_event = { id = ukr_zelenskiy.2 days = 1 }
+					}
+				}
+				else = {
+					random = {
+						chance = 1
+						country_event = { id = ukr_zelenskiy.2 days = 1 }
+					}
+				}
+			}
+			#SUBJECTS AUTORITY
+			every_subject_country = {
+				limit = {
+					OR = {
+						has_autonomy_state = autonomy_republic_ukr
+						has_autonomy_state = autonomy_novorossiya_ukr
+					}
+				}
+				set_temp_variable = { modify_subjectavtoritet = 2 }
+				modify_subjectavtoritet_support = yes
 			}
 			# Check for Elections
 			if = {
@@ -155,6 +190,73 @@ on_actions = {
 				}
 
 				add_to_variable = { hur_points = buf }
+			}
+		}
+	}
+	on_declare_war = {
+		effect = {
+			if = {
+				limit = {
+					OR = {
+						original_tag = UKR
+						FROM = { original_tag = UKR }
+					}
+				}
+				UKR_record_rework_war = yes
+			}
+		}
+	}
+	on_capitulation = {
+		effect = {
+			if = {
+				limit = {
+					OR = {
+						original_tag = SEU
+						original_tag = DPR
+						original_tag = LPR
+						original_tag = DRP
+						original_tag = OPR
+						original_tag = CRM
+						original_tag = NOV
+					}
+				}
+				ROOT = { UKR_record_rework_capitulation = yes }
+			}
+		}
+	}
+	on_puppet = {
+		effect = {
+			if = {
+				limit = { FROM = { original_tag = UKR } }
+				ROOT = { UKR_register_rework_puppet = yes }
+			}
+		}
+	}
+	on_annex = {
+		effect = {
+			if = {
+				limit = { country_exists = UKR }
+				if = { limit = { FROM = { original_tag = SEU } } UKR = { UKR_cleanup_seu_rework = yes } }
+				if = { limit = { FROM = { original_tag = DPR } } UKR = { UKR_cleanup_dpr_rework = yes } }
+				if = { limit = { FROM = { original_tag = LPR } } UKR = { UKR_cleanup_lpr_rework = yes } }
+				if = { limit = { FROM = { original_tag = DRP } } UKR = { UKR_cleanup_drp_rework = yes } }
+				if = { limit = { FROM = { original_tag = OPR } } UKR = { UKR_cleanup_opr_rework = yes } }
+				if = { limit = { FROM = { original_tag = CRM } } UKR = { UKR_cleanup_crm_rework = yes } }
+				if = { limit = { FROM = { original_tag = NOV } } UKR = { UKR_cleanup_nov_rework = yes } }
+			}
+		}
+	}
+	on_subject_annexed = {
+		effect = {
+			if = {
+				limit = { country_exists = UKR }
+				if = { limit = { ROOT = { original_tag = SEU } } UKR = { UKR_cleanup_seu_rework = yes } }
+				if = { limit = { ROOT = { original_tag = DPR } } UKR = { UKR_cleanup_dpr_rework = yes } }
+				if = { limit = { ROOT = { original_tag = LPR } } UKR = { UKR_cleanup_lpr_rework = yes } }
+				if = { limit = { ROOT = { original_tag = DRP } } UKR = { UKR_cleanup_drp_rework = yes } }
+				if = { limit = { ROOT = { original_tag = OPR } } UKR = { UKR_cleanup_opr_rework = yes } }
+				if = { limit = { ROOT = { original_tag = CRM } } UKR = { UKR_cleanup_crm_rework = yes } }
+				if = { limit = { ROOT = { original_tag = NOV } } UKR = { UKR_cleanup_nov_rework = yes } }
 			}
 		}
 	}
