@@ -232,6 +232,22 @@ def test_ai_only_decision_flag_not_flagged(tmp_path):
     assert out == []
 
 
+def test_ai_only_available_decision_flag_not_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "some_category = {\n"
+        "\tmy_decision = {\n"
+        "\t\tavailable = {\n"
+        "\t\t\tis_ai = yes\n"
+        "\t\t\thas_country_flag = ENG_deal_flag\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        rel="common/decisions/src.txt",
+    )
+    assert out == []
+
+
 def test_ai_only_category_flag_not_flagged(tmp_path):
     out = _findings(
         tmp_path,

@@ -304,9 +304,6 @@ def test_is_ai_in_allowed_exempts(tmp_path):
 
 
 def test_is_ai_in_available_exempts(tmp_path):
-    # ``available = { is_ai = yes }`` alone only disables the button while
-    # the entry remains visible (greyed out), so the tooltip still matters.
-    # It only counts as AI-only when the parent category is also gated.
     out = _findings(
         tmp_path,
         "some_category = {\n"
@@ -319,7 +316,7 @@ def test_is_ai_in_available_exempts(tmp_path):
         "}\n",
         rel=_DECISION_REL,
     )
-    assert len(out) == 1
+    assert out == []
 
 
 def test_is_ai_in_available_with_ai_category_exempts(tmp_path):

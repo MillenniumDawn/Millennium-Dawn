@@ -95,6 +95,11 @@ def test_factory_ai_only_from_visible():
     assert factory.ai_only
 
 
+def test_factory_ai_only_from_available():
+    factory = decision_factory("dec_one = {\n\tavailable = {\n\t\tis_ai = yes\n\t}\n}")
+    assert factory.ai_only
+
+
 def test_factory_not_ai_only_when_nested():
     factory = decision_factory(
         "dec_two = {\n\tvisible = {\n\t\tOR = {\n\t\t\tis_ai = yes\n"
@@ -108,6 +113,11 @@ def test_factory_not_ai_only_when_nested():
 
 def test_ai_only_decision_without_loc_not_flagged(monkeypatch):
     factory = decision_factory("dec_one = {\n\tvisible = {\n\t\tis_ai = yes\n\t}\n}")
+    assert _results_for([factory], set(), monkeypatch) == []
+
+
+def test_ai_only_available_decision_without_loc_not_flagged(monkeypatch):
+    factory = decision_factory("dec_one = {\n\tavailable = {\n\t\tis_ai = yes\n\t}\n}")
     assert _results_for([factory], set(), monkeypatch) == []
 
 
