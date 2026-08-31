@@ -209,7 +209,7 @@ MD_avoid_new_wars_when_outmatched = {
 }
 ```
 
-Omitting `allowed` applies a strategy to every country (precedent: `save_pp_for_laws`, `AI_generic_office_construction`, `default_area_priority`). Do not re-add per-tag `*_cancel_war_*` blocks.
+Omitting `allowed` applies a strategy to every country (precedent: `save_pp_for_laws`, `AI_generic_office_construction`, `default_area_priority`). Do not re-add per-tag `*_cancel_war_*` blocks, and do not write a per-tag `TAG_avoid_starting_wars` on a plain `enemies_strength_ratio` gate — anything stricter than `> 0.75` is already covered by the mod-wide block and does nothing. A per-tag brake earns its place only on a gate the strength ratio cannot express, such as `BLR`/`SOV` firing on NATO/EU-aligned enemies at any strength.
 
 **Ratio direction differs between the two triggers.** `strength_ratio = { tag = X ratio < 1 }` means the scope country is weaker than X. `enemies_strength_ratio` rises as the scope country's enemies get stronger — MD's peace-deal triggers read `> 1.7` as losing and `> 2.0` as massively outgunned (`common/scripted_triggers/00_peace_deal_triggers.txt`).
 
