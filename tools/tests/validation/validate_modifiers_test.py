@@ -10,9 +10,12 @@ from validate_modifiers import (
     Validator,
     _check_file_for_unknown_modifiers,
     _extract_top_level_definition_blocks,
+    _harvest_doctrine_folder_cost_factors,
     _is_parametric_modifier,
     _load_documented_modifiers,
 )
+
+NEWLINE = chr(10)
 
 
 def _write_idea_file(tmp_path, modifier_body):
@@ -87,38 +90,64 @@ def test_parametric_modifier_families_exempt():
 
 
 def test_doctrine_cost_factor_is_not_a_parametric_family():
-    """Doctrine cost factors are a closed set of four, not an open family.
+    """Doctrine cost factors are harvested per folder, not matched by shape.
 
     A `<word>_doctrine_cost_factor` regex used to exempt the whole shape, which
-    whitelisted `equipment_doctrine_cost_factor` -- a name the engine does not
-    define, so it compiled silently and did nothing in three Netherlands ideas.
-    The four real categories are documented, so they need no pattern.
+    would have whitelisted a misspelled folder name. The real set is finite and
+    declared, so it is harvested from common/doctrines/folders/ instead.
     """
-    for valid in (
+    for name in (
         "air_doctrine_cost_factor",
         "land_doctrine_cost_factor",
         "naval_doctrine_cost_factor",
         "special_forces_doctrine_cost_factor",
+        "equipment_doctrine_cost_factor",
+        "equipmnt_doctrine_cost_factor",
     ):
-        assert not _is_parametric_modifier(valid), (
-            f"{valid} must come from the documentation, not a catch-all regex"
-        )
-    assert not _is_parametric_modifier("equipment_doctrine_cost_factor")
+        assert not _is_parametric_modifier(name), name
 
 
-def test_documented_doctrine_cost_factors_stay_known_good():
-    """The four real categories must survive without the catch-all pattern."""
-    documented, _ = _load_documented_modifiers(str(REPO_ROOT / _DOC_REL_PATH))
-    if not documented:
-        return  # documentation not checked out; covered by its own test
-    for valid in (
-        "air_doctrine_cost_factor",
+def test_doctrine_folder_cost_factors_are_harvested(tmp_path):
+    """Every declared folder generates one, including mod-defined folders.
+
+    MD declares its own `equipment` folder beside vanilla's four, so the shipped
+    vanilla documentation cannot cover the set: harvesting is what keeps
+    equipment_doctrine_cost_factor valid while a typo stays reportable.
+    """
+    folders = tmp_path / "common" / "doctrines" / "folders"
+    folders.mkdir(parents=True)
+    path = folders / "doctrine_folders.txt"
+    path.write_text(
+        "land = {"
+        + NEWLINE
+        + '	name = "land_doctrine_folder"'
+        + NEWLINE
+        + "}"
+        + NEWLINE
+        + "equipment = {"
+        + NEWLINE
+        + '	name = "equipment_doctrine_folder"'
+        + NEWLINE
+        + "}"
+        + NEWLINE,
+        encoding="utf-8",
+    )
+    harvested = _harvest_doctrine_folder_cost_factors([str(path)])
+    assert harvested == {
         "land_doctrine_cost_factor",
-        "naval_doctrine_cost_factor",
-        "special_forces_doctrine_cost_factor",
-    ):
-        assert valid in documented, valid
-    assert "equipment_doctrine_cost_factor" not in documented
+        "equipment_doctrine_cost_factor",
+    }
+
+
+def test_shipped_doctrine_folders_cover_the_netherlands_ideas():
+    """The five folders MD ships are exactly the five modifiers in use."""
+    shipped = REPO_ROOT / "common" / "doctrines" / "folders" / "doctrine_folders.txt"
+    if not shipped.exists():
+        return
+    harvested = _harvest_doctrine_folder_cost_factors([str(shipped)])
+    assert "equipment_doctrine_cost_factor" in harvested
+    for vanilla in ("air", "land", "naval", "special_forces"):
+        assert f"{vanilla}_doctrine_cost_factor" in harvested
 
 
 def test_shipped_doc_yields_concrete_names_and_families():

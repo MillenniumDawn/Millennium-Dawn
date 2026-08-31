@@ -394,6 +394,11 @@ def _load_documented_modifiers(
 
 _IDEA_SLOT_RE = re.compile(r"^\s*(?:character_)?slot\s*=\s*([A-Za-z][A-Za-z0-9_]*)")
 
+# Doctrine folders are declared as top-level `<id> = {` blocks. MD adds its own
+# `equipment` folder alongside vanilla's four, and the vanilla documentation
+# naturally lists only vanilla folders, so these must be harvested.
+_DOCTRINE_FOLDER_RE = re.compile(r"^([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{")
+
 _BRACE_OR_ENABLE_RE = re.compile(r"\benable\s*=\s*\{|\{|\}")
 # The lookbehind keeps `tag` off the tail of `has_cosmetic_tag`; matching a
 # token rather than a whole line is what stops a gate hiding on a shared line.
@@ -490,6 +495,28 @@ def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
             m = _IDEA_SLOT_RE.match(line)
             if m:
                 names.add(f"{m.group(1)}_cost_factor")
+    return names
+
+
+def _harvest_doctrine_folder_cost_factors(folder_files: List[str]) -> Set[str]:
+    """Every doctrine folder auto-generates a `<folder>_doctrine_cost_factor`.
+
+    MD declares its own `equipment` folder next to vanilla's land/naval/air/
+    special_forces, so the shipped vanilla documentation cannot cover the set.
+    Harvesting the declared ids keeps mod-defined folders valid while still
+    rejecting a misspelled folder name.
+    """
+    names: Set[str] = set()
+    for filepath in folder_files:
+        try:
+            with open(filepath, encoding="utf-8-sig") as fh:
+                content = fh.read()
+        except OSError:
+            continue
+        for line in content.splitlines():
+            m = _DOCTRINE_FOLDER_RE.match(line)
+            if m:
+                names.add(f"{m.group(1)}_doctrine_cost_factor")
     return names
 
 
@@ -701,6 +728,14 @@ class Validator(BaseValidator):
         slot_factors = _harvest_idea_slot_cost_factors(idea_tag_files)
         known_good |= slot_factors
 
+        # Engine-generated <folder>_doctrine_cost_factor from every doctrine
+        # folder, including MD's own `equipment` folder.
+        doctrine_folder_files = self._collect_files(
+            ["common/doctrines/folders/**/*.txt"], ignore_staged=True
+        )
+        doctrine_factors = _harvest_doctrine_folder_cost_factors(doctrine_folder_files)
+        known_good |= doctrine_factors
+
         # Engine-generated per-sub-unit modifiers (unit-keyed doc templates plus
         # modifier_army_sub_unit_*, doc-concrete for vanilla only) for MD's own
         # sub_units entries — the vanilla doc has no MD unit names to expand against.
@@ -733,6 +768,7 @@ class Validator(BaseValidator):
         self.log(
             f"  Known-good modifier set: {len(known_good)} names "
             f"({len(documented)} documented, {len(slot_factors)} slot cost factors, "
+            f"{len(doctrine_factors)} doctrine cost factors, "
             f"{len(sub_unit_modifiers)} MD sub-unit modifiers, "
             f"{len(operation_modifiers)} MD operation modifiers)"
         )
