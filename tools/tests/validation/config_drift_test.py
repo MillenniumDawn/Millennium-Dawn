@@ -907,19 +907,9 @@ def test_validation_checkout_uses_the_live_pr_head():
     assert 'echo "ref=$head_sha"' in script
     assert 'echo "head-sha=$head_sha"' in script
     assert 'echo "base-sha=$base_sha"' in script
-    assert 'echo "tooling-ref=$tooling_ref"' in script
-    # Own-repo branches are judged by the validators they ship; fork heads are
-    # untrusted under pull_request_target and stay on base tooling.
-    assert 'if [ "$head_repository" = "$GITHUB_REPOSITORY" ]; then' in script
-    assert 'tooling_ref="$head_sha"' in script
-    assert 'tooling_ref="$base_sha"' in script
     assert detect["outputs"]["head-sha"] == "${{ steps.resolve-ref.outputs.head-sha }}"
     assert detect["outputs"]["base-sha"] == "${{ steps.resolve-ref.outputs.base-sha }}"
     assert detect["outputs"]["checkout-ref"] == "${{ steps.resolve-ref.outputs.ref }}"
-    assert (
-        detect["outputs"]["tooling-ref"]
-        == "${{ steps.resolve-ref.outputs.tooling-ref }}"
-    )
     trigger = _workflow_trigger(CI_WORKFLOW)
     assert trigger["workflow_dispatch"]["inputs"]["pr_number"]["required"] is False
 
@@ -963,7 +953,7 @@ def test_prepare_workspace_uses_trusted_tools_and_run_artifact():
     assert trusted_checkout["with"]["repository"] == "${{ github.repository }}"
     assert (
         trusted_checkout["with"]["ref"]
-        == "${{ needs.detect-changes.outputs.tooling-ref }}"
+        == "${{ needs.detect-changes.outputs.base-sha }}"
     )
     assert set(trusted_checkout["with"]["sparse-checkout"].split()) >= {
         "tools",
@@ -1031,7 +1021,7 @@ def test_prepare_workspace_uses_trusted_tools_and_run_artifact():
     assert path_checkouts[1]["with"]["repository"] == "${{ github.repository }}"
     assert (
         path_checkouts[1]["with"]["ref"]
-        == "${{ needs.detect-changes.outputs.tooling-ref }}"
+        == "${{ needs.detect-changes.outputs.base-sha }}"
     )
     link_guard = next(
         step for step in paths["steps"] if step.get("name") == "Reject links in PR tree"

@@ -871,9 +871,7 @@ class Validator(BaseValidator):
             "Orphaned tooltip keys (defined in loc but never referenced):",
         )
 
-    def validate_opinion_modifiers(
-        self, loc_keys: Dict, scripted_loc_keys: set
-    ):
+    def validate_opinion_modifiers(self, loc_keys: Dict, scripted_loc_keys: set):
         self._log_section("Checking opinion modifier localisation...")
 
         modifier_files = self._collect_files(

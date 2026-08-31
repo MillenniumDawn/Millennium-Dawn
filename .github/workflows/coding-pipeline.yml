@@ -1,7 +1,7 @@
 name: Code Standards & Validation
 
 on:
-  # Runs for fork and conflicted PRs with trusted tooling against PR data.
+  # Runs for fork and conflicted PRs with base-owned tooling against PR data.
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
@@ -24,9 +24,8 @@ concurrency:
     github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-# Validator jobs run tooling from `tooling-ref` — the PR head for branches in
-# this repository, the base branch for forks — against PR data, with no write
-# token. The report job alone has write access and stays on base tooling.
+# Validator jobs use base-owned tooling against PR data. The report job alone
+# has write access and also checks out base-branch tooling.
 permissions:
   contents: read
 
@@ -129,7 +128,6 @@ jobs:
         steps.dispatch.outputs.mios }}
       checkout-repository: ${{ steps.resolve-ref.outputs.repository }}
       checkout-ref: ${{ steps.resolve-ref.outputs.ref }}
-      tooling-ref: ${{ steps.resolve-ref.outputs.tooling-ref }}
       map-adjacency: >-
         ${{ steps.filter.outputs.map-adjacency ||
         steps.dispatch.outputs.map-adjacency }}
@@ -168,20 +166,11 @@ jobs:
             echo "::error::Unable to resolve the PR head repository and SHA"
             exit 1
           fi
-          # A branch in this repository runs its own validator code, so a PR
-          # that changes a check is judged by the check it ships. Fork heads
-          # are untrusted under pull_request_target and stay on base tooling.
-          if [ "$head_repository" = "$GITHUB_REPOSITORY" ]; then
-            tooling_ref="$head_sha"
-          else
-            tooling_ref="$base_sha"
-          fi
           {
             echo "repository=$head_repository"
             echo "ref=$head_sha"
             echo "head-sha=$head_sha"
             echo "base-sha=$base_sha"
-            echo "tooling-ref=$tooling_ref"
           } >> "$GITHUB_OUTPUT"
 
       # dorny/paths-filter reads the PR file list through the API.
@@ -357,14 +346,12 @@ jobs:
             exit 1
           fi
 
-      # Validator code and reference data never come from the PR data tree.
-      # `tooling-ref` is the PR head for branches in this repository and the
-      # base branch for forks.
+      # Validator code and reference data must come from the base branch.
       - name: Checkout trusted tooling
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ github.repository }}
-          ref: ${{ needs.detect-changes.outputs.tooling-ref }}
+          ref: ${{ needs.detect-changes.outputs.base-sha }}
           path: trusted
           fetch-depth: 1
           persist-credentials: false
@@ -931,7 +918,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ github.repository }}
-          ref: ${{ needs.detect-changes.outputs.tooling-ref }}
+          ref: ${{ needs.detect-changes.outputs.base-sha }}
           path: trusted
           fetch-depth: 1
           persist-credentials: false
@@ -1013,10 +1000,9 @@ jobs:
             tools/shared_utils.py
           sparse-checkout-cone-mode: false
 
-      # Hashed from base tooling, matching the generation that built the
-      # baseline on main, so a report can only restore a baseline built by the
-      # same validator generation. A PR that changes a validator therefore
-      # reports its own findings against the main-side baseline.
+      # Same source hash as prepare-workspace: the baseline cache entry is
+      # keyed on it, so a report can only restore a baseline built by the
+      # current validator generation.
       - name: Compute validator code hash
         id: toolshash
         run: >-
