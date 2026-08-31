@@ -1982,7 +1982,11 @@ def _check_redundant_avoid_starting_wars(lines, filepath=""):
         block, next_idx = _get_block(lines, i)
         text = "\n".join(_code_for_depth(ln) for ln in block)
         enable_idx = next(
-            (k for k, ln in enumerate(block) if _code_for_depth(ln).strip().startswith("enable")),
+            (
+                k
+                for k, ln in enumerate(block)
+                if _code_for_depth(ln).strip().startswith("enable")
+            ),
             None,
         )
         if enable_idx is None:

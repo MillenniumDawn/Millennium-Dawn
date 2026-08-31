@@ -3912,14 +3912,18 @@ _CUB_DAILY_CACHE = [
 ]
 
 assert_finds(
-    lambda lines: _check_ai_daily_flag_cache(lines, "common/on_actions/99_CUB_on_actions.txt"),
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/99_CUB_on_actions.txt"
+    ),
     _CUB_DAILY_CACHE,
     1,
     "on_daily block that only set/clears a flag flagged",
 )
 
 assert_finds(
-    lambda lines: _check_ai_daily_flag_cache(lines, "common/on_actions/99_CUB_on_actions.txt"),
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/99_CUB_on_actions.txt"
+    ),
     _CUB_DAILY_CACHE[:6]
     + [
         "\t\t\t\tadd_political_power = 5\n",
@@ -3932,7 +3936,9 @@ assert_finds(
 )
 
 assert_finds(
-    lambda lines: _check_ai_daily_flag_cache(lines, "common/on_actions/99_CUB_on_actions.txt"),
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/99_CUB_on_actions.txt"
+    ),
     [
         "on_actions = {\n",
         "\ton_daily_CUB = {\n",
@@ -3947,14 +3953,18 @@ assert_finds(
 )
 
 assert_finds(
-    lambda lines: _check_ai_daily_flag_cache(lines, "common/on_actions/MD_event_on_actions.txt"),
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/MD_event_on_actions.txt"
+    ),
     [ln.replace("on_daily_CUB", "on_daily_BOS") for ln in _CUB_DAILY_CACHE],
     0,
     "allowlisted on_daily_BOS not flagged",
 )
 
 assert_finds(
-    lambda lines: _check_ai_daily_flag_cache(lines, "common/scripted_effects/00_scripted_effects.txt"),
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/scripted_effects/00_scripted_effects.txt"
+    ),
     _CUB_DAILY_CACHE,
     0,
     "check is scoped to common/on_actions",
@@ -3982,21 +3992,27 @@ def _war_brake(ratio, strategy="avoid_starting_wars value = -200"):
 
 
 assert_finds(
-    lambda lines: _check_redundant_avoid_starting_wars(lines, "common/ai_strategy/CUB.txt"),
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/CUB.txt"
+    ),
     _war_brake("1.2"),
     1,
     "stricter-than-mod-wide ratio flagged",
 )
 
 assert_finds(
-    lambda lines: _check_redundant_avoid_starting_wars(lines, "common/ai_strategy/CUB.txt"),
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/CUB.txt"
+    ),
     _war_brake("0.5"),
     0,
     "looser ratio than the mod-wide block not flagged",
 )
 
 assert_finds(
-    lambda lines: _check_redundant_avoid_starting_wars(lines, "common/ai_strategy/CUB.txt"),
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/CUB.txt"
+    ),
     _war_brake("1.2", "declare_war id = HAI value = -4000"),
     0,
     "block carrying a targeted strategy not flagged",
@@ -4012,7 +4028,9 @@ assert_finds(
 )
 
 assert_finds(
-    lambda lines: _check_redundant_avoid_starting_wars(lines, "common/ai_strategy/BLR.txt"),
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/BLR.txt"
+    ),
     [
         "BLR_avoid_nato_wars = {\n",
         "\tallowed = { original_tag = BLR }\n",
