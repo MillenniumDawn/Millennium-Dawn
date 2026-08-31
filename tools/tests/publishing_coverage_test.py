@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import io
 import subprocess
-import sys
 import tarfile
 from pathlib import Path, PurePosixPath
 

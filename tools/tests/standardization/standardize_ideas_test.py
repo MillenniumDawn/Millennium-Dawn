@@ -340,9 +340,10 @@ def test_meaningful_effect_detection_of_an_empty_block():
 
 def test_always_no_filter_only_applies_to_gate_properties():
     standardizer = IdeaStandardizer()
-    block = ["modifier = {", "\talways = no", "}"]
+    block = ["cancel = {", "\talways = no", "}"]
     assert not standardizer.is_always_no_block(block, "modifier")
-    assert standardizer.is_always_no_block(block, "allowed")
+    assert not standardizer.is_always_no_block(block, "allowed")
+    assert standardizer.is_always_no_block(block, "cancel")
 
 
 def test_compact_block_boundaries():
