@@ -19,7 +19,7 @@ def _unused(tokens, activated_decisions, activated_missions, monkeypatch):
     monkeypatch.setattr(
         validator,
         "_get_activation_removal_scan",
-        lambda: (activated_decisions, activated_missions, set()),
+        lambda: (activated_decisions, activated_missions, set(), set()),
     )
     validator.validate_unused_decisions()
     return validator.collected
@@ -105,10 +105,11 @@ def test_activation_scan_uses_only_shipped_content_roots(tmp_path):
     archived.parent.mkdir()
     archived.write_text("activate_mission = archived_mission\n", encoding="utf-8")
 
-    decisions, missions, removals = V.Validator(
+    decisions, missions, removals, announced = V.Validator(
         str(tmp_path), workers=1
     )._get_activation_removal_scan()
 
     assert decisions == set()
     assert missions == {"shipped_mission"}
     assert removals == set()
+    assert announced == set()

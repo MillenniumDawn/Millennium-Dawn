@@ -61,7 +61,10 @@ def decisions_results_for(factories, monkeypatch, check="validate_missing_log"):
     import validate_decisions as V
 
     validator = fake_decisions_validator("/tmp")
-    monkeypatch.setattr(V, "parse_all_decision_factories", lambda mod_path: factories)
+    # Some checks pass `lowercase=` explicitly, so the stub must accept it.
+    monkeypatch.setattr(
+        V, "parse_all_decision_factories", lambda mod_path, lowercase=False: factories
+    )
     getattr(validator, check)()
     return validator.collected
 

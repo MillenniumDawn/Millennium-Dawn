@@ -13,10 +13,11 @@ outright, so no requirement line renders either way.
 import validate_variables as V
 
 
-def _findings(tmp_path, text):
-    f = tmp_path / "src.txt"
+def _findings(tmp_path, text, ai_categories=frozenset(), rel="src.txt"):
+    f = tmp_path / rel
+    f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(text, encoding="utf-8")
-    return V.process_file_for_available_flags((str(f), str(tmp_path)))
+    return V.process_file_for_available_flags((str(f), str(tmp_path), ai_categories))
 
 
 def test_shorthand_flag_in_available_flagged(tmp_path):
@@ -210,3 +211,54 @@ def test_only_unlocalised_flags_reported(tmp_path):
     assert "ENG_known_flag" not in issue.message
     assert issue.severity == V.Severity.WARNING
     assert issue.category == "unlocalised-available-flag"
+
+
+# --- AI-only exemption -------------------------------------------------------
+
+
+def test_ai_only_decision_flag_not_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "some_category = {\n"
+        "\tmy_decision = {\n"
+        "\t\tvisible = { is_ai = yes }\n"
+        "\t\tavailable = {\n"
+        "\t\t\thas_country_flag = ENG_deal_flag\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        rel="common/decisions/src.txt",
+    )
+    assert out == []
+
+
+def test_ai_only_available_decision_flag_not_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "some_category = {\n"
+        "\tmy_decision = {\n"
+        "\t\tavailable = {\n"
+        "\t\t\tis_ai = yes\n"
+        "\t\t\thas_country_flag = ENG_deal_flag\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        rel="common/decisions/src.txt",
+    )
+    assert out == []
+
+
+def test_ai_only_category_flag_not_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "ai_category = {\n"
+        "\tmy_decision = {\n"
+        "\t\tavailable = {\n"
+        "\t\t\thas_country_flag = ENG_deal_flag\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        ai_categories=frozenset({"ai_category"}),
+        rel="common/decisions/src.txt",
+    )
+    assert out == []

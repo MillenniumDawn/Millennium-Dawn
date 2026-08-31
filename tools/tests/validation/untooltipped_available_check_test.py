@@ -10,11 +10,18 @@ outright, so no tooltip renders either way.
 
 import validate_variables as V
 
+# The AI-only exemption keys off the decisions path, so a test that wants it
+# has to write the file where decisions actually live.
+_DECISION_REL = "common/decisions/src.txt"
 
-def _findings(tmp_path, text):
-    f = tmp_path / "src.txt"
+
+def _findings(tmp_path, text, ai_categories=frozenset(), rel="src.txt"):
+    f = tmp_path / rel
+    f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(text, encoding="utf-8")
-    return V.process_file_for_untooltipped_available_checks((str(f), str(tmp_path)))
+    return V.process_file_for_untooltipped_available_checks(
+        (str(f), str(tmp_path), ai_categories)
+    )
 
 
 def test_bare_check_in_available_flagged(tmp_path):
@@ -256,5 +263,205 @@ def test_single_line_available_flagged(tmp_path):
     out = _findings(
         tmp_path,
         "my_decision = {\n\tavailable = { check_variable = { my_var > 5 } }\n}\n",
+    )
+    assert len(out) == 1
+
+
+# --- AI-only exemption -------------------------------------------------------
+#
+# Nobody reads a requirement line on a decision no human player can see, so the
+# wrapper the check demands would be dead weight there.
+
+
+_AI_DECISION = (
+    "some_category = {\n"
+    "\tmy_decision = {\n"
+    "\t\t{gate}\n"
+    "\t\tavailable = {\n"
+    "\t\t\tcheck_variable = { my_var > 5 }\n"
+    "\t\t}\n"
+    "\t}\n"
+    "}\n"
+)
+
+
+def _decision_file(gate):
+    return _AI_DECISION.replace("{gate}", gate)
+
+
+def test_is_ai_in_visible_exempts(tmp_path):
+    out = _findings(
+        tmp_path, _decision_file("visible = { is_ai = yes }"), rel=_DECISION_REL
+    )
+    assert out == []
+
+
+def test_is_ai_in_allowed_exempts(tmp_path):
+    out = _findings(
+        tmp_path, _decision_file("allowed = { is_ai = yes }"), rel=_DECISION_REL
+    )
+    assert out == []
+
+
+def test_is_ai_in_available_exempts(tmp_path):
+    out = _findings(
+        tmp_path,
+        "some_category = {\n"
+        "\tmy_decision = {\n"
+        "\t\tavailable = {\n"
+        "\t\t\tis_ai = yes\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        rel=_DECISION_REL,
+    )
+    assert out == []
+
+
+def test_is_ai_in_available_with_ai_category_exempts(tmp_path):
+    out = _findings(
+        tmp_path,
+        "some_category = {\n"
+        "\tmy_decision = {\n"
+        "\t\tavailable = {\n"
+        "\t\t\tis_ai = yes\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        ai_categories=frozenset({"some_category"}),
+        rel=_DECISION_REL,
+    )
+    assert out == []
+
+
+def test_is_ai_nested_in_or_does_not_exempt(tmp_path):
+    out = _findings(
+        tmp_path,
+        _decision_file("visible = { OR = { is_ai = yes is_debug = yes } }"),
+        rel=_DECISION_REL,
+    )
+    assert len(out) == 1
+
+
+def test_ai_only_category_exempts_member_decision(tmp_path):
+    out = _findings(
+        tmp_path,
+        _decision_file("cost = 25"),
+        ai_categories=frozenset({"some_category"}),
+        rel=_DECISION_REL,
+    )
+    assert out == []
+
+
+def test_ordinary_category_in_same_file_still_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "ai_category = {\n"
+        "\tai_decision = {\n"
+        "\t\tavailable = {\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+        "human_category = {\n"
+        "\thuman_decision = {\n"
+        "\t\tavailable = {\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        ai_categories=frozenset({"ai_category"}),
+        rel=_DECISION_REL,
+    )
+    assert len(out) == 1
+    assert out[0][2] == 11
+
+
+def test_sibling_decision_of_ai_only_one_still_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "some_category = {\n"
+        "\tai_decision = {\n"
+        "\t\tvisible = { is_ai = yes }\n"
+        "\t\tavailable = {\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "\thuman_decision = {\n"
+        "\t\tavailable = {\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        rel=_DECISION_REL,
+    )
+    assert len(out) == 1
+    assert out[0][2] == 10
+
+
+def test_ai_only_decision_after_a_sibling_is_still_exempt(tmp_path):
+    # The span walk used to land back on each decision's closing brace, driving
+    # its depth count negative so only the first decision in a category was
+    # ever tested. Every AI-only decision here must be exempt, whatever its
+    # position, and the one human decision must still be flagged.
+    out = _findings(
+        tmp_path,
+        "some_category = {\n"
+        "\thuman_decision = {\n"
+        "\t\tavailable = {\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "\tfirst_ai_decision = {\n"
+        "\t\tvisible = { is_ai = yes }\n"
+        "\t\tavailable = {\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "\tsecond_ai_decision = {\n"
+        "\t\tvisible = { is_ai = yes }\n"
+        "\t\tavailable = {\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        rel=_DECISION_REL,
+    )
+    assert len(out) == 1
+    assert out[0][2] == 4
+
+
+def test_category_definition_file_not_treated_as_decisions(tmp_path):
+    # `common/decisions/categories/` holds the categories themselves, not the
+    # category -> decision nesting the span walk assumes.
+    out = _findings(
+        tmp_path,
+        "my_category = {\n"
+        "\tvisible = { is_ai = yes }\n"
+        "\tavailable = {\n"
+        "\t\tcheck_variable = { my_var > 5 }\n"
+        "\t}\n"
+        "}\n",
+        rel="common/decisions/categories/cat.txt",
+    )
+    assert len(out) == 1
+
+
+def test_focus_tree_with_is_ai_still_flagged(tmp_path):
+    # The span walk is decisions-only: a focus is not a category/decision pair.
+    out = _findings(
+        tmp_path,
+        "focus_tree = {\n"
+        "\tfocus = {\n"
+        "\t\tid = MY_focus\n"
+        "\t\tavailable = {\n"
+        "\t\t\tis_ai = yes\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        rel="common/national_focus/my_tree.txt",
     )
     assert len(out) == 1

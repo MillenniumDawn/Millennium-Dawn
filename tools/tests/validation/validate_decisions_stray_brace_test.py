@@ -88,6 +88,6 @@ def test_scan_picks_up_remove_targeted_decision_only(tmp_path):
         encoding="utf-8",
     )
 
-    _, _, removals = V._scan_activations_and_removals(str(f))
+    _, _, removals, _ = V._scan_activations_and_removals(str(f))
 
     assert "my_targeted_dec" in removals
