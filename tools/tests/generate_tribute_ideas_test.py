@@ -1,11 +1,10 @@
 import importlib.util
-from pathlib import Path
 
 
 def _module():
-    path = (
-        Path(__file__).resolve().parents[1] / "generators" / "generate_tribute_ideas.py"
-    )
+    from shared.paths import GENERATORS_DIR
+
+    path = GENERATORS_DIR / "generate_tribute_ideas.py"
     spec = importlib.util.spec_from_file_location("generate_tribute_ideas", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

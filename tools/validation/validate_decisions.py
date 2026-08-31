@@ -11,16 +11,22 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
+from typing import AbstractSet, Any, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from image_size import read_image_size
 from shared_utils import (
+    ai_only_decision_categories,
     atomic_write_text,
     blank_quoted_strings,
+    direct_child_block,
     extract_block_from_text,
+    first_flat_match,
+    flat_block_text,
+    has_flat_is_ai,
+    iter_flat_offsets,
     read_text_strict,
     strip_comments,
     strip_inline_comment,
@@ -72,12 +78,12 @@ _STATEMENT_NAME_RE = re.compile(r"([A-Za-z_]\w*)\s*=")
 # (GFX_CTC.5, GFX_MIG-29-GER), a regression sprite_reference_test.py pins.
 _SPRITE_VALUE = r'"?([A-Za-z0-9_.\-]+)"?'
 _DEC_ICON_SIMPLE_RE = re.compile(
-    r"^[ \t]*icon\s*=\s*(?!\{)" + _SPRITE_VALUE + r"[ \t]*$", re.MULTILINE
+    r"^[ \t]*icon\s*=\s*(?!\{)" + _SPRITE_VALUE + r"[ \t]*\r?$", re.MULTILINE
 )
 _DEC_ICON_BLOCK_RE = re.compile(r"^[ \t]*icon\s*=\s*\{", re.MULTILINE)
 _DEC_ICON_KEY_RE = re.compile(r"\bkey\s*=\s*" + _SPRITE_VALUE)
 _DEC_PICTURE_RE = re.compile(
-    r"^[ \t]*picture\s*=\s*" + _SPRITE_VALUE + r"[ \t]*$", re.MULTILINE
+    r"^[ \t]*picture\s*=\s*" + _SPRITE_VALUE + r"[ \t]*\r?$", re.MULTILINE
 )
 # The token naming a block, read backwards from its opening brace.
 _DEC_OWNER_RE = re.compile(r"([A-Za-z0-9_.]+)\s*=\s*$")
@@ -347,20 +353,59 @@ def _unactivated(candidates: set, activated: set) -> list:
     return sorted(remaining)
 
 
-def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set]:
-    """Single-read worker: (activated_decisions, activated_missions, removed).
+_UNLOCK_CATEGORY_RE = re.compile(
+    r"unlock_decision_category_tooltip\s*=\s*([A-Za-z0-9_]+)"
+)
+_UNLOCK_DECISION_RE = re.compile(r"unlock_decision_tooltip\s*=\s*([A-Za-z0-9_]+)")
+# State that flips on during play, so the category it gates appears mid-game.
+_MIDGAME_GATE_RE = re.compile(
+    r"\b(?:has_country_flag|has_global_flag|has_completed_focus|has_idea)"
+    r"\s*=\s*[A-Za-z0-9_]+|\bcheck_variable\b"
+)
+_FLAG_GATE_RE = re.compile(r"has_(?:country|global)_flag\s*=\s*([A-Za-z0-9_]+)")
+# Both the bare form and the timed `set_country_flag = { flag = X days = N }`.
+_SET_FLAG_RE = re.compile(
+    r"set_(?:country|global)_flag\s*=\s*(?:([A-Za-z0-9_]+)"
+    r"|\{[^{}]*?flag\s*=\s*([A-Za-z0-9_]+))"
+)
+_UNLOCK_IN_EFFECT_RE = re.compile(r"unlock_decision_tooltip\s*=\s*([A-Za-z0-9_]+)")
 
-    Combines the activation and external-removal scans so the full-repo .txt
-    sweep reads each file once instead of twice.
+
+def _flat_flag_gates(block: str) -> Set[str]:
+    """Flags a trigger block waits on positively, at depth 0.
+
+    Depth 0 only: `NOT = { has_country_flag = X }` is satisfied *until* X is set,
+    so treating it as a gate X opens inverts the meaning.
+    """
+    flags: Set[str] = set()
+    if not block:
+        return flags
+    for inner, index in iter_flat_offsets(block):
+        if index and not inner[index - 1].isspace():
+            continue
+        match = _FLAG_GATE_RE.match(inner, index)
+        if match:
+            flags.add(match.group(1))
+    return flags
+
+
+def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, set]:
+    """Single-read worker: (activated, missions, removed, announced).
+
+    Combines the activation, external-removal and unlock-tooltip scans so the
+    full-repo .txt sweep reads each file once instead of three times.
+    `announced` holds both the categories and the individual decisions that some
+    focus or effect tells the player it has unlocked.
     """
     if _should_skip(filename):
-        return set(), set(), set()
+        return set(), set(), set(), set()
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
     decisions: set = set()
     missions: set = set()
     removals: set = set()
+    announced: set = set()
     if "activate_targeted_decision" in text_file:
         for block in _TARGETED_BLOCK_RE.findall(text_file):
             decisions.update(_DECISION_NAME_RE.findall(block))
@@ -370,7 +415,11 @@ def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set]:
         removals.update(_REMOVE_DECISION_RE.findall(text_file))
         for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
             removals.update(_REMOVE_DECISION_NAME_RE.findall(block))
-    return decisions, missions, removals
+    if "unlock_decision_category_tooltip" in text_file:
+        announced.update(_UNLOCK_CATEGORY_RE.findall(text_file))
+    if "unlock_decision_tooltip" in text_file:
+        announced.update(_UNLOCK_DECISION_RE.findall(text_file))
+    return decisions, missions, removals, announced
 
 
 def _load_scripted_localisation_keys(mod_path: str) -> set:
@@ -471,36 +520,6 @@ _BARE_TRIGGER_RE = re.compile(
 )
 
 
-def _flat_block_text(block: str) -> str:
-    """Remove an optional outer block brace pair before a flat token scan."""
-    inner = block.strip()
-    if inner.startswith("{"):
-        inner = inner[1:]
-    if inner.endswith("}"):
-        inner = inner[:-1]
-    return inner
-
-
-def _iter_flat_offsets(block: str) -> Iterator[Tuple[str, int]]:
-    """Yield offsets at brace depth zero, skipping comments and nested blocks."""
-    inner = _flat_block_text(block)
-    depth = 0
-    index = 0
-    while index < len(inner):
-        char = inner[index]
-        if char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-        elif char == "#":
-            while index < len(inner) and inner[index] != "\n":
-                index += 1
-            continue
-        elif depth == 0:
-            yield inner, index
-        index += 1
-
-
 def _flat_tag_pins_with_kind(block: str) -> set:
     """Return {(keyword, tag), ...} for flat (non-nested), depth-0 tag/original_tag tokens.
 
@@ -514,7 +533,7 @@ def _flat_tag_pins_with_kind(block: str) -> set:
     if not block:
         return set()
     pins = set()
-    for inner, index in _iter_flat_offsets(block):
+    for inner, index in iter_flat_offsets(block):
         match = _TAG_TOKEN_PATTERN.match(inner, index)
         if match:
             pins.add((match.group(1), match.group(2)))
@@ -586,7 +605,7 @@ def _scan_top_level(block: str):
     """
     if not block:
         return
-    for inner, index in _iter_flat_offsets(block):
+    for inner, index in iter_flat_offsets(block):
         char = inner[index]
         if not (char.isalpha() or char == "_"):
             continue
@@ -718,6 +737,13 @@ def _int_literal(value: str) -> int:
         return int(value)
     except ValueError:
         raise ValueError(f"invalid decimal literal: {value}") from None
+
+
+def _is_effectively_ai_only(
+    dec: "DecisionFactory", dec_id: str, ai_only_by_category: Set[str]
+) -> bool:
+    """Whether the decision or its category is gated to AI players."""
+    return dec.ai_only or dec_id in ai_only_by_category
 
 
 def _find_formable_commitment_rows(
@@ -885,7 +911,7 @@ def _top_level_neg_pp(block: str):
     ignored (they are gameplay outcomes, not entry costs)."""
     if not block:
         return None
-    for inner, index in _iter_flat_offsets(block):
+    for inner, index in iter_flat_offsets(block):
         match = re.match(r"add_political_power\s*=\s*-(\d+)", inner[index:])
         if match:
             return _int_literal(match.group(1))
@@ -961,6 +987,15 @@ class DecisionFactory:
         # effect sub-blocks.
         self.name_override = _top_level_field_value(dec, "name")
         self.desc_override = _top_level_field_value(dec, "desc")
+        # An unconditional `is_ai = yes` hides the decision from every human
+        # player, so it needs no localisation. Category-level AI gating is
+        # resolved by the validator, which is the only side that knows the
+        # decision's parent category.
+        self.ai_only = (
+            has_flat_is_ai(self.visible)
+            or has_flat_is_ai(self.available)
+            or has_flat_is_ai(self.allowed)
+        )
 
 
 # Decisions parsing cache - enabled by default, disabled via BaseValidator.no_cache
@@ -1197,20 +1232,60 @@ class Validator(BaseValidator):
     TITLE = "DECISION VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, fix: bool = False, missing_icons: bool = False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        fix: bool = False,
+        missing_icons: bool = False,
+        unannounced_categories: bool = False,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.fix = fix
         self.missing_icons = missing_icons
+        self.unannounced_categories = unannounced_categories
         self._activation_removal_cache: Optional[
-            Tuple[Set[str], Set[str], Set[str]]
+            Tuple[Set[str], Set[str], Set[str], Set[str]]
         ] = None
+        self._ai_only_by_category: Optional[Set[str]] = None
+        self._ai_only_categories: Optional[Dict[str, str]] = None
         if self.no_cache:
             _set_cache_enabled(False)
 
+    def _get_ai_only_categories(self) -> Dict[str, str]:
+        """AI-only decision category names, mapped to their defining filename."""
+        if self._ai_only_categories is None:
+            self._ai_only_categories = ai_only_decision_categories(self.mod_path)
+        return self._ai_only_categories
+
+    def _get_ai_only_by_category(self) -> Set[str]:
+        """Return decision ids that are AI-only because their category is."""
+        if self._ai_only_by_category is not None:
+            return self._ai_only_by_category
+
+        ai_categories = self._get_ai_only_categories()
+        members: Set[str] = set()
+        if ai_categories:
+            # parse_categories_with_decisions matches every indented `X = {`,
+            # so its lists also carry nested block names (visible, available,
+            # complete_effect). Intersect with the real decision names.
+            known, _ = parse_all_decision_names(self.mod_path, lowercase=False)
+            known_set = set(known)
+            by_category = parse_categories_with_decisions(
+                self.mod_path, lowercase=False
+            )
+            for category in ai_categories:
+                members.update(
+                    name for name in by_category.get(category, []) if name in known_set
+                )
+
+        self._ai_only_by_category = members
+        return members
+
     def _get_activation_removal_scan(
         self,
-    ) -> Tuple[Set[str], Set[str], Set[str]]:
-        """Scan shipped content for decision activations and external removals."""
+    ) -> Tuple[Set[str], Set[str], Set[str], Set[str]]:
+        """Scan shipped content for activations, external removals and unlocks."""
         if self._activation_removal_cache is not None:
             return self._activation_removal_cache
         all_files = [
@@ -1223,16 +1298,19 @@ class Validator(BaseValidator):
         activated_decisions: Set[str] = set()
         activated_missions: Set[str] = set()
         externally_removed: Set[str] = set()
-        for decision_set, mission_set, removed_set in self._pool_map(
+        announced: Set[str] = set()
+        for decision_set, mission_set, removed_set, announced_set in self._pool_map(
             _scan_activations_and_removals, all_files, chunksize=30
         ):
             activated_decisions |= decision_set
             activated_missions |= mission_set
             externally_removed |= removed_set
+            announced |= announced_set
         self._activation_removal_cache = (
             activated_decisions,
             activated_missions,
             externally_removed,
+            announced,
         )
         return self._activation_removal_cache
 
@@ -1307,7 +1385,9 @@ class Validator(BaseValidator):
         # `activate_targeted_decision = { ... }` block; the bare keyword
         # `decision` appears in unrelated places (on_political_decision hooks etc.)
         # and matching them would hide genuinely unused decisions.
-        activated_decisions, activated_missions, _ = self._get_activation_removal_scan()
+        activated_decisions, activated_missions, _, _ = (
+            self._get_activation_removal_scan()
+        )
 
         # A mission with a target is activated by activate_targeted_decision, so
         # neither set alone covers every activation mechanism.
@@ -2092,17 +2172,34 @@ class Validator(BaseValidator):
             f"  Found {len(factories)} decisions, {len(loc_keys)} localisation keys"
         )
 
+        ai_only_by_category = self._get_ai_only_by_category()
+
         results = []
+        ai_results = []
         for dec in factories:
             dec_id = dec.token
             filename = dec.source_basename
-            missing = []
             # Decisions can redirect the engine's loc lookup via top-level
             # `name = X` / `desc = X` fields. Validate the override key when
             # present; otherwise check the default `<id>` for the name. The
             # default `<id>_desc` is *not* checked when no override is set —
             # many decisions intentionally omit a description tooltip.
             name_key = dec.name_override if dec.name_override else dec_id
+
+            if _is_effectively_ai_only(dec, dec_id, ai_only_by_category):
+                # No human ever sees an AI-only decision, so its loc is dead
+                # weight — the check runs in reverse and reports keys that
+                # exist. `custom_cost_text` is exempt: it can point at a
+                # scripted-loc key shared with player-facing decisions.
+                for key in (name_key, f"{dec_id}_desc", dec.desc_override):
+                    if key and key in loc_keys:
+                        ai_results.append(
+                            f"{dec_id} - {filename}: AI-only decision has "
+                            f"localisation key '{key}'"
+                        )
+                continue
+
+            missing = []
             if name_key not in loc_keys:
                 missing.append(name_key)
             if dec.desc_override and dec.desc_override not in loc_keys:
@@ -2117,6 +2214,8 @@ class Validator(BaseValidator):
             for key in missing:
                 results.append(f"{dec_id} - {filename}: missing loc key '{key}'")
 
+        ai_results.extend(self._ai_only_category_loc(loc_keys))
+
         self._report(
             results,
             "✓ All decision localisation keys are defined",
@@ -2124,6 +2223,141 @@ class Validator(BaseValidator):
             Severity.WARNING,
             category="missing-decision-localisation",
         )
+        self._report(
+            ai_results,
+            "✓ No AI-only decision or category carries dead localisation",
+            "AI-only decisions and categories with localisation keys:",
+            Severity.WARNING,
+            category="ai-only-decision-localisation",
+        )
+
+    def _ai_only_category_loc(self, loc_keys: AbstractSet[str]) -> List[str]:
+        """Findings for AI-only decision categories that still carry loc keys.
+
+        The category header is drawn in the same tab as its decisions, so an
+        AI-only category needs no `<id>` or `<id>_desc` either. Categories carry
+        no `name =` / `desc =` override, so those two are the whole surface.
+        A category named by `unlock_decision_category_tooltip` is exempt: that
+        effect renders its name key inside a focus or decision tooltip, which is
+        the one place a player sees it outside the category's own tab.
+        """
+        sources = self._get_ai_only_categories()
+        flagged: Dict[str, List[str]] = {}
+        for name in sources:
+            keys = [key for key in (name, f"{name}_desc") if key in loc_keys]
+            if keys:
+                flagged[name] = keys
+        if not flagged:
+            return []
+
+        _, _, _, announced = self._get_activation_removal_scan()
+        return [
+            f"{name} - {sources.get(name, 'decisions/categories')}: AI-only "
+            f"decision category has localisation key '{key}'"
+            for name in sorted(flagged)
+            if name not in announced
+            for key in flagged[name]
+        ]
+
+    def validate_unannounced_categories(self):
+        """Flag categories that switch on mid-game without telling the player.
+
+        A category with no `visible` block is always on the decisions tab, and
+        one gated only on the tag or the date is on from the start, so neither
+        has anything to announce. A category gated on state that flips during
+        play — a flag, a completed focus, an idea, a variable — appears part-way
+        through, and needs `unlock_decision_category_tooltip` (or
+        `unlock_decision_tooltip` on one of its decisions) in whatever turns it
+        on. Without it a whole tab of decisions shows up with no indication of
+        where it came from. AI-only categories are exempt: nobody is watching.
+        """
+        self._log_section("Checking decision categories announce themselves...")
+        self._report(
+            self._unannounced_categories(),
+            "✓ Every mid-game decision category announces itself",
+            "Decision categories that appear without telling the player:",
+            Severity.WARNING,
+            category="unannounced-decision-category",
+        )
+
+    def _unannounced_categories(self) -> List[str]:
+        """Findings for mid-game categories nothing announces to the player."""
+        ai_only = self._get_ai_only_categories()
+        _, _, _, announced = self._get_activation_removal_scan()
+        by_category = parse_categories_with_decisions(self.mod_path, lowercase=False)
+
+        results = []
+        for name, body in sorted(parse_decision_categories(self.mod_path).items()):
+            if name in ai_only or name in announced:
+                continue
+            # parse_decision_categories hands back `NAME = { ... }`, so unwrap
+            # the header before looking for the category's own child blocks.
+            inner = flat_block_text(direct_child_block(body, name))
+            gate = first_flat_match(
+                direct_child_block(inner, "visible"), _MIDGAME_GATE_RE
+            )
+            if not gate:
+                continue
+            if any(dec in announced for dec in by_category.get(name, [])):
+                continue
+            results.append(
+                f"{name}: becomes visible on {gate.group(0).strip()} but nothing "
+                f"calls unlock_decision_category_tooltip = {name}"
+            )
+        return results
+
+    def validate_unannounced_decision_unlocks(self):
+        """Flag effects that announce some decisions they unlock but not others.
+
+        A decision whose effect sets a flag that another decision's `visible` or
+        `available` waits on has unlocked that decision. `unlock_decision_tooltip`
+        is how the player is told. MD does not announce every unlock, so only the
+        inconsistent case is reported: a block that already announces at least one
+        decision, and misses a sibling gated on the very flag it just set. That is
+        an oversight rather than a style choice.
+        """
+        self._log_section("Checking decisions announce the decisions they unlock...")
+        self._report(
+            self._unannounced_decision_unlocks(),
+            "✓ Every decision that announces an unlock announces all of them",
+            "Decision effects that unlock a decision without telling the player:",
+            Severity.WARNING,
+            category="unannounced-decision-unlock",
+        )
+
+    def _unannounced_decision_unlocks(self) -> List[str]:
+        """Findings for effects that announce some unlocks but miss others."""
+        factories = list(parse_all_decision_factories(self.mod_path))
+        ai_only_by_category = self._get_ai_only_by_category()
+
+        # flag -> decisions a player can only reach once that flag is set
+        gated: Dict[str, Set[str]] = {}
+        for dec in factories:
+            if _is_effectively_ai_only(dec, dec.token, ai_only_by_category):
+                continue
+            for block in (dec.visible, dec.available):
+                for match in _flat_flag_gates(block):
+                    gated.setdefault(match, set()).add(dec.token)
+
+        results = []
+        for setter in factories:
+            for block_name in EFFECT_BLOCKS:
+                block = getattr(setter, block_name)
+                if not block or "unlock_decision_tooltip" not in block:
+                    continue
+                announced = set(_UNLOCK_IN_EFFECT_RE.findall(block))
+                missed: Set[str] = set()
+                for first, second in _SET_FLAG_RE.findall(block):
+                    missed |= gated.get(first or second, set())
+                missed -= announced
+                missed.discard(setter.token)
+                if missed:
+                    results.append(
+                        f"{setter.token} - {setter.source_basename}: {block_name} "
+                        f"announces {len(announced)} unlock(s) but not "
+                        f"{', '.join(sorted(missed))}"
+                    )
+        return results
 
     def validate_missing_log(self):
         """Flag decision effect blocks that carry no log line.
@@ -2470,7 +2704,7 @@ class Validator(BaseValidator):
 
         factories = parse_all_decision_factories(self.mod_path)
 
-        _, _, externally_removed = self._get_activation_removal_scan()
+        _, _, externally_removed, _ = self._get_activation_removal_scan()
 
         results = []
 
@@ -2679,6 +2913,7 @@ class Validator(BaseValidator):
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
         self.validate_missing_localisation()
+        self.validate_unannounced_decision_unlocks()
         self.validate_missing_log()
         self.validate_log_not_first()
         self.validate_visible_in_missions()
@@ -2700,6 +2935,14 @@ class Validator(BaseValidator):
                 "Skipping missing icon check (pass --missing-icons to enable)"
             )
 
+        if self.unannounced_categories:
+            self.validate_unannounced_categories()
+        else:
+            self._log_section(
+                "Skipping unannounced category check "
+                "(pass --unannounced-categories to enable)"
+            )
+
 
 def _add_extra_args(parser):
     parser.add_argument(
@@ -2712,6 +2955,12 @@ def _add_extra_args(parser):
         action="store_true",
         dest="missing_icons",
         help="Flag decisions and decision categories whose icon/picture sprite is undefined in interface/*.gfx",
+    )
+    parser.add_argument(
+        "--unannounced-categories",
+        action="store_true",
+        dest="unannounced_categories",
+        help="Flag decision categories that become visible mid-game without any unlock_decision_category_tooltip telling the player",
     )
 
 
