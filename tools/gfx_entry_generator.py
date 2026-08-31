@@ -401,7 +401,7 @@ def generate_goals(mod_root, gfxbool=None):
 
     def render_shine(name, texture_path):
         return (
-            f'\tspriteType = {{ \n\t\tname = "{name}"\n'
+            f'\tspriteType = {{\n\t\tname = "{name}"\n'
             f'\t\ttexturefile = "{texture_path}"\n'
             '\t\teffectfile = "gfx/FX/buttonstate.lua"\n'
             "\t\tanimation = {\n"
