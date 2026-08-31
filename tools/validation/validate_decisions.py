@@ -72,12 +72,12 @@ _STATEMENT_NAME_RE = re.compile(r"([A-Za-z_]\w*)\s*=")
 # (GFX_CTC.5, GFX_MIG-29-GER), a regression sprite_reference_test.py pins.
 _SPRITE_VALUE = r'"?([A-Za-z0-9_.\-]+)"?'
 _DEC_ICON_SIMPLE_RE = re.compile(
-    r"^[ \t]*icon\s*=\s*(?!\{)" + _SPRITE_VALUE + r"[ \t]*$", re.MULTILINE
+    r"^[ \t]*icon\s*=\s*(?!\{)" + _SPRITE_VALUE + r"[ \t]*\r?$", re.MULTILINE
 )
 _DEC_ICON_BLOCK_RE = re.compile(r"^[ \t]*icon\s*=\s*\{", re.MULTILINE)
 _DEC_ICON_KEY_RE = re.compile(r"\bkey\s*=\s*" + _SPRITE_VALUE)
 _DEC_PICTURE_RE = re.compile(
-    r"^[ \t]*picture\s*=\s*" + _SPRITE_VALUE + r"[ \t]*$", re.MULTILINE
+    r"^[ \t]*picture\s*=\s*" + _SPRITE_VALUE + r"[ \t]*\r?$", re.MULTILINE
 )
 # The token naming a block, read backwards from its opening brace.
 _DEC_OWNER_RE = re.compile(r"([A-Za-z0-9_.]+)\s*=\s*$")

@@ -494,9 +494,17 @@ def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
     return names
 
 
-def _extract_top_level_definition_blocks(text: str) -> List[Tuple[str, int, str]]:
-    """Return (name, line, body) for blocks assigned at file scope."""
-    blocks: List[Tuple[str, int, str]] = []
+def _extract_top_level_definition_blocks(
+    text: str,
+) -> List[Tuple[str, int, int, str]]:
+    """Return (name, name_line, body_line, body) for file-scope blocks.
+
+    `body` starts after the opening brace, so a caller adding an offset
+    within the body must add it to `body_line`. The two lines differ when
+    the brace sits on its own line, and using `name_line` there reports
+    every finding short by the gap.
+    """
+    blocks: List[Tuple[str, int, int, str]] = []
     cursor = 0
     in_string = False
     while cursor < len(text):
@@ -530,8 +538,9 @@ def _extract_top_level_definition_blocks(text: str) -> List[Tuple[str, int, str]
         body, end = extract_block_from_text(text, opener)
         if end == -1:
             break
-        line = text.count("\n", 0, cursor) + 1
-        blocks.append((text[cursor:end_name], line, body))
+        name_line = text.count("\n", 0, cursor) + 1
+        body_line = text.count("\n", 0, opener) + 1
+        blocks.append((text[cursor:end_name], name_line, body_line, body))
         cursor = end
     return blocks
 
@@ -540,7 +549,7 @@ def _extract_top_level_definition_names(text: str) -> Set[str]:
     """Return valid names assigned to blocks at the file's top level."""
     return {
         name
-        for name, _line, _body in _extract_top_level_definition_blocks(text)
+        for name, _nl, _bl, _body in _extract_top_level_definition_blocks(text)
         if _MODIFIER_NAME_RE.match(name) and name not in _NON_MODIFIER_KEYS
     }
 
@@ -558,10 +567,10 @@ def _harvest_md_sub_unit_names(unit_files: List[str]) -> Set[str]:
         )
         if not text or "sub_units" not in text:
             continue
-        for name, _line, body in _extract_top_level_definition_blocks(text):
+        for name, _nl, _bl, body in _extract_top_level_definition_blocks(text):
             if name != "sub_units":
                 continue
-            for sub_name, _l, _b in _extract_top_level_definition_blocks(body):
+            for sub_name, _nl, _bl, _b in _extract_top_level_definition_blocks(body):
                 names.add(sub_name)
     return names
 
@@ -575,7 +584,7 @@ def _harvest_md_operation_names(operation_files: List[str]) -> Set[str]:
         )
         if not text:
             continue
-        for name, _line, _body in _extract_top_level_definition_blocks(text):
+        for name, _nl, _bl, _body in _extract_top_level_definition_blocks(text):
             names.add(name)
     return names
 
@@ -583,7 +592,8 @@ def _harvest_md_operation_names(operation_files: List[str]) -> Set[str]:
 def _extract_dynamic_modifier_names(text: str) -> List[Tuple[str, int]]:
     """Return names and lines of top-level dynamic modifier definitions."""
     return [
-        (name, line) for name, line, _body in _extract_top_level_definition_blocks(text)
+        (name, name_line)
+        for name, name_line, _bl, _body in _extract_top_level_definition_blocks(text)
     ]
 
 
@@ -613,9 +623,11 @@ def _check_file_for_unknown_modifiers(
         if is_dynamic:
             # Dynamic modifier blocks can run to dozens of keys — report each
             # key's own line instead of the enclosing block's header line.
-            for _name, block_line, body in _extract_top_level_definition_blocks(text):
+            for _name, _nl, body_line, body in _extract_top_level_definition_blocks(
+                text
+            ):
                 for name, offset in _extract_modifier_entries_from_body(body):
-                    parsed.append((name, rel, block_line + offset))
+                    parsed.append((name, rel, body_line + offset))
         else:
             for lineno, body in _extract_modifier_blocks(text):
                 if _is_ai_weight_block(body):
@@ -830,9 +842,11 @@ class Validator(BaseValidator):
 
         results = []
         for _filepath, rel, text in self._iter_dynamic_modifier_files():
-            for name, block_line, body in _extract_top_level_definition_blocks(text):
+            for name, _nl, body_line, body in _extract_top_level_definition_blocks(
+                text
+            ):
                 for message, offset in _redundant_enable_gates(body):
-                    results.append((f"'{name}': {message}", rel, block_line + offset))
+                    results.append((f"'{name}': {message}", rel, body_line + offset))
 
         self._report(
             results,

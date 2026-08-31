@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
 """
-Remove `allowed` blocks from ideas in slotless categories.
+Remove `allowed` and `available` blocks from ideas in slotless categories.
 
 An idea in a category with no slot (`country`, `hidden_ideas`) can only arrive
-through `add_idea`, which does not consult `allowed`, so the block is a gate on
-a pool the idea never enters. Categories are read from common/idea_tags/, so a
-new slotless category is covered without editing this script.
+through `add_idea`, which does not consult `allowed` or `available`, so either
+block is a gate on a pool the idea never enters. Use `cancel` if the idea
+should remove itself. Categories are read from common/idea_tags/, so a new
+slotless category is covered without editing this script.
 
 Rewrites in place, touching nothing but the blocks it removes.
 """
@@ -26,17 +27,17 @@ from shared_utils import (
     log_message,
 )
 
-_ALLOWED_OPEN_RE = re.compile(r"^(\s*)allowed\s*=\s*\{")
+_GATE_OPEN_RE = re.compile(r"^(\s*)(?:allowed|available)\s*=\s*\{")
 
 
 def strip_allowed_blocks(
     lines: list[str], slotless: frozenset
 ) -> tuple[list[str], int, int]:
-    """Drop every `allowed` block sitting directly inside a slotless-category idea.
+    """Drop every `allowed`/`available` block sitting directly inside a slotless idea.
 
     Returns the rewritten lines, the number of blocks removed, and the number
     skipped because their braces never balanced. Only the
-    ideas > category > idea nesting is touched, so an `allowed` somewhere
+    ideas > category > idea nesting is touched, so a gate somewhere
     unexpected is left alone rather than guessed at.
     """
     out: list[str] = []
@@ -48,7 +49,7 @@ def strip_allowed_blocks(
     while i < len(lines):
         code = common_utils.code_of_line(lines[i])
         opener = (
-            _ALLOWED_OPEN_RE.match(code)
+            _GATE_OPEN_RE.match(code)
             if len(stack) == 3 and stack[0] == "ideas" and stack[1] in slotless
             else None
         )
@@ -134,7 +135,7 @@ def main() -> int:
             continue
         if skipped:
             unbalanced += skipped
-            log_message("WARNING", f"{rel}: {skipped} allowed blocks never close")
+            log_message("WARNING", f"{rel}: {skipped} gate blocks never close")
         if removed:
             touched += 1
             total += removed
@@ -142,7 +143,7 @@ def main() -> int:
 
     verb = "would remove" if args.dry_run else "removed"
     level = "ERROR" if failed or unbalanced else "SUCCESS"
-    message = f"{verb} {total} allowed blocks across {touched} files"
+    message = f"{verb} {total} gate blocks across {touched} files"
     if failed:
         message += f"; {failed} files could not be read"
     log_message(level, message)

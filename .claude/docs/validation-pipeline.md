@@ -4,25 +4,29 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 
 ## The validator test suite is a hard gate
 
-CI runs `python -m pytest` on every PR touching `tools/` (the `unit` entry of the `checks` matrix in `tools-validation.yml`, reported as "report_lib + validator unit tests"; testpaths in `pyproject.toml` cover all six test dirs). It must be green permanently — do not introduce regressions into the testing schema. A validator's behavior and its regression tests are one change: when a `*_test.py` in `tools/validation/tests/` (or the other test dirs) breaks because a validator changed, update the test to the new correct behavior in the same commit. If the test reflects the correct invariant and the validator regressed, fix the validator instead. Never delete or weaken a regression test to make it pass; the suite is the acceptance gate for validator wiring, and a red `pytest` blocks the PR regardless of how clean the validators themselves run. Run `python -m pytest` locally before merging any `tools/` change.
+CI runs `python -m pytest` on every PR touching `tools/` (the `unit` entry of the `checks` matrix in `tools-validation.yml`, reported as "report_lib + validator unit tests"; `testpaths` in `pyproject.toml` is `tools/tests`). It must be green permanently — do not introduce regressions into the testing schema. A validator's behavior and its regression tests are one change: when a `*_test.py` under `tools/tests/` breaks because a validator changed, update the test to the new correct behavior in the same commit. If the test reflects the correct invariant and the validator regressed, fix the validator instead. Never delete or weaken a regression test to make it pass; the suite is the acceptance gate for validator wiring, and a red `pytest` blocks the PR regardless of how clean the validators themselves run. Run `python -m pytest` locally before merging any `tools/` change.
+
+CI and pre-push run the collection-layout guard by explicit path with config `addopts` disabled. The suite command also pins `tools/tests` and `*_test.py`, so a `pyproject.toml` change cannot remove tests or the guard from the run it protects. CI runs that pinned suite on Linux, macOS, and Windows; the Linux entry also enforces the coverage threshold.
+
+`tools-validation.yml` uses one `checks` matrix. Its staged-integration entry also runs `validate_tools.py`, after the isolated-worktree tests, so either gate can fail without hiding the other. Code duplication remains a separate matrix entry and keeps the `Code duplication (jscpd)` check name.
 
 ## When the coding pipeline runs
 
-`coding-pipeline.yml` triggers on `pull_request` (`opened`, `synchronize`, `reopened`, `ready_for_review`, targeting `main`, content-path filtered). Two extra entry points cover open PRs that get no pushes:
+`coding-pipeline.yml` triggers on `pull_request_target` (`opened`, `synchronize`, `reopened`, `ready_for_review`, targeting `main`) for every PR. `detect-changes` scopes validator jobs after the event, so fork, conflicted, and content-clean PRs still receive a report. Validation always checks out the live PR head repository and SHA. This avoids stale synthetic merge refs and keeps conflicted PRs in the pipeline. The report job always checks out tools from the base branch.
 
-- `workflow_dispatch` (inputs `pr_number`, `base_sha`) — manual re-run for an open PR, keyed on the PR's head branch as `ref`. The PR context is rebuilt from the inputs: `PR_NUMBER`/`HEAD_SHA`/`BASE_SHA` are `inputs.X || github.event.pull_request.X` everywhere they are used (workspace cache key, manifest, report). `detect-changes` skips `dorny/paths-filter` on dispatch (no checkout, no base ref) and treats every group as changed except `style` — the style job is diff-scoped, and a dispatch has no diff.
-- `nightly-pr-validation.yml` — cron (06:00 UTC) + manual dispatch. Lists open PRs targeting `main` and dispatches `coding-pipeline.yml` per PR, so validation tracks the merge ref after main advances. `base_sha` is main's live head, resolved once per sweep: it is the only component of the workspace cache key that moves when main does, and cache keys are immutable, so a stale value would make `cache/save` a no-op and replay the previous run's tree. Fork PRs are skipped (dispatch refs must live in this repo); they still validate on every push. Two more classes are warned about and skipped rather than dispatched: a PR with no `refs/pull/N/merge` (it conflicts with main, and the pipeline checks that ref out) and a PR whose head branch predates the `workflow_dispatch` trigger (a dispatch runs the workflow file as it exists on `--ref`, so those branches need a rebase first).
+Two extra entry points cover open PRs that get no pushes:
 
-A report comment is only created when a run has findings (#2702). A clean run never opens one, and what it does with an existing one depends on scope:
+- `workflow_dispatch` accepts optional `pr_number` and `base_sha`. With a PR number, `detect-changes` resolves the live PR JSON. Without one, it validates the current repository at `github.sha` and skips PR-only comment posting. Dispatch treats every validator group as changed except `style`, which is diff-scoped and has no diff on dispatch.
+- `nightly-pr-validation.yml`: cron (06:00 UTC) + manual dispatch. It resolves main's live SHA, then dispatches the trusted coding workflow from `main` for every open PR, including forks and conflicts, passing `pr_number` and `base_sha`. The coding workflow resolves each PR's head data itself and uses that base SHA for trusted tooling and baseline selection.
 
-- **full** (dispatch only, every validator ran and passed): deletes the comment.
-- **partial** (per-PR, only the changed groups' validators ran): rewrites the comment in place so it stops reporting an older commit, and leaves the PR uncommented if there was never a comment. It cannot delete, because a validator that did not run this time may still have live findings from an earlier push.
+The prepare job checks out PR content without tools, then installs `tools/`, reference resources, and `.claude/` from the base branch. It restores the shared main-built validator cache read-only and distributes the prepared workspace through a same-run artifact. No PR-scoped cache is saved. `validate-paths` keeps a PR checkout for its git index and invokes the validator from the trusted base checkout.
 
-Partial reports label themselves in the verdict banner and metadata strip. Scope is computed in the `validation-report` job and passed as `--validation-scope`.
+Every PR run publishes Checks API results, a step summary, and a report artifact. The bot posts a PR comment only when validators have findings or the pipeline cannot produce a complete verdict. A clean run removes an older bot report instead of posting a success comment. Partial reports label themselves in the verdict banner and metadata strip. Scope is computed in the `validation-report` job and passed as `--validation-scope`.
 
 ## The split
 
 - Most content validators run **CI-only**: the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml` are the gate. Their old `stages: [manual]` pre-commit hooks were removed (almost nobody ran them). On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `validate_defines.py`. Common scripting-mistake rules run once through `validate_common_mistakes.py` in that dispatcher and the CI validator matrix. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
+- Everything that fans out draws on one CPU ceiling: `cpu_budget()` in `tools/shared_utils.py` hands out 75% of the cores and leaves the rest to whoever is using the machine. `run_all_validators.py` caps how many validators run at once and passes each `--workers`; `precommit_validate.py` splits the same budget across its fan-out (it used to floor inner workers at 2, so fan-out times pools could reach twice the core count); `BaseValidator` clamps whatever `--workers` it is given. CI runners get every core, and `MD_MAX_WORKERS=N` overrides both. The unbounded suite fan-out that this replaced was measurably faster — the suite is largely I/O-bound — so a run that needs the old speed sets `MD_MAX_WORKERS`.
 - `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
 - `fix_loc_yaml.py` is pre-commit-only. `validate_localization_encoding.py` and `validate_mod_encoding.py` also run in the coding pipeline, so web-UI edits and contributors with hooks disabled cannot bypass the encoding checks. (The old `check_braces.py` hook was absorbed into `tools/validation/validate_style.py`.)
 - `validate_defines.py` runs on pre-commit against the live install and on CI against the committed `tools/validation/vanilla_defines.txt` manifest. Regenerate it (and every other vanilla-derived file) with `refresh_vanilla_data.py` after a HOI4 version bump (see [Refreshing vanilla-derived data](#refreshing-vanilla-derived-data)).
@@ -39,9 +43,9 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
 - `validate_decisions.py`'s random-seed check (`validate_random_seed`, #2731) covers both `random_list = { ... }` and bare `random = { chance = N ... }`, and exempts `fire_only_once = yes` decisions (their roll resolves once, so a cached seed can never surface). It is ERROR-severity and gates: the 11-decision backlog was cleared in the same change, so it is clean on main. An explicit `fixed_random_seed = yes` counts as a deliberate choice; only an absent field is a finding.
 - `validate_localisation.py` carries two WARNING-only prose checks (#2704). `loc-em-dash` enforces the "no em dashes in player-facing strings" rule from `.claude/docs/localisation-rules.md` (backlog: 486); `loc-backtick-apostrophe` catches a backtick typed for an apostrophe (backlog: 15). Both scan only the quoted value of `localisation/english/**/*.yml` — non-English files are out of scope repo-wide.
 - `validate_style.py` exempts `EH_` focus IDs via `_SHARED_FOCUS_PREFIXES` — the Event Horizon tree is generic (`event_horizon_generic_focus`) and `EH_` is its mod-wide domain prefix.
-- The `styling-check` job feeds the validation report as two sections, **Style Check** (`validate_style.py`) and **Common Mistakes** (`check_common_mistakes.py`) (#3082). Each tool runs in its own step so a `--strict` style failure cannot stop the other, and both artifacts upload with `if: always()`. Slugs are load-bearing: the report derives a section title from the artifact directory name, so `validation-style-check-results` is what renders as "Style Check".
+- The `content-checks` job feeds the validation report as two diff-scoped sections, **Style Check** (`validate_style.py`) and **Common Mistakes** (`check_common_mistakes.py`) (#3082), then runs the encoding and descriptor checks against the same prepared workspace. Each style tool runs in its own step so a `--strict` style failure cannot stop the other. Every report-producing job verifies both its log and JSON sidecar before uploading them. Slugs are load-bearing: the report derives a section title from the artifact directory name, so `validation-style-check-results` is what renders as "Style Check".
   - `check_common_mistakes.py` is not a `BaseValidator`, so it grew its own `--output` that writes the log plus the `<stem>.json` sidecar the report reads. Everything it reports is ERROR-severity; it has no warning tier.
-  - `styling-check` is deliberately **absent from the `VALIDATION_SCOPE` expression** even though it is in the report job's `needs`. `detect-changes` forces `style=false` on `workflow_dispatch`, so the job is always skipped there, and a `== 'success'` test would pin every dispatch to `partial`. A dispatch therefore never produces these two sections.
+  - `content-checks` is included in the `VALIDATION_SCOPE` expression because its structural checks run on dispatch. `detect-changes` forces `style=false` on `workflow_dispatch`, so only the two diff-scoped style steps and their artifacts skip. A dispatch never produces those two report sections.
   - The nightly baseline is full-repo while the CI style run is diff-scoped, so pre-existing findings on a touched file classify as EXISTING rather than NEW.
   - Seven of its checks resolve a name against mod data rather than judging a line in isolation, so they carry the same case-sensitivity teeth the rest of the repo does. `_check_equipment_type_defined` resolves `add_equipment_to_stockpile` / `send_equipment` / `add_equipment_production` / `add_equipment_subsidy` `type =` against `common/units/equipment/`, expanding each `duplicate_archetypes` clone across its archetype's numbered variants — the engine generates `medium_tank_destroyer_chassis_0` from `medium_tank_chassis_0`, and without that expansion the check reports ~2.3k false positives on history OOBs. `_check_equipment_bonus` reads `script_enum_equipment_bonus_type` from `common/script_enums.txt` and also requires `name`/`project`. `_check_active_decision_defined` resolves `has_active_mission` / `has_active_decision` / `has_active_timed_decision` against `common/decisions/`. `_check_modifier_ref_defined` resolves `add_opinion_modifier` against the replace_path'd `common/opinion_modifiers/` and `add_relation_modifier` against `common/modifiers/` — vanilla static modifiers load too, but every relation modifier MD names is its own, so the mod-only set is exact. The other three are structural: `_check_else_with_limit` (a `limit` as a direct child of `else`), `_check_nested_province_block` (`province = { province = <id> }`, which is not a selector), and `_check_log_nested_quote` (a `#`-comment swallowed into a `log` string, which closes the value early and leaves the rest to parse as effects). All seven are ERROR and gate; their combined 21-finding backlog was cleared in the same change.
   - The reference sets are read lazily and `lru_cache`d per worker, only once a candidate construct is in hand — `common/decisions/` alone is 7.6 MB, and eagerly loading it in every worker would cost more than the checks. Because the CI style run is diff-scoped, deleting a definition only surfaces its now-dead references on the nightly full-repo baseline, not on the PR that deletes it.
@@ -63,7 +67,7 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
 - `validate_set_variables.py` runs **CI-only**, `--strict` (its unused-variable backlog was cleared). No pre-commit hook; run it directly (`python3 tools/validation/validate_set_variables.py`) for a local check.
 - `validate_scripted_localisation.py` runs **CI-only**, `--strict` (its missing/unused scripted-loc backlog was cleared). No pre-commit hook; run it directly for a local check.
 - `validate_modifiers.py` runs **CI-only**, `--strict` since #3228. It is not in `precommit_validate.py`'s registry, so `common/dynamic_modifiers/` edits get no local signal — run it directly before pushing. Only `redundant-enable-gate` is ERROR and gates; `unknown-modifier` and `dynamic-modifier-name-loc` stay WARNING, which is why `--strict` is safe here despite the frequency heuristic's known false positives. `redundant-enable-gate` flags a top-level `always = yes` or `original_tag` / `tag` inside a dynamic modifier's own `enable` (never one nested in `OR` / `NOT`, nor one inside `remove_trigger`) — see `common/dynamic_modifiers/README.md` for when a gate is genuinely load-bearing. `tools/standardization/strip_dynmod_tag_gates.py` clears them in bulk. There is deliberately no exemption list: add one only when a real case appears.
-- `validate_file_paths.py` runs **CI-only**, `--strict`, in its own `validate-paths` job rather than either matrix. It reads path names from the git index (`git ls-files`), so it needs a checkout with `.git`; the workspace bundle the matrix jobs restore has neither `.git` nor `map/`. The job checks out with `filter: blob:none` and a sparse `tools` cone — the index already names every shipped path, so no content is fetched. `descriptor.mod` is read for `replace_path` directives, and a missing descriptor is a hard setup error: reading it as "nothing is replaced" would turn every inert case clash into a blocking one. Cross-references the committed `vanilla_paths.txt` manifest (CI has no HOI4 install); regenerate it after a game update via `refresh_vanilla_data.py`. Its within-mod case-collision check overlaps the pre-commit `check-case-conflict` hook on purpose — that hook only sees staged files on machines with hooks enabled, so web-UI edits and hook-less contributors bypass it exactly like the BOM fixers below.
+- `validate_file_paths.py` runs **CI-only**, `--strict`, in its own `validate-paths` job rather than either matrix. It reads path names from the PR git index (`git ls-files`), so the job keeps a sparse PR checkout with `.git` and `descriptor.mod`, while invoking the validator from a separate base-branch checkout. The index names every shipped path, so no content is fetched. Cross-references the committed `vanilla_paths.txt` manifest (CI has no HOI4 install); regenerate it after a game update via `refresh_vanilla_data.py`. Its within-mod case-collision check overlaps the pre-commit `check-case-conflict` hook on purpose — that hook only sees staged files on machines with hooks enabled, so web-UI edits and hook-less contributors bypass it exactly like the BOM fixers below.
 
 - `validate_characters.py` runs in both pre-commit and CI (`--strict`, `characters` path filter) and covers **both leader trait pools** over one file walk — unit leader roles and advisor slots. They are checked together because they cross: deciding whether a trait is legal on a general or on an advisor needs both pools loaded, and each pool's traits are dead in the other's blocks. Its `trait-role-mismatch` check is ERROR and gates: a unit leader trait declares `type = land` / `navy` / `operative` (or `all`, or a `{ land navy }` list), and one from the wrong branch loads silently and never applies, so the leader ships with fewer traits than the script promises. Only the branch is compared — vanilla itself puts `type = corps_commander` traits on field marshals and `type = field_marshal` traits on corps commanders, so that split is not a finding (checking it produced 185 false positives). The `bold`-on-a-general backlog was cleared in the same change. `undefined-unit-leader-trait` is WARNING: 9 ALG/PHI references to traits nothing defines need content decisions, not a mechanical fix. `common/unit_leader` is `replace_path`'d, so the mod's files are the complete trait universe and no vanilla manifest is needed. `country_leader` blocks (the country leader's own traits, not an advisor's) draw from a third pool and are not scanned.
 
@@ -87,27 +91,49 @@ Partial reports label themselves in the verdict banner and metadata strip. Scope
 
 - `validate_on_actions.py` reports deterministic `date >` polling from `on_daily[_TAG]`, `on_weekly[_TAG]`, and `on_monthly[_TAG]` as `deterministic-date-poll`. Historical events belong in `00_yearly_effects.txt`; chance-rolled polls remain exempt. The check is ERROR-severity. The two Howard election placeholders and `the_new_look_rudd.1` intentionally remain weekly/monthly retries, so they are explicit exemptions.
 
-- `validate_oob_units.py` slot-checks ship `create_equipment_variant` blocks through
+- `validate_oob_units.py` slot-checks every `create_equipment_variant` through
   `tools/validation/equipment_module_slots.py`, resolving module-driven slot unlocks
-  and `duplicate_archetypes` clones first. Tank and plane variant slots are not
-  validated yet.
-  All findings are ERROR. It also structurally checks `create_unit`
+  and `duplicate_archetypes` clones first. Ship, tank, and plane designs are all
+  checked: required slots, hull `module_count_limit`, and module
+  `forbid_equipment_type` / `forbid_equipment_type_exact_match` are ERROR; slot and
+  category mismatches are ERROR on created variants. `validate_ai_equipment.py`
+  applies the same slot rules to `target_variant` designs, with category-mismatch
+  still WARNING pending the existing backlog. Both run `--strict` on CI. It also structurally checks `create_unit`
   effects: state scope, `owner`, block keys, a single-line division string
-  naming a `division_template`, zero equipment/manpower factors, and the order
-  of a template defined in the same file and effect path as the `create_unit`
-  using it. It does not check that a referenced template is defined anywhere, so
-  a template that only ever exists for the wrong country, or a `has_template`
-  guard naming a template nothing defines, still passes. Its combined run gate
-  covers `history/countries/`, `common/national_focus/`, `events/`,
-  `common/decisions/`, `common/special_projects/`, `common/scripted_effects/`,
-  `common/on_actions/`, `common/operations/`,
-  `common/resistance_compliance_modifiers/`, and `common/scripted_guis/`, in
-  both the pre-commit registry (`tools/precommit_validate.py`) and the CI
-  `oob` path filter. `config_drift_test.py` derives both routes from
-  `_CREATE_UNIT_SOURCE_PATTERNS`, so a new directory there fails the suite until
-  both are updated. Findings are **errors**. Non-ship variants are skipped. Their
-  `allowed_module_categories` blocks are often empty, so the naval resolver
-  cannot be pointed at them as-is.
+  that parses as army data (documented inner keys, quoted `name` /
+  `division_template`, numeric factors, `force_equipment_variants` shape),
+  zero equipment/manpower factors, and the order of a template defined in the
+  same file and effect path as the `create_unit` using it. German/Danish letters
+  in that string (`äöüßæøå`) are WARNING (`out-of-bounds-division`): the inner
+  parser rejects them even inside quotes (Sweden `militärdistriktet`). Romance,
+  Slavic, and Kurdish accents are allowed; they render in game. Schema failures
+  gate. If a `create_unit` names a template that `delete_unit_template_and_units`
+  removes anywhere, and this effect neither creates that template earlier nor
+  sits behind a `has_template` guard, that is WARNING (`missing-template-ensure`).
+  persistent.cpp reports the missing template as `Malformed token: <name>`.
+  Requiring the ensure pattern on every `create_unit` is 544 findings, mostly
+  legal OOB spawns, so the check is limited to names that are also deleted.
+  A `<effect> = yes` call earlier in the same effect also counts when that
+  scripted effect creates or guards the template, followed transitively, so the
+  ensure block can be factored out instead of inlined at every call site.
+  The backlog was cleared in the same change and the check is clean on main.
+  It stays WARNING because the covering-template resolver is a heuristic: a
+  bare `ROOT`-scope definition is taken to cover the whole effect, and a
+  `has_template` guard naming a template nothing defines still passes. Its
+  combined run gate covers `history/countries/`, `common/national_focus/`,
+  `events/`, `common/decisions/`, `common/special_projects/`,
+  `common/scripted_effects/`, `common/on_actions/`, `common/operations/`,
+  `common/resistance_compliance_modifiers/`, `common/scripted_guis/`, and
+  `common/ideas/` (deletions live in idea removal effects), in both the
+  pre-commit registry (`tools/precommit_validate.py`) and the CI `oob` path
+  filter. `config_drift_test.py` derives those routes from
+  `_CREATE_UNIT_SOURCE_PATTERNS`, `_DELETE_TEMPLATE_SOURCE_PATTERNS`, and
+  `_VARIANT_SOURCE_PATTERNS`, so a new directory there fails the suite until
+  every route is updated. `parent_version` is not resolved: each block is
+  checked on the modules it writes, so a design that inherits a required slot
+  from its parent reads as missing it, and a parent-supplied module does not
+  count toward a `module_count_limit`. A clean run on a `parent_version > 0`
+  design is not proof the runtime design is legal.
 
 - `validate_decisions.py` carries a **missing icon** check (WARNING, `missing-decision-icon`), opt-in behind `--missing-icons` and **not** wired into CI. Resolution follows the engine and differs per site: a decision `icon = X` is accepted if `X`, `GFX_decision_X` or `GFX_X` is defined (a bare name is the dominant MD convention and is **not** a bug — see `.claude/docs/decision-reference.md`); a category `icon = X` takes the `GFX_decision_category_` prefix instead, so a sprite that only exists as `GFX_decision_X` does not satisfy it; a category `picture` is always the full sprite name. Values already starting with `GFX_` are only tried verbatim, never double-prefixed. Dynamic `icon = { key = ... trigger = ... }` blocks contribute one check per `key`, and `[...]` values are skipped as runtime-resolved. Backlog on main: 355 decision + 79 category findings with vanilla sprites in view (596 without, see `sprite_index.py` below); flip to ERROR once cleared. The same `--missing-icons` flag drives the sibling check in `validate_focus_tree.py`; `validate_ideas.py` no longer takes the flag, since its audit is always on. `validate_decisions.py` and `validate_focus_tree.py` remain manual. `run_all_validators.py` carries the flag for focus-tree only.
 

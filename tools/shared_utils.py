@@ -45,6 +45,34 @@ _LEVEL_COLORS = {
 # extend this list with their own patterns.
 DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
 
+# Leave a quarter of the machine to whoever is using it. A full suite run
+# fans out over every validator and each of those keeps its own pool, so
+# without a shared ceiling the tooling oversubscribes the box and everything
+# else on it stalls.
+CPU_BUDGET_FRACTION = 0.75
+
+
+def cpu_budget() -> int:
+    """Cores this repo's tooling may occupy at once, never the whole machine.
+
+    ``MD_MAX_WORKERS`` overrides the share outright. CI runners have the box to
+    themselves, so there the budget is every core.
+    """
+    override = os.environ.get("MD_MAX_WORKERS", "").strip()
+    if override.isdigit() and int(override) > 0:
+        return int(override)
+    cores = os.cpu_count() or 1
+    if os.environ.get("CI", "").strip().lower() in ("1", "true"):
+        return cores
+    return max(1, int(cores * CPU_BUDGET_FRACTION))
+
+
+def split_cpu_budget(tasks: int) -> Tuple[int, int]:
+    """Split the budget into (concurrent tasks, workers each), product capped."""
+    budget = cpu_budget()
+    parallel = max(1, min(tasks, budget))
+    return parallel, max(1, budget // parallel)
+
 
 def log_message(
     level: str, message: str, verbose: bool = False, use_colors: bool = True
@@ -310,12 +338,12 @@ _COMPARISON_OPS = {"!=", "==", ">=", "<="}
 
 
 def normalize_spacing(line: str) -> str:
-    """Put single spaces around ``{``, ``}`` and ``=`` in one line of script.
+    """Put single spaces around braces, assignments and comparisons in one line.
 
     Leading indentation, ``"..."`` string interiors and any trailing ``#``
     comment are left byte-exact; a whole-line comment is returned unchanged.
-    ``!=``/``==``/``>=``/``<=`` are padded as one operator, and an empty block
-    keeps the spacing it was written with (``{}`` and ``{ }`` both survive).
+    Comparison operators are padded without splitting their two-character forms,
+    and an empty block keeps its written spacing (``{}`` and ``{ }`` both survive).
     Idempotent.
     """
     code = strip_inline_comment(line)
@@ -341,7 +369,7 @@ def normalize_spacing(line: str) -> str:
             out.append(f" {code[i : i + 2]} ")
             i += 2
             continue
-        elif c in "{}=":
+        elif c in "{}=<>":
             out.append(f" {c} ")
         else:
             out.append(c)
@@ -463,6 +491,13 @@ def should_skip_file(
     content_roots = {"common", "events", "history", "interface", "localisation"}
     normalized_path = filename.replace("\\", "/").strip("/")
     parts = normalized_path.split("/")
+    # Canal/strait closures set flags read here, so this file is game logic
+    # that must count for variables validation. Stale worktree and reference
+    # copies stay ignored.
+    if parts[-2:] == ["map", "adjacency_rules.txt"] and not (
+        ignored_dirs - {"map"}
+    ).intersection(parts[:-2]):
+        return False
     for index, part in enumerate(parts):
         if part not in ignored_dirs:
             continue
@@ -475,6 +510,11 @@ def should_skip_file(
     return False
 
 
+def normalize_path_separators(path: str) -> str:
+    """Return a path with POSIX separators for public output."""
+    return path.replace("\\", "/")
+
+
 def is_excluded_path(path: str, excluded_dirs: Container[str], repo_root: str) -> bool:
     """True if path is under one of excluded_dirs, matched relative to repo_root.
 
@@ -482,7 +522,11 @@ def is_excluded_path(path: str, excluded_dirs: Container[str], repo_root: str) -
     a checkout nested under an ancestor dir literally named after one of
     excluded_dirs would otherwise match every file and no-op the whole repo.
     """
-    rel = os.path.relpath(os.path.abspath(path), os.path.abspath(repo_root))
+    try:
+        rel = os.path.relpath(os.path.abspath(path), os.path.abspath(repo_root))
+    except ValueError:
+        rel = normalize_path_separators(os.path.abspath(path)).strip("/")
+        return any(part in excluded_dirs for part in rel.split("/"))
     return any(part in excluded_dirs for part in rel.split(os.sep))
 
 
@@ -502,7 +546,7 @@ def iter_txt_targets(
             for fn in filenames:
                 if fn.lower().endswith(".txt"):
                     full = os.path.join(dirpath, fn)
-                    yield os.path.relpath(full, path), full
+                    yield normalize_path_separators(os.path.relpath(full, path)), full
     elif os.path.isfile(path):
         yield path, path
 
@@ -1047,8 +1091,8 @@ def create_linting_parser(
     parser.add_argument(
         "--workers",
         type=int,
-        default=max(1, min(os.cpu_count() or 2, 4)),
-        help="Number of parallel workers (default: min(CPU count, 4))",
+        default=max(1, min(cpu_budget(), 4)),
+        help="Number of parallel workers (default: min(CPU budget, 4))",
     )
     parser.add_argument(
         "filenames",
@@ -1231,7 +1275,7 @@ def get_staged_files(
     # unless a cross-reference check needs to observe a deleted target.
     def _filter(names: list) -> list:
         paths = [
-            os.path.join(mod_path, f)
+            os.path.normpath(os.path.join(mod_path, f))
             for f in names
             if f and any(f.endswith(ext) for ext in extensions)
         ]
