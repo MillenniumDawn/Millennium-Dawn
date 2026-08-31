@@ -5,15 +5,35 @@ multiple times. The standardizer must preserve every occurrence, in order.
 Log injection must also survive an id line carrying a trailing comment.
 """
 
+import sys
+
+import pytest
 import standardize_focus_tree as focus_tree_module
 from shared_utils import strip_inline_comment
 from standardize_focus_tree import (
+    clean_block_lines,
+    effect_block_with_log,
     extract_focus_properties,
+    format_continuous_focus_position_block,
     format_focus_block,
+    format_initial_show_position_block,
+    format_inlay_window_block,
+    format_offset_block,
+    format_shortcut_block,
     reindent_by_brace_depth,
     standardize_focus_tree,
     validate_modifier_naming,
 )
+
+
+def _write(path, text):
+    with open(path, "w", encoding="utf-8", newline="") as handle:
+        handle.write(text)
+
+
+def _read(path):
+    with open(path, "r", encoding="utf-8", newline="") as handle:
+        return handle.read()
 
 
 def _code_braces_balanced(lines):
@@ -634,3 +654,214 @@ def test_failed_write_leaves_original_intact_and_no_temp_file(tmp_path, monkeypa
     assert standardize_focus_tree(str(target), str(target)) is False
     assert target.read_text(encoding="utf-8") == original
     assert not (tmp_path / "focus.txt.tmp").exists()
+
+
+def test_missing_input_file_reports_failure(tmp_path):
+    assert (
+        standardize_focus_tree(str(tmp_path / "absent.txt"), str(tmp_path / "out.txt"))
+        is False
+    )
+    assert not (tmp_path / "out.txt").exists()
+
+
+def test_naming_check_ignores_non_focus_blocks():
+    lines = [
+        "shortcut = {\n",
+        "\tname = TST_shortcut\n",
+        "\tcustom_effect_tooltip = { MODIFIER = TST_Invalid_modifier }\n",
+        "}\n",
+    ]
+    assert validate_modifier_naming(lines, "shortcut.txt") == 0
+
+
+def test_naming_violation_is_reported_for_a_focus_without_an_id(capsys):
+    lines = [
+        "focus = {\n",
+        "\tcustom_effect_tooltip = { MODIFIER = TST_Invalid_modifier }\n",
+        "}\n",
+    ]
+    assert validate_modifier_naming(lines, "noid.txt") == 1
+    assert "focus '' uses" in capsys.readouterr().err
+
+
+def test_split_block_rejects_a_commented_closing_brace():
+    # Merging must bail when the closer is not a bare `}`; a brace hiding in the
+    # comment would otherwise be treated as the block's own.
+    assert focus_tree_module._split_block(["x = {", "\ty = 1", "} # note"]) is None
+
+
+def test_multi_line_icon_block_is_preserved_verbatim():
+    lines = [
+        "\tfocus = {\n",
+        "\t\tid = TST_icon\n",
+        "\t\ticon = {\n",
+        "\t\t\ttrigger = { has_war = yes }\n",
+        "\t\t\ticon = GFX_goal_war\n",
+        "\t\t}\n",
+        "\t}\n",
+    ]
+    out = format_focus_block(extract_focus_properties(lines))
+    assert out[:6] == [
+        "\tfocus = {",
+        "\t\tid = TST_icon",
+        "\t\ticon = {",
+        "\t\t\ttrigger = { has_war = yes }",
+        "\t\t\ticon = GFX_goal_war",
+        "\t\t}",
+    ]
+    assert format_focus_block(extract_focus_properties([f"{l}\n" for l in out])) == out
+
+
+def test_empty_skip_empty_blocks_are_dropped():
+    props = extract_focus_properties(
+        [
+            "\tfocus = {\n",
+            "\t\tid = TST_x\n",
+            "\t\tavailable = { }\n",
+            "\t\tbypass = {\n",
+            "\t\t}\n",
+            "\t\tmutually_exclusive = { }\n",
+            "\t}\n",
+        ]
+    )
+    assert props["available"] == []
+    assert props["bypass"] == []
+    assert props["mutually_exclusive"] == []
+
+
+def test_trailing_comment_is_emitted_last():
+    props = extract_focus_properties(
+        ["\tfocus = {\n", "\t\tid = TST_x\n", "\t\t# closing note\n", "\t}\n"]
+    )
+    assert props["comments"]["__trailing__"] == ["\t\t# closing note"]
+    out = format_focus_block(props)
+    assert out[-2:] == ["\t\t# closing note", "\t}"]
+
+
+def test_focus_without_an_id_still_formats():
+    out = format_focus_block(
+        extract_focus_properties(["\tfocus = {\n", "\t\tcost = 5\n", "\t}\n"])
+    )
+    assert out == [
+        "\tfocus = {",
+        "\t\tcost = 5",
+        "",
+        "\t\tai_will_do = { base = 1 }",
+        "\t}",
+    ]
+
+
+def test_clean_block_lines_drops_only_trailing_blanks():
+    assert clean_block_lines([]) == []
+    assert clean_block_lines(["a = {", "", "\tb = 1", "}", "", "  "]) == [
+        "a = {",
+        "",
+        "\tb = 1",
+        "}",
+    ]
+
+
+def test_effect_block_with_log_leaves_unloggable_blocks_alone():
+    # Braces do not balance on the one line, so there is no safe insertion point.
+    over_closed = ["completion_reward = { add_political_power = 1 } }"]
+    assert "log =" not in "".join(effect_block_with_log(over_closed, "TST_x"))
+    # No focus id: nothing to name in a log line.
+    assert "log =" not in "".join(
+        effect_block_with_log(["completion_reward = { add_political_power = 1 }"], "")
+    )
+
+
+def test_offset_block_keeps_unknown_lines_without_coordinates():
+    assert format_offset_block(
+        ["offset = {\n", "\tunknown = yes\n", "}\n"],
+    ) == ["\toffset = {", "\tunknown = yes\n", "\t}"]
+
+
+def test_shortcut_block_without_optional_fields_keeps_its_trigger():
+    assert format_shortcut_block(
+        ["shortcut = {\n", "\ttrigger = { has_war = no }\n", "}\n"]
+    ) == ["\tshortcut = {", "\ttrigger = { has_war = no }", "\t}"]
+
+
+def test_inlay_window_without_optional_fields_drops_blank_lines_only():
+    assert format_inlay_window_block(
+        ["inlay_window = {\n", "\tvisible = yes\n", "\n", "}\n"]
+    ) == ["\tinlay_window = {", "\tvisible = yes\n", "\t}"]
+
+
+def test_continuous_focus_position_multi_line_is_collapsed():
+    assert format_continuous_focus_position_block(
+        ["continuous_focus_position = {\n", "\tx = 5700\n", "\ty = 2000\n", "}\n"]
+    ) == ["\tcontinuous_focus_position = { x = 5700 y = 2000 }"]
+
+
+def test_continuous_focus_position_accepts_reordered_axes():
+    assert format_continuous_focus_position_block(
+        ["continuous_focus_position = { y = 2000 x = 5700 }"]
+    ) == ["\tcontinuous_focus_position = { x = 5700 y = 2000 }"]
+
+
+def test_initial_show_position_multi_line_keeps_every_field():
+    out = format_initial_show_position_block(
+        [
+            "initial_show_position = {\n",
+            "\tx = 2\n",
+            "\ty = 0\n",
+            "\tfocus = TST_focus\n",
+            "\toffset = { x = 1 y = 2 }\n",
+            "\tunknown = yes\n",
+            "\n",
+            "}\n",
+        ]
+    )
+    assert out == [
+        "\tinitial_show_position = {",
+        "\t\tx = 2",
+        "\t\ty = 0",
+        "\t\tfocus = TST_focus",
+        "\toffset = { x = 1 y = 2 }",
+        "\tunknown = yes\n",
+        "\t}",
+    ]
+
+
+def test_initial_show_position_multi_line_without_known_fields():
+    assert format_initial_show_position_block(
+        ["initial_show_position = {\n", "\tunknown = yes\n", "}\n"]
+    ) == ["\tinitial_show_position = {", "\tunknown = yes\n", "\t}"]
+
+
+def test_main_standardizes_and_backs_up(tmp_path, monkeypatch):
+    source = tmp_path / "focus.txt"
+    _write(source, _INVALID_MODIFIER_TREE)
+    monkeypatch.setattr(
+        sys, "argv", ["standardize_focus_tree.py", str(source), "-b", "-v"]
+    )
+
+    focus_tree_module.main()
+
+    assert "ai_will_do = { base = 1 }" in _read(source)
+    assert list(tmp_path.glob("focus.txt.backup.*"))
+
+
+def test_main_exits_one_when_naming_check_rejects(tmp_path, monkeypatch):
+    source = tmp_path / "focus.txt"
+    output = tmp_path / "out.txt"
+    _write(source, _INVALID_MODIFIER_TREE)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "standardize_focus_tree.py",
+            str(source),
+            "-o",
+            str(output),
+            "--check-naming",
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exit_info:
+        focus_tree_module.main()
+
+    assert exit_info.value.code == 1
+    assert not output.exists()

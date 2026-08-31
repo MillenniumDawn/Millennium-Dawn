@@ -1,5 +1,7 @@
 import sys
 
+import pytest
+
 import tools.standardization.rename_focus_ids as rename_focus_ids_module
 from tools.standardization.rename_focus_ids import (
     extract_focus_ids,
@@ -111,3 +113,60 @@ def test_cli_defaults_to_repo_root_from_standardization_directory(
 
     assert main() == 0
     assert event_file.read_text(encoding="utf-8") == "focus = AST_first\n"
+
+
+def test_tag_prefixed_ast_ids_map_from_both_spellings():
+    text = "focus = {\n\tid = AST_ast_first\n}\nfocus = {\n\tid = AST_second\n}\n"
+    assert extract_focus_ids(text, "AST") == {
+        "AST_ast_first": "AST_first",
+        "ast_first": "AST_first",
+        "AST_second": "AST_second",
+    }
+
+
+def test_duplicate_normalised_ids_are_rejected():
+    text = "focus = {\n\tid = ast_first\n}\nfocus = {\n\tid = AST_first\n}\n"
+    with pytest.raises(ValueError, match="Duplicate normalized focus ID: AST_first"):
+        extract_focus_ids(text, "AST")
+
+
+def _tree(tmp_path, focus_text, event_text, localisation_text):
+    focus_dir = tmp_path / "common" / "national_focus"
+    event_dir = tmp_path / "events"
+    loc_dir = tmp_path / "localisation" / "english"
+    focus_dir.mkdir(parents=True)
+    event_dir.mkdir(parents=True)
+    loc_dir.mkdir(parents=True)
+    focus_file = focus_dir / "05_Australia.txt"
+    event_file = event_dir / "australia.txt"
+    localisation_file = loc_dir / "MD_focus_AST_l_english.yml"
+    _write(focus_file, focus_text)
+    _write(event_file, event_text)
+    _write(localisation_file, localisation_text)
+    return focus_file, event_file, localisation_file
+
+
+def test_focus_file_without_ids_is_rejected(tmp_path):
+    focus_file, _event_file, localisation_file = _tree(
+        tmp_path,
+        "focus_tree = {\n\tid = australia_focus\n}\n",
+        "focus = something_else\n",
+        'l_english:\n other_key: "x"\n',
+    )
+    with pytest.raises(ValueError, match="No focus IDs found"):
+        rename_focus_ids(tmp_path, focus_file, localisation_file, "AST")
+
+
+def test_already_canonical_tree_rewrites_nothing(tmp_path):
+    focus_file, event_file, localisation_file = _tree(
+        tmp_path,
+        "shared_focus = {\n\tid = AST_first\n}\n",
+        "focus = something_else\n",
+        'l_english:\n other_key: "x"\n',
+    )
+
+    mapping, changed = rename_focus_ids(tmp_path, focus_file, localisation_file, "AST")
+
+    assert mapping == {"AST_first": "AST_first"}
+    assert changed == []
+    assert event_file.read_text(encoding="utf-8") == "focus = something_else\n"
