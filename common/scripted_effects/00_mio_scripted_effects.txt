@@ -181,57 +181,71 @@ mio_catalog_entry_unlock_yes = {
 	}
 }
 
-ITA_mio_accumulate_merge_sums = {
-	set_variable = { ITA_mio_merge_counter = 0 }
+mio_accumulate_merge_sums = {
+	set_variable = { mio_merge_counter = 0 }
 	while_loop_effect = {
 		limit = {
-			check_variable = { ITA_mio_merge_counter < 100 }
-			has_mio_number_of_completed_traits > var:ITA_mio_merge_counter
+			check_variable = { mio_merge_counter < 100 }
+			has_mio_number_of_completed_traits > var:mio_merge_counter
 		}
-		add_to_variable = { ITA_mio_merge_counter = 1 }
+		add_to_variable = { mio_merge_counter = 1 }
 	}
 	ROOT = {
-		add_to_variable = { ITA_mio_merge_trait_sum = PREV.ITA_mio_merge_counter }
-		add_to_variable = { ITA_mio_merge_picks_sum = PREV.ITA_mio_merge_counter }
+		add_to_variable = { mio_merge_trait_sum = PREV.mio_merge_counter }
+		add_to_variable = { mio_merge_picks_sum = PREV.mio_merge_counter }
 	}
 	if = {
 		limit = { check_variable = { free_trait_picks > 0 } }
-		ROOT = { add_to_variable = { ITA_mio_merge_picks_sum = PREV.free_trait_picks } }
+		ROOT = { add_to_variable = { mio_merge_picks_sum = PREV.free_trait_picks } }
 	}
-	clear_variable = ITA_mio_merge_counter
+	clear_variable = mio_merge_counter
 }
 
 ITA_alenia_aermacchi_merger_carry_traits = {
-	set_variable = { ITA_mio_merge_trait_sum = 0 }
-	set_variable = { ITA_mio_merge_picks_sum = 0 }
-	mio:ITA_alenia_aeronautica = { ITA_mio_accumulate_merge_sums = yes }
-	mio:ITA_aermacchi_manufacturer = { ITA_mio_accumulate_merge_sums = yes }
+	set_variable = { mio_merge_trait_sum = 0 }
+	set_variable = { mio_merge_picks_sum = 0 }
+	mio:ITA_alenia_aeronautica = { mio_accumulate_merge_sums = yes }
+	mio:ITA_aermacchi_manufacturer = { mio_accumulate_merge_sums = yes }
 	if = {
-		limit = { check_variable = { ITA_mio_merge_trait_sum > 0 } }
-		mio:ITA_alenia_aermacchi = { add_mio_size = ROOT.ITA_mio_merge_trait_sum }
+		limit = { check_variable = { mio_merge_trait_sum > 0 } }
+		mio:ITA_alenia_aermacchi = { add_mio_size = ROOT.mio_merge_trait_sum }
 	}
 	if = {
-		limit = { check_variable = { ITA_mio_merge_picks_sum > 0 } }
-		mio:ITA_alenia_aermacchi = { add_to_variable = { free_trait_picks = ROOT.ITA_mio_merge_picks_sum } }
+		limit = { check_variable = { mio_merge_picks_sum > 0 } }
+		mio:ITA_alenia_aermacchi = { add_to_variable = { free_trait_picks = ROOT.mio_merge_picks_sum } }
 	}
-	clear_variable = ITA_mio_merge_trait_sum
-	clear_variable = ITA_mio_merge_picks_sum
+	clear_variable = mio_merge_trait_sum
+	clear_variable = mio_merge_picks_sum
 }
 
 ITA_finmeccanica_restructuring_carry_traits = {
-	set_variable = { ITA_mio_merge_trait_sum = 0 }
-	set_variable = { ITA_mio_merge_picks_sum = 0 }
-	mio:ITA_alenia_aermacchi = { ITA_mio_accumulate_merge_sums = yes }
-	mio:ITA_finmeccanica = { ITA_mio_accumulate_merge_sums = yes }
-	mio:ITA_agusta_westland = { ITA_mio_accumulate_merge_sums = yes }
+	set_variable = { mio_merge_trait_sum = 0 }
+	set_variable = { mio_merge_picks_sum = 0 }
+	mio:ITA_alenia_aermacchi = { mio_accumulate_merge_sums = yes }
+	mio:ITA_finmeccanica = { mio_accumulate_merge_sums = yes }
+	mio:ITA_agusta_westland = { mio_accumulate_merge_sums = yes }
 	if = {
-		limit = { check_variable = { ITA_mio_merge_trait_sum > 0 } }
-		mio:ITA_leonardo = { add_mio_size = ROOT.ITA_mio_merge_trait_sum }
+		limit = { check_variable = { mio_merge_trait_sum > 0 } }
+		mio:ITA_leonardo = { add_mio_size = ROOT.mio_merge_trait_sum }
 	}
 	if = {
-		limit = { check_variable = { ITA_mio_merge_picks_sum > 0 } }
-		mio:ITA_leonardo = { add_to_variable = { free_trait_picks = ROOT.ITA_mio_merge_picks_sum } }
+		limit = { check_variable = { mio_merge_picks_sum > 0 } }
+		mio:ITA_leonardo = { add_to_variable = { free_trait_picks = ROOT.mio_merge_picks_sum } }
 	}
-	clear_variable = ITA_mio_merge_trait_sum
-	clear_variable = ITA_mio_merge_picks_sum
+	clear_variable = mio_merge_trait_sum
+	clear_variable = mio_merge_picks_sum
+}
+
+GER_airbus_change_carry_traits = {
+	mio:GER_Eurocopter_helicopters_tank_manufacturer = { mio_accumulate_merge_sums = yes }
+	if = {
+		limit = { check_variable = { mio_merge_trait_sum > 0 } }
+		mio:GER_airbus_defence_aircraft_manufacturer = { add_mio_size = ROOT.mio_merge_trait_sum }
+	}
+	if = {
+		limit = { check_variable = { mio_merge_picks_sum > 0 } }
+		mio:GER_airbus_defence_aircraft_manufacturer = { add_to_variable = { free_trait_picks = ROOT.mio_merge_picks_sum } }
+	}
+	clear_variable = mio_merge_trait_sum
+	clear_variable = mio_merge_picks_sum
 }
