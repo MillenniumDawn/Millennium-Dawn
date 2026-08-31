@@ -6,14 +6,8 @@ shipped flag, so it carries the tests.
 """
 
 import struct
-import sys
-from pathlib import Path
 
-_ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"
-if str(_ASSETS_DIR) not in sys.path:
-    sys.path.insert(0, str(_ASSETS_DIR))
-
-from md_art_convert import TGA_HEADER, tga_normalised  # noqa: E402
+from md_art_convert import TGA_HEADER, tga_normalised
 
 
 def _tga(
