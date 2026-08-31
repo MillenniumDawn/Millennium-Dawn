@@ -275,9 +275,9 @@ class TestAssignMioIcons:
 
         self._run(monkeypatch, tmp_path, gfx, str(mio), "--write")
 
-        assert (
-            "icon = GFX_generic_mio_trait_icon_smallarms" in mio.read_text()
-        ), "the family sprite exists, so the unique fallback must not win"
+        assert "icon = GFX_generic_mio_trait_icon_smallarms" in mio.read_text(), (
+            "the family sprite exists, so the unique fallback must not win"
+        )
 
     def test_write_falls_back_to_unique_when_no_sprite_matches(
         self, tmp_path, monkeypatch
@@ -325,9 +325,10 @@ class TestAssignMioIcons:
         gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_smallarms")
         write_text(tmp_path / "org.txt", self.TRAIT)
         self._run(monkeypatch, tmp_path, gfx, "org.txt", "--write")
-        assert "icon = GFX_generic_mio_trait_icon_smallarms" in (
-            tmp_path / "org.txt"
-        ).read_text()
+        assert (
+            "icon = GFX_generic_mio_trait_icon_smallarms"
+            in (tmp_path / "org.txt").read_text()
+        )
 
     def test_write_failure_exits_nonzero(self, tmp_path, monkeypatch):
         gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_smallarms")
@@ -348,7 +349,9 @@ class TestAssignMioIcons:
         self._run(monkeypatch, tmp_path, gfx, str(mio))
         assert "unique fallbacks: 1 -> test_trait" in capsys.readouterr().out
 
-    def test_trait_without_a_placeholder_is_left_alone(self, tmp_path, monkeypatch, capsys):
+    def test_trait_without_a_placeholder_is_left_alone(
+        self, tmp_path, monkeypatch, capsys
+    ):
         gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_smallarms")
         mio = tmp_path / "test_mio.txt"
         body = self.TRAIT.replace("icon = x", "icon = GFX_already_set")

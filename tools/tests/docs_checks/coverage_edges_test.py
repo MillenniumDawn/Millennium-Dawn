@@ -538,7 +538,8 @@ class TestOgImages:
         )
         issues = og.check_html_file(site, page, "")
         assert any(
-            issue.startswith("twitter:image is not a site-local URL") for issue in issues
+            issue.startswith("twitter:image is not a site-local URL")
+            for issue in issues
         )
 
 

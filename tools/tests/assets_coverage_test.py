@@ -129,9 +129,7 @@ def test_pixels_match_uses_magick_compare(monkeypatch):
 
 def test_pixels_match_uses_compare_binary(monkeypatch):
     def which(name):
-        return {"convert": "/usr/bin/convert", "compare": "/usr/bin/compare"}.get(
-            name
-        )
+        return {"convert": "/usr/bin/convert", "compare": "/usr/bin/compare"}.get(name)
 
     monkeypatch.setattr(md_art_convert.shutil, "which", which)
     recorded = {}

@@ -258,7 +258,9 @@ def test_step_summary_includes_the_workflow_run_url(tmp_path, monkeypatch):
     assert code == 0
     summary = summary_path.read_text(encoding="utf-8")
     assert "**Commit:** `abc1234`" in summary
-    assert "**Run:** [https://example.test/run/1](https://example.test/run/1)" in summary
+    assert (
+        "**Run:** [https://example.test/run/1](https://example.test/run/1)" in summary
+    )
 
 
 def test_step_summary_caps_new_error_lists(tmp_path, monkeypatch):

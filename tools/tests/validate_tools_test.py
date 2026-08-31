@@ -64,7 +64,7 @@ def test_index_mode_controls_executable_check(tmp_path, monkeypatch):
         return V.subprocess.CompletedProcess(
             args[0],
             0,
-            "100755 hash 0\ttools/executable.py\n" "100644 hash 0\ttools/regular.py\n",
+            "100755 hash 0\ttools/executable.py\n100644 hash 0\ttools/regular.py\n",
             "",
         )
 
@@ -254,7 +254,7 @@ def test_unreadable_pyproject_is_reported(tmp_path):
 def test_pyproject_without_runtime_group_has_no_dependency_findings(tmp_path):
     _write_script(tmp_path, "good_script.py", _HEALTHY)
     (tmp_path / "pyproject.toml").write_text(
-        "[dependency-groups]\ndev = [\"pytest\"]\n", encoding="utf-8"
+        '[dependency-groups]\ndev = ["pytest"]\n', encoding="utf-8"
     )
     validator = ToolsValidator(mod_path=str(tmp_path), use_colors=False, workers=1)
     assert validator._check_dependencies() == []
