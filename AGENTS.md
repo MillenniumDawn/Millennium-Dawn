@@ -4,7 +4,7 @@
 
 Millennium Dawn is a Hearts of Iron IV mod (2000-present). Key directories: `common/` (game data), `events/`, `localisation/` (English `.yml`, UTF-8 BOM), `history/`, `interface/`, `gfx/`, `tools/` (Python dev scripts).
 
-**IMPORTANT**: The `resources/` directory is for reference material only. Do NOT modify files under `resources/` unless explicitly asked by the user.
+**IMPORTANT**: The `resources/` directory is for reference material only. Do NOT modify files under `resources/` unless explicitly asked by the user. It holds the vanilla docs the validators read plus the unsorted art dumps (`resources/README.md`); everything else retired from the mod lives in the [millennium-dawn-resources](https://github.com/MillenniumDawn/millennium-dawn-resources) repo.
 
 ## Validation & Tools
 
@@ -56,6 +56,9 @@ Every text-mode write in `tools/` must pass `newline=""`. Without it, Python's t
 - Logging: `log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"` as the first statement of every effect block the engine runs (`complete_effect`, `remove_effect`, `timeout_effect`, `cancel_effect`). A log nested inside an `if`/`hidden_effect` records which branch ran and stays there
 - `ai_will_do = { base = N }` — `base` not `factor` at root
 - Don't repeat category `allowed` in decisions — put nation gate on category, dynamic checks in `available`/`visible`
+- AI-only decisions get **no localisation and no tooltip wrappers**. A decision is AI-only when an unconditional `is_ai = yes` sits at the top level of its `visible`/`available`/`allowed`, or its category is gated that way — no human sees it, so a loc key is dead weight and is flagged. An AI-only category's own key is flagged the same way. Write `check_variable` bare in such an `available` block: `custom_trigger_tooltip` / `custom_effect_tooltip` render to nobody, and the `available`-block tooltip checks skip AI-only decisions
+- A category that becomes visible mid-game (flag, completed focus, idea, variable) should get `unlock_decision_category_tooltip = <category>` in whatever turns it on, or `unlock_decision_tooltip` on one of its decisions. Otherwise a whole tab appears with no indication of where it came from. Always-on and tag-gated categories need nothing. Audit with `validate_decisions.py --unannounced-categories` (opt-in, not in CI — 118 existing cases)
+- An effect that sets a flag another decision's `visible`/`available` waits on has unlocked it. If the block already calls `unlock_decision_tooltip` for some, it must call it for all of them (`unannounced-decision-unlock`). Gates only count at depth 0 — inside a `NOT` the flag hides rather than unlocks
 - Ref: `.claude/docs/decision-reference.md`
 
 ## Events
