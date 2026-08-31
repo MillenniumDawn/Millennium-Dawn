@@ -645,9 +645,7 @@ def test_steam_login_exits_when_steamcmd_fails(monkeypatch):
 
 def test_steam_login_invokes_steamcmd_login(monkeypatch):
     calls = []
-    monkeypatch.setattr(
-        pw.subprocess, "call", lambda cmd: calls.append(cmd) or 0
-    )
+    monkeypatch.setattr(pw.subprocess, "call", lambda cmd: calls.append(cmd) or 0)
 
     pw.steam_login(Path("/bin/steamcmd"), "user")
 
@@ -758,7 +756,11 @@ def test_main_exits_without_a_username(monkeypatch):
 
 
 def test_main_refuses_a_diff_that_deletes_files(monkeypatch):
-    monkeypatch.setattr(sys, "argv", ["publish_workshop.py", "test", "--base-ref", "v1", "--username", "u"])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["publish_workshop.py", "test", "--base-ref", "v1", "--username", "u"],
+    )
     monkeypatch.setattr(pw, "get_deleted_files", lambda _ref: {"events/old.txt"})
 
     with pytest.raises(SystemExit, match="cannot safely express deleted files"):
@@ -789,9 +791,7 @@ def test_main_refuses_a_diff_with_no_publishable_files(tmp_path, monkeypatch):
         pw.main()
 
 
-def test_main_full_publish_patches_the_descriptor_then_uploads(
-    tmp_path, monkeypatch
-):
+def test_main_full_publish_patches_the_descriptor_then_uploads(tmp_path, monkeypatch):
     monkeypatch.setattr(
         sys,
         "argv",
