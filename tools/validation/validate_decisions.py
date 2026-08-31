@@ -739,6 +739,51 @@ def _int_literal(value: str) -> int:
         raise ValueError(f"invalid decimal literal: {value}") from None
 
 
+def _decision_category_map(mod_path: str) -> Dict[str, str]:
+    """Map each decision token to its parent category name.
+
+    Built from ``parse_categories_with_decisions`` and trimmed to real
+    decisions so nested block names (visible, available, etc.) never
+    appear as decisions.
+    """
+    known, _ = parse_all_decision_names(mod_path, lowercase=False)
+    known_set = set(known)
+    by_category = parse_categories_with_decisions(mod_path, lowercase=False)
+    mapping: Dict[str, str] = {}
+    for cat, tokens in by_category.items():
+        for tok in tokens:
+            if tok in known_set and tok not in mapping:
+                mapping[tok] = cat
+    return mapping
+
+
+def _is_effectively_ai_only(
+    dec: "DecisionFactory",
+    dec_id: str,
+    ai_only_by_category: Set[str],
+    ai_categories: Dict[str, str],
+    dec_to_category: Dict[str, str],
+) -> bool:
+    """Whether *dec* is hidden from every human player.
+
+    A decision in an AI-only category is always hidden. Otherwise an
+    unconditional ``is_ai = yes`` in ``visible`` or ``allowed`` is enough,
+    but one that sits only in ``available`` merely disables the button while
+    the entry remains visible (greyed out). To avoid flagging its loc as
+    dead — a false positive — that last case only counts when the parent
+    category itself is also AI-gated.
+    """
+    if dec_id in ai_only_by_category:
+        return True
+    if has_flat_is_ai(dec.visible) or has_flat_is_ai(dec.allowed):
+        return True
+    if has_flat_is_ai(dec.available):
+        cat = dec_to_category.get(dec_id)
+        if cat and cat in ai_categories:
+            return True
+    return False
+
+
 def _find_formable_commitment_rows(
     factories: List["DecisionFactory"], focus_texts: Dict[str, str]
 ) -> List[str]:
@@ -2166,6 +2211,8 @@ class Validator(BaseValidator):
         )
 
         ai_only_by_category = self._get_ai_only_by_category()
+        ai_categories = self._get_ai_only_categories()
+        dec_to_category = _decision_category_map(self.mod_path)
 
         results = []
         ai_results = []
@@ -2179,7 +2226,9 @@ class Validator(BaseValidator):
             # many decisions intentionally omit a description tooltip.
             name_key = dec.name_override if dec.name_override else dec_id
 
-            if dec.ai_only or dec_id in ai_only_by_category:
+            if _is_effectively_ai_only(
+                dec, dec_id, ai_only_by_category, ai_categories, dec_to_category
+            ):
                 # No human ever sees an AI-only decision, so its loc is dead
                 # weight — the check runs in reverse and reports keys that
                 # exist. `custom_cost_text` is exempt: it can point at a
@@ -2322,11 +2371,15 @@ class Validator(BaseValidator):
         """Findings for effects that announce some unlocks but miss others."""
         factories = list(parse_all_decision_factories(self.mod_path))
         ai_only_by_category = self._get_ai_only_by_category()
+        ai_categories = self._get_ai_only_categories()
+        dec_to_category = _decision_category_map(self.mod_path)
 
         # flag -> decisions a player can only reach once that flag is set
         gated: Dict[str, Set[str]] = {}
         for dec in factories:
-            if dec.ai_only or dec.token in ai_only_by_category:
+            if _is_effectively_ai_only(
+                dec, dec.token, ai_only_by_category, ai_categories, dec_to_category
+            ):
                 continue
             for block in (dec.visible, dec.available):
                 for match in _flat_flag_gates(block):

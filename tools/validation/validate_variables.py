@@ -22,7 +22,10 @@ from shared_utils import (
     ai_only_decision_categories,
     blank_quoted_strings,
     compute_line_offsets,
+    direct_child_block,
     extract_block_from_text,
+    flat_block_text,
+    has_flat_is_ai,
     is_ai_only_block,
     iter_direct_child_blocks,
     line_for_offset,
@@ -479,9 +482,12 @@ def _ai_only_spans(
     """Offset spans of decisions no human player ever sees.
 
     Depth-0 blocks in a decisions file are categories and depth-1 the decisions
-    themselves. A decision is AI-only when its category is, or when one of its
-    own trigger blocks carries an unconditional `is_ai = yes`. Nothing inside
-    such a span renders to a player, so every tooltip requirement is moot.
+    themselves. A decision in an AI-only category is always hidden. Otherwise
+    an unconditional ``is_ai = yes`` in ``visible`` or ``allowed`` is enough,
+    but one that sits only in ``available`` merely disables the button while
+    the entry remains visible, so it only counts when the parent category is
+    also AI-gated — otherwise the tooltip still matters and exempting it
+    would hide a real finding.
     """
     if not ai_categories and "is_ai" not in cleaned:
         return []
@@ -497,8 +503,17 @@ def _ai_only_spans(
         for match, dec_open, dec_close in iter_direct_child_blocks(
             inner, _SCOPE_OPEN_RE
         ):
-            if is_ai_only_block(inner[dec_open : dec_close + 1]):
+            body = inner[dec_open : dec_close + 1]
+            inner_body = flat_block_text(body)
+            if has_flat_is_ai(
+                direct_child_block(inner_body, "visible")
+            ) or has_flat_is_ai(direct_child_block(inner_body, "allowed")):
                 spans.append((offset + match.start(), offset + dec_close))
+            elif is_ai_only_block(body):
+                # ``available``-only ``is_ai`` without a gated parent still
+                # shows the entry (greyed out), so the available tooltip
+                # checks must still run.
+                continue
     return spans
 
 
