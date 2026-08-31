@@ -24,6 +24,7 @@ from shared_utils import (
     compute_line_offsets,
     extract_block_from_text,
     is_ai_only_block,
+    iter_direct_child_blocks,
     line_for_offset,
     read_text_under,
     strip_comments,
@@ -482,38 +483,23 @@ def _ai_only_spans(
     own trigger blocks carries an unconditional `is_ai = yes`. Nothing inside
     such a span renders to a player, so every tooltip requirement is moot.
     """
+    if not ai_categories and "is_ai" not in cleaned:
+        return []
     spans: List[Tuple[int, int]] = []
     for category in _CATEGORY_OPEN_RE.finditer(cleaned):
         open_idx = category.end() - 1
         close_idx = _matching_brace(cleaned, open_idx)
         if category.group(1) in ai_categories:
-            spans.append((open_idx, close_idx))
+            spans.append((category.start(), close_idx))
             continue
-        inner_start = open_idx + 1
-        inner = cleaned[inner_start:close_idx]
-        depth = 0
-        index = 0
-        while index < len(inner):
-            char = inner[index]
-            if char == "{":
-                depth += 1
-            elif char == "}":
-                depth -= 1
-            elif depth == 0:
-                match = _SCOPE_OPEN_RE.match(inner, index)
-                if match:
-                    dec_open = match.end() - 1
-                    dec_close = _matching_brace(inner, dec_open)
-                    if is_ai_only_block(inner[dec_open : dec_close + 1]):
-                        spans.append((inner_start + dec_open, inner_start + dec_close))
-                    index = dec_close
-                    continue
-            index += 1
+        offset = open_idx + 1
+        inner = cleaned[offset:close_idx]
+        for match, dec_open, dec_close in iter_direct_child_blocks(
+            inner, _SCOPE_OPEN_RE
+        ):
+            if is_ai_only_block(inner[dec_open : dec_close + 1]):
+                spans.append((offset + match.start(), offset + dec_close))
     return spans
-
-
-def _in_spans(pos: int, spans: List[Tuple[int, int]]) -> bool:
-    return any(start <= pos <= end for start, end in spans)
 
 
 def _scan_available_file(
@@ -525,7 +511,9 @@ def _scan_available_file(
     if cleaned is None:
         return [], []
     rel = os.path.relpath(filename, mod_path)
-    exempt = _ai_only_spans(cleaned, ai_categories) if _is_decision_source(rel) else []
+    exempt = _span_index(
+        _ai_only_spans(cleaned, ai_categories) if _is_decision_source(rel) else []
+    )
     events: List[Tuple[int, int, object]] = _scope_events(cleaned)
     for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
         open_idx = m.end() - 1
@@ -547,7 +535,7 @@ def _scan_available_file(
             if stack:
                 stack.pop()
             continue
-        if _in_spans(pos, exempt):
+        if _inside(exempt, pos):
             continue
         if kind == 2:
             for token in reversed(stack):
@@ -665,7 +653,9 @@ def process_file_for_untooltipped_available_scripted_trigger(
     events.sort(key=lambda e: (e[0], e[1]))
 
     rel = os.path.relpath(filename, mod_path)
-    exempt = _ai_only_spans(cleaned, ai_categories) if _is_decision_source(rel) else []
+    exempt = _span_index(
+        _ai_only_spans(cleaned, ai_categories) if _is_decision_source(rel) else []
+    )
     stack: List[str] = []
     issues: List[Tuple[str, str, int]] = []
     for pos, kind, tok in events:
@@ -674,7 +664,7 @@ def process_file_for_untooltipped_available_scripted_trigger(
         elif kind == 1:
             if stack:
                 stack.pop()
-        elif not _in_spans(pos, exempt):
+        elif not _inside(exempt, pos):
             for token in reversed(stack):
                 if token in _TOOLTIP_WRAPPER_TOKENS:
                     break

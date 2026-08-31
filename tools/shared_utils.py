@@ -896,12 +896,15 @@ def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> st
 
 
 def flat_block_text(block: str) -> str:
-    """Remove an optional outer block brace pair before a flat token scan."""
+    """Strip an outer brace pair, but only when the two actually match.
+
+    A bare body ending in the `}` of its last child keeps both characters — a
+    naive strip there would delete an unrelated brace and desync every depth
+    count downstream.
+    """
     inner = block.strip()
-    if inner.startswith("{"):
-        inner = inner[1:]
-    if inner.endswith("}"):
-        inner = inner[:-1]
+    if inner.startswith("{") and find_matching_brace(inner, 0) == len(inner) - 1:
+        return inner[1:-1]
     return inner
 
 
@@ -931,35 +934,45 @@ _AI_GATE_FIELDS = ("visible", "available", "allowed")
 _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
 
 
-def has_flat_is_ai(block: str) -> bool:
-    """Return True when `is_ai = yes` sits unconditionally at depth 0 of a trigger block.
+def first_flat_match(
+    block: str, pattern: "re.Pattern[str]"
+) -> Optional["re.Match[str]"]:
+    """First match of *pattern* sitting unconditionally at depth 0 of a block.
 
-    Nested inside OR/AND/if/limit or a scoped `TAG = { }` the token is
-    conditional, so the object is not AI-only and must not be exempted from
-    localisation or tooltip requirements. ``iter_flat_offsets`` yields every
-    depth-0 character position, hence the preceding-whitespace guard against
-    matching mid-token.
+    Nested inside NOT/OR/AND/if/limit or a scoped `TAG = { }` a token is
+    conditional and means something different: `NOT = { has_country_flag = X }`
+    is satisfied until X is set, the opposite of a gate that X opens.
+    ``iter_flat_offsets`` yields every depth-0 character position, hence the
+    preceding-whitespace guard against matching mid-token.
     """
     if not block:
-        return False
+        return None
     for inner, index in iter_flat_offsets(block):
         if index and not inner[index - 1].isspace():
             continue
-        if _IS_AI_YES_RE.match(inner, index):
-            return True
-    return False
+        match = pattern.match(inner, index)
+        if match:
+            return match
+    return None
 
 
-def direct_child_block(body: str, name: str) -> str:
-    """Return the `name = { ... }` block at depth 0 of *body*, braces included.
+def has_flat_is_ai(block: str) -> bool:
+    """True when `is_ai = yes` sits unconditionally at depth 0 of a trigger block."""
+    return first_flat_match(block, _IS_AI_YES_RE) is not None
 
-    Returns "" when there is no such block. Depth-aware so a nested `visible`
-    inside a `modifier` or an effect's `limit` is never mistaken for the
-    object's own trigger block.
+
+def iter_direct_child_blocks(
+    body: str, opener: "re.Pattern[str]"
+) -> Iterator[Tuple["re.Match[str]", int, int]]:
+    """Yield `(match, open_idx, close_idx)` for every *opener* block at depth 0.
+
+    Depth-aware so a nested `visible` inside a `modifier` or an effect's `limit`
+    is never mistaken for the object's own trigger block. Each hit advances past
+    its own closing brace, which keeps the depth count balanced — landing back
+    on that `}` would decrement a depth the matching `{` never incremented.
     """
-    opener = re.compile(r"\b" + re.escape(name) + r"\s*=\s*\{")
-    depth = 0
     index = 0
+    depth = 0
     while index < len(body):
         char = body[index]
         if char == "{":
@@ -970,32 +983,44 @@ def direct_child_block(body: str, name: str) -> str:
             match = opener.match(body, index)
             if match:
                 close = find_matching_brace(body, match.end() - 1)
-                return body[match.end() - 1 : close + 1] if close != -1 else ""
+                if close == -1:
+                    return
+                yield match, match.end() - 1, close
+                index = close + 1
+                continue
         index += 1
+
+
+def direct_child_block(body: str, name: str) -> str:
+    """Return the `name = { ... }` block at depth 0 of *body*, braces included.
+
+    Returns "" when there is no such block.
+    """
+    opener = re.compile(r"\b" + re.escape(name) + r"\s*=\s*\{")
+    for _match, open_idx, close in iter_direct_child_blocks(body, opener):
+        return body[open_idx : close + 1]
     return ""
 
 
 def is_ai_only_block(body: str) -> bool:
     """True when a decision or category body is gated on an unconditional `is_ai = yes`.
 
-    Accepts the body with or without its outer braces. Unlike
-    ``flat_block_text`` the pair is only stripped when it actually matches — a
-    bare body ending in the `}` of its last child must stay intact.
+    Accepts the body with or without its outer braces.
     """
-    inner = body.strip()
-    if inner.startswith("{") and find_matching_brace(inner, 0) == len(inner) - 1:
-        inner = inner[1:-1]
+    inner = flat_block_text(body)
     return any(has_flat_is_ai(direct_child_block(inner, f)) for f in _AI_GATE_FIELDS)
 
 
-def ai_only_decision_categories(mod_path: str) -> Set[str]:
-    """Names of decision categories no human player ever sees.
+def ai_only_decision_categories(mod_path: str) -> Dict[str, str]:
+    """Decision categories no human player ever sees, mapped to their filename.
 
     Every decision inside one inherits that: it needs no localisation and no
-    tooltip wrapper, because there is nobody to read either.
+    tooltip wrapper, because there is nobody to read either. The basename comes
+    back with the name so a finding can cite its source without a second walk
+    over the same directory.
     """
     root = Path(mod_path) / "common" / "decisions" / "categories"
-    names: Set[str] = set()
+    names: Dict[str, str] = {}
     for path in sorted(root.rglob("*.txt")):
         try:
             text = path.read_text(encoding="utf-8-sig", errors="replace")
@@ -1007,7 +1032,7 @@ def ai_only_decision_categories(mod_path: str) -> Set[str]:
         for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
             body, _end = extract_block_from_text(text, match.end() - 1)
             if body and is_ai_only_block(body):
-                names.add(match.group(1))
+                names.setdefault(match.group(1), path.name)
     return names
 
 

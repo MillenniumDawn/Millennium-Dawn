@@ -10,6 +10,7 @@ and must not exempt anything.
 from shared_utils import (
     ai_only_decision_categories,
     direct_child_block,
+    flat_block_text,
     has_flat_is_ai,
     is_ai_only_block,
 )
@@ -81,7 +82,7 @@ def test_ai_only_category_detected(tmp_path):
         "\tallowed = { original_tag = JAP }\n"
         "}\n",
     )
-    assert ai_only_decision_categories(mod) == {"md_ai_category"}
+    assert ai_only_decision_categories(mod) == {"md_ai_category": "cat.txt"}
 
 
 def test_debug_gated_category_not_ai_only(tmp_path):
@@ -96,7 +97,7 @@ def test_debug_gated_category_not_ai_only(tmp_path):
         "\t}\n"
         "}\n",
     )
-    assert ai_only_decision_categories(mod) == set()
+    assert ai_only_decision_categories(mod) == {}
 
 
 def test_commented_is_ai_not_ai_only(tmp_path):
@@ -104,8 +105,23 @@ def test_commented_is_ai_not_ai_only(tmp_path):
         tmp_path,
         "md_ai_category = {\n\tvisible = {\n\t\t# is_ai = yes\n\t}\n}\n",
     )
-    assert ai_only_decision_categories(mod) == set()
+    assert ai_only_decision_categories(mod) == {}
 
 
 def test_missing_categories_directory_is_empty(tmp_path):
-    assert ai_only_decision_categories(str(tmp_path)) == set()
+    assert ai_only_decision_categories(str(tmp_path)) == {}
+
+
+def test_flat_block_text_keeps_an_unmatched_trailing_brace():
+    # A bare body ending in the `}` of its last child is not a wrapped block —
+    # stripping both ends would delete an unrelated brace and desync the depth
+    # count of every walk downstream.
+    body = "{ a }\n\tvisible = { is_ai = yes }"
+    assert flat_block_text(body) == body
+    assert flat_block_text("{ visible = { is_ai = yes } }") == (
+        " visible = { is_ai = yes } "
+    )
+
+
+def test_is_ai_only_block_accepts_a_bare_body():
+    assert is_ai_only_block("\tcost = 25\n\tvisible = {\n\t\tis_ai = yes\n\t}\n")

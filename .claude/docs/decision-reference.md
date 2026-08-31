@@ -145,7 +145,7 @@ A decision is **AI-only** when the engine can never show it to a human player. T
 
 **An AI-only decision takes no localisation.** Nothing renders its name or tooltip, so a key for it is dead weight that later has to be translated. The raw ID surfacing in the decision UI is harmless because no human ever opens that tab. `validate_decisions.py` enforces both directions: an AI-only decision is exempt from `missing-decision-localisation`, and a key that does exist for one is reported as `ai-only-decision-localisation`. Both are WARNING-severity. `custom_cost_text` is exempt from the reverse check, since it can point at a scripted-loc key shared with player-facing decisions.
 
-The same holds for an **AI-only category** — one whose own `visible` / `available` / `allowed` carries that unconditional `is_ai = yes`. Its header is drawn in the same tab as its decisions, so its `<id>` and `<id>_desc` are dead weight too and are reported under `ai-only-decision-localisation` as well. The one exemption is a category named by `unlock_decision_category_tooltip` in a focus or decision, which renders the name key outside that tab. Categories are still never *required* to carry localisation — the missing-key direction does not apply to them.
+The same holds for an **AI-only category** — one whose own `visible` / `available` / `allowed` carries that unconditional `is_ai = yes`. Its header is drawn in the same tab as its decisions, so its `<id>` and `<id>_desc` are dead weight too and are reported under `ai-only-decision-localisation` as well. The one exemption is a category named by `unlock_decision_category_tooltip` in a focus or decision, which renders the name key outside that tab. Categories are still never _required_ to carry localisation — the missing-key direction does not apply to them.
 
 **An AI-only decision takes no tooltip wrappers either.** `custom_trigger_tooltip` exists to give a requirement line a human can read, and `custom_effect_tooltip` to describe an effect the player is about to trigger; on an AI-only decision both render to nobody and only keep a loc key alive. Write the trigger bare:
 
@@ -157,6 +157,40 @@ The same holds for an **AI-only category** — one whose own `visible` / `availa
 ```
 
 `validate_variables.py` backs this: its three `available`-block checks — `untooltipped-available-check`, `unlocalised-available-flag` and `untooltipped-available-scripted-trigger` — skip AI-only decisions and every decision inside an AI-only category, using the same depth-0 `is_ai = yes` rule as above.
+
+## Announcing a Category
+
+A category with no `visible` block sits on the decisions tab from the first day, and one gated only on the tag or the date is on from the start too. Neither has anything to announce.
+
+A category gated on state that flips during play (a country or global flag, a completed focus, an idea, a variable) appears part-way through a game. Whatever turns it on should say so, with `unlock_decision_category_tooltip = <category>` in the focus `completion_reward` or event effect that sets the gate:
+
+```
+	completion_reward = {
+		set_country_flag = ALG_drone_program_open
+		unlock_decision_category_tooltip = ALG_drone_program_category
+	}
+```
+
+Without it a whole tab of decisions appears with no indication of where it came from. `unlock_decision_tooltip = <decision>` on one of its decisions counts too, since that names the decision the player just gained.
+
+`validate_decisions.py` reports the gap as `unannounced-decision-category` (WARNING), naming the trigger that makes the category conditional so the fix location is obvious. AI-only categories are exempt: nobody is watching.
+
+The check is **opt-in** (`--unannounced-categories`) and does not run in CI. MD has 118 categories in this state, so it is a backlog to work through deliberately rather than a gate on new work.
+
+The gate must sit at brace depth zero of `visible` to count. Inside a `NOT` the meaning inverts: `NOT = { has_country_flag = X }` is satisfied _until_ X is set, so X hides the category rather than opening it.
+
+## Announcing a Decision
+
+A decision effect that sets a flag another decision's `visible` or `available` waits on has unlocked that decision. `unlock_decision_tooltip = <decision>` is how the player is told:
+
+```
+		complete_effect = {
+			set_country_flag = SAU_decisive_storm
+			unlock_decision_tooltip = SAU_storm_air_campaign
+		}
+```
+
+MD does not announce every unlock, so `validate_decisions.py` only reports the inconsistent case as `unannounced-decision-unlock` (WARNING): a block that already calls `unlock_decision_tooltip` at least once and misses a sibling gated on the very flag it just set. That is an oversight, not a style choice. Both `visible` and `available` gates count, and the same depth-zero rule applies.
 
 ## Randomised Effects
 
@@ -176,7 +210,7 @@ The engine seeds the roll from the save state, so without it every repeat of the
 
 The AI commits to one formable at a time via two country variables: `formable_committed_id` (unique ordinal per formable) and `formable_committed_size` (that formable's full `update_flag` state count). Without this, a country holding territory for two formables alternates their zero-cost `update_flag` decisions forever.
 
-Every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate — *blocked when committed to a different formable that is not strictly smaller*:
+Every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate — _blocked when committed to a different formable that is not strictly smaller_:
 
 ```
 	modifier = {

@@ -384,6 +384,38 @@ def test_sibling_decision_of_ai_only_one_still_flagged(tmp_path):
     assert out[0][2] == 10
 
 
+def test_ai_only_decision_after_a_sibling_is_still_exempt(tmp_path):
+    # The span walk used to land back on each decision's closing brace, driving
+    # its depth count negative so only the first decision in a category was
+    # ever tested. Every AI-only decision here must be exempt, whatever its
+    # position, and the one human decision must still be flagged.
+    out = _findings(
+        tmp_path,
+        "some_category = {\n"
+        "\thuman_decision = {\n"
+        "\t\tavailable = {\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "\tfirst_ai_decision = {\n"
+        "\t\tvisible = { is_ai = yes }\n"
+        "\t\tavailable = {\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "\tsecond_ai_decision = {\n"
+        "\t\tvisible = { is_ai = yes }\n"
+        "\t\tavailable = {\n"
+        "\t\t\tcheck_variable = { my_var > 5 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        rel=_DECISION_REL,
+    )
+    assert len(out) == 1
+    assert out[0][2] == 4
+
+
 def test_category_definition_file_not_treated_as_decisions(tmp_path):
     # `common/decisions/categories/` holds the categories themselves, not the
     # category -> decision nesting the span walk assumes.

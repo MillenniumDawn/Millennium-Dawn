@@ -22,7 +22,6 @@ def _results_for(
         V, "parse_all_decision_factories", lambda mod_path, lowercase=False: factories
     )
     monkeypatch.setattr(V, "_load_scripted_localisation_keys", lambda mod_path: set())
-    monkeypatch.setattr(V, "_category_source_basenames", lambda mod_path, names: {})
     monkeypatch.setattr(
         validator, "_load_localisation_keys", lambda: set(loc_keys), raising=False
     )
@@ -35,13 +34,13 @@ def _results_for(
     monkeypatch.setattr(
         validator,
         "_get_ai_only_categories",
-        lambda: set(ai_only_categories),
+        lambda: {name: "cat.txt" for name in ai_only_categories},
         raising=False,
     )
     monkeypatch.setattr(
         validator,
-        "_get_unlocked_categories",
-        lambda: set(unlocked_categories),
+        "_get_activation_removal_scan",
+        lambda: (set(), set(), set(), set(unlocked_categories)),
         raising=False,
     )
     validator.validate_missing_localisation()
@@ -254,7 +253,7 @@ def test_ai_only_category_loc_reported_on_real_validator(tmp_path):
 
 def test_ai_only_category_names_resolved(tmp_path):
     validator = _write_mod(tmp_path, "\t\tis_ai = yes")
-    assert validator._get_ai_only_categories() == {"md_test_category"}
+    assert validator._get_ai_only_categories() == {"md_test_category": "cat.txt"}
 
 
 def test_category_key_reported_with_source_file(tmp_path):

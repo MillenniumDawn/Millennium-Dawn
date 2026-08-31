@@ -72,6 +72,12 @@ _PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
 # `KEY:0 "value"` lines across two lines and rewrote double quotes to single
 # quotes. Paradox YAML is not real YAML — both mangle silently in-game rather
 # than erroring, so they must be caught here.
+# Opinion modifiers sit exactly one level under the file's `opinion_modifiers
+# = { }` wrapper. Spaces are accepted alongside the tab MD actually uses, but
+# only one level deep — `\s+` would swallow blank lines and match nested blocks.
+_OPINION_MODIFIER_RE = re.compile(
+    r"^(?:\t| {1,4})([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE
+)
 _MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
 _MANGLED_SINGLE_QUOTE_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*'.*'\s*$")
 
@@ -878,16 +884,15 @@ class Validator(BaseValidator):
             ["common/opinion_modifiers/**/*.txt"], ignore_staged=True
         )
         modifiers: Dict[str, str] = {}
-        pattern = re.compile(r"^\t([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
         for filepath in modifier_files:
             try:
                 text = FileOpener.open_text_file(
                     filepath, lowercase=False, strip_comments_flag=True
                 )
-            except Exception:
+            except OSError:
                 continue
             basename = os.path.basename(filepath)
-            for match in pattern.finditer(text):
+            for match in _OPINION_MODIFIER_RE.finditer(text):
                 name = match.group(1)
                 if name not in modifiers:
                     modifiers[name] = basename
