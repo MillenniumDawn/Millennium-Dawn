@@ -109,7 +109,6 @@ _PARAMETRIC_MODIFIER_PATTERNS: Tuple[re.Pattern, ...] = tuple(
         r"^production_cost_max_[a-z][a-z0-9_]*$",
         # <Doctrine>-keyed (covers _mastery_gain and _track_mastery_gain)
         r"^[a-z][a-z0-9_]*_mastery_gain_factor$",
-        r"^[a-z][a-z0-9_]*_doctrine_cost_factor$",
         # <Ideology>-keyed
         r"^[a-z][a-z0-9_]*_drift(?:_from_guarantees)?$",
         r"^[a-z][a-z0-9_]*_acceptance$",

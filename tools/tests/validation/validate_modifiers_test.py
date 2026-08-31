@@ -86,6 +86,41 @@ def test_parametric_modifier_families_exempt():
     assert not _is_parametric_modifier("completely_fake_modifier_field")
 
 
+def test_doctrine_cost_factor_is_not_a_parametric_family():
+    """Doctrine cost factors are a closed set of four, not an open family.
+
+    A `<word>_doctrine_cost_factor` regex used to exempt the whole shape, which
+    whitelisted `equipment_doctrine_cost_factor` -- a name the engine does not
+    define, so it compiled silently and did nothing in three Netherlands ideas.
+    The four real categories are documented, so they need no pattern.
+    """
+    for valid in (
+        "air_doctrine_cost_factor",
+        "land_doctrine_cost_factor",
+        "naval_doctrine_cost_factor",
+        "special_forces_doctrine_cost_factor",
+    ):
+        assert not _is_parametric_modifier(valid), (
+            f"{valid} must come from the documentation, not a catch-all regex"
+        )
+    assert not _is_parametric_modifier("equipment_doctrine_cost_factor")
+
+
+def test_documented_doctrine_cost_factors_stay_known_good():
+    """The four real categories must survive without the catch-all pattern."""
+    documented, _ = _load_documented_modifiers(str(REPO_ROOT / _DOC_REL_PATH))
+    if not documented:
+        return  # documentation not checked out; covered by its own test
+    for valid in (
+        "air_doctrine_cost_factor",
+        "land_doctrine_cost_factor",
+        "naval_doctrine_cost_factor",
+        "special_forces_doctrine_cost_factor",
+    ):
+        assert valid in documented, valid
+    assert "equipment_doctrine_cost_factor" not in documented
+
+
 def test_shipped_doc_yields_concrete_names_and_families():
     """Guard the doc parse against a format change in the next refresh.
 
