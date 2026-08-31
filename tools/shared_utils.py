@@ -491,6 +491,13 @@ def should_skip_file(
     content_roots = {"common", "events", "history", "interface", "localisation"}
     normalized_path = filename.replace("\\", "/").strip("/")
     parts = normalized_path.split("/")
+    # Canal/strait closures set flags read here, so this file is game logic
+    # that must count for variables validation. Stale worktree and reference
+    # copies stay ignored.
+    if parts[-2:] == ["map", "adjacency_rules.txt"] and not (
+        ignored_dirs - {"map"}
+    ).intersection(parts[:-2]):
+        return False
     for index, part in enumerate(parts):
         if part not in ignored_dirs:
             continue
@@ -503,6 +510,11 @@ def should_skip_file(
     return False
 
 
+def normalize_path_separators(path: str) -> str:
+    """Return a path with POSIX separators for public output."""
+    return path.replace("\\", "/")
+
+
 def is_excluded_path(path: str, excluded_dirs: Container[str], repo_root: str) -> bool:
     """True if path is under one of excluded_dirs, matched relative to repo_root.
 
@@ -510,7 +522,11 @@ def is_excluded_path(path: str, excluded_dirs: Container[str], repo_root: str) -
     a checkout nested under an ancestor dir literally named after one of
     excluded_dirs would otherwise match every file and no-op the whole repo.
     """
-    rel = os.path.relpath(os.path.abspath(path), os.path.abspath(repo_root))
+    try:
+        rel = os.path.relpath(os.path.abspath(path), os.path.abspath(repo_root))
+    except ValueError:
+        rel = normalize_path_separators(os.path.abspath(path)).strip("/")
+        return any(part in excluded_dirs for part in rel.split("/"))
     return any(part in excluded_dirs for part in rel.split(os.sep))
 
 
@@ -530,7 +546,7 @@ def iter_txt_targets(
             for fn in filenames:
                 if fn.lower().endswith(".txt"):
                     full = os.path.join(dirpath, fn)
-                    yield os.path.relpath(full, path), full
+                    yield normalize_path_separators(os.path.relpath(full, path)), full
     elif os.path.isfile(path):
         yield path, path
 
@@ -1259,7 +1275,7 @@ def get_staged_files(
     # unless a cross-reference check needs to observe a deleted target.
     def _filter(names: list) -> list:
         paths = [
-            os.path.join(mod_path, f)
+            os.path.normpath(os.path.join(mod_path, f))
             for f in names
             if f and any(f.endswith(ext) for ext in extensions)
         ]

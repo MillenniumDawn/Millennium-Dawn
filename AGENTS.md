@@ -4,7 +4,7 @@
 
 Millennium Dawn is a Hearts of Iron IV mod (2000-present). Key directories: `common/` (game data), `events/`, `localisation/` (English `.yml`, UTF-8 BOM), `history/`, `interface/`, `gfx/`, `tools/` (Python dev scripts).
 
-**IMPORTANT**: The `resources/` directory is for reference material only. Do NOT modify files under `resources/` unless explicitly asked by the user.
+**IMPORTANT**: The `resources/` directory is for reference material only. Do NOT modify files under `resources/` unless explicitly asked by the user. It holds the vanilla docs the validators read plus the unsorted art dumps (`resources/README.md`); everything else retired from the mod lives in the [millennium-dawn-resources](https://github.com/MillenniumDawn/millennium-dawn-resources) repo.
 
 ## Validation & Tools
 
@@ -14,7 +14,7 @@ Validation runs on GitHub CI at PR time — don't run proactively. Standardizati
 
 Pre-commit and CI run **different hook sets** — passing locally does not guarantee passing CI, and vice versa. Before wiring, judging, or debugging any validator, read `.claude/docs/validation-pipeline.md` (CI-only validators, pre-commit-only fixers, strictness divergences, vanilla-manifest regeneration, deprecation watch).
 
-**The validator test suite must stay green permanently.** CI runs `python -m pytest` on every PR that touches `tools/` (testpaths in `pyproject.toml` cover `tools/tests`, `tools/report_lib/tests`, `tools/validation/tests`, `tools/linting/tests`, `tools/standardization/tests`, `tools/docs_checks/tests`). Do not introduce regressions into the testing schema. When a validator behavior change breaks a regression test, fix it in the same change: update the affected `*_test.py` to match the new correct behavior, or fix the validator if the test is right. Never delete or weaken a regression test to hide a failure — the suite is a gate, not a suggestion. Before merging any `tools/` change, run `python -m pytest` and confirm zero failures.
+**The validator test suite must stay green permanently.** CI runs `python -m pytest` on every PR that touches `tools/` (`testpaths` in `pyproject.toml` is `tools/tests`). Do not introduce regressions into the testing schema. When a validator behavior change breaks a regression test, fix it in the same change: update the affected `*_test.py` to match the new correct behavior, or fix the validator if the test is right. Never delete or weaken a regression test to hide a failure — the suite is a gate, not a suggestion. Before merging any `tools/` change, run `python -m pytest` and confirm zero failures.
 
 ## Formatting
 
@@ -71,8 +71,8 @@ Every text-mode write in `tools/` must pass `newline=""`. Without it, Python's t
 
 ## Ideas
 
-- Always `picture = sprite_name` (no picture = blank icon); `original_tag` not `tag` in `allowed` blocks
-- Category-specific `allowed`-block scoping and removable defaults (`cancel`, `on_add`, `allowed_civil_war`): `.claude/docs/idea-reference.md`
+- Always `picture = sprite_name` (no picture = blank icon); `original_tag` not `tag` in `allowed` blocks; no `available` in `country`/`hidden_ideas`
+- Category-specific `allowed`/`available`-block scoping and removable defaults (`cancel`, `on_add`, `allowed_civil_war`): `.claude/docs/idea-reference.md`
 
 ## MIOs
 
