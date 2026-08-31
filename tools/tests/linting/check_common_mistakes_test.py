@@ -44,6 +44,8 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   41. is_at_war is not a valid trigger (use has_war)
   42. review regressions: add-after-zero, excluded fallback, single-line ai_chance
   43. windows path separators keep the directory-scoped checks enabled
+  44. on_daily_TAG blocks that only refresh country flags for the AI to read
+  45. per-tag war brakes already covered by MD_avoid_new_wars_when_outmatched
 """
 
 import os
@@ -56,6 +58,7 @@ from check_common_mistakes import (
     _ai_zero_modifier_conditions,
     _check_active_decision_defined,
     _check_add_to_faction_country,
+    _check_ai_daily_flag_cache,
     _check_any_country_member_array,
     _check_building_missing_province,
     _check_check_expr_bad_operand,
@@ -88,6 +91,7 @@ from check_common_mistakes import (
     _check_nested_province_block,
     _check_on_add_array_symmetry,
     _check_random_select_amount_literal,
+    _check_redundant_avoid_starting_wars,
     _check_tautological_or,
     _equipment_bonus_enum,
     _equipment_names,
@@ -3883,6 +3887,164 @@ assert_finds(
     ],
     0,
     "defined opinion modifier not flagged",
+)
+
+
+# 44. on_daily_TAG blocks that only refresh country flags for the AI to read
+
+print("\n── AI daily flag caches ──")
+
+_CUB_DAILY_CACHE = [
+    "on_actions = {\n",
+    "\ton_daily_CUB = {\n",
+    "\t\teffect = {\n",
+    "\t\t\tif = {\n",
+    "\t\t\t\tlimit = { is_ai = yes }\n",
+    "\t\t\t\tif = {\n",
+    "\t\t\t\t\tlimit = { CUB_ai_can_attack_hai_uncached_trigger = yes }\n",
+    "\t\t\t\t\tset_country_flag = CUB_ai_can_attack_hai\n",
+    "\t\t\t\t}\n",
+    "\t\t\t\telse = { clr_country_flag = CUB_ai_can_attack_hai }\n",
+    "\t\t\t}\n",
+    "\t\t}\n",
+    "\t}\n",
+    "}\n",
+]
+
+assert_finds(
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/99_CUB_on_actions.txt"
+    ),
+    _CUB_DAILY_CACHE,
+    1,
+    "on_daily block that only set/clears a flag flagged",
+)
+
+assert_finds(
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/99_CUB_on_actions.txt"
+    ),
+    _CUB_DAILY_CACHE[:6]
+    + [
+        "\t\t\t\tadd_political_power = 5\n",
+        "\t\t\t\tset_country_flag = CUB_did_a_thing\n",
+        "\t\t\t\tclr_country_flag = CUB_did_a_thing\n",
+    ]
+    + _CUB_DAILY_CACHE[-4:],
+    0,
+    "on_daily block that also does real work not flagged",
+)
+
+assert_finds(
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/99_CUB_on_actions.txt"
+    ),
+    [
+        "on_actions = {\n",
+        "\ton_daily_CUB = {\n",
+        "\t\teffect = {\n",
+        "\t\t\tset_country_flag = CUB_one_way_latch\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "one-way latch (set with no matching clr) not flagged",
+)
+
+assert_finds(
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/MD_event_on_actions.txt"
+    ),
+    [ln.replace("on_daily_CUB", "on_daily_BOS") for ln in _CUB_DAILY_CACHE],
+    0,
+    "allowlisted on_daily_BOS not flagged",
+)
+
+assert_finds(
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/scripted_effects/00_scripted_effects.txt"
+    ),
+    _CUB_DAILY_CACHE,
+    0,
+    "check is scoped to common/on_actions",
+)
+
+
+# 45. Per-tag war brakes already covered by MD_avoid_new_wars_when_outmatched
+
+print("\n── Redundant per-tag war brakes ──")
+
+
+def _war_brake(ratio, strategy="avoid_starting_wars value = -200"):
+    return [
+        "CUB_avoid_starting_wars = {\n",
+        "\tallowed = { original_tag = CUB }\n",
+        "\tenable = {\n",
+        "\t\thas_war = yes\n",
+        f"\t\tenemies_strength_ratio > {ratio}\n",
+        "\t}\n",
+        "\tabort_when_not_enabled = yes\n",
+        "\n",
+        f"\tai_strategy = {{ type = {strategy} }}\n",
+        "}\n",
+    ]
+
+
+assert_finds(
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/CUB.txt"
+    ),
+    _war_brake("1.2"),
+    1,
+    "stricter-than-mod-wide ratio flagged",
+)
+
+assert_finds(
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/CUB.txt"
+    ),
+    _war_brake("0.5"),
+    0,
+    "looser ratio than the mod-wide block not flagged",
+)
+
+assert_finds(
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/CUB.txt"
+    ),
+    _war_brake("1.2", "declare_war id = HAI value = -4000"),
+    0,
+    "block carrying a targeted strategy not flagged",
+)
+
+assert_finds(
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/MD_war_declaration_ai.txt"
+    ),
+    _war_brake("1.2"),
+    0,
+    "the mod-wide file itself is exempt",
+)
+
+assert_finds(
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/BLR.txt"
+    ),
+    [
+        "BLR_avoid_nato_wars = {\n",
+        "\tallowed = { original_tag = BLR }\n",
+        "\tenable = {\n",
+        "\t\thas_war = yes\n",
+        "\t\tany_enemy_country = { is_in_faction_with = USA }\n",
+        "\t}\n",
+        "\tabort_when_not_enabled = yes\n",
+        "\n",
+        "\tai_strategy = { type = avoid_starting_wars value = -200 }\n",
+        "}\n",
+    ],
+    0,
+    "brake on a gate the strength ratio cannot express not flagged",
 )
 
 
