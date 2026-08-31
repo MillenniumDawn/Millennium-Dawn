@@ -114,6 +114,18 @@ Don't open a scope to check one trigger when a flat form exists — every `TAG =
 | `TAG = { is_puppet = yes }`     | `is_puppet_of = TAG`   |
 | `TAG = { has_war_with = ROOT }` | `has_war_with = TAG`   |
 
+## Never cache a boolean into a daily flag to feed the AI
+
+Do not add an `on_daily_TAG` block that set/clears flags whose only readers are `ai_strategy` `enable` blocks or focus `ai_will_do` modifiers. Both are already evaluated lazily by the engine; a daily pass makes the check *more* expensive, not less, and lags real game state by up to a day. Write the condition inline in `enable`, the way `ALG_cancel_war_neighbours` and `BRA_cancel_war_URG` do.
+
+`.claude/docs/performance-patterns.md` has two adjacent sections that are easy to confuse. *Cache `ai_strategy` enable Math Into a Daily Variable* covers **arithmetic chains only** (`set_temp_variable` / `multiply_temp_variable` / …). For a boolean condition the next section applies: *Prefer a Live Trigger Over a Daily-Refreshed Cached Flag*.
+
+`on_daily_BOS` in `common/on_actions/MD_event_on_actions.txt` is a surviving example of the wrong shape. Do not copy it.
+
+## Don't re-add per-tag war brakes
+
+`MD_avoid_new_wars_when_outmatched` in `common/ai_strategy/MD_war_declaration_ai.txt` already brakes every country at `enemies_strength_ratio > 0.75`. A per-tag `avoid_starting_wars` on a stricter ratio is a strict subset of it and can never fire on a tick it does not already own — dead code. A per-tag brake earns its place only on a gate the strength ratio cannot express. Read `.claude/docs/ai-strategy-reference.md` before editing `common/ai_strategy/`, including when you wrote the section yourself.
+
 ## send_equipment for country-to-country transfers
 
 Moving equipment from one country's stockpile to another is one effect, not two:

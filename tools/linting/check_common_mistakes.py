@@ -1866,6 +1866,156 @@ def _check_nor_block(lines):
     return issues
 
 
+# on_daily_BOS predates the rule below and is left in place deliberately; it is
+# the example .claude/rules/general-rules.md points at as the shape not to copy.
+_AI_DAILY_CACHE_ALLOWLIST = frozenset({"on_daily_BOS"})
+
+_RE_ON_DAILY_TAG = re.compile(r"^\s*(on_daily_[A-Z]{3}[A-Z_]*)\s*=\s*\{")
+_RE_SET_COUNTRY_FLAG = re.compile(r"\bset_country_flag\s*=\s*(\S+)")
+_RE_CLR_COUNTRY_FLAG = re.compile(r"\bclr_country_flag\s*=\s*(\S+)")
+_RE_STATEMENT_HEAD = re.compile(r"^([A-Za-z_][A-Za-z0-9_.]*)\s*=")
+
+# Statement heads that carry no work of their own: control flow, the on_action
+# wrapper, and the flag writes the check is looking for.
+_AI_DAILY_CACHE_STRUCTURAL = frozenset(
+    {
+        "effect",
+        "if",
+        "else",
+        "else_if",
+        "hidden_effect",
+        "set_country_flag",
+        "clr_country_flag",
+    }
+)
+
+
+def _check_ai_daily_flag_cache(lines, filepath=""):
+    """Flag an on_daily_TAG block that only refreshes country flags.
+
+    A daily set/clear pass over a boolean costs a tick and lags real game state
+    by up to a day. When the readers are `ai_strategy` `enable` blocks or focus
+    `ai_will_do` modifiers -- both already evaluated lazily by the engine -- the
+    cache makes the check more expensive than writing the condition inline.
+    """
+    if "common/on_actions" not in filepath.replace("\\", "/"):
+        return []
+
+    issues = []
+    i = 0
+    while i < len(lines):
+        header = _RE_ON_DAILY_TAG.match(_code_for_depth(lines[i]))
+        if not header:
+            i += 1
+            continue
+        block, next_idx = _get_block(lines, i)
+        name = header.group(1)
+        if name in _AI_DAILY_CACHE_ALLOWLIST:
+            i = next_idx
+            continue
+
+        set_flags, clr_flags = set(), set()
+        does_real_work = False
+        limit_depth = None
+        depth = 0
+        for offset, raw in enumerate(block):
+            code = _code_for_depth(raw)
+            stripped = code.strip()
+            head = _RE_STATEMENT_HEAD.match(stripped)
+            token = head.group(1) if head else None
+            # Everything inside a limit is a trigger, not work the block performs.
+            if limit_depth is None:
+                if token == "limit":
+                    limit_depth = depth
+                elif offset and token and token != name:
+                    set_flags.update(_RE_SET_COUNTRY_FLAG.findall(code))
+                    clr_flags.update(_RE_CLR_COUNTRY_FLAG.findall(code))
+                    if token not in _AI_DAILY_CACHE_STRUCTURAL:
+                        does_real_work = True
+            depth += code.count("{") - code.count("}")
+            if limit_depth is not None and depth <= limit_depth:
+                limit_depth = None
+
+        refreshed = sorted(set_flags & clr_flags)
+        if refreshed and not does_real_work:
+            issues.append(
+                (
+                    i + 1,
+                    f"{name} only refreshes country flags ({', '.join(refreshed)}) -- "
+                    "ai_strategy enable and focus ai_will_do are already evaluated "
+                    "lazily; write the condition inline instead of caching it daily",
+                )
+            )
+        i = next_idx
+    return issues
+
+
+_RE_AI_STRATEGY_BLOCK = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{")
+_RE_ENEMIES_STRENGTH_RATIO = re.compile(r"\benemies_strength_ratio\s*>\s*([\d.]+)")
+_RE_AI_STRATEGY_TYPE = re.compile(r"\bai_strategy\s*=\s*\{[^}]*?\btype\s*=\s*(\w+)")
+
+# common/ai_strategy/MD_war_declaration_ai.txt brakes every country above this.
+_MOD_WIDE_WAR_BRAKE_RATIO = 0.75
+
+
+def _check_redundant_avoid_starting_wars(lines, filepath=""):
+    """Flag a per-tag war brake already covered mod-wide.
+
+    MD_avoid_new_wars_when_outmatched fires for every country at
+    enemies_strength_ratio > 0.75. A per-tag avoid_starting_wars on a stricter
+    ratio is a strict subset of it and can never fire on a tick it does not
+    already own.
+    """
+    normalized = filepath.replace("\\", "/")
+    if "common/ai_strategy/" not in normalized or normalized.endswith(
+        "MD_war_declaration_ai.txt"
+    ):
+        return []
+
+    issues = []
+    i = 0
+    while i < len(lines):
+        header = _RE_AI_STRATEGY_BLOCK.match(_code_for_depth(lines[i]))
+        if not header or lines[i].startswith((" ", "\t")):
+            i += 1
+            continue
+        block, next_idx = _get_block(lines, i)
+        text = "\n".join(_code_for_depth(ln) for ln in block)
+        enable_idx = next(
+            (
+                k
+                for k, ln in enumerate(block)
+                if _code_for_depth(ln).strip().startswith("enable")
+            ),
+            None,
+        )
+        if enable_idx is None:
+            i = next_idx
+            continue
+        enable_text = "\n".join(
+            _code_for_depth(ln) for ln in _get_block(block, enable_idx)[0]
+        )
+        ratio = _RE_ENEMIES_STRENGTH_RATIO.search(enable_text)
+        types = set(_RE_AI_STRATEGY_TYPE.findall(text))
+        if (
+            ratio
+            and float(ratio.group(1)) >= _MOD_WIDE_WAR_BRAKE_RATIO
+            and "has_war = yes" in enable_text
+            and types == {"avoid_starting_wars"}
+        ):
+            issues.append(
+                (
+                    i + 1,
+                    f"{header.group(1)} gates avoid_starting_wars on "
+                    f"enemies_strength_ratio > {ratio.group(1)} -- a strict subset of "
+                    "MD_avoid_new_wars_when_outmatched (> 0.75), so it never fires on "
+                    "a tick that block does not already own",
+                )
+            )
+        i = next_idx
+    return issues
+
+
 def _find_brace_close(text, open_pos):
     """Return the index in `text` of the brace matching the one at `open_pos`.
 
@@ -3479,6 +3629,8 @@ def check_file(filepath):
     issues.extend(_check_on_add_array_symmetry(lines))
     issues.extend(_check_empty_log_only_blocks(lines))
     issues.extend(_check_is_x_nation_runtime(lines, filepath))
+    issues.extend(_check_ai_daily_flag_cache(lines, filepath))
+    issues.extend(_check_redundant_avoid_starting_wars(lines, filepath))
     issues.extend(_check_influence_setter_scope(lines))
     issues.extend(_check_check_var_ge_le(lines))
     issues.extend(_check_add_to_faction_country(lines))
