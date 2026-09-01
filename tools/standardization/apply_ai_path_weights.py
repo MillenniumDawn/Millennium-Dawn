@@ -181,10 +181,17 @@ def rebuild_block(
     removed: List[str] = []
     base_line = inner + "base = 1"
     if start == end:
-        opener = code_of_line(lines[start])
-        single = opener[opener.index("{") + 1 : opener.rindex("}")].strip()
-        if _BASE_LINE.match(single):
-            base_line = inner + single.replace("factor = ", "base = ", 1)
+        code = code_of_line(lines[start])
+        body_text = code[code.index("{") + 1 : code.rindex("}")].strip()
+        if "{" in body_text:
+            raise MappingError(
+                "inline ai_will_do with a nested block at line {}".format(start + 1)
+            )
+        if body_text:
+            if _BASE_LINE.match(body_text):
+                base_line = inner + body_text.replace("factor = ", "base = ", 1)
+            else:
+                kept.append(inner + body_text)
     cursor = start + 1
     while cursor < end:
         code = code_of_line(lines[cursor])
