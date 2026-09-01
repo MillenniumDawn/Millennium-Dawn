@@ -329,3 +329,84 @@ def test_scan_file_skips_files_without_building_effects(tmp_path):
     filepath = tmp_path / "no_buildings.txt"
     filepath.write_text("focus = { id = TST_focus }\n", encoding="utf-8")
     assert V.scan_file((str(filepath), str(tmp_path) + "/")) == []
+
+
+def test_scan_file_skips_unreadable_files(tmp_path):
+    (tmp_path / "damage_building.txt").mkdir()
+    assert V.scan_file((str(tmp_path / "damage_building.txt"), str(tmp_path))) == []
+
+
+# --- effects with no type field --------------------------------------------
+
+
+def test_effect_without_a_type_field_is_not_flagged():
+    """`type =` names the building; without it there is nothing to guard."""
+    script = "652 = {\n\tdamage_building = {\n\t\tdamage = 1\n\t}\n}\n"
+    assert _scan(script) == []
+
+
+def test_modifier_without_factor_zero_is_not_a_guard():
+    script = (
+        "random_list = {\n"
+        "\t33 = {\n"
+        "\t\tmodifier = { factor = 2  industrial_complex > 0 }\n"
+        "\t\tmodifier = { factor = 0  arms_factory < 1 }\n"
+        "\t\tremove_building = { type = industrial_complex level = 1 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _scan(script)
+    assert len(findings) == 1
+    assert "industrial_complex" in findings[0][2]
+
+
+# --- validator wiring -------------------------------------------------------
+
+
+def _run(tmp_path, write_path, monkeypatch, script):
+    import validator_common
+
+    monkeypatch.setattr(validator_common, "_LOG_LEVEL", "INFO")
+    write_path(tmp_path, "events/test_events.txt", script)
+    validator = V.Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
+    validator.run_validations()
+    return validator
+
+
+def test_run_reports_and_logs_each_unguarded_effect(tmp_path, write_path, monkeypatch):
+    validator = _run(
+        tmp_path,
+        write_path,
+        monkeypatch,
+        "652 = {\n\tdamage_building = { type = fuel_silo damage = 1 }\n}\n",
+    )
+
+    assert [(i.severity, i.category) for i in validator._issues] == [
+        ("warning", "unguarded-damage-building")
+    ]
+    assert validator._issues[0].file == "events/test_events.txt"
+    assert any(
+        line.startswith("  events/test_events.txt:2 - ")
+        for line in validator.output_lines
+    )
+    assert any(
+        "1 unguarded building effect(s)" in line for line in validator.output_lines
+    )
+
+
+def test_run_stays_quiet_when_every_effect_is_guarded(
+    tmp_path, write_path, monkeypatch
+):
+    validator = _run(
+        tmp_path,
+        write_path,
+        monkeypatch,
+        "652 = {\n"
+        "\tif = { limit = { fuel_silo > 0 }\n"
+        "\t\tdamage_building = { type = fuel_silo damage = 1 }\n"
+        "\t}\n"
+        "}\n",
+    )
+
+    assert validator._issues == []
+    assert any("All damage_building" in line for line in validator.output_lines)

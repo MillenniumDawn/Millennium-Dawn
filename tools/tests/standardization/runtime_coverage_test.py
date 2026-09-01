@@ -188,6 +188,7 @@ def test_common_utils_boundaries_and_base_standardizer(tmp_path, monkeypatch):
     assert compact_icon([]) == "icon = GFX_goal_generic_support_the_left_wing"
     assert compact_icon([" icon = GFX_a "]) == "icon = GFX_a"
     assert compact_icon(["icon = {", "\tfoo", "}"]) == "icon = {\n\tfoo\n}"
+    assert compact_icon(["icon = {", "", "\tfoo", "}"]) == "icon = {\n\tfoo\n}"
     assert collapse_blank_runs(["a", "", "", "b"], max_blank=0) == ["a", "b"]
     assert join_groups([["", "a", ""], [], ["b", ""]]) == ["a", "", "b"]
 
@@ -204,6 +205,10 @@ def test_common_utils_boundaries_and_base_standardizer(tmp_path, monkeypatch):
 
     missing = tmp_path / "missing.txt"
     assert read_lines_for_standardization(str(missing)) is None
+    # A path that exists but cannot be opened as text reports the same failure.
+    unreadable = tmp_path / "as_a_directory.txt"
+    unreadable.mkdir()
+    assert read_lines_for_standardization(str(unreadable)) is None
     output = tmp_path / "out.txt"
     assert write_standardized_output(
         str(output), ["foo = 1", "", "bar = 2"], start_time=0, processed_count=2
@@ -244,6 +249,10 @@ def test_base_standardizer_matching_and_no_match(tmp_path):
     _write(untouched, "header = yes\n")
     assert _MiniStandardizer().standardize_file(str(untouched), str(untouched))
     assert _read(untouched) == "header = yes\n"
+
+    absent = tmp_path / "absent.txt"
+    assert not _MiniStandardizer().standardize_file(str(absent), str(output))
+    assert not absent.exists()
 
 
 def test_common_utils_output_and_backup_edges(tmp_path, monkeypatch):

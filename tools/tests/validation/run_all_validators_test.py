@@ -1,7 +1,9 @@
 """Output-contract tests for run_all_validators without content scans."""
 
+import builtins
 import io
 import json
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -328,3 +330,130 @@ def test_both_without_output_prints_json_and_human_report(
     assert '"total_errors": 0' in stdout
     assert "COMBINED VALIDATION REPORT" in stdout
     assert "ALL VALIDATIONS PASSED" in stdout
+
+
+def test_warnings_only_run_reports_completed_with_warnings(
+    tmp_path, monkeypatch, capsys
+):
+    warning = {
+        "severity": "warning",
+        "category": "advisory",
+        "message": "worth a look",
+        "file": "a.txt",
+        "line": 4,
+    }
+    monkeypatch.setattr(runner, "launch_validator", _launcher_with([warning]))
+
+    code = _run_stub(tmp_path, _args("text", strict=True))
+
+    stdout = capsys.readouterr().out
+    assert code == 0
+    assert "COMPLETED WITH WARNINGS" in stdout
+    assert "1 warning(s)" in stdout
+
+
+def test_launch_validator_reports_an_unwritable_output_dir(tmp_path):
+    with pytest.raises(OSError):
+        runner.launch_validator(
+            "validate_stub.py", [], str(tmp_path / "gone"), "stub", str(tmp_path)
+        )
+
+
+def test_print_stderr_tail_stays_silent_for_an_empty_log(tmp_path, capsys, write_path):
+    write_path(tmp_path, "stub.stderr.log", "\n\n")
+
+    runner._print_stderr_tail(str(tmp_path), "stub")
+
+    assert capsys.readouterr().out == ""
+
+
+def test_report_groups_several_issues_under_one_file(tmp_path, write_path):
+    issues = [
+        {
+            "severity": "error",
+            "category": "cat",
+            "message": f"finding {n}",
+            "file": "a.txt",
+            "line": n,
+        }
+        for n in (2, 1)
+    ]
+    write_path(tmp_path, "one.json", json.dumps(issues))
+
+    report = runner.generate_combined_report(
+        str(tmp_path), [("one", "one.py", "One")], [], use_colors=False
+    )
+
+    assert "  a.txt (2 issue(s))" in report
+    assert report.index("finding 1") < report.index("finding 2")
+
+
+def test_json_report_write_failure_propagates(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, "launch_validator", _launcher_with([]))
+
+    with pytest.raises(OSError):
+        _run_stub(tmp_path, _args("json", str(tmp_path / "gone" / "report.json")))
+
+
+def test_text_report_write_failure_propagates(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, "launch_validator", _launcher_with([]))
+
+    with pytest.raises(OSError):
+        _run_stub(tmp_path, _args("text", str(tmp_path / "gone" / "report.txt")))
+
+
+def test_persist_results_makedirs_failure_propagates(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, "launch_validator", _launcher_with([]))
+    monkeypatch.setattr(
+        runner.os,
+        "makedirs",
+        lambda *a, **k: (_ for _ in ()).throw(OSError("read-only")),
+    )
+
+    with pytest.raises(OSError, match="read-only"):
+        _run_stub(tmp_path, _args("both", persist_results=str(tmp_path / "persisted")))
+
+
+def test_persist_results_tolerates_a_stale_sidecar_vanishing(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, "launch_validator", _launcher_with([]))
+    persist_dir = tmp_path / "persisted"
+    persist_dir.mkdir()
+    (persist_dir / "stale.json").write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(
+        runner.os,
+        "unlink",
+        lambda path: (_ for _ in ()).throw(FileNotFoundError(path)),
+    )
+
+    assert _run_stub(tmp_path, _args("both", persist_results=str(persist_dir))) == 0
+
+
+def test_persist_results_marker_write_failure_propagates(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, "launch_validator", _launcher_with([]))
+    real_open = builtins.open
+
+    def failing_open(file, *args, **kwargs):
+        if str(file).endswith(runner.PERSISTENCE_MARKER):
+            raise OSError("disk full")
+        return real_open(file, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", failing_open)
+
+    with pytest.raises(OSError, match="disk full"):
+        _run_stub(tmp_path, _args("both", persist_results=str(tmp_path / "persisted")))
+
+
+def test_main_stays_quiet_when_the_cache_is_fresh(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(runner, "discover_validators", lambda: [])
+    monkeypatch.setattr(runner.disk_cache, "clear_if_stale", lambda path, age: False)
+    monkeypatch.setattr(runner.disk_cache, "prune_old_versions", lambda path: [])
+    monkeypatch.setattr(runner, "_run_suite", lambda *a: 0)
+    monkeypatch.setattr(sys, "argv", ["runner", "--path", str(tmp_path)])
+
+    with pytest.raises(SystemExit) as exc:
+        runner.main()
+
+    stdout = capsys.readouterr().out
+    assert exc.value.code == 0
+    assert "Pruned stale" not in stdout
+    assert "cleared and rebuilding" not in stdout

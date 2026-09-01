@@ -7,9 +7,14 @@ only the option body, and the injected log's indent must follow the body (2-tab
 files get a 2-tab line, not a hardcoded 3-tab one).
 """
 
+import sys
+
+import standardize_events
 from standardize_events import (
     EventStandardizer,
+    _option_body,
     _option_has_effects,
+    _option_indent,
     _option_log_line,
 )
 
@@ -368,3 +373,134 @@ def test_event_without_options_has_no_stray_blank():
         "\tis_triggered_only = yes",
         "}",
     ]
+
+
+_NEWS_EVENT = [
+    "news_event = {",
+    "\tid = test.7",
+    "\ttitle = test.7.t",
+    "\ttitle = {",
+    "\t\ttrigger = { has_war = yes }",
+    "\t\ttext = test.7.t.war",
+    "\t}",
+    "\tdesc = test.7.d",
+    "\tpicture = GFX_report_event_generic",
+    "\tmajor = yes",
+    "\thidden = no",
+    "\tfire_only_once = yes",
+    "",
+    "\tmean_time_to_happen = {",
+    "\t\tdays = 30",
+    "\t}",
+    "",
+    "\t# only once the war starts",
+    "\ttrigger = {",
+    "\t\thas_war = yes",
+    "\t}",
+    "",
+    "\timmediate = {",
+    "\t\tset_country_flag = TST_reported",
+    "\t}",
+    "}",
+]
+
+
+def test_news_event_header_conditional_title_and_blocks_are_kept():
+    out = _standardize_event(_NEWS_EVENT)
+    assert out == [
+        "news_event = {",
+        "\tid = test.7",
+        "\ttitle = test.7.t",
+        "\ttitle = {",
+        "\t\ttrigger = { has_war = yes }",
+        "\t\ttext = test.7.t.war",
+        "\t}",
+        "\tdesc = test.7.d",
+        "\tpicture = GFX_report_event_generic",
+        "\tmajor = yes",
+        "\thidden = no",
+        "\tfire_only_once = yes",
+        "",
+        "\tmean_time_to_happen = { days = 30 }",
+        "",
+        "\t# only once the war starts",
+        "\ttrigger = { has_war = yes }",
+        "",
+        "\timmediate = { set_country_flag = TST_reported }",
+        "}",
+    ]
+    assert _standardize_event(out) == out
+
+
+def test_event_without_a_trigger_gate_gains_is_triggered_only():
+    assert _standardize_event(
+        ["country_event = {", "\ttitle = test.8.t", "\tdesc = test.8.d", "}"]
+    ) == [
+        "country_event = {",
+        "\ttitle = test.8.t",
+        "\tdesc = test.8.d",
+        "\tis_triggered_only = yes",
+        "}",
+    ]
+
+
+def test_mean_time_to_happen_suppresses_the_injected_gate():
+    out = _standardize_event(
+        [
+            "country_event = {",
+            "\tid = test.9",
+            "\tmean_time_to_happen = {",
+            "\t\tdays = 30",
+            "\t}",
+            "}",
+        ]
+    )
+    assert "is_triggered_only" not in "\n".join(out)
+
+
+def test_option_body_of_a_malformed_option_is_empty():
+    assert _option_body(["\toption = yes\n"]) == []
+
+
+def test_option_body_survives_a_missing_closer():
+    assert _option_body(
+        ["\toption = {\n", "\t\tname = test.1.a\n", "\t\t# cut off\n"]
+    ) == ["\t\tname = test.1.a\n"]
+
+
+def test_option_indent_falls_back_when_the_body_gives_none():
+    assert _option_indent(["\toption = {\n", "\n", "\t\tname = x\n", "\t}\n"]) == "\t\t"
+    assert _option_indent(["\toption = {\n", "\t}\n"]) == "\t\t\t"
+
+
+def test_option_log_line_falls_back_to_a_literal_name():
+    assert (
+        _option_log_line(["\toption = {\n", "\t\tadd_political_power = 10\n", "\t}\n"])
+        == '\t\tlog = "[GetDateText]: [This.GetName]: option executed"'
+    )
+
+
+def test_option_effect_scan_ignores_blanks_and_comments():
+    option = [
+        "\toption = {\n",
+        "\n",
+        "\t\t# just a note\n",
+        "\t\tname = test.1.a\n",
+        "\t}\n",
+    ]
+    assert not _option_has_effects(option)
+
+
+def test_main_standardizes_the_named_file(tmp_path, monkeypatch):
+    source = tmp_path / "events.txt"
+    output = tmp_path / "out.txt"
+    with open(source, "w", encoding="utf-8", newline="") as handle:
+        handle.write("\n".join(_EVENT) + "\n")
+    monkeypatch.setattr(
+        sys, "argv", ["standardize_events.py", str(source), "-o", str(output)]
+    )
+
+    standardize_events.main()
+
+    with open(output, "r", encoding="utf-8", newline="") as handle:
+        assert "test.1.a executed" in handle.read()

@@ -263,3 +263,141 @@ def test_aggregate_cached_invalidates_when_file_added(tmp_path):
     disk_cache.aggregate_cached(str(tmp_path), "key", [str(a), str(b)], factory)
 
     assert len(calls) == 2, "Adding a tracked file must invalidate the aggregate"
+
+
+def test_fingerprint_of_a_missing_source_is_stable(tmp_path, monkeypatch):
+    """A validator source that is not on disk must not crash or churn the key."""
+    monkeypatch.setattr(
+        disk_cache, "_fingerprint_paths", lambda _namespace: [tmp_path / "gone.py"]
+    )
+    disk_cache._FINGERPRINT_CACHE.clear()
+
+    first = disk_cache._validator_code_fingerprint("absent")
+    disk_cache._FINGERPRINT_CACHE.clear()
+    second = disk_cache._validator_code_fingerprint("absent")
+
+    assert first == second
+
+
+def test_results_are_still_computed_when_the_db_cannot_open(tmp_path, monkeypatch):
+    monkeypatch.setattr(disk_cache, "_connect", lambda mod_path: None)
+    calls = []
+
+    def compute():
+        calls.append(1)
+        return "ok"
+
+    first = disk_cache.per_file_cached_by_content(
+        str(tmp_path), "ns", "f.txt", "body", compute
+    )
+    second = disk_cache.per_file_cached_by_content(
+        str(tmp_path), "ns", "f.txt", "body", compute
+    )
+
+    assert (first, second) == ("ok", "ok")
+    assert len(calls) == 2
+
+
+def test_connect_reuses_a_connection_opened_while_waiting_for_the_lock(
+    tmp_path, monkeypatch
+):
+    """The double-checked lock must not open a second connection to one db."""
+    sentinel = object()
+    conns = {}
+    monkeypatch.setattr(disk_cache, "_conns", conns)
+    key = (disk_cache.os.getpid(), str(disk_cache._db_path(str(tmp_path))))
+
+    class _RacingLock:
+        def __enter__(self):
+            conns[key] = sentinel
+
+        def __exit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(disk_cache, "_conns_lock", _RacingLock())
+
+    assert disk_cache._connect(str(tmp_path)) is sentinel
+
+
+# ---- cache maintenance -----------------------------------------------------
+
+
+def test_prune_old_versions_without_a_cache_dir(tmp_path):
+    assert disk_cache.prune_old_versions(str(tmp_path)) == []
+
+
+def test_prune_old_versions_when_the_cache_root_is_not_a_dir(tmp_path, write_path):
+    write_path(tmp_path, disk_cache._CACHE_DIR_NAME, "not a directory")
+    assert disk_cache.prune_old_versions(str(tmp_path)) == []
+
+
+def test_prune_old_versions_removes_only_stale_version_dirs(tmp_path, write_path):
+    root = tmp_path / disk_cache._CACHE_DIR_NAME
+    (root / "v4" / "old").mkdir(parents=True)
+    (root / f"v{disk_cache.CACHE_VERSION}").mkdir(parents=True)
+    write_path(tmp_path, f"{disk_cache._CACHE_DIR_NAME}/notes.txt", "keep me")
+    write_path(tmp_path, f"{disk_cache._CACHE_DIR_NAME}/v3", "a file, not a dir")
+
+    removed = disk_cache.prune_old_versions(str(tmp_path))
+
+    assert removed == ["v4"]
+    assert not (root / "v4").exists()
+    assert (root / "v3").is_file()
+    assert (root / f"v{disk_cache.CACHE_VERSION}").is_dir()
+
+
+def test_prune_old_versions_survives_a_failing_removal(tmp_path, monkeypatch):
+    (tmp_path / disk_cache._CACHE_DIR_NAME / "v4").mkdir(parents=True)
+    monkeypatch.setattr(
+        disk_cache.shutil,
+        "rmtree",
+        lambda *a, **k: (_ for _ in ()).throw(OSError("busy")),
+    )
+
+    assert disk_cache.prune_old_versions(str(tmp_path)) == []
+
+
+def test_clear_closes_open_connections_even_when_close_fails(tmp_path, monkeypatch):
+    conns = {}
+    monkeypatch.setattr(disk_cache, "_conns", conns)
+    key = (disk_cache.os.getpid(), str(disk_cache._db_path(str(tmp_path))))
+
+    class _Stubborn:
+        def close(self):
+            raise OSError("still in use")
+
+    conns[key] = _Stubborn()
+    (tmp_path / disk_cache._CACHE_DIR_NAME).mkdir()
+
+    disk_cache.clear(str(tmp_path))
+
+    assert conns == {}
+    assert not (tmp_path / disk_cache._CACHE_DIR_NAME).exists()
+
+
+def test_clear_survives_a_failing_tree_removal(tmp_path, monkeypatch):
+    (tmp_path / disk_cache._CACHE_DIR_NAME).mkdir()
+    monkeypatch.setattr(
+        disk_cache.shutil,
+        "rmtree",
+        lambda *a, **k: (_ for _ in ()).throw(OSError("busy")),
+    )
+
+    disk_cache.clear(str(tmp_path))
+
+    assert (tmp_path / disk_cache._CACHE_DIR_NAME).exists()
+
+
+def test_stamp_created_survives_an_unwritable_cache_root(tmp_path, write_path):
+    write_path(tmp_path, disk_cache._CACHE_DIR_NAME, "not a directory")
+
+    disk_cache.stamp_created(str(tmp_path))
+
+    assert disk_cache.cache_age_days(str(tmp_path)) is None
+
+
+def test_clear_if_stale_keeps_a_fresh_cache(tmp_path):
+    disk_cache.stamp_created(str(tmp_path))
+
+    assert disk_cache.clear_if_stale(str(tmp_path), 7.0) is False
+    assert disk_cache._marker_path(str(tmp_path)).exists()

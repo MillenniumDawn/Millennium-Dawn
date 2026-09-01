@@ -332,3 +332,112 @@ def test_body_line_matches_name_line_on_the_usual_shape():
     text = "FOO_modifier = {\n\tenable = { always = yes }\n}\n"
     _name, name_line, body_line, _body = _extract_top_level_definition_blocks(text)[0]
     assert name_line == body_line == 1
+
+
+def test_lowercase_md_prefix_is_valid(tmp_path):
+    """`md_` is the same custom-modifier prefix as `MD_`, minus the tag shape
+    that makes `MD_x` read as a targeted modifier."""
+    _write_idea_file(tmp_path, "\t\t\t\tmd_custom_thing = 0.1\n")
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_modifier_names(frozenset())
+    assert validator.warnings_found == 0
+
+
+def test_parametric_family_member_is_not_reported(tmp_path):
+    _write_idea_file(
+        tmp_path,
+        "\t\t\t\tproduction_speed_arms_factory_factor = 0.1\n"
+        "\t\t\t\tproduction_speed_arms_factry_factor2 = 0.1\n",
+    )
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_modifier_names(frozenset())
+
+    assert validator.warnings_found == 1
+    assert "production_speed_arms_factry_factor2" in validator._issues[0].message
+
+
+def test_files_without_a_modifier_block_are_not_parsed(tmp_path):
+    ideas_dir = tmp_path / "common" / "ideas"
+    ideas_dir.mkdir(parents=True)
+    path = ideas_dir / "plain.txt"
+    path.write_text("ideas = {\n\tcountry = {\n\t}\n}\n", encoding="utf-8")
+    assert _check_file_for_unknown_modifiers(
+        (str(path), frozenset(), str(tmp_path))
+    ) == ([])
+
+
+def test_ignored_directories_are_not_parsed(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "sample.txt"
+    path.write_text(
+        "modifier = {\n\tcompletely_fake_modifier_field = 0.1\n}\n", encoding="utf-8"
+    )
+    assert _check_file_for_unknown_modifiers(
+        (str(path), frozenset(), str(tmp_path))
+    ) == ([])
+
+
+def test_empty_definition_file_contributes_nothing(tmp_path):
+    def_dir = tmp_path / "common" / "modifier_definitions"
+    def_dir.mkdir(parents=True)
+    (def_dir / "empty.txt").write_text("", encoding="utf-8")
+    (def_dir / "real.txt").write_text(
+        "my_custom_defined_modifier = { value_type = number }\n", encoding="utf-8"
+    )
+
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    assert "my_custom_defined_modifier" in validator._build_known_good_set()
+
+
+def test_documented_concrete_modifier_enters_the_known_good_set(tmp_path):
+    doc_dir = tmp_path / "resources" / "documentation"
+    doc_dir.mkdir(parents=True)
+    (doc_dir / "modifiers_documentation.md").write_text(
+        "## casualty_trickleback\n\nSome prose.\n", encoding="utf-8"
+    )
+
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    known_good = validator._build_known_good_set()
+
+    assert "casualty_trickleback" in known_good
+    assert not any("known-good set is" in line for line in validator.output_lines)
+
+
+def test_empty_dynamic_modifier_file_is_skipped(tmp_path):
+    dynamic_dir = tmp_path / "common" / "dynamic_modifiers"
+    dynamic_dir.mkdir(parents=True)
+    (dynamic_dir / "empty.txt").write_text("", encoding="utf-8")
+    (dynamic_dir / "real.txt").write_text(
+        "FOO_modifier = {\n\tenable = { always = yes }\n}\n", encoding="utf-8"
+    )
+
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_redundant_enable_gates()
+
+    assert validator.errors_found == 1
+    assert validator._issues[0].file.endswith("real.txt")
+
+
+def test_full_run_covers_all_three_checks(tmp_path):
+    _write_idea_file(tmp_path, "\t\t\t\tcompletely_fake_modifier_field = 0.1\n")
+    dynamic_dir = tmp_path / "common" / "dynamic_modifiers"
+    dynamic_dir.mkdir(parents=True)
+    (dynamic_dir / "test.txt").write_text(
+        "FOO_modifier = {\n\tenable = { always = yes }\n}\n", encoding="utf-8"
+    )
+    loc_dir = tmp_path / "localisation" / "english"
+    loc_dir.mkdir(parents=True)
+    (loc_dir / "test_l_english.yml").write_text(
+        'l_english:\n FOO_modifier_TT:0 "tooltip"\n', encoding="utf-8-sig"
+    )
+
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    categories = {issue.category for issue in validator._issues}
+    assert categories == {
+        "unknown-modifier",
+        "dynamic-modifier-name-loc",
+        "redundant-enable-gate",
+    }

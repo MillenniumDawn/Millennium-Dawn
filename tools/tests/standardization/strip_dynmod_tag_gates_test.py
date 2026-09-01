@@ -410,3 +410,53 @@ def test_main_exits_non_zero_on_an_unbalanced_block(tmp_path, monkeypatch):
     )
 
     assert main() == 1
+
+
+def test_backup_is_written_beside_the_rewritten_file(tmp_path):
+    mod_path = tmp_path / "dynmod.txt"
+    _write_mod(mod_path, _MOD_SAMPLE)
+
+    assert process_file(str(mod_path), dry_run=False, backup=True) == (1, 0, 0, False)
+    assert "enable" not in mod_path.read_text(encoding="utf-8")
+    assert list(tmp_path.glob("dynmod.txt.backup.*"))
+
+
+def test_main_sweeps_the_dynamic_modifiers_directory_by_default(tmp_path, monkeypatch):
+    mod_dir = tmp_path / "common" / "dynamic_modifiers"
+    mod_dir.mkdir(parents=True)
+    target = mod_dir / "modifiers.txt"
+    _write_mod(target, _MOD_SAMPLE)
+    monkeypatch.setattr(
+        sys, "argv", ["strip_dynmod_tag_gates.py", "--root", str(tmp_path)]
+    )
+
+    assert main() == 0
+    assert "enable" not in target.read_text(encoding="utf-8")
+
+
+def test_main_errors_when_the_modifier_directory_is_missing(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        sys, "argv", ["strip_dynmod_tag_gates.py", "--root", str(tmp_path)]
+    )
+    assert main() == 1
+
+
+def test_main_reports_a_file_it_cannot_read(tmp_path, monkeypatch):
+    clean = tmp_path / "clean.txt"
+    _write_mod(clean, "FOO_modifier = {\n\tstability_factor = x\n}\n")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "strip_dynmod_tag_gates.py",
+            "--root",
+            str(tmp_path),
+            str(tmp_path / "missing.txt"),
+            str(clean),
+        ],
+    )
+
+    assert main() == 1
+    assert clean.read_text(encoding="utf-8") == (
+        "FOO_modifier = {\n\tstability_factor = x\n}\n"
+    )

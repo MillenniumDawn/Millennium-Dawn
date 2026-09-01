@@ -8,6 +8,15 @@ not touch the live mod, so they stay fast and deterministic.
 
 import pytest
 import tick_audit as ta
+from shared.suite import write_under as _spot_file
+
+
+def _scan_spot_source(tmp_path, monkeypatch, source):
+    _spot_file(tmp_path, "common/on_actions/a.txt", source)
+    monkeypatch.setattr(ta, "REPO_ROOT", str(tmp_path))
+    report = ta.scan_spot_checks(["common/on_actions"])
+    return report, [item["rule"] for item in report["findings"]]
+
 
 # --- brace-depth field reading ---------------------------------------------
 
@@ -138,13 +147,6 @@ def test_non_self_firing_event_is_not_a_loop():
         }
     }
     assert ta.collect_event_loops(events) == []
-
-
-def _spot_file(root, relative, content):
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
 
 
 def test_spot_check_context_and_schema(tmp_path, monkeypatch):
@@ -513,9 +515,9 @@ def test_spot_named_blocks_preserves_repeated_sibling_bodies():
 
 
 def test_spot_check_division_force_update_and_invariant_reads(tmp_path, monkeypatch):
-    _spot_file(
+    report, rules = _scan_spot_source(
         tmp_path,
-        "common/on_actions/a.txt",
+        monkeypatch,
         """on_actions = {
 	on_daily = {
 		clamp_temp_variable = { var = safe min = 0.01 }
@@ -537,10 +539,6 @@ def test_spot_check_division_force_update_and_invariant_reads(tmp_path, monkeypa
 }
 """,
     )
-    monkeypatch.setattr(ta, "REPO_ROOT", str(tmp_path))
-
-    report = ta.scan_spot_checks(["common/on_actions"])
-    rules = [item["rule"] for item in report["findings"]]
 
     assert rules.count("unclamped-division") == 1
     assert "force-update-dynamic-modifier" in rules
@@ -608,3 +606,185 @@ def test_spot_check_unreadable_source_exits_two(tmp_path, monkeypatch):
 
     assert report["diagnostics"][0]["fatal"] is True
     assert ta.main(["--spot-check", "common/on_actions/bad.txt"]) == 2
+
+
+def test_spot_check_scans_event_bodies_past_comments(tmp_path, monkeypatch):
+    _spot_file(
+        tmp_path,
+        "events/a.txt",
+        """country_event = {
+	id = ev.1
+	trigger = { tag = USA }
+	immediate = {
+		# a comment holding { braces } and "quotes"
+		every_country = { }
+	}
+	option = {
+		name = ev.1.a
+		every_state = { }
+	}
+}
+
+country_event = {
+	title = nameless.t
+	immediate = { every_country = { } }
+}
+""",
+    )
+    monkeypatch.setattr(ta, "REPO_ROOT", str(tmp_path))
+
+    report = ta.scan_spot_checks(["events"])
+    by_context = {
+        (item["context"]["name"], item["context"]["kind"]): item
+        for item in report["findings"]
+    }
+
+    immediate = by_context[("ev.1", "event_immediate")]
+    assert immediate["severity"] == "medium"
+    assert immediate["context"]["reachability"] == "event-driven"
+    # The comment must not shift offsets or swallow the following block.
+    assert immediate["line"] == 6
+    assert by_context[("ev.1", "event_option")]["operation"] == "every_state"
+    # An event with no id falls back to its block name.
+    assert ("country_event", "event_immediate") in by_context
+
+
+def test_spot_check_ignores_unknown_on_action_hooks(tmp_path, monkeypatch):
+    _spot_file(
+        tmp_path,
+        "common/on_actions/a.txt",
+        """on_actions = {
+	on_war_relation_added = { every_country = { } }
+}
+
+wrapper_block = { every_state = { } }
+""",
+    )
+    monkeypatch.setattr(ta, "REPO_ROOT", str(tmp_path))
+
+    report = ta.scan_spot_checks(["common/on_actions"])
+
+    assert report["findings"] == []
+
+
+def test_spot_check_handles_malformed_loop_and_division_blocks(tmp_path, monkeypatch):
+    report, rules = _scan_spot_source(
+        tmp_path,
+        monkeypatch,
+        """on_actions = {
+	on_daily = {
+		log = "tick"
+		every_country = yes
+	}
+	on_weekly = {
+		divide_temp_variable = { }
+		divide_temp_variable = { result = denom }
+		divide_variable = yes
+	}
+}
+""",
+    )
+
+    assert rules.count("unclamped-division") == 1
+    assert any(
+        item["rule"] == "unbounded-scope-loop" and item["severity"] == "critical"
+        for item in report["findings"]
+    )
+    # A loop with no body cannot be searched for repeated invariant scopes.
+    assert "repeated-invariant-scope" not in rules
+    assert any(
+        "malformed division block" in item["message"] for item in report["diagnostics"]
+    )
+
+
+def test_spot_check_wrapped_decisions_skip_unscanned_keys(
+    tmp_path, monkeypatch, capsys
+):
+    _spot_file(
+        tmp_path,
+        "common/decisions/a.txt",
+        """decisions = {
+	tick_category = {
+		wrapped_decision = {
+			visible = { every_country = { } }
+			complete_effect = { every_state = { } }
+		}
+	}
+}
+""",
+    )
+    monkeypatch.setattr(ta, "REPO_ROOT", str(tmp_path))
+
+    report = ta.scan_spot_checks(["common/decisions"])
+
+    assert [item["operation"] for item in report["findings"]] == ["every_country"]
+    assert report["findings"][0]["context"]["kind"] == "decision_visible"
+    assert report["findings"][0]["context"]["name"] == "wrapped_decision"
+
+    assert ta.main(["--spot-check", "common/decisions", "--limit", "1"]) == 0
+    assert "context: decision_visible, wrapped_decision" in capsys.readouterr().out
+
+
+def test_spot_check_focus_scans_only_completion_reward(tmp_path, monkeypatch):
+    _spot_file(
+        tmp_path,
+        "common/national_focus/a.txt",
+        """focus_tree = {
+	focus = {
+		id = F_guard
+		available = { every_country = { } }
+		completion_reward = { every_state = { } }
+	}
+}
+""",
+    )
+    monkeypatch.setattr(ta, "REPO_ROOT", str(tmp_path))
+
+    report = ta.scan_spot_checks(["common/national_focus"])
+
+    assert [item["operation"] for item in report["findings"]] == ["every_state"]
+    assert report["findings"][0]["context"]["name"] == "F_guard"
+
+
+def test_spot_check_scope_filter_and_partial_can_staff_guard(tmp_path, monkeypatch):
+    _spot_file(
+        tmp_path,
+        "common/on_actions/a.txt",
+        """on_actions = {
+	on_daily = {
+		can_staff_a_factory = { check_variable = { workers > required } }
+		can_staff_b_factory = { has_idea = staffed }
+		every_country = { }
+	}
+	on_monthly = {
+		every_state = { }
+	}
+}
+""",
+    )
+    monkeypatch.setattr(ta, "REPO_ROOT", str(tmp_path))
+
+    unfiltered = ta.scan_spot_checks(["common/on_actions"])
+    assert {item["context"]["cadence"] for item in unfiltered["findings"]} == {
+        "daily",
+        "monthly",
+    }
+    # Only the check_variable-only trigger is suppressed as O(1).
+    assert unfiltered["summary"]["suppressed"] == 1
+
+    filtered = ta.scan_spot_checks(["common/on_actions"], scope="daily")
+    assert [item["operation"] for item in filtered["findings"]] == ["every_country"]
+
+
+def test_spot_check_ignores_files_outside_the_known_categories(tmp_path, monkeypatch):
+    _spot_file(tmp_path, "common/ideas/a.txt", "ideas = { every_country = { } }")
+    monkeypatch.setattr(ta, "REPO_ROOT", str(tmp_path))
+
+    report = ta.scan_spot_checks(["common/ideas/a.txt"])
+
+    assert report["findings"] == []
+    assert report["diagnostics"] == []
+
+
+def test_spot_named_blocks_without_diagnostics_stops_at_unclosed_block():
+    assert list(ta._spot_named_blocks("cat = { child = { }\n")) == []

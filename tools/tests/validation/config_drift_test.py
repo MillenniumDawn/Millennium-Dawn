@@ -27,6 +27,7 @@ from fnmatch import fnmatch
 
 import pytest
 import yaml
+from coverage import Coverage
 from precommit_validate import _REGISTRY
 from shared.paths import REPO_ROOT, VALIDATION_DIR
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
@@ -76,9 +77,9 @@ def _checks_matrix_steps(check_id: str) -> list:
 
 def _sole_checkout(steps: list) -> dict:
     checkouts = [s for s in steps if s.get("uses", "").startswith("actions/checkout@")]
-    assert (
-        len(checkouts) == 1
-    ), f"expected exactly one checkout for this matrix entry, got {len(checkouts)}"
+    assert len(checkouts) == 1, (
+        f"expected exactly one checkout for this matrix entry, got {len(checkouts)}"
+    )
     return checkouts[0]
 
 
@@ -324,9 +325,9 @@ def test_precommit_exempt_entries_are_current(disk, precommit):
 
 def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     gone = sorted(STRICT_MISMATCH_ALLOWED - disk)
-    assert (
-        not gone
-    ), f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    assert not gone, (
+        f"STRICT_MISMATCH_ALLOWED names validators that no longer exist: {gone}."
+    )
     resolved = sorted(
         s
         for s in STRICT_MISMATCH_ALLOWED
@@ -548,6 +549,7 @@ def test_python_quality_checks_are_wired_in_precommit_and_ci():
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     for package in ("black==", "coverage==", "mypy==", "pylint==", "ruff=="):
         assert package in pyproject
+    assert Coverage().config.include_namespace_packages is True
 
 
 def test_pytest_collection_gate_cannot_self_exclude():
@@ -686,6 +688,8 @@ def test_tools_tests_checkout_consumed_configuration():
         "common/national_focus",
         "common/script_enums.txt",
         "common/units/equipment",
+        # renewable_power_per_cost_test drives the CLI against its live input.
+        "common/technologies/industry.txt",
         "common/decisions",
         "common/opinion_modifiers",
         "common/modifiers",
@@ -726,9 +730,9 @@ def test_ci_run_steps_default_to_strict():
             for step in workflow["jobs"][job]["steps"]
             if step.get("name") == "Run validation"
         )
-        assert (
-            'matrix.validator.strict }}" != "false"' in run
-        ), f"{job}'s Run step must default to --strict when `strict:` is absent."
+        assert 'matrix.validator.strict }}" != "false"' in run, (
+            f"{job}'s Run step must default to --strict when `strict:` is absent."
+        )
 
 
 def test_ci_redundant_modifier_gate_is_strict():

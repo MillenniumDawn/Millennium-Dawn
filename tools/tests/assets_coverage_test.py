@@ -2,6 +2,7 @@ import importlib.util
 import shutil
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import gfx_entry_generator as generator
 import pytest
@@ -90,6 +91,97 @@ def test_md_imagemagick_resolution_and_missing_executable(monkeypatch):
     paths.clear()
     with pytest.raises(SystemExit, match="ImageMagick not found"):
         md_art_convert.imagemagick()
+
+
+def test_image_size_uses_magick_identify_subcommand(monkeypatch):
+    monkeypatch.setattr(
+        md_art_convert.shutil,
+        "which",
+        lambda name: "/usr/bin/magick" if name == "magick" else None,
+    )
+    recorded = {}
+
+    def fake_run(argv, **_kwargs):
+        recorded["argv"] = argv
+        return SimpleNamespace(stdout="10 20")
+
+    monkeypatch.setattr(md_art_convert.subprocess, "run", fake_run)
+    assert md_art_convert.image_size(Path("x.png")) == (10, 20)
+    assert recorded["argv"][:3] == ["/usr/bin/magick", "identify", "-format"]
+
+
+def test_pixels_match_uses_magick_compare(monkeypatch):
+    executables = {"magick": "/usr/bin/magick"}
+    monkeypatch.setattr(md_art_convert.shutil, "which", executables.get)
+    calls = []
+
+    def fake_run(argv, **_kwargs):
+        calls.append(argv)
+        return SimpleNamespace(stderr="0")
+
+    monkeypatch.setattr(md_art_convert.subprocess, "run", fake_run)
+    assert md_art_convert.pixels_match(Path("a.png"), Path("b.png"))
+    assert calls[0][:2] == ["/usr/bin/magick", "compare"]
+
+
+def test_pixels_match_uses_compare_binary(monkeypatch):
+    def which(name):
+        return {"convert": "/usr/bin/convert", "compare": "/usr/bin/compare"}.get(name)
+
+    monkeypatch.setattr(md_art_convert.shutil, "which", which)
+    recorded = {}
+
+    def fake_run(argv, **_kwargs):
+        recorded["argv"] = argv
+        return SimpleNamespace(stderr="0.0")
+
+    monkeypatch.setattr(md_art_convert.subprocess, "run", fake_run)
+    assert md_art_convert.pixels_match(Path("a.png"), Path("b.png"))
+    assert recorded["argv"][0] == "/usr/bin/compare"
+
+
+def test_fixed_size_counts_a_verify_mismatch(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(md_art_convert, "image_size", lambda _path: (2, 2))
+    monkeypatch.setattr(md_art_convert, "write_dds", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(md_art_convert, "pixels_match", lambda *_args, **_kwargs: False)
+    src = tmp_path / "x.png"
+    src.write_bytes(b"x")
+    failures = md_art_convert.convert_fixed_size(
+        [src], tmp_path / "out", [(2, 2)], resize=False, verify=True
+    )
+    assert failures == 1
+    assert "does not match its source" in capsys.readouterr().out
+
+
+def test_fixed_size_skips_disallowed_dimensions(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(md_art_convert, "image_size", lambda _path: (3, 3))
+    src = tmp_path / "odd.png"
+    src.write_bytes(b"x")
+    failures = md_art_convert.convert_fixed_size(
+        [src], tmp_path / "out", [(2, 2)], resize=False, verify=False
+    )
+    assert failures == 1
+    assert "SKIP" in capsys.readouterr().out
+
+
+def test_flag_conversion_notes_a_resize_and_counts_verify_failures(
+    monkeypatch, tmp_path, capsys
+):
+    monkeypatch.setattr(md_art_convert, "write_tga", lambda *_args, **_kwargs: None)
+    src = tmp_path / "flag.png"
+    src.write_bytes(b"x")
+
+    monkeypatch.setattr(md_art_convert, "image_size", lambda _path: (10, 10))
+    assert (
+        md_art_convert.convert_flag(src, "TST", tmp_path / "flags", verify=False) == 0
+    )
+    assert "resizing to 82x52" in capsys.readouterr().out
+
+    monkeypatch.setattr(md_art_convert, "image_size", lambda _path: (82, 52))
+    monkeypatch.setattr(md_art_convert, "pixels_match", lambda *_args, **_kwargs: False)
+    failures = md_art_convert.convert_flag(src, "TST", tmp_path / "flags", verify=True)
+    assert failures == 1
+    assert "does not match its source" in capsys.readouterr().out
 
 
 @requires_imagemagick

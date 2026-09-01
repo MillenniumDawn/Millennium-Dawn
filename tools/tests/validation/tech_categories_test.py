@@ -1,6 +1,6 @@
 """Tests for validate_tech_categories."""
 
-from validate_tech_categories import Validator, _references
+from validate_tech_categories import Validator, _brace_span, _references
 
 _TAGS = """technology_Categories = {
 \tCAT_Military
@@ -138,3 +138,55 @@ def test_research_bonus_stops_at_its_closing_brace():
         "research_bonus = { CAT_one = 0.1 }\n" "equipment_bonus = { CAT_two = 0.2 }\n"
     )
     assert [n for n, _ in _references(text)] == ["CAT_one"]
+
+
+def test_research_bonus_spans_a_nested_block():
+    text = (
+        "research_bonus = {\n"
+        "\tif = { limit = { always = yes } }\n"
+        "\tCAT_one = 0.1\n"
+        "}\n"
+        "research_bonus = { CAT_two = 0.2 }\n"
+    )
+    assert [n for n, _ in _references(text)] == ["CAT_one", "CAT_two"]
+
+
+def test_brace_span_of_an_unclosed_block_runs_to_the_end():
+    text = "research_bonus = { CAT_one = 0.1"
+    assert _brace_span(text, text.index("{")) == len(text)
+
+
+def test_unclosed_research_bonus_still_yields_its_keys():
+    text = "research_bonus = { CAT_nope = 0.1\n"
+    assert [n for n, _ in _references(text)] == ["CAT_nope"]
+
+
+def test_unreadable_tag_file_is_skipped(tmp_path):
+    (tmp_path / "common" / "technology_tags" / "broken.txt").mkdir(parents=True)
+    v = _run(
+        tmp_path,
+        "events/Test.txt",
+        "country_event = {\n\tadd_tech_bonus = { category = CAT_computing }\n}\n",
+    )
+    assert len(_messages(v)) == 1
+
+
+def test_unreadable_scanned_file_is_skipped(tmp_path):
+    (tmp_path / "events" / "broken.txt").mkdir(parents=True)
+    v = _run(
+        tmp_path,
+        "events/Test.txt",
+        "country_event = {\n\tadd_tech_bonus = { category = CAT_missile }\n}\n",
+    )
+    assert _messages(v) == []
+    assert v.errors_found == 0
+
+
+def test_missing_category_set_is_reported_once(tmp_path):
+    v = _run(
+        tmp_path,
+        "events/Test.txt",
+        "country_event = {\n\tadd_tech_bonus = { category = CAT_missile }\n}\n",
+        tags="",
+    )
+    assert [i.category for i in v._issues] == ["tech-category-set-missing"]

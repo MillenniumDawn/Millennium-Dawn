@@ -1,7 +1,7 @@
 """Tests for `report_lib.loader`."""
 
-from report_lib import load_all
-from shared.suite import make_results_tree, write_log, write_sidecar
+from report_lib import discover_validator_runs, load_all
+from shared.suite import make_results_tree, write_log, write_sidecar, write_text
 
 
 def test_load_passed_validator(tmp_path):
@@ -193,3 +193,72 @@ def test_empty_results_dir(tmp_path):
 
 def test_missing_results_dir_returns_empty():
     assert load_all("/nonexistent/path/that/does/not/exist") == []
+
+
+def test_discovery_ignores_non_artifact_entries(tmp_path):
+    root = tmp_path / "validation-results"
+    root.mkdir()
+    # A plain file whose name looks like an artifact directory.
+    write_text(root / "validation-decoy-results", "not a directory")
+    # A flat artifact with an extension the loader does not read.
+    write_text(root / "validation-notes.md", "ignored")
+    write_sidecar(root, "events", [])
+
+    assert [slug for slug, _ in discover_validator_runs(str(root))] == ["events"]
+
+
+def test_legacy_total_issue_summary_line_counts_as_errors(tmp_path):
+    log = (
+        "  common/events/foo.txt:42 - missing localisation\n"
+        "✗ VALIDATION COMPLETE - 3 TOTAL ISSUES FOUND\n"
+    )
+    root = make_results_tree(tmp_path, {"events": {"log": log}})
+
+    run = load_all(str(root))[0]
+
+    assert (run.errors, run.warnings, run.status) == (3, 0, "failed")
+
+
+def test_sidecar_without_a_log_still_loads(tmp_path):
+    root = tmp_path / "validation-results"
+    write_sidecar(root, "events", [])
+
+    run = load_all(str(root))[0]
+
+    assert run.log_text is None
+    assert run.status == "passed"
+
+
+def test_unreadable_log_is_treated_as_absent(tmp_path):
+    root = tmp_path / "validation-results"
+    write_sidecar(root, "events", [])
+    (root / "validation-events.log").write_bytes(b"\xff\xfe not utf-8 \xff")
+
+    run = load_all(str(root))[0]
+
+    assert run.log_text is None
+    assert run.status == "passed"
+
+
+def test_log_only_run_without_output_is_no_output(tmp_path):
+    root = tmp_path / "validation-results"
+    root.mkdir()
+    # A directory artifact holding neither a .log nor a .json.
+    (root / "validation-events-results").mkdir()
+    write_text(root / "validation-events-results" / "notes.txt", "nothing useful")
+
+    run = load_all(str(root))[0]
+
+    assert run.status == "no_output"
+    assert run.had_json is False
+
+
+def test_failure_marker_without_parsable_issues_still_fails(tmp_path):
+    root = make_results_tree(
+        tmp_path, {"events": {"log": "✗ VALIDATION COMPLETE\nsomething went wrong\n"}}
+    )
+
+    run = load_all(str(root))[0]
+
+    assert run.status == "failed"
+    assert run.issues == []

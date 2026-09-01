@@ -164,3 +164,134 @@ def test_group_expands_to_members():
 
 def test_non_group_token_expands_to_itself():
     assert _index(_AA, groups=_GROUPS).expand("AA_Equipment") == ["AA_Equipment"]
+
+
+_SPLIT = """
+equipments = {
+\tsplit_entry = {
+\t\tis_archetype = yes
+\t\treliability = 0.9
+\t}
+}
+equipments = {
+\tsplit_entry = {
+\t\ttype = escort
+\t\tair_attack = 0.5
+\t}
+}
+"""
+
+
+def test_an_entry_restated_in_a_second_block_unions_its_stats_and_types():
+    index = _index(_SPLIT)
+    stats = index.resolve("split_entry")
+    assert {"reliability", "air_attack"} <= stats
+    assert index.resolve("escort") == stats
+
+
+_EDGE_DUPLICATES = """
+equipments = {
+\tedge_base = {
+\t\tis_archetype = yes
+\t\tair_range = 1000
+\t}
+}
+duplicate_archetypes = {
+\tedge_clone = {
+\t\tarchetype = edge_base
+\t\tvariant_name = { find_and_replace = { chassis equipment } }
+\t\tfor_each = {
+\t\t\tair_ground_attack = { set = 3 }
+\t\t}
+\t}
+}
+"""
+
+
+def test_clone_without_a_substitute_registers_only_itself():
+    index = _index(_EDGE_DUPLICATES)
+    stats = index.resolve("edge_clone")
+    assert {"air_range", "air_ground_attack"} <= stats
+    assert index.resolve("cv_edge_clone") is None
+
+
+_UNLOCK_HULLS = """
+equipments = {
+\tunlock_hull = {
+\t\tis_archetype = yes
+\t\treliability = 0.8
+\t\tmodule_slots = {
+\t\t\tgun_slot = {
+\t\t\t\tallowed_module_categories = { gun_category }
+\t\t\t}
+\t\t\tfree_slot = {
+\t\t\t\trequired = no
+\t\t\t}
+\t\t}
+\t}
+\tbare_hull = {
+\t\tis_archetype = yes
+\t\tarmor_value = 5
+\t\tmodule_slots = {
+\t\t\tquiet_slot = {
+\t\t\t\tallowed_module_categories = { silent_category }
+\t\t\t}
+\t\t}
+\t}
+}
+"""
+
+_UNLOCK_MODULES = """
+not_equipment_modules = {
+\tignored_entry = { }
+}
+equipment_modules = {
+\tgun_module = {
+\t\tcategory = gun_category
+\t\tcan_convert_from = { module_category = old_gun_category }
+\t\tallowed_module_categories = {
+\t\t\tgun_slot = { ammo_category }
+\t\t}
+\t\tadd_stats = {
+\t\t\thard_attack = 5
+\t\t}
+\t}
+\tammo_module = {
+\t\tcategory = ammo_category
+\t\tmultiply_stats = {
+\t\t\tbreakthrough = 1.1
+\t\t}
+\t}
+\tsilent_module = {
+\t\tcategory = silent_category
+\t}
+}
+"""
+
+
+def test_hull_reaches_stats_of_categories_its_modules_unlock():
+    """gun_module unlocks ammo_category into gun_slot, so the hull can carry
+    ammo stats even though its own slot list never names that category."""
+    stats = _index(_UNLOCK_HULLS, _UNLOCK_MODULES).resolve("unlock_hull")
+    assert {"reliability", "hard_attack", "breakthrough"} <= stats
+
+
+def test_a_hull_whose_modules_declare_no_stats_gains_nothing():
+    stats = _index(_UNLOCK_HULLS, _UNLOCK_MODULES).resolve("bare_hull")
+    assert "armor_value" in stats
+    assert "hard_attack" not in stats
+    assert "breakthrough" not in stats
+
+
+_EDGE_GROUPS = """
+mio_cat_edge = {
+\tallowed = { always = yes }
+\tequipment_type = {
+\t\tfrigate
+\t}
+}
+"""
+
+
+def test_group_ignores_blocks_other_than_equipment_type():
+    assert _index(_AA, groups=_EDGE_GROUPS).expand("mio_cat_edge") == ["frigate"]

@@ -9,6 +9,7 @@ from report_lib import (
 )
 from report_lib.baseline import BaselineStats
 from report_lib.comment import REPORT_MARKER
+from report_lib.markdown import _severity_icon
 
 
 def _ctx(repo=None):
@@ -266,6 +267,104 @@ def test_concise_comment_no_pointer_when_clean():
     assert "## Validators" not in body
     assert "full issue list" not in body
     assert "All 1 validator passed" in body
+
+
+def test_severity_icon_ranks_errors_over_warnings():
+    assert _severity_icon(2, 3) == "❌"
+    assert _severity_icon(0, 3) == "⚠️"
+    assert _severity_icon(0, 0) == "✅"
+
+
+def test_error_verdict_flags_an_incomplete_validator():
+    runs = [
+        ValidatorRun(name="events", title="Events", status="failed", errors=2),
+        ValidatorRun(name="ideas", title="Ideas", status="no_output"),
+    ]
+    body = render(runs, [], _ctx())
+    assert "2 errors must be fixed before merge." in body
+    assert "1 validator did not complete." in body
+
+
+def test_warning_verdict_flags_an_incomplete_validator():
+    runs = [
+        ValidatorRun(name="events", title="Events", status="warnings", warnings=2),
+        ValidatorRun(name="ideas", title="Ideas", status="unknown"),
+    ]
+    body = render(runs, [], _ctx())
+    assert "> [!WARNING]" in body
+    assert "2 warnings to review. None block merge." in body
+    assert "1 validator did not complete." in body
+
+
+def test_metadata_strip_omits_missing_fields():
+    ctx = ReportContext(date_utc="2026-04-16 14:02:00 UTC")
+    body = render([], [], ctx)
+    assert "**Date:** 2026-04-16 14:02:00 UTC" in body
+    assert "**Commit:**" not in body
+    assert "**PR:**" not in body
+    assert "**Run:**" not in body
+
+
+def test_bullet_without_a_file_renders_the_message_alone():
+    issue = Issue(
+        severity=Severity.ERROR,
+        category="config",
+        message="validator crashed before reporting a file",
+        validator="events",
+    )
+    body = render([], [issue], _ctx(repo="MillenniumDawn/Millennium-Dawn"))
+    assert "- ❌ validator crashed before reporting a file" in body
+    assert "https://github.com/" not in body
+
+
+def _two_category_issues():
+    return [
+        Issue(
+            severity=Severity.ERROR,
+            category=f"cat_{n}",
+            message=f"finding {n}",
+            file=f"{n}.txt",
+            line=1,
+            validator="events",
+        )
+        for n in (1, 2)
+    ]
+
+
+def test_overflow_beyond_max_visible_points_at_the_artifact():
+    issues = _two_category_issues()
+    body = render([], issues, _ctx(), max_visible=1)
+    assert "finding 1" in body
+    assert "finding 2" not in body
+    assert "> **1 additional issues not shown.**" in body
+    assert "[workflow artifact](https://example.test/artifact)" in body
+
+
+def test_overflow_falls_back_to_the_step_summary_link():
+    ctx = _ctx()
+    ctx.artifact_url = None
+    body = render([], _two_category_issues(), ctx, max_visible=1)
+    assert "> **1 additional issues not shown.**" in body
+    assert "[step summary](https://example.test/run/1) for the full list." in body
+
+
+def test_overflow_notice_has_no_link_without_urls():
+    ctx = ReportContext(commit_sha="abc1234deadbeef")  # pragma: allowlist secret
+    body = render([], _two_category_issues(), ctx, max_visible=1)
+    assert "> **1 additional issues not shown.**\n" in body + "\n"
+    assert "http" not in body
+
+
+def test_raw_logs_skip_validators_with_no_output():
+    runs = [
+        ValidatorRun(
+            name="events", title="Events", status="failed", errors=1, log_text="boom"
+        ),
+        ValidatorRun(name="ideas", title="Ideas", status="no_output", log_text="   "),
+    ]
+    body = render(runs, [], _ctx())
+    assert "#### Events" in body
+    assert "#### Ideas" not in body
 
 
 def _stats(**overrides):

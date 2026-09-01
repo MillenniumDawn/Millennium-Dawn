@@ -508,6 +508,40 @@ class TestOgImages:
         monkeypatch.setattr(sys, "argv", ["og", "--site-dir", "s"])
         assert og.parse_args().baseurl == ""
 
+    def test_missing_local_og_image_is_reported(self, tmp_path):
+        site = tmp_path / "site"
+        page = write(
+            site / "page.html",
+            '<head><meta property="og:title" content="Title">'
+            '<meta property="og:image" content="/missing.png">'
+            '<meta property="og:image:width" content="1">'
+            '<meta property="og:image:height" content="1">'
+            '<meta property="og:image:alt" content="image">'
+            '<meta name="twitter:image" content="/missing.png"></head>',
+        )
+        issues = og.check_html_file(site, page, "")
+        assert any(
+            issue.startswith("og:image target does not exist") for issue in issues
+        )
+
+    def test_twitter_cdn_image_is_rejected(self, tmp_path):
+        site = tmp_path / "site"
+        write(site / "image.png", "")
+        page = write(
+            site / "page.html",
+            '<head><meta property="og:title" content="Title">'
+            '<meta property="og:image" content="/image.png">'
+            '<meta property="og:image:width" content="1">'
+            '<meta property="og:image:height" content="1">'
+            '<meta property="og:image:alt" content="image">'
+            '<meta name="twitter:image" content="https://cdn.example/x.png"></head>',
+        )
+        issues = og.check_html_file(site, page, "")
+        assert any(
+            issue.startswith("twitter:image is not a site-local URL")
+            for issue in issues
+        )
+
 
 class TestContentHtml:
     def test_masking_and_parsing_helpers(self, tmp_path, monkeypatch):

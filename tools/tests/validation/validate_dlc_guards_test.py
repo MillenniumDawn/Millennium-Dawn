@@ -81,6 +81,59 @@ def test_parse_folder_gates_require_forbid_and_non_dlc(tmp_path):
     assert "plain_folder" not in gates
 
 
+def test_parse_folder_gates_ignores_other_blocks_and_unreadable_files(tmp_path):
+    _write(
+        tmp_path,
+        "common/technology_tags/00_technology.txt",
+        "technology_Categories = {\n\tCAT_air_engine\n}\n"
+        "technology_folders = {\n"
+        "\tbba_aircraft_folder = {\n"
+        "\t\tledger = air\n"
+        "\t\tdoctrine = { }\n"
+        f'\t\tavailable = {{ has_dlc = "{BBA}" }}\n'
+        "\t}\n"
+        "}\n",
+    )
+    (tmp_path / "common" / "technology_tags" / "broken.txt").mkdir()
+
+    gates = V.parse_folder_gates(str(tmp_path) + "/")
+
+    assert gates == {"bba_aircraft_folder": frozenset({("require", BBA)})}
+
+
+def test_parse_tech_gates_ignores_other_blocks_and_unreadable_files(tmp_path):
+    _write(
+        tmp_path,
+        "common/technologies/test.txt",
+        "technology_sharing_group = {\n\tid = shared\n}\n"
+        "technologies = {\n"
+        "\tgen_5_light = {\n"
+        "\t\tfolder = { name = bba_aircraft_folder }\n"
+        "\t\tfolder = { position = { x = 1 y = 1 } }\n"
+        "\t\tpath = { leads_to_tech = gen_5_medium }\n"
+        "\t}\n"
+        "}\n",
+    )
+    (tmp_path / "common" / "technologies" / "broken.txt").mkdir()
+
+    tech_gates, _categories = V.parse_tech_gates(
+        str(tmp_path) + "/", {"bba_aircraft_folder": frozenset({("require", BBA)})}
+    )
+
+    assert tech_gates == {"gen_5_light": frozenset({("require", BBA)})}
+
+
+def test_category_shared_by_ungated_techs_only_is_not_gated(tmp_path):
+    _, category_gates = _tech_gates(
+        tmp_path,
+        "\tplain_one = {\n\t\tcategories = { CAT_open }\n\t}\n"
+        "\tplain_two = {\n\t\tcategories = { CAT_open }\n\t}\n",
+        {},
+    )
+
+    assert category_gates == {}
+
+
 def _tech_gates(tmp_path, body, folder_gates):
     _write(
         tmp_path, "common/technologies/test.txt", "technologies = {\n" + body + "}\n"
@@ -152,6 +205,22 @@ def test_parse_project_gates(tmp_path):
     )
     gates = V.parse_project_gates(str(tmp_path) + "/")
     assert gates == {"sp_stealth_technology": frozenset({("require", BBA)})}
+
+
+def test_parse_project_gates_skips_unreadable_files(tmp_path):
+    _write(
+        tmp_path,
+        "common/special_projects/projects/air_projects.txt",
+        "sp_stealth_technology = {\n"
+        f'\tallowed = {{ has_dlc = "{BBA}" }}\n'
+        "\tnth_completion_reward = { add_tech_bonus = { uses = 1 } }\n"
+        "}\n",
+    )
+    (tmp_path / "common" / "special_projects" / "projects" / "broken.txt").mkdir()
+
+    assert V.parse_project_gates(str(tmp_path) + "/") == {
+        "sp_stealth_technology": frozenset({("require", BBA)})
+    }
 
 
 # --- guard walker -----------------------------------------------------------
@@ -391,3 +460,114 @@ def test_scan_file_cache_invalidates_when_gate_maps_change(tmp_path, monkeypatch
     findings = V.scan_file(str(filepath))
     assert len(findings) == 1
     assert "gen_5_light" in findings[0][3]
+
+
+def test_ungated_category_and_project_references_are_clean():
+    script = (
+        "completion_reward = {\n"
+        "\tadd_tech_bonus = { name = TST_focus category = CAT_open uses = 1 }\n"
+        "\tsp:sp_open_project = { add_project_progress_ratio = 0.2 }\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+
+
+def test_scan_file_skips_unreadable_and_irrelevant_files(tmp_path):
+    V._init_worker({}, {}, {}, "", str(tmp_path) + "/")
+    (tmp_path / "broken.txt").mkdir()
+    plain = _write(tmp_path, "events/plain.txt", "country_event = { id = test.1 }\n")
+
+    assert V.scan_file(str(tmp_path / "broken.txt")) == []
+    assert V.scan_file(str(plain)) == []
+
+
+# --- validator wiring -------------------------------------------------------
+
+
+def _dlc_repo(tmp_path):
+    _write(
+        tmp_path,
+        "common/technology_tags/00_technology.txt",
+        "technology_folders = {\n"
+        "\tbba_aircraft_folder = {\n"
+        f'\t\tavailable = {{ has_dlc = "{BBA}" }}\n'
+        "\t}\n"
+        "}\n",
+    )
+    _write(
+        tmp_path,
+        "common/technologies/air.txt",
+        "technologies = {\n"
+        "\tgen_5_light = {\n"
+        "\t\tfolder = { name = bba_aircraft_folder }\n"
+        "\t\tcategories = { CAT_air_engine }\n"
+        "\t}\n"
+        "}\n",
+    )
+    _write(
+        tmp_path,
+        "common/special_projects/projects/air.txt",
+        "sp_stealth_technology = {\n" f'\tallowed = {{ has_dlc = "{BBA}" }}\n' "}\n",
+    )
+
+
+def test_validator_reports_crashing_errors_and_category_warnings(tmp_path, monkeypatch):
+    import validator_common
+
+    monkeypatch.setattr(validator_common, "_LOG_LEVEL", "INFO")
+    _dlc_repo(tmp_path)
+    _write(
+        tmp_path,
+        "common/national_focus/05_test.txt",
+        "focus = {\n"
+        "\tid = TST_jet\n"
+        "\tcompletion_reward = {\n"
+        + _bonus("gen_5_light", "\t\t")
+        + "\t\tadd_tech_bonus = { name = TST_jet category = CAT_air_engine uses = 1 }\n"
+        "\t\tsp:sp_stealth_technology = { add_project_progress_ratio = 0.35 }\n"
+        "\t}\n"
+        "}\n",
+    )
+    validator = V.Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
+
+    validator.run_validations()
+    by_category = {i.category: i.severity for i in validator._issues}
+
+    assert by_category == {
+        "dlc_tech_bonus": "error",
+        "dlc_tech_bonus_category": "warning",
+        "dlc_special_project": "error",
+    }
+    assert any(
+        "3 unguarded DLC-gated reference(s)" in line for line in validator.output_lines
+    )
+    assert any(
+        line.startswith("  common/national_focus/05_test.txt:")
+        for line in validator.output_lines
+    )
+
+
+def test_validator_stays_quiet_when_every_reference_is_guarded(tmp_path, monkeypatch):
+    import validator_common
+
+    monkeypatch.setattr(validator_common, "_LOG_LEVEL", "INFO")
+    _dlc_repo(tmp_path)
+    _write(
+        tmp_path,
+        "common/national_focus/05_test.txt",
+        "focus = {\n"
+        "\tid = TST_jet\n"
+        "\tcompletion_reward = {\n"
+        "\t\tif = {\n"
+        f'\t\t\tlimit = {{ has_dlc = "{BBA}" }}\n'
+        + _bonus("gen_5_light", "\t\t\t")
+        + "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+    validator = V.Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
+
+    validator.run_validations()
+
+    assert validator._issues == []
+    assert any("sit behind a has_dlc guard" in line for line in validator.output_lines)

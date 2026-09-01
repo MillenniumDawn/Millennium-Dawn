@@ -1,4 +1,7 @@
 import importlib.util
+import sys
+
+import pytest
 
 
 def _module():
@@ -35,3 +38,19 @@ def test_generation_does_not_touch_caller_owned_temp_names(tmp_path, monkeypatch
     assert (ideas / "tribute_ideas.txt").is_file()
     generated_loc = loc / "MD_tribute_ideas_l_english.yml"
     assert generated_loc.read_bytes().startswith(b"\xef\xbb\xbf")
+
+
+def test_missing_required_path_exits(tmp_path, monkeypatch):
+    module = _module()
+    monkeypatch.setattr(module, "REPO_ROOT", str(tmp_path))
+    monkeypatch.setattr(module, "TAG_DIR", str(tmp_path / "missing_tags"))
+    with pytest.raises(SystemExit, match="required path not found"):
+        module.main()
+
+
+def test_tools_dir_is_put_on_sys_path(monkeypatch):
+    monkeypatch.setattr(
+        sys, "path", [entry for entry in sys.path if not entry.endswith("tools")]
+    )
+    module = _module()
+    assert module.TOOLS_DIR in sys.path

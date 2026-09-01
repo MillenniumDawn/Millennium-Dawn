@@ -321,6 +321,54 @@ class TestAssignMioIcons:
             self._run(monkeypatch, tmp_path, gfx, str(tmp_path / "does_not_exist.txt"))
         assert "No such file or directory" in str(excinfo.value)
 
+    def test_relative_path_is_resolved_against_root(self, tmp_path, monkeypatch):
+        gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_smallarms")
+        write_text(tmp_path / "org.txt", self.TRAIT)
+        self._run(monkeypatch, tmp_path, gfx, "org.txt", "--write")
+        assert (
+            "icon = GFX_generic_mio_trait_icon_smallarms"
+            in (tmp_path / "org.txt").read_text()
+        )
+
+    def test_write_failure_exits_nonzero(self, tmp_path, monkeypatch):
+        gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_smallarms")
+        mio = tmp_path / "test_mio.txt"
+        write_text(mio, self.TRAIT)
+
+        def fail_replace(_src, _dst):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(assign_mio_icons.os, "replace", fail_replace)
+        with pytest.raises(SystemExit, match="cannot write"):
+            self._run(monkeypatch, tmp_path, gfx, str(mio), "--write")
+
+    def test_unique_fallbacks_are_listed(self, tmp_path, monkeypatch, capsys):
+        gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_unrelated")
+        mio = tmp_path / "test_mio.txt"
+        write_text(mio, self.TRAIT)
+        self._run(monkeypatch, tmp_path, gfx, str(mio))
+        assert "unique fallbacks: 1 -> test_trait" in capsys.readouterr().out
+
+    def test_trait_without_a_placeholder_is_left_alone(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_smallarms")
+        mio = tmp_path / "test_mio.txt"
+        body = self.TRAIT.replace("icon = x", "icon = GFX_already_set")
+        write_text(mio, body)
+        self._run(monkeypatch, tmp_path, gfx, str(mio), "--write")
+        assert mio.read_text() == body
+        assert "Total placeholders resolved: 0" in capsys.readouterr().out
+
+    def test_placeholder_without_a_token_is_reported_as_unknown(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        gfx = self._sprites(tmp_path, "GFX_generic_mio_trait_icon_smallarms")
+        mio = tmp_path / "test_mio.txt"
+        write_text(mio, self.TRAIT.replace("    token = test_trait\n", ""))
+        self._run(monkeypatch, tmp_path, gfx, str(mio))
+        assert "?" in capsys.readouterr().out
+
 
 # ---------------------------------------------------------------------------
 # dev_setup.py

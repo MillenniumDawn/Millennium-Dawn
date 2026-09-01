@@ -779,3 +779,242 @@ def test_uniform_history_is_not_flagged(tmp_path):
         validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
         validator.run_validations()
         assert not [i for i in validator._issues if "partial history" in i.category]
+
+
+# --- parser edge cases ------------------------------------------------------
+
+EDGE_HULLS = """
+equipments = {
+\tedge_hull = {
+\t\tis_archetype = yes
+\t\ttype = screen_ship
+\t\tname = "Edge Class"
+\t\tmodule_slots = {
+\t\t\tgun_slot = {
+\t\t\t\trequired = no
+\t\t\t\tallowed_module_categories = { module_light_guns_category }
+\t\t\t\tfuture_engine_rules = { unrecognised = yes }
+\t\t\t}
+\t\t}
+\t\tmodule_count_limit = { category = module_light_guns_category }
+\t\tmodule_count_limit = { count < 3 }
+\t}
+\tedge_orphan_hull = {
+\t\tarchetype = missing_archetype
+\t\tmodule_slots = inherit
+\t}
+}
+duplicate_archetypes = {
+\tedge_untyped_clone = {
+\t\ttype = screen_ship
+\t}
+}
+"""
+
+EDGE_MODULES = """
+equipment_modules = {
+\tedge_base_gun = {
+\t\tcategory = module_light_guns_category
+\t\tforbid_equipment_type = { screen_ship }
+\t}
+\tedge_child_gun = {
+\t\tcategory = module_light_guns_category
+\t\tparent = edge_base_gun
+\t}
+\tedge_grandchild_gun = {
+\t\tcategory = module_light_guns_category
+\t\tparent = edge_child_gun
+\t}
+\tedge_nested_category_only = {
+\t\tcan_convert_from = {
+\t\t\tcategory = module_light_guns_category
+\t\t}
+\t}
+}
+"""
+
+
+def _edge_index():
+    return build_indexes([EDGE_HULLS], [EDGE_MODULES])
+
+
+def _edge_created(body):
+    return (
+        "focus_tree = {\n"
+        "\tfocus = {\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tcreate_equipment_variant = {\n"
+        f"{body}"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+
+
+def test_quoted_name_does_not_break_hull_parsing():
+    slots = _edge_index().hull_slots["edge_hull"] or {}
+    gun = slots["gun_slot"]
+    assert gun is not None
+    assert gun.allowed == {"module_light_guns_category"}
+
+
+def test_unrecognised_slot_sub_block_is_ignored():
+    gun = (_edge_index().hull_slots["edge_hull"] or {})["gun_slot"]
+    assert gun is not None and gun.allowed == {"module_light_guns_category"}
+
+
+def test_malformed_count_limits_are_dropped():
+    """A limit with no `count <`, or with neither category nor module, caps
+    nothing — keeping it would invent a finding out of an unparsed block."""
+    assert _edge_index().hull_count_limits["edge_hull"] == {}
+
+
+def test_inherit_from_an_undefined_archetype_leaves_slots_unresolved():
+    assert _edge_index().hull_slots["edge_orphan_hull"] is None
+
+
+def test_duplicate_without_an_archetype_is_not_cloned():
+    assert "edge_untyped_clone" not in _edge_index().hull_slots
+
+
+def test_forbid_types_are_inherited_down_a_parent_chain():
+    index = _edge_index()
+    assert index.module_forbid_types["edge_child_gun"] == {"screen_ship"}
+    assert index.module_forbid_types["edge_grandchild_gun"] == {"screen_ship"}
+
+
+def test_a_category_only_visible_inside_a_nested_block_is_not_the_module_category():
+    assert "edge_nested_category_only" not in _edge_index().module_category
+
+
+def test_unbalanced_equipment_file_yields_no_hulls():
+    assert (
+        build_indexes(
+            ["equipments = { broken_hull = { module_slots = { "], []
+        ).hull_slots
+        == {}
+    )
+
+
+def test_variant_without_a_type_is_skipped():
+    content = _edge_created(
+        '\t\t\t\tname = "Nameless"\n'
+        "\t\t\t\tmodules = {\n"
+        "\t\t\t\t\tgun_slot = edge_base_gun\n"
+        "\t\t\t\t}\n"
+    )
+    assert check_created_variants(content, _edge_index()) == []
+
+
+def test_variant_with_neither_type_nor_modules_is_skipped():
+    content = _edge_created('\t\t\t\tname = "Nameless"\n')
+    assert check_created_variants(content, _edge_index()) == []
+
+
+def test_variant_naming_an_unindexed_hull_without_modules_is_skipped():
+    content = _edge_created('\t\t\t\tname = "Ghost"\n\t\t\t\ttype = not_a_hull\n')
+    assert check_created_variants(content, _edge_index()) == []
+
+
+def test_variant_on_an_unresolvable_hull_is_skipped():
+    content = _edge_created(
+        '\t\t\t\tname = "Orphan"\n'
+        "\t\t\t\ttype = edge_orphan_hull\n"
+        "\t\t\t\tmodules = {\n"
+        "\t\t\t\t\tno_such_slot = edge_base_gun\n"
+        "\t\t\t\t}\n"
+    )
+    assert check_created_variants(content, _edge_index()) == []
+
+
+def test_blocks_before_modules_do_not_hide_it():
+    content = _edge_created(
+        '\t\t\t\tname = "Upgraded"\n'
+        "\t\t\t\ttype = edge_hull\n"
+        "\t\t\t\tupgrades = {\n"
+        "\t\t\t\t\tship_engine_upgrade = 1\n"
+        "\t\t\t\t}\n"
+        "\t\t\t\tmodules = {\n"
+        "\t\t\t\t\tno_such_slot = edge_base_gun\n"
+        "\t\t\t\t}\n"
+    )
+    assert [f.kind for f in check_created_variants(content, _edge_index())] == [
+        "unknown_slot"
+    ]
+
+
+def test_empty_modules_block_yields_no_assignments():
+    content = _edge_created(
+        '\t\t\t\tname = "Bare"\n\t\t\t\ttype = edge_hull\n\t\t\t\tmodules = {}\n'
+    )
+    assert check_created_variants(content, _edge_index()) == []
+
+
+def test_non_identifier_module_value_is_skipped():
+    content = _edge_created(
+        '\t\t\t\tname = "Odd"\n'
+        "\t\t\t\ttype = edge_hull\n"
+        "\t\t\t\tmodules = {\n"
+        "\t\t\t\t\tgun_slot = 2\n"
+        "\t\t\t\t}\n"
+    )
+    assert check_created_variants(content, _edge_index()) == []
+
+
+def test_block_assignment_naming_nothing_is_skipped():
+    content = _edge_created(
+        '\t\t\t\tname = "Odd"\n'
+        "\t\t\t\ttype = edge_hull\n"
+        "\t\t\t\tmodules = {\n"
+        "\t\t\t\t\tgun_slot = { }\n"
+        "\t\t\t\t}\n"
+    )
+    assert check_created_variants(content, _edge_index()) == []
+
+
+def test_parse_variant_names_skips_blocks_missing_a_field():
+    from equipment_module_slots import parse_variant_names
+
+    content = _edge_created("\t\t\t\ttype = edge_hull\n") + _edge_created(
+        '\t\t\t\tname = "Real"\n\t\t\t\ttype = edge_hull\n'
+    )
+    assert [name for _type, name, _line in parse_variant_names(content)] == ["Real"]
+
+
+def test_unreadable_equipment_file_is_skipped(tmp_path, caplog):
+    import logging
+
+    from equipment_module_slots import build_equipment_index
+
+    units = tmp_path / "common" / "units" / "equipment"
+    (units / "broken.txt").mkdir(parents=True)
+    _write(tmp_path, "common/units/equipment/MD_edge.txt", EDGE_HULLS)
+
+    with caplog.at_level(logging.WARNING):
+        index = build_equipment_index(str(units))
+
+    assert "broken.txt" in caplog.text
+    assert "edge_hull" in index.hull_slots
+
+
+# --- count-limit accounting -------------------------------------------------
+
+
+def test_empty_assignment_does_not_charge_a_count_limit():
+    content = _variant("lim_tank_hull_1", "\t\t\t\tgun_slot = empty\n")
+    assert _kinds(content) == []
+
+
+def test_category_reference_charges_the_category_limit():
+    content = _variant(
+        "lim_tank_hull_1",
+        "\t\t\t\tgun_slot = module_light_guns_category\n"
+        "\t\t\t\textra_gun_slot = module_light_guns_category\n",
+    )
+    assert _kinds(content) == ["count_limit_exceeded"]
+
+
+def test_unknown_reference_charges_no_limit():
+    content = _variant("lim_tank_hull_1", "\t\t\t\tgun_slot = not_a_module\n")
+    assert _kinds(content) == ["unknown_module"]

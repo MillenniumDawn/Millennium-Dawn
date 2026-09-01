@@ -4,17 +4,17 @@ import builtins
 import json
 
 import baseline_check
+import pytest
 from report_lib import load_baseline
 from report_lib.baseline import META_FILENAME
 from shared.suite import issue_dict as _issue_dict
 from shared.suite import write_slug_json as _write_sidecar
+from shared.suite import write_text
 
 
 def _write_meta(base, toolshash="h"):
     base.mkdir(parents=True, exist_ok=True)
-    (base / META_FILENAME).write_text(
-        json.dumps({"toolshash": toolshash}), encoding="utf-8"
-    )
+    write_text(base / META_FILENAME, json.dumps({"toolshash": toolshash}))
 
 
 def _previous_with_one_old_error(tmp_path):
@@ -29,6 +29,28 @@ def _identical_previous_and_current(tmp_path):
     current = tmp_path / "current"
     _write_sidecar(current, "events", [_issue_dict("error", message="old")])
     return previous, current
+
+
+def _summary_with_run_url(tmp_path, monkeypatch, run_url, commit=None):
+    previous, current = _identical_previous_and_current(tmp_path)
+    summary_path = tmp_path / "summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_path))
+    argv = [
+        "--previous",
+        str(previous),
+        "--current",
+        str(current),
+        "--output",
+        str(tmp_path / "baseline"),
+        "--toolshash",
+        "h",
+        "--workflow-run-url",
+        run_url,
+    ]
+    if commit:
+        argv.extend(["--commit-sha", commit])
+    assert baseline_check.main(argv) == 0
+    return summary_path.read_text(encoding="utf-8")
 
 
 def _run(
@@ -211,12 +233,40 @@ def test_clean_night_step_summary_confirms_update(tmp_path, monkeypatch):
     assert "✅ No new errors — baseline updated to tonight's results." in summary
 
 
-def test_step_summary_caps_new_findings_lists(tmp_path, monkeypatch):
+def test_header_omits_commit_when_only_the_run_url_is_set(tmp_path, monkeypatch):
+    summary = _summary_with_run_url(tmp_path, monkeypatch, "https://example.test/run/2")
+    assert "**Commit:**" not in summary
+    assert "**Run:** [https://example.test/run/2]" in summary
+
+
+def test_step_summary_includes_the_workflow_run_url(tmp_path, monkeypatch):
+    summary = _summary_with_run_url(
+        tmp_path,
+        monkeypatch,
+        "https://example.test/run/1",
+        commit="abc1234deadbeef",
+    )
+    assert "**Commit:** `abc1234`" in summary
+    assert (
+        "**Run:** [https://example.test/run/1](https://example.test/run/1)" in summary
+    )
+
+
+@pytest.mark.parametrize(
+    ("severity", "filename", "message", "exit_code", "marker"),
+    [
+        ("error", "e.txt", "error", 1, "- ❌ `e.txt:"),
+        ("warning", "w.txt", "warning", 0, "- ⚠️ `w.txt:"),
+    ],
+)
+def test_step_summary_caps_new_issue_lists(
+    tmp_path, monkeypatch, severity, filename, message, exit_code, marker
+):
     previous = tmp_path / "prev"
     _write_meta(previous)
     current = tmp_path / "current"
     issues = [
-        _issue_dict("warning", file="w.txt", line=n, message=f"warning {n}")
+        _issue_dict(severity, file=filename, line=n, message=f"{message} {n}")
         for n in range(1, baseline_check.MAX_LISTED + 2)
     ]
     _write_sidecar(current, "events", issues)
@@ -230,10 +280,10 @@ def test_step_summary_caps_new_findings_lists(tmp_path, monkeypatch):
         summary_path=summary_path,
     )
 
-    assert code == 0
+    assert code == exit_code
     summary = summary_path.read_text(encoding="utf-8")
     assert "_…and 1 more._" in summary
-    assert summary.count("- ⚠️ `w.txt:") == baseline_check.MAX_LISTED
+    assert summary.count(marker) == baseline_check.MAX_LISTED
 
 
 def test_issue_line_renders_fallback_locations():
