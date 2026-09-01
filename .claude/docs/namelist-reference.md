@@ -58,7 +58,7 @@ TAG_FRIGATE_HISTORICAL = {
 
 ### Ship type tokens (canonical — match `common/units/MD_naval_units.txt`)
 
-Valid: `carrier` `helicopter_operator` `destroyer` `stealth_destroyer` `frigate` `stealth_frigate` `corvette` `stealth_corvette` `cruiser` `battle_cruiser` `battleship` `attack_submarine` `missile_submarine`
+Valid: `carrier` `helicopter_operator` `destroyer` `stealth_destroyer` `screen_destroyer` `frigate` `stealth_frigate` `heavy_frigate` `corvette` `stealth_corvette` `patrol_boat` `cruiser` `battle_cruiser` `battleship` `attack_submarine` `missile_submarine`
 
 **Dead vanilla tokens that silently never match** (removed when MD restructured naval units — never use them):
 
