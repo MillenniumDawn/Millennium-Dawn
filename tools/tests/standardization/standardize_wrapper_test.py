@@ -171,7 +171,7 @@ def test_history_subcommand_runs(tmp_path):
     src.write_text(
         "capital = 123\n"
         "2000.1.1 = {\n"
-        "oob = \"TST_2000.txt\"\n"
+        'oob = "TST_2000.txt"\n'
         "set_politics = { ruling_party = democratic elections_allowed = yes }\n"
         "}\n",
         encoding="utf-8",
@@ -186,17 +186,15 @@ def test_localisation_subcommand_with_mod_root(tmp_path):
     out = tmp_path / "tst_out.yml"
     (tmp_path / "localisation").mkdir(parents=True, exist_ok=True)
     (tmp_path / "common").mkdir(parents=True, exist_ok=True)
-    src.write_text("l_english:\n \"x\" : \"y\"\n", encoding="utf-8")
-    result = _run(
-        "localisation", str(src), "-o", str(out), "--mod-root", str(tmp_path)
-    )
+    src.write_text('l_english:\n "x" : "y"\n', encoding="utf-8")
+    result = _run("localisation", str(src), "-o", str(out), "--mod-root", str(tmp_path))
     assert result.returncode == 0
 
 
 def test_localisation_subcommand_no_mod_root_fails(tmp_path):
     src = tmp_path / "lone_l_english.yml"
     src.parent.mkdir(parents=True, exist_ok=True)
-    src.write_text("l_english:\n \"x\" : \"y\"\n", encoding="utf-8")
+    src.write_text('l_english:\n "x" : "y"\n', encoding="utf-8")
     result = _run("localisation", str(src))
     # Either no-detect -> explicit error, or the standardizer exits non-zero.
     assert result.returncode != 0
@@ -231,7 +229,12 @@ def test_main_focus_inline_branch(tmp_path, monkeypatch):
 
     saved = sys.argv[:]
     sys.argv = [
-        "standardize.py", "focus", str(src), "-o", str(tmp_path / "out.txt"), "--backup"
+        "standardize.py",
+        "focus",
+        str(src),
+        "-o",
+        str(tmp_path / "out.txt"),
+        "--backup",
     ]
     try:
         standardize.main()
@@ -271,7 +274,7 @@ def test_main_localisation_returns_one_when_mod_root_missing(tmp_path, monkeypat
 
     src = tmp_path / "orphan.yml"
     src.parent.mkdir(parents=True, exist_ok=True)
-    src.write_text("l_english:\n \"x\" : \"y\"\n", encoding="utf-8")
+    src.write_text('l_english:\n "x" : "y"\n', encoding="utf-8")
     monkeypatch.setattr("standardize._detect_mod_root", lambda path: None)
 
     saved = sys.argv[:]

@@ -196,7 +196,10 @@ def test_main_file_no_args_exits_one(capsys, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["convert_to_legacy_dds.py"])
     with pytest.raises(SystemExit):
         cl.main()
-    assert "usage" in capsys.readouterr().out.lower() or "convert_dds" in capsys.readouterr().out.lower()
+    assert (
+        "usage" in capsys.readouterr().out.lower()
+        or "convert_dds" in capsys.readouterr().out.lower()
+    )
 
 
 def test_main_directory_iterates_and_reports_counts(tmp_path, monkeypatch, capsys):
@@ -221,9 +224,7 @@ def test_main_directory_with_output_root_relocates_files(tmp_path, monkeypatch):
     dst = tmp_path / "out"
     src.mkdir()
     pixels = bytes([5, 6, 7, 255])
-    (src / "rel.dds").write_bytes(
-        _make_dx10_dds(1, 1, cl.DXGI_B8G8R8A8_UNORM, pixels)
-    )
+    (src / "rel.dds").write_bytes(_make_dx10_dds(1, 1, cl.DXGI_B8G8R8A8_UNORM, pixels))
     monkeypatch.setattr(sys, "argv", ["convert_to_legacy_dds.py", str(src), str(dst)])
     cl.main()
     assert (dst / "rel.dds").is_file()
@@ -244,7 +245,9 @@ def test_main_single_file_success_exits_zero(tmp_path, monkeypatch):
     (tmp_path / "only.dds").write_bytes(
         _make_dx10_dds(1, 1, cl.DXGI_B8G8R8A8_UNORM, pixels)
     )
-    monkeypatch.setattr(sys, "argv", ["convert_to_legacy_dds.py", str(tmp_path / "only.dds")])
+    monkeypatch.setattr(
+        sys, "argv", ["convert_to_legacy_dds.py", str(tmp_path / "only.dds")]
+    )
     with pytest.raises(SystemExit) as exit_info:
         cl.main()
     assert exit_info.value.code == 0
@@ -255,7 +258,9 @@ def test_main_single_file_skipped_exits_one(tmp_path, monkeypatch):
     struct.pack_into("<I", header, 0, cl.DDS_MAGIC)
     struct.pack_into("<I", header, 4, 124)
     (tmp_path / "skipped.dds").write_bytes(bytes(header))
-    monkeypatch.setattr(sys, "argv", ["convert_to_legacy_dds.py", str(tmp_path / "skipped.dds")])
+    monkeypatch.setattr(
+        sys, "argv", ["convert_to_legacy_dds.py", str(tmp_path / "skipped.dds")]
+    )
     with pytest.raises(SystemExit) as exit_info:
         cl.main()
     assert exit_info.value.code == 1

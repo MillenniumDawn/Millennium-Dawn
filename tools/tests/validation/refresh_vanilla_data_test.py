@@ -7,7 +7,9 @@ import pytest
 
 @pytest.fixture
 def rvd(monkeypatch):
-    monkeypatch.setattr("shared_utils.find_hoi4_install", lambda explicit_path=None: "/fake/install")
+    monkeypatch.setattr(
+        "shared_utils.find_hoi4_install", lambda explicit_path=None: "/fake/install"
+    )
     import validation.refresh_vanilla_data as module
 
     importlib.reload(module)
@@ -20,9 +22,7 @@ def tmp_manifests(monkeypatch, tmp_path):
     import validation.refresh_vanilla_data as rvd_mod
 
     monkeypatch.setattr(rvd_mod, "_HERE", str(tmp_path))
-    monkeypatch.setattr(
-        rvd_mod, "_DOC_DIR", str(tmp_path / "resources/documentation")
-    )
+    monkeypatch.setattr(rvd_mod, "_DOC_DIR", str(tmp_path / "resources/documentation"))
     return tmp_path
 
 
@@ -39,7 +39,9 @@ def test_main_exits_one_when_no_install(monkeypatch):
 
     importlib.reload(rvd_mod)
     monkeypatch.setattr(rvd_mod, "find_hoi4_install", lambda: None)
-    monkeypatch.setattr("shared_utils.find_hoi4_install", lambda explicit_path=None: None)
+    monkeypatch.setattr(
+        "shared_utils.find_hoi4_install", lambda explicit_path=None: None
+    )
 
     import sys as _sys
 
@@ -87,9 +89,7 @@ def test_main_only_runs_requested_targets(monkeypatch, tmp_path):
 
     import sys as _sys
 
-    monkeypatch.setattr(
-        _sys, "argv", ["refresh_vanilla_data.py", "--only", "sprites"]
-    )
+    monkeypatch.setattr(_sys, "argv", ["refresh_vanilla_data.py", "--only", "sprites"])
     rc = rvd_mod.main()
 
     assert rc == 0
@@ -109,9 +109,7 @@ def test_main_returns_one_when_target_fails(monkeypatch, tmp_path, capsys):
 
     import sys as _sys
 
-    monkeypatch.setattr(
-        _sys, "argv", ["refresh_vanilla_data.py", "--only", "defines"]
-    )
+    monkeypatch.setattr(_sys, "argv", ["refresh_vanilla_data.py", "--only", "defines"])
     rc = rvd_mod.main()
 
     captured = capsys.readouterr()
@@ -150,7 +148,9 @@ def test_refresh_defines_raises_when_missing(monkeypatch):
 def test_refresh_gui_writes_basename_manifest(monkeypatch, tmp_manifests):
     import validation.refresh_vanilla_data as rvd_mod
 
-    monkeypatch.setattr(rvd_mod, "_vanilla_gui_files", lambda: ["/x/main.gui", "/y/sub.gui"])
+    monkeypatch.setattr(
+        rvd_mod, "_vanilla_gui_files", lambda: ["/x/main.gui", "/y/sub.gui"]
+    )
     summary = rvd_mod._refresh_gui()
     assert summary.startswith("vanilla_gui_files.txt:")
 
@@ -171,7 +171,9 @@ def test_refresh_sprites_writes_manifest(monkeypatch, tmp_manifests):
     import validation.refresh_vanilla_data as rvd_mod
 
     monkeypatch.setattr(rvd_mod, "_vanilla_gfx_files", lambda: ["/x/events.gfx"])
-    monkeypatch.setattr(rvd_mod, "_read_raw", lambda p: "raw content" if "events" in p else None)
+    monkeypatch.setattr(
+        rvd_mod, "_read_raw", lambda p: "raw content" if "events" in p else None
+    )
     monkeypatch.setattr(
         rvd_mod,
         "sprite_names_from_gfx_text",
@@ -188,8 +190,12 @@ def test_refresh_sprites_writes_manifest(monkeypatch, tmp_manifests):
 def test_refresh_sprites_skips_unreadable_gfx(monkeypatch, tmp_manifests):
     import validation.refresh_vanilla_data as rvd_mod
 
-    monkeypatch.setattr(rvd_mod, "_vanilla_gfx_files", lambda: ["/x/events.gfx", "/y/bad.gfx"])
-    monkeypatch.setattr(rvd_mod, "_read_raw", lambda p: "raw content" if "events" in p else None)
+    monkeypatch.setattr(
+        rvd_mod, "_vanilla_gfx_files", lambda: ["/x/events.gfx", "/y/bad.gfx"]
+    )
+    monkeypatch.setattr(
+        rvd_mod, "_read_raw", lambda p: "raw content" if "events" in p else None
+    )
     monkeypatch.setattr(
         rvd_mod,
         "sprite_names_from_gfx_text",
@@ -206,9 +212,7 @@ def test_refresh_fonts_writes_manifest(monkeypatch, tmp_manifests):
 
     monkeypatch.setattr(rvd_mod, "_vanilla_gfx_files", lambda: ["/x/fonts.gfx"])
     monkeypatch.setattr(rvd_mod, "_read_raw", lambda p: "raw content")
-    monkeypatch.setattr(
-        rvd_mod, "font_names_from_gfx_text", lambda raw: {"TestFont"}
-    )
+    monkeypatch.setattr(rvd_mod, "font_names_from_gfx_text", lambda raw: {"TestFont"})
 
     summary = rvd_mod._refresh_fonts()
     assert summary.startswith("vanilla_fonts.txt:")

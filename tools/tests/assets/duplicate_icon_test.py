@@ -30,7 +30,9 @@ class _FakeFile(io.StringIO):
     pass
 
 
-def test_main_counts_and_prints_only_duplicate_icon_lines(tmp_path, monkeypatch, capsys):
+def test_main_counts_and_prints_only_duplicate_icon_lines(
+    tmp_path, monkeypatch, capsys
+):
     fake_path = tmp_path / "turkey.txt"
     content = (
         "focus = {\n"
@@ -76,12 +78,7 @@ def test_main_returns_zero_when_no_duplicates(tmp_path, monkeypatch, capsys):
 
 
 def test_main_is_case_insensitive_across_repeated_lines(tmp_path, monkeypatch, capsys):
-    content = (
-        "focus = {\n"
-        "    icon = GFX_alpha\n"
-        "    ICON = gfx_alpha\n"
-        "}\n"
-    )
+    content = "focus = {\n" "    icon = GFX_alpha\n" "    ICON = gfx_alpha\n" "}\n"
     monkeypatch.setattr("builtins.open", lambda *a, **kw: io.StringIO(content))
     monkeypatch.setattr(sys, "argv", ["duplicate_icon.py", "x.txt"])
     di.main()

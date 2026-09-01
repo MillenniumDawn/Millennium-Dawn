@@ -24,8 +24,17 @@ def write_text(path: Path, content: str) -> None:
 # ─── Helpers ────────────────────────────────────────────────────────────────────
 
 
-def _state(state_id, manpower, owner, prod, buildings=None, vp=None,
-           landmark=None, spaceport=False, capital=False):
+def _state(
+    state_id,
+    manpower,
+    owner,
+    prod,
+    buildings=None,
+    vp=None,
+    landmark=None,
+    spaceport=False,
+    capital=False,
+):
     buildings = buildings or {}
     lines = [
         "state = {",
@@ -59,23 +68,40 @@ def redist_mini_repo(mini_repo):
     with identical productivity to test redistribution."""
     write_text(
         mini_repo / "history" / "states" / "5-Capital.txt",
-        _state(state_id=5, manpower=1_000_000, owner="TST", prod=1000,
-               vp=10, landmark="parliament", buildings={"industrial_complex": 8, "offices": 3}),
+        _state(
+            state_id=5,
+            manpower=1_000_000,
+            owner="TST",
+            prod=1000,
+            vp=10,
+            landmark="parliament",
+            buildings={"industrial_complex": 8, "offices": 3},
+        ),
     )
     write_text(
         mini_repo / "history" / "states" / "10-Ind.txt",
-        _state(state_id=10, manpower=1_000_000, owner="TST", prod=1000,
-               vp=5, buildings={"industrial_complex": 6, "arms_factory": 2}),
+        _state(
+            state_id=10,
+            manpower=1_000_000,
+            owner="TST",
+            prod=1000,
+            vp=5,
+            buildings={"industrial_complex": 6, "arms_factory": 2},
+        ),
     )
     write_text(
         mini_repo / "history" / "states" / "20-Rural.txt",
-        _state(state_id=20, manpower=1_000_000, owner="TST", prod=1000,
-               buildings={"agriculture_district": 1}),
+        _state(
+            state_id=20,
+            manpower=1_000_000,
+            owner="TST",
+            prod=1000,
+            buildings={"agriculture_district": 1},
+        ),
     )
     write_text(
         mini_repo / "history" / "states" / "30-Single.txt",
-        _state(state_id=30, manpower=500_000, owner="ONE", prod=999,
-               vp=2),
+        _state(state_id=30, manpower=500_000, owner="ONE", prod=999, vp=2),
     )
     # Country history: TST capital = state 5.
     write_text(
@@ -151,8 +177,14 @@ class TestLoadAllStates:
             "state = { id = 99 manpower = 1 }\n",
         )
         by_owner = mod.load_all_states()
-        assert all(s["owner"] for owner_states in by_owner.values() for s in owner_states)
-        assert all(s["id"] is not None for owner_states in by_owner.values() for s in owner_states)
+        assert all(
+            s["owner"] for owner_states in by_owner.values() for s in owner_states
+        )
+        assert all(
+            s["id"] is not None
+            for owner_states in by_owner.values()
+            for s in owner_states
+        )
 
     def test_state_extras_attached(self, import_redistribute, redist_mini_repo):
         mod = import_redistribute
@@ -179,8 +211,12 @@ class TestComputeScore:
     def test_capital_boost(self, import_redistribute):
         mod = import_redistribute
         state = {
-            "vp_sum": 0, "has_landmark": False, "has_spaceport": False,
-            "buildings": {}, "manpower": 1_000_000, "id": 1,
+            "vp_sum": 0,
+            "has_landmark": False,
+            "has_spaceport": False,
+            "buildings": {},
+            "manpower": 1_000_000,
+            "id": 1,
         }
         assert mod.compute_score(state, is_capital=True) == pytest.approx(1.25)
         assert mod.compute_score(state, is_capital=False) == pytest.approx(1.0)
@@ -188,21 +224,38 @@ class TestComputeScore:
     def test_landmark_and_spaceport_boost(self, import_redistribute):
         mod = import_redistribute
         base = {"vp_sum": 0, "buildings": {}, "manpower": 1_000_000, "id": 1}
-        assert mod.compute_score({**base, "has_landmark": True, "has_spaceport": False}) == pytest.approx(1.35)
-        assert mod.compute_score({**base, "has_landmark": False, "has_spaceport": True}) == pytest.approx(1.25)
-        assert mod.compute_score({**base, "has_landmark": True, "has_spaceport": True}) == pytest.approx(1.35 * 1.25)
+        assert mod.compute_score(
+            {**base, "has_landmark": True, "has_spaceport": False}
+        ) == pytest.approx(1.35)
+        assert mod.compute_score(
+            {**base, "has_landmark": False, "has_spaceport": True}
+        ) == pytest.approx(1.25)
+        assert mod.compute_score(
+            {**base, "has_landmark": True, "has_spaceport": True}
+        ) == pytest.approx(1.35 * 1.25)
 
     def test_vp_boost_saturates_at_25(self, import_redistribute):
         mod = import_redistribute
-        state = {"vp_sum": 100, "has_landmark": False, "has_spaceport": False,
-                 "buildings": {}, "manpower": 1_000_000, "id": 1}
+        state = {
+            "vp_sum": 100,
+            "has_landmark": False,
+            "has_spaceport": False,
+            "buildings": {},
+            "manpower": 1_000_000,
+            "id": 1,
+        }
         # 1.40 + 0.04 * min(100, 25) = 1.40 + 1.00 = 2.40
         assert mod.compute_score(state) == pytest.approx(2.40)
 
     def test_factory_cap_at_twelve(self, import_redistribute):
         mod = import_redistribute
-        base = {"vp_sum": 0, "has_landmark": False, "has_spaceport": False,
-                "manpower": 1_000_000, "id": 1}
+        base = {
+            "vp_sum": 0,
+            "has_landmark": False,
+            "has_spaceport": False,
+            "manpower": 1_000_000,
+            "id": 1,
+        }
         # 12 factories → 1.0 + 0.04 * 12 = 1.48
         b12 = dict(base, buildings={"industrial_complex": 12})
         # 50 factories → cap kicks in at 12 → also 1.48
@@ -211,10 +264,18 @@ class TestComputeScore:
 
     def test_dockyard_boost_when_present(self, import_redistribute):
         mod = import_redistribute
-        state_no = {"vp_sum": 0, "has_landmark": False, "has_spaceport": False,
-                    "buildings": {}, "manpower": 1_000_000, "id": 1}
+        state_no = {
+            "vp_sum": 0,
+            "has_landmark": False,
+            "has_spaceport": False,
+            "buildings": {},
+            "manpower": 1_000_000,
+            "id": 1,
+        }
         state_yes = dict(state_no, buildings={"dockyard": 1})
-        assert mod.compute_score(state_yes) == pytest.approx(mod.compute_score(state_no) * 1.25)
+        assert mod.compute_score(state_yes) == pytest.approx(
+            mod.compute_score(state_no) * 1.25
+        )
 
 
 # ─── redistribute ──────────────────────────────────────────────────────────────
@@ -223,8 +284,17 @@ class TestComputeScore:
 class TestRedistribute:
     def test_zero_target_weighted_passthrough(self, import_redistribute):
         mod = import_redistribute
-        states = [{"id": 1, "manpower": 100, "productivity": 0, "buildings": {}, "vp_sum": 0,
-                   "has_landmark": False, "has_spaceport": False}]
+        states = [
+            {
+                "id": 1,
+                "manpower": 100,
+                "productivity": 0,
+                "buildings": {},
+                "vp_sum": 0,
+                "has_landmark": False,
+                "has_spaceport": False,
+            }
+        ]
         plan = mod.redistribute(states)
         # Zero weighted target → no change.
         assert plan == [(states[0], 0, 0)]
@@ -233,7 +303,9 @@ class TestRedistribute:
         mod = import_redistribute
         assert mod.redistribute([]) == []
 
-    def test_pop_weighted_total_is_preserved(self, import_redistribute, redist_mini_repo):
+    def test_pop_weighted_total_is_preserved(
+        self, import_redistribute, redist_mini_repo
+    ):
         mod = import_redistribute
         by_owner = mod.load_all_states()
         tst_states = by_owner["TST"]
@@ -258,8 +330,15 @@ class TestRedistribute:
         # bisection-driven output still pins at the ceil when scores are
         # equal and the target is at the maximum feasible scale.
         states = [
-            {"id": i, "manpower": 100, "productivity": 1, "buildings": {}, "vp_sum": 0,
-             "has_landmark": False, "has_spaceport": False}
+            {
+                "id": i,
+                "manpower": 100,
+                "productivity": 1,
+                "buildings": {},
+                "vp_sum": 0,
+                "has_landmark": False,
+                "has_spaceport": False,
+            }
             for i in (1, 2, 3)
         ]
         # With productivity=1 everywhere, pop_w_mean = 1, ceil = 2. The
@@ -277,8 +356,15 @@ class TestRedistribute:
         # Make target_weighted *so* small that even the minimum floor can't
         # accommodate it — this exercises the "pin all at floor" early exit.
         states = [
-            {"id": i, "manpower": 100, "productivity": 1000, "buildings": {}, "vp_sum": 0,
-             "has_landmark": False, "has_spaceport": False}
+            {
+                "id": i,
+                "manpower": 100,
+                "productivity": 1000,
+                "buildings": {},
+                "vp_sum": 0,
+                "has_landmark": False,
+                "has_spaceport": False,
+            }
             for i in (1, 2, 3)
         ]
         # All three states at productivity 1 → target_weighted = 300.
@@ -299,10 +385,24 @@ class TestRedistribute:
         # Two identical states with high productivity: bisection may round to
         # within 2 of the current value, in which case snap kicks in.
         states = [
-            {"id": 1, "manpower": 100, "productivity": 500, "buildings": {}, "vp_sum": 0,
-             "has_landmark": False, "has_spaceport": False},
-            {"id": 2, "manpower": 100, "productivity": 500, "buildings": {}, "vp_sum": 0,
-             "has_landmark": False, "has_spaceport": False},
+            {
+                "id": 1,
+                "manpower": 100,
+                "productivity": 500,
+                "buildings": {},
+                "vp_sum": 0,
+                "has_landmark": False,
+                "has_spaceport": False,
+            },
+            {
+                "id": 2,
+                "manpower": 100,
+                "productivity": 500,
+                "buildings": {},
+                "vp_sum": 0,
+                "has_landmark": False,
+                "has_spaceport": False,
+            },
         ]
         plan = mod.redistribute(states)
         # All new values must be within ±2 of the originals, since the target
@@ -339,7 +439,9 @@ class TestRewriteState:
         state = {"filepath": str(mini_repo / "history" / "states" / "51.txt"), "id": 51}
         assert mod.rewrite_state(state, 777) is False
 
-    def test_missing_productivity_var_returns_false(self, import_redistribute, mini_repo):
+    def test_missing_productivity_var_returns_false(
+        self, import_redistribute, mini_repo
+    ):
         mod = import_redistribute
         write_text(
             mini_repo / "history" / "states" / "52.txt",
@@ -374,7 +476,9 @@ class TestSelectTags:
         # No African tag in our fixture; result must be empty.
         assert mod.select_tags(args, by_owner) == []
 
-    def test_continent_with_unknown_name_exits_2(self, import_redistribute, redist_mini_repo, capsys, monkeypatch):
+    def test_continent_with_unknown_name_exits_2(
+        self, import_redistribute, redist_mini_repo, capsys, monkeypatch
+    ):
         mod = import_redistribute
         monkeypatch.setattr(sys, "argv", ["rp.py", "--continent", "atlantis"])
         with pytest.raises(SystemExit) as exc:
@@ -382,10 +486,14 @@ class TestSelectTags:
         assert exc.value.code == 2
         assert "unknown continent" in capsys.readouterr().err
 
-    def test_tag_and_skip_filters(self, import_redistribute, redist_mini_repo, monkeypatch):
+    def test_tag_and_skip_filters(
+        self, import_redistribute, redist_mini_repo, monkeypatch
+    ):
         mod = import_redistribute
         # Patch the continent table so our TST fixture is selectable via --tag.
-        monkeypatch.setitem(mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"])
+        monkeypatch.setitem(
+            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
+        )
         mod.TAG_TO_CONTINENT["TST"] = "europe"
         by_owner = mod.load_all_states()
         args = mod.argparse.Namespace(
@@ -414,10 +522,14 @@ class TestSelectTags:
 
 
 class TestCliMain:
-    def test_dry_run_no_writes(self, import_redistribute, redist_mini_repo, capsys, monkeypatch):
+    def test_dry_run_no_writes(
+        self, import_redistribute, redist_mini_repo, capsys, monkeypatch
+    ):
         mod = import_redistribute
         # Patch the continent table so our TST fixture is selectable via --tag.
-        monkeypatch.setitem(mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"])
+        monkeypatch.setitem(
+            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
+        )
         mod.TAG_TO_CONTINENT["TST"] = "europe"
         monkeypatch.setattr(sys, "argv", ["rp.py", "--tag", "TST"])
         mod.main()
@@ -430,9 +542,13 @@ class TestCliMain:
             # Each state has the original value 1000 or 999 (one-state fixture).
             assert "1000" in text or "999" in text
 
-    def test_write_modifies_files(self, import_redistribute, redist_mini_repo, capsys, monkeypatch):
+    def test_write_modifies_files(
+        self, import_redistribute, redist_mini_repo, capsys, monkeypatch
+    ):
         mod = import_redistribute
-        monkeypatch.setitem(mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"])
+        monkeypatch.setitem(
+            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
+        )
         mod.TAG_TO_CONTINENT["TST"] = "europe"
         monkeypatch.setattr(sys, "argv", ["rp.py", "--write", "--tag", "TST"])
         mod.main()
@@ -449,9 +565,13 @@ class TestCliMain:
         # TST has 3 states — at least one should have moved.
         assert any(name.startswith(("5-", "10-", "20-")) for name in changed)
 
-    def test_report_runs_gdp_delta(self, import_redistribute, redist_mini_repo, capsys, monkeypatch):
+    def test_report_runs_gdp_delta(
+        self, import_redistribute, redist_mini_repo, capsys, monkeypatch
+    ):
         mod = import_redistribute
-        monkeypatch.setitem(mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"])
+        monkeypatch.setitem(
+            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
+        )
         mod.TAG_TO_CONTINENT["TST"] = "europe"
         monkeypatch.setattr(sys, "argv", ["rp.py", "--report", "--tag", "TST"])
         mod.main()
@@ -460,23 +580,32 @@ class TestCliMain:
         assert "GDP" in captured.out
         assert "Δ%" in captured.out
 
-    def test_gdp_tolerance_zero_preserves_pass(self, import_redistribute, redist_mini_repo, capsys, monkeypatch):
+    def test_gdp_tolerance_zero_preserves_pass(
+        self, import_redistribute, redist_mini_repo, capsys, monkeypatch
+    ):
         mod = import_redistribute
-        monkeypatch.setitem(mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"])
+        monkeypatch.setitem(
+            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
+        )
         mod.TAG_TO_CONTINENT["TST"] = "europe"
         # The fixture's redistribute preserves pop-weighted totals exactly
         # (drift ≤ snap tolerance), so even a 0.0 GDP tolerance succeeds.
-        monkeypatch.setattr(sys, "argv",
-                            ["rp.py", "--report", "--tag", "TST", "--gdp-tolerance", "0.0"])
+        monkeypatch.setattr(
+            sys, "argv", ["rp.py", "--report", "--tag", "TST", "--gdp-tolerance", "0.0"]
+        )
         mod.main()
         captured = capsys.readouterr()
         assert "TST" in captured.out
         # No violation summary printed.
         assert "GDP DELTA VIOLATIONS" not in captured.err
 
-    def test_idempotent_run_under_writes(self, import_redistribute, redist_mini_repo, capsys, monkeypatch):
+    def test_idempotent_run_under_writes(
+        self, import_redistribute, redist_mini_repo, capsys, monkeypatch
+    ):
         mod = import_redistribute
-        monkeypatch.setitem(mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"])
+        monkeypatch.setitem(
+            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
+        )
         mod.TAG_TO_CONTINENT["TST"] = "europe"
         monkeypatch.setattr(sys, "argv", ["rp.py", "--write", "--tag", "TST"])
         mod.main()
@@ -513,7 +642,9 @@ class TestMisc:
             for tag in tags:
                 assert mod.TAG_TO_CONTINENT[tag] == cont
 
-    def test_pop_weighted_drift_warning(self, import_redistribute, mini_repo, capsys, monkeypatch):
+    def test_pop_weighted_drift_warning(
+        self, import_redistribute, mini_repo, capsys, monkeypatch
+    ):
         mod = import_redistribute
         # Build a synthetic TST with extreme scoring disparity: 1 high-VP
         # state + 2 zero-VP states; the high-VP state hits the ceil cap,
@@ -521,9 +652,17 @@ class TestMisc:
         for sid, vp in ((1, 50), (2, 0), (3, 0)):
             write_text(
                 mini_repo / "history" / "states" / f"{sid}.txt",
-                _state(state_id=sid, manpower=100, owner="AAA", prod=500, vp=vp if vp else None),
+                _state(
+                    state_id=sid,
+                    manpower=100,
+                    owner="AAA",
+                    prod=500,
+                    vp=vp if vp else None,
+                ),
             )
-        write_text(mini_repo / "history" / "countries" / "AAA - Test.txt", "capital = 1\n")
+        write_text(
+            mini_repo / "history" / "countries" / "AAA - Test.txt", "capital = 1\n"
+        )
         monkeypatch.setattr(sys, "argv", ["rp.py", "--tag", "TST"])
         mod.main()
         # The drift warning is printed to stderr when any country's drift > 0.5%.

@@ -53,8 +53,8 @@ def test_extract_texture_definitions_returns_path_line_and_match(tmp_path):
     body = (
         "spriteTypes = {\n"
         "    spriteType = {\n"
-        "        name = \"GFX_one\"\n"
-        "        textureFile = \"gfx/one.dds\"\n"
+        '        name = "GFX_one"\n'
+        '        textureFile = "gfx/one.dds"\n'
         "    }\n"
         "}\n"
     )
@@ -93,7 +93,9 @@ def test_extract_texture_definitions_handles_multiple_texturefile_per_file(tmp_p
 # --- find_duplicate_textures ----------------------------------------------
 
 
-def test_find_duplicate_textures_skips_goals_shine_and_modding_resources(tmp_path, capsys):
+def test_find_duplicate_textures_skips_goals_shine_and_modding_resources(
+    tmp_path, capsys
+):
     _write_gfx(
         tmp_path,
         "goals_shine.gfx",
@@ -139,14 +141,22 @@ def test_find_duplicate_textures_groups_by_texture_path(tmp_path):
 
 
 def test_find_duplicate_textures_no_results_returns_empty(tmp_path):
-    _write_gfx(tmp_path, "a.gfx", 'spriteType = { name = "GFX_a" textureFile = "gfx/a.dds" }\n')
-    _write_gfx(tmp_path, "b.gfx", 'spriteType = { name = "GFX_b" textureFile = "gfx/b.dds" }\n')
+    _write_gfx(
+        tmp_path, "a.gfx", 'spriteType = { name = "GFX_a" textureFile = "gfx/a.dds" }\n'
+    )
+    _write_gfx(
+        tmp_path, "b.gfx", 'spriteType = { name = "GFX_b" textureFile = "gfx/b.dds" }\n'
+    )
     dupes = fdt.find_duplicate_textures(str(tmp_path))
     assert dupes == {}
 
 
-def test_find_duplicate_textures_walks_through_ioerror_in_one_file(tmp_path, monkeypatch, capsys):
-    _write_gfx(tmp_path, "good.gfx", 'spriteType = { name = "G" textureFile = "gfx/g.dds" }\n')
+def test_find_duplicate_textures_walks_through_ioerror_in_one_file(
+    tmp_path, monkeypatch, capsys
+):
+    _write_gfx(
+        tmp_path, "good.gfx", 'spriteType = { name = "G" textureFile = "gfx/g.dds" }\n'
+    )
     real_extract = fdt.extract_texture_definitions
 
     def maybe_fail(path):
@@ -204,7 +214,9 @@ def test_print_results_uses_optional_output_stream(capsys):
 # --- main() ---------------------------------------------------------------
 
 
-def test_main_writes_timestamped_report_and_prints_results(tmp_path, monkeypatch, capsys):
+def test_main_writes_timestamped_report_and_prints_results(
+    tmp_path, monkeypatch, capsys
+):
     _write_gfx(
         tmp_path,
         "a.gfx",
@@ -246,6 +258,8 @@ def test_main_with_no_duplicates_writes_clean_report(tmp_path, monkeypatch, caps
 
 
 def test_main_exits_nonzero_on_missing_directory(monkeypatch):
-    monkeypatch.setattr(sys, "argv", ["find_duplicate_textures.py", "/no/such/dir/here"])
+    monkeypatch.setattr(
+        sys, "argv", ["find_duplicate_textures.py", "/no/such/dir/here"]
+    )
     with pytest.raises(SystemExit):
         fdt.main()

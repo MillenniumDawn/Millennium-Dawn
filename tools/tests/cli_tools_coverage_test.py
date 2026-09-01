@@ -275,9 +275,9 @@ class TestAssignMioIcons:
 
         self._run(monkeypatch, tmp_path, gfx, str(mio), "--write")
 
-        assert "icon = GFX_generic_mio_trait_icon_smallarms" in mio.read_text(), (
-            "the family sprite exists, so the unique fallback must not win"
-        )
+        assert (
+            "icon = GFX_generic_mio_trait_icon_smallarms" in mio.read_text()
+        ), "the family sprite exists, so the unique fallback must not win"
 
     def test_write_falls_back_to_unique_when_no_sprite_matches(
         self, tmp_path, monkeypatch

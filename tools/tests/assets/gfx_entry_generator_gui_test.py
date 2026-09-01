@@ -123,7 +123,9 @@ def gui_module(monkeypatch):
         return fake_gui
 
     setattr(fake_tkinter, "Tk", _tk_factory)
-    setattr(fake_tkinter, "Canvas", lambda *args, **kwargs: _FakeCanvas(*args, **kwargs))
+    setattr(
+        fake_tkinter, "Canvas", lambda *args, **kwargs: _FakeCanvas(*args, **kwargs)
+    )
     setattr(fake_tkinter, "PhotoImage", lambda *args, **kwargs: "PhotoImageStub")
     setattr(fake_tkinter, "IntVar", lambda *args, **kwargs: fake_selection)
     setattr(fake_tkinter, "NW", "nw")
@@ -193,7 +195,9 @@ def test_main_routes_radio_1_to_generate_goals(gui_module, tmp_path, monkeypatch
         "generate_goals",
         lambda root, gfxbool=None: captured.append(("goals", root, gfxbool)),
     )
-    monkeypatch.setattr(geg, "generate_event_pictures", lambda *_: captured.append(("events",)))
+    monkeypatch.setattr(
+        geg, "generate_event_pictures", lambda *_: captured.append(("events",))
+    )
     monkeypatch.setattr(geg, "generate_ideas", lambda *_: captured.append(("ideas",)))
 
     gui_module.selection.set(1)
@@ -205,10 +209,14 @@ def test_main_routes_radio_2_and_3(gui_module, monkeypatch):
     captured = []
     monkeypatch.setattr(geg, "generate_goals", lambda *_: captured.append("goals"))
     monkeypatch.setattr(
-        geg, "generate_event_pictures", lambda *_: captured.append(("events", gui_module.module.MOD_ROOT))
+        geg,
+        "generate_event_pictures",
+        lambda *_: captured.append(("events", gui_module.module.MOD_ROOT)),
     )
     monkeypatch.setattr(
-        geg, "generate_ideas", lambda *_: captured.append(("ideas", gui_module.module.MOD_ROOT))
+        geg,
+        "generate_ideas",
+        lambda *_: captured.append(("ideas", gui_module.module.MOD_ROOT)),
     )
 
     gui_module.selection.set(2)
@@ -221,7 +229,9 @@ def test_main_routes_radio_2_and_3(gui_module, monkeypatch):
     assert captured == [("ideas", gui_module.module.MOD_ROOT)]
 
 
-def test_main_with_unparseable_selection_swallows_silently(gui_module, monkeypatch, capsys):
+def test_main_with_unparseable_selection_swallows_silently(
+    gui_module, monkeypatch, capsys
+):
     # Anything that int() rejects should leave the captured calls empty and
     # not surface an exception — matches the GUI's "ignore invalid clicks" policy.
     gui_module.selection.set("not-a-number")

@@ -62,7 +62,7 @@ def test_rewrite_line_replaces_innermost_span_first():
 def test_rewrite_line_handles_two_spans_on_one_line():
     from fix_log_ids import _rewrite_line
 
-    line = "log = \"[GetDateText]: Focus OLD_X and OLD_Y\""
+    line = 'log = "[GetDateText]: Focus OLD_X and OLD_Y"'
     # Rightmost-first ensures earlier offsets remain valid after replacement.
     out = _rewrite_line(line, [(34, 39, "NEW_Y"), (24, 29, "NEW_X")])
     assert "NEW_X" in out
@@ -83,7 +83,7 @@ def test_apply_rewrites_focus_log_token(tmp_path):
             "    id = TST_correct_focus\n"
             "    focus = {\n"
             "        id = TST_correct_focus\n"
-            "        log = \"[GetDateText]: [Root.GetName]: Focus TST_wrong_focus\"\n"
+            '        log = "[GetDateText]: [Root.GetName]: Focus TST_wrong_focus"\n'
             "    }\n"
             "}\n"
         ),
@@ -93,7 +93,7 @@ def test_apply_rewrites_focus_log_token(tmp_path):
     assert path == str(focus)
     assert count == 1
     body = focus.read_text(encoding="utf-8")
-    assert "Focus TST_correct_focus\"" in body
+    assert 'Focus TST_correct_focus"' in body
     assert "TST_wrong_focus" not in body
 
 
@@ -107,7 +107,7 @@ def test_apply_dry_run_does_not_write(tmp_path):
         "    id = TST_dry_focus\n"
         "    focus = {\n"
         "        id = TST_dry_focus\n"
-        "        log = \"[GetDateText]: [Root.GetName]: Focus TST_other\"\n"
+        '        log = "[GetDateText]: [Root.GetName]: Focus TST_other"\n'
         "    }\n"
         "}\n"
     )
@@ -131,7 +131,7 @@ def test_apply_returns_zero_when_no_mismatch(tmp_path):
             "    id = TST_clean\n"
             "    focus = {\n"
             "        id = TST_clean\n"
-            "        log = \"[GetDateText]: [Root.GetName]: Focus TST_clean\"\n"
+            '        log = "[GetDateText]: [Root.GetName]: Focus TST_clean"\n'
             "    }\n"
             "}\n"
         ),
@@ -161,7 +161,7 @@ def test_apply_rewrites_decision_log_token(tmp_path):
         (
             "TAG_decisions = {\n"
             "    TAG_test_decision = {\n"
-            "        log = \"[GetDateText]: [Root.GetName]: Decision TAG_other_decision\"\n"
+            '        log = "[GetDateText]: [Root.GetName]: Decision TAG_other_decision"\n'
             "        allowed = { always = yes }\n"
             "    }\n"
             "}\n"
@@ -170,7 +170,7 @@ def test_apply_rewrites_decision_log_token(tmp_path):
     _, count = fix_file(str(dec))
     assert count == 1
     body = dec.read_text(encoding="utf-8")
-    assert "Decision TAG_test_decision\"" in body
+    assert 'Decision TAG_test_decision"' in body
 
 
 def test_apply_read_failure_returns_zero(tmp_path, monkeypatch):
@@ -224,7 +224,7 @@ def test_cli_writes_fix_when_target_is_repo_root(tmp_path):
         "    id = TST_log_id_fix\n"
         "    focus = {\n"
         "        id = TST_log_id_fix\n"
-        "        log = \"[GetDateText]: [Root.GetName]: Focus TST_other_id\"\n"
+        '        log = "[GetDateText]: [Root.GetName]: Focus TST_other_id"\n'
         "    }\n"
         "}\n"
     )
@@ -234,6 +234,6 @@ def test_cli_writes_fix_when_target_is_repo_root(tmp_path):
         assert result.returncode == 0
         body = target.read_text(encoding="utf-8")
         assert "TST_other_id" not in body
-        assert "Focus TST_log_id_fix\"" in body
+        assert 'Focus TST_log_id_fix"' in body
     finally:
         target.unlink(missing_ok=True)

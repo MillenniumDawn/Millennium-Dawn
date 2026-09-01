@@ -150,8 +150,6 @@ class TestIterReadableFiles:
         search.mkdir()
         (search / "x.txt").write_text("a\n", encoding="utf-8")
         (search / "y.yml").write_text("b: 1\n", encoding="utf-8")
-        results = list(
-            _shared.iter_readable_files([search], ("*.txt", "*.yml"))
-        )
+        results = list(_shared.iter_readable_files([search], ("*.txt", "*.yml")))
         names = sorted(p.suffix for p, _ in results)
         assert names == [".txt", ".yml"]

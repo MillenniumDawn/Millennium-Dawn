@@ -50,7 +50,7 @@ def state_a_text() -> str:
     return (
         "state = {\n"
         "\tid = 100\n"
-        "\tname = \"STATE_TEST_A\"\n"
+        '\tname = "STATE_TEST_A"\n'
         "\tmanpower = 1500000\n"
         "\tstate_category = state_03\n"
         "\n"
@@ -73,7 +73,7 @@ def state_b_text() -> str:
     return (
         "state = {\n"
         "\tid = 200\n"
-        "\tname = \"STATE_TEST_B\"\n"
+        '\tname = "STATE_TEST_B"\n'
         "\tmanpower = 800000\n"
         "\tstate_category = state_02\n"
         "\n"
@@ -144,7 +144,9 @@ def populated_mini_repo(
     write_text(mini_repo / "history" / "states" / "100-A.txt", state_a_text)
     write_text(mini_repo / "history" / "states" / "200-B.txt", state_b_text)
     write_text(mini_repo / "history" / "countries" / "TST - Test.txt", country_tst_text)
-    write_text(mini_repo / "common" / "ideas" / "00_test_ideas.txt", idea_high_health_text)
+    write_text(
+        mini_repo / "common" / "ideas" / "00_test_ideas.txt", idea_high_health_text
+    )
     return mini_repo
 
 
@@ -163,9 +165,15 @@ def import_estimate_gdp(monkeypatch, mini_repo: Path):
     sys.modules.pop("estimate_gdp", None)
     mod = importlib.import_module("estimate_gdp")
     monkeypatch.setattr(mod, "BASE_DIR", str(mini_repo), raising=False)
-    monkeypatch.setattr(mod, "STATES_DIR", str(mini_repo / "history" / "states"), raising=False)
-    monkeypatch.setattr(mod, "COUNTRIES_DIR", str(mini_repo / "history" / "countries"), raising=False)
-    monkeypatch.setattr(mod, "IDEAS_DIR", str(mini_repo / "common" / "ideas"), raising=False)
+    monkeypatch.setattr(
+        mod, "STATES_DIR", str(mini_repo / "history" / "states"), raising=False
+    )
+    monkeypatch.setattr(
+        mod, "COUNTRIES_DIR", str(mini_repo / "history" / "countries"), raising=False
+    )
+    monkeypatch.setattr(
+        mod, "IDEAS_DIR", str(mini_repo / "common" / "ideas"), raising=False
+    )
     return mod
 
 
@@ -183,7 +191,9 @@ def import_pre_place(import_estimate_gdp, monkeypatch, mini_repo: Path):
     mod = importlib.import_module("pre_place_power_plants")
     # pre_place reads COMPOSITE_SEED_CSV relative to its own __file__; rewrite
     # it to a tmp file we'll create in each test as needed.
-    monkeypatch.setattr(mod, "COMPOSITE_SEED_CSV", str(mini_repo / "seeds.csv"), raising=False)
+    monkeypatch.setattr(
+        mod, "COMPOSITE_SEED_CSV", str(mini_repo / "seeds.csv"), raising=False
+    )
     return mod
 
 
@@ -196,5 +206,7 @@ def import_redistribute(import_estimate_gdp, monkeypatch, mini_repo: Path):
     monkeypatch.syspath_prepend(tools_dir)
     sys.modules.pop("redistribute_productivity", None)
     mod = importlib.import_module("redistribute_productivity")
-    monkeypatch.setattr(mod, "STATES_DIR", str(mini_repo / "history" / "states"), raising=False)
+    monkeypatch.setattr(
+        mod, "STATES_DIR", str(mini_repo / "history" / "states"), raising=False
+    )
     return mod

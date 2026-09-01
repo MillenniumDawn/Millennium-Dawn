@@ -28,11 +28,24 @@ class TestTokenizerAndIdeaParser:
         mod = import_estimate_gdp
         toks = mod._tokenize('a = "b c" d = { e = 1 }')
         kinds = [t[0] for t in toks]
-        assert kinds == ["WORD", "EQ", "STR", "WORD", "EQ", "OPEN", "WORD", "EQ", "WORD", "CLOSE"]
+        assert kinds == [
+            "WORD",
+            "EQ",
+            "STR",
+            "WORD",
+            "EQ",
+            "OPEN",
+            "WORD",
+            "EQ",
+            "WORD",
+            "CLOSE",
+        ]
         # The string token keeps the contents but no quotes.
         assert toks[2] == ("STR", "b c")
 
-    def test_extract_ideas_skips_comments_and_unrelated_modifiers(self, import_estimate_gdp):
+    def test_extract_ideas_skips_comments_and_unrelated_modifiers(
+        self, import_estimate_gdp
+    ):
         mod = import_estimate_gdp
         content = (
             "ideas = {\n"
@@ -87,7 +100,9 @@ class TestTokenizerAndIdeaParser:
         # depth-0 modifier lands under the top-level context name.
         assert out["ideas"]["civilian_factories_productivity"] == pytest.approx(0.99)
 
-    def test_parse_all_ideas_skips_non_txt_and_unreadable(self, import_estimate_gdp, mini_repo):
+    def test_parse_all_ideas_skips_non_txt_and_unreadable(
+        self, import_estimate_gdp, mini_repo
+    ):
         mod = import_estimate_gdp
         # .DS_Store is not a .txt and must be skipped, not crash.
         (mini_repo / "common" / "ideas" / ".DS_Store").write_bytes(b"\x00\x01")
@@ -111,7 +126,9 @@ class TestCountryHistoryParser:
         assert info["capital"] == 100
         assert info["seeded_gdpc"] == 12.5
 
-    def test_dynamic_resource_extraction_vars_are_captured(self, import_estimate_gdp, mini_repo):
+    def test_dynamic_resource_extraction_vars_are_captured(
+        self, import_estimate_gdp, mini_repo
+    ):
         mod = import_estimate_gdp
 
         body = (
@@ -127,14 +144,23 @@ class TestCountryHistoryParser:
         info = mod.parse_country_history("DYN")
         assert info["seeded_gdpc"] == 7.0
         # The regex matches `*resource_extraction*` so both names land in the dict.
-        assert info["dynamic_resource_vars"]["oil_resource_extraction_modifier"] == pytest.approx(0.10)
-        assert info["dynamic_resource_vars"]["steel_resource_extraction_factor"] == pytest.approx(-0.05)
+        assert info["dynamic_resource_vars"][
+            "oil_resource_extraction_modifier"
+        ] == pytest.approx(0.10)
+        assert info["dynamic_resource_vars"][
+            "steel_resource_extraction_factor"
+        ] == pytest.approx(-0.05)
         assert "unrelated_var" not in info["dynamic_resource_vars"]
 
     def test_unknown_tag_returns_empty(self, import_estimate_gdp, populated_mini_repo):
         mod = import_estimate_gdp
         info = mod.parse_country_history("ZZZ")
-        assert info == {"ideas": [], "seeded_gdpc": None, "dynamic_resource_vars": {}, "capital": None}
+        assert info == {
+            "ideas": [],
+            "seeded_gdpc": None,
+            "dynamic_resource_vars": {},
+            "capital": None,
+        }
 
 
 class TestStateParser:
@@ -203,8 +229,10 @@ class TestStateParser:
     def test_state_file_io_roundtrip(self, import_estimate_gdp, mini_repo):
         mod = import_estimate_gdp
 
-        write_text(mini_repo / "history" / "states" / "round.txt",
-                   "state = {\nid = 9\nowner = TST\nmanpower = 11\n}\n")
+        write_text(
+            mini_repo / "history" / "states" / "round.txt",
+            "state = {\nid = 9\nowner = TST\nmanpower = 11\n}\n",
+        )
         s = mod.parse_state_file(str(mini_repo / "history" / "states" / "round.txt"))
         assert s["id"] == 9
         assert s["owner"] == "TST"
@@ -218,7 +246,10 @@ class TestModifierStackAndGdp:
         mod = import_estimate_gdp
         idea_db = {
             "a": {"civilian_factories_productivity": 0.10},
-            "b": {"civilian_factories_productivity": 0.05, "local_resources_factor": 0.20},
+            "b": {
+                "civilian_factories_productivity": 0.05,
+                "local_resources_factor": 0.20,
+            },
             "missing": {"civilian_factories_productivity": 0.99},  # unused
         }
         stack = mod.build_modifier_stack(["a", "b"], idea_db)
@@ -232,7 +263,9 @@ class TestModifierStackAndGdp:
         assert mod.calculate_gdp([]) is None
         assert mod.calculate_gdp([{"manpower": 0}]) is None
 
-    def test_calculate_gdp_realistic_two_state_country(self, import_estimate_gdp, populated_mini_repo):
+    def test_calculate_gdp_realistic_two_state_country(
+        self, import_estimate_gdp, populated_mini_repo
+    ):
         mod = import_estimate_gdp
         states = []
         for name in ("100-A.txt", "200-B.txt"):
@@ -262,7 +295,9 @@ class TestModifierStackAndGdp:
         assert result["gdp_from_resources"] == pytest.approx(6.0)
         assert result["num_states"] == 2
 
-    def test_finalize_gdp_applies_productivity_mult_and_healthcare(self, import_estimate_gdp, populated_mini_repo):
+    def test_finalize_gdp_applies_productivity_mult_and_healthcare(
+        self, import_estimate_gdp, populated_mini_repo
+    ):
         mod = import_estimate_gdp
         states = []
         for name in ("100-A.txt", "200-B.txt"):
@@ -290,7 +325,9 @@ class TestModifierStackAndGdp:
         # Floor on gdp_total prevents negative or zero values.
         assert result["gdp_total"] >= 0.1
 
-    def test_finalize_gdp_uses_seeded_gdpc_for_healthcare(self, import_estimate_gdp, populated_mini_repo):
+    def test_finalize_gdp_uses_seeded_gdpc_for_healthcare(
+        self, import_estimate_gdp, populated_mini_repo
+    ):
         mod = import_estimate_gdp
         states = []
         for name in ("100-A.txt", "200-B.txt"):
@@ -306,9 +343,13 @@ class TestModifierStackAndGdp:
         # = 23 * 0.01 * 12.5 * 2.20 = 6.325.
         mod.finalize_gdp(result, health_idea="health_06", seeded_gdpc=12.5)
         expected_raw = 23 * 0.01 * 12.5 * 2.20
-        expected_total = (result["gdp_pre_healthcare"] + expected_raw) * result["productivity_mult"]
+        expected_total = (result["gdp_pre_healthcare"] + expected_raw) * result[
+            "productivity_mult"
+        ]
         assert result["gdp_total"] == pytest.approx(expected_total)
-        assert result["gdp_from_healthcare"] == pytest.approx(expected_raw * result["productivity_mult"])
+        assert result["gdp_from_healthcare"] == pytest.approx(
+            expected_raw * result["productivity_mult"]
+        )
         assert result["health_idea"] == "health_06"
 
 
@@ -322,7 +363,9 @@ class TestEndToEndCountry:
         # already redirected to the mini_repo by import_estimate_gdp's patching).
         states = []
         for name in ("100-A.txt", "200-B.txt"):
-            with open(populated_mini_repo / "history" / "states" / name, "r", encoding="utf-8") as f:
+            with open(
+                populated_mini_repo / "history" / "states" / name, "r", encoding="utf-8"
+            ) as f:
                 states.append(mod.parse_state_file_from_content(f.read(), name))
         result = mod.compute_country_gdp("TST", states, idea_db)
         assert result is not None
@@ -337,7 +380,9 @@ class TestEndToEndCountry:
         assert "political_power_gain" not in result["modifier_stack"]
         assert result["gdp_total"] >= 0.1
 
-    def test_dynamic_resource_vars_extend_modifier_stack(self, import_estimate_gdp, mini_repo):
+    def test_dynamic_resource_vars_extend_modifier_stack(
+        self, import_estimate_gdp, mini_repo
+    ):
         mod = import_estimate_gdp
 
         write_text(
@@ -367,7 +412,9 @@ class TestEndToEndCountry:
             ),
         )
         idea_db = mod.parse_all_ideas()
-        with open(mini_repo / "history" / "states" / "300-C.txt", "r", encoding="utf-8") as f:
+        with open(
+            mini_repo / "history" / "states" / "300-C.txt", "r", encoding="utf-8"
+        ) as f:
             state = mod.parse_state_file_from_content(f.read(), "300-C.txt")
         result = mod.compute_country_gdp("RES", [state], idea_db)
         assert result is not None
@@ -380,7 +427,9 @@ class TestEndToEndCountry:
 class TestCliMain:
     """The main() entrypoint: argv parsing, --top/--all, error exits, no-arg help."""
 
-    def test_no_args_prints_docstring_and_exits_1(self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch):
+    def test_no_args_prints_docstring_and_exits_1(
+        self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch
+    ):
         mod = import_estimate_gdp
         monkeypatch.setattr(sys, "argv", ["estimate_gdp.py"])
         with pytest.raises(SystemExit) as exc:
@@ -389,7 +438,9 @@ class TestCliMain:
         captured = capsys.readouterr()
         assert "Estimate a nation's starting GDP" in captured.out
 
-    def test_top_with_no_value_exits_1(self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch):
+    def test_top_with_no_value_exits_1(
+        self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch
+    ):
         mod = import_estimate_gdp
         monkeypatch.setattr(sys, "argv", ["estimate_gdp.py", "--top"])
         with pytest.raises(SystemExit) as exc:
@@ -397,7 +448,9 @@ class TestCliMain:
         assert exc.value.code == 1
         assert "--top requires an integer" in capsys.readouterr().err
 
-    def test_top_with_non_integer_exits_1(self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch):
+    def test_top_with_non_integer_exits_1(
+        self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch
+    ):
         mod = import_estimate_gdp
         monkeypatch.setattr(sys, "argv", ["estimate_gdp.py", "--top", "five"])
         with pytest.raises(SystemExit) as exc:
@@ -405,7 +458,9 @@ class TestCliMain:
         assert exc.value.code == 1
         assert "expects an integer" in capsys.readouterr().err
 
-    def test_top_with_negative_exits_1(self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch):
+    def test_top_with_negative_exits_1(
+        self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch
+    ):
         mod = import_estimate_gdp
         monkeypatch.setattr(sys, "argv", ["estimate_gdp.py", "--top", "-3"])
         with pytest.raises(SystemExit) as exc:
@@ -413,7 +468,9 @@ class TestCliMain:
         assert exc.value.code == 1
         assert "non-negative integer" in capsys.readouterr().err
 
-    def test_top_with_explicit_tags_exits_1(self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch):
+    def test_top_with_explicit_tags_exits_1(
+        self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch
+    ):
         mod = import_estimate_gdp
         monkeypatch.setattr(sys, "argv", ["estimate_gdp.py", "--top", "5", "TST"])
         with pytest.raises(SystemExit) as exc:
@@ -421,7 +478,9 @@ class TestCliMain:
         assert exc.value.code == 1
         assert "cannot be combined" in capsys.readouterr().err
 
-    def test_explicit_tag_prints_per_country_breakdown(self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch):
+    def test_explicit_tag_prints_per_country_breakdown(
+        self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch
+    ):
         mod = import_estimate_gdp
         monkeypatch.setattr(sys, "argv", ["estimate_gdp.py", "TST"])
         mod.main()
@@ -430,7 +489,9 @@ class TestCliMain:
         assert "GDP Total:" in out
         assert "Buildings:" in out
 
-    def test_verbose_lists_modifier_stack(self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch):
+    def test_verbose_lists_modifier_stack(
+        self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch
+    ):
         mod = import_estimate_gdp
         monkeypatch.setattr(sys, "argv", ["estimate_gdp.py", "TST", "-v"])
         mod.main()
@@ -438,14 +499,18 @@ class TestCliMain:
         assert "Active GDP Modifiers" in out
         assert "civilian_factories_productivity" in out
 
-    def test_unknown_tag_warns_and_skips(self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch):
+    def test_unknown_tag_warns_and_skips(
+        self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch
+    ):
         mod = import_estimate_gdp
         monkeypatch.setattr(sys, "argv", ["estimate_gdp.py", "ZZZ"])
         mod.main()
         out = capsys.readouterr().out
         assert "WARNING: No states found for ZZZ" in out
 
-    def test_all_prints_ranked_table(self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch):
+    def test_all_prints_ranked_table(
+        self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch
+    ):
         mod = import_estimate_gdp
         monkeypatch.setattr(sys, "argv", ["estimate_gdp.py", "--all"])
         mod.main()
@@ -455,7 +520,9 @@ class TestCliMain:
         assert "TAG" in out
         assert "TST" in out
 
-    def test_top_zero_returns_all_ranked_untrimmed(self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch):
+    def test_top_zero_returns_all_ranked_untrimmed(
+        self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch
+    ):
         mod = import_estimate_gdp
         monkeypatch.setattr(sys, "argv", ["estimate_gdp.py", "--top", "0"])
         mod.main()
@@ -465,7 +532,9 @@ class TestCliMain:
         assert "TAG" in out
         assert "TST" in out
 
-    def test_top_truncates_to_n(self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch):
+    def test_top_truncates_to_n(
+        self, import_estimate_gdp, populated_mini_repo, capsys, monkeypatch
+    ):
         mod = import_estimate_gdp
         monkeypatch.setattr(sys, "argv", ["estimate_gdp.py", "--top", "1"])
         mod.main()

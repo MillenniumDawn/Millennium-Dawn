@@ -198,9 +198,7 @@ def test_decompress_dxt1_opaque_and_transparent_blocks():
     pixels = bd.decompress_dxt1(block_high_low, 4, 4)
     assert all(p == (0, 0, 255, 255) for p in pixels)
     # c0 <= c1 -> index 3 is transparent.
-    block_low_high = struct.pack(
-        "<HHI", pal_low, pal_high, 0xFFFFFFFF  # all index 3
-    )
+    block_low_high = struct.pack("<HHI", pal_low, pal_high, 0xFFFFFFFF)  # all index 3
     pixels_t = bd.decompress_dxt1(block_low_high, 4, 4)
     assert all(p == (0, 0, 0, 0) for p in pixels_t)
 
@@ -325,7 +323,7 @@ def test_convert_dds_dx10_bc1_srgb_routes_to_dxt5(tmp_path):
     body = bd._compress_color_block(_flat_pixels((255, 0, 0, 255), 4, 4))
     raw = bytearray(_make_dds(4, 4, bd.DX10_FOURCC, body))
     # Insert dxgi at offset 128 (BC1 sRGB variant).
-    raw[128:128 + 4] = struct.pack("<I", bd.DXGI_FORMAT_BC1_UNORM_SRGB)
+    raw[128 : 128 + 4] = struct.pack("<I", bd.DXGI_FORMAT_BC1_UNORM_SRGB)
     src = tmp_path / "bc1.dds"
     src.write_bytes(bytes(raw))
     assert bd.convert_dds(str(src)) is True
