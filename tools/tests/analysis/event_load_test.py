@@ -104,17 +104,15 @@ def test_collect_attributes_the_startup_pulse_to_the_bookmark_year(mod):
 
 
 def test_collect_resolves_a_milestone_wrapper(mod):
-    rows = event_load.collect("USA", str(mod))
-    assert ("usa.3", 55) in rows["2001"], (
-        "an effect called inside the tag scope must resolve"
-    )
+    """An effect called inside the tag scope must resolve to its event."""
+    year = event_load.collect("USA", str(mod))["2001"]
+    assert ("usa.3", 55) in year
 
 
 def test_collect_resolves_a_shared_milestone_that_scopes_into_the_tag(mod):
-    rows = event_load.collect("USA", str(mod))
-    assert ("shared.1", 60) in rows["2001"], (
-        "a top-level call scoping into the tag must resolve"
-    )
+    """A top-level call that scopes into the tag must resolve to its event."""
+    year = event_load.collect("USA", str(mod))["2001"]
+    assert ("shared.1", 60) in year
 
 
 def test_collect_keeps_tags_apart(mod):
