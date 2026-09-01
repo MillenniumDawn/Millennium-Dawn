@@ -13,6 +13,7 @@ from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from shared_utils import normalize_path_separators
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
@@ -1239,11 +1240,18 @@ class Validator(BaseValidator):
             if cat in non_selectable and cat != "character"
         }
         if self.staged_only:
-            staged_set = set(self.staged_files or [])
+            staged_set = {
+                normalize_path_separators(path) for path in self.staged_files or []
+            }
             candidates = {
                 name: cat
                 for name, cat in candidates.items()
-                if any(defining_file.get(name, "").endswith(sf) for sf in staged_set)
+                if any(
+                    normalize_path_separators(defining_file.get(name, "")).endswith(
+                        staged_file
+                    )
+                    for staged_file in staged_set
+                )
             }
         if not candidates:
             self.log("  No non-selectable ideas to check.")
@@ -1309,16 +1317,24 @@ class Validator(BaseValidator):
         self.log(f"  Found {len(defined_ideas)} defined ideas total")
 
         if self.staged_only:
-            staged_files_set = set(self.staged_files or [])
+            staged_files_set = {
+                normalize_path_separators(path) for path in self.staged_files or []
+            }
             staged_issues = {
                 fp: issues
                 for fp, issues in issues_by_file.items()
-                if any(fp.endswith(sf) for sf in staged_files_set)
+                if any(
+                    normalize_path_separators(fp).endswith(staged_file)
+                    for staged_file in staged_files_set
+                )
             }
             staged_ideas_by_file = {
                 fp: ids
                 for fp, ids in ideas_by_file.items()
-                if any(fp.endswith(sf) for sf in staged_files_set)
+                if any(
+                    normalize_path_separators(fp).endswith(staged_file)
+                    for staged_file in staged_files_set
+                )
             }
             idea_tags_changed = any(
                 path.startswith("common/idea_tags/") and path.endswith(".txt")
