@@ -157,7 +157,10 @@ def test_decompress_dxt1_opaque_and_transparent_blocks():
     # c0 > c1 -> no transparency slot.
     pal_high, pal_low = bd.rgb_to_565(255, 0, 0), bd.rgb_to_565(0, 0, 0)
     block_high_low = struct.pack(
-        "<HHI", pal_high, pal_low, 0x00000000  # all index 0 -> c0 (red)
+        "<HHI",
+        pal_high,
+        pal_low,
+        0x00000000,  # all index 0 -> c0 (red)
     )
     pixels = bd.decompress_dxt1(block_high_low, 4, 4)
     assert all(p == (0, 0, 255, 255) for p in pixels)

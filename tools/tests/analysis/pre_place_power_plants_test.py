@@ -480,14 +480,7 @@ class TestInjectBuilding:
         mod = import_pre_place
         write_text(
             mini_repo / "history" / "states" / "102.txt",
-            (
-                "state = {\n"
-                "\tid = 102\n"
-                "\thistory = {\n"
-                "\t\towner = TST\n"
-                "\t}\n"
-                "}\n"
-            ),
+            ("state = {\n\tid = 102\n\thistory = {\n\t\towner = TST\n\t}\n}\n"),
         )
         ok, msg = mod.inject_building(
             str(mini_repo / "history" / "states" / "102.txt"), "composite_plant", 1
@@ -615,11 +608,7 @@ class TestInjectReactorStockpile:
         mod = import_pre_place
         write_text(
             mini_repo / "history" / "countries" / "NOP - Test.txt",
-            (
-                "2000.1.1 = {\n"
-                "\tset_variable = { overall_productivity = 4.0 }\n"
-                "}\n"
-            ),
+            ("2000.1.1 = {\n\tset_variable = { overall_productivity = 4.0 }\n}\n"),
         )
         ok, _ = mod.inject_reactor_stockpile(
             str(mini_repo / "history" / "countries" / "NOP - Test.txt"),

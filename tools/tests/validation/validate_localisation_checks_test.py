@@ -336,7 +336,8 @@ def _opinion_file(tmp_path):
         "\tlocalised_modifier = {\n\t\tvalue = 10\n\t}\n"
         "\tunlocalised_modifier = {\n\t\tvalue = -10\n\t}\n"
         # A redeclaration keeps the first file it was seen in.
-        "\tunlocalised_modifier = {\n\t\tvalue = -20\n\t}\n" "}\n",
+        "\tunlocalised_modifier = {\n\t\tvalue = -20\n\t}\n"
+        "}\n",
     )
 
 
@@ -368,8 +369,9 @@ def test_opinion_modifier_scan_tolerates_a_vanished_file(tmp_path, monkeypatch):
     monkeypatch.setattr(
         validator,
         "_collect_files",
-        lambda patterns, **kw: [str(tmp_path / "gone.txt")]
-        + real_collect(patterns, **kw),
+        lambda patterns, **kw: (
+            [str(tmp_path / "gone.txt")] + real_collect(patterns, **kw)
+        ),
     )
     validator.validate_opinion_modifiers({}, set())
 

@@ -203,8 +203,7 @@ def test_missing_prerequisites_report_case_mismatches_and_dedupe(tmp_path):
         "Missing prerequisite target 'TAG_SHARED_S' (referenced by"
         " 'TAG_focus_b'): case-mismatch reference 'TAG_SHARED_S' — defined as"
         " 'TAG_shared_s' (works on Windows, fails on Linux)",
-        "Missing prerequisite target 'TAG_focus_absent' (referenced by"
-        " 'TAG_focus_c')",
+        "Missing prerequisite target 'TAG_focus_absent' (referenced by 'TAG_focus_c')",
     ]
     assert {i.category for i in v._issues} == {"missing-prerequisite"}
 
@@ -392,7 +391,7 @@ def _staged_mod(tmp_path):
     _write(
         tmp_path,
         "localisation/english/md_l_english.yml",
-        "l_english:\n" ' TAG_focus_clean:0 "C"\n' ' TAG_focus_clean_desc:0 "C desc"\n',
+        'l_english:\n TAG_focus_clean:0 "C"\n TAG_focus_clean_desc:0 "C desc"\n',
     )
     return staged
 

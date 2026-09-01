@@ -181,8 +181,7 @@ def test_each_history_check_reports_its_own_finding(tmp_path):
         "the granting special project (sp:sp_microchip)",
         "BAD: owns a state with a nuclear_reactor at game start but grants no "
         "nuclear_status idea (nuclear_energy)",
-        'oob references "BAD_missing" but no history/units/BAD_missing.txt file '
-        "exists",
+        'oob references "BAD_missing" but no history/units/BAD_missing.txt file exists',
     ]
     assert validator.errors_found == len(messages)
 
