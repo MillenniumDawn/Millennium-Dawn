@@ -10,7 +10,7 @@ Pipeline:
   4. Render two bodies: a concise PR comment (summary table + step-summary
      pointer) and a detailed step summary (full per-validator issue list).
   5. Truncate the comment if over GitHub's 65 536-byte limit.
-  6. Optionally post the comment as a PR comment and/or emit Checks API annotations.
+  6. Optionally sync a findings-only PR comment and/or emit Checks API annotations.
 
 All heavy lifting lives in `tools/report_lib/`; this file is just a CLI.
 """
@@ -31,8 +31,8 @@ from report_lib import (  # noqa: E402
     MAX_ISSUES_STEP_SUMMARY,
     ReportContext,
     classify,
+    clear_comment,
     dedupe,
-    delete_comment,
     load_all,
     load_baseline,
     post_checks,
@@ -70,9 +70,9 @@ def build_report(results_dir: str, ctx: ReportContext, baseline=None):
         workflow_run_url=ctx.workflow_run_url or "",
     )
 
-    # Step summary — the full report: every validator's issues, more of them, but
-    # skip raw logs (large and redundant with the structured list; omitting them
-    # keeps the summary under 1 MB).
+    # Step summary — the full report: new findings split by severity, then each
+    # failing validator's issues. Skip raw logs (large and redundant with the
+    # structured list; omitting them keeps the summary under 1 MB).
     step_body = render(
         runs,
         deduped,
@@ -83,16 +83,6 @@ def build_report(results_dir: str, ctx: ReportContext, baseline=None):
     )
 
     return body, step_body, runs, deduped, truncated, baseline_stats
-
-
-def should_delete_comment(runs, deduped, validation_scope: str) -> bool:
-    """Only a full run proves the PR clean, so only a full run may delete."""
-    return (
-        validation_scope == "full"
-        and bool(runs)
-        and not deduped
-        and all(run.status == "passed" for run in runs)
-    )
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -175,7 +165,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
 
     try:
-        with open(args.output, "w", encoding="utf-8") as f:
+        with open(args.output, "w", encoding="utf-8", newline="") as f:
             f.write(body)
     except Exception as e:
         print(f"Error writing report: {e}", file=sys.stderr)
@@ -191,7 +181,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     step_summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if step_summary_path:
         try:
-            with open(step_summary_path, "w", encoding="utf-8") as f:
+            with open(step_summary_path, "w", encoding="utf-8", newline="") as f:
                 f.write(step_body)
             print("Step summary written.", file=sys.stderr)
         except Exception as e:
@@ -245,34 +235,30 @@ def main(argv: Optional[List[str]] = None) -> int:
                     file=sys.stderr,
                 )
                 return 1
-            if should_delete_comment(runs, deduped, args.validation_scope):
-                success, message = delete_comment(
-                    repo_owner,
-                    repo_name,
-                    args.pr_number,
-                    args.github_token,
-                )
-            else:
-                # A clean partial run refreshes an existing comment so it stops
-                # reporting an older commit, but never opens a new one: only the
-                # changed groups' validators ran, so it cannot clear a finding
-                # an unrun validator would still report.
+            # An empty run list means the pipeline didn't finish, not clean —
+            # still posts instead of clearing.
+            should_post = not runs or any(run.status != "passed" for run in runs)
+            if should_post:
                 success, message = post_comment(
                     repo_owner,
                     repo_name,
                     args.pr_number,
                     body,
                     args.github_token,
-                    update_only=not deduped,
+                )
+            else:
+                success, message = clear_comment(
+                    repo_owner,
+                    repo_name,
+                    args.pr_number,
+                    args.github_token,
                 )
             (print if success else _err)(f"PR comment: {message}")
-            # A read-only GITHUB_TOKEN (fork PRs get one regardless of the
-            # workflow's permissions block) can't write comments. Don't fail the
-            # job over it — the report still uploads as an artifact. Mirrors the
-            # Checks API handling below.
+            # A read-only GITHUB_TOKEN can't write comments — log and continue,
+            # mirroring the Checks API handling below.
             if not success:
                 _err(
-                    "PR comment could not be updated; continuing. "
+                    "PR comment could not be synchronized; continuing. "
                     "See the validation-report artifact for the full report."
                 )
 

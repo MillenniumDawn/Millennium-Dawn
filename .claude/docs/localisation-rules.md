@@ -18,7 +18,7 @@
 - Keys use **no trailing version number**: `key: "value"`, not `key:0 "value"`.
 - Key naming mirrors the script ID exactly (e.g., focus `SER_free_market_capitalism` → `SER_free_market_capitalism: "..."`, `SER_free_market_capitalism_desc: "..."`).
 - Focus/decision/event keys: `ID`, `ID_desc` (tooltip body). Events also need `ID.t` (title), `ID.d` (description), and `ID.a`, `ID.b`, … (option names).
-- Every new script object (focus, decision, event, idea, MIO, subideology) needs matching loc keys before it goes in.
+- Every new script object (focus, decision, event, idea, MIO, subideology) needs matching loc keys before it goes in. The one exception is an **AI-only decision** — one no human player can ever see — which takes no keys at all, and is flagged if it has any (`.claude/docs/decision-reference.md`).
 - Undefined `[variable]` substitutions: every `[Foo.GetBar]` or `[my_var]` must correspond to a real scope getter or set variable. A missing or misspelled getter renders as an empty string or literal `[variable_name]` in-game.
 
 ## Writing Style

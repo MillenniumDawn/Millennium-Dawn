@@ -174,6 +174,5 @@ def write_baseline(sidecar_dir: str, baseline_dir: str, meta: Dict[str, str]) ->
         stale.unlink()
     for path in sidecars:
         shutil.copyfile(path, target / path.name)
-    (target / META_FILENAME).write_text(
-        json.dumps(meta, indent=2, sort_keys=True), encoding="utf-8"
-    )
+    with open(target / META_FILENAME, "w", encoding="utf-8", newline="") as fh:
+        fh.write(json.dumps(meta, indent=2, sort_keys=True))

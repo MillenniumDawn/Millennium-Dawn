@@ -2964,3 +2964,72 @@ set_intervention_to_lvl_6 = {
 		}
 	}
 }
+# Caches the canal closures into global flags so map/adjacency_rules.txt reads one flag per canal
+# instead of scoping into a state and testing a dynamic modifier on every pathfinding query.
+update_canal_blockage_flags = {
+	if = {
+		limit = {
+			OR = {
+				EGY = { has_idea = suez_canal_blocked }
+				214 = {
+					has_dynamic_modifier = {
+						modifier = canal_damaged_modifier
+						scope = THIS
+					}
+				}
+			}
+		}
+		set_global_flag = SUEZ_CANAL_BLOCKED
+	}
+	else = { clr_global_flag = SUEZ_CANAL_BLOCKED }
+	if = {
+		limit = {
+			853 = {
+				has_dynamic_modifier = {
+					modifier = canal_damaged_modifier
+					scope = THIS
+				}
+			}
+		}
+		set_global_flag = PANAMA_CANAL_BLOCKED
+	}
+	else = { clr_global_flag = PANAMA_CANAL_BLOCKED }
+	if = {
+		limit = {
+			37 = {
+				has_dynamic_modifier = {
+					modifier = canal_damaged_modifier
+					scope = THIS
+				}
+			}
+		}
+		set_global_flag = GLOBAL_KIEL_CANAL_BLOCKED
+	}
+	else = { clr_global_flag = GLOBAL_KIEL_CANAL_BLOCKED }
+}
+
+# Purpose: Resyncs the diplomatic actions arrays for use in replacing various functions
+diplomatic_action_cached_array_resync = {
+	clear_array = guaranteeing_nations
+	clear_array = nations_with_military_access
+	clear_array = nations_who_sent_us_volunteers
+	clear_array = nations_we_sent_volunteers_to
+	every_country = {
+		if = {
+			limit = { has_guaranteed = PREV }
+			add_to_array = { PREV.guaranteeing_nations = THIS.id }
+		}
+		if = {
+			limit = { has_military_access_to = PREV }
+			add_to_array = { PREV.nations_with_military_access = THIS.id }
+		}
+		if = {
+			limit = { PREV = { has_volunteers_amount_from = { tag = PREV count > 0 } } }
+			add_to_array = { PREV.nations_who_sent_us_volunteers = THIS.id }
+		}
+		if = {
+			limit = { has_volunteers_amount_from = { tag = PREV count > 0 } }
+			add_to_array = { PREV.nations_we_sent_volunteers_to = THIS.id }
+		}
+	}
+}

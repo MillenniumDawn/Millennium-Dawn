@@ -32,7 +32,7 @@ EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 # `operative_event`, and there is no `character_event`; because `operative` has
 # no word boundary before `_leader_event`, an `operative`/`_event` split never
 # matches the real keyword. Kept in sync with the definition keywords in
-# _EVENT_BLOCK_PATTERN / _EVENT_TYPE_PATTERN.
+# _EVENT_TYPE_PATTERN.
 _EVENT_CALL_KEYWORDS = (
     "country_event",
     "news_event",
@@ -56,15 +56,22 @@ def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
 
 
-def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
-    """Pool worker: return (sprite, filename, line) for each event picture ref."""
-    if _should_skip(filename):
-        return []
+def _read_cleaned_text(filename: str, *, skip: bool = True) -> Optional[str]:
+    """Read a mod file and strip ``#`` comments, or return ``None`` on failure."""
+    if skip and _should_skip(filename):
+        return None
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+    except OSError:
+        return None
+    return re.sub(r"#[^\n]*", "", text)
+
+
+def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
+    """Pool worker: return (sprite, filename, line) for each event picture ref."""
+    text = _read_cleaned_text(filename)
+    if text is None:
         return []
-    text = re.sub(r"#[^\n]*", "", text)
     out: List[Tuple[str, str, int]] = []
     for m in _EVENT_PICTURE_REF.finditer(text):
         line = text.count("\n", 0, m.start()) + 1
@@ -85,13 +92,9 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     inflate each other's counts.
     """
     filename, tracked_ids = args
-    if _should_skip(filename):
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
         return {}
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return {}
-    cleaned = re.sub(r"#[^\n]*", "", text)
     counts = Counter(_ID_TOKEN_PATTERN.findall(cleaned))
     return {eid: counts[eid] for eid in tracked_ids if eid in counts}
 
@@ -111,13 +114,9 @@ _DYNAMIC_EVENT_NS_PATTERN = re.compile(
 # matched by finding the keyword and then the first `id =` inside its braces, so
 # `days`/`hours`/`random_days` in any order are handled.
 _EVENT_FIRE_SHORT_RE = re.compile(
-    r"\b(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
-    r"\s*=\s*([A-Za-z_][\w.]*)"
+    r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*([A-Za-z_][\w.]*)"
 )
-_EVENT_FIRE_BLOCK_RE = re.compile(
-    r"\b(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
-    r"\s*=\s*\{([^{}]*)\}"
-)
+_EVENT_FIRE_BLOCK_RE = re.compile(r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{([^{}]*)\}")
 _FIRE_ID_RE = re.compile(r"\bid\s*=\s*([A-Za-z_][\w.]*)")
 
 
@@ -128,9 +127,13 @@ _DEFINITION_ONLY_RE = re.compile(
     r"\b(?:title|desc|picture|is_triggered_only|fire_only_once|hidden|option|"
     r"immediate|major|trigger|mean_time_to_happen|timeout_days)\s*="
 )
-_EVENT_BLOCK_OPEN_RE = re.compile(
-    r"\b(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
-    r"\s*=\s*\{"
+_EVENT_BLOCK_OPEN_RE = re.compile(r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{")
+_REVERSED_EVENT_CALL_RE = re.compile(
+    r"\b(event_(?:country|news|state|unit_leader|operative_leader))\s*=\s*"
+    r"(?:\{[^{}]*?\bid\s*=\s*([A-Za-z_][\w.]*)|([A-Za-z_][\w.]*))"
+)
+_MISSING_EVENT_CALL_EQUALS_RE = re.compile(
+    r"\b(" + _EVENT_CALL_ALT + r")\s+\{[^{}]*?\bid\s*=\s*([A-Za-z_][\w.]*)"
 )
 
 
@@ -146,15 +149,8 @@ def _matching_brace(text: str, open_pos: int) -> int:
     return -1
 
 
-def _iter_event_bodies(cleaned: str):
-    """Yield (event_id, body, match_start) for each event defined in `cleaned`.
-
-    Brace-matches each event block rather than keying off indentation, because
-    several event files indent their definitions one tab deeper than the norm
-    and a `^\\tid = ` pattern misses those entirely. A block counts as a
-    definition only when it carries a key no fire ever has, which is what
-    separates it from a `{ id = x days = 3 }` fire.
-    """
+def _iter_typed_event_bodies(cleaned: str):
+    """Yield typed definitions using brace matching so indentation is irrelevant."""
     for m in _EVENT_BLOCK_OPEN_RE.finditer(cleaned):
         ob = cleaned.index("{", m.end() - 1)
         end = _matching_brace(cleaned, ob)
@@ -163,18 +159,36 @@ def _iter_event_bodies(cleaned: str):
         body = cleaned[ob + 1 : end]
         idm = _FIRE_ID_RE.search(body)
         if idm and _DEFINITION_ONLY_RE.search(body):
-            yield idm.group(1), body, m.start()
+            yield idm.group(1), m.group(1), body, m.start()
+
+
+def _iter_event_bodies(cleaned: str):
+    """Yield (event_id, body, match_start) for defined events."""
+    for eid, _event_type, body, start in _iter_typed_event_bodies(cleaned):
+        yield eid, body, start
 
 
 def scan_event_definitions(args: Tuple[str, frozenset]) -> Set[str]:
     """Pool worker: event IDs *defined* in one file."""
     filename = args[0]
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+    cleaned = _read_cleaned_text(filename, skip=False)
+    if cleaned is None:
         return set()
-    cleaned = re.sub(r"#[^\n]*", "", text)
     return {eid for eid, _body, _start in _iter_event_bodies(cleaned)}
+
+
+def scan_event_definition_types(
+    args: Tuple[str, frozenset],
+) -> List[Tuple[str, str]]:
+    """Pool worker: event IDs and their declaration keywords."""
+    filename = args[0]
+    cleaned = _read_cleaned_text(filename, skip=False)
+    if cleaned is None:
+        return []
+    return [
+        (eid, event_type)
+        for eid, event_type, _body, _start in _iter_typed_event_bodies(cleaned)
+    ]
 
 
 def _is_literal_id(eid: str, after: str) -> bool:
@@ -186,15 +200,21 @@ def _is_literal_id(eid: str, after: str) -> bool:
     return "." in eid and not eid.endswith(".") and not after.startswith("[")
 
 
+def _iter_typed_fires(text: str):
+    """Yield (event_id, call_keyword, match_start) for literal event fires."""
+    for m in _EVENT_FIRE_SHORT_RE.finditer(text):
+        if _is_literal_id(m.group(2), text[m.end() : m.end() + 1]):
+            yield m.group(2), m.group(1), m.start()
+    for m in _EVENT_FIRE_BLOCK_RE.finditer(text):
+        idm = _FIRE_ID_RE.search(m.group(2))
+        if idm and _is_literal_id(idm.group(1), m.group(2)[idm.end() : idm.end() + 1]):
+            yield idm.group(1), m.group(1), m.start()
+
+
 def _iter_fired_ids(text: str):
     """Yield (event_id, match_start) for every literal event fire in `text`."""
-    for m in _EVENT_FIRE_SHORT_RE.finditer(text):
-        if _is_literal_id(m.group(1), text[m.end() : m.end() + 1]):
-            yield m.group(1), m.start()
-    for m in _EVENT_FIRE_BLOCK_RE.finditer(text):
-        idm = _FIRE_ID_RE.search(m.group(1))
-        if idm and _is_literal_id(idm.group(1), m.group(1)[idm.end() : idm.end() + 1]):
-            yield idm.group(1), m.start()
+    for eid, _call_type, pos in _iter_typed_fires(text):
+        yield eid, pos
 
 
 def scan_event_fires(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
@@ -204,18 +224,65 @@ def scan_event_fires(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
     literal form to resolve, so it is skipped rather than guessed at.
     """
     filename = args[0]
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
+        return []
+
+    return [
+        (eid, filename, cleaned.count("\n", 0, pos) + 1)
+        for eid, pos in _iter_fired_ids(cleaned)
+    ]
+
+
+def scan_typed_event_fires(
+    args: Tuple[str, frozenset],
+) -> List[Tuple[str, str, str, int]]:
+    """Pool worker: literal event fires with their call keywords."""
+    filename = args[0]
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
+        return []
+    return [
+        (eid, call_type, filename, cleaned.count("\n", 0, pos) + 1)
+        for eid, call_type, pos in _iter_typed_fires(cleaned)
+    ]
+
+
+def scan_invalid_event_calls(
+    args: Tuple[str, frozenset],
+) -> List[Tuple[str, str, str, str, int]]:
+    """Pool worker: reversed keywords and event calls missing ``=``."""
+    filename = args[0]
     if _should_skip(filename):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return []
-    cleaned = re.sub(r"#[^\n]*", "", text)
-
-    return [
-        (eid, filename, cleaned.count("\n", 0, pos) + 1)
-        for eid, pos in _iter_fired_ids(cleaned)
-    ]
+    cleaned = blank_quoted_strings(strip_comments(text))
+    results: List[Tuple[str, str, str, str, int]] = []
+    for m in _REVERSED_EVENT_CALL_RE.finditer(cleaned):
+        results.append(
+            (
+                "reversed",
+                m.group(1),
+                m.group(2) or m.group(3),
+                filename,
+                cleaned.count("\n", 0, m.start()) + 1,
+            )
+        )
+    for m in _MISSING_EVENT_CALL_EQUALS_RE.finditer(cleaned):
+        results.append(
+            (
+                "missing-equals",
+                m.group(1),
+                m.group(2),
+                filename,
+                cleaned.count("\n", 0, m.start()) + 1,
+            )
+        )
+    results.sort(key=lambda result: result[-1])
+    return results
 
 
 def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
@@ -225,13 +292,9 @@ def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
     dispatch and must not be reported as unreferenced.
     """
     filename = args[0]
-    if _should_skip(filename):
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
         return set()
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return set()
-    cleaned = re.sub(r"#[^\n]*", "", text)
     return set(_DYNAMIC_EVENT_NS_PATTERN.findall(cleaned))
 
 
@@ -272,13 +335,9 @@ def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, 
     Returns (id, file, line) so a finding can point at the definition.
     """
     filename = args[0]
-    if _should_skip(filename):
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
         return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    cleaned = re.sub(r"#[^\n]*", "", text)
 
     out: List[Tuple[str, str, int]] = []
     for eid, body, start in _iter_event_bodies(cleaned):
@@ -295,13 +354,9 @@ def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
     of a chain needs a scheduling entry.
     """
     filename = args[0]
-    if _should_skip(filename):
+    cleaned = _read_cleaned_text(filename)
+    if cleaned is None:
         return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    cleaned = re.sub(r"#[^\n]*", "", text)
 
     out: List[Tuple[str, str]] = []
     for parent, body, _start in _iter_event_bodies(cleaned):
@@ -485,39 +540,6 @@ def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
 # --- Event parsing ---
 
 
-_EVENT_BLOCK_PATTERN = re.compile(
-    r"^(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
-    r"\s*=\s*\{(.*?)^\}",
-    flags=re.DOTALL | re.MULTILINE,
-)
-
-
-def _parse_events(text: str, basename: str) -> Tuple[List[str], Dict[str, str]]:
-    events = []
-    paths = {}
-    for match in _EVENT_BLOCK_PATTERN.findall(text):
-        events.append(match)
-        paths[match] = basename
-    return events, paths
-
-
-def process_file_for_events(
-    args: Tuple[str, bool, str],
-) -> Tuple[List[str], Dict[str, str]]:
-    filename, lowercase, mod_path = args
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=lowercase, strip_comments_flag=True
-    )
-    basename = os.path.basename(filename)
-    return disk_cache.per_file_cached_by_content(
-        mod_path,
-        f"events.blocks.lc={int(lowercase)}",
-        filename,
-        text_file,
-        lambda: _parse_events(text_file, basename),
-    )
-
-
 _EVENT_TYPE_PATTERN = re.compile(
     r"^(country_event|news_event|state_event|unit_leader_event|operative_leader_event)\s*=\s*\{",
     re.MULTILINE,
@@ -530,12 +552,6 @@ _OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
 # Event-level (depth-1) title/desc fields — option-level name fields are
 # nested deeper and are not matched.
 _EVENT_TITLEDESC_PATTERN = re.compile(r"^\t(?:title|desc)\s*=\s*(.+)$", re.MULTILINE)
-
-# `id = X` line inside an event block (literal single-space form, distinct
-# from _EVENT_ID_PATTERN's \s* form used in metadata parsing). Reused across
-# validate_unsupported_title_desc / validate_missing_triggered_only /
-# validate_missing_localisation / validate_triggered_only_unreferenced.
-_EVENT_ID_LITERAL_RE = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
 
 # title/desc block-vs-inline detection (validate_unsupported_title_desc).
 _TITLE_DESC_BLOCK_RE = {
@@ -614,12 +630,11 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
         body_nc = blank_quoted_strings(strip_comments(body))
 
         id_match = _EVENT_ID_PATTERN.search(body)
-        if not id_match:
-            continue
 
         meta.append(
             {
-                "id": id_match.group(1),
+                "id": id_match.group(1) if id_match else None,
+                "body": body,
                 "type": event_type,
                 "file": basename,
                 "is_hidden": "hidden = yes" in body_nc,
@@ -641,35 +656,20 @@ class Validator(BaseValidator):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._events_cache: Optional[Tuple[List[str], Dict[str, str]]] = None
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
         self._random_events_cache: Optional[set] = None
         self._probability_rolled_cache: Optional[set] = None
         self._fire_only_once_ids_cache: Optional[set] = None
         self._fire_scan_args_cache: Optional[List[Tuple[str, frozenset]]] = None
         self._fires_cache: Optional[List[Tuple[str, str, int]]] = None
-
-    def _get_all_events(self) -> Tuple[List[str], Dict[str, str]]:
-        if self._events_cache is not None:
-            return self._events_cache
-        files = self._collect_files(["events/**/*.txt"])
-        args_list = [(f, False, self.mod_path) for f in files]
-        all_results = self._pool_map(process_file_for_events, args_list, chunksize=10)
-
-        events = []
-        paths = {}
-        for ev_list, ev_paths in all_results:
-            events.extend(ev_list)
-            paths.update(ev_paths)
-
-        self._events_cache = (events, paths)
-        return self._events_cache
+        self._typed_fires_cache: Optional[List[Tuple[str, str, str, int]]] = None
+        self._definition_types_cache: Optional[Dict[str, str]] = None
 
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
-        Each metadata dict has: id, type, file, is_hidden,
-        is_triggered_only, fire_only_once, has_mtth, option_count,
+        Each metadata dict has: id (or None for malformed blocks), type, file,
+        is_hidden, is_triggered_only, fire_only_once, has_mtth, option_count,
         title_desc_refs.
         """
         if self._meta_cache is not None:
@@ -719,6 +719,15 @@ class Validator(BaseValidator):
             ]
         return self._fire_scan_args_cache
 
+    def _get_scoped_fire_scan_args(self) -> List[Tuple[str, frozenset]]:
+        """Pool args for callers in the current staged or full validation scope."""
+        return [
+            (f, frozenset())
+            for f in self._collect_files(
+                ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+            )
+        ]
+
     def _get_event_fires(self) -> List[Tuple[str, str, int]]:
         """Every literal event fire in the mod as (event_id, file, line)."""
         if self._fires_cache is not None:
@@ -730,6 +739,33 @@ class Validator(BaseValidator):
             fires.extend(result)
         self._fires_cache = fires
         return fires
+
+    def _get_typed_event_fires(self) -> List[Tuple[str, str, str, int]]:
+        """Every literal event fire with its call keyword."""
+        if self._typed_fires_cache is not None:
+            return self._typed_fires_cache
+        fires: List[Tuple[str, str, str, int]] = []
+        for result in self._pool_map(
+            scan_typed_event_fires, self._get_fire_scan_args(), chunksize=30
+        ):
+            fires.extend(result)
+        self._typed_fires_cache = fires
+        return fires
+
+    def _get_event_definition_types(self) -> Dict[str, str]:
+        """Return event declaration keywords from the full events tree."""
+        if self._definition_types_cache is not None:
+            return self._definition_types_cache
+        definitions: Dict[str, str] = {}
+        event_files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
+        for result in self._pool_map(
+            scan_event_definition_types,
+            [(f, frozenset()) for f in event_files],
+            chunksize=20,
+        ):
+            definitions.update(result)
+        self._definition_types_cache = definitions
+        return definitions
 
     def _get_random_event_ids(self) -> set:
         """Return event IDs referenced inside ``random_events`` blocks in on_actions.
@@ -817,20 +853,18 @@ class Validator(BaseValidator):
             "Checking for events with unsupported title/desc combinations..."
         )
 
-        events, paths = self._get_all_events()
-        self.log(f"  Found {len(events)} events")
+        meta, _ = self._get_event_metadata()
+        self.log(f"  Found {len(meta)} events")
         results = []
 
-        for line_type in ["title", "desc"]:
-            block_pat = _TITLE_DESC_BLOCK_RE[line_type]
-            inline_pat = _TITLE_DESC_INLINE_RE[line_type]
-
-            for event in events:
-                if block_pat.search(event) and inline_pat.search(event):
-                    eid_match = _EVENT_ID_LITERAL_RE.findall(event)
-                    eid = eid_match[0] if eid_match else "unknown"
+        for ev in meta:
+            eid = ev["id"] or "unknown"
+            for line_type in ("title", "desc"):
+                if _TITLE_DESC_BLOCK_RE[line_type].search(
+                    ev["body"]
+                ) and _TITLE_DESC_INLINE_RE[line_type].search(ev["body"]):
                     results.append(
-                        f"{eid} - {paths.get(event, 'unknown')} - invalid {line_type} (has both block and inline forms)"
+                        f"{eid} - {ev['file']} - invalid {line_type} (has both block and inline forms)"
                     )
 
         self._report(
@@ -844,16 +878,13 @@ class Validator(BaseValidator):
     def validate_missing_triggered_only(self):
         self._log_section("Checking for events missing is_triggered_only = yes...")
 
-        events, paths = self._get_all_events()
-        self.log(f"  Found {len(events)} events")
-        results = []
-
-        for event in events:
-            if "is_triggered_only = yes" not in event:
-                event_id = _EVENT_ID_LITERAL_RE.findall(event)
-                eid = event_id[0] if event_id else "unknown"
-                filename = paths.get(event, "unknown")
-                results.append(f"{eid} - {filename}")
+        meta, _ = self._get_event_metadata()
+        self.log(f"  Found {len(meta)} events")
+        results = [
+            f"{ev['id'] or 'unknown'} - {ev['file']}"
+            for ev in meta
+            if not ev["is_triggered_only"]
+        ]
 
         self._report(
             results,
@@ -891,24 +922,20 @@ class Validator(BaseValidator):
     def validate_missing_localisation(self):
         self._log_section("Checking for events with missing localisation keys...")
 
-        events, paths = self._get_all_events()
+        meta, _ = self._get_event_metadata()
         loc_keys = self._load_localisation_keys()
-        self.log(f"  Found {len(events)} events, {len(loc_keys)} localisation keys")
+        self.log(f"  Found {len(meta)} events, {len(loc_keys)} localisation keys")
 
         results = []
-        for event in events:
+        for ev in meta:
             # Hidden events display no window, so their title/desc/option-name
             # loc is dead — never flag them for missing keys.
-            if "hidden = yes" in event:
+            if ev["is_hidden"]:
                 continue
-            eid_matches = _EVENT_ID_LITERAL_RE.findall(event)
-            eid = eid_matches[0] if eid_matches else "unknown"
-            filename = paths.get(event, "unknown")
-
-            loc_refs = [k for k in _LOC_REF_PATTERN.findall(event) if "." in k]
-            missing = [k for k in loc_refs if k not in loc_keys]
-            for key in missing:
-                results.append(f"{eid} - {filename}: missing loc key '{key}'")
+            eid = ev["id"] or "unknown"
+            for key in _LOC_REF_PATTERN.findall(ev["body"]):
+                if "." in key and key not in loc_keys:
+                    results.append(f"{eid} - {ev['file']}: missing loc key '{key}'")
 
         self._report(
             results,
@@ -923,15 +950,12 @@ class Validator(BaseValidator):
             "Checking for triggered-only events never referenced anywhere..."
         )
 
-        events, paths = self._get_all_events()
-
-        triggered_only_ids: Dict[str, str] = {}
-        for event in events:
-            if "is_triggered_only = yes" in event:
-                matches = _EVENT_ID_LITERAL_RE.findall(event)
-                if matches:
-                    eid = matches[0]
-                    triggered_only_ids[eid] = paths.get(event, "unknown")
+        meta, _ = self._get_event_metadata()
+        triggered_only_ids: Dict[str, str] = {
+            ev["id"]: ev["file"]
+            for ev in meta
+            if ev["id"] is not None and ev["is_triggered_only"]
+        }
 
         self.log(
             f"  Found {len(triggered_only_ids)} triggered-only events — scanning for references..."
@@ -1043,7 +1067,7 @@ class Validator(BaseValidator):
             return None
 
         # Lookup pass: a staged event's parent almost always lives elsewhere.
-        graph_args = [
+        graph_args: List[Tuple[str, frozenset]] = [
             (f, frozenset())
             for f in self._collect_files(["events/**/*.txt"], ignore_staged=True)
         ]
@@ -1098,6 +1122,8 @@ class Validator(BaseValidator):
         for ev in meta:
             if not (ev["has_mtth"] and ev["is_triggered_only"]):
                 continue
+            if ev["id"] is None:
+                continue
             if ev["id"] in random_event_ids:
                 continue
             results.append(f"{ev['id']} - {ev['file']}")
@@ -1129,7 +1155,8 @@ class Validator(BaseValidator):
             detail = f"{count} option block{'s' if count != 1 else ''}"
             if count >= 2:
                 detail += " (only the first auto-fires — the rest are dead code)"
-            results.append(f"{ev['id']} - {ev['file']}: {detail}")
+            event_id = ev["id"] or "unknown"
+            results.append(f"{event_id} - {ev['file']}: {detail}")
 
         self._report(
             results,
@@ -1167,7 +1194,8 @@ class Validator(BaseValidator):
             if not real:
                 continue
             detail = "; ".join(real)
-            results.append(f"{ev['id']} - {ev['file']}: {detail}")
+            event_id = ev["id"] or "unknown"
+            results.append(f"{event_id} - {ev['file']}: {detail}")
 
         self._report(
             results,
@@ -1191,6 +1219,8 @@ class Validator(BaseValidator):
 
         for ev in meta:
             eid = ev["id"]
+            if eid is None:
+                continue
             if eid in seen:
                 results.append(f"{eid} - defined in {seen[eid]} and {ev['file']}")
             else:
@@ -1218,6 +1248,8 @@ class Validator(BaseValidator):
 
         for ev in meta:
             eid = ev["id"]
+            if eid is None:
+                continue
             last_dot = eid.rfind(".")
             if last_dot < 0:
                 continue
@@ -1230,6 +1262,60 @@ class Validator(BaseValidator):
             "✓ All event namespaces are declared",
             "Events with undeclared namespace (add_namespace missing — event will silently fail):",
             category="namespace-mismatch",
+        )
+
+    def validate_invalid_event_calls(self):
+        """Flag malformed event effects that the engine cannot execute."""
+        self._log_section("Checking event call syntax...")
+
+        results = []
+        for matches in self._pool_map(
+            scan_invalid_event_calls,
+            self._get_scoped_fire_scan_args(),
+            chunksize=30,
+        ):
+            for kind, keyword, eid, filename, line in matches:
+                if kind == "reversed":
+                    message = f"{keyword} = {eid} - use an event effect keyword"
+                else:
+                    message = f"{keyword} {{ id = {eid} }} - missing '='"
+                results.append(
+                    (message, os.path.relpath(filename, self.mod_path), line)
+                )
+
+        self._report(
+            results,
+            "✓ Event call syntax is valid",
+            "Malformed event calls (silently do nothing or break parsing):",
+            Severity.ERROR,
+            category="malformed-event-fire",
+        )
+
+    def validate_event_fire_types(self):
+        """Flag fires whose effect keyword does not match the declaration."""
+        self._log_section("Checking event call types match their declarations...")
+
+        definitions = self._get_event_definition_types()
+        results = []
+        for eid, call_type, filename, line in self._get_typed_event_fires():
+            expected = definitions.get(eid)
+            if expected is None or expected == call_type:
+                continue
+            rel = os.path.relpath(filename, self.mod_path)
+            results.append(
+                (
+                    f"{eid} - fired with {call_type}, defined as {expected}",
+                    rel,
+                    line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ Event call types match their declarations",
+            "Event calls using the wrong effect type:",
+            Severity.ERROR,
+            category="event-fire-type-mismatch",
         )
 
     def validate_undefined_event_fires(self):
@@ -1399,6 +1485,8 @@ class Validator(BaseValidator):
         self.validate_hidden_event_localisation()
         self.validate_duplicate_event_ids()
         self.validate_namespace_mismatch()
+        self.validate_invalid_event_calls()
+        self.validate_event_fire_types()
         self.validate_undefined_event_fires()
         self.validate_event_pictures()
         self.validate_fire_only_once_in_loop()

@@ -21,9 +21,20 @@ from validator_common import (
     strip_comments,
 )
 
+# Every tree the engine runs script from, not a per-directory caller list: that
+# list drifted past operations, scripted_diplomatic_actions, ideas, MIOs,
+# factions and bop, all of which already call contracted effects, and any new
+# common/ subdirectory would be missed the same way. _validate_call_sites_in_file
+# drops a file that names no contract before parsing it, so the extra breadth
+# costs a read per file.
+_CALLER_PATTERNS = [
+    "common/**/*.txt",
+    "events/**/*.txt",
+    "history/**/*.txt",
+]
+
 # Hardcoded contracts for well-documented effects. Auto-discovery fills in
 # additional contracts from "# Parameters:" comment blocks.
-
 # Mapping: effect_name -> { "required": [...], "optional": [...] }
 HARDCODED_CONTRACTS: Dict[str, Dict[str, List[str]]] = {
     "change_influence_percentage": {
@@ -78,20 +89,24 @@ _SCOPE_ITERATORS = {
 } - {
     "random_list"  # probability buckets, not a scope change
 }
-SCOPE_CHANGING_KEYWORDS: Set[str] = _SCOPE_ITERATORS | {
-    "capital_scope",
-    "owner",
-    "controller",
-    "overlord",
-    "faction_leader",
-    "ROOT",
-    "PREV",
-    "FROM",
-    "var",  # var:X = { } scope
-    "for_each_scope_loop",
-    "while_loop_effect",
-    "for_loop_effect",
-    "for_each_loop",
+SCOPE_CHANGING_KEYWORDS: Set[str] = {
+    keyword.lower()
+    for keyword in _SCOPE_ITERATORS
+    | {
+        "capital_scope",
+        "owner",
+        "controller",
+        "overlord",
+        "faction_leader",
+        "ROOT",
+        "PREV",
+        "FROM",
+        "var",  # var:X = { } scope
+        "for_each_scope_loop",
+        "while_loop_effect",
+        "for_loop_effect",
+        "for_each_loop",
+    }
 }
 
 _SET_TEMP_RE = re.compile(
@@ -302,24 +317,41 @@ def _parse_effect_contracts_from_file(
 
 
 def _normalize_multiline_set_temp(text: str) -> str:
-    """Collapse multi-line set_temp_variable blocks onto a single line.
+    """Collapse multi-line set_temp_variable blocks without changing line numbers."""
+    normalized = []
+    cursor = 0
+    pattern = re.compile(r"\bset_temp_variable\s*=\s*\{")
 
-    HOI4 files sometimes write:
-        set_temp_variable = {
-            param_name = value
-        }
-    This collapses such blocks into the single-line form
-        set_temp_variable = { param_name = value }
-    so that the tokenizer can match them with a single-line regex.
+    while match := pattern.search(text, cursor):
+        block_start = match.end() - 1
+        name_match = re.match(
+            r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=", text[block_start + 1 :]
+        )
+        if not name_match:
+            normalized.append(text[cursor : match.end()])
+            cursor = match.end()
+            continue
 
-    Only collapses blocks that are clearly set_temp_variable (not deeper nesting).
-    """
-    result = re.sub(
-        r"set_temp_variable\s*=\s*\{\s*\n\s*([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^\n}]+?)\s*\n\s*\}",
-        r"set_temp_variable = { \1 }",
-        text,
-    )
-    return result
+        depth = 1
+        block_end = block_start + 1
+        while block_end < len(text) and depth:
+            if text[block_end] == "{":
+                depth += 1
+            elif text[block_end] == "}":
+                depth -= 1
+            block_end += 1
+        if depth or "\n" not in text[block_start:block_end]:
+            normalized.append(text[cursor : match.end()])
+            cursor = match.end()
+            continue
+
+        normalized.append(text[cursor : match.start()])
+        normalized.append(f"set_temp_variable = {{ {name_match.group(1)} = 0 }}")
+        normalized.append("\n" * text[match.start() : block_end].count("\n"))
+        cursor = block_end
+
+    normalized.append(text[cursor:])
+    return "".join(normalized)
 
 
 def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
@@ -360,7 +392,11 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
                     m.start(),
                     1,
                     (
-                        "scope_open" if kw in SCOPE_CHANGING_KEYWORDS else "plain_open",
+                        (
+                            "scope_open"
+                            if kw.lower() in SCOPE_CHANGING_KEYWORDS
+                            else "plain_open"
+                        ),
                         lineno,
                         kw,
                         "",
@@ -598,14 +634,7 @@ class Validator(BaseValidator):
             self.log("  No contracts found — nothing to validate")
             return
 
-        scan_patterns = [
-            "common/national_focus/*.txt",
-            "common/scripted_effects/*.txt",
-            "common/decisions/*.txt",
-            "common/decisions/**/*.txt",
-            "events/*.txt",
-        ]
-        files = self._collect_files(scan_patterns)
+        files = self._collect_files(_CALLER_PATTERNS)
         self.log(f"  Scanning {len(files)} files for effect calls")
 
         args_list = [

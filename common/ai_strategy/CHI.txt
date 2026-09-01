@@ -321,9 +321,11 @@ CHI_spy_on_TAI = {
 	allowed = { original_tag = CHI }
 	enable = {
 		country_exists = TAI
-		CHI = { has_government = communism }
-		NOT = { TAI = { is_subject_of = CHI } }
+		has_government = communism
 		NOT = { has_completed_focus = CHI_TAI_cross_strait_policy }
+		TAI = {
+			NOT = { is_subject_of = CHI }
+		}
 	}
 	abort_when_not_enabled = yes
 
@@ -414,7 +416,7 @@ CHI_protect_coast = { #CHI is fighting defensively if it doesn't have a naval fa
 CHI_protect_coast_against_world = { #CHI is fighting defensively if it doesn't have a naval favorable strength ratio against enemy alliance
 	allowed = { original_tag = CHI }
 	enable = {
-		country_exists = CHI
+		has_war = yes
 		alliance_naval_strength_ratio > 1.5
 	}
 	abort_when_not_enabled = yes
@@ -451,7 +453,6 @@ CHI_the_great_goliath = {
 	ai_strategy = { type = alliance id = "USA" value = -200 }
 	ai_strategy = { type = support id = "USA" value = -200 }
 }
-
 
 CHI_help_korea_junta = {
 	allowed = { original_tag = CHI }
@@ -511,7 +512,7 @@ CHI_war_with_the_raj = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = front_unit_request tag = "RAJ" value = 150 }
+	ai_strategy = { type = front_unit_request id = "RAJ" value = 150 }
 }
 
 CHI_befriend_local_neighbors = {
@@ -545,6 +546,7 @@ CHI_blitz_taiwan = {
 	allowed = { original_tag = CHI }
 	enable = {
 		has_war_with = TAI
+		naval_strength_ratio = { tag = TAI ratio > 1 }
 	}
 	abort_when_not_enabled = yes
 
@@ -556,6 +558,7 @@ CHI_blitz_mongolia = {
 	allowed = { original_tag = CHI }
 	enable = {
 		has_war_with = MON
+		strength_ratio = { tag = MON ratio > 1 }
 	}
 	abort_when_not_enabled = yes
 
@@ -566,7 +569,7 @@ CHI_blitz_mongolia = {
 CHI_prepare_for_war_against_india = {
 	allowed = { original_tag = CHI }
 	enable = {
-		has_opinion = { target = CHI value < -25 }
+		RAJ = { has_opinion = { target = CHI value < -25 } }
 		OR = {
 			has_war_with = RAJ
 			any_owned_state = {
@@ -579,7 +582,7 @@ CHI_prepare_for_war_against_india = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = front_unit_request tag = "RAJ" value = 20 }
+	ai_strategy = { type = front_unit_request id = "RAJ" value = 20 }
 }
 
 CHI_defeat_any_invasion = {
@@ -743,19 +746,6 @@ CHI_concentrates_forces_vs_RUS = {
 	}
 }
 
-CHI_cancel_new_war = {
-	allowed = { original_tag = CHI }
-	enable = {
-		has_war_with = SOV
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = declare_war id = "RAJ" value = -4000 }
-	ai_strategy = { type = declare_war id = "TAI" value = -4000 }
-	ai_strategy = { type = declare_war id = "USA" value = -4000 }
-	ai_strategy = { type = declare_war id = "JAP" value = -4000 }
-}
-
 # CIVIL WAR IN AMERICA
 #Moved to MD_combat_ai_strategies.txt: us_civil_war_international_support
 
@@ -844,4 +834,58 @@ CHI_support_north_korea = {
 	ai_strategy = { type = befriend id = "NKO" value = 25 }
 	ai_strategy = { type = antagonize id = "KOR" value = 25 }
 	ai_strategy = { type = contain id = "KOR" value = 25 }
+}
+
+CHI_avoid_unready_war_with_TAI = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = TAI
+		NOT = { has_war_with = TAI }
+		NOT = { naval_strength_ratio = { tag = TAI ratio > 1.5 } }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = TAI value = -4000 }
+	ai_strategy = { type = conquer id = TAI value = -4000 }
+}
+
+CHI_prepare_war_with_TAI = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = TAI
+		NOT = { has_war_with = TAI }
+		naval_strength_ratio = { tag = TAI ratio > 1.5 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = TAI value = 200 }
+	ai_strategy = { type = declare_war id = TAI value = 200 }
+	ai_strategy = { type = conquer id = TAI value = 200 }
+}
+
+CHI_avoid_unready_war_with_RAJ = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = RAJ
+		NOT = { has_war_with = RAJ }
+		NOT = { strength_ratio = { tag = RAJ ratio > 1.2 } }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = RAJ value = -4000 }
+	ai_strategy = { type = conquer id = RAJ value = -4000 }
+}
+
+CHI_prepare_war_with_RAJ = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = RAJ
+		NOT = { has_war_with = RAJ }
+		strength_ratio = { tag = RAJ ratio > 1.2 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = RAJ value = 200 }
+	ai_strategy = { type = declare_war id = RAJ value = 200 }
+	ai_strategy = { type = conquer id = RAJ value = 200 }
 }

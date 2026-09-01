@@ -5,16 +5,33 @@
 # the same settings from one place.
 
 [tool.pytest.ini_options]
-testpaths = [
-  "tools/tests",
-  "tools/report_lib/tests",
-  "tools/validation/tests",
-  "tools/linting/tests",
-  "tools/standardization/tests",
-  "tools/docs_checks/tests",
-]
+testpaths = ["tools/tests"]
 python_files = ["*_test.py"]
 addopts = "-q"
+pythonpath = [
+  ".",
+  "tools",
+  "tools/validation",
+  "tools/linting",
+  "tools/standardization",
+  "tools/docs_checks",
+  "tools/analysis",
+  "tools/assets",
+]
+
+[tool.pyright]
+extraPaths = [
+  ".",
+  "tools",
+  "tools/validation",
+  "tools/linting",
+  "tools/standardization",
+  "tools/docs_checks",
+  "tools/analysis",
+  "tools/assets",
+]
+venvPath = "."
+venv = ".venv"
 
 [tool.ruff]
 line-length = 88
@@ -37,6 +54,13 @@ ignore = [
   "E501",
 ]
 
+[tool.ruff.lint.isort]
+# Without this, ruff classifies `import common` (tools/docs_checks/common.py)
+# from the presence of the game-data `common/` directory at the repo root: it
+# is first-party in a full checkout and third-party in CI's sparse `tools/`-only
+# checkout, so the same file passes locally and fails I001 on CI.
+known-first-party = ["common"]
+
 [tool.ruff.lint.per-file-ignores]
 # Library/hub modules re-export a public API surface (e.g. validator_common
 # re-exports run_validator_main from shared_utils). pyflakes can't see the
@@ -44,7 +68,6 @@ ignore = [
 "tools/shared_utils.py" = ["F401"]
 "tools/loc.py" = ["F401"]
 "tools/logging_tool.py" = ["F401"]
-"tools/path_utils.py" = ["F401"]
 "tools/standardization/common_utils.py" = ["F401"]
 "tools/validation/validator_common.py" = ["F401"]
 
@@ -66,8 +89,9 @@ branch = true
 source = ["tools"]
 
 [tool.coverage.report]
-omit = ["tools/**/tests/*", "tools/*_test.py"]
-fail_under = 58
+omit = ["tools/tests/**", "tools/*_test.py", "**/__pycache__/**"]
+include_namespace_packages = true
+fail_under = 95
 
 [tool.mypy]
 python_version = "3.10"

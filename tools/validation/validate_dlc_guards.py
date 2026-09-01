@@ -41,6 +41,7 @@ from shared_utils import (  # noqa: E402
 from validate_history import _extract_dlc_conditions  # noqa: E402
 from validator_common import (  # noqa: E402
     BaseValidator,
+    _child_blocks,
     run_validator_main,
     strip_comments,
 )
@@ -48,8 +49,6 @@ from validator_common import (  # noqa: E402
 Gates = FrozenSet[Tuple[str, str]]
 Conditions = List[Tuple[str, str]]
 
-# Numeric names so `random_list` weight buckets (`50 = { ... }`) parse as blocks.
-_BLOCK_RE = re.compile(r"([A-Za-z_0-9@][A-Za-z0-9_.@]*(?::[A-Za-z0-9_]+)?)\s*=\s*\{")
 _HAS_DLC_RE = re.compile(r'has_dlc\s*=\s*"([^"\n]+)"')
 _TECH_ENTRY_RE = re.compile(r"\btechnology\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 _CATEGORY_ENTRY_RE = re.compile(r"\bcategory\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
@@ -70,20 +69,6 @@ _BRANCHES = frozenset({"if", "else_if", "else"})
 _CRASHING = frozenset({"dlc_tech_bonus", "dlc_special_project"})
 
 
-def _match_brace(text: str, open_pos: int) -> int:
-    """Return the index of the `}` closing the `{` at ``open_pos``, or -1."""
-    depth = 0
-    for i in range(open_pos, len(text)):
-        char = text[i]
-        if char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                return i
-    return -1
-
-
 def _sanitize(text: str) -> str:
     """Strip comments and blank quoted strings, preserving line numbering.
 
@@ -93,22 +78,6 @@ def _sanitize(text: str) -> str:
     text = strip_comments(text)
     keep_start = {m.start(1) - 1 for m in _HAS_DLC_RE.finditer(text)}
     return blank_quoted_strings(text, keep_start)
-
-
-def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, int]]:
-    """Direct child blocks of a body as (name, name_start, body_start, body_end)."""
-    blocks = []
-    i = start
-    while i < end:
-        match = _BLOCK_RE.search(text, i, end)
-        if not match:
-            break
-        close = _match_brace(text, match.end() - 1)
-        if close < 0 or close > end:
-            break
-        blocks.append((match.group(1), match.start(), match.end(), close))
-        i = close + 1
-    return blocks
 
 
 def _branch_conditions(

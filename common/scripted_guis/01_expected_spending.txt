@@ -1,8 +1,8 @@
 scripted_gui = {
 	open_protest_main_button = {
 		context_type = player_context
-		window_name = "main_protests_open_button"
-		parent_window_name = "MapmodesInterface_Ingame"
+		window_name = "protests_open_button"
+		parent_window_token = politics_tab
 
 		dirty = global.protest_ui_dirty
 
@@ -23,6 +23,12 @@ scripted_gui = {
 				update_protest_dirty_var = yes
 			}
 		}
+
+		triggers = {
+			protests_warning_icon_visible = {
+				check_variable = { protest_strength > 10 }
+			}
+		}
 	}
 
 	protest_system_rework_gui = {
@@ -37,125 +43,6 @@ scripted_gui = {
 
 		ai_enabled = { always = no }
 
-		properties = {
-			welfare_spending_1_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_1_COLOR]"
-			}
-			welfare_spending_2_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_2_COLOR]"
-			}
-			welfare_spending_3_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_3_COLOR]"
-			}
-			welfare_spending_4_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_4_COLOR]"
-			}
-			welfare_spending_5_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_5_COLOR]"
-			}
-			welfare_spending_6_icon = {
-				image = "[GET_WELFARE_SPENDING_LEVEL_6_COLOR]"
-			}
-
-			health_spending_1_icon = {
-				image = "[GET_HEALTH_SPENDING_LEVEL_1_COLOR]"
-			}
-			health_spending_2_icon = {
-				image = "[GET_HEALTH_SPENDING_LEVEL_2_COLOR]"
-			}
-			health_spending_3_icon = {
-				image = "[GET_HEALTH_SPENDING_LEVEL_3_COLOR]"
-			}
-			health_spending_4_icon = {
-				image = "[GET_HEALTH_SPENDING_LEVEL_4_COLOR]"
-			}
-			health_spending_5_icon = {
-				image = "[GET_HEALTH_SPENDING_LEVEL_5_COLOR]"
-			}
-			health_spending_6_icon = {
-				image = "[GET_HEALTH_SPENDING_LEVEL_6_COLOR]"
-			}
-
-			adm_spending_1_icon = {
-				image = "[GET_ADM_SPENDING_LEVEL_1_COLOR]"
-			}
-			adm_spending_2_icon = {
-				image = "[GET_ADM_SPENDING_LEVEL_2_COLOR]"
-			}
-			adm_spending_3_icon = {
-				image = "[GET_ADM_SPENDING_LEVEL_3_COLOR]"
-			}
-			adm_spending_4_icon = {
-				image = "[GET_ADM_SPENDING_LEVEL_4_COLOR]"
-			}
-			adm_spending_5_icon = {
-				image = "[GET_ADM_SPENDING_LEVEL_5_COLOR]"
-			}
-
-			edu_spending_1_icon = {
-				image = "[GET_EDU_SPENDING_LEVEL_1_COLOR]"
-			}
-			edu_spending_2_icon = {
-				image = "[GET_EDU_SPENDING_LEVEL_2_COLOR]"
-			}
-			edu_spending_3_icon = {
-				image = "[GET_EDU_SPENDING_LEVEL_3_COLOR]"
-			}
-			edu_spending_4_icon = {
-				image = "[GET_EDU_SPENDING_LEVEL_4_COLOR]"
-			}
-			edu_spending_5_icon = {
-				image = "[GET_EDU_SPENDING_LEVEL_5_COLOR]"
-			}
-
-			police_spending_1_icon = {
-				image = "[GET_POLICE_SPENDING_LEVEL_1_COLOR]"
-			}
-			police_spending_2_icon = {
-				image = "[GET_POLICE_SPENDING_LEVEL_2_COLOR]"
-			}
-			police_spending_3_icon = {
-				image = "[GET_POLICE_SPENDING_LEVEL_3_COLOR]"
-			}
-			police_spending_4_icon = {
-				image = "[GET_POLICE_SPENDING_LEVEL_4_COLOR]"
-			}
-			police_spending_5_icon = {
-				image = "[GET_POLICE_SPENDING_LEVEL_5_COLOR]"
-			}
-
-			defence_spending_1_icon = {
-				image = "[GET_DEFENCE_SPENDING_LEVEL_1_COLOR]"
-			}
-			defence_spending_2_icon = {
-				image = "[GET_DEFENCE_SPENDING_LEVEL_2_COLOR]"
-			}
-			defence_spending_3_icon = {
-				image = "[GET_DEFENCE_SPENDING_LEVEL_3_COLOR]"
-			}
-			defence_spending_4_icon = {
-				image = "[GET_DEFENCE_SPENDING_LEVEL_4_COLOR]"
-			}
-			defence_spending_5_icon = {
-				image = "[GET_DEFENCE_SPENDING_LEVEL_5_COLOR]"
-			}
-			defence_spending_6_icon = {
-				image = "[GET_DEFENCE_SPENDING_LEVEL_6_COLOR]"
-			}
-			defence_spending_7_icon = {
-				image = "[GET_DEFENCE_SPENDING_LEVEL_7_COLOR]"
-			}
-			defence_spending_8_icon = {
-				image = "[GET_DEFENCE_SPENDING_LEVEL_8_COLOR]"
-			}
-			defence_spending_9_icon = {
-				image = "[GET_DEFENCE_SPENDING_LEVEL_9_COLOR]"
-			}
-			defence_spending_10_icon = {
-				image = "[GET_DEFENCE_SPENDING_LEVEL_10_COLOR]"
-			}
-		}
-
 		effects = {
 			close_protest_screen_click = {
 				clr_country_flag = open_protests_screen
@@ -164,66 +51,215 @@ scripted_gui = {
 		}
 
 		triggers = {
-			MD_protests_state_calm_visible = {
-				NOT = {
-					OR = {
-						has_active_mission = MD_incoming_protest_movement
-						has_active_mission = MD_incoming_revolt
-					}
-				}
-				NOT = { has_country_flag = MD_protest_cooldown }
+			close_protest_screen_click_enabled = {
+				# calculate frames for all the expected spending levels
+
+				# administrative
+				set_temp_variable = { index = 1 }
+				generate_expected_adm_spending_frame = yes
+				set_temp_variable = { index = 2 }
+				generate_expected_adm_spending_frame = yes
+				set_temp_variable = { index = 3 }
+				generate_expected_adm_spending_frame = yes
+				set_temp_variable = { index = 4 }
+				generate_expected_adm_spending_frame = yes
+				set_temp_variable = { index = 5 }
+				generate_expected_adm_spending_frame = yes
+
+				# police
+				set_temp_variable = { index = 1 }
+				generate_expected_police_spending_frame = yes
+				set_temp_variable = { index = 2 }
+				generate_expected_police_spending_frame = yes
+				set_temp_variable = { index = 3 }
+				generate_expected_police_spending_frame = yes
+				set_temp_variable = { index = 4 }
+				generate_expected_police_spending_frame = yes
+				set_temp_variable = { index = 5 }
+				generate_expected_police_spending_frame = yes
+
+				# education
+				set_temp_variable = { index = 1 }
+				generate_expected_edu_spending_frame = yes
+				set_temp_variable = { index = 2 }
+				generate_expected_edu_spending_frame = yes
+				set_temp_variable = { index = 3 }
+				generate_expected_edu_spending_frame = yes
+				set_temp_variable = { index = 4 }
+				generate_expected_edu_spending_frame = yes
+				set_temp_variable = { index = 5 }
+				generate_expected_edu_spending_frame = yes
+
+				# health
+				set_temp_variable = { index = 1 }
+				generate_expected_health_spending_frame = yes
+				set_temp_variable = { index = 2 }
+				generate_expected_health_spending_frame = yes
+				set_temp_variable = { index = 3 }
+				generate_expected_health_spending_frame = yes
+				set_temp_variable = { index = 4 }
+				generate_expected_health_spending_frame = yes
+				set_temp_variable = { index = 5 }
+				generate_expected_health_spending_frame = yes
+				set_temp_variable = { index = 6 }
+				generate_expected_health_spending_frame = yes
+
+				# welfare
+				set_temp_variable = { index = 1 }
+				generate_expected_welfare_spending_frame = yes
+				set_temp_variable = { index = 2 }
+				generate_expected_welfare_spending_frame = yes
+				set_temp_variable = { index = 3 }
+				generate_expected_welfare_spending_frame = yes
+				set_temp_variable = { index = 4 }
+				generate_expected_welfare_spending_frame = yes
+				set_temp_variable = { index = 5 }
+				generate_expected_welfare_spending_frame = yes
+				set_temp_variable = { index = 6 }
+				generate_expected_welfare_spending_frame = yes
+
+				# military
+				set_temp_variable = { index = 1 }
+				generate_expected_military_spending_frame = yes
+				set_temp_variable = { index = 2 }
+				generate_expected_military_spending_frame = yes
+				set_temp_variable = { index = 3 }
+				generate_expected_military_spending_frame = yes
+				set_temp_variable = { index = 4 }
+				generate_expected_military_spending_frame = yes
+				set_temp_variable = { index = 5 }
+				generate_expected_military_spending_frame = yes
+				set_temp_variable = { index = 6 }
+				generate_expected_military_spending_frame = yes
+				set_temp_variable = { index = 7 }
+				generate_expected_military_spending_frame = yes
+				set_temp_variable = { index = 8 }
+				generate_expected_military_spending_frame = yes
+				set_temp_variable = { index = 9 }
+				generate_expected_military_spending_frame = yes
+				set_temp_variable = { index = 10 }
+				generate_expected_military_spending_frame = yes
+
+				always = yes
 			}
-			MD_protests_state_warning_visible = {
-				has_active_mission = MD_incoming_protest_movement
+		}
+
+		properties = {
+			adm_spending_1 = {
+				frame = adm_spending_frame_1
 			}
-			MD_protests_state_revolt_visible = {
-				has_active_mission = MD_incoming_revolt
+			adm_spending_2 = {
+				frame = adm_spending_frame_2
 			}
-			MD_protests_state_cooldown_visible = {
-				has_country_flag = MD_protest_cooldown
-				NOT = {
-					OR = {
-						has_active_mission = MD_incoming_protest_movement
-						has_active_mission = MD_incoming_revolt
-					}
-				}
+			adm_spending_3 = {
+				frame = adm_spending_frame_3
+			}
+			adm_spending_4 = {
+				frame = adm_spending_frame_4
+			}
+			adm_spending_5 = {
+				frame = adm_spending_frame_5
 			}
 
-			# Drift source rows — render when contributing (spending shows both signs)
-			MD_drift_spending_row_visible = {
-				OR = {
-					check_variable = { drift_spending_last > 0.01 }
-					check_variable = { drift_spending_last < -0.01 }
-				}
+			police_spending_1 = {
+				frame = police_spending_frame_1
 			}
-			MD_drift_stability_row_visible = {
-				check_variable = { drift_stability_last > 0.01 }
+			police_spending_2 = {
+				frame = police_spending_frame_2
 			}
-			MD_drift_interest_row_visible = {
-				check_variable = { drift_interest_last > 0.01 }
+			police_spending_3 = {
+				frame = police_spending_frame_3
 			}
-			MD_drift_recession_row_visible = {
-				check_variable = { drift_recession_last > 0.01 }
+			police_spending_4 = {
+				frame = police_spending_frame_4
 			}
-			MD_drift_depression_row_visible = {
-				check_variable = { drift_depression_last > 0.01 }
-			}
-			MD_drift_war_row_visible = {
-				check_variable = { drift_war_last > 0.01 }
-			}
-			MD_drift_corruption_row_visible = {
-				check_variable = { drift_corruption_last > 0.01 }
-			}
-			MD_drift_ct_row_visible = {
-				check_variable = { drift_ct_last > 0.01 }
-			}
-			MD_drift_passive_row_visible = {
-				check_variable = { drift_passive_last < 0 }
+			police_spending_5 = {
+				frame = police_spending_frame_5
 			}
 
-			# Revolt-state tracker only during revolt
-			MD_protests_revolt_states_visible = {
-				has_active_mission = MD_incoming_revolt
+			edu_spending_1 = {
+				frame = edu_spending_frame_1
+			}
+			edu_spending_2 = {
+				frame = edu_spending_frame_2
+			}
+			edu_spending_3 = {
+				frame = edu_spending_frame_3
+			}
+			edu_spending_4 = {
+				frame = edu_spending_frame_4
+			}
+			edu_spending_5 = {
+				frame = edu_spending_frame_5
+			}
+
+			health_spending_1 = {
+				frame = health_spending_frame_1
+			}
+			health_spending_2 = {
+				frame = health_spending_frame_2
+			}
+			health_spending_3 = {
+				frame = health_spending_frame_3
+			}
+			health_spending_4 = {
+				frame = health_spending_frame_4
+			}
+			health_spending_5 = {
+				frame = health_spending_frame_5
+			}
+			health_spending_6 = {
+				frame = health_spending_frame_6
+			}
+
+			welfare_spending_1 = {
+				frame = welfare_spending_frame_1
+			}
+			welfare_spending_2 = {
+				frame = welfare_spending_frame_2
+			}
+			welfare_spending_3 = {
+				frame = welfare_spending_frame_3
+			}
+			welfare_spending_4 = {
+				frame = welfare_spending_frame_4
+			}
+			welfare_spending_5 = {
+				frame = welfare_spending_frame_5
+			}
+			welfare_spending_6 = {
+				frame = welfare_spending_frame_6
+			}
+
+			military_spending_1 = {
+				frame = military_spending_frame_1
+			}
+			military_spending_2 = {
+				frame = military_spending_frame_2
+			}
+			military_spending_3 = {
+				frame = military_spending_frame_3
+			}
+			military_spending_4 = {
+				frame = military_spending_frame_4
+			}
+			military_spending_5 = {
+				frame = military_spending_frame_5
+			}
+			military_spending_6 = {
+				frame = military_spending_frame_6
+			}
+			military_spending_7 = {
+				frame = military_spending_frame_7
+			}
+			military_spending_8 = {
+				frame = military_spending_frame_8
+			}
+			military_spending_9 = {
+				frame = military_spending_frame_9
+			}
+			military_spending_10 = {
+				frame = military_spending_frame_10
 			}
 		}
 	}

@@ -8,7 +8,7 @@ import logging
 import os
 import re
 import sys
-from typing import Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -21,6 +21,9 @@ _NAVAL_SLOT_CATEGORIES = {
     "unknown_slot": "NAVAL VARIANT: slot not on hull",
     "unknown_module": "NAVAL VARIANT: unknown module reference",
     "category_mismatch": "NAVAL VARIANT: module category not allowed in slot",
+    "missing_required_module": "NAVAL VARIANT: required slot left empty",
+    "count_limit_exceeded": "NAVAL VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "NAVAL VARIANT: module forbidden on hull type",
 }
 
 _EQUIPMENT_SLOT_CATEGORIES = {
@@ -28,6 +31,15 @@ _EQUIPMENT_SLOT_CATEGORIES = {
     "unknown_slot": "EQUIPMENT VARIANT: slot not on hull",
     "unknown_module": "EQUIPMENT VARIANT: unknown module reference",
     "category_mismatch": "EQUIPMENT VARIANT: module category not allowed in slot",
+    "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
+    "count_limit_exceeded": "EQUIPMENT VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
+}
+
+_SLOT_ERROR_KINDS = {
+    "missing_required_module",
+    "count_limit_exceeded",
+    "forbidden_equipment_type",
 }
 
 ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
@@ -165,12 +177,12 @@ def parse_designs(content: str) -> List[Dict]:
     designer, so a group that sets it on only some of its designs shows the
     player a partial preset list.
     """
-    designs = []
+    designs: List[Dict[str, Any]] = []
     lines = content.split("\n")
     group = None
     group_depth = 0
     depth = 0
-    pending = None
+    pending: Optional[Dict[str, Any]] = None
 
     for idx, raw in enumerate(lines):
         code = strip_inline_comment(raw)
@@ -212,6 +224,9 @@ class Validator(BaseValidator):
     # engines on destroyers, ESM on subs, mineclearing on corvettes, engine
     # modules in weapon slots) untouched; the tank and plane templates came into
     # scope later and carry their own share.
+    # A template that leaves a `required = yes` slot empty, exceeds a hull
+    # `module_count_limit`, or equips a module forbidden on that hull's types
+    # cannot be matched, so those are always hard errors regardless of backlog.
     SLOT_SEVERITY = Severity.WARNING
 
     def run_validations(self):
@@ -254,7 +269,11 @@ class Validator(BaseValidator):
                 )
                 results.append(
                     Issue(
-                        severity=self.SLOT_SEVERITY,
+                        severity=(
+                            Severity.ERROR
+                            if f.kind in _SLOT_ERROR_KINDS
+                            else self.SLOT_SEVERITY
+                        ),
                         category=labels[f.kind],
                         message=f.message,
                         file=rel,

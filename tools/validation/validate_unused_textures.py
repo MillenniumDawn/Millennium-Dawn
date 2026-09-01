@@ -49,7 +49,7 @@ EXTRA_SKIP_PATTERNS = ["resources", "loadingscreens"]
 # Flags are loaded by naming convention, never referenced from a .gfx: the engine
 # resolves gfx/flags/<TAG>.tga plus its _<ideology> variants and any cosmetic-tag
 # name. Scanning them makes every flag in the mod look unused.
-_FLAG_DIR_PREFIX = os.path.join("gfx", "flags") + os.sep
+_FLAG_DIR_PREFIX = "gfx/flags/"
 
 
 def find_texture_files(mod_path: str) -> Set[str]:
@@ -67,11 +67,11 @@ def find_texture_files(mod_path: str) -> Set[str]:
                     break
             if skip:
                 continue
-            if os.path.relpath(filename, mod_path).startswith(_FLAG_DIR_PREFIX):
+            rel_path = os.path.relpath(filename, mod_path).replace("\\", "/")
+            if rel_path.startswith(_FLAG_DIR_PREFIX):
                 continue
 
             # Store relative path from mod root for easier comparison
-            rel_path = os.path.relpath(filename, mod_path)
             texture_files.add(rel_path)
 
     return texture_files

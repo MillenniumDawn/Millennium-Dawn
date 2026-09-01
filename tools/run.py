@@ -31,7 +31,6 @@ SEARCH_DIRS = [
     "publishing",
     "standardization",
     "validation",
-    "tests",
     ".",  # root-level scripts
 ]
 
@@ -45,6 +44,11 @@ HIDDEN = {
     "standardize_staged",
     "common_utils",
     "validator_common",
+    "check_common_mistakes",
+    "disk_cache",
+    "equipment_module_slots",
+    "equipment_stats",
+    "sprite_index",
 }
 
 
@@ -88,31 +92,35 @@ def print_list(tools: dict[str, Path]) -> None:
 
 def main() -> None:
     if len(sys.argv) < 2 or sys.argv[1] in ("--help", "-h"):
-        print(__doc__.strip())
+        print((__doc__ or "").strip())
         sys.exit(0)
 
     if sys.argv[1] == "--list":
         print_list(find_all_tools())
         sys.exit(0)
 
-    tool_name = sys.argv[1].replace(".py", "").replace("-", "_")
+    tool_name = sys.argv[1].removesuffix(".py")
     tool_args = sys.argv[2:]
 
     tools = find_all_tools()
     if tool_name not in tools:
-        # Fuzzy match: check for partial matches.
-        matches = [k for k in tools if tool_name in k]
-        if len(matches) == 1:
-            tool_name = matches[0]
-        elif matches:
-            print(f"Ambiguous tool name '{tool_name}'. Did you mean one of:")
-            for m in sorted(matches):
-                print(f"  {m}")
-            sys.exit(1)
+        normalized = tool_name.replace("-", "_")
+        aliases = [key for key in tools if key.replace("-", "_") == normalized]
+        if len(aliases) == 1:
+            tool_name = aliases[0]
         else:
-            print(f"Unknown tool: '{tool_name}'")
-            print("Run 'python3 tools/run.py --list' to see available tools.")
-            sys.exit(1)
+            matches = [key for key in tools if normalized in key.replace("-", "_")]
+            if len(matches) == 1:
+                tool_name = matches[0]
+            elif matches:
+                print(f"Ambiguous tool name '{tool_name}'. Did you mean one of:")
+                for match in sorted(matches):
+                    print(f"  {match}")
+                sys.exit(1)
+            else:
+                print(f"Unknown tool: '{tool_name}'")
+                print("Run 'python3 tools/run.py --list' to see available tools.")
+                sys.exit(1)
 
     script_path = tools[tool_name]
     result = subprocess.run(

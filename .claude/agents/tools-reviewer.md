@@ -28,7 +28,7 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 - `tools/validation/validator_common.py` — `BaseValidator`, `_pool_map`, staged-file support.
 - `pyproject.toml` — single source for ruff (lint), pytest (testpaths), black, isort config.
 - `.pre-commit-config.yaml` — which scripts are hooks vs `stages: [manual]` vs unwired; the `ruff` hook and the `tools-pytest` pre-push hook.
-- `.github/workflows/tools-validation.yml` — the `ruff-lint` job, the pytest job (runs all four test dirs), and `validate_tools.py --strict`.
+- `.github/workflows/tools-validation.yml` — the `checks` matrix (`lint`, `unit`, `staged` entries) and `validate_tools.py --strict`.
 - `.github/workflows/coding-pipeline.yml` — what CI runs unconditionally vs locally-only.
 
 ## Workflow
@@ -75,9 +75,9 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 
 **Tests (pytest)**:
 
-- Any new or changed `validate_*.py` / `report_lib` logic needs matching tests in the right `tests/` dir (`tools/tests`, `tools/report_lib/tests`, `tools/validation/tests`, `tools/linting/tests`). The whole suite must stay green.
+- Any new or changed `validate_*.py` / `report_lib` logic needs matching tests under `tools/tests/` (domain subdirs: `validation/`, `report_lib/`, `linting/`, `standardization/`, `docs_checks/`). The whole suite must stay green.
 - New test files must end in `_test.py` (the `python_files` pattern in `pyproject.toml`); `test_*.py` is not collected.
-- All four dirs run in CI and at `pre-push`. A test added only under a dir not in `testpaths` is dead — confirm placement.
+- `testpaths` is `tools/tests`. A test added outside that tree is dead.
 
 **Consistency**:
 

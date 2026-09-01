@@ -1,12 +1,6 @@
 """Unit tests for shared_utils.extract_block brace-balancing."""
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-from shared_utils import blank_quoted_strings, extract_block  # noqa: E402
+from shared_utils import blank_quoted_strings, extract_block
 
 
 def _split(text):

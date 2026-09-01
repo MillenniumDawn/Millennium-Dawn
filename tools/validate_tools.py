@@ -5,6 +5,7 @@ import ast
 import importlib.util
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import List, Optional, Set, Tuple
@@ -42,7 +43,7 @@ class ToolsValidator(BaseValidator):
         self, path: Path
     ) -> Tuple[Optional[str], bool, bool, bool, Set[str]]:
         """Read file once; return (syntax_error, has_shebang, has_main, has_guard, imports)."""
-        rel = str(path.relative_to(self.tools_dir))
+        rel = path.relative_to(self.tools_dir).as_posix()
         try:
             with open(path, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -102,8 +103,31 @@ class ToolsValidator(BaseValidator):
             return True
         return path.stem in imported
 
-    def _is_executable(self, path: Path) -> bool:
-        return os.access(path, os.X_OK)
+    def _indexed_executable_paths(self) -> Optional[Set[Path]]:
+        try:
+            result = subprocess.run(
+                ["git", "ls-files", "--stage", "--", "tools"],
+                cwd=self.tools_dir.parent,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            return None
+
+        executable_paths = set()
+        for line in result.stdout.splitlines():
+            metadata, separator, relative_path = line.partition("\t")
+            if separator and metadata.startswith("100755 "):
+                executable_paths.add((self.tools_dir.parent / relative_path).resolve())
+        return executable_paths
+
+    def _is_executable(
+        self, path: Path, indexed_executables: Optional[Set[Path]] = None
+    ) -> bool:
+        if indexed_executables is not None:
+            return path.resolve() in indexed_executables
+        return os.name == "nt" or os.access(path, os.X_OK)
 
     def _check_dependencies(self) -> List[str]:
         # Runtime packages live in the `runtime` dependency-group in pyproject.
@@ -136,6 +160,7 @@ class ToolsValidator(BaseValidator):
         self.log(f"  Found {len(scripts)} Python scripts to validate")
 
         pkg_dirs = {p.parent for p in scripts if p.name == "__init__.py"}
+        indexed_executables = self._indexed_executable_paths()
 
         syntax_errors = []
         missing_shebangs = []
@@ -152,7 +177,7 @@ class ToolsValidator(BaseValidator):
             imported |= imports
 
         for path in scripts:
-            rel = str(path.relative_to(self.tools_dir))
+            rel = path.relative_to(self.tools_dir).as_posix()
             syntax_err, has_shebang, has_main, has_guard = scanned[path]
 
             if syntax_err:
@@ -160,7 +185,7 @@ class ToolsValidator(BaseValidator):
             if not self._is_library(path, has_guard, pkg_dirs, imported):
                 if not has_shebang:
                     missing_shebangs.append(rel)
-                if not self._is_executable(path):
+                if not self._is_executable(path, indexed_executables):
                     non_executable.append(rel)
                 if not has_main:
                     no_main.append(rel)
