@@ -9,6 +9,7 @@ Public entry points:
   - dedupe(issues)         -> list[Issue]
   - render(state, ctx)     -> str  (Markdown body)
   - post_comment(...)      -> None
+  - clear_comment(...)     -> None
   - post_checks(...)       -> None
 
 The CLI is `tools/generate_validation_report.py`.
@@ -25,7 +26,7 @@ from .baseline import (
     write_baseline,
 )
 from .checks_api import post_checks
-from .comment import REPORT_MARKER, delete_comment, find_existing_comment, post_comment
+from .comment import REPORT_MARKER, clear_comment, find_existing_comment, post_comment
 from .dedupe import dedupe
 from .loader import discover_validator_runs, load_all
 from .markdown import MAX_ISSUES_STEP_SUMMARY, render
@@ -55,6 +56,6 @@ __all__ = [
     "REPORT_MARKER",
     "find_existing_comment",
     "post_comment",
-    "delete_comment",
+    "clear_comment",
     "post_checks",
 ]

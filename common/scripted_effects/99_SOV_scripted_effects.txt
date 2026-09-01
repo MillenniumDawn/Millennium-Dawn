@@ -5793,21 +5793,6 @@ SOV_russian_governorates_annex = {
 	}
 	if = {
 		limit = {
-			LRP = {
-				influence_higher_50 = yes
-				has_autonomy_state = autonomy_governorate_rf
-			}
-		}
-		LRP = {
-			add_timed_idea = {
-				idea = SOV_idea_governorate
-				days = 100
-			}
-		}
-		add_political_power = -150
-	}
-	if = {
-		limit = {
 			CRM = {
 				influence_higher_50 = yes
 				has_autonomy_state = autonomy_governorate_rf
@@ -7565,7 +7550,6 @@ russian_new_states = {
 				694
 				693
 				1030
-				333
 			}
 		}
 		hidden_effect = {
@@ -7712,17 +7696,6 @@ russian_new_states = {
 						NOV = {
 							transfer_state = 694
 							add_state_core = 694
-						}
-					}
-				}
-				if = {
-					limit = {
-						SOV = { owns_state = 333 }
-					}
-					hidden_effect = {
-						NOV = {
-							transfer_state = 333
-							add_state_core = 333
 						}
 					}
 				}
@@ -9643,16 +9616,6 @@ jirik_ukraine_novorossia = {
 			}
 			if = {
 				limit = {
-					UKR = { owns_state = 333 }
-				}
-				NOV = {
-					add_state_core = 333
-					transfer_state = 333
-				}
-				add_political_power = -35
-			}
-			if = {
-				limit = {
 					has_idea = SOV_gru1
 					UKR = { owns_state = 695 }
 				}
@@ -9758,6 +9721,7 @@ jirik_ukraine_novorossia = {
 			}
 			set_cosmetic_tag = GOV_NOV
 			clr_country_flag = dynamic_flag
+			NOV_shared_setup = yes
 		}
 	}
 }
@@ -9954,11 +9918,70 @@ ai_russian_popularity_assistant = {
 }
 ###########SPECIAL FORCES MOBILIZES###########
 ###########MOBILIZE ROSGUARD###########
+SOV_ensure_storm_z_template = {
+	if = {
+		limit = { NOT = { has_template = "Battalion of Prisoners" } }
+		division_template = {
+			name = "Battalion of Prisoners"
+			is_locked = yes
+			regiments = {
+				Militia_Bat = { x = 0 y = 0 }
+				Militia_Bat = { x = 0 y = 1 }
+				Militia_Bat = { x = 1 y = 0 }
+			}
+			priority = 2
+		}
+	}
+}
 SOV_rosguard_mobilise_effect = {
 	remove_ideas = SOV_rosguard_troops_idea
 	add_command_power = -65
 	hidden_effect = {
 		add_ideas = SOV_rosguard_troops_mobilize_idea
+		if = {
+			limit = { NOT = { has_template = "Rosgvardia" } }
+			division_template = {
+				name = "Rosgvardia"
+				is_locked = yes
+				regiments = {
+					Militia_Bat = { x = 0 y = 0 }
+					Militia_Bat = { x = 0 y = 1 }
+					Militia_Bat = { x = 0 y = 2 }
+					Militia_Bat = { x = 1 y = 0 }
+					Militia_Bat = { x = 1 y = 1 }
+					Militia_Bat = { x = 1 y = 2 }
+					Arty_Bat = { x = 2 y = 0 }
+					Arty_Bat = { x = 2 y = 1 }
+					Arty_Bat = { x = 2 y = 2 }
+				}
+				support = {
+					Mot_Recce_Comp = { x = 0 y = 0 }
+					L_Engi_Comp = { x = 0 y = 1 }
+				}
+			}
+		}
+		if = {
+			limit = { NOT = { has_template = "Rosgvardia Tank Brigade" } }
+			division_template = {
+				name = "Rosgvardia Tank Brigade"
+				is_locked = yes
+				regiments = {
+					armor_Bat = { x = 0 y = 0 }
+					armor_Bat = { x = 0 y = 1 }
+					Militia_Bat = { x = 1 y = 0 }
+					Militia_Bat = { x = 1 y = 1 }
+					Militia_Bat = { x = 1 y = 2 }
+					Militia_Bat = { x = 1 y = 3 }
+					Arty_Bat = { x = 2 y = 0 }
+					Arty_Bat = { x = 2 y = 1 }
+					Arty_Bat = { x = 2 y = 2 }
+				}
+				support = {
+					Mot_Recce_Comp = { x = 0 y = 0 }
+					L_Engi_Comp = { x = 0 y = 1 }
+				}
+			}
+		}
 	}
 	if = {
 		limit = {
@@ -10166,25 +10189,58 @@ SOV_omon_mobilise_effect = {
 				}
 				priority = 2
 			}
-			1189 = {
-				create_unit = {
-					division = "name = \"OMON Zubr\" division_template = \"OMON\" start_experience_factor = 0.9"
-					prioritize_location = 401
-					owner = SOV
+			if = {
+				limit = { 1189 = { is_fully_controlled_by = ROOT } }
+				1189 = {
+					create_unit = {
+						division = "name = \"OMON Zubr\" division_template = \"OMON\" start_experience_factor = 0.9"
+						prioritize_location = 401
+						owner = SOV
+					}
 				}
 			}
-			644 = {
-				create_unit = {
-					division = "name = \"OMON Bastion\" division_template = \"OMON\" start_experience_factor = 0.9"
-					prioritize_location = 3151
-					owner = SOV
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"OMON Zubr\" division_template = \"OMON\" start_experience_factor = 0.9"
+						owner = SOV
+					}
 				}
 			}
-			676 = {
-				create_unit = {
-					division = "name = \"OMON Malachit\" division_template = \"OMON\" start_experience_factor = 0.9"
-					prioritize_location = 1821
-					owner = SOV
+			if = {
+				limit = { 644 = { is_fully_controlled_by = ROOT } }
+				644 = {
+					create_unit = {
+						division = "name = \"OMON Bastion\" division_template = \"OMON\" start_experience_factor = 0.9"
+						prioritize_location = 3151
+						owner = SOV
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"OMON Bastion\" division_template = \"OMON\" start_experience_factor = 0.9"
+						owner = SOV
+					}
+				}
+			}
+			if = {
+				limit = { 676 = { is_fully_controlled_by = ROOT } }
+				676 = {
+					create_unit = {
+						division = "name = \"OMON Malachit\" division_template = \"OMON\" start_experience_factor = 0.9"
+						prioritize_location = 1821
+						owner = SOV
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"OMON Malachit\" division_template = \"OMON\" start_experience_factor = 0.9"
+						owner = SOV
+					}
 				}
 			}
 		}
@@ -10210,25 +10266,58 @@ SOV_omon_mobilise_effect = {
 				}
 				priority = 2
 			}
-			1189 = {
-				create_unit = {
-					division = "name = \"OMON Zubr\" division_template = \"OMON\" start_experience_factor = 0.9"
-					prioritize_location = 401
-					owner = SOV
+			if = {
+				limit = { 1189 = { is_fully_controlled_by = ROOT } }
+				1189 = {
+					create_unit = {
+						division = "name = \"OMON Zubr\" division_template = \"OMON\" start_experience_factor = 0.9"
+						prioritize_location = 401
+						owner = SOV
+					}
 				}
 			}
-			644 = {
-				create_unit = {
-					division = "name = \"OMON Bastion\" division_template = \"OMON\" start_experience_factor = 0.9"
-					prioritize_location = 3151
-					owner = SOV
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"OMON Zubr\" division_template = \"OMON\" start_experience_factor = 0.9"
+						owner = SOV
+					}
 				}
 			}
-			676 = {
-				create_unit = {
-					division = "name = \"OMON Malachit\" division_template = \"OMON\" start_experience_factor = 0.9"
-					prioritize_location = 1821
-					owner = SOV
+			if = {
+				limit = { 644 = { is_fully_controlled_by = ROOT } }
+				644 = {
+					create_unit = {
+						division = "name = \"OMON Bastion\" division_template = \"OMON\" start_experience_factor = 0.9"
+						prioritize_location = 3151
+						owner = SOV
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"OMON Bastion\" division_template = \"OMON\" start_experience_factor = 0.9"
+						owner = SOV
+					}
+				}
+			}
+			if = {
+				limit = { 676 = { is_fully_controlled_by = ROOT } }
+				676 = {
+					create_unit = {
+						division = "name = \"OMON Malachit\" division_template = \"OMON\" start_experience_factor = 0.9"
+						prioritize_location = 1821
+						owner = SOV
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"OMON Malachit\" division_template = \"OMON\" start_experience_factor = 0.9"
+						owner = SOV
+					}
 				}
 			}
 		}
@@ -10253,46 +10342,112 @@ SOV_sobr_mobilise_effect = {
 				}
 				priority = 2
 			}
-			1189 = {
-				create_unit = {
-					division = "name = \"SOBR Bulat\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 401
-					owner = SOV
+			if = {
+				limit = { 1189 = { is_fully_controlled_by = ROOT } }
+				1189 = {
+					create_unit = {
+						division = "name = \"SOBR Bulat\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 401
+						owner = SOV
+					}
 				}
 			}
-			644 = {
-				create_unit = {
-					division = "name = \"SOBR Granit\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 3151
-					owner = SOV
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Bulat\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
 				}
 			}
-			642 = {
-				create_unit = {
-					division = "name = \"SOBR Viking\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 395
-					owner = SOV
+			if = {
+				limit = { 644 = { is_fully_controlled_by = ROOT } }
+				644 = {
+					create_unit = {
+						division = "name = \"SOBR Granit\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 3151
+						owner = SOV
+					}
 				}
 			}
-			1174 = {
-				create_unit = {
-					division = "name = \"SOBR Partizan\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 3335
-					owner = SOV
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Granit\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
 				}
 			}
-			660 = {
-				create_unit = {
-					division = "name = \"SOBR Rubin\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 11375
-					owner = SOV
+			if = {
+				limit = { 642 = { is_fully_controlled_by = ROOT } }
+				642 = {
+					create_unit = {
+						division = "name = \"SOBR Viking\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 395
+						owner = SOV
+					}
 				}
 			}
-			654 = {
-				create_unit = {
-					division = "name = \"SOBR Sigma\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 306
-					owner = SOV
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Viking\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
+				}
+			}
+			if = {
+				limit = { 1174 = { is_fully_controlled_by = ROOT } }
+				1174 = {
+					create_unit = {
+						division = "name = \"SOBR Partizan\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 3335
+						owner = SOV
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Partizan\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
+				}
+			}
+			if = {
+				limit = { 660 = { is_fully_controlled_by = ROOT } }
+				660 = {
+					create_unit = {
+						division = "name = \"SOBR Rubin\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 11375
+						owner = SOV
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Rubin\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
+				}
+			}
+			if = {
+				limit = { 654 = { is_fully_controlled_by = ROOT } }
+				654 = {
+					create_unit = {
+						division = "name = \"SOBR Sigma\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 306
+						owner = SOV
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Sigma\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
 				}
 			}
 		}
@@ -10312,46 +10467,112 @@ SOV_sobr_mobilise_effect = {
 				}
 				priority = 2
 			}
-			1189 = {
-				create_unit = {
-					division = "name = \"SOBR Bulat\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 401
-					owner = SOV
+			if = {
+				limit = { 1189 = { is_fully_controlled_by = ROOT } }
+				1189 = {
+					create_unit = {
+						division = "name = \"SOBR Bulat\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 401
+						owner = SOV
+					}
 				}
 			}
-			644 = {
-				create_unit = {
-					division = "name = \"SOBR Granit\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 3151
-					owner = SOV
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Bulat\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
 				}
 			}
-			642 = {
-				create_unit = {
-					division = "name = \"SOBR Viking\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 395
-					owner = SOV
+			if = {
+				limit = { 644 = { is_fully_controlled_by = ROOT } }
+				644 = {
+					create_unit = {
+						division = "name = \"SOBR Granit\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 3151
+						owner = SOV
+					}
 				}
 			}
-			1174 = {
-				create_unit = {
-					division = "name = \"SOBR Partizan\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 3335
-					owner = SOV
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Granit\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
 				}
 			}
-			660 = {
-				create_unit = {
-					division = "name = \"SOBR Rubin\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 11375
-					owner = SOV
+			if = {
+				limit = { 642 = { is_fully_controlled_by = ROOT } }
+				642 = {
+					create_unit = {
+						division = "name = \"SOBR Viking\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 395
+						owner = SOV
+					}
 				}
 			}
-			654 = {
-				create_unit = {
-					division = "name = \"SOBR Sigma\" division_template = \"SOBR\" start_experience_factor = 0.9"
-					prioritize_location = 306
-					owner = SOV
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Viking\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
+				}
+			}
+			if = {
+				limit = { 1174 = { is_fully_controlled_by = ROOT } }
+				1174 = {
+					create_unit = {
+						division = "name = \"SOBR Partizan\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 3335
+						owner = SOV
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Partizan\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
+				}
+			}
+			if = {
+				limit = { 660 = { is_fully_controlled_by = ROOT } }
+				660 = {
+					create_unit = {
+						division = "name = \"SOBR Rubin\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 11375
+						owner = SOV
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Rubin\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
+				}
+			}
+			if = {
+				limit = { 654 = { is_fully_controlled_by = ROOT } }
+				654 = {
+					create_unit = {
+						division = "name = \"SOBR Sigma\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						prioritize_location = 306
+						owner = SOV
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"SOBR Sigma\" division_template = \"SOBR\" start_experience_factor = 0.9"
+						owner = SOV
+					}
 				}
 			}
 		}
@@ -12101,4 +12322,95 @@ SOV_apply_western_sanctions = {
 	set_variable = { SOV_sanctions_opinion_gain = { value = SOV_sanctions_opinion_gain subtract = 0.02 clamp = { min = -0.08 max = 0 } } }
 	set_variable = { SOV_sanctions_research_speed = { value = SOV_sanctions_research_speed subtract = 0.02 clamp = { min = -0.08 max = 0 } } }
 	set_variable = { SOV_sanctions_tax_cost = { value = SOV_sanctions_tax_cost add = 0.02 clamp = { min = 0 max = 0.08 } } }
+}
+
+# Russian computing sovereignty. Five milestones set the route; the closing
+# milestone resolves it into one of four computing futures.
+
+SOV_computing_sovereignty_apply_sovereign_stack = {
+	if = {
+		limit = { SOV_computing_sovereignty_outcome_settled = no }
+		add_ideas = SOV_computing_sovereignty_sovereign_computing_stack
+	}
+}
+
+SOV_computing_sovereignty_apply_chinese_substitution = {
+	if = {
+		limit = { SOV_computing_sovereignty_outcome_settled = no }
+		add_timed_idea = { idea = SOV_computing_sovereignty_chinese_substitution days = 365 }
+	}
+}
+
+SOV_computing_sovereignty_apply_parallel_imports = {
+	if = {
+		limit = { SOV_computing_sovereignty_outcome_settled = no }
+		add_timed_idea = { idea = SOV_computing_sovereignty_parallel_import_economy days = 365 }
+	}
+}
+
+SOV_computing_sovereignty_apply_mature_nodes = {
+	if = {
+		limit = { SOV_computing_sovereignty_outcome_settled = no }
+		add_timed_idea = { idea = SOV_computing_sovereignty_mature_node_specialization days = 365 }
+	}
+}
+
+# One entry point per milestone, called from the yearly pulse. Full presents the
+# choice; Outcomes Only applies the historical persistent route silently without
+# the live event's one-time costs or rewards.
+SOV_computing_sovereignty_milestone_2001 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = sov_economic.300 days = 151 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = SOV_cs_elbrus_domestic_bet
+	}
+}
+
+SOV_computing_sovereignty_milestone_2006 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = sov_economic.301 days = 114 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = SOV_cs_angstrem_t_pursued
+	}
+}
+
+SOV_computing_sovereignty_milestone_2014 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = sov_economic.302 days = 212 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = SOV_cs_import_substitution
+	}
+}
+
+SOV_computing_sovereignty_milestone_2022 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = sov_economic.303 days = 59 }
+		country_event = { id = sov_economic.304 days = 273 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = SOV_cs_embargo_absorbed
+		set_country_flag = SOV_cs_foundry_loss_accepted
+	}
+}
+
+SOV_computing_sovereignty_milestone_2025 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = sov_economic.305 days = 151 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		SOV_computing_sovereignty_apply_mature_nodes = yes
+	}
 }

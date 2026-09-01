@@ -3,6 +3,7 @@ import stat
 
 import pytest
 import shared_utils as U
+from shared.suite import initialize_git_repository, run_git
 
 
 def test_normalized_traversal_exclusions_handle_both_separators():
@@ -10,6 +11,14 @@ def test_normalized_traversal_exclusions_handle_both_separators():
     assert U.should_skip_file(r".git\objects\x")
     assert U.should_skip_file("resources/reference.txt")
     assert not U.should_skip_file("common/resources/game-data.txt")
+
+
+def test_adjacency_rules_count_as_game_logic_but_map_stays_ignored():
+    assert not U.should_skip_file("map/adjacency_rules.txt")
+    assert U.should_skip_file("map/colors.txt")
+    assert not U.should_skip_file("map\\adjacency_rules.txt")
+    assert U.should_skip_file(".claude/worktrees/wt/map/adjacency_rules.txt")
+    assert U.should_skip_file("resources/vanilla/map/adjacency_rules.txt")
 
 
 def test_strict_read_rejects_malformed_bytes(tmp_path):
@@ -46,7 +55,8 @@ def test_atomic_write_preserves_mode_and_existing_bom(tmp_path):
 
     U.atomic_write_text(str(path), 'l_english:\n key: "value"\n')
 
-    assert stat.S_IMODE(path.stat().st_mode) == 0o744
+    expected_mode = 0o666 if os.name == "nt" else 0o744
+    assert stat.S_IMODE(path.stat().st_mode) == expected_mode
     assert path.read_bytes().startswith(b"\xef\xbb\xbf")
     assert path.read_bytes().count(b"\xef\xbb\xbf") == 1
 
@@ -56,7 +66,8 @@ def test_atomic_write_uses_non_executable_mode_for_new_files(tmp_path):
 
     U.atomic_write_text(str(path), "generated\n")
 
-    assert stat.S_IMODE(path.stat().st_mode) == 0o644
+    expected_mode = 0o666 if os.name == "nt" else 0o644
+    assert stat.S_IMODE(path.stat().st_mode) == expected_mode
 
 
 def test_atomic_write_preserves_bom_and_crlf(tmp_path):
@@ -97,6 +108,15 @@ def test_read_text_under_reads_inside_and_rejects_escape(tmp_path):
     assert U.read_text_under(str(inside), str(tmp_path)) == "hello"
     with pytest.raises(ValueError, match="not under"):
         U.read_text_under("/etc/passwd", str(tmp_path))
+
+
+def test_excluded_path_ignores_different_drives(monkeypatch):
+    def raise_cross_drive(*_args):
+        raise ValueError("path is on another mount")
+
+    monkeypatch.setattr(U.os.path, "relpath", raise_cross_drive)
+    assert not U.is_excluded_path("C:/tmp/file.txt", {"resources"}, "D:/repo")
+    assert U.is_excluded_path("C:/resources/file.txt", {"resources"}, "D:/repo")
 
 
 def test_write_text_under_rejects_escape(tmp_path):
@@ -150,6 +170,7 @@ def test_staged_files_drops_paths_that_are_no_longer_on_disk(tmp_path, monkeypat
 
     staged = U.get_staged_files(str(tmp_path))
 
+    assert staged is not None
     assert [os.path.normpath(f) for f in staged] == [os.path.normpath(str(kept))]
 
 
@@ -157,3 +178,40 @@ def test_staged_files_returns_none_when_every_path_is_gone(tmp_path, monkeypatch
     monkeypatch.setenv("MD_STAGED_FILES", "common/country_leader/deleted.txt")
 
     assert U.get_staged_files(str(tmp_path)) is None
+
+
+def test_staged_files_retains_missing_paths_when_requested(tmp_path, monkeypatch):
+    deleted = tmp_path / "common" / "country_leader" / "deleted.txt"
+    monkeypatch.setenv("MD_STAGED_FILES", "common/country_leader/deleted.txt")
+
+    assert U.get_staged_files(str(tmp_path), include_missing=True) == [str(deleted)]
+
+
+def test_staged_files_includes_deleted_git_paths_when_requested(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    units = tmp_path / "history" / "units"
+    units.mkdir(parents=True)
+    deleted = units / "deleted.txt"
+    renamed_from = units / "renamed-from.txt"
+    moved_from = units / "moved-out.txt"
+    for path, content in (
+        (deleted, "units = { deleted = yes }\n"),
+        (renamed_from, "units = { renamed = yes }\n"),
+        (moved_from, "units = { moved = yes }\n"),
+    ):
+        with path.open("w", encoding="utf-8", newline="") as output_file:
+            output_file.write(content)
+
+    initialize_git_repository(tmp_path, "history/units")
+    deleted.unlink()
+    renamed_to = units / "renamed-to.txt"
+    renamed_from.rename(renamed_to)
+    moved_from.rename(tmp_path / "moved-out.txt")
+    run_git(tmp_path, "add", "-A")
+
+    staged = U.get_staged_files(str(tmp_path), include_missing=True)
+
+    assert staged is not None
+    assert str(deleted) in staged
+    assert str(renamed_to) in staged
+    assert str(moved_from) in staged

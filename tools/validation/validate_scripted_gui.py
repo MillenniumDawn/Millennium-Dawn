@@ -8,7 +8,7 @@ error but does nothing at runtime.
 import os
 import re
 import sys
-from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -375,15 +375,24 @@ class Validator(BaseValidator):
             f"{len(files)} .gui files"
         )
 
-    def _parse_one_gui_file(self, filepath: str) -> None:
+    def _read_text_or_warn(self, filepath: str) -> Optional[Tuple[str, str]]:
+        """Read filepath as utf-8-sig text, returning (text, relative path).
+
+        Logs a warning and returns None on any read failure.
+        """
         try:
             with open(filepath, "r", encoding="utf-8-sig") as fh:
                 text = fh.read()
         except Exception as e:
             self.log(f"  ! could not read {filepath}: {e}", "warning")
-            return
+            return None
+        return text, os.path.relpath(filepath, self.mod_path)
 
-        rel = os.path.relpath(filepath, self.mod_path)
+    def _parse_one_gui_file(self, filepath: str) -> None:
+        parsed = self._read_text_or_warn(filepath)
+        if parsed is None:
+            return
+        text, rel = parsed
         data = disk_cache.per_file_cached_by_content(
             self.mod_path,
             "sgui.gui2",
@@ -414,14 +423,10 @@ class Validator(BaseValidator):
         )
 
     def _parse_one_scripted_gui_file(self, filepath: str) -> None:
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as fh:
-                text = fh.read()
-        except Exception as e:
-            self.log(f"  ! could not read {filepath}: {e}", "warning")
+        parsed = self._read_text_or_warn(filepath)
+        if parsed is None:
             return
-
-        rel = os.path.relpath(filepath, self.mod_path)
+        text, rel = parsed
         blocks, trigger_names = disk_cache.per_file_cached_by_content(
             self.mod_path,
             "sgui.scripted4",

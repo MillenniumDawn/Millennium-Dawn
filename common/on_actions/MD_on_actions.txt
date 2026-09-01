@@ -1,4 +1,5 @@
 # Author(s): Angriest Bird
+# NOTE: This is the general MD on actions consolidate for file cleanliness
 on_actions = {
 	on_weekly = {
 		effect = {
@@ -9,6 +10,9 @@ on_actions = {
 
 			if = { limit = { NOT = { has_global_flag = on_weekly_global_done } }
 				set_global_flag = { flag = on_weekly_global_done value = 1 days = 7 }
+
+				update_canal_blockage_flags = yes
+
 				international_systems_update = yes
 				add_to_variable = { global.md_gui_dirty = 1 }
 				if = { limit = { check_variable = { global.md_gui_dirty > 1000000 } }
@@ -602,16 +606,46 @@ on_actions = {
 						has_operation_token = { tag = FROM token = token_foreign_advisors }
 					}
 				}
-				remove_operation_token = { tag = FROM token = token_airforce }
-				remove_operation_token = { tag = FROM token = token_army }
-				remove_operation_token = { tag = FROM token = token_civilian }
-				remove_operation_token = { tag = FROM token = token_navy }
-				remove_operation_token = { tag = FROM token = token_resistance_contacts }
-				remove_operation_token = { tag = FROM token = token_hvt }
-				remove_operation_token = { tag = FROM token = token_arms_cache }
-				remove_operation_token = { tag = FROM token = token_training_camps }
-				remove_operation_token = { tag = FROM token = token_regional_headquarters }
-				remove_operation_token = { tag = FROM token = token_foreign_advisors }
+				if = {
+					limit = { has_operation_token = { tag = FROM token = token_airforce } }
+					remove_operation_token = { tag = FROM token = token_airforce }
+				}
+				if = {
+					limit = { has_operation_token = { tag = FROM token = token_army } }
+					remove_operation_token = { tag = FROM token = token_army }
+				}
+				if = {
+					limit = { has_operation_token = { tag = FROM token = token_civilian } }
+					remove_operation_token = { tag = FROM token = token_civilian }
+				}
+				if = {
+					limit = { has_operation_token = { tag = FROM token = token_navy } }
+					remove_operation_token = { tag = FROM token = token_navy }
+				}
+				if = {
+					limit = { has_operation_token = { tag = FROM token = token_resistance_contacts } }
+					remove_operation_token = { tag = FROM token = token_resistance_contacts }
+				}
+				if = {
+					limit = { has_operation_token = { tag = FROM token = token_hvt } }
+					remove_operation_token = { tag = FROM token = token_hvt }
+				}
+				if = {
+					limit = { has_operation_token = { tag = FROM token = token_arms_cache } }
+					remove_operation_token = { tag = FROM token = token_arms_cache }
+				}
+				if = {
+					limit = { has_operation_token = { tag = FROM token = token_training_camps } }
+					remove_operation_token = { tag = FROM token = token_training_camps }
+				}
+				if = {
+					limit = { has_operation_token = { tag = FROM token = token_regional_headquarters } }
+					remove_operation_token = { tag = FROM token = token_regional_headquarters }
+				}
+				if = {
+					limit = { has_operation_token = { tag = FROM token = token_foreign_advisors } }
+					remove_operation_token = { tag = FROM token = token_foreign_advisors }
+				}
 			}
 		}
 	}
@@ -747,6 +781,8 @@ on_actions = {
 
 	on_monthly = {
 		effect = {
+			diplomatic_action_cached_array_resync = yes
+
 			# Triggers for one nation
 			if = { limit = { NOT = { has_global_flag = on_monthly_done } }
 				# Jan = 1, Feb = 2, March = 3, April = 4, May = 5, June = 6, July = 7
@@ -986,7 +1022,6 @@ on_actions = {
 				every_country = {
 					recalculate_party = yes
 					gov_pop_calculation = yes
-					recalculate_law_desires = yes
 					update_neighbors_effects = yes
 
 					civilian_microchip_consumption = yes
@@ -1014,6 +1049,7 @@ on_actions = {
 					}
 
 					calculate_expected_spending = yes
+					recalculate_law_desires = yes
 					apply_protest_effects = yes
 
 					un_check_if_valid_for_sanctions = yes
@@ -1385,13 +1421,46 @@ on_actions = {
 			}
 		}
 	}
-}
 
-# ── Reserve Currency — Faction-Change Auto-Switch (AI only) ──────────────────────────────
-# When an AI joins the Chinese or Russian faction, switch to their currency.
-# When an AI leaves, fall back to USD (the default global reserve).
-# ROOT = the country joining/leaving; FROM = the faction leader.
-on_actions = {
+	# ROOT is the country which guarantees
+	# FROM is the country that is guaranteed.
+	on_guarantee = {
+		effect = {
+			FROM = {
+				if = {
+					limit = { NOT = { is_in_array = { guaranteeing_nations = ROOT.id } } }
+					add_to_array = { array = guaranteeing_nations value = ROOT.id }
+				}
+			}
+		}
+	}
+
+	# ROOT is the country which requested, FROM is the country that accepted.
+	on_military_access = {
+		effect = {
+			FROM = {
+				if = {
+					limit = { NOT = { is_in_array = { nations_with_military_access = ROOT.id } } }
+					add_to_array = { array = nations_with_military_access value = ROOT.id }
+				}
+			}
+		}
+	}
+
+	# ROOT is the country which offered access, FROM is the country that accepted.
+	on_offer_military_access = {
+		effect = {
+			if = {
+				limit = { NOT = { is_in_array = { nations_with_military_access = FROM.id } } }
+				add_to_array = { array = nations_with_military_access value = FROM.id }
+			}
+		}
+	}
+
+	# ── Reserve Currency — Faction-Change Auto-Switch (AI only) ──────────────────────────────
+	# When an AI joins the Chinese or Russian faction, switch to their currency.
+	# When an AI leaves, fall back to USD (the default global reserve).
+	# ROOT = the country joining/leaving; FROM = the faction leader.
 	on_join_faction = {
 		effect = {
 			if = {
@@ -1449,6 +1518,17 @@ on_actions = {
 					NOT = { tag = RUS }
 				}
 				add_ideas = us_dollar
+			}
+		}
+	}
+
+	on_startup = {
+		effect = {
+			ABK = {
+				update_canal_blockage_flags = yes
+			}
+			every_country = {
+				diplomatic_action_cached_array_resync = yes
 			}
 		}
 	}

@@ -95,7 +95,7 @@ news_event = {
 	picture = GFX_national_apology_image
 	is_triggered_only = yes
 
-	option = { name = the_national_apology.1.a }
+	option = { name = the_national_apology.1.a add_stability = 0.03 }
 
 }
 
@@ -225,7 +225,7 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-			log = "[GetDateText]: [This.GetName]: pacific_solution.3.a # "Excellent news." executed"
+		log = "[GetDateText]: [This.GetName]: pacific_solution.3.a executed"
 		name = pacific_solution.3.a # "Excellent news."
 		set_temp_variable = { treasury_change = -4 }
 		modify_treasury_effect = yes
@@ -270,7 +270,7 @@ country_event = {
 	}
 
 	option = {
-			log = "[GetDateText]: [This.GetName]: pacific_solution.5.a # "Excellent news." executed"
+			log = "[GetDateText]: [This.GetName]: pacific_solution.5.a executed"
 		name = pacific_solution.5.a # "Excellent news."
 		set_temp_variable = { treasury_change = -4 }
 		modify_treasury_effect = yes
@@ -2048,7 +2048,10 @@ country_event = {
 				add_idea = boat_arrivals_ast
 			}
 		}
-		add_ideas = detention_centre_emergency_funding_ast
+		add_timed_idea = {
+			idea = detention_centre_emergency_funding_ast
+			days = 230
+		}
 	}
 
 }
@@ -2252,10 +2255,6 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	immediate = {
-		news_event = { id = malcolm_abbott_event.2 days = 1 }
-	}
-
 	option = {
 		log = "[GetDateText]: [This.GetName]: malcolm_abbott_event.1.a executed"
 		name = malcolm_abbott_event.1.a
@@ -2287,7 +2286,7 @@ news_event = {
 
 	option = {
 		log = "[GetDateText]: [This.GetName]: malcolm_abbott_event.1.a executed"
-		name = malcolm_abbott_event.1.a
+		name = malcolm_abbott_event.2.a
 		add_stability = -0.03
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		change_relative_party_popularity = yes
@@ -2300,7 +2299,7 @@ news_event = {
 
 	option = {
 		log = "[GetDateText]: [This.GetName]: malcolm_abbott_event.1.b executed"
-		name = malcolm_abbott_event.1.b
+		name = malcolm_abbott_event.2.a
 		add_stability = -0.05
 		set_temp_variable = { party_popularity_increase = -0.06 }
 		change_relative_party_popularity = yes
@@ -2379,19 +2378,20 @@ news_event = {
 		name = malcolm_abbott_event.5.a
 		hidden_effect = {
 			kill_country_leader = yes
-		create_country_leader = {
-					name = "Malcolm Turnbull"
-					picture = "malcolm_turnbull_1.dds"
-					ideology = conservatism
-					traits = {
-						western_conservatism
+			create_country_leader = {
+						name = "Malcolm Turnbull"
+						picture = "malcolm_turnbull_1.dds"
+						ideology = conservatism
+						traits = {
+							western_conservatism
+						}
 					}
-				}
-		}
 			load_focus_tree = {
 				tree = turnbullgov_focus
 				keep_completed = yes
 			}
+		}
+		custom_effect_tooltip = focus_tree_has_changed_ast_tt
 	}
 
 }
@@ -2976,30 +2976,30 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: operation_sovereign_abbott.1.a executed"
 		name = operation_sovereign_abbott.1.a
-			if = {
-				limit = { has_idea = boat_arrivals_ast }
-				swap_ideas = {
-					remove_idea = boat_arrivals_ast
-					add_idea = boat_arrivals_ast_2
-				}
+		if = {
+			limit = { has_idea = boat_arrivals_ast }
+			swap_ideas = {
+				remove_idea = boat_arrivals_ast
+				add_idea = boat_arrivals_ast_2
+			}
+		}
+		else_if = {
+			limit = { has_idea = boat_arrivals_ast_2 }
+			swap_ideas = {
+				remove_idea = boat_arrivals_ast_2
+				add_idea = boat_arrivals_ast_3
 			}
 			else_if = {
-				limit = { has_idea = boat_arrivals_ast_2 }
-				swap_ideas = {
-					remove_idea = boat_arrivals_ast_2
-					add_idea = boat_arrivals_ast_3
-				}
-			}
-			else = {
 				limit = { has_idea = boat_arrivals_ast_4 }
 				swap_ideas = {
 					remove_idea = boat_arrivals_ast_4
 					add_idea = boat_arrivals_ast
 				}
 			}
-			newline = yes
-			set_temp_variable = { party_popularity_increase = 0.02 }
-			change_relative_party_popularity = yes
+		}
+		newline = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		change_relative_party_popularity = yes
 	}
 
 }
@@ -3749,6 +3749,10 @@ country_event = {
 		}
 		ai_chance = {
 			base = 0
+			modifier = {
+				is_guaranteed_by = AST
+				add = 99
+			}
 		}
 	}
 
@@ -4855,7 +4859,8 @@ news_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		kill_country_leader = yes
+		hidden_effect = {
+			kill_country_leader = yes
 			remove_power_balance = {
 				id = rudd_bop
 			}
@@ -4873,13 +4878,12 @@ news_event = {
 				tree = australia_abbottgov_focus
 				keep_completed = yes
 			}
-			hidden_effect = {
-				set_temp_variable = { add_col_one = 14 }
-				add_coalition_members_effect = yes
-			}
+			set_temp_variable = { add_col_one = 14 }
+			add_coalition_members_effect = yes
+		}
 	}
 
-	option = { name = dissolution_election_rudd.3.a }
+	option = { name = dissolution_election_rudd.3.a custom_effect_tooltip = focus_tree_has_changed_ast_tt }
 
 }
 
@@ -4891,6 +4895,11 @@ country_event = {
 	title = ast_elections.1.t
 	desc = ast_elections.1.d
 	is_triggered_only = yes
+
+	trigger = {
+		tag = AST
+		is_ai = yes
+	}
 
 	option = {
 		log = "[GetDateText]: [This.GetName]: ast_elections.1.a executed"
@@ -5165,6 +5174,17 @@ country_event = {
 				}
 			}
 		}
+		country_event = ast_elections.5 #chooses government
+	}
+
+}
+
+country_event = {
+	id = ast_elections.5
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
 		if = {
 			limit = {
 				western_social_democrats_are_in_power = yes
@@ -5190,10 +5210,10 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				western_conservatism_are_in_power = yes
+				western_social_democrats_are_in_power = yes
 				date > 2011.01.01
 				date < 2014.01.01
-				has_country_flag = liberals_previously_in
+				NOT = { has_country_flag = labor_previously_in }
 			}
 			set_politics = {
 					ruling_party = democratic
@@ -5223,7 +5243,7 @@ country_event = {
 		else_if = {
 			limit = {
 				western_conservatism_are_in_power = yes
-				date > 2007.01.01
+				date > 2010.01.01
 				date < 2014.01.01
 				NOT = {
 					has_country_flag = liberals_previously_in
@@ -5266,14 +5286,14 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			country_event = { id = ast_elections.5 days = 1 } #election day after effects
+			country_event = { id = ast_elections.6 days = 1 } #election day after effects
 		}
 	}
 
 }
 
 country_event = {
-	id = ast_elections.5
+	id = ast_elections.6
 	is_triggered_only = yes
 	hidden = yes
 
@@ -5307,7 +5327,8 @@ news_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		kill_country_leader = yes
+		hidden_effect = {
+			kill_country_leader = yes
 			create_country_leader = {
 					name = "Kevin Rudd"
 					desc = "kevin_rudd_desc"
@@ -5321,9 +5342,10 @@ news_event = {
 				tree = ruddgov_focus
 				keep_completed = yes
 			}
+		}	
 	}
 
-	option = { name = election_outcomes_ast.1.a }
+	option = { name = election_outcomes_ast.1.a custom_effect_tooltip = focus_tree_has_changed_ast_tt }
 
 }
 
@@ -5449,6 +5471,7 @@ news_event = {
 		name = election_outcomes_ast.5.a
 		add_ideas = hung_parliament_ast
 		set_country_flag = gillard_won_election_ast
+		custom_effect_tooltip = focus_tree_has_changed_ast_tt
 	}
 
 }
@@ -5479,7 +5502,7 @@ news_event = {
 		}
 	}
 
-	option = { name = election_outcomes_ast.9.a }
+	option = { name = election_outcomes_ast.9.a custom_effect_tooltip = focus_tree_has_changed_ast_tt }
 
 }
 
@@ -5541,20 +5564,20 @@ country_event = {
 	hidden = yes
 
 	immediate = {
-		add_to_array = { ruling_party = 0 }
-		set_temp_variable = { ruling_party_popularity = party_pop_array^0 }
-		for_each_loop = {
-			array = party_pop_array
-			value = v
-			index = i
-			break = break
-			if = {
-				limit = { check_variable = { ruling_party_popularity < party_pop_array^i } }
-				set_temp_variable = { ruling_party_popularity = party_pop_array^i }
-				clear_array = ruling_party
-				add_to_array = { ruling_party = i }
+		clear_array = ruling_party
+			set_temp_variable = { ruling_party_popularity = party_pop_array^0 }
+			add_to_array = { ruling_party = 0 }
+			for_each_loop = {
+				array = party_pop_array
+				value = v
+				index = i
+				if = {
+					limit = { check_variable = { ruling_party_popularity < party_pop_array^i } }
+					set_temp_variable = { ruling_party_popularity = party_pop_array^i }
+					clear_array = ruling_party
+					add_to_array = { ruling_party = i }
+				}
 			}
-		}
 		#gillard wins
 		if = {
 			limit = {
@@ -5803,7 +5826,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: gillard_gov_event.1.a executed"
 		name = gillard_gov_event.1.a
 		add_political_power = 120
-		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
 		change_relative_party_popularity = yes
 	}
 
@@ -6416,7 +6439,7 @@ country_event = {
 		if = {
 			limit = {
 				power_balance_value = {
-					id = TAG_my_bop
+					id = rudd_bop
 					value > 0.65
 				}
 			}
@@ -6449,8 +6472,7 @@ country_event = {
 			remove_ideas = hung_parliament_ast_2
 			set_temp_variable = { party_popularity_increase = -0.09 }
 			change_relative_party_popularity = yes
-		}
-		create_country_leader = {
+			create_country_leader = {
 					name = "Kevin Rudd"
 					picture = "kevin_rudd_1.dds"
 					desc = kevin_rudd_desc
@@ -6460,12 +6482,13 @@ country_event = {
 						popular_figure_ast
 					}
 				}
-		load_focus_tree = {
-				tree = ruddgov_return_focus
-				keep_completed = yes
-			}
+			load_focus_tree = {
+					tree = ruddgov_return_focus
+					keep_completed = yes
+				}
+		}
+		custom_effect_tooltip = focus_tree_has_changed_ast_tt
 	}
-
 }
 
 #wins
@@ -7045,7 +7068,13 @@ country_event = {
 	picture = GFX_bob_brown_event
 	is_triggered_only = yes
 
-	option = { name = bob_brown_event.1.a }
+	option = { 
+		log = "[GetDateText]: [This.GetName]: bob_brown_event.1.a executed"
+		name = bob_brown_event.1.a
+		custom_effect_tooltip = bob_brown_event_tt
+		newline = yes
+		add_political_power = 40
+	}
 
 }
 
@@ -7057,7 +7086,10 @@ country_event = {
 	desc = something_to_give_ast.1.d
 	is_triggered_only = yes
 
-	option = { name = something_to_give_ast.1.a }
+	option = {
+		log = "[GetDateText]: [This.GetName]: something_to_give_ast.1.a executed"
+		name = something_to_give_ast.1.a 
+	}
 
 }
 
@@ -7070,7 +7102,10 @@ country_event = {
 	picture = GFX_rudd_school_event
 	is_triggered_only = yes
 
-	option = { name = school_visit_rudd.1.a }
+	option = {
+		log = "[GetDateText]: [This.GetName]:  school_visit_rudd.1.a executed"
+		name = school_visit_rudd.1.a 
+	}
 
 }
 
@@ -7118,7 +7153,7 @@ country_event = {
 	picture = GFX_ken_henry_ast
 	is_triggered_only = yes
 
-	option = { name = tackle_mining_oligarchy_ast.1.a }
+	option = { name = tackle_mining_oligarchy_ast.1.a add_political_power = 30 }
 
 }
 
@@ -7129,7 +7164,7 @@ country_event = {
 	picture = GFX_wayne_swan_rudd
 	is_triggered_only = yes
 
-	option = { name = tackle_mining_oligarchy_ast.2.a }
+	option = { name = tackle_mining_oligarchy_ast.2.a add_political_power = 50 }
 
 }
 
@@ -7205,6 +7240,11 @@ country_event = {
 		hidden_effect = {
 			set_country_flag = rudd_agreement_done_1
 		}
+		trigger = {
+			NOT = {
+				has_guaranteed = KOR
+			}
+		}
 	}
 
 	option = {
@@ -7215,6 +7255,25 @@ country_event = {
 				target = AST
 				modifier = insult
 			}
+		}
+		trigger = {
+			NOT = {
+				has_guaranteed = KOR
+			}
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: rudd_visit_ast.1.c executed"
+		name = rudd_visit_ast.1.c
+		KOR = {
+			add_opinion_modifier = {
+				target = AST
+				modifier = gratitude
+			}
+		}
+		trigger = {
+			has_guaranteed = KOR
 		}
 	}
 
@@ -7307,7 +7366,7 @@ country_event = {
 	picture = GFX_julia_gillard_standard
 	is_triggered_only = yes
 
-	option = { name = gillard_talk.1.a }
+	option = { name = gillard_talk.1.a add_political_power = 50 }
 
 }
 
@@ -7481,7 +7540,7 @@ country_event = {
 		}
 		set_country_flag = {
 					flag = election_cooldown_ast
-					days = 435
+					days = 680
 					value = 1
 				}
 	}
@@ -7544,13 +7603,12 @@ country_event = {
 				id = rudd_bop
 				set_default = yes
 			}
-			set_temp_variable = { party_popularity_increase = 0.03 }
-			change_relative_party_popularity = yes
-		}
-		load_focus_tree = {
+			load_focus_tree = {
 				tree = gillardgov_focus
 				keep_completed = yes
 			}
+		}
+		custom_effect_tooltip = focus_tree_has_changed_ast_tt
 	}
 
 }
@@ -7683,7 +7741,10 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: mad_katter_ast.1.a executed"
 		name = mad_katter_ast.1.a
-		add_ideas = aus_farmer_subsidies
+		add_timed_idea = {
+			idea = aus_farmer_subsidies
+			days = 350
+		}
 	}
 
 }
@@ -7773,10 +7834,7 @@ country_event = {
 		tag = AST
 		has_focus_tree = ruddgov_focus
 		NOT = { has_country_flag = aus_gillard_overthrow_1_done }
-		NOT = { has_country_flag = the_new_look_rudd_done }
 	}
-
-	immediate = { set_country_flag = the_new_look_rudd_done }
 
 	option = {
 		log = "[GetDateText]: [This.GetName]: the_new_look_rudd.1.a executed"
@@ -7847,8 +7905,7 @@ country_event = {
 				id = rudd_bop
 				set_default = yes
 			}
-		}
-		create_country_leader = {
+			create_country_leader = {
 					name = "Julia Gillard"
 					desc = julia_gilard_desc
 					picture = "julia_gillard_1.dds"
@@ -7857,10 +7914,12 @@ country_event = {
 						western_conservatism
 					}
 			}
-		load_focus_tree = {
+			load_focus_tree = {
 				tree = gillardgov_focus
 				keep_completed = yes
 			}
+		}
+		custom_effect_tooltip = focus_tree_has_changed_ast_tt
 	}
 
 }
@@ -8193,7 +8252,7 @@ country_event = {
 	id = embassy_attacked.1
 	title = embassy_attacked.1.t
 	desc = embassy_attacked.1.d
-	picture = GFX_bali_bombings
+	picture = GFX_embasyattack
 	is_triggered_only = yes
 
 	trigger = {
@@ -8362,7 +8421,7 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: a_global_financial_crisis.1.a executed"
 		name = a_global_financial_crisis.1.a
-		custom_effect_tooltip = gfc_ast_tt
+		custom_effect_tooltip = focus_tree_has_changed_ast_tt
 		newline = yes
 		add_ideas = tfc_1
 		newline = yes
@@ -8423,19 +8482,11 @@ country_event = {
 	immediate = {
 		if = {
 				limit = { has_country_flag = negative_gearing_diminished_ast }
-				swap_ideas = {
-					remove_idea = tfc_2
-					add_idea = tfc_3
-				}
 				hidden_effect = {
 					country_event = { id = a_global_financial_crisis.3 days = 280 }
 				}
 			}
 			else = {
-				swap_ideas = {
-					remove_idea = tfc_2
-					add_idea = tfc_3
-				}
 				hidden_effect = {
 					country_event = { id = a_global_financial_crisis.3 days = 760 }
 				}
@@ -9012,6 +9063,7 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: aukus_formed_ast.1.a executed"
 		name = aukus_formed_ast.1.a
 		add_ideas = aukus_proliferation_project
+		newline = yes
 		ENG = {
 			add_ideas = aukus_proliferation_project
 		}
@@ -9134,6 +9186,7 @@ news_event = {
 
 	option = {
 		name = black_saturday_ast.1.a
+		log = "[GetDateText]: [This.GetName]: black_saturday_ast.1.a executed"
 		add_stability = -0.02
 		hidden_effect = {
 			if = {
@@ -9165,6 +9218,7 @@ news_event = {
 	immediate = { set_country_flag = black_saturday_2_done }
 
 	option = {
+		log = "[GetDateText]: [This.GetName]: black_saturday_ast.2.a executed"
 		name = black_saturday_ast.2.a
 		add_stability = -0.05
 	}
@@ -9188,7 +9242,56 @@ news_event = {
 	immediate = { set_country_flag = black_saturday_2_done }
 
 	option = {
+		log = "[GetDateText]: [This.GetName]: black_saturday_ast.3.a executed"
 		name = black_saturday_ast.2.a
 		add_stability = -0.05
 	}
+}
+
+add_namespace = syrian_refugees_event_ast
+
+country_event = {
+	id = syrian_refugees_event_ast.1
+	title = syrian_refugees_event_ast.1.t
+	desc = syrian_refugees_event_ast.1.d
+	picture = GFX_failed_to_catch_migrants
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: syrian_refugees_event_ast.1.a executed"
+		name = syrian_refugees_event_ast.1.a
+		add_timed_idea = {
+			idea = syrian_refugees_idea_ast
+			days = 326
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: syrian_refugees_event_ast.2.a executed"
+		name = syrian_refugees_event_ast.1.b
+		add_political_power = 20
+		add_popularity = {
+				ideology = nationalist
+				popularity = 0.02
+			}
+	}
+}
+
+add_namespace = malaysianflight_event_ast
+
+news_event = {
+	id = malaysianflight_event_ast.1
+	title = malaysianflight_event_ast.1.t
+	desc = malaysianflight_event_ast.1.d
+	picture = GFX_mh370_disappearance_event
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: malaysianflight_event_ast.1.a executed"
+		name = malaysianflight_event_ast.1.a
+		add_stability = -0.02
+	}
+
 }
