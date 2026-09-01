@@ -336,8 +336,7 @@ def _opinion_file(tmp_path):
         "\tlocalised_modifier = {\n\t\tvalue = 10\n\t}\n"
         "\tunlocalised_modifier = {\n\t\tvalue = -10\n\t}\n"
         # A redeclaration keeps the first file it was seen in.
-        "\tunlocalised_modifier = {\n\t\tvalue = -20\n\t}\n"
-        "}\n",
+        "\tunlocalised_modifier = {\n\t\tvalue = -20\n\t}\n" "}\n",
     )
 
 
