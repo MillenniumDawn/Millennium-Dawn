@@ -84,7 +84,7 @@ Standardizes idea files according to Millennium Dawn standards.
 
 **Key features:**
 
-- Removes redundant default properties (`allowed = { always = no }`, `cancel = { always = no }`)
+- Removes redundant default properties (`cancel = { always = no }`). Keeps `allowed = { always = no }` (hides a slotted idea from the picker; `add_idea` still applies it)
 - Adds logging to on_add/on_remove when they have effects
 - Preserves allowed_civil_war for civil war tags
 - Maintains proper formatting
@@ -113,6 +113,44 @@ Both find a block's closing brace by column, not by "the line where depth hit ze
 python3 strip_idea_allowed_gates.py --dry-run
 python3 strip_dynmod_tag_gates.py --backup
 ```
+
+### AI Path Weights (`apply_ai_path_weights.py`)
+
+Writes the `ai_will_do` path modifiers for a country's AI path game rule (issue #3162) from a
+mapping of focus id to ownership group, so the two-line boost/killswitch pair does not have to be
+hand-written across ~180 focuses. Like the gate sweeps above it rewrites only the blocks it owns.
+
+A modifier is replaced only when it exists to route paths: it names a `<TAG>_*_FOCUS_PATH` flag, a
+`<TAG>_ai_*_path` trigger, or is a bare `factor = 0` `is_historical_focus_on` killswitch. Anything
+carrying `can_staff_an_*`, `bankruptcy_incoming_collapse` or `ai_is_threatened` is a guard and is
+preserved verbatim — `validate_focus_tree.py` scans for those tokens literally and would report a
+guard that had been folded into a path trigger as missing.
+
+The emitted pair goes last in the block, because modifiers apply in order and a later `add` would
+resurrect a focus the killswitch just zeroed. The run aborts without writing on an unknown or
+duplicated focus id, a shared focus file, unbalanced braces, or a rewrite that is not idempotent.
+
+**Usage:**
+
+```bash
+python3 apply_ai_path_weights.py --tag DEN --map plan.txt --dry-run
+python3 apply_ai_path_weights.py --tag DEN --map -
+```
+
+Mapping format (`#` comments allowed):
+
+```
+group historical owner=DEN_ai_historical_path not=DEN_ai_not_historical_path
+group socialist owner_flag=DEN_SOCIALIST_FOCUS_PATH not=DEN_ai_not_socialist_path
+boost 25
+
+DEN_join_the_euro historical
+DEN_red_bloc socialist 150
+DEN_army_reform -
+```
+
+Pair it with `tools/analysis/ai_path_report.py`, which decides which focuses belong to which group
+and re-checks the result for killswitch orphans.
 
 ### Military Industrial Organizations (`standardize_mio.py`)
 
@@ -194,7 +232,7 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 
 ### Ideas
 
-- Remove `allowed = { always = no }` (redundant default; `allowed` checked once at load, bypassed by `add_ideas`)
+- Keep `allowed = { always = no }` on slotted ideas (hides them from the picker; `add_idea` still applies them)
 - Remove `cancel = { always = no }` (redundant default; checked hourly, never true)
 - Remove empty `on_add = { log = "" }`
 - Include `allowed_civil_war = { always = yes }` for civil war tags
