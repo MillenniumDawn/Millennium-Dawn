@@ -78,6 +78,20 @@ TRUE, FALSE, UNKNOWN = True, False, None
 # --------------------------------------------------------------------------
 
 
+def iter_txt_files(folder: str) -> Iterator[str]:
+    """Yield every .txt path directly in *folder*, in a stable order."""
+    if not os.path.isdir(folder):
+        return
+    for name in sorted(os.listdir(folder)):
+        if name.endswith(".txt"):
+            yield os.path.join(folder, name)
+
+
+def read_raw(path: str) -> str:
+    with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
+        return handle.read()
+
+
 def read_script(path: str, keep_quotes: bool = False) -> str:
     """Read a mod file and neutralise comments, and by default quoted strings.
 
@@ -85,8 +99,7 @@ def read_script(path: str, keep_quotes: bool = False) -> str:
     computed downstream still points at the original file. `keep_quotes` is for
     files whose quoted values are the data (loc key names in a game rule).
     """
-    with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
-        text = strip_comments(handle.read())
+    text = strip_comments(read_raw(path))
     return text if keep_quotes else blank_quoted_strings(text)
 
 
@@ -246,14 +259,9 @@ def expr_tokens(expr: Expr) -> Iterator[str]:
 def load_path_triggers(root: str, tag: str) -> Dict[str, Expr]:
     """Index every `TAG_ai_*` scripted trigger definition in the mod."""
     triggers: Dict[str, Expr] = {}
-    folder = os.path.join(root, "common", "scripted_triggers")
-    if not os.path.isdir(folder):
-        return triggers
     opener = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.M)
-    for name in sorted(os.listdir(folder)):
-        if not name.endswith(".txt"):
-            continue
-        text = read_script(os.path.join(folder, name))
+    for path in iter_txt_files(os.path.join(root, "common", "scripted_triggers")):
+        text = read_script(path)
         for match in opener.finditer(text):
             if not is_path_trigger(match.group(1), tag):
                 continue
@@ -660,25 +668,17 @@ def resolve_focus_file(root: str, tag: str) -> str:
     folder = os.path.join(root, "common", "national_focus")
     country_ref = re.compile(r"(original_tag|tag)\s*=\s*" + tag + r"\b")
     matches = []
-    for name in sorted(os.listdir(folder)):
-        if not name.endswith(".txt"):
-            continue
-        path = os.path.join(folder, name)
+    for path in iter_txt_files(folder):
         text = read_script(path)
         head = text[: text.find("focus", 200) if "focus" in text else 4000]
         if country_ref.search(head[:4000]):
             matches.append(path)
     if len(matches) == 1:
         return matches[0]
+    id_ref = re.compile(r"^[ \t]*id\s*=\s*" + tag + r"_", re.M)
     counted = []
-    for name in sorted(os.listdir(folder)):
-        if not name.endswith(".txt"):
-            continue
-        path = os.path.join(folder, name)
-        with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
-            count = len(
-                re.findall(r"^[ \t]*id\s*=\s*" + tag + r"_", handle.read(), re.M)
-            )
+    for path in iter_txt_files(folder):
+        count = len(id_ref.findall(read_raw(path)))
         if count:
             counted.append((count, path))
     if not counted:
@@ -1179,15 +1179,9 @@ def event_index(root: str) -> Dict[str, str]:
     if cached is not None:
         return cached
     index: Dict[str, str] = {}
-    folder = os.path.join(root, "events")
-    if os.path.isdir(folder):
-        for name in sorted(os.listdir(folder)):
-            if not name.endswith(".txt"):
-                continue
-            path = os.path.join(folder, name)
-            with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
-                for found in _ID_LINE.finditer(handle.read()):
-                    index.setdefault(found.group(1), path)
+    for path in iter_txt_files(os.path.join(root, "events")):
+        for found in _ID_LINE.finditer(read_raw(path)):
+            index.setdefault(found.group(1), path)
     _EVENT_INDEX[root] = index
     return index
 
@@ -1221,13 +1215,10 @@ def _history_facts(root: str, tag: str) -> Dict:
         "term_limit": 0,
         "killswitch": False,
     }
-    folder = os.path.join(root, "history", "countries")
-    if not os.path.isdir(folder):
-        return facts
-    for name in sorted(os.listdir(folder)):
-        if not name.endswith(".txt") or not name.startswith(tag + " "):
+    for path in iter_txt_files(os.path.join(root, "history", "countries")):
+        if not os.path.basename(path).startswith(tag + " "):
             continue
-        text = read_script(os.path.join(folder, name), keep_quotes=True)
+        text = read_script(path, keep_quotes=True)
         election = re.search(r'last_election\s*=\s*"?([\d.]+)"?', text)
         frequency = re.search(r"election_frequency\s*=\s*(\d+)", text)
         limit = re.search(r"term_limit\s*=\s*(\d+)", text)
