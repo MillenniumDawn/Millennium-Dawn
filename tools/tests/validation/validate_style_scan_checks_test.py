@@ -255,3 +255,14 @@ def test_run_validations_splits_errors_from_warnings(tmp_path, write_path):
     assert "spacing" in categories
     assert v.errors_found == 1
     assert v.warnings_found == 2
+
+
+def test_run_validations_scans_music_files(tmp_path, write_path):
+    write_path(tmp_path, "music/broken.txt", "a = {\n")
+
+    v = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.run_validations()
+
+    categories = {i.category for i in v._issues}
+    assert "brace-matching" in categories
+    assert v.errors_found == 1

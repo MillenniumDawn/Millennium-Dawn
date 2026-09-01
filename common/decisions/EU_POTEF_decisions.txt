@@ -386,13 +386,14 @@ EU_office_category = {
 			NOT = { has_country_flag = POTEF_has_nominated }
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_POTEF_nominee_trigger
-				set_temp_variable = { temp_idx = ruling_party^0 }
+				set_temp_variable = { temp_idx = ruling_party }
 				OR = {
 					NOT = {
 						any_of_scopes = {
 							array = global.EU_member
 							exists = yes
-							is_in_array = { ruling_party = ROOT.temp_idx }
+							has_variable = ruling_party
+							check_variable = { ruling_party = ROOT.temp_idx }
 							NOT = { tag = ROOT }
 							NOT = { is_top3_influencer = yes }
 						}
@@ -402,14 +403,14 @@ EU_office_category = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_POTEF_nominee_trigger_2
-				set_temp_variable = { temp_idx = ruling_party^0 }
+				set_temp_variable = { temp_idx = ruling_party }
 				NOT = { check_variable = { global.POTEF_nominee_country^temp_idx > 0 } }
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: decision EU_POTEF_nominee"
-			set_variable = { var_gov_index = ruling_party^0 }
+			set_variable = { var_gov_index = ruling_party }
 			set_country_flag = POTEF_has_nominated
 			# Index = subideology, value = nominee country id (read by EU_POTEF_party_N_nominee gate + display loc)
 			set_variable = { global.POTEF_nominee_country^var_gov_index = THIS.id }
@@ -481,17 +482,16 @@ EU_office_category = {
 			custom_effect_tooltip = tooltip_EU_POTEF_campaign_in_member_state_effect
 			hidden_effect = {
 				log = "[GetDateText]: [Root.GetName]: decision EU_POTEF_campaign_in_member_state"
-				for_each_loop = {
-					array = ruling_party
-					value = v
-					set_variable = { var_gov_index = v }
+				if = { limit = { has_variable = ruling_party }
+					set_variable = { var_gov_index = ruling_party }
 				}
 				random_list = {
 					3 = {
 						modifier = {
 							add = 1
 							FROM = {
-								is_in_array = { ruling_party = var_gov_index }
+								has_variable = ruling_party
+								check_variable = { ruling_party = var_gov_index }
 							}
 						}
 						modifier = {
@@ -536,7 +536,8 @@ EU_office_category = {
 						modifier = {
 							factor = 0
 							FROM = {
-								is_in_array = { ruling_party = var_gov_index }
+								has_variable = ruling_party
+								check_variable = { ruling_party = var_gov_index }
 							}
 							check_variable = { FROM.europeanism > 0.90 }
 							FROM = {

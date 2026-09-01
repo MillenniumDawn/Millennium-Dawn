@@ -730,6 +730,7 @@ def test_ci_run_steps_default_to_strict():
             for step in workflow["jobs"][job]["steps"]
             if step.get("name") == "Run validation"
         )
+        assert isinstance(run, str)
         assert (
             'matrix.validator.strict }}" != "false"' in run
         ), f"{job}'s Run step must default to --strict when `strict:` is absent."
@@ -1126,3 +1127,27 @@ def test_mod_changes_reach_content_checks():
         "content-checks"
     ]
     assert "needs.detect-changes.outputs.mod == 'true'" in content_checks["if"]
+
+
+def test_music_style_changes_reach_content_checks():
+    _, filters = _filter_definitions()
+    assert {
+        "common/**/*.txt",
+        "events/**/*.txt",
+        "history/**/*.txt",
+        "music/**/*.txt",
+    } <= set(filters["style"])
+    assert "music/**" in filters["content"]
+
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    assert "music" in set(workflow["env"]["WORKSPACE_PATHS"].split())
+    pr_checkout = next(
+        step
+        for step in workflow["jobs"]["prepare-workspace"]["steps"]
+        if step.get("uses", "").startswith("actions/checkout@")
+    )
+    assert "music" in set(pr_checkout["with"]["sparse-checkout"].split())
+    assert (
+        "needs.detect-changes.outputs.style == 'true'"
+        in workflow["jobs"]["content-checks"]["if"]
+    )
