@@ -392,3 +392,109 @@ never fire.
 **Never** add an `on_daily_<TAG>` pass that caches booleans into country flags for `enable` or
 `ai_will_do` to read. Both are already evaluated lazily; a daily cache costs more and lags real
 state by a day. Write the condition inline.
+
+## 8. Historical government walker — `events/<country>.txt`
+
+Only when the report's `government` section verdicts **dated timeline**. On an undated successor
+roster, write nothing: the ramp decisions in §6 already deliver the party, and a walker over an
+undated roster installs the wrong person.
+
+The path rule steers the party; nothing steers the person. `set_leader` runs on a re-election only
+behind a term limit (`events/MD_Elections.txt:2277`, `:2355`) and only 95 of 393 history files set
+one, so a country whose party keeps winning never rotates its leader and no intra-party succession
+can happen. The walker is the fix: an AI-only hidden event fired at the real historical dates, which
+asserts the ruling party and the roster pointer and lets the existing succession list supply the
+name.
+
+```
+country_event = {
+	id = denmark_md.400
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_civil_war = no
+		DEN_ai_historical_path = yes
+		DEN_ai_not_historical_path = no
+		NOT = { has_country_flag = generic_election_killswitch }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event denmark_md.400"
+		if = {
+			limit = { date > 2022.10.24 }
+			set_variable = { conservatism_leader = 6 }
+			set_temp_variable = { rul_party_temp = 1 }
+		}
+		else_if = {
+			limit = { date > 2019.7.23 }
+			set_variable = { socialism_leader = 1 }
+			set_temp_variable = { rul_party_temp = 3 }
+		}
+		else = {
+			set_variable = { socialism_leader = 0 }
+			set_temp_variable = { rul_party_temp = 3 }
+		}
+
+		if = {
+			limit = { NOT = { is_in_array = { ruling_party = rul_party_temp } } }
+			change_ruling_party_effect = yes
+			set_elections_60_months = yes
+		}
+		else = {
+			set_ruling_leader = yes
+			set_leader = yes
+		}
+	}
+}
+```
+
+Scheduled once per historical date from `common/scripted_effects/00_yearly_effects.txt`, inside the
+matching `trigger_year_<Y>_events` block. The dispatcher runs at the January tick and MD's day counts
+ignore leap years:
+
+```
+DEN = { country_event = { id = denmark_md.400 days = 158 } }
+```
+
+**Pointer semantics.** `<subideology>_leader = N` means *the next person created is roster index N*.
+Each roster block in `common/scripted_effects/<TAG>_political_leaders.txt` increments before creating,
+and the blocks are sequential `if`s rather than `else_if`s, so the cascade keeps running past N until
+a block's `date <` end-of-tenure guard sets `b = 1`. The last entry of every branch sets `b`
+unconditionally, so the list never falls off its end.
+
+**Assert the index in every branch.** Never blind-advance by calling `set_leader` and trusting the
+pointer. Explicit assertion makes each date idempotent and self-repairing: a generic election between
+two historical dates moves the pointer, and the next date snaps it back. `britain_md.400` and
+`HOL_politics.86` blind-advance, which is why the AI UK gets Gordon Brown in 2005 and Ed Miliband in
+2007.
+
+**Never pass `change_leader_temp = 1`.** It sets `do_not_retire`
+(`common/scripted_effects/00_MD_politicsview_scripted_effects.txt:2231`), which makes the roster
+cascade pin at the current pointer instead of fast-forwarding. `britain_md.400` does this on its 2015
+party change and installs William Hague — a leader whose tenure ended in 2001 — as Prime Minister.
+Use it only to deliberately keep an incumbent across a coalition reshuffle.
+
+**Bound the date chain.** One descending `if`/`else_if` where every branch asserts both the party and
+the roster index, then one shared tail that decides change-vs-advance. The chain's final `else` must
+not change the ruling party on its own: with no upper bound, a re-fire after the last historical date
+reinstalls the earliest government.
+
+**`set_elections_XX_months` on a party change only** (`:2619` / `:2626` / `:2633`), matching the
+country's `election_frequency`. It resyncs `last_election` so the generic clock does not fire weeks
+later and undo the forced government. Calling it on every branch suppresses AI election news
+indefinitely.
+
+**Never inline `create_country_leader`.** `ast_elections.1` (`events/05_australia_events.txt:4894`)
+does; it duplicates the leader data, leaves the person missing from the roster, and desyncs the
+pointer for every other caller of `set_leader`. If the historical person is absent, append an entry to
+`<TAG>_political_leaders.txt` in that file's exact existing shape, with a real end-of-tenure `date <`
+marker and a `picture =` that exists under `gfx/leaders/<TAG>/` — nothing validates leader portraits,
+and the filename is case-sensitive on Linux.
+
+The event is hidden and `is_ai = yes`, so it gets **no localisation keys at all**. Gate on the §4
+scripted triggers, never on raw flags: countries converted before this standard carry older flag names
+(ENG reads `ENG_HISTORICAL_AI_FOCUS`, not `_FOCUS_PATH`). Between two historical dates the generic
+election machinery still runs and may seat someone else; the next date re-asserts. That is the
+accepted fidelity ceiling.
