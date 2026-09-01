@@ -5,8 +5,11 @@ stays silent on correct content and one deliberately broken mod proves each
 pass still reports its own finding when the others also fire.
 """
 
+import os
+
 import pytest
 import validate_history as V
+from shared.suite import write_under_str as _write
 
 _TECHNOLOGIES = """technologies = {
 \troot_tech = {
@@ -110,13 +113,6 @@ create_equipment_variant = {
 \t}
 }
 """
-
-
-def _write(tmp_path, relative, body):
-    path = tmp_path / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body, encoding="utf-8")
-    return str(path)
 
 
 def _state(tag, state_id):
@@ -261,7 +257,7 @@ def test_staged_mode_limits_history_files_to_staged_country_files(
         mod_path=str(tmp_path), use_colors=False, staged_only=True, workers=1
     )
     files = validator._get_history_files()
-    assert [f.rsplit("/", 1)[-1] for f in files] == ["TST - Test.txt"]
+    assert [os.path.basename(f) for f in files] == ["TST - Test.txt"]
 
 
 def test_staged_mode_without_staged_files_checks_nothing(tmp_path, monkeypatch):

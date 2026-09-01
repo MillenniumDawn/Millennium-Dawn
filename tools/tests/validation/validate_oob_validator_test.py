@@ -150,28 +150,27 @@ def test_air_wing_template_with_a_loc_key_is_clean(tmp_path):
     assert validator._issues == []
 
 
-def test_created_variant_check_skips_a_mod_with_no_variant_sources(
-    tmp_path, monkeypatch
-):
-    (tmp_path / "common" / "units" / "equipment").mkdir(parents=True)
+def _created_variant_log(tmp_path, monkeypatch):
     validator = _validator(tmp_path)
     logged = []
     monkeypatch.setattr(validator, "log", lambda msg, *a, **k: logged.append(msg))
     validator.validate_created_variant_modules()
-
     assert validator._issues == []
+    return logged
+
+
+def test_created_variant_check_skips_a_mod_with_no_variant_sources(
+    tmp_path, monkeypatch
+):
+    (tmp_path / "common" / "units" / "equipment").mkdir(parents=True)
+    logged = _created_variant_log(tmp_path, monkeypatch)
     assert logged[-1] == "  No files with equipment variants to check"
 
 
 def test_created_variant_check_skips_files_without_a_variant(tmp_path, monkeypatch):
     _write(tmp_path, "common/units/equipment/MD_ships.txt", _EQUIPMENT)
     _write(tmp_path, "events/SWE.txt", "country_event = {\n\tid = swe.1\n}\n")
-    validator = _validator(tmp_path)
-    logged = []
-    monkeypatch.setattr(validator, "log", lambda msg, *a, **k: logged.append(msg))
-    validator.validate_created_variant_modules()
-
-    assert validator._issues == []
+    logged = _created_variant_log(tmp_path, monkeypatch)
     assert "  Found 1 files to check" in logged
 
 

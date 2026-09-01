@@ -688,6 +688,8 @@ def test_tools_tests_checkout_consumed_configuration():
         "common/national_focus",
         "common/script_enums.txt",
         "common/units/equipment",
+        # renewable_power_per_cost_test drives the CLI against its live input.
+        "common/technologies/industry.txt",
         "common/decisions",
         "common/opinion_modifiers",
         "common/modifiers",

@@ -6,24 +6,13 @@ size, already legacy, truncated DX10, unsupported DXGI, truncated pixels),
 and the directory-vs-file CLI dispatch paths.
 """
 
-import importlib.util
 import struct
 import sys
-from pathlib import Path
 
 import pytest
+from shared.suite import dds_header, load_tool_module
 
-
-def _load_asset(name):
-    path = Path(__file__).resolve().parents[2] / "assets" / f"{name}.py"
-    spec = importlib.util.spec_from_file_location(f"_asset_{name}", path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-cl = _load_asset("convert_to_legacy_dds")
+cl = load_tool_module("assets/convert_to_legacy_dds.py")
 
 
 # --- LUT math -------------------------------------------------------------
@@ -55,18 +44,16 @@ def test_srgb_to_linear_lut_matches_function():
 
 def _make_dx10_dds(width, height, dxgi, pixels, *, with_dx10=True):
     flags = 0x10000B  # DDSD_CAPS | HEIGHT | WIDTH | PIXELFORMAT
-    hdr = struct.pack("<I", cl.DDS_MAGIC)
-    hdr += struct.pack("<I", 124)
-    hdr += struct.pack("<I", flags)
-    hdr += struct.pack("<I", height)
-    hdr += struct.pack("<I", width)
-    hdr += struct.pack("<I", width * height * 4)  # linearSize
-    hdr += struct.pack("<I", 0)
-    hdr += struct.pack("<I", 0)
-    hdr += b"\x00" * 44
-    hdr += struct.pack("<8I", 32, 0x04, cl.DX10_FOURCC, 0, 0, 0, 0, 0)
-    hdr += struct.pack("<I", 0x1000)  # caps
-    hdr += b"\x00" * 16
+    pixel_format = struct.pack("<8I", 32, 0x04, cl.DX10_FOURCC, 0, 0, 0, 0, 0)
+    hdr = dds_header(
+        cl.DDS_MAGIC,
+        flags,
+        height,
+        width,
+        width * height * 4,
+        pixel_format,
+        0x1000,
+    )
     payload = hdr
     if with_dx10:
         payload += struct.pack("<5I", dxgi, 0, 0, 0, 0)  # DX10 extension

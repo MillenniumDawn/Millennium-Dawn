@@ -5,7 +5,6 @@ sequence (POST then PATCH per overflow batch), the payloads, and the failure
 messages are all asserted without touching the network.
 """
 
-import io
 import json
 import urllib.error
 
@@ -22,6 +21,7 @@ from report_lib.checks_api import (
     post_checks,
 )
 from report_lib.models import Issue, Severity, ValidatorRun
+from shared.suite import http_error as _http_error
 
 
 def _run_with_issues(issues, errors=None, warnings=None, status=None):
@@ -254,20 +254,6 @@ class _Resp:
 
     def __exit__(self, *_args):
         return False
-
-
-def _http_error(code, body):
-    """`body=None` builds an error whose stream cannot be read back."""
-    error = urllib.error.HTTPError(
-        "https://api.github.invalid", code, "err", {}, io.BytesIO(body or b"")
-    )
-    if body is None:
-
-        def unreadable(*_args, **_kwargs):
-            raise OSError("response stream already consumed")
-
-        error.read = unreadable
-    return error
 
 
 def _transport(monkeypatch, outcomes):

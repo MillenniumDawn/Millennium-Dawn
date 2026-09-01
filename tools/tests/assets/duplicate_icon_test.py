@@ -6,24 +6,13 @@ both the duplicate-icon counter and the no-duplicate path without touching
 the real `common/national_focus/` content.
 """
 
-import importlib.util
 import io
 import sys
-from pathlib import Path
 
 import pytest
+from shared.suite import load_tool_module, write_text
 
-
-def _load_asset(name):
-    path = Path(__file__).resolve().parents[2] / "assets" / f"{name}.py"
-    spec = importlib.util.spec_from_file_location(f"_asset_{name}", path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-di = _load_asset("duplicate_icon")
+di = load_tool_module("assets/duplicate_icon.py")
 
 
 class _FakeFile(io.StringIO):
@@ -43,7 +32,7 @@ def test_main_counts_and_prints_only_duplicate_icon_lines(
         "    icon = GFX_TUR_other\n"  # duplicate icon
         "}\n"
     )
-    fake_path.write_text(content)
+    write_text(fake_path, content)
 
     opened = []
 

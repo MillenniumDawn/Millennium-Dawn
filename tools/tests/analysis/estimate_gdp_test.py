@@ -21,6 +21,16 @@ def write_text(path: Path, content: str) -> None:
         handle.write(content)
 
 
+def _parsed_states(mod, repo):
+    states_dir = repo / "history" / "states"
+    return [
+        mod.parse_state_file_from_content(
+            (states_dir / name).read_text(encoding="utf-8"), name
+        )
+        for name in ("100-A.txt", "200-B.txt")
+    ]
+
+
 class TestTokenizerAndIdeaParser:
     """Token parsing + idea modifier extraction (comments, strings, nested blocks)."""
 
@@ -267,15 +277,7 @@ class TestModifierStackAndGdp:
         self, import_estimate_gdp, populated_mini_repo
     ):
         mod = import_estimate_gdp
-        states = []
-        for name in ("100-A.txt", "200-B.txt"):
-            states.append(
-                mod.parse_state_file_from_content(
-                    (populated_mini_repo / "history" / "states" / name).read_text(),
-                    name,
-                )
-            )
-        result = mod.calculate_gdp(states)
+        result = mod.calculate_gdp(_parsed_states(mod, populated_mini_repo))
         assert result is not None
         # population = 1.5M + 0.8M = 2.3M
         assert result["population"] == 2_300_000
@@ -299,15 +301,7 @@ class TestModifierStackAndGdp:
         self, import_estimate_gdp, populated_mini_repo
     ):
         mod = import_estimate_gdp
-        states = []
-        for name in ("100-A.txt", "200-B.txt"):
-            states.append(
-                mod.parse_state_file_from_content(
-                    (populated_mini_repo / "history" / "states" / name).read_text(),
-                    name,
-                )
-            )
-        result = mod.calculate_gdp(states)
+        result = mod.calculate_gdp(_parsed_states(mod, populated_mini_repo))
         # The high_health idea has no GDP modifier by itself; finalize uses
         # HEALTH_GDP_MULT["health_XX"] — but our test idea is named "high_health"
         # not "health_01..06", so health_idea defaults to None.
@@ -329,15 +323,7 @@ class TestModifierStackAndGdp:
         self, import_estimate_gdp, populated_mini_repo
     ):
         mod = import_estimate_gdp
-        states = []
-        for name in ("100-A.txt", "200-B.txt"):
-            states.append(
-                mod.parse_state_file_from_content(
-                    (populated_mini_repo / "history" / "states" / name).read_text(),
-                    name,
-                )
-            )
-        result = mod.calculate_gdp(states)
+        result = mod.calculate_gdp(_parsed_states(mod, populated_mini_repo))
         # health_06 → 2.20 multiplier. With seeded gdpc=12.5 and population_total
         # in hundred-thousands (2_300_000 / 100_000 = 23): healthcare_raw
         # = 23 * 0.01 * 12.5 * 2.20 = 6.325.

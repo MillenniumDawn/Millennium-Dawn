@@ -5,16 +5,8 @@ import sys
 
 import pytest
 import sync_dynamic_tokens as sync
-
-
-def write(path, text):
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
-
-
-def read(path):
-    with path.open(encoding="utf-8", newline="") as handle:
-        return handle.read()
+from shared.suite import read_text as read
+from shared.suite import write_text as write
 
 
 def run(monkeypatch, log, output=None):

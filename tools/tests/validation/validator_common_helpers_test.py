@@ -2,6 +2,7 @@
 
 import importlib.util
 import logging
+import os
 
 import pytest
 import validator_common as VC
@@ -20,8 +21,9 @@ def dummy(tmp_path):
 
 
 def test_mod_path_already_terminated_is_left_alone(tmp_path):
-    v = _Dummy(mod_path=str(tmp_path) + "/", use_colors=False, workers=1)
-    assert v.mod_path == str(tmp_path) + "/"
+    mod_path = str(tmp_path) + os.sep
+    v = _Dummy(mod_path=mod_path, use_colors=False, workers=1)
+    assert v.mod_path == mod_path
 
 
 def test_report_tuple_with_unparsable_line_falls_back_to_zero(dummy):
@@ -152,6 +154,7 @@ def test_md_log_level_env_var_sets_the_module_threshold(monkeypatch, level):
     """The threshold is read at import, so it is env-driven, not settable later."""
     monkeypatch.setenv("MD_LOG_LEVEL", level.lower())
     spec = importlib.util.spec_from_file_location("validator_common_probe", VC.__file__)
+    assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert module._LOG_LEVEL == level
@@ -227,7 +230,7 @@ def test_get_full_path_finds_the_file_holding_the_item(dummy, write_path, tmp_pa
     hit = dummy.get_full_path("shared.txt", "wanted_item")
 
     assert hit is not None
-    assert hit.endswith("one/shared.txt")
+    assert hit.endswith(os.path.join("one", "shared.txt"))
 
 
 def test_get_full_path_returns_none_when_no_candidate_has_the_item(

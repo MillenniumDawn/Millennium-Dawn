@@ -10,40 +10,16 @@ buttons and the underlying `gfx_entry_generator.generate_*` invocations. No
 display is opened in any test.
 """
 
-import importlib.util
 import sys
 import types
 from pathlib import Path
 
 import pytest
+from shared.suite import load_tool_module
 
-
-def _load_asset(name):
-    path = Path(__file__).resolve().parents[2] / "assets" / f"{name}.py"
-    spec = importlib.util.spec_from_file_location(f"_asset_{name}", path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def _load_sibling(name):
-    """Load a tool sibling (e.g. tools/gfx_entry_generator.py) under its canonical name.
-
-    The GUI module imports `gfx_entry_generator` via the standard `import` machinery
-    after `sys.path.insert`, so the module needs to be registered under that name in
-    `sys.modules` for monkeypatching against the function it uses in main() to work.
-    """
-    path = Path(__file__).resolve().parents[2] / f"{name}.py"
-    spec = importlib.util.spec_from_file_location(name, path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-geg = _load_sibling("gfx_entry_generator")
+geg = load_tool_module(
+    "gfx_entry_generator.py", module_name="gfx_entry_generator", register=True
+)
 
 
 class _FakeIntVar:
@@ -140,7 +116,7 @@ def gui_module(monkeypatch):
 
     monkeypatch.setitem(sys.modules, "tkinter", fake_tkinter)
 
-    module = _load_asset("gfx_entry_generator_gui")
+    module = load_tool_module("assets/gfx_entry_generator_gui.py")
 
     # mainloop() must NOT be called when the test sets main=None via fixture
     # callback hooks; the import above already invoked it via the GUI module's

@@ -9,6 +9,8 @@ import sys
 
 import pytest
 import standardize_focus_tree as focus_tree_module
+from shared.suite import read_text as _read
+from shared.suite import write_text as _write
 from shared_utils import strip_inline_comment
 from standardize_focus_tree import (
     clean_block_lines,
@@ -24,16 +26,6 @@ from standardize_focus_tree import (
     standardize_focus_tree,
     validate_modifier_naming,
 )
-
-
-def _write(path, text):
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
-
-
-def _read(path):
-    with open(path, "r", encoding="utf-8", newline="") as handle:
-        return handle.read()
 
 
 def _code_braces_balanced(lines):

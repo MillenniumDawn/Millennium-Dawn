@@ -12,6 +12,7 @@ import sys
 
 import pytest
 import tick_audit as ta
+from shared.suite import write_under as _write_script
 
 ON_ACTIONS = """on_actions = {
 	on_daily = {
@@ -145,13 +146,6 @@ DECISIONS = """tick_category = {
 	}
 }
 """
-
-
-def _write_script(root, relative, content):
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
 
 
 @pytest.fixture

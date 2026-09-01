@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import pytest
+from shared.suite import write_text
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = REPO_ROOT / "tools" / "balance" / "set_energy_tech_scurves.py"
@@ -242,23 +243,25 @@ INDUSTRY_TEMPLATE = (
 )
 
 
+ENERGY_EDITS = {
+    "fuel_efficiency": ("fos", 0.5, 0.25, -0.04),
+    "reactor1": ("nuc", 0.6, 0.18, -0.05),
+    "early_renewables": ("ren", 0.7, 0.28, -0.10),
+}
+
+
 @pytest.fixture
 def industry_path(tmp_path):
-    p = tmp_path / "industry.txt"
-    p.write_text(INDUSTRY_TEMPLATE, encoding="utf-8")
-    return p
+    return write_text(tmp_path / "industry.txt", INDUSTRY_TEMPLATE)
 
 
 def test_apply_to_industry_rewrites_existing_lines(industry_path, monkeypatch):
     monkeypatch.setattr(sc, "INDUSTRY", str(industry_path))
-    edits = {
-        "fuel_efficiency": ("fos", 0.5, 0.25, -0.04),
-        "reactor1": ("nuc", 0.6, 0.18, -0.05),
-        "early_renewables": ("ren", 0.7, 0.28, -0.10),
-    }
-    report, missing = sc.apply_to_industry((0.3, 1.0, 1.0, 1.0), edits, apply=False)
+    report, missing = sc.apply_to_industry(
+        (0.3, 1.0, 1.0, 1.0), ENERGY_EDITS, apply=False
+    )
     assert missing == set()
-    assert {r[0] for r in report} == set(edits)
+    assert {r[0] for r in report} == set(ENERGY_EDITS)
     # dry run: file untouched
     assert "renewable_energy_gain_multiplier = 0.20" in industry_path.read_text(
         encoding="utf-8"
@@ -267,12 +270,9 @@ def test_apply_to_industry_rewrites_existing_lines(industry_path, monkeypatch):
 
 def test_apply_to_industry_writes_when_apply_true(industry_path, monkeypatch):
     monkeypatch.setattr(sc, "INDUSTRY", str(industry_path))
-    edits = {
-        "fuel_efficiency": ("fos", 0.5, 0.25, -0.04),
-        "reactor1": ("nuc", 0.6, 0.18, -0.05),
-        "early_renewables": ("ren", 0.7, 0.28, -0.10),
-    }
-    report, missing = sc.apply_to_industry((0.3, 1.0, 1.0, 1.0), edits, apply=True)
+    report, missing = sc.apply_to_industry(
+        (0.3, 1.0, 1.0, 1.0), ENERGY_EDITS, apply=True
+    )
     assert missing == set()
     assert report
     text = industry_path.read_text(encoding="utf-8")
@@ -285,8 +285,7 @@ def test_apply_to_industry_writes_when_apply_true(industry_path, monkeypatch):
 
 
 def test_apply_to_industry_reports_missing(monkeypatch, tmp_path):
-    p = tmp_path / "industry.txt"
-    p.write_text("\tstart_year = 1990\n", encoding="utf-8")
+    p = write_text(tmp_path / "industry.txt", "\tstart_year = 1990\n")
     monkeypatch.setattr(sc, "INDUSTRY", str(p))
     edits = {"does_not_exist": ("fos", 0.1, 0.05, -0.001)}
     _, missing = sc.apply_to_industry((0.3, 1.0, 1.0, 1.0), edits, apply=False)

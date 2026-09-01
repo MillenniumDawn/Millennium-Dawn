@@ -624,6 +624,18 @@ def _publish_mod(tmp_path):
     return mod_dir
 
 
+def _stub_publish_runtime(tmp_path, monkeypatch):
+    monkeypatch.setattr(pw, "find_steamcmd", lambda: Path("/bin/steamcmd"))
+    monkeypatch.setattr(pw, "steam_login", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(pw.tempfile, "gettempdir", lambda: str(tmp_path))
+
+
+def _prepare_full_main(tmp_path, monkeypatch, *args):
+    monkeypatch.setattr(sys, "argv", ["publish_workshop.py", *args])
+    monkeypatch.setattr(pw.tempfile, "mkdtemp", lambda prefix="": str(tmp_path / "pub"))
+    (tmp_path / "pub").mkdir()
+
+
 def test_copy_repo_refuses_a_tracked_symlink(tmp_path, monkeypatch):
     proc = _archive_proc(
         monkeypatch,
@@ -645,20 +657,19 @@ def test_steam_login_exits_when_steamcmd_fails(monkeypatch):
 
 def test_steam_login_invokes_steamcmd_login(monkeypatch):
     calls = []
+    steamcmd = Path("/bin/steamcmd")
     monkeypatch.setattr(pw.subprocess, "call", lambda cmd: calls.append(cmd) or 0)
 
-    pw.steam_login(Path("/bin/steamcmd"), "user")
+    pw.steam_login(steamcmd, "user")
 
-    assert calls == [["/bin/steamcmd", "+login", "user", "+quit"]]
+    assert calls == [[str(steamcmd), "+login", "user", "+quit"]]
 
 
 def test_publish_succeeds_and_retries_a_transient_failure(
     tmp_path, monkeypatch, capsys
 ):
-    monkeypatch.setattr(pw, "find_steamcmd", lambda: Path("/bin/steamcmd"))
-    monkeypatch.setattr(pw, "steam_login", lambda *_args, **_kwargs: None)
+    _stub_publish_runtime(tmp_path, monkeypatch)
     monkeypatch.setattr(pw.time, "sleep", lambda _seconds: None)
-    monkeypatch.setattr(pw.tempfile, "gettempdir", lambda: str(tmp_path))
     procs = iter(
         [
             _SteamProc(["Uploading content failed"], returncode=1),
@@ -692,9 +703,7 @@ def test_publish_succeeds_and_retries_a_transient_failure(
 
 
 def test_publish_does_not_retry_an_auth_failure(tmp_path, monkeypatch):
-    monkeypatch.setattr(pw, "find_steamcmd", lambda: Path("/bin/steamcmd"))
-    monkeypatch.setattr(pw, "steam_login", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr(pw.tempfile, "gettempdir", lambda: str(tmp_path))
+    _stub_publish_runtime(tmp_path, monkeypatch)
     slept = []
     monkeypatch.setattr(pw.time, "sleep", slept.append)
     monkeypatch.setattr(
@@ -712,10 +721,8 @@ def test_publish_does_not_retry_an_auth_failure(tmp_path, monkeypatch):
 
 
 def test_publish_exits_after_exhausted_retries(tmp_path, monkeypatch):
-    monkeypatch.setattr(pw, "find_steamcmd", lambda: Path("/bin/steamcmd"))
-    monkeypatch.setattr(pw, "steam_login", lambda *_args, **_kwargs: None)
+    _stub_publish_runtime(tmp_path, monkeypatch)
     monkeypatch.setattr(pw.time, "sleep", lambda _seconds: None)
-    monkeypatch.setattr(pw.tempfile, "gettempdir", lambda: str(tmp_path))
     monkeypatch.setattr(
         pw.subprocess,
         "Popen",
@@ -729,9 +736,7 @@ def test_publish_exits_after_exhausted_retries(tmp_path, monkeypatch):
 def test_publish_verbose_echoes_the_vdf_and_steamcmd_stream(
     tmp_path, monkeypatch, capsys
 ):
-    monkeypatch.setattr(pw, "find_steamcmd", lambda: Path("/bin/steamcmd"))
-    monkeypatch.setattr(pw, "steam_login", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr(pw.tempfile, "gettempdir", lambda: str(tmp_path))
+    _stub_publish_runtime(tmp_path, monkeypatch)
     monkeypatch.setattr(
         pw.subprocess,
         "Popen",
@@ -792,25 +797,20 @@ def test_main_refuses_a_diff_with_no_publishable_files(tmp_path, monkeypatch):
 
 
 def test_main_full_publish_patches_the_descriptor_then_uploads(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "publish_workshop.py",
-            "test",
-            "--full",
-            "--username",
-            "uploader",
-            "--version",
-            "1.2.3",
-            "--changenote",
-            "notes",
-            "--exclude",
-            "scratch",
-        ],
+    _prepare_full_main(
+        tmp_path,
+        monkeypatch,
+        "test",
+        "--full",
+        "--username",
+        "uploader",
+        "--version",
+        "1.2.3",
+        "--changenote",
+        "notes",
+        "--exclude",
+        "scratch",
     )
-    monkeypatch.setattr(pw.tempfile, "mkdtemp", lambda prefix="": str(tmp_path / "pub"))
-    (tmp_path / "pub").mkdir()
     seen = {}
 
     def fake_copy(dest_parent, excludes):
@@ -848,21 +848,16 @@ def test_main_full_publish_patches_the_descriptor_then_uploads(tmp_path, monkeyp
 
 
 def test_main_no_default_excludes_is_honoured(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "publish_workshop.py",
-            "beta",
-            "--full",
-            "--username",
-            "u",
-            "--no-default-excludes",
-            "--verbose",
-        ],
+    _prepare_full_main(
+        tmp_path,
+        monkeypatch,
+        "beta",
+        "--full",
+        "--username",
+        "u",
+        "--no-default-excludes",
+        "--verbose",
     )
-    monkeypatch.setattr(pw.tempfile, "mkdtemp", lambda prefix="": str(tmp_path / "pub"))
-    (tmp_path / "pub").mkdir()
     seen = {}
 
     def fake_copy(dest_parent, excludes):

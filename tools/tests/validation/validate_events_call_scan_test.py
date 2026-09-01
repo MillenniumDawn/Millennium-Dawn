@@ -7,16 +7,11 @@ skipped file has to come back empty rather than raise — a raising worker takes
 the whole pool down and the check silently reports nothing.
 """
 
+import os
+
 import pytest
 import validate_events as V
-from shared_utils import write_text_under
-
-
-def _write(tmp_path, name, body):
-    p = tmp_path / name
-    p.parent.mkdir(parents=True, exist_ok=True)
-    write_text_under(str(p), str(tmp_path), body)
-    return str(p)
+from shared.suite import write_under_str as _write
 
 
 def _validator(tmp_path):
@@ -179,10 +174,11 @@ def test_long_form_id_only_call_flagged_once_per_site(tmp_path):
         "other = { news_event = { id = foo.2 } }\n"
         "kept = { country_event = { id = foo.3 days = 3 } }\n",
     )
+    relative = os.path.join("common", "national_focus", "GER.txt")
     assert V.process_txt_for_long_form_events((path, str(tmp_path))) == [
-        "common/national_focus/GER.txt:1 - country_event = { id = foo.1 }"
+        f"{relative}:1 - country_event = {{ id = foo.1 }}"
         " → use shorthand `country_event = foo.1`",
-        "common/national_focus/GER.txt:2 - news_event = { id = foo.2 }"
+        f"{relative}:2 - news_event = {{ id = foo.2 }}"
         " → use shorthand `news_event = foo.2`",
     ]
 
@@ -267,8 +263,9 @@ def test_undefined_fire_reported_once_per_id(tmp_path):
     )
     v = _validator(tmp_path)
     v.validate_undefined_event_fires()
+    relative = os.path.join("common", "f.txt")
     assert [i.message for i in v._issues] == [
-        "ghost.1 - fired from common/f.txt:3, no event defines it"
+        f"ghost.1 - fired from {relative}:3, no event defines it"
     ]
     assert v._issues[0].category == "undefined-event-fire"
 

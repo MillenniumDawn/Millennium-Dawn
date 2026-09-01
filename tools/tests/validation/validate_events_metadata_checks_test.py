@@ -1,14 +1,7 @@
 """Event checks that walk metadata instead of a second body-list parse."""
 
-from shared_utils import write_text_under
+from shared.suite import write_under_str as _write
 from validate_events import Validator
-
-
-def _write(tmp_path, name, body):
-    p = tmp_path / name
-    p.parent.mkdir(parents=True, exist_ok=True)
-    write_text_under(str(p), str(tmp_path), body)
-    return str(p)
 
 
 def _validator(tmp_path):

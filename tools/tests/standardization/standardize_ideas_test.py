@@ -11,17 +11,9 @@ import re
 import sys
 
 import standardize_ideas
+from shared.suite import read_text as _read
+from shared.suite import write_text as _write
 from standardize_ideas import IdeaStandardizer
-
-
-def _write(path, text):
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
-
-
-def _read(path):
-    with open(path, "r", encoding="utf-8", newline="") as handle:
-        return handle.read()
 
 
 def _idea(lines):

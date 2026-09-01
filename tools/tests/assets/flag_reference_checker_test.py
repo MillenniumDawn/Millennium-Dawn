@@ -5,24 +5,14 @@ pipeline (which counts token occurrences once per file across all detected
 flags), and the CLI error paths.
 """
 
-import importlib.util
 import io
 import sys
 from pathlib import Path
 
 import pytest
+from shared.suite import load_tool_module
 
-
-def _load_asset(name):
-    path = Path(__file__).resolve().parents[2] / "assets" / f"{name}.py"
-    spec = importlib.util.spec_from_file_location(f"_asset_{name}", path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-frc = _load_asset("flag-reference-checker")
+frc = load_tool_module("assets/flag-reference-checker.py")
 
 
 # --- find_flags -----------------------------------------------------------
@@ -60,18 +50,21 @@ def test_find_flags_returns_set_of_unique_names():
 
 
 def test_should_skip_rejects_dotfiles_and_yaml_files():
-    assert frc.should_skip("/some/place", ".hidden") is True
+    assert frc.should_skip(str(Path("some") / "place"), ".hidden") is True
     # yaml rule needs parent dir to match localisation/localization.
-    assert frc.should_skip("/loc", "file.yml") is False
-    assert frc.should_skip("/place/localisation", "file.yml") is True
-    assert frc.should_skip("/place/gfx/sub", "file.txt") is True
+    assert frc.should_skip("loc", "file.yml") is False
+    assert frc.should_skip(str(Path("place") / "localisation"), "file.yml") is True
+    assert frc.should_skip(str(Path("place") / "gfx" / "sub"), "file.txt") is True
 
 
 def test_should_skip_directory_match_is_case_insensitive_for_gfx_localisation():
     # The implementation lower-cases path components, so gfx/localisation under
     # capitalised directory names still hit the skip branches.
-    assert frc.should_skip("/place/GFX/whatever", "real.txt") is True
-    assert frc.should_skip("/place/Localisation/whatever", "real.yml") is True
+    assert frc.should_skip(str(Path("place") / "GFX" / "whatever"), "real.txt") is True
+    assert (
+        frc.should_skip(str(Path("place") / "Localisation" / "whatever"), "real.yml")
+        is True
+    )
 
 
 # --- scan_directory -------------------------------------------------------
@@ -114,10 +107,13 @@ def test_scan_directory_skips_hidden_gfx_and_localisation_directories(tmp_path):
     assert "KEEP" in all_flags
     assert "DROP" not in all_flags
     referenced = {fp for fp in refs.get("KEEP", {})}
-    assert any(fp.endswith("events/public.txt") for fp in referenced)
-    assert not any(".hidden" in fp for fp in referenced)
-    assert not any("localisation" in fp or "LOCALIZATION" in fp for fp in referenced)
-    assert not any("/gfx/" in fp for fp in referenced)
+    parts = [tuple(part.lower() for part in Path(fp).parts) for fp in referenced]
+    assert any(path_parts[-2:] == ("events", "public.txt") for path_parts in parts)
+    assert not any(".hidden" in path_parts for path_parts in parts)
+    assert not any(
+        {"localisation", "localization", "gfx"}.intersection(path_parts)
+        for path_parts in parts
+    )
 
 
 def test_scan_directory_ignores_unreadable_files(tmp_path, monkeypatch):
@@ -125,7 +121,7 @@ def test_scan_directory_ignores_unreadable_files(tmp_path, monkeypatch):
     real_open = io.open
 
     def selective_open(path, *args, **kwargs):
-        if "events/readable.txt" not in str(path):
+        if Path(path).name != "readable.txt":
             raise OSError("blocked")
         return real_open(path, *args, **kwargs)
 

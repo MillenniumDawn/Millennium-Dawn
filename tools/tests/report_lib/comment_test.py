@@ -1,8 +1,5 @@
 """Tests for `report_lib.comment` discovery and posting."""
 
-import io
-import urllib.error
-
 import pytest
 from report_lib import comment as C
 from report_lib.comment import (
@@ -11,6 +8,7 @@ from report_lib.comment import (
     find_existing_comment,
     post_comment,
 )
+from shared.suite import http_error as _http_error
 
 
 def _comment(body, bot=True, cid=1):
@@ -159,20 +157,6 @@ def test_clear_reports_delete_failure(monkeypatch):
     assert message == "delete comment: boom"
 
 
-def _http_error(code, body=b"denied"):
-    """`body=None` builds an error whose stream cannot be read back."""
-    error = urllib.error.HTTPError(
-        "https://api.github.invalid", code, "err", {}, io.BytesIO(body or b"")
-    )
-    if body is None:
-
-        def unreadable(*_args, **_kwargs):
-            raise OSError("response stream already consumed")
-
-        error.read = unreadable
-    return error
-
-
 def test_finds_the_report_on_a_later_page(monkeypatch):
     pages = {
         1: [_comment("chatter", cid=n) for n in range(C._PAGE_SIZE)],
@@ -261,32 +245,22 @@ def test_clear_reports_a_listing_error(monkeypatch):
     assert message == "list comments: HTTP 401 — bad token"
 
 
-def test_clear_reports_a_delete_http_error(monkeypatch):
+@pytest.mark.parametrize(
+    ("code", "body", "message"),
+    [
+        (404, b"gone", "delete comment: HTTP 404 — gone"),
+        (502, None, "delete comment: HTTP 502 — <no body>"),
+    ],
+)
+def test_clear_reports_a_delete_http_error(monkeypatch, code, body, message):
     monkeypatch.setattr(
         C, "_get", lambda *a, **k: [_comment(f"{REPORT_MARKER}\nold", cid=42)]
     )
     monkeypatch.setattr(
-        C, "_delete", lambda *a: (_ for _ in ()).throw(_http_error(404, b"gone"))
+        C, "_delete", lambda *a: (_ for _ in ()).throw(_http_error(code, body))
     )
 
-    assert clear_comment("owner", "repo", "7", "token") == (
-        False,
-        "delete comment: HTTP 404 — gone",
-    )
-
-
-def test_clear_reports_a_delete_error_with_an_unreadable_body(monkeypatch):
-    monkeypatch.setattr(
-        C, "_get", lambda *a, **k: [_comment(f"{REPORT_MARKER}\nold", cid=42)]
-    )
-    monkeypatch.setattr(
-        C, "_delete", lambda *a: (_ for _ in ()).throw(_http_error(502, None))
-    )
-
-    assert clear_comment("owner", "repo", "7", "token") == (
-        False,
-        "delete comment: HTTP 502 — <no body>",
-    )
+    assert clear_comment("owner", "repo", "7", "token") == (False, message)
 
 
 def test_decode_json_rejects_a_non_json_body():

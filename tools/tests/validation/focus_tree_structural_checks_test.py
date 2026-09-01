@@ -6,16 +6,10 @@ reporting scope (findings in unstaged files must stay out of a commit run).
 """
 
 import argparse
+import os
 
 import validate_focus_tree as V
-from shared_utils import write_text_under
-
-
-def _write(tmp_path, name, body):
-    p = tmp_path / name
-    p.parent.mkdir(parents=True, exist_ok=True)
-    write_text_under(str(p), str(tmp_path), body)
-    return str(p)
+from shared.suite import write_under_str as _write
 
 
 def _focus_file(tmp_path, body, name="test.txt"):
@@ -56,9 +50,10 @@ def test_duplicate_focus_id_lists_every_definition(tmp_path):
     v = _validator(tmp_path)
     v.validate_duplicate_focus_ids()
 
+    focus_path = os.path.join("common", "national_focus", "test.txt")
     assert _messages(v) == [
-        "Duplicate focus ID 'TAG_focus_a' defined 2 times:"
-        " common/national_focus/test.txt:3, common/national_focus/test.txt:8"
+        f"Duplicate focus ID 'TAG_focus_a' defined 2 times:"
+        f" {focus_path}:3, {focus_path}:8"
     ]
     assert v._issues[0].line == 3
     assert v._issues[0].category == "duplicate-focus-id"
@@ -414,7 +409,9 @@ def test_findings_in_unstaged_files_are_not_reported(tmp_path, monkeypatch):
     v.run_validations()
 
     assert v._issues == []
-    assert v._get_staged_paths() == {"common/national_focus/staged.txt"}
+    assert v._get_staged_paths() == {
+        os.path.join("common", "national_focus", "staged.txt")
+    }
 
 
 def test_no_staged_focus_files_reports_nothing(tmp_path, monkeypatch):

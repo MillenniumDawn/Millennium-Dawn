@@ -8,6 +8,15 @@ not touch the live mod, so they stay fast and deterministic.
 
 import pytest
 import tick_audit as ta
+from shared.suite import write_under as _spot_file
+
+
+def _scan_spot_source(tmp_path, monkeypatch, source):
+    _spot_file(tmp_path, "common/on_actions/a.txt", source)
+    monkeypatch.setattr(ta, "REPO_ROOT", str(tmp_path))
+    report = ta.scan_spot_checks(["common/on_actions"])
+    return report, [item["rule"] for item in report["findings"]]
+
 
 # --- brace-depth field reading ---------------------------------------------
 
@@ -138,13 +147,6 @@ def test_non_self_firing_event_is_not_a_loop():
         }
     }
     assert ta.collect_event_loops(events) == []
-
-
-def _spot_file(root, relative, content):
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
 
 
 def test_spot_check_context_and_schema(tmp_path, monkeypatch):
@@ -513,9 +515,9 @@ def test_spot_named_blocks_preserves_repeated_sibling_bodies():
 
 
 def test_spot_check_division_force_update_and_invariant_reads(tmp_path, monkeypatch):
-    _spot_file(
+    report, rules = _scan_spot_source(
         tmp_path,
-        "common/on_actions/a.txt",
+        monkeypatch,
         """on_actions = {
 	on_daily = {
 		clamp_temp_variable = { var = safe min = 0.01 }
@@ -537,10 +539,6 @@ def test_spot_check_division_force_update_and_invariant_reads(tmp_path, monkeypa
 }
 """,
     )
-    monkeypatch.setattr(ta, "REPO_ROOT", str(tmp_path))
-
-    report = ta.scan_spot_checks(["common/on_actions"])
-    rules = [item["rule"] for item in report["findings"]]
 
     assert rules.count("unclamped-division") == 1
     assert "force-update-dynamic-modifier" in rules
@@ -670,9 +668,9 @@ wrapper_block = { every_state = { } }
 
 
 def test_spot_check_handles_malformed_loop_and_division_blocks(tmp_path, monkeypatch):
-    _spot_file(
+    report, rules = _scan_spot_source(
         tmp_path,
-        "common/on_actions/a.txt",
+        monkeypatch,
         """on_actions = {
 	on_daily = {
 		log = "tick"
@@ -686,10 +684,6 @@ def test_spot_check_handles_malformed_loop_and_division_blocks(tmp_path, monkeyp
 }
 """,
     )
-    monkeypatch.setattr(ta, "REPO_ROOT", str(tmp_path))
-
-    report = ta.scan_spot_checks(["common/on_actions"])
-    rules = [item["rule"] for item in report["findings"]]
 
     assert rules.count("unclamped-division") == 1
     assert any(

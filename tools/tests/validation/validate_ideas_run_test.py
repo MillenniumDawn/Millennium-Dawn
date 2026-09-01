@@ -10,6 +10,7 @@ import sys
 
 import pytest
 import validate_ideas
+from shared.suite import write_under as _write
 from validate_ideas import IdeaIssue, Validator, _add_extra_args
 
 IDEA_TAGS = """idea_categories = {
@@ -84,14 +85,6 @@ RUN_GFX = (
 )
 
 
-def _write(root, relative, content):
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-    return path
-
-
 def _validator(root, **kwargs):
     kwargs.setdefault("unused_ideas", False)
     return Validator(str(root), use_colors=False, workers=1, **kwargs)
@@ -163,7 +156,7 @@ def test_quality_report_ignores_an_issue_type_it_has_no_message_for(tmp_path):
 
     validator.validate_idea_quality(
         {
-            "common/ideas/quality.txt": [
+            str(tmp_path / "common" / "ideas" / "quality.txt"): [
                 IdeaIssue("KNOWN_idea", "country", 4, "cancel-always-no"),
                 IdeaIssue("ODD_idea", "country", 9, "not-a-rendered-type"),
             ]
@@ -262,7 +255,7 @@ def test_loc_consolidation_only_suggests_true_duplicates(tmp_path):
         ' RENAMED_idea:0 "Shared Name"\n',
     )
     ideas_file = str(_write(tmp_path, "common/ideas/test.txt", "ideas = { }\n"))
-    defined = {
+    defined: dict[str, tuple[str, str | None, str | None]] = {
         name: ("country", None, None)
         for name in ("TIER_one", "TIER_two", "SOLO_idea", "SPLIT_one", "SPLIT_two")
     }
@@ -424,7 +417,7 @@ def test_staged_mode_limits_unused_ideas_to_staged_files(tmp_path):
     validator = _validator(tmp_path, unused_ideas=True)
     defined, _issues, ideas_by_file = validator._parse_all_ideas()
     validator.staged_only = True
-    validator.staged_files = ["common/ideas/extra.txt"]
+    validator.staged_files = [str(tmp_path / "common" / "ideas" / "extra.txt")]
 
     validator.validate_unused_ideas(defined, ideas_by_file)
 
@@ -503,7 +496,7 @@ def test_staged_run_reports_quality_for_the_staged_idea_file(tmp_path, no_vanill
     _write(tmp_path, "common/ideas/quality.txt", QUALITY_IDEAS)
     validator = _validator(tmp_path)
     validator.staged_only = True
-    validator.staged_files = ["common/ideas/quality.txt"]
+    validator.staged_files = [str(tmp_path / "common" / "ideas" / "quality.txt")]
 
     validator.run_validations()
 

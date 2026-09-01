@@ -5,24 +5,13 @@ flag and pixelformat edge cases, error branches, and the two-mode CLI dispatcher
 (file vs. directory) by invoking the module's main() via sys.argv.
 """
 
-import importlib.util
 import struct
 import sys
-from pathlib import Path
 
 import pytest
+from shared.suite import dds_header, load_tool_module
 
-
-def _load_asset(name):
-    path = Path(__file__).resolve().parents[2] / "assets" / f"{name}.py"
-    spec = importlib.util.spec_from_file_location(f"_asset_{name}", path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-bd = _load_asset("batchdds-2")
+bd = load_tool_module("assets/batchdds-2.py")
 
 # --- DDS fixture helpers ---------------------------------------------------
 
@@ -37,42 +26,17 @@ def _make_dds(width, height, fourcc, body, mip_count=0):
         | bd.DDSD_LINEARSIZE
     )
     linear_size = max(1, len(body))
-    if fourcc == bd.DX10_FOURCC:
-        pixelformat_block = struct.pack(
-            "<8I",
-            32,
-            bd.DDPF_FOURCC,
-            bd.DX10_FOURCC,
-            0,
-            0,
-            0,
-            0,
-            0,
-        )
-    else:
-        pixelformat_block = struct.pack(
-            "<8I",
-            32,
-            bd.DDPF_FOURCC,
-            fourcc,
-            0,
-            0,
-            0,
-            0,
-            0,
-        )
-    hdr = struct.pack("<I", bd.DDS_MAGIC)
-    hdr += struct.pack("<I", 124)
-    hdr += struct.pack("<I", flags)
-    hdr += struct.pack("<I", height)
-    hdr += struct.pack("<I", width)
-    hdr += struct.pack("<I", linear_size)
-    hdr += struct.pack("<I", 0)  # depth
-    hdr += struct.pack("<I", mip_count)
-    hdr += b"\x00" * 44  # reserved1[11]
-    hdr += pixelformat_block
-    hdr += struct.pack("<I", bd.DDSCAPS_TEXTURE)
-    hdr += b"\x00" * 16  # caps2..4 + reserved2
+    pixelformat_block = struct.pack("<8I", 32, bd.DDPF_FOURCC, fourcc, *([0] * 5))
+    hdr = dds_header(
+        bd.DDS_MAGIC,
+        flags,
+        height,
+        width,
+        linear_size,
+        pixelformat_block,
+        bd.DDSCAPS_TEXTURE,
+        mip_count,
+    )
     out = hdr + body
     if fourcc == bd.DX10_FOURCC:
         # empty DX10 extension block (20 bytes) at offset 128; dxgi goes here

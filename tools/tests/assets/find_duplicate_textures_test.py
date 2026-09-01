@@ -6,24 +6,14 @@ the duplicate grouping, the formatted output (empty + populated, with and
 without an output stream), and the CLI which writes a timestamped report file.
 """
 
-import importlib.util
 import io
 import sys
 from pathlib import Path
 
 import pytest
+from shared.suite import load_tool_module
 
-
-def _load_asset(name):
-    path = Path(__file__).resolve().parents[2] / "assets" / f"{name}.py"
-    spec = importlib.util.spec_from_file_location(f"_asset_{name}", path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-fdt = _load_asset("find_duplicate_textures")
+fdt = load_tool_module("assets/find_duplicate_textures.py")
 
 
 def _write_gfx(root, name, body):
@@ -206,7 +196,7 @@ def test_print_results_uses_optional_output_stream(capsys):
         assert "Found 1 textures" in haystack
         assert "gfx/dup.dds" in haystack
         assert "Found 2 definitions" in haystack
-        assert "interface/a.gfx" in haystack
+        assert str(Path("interface") / "a.gfx") in haystack
         assert "Line: 7" in haystack
         assert "Line: 14" in haystack
 

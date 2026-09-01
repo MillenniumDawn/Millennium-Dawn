@@ -7,6 +7,8 @@ unbalanced brace, a stray quote. Each case here pins "degrade to no finding"
 rather than the crash or false positive.
 """
 
+import os
+
 import pytest
 import validate_variables as V
 
@@ -93,10 +95,11 @@ def test_flag_syntax_reports_days_without_value_and_long_form(tmp_path):
 
     days, long_form = V.process_file_for_flag_syntax((str(path), str(tmp_path)))
 
+    relative = os.path.join("common", "scripted_effects", "syntax.txt")
     assert len(days) == 1 and "missing value field" in days[0]
-    assert days[0].startswith("common/scripted_effects/syntax.txt:2")
+    assert days[0].startswith(f"{relative}:2")
     assert len(long_form) == 1 and "use shorthand" in long_form[0]
-    assert long_form[0].startswith("common/scripted_effects/syntax.txt:3")
+    assert long_form[0].startswith(f"{relative}:3")
 
 
 def test_flag_syntax_accepts_days_with_value(tmp_path):
@@ -414,6 +417,13 @@ def test_consumer_map_refuses_a_file_outside_the_mod(tmp_path):
 # --- orphan money setters --------------------------------------------------
 
 
+MONEY_CONSUMERS = {
+    "treasury_change": frozenset({"modify_treasury_effect"}),
+    "debt_change": frozenset({"modify_debt_effect"}),
+    "int_investment_change": frozenset({"modify_international_investment_effect"}),
+}
+
+
 def test_orphan_money_scan_skips_non_script_directories(tmp_path):
     args = (str(_skipped(tmp_path)), str(tmp_path), {"treasury_change": frozenset()})
     assert V.process_file_for_orphan_money(args) == []
@@ -444,14 +454,10 @@ def test_setter_outside_any_effect_container_is_not_flagged(tmp_path):
         "option = {\n"
         "\tset_temp_variable = { debt_change = 5 }\n",
     )
-    consumer_map = {
-        "treasury_change": frozenset({"modify_treasury_effect"}),
-        "debt_change": frozenset({"modify_debt_effect"}),
-        "int_investment_change": frozenset({"modify_international_investment_effect"}),
-    }
 
     assert (
-        V.process_file_for_orphan_money((str(path), str(tmp_path), consumer_map)) == []
+        V.process_file_for_orphan_money((str(path), str(tmp_path), MONEY_CONSUMERS))
+        == []
     )
 
 
@@ -469,14 +475,10 @@ def test_branch_gated_rewrites_do_not_clobber_the_setter(tmp_path):
         "\tmodify_treasury_effect = yes\n"
         "}\n",
     )
-    consumer_map = {
-        "treasury_change": frozenset({"modify_treasury_effect"}),
-        "debt_change": frozenset({"modify_debt_effect"}),
-        "int_investment_change": frozenset({"modify_international_investment_effect"}),
-    }
 
     assert (
-        V.process_file_for_orphan_money((str(path), str(tmp_path), consumer_map)) == []
+        V.process_file_for_orphan_money((str(path), str(tmp_path), MONEY_CONSUMERS))
+        == []
     )
 
 

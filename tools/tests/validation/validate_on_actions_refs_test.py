@@ -10,6 +10,7 @@ import sys
 
 import pytest
 import validate_on_actions
+from shared.suite import write_under as _write
 from validate_on_actions import (
     Validator,
     _extract_random_events_ids,
@@ -47,14 +48,6 @@ ON_ACTIONS = """on_actions = {
 """
 
 ON_ACTIONS_FILE = "common/on_actions/MD_test.txt"
-
-
-def _write(root, relative, content):
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-    return path
 
 
 def _issues(validator, category):

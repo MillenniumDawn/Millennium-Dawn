@@ -5,18 +5,8 @@ from types import SimpleNamespace
 
 import archive_stale_branches as A
 import pytest
-
-
-def write(path, text):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
-
-
-def read(path):
-    with path.open(encoding="utf-8", newline="") as handle:
-        return handle.read()
-
+from shared.suite import read_text as read
+from shared.suite import write_text as write
 
 SYMLINK = object()
 

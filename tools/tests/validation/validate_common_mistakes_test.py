@@ -10,17 +10,10 @@ import sys
 
 import pytest
 import validate_common_mistakes as common_mistakes
+from shared.suite import write_under as _write
 from shared_utils import run_validator_main
 
 FACTION_MISTAKE = "some_trigger = {\n\tis_in_faction = GER\n}\n"
-
-
-def _write(root, relative, content):
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-    return path
 
 
 def _validator(root):

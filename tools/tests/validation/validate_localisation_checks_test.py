@@ -15,7 +15,8 @@ import validate_localisation as VL
 
 def _write(path, body, encoding="utf-8-sig"):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body, encoding=encoding)
+    with path.open("w", encoding=encoding, newline="") as handle:
+        handle.write(body)
     return str(path)
 
 
@@ -34,6 +35,7 @@ def test_unclosed_colour_codes_report_the_expected_count(tmp_path):
     path = _english(tmp_path, "a_l_english.yml", 'l_english:\n A:0 "§Ya §Yb"\n')
     results = VL.process_yml_for_syntax((path, ["Y"], frozenset()))
     assert len(results) == 1
+    assert isinstance(results[0], str)
     assert "expected 1 § but got 0" in results[0].replace("§!", "§")
 
 
@@ -269,6 +271,12 @@ def test_resistance_tooltip_with_an_empty_assignment_yields_nothing(tmp_path):
 # --- orphaned tooltip keys --------------------------------------------------
 
 
+def _orphaned_messages(tmp_path, loc_keys):
+    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_orphaned_tooltip_keys(loc_keys, set(), set())
+    return [issue.message for issue in validator._issues]
+
+
 def test_tooltip_key_referenced_only_through_a_loc_substitution_is_not_orphaned(
     tmp_path,
 ):
@@ -279,10 +287,7 @@ def test_tooltip_key_referenced_only_through_a_loc_substitution_is_not_orphaned(
         "used_tt": "used",
         "orphan_tt": "orphan",
     }
-    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.validate_orphaned_tooltip_keys(loc_keys, set(), set())
-
-    assert [i.message for i in validator._issues] == ["orphan_tt"]
+    assert _orphaned_messages(tmp_path, loc_keys) == ["orphan_tt"]
 
 
 def test_not_variant_is_only_forgiven_when_its_base_is_negated(tmp_path):
@@ -300,10 +305,7 @@ def test_not_variant_is_only_forgiven_when_its_base_is_negated(tmp_path):
         "tooltip_positive": "c",
         "tooltip_positive_NOT": "d",
     }
-    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.validate_orphaned_tooltip_keys(loc_keys, set(), set())
-
-    assert [i.message for i in validator._issues] == ["tooltip_positive_NOT"]
+    assert _orphaned_messages(tmp_path, loc_keys) == ["tooltip_positive_NOT"]
 
 
 def test_repeated_dynamic_token_is_compiled_once(tmp_path):
@@ -314,10 +316,7 @@ def test_repeated_dynamic_token_is_compiled_once(tmp_path):
             "custom_effect_tooltip = tooltip_EU_[EUXXX]_approve\n",
         )
     loc_keys = {"tooltip_EU_FRA_approve": "x", "tooltip_unmatched": "y"}
-    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.validate_orphaned_tooltip_keys(loc_keys, set(), set())
-
-    assert [i.message for i in validator._issues] == ["tooltip_unmatched"]
+    assert _orphaned_messages(tmp_path, loc_keys) == ["tooltip_unmatched"]
 
 
 def test_no_tooltip_named_keys_reports_nothing(tmp_path):

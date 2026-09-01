@@ -35,29 +35,16 @@ shared_focus = {
 
 
 def test_renames_focus_references_and_preserves_unrelated_tokens(tmp_path):
-    focus_dir = tmp_path / "common" / "national_focus"
-    event_dir = tmp_path / "events"
-    loc_dir = tmp_path / "localisation" / "english"
-    focus_dir.mkdir(parents=True)
-    event_dir.mkdir(parents=True)
-    loc_dir.mkdir(parents=True)
-
-    focus_file = focus_dir / "05_Australia.txt"
-    _write(
-        focus_file,
+    focus_file, event_file, localisation_file = _tree(
+        tmp_path,
         """shared_focus = {
 \tid = ast_first
-\tlog = \"Focus ast_first\"
+\tlog = "Focus ast_first"
 \trelative_position_id = ast_first
 \tmodifier = ast_first
 }
 """,
-    )
-    event_file = event_dir / "australia.txt"
-    _write(event_file, "\tfocus = ast_first\n")
-    localisation_file = loc_dir / "MD_focus_AST_l_english.yml"
-    _write(
-        localisation_file,
+        "\tfocus = ast_first\n",
         'l_english:\n AST_ast_first: "old"\n ast_first: "new"\n ast_first_desc: "desc"\n',
     )
 

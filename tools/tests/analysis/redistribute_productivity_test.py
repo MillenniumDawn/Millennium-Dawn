@@ -62,6 +62,30 @@ def _state(
     return "\n".join(lines) + "\n"
 
 
+def _enable_tst(mod, monkeypatch):
+    tags = mod.CONTINENT_TAGS["europe"]
+    if "TST" not in tags:
+        monkeypatch.setitem(mod.CONTINENT_TAGS, "europe", tags + ["TST"])
+    monkeypatch.setitem(mod.TAG_TO_CONTINENT, "TST", "europe")
+
+
+def _run_tst(mod, monkeypatch, *args):
+    _enable_tst(mod, monkeypatch)
+    monkeypatch.setattr(sys, "argv", ["rp.py", *args, "--tag", "TST"])
+    mod.main()
+
+
+def _productivity_values(repo):
+    values = {}
+    for path in (repo / "history" / "states").iterdir():
+        match = re.search(
+            r"productivity_state_var = (\d+)", path.read_text(encoding="utf-8")
+        )
+        if match:
+            values[path.name] = int(match.group(1))
+    return values
+
+
 @pytest.fixture
 def redist_mini_repo(mini_repo):
     """Three TST states (state_05 capital, state_10 industrial, state_20 rural)
@@ -490,11 +514,7 @@ class TestSelectTags:
         self, import_redistribute, redist_mini_repo, monkeypatch
     ):
         mod = import_redistribute
-        # Patch the continent table so our TST fixture is selectable via --tag.
-        monkeypatch.setitem(
-            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
-        )
-        mod.TAG_TO_CONTINENT["TST"] = "europe"
+        _enable_tst(mod, monkeypatch)
         by_owner = mod.load_all_states()
         args = mod.argparse.Namespace(
             continent=None, tag="TST", skip_tag=None, min_states=3
@@ -526,13 +546,7 @@ class TestCliMain:
         self, import_redistribute, redist_mini_repo, capsys, monkeypatch
     ):
         mod = import_redistribute
-        # Patch the continent table so our TST fixture is selectable via --tag.
-        monkeypatch.setitem(
-            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
-        )
-        mod.TAG_TO_CONTINENT["TST"] = "europe"
-        monkeypatch.setattr(sys, "argv", ["rp.py", "--tag", "TST"])
-        mod.main()
+        _run_tst(mod, monkeypatch)
         out = capsys.readouterr().out
         assert "TST" in out
         # None of the state files should have been written.
@@ -546,12 +560,7 @@ class TestCliMain:
         self, import_redistribute, redist_mini_repo, capsys, monkeypatch
     ):
         mod = import_redistribute
-        monkeypatch.setitem(
-            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
-        )
-        mod.TAG_TO_CONTINENT["TST"] = "europe"
-        monkeypatch.setattr(sys, "argv", ["rp.py", "--write", "--tag", "TST"])
-        mod.main()
+        _run_tst(mod, monkeypatch, "--write")
         # After --write, the table prints "Files written:" + a number.
         captured = capsys.readouterr()
         assert "Files written:" in captured.out
@@ -569,12 +578,7 @@ class TestCliMain:
         self, import_redistribute, redist_mini_repo, capsys, monkeypatch
     ):
         mod = import_redistribute
-        monkeypatch.setitem(
-            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
-        )
-        mod.TAG_TO_CONTINENT["TST"] = "europe"
-        monkeypatch.setattr(sys, "argv", ["rp.py", "--report", "--tag", "TST"])
-        mod.main()
+        _run_tst(mod, monkeypatch, "--report")
         captured = capsys.readouterr()
         # GDP Δ% column appears when --report is set.
         assert "GDP" in captured.out
@@ -584,16 +588,9 @@ class TestCliMain:
         self, import_redistribute, redist_mini_repo, capsys, monkeypatch
     ):
         mod = import_redistribute
-        monkeypatch.setitem(
-            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
-        )
-        mod.TAG_TO_CONTINENT["TST"] = "europe"
         # The fixture's redistribute preserves pop-weighted totals exactly
         # (drift ≤ snap tolerance), so even a 0.0 GDP tolerance succeeds.
-        monkeypatch.setattr(
-            sys, "argv", ["rp.py", "--report", "--tag", "TST", "--gdp-tolerance", "0.0"]
-        )
-        mod.main()
+        _run_tst(mod, monkeypatch, "--report", "--gdp-tolerance", "0.0")
         captured = capsys.readouterr()
         assert "TST" in captured.out
         # No violation summary printed.
@@ -603,27 +600,10 @@ class TestCliMain:
         self, import_redistribute, redist_mini_repo, capsys, monkeypatch
     ):
         mod = import_redistribute
-        monkeypatch.setitem(
-            mod.CONTINENT_TAGS, "europe", mod.CONTINENT_TAGS["europe"] + ["TST"]
-        )
-        mod.TAG_TO_CONTINENT["TST"] = "europe"
-        monkeypatch.setattr(sys, "argv", ["rp.py", "--write", "--tag", "TST"])
-        mod.main()
-        # Snapshot state file values.
-        first_pass = {}
-        for f in (redist_mini_repo / "history" / "states").iterdir():
-            text = f.read_text(encoding="utf-8")
-            m = re.search(r"productivity_state_var = (\d+)", text)
-            if m:
-                first_pass[f.name] = int(m.group(1))
-        monkeypatch.setattr(sys, "argv", ["rp.py", "--write", "--tag", "TST"])
-        mod.main()
-        second_pass = {}
-        for f in (redist_mini_repo / "history" / "states").iterdir():
-            text = f.read_text(encoding="utf-8")
-            m = re.search(r"productivity_state_var = (\d+)", text)
-            if m:
-                second_pass[f.name] = int(m.group(1))
+        _run_tst(mod, monkeypatch, "--write")
+        first_pass = _productivity_values(redist_mini_repo)
+        _run_tst(mod, monkeypatch, "--write")
+        second_pass = _productivity_values(redist_mini_repo)
         # Snap-to-current keeps everything identical on the second pass.
         assert first_pass == second_pass
 

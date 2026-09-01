@@ -8,9 +8,12 @@ order, and never drop or split content.
 """
 
 import sys
+from typing import cast
 
 import pytest
 import standardize_decisions
+from shared.suite import read_text as _read
+from shared.suite import write_text as _write
 from shared_utils import collapse_or_compact
 from standardize_decisions import (
     DecisionStandardizer,
@@ -22,16 +25,6 @@ from standardize_decisions import (
     reindent_block,
     strip_sole_decision_allowed,
 )
-
-
-def _write(path, text):
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
-
-
-def _read(path):
-    with open(path, "r", encoding="utf-8", newline="") as handle:
-        return handle.read()
 
 
 def _decision(lines):
@@ -733,8 +726,9 @@ def test_ensure_ai_will_do_reuses_an_existing_trailing_blank():
 
 
 def test_ensure_ai_will_do_terminates_an_unterminated_last_line():
-    src = (
-        "CHI_cat = {\n\tCHI_bare = {\n\t\ticon = generic_decision\n\t}\n}".splitlines()
+    src = cast(
+        list[str],
+        "CHI_cat = {\n\tCHI_bare = {\n\t\ticon = generic_decision\n\t}\n}".splitlines(),
     )
     out = ensure_missing_ai_will_do(src)
     assert out[2:5] == [

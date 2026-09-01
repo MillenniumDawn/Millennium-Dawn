@@ -83,7 +83,8 @@ INDUSTRY_FIXTURE = (
 @pytest.fixture
 def industry_path(tmp_path):
     p = tmp_path / "industry.txt"
-    p.write_text(INDUSTRY_FIXTURE, encoding="utf-8")
+    with p.open("w", encoding="utf-8", newline="") as handle:
+        handle.write(INDUSTRY_FIXTURE)
     return p
 
 
@@ -187,20 +188,3 @@ def test_cli_writes_png(tmp_path):
     assert "nuc:" in result.stdout
     assert "fos:" in result.stdout
     assert "state" in result.stdout
-
-
-@skip_no_mpl
-def test_cli_dry_run_against_real_industry(tmp_path):
-    """Smoke test against the real industry.txt."""
-    out = tmp_path / "real.png"
-    result = subprocess.run(
-        [sys.executable, str(SCRIPT), "--out", str(out)],
-        capture_output=True,
-        text=True,
-        check=True,
-        cwd=str(REPO_ROOT),
-    )
-    # chain length summary line per source
-    for key in ("ren:", "nuc:", "fos:"):
-        assert key in result.stdout
-    assert out.exists() and out.stat().st_size > 1000

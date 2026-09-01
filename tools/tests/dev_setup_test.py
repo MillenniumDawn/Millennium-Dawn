@@ -54,6 +54,23 @@ def write(path, text):
         handle.write(text)
 
 
+def venv_python(root):
+    bin_dir = "Scripts" if os.name == "nt" else "bin"
+    extension = ".exe" if os.name == "nt" else ""
+    return root / ".venv" / bin_dir / f"python{extension}"
+
+
+def stub_external_management(monkeypatch):
+    python = Path("/venv/bin/python")
+    switched = []
+    monkeypatch.setattr(dev_setup, "in_virtualenv", lambda: False)
+    monkeypatch.setattr(dev_setup, "is_externally_managed", lambda: True)
+    monkeypatch.setattr(dev_setup, "create_venv", lambda: python)
+    monkeypatch.setattr(dev_setup, "reexec_with", switched.append)
+    stub_run(monkeypatch)
+    return python, switched
+
+
 # ── thin wrappers ───────────────────────────────────────────────────────────
 
 
@@ -186,9 +203,7 @@ def test_venv_python_path_is_none_for_an_empty_venv_directory(monkeypatch, tmp_p
 
 def test_venv_python_path_finds_the_interpreter(monkeypatch, tmp_path):
     monkeypatch.setattr(dev_setup, "REPO_ROOT", tmp_path)
-    bin_dir = "Scripts" if os.name == "nt" else "bin"
-    ext = ".exe" if os.name == "nt" else ""
-    python = tmp_path / ".venv" / bin_dir / f"python{ext}"
+    python = venv_python(tmp_path)
     write(python, "")
 
     assert dev_setup.venv_python_path() == python
@@ -196,9 +211,7 @@ def test_venv_python_path_finds_the_interpreter(monkeypatch, tmp_path):
 
 def test_create_venv_reuses_an_existing_interpreter(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(dev_setup, "REPO_ROOT", tmp_path)
-    bin_dir = "Scripts" if os.name == "nt" else "bin"
-    ext = ".exe" if os.name == "nt" else ""
-    python = tmp_path / ".venv" / bin_dir / f"python{ext}"
+    python = venv_python(tmp_path)
     write(python, "")
     calls = stub_run(monkeypatch)
 
@@ -241,10 +254,11 @@ def test_reexec_with_hands_the_argv_tail_to_the_new_interpreter(monkeypatch, cap
     )
     monkeypatch.setattr(sys, "argv", ["dev_setup.py", "--docs"])
 
-    dev_setup.reexec_with(Path("/venv/bin/python"))
+    python = Path("/venv/bin/python")
+    dev_setup.reexec_with(python)
 
-    assert recorded["path"] == "/venv/bin/python"
-    assert recorded["argv"][0] == "/venv/bin/python"
+    assert recorded["path"] == str(python)
+    assert recorded["argv"][0] == str(python)
     assert recorded["argv"][-1] == "--docs"
     assert "Switching to venv Python" in capsys.readouterr().out
 
@@ -261,7 +275,11 @@ def test_reexec_with_hands_the_argv_tail_to_the_new_interpreter(monkeypatch, cap
     ],
 )
 def test_check_python_grades_the_interpreter(version, ok, note, monkeypatch, capsys):
-    monkeypatch.setattr(sys, "version_info", Version(*version, "final", 0))
+    monkeypatch.setattr(
+        sys,
+        "version_info",
+        Version(version[0], version[1], version[2], "final", 0),
+    )
 
     assert dev_setup.check_python() is ok
     assert note in capsys.readouterr().out
@@ -532,16 +550,11 @@ def test_install_pre_commit_retries_with_user_scope(monkeypatch):
 
 
 def test_install_pre_commit_switches_into_a_venv_when_externally_managed(monkeypatch):
-    monkeypatch.setattr(dev_setup, "in_virtualenv", lambda: False)
-    monkeypatch.setattr(dev_setup, "is_externally_managed", lambda: True)
-    monkeypatch.setattr(dev_setup, "create_venv", lambda: Path("/venv/bin/python"))
-    switched = []
-    monkeypatch.setattr(dev_setup, "reexec_with", switched.append)
-    stub_run(monkeypatch)
+    python, switched = stub_external_management(monkeypatch)
 
     dev_setup.install_pre_commit()
 
-    assert switched == [Path("/venv/bin/python")]
+    assert switched == [python]
 
 
 def test_ensure_hooks_path_unset_clears_a_redundant_override(
@@ -603,12 +616,13 @@ def test_install_hooks_reports_a_failed_install(monkeypatch):
 
 def test_pip_install_group_upgrades_pip_then_installs_the_group(monkeypatch, capsys):
     monkeypatch.setattr(dev_setup, "in_virtualenv", lambda: True)
-    monkeypatch.setattr(dev_setup, "PYPROJECT", Path("/repo/pyproject.toml"))
+    pyproject = Path("/repo/pyproject.toml")
+    monkeypatch.setattr(dev_setup, "PYPROJECT", pyproject)
     calls = stub_run(monkeypatch)
 
     assert dev_setup._pip_install_group("runtime", "tool dependencies") is True
     assert calls[0][-3:] == ["install", "--upgrade", "pip"]
-    assert calls[1][-2:] == ["--group", "/repo/pyproject.toml:runtime"]
+    assert calls[1][-2:] == ["--group", f"{pyproject}:runtime"]
     assert "Installing tool dependencies" in capsys.readouterr().out
 
 
@@ -626,16 +640,11 @@ def test_pip_install_group_retries_with_user_scope(monkeypatch):
 
 
 def test_pip_install_group_switches_into_a_venv_when_externally_managed(monkeypatch):
-    monkeypatch.setattr(dev_setup, "in_virtualenv", lambda: False)
-    monkeypatch.setattr(dev_setup, "is_externally_managed", lambda: True)
-    monkeypatch.setattr(dev_setup, "create_venv", lambda: Path("/venv/bin/python"))
-    switched = []
-    monkeypatch.setattr(dev_setup, "reexec_with", switched.append)
-    stub_run(monkeypatch)
+    python, switched = stub_external_management(monkeypatch)
 
     dev_setup._pip_install_group("runtime", "tool dependencies")
 
-    assert switched == [Path("/venv/bin/python")]
+    assert switched == [python]
 
 
 def test_package_installers_target_the_runtime_and_dev_groups(monkeypatch):

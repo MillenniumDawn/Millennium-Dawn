@@ -111,20 +111,17 @@ def test_image_size_uses_magick_identify_subcommand(monkeypatch):
 
 
 def test_pixels_match_uses_magick_compare(monkeypatch):
-    monkeypatch.setattr(
-        md_art_convert.shutil,
-        "which",
-        lambda name: "/usr/bin/magick" if name == "magick" else None,
-    )
-    recorded = {}
+    executables = {"magick": "/usr/bin/magick"}
+    monkeypatch.setattr(md_art_convert.shutil, "which", executables.get)
+    calls = []
 
     def fake_run(argv, **_kwargs):
-        recorded["argv"] = argv
+        calls.append(argv)
         return SimpleNamespace(stderr="0")
 
     monkeypatch.setattr(md_art_convert.subprocess, "run", fake_run)
     assert md_art_convert.pixels_match(Path("a.png"), Path("b.png"))
-    assert recorded["argv"][:2] == ["/usr/bin/magick", "compare"]
+    assert calls[0][:2] == ["/usr/bin/magick", "compare"]
 
 
 def test_pixels_match_uses_compare_binary(monkeypatch):

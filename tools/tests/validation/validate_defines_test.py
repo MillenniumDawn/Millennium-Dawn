@@ -6,6 +6,7 @@ automated gate. Fixtures supply a tiny fake vanilla defines file via the
 validator's ``vanilla_path`` injection point.
 """
 
+import pytest
 from validate_defines import Validator, parse_md_defines, parse_vanilla_defines
 
 _VANILLA = """NDefines = {
@@ -267,28 +268,22 @@ def test_no_install_and_no_manifest_is_a_setup_error(tmp_path, monkeypatch):
     assert "refresh_vanilla_data.py" in validator._issues[0].message
 
 
-def test_staged_run_without_the_defines_file_is_skipped(tmp_path):
+@pytest.mark.parametrize(
+    ("staged_file", "expected_errors"),
+    [
+        ("common/ideas/other.txt", 0),
+        ("common/defines/MD_defines.lua", 1),
+    ],
+)
+def test_staged_run_scopes_the_defines_check(tmp_path, staged_file, expected_errors):
     vanilla = _write_vanilla(tmp_path)
     _write_md_defines(tmp_path, "NDefines.NCountry.NOT_A_REAL_DEFINE = 1\n")
     validator = Validator(
         mod_path=str(tmp_path), use_colors=False, workers=1, vanilla_path=vanilla
     )
     validator.staged_only = True
-    validator.staged_files = [str(tmp_path / "common" / "ideas" / "other.txt")]
+    validator.staged_files = [str(tmp_path / staged_file)]
     validator.run_validations()
 
-    assert validator.errors_found == 0
-    assert validator._issues == []
-
-
-def test_staged_run_including_the_defines_file_still_checks_it(tmp_path):
-    vanilla = _write_vanilla(tmp_path)
-    _write_md_defines(tmp_path, "NDefines.NCountry.NOT_A_REAL_DEFINE = 1\n")
-    validator = Validator(
-        mod_path=str(tmp_path), use_colors=False, workers=1, vanilla_path=vanilla
-    )
-    validator.staged_only = True
-    validator.staged_files = [str(tmp_path / "common" / "defines" / "MD_defines.lua")]
-    validator.run_validations()
-
-    assert validator.errors_found == 1
+    assert validator.errors_found == expected_errors
+    assert bool(validator._issues) is bool(expected_errors)

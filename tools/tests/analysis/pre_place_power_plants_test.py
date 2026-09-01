@@ -62,15 +62,25 @@ def _build_state(
         )
     lines.append(f"\t\tset_variable = {{ productivity_state_var = {prod} }}")
     if resources:
-        rs = " ".join(f"{k} = {v}" for k, v in resources.items())
-        lines.append(f"\t\tresources = {{ {rs} }}")
-    lines.append("\t\tbuildings = {")
-    for bname, bcount in buildings.items():
-        lines.append(f"\t\t\t{bname} = {bcount}")
-    lines.append("\t\t}")
-    lines.append("\t}")
-    lines.append("}")
+        resource_fields = " ".join(
+            f"{key} = {value}" for key, value in resources.items()
+        )
+        lines.append(f"\t\tresources = {{ {resource_fields} }}")
+    lines.extend(["\t\tbuildings = {"])
+    lines.extend(f"\t\t\t{name} = {count}" for name, count in buildings.items())
+    lines.extend(["\t\t}", "\t}", "}"])
     return "\n".join(lines) + "\n"
+
+
+def _parsed_states(mod, repo):
+    return [
+        mod.parse_state_with_category(str(path))
+        for path in sorted((repo / "history" / "states").iterdir())
+    ]
+
+
+def _states_for_owner(mod, repo, owner):
+    return [state for state in _parsed_states(mod, repo) if state["owner"] == owner]
 
 
 @pytest.fixture
@@ -253,9 +263,7 @@ class TestEnergyConsumption:
         mod = import_pre_place
 
         # Reload to get renewable-extended states from disk.
-        states = []
-        for f in sorted((full_mini_repo / "history" / "states").iterdir()):
-            states.append(mod.parse_state_with_category(str(f)))
+        states = _parsed_states(mod, full_mini_repo)
         # Pop=3M, total industry buildings: 7 IC + 3 AF + 2 offices = 12.
         # With energy_use_multiplier=-0.10 in industry_modern idea and a gdpc.
         stack = {"energy_use_multiplier": -0.10, "pop_energy_use_multiplier": 0.0}
@@ -295,10 +303,7 @@ class TestEnergyConsumption:
 class TestEnergySupply:
     def test_renewable_and_hydro_and_geo(self, import_pre_place, full_mini_repo):
         mod = import_pre_place
-
-        states = []
-        for f in sorted((full_mini_repo / "history" / "states").iterdir()):
-            states.append(mod.parse_state_with_category(str(f)))
+        states = _parsed_states(mod, full_mini_repo)
         # TST owns states 10 and 20. Renewable infra = 4 in state 20 with
         # cap_var=0.8 → 4 * 0.5 * 0.8/2 = 0.8 GW. Hydro in state 10 = 0.5 GW.
         # Geo in state 20 = 0.3 GW. State 30 belongs to NUK and is filtered.
@@ -310,12 +315,7 @@ class TestEnergySupply:
 
     def test_nuclear_contribution(self, import_pre_place, full_mini_repo):
         mod = import_pre_place
-
-        nuk_states = []
-        for f in sorted((full_mini_repo / "history" / "states").iterdir()):
-            s = mod.parse_state_with_category(str(f))
-            if s["owner"] == "NUK":
-                nuk_states.append(s)
+        nuk_states = _states_for_owner(mod, full_mini_repo, "NUK")
         supply = mod.energy_supply_non_fossil(
             nuk_states, {"nuclear_energy_generation_modifier": 0.0}, has_nuclear=True
         )
@@ -326,12 +326,7 @@ class TestEnergySupply:
         self, import_pre_place, full_mini_repo
     ):
         mod = import_pre_place
-
-        nuk_states = []
-        for f in sorted((full_mini_repo / "history" / "states").iterdir()):
-            s = mod.parse_state_with_category(str(f))
-            if s["owner"] == "NUK":
-                nuk_states.append(s)
+        nuk_states = _states_for_owner(mod, full_mini_repo, "NUK")
         # Even though reactors exist, has_nuclear=False skips the nuclear branch.
         supply = mod.energy_supply_non_fossil(nuk_states, {}, has_nuclear=False)
         assert supply == 0.0

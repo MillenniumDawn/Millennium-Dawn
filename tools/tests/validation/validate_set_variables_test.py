@@ -10,6 +10,7 @@ import sys
 
 import pytest
 import validate_set_variables
+from shared.suite import write_under as _write
 from validate_set_variables import (
     SetVariables,
     Validator,
@@ -44,14 +45,6 @@ READERS = """read_effect = {
 LOCALISATION = ' l_english:\n TEST_key:0 "Fuel: [?TAG_loc_var|0]"\n'
 
 GUI = 'containerWindowType = {\n\ttextType = { text = "[?THIS.TAG_gui_var|0]" }\n}\n'
-
-
-def _write(root, relative, content):
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-    return path
 
 
 def _findings(validator):
