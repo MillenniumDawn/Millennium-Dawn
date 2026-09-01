@@ -34,7 +34,11 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 # The startup pulse has no year in its name; it runs at the 2000.1.1 bookmark.
 STARTUP_YEAR = "2000"
 
-_EVENT_RE = re.compile(r"country_event = \{ id = ([\w.]+)(?: days = (\d+))?")
+# Both shapes the mod uses, for country and news events alike:
+#   country_event = { id = foo.1 days = 30 }   and   country_event = foo.1
+_EVENT_RE = re.compile(
+    r"(?:country|news)_event = (?:\{ id = ([\w.]+)(?: days = (\d+))?|([A-Za-z][\w.]*))"
+)
 _CALL_RE = re.compile(r"^\s*(\w+) = yes\s*$", re.M)
 _DEF_RE = re.compile(r"^(\w+) = \{\n(.*?)^\}\n", re.S | re.M)
 
@@ -56,9 +60,22 @@ def load_effects(root: str) -> dict[str, str]:
 
 
 def scope_of(tag: str, block: str) -> str:
-    """The TAG = { ... } sub-blocks of a yearly block, both multi and single line."""
-    parts = re.findall(r"^\t%s = \{\n(.*?)^\t\}\n" % tag, block, re.S | re.M)
-    parts += re.findall(r"^\t%s = \{ (.*?) \}\s*$" % tag, block, re.M)
+    """Every TAG = { ... } sub-block, at any depth.
+
+    Tag scopes are not always children of the yearly block: several sit inside an
+    `if`, so matching on a fixed indent misses them. Brace matching finds them
+    wherever they are.
+    """
+    parts = []
+    for match in re.finditer(r"(?<![A-Za-z0-9_])%s = \{" % tag, block):
+        depth, i = 1, match.end()
+        while i < len(block) and depth:
+            if block[i] == "{":
+                depth += 1
+            elif block[i] == "}":
+                depth -= 1
+            i += 1
+        parts.append(block[match.end() : i - 1])
     return "\n".join(parts)
 
 
@@ -68,7 +85,10 @@ def deliveries(
     """(event id, day offset) for everything this body schedules, following calls."""
     if seen is None:
         seen = set()
-    found = [(m.group(1), int(m.group(2) or 0)) for m in _EVENT_RE.finditer(body)]
+    found = [
+        (m.group(1) or m.group(3), int(m.group(2) or 0))
+        for m in _EVENT_RE.finditer(body)
+    ]
     if depth < 4:
         for match in _CALL_RE.finditer(body):
             name = match.group(1)
@@ -104,11 +124,7 @@ def collect(tag: str, root: str) -> dict[str, list[tuple[str, int]]]:
         # how a shared multi-country milestone dispatches.
         for name in re.findall(r"^\t(\w+) = yes$", block, re.M):
             if name in bodies:
-                for match in re.finditer(
-                    r"%s = \{ country_event = \{ id = ([\w.]+) days = (\d+)" % tag,
-                    bodies[name],
-                ):
-                    rows[year].append((match.group(1), int(match.group(2))))
+                rows[year] += deliveries(scope_of(tag, bodies[name]), bodies)
     return rows
 
 
