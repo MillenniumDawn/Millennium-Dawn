@@ -27,6 +27,7 @@ from fnmatch import fnmatch
 
 import pytest
 import yaml
+from coverage import Coverage
 from precommit_validate import _REGISTRY
 from shared.paths import REPO_ROOT, VALIDATION_DIR
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
@@ -548,6 +549,7 @@ def test_python_quality_checks_are_wired_in_precommit_and_ci():
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     for package in ("black==", "coverage==", "mypy==", "pylint==", "ruff=="):
         assert package in pyproject
+    assert Coverage().config.include_namespace_packages is True
 
 
 def test_pytest_collection_gate_cannot_self_exclude():
@@ -686,6 +688,8 @@ def test_tools_tests_checkout_consumed_configuration():
         "common/national_focus",
         "common/script_enums.txt",
         "common/units/equipment",
+        # renewable_power_per_cost_test drives the CLI against its live input.
+        "common/technologies/industry.txt",
         "common/decisions",
         "common/opinion_modifiers",
         "common/modifiers",
