@@ -36,9 +36,10 @@ the country's existing mechanic), never a scripted force-flip.
 Elections resolve on raw sub-party popularity, so a dominant starting party re-elects forever. Read
 the drift ledger from the history file's ideas before sizing a ramp: UK `democratic_drift = 0.40`;
 Japan `western_country` (0.08 + `drift_defence_factor` 0.40); Italy `western_country` + `EU_member` +
-`NATO_member` (+0.11 net); Comoros has none. Patterns: `HOL_politics.86` / `britain_md.400`
-(date-driven AI-only walk), `JAP_ai_path_category` / `ITA_ai_path_category` / `BOT_ai_path_category`
-/ `COM_ai_path_category` (decision ramp + drift-cancelling dynamic modifier).
+`NATO_member` (+0.11 net); Comoros has none. Patterns: the date-driven AI-only walk (shape in
+[write.md](write.md) §8 — `HOL_politics.86` and `britain_md.400` are the only live examples and both
+are wrong, so read the template, not them), `JAP_ai_path_category` / `ITA_ai_path_category` /
+`BOT_ai_path_category` / `COM_ai_path_category` (decision ramp + drift-cancelling dynamic modifier).
 
 ## Does the chosen path survive its own election?
 
@@ -46,6 +47,19 @@ A coup or takeover event that changes the ruling party without disabling electio
 at the next scheduled election and strands the whole branch behind an in-power gate.
 `change_ruling_party_effect` takes a `disable_elections` temp var; scope it to `is_ai = yes` so a
 human keeps their agency.
+
+## Does the historical path deliver the historical person?
+
+The report's `government` section verdicts the roster and audits any walker; these are the judgments
+it cannot make. Is the roster a real **timeline** or just a list of plausible successors? A file can
+clear the dated-entry threshold on one branch while the branch your path installs has no dates at all
+— read the per-sub-ideology table, not the verdict alone. Are the people a walker asserts actually
+heads of government? ENG's conservatism roster opens with William Hague and Michael Howard, both
+opposition leaders who were never Prime Minister, so index 0 is not "the first Tory PM". Does a focus
+tree leave `do_not_retire` set and never clear it (`common/national_focus/05_afghanistan.txt:7249`,
+`05_iraq.txt:10571` do), pinning the cascade for the rest of the game? And does the country already
+own its election flow behind `generic_election_killswitch` (AST, BOT, BRA, HAI, PER, ROM, SAO, SIA,
+SIN, SOM, SPR) — if so extend that chain, never stack a walker on it.
 
 ## Right axis, right arity?
 
