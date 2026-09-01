@@ -3213,19 +3213,20 @@ replicate_configure_politics = {
 	}
 	start_politics_input = yes
 	#copy politics
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = v
-		set_variable = { party_pop_array^v = nation_to_copy_from.party_pop_array^v }
-	}
-	if = { limit = { nation_to_copy_from = { has_variable = ruling_party } }
-		set_variable = { ruling_party = nation_to_copy_from.ruling_party }
-	}
-	for_each_loop = {
-		array = gov_coalition_array
-		index = i
-		value = v
-		add_to_array = { gov_coalition_array = nation_to_copy_from.gov_coalition_array^i }
+	var:nation_to_copy_from = {
+		for_loop_effect = {
+			end = party_pop_array^num
+			value = v
+			set_variable = { PREV.party_pop_array^v = party_pop_array^v }
+		}
+		if = { limit = { has_variable = ruling_party }
+			set_variable = { PREV.ruling_party = ruling_party }
+		}
+		for_each_loop = {
+			array = gov_coalition_array
+			value = v
+			add_to_array = { PREV.gov_coalition_array = v }
+		}
 	}
 	set_variable = { party_pop_array^19 = 0.01 } #all moved to fight ;)
 	set_variable = { party_pop_elect_array^19 = 0 } #made illegal
@@ -3260,71 +3261,66 @@ calculate_all_propaganda_costs = {
 }
 
 calculate_prowestern_propaganda_cost = {
+	set_temp_variable = { propaganda_cost_mult = 1 }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@propaganda_campaign_cost_modifier }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@western_outlook_campaign_cost_modifier }
 	set_variable = {
 		promote_outlook_western_costs = {
 			value = gdp_total
 			multiply = 0.001
-			multiply = {
-				value = 1
-				add = modifier@propaganda_campaign_cost_modifier
-				add = modifier@western_outlook_campaign_cost_modifier
-			}
+			multiply = propaganda_cost_mult
 		}
 	}
 }
 
 calculate_emerging_propaganda_cost = {
+	set_temp_variable = { propaganda_cost_mult = 1 }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@propaganda_campaign_cost_modifier }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@emerging_outlook_campaign_cost_modifier }
 	set_variable = {
 		promote_outlook_emerging_costs = {
 			value = gdp_total
 			multiply = 0.001
-			multiply = {
-				value = 1
-				add = modifier@propaganda_campaign_cost_modifier
-				add = modifier@emerging_outlook_campaign_cost_modifier
-			}
+			multiply = propaganda_cost_mult
 		}
 	}
 }
 
 calculate_nonaligned_propaganda_cost = {
+	set_temp_variable = { propaganda_cost_mult = 1 }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@propaganda_campaign_cost_modifier }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@nonaligned_outlook_campaign_cost_modifier }
 	set_variable = {
 		promote_outlook_nonaligned_costs = {
 			value = gdp_total
 			multiply = 0.001
-			multiply = {
-				value = 1
-				add = modifier@propaganda_campaign_cost_modifier
-				add = modifier@nonaligned_outlook_campaign_cost_modifier
-			}
+			multiply = propaganda_cost_mult
 		}
 	}
 }
 
 calculate_nationalist_propaganda_cost = {
+	set_temp_variable = { propaganda_cost_mult = 1 }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@propaganda_campaign_cost_modifier }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@nationalist_outlook_campaign_cost_modifier }
 	set_variable = {
 		promote_outlook_nationalist_costs = {
 			value = gdp_total
 			multiply = 0.001
-			multiply = {
-				value = 1
-				add = modifier@propaganda_campaign_cost_modifier
-				add = modifier@nationalist_outlook_campaign_cost_modifier
-			}
+			multiply = propaganda_cost_mult
 		}
 	}
 }
 
 calculate_salafist_propaganda_cost = {
+	set_temp_variable = { propaganda_cost_mult = 1 }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@propaganda_campaign_cost_modifier }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@salafist_outlook_campaign_cost_modifier }
 	set_variable = {
 		promote_outlook_salafist_costs = {
 			value = gdp_total
 			multiply = 0.001
-			multiply = {
-				value = 1
-				add = modifier@propaganda_campaign_cost_modifier
-				add = modifier@salafist_outlook_campaign_cost_modifier
-			}
+			multiply = propaganda_cost_mult
 		}
 	}
 }
