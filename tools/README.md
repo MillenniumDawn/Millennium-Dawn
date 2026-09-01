@@ -186,6 +186,7 @@ Metrics, reference analysis, and review tools.
 
 | Script                              | Description                                                                                                                                                     |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ai_path_report.py**               | Reports one country's AI path rule, flag wiring, focus ownership and killswitch orphans (issue #3162)                                                            |
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                       |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas                                                                                            |
 | **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                          |
