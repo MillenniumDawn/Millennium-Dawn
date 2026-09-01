@@ -1,0 +1,641 @@
+ASEAN_decisions = {
+
+	ASEAN_apply_membership = {
+
+		icon = GFX_decision_generic_form_nation
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			NOT = { is_asean_member = yes }
+			has_global_flag = ASEAN_admission_protocols_completed
+		}
+
+		available = { has_political_power > 50 }
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_apply_membership"
+			random_country = {
+				limit = {
+					is_asean_member_committed = yes
+					OR = {
+						original_tag = IND
+						original_tag = SIA
+						original_tag = SIN
+					}
+				}
+				country_event = { id = asean.4 days = 3 }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	ASEAN_leave_organisation = {
+
+		icon = GFX_decision_generic_break_treaty
+
+		allowed = { is_asean_nation = yes }
+
+		visible = { is_asean_member = yes }
+
+		available = { has_political_power > 150 }
+
+		cost = 150
+
+		days_re_enable = 1095
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_leave_organisation"
+			remove_ideas = ASEAN_Member
+			remove_ideas = ASEAN_Member_drifting
+			remove_ideas = ASEAN_Member_detached
+			remove_ideas = ASEAN_Member_estranged
+			remove_ideas = ASEAN_suspended
+			if = {
+				limit = { is_in_array = { global.ASEAN_Member = THIS } }
+				remove_from_array = { global.ASEAN_Member = THIS }
+			}
+			if = {
+				limit = { has_dynamic_modifier = { modifier = ASEAN_reforms_modifier } }
+				remove_dynamic_modifier = { modifier = ASEAN_reforms_modifier }
+			}
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	ASEAN_lodge_objection = {
+
+		icon = GFX_decision_gulf_block_button
+
+		allowed = { is_asean_nation = yes }
+
+		visible = { is_asean_member_active = yes }
+
+		available = { has_political_power > 75 }
+
+		cost = 75
+
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_lodge_objection"
+			ASEAN_record_objection = yes
+			add_political_power = -25
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	ASEAN_propose_summit = {
+
+		icon = GFX_decision_generic_political_rally
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member_committed = yes
+			has_global_flag = ASEAN_summit_calendar_completed
+		}
+
+		available = { has_political_power > 50 }
+
+		cost = 50
+
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_propose_summit"
+			country_event = { id = asean_summit.1 days = 3 }
+			set_country_flag = { flag = ASEAN_chair_this_year_flag days = 365 value = 1 }
+			if = { limit = { NOT = { has_idea = ASEAN_chair_this_year } }
+				add_ideas = ASEAN_chair_this_year
+			}
+		}
+
+		ai_will_do = { base = 20 }
+	}
+
+	ASEAN_mediate_dispute = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		allowed = { is_asean_nation = yes }
+
+		target_trigger = {
+			FROM = {
+				is_asean_member = yes
+				NOT = { original_tag = ROOT.original_tag }
+			}
+		}
+
+		visible = {
+			is_asean_member_committed = yes
+			has_global_flag = ASEAN_dispute_settlement_completed
+		}
+
+		available = { has_political_power > 75 }
+
+		cost = 75
+
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_mediate_dispute"
+			add_political_power = -25
+			add_opinion_modifier = { target = FROM modifier = large_increase }
+			FROM = { add_opinion_modifier = { target = ROOT modifier = large_increase } }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	ASEAN_arbitrate_dispute = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		allowed = { is_asean_nation = yes }
+
+		target_trigger = {
+			FROM = {
+				is_asean_member = yes
+				NOT = { original_tag = ROOT.original_tag }
+			}
+		}
+
+		visible = {
+			is_asean_member_committed = yes
+			has_global_flag = ASEAN_court_founded
+		}
+
+		available = { has_political_power > 100 }
+
+		cost = 100
+
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_arbitrate_dispute"
+			add_political_power = -50
+			add_stability = 0.02
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	ASEAN_humanitarian_access = {
+
+		icon = GFX_decision_generic_civil_support
+
+		allowed = { is_asean_nation = yes }
+
+		target_trigger = {
+			FROM = {
+				is_asean_member = yes
+				NOT = { original_tag = ROOT.original_tag }
+			}
+		}
+
+		visible = {
+			is_asean_member = yes
+			has_global_flag = ASEAN_flexible_engagement_completed
+			has_global_flag = ASEAN_hadr_completed
+		}
+
+		available = { has_political_power > 100 }
+
+		cost = 100
+
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_humanitarian_access"
+			add_political_power = -50
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	ASEAN_opt_in_cept = {
+
+		icon = GFX_decision_generic_construction
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member = yes
+			has_global_flag = ASEAN_revise_cept_completed
+			NOT = { has_country_flag = ASEAN_opted_in_cept }
+		}
+
+		available = { has_political_power > 25 }
+
+		cost = 25
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_opt_in_cept"
+			set_country_flag = ASEAN_opted_in_cept
+			set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.05 }
+			add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		}
+
+		ai_will_do = { base = 30 }
+	}
+
+	ASEAN_opt_in_atiga = {
+
+		icon = GFX_decision_generic_construction
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member = yes
+			has_global_flag = ASEAN_atiga_completed
+			NOT = { has_country_flag = ASEAN_opted_in_atiga }
+		}
+
+		available = { has_political_power > 50 }
+
+		cost = 50
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_opt_in_atiga"
+			set_country_flag = ASEAN_opted_in_atiga
+			set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.10 }
+			add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		}
+
+		ai_will_do = { base = 25 }
+	}
+
+	ASEAN_opt_in_cmim = {
+
+		icon = GFX_decision_generic_fundraising
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member = yes
+			has_global_flag = ASEAN_cmim_completed
+			NOT = { has_country_flag = ASEAN_opted_in_cmim }
+		}
+
+		available = { has_political_power > 50 }
+
+		cost = 50
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_opt_in_cmim"
+			set_country_flag = ASEAN_opted_in_cmim
+			if = { limit = { NOT = { has_idea = ASEAN_currency_swap_net } }
+				add_ideas = ASEAN_currency_swap_net
+			}
+		}
+
+		ai_will_do = { base = 30 }
+	}
+
+	ASEAN_opt_in_currency = {
+
+		icon = GFX_decision_generic_eurozone
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member = yes
+			has_global_flag = ASEAN_acu_completed
+			NOT = { has_country_flag = ASEAN_opted_in_currency }
+		}
+
+		available = { has_political_power > 150 }
+
+		cost = 150
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_opt_in_currency"
+			set_country_flag = ASEAN_opted_in_currency
+			set_temp_variable = { ASEAN_interest_rate_multiplier_modifier_temp = 0.30 }
+			add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	ASEAN_call_suspension_vote = {
+
+		icon = GFX_decision_gulf_expel_button
+
+		allowed = { is_asean_nation = yes }
+
+		target_trigger = {
+			FROM = {
+				is_asean_member = yes
+				NOT = { original_tag = ROOT.original_tag }
+			}
+		}
+
+		visible = { is_asean_member_committed = yes }
+
+		available = { has_political_power > 150 }
+
+		cost = 150
+
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_call_suspension_vote"
+			add_political_power = -75
+			FROM = { country_event = { id = asean_crisis.21 days = 5 } }
+			for_each_scope_loop = {
+				array = global.ASEAN_Member
+				if = {
+					limit = {
+						NOT = { tag = ROOT }
+						NOT = { tag = FROM }
+					}
+					country_event = { id = asean_crisis.21 days = 5 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 20
+				FROM = { has_country_flag = ASEAN_recent_coup }
+			}
+		}
+	}
+
+	ASEAN_veto_suspension = {
+
+		icon = GFX_decision_gulf_block_button
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member_committed = yes
+			has_global_flag = ASEAN_suspension_vote_open
+		}
+
+		available = { has_political_power > 100 }
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_veto_suspension"
+			set_global_flag = ASEAN_suspension_vetoed
+			add_political_power = -50
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	ASEAN_lift_suspension = {
+
+		icon = GFX_decision_gulf_agree_button
+
+		allowed = { is_asean_nation = yes }
+
+		target_trigger = {
+			FROM = {
+				is_asean_member = yes
+				has_country_flag = ASEAN_suspended_flag
+			}
+		}
+
+		visible = { is_asean_member_committed = yes }
+
+		available = { has_political_power > 75 }
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_lift_suspension"
+			FROM = { ASEAN_lift_suspension = yes }
+			add_political_power = -25
+		}
+
+		ai_will_do = { base = 3 }
+	}
+}
+
+ASEAN_accession_decisions = {
+
+	ASEAN_endorse_TIM = {
+
+		icon = GFX_decision_gulf_agree_button
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member_committed = yes
+			exists = TIM
+			NOT = { TIM = { is_asean_member = yes } }
+			NOT = { has_country_flag = ASEAN_endorsed_TIM }
+			has_global_flag = ASEAN_admission_protocols_completed
+		}
+
+		available = { has_political_power > 25 }
+
+		cost = 25
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_endorse_TIM"
+			set_country_flag = ASEAN_endorsed_TIM
+			add_to_variable = { global.ASEAN_endorsements_TIM = 1 }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	ASEAN_invite_TIM = {
+
+		icon = GFX_decision_gulf_support_member_button
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member_committed = yes
+			exists = TIM
+			NOT = { TIM = { is_asean_member = yes } }
+			check_variable = { global.ASEAN_endorsements_TIM > 3 }
+			has_global_flag = ASEAN_admit_east_timor_completed
+		}
+
+		available = { has_political_power > 50 }
+
+		cost = 50
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_invite_TIM"
+			TIM = { country_event = { id = asean.1 days = 3 } }
+		}
+
+		ai_will_do = { base = 20 }
+	}
+
+	ASEAN_block_TIM = {
+
+		icon = GFX_decision_gulf_block_button
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member_committed = yes
+			exists = TIM
+			NOT = { TIM = { is_asean_member = yes } }
+			NOT = { has_country_flag = ASEAN_blocked_TIM }
+			has_global_flag = ASEAN_admission_protocols_completed
+		}
+
+		available = { has_political_power > 75 }
+
+		cost = 75
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_block_TIM"
+			set_country_flag = ASEAN_blocked_TIM
+			subtract_from_variable = { global.ASEAN_endorsements_TIM = 1 }
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	ASEAN_endorse_PAP = {
+
+		icon = GFX_decision_gulf_agree_button
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member_committed = yes
+			exists = PAP
+			NOT = { PAP = { is_asean_member = yes } }
+			NOT = { has_country_flag = ASEAN_endorsed_PAP }
+			has_global_flag = ASEAN_admission_protocols_completed
+		}
+
+		available = { has_political_power > 25 }
+
+		cost = 25
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_endorse_PAP"
+			set_country_flag = ASEAN_endorsed_PAP
+			add_to_variable = { global.ASEAN_endorsements_PAP = 1 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	ASEAN_invite_PAP = {
+
+		icon = GFX_decision_gulf_support_member_button
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member_committed = yes
+			exists = PAP
+			NOT = { PAP = { is_asean_member = yes } }
+			check_variable = { global.ASEAN_endorsements_PAP > 3 }
+			has_global_flag = ASEAN_admit_png_completed
+		}
+
+		available = { has_political_power > 50 }
+
+		cost = 50
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_invite_PAP"
+			PAP = { country_event = { id = asean.1 days = 3 } }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	ASEAN_block_PAP = {
+
+		icon = GFX_decision_gulf_block_button
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member_committed = yes
+			exists = PAP
+			NOT = { PAP = { is_asean_member = yes } }
+			NOT = { has_country_flag = ASEAN_blocked_PAP }
+			has_global_flag = ASEAN_admission_protocols_completed
+		}
+
+		available = { has_political_power > 75 }
+
+		cost = 75
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_block_PAP"
+			set_country_flag = ASEAN_blocked_PAP
+			subtract_from_variable = { global.ASEAN_endorsements_PAP = 1 }
+		}
+
+		ai_will_do = { base = 0 }
+	}
+}
+
+ASEAN_decisions = {
+
+	ASEAN_engage_member = {
+
+		icon = GFX_decision_gulf_support_member_button
+
+		allowed = { is_asean_nation = yes }
+
+		target_trigger = {
+			FROM = {
+				is_asean_member = yes
+				NOT = { original_tag = ROOT.original_tag }
+				NOT = { is_asean_member_committed = yes }
+			}
+		}
+
+		visible = { is_asean_member_committed = yes }
+
+		available = { has_political_power > 100 }
+
+		cost = 100
+
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_engage_member"
+			add_political_power = -50
+			FROM = { country_event = { id = asean.4 days = 3 } }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+}
