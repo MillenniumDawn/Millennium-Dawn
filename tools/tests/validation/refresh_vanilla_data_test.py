@@ -43,13 +43,8 @@ def test_main_exits_one_when_no_install(monkeypatch):
 
     import sys as _sys
 
-    _sys.argv = ["refresh_vanilla_data.py"]
-    try:
-        rc = rvd_mod.main()
-    finally:
-        _sys.argv = []
-
-    assert rc == 1
+    monkeypatch.setattr(_sys, "argv", ["refresh_vanilla_data.py"])
+    assert rvd_mod.main() == 1
 
 
 def test_main_dispatches_each_target(monkeypatch, tmp_path, capsys):
@@ -62,11 +57,8 @@ def test_main_dispatches_each_target(monkeypatch, tmp_path, capsys):
 
     import sys as _sys
 
-    _sys.argv = ["refresh_vanilla_data.py"]
-    try:
-        rc = rvd_mod.main()
-    finally:
-        _sys.argv = []
+    monkeypatch.setattr(_sys, "argv", ["refresh_vanilla_data.py"])
+    rc = rvd_mod.main()
 
     captured = capsys.readouterr()
     assert rc == 0
@@ -95,11 +87,10 @@ def test_main_only_runs_requested_targets(monkeypatch, tmp_path):
 
     import sys as _sys
 
-    _sys.argv = ["refresh_vanilla_data.py", "--only", "sprites"]
-    try:
-        rc = rvd_mod.main()
-    finally:
-        _sys.argv = []
+    monkeypatch.setattr(
+        _sys, "argv", ["refresh_vanilla_data.py", "--only", "sprites"]
+    )
+    rc = rvd_mod.main()
 
     assert rc == 0
     assert called == ["sprites"]
@@ -118,11 +109,10 @@ def test_main_returns_one_when_target_fails(monkeypatch, tmp_path, capsys):
 
     import sys as _sys
 
-    _sys.argv = ["refresh_vanilla_data.py", "--only", "defines"]
-    try:
-        rc = rvd_mod.main()
-    finally:
-        _sys.argv = []
+    monkeypatch.setattr(
+        _sys, "argv", ["refresh_vanilla_data.py", "--only", "defines"]
+    )
+    rc = rvd_mod.main()
 
     captured = capsys.readouterr()
     assert rc == 1
