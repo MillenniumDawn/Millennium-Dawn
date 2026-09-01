@@ -73,6 +73,13 @@ events and strategy plans — otherwise a RANDOM roll enables the flags but not 
 `NO_PATH` leaves a working AI: an unconditionally-enabled strategy plan and a sane focus
 `ai_will_do` base.
 
+**Historical government.** Read the report's `government` section. On a **dated timeline** verdict,
+write the walker ([references/write.md](references/write.md) §8) and its `00_yearly_effects.txt`
+schedule lines, so historical AI delivers the historical head of government and not just the
+historical party. On an **undated successor roster**, write nothing and say so in the PR — the ramp
+decisions already deliver the party, and a walker over an undated roster installs the wrong person.
+Never pass `change_leader_temp = 1`; never inline `create_country_leader`.
+
 **AI hardening pass**, mandatory. `ai_is_threatened` weighting on combat-capacity focuses
 (`.claude/docs/ai-strategy-reference.md`, the `ai_is_threatened` section); bankruptcy / `can_staff`
 guards on spending focuses (run `tools/validation/validate_focus_tree.py --path .` first — it may
@@ -84,7 +91,9 @@ boost the historical branch.
 ## 5. Verify
 
 Re-run `ai_path_report.py --tag TAG`: 0 orphans in every state, no additive path modifiers, no
-unreferenced flags, rule and wiring clean. Then `validate_focus_tree.py --path .`, and
+unreferenced flags, rule and wiring clean, and a clean `government` section (every walker branch
+asserts an in-range roster index, no `change_leader_temp`, no unbounded party change, every scheduled
+date resolves to the person history had). Then `validate_focus_tree.py --path .`, and
 `validate_decisions.py` warning-group counts against a stashed baseline.
 
 ## 6. Finish
