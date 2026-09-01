@@ -1,0 +1,2073 @@
+shared_focus = {
+	id = ASEAN_bali_concord_ii
+	icon = align_to_asean
+
+	x = 90
+	y = 0
+
+	cost = 5
+
+	allow_branch = { is_asean_member = yes }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	available = { date > 2003.10.7 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_bali_concord_ii_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_bali_concord_ii"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_bali_concord_ii_completed } }
+			set_global_flag = ASEAN_bali_concord_ii_completed
+		}
+		if = {
+			limit = { NOT = { has_dynamic_modifier = { modifier = ASEAN_reforms_modifier } } }
+			add_dynamic_modifier = { modifier = ASEAN_reforms_modifier }
+		}
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = {
+					NOT = { tag = ROOT }
+					NOT = { has_dynamic_modifier = { modifier = ASEAN_reforms_modifier } }
+				}
+				add_dynamic_modifier = { modifier = ASEAN_reforms_modifier }
+			}
+		}
+	}
+
+	ai_will_do = { base = 200 }
+}
+
+### Branch 1: Charter Spine
+
+shared_focus = {
+	id = ASEAN_asean_charter
+	icon = EU_constitution
+
+	x = -20
+	y = 1
+	relative_position_id = ASEAN_bali_concord_ii
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_bali_concord_ii }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
+
+	available = { date > 2007.11.20 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_asean_charter_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_asean_charter"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_asean_charter_completed } }
+			set_global_flag = ASEAN_asean_charter_completed
+			set_global_flag = asean_charter_ratified
+		}
+		set_temp_variable = { ASEAN_stability_factor_temp = 0.02 }
+		add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+		set_temp_variable = { ASEAN_political_power_factor_temp = 0.02 }
+		add_to_variable = { ASEAN_political_power_factor = ASEAN_political_power_factor_temp tooltip = political_power_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+				add_to_variable = { ASEAN_political_power_factor = ASEAN_political_power_factor_temp tooltip = political_power_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 150 }
+}
+
+shared_focus = {
+	id = ASEAN_flexible_engagement_debate
+	icon = meeting
+
+	x = -3
+	y = 1
+	relative_position_id = ASEAN_asean_charter
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_asean_charter }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_flexible_engagement_debate_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_flexible_engagement_debate"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_flexible_engagement_debate_completed } }
+			set_global_flag = ASEAN_flexible_engagement_debate_completed
+		}
+		add_political_power = 50
+	}
+
+	ai_will_do = { base = 100 }
+}
+
+shared_focus = {
+	id = ASEAN_uphold_non_interference
+	icon = focus_generic_court
+
+	x = -1
+	y = 1
+	relative_position_id = ASEAN_flexible_engagement_debate
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_flexible_engagement_debate }
+	mutually_exclusive = { focus = ASEAN_flexible_engagement }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_STABILITY }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_uphold_non_interference_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_uphold_non_interference"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_uphold_non_interference_completed } }
+			set_global_flag = ASEAN_uphold_non_interference_completed
+			set_global_flag = ASEAN_non_interference_upheld
+		}
+		add_stability = 0.02
+		set_temp_variable = { ASEAN_stability_factor_temp = 0.02 }
+		add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 60 }
+}
+
+shared_focus = {
+	id = ASEAN_flexible_engagement
+	icon = focus_generic_conference
+
+	x = 1
+	y = 1
+	relative_position_id = ASEAN_flexible_engagement_debate
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_flexible_engagement_debate }
+	mutually_exclusive = { focus = ASEAN_uphold_non_interference }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_flexible_engagement_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_flexible_engagement"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_flexible_engagement_completed } }
+			set_global_flag = ASEAN_flexible_engagement_completed
+			set_global_flag = ASEAN_flexible_engagement_adopted
+		}
+		add_political_power = 50
+	}
+
+	ai_will_do = { base = 40 }
+}
+
+shared_focus = {
+	id = ASEAN_empower_secretariat
+	icon = generic_government
+
+	x = -1
+	y = 1
+	relative_position_id = ASEAN_asean_charter
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_asean_charter }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_empower_secretariat_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_empower_secretariat"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_empower_secretariat_completed } }
+			set_global_flag = ASEAN_empower_secretariat_completed
+			IND = {
+				if = {
+					limit = { NOT = { has_idea = ASEAN_secretariat_hq } }
+					add_ideas = ASEAN_secretariat_hq
+				}
+			}
+		}
+		set_temp_variable = { ASEAN_political_power_factor_temp = 0.02 }
+		add_to_variable = { ASEAN_political_power_factor = ASEAN_political_power_factor_temp tooltip = political_power_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_political_power_factor = ASEAN_political_power_factor_temp tooltip = political_power_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 100 }
+}
+
+shared_focus = {
+	id = ASEAN_summit_calendar
+	icon = iberian_summit
+
+	x = 1
+	y = 1
+	relative_position_id = ASEAN_asean_charter
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_asean_charter }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_summit_calendar_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_summit_calendar"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_summit_calendar_completed } }
+			set_global_flag = ASEAN_summit_calendar_completed
+			set_global_flag = ASEAN_summit_calendar_institutionalised
+		}
+		add_political_power = 50
+	}
+
+	ai_will_do = { base = 80 }
+}
+
+shared_focus = {
+	id = ASEAN_dispute_settlement_protocol
+	icon = judiciary
+
+	x = 3
+	y = 1
+	relative_position_id = ASEAN_asean_charter
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_asean_charter }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
+
+	available = { date > 2004.11.29 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_dispute_settlement_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_dispute_settlement_protocol"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_dispute_settlement_completed } }
+			set_global_flag = ASEAN_dispute_settlement_completed
+			set_global_flag = ASEAN_dispute_protocol_active
+		}
+		add_political_power = 50
+	}
+
+	ai_will_do = { base = 80 }
+}
+
+shared_focus = {
+	id = ASEAN_aichr
+	icon = focus_generic_court
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_flexible_engagement
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_flexible_engagement }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
+
+	available = { date > 2009.10.23 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_aichr_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_aichr"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_aichr_completed } }
+			set_global_flag = ASEAN_aichr_completed
+		}
+		if = {
+			limit = { NOT = { has_idea = ASEAN_aicur_body } }
+			add_ideas = ASEAN_aicur_body
+		}
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = {
+					NOT = { tag = ROOT }
+					NOT = { has_idea = ASEAN_aicur_body }
+				}
+				add_ideas = ASEAN_aicur_body
+			}
+		}
+	}
+
+	ai_will_do = { base = 40 }
+}
+
+shared_focus = {
+	id = ASEAN_found_the_court
+	icon = focus_generic_court
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_aichr
+
+	cost = 15
+
+	prerequisite = {
+		focus = ASEAN_dispute_settlement_protocol
+		focus = ASEAN_aichr
+	}
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_court_founded
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_found_the_court"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_court_founded } }
+			set_global_flag = ASEAN_court_founded
+		}
+		set_temp_variable = { ASEAN_stability_factor_temp = 0.03 }
+		add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 20 }
+}
+
+### Branch 2: Economic Community
+
+shared_focus = {
+	id = ASEAN_free_trade_area
+	icon = customs_union
+
+	x = -8
+	y = 1
+	relative_position_id = ASEAN_bali_concord_ii
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_bali_concord_ii }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_free_trade_area_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_free_trade_area"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_free_trade_area_completed } }
+			set_global_flag = ASEAN_free_trade_area_completed
+		}
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.08 }
+		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 180 }
+}
+
+shared_focus = {
+	id = ASEAN_revise_cept
+	icon = Focus_GER_customs_union
+
+	x = -1
+	y = 1
+	relative_position_id = ASEAN_free_trade_area
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_free_trade_area }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_revise_cept_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_revise_cept"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_revise_cept_completed } }
+			set_global_flag = ASEAN_revise_cept_completed
+		}
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 100 }
+}
+
+shared_focus = {
+	id = ASEAN_chiang_mai_initiative
+	icon = generic_bank
+
+	x = 1
+	y = 1
+	relative_position_id = ASEAN_free_trade_area
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_free_trade_area }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
+
+	available = { date > 2000.5.6 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_chiang_mai_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_chiang_mai_initiative"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_chiang_mai_completed } }
+			set_global_flag = ASEAN_chiang_mai_completed
+		}
+		if = {
+			limit = { NOT = { has_idea = ASEAN_currency_swap_net } }
+			add_ideas = ASEAN_currency_swap_net
+		}
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = {
+					NOT = { tag = ROOT }
+					NOT = { has_idea = ASEAN_currency_swap_net }
+				}
+				add_ideas = ASEAN_currency_swap_net
+			}
+		}
+	}
+
+	ai_will_do = { base = 120 }
+}
+
+shared_focus = {
+	id = ASEAN_atiga
+	icon = customs_union
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_revise_cept
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_revise_cept }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
+
+	available = { date > 2010.1.1 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_atiga_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_atiga"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_atiga_completed } }
+			set_global_flag = ASEAN_atiga_completed
+		}
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.15 }
+		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 150 }
+}
+
+shared_focus = {
+	id = ASEAN_cmim_multilateralise
+	icon = Generic_Loadsamoney
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_chiang_mai_initiative
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_chiang_mai_initiative }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
+
+	available = { date > 2010.3.24 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_cmim_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_cmim_multilateralise"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_cmim_completed } }
+			set_global_flag = ASEAN_cmim_completed
+		}
+		set_temp_variable = { ASEAN_interest_rate_multiplier_modifier_temp = 0.10 }
+		add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 120 }
+}
+
+shared_focus = {
+	id = ASEAN_single_window
+	icon = infrastructure
+
+	x = -1
+	y = 1
+	relative_position_id = ASEAN_atiga
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_atiga }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INFRASTRUCTURE }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_single_window_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_single_window"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_single_window_completed } }
+			set_global_flag = ASEAN_single_window_completed
+		}
+		set_temp_variable = { ASEAN_production_speed_infrastructure_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_production_speed_infrastructure_factor = ASEAN_production_speed_infrastructure_factor_temp tooltip = production_speed_infrastructure_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_production_speed_infrastructure_factor = ASEAN_production_speed_infrastructure_factor_temp tooltip = production_speed_infrastructure_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 80 }
+}
+
+shared_focus = {
+	id = ASEAN_open_skies
+	icon = generic_airport_icon
+
+	x = 1
+	y = 1
+	relative_position_id = ASEAN_atiga
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_atiga }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
+
+	available = { date > 2015.1.1 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_open_skies_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_open_skies"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_open_skies_completed } }
+			set_global_flag = ASEAN_open_skies_completed
+		}
+		set_temp_variable = { ASEAN_consumer_goods_factor_temp = 0.03 }
+		add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 60 }
+}
+
+shared_focus = {
+	id = ASEAN_power_grid
+	icon = focus_generic_electrification
+
+	x = -1
+	y = 1
+	relative_position_id = ASEAN_single_window
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_single_window }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POWER_INFRASTRUCTURE }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_power_grid_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_power_grid"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_power_grid_completed } }
+			set_global_flag = ASEAN_power_grid_completed
+		}
+		set_temp_variable = { ASEAN_productivity_growth_modifier_temp = 0.02 }
+		add_to_variable = { ASEAN_productivity_growth_modifier = ASEAN_productivity_growth_modifier_temp tooltip = productivity_growth_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_productivity_growth_modifier = ASEAN_productivity_growth_modifier_temp tooltip = productivity_growth_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 60 }
+}
+
+shared_focus = {
+	id = ASEAN_singapore_kunming_rail
+	icon = focus_generic_railroad
+
+	x = 1
+	y = 1
+	relative_position_id = ASEAN_single_window
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_single_window }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INFRASTRUCTURE }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_skrl_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_singapore_kunming_rail"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_skrl_completed } }
+			set_global_flag = ASEAN_skrl_completed
+		}
+		set_temp_variable = { ASEAN_production_speed_infrastructure_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_production_speed_infrastructure_factor = ASEAN_production_speed_infrastructure_factor_temp tooltip = production_speed_infrastructure_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_production_speed_infrastructure_factor = ASEAN_production_speed_infrastructure_factor_temp tooltip = production_speed_infrastructure_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 60 }
+}
+
+shared_focus = {
+	id = ASEAN_asean_economic_community
+	icon = integrated_economies
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_singapore_kunming_rail
+
+	cost = 15
+
+	prerequisite = { focus = ASEAN_atiga }
+	prerequisite = {
+		focus = ASEAN_power_grid
+		focus = ASEAN_singapore_kunming_rail
+	}
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
+
+	available = { date > 2015.12.31 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_aec_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_asean_economic_community"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_aec_completed } }
+			set_global_flag = ASEAN_aec_completed
+			set_global_flag = ASEAN_aec_declared
+		}
+		set_temp_variable = { ASEAN_return_on_investment_modifier_temp = 0.03 }
+		add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+				add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 150 }
+}
+
+shared_focus = {
+	id = ASEAN_hub_or_market_fork
+	icon = focus_generic_conference
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_asean_economic_community
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_asean_economic_community }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_hub_or_market_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_hub_or_market_fork"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_hub_or_market_completed } }
+			set_global_flag = ASEAN_hub_or_market_completed
+		}
+		add_political_power = 50
+	}
+
+	ai_will_do = { base = 80 }
+}
+
+shared_focus = {
+	id = ASEAN_external_fta_hub
+	icon = expand_trade_fleet
+
+	x = -1
+	y = 1
+	relative_position_id = ASEAN_hub_or_market_fork
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_hub_or_market_fork }
+	mutually_exclusive = { focus = ASEAN_deep_single_market }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_hub_strategy_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_external_fta_hub"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_hub_strategy_completed } }
+			set_global_flag = ASEAN_hub_strategy_completed
+			set_global_flag = ASEAN_hub_strategy_chosen
+		}
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.10 }
+		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 90 }
+}
+
+shared_focus = {
+	id = ASEAN_deep_single_market
+	icon = economic_community
+
+	x = 1
+	y = 1
+	relative_position_id = ASEAN_hub_or_market_fork
+
+	cost = 15
+
+	prerequisite = { focus = ASEAN_hub_or_market_fork }
+	mutually_exclusive = { focus = ASEAN_external_fta_hub }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_deep_market_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_deep_single_market"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_deep_market_completed } }
+			set_global_flag = ASEAN_deep_market_completed
+			set_global_flag = ASEAN_deep_market_chosen
+		}
+		set_temp_variable = { ASEAN_interest_rate_multiplier_modifier_temp = 0.10 }
+		add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
+		set_temp_variable = { ASEAN_return_on_investment_modifier_temp = 0.03 }
+		add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
+				add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 30 }
+}
+
+shared_focus = {
+	id = ASEAN_asian_currency_unit
+	icon = focus_generic_stockpile_currency
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_deep_single_market
+
+	cost = 20
+
+	prerequisite = { focus = ASEAN_deep_single_market }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
+
+	available = { has_global_flag = asean_second_crisis_survived }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_acu_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_asian_currency_unit"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_acu_completed } }
+			set_global_flag = ASEAN_acu_completed
+		}
+		set_temp_variable = { ASEAN_interest_rate_multiplier_modifier_temp = 0.20 }
+		add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+### Branch 3: Political-Security Community
+
+shared_focus = {
+	id = ASEAN_political_security_community
+	icon = focus_generic_conference
+
+	x = 6
+	y = 1
+	relative_position_id = ASEAN_bali_concord_ii
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_bali_concord_ii }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_psc_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_political_security_community"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_psc_completed } }
+			set_global_flag = ASEAN_psc_completed
+			set_global_flag = ASEAN_apsc_active
+		}
+		add_political_power = 50
+	}
+
+	ai_will_do = { base = 150 }
+}
+
+shared_focus = {
+	id = ASEAN_arf
+	icon = meeting
+
+	x = -4
+	y = 1
+	relative_position_id = ASEAN_political_security_community
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_political_security_community }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_arf_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_arf"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_arf_completed } }
+			set_global_flag = ASEAN_arf_completed
+		}
+		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.05 }
+		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 120 }
+}
+
+shared_focus = {
+	id = ASEAN_declaration_scs
+	icon = south_east_asian_offensive
+
+	x = -2
+	y = 1
+	relative_position_id = ASEAN_political_security_community
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_political_security_community }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	available = { date > 2002.11.4 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_scs_doc_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_declaration_scs"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_scs_doc_completed } }
+			set_global_flag = ASEAN_scs_doc_completed
+			set_global_flag = ASEAN_scs_declaration_signed
+		}
+		add_political_power = 30
+	}
+
+	ai_will_do = { base = 80 }
+}
+
+shared_focus = {
+	id = ASEAN_counterterrorism
+	icon = political_pressure
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_political_security_community
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_political_security_community }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INSURGENCY }
+
+	available = { date > 2002.10.12 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_counterterror_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_counterterrorism"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_counterterror_completed } }
+			set_global_flag = ASEAN_counterterror_completed
+		}
+		add_political_power = 30
+	}
+
+	ai_will_do = { base = 100 }
+}
+
+shared_focus = {
+	id = ASEAN_malacca_patrols
+	icon = focus_SIA_river_patrols
+
+	x = 2
+	y = 1
+	relative_position_id = ASEAN_political_security_community
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_political_security_community }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_NAVY }
+
+	available = { date > 2004.7.20 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_malacca_patrols_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_malacca_patrols"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_malacca_patrols_completed } }
+			set_global_flag = ASEAN_malacca_patrols_completed
+		}
+		if = {
+			limit = { any_owned_state = { is_coastal = yes } }
+			navy_experience = 25
+		}
+	}
+
+	ai_will_do = { base = 80 }
+}
+
+shared_focus = {
+	id = ASEAN_hadr
+	icon = un_pko
+
+	x = 4
+	y = 1
+	relative_position_id = ASEAN_political_security_community
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_political_security_community }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	available = { date > 2005.1.1 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_hadr_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_hadr"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_hadr_completed } }
+			set_global_flag = ASEAN_hadr_completed
+		}
+		set_temp_variable = { ASEAN_stability_factor_temp = 0.02 }
+		add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 80 }
+}
+
+shared_focus = {
+	id = ASEAN_seanwfz_pressure_p5
+	icon = Generic_Red_Atomic
+
+	x = -2
+	y = 1
+	relative_position_id = ASEAN_arf
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_arf }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_seanwfz_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_seanwfz_pressure_p5"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_seanwfz_completed } }
+			set_global_flag = ASEAN_seanwfz_completed
+		}
+		add_world_tension = -1
+	}
+
+	ai_will_do = { base = 50 }
+}
+
+shared_focus = {
+	id = ASEAN_plus_three
+	icon = alliance
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_arf
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_arf }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_plus_three_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_plus_three"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_plus_three_completed } }
+			set_global_flag = ASEAN_plus_three_completed
+		}
+		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.05 }
+		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 100 }
+}
+
+shared_focus = {
+	id = ASEAN_admm
+	icon = CIS_military_army
+
+	x = 2
+	y = 1
+	relative_position_id = ASEAN_counterterrorism
+
+	cost = 10
+
+	prerequisite = {
+		focus = ASEAN_hadr
+		focus = ASEAN_counterterrorism
+	}
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_MILITARY_LAWS }
+
+	available = { date > 2006.5.9 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_admm_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_admm"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_admm_completed } }
+			set_global_flag = ASEAN_admm_completed
+		}
+		army_experience = 25
+	}
+
+	ai_will_do = { base = 100 }
+}
+
+shared_focus = {
+	id = ASEAN_east_asia_summit
+	icon = iberian_summit
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_plus_three
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_plus_three }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	available = { date > 2005.12.14 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_eas_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_east_asia_summit"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_eas_completed } }
+			set_global_flag = ASEAN_eas_completed
+		}
+		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.05 }
+		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 80 }
+}
+
+shared_focus = {
+	id = ASEAN_admm_plus
+	icon = exercise_keen_sword
+
+	x = -2
+	y = 1
+	relative_position_id = ASEAN_admm
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_admm }
+	prerequisite = { focus = ASEAN_arf }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_MILITARY_LAWS }
+
+	available = { date > 2010.10.12 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_admm_plus_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_admm_plus"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_admm_plus_completed } }
+			set_global_flag = ASEAN_admm_plus_completed
+		}
+		army_experience = 25
+		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.05 }
+		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 80 }
+}
+
+shared_focus = {
+	id = ASEAN_alignment_question
+	icon = focus_generic_conference
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_admm
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_admm }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_alignment_question"
+		add_political_power = 50
+	}
+
+	ai_will_do = { base = 80 }
+}
+
+shared_focus = {
+	id = ASEAN_extend_eas_us_russia
+	icon = focus_generic_approach_the_west
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_east_asia_summit
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_east_asia_summit }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	available = { date > 2011.11.19 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_eas_extended_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_extend_eas_us_russia"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_eas_extended_completed } }
+			set_global_flag = ASEAN_eas_extended_completed
+		}
+		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.10 }
+		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 80 }
+}
+
+shared_focus = {
+	id = ASEAN_first_joint_exercise
+	icon = exercise_keen_sword
+
+	x = -2
+	y = 1
+	relative_position_id = ASEAN_admm_plus
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_admm_plus }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_MILITARY_LAWS }
+
+	available = { date > 2020.1.1 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_joint_exercise_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_first_joint_exercise"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_joint_exercise_completed } }
+			set_global_flag = ASEAN_joint_exercise_completed
+		}
+		army_experience = 25
+	}
+
+	ai_will_do = { base = 60 }
+}
+
+shared_focus = {
+	id = ASEAN_align_with_china
+	icon = align_to_china
+
+	x = -2
+	y = 1
+	relative_position_id = ASEAN_alignment_question
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_alignment_question }
+	mutually_exclusive = {
+		focus = ASEAN_pursue_self_reliance
+		focus = ASEAN_align_with_america
+	}
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INFLUENCE }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_align_with_china"
+		set_country_flag = ASEAN_aligned_china
+		add_political_power = -50
+		CHI = { add_opinion_modifier = { target = ROOT modifier = large_increase } }
+		add_opinion_modifier = { target = CHI modifier = large_increase }
+	}
+
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 30
+			OR = {
+				original_tag = CBD
+				original_tag = LAO
+				original_tag = BRM
+			}
+		}
+	}
+}
+
+shared_focus = {
+	id = ASEAN_pursue_self_reliance
+	icon = Generic_CIWS
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_alignment_question
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_alignment_question }
+	mutually_exclusive = {
+		focus = ASEAN_align_with_china
+		focus = ASEAN_align_with_america
+	}
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_MILITARY_LAWS }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_pursue_self_reliance"
+		set_country_flag = ASEAN_aligned_self_reliance
+		add_war_support = 0.05
+		army_experience = 25
+	}
+
+	ai_will_do = {
+		base = 20
+		modifier = {
+			add = 40
+			OR = {
+				original_tag = IND
+				original_tag = VIE
+			}
+		}
+	}
+}
+
+shared_focus = {
+	id = ASEAN_align_with_america
+	icon = focus_generic_approach_the_west
+
+	x = 2
+	y = 1
+	relative_position_id = ASEAN_alignment_question
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_alignment_question }
+	mutually_exclusive = {
+		focus = ASEAN_align_with_china
+		focus = ASEAN_pursue_self_reliance
+	}
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INFLUENCE }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_align_with_america"
+		set_country_flag = ASEAN_aligned_america
+		add_political_power = -50
+		USA = { add_opinion_modifier = { target = ROOT modifier = large_increase } }
+		add_opinion_modifier = { target = USA modifier = large_increase }
+	}
+
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 30
+			OR = {
+				original_tag = PHI
+				original_tag = SIA
+				original_tag = SIN
+			}
+		}
+	}
+}
+
+shared_focus = {
+	id = ASEAN_defense_community
+	icon = alliance
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_first_joint_exercise
+
+	cost = 15
+
+	prerequisite = { focus = ASEAN_first_joint_exercise }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_MILITARY_LAWS }
+
+	available = { has_global_flag = asean_defense_pact_gate }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_defense_community_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_defense_community"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_defense_community_completed } }
+			set_global_flag = ASEAN_defense_community_completed
+			set_global_flag = ASEAN_defense_pact_signed
+		}
+		set_rule = { can_create_factions = yes }
+		if = {
+			limit = { is_in_faction = no }
+			create_faction_from_template = faction_template_sia_seato
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = ASEAN_rcep
+	icon = expand_trade_fleet
+
+	x = 0
+	y = 2
+	relative_position_id = ASEAN_admm_plus
+
+	cost = 15
+
+	prerequisite = { focus = ASEAN_extend_eas_us_russia }
+	prerequisite = { focus = ASEAN_external_fta_hub }
+	prerequisite = { focus = ASEAN_admm_plus }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
+
+	available = { date > 2020.11.15 }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_rcep_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_rcep"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_rcep_completed } }
+			set_global_flag = ASEAN_rcep_completed
+		}
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.15 }
+		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.05 }
+		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+				add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 120 }
+}
+
+### Branch 4: Enlargement
+
+shared_focus = {
+	id = ASEAN_admission_protocols
+	icon = annex_country
+
+	x = 20
+	y = 1
+	relative_position_id = ASEAN_bali_concord_ii
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_bali_concord_ii }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_admission_protocols_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_admission_protocols"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_admission_protocols_completed } }
+			set_global_flag = ASEAN_admission_protocols_completed
+		}
+		add_political_power = 50
+	}
+
+	ai_will_do = { base = 100 }
+}
+
+shared_focus = {
+	id = ASEAN_iai_narrow_gap
+	icon = Focus_GER_south_east_asian_natural_wealth
+
+	x = -2
+	y = 1
+	relative_position_id = ASEAN_admission_protocols
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_admission_protocols }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_iai_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_iai_narrow_gap"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_iai_completed } }
+			set_global_flag = ASEAN_iai_completed
+		}
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.05 } }
+		modify_treasury_effect = yes
+		set_temp_variable = { ASEAN_productivity_growth_modifier_temp = 0.02 }
+		add_to_variable = { ASEAN_productivity_growth_modifier = ASEAN_productivity_growth_modifier_temp tooltip = productivity_growth_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_productivity_growth_modifier = ASEAN_productivity_growth_modifier_temp tooltip = productivity_growth_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 60
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
+}
+
+shared_focus = {
+	id = ASEAN_admit_east_timor
+	icon = align_to_east_timor
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_admission_protocols
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_admission_protocols }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_DIPLOMACY }
+
+	available = {
+		date > 2022.11.11
+		check_variable = { global.ASEAN_active_count > 3 }
+	}
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_admit_east_timor_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_admit_east_timor"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_admit_east_timor_completed } }
+			set_global_flag = ASEAN_admit_east_timor_completed
+			TIM = { country_event = { id = asean.1 days = 3 } }
+		}
+	}
+
+	ai_will_do = { base = 60 }
+}
+
+shared_focus = {
+	id = ASEAN_admit_png
+	icon = align_to_papua_new_guinea
+
+	x = 2
+	y = 1
+	relative_position_id = ASEAN_admission_protocols
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_admission_protocols }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_DIPLOMACY }
+
+	available = {
+		check_variable = { global.ASEAN_active_count > 3 }
+	}
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_admit_png_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_admit_png"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_admit_png_completed } }
+			set_global_flag = ASEAN_admit_png_completed
+			PAP = { country_event = { id = asean.1 days = 3 } }
+		}
+	}
+
+	ai_will_do = { base = 20 }
+}
+
+shared_focus = {
+	id = ASEAN_asean_11_new_governance
+	icon = Parliament_monarchism
+
+	x = -2
+	y = 1
+	relative_position_id = ASEAN_admit_east_timor
+
+	cost = 10
+
+	prerequisite = { focus = ASEAN_admit_east_timor }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_governance_11_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_asean_11_new_governance"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_governance_11_completed } }
+			set_global_flag = ASEAN_governance_11_completed
+		}
+		set_temp_variable = { ASEAN_political_power_factor_temp = 0.02 }
+		add_to_variable = { ASEAN_political_power_factor = ASEAN_political_power_factor_temp tooltip = political_power_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_political_power_factor = ASEAN_political_power_factor_temp tooltip = political_power_factor_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 40 }
+}
+
+shared_focus = {
+	id = ASEAN_bimstec_absorption
+	icon = Influence_South_Asia
+
+	x = -2
+	y = 1
+	relative_position_id = ASEAN_admit_png
+
+	cost = 15
+
+	prerequisite = {
+		focus = ASEAN_admit_east_timor
+		focus = ASEAN_admit_png
+	}
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_DIPLOMACY }
+
+	available = {
+		check_variable = { global.ASEAN_active_count > 3 }
+	}
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_bimstec_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_bimstec_absorption"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_bimstec_completed } }
+			set_global_flag = ASEAN_bimstec_completed
+			BAN = { country_event = { id = asean.1 days = 3 } }
+			SRI = { country_event = { id = asean.1 days = 3 } }
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = ASEAN_pacific_expansion
+	icon = pacific_states
+
+	x = 0
+	y = 1
+	relative_position_id = ASEAN_admit_png
+
+	cost = 15
+
+	prerequisite = { focus = ASEAN_admit_png }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_DIPLOMACY }
+
+	available = {
+		check_variable = { global.ASEAN_active_count > 3 }
+	}
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_pacific_expansion_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_pacific_expansion"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_pacific_expansion_completed } }
+			set_global_flag = ASEAN_pacific_expansion_completed
+			FIJ = { country_event = { id = asean.1 days = 3 } }
+			SOL = { country_event = { id = asean.1 days = 5 } }
+			PAU = { country_event = { id = asean.1 days = 7 } }
+			VAN = { country_event = { id = asean.1 days = 9 } }
+			TON = { country_event = { id = asean.1 days = 11 } }
+			MAR = { country_event = { id = asean.1 days = 13 } }
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = ASEAN_indo_pacific_pole
+	icon = asian_union
+
+	x = 1
+	y = 1
+	relative_position_id = ASEAN_bimstec_absorption
+
+	cost = 20
+
+	prerequisite = { focus = ASEAN_bimstec_absorption }
+	prerequisite = { focus = ASEAN_pacific_expansion }
+
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	bypass = {
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_focus_completed_tt
+			has_global_flag = ASEAN_indo_pacific_pole_completed
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_indo_pacific_pole"
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_indo_pacific_pole_completed } }
+			set_global_flag = ASEAN_indo_pacific_pole_completed
+		}
+		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.15 }
+		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+			}
+		}
+	}
+
+	ai_will_do = { base = 5 }
+}

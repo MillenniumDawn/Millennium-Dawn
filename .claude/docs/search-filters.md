@@ -85,12 +85,13 @@ Countries using only custom filters are invisible to generic searches. Always in
 
 ### Alliance & Bloc Filters
 
-| Filter                        | When to use                                                        |
-| ----------------------------- | ------------------------------------------------------------------ |
-| `FOCUS_FILTER_NATO`           | NATO membership, NATO-related focuses, Atlantic alliance mechanics |
-| `FOCUS_FILTER_EUROPEAN_UNION` | EU integration focuses, EU membership mechanics                    |
-| `FOCUS_FILTER_CMW`            | Commonwealth of Nations membership and mechanics                   |
-| `FOCUS_FILTER_TFV_AUTONOMY`   | Autonomy within a faction or overlord relationship                 |
+| Filter                        | When to use                                                           |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `FOCUS_FILTER_NATO`           | NATO membership, NATO-related focuses, Atlantic alliance mechanics    |
+| `FOCUS_FILTER_EUROPEAN_UNION` | EU integration focuses, EU membership mechanics                       |
+| `FOCUS_FILTER_CMW`            | Commonwealth of Nations membership and mechanics                      |
+| `FOCUS_FILTER_ASEAN`          | ASEAN membership, shared-tree focuses, Southeast Asian bloc mechanics |
+| `FOCUS_FILTER_TFV_AUTONOMY`   | Autonomy within a faction or overlord relationship                    |
 
 ### Meta / System Filters
 
@@ -153,14 +154,14 @@ These custom filters exist for other country trees — do not add them to Israel
 
 ## Common Mistakes
 
-| Wrong                                                                  | Correct                                                                                                             |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Only custom filter, no generic                                         | Always add the paired generic (see tables above)                                                                    |
-| `FOCUS_FILTER_MILITARY`                                                | Use `FOCUS_FILTER_MILITARY_LAWS` (MILITARY is a legacy/unused alias)                                                |
-| Using `FOCUS_FILTER_DIPLOMACY` for all foreign policy                  | Use `FOCUS_FILTER_FOREIGN_POLICY` for general relations; `FOCUS_FILTER_DIPLOMACY` for specific diplomatic actions   |
+| Wrong                                                                  | Correct                                                                                                                     |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Only custom filter, no generic                                         | Always add the paired generic (see tables above)                                                                            |
+| `FOCUS_FILTER_MILITARY`                                                | Use `FOCUS_FILTER_MILITARY_LAWS` (MILITARY is a legacy/unused alias)                                                        |
+| Using `FOCUS_FILTER_DIPLOMACY` for all foreign policy                  | Use `FOCUS_FILTER_FOREIGN_POLICY` for general relations; `FOCUS_FILTER_DIPLOMACY` for specific diplomatic actions           |
 | Tagging economic investment focuses without `FOCUS_FILTER_EXPENDITURE` | Add `FOCUS_FILTER_EXPENDITURE` to treasury-spending industrial/economic focuses, and add a bankruptcy guard in `ai_will_do` |
-| Missing filter entirely                                                | Every focus must have at least one filter                                                                           |
-| Using another country's custom filter                                  | Custom filters (RUSSIA*\*, UKRAINE*\*, ISRPOLIT, etc.) are country-specific — never cross-assign                    |
+| Missing filter entirely                                                | Every focus must have at least one filter                                                                                   |
+| Using another country's custom filter                                  | Custom filters (RUSSIA*\*, UKRAINE*\*, ISRPOLIT, etc.) are country-specific — never cross-assign                            |
 
 ## Checklist When Adding a New Focus
 
