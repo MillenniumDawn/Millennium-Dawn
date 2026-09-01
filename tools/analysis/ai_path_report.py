@@ -29,7 +29,16 @@ from shared_utils import (  # noqa: E402
     strip_comments,
 )
 
-SECTIONS = ("rule", "wiring", "owners", "matrix", "graph", "plans", "rewards")
+SECTIONS = (
+    "rule",
+    "wiring",
+    "owners",
+    "matrix",
+    "graph",
+    "plans",
+    "rewards",
+    "government",
+)
 
 DANGER_EFFECTS = (
     "delete_unit",
@@ -47,6 +56,10 @@ GUARD_TOKENS = (
     "bankruptcy_incoming_collapse",
     "ai_is_threatened",
 )
+
+BOOKMARK_DATES = ((2016, 1, 2), (2017, 1, 1))
+TIMELINE_MIN_DATES = 3
+DAYS_PER_MONTH = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
 _STATEMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*=\s*")
 _FOCUS_START = re.compile(r"^[ \t]*(focus|shared_focus|joint_focus)\s*=\s*\{", re.M)
@@ -714,6 +727,7 @@ def build_report(root: str, tag: str, limit: int) -> Dict:
         "graph": _graph_findings(focuses, by_id, weights, limit),
         "plans": _plan_findings(plans, by_id, limit),
         "rewards": _reward_findings(focuses, limit),
+        "government": _government_findings(root, tag),
     }
 
 
@@ -958,6 +972,453 @@ def _reward_findings(focuses: Sequence[Focus], limit: int) -> List[str]:
 
 
 # --------------------------------------------------------------------------
+# Historical government walker
+# --------------------------------------------------------------------------
+
+
+@dataclass
+class Leader:
+    name: str
+    index: int
+    until: Optional[Tuple[int, int, int]] = None
+
+
+@dataclass
+class Branch:
+    kind: str
+    after: Optional[Tuple[int, int, int]] = None
+    party: Optional[int] = None
+    pointer: Optional[Tuple[str, int]] = None
+    changes_party: bool = False
+    advances: bool = False
+
+
+@dataclass
+class Walker:
+    event_id: str = ""
+    path: str = ""
+    line: int = 0
+    chain: List[Branch] = field(default_factory=list)
+    pins_leader: bool = False
+
+
+_DATE = re.compile(r"(\d{4})\.(\d{1,2})\.(\d{1,2})")
+_ROSTER_DATE = re.compile(r"date\s*<\s*(\d{4}\.\d{1,2}\.\d{1,2})")
+_WALKER_DATE = re.compile(r"date\s*>\s*(\d{4}\.\d{1,2}\.\d{1,2})")
+
+
+def _parse_date(raw: str) -> Optional[Tuple[int, int, int]]:
+    match = _DATE.search(raw)
+    if not match:
+        return None
+    year, month, day = match.groups()
+    return int(year), int(month), int(day)
+
+
+def format_date(date: Optional[Tuple[int, int, int]]) -> str:
+    return "{}.{}.{}".format(*date) if date else "-"
+
+
+def day_offset_to_date(year: int, days: int) -> Tuple[int, int, int]:
+    """Resolve a `days = N` offset inside `trigger_year_<year>_events`.
+
+    The dispatcher runs at the January tick, and MD's own day counts ignore leap
+    years, so a fixed month table reproduces the numbers already in the file.
+    """
+    month = 1
+    remaining = days
+    for length in DAYS_PER_MONTH:
+        if remaining < length:
+            break
+        remaining -= length
+        month += 1
+    if month > 12:
+        return year + 1, 1, 1
+    return year, month, remaining + 1
+
+
+def _block_of(body: str, key: str) -> Optional[str]:
+    for name, _, block in iter_statements(body):
+        if name == key and block is not None:
+            return block
+    return None
+
+
+def parse_party_indices(text: str) -> Dict[int, str]:
+    """Map `ruling_party` index to sub-ideology, read from `set_ruling_leader`."""
+    match = re.search(r"^set_ruling_leader\s*=\s*\{", text, re.M)
+    if not match:
+        return {}
+    start = text.index("{", match.start())
+    close = find_matching_brace(text, start)
+    if close == -1:
+        return {}
+    pairs = re.findall(
+        r"ruling_party\s*=\s*(\d+)[\s}]*set_country_flag\s*=\s*set_(\w+)",
+        text[start + 1 : close],
+    )
+    return {int(index): name for index, name in pairs}
+
+
+def parse_leader_roster(text: str, tag: str) -> Dict[str, List[Leader]]:
+    """Map sub-ideology to its ordered succession list in `set_leader_<TAG>`."""
+    match = re.search(r"^\s*set_leader_" + tag + r"\s*=\s*\{", text, re.M)
+    if not match:
+        return {}
+    start = text.index("{", match.start())
+    close = find_matching_brace(text, start)
+    if close == -1:
+        return {}
+    branches: Dict[str, List[Leader]] = {}
+    for key, _, block in iter_statements(text[start + 1 : close]):
+        if key not in ("if", "else_if") or block is None:
+            continue
+        limit = _block_of(block, "limit") or ""
+        found = re.search(r"has_country_flag\s*=\s*set_(\w+)", limit)
+        if found:
+            branches[found.group(1)] = _parse_roster_branch(block, found.group(1))
+    return branches
+
+
+def _parse_roster_branch(block: str, subideology: str) -> List[Leader]:
+    declared = re.compile(re.escape(subideology) + r"_leader\s*=\s*(\d+)")
+    leaders: List[Leader] = []
+    for key, _, entry in iter_statements(block):
+        if key != "if" or entry is None:
+            continue
+        create = _block_of(entry, "create_country_leader")
+        if create is None:
+            continue
+        name = re.search(r'name\s*=\s*"([^"]*)"', create)
+        index = declared.search(_block_of(entry, "limit") or "")
+        until = _ROSTER_DATE.search(entry)
+        leaders.append(
+            Leader(
+                name=name.group(1) if name else "?",
+                index=int(index.group(1)) if index else len(leaders),
+                until=_parse_date(until.group(1)) if until else None,
+            )
+        )
+    return leaders
+
+
+def parse_year_schedule(text: str, tag: str) -> List[Tuple[int, str, int]]:
+    """Return (year, event id, day offset) for every event scheduled at *tag*."""
+    entries: List[Tuple[int, str, int]] = []
+    scope = re.compile(r"\b" + tag + r"\s*=\s*\{")
+    fire = re.compile(
+        r"country_event\s*=\s*\{[^{}]*?\bid\s*=\s*([A-Za-z0-9_.]+)"
+        r"[^{}]*?\bdays\s*=\s*(\d+)"
+    )
+    for match in re.finditer(r"^trigger_year_(\d{4})_events\s*=\s*\{", text, re.M):
+        start = text.index("{", match.start())
+        close = find_matching_brace(text, start)
+        if close == -1:
+            continue
+        body = text[start + 1 : close]
+        for scoped in scope.finditer(body):
+            inner = body.index("{", scoped.start())
+            inner_close = find_matching_brace(body, inner)
+            if inner_close == -1:
+                continue
+            for event in fire.finditer(body[inner + 1 : inner_close]):
+                entries.append(
+                    (int(match.group(1)), event.group(1), int(event.group(2)))
+                )
+    return entries
+
+
+def parse_walker(immediate: str) -> Walker:
+    """Read the date chain out of a historical government walker's `immediate`."""
+    walker = Walker(
+        pins_leader=bool(re.search(r"change_leader_temp\s*=\s*1", immediate))
+    )
+    chain_open = True
+    for key, _, block in iter_statements(immediate):
+        if key not in ("if", "else_if", "else") or block is None:
+            continue
+        bound = _WALKER_DATE.search(_block_of(block, "limit") or "")
+        after = _parse_date(bound.group(1)) if bound else None
+        changes_party = "change_ruling_party_effect" in block
+        advances = "set_leader" in block
+        if not chain_open or (after is None and not (key == "else" and walker.chain)):
+            chain_open = False
+            continue
+        party = re.search(r"rul_party_temp\s*=\s*(\d+)", block)
+        pointer = re.search(r"(\w+)_leader\s*=\s*(\d+)", block)
+        walker.chain.append(
+            Branch(
+                kind=key,
+                after=after,
+                party=int(party.group(1)) if party else None,
+                pointer=(
+                    (pointer.group(1), int(pointer.group(2))) if pointer else None
+                ),
+                changes_party=changes_party,
+                advances=advances,
+            )
+        )
+        if key == "else":
+            chain_open = False
+    return walker
+
+
+def resolve_branch(chain: Sequence[Branch], date: Tuple[int, int, int]):
+    for branch in chain:
+        if branch.after is None or date > branch.after:
+            return branch
+    return None
+
+
+_EVENT_INDEX: Dict[str, Dict[str, str]] = {}
+
+
+def event_index(root: str) -> Dict[str, str]:
+    """Map every event id under events/ to the file that defines it."""
+    cached = _EVENT_INDEX.get(root)
+    if cached is not None:
+        return cached
+    index: Dict[str, str] = {}
+    folder = os.path.join(root, "events")
+    if os.path.isdir(folder):
+        for name in sorted(os.listdir(folder)):
+            if not name.endswith(".txt"):
+                continue
+            path = os.path.join(folder, name)
+            with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
+                for found in _ID_LINE.finditer(handle.read()):
+                    index.setdefault(found.group(1), path)
+    _EVENT_INDEX[root] = index
+    return index
+
+
+def find_event(root: str, event_id: str) -> Tuple[str, int, str]:
+    """Locate a `country_event` by id and return (path, line, body)."""
+    path = event_index(root).get(event_id)
+    if not path:
+        return "", 0, ""
+    text = read_script(path)
+    for match in re.finditer(r"country_event\s*=\s*\{", text):
+        start = match.end() - 1
+        close = find_matching_brace(text, start)
+        if close == -1:
+            continue
+        body = text[start + 1 : close]
+        found = _ID_LINE.search(body)
+        if found and found.group(1) == event_id:
+            return (
+                os.path.relpath(path, root).replace("\\", "/"),
+                line_of(text, match.start()),
+                body,
+            )
+    return "", 0, ""
+
+
+def _history_facts(root: str, tag: str) -> Dict:
+    facts = {
+        "last_election": "",
+        "frequency": 0,
+        "term_limit": 0,
+        "killswitch": False,
+    }
+    folder = os.path.join(root, "history", "countries")
+    if not os.path.isdir(folder):
+        return facts
+    for name in sorted(os.listdir(folder)):
+        if not name.endswith(".txt") or not name.startswith(tag + " "):
+            continue
+        text = read_script(os.path.join(folder, name), keep_quotes=True)
+        election = re.search(r'last_election\s*=\s*"?([\d.]+)"?', text)
+        frequency = re.search(r"election_frequency\s*=\s*(\d+)", text)
+        limit = re.search(r"term_limit\s*=\s*(\d+)", text)
+        facts["last_election"] = election.group(1) if election else ""
+        facts["frequency"] = int(frequency.group(1)) if frequency else 0
+        facts["term_limit"] = int(limit.group(1)) if limit else 0
+        facts["killswitch"] = "generic_election_killswitch" in text
+        break
+    return facts
+
+
+def _government_findings(root: str, tag: str) -> Dict:
+    issues: List[str] = []
+    roster_path = os.path.join(
+        root, "common", "scripted_effects", tag + "_political_leaders.txt"
+    )
+    roster: Dict[str, List[Leader]] = {}
+    if os.path.isfile(roster_path):
+        roster = parse_leader_roster(read_script(roster_path, keep_quotes=True), tag)
+    dated = {
+        sub: sum(
+            1
+            for leader in leaders
+            if leader.until and leader.until not in BOOKMARK_DATES
+        )
+        for sub, leaders in roster.items()
+    }
+    total_dated = sum(dated.values())
+
+    parties: Dict[int, str] = {}
+    election_effects = os.path.join(
+        root, "common", "scripted_effects", "99_election_effects.txt"
+    )
+    if os.path.isfile(election_effects):
+        parties = parse_party_indices(read_script(election_effects))
+
+    yearly = os.path.join(root, "common", "scripted_effects", "00_yearly_effects.txt")
+    schedule = (
+        parse_year_schedule(read_script(yearly), tag) if os.path.isfile(yearly) else []
+    )
+
+    walker = Walker()
+    timetable: List[str] = []
+    candidates: List[str] = []
+    for event_id in sorted({entry[1] for entry in schedule}):
+        path, line, body = find_event(root, event_id)
+        if not body:
+            issues.append(event_id + " is scheduled but no country_event defines it")
+            continue
+        immediate = _block_of(body, "immediate") or ""
+        if not re.search(r"\bset_leader\b|change_ruling_party_effect", immediate):
+            continue
+        candidates.append(event_id)
+        if not walker.event_id:
+            walker = parse_walker(immediate)
+            walker.event_id, walker.path, walker.line = event_id, path, line
+    if len(candidates) > 1:
+        issues.append(
+            "{} scheduled events change the government ({}); this reads {}".format(
+                len(candidates), ", ".join(candidates), walker.event_id
+            )
+        )
+
+    history = _history_facts(root, tag)
+    walker_dates = [
+        (day_offset_to_date(year, days), event_id)
+        for year, event_id, days in schedule
+        if event_id == walker.event_id
+    ]
+    walker_dates.sort()
+
+    if walker.event_id:
+        if not walker_dates:
+            issues.append(
+                walker.event_id + " is never scheduled from 00_yearly_effects"
+            )
+        if walker.pins_leader:
+            issues.append(
+                "change_leader_temp = 1 sets do_not_retire and pins the roster pointer"
+            )
+        if history["killswitch"]:
+            issues.append(
+                "country carries generic_election_killswitch: extend its own "
+                "election chain instead of stacking a walker"
+            )
+        if total_dated < TIMELINE_MIN_DATES:
+            issues.append(
+                "walker over an undated roster: {} real end-of-tenure dates".format(
+                    total_dated
+                )
+            )
+        if (
+            walker.chain
+            and walker.chain[-1].kind == "else"
+            and walker.chain[-1].changes_party
+        ):
+            issues.append(
+                "the chain's final else changes the ruling party with no upper "
+                "date bound, so a late re-fire installs the wrong party"
+            )
+        reached = set()
+        for date, _ in walker_dates:
+            branch = resolve_branch(walker.chain, date)
+            if branch is None:
+                timetable.append(format_date(date) + "  no branch matches")
+                continue
+            reached.add(id(branch))
+            party = (
+                "{} ({})".format(branch.party, parties.get(branch.party, "?"))
+                if branch.party is not None
+                else "-"
+            )
+            person = "unasserted, the pointer blind-advances"
+            if branch.pointer:
+                sub, index = branch.pointer
+                entry = next(
+                    (leader for leader in roster.get(sub, []) if leader.index == index),
+                    None,
+                )
+                person = (
+                    "{}^{} {}".format(sub, index, entry.name)
+                    if entry
+                    else "{}^{} OUT OF RANGE".format(sub, index)
+                )
+            timetable.append(
+                "{:<11} after {:<11} party {:<24} {}".format(
+                    format_date(date), format_date(branch.after), party, person
+                )
+            )
+        for position, branch in enumerate(walker.chain):
+            label = "branch {} (after {})".format(position, format_date(branch.after))
+            if branch.pointer is None:
+                issues.append(
+                    label + " asserts no roster index, so the pointer blind-advances"
+                )
+                continue
+            sub, index = branch.pointer
+            if not any(leader.index == index for leader in roster.get(sub, [])):
+                issues.append(
+                    "{} asserts {}^{}, which the roster does not define".format(
+                        label, sub, index
+                    )
+                )
+            elif (
+                branch.party is not None
+                and parties.get(branch.party)
+                and parties[branch.party] != sub
+            ):
+                issues.append(
+                    "{} installs party {} ({}) but seeds the {} pointer".format(
+                        label, branch.party, parties[branch.party], sub
+                    )
+                )
+            if id(branch) not in reached:
+                issues.append(label + " is never reached by a scheduled date")
+    elif total_dated >= TIMELINE_MIN_DATES:
+        issues.append(
+            "dated roster but no historical government walker"
+            + (
+                "; the country owns its election chain behind "
+                "generic_election_killswitch, so extend that instead"
+                if history["killswitch"]
+                else ""
+            )
+        )
+
+    verdict = "no roster file"
+    if roster:
+        verdict = (
+            "dated timeline: a walker can name the historical person"
+            if total_dated >= TIMELINE_MIN_DATES
+            else "undated successor roster: write no walker"
+        )
+    return {
+        "verdict": verdict,
+        "roster": {
+            sub: "{} entries, {} dated".format(len(leaders), dated[sub])
+            for sub, leaders in sorted(roster.items())
+        },
+        "history": history,
+        "walker": (
+            "{} ({}:{})".format(walker.event_id, walker.path, walker.line)
+            if walker.event_id
+            else ""
+        ),
+        "timetable": timetable,
+        "issues": issues,
+    }
+
+
+# --------------------------------------------------------------------------
 # Rendering
 # --------------------------------------------------------------------------
 
@@ -1056,6 +1517,25 @@ def render(report: Dict, sections: Sequence[str]) -> str:
     if "rewards" in sections:
         out.append("DANGER REWARDS  {}".format(len(report["rewards"])))
         out.extend("  " + row for row in report["rewards"])
+        out.append("")
+
+    if "government" in sections:
+        gov = report["government"]
+        history = gov["history"]
+        out.append("GOVERNMENT  " + gov["verdict"])
+        out.append(
+            "  elections  last {} every {} months, term_limit {}{}".format(
+                history["last_election"] or "-",
+                history["frequency"] or "-",
+                history["term_limit"],
+                ", generic_election_killswitch" if history["killswitch"] else "",
+            )
+        )
+        for sub, summary in gov["roster"].items():
+            out.append("  {:<28} {}".format(sub, summary))
+        out.append("  walker  " + (gov["walker"] or "none"))
+        out.extend("    " + row for row in gov["timetable"])
+        out.extend("  ! " + issue for issue in gov["issues"])
         out.append("")
 
     return "\n".join(out).rstrip() + "\n"
