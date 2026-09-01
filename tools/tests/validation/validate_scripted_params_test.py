@@ -14,6 +14,9 @@ Pins these behaviors for change_influence_percentage:
      refs, array subscripts, numerics, and aliases are accepted.
 """
 
+import runpy
+import sys
+
 import pytest
 import validate_scripted_params as vsp
 from validate_scripted_params import _validate_call_sites_in_file
@@ -627,3 +630,278 @@ def test_invalid_tag_placeholder_TAG_is_flagged(tmp_path, cip_contract):
     """The literal `TAG` placeholder is not a real tag."""
     issues = _issues(_tag_body("influence_target", "TAG"), cip_contract, tmp_path)
     assert len(_invalid_tags(issues)) == 1
+
+
+# --- contract auto-discovery ----------------------------------------------
+
+
+def test_contract_parser_returns_nothing_for_an_unreadable_file(tmp_path):
+    assert vsp._parse_effect_contracts_from_file(str(tmp_path / "gone.txt")) == {}
+
+
+def test_contract_parser_skips_blank_and_separator_comment_lines(tmp_path):
+    path = tmp_path / "common" / "scripted_effects" / "spaced.txt"
+    _write(
+        path,
+        "# Parameters:\n"
+        "#\n"
+        "# -----\n"
+        "# - first_param: the required one\n"
+        "# - second_param: optional, defaults to 0\n"
+        "spaced_effect = {\n}\n",
+    )
+
+    assert vsp._parse_effect_contracts_from_file(str(path)) == {
+        "spaced_effect": {"required": ["first_param"], "optional": ["second_param"]}
+    }
+
+
+def test_contract_parser_reads_set_temp_variable_examples(tmp_path):
+    """The corpus documents params as call examples as well as `- name:` bullets."""
+    path = tmp_path / "common" / "scripted_effects" / "documented.txt"
+    _write(
+        path,
+        "# Parameters:\n"
+        "#   set_temp_variable = { required_one = 5 }\n"
+        "#   set_temp_variable = { optional_one = 5 } (optional)\n"
+        "\n"
+        "documented_effect = {\n}\n",
+    )
+
+    assert vsp._parse_effect_contracts_from_file(str(path)) == {
+        "documented_effect": {
+            "required": ["required_one"],
+            "optional": ["optional_one"],
+        }
+    }
+
+
+def test_contract_parser_ignores_prose_and_skip_words(tmp_path):
+    """`# - note: ...` and free prose are documentation, not parameters."""
+    path = tmp_path / "common" / "scripted_effects" / "prose.txt"
+    _write(
+        path,
+        "# Parameters:\n"
+        "# See the block above\n"
+        "# - note: nothing to pass\n"
+        "prose_effect = {\n}\n",
+    )
+
+    assert vsp._parse_effect_contracts_from_file(str(path)) == {}
+
+
+def test_contract_parser_never_shadows_a_hardcoded_contract(tmp_path):
+    """A doc block on a hardcoded effect must not replace the curated contract."""
+    path = tmp_path / "common" / "scripted_effects" / "influence.txt"
+    _write(
+        path,
+        "# Parameters:\n"
+        "# - percent_change: how much\n"
+        "# - tag_index: the influencer\n"
+        "change_influence_percentage = {\n}\n",
+    )
+
+    assert vsp._parse_effect_contracts_from_file(str(path)) == {}
+
+
+def test_contract_parser_tolerates_a_parameter_block_at_end_of_file(tmp_path):
+    path = tmp_path / "common" / "scripted_effects" / "dangling.txt"
+    _write(path, "# Parameters:\n# - dangling_param: no definition follows\n")
+
+    assert vsp._parse_effect_contracts_from_file(str(path)) == {}
+
+
+def test_discovered_contract_with_only_optional_params_is_not_registered(tmp_path):
+    """A contract with no required param has nothing to enforce at call sites."""
+    _write(
+        tmp_path / "common" / "scripted_effects" / "optional_only.txt",
+        "# Parameters:\n"
+        "# - maybe_param: optional switch\n"
+        "optional_only_effect = {\n}\n",
+    )
+
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator._build_contracts()
+
+    assert "optional_only_effect" not in validator._contracts
+
+
+# --- country tag / alias loading ------------------------------------------
+
+
+def test_tag_set_accepts_both_country_tags_and_aliases(tmp_path):
+    _write(
+        tmp_path / "common" / "country_tags" / "00_countries.txt",
+        "# Country tags\n"
+        '\nUSA = "countries/USA.txt"\nGER = "countries/Germany.txt"\n',
+    )
+    _write(
+        tmp_path / "common" / "country_tag_aliases" / "00_aliases.txt",
+        "STC = {\n\toriginal_tag = YEM\n}\n",
+    )
+
+    assert vsp._load_valid_country_tags(str(tmp_path)) == frozenset(
+        {"USA", "GER", "STC"}
+    )
+
+
+def test_tag_set_skips_unreadable_entries(tmp_path):
+    """A directory sitting where a .txt is expected must not abort the scan."""
+    _write(
+        tmp_path / "common" / "country_tags" / "00_countries.txt",
+        'USA = "countries/USA.txt"\n',
+    )
+    (tmp_path / "common" / "country_tags" / "broken.txt").mkdir()
+    (tmp_path / "common" / "country_tag_aliases").mkdir(parents=True)
+    (tmp_path / "common" / "country_tag_aliases" / "broken.txt").mkdir()
+
+    assert vsp._load_valid_country_tags(str(tmp_path)) == frozenset({"USA"})
+
+
+# --- call-site scanning edge cases ----------------------------------------
+
+
+def test_hash_inside_a_quoted_log_does_not_swallow_the_call(tmp_path, cip_contract):
+    """strip_comments keeps a `#` inside quotes; the tokenizer must drop it itself."""
+    body = (
+        "shared_focus = {\n"
+        "    completion_reward = {\n"
+        '        log = "influence # 1"\n'
+        "        set_temp_variable = { percent_change = 5 }\n"
+        "        change_influence_percentage = yes\n"
+        "    }\n"
+        "}\n"
+    )
+    assert _issues(body, cip_contract, tmp_path) == []
+
+
+def test_empty_set_temp_variable_block_sets_no_parameter(tmp_path, cip_contract):
+    body = (
+        "shared_focus = {\n"
+        "    completion_reward = {\n"
+        "        set_temp_variable = {\n"
+        "        }\n"
+        "        change_influence_percentage = yes\n"
+        "    }\n"
+        "}\n"
+    )
+    issues = _issues(body, cip_contract, tmp_path)
+    assert any(
+        category == "missing-required-param" and "percent_change" in message
+        for category, message in issues
+    )
+
+
+def test_call_to_an_uncontracted_effect_is_ignored(tmp_path, cip_contract):
+    body = (
+        "shared_focus = {\n"
+        "    completion_reward = {\n"
+        "        set_temp_variable = { percent_change = 5 }\n"
+        "        some_other_effect = yes\n"
+        "        change_influence_percentage = yes\n"
+        "    }\n"
+        "}\n"
+    )
+    assert _issues(body, cip_contract, tmp_path) == []
+
+
+def test_file_naming_no_contracted_effect_is_skipped(tmp_path, cip_contract):
+    body = "shared_focus = {\n    completion_reward = { add_stability = 0.05 }\n}\n"
+    assert _issues(body, cip_contract, tmp_path) == []
+
+
+def test_unreadable_caller_file_yields_no_findings(tmp_path, cip_contract):
+    path = tmp_path / "common" / "national_focus" / "test_focus.txt"
+    path.mkdir(parents=True)
+
+    assert (
+        _validate_call_sites_in_file(
+            (str(path), cip_contract, str(tmp_path), frozenset())
+        )
+        == []
+    )
+
+
+def test_stray_close_brace_does_not_desync_scope_tracking(tmp_path, cip_contract):
+    """An extra `}` at root must not pop the root frame and lose every temp var."""
+    body = (
+        "}\n"
+        "shared_focus = {\n"
+        "    completion_reward = {\n"
+        "        set_temp_variable = { percent_change = 5 }\n"
+        "        change_influence_percentage = yes\n"
+        "    }\n"
+        "}\n"
+    )
+    assert _issues(body, cip_contract, tmp_path) == []
+
+
+# --- validator wiring ------------------------------------------------------
+
+
+def test_validate_callers_without_contracts_scans_nothing(tmp_path, monkeypatch):
+    """An empty registry short-circuits before the file scan."""
+    _write(
+        tmp_path / "common" / "national_focus" / "focus.txt",
+        "shared_focus = { completion_reward = { change_influence_percentage = yes } }\n",
+    )
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    logged = []
+    monkeypatch.setattr(validator, "log", lambda msg, *a, **k: logged.append(msg))
+
+    validator._validate_callers()
+
+    assert validator._issues == []
+    assert any("No contracts found" in line for line in logged)
+
+
+def test_validator_routes_identical_and_invalid_tag_findings(tmp_path):
+    """Both influence-specific categories reach the report, not just the param one."""
+    _write(
+        tmp_path / "common" / "country_tags" / "00_countries.txt",
+        'USA = "countries/USA.txt"\n',
+    )
+    _write(
+        tmp_path / "events" / "test_events.txt",
+        "country_event = {\n"
+        "    id = test.1\n"
+        "    option = {\n"
+        "        name = test.1.a\n"
+        "        set_temp_variable = { percent_change = 5 }\n"
+        "        set_temp_variable = { tag_index = USA }\n"
+        "        set_temp_variable = { influence_target = USA.id }\n"
+        "        change_influence_percentage = yes\n"
+        "    }\n"
+        "    option = {\n"
+        "        name = test.1.b\n"
+        "        set_temp_variable = { percent_change = 5 }\n"
+        "        set_temp_variable = { influence_target = ZZZ }\n"
+        "        change_influence_percentage = yes\n"
+        "    }\n"
+        "}\n",
+    )
+
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    assert sorted({issue.category for issue in validator._issues}) == [
+        "identical-influence-params",
+        "invalid-influence-tag",
+    ]
+
+
+def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch):
+    _write(
+        tmp_path / "common" / "country_tags" / "00_countries.txt",
+        'USA = "countries/USA.txt"\n',
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [vsp.__file__, "--path", str(tmp_path), "--workers", "1", "--no-color"],
+    )
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(vsp.__file__, run_name="__main__")
+
+    assert exit_info.value.code == 0

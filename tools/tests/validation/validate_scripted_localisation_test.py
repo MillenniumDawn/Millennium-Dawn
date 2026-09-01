@@ -207,6 +207,304 @@ def test_definition_line_skips_longer_name_prefix(tmp_path):
     assert V._find_definition_line(str(path), "communist") == 5
 
 
+def _write_sloc(tmp_path, name, body):
+    loc_dir = tmp_path / "common" / "scripted_localisation"
+    loc_dir.mkdir(parents=True, exist_ok=True)
+    path = loc_dir / name
+    path.write_text(body, encoding="utf-8")
+    return str(path)
+
+
+def test_defined_scan_reports_names_and_their_file(tmp_path):
+    path = _write_sloc(
+        tmp_path,
+        "defs.txt",
+        "defined_text = {\n\tname = FirstLoc\n}\n"
+        "defined_text = {\n\tname = SecondLoc\n}\n",
+    )
+    names, paths = V.process_file_for_defined_localisations(
+        (path, False, str(tmp_path))
+    )
+    assert names == ["FirstLoc", "SecondLoc"]
+    assert paths == {"FirstLoc": "defs.txt", "SecondLoc": "defs.txt"}
+
+
+def test_defined_scan_ignores_a_file_without_defined_text(tmp_path):
+    path = _write_sloc(tmp_path, "notes.txt", "name = NotADefinedText\n")
+    assert V.process_file_for_defined_localisations((path, False, str(tmp_path))) == (
+        [],
+        {},
+    )
+
+
+def test_defined_scan_skips_the_french_loc_dump(tmp_path):
+    # 00_scripted_localisation_FR_loc.txt is a translation dump, not definitions
+    # (AGENTS.md keeps non-English loc out of scope).
+    path = _write_sloc(
+        tmp_path,
+        "00_scripted_localisation_FR_loc.txt",
+        "defined_text = {\n\tname = FrenchOnly\n}\n",
+    )
+    assert V.process_file_for_defined_localisations((path, False, str(tmp_path))) == (
+        [],
+        {},
+    )
+
+
+def test_scans_skip_ignored_directories(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "sample.txt"
+    path.write_text("defined_text = {\n\tname = DocsOnly\n}\n", encoding="utf-8")
+
+    assert (
+        V.process_file_for_defined_localisations((str(path), False, str(tmp_path)))[0]
+        == []
+    )
+    assert V.process_file_for_used_localisations(
+        (str(path), {"DocsOnly"}, False, str(tmp_path))
+    ) == ([], {})
+
+
+def test_usage_scan_returns_nothing_when_no_name_matches(tmp_path):
+    path = tmp_path / "consumer.txt"
+    path.write_text("custom_effect_tooltip = SomeOtherKey\n")
+    assert V.process_file_for_used_localisations(
+        (str(path), {"DefinedLoc"}, False, str(tmp_path))
+    ) == ([], {})
+
+
+def test_reference_line_falls_back_through_the_tooltip_syntax(tmp_path):
+    path = tmp_path / "consumer.txt"
+    path.write_text(
+        "filler = yes\ncustom_effect_tooltip = MyScriptedLoc\n",
+    )
+    assert V._find_reference_line(str(path), "myscriptedloc") == 2
+
+
+def test_reference_line_skips_an_earlier_tooltip_for_another_key(tmp_path):
+    path = tmp_path / "consumer.txt"
+    path.write_text(
+        "custom_effect_tooltip = OtherLoc\ncustom_trigger_tooltip = MyScriptedLoc\n",
+    )
+    assert V._find_reference_line(str(path), "myscriptedloc") == 2
+
+
+def test_reference_line_falls_back_to_a_plain_search(tmp_path):
+    path = tmp_path / "consumer.txt"
+    path.write_text("filler = yes\nsomething = MyScriptedLoc\n")
+    assert V._find_reference_line(str(path), "myscriptedloc") == 2
+
+
+def test_reference_line_of_an_unreadable_file_is_zero(tmp_path):
+    assert V._find_reference_line(str(tmp_path / "absent.txt"), "anything") == 0
+
+
+def test_definition_line_falls_back_to_a_plain_search(tmp_path):
+    # The anchored pattern refuses `name = communist_party` for `communist`;
+    # the substring fallback still points at the only plausible line.
+    path = tmp_path / "defs.txt"
+    path.write_text("filler = yes\nname = communist_party\n")
+    assert V._find_definition_line(str(path), "communist") == 2
+
+
+def test_definition_line_of_an_unreadable_file_is_zero(tmp_path):
+    assert V._find_definition_line(str(tmp_path / "absent.txt"), "anything") == 0
+
+
+def test_meta_effect_template_counts_as_a_use(tmp_path):
+    _write_sloc(
+        tmp_path,
+        "defs.txt",
+        "defined_text = {\n\tname = tooltip_EU_FRA_approve\n}\n",
+    )
+    consumer = tmp_path / "common" / "scripted_effects" / "meta.txt"
+    consumer.parent.mkdir(parents=True)
+    consumer.write_text(
+        "meta_effect = {\n"
+        "\ttext = { custom_effect_tooltip = tooltip_EU_[TAG]_approve }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+
+    used, paths = V.ScriptedLocalisation.get_all_used_localisations(
+        str(tmp_path),
+        {"tooltip_EU_FRA_approve"},
+        lowercase=False,
+        return_paths=True,
+        workers=1,
+    )
+
+    assert "tooltip_EU_FRA_approve" in used
+    assert paths["tooltip_EU_FRA_approve"] == "<meta_effect>"
+
+
+def test_unused_definition_is_reported_with_its_line(tmp_path):
+    _write_sloc(
+        tmp_path,
+        "defs.txt",
+        "defined_text = {\n\tname = UsedLoc\n}\n"
+        "defined_text = {\n\tname = OrphanLoc\n}\n",
+    )
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_unused_scripted_localisations(
+        [],
+        ["UsedLoc", "OrphanLoc"],
+        {"UsedLoc": "defs.txt", "OrphanLoc": "defs.txt"},
+        ["UsedLoc"],
+    )
+
+    assert len(validator._issues) == 1
+    issue = validator._issues[0]
+    assert issue.category == "unused-scripted-loc"
+    assert "orphanloc" in issue.message.lower()
+    assert issue.file == "common/scripted_localisation/defs.txt"
+    assert issue.line == 5
+
+
+def test_unused_definition_whose_file_is_gone_is_not_reported(tmp_path):
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_unused_scripted_localisations(
+        [], ["OrphanLoc"], {"OrphanLoc": "deleted.txt"}, []
+    )
+    assert validator._issues == []
+
+
+def test_unused_check_skips_the_preemptive_party_slot_library(tmp_path):
+    _write_sloc(
+        tmp_path,
+        "defs.txt",
+        "defined_text = {\n\tname = eu_parl_pg_party_7\n}\n",
+    )
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_unused_scripted_localisations(
+        [], ["eu_parl_pg_party_7"], {"eu_parl_pg_party_7": "defs.txt"}, []
+    )
+    assert validator._issues == []
+
+
+def test_missing_check_ignores_a_reference_it_cannot_locate(tmp_path):
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_missing_scripted_localisations(
+        [], [], ["GhostLoc"], {"GhostLoc": "no_such_file.txt"}
+    )
+    assert validator._issues == []
+
+
+def test_gfx_icon_check_flags_an_undefined_sprite(tmp_path):
+    interface = tmp_path / "interface"
+    interface.mkdir()
+    (interface / "icons.gfx").write_text(
+        "spriteTypes = {\n\tspriteType = { name = GFX_real_icon }\n}\n"
+    )
+    _write_sloc(
+        tmp_path,
+        "icons.txt",
+        "defined_text = {\n"
+        "\tname = Icon\n"
+        "\ttext = { localization_key = GFX_real_icon }\n"
+        "\ttext = { localization_key = GFX_absent_icon }\n"
+        "}\n",
+    )
+
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_gfx_icons()
+
+    assert len(validator._issues) == 1
+    assert validator._issues[0].category == "gfx-icon"
+    assert "GFX_absent_icon" in validator._issues[0].message
+    assert validator._issues[0].line == 4
+
+
+def test_gfx_icon_check_in_staged_mode_reads_only_staged_files(tmp_path):
+    interface = tmp_path / "interface"
+    interface.mkdir()
+    (interface / "icons.gfx").write_text("spriteTypes = {\n}\n")
+    staged = _write_sloc(
+        tmp_path, "staged.txt", "localization_key = GFX_staged_missing\n"
+    )
+    _write_sloc(tmp_path, "other.txt", "localization_key = GFX_other_missing\n")
+
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.staged_files = [staged]
+    validator.validate_gfx_icons()
+
+    messages = [issue.message for issue in validator._issues]
+    assert any("GFX_staged_missing" in m for m in messages)
+    assert not any("GFX_other_missing" in m for m in messages)
+
+
+class _InlinePool:
+    """Stand-in for the validator's shared worker pool: maps in-process."""
+
+    def __init__(self):
+        self.closed = False
+
+    def map(self, fn, items, chunksize=None):
+        return [fn(item) for item in items]
+
+    def close(self):
+        self.closed = True
+
+    def join(self):
+        pass
+
+
+def test_supplied_pool_is_reused_and_left_open(tmp_path):
+    _write_sloc(tmp_path, "defs.txt", "defined_text = {\n\tname = SharedLoc\n}\n")
+    for name in ("a.txt", "b.txt"):
+        consumer = tmp_path / name
+        consumer.write_text("custom_effect_tooltip = SharedLoc\n", encoding="utf-8")
+
+    pool = _InlinePool()
+    defined = V.ScriptedLocalisation.get_all_defined_localisations(
+        str(tmp_path), lowercase=False, pool=pool
+    )
+    used, paths = V.ScriptedLocalisation.get_all_used_localisations(
+        str(tmp_path),
+        set(defined),
+        lowercase=False,
+        return_paths=True,
+        pool=pool,
+    )
+
+    assert defined == ["SharedLoc"]
+    # Recorded once, from whichever consumer was scanned first.
+    assert used == ["SharedLoc"]
+    assert paths["SharedLoc"] in {"a.txt", "b.txt"}
+    assert pool.closed is False
+
+
+def test_full_run_reports_unused_definitions_and_undefined_icons(tmp_path):
+    interface = tmp_path / "interface"
+    interface.mkdir()
+    (interface / "icons.gfx").write_text("spriteTypes = {\n}\n")
+    _write_sloc(
+        tmp_path,
+        "defs.txt",
+        "defined_text = {\n"
+        "\tname = OrphanLoc\n"
+        "\ttext = { localization_key = GFX_absent_icon }\n"
+        "}\n",
+    )
+
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    categories = {issue.category for issue in validator._issues}
+    assert "unused-scripted-loc" in categories
+    assert "gfx-icon" in categories
+
+
+def test_staged_run_without_staged_files_does_nothing(tmp_path):
+    _write_sloc(tmp_path, "defs.txt", "defined_text = {\n\tname = OrphanLoc\n}\n")
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.staged_only = True
+    validator.staged_files = []
+    validator.run_validations()
+    assert validator._issues == []
+
+
 def test_usage_scan_ignores_non_english_localisation(tmp_path):
     english = tmp_path / "localisation" / "english"
     french = tmp_path / "localisation" / "french"

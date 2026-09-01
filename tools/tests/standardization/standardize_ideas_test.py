@@ -7,6 +7,12 @@ every comment, preserve nested block structure (balanced braces, intact
 nesting), and round-trip idempotently.
 """
 
+import re
+import sys
+
+import standardize_ideas
+from shared.suite import read_text as _read
+from shared.suite import write_text as _write
 from standardize_ideas import IdeaStandardizer
 
 
@@ -254,3 +260,179 @@ def test_idempotent():
     assert first == second
     assert any("# body comment kept" in line for line in first)
     assert _brace_balanced(first)
+
+
+def test_block_pattern_matches_an_idea_opener():
+    pattern = IdeaStandardizer().get_block_pattern()
+    assert re.match(pattern, "\tTAG_test_idea = {")
+    assert not re.match(pattern, "\t# TAG_test_idea = {")
+
+
+def test_packed_opener_keeps_later_comments_and_plain_lines():
+    out = _standardize(
+        _idea(
+            [
+                "\tTAG_packed = { picture = test_picture",
+                "\t\t# a note above the modifier",
+                "\t\tmodifier = { stability_factor = 0.05 } # keep this",
+                "\t\tname = TAG_packed_name",
+                "\t}",
+            ]
+        )
+    )
+    text = "\n".join(out)
+    assert "picture = test_picture" in text
+    assert "name = TAG_packed_name" in text
+    assert "# a note above the modifier" in text
+    assert "# keep this" in text
+    assert _brace_balanced(out)
+
+
+def test_blank_body_lines_are_dropped():
+    out = _standardize(
+        _idea(
+            [
+                "\tTAG_spaced = {",
+                "\t\tpicture = test_picture",
+                "",
+                "\t\tname = TAG_spaced_name",
+                "\t}",
+            ]
+        )
+    )
+    assert out == [
+        "\tTAG_spaced = {",
+        "\t\tname = TAG_spaced_name",
+        "\t\tpicture = test_picture",
+        "\t}",
+    ]
+
+
+def test_idea_without_a_readable_id_falls_back_to_idea():
+    standardizer = IdeaStandardizer()
+    props = standardizer.extract_properties(["{\n", "\tpicture = x\n", "}\n"])
+    assert props["id"] == ""
+    assert standardizer.format_block(props, "\t")[0] == "\tidea = {"
+
+
+def test_empty_log_block_detection():
+    standardizer = IdeaStandardizer()
+    assert standardizer.is_empty_log_block([])
+    assert standardizer.is_empty_log_block(
+        ["on_add = {", "\t# only a note", '\tlog = ""', "}"]
+    )
+    assert not standardizer.is_empty_log_block(
+        ["on_add = {", "\tadd_stability = 0.05", "}"]
+    )
+
+
+def test_meaningful_effect_detection_of_an_empty_block():
+    assert not IdeaStandardizer().has_meaningful_effects([])
+
+
+def test_always_no_filter_only_applies_to_gate_properties():
+    standardizer = IdeaStandardizer()
+    block = ["cancel = {", "\talways = no", "}"]
+    assert not standardizer.is_always_no_block(block, "modifier")
+    assert not standardizer.is_always_no_block(block, "allowed")
+    assert standardizer.is_always_no_block(block, "cancel")
+
+
+def test_compact_block_boundaries():
+    standardizer = IdeaStandardizer()
+    assert standardizer.compact_block([]) == []
+    assert standardizer.compact_block(
+        ["on_add = {", "", "\tadd_stability = 0.05", "}"], "\t\t"
+    ) == ["\t\ton_add = {", "\t\t\tadd_stability = 0.05", "\t\t}"]
+
+
+def test_single_line_on_add_with_effects_is_exploded_and_logged():
+    out = _standardize(
+        _idea(
+            [
+                "\tTAG_lifecycle = {",
+                "\t\tpicture = x",
+                "\t\ton_add = { add_stability = 0.05 }",
+                "\t}",
+            ]
+        )
+    )
+    assert out == [
+        "\tTAG_lifecycle = {",
+        "\t\tpicture = x",
+        "\t\ton_add = {",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Idea TAG_lifecycle added"',
+        "\t\t\tadd_stability = 0.05",
+        "\t\t}",
+        "\t}",
+    ]
+    assert _standardize([line + "\n" for line in out]) == out
+
+
+def test_effectless_lifecycle_blocks_are_dropped():
+    out = _standardize(
+        _idea(
+            [
+                "\tTAG_lifecycle = {",
+                "\t\tpicture = x",
+                "\t\ton_add = {",
+                "\t\t}",
+                "\t\ton_remove = {",
+                '\t\t\tlog = "[GetDateText]: [Root.GetName]: Idea TAG_lifecycle removed"',
+                "\t\t}",
+                "\t}",
+            ]
+        )
+    )
+    assert out == ["\tTAG_lifecycle = {", "\t\tpicture = x", "\t}"]
+
+
+_IDEAS_FILE = """ideas = {
+\tcountry = {
+\t\tTST_idea = {
+\t\t\tpicture = test_picture
+\t\t\tallowed = { tag = TST }
+\t\t}
+\t}
+}
+"""
+
+
+def test_standardize_file_rewrites_nested_ideas(tmp_path):
+    source = tmp_path / "ideas.txt"
+    output = tmp_path / "out.txt"
+    _write(source, _IDEAS_FILE)
+
+    standardizer = IdeaStandardizer()
+    assert standardizer.standardize_file(str(source), str(output))
+    assert standardizer.processed_count == 1
+    once = _read(output)
+    assert once == (
+        "ideas = {\n"
+        "\tcountry = {\n"
+        "\t\tTST_idea = {\n"
+        "\t\t\tpicture = test_picture\n"
+        "\t\t\tallowed = { original_tag = TST }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+
+    assert IdeaStandardizer().standardize_file(str(output), str(output))
+    assert _read(output) == once
+
+
+def test_standardize_file_reports_a_missing_input(tmp_path):
+    assert not IdeaStandardizer().standardize_file(
+        str(tmp_path / "absent.txt"), str(tmp_path / "out.txt")
+    )
+
+
+def test_main_standardizes_the_named_file(tmp_path, monkeypatch):
+    source = tmp_path / "ideas.txt"
+    _write(source, _IDEAS_FILE)
+    monkeypatch.setattr(sys, "argv", ["standardize_ideas.py", str(source)])
+
+    standardize_ideas.main()
+
+    assert "original_tag = TST" in _read(source)
