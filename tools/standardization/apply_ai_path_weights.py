@@ -180,6 +180,11 @@ def rebuild_block(
     kept: List[str] = []
     removed: List[str] = []
     base_line = inner + "base = 1"
+    if start == end:
+        opener = code_of_line(lines[start])
+        single = opener[opener.index("{") + 1 : opener.rindex("}")].strip()
+        if _BASE_LINE.match(single):
+            base_line = inner + single.replace("factor = ", "base = ", 1)
     cursor = start + 1
     while cursor < end:
         code = code_of_line(lines[cursor])

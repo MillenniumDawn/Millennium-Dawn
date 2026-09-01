@@ -13,6 +13,7 @@ boost 25
 DEN_legacy historical
 DEN_guarded socialist 150
 DEN_naked historical
+DEN_oneline historical
 DEN_neutral -
 """
 
@@ -61,8 +62,14 @@ TREE = """focus_tree = {
 	}
 
 	focus = {
-		id = DEN_neutral
+		id = DEN_oneline
 		x = 3
+		ai_will_do = { base = 15 }
+	}
+
+	focus = {
+		id = DEN_neutral
+		x = 4
 		ai_will_do = {
 			base = 1
 			modifier = { factor = 0 DEN_ai_not_socialist_path = yes }
@@ -142,6 +149,13 @@ class TestRewrite:
         block = output.split("id = DEN_naked")[1].split("focus = {")[0]
         assert "ai_will_do = {" in block
         assert "base = 1" in block
+        assert "modifier = { factor = 25 DEN_ai_historical_path = yes }" in block
+
+    def test_a_one_line_ai_will_do_keeps_its_base(self):
+        output, _ = run()
+        block = output.split("id = DEN_oneline")[1].split("focus = {")[0]
+        assert "base = 15" in block
+        assert "base = 1\n" not in block
         assert "modifier = { factor = 25 DEN_ai_historical_path = yes }" in block
 
     def test_un_owning_strips_path_modifiers_and_keeps_the_rest(self):
