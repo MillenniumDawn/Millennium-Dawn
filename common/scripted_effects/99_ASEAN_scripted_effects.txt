@@ -25,6 +25,165 @@ ASEAN_resync_member_array = {
 	}
 }
 
+ASEAN_check_breach = {
+	set_variable = { THIS.ASEAN_breach = 0 }
+
+	if = {
+		limit = {
+			any_country = {
+				is_asean_member = yes
+				has_war_with = ROOT
+				NOT = { original_tag = ROOT.original_tag }
+			}
+		}
+		add_to_variable = { THIS.ASEAN_breach = 3 }
+	}
+
+	if = {
+		limit = { has_elections = no }
+		add_to_variable = { THIS.ASEAN_breach = 2 }
+	}
+
+	if = {
+		limit = {
+			has_elections = no
+			OR = {
+				western_autocrats_are_in_power = yes
+				emerging_communist_state_are_in_power = yes
+			}
+		}
+		add_to_variable = { THIS.ASEAN_breach = 1 }
+	}
+
+	if = {
+		limit = { has_country_flag = ASEAN_recent_coup }
+		add_to_variable = { THIS.ASEAN_breach = 2 }
+	}
+
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = ASEAN_aligned_china
+				has_country_flag = ASEAN_aligned_america
+			}
+		}
+		add_to_variable = { THIS.ASEAN_breach = 2 }
+	}
+
+	if = {
+		limit = { has_country_flag = ASEAN_suspended_flag }
+		add_to_variable = { THIS.ASEAN_breach = 2 }
+	}
+
+	if = {
+		limit = { has_country_flag = ASEAN_objection_recent }
+		add_to_variable = { THIS.ASEAN_breach = 1 }
+	}
+
+	if = {
+		limit = {
+			OR = {
+				has_idea = corruption_level_06
+				has_idea = corruption_level_07
+				has_idea = corruption_level_08
+				has_idea = corruption_level_09
+				has_idea = corruption_level_10
+			}
+		}
+		add_to_variable = { THIS.ASEAN_breach = 1 }
+	}
+}
+
+ASEAN_apply_band = {
+	if = {
+		limit = { check_variable = { THIS.ASEAN_breach < 2 } }
+		if = {
+			limit = {
+				NOT = { has_idea = ASEAN_Member }
+				OR = {
+					has_idea = ASEAN_Member_drifting
+					has_idea = ASEAN_Member_detached
+					has_idea = ASEAN_Member_estranged
+				}
+			}
+			if = { limit = { has_idea = ASEAN_Member_drifting }
+				swap_ideas = { remove_idea = ASEAN_Member_drifting add_idea = ASEAN_Member }
+			}
+			else_if = { limit = { has_idea = ASEAN_Member_detached }
+				swap_ideas = { remove_idea = ASEAN_Member_detached add_idea = ASEAN_Member }
+			}
+			else_if = { limit = { has_idea = ASEAN_Member_estranged }
+				swap_ideas = { remove_idea = ASEAN_Member_estranged add_idea = ASEAN_Member }
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { THIS.ASEAN_breach < 4 } }
+		if = {
+			limit = {
+				NOT = { has_idea = ASEAN_Member_drifting }
+				OR = {
+					has_idea = ASEAN_Member
+					has_idea = ASEAN_Member_detached
+					has_idea = ASEAN_Member_estranged
+				}
+			}
+			if = { limit = { has_idea = ASEAN_Member }
+				swap_ideas = { remove_idea = ASEAN_Member add_idea = ASEAN_Member_drifting }
+			}
+			else_if = { limit = { has_idea = ASEAN_Member_detached }
+				swap_ideas = { remove_idea = ASEAN_Member_detached add_idea = ASEAN_Member_drifting }
+			}
+			else_if = { limit = { has_idea = ASEAN_Member_estranged }
+				swap_ideas = { remove_idea = ASEAN_Member_estranged add_idea = ASEAN_Member_drifting }
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { THIS.ASEAN_breach < 6 } }
+		if = {
+			limit = {
+				NOT = { has_idea = ASEAN_Member_detached }
+				OR = {
+					has_idea = ASEAN_Member
+					has_idea = ASEAN_Member_drifting
+					has_idea = ASEAN_Member_estranged
+				}
+			}
+			if = { limit = { has_idea = ASEAN_Member }
+				swap_ideas = { remove_idea = ASEAN_Member add_idea = ASEAN_Member_detached }
+			}
+			else_if = { limit = { has_idea = ASEAN_Member_drifting }
+				swap_ideas = { remove_idea = ASEAN_Member_drifting add_idea = ASEAN_Member_detached }
+			}
+			else_if = { limit = { has_idea = ASEAN_Member_estranged }
+				swap_ideas = { remove_idea = ASEAN_Member_estranged add_idea = ASEAN_Member_detached }
+			}
+		}
+	}
+	else = {
+		if = {
+			limit = {
+				NOT = { has_idea = ASEAN_Member_estranged }
+				OR = {
+					has_idea = ASEAN_Member
+					has_idea = ASEAN_Member_drifting
+					has_idea = ASEAN_Member_detached
+				}
+			}
+			if = { limit = { has_idea = ASEAN_Member }
+				swap_ideas = { remove_idea = ASEAN_Member add_idea = ASEAN_Member_estranged }
+			}
+			else_if = { limit = { has_idea = ASEAN_Member_drifting }
+				swap_ideas = { remove_idea = ASEAN_Member_drifting add_idea = ASEAN_Member_estranged }
+			}
+			else_if = { limit = { has_idea = ASEAN_Member_detached }
+				swap_ideas = { remove_idea = ASEAN_Member_detached add_idea = ASEAN_Member_estranged }
+			}
+		}
+	}
+}
+
 ASEAN_recount_bands = {
 	set_temp_variable = { ASEAN_committed_count_tmp = 0 }
 	set_temp_variable = { ASEAN_drifting_count_tmp = 0 }
@@ -53,6 +212,88 @@ ASEAN_recount_bands = {
 	add_to_variable = { global.ASEAN_active_count = ASEAN_drifting_count_tmp }
 }
 
+ASEAN_recount_founding_committed = {
+	set_temp_variable = { ASEAN_founding_committed_tmp = 0 }
+	if = { limit = { IND = { has_idea = ASEAN_Member } }
+		add_to_temp_variable = { ASEAN_founding_committed_tmp = 1 }
+	}
+	if = { limit = { MAY = { has_idea = ASEAN_Member } }
+		add_to_temp_variable = { ASEAN_founding_committed_tmp = 1 }
+	}
+	if = { limit = { PHI = { has_idea = ASEAN_Member } }
+		add_to_temp_variable = { ASEAN_founding_committed_tmp = 1 }
+	}
+	if = { limit = { SIA = { has_idea = ASEAN_Member } }
+		add_to_temp_variable = { ASEAN_founding_committed_tmp = 1 }
+	}
+	if = { limit = { SIN = { has_idea = ASEAN_Member } }
+		add_to_temp_variable = { ASEAN_founding_committed_tmp = 1 }
+	}
+	if = { limit = { BRU = { has_idea = ASEAN_Member } }
+		add_to_temp_variable = { ASEAN_founding_committed_tmp = 1 }
+	}
+	set_variable = { global.ASEAN_founding_committed = ASEAN_founding_committed_tmp }
+}
+
+ASEAN_fracture_watch = {
+	if = {
+		limit = { check_variable = { global.ASEAN_founding_committed < 3 } }
+		if = {
+			limit = { NOT = { has_global_flag = ASEAN_fracture_watch_active } }
+			set_global_flag = ASEAN_fracture_watch_active
+			set_variable = { global.ASEAN_fracture_watch_months = 0 }
+		}
+		add_to_variable = { global.ASEAN_fracture_watch_months = 1 }
+	}
+	else = {
+		if = {
+			limit = { has_global_flag = ASEAN_fracture_watch_active }
+			clr_global_flag = ASEAN_fracture_watch_active
+			set_variable = { global.ASEAN_fracture_watch_months = 0 }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { global.ASEAN_fracture_watch_months > 11 }
+			NOT = { has_global_flag = ASEAN_emergency_summit_called }
+		}
+		set_global_flag = ASEAN_emergency_summit_called
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			country_event = { id = asean_crisis.10 days = 3 }
+		}
+	}
+}
+
 ASEAN_monthly_update = {
+	for_each_scope_loop = {
+		array = global.ASEAN_Member
+		ASEAN_check_breach = yes
+		ASEAN_apply_band = yes
+	}
 	ASEAN_recount_bands = yes
+	ASEAN_recount_founding_committed = yes
+	ASEAN_fracture_watch = yes
+}
+
+ASEAN_apply_suspension = {
+	if = { limit = { NOT = { has_country_flag = ASEAN_suspended_flag } }
+		set_country_flag = ASEAN_suspended_flag
+		if = { limit = { NOT = { has_idea = ASEAN_suspended } }
+			add_ideas = ASEAN_suspended
+		}
+	}
+}
+
+ASEAN_lift_suspension = {
+	if = { limit = { has_country_flag = ASEAN_suspended_flag }
+		clr_country_flag = ASEAN_suspended_flag
+		if = { limit = { has_idea = ASEAN_suspended }
+			remove_ideas = ASEAN_suspended
+		}
+	}
+}
+
+ASEAN_record_objection = {
+	set_country_flag = { flag = ASEAN_objection_recent days = 180 value = 1 }
 }
