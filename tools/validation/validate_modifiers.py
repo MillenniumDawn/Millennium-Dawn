@@ -109,7 +109,6 @@ _PARAMETRIC_MODIFIER_PATTERNS: Tuple[re.Pattern, ...] = tuple(
         r"^production_cost_max_[a-z][a-z0-9_]*$",
         # <Doctrine>-keyed (covers _mastery_gain and _track_mastery_gain)
         r"^[a-z][a-z0-9_]*_mastery_gain_factor$",
-        r"^[a-z][a-z0-9_]*_doctrine_cost_factor$",
         # <Ideology>-keyed
         r"^[a-z][a-z0-9_]*_drift(?:_from_guarantees)?$",
         r"^[a-z][a-z0-9_]*_acceptance$",
@@ -395,6 +394,11 @@ def _load_documented_modifiers(
 
 _IDEA_SLOT_RE = re.compile(r"^\s*(?:character_)?slot\s*=\s*([A-Za-z][A-Za-z0-9_]*)")
 
+# Doctrine folders are declared as top-level `<id> = {` blocks. MD adds its own
+# `equipment` folder alongside vanilla's four, and the vanilla documentation
+# naturally lists only vanilla folders, so these must be harvested.
+_DOCTRINE_FOLDER_RE = re.compile(r"^([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{")
+
 _BRACE_OR_ENABLE_RE = re.compile(r"\benable\s*=\s*\{|\{|\}")
 # The lookbehind keeps `tag` off the tail of `has_cosmetic_tag`; matching a
 # token rather than a whole line is what stops a gate hiding on a shared line.
@@ -494,9 +498,39 @@ def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
     return names
 
 
-def _extract_top_level_definition_blocks(text: str) -> List[Tuple[str, int, str]]:
-    """Return (name, line, body) for blocks assigned at file scope."""
-    blocks: List[Tuple[str, int, str]] = []
+def _harvest_doctrine_folder_cost_factors(folder_files: List[str]) -> Set[str]:
+    """Every doctrine folder auto-generates a `<folder>_doctrine_cost_factor`.
+
+    MD declares its own `equipment` folder next to vanilla's land/naval/air/
+    special_forces, so the shipped vanilla documentation cannot cover the set.
+    Harvesting the declared ids keeps mod-defined folders valid while still
+    rejecting a misspelled folder name.
+    """
+    names: Set[str] = set()
+    for filepath in folder_files:
+        try:
+            with open(filepath, encoding="utf-8-sig") as fh:
+                content = fh.read()
+        except OSError:
+            continue
+        for line in content.splitlines():
+            m = _DOCTRINE_FOLDER_RE.match(line)
+            if m:
+                names.add(f"{m.group(1)}_doctrine_cost_factor")
+    return names
+
+
+def _extract_top_level_definition_blocks(
+    text: str,
+) -> List[Tuple[str, int, int, str]]:
+    """Return (name, name_line, body_line, body) for file-scope blocks.
+
+    `body` starts after the opening brace, so a caller adding an offset
+    within the body must add it to `body_line`. The two lines differ when
+    the brace sits on its own line, and using `name_line` there reports
+    every finding short by the gap.
+    """
+    blocks: List[Tuple[str, int, int, str]] = []
     cursor = 0
     in_string = False
     while cursor < len(text):
@@ -530,8 +564,9 @@ def _extract_top_level_definition_blocks(text: str) -> List[Tuple[str, int, str]
         body, end = extract_block_from_text(text, opener)
         if end == -1:
             break
-        line = text.count("\n", 0, cursor) + 1
-        blocks.append((text[cursor:end_name], line, body))
+        name_line = text.count("\n", 0, cursor) + 1
+        body_line = text.count("\n", 0, opener) + 1
+        blocks.append((text[cursor:end_name], name_line, body_line, body))
         cursor = end
     return blocks
 
@@ -540,7 +575,7 @@ def _extract_top_level_definition_names(text: str) -> Set[str]:
     """Return valid names assigned to blocks at the file's top level."""
     return {
         name
-        for name, _line, _body in _extract_top_level_definition_blocks(text)
+        for name, _nl, _bl, _body in _extract_top_level_definition_blocks(text)
         if _MODIFIER_NAME_RE.match(name) and name not in _NON_MODIFIER_KEYS
     }
 
@@ -558,10 +593,10 @@ def _harvest_md_sub_unit_names(unit_files: List[str]) -> Set[str]:
         )
         if not text or "sub_units" not in text:
             continue
-        for name, _line, body in _extract_top_level_definition_blocks(text):
+        for name, _nl, _bl, body in _extract_top_level_definition_blocks(text):
             if name != "sub_units":
                 continue
-            for sub_name, _l, _b in _extract_top_level_definition_blocks(body):
+            for sub_name, _nl, _bl, _b in _extract_top_level_definition_blocks(body):
                 names.add(sub_name)
     return names
 
@@ -575,7 +610,7 @@ def _harvest_md_operation_names(operation_files: List[str]) -> Set[str]:
         )
         if not text:
             continue
-        for name, _line, _body in _extract_top_level_definition_blocks(text):
+        for name, _nl, _bl, _body in _extract_top_level_definition_blocks(text):
             names.add(name)
     return names
 
@@ -583,7 +618,8 @@ def _harvest_md_operation_names(operation_files: List[str]) -> Set[str]:
 def _extract_dynamic_modifier_names(text: str) -> List[Tuple[str, int]]:
     """Return names and lines of top-level dynamic modifier definitions."""
     return [
-        (name, line) for name, line, _body in _extract_top_level_definition_blocks(text)
+        (name, name_line)
+        for name, name_line, _bl, _body in _extract_top_level_definition_blocks(text)
     ]
 
 
@@ -613,9 +649,11 @@ def _check_file_for_unknown_modifiers(
         if is_dynamic:
             # Dynamic modifier blocks can run to dozens of keys — report each
             # key's own line instead of the enclosing block's header line.
-            for _name, block_line, body in _extract_top_level_definition_blocks(text):
+            for _name, _nl, body_line, body in _extract_top_level_definition_blocks(
+                text
+            ):
                 for name, offset in _extract_modifier_entries_from_body(body):
-                    parsed.append((name, rel, block_line + offset))
+                    parsed.append((name, rel, body_line + offset))
         else:
             for lineno, body in _extract_modifier_blocks(text):
                 if _is_ai_weight_block(body):
@@ -690,6 +728,14 @@ class Validator(BaseValidator):
         slot_factors = _harvest_idea_slot_cost_factors(idea_tag_files)
         known_good |= slot_factors
 
+        # Engine-generated <folder>_doctrine_cost_factor from every doctrine
+        # folder, including MD's own `equipment` folder.
+        doctrine_folder_files = self._collect_files(
+            ["common/doctrines/folders/**/*.txt"], ignore_staged=True
+        )
+        doctrine_factors = _harvest_doctrine_folder_cost_factors(doctrine_folder_files)
+        known_good |= doctrine_factors
+
         # Engine-generated per-sub-unit modifiers (unit-keyed doc templates plus
         # modifier_army_sub_unit_*, doc-concrete for vanilla only) for MD's own
         # sub_units entries — the vanilla doc has no MD unit names to expand against.
@@ -722,6 +768,7 @@ class Validator(BaseValidator):
         self.log(
             f"  Known-good modifier set: {len(known_good)} names "
             f"({len(documented)} documented, {len(slot_factors)} slot cost factors, "
+            f"{len(doctrine_factors)} doctrine cost factors, "
             f"{len(sub_unit_modifiers)} MD sub-unit modifiers, "
             f"{len(operation_modifiers)} MD operation modifiers)"
         )
@@ -830,9 +877,11 @@ class Validator(BaseValidator):
 
         results = []
         for _filepath, rel, text in self._iter_dynamic_modifier_files():
-            for name, block_line, body in _extract_top_level_definition_blocks(text):
+            for name, _nl, body_line, body in _extract_top_level_definition_blocks(
+                text
+            ):
                 for message, offset in _redundant_enable_gates(body):
-                    results.append((f"'{name}': {message}", rel, block_line + offset))
+                    results.append((f"'{name}': {message}", rel, body_line + offset))
 
         self._report(
             results,

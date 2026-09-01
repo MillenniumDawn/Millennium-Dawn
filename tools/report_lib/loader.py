@@ -19,20 +19,28 @@ from .models import Issue, Severity, ValidatorRun
 def discover_validator_runs(results_dir: str) -> List[Tuple[str, Path]]:
     """Return [(validator_slug, artifact_dir), ...] sorted by slug.
 
-    Matches any subdirectory named `validation-<slug>-results`, which is the
-    convention the workflow uses for uploaded artifacts.
+    Multiple downloaded artifacts use `validation-<slug>-results`
+    subdirectories. GitHub extracts a single pattern match directly into the
+    destination, so flat `validation-<slug>.json` or `.log` files also count.
     """
     base = Path(results_dir)
     if not base.is_dir():
         return []
 
-    runs = []
+    runs = {}
     for sub in sorted(base.glob("validation-*-results")):
         if not sub.is_dir():
             continue
         slug = sub.name.removeprefix("validation-").removesuffix("-results")
-        runs.append((slug, sub))
-    return runs
+        runs[slug] = sub
+
+    for path in sorted(base.glob("validation-*.*")):
+        if not path.is_file() or path.suffix not in {".json", ".log"}:
+            continue
+        slug = path.stem.removeprefix("validation-")
+        runs.setdefault(slug, base)
+
+    return sorted(runs.items())
 
 
 def load_all(results_dir: str) -> List[ValidatorRun]:

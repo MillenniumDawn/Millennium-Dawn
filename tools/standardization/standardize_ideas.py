@@ -39,8 +39,11 @@ _BLOCK_PROPS = {
     "on_remove",
 }
 
-# Blocks that get filtered out when they contain `always = no`
-_ALWAYS_NO_FILTERED = {"allowed", "allowed_civil_war", "cancel"}
+# Blocks that get filtered out when they contain `always = no`.
+# `allowed` is not in this set: on a slotted idea it hides the entry from the
+# picker while add_idea still applies it. Slotless allowed blocks are stripped
+# by strip_idea_allowed_gates.py instead.
+_ALWAYS_NO_FILTERED = {"allowed_civil_war", "cancel"}
 
 # Block pattern for wrapper blocks / idea blocks
 _BLOCK_START_RE = re.compile(r"\s*[\w_]+\s*=\s*{")
@@ -264,16 +267,10 @@ class IdeaStandardizer(BaseStandardizer):
         return False
 
     def is_always_no_block(self, block_lines: List[str], property_name: str) -> bool:
-        """Check if a block contains only `always = no` — a redundant default.
+        """True when the block is a redundant `always = no` default we drop.
 
-        Removed as code cleanup, NOT a performance optimization.
-        `allowed` is checked once at game start/load (default = always allowed)
-        and is bypassed by add_ideas — so `allowed = { always = no }` is dead code.
-        Tradeoff: `has_available_idea_with_trait` builds a list of every idea that
-        passes `allowed`, then evaluates their `available` triggers at runtime.
-        Keeping `allowed = { always = no }` keeps ideas out of that list (fewer
-        runtime checks). Removing it lets more ideas into the pool (more runtime
-        checks). MD does not use that trigger, so the tradeoff is moot here.
+        `allowed = { always = no }` is not redundant on slotted ideas: it hides
+        the entry from the picker while add_idea still applies it.
         """
         if property_name not in _ALWAYS_NO_FILTERED:
             return False

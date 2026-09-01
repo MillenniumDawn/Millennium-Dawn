@@ -1,13 +1,9 @@
 name: PR Cache Cleanup
 
-# Deletes the closed PR's workspace-bundle caches (~150-250MB per pushed
-# head sha) instead of letting them sit against the 10GB repo budget until
-# LRU/7-day eviction. Ref-scoped deletion also sweeps any legacy
-# validators-v4-* entries for that PR.
+# Removes legacy workspace caches when a PR closes.
 
 on:
-  # pull_request_target so the token keeps actions:write for fork PRs. Safe
-  # here only because this job never checks out or executes PR code.
+  # This job never checks out or executes PR code.
   pull_request_target:
     types: [closed]
 
@@ -19,43 +15,44 @@ jobs:
     name: Delete PR caches
     runs-on: ubuntu-latest
     steps:
-      - name: Delete caches scoped to this PR's merge ref
+      - name: Delete legacy caches scoped to this PR's merge ref
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           ref="refs/pull/${{ github.event.pull_request.number }}/merge"
+          cache_url="repos/${{ github.repository }}/actions/caches"
           # --paginate: a long-lived PR can hold >100 entries. The || arm
           # tolerates a delete/eviction race (404) without failing the job.
-          gh api --paginate "repos/${{ github.repository }}/actions/caches?ref=${ref}&per_page=100" \
-            --jq '.actions_caches[].id' \
-            | while read -r id; do
-                gh api -X DELETE "repos/${{ github.repository }}/actions/caches/${id}" \
-                  && echo "deleted cache ${id}" \
-                  || echo "cache ${id} already gone"
-              done
+          cache_ids=$(gh api --paginate \
+            "${cache_url}?ref=${ref}&per_page=100" \
+            --jq '.actions_caches[].id')
+          while read -r id; do
+            [ -z "$id" ] && continue
+            gh api -X DELETE "${cache_url}/${id}" \
+              && echo "deleted cache ${id}" \
+              || echo "cache ${id} already gone"
+          done <<< "$cache_ids"
 
-      # nightly-pr-validation dispatches coding-pipeline on the PR's head
-      # branch, so the bundles that run saves are scoped to refs/heads/<branch>
-      # and the merge-ref sweep above never sees them. Same-repo PRs only, and
-      # restricted to the md-workspace- prefix: the branch itself may live on.
+      # Remove legacy branch-scoped workspace bundles.
       - name: Delete workspace bundles scoped to this PR's head branch
         if: >-
           github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ github.token }}
-          # Through env, never inline ${{ }}: this is pull_request_target and a
-          # branch name is contributor-controlled text.
+          # Keep contributor-controlled branch text out of the shell template.
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           [ -n "$HEAD_REF" ] || exit 0
+          cache_url="repos/${{ github.repository }}/actions/caches"
           # -f, not a hand-built query string: gh url-encodes the value, so a
           # branch name containing & or # cannot rewrite the request.
-          gh api --paginate --method GET "repos/${{ github.repository }}/actions/caches" \
+          cache_ids=$(gh api --paginate --method GET "$cache_url" \
             -f ref="refs/heads/${HEAD_REF}" -F per_page=100 \
             --jq '.actions_caches[]
-                  | select(.key | startswith("md-workspace-")) | .id' \
-            | while read -r id; do
-                gh api -X DELETE "repos/${{ github.repository }}/actions/caches/${id}" \
-                  && echo "deleted cache ${id}" \
-                  || echo "cache ${id} already gone"
-              done
+                  | select(.key | startswith("md-workspace-")) | .id')
+          while read -r id; do
+            [ -z "$id" ] && continue
+            gh api -X DELETE "${cache_url}/${id}" \
+              && echo "deleted cache ${id}" \
+              || echo "cache ${id} already gone"
+          done <<< "$cache_ids"

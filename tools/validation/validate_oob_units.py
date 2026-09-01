@@ -12,7 +12,7 @@ import os
 import re
 import sys
 from difflib import get_close_matches
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -27,7 +27,11 @@ from equipment_module_slots import (
     check_created_variants,
     parse_variant_names,
 )
-from shared_utils import get_staged_files, read_text_under
+from shared_utils import (
+    get_staged_files,
+    normalize_path_separators,
+    read_text_under,
+)
 from validator_common import (
     BaseValidator,
     Issue,
@@ -41,6 +45,9 @@ _VARIANT_SLOT_CATEGORIES = {
     "unknown_slot": "SHIP VARIANT: slot not on hull",
     "unknown_module": "SHIP VARIANT: unknown module reference",
     "category_mismatch": "SHIP VARIANT: module category not allowed in slot",
+    "missing_required_module": "SHIP VARIANT: required slot left empty",
+    "count_limit_exceeded": "SHIP VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "SHIP VARIANT: module forbidden on hull type",
 }
 
 _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
@@ -48,6 +55,9 @@ _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
     "unknown_slot": "EQUIPMENT VARIANT: slot not on hull",
     "unknown_module": "EQUIPMENT VARIANT: unknown module reference",
     "category_mismatch": "EQUIPMENT VARIANT: module category not allowed in slot",
+    "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
+    "count_limit_exceeded": "EQUIPMENT VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
 }
 
 # Every directory where a create_equipment_variant effect actually appears.
@@ -88,6 +98,11 @@ _CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
     "common/operations/*.txt",
     "common/resistance_compliance_modifiers/*.txt",
     "common/scripted_guis/*.txt",
+]
+# delete_unit_template_and_units also lives in idea removal effects, so the
+# deleted-name set is drawn from a wider file list than the create_unit sources.
+_DELETE_TEMPLATE_SOURCE_PATTERNS = _CREATE_UNIT_SOURCE_PATTERNS + [
+    "common/ideas/*.txt",
 ]
 
 
@@ -673,7 +688,10 @@ def validate_oob_division_groups_file(
 # state-scope effect, a numeric state-ID block, or a state-scoped decision).
 # Its division string must live on one physical line, parse as army data, and
 # name a division_template. A template defined in the same country/effect path
-# must appear before the create_unit that uses it.
+# must appear before the create_unit that uses it. persistent.cpp reports a
+# missing runtime template as "Malformed token: <name>". If that name is also
+# deleted via delete_unit_template_and_units anywhere, the effect must create
+# the template earlier or sit behind a has_template guard.
 
 # Documented create_unit block keys; anything else is a typo.
 _CREATE_UNIT_KEYS = frozenset(
@@ -714,6 +732,11 @@ _DIVISION_VALUE_RE = re.compile(r'\bdivision\s*=\s*"((?:[^"\\]|\\.)*)"', re.S)
 _TEMPLATE_NAME_RE = re.compile(r'\bname\s*=\s*"([^"]*)"')
 _KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _OWNER_RE = re.compile(r"\bowner\s*=")
+_OWNER_VALUE_RE = re.compile(r"\bowner\s*=\s*([A-Za-z0-9_]+)")
+_DELETE_TEMPLATE_BLOCK_RE = re.compile(
+    r"delete_unit_template_and_units\s*=\s*\{([^{}]*)\}"
+)
+_DELETE_TEMPLATE_NAME_RE = re.compile(r'\bdivision_template\s*=\s*"([^"]*)"')
 _ZERO_FACTOR_RE = re.compile(
     r"\b(?:start_equipment_factor|start_manpower_factor)\s*=\s*0(?![.\d])"
 )
@@ -771,6 +794,9 @@ _CREATE_UNIT_CATEGORIES = {
     "out-of-bounds-division": "CREATE UNIT: division string has German/Danish letters",
     "zero-factor": "CREATE UNIT: equipment/manpower factor is zero",
     "template-order": "CREATE UNIT: template defined after create_unit",
+    "missing-template-ensure": (
+        "CREATE UNIT: template not created or has_template-guarded in this effect"
+    ),
 }
 _CREATE_UNIT_WARNING_KINDS = frozenset({"out-of-bounds-division"})
 # persistent.cpp rejects these even inside quotes (Sweden militärdistriktet).
@@ -1033,24 +1059,61 @@ def _top_level_keys(text: str, start: int, end: int) -> List[str]:
     return keys
 
 
+def _templates_named(
+    nodes: List[Dict], text: str, container: int, name: str
+) -> Iterator[int]:
+    """Indices of division_template blocks named *name* anywhere under *container*."""
+    stack = list(nodes[container]["children"])
+    while stack:
+        i = stack.pop()
+        if nodes[i]["label"] == "division_template":
+            m = _TEMPLATE_NAME_RE.search(text[nodes[i]["start"] : nodes[i]["end"]])
+            if m and m.group(1) == name:
+                yield i
+        stack.extend(nodes[i]["children"])
+
+
 def _template_defs_named(
     nodes: List[Dict], text: str, container: int, name: str, scope_path: Tuple[str, ...]
 ) -> List[int]:
     """Indices of same-scope division_template blocks named *name*."""
-    out = []
-    stack = list(nodes[container]["children"])
-    while stack:
-        i = stack.pop()
-        if (
-            nodes[i]["label"] == "division_template"
-            and _country_scope_path(nodes, i) == scope_path
-        ):
-            body = text[nodes[i]["start"] : nodes[i]["end"]]
-            m = _TEMPLATE_NAME_RE.search(body)
-            if m and m.group(1) == name:
-                out.append(i)
-        stack.extend(nodes[i]["children"])
-    return out
+    return [
+        i
+        for i in _templates_named(nodes, text, container, name)
+        if _country_scope_path(nodes, i) == scope_path
+    ]
+
+
+def _template_covers_create(
+    nodes: List[Dict],
+    def_idx: int,
+    cu_path: Tuple[str, ...],
+    owner: Optional[str],
+) -> bool:
+    def_path = _country_scope_path(nodes, def_idx)
+    if def_path == cu_path:
+        return True
+    # A bare ROOT-scope definition is treated as covering the whole effect: the
+    # effect's own country almost always owns the spawn. This under-reports a
+    # create_unit nested in an unrelated TAG scope with a different owner.
+    if def_path == ("ROOT",):
+        return True
+    if owner and def_path and def_path[-1] == owner:
+        return True
+    return False
+
+
+def _has_prior_covering_template(
+    nodes: List[Dict], text: str, cu_idx: int, name: str, owner: Optional[str]
+) -> bool:
+    container = _container_for(nodes, cu_idx)
+    cu_start = nodes[cu_idx]["start"]
+    cu_path = _country_scope_path(nodes, cu_idx)
+    return any(
+        nodes[i]["start"] < cu_start
+        and _template_covers_create(nodes, i, cu_path, owner)
+        for i in _templates_named(nodes, text, container, name)
+    )
 
 
 def _in_state_scope(nodes: List[Dict], text: str, idx: int) -> bool:
@@ -1360,9 +1423,89 @@ def _parse_division_string(
     return issues, template
 
 
-def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
+_EFFECT_CALL_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*)\s*=\s*yes\b")
+
+
+def _effect_template_closure(
+    mod_path: str, files: List[str]
+) -> Dict[str, FrozenSet[str]]:
+    """Map each scripted effect to the template names calling it guarantees.
+
+    An ensure block is routinely factored into its own effect and invoked
+    before the create_unit, so a same-effect scan alone reports those as
+    unguarded. Calls are followed transitively.
+    """
+    ensures: Dict[str, Set[str]] = {}
+    calls: Dict[str, Set[str]] = {}
+    for filepath in files:
+        content = strip_comments(_read_text(filepath, mod_path))
+        if not content:
+            continue
+        nodes = _build_block_nodes(content)
+        for i, node in enumerate(nodes):
+            if node["parent"] != -1 or not node["label"]:
+                continue
+            body = content[node["start"] : node["end"]]
+            names = set(_TEMPLATE_NAME_RE.findall(body))
+            names.update(_HAS_TEMPLATE_RE.findall(body))
+            ensures.setdefault(node["label"], set()).update(names)
+            calls.setdefault(node["label"], set()).update(_EFFECT_CALL_RE.findall(body))
+
+    resolved: Dict[str, FrozenSet[str]] = {}
+
+    def resolve(name: str, seen: Set[str]) -> FrozenSet[str]:
+        if name in resolved:
+            return resolved[name]
+        if name in seen or name not in ensures:
+            return frozenset()
+        seen.add(name)
+        out = set(ensures[name])
+        for callee in calls.get(name, ()):
+            out.update(resolve(callee, seen))
+        seen.discard(name)
+        result = frozenset(out)
+        resolved[name] = result
+        return result
+
+    for name in ensures:
+        resolve(name, set())
+    return resolved
+
+
+def _prior_effect_ensures(
+    text: str,
+    container: int,
+    nodes: List[Dict],
+    cu_start: int,
+    name: str,
+    closure: Dict[str, FrozenSet[str]],
+) -> bool:
+    """True if an effect invoked before the create_unit guarantees *name*."""
+    start = nodes[container]["start"] if container != -1 else 0
+    for m in _EFFECT_CALL_RE.finditer(text, start, cu_start):
+        if name in closure.get(m.group(1), ()):
+            return True
+    return False
+
+
+def _deleted_template_names(mod_path: str, files: List[str]) -> FrozenSet[str]:
+    names: Set[str] = set()
+    for filepath in files:
+        raw = _read_text(filepath, mod_path)
+        if not raw:
+            continue
+        for block in _DELETE_TEMPLATE_BLOCK_RE.finditer(strip_comments(raw)):
+            m = _DELETE_TEMPLATE_NAME_RE.search(block.group(1))
+            if m and m.group(1):
+                names.add(m.group(1))
+    return frozenset(names)
+
+
+def _check_created_units(
+    args: Tuple[str, str, str, FrozenSet[str], Dict[str, FrozenSet[str]]],
+) -> List[Issue]:
     """Validate every create_unit block in one file. Returns error Issues."""
-    filepath, rel, mod_path = args
+    filepath, rel, mod_path, deleted_names, effect_closure = args
     raw = _read_text(filepath, mod_path)
     if not raw:
         return []
@@ -1447,12 +1590,14 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
 
         scope_path = _country_scope_path(nodes, cu_idx)
         container = _container_for(nodes, cu_idx)
+        found_same_scope = False
         for a in _ancestors(nodes, cu_idx):
             defs = _template_defs_named(nodes, content, a, tname, scope_path)
             if not defs:
                 if a == container:
                     break
                 continue
+            found_same_scope = True
             # A name can be defined multiple times in one country/effect path.
             # Only the earliest definition can make this create_unit valid.
             t = nodes[min(defs, key=lambda d: nodes[d]["start"])]
@@ -1463,6 +1608,27 @@ def _check_created_units(args: Tuple[str, str, str]) -> List[Issue]:
                     line,
                 )
             break
+
+        if found_same_scope:
+            continue
+        if tname not in deleted_names:
+            continue
+        # force_equipment_variants entries carry their own `owner =`; only the
+        # keys outside the division string belong to the create_unit block.
+        outer = body[: dm.start()] + body[dm.end() :]
+        owner_m = _OWNER_VALUE_RE.search(outer)
+        owner = owner_m.group(1) if owner_m else None
+        if _prior_effect_ensures(
+            content, container, nodes, cu["start"], tname, effect_closure
+        ):
+            continue
+        if not _has_prior_covering_template(nodes, content, cu_idx, tname, owner):
+            out.warn(
+                "missing-template-ensure",
+                f"{cu['line']}: create_unit uses division_template '{tname}' which is deleted "
+                f"elsewhere, with no prior division_template or has_template guard in this effect",
+                line,
+            )
 
     return out.issues
 
@@ -1646,7 +1812,7 @@ class Validator(BaseValidator):
         files = self._collect_files(_VARIANT_SOURCE_PATTERNS, ignore_staged=full_scope)
         sources = [
             (
-                os.path.relpath(filepath, self.mod_path),
+                normalize_path_separators(os.path.relpath(filepath, self.mod_path)),
                 _read_text(filepath, self.mod_path),
             )
             for filepath in files
@@ -1660,9 +1826,12 @@ class Validator(BaseValidator):
         A module in a slot the hull does not have, or whose category that slot
         rejects, is dropped at load with no error. The design still appears, so
         the loss only shows as missing stats — a Type 32 Guardian naming the
-        tank slot `engine_type_slot` shipped with no engine at all. Ship hulls,
-        tank chassis and plane airframes all follow the same rules, so every
-        design is checked, whatever it builds.
+        tank slot `engine_type_slot` shipped with no engine at all. A design
+        that also leaves a `required = yes` slot without a module is worse: the
+        engine refuses the variant outright at effect time
+        (equipment_effects.cpp: 'Invalid module setup. Design lacks one or more
+        required modules'). Ship hulls, tank chassis and plane airframes all
+        follow the same rules, so every design is checked, whatever it builds.
         """
         self._log_section(
             "Checking created equipment variants against hull slot rules..."
@@ -1746,7 +1915,7 @@ class Validator(BaseValidator):
             content = _read_text(filepath, self.mod_path)
             if "version_name" not in content:
                 continue
-            rel = os.path.relpath(filepath, self.mod_path)
+            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
             for f in check_oob_variant_refs(content, by_tag, wildcard):
                 results.append(
                     Issue(
@@ -1762,7 +1931,7 @@ class Validator(BaseValidator):
             content = _read_text(filepath, self.mod_path)
             if "add_equipment_" not in content:
                 continue
-            rel = os.path.relpath(filepath, self.mod_path)
+            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
             for f in check_attributed_archetypes(content, archetypes):
                 results.append(
                     Issue(
@@ -1789,9 +1958,9 @@ class Validator(BaseValidator):
             os.path.splitext(os.path.basename(filepath))[0] for filepath in target_paths
         }
         changed_targets = self.staged_only and any(
-            os.path.relpath(filepath, self.mod_path)
-            .replace(os.sep, "/")
-            .startswith("history/units/")
+            normalize_path_separators(
+                os.path.relpath(filepath, self.mod_path)
+            ).startswith("history/units/")
             for filepath in get_staged_files(
                 self.mod_path, extensions=self.STAGED_EXTENSIONS, include_missing=True
             )
@@ -1804,7 +1973,7 @@ class Validator(BaseValidator):
         results = []
         for filepath in source_paths:
             content = _read_text(filepath, self.mod_path)
-            rel = os.path.relpath(filepath, self.mod_path)
+            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
             for target, line in find_load_oob_references(content):
                 if target not in targets:
                     results.append(
@@ -1836,8 +2005,33 @@ class Validator(BaseValidator):
             return
         self.log(f"  Found {len(files)} files to check")
 
+        delete_files = self._collect_files(
+            _DELETE_TEMPLATE_SOURCE_PATTERNS, ignore_staged=True
+        )
+        deleted_names = disk_cache.aggregate_cached(
+            self.mod_path,
+            "oob_units.deleted_templates",
+            delete_files,
+            lambda: _deleted_template_names(self.mod_path, delete_files),
+        )
+        effect_files = self._collect_files(
+            ["common/scripted_effects/*.txt"], ignore_staged=True
+        )
+        effect_closure = disk_cache.aggregate_cached(
+            self.mod_path,
+            "oob_units.effect_templates",
+            effect_files,
+            lambda: _effect_template_closure(self.mod_path, effect_files),
+        )
         args_list = [
-            (f, os.path.relpath(f, self.mod_path), self.mod_path) for f in files
+            (
+                f,
+                normalize_path_separators(os.path.relpath(f, self.mod_path)),
+                self.mod_path,
+                deleted_names,
+                effect_closure,
+            )
+            for f in files
         ]
         all_results = self._pool_map(_check_created_units, args_list, chunksize=20)
 

@@ -241,7 +241,7 @@ A summary. The full reference is the [Code Stylization Guide](/dev-resources/cod
 - Follow naming conventions: `TAG_focus_name_here`.
 - Use `is_triggered_only = yes` for events.
 - Include `ai_will_do` in all focuses and decisions.
-- Remove redundant code (`allowed = { always = no }`, empty trigger blocks).
+- Remove redundant code (empty trigger blocks). Keep `allowed = { always = no }` on slotted ideas that must not appear in the picker.
 
 ### Docs Content (`docs/`)
 

@@ -1277,6 +1277,8 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus AST_stop_panicking"
 		set_temp_variable = { treasury_change = -10.00 }
 		modify_treasury_effect = yes
+		newline = yes
+		add_stability = 0.03
 		custom_effect_tooltip = tfc_fixing_tt
 	}
 
@@ -1306,10 +1308,18 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus AST_guarantee_the_banks"
 		set_temp_variable = { treasury_change = -20.00 }
 		modify_treasury_effect = yes
-		hidden_effect = {
+		newline = yes
+		if = {
+			limit = { has_idea = tfc_1 }
 			swap_ideas = {
 				remove_idea = tfc_1
 				add_idea = tfc_2
+			}
+		}
+		else = {
+			swap_ideas = {
+				remove_idea = tfc_2
+				add_idea = tfc_3
 			}
 		}
 		custom_effect_tooltip = tfc_fixing_tt
@@ -1341,6 +1351,20 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus AST_grab_the_securities"
 		set_temp_variable = { treasury_change = -8.00 }
 		modify_treasury_effect = yes
+		newline = yes
+		if = {
+			limit = { has_idea = tfc_1 }
+			swap_ideas = {
+				remove_idea = tfc_1
+				add_idea = tfc_2
+			}
+		}
+		else = {
+			swap_ideas = {
+				remove_idea = tfc_2
+				add_idea = tfc_3
+			}
+		}
 		custom_effect_tooltip = tfc_fixing_tt
 	}
 
@@ -1372,13 +1396,34 @@ shared_focus = {
 		set_temp_variable = { treasury_change = -42.00 }
 		modify_treasury_effect = yes
 		newline = yes
-		custom_effect_tooltip = tfc_fixing_2_tt
+		swap_ideas = {
+				remove_idea = tfc_3
+				add_idea = tfc_4
+			}
 		newline = yes
 		increase_economic_growth = yes
 		hidden_effect = {
 			country_event = a_global_financial_crisis.4
 			clr_country_flag = tfc_ast_flag
 			clr_country_flag = the_nation_is_in_crisis_ast
+			remove_ideas = tfc_4
+			if = {
+				limit = { has_country_flag = negative_gearing_diminished_ast }
+				hidden_effect = {
+					add_timed_idea = {
+						idea = tfc_4
+						days = 290
+					}
+				}
+			}
+			else = {
+				hidden_effect = {
+					add_timed_idea = {
+						idea = tfc_4
+						days = 760
+					}
+				}
+			}
 		}
 	}
 
@@ -2535,9 +2580,7 @@ focus_tree = {
 			add_stability = -0.15
 			set_temp_variable = { temp_opinion = -50 }
 			change_landowners_opinion = yes
-			hidden_effect = {
-				set_country_flag = negative_gearing_diminished_ast
-			}
+			set_country_flag = negative_gearing_diminished_ast
 		}
 
 		ai_will_do = { base = 1 }
@@ -3602,6 +3645,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_partner_with_the_japanese"
 			JAP = { country_event = ast_jap_trade.1 }
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_ideas = japanese_export_deal_ast
+			}
 		}
 
 		ai_will_do = { base = 1 }
@@ -6920,6 +6968,11 @@ focus_tree = {
 			MAY = {
 				country_event = kuala_lumpur_abbott.1
 			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_ideas = abbott_mal_pact_ast
+			}
 		}
 
 		ai_will_do = { base = 1 }
@@ -7039,14 +7092,8 @@ focus_tree = {
 			effect_tooltip = {
 				JAP = { add_war_support = 0.025 }
 				add_opinion_modifier = { target = JAP modifier = military_cooperation }
-				custom_effect_tooltip = jap_alliance_abbott_tt
 				give_guarantee = JAP
 				JAP = { give_guarantee = AST }
-			}
-			custom_effect_tooltip = TT_IF_THEY_REJECT
-			effect_tooltip = {
-				add_opinion_modifier = { target = JAP modifier = denied_us_ast }
-				add_political_power = -50
 			}
 		}
 
@@ -7073,6 +7120,12 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_due_reparations"
 			JAP = {
 				country_event = jap_repar_abbott.1
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				set_temp_variable = { treasury_change = 53 }
+				modify_treasury_effect = yes
 			}
 		}
 
@@ -8714,6 +8767,7 @@ focus_tree = {
 			hidden_effect = {
 				news_event = costello_republic_events.4
 			}
+			set_country_flag = end_repub_opposition
 		}
 
 		ai_will_do = { base = 1 }
@@ -10358,7 +10412,11 @@ focus_tree = {
 			}
 			set_country_flag = rudd_super_passed
 			hidden_effect = {
-				country_event = { id = legislation_rudd_blocked.4 days = 3 }
+				if = {
+					limit = { has_country_flag = election_cooldown_ast }
+					country_event = { id = legislation_rudd_blocked.4 days = 3 }
+				}
+				
 			}
 		}
 
@@ -13308,6 +13366,13 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_smother_the_pot"
 			LBA = {
 				country_event = stir_the_pot_event.1
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				LBA = {
+					add_ideas = enforced_no_fly_zone_ast
+				}
 			}
 			hidden_effect = {
 				if = {
