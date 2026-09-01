@@ -20,7 +20,13 @@ NATO_auto_ratify_accession = {
 				limit = {
 					exists = yes
 					has_idea = NATO_member
-					has_country_flag = MD_auto_ratify_nato_accession
+					# The AI cannot toggle the automation GUI, so without this it could
+					# only ratify by winning a political-power contest for the decision,
+					# and accession needs every living member to succeed at that.
+					OR = {
+						is_ai = yes
+						has_country_flag = MD_auto_ratify_nato_accession
+					}
 					NOT = { has_country_flag = NATO_Ratified_@ROOT }
 				}
 				set_temp_variable = {
@@ -40,10 +46,10 @@ NATO_auto_ratify_accession = {
 					log = "[GetDateText]: [THIS.GetName]: Automatic NATO accession ratification target: [ROOT.GetName]"
 					add_political_power = -20
 					set_country_flag = NATO_Ratified_@ROOT
-					if = {
-						limit = { is_ai = no }
-						update_nato_dirty_variable = yes
-					}
+					# Unconditional: the dirty variable is global and drives the
+					# ratification tracker, so a human watching it has to see an AI
+					# member's ratification too. The decision path already does this.
+					update_nato_dirty_variable = yes
 				}
 			}
 		}
