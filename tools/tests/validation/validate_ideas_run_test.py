@@ -417,7 +417,7 @@ def test_staged_mode_limits_unused_ideas_to_staged_files(tmp_path):
     validator = _validator(tmp_path, unused_ideas=True)
     defined, _issues, ideas_by_file = validator._parse_all_ideas()
     validator.staged_only = True
-    validator.staged_files = [str(tmp_path / "common" / "ideas" / "extra.txt")]
+    validator.staged_files = ["common/ideas/extra.txt"]
 
     validator.validate_unused_ideas(defined, ideas_by_file)
 
@@ -496,7 +496,7 @@ def test_staged_run_reports_quality_for_the_staged_idea_file(tmp_path, no_vanill
     _write(tmp_path, "common/ideas/quality.txt", QUALITY_IDEAS)
     validator = _validator(tmp_path)
     validator.staged_only = True
-    validator.staged_files = [str(tmp_path / "common" / "ideas" / "quality.txt")]
+    validator.staged_files = ["common/ideas/quality.txt"]
 
     validator.run_validations()
 

@@ -1,7 +1,5 @@
 """Focused regressions for scripted-localisation invocation scanning."""
 
-import os
-
 import validate_scripted_localisation as V
 
 
@@ -360,7 +358,7 @@ def test_unused_definition_is_reported_with_its_line(tmp_path):
     issue = validator._issues[0]
     assert issue.category == "unused-scripted-loc"
     assert "orphanloc" in issue.message.lower()
-    assert issue.file == os.path.join("common", "scripted_localisation", "defs.txt")
+    assert issue.file == "common/scripted_localisation/defs.txt"
     assert issue.line == 5
 
 
