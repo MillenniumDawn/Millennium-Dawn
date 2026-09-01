@@ -176,7 +176,12 @@ class TestRewrite:
 
     def test_unbalanced_braces_abort(self):
         with pytest.raises(tool.MappingError):
-            run(text=TREE.replace("\tfocus = {\n\t\tid = DEN_naked", "\tfocus = {\n\t\t{\n\t\tid = DEN_naked"))
+            run(
+                text=TREE.replace(
+                    "\tfocus = {\n\t\tid = DEN_naked",
+                    "\tfocus = {\n\t\t{\n\t\tid = DEN_naked",
+                )
+            )
 
 
 class TestPathModifierDetection:

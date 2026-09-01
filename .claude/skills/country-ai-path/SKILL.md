@@ -57,8 +57,9 @@ python tools/standardization/apply_ai_path_weights.py --map <mapping>
 
 Loc drafting and `_desc` sentence-count fixes go to a `localisation-editor` subagent on haiku.
 
-**Rule standard.** Exactly `HISTORICAL` (the `default = { }` block) + one option per alt-history path
-+ `RANDOM_PATH` + `NO_PATH`. Delete `DEFAULT`; merge any duplicate `DEFAULT`/`HISTORICAL`. Write the
+**Rule standard.** Exactly `HISTORICAL` + one option per alt-history path + `RANDOM_PATH` +
+`NO_PATH`, and `NO_PATH` is the `default = { }` block, listed last — a country the player never
+configures runs unscripted. Delete `DEFAULT`; merge any duplicate `DEFAULT`/`HISTORICAL`. Write the
 options fresh — don't recycle a stub's names or bucket count. The historical option's displayed text
 is literally `"Historical"`; its `_desc` carries the country's history. Player-facing names, no
 internal jargon, no "random" in a path name. Every `_desc` exactly two sentences, present tense

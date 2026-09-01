@@ -9,6 +9,13 @@ def parse(body: str, tag: str = "DEN"):
     return report.parse_expr(body, tag)
 
 
+def parent_child_focuses():
+    return {
+        "a": report.Focus(id="a", line=1, kind="focus"),
+        "b": report.Focus(id="b", line=2, kind="focus", prereq_groups=[["a"]]),
+    }
+
+
 class TestStatements:
     def test_scalar_block_and_quoted_values(self):
         body = 'name = "DEN_AI" option = { name = HISTORICAL } flag = X'
@@ -46,7 +53,9 @@ class TestEvaluator:
         assert report.evaluate(expr, None, False, {}) is True
 
     def test_or_short_circuits_past_unknown(self):
-        expr = parse("OR = { has_government = democratic is_historical_focus_on = yes }")
+        expr = parse(
+            "OR = { has_government = democratic is_historical_focus_on = yes }"
+        )
         assert report.evaluate(expr, None, True, {}) is True
         assert report.evaluate(expr, None, False, {}) is None
 
@@ -67,7 +76,9 @@ class TestEvaluator:
         }
         expr = parse("DEN_ai_not_socialist_path = yes")
         assert report.evaluate(expr, "DEN_EU_FOCUS_PATH", False, triggers) is True
-        assert report.evaluate(expr, "DEN_SOCIALIST_FOCUS_PATH", True, triggers) is False
+        assert (
+            report.evaluate(expr, "DEN_SOCIALIST_FOCUS_PATH", True, triggers) is False
+        )
         assert report.evaluate(expr, None, False, triggers) is False
 
     def test_cycles_terminate_as_unknown(self):
@@ -75,7 +86,9 @@ class TestEvaluator:
             "DEN_ai_a_path": parse("DEN_ai_b_path = yes"),
             "DEN_ai_b_path": parse("DEN_ai_a_path = yes"),
         }
-        assert report.evaluate(parse("DEN_ai_a_path = yes"), None, True, triggers) is None
+        assert (
+            report.evaluate(parse("DEN_ai_a_path = yes"), None, True, triggers) is None
+        )
 
     def test_missing_trigger_definition_is_unknown(self):
         assert report.evaluate(parse("DEN_ai_ghost_path = yes"), None, True, {}) is None
@@ -85,7 +98,9 @@ class TestEvaluator:
             "DEN_ai_alt_path": parse("DEN_ai_west_path = yes"),
             "DEN_ai_west_path": parse("has_global_flag = DEN_EU_FOCUS_PATH"),
         }
-        assert "DEN_EU_FOCUS_PATH" in report._expand_trigger("DEN_ai_alt_path", triggers)
+        assert "DEN_EU_FOCUS_PATH" in report._expand_trigger(
+            "DEN_ai_alt_path", triggers
+        )
 
 
 FOCUS_FILE = """
@@ -191,7 +206,11 @@ class TestFocusParsing:
         findings = report._owner_findings(
             self.focuses,
             "DEN",
-            ["DEN_HISTORICAL_FOCUS_PATH", "DEN_SOCIALIST_FOCUS_PATH", "DEN_DEAD_FOCUS_PATH"],
+            [
+                "DEN_HISTORICAL_FOCUS_PATH",
+                "DEN_SOCIALIST_FOCUS_PATH",
+                "DEN_DEAD_FOCUS_PATH",
+            ],
             triggers,
         )
         assert findings["unused_flags"] == ["DEN_DEAD_FOCUS_PATH"]
@@ -199,10 +218,7 @@ class TestFocusParsing:
 
 class TestReachability:
     def test_single_member_group_with_a_dead_parent_orphans_the_child(self):
-        focuses = {
-            "a": report.Focus(id="a", line=1, kind="focus"),
-            "b": report.Focus(id="b", line=2, kind="focus", prereq_groups=[["a"]]),
-        }
+        focuses = parent_child_focuses()
         alive = {"a": False, "b": True}
         assert report.unreachable_focuses(alive, focuses) == {"b"}
 
@@ -225,10 +241,7 @@ class TestReachability:
         assert report.unreachable_focuses(alive, focuses) == {"b", "c"}
 
     def test_a_dead_focus_is_not_also_counted_as_an_orphan(self):
-        focuses = {
-            "a": report.Focus(id="a", line=1, kind="focus"),
-            "b": report.Focus(id="b", line=2, kind="focus", prereq_groups=[["a"]]),
-        }
+        focuses = parent_child_focuses()
         alive = {"a": False, "b": False}
         assert report.unreachable_focuses(alive, focuses) == set()
 

@@ -11,7 +11,7 @@ Substitute `DEN` / `Denmark` / the path names. Tabs for indentation.
 DEN_ai_behavior = {
 	name = "DEN_AI_BEHAVIOR"
 	group = "RULE_GROUP_AI_BEHAVIOR"
-	default = {
+	option = {
 		name = HISTORICAL
 		text = "RULE_OPTION_DEN_HISTORICAL"
 		desc = "RULE_OPTION_DEN_HISTORICAL_DESC"
@@ -26,7 +26,7 @@ DEN_ai_behavior = {
 		text = "RULE_OPTION_MD_RANDOM_PATH"
 		desc = "RULE_OPTION_MD_RANDOM_PATH_DESC"
 	}
-	option = {
+	default = {
 		name = NO_PATH
 		text = "RULE_OPTION_MD_NO_PATH"
 		desc = "RULE_OPTION_MD_NO_PATH_DESC"
@@ -34,10 +34,11 @@ DEN_ai_behavior = {
 }
 ```
 
-`HISTORICAL` is the `default = { }` block. One `option` per alt-history path between it and
-`RANDOM_PATH`. No `DEFAULT`. Option names are unprefixed (`EUROPEAN_UNION`, not
-`DEN_EUROPEAN_UNION`) and never contain "random". Don't reorder the file — the alphabetical pass is
-a separate cross-cutting item.
+`NO_PATH` is the `default = { }` block and stays last — a fresh game leaves the AI unscripted unless
+the player picks a path. `HISTORICAL` is a plain `option` and comes first, with one `option` per
+alt-history path between it and `RANDOM_PATH`. No `DEFAULT`. Option names are unprefixed
+(`EUROPEAN_UNION`, not `DEN_EUROPEAN_UNION`) and never contain "random". Don't reorder the file —
+the alphabetical pass is a separate cross-cutting item.
 
 ## 2. Localisation — `localisation/english/MD_game_rules_l_english.yml`
 

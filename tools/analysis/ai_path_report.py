@@ -310,18 +310,22 @@ def parse_focus_file(text: str, tag: str) -> List[Focus]:
             continue
         focuses.append(
             _build_focus(
-                id_match.group(1), match.group(1), line_of(text, match.start()), body, tag
+                id_match.group(1),
+                match.group(1),
+                line_of(text, match.start()),
+                body,
+                tag,
             )
         )
 
 
-def _build_focus(
-    focus_id: str, kind: str, line: int, body: str, tag: str
-) -> Focus:
+def _build_focus(focus_id: str, kind: str, line: int, body: str, tag: str) -> Focus:
     focus = Focus(id=focus_id, line=line, kind=kind)
     for key, scalar, block in iter_statements(body):
         if key == "prerequisite" and block is not None:
-            group = [value for name, value, _ in iter_statements(block) if name == "focus"]
+            group = [
+                value for name, value, _ in iter_statements(block) if name == "focus"
+            ]
             if group:
                 focus.prereq_groups.append(group)
         elif key == "mutually_exclusive" and block is not None:
@@ -459,19 +463,31 @@ def parse_wiring(root: str, tag: str) -> Tuple[Dict[str, List[str]], Dict[str, f
         return per_option, buckets
     text = read_script(path)
     rule_ref = re.compile(
-        r"has_game_rule\s*=\s*\{\s*rule\s*=\s*" + tag + r"_ai_behavior\s+option\s*=\s*(\w+)"
+        r"has_game_rule\s*=\s*\{\s*rule\s*=\s*"
+        + tag
+        + r"_ai_behavior\s+option\s*=\s*(\w+)"
     )
     for match in rule_ref.finditer(text):
         option = match.group(1)
         limit_open = text.rfind("limit", 0, match.start())
-        block_start = text.find("{", text.rfind("if", 0, limit_open) if limit_open > 0 else 0)
+        block_start = text.find(
+            "{", text.rfind("if", 0, limit_open) if limit_open > 0 else 0
+        )
         close = find_matching_brace(text, block_start) if block_start != -1 else -1
-        scope = text[match.end() : close] if close != -1 else text[match.end() : match.end() + 2000]
-        flags = re.findall(r"set_global_flag\s*=\s*(" + tag + r"_\w+_FOCUS_PATH)", scope)
+        scope = (
+            text[match.end() : close]
+            if close != -1
+            else text[match.end() : match.end() + 2000]
+        )
+        flags = re.findall(
+            r"set_global_flag\s*=\s*(" + tag + r"_\w+_FOCUS_PATH)", scope
+        )
         per_option.setdefault(option, []).extend(flags)
         if option == "RANDOM_PATH":
             for weight, flag in re.findall(
-                r"([0-9.]+)\s*=\s*\{\s*set_global_flag\s*=\s*(" + tag + r"_\w+_FOCUS_PATH)",
+                r"([0-9.]+)\s*=\s*\{\s*set_global_flag\s*=\s*("
+                + tag
+                + r"_\w+_FOCUS_PATH)",
                 scope,
             ):
                 buckets[flag] = _number(weight, 0.0)
@@ -515,7 +531,9 @@ def count_sentences(text: str) -> int:
 
 def parse_plans(root: str, tag: str) -> List[Tuple[str, Dict[str, float], bool]]:
     """Return (plan name, focus_factors, reads_game_rule) per strategy plan."""
-    path = os.path.join(root, "common", "ai_strategy_plans", tag + "_strategy_plans.txt")
+    path = os.path.join(
+        root, "common", "ai_strategy_plans", tag + "_strategy_plans.txt"
+    )
     if not os.path.isfile(path):
         return []
     text = read_script(path)
@@ -597,7 +615,9 @@ def focus_weight(
 def unreachable_focuses(alive: Dict[str, bool], focuses: Dict[str, Focus]) -> set:
     """Focuses whose prerequisite chain is fully dead, to a fixed point."""
     reachable = {
-        focus_id for focus_id, is_alive in alive.items() if is_alive and not focuses[focus_id].prereq_groups
+        focus_id
+        for focus_id, is_alive in alive.items()
+        if is_alive and not focuses[focus_id].prereq_groups
     }
     changed = True
     while changed:
@@ -643,7 +663,9 @@ def resolve_focus_file(root: str, tag: str) -> str:
             continue
         path = os.path.join(folder, name)
         with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
-            count = len(re.findall(r"^[ \t]*id\s*=\s*" + tag + r"_", handle.read(), re.M))
+            count = len(
+                re.findall(r"^[ \t]*id\s*=\s*" + tag + r"_", handle.read(), re.M)
+            )
         if count:
             counted.append((count, path))
     if not counted:
@@ -706,14 +728,19 @@ def _rule_findings(
     issues: List[str] = []
     options: List[str] = []
     if not rule:
-        return {"issues": ["no " + tag + "_ai_behavior rule in 00_game_rules.txt"], "options": []}
+        return {
+            "issues": ["no " + tag + "_ai_behavior rule in 00_game_rules.txt"],
+            "options": [],
+        }
     options = [option.name for option in rule.options]
     defaults = [option.name for option in rule.options if option.is_default]
-    if defaults != ["HISTORICAL"]:
-        issues.append("default block is {}, expected HISTORICAL".format(defaults or "missing"))
+    if defaults != ["NO_PATH"]:
+        issues.append(
+            "default block is {}, expected NO_PATH".format(defaults or "missing")
+        )
     if "DEFAULT" in options:
         issues.append("DEFAULT option still present")
-    for required in ("RANDOM_PATH", "NO_PATH"):
+    for required in ("HISTORICAL", "RANDOM_PATH", "NO_PATH"):
         if required not in options:
             issues.append("missing " + required + " option")
     if rule.header_key and rule.header_key not in loc:
@@ -721,17 +748,29 @@ def _rule_findings(
     elif rule.header_key:
         header = loc[rule.header_key]
         if not header.startswith("@" + tag + " "):
-            issues.append("header key should read '@{} <short name>', found '{}'".format(tag, header))
+            issues.append(
+                "header key should read '@{} <short name>', found '{}'".format(
+                    tag, header
+                )
+            )
     for option in rule.options:
-        if option.name == "RANDOM_PATH" and option.text_key != "RULE_OPTION_MD_RANDOM_PATH":
+        if (
+            option.name == "RANDOM_PATH"
+            and option.text_key != "RULE_OPTION_MD_RANDOM_PATH"
+        ):
             issues.append("RANDOM_PATH must reuse RULE_OPTION_MD_RANDOM_PATH")
         if option.name == "NO_PATH" and option.text_key != "RULE_OPTION_MD_NO_PATH":
             issues.append("NO_PATH must reuse RULE_OPTION_MD_NO_PATH")
         if option.text_key and option.text_key not in loc:
             issues.append("missing loc key " + option.text_key)
-        if option.name == "HISTORICAL" and loc.get(option.text_key) not in (None, "Historical"):
+        if option.name == "HISTORICAL" and loc.get(option.text_key) not in (
+            None,
+            "Historical",
+        ):
             issues.append(
-                "historical option text is '{}', must be 'Historical'".format(loc[option.text_key])
+                "historical option text is '{}', must be 'Historical'".format(
+                    loc[option.text_key]
+                )
             )
         if "RANDOM" in option.name and option.name != "RANDOM_PATH":
             issues.append("option name " + option.name + " contains 'random'")
@@ -743,7 +782,9 @@ def _rule_findings(
         elif desc and not option.desc_key.startswith("RULE_OPTION_MD_"):
             sentences = count_sentences(desc)
             if sentences != 2:
-                issues.append("{} has {} sentences, must be 2".format(option.desc_key, sentences))
+                issues.append(
+                    "{} has {} sentences, must be 2".format(option.desc_key, sentences)
+                )
             if _YEAR.search(desc):
                 issues.append(option.desc_key + " contains a hard date")
 
@@ -752,7 +793,9 @@ def _rule_findings(
         if option in ("RANDOM_PATH", "NO_PATH"):
             continue
         if option not in wired:
-            issues.append("option " + option + " sets no global flag in 999_game_rules_on_actions")
+            issues.append(
+                "option " + option + " sets no global flag in 999_game_rules_on_actions"
+            )
     if wiring.get("NO_PATH"):
         issues.append("NO_PATH sets a flag; it must set none")
     if "RANDOM_PATH" in options:
@@ -940,18 +983,24 @@ def render(report: Dict, sections: Sequence[str]) -> str:
     if "owners" in sections:
         owners = report["owners"]
         out.append(
-            "OWNERSHIP  {} owned / {} path-neutral".format(owners["owned"], owners["unowned"])
+            "OWNERSHIP  {} owned / {} path-neutral".format(
+                owners["owned"], owners["unowned"]
+            )
         )
         for group, count in sorted(owners["groups"].items(), key=lambda item: -item[1]):
             out.append("  {:<5} {}".format(count, group))
         if owners["additive"]:
             out.append("  ! additive path modifiers: " + ", ".join(owners["additive"]))
         if owners["unused_flags"]:
-            out.append("  ! flags never read in the tree: " + ", ".join(owners["unused_flags"]))
+            out.append(
+                "  ! flags never read in the tree: " + ", ".join(owners["unused_flags"])
+            )
         out.append("")
 
     if "matrix" in sections:
-        out.append("STATE MATRIX  option / historical AI / live / zeroed / orphans / stranded")
+        out.append(
+            "STATE MATRIX  option / historical AI / live / zeroed / orphans / stranded"
+        )
         for row in report["matrix"]:
             out.append(
                 "  {:<22} {:<4} {:>5} {:>7} {:>8} {:>9}".format(
@@ -991,7 +1040,9 @@ def render(report: Dict, sections: Sequence[str]) -> str:
         if plans["no_focus_factors"]:
             out.append("  no focus_factors: " + ", ".join(plans["no_focus_factors"]))
         if plans["reads_game_rule"]:
-            out.append("  ! reads has_game_rule: " + ", ".join(plans["reads_game_rule"]))
+            out.append(
+                "  ! reads has_game_rule: " + ", ".join(plans["reads_game_rule"])
+            )
         if plans["zeroed_by_every_plan"]:
             out.append(
                 "  ! zeroed by every plan ({}): {}".format(
@@ -1014,15 +1065,21 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Report the AI path facts for one country (issue #3162)."
     )
-    parser.add_argument("--tag", required=True, help="Three-letter country tag, e.g. DEN")
-    parser.add_argument("--path", default=".", help="Mod root (default: current directory)")
+    parser.add_argument(
+        "--tag", required=True, help="Three-letter country tag, e.g. DEN"
+    )
+    parser.add_argument(
+        "--path", default=".", help="Mod root (default: current directory)"
+    )
     parser.add_argument(
         "--section",
         action="append",
         choices=SECTIONS + ("all",),
         help="Limit output to one section; repeatable",
     )
-    parser.add_argument("--limit", type=int, default=15, help="Items per list (0 = all)")
+    parser.add_argument(
+        "--limit", type=int, default=15, help="Items per list (0 = all)"
+    )
     parser.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args(argv)
 

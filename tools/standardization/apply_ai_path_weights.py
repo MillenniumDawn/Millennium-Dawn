@@ -97,10 +97,14 @@ def _parse_group(parts: Sequence[str], number: int) -> Group:
     owner_flag = fields.get("owner_flag")
     kill = fields.get("not")
     if not kill or not (owner or owner_flag):
-        raise MappingError("line {}: group needs owner/owner_flag and not".format(number))
+        raise MappingError(
+            "line {}: group needs owner/owner_flag and not".format(number)
+        )
     for value in (owner, owner_flag, kill):
         if value and not _TRIGGER_NAME.match(value):
-            raise MappingError("line {}: '{}' is not a trigger name".format(number, value))
+            raise MappingError(
+                "line {}: '{}' is not a trigger name".format(number, value)
+            )
     owner_line = (
         "has_global_flag = " + owner_flag if owner_flag else str(owner) + " = yes"
     )
@@ -163,7 +167,12 @@ def find_focus_spans(lines: Sequence[str]) -> Dict[str, Tuple[int, int]]:
 
 
 def rebuild_block(
-    lines: Sequence[str], start: int, end: int, group: Optional[Group], boost: float, tag: str
+    lines: Sequence[str],
+    start: int,
+    end: int,
+    group: Optional[Group],
+    boost: float,
+    tag: str,
 ) -> Tuple[List[str], List[str]]:
     """Return (new ai_will_do lines, removed modifier descriptions)."""
     indent = _AI_WILL_DO.match(code_of_line(lines[start])).group(1)
@@ -197,7 +206,9 @@ def rebuild_block(
 
     body = [indent + "ai_will_do = {", base_line] + kept
     if group is not None:
-        body.append(inner + "modifier = {{ factor = {} {} }}".format(_fmt(boost), group.owner))
+        body.append(
+            inner + "modifier = {{ factor = {} {} }}".format(_fmt(boost), group.owner)
+        )
         body.append(inner + "modifier = {{ factor = 0 {} }}".format(group.kill))
     body.append(indent + "}")
     return body, removed
@@ -238,7 +249,8 @@ def new_block(indent: str, group: Optional[Group], boost: float) -> List[str]:
     body = [indent + "ai_will_do = {", indent + "\tbase = 1"]
     if group is not None:
         body.append(
-            indent + "\tmodifier = {{ factor = {} {} }}".format(_fmt(boost), group.owner)
+            indent
+            + "\tmodifier = {{ factor = {} {} }}".format(_fmt(boost), group.owner)
         )
         body.append(indent + "\tmodifier = {{ factor = 0 {} }}".format(group.kill))
     body.append(indent + "}")
@@ -267,7 +279,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--tag", required=True, help="Three-letter country tag")
     parser.add_argument("--map", required=True, help="Mapping file, or - for stdin")
     parser.add_argument("--file", help="Focus file (default: resolved from --tag)")
-    parser.add_argument("--path", default=".", help="Mod root (default: current directory)")
+    parser.add_argument(
+        "--path", default=".", help="Mod root (default: current directory)"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Report without writing")
     args = parser.parse_args(argv)
 

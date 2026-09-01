@@ -319,9 +319,9 @@ def test_post_checks_patches_annotations_beyond_the_first_batch(monkeypatch):
 
     assert results == [("Events", True, "check #7")]
     assert [c[0] for c in calls] == ["POST", "PATCH"]
-    assert calls[1][1] == "https://api.github.com/repos/owner/repo/check-runs/7", (
-        "PATCH must target the freshly created check run"
-    )
+    assert (
+        calls[1][1] == "https://api.github.com/repos/owner/repo/check-runs/7"
+    ), "PATCH must target the freshly created check run"
     assert len(calls[0][2]["output"]["annotations"]) == ANNOTATIONS_PER_REQUEST
     assert (
         len(calls[1][2]["output"]["annotations"])
