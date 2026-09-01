@@ -1,0 +1,58 @@
+ASEAN_resync_member_array = {
+	for_each_scope_loop = {
+		array = global.ASEAN_Member
+		if = {
+			limit = {
+				NOT = { has_idea = ASEAN_Member }
+				NOT = { has_idea = ASEAN_Member_drifting }
+				NOT = { has_idea = ASEAN_Member_detached }
+				NOT = { has_idea = ASEAN_Member_estranged }
+			}
+			remove_from_array = { global.ASEAN_Member = THIS }
+		}
+	}
+	if = {
+		limit = {
+			OR = {
+				has_idea = ASEAN_Member
+				has_idea = ASEAN_Member_drifting
+				has_idea = ASEAN_Member_detached
+				has_idea = ASEAN_Member_estranged
+			}
+			NOT = { is_in_array = { global.ASEAN_Member = THIS } }
+		}
+		add_to_array = { global.ASEAN_Member = THIS }
+	}
+}
+
+ASEAN_recount_bands = {
+	set_temp_variable = { ASEAN_committed_count_tmp = 0 }
+	set_temp_variable = { ASEAN_drifting_count_tmp = 0 }
+	set_temp_variable = { ASEAN_detached_count_tmp = 0 }
+	set_temp_variable = { ASEAN_estranged_count_tmp = 0 }
+	for_each_scope_loop = {
+		array = global.ASEAN_Member
+		if = { limit = { has_idea = ASEAN_Member }
+			add_to_temp_variable = { ASEAN_committed_count_tmp = 1 }
+		}
+		else_if = { limit = { has_idea = ASEAN_Member_drifting }
+			add_to_temp_variable = { ASEAN_drifting_count_tmp = 1 }
+		}
+		else_if = { limit = { has_idea = ASEAN_Member_detached }
+			add_to_temp_variable = { ASEAN_detached_count_tmp = 1 }
+		}
+		else_if = { limit = { has_idea = ASEAN_Member_estranged }
+			add_to_temp_variable = { ASEAN_estranged_count_tmp = 1 }
+		}
+	}
+	set_variable = { global.ASEAN_committed_count = ASEAN_committed_count_tmp }
+	set_variable = { global.ASEAN_drifting_count = ASEAN_drifting_count_tmp }
+	set_variable = { global.ASEAN_detached_count = ASEAN_detached_count_tmp }
+	set_variable = { global.ASEAN_estranged_count = ASEAN_estranged_count_tmp }
+	set_variable = { global.ASEAN_active_count = ASEAN_committed_count_tmp }
+	add_to_variable = { global.ASEAN_active_count = ASEAN_drifting_count_tmp }
+}
+
+ASEAN_monthly_update = {
+	ASEAN_recount_bands = yes
+}
