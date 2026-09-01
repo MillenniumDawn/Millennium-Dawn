@@ -2,12 +2,13 @@
 	NDefines.NGame.START_DATE = "2000.1.1.12"
 	NDefines.NGame.END_DATE = "2100.1.1.1"
 	NDefines.NGame.LAG_DAYS_FOR_LOWER_SPEED = 500
+	NDefines.NGame.GAME_SPEED_SECONDS = { 1.5, 0.4, 0.15, 0.05, 0.0 }
 	NDefines.NGame.LAG_DAYS_FOR_PAUSE = 100
 	NDefines.NGame.MAX_SCRIPTED_LOC_RECURSION = 40
 	NDefines.NGame.ENERGY_RESOURCE = "oil" -- sets what resource is used for energy. We can adjust this later to a proper resource that is tradeable
 	NDefines.NGame.CHECKSUM_SALT = "MillenniumDawn"
-	NDefines.NGame.COMBAT_LOG_MAX_MONTHS = 6 -- 12; halve combat log retention for performance
-	NDefines.NGame.MESSAGE_TIMEOUT_DAYS = 7 -- 60; messages expire sooner to reduce memory
+	NDefines.NGame.COMBAT_LOG_MAX_MONTHS = 2 -- 12; halve combat log retention for performance
+	NDefines.NGame.MESSAGE_TIMEOUT_DAYS = 3 -- 60; messages expire sooner to reduce memory
 	NDefines.NGame.TRADE_ROUTE_RECALCULATE_FREQUENCY_DAYS = 45 -- vanilla recalculates too often; 45 days matches BI
 
 	-- NDiplomacy Defines
@@ -182,7 +183,7 @@
 	NDefines.NCountry.BASE_STABILITY_WAR_FACTOR = -0.15
 	NDefines.NCountry.WAR_SUPPORT_OFFNSIVE_WAR = -0.1
 	NDefines.NCountry.WAR_SUPPORT_DEFENSIVE_WAR = 0.2 -- 1
-	NDefines.NCountry.EVENT_PROCESS_OFFSET = 30 -- 20; stagger event processing across 30 ticks to reduce spike load with 200+ countries
+	NDefines.NCountry.EVENT_PROCESS_OFFSET = 60 -- 20; stagger event processing across 30 ticks to reduce spike load with 200+ countries
 	NDefines.NCountry.COUNTRY_SCORE_MULTIPLIER = 0 -- 1.0; disable cosmetic VP score calculations for performance
 	NDefines.NCountry.ARMY_SCORE_MULTIPLIER = 0 -- 0.15
 	NDefines.NCountry.NAVY_SCORE_MULTIPLIER = 0 -- 1.0
@@ -983,23 +984,23 @@
 	NDefines.NAI.NUM_SILOS_PER_DOCKYARDS = 0.03
 
 	-- AI Refresh Frequency — reduce expensive periodic checks for 200+ nation mod
-	NDefines.NAI.DAYS_BETWEEN_CHECK_BEST_TEMPLATE = 14 -- 7; 2x less frequent template re-evaluation
-	NDefines.NAI.DAYS_BETWEEN_CHECK_BEST_EQUIPMENT = 14 -- 7; 2x less frequent equipment re-evaluation
-	NDefines.NAI.DAYS_BETWEEN_AIR_PRIORITIES_UPDATE = 14 -- 4; less frequent than vanilla to reduce CPU load
+	NDefines.NAI.DAYS_BETWEEN_CHECK_BEST_TEMPLATE = 30 -- 7; 2x less frequent template re-evaluation
+	NDefines.NAI.DAYS_BETWEEN_CHECK_BEST_EQUIPMENT = 30 -- 7; 2x less frequent equipment re-evaluation
+	NDefines.NAI.DAYS_BETWEEN_AIR_PRIORITIES_UPDATE = 30 -- 4; less frequent than vanilla to reduce CPU load
 
 	-- AI Combat Responsiveness — slower than vanilla; these hot-path checks cost real CPU per tick for little AI gain on a 200+ nation mod
-	NDefines.NAI.HOURS_BETWEEN_ENCIRCLEMENT_DISCOVERY = 96 -- 72; per-army province scan, eased ~1.5x
-	NDefines.NAI.AI_UPDATE_ROLES_FREQUENCY_HOURS = 72 -- 48
-	NDefines.NAI.UPDATE_SUPPLY_MOTORIZATION_FREQUENCY_HOURS = 72 -- 52
-	NDefines.NAI.UPDATE_SUPPLY_BOTTLENECKS_FREQUENCY_HOURS = 240 -- 168
+	NDefines.NAI.HOURS_BETWEEN_ENCIRCLEMENT_DISCOVERY = 168 -- 72; per-army province scan, eased ~1.5x
+	NDefines.NAI.AI_UPDATE_ROLES_FREQUENCY_HOURS = 168 -- 48
+	NDefines.NAI.UPDATE_SUPPLY_MOTORIZATION_FREQUENCY_HOURS = 168 -- 52
+	NDefines.NAI.UPDATE_SUPPLY_BOTTLENECKS_FREQUENCY_HOURS = 336 -- 168
 
 	-- AI Periodic Recalc — slowed past vanilla; periodic re-evaluation that barely changes between ticks
-	NDefines.NAI.EQUIPMENT_MARKET_UPDATE_FREQUENCY_DAYS = 16 -- 11
-	NDefines.NAI.AIFC_UPDATE_FREQUENCY_DAYS = 8 -- 5; force-concentration logic, perf-sensitive
-	NDefines.NAI.CONVOY_RAIDING_TARGET_RECALC_DAYS = 22 -- 15
-	NDefines.NAI.STRIKE_FORCE_TARGET_RECALC_DAYS = 8 -- 5
-	NDefines.NAI.AI_NAVAL_GOALS_UPDATE_FREQUENCY_DAYS = 10 -- 7
-	NDefines.NAI.AI_OBJECTIVE_DEFAULT_TARGET_RECALC_DAYS = 8 -- 5
+	NDefines.NAI.EQUIPMENT_MARKET_UPDATE_FREQUENCY_DAYS = 30 -- 11
+	NDefines.NAI.AIFC_UPDATE_FREQUENCY_DAYS = 14 -- 5; force-concentration logic, perf-sensitive
+	NDefines.NAI.CONVOY_RAIDING_TARGET_RECALC_DAYS = 30 -- 15
+	NDefines.NAI.STRIKE_FORCE_TARGET_RECALC_DAYS = 15 -- 5
+	NDefines.NAI.AI_NAVAL_GOALS_UPDATE_FREQUENCY_DAYS = 20 -- 7
+	NDefines.NAI.AI_OBJECTIVE_DEFAULT_TARGET_RECALC_DAYS = 15 -- 5
 	NDefines.NFactions.AI_DAYS_TO_SELECT_GOAL = 21 -- 14
 
 	-- Raid Interface — throttle per-hour/per-frame raid target evaluation to cut map-icon refresh cost
@@ -1019,11 +1020,11 @@
 	NDefines.NAI.PEACE_BID_FOLD_AGAINST_PLAYER_CHANCE = 0.7			-- 0.5 in vanilla
 	NDefines.NAI.PEACE_BID_FOLD_AGAINST_LIBERATE_CONTEST = 1.0			-- 1.0 in vanilla
 	NDefines.NAI.PEACE_AI_GROUP_PEACE_ACTIONS = false					-- Whether AI should group peace actions or greedily just select the most-desired peace actions
-	NDefines.NAI.PEACE_AI_EVALUATE_FOR_SUBJECTS = true					-- Whether AI should include subjects when evaluating giving states to other winners (may affect performance on new conference turn)
-	NDefines.NAI.PEACE_AI_EVALUATE_FOR_ALLIES = true					-- Whether AI should include allies when evaluating giving states to other winners (may affect performance on new conference turn)
+	NDefines.NAI.PEACE_AI_EVALUATE_FOR_SUBJECTS = false					-- Whether AI should include subjects when evaluating giving states to other winners (may affect performance on new conference turn)
+	NDefines.NAI.PEACE_AI_EVALUATE_FOR_ALLIES = false					-- Whether AI should include allies when evaluating giving states to other winners (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_FOR_NON_ALLIES = false				-- Whether AI should include non-allies (not in same faction) when evaluating giving states to other winners (may affect performance on new conference turn)
-	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CORE = true				-- Whether AI should evaluate giving states to other winners if state is their core (may affect performance on new conference turn)
-	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CLAIM = true				-- Whether AI should evaluate giving states to other winners if they have a claim on the state (may affect performance on new conference turn)
+	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CORE = false				-- Whether AI should evaluate giving states to other winners if state is their core (may affect performance on new conference turn)
+	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CLAIM = false				-- Whether AI should evaluate giving states to other winners if they have a claim on the state (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_ALWAYS = false				-- Whether AI should always evaluate giving states to other winners (!!! may heavily affect performance on new conference turn for large peace conferences !!!)
 	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.4 -- 0.2 vanilla; was 0.6 (3x vanilla caused AI to overstack rocket sites with SAMs)
 	NDefines.NAI.LAND_COMBAT_MISSILE_IMPORTANCE_FACTOR = 1.75 -- Importance of missiles for regions of strat importance. Higher = more -- 1.5
