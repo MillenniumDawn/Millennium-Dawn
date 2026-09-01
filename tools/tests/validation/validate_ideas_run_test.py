@@ -416,6 +416,9 @@ def test_staged_mode_limits_unused_ideas_to_staged_files(tmp_path):
     )
     validator = _validator(tmp_path, unused_ideas=True)
     defined, _issues, ideas_by_file = validator._parse_all_ideas()
+    ideas_by_file = {
+        path.replace("/", "\\"): ideas for path, ideas in ideas_by_file.items()
+    }
     validator.staged_only = True
     validator.staged_files = ["common/ideas/extra.txt"]
 
