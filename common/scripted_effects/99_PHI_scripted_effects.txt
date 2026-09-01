@@ -1,0 +1,342 @@
+#Author(s): Angriest_Bird
+
+
+# temp_change = the change number
+# Purpose: PHI_change_strength_of_milf is to change the full strength of the Moro Islamic Liberation Front
+PHI_change_strength_of_milf = {
+	custom_effect_tooltip = PHI_change_milf_strength_tt
+	add_to_variable = { PHI_strength_of_milf = temp_change }
+	clamp_variable = {
+		min = 0
+		max = 100
+		var = PHI_strength_of_milf
+	}
+	PHI_update_the_effects_of_islamic_strength = yes
+}
+
+PHI_update_the_effects_of_islamic_strength = {
+	# Once the insurgency is concluded the modifier must stay off, or any later
+	# strength recalculation would silently resurrect it.
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = PHI_milf_defeated
+				has_country_flag = PHI_permanent_ceasefire
+			}
+		}
+		PHI_end_the_moro_insurgency = yes
+	}
+	else = {
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = PHI_islamism_dynamic_modifier } } }
+			add_dynamic_modifier = { modifier = PHI_islamism_dynamic_modifier }
+			set_country_flag = phi_milf_exists
+			if = {
+				limit = { NOT = { has_variable = PHI_strength_of_milf } }
+				set_variable = { var = PHI_strength_of_milf value = 35 }
+			}
+		}
+
+		PHI_recalculate_the_effects_of_islamic_strength = yes
+	}
+}
+
+PHI_recalculate_the_effects_of_islamic_strength = {
+	set_temp_variable = { opinion_modifier = PHI_strength_of_milf }
+
+	set_variable = { var = PHI_fascism_drift_effect value = opinion_modifier }
+	set_variable = { var = PHI_stability_factor_effect value = opinion_modifier }
+	set_variable = { var = PHI_political_power_factor_effect value = opinion_modifier }
+
+	multiply_variable = { var = PHI_fascism_drift_effect value = 0.003 }
+	multiply_variable = { var = PHI_stability_factor_effect value = -0.004 }
+	multiply_variable = { var = PHI_political_power_factor_effect value = -0.004 }
+
+	force_update_dynamic_modifier = yes
+}
+
+PHI_end_the_moro_insurgency = {
+	if = { limit = { has_dynamic_modifier = { modifier = PHI_islamism_dynamic_modifier } }
+		remove_dynamic_modifier = { modifier = PHI_islamism_dynamic_modifier }
+	}
+	set_variable = { var = PHI_strength_of_milf value = 0 }
+	clr_country_flag = phi_milf_exists
+}
+
+# temp_change = the change number
+# Purpose: PHI_change_strength_of_npa is to change the full strength of the New People's Army
+PHI_change_strength_of_npa = {
+	custom_effect_tooltip = PHI_change_npa_strength_tt
+	add_to_variable = { PHI_strength_of_npa = temp_change }
+	clamp_variable = {
+		min = 0
+		max = 100
+		var = PHI_strength_of_npa
+	}
+	PHI_update_the_effects_of_npa_strength = yes
+}
+
+PHI_update_the_effects_of_npa_strength = {
+	if = {
+		limit = { has_country_flag = PHI_ended_the_communist_insurgency }
+		PHI_end_the_communist_insurgency = yes
+	}
+	else = {
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = PHI_npa_insurgency_dynamic_modifier } } }
+			add_dynamic_modifier = { modifier = PHI_npa_insurgency_dynamic_modifier }
+			set_country_flag = PHI_npa_exists
+			if = {
+				limit = { NOT = { has_variable = PHI_strength_of_npa } }
+				set_variable = { var = PHI_strength_of_npa value = 40 }
+			}
+		}
+
+		PHI_recalculate_the_effects_of_npa_strength = yes
+	}
+}
+
+PHI_recalculate_the_effects_of_npa_strength = {
+	set_temp_variable = { opinion_modifier = PHI_strength_of_npa }
+
+	set_variable = { var = PHI_npa_communism_drift_effect value = opinion_modifier }
+	set_variable = { var = PHI_npa_stability_factor_effect value = opinion_modifier }
+	set_variable = { var = PHI_npa_political_power_factor_effect value = opinion_modifier }
+
+	multiply_variable = { var = PHI_npa_communism_drift_effect value = 0.003 }
+	multiply_variable = { var = PHI_npa_stability_factor_effect value = -0.0035 }
+	multiply_variable = { var = PHI_npa_political_power_factor_effect value = -0.003 }
+
+	force_update_dynamic_modifier = yes
+}
+
+PHI_end_the_communist_insurgency = {
+	if = { limit = { has_dynamic_modifier = { modifier = PHI_npa_insurgency_dynamic_modifier } }
+		remove_dynamic_modifier = { modifier = PHI_npa_insurgency_dynamic_modifier }
+	}
+	set_variable = { var = PHI_strength_of_npa value = 0 }
+	clr_country_flag = PHI_npa_exists
+}
+
+PHI_change_the_strength_of_corruption = {
+	custom_effect_tooltip = PHI_change_the_strength_of_corruption_tt
+	add_to_variable = { PHI_corruption_strength = temp_change }
+	# No clamp — allow overflow/underflow for carry-over math
+	PHI_check_corruption_tier_change = yes
+}
+
+PHI_check_corruption_tier_change = {
+	# Tier worsens if strength exceeds 100
+	if = {
+		limit = { check_variable = { PHI_corruption_strength > 100 } }
+		PHI_increase_corruption_tier = yes
+	}
+	# Tier improves if strength drops below 0
+	else_if = {
+		limit = { check_variable = { PHI_corruption_strength < 0 } }
+		PHI_decrease_corruption_tier = yes
+	}
+}
+
+# Called when strength drops below 0 — corruption improves, carry over the remainder
+# e.g. strength was 25, decreased by 40 -> -15 -> tier drops, new strength = 100 + (-15) = 85
+PHI_decrease_corruption_tier = {
+	set_temp_variable = { PHI_carry = 100 }
+	add_to_temp_variable = { PHI_carry = PHI_corruption_strength }
+
+	if = {
+		limit = { has_idea = corruption_level_10 }
+		swap_ideas = { remove_idea = corruption_level_10 add_idea = corruption_level_09 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_09 }
+		swap_ideas = { remove_idea = corruption_level_09 add_idea = corruption_level_08 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_08 }
+		swap_ideas = { remove_idea = corruption_level_08 add_idea = corruption_level_07 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_07 }
+		swap_ideas = { remove_idea = corruption_level_07 add_idea = corruption_level_06 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_06 }
+		swap_ideas = { remove_idea = corruption_level_06 add_idea = corruption_level_05 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_05 }
+		swap_ideas = { remove_idea = corruption_level_05 add_idea = corruption_level_04 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_04 }
+		swap_ideas = { remove_idea = corruption_level_04 add_idea = corruption_level_03 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_03 }
+		swap_ideas = { remove_idea = corruption_level_03 add_idea = corruption_level_02 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_02 }
+		swap_ideas = { remove_idea = corruption_level_02 add_idea = corruption_level_01 }
+	}
+	# corruption_level_01 is the floor — carry over but no further tier drop
+
+	if = {
+		limit = { NOT = { has_idea = corruption_level_01 } }
+	}
+
+	set_variable = { PHI_corruption_strength = PHI_carry }
+	PHI_check_corruption_eradication = yes
+	country_event = { id = PHI_corruption_event.1 days = 1 }
+}
+
+# Called when strength exceeds 100 — corruption worsens, carry over the remainder
+# e.g. strength was 90, increased by 20 -> 110 -> tier rises, new strength = 110 - 100 = 10
+PHI_increase_corruption_tier = {
+	set_temp_variable = { PHI_carry = PHI_corruption_strength }
+	subtract_from_temp_variable = { PHI_carry = 100 }
+
+	if = {
+		limit = { has_idea = corruption_level_10 }
+		# Already at max — clamp to 100
+		set_variable = { PHI_corruption_strength = 100 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_09 }
+		swap_ideas = { remove_idea = corruption_level_09 add_idea = corruption_level_10 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_08 }
+		swap_ideas = { remove_idea = corruption_level_08 add_idea = corruption_level_09 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_07 }
+		swap_ideas = { remove_idea = corruption_level_07 add_idea = corruption_level_08 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_06 }
+		swap_ideas = { remove_idea = corruption_level_06 add_idea = corruption_level_07 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_05 }
+		swap_ideas = { remove_idea = corruption_level_05 add_idea = corruption_level_06 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_04 }
+		swap_ideas = { remove_idea = corruption_level_04 add_idea = corruption_level_05 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_03 }
+		swap_ideas = { remove_idea = corruption_level_03 add_idea = corruption_level_04 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_02 }
+		swap_ideas = { remove_idea = corruption_level_02 add_idea = corruption_level_03 }
+	}
+	else_if = {
+		limit = { has_idea = corruption_level_01 }
+		swap_ideas = { remove_idea = corruption_level_01 add_idea = corruption_level_02 }
+	}
+
+	if = {
+		limit = { NOT = { has_idea = corruption_level_10 } }
+		set_variable = { PHI_corruption_strength = PHI_carry }
+	}
+	country_event = { id = PHI_corruption_event.2 days = 1 }
+}
+
+
+# Fire eradication event when tier drops to corruption_level_03
+# Called at the end of PHI_decrease_corruption_tier
+PHI_check_corruption_eradication = {
+	if = {
+		limit = {
+			has_idea = corruption_level_03
+			NOT = { has_country_flag = PHI_corruption_eradicated_fired }
+		}
+		set_country_flag = PHI_corruption_eradicated_fired
+		country_event = { id = PHI_corruption_event.100 days = 1 }
+	}
+}
+
+
+# Roll helpers for PHI_corruption_roll, called from the corruption event immediate blocks
+# Values stored as POSITIVE integers (5, not -5) so [?PHI_corruption_roll|0] displays correctly.
+# Applied by subtracting in the event option.
+
+PHI_roll_minor_corruption = {
+	random_list = {
+		17 = { set_variable = { PHI_corruption_roll = 5 } }
+		17 = { set_variable = { PHI_corruption_roll = 6 } }
+		17 = { set_variable = { PHI_corruption_roll = 7 } }
+		17 = { set_variable = { PHI_corruption_roll = 8 } }
+		16 = { set_variable = { PHI_corruption_roll = 9 } }
+		16 = { set_variable = { PHI_corruption_roll = 10 } }
+	}
+}
+
+PHI_roll_major_corruption = {
+	random_list = {
+		17 = { set_variable = { PHI_corruption_roll = 10 } }
+		17 = { set_variable = { PHI_corruption_roll = 12 } }
+		17 = { set_variable = { PHI_corruption_roll = 14 } }
+		17 = { set_variable = { PHI_corruption_roll = 16 } }
+		16 = { set_variable = { PHI_corruption_roll = 18 } }
+		16 = { set_variable = { PHI_corruption_roll = 20 } }
+	}
+}
+
+PHI_roll_huge_std_corruption = {
+	random_list = {
+		17 = { set_variable = { PHI_corruption_roll = 20 } }
+		17 = { set_variable = { PHI_corruption_roll = 22 } }
+		17 = { set_variable = { PHI_corruption_roll = 24 } }
+		17 = { set_variable = { PHI_corruption_roll = 26 } }
+		16 = { set_variable = { PHI_corruption_roll = 28 } }
+		16 = { set_variable = { PHI_corruption_roll = 30 } }
+	}
+}
+
+PHI_roll_huge_tax_corruption = {
+	random_list = {
+		17 = { set_variable = { PHI_corruption_roll = 25 } }
+		17 = { set_variable = { PHI_corruption_roll = 28 } }
+		17 = { set_variable = { PHI_corruption_roll = 31 } }
+		17 = { set_variable = { PHI_corruption_roll = 34 } }
+		16 = { set_variable = { PHI_corruption_roll = 37 } }
+		16 = { set_variable = { PHI_corruption_roll = 40 } }
+	}
+}
+
+PHI_roll_huge_offshore_corruption = {
+	random_list = {
+		17 = { set_variable = { PHI_corruption_roll = 40 } }
+		17 = { set_variable = { PHI_corruption_roll = 44 } }
+		17 = { set_variable = { PHI_corruption_roll = 48 } }
+		17 = { set_variable = { PHI_corruption_roll = 52 } }
+		16 = { set_variable = { PHI_corruption_roll = 56 } }
+		16 = { set_variable = { PHI_corruption_roll = 60 } }
+	}
+}
+
+# Monthly random corruption event pulse
+# Called from on_monthly via 99_PHI_on_actions.txt
+PHI_random_corruption_event_pulse = {
+	if = {
+		limit = {
+			has_idea = PHI_locked_corruption
+			NOT = { has_country_flag = PHI_corruption_eradicated_fired }
+			NOT = { has_country_flag = PHI_corruption_event_cooldown }
+		}
+		random_list = {
+			5 = { country_event = { id = PHI_corruption_event.200 days = 3 random_days = 7 } }
+			5 = { country_event = { id = PHI_corruption_event.201 days = 3 random_days = 7 } }
+			5 = { country_event = { id = PHI_corruption_event.202 days = 3 random_days = 7 } }
+			5 = { country_event = { id = PHI_corruption_event.203 days = 3 random_days = 7 } }
+			5 = { country_event = { id = PHI_corruption_event.204 days = 3 random_days = 7 } }
+			5 = { country_event = { id = PHI_corruption_event.205 days = 3 random_days = 7 } }
+			5 = { country_event = { id = PHI_corruption_event.206 days = 3 random_days = 7 } }
+			60 = { }	# 60% chance: nothing this month
+		}
+		set_country_flag = { flag = PHI_corruption_event_cooldown value = 1 days = 60 }
+	}
+}

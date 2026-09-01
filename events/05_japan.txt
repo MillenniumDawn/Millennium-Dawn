@@ -246,10 +246,17 @@ country_event = {
 			base = 5
 			modifier = {
 				add = 100
-				OR = {
-					CHI = { has_completed_focus = CHI_New_World_Order }
-					USA = { NOT = { has_guaranteed = ROOT } }
-				}
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				naval_strength_ratio = { tag = CHI ratio > 1.5 }
+			}
+			modifier = {
+				add = 50
+				CHI = { has_completed_focus = CHI_New_World_Order }
+			}
+			modifier = {
+				factor = 0
+				JAP_article_nine_hard_threat = no
+				NOT = { has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS }
 			}
 			modifier = {
 				factor = 2
@@ -259,7 +266,13 @@ country_event = {
 	}
 
 	option = {
-		trigger = { any_country = { has_guaranteed = ROOT } }
+		trigger = {
+			any_of_scopes = {
+				array = ROOT.guaranteeing_nations
+				exists = yes
+				has_guaranteed = ROOT
+			}
+		}
 		name = Japan.6.b #We should call upon our protectors!
 		create_wargoal = {
 			type = topple_government
@@ -275,6 +288,11 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Japan.6.b executed"
 		ai_chance = {
 			base = 5
+			modifier = {
+				factor = 0
+				JAP_article_nine_hard_threat = no
+				NOT = { has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS }
+			}
 			modifier = {
 				factor = 2
 				CHI = { check_variable = { CHI_chinese_aggression > 10 } }
@@ -295,6 +313,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Japan.6.c executed"
 		ai_chance = {
 			base = 20
+			modifier = {
+				factor = 10
+				NOT = { has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS }
+			}
 			modifier = {
 				factor = 2
 				CHI = { check_variable = { CHI_chinese_aggression < 0 } }
@@ -498,19 +520,11 @@ country_event = {
 			 modifier = {
 				factor = 0
 				is_historical_focus_on = yes
-				NOT = {
-					has_game_rule = {
-						rule = JAP_ai_behavior
-						option = RETURN_OF_THE_EMPIRE
-					}
-				}
+				NOT = { has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS }
 			 }
 			 modifier = {
 				factor = 999
-				has_game_rule = {
-					rule = JAP_ai_behavior
-					option = RETURN_OF_THE_EMPIRE
-				}
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
 			 }
 		}
 	}
@@ -546,10 +560,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 999
-				has_game_rule = {
-					rule = JAP_ai_behavior
-					option = RETURN_OF_THE_EMPIRE
-				}
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
 			}
 		}
 	}
@@ -574,9 +585,12 @@ country_event = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.121006001 - disaster_help"
 		611 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.5
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.5
+				}
 			}
 		}
 		newline = yes
@@ -591,9 +605,12 @@ country_event = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.121006001 - disaster_leave"
 		611 = {
-			damage_building = {
-				type = infrastructure
-				damage = 1.0
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 1.0
+				}
 			}
 		}
 		add_stability = -0.01
@@ -676,21 +693,30 @@ country_event = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.130324001 - disaster_help"
 		611 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.5
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.5
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.25
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 0.25
+				}
 			}
 		}
 		610 = {
 			if = {
 				limit = { NOT = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
-				damage_building = {
-					type = infrastructure
-					damage = 0.05
+				if = {
+					limit = { infrastructure > 0 }
+					damage_building = {
+						type = infrastructure
+						damage = 0.05
+					}
 				}
 			}
 		}
@@ -706,21 +732,30 @@ country_event = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.130324001 - disaster_leave"
 		611 = {
-			damage_building = {
-				type = infrastructure
-				damage = 1.0
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 1.0
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.5
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 0.5
+				}
 			}
 		}
 		610 = {
 			if = {
 				limit = { NOT = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } } }
-				damage_building = {
-					type = infrastructure
-					damage = 0.1
+				if = {
+					limit = { infrastructure > 0 }
+					damage_building = {
+						type = infrastructure
+						damage = 0.1
+					}
 				}
 			}
 		}
@@ -827,9 +862,12 @@ country_event = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.150526001 - disaster_help"
 		616 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.25
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.25
+				}
 			}
 		}
 		newline = yes
@@ -844,9 +882,12 @@ country_event = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.150526001 - disaster_leave"
 		616 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.5
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.5
+				}
 			}
 		}
 		add_stability = -0.01
@@ -882,17 +923,26 @@ country_event = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.150726001 - disaster_help"
 		616 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.5
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.5
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.5
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 0.5
+				}
 			}
-			damage_building = {
-				type = air_base
-				damage = 0.25
+			if = {
+				limit = { air_base > 0 }
+				damage_building = {
+					type = air_base
+					damage = 0.25
+				}
 			}
 		}
 		newline = yes
@@ -907,17 +957,26 @@ country_event = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.150726001 - disaster_leave"
 		616 = {
-			damage_building = {
-				type = infrastructure
-				damage = 1.0
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 1.0
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 1.0
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 1.0
+				}
 			}
-			damage_building = {
-				type = air_base
-				damage = 0.5
+			if = {
+				limit = { air_base > 0 }
+				damage_building = {
+					type = air_base
+					damage = 0.5
+				}
 			}
 		}
 		add_stability = -0.01
@@ -953,17 +1012,26 @@ country_event = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.150926001 - disaster_help"
 		617 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.75
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.75
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.5
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 0.5
+				}
 			}
-			damage_building = {
-				type = naval_base
-				damage = 0.5
+			if = {
+				limit = { naval_base > 0 }
+				damage_building = {
+					type = naval_base
+					damage = 0.5
+				}
 			}
 		}
 		newline = yes
@@ -978,17 +1046,26 @@ country_event = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.150926001 - disaster_leave"
 		617 = {
-			damage_building = {
-				type = infrastructure
-				damage = 1.5
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 1.5
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 1.0
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 1.0
+				}
 			}
-			damage_building = {
-				type = naval_base
-				damage = 1.0
+			if = {
+				limit = { naval_base > 0 }
+				damage_building = {
+					type = naval_base
+					damage = 1.0
+				}
 			}
 		}
 		add_stability = -0.01
@@ -1024,17 +1101,26 @@ country_event = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.161023001 - disaster_help"
 		613 = {
-			damage_building = {
-				type = infrastructure
-				damage = 1.5
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 1.5
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 1.0
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 1.0
+				}
 			}
-			damage_building = {
-				type = arms_factory
-				damage = 0.5
+			if = {
+				limit = { arms_factory > 0 }
+				damage_building = {
+					type = arms_factory
+					damage = 0.5
+				}
 			}
 		}
 		newline = yes
@@ -1049,17 +1135,26 @@ country_event = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.161023001 - disaster_leave"
 		613 = {
-			damage_building = {
-				type = infrastructure
-				damage = 3.0
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 3.0
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 2.0
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 2.0
+				}
 			}
-			damage_building = {
-				type = arms_factory
-				damage = 1.0
+			if = {
+				limit = { arms_factory > 0 }
+				damage_building = {
+					type = arms_factory
+					damage = 1.0
+				}
 			}
 		}
 		add_stability = -0.01
@@ -1095,13 +1190,19 @@ country_event = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.170320001 - disaster_help"
 		609 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.5
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.5
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.25
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 0.25
+				}
 			}
 		}
 		newline = yes
@@ -1116,13 +1217,19 @@ country_event = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.170320001 - disaster_leave"
 		609 = {
-			damage_building = {
-				type = infrastructure
-				damage = 1.0
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 1.0
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.5
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 0.5
+				}
 			}
 		}
 		add_stability = -0.01
@@ -1310,13 +1417,19 @@ country_event = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.190325001 - disaster_help"
 		613 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.25
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.25
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.1
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 0.1
+				}
 			}
 		}
 		newline = yes
@@ -1331,13 +1444,19 @@ country_event = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.190325001 - disaster_leave"
 		613 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.5
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.5
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.2
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 0.2
+				}
 			}
 		}
 		add_stability = -0.01
@@ -1414,9 +1533,12 @@ country_event = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.190716001 - disaster_help"
 		613 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.25
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.25
+				}
 			}
 		}
 		newline = yes
@@ -1431,9 +1553,12 @@ country_event = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.190716001 - disaster_leave"
 		613 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.5
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.5
+				}
 			}
 		}
 		add_stability = -0.01
@@ -1535,9 +1660,12 @@ country_event = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.200614001 - disaster_help"
 		616 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.5
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.5
+				}
 			}
 		}
 		newline = yes
@@ -1552,9 +1680,12 @@ country_event = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.200614001 - disaster_leave"
 		616 = {
-			damage_building = {
-				type = infrastructure
-				damage = 1.0
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 1.0
+				}
 			}
 		}
 		add_stability = -0.01
@@ -1895,17 +2026,26 @@ country_event = {
 		name = JAP_historical.disaster_help
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.210811001 - disaster_help"
 		613 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.25
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.25
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.25
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 0.25
+				}
 			}
-			damage_building = {
-				type = arms_factory
-				damage = 0.25
+			if = {
+				limit = { arms_factory > 0 }
+				damage_building = {
+					type = arms_factory
+					damage = 0.25
+				}
 			}
 		}
 		newline = yes
@@ -1920,17 +2060,26 @@ country_event = {
 		name = JAP_historical.disaster_leave
 		log = "[GetDateText]: [Root.GetName]: JAP_historical.210811001 - disaster_leave"
 		613 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.5
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.5
+				}
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.5
+			if = {
+				limit = { industrial_complex > 0 }
+				damage_building = {
+					type = industrial_complex
+					damage = 0.5
+				}
 			}
-			damage_building = {
-				type = arms_factory
-				damage = 0.5
+			if = {
+				limit = { arms_factory > 0 }
+				damage_building = {
+					type = arms_factory
+					damage = 0.5
+				}
 			}
 		}
 		add_stability = -0.01
@@ -2002,20 +2151,56 @@ country_event = {
 		616 = {
 			if = {
 				limit = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } }
-				remove_building = { type = infrastructure level = 2 }
-				remove_building = { type = internet_station level = 1 }
-				remove_building = { type = industrial_complex level = 2 }
-				damage_building = { type = arms_factory damage = 2.5 }
-				damage_building = { type = offices damage = 2.5 }
+				if = {
+					limit = { infrastructure > 0 }
+					remove_building = { type = infrastructure level = 2 }
+				}
+				if = {
+					limit = { internet_station > 0 }
+					remove_building = { type = internet_station level = 1 }
+				}
+				if = {
+					limit = { industrial_complex > 0 }
+					remove_building = { type = industrial_complex level = 2 }
+				}
+				if = {
+					limit = { arms_factory > 0 }
+					damage_building = { type = arms_factory damage = 2.5 }
+				}
+				if = {
+					limit = { offices > 0 }
+					damage_building = { type = offices damage = 2.5 }
+				}
 			}
 			else = {
-				remove_building = { type = infrastructure level = 4 }
-				remove_building = { type = internet_station level = 2 }
-				remove_building = { type = industrial_complex level = 4 }
-				remove_building = { type = dockyard level = 1 }
-				remove_building = { type = agriculture_district level = 1 }
-				damage_building = { type = arms_factory damage = 5.0 }
-				damage_building = { type = offices damage = 5.0 }
+				if = {
+					limit = { infrastructure > 0 }
+					remove_building = { type = infrastructure level = 4 }
+				}
+				if = {
+					limit = { internet_station > 0 }
+					remove_building = { type = internet_station level = 2 }
+				}
+				if = {
+					limit = { industrial_complex > 0 }
+					remove_building = { type = industrial_complex level = 4 }
+				}
+				if = {
+					limit = { dockyard > 0 }
+					remove_building = { type = dockyard level = 1 }
+				}
+				if = {
+					limit = { agriculture_district > 0 }
+					remove_building = { type = agriculture_district level = 1 }
+				}
+				if = {
+					limit = { arms_factory > 0 }
+					damage_building = { type = arms_factory damage = 5.0 }
+				}
+				if = {
+					limit = { offices > 0 }
+					damage_building = { type = offices damage = 5.0 }
+				}
 			}
 			add_dynamic_modifier = {
 					modifier = JAP_scars_earthquake_and_tsunami
@@ -2025,21 +2210,60 @@ country_event = {
 		615 = {
 			if = {
 				limit = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } }
-				remove_building = { type = infrastructure level = 1 }
-				remove_building = { type = industrial_complex level = 2 }
-				damage_building = { type = arms_factory damage = 1.0 }
-				damage_building = { type = dockyard damage = 1.0 }
-				damage_building = { type = agriculture_district damage = 1.0 }
-				damage_building = { type = offices damage = 1.0 }
+				if = {
+					limit = { infrastructure > 0 }
+					remove_building = { type = infrastructure level = 1 }
+				}
+				if = {
+					limit = { industrial_complex > 0 }
+					remove_building = { type = industrial_complex level = 2 }
+				}
+				if = {
+					limit = { arms_factory > 0 }
+					damage_building = { type = arms_factory damage = 1.0 }
+				}
+				if = {
+					limit = { dockyard > 0 }
+					damage_building = { type = dockyard damage = 1.0 }
+				}
+				if = {
+					limit = { agriculture_district > 0 }
+					damage_building = { type = agriculture_district damage = 1.0 }
+				}
+				if = {
+					limit = { offices > 0 }
+					damage_building = { type = offices damage = 1.0 }
+				}
 			}
 			else = {
-				remove_building = { type = infrastructure level = 2 }
-				remove_building = { type = internet_station level = 1 }
-				remove_building = { type = industrial_complex level = 3 }
-				damage_building = { type = arms_factory damage = 2.0 }
-				damage_building = { type = dockyard damage = 2.0 }
-				damage_building = { type = agriculture_district damage = 2.0 }
-				damage_building = { type = offices damage = 2.0 }
+				if = {
+					limit = { infrastructure > 0 }
+					remove_building = { type = infrastructure level = 2 }
+				}
+				if = {
+					limit = { internet_station > 0 }
+					remove_building = { type = internet_station level = 1 }
+				}
+				if = {
+					limit = { industrial_complex > 0 }
+					remove_building = { type = industrial_complex level = 3 }
+				}
+				if = {
+					limit = { arms_factory > 0 }
+					damage_building = { type = arms_factory damage = 2.0 }
+				}
+				if = {
+					limit = { dockyard > 0 }
+					damage_building = { type = dockyard damage = 2.0 }
+				}
+				if = {
+					limit = { agriculture_district > 0 }
+					damage_building = { type = agriculture_district damage = 2.0 }
+				}
+				if = {
+					limit = { offices > 0 }
+					damage_building = { type = offices damage = 2.0 }
+				}
 			}
 			add_dynamic_modifier = {
 					modifier = JAP_scars_earthquake
@@ -2805,6 +3029,10 @@ country_event = {
 				is_in_array = { ruling_party = 1 }
 				factor = 100
 			}
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+			}
 		}
 	}
 
@@ -2831,6 +3059,10 @@ country_event = {
 			modifier = {
 				is_in_array = { ruling_party = 3 }
 				factor = 100
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
 			}
 		}
 	}
@@ -2867,6 +3099,10 @@ country_event = {
 				is_in_array = { ruling_party = 14 }
 				factor = 100
 			}
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+			}
 		}
 	}
 
@@ -2896,6 +3132,36 @@ country_event = {
 			modifier = {
 				is_in_array = { ruling_party = 16 }
 				factor = 100
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+			}
+		}
+	}
+	option = {
+		name = Japan.104.f
+		log = "[GetDateText]: [This.GetName]: Japan.104.f executed"
+		if = {
+			limit = {
+				is_in_array = { ruling_party = 23 }
+			}
+			set_temp_variable = { party_index = 23 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			change_relative_party_popularity = yes
+		}
+		else = {
+			set_temp_variable = { party_index = 23 }
+			set_temp_variable = { party_popularity_increase = 0.20 }
+			set_temp_variable = { temp_outlook_increase = 0.20 }
+			change_relative_party_popularity = yes
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
 			}
 		}
 	}
@@ -5127,6 +5393,7 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = -0.05 }
 		change_relative_party_popularity = yes
 		country_event = { id = JAP_diplomacy.29 days = 365 }
+		ai_chance = { base = 10 }
 	}
 }
 country_event = {
@@ -5154,6 +5421,7 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = -0.05 }
 		change_relative_party_popularity = yes
 		country_event = { id = JAP_diplomacy.30 days = 365 }
+		ai_chance = { base = 10 }
 	}
 }
 country_event = {
@@ -5268,7 +5536,7 @@ country_event = {
 
 	option = {
 		name = JAP_diplomacy.33.e
-		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.33.d executed"
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.33.e executed"
 		add_ideas = JAP_mars_colony4
 	}
 }
@@ -5444,6 +5712,14 @@ country_event = {
 			type = take_claimed_state
 			generator = { 691 690 1168 }
 		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = SOV ratio > 2 }
+			}
+		}
 	}
 }
 
@@ -5590,8 +5866,9 @@ country_event = {
 				add = 10
 			}
 			modifier = {
-				any_other_country = {
-					has_war_with = SOV
+				any_of_scopes = {
+					array = SOV.enemies
+					exists = yes
 					is_major = yes
 					NOT = { original_tag = JAP }
 				}
@@ -6105,7 +6382,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = KOR ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.96.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.96.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = KOR ratio > 2 }
+			}
 		}
 	}
 }
@@ -6189,7 +6486,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = NKO ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.99.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.99.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = NKO ratio > 2 }
+			}
 		}
 	}
 }
@@ -6283,7 +6600,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = TAI ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.103.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.103.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = TAI ratio > 2 }
+			}
 		}
 	}
 }
@@ -6368,7 +6705,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = PHI ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.107.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.107.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = PHI ratio > 2 }
+			}
 		}
 	}
 }
@@ -6464,7 +6821,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = MAY ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.111.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.111.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = MAY ratio > 2 }
+			}
 		}
 	}
 }
@@ -6559,7 +6936,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = IND ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.115.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.115.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = IND ratio > 2 }
+			}
 		}
 	}
 }
@@ -6670,7 +7067,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = VIE ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.119.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.119.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = VIE ratio > 2 }
+			}
 		}
 	}
 }
@@ -6781,7 +7198,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = CBD ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.123.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.123.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = CBD ratio > 2 }
+			}
 		}
 	}
 }
@@ -6892,7 +7329,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = LAO ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.127.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.127.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = LAO ratio > 2 }
+			}
 		}
 	}
 }
@@ -7003,7 +7460,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = AST ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.131.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.131.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = AST ratio > 2 }
+			}
 		}
 	}
 }
@@ -7114,7 +7591,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = NZL ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.135.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.135.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = NZL ratio > 2 }
+			}
 		}
 	}
 }
@@ -7225,7 +7722,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = BRM ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.139.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.139.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = BRM ratio > 2 }
+			}
 		}
 	}
 }
@@ -7336,7 +7853,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = KAC ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.144.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.144.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = KAC ratio > 2 }
+			}
 		}
 	}
 }
@@ -7436,7 +7973,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = WAA ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.147.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.147.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = WAA ratio > 2 }
+			}
 		}
 	}
 }
@@ -7537,7 +8094,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = SHN ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.150.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.150.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = SHN ratio > 2 }
+			}
 		}
 	}
 }
@@ -7638,7 +8215,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = KAR ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.153.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.153.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = KAR ratio > 2 }
+			}
 		}
 	}
 }
@@ -7739,7 +8336,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = PAU ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.156.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.156.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = PAU ratio > 2 }
+			}
 		}
 	}
 }
@@ -7840,7 +8457,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = MIC ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.159.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.159.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = MIC ratio > 2 }
+			}
 		}
 	}
 }
@@ -7941,7 +8578,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = NAU ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.162.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.162.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = NAU ratio > 2 }
+			}
 		}
 	}
 }
@@ -8042,7 +8699,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = KIR ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.165.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.165.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = KIR ratio > 2 }
+			}
 		}
 	}
 }
@@ -8143,7 +8820,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = MAR ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.168.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.168.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = MAR ratio > 2 }
+			}
 		}
 	}
 }
@@ -8244,7 +8941,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = TUL ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.171.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.171.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = TUL ratio > 2 }
+			}
 		}
 	}
 }
@@ -8346,7 +9063,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = SOL ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.174.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.174.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = SOL ratio > 2 }
+			}
 		}
 	}
 }
@@ -8448,7 +9185,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = PAP ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.177.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.177.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = PAP ratio > 2 }
+			}
 		}
 	}
 }
@@ -8549,7 +9306,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = VAN ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.180.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.180.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = VAN ratio > 2 }
+			}
 		}
 	}
 }
@@ -8650,7 +9427,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = FIJ ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.183.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.183.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = FIJ ratio > 2 }
+			}
 		}
 	}
 }
@@ -8751,7 +9548,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = SAM ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.186.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.186.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = SAM ratio > 2 }
+			}
 		}
 	}
 }
@@ -8852,7 +9669,27 @@ country_event = {
 			type = take_claimed_state
 		}
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = TON ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.189.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.189.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = TON ratio > 2 }
+			}
 		}
 	}
 }
@@ -8961,7 +9798,27 @@ country_event = {
 		825 = { add_claim_by = JAP }
 		827 = { add_claim_by = JAP }
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = USA ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.192.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.192.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = USA ratio > 2 }
+			}
 		}
 	}
 }
@@ -9064,7 +9921,27 @@ country_event = {
 		1215 = { add_claim_by = JAP }
 		69 = { add_claim_by = JAP }
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = FRA ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.195.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.195.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = FRA ratio > 2 }
+			}
 		}
 	}
 }
@@ -9161,7 +10038,27 @@ country_event = {
 		}
 		18 = { add_claim_by = JAP }
 		ai_chance = {
-			base = 10
+			base = 0
+			modifier = {
+				add = 100
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = ENG ratio > 2 }
+			}
+		}
+	}
+
+	option = {
+		name = JAP_diplomacy.198.b
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.198.b"
+		add_political_power = 25
+		add_war_support = -0.05
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
+				strength_ratio = { tag = ENG ratio > 2 }
+			}
 		}
 	}
 }
@@ -9765,7 +10662,7 @@ country_event = {
 			base = 8
 			modifier = {
 				factor = 2
-				has_country_flag = JAP_HISTORICAL_PATH
+				has_global_flag = JAP_HISTORICAL_AI_FOCUS
 			}
 		}
 	}
@@ -9805,7 +10702,7 @@ country_event = {
 			base = 8
 			modifier = {
 				factor = 2
-				has_country_flag = JAP_HISTORICAL_PATH
+				has_global_flag = JAP_HISTORICAL_AI_FOCUS
 			}
 		}
 	}
@@ -9845,7 +10742,7 @@ country_event = {
 			base = 8
 			modifier = {
 				factor = 2
-				has_country_flag = JAP_HISTORICAL_PATH
+				has_global_flag = JAP_HISTORICAL_AI_FOCUS
 			}
 		}
 	}
@@ -9885,7 +10782,7 @@ country_event = {
 			base = 8
 			modifier = {
 				factor = 2
-				has_country_flag = JAP_HISTORICAL_PATH
+				has_global_flag = JAP_HISTORICAL_AI_FOCUS
 			}
 		}
 	}
@@ -9927,7 +10824,7 @@ country_event = {
 			base = 8
 			modifier = {
 				factor = 2
-				has_country_flag = JAP_HISTORICAL_PATH
+				has_global_flag = JAP_HISTORICAL_AI_FOCUS
 			}
 		}
 	}
@@ -9968,7 +10865,7 @@ country_event = {
 			base = 8
 			modifier = {
 				factor = 2
-				has_country_flag = JAP_HISTORICAL_PATH
+				has_global_flag = JAP_HISTORICAL_AI_FOCUS
 			}
 		}
 	}
@@ -10011,7 +10908,7 @@ country_event = {
 			base = 8
 			modifier = {
 				factor = 2
-				has_country_flag = JAP_HISTORICAL_PATH
+				has_global_flag = JAP_HISTORICAL_AI_FOCUS
 			}
 		}
 	}
@@ -10202,7 +11099,7 @@ country_event = {
 
 	trigger = {
 		is_ai = yes
-		has_country_flag = JAP_RETURN_OF_THE_EMPIRE_PATH
+		has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
 		nationalist_monarchists_are_in_power = no
 		has_civil_war = no
 	}
@@ -10224,7 +11121,7 @@ country_event = {
 
 	trigger = {
 		is_ai = yes
-		has_country_flag = JAP_RETURN_OF_THE_EMPIRE_PATH
+		has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
 		nationalist_monarchists_are_in_power = no
 		has_civil_war = no
 	}
@@ -10246,7 +11143,7 @@ country_event = {
 
 	trigger = {
 		is_ai = yes
-		has_country_flag = JAP_RETURN_OF_THE_EMPIRE_PATH
+		has_global_flag = JAP_RETURN_OF_THE_EMPIRE_AI_FOCUS
 		nationalist_monarchists_are_in_power = no
 		has_civil_war = no
 	}
@@ -10257,5 +11154,723 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = 0.2 }
 		set_temp_variable = { temp_outlook_increase = 0.2 }
 		change_relative_party_popularity = yes
+	}
+}
+
+# Sony corporate history
+country_event = {
+	id = JAP_electronics.300
+	title = JAP_electronics.300.t
+	desc = {
+		trigger = {
+			country_exists = SWE
+			SWE = { has_country_flag = SWE_sony_ericsson_joint_venture }
+		}
+		text = JAP_electronics.300.d_agreed
+	}
+	desc = {
+		trigger = {
+			NOT = {
+				AND = {
+					country_exists = SWE
+					SWE = { has_country_flag = SWE_sony_ericsson_joint_venture }
+				}
+			}
+		}
+		text = JAP_electronics.300.d_alone
+	}
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = JAP_sony_ericsson_venture }
+		NOT = { has_country_flag = JAP_sony_mobile_alone }
+	}
+
+	option = {
+		name = JAP_electronics.300.a
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.300.a executed"
+		set_temp_variable = { treasury_change = -2.00 }
+		modify_treasury_effect = yes
+		add_tech_bonus = {
+			name = JAP_electronics.300.a_bonus
+			bonus = 0.15
+			uses = 1
+			category = CAT_internet_tech
+		}
+		set_country_flag = JAP_sony_ericsson_venture
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = JAP_electronics.300.b
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.300.b executed"
+		add_political_power = 10
+		add_tech_bonus = {
+			name = JAP_electronics.300.b_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_computing_tech
+		}
+		set_country_flag = JAP_sony_mobile_alone
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = JAP_electronics.301
+	title = JAP_electronics.301.t
+	desc = JAP_electronics.301.d
+	picture = GFX_computer
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = JAP_sony_open_music_format }
+		NOT = { has_country_flag = JAP_sony_proprietary_drm }
+	}
+
+	option = {
+		name = JAP_electronics.301.a
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.301.a executed"
+		add_political_power = -15
+		add_tech_bonus = {
+			name = JAP_electronics.301.a_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_computing_tech
+		}
+		set_country_flag = JAP_sony_proprietary_drm
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = JAP_electronics.301.b
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.301.b executed"
+		add_tech_bonus = {
+			name = JAP_electronics.301.b_bonus
+			bonus = 0.15
+			uses = 1
+			category = CAT_internet_tech
+		}
+		set_country_flag = JAP_sony_open_music_format
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = JAP_electronics.302
+	title = JAP_electronics.302.t
+	desc = JAP_electronics.302.d
+	picture = GFX_computer
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = JAP_sony_cell_architecture }
+		NOT = { has_country_flag = JAP_sony_conventional_console }
+	}
+
+	option = {
+		name = JAP_electronics.302.a
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.302.a executed"
+		set_temp_variable = { treasury_change = -8.00 }
+		modify_treasury_effect = yes
+		add_tech_bonus = {
+			name = JAP_electronics.302.a_bonus
+			bonus = 0.15
+			uses = 1
+			category = CAT_computing_tech
+		}
+		set_country_flag = JAP_sony_cell_architecture
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = JAP_electronics.302.b
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.302.b executed"
+		add_political_power = 10
+		add_tech_bonus = {
+			name = JAP_electronics.302.b_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_industry
+		}
+		set_country_flag = JAP_sony_conventional_console
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = JAP_electronics.303
+	title = JAP_electronics.303.t
+	desc = JAP_electronics.303.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = JAP_sony_unified_group }
+		NOT = { has_country_flag = JAP_sony_divisional_autonomy }
+	}
+
+	option = {
+		name = JAP_electronics.303.a
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.303.a executed"
+		add_political_power = -25
+		add_tech_bonus = {
+			name = JAP_electronics.303.a_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_computing_tech
+		}
+		set_country_flag = JAP_sony_unified_group
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = JAP_electronics.303.b
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.303.b executed"
+		add_tech_bonus = {
+			name = JAP_electronics.303.b_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_industry
+		}
+		set_country_flag = JAP_sony_divisional_autonomy
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = JAP_electronics.304
+	title = JAP_electronics.304.t
+	desc = JAP_electronics.304.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = JAP_sony_sensor_pivot }
+		NOT = { has_country_flag = JAP_sony_consumer_priority }
+	}
+
+	option = {
+		name = JAP_electronics.304.a
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.304.a executed"
+		set_temp_variable = { treasury_change = -6.00 }
+		modify_treasury_effect = yes
+		add_tech_bonus = {
+			name = JAP_electronics.304.a_bonus
+			bonus = 0.15
+			uses = 1
+			category = CAT_computing_tech
+		}
+		set_country_flag = JAP_sony_sensor_pivot
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = JAP_electronics.304.b
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.304.b executed"
+		add_political_power = 15
+		add_tech_bonus = {
+			name = JAP_electronics.304.b_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_industry
+		}
+		set_country_flag = JAP_sony_consumer_priority
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = JAP_electronics.305
+	title = JAP_electronics.305.t
+	desc = JAP_electronics.305.d
+	picture = GFX_computer
+	is_triggered_only = yes
+
+	trigger = {
+		JAP_sony_outcome_settled = no
+	}
+
+	option = {
+		name = JAP_electronics.305.a
+		trigger = {
+			has_country_flag = JAP_sony_sensor_pivot
+			has_country_flag = JAP_sony_unified_group
+		}
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.305.a executed"
+		effect_tooltip = { add_timed_idea = { idea = JAP_sony_one_sony_ecosystem days = 365 } }
+		hidden_effect = { JAP_sony_apply_one_sony_ecosystem = yes }
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = JAP_electronics.305.b
+		trigger = {
+			has_country_flag = JAP_sony_sensor_pivot
+			NOT = { has_country_flag = JAP_sony_unified_group }
+		}
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.305.b executed"
+		effect_tooltip = { add_timed_idea = { idea = JAP_sony_hardware_federation days = 365 } }
+		hidden_effect = { JAP_sony_apply_hardware_federation = yes }
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = JAP_electronics.305.c
+		trigger = {
+			NOT = { has_country_flag = JAP_sony_sensor_pivot }
+			has_country_flag = JAP_sony_cell_architecture
+		}
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.305.c executed"
+		effect_tooltip = { add_ideas = JAP_sony_cell_sovereign_compute }
+		hidden_effect = { JAP_sony_apply_cell_sovereign_compute = yes }
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = JAP_electronics.305.e
+		trigger = {
+			NOT = { has_country_flag = JAP_sony_sensor_pivot }
+			NOT = { has_country_flag = JAP_sony_cell_architecture }
+		}
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.305.e executed"
+		effect_tooltip = { add_timed_idea = { idea = JAP_sony_open_digital_commonwealth days = 365 } }
+		hidden_effect = { JAP_sony_apply_open_digital_commonwealth = yes }
+		ai_chance = { base = 100 }
+	}
+}
+
+# Nintendo corporate history
+country_event = {
+	id = JAP_electronics.310
+	title = JAP_electronics.310.t
+	desc = JAP_electronics.310.d
+	picture = GFX_computer
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = JAP_nintendo_dedicated_handheld }
+		NOT = { has_country_flag = JAP_nintendo_single_platform }
+	}
+
+	option = {
+		name = JAP_electronics.310.a
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.310.a executed"
+		add_political_power = -15
+		add_tech_bonus = {
+			name = JAP_electronics.310.a_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_computing_tech
+		}
+		set_country_flag = JAP_nintendo_dedicated_handheld
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = JAP_electronics.310.b
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.310.b executed"
+		add_tech_bonus = {
+			name = JAP_electronics.310.b_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_industry
+		}
+		set_country_flag = JAP_nintendo_single_platform
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = JAP_electronics.311
+	title = JAP_electronics.311.t
+	desc = JAP_electronics.311.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = JAP_nintendo_wider_audience }
+		NOT = { has_country_flag = JAP_nintendo_performance_race }
+	}
+
+	option = {
+		name = JAP_electronics.311.a
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.311.a executed"
+		set_temp_variable = { treasury_change = 4.00 }
+		modify_treasury_effect = yes
+		add_tech_bonus = {
+			name = JAP_electronics.311.a_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_industry
+		}
+		set_country_flag = JAP_nintendo_wider_audience
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	option = {
+		name = JAP_electronics.311.b
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.311.b executed"
+		set_temp_variable = { treasury_change = -5.00 }
+		modify_treasury_effect = yes
+		add_tech_bonus = {
+			name = JAP_electronics.311.b_bonus
+			bonus = 0.15
+			uses = 1
+			category = CAT_computing_tech
+		}
+		set_country_flag = JAP_nintendo_performance_race
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+}
+
+country_event = {
+	id = JAP_electronics.312
+	title = JAP_electronics.312.t
+	desc = JAP_electronics.312.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = JAP_nintendo_hardware_persisted }
+		NOT = { has_country_flag = JAP_nintendo_hardware_withdrawal }
+	}
+
+	option = {
+		name = JAP_electronics.312.a
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.312.a executed"
+		add_political_power = -25
+		add_tech_bonus = {
+			name = JAP_electronics.312.a_bonus
+			bonus = 0.15
+			uses = 1
+			category = CAT_computing_tech
+		}
+		set_country_flag = JAP_nintendo_hardware_persisted
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = JAP_electronics.312.b
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.312.b executed"
+		set_temp_variable = { treasury_change = 3.00 }
+		modify_treasury_effect = yes
+		add_tech_bonus = {
+			name = JAP_electronics.312.b_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_internet_tech
+		}
+		set_country_flag = JAP_nintendo_hardware_withdrawal
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = JAP_electronics.313
+	title = JAP_electronics.313.t
+	desc = JAP_electronics.313.d
+	picture = GFX_computer
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = JAP_nintendo_licensed_mobile }
+		NOT = { has_country_flag = JAP_nintendo_mobile_refused }
+	}
+
+	option = {
+		name = JAP_electronics.313.a
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.313.a executed"
+		set_temp_variable = { treasury_change = 2.00 }
+		modify_treasury_effect = yes
+		add_tech_bonus = {
+			name = JAP_electronics.313.a_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_internet_tech
+		}
+		set_country_flag = JAP_nintendo_licensed_mobile
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	option = {
+		name = JAP_electronics.313.b
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.313.b executed"
+		add_political_power = 10
+		add_tech_bonus = {
+			name = JAP_electronics.313.b_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_computing_tech
+		}
+		set_country_flag = JAP_nintendo_mobile_refused
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+country_event = {
+	id = JAP_electronics.314
+	title = JAP_electronics.314.t
+	desc = JAP_electronics.314.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = JAP_nintendo_hybrid_console }
+		NOT = { has_country_flag = JAP_nintendo_separate_lines }
+	}
+
+	option = {
+		name = JAP_electronics.314.a
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.314.a executed"
+		set_temp_variable = { treasury_change = -4.00 }
+		modify_treasury_effect = yes
+		add_tech_bonus = {
+			name = JAP_electronics.314.a_bonus
+			bonus = 0.15
+			uses = 1
+			category = CAT_computing_tech
+		}
+		set_country_flag = JAP_nintendo_hybrid_console
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = JAP_electronics.314.b
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.314.b executed"
+		add_political_power = 10
+		add_tech_bonus = {
+			name = JAP_electronics.314.b_bonus
+			bonus = 0.10
+			uses = 1
+			category = CAT_industry
+		}
+		set_country_flag = JAP_nintendo_separate_lines
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = JAP_electronics.315
+	title = JAP_electronics.315.t
+	desc = JAP_electronics.315.d
+	picture = GFX_computer
+	is_triggered_only = yes
+
+	trigger = {
+		JAP_nintendo_outcome_settled = no
+	}
+
+	option = {
+		name = JAP_electronics.315.a
+		trigger = {
+			has_country_flag = JAP_nintendo_hybrid_console
+			has_country_flag = JAP_nintendo_hardware_persisted
+		}
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.315.a executed"
+		effect_tooltip = { add_timed_idea = { idea = JAP_nintendo_disciplined_hybrid_platform days = 365 } }
+		hidden_effect = { JAP_nintendo_apply_disciplined_hybrid = yes }
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = JAP_electronics.315.b
+		trigger = {
+			has_country_flag = JAP_nintendo_hybrid_console
+			NOT = { has_country_flag = JAP_nintendo_hardware_persisted }
+		}
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.315.b executed"
+		effect_tooltip = { add_timed_idea = { idea = JAP_nintendo_integrated_entertainment_ecosystem days = 365 } }
+		hidden_effect = { JAP_nintendo_apply_integrated_ecosystem = yes }
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = JAP_electronics.315.c
+		trigger = {
+			NOT = { has_country_flag = JAP_nintendo_hybrid_console }
+			has_country_flag = JAP_nintendo_licensed_mobile
+		}
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.315.c executed"
+		effect_tooltip = { add_timed_idea = { idea = JAP_nintendo_global_ip_licensor days = 365 } }
+		hidden_effect = { JAP_nintendo_apply_global_ip_licensor = yes }
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = JAP_electronics.315.e
+		trigger = {
+			NOT = { has_country_flag = JAP_nintendo_hybrid_console }
+			NOT = { has_country_flag = JAP_nintendo_licensed_mobile }
+		}
+		log = "[GetDateText]: [Root.GetName]: JAP_electronics.315.e executed"
+		effect_tooltip = { add_timed_idea = { idea = JAP_nintendo_open_developer_commonwealth days = 365 } }
+		hidden_effect = { JAP_nintendo_apply_open_developer_commonwealth = yes }
+		ai_chance = { base = 100 }
 	}
 }

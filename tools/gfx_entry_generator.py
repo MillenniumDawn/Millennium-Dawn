@@ -401,7 +401,7 @@ def generate_goals(mod_root, gfxbool=None):
 
     def render_shine(name, texture_path):
         return (
-            f'\tspriteType = {{ \n\t\tname = "{name}"\n'
+            f'\tspriteType = {{\n\t\tname = "{name}"\n'
             f'\t\ttexturefile = "{texture_path}"\n'
             '\t\teffectfile = "gfx/FX/buttonstate.lua"\n'
             "\t\tanimation = {\n"
@@ -1175,14 +1175,15 @@ def generate_focus_titlebars(mod_root):
     styles_nl = _newline_of(styles_text)
     styles_text = styles_text.replace("\r\n", "\n").replace("\r", "\n")
     styles_text_stripped = _strip_region(styles_text, STYLE_BEGIN, STYLE_END)
-    styled = set(
-        re.findall(
-            r"available\s*=\s*GFX_focus_can_start_joint_(\S+)", styles_text_stripped
+    style_pattern = r"available\s*=\s*GFX_focus_can_start_joint_(\S+)"
+    styled_outside = set(re.findall(style_pattern, styles_text_stripped))
+    styled_before = set(re.findall(style_pattern, styles_text))
+    managed_style_suffixes = [s for s in emitted if s not in styled_outside]
+    need_style = [s for s in managed_style_suffixes if s not in styled_before]
+    if managed_style_suffixes:
+        style_body = "\n\n".join(
+            _style_block(s).rstrip("\n") for s in managed_style_suffixes
         )
-    )
-    need_style = [s for s in emitted if s not in styled]
-    if need_style:
-        style_body = "\n\n".join(_style_block(s).rstrip("\n") for s in need_style)
         managed_styles = f"{STYLE_BEGIN}\n\n{style_body}\n\n{STYLE_END}\n"
         styles_text_out = styles_text_stripped.rstrip("\n") + "\n\n" + managed_styles
     else:

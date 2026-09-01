@@ -6,6 +6,9 @@ scripted_gui image= properties, and scripted_localisation localization_key= agai
 the set defined in interface/*.gfx. Promotes .gui errors from WARNING to ERROR for
 MD-authored files; vanilla-override files stay at WARNING, as do MD-authored nation
 variants for refs inherited from the specific vanilla file they copy.
+
+Also checks .gui `font = "x"` against the bitmapfonts declared in interface/*.gfx
+(mod plus vanilla) — an unresolved font silently falls back to the default face.
 """
 
 import glob
@@ -138,9 +141,10 @@ _GFX_NAME = re.compile(
 # textureFile / texturefile inside a sprite block — the art a definition points at.
 _GFX_TEXTUREFILE = re.compile(r'\btexture[fF]ile\s*=\s*"([^"]+)"', re.IGNORECASE)
 
-# GUI references — spriteType / quadTextureSprite / background
+# Property names are case-insensitive; quotes are optional. GFX_ stays exact.
 _GUI_REF = re.compile(
-    r'\b(spriteType|quadTextureSprite|background)\s*=\s*"(GFX_[^"\[]+)"'
+    r"\b(?i:spriteType|quadTextureSprite|background)\s*=\s*"
+    r'(?:"(GFX_[^"\[]+)"|(GFX_[A-Za-z0-9_.@-]+))'
 )
 
 # Scripted GUI properties: image = "GFX_xxx"
@@ -161,6 +165,12 @@ _SPRITE_TEMPLATE_REF = re.compile(
 # the unused-sprite check, so over-matching (e.g. a token in a string) is safe.
 _GFX_TOKEN_REF = re.compile(r"GFX_[A-Za-z0-9_.\-]+")
 _HASH_COMMENT = re.compile(r"#[^\n]*")
+
+# Bitmap font declarations in .gfx, and the .gui `font = "x"` references to them.
+# A font name is not GFX_-prefixed, so it needs its own pair of patterns.
+_FONT_DEF = re.compile(r"\bbitmapfont\s*=\s*\{")
+_FONT_NAME = re.compile(r'\bname\s*=\s*"([^"]+)"')
+_FONT_REF = re.compile(r'\bfont\s*=\s*"([^"\[]+)"')
 
 # Localisation sprite reference: `£name` renders the sprite `GFX_name` (an
 # optional `|frame` suffix may follow). Party, idea and money icons are often
@@ -194,6 +204,19 @@ def _load_vanilla_sprite_manifest() -> FrozenSet[str]:
     # corrupt manifest should degrade to the heuristic, not crash the run.
     try:
         with open(_VANILLA_SPRITES_MANIFEST, encoding="utf-8") as fh:
+            return frozenset(
+                line.strip() for line in fh if line.strip() and not line.startswith("#")
+            )
+    except (OSError, UnicodeDecodeError):
+        return frozenset()
+
+
+_VANILLA_FONTS_MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_fonts.txt")
+
+
+def _load_vanilla_font_manifest() -> FrozenSet[str]:
+    try:
+        with open(_VANILLA_FONTS_MANIFEST, encoding="utf-8") as fh:
             return frozenset(
                 line.strip() for line in fh if line.strip() and not line.startswith("#")
             )
@@ -278,7 +301,7 @@ def _vanilla_gui_ref_index() -> dict:
         text = _strip_comments(raw)
         refs = index.setdefault(os.path.basename(path), set())
         for m in _GUI_REF.finditer(text):
-            sprite = m.group(2)
+            sprite = m.group(1) or m.group(2)
             if not _is_dynamic(sprite):
                 refs.add(sprite)
     return index
@@ -317,7 +340,18 @@ _EQUIPMENT_ICON_TAG_RE = re.compile(r"^[A-Z][A-Z0-9]{2}_(.+)$")
 _EQUIPMENTS_BLOCK_RE = re.compile(r"^equipments\s*=\s*\{", re.MULTILINE)
 _TECHNOLOGIES_BLOCK_RE = re.compile(r"^technologies\s*=\s*\{", re.MULTILINE)
 _MODULES_BLOCK_RE = re.compile(r"^equipment_modules\s*=\s*\{", re.MULTILINE)
+_SUB_UNITS_BLOCK_RE = re.compile(r"^sub_units\s*=\s*\{", re.MULTILINE)
+_SUB_UNIT_CATEGORIES_BLOCK_RE = re.compile(
+    r"^sub_unit_categories\s*=\s*\{", re.MULTILINE
+)
 _EQUIPMENT_ENTRY_RE = re.compile(r"^\t([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+_UNIT_ICON_SUFFIXES = (
+    "_icon_small",
+    "_icon_medium",
+    "_icon_small_white",
+    "_icon_medium_white",
+    "_icon_medium_black",
+)
 
 # The equipment designer draws GFX_EMI_<name> for both halves of the module
 # system: the module itself, and the category its slot accepts. A category is
@@ -373,26 +407,41 @@ def _search_filter_names_from_text(raw: str) -> List[str]:
     return sorted(names)
 
 
+def _iter_txt_files(root: str, *, recursive: bool = True) -> List[str]:
+    """Return `.txt` paths under `root`. Missing dirs yield an empty list."""
+    if not recursive:
+        try:
+            return [
+                os.path.join(root, fn)
+                for fn in os.listdir(root)
+                if fn.endswith(".txt") and os.path.isfile(os.path.join(root, fn))
+            ]
+        except OSError:
+            return []
+    files: List[str] = []
+    for dirpath, _dirnames, filenames in os.walk(root):
+        for fn in filenames:
+            if fn.endswith(".txt"):
+                files.append(os.path.join(dirpath, fn))
+    return files
+
+
 def _load_names_from_dir(
-    mod_path: str, root: str, parse, namespace: str
+    mod_path: str, root: str, parse, namespace: str, *, recursive: bool = True
 ) -> FrozenSet[str]:
     """Return every name `parse` finds under `root`, content-cached per file."""
     names: Set[str] = set()
-    for dirpath, _dirnames, filenames in os.walk(root):
-        for fn in filenames:
-            if not fn.endswith(".txt"):
-                continue
-            filepath = os.path.join(dirpath, fn)
-            try:
-                with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
-                    raw = fh.read()
-            except OSError:
-                continue
-            names.update(
-                disk_cache.per_file_cached_by_content(
-                    mod_path, namespace, filepath, raw, lambda: parse(raw)
-                )
+    for filepath in _iter_txt_files(root, recursive=recursive):
+        try:
+            with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
+                raw = fh.read()
+        except OSError:
+            continue
+        names.update(
+            disk_cache.per_file_cached_by_content(
+                mod_path, namespace, filepath, raw, lambda: parse(raw)
             )
+        )
     return frozenset(names)
 
 
@@ -405,14 +454,51 @@ def _load_entry_names(
     )
 
 
+def _equipment_tree_from_text(raw: str) -> Tuple[List[str], List[str]]:
+    """Return (equipment entries, module/category names) from one equipment file."""
+    return (
+        _entry_names_from_text(raw, _EQUIPMENTS_BLOCK_RE),
+        _module_icon_names_from_text(raw),
+    )
+
+
+def _load_equipment_tree(mod_path: str) -> Tuple[FrozenSet[str], FrozenSet[str]]:
+    """Return cached (equipment names, module/category names) for the equipment tree."""
+    root = os.path.join(mod_path, "common", "units", "equipment")
+    tracked = _iter_txt_files(root)
+
+    def _build() -> Tuple[FrozenSet[str], FrozenSet[str]]:
+        equipment: Set[str] = set()
+        modules: Set[str] = set()
+        for filepath in tracked:
+            try:
+                with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
+                    raw = fh.read()
+            except OSError:
+                continue
+            eq_names, module_names = disk_cache.per_file_cached_by_content(
+                mod_path,
+                "gfx_ref.equipment_tree",
+                filepath,
+                raw,
+                lambda: _equipment_tree_from_text(raw),
+            )
+            equipment.update(eq_names)
+            modules.update(module_names)
+        return frozenset(equipment), frozenset(modules)
+
+    return disk_cache.aggregate_cached(
+        mod_path,
+        "gfx_ref.equipment_tree.aggregate",
+        tracked,
+        _build,
+        namespace="gfx_ref",
+    )
+
+
 def _load_equipment_names(mod_path: str) -> FrozenSet[str]:
     """Return every equipment archetype/variant declared in common/units/equipment."""
-    return _load_entry_names(
-        mod_path,
-        os.path.join(mod_path, "common", "units", "equipment"),
-        _EQUIPMENTS_BLOCK_RE,
-        "gfx_ref.equipment_names",
-    )
+    return _load_equipment_tree(mod_path)[0]
 
 
 def _load_technology_names(mod_path: str) -> FrozenSet[str]:
@@ -447,11 +533,94 @@ def _module_icon_names_from_text(raw: str) -> List[str]:
 
 def _load_module_icon_names(mod_path: str) -> FrozenSet[str]:
     """Return every module and category the designer can draw an icon for."""
-    return _load_names_from_dir(
+    return _load_equipment_tree(mod_path)[1]
+
+
+def _unit_category_names_from_text(raw: str) -> List[str]:
+    """Return every token listed inside a `sub_unit_categories = { }` block."""
+    text = _HASH_COMMENT.sub("", raw)
+    names: Set[str] = set()
+    for block in _SUB_UNIT_CATEGORIES_BLOCK_RE.finditer(text):
+        body, _end = extract_block_from_text(text, block.start())
+        if body:
+            names.update(body.split())
+    return sorted(names)
+
+
+def _load_unit_icon_names(mod_path: str) -> FrozenSet[str]:
+    """Return every subunit and unit category the engine can draw a counter for."""
+    names = set(
+        _load_names_from_dir(
+            mod_path,
+            os.path.join(mod_path, "common", "units"),
+            lambda raw: _entry_names_from_text(raw, _SUB_UNITS_BLOCK_RE),
+            "gfx_ref.unit_names",
+            recursive=False,
+        )
+    )
+    names.update(
+        _load_names_from_dir(
+            mod_path,
+            os.path.join(mod_path, "common", "unit_tags"),
+            _unit_category_names_from_text,
+            "gfx_ref.unit_categories",
+        )
+    )
+    return frozenset(names)
+
+
+_ENGINE_DECLARATION_FAMILIES = (
+    (
+        _load_search_filter_names,
+        "  No search_filters found under common/national_focus"
+        " — focus-filter icons unresolved",
+        ("GFX_{name}",),
+    ),
+    (
+        _load_module_icon_names,
+        "  No equipment modules found under common/units/equipment"
+        " — module icons unresolved",
+        ("GFX_EMI_{name}", "GFX_SMI_{name}"),
+    ),
+    (
+        _load_unit_icon_names,
+        "  No sub-units or unit categories found — unit icons unresolved",
+        tuple("GFX_unit_{name}" + suffix for suffix in _UNIT_ICON_SUFFIXES),
+    ),
+)
+
+
+def _declaration_engine_source_files(mod_path: str) -> List[str]:
+    """Return the files that feed declaration-derived engine sprites."""
+    return (
+        _iter_txt_files(os.path.join(mod_path, "common", "national_focus"))
+        + _iter_txt_files(os.path.join(mod_path, "common", "units", "equipment"))
+        + _iter_txt_files(os.path.join(mod_path, "common", "units"), recursive=False)
+        + _iter_txt_files(os.path.join(mod_path, "common", "unit_tags"))
+    )
+
+
+def _declaration_engine_refs(
+    mod_path: str,
+) -> Tuple[FrozenSet[str], Tuple[str, ...]]:
+    """Return cached declaration-derived engine sprites plus empty-source notices."""
+
+    def _build() -> Tuple[FrozenSet[str], Tuple[str, ...]]:
+        refs: Set[str] = set()
+        notices: List[str] = []
+        for load, notice, templates in _ENGINE_DECLARATION_FAMILIES:
+            names = load(mod_path)
+            if not names:
+                notices.append(notice)
+            refs.update(t.format(name=n) for t in templates for n in names)
+        return frozenset(refs), tuple(notices)
+
+    return disk_cache.aggregate_cached(
         mod_path,
-        os.path.join(mod_path, "common", "units", "equipment"),
-        _module_icon_names_from_text,
-        "gfx_ref.module_icon_names",
+        "gfx_ref.declaration_engine_refs",
+        _declaration_engine_source_files(mod_path),
+        _build,
+        namespace="gfx_ref",
     )
 
 
@@ -546,6 +715,27 @@ def sprite_defs_from_gfx_text(raw: str) -> List[Tuple[str, str, int]]:
     return defs
 
 
+def font_names_from_gfx_text(raw: str) -> Set[str]:
+    """Return the bitmapfont names defined in raw .gfx file content.
+
+    Shared with refresh_vanilla_data.py so the committed manifest is built with
+    exactly the parse the validator applies to mod files.
+    """
+    names: Set[str] = set()
+    text = _strip_comments(raw)
+    for match in _FONT_DEF.finditer(text):
+        depth, i = 0, match.end() - 1
+        while i < len(text):
+            depth += (text[i] == "{") - (text[i] == "}")
+            if not depth:
+                break
+            i += 1
+        name = _FONT_NAME.search(text[match.end() : i])
+        if name:
+            names.add(name.group(1))
+    return names
+
+
 def sprite_names_from_gfx_text(raw: str) -> Set[str]:
     """Return the set of GFX sprite names defined in raw .gfx file content.
 
@@ -585,7 +775,7 @@ def _parse_gui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
         offsets = compute_line_offsets(raw)
         results = []
         for m in _GUI_REF.finditer(text):
-            sprite = m.group(2)
+            sprite = m.group(1) or m.group(2)
             if _is_dynamic(sprite):
                 continue
             line = line_for_offset(offsets, m.start())
@@ -597,6 +787,62 @@ def _parse_gui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     )
 
 
+def _parse_gui_fonts(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
+    """Return list of (font_name, filepath, line_number) from a .gui file."""
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return []
+
+    def _compute():
+        text = _strip_comments(raw)
+        offsets = compute_line_offsets(raw)
+        return [
+            (m.group(1), filepath, line_for_offset(offsets, m.start()))
+            for m in _FONT_REF.finditer(text)
+        ]
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.font", filepath, raw, _compute
+    )
+
+
+def _parse_gfx_fonts(args: Tuple[str, str]) -> List[str]:
+    """Return the bitmapfont names a .gfx file defines."""
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return []
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "gfx_ref.fontdef",
+        filepath,
+        raw,
+        lambda: sorted(font_names_from_gfx_text(raw)),
+    )
+
+
+def _refs_from_raw_text(
+    raw: str, filepath: str, pattern: "re.Pattern[str]"
+) -> List[Tuple[str, str, int]]:
+    """Return (sprite_name, filepath, line) for each `pattern` match's group(1).
+
+    Scans `raw` directly rather than comment-stripped text: scripted_gui .txt
+    and scripted_localisation .txt both use # for Clausewitz-script comments,
+    but a scripted loc key can itself start with #, so stripping would corrupt
+    a legitimate reference. Dynamic names are skipped.
+    """
+    offsets = compute_line_offsets(raw)
+    results = []
+    for m in pattern.finditer(raw):
+        sprite = m.group(1)
+        if _is_dynamic(sprite):
+            continue
+        line = line_for_offset(offsets, m.start())
+        results.append((sprite, filepath, line))
+    return results
+
+
 def _parse_sgui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a scripted_gui .txt file."""
     filepath, mod_path = args
@@ -604,22 +850,12 @@ def _parse_sgui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     if raw is None:
         return []
 
-    def _compute():
-        # scripted_gui .txt files use # comments (Clausewitz script style) but the
-        # image = "GFX_xxx" attribute pattern is the same. We don't strip # comments
-        # here to avoid stripping scripted loc keys that start with # — use raw text.
-        offsets = compute_line_offsets(raw)
-        results = []
-        for m in _SGUI_IMAGE_REF.finditer(raw):
-            sprite = m.group(1)
-            if _is_dynamic(sprite):
-                continue
-            line = line_for_offset(offsets, m.start())
-            results.append((sprite, filepath, line))
-        return results
-
     return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.sgui", filepath, raw, _compute
+        mod_path,
+        "gfx_ref.sgui",
+        filepath,
+        raw,
+        lambda: _refs_from_raw_text(raw, filepath, _SGUI_IMAGE_REF),
     )
 
 
@@ -707,19 +943,12 @@ def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     if raw is None:
         return []
 
-    def _compute():
-        offsets = compute_line_offsets(raw)
-        results = []
-        for m in _SLOC_KEY_REF.finditer(raw):
-            sprite = m.group(1)
-            if _is_dynamic(sprite):
-                continue
-            line = line_for_offset(offsets, m.start())
-            results.append((sprite, filepath, line))
-        return results
-
     return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.sloc", filepath, raw, _compute
+        mod_path,
+        "gfx_ref.sloc",
+        filepath,
+        raw,
+        lambda: _refs_from_raw_text(raw, filepath, _SLOC_KEY_REF),
     )
 
 
@@ -877,28 +1106,19 @@ class Validator(BaseValidator):
             GFX_<FOCUS_FILTER_X>          every search_filters token in a focus tree
             GFX_EMI_<module|category>     equipment modules and the slot categories
                                           they claim / a chassis slot allows
+            GFX_SMI_<module|category>     the same names, ship-designer prefix
+            GFX_unit_<subunit|category>_icon_{small,medium}[_white|_black]
+                                          battalion counters from sub_units and
+                                          unit_tags
             GFX_<TAG|culture>_ace_<m|f>_N ace portraits, keyed by tag or 2d culture
             GFX_missile_<TAG>_ID_<N>_icon and anything else a `[...]` scripted-loc
                                           or scripted-GUI template can build
         """
         self._log_section("Resolving engine-built GFX references from mod data")
-        refs: Set[str] = set()
-
-        filters = _load_search_filter_names(self.mod_path)
-        if not filters:
-            self.log(
-                "  No search_filters found under common/national_focus"
-                " — focus-filter icons unresolved"
-            )
-        refs.update("GFX_" + f for f in filters)
-
-        modules = _load_module_icon_names(self.mod_path)
-        if not modules:
-            self.log(
-                "  No equipment modules found under common/units/equipment"
-                " — module icons unresolved"
-            )
-        refs.update("GFX_EMI_" + m for m in modules)
+        declared, notices = _declaration_engine_refs(self.mod_path)
+        refs: Set[str] = set(declared)
+        for notice in notices:
+            self.log(notice)
 
         pools = _load_ace_pool_names(self.mod_path)
         if not pools:
@@ -999,11 +1219,11 @@ class Validator(BaseValidator):
         # .gui refs are gathered full-repo (ignore_staged) to build the override
         # index below, so under --staged the reported entries must be re-scoped to
         # the staged files or the whole repo's ~50 .gui errors would surface.
-        staged_rel = (
-            {os.path.relpath(f, self.mod_path) for f in (self.staged_files or [])}
-            if self.staged_only
-            else None
-        )
+        staged_rel: Set[str] = set()
+        if self.staged_only:
+            staged_rel = {
+                os.path.relpath(f, self.mod_path) for f in (self.staged_files or [])
+            }
         # Vanilla .gui files ship dead sprite refs of their own; an MD-authored
         # nation variant (`<vanilla_stem>_<tag>.gui`) inheriting the same ref is
         # vanilla's bug, not the mod's — downgrade to WARNING. Keyed per vanilla
@@ -1031,7 +1251,7 @@ class Validator(BaseValidator):
             if not self._vanilla_defs_loaded and _is_likely_vanilla(sprite):
                 continue
             rel = os.path.relpath(filepath, self.mod_path)
-            if staged_rel is not None and rel not in staged_rel:
+            if self.staged_only and rel not in staged_rel:
                 continue
             key = (sprite, rel, line)
             if key in seen:
@@ -1160,6 +1380,62 @@ class Validator(BaseValidator):
                 severity=Severity.WARNING,
                 category="case-variant-sprite",
             )
+
+    def _check_undefined_fonts(self) -> None:
+        """Report .gui `font = "x"` naming a bitmapfont nothing declares.
+
+        An unresolved font logs "No font with name x" and the text box renders
+        with the engine default, so the layout silently drifts. MD overrides
+        vanilla's interface/core.gfx wholesale but leaves its other font files
+        alone, so the universe is the mod's declarations plus vanilla's.
+        """
+        self._log_section("Checking font references in interface/*.gui files")
+        gfx_files = self._collect_files(["interface/**/*.gfx"], ignore_staged=True)
+        defined: Set[str] = set()
+        for batch in self._pool_map(
+            _parse_gfx_fonts, [(f, self.mod_path) for f in gfx_files]
+        ):
+            defined.update(batch)
+
+        vanilla_gfx = _vanilla_gfx_files()
+        if vanilla_gfx:
+            for batch in self._pool_map(
+                _parse_gfx_fonts, [(f, self.mod_path) for f in vanilla_gfx]
+            ):
+                defined.update(batch)
+        else:
+            manifest = _load_vanilla_font_manifest()
+            if not manifest:
+                self.log(
+                    "  No vanilla HOI4 install detected and no vanilla_fonts.txt"
+                    " manifest — skipping the font check"
+                )
+                return
+            defined.update(manifest)
+
+        gui_files = self._collect_files(["interface/**/*.gui"], ignore_staged=True)
+        issues = []
+        for batch in self._pool_map(
+            _parse_gui_fonts, [(f, self.mod_path) for f in gui_files]
+        ):
+            for name, filepath, line in batch:
+                if name in defined:
+                    continue
+                issues.append(
+                    (
+                        f'font = "{name}" is not declared as a bitmapfont — the '
+                        f"engine falls back to its default face",
+                        os.path.relpath(filepath, self.mod_path),
+                        line,
+                    )
+                )
+        self._report(
+            issues,
+            ok_msg=f"All font references resolve ({len(defined)} fonts declared).",
+            fail_msg=f"Undefined font references ({len(issues)} total):",
+            severity=Severity.ERROR,
+            category="undefined-font",
+        )
 
     def _check_loc_ref_case(
         self,
@@ -1347,6 +1623,7 @@ class Validator(BaseValidator):
         mod_defined_ci = casefold_index(mod_defined)
 
         self._check_duplicate_definitions()
+        self._check_undefined_fonts()
 
         gui_refs = self._collect_gui_refs(defined)
         sgui_refs = self._collect_sgui_refs(defined)

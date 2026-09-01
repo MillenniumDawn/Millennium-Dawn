@@ -11,6 +11,45 @@ update_nato_dirty_variable = {
 	}
 }
 
+NATO_auto_ratify_accession = {
+	if = {
+		limit = { has_country_flag = NATO_Accession_Voting }
+		for_each_scope_loop = {
+			array = global.nato_members
+			if = {
+				limit = {
+					exists = yes
+					has_idea = NATO_member
+					has_country_flag = MD_auto_ratify_nato_accession
+					NOT = { has_country_flag = NATO_Ratified_@ROOT }
+				}
+				set_temp_variable = {
+					automation_available_pp = {
+						value = political_power
+						subtract = automation_pp_reserve
+					}
+				}
+				if = {
+					limit = {
+						check_variable = {
+							var = automation_available_pp
+							value = 20
+							compare = greater_than_or_equals
+						}
+					}
+					log = "[GetDateText]: [THIS.GetName]: Automatic NATO accession ratification target: [ROOT.GetName]"
+					add_political_power = -20
+					set_country_flag = NATO_Ratified_@ROOT
+					if = {
+						limit = { is_ai = no }
+						update_nato_dirty_variable = yes
+					}
+				}
+			}
+		}
+	}
+}
+
 # Effect: NATO_join
 # Purpose: Admits ROOT to NATO full membership (mutual opinion boost, military access, NATO_member idea, tech sharing, faction join) when can_join_NATO passes; otherwise routes eligible non-members to Major Non-NATO Ally status.
 NATO_join = {
@@ -30,7 +69,9 @@ NATO_join = {
 					relation = military_access
 					active = yes
 				}
-				PREV = {
+			}
+			PREV = {
+				if = { limit = { NOT = { has_military_access_to = PREV } }
 					diplomatic_relation = {
 						country = PREV
 						relation = military_access

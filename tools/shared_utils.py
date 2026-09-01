@@ -7,13 +7,16 @@ import bisect
 import logging
 import os
 import re
+import stat
 import subprocess
 import sys
+import tempfile
 import time
 from collections import OrderedDict
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Container, Dict, Iterator, List, Optional, Set, Tuple
 
 
 class Colors:
@@ -41,6 +44,34 @@ _LEVEL_COLORS = {
 # Default skip patterns shared across validators. Individual validators can
 # extend this list with their own patterns.
 DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
+
+# Leave a quarter of the machine to whoever is using it. A full suite run
+# fans out over every validator and each of those keeps its own pool, so
+# without a shared ceiling the tooling oversubscribes the box and everything
+# else on it stalls.
+CPU_BUDGET_FRACTION = 0.75
+
+
+def cpu_budget() -> int:
+    """Cores this repo's tooling may occupy at once, never the whole machine.
+
+    ``MD_MAX_WORKERS`` overrides the share outright. CI runners have the box to
+    themselves, so there the budget is every core.
+    """
+    override = os.environ.get("MD_MAX_WORKERS", "").strip()
+    if override.isdigit() and int(override) > 0:
+        return int(override)
+    cores = os.cpu_count() or 1
+    if os.environ.get("CI", "").strip().lower() in ("1", "true"):
+        return cores
+    return max(1, int(cores * CPU_BUDGET_FRACTION))
+
+
+def split_cpu_budget(tasks: int) -> Tuple[int, int]:
+    """Split the budget into (concurrent tasks, workers each), product capped."""
+    budget = cpu_budget()
+    parallel = max(1, min(tasks, budget))
+    return parallel, max(1, budget // parallel)
 
 
 def log_message(
@@ -184,6 +215,32 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
     return block_lines, i  # position AFTER the block, not i-1
 
 
+def find_matching_brace(text: str, open_idx: int) -> int:
+    """Return the index of the ``}`` matching the ``{`` at *open_idx*.
+
+    Returns -1 if the braces never balance. Braces inside double-quoted
+    strings are ignored; :func:`extract_block_from_text` delegates here for
+    its own brace matching.
+    """
+    depth = 0
+    in_str = False
+    i = open_idx
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c == '"' and text[i - 1] != "\\":
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    return i
+        i += 1
+    return -1
+
+
 def extract_block_from_text(text: str, start: int) -> Tuple[str, int]:
     """Char-accurate brace-block extractor for raw text.
 
@@ -195,24 +252,31 @@ def extract_block_from_text(text: str, start: int) -> Tuple[str, int]:
     open_pos = text.find("{", start)
     if open_pos == -1:
         return "", -1
-    n = len(text)
-    body_start = open_pos + 1
+    close_pos = find_matching_brace(text, open_pos)
+    if close_pos == -1:
+        return "", -1
+    return text[open_pos + 1 : close_pos], close_pos + 1
+
+
+def find_unquoted_block_end(text: str, start: int) -> Tuple[int, bool]:
+    """Advance from *start* (just past an already-consumed opening ``{``),
+    counting bare ``{``/``}`` until depth returns to zero or *text* runs out.
+
+    Returns ``(end_index, balanced)`` — *end_index* is one past the matching
+    ``}`` when *balanced*, else ``len(text)``. Unlike :func:`find_matching_brace`,
+    quoted-string interiors are not respected; use only where the input can't
+    hide a brace inside a ``"..."`` span.
+    """
     depth = 1
-    i = body_start
-    in_str = False
-    while i < n:
-        c = text[i]
-        if c == '"' and text[i - 1] != "\\":
-            in_str = not in_str
-        elif not in_str:
-            if c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    return text[body_start:i], i + 1
+    i = start
+    n = len(text)
+    while i < n and depth > 0:
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
         i += 1
-    return "", -1
+    return i, depth == 0
 
 
 def compact_block(block_lines: List[str]) -> List[str]:
@@ -274,12 +338,12 @@ _COMPARISON_OPS = {"!=", "==", ">=", "<="}
 
 
 def normalize_spacing(line: str) -> str:
-    """Put single spaces around ``{``, ``}`` and ``=`` in one line of script.
+    """Put single spaces around braces, assignments and comparisons in one line.
 
     Leading indentation, ``"..."`` string interiors and any trailing ``#``
     comment are left byte-exact; a whole-line comment is returned unchanged.
-    ``!=``/``==``/``>=``/``<=`` are padded as one operator, and an empty block
-    keeps the spacing it was written with (``{}`` and ``{ }`` both survive).
+    Comparison operators are padded without splitting their two-character forms,
+    and an empty block keeps its written spacing (``{}`` and ``{ }`` both survive).
     Idempotent.
     """
     code = strip_inline_comment(line)
@@ -305,7 +369,7 @@ def normalize_spacing(line: str) -> str:
             out.append(f" {code[i : i + 2]} ")
             i += 2
             continue
-        elif c in "{}=":
+        elif c in "{}=<>":
             out.append(f" {c} ")
         else:
             out.append(c)
@@ -409,8 +473,8 @@ def create_backup(filename: str) -> str:
     backup_filename = f"{filename}.backup.{timestamp}"
 
     try:
-        with open(filename, "r", encoding="utf-8") as src:
-            with open(backup_filename, "w", encoding="utf-8") as dst:
+        with open(filename, "r", encoding="utf-8", newline="") as src:
+            with open(backup_filename, "w", encoding="utf-8", newline="") as dst:
                 dst.write(src.read())
         log_message("INFO", f"Backup created: {backup_filename}")
         return backup_filename
@@ -422,20 +486,182 @@ def create_backup(filename: str) -> str:
 def should_skip_file(
     filename: str, extra_skip_patterns: Optional[List[str]] = None
 ) -> bool:
-    """Check if a file should be skipped during processing"""
-    IGNORED_DIRS = ["gfx", "tools", "resources", "docs", "map"]
-
-    normalized_path = filename.replace("\\", "/")
-    for ignored_dir in IGNORED_DIRS:
-        if f"/{ignored_dir}/" in normalized_path or normalized_path.startswith(
-            f"{ignored_dir}/"
-        ):
+    """Check if a file should be skipped during processing."""
+    ignored_dirs = {".git", ".claude", "gfx", "tools", "resources", "docs", "map"}
+    content_roots = {"common", "events", "history", "interface", "localisation"}
+    normalized_path = filename.replace("\\", "/").strip("/")
+    parts = normalized_path.split("/")
+    # Canal/strait closures set flags read here, so this file is game logic
+    # that must count for variables validation. Stale worktree and reference
+    # copies stay ignored.
+    if parts[-2:] == ["map", "adjacency_rules.txt"] and not (
+        ignored_dirs - {"map"}
+    ).intersection(parts[:-2]):
+        return False
+    for index, part in enumerate(parts):
+        if part not in ignored_dirs:
+            continue
+        if part in {".git", ".claude"} or not content_roots.intersection(parts[:index]):
             return True
     if extra_skip_patterns:
         for pattern in extra_skip_patterns:
-            if pattern in filename:
+            if pattern in normalized_path:
                 return True
     return False
+
+
+def normalize_path_separators(path: str) -> str:
+    """Return a path with POSIX separators for public output."""
+    return path.replace("\\", "/")
+
+
+def is_excluded_path(path: str, excluded_dirs: Container[str], repo_root: str) -> bool:
+    """True if path is under one of excluded_dirs, matched relative to repo_root.
+
+    Matching is against the path relative to repo_root, not the absolute path:
+    a checkout nested under an ancestor dir literally named after one of
+    excluded_dirs would otherwise match every file and no-op the whole repo.
+    """
+    try:
+        rel = os.path.relpath(os.path.abspath(path), os.path.abspath(repo_root))
+    except ValueError:
+        rel = normalize_path_separators(os.path.abspath(path)).strip("/")
+        return any(part in excluded_dirs for part in rel.split("/"))
+    return any(part in excluded_dirs for part in rel.split(os.sep))
+
+
+def iter_txt_targets(
+    path: str, excluded_dirs: Container[str]
+) -> Iterator[Tuple[str, str]]:
+    """Yield (display_path, full_path) for every .txt file a CLI target names.
+
+    `path` may be a single file (yielded as-is) or a directory (walked
+    recursively, pruning excluded_dirs). display_path is path-relative for a
+    walked file, or path itself for a direct file argument. Callers must check
+    whether path itself is excluded before calling this.
+    """
+    if os.path.isdir(path):
+        for dirpath, dirnames, filenames in os.walk(path):
+            dirnames[:] = [d for d in dirnames if d not in excluded_dirs]
+            for fn in filenames:
+                if fn.lower().endswith(".txt"):
+                    full = os.path.join(dirpath, fn)
+                    yield normalize_path_separators(os.path.relpath(full, path)), full
+    elif os.path.isfile(path):
+        yield path, path
+
+
+def _reject_symlink_path(path: Path) -> None:
+    if path.is_symlink():
+        raise OSError(f"Refusing to access symlink: {path}")
+    for parent in path.absolute().parents:
+        if parent == parent.parent:
+            break
+        if parent.is_symlink():
+            raise OSError(f"Refusing to access symlinked parent: {parent}")
+
+
+def read_text_strict(
+    filename: str,
+    encoding: str = "utf-8-sig",
+    *,
+    reject_symlink: bool = True,
+) -> str:
+    """Read repository text without replacing malformed bytes."""
+    path = Path(filename)
+    if reject_symlink:
+        _reject_symlink_path(path)
+    with path.open("r", encoding=encoding, errors="strict", newline="") as handle:
+        return handle.read()
+
+
+def resolve_under(path: str, under: str) -> Path:
+    """Resolve *path* and raise if it is not inside *under*."""
+    root = Path(under).resolve()
+    resolved = Path(path).resolve()
+    if resolved != root and root not in resolved.parents:
+        raise ValueError(f"path {path} is not under {under}")
+    _reject_symlink_path(resolved)
+    return resolved
+
+
+def read_text_under(
+    path: str,
+    under: str,
+    encoding: str = "utf-8-sig",
+    *,
+    errors: str = "replace",
+) -> str:
+    """Read a text file after proving it lives under *under*."""
+    resolved = resolve_under(path, under)
+    return Path(os.fspath(resolved)).read_text(encoding=encoding, errors=errors)
+
+
+def atomic_write_bytes(filename: str, data: bytes) -> None:
+    """Replace a regular file atomically, preserving mode and old contents."""
+    path = Path(filename)
+    _reject_symlink_path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    existing_mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else None
+    temp_name = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb", dir=path.parent, prefix=f".{path.name}.", delete=False
+        ) as handle:
+            temp_name = handle.name
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temp_name, existing_mode if existing_mode is not None else 0o644)
+        os.replace(temp_name, path)
+        opener = globals().get("FileOpener")
+        if opener is not None:
+            opener.invalidate(str(path))
+        temp_name = None
+    finally:
+        if temp_name is not None:
+            try:
+                os.unlink(temp_name)
+            except FileNotFoundError:
+                pass
+
+
+def atomic_write_text(
+    filename: str,
+    text: str,
+    encoding: str = "utf-8",
+    *,
+    bom: Optional[bool] = None,
+) -> None:
+    """Atomically write text, preserving an existing UTF-8 BOM by default."""
+    path = Path(filename)
+    _reject_symlink_path(path)
+    existing = b""
+    if path.exists():
+        try:
+            existing = path.read_bytes()
+        except OSError:
+            existing = b""
+    if bom is None:
+        bom = existing.startswith(b"\xef\xbb\xbf")
+    if b"\r\n" in existing and "\n" in text:
+        text = text.replace("\r\n", "\n").replace("\n", "\r\n")
+    text = text.removeprefix("\ufeff")
+    if bom:
+        text = "\ufeff" + text
+    output_encoding = "utf-8" if encoding == "utf-8-sig" else encoding
+    atomic_write_bytes(filename, text.encode(output_encoding, errors="strict"))
+
+
+def write_text_under(
+    path: str,
+    under: str,
+    text: str,
+    encoding: str = "utf-8",
+) -> None:
+    """Write text after proving *path* lives under *under*."""
+    resolved = resolve_under(path, under)
+    atomic_write_text(str(resolved), text, encoding=encoding)
 
 
 def clean_filepath(filepath: str) -> str:
@@ -523,15 +749,8 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
         if not m:
             continue
         start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        cat_block = text[start : i - 1] if depth == 0 else text[start:]
+        i, balanced = find_unquoted_block_end(text, start)
+        cat_block = text[start : i - 1] if balanced else text[start:]
 
         pos = 0
         while True:
@@ -540,17 +759,10 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
                 break
             cat_name = cat_m.group(1)
             cat_start = pos + cat_m.end()
-            cat_depth = 1
-            cat_i = cat_start
-            while cat_i < len(cat_block) and cat_depth > 0:
-                if cat_block[cat_i] == "{":
-                    cat_depth += 1
-                elif cat_block[cat_i] == "}":
-                    cat_depth -= 1
-                cat_i += 1
+            cat_i, cat_balanced = find_unquoted_block_end(cat_block, cat_start)
             cat_body = (
                 cat_block[cat_start : cat_i - 1]
-                if cat_depth == 0
+                if cat_balanced
                 else cat_block[cat_start:]
             )
             type_m = re.search(r"\btype\s*=\s*(\w+)", cat_body)
@@ -568,20 +780,8 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
     return out
 
 
-def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:
-    """Parse common/idea_tags/*.txt and return non-selectable idea category names.
-
-    A category is non-selectable if it has `hidden = yes` or has neither
-    `slot =` nor `character_slot =` entries (like `country` with
-    `type = national_spirit`). These are categories where ideas are only
-    added/removed via script (add_ideas/remove_ideas), never picked in the UI,
-    so `allowed = { always = no }` is always redundant.
-
-    Args:
-        mod_root: Path to the mod root (auto-detected if None).
-    Returns:
-        frozenset of non-selectable category names (e.g. {'country', 'hidden_ideas'}).
-    """
+@lru_cache(maxsize=None)
+def _non_selectable_idea_categories_cached(mod_root: str) -> frozenset:
     categories = {
         c["name"]
         for c in get_all_idea_categories(mod_root)
@@ -590,6 +790,41 @@ def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozen
     return (
         frozenset(categories) if categories else frozenset({"country", "hidden_ideas"})
     )
+
+
+def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:
+    """Return non-selectable idea categories for one normalized mod root."""
+    if mod_root is None:
+        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    normalized = os.path.normcase(os.path.abspath(os.path.normpath(mod_root)))
+    return _non_selectable_idea_categories_cached(normalized)
+
+
+@lru_cache(maxsize=None)
+def _slotless_idea_categories_cached(mod_root: str) -> frozenset:
+    return frozenset(
+        c["name"]
+        for c in get_all_idea_categories(mod_root)
+        if not c["has_slot"] and not c["has_char_slot"]
+    )
+
+
+def get_slotless_idea_categories(mod_root: Optional[str] = None) -> frozenset:
+    """Return idea categories with no slot of any kind.
+
+    Narrower than get_non_selectable_idea_categories, which also counts a hidden
+    category that still has a slot (dynamic_modifier_slots). An idea here can
+    only arrive through add_idea, so its `allowed` gate is never consulted; one
+    in a slotted category still filters the pool the slot draws from.
+
+    Empty when common/idea_tags/ is missing or unparseable. This backs an
+    ERROR-severity check, so it guesses at nothing: no categories means the
+    check goes quiet rather than blocking a PR on a hardcoded assumption.
+    """
+    if mod_root is None:
+        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    normalized = os.path.normcase(os.path.abspath(os.path.normpath(mod_root)))
+    return _slotless_idea_categories_cached(normalized)
 
 
 def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int:
@@ -613,8 +848,10 @@ def strip_comments(text: str) -> str:
     lines = text.split("\n")
     result = []
     for line in lines:
-        stripped = line.lstrip()
-        if stripped.startswith("#"):
+        if "#" not in line:
+            result.append(line)
+            continue
+        if line.lstrip().startswith("#"):
             result.append("")
             continue
         in_quote = False
@@ -658,6 +895,147 @@ def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> st
     return "".join(out)
 
 
+def flat_block_text(block: str) -> str:
+    """Strip an outer brace pair, but only when the two actually match.
+
+    A bare body ending in the `}` of its last child keeps both characters — a
+    naive strip there would delete an unrelated brace and desync every depth
+    count downstream.
+    """
+    inner = block.strip()
+    if inner.startswith("{") and find_matching_brace(inner, 0) == len(inner) - 1:
+        return inner[1:-1]
+    return inner
+
+
+def iter_flat_offsets(block: str) -> Iterator[Tuple[str, int]]:
+    """Yield offsets at brace depth zero, skipping comments and nested blocks."""
+    inner = flat_block_text(block)
+    depth = 0
+    index = 0
+    while index < len(inner):
+        char = inner[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+        elif char == "#":
+            while index < len(inner) and inner[index] != "\n":
+                index += 1
+            continue
+        elif depth == 0:
+            yield inner, index
+        index += 1
+
+
+_IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
+# The three trigger blocks that can hide a decision or category from a player.
+_AI_GATE_FIELDS = ("visible", "available", "allowed")
+_TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+
+
+def first_flat_match(
+    block: str, pattern: "re.Pattern[str]"
+) -> Optional["re.Match[str]"]:
+    """First match of *pattern* sitting unconditionally at depth 0 of a block.
+
+    Nested inside NOT/OR/AND/if/limit or a scoped `TAG = { }` a token is
+    conditional and means something different: `NOT = { has_country_flag = X }`
+    is satisfied until X is set, the opposite of a gate that X opens.
+    ``iter_flat_offsets`` yields every depth-0 character position, hence the
+    preceding-whitespace guard against matching mid-token.
+    """
+    if not block:
+        return None
+    for inner, index in iter_flat_offsets(block):
+        if index and not inner[index - 1].isspace():
+            continue
+        match = pattern.match(inner, index)
+        if match:
+            return match
+    return None
+
+
+def has_flat_is_ai(block: str) -> bool:
+    """True when `is_ai = yes` sits unconditionally at depth 0 of a trigger block."""
+    return first_flat_match(block, _IS_AI_YES_RE) is not None
+
+
+def iter_direct_child_blocks(
+    body: str, opener: "re.Pattern[str]"
+) -> Iterator[Tuple["re.Match[str]", int, int]]:
+    """Yield `(match, open_idx, close_idx)` for every *opener* block at depth 0.
+
+    Depth-aware so a nested `visible` inside a `modifier` or an effect's `limit`
+    is never mistaken for the object's own trigger block. Each hit advances past
+    its own closing brace, which keeps the depth count balanced — landing back
+    on that `}` would decrement a depth the matching `{` never incremented.
+    """
+    index = 0
+    depth = 0
+    while index < len(body):
+        char = body[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+        elif depth == 0:
+            match = opener.match(body, index)
+            if match:
+                close = find_matching_brace(body, match.end() - 1)
+                if close == -1:
+                    return
+                yield match, match.end() - 1, close
+                index = close + 1
+                continue
+        index += 1
+
+
+def direct_child_block(body: str, name: str) -> str:
+    """Return the `name = { ... }` block at depth 0 of *body*, braces included.
+
+    Returns "" when there is no such block.
+    """
+    opener = re.compile(r"\b" + re.escape(name) + r"\s*=\s*\{")
+    for _match, open_idx, close in iter_direct_child_blocks(body, opener):
+        return body[open_idx : close + 1]
+    return ""
+
+
+def is_ai_only_block(body: str) -> bool:
+    """True when a decision or category body is gated on an unconditional `is_ai = yes`.
+
+    Accepts the body with or without its outer braces.
+    """
+    inner = flat_block_text(body)
+    return any(has_flat_is_ai(direct_child_block(inner, f)) for f in _AI_GATE_FIELDS)
+
+
+def ai_only_decision_categories(mod_path: str) -> Dict[str, str]:
+    """Decision categories no human player ever sees, mapped to their filename.
+
+    Every decision inside one inherits that: it needs no localisation and no
+    tooltip wrapper, because there is nobody to read either. The basename comes
+    back with the name so a finding can cite its source without a second walk
+    over the same directory.
+    """
+    root = Path(mod_path) / "common" / "decisions" / "categories"
+    names: Dict[str, str] = {}
+    for path in sorted(root.rglob("*.txt")):
+        try:
+            text = path.read_text(encoding="utf-8-sig", errors="replace")
+        except OSError:
+            continue
+        if "is_ai" not in text:
+            continue
+        text = strip_comments(text)
+        for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
+            body, _end = extract_block_from_text(text, match.end() - 1)
+            if body and is_ai_only_block(body):
+                names.setdefault(match.group(1), path.name)
+    return names
+
+
 class FileOpener:
     # LRU bound sized for common/ (~3600 files) plus localisation, so a broad
     # scan stays cached without evicting on every overflow.
@@ -676,20 +1054,28 @@ class FileOpener:
         if cached is not None:
             cls._cache.move_to_end(cache_key)
             return cached
-        try:
-            with open(filename, "r", encoding="utf-8-sig") as text_file:
-                content = text_file.read()
-                if strip_comments_flag:
-                    content = strip_comments(content)
-                if lowercase:
-                    content = content.lower()
-        except Exception as ex:
-            log_message("WARNING", f"Skipping file {filename}: {ex}")
-            return ""
+        content = read_text_strict(filename)
+        if strip_comments_flag:
+            content = strip_comments(content)
+        if lowercase:
+            content = content.lower()
         cls._cache[cache_key] = content
         if len(cls._cache) > cls._MAX_CACHE_SIZE:
             cls._cache.popitem(last=False)
         return content
+
+    @classmethod
+    def invalidate(cls, filename: str) -> None:
+        """Drop every cached representation of one file."""
+        target = os.path.abspath(os.fspath(filename))
+        for key in [
+            key for key in cls._cache if os.path.abspath(os.fspath(key[0])) == target
+        ]:
+            del cls._cache[key]
+
+    @classmethod
+    def clear_cache(cls) -> None:
+        cls._cache.clear()
 
 
 class DataCleaner:
@@ -846,8 +1232,8 @@ def create_linting_parser(
     parser.add_argument(
         "--workers",
         type=int,
-        default=max(1, min(os.cpu_count() or 2, 4)),
-        help="Number of parallel workers (default: min(CPU count, 4))",
+        default=max(1, min(cpu_budget(), 4)),
+        help="Number of parallel workers (default: min(CPU budget, 4))",
     )
     parser.add_argument(
         "filenames",
@@ -1012,41 +1398,69 @@ def get_all_txt_files(
 
 
 def get_staged_files(
-    mod_path: str, extensions: Optional[List[str]] = None
+    mod_path: str,
+    extensions: Optional[List[str]] = None,
+    include_missing: bool = False,
 ) -> Optional[List[str]]:
     """Get list of git changed files for validation.
 
     First checks for staged (cached) files — used in pre-commit hook context.
     Falls back to the branch diff vs main when nothing is staged, so that
     running --staged on a feature branch validates only the changed files.
+    Set include_missing to retain deleted paths for cross-reference checks.
     """
     if extensions is None:
         extensions = [".txt"]
 
+    # Most validators open every changed path, so missing files are filtered
+    # unless a cross-reference check needs to observe a deleted target.
     def _filter(names: list) -> list:
-        return [
-            os.path.join(mod_path, f)
+        paths = [
+            os.path.normpath(os.path.join(mod_path, f))
             for f in names
             if f and any(f.endswith(ext) for ext in extensions)
         ]
+        return paths if include_missing else [p for p in paths if os.path.isfile(p)]
+
+    def _git_diff(*args):
+        diff_filter = "ACMRD" if include_missing else "ACM"
+        output_format = "--name-status" if include_missing else "--name-only"
+        command = ["git", "diff"] + list(args) + [output_format]
+        if include_missing:
+            command.append("--find-renames")
+        command.append(f"--diff-filter={diff_filter}")
+        result = subprocess.run(
+            command,
+            cwd=mod_path,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=15,
+        )
+        if not include_missing:
+            return result.stdout.strip().split("\n")
+
+        names = []
+        for line in result.stdout.splitlines():
+            status, *paths = line.split("\t")
+            if status.startswith(("R", "C")):
+                names.extend(paths)
+            elif paths:
+                names.append(paths[0])
+        return names
 
     env_files = _read_staged_from_env()
     if env_files is not None:
-        return _filter(env_files) or None
+        files = _filter(env_files)
+        if not include_missing:
+            return files or None
+        try:
+            files.extend(_filter(_git_diff("--cached")))
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            pass
+        return list(dict.fromkeys(files)) or None
 
     try:
-
-        def _git_diff(*args):
-            result = subprocess.run(
-                ["git", "diff"] + list(args) + ["--name-only", "--diff-filter=ACM"],
-                cwd=mod_path,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=15,
-            )
-            return result.stdout.strip().split("\n")
-
         # Pre-commit hook context: files added to the index
         files = _filter(_git_diff("--cached"))
         if files:
