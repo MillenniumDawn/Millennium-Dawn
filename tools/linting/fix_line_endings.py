@@ -13,7 +13,7 @@ def fix_line_endings(file_path: Path) -> bool:
     """Return True if the file was modified (CRLF -> LF), False if unchanged."""
     try:
         if not file_path.is_file():
-            print(f"⚠️  {file_path}: Not a file, skipping")
+            print(f"SKIP {file_path}: Not a file, skipping")
             return False
 
         # Binary mode preserves bytes other than the line endings we rewrite
@@ -21,25 +21,25 @@ def fix_line_endings(file_path: Path) -> bool:
             original_content = f.read()
 
         if b"\r\n" not in original_content:
-            print(f"✅ {file_path}: Already has Unix line endings")
+            print(f"OK {file_path}: Already has Unix line endings")
             return False
 
         fixed_content = original_content.replace(b"\r\n", b"\n")
 
         atomic_write_bytes(str(file_path), fixed_content)
 
-        print(f"🔧 {file_path}: Fixed mixed line endings (CRLF → LF)")
+        print(f"FIXED {file_path}: Fixed mixed line endings (CRLF to LF)")
         return True
 
     except Exception as e:
-        print(f"❌ {file_path}: Error fixing line endings - {e}", file=sys.stderr)
+        print(f"ERROR {file_path}: Error fixing line endings - {e}", file=sys.stderr)
         return False
 
 
 def main():
     """Main entry point for the script."""
     if len(sys.argv) < 2:
-        print("❌ No files provided", file=sys.stderr)
+        print("ERROR No files provided", file=sys.stderr)
         return 1
 
     files = [Path(f) for f in sys.argv[1:]]
