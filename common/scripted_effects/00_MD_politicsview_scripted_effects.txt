@@ -533,12 +533,14 @@ start_politics_input = {
 	clear_array = party_pop_array
 	clear_array = party_pop_elect_array
 	clear_array = pos_array
+	clear_array = party_banned_array
 	clear_variable = ruling_party
 	clear_array = gov_coalition_array
 
 	resize_array = { array = party_pop_array size = 24 }
 	resize_array = { array = party_pop_elect_array size = 24 value = -1 }
 	resize_array = { array = pos_array size = 24 }
+	resize_array = { array = party_banned_array size = 24 value = 0 }
 	update_dirty_politicsview_expanded = yes
 }
 
@@ -1182,18 +1184,9 @@ calculate_banned_parties = {
 		start = 0
 		end = 24
 		value = v
-		# Ban flags are 1-indexed (party1_banned..party24_banned); array slots are 0-indexed.
-		set_temp_variable = { v_flag = v }
-		add_to_temp_variable = { v_flag = 1 }
-		meta_effect = {
-			text = {
-				if = {
-					limit = { has_country_flag = party[FLAG]_banned }
-					set_variable = { party_pop_elect_array^[SLOT] = 0 }
-				}
-			}
-			FLAG = "[?v_flag|0]"
-			SLOT = "[?v|0]"
+		if = {
+			limit = { check_variable = { party_banned_array^v = 1 } }
+			set_variable = { party_pop_elect_array^v = 0 }
 		}
 	}
 }
@@ -2417,31 +2410,19 @@ update_dirty_politicsview_expanded = {
 }
 
 # ban_party_scripted_call
-# Parameters: party_index - 1-24
+# Parameters: party_index - 0-23
 # Purpose: Bans the provided party index from elections
 ban_party_scripted_call = {
-	meta_effect = {
-		text = {
-			set_country_flag = party[v]_banned
-		}
-		v = "[?party_index|.0]"
-	}
-	add_to_temp_variable = { party_index = -1 }
+	set_variable = { party_banned_array^party_index = 1 }
 	custom_effect_tooltip = ban_party_effect_tt
 	update_dirty_politicsview_expanded = yes
 }
 
 # unban_party_scripted_call
-# Parameters: party_index - 1-24
+# Parameters: party_index - 0-23
 # Purpose: Allows the provided party index for elections
 unban_party_scripted_call = {
-	meta_effect = {
-		text = {
-			clr_country_flag = party[v]_banned
-		}
-		v = "[?party_index|.0]"
-	}
-	add_to_temp_variable = { party_index = -1 }
+	set_variable = { party_banned_array^party_index = 0 }
 	custom_effect_tooltip = unban_party_effect_tt
 	update_dirty_politicsview_expanded = yes
 }
@@ -2464,17 +2445,10 @@ set_partyall_banned = {
 					}
 					NOT = { is_in_array = { gov_coalition_array = ban_i } }
 				}
-				set_temp_variable = { ban_flag_index = ban_i }
-				add_to_temp_variable = { ban_flag_index = 1 }
-				meta_effect = {
-					text = {
-						if = {
-							limit = { NOT = { has_country_flag = party[v]_banned } }
-							add_to_temp_variable = { pp_cost = 10 }
-							set_country_flag = party[v]_banned
-						}
-					}
-					v = "[?ban_flag_index|.0]"
+				if = {
+					limit = { NOT = { check_variable = { party_banned_array^ban_i = 1 } } }
+					add_to_temp_variable = { pp_cost = 10 }
+					set_variable = { party_banned_array^ban_i = 1 }
 				}
 			}
 		}
@@ -2496,16 +2470,10 @@ set_partyall_allowed = {
 		for_loop_effect = {
 			end = 24
 			value = unban_i
-			set_temp_variable = { unban_flag_index = unban_i }
-			add_to_temp_variable = { unban_flag_index = 1 }
-			meta_effect = {
-				text = {
-					if = { limit = { has_country_flag = party[v]_banned }
-						add_to_temp_variable = { pp_cost = 10 }
-						clr_country_flag = party[v]_banned
-					}
-				}
-				v = "[?unban_flag_index|.0]"
+			if = {
+				limit = { check_variable = { party_banned_array^unban_i = 1 } }
+				add_to_temp_variable = { pp_cost = 10 }
+				set_variable = { party_banned_array^unban_i = 0 }
 			}
 		}
 
