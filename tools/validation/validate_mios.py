@@ -45,6 +45,7 @@ ORG_DIR = "common/military_industrial_organization/organizations"
 POLICY_DIR = "common/military_industrial_organization/policies"
 COMPANY_TRAIT_FILE = "common/country_leader/defense_company_traits.txt"
 COUNTRY_TAG_DIR = "common/country_tags"
+DOCTRINE_DIR = "common/doctrines"
 
 # Files that can carry a `mio:` reference. The org dir itself is excluded — a
 # trait naming its own org is not a cross-scope reference.
@@ -331,6 +332,18 @@ class Validator(BaseValidator):
         company_traits = Path(self.mod_path) / COMPANY_TRAIT_FILE
         if company_traits.is_file():
             files.append(str(company_traits))
+        return self._staged_bonus_subset(files)
+
+    def _doctrine_files(self) -> List[str]:
+        files = sorted(
+            glob.glob(
+                str(Path(self.mod_path) / DOCTRINE_DIR / "**" / "*.txt"),
+                recursive=True,
+            )
+        )
+        return self._staged_bonus_subset(files)
+
+    def _staged_bonus_subset(self, files: List[str]) -> List[str]:
         if not self.staged_only:
             return files
         staged = {Path(f).resolve() for f in self.staged_files or []}
@@ -341,8 +354,15 @@ class Validator(BaseValidator):
     def run_validations(self):
         files = self._org_files()
         bonus_files = self._bonus_files()
+        doctrine_files = self._doctrine_files()
         reference_files = self._reference_files()
-        if self.staged_only and not files and not bonus_files and not reference_files:
+        if (
+            self.staged_only
+            and not files
+            and not bonus_files
+            and not doctrine_files
+            and not reference_files
+        ):
             self.log("No staged MIO files found — skipping MIO validation", "warning")
             return
 
@@ -386,6 +406,15 @@ class Validator(BaseValidator):
             clean = blank_comments(text)
             self._check_nested_equipment_bonus(clean, rel, equipment)
             self._check_org_modifier_range(clean, rel, 0)
+        for filepath in doctrine_files:
+            try:
+                text = Path(filepath).read_text(encoding="utf-8")
+            except OSError:
+                continue
+            rel = Path(filepath).relative_to(self.mod_path).as_posix()
+            self._check_nested_equipment_bonus(
+                blank_comments(text), rel, equipment, dead_stats=False
+            )
 
         reference_hits = 0
         for filepath in reference_files:
@@ -696,14 +725,29 @@ class Validator(BaseValidator):
                 )
 
     def _check_nested_equipment_bonus(
-        self, text: str, rel: str, equipment: EquipmentStatIndex
+        self,
+        text: str,
+        rel: str,
+        equipment: EquipmentStatIndex,
+        *,
+        dead_stats: bool = True,
     ):
-        """Policies and country-leader company traits key their equipment_bonus
-        by archetype, so each nested block is its own scope."""
+        """Policies, doctrines, and country-leader company traits key their
+        equipment_bonus by archetype, so each nested block is its own scope."""
         for start, block in _sub_blocks(text, "equipment_bonus"):
             block_offset = text.count("\n", 0, start)
+            keyed: Dict[str, Set[str]] = {}
+            token_at: Dict[str, int] = {}
             for token, token_start, inner in _named_sub_blocks(block):
                 line = block_offset + block.count("\n", 0, token_start) + 1
+                keyed[token] = {
+                    stat
+                    for stat, _value in BONUS_STAT_RE.findall(inner)
+                    if stat != "instant"
+                }
+                token_at[token] = token_start
+                if not dead_stats:
+                    continue
                 scope = self._resolve_scope([token], equipment, rel, line)
                 if not scope:
                     continue
@@ -713,6 +757,15 @@ class Validator(BaseValidator):
                     scope,
                     rel,
                     lambda pos, o=offset, b=inner: o + b.count("\n", 0, pos) + 1,
+                )
+            for type_key, child, shared in equipment.type_archetype_overlaps(keyed):
+                line = block_offset + block.count("\n", 0, token_at[child]) + 1
+                self.add_error(
+                    "bonus-type-archetype-stack",
+                    f"equipment_bonus {', '.join(sorted(shared))} on {child} "
+                    f"also applies via type '{type_key}' in this block",
+                    rel,
+                    line,
                 )
 
     def _focus_context(self, text: str, pos: int, tags: FrozenSet[str]) -> Set[str]:
