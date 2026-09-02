@@ -253,8 +253,10 @@ calculate_currency_strength = {
 # ── Income stream multipliers ─────────────────────────────────────────────────
 
 # Runs in ingame_update_setup (00_money_system.txt) after income is computed.
-# Both streams scale by 1/currency_strength: a weak currency (< 1.0) boosts
-# foreign-earned income locally, a strong one suppresses it.
+# Income scales by 1/currency_strength: a weak currency (< 1.0) boosts
+# foreign-earned income locally, a strong one suppresses it. The matching
+# adjustment for debt lives in calculate_interest_rate, which sets debt_rate
+# after this effect runs.
 apply_currency_multipliers = {
 	set_temp_variable = {
 		inv_factor = {
@@ -273,25 +275,6 @@ apply_currency_multipliers = {
 	multiply_variable = { rubber_exports = inv_factor }
 	multiply_variable = { microchip_exports = inv_factor }
 	multiply_variable = { composite_exports = inv_factor }
-
-	# Only debt denominated in an external reserve currency takes the exchange hit.
-	if = {
-		limit = {
-			OR = {
-				has_idea = us_dollar
-				has_idea = euro
-				has_idea = chinese_yuan
-				has_idea = chinese_yuan_2
-				has_idea = chinese_yuan_3
-				has_idea = russia_rouble
-				has_idea = japanese_yen
-				has_idea = british_pound
-				has_idea = swiss_frank
-				has_idea = gulden
-			}
-		}
-		multiply_variable = { debt_rate = inv_factor }
-	}
 }
 
 # ── Seigniorage income ────────────────────────────────────────────────────────
