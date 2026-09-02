@@ -27,16 +27,31 @@ TGA_TOP_LEFT = 0x20
 UNCOMPRESSED_TGA_TYPES = frozenset({1, 2, 3})
 
 
-def imagemagick() -> list[str]:
-    for exe in ("magick", "convert"):
+def _is_imagemagick(path: str) -> bool:
+    """Windows ships its own convert.exe (FAT to NTFS), so ask the binary."""
+    try:
+        result = subprocess.run(
+            [path, "-version"], capture_output=True, text=True, timeout=30
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return "imagemagick" in (result.stdout + result.stderr).lower()
+
+
+def _which_imagemagick(*names: str) -> str:
+    for exe in names:
         found = shutil.which(exe)
-        if found:
-            return [found]
-    sys.exit("ImageMagick not found on PATH (need `magick` or `convert`).")
+        if found and _is_imagemagick(found):
+            return found
+    sys.exit("ImageMagick not found on PATH (need one of: " + ", ".join(names) + ").")
+
+
+def imagemagick() -> list[str]:
+    return [_which_imagemagick("magick", "convert")]
 
 
 def image_size(path: Path) -> tuple[int, int]:
-    identify = shutil.which("identify") or shutil.which("magick")
+    identify = _which_imagemagick("identify", "magick")
     argv = [identify]
     if Path(identify).stem.lower() == "magick":
         argv.append("identify")

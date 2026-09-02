@@ -3,13 +3,58 @@
 import importlib.util
 import io
 import json
+import shutil
 import struct
 import subprocess
 import sys
+import tempfile
 import urllib.error
 from http.client import HTTPMessage
 from pathlib import Path
 from types import ModuleType
+
+
+def symlinks_available() -> bool:
+    """Whether this process may create a symlink.
+
+    Windows refuses without Developer Mode or admin rights (WinError 1314), so
+    symlink-rejection tests skip there instead of failing the whole suite.
+    """
+    with tempfile.TemporaryDirectory() as folder:
+        target = Path(folder) / "target"
+        target.mkdir()
+        try:
+            (Path(folder) / "link").symlink_to(target)
+        except (OSError, NotImplementedError):
+            return False
+    return True
+
+
+def imagemagick_available() -> bool:
+    """Whether a real ImageMagick binary is on PATH.
+
+    Windows ships its own `convert.exe` (the FAT-to-NTFS converter), so the
+    name alone proves nothing — ask the binary what it is.
+    """
+    return bool(md_art_convert_binary())
+
+
+def md_art_convert_binary() -> str | None:
+    for exe in ("magick", "convert", "identify"):
+        found = shutil.which(exe)
+        if found and _is_imagemagick(found):
+            return found
+    return None
+
+
+def _is_imagemagick(path: str) -> bool:
+    try:
+        result = subprocess.run(
+            [path, "-version"], capture_output=True, text=True, timeout=30
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return "imagemagick" in (result.stdout + result.stderr).lower()
 
 
 def run_git(repository, *args):
