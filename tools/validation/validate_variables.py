@@ -1727,10 +1727,14 @@ class Validator(BaseValidator):
         return self._available_scan_memo
 
     def validate_untooltipped_available_checks(self):
-        """Flag bare check_variable inside `available` blocks (WARNING).
+        """Flag bare check_variable inside `available` blocks (ERROR).
 
         `visible` is excluded: a failing visible hides the object outright, so
         there is no tooltip surface for the check to render into.
+
+        Gating rather than warning: as a warning this reported #3362's blank
+        requirement line and the PR merged anyway. AI-only decisions are already
+        exempt, so a hit here is always a requirement a human player would read.
         """
         self._log_section(
             "Checking for untooltipped check_variable in available blocks..."
@@ -1746,7 +1750,7 @@ class Validator(BaseValidator):
             issues,
             "✓ No untooltipped check_variable in available blocks",
             "check_variable in `available` with no tooltip wrapper (the player sees a blank requirement line):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="untooltipped-available-check",
         )
 
