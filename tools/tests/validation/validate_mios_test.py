@@ -459,6 +459,46 @@ def test_nested_policy_form_checks_each_archetype_separately(tmp_path):
     assert "AA_Equipment" in v._issues[0].message
 
 
+def test_type_and_child_sharing_a_stat_is_flagged(tmp_path):
+    equipment_dir = tmp_path / "common" / "units" / "equipment"
+    equipment_dir.mkdir(parents=True, exist_ok=True)
+    (equipment_dir / "MD_ships.txt").write_text(
+        "equipments = {\n"
+        "\thelicopter_operator = {\n"
+        "\t\tis_archetype = yes\n"
+        "\t\ttype = carrier\n"
+        "\t\tbuild_cost_ic = 28000\n"
+        "\t}\n"
+        "\tcarrier = {\n"
+        "\t\tis_archetype = yes\n"
+        "\t\ttype = carrier\n"
+        "\t\tbuild_cost_ic = 40000\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    text = (
+        "mio_policy_test = {\n"
+        "\tequipment_bonus = {\n"
+        "\t\tcarrier = {\n"
+        "\t\t\tbuild_cost_ic = -0.25\n"
+        "\t\t}\n"
+        "\t\thelicopter_operator = {\n"
+        "\t\t\tbuild_cost_ic = -0.25\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    v = _validator(tmp_path)
+    v._check_nested_equipment_bonus(
+        text, "p.txt", V.build_equipment_stat_index(str(tmp_path))
+    )
+    assert [i.category for i in v._issues] == ["bonus-type-archetype-stack"]
+    assert v._issues[0].severity == "error"
+    assert "helicopter_operator" in v._issues[0].message
+    assert "carrier" in v._issues[0].message
+
+
 def test_production_keys_are_not_equipment_stats(tmp_path):
     text = (
         "mio_policy_test = {\n"
