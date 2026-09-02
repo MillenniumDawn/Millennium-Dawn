@@ -111,7 +111,7 @@ def pixels_match(a: Path, b: Path) -> bool:
     if Path(argv[0]).stem.lower() == "magick":
         argv.append("compare")
     else:
-        argv = [shutil.which("compare") or "compare"]
+        argv = [_which_imagemagick("compare")]
     result = subprocess.run(
         argv + ["-metric", "AE", str(a), str(b), "null:"],
         capture_output=True,

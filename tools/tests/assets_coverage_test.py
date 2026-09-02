@@ -177,6 +177,17 @@ def test_pixels_match_uses_compare_binary(monkeypatch):
     assert recorded["argv"][0] == "/usr/bin/compare"
 
 
+def test_pixels_match_names_imagemagick_when_compare_is_missing(monkeypatch):
+    _trust_resolved_binaries(monkeypatch)
+    monkeypatch.setattr(
+        md_art_convert.shutil,
+        "which",
+        lambda name: "/usr/bin/convert" if name == "convert" else None,
+    )
+    with pytest.raises(SystemExit, match="ImageMagick not found"):
+        md_art_convert.pixels_match(Path("a.png"), Path("b.png"))
+
+
 def test_fixed_size_counts_a_verify_mismatch(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(md_art_convert, "image_size", lambda _path: (2, 2))
     monkeypatch.setattr(md_art_convert, "write_dds", lambda *_args, **_kwargs: None)

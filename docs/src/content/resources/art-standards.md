@@ -72,7 +72,7 @@ DO NOT: GFX_Germany_Icon_Name
 
 ## Converting
 
-`tools/assets/md_art_convert.py` writes the formats above so you don’t have to remember the flags. It needs ImageMagick on PATH.
+`tools/assets/md_art_convert.py` writes the formats above so you don’t have to remember the flags. It needs ImageMagick on PATH; on Windows install ImageMagick 7, since the `convert` already on PATH there is the NTFS conversion utility rather than ImageMagick.
 
 ```bash
 # Event pictures, 217x163 for a country event or 397x153 for a news event
