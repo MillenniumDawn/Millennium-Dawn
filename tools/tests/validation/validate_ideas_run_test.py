@@ -554,3 +554,48 @@ def test_script_entry_point_exits_nonzero_under_strict(tmp_path, monkeypatch):
         runpy.run_path(validate_ideas.__file__, run_name="__main__")
 
     assert exit_info.value.code == 1
+
+
+def test_type_and_child_equipment_bonus_is_flagged(tmp_path):
+    _write(
+        tmp_path,
+        "common/units/equipment/ships.txt",
+        "equipments = {\n"
+        "\thelicopter_operator = {\n"
+        "\t\tis_archetype = yes\n"
+        "\t\ttype = carrier\n"
+        "\t\tbuild_cost_ic = 28000\n"
+        "\t}\n"
+        "\tcarrier = {\n"
+        "\t\tis_archetype = yes\n"
+        "\t\ttype = carrier\n"
+        "\t\tbuild_cost_ic = 40000\n"
+        "\t}\n"
+        "}\n",
+    )
+    _write(
+        tmp_path,
+        "common/idea_tags/00_idea.txt",
+        IDEA_TAGS,
+    )
+    _write(
+        tmp_path,
+        "common/ideas/navy.txt",
+        "ideas = {\n"
+        "\tcountry = {\n"
+        "\t\tNAVY_act = {\n"
+        "\t\t\tequipment_bonus = {\n"
+        "\t\t\t\tcarrier = { build_cost_ic = -0.25 }\n"
+        "\t\t\t\thelicopter_operator = { build_cost_ic = -0.25 }\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+    validator = _validator(tmp_path)
+    validator.validate_equipment_bonus_stack()
+    assert [issue.category for issue in validator._issues] == [
+        "bonus-type-archetype-stack"
+    ]
+    assert validator._issues[0].file == "common/ideas/navy.txt"
+    assert "helicopter_operator" in validator._issues[0].message
