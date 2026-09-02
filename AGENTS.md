@@ -30,6 +30,12 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
   `has_completed_focus`, variables, event targets, ideology, subject status,
   faction membership, and similar direct checks instead. Use a flag only for
   state that cannot be queried directly or must record a historical transition.
+- Markdown docs: tables must read aligned in plaintext — prettier-padded columns
+  (the repo `.md` hook settings) with the **whole padded row within 100 characters**.
+  Tighten cells, factor a shared path prefix into a note above the table, drop or
+  merge columns, or move detail into a terse `Details:` list under the table
+  (patterns: `.claude/docs/documentation-references.md`, `.claude/docs/formable-reference.md`).
+  Content that cannot fit a 100-wide table becomes a bulleted list instead.
 
 ### Line endings in Python tooling
 

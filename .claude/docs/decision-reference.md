@@ -21,13 +21,15 @@ A decision becomes targeted when it includes `targets`, `target_array`, `target_
 
 ### Trigger Evaluation Order & Frequency
 
-| Block                 | Scope       | Frequency                                    | Purpose                                       |
-| --------------------- | ----------- | -------------------------------------------- | --------------------------------------------- |
-| `allowed`             | ROOT        | Once (game start/load)                       | Permanent gate                                |
-| `target_root_trigger` | ROOT only   | Daily                                        | Fast pre-filter — if false, skips all targets |
-| `target_trigger`      | ROOT + FROM | Daily (only if `target_root_trigger` passes) | Per-target daily filter                       |
-| `visible`             | ROOT + FROM | Every tick                                   | UI visibility (most expensive)                |
-| `available`           | ROOT + FROM | Every tick                                   | Clickability gate                             |
+| Block                 | Scope       | Frequency              | Purpose                        |
+| --------------------- | ----------- | ---------------------- | ------------------------------ |
+| `allowed`             | ROOT        | Once (game start/load) | Permanent gate                 |
+| `target_root_trigger` | ROOT only   | Daily                  | Fast pre-filter                |
+| `target_trigger`      | ROOT + FROM | Daily                  | Per-target daily filter        |
+| `visible`             | ROOT + FROM | Every tick             | UI visibility (most expensive) |
+| `available`           | ROOT + FROM | Every tick             | Clickability gate              |
+
+`target_trigger` runs only if `target_root_trigger` passes — a false pre-filter skips all targets.
 
 **Don't repeat the category's `allowed` on each decision.** A decision's `allowed` is redundant when it just duplicates the parent category's `allowed` (e.g. both are `original_tag = TAG`) — the category gate already applies to every decision inside it. Restrict the nation once on the category; put dynamic conditions in `available`/`visible` (since `allowed` is locked at game start).
 

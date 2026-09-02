@@ -6,38 +6,38 @@ Every path by which a country adopts a union identity — the 23 decision formab
 
 Decision paths are under `common/decisions/`.
 
-| Term | Meaning |
-| --- | --- |
-| Decision formable | One of the 23 `form_<TAG>_category` blocks in `formable_nation_decisions.txt` (183 decisions; §2). |
-| Special formable | Union outside that file: USoE, EFS, UAR, Yugoslavia, United States of Africa, Event Horizon (§4). |
-| Cosmetic identity | Any other `set_cosmetic_tag` union or empire. No ratchet state. Catalogued in §5. |
-| `is_<TAG>` | Country flag: started (or, via Spain's focus, completed) formable `<TAG>`. Never cleared. |
-| `<TAG>_exists` | Global flag: someone started `<TAG>`; hides `form_<TAG>_category` for all others. Never cleared. |
-| `reshaping_national_identity` | Idea, `common/ideas/MD_formable_ideas.txt:5`, `stability_factor = -0.15` (:16); lifecycle below. |
-| Cosmetic `<TAG>` | `set_cosmetic_tag = <TAG>` from `<TAG>_update_flag`: the flag and name the player sees. |
-| `formable_committed_id` / `formable_committed_size` | Country variables of the ratchet (§3). Unset reads 0 — never seed them. |
-| `formed_country_formable` | Country flag: permanent latch once any national identity is locked in (#3440; §2). |
-| `special_formable_id` | Temp variable read by `commit_special_formable` (§4). |
+| Term                          | Meaning                                                          |
+| ----------------------------- | ---------------------------------------------------------------- |
+| Decision formable             | One of 23 categories in `formable_nation_decisions.txt` (§2)     |
+| Special formable              | Union outside that file — six identities, ids 101-106 (§4)       |
+| Cosmetic identity             | Any other `set_cosmetic_tag` union/empire; catalog in §5         |
+| `is_<TAG>`                    | Started formable `<TAG>` (Spain: completed). Never cleared.      |
+| `<TAG>_exists`                | Global: `<TAG>` started; hides its category. Never cleared.      |
+| `reshaping_national_identity` | Idea (`MD_formable_ideas.txt:5`, `stability_factor = -0.15` :16) |
+| Cosmetic `<TAG>`              | From `<TAG>_update_flag`: the flag/name the player sees          |
+| `formable_committed_id/_size` | Ratchet country variables (§3). Unset reads 0 — never seed       |
+| `formed_country_formable`     | Permanent latch once an identity locks in (#3440; §2)            |
+| `special_formable_id`         | Temp variable read by `commit_special_formable` (§4)             |
 
 Details:
 
 - Ratchet commits: a decision formable commits a real id (1-23) and its state count; a special formable commits through `commit_special_formable` with a reserved id (>= 100) and the sentinel size 1000.
-- `reshaping_national_identity`: added by `integrate_start`, removed by `update_flag` and by `commit_special_formable`; its `on_add` latches (§2).
+- `reshaping_national_identity`: added by `integrate_start`, removed by `update_flag` and by `commit_special_formable`; its `on_add` latches (§2). Lifecycle idea shown to the player; -15 % stability.
+- The six special formables: USoE, EFS membership, UAR, Yugoslavia, United States of Africa, Event Horizon blocs.
+- Full variable names: `formable_committed_id`, `formable_committed_size`.
 
-| File | Owns |
-| --- | --- |
-| `common/decisions/formable_nation_decisions.txt` | 23 categories × 4 decision shapes (§2) = 183 decisions, every one ratchet-gated |
-| `common/decisions/categories/formable_nations.txt` | 23 `form_<TAG>_category`; `EFS_flag_category` :128-140; `USoE_Flag_Reset_Flag_category` :142-154 |
-| `common/scripted_effects/00_formable_effects.txt` | `commit_special_formable` :56-66; `mark_formed_country_formable` :48-50; purchase timers :7-44 |
-| `common/ideas/MD_formable_ideas.txt` | `reshaping_national_identity` |
-| `common/decisions/MD_EFS_decisions.txt` | `EFS_update_flag` (special 102) |
-| `common/scripted_effects/99_EU_voting_scripted_effects.txt` | `focus_EU111_QMV_result` (special 101), `focus_EU112_QMV_result` |
-| `common/decisions/UnitedArabRepublic.txt`, `common/on_actions/99_UAR_on_action.txt` | UAR (special 103) |
-| `common/scripted_effects/99_yugoslavia_scripted_effects.txt` | `form_yugoslavia_effect` (special 104) |
-| `common/national_focus/06_AfricanUnion_shared.txt` | United States of Africa (special 105) |
-| `events/Event Horizon.txt` | Event Horizon blocs (special 106) |
-| `tools/validation/validate_decisions.py` | `validate_formable_commitment_sync`; `_SPECIAL_FORMABLE_IDS` :480-487 (special-id source of truth) |
-| `tools/tests/validation/validate_decisions_formable_commitment_test.py` | Regression tests for both rule sets |
+- `common/decisions/formable_nation_decisions.txt` — 23 categories × 4 decision shapes (§2) = 183 decisions, every one ratchet-gated
+- `common/decisions/categories/formable_nations.txt` — 23 `form_<TAG>_category`; `EFS_flag_category` :128-140; `USoE_Flag_Reset_Flag_category` :142-154
+- `common/scripted_effects/00_formable_effects.txt` — `commit_special_formable` :56-66; `mark_formed_country_formable` :48-50; purchase timers :7-44
+- `common/ideas/MD_formable_ideas.txt` — `reshaping_national_identity`
+- `common/decisions/MD_EFS_decisions.txt` — `EFS_update_flag` (special 102)
+- `common/scripted_effects/99_EU_voting_scripted_effects.txt` — `focus_EU111_QMV_result` (special 101), `focus_EU112_QMV_result`
+- `common/decisions/UnitedArabRepublic.txt`, `common/on_actions/99_UAR_on_action.txt` — UAR (special 103)
+- `common/scripted_effects/99_yugoslavia_scripted_effects.txt` — `form_yugoslavia_effect` (special 104)
+- `common/national_focus/06_AfricanUnion_shared.txt` — United States of Africa (special 105)
+- `events/Event Horizon.txt` — Event Horizon blocs (special 106)
+- `tools/validation/validate_decisions.py` — `validate_formable_commitment_sync`; `_SPECIAL_FORMABLE_IDS` :480-487 (special-id source of truth)
+- `tools/tests/validation/validate_decisions_formable_commitment_test.py` — Regression tests for both rule sets
 
 Details:
 
@@ -73,18 +73,23 @@ Latch vs ratchet: the latch is a one-way **visibility** cut for players and AI a
 
 ### Per-formable decision set
 
-| Decision | Shape | Ratchet |
-| --- | --- | --- |
-| `<TAG>_integrate_start` | `visible = { NOT is_<TAG> }`; `available` = owns/puppet-owns N states; `complete_effect` below | gate; unconditional commit (BLT :7-18, :72-75) |
-| `<TAG>_integrate_<SUB>` | timed (`days_remove`); `remove_effect` cores / annexes the constituent | gate only (IBR/ANZ: guarded commit, below) |
-| `<TAG>_update_flag` | `cost = 0`; `base = 10000`; `visible = { is_<TAG>  NOT has_cosmetic_tag <TAG> }`; rest below | gate; unconditional commit (BLT :295-306, :353-356) |
-| `<TAG>_buy_core_state` | state-targeted purchase; timer resolves through `00_formable_effects.txt:7-44` (below) | gate only |
+Names are `<TAG>_<shape>`; effect details below.
+
+| Decision          | Shape                                                | Ratchet              |
+| ----------------- | ---------------------------------------------------- | -------------------- |
+| `integrate_start` | `visible = { NOT is_<TAG> }`; ~80 % owned; below     | gate + commit        |
+| `integrate_<SUB>` | timed (`days_remove`); `remove_effect` cores/annexes | gate (IBR/ANZ below) |
+| `update_flag`     | `cost = 0`; `base = 10000`; visibility below         | gate + commit        |
+| `buy_core_state`  | state-targeted purchase; timers below                | gate only            |
 
 Details:
 
 - `integrate_start` `complete_effect`: `set_country_flag = is_<TAG>`, `set_global_flag = <TAG>_exists`, `add_ideas = reshaping_national_identity`.
 - `update_flag` (`ai_will_do base = 10000`): `available` = every listed state `is_core_of = ROOT`; `complete_effect`: `set_cosmetic_tag = <TAG>`, `remove_ideas = reshaping_national_identity`.
 - `buy_core_state` timer: `formable_purchase_deliver_offer` / `formable_purchase_cancel_offer` (`00_formable_effects.txt:7-44`), events `formable_buy.*`.
+- `integrate_start` `available`: owns or puppet-owns ~80 % of the state list.
+- `update_flag` `visible`: `is_<TAG>` + NOT `has_cosmetic_tag <TAG>`.
+- Ratchet anchors (BLT): `integrate_start` gate :7-18, commit :72-75; `update_flag` gate :295-306, commit :353-356; IBR/ANZ subs carry guarded commits (§3).
 
 The `update_flag` state list is the formable's **size** (§3).
 
@@ -99,15 +104,22 @@ The `update_flag` state list is the formable's **size** (§3).
 
 ### External readers of formable state
 
-| Reader | File | Reads |
-| --- | --- | --- |
-| Achievements | `common/achievements/MD_achievements.txt:548-941` (22 checks) | `is_<TAG>` |
-| EFS branding | `common/decisions/MD_EFS_decisions.txt` (:48, :74, :94, …) | `is_IBR` → `EFS_IBR`, `is_SCA` → `EFS_SCA`, `is_BLT` → `EFS_BLT` |
-| UAR category | `common/decisions/categories/UnitedArabRepublic_categories.txt:10` | hidden when `is_MAGHREB` |
-| Benelux focus | `common/national_focus/03_benelux_shared.txt:776` | `BNL_treaty_of_union` bypass on `is_HBL` |
-| Flag-change decisions | `common/decisions/categories/different_country_flags.txt:25` | hidden once latched — #3440 replaced the old `is_BLT/FCA/GCL/SCA/IBR/UAS` list with the latch |
-| MAGHREB start | `formable_nation_decisions.txt:10866-10867` | `NOT is_neo_baathist_uar` / `NOT is_baathist_uar`; sole decision-formable gate on a special identity |
-| Spain | `05_spain.txt:3061-3062`, :3416 | sets `IBR_exists`, `is_IBR` outside the file |
+Prefixes omitted: `common/national_focus/`, `common/decisions/categories/`.
+
+| Reader                | Where — reads                                                          |
+| --------------------- | ---------------------------------------------------------------------- |
+| Achievements          | `common/achievements/MD_achievements.txt:548-941` — `is_<TAG>` (22)    |
+| EFS branding          | `MD_EFS_decisions.txt` :48, :74, :94, … — `is_IBR/SCA/BLT` → `EFS_*`   |
+| UAR category          | `UnitedArabRepublic_categories.txt:10` — hidden when `is_MAGHREB`      |
+| Benelux focus         | `03_benelux_shared.txt:776` — `BNL_treaty_of_union` bypass on `is_HBL` |
+| Flag-change decisions | `different_country_flags.txt:25` — hidden once latched (#3440)         |
+| MAGHREB start         | `formable_nation_decisions.txt:10866-10867` — `NOT is_*_uar` (below)   |
+| Spain                 | `05_spain.txt:3061-3062`, :3416 — sets `IBR_exists`, `is_IBR`          |
+
+Details:
+
+- Flag-change: #3440 replaced the old `is_BLT/FCA/GCL/SCA/IBR/UAS` list with the latch.
+- MAGHREB start: `NOT is_neo_baathist_uar` / `NOT is_baathist_uar` — the sole decision-formable gate on a special identity.
 
 Nothing else reads `<TAG>_exists`, `reshaping_national_identity` or `formable_committed_*` (outside the ratchet sites, `commit_special_formable`, the UAR revocations and the validator).
 
@@ -167,16 +179,16 @@ Guarded commit — a delayed or ungated site must not downgrade a larger commitm
 
 size = `<TAG>_update_flag` state-list count; the validator recomputes it (§9). Ids 100+ are reserved for special formables (§4).
 
-| id | TAG | size | id | TAG | size | id | TAG | size |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | BLT | 12 | 9 | USNA | 83 | 17 | NORDEM | 45 |
-| 2 | FCA | 14 | 10 | UTS | 14 | 18 | MAGHREB | 46 |
-| 3 | GCL | 18 | 11 | MAPHI | 42 | 19 | WESTFED | 9 |
-| 4 | SCA | 27 | 12 | INDOCHI | 14 | 20 | AUSHUN | 33 |
-| 5 | IBR | 24 | 13 | ANDES | 16 | 21 | PBL | 41 |
-| 6 | ANZ | 16 | 14 | ANTCONF | 9 | 22 | UAS | 15 |
-| 7 | SOU | 74 | 15 | CANZUK | 53 | 23 | AVG | 21 |
-| 8 | HBL | 10 | 16 | RDLP | 21 | 101-106 | special (§4) | 1000 |
+| id  | TAG | size | id  | TAG     | size | id      | TAG          | size |
+| --- | --- | ---- | --- | ------- | ---- | ------- | ------------ | ---- |
+| 1   | BLT | 12   | 9   | USNA    | 83   | 17      | NORDEM       | 45   |
+| 2   | FCA | 14   | 10  | UTS     | 14   | 18      | MAGHREB      | 46   |
+| 3   | GCL | 18   | 11  | MAPHI   | 42   | 19      | WESTFED      | 9    |
+| 4   | SCA | 27   | 12  | INDOCHI | 14   | 20      | AUSHUN       | 33   |
+| 5   | IBR | 24   | 13  | ANDES   | 16   | 21      | PBL          | 41   |
+| 6   | ANZ | 16   | 14  | ANTCONF | 9    | 22      | UAS          | 15   |
+| 7   | SOU | 74   | 15  | CANZUK  | 53   | 23      | AVG          | 21   |
+| 8   | HBL | 10   | 16  | RDLP    | 21   | 101-106 | special (§4) | 1000 |
 
 ### CANZUK exemption
 
@@ -245,16 +257,23 @@ Rules:
 
 ### Sentinel table
 
-Mirrors `_SPECIAL_FORMABLE_IDS` (`tools/validation/validate_decisions.py:431-438`), the source of truth; nothing checks this table against the dict.
+Mirrors `_SPECIAL_FORMABLE_IDS` (`tools/validation/validate_decisions.py:480-487`), the source of truth; nothing checks this table against the dict.
 
-| id | name | write site(s) | revocation |
-| --- | --- | --- | --- |
-| 101 | United States of Europe (EU111) | `99_EU_voting_scripted_effects.txt:451-452` (`focus_EU111_QMV_result` ROOT block; cosmetic :450) | none |
-| 102 | European Federation member (EU112) | `MD_EFS_decisions.txt:281-282` (`EFS_update_flag`, after tag chain, before `EFS_flag_change` :283) | none (`european_federation` and the EFS cosmetic are never dropped, not even by `leaving_EU`) |
-| 103 | United Arab Republic | `UnitedArabRepublic.txt:44-45`, :102-103; `05_egypt.txt:4125-4126`, :4137-4138; Libya below | `clear_variable` of both vars at the falls-apart timeouts and on_puppet (below; gaps §4.3) |
-| 104 | Yugoslavia restored | `99_yugoslavia_scripted_effects.txt:169-170` — `form_yugoslavia_effect` | none |
-| 105 | United States of Africa | `06_AfricanUnion_shared.txt:2674-2675` — `AFRICAN_UNION_shared_focus_unite_africa` | none |
-| 106 | Event Horizon bloc (all eleven) | `events/Event Horizon.txt` :368, :491, :609, :730, :853, :974, :1094, :1215, :1337, :1456, :1578 | none |
+| Special                             | Write site(s)                                        |
+| ----------------------------------- | ---------------------------------------------------- |
+| 101 United States of Europe (EU111) | `99_EU_voting_scripted_effects.txt:451-452`          |
+| 102 European Federation member      | `MD_EFS_decisions.txt:281-282`                       |
+| 103 United Arab Republic            | `UnitedArabRepublic.txt:46-47`, :106-107; more below |
+| 104 Yugoslavia restored             | `99_yugoslavia_scripted_effects.txt:169-170`         |
+| 105 United States of Africa         | `06_AfricanUnion_shared.txt:2674-2675`               |
+| 106 Event Horizon bloc (all eleven) | `events/Event Horizon.txt` :368 … :1578              |
+
+Details:
+
+- Context per id in §4.1-4.6 (101: `focus_EU111_QMV_result` ROOT block, cosmetic :450; 102: `EFS_update_flag`, after the tag chain, before `EFS_flag_change` :283; 104: `form_yugoslavia_effect`; 105: `AFRICAN_UNION_shared_focus_unite_africa`).
+- 103 also: `05_egypt.txt:4416-4417`, :4429-4430; `05_libya.txt:11799-11800`.
+- 106 sites: :368, :491, :609, :730, :853, :974, :1094, :1215, :1337, :1456, :1578.
+- Revocation: none except 103 — `clear_variable` of both vars at the falls-apart timeouts (:773-774, :825-826) and `99_UAR_on_action.txt` on_puppet (:69-70, :83-84); gaps §4.3. 102: `european_federation` and the EFS cosmetic are never dropped, not even by `leaving_EU`.
 
 Details:
 
@@ -287,20 +306,22 @@ Ratchet: sentinel 102 overrides any decision commitment, completed or not (§8e)
 
 Category `form_UAR_category` (`categories/UnitedArabRepublic_categories.txt:2-12`): `allowed = { is_arabic_nation = yes }`; `visible` = NOT `is_MAGHREB` (§8f), NOT `GAME_RULE_disable_formable_nations` (#3440, §7). Decisions in `common/decisions/UnitedArabRepublic.txt`:
 
-| Step | Decision | Effect |
-| --- | --- | --- |
-| Announce | `UAR_announce_neo_baathist_uar` :2 / `UAR_announce_baathist_uar` :63; cost 200, `base = 100` | global `*_uar_formed`, country `formed_*`, latch, cosmetic, **sentinel** (details below) |
-| Invite | `UAR_invite_country_neo_baathist_uar` :123, `UAR_invite_country_baathist_uar` :289 | targets become subjects (`autonomy_uar_regional_command` / `autonomy_uar_state`) |
-| Leave | `UAR_country_leaves_neo_baathist_uar` :455, `UAR_country_leaves_baathist_uar` :604 | subject exits |
-| Falls apart | `UAR_neo_baathist_uar_falls_apart` :753 / `UAR_baathist_uar_falls_apart` :805 (ideology drifted) | `timeout_effect` (below): `drop_cosmetic_tag`, **`clear_variable` both ratchet vars**, clear flags |
-| Unite | `UAR_unite_neo_baathist_uar` :917 / `UAR_unite_baathist_uar` :1012 (more below); `base = 100` | global `*_uar_united` / country `united_*`; **clears `formed_*`** (below) |
-| Integrate | `UAR_integrate_MAU` :1115 … `UAR_integrate_YEM` :2135 (cores) | cores |
+| Step        | Decisions                                                 | Effect           |
+| ----------- | --------------------------------------------------------- | ---------------- |
+| Announce    | `UAR_announce_neo_baathist_uar` :2 / `…_baathist_uar` :63 | below            |
+| Invite      | `UAR_invite_country_neo_baathist_uar` :123 / :289         | subjects (below) |
+| Leave       | `UAR_country_leaves_neo_baathist_uar` :455 / :604         | subject exits    |
+| Falls apart | `UAR_neo_baathist_uar_falls_apart` :753 / `…` :805        | below            |
+| Unite       | `UAR_unite_neo_baathist_uar` :917 / :1012                 | below            |
+| Integrate   | `UAR_integrate_MAU` :1115 … `UAR_integrate_YEM` :2135     | cores            |
 
 Details:
 
 - Announce: `UAR_announce_neo_baathist_uar` (`emerging_autocracy`) / `UAR_announce_baathist_uar` (`nationalist_fascist`) set global `neo_baathist_uar_formed` / `baathist_uar_formed` (:42 / :102), country `formed_*` (:43 / :103), latch (:44 / :104), `set_cosmetic_tag = UAR_communism` / `UAR_nationalist` (:45 / :105), **sentinel** (:46-47 / :106-107). Both announces are hidden once latched (:7, :68).
-- Falls apart: `timeout_effect` :770 / :822 clears the ratchet vars (:773-774 / :825-826), `formed_*` and the global.
-- Unite: **clears `formed_*`** (:939 / :1034); needs `uar_has_required_gdp_share` (:931 / :1026; 40 % of Arab GDP); cores + annexes Arab subjects, wargoal on the rival UAR.
+- Falls apart: `timeout_effect` :770 / :822 drops the cosmetic, clears the ratchet vars (:773-774 / :825-826), `formed_*` and the global.
+- Unite: sets global `*_uar_united` / country `united_*`; **clears `formed_*`** (:939 / :1034); needs `uar_has_required_gdp_share` (:931 / :1026; 40 % of Arab GDP); cores + annexes Arab subjects, wargoal on the rival UAR.
+- Full second names of each pair: `UAR_announce_baathist_uar`, `UAR_invite_country_baathist_uar`, `UAR_country_leaves_baathist_uar`, `UAR_baathist_uar_falls_apart`, `UAR_unite_baathist_uar`.
+- Announce cost 200; Announce/Unite `base = 100`. Invite: subjects via `autonomy_uar_regional_command` / `autonomy_uar_state`. Falls apart fires when the ruling ideology drifts.
 
 Focus sites that form the UAR without the decision (both wired): `EGY_pan_arab_effort` (`05_egypt.txt:4385`) — neo-Ba'athist branch (cosmetic :4415, sentinel :4416-4417), Ba'athist branch (:4428, :4429-4430); the third branch (:4437-4441) is an `effect_tooltip` that never runs and carries no call. `LBA_strive_for_uar` (`05_libya.txt:11764`, :11795-11800) — Libya is a MAGHREB constituent, so without this site an AI Libya mid-MAGHREB would have `MAGHREB_update_flag` overwrite `UAR_communism`.
 
@@ -322,19 +343,19 @@ Ratchet: `MAGHREB_integrate_start` is hidden for a UAR (`NOT is_neo_baathist_uar
 
 Scenario gate `EH_scenario_enabled` (`common/scripted_triggers/99_EH_scripted_triggers.txt:114`, `rule_event_horizon_scenario` not at default). Chain: `EH_convergence_event_chain_effect` (`99_EH_scripted_effects.txt:278`) → `EH_event.401` (:291; `events/Event Horizon.txt:292`) to a random North American country; each odd event (401, 403, … 421) picks a country of its region and fires the even formation event, which chains the next region. Every formation option: `drop_cosmetic_tag`, `set_cosmetic_tag = EH_*`, sentinel, kill the leader, `set_politics` neutrality, `load_focus_tree = event_horizon_generic_focus`, annex every AI country matching the region trigger, core all owned states, `EH_chimera_declares_war`. Forced (no `ai_will_do`), AI- and player-reachable. One id for all blocs.
 
-| Event | Bloc | cosmetic / sentinel |
-| --- | --- | --- |
-| `EH_event.402` :356 | `EH_USN` (North America) | :367 / :368-369 |
-| `EH_event.404` :479 | `EH_RCA` (Central America) | :490 / :491-492 |
-| `EH_event.406` :598 | `EH_USM` (South America) | :608 / :609-610 |
-| `EH_event.408` :718 | `EH_EUF` (Europe + TUR) | :729 / :730-731 |
-| `EH_event.410` :841 | `EH_AFD` | :852 / :853-854 |
-| `EH_event.412` :962 | `EH_CRU` | :973 / :974-975 |
-| `EH_event.414` :1082 | `EH_ERF` | :1093 / :1094-1095 |
-| `EH_event.416` :1203 | `EH_CHN` | :1214 / :1215-1216 |
-| `EH_event.418` :1325 | `EH_ASE` | :1336 / :1337-1338 |
-| `EH_event.420` :1444 | `EH_EAC` | :1455 / :1456-1457 |
-| `EH_event.422` :1566 | `EH_ODU` | :1577 / :1578-1579 |
+| Event                | Bloc                       | cosmetic / sentinel |
+| -------------------- | -------------------------- | ------------------- |
+| `EH_event.402` :356  | `EH_USN` (North America)   | :367 / :368-369     |
+| `EH_event.404` :479  | `EH_RCA` (Central America) | :490 / :491-492     |
+| `EH_event.406` :598  | `EH_USM` (South America)   | :608 / :609-610     |
+| `EH_event.408` :718  | `EH_EUF` (Europe + TUR)    | :729 / :730-731     |
+| `EH_event.410` :841  | `EH_AFD`                   | :852 / :853-854     |
+| `EH_event.412` :962  | `EH_CRU`                   | :973 / :974-975     |
+| `EH_event.414` :1082 | `EH_ERF`                   | :1093 / :1094-1095  |
+| `EH_event.416` :1203 | `EH_CHN`                   | :1214 / :1215-1216  |
+| `EH_event.418` :1325 | `EH_ASE`                   | :1336 / :1337-1338  |
+| `EH_event.420` :1444 | `EH_EAC`                   | :1455 / :1456-1457  |
+| `EH_event.422` :1566 | `EH_ODU`                   | :1577 / :1578-1579  |
 
 `is_european_federation_country` (`99_EH_scripted_triggers.txt:182`) is a continent test (Europe + TUR minus SOV/SOO/ABK/CHE/GEO/UKR/BLR), not a read of the `european_federation` flag. `different_country_flags_category` hides when `EH_scenario_enabled` (`categories/different_country_flags.txt:65`). The bloc ROOT (USA → USNA, BRA → SOU, …) stays a decision-formable constituent — hence the sentinel. Nothing in the EU scripts reads the scenario, so the EU keeps running (§8g). No revocation.
 
@@ -346,68 +367,66 @@ Rule for authors: add the two-line call only when the tree's identity must survi
 
 ## 5. Catalog of every union / identity mechanism
 
-Kinds: `decision` (23 decision formables), `special` (§4), `decision-union` (decision outside the formables file), `focus-union` (annex/core + new identity from a focus), `event-union`, `cosmetic` (no annex/cores in the block). Ratchet column: `decision N/S` = commits id N size S; `sentinel N` = special commit; `none` = neither reads nor writes ratchet state; `sub-step` = leads into a decision formable, must not commit.
+Kinds: `decision` (23 decision formables), `special` (§4), `decision-union` (decision outside the formables file), `focus-union` (annex/core + new identity from a focus), `event-union`, `cosmetic` (no annex/cores in the block). Ratchet field: `decision N/S` = commits id N size S; `sentinel N` = special commit; `none` = neither reads nor writes ratchet state; `sub-step` = leads into a decision formable, must not commit.
 
 Paths: `common/` files may appear by basename alone — focus trees live in `common/national_focus/`, decisions in `common/decisions/`, categories in `common/decisions/categories/`, the rest per §1; `events/` files keep their prefix. Overflow references sit in the "Further anchors" list below the table.
 
-| Mechanism | Kind | Entry (file:line) | Writes | AI | Ratchet |
-| --- | --- | --- | --- | --- | --- |
-| 23 decision formables | decision | `formable_nation_decisions.txt` (§2) | `is_<TAG>`, `<TAG>_exists`, `reshaping_national_identity`, cosmetic `<TAG>` | yes (`base = 10` / 10000) | decision 1-23 |
-| Spain → Iberian Union | focus-union | `05_spain.txt:3041` (`SPR_declare_the_iberian_union`) … :3347 (`SPR_solidify_the_iberian_union`) §2 | `IBR_exists`, `is_IBR`, cosmetic `IBR`, cores/annex POR+ADO | `base = 1`, ratchet-gated | decision 5/24 (guarded) |
-| United States of Europe (EU111) | special | `99_EU_voting_scripted_effects.txt:386` (§4.1) | cosmetic `USoE`; flags `USoE`, `USoE_member`; `multi_ethnic_state_idea`; annexes members | yes (vote weights :207) | sentinel 101 |
-| European Federation (EU112) + EFS branding | special | `99_EU_voting_scripted_effects.txt:847`; `MD_EFS_decisions.txt:6` (§4.2) | global `european_federation`; cosmetic `EFS_<TAG>` / `EFS_IBR/SCA/BLT/WAS`; `EFS_flag_change` | yes (:208; base 10000) | sentinel 102 |
-| `USoE_integrate_new_members` | decision-union | `EU_USoE_decisions.txt:125` | cores + `USoE_member` for later joiners | no (`base = 0` :184) | none |
-| `USoE_reset_flag` / `USoE_AI_reset_flag` | cosmetic | `MD_USoE_decisions.txt:5`, :17 (category `categories/formable_nations.txt:142-154`) | cosmetic back to `USoE` (AI: from `USoE_*` variants only) | AI variant only | none |
-| USoE dynastic / ideological variants | cosmetic | `set_USoE_flag_of_the_house` `99_eu_scripted_effects.txt:563`; `01_EU_USoE_shared.txt:1739` | cosmetic `USoE_SAV/WIT/BOR_ANJ/BOR/HAN/GLU/WIN/ORA/HAB/NAP/HOH`, `USoE_com/air/army/navy/green` | yes | none (sentinel already held) |
-| `EU_USoE_westernize_decision` | expansion | `EU_USoE_decisions.txt:33` | annex wargoals from the USoE | yes | none |
-| POTEF-tree annexations | focus-union | `02_EU_POTEF_shared.txt:4555-4563` (LBA annexes GNA/GNC/HOR), :4798 (CYP annexes NCY) | annex only, no cosmetic | yes | none |
-| Estonia "European Federation" (flavour) | cosmetic | `05_estonia.txt:5134` (`EST_european_federation`), cosmetic :5152 | cosmetic `EST_euro_federation`; cores of neighbours' states; `nationalist_fascist` gate | `base = 1` | none (loc-name clash only) |
-| Event Horizon blocs (11) | special | `events/Event Horizon.txt:356` … :1566 (§4.6) | cosmetic `EH_*`; annexes region; scenario flags | forced (event chain) | sentinel 106 |
-| United Arab Republic | special | `UnitedArabRepublic.txt:2`, :63; `05_egypt.txt:4385`; `05_libya.txt:11764` (§4.3) | cosmetic `UAR_communism` / `UAR_nationalist`; globals `*_uar_formed`; flags `formed_*` | yes (`base = 100`) | sentinel 103; MAGHREB cross-gate :10866-10867 |
-| UAR pre-announce cosmetic sites | cosmetic | `05_egypt.txt:4159`, :4214, :4272, :4327; `05_syria.txt`; `egypt.144` (§4.3) | cosmetic `UAR_communism`; latch (`is_UAR` dropped, #3440) | yes | none — not sentinel sites (§4.3) |
-| UAR invite / leave / unite / integrate | decision-union | `UnitedArabRepublic.txt:123`, :289, :455, :604, :917, :1012, :1115-2135 | subjects; globals `*_uar_united`; cores | yes (`base = 100`) | none beyond §4.3 |
-| Union State (Russia ⇄ BLR/SER/UKR/ARM) | decision-union | `Union State.txt:651` (`USR_russia_reunite_with_belarus`), :914 (`USR_belarus_annex_russia`) | cosmetic `BLR_UNS_Communism` (:680, :984, :1436) / `BLR_UNS_great` (:689); cores + annex | belarus `base = 0` ×355 if BLR is AI; armenia `base = 1` | none |
-| Union State focuses | focus-union | `05_russia.txt:8467` (`SOV_strengthen_union_state`); `05_ukraine.txt:17611` (below) | cores BLR → SOV; UKR annexes SOV | `base = 355` / 100 | none |
-| Iranic Confederation | decision-union | `common/decisions/Tajikistan.txt:732`, :765, :791, :814 (`IRN_announce_*`) | cosmetic `IRN_confederation_early` :756 / `PER_iranic_federation` :825; latch :826; flags below | yes (`base = 10`) | none |
-| Iranian civil-war latch sites | latch | `events/Iran.txt:17586`, :17955, :18426; `Tajikistan.txt:2365` | latch (their old `is_IRAN` flag was dropped by #3440) | yes | none — not a formable marker |
-| Socialist Commonwealth of Central Asia | decision-union | `Tajikistan.txt:1974` (`TAJ_workers_council_of_central_asia`) | cosmetic `SCA_soviet_onion` :2059; latch :2060; cores KAZ/UZB/KYR/TAJ/TRK | `base = 10` | none — reuses the `SCA` prefix, never touches `is_SCA` |
-| Union of Central Asian States | cosmetic | `05_tajikistan.txt:8225` (`TAJ_central_asian_state`, cosmetic :8244); integrations below | hidden cosmetic `TAJ_formable`; province renames | `base = 1` | none — cosmetic-only despite the name |
-| Yugoslavia restored | special | `99_yugoslavia_scripted_effects.txt:166`; `Yugoslavia.txt:82`; focus callers below (§4.4) | cosmetic `yugoslavia_restored`; idea `formed_yugoslavia`; `GLOBAL_yugoslavia_restored` | yes (`base = 2`) | sentinel 104 |
-| Czechoslovakia | decision-union | `Czech_Republic.txt:6187` (`CZE_SLO_border_removal_2`, cosmetic :6246); focus + events below | cosmetic `CZE_SLO_czechoslovakia`; flag `CZE_SLO_new_dawn_of_czechoslovakia_flag`; annex CZE ⇄ SLO | yes (`base = 100`) | none |
-| Czechoslovakia (Russian sphere) | event-union | `events/Russia.txt:7427` (`sov_warsaw_pact.7`) | CZE annexes SLO; cosmetic `CZR_union` (:7446) | yes | none |
-| Serbia-Montenegro | cosmetic | `common/decisions/Serbia.txt:381` (`SER_rename_nation`) | cosmetic `SER_MNT` (:400) / back to `SER` | `base = 0` | none |
-| Antillean Confederation | cosmetic | `common/decisions/Cuba.txt:1124` (`CUB_form_confederation`) | cosmetic `CUB_confederation` (:1141); needs HAI/DOM/COL/JAM/PTR subjects | yes | none |
-| Liechtenstein HRE | decision-union | `common/decisions/Liechtenstein.txt:123` (`LIC_form_HRE`) | cosmetic `LIC_AUTH_SS` (:178); cores | `base = 3` | none |
-| Kurdistan declaration | decision-union | `common/decisions/Kurdistan.txt:133` (`KUR_declare_kurdistan`) | cosmetic `KUR_neutrality` (:157; hides `different_country_flags` :35); 8 cores | yes | none |
-| Ottoman State / Turkic confederation | decision-union | `common/decisions/Turkey.txt` (`TUR_empower_sultan`, cosmetic :772); `turkey.txt:16781` (below) | cosmetic `TUR_NEW_TURKIC_STATE`; flag `TUR_osmani` :16817; latch | yes | none |
-| Pan-Turkic | focus-union | `turkey.txt:16736` (`TUR_pan_turkey`) | cosmetic `TUR_PAN_TURKIC` :16760; latch :16762 | yes | none |
-| Ethiopia-Eritrea federation | decision-union | `common/decisions/Ethiopia.txt:375` (`ETH_federalise_ERI_flip`, cosmetic :406); event below | cosmetic `ETH_federation_ct` / `ERI_ETH` | yes | none |
-| Nagorno-Karabakh | decision-union | `common/decisions/karabakh.txt:518` (`NKR_armenia_annex_nkr`); category `karabakh_categories.txt:1` | ARM annexes NKR; flag `karabakh_regulated_flag` (:548, :565); no cosmetic | yes | none |
-| Korea reunification | focus-union | `03_joint_korea_confederation.txt:510`, :535, :612 (`KOR_confederation` :560); more below | flag `korea_peninsula_reunited`; no cosmetic | yes | none |
-| Cyprus | decision-union | `Greece.txt:177` (`GRE_unify_cyprus`); `05_GRE_decisions.txt:755` (`TUR_unify_cyprus`); more below | states 145/146 transfer; cosmetic on NCY | yes | none |
-| Vanguard bloc | cosmetic | `events/Turkey.txt:3101-3439` (12 latch sites); more below | cosmetic `TUR/PER/IRQ/SYR_VANGUARD`; latch (`is_VANGUARD` dropped, #3440) | yes | none |
-| Franco-German "European Socialist Republic" | focus-union | `05_germany.txt:19235` (`GER_german_franco_union`; event `germany.223`) | cosmetic `GER_franco_german_union` :19279; latch :19280; annex FRA | `base = 1` | none |
-| German empires / mandates | cosmetic | `05_germany.txt:20371` (`GER_our_long_lost_glory`, cosmetic :20396); more below | cosmetics `GER_fourth_reich` / `GER_german_empire` / `GER_holy_german_empire`; latch | yes | none |
-| United Islamic Republics | focus-union | `05_iran.txt:13668` (`PER_a_new_dawn`, cosmetic :13804), :16230 (`PER_reunification` → below) | cosmetic `UNITED_ISLAMIC_REPUBLICS`; cores + annex subjects | yes (`base = 10` decisions) | none |
-| Turkey-Syria union | focus-union | `turkey.txt:16786` (`TUR_turkey_syria_union`); `events/Turkey.txt:4393` | cosmetic `TUR_TURKEY_SYRIA_UNION`; annex SYR | yes | none |
-| Polish-Lithuanian Commonwealth / Visegrad | focus-union | `05_poland.txt:26299` (`POL_make_two_nations_one_again`, cosmetic :26349); Visegrad below | cosmetic `POL_LIT` / `POL_QUAD` / `POL_LIT_QUAD`; annex LIT; subjects | `base = 50` | none |
-| Baltic union under Estonia | focus-union | `05_estonia.txt:3340` (`EST_dreams_of_union`) | annex LIT/LAT; no cosmetic | yes | sub-step of BLT (id 1) |
-| Commonwealth Federation | focus-union | `05_united_kingdom.txt:20317` (`ENG_declare_the_commonwealth`, cosmetic :20374); Ireland below | cosmetic `ENG_commonwealth_federation`; annex 3 subjects; cores | `base = 1` | sub-step of CANZUK (id 15) |
-| Gulf super-state | focus-union | `gulf_shared.txt:1551` (`GCC_gulf_super_state`, cosmetic :1618); `05_saudi_arabia.txt:1544` (below) | cosmetic `GCC`; cores + annex; two `*_completed` globals (below) | `base = 1` | none (not wired) |
-| United States of Africa | special | `06_AfricanUnion_shared.txt:2619` (§4.5) | cosmetic `AFRICAN_UNION`; `African_Union_united`; `is_united_states_of_africa`; cores + annex/puppet | yes | sentinel 105 |
-| Alpine Federation | focus-union | `05_switzerland.txt:6526` (`SWI_proclaim_the_alp_federation`, cosmetic :6547) | cosmetic `SWI_alpine_federation`; cores | `base = 2` | none |
-| Dietsland / Dutch Fourth Reich | focus-union | `05_netherlands.txt:35329` (`HOL_glorify_dietsland`, cosmetic :35351), :36985 (`HOL_fourth_reich`) | cosmetic `HOL_dietsland` / `HOL_fourth_reich`; cores 50/51; annexes | yes | none (HBL constituent, not wired) |
-| Litbel | focus-union | `05_belarus.txt:13505` (`BLR_the_litbel`, cosmetic :13545), :13594 (`BLR_litbel_annex_lat`) | cosmetic `BLR_Litbel`; annex LIT/LAT | `base = 150` | none (not wired) |
-| Islamic Republic of Lebanon | focus-union | `05_Hezbollah.txt:3973` (`HEZ_Shias_Lebanon`) | annex LEB | `base = 0` | none |
-| Union of Slavic Republics | focus-union | `05_ukraine.txt:18139` (cosmetic `UKR_SlavicUSSR`; 8 subjects) | cosmetic; subjects | yes | none |
-| Union of Democratic States | event-union | `events/Ukraine.txt:6293` (`ukraine_kommi.8`) | annex PMR/HUN/BLR/MLV | yes | none |
-| West-Balkan Federation | event-union | `events/Serbia.txt:4141` (`kosovo.8`; cosmetic :4150, latch :4152) | cosmetic `KOS_AUTH`; latch (`is_KOS` dropped, #3440); annex ALB | yes | none |
-| Greater Serbia | focus-union | `05_serbia.txt:4137` (`SER_integrate_bosnia`) | annex RSK | yes | none |
-| Bosnian Federal Republic | event-union | `events/bosnia_events.txt:1272` (`BOS_political.2`, cosmetic :1283), :1294 (`.3`, `bos_fed2` :1312) | cosmetic `bos_fed` / `rsk_fed` / `hzg_fed` → `bos_fed2`; annex | yes | none |
-| China SAR integrations / Mongolia | focus-union | `05_china.txt:23672` (`CHI_SAR_integrate_HKG`) … :28613 (`_OMG`); Mongolia below | cores / annex; no cosmetic | yes | none (the dead `is_CHINA` reader was removed by #3440) |
-| Benelux union | focus-union | `03_benelux_shared.txt:752` (`BNL_treaty_of_union`) | puppets BEL/LUX; no cosmetic; bypass `is_HBL` (:776) | yes | reads `is_HBL` |
-| Italian integrations | decision-union | `common/decisions/Italy.txt:2` (`integration_britannia` …) | cores | yes | none |
-| Country-flag decisions (GER/USA) | cosmetic | `common/decisions/Country Flag Decisions.txt:905` (`USA_51`), :908 (`USA_52`), :986 (`GER_empire`) | cosmetic | yes | none |
+- **23 decision formables** (decision; AI: yes (`base = 10` / 10000)) — `formable_nation_decisions.txt` (§2). Writes: `is_<TAG>`, `<TAG>_exists`, `reshaping_national_identity`, cosmetic `<TAG>`. Ratchet: decision 1-23.
+- **Spain → Iberian Union** (focus-union; AI: `base = 1`, ratchet-gated) — `05_spain.txt:3041` (`SPR_declare_the_iberian_union`) … :3347 (`SPR_solidify_the_iberian_union`) §2. Writes: `IBR_exists`, `is_IBR`, cosmetic `IBR`, cores/annex POR+ADO. Ratchet: decision 5/24 (guarded).
+- **United States of Europe (EU111)** (special; AI: yes (vote weights :207)) — `99_EU_voting_scripted_effects.txt:386` (§4.1). Writes: cosmetic `USoE`; flags `USoE`, `USoE_member`; `multi_ethnic_state_idea`; annexes members. Ratchet: sentinel 101.
+- **European Federation (EU112) + EFS branding** (special; AI: yes (:208; base 10000)) — `99_EU_voting_scripted_effects.txt:847`; `MD_EFS_decisions.txt:6` (§4.2). Writes: global `european_federation`; cosmetic `EFS_<TAG>` / `EFS_IBR/SCA/BLT/WAS`; `EFS_flag_change`. Ratchet: sentinel 102.
+- **`USoE_integrate_new_members`** (decision-union; AI: no (`base = 0` :184)) — `EU_USoE_decisions.txt:125`. Writes: cores + `USoE_member` for later joiners. Ratchet: none.
+- **`USoE_reset_flag` / `USoE_AI_reset_flag`** (cosmetic; AI: AI variant only) — `MD_USoE_decisions.txt:5`, :17 (category `categories/formable_nations.txt:142-154`). Writes: cosmetic back to `USoE` (AI: from `USoE_*` variants only). Ratchet: none.
+- **USoE dynastic / ideological variants** (cosmetic; AI: yes) — `set_USoE_flag_of_the_house` `99_eu_scripted_effects.txt:563`; `01_EU_USoE_shared.txt:1739`. Writes: cosmetic `USoE_SAV/WIT/BOR_ANJ/BOR/HAN/GLU/WIN/ORA/HAB/NAP/HOH`, `USoE_com/air/army/navy/green`. Ratchet: none (sentinel already held).
+- **`EU_USoE_westernize_decision`** (expansion; AI: yes) — `EU_USoE_decisions.txt:33`. Writes: annex wargoals from the USoE. Ratchet: none.
+- **POTEF-tree annexations** (focus-union; AI: yes) — `02_EU_POTEF_shared.txt:4555-4563` (LBA annexes GNA/GNC/HOR), :4798 (CYP annexes NCY). Writes: annex only, no cosmetic. Ratchet: none.
+- **Estonia "European Federation" (flavour)** (cosmetic; AI: `base = 1`) — `05_estonia.txt:5134` (`EST_european_federation`), cosmetic :5152. Writes: cosmetic `EST_euro_federation`; cores of neighbours' states; `nationalist_fascist` gate. Ratchet: none (loc-name clash only).
+- **Event Horizon blocs (11)** (special; AI: forced (event chain)) — `events/Event Horizon.txt:356` … :1566 (§4.6). Writes: cosmetic `EH_*`; annexes region; scenario flags. Ratchet: sentinel 106.
+- **United Arab Republic** (special; AI: yes (`base = 100`)) — `UnitedArabRepublic.txt:2`, :63; `05_egypt.txt:4385`; `05_libya.txt:11764` (§4.3). Writes: cosmetic `UAR_communism` / `UAR_nationalist`; globals `*_uar_formed`; flags `formed_*`. Ratchet: sentinel 103; MAGHREB cross-gate :10866-10867.
+- **UAR pre-announce cosmetic sites** (cosmetic; AI: yes) — `05_egypt.txt:4159`, :4214, :4272, :4327; `05_syria.txt`; `egypt.144` (§4.3). Writes: cosmetic `UAR_communism`; latch (`is_UAR` dropped, #3440). Ratchet: none — not sentinel sites (§4.3).
+- **UAR invite / leave / unite / integrate** (decision-union; AI: yes (`base = 100`)) — `UnitedArabRepublic.txt:123`, :289, :455, :604, :917, :1012, :1115-2135. Writes: subjects; globals `*_uar_united`; cores. Ratchet: none beyond §4.3.
+- **Union State (Russia ⇄ BLR/SER/UKR/ARM)** (decision-union; AI: belarus `base = 0` ×355 if BLR is AI; armenia `base = 1`) — `Union State.txt:651` (`USR_russia_reunite_with_belarus`), :914 (`USR_belarus_annex_russia`). Writes: cosmetic `BLR_UNS_Communism` (:680, :984, :1436) / `BLR_UNS_great` (:689); cores + annex. Ratchet: none.
+- **Union State focuses** (focus-union; AI: `base = 355` / 100) — `05_russia.txt:8467` (`SOV_strengthen_union_state`); `05_ukraine.txt:17611` (below). Writes: cores BLR → SOV; UKR annexes SOV. Ratchet: none.
+- **Iranic Confederation** (decision-union; AI: yes (`base = 10`)) — `common/decisions/Tajikistan.txt:732`, :765, :791, :814 (`IRN_announce_*`). Writes: cosmetic `IRN_confederation_early` :756 / `PER_iranic_federation` :825; latch :826; flags below. Ratchet: none.
+- **Iranian civil-war latch sites** (latch; AI: yes) — `events/Iran.txt:17586`, :17955, :18426; `Tajikistan.txt:2365`. Writes: latch (their old `is_IRAN` flag was dropped by #3440). Ratchet: none — not a formable marker.
+- **Socialist Commonwealth of Central Asia** (decision-union; AI: `base = 10`) — `Tajikistan.txt:1974` (`TAJ_workers_council_of_central_asia`). Writes: cosmetic `SCA_soviet_onion` :2059; latch :2060; cores KAZ/UZB/KYR/TAJ/TRK. Ratchet: none — reuses the `SCA` prefix, never touches `is_SCA`.
+- **Union of Central Asian States** (cosmetic; AI: `base = 1`) — `05_tajikistan.txt:8225` (`TAJ_central_asian_state`, cosmetic :8244); integrations below. Writes: hidden cosmetic `TAJ_formable`; province renames. Ratchet: none — cosmetic-only despite the name.
+- **Yugoslavia restored** (special; AI: yes (`base = 2`)) — `99_yugoslavia_scripted_effects.txt:166`; `Yugoslavia.txt:82`; focus callers below (§4.4). Writes: cosmetic `yugoslavia_restored`; idea `formed_yugoslavia`; `GLOBAL_yugoslavia_restored`. Ratchet: sentinel 104.
+- **Czechoslovakia** (decision-union; AI: yes (`base = 100`)) — `Czech_Republic.txt:6187` (`CZE_SLO_border_removal_2`, cosmetic :6246); focus + events below. Writes: cosmetic `CZE_SLO_czechoslovakia`; flag `CZE_SLO_new_dawn_of_czechoslovakia_flag`; annex CZE ⇄ SLO. Ratchet: none.
+- **Czechoslovakia (Russian sphere)** (event-union; AI: yes) — `events/Russia.txt:7427` (`sov_warsaw_pact.7`). Writes: CZE annexes SLO; cosmetic `CZR_union` (:7446). Ratchet: none.
+- **Serbia-Montenegro** (cosmetic; AI: `base = 0`) — `common/decisions/Serbia.txt:381` (`SER_rename_nation`). Writes: cosmetic `SER_MNT` (:400) / back to `SER`. Ratchet: none.
+- **Antillean Confederation** (cosmetic; AI: yes) — `common/decisions/Cuba.txt:1124` (`CUB_form_confederation`). Writes: cosmetic `CUB_confederation` (:1141); needs HAI/DOM/COL/JAM/PTR subjects. Ratchet: none.
+- **Liechtenstein HRE** (decision-union; AI: `base = 3`) — `common/decisions/Liechtenstein.txt:123` (`LIC_form_HRE`). Writes: cosmetic `LIC_AUTH_SS` (:178); cores. Ratchet: none.
+- **Kurdistan declaration** (decision-union; AI: yes) — `common/decisions/Kurdistan.txt:133` (`KUR_declare_kurdistan`). Writes: cosmetic `KUR_neutrality` (:157; hides `different_country_flags` :35); 8 cores. Ratchet: none.
+- **Ottoman State / Turkic confederation** (decision-union; AI: yes) — `common/decisions/Turkey.txt` (`TUR_empower_sultan`, cosmetic :772); `turkey.txt:16781` (below). Writes: cosmetic `TUR_NEW_TURKIC_STATE`; flag `TUR_osmani` :16817; latch. Ratchet: none.
+- **Pan-Turkic** (focus-union; AI: yes) — `turkey.txt:16736` (`TUR_pan_turkey`). Writes: cosmetic `TUR_PAN_TURKIC` :16760; latch :16762. Ratchet: none.
+- **Ethiopia-Eritrea federation** (decision-union; AI: yes) — `common/decisions/Ethiopia.txt:375` (`ETH_federalise_ERI_flip`, cosmetic :406); event below. Writes: cosmetic `ETH_federation_ct` / `ERI_ETH`. Ratchet: none.
+- **Nagorno-Karabakh** (decision-union; AI: yes) — `common/decisions/karabakh.txt:518` (`NKR_armenia_annex_nkr`); category `karabakh_categories.txt:1`. Writes: ARM annexes NKR; flag `karabakh_regulated_flag` (:548, :565); no cosmetic. Ratchet: none.
+- **Korea reunification** (focus-union; AI: yes) — `03_joint_korea_confederation.txt:510`, :535, :612 (`KOR_confederation` :560); more below. Writes: flag `korea_peninsula_reunited`; no cosmetic. Ratchet: none.
+- **Cyprus** (decision-union; AI: yes) — `Greece.txt:177` (`GRE_unify_cyprus`); `05_GRE_decisions.txt:755` (`TUR_unify_cyprus`); more below. Writes: states 145/146 transfer; cosmetic on NCY. Ratchet: none.
+- **Vanguard bloc** (cosmetic; AI: yes) — `events/Turkey.txt:3101-3439` (12 latch sites); more below. Writes: cosmetic `TUR/PER/IRQ/SYR_VANGUARD`; latch (`is_VANGUARD` dropped, #3440). Ratchet: none.
+- **Franco-German "European Socialist Republic"** (focus-union; AI: `base = 1`) — `05_germany.txt:19235` (`GER_german_franco_union`; event `germany.223`). Writes: cosmetic `GER_franco_german_union` :19279; latch :19280; annex FRA. Ratchet: none.
+- **German empires / mandates** (cosmetic; AI: yes) — `05_germany.txt:20371` (`GER_our_long_lost_glory`, cosmetic :20396); more below. Writes: cosmetics `GER_fourth_reich` / `GER_german_empire` / `GER_holy_german_empire`; latch. Ratchet: none.
+- **United Islamic Republics** (focus-union; AI: yes (`base = 10` decisions)) — `05_iran.txt:13668` (`PER_a_new_dawn`, cosmetic :13804), :16230 (`PER_reunification` → below). Writes: cosmetic `UNITED_ISLAMIC_REPUBLICS`; cores + annex subjects. Ratchet: none.
+- **Turkey-Syria union** (focus-union; AI: yes) — `turkey.txt:16786` (`TUR_turkey_syria_union`); `events/Turkey.txt:4393`. Writes: cosmetic `TUR_TURKEY_SYRIA_UNION`; annex SYR. Ratchet: none.
+- **Polish-Lithuanian Commonwealth / Visegrad** (focus-union; AI: `base = 50`) — `05_poland.txt:26299` (`POL_make_two_nations_one_again`, cosmetic :26349); Visegrad below. Writes: cosmetic `POL_LIT` / `POL_QUAD` / `POL_LIT_QUAD`; annex LIT; subjects. Ratchet: none.
+- **Baltic union under Estonia** (focus-union; AI: yes) — `05_estonia.txt:3340` (`EST_dreams_of_union`). Writes: annex LIT/LAT; no cosmetic. Ratchet: sub-step of BLT (id 1).
+- **Commonwealth Federation** (focus-union; AI: `base = 1`) — `05_united_kingdom.txt:20317` (`ENG_declare_the_commonwealth`, cosmetic :20374); Ireland below. Writes: cosmetic `ENG_commonwealth_federation`; annex 3 subjects; cores. Ratchet: sub-step of CANZUK (id 15).
+- **Gulf super-state** (focus-union; AI: `base = 1`) — `gulf_shared.txt:1551` (`GCC_gulf_super_state`, cosmetic :1618); `05_saudi_arabia.txt:1544` (below). Writes: cosmetic `GCC`; cores + annex; two `*_completed` globals (below). Ratchet: none (not wired).
+- **United States of Africa** (special; AI: yes) — `06_AfricanUnion_shared.txt:2619` (§4.5). Writes: cosmetic `AFRICAN_UNION`; `African_Union_united`; `is_united_states_of_africa`; cores + annex/puppet. Ratchet: sentinel 105.
+- **Alpine Federation** (focus-union; AI: `base = 2`) — `05_switzerland.txt:6526` (`SWI_proclaim_the_alp_federation`, cosmetic :6547). Writes: cosmetic `SWI_alpine_federation`; cores. Ratchet: none.
+- **Dietsland / Dutch Fourth Reich** (focus-union; AI: yes) — `05_netherlands.txt:35329` (`HOL_glorify_dietsland`, cosmetic :35351), :36985 (`HOL_fourth_reich`). Writes: cosmetic `HOL_dietsland` / `HOL_fourth_reich`; cores 50/51; annexes. Ratchet: none (HBL constituent, not wired).
+- **Litbel** (focus-union; AI: `base = 150`) — `05_belarus.txt:13505` (`BLR_the_litbel`, cosmetic :13545), :13594 (`BLR_litbel_annex_lat`). Writes: cosmetic `BLR_Litbel`; annex LIT/LAT. Ratchet: none (not wired).
+- **Islamic Republic of Lebanon** (focus-union; AI: `base = 0`) — `05_Hezbollah.txt:3973` (`HEZ_Shias_Lebanon`). Writes: annex LEB. Ratchet: none.
+- **Union of Slavic Republics** (focus-union; AI: yes) — `05_ukraine.txt:18139` (cosmetic `UKR_SlavicUSSR`; 8 subjects). Writes: cosmetic; subjects. Ratchet: none.
+- **Union of Democratic States** (event-union; AI: yes) — `events/Ukraine.txt:6293` (`ukraine_kommi.8`). Writes: annex PMR/HUN/BLR/MLV. Ratchet: none.
+- **West-Balkan Federation** (event-union; AI: yes) — `events/Serbia.txt:4141` (`kosovo.8`; cosmetic :4150, latch :4152). Writes: cosmetic `KOS_AUTH`; latch (`is_KOS` dropped, #3440); annex ALB. Ratchet: none.
+- **Greater Serbia** (focus-union; AI: yes) — `05_serbia.txt:4137` (`SER_integrate_bosnia`). Writes: annex RSK. Ratchet: none.
+- **Bosnian Federal Republic** (event-union; AI: yes) — `events/bosnia_events.txt:1272` (`BOS_political.2`, cosmetic :1283), :1294 (`.3`, `bos_fed2` :1312). Writes: cosmetic `bos_fed` / `rsk_fed` / `hzg_fed` → `bos_fed2`; annex. Ratchet: none.
+- **China SAR integrations / Mongolia** (focus-union; AI: yes) — `05_china.txt:23672` (`CHI_SAR_integrate_HKG`) … :28613 (`_OMG`); Mongolia below. Writes: cores / annex; no cosmetic. Ratchet: none (the dead `is_CHINA` reader was removed by #3440).
+- **Benelux union** (focus-union; AI: yes) — `03_benelux_shared.txt:752` (`BNL_treaty_of_union`). Writes: puppets BEL/LUX; no cosmetic; bypass `is_HBL` (:776). Ratchet: reads `is_HBL`.
+- **Italian integrations** (decision-union; AI: yes) — `common/decisions/Italy.txt:2` (`integration_britannia` …). Writes: cores. Ratchet: none.
+- **Country-flag decisions (GER/USA)** (cosmetic; AI: yes) — `common/decisions/Country Flag Decisions.txt:905` (`USA_51`), :908 (`USA_52`), :986 (`GER_empire`). Writes: cosmetic. Ratchet: none.
 
 Further anchors:
 
@@ -435,31 +454,29 @@ Further anchors:
 
 Cosmetic-only identities (no annex or cores in the block; flavour / easter egg; none read or write ratchet state):
 
-| Cosmetic | Site |
-| --- | --- |
-| `SWE_Swedish_empire` | `05_sweden.txt:16663`, :16674 |
-| `ITA_RomanEmpire` / `ITA_RomanEmpire2` | `05_italy.txt:3510`, :3522 |
-| `SOV_hyper_empire` (hides `different_country_flags` :46) | `05_russia.txt:7994` |
-| `SOV_soviet_empire`, `SOV_USA` | `05_russia.txt:13010`, :18074 |
-| `SOV_romanov_empire` | `events/Russia.txt:5757` |
-| `RAJ_AUTH_SS`, `RAJ_Empireofsun` | `05_india.txt:13942`, :14924 |
-| `ARM_armen_empire_nationalist` | `05_armenia.txt:7932` |
-| `ARM_United_States` | `events/Armenia.txt:7313` |
-| `GRN_Frozen_Federation`, `GRN_Kingdom_Of_Greenland` | `05_greenland.txt:21424`, :9034 |
-| `LBA_LIBYAN_FEDERATION` | `05_libya.txt:3650` |
-| `BRM_Burma_federation`, `BRM_Myanmar_federation` | `05_myanmar.txt:1592`, :1777, :1781 |
-| `CAS_pan_pacific_union` | `05_cascadia.txt:14296` |
-| `USB_MidAtlantic_Union`, `USB_UFSR` | `05_free_states_of_america.txt:4293`, :1865 |
-| `LKT_Continental_Confederation` | `05_republic_of_lakota.txt:12681` |
-| `CSA_southern_union`, `CSA_united_southern_states` | `events/Southern Republic of America.txt:2019`, :2041 |
-| `FRA_empire`, `FRA_Occident_Empire`, `FRA_Kingdom_Jerusalem` (37 cores) | `events/France.txt:7518`, :9380, :9738 |
-| `JAP_EMPIRE`, `JAP_EMPIRE_NAVAL` | `events/05_japan.txt:382`, :392 |
-| `BUL_empire`, `BUL_empire2` | `events/05_bulgaria.txt:341`, :335 |
-| `SYR_Federal_State` | `05_syria.txt:7772` |
-| `BLR_GLI` | `05_belarus.txt:5086` |
-| `SAU_republic_of_arabia` | `05_saudi_arabia.txt:9850`, :10094 |
-| `BHR_REP`, `KUW_REP`, … | `gulf.txt:3455-3475` |
-| `KHM_Russia_nationalist` / `_democratic` | `Khanti-mansi.txt:2484`, :2491 |
+- `SWE_Swedish_empire` — `05_sweden.txt:16663`, :16674
+- `ITA_RomanEmpire` / `ITA_RomanEmpire2` — `05_italy.txt:3510`, :3522
+- `SOV_hyper_empire` (hides `different_country_flags` :46) — `05_russia.txt:7994`
+- `SOV_soviet_empire`, `SOV_USA` — `05_russia.txt:13010`, :18074
+- `SOV_romanov_empire` — `events/Russia.txt:5757`
+- `RAJ_AUTH_SS`, `RAJ_Empireofsun` — `05_india.txt:13942`, :14924
+- `ARM_armen_empire_nationalist` — `05_armenia.txt:7932`
+- `ARM_United_States` — `events/Armenia.txt:7313`
+- `GRN_Frozen_Federation`, `GRN_Kingdom_Of_Greenland` — `05_greenland.txt:21424`, :9034
+- `LBA_LIBYAN_FEDERATION` — `05_libya.txt:3650`
+- `BRM_Burma_federation`, `BRM_Myanmar_federation` — `05_myanmar.txt:1592`, :1777, :1781
+- `CAS_pan_pacific_union` — `05_cascadia.txt:14296`
+- `USB_MidAtlantic_Union`, `USB_UFSR` — `05_free_states_of_america.txt:4293`, :1865
+- `LKT_Continental_Confederation` — `05_republic_of_lakota.txt:12681`
+- `CSA_southern_union`, `CSA_united_southern_states` — `events/Southern Republic of America.txt:2019`, :2041
+- `FRA_empire`, `FRA_Occident_Empire`, `FRA_Kingdom_Jerusalem` (37 cores) — `events/France.txt:7518`, :9380, :9738
+- `JAP_EMPIRE`, `JAP_EMPIRE_NAVAL` — `events/05_japan.txt:382`, :392
+- `BUL_empire`, `BUL_empire2` — `events/05_bulgaria.txt:341`, :335
+- `SYR_Federal_State` — `05_syria.txt:7772`
+- `BLR_GLI` — `05_belarus.txt:5086`
+- `SAU_republic_of_arabia` — `05_saudi_arabia.txt:9850`, :10094
+- `BHR_REP`, `KUW_REP`, … — `gulf.txt:3455-3475`
+- `KHM_Russia_nationalist` / `_democratic` — `Khanti-mansi.txt:2484`, :2491
 
 The remaining ~350 `set_cosmetic_tag` hits are ideology or civil-war variants (`*_AUTH_*`, `*_REB_*`, `GOV_*` Russian governorates, `IRQ_*` insurgents, `Nazbols_*`, …) — not identities.
 
@@ -477,17 +494,15 @@ The remaining ~350 `set_cosmetic_tag` hits are ideology or civil-war variants (`
 
 All lines in `common/decisions/formable_nation_decisions.txt` unless noted. "EU guard" = the `visible` condition that hides an `update_flag`; `european_federation` is a **global** flag, so those guards fire worldwide (§8a).
 
-| Formable | `update_flag` EU guard | `integrate_start` AI EU block | CANZUK exemption (id 15) | Special cross-gate |
-| --- | --- | --- | --- | --- |
-| BLT | `NOT european_federation` (:310) + `NOT EU_member` (:311) | none (:5-21 — the Baltic trap, §8b) | — | — |
-| CANZUK | `NOT OR { european_federation :9209, EU_member :9210, has_cosmetic_tag CANZUK :9211 }` | `factor = 0` on `european_federation` OR `EU_member` (:8680-8687) | source of the exemption | — |
-| MAGHREB | `NOT OR { european_federation :11537, EU_member :11538, has_cosmetic_tag MAGHREB :11539 }` | none | — | `integrate_start` visible `NOT is_neo_baathist_uar` / `NOT is_baathist_uar` (:10866-10867); below |
-| ANZ | none (:2936-2939) | no `integrate_start` | all 3 decisions (:2706, :2829, :2927) | — |
-| NORDEM | none (:10621-10624) | none | all 7 decisions (:10055 … :10770) | — |
-| AVG | none (:15432-15435) | none | all 6 decisions (:15056 … :15533) | — |
-| SCA, IBR, HBL, AUSHUN | none (:2171-2174, :2610-2613, :4799-4803, :13694-13697); EFS players can still click them (§8c) | none / no `integrate_start` (IBR) | — | — |
-| FCA, GCL, SOU, USNA, UTS, MAPHI, INDOCHI, ANDES, ANTCONF, RDLP, WESTFED, PBL, UAS | none | none | — | — |
-| `EFS_update_flag` (`MD_EFS_decisions.txt:6`) | `visible = { NOT EFS_flag_change }` only | no ratchet gate, no exemption — writes sentinel 102 | — | reads `is_IBR/is_SCA/is_BLT` |
+- **BLT** — `update_flag` EU guard: `NOT european_federation` (:310) + `NOT EU_member` (:311); `integrate_start` AI EU block: none (:5-21 — the Baltic trap, §8b); CANZUK exemption: none; special cross-gate: none.
+- **CANZUK** — `update_flag` EU guard: `NOT OR { european_federation :9209, EU_member :9210, has_cosmetic_tag CANZUK :9211 }`; `integrate_start` AI EU block: `factor = 0` on `european_federation` OR `EU_member` (:8680-8687); CANZUK exemption: source of the exemption; special cross-gate: none.
+- **MAGHREB** — `update_flag` EU guard: `NOT OR { european_federation :11537, EU_member :11538, has_cosmetic_tag MAGHREB :11539 }`; `integrate_start` AI EU block: none; CANZUK exemption: none; special cross-gate: `integrate_start` visible `NOT is_neo_baathist_uar` / `NOT is_baathist_uar` (:10866-10867); below.
+- **ANZ** — `update_flag` EU guard: none (:2936-2939); `integrate_start` AI EU block: no `integrate_start`; CANZUK exemption: all 3 decisions (:2706, :2829, :2927); special cross-gate: none.
+- **NORDEM** — `update_flag` EU guard: none (:10621-10624); `integrate_start` AI EU block: none; CANZUK exemption: all 7 decisions (:10055 … :10770); special cross-gate: none.
+- **AVG** — `update_flag` EU guard: none (:15432-15435); `integrate_start` AI EU block: none; CANZUK exemption: all 6 decisions (:15056 … :15533); special cross-gate: none.
+- **SCA, IBR, HBL, AUSHUN** — `update_flag` EU guard: none (:2171-2174, :2610-2613, :4799-4803, :13694-13697); EFS players can still click them (§8c); `integrate_start` AI EU block: none / no `integrate_start` (IBR); CANZUK exemption: none; special cross-gate: none.
+- **FCA, GCL, SOU, USNA, UTS, MAPHI, INDOCHI, ANDES, ANTCONF, RDLP, WESTFED, PBL, UAS** — `update_flag` EU guard: none; `integrate_start` AI EU block: none; CANZUK exemption: none; special cross-gate: none.
+- **`EFS_update_flag` (`MD_EFS_decisions.txt:6`)** — `update_flag` EU guard: `visible = { NOT EFS_flag_change }` only; `integrate_start` AI EU block: no ratchet gate, no exemption — writes sentinel 102; CANZUK exemption: none; special cross-gate: reads `is_IBR/is_SCA/is_BLT`.
 
 Details:
 
@@ -497,17 +512,22 @@ The `european_federation` reads at :2708, :2831, :2929, :10057 … :15535 are th
 
 ## 7. Game-rule coverage
 
-| Rule (`common/game_rules/00_game_rules.txt`) | Runtime state | Read by | Effect on formation |
-| --- | --- | --- | --- |
-| `rule_disable_formable_nations` (:353) | `GAME_RULE_disable_formable_nations` (`999_game_rules_on_actions.txt:415-424`) | the 23 `form_<TAG>_category` blocks + `form_UAR_category` (#3440) | Hides every decision formable and the UAR category, nothing else (below). Sentinels inert. |
-| `rule_disable_eu` (:386) | `GAME_RULE_eu_disabled` (`99_eu_scripted_effects.txt:604-620`) | EU setup (`99_eu_scripted_effects.txt:134`, :164, :189, :681) | No EU → EU111/EU112 unreachable; `EFS_flag_category` never appears. |
-| `rule_enable_ai_european_union_end_game_paths` (:456) | read directly with `has_game_rule` | GUI AI weights `01_european_union_guis.txt:4548-4552`, :5190-5194 | `option = no` → `factor = 0` on AI proposing agendas 110/111/112 (below) |
-| `rule_event_horizon_scenario` (:3872) | `EH_scenario_enabled` (`99_EH_scripted_triggers.txt:114`) | `EH_convergence_event_chain_effect`, `categories/different_country_flags.txt:65` | Enables the Event Horizon chain; hides flag-change decisions. The EU system does not read it. |
+Rules live in `common/game_rules/00_game_rules.txt`.
+
+| Rule                                                  | Runtime state                        |
+| ----------------------------------------------------- | ------------------------------------ |
+| `rule_disable_formable_nations` (:353)                | `GAME_RULE_disable_formable_nations` |
+| `rule_disable_eu` (:386)                              | `GAME_RULE_eu_disabled`              |
+| `rule_enable_ai_european_union_end_game_paths` (:456) | read directly via `has_game_rule`    |
+| `rule_event_horizon_scenario` (:3872)                 | `EH_scenario_enabled`                |
 
 Details:
 
-- `rule_disable_formable_nations`: since #3440 it also hides `form_UAR_category` (`UnitedArabRepublic_categories.txt:10`); EU111/EU112, Yugoslavia, United States of Africa, Event Horizon, Spain's IBR focus and every other §5 mechanism stay formable.
-- `rule_enable_ai_european_union_end_game_paths`: the **only** AI kill switch for USoE/EFS; players unaffected (§8j).
+- Flag sources: `999_game_rules_on_actions.txt:415-424`; `99_eu_scripted_effects.txt:604-620`; `99_EH_scripted_triggers.txt:114`.
+- `rule_disable_formable_nations`: read by the 23 `form_<TAG>_category` blocks and, since #3440, `form_UAR_category` (`UnitedArabRepublic_categories.txt:10`) — hides them all; sentinel writes stay inert but harmless. EU111/EU112, Yugoslavia, United States of Africa, Event Horizon, Spain's IBR focus and every other §5 mechanism stay formable.
+- `rule_disable_eu`: read by the EU setup (`99_eu_scripted_effects.txt:134`, :164, :189, :681) — no EU, so EU111/EU112 are unreachable and `EFS_flag_category` never appears.
+- `rule_enable_ai_european_union_end_game_paths`: GUI AI weights (`01_european_union_guis.txt:4548-4552`, :5190-5194); `option = no` → `factor = 0` on the AI proposing agendas 110/111/112 — the **only** AI kill switch for USoE/EFS; players unaffected (§8j).
+- `rule_event_horizon_scenario`: read by `EH_convergence_event_chain_effect` and `categories/different_country_flags.txt:49` — enables the Event Horizon chain and hides flag-change decisions. The EU system does not read it.
 
 ## 8. Known traps / accepted behaviour
 
@@ -557,30 +577,28 @@ All pre-existing or accepted; none changed by the sentinel or latch work unless 
 
 Scans `common/decisions`, `common/national_focus`, `common/scripted_effects`, `common/on_actions`, `events` (`_COMMIT_SCAN_DIRS`, `validate_decisions.py:501-507`) for texts containing `formable_committed_`, `special_formable_id` or `commit_special_formable`; a call site outside those directories is invisible to the "no call site" check, so keep calls inside them. `effect_tooltip` bodies are stripped before matching.
 
-| Row | Meaning / fix |
-| --- | --- |
-| `<decision> - not a formable decision shape` | formables-file token ≠ `<TAG>_(integrate_start\|integrate_<SUB>\|update_flag\|buy_core_state)` |
-| `<TAG>: no update_flag available block - cannot derive size` | `update_flag` missing or has no `available` |
-| `<decision> - missing commitment gate (no formable_committed_size literal)` | a decision without the §3 gate |
-| `<decision> - size literal N != <TAG> update_flag state count M` | state list edited without updating the literal (or vice versa) |
-| `<TAG>: conflicting commit ids [...]` / `<TAG>: no commit write (...)` | commit sites disagree, or none exist |
-| `<TAG>: commit id N is in the reserved special range (>= 100)` | decision formable used a special id |
-| `<TAG>: commit id N collides with <OTHER>` | id reused |
-| `<decision> - gate id G != <TAG> commit id F` | gate copied from another formable |
-| `<decision> - references unknown formable id R` | an exemption or guard names an id nobody commits |
-| `<path>: commit references unknown formable id I` | a focus or effect commit (Spain) drifted (id) |
-| `commit size S != update_flag state count M for id I` | a focus or effect commit (Spain) drifted (size) |
-| `<path>: guard size V matches no formable state count` | a `less_than` / `>=` guard value drifted |
-| `<decision>: decision formables commit by id/size, not commit_special_formable` | sentinel call inside the formables file |
-| `special sentinel size 1000 does not exceed the largest formable state count N` | a formable grew past 1000 states — raise `_SPECIAL_COMMIT_SIZE` and the effect together |
-| `<path>: commit_special_formable must set formable_committed_id = …` (full text below) | the effect definition drifted |
-| `<path>: sentinel size literal N outside commit_special_formable` | `formable_committed_size = 1000` (or any >= 100) written inline |
-| `<path>: special formable id N written inline - use commit_special_formable` | `formable_committed_id = <special>` written inline |
-| `<path>: N special_formable_id setter(s) not immediately followed by commit_special_formable = yes` | orphan setter |
-| `<path>: N commit_special_formable call(s) without a preceding special_formable_id setter` | call without setter |
-| `<path>: unknown special formable id N (add it to _SPECIAL_FORMABLE_IDS)` | setter uses an id not in the table |
-| `00_formable_effects.txt: expected exactly one commit_special_formable definition, found N` | effect missing, duplicated, or moved out of that file |
-| `special formable id N (name) has no call site - remove it from _SPECIAL_FORMABLE_IDS` | table id with no live call (tooltip-only calls do not count) |
+- `<decision> - not a formable decision shape` — formables-file token ≠ `<TAG>_(integrate_start\|integrate_<SUB>\|update_flag\|buy_core_state)`
+- `<TAG>: no update_flag available block - cannot derive size` — `update_flag` missing or has no `available`
+- `<decision> - missing commitment gate (no formable_committed_size literal)` — a decision without the §3 gate
+- `<decision> - size literal N != <TAG> update_flag state count M` — state list edited without updating the literal (or vice versa)
+- `<TAG>: conflicting commit ids [...]` / `<TAG>: no commit write (...)` — commit sites disagree, or none exist
+- `<TAG>: commit id N is in the reserved special range (>= 100)` — decision formable used a special id
+- `<TAG>: commit id N collides with <OTHER>` — id reused
+- `<decision> - gate id G != <TAG> commit id F` — gate copied from another formable
+- `<decision> - references unknown formable id R` — an exemption or guard names an id nobody commits
+- `<path>: commit references unknown formable id I` — a focus or effect commit (Spain) drifted (id)
+- `commit size S != update_flag state count M for id I` — a focus or effect commit (Spain) drifted (size)
+- `<path>: guard size V matches no formable state count` — a `less_than` / `>=` guard value drifted
+- `<decision>: decision formables commit by id/size, not commit_special_formable` — sentinel call inside the formables file
+- `special sentinel size 1000 does not exceed the largest formable state count N` — a formable grew past 1000 states — raise `_SPECIAL_COMMIT_SIZE` and the effect together
+- `<path>: commit_special_formable must set formable_committed_id = …` (full text below) — the effect definition drifted
+- `<path>: sentinel size literal N outside commit_special_formable` — `formable_committed_size = 1000` (or any >= 100) written inline
+- `<path>: special formable id N written inline - use commit_special_formable` — `formable_committed_id = <special>` written inline
+- `<path>: N special_formable_id setter(s) not immediately followed by commit_special_formable = yes` — orphan setter
+- `<path>: N commit_special_formable call(s) without a preceding special_formable_id setter` — call without setter
+- `<path>: unknown special formable id N (add it to _SPECIAL_FORMABLE_IDS)` — setter uses an id not in the table
+- `00_formable_effects.txt: expected exactly one commit_special_formable definition, found N` — effect missing, duplicated, or moved out of that file
+- `special formable id N (name) has no call site - remove it from _SPECIAL_FORMABLE_IDS` — table id with no live call (tooltip-only calls do not count)
 
 Details:
 

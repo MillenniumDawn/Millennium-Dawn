@@ -154,14 +154,19 @@ Every PR run publishes Checks API results, a step summary, and a report artifact
 
 CI has no HOI4 install, so six checked-in files stand in for the game. `tools/validation/refresh_vanilla_data.py` rebuilds all of them from a local install (auto-detected, or set `$HOI4_PATH`):
 
-| Target    | File                                     | Read by                                                                        |
-| --------- | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| `defines` | `tools/validation/vanilla_defines.txt`   | `validate_defines.py`                                                          |
-| `docs`    | `resources/documentation/*.md`           | `validate_modifiers.py` (verbatim copies of the game's own `documentation/`)   |
-| `fonts`   | `tools/validation/vanilla_fonts.txt`     | `validate_gfx_references.py` (undefined-font check)                            |
-| `gui`     | `tools/validation/vanilla_gui_files.txt` | `validate_gfx_references.py` (MD-authored vs vanilla override → ERROR/WARNING) |
-| `paths`   | `tools/validation/vanilla_paths.txt`     | `validate_file_paths.py`                                                       |
-| `sprites` | `tools/validation/vanilla_sprites.txt`   | `validate_gfx_references.py`                                                   |
+Files live under `tools/validation/` except the `docs` target.
+
+| Target    | File                           | Read by                      |
+| --------- | ------------------------------ | ---------------------------- |
+| `defines` | `vanilla_defines.txt`          | `validate_defines.py`        |
+| `docs`    | `resources/documentation/*.md` | `validate_modifiers.py`      |
+| `fonts`   | `vanilla_fonts.txt`            | `validate_gfx_references.py` |
+| `gui`     | `vanilla_gui_files.txt`        | `validate_gfx_references.py` |
+| `paths`   | `vanilla_paths.txt`            | `validate_file_paths.py`     |
+| `sprites` | `vanilla_sprites.txt`          | `validate_gfx_references.py` |
+
+- `docs` files are verbatim copies of the game's own `documentation/`.
+- `fonts` feeds the undefined-font check; `gui` the MD-authored vs vanilla override split (ERROR/WARNING).
 
 ```bash
 python3 tools/validation/refresh_vanilla_data.py
