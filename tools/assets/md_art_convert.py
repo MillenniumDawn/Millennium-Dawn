@@ -38,12 +38,21 @@ def _is_imagemagick(path: str) -> bool:
     return "imagemagick" in (result.stdout + result.stderr).lower()
 
 
-def _which_imagemagick(*names: str) -> str:
+def find_imagemagick(*names: str) -> str | None:
     for exe in names:
         found = shutil.which(exe)
         if found and _is_imagemagick(found):
             return found
-    sys.exit("ImageMagick not found on PATH (need one of: " + ", ".join(names) + ").")
+    return None
+
+
+def _which_imagemagick(*names: str) -> str:
+    found = find_imagemagick(*names)
+    if found is None:
+        sys.exit(
+            "ImageMagick not found on PATH (need one of: " + ", ".join(names) + ")."
+        )
+    return found
 
 
 def imagemagick() -> list[str]:

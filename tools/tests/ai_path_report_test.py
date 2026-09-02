@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import json
+
 import ai_path_report as report
+import pytest
+from shared.suite import write_under
 
 
 def parse(body: str, tag: str = "DEN"):
@@ -599,44 +603,403 @@ class TestCrisisWeighting:
         assert report._has_priority_boost(focus) is True
 
 
+def live_in(state):
+    focuses = report.parse_focus_file(FOCUS_FILE, "DEN")
+    triggers = {
+        "DEN_ai_historical_path": parse("is_historical_focus_on = yes"),
+        "DEN_ai_not_historical_path": parse("NOT = { is_historical_focus_on = yes }"),
+        "DEN_ai_not_socialist_path": parse(
+            "NOT = { has_global_flag = DEN_SOCIALIST_FOCUS_PATH }"
+            " is_historical_focus_on = yes"
+        ),
+    }
+    by_id = {focus.id: focus for focus in focuses}
+    return report.live_focuses(focuses, by_id, state, triggers)
+
+
 class TestCureReachability:
     def test_a_killswitched_cure_leaves_no_live_relief(self):
-        focuses = report.parse_focus_file(FOCUS_FILE, "DEN")
-        by_id = {focus.id: focus for focus in focuses}
-        triggers = {
-            "DEN_ai_historical_path": parse("is_historical_focus_on = yes"),
-            "DEN_ai_not_historical_path": parse(
-                "NOT = { is_historical_focus_on = yes }"
-            ),
-            "DEN_ai_not_socialist_path": parse(
-                "NOT = { has_global_flag = DEN_SOCIALIST_FOCUS_PATH }"
-                " is_historical_focus_on = yes"
-            ),
-        }
-        live = report.live_focuses(
-            focuses, by_id, report.State("HISTORICAL", None, True), triggers
-        )
+        live = live_in(report.State("HISTORICAL", None, True))
         assert "DEN_root" in live
         assert "DEN_child" not in live
 
     def test_an_orphaned_cure_does_not_count_as_live(self):
-        focuses = report.parse_focus_file(FOCUS_FILE, "DEN")
-        by_id = {focus.id: focus for focus in focuses}
-        triggers = {
-            "DEN_ai_historical_path": parse("is_historical_focus_on = yes"),
-            "DEN_ai_not_historical_path": parse(
-                "NOT = { is_historical_focus_on = yes }"
-            ),
-            "DEN_ai_not_socialist_path": parse(
-                "NOT = { has_global_flag = DEN_SOCIALIST_FOCUS_PATH }"
-                " is_historical_focus_on = yes"
-            ),
-        }
-        live = report.live_focuses(
-            focuses,
-            by_id,
-            report.State("SOCIALIST", "DEN_SOCIALIST_FOCUS_PATH", False),
-            triggers,
-        )
+        live = live_in(report.State("SOCIALIST", "DEN_SOCIALIST_FOCUS_PATH", False))
         assert "DEN_root" not in live
         assert "DEN_child" not in live
+
+
+CURE_FOCUS = """
+	focus = {
+		id = DEN_fight_the_mafia
+		completion_reward = {
+			remove_ideas = DEN_mafia
+		}
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = DEN_SOCIALIST_FOCUS_PATH }
+			modifier = { factor = 0 DEN_ai_not_socialist_path = yes }
+		}
+	}
+"""
+
+TREE_FILES = {
+    "common/game_rules/00_game_rules.txt": """
+DEN_ai_behavior = {
+	name = "DEN_AI_BEHAVIOR"
+	group = "RULE_GROUP_AI_BEHAVIOR"
+	option = {
+		name = HISTORICAL
+		text = "RULE_OPTION_DEN_HISTORICAL"
+		desc = "RULE_OPTION_DEN_HISTORICAL_DESC"
+	}
+	option = {
+		name = SOCIALIST
+		text = "RULE_OPTION_DEN_SOCIALIST"
+		desc = "RULE_OPTION_DEN_SOCIALIST_DESC"
+	}
+	option = {
+		name = RANDOM_PATH
+		text = "RULE_OPTION_MD_RANDOM_PATH"
+		desc = "RULE_OPTION_MD_RANDOM_PATH_DESC"
+	}
+	default = {
+		name = NO_PATH
+		text = "RULE_OPTION_MD_NO_PATH"
+		desc = "RULE_OPTION_MD_NO_PATH_DESC"
+	}
+}
+""",
+    "localisation/english/MD_game_rules_l_english.yml": """
+ l_english:
+ DEN_AI_BEHAVIOR: "@DEN Denmark"
+ RULE_OPTION_DEN_HISTORICAL: "Historical"
+ RULE_OPTION_DEN_HISTORICAL_DESC: "Denmark keeps to the centre. Its neighbours plan around it."
+ RULE_OPTION_DEN_SOCIALIST: "The Red Chamber"
+ RULE_OPTION_DEN_SOCIALIST_DESC: "The §8Social Democrats§! take the chamber. The union loses a vote."
+ RULE_OPTION_MD_RANDOM_PATH: "Random"
+ RULE_OPTION_MD_RANDOM_PATH_DESC: "A path is drawn at random. Every campaign differs."
+ RULE_OPTION_MD_NO_PATH: "No Path"
+ RULE_OPTION_MD_NO_PATH_DESC: "The country runs unscripted. Nothing steers it."
+""",
+    "common/on_actions/999_game_rules_on_actions.txt": """
+on_actions = {
+	on_startup = {
+		effect = {
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = DEN_ai_behavior
+						option = RANDOM_PATH
+					}
+				}
+				random_list = {
+					30 = { set_global_flag = DEN_HISTORICAL_FOCUS_PATH }
+					20 = { set_global_flag = DEN_SOCIALIST_FOCUS_PATH }
+				}
+			}
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = DEN_ai_behavior
+						option = HISTORICAL
+					}
+				}
+				set_global_flag = DEN_HISTORICAL_FOCUS_PATH
+			}
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = DEN_ai_behavior
+						option = SOCIALIST
+					}
+				}
+				set_global_flag = DEN_SOCIALIST_FOCUS_PATH
+			}
+		}
+	}
+}
+""",
+    "common/scripted_triggers/99_DEN_scripted_triggers.txt": """
+DEN_ai_historical_path = {
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = DEN_HISTORICAL_FOCUS_PATH
+	}
+}
+
+DEN_ai_not_historical_path = {
+	has_global_flag = DEN_SOCIALIST_FOCUS_PATH
+}
+
+DEN_ai_not_socialist_path = {
+	NOT = { has_global_flag = DEN_SOCIALIST_FOCUS_PATH }
+	is_historical_focus_on = yes
+}
+""",
+    "common/ai_strategy_plans/DEN_strategy_plans.txt": """
+DEN_historical_plan = {
+	enable = { has_global_flag = DEN_HISTORICAL_FOCUS_PATH }
+	focus_factors = {
+		DEN_root = 100
+		DEN_other = 0
+		DEN_ghost_focus = 50
+	}
+}
+""",
+    "history/countries/DEN - Denmark.txt": """
+capital = 1
+set_politics = {
+	ruling_party = conservatism
+	last_election = "1998.3.11"
+	election_frequency = 48
+	elections_allowed = yes
+}
+add_ideas = {
+	limited_conscription
+	DEN_mafia
+	DEN_pension_crisis
+}
+add_dynamic_modifier = { modifier = DEN_ageing_population }
+set_variable = { DEN_ageing_population_var = -0.75 }
+1 = {
+	add_dynamic_modifier = { modifier = DEN_capital_region }
+}
+""",
+    "common/decisions/categories/99_DEN_decision_categories.txt": """
+DEN_pension_category = {
+	allowed = { original_tag = DEN }
+	icon = GFX_decisions_category_political
+	priority = 50
+
+	visible = {
+		has_idea = DEN_pension_crisis
+	}
+}
+""",
+    "common/decisions/Denmark.txt": """
+DEN_pension_category = {
+
+	DEN_reform_the_pensions = {
+
+		icon = generic_decision
+
+		cost = 50
+
+		available = {
+			has_idea = DEN_pension_crisis
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision DEN_reform_the_pensions"
+			remove_ideas = DEN_pension_crisis
+		}
+
+		ai_will_do = { base = 0 }
+	}
+}
+""",
+    "common/scripted_guis/99_DEN_scripted_guis.txt": """
+scripted_gui = {
+	DEN_pension_gui = {
+		window_name = "DEN_pension_window"
+		context_type = decision_category
+	}
+	DEN_ledger_gui = {
+		window_name = "DEN_ledger_window"
+		context_type = player_context
+
+		visible = {
+			has_dynamic_modifier = { modifier = DEN_ageing_population }
+		}
+	}
+}
+""",
+    "common/scripted_effects/DEN_political_leaders.txt": """
+set_leader_DEN = {
+	if = { limit = { has_country_flag = set_conservatism }
+		if = { limit = { check_variable = { conservatism_leader = 0 } }
+			add_to_variable = { conservatism_leader = 1 }
+			create_country_leader = { name = "Poul Rasmussen" ideology = conservatism }
+			if = { limit = { date < 2001.11.27 } set_temp_variable = { b = 1 } }
+		}
+		if = { limit = { check_variable = { conservatism_leader = 1 } NOT = { check_variable = { b = 1 } } }
+			add_to_variable = { conservatism_leader = 1 }
+			create_country_leader = { name = "Anders Fogh" ideology = conservatism }
+			set_temp_variable = { b = 1 }
+		}
+	}
+}
+""",
+    "common/scripted_effects/00_yearly_effects.txt": """
+trigger_year_2001_events = {
+	DEN = { country_event = { id = denmark_md.400 days = 330 } }
+}
+""",
+    "events/denmark.txt": """
+add_namespace = denmark_md
+
+country_event = {
+	id = denmark_md.400
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_civil_war = no
+		DEN_ai_historical_path = yes
+		DEN_ai_not_historical_path = no
+	}
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event denmark_md.400"
+		if = {
+			limit = { date > 2001.11.27 }
+			set_variable = { conservatism_leader = 1 }
+			set_temp_variable = { rul_party_temp = 1 }
+		}
+		else = {
+			set_variable = { conservatism_leader = 0 }
+			set_temp_variable = { rul_party_temp = 1 }
+		}
+
+		if = {
+			limit = { NOT = { is_in_array = { ruling_party = rul_party_temp } } }
+			change_ruling_party_effect = yes
+			set_elections_48_months = yes
+		}
+		else = {
+			set_ruling_leader = yes
+			set_leader = yes
+		}
+	}
+}
+""",
+}
+
+
+@pytest.fixture
+def mod_tree(tmp_path):
+    """A tmpdir shaped like the mod, just wide enough to drive the whole report."""
+    write_under(
+        tmp_path,
+        "common/national_focus/05_denmark.txt",
+        FOCUS_FILE.rstrip()[:-1] + CURE_FOCUS + "}\n",
+    )
+    for relative, content in TREE_FILES.items():
+        write_under(tmp_path, relative, content)
+    return tmp_path
+
+
+def run_cli(tree, capsys, *extra):
+    code = report.main(["--tag", "DEN", "--path", str(tree), *extra])
+    return code, capsys.readouterr().out
+
+
+class TestWholeReport:
+    def test_the_rule_and_its_wiring_are_read_off_the_tree(self, mod_tree):
+        built = report.build_report(str(mod_tree), "DEN", 15)
+        assert built["rule"]["options"] == [
+            "HISTORICAL",
+            "SOCIALIST",
+            "RANDOM_PATH",
+            "NO_PATH",
+        ]
+        assert built["path_flags"] == [
+            "DEN_HISTORICAL_FOCUS_PATH",
+            "DEN_SOCIALIST_FOCUS_PATH",
+        ]
+        assert "DEN_other: delete_unit" in built["rewards"]
+
+    def test_a_focus_factor_naming_no_focus_is_a_plan_conflict(self, mod_tree):
+        built = report.build_report(str(mod_tree), "DEN", 15)
+        assert built["plans"]["plans"] == 1
+        assert built["plans"]["conflicts"] == [
+            "DEN_historical_plan: DEN_ghost_focus (no such focus)"
+        ]
+
+    def test_burdens_carry_their_cures_and_their_backing_category(self, mod_tree):
+        built = report.build_report(str(mod_tree), "DEN", 15)
+        rows = {row["name"]: row for row in built["mechanics"]["burdens"]}
+        assert rows["DEN_mafia"]["focus_cures"] == ["DEN_fight_the_mafia"]
+        assert rows["DEN_pension_crisis"]["decision_cures"] == [
+            "DEN_reform_the_pensions"
+        ]
+        assert rows["DEN_pension_crisis"]["categories"] == ["DEN_pension_category"]
+        assert "limited_conscription" not in rows
+        assert "DEN_capital_region" not in rows
+
+    def test_a_cure_dies_only_where_its_path_is_killswitched(self, mod_tree):
+        built = report.build_report(str(mod_tree), "DEN", 0)
+        dead = [
+            issue
+            for issue in built["mechanics"]["issues"]
+            if issue.startswith("DEN_mafia:")
+        ]
+        assert dead == [
+            "DEN_mafia: every cure is dead under HISTORICAL / historical on",
+            "DEN_mafia: every cure is dead under NO_PATH / historical on",
+        ]
+
+    def test_an_ai_untakeable_cure_and_a_player_only_gui_are_reported(self, mod_tree):
+        issues = report.build_report(str(mod_tree), "DEN", 0)["mechanics"]["issues"]
+        assert (
+            "DEN_reform_the_pensions cures DEN_pension_crisis"
+            " but the AI can never take it" in issues
+        )
+        assert (
+            "DEN_ledger_gui is player-only and no decision relieves"
+            " DEN_ageing_population" in issues
+        )
+
+    def test_the_gui_backing_is_classified_from_its_context_type(self, mod_tree):
+        built = report.build_report(str(mod_tree), "DEN", 15)
+        guis = {row["id"]: row["backing"] for row in built["mechanics"]["guis"]}
+        assert guis == {
+            "DEN_pension_gui": "decision-backed",
+            "DEN_ledger_gui": "player-only",
+        }
+
+    def test_the_walker_is_found_and_its_schedule_resolved(self, mod_tree):
+        government = report.build_report(str(mod_tree), "DEN", 15)["government"]
+        assert "denmark_md.400" in government["walker"]
+        assert government["history"]["frequency"] == 48
+        assert government["timetable"]
+
+
+class TestRendering:
+    def test_every_section_is_rendered_once(self, mod_tree):
+        built = report.build_report(str(mod_tree), "DEN", 15)
+        text = report.render(built, report.SECTIONS)
+        for header in (
+            "RULE / WIRING",
+            "OWNERSHIP",
+            "STATE MATRIX",
+            "GRAPH",
+            "STRATEGY PLANS",
+            "DANGER REWARDS",
+            "MECHANICS",
+            "GOVERNMENT",
+        ):
+            assert text.count(header) == 1
+
+    def test_no_rendered_line_carries_trailing_whitespace(self, mod_tree):
+        built = report.build_report(str(mod_tree), "DEN", 15)
+        text = report.render(built, report.SECTIONS)
+        assert [line for line in text.splitlines() if line != line.rstrip()] == []
+
+    def test_the_cli_prints_the_whole_report(self, mod_tree, capsys):
+        code, out = run_cli(mod_tree, capsys)
+        assert code == 0
+        assert "MECHANICS" in out
+        assert "GOVERNMENT" in out
+
+    def test_a_single_section_suppresses_the_others(self, mod_tree, capsys):
+        _code, out = run_cli(mod_tree, capsys, "--section", "mechanics")
+        assert "MECHANICS" in out
+        assert "STATE MATRIX" not in out
+
+    def test_json_output_carries_every_section(self, mod_tree, capsys):
+        _code, out = run_cli(mod_tree, capsys, "--format", "json")
+        payload = json.loads(out)
+        assert [name for name in report.SECTIONS if name not in payload] == ["wiring"]

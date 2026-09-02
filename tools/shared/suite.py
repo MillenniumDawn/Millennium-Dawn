@@ -3,7 +3,6 @@
 import importlib.util
 import io
 import json
-import shutil
 import struct
 import subprocess
 import sys
@@ -34,27 +33,10 @@ def imagemagick_available() -> bool:
     """Whether a real ImageMagick binary is on PATH.
 
     Windows ships its own `convert.exe` (the FAT-to-NTFS converter), so the
-    name alone proves nothing — ask the binary what it is.
+    tool's own resolver decides — the name alone proves nothing.
     """
-    return bool(md_art_convert_binary())
-
-
-def md_art_convert_binary() -> str | None:
-    for exe in ("magick", "convert", "identify"):
-        found = shutil.which(exe)
-        if found and _is_imagemagick(found):
-            return found
-    return None
-
-
-def _is_imagemagick(path: str) -> bool:
-    try:
-        result = subprocess.run(
-            [path, "-version"], capture_output=True, text=True, timeout=30
-        )
-    except (OSError, subprocess.SubprocessError):
-        return False
-    return "imagemagick" in (result.stdout + result.stderr).lower()
+    converter = load_tool_module("assets/md_art_convert.py")
+    return converter.find_imagemagick("magick", "convert", "identify") is not None
 
 
 def run_git(repository, *args):
