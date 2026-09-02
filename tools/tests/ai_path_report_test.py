@@ -484,3 +484,159 @@ class TestLocalisation:
 
     def test_one_sentence_is_detected(self):
         assert report.count_sentences("Only this.") == 1
+
+
+HISTORY_FILE = """
+capital = 1
+add_ideas = {
+	limited_conscription
+	DEN_mafia
+	DEN_brain_drain
+}
+add_dynamic_modifier = { modifier = DEN_ageing_population }
+set_variable = { DEN_ageing_population_var = -0.75 }
+set_variable = { DEN_reserve_var = 0.5 }
+81 = {
+	add_dynamic_modifier = { modifier = roma_capitale_modifier }
+	set_variable = { roma_capitale_var = -0.6 }
+}
+2004.1.1 = {
+	add_ideas = { DEN_euro_entry }
+}
+"""
+
+
+class TestCureScanning:
+    def test_scalar_and_block_idea_removals(self):
+        block = "remove_ideas = DEN_mafia remove_ideas = { DEN_a DEN_b }"
+        assert report._scan_cures(block) == ["DEN_mafia", "DEN_a", "DEN_b"]
+
+    def test_swap_ideas_reports_only_the_removed_side(self):
+        block = "swap_ideas = { add_idea = DEN_new remove_idea = DEN_old }"
+        assert report._scan_cures(block) == ["DEN_old"]
+
+    def test_dynamic_modifier_and_variable_relief(self):
+        block = (
+            "remove_dynamic_modifier = { modifier = DEN_ageing_population }"
+            " add_to_variable = { DEN_stability_factor_var = 0.05 }"
+        )
+        assert report._scan_cures(block) == [
+            "DEN_ageing_population",
+            "DEN_stability_factor_var",
+        ]
+
+    def test_subtracting_from_a_variable_is_not_relief(self):
+        assert report._scan_cures("subtract_from_variable = { DEN_x = 0.05 }") == []
+
+    def test_a_focus_records_the_cures_in_its_completion_reward(self):
+        focuses = report.parse_focus_file(
+            "focus = { id = DEN_fix completion_reward = {"
+            " remove_ideas = DEN_mafia } ai_will_do = { base = 1 } }",
+            "DEN",
+        )
+        assert focuses[0].cures == ["DEN_mafia"]
+
+
+class TestBurdens:
+    def test_state_blocks_are_dropped_and_dated_blocks_kept(self):
+        scoped = report.country_scope(HISTORY_FILE)
+        assert "roma_capitale_modifier" not in scoped
+        assert "DEN_euro_entry" in scoped
+        assert len(scoped) == len(HISTORY_FILE)
+
+    def test_variable_seed_reads_both_forms(self):
+        assert report._variable_seed(" DEN_x = -0.75 ") == ("DEN_x", -0.75)
+        assert report._variable_seed(" var = DEN_y value = -1 ") == ("DEN_y", -1.0)
+
+    def test_only_country_ideas_count_as_burdens(self):
+        assert report._is_country_idea("DEN_mafia", "DEN") is True
+        assert report._is_country_idea("mafia_DEN", "DEN") is True
+        assert report._is_country_idea("limited_conscription", "DEN") is False
+
+
+class TestDecisionUsability:
+    def test_a_zero_base_decision_is_unreachable_for_the_ai(self):
+        decision = report._build_decision(
+            "DEN_repeal",
+            "DEN_cat",
+            "available = { has_idea = DEN_mafia }"
+            " complete_effect = { remove_ideas = DEN_mafia }"
+            " ai_will_do = { base = 0 }",
+        )
+        assert decision.base == 0
+        assert decision.ai_blocked is False
+        assert decision.cures == ("DEN_mafia",)
+
+    def test_an_is_ai_no_gate_blocks_the_decision(self):
+        decision = report._build_decision(
+            "DEN_player_only",
+            "DEN_cat",
+            "visible = { is_ai = no } ai_will_do = { base = 100 }",
+        )
+        assert decision.ai_blocked is True
+
+    def test_a_decision_without_ai_will_do_keeps_the_default_base(self):
+        assert report._build_decision("DEN_x", "DEN_cat", "cost = 25").base == 1.0
+
+
+class TestCrisisWeighting:
+    def test_a_purely_path_weighted_cure_focus_is_flat(self):
+        focus = report.parse_focus_file(FOCUS_FILE, "DEN")[1]
+        assert report._has_priority_boost(focus) is False
+
+    def test_a_crisis_modifier_counts_as_a_boost(self):
+        focus = report.parse_focus_file(
+            "focus = { id = DEN_fix ai_will_do = { base = 1"
+            " modifier = { factor = 5 has_idea = DEN_mafia } } }",
+            "DEN",
+        )[0]
+        assert report._has_priority_boost(focus) is True
+
+    def test_a_raised_base_counts_as_a_boost(self):
+        focus = report.parse_focus_file(
+            "focus = { id = DEN_fix ai_will_do = { base = 40 } }", "DEN"
+        )[0]
+        assert report._has_priority_boost(focus) is True
+
+
+class TestCureReachability:
+    def test_a_killswitched_cure_leaves_no_live_relief(self):
+        focuses = report.parse_focus_file(FOCUS_FILE, "DEN")
+        by_id = {focus.id: focus for focus in focuses}
+        triggers = {
+            "DEN_ai_historical_path": parse("is_historical_focus_on = yes"),
+            "DEN_ai_not_historical_path": parse(
+                "NOT = { is_historical_focus_on = yes }"
+            ),
+            "DEN_ai_not_socialist_path": parse(
+                "NOT = { has_global_flag = DEN_SOCIALIST_FOCUS_PATH }"
+                " is_historical_focus_on = yes"
+            ),
+        }
+        live = report.live_focuses(
+            focuses, by_id, report.State("HISTORICAL", None, True), triggers
+        )
+        assert "DEN_root" in live
+        assert "DEN_child" not in live
+
+    def test_an_orphaned_cure_does_not_count_as_live(self):
+        focuses = report.parse_focus_file(FOCUS_FILE, "DEN")
+        by_id = {focus.id: focus for focus in focuses}
+        triggers = {
+            "DEN_ai_historical_path": parse("is_historical_focus_on = yes"),
+            "DEN_ai_not_historical_path": parse(
+                "NOT = { is_historical_focus_on = yes }"
+            ),
+            "DEN_ai_not_socialist_path": parse(
+                "NOT = { has_global_flag = DEN_SOCIALIST_FOCUS_PATH }"
+                " is_historical_focus_on = yes"
+            ),
+        }
+        live = report.live_focuses(
+            focuses,
+            by_id,
+            report.State("SOCIALIST", "DEN_SOCIALIST_FOCUS_PATH", False),
+            triggers,
+        )
+        assert "DEN_root" not in live
+        assert "DEN_child" not in live
