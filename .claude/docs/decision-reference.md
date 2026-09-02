@@ -208,7 +208,7 @@ The engine seeds the roll from the save state, so without it every repeat of the
 
 ## Formable Commitment Ratchet
 
-The AI commits to one formable at a time via two country variables: `formable_committed_id` (unique ordinal per formable) and `formable_committed_size` (that formable's full `update_flag` state count). Without this, a country holding territory for two formables alternates their zero-cost `update_flag` decisions forever.
+The AI commits to one formable at a time via `formable_committed_id` / `formable_committed_size`; every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate that blocks any formable other than the committed one unless it is strictly larger, and special formables (USoE, EFS membership, UAR, ...) commit through `commit_special_formable` with a sentinel size that outranks every decision formable. Full contract, id/size tables, guarded sites, and the maintenance rules (a new formable must wire the gates; editing an `update_flag` state list means updating every size literal — `validate_decisions.py` gates on drift): [formable-reference.md](formable-reference.md).
 
 Every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate — _blocked when committed to a different formable that is not strictly smaller_:
 
