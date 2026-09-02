@@ -342,10 +342,24 @@ ASEAN_decisions = {
 			FROM = {
 				is_asean_member = yes
 				NOT = { original_tag = ROOT.original_tag }
+				NOT = { has_country_flag = ASEAN_suspended_flag }
+				OR = {
+					check_variable = { FROM.ASEAN_breach > 3 }
+					has_country_flag = ASEAN_recent_coup
+					any_country = {
+						is_asean_member = yes
+						has_war_with = FROM
+						NOT = { original_tag = FROM.original_tag }
+					}
+				}
 			}
 		}
 
-		visible = { is_asean_member_committed = yes }
+		visible = {
+			is_asean_member_committed = yes
+			has_global_flag = ASEAN_asean_charter_completed
+			check_variable = { global.ASEAN_suspend_candidates > 0 }
+		}
 
 		available = { has_political_power > 150 }
 
@@ -356,6 +370,9 @@ ASEAN_decisions = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_call_suspension_vote"
 			add_political_power = -75
+			set_global_flag = { flag = ASEAN_suspension_vote_open days = 15 value = 1 }
+			set_variable = { global.ASEAN_suspension_vote_yes = 0 }
+			set_variable = { global.ASEAN_suspension_vote_no = 0 }
 			FROM = { country_event = { id = asean_crisis.21 days = 5 } }
 			for_each_scope_loop = {
 				array = global.ASEAN_Member
