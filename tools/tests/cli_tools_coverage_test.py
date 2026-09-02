@@ -15,9 +15,15 @@ from pathlib import Path
 
 import assign_mio_icons
 import pytest
+from shared.suite import symlinks_available
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOLS = REPO_ROOT / "tools"
+
+requires_symlinks = pytest.mark.skipif(
+    not symlinks_available(),
+    reason="creating a symlink needs Developer Mode or admin on Windows",
+)
 
 
 def write_text(path: Path, content: str) -> None:
@@ -114,6 +120,7 @@ class TestArchiveStaleBranches:
 
         assert arch.branch_exists("origin/nonexistent-ref-xyz123", REPO_ROOT) is False
 
+    @requires_symlinks
     def test_remove_stale_files_rejects_symlink_dir(self, tmp_path):
         """remove_stale_files raises ValueError when target is a symlink."""
         sys.path.insert(0, str(TOOLS))
