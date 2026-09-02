@@ -30,6 +30,13 @@ class TestStatements:
         keys = [key for key, _, _ in report.iter_statements(body)]
         assert keys == ["a", "d"]
 
+    def test_comparison_operators_are_yielded(self):
+        body = "has_stability > 0.66 threat < 0.4"
+        assert list(report.iter_statements(body)) == [
+            ("has_stability", "0.66", None),
+            ("threat", "0.4", None),
+        ]
+
 
 class TestEvaluator:
     def test_flag_predicate(self):
@@ -45,6 +52,10 @@ class TestEvaluator:
 
     def test_unknown_trigger_never_counts_as_a_kill(self):
         expr = parse("has_government = democratic")
+        assert report.evaluate(expr, None, True, {}) is None
+
+    def test_comparison_only_body_never_counts_as_a_kill(self):
+        expr = parse("has_stability > 0.66")
         assert report.evaluate(expr, None, True, {}) is None
 
     def test_not_wrapped_flag_is_an_exemption(self):
