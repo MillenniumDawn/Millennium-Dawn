@@ -11,6 +11,7 @@ rewrites nothing but the row order and the origin bit.
 """
 
 import argparse
+import os
 import shutil
 import struct
 import subprocess
@@ -27,16 +28,52 @@ TGA_TOP_LEFT = 0x20
 UNCOMPRESSED_TGA_TYPES = frozenset({1, 2, 3})
 
 
+def _is_windows_ntfs_convert(candidate: str) -> bool:
+    """Windows ships an unrelated NTFS `convert.exe` under %SystemRoot%.
+
+    It sits on PATH ahead of any ImageMagick install, so a bare `which` hit
+    on `convert` is not proof that ImageMagick is present.
+    """
+    if sys.platform != "win32" or Path(candidate).name.lower() != "convert.exe":
+        return False
+    system_root = Path(os.environ.get("SystemRoot") or r"C:\Windows")
+    return system_root in Path(candidate).parents
+
+
+def _which(*names: str) -> str | None:
+    for name in names:
+        found = shutil.which(name)
+        if found and not _is_windows_ntfs_convert(found):
+            return found
+    return None
+
+
+def _resolve(*names: str) -> str:
+    found = _which(*names)
+    if found is None:
+        wanted = " or ".join(f"`{name}`" for name in names)
+        sys.exit(f"ImageMagick not found on PATH (need {wanted}).")
+    return found
+
+
+def has_imagemagick() -> bool:
+    """True when every binary the conversion subcommands shell out to is present."""
+    return all(
+        _which(*names)
+        for names in (
+            ("magick", "convert"),
+            ("identify", "magick"),
+            ("magick", "compare"),
+        )
+    )
+
+
 def imagemagick() -> list[str]:
-    for exe in ("magick", "convert"):
-        found = shutil.which(exe)
-        if found:
-            return [found]
-    sys.exit("ImageMagick not found on PATH (need `magick` or `convert`).")
+    return [_resolve("magick", "convert")]
 
 
 def image_size(path: Path) -> tuple[int, int]:
-    identify = shutil.which("identify") or shutil.which("magick")
+    identify = _resolve("identify", "magick")
     argv = [identify]
     if Path(identify).stem.lower() == "magick":
         argv.append("identify")
@@ -87,7 +124,7 @@ def pixels_match(a: Path, b: Path) -> bool:
     if Path(argv[0]).stem.lower() == "magick":
         argv.append("compare")
     else:
-        argv = [shutil.which("compare") or "compare"]
+        argv = [_resolve("compare")]
     result = subprocess.run(
         argv + ["-metric", "AE", str(a), str(b), "null:"],
         capture_output=True,

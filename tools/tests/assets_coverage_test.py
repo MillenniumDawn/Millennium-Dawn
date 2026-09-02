@@ -1,5 +1,4 @@
 import importlib.util
-import shutil
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -25,9 +24,8 @@ md_art_convert = _load_asset("md_art_convert")
 state_gfx = _load_asset("state_gfx")
 
 
-HAS_IMAGEMAGICK = bool(shutil.which("magick") or shutil.which("convert"))
 requires_imagemagick = pytest.mark.skipif(
-    not HAS_IMAGEMAGICK, reason="ImageMagick is not installed"
+    not md_art_convert.has_imagemagick(), reason="ImageMagick is not installed"
 )
 
 
@@ -91,6 +89,41 @@ def test_md_imagemagick_resolution_and_missing_executable(monkeypatch):
     paths.clear()
     with pytest.raises(SystemExit, match="ImageMagick not found"):
         md_art_convert.imagemagick()
+
+
+def test_md_windows_ntfs_convert_is_not_mistaken_for_imagemagick(monkeypatch):
+    ntfs = "/fake-windows/system32/convert.exe"
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setenv("SystemRoot", "/fake-windows")
+    monkeypatch.setattr(md_art_convert.shutil, "which", {"convert": ntfs}.get)
+
+    assert not md_art_convert.has_imagemagick()
+    with pytest.raises(SystemExit, match="ImageMagick not found"):
+        md_art_convert.imagemagick()
+
+    elsewhere = "/opt/imagemagick/convert.exe"
+    monkeypatch.setattr(md_art_convert.shutil, "which", {"convert": elsewhere}.get)
+    assert md_art_convert.imagemagick() == [elsewhere]
+
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setattr(md_art_convert.shutil, "which", {"convert": ntfs}.get)
+    assert md_art_convert.imagemagick() == [ntfs]
+
+
+def test_md_image_size_names_imagemagick_when_it_is_missing(monkeypatch):
+    monkeypatch.setattr(md_art_convert.shutil, "which", lambda _name: None)
+    with pytest.raises(SystemExit, match="ImageMagick not found"):
+        md_art_convert.image_size(Path("x.png"))
+
+
+def test_md_pixels_match_names_imagemagick_when_compare_is_missing(monkeypatch):
+    monkeypatch.setattr(
+        md_art_convert.shutil,
+        "which",
+        lambda name: "/usr/bin/convert" if name == "convert" else None,
+    )
+    with pytest.raises(SystemExit, match="ImageMagick not found"):
+        md_art_convert.pixels_match(Path("a.png"), Path("b.png"))
 
 
 def test_image_size_uses_magick_identify_subcommand(monkeypatch):
