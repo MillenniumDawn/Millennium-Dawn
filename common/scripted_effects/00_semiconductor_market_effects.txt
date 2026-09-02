@@ -185,21 +185,39 @@ semiconductor_market_update_access_tension = {
 
 semiconductor_market_deliver_tools = {
 	if = {
-		limit = { check_variable = { global.semiconductor_market_tool_backlog > 0 } }
-		subtract_from_variable = { global.semiconductor_market_tool_backlog = 1 }
-
+		limit = {
+			check_variable = { global.semiconductor_market_tool_backlog > 0 }
+			country_exists = HOL
+			HOL = {
+				NOT = { has_country_flag = collapsed_nation }
+				has_country_flag = HOL_asml_samsung_tool_order_pending
+			}
+		}
+		HOL = { HOL_asml_complete_samsung_tool_order = yes }
+		if = {
+			limit = { country_exists = KOR }
+			KOR = { KOR_samsung_receive_asml_tool_delivery = yes }
+		}
+		# A mature, resilient ASML clears a second unit of backlog in the same quarter.
 		if = {
 			limit = {
 				check_variable = { global.semiconductor_market_tool_backlog > 0 }
-				country_exists = HOL
 				HOL = {
-					NOT = { has_country_flag = collapsed_nation }
 					check_variable = { var = HOL_asml_euv_maturity value = 7 compare = greater_than_or_equals }
 					check_variable = { var = HOL_asml_supplier_resilience value = 7 compare = greater_than_or_equals }
 				}
 			}
 			subtract_from_variable = { global.semiconductor_market_tool_backlog = 1 }
 		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { global.semiconductor_market_tool_backlog > 0 }
+			country_exists = KOR
+			KOR = { NOT = { has_country_flag = collapsed_nation } }
+		}
+		subtract_from_variable = { global.semiconductor_market_tool_backlog = 1 }
+		KOR = { KOR_samsung_receive_secondary_supplier_delivery = yes }
 	}
 }
 
