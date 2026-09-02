@@ -1,0 +1,464 @@
+KOR_samsung_initialize_state = {
+	if = {
+		limit = { NOT = { has_country_flag = KOR_samsung_state_initialized } }
+		set_variable = { KOR_samsung_memory_leadership = 7 }
+		set_variable = { KOR_samsung_foundry_capability = 4 }
+		set_variable = { KOR_samsung_consumer_ecosystem = 5 }
+		set_variable = { KOR_samsung_supply_resilience = 4 }
+		set_variable = { KOR_samsung_governance_trust = 3 }
+		set_country_flag = KOR_samsung_state_initialized
+	}
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_clamp_state = {
+	clamp_variable = { var = KOR_samsung_memory_leadership min = 0 max = 10 }
+	clamp_variable = { var = KOR_samsung_foundry_capability min = 0 max = 10 }
+	clamp_variable = { var = KOR_samsung_consumer_ecosystem min = 0 max = 10 }
+	clamp_variable = { var = KOR_samsung_supply_resilience min = 0 max = 10 }
+	clamp_variable = { var = KOR_samsung_governance_trust min = 0 max = 10 }
+}
+
+KOR_samsung_record_asml_coinvestment = {
+	if = {
+		limit = {
+			original_tag = KOR
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = KOR_samsung_asml_coinvestment }
+		}
+		set_country_flag = KOR_samsung_asml_coinvestment
+		add_to_variable = { KOR_samsung_foundry_capability = 1 }
+		add_to_variable = { KOR_samsung_supply_resilience = 1 }
+		KOR_samsung_clamp_state = yes
+	}
+}
+
+KOR_samsung_receive_asml_tool_delivery = {
+	if = {
+		limit = {
+			original_tag = KOR
+			NOT = { has_country_flag = collapsed_nation }
+		}
+		if = {
+			limit = { NOT = { has_country_flag = KOR_samsung_first_tool_delivery } }
+			set_country_flag = KOR_samsung_first_tool_delivery
+			add_to_variable = { KOR_samsung_foundry_capability = 1 }
+			add_to_variable = { KOR_samsung_supply_resilience = 1 }
+			KOR_samsung_clamp_state = yes
+		}
+	}
+}
+
+KOR_samsung_receive_secondary_supplier_delivery = {
+	if = {
+		limit = {
+			original_tag = KOR
+			NOT = { has_country_flag = collapsed_nation }
+		}
+		if = {
+			limit = { NOT = { has_country_flag = KOR_samsung_first_secondary_delivery } }
+			set_country_flag = KOR_samsung_first_secondary_delivery
+			add_to_variable = { KOR_samsung_supply_resilience = 1 }
+			KOR_samsung_clamp_state = yes
+		}
+	}
+}
+
+KOR_samsung_update_market_pressure = {
+	remove_ideas = {
+		KOR_samsung_market_pressure_light
+		KOR_samsung_market_pressure_moderate
+		KOR_samsung_market_pressure_severe
+	}
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		set_variable = { KOR_samsung_market_pressure = global.semiconductor_market_demand }
+		add_to_variable = { KOR_samsung_market_pressure = global.semiconductor_market_tool_backlog }
+		add_to_variable = { KOR_samsung_market_pressure = global.semiconductor_market_access_tension }
+		add_to_variable = { KOR_samsung_market_pressure = 10 }
+		subtract_from_variable = { KOR_samsung_market_pressure = KOR_samsung_foundry_capability }
+		subtract_from_variable = { KOR_samsung_market_pressure = KOR_samsung_supply_resilience }
+		divide_variable = { KOR_samsung_market_pressure = 3 }
+		clamp_variable = { var = KOR_samsung_market_pressure min = 0 max = 10 }
+		if = {
+			limit = { check_variable = { KOR_samsung_market_pressure > 6 } }
+			add_ideas = KOR_samsung_market_pressure_severe
+		}
+		else_if = {
+			limit = { check_variable = { KOR_samsung_market_pressure > 3 } }
+			add_ideas = KOR_samsung_market_pressure_moderate
+		}
+		else_if = {
+			limit = { check_variable = { KOR_samsung_market_pressure > 0 } }
+			add_ideas = KOR_samsung_market_pressure_light
+		}
+	}
+}
+
+KOR_samsung_record_nand_leadership = {
+	set_country_flag = KOR_samsung_nand_system_lsi
+	add_to_variable = { KOR_samsung_memory_leadership = 1 }
+	add_to_variable = { KOR_samsung_foundry_capability = 1 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_record_s1_investment = {
+	set_country_flag = KOR_samsung_s1_investment
+	add_to_variable = { KOR_samsung_foundry_capability = 2 }
+	add_to_variable = { KOR_samsung_supply_resilience = 1 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_record_governance_reform = {
+	set_country_flag = KOR_samsung_2008_governance_reform
+	add_to_variable = { KOR_samsung_governance_trust = 2 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_record_galaxy_launch = {
+	set_country_flag = KOR_samsung_galaxy_launch
+	add_to_variable = { KOR_samsung_consumer_ecosystem = 2 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_record_vnand = {
+	set_country_flag = KOR_samsung_vnand_mass_production
+	add_to_variable = { KOR_samsung_memory_leadership = 2 }
+	add_to_variable = { KOR_samsung_supply_resilience = 1 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_transfer_techwin_to_hanwha = {
+	if = {
+		limit = { NOT = { has_country_flag = KOR_samsung_techwin_transferred } }
+		set_country_flag = KOR_samsung_techwin_transferred
+		if = {
+			limit = { has_idea = KOR_samsung_k9_thunder1 }
+			swap_ideas = { remove_idea = KOR_samsung_k9_thunder1 add_idea = KOR_hanwha_k9_thunder1 }
+		}
+		if = {
+			limit = { has_idea = KOR_samsung_k9_thunder2 }
+			swap_ideas = { remove_idea = KOR_samsung_k9_thunder2 add_idea = KOR_hanwha_k9_thunder2 }
+		}
+		if = {
+			limit = { has_idea = KOR_samsung_k9_thunder3 }
+			swap_ideas = { remove_idea = KOR_samsung_k9_thunder3 add_idea = KOR_hanwha_k9_thunder3 }
+		}
+	}
+}
+
+KOR_samsung_record_note7_reform = {
+	set_country_flag = KOR_samsung_note7_quality_reform
+	add_to_variable = { KOR_samsung_governance_trust = 2 }
+	add_to_variable = { KOR_samsung_supply_resilience = 1 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_record_foundry_organization = {
+	set_country_flag = KOR_samsung_dedicated_foundry
+	add_to_variable = { KOR_samsung_foundry_capability = 2 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_record_7lpp_euv = {
+	set_country_flag = KOR_samsung_7lpp_euv
+	add_to_variable = { KOR_samsung_foundry_capability = 1 }
+	add_to_variable = { KOR_samsung_supply_resilience = 1 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_record_fold_relaunch = {
+	set_country_flag = KOR_samsung_fold_relaunched
+	add_to_variable = { KOR_samsung_consumer_ecosystem = 1 }
+	add_to_variable = { KOR_samsung_governance_trust = 1 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_record_v1_line = {
+	set_country_flag = KOR_samsung_v1_euv_line
+	add_to_variable = { KOR_samsung_foundry_capability = 1 }
+	add_to_variable = { KOR_samsung_supply_resilience = 1 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_record_taylor_investment = {
+	set_country_flag = KOR_samsung_taylor_investment
+	add_to_variable = { KOR_samsung_foundry_capability = 1 }
+	add_to_variable = { KOR_samsung_supply_resilience = 1 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_record_3nm_gaa = {
+	set_country_flag = KOR_samsung_3nm_gaa
+	add_to_variable = { KOR_samsung_foundry_capability = 1 }
+	add_to_variable = { KOR_samsung_memory_leadership = 1 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_record_hbm_ai = {
+	add_to_variable = { KOR_samsung_memory_leadership = 1 }
+	add_to_variable = { KOR_samsung_supply_resilience = 1 }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_clear_capstone_outcome = {
+	remove_ideas = {
+		KOR_samsung_integrated_ai_semiconductor_stack
+		KOR_samsung_merchant_foundry_challenger
+		KOR_samsung_memory_ai_infrastructure_champion
+		KOR_samsung_global_galaxy_ecosystem
+		KOR_samsung_disciplined_diversified_champion
+	}
+	clr_country_flag = KOR_samsung_capstone_resolved
+}
+
+KOR_samsung_apply_integrated_ai_semiconductor_stack = {
+	KOR_samsung_clear_capstone_outcome = yes
+	add_ideas = KOR_samsung_integrated_ai_semiconductor_stack
+	set_country_flag = KOR_samsung_capstone_resolved
+}
+
+KOR_samsung_apply_merchant_foundry_challenger = {
+	KOR_samsung_clear_capstone_outcome = yes
+	add_ideas = KOR_samsung_merchant_foundry_challenger
+	set_country_flag = KOR_samsung_capstone_resolved
+}
+
+KOR_samsung_apply_memory_ai_infrastructure_champion = {
+	KOR_samsung_clear_capstone_outcome = yes
+	add_ideas = KOR_samsung_memory_ai_infrastructure_champion
+	set_country_flag = KOR_samsung_capstone_resolved
+}
+
+KOR_samsung_apply_global_galaxy_ecosystem = {
+	KOR_samsung_clear_capstone_outcome = yes
+	add_ideas = KOR_samsung_global_galaxy_ecosystem
+	set_country_flag = KOR_samsung_capstone_resolved
+}
+
+KOR_samsung_apply_disciplined_diversified_champion = {
+	KOR_samsung_clear_capstone_outcome = yes
+	add_ideas = KOR_samsung_disciplined_diversified_champion
+	set_country_flag = KOR_samsung_capstone_resolved
+}
+
+KOR_samsung_resolve_capstone = {
+	KOR_samsung_initialize_state = yes
+	KOR_samsung_clear_capstone_outcome = yes
+	if = {
+		limit = {
+			has_country_flag = KOR_samsung_integrated_stack_strategy
+			check_variable = { KOR_samsung_memory_leadership > 8 }
+			check_variable = { KOR_samsung_foundry_capability > 7 }
+			check_variable = { KOR_samsung_consumer_ecosystem > 7 }
+			check_variable = { KOR_samsung_supply_resilience > 6 }
+		}
+		KOR_samsung_apply_integrated_ai_semiconductor_stack = yes
+	}
+	else_if = {
+		limit = {
+			has_country_flag = KOR_samsung_merchant_foundry_strategy
+			check_variable = { KOR_samsung_foundry_capability > 8 }
+			check_variable = { KOR_samsung_supply_resilience > 6 }
+		}
+		KOR_samsung_apply_merchant_foundry_challenger = yes
+	}
+	else_if = {
+		limit = {
+			check_variable = { KOR_samsung_memory_leadership > 8 }
+			check_variable = { KOR_samsung_supply_resilience > 5 }
+		}
+		KOR_samsung_apply_memory_ai_infrastructure_champion = yes
+	}
+	else_if = {
+		limit = {
+			has_country_flag = KOR_samsung_galaxy_ecosystem_strategy
+			check_variable = { KOR_samsung_consumer_ecosystem > 8 }
+			check_variable = { KOR_samsung_governance_trust > 4 }
+		}
+		KOR_samsung_apply_global_galaxy_ecosystem = yes
+	}
+	else = { KOR_samsung_apply_disciplined_diversified_champion = yes }
+	KOR_samsung_clamp_state = yes
+}
+
+KOR_samsung_milestone_2002 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.1 days = 243 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_nand_leadership = yes
+	}
+}
+
+KOR_samsung_milestone_2005 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.2 days = 151 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_s1_investment = yes
+	}
+}
+
+KOR_samsung_milestone_2008 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.3 days = 112 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_governance_reform = yes
+	}
+}
+
+KOR_samsung_milestone_2010 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.4 days = 154 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_galaxy_launch = yes
+	}
+}
+
+KOR_samsung_milestone_2012 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.5 days = 217 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_asml_coinvestment = yes
+	}
+}
+
+KOR_samsung_milestone_2013 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.6 days = 217 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_vnand = yes
+	}
+}
+
+KOR_samsung_milestone_2015 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.7 days = 179 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_transfer_techwin_to_hanwha = yes
+	}
+}
+
+KOR_samsung_milestone_2016 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.8 days = 245 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_note7_reform = yes
+	}
+}
+
+KOR_samsung_milestone_2017 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.9 days = 131 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_foundry_organization = yes
+	}
+}
+
+KOR_samsung_milestone_2018 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.10 days = 290 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_7lpp_euv = yes
+	}
+}
+
+KOR_samsung_milestone_2019 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.11 days = 248 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_fold_relaunch = yes
+	}
+}
+
+KOR_samsung_milestone_2020 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.12 days = 50 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_v1_line = yes
+	}
+}
+
+KOR_samsung_milestone_2021 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.13 days = 326 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_taylor_investment = yes
+	}
+}
+
+KOR_samsung_milestone_2022 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.14 days = 180 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_3nm_gaa = yes
+	}
+}
+
+KOR_samsung_milestone_2024 = {
+	KOR_samsung_initialize_state = yes
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = KOR_samsung_events.15 days = 335 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		KOR_samsung_record_hbm_ai = yes
+		KOR_samsung_resolve_capstone = yes
+	}
+}
