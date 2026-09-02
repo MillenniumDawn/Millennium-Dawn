@@ -186,8 +186,10 @@ Metrics, reference analysis, and review tools.
 
 | Script                              | Description                                                                                                                                                     |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ai_path_report.py**               | Reports one country's AI path rule, flag wiring, focus ownership and killswitch orphans (issue #3162)                                                            |
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                       |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas                                                                                            |
+| **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                            |
 | **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                          |
 | **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced                                                                                              |
 | **pre_place_power_plants.py**       | Bakes fossil_powerplant + composite_plant counts into `history/states/` to skip startup loops. Re-run after edits to the energy formula or country/state setup. |

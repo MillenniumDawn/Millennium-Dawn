@@ -188,6 +188,48 @@ def test_missing_pool_files_lists_only_absent_files(tmp_path):
     assert missing_pool_files(str(tmp_path)) == ["01_navy_chief_traits.txt"]
 
 
+def test_parse_advisor_trait_slots_skips_a_pool_file_that_is_absent(tmp_path):
+    _write_fixture(tmp_path, _characters(), skip_pool_file="01_navy_chief_traits.txt")
+
+    slots = parse_advisor_trait_slots(str(tmp_path))
+
+    assert "navy_chief_reform_2" not in slots
+    assert slots["army_chief_defensive_1"] == "army_chief"
+
+
+def test_parse_trait_types_without_the_trait_dir(tmp_path):
+    assert parse_trait_types(str(tmp_path)) == {}
+
+
+def test_parse_trait_types_survives_an_unreadable_dir(tmp_path, monkeypatch):
+    import validate_characters as VC
+
+    (tmp_path / "common" / "unit_leader").mkdir(parents=True)
+    monkeypatch.setattr(
+        VC.os, "listdir", lambda path: (_ for _ in ()).throw(OSError("denied"))
+    )
+
+    assert parse_trait_types(str(tmp_path)) == {}
+
+
+def test_parse_trait_types_reads_only_txt_and_typed_traits(tmp_path, write_path):
+    write_path(
+        tmp_path,
+        "common/unit_leader/01_traits.txt",
+        "leader_traits = {\n"
+        "\ttyped = {\n\t\ttype = navy\n\t}\n"
+        "\tuntyped = {\n\t\ttrait_type = personality_trait\n\t}\n"
+        "}\n",
+    )
+    write_path(
+        tmp_path,
+        "common/unit_leader/notes.md",
+        "leader_traits = {\n\tignored = {\n\t\ttype = land\n\t}\n}\n",
+    )
+
+    assert parse_trait_types(str(tmp_path)) == {"typed": {"navy"}}
+
+
 def test_collect_trait_uses_covers_roles_and_create_effects():
     content = (
         "corps_commander = {\n"
@@ -241,6 +283,21 @@ def test_collect_advisor_uses_covers_both_trait_list_forms():
         ("army_chief", "army_armored_2", 3),
         ("high_command", "army_armored_2", 7),
     ]
+
+
+def test_collect_trait_uses_ignores_a_leader_block_without_traits():
+    content = "corps_commander = {\n\tskill = 3\n}\n"
+
+    assert collect_trait_uses(content) == []
+
+
+def test_collect_advisor_uses_needs_both_a_slot_and_traits():
+    content = (
+        "advisor = {\n\ttraits = { army_chief_defensive_1 }\n}\n"
+        "advisor = {\n\tslot = army_chief\n}\n"
+    )
+
+    assert collect_advisor_uses(content) == []
 
 
 def test_collect_advisor_uses_covers_add_advisor_role():
@@ -484,6 +541,51 @@ def test_validator_skips_when_neither_trait_pool_parses(tmp_path):
     categories = {category for category, _ in _categories(validator)}
 
     assert categories == {"advisor-pool-file-missing"}
+
+
+def test_validator_runs_the_advisor_check_alone_when_no_unit_traits_exist(
+    tmp_path, write_path
+):
+    advisor_dir = tmp_path / "common" / "country_leader"
+    advisor_dir.mkdir(parents=True)
+    for fname, content in POOL_FILES.items():
+        (advisor_dir / fname).write_text(content, encoding="utf-8")
+    write_path(
+        tmp_path,
+        "common/characters/TAG.txt",
+        _characters(_advisor("TAG_chief", "army_chief", "army_armored_2")),
+    )
+    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+
+    validator.run_validations()
+
+    assert {category for category, _ in _categories(validator)} == {
+        "advisor-trait-slot-mismatch"
+    }
+
+
+def test_validator_runs_the_role_check_alone_when_no_advisor_traits_exist(
+    tmp_path, write_path
+):
+    write_path(tmp_path, "common/unit_leader/01_army_leader_traits.txt", TRAITS)
+    write_path(
+        tmp_path,
+        "common/characters/TAG.txt",
+        "characters = {\n"
+        "\tTAG_general = {\n"
+        "\t\tcorps_commander = {\n"
+        "\t\t\ttraits = { bold }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+
+    validator.run_validations()
+    categories = {category for category, _ in _categories(validator)}
+
+    assert "trait-role-mismatch" in categories
+    assert "undefined-advisor-trait" not in categories
 
 
 def test_validator_scans_all_uses_when_an_advisor_pool_file_is_staged(

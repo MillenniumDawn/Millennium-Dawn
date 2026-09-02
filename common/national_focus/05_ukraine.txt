@@ -703,8 +703,8 @@ focus_tree = {
 			set_country_flag = UKR_yushenko_party
 			update_party_name = yes
 			if = {
-				limit = { NOT = { is_in_array = { ruling_party = 1 } } }
-				set_temp_variable = { rul_party_temp = 1 }
+				limit = { NOT = { check_variable = { ruling_party = 16 } } }
+				set_temp_variable = { rul_party_temp = 16 }
 				set_temp_variable = { disable_elections = 1 }
 				change_ruling_party_effect = yes
 			}
@@ -772,9 +772,101 @@ focus_tree = {
 		}
 	}
 
+	focus = {
+		id = UKR_stay_for_fair_election
+		icon = UKR_president_minister
 
+		x = 1
+		y = 1
+		relative_position_id = UKR_negotiate_orange_maidan
 
+		cost = 4
 
+		prerequisite = { focus = UKR_negotiate_orange_maidan }
+		mutually_exclusive = { focus = UKR_lyvochkin }
+
+		search_filters = { FOCUS_FILTER_UKRAINE_KUCHMA FOCUS_FILTER_POLITICAL }
+
+		available = {
+			date < 2006.1.1
+			NOT = { has_country_flag = UKR_orange_2004_started }
+			NOT = { has_country_flag = UKR_orange_2004_resolved }
+			OR = {
+				emerging_reactionaries_are_in_power = yes
+				has_global_flag = UKR_YANUK_PATH
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_stay_for_fair_election"
+			set_country_flag = UKR_yushenko_party
+			update_party_name = yes
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.15 }
+			change_relative_party_popularity = yes
+			if = {
+				limit = {
+					NOT = { has_country_flag = ukr_revoult_bilo }
+				}
+				set_temp_variable = { tension_change = 15 }
+				UKR_add_political_tension = yes
+			}
+			if = {
+				limit = { NOT = { check_variable = { ruling_party = 6 } } }
+				set_temp_variable = { rul_party_temp = 6 }
+				set_temp_variable = { disable_elections = 1 }
+				change_ruling_party_effect = yes
+			}
+			create_country_leader = {
+				name = "Viktor Yanukovych"
+				picture = "gfx/leaders/UKR/Viktor_Yanukovych.dds"
+				expire = "2017.1.1"
+				ideology = Conservative
+				traits = {
+					emerging_Conservative
+					inexperienced
+					stubborn
+				}
+			}
+			if = {
+				limit = {
+					has_idea = UKR_yushenko_premier_idea
+				}
+				remove_ideas = UKR_yushenko_premier_idea
+			}
+			if = {
+				limit = {
+					has_idea = UKR_yanuk_premier_idea
+				}
+				remove_ideas = UKR_yanuk_premier_idea
+			}
+			if = {
+				limit = { check_variable = { UKR.UKR_political_tension > 40 } }
+				add_timed_idea = {
+					idea = UKR_unstable_government_idea
+					days = 390
+				}
+			}
+			hidden_effect = {
+				set_country_flag = UKR_orange_2004_started
+				country_event = ukraine_kuchma.13
+				country_event = { id = ukraine_kuchma.18 days = 1 }
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				is_historical_focus_on = yes
+				add = -80
+			}
+			modifier = {
+				has_global_flag = UKR_YANUK_PATH
+				add = 355
+			}
+		}
+	}
 
 	focus = {
 		id = UKR_welfare_reform
@@ -1922,7 +2014,7 @@ focus_tree = {
 				clr_country_flag = dynamic_flag
 				recalculate_party = yes
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+					limit = { NOT = { check_variable = { ruling_party = 4 } } }
 					set_temp_variable = { rul_party_temp = 4 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -2000,7 +2092,7 @@ focus_tree = {
 				clr_country_flag = dynamic_flag
 				recalculate_party = yes
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 18 } } }
+					limit = { NOT = { check_variable = { ruling_party = 18 } } }
 					set_temp_variable = { rul_party_temp = 18 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -8532,7 +8624,7 @@ focus_tree = {
 				set_cosmetic_tag = UKR_AUTH_SS_nationalist
 				clr_country_flag = dynamic_flag
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 21 } } }
+					limit = { NOT = { check_variable = { ruling_party = 21 } } }
 					set_temp_variable = { rul_party_temp = 21 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -10501,7 +10593,7 @@ focus_tree = {
 			}
 			hidden_effect = {
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 6 } } }
+					limit = { NOT = { check_variable = { ruling_party = 6 } } }
 					set_temp_variable = { rul_party_temp = 6 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -13544,8 +13636,8 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 			}
 			hidden_effect = {
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 1 } } }
-					set_temp_variable = { rul_party_temp = 1 }
+					limit = { NOT = { check_variable = { ruling_party = 2 } } }
+					set_temp_variable = { rul_party_temp = 2 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
 				}

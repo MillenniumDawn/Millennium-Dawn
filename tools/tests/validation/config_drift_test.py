@@ -27,6 +27,7 @@ from fnmatch import fnmatch
 
 import pytest
 import yaml
+from coverage import Coverage
 from precommit_validate import _REGISTRY
 from shared.paths import REPO_ROOT, VALIDATION_DIR
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
@@ -548,6 +549,7 @@ def test_python_quality_checks_are_wired_in_precommit_and_ci():
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     for package in ("black==", "coverage==", "mypy==", "pylint==", "ruff=="):
         assert package in pyproject
+    assert Coverage().config.include_namespace_packages is True
 
 
 def test_pytest_collection_gate_cannot_self_exclude():
@@ -686,6 +688,8 @@ def test_tools_tests_checkout_consumed_configuration():
         "common/national_focus",
         "common/script_enums.txt",
         "common/units/equipment",
+        # renewable_power_per_cost_test drives the CLI against its live input.
+        "common/technologies/industry.txt",
         "common/decisions",
         "common/opinion_modifiers",
         "common/modifiers",
@@ -726,6 +730,7 @@ def test_ci_run_steps_default_to_strict():
             for step in workflow["jobs"][job]["steps"]
             if step.get("name") == "Run validation"
         )
+        assert isinstance(run, str)
         assert (
             'matrix.validator.strict }}" != "false"' in run
         ), f"{job}'s Run step must default to --strict when `strict:` is absent."
@@ -1122,3 +1127,27 @@ def test_mod_changes_reach_content_checks():
         "content-checks"
     ]
     assert "needs.detect-changes.outputs.mod == 'true'" in content_checks["if"]
+
+
+def test_music_style_changes_reach_content_checks():
+    _, filters = _filter_definitions()
+    assert {
+        "common/**/*.txt",
+        "events/**/*.txt",
+        "history/**/*.txt",
+        "music/**/*.txt",
+    } <= set(filters["style"])
+    assert "music/**" in filters["content"]
+
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    assert "music" in set(workflow["env"]["WORKSPACE_PATHS"].split())
+    pr_checkout = next(
+        step
+        for step in workflow["jobs"]["prepare-workspace"]["steps"]
+        if step.get("uses", "").startswith("actions/checkout@")
+    )
+    assert "music" in set(pr_checkout["with"]["sparse-checkout"].split())
+    assert (
+        "needs.detect-changes.outputs.style == 'true'"
+        in workflow["jobs"]["content-checks"]["if"]
+    )
