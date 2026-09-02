@@ -34,9 +34,11 @@ python tools/analysis/ai_path_report.py --tag TAG
 
 The report decides every mechanical question: rule and loc conformance, flag wiring, which focuses
 carry path modifiers and whether they are multiplicative, path flags that appear nowhere, killswitch
-orphans per rule state × historical AI on/off, mutex ties, `focus_factors` disagreements, and
-dangerous completion rewards. Read [references/audit.md](references/audit.md) **after** the report —
-it covers only the judgment the report cannot make.
+orphans per rule state × historical AI on/off, mutex ties, `focus_factors` disagreements, dangerous
+completion rewards, and the country's own mechanics — the burdens its history file hands it, what
+relieves each, which burdens go unrelieved in some rule state, and whether each country GUI is
+decision-backed or player-only. Read [references/audit.md](references/audit.md) **after** the report
+— it covers only the judgment the report cannot make.
 
 ## 3. Design
 
@@ -88,10 +90,20 @@ already be clean, and it flags guards on focuses that spend nothing); review
 focus. Under historical AI the AI must stick to history: killswitch non-historical branch roots,
 boost the historical branch.
 
+The country must also stay able to fix itself. Every burden it starts with keeps a live cure in every
+rule state you leave standing — if killswitching a branch takes the last one, re-own the cure focus
+or exempt it. Where a burden's only relief is a player-only mechanic, an `is_ai = no` decision or a
+`base = 0` one, give the AI the same outcome through its `TAG_ai_path_category`
+([references/write.md](references/write.md) §6). Crisis focuses get a real weighting modifier, not
+the default base.
+
 ## 5. Verify
 
 Re-run `ai_path_report.py --tag TAG`: 0 orphans in every state, no additive path modifiers, no
-unreferenced flags, rule and wiring clean, and a clean `government` section (every walker branch
+unreferenced flags, rule and wiring clean, a clean `mechanics` section (no burden whose cures are all
+dead in a state, no cure focus at flat base, no AI-untakeable cure decision left without an AI route;
+the `nothing relieves` line is inventory, not a failure — say in the PR which entries you judged
+bonuses), and a clean `government` section (every walker branch
 asserts an in-range roster index, no `change_leader_temp`, no unbounded party change, every scheduled
 date resolves to the person history had). Then `validate_focus_tree.py --path .`, and
 `validate_decisions.py` warning-group counts against a stashed baseline.
