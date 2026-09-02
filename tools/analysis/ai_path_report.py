@@ -61,7 +61,7 @@ BOOKMARK_DATES = ((2016, 1, 2), (2017, 1, 1))
 TIMELINE_MIN_DATES = 3
 DAYS_PER_MONTH = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
-_STATEMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*=\s*")
+_STATEMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*[=<>]\s*")
 _FOCUS_START = re.compile(r"^[ \t]*(focus|shared_focus|joint_focus)\s*=\s*\{", re.M)
 _ID_LINE = re.compile(r"^[ \t]*id\s*=\s*(\S+)", re.M)
 _LOC_KEY = re.compile(r'^\s*([A-Za-z_][A-Za-z0-9_]*):\s*\d*\s*"(.*)"\s*$')
