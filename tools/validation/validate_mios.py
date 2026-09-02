@@ -16,6 +16,8 @@ Rules from .claude/docs/mio-reference.md + AGENTS.md:
     localisation key (TAG_<key> fallback included)
   * equipment_bonus stats reach equipment that declares a base for them, since
     the bonus is a percentage and 10% of an undeclared stat is still nothing
+  * percentage-type organization_modifier keys stay inside -1..1 — a whole
+    number there is a dropped decimal point that silently breaks the org
   * every `mio:<org>` reference names a real org, and the org is reachable from
     the country whose script references it — an org pinned to another tag is
     simply absent in that scope, so the engine logs `was not found in country
@@ -125,6 +127,22 @@ NON_STAT_BONUS_KEYS = frozenset(
 # (naval_light_gun_hit_chance_factor, naval_heavy_gun_hit_chance_factor,
 # naval_torpedo_damage_reduction_factor, naval_weather_penalty_factor).
 ZERO_BASE_EXEMPT_STATS: FrozenSet[str] = frozenset()
+
+# organization_modifier keys the engine reads as a factor, so 0.15 is +15% and a
+# whole number is a dropped decimal point, not a strong bonus. Helsing SE shipped
+# `size_up_requirement = -3`, driving the level-up cost negative and maxing the
+# org's trait tree for free. task_capacity is absent on purpose — it is a flat
+# task count and 1..5 is its normal range.
+PERCENT_ORG_MODIFIERS = frozenset(
+    {
+        "military_industrial_organization_design_team_assign_cost",
+        "military_industrial_organization_design_team_change_cost",
+        "military_industrial_organization_funds_gain",
+        "military_industrial_organization_industrial_manufacturer_assign_cost",
+        "military_industrial_organization_research_bonus",
+        "military_industrial_organization_size_up_requirement",
+    }
+)
 
 LocKeys = Union[FrozenSet[str], Set[str]]
 
@@ -351,6 +369,7 @@ class Validator(BaseValidator):
                 self._check_allowed(org_id, body, rel, body_offset)
                 self._check_initial_trait(org_id, body, rel, body_offset)
                 self._check_positions(org_id, body, rel, body_offset)
+                self._check_org_modifier_range(body, rel, body_offset)
                 self._check_on_complete(body, rel, body_offset)
                 self._check_header_text(org_id, body, rel, body_offset, loc_keys)
                 self._check_trait_localisation(org_id, body, rel, body_offset, loc_keys)
@@ -364,7 +383,9 @@ class Validator(BaseValidator):
             except OSError:
                 continue
             rel = Path(filepath).relative_to(self.mod_path).as_posix()
-            self._check_nested_equipment_bonus(blank_comments(text), rel, equipment)
+            clean = blank_comments(text)
+            self._check_nested_equipment_bonus(clean, rel, equipment)
+            self._check_org_modifier_range(clean, rel, 0)
 
         reference_hits = 0
         for filepath in reference_files:
@@ -454,6 +475,33 @@ class Validator(BaseValidator):
                     f"trait position x = {x} must stay inside 0..9",
                     rel,
                     body_offset + body.count("\n", 0, m.start()) + 1,
+                )
+
+    def _check_org_modifier_range(self, body: str, rel: str, line_offset: int):
+        for block_start, inner in _sub_blocks(body, "organization_modifier"):
+            for m in BONUS_STAT_RE.finditer(inner):
+                key = m.group(1)
+                if key not in PERCENT_ORG_MODIFIERS:
+                    continue
+                try:
+                    value = float(m.group(2))
+                except ValueError:
+                    continue
+                if abs(value) < 1:
+                    continue
+                line = (
+                    line_offset
+                    + body.count("\n", 0, block_start)
+                    + inner.count("\n", 0, m.start())
+                    + 1
+                )
+                self.add_error(
+                    "org-modifier-out-of-range",
+                    f"{key} = {m.group(2)} is a factor, so this reads as "
+                    f"{value * 100:.0f}% — write it as a decimal "
+                    f"(e.g. {value / 100:g})",
+                    rel,
+                    line,
                 )
 
     @staticmethod

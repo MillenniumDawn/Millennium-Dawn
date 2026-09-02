@@ -87,6 +87,40 @@ def test_position_x_bounds_exempt_orgs(tmp_path):
     assert v._issues[0].category == "trait-x-bounds"
 
 
+def test_percentage_org_modifier_whole_number_flagged(tmp_path):
+    v = _validator(tmp_path)
+    body = (
+        "\tinitial_trait = {\n"
+        "\t\torganization_modifier = {\n"
+        "\t\t\tmilitary_industrial_organization_size_up_requirement = -3\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert len(v._issues) == 1
+    assert v._issues[0].category == "org-modifier-out-of-range"
+    assert v._issues[0].line == 3
+
+
+def test_fractional_org_modifier_passes(tmp_path):
+    v = _validator(tmp_path)
+    body = (
+        "\torganization_modifier = {\n"
+        "\t\tmilitary_industrial_organization_size_up_requirement = -0.15\n"
+        "\t\tmilitary_industrial_organization_research_bonus = 0.10\n"
+        "\t}\n"
+    )
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert not v._issues
+
+
+def test_task_capacity_is_exempt_from_range_check(tmp_path):
+    v = _validator(tmp_path)
+    body = "\torganization_modifier = { military_industrial_organization_task_capacity = 3 }\n"
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert not v._issues
+
+
 def test_empty_on_complete_flagged(tmp_path):
     v = _validator(tmp_path)
     v._check_on_complete("\ton_complete = {\n\t}\n", "f.txt", 0)
