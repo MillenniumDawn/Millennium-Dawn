@@ -26,46 +26,9 @@ permissions:
   contents: read
 
 jobs:
-  validate-tools:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 1
-          persist-credentials: false
-          sparse-checkout: |
-            tools
-            pyproject.toml
-            common
-            events
-            history
-            localisation
-            interface
-            gfx/flags
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
-        with:
-          python-version: "3.x"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install --group runtime
-      - name: Run tools validation
-        run: |
-          python tools/validate_tools.py --strict --no-color --output \
-            tools_validation.log
-      - name: Upload validation report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always()
-        with:
-          name: tools-validation-report
-          path: tools_validation.log
-          retention-days: 7
-
   checks:
     name: ${{ matrix.check.name }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.check.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -74,15 +37,27 @@ jobs:
         check:
           - name: report_lib + validator unit tests
             id: unit
+            runner: ubuntu-latest
+          - name: tools unit tests (macOS)
+            id: unit-macos
+            runner: macos-latest
+          - name: tools unit tests (Windows)
+            id: unit-windows
+            runner: windows-latest
           - name: staged validator integration
             id: staged
+            runner: ubuntu-latest
           - name: ruff lint (tools)
             id: lint
+            runner: ubuntu-latest
+          - name: Code duplication (jscpd)
+            id: duplication
+            runner: ubuntu-latest
     steps:
       # The unit-test checkout must include every config and fixture that the
       # tests read; config_drift_test enforces this list.
       - name: Checkout (unit tests)
-        if: matrix.check.id == 'unit'
+        if: startsWith(matrix.check.id, 'unit')
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 1
@@ -97,6 +72,7 @@ jobs:
             common/idea_tags
             common/script_enums.txt
             common/units/equipment
+            common/technologies/industry.txt
             common/decisions
             common/opinion_modifiers
             common/modifiers
@@ -133,19 +109,35 @@ jobs:
             pyproject.toml
           sparse-checkout-cone-mode: false
 
+      - name: Checkout (duplication)
+        if: matrix.check.id == 'duplication'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            tools
+            package.json
+            bun.lock
+            .jscpd.json
+
       - name: Set up Python
+        if: matrix.check.id != 'duplication'
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.x"
 
       - name: Install dependencies (unit tests)
-        if: matrix.check.id == 'unit'
+        if: startsWith(matrix.check.id, 'unit')
         run: |
           python -m pip install --upgrade pip
-          pip install --group dev
+          # analysis pulls scipy/numpy/matplotlib used by the optional
+          # tools/balance and tools/analysis scripts and their tests.
+          pip install --group dev --group runtime --group analysis
 
       - name: Install dependencies (staged integration)
         if: matrix.check.id == 'staged'
+        id: staged-deps
         run: |
           python -m pip install --upgrade pip
           pip install --group dev --group runtime
@@ -156,11 +148,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install --group dev
 
+      - name: Verify pytest collection configuration
+        if: startsWith(matrix.check.id, 'unit')
+        run: >-
+          python -m pytest tools/tests/collection_layout_test.py
+          -o addopts= -q
+
       - name: Run unit tests
         if: matrix.check.id == 'unit'
         run: |
-          python -m coverage run --branch -m pytest -v
+          python -m coverage run --branch -m pytest tools/tests \
+            -o addopts= -o 'python_files=*_test.py' -v
           python -m coverage report
+
+      - name: Run cross-platform unit tests
+        if: matrix.check.id == 'unit-macos' || matrix.check.id == 'unit-windows'
+        run: >-
+          python -m pytest tools/tests -o addopts=
+          -o "python_files=*_test.py" -v
 
       - name: Create isolated test worktree
         if: matrix.check.id == 'staged'
@@ -178,6 +183,26 @@ jobs:
             tools/tests/staged_validators_test.py \
             tools/tests/staged_validators_real_test.py -q
 
+      # Run after test failures, but not broken setup or cancellation.
+      - name: Run tools validation
+        if: >-
+          !cancelled() && matrix.check.id == 'staged' &&
+          steps.staged-deps.outcome == 'success'
+        run: |
+          python tools/validate_tools.py --strict --no-color --output \
+            tools_validation.log
+
+      - name: Upload tools validation report
+        if: >-
+          !cancelled() && matrix.check.id == 'staged' &&
+          steps.staged-deps.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tools-validation-report
+          path: tools_validation.log
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Run ruff
         if: matrix.check.id == 'lint'
         run: ruff check tools --output-format=github
@@ -194,25 +219,16 @@ jobs:
         if: matrix.check.id == 'lint'
         run: mypy
 
-  check-duplication:
-    name: Code duplication (jscpd)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 1
-          persist-credentials: false
-          sparse-checkout: |
-            tools
-            package.json
-            bun.lock
-            .jscpd.json
       - name: Setup Bun
+        if: matrix.check.id == 'duplication'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
           bun-version: "1.3.14"
-      - name: Install dependencies
+
+      - name: Install duplication dependencies
+        if: matrix.check.id == 'duplication'
         run: bun install --frozen-lockfile
+
       - name: Run jscpd
+        if: matrix.check.id == 'duplication'
         run: bun run jscpd

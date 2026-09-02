@@ -491,6 +491,13 @@ def should_skip_file(
     content_roots = {"common", "events", "history", "interface", "localisation"}
     normalized_path = filename.replace("\\", "/").strip("/")
     parts = normalized_path.split("/")
+    # Canal/strait closures set flags read here, so this file is game logic
+    # that must count for variables validation. Stale worktree and reference
+    # copies stay ignored.
+    if parts[-2:] == ["map", "adjacency_rules.txt"] and not (
+        ignored_dirs - {"map"}
+    ).intersection(parts[:-2]):
+        return False
     for index, part in enumerate(parts):
         if part not in ignored_dirs:
             continue
@@ -503,6 +510,11 @@ def should_skip_file(
     return False
 
 
+def normalize_path_separators(path: str) -> str:
+    """Return a path with POSIX separators for public output."""
+    return path.replace("\\", "/")
+
+
 def is_excluded_path(path: str, excluded_dirs: Container[str], repo_root: str) -> bool:
     """True if path is under one of excluded_dirs, matched relative to repo_root.
 
@@ -510,7 +522,11 @@ def is_excluded_path(path: str, excluded_dirs: Container[str], repo_root: str) -
     a checkout nested under an ancestor dir literally named after one of
     excluded_dirs would otherwise match every file and no-op the whole repo.
     """
-    rel = os.path.relpath(os.path.abspath(path), os.path.abspath(repo_root))
+    try:
+        rel = os.path.relpath(os.path.abspath(path), os.path.abspath(repo_root))
+    except ValueError:
+        rel = normalize_path_separators(os.path.abspath(path)).strip("/")
+        return any(part in excluded_dirs for part in rel.split("/"))
     return any(part in excluded_dirs for part in rel.split(os.sep))
 
 
@@ -530,7 +546,7 @@ def iter_txt_targets(
             for fn in filenames:
                 if fn.lower().endswith(".txt"):
                     full = os.path.join(dirpath, fn)
-                    yield os.path.relpath(full, path), full
+                    yield normalize_path_separators(os.path.relpath(full, path)), full
     elif os.path.isfile(path):
         yield path, path
 
@@ -877,6 +893,147 @@ def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> st
         elif in_str and c != "\n" and start not in keep:
             out[i] = " "
     return "".join(out)
+
+
+def flat_block_text(block: str) -> str:
+    """Strip an outer brace pair, but only when the two actually match.
+
+    A bare body ending in the `}` of its last child keeps both characters — a
+    naive strip there would delete an unrelated brace and desync every depth
+    count downstream.
+    """
+    inner = block.strip()
+    if inner.startswith("{") and find_matching_brace(inner, 0) == len(inner) - 1:
+        return inner[1:-1]
+    return inner
+
+
+def iter_flat_offsets(block: str) -> Iterator[Tuple[str, int]]:
+    """Yield offsets at brace depth zero, skipping comments and nested blocks."""
+    inner = flat_block_text(block)
+    depth = 0
+    index = 0
+    while index < len(inner):
+        char = inner[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+        elif char == "#":
+            while index < len(inner) and inner[index] != "\n":
+                index += 1
+            continue
+        elif depth == 0:
+            yield inner, index
+        index += 1
+
+
+_IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
+# The three trigger blocks that can hide a decision or category from a player.
+_AI_GATE_FIELDS = ("visible", "available", "allowed")
+_TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+
+
+def first_flat_match(
+    block: str, pattern: "re.Pattern[str]"
+) -> Optional["re.Match[str]"]:
+    """First match of *pattern* sitting unconditionally at depth 0 of a block.
+
+    Nested inside NOT/OR/AND/if/limit or a scoped `TAG = { }` a token is
+    conditional and means something different: `NOT = { has_country_flag = X }`
+    is satisfied until X is set, the opposite of a gate that X opens.
+    ``iter_flat_offsets`` yields every depth-0 character position, hence the
+    preceding-whitespace guard against matching mid-token.
+    """
+    if not block:
+        return None
+    for inner, index in iter_flat_offsets(block):
+        if index and not inner[index - 1].isspace():
+            continue
+        match = pattern.match(inner, index)
+        if match:
+            return match
+    return None
+
+
+def has_flat_is_ai(block: str) -> bool:
+    """True when `is_ai = yes` sits unconditionally at depth 0 of a trigger block."""
+    return first_flat_match(block, _IS_AI_YES_RE) is not None
+
+
+def iter_direct_child_blocks(
+    body: str, opener: "re.Pattern[str]"
+) -> Iterator[Tuple["re.Match[str]", int, int]]:
+    """Yield `(match, open_idx, close_idx)` for every *opener* block at depth 0.
+
+    Depth-aware so a nested `visible` inside a `modifier` or an effect's `limit`
+    is never mistaken for the object's own trigger block. Each hit advances past
+    its own closing brace, which keeps the depth count balanced — landing back
+    on that `}` would decrement a depth the matching `{` never incremented.
+    """
+    index = 0
+    depth = 0
+    while index < len(body):
+        char = body[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+        elif depth == 0:
+            match = opener.match(body, index)
+            if match:
+                close = find_matching_brace(body, match.end() - 1)
+                if close == -1:
+                    return
+                yield match, match.end() - 1, close
+                index = close + 1
+                continue
+        index += 1
+
+
+def direct_child_block(body: str, name: str) -> str:
+    """Return the `name = { ... }` block at depth 0 of *body*, braces included.
+
+    Returns "" when there is no such block.
+    """
+    opener = re.compile(r"\b" + re.escape(name) + r"\s*=\s*\{")
+    for _match, open_idx, close in iter_direct_child_blocks(body, opener):
+        return body[open_idx : close + 1]
+    return ""
+
+
+def is_ai_only_block(body: str) -> bool:
+    """True when a decision or category body is gated on an unconditional `is_ai = yes`.
+
+    Accepts the body with or without its outer braces.
+    """
+    inner = flat_block_text(body)
+    return any(has_flat_is_ai(direct_child_block(inner, f)) for f in _AI_GATE_FIELDS)
+
+
+def ai_only_decision_categories(mod_path: str) -> Dict[str, str]:
+    """Decision categories no human player ever sees, mapped to their filename.
+
+    Every decision inside one inherits that: it needs no localisation and no
+    tooltip wrapper, because there is nobody to read either. The basename comes
+    back with the name so a finding can cite its source without a second walk
+    over the same directory.
+    """
+    root = Path(mod_path) / "common" / "decisions" / "categories"
+    names: Dict[str, str] = {}
+    for path in sorted(root.rglob("*.txt")):
+        try:
+            text = path.read_text(encoding="utf-8-sig", errors="replace")
+        except OSError:
+            continue
+        if "is_ai" not in text:
+            continue
+        text = strip_comments(text)
+        for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
+            body, _end = extract_block_from_text(text, match.end() - 1)
+            if body and is_ai_only_block(body):
+                names.setdefault(match.group(1), path.name)
+    return names
 
 
 class FileOpener:
@@ -1259,7 +1416,7 @@ def get_staged_files(
     # unless a cross-reference check needs to observe a deleted target.
     def _filter(names: list) -> list:
         paths = [
-            os.path.join(mod_path, f)
+            os.path.normpath(os.path.join(mod_path, f))
             for f in names
             if f and any(f.endswith(ext) for ext in extensions)
         ]

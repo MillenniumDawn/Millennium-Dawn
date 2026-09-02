@@ -188,6 +188,31 @@ In MD both signs appear intentionally:
 
 Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (in the HOI4 install). Mirror gotchas here as they come up.
 
+### `declare_war` — target-keyed only, and pre-war only
+
+`declare_war` weights the AI's desire to **open** a war on one target. Two consequences:
+
+- **There is no generic form.** It requires `id = TAG`; `target =` is not accepted, and `dont_declare_war` is not a token at all (absent from vanilla `_documentation.md`, which lists only `declare_war` and `dont_join_wars_with`). The targetless equivalent is `avoid_starting_wars`.
+- **`enable = { has_war_with = TARGET }` makes it a no-op** — you cannot declare war on a country you are already fighting. Gate on `has_wargoal_against = X` + `NOT = { has_war_with = X }` instead, as `MD_war_declaration_ai.txt` and `BOS_avoid_unready_war_with_cro` do.
+
+306 `TAG_cancel_war_TARGET` blocks carrying that no-op gate were deleted from 18 files and replaced by one mod-wide block in `MD_war_declaration_ai.txt`:
+
+```pdx
+MD_avoid_new_wars_when_outmatched = {
+	enable = {
+		has_war = yes
+		enemies_strength_ratio > 0.75
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = avoid_starting_wars value = -200 }
+}
+```
+
+Omitting `allowed` applies a strategy to every country (precedent: `save_pp_for_laws`, `AI_generic_office_construction`, `default_area_priority`). Do not re-add per-tag `*_cancel_war_*` blocks, and do not write a per-tag `TAG_avoid_starting_wars` on a plain `enemies_strength_ratio` gate — anything stricter than `> 0.75` is already covered by the mod-wide block and does nothing. A per-tag brake earns its place only on a gate the strength ratio cannot express, such as `BLR`/`SOV` firing on NATO/EU-aligned enemies at any strength.
+
+**Ratio direction differs between the two triggers.** `strength_ratio = { tag = X ratio < 1 }` means the scope country is weaker than X. `enemies_strength_ratio` rises as the scope country's enemies get stronger — MD's peace-deal triggers read `> 1.7` as losing and `> 2.0` as massively outgunned (`common/scripted_triggers/00_peace_deal_triggers.txt`).
+
 ### `MD_combat_ai_strategies.txt` — Production & Combat
 
 **Army production (3 tiers by factory count):**
@@ -317,8 +342,8 @@ stockpile adds a second +100% category-demand increase.
 
 **Notable diplomacy patterns:**
 
-- **Japan**: Most pacifist AI, `declare_war = -200` against 24 neighbors
-- **SOV**: `declare_war = -4000` against nations guaranteed by TUR/CHI
+- **Japan**: Most pacifist AI, `JAP_no_war_if_at_war` sets `declare_war = -200` against 30 neighbors
+- **SOV**: `SOV_cancel_war_chi_guaranteed` sets `declare_war = -4000` against nations guaranteed by TUR/CHI
 - **USA during War on Terror**: `pp_spend_priority` forces decision spending (decisions=250, all others=-9999)
 
 ## AI Strategy Plans (`common/ai_strategy_plans/`)
