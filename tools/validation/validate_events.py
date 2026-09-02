@@ -10,7 +10,7 @@ import re
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -855,17 +855,7 @@ class Validator(BaseValidator):
         self._probability_rolled_cache = ids
         return ids
 
-    def _get_fire_only_once_ids(self) -> set:
-        """Return IDs of events declared ``fire_only_once = yes``.
-
-        Lookup pass: must scan the full repo even in staged mode. Otherwise a
-        staged caller that fires an existing fire_only_once event whose
-        definition lives in an unstaged file drops out of the ID set, and the
-        real in-loop / multi-caller bug commits silently.
-        """
-        if self._fire_only_once_ids_cache is not None:
-            return self._fire_only_once_ids_cache
-
+    def _collect_event_ids_where(self, predicate: Callable[[dict], bool]) -> set:
         files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
         ids: set = set()
         for filepath in files:
@@ -882,10 +872,23 @@ class Validator(BaseValidator):
                 text,
                 lambda: _parse_event_metadata(text, basename),
             )
-            ids.update(ev["id"] for ev in file_meta if ev["fire_only_once"])
-
-        self._fire_only_once_ids_cache = ids
+            ids.update(ev["id"] for ev in file_meta if predicate(ev))
         return ids
+
+    def _get_fire_only_once_ids(self) -> set:
+        """Return IDs of events declared ``fire_only_once = yes``.
+
+        Lookup pass: must scan the full repo even in staged mode. Otherwise a
+        staged caller that fires an existing fire_only_once event whose
+        definition lives in an unstaged file drops out of the ID set, and the
+        real in-loop / multi-caller bug commits silently.
+        """
+        if self._fire_only_once_ids_cache is not None:
+            return self._fire_only_once_ids_cache
+        self._fire_only_once_ids_cache = self._collect_event_ids_where(
+            lambda ev: bool(ev["fire_only_once"])
+        )
+        return self._fire_only_once_ids_cache
 
     def _get_major_event_ids(self) -> set:
         """Return IDs of events declared ``major = yes``.
@@ -897,27 +900,10 @@ class Validator(BaseValidator):
         """
         if self._major_event_ids_cache is not None:
             return self._major_event_ids_cache
-
-        files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
-        ids: set = set()
-        for filepath in files:
-            text = FileOpener.open_text_file(
-                filepath, lowercase=False, strip_comments_flag=True
-            )
-            if not text:
-                continue
-            basename = os.path.basename(filepath)
-            file_meta, _ = disk_cache.per_file_cached_by_content(
-                self.mod_path,
-                "events.metadata",
-                filepath,
-                text,
-                lambda: _parse_event_metadata(text, basename),
-            )
-            ids.update(ev["id"] for ev in file_meta if ev["is_major"] and ev["id"])
-
-        self._major_event_ids_cache = ids
-        return ids
+        self._major_event_ids_cache = self._collect_event_ids_where(
+            lambda ev: bool(ev["is_major"] and ev["id"])
+        )
+        return self._major_event_ids_cache
 
     def validate_unsupported_title_desc(self):
         self._log_section(
