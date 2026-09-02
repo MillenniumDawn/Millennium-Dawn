@@ -37,6 +37,7 @@ SECTIONS = (
     "graph",
     "plans",
     "rewards",
+    "mechanics",
     "government",
 )
 
@@ -68,6 +69,19 @@ _LOC_KEY = re.compile(r'^\s*([A-Za-z_][A-Za-z0-9_]*):\s*\d*\s*"(.*)"\s*$')
 _YEAR = re.compile(r"\b(19|20)\d{2}\b")
 _HIGHLIGHT = re.compile(r"§.*?§!")
 _LOC_SCOPE = re.compile(r"\[[^\]]*\]")
+_TOP_BLOCK = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.M)
+_STATE_BLOCK = re.compile(r"^[ \t]*\d+\s*=\s*\{", re.M)
+_IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_REMOVE_IDEA = re.compile(r"remove_ideas?\s*=\s*(\{[^{}]*\}|[A-Za-z_][A-Za-z0-9_]*)")
+_REMOVE_DYNAMIC = re.compile(
+    r"remove_dynamic_modifier\s*=\s*\{[^{}]*?modifier\s*=\s*([A-Za-z_][A-Za-z0-9_]*)"
+)
+_ADD_TO_VARIABLE = re.compile(
+    r"add_to_variable\s*=\s*\{\s*(?:var\s*=\s*)?([A-Za-z_][A-Za-z0-9_.:^]*)"
+)
+_MODIFIER_NAME = re.compile(r"modifier\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
+_AI_BLOCKED = re.compile(r"is_ai\s*=\s*no\b")
+_IDEA_KEYWORDS = ("idea", "ideas")
 
 # Three-valued logic: None means "depends on something this tool cannot model".
 TRUE, FALSE, UNKNOWN = True, False, None
@@ -304,6 +318,7 @@ class Focus:
     has_ai_will_do: bool = False
     modifiers: List[Modifier] = field(default_factory=list)
     dangers: List[str] = field(default_factory=list)
+    cures: List[str] = field(default_factory=list)
 
     @property
     def owner_tokens(self) -> Tuple[str, ...]:
@@ -360,6 +375,7 @@ def _build_focus(focus_id: str, kind: str, line: int, body: str, tag: str) -> Fo
             _read_ai_will_do(block, focus, tag)
         elif key.startswith("completion_reward") and block is not None:
             focus.dangers.extend(_scan_dangers(block))
+            focus.cures.extend(_scan_cures(block))
         elif key == "select_effect" and block is not None:
             focus.dangers.extend(_scan_dangers(block))
     return focus
@@ -412,6 +428,24 @@ def _scan_dangers(block: str) -> List[str]:
         if re.search(r"\b" + effect + r"\s*=", block):
             found.append(effect)
     return found
+
+
+def _scan_cures(block: str) -> List[str]:
+    """Names this effect block relieves: ideas, dynamic modifiers, variables."""
+    found: List[str] = []
+    for match in _REMOVE_IDEA.finditer(block):
+        raw = match.group(1)
+        if raw.startswith("{"):
+            found.extend(_idea_tokens(raw))
+        else:
+            found.append(raw)
+    found.extend(match.group(1) for match in _REMOVE_DYNAMIC.finditer(block))
+    found.extend(match.group(1) for match in _ADD_TO_VARIABLE.finditer(block))
+    return found
+
+
+def _idea_tokens(block: str) -> List[str]:
+    return [name for name in _IDENTIFIER.findall(block) if name not in _IDEA_KEYWORDS]
 
 
 def _number(raw: str, fallback: float) -> float:
@@ -727,6 +761,9 @@ def build_report(root: str, tag: str, limit: int) -> Dict:
         "graph": _graph_findings(focuses, by_id, weights, limit),
         "plans": _plan_findings(plans, by_id, limit),
         "rewards": _reward_findings(focuses, limit),
+        "mechanics": _mechanics_findings(
+            root, tag, focuses, by_id, states, triggers, limit
+        ),
         "government": _government_findings(root, tag),
     }
 
@@ -969,6 +1006,360 @@ def _reward_findings(focuses: Sequence[Focus], limit: int) -> List[str]:
         if focus.dangers
     ]
     return rows[:limit] if limit else rows
+
+
+# --------------------------------------------------------------------------
+# Country mechanics
+# --------------------------------------------------------------------------
+
+
+@dataclass
+class Burden:
+    name: str
+    kind: str
+
+
+@dataclass
+class Decision:
+    id: str
+    category: str
+    base: float
+    ai_blocked: bool
+    cures: Tuple[str, ...] = ()
+
+
+def country_scope(text: str) -> str:
+    """Blank every numeric state block, leaving country-scope statements.
+
+    Length and newlines are preserved, so offsets stay valid. Dated blocks keep
+    their contents — they are country scope too.
+    """
+    out = text
+    for match in _STATE_BLOCK.finditer(text):
+        close = find_matching_brace(text, match.end() - 1)
+        if close == -1:
+            continue
+        out = (
+            out[: match.start()] + " " * (close + 1 - match.start()) + out[close + 1 :]
+        )
+    return out
+
+
+def parse_burdens(root: str, tag: str) -> List[Burden]:
+    """Ideas, dynamic modifiers and negative variables the country starts with."""
+    burdens: List[Burden] = []
+    seen = set()
+
+    def record(name: str, kind: str) -> None:
+        if name and name not in seen:
+            seen.add(name)
+            burdens.append(Burden(name=name, kind=kind))
+
+    for path in iter_txt_files(os.path.join(root, "history", "countries")):
+        if not os.path.basename(path).startswith(tag + " "):
+            continue
+        for key, scalar, block in iter_statements(country_scope(read_script(path))):
+            if key in ("add_ideas", "add_timed_idea"):
+                names = _idea_tokens(block) if block is not None else [scalar]
+                for name in names:
+                    if name and _is_country_idea(name, tag):
+                        record(name, "idea")
+            elif key == "add_dynamic_modifier" and block is not None:
+                match = _MODIFIER_NAME.search(block)
+                if match:
+                    record(match.group(1), "dynamic modifier")
+            elif key == "set_variable" and block is not None:
+                name, value = _variable_seed(block)
+                if value is not None and value < 0:
+                    record(name, "negative variable")
+        break
+    return burdens
+
+
+def _is_country_idea(name: str, tag: str) -> bool:
+    return name.startswith(tag + "_") or name.endswith("_" + tag)
+
+
+def _variable_seed(block: str) -> Tuple[str, Optional[float]]:
+    name, raw = "", None
+    for key, scalar, nested in iter_statements(block):
+        if nested is not None or scalar is None:
+            continue
+        if key == "var":
+            name = scalar
+        elif key == "value":
+            raw = scalar
+        elif not name:
+            name, raw = key, scalar
+    if raw is None:
+        return name, None
+    try:
+        return name, float(raw)
+    except ValueError:
+        return name, None
+
+
+def parse_decision_categories(root: str, tag: str) -> Dict[str, Dict[str, str]]:
+    """Category id -> {gui, gates} for every decision category owned by *tag*.
+
+    `gates` is the category's own visibility text: a category gated on an idea
+    or modifier is that burden's mechanic, whatever its individual decisions do.
+    """
+    categories: Dict[str, Dict[str, str]] = {}
+    owner = re.compile(r"(original_tag|tag)\s*=\s*" + tag + r"\b")
+    folder = os.path.join(root, "common", "decisions", "categories")
+    for path in iter_txt_files(folder):
+        raw = read_raw(path)
+        if tag not in raw:
+            continue
+        text = blank_quoted_strings(strip_comments(raw))
+        for match in _TOP_BLOCK.finditer(text):
+            close = find_matching_brace(text, match.end() - 1)
+            if close == -1:
+                continue
+            body = text[match.end() : close]
+            allowed, gui, gates = "", "", []
+            for key, scalar, block in iter_statements(body):
+                if key == "allowed" and block is not None:
+                    allowed = block
+                elif key == "scripted_gui" and scalar:
+                    gui = scalar
+                elif key in ("visible", "available") and block is not None:
+                    gates.append(block)
+            if owner.search(allowed):
+                categories[match.group(1)] = {"gui": gui, "gates": " ".join(gates)}
+    return categories
+
+
+def parse_decisions(root: str, tag: str, categories: Sequence[str]) -> List[Decision]:
+    decisions: List[Decision] = []
+    wanted = set(categories)
+    if not wanted:
+        return decisions
+    for path in iter_txt_files(os.path.join(root, "common", "decisions")):
+        raw = read_raw(path)
+        if not any(name in raw for name in wanted):
+            continue
+        text = blank_quoted_strings(strip_comments(raw))
+        for match in _TOP_BLOCK.finditer(text):
+            if match.group(1) not in wanted:
+                continue
+            close = find_matching_brace(text, match.end() - 1)
+            if close == -1:
+                continue
+            for key, _, block in iter_statements(text[match.end() : close]):
+                if block is not None:
+                    decisions.append(_build_decision(key, match.group(1), block))
+    return decisions
+
+
+def _build_decision(decision_id: str, category: str, block: str) -> Decision:
+    base = 1.0
+    blocked = False
+    for key, _, nested in iter_statements(block):
+        if nested is None:
+            continue
+        if key == "ai_will_do":
+            base = _ai_will_do_base(nested)
+        elif key in ("available", "visible", "allowed"):
+            blocked = blocked or _AI_BLOCKED.search(nested) is not None
+    return Decision(
+        id=decision_id,
+        category=category,
+        base=base,
+        ai_blocked=blocked,
+        cures=tuple(_scan_cures(block)),
+    )
+
+
+def _ai_will_do_base(block: str) -> float:
+    base = 1.0
+    for key, scalar, nested in iter_statements(block):
+        if key in ("base", "factor") and nested is None and scalar:
+            base = _number(scalar, base)
+    return base
+
+
+def parse_guis(root: str, tag: str) -> List[Tuple[str, str, str]]:
+    """(gui id, context_type, body) for every scripted GUI owned by *tag*."""
+    results: List[Tuple[str, str, str]] = []
+    folder = os.path.join(root, "common", "scripted_guis")
+    for path in iter_txt_files(folder):
+        named = tag in os.path.basename(path)
+        raw = read_raw(path)
+        if not named and tag + "_" not in raw:
+            continue
+        text = blank_quoted_strings(strip_comments(raw))
+        for key, _, block in iter_statements(text):
+            if key != "scripted_gui" or block is None:
+                continue
+            for gui_id, _, body in iter_statements(block):
+                if body is None or not (named or gui_id.startswith(tag + "_")):
+                    continue
+                context = next(
+                    (
+                        scalar
+                        for inner, scalar, _ in iter_statements(body)
+                        if inner == "context_type" and scalar
+                    ),
+                    "",
+                )
+                results.append((gui_id, context, body))
+    return results
+
+
+def live_focuses(
+    focuses: Sequence[Focus],
+    by_id: Dict[str, Focus],
+    state: State,
+    triggers: Dict[str, Expr],
+) -> set:
+    """Focus ids the AI can both weigh above zero and actually reach."""
+    alive = {focus.id: focus_weight(focus, state, triggers)[0] > 0 for focus in focuses}
+    orphans = unreachable_focuses(alive, by_id)
+    return {
+        focus_id
+        for focus_id, is_alive in alive.items()
+        if is_alive and focus_id not in orphans
+    }
+
+
+def _has_priority_boost(focus: Focus) -> bool:
+    if focus.base > 1:
+        return True
+    return any(
+        not modifier.path_related
+        and (
+            (modifier.op == "factor" and modifier.value > 1)
+            or (modifier.op == "add" and modifier.value > 0)
+        )
+        for modifier in focus.modifiers
+    )
+
+
+def _mechanics_findings(
+    root: str,
+    tag: str,
+    focuses: Sequence[Focus],
+    by_id: Dict[str, Focus],
+    states: Sequence[State],
+    triggers: Dict[str, Expr],
+    limit: int,
+) -> Dict:
+    burdens = parse_burdens(root, tag)
+    categories = parse_decision_categories(root, tag)
+    decisions = parse_decisions(root, tag, sorted(categories))
+    guis = parse_guis(root, tag)
+    backed = {entry["gui"] for entry in categories.values() if entry["gui"]}
+    names = {burden.name for burden in burdens}
+
+    focus_cures: Dict[str, List[str]] = {}
+    for focus in focuses:
+        for cure in focus.cures:
+            if cure in names:
+                focus_cures.setdefault(cure, []).append(focus.id)
+    decision_cures: Dict[str, List[Decision]] = {}
+    for decision in decisions:
+        for cure in decision.cures:
+            if cure in names:
+                decision_cures.setdefault(cure, []).append(decision)
+    category_cover: Dict[str, List[str]] = {}
+    for category, entry in categories.items():
+        for name in names:
+            if name in entry["gates"]:
+                category_cover.setdefault(name, []).append(category)
+
+    issues: List[str] = []
+    rows: List[Dict] = []
+    unrelieved: List[str] = []
+    reachable = {
+        state.option
+        + str(state.historical): live_focuses(focuses, by_id, state, triggers)
+        for state in states
+    }
+    for burden in burdens:
+        cures = focus_cures.get(burden.name, [])
+        cure_decisions = decision_cures.get(burden.name, [])
+        cover = sorted(category_cover.get(burden.name, []))
+        rows.append(
+            {
+                "name": burden.name,
+                "kind": burden.kind,
+                "focus_cures": cures,
+                "decision_cures": [decision.id for decision in cure_decisions],
+                "categories": cover,
+            }
+        )
+        if not cures and not cure_decisions:
+            if not cover:
+                unrelieved.append(burden.name)
+            continue
+        if cure_decisions:
+            continue
+        for state in states:
+            live = reachable[state.option + str(state.historical)]
+            if not any(focus_id in live for focus_id in cures):
+                issues.append(
+                    "{}: every cure is dead under {} / historical {}".format(
+                        burden.name,
+                        state.option,
+                        "on" if state.historical else "off",
+                    )
+                )
+
+    for focus in focuses:
+        cured = sorted({cure for cure in focus.cures if cure in names})
+        if cured and not _has_priority_boost(focus):
+            issues.append("{} cures {} at flat base".format(focus.id, ", ".join(cured)))
+    for cure, cure_decisions in sorted(decision_cures.items()):
+        for decision in cure_decisions:
+            if decision.base <= 0 or decision.ai_blocked:
+                issues.append(
+                    "{} cures {} but the AI can never take it".format(decision.id, cure)
+                )
+
+    gui_rows = []
+    for gui_id, context, body in guis:
+        touched = sorted(name for name in names if name in body)
+        backing = (
+            "decision-backed"
+            if gui_id in backed or context == "decision_category"
+            else "player-only"
+        )
+        gui_rows.append(
+            {
+                "id": gui_id,
+                "context": context or "-",
+                "backing": backing,
+                "touches": touched,
+            }
+        )
+        if backing == "player-only" and touched:
+            uncovered = [
+                name
+                for name in touched
+                if name not in category_cover
+                and not any(name in decision.cures for decision in decisions)
+            ]
+            if uncovered:
+                issues.append(
+                    "{} is player-only and no decision relieves {}".format(
+                        gui_id, ", ".join(uncovered)
+                    )
+                )
+
+    return {
+        "burdens": rows[:limit] if limit else rows,
+        "burden_count": len(rows),
+        "decisions": len(decisions),
+        "categories": sorted(categories),
+        "guis": gui_rows[:limit] if limit else gui_rows,
+        "gui_count": len(gui_rows),
+        "unrelieved": unrelieved[:limit] if limit else unrelieved,
+        "unrelieved_count": len(unrelieved),
+        "issues": issues[:limit] if limit else issues,
+        "issue_count": len(issues),
+    }
 
 
 # --------------------------------------------------------------------------
@@ -1508,6 +1899,43 @@ def render(report: Dict, sections: Sequence[str]) -> str:
     if "rewards" in sections:
         out.append("DANGER REWARDS  {}".format(len(report["rewards"])))
         out.extend("  " + row for row in report["rewards"])
+        out.append("")
+
+    if "mechanics" in sections:
+        mechanics = report["mechanics"]
+        out.append(
+            "MECHANICS  {} burdens, {} decisions in {} categories, {} GUIs".format(
+                mechanics["burden_count"],
+                mechanics["decisions"],
+                len(mechanics["categories"]),
+                mechanics["gui_count"],
+            )
+        )
+        for row in mechanics["burdens"]:
+            out.append(
+                "  {:<19} {:<38} focus {:>2} / decision {:>2} {}".format(
+                    row["kind"],
+                    row["name"],
+                    len(row["focus_cures"]),
+                    len(row["decision_cures"]),
+                    ", ".join(row["categories"]),
+                ).rstrip()
+            )
+        for row in mechanics["guis"]:
+            out.append(
+                "  gui  {:<34} {:<20} {}".format(
+                    row["id"], row["context"], row["backing"]
+                )
+            )
+        if mechanics["unrelieved"]:
+            out.append(
+                "  nothing relieves ({}, judge the sign yourself): {}".format(
+                    mechanics["unrelieved_count"], ", ".join(mechanics["unrelieved"])
+                )
+            )
+        out.extend("  ! " + issue for issue in mechanics["issues"])
+        if not mechanics["issues"]:
+            out.append("  clean")
         out.append("")
 
     if "government" in sections:
