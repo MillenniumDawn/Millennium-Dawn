@@ -9,7 +9,10 @@ from validate_ideas import (
     _IDEA_REF_BLOCK,
     _IDEA_REF_GENEROUS,
     _WORD_TOKEN,
+    SpriteSet,
+    Validator,
     _idea_categories_frame_count,
+    _is_placeholder_texture,
     _missing_icon_message,
     _parse_ideas_from_text,
 )
@@ -51,7 +54,10 @@ def test_unused_ref_scan_ignores_unrelated_keys():
     assert "DEAD_idea" not in refs
 
 
-SPRITES = frozenset({"GFX_idea_known_pic", "GFX_idea_AUTO", "GFX_idea_shared_key"})
+SPRITES = SpriteSet.build(
+    {"GFX_idea_known_pic", "GFX_idea_AUTO", "GFX_idea_shared_key", "GFX_idea_CasedPic"},
+    {"GFX_idea_wip_pic"},
+)
 HIDDEN = frozenset({"hidden_ideas"})
 
 
@@ -67,6 +73,124 @@ def test_icon_explicit_picture_missing():
     assert msg == "X: picture = nope -> GFX_idea_nope (undefined)"
 
 
+def test_icon_placeholder_art_is_a_finding():
+    msg = _missing_icon_message("X", "country", None, "wip_pic", SPRITES, HIDDEN)
+    assert msg == "X: picture = wip_pic -> GFX_idea_wip_pic (placeholder art)"
+
+
+def test_icon_case_mismatch_names_the_defined_sprite():
+    msg = _missing_icon_message("X", "country", None, "casedpic", SPRITES, HIDDEN)
+    assert msg == (
+        "X: picture = casedpic -> GFX_idea_casedpic "
+        "(case mismatch, defined as GFX_idea_CasedPic)"
+    )
+
+
+def test_icon_case_mismatch_beats_placeholder_lookup():
+    # A placeholder sprite still anchors the case-mismatch report.
+    sprites = SpriteSet.build(set(), {"GFX_idea_WipCased"})
+    msg = _missing_icon_message("X", "country", None, "wipcased", sprites, HIDDEN)
+    assert msg == (
+        "X: picture = wipcased -> GFX_idea_wipcased "
+        "(case mismatch, defined as GFX_idea_WipCased)"
+    )
+
+
+def test_placeholder_texture_detection():
+    assert _is_placeholder_texture("gfx/interface/ideas/WIP_idea.dds")
+    assert _is_placeholder_texture("gfx\\interface\\ideas\\wip_idea.dds")
+    assert not _is_placeholder_texture("gfx/interface/ideas/politics/large_power.dds")
+
+
+def test_sprite_index_reports_placeholder(tmp_path, monkeypatch):
+    interface = tmp_path / "interface"
+    interface.mkdir()
+    (interface / "ideas.gfx").write_text(
+        'spriteType = {\n name = "GFX_idea_todo"\n'
+        ' texturefile = "gfx/interface/ideas/WIP_idea.dds"\n}\n',
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("validate_gfx_references._vanilla_gfx_files", lambda: [])
+    monkeypatch.setattr(
+        "validate_gfx_references._load_vanilla_sprite_manifest", frozenset
+    )
+    sprites = Validator(
+        str(tmp_path), use_colors=False, workers=1
+    )._build_idea_sprite_set()
+
+    assert sprites.placeholders == frozenset({"GFX_idea_todo"})
+    assert "GFX_idea_todo" not in sprites.defined
+    assert (
+        _missing_icon_message("TEST_idea", "country", None, "todo", sprites, HIDDEN)
+        == "TEST_idea: picture = todo -> GFX_idea_todo (placeholder art)"
+    )
+
+
+def test_placeholder_shadowing_a_vanilla_name_still_reports(monkeypatch, tmp_path):
+    # The mod definition wins at load time, so a vanilla sprite of the same name
+    # does not rescue an idea pointed at placeholder art.
+    interface = tmp_path / "interface"
+    interface.mkdir()
+    (interface / "ideas.gfx").write_text(
+        'spriteType = {\n name = "GFX_idea_shadowed"\n'
+        ' texturefile = "gfx/interface/ideas/WIP_idea.dds"\n}\n',
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("validate_gfx_references._vanilla_gfx_files", lambda: [])
+    monkeypatch.setattr(
+        "validate_gfx_references._load_vanilla_sprite_manifest",
+        lambda: frozenset({"GFX_idea_shadowed"}),
+    )
+    sprites = Validator(
+        str(tmp_path), use_colors=False, workers=1
+    )._build_idea_sprite_set()
+
+    assert (
+        _missing_icon_message("TEST_idea", "country", None, "shadowed", sprites, HIDDEN)
+        == "TEST_idea: picture = shadowed -> GFX_idea_shadowed (placeholder art)"
+    )
+
+
+def test_icon_sprite_index_resolves_explicit_picture(tmp_path, monkeypatch):
+    interface = tmp_path / "interface"
+    interface.mkdir()
+    (interface / "ideas.gfx").write_text(
+        'spriteType = { name = "GFX_idea_international_treaty2" }',
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("validate_gfx_references._vanilla_gfx_files", lambda: [])
+    sprites = Validator(
+        str(tmp_path), use_colors=False, workers=1
+    )._build_idea_sprite_set()
+
+    assert (
+        _missing_icon_message(
+            "TEST_idea", "country", None, "international_treaty2", sprites, HIDDEN
+        )
+        is None
+    )
+
+
+def test_icon_sprite_index_uses_vanilla_manifest(tmp_path, monkeypatch):
+    monkeypatch.setattr("validate_gfx_references._vanilla_gfx_files", lambda: [])
+    monkeypatch.setattr(
+        "validate_gfx_references._load_vanilla_sprite_manifest",
+        lambda: frozenset({"GFX_idea_vanilla"}),
+    )
+
+    sprites = Validator(
+        str(tmp_path), use_colors=False, workers=1
+    )._build_idea_sprite_set()
+
+    assert (
+        _missing_icon_message("TEST_idea", "country", None, "vanilla", sprites, HIDDEN)
+        is None
+    )
+
+
 def test_icon_no_picture_auto_registered():
     # GFX_idea_AUTO exists -> no finding.
     assert _missing_icon_message("AUTO", "country", None, None, SPRITES, HIDDEN) is None
@@ -74,7 +198,7 @@ def test_icon_no_picture_auto_registered():
 
 def test_icon_no_picture_missing_auto():
     msg = _missing_icon_message("LONELY", "country", None, None, SPRITES, HIDDEN)
-    assert msg == "LONELY: no picture and no auto-icon GFX_idea_LONELY"
+    assert msg == "LONELY: auto-icon GFX_idea_LONELY (undefined)"
 
 
 def test_icon_no_picture_name_override_sprite():
@@ -99,6 +223,23 @@ def test_icon_character_token_skipped():
 def test_icon_dynamic_picture_skipped():
     assert (
         _missing_icon_message("X", "country", None, "[GetIcon]", SPRITES, HIDDEN)
+        is None
+    )
+
+
+def test_parser_preserves_dynamic_picture():
+    defined, _ = _parse_ideas_from_text("""ideas = {
+ country = {
+  DYNAMIC = {
+   picture = [GetIcon]
+  }
+ }
+}""")
+    cat, name_override, picture = defined["DYNAMIC"]
+
+    assert picture == "[GetIcon]"
+    assert (
+        _missing_icon_message("DYNAMIC", cat, name_override, picture, SPRITES, HIDDEN)
         is None
     )
 

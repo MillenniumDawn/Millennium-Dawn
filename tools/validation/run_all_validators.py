@@ -36,7 +36,6 @@ _AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
 # these surface as warnings without gating. --missing-loc is intentionally left
 # off — its ~7.8k backlog would drown the report; run it on demand instead.
 _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
-    "ideas": ["--missing-icons"],
     "focus-tree": ["--missing-icons"],
 }
 
@@ -100,7 +99,7 @@ def launch_validator(
     # previously DEVNULL made crashes undiagnosable from the suite output.
     stderr_path = os.path.join(output_dir, f"{name}.stderr.log")
     try:
-        stderr_fh = open(stderr_path, "w", encoding="utf-8")
+        stderr_fh = open(stderr_path, "w", encoding="utf-8", newline="")
     except OSError:
         raise
     try:
@@ -479,7 +478,7 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
                     else f"{args.output}.json"
                 )
             try:
-                with open(json_path, "w", encoding="utf-8") as f:
+                with open(json_path, "w", encoding="utf-8", newline="") as f:
                     f.write(json_output)
             except OSError:
                 raise
@@ -489,7 +488,7 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     if args.format in ("text", "both"):
         if args.output:
             try:
-                with open(args.output, "w", encoding="utf-8") as f:
+                with open(args.output, "w", encoding="utf-8", newline="") as f:
                     f.write(report)
             except OSError:
                 raise

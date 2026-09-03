@@ -28,7 +28,7 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 - `tools/validation/validator_common.py` — `BaseValidator`, `_pool_map`, staged-file support.
 - `pyproject.toml` — single source for ruff (lint), pytest (testpaths), black, isort config.
 - `.pre-commit-config.yaml` — which scripts are hooks vs `stages: [manual]` vs unwired; the `ruff` hook and the `tools-pytest` pre-push hook.
-- `.github/workflows/tools-validation.yml` — the `ruff-lint` job, the pytest job (runs all four test dirs), and `validate_tools.py --strict`.
+- `.github/workflows/tools-validation.yml` — the `checks` matrix (`lint`, `unit`, `staged` entries) and `validate_tools.py --strict`.
 - `.github/workflows/coding-pipeline.yml` — what CI runs unconditionally vs locally-only.
 
 ## Workflow

@@ -61,6 +61,66 @@ _NAME_LINE_RE = re.compile(r"\bname\s*=\s*(\S+)")
 _EFFECT_TOOLTIP_START = re.compile(r"\beffect_tooltip\s*=\s*\{")
 _PP_MALUS_RE = re.compile(r"\badd_political_power\s*=\s*(-\d+(?:\.\d+)?)\b")
 
+# Focuses whose PP malus is the intended mechanic rather than an oversight: the
+# Italian technocrat policy tree charges PP to enact a policy and gates the
+# focus on having it banked (available = { ... has_political_power > N }).
+_PP_MALUS_EXEMPT_FOCUS_IDS = frozenset(
+    {
+        "ITA_a_devout_state",
+        "ITA_a_secular_state",
+        "ITA_abolish_perfect_bicameralism",
+        "ITA_abolish_school_religion_teaching",
+        "ITA_abolish_the_provinces",
+        "ITA_allow_euthanasia",
+        "ITA_allow_same_sex_marriage",
+        "ITA_anti_corruption_measures",
+        "ITA_build_waste_incinerators",
+        "ITA_carbon_tax",
+        "ITA_cash_bonus_to_18_year_olds",
+        "ITA_classical_education",
+        "ITA_constitutionalise_secularism",
+        "ITA_constitutionalise_social_rights",
+        "ITA_defund_school_laboratories",
+        "ITA_economic_support_for_the_church",
+        "ITA_encourage_immigration",
+        "ITA_european_speech",
+        "ITA_fire_excessive_government_employees",
+        "ITA_impose_better_checks_on_magistrates",
+        "ITA_increase_competition",
+        "ITA_increase_funding_for_research",
+        "ITA_increase_pension_age_requirements",
+        "ITA_introduce_meritocracy",
+        "ITA_italian_federation",
+        "ITA_ius_scholae",
+        "ITA_ius_soli",
+        "ITA_legalize_all_drugs",
+        "ITA_legalize_light_drugs",
+        "ITA_let_companies_fail",
+        "ITA_let_salaries_decrease",
+        "ITA_limit_8xmille",
+        "ITA_merge_small_municipalities",
+        "ITA_modern_education",
+        "ITA_modify_article_18",
+        "ITA_privatize_museum_system",
+        "ITA_privatize_water_distribution",
+        "ITA_protect_migrant_rights",
+        "ITA_protect_prisoners_rights",
+        "ITA_recalculate_baby_pensions",
+        "ITA_reduce_expenses",
+        "ITA_reduce_judgement_times",
+        "ITA_reopen_brothels",
+        "ITA_safeguard_teachers_privileges",
+        "ITA_school_mass_hiring",
+        "ITA_sell_government_shares_in_companies",
+        "ITA_shift_taxation_from_income_to_property",
+        "ITA_simplify_legal_code",
+        "ITA_stimulate_growth",
+        "ITA_stop_building_abuse",
+        "ITA_tax_church_property",
+        "ITA_with_europe",
+    }
+)
+
 # ai_will_do staffing/bankruptcy guards (issue #2233 + the AGENTS.md
 # convention). Building type -> the scripted trigger
 # (common/scripted_triggers/00_economic_triggers.txt) that an ai_will_do
@@ -1944,7 +2004,8 @@ class Validator(BaseValidator):
         balance choice needing per-site judgment, so this reports at WARNING
         only. Scope is the literal-negative-number pattern: variable forms
         and timed lose-PP ideas are not detected. effect_tooltip previews of
-        a PP change applied elsewhere (e.g. via select_effect) are skipped.
+        a PP change applied elsewhere (e.g. via select_effect) are skipped, as
+        are the focuses in _PP_MALUS_EXEMPT_FOCUS_IDS.
         """
         self._log_section("Checking for PP malus in focus completion_reward...")
 
@@ -1956,6 +2017,8 @@ class Validator(BaseValidator):
         results = []
         for sub in data_lists:
             for focus_id, fp, line in sub:
+                if focus_id in _PP_MALUS_EXEMPT_FOCUS_IDS:
+                    continue
                 if not self._is_reportable(fp):
                     continue
                 rel = os.path.relpath(fp, self.mod_path)

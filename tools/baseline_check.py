@@ -97,7 +97,7 @@ def _write_step_summary(lines: Sequence[str]) -> None:
     if not path:
         return
     try:
-        with open(path, "a", encoding="utf-8") as stream:
+        with open(path, "a", encoding="utf-8", newline="") as stream:
             stream.write("\n".join(lines) + "\n")
     except OSError:
         # The step summary is a nicety; the exit code and stdout are the

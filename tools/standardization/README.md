@@ -130,6 +130,14 @@ All standardizers support these command-line options:
 
 ## Code Standards Enforced
 
+### All File Types
+
+Every line written by a standardizer passes through `normalize_spacing`
+(`tools/shared_utils.py`), which puts single spaces around `{`, `}` and `=`, so
+`NOT = {country_exists = ENG}` comes out as `NOT = { country_exists = ENG }`.
+Indentation, `"..."` string interiors and `#` comments are left byte-exact.
+`tools/linting/fix_styling.py` uses the same helper.
+
 ### Focus Trees
 
 - Use `relative_position_id` for positioning

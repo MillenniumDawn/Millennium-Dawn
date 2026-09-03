@@ -36,6 +36,13 @@ TAG_modifier_name = {
 
 Each line maps a game modifier field to a variable name. The variable defaults to 0 and can be changed via `add_to_variable` in focus trees, decisions, or events.
 
+#### Attach Scope Decides Everything
+
+A dynamic modifier can be attached to a country **or** to a state, and that choice governs two things that fail silently when they are wrong:
+
+1. **Variables resolve in the attach scope.** A state-attached modifier looks up a bare variable name on the *state*; a country-attached one looks it up on the *country*. To read a country variable from a state-attached modifier, prefix it with the tag: `local_building_slots_factor = SPR.SPR_canaries_local^0` (`99_SPR_dynamic_modifiers.txt:19`). Otherwise write the variable inside the state block that owns the modifier (`common/decisions/05_GRE_decisions.txt:1173`).
+2. **Country-category modifier fields do nothing on a state-attached modifier.** Check the field's category in `common/modifier_definitions/` or `resources/documentation/modifiers_documentation.md`. When a region needs both kinds, split it into a state modifier and a country twin, as `GRE_archipelagos_defense_plan` / `GRE_archipelagos_defense_plan_country` do (`99_GRE_dynamic_modifiers.txt:109-129`).
+
 ### Step 2: Attach the Modifier to a Country
 
 Edit the country history file in `history/countries/`:

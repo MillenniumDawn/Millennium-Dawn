@@ -36,6 +36,10 @@ Default to no comments. Add one only when the WHY is non-obvious: a hidden const
 
 Unset script variables already read as `0`. Never write `set_variable = { X = 0 }` to "initialise" a var — it is redundant. This includes dynamic-modifier vars: `add_dynamic_modifier` with its backing vars unset applies a 0-effect modifier until a focus/decision `add_to_variable`s them, so no zero-seed is needed in history. Only seed a variable when its start value is non-zero.
 
+## Relief effects must move penalty variables the right way
+
+Before writing an effect that "reduces" a penalty backed by a variable, check which direction the backing modifier reads. Cost-shaped keys (`receiving_investment_cost_modifier`, `consumer_goods_factor`, `*_cost_multiplier_modifier`) get _worse_ as the variable rises, so relief subtracts. Bonus-shaped keys (`return_on_investment_modifier`, `production_speed_buildings_factor`, `research_speed_factor`) get worse as it falls, so relief adds. Copying `add_to_variable = { X = 0.02 }` across a whole relief block silently deepens every cost-shaped penalty while the tooltip promises the opposite. Read the `common/dynamic_modifiers/` entry, then match the sign per variable.
+
 ## NOT blocks and "NOR"
 
 `NOT = { A B }` means NOT(A AND B) — "not both at once", almost never intended. For "neither" write separate `NOT` blocks or `NOT = { OR = { A B } }`. `NOR` is not a HOI4 trigger keyword. Bare multi-child NOTs are flagged (warning) by `validate_simplifications.py`.
@@ -91,6 +95,21 @@ Don't open a scope to check one trigger when a flat form exists — every `TAG =
 | `TAG = { exists = yes }`        | `country_exists = TAG` |
 | `TAG = { is_puppet = yes }`     | `is_puppet_of = TAG`   |
 | `TAG = { has_war_with = ROOT }` | `has_war_with = TAG`   |
+
+## send_equipment for country-to-country transfers
+
+Moving equipment from one country's stockpile to another is one effect, not two:
+
+```
+# Good
+send_equipment = { type = infantry_weapons_type amount = 2000 target = UKR }
+
+# Avoid — two effects, two amounts to keep in sync, and the donor can be driven negative
+add_equipment_to_stockpile = { type = infantry_weapons_type amount = -2000 }
+UKR = { add_equipment_to_stockpile = { type = infantry_weapons_type amount = 2000 producer = PREV } }
+```
+
+`send_equipment` transfers what the sender actually holds and carries the real producer with it, so no `producer =` override is needed. Keep `add_equipment_to_stockpile` only where nothing is being transferred: equipment bought with money, or a delivery that changes type or variant (donor gives generic airframes, recipient receives a named model).
 
 ## Case sensitivity in references
 

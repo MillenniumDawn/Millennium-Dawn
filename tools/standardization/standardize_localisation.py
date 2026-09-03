@@ -389,7 +389,8 @@ class LocalisationStandardizer:
         )
 
         try:
-            output_file.write_text(output, encoding="utf-8-sig")
+            with open(output_file, "w", encoding="utf-8-sig", newline="") as f:
+                f.write(output)
         except OSError as exc:
             log_message("ERROR", f"Cannot write {output_file}: {exc}")
             return False

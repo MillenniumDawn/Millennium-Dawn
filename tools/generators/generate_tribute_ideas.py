@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import codecs
 import os
 import shutil
 import sys
@@ -34,7 +33,7 @@ def main():
     country_tag_list.extend(pulldynamictags())
 
     print("Creating Tribute Idea List")
-    with open("tribute_ideas.txt", "w") as ffile:
+    with open("tribute_ideas.txt", "w", encoding="utf-8", newline="") as ffile:
         ffile.write("ideas = {\n\tcountry = {\n\t\t")
         for fname in country_tag_list:
             ffile.write(f"tribute_idea_{fname} = {{{newline}")
@@ -48,7 +47,9 @@ def main():
             ffile.write(f"targeted_modifier = {{{newline2}tag = {fname}{modifiers}}}")
             ffile.write("\n\t\t}\n\t\t")
         ffile.write("}\n}")
-    with codecs.open("MD_tribute_ideas_l_english.yml", "w", "utf-8-sig") as ffile:
+    with open(
+        "MD_tribute_ideas_l_english.yml", "w", encoding="utf-8-sig", newline=""
+    ) as ffile:
         ffile.write("l_english:\n")
         for fname in country_tag_list:
             ffile.write(

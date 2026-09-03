@@ -651,7 +651,7 @@ def write_flamegraph(root, out_path, repo_root):
         .replace("__REPO__", abs_root)
         .replace("__TOTAL__", str(root["total"]))
     )
-    with open(out_path, "w", encoding="utf-8") as fh:
+    with open(out_path, "w", encoding="utf-8", newline="") as fh:
         fh.write(html)
 
 
@@ -1303,7 +1303,7 @@ def main(argv=None):
         loc = index_effect_locations()
         root = build_call_tree(effects, events, loc)
         if args.tree:
-            with open(args.tree, "w", encoding="utf-8") as fh:
+            with open(args.tree, "w", encoding="utf-8", newline="") as fh:
                 json.dump(root, fh, indent=1)
             print(f"Wrote {args.tree}")
         if args.flamegraph:
@@ -1315,7 +1315,7 @@ def main(argv=None):
     report = build_report(tag_filter=args.tag)
 
     if args.json:
-        with open(args.json, "w", encoding="utf-8") as fh:
+        with open(args.json, "w", encoding="utf-8", newline="") as fh:
             json.dump(report, fh, indent=2)
         print(f"Wrote {args.json}")
 

@@ -316,13 +316,16 @@ def _is_parametric_modifier(name: str) -> bool:
 
 
 # Vanilla modifier reference doc. Each `## name` section is a concrete modifier;
-# each `## <span id="...">` section is a parametric family whose concrete
-# members are listed on a `**Modified types**:` line. The span anchor encodes
-# the placeholder position as `-word-`, so the template is recoverable.
+# each `## <span id="..."></span>name_<Placeholder>_rest` section is a parametric
+# family whose concrete members are listed on a `**Modified types**:` line. Read
+# the template off the heading text, not the span anchor: 1.19 dropped the
+# placeholder from the anchor id (`experience_gain__combat_factor`), which left
+# every family unexpanded and its members reported as unknown.
 _DOC_REL_PATH = os.path.join("resources", "documentation", "modifiers_documentation.md")
-_DOC_CONCRETE_RE = re.compile(r"^## ([a-z][a-z0-9_]*)\s*$", re.MULTILINE)
+_DOC_CONCRETE_RE = re.compile(r"^##[ \t]+([a-z][a-z0-9_]*)[ \t]*$", re.MULTILINE)
 _DOC_MODIFIED_TYPES_RE = re.compile(r"\*\*Modified types\*\*:\s*(.+)")
-_DOC_SPAN_PLACEHOLDER_RE = re.compile(r"-([a-z0-9]+)-")
+_DOC_FAMILY_RE = re.compile(r'^<span id="[^"]*"></span>(\S+)')
+_DOC_PLACEHOLDER_RE = re.compile(r"<([A-Za-z]+)>")
 
 # modifier_army_sub_unit_<Unit>_attack/defence_factor is only documented as a
 # concrete per-vanilla-unit listing (no <span> template — every vanilla sub-unit
@@ -334,17 +337,6 @@ _EXTRA_UNIT_TEMPLATES: Tuple[str, ...] = (
     "modifier_army_sub_unit_{}_defence_factor",
 )
 
-# Engine modifiers the doc dump predates. Each one is used by vanilla itself, so
-# it is known-good despite having no `## name` section to harvest.
-# local_resource_gain_efficiency_per_infrastructure: vanilla
-# common/buildings/00_buildings.txt (infrastructure state_modifiers) + TAOG focus
-# and dynamic-modifier files.
-_UNDOCUMENTED_VANILLA_MODIFIERS: FrozenSet[str] = frozenset(
-    {
-        "local_resource_gain_efficiency_per_infrastructure",
-    }
-)
-
 
 def _load_documented_modifiers(
     doc_path: str,
@@ -352,7 +344,7 @@ def _load_documented_modifiers(
     """Build a known-good set + parametric templates from the vanilla modifier documentation.
 
     Adds every concrete `## name` header, then expands each parametric family
-    (`## <span id="-building-_max_level_terrain_limit">…`) against its
+    (`## <span …></span>state_<Building>_max_level_terrain_limit`) against its
     documented **Modified types** list. Expansion is exact — only entities the
     doc actually lists pass — so it never whitelists a typo the way a broad
     `<anything>_factor` regex would.
@@ -371,17 +363,17 @@ def _load_documented_modifiers(
     names: Set[str] = set(_DOC_CONCRETE_RE.findall(text))
     templates_by_word: Dict[str, List[str]] = {}
 
-    for section in re.split(r"^## ", text, flags=re.MULTILINE):
-        m = re.match(r'<span id="([^"]+)">', section)
+    for section in re.split(r"^##[ \t]+", text, flags=re.MULTILINE):
+        m = _DOC_FAMILY_RE.match(section)
         if not m:
             continue
-        anchor = m.group(1)
-        template = re.sub(r"-[a-z0-9]+-", "{}", anchor)
-        if "{}" not in template:
+        # A prettier pass over the doc escapes the leading underscore as `\_`.
+        heading = m.group(1).replace("\\", "")
+        words = _DOC_PLACEHOLDER_RE.findall(heading)
+        if len(words) != 1:
             continue
-        words = _DOC_SPAN_PLACEHOLDER_RE.findall(anchor)
-        if len(words) == 1:
-            templates_by_word.setdefault(words[0], []).append(template)
+        template = _DOC_PLACEHOLDER_RE.sub("{}", heading)
+        templates_by_word.setdefault(words[0].lower(), []).append(template)
         types_line = _DOC_MODIFIED_TYPES_RE.search(section)
         if not types_line:
             continue
@@ -389,10 +381,7 @@ def _load_documented_modifiers(
             entity = entity.strip()
             if not _MODIFIER_NAME_RE.match(entity):
                 continue
-            try:
-                concrete = template.format(entity)
-            except (IndexError, KeyError):
-                continue
+            concrete = template.format(entity)
             if _MODIFIER_NAME_RE.match(concrete):
                 names.add(concrete)
 
@@ -610,7 +599,6 @@ class Validator(BaseValidator):
                 "resources/documentation is checked out (CI sparse-checkout)."
             )
         known_good |= documented
-        known_good |= _UNDOCUMENTED_VANILLA_MODIFIERS
 
         # Engine-generated <slot>_cost_factor modifiers from every idea slot.
         idea_tag_files = self._collect_files(

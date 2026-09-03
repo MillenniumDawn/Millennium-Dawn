@@ -308,7 +308,7 @@ def test_unkeyable_findings_count_as_new(tmp_path):
 def test_step_summary_write_failure_is_non_fatal(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(tmp_path / "summary.md"))
 
-    def broken_open(_path, _mode, encoding="utf-8"):
+    def broken_open(_path, _mode, **_kwargs):
         raise OSError("read-only filesystem")
 
     monkeypatch.setattr(builtins, "open", broken_open)

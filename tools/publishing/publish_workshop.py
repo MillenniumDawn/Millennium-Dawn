@@ -388,7 +388,8 @@ def patch_descriptor(
         )
         lines.append(updates[prefix])
 
-    descriptor.write_text("".join(lines), encoding="utf-8")
+    with open(descriptor, "w", encoding="utf-8", newline="") as f:
+        f.write("".join(lines))
 
     print(f"  Mod name:       {target_name}")
     print(f"  remote_file_id: {mod_id}")
@@ -484,7 +485,7 @@ def publish(
 
     # Preserve preamble context in the log file for post-mortem; each
     # attempt appends its own section below.
-    with log_path.open("w", encoding="utf-8") as log_f:
+    with log_path.open("w", encoding="utf-8", newline="") as log_f:
         for pline in preamble:
             log_f.write(pline + "\n")
 
@@ -525,7 +526,7 @@ def publish(
             bufsize=1,
         )
 
-        with log_path.open("a", encoding="utf-8") as log_f:
+        with log_path.open("a", encoding="utf-8", newline="") as log_f:
             log_f.write(f"\n=== Attempt {attempt}/{MAX_ATTEMPTS} ===\n")
             log_f.flush()
 

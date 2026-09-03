@@ -38,7 +38,7 @@ def find_vanilla_defines() -> Optional[str]:
 
 
 # Committed fallback for machines without the game (CI): NAMESPACE.NAME per
-# line, regenerated from a local install by gen_vanilla_defines_manifest.py.
+# line, regenerated from a local install by refresh_vanilla_data.py.
 _DEFINES_MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_defines.txt")
 
 
@@ -205,7 +205,7 @@ class Validator(BaseValidator):
                 "defines-setup",
                 "Cannot find vanilla 00_defines.lua and no vanilla_defines.txt "
                 "manifest exists. Set --vanilla-path, install HOI4 via Steam, "
-                "or run gen_vanilla_defines_manifest.py on a machine with the game.",
+                "or run refresh_vanilla_data.py on a machine with the game.",
             )
             return
 

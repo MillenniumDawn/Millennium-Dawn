@@ -75,7 +75,6 @@ FALSE_POSITIVE_NAMES = frozenset(
         "antarctica_is_life_support_slot_selected",
         "antarctica_is_fuel_storage_slot_selected",
         "antarctica_is_laboratory_slot_selected",
-        "antarctica_dynamic_station_matches_selected_filter",
         # 00_budget_effects.txt
         "disable_debt_rate_payments",
         "enable_debt_rate_payments",

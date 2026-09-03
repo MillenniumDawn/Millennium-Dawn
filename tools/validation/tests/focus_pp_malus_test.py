@@ -6,7 +6,16 @@ change applied elsewhere) and outside completion_reward (select_effect,
 bypass) are not.
 """
 
-from validate_focus_tree import Validator, _extract_pp_malus
+import re
+from pathlib import Path
+
+from validate_focus_tree import (
+    _PP_MALUS_EXEMPT_FOCUS_IDS,
+    Validator,
+    _extract_pp_malus,
+)
+
+_MOD_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _write_focus_file(tmp_path, content):
@@ -75,3 +84,42 @@ def test_validator_reports_pp_malus_as_warning_not_error(tmp_path):
     v.validate_pp_malus_in_rewards()
     assert v.warnings_found == 1
     assert v.errors_found == 0
+
+
+def test_exempt_focus_id_is_not_reported(tmp_path):
+    exempt = sorted(_PP_MALUS_EXEMPT_FOCUS_IDS)[0]
+    content = FOCUS_TEMPLATE.format(
+        reward="add_political_power = -100", extra=""
+    ).replace("TAG_focus_a", exempt)
+    _write_focus_file(tmp_path, content)
+    v = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_pp_malus_in_rewards()
+    assert v.warnings_found == 0
+    assert v.errors_found == 0
+
+
+def _focus_ids_with_pp_malus():
+    """Focus ids in the real tree that still carry a literal negative
+    add_political_power, found by walking back to the nearest preceding id."""
+    id_or_malus = re.compile(
+        r"^\s*(?:id\s*=\s*(\S+)|(add_political_power\s*=\s*-\d))", re.MULTILINE
+    )
+    found = set()
+    for path in sorted((_MOD_ROOT / "common" / "national_focus").glob("*.txt")):
+        current = None
+        for m in id_or_malus.finditer(
+            path.read_text(encoding="utf-8-sig", errors="replace")
+        ):
+            if m.group(1):
+                current = m.group(1)
+            elif current:
+                found.add(current)
+    return found
+
+
+def test_pp_malus_exemptions_are_still_live():
+    stale = sorted(_PP_MALUS_EXEMPT_FOCUS_IDS - _focus_ids_with_pp_malus())
+    assert not stale, (
+        "_PP_MALUS_EXEMPT_FOCUS_IDS names focuses that no longer apply a PP "
+        f"malus: {stale}. Remove them from the exemption set."
+    )

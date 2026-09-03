@@ -168,15 +168,11 @@ antarctica_can_install_module_no_duplicate_laboratories = {
 		tooltip = ANTARCTICA_STATION_INSTALL_MODULE_NO_DUPLICATE_LABS_TT
 		OR = {
 			NOT = { check_variable = { selected_antarctica_station_selected_module_category = 5 } }
-			meta_trigger = {
-				text = {
-					NOT = { check_variable = { global.research_station_[ID]_module_slot_6 = [MOD] } }
-					NOT = { check_variable = { global.research_station_[ID]_module_slot_7 = [MOD] } }
-					NOT = { check_variable = { global.research_station_[ID]_module_slot_8 = [MOD] } }
-					NOT = { check_variable = { global.research_station_[ID]_module_slot_9 = [MOD] } }
-				}
-				ID = "[?selected_antarctica_station]"
-				MOD = "[?selected_antarctica_station_selected_module]"
+			AND = {
+				NOT = { check_variable = { global.antarctica_station_module_slot_6^selected_antarctica_station = selected_antarctica_station_selected_module } }
+				NOT = { check_variable = { global.antarctica_station_module_slot_7^selected_antarctica_station = selected_antarctica_station_selected_module } }
+				NOT = { check_variable = { global.antarctica_station_module_slot_8^selected_antarctica_station = selected_antarctica_station_selected_module } }
+				NOT = { check_variable = { global.antarctica_station_module_slot_9^selected_antarctica_station = selected_antarctica_station_selected_module } }
 			}
 		}
 	}
@@ -185,25 +181,19 @@ antarctica_can_install_module_no_duplicate_laboratories = {
 antarctica_station_check_possible_illegal_laboratories_installed = {
 	custom_trigger_tooltip = {
 		tooltip = ILLEGAL_ACTIVITIES_BUTTON_TRIGGER
-		meta_trigger = {
-			text = {
-				OR = {
-					check_variable = { global.research_station_[ID]_module_slot_6 = 5 }
-					check_variable = { global.research_station_[ID]_module_slot_7 = 5 }
-					check_variable = { global.research_station_[ID]_module_slot_8 = 5 }
-					check_variable = { global.research_station_[ID]_module_slot_9 = 5 }
-					check_variable = { global.research_station_[ID]_module_slot_6 = 7 }
-					check_variable = { global.research_station_[ID]_module_slot_7 = 7 }
-					check_variable = { global.research_station_[ID]_module_slot_8 = 7 }
-					check_variable = { global.research_station_[ID]_module_slot_9 = 7 }
-					check_variable = { global.research_station_[ID]_module_slot_6 = 8 }
-					check_variable = { global.research_station_[ID]_module_slot_7 = 8 }
-					check_variable = { global.research_station_[ID]_module_slot_8 = 8 }
-					check_variable = { global.research_station_[ID]_module_slot_9 = 8 }
-				}
-			}
-			ID = "[?selected_antarctica_station]"
-			MOD = "[?selected_antarctica_station_selected_module]"
+		OR = {
+			check_variable = { global.antarctica_station_module_slot_6^selected_antarctica_station = 5 }
+			check_variable = { global.antarctica_station_module_slot_7^selected_antarctica_station = 5 }
+			check_variable = { global.antarctica_station_module_slot_8^selected_antarctica_station = 5 }
+			check_variable = { global.antarctica_station_module_slot_9^selected_antarctica_station = 5 }
+			check_variable = { global.antarctica_station_module_slot_6^selected_antarctica_station = 7 }
+			check_variable = { global.antarctica_station_module_slot_7^selected_antarctica_station = 7 }
+			check_variable = { global.antarctica_station_module_slot_8^selected_antarctica_station = 7 }
+			check_variable = { global.antarctica_station_module_slot_9^selected_antarctica_station = 7 }
+			check_variable = { global.antarctica_station_module_slot_6^selected_antarctica_station = 8 }
+			check_variable = { global.antarctica_station_module_slot_7^selected_antarctica_station = 8 }
+			check_variable = { global.antarctica_station_module_slot_8^selected_antarctica_station = 8 }
+			check_variable = { global.antarctica_station_module_slot_9^selected_antarctica_station = 8 }
 		}
 	}
 }
@@ -221,38 +211,6 @@ antarctica_station_install_module_winter_penalty = {
 			check_variable = { global.month = 8 }
 			check_variable = { global.month = 9 }
 			check_variable = { global.month = 10 }
-		}
-	}
-}
-
-# Usage: Called via meta_trigger with ID resolved to the station id from global.antarctica_station_ids^N.
-# Uses country-capital continent and the active Antarctica region filters.
-antarctica_dynamic_station_matches_selected_filter = {
-	OR = {
-		AND = {
-			check_variable = { station_filter_america > 1 }
-			OR = {
-				var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = north_america } }
-				var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = south_america } }
-			}
-		}
-		AND = {
-			check_variable = { station_filter_asia > 1 }
-			OR = {
-				var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = asia } }
-				var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = australia } }
-			}
-		}
-		AND = {
-			check_variable = { station_filter_europe > 1 }
-			var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = europe } }
-		}
-		AND = {
-			check_variable = { station_filter_africa > 1 }
-			OR = {
-				var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = africa } }
-				var:global.research_station_[ID]_controller = { capital_scope = { is_on_continent = middle_east } }
-			}
 		}
 	}
 }
@@ -293,30 +251,25 @@ is_startup_research_station = {
 }
 
 check_antarctica_marker_triggers = {
-	meta_trigger = {
-		text = {
-			check_variable = { global.antarctica_station_ids^[ID] > 0 }
-			OR = {
-				NOT = { has_country_flag = antarctica_filters_active }
-				AND = {
-					check_variable = { global.antarctica_station_region^[ID] = 1 }
-					check_variable = { station_filter_america > 1 }
-				}
-				AND = {
-					check_variable = { global.antarctica_station_region^[ID] = 2 }
-					check_variable = { station_filter_asia > 1 }
-				}
-				AND = {
-					check_variable = { global.antarctica_station_region^[ID] = 3 }
-					check_variable = { station_filter_europe > 1 }
-				}
-				AND = {
-					check_variable = { global.antarctica_station_region^[ID] = 4 }
-					check_variable = { station_filter_africa > 1 }
-				}
-			}
+	check_variable = { global.antarctica_station_ids^temp_antarctica_station_id > 0 }
+	OR = {
+		NOT = { has_country_flag = antarctica_filters_active }
+		AND = {
+			check_variable = { global.antarctica_station_region^temp_antarctica_station_id = 1 }
+			check_variable = { station_filter_america > 1 }
 		}
-		ID = "[?temp_antarctica_station_id]"
+		AND = {
+			check_variable = { global.antarctica_station_region^temp_antarctica_station_id = 2 }
+			check_variable = { station_filter_asia > 1 }
+		}
+		AND = {
+			check_variable = { global.antarctica_station_region^temp_antarctica_station_id = 3 }
+			check_variable = { station_filter_europe > 1 }
+		}
+		AND = {
+			check_variable = { global.antarctica_station_region^temp_antarctica_station_id = 4 }
+			check_variable = { station_filter_africa > 1 }
+		}
 	}
 }
 
@@ -337,13 +290,8 @@ is_antarctica_station_tier_three = {
 is_station_fuel_supply_ready = {
 	custom_trigger_tooltip = {
 		tooltip = ANTARCTICA_STATION_SEND_SUPPLIES_QUEUE_TT
-		meta_trigger = {
-			text = {
-				check_variable = { global.research_station_[ID]_delivery_days_remaining < 1 }
-				check_variable = { global.research_station_[ID]_delivery_fuel_pending < 1 }
-			}
-			ID = "[?selected_antarctica_station]"
-		}
+		check_variable = { global.antarctica_station_delivery_days_remaining^selected_antarctica_station < 1 }
+		check_variable = { global.antarctica_station_delivery_fuel_pending^selected_antarctica_station < 1 }
 	}
 	custom_trigger_tooltip = {
 		tooltip = ANTARCTICA_STATION_NOT_FULLY_RENEWABLE

@@ -32,6 +32,7 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   29. _files_need_global_refs pre-scan gate matches whitespace-flexible form
   30. add_to_faction with a non-country argument (a faction name)
   31. create_faction is deprecated (use create_faction_from_template)
+  32. add_building_construction of a provincial building with no province
 """
 
 import os
@@ -44,6 +45,7 @@ from check_common_mistakes import (
     _RE_IS_X_NATION,
     _check_add_to_faction_country,
     _check_any_country_member_array,
+    _check_building_missing_province,
     _check_check_expr_bad_operand,
     _check_check_var_ge_le,
     _check_consecutive_scope_blocks,
@@ -69,6 +71,7 @@ from check_common_mistakes import (
     _check_tautological_or,
     _files_need_global_refs,
     _get_block,
+    _provincial_building_types,
     check_file,
 )
 
@@ -3094,6 +3097,209 @@ assert_eq(
     False,
     "focus without available always-no does not force the scan",
 )
+
+
+# 32. add_building_construction of a provincial building with no province
+
+print("\n── add_building_construction province ──")
+
+assert_eq(
+    "naval_base" in _provincial_building_types()
+    and "supply_node" in _provincial_building_types()
+    and "industrial_complex" not in _provincial_building_types(),
+    True,
+    "provincial building types read from common/buildings",
+)
+
+# 32a. provincial building, no province → flag
+assert_finds(
+    _check_building_missing_province,
+    [
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = naval_base\n",
+        "\t\t\t\tlevel = 2\n",
+        "\t\t\t\tinstant_build = yes\n",
+        "\t\t\t}\n",
+    ],
+    1,
+    "naval_base without province flagged",
+)
+
+# 32b. literal province id → no flag
+assert_finds(
+    _check_building_missing_province,
+    [
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = supply_node\n",
+        "\t\t\t\tlevel = 1\n",
+        "\t\t\t\tprovince = 12299\n",
+        "\t\t\t}\n",
+    ],
+    0,
+    "supply_node with literal province not flagged",
+)
+
+# 32c. province selector block → no flag
+assert_finds(
+    _check_building_missing_province,
+    [
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = bunker\n",
+        "\t\t\t\tlevel = 2\n",
+        "\t\t\t\tprovince = {\n",
+        "\t\t\t\t\tall_provinces = yes\n",
+        "\t\t\t\t\tlimit_to_border = yes\n",
+        "\t\t\t\t}\n",
+        "\t\t\t}\n",
+    ],
+    0,
+    "bunker with province selector not flagged",
+)
+
+# 32d. state-level building → no flag
+assert_finds(
+    _check_building_missing_province,
+    [
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = industrial_complex\n",
+        "\t\t\t\tlevel = 2\n",
+        "\t\t\t}\n",
+    ],
+    0,
+    "state-level building without province not flagged",
+)
+
+# 32e. two blocks in one state scope, only the provincial one missing → one flag
+assert_finds(
+    _check_building_missing_province,
+    [
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = air_base\n",
+        "\t\t\t\tlevel = 2\n",
+        "\t\t\t}\n",
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = rail_way\n",
+        "\t\t\t\tlevel = 2\n",
+        "\t\t\t}\n",
+    ],
+    1,
+    "only the provincial block of a pair flagged",
+)
+
+# 32f. commented-out block → no flag
+assert_finds(
+    _check_building_missing_province,
+    [
+        "\t\t\t# add_building_construction = {\n",
+        "\t\t\t#\ttype = naval_base\n",
+        "\t\t\t#\tlevel = 2\n",
+        "\t\t\t# }\n",
+    ],
+    0,
+    "commented-out construction not flagged",
+)
+
+# 32g. province present only in a comment → still flagged
+assert_finds(
+    _check_building_missing_province,
+    [
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = naval_base\n",
+        "\t\t\t\tlevel = 2\n",
+        "\t\t\t\t# province = 153\n",
+        "\t\t\t}\n",
+    ],
+    1,
+    "commented-out province does not clear the flag",
+)
+
+# 32h. single-line construction block
+assert_finds(
+    _check_building_missing_province,
+    ["\t\t\tadd_building_construction = { type = naval_base level = 2 }\n"],
+    1,
+    "single-line construction without province flagged",
+)
+
+# 32i. two single-line blocks sharing a line: the second one's province must
+# not clear the first, and the second must still be judged on its own type
+assert_finds(
+    _check_building_missing_province,
+    [
+        "\t\t\tadd_building_construction = { type = naval_base level = 2 } "
+        "add_building_construction = { type = rail_way level = 2 province = 100 }\n"
+    ],
+    1,
+    "province on a same-line sibling does not clear the first block",
+)
+assert_finds(
+    _check_building_missing_province,
+    [
+        "\t\t\tadd_building_construction = { type = air_base level = 2 } "
+        "add_building_construction = { type = rail_way level = 2 }\n"
+    ],
+    1,
+    "second block on a shared line is judged on its own type",
+)
+
+# 32j. a comment mentioning province_max must not make a state-level building
+# look provincial
+_fixture_root = tempfile.mkdtemp()
+os.makedirs(os.path.join(_fixture_root, "common", "buildings"))
+with open(
+    os.path.join(_fixture_root, "common", "buildings", "00_buildings.txt"),
+    "w",
+    encoding="utf-8",
+) as _f:
+    _f.write(
+        "buildings = {\n"
+        "\tindustrial_complex = {\n"
+        "\t\tbase_cost = 100\n"
+        "\t\t# province_max = 5 would make this provincial\n"
+        "\t\tlevel_cap = { state_max = 25 }\n"
+        "\t}\n"
+        "\tnaval_base = {\n"
+        "\t\tlevel_cap = { province_max = 10 }\n"
+        "\t}\n"
+        "}\n"
+    )
+assert_eq(
+    _provincial_building_types(_fixture_root),
+    frozenset({"naval_base"}),
+    "province_max inside a comment does not mark a building provincial",
+)
+assert_finds(
+    lambda lines: _check_building_missing_province(lines, _fixture_root),
+    [
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = industrial_complex\n",
+        "\t\t\t\tlevel = 2\n",
+        "\t\t\t}\n",
+    ],
+    0,
+    "comment-only province_max does not trigger a false positive",
+)
+
+# 32k. unreadable common/buildings falls back to the known list rather than
+# silently disabling the check
+_missing_root = os.path.join(_fixture_root, "does-not-exist")
+assert_eq(
+    "naval_base" in _provincial_building_types(_missing_root),
+    True,
+    "missing common/buildings falls back to the known provincial list",
+)
+assert_finds(
+    lambda lines: _check_building_missing_province(lines, _missing_root),
+    [
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\t\ttype = naval_base\n",
+        "\t\t\t\tlevel = 2\n",
+        "\t\t\t}\n",
+    ],
+    1,
+    "check still fires under the fallback list",
+)
+shutil.rmtree(_fixture_root)
 
 
 # Summary

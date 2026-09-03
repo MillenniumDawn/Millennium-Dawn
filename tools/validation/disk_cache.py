@@ -322,7 +322,8 @@ def stamp_created(mod_path: str) -> None:
         return
     try:
         marker.parent.mkdir(parents=True, exist_ok=True)
-        marker.write_text(str(time.time()), encoding="utf-8")
+        with open(marker, "w", encoding="utf-8", newline="") as fh:
+            fh.write(str(time.time()))
     except OSError:
         pass
 
