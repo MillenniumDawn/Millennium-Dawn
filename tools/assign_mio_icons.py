@@ -40,6 +40,10 @@ PREFIX_MAP = {
     "guided_missile_equipment": "guided_missile",
     "cnc_equipment_type": "cnc",
     "infantry_weapons_type": "smallarms",
+    "artillery_equipment": "artillery",
+    "AA_Equipment": "aa",
+    "L_AT_Equipment": "atgm",
+    "H_AT_Equipment": "atgm",
     # ballistic_missile_equipment -> intentionally no prefix (standard icons)
 }
 
