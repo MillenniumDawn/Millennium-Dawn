@@ -552,8 +552,11 @@ country_event = {
 		add_political_power = -50
 		if = {
 			limit = { FROM = { exists = yes } }
-			FROM = { country_event = { id = asean_crisis.21 days = 5 } }
+			FROM = { set_country_flag = { flag = ASEAN_condemned_recent days = 180 value = 1 } }
+			add_opinion_modifier = { target = FROM modifier = large_decrease }
+			FROM = { add_opinion_modifier = { target = ROOT modifier = large_decrease } }
 		}
+		custom_effect_tooltip = ASEAN_suspension_vote_unlocked_tt
 	}
 	option = {
 		name = asean_crisis.20.b
@@ -570,6 +573,12 @@ country_event = {
 		ai_chance = { base = 30 }
 		log = "[GetDateText]: [Root.GetName]: Event asean_crisis.20 option c (propose Five-Point Consensus)"
 		add_political_power = -25
+		if = {
+			limit = { FROM = { exists = yes } }
+			FROM = { add_stability = 0.02 }
+			add_opinion_modifier = { target = FROM modifier = small_increase }
+			FROM = { add_opinion_modifier = { target = ROOT modifier = small_increase } }
+		}
 	}
 }
 
@@ -627,11 +636,18 @@ country_event = {
 
 	option = {
 		name = asean_crisis.30.a
+		trigger = { has_country_flag = ASEAN_opted_in_cmim }
 		log = "[GetDateText]: [Root.GetName]: Event asean_crisis.30 option a (draw on Chiang Mai)"
-		if = {
-			limit = { has_country_flag = ASEAN_opted_in_cmim }
-			country_event = { id = asean_crisis.31 days = 5 }
-		}
+		country_event = { id = asean_crisis.31 days = 5 }
+	}
+	option = {
+		name = asean_crisis.30.b
+		trigger = { NOT = { has_country_flag = ASEAN_opted_in_cmim } }
+		log = "[GetDateText]: [Root.GetName]: Event asean_crisis.30 option b (no safety net)"
+		add_stability = -0.05
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.02 }
+		modify_treasury_effect = yes
 	}
 }
 

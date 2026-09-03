@@ -10347,6 +10347,7 @@ focus_tree = {
 					NOT = { has_global_flag = ASEAN_seato_founded }
 				}
 				set_global_flag = ASEAN_seato_founded
+				set_variable = { global.ASEAN_seato_leader = THIS.id }
 				create_faction_from_template = faction_template_sia_seato
 			}
 			set_temp_variable = { treasury_change = -15 }
@@ -10379,7 +10380,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_EXPENDITURE }
 
-		available = { is_faction_leader = yes }
+		available = { SIA_can_run_seato_invites = yes }
 
 		bypass = {
 			NOT = { country_exists = VIE }
@@ -10390,44 +10391,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_invite_mainland"
-			# The whole payload is leadership-gated so losing the faction mid-focus cannot bill the
-			# treasury for invitations that are never sent.
+			# Pact-gated so losing the seat mid-focus cannot bill the treasury for invitations
+			# that are never sent. Bangkok pays either way, but thailand.431 only offers
+			# accession when its FROM leads the faction, so the letters go out under the pact
+			# leader's name when Thailand joined a SEATO it did not found.
 			if = {
-				limit = { is_faction_leader = yes }
+				limit = { SIA_can_run_seato_invites = yes }
 				set_temp_variable = { treasury_change = -50 }
 				modify_treasury_effect = yes
 				custom_effect_tooltip = SIA_invite_mainland_tt
 				if = {
-					limit = { country_exists = VIE NOT = { VIE = { is_in_faction = yes } } }
-					VIE = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
+					limit = { is_faction_leader = yes }
+					SIA_seato_invite_mainland = yes
 				}
-				if = {
-					limit = { country_exists = LAO NOT = { LAO = { is_in_faction = yes } } }
-					LAO = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
-				}
-				if = {
-					limit = { country_exists = CBD NOT = { CBD = { is_in_faction = yes } } }
-					CBD = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
-				}
-				if = {
-					limit = { country_exists = BRM NOT = { BRM = { is_in_faction = yes } } }
-					BRM = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
+				else = {
+					var:global.ASEAN_seato_leader = { SIA_seato_invite_mainland = yes }
 				}
 				custom_effect_tooltip = TT_IF_EACH_ACCEPTS
 				custom_effect_tooltip = SIA_seato_invite_accept_tt
@@ -10458,7 +10436,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_EXPENDITURE }
 
-		available = { is_faction_leader = yes }
+		available = { SIA_can_run_seato_invites = yes }
 
 		bypass = {
 			NOT = { country_exists = IND }
@@ -10471,49 +10449,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_invite_maritime"
 			if = {
-				limit = { is_faction_leader = yes }
+				limit = { SIA_can_run_seato_invites = yes }
 				set_temp_variable = { treasury_change = -50 }
 				modify_treasury_effect = yes
 				custom_effect_tooltip = SIA_invite_maritime_tt
 				if = {
-					limit = { country_exists = IND NOT = { IND = { is_in_faction = yes } } }
-					IND = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
+					limit = { is_faction_leader = yes }
+					SIA_seato_invite_maritime = yes
 				}
-				if = {
-					limit = { country_exists = PHI NOT = { PHI = { is_in_faction = yes } } }
-					PHI = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
-				}
-				if = {
-					limit = { country_exists = MAY NOT = { MAY = { is_in_faction = yes } } }
-					MAY = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
-				}
-				if = {
-					limit = { country_exists = SIN NOT = { SIN = { is_in_faction = yes } } }
-					SIN = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
-				}
-				if = {
-					limit = { country_exists = BRU NOT = { BRU = { is_in_faction = yes } } }
-					BRU = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
+				else = {
+					var:global.ASEAN_seato_leader = { SIA_seato_invite_maritime = yes }
 				}
 				custom_effect_tooltip = TT_IF_EACH_ACCEPTS
 				custom_effect_tooltip = SIA_seato_invite_accept_tt
@@ -10544,7 +10489,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_EXPENDITURE }
 
-		available = { is_faction_leader = yes }
+		available = { SIA_can_run_seato_invites = yes }
 
 		bypass = {
 			NOT = { country_exists = SHN }
@@ -10555,33 +10500,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_invite_breakaways"
 			if = {
-				limit = { is_faction_leader = yes }
+				limit = { SIA_can_run_seato_invites = yes }
 				set_temp_variable = { treasury_change = -20 }
 				modify_treasury_effect = yes
 				custom_effect_tooltip = SIA_invite_breakaways_tt
 				if = {
-					limit = { country_exists = SHN NOT = { SHN = { is_in_faction = yes } } }
-					SHN = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
+					limit = { is_faction_leader = yes }
+					SIA_seato_invite_breakaways = yes
 				}
-				if = {
-					limit = { country_exists = KAR NOT = { KAR = { is_in_faction = yes } } }
-					KAR = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
-				}
-				if = {
-					limit = { country_exists = WAA NOT = { WAA = { is_in_faction = yes } } }
-					WAA = {
-						custom_effect_tooltip = SIA_seato_invite_line_tt
-						hidden_effect = { SIA_seato_score_update = yes }
-						country_event = { id = thailand.431 days = 2 random_days = 6 }
-					}
+				else = {
+					var:global.ASEAN_seato_leader = { SIA_seato_invite_breakaways = yes }
 				}
 				custom_effect_tooltip = TT_IF_EACH_ACCEPTS
 				custom_effect_tooltip = SIA_seato_invite_accept_tt

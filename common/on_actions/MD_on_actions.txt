@@ -686,9 +686,15 @@ on_actions = {
 
 	on_coup_succeeded = {
 		effect = {
-			if = {
-				limit = { is_asean_member = yes }
-				set_country_flag = { flag = ASEAN_recent_coup days = 730 value = 1 }
+			# Whether ROOT here is the couped state or the incoming government is undocumented
+			# and this is the repo's only hook, so match on original_tag: a coup splinter keeps
+			# the parent's original_tag even when it never held the membership idea itself.
+			for_each_scope_loop = {
+				array = global.ASEAN_Member
+				if = {
+					limit = { original_tag = ROOT.original_tag }
+					set_country_flag = { flag = ASEAN_recent_coup days = 730 value = 1 }
+				}
 			}
 		}
 	}

@@ -45,17 +45,29 @@ ASEAN_check_breach = {
 	}
 
 	# Ideology is not a breach: ASEAN doctrine is non-interference in how members govern
-	# themselves. Governance stability is what the Association actually tracks.
+	# themselves. What the Association tracks is whether a member can govern at all, on a
+	# -2..+2 axis running from settled peace to open internal conflict.
 	if = {
+		limit = { has_civil_war = yes }
+		add_to_variable = { THIS.ASEAN_breach = 2 }
+	}
+	else_if = {
+		limit = { has_stability < 0.35 }
+		add_to_variable = { THIS.ASEAN_breach = 1 }
+	}
+	else_if = {
+		limit = {
+			has_war = no
+			has_stability > 0.7
+		}
+		add_to_variable = { THIS.ASEAN_breach = -2 }
+	}
+	else_if = {
 		limit = {
 			has_war = no
 			has_stability > 0.5
 		}
 		add_to_variable = { THIS.ASEAN_breach = -1 }
-	}
-	else_if = {
-		limit = { has_civil_war = yes }
-		add_to_variable = { THIS.ASEAN_breach = 2 }
 	}
 
 	if = {
@@ -325,14 +337,14 @@ ASEAN_iai_recipient_withdraw_on_departure = {
 }
 
 # The four band ideas carry a flat -1000 ai_get_ally_desire_factor so AI members do not
-# drift into unrelated factions. That same veto leaves SIA_defense_community's SEATO
-# capstone with no willing members once it exists. Rather than weaken the band ideas'
-# own modifier for every member regardless of context, grant a self-healing offset idea
-# once the pact actually exists so the veto lifts only then.
+# drift into unrelated factions. That same veto leaves SEATO with no willing members once
+# it exists, whichever tree founded it. Rather than weaken the band ideas' own modifier for
+# every member regardless of context, grant a self-healing offset idea once the pact
+# actually exists so the veto lifts only then.
 ASEAN_seato_alignment_upkeep = {
 	if = {
 		limit = {
-			has_global_flag = ASEAN_defense_community_completed
+			has_global_flag = ASEAN_seato_founded
 			is_asean_member = yes
 			NOT = { has_idea = ASEAN_seato_alignment }
 		}
@@ -381,6 +393,17 @@ ASEAN_apply_suspension = {
 		set_country_flag = ASEAN_suspended_flag
 		if = { limit = { NOT = { has_idea = ASEAN_suspended } }
 			add_ideas = ASEAN_suspended
+		}
+		# The flag is already set, so the loop's own check excludes the suspended member
+		# from its own bulletin without depending on how PREV binds inside the loop.
+		hidden_effect = {
+			for_each_scope_loop = {
+				array = global.ASEAN_Member
+				if = {
+					limit = { NOT = { has_country_flag = ASEAN_suspended_flag } }
+					news_event = { id = asean_crisis.22 days = 2 }
+				}
+			}
 		}
 	}
 }

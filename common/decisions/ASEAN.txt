@@ -25,6 +25,7 @@ ASEAN_decisions = {
 			remove_ideas = ASEAN_Member_detached
 			remove_ideas = ASEAN_Member_estranged
 			remove_ideas = ASEAN_suspended
+			clr_country_flag = ASEAN_suspended_flag
 			if = {
 				limit = { is_in_array = { global.ASEAN_Member = THIS } }
 				remove_from_array = { global.ASEAN_Member = THIS }
@@ -394,18 +395,22 @@ ASEAN_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_call_suspension_vote"
 			add_political_power = -75
 			set_global_flag = { flag = ASEAN_suspension_vote_open days = 30 value = 1 }
-			set_variable = { global.ASEAN_suspension_vote_yes = 0 }
+			# The proposer's own ballot is cast with the motion, as the decision text says.
+			set_variable = { global.ASEAN_suspension_vote_yes = 1 }
 			set_variable = { global.ASEAN_suspension_vote_no = 0 }
 			set_variable = { global.ASEAN_suspension_target = FROM.id }
-			FROM = { country_event = { id = asean_crisis.21 days = 5 } }
-			for_each_scope_loop = {
-				array = global.ASEAN_Member
-				if = {
-					limit = {
-						NOT = { tag = ROOT }
-						NOT = { tag = FROM }
+			# Sent from the accused so asean_crisis.21 reads the motion's target in FROM.
+			# The accused does not sit on the ballot for its own suspension.
+			FROM = {
+				for_each_scope_loop = {
+					array = global.ASEAN_Member
+					if = {
+						limit = {
+							NOT = { original_tag = ROOT.original_tag }
+							NOT = { check_variable = { global.ASEAN_suspension_target = THIS.id } }
+						}
+						country_event = { id = asean_crisis.21 days = 5 }
 					}
-					country_event = { id = asean_crisis.21 days = 5 }
 				}
 			}
 		}
@@ -424,6 +429,7 @@ ASEAN_decisions = {
 				limit = { has_global_flag = ASEAN_suspension_vetoed }
 				clr_global_flag = ASEAN_suspension_vetoed
 			}
+			clear_variable = global.ASEAN_suspension_target
 		}
 
 		ai_will_do = {
@@ -573,7 +579,9 @@ ASEAN_accession_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_endorse_applicant"
 			set_variable = { ASEAN_last_endorsed_application_id = global.ASEAN_application_id }
 			add_to_variable = { global.ASEAN_membership_endorsements = 1 }
-			add_opinion_modifier = { target = var:global.ASEAN_applicant modifier = small_increase }
+			var:global.ASEAN_applicant = {
+				ROOT = { add_opinion_modifier = { target = PREV modifier = small_increase } }
+			}
 		}
 
 		ai_will_do = { base = 10 }
@@ -632,7 +640,9 @@ ASEAN_accession_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_block_applicant"
 			set_variable = { ASEAN_last_blocked_application_id = global.ASEAN_application_id }
 			subtract_from_variable = { global.ASEAN_membership_endorsements = 1 }
-			add_opinion_modifier = { target = var:global.ASEAN_applicant modifier = medium_decrease }
+			var:global.ASEAN_applicant = {
+				ROOT = { add_opinion_modifier = { target = PREV modifier = medium_decrease } }
+			}
 		}
 
 		ai_will_do = { base = 0 }
