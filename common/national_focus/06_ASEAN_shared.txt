@@ -17,8 +17,6 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
 
-	available = { date > 2003.10.7 }
-
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -250,7 +248,7 @@ shared_focus = {
 			OR = {
 				original_tag = IND
 				IND = { is_subject_of = ROOT }
-				IND = { CAPITAL = { is_controlled_by = ROOT } }
+				IND = { capital_scope = { is_controlled_by = ROOT } }
 			}
 		}
 	}
@@ -703,7 +701,7 @@ shared_focus = {
 			OR = {
 				original_tag = SIN
 				SIN = { is_subject_of = ROOT }
-				SIN = { CAPITAL = { is_controlled_by = ROOT } }
+				SIN = { capital_scope = { is_controlled_by = ROOT } }
 			}
 		}
 	}
@@ -1199,7 +1197,7 @@ shared_focus = {
 			OR = {
 				original_tag = SIN
 				SIN = { is_subject_of = ROOT }
-				SIN = { CAPITAL = { is_controlled_by = ROOT } }
+				SIN = { capital_scope = { is_controlled_by = ROOT } }
 			}
 		}
 	}
@@ -1508,7 +1506,7 @@ shared_focus = {
 			OR = {
 				original_tag = IND
 				IND = { is_subject_of = ROOT }
-				IND = { CAPITAL = { is_controlled_by = ROOT } }
+				IND = { capital_scope = { is_controlled_by = ROOT } }
 			}
 		}
 	}
@@ -1576,8 +1574,16 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_seanwfz_completed } }
 			set_global_flag = ASEAN_seanwfz_completed
+			if = { limit = { country_exists = USA } USA = { country_event = { id = asean.20 days = 10 } } }
+			if = { limit = { country_exists = RUS } RUS = { country_event = { id = asean.20 days = 12 } } }
+			if = { limit = { country_exists = CHI } CHI = { country_event = { id = asean.20 days = 14 } } }
+			if = { limit = { country_exists = ENG } ENG = { country_event = { id = asean.20 days = 16 } } }
+			if = { limit = { country_exists = FRA } FRA = { country_event = { id = asean.20 days = 18 } } }
 		}
 		add_named_threat = { threat = -1 name = ASEAN_seanwfz_peace_dividend }
+		custom_effect_tooltip = ASEAN_seanwfz_protocol_offered_tt
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = { add_named_threat = { threat = -1 name = ASEAN_seanwfz_peace_dividend } }
 	}
 
 	ai_will_do = { base = 50 }
@@ -2053,10 +2059,12 @@ shared_focus = {
 	available = {
 		can_do_asean_focus = yes
 		has_global_flag = asean_defense_pact_gate
-		# Joining someone else's faction first would leave the whole SEATO arm inert.
+		# Founding a second SEATO would leave both halves inert, so the taker must either be
+		# able to create the faction or be reaching a pact that already exists.
 		OR = {
 			is_in_faction = no
 			is_faction_leader = yes
+			has_global_flag = ASEAN_seato_founded
 		}
 	}
 
@@ -2080,6 +2088,7 @@ shared_focus = {
 				NOT = { has_global_flag = ASEAN_seato_founded }
 			}
 			set_global_flag = ASEAN_seato_founded
+			set_variable = { global.ASEAN_seato_leader = THIS.id }
 			create_faction_from_template = faction_template_sia_seato
 			custom_effect_tooltip = ASEAN_seato_faction_rules_tt
 		}
@@ -2247,7 +2256,8 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_iai_completed } }
 			set_global_flag = ASEAN_iai_completed
 		}
-		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.05 } }
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.05 }
 		modify_treasury_effect = yes
 		if = { limit = { country_exists = CBD } CBD = { country_event = { id = asean.11 days = 3 } } }
 		if = { limit = { country_exists = LAO } LAO = { country_event = { id = asean.11 days = 5 } } }
@@ -2256,7 +2266,8 @@ shared_focus = {
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		effect_tooltip = {
 			set_country_flag = { flag = ASEAN_iai_recipient_flag days = 1800 value = 1 }
-			set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.02 } }
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = 0.02 }
 			modify_treasury_effect = yes
 		}
 		set_temp_variable = { ASEAN_productivity_growth_modifier_temp = 0.02 }
@@ -2306,7 +2317,7 @@ shared_focus = {
 			OR = {
 				original_tag = IND
 				IND = { is_subject_of = ROOT }
-				IND = { CAPITAL = { is_controlled_by = ROOT } }
+				IND = { capital_scope = { is_controlled_by = ROOT } }
 			}
 		}
 	}
