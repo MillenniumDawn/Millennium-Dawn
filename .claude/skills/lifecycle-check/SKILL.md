@@ -34,31 +34,31 @@ Cannot be checked from files. Mark "not verifiable from code" and remind the use
 
 #### Coding Phase
 
-| Item                    | How to check                                                                                        |
-| ----------------------- | --------------------------------------------------------------------------------------------------- |
-| Focus tree file         | `common/national_focus/05_TAG.txt` exists and is non-empty                                          |
-| Focus tree rewards      | Grep for `completion_reward` in the focus file — count blocks vs focus count to spot stubs          |
-| National ideas          | `common/ideas/TAG.txt` exists; grep for `idea` blocks                                               |
-| National decisions      | `common/decisions/TAG*.txt` or `common/decisions/categories/TAG*.txt` exists                        |
-| History file updated    | `history/countries/TAG*.txt` modified in branch diff, or exists and is non-trivial                  |
-| OOB file                | `history/units/TAG_*.txt` exists                                                                    |
-| Character file          | `common/characters/TAG.txt` exists with at least one `general` or `field_marshal` block             |
-| Party localisation      | `localisation/english/` contains a file with `TAG.` ideology keys                                   |
-| Focus localisation      | `localisation/english/MD_focus_TAG_l_english.yml` exists and is non-empty                           |
-| Ideas localisation      | `localisation/english/` contains a file with `TAG_idea_` or `TAG_spirit_` keys                      |
-| Decisions localisation  | `localisation/english/` contains a file with decision keys for TAG                                  |
-| Unit namelists          | `common/units/names/` or `common/units/names_divisions/` contains a file with TAG name entries      |
-| Investment/Influence AI | `common/ai_strategy/TAG*.txt` exists with investment or influence entries                           |
-| Game rules              | `common/game_rules/` contains a rule referencing TAG                                                |
-| Scripted localisation   | `common/scripted_localisation/` contains a file with TAG entries (if the country uses scripted loc) |
+| Item                    | How to check                                                           |
+| ----------------------- | ---------------------------------------------------------------------- |
+| Focus tree file         | `common/national_focus/05_TAG.txt` exists and is non-empty             |
+| Focus tree rewards      | Count `completion_reward` blocks vs focus count to spot stubs          |
+| National ideas          | `common/ideas/TAG.txt` exists; grep for `idea` blocks                  |
+| National decisions      | `common/decisions/TAG*.txt` (or under `categories/`) exists            |
+| History file updated    | `history/countries/TAG*.txt` in branch diff, or exists and non-trivial |
+| OOB file                | `history/units/TAG_*.txt` exists                                       |
+| Character file          | `common/characters/TAG.txt` has a `general` or `field_marshal` block   |
+| Party localisation      | `localisation/english/` contains a file with `TAG.` ideology keys      |
+| Focus localisation      | `localisation/english/MD_focus_TAG_l_english.yml` non-empty            |
+| Ideas localisation      | `localisation/english/` file with `TAG_idea_` or `TAG_spirit_` keys    |
+| Decisions localisation  | `localisation/english/` contains a file with decision keys for TAG     |
+| Unit namelists          | TAG name entries in `common/units/names/` or `names_divisions/`        |
+| Investment/Influence AI | `common/ai_strategy/TAG*.txt` has investment or influence entries      |
+| Game rules              | `common/game_rules/` contains a rule referencing TAG                   |
+| Scripted localisation   | `common/scripted_localisation/` file with TAG entries (if used)        |
 
 #### Graphics Phase
 
-| Item             | How to check                                                                                                    |
-| ---------------- | --------------------------------------------------------------------------------------------------------------- |
-| Focus icons      | Grep the focus file for `icon =` on every focus block; spot any using a default/placeholder like `goal_unknown` |
-| Idea icons       | Grep the ideas file for `picture =`                                                                             |
-| Leader portraits | `gfx/leaders/TAG/` directory exists and contains at least one `.dds` file                                       |
+| Item             | How to check                                                              |
+| ---------------- | ------------------------------------------------------------------------- |
+| Focus icons      | Every focus has `icon =`; flag default/placeholder like `goal_unknown`    |
+| Idea icons       | Grep the ideas file for `picture =`                                       |
+| Leader portraits | `gfx/leaders/TAG/` directory exists and contains at least one `.dds` file |
 
 #### Polish Phase
 
@@ -71,10 +71,12 @@ Cannot be checked from files. Mark "not verifiable from code" and remind the use
 
 #### Completion Phase
 
-| Item            | How to check                                                                                                                |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Changelog entry | Grep `Changelog.txt` for the TAG or country name                                                                            |
-| Authors updated | Grep `docs/src/content/misc/authors.md` for the developer's name (cannot verify automatically — note as "confirm manually") |
+| Item            | How to check                                                     |
+| --------------- | ---------------------------------------------------------------- |
+| Changelog entry | Grep `Changelog.txt` for the TAG or country name                 |
+| Authors updated | Grep `docs/src/content/misc/authors.md` for the developer's name |
+
+- Authors updated cannot be verified automatically — note as "confirm manually".
 
 ### 3. Output
 
