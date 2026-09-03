@@ -284,9 +284,7 @@ class TestRivalSpinesUnderOneOption:
             "owners": report._owner_findings(focuses, "DEN", [], {}),
         }
         text = report.render(built, ["owners"])
-        assert (
-            "! DEN_LEFT_FOCUS_PATH owns 2 branch roots: DEN_reds, DEN_greens" in text
-        )
+        assert "! DEN_LEFT_FOCUS_PATH owns 2 branch roots: DEN_reds, DEN_greens" in text
 
 
 class TestReachability:
