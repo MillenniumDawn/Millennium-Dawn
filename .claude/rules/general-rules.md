@@ -116,9 +116,9 @@ Don't open a scope to check one trigger when a flat form exists — every `TAG =
 
 ## Never cache a boolean into a daily flag to feed the AI
 
-Do not add an `on_daily_TAG` block that set/clears flags whose only readers are `ai_strategy` `enable` blocks or focus `ai_will_do` modifiers. Both are already evaluated lazily by the engine; a daily pass makes the check *more* expensive, not less, and lags real game state by up to a day. Write the condition inline in `enable`, the way `ALG_cancel_war_neighbours` and `BRA_cancel_war_URG` do.
+Do not add an `on_daily_TAG` block that set/clears flags whose only readers are `ai_strategy` `enable` blocks or focus `ai_will_do` modifiers. Both are already evaluated lazily by the engine; a daily pass makes the check _more_ expensive, not less, and lags real game state by up to a day. Write the condition inline in `enable`, the way `ALG_cancel_war_neighbours` and `BRA_cancel_war_URG` do.
 
-`.claude/docs/performance-patterns.md` has two adjacent sections that are easy to confuse. *Cache `ai_strategy` enable Math Into a Daily Variable* covers **arithmetic chains only** (`set_temp_variable` / `multiply_temp_variable` / …). For a boolean condition the next section applies: *Prefer a Live Trigger Over a Daily-Refreshed Cached Flag*.
+`.claude/docs/performance-patterns.md` has two adjacent sections that are easy to confuse. _Cache `ai_strategy` enable Math Into a Daily Variable_ covers **arithmetic chains only** (`set_temp_variable` / `multiply_temp_variable` / …). For a boolean condition the next section applies: _Prefer a Live Trigger Over a Daily-Refreshed Cached Flag_.
 
 `on_daily_BOS` in `common/on_actions/MD_event_on_actions.txt` is a surviving example of the wrong shape. Do not copy it.
 
