@@ -305,6 +305,272 @@ class TestWeights:
         assert weight == 1
 
 
+ALIAS_FILE = """
+focus_tree = {
+	id = den
+
+	focus = {
+		id = DEN_hardline
+		mutually_exclusive = { focus = DEN_soft }
+		available = { western_conservatism_are_in_power = yes }
+		ai_will_do = {
+			base = 3
+			modifier = { factor = 25 DEN_ai_hardline_path = yes }
+			modifier = { factor = 0 DEN_ai_not_hardline_path = yes }
+		}
+	}
+
+	focus = {
+		id = DEN_soft
+		mutually_exclusive = { focus = DEN_hardline }
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				GER = { western_autocrats_are_in_power = yes }
+			}
+		}
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = DEN_SOCIALIST_FOCUS_PATH }
+			modifier = { factor = 0 DEN_ai_not_socialist_path = yes }
+		}
+	}
+}
+"""
+
+ALIAS_FLAGS = [
+    "DEN_HISTORICAL_FOCUS_PATH",
+    "DEN_NATIONALIST_FOCUS_PATH",
+    "DEN_SOCIALIST_FOCUS_PATH",
+]
+
+ALIAS_STATES = [
+    report.State(option, flag, historical)
+    for option, flag in (
+        ("HISTORICAL", "DEN_HISTORICAL_FOCUS_PATH"),
+        ("NATIONALIST", "DEN_NATIONALIST_FOCUS_PATH"),
+        ("SOCIALIST", "DEN_SOCIALIST_FOCUS_PATH"),
+        ("NO_PATH", None),
+    )
+    for historical in (True, False)
+]
+
+UNGUARDED_HISTORICAL = (
+    "OR = { is_historical_focus_on = yes has_global_flag = DEN_HISTORICAL_FOCUS_PATH }"
+)
+
+GUARDED_HISTORICAL = """
+	OR = {
+		has_global_flag = DEN_HISTORICAL_FOCUS_PATH
+		AND = {
+			is_historical_focus_on = yes
+			NOT = { DEN_ai_alt_path = yes }
+		}
+	}
+"""
+
+
+def alias_triggers(historical_body: str):
+    return {
+        "DEN_ai_alt_path": parse(
+            "OR = {"
+            " has_global_flag = DEN_SOCIALIST_FOCUS_PATH"
+            " has_global_flag = DEN_NATIONALIST_FOCUS_PATH"
+            " }"
+        ),
+        "DEN_ai_historical_path": parse(historical_body),
+        "DEN_ai_hardline_path": parse(
+            "OR = {"
+            " DEN_ai_historical_path = yes"
+            " has_global_flag = DEN_NATIONALIST_FOCUS_PATH"
+            " }"
+        ),
+        "DEN_ai_not_hardline_path": parse(
+            "NOT = { DEN_ai_hardline_path = yes }"
+            " has_global_flag = DEN_SOCIALIST_FOCUS_PATH"
+        ),
+        "DEN_ai_not_socialist_path": parse(
+            "NOT = { has_global_flag = DEN_SOCIALIST_FOCUS_PATH }"
+            " OR = { is_historical_focus_on = yes DEN_ai_hardline_path = yes }"
+        ),
+    }
+
+
+def graph_findings(focuses, triggers):
+    by_id = {focus.id: focus for focus in focuses}
+    weights = {
+        focus.id: [
+            report.focus_weight(focus, state, triggers)[0] for state in ALIAS_STATES
+        ]
+        for focus in focuses
+    }
+    return report._graph_findings(focuses, by_id, weights, ALIAS_STATES, triggers, 0)
+
+
+def alias_graph(historical_body: str):
+    return graph_findings(
+        report.parse_focus_file(ALIAS_FILE, "DEN"), alias_triggers(historical_body)
+    )
+
+
+class TestHistoricalOverride:
+    def test_unguarded_alias_keeps_a_focus_alive_under_an_explicit_rule(self):
+        graph = alias_graph(UNGUARDED_HISTORICAL)
+        assert graph["historical_override_count"] == 1
+        assert graph["historical_overrides"] == [
+            "DEN_hardline under SOCIALIST: 0 with historical off, 75 with it on"
+        ]
+
+    def test_guarding_the_historical_arm_silences_it(self):
+        assert alias_graph(GUARDED_HISTORICAL)["historical_override_count"] == 0
+
+    def test_canonical_unguarded_pair_is_not_a_finding(self):
+        """`write.md`'s shape survives: its not trigger is a pure alt-flag OR."""
+        triggers = {
+            "DEN_ai_historical_path": parse(UNGUARDED_HISTORICAL),
+            "DEN_ai_not_historical_path": parse(
+                "OR = {"
+                " has_global_flag = DEN_SOCIALIST_FOCUS_PATH"
+                " has_global_flag = DEN_NATIONALIST_FOCUS_PATH"
+                " }"
+            ),
+        }
+        focuses = report.parse_focus_file(FOCUS_FILE, "DEN")[:1]
+        assert graph_findings(focuses, triggers)["historical_override_count"] == 0
+
+
+class TestMutexBothOwned:
+    def test_rival_paths_boosting_one_either_or_is_reported(self):
+        graph = alias_graph(UNGUARDED_HISTORICAL)
+        assert graph["mutex_both_owned"] == [
+            "DEN_hardline / DEN_soft boosted by rival paths under SOCIALIST"
+            " / historical on"
+        ]
+
+    def test_guarded_triggers_leave_one_owner_per_state(self):
+        assert alias_graph(GUARDED_HISTORICAL)["mutex_both_owned_count"] == 0
+
+    def test_one_path_owning_both_sides_is_a_flavour_choice(self):
+        triggers = alias_triggers(GUARDED_HISTORICAL)
+        focuses = report.parse_focus_file(ALIAS_FILE, "DEN")
+        for focus in focuses:
+            focus.modifiers = [
+                modifier for modifier in focus.modifiers if not modifier.path_related
+            ] + [
+                report.Modifier(
+                    op="factor",
+                    value=25.0,
+                    expr=parse("DEN_ai_hardline_path = yes"),
+                    tokens=("DEN_ai_hardline_path",),
+                    guard=False,
+                    line=1,
+                )
+            ]
+        assert graph_findings(focuses, triggers)["mutex_both_owned_count"] == 0
+
+
+class TestPathGates:
+    def test_raw_historical_flag_is_dead_under_no_path(self):
+        issues = report._path_gate_issues(
+            "DEN",
+            {
+                "DEN_ai_path_category": {
+                    "gui": "",
+                    "gates": "",
+                    "visible": " has_global_flag = DEN_HISTORICAL_FOCUS_PATH ",
+                }
+            },
+            [],
+            ALIAS_STATES,
+            alias_triggers(GUARDED_HISTORICAL),
+        )
+        assert issues == [
+            "DEN_ai_path_category: gates on DEN_HISTORICAL_FOCUS_PATH; NO_PATH with"
+            " historical AI sets no flag, read DEN_ai_historical_path instead"
+        ]
+
+    def test_unguarded_trigger_shows_the_ramp_during_an_alt_path(self):
+        decision = report.Decision(
+            id="DEN_rally_the_conservatives",
+            category="DEN_ai_path_category",
+            base=100.0,
+            ai_blocked=False,
+            visible=" DEN_ai_historical_path = yes ",
+        )
+        issues = report._path_gate_issues(
+            "DEN", {}, [decision], ALIAS_STATES, alias_triggers(UNGUARDED_HISTORICAL)
+        )
+        assert len(issues) == 1
+        assert issues[0].startswith(
+            "DEN_rally_the_conservatives: visible under NATIONALIST only because"
+        )
+
+    def test_guarded_trigger_and_pure_alt_gates_are_clean(self):
+        decisions = [
+            report.Decision(
+                id="DEN_rally_the_conservatives",
+                category="DEN_ai_path_category",
+                base=100.0,
+                ai_blocked=False,
+                visible=" DEN_ai_historical_path = yes ",
+            ),
+            report.Decision(
+                id="DEN_rally_the_socialists",
+                category="DEN_ai_path_category",
+                base=100.0,
+                ai_blocked=False,
+                visible=" has_global_flag = DEN_SOCIALIST_FOCUS_PATH ",
+            ),
+        ]
+        assert (
+            report._path_gate_issues(
+                "DEN",
+                {},
+                decisions,
+                ALIAS_STATES,
+                alias_triggers(GUARDED_HISTORICAL),
+            )
+            == []
+        )
+
+    def test_a_gate_with_no_path_token_is_ignored(self):
+        decision = report.Decision(
+            id="DEN_unrelated",
+            category="DEN_ai_path_category",
+            base=1.0,
+            ai_blocked=False,
+            visible=" has_country_flag = DEN_something ",
+        )
+        assert (
+            report._path_gate_issues(
+                "DEN",
+                {},
+                [decision],
+                ALIAS_STATES,
+                alias_triggers(UNGUARDED_HISTORICAL),
+            )
+            == []
+        )
+
+
+class TestOwnerPartyGates:
+    def test_each_group_lists_the_parties_its_focuses_require(self):
+        focuses = report.parse_focus_file(ALIAS_FILE, "DEN")
+        owners = report._owner_findings(
+            focuses, "DEN", ALIAS_FLAGS, alias_triggers(GUARDED_HISTORICAL)
+        )
+        assert owners["group_parties"] == {
+            "DEN_ai_hardline_path": ["western_conservatism_are_in_power"],
+            "DEN_SOCIALIST_FOCUS_PATH": ["western_liberals_are_in_power"],
+        }
+
+    def test_a_foreign_scope_party_gate_is_not_this_focus_requirement(self):
+        focuses = {
+            focus.id: focus for focus in report.parse_focus_file(ALIAS_FILE, "DEN")
+        }
+        assert "western_autocrats_are_in_power" not in focuses["DEN_soft"].party_gates
+
+
 ROSTER_FILE = """
 set_leader_DEN = {
 	if = { limit = { has_country_flag = set_conservatism }
