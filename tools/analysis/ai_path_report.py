@@ -82,6 +82,7 @@ _ADD_TO_VARIABLE = re.compile(
 )
 _MODIFIER_NAME = re.compile(r"modifier\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 _AI_BLOCKED = re.compile(r"is_ai\s*=\s*no\b")
+_PARTY_GATE = re.compile(r"[a-z_]+_in_power(?:_or_coalition)?")
 _IDEA_KEYWORDS = ("idea", "ideas")
 
 # Three-valued logic: None means "depends on something this tool cannot model".
@@ -314,6 +315,7 @@ class Focus:
     prereq_groups: List[List[str]] = field(default_factory=list)
     mutex: List[str] = field(default_factory=list)
     gates: List[str] = field(default_factory=list)
+    party_gates: List[str] = field(default_factory=list)
     always_off: bool = False
     base: float = 1.0
     has_ai_will_do: bool = False
@@ -393,6 +395,24 @@ def _read_gates(block: str, focus: Focus) -> None:
             focus.gates.append(scalar)
         elif key == "always" and scalar == "no":
             focus.always_off = True
+    focus.party_gates.extend(_collect_party_gates(block))
+
+
+def _collect_party_gates(block: str) -> List[str]:
+    """Ruling-party requirements this focus places on *itself*.
+
+    Descends through `OR`/`AND` but not into a `TAG = { }` or state scope, whose
+    party gate is somebody else's government, nor into a `NOT`, which excludes a
+    party rather than requiring one.
+    """
+    found: List[str] = []
+    for key, scalar, nested in iter_statements(block):
+        if nested is not None:
+            if key in ("OR", "AND", "hidden_trigger", "custom_trigger_tooltip"):
+                found.extend(_collect_party_gates(nested))
+        elif scalar == "yes" and _PARTY_GATE.fullmatch(key):
+            found.append(key)
+    return found
 
 
 def _read_ai_will_do(block: str, focus: Focus, tag: str) -> None:
@@ -759,7 +779,7 @@ def build_report(root: str, tag: str, limit: int) -> Dict:
         "rule": _rule_findings(rule, loc, wiring, buckets, flags, tag),
         "owners": _owner_findings(focuses, tag, flags, triggers),
         "matrix": _matrix(focuses, by_id, states, triggers, limit),
-        "graph": _graph_findings(focuses, by_id, weights, limit),
+        "graph": _graph_findings(focuses, by_id, weights, states, triggers, limit),
         "plans": _plan_findings(plans, by_id, limit),
         "rewards": _reward_findings(focuses, limit),
         "mechanics": _mechanics_findings(
@@ -883,14 +903,17 @@ def _owner_findings(
                 referenced.add(token)
                 referenced.update(_expand_trigger(token, triggers))
     groups: Dict[str, int] = {}
+    parties: Dict[str, set] = {}
     for focus in owned:
         key = " + ".join(focus.owner_tokens) or "(kill only)"
         groups[key] = groups.get(key, 0) + 1
+        parties.setdefault(key, set()).update(focus.party_gates)
     unused = [flag for flag in flags if flag not in referenced]
     return {
         "owned": len(owned),
         "unowned": len(focuses) - len(owned),
         "groups": groups,
+        "group_parties": {key: sorted(value) for key, value in parties.items()},
         "additive": sorted(set(additive)),
         "unused_flags": unused,
         "multi_root": _multi_root_owners(owned),
@@ -953,10 +976,21 @@ def _matrix(
     return rows
 
 
+def _owner_live(focus: Focus, state: State, triggers: Dict[str, Expr]) -> bool:
+    """True when a boosting path modifier of *focus* fires in *state*."""
+    return any(
+        evaluate(modifier.expr, state.flag, state.historical, triggers) is TRUE
+        for modifier in focus.modifiers
+        if modifier.path_related and modifier.value > 1
+    )
+
+
 def _graph_findings(
     focuses: Sequence[Focus],
     by_id: Dict[str, Focus],
     weights: Dict[str, List[float]],
+    states: Sequence[State],
+    triggers: Dict[str, Expr],
     limit: int,
 ) -> Dict:
     routing_ties: List[str] = []
@@ -974,12 +1008,64 @@ def _graph_findings(
                 routing_ties.append(focus.id + " / " + other.id)
             else:
                 neutral_ties += 1
+
+    # Two sides of one either/or boosted by *different* paths in the same state:
+    # each path thinks it owns the choice, and the larger number decides. A pair
+    # inside one path's own spine is a flavour choice and stays out of this.
+    both_owned: List[str] = []
+    for state in states:
+        for focus in focuses:
+            if focus.always_off or not _owner_live(focus, state, triggers):
+                continue
+            for other_id in focus.mutex:
+                other = by_id.get(other_id)
+                if not other or other.always_off or other.id < focus.id:
+                    continue
+                if set(focus.owner_tokens) == set(other.owner_tokens):
+                    continue
+                if _owner_live(other, state, triggers):
+                    both_owned.append(
+                        "{} / {} boosted by rival paths under {} / historical {}".format(
+                            focus.id,
+                            other.id,
+                            state.option,
+                            "on" if state.historical else "off",
+                        )
+                    )
+
+    # An explicit alternate rule must decide the tree on its own. A focus that
+    # only survives because global history is on is reading past that rule.
+    overrides: List[str] = []
+    index = {(state.option, state.historical): pos for pos, state in enumerate(states)}
+    for state in states:
+        if not state.historical or state.flag is None or state.option == "HISTORICAL":
+            continue
+        off = index.get((state.option, False))
+        if off is None:
+            continue
+        on = index[(state.option, True)]
+        for focus in focuses:
+            if focus.always_off:
+                continue
+            row = weights.get(focus.id)
+            if not row or row[off] != 0 or row[on] <= 0:
+                continue
+            overrides.append(
+                "{} under {}: 0 with historical off, {:g} with it on".format(
+                    focus.id, state.option, row[on]
+                )
+            )
+
     missing = [focus.id for focus in focuses if not focus.has_ai_will_do]
     return {
         "roots": sum(1 for focus in focuses if not focus.prereq_groups),
         "mutex_ties": routing_ties[:limit] if limit else routing_ties,
         "mutex_tie_count": len(routing_ties),
         "neutral_ties": neutral_ties,
+        "mutex_both_owned": both_owned[:limit] if limit else both_owned,
+        "mutex_both_owned_count": len(both_owned),
+        "historical_overrides": overrides[:limit] if limit else overrides,
+        "historical_override_count": len(overrides),
         "no_ai_will_do": len(missing),
     }
 
@@ -1045,6 +1131,7 @@ class Decision:
     base: float
     ai_blocked: bool
     cures: Tuple[str, ...] = ()
+    visible: str = ""
 
 
 def country_scope(text: str) -> str:
@@ -1137,7 +1224,7 @@ def parse_decision_categories(root: str, tag: str) -> Dict[str, Dict[str, str]]:
             if close == -1:
                 continue
             body = text[match.end() : close]
-            allowed, gui, gates = "", "", []
+            allowed, gui, visible, gates = "", "", "", []
             for key, scalar, block in iter_statements(body):
                 if key == "allowed" and block is not None:
                     allowed = block
@@ -1145,8 +1232,14 @@ def parse_decision_categories(root: str, tag: str) -> Dict[str, Dict[str, str]]:
                     gui = scalar
                 elif key in ("visible", "available") and block is not None:
                     gates.append(block)
+                    if key == "visible":
+                        visible = block
             if owner.search(allowed):
-                categories[match.group(1)] = {"gui": gui, "gates": " ".join(gates)}
+                categories[match.group(1)] = {
+                    "gui": gui,
+                    "gates": " ".join(gates),
+                    "visible": visible,
+                }
     return categories
 
 
@@ -1175,6 +1268,7 @@ def parse_decisions(root: str, tag: str, categories: Sequence[str]) -> List[Deci
 def _build_decision(decision_id: str, category: str, block: str) -> Decision:
     base = 1.0
     blocked = False
+    visible = ""
     for key, _, nested in iter_statements(block):
         if nested is None:
             continue
@@ -1182,12 +1276,15 @@ def _build_decision(decision_id: str, category: str, block: str) -> Decision:
             base = _ai_will_do_base(nested)
         elif key in ("available", "visible", "allowed"):
             blocked = blocked or _AI_BLOCKED.search(nested) is not None
+            if key == "visible":
+                visible = nested
     return Decision(
         id=decision_id,
         category=category,
         base=base,
         ai_blocked=blocked,
         cures=tuple(_scan_cures(block)),
+        visible=visible,
     )
 
 
@@ -1256,6 +1353,54 @@ def _has_priority_boost(focus: Focus) -> bool:
     )
 
 
+def _path_gate_issues(
+    tag: str,
+    categories: Dict[str, Dict[str, str]],
+    decisions: Sequence[Decision],
+    states: Sequence[State],
+    triggers: Dict[str, Expr],
+) -> List[str]:
+    """Path gates outside the focus tree, where no killswitch modifier follows.
+
+    Inside `ai_will_do` the mandated `factor = 0` pair settles the historical /
+    explicit-rule overlap. A `visible` block has no second chance, so it has to
+    read the historical *trigger*, guarded against the alt flags.
+    """
+    historical_flag = tag + "_HISTORICAL_FOCUS_PATH"
+    issues: List[str] = []
+    gates = [(name, entry["visible"]) for name, entry in sorted(categories.items())]
+    gates.extend((decision.id, decision.visible) for decision in decisions)
+    for name, block in gates:
+        if not block:
+            continue
+        tokens = set(_IDENTIFIER.findall(block))
+        if not any(
+            is_path_flag(token, tag) or is_path_trigger(token, tag) for token in tokens
+        ):
+            continue
+        if historical_flag in tokens:
+            issues.append(
+                "{}: gates on {}; NO_PATH with historical AI sets no flag, "
+                "read {}_ai_historical_path instead".format(name, historical_flag, tag)
+            )
+            continue
+        expr = parse_expr(block, tag)
+        for state in states:
+            if not state.historical or state.flag in (None, historical_flag):
+                continue
+            if evaluate(expr, state.flag, True, triggers) is not TRUE:
+                continue
+            if evaluate(expr, state.flag, False, triggers) is FALSE:
+                issues.append(
+                    "{}: visible under {} only because historical AI is on; "
+                    "guard the historical arm against the alt flags".format(
+                        name, state.option
+                    )
+                )
+                break
+    return issues
+
+
 def _mechanics_findings(
     root: str,
     tag: str,
@@ -1288,7 +1433,7 @@ def _mechanics_findings(
             if name in entry["gates"]:
                 category_cover.setdefault(name, []).append(category)
 
-    issues: List[str] = []
+    issues: List[str] = _path_gate_issues(tag, categories, decisions, states, triggers)
     rows: List[Dict] = []
     unrelieved: List[str] = []
     reachable = {
@@ -1862,6 +2007,11 @@ def render(report: Dict, sections: Sequence[str]) -> str:
         )
         for group, count in sorted(owners["groups"].items(), key=lambda item: -item[1]):
             out.append("  {:<5} {}".format(count, group))
+            parties = owners["group_parties"].get(group, [])
+            if parties:
+                out.append(
+                    "        parties ({}): {}".format(len(parties), ", ".join(parties))
+                )
         if owners["additive"]:
             out.append("  ! additive path modifiers: " + ", ".join(owners["additive"]))
         if owners["unused_flags"]:
@@ -1911,6 +2061,20 @@ def render(report: Dict, sections: Sequence[str]) -> str:
             )
         )
         out.extend("  ! tie " + tie for tie in graph["mutex_ties"])
+        if graph["mutex_both_owned_count"]:
+            out.append(
+                "  ! mutex pairs boosted on both sides: {}".format(
+                    graph["mutex_both_owned_count"]
+                )
+            )
+            out.extend("      " + row for row in graph["mutex_both_owned"])
+        if graph["historical_override_count"]:
+            out.append(
+                "  ! alive only via global history under an explicit rule: {}".format(
+                    graph["historical_override_count"]
+                )
+            )
+            out.extend("      " + row for row in graph["historical_overrides"])
         out.append("")
 
     if "plans" in sections:

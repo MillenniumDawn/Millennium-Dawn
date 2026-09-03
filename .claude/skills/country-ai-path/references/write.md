@@ -196,6 +196,48 @@ DEN_ai_rival_of_socialist_path = {
 Triggers may call each other, so the set stays small. Keep the depth shallow — three levels is
 plenty.
 
+**The `is_historical_focus_on` arm is only safe inside `ai_will_do`.** Under an explicit alt rule with
+historical AI on, the plain owner trigger above is *also* true — harmless there only because the
+mandated pair (§5) puts `factor = 0 DEN_ai_not_historical_path = yes` **last**, and that not trigger
+is a pure alt-flag OR, so the killswitch wins. Two places break that guarantee:
+
+- An **alias** spanning historical and an alt path. Its not trigger opens with
+  `NOT = { DEN_ai_western_path = yes }`, so the alias being true suppresses its own killswitch and the
+  historical spine outbids the rule the player picked.
+- Any reader **outside** `ai_will_do` — a decision or category `visible`, a strategy-plan `enable`, a
+  walker event `trigger`. There is no second modifier to correct it.
+
+Either case needs the alt-flag guard (`99_FRA_scripted_triggers.txt:255`, `99_GEO_scripted_triggers.txt:43`):
+
+```
+DEN_ai_alt_path = {
+	OR = {
+		has_global_flag = DEN_EUROPEAN_UNION_FOCUS_PATH
+		has_global_flag = DEN_EUROSCEPTIC_FOCUS_PATH
+		has_global_flag = DEN_SOCIALIST_FOCUS_PATH
+		has_global_flag = DEN_NATIONALIST_FOCUS_PATH
+	}
+}
+
+DEN_ai_historical_path = {
+	OR = {
+		has_global_flag = DEN_HISTORICAL_FOCUS_PATH
+		AND = {
+			is_historical_focus_on = yes
+			NOT = { DEN_ai_alt_path = yes }
+		}
+	}
+}
+```
+
+Name the helper `TAG_ai_alt_path` for the non-historical flags and `TAG_ai_any_path` when it must
+include historical too (`99_EGY_scripted_triggers.txt:18`, `99_IRQ_scripted_triggers.txt:8`). A single
+reader outside `ai_will_do` may instead pair the plain trigger with its not trigger —
+`DEN_ai_historical_path = yes` + `DEN_ai_not_historical_path = no` (§8, `ITA_strategy_plans.txt:6`).
+
+`ai_path_report.py` reports both failures: a focus alive under an alt rule only because historical is
+on, and a decision gate that is dead under `NO_PATH` or visible during an alt path.
+
 **Precondition.** The collapsed shape is behaviour-identical to the old three-modifier form only
 while at most one `TAG_*_FOCUS_PATH` flag is ever set and each not trigger excludes its own group's
 flags. The report's Wiring section checks both; read it before writing the triggers.
@@ -283,6 +325,14 @@ DEN_ai_path_category = {
 ```
 
 The icon must be a **category** sprite (52x40, `GFX_decisions_category_*`), not a decision one.
+
+Raw flags are right only while every path in the `visible` is an **alt** path, as above. A ramp that
+also has to run for the **historical** party gates on the alt-guarded `DEN_ai_historical_path` (§4)
+instead — raw `DEN_HISTORICAL_FOCUS_PATH` is dead under `NO_PATH` with historical AI, which is the one
+state the trigger exists to cover, and a bare unguarded trigger runs the historical ramp on top of the
+alt ramp the player picked. Both mistakes are live today: `GER_ai_path_category` and
+`GRE_ai_path_category` read the raw flag; `EGY_ai_rally_the_generals` and `IND_rally_the_awakening`
+read the unguarded trigger.
 
 A ramp pair per path, in `common/decisions/<Country>.txt`:
 
