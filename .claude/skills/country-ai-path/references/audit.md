@@ -6,15 +6,13 @@ real bug in an earlier country.
 
 ## The report answers these — act on its findings, don't re-derive them
 
-| Report section | Bug it catches |
-| --- | --- |
-| Tree ownership | Additive path modifiers that lose to any multiplicative historical modifier (Ethiopia); a path flag that appears in the tree zero times (Japan had 36 historical modifiers and none for path two; Italy's ten had none at all) |
-| Killswitch orphans | Children stranded because every prerequisite in their sole OR-group was zeroed, and gates (`has_completed_focus`, `check_variable`, a flag set only by a zeroed focus) stranded without producing an orphan |
-| Mutex ties | Fork sides at identical priority resolving by file order (Italy's ~30 doctrine pairs at `base = 80`; Comoros' social-democracy/dictatorship mutex) |
-| Strategy plan | `focus_factors` disagreeing with the tree, plans with no `focus_factors` at all, both sides of a fork zeroed |
-| Danger rewards | Completion rewards that disband the army, hand the country away, or start an unwinnable civil war |
-| Mechanics | The burdens the country starts with and what relieves each one; a burden whose every cure focus is dead in some rule state (Belarus' `BLR_outdated_army` under all four alt paths); a cure focus left at flat base; a cure decision at `base = 0` or behind `is_ai = no`; whether each country GUI is decision-backed or player-only |
-| Rule / Wiring | Option set, two-sentence descs, `@TAG` header, per-option flags, `RANDOM_PATH` buckets, surviving `has_game_rule` readers |
+- **Tree ownership** — additive path modifiers that lose to any multiplicative historical modifier (Ethiopia); a path flag that appears in the tree zero times (Japan had 36 historical modifiers and none for path two; Italy's ten had none at all)
+- **Killswitch orphans** — children stranded because every prerequisite in their sole OR-group was zeroed, and gates (`has_completed_focus`, `check_variable`, a flag set only by a zeroed focus) stranded without producing an orphan
+- **Mutex ties** — fork sides at identical priority resolving by file order (Italy's ~30 doctrine pairs at `base = 80`; Comoros' social-democracy/dictatorship mutex)
+- **Strategy plan** — `focus_factors` disagreeing with the tree, plans with no `focus_factors` at all, both sides of a fork zeroed
+- **Danger rewards** — completion rewards that disband the army, hand the country away, or start an unwinnable civil war
+- **Mechanics** — the burdens the country starts with and what relieves each one; a burden whose every cure focus is dead in some rule state (Belarus' `BLR_outdated_army` under all four alt paths); a cure focus left at flat base; a cure decision at `base = 0` or behind `is_ai = no`; whether each country GUI is decision-backed or player-only
+- **Rule / Wiring** — option set, two-sentence descs, `@TAG` header, per-option flags, `RANDOM_PATH` buckets, surviving `has_game_rule` readers
 
 A surviving `factor = 0` `is_historical_focus_on = yes` killswitch in the tree still zeroes a path's
 own focuses even when a strategy plan boosts them (10 × 0 × 100 = 0) — every such killswitch needs a
