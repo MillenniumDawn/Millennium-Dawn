@@ -277,7 +277,7 @@
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
 	NDefines.NBuildings.RADAR_INTEL_EFFECT = 60 -- 40
 	NDefines.NBuildings.BASE_FACTORY_REPAIR = 0.25
-	NDefines.NBuildings.MAX_SHARED_SLOTS = 56
+	NDefines.NBuildings.MAX_SHARED_SLOTS = 100
 	NDefines.NBuildings.INFRASTRUCTURE_RESOURCE_BONUS = 0.05	--upped from 0.02, vanilla 0.2
 	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 3.5 -- was 4.0 --Fucked with this to see
 	-- NOTE: The below piercing values are granularized to make piercing less punishing for nations with no real tank access
