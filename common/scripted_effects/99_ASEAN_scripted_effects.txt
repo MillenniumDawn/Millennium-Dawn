@@ -81,6 +81,11 @@ ASEAN_check_breach = {
 	}
 
 	if = {
+		limit = { has_country_flag = ASEAN_condemned_recent }
+		add_to_variable = { THIS.ASEAN_breach = 1 }
+	}
+
+	if = {
 		limit = {
 			OR = {
 				has_idea = corruption_level_06
@@ -277,15 +282,61 @@ ASEAN_fracture_watch = {
 	}
 }
 
+# The IAI grant is a timed flag, so the bonus is applied once on arrival and withdrawn once on lapse. A plain monthly re-add would compound forever.
+ASEAN_iai_recipient_upkeep = {
+	if = {
+		limit = {
+			has_country_flag = ASEAN_iai_recipient_flag
+			NOT = { has_country_flag = ASEAN_iai_bonus_applied }
+		}
+		set_country_flag = ASEAN_iai_bonus_applied
+		set_temp_variable = { ASEAN_production_speed_infrastructure_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_production_speed_infrastructure_factor = ASEAN_production_speed_infrastructure_factor_temp tooltip = production_speed_infrastructure_factor_tt }
+	}
+	else_if = {
+		limit = {
+			NOT = { has_country_flag = ASEAN_iai_recipient_flag }
+			has_country_flag = ASEAN_iai_bonus_applied
+		}
+		clr_country_flag = ASEAN_iai_bonus_applied
+		set_temp_variable = { ASEAN_production_speed_infrastructure_factor_temp = -0.05 }
+		add_to_variable = { ASEAN_production_speed_infrastructure_factor = ASEAN_production_speed_infrastructure_factor_temp tooltip = production_speed_infrastructure_factor_tt }
+	}
+}
+
 ASEAN_monthly_update = {
 	for_each_scope_loop = {
 		array = global.ASEAN_Member
 		ASEAN_check_breach = yes
 		ASEAN_apply_band = yes
+		ASEAN_iai_recipient_upkeep = yes
 	}
 	ASEAN_recount_bands = yes
 	ASEAN_recount_founding_committed = yes
 	ASEAN_fracture_watch = yes
+	ASEAN_defense_pact_watch = yes
+}
+
+# The alliance capstone stays shut until an outside major power is already shooting at a member: the pact is a reaction, never a plan.
+ASEAN_defense_pact_watch = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = asean_defense_pact_gate }
+			any_of_scopes = {
+				array = global.ASEAN_Member
+				has_war = yes
+				any_enemy_country = {
+					NOT = { is_asean_member = yes }
+					OR = {
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = super_power
+					}
+				}
+			}
+		}
+		set_global_flag = asean_defense_pact_gate
+	}
 }
 
 ASEAN_apply_suspension = {
