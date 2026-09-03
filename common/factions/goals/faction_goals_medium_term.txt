@@ -6,23 +6,17 @@ faction_goal_secure_european_continent = {
 	description = secure_european_continent_goal_desc
 	category = medium_term
 	group = FOCUS_FILTER_ANNEXATION
+	select_effect = {
+		faction_goal_update_daily_condition_caches = yes
+	}
 	completed = {
-		collection_size = {
-			input = {
-				input = constant:country_groups.continental_europe_2000
-				operators = {
-					limit = {
-						OR = {
-							is_in_faction_with = ROOT
-							has_capitulated = yes
-							exists = no
-							is_subject_of = ROOT
-						}
-					}
-				}
-				name = COLLECTION_CONTINENTAL_EUROPE_DEFEATED_OR_FACTION_MEMBERS
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_secure_europe_condition_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = COLLECTION_CONTINENTAL_EUROPE_DEFEATED_OR_FACTION_MEMBERS
 			}
-			value > 16
 		}
 	}
 	complete_effect = {
@@ -60,30 +54,19 @@ faction_goal_high_seas_fleet = {
 			tag = BUL
 		}
 	}
+	select_effect = {
+		set_temp_variable = { faction_goal_force_capital_ships_cache = 1 }
+		faction_goal_update_member_metrics_cache = yes
+	}
 	completed = {
 		has_war_with_major = yes
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_capital_ships_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_ships_with_type@battleship
-						add = num_ships_with_type@battle_cruiser
-						add = num_ships_with_type@cruiser
-						add = num_ships_with_type@stealth_destroyer
-						add = num_ships_with_type@destroyer
-						add = num_ships_with_type@heavy_frigate
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_capital_ships_cache
+				value = 20
+				compare = greater_than_or_equals
+				tooltip = faction_goal_capital_ships_at_least_tt
 			}
-		}
-		check_variable = {
-			var = num_capital_ships_faction
-			value = 20
-			compare = greater_than_or_equals
-			tooltip = faction_goal_capital_ships_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -119,11 +102,17 @@ faction_goal_secure_the_oil_supply = {
 	allowed = {
 		tag = JAP
 	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
+	}
 	completed = {
-		has_resources_in_collection = {
-			collection = collection:faction_members_collection
-			resource = oil
-			amount > 199
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_secure_oil_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = faction_goal_secure_oil_completed_tt
+			}
 		}
 	}
 	complete_effect = {
@@ -193,13 +182,14 @@ faction_goal_nato_gdp_per_capita = {
 	allowed = {
 		has_faction_template = faction_template_nato
 	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+		faction_goal_update_daily_condition_caches = yes
+	}
 	completed = {
 		custom_override_tooltip = {
 			tooltip = nato_25_per_capita_or_more_tt
-			all_of_scopes = {
-				array = faction_members
-				check_variable = { gdp_per_capita > 24.999 }
-			}
+			scope:faction = { check_variable = { faction_goal_nato_gdp_condition_cache = 1 } }
 		}
 	}
 	complete_effect = {
@@ -221,18 +211,18 @@ faction_goal_crush_the_democracy = {
 	visible = {
 		has_elections = no
 	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+		faction_goal_update_daily_condition_caches = yes
+	}
 	completed = {
-		collection_size = {
-			input = {
-				input = collection:faction_members_collection
-				operators = {
-					limit = {
-						democratic < 0.3
-					}
-				}
-				name = FACTION_MEMBERS_BELOW_30_DEMOCRACY
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_crush_democracy_condition_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = FACTION_MEMBERS_BELOW_30_DEMOCRACY
 			}
-			value > 10
 		}
 	}
 	complete_effect = {
@@ -255,23 +245,17 @@ faction_goal_secure_east_asia_continent = {
 	description = secure_east_asia_continent_goal_desc
 	category = medium_term
 	group = FOCUS_FILTER_ANNEXATION
+	select_effect = {
+		faction_goal_update_daily_condition_caches = yes
+	}
 	completed = {
-		collection_size = {
-			input = {
-				input = constant:country_groups.continental_east_asia_2000
-				operators = {
-					limit = {
-						OR = {
-							is_in_faction_with = ROOT
-							has_capitulated = yes
-							exists = no
-							is_subject_of = ROOT
-						}
-					}
-				}
-				name = COLLECTION_CONTINENTAL_EAST_ASIA_DEFEATED_OR_FACTION_MEMBERS
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_secure_east_asia_condition_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = COLLECTION_CONTINENTAL_EAST_ASIA_DEFEATED_OR_FACTION_MEMBERS
 			}
-			value > 16
 		}
 	}
 	complete_effect = {
@@ -329,27 +313,13 @@ faction_goal_marine_corps = {
 	category = medium_term
 	group = FOCUS_FILTER_NAVY_XP
 	available = {
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_marine_battalions_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_battalions_with_type@L_Marine_Bat
-						add = num_battalions_with_type@L_Marine_Cdo_Bat
-						add = num_battalions_with_type@Mot_Marine_Bat
-						add = num_battalions_with_type@Mech_Marine_Bat
-						add = num_battalions_with_type@Arm_Marine_Bat
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_marine_battalions_cache
+				value = 150
+				compare = less_than
+				tooltip = faction_goal_marine_bats_below_tt
 			}
-		}
-		check_variable = {
-			var = num_marine_battalions_faction
-			value = 150
-			compare = less_than
-			tooltip = faction_goal_marine_bats_below_tt
 		}
 	}
 	select_effect = {
@@ -420,49 +390,26 @@ faction_goal_airborne_corps = {
 	category = medium_term
 	group = FOCUS_FILTER_AIR_XP
 	available = {
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_airborne_battalions_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_battalions_with_type@Arm_Air_Inf_Bat
-						add = num_battalions_with_type@Mech_Air_Inf_Bat
-						add = num_battalions_with_type@Mot_Air_Inf_Bat
-						add = num_battalions_with_type@L_Air_Inf_Bat
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_airborne_battalions_cache
+				value = 100
+				compare = less_than
+				tooltip = faction_goal_airborne_bats_below_tt
 			}
-		}
-		check_variable = {
-			var = num_airborne_battalions_faction
-			value = 100
-			compare = less_than
-			tooltip = faction_goal_airborne_bats_below_tt
 		}
 	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+	}
 	completed = {
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_airborne_battalions_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_battalions_with_type@Arm_Air_Inf_Bat
-						add = num_battalions_with_type@Mech_Air_Inf_Bat
-						add = num_battalions_with_type@Mot_Air_Inf_Bat
-						add = num_battalions_with_type@L_Air_Inf_Bat
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_airborne_battalions_cache
+				value = 100
+				compare = greater_than_or_equals
+				tooltip = faction_goal_airborne_bats_at_least_tt
 			}
-		}
-		check_variable = {
-			var = num_airborne_battalions_faction
-			value = 100
-			compare = greater_than_or_equals
-			tooltip = faction_goal_airborne_bats_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -523,45 +470,26 @@ faction_goal_submarine_force = {
 	category = medium_term
 	group = FOCUS_FILTER_NAVY_XP
 	available = {
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_submarines_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_ships_with_type@missile_submarine
-						add = num_ships_with_type@attack_submarine
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_submarines_cache
+				value = 100
+				compare = less_than
+				tooltip = faction_goal_submarines_below_tt
 			}
-		}
-		check_variable = {
-			var = num_submarines_faction
-			value = 100
-			compare = less_than
-			tooltip = faction_goal_submarines_below_tt
 		}
 	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+	}
 	completed = {
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_submarines_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_ships_with_type@missile_submarine
-						add = num_ships_with_type@attack_submarine
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_submarines_cache
+				value = 100
+				compare = greater_than_or_equals
+				tooltip = faction_goal_submarines_at_least_tt
 			}
-		}
-		check_variable = {
-			var = num_submarines_faction
-			value = 100
-			compare = greater_than_or_equals
-			tooltip = faction_goal_submarines_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -638,53 +566,26 @@ faction_goal_convoy_escort_force = {
 	category = medium_term
 	group = FOCUS_FILTER_NAVY_XP
 	available = {
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_screen_ships_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_ships_with_type@screen_destroyer
-						add = num_ships_with_type@stealth_frigate
-						add = num_ships_with_type@frigate
-						add = num_ships_with_type@corvette
-						add = num_ships_with_type@stealth_corvette
-						add = num_ships_with_type@patrol_boat
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_screen_ships_cache
+				value = 100
+				compare = less_than
+				tooltip = faction_goal_screen_ships_below_tt
 			}
-		}
-		check_variable = {
-			var = num_screen_ships_faction
-			value = 100
-			compare = less_than
-			tooltip = faction_goal_screen_ships_below_tt
 		}
 	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+	}
 	completed = {
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_screen_ships_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_ships_with_type@screen_destroyer
-						add = num_ships_with_type@stealth_frigate
-						add = num_ships_with_type@frigate
-						add = num_ships_with_type@corvette
-						add = num_ships_with_type@stealth_corvette
-						add = num_ships_with_type@patrol_boat
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_screen_ships_cache
+				value = 100
+				compare = greater_than_or_equals
+				tooltip = faction_goal_screen_ships_at_least_tt
 			}
-		}
-		check_variable = {
-			var = num_screen_ships_faction
-			value = 100
-			compare = greater_than_or_equals
-			tooltip = faction_goal_screen_ships_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -760,45 +661,26 @@ faction_goal_air_superiority = {
 		}
 	}
 	available = {
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_fighters_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_deployed_planes_with_type@small_plane_airframe
-						add = num_deployed_planes_with_type@cv_small_plane_airframe
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_fighters_cache
+				value = 1000
+				compare = less_than
+				tooltip = faction_goal_fighters_below_tt
 			}
-		}
-		check_variable = {
-			var = num_fighters_faction
-			value = 1000
-			compare = less_than
-			tooltip = faction_goal_fighters_below_tt
 		}
 	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+	}
 	completed = {
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_fighters_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_deployed_planes_with_type@small_plane_airframe
-						add = num_deployed_planes_with_type@cv_small_plane_airframe
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_fighters_cache
+				value = 1000
+				compare = greater_than_or_equals
+				tooltip = faction_goal_fighters_at_least_tt
 			}
-		}
-		check_variable = {
-			var = num_fighters_faction
-			value = 1000
-			compare = greater_than_or_equals
-			tooltip = faction_goal_fighters_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -842,13 +724,8 @@ faction_goal_air_superiority = {
 		}
 		modifier = {
 			add = 1 # Factions with decent number of military factories should probably start caring a lot about contesting air superiority - because they can
-			check_expr = {
-				value = 0
-				every_collection = {
-					named_collection = faction_members_collection
-					add = num_of_military_factories
-				}
-				greater_than = 149
+			scope:faction = {
+				check_variable = { faction_goal_military_factories_cache > 149 }
 			}
 		}
 	}
@@ -862,17 +739,19 @@ faction_goal_industrial_expansion = {
 	category = medium_term
 	group = FOCUS_FILTER_INDUSTRY
 	visible = {
-		count_in_collection = {
-			collection = collection:faction_members_collection
-			buildings = { industrial_complex }
-			size > 49
-		}
+		scope:faction = { check_variable = { faction_goal_industrial_visible_cache = 1 } }
+	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
 	}
 	completed = {
-		count_in_collection = {
-			collection = collection:faction_members_collection
-			buildings = { industrial_complex }
-			size > 149
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_industrial_completed_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = faction_goal_industrial_expansion_completed_tt
+			}
 		}
 	}
 	complete_effect = {
@@ -911,17 +790,19 @@ faction_goal_a_military_base = {
 	category = medium_term
 	group = FOCUS_FILTER_INDUSTRY
 	visible = {
-		count_in_collection = {
-			collection = collection:faction_members_collection
-			buildings = { arms_factory }
-			size > 49
-		}
+		scope:faction = { check_variable = { faction_goal_military_base_visible_cache = 1 } }
+	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
 	}
 	completed = {
-		count_in_collection = {
-			collection = collection:faction_members_collection
-			buildings = { arms_factory }
-			size > 149
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_military_base_completed_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = faction_goal_military_base_completed_tt
+			}
 		}
 	}
 	complete_effect = {
@@ -1009,26 +890,7 @@ faction_goal_control_panama_canal = {
 		}
 	}
 	visible = {
-		OR = {
-			any_collection_element = {
-				collection = collection:faction_controlled_states_collection
-				distance_to = {
-					target = 853
-					value < 2000
-				}
-			}
-			AND = {
-				853 = { is_controlled_by = USA }
-				has_war_with = USA
-				any_collection_element = {
-					collection = collection:faction_controlled_states_collection
-					distance_to = {
-						target = 853
-						value < 6000
-					}
-				}
-			}
-		}
+		scope:faction = { check_variable = { faction_goal_panama_visible_cache = 1 } }
 	}
 	available = {
 		853 = { is_controlled_by_ROOT_or_ally = no }
@@ -1096,13 +958,7 @@ faction_goal_control_gibraltar = {
 		}
 	}
 	visible = {
-		any_collection_element = {
-			collection = collection:faction_controlled_states_collection
-			distance_to = {
-				target = 19
-				value < 2000
-			}
-		}
+		scope:faction = { check_variable = { faction_goal_gibraltar_visible_cache = 1 } }
 	}
 	available = {
 		19 = { is_controlled_by_ROOT_or_ally = no }
@@ -1153,13 +1009,7 @@ faction_goal_control_bosporus = {
 		}
 	}
 	visible = {
-		any_collection_element = {
-			collection = collection:faction_controlled_states_collection
-			distance_to = {
-				target = 155
-				value < 2000
-			}
-		}
+		scope:faction = { check_variable = { faction_goal_bosporus_visible_cache = 1 } }
 	}
 	available = {
 		155 = { is_controlled_by_ROOT_or_ally = no }
@@ -1230,13 +1080,7 @@ faction_goal_control_suez_canal = {
 		}
 	}
 	visible = {
-		any_collection_element = {
-			collection = collection:faction_controlled_states_collection
-			distance_to = {
-				target = 214
-				value < 2000
-			}
-		}
+		scope:faction = { check_variable = { faction_goal_suez_visible_cache = 1 } }
 	}
 	available = {
 		214 = { is_controlled_by_ROOT_or_ally = no }
@@ -1304,13 +1148,7 @@ faction_goal_control_mandeb = {
 		}
 	}
 	visible = {
-		any_collection_element = {
-			collection = collection:faction_controlled_states_collection
-			distance_to = {
-				target = 1020
-				value < 2000
-			}
-		}
+		scope:faction = { check_variable = { faction_goal_mandeb_visible_cache = 1 } }
 	}
 	available = {
 		1020 = { is_controlled_by_ROOT_or_ally = no }

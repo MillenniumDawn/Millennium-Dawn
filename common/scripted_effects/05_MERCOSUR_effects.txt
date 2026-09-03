@@ -55,6 +55,7 @@ MER_recalculate_unasul_member_state_stability_factor = {
 }
 
 MER_remove_unasul_faction_membership_silent = {
+	set_temp_variable = { faction_goal_refresh_transferred_leader = 0 }
 	if = {
 		limit = { has_idea = UNASUL_member }
 
@@ -80,6 +81,8 @@ MER_remove_unasul_faction_membership_silent = {
 				}
 				set_faction_leader = yes
 				set_country_flag = MER_unasul_faction_leader
+				save_event_target_as = faction_goal_transferred_leader
+				set_temp_variable = { ROOT.faction_goal_refresh_transferred_leader = 1 }
 			}
 		}
 		else_if = {
@@ -99,6 +102,15 @@ MER_remove_unasul_faction_membership_silent = {
 
 		remove_ideas = UNASUL_member
 		leave_faction = yes
+		if = {
+			limit = { check_variable = { faction_goal_refresh_transferred_leader = 1 } }
+			hidden_effect = {
+				event_target:faction_goal_transferred_leader = {
+					faction_goal_update_daily_caches = yes
+					faction_goal_update_weekly_caches = yes
+				}
+			}
+		}
 	}
 }
 
