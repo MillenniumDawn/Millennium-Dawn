@@ -126,6 +126,23 @@ _GOLDEN = {
         "validate_mios",
         "validate_events",
     },
+    "common/military_industrial_organization/policies/_land_policies.txt": {
+        "validate_style",
+        "validate_mios",
+        "validate_events",
+    },
+    "common/units/equipment/MD_anti_air.txt": {
+        "validate_style",
+        "validate_mios",
+        "validate_events",
+        "validate_ai_navy",
+        "validate_oob_units",
+    },
+    "common/equipment_groups/mio_equipment_groups.txt": {
+        "validate_style",
+        "validate_mios",
+        "validate_events",
+    },
     "history/countries/x.txt": {
         "validate_style",
         "validate_ideas",

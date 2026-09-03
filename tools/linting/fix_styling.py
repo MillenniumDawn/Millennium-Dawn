@@ -13,6 +13,7 @@ from shared_utils import (
     collect_files_by_mode,
     create_linting_parser,
     get_root_dir,
+    normalize_spacing,
     print_timing_summary,
     run_with_pool,
     strip_inline_comment,
@@ -21,20 +22,6 @@ from shared_utils import (
 __version__ = 2.0
 
 _RE_EQ_SEP = re.compile(r"={3,}")
-_RE_MULTI_SP_BEFORE_EQ = re.compile(r"  +=")
-_RE_MULTI_SP_AFTER_EQ = re.compile(r"=  +")
-_RE_TAB_BEFORE_EQ = re.compile(r"\t+(=)")
-_RE_NO_SP_BEFORE_EQ = re.compile(r"([^\s!<>=])=")
-_RE_NO_SP_AFTER_EQ = re.compile(r"=([^\s=>{])")
-_RE_NO_SP_BEFORE_OPEN = re.compile(r"([^\s])\{")
-_RE_NO_SP_AFTER_OPEN = re.compile(r"\{([^\s\n])")
-_RE_NO_SP_BEFORE_CLOSE = re.compile(r"([^\s])\}")
-_RE_NO_SP_AFTER_CLOSE = re.compile(r"\}([^\s\n}])")
-_RE_MULTI_SP_BEFORE_OPEN = re.compile(r"  +\{")
-_RE_MULTI_SP_AFTER_OPEN = re.compile(r"\{  +")
-_RE_MULTI_SP_BEFORE_CLOSE = re.compile(r"  +\}")
-_RE_MULTI_SP_AFTER_CLOSE = re.compile(r"\}  +")
-_RE_MULTI_SP = re.compile(r"  +")
 
 
 def fix_line(line):
@@ -60,76 +47,25 @@ def fix_line(line):
         # Fix === separator lines in comments (validators flag these as = issues)
         if _RE_EQ_SEP.search(line):
             line = _RE_EQ_SEP.sub(lambda m: "-" * len(m.group()), line)
-            if line != original:
+            fixes += 1
+    else:
+        comment_pos = line.find("#")
+        if comment_pos > 0:
+            comment_part = line[comment_pos:]
+            # Fix === in inline comments too
+            if _RE_EQ_SEP.search(comment_part):
+                line = line[:comment_pos] + _RE_EQ_SEP.sub(
+                    lambda m: "-" * len(m.group()), comment_part
+                )
                 fixes += 1
-        # Remove trailing whitespace on comment lines
-        rstripped = line.rstrip(" \t")
-        if rstripped != line.rstrip("\n"):
-            line = rstripped + "\n" if original.endswith("\n") else rstripped
-            fixes += 1
-        return line, fixes
 
-    comment_pos = line.find("#")
-    if comment_pos > 0:
-        code_part = line[:comment_pos]
-        comment_part = line[comment_pos:]
-        # Fix === in inline comments too
-        if _RE_EQ_SEP.search(comment_part):
-            comment_part = _RE_EQ_SEP.sub(lambda m: "-" * len(m.group()), comment_part)
-            fixes += 1
-    else:
-        code_part = line
-        comment_part = ""
-
-    if "=" in code_part:
-        # Fix double+ spaces before =
-        new_code = _RE_MULTI_SP_BEFORE_EQ.sub(" =", code_part)
-        new_code = _RE_MULTI_SP_AFTER_EQ.sub("= ", new_code)
-        new_code = _RE_TAB_BEFORE_EQ.sub(r" \1", new_code)
-        new_code = _RE_NO_SP_BEFORE_EQ.sub(r"\1 =", new_code)
-        new_code = _RE_NO_SP_AFTER_EQ.sub(r"= \1", new_code)
-        if new_code != code_part:
-            code_part = new_code
-            fixes += 1
-
-    if "{" in code_part or "}" in code_part:
-        new_code = code_part
-        # Add space before { if missing (not at line start)
-        new_code = _RE_NO_SP_BEFORE_OPEN.sub(r"\1 {", new_code)
-        new_code = _RE_NO_SP_AFTER_OPEN.sub(r"{ \1", new_code)
-        new_code = _RE_NO_SP_BEFORE_CLOSE.sub(r"\1 }", new_code)
-        new_code = _RE_NO_SP_AFTER_CLOSE.sub(r"} \1", new_code)
-        # Handle }} -> } } (add space between consecutive closing braces)
-        while "}}" in new_code:
-            new_code = new_code.replace("}}", "} }")
-        # Fix double+ spaces around braces
-        new_code = _RE_MULTI_SP_BEFORE_OPEN.sub(" {", new_code)
-        new_code = _RE_MULTI_SP_AFTER_OPEN.sub("{ ", new_code)
-        new_code = _RE_MULTI_SP_BEFORE_CLOSE.sub(" }", new_code)
-        new_code = _RE_MULTI_SP_AFTER_CLOSE.sub("} ", new_code)
-        if new_code != code_part:
-            code_part = new_code
-            fixes += 1
-
-    code_stripped = code_part.lstrip("\t")
-    code_indent = code_part[: len(code_part) - len(code_stripped)]
-    if "    " in code_stripped:
-        new_stripped = _RE_MULTI_SP.sub(" ", code_stripped)
-        if new_stripped != code_stripped:
-            code_part = code_indent + new_stripped
-            fixes += 1
-
-    line = code_part + comment_part
-
-    if line.endswith("\n"):
-        rstripped = line.rstrip(" \t\n") + "\n"
-    else:
-        rstripped = line.rstrip(" \t")
-    if rstripped != line:
-        line = rstripped
+    newline = line[len(line.rstrip("\r\n")) :]
+    body = line[: len(line) - len(newline)]
+    normalized = normalize_spacing(body)
+    if normalized != body:
         fixes += 1
 
-    return line, fixes
+    return normalized + newline, fixes
 
 
 def fix_file(filepath):
@@ -165,7 +101,7 @@ def fix_file(filepath):
         new_content = "\n".join(fixed_lines)
 
         if new_content != content:
-            with open(filepath, "w", encoding="utf-8") as f:
+            with open(filepath, "w", encoding="utf-8", newline="") as f:
                 f.write(new_content)
 
         return (filepath, total_fixes, unfixable)
