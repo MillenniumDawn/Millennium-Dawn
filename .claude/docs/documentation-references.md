@@ -4,19 +4,19 @@
 
 Offline references for HOI4 scripting, copied verbatim from the game's own `documentation/` folder. Read these to look up valid effects, triggers, modifiers, or other engine features. Refresh them after a HOI4 version bump with `python3 tools/validation/refresh_vanilla_data.py --only docs`.
 
-| File                                 | Contents                                                                          |
-| ------------------------------------ | --------------------------------------------------------------------------------- |
-| `effects_documentation.md`           | All effects by scope (COUNTRY, STATE, CHARACTER, etc.)                            |
-| `triggers_documentation.md`          | All triggers by scope                                                             |
-| `modifiers_documentation.md`         | All modifiers by category (army, navy, air, country, state, etc.)                 |
-| `dynamic_variables_documentation.md` | Read-only dynamic variables (global, country, state, unit_leader, MIO)            |
-| `loc_formatter_documentation.md`     | Localization formatters (`idea_desc`, `tech_effect`, `country_leader_desc`, etc.) |
-| `loc_objects_documentation.md`       | Localization scope objects (Country, State, Character, etc.) and their properties |
-| `script_collection_input.md`         | Collection inputs (`game:all_countries`, `game:all_states`, `game:scope`, etc.)   |
-| `script_collection_operator.md`      | Collection operators (`faction_members`, `owned_states`, `limit`, etc.)           |
-| `script_concept_documentation.md`    | Script concepts: bindable loc, formatted loc, collections, script constants       |
-| `script_math_functions.md`           | Math functions usable inside `value = { ... }` expressions                        |
-| `console_commands_documentation.md`  | Console commands and tweakable variables                                          |
+| File                                 | Contents                                                |
+| ------------------------------------ | ------------------------------------------------------- |
+| `effects_documentation.md`           | All effects by scope (COUNTRY, STATE, CHARACTER, …)     |
+| `triggers_documentation.md`          | All triggers by scope                                   |
+| `modifiers_documentation.md`         | All modifiers by category (army, navy, country, …)      |
+| `dynamic_variables_documentation.md` | Read-only dynamic variables by scope                    |
+| `loc_formatter_documentation.md`     | Localization formatters (`idea_desc`, `tech_effect`, …) |
+| `loc_objects_documentation.md`       | Localization scope objects and their properties         |
+| `script_collection_input.md`         | Collection inputs (`game:all_countries`, …)             |
+| `script_collection_operator.md`      | Collection operators (`faction_members`, `limit`, …)    |
+| `script_concept_documentation.md`    | Bindable/formatted loc, collections, script constants   |
+| `script_math_functions.md`           | Math functions for `value = { ... }` expressions        |
+| `console_commands_documentation.md`  | Console commands and tweakable variables                |
 
 ## External Wiki References
 
@@ -42,44 +42,58 @@ Use for broader modding context not covered in local docs:
 
 Most filenames end in one of four suffixes: `-reference` (structure or valid-key lookup), `-rules` (must-follow conventions), `-patterns` (recipe/refactor catalogs), or `-system` (subsystem architecture). A handful of docs use a plain descriptive name instead when none of those fit (`agent-conventions.md`, `debug-commands.md`, `typo-watchlist.md`, `validation-pipeline.md`).
 
-| File                                          | Contents                                                                                                                                                                                                                                                                                                                                                                      |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.claude/docs/agent-conventions.md`           | Shared rules for every `.claude/agents/` definition: universal anti-rules (no proactive validators, no AI attribution, stay in scope, never guess identifiers) plus standard required reading                                                                                                                                                                                 |
-| `.claude/docs/ai-equipment-reference.md`      | AI equipment-variant files (`common/ai_equipment/`): role-template structure (`category`/`roles`/`priority`), `target_variant` matching, common coverage errors                                                                                                                                                                                                               |
-| `.claude/docs/ai-strategy-reference.md`       | Unit-production and AI strategy system: 5 evaluation layers, on_action entry points, the live `ai_is_threatened` trigger, strategy/template/plan file reference                                                                                                                                                                                                               |
-| `.claude/docs/bug-patterns.md`                | Deduplicated catalog of known MD/HOI4 bug patterns: greppable scan signatures for codebase sweeps, plus adversarial what-could-go-wrong questions for diff review                                                                                                                                                                                                             |
-| `.claude/docs/content-guidelines.md`          | On-demand content-quality checklist (economic, political, military, visual, AI) condensed from the full content-review and new-general guides                                                                                                                                                                                                                                 |
-| `.claude/docs/debug-commands.md`              | In-game console command recipes for testing MD systems, with a focus on the EU/USoE subsystem                                                                                                                                                                                                                                                                                 |
-| `.claude/docs/decision-reference.md`          | Decision structure, icon-field auto-prefix rule, targeted-decision trigger evaluation order/performance, common effect examples                                                                                                                                                                                                                                               |
-| `.claude/docs/diplomatic-action-reference.md` | Scripted diplomatic actions (`common/scripted_diplomatic_actions/`): file listing and ROOT/THIS/PREV scope rules                                                                                                                                                                                                                                                              |
-| `.claude/docs/dynamic-modifier-tooltips.md`   | Tooltip syntax for dynamic modifiers (`common/dynamic_modifiers/`): `adds_dynamic_modifier_tt` vs `modifies_dynamic_modifier_tt`                                                                                                                                                                                                                                              |
-| `.claude/docs/energy-power-balance.md`        | Power-per-build-cost model comparing renewable/nuclear/fossil plants and the tech S-curve design; read before touching power buildings or energy tech                                                                                                                                                                                                                         |
-| `.claude/docs/entity-system.md`               | Mesh → entity → animation chain, three-level lookup, `gfx/entities/` organisation, pdxmesh naming, division designer performance note. Also landmark buildings: state-file placement, `map/buildings.txt` spawn points, `provinces.bmp` validation, heightmap-calibrated y, rendering gotchas                                                                                 |
-| `.claude/docs/event-reference.md`             | Event structure/examples (triggered, cross-country, news, historical ETD), the complete TT*IF*\* tooltip pattern, `random_events` dispatch mechanics                                                                                                                                                                                                                          |
-| `.claude/docs/faction-rules.md`               | `common/factions/rules/` conventions: rule types and their trigger scopes, derived from the engine's own `_documentation.md`                                                                                                                                                                                                                                                  |
-| `.claude/docs/focus-tree-reference.md`        | Focus tree structure, required property order, shared/joint focus conventions, bankruptcy-guard and building-effect examples                                                                                                                                                                                                                                                  |
-| `.claude/docs/hoi4-data-structures.md`        | Full reference for HOI4 variable types (persistent/temporary/global), arrays, loops, collections, and formatted loc                                                                                                                                                                                                                                                           |
-| `.claude/docs/idea-reference.md`              | Idea structure/example: picture requirement, tiered naming, `name =` loc-redirection gotchas                                                                                                                                                                                                                                                                                  |
-| `.claude/docs/known-false-positives.md`       | Patterns that look like bugs but are intentional; review/fix/simplify agents must skip them                                                                                                                                                                                                                                                                                   |
-| `.claude/docs/localisation-rules.md`          | English-only `.yml` editing rules: BOM/encoding, one-loc-file-per-country naming, key formatting                                                                                                                                                                                                                                                                              |
-| `.claude/docs/md-custom-modifiers.md`         | Full list of non-vanilla modifier keys defined in `common/modifier_definitions/`, grouped by category                                                                                                                                                                                                                                                                         |
-| `.claude/docs/meta-effect-patterns.md`        | `token:` references and `meta_effect`/`meta_trigger` runtime substitution for collapsing N-branch dispatch into one parameterized call, keeping `[!]` tooltips alive                                                                                                                                                                                                          |
-| `.claude/docs/mio-reference.md`               | MIO structure/example, valid modifier keys per block type (organisation/production/equipment), trait-grid layout rules                                                                                                                                                                                                                                                        |
-| `.claude/docs/music-system.md`                | Music: `.asset` definitions, `.txt` playlists, all MD stations (Main, Regional, UKR-RUS war, Synthwave), chance weight logic, adding tracks, radio station GUI wiring                                                                                                                                                                                                         |
-| `.claude/docs/namelist-reference.md`          | Quick reference for division/ship-hull/ship-class-design name-list files and their mandatory groups                                                                                                                                                                                                                                                                           |
-| `.claude/docs/oob-equipment-reference.md`     | OOB equipment type mapping (NSB vs non-NSB), stockpile syntax, chassis/variant validation, common errors                                                                                                                                                                                                                                                                      |
-| `.claude/docs/oob-variants-reference.md`      | Full OOB file structure (DLC-gated `history/units/` patterns) and equipment-variant reference; the complete version behind `oob-equipment-reference.md`'s quick lookup                                                                                                                                                                                                        |
-| `.claude/docs/performance-patterns.md`        | Hoisting invariants, temp-variable booleans, GUI dirty counters, engine arrays, clamp-before-division, early-out guards                                                                                                                                                                                                                                                       |
-| `.claude/docs/refactor-checklist.md`          | Breaking-change checks for prefix renames, array migrations, event/decision namespace, GUI/GFX cross-references, scope safety, country-tag removal                                                                                                                                                                                                                            |
-| `.claude/docs/scripted-gui-patterns.md`       | Data-driven catalogs via `dynamic_lists` + scripted-loc dispatchers, MD dirty-variable standard (`update_<system>_dirty_variable`), filter checkbox image-swap, per-entry tooltips with ✓/✗                                                                                                                                                                                   |
-| `.claude/docs/scripted-gui-rules.md`          | Raw scripted_gui mechanics: file-prefix naming, window/effects structure, dirty-variable performance rule, AI configuration blocks                                                                                                                                                                                                                                            |
-| `.claude/docs/scripting-edge-cases.md`        | Niche scripting pitfalls moved out of the always-loaded `general-rules.md`: `change_influence_percentage` defaults, `^index` array semantics, vacant-office gating, per-effect scope interpolation rules for `add_to_war` / `add_*_opinion_modifier` / `add_relation_modifier` (FROM in events fired from on_actions or `random_scope_in_array` defaults to the firing scope) |
-| `.claude/docs/search-filters.md`              | Complete `search_filters` reference: every `FOCUS_FILTER_*`, Israel-specific filter mapping, subcategory logic for ISRMILITARY/ISRECON, common mistakes checklist                                                                                                                                                                                                             |
-| `.claude/docs/simplification-patterns.md`     | Replacing N-branch lookups with arrays, parameterized scripted loc, shared helpers, meta_effect consolidation                                                                                                                                                                                                                                                                 |
-| `.claude/docs/sound-system.md`                | Sound: `sound`/`soundeffect` definitions, combat sounds, country voicelines (23 countries), categories/compressors, adding voicelines, audio file requirements                                                                                                                                                                                                                |
-| `.claude/docs/typo-watchlist.md`              | Recurring localisation typos to check for during review                                                                                                                                                                                                                                                                                                                       |
-| `.claude/docs/un-system-reference.md`         | UN voting/membership/election system architecture: owning files, vote lifecycle invariants, the SC/GA vote-type catalog, and the recipe for adding a new resolution type                                                                                                                                                                                                      |
-| `.claude/docs/validation-pipeline.md`         | Pre-commit vs CI hook-set divergence: which validators are CI-only, pre-commit-only, or dual-wired, plus the tooling-deprecation watch                                                                                                                                                                                                                                        |
+All files below live in `.claude/docs/`.
+
+| File                             | Contents                                                     |
+| -------------------------------- | ------------------------------------------------------------ |
+| `agent-conventions.md`           | Rules for `.claude/agents/` definitions: anti-rules, reading |
+| `ai-equipment-reference.md`      | AI equipment variants: role templates, coverage errors       |
+| `ai-strategy-reference.md`       | Unit production: 5 layers, on_action entries, plan files     |
+| `bug-patterns.md`                | Known bug patterns: scan signatures, diff-review questions   |
+| `content-guidelines.md`          | Content checklist: economic, political, military, visual, AI |
+| `debug-commands.md`              | Console recipes for testing MD systems (EU/USoE focus)       |
+| `decision-reference.md`          | Decision structure, targeted-decision perf, examples         |
+| `diplomatic-action-reference.md` | Scripted diplomatic actions: files, ROOT/THIS/PREV scopes    |
+| `dynamic-modifier-tooltips.md`   | `adds_` vs `modifies_dynamic_modifier_tt` tooltips           |
+| `energy-power-balance.md`        | Power-per-cost + tech S-curves; read before energy edits     |
+| `entity-system.md`               | Mesh→entity→animation chain, pdxmesh naming, landmarks       |
+| `event-reference.md`             | Event types, TT*IF*\* tooltips, `random_events` dispatch     |
+| `faction-rules.md`               | `common/factions/rules/`: rule types and trigger scopes      |
+| `focus-tree-reference.md`        | Focus structure, property order, bankruptcy-guard examples   |
+| `formable-reference.md`          | Formable paths, AI ratchet, sentinel, cross-guards, traps    |
+| `hoi4-data-structures.md`        | Variables, arrays, loops, collections, formatted loc         |
+| `idea-reference.md`              | Idea structure: pictures, tiered naming, `name =` gotchas    |
+| `known-false-positives.md`       | Intentional bug-lookalikes; review agents must skip them     |
+| `localisation-rules.md`          | English `.yml` rules: BOM, file naming, key formatting       |
+| `md-custom-modifiers.md`         | Non-vanilla modifier keys, grouped by category               |
+| `meta-effect-patterns.md`        | `meta_effect`/`meta_trigger` dispatch; `[!]` tooltips        |
+| `mio-reference.md`               | MIO structure, per-block modifier keys, trait-grid rules     |
+| `music-system.md`                | Stations, playlists, chance weights, radio GUI wiring        |
+| `namelist-reference.md`          | Division/ship name-list files and mandatory groups           |
+| `oob-equipment-reference.md`     | OOB equipment types (NSB), stockpiles, variant errors        |
+| `oob-variants-reference.md`      | Full OOB + variant reference (`history/units/`)              |
+| `performance-patterns.md`        | Hoisting, dirty counters, clamp-before-divide, early-outs    |
+| `refactor-checklist.md`          | Rename/migration sweeps: namespaces, GUI/GFX refs, tags      |
+| `scripted-gui-patterns.md`       | `dynamic_lists`, loc dispatchers, dirty-var standard         |
+| `scripted-gui-rules.md`          | scripted_gui mechanics: structure, dirty-var perf, AI        |
+| `scripting-edge-cases.md`        | Niche pitfalls: temp-var defaults, `^index`, vacant office   |
+| `search-filters.md`              | Every `FOCUS_FILTER_*`, Israel subcats, common mistakes      |
+| `simplification-patterns.md`     | Lookups→arrays, parameterized loc, shared helpers            |
+| `sound-system.md`                | Sound defs, combat sounds, voicelines, compressors           |
+| `typo-watchlist.md`              | Recurring localisation typos to check in review              |
+| `un-system-reference.md`         | UN votes/elections: invariants, new-resolution recipe        |
+| `validation-pipeline.md`         | Pre-commit vs CI validator divergence; deprecation watch     |
+
+Detail moved out of the table:
+
+- `agent-conventions.md` anti-rules: no proactive validators, no AI attribution, stay in scope, never guess identifiers.
+- `ai-equipment-reference.md` role-template structure keys: `category`/`roles`/`priority`.
+- `entity-system.md` landmark buildings: state-file placement, `map/buildings.txt` spawn points, `provinces.bmp` validation, heightmap-calibrated y, rendering gotchas; plus a division-designer performance note.
+- `formable-reference.md` paths: 23 decision formables, EU111 USoE, EU112 EFS, UAR, Yugoslavia, United States of Africa, Event Horizon, focus-tree unions; plus known traps and maintenance rules.
+- `music-system.md` stations: Main, Regional, UKR-RUS war, Synthwave.
+- `scripted-gui-patterns.md`: the dirty-variable standard is `update_<system>_dirty_variable`; checkbox swap = filter-checkbox image swap; ✓/✗ tooltips are per-entry.
+- `scripting-edge-cases.md` holds niche pitfalls moved out of the always-loaded `general-rules.md`, including per-effect scope interpolation for `add_to_war` / `add_*_opinion_modifier` / `add_relation_modifier` (FROM in events fired from on_actions or `random_scope_in_array` defaults to the firing scope).
+- `sound-system.md` also covers adding voicelines and audio-file requirements.
 
 ## AI Agent Definitions
 
