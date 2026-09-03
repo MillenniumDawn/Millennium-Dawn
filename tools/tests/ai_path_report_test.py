@@ -396,9 +396,7 @@ def alias_triggers(historical_body: str):
     }
 
 
-def alias_graph(historical_body: str):
-    triggers = alias_triggers(historical_body)
-    focuses = report.parse_focus_file(ALIAS_FILE, "DEN")
+def graph_findings(focuses, triggers):
     by_id = {focus.id: focus for focus in focuses}
     weights = {
         focus.id: [
@@ -407,6 +405,12 @@ def alias_graph(historical_body: str):
         for focus in focuses
     }
     return report._graph_findings(focuses, by_id, weights, ALIAS_STATES, triggers, 0)
+
+
+def alias_graph(historical_body: str):
+    return graph_findings(
+        report.parse_focus_file(ALIAS_FILE, "DEN"), alias_triggers(historical_body)
+    )
 
 
 class TestHistoricalOverride:
@@ -432,17 +436,7 @@ class TestHistoricalOverride:
             ),
         }
         focuses = report.parse_focus_file(FOCUS_FILE, "DEN")[:1]
-        by_id = {focus.id: focus for focus in focuses}
-        weights = {
-            focus.id: [
-                report.focus_weight(focus, state, triggers)[0] for state in ALIAS_STATES
-            ]
-            for focus in focuses
-        }
-        graph = report._graph_findings(
-            focuses, by_id, weights, ALIAS_STATES, triggers, 0
-        )
-        assert graph["historical_override_count"] == 0
+        assert graph_findings(focuses, triggers)["historical_override_count"] == 0
 
 
 class TestMutexBothOwned:
@@ -472,17 +466,7 @@ class TestMutexBothOwned:
                     line=1,
                 )
             ]
-        by_id = {focus.id: focus for focus in focuses}
-        weights = {
-            focus.id: [
-                report.focus_weight(focus, state, triggers)[0] for state in ALIAS_STATES
-            ]
-            for focus in focuses
-        }
-        graph = report._graph_findings(
-            focuses, by_id, weights, ALIAS_STATES, triggers, 0
-        )
-        assert graph["mutex_both_owned_count"] == 0
+        assert graph_findings(focuses, triggers)["mutex_both_owned_count"] == 0
 
 
 class TestPathGates:
