@@ -230,53 +230,28 @@ faction_goal_strategic_bombing_campaign = {
 				tooltip = faction_goal_strat_bombers_below_tt
 			}
 			collection_size = {
-				input = {
-					input = game:all_states
-					operators = {
-						limit = {
-							owner = { has_war_with = ROOT }
-							is_core_of = OWNER
-							days_since_last_strategic_bombing < 30
-						}
-					}
-					name = ENEMY_FACTION_STATES_BOMBED
-				}
+				input = collection:faction_enemy_owned_core_states_recently_bombed_collection
 				value < 3
 			}
 		}
 	}
+	select_effect = {
+		faction_goal_update_strategic_bombing_campaign_cache = yes
+	}
 	completed = {
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_strategic_bombers_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_deployed_planes_with_type@large_plane_airframe
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_strategic_bombers_cache
+				value = 200
+				compare = greater_than_or_equals
+				tooltip = faction_goal_strat_bombers_at_least_tt
 			}
-		}
-		check_variable = {
-			var = num_strategic_bombers_faction
-			value = 200
-			compare = greater_than_or_equals
-			tooltip = faction_goal_strat_bombers_at_least_tt
-		}
-		collection_size = {
-			input = {
-				input = game:all_states
-				operators = {
-					limit = {
-						owner = { has_war_with = ROOT }
-						is_core_of = OWNER
-						days_since_last_strategic_bombing < 30
-					}
-				}
-				name = ENEMY_FACTION_STATES_BOMBED
+			check_variable = {
+				var = faction_goal_recently_bombed_states_cache
+				value = 3
+				compare = greater_than_or_equals
+				tooltip = faction_goal_recently_bombed_states_at_least_tt
 			}
-			value > 2
 		}
 	}
 	complete_effect = {
