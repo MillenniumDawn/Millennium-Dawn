@@ -8,9 +8,21 @@ steal_from_party = {
 			set_temp_variable = { outlook_party_index = steal_party_index }
 			set_outlook_from_party_index = yes
 			if = {
-				limit = { NOT = { has_government = var:outlook_ideology } }
-				add_popularity = { ideology = var:outlook_ideology popularity = -0.01 }
+				limit = {
+					NOT = {
+						OR = {
+							AND = { check_variable = { outlook_id = 0 } has_government = democratic }
+							AND = { check_variable = { outlook_id = 1 } has_government = communism }
+							AND = { check_variable = { outlook_id = 2 } has_government = fascism }
+							AND = { check_variable = { outlook_id = 3 } has_government = neutrality }
+							AND = { check_variable = { outlook_id = 4 } has_government = nationalist }
+						}
+					}
+				}
+				set_temp_variable = { outlook_popularity_change = -0.01 }
+				change_outlook_popularity = yes
 			}
+			set_temp_variable = { temp_outlook_increase = 0 }
 			set_temp_variable = { party_index = steal_party_index }
 			set_temp_variable = { party_popularity_increase = -0.01 }
 			change_relative_party_popularity = yes
@@ -179,42 +191,67 @@ set_party_index_to_ruling_party = {
 # Parameters:
 # set_temp_variable = { outlook_party_index = X }
 # set_outlook_from_party_index = yes
-# Sets the country variable outlook_ideology (vanilla ideology token) and the temp
-# variables outlook_id (0-4) and outlook_start / outlook_end (half-open sibling range).
+# Sets the temp variables outlook_id (0-4) and outlook_start / outlook_end
+# (half-open sibling range).
 set_outlook_from_party_index = {
+	set_temp_variable = {
+		outlook_id = {
+			value = { value = outlook_party_index greater_than = 3 }
+			add = { value = outlook_party_index greater_than = 9 }
+			add = { value = outlook_party_index greater_than = 11 }
+			add = { value = outlook_party_index greater_than = 19 }
+		}
+	}
+	set_temp_variable = {
+		outlook_start = {
+			value = { value = outlook_party_index greater_than = 3 multiply = 4 }
+			add = { value = outlook_party_index greater_than = 9 multiply = 6 }
+			add = { value = outlook_party_index greater_than = 11 multiply = 2 }
+			add = { value = outlook_party_index greater_than = 19 multiply = 8 }
+		}
+	}
+	set_temp_variable = {
+		outlook_end = {
+			value = 4
+			add = { value = outlook_party_index greater_than = 3 multiply = 6 }
+			add = { value = outlook_party_index greater_than = 9 multiply = 2 }
+			add = { value = outlook_party_index greater_than = 11 multiply = 8 }
+			add = { value = outlook_party_index greater_than = 19 multiply = 4 }
+		}
+	}
+}
+
+set_outlook_popularity_from_id = {
+	set_temp_variable = {
+		outlook_popularity = {
+			value = { value = outlook_id equals = 0 multiply = party_popularity@democratic }
+			add = { value = outlook_id equals = 1 multiply = party_popularity@communism }
+			add = { value = outlook_id equals = 2 multiply = party_popularity@fascism }
+			add = { value = outlook_id equals = 3 multiply = party_popularity@neutrality }
+			add = { value = outlook_id equals = 4 multiply = party_popularity@nationalist }
+		}
+	}
+}
+
+change_outlook_popularity = {
 	if = {
-		limit = { check_variable = { outlook_party_index < 4 } }
-		set_temp_variable = { outlook_id = 0 }
-		set_temp_variable = { outlook_start = 0 }
-		set_temp_variable = { outlook_end = 4 }
-		set_variable = { outlook_ideology = token:democratic }
+		limit = { check_variable = { outlook_id = 0 } }
+		add_popularity = { ideology = democratic popularity = outlook_popularity_change }
 	}
 	else_if = {
-		limit = { check_variable = { outlook_party_index < 10 } }
-		set_temp_variable = { outlook_id = 1 }
-		set_temp_variable = { outlook_start = 4 }
-		set_temp_variable = { outlook_end = 10 }
-		set_variable = { outlook_ideology = token:communism }
+		limit = { check_variable = { outlook_id = 1 } }
+		add_popularity = { ideology = communism popularity = outlook_popularity_change }
 	}
 	else_if = {
-		limit = { check_variable = { outlook_party_index < 12 } }
-		set_temp_variable = { outlook_id = 2 }
-		set_temp_variable = { outlook_start = 10 }
-		set_temp_variable = { outlook_end = 12 }
-		set_variable = { outlook_ideology = token:fascism }
+		limit = { check_variable = { outlook_id = 2 } }
+		add_popularity = { ideology = fascism popularity = outlook_popularity_change }
 	}
 	else_if = {
-		limit = { check_variable = { outlook_party_index < 20 } }
-		set_temp_variable = { outlook_id = 3 }
-		set_temp_variable = { outlook_start = 12 }
-		set_temp_variable = { outlook_end = 20 }
-		set_variable = { outlook_ideology = token:neutrality }
+		limit = { check_variable = { outlook_id = 3 } }
+		add_popularity = { ideology = neutrality popularity = outlook_popularity_change }
 	}
 	else = {
-		set_temp_variable = { outlook_id = 4 }
-		set_temp_variable = { outlook_start = 20 }
-		set_temp_variable = { outlook_end = 24 }
-		set_variable = { outlook_ideology = token:nationalist }
+		add_popularity = { ideology = nationalist popularity = outlook_popularity_change }
 	}
 }
 
@@ -240,12 +277,14 @@ change_relative_party_popularity = {
 	set_outlook_from_party_index = yes
 	# If you have the optional parameter. First ADD the new outlook percentage.
 	if = { limit = { NOT = { check_variable = { temp_outlook_increase = 0 } } }
-		hidden_effect = { add_popularity = { ideology = var:outlook_ideology popularity = temp_outlook_increase } }
+		set_temp_variable = { outlook_popularity_change = temp_outlook_increase }
+		hidden_effect = { change_outlook_popularity = yes }
 		add_to_variable = { party_pop_array^party_index = party_popularity_increase }
 	}
 	else = {
+		set_outlook_popularity_from_id = yes
 		#Set the old remainder Outlook based on non-boosted parties
-		set_temp_variable = { old_outlook_remainder = party_popularity@outlook_ideology }
+		set_temp_variable = { old_outlook_remainder = outlook_popularity }
 		subtract_from_temp_variable = { old_outlook_remainder = party_pop_array^party_index }
 		if = {
 			limit = {
@@ -259,7 +298,7 @@ change_relative_party_popularity = {
 		if = {
 			limit = { check_variable = { old_outlook_remainder > 0 } }
 			#Set the new remainder Outlook
-			set_temp_variable = { outlook_remainder = party_popularity@outlook_ideology }
+			set_temp_variable = { outlook_remainder = outlook_popularity }
 			subtract_from_temp_variable = { outlook_remainder = party_pop_array^party_index }
 			#Scale all non-boosted parties
 			divide_temp_variable = { outlook_remainder = old_outlook_remainder }
@@ -294,9 +333,11 @@ effect_puppet_match_ruling_party_to_overlord = {		#Used in target scope
 		set_temp_variable = { puppet_outlook_swing = 0.60 }
 		set_temp_variable = { outlook_party_index = rul_party_temp }
 		set_outlook_from_party_index = yes
-		subtract_from_temp_variable = { puppet_outlook_swing = party_popularity@outlook_ideology }
+		set_outlook_popularity_from_id = yes
+		subtract_from_temp_variable = { puppet_outlook_swing = outlook_popularity }
 		clamp_temp_variable = { var = puppet_outlook_swing min = 0 }
-		add_popularity = { ideology = var:outlook_ideology popularity = puppet_outlook_swing }
+		set_temp_variable = { outlook_popularity_change = puppet_outlook_swing }
+		change_outlook_popularity = yes
 
 		set_temp_variable = { party_index = rul_party_temp }
 		set_temp_variable = { party_popularity_increase = 0.40 }
@@ -446,10 +487,11 @@ add_up_party_totals = {
 		multiply_variable = { party_pop_array^current_id = 1000 }
 		set_temp_variable = { outlook_party_index = current_id }
 		set_outlook_from_party_index = yes
+		set_outlook_popularity_from_id = yes
 		if = {
 			limit = { check_variable = { pop_total_temp^outlook_id > 0 } }
 			divide_variable = { party_pop_array^current_id = pop_total_temp^outlook_id }
-			multiply_variable = { party_pop_array^current_id = party_popularity@outlook_ideology }
+			multiply_variable = { party_pop_array^current_id = outlook_popularity }
 		}
 		else = {
 			set_variable = { party_pop_array^current_id = 0 }
@@ -1923,9 +1965,24 @@ change_ruling_party_effect = {
 			hidden_effect = {
 				set_temp_variable = { outlook_party_index = rul_party_temp }
 				set_outlook_from_party_index = yes
-				set_politics = {
-					ruling_party = var:outlook_ideology
-					elections_allowed = yes
+				if = {
+					limit = { check_variable = { outlook_id = 0 } }
+					set_politics = { ruling_party = democratic elections_allowed = yes }
+				}
+				else_if = {
+					limit = { check_variable = { outlook_id = 1 } }
+					set_politics = { ruling_party = communism elections_allowed = yes }
+				}
+				else_if = {
+					limit = { check_variable = { outlook_id = 2 } }
+					set_politics = { ruling_party = fascism elections_allowed = yes }
+				}
+				else_if = {
+					limit = { check_variable = { outlook_id = 3 } }
+					set_politics = { ruling_party = neutrality elections_allowed = yes }
+				}
+				else = {
+					set_politics = { ruling_party = nationalist elections_allowed = yes }
 				}
 			}
 		}
@@ -1940,9 +1997,24 @@ change_ruling_party_effect = {
 			hidden_effect = {
 				set_temp_variable = { outlook_party_index = rul_party_temp }
 				set_outlook_from_party_index = yes
-				set_politics = {
-					ruling_party = var:outlook_ideology
-					elections_allowed = no
+				if = {
+					limit = { check_variable = { outlook_id = 0 } }
+					set_politics = { ruling_party = democratic elections_allowed = no }
+				}
+				else_if = {
+					limit = { check_variable = { outlook_id = 1 } }
+					set_politics = { ruling_party = communism elections_allowed = no }
+				}
+				else_if = {
+					limit = { check_variable = { outlook_id = 2 } }
+					set_politics = { ruling_party = fascism elections_allowed = no }
+				}
+				else_if = {
+					limit = { check_variable = { outlook_id = 3 } }
+					set_politics = { ruling_party = neutrality elections_allowed = no }
+				}
+				else = {
+					set_politics = { ruling_party = nationalist elections_allowed = no }
 				}
 			}
 		}
