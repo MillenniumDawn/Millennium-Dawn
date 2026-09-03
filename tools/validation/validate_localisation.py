@@ -43,11 +43,14 @@ def _should_skip(filename: str) -> bool:
 # --- Multiprocessing helpers ---
 
 
+def _loc_body_lines(filename: str) -> List[str]:
+    return FileOpener.open_text_file(filename, strip_comments_flag=True).split("\n")[1:]
+
+
 def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    lines = text_file.split("\n")[1:]
+    lines = _loc_body_lines(filename)
     for line_idx, line in enumerate(lines):
         if line.count("[") != line.count("]"):
             results.append(
@@ -69,6 +72,12 @@ _PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
 # `KEY:0 "value"` lines across two lines and rewrote double quotes to single
 # quotes. Paradox YAML is not real YAML — both mangle silently in-game rather
 # than erroring, so they must be caught here.
+# Opinion modifiers sit exactly one level under the file's `opinion_modifiers
+# = { }` wrapper. Spaces are accepted alongside the tab MD actually uses, but
+# only one level deep — `\s+` would swallow blank lines and match nested blocks.
+_OPINION_MODIFIER_RE = re.compile(
+    r"^(?:\t| {1,4})([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE
+)
 _MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
 _MANGLED_SINGLE_QUOTE_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*'.*'\s*$")
 
@@ -216,8 +225,7 @@ _TYPO_RUNTIME_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$[\w.@|+\-]+\$|£[\w.@\-]+
 def process_yml_for_typos(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    lines = text_file.split("\n")[1:]
+    lines = _loc_body_lines(filename)
     for line_idx, line in enumerate(lines):
         if not line.strip():
             continue
@@ -869,6 +877,45 @@ class Validator(BaseValidator):
             "Orphaned tooltip keys (defined in loc but never referenced):",
         )
 
+    def validate_opinion_modifiers(self, loc_keys: Dict, scripted_loc_keys: set):
+        self._log_section("Checking opinion modifier localisation...")
+
+        modifier_files = self._collect_files(
+            ["common/opinion_modifiers/**/*.txt"], ignore_staged=True
+        )
+        modifiers: Dict[str, str] = {}
+        for filepath in modifier_files:
+            try:
+                text = FileOpener.open_text_file(
+                    filepath, lowercase=False, strip_comments_flag=True
+                )
+            except OSError:
+                continue
+            basename = os.path.basename(filepath)
+            for match in _OPINION_MODIFIER_RE.finditer(text):
+                name = match.group(1)
+                if name not in modifiers:
+                    modifiers[name] = basename
+
+        missing = []
+        for name, basename in sorted(modifiers.items()):
+            if (
+                name in loc_keys
+                or name in scripted_loc_keys
+                or name in VANILLA_LOC_KEYS
+            ):
+                continue
+            missing.append(
+                f"{name} - {basename}: opinion modifier without localisation"
+            )
+        self._report(
+            missing,
+            "\u2713 All opinion modifiers have localisation",
+            "Opinion modifiers without localisation:",
+            severity=Severity.WARNING,
+            category="missing-opinion-modifier-localisation",
+        )
+
     def run_validations(self):
         if self.staged_only and not self.staged_files:
             self.log(
@@ -897,6 +944,7 @@ class Validator(BaseValidator):
             self.validate_orphaned_tooltip_keys(
                 loc_keys, skipped_keys, scripted_loc_keys
             )
+            self.validate_opinion_modifiers(loc_keys, scripted_loc_keys)
 
 
 if __name__ == "__main__":

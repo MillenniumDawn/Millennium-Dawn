@@ -98,7 +98,7 @@ Inside a math expression (`set_variable = { X = { value = ... } }`) a malformed 
 
 ## Variable and array operations do not auto-tooltip
 
-`check_variable`, `is_in_array`, `set/add_to/subtract_from/multiply/divide/clamp_variable`, `add_to/remove_from_array` produce no tooltip — bare in `available`/`visible` the player sees nothing (triggers) or a blank line (effects). Wrap triggers in `custom_trigger_tooltip = { tooltip = key ... }` and effects with `custom_effect_tooltip`. Named scripted triggers DO auto-tooltip via their name's loc key — prefer them over raw variable checks in player-facing blocks. Bare `check_variable` in an `available` block is caught (warning) by `validate_variables.py`; `visible` is exempt, since a failing `visible` hides the object outright and renders no tooltip either way.
+`check_variable`, `is_in_array`, `set/add_to/subtract_from/multiply/divide/clamp_variable`, `add_to/remove_from_array` produce no tooltip — bare in `available`/`visible` the player sees nothing (triggers) or a blank line (effects). Wrap triggers in `custom_trigger_tooltip = { tooltip = key ... }` and effects with `custom_effect_tooltip`. Named scripted triggers DO auto-tooltip via their name's loc key — prefer them over raw variable checks in player-facing blocks. Bare `check_variable` in an `available` block is caught (error) by `validate_variables.py`; `visible` is exempt, since a failing `visible` hides the object outright and renders no tooltip either way.
 
 ## Faction triggers
 
@@ -113,6 +113,18 @@ Don't open a scope to check one trigger when a flat form exists — every `TAG =
 | `TAG = { exists = yes }`        | `country_exists = TAG` |
 | `TAG = { is_puppet = yes }`     | `is_puppet_of = TAG`   |
 | `TAG = { has_war_with = ROOT }` | `has_war_with = TAG`   |
+
+## Never cache a boolean into a daily flag to feed the AI
+
+Do not add an `on_daily_TAG` block that set/clears flags whose only readers are `ai_strategy` `enable` blocks or focus `ai_will_do` modifiers. Both are already evaluated lazily by the engine; a daily pass makes the check _more_ expensive, not less, and lags real game state by up to a day. Write the condition inline in `enable`, the way `ALG_cancel_war_neighbours` and `BRA_cancel_war_URG` do.
+
+`.claude/docs/performance-patterns.md` has two adjacent sections that are easy to confuse. _Cache `ai_strategy` enable Math Into a Daily Variable_ covers **arithmetic chains only** (`set_temp_variable` / `multiply_temp_variable` / …). For a boolean condition the next section applies: _Prefer a Live Trigger Over a Daily-Refreshed Cached Flag_.
+
+`on_daily_BOS` in `common/on_actions/MD_event_on_actions.txt` is a surviving example of the wrong shape. Do not copy it.
+
+## Don't re-add per-tag war brakes
+
+`MD_avoid_new_wars_when_outmatched` in `common/ai_strategy/MD_war_declaration_ai.txt` already brakes every country at `enemies_strength_ratio > 0.75`. A per-tag `avoid_starting_wars` on a stricter ratio is a strict subset of it and can never fire on a tick it does not already own — dead code. A per-tag brake earns its place only on a gate the strength ratio cannot express. Read `.claude/docs/ai-strategy-reference.md` before editing `common/ai_strategy/`, including when you wrote the section yourself.
 
 ## send_equipment for country-to-country transfers
 

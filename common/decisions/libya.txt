@@ -42,18 +42,18 @@ libya_oil_nationalisation = {
 			modifier = {
 				factor = 0
 				OR = {
-					is_in_array = { ruling_party = 2 }
-					is_in_array = { ruling_party = 15 }
-					is_in_array = { ruling_party = 16 }
+					check_variable = { ruling_party = 2 }
+					check_variable = { ruling_party = 15 }
+					check_variable = { ruling_party = 16 }
 				}
 			}
 			#Communists always want to nationalise
 			modifier = {
 				factor = 0
 				OR = {
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { ruling_party = 19 }
-					is_in_array = { ruling_party = 21 }
+					check_variable = { ruling_party = 4 }
+					check_variable = { ruling_party = 19 }
+					check_variable = { ruling_party = 21 }
 				}
 				check_variable = { interest_rate < 8 }
 			}
@@ -115,18 +115,18 @@ libya_oil_nationalisation = {
 			modifier = {
 				factor = 5
 				OR = {
-					is_in_array = { ruling_party = 2 }
-					is_in_array = { ruling_party = 15 }
-					is_in_array = { ruling_party = 16 }
+					check_variable = { ruling_party = 2 }
+					check_variable = { ruling_party = 15 }
+					check_variable = { ruling_party = 16 }
 				}
 			}
 			#Communists don't sell
 			modifier = {
 				factor = 0
 				OR = {
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { ruling_party = 19 }
-					is_in_array = { ruling_party = 21 }
+					check_variable = { ruling_party = 4 }
+					check_variable = { ruling_party = 19 }
+					check_variable = { ruling_party = 21 }
 				}
 			}
 			#Don't sell if our influence is too low
@@ -6210,7 +6210,7 @@ libya_libyan_foreign_policy = {
 			has_completed_focus = LBA_casablanca_accords
 			OR = {
 				NOT = { has_country_flag = libya_casablanca_accords_signed_by_MOR }
-				has_country_flag = libya_casablanca_accords_MOR_left
+				has_country_flag = libya_casablanca_accords_left_MOR
 			}
 			has_active_mission = libya_casablanca_accords
 		}
@@ -6263,7 +6263,7 @@ libya_libyan_foreign_policy = {
 			has_completed_focus = LBA_casablanca_accords
 			OR = {
 				NOT = { has_country_flag = libya_casablanca_accords_signed_by_SHA }
-				has_country_flag = libya_casablanca_accords_SHA_left
+				has_country_flag = libya_casablanca_accords_left_SHA
 			}
 			has_active_mission = libya_casablanca_accords
 		}
@@ -6316,7 +6316,7 @@ libya_libyan_foreign_policy = {
 			has_completed_focus = LBA_casablanca_accords
 			OR = {
 				NOT = { has_country_flag = libya_casablanca_accords_signed_by_ALG }
-				has_country_flag = libya_casablanca_accords_ALG_left
+				has_country_flag = libya_casablanca_accords_left_ALG
 			}
 			has_active_mission = libya_casablanca_accords
 		}
@@ -6369,7 +6369,7 @@ libya_libyan_foreign_policy = {
 			has_completed_focus = LBA_casablanca_accords
 			OR = {
 				NOT = { has_country_flag = libya_casablanca_accords_signed_by_MAU }
-				has_country_flag = libya_casablanca_accords_MAU_left
+				has_country_flag = libya_casablanca_accords_left_MAU
 			}
 			has_active_mission = libya_casablanca_accords
 		}
@@ -7149,15 +7149,13 @@ libya_aftermath_of_civil_war = {
 		visible = {
 			392 = { is_demilitarized_zone = yes }
 			NOT = { has_war_with = ASL }
+			has_border_war = no
 		}
 
 		available = {
-			has_border_war = no
-			OR = {
-				any_country_division = {
+			any_country_division = {
+				OR = {
 					division_has_majority_template = Special_Forces
-				}
-				any_country_division = {
 					division_has_majority_template = L_Air_Inf_Bat
 				}
 			}
@@ -7207,7 +7205,7 @@ libya_aftermath_of_civil_war = {
 					392 = {
 						set_demilitarized_zone = no
 						if = {
-							limit = { air_base > 0 }
+							limit = { air_base > 1 }
 							remove_building = {
 								type = air_base
 								level = 2
@@ -7229,6 +7227,7 @@ libya_aftermath_of_civil_war = {
 
 		cancel_trigger = {
 			OR = {
+				has_war = yes
 				has_country_leader = {
 					character = LBA_khalifa_haftar
 					ruling_only = yes
@@ -7272,7 +7271,14 @@ libya_aftermath_of_civil_war = {
 			clr_country_flag = dynamic_flag
 			clr_country_flag = dynamic_rebel_flag
 			hidden_effect = {
-				start_civil_war = {
+				if = {
+					limit = {
+						has_war = no
+						country_exists = ASL
+						ASL = { has_war = no }
+					}
+					hidden_effect = {
+						start_civil_war = {
 					ruling_party = ROOT
 					ideology = nationalist
 					army_ratio = 0
@@ -7307,16 +7313,19 @@ libya_aftermath_of_civil_war = {
 						complete_national_focus = LBA_libyan_national_army
 					}
 					complete_national_focus = LBA_call_back_haftar
-					load_oob = "LBA_LNA_forces"
-				}
-				LNA = {
+						load_oob = "LBA_LNA_forces"
+					}
+					if = {
+						limit = { country_exists = LNA }
+						LNA = {
 					declare_war_on = {
 						target = ASL
 						type = civil_war
 					}
-					add_civil_war_target = ASL
-				}
-				declare_war_on = {
+						add_civil_war_target = ASL
+					}
+					}
+					declare_war_on = {
 					target = ASL
 					type = civil_war
 				}
@@ -7381,7 +7390,9 @@ libya_aftermath_of_civil_war = {
 						}
 					}
 				}
+				}
 			}
 		}
 	}
+}
 }

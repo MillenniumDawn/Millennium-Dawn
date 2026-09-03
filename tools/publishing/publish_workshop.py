@@ -230,8 +230,8 @@ def dir_stats(root: Path) -> tuple[int, int]:
 def _archive_path_excluded(path: PurePosixPath, excludes: set[str]) -> bool:
     root_only = {pattern for pattern in excludes if pattern in ROOT_ONLY_EXCLUDES}
     anywhere = excludes - root_only
-    if len(path.parts) == 1 and any(
-        fnmatch.fnmatch(path.name, pattern) for pattern in root_only
+    if path.parts and any(
+        fnmatch.fnmatch(path.parts[0], pattern) for pattern in root_only
     ):
         return True
     return any(

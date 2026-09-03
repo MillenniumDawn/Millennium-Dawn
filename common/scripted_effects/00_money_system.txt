@@ -2004,6 +2004,53 @@ calculate_additional_income_rate = {
 		set_variable = { additional_income_gulf_exploitation = { value = gdp_total multiply = 0.0003 } }
 		add_to_variable = { additional_income_rate = additional_income_gulf_exploitation }
 	}
+	# Saudi Arabia - Seperate from GULF
+	# === Saudi pipeline Additional Income (added by SAU pipeline feature) ===
+	if = { limit = { original_tag = SAU }
+		set_variable = { additional_income_SAU_pipeline_export = 0 }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 1.0 } }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 1.15 } }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 1.25 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 1.0 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 1.15 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 1.25 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 1.0 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 1.15 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 1.25 } }
+		if = { limit = { check_variable = { additional_income_SAU_pipeline_export > 0 } }
+			add_to_variable = { additional_income_rate = additional_income_SAU_pipeline_export }
+		}
+	}
+	# One entry per transit country the pipeline crosses; a host on more than one route is paid for each.
+	if = {
+		limit = {
+			OR = {
+				has_idea = SAU_pipeline_transit_YEM_t1 has_idea = SAU_pipeline_transit_YEM_t2 has_idea = SAU_pipeline_transit_YEM_t3
+				has_idea = SAU_pipeline_transit_JOR_t1 has_idea = SAU_pipeline_transit_JOR_t2 has_idea = SAU_pipeline_transit_JOR_t3
+				has_idea = SAU_pipeline_transit_SYR_t1 has_idea = SAU_pipeline_transit_SYR_t2 has_idea = SAU_pipeline_transit_SYR_t3
+				has_idea = SAU_pipeline_transit_IRQ_t1 has_idea = SAU_pipeline_transit_IRQ_t2 has_idea = SAU_pipeline_transit_IRQ_t3
+				has_idea = SAU_pipeline_transit_TUR_t1 has_idea = SAU_pipeline_transit_TUR_t2 has_idea = SAU_pipeline_transit_TUR_t3
+			}
+		}
+		set_variable = { additional_income_SAU_pipeline_transit = 0 }
+		if = { limit = { has_idea = SAU_pipeline_transit_YEM_t1 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.0 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_YEM_t2 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.15 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_YEM_t3 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.25 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_JOR_t1 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.0 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_JOR_t2 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.15 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_JOR_t3 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.25 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_SYR_t1 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.0 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_SYR_t2 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.15 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_SYR_t3 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.25 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_IRQ_t1 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.0 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_IRQ_t2 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.15 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_IRQ_t3 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.25 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_TUR_t1 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.0 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_TUR_t2 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.15 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_TUR_t3 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.25 } }
+		add_to_variable = { additional_income_rate = additional_income_SAU_pipeline_transit }
+	}
+
 	#Sold Equipment Tax Income
 	if = {
 		limit = { check_variable = { market_sold_contracts > 0 } }
@@ -2326,6 +2373,8 @@ calculate_additional_income_rate = {
 	if = { limit = { has_idea = CPD_war_reparations_receiver }
 		add_to_variable = { additional_income_rate = CPD_reparations_weekly }
 	}
+
+
 }
 
 # Effect: update_tension_premium
@@ -2387,6 +2436,28 @@ calculate_interest_rate = {
 
 		#Calculate weekly debt rate based on interest (52 weeks in a year)
 		set_variable = { debt_rate = { value = debt multiply = 0.00019 multiply = interest_rate } }
+
+		# Only debt denominated in an external reserve currency takes the exchange hit.
+		# Must follow the set_variable above: applied before it, the adjustment is
+		# overwritten and never reaches the player.
+		if = {
+			limit = {
+				OR = {
+					has_idea = us_dollar
+					has_idea = euro
+					has_idea = chinese_yuan
+					has_idea = chinese_yuan_2
+					has_idea = chinese_yuan_3
+					has_idea = russia_rouble
+					has_idea = japanese_yen
+					has_idea = british_pound
+					has_idea = swiss_frank
+					has_idea = gulden
+				}
+			}
+			set_temp_variable = { debt_fx_factor = { value = 1 divide = currency_strength } }
+			multiply_variable = { debt_rate = debt_fx_factor }
+		}
 
 		#If interest rate is really high, add additional modifier
 		if = { limit = { check_variable = { interest_rate > 14.999 } }
@@ -4181,6 +4252,26 @@ calculate_additional_expense_rate = {
 	# fraction of GDP captured at sign-time (no double-inflation).
 	if = { limit = { has_idea = CPD_war_reparations_payer }
 		add_to_variable = { additional_expenses_rate = CPD_reparations_weekly }
+	}
+	# Saudi Arabia - Seperate from GULF
+	# === Saudi pipeline transit fees (Additional Expense) ===
+	if = { limit = { original_tag = SAU }
+		set_variable = { additional_expense_SAU_pipeline = 0 }
+		# Yemen route - 1 transit country (Yemen)
+		if = { limit = { has_idea = SAU_yemen_pipeline_t1 } add_to_variable = { additional_expense_SAU_pipeline = 1.0 } }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t2 } add_to_variable = { additional_expense_SAU_pipeline = 1.15 } }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t3 } add_to_variable = { additional_expense_SAU_pipeline = 1.25 } }
+		# Levant route - 2 transit countries (Jordan + Syria)
+		if = { limit = { has_idea = SAU_syria_pipeline_t1 } add_to_variable = { additional_expense_SAU_pipeline = 2.0 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t2 } add_to_variable = { additional_expense_SAU_pipeline = 2.3 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t3 } add_to_variable = { additional_expense_SAU_pipeline = 2.5 } }
+		# Iraq route - 1 transit country (Iraq)
+		if = { limit = { has_idea = SAU_iraq_pipeline_t1 } add_to_variable = { additional_expense_SAU_pipeline = 1.0 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t2 } add_to_variable = { additional_expense_SAU_pipeline = 1.15 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t3 } add_to_variable = { additional_expense_SAU_pipeline = 1.25 } }
+		# Europe extension - 1 transit country (Turkey)
+		if = { limit = { has_country_flag = SAU_turkey_pipeline_open } add_to_variable = { additional_expense_SAU_pipeline = 1.25 } }
+		add_to_variable = { additional_expenses_rate = additional_expense_SAU_pipeline }
 	}
 }
 
