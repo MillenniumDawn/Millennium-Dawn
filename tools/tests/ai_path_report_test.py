@@ -408,6 +408,20 @@ class TestYearSchedule:
             (2022, "denmark_md.400", 298),
         ]
 
+    def test_the_startup_block_is_read_as_the_mod_start_year(self):
+        text = (
+            "MD_event_on_startup_events = {\n"
+            "\tDEN = { country_event = { id = denmark_md.400 days = 94 } }\n"
+            "}\n"
+            "trigger_year_2001_events = {\n"
+            "\tDEN = { country_event = { id = denmark_md.400 days = 158 } }\n"
+            "}\n"
+        )
+        assert report.parse_year_schedule(text, "DEN") == [
+            (2001, "denmark_md.400", 158),
+            (report.START_YEAR, "denmark_md.400", 94),
+        ]
+
 
 class TestWalker:
     def setup_method(self):
