@@ -1,44 +1,5 @@
 ASEAN_decisions = {
 
-	ASEAN_apply_membership = {
-
-		icon = GFX_decision_generic_form_nation
-
-		allowed = { is_asean_nation = yes }
-
-		visible = {
-			NOT = { is_asean_member = yes }
-			has_global_flag = ASEAN_admission_protocols_completed
-		}
-
-		available = { has_political_power > 50 }
-
-		cost = 50
-
-		days_remove = 60
-		days_re_enable = 730
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_apply_membership"
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = -0.02 }
-			modify_treasury_effect = yes
-			random_country = {
-				limit = {
-					is_asean_member_committed = yes
-					OR = {
-						original_tag = IND
-						original_tag = SIA
-						original_tag = SIN
-					}
-				}
-				country_event = { id = asean.4 days = 3 }
-			}
-		}
-
-		ai_will_do = { base = 5 }
-	}
-
 	ASEAN_leave_organisation = {
 
 		icon = GFX_decision_generic_break_treaty
@@ -401,8 +362,8 @@ ASEAN_decisions = {
 				OR = {
 					check_variable = { FROM.ASEAN_breach > 3 }
 					has_country_flag = ASEAN_recent_coup
-					any_country = {
-						is_asean_member = yes
+					any_of_scopes = {
+						array = global.ASEAN_Member
 						has_war_with = FROM
 						NOT = { original_tag = FROM.original_tag }
 					}
@@ -416,19 +377,26 @@ ASEAN_decisions = {
 			check_variable = { global.ASEAN_suspend_candidates > 0 }
 		}
 
-		available = { has_political_power > 150 }
+		available = {
+			has_political_power > 150
+			custom_trigger_tooltip = {
+				tooltip = ASEAN_suspension_vote_already_open_tt
+				NOT = { has_global_flag = ASEAN_suspension_vote_open }
+			}
+		}
 
 		cost = 150
 
-		days_remove = 15
+		days_remove = 30
 		days_re_enable = 365
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_call_suspension_vote"
 			add_political_power = -75
-			set_global_flag = { flag = ASEAN_suspension_vote_open days = 15 value = 1 }
+			set_global_flag = { flag = ASEAN_suspension_vote_open days = 30 value = 1 }
 			set_variable = { global.ASEAN_suspension_vote_yes = 0 }
 			set_variable = { global.ASEAN_suspension_vote_no = 0 }
+			set_variable = { global.ASEAN_suspension_target = FROM.id }
 			FROM = { country_event = { id = asean_crisis.21 days = 5 } }
 			for_each_scope_loop = {
 				array = global.ASEAN_Member
@@ -476,6 +444,7 @@ ASEAN_decisions = {
 		visible = {
 			is_asean_member_committed = yes
 			has_global_flag = ASEAN_suspension_vote_open
+			NOT = { check_variable = { global.ASEAN_suspension_target = ROOT.id } }
 		}
 
 		available = { has_political_power > 100 }
@@ -503,6 +472,7 @@ ASEAN_decisions = {
 			FROM = {
 				is_asean_member = yes
 				has_country_flag = ASEAN_suspended_flag
+				NOT = { original_tag = ROOT.original_tag }
 			}
 		}
 
@@ -542,6 +512,131 @@ ASEAN_decisions = {
 }
 
 ASEAN_accession_decisions = {
+
+	ASEAN_apply_membership = {
+
+		icon = GFX_decision_generic_form_nation
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			NOT = { is_asean_member = yes }
+			has_global_flag = ASEAN_admission_protocols_completed
+		}
+
+		available = {
+			has_political_power > 50
+			custom_trigger_tooltip = {
+				tooltip = ASEAN_application_already_open_tt
+				NOT = { has_global_flag = ASEAN_membership_application_open }
+			}
+		}
+
+		cost = 50
+
+		days_remove = 60
+		days_re_enable = 730
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_apply_membership"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.02 }
+			modify_treasury_effect = yes
+			set_global_flag = { flag = ASEAN_membership_application_open days = 365 value = 1 }
+			set_variable = { global.ASEAN_applicant = ROOT.id }
+			set_variable = { global.ASEAN_membership_endorsements = 0 }
+			add_to_variable = { global.ASEAN_application_id = 1 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	ASEAN_endorse_applicant = {
+
+		icon = GFX_decision_gulf_agree_button
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member_committed = yes
+			has_global_flag = ASEAN_membership_application_open
+			NOT = { check_variable = { ASEAN_last_endorsed_application_id = global.ASEAN_application_id } }
+		}
+
+		available = { has_political_power > 25 }
+
+		cost = 25
+
+		days_remove = 15
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_endorse_applicant"
+			set_variable = { ASEAN_last_endorsed_application_id = global.ASEAN_application_id }
+			add_to_variable = { global.ASEAN_membership_endorsements = 1 }
+			add_opinion_modifier = { target = var:global.ASEAN_applicant modifier = small_increase }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	ASEAN_invite_applicant = {
+
+		icon = GFX_decision_gulf_support_member_button
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member_committed = yes
+			has_global_flag = ASEAN_membership_application_open
+			check_variable = { global.ASEAN_membership_endorsements > 3 }
+			NOT = { var:global.ASEAN_applicant = { is_asean_member = yes } }
+		}
+
+		available = { has_political_power > 50 }
+
+		cost = 50
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_invite_applicant"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+			var:global.ASEAN_applicant = { country_event = { id = asean.1 days = 3 } }
+			clr_global_flag = ASEAN_membership_application_open
+		}
+
+		ai_will_do = { base = 15 }
+	}
+
+	ASEAN_block_applicant = {
+
+		icon = GFX_decision_gulf_block_button
+
+		allowed = { is_asean_nation = yes }
+
+		visible = {
+			is_asean_member_committed = yes
+			has_global_flag = ASEAN_membership_application_open
+			NOT = { check_variable = { ASEAN_last_blocked_application_id = global.ASEAN_application_id } }
+		}
+
+		available = { has_political_power > 75 }
+
+		cost = 75
+
+		days_remove = 15
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ASEAN_block_applicant"
+			set_variable = { ASEAN_last_blocked_application_id = global.ASEAN_application_id }
+			subtract_from_variable = { global.ASEAN_membership_endorsements = 1 }
+			add_opinion_modifier = { target = var:global.ASEAN_applicant modifier = medium_decrease }
+		}
+
+		ai_will_do = { base = 0 }
+	}
 
 	ASEAN_endorse_TIM = {
 

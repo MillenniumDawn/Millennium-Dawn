@@ -15,12 +15,14 @@ ideas = {
 				log = "[GetDateText]: [Root.GetName]: remove idea ASEAN_Member"
 				if = {
 					limit = {
+						NOT = { has_country_flag = ASEAN_band_swap_in_progress }
 						NOT = { has_idea = ASEAN_Member_drifting }
 						NOT = { has_idea = ASEAN_Member_detached }
 						NOT = { has_idea = ASEAN_Member_estranged }
 						is_in_array = { global.ASEAN_Member = THIS }
 					}
 					remove_from_array = { global.ASEAN_Member = THIS }
+					ASEAN_iai_recipient_withdraw_on_departure = yes
 				}
 			}
 
@@ -52,12 +54,14 @@ ideas = {
 				log = "[GetDateText]: [Root.GetName]: remove idea ASEAN_Member_drifting"
 				if = {
 					limit = {
+						NOT = { has_country_flag = ASEAN_band_swap_in_progress }
 						NOT = { has_idea = ASEAN_Member }
 						NOT = { has_idea = ASEAN_Member_detached }
 						NOT = { has_idea = ASEAN_Member_estranged }
 						is_in_array = { global.ASEAN_Member = THIS }
 					}
 					remove_from_array = { global.ASEAN_Member = THIS }
+					ASEAN_iai_recipient_withdraw_on_departure = yes
 				}
 			}
 
@@ -89,12 +93,14 @@ ideas = {
 				log = "[GetDateText]: [Root.GetName]: remove idea ASEAN_Member_detached"
 				if = {
 					limit = {
+						NOT = { has_country_flag = ASEAN_band_swap_in_progress }
 						NOT = { has_idea = ASEAN_Member }
 						NOT = { has_idea = ASEAN_Member_drifting }
 						NOT = { has_idea = ASEAN_Member_estranged }
 						is_in_array = { global.ASEAN_Member = THIS }
 					}
 					remove_from_array = { global.ASEAN_Member = THIS }
+					ASEAN_iai_recipient_withdraw_on_departure = yes
 				}
 			}
 
@@ -123,12 +129,14 @@ ideas = {
 				log = "[GetDateText]: [Root.GetName]: remove idea ASEAN_Member_estranged"
 				if = {
 					limit = {
+						NOT = { has_country_flag = ASEAN_band_swap_in_progress }
 						NOT = { has_idea = ASEAN_Member }
 						NOT = { has_idea = ASEAN_Member_drifting }
 						NOT = { has_idea = ASEAN_Member_detached }
 						is_in_array = { global.ASEAN_Member = THIS }
 					}
 					remove_from_array = { global.ASEAN_Member = THIS }
+					ASEAN_iai_recipient_withdraw_on_departure = yes
 				}
 			}
 
@@ -144,14 +152,37 @@ ideas = {
 			picture = ASEAN_Member
 			allowed_civil_war = { always = yes }
 
+			# A suspended member who leaves ASEAN never gets a decision to lift the
+			# suspension, since that decision requires membership. Expire here too so
+			# the penalty cannot outlive the standing it was imposed on.
 			cancel = {
-				NOT = { has_country_flag = ASEAN_suspended_flag }
+				OR = {
+					NOT = { has_country_flag = ASEAN_suspended_flag }
+					NOT = { is_asean_member = yes }
+				}
 			}
 
 			modifier = {
 				political_power_gain = -0.10
 				stability_factor = -0.05
 				war_support_factor = -0.05
+			}
+		}
+
+		ASEAN_seato_alignment = {
+			picture = international_treaty
+			allowed_civil_war = { always = yes }
+
+			# Offsets a band idea's flat -1000 ai_get_ally_desire_factor to a net +50 once
+			# ASEAN_defense_community exists, so AI members are willing to join and stay in
+			# faction_template_sia_seato instead of the doctrine veto keeping it empty.
+			# Granted/held by ASEAN_seato_alignment_upkeep; self-expires on leaving ASEAN.
+			cancel = { NOT = { is_asean_member = yes } }
+
+			modifier = {
+				hidden_modifier = {
+					ai_get_ally_desire_factor = 1050
+				}
 			}
 		}
 
@@ -169,6 +200,8 @@ ideas = {
 		}
 
 		ASEAN_chair_this_year = {
+			cancel = { NOT = { has_country_flag = ASEAN_chair_this_year_flag } }
+
 			picture = generic_government
 			allowed_civil_war = { always = yes }
 
