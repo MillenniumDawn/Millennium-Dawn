@@ -59,6 +59,7 @@ GUARD_TOKENS = (
 )
 
 BOOKMARK_DATES = ((2016, 1, 2), (2017, 1, 1))
+START_YEAR = 2000
 TIMELINE_MIN_DATES = 3
 DAYS_PER_MONTH = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
@@ -1492,22 +1493,27 @@ def parse_leader_roster(text: str, tag: str) -> Dict[str, List[Leader]]:
 def _parse_roster_branch(block: str, subideology: str) -> List[Leader]:
     declared = re.compile(re.escape(subideology) + r"_leader\s*=\s*(\d+)")
     leaders: List[Leader] = []
-    for key, _, entry in iter_statements(block):
-        if key != "if" or entry is None:
-            continue
-        create = _block_of(entry, "create_country_leader")
-        if create is None:
-            continue
-        name = re.search(r'name\s*=\s*"([^"]*)"', create)
-        index = declared.search(_block_of(entry, "limit") or "")
-        until = _ROSTER_DATE.search(entry)
-        leaders.append(
-            Leader(
-                name=name.group(1) if name else "?",
-                index=int(index.group(1)) if index else len(leaders),
-                until=_parse_date(until.group(1)) if until else None,
+
+    def walk(scope: str) -> None:
+        for key, _, entry in iter_statements(scope):
+            if key not in ("if", "else_if") or entry is None:
+                continue
+            create = _block_of(entry, "create_country_leader")
+            if create is None:
+                walk(entry)
+                continue
+            name = re.search(r'name\s*=\s*"([^"]*)"', create)
+            index = declared.search(_block_of(entry, "limit") or "")
+            until = _ROSTER_DATE.search(entry)
+            leaders.append(
+                Leader(
+                    name=name.group(1) if name else "?",
+                    index=int(index.group(1)) if index else len(leaders),
+                    until=_parse_date(until.group(1)) if until else None,
+                )
             )
-        )
+
+    walk(block)
     return leaders
 
 
@@ -1519,7 +1525,15 @@ def parse_year_schedule(text: str, tag: str) -> List[Tuple[int, str, int]]:
         r"country_event\s*=\s*\{[^{}]*?\bid\s*=\s*([A-Za-z0-9_.]+)"
         r"[^{}]*?\bdays\s*=\s*(\d+)"
     )
-    for match in re.finditer(r"^trigger_year_(\d{4})_events\s*=\s*\{", text, re.M):
+    blocks = [
+        (int(match.group(1)), match)
+        for match in re.finditer(r"^trigger_year_(\d{4})_events\s*=\s*\{", text, re.M)
+    ]
+    blocks += [
+        (START_YEAR, match)
+        for match in re.finditer(r"^MD_event_on_startup_events\s*=\s*\{", text, re.M)
+    ]
+    for year, match in blocks:
         start = text.index("{", match.start())
         close = find_matching_brace(text, start)
         if close == -1:
@@ -1531,9 +1545,7 @@ def parse_year_schedule(text: str, tag: str) -> List[Tuple[int, str, int]]:
             if inner_close == -1:
                 continue
             for event in fire.finditer(body[inner + 1 : inner_close]):
-                entries.append(
-                    (int(match.group(1)), event.group(1), int(event.group(2)))
-                )
+                entries.append((year, event.group(1), int(event.group(2))))
     return entries
 
 
