@@ -6,14 +6,13 @@ real bug in an earlier country.
 
 ## The report answers these — act on its findings, don't re-derive them
 
-| Report section | Bug it catches |
-| --- | --- |
-| Tree ownership | Additive path modifiers that lose to any multiplicative historical modifier (Ethiopia); a path flag that appears in the tree zero times (Japan had 36 historical modifiers and none for path two; Italy's ten had none at all) |
-| Killswitch orphans | Children stranded because every prerequisite in their sole OR-group was zeroed, and gates (`has_completed_focus`, `check_variable`, a flag set only by a zeroed focus) stranded without producing an orphan |
-| Mutex ties | Fork sides at identical priority resolving by file order (Italy's ~30 doctrine pairs at `base = 80`; Comoros' social-democracy/dictatorship mutex) |
-| Strategy plan | `focus_factors` disagreeing with the tree, plans with no `focus_factors` at all, both sides of a fork zeroed |
-| Danger rewards | Completion rewards that disband the army, hand the country away, or start an unwinnable civil war |
-| Rule / Wiring | Option set, two-sentence descs, `@TAG` header, per-option flags, `RANDOM_PATH` buckets, surviving `has_game_rule` readers |
+- **Tree ownership** — additive path modifiers that lose to any multiplicative historical modifier (Ethiopia); a path flag that appears in the tree zero times (Japan had 36 historical modifiers and none for path two; Italy's ten had none at all)
+- **Killswitch orphans** — children stranded because every prerequisite in their sole OR-group was zeroed, and gates (`has_completed_focus`, `check_variable`, a flag set only by a zeroed focus) stranded without producing an orphan
+- **Mutex ties** — fork sides at identical priority resolving by file order (Italy's ~30 doctrine pairs at `base = 80`; Comoros' social-democracy/dictatorship mutex)
+- **Strategy plan** — `focus_factors` disagreeing with the tree, plans with no `focus_factors` at all, both sides of a fork zeroed
+- **Danger rewards** — completion rewards that disband the army, hand the country away, or start an unwinnable civil war
+- **Mechanics** — the burdens the country starts with and what relieves each one; a burden whose every cure focus is dead in some rule state (Belarus' `BLR_outdated_army` under all four alt paths); a cure focus left at flat base; a cure decision at `base = 0` or behind `is_ai = no`; whether each country GUI is decision-backed or player-only
+- **Rule / Wiring** — option set, two-sentence descs, `@TAG` header, per-option flags, `RANDOM_PATH` buckets, surviving `has_game_rule` readers
 
 A surviving `factor = 0` `is_historical_focus_on = yes` killswitch in the tree still zeroes a path's
 own focuses even when a strategy plan boosts them (10 × 0 × 100 = 0) — every such killswitch needs a
@@ -72,13 +71,24 @@ path under another name.
 
 ## Crisis focuses and stranded maluses
 
-Crisis / problem-resolution focuses sitting at flat base priority, and whether the modifier's
-trigger matches what the focus actually removes, transitively. If the idea-removal detector comes
-back empty, look for negatively-seeded dynamic-modifier variables in the history file.
+The report's `Mechanics` section lists every burden the history file hands the country — ideas,
+dynamic modifiers, negatively-seeded variables — with the focuses and decisions that relieve each,
+and raises the stranded-malus case directly: `every cure is dead under <option> / historical <on|off>`.
+Italy's only cure for its starting southern-question idea sat under one side of an unclaimed mutex
+fork; that is the shape it catches.
 
-Then: does killswitching strand a malus? Gate the applying event off for a rule-driven AI. Italy's
-only cure for its starting southern-question idea sat under one side of an unclaimed mutex fork.
-Also check for a mission with unconditional `activation` but `available` gated on one fork side.
+The judgment left to you:
+
+- **Sign.** The tool does not know a bonus from a malus, so its `nothing relieves` line mixes both.
+  Read the idea's modifier block before treating an unrelieved entry as a defect; the direction rule
+  is in `.claude/rules/general-rules.md` (relief effects). `tools/analysis/find_idea_references.py`
+  answers where an idea is touched at all.
+- **Transitive fit.** Does the crisis modifier's trigger actually match what the focus removes, once
+  you follow the scripted effects it calls?
+- **The applying event.** A malus applied by an event after game start never reaches the burden list.
+  Gate that event off for a rule-driven AI when the branch that cures it is killswitched.
+- **Missions.** An unconditional `activation` with `available` gated on one fork side strands the
+  same way and is invisible to the report.
 
 ## Focuses the AI must never take
 
@@ -115,6 +125,23 @@ through it anyway. UK devolution was a coin flip toward losing Scotland/Wales/NI
 blockade set a permanent tension tick with no off-ramp; Japan's Article 9 balance of power sets
 `can_not_declare_war = yes` on all five ranges; Italy's Padania branch tag-switched the country out
 of existence on a `factor = 400` that Lega drift makes likelier yearly.
+
+## Country mechanics the AI cannot drive
+
+A scripted GUI is buttons: the AI never clicks one. Only a `context_type = decision_category` GUI is
+AI-reachable, because the decisions behind it are taken normally — `ITA_mafia_gui` is that shape, and
+the report labels it `decision-backed`. A `player_context` GUI is labelled `player-only`, and 22 of
+MD's country GUIs are; where one of those is the only relief for a burden, the AI carries that burden
+for the whole game no matter which path it walks.
+
+The fix is a decision the AI can take, added to the country's existing `TAG_ai_path_category`
+([write.md](write.md) §6) — same effect, `is_ai = yes` category, no loc. Never a second GUI, never an
+`on_daily_<TAG>` pass, and never a hidden event that silently repairs the country for free.
+
+Two cure shapes the report flags that are not GUI-related and mean the same thing: a cure decision at
+`base = 0` (Italy's `*_decision_repeal` pairs, deliberately player-only) and a cure decision behind
+`is_ai = no`. Deliberate is fine — but then the AI needs its own route to the same outcome, or the
+burden is permanent for it.
 
 ## Before adding anything new
 
