@@ -29,7 +29,17 @@ from shared_utils import (  # noqa: E402
     strip_comments,
 )
 
-SECTIONS = ("rule", "wiring", "owners", "matrix", "graph", "plans", "rewards")
+SECTIONS = (
+    "rule",
+    "wiring",
+    "owners",
+    "matrix",
+    "graph",
+    "plans",
+    "rewards",
+    "mechanics",
+    "government",
+)
 
 DANGER_EFFECTS = (
     "delete_unit",
@@ -48,13 +58,30 @@ GUARD_TOKENS = (
     "ai_is_threatened",
 )
 
-_STATEMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*=\s*")
+BOOKMARK_DATES = ((2016, 1, 2), (2017, 1, 1))
+TIMELINE_MIN_DATES = 3
+DAYS_PER_MONTH = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+
+_STATEMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*[=<>]\s*")
 _FOCUS_START = re.compile(r"^[ \t]*(focus|shared_focus|joint_focus)\s*=\s*\{", re.M)
 _ID_LINE = re.compile(r"^[ \t]*id\s*=\s*(\S+)", re.M)
 _LOC_KEY = re.compile(r'^\s*([A-Za-z_][A-Za-z0-9_]*):\s*\d*\s*"(.*)"\s*$')
 _YEAR = re.compile(r"\b(19|20)\d{2}\b")
 _HIGHLIGHT = re.compile(r"§.*?§!")
 _LOC_SCOPE = re.compile(r"\[[^\]]*\]")
+_TOP_BLOCK = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.M)
+_STATE_BLOCK = re.compile(r"^[ \t]*\d+\s*=\s*\{", re.M)
+_IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_REMOVE_IDEA = re.compile(r"remove_ideas?\s*=\s*(\{[^{}]*\}|[A-Za-z_][A-Za-z0-9_]*)")
+_REMOVE_DYNAMIC = re.compile(
+    r"remove_dynamic_modifier\s*=\s*\{[^{}]*?modifier\s*=\s*([A-Za-z_][A-Za-z0-9_]*)"
+)
+_ADD_TO_VARIABLE = re.compile(
+    r"add_to_variable\s*=\s*\{\s*(?:var\s*=\s*)?([A-Za-z_][A-Za-z0-9_.:^]*)"
+)
+_MODIFIER_NAME = re.compile(r"modifier\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
+_AI_BLOCKED = re.compile(r"is_ai\s*=\s*no\b")
+_IDEA_KEYWORDS = ("idea", "ideas")
 
 # Three-valued logic: None means "depends on something this tool cannot model".
 TRUE, FALSE, UNKNOWN = True, False, None
@@ -65,6 +92,20 @@ TRUE, FALSE, UNKNOWN = True, False, None
 # --------------------------------------------------------------------------
 
 
+def iter_txt_files(folder: str) -> Iterator[str]:
+    """Yield every .txt path directly in *folder*, in a stable order."""
+    if not os.path.isdir(folder):
+        return
+    for name in sorted(os.listdir(folder)):
+        if name.endswith(".txt"):
+            yield os.path.join(folder, name)
+
+
+def read_raw(path: str) -> str:
+    with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
+        return handle.read()
+
+
 def read_script(path: str, keep_quotes: bool = False) -> str:
     """Read a mod file and neutralise comments, and by default quoted strings.
 
@@ -72,8 +113,7 @@ def read_script(path: str, keep_quotes: bool = False) -> str:
     computed downstream still points at the original file. `keep_quotes` is for
     files whose quoted values are the data (loc key names in a game rule).
     """
-    with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
-        text = strip_comments(handle.read())
+    text = strip_comments(read_raw(path))
     return text if keep_quotes else blank_quoted_strings(text)
 
 
@@ -233,14 +273,9 @@ def expr_tokens(expr: Expr) -> Iterator[str]:
 def load_path_triggers(root: str, tag: str) -> Dict[str, Expr]:
     """Index every `TAG_ai_*` scripted trigger definition in the mod."""
     triggers: Dict[str, Expr] = {}
-    folder = os.path.join(root, "common", "scripted_triggers")
-    if not os.path.isdir(folder):
-        return triggers
     opener = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.M)
-    for name in sorted(os.listdir(folder)):
-        if not name.endswith(".txt"):
-            continue
-        text = read_script(os.path.join(folder, name))
+    for path in iter_txt_files(os.path.join(root, "common", "scripted_triggers")):
+        text = read_script(path)
         for match in opener.finditer(text):
             if not is_path_trigger(match.group(1), tag):
                 continue
@@ -283,6 +318,7 @@ class Focus:
     has_ai_will_do: bool = False
     modifiers: List[Modifier] = field(default_factory=list)
     dangers: List[str] = field(default_factory=list)
+    cures: List[str] = field(default_factory=list)
 
     @property
     def owner_tokens(self) -> Tuple[str, ...]:
@@ -339,6 +375,7 @@ def _build_focus(focus_id: str, kind: str, line: int, body: str, tag: str) -> Fo
             _read_ai_will_do(block, focus, tag)
         elif key.startswith("completion_reward") and block is not None:
             focus.dangers.extend(_scan_dangers(block))
+            focus.cures.extend(_scan_cures(block))
         elif key == "select_effect" and block is not None:
             focus.dangers.extend(_scan_dangers(block))
     return focus
@@ -391,6 +428,24 @@ def _scan_dangers(block: str) -> List[str]:
         if re.search(r"\b" + effect + r"\s*=", block):
             found.append(effect)
     return found
+
+
+def _scan_cures(block: str) -> List[str]:
+    """Names this effect block relieves: ideas, dynamic modifiers, variables."""
+    found: List[str] = []
+    for match in _REMOVE_IDEA.finditer(block):
+        raw = match.group(1)
+        if raw.startswith("{"):
+            found.extend(_idea_tokens(raw))
+        else:
+            found.append(raw)
+    found.extend(match.group(1) for match in _REMOVE_DYNAMIC.finditer(block))
+    found.extend(match.group(1) for match in _ADD_TO_VARIABLE.finditer(block))
+    return found
+
+
+def _idea_tokens(block: str) -> List[str]:
+    return [name for name in _IDENTIFIER.findall(block) if name not in _IDEA_KEYWORDS]
 
 
 def _number(raw: str, fallback: float) -> float:
@@ -647,25 +702,17 @@ def resolve_focus_file(root: str, tag: str) -> str:
     folder = os.path.join(root, "common", "national_focus")
     country_ref = re.compile(r"(original_tag|tag)\s*=\s*" + tag + r"\b")
     matches = []
-    for name in sorted(os.listdir(folder)):
-        if not name.endswith(".txt"):
-            continue
-        path = os.path.join(folder, name)
+    for path in iter_txt_files(folder):
         text = read_script(path)
         head = text[: text.find("focus", 200) if "focus" in text else 4000]
         if country_ref.search(head[:4000]):
             matches.append(path)
     if len(matches) == 1:
         return matches[0]
+    id_ref = re.compile(r"^[ \t]*id\s*=\s*" + tag + r"_", re.M)
     counted = []
-    for name in sorted(os.listdir(folder)):
-        if not name.endswith(".txt"):
-            continue
-        path = os.path.join(folder, name)
-        with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
-            count = len(
-                re.findall(r"^[ \t]*id\s*=\s*" + tag + r"_", handle.read(), re.M)
-            )
+    for path in iter_txt_files(folder):
+        count = len(id_ref.findall(read_raw(path)))
         if count:
             counted.append((count, path))
     if not counted:
@@ -714,6 +761,10 @@ def build_report(root: str, tag: str, limit: int) -> Dict:
         "graph": _graph_findings(focuses, by_id, weights, limit),
         "plans": _plan_findings(plans, by_id, limit),
         "rewards": _reward_findings(focuses, limit),
+        "mechanics": _mechanics_findings(
+            root, tag, focuses, by_id, states, triggers, limit
+        ),
+        "government": _government_findings(root, tag),
     }
 
 
@@ -958,6 +1009,798 @@ def _reward_findings(focuses: Sequence[Focus], limit: int) -> List[str]:
 
 
 # --------------------------------------------------------------------------
+# Country mechanics
+# --------------------------------------------------------------------------
+
+
+@dataclass
+class Burden:
+    name: str
+    kind: str
+
+
+@dataclass
+class Decision:
+    id: str
+    category: str
+    base: float
+    ai_blocked: bool
+    cures: Tuple[str, ...] = ()
+
+
+def country_scope(text: str) -> str:
+    """Blank every numeric state block, leaving country-scope statements.
+
+    Length and newlines are preserved, so offsets stay valid. Dated blocks keep
+    their contents — they are country scope too.
+    """
+    out = text
+    for match in _STATE_BLOCK.finditer(text):
+        close = find_matching_brace(text, match.end() - 1)
+        if close == -1:
+            continue
+        out = (
+            out[: match.start()] + " " * (close + 1 - match.start()) + out[close + 1 :]
+        )
+    return out
+
+
+def parse_burdens(root: str, tag: str) -> List[Burden]:
+    """Ideas, dynamic modifiers and negative variables the country starts with."""
+    burdens: List[Burden] = []
+    seen = set()
+
+    def record(name: str, kind: str) -> None:
+        if name and name not in seen:
+            seen.add(name)
+            burdens.append(Burden(name=name, kind=kind))
+
+    for path in iter_txt_files(os.path.join(root, "history", "countries")):
+        if not os.path.basename(path).startswith(tag + " "):
+            continue
+        for key, scalar, block in iter_statements(country_scope(read_script(path))):
+            if key in ("add_ideas", "add_timed_idea"):
+                names = _idea_tokens(block) if block is not None else [scalar]
+                for name in names:
+                    if name and _is_country_idea(name, tag):
+                        record(name, "idea")
+            elif key == "add_dynamic_modifier" and block is not None:
+                match = _MODIFIER_NAME.search(block)
+                if match:
+                    record(match.group(1), "dynamic modifier")
+            elif key == "set_variable" and block is not None:
+                name, value = _variable_seed(block)
+                if value is not None and value < 0:
+                    record(name, "negative variable")
+        break
+    return burdens
+
+
+def _is_country_idea(name: str, tag: str) -> bool:
+    return name.startswith(tag + "_") or name.endswith("_" + tag)
+
+
+def _variable_seed(block: str) -> Tuple[str, Optional[float]]:
+    name, raw = "", None
+    for key, scalar, nested in iter_statements(block):
+        if nested is not None or scalar is None:
+            continue
+        if key == "var":
+            name = scalar
+        elif key == "value":
+            raw = scalar
+        elif not name:
+            name, raw = key, scalar
+    if raw is None:
+        return name, None
+    try:
+        return name, float(raw)
+    except ValueError:
+        return name, None
+
+
+def parse_decision_categories(root: str, tag: str) -> Dict[str, Dict[str, str]]:
+    """Category id -> {gui, gates} for every decision category owned by *tag*.
+
+    `gates` is the category's own visibility text: a category gated on an idea
+    or modifier is that burden's mechanic, whatever its individual decisions do.
+    """
+    categories: Dict[str, Dict[str, str]] = {}
+    owner = re.compile(r"(original_tag|tag)\s*=\s*" + tag + r"\b")
+    folder = os.path.join(root, "common", "decisions", "categories")
+    for path in iter_txt_files(folder):
+        raw = read_raw(path)
+        if tag not in raw:
+            continue
+        text = blank_quoted_strings(strip_comments(raw))
+        for match in _TOP_BLOCK.finditer(text):
+            close = find_matching_brace(text, match.end() - 1)
+            if close == -1:
+                continue
+            body = text[match.end() : close]
+            allowed, gui, gates = "", "", []
+            for key, scalar, block in iter_statements(body):
+                if key == "allowed" and block is not None:
+                    allowed = block
+                elif key == "scripted_gui" and scalar:
+                    gui = scalar
+                elif key in ("visible", "available") and block is not None:
+                    gates.append(block)
+            if owner.search(allowed):
+                categories[match.group(1)] = {"gui": gui, "gates": " ".join(gates)}
+    return categories
+
+
+def parse_decisions(root: str, tag: str, categories: Sequence[str]) -> List[Decision]:
+    decisions: List[Decision] = []
+    wanted = set(categories)
+    if not wanted:
+        return decisions
+    for path in iter_txt_files(os.path.join(root, "common", "decisions")):
+        raw = read_raw(path)
+        if not any(name in raw for name in wanted):
+            continue
+        text = blank_quoted_strings(strip_comments(raw))
+        for match in _TOP_BLOCK.finditer(text):
+            if match.group(1) not in wanted:
+                continue
+            close = find_matching_brace(text, match.end() - 1)
+            if close == -1:
+                continue
+            for key, _, block in iter_statements(text[match.end() : close]):
+                if block is not None:
+                    decisions.append(_build_decision(key, match.group(1), block))
+    return decisions
+
+
+def _build_decision(decision_id: str, category: str, block: str) -> Decision:
+    base = 1.0
+    blocked = False
+    for key, _, nested in iter_statements(block):
+        if nested is None:
+            continue
+        if key == "ai_will_do":
+            base = _ai_will_do_base(nested)
+        elif key in ("available", "visible", "allowed"):
+            blocked = blocked or _AI_BLOCKED.search(nested) is not None
+    return Decision(
+        id=decision_id,
+        category=category,
+        base=base,
+        ai_blocked=blocked,
+        cures=tuple(_scan_cures(block)),
+    )
+
+
+def _ai_will_do_base(block: str) -> float:
+    base = 1.0
+    for key, scalar, nested in iter_statements(block):
+        if key in ("base", "factor") and nested is None and scalar:
+            base = _number(scalar, base)
+    return base
+
+
+def parse_guis(root: str, tag: str) -> List[Tuple[str, str, str]]:
+    """(gui id, context_type, body) for every scripted GUI owned by *tag*."""
+    results: List[Tuple[str, str, str]] = []
+    folder = os.path.join(root, "common", "scripted_guis")
+    for path in iter_txt_files(folder):
+        named = tag in os.path.basename(path)
+        raw = read_raw(path)
+        if not named and tag + "_" not in raw:
+            continue
+        text = blank_quoted_strings(strip_comments(raw))
+        for key, _, block in iter_statements(text):
+            if key != "scripted_gui" or block is None:
+                continue
+            for gui_id, _, body in iter_statements(block):
+                if body is None or not (named or gui_id.startswith(tag + "_")):
+                    continue
+                context = next(
+                    (
+                        scalar
+                        for inner, scalar, _ in iter_statements(body)
+                        if inner == "context_type" and scalar
+                    ),
+                    "",
+                )
+                results.append((gui_id, context, body))
+    return results
+
+
+def live_focuses(
+    focuses: Sequence[Focus],
+    by_id: Dict[str, Focus],
+    state: State,
+    triggers: Dict[str, Expr],
+) -> set:
+    """Focus ids the AI can both weigh above zero and actually reach."""
+    alive = {focus.id: focus_weight(focus, state, triggers)[0] > 0 for focus in focuses}
+    orphans = unreachable_focuses(alive, by_id)
+    return {
+        focus_id
+        for focus_id, is_alive in alive.items()
+        if is_alive and focus_id not in orphans
+    }
+
+
+def _has_priority_boost(focus: Focus) -> bool:
+    if focus.base > 1:
+        return True
+    return any(
+        not modifier.path_related
+        and (
+            (modifier.op == "factor" and modifier.value > 1)
+            or (modifier.op == "add" and modifier.value > 0)
+        )
+        for modifier in focus.modifiers
+    )
+
+
+def _mechanics_findings(
+    root: str,
+    tag: str,
+    focuses: Sequence[Focus],
+    by_id: Dict[str, Focus],
+    states: Sequence[State],
+    triggers: Dict[str, Expr],
+    limit: int,
+) -> Dict:
+    burdens = parse_burdens(root, tag)
+    categories = parse_decision_categories(root, tag)
+    decisions = parse_decisions(root, tag, sorted(categories))
+    guis = parse_guis(root, tag)
+    backed = {entry["gui"] for entry in categories.values() if entry["gui"]}
+    names = {burden.name for burden in burdens}
+
+    focus_cures: Dict[str, List[str]] = {}
+    for focus in focuses:
+        for cure in focus.cures:
+            if cure in names:
+                focus_cures.setdefault(cure, []).append(focus.id)
+    decision_cures: Dict[str, List[Decision]] = {}
+    for decision in decisions:
+        for cure in decision.cures:
+            if cure in names:
+                decision_cures.setdefault(cure, []).append(decision)
+    category_cover: Dict[str, List[str]] = {}
+    for category, entry in categories.items():
+        for name in names:
+            if name in entry["gates"]:
+                category_cover.setdefault(name, []).append(category)
+
+    issues: List[str] = []
+    rows: List[Dict] = []
+    unrelieved: List[str] = []
+    reachable = {
+        state.option
+        + str(state.historical): live_focuses(focuses, by_id, state, triggers)
+        for state in states
+    }
+    for burden in burdens:
+        cures = focus_cures.get(burden.name, [])
+        cure_decisions = decision_cures.get(burden.name, [])
+        cover = sorted(category_cover.get(burden.name, []))
+        rows.append(
+            {
+                "name": burden.name,
+                "kind": burden.kind,
+                "focus_cures": cures,
+                "decision_cures": [decision.id for decision in cure_decisions],
+                "categories": cover,
+            }
+        )
+        if not cures and not cure_decisions:
+            if not cover:
+                unrelieved.append(burden.name)
+            continue
+        if cure_decisions:
+            continue
+        for state in states:
+            live = reachable[state.option + str(state.historical)]
+            if not any(focus_id in live for focus_id in cures):
+                issues.append(
+                    "{}: every cure is dead under {} / historical {}".format(
+                        burden.name,
+                        state.option,
+                        "on" if state.historical else "off",
+                    )
+                )
+
+    for focus in focuses:
+        cured = sorted({cure for cure in focus.cures if cure in names})
+        if cured and not _has_priority_boost(focus):
+            issues.append("{} cures {} at flat base".format(focus.id, ", ".join(cured)))
+    for cure, cure_decisions in sorted(decision_cures.items()):
+        for decision in cure_decisions:
+            if decision.base <= 0 or decision.ai_blocked:
+                issues.append(
+                    "{} cures {} but the AI can never take it".format(decision.id, cure)
+                )
+
+    gui_rows = []
+    for gui_id, context, body in guis:
+        touched = sorted(name for name in names if name in body)
+        backing = (
+            "decision-backed"
+            if gui_id in backed or context == "decision_category"
+            else "player-only"
+        )
+        gui_rows.append(
+            {
+                "id": gui_id,
+                "context": context or "-",
+                "backing": backing,
+                "touches": touched,
+            }
+        )
+        if backing == "player-only" and touched:
+            uncovered = [
+                name
+                for name in touched
+                if name not in category_cover
+                and not any(name in decision.cures for decision in decisions)
+            ]
+            if uncovered:
+                issues.append(
+                    "{} is player-only and no decision relieves {}".format(
+                        gui_id, ", ".join(uncovered)
+                    )
+                )
+
+    return {
+        "burdens": rows[:limit] if limit else rows,
+        "burden_count": len(rows),
+        "decisions": len(decisions),
+        "categories": sorted(categories),
+        "guis": gui_rows[:limit] if limit else gui_rows,
+        "gui_count": len(gui_rows),
+        "unrelieved": unrelieved[:limit] if limit else unrelieved,
+        "unrelieved_count": len(unrelieved),
+        "issues": issues[:limit] if limit else issues,
+        "issue_count": len(issues),
+    }
+
+
+# --------------------------------------------------------------------------
+# Historical government walker
+# --------------------------------------------------------------------------
+
+
+@dataclass
+class Leader:
+    name: str
+    index: int
+    until: Optional[Tuple[int, int, int]] = None
+
+
+@dataclass
+class Branch:
+    kind: str
+    after: Optional[Tuple[int, int, int]] = None
+    party: Optional[int] = None
+    pointer: Optional[Tuple[str, int]] = None
+    changes_party: bool = False
+    advances: bool = False
+
+
+@dataclass
+class Walker:
+    event_id: str = ""
+    path: str = ""
+    line: int = 0
+    chain: List[Branch] = field(default_factory=list)
+    pins_leader: bool = False
+
+
+_DATE = re.compile(r"(\d{4})\.(\d{1,2})\.(\d{1,2})")
+_ROSTER_DATE = re.compile(r"date\s*<\s*(\d{4}\.\d{1,2}\.\d{1,2})")
+_WALKER_DATE = re.compile(r"date\s*>\s*(\d{4}\.\d{1,2}\.\d{1,2})")
+
+
+def _parse_date(raw: str) -> Optional[Tuple[int, int, int]]:
+    match = _DATE.search(raw)
+    if not match:
+        return None
+    year, month, day = match.groups()
+    return int(year), int(month), int(day)
+
+
+def format_date(date: Optional[Tuple[int, int, int]]) -> str:
+    return "{}.{}.{}".format(*date) if date else "-"
+
+
+def day_offset_to_date(year: int, days: int) -> Tuple[int, int, int]:
+    """Resolve a `days = N` offset inside `trigger_year_<year>_events`.
+
+    The dispatcher runs at the January tick, and MD's own day counts ignore leap
+    years, so a fixed month table reproduces the numbers already in the file.
+    """
+    month = 1
+    remaining = days
+    for length in DAYS_PER_MONTH:
+        if remaining < length:
+            break
+        remaining -= length
+        month += 1
+    if month > 12:
+        return year + 1, 1, 1
+    return year, month, remaining + 1
+
+
+def _block_of(body: str, key: str) -> Optional[str]:
+    for name, _, block in iter_statements(body):
+        if name == key and block is not None:
+            return block
+    return None
+
+
+def parse_party_indices(text: str) -> Dict[int, str]:
+    """Map `ruling_party` index to sub-ideology, read from `set_ruling_leader`."""
+    match = re.search(r"^set_ruling_leader\s*=\s*\{", text, re.M)
+    if not match:
+        return {}
+    start = text.index("{", match.start())
+    close = find_matching_brace(text, start)
+    if close == -1:
+        return {}
+    pairs = re.findall(
+        r"ruling_party\s*=\s*(\d+)[\s}]*set_country_flag\s*=\s*set_(\w+)",
+        text[start + 1 : close],
+    )
+    return {int(index): name for index, name in pairs}
+
+
+def parse_leader_roster(text: str, tag: str) -> Dict[str, List[Leader]]:
+    """Map sub-ideology to its ordered succession list in `set_leader_<TAG>`."""
+    match = re.search(r"^\s*set_leader_" + tag + r"\s*=\s*\{", text, re.M)
+    if not match:
+        return {}
+    start = text.index("{", match.start())
+    close = find_matching_brace(text, start)
+    if close == -1:
+        return {}
+    branches: Dict[str, List[Leader]] = {}
+    for key, _, block in iter_statements(text[start + 1 : close]):
+        if key not in ("if", "else_if") or block is None:
+            continue
+        limit = _block_of(block, "limit") or ""
+        found = re.search(r"has_country_flag\s*=\s*set_(\w+)", limit)
+        if found:
+            branches[found.group(1)] = _parse_roster_branch(block, found.group(1))
+    return branches
+
+
+def _parse_roster_branch(block: str, subideology: str) -> List[Leader]:
+    declared = re.compile(re.escape(subideology) + r"_leader\s*=\s*(\d+)")
+    leaders: List[Leader] = []
+    for key, _, entry in iter_statements(block):
+        if key != "if" or entry is None:
+            continue
+        create = _block_of(entry, "create_country_leader")
+        if create is None:
+            continue
+        name = re.search(r'name\s*=\s*"([^"]*)"', create)
+        index = declared.search(_block_of(entry, "limit") or "")
+        until = _ROSTER_DATE.search(entry)
+        leaders.append(
+            Leader(
+                name=name.group(1) if name else "?",
+                index=int(index.group(1)) if index else len(leaders),
+                until=_parse_date(until.group(1)) if until else None,
+            )
+        )
+    return leaders
+
+
+def parse_year_schedule(text: str, tag: str) -> List[Tuple[int, str, int]]:
+    """Return (year, event id, day offset) for every event scheduled at *tag*."""
+    entries: List[Tuple[int, str, int]] = []
+    scope = re.compile(r"\b" + tag + r"\s*=\s*\{")
+    fire = re.compile(
+        r"country_event\s*=\s*\{[^{}]*?\bid\s*=\s*([A-Za-z0-9_.]+)"
+        r"[^{}]*?\bdays\s*=\s*(\d+)"
+    )
+    for match in re.finditer(r"^trigger_year_(\d{4})_events\s*=\s*\{", text, re.M):
+        start = text.index("{", match.start())
+        close = find_matching_brace(text, start)
+        if close == -1:
+            continue
+        body = text[start + 1 : close]
+        for scoped in scope.finditer(body):
+            inner = body.index("{", scoped.start())
+            inner_close = find_matching_brace(body, inner)
+            if inner_close == -1:
+                continue
+            for event in fire.finditer(body[inner + 1 : inner_close]):
+                entries.append(
+                    (int(match.group(1)), event.group(1), int(event.group(2)))
+                )
+    return entries
+
+
+def parse_walker(immediate: str) -> Walker:
+    """Read the date chain out of a historical government walker's `immediate`."""
+    walker = Walker(
+        pins_leader=bool(re.search(r"change_leader_temp\s*=\s*1", immediate))
+    )
+    chain_open = True
+    for key, _, block in iter_statements(immediate):
+        if key not in ("if", "else_if", "else") or block is None:
+            continue
+        bound = _WALKER_DATE.search(_block_of(block, "limit") or "")
+        after = _parse_date(bound.group(1)) if bound else None
+        changes_party = "change_ruling_party_effect" in block
+        advances = "set_leader" in block
+        if not chain_open or (after is None and not (key == "else" and walker.chain)):
+            chain_open = False
+            continue
+        party = re.search(r"rul_party_temp\s*=\s*(\d+)", block)
+        pointer = re.search(r"(\w+)_leader\s*=\s*(\d+)", block)
+        walker.chain.append(
+            Branch(
+                kind=key,
+                after=after,
+                party=int(party.group(1)) if party else None,
+                pointer=(
+                    (pointer.group(1), int(pointer.group(2))) if pointer else None
+                ),
+                changes_party=changes_party,
+                advances=advances,
+            )
+        )
+        if key == "else":
+            chain_open = False
+    return walker
+
+
+def resolve_branch(chain: Sequence[Branch], date: Tuple[int, int, int]):
+    for branch in chain:
+        if branch.after is None or date > branch.after:
+            return branch
+    return None
+
+
+_EVENT_INDEX: Dict[str, Dict[str, str]] = {}
+
+
+def event_index(root: str) -> Dict[str, str]:
+    """Map every event id under events/ to the file that defines it."""
+    cached = _EVENT_INDEX.get(root)
+    if cached is not None:
+        return cached
+    index: Dict[str, str] = {}
+    for path in iter_txt_files(os.path.join(root, "events")):
+        for found in _ID_LINE.finditer(read_raw(path)):
+            index.setdefault(found.group(1), path)
+    _EVENT_INDEX[root] = index
+    return index
+
+
+def find_event(root: str, event_id: str) -> Tuple[str, int, str]:
+    """Locate a `country_event` by id and return (path, line, body)."""
+    path = event_index(root).get(event_id)
+    if not path:
+        return "", 0, ""
+    text = read_script(path)
+    for match in re.finditer(r"country_event\s*=\s*\{", text):
+        start = match.end() - 1
+        close = find_matching_brace(text, start)
+        if close == -1:
+            continue
+        body = text[start + 1 : close]
+        found = _ID_LINE.search(body)
+        if found and found.group(1) == event_id:
+            return (
+                os.path.relpath(path, root).replace("\\", "/"),
+                line_of(text, match.start()),
+                body,
+            )
+    return "", 0, ""
+
+
+def _history_facts(root: str, tag: str) -> Dict:
+    facts = {
+        "last_election": "",
+        "frequency": 0,
+        "term_limit": 0,
+        "killswitch": False,
+    }
+    for path in iter_txt_files(os.path.join(root, "history", "countries")):
+        if not os.path.basename(path).startswith(tag + " "):
+            continue
+        text = read_script(path, keep_quotes=True)
+        election = re.search(r'last_election\s*=\s*"?([\d.]+)"?', text)
+        frequency = re.search(r"election_frequency\s*=\s*(\d+)", text)
+        limit = re.search(r"term_limit\s*=\s*(\d+)", text)
+        facts["last_election"] = election.group(1) if election else ""
+        facts["frequency"] = int(frequency.group(1)) if frequency else 0
+        facts["term_limit"] = int(limit.group(1)) if limit else 0
+        facts["killswitch"] = "generic_election_killswitch" in text
+        break
+    return facts
+
+
+def _government_findings(root: str, tag: str) -> Dict:
+    issues: List[str] = []
+    roster_path = os.path.join(
+        root, "common", "scripted_effects", tag + "_political_leaders.txt"
+    )
+    roster: Dict[str, List[Leader]] = {}
+    if os.path.isfile(roster_path):
+        roster = parse_leader_roster(read_script(roster_path, keep_quotes=True), tag)
+    dated = {
+        sub: sum(
+            1
+            for leader in leaders
+            if leader.until and leader.until not in BOOKMARK_DATES
+        )
+        for sub, leaders in roster.items()
+    }
+    total_dated = sum(dated.values())
+
+    parties: Dict[int, str] = {}
+    election_effects = os.path.join(
+        root, "common", "scripted_effects", "99_election_effects.txt"
+    )
+    if os.path.isfile(election_effects):
+        parties = parse_party_indices(read_script(election_effects))
+
+    yearly = os.path.join(root, "common", "scripted_effects", "00_yearly_effects.txt")
+    schedule = (
+        parse_year_schedule(read_script(yearly), tag) if os.path.isfile(yearly) else []
+    )
+
+    walker = Walker()
+    timetable: List[str] = []
+    candidates: List[str] = []
+    for event_id in sorted({entry[1] for entry in schedule}):
+        path, line, body = find_event(root, event_id)
+        if not body:
+            issues.append(event_id + " is scheduled but no country_event defines it")
+            continue
+        immediate = _block_of(body, "immediate") or ""
+        if not re.search(r"\bset_leader\b|change_ruling_party_effect", immediate):
+            continue
+        candidates.append(event_id)
+        if not walker.event_id:
+            walker = parse_walker(immediate)
+            walker.event_id, walker.path, walker.line = event_id, path, line
+    if len(candidates) > 1:
+        issues.append(
+            "{} scheduled events change the government ({}); this reads {}".format(
+                len(candidates), ", ".join(candidates), walker.event_id
+            )
+        )
+
+    history = _history_facts(root, tag)
+    walker_dates = [
+        (day_offset_to_date(year, days), event_id)
+        for year, event_id, days in schedule
+        if event_id == walker.event_id
+    ]
+    walker_dates.sort()
+
+    if walker.event_id:
+        if not walker_dates:
+            issues.append(
+                walker.event_id + " is never scheduled from 00_yearly_effects"
+            )
+        if walker.pins_leader:
+            issues.append(
+                "change_leader_temp = 1 sets do_not_retire and pins the roster pointer"
+            )
+        if history["killswitch"]:
+            issues.append(
+                "country carries generic_election_killswitch: extend its own "
+                "election chain instead of stacking a walker"
+            )
+        if total_dated < TIMELINE_MIN_DATES:
+            issues.append(
+                "walker over an undated roster: {} real end-of-tenure dates".format(
+                    total_dated
+                )
+            )
+        if (
+            walker.chain
+            and walker.chain[-1].kind == "else"
+            and walker.chain[-1].changes_party
+        ):
+            issues.append(
+                "the chain's final else changes the ruling party with no upper "
+                "date bound, so a late re-fire installs the wrong party"
+            )
+        reached = set()
+        for date, _ in walker_dates:
+            branch = resolve_branch(walker.chain, date)
+            if branch is None:
+                timetable.append(format_date(date) + "  no branch matches")
+                continue
+            reached.add(id(branch))
+            party = (
+                "{} ({})".format(branch.party, parties.get(branch.party, "?"))
+                if branch.party is not None
+                else "-"
+            )
+            person = "unasserted, the pointer blind-advances"
+            if branch.pointer:
+                sub, index = branch.pointer
+                entry = next(
+                    (leader for leader in roster.get(sub, []) if leader.index == index),
+                    None,
+                )
+                person = (
+                    "{}^{} {}".format(sub, index, entry.name)
+                    if entry
+                    else "{}^{} OUT OF RANGE".format(sub, index)
+                )
+            timetable.append(
+                "{:<11} after {:<11} party {:<24} {}".format(
+                    format_date(date), format_date(branch.after), party, person
+                )
+            )
+        for position, branch in enumerate(walker.chain):
+            label = "branch {} (after {})".format(position, format_date(branch.after))
+            if branch.pointer is None:
+                issues.append(
+                    label + " asserts no roster index, so the pointer blind-advances"
+                )
+                continue
+            sub, index = branch.pointer
+            if not any(leader.index == index for leader in roster.get(sub, [])):
+                issues.append(
+                    "{} asserts {}^{}, which the roster does not define".format(
+                        label, sub, index
+                    )
+                )
+            elif (
+                branch.party is not None
+                and parties.get(branch.party)
+                and parties[branch.party] != sub
+            ):
+                issues.append(
+                    "{} installs party {} ({}) but seeds the {} pointer".format(
+                        label, branch.party, parties[branch.party], sub
+                    )
+                )
+            if id(branch) not in reached:
+                issues.append(label + " is never reached by a scheduled date")
+    elif total_dated >= TIMELINE_MIN_DATES:
+        issues.append(
+            "dated roster but no historical government walker"
+            + (
+                "; the country owns its election chain behind "
+                "generic_election_killswitch, so extend that instead"
+                if history["killswitch"]
+                else ""
+            )
+        )
+
+    verdict = "no roster file"
+    if roster:
+        verdict = (
+            "dated timeline: a walker can name the historical person"
+            if total_dated >= TIMELINE_MIN_DATES
+            else "undated successor roster: write no walker"
+        )
+    return {
+        "verdict": verdict,
+        "roster": {
+            sub: "{} entries, {} dated".format(len(leaders), dated[sub])
+            for sub, leaders in sorted(roster.items())
+        },
+        "history": history,
+        "walker": (
+            "{} ({}:{})".format(walker.event_id, walker.path, walker.line)
+            if walker.event_id
+            else ""
+        ),
+        "timetable": timetable,
+        "issues": issues,
+    }
+
+
+# --------------------------------------------------------------------------
 # Rendering
 # --------------------------------------------------------------------------
 
@@ -1056,6 +1899,62 @@ def render(report: Dict, sections: Sequence[str]) -> str:
     if "rewards" in sections:
         out.append("DANGER REWARDS  {}".format(len(report["rewards"])))
         out.extend("  " + row for row in report["rewards"])
+        out.append("")
+
+    if "mechanics" in sections:
+        mechanics = report["mechanics"]
+        out.append(
+            "MECHANICS  {} burdens, {} decisions in {} categories, {} GUIs".format(
+                mechanics["burden_count"],
+                mechanics["decisions"],
+                len(mechanics["categories"]),
+                mechanics["gui_count"],
+            )
+        )
+        for row in mechanics["burdens"]:
+            out.append(
+                "  {:<19} {:<38} focus {:>2} / decision {:>2} {}".format(
+                    row["kind"],
+                    row["name"],
+                    len(row["focus_cures"]),
+                    len(row["decision_cures"]),
+                    ", ".join(row["categories"]),
+                ).rstrip()
+            )
+        for row in mechanics["guis"]:
+            out.append(
+                "  gui  {:<34} {:<20} {}".format(
+                    row["id"], row["context"], row["backing"]
+                )
+            )
+        if mechanics["unrelieved"]:
+            out.append(
+                "  nothing relieves ({}, judge the sign yourself): {}".format(
+                    mechanics["unrelieved_count"], ", ".join(mechanics["unrelieved"])
+                )
+            )
+        out.extend("  ! " + issue for issue in mechanics["issues"])
+        if not mechanics["issues"]:
+            out.append("  clean")
+        out.append("")
+
+    if "government" in sections:
+        gov = report["government"]
+        history = gov["history"]
+        out.append("GOVERNMENT  " + gov["verdict"])
+        out.append(
+            "  elections  last {} every {} months, term_limit {}{}".format(
+                history["last_election"] or "-",
+                history["frequency"] or "-",
+                history["term_limit"],
+                ", generic_election_killswitch" if history["killswitch"] else "",
+            )
+        )
+        for sub, summary in gov["roster"].items():
+            out.append("  {:<28} {}".format(sub, summary))
+        out.append("  walker  " + (gov["walker"] or "none"))
+        out.extend("    " + row for row in gov["timetable"])
+        out.extend("  ! " + issue for issue in gov["issues"])
         out.append("")
 
     return "\n".join(out).rstrip() + "\n"

@@ -36,11 +36,19 @@ fossil  < 2015 <  nuclear (fission)  < 2020 <  renewable  < 2060 <  nuclear (fus
 
 Each source's cumulative tech buff (power **and** construction-speed) is a **logistic S-curve**:
 
-| source | curve | start | shape |
-| --- | --- | --- | --- |
-| **fossil** | one S-curve | low (~0.25) | steeper early rise (worthwhile 1990s-2010s tech bonuses), same efficiency by 2020, less game-start edge; small total gain (power +0.30, speed +0.15) |
-| **renewable** | one S-curve | bottom | shifted early (crosses fossil by 2020): steep 2010s-2020s rise → plateaus by ~2040 (power +10.8, speed +4.3) |
-| **nuclear** | **two** stacked S-curves | low-mid | fission (~1990-2015) then fusion (~2050-2065); power +3.35, speed +1.01 |
+| source        | curve                    | start       | power | speed |
+| ------------- | ------------------------ | ----------- | ----- | ----- |
+| **fossil**    | one S-curve              | low (~0.25) | +0.30 | +0.15 |
+| **renewable** | one S-curve              | bottom      | +10.8 | +4.3  |
+| **nuclear**   | **two** stacked S-curves | low-mid     | +3.35 | +1.01 |
+
+Shape:
+
+- **fossil** — steeper early rise, same efficiency by 2020, less game-start edge
+- **renewable** — shifted early; steep 2010s-2020s rise crosses fossil by 2020, plateau ~2040
+- **nuclear** — fission (~1990-2015) then fusion (~2050-2065)
+
+Fossil's steeper early rise makes its 1990s-2010s tech bonuses worthwhile; its total gain stays small.
 
 Crossover amplitudes are solved so the three transitions land exactly on 2015 / 2020 / 2060.
 The average metric across sources stays broadly stable and **flattens late-game** — renewable

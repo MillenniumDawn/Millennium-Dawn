@@ -21,13 +21,15 @@ A decision becomes targeted when it includes `targets`, `target_array`, `target_
 
 ### Trigger Evaluation Order & Frequency
 
-| Block                 | Scope       | Frequency                                    | Purpose                                       |
-| --------------------- | ----------- | -------------------------------------------- | --------------------------------------------- |
-| `allowed`             | ROOT        | Once (game start/load)                       | Permanent gate                                |
-| `target_root_trigger` | ROOT only   | Daily                                        | Fast pre-filter — if false, skips all targets |
-| `target_trigger`      | ROOT + FROM | Daily (only if `target_root_trigger` passes) | Per-target daily filter                       |
-| `visible`             | ROOT + FROM | Every tick                                   | UI visibility (most expensive)                |
-| `available`           | ROOT + FROM | Every tick                                   | Clickability gate                             |
+| Block                 | Scope       | Frequency              | Purpose                        |
+| --------------------- | ----------- | ---------------------- | ------------------------------ |
+| `allowed`             | ROOT        | Once (game start/load) | Permanent gate                 |
+| `target_root_trigger` | ROOT only   | Daily                  | Fast pre-filter                |
+| `target_trigger`      | ROOT + FROM | Daily                  | Per-target daily filter        |
+| `visible`             | ROOT + FROM | Every tick             | UI visibility (most expensive) |
+| `available`           | ROOT + FROM | Every tick             | Clickability gate              |
+
+`target_trigger` runs only if `target_root_trigger` passes — a false pre-filter skips all targets.
 
 **Don't repeat the category's `allowed` on each decision.** A decision's `allowed` is redundant when it just duplicates the parent category's `allowed` (e.g. both are `original_tag = TAG`) — the category gate already applies to every decision inside it. Restrict the nation once on the category; put dynamic conditions in `available`/`visible` (since `allowed` is locked at game start).
 
@@ -208,7 +210,7 @@ The engine seeds the roll from the save state, so without it every repeat of the
 
 ## Formable Commitment Ratchet
 
-The AI commits to one formable at a time via two country variables: `formable_committed_id` (unique ordinal per formable) and `formable_committed_size` (that formable's full `update_flag` state count). Without this, a country holding territory for two formables alternates their zero-cost `update_flag` decisions forever.
+The AI commits to one formable at a time via `formable_committed_id` / `formable_committed_size`; every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate that blocks any formable other than the committed one unless it is strictly larger, and special formables (USoE, EFS membership, UAR, ...) commit through `commit_special_formable` with a sentinel size that outranks every decision formable. Full contract, id/size tables, guarded sites, and the maintenance rules (a new formable must wire the gates; editing an `update_flag` state list means updating every size literal — `validate_decisions.py` gates on drift): [formable-reference.md](formable-reference.md).
 
 Every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate — _blocked when committed to a different formable that is not strictly smaller_:
 

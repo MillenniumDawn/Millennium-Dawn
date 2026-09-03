@@ -6,9 +6,15 @@ from types import SimpleNamespace
 import archive_stale_branches as A
 import pytest
 from shared.suite import read_text as read
+from shared.suite import symlinks_available
 from shared.suite import write_text as write
 
 SYMLINK = object()
+
+requires_symlinks = pytest.mark.skipif(
+    not symlinks_available(),
+    reason="creating a symlink needs Developer Mode or admin on Windows",
+)
 
 
 def stub_repo(monkeypatch, tmp_path, trees, diffs, missing=()):
@@ -196,6 +202,7 @@ def test_reject_symlinks_ignores_an_absent_directory(tmp_path):
     A._reject_symlinks(tmp_path / "not-created-yet")
 
 
+@requires_symlinks
 def test_reject_symlinks_refuses_a_symlinked_root(tmp_path):
     (tmp_path / "real").mkdir()
     link = tmp_path / "link"
@@ -205,6 +212,7 @@ def test_reject_symlinks_refuses_a_symlinked_root(tmp_path):
         A._reject_symlinks(link)
 
 
+@requires_symlinks
 def test_reject_symlinks_refuses_a_nested_symlink(tmp_path):
     write(tmp_path / "nested" / "real.txt", "x")
     (tmp_path / "nested" / "link.txt").symlink_to(tmp_path / "nested" / "real.txt")
@@ -219,6 +227,7 @@ def test_mkdir_owned_creates_the_whole_chain(tmp_path):
     assert (tmp_path / "a" / "b" / "c").is_dir()
 
 
+@requires_symlinks
 def test_mkdir_owned_refuses_to_descend_through_a_symlink(tmp_path):
     (tmp_path / "real").mkdir()
     (tmp_path / "a").symlink_to(tmp_path / "real")
@@ -256,6 +265,7 @@ def test_main_archives_only_files_that_differ_from_main(monkeypatch, tmp_path, c
     assert "=== Archive summary ===" in stdout
 
 
+@requires_symlinks
 def test_main_reports_excluded_missing_and_symlinked_paths(
     monkeypatch, tmp_path, capsys
 ):
@@ -352,6 +362,7 @@ def test_main_rejects_a_branch_name_that_escapes_the_archive(monkeypatch, tmp_pa
         )
 
 
+@requires_symlinks
 def test_main_refuses_a_symlinked_archive_root(monkeypatch, tmp_path):
     repo = stub_repo(
         monkeypatch,

@@ -30,6 +30,12 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
   `has_completed_focus`, variables, event targets, ideology, subject status,
   faction membership, and similar direct checks instead. Use a flag only for
   state that cannot be queried directly or must record a historical transition.
+- Markdown docs: tables must read aligned in plaintext — prettier-padded columns
+  (the repo `.md` hook settings) with the **whole padded row within 100 characters**.
+  Tighten cells, factor a shared path prefix into a note above the table, drop or
+  merge columns, or move detail into a terse `Details:` list under the table
+  (patterns: `.claude/docs/documentation-references.md`, `.claude/docs/formable-reference.md`).
+  Content that cannot fit a 100-wide table becomes a bulleted list instead.
 
 ### Line endings in Python tooling
 
@@ -63,7 +69,7 @@ Every text-mode write in `tools/` must pass `newline=""`. Without it, Python's t
 
 ## Events
 
-- Always `is_triggered_only = yes`; log only if option has effects; `major = yes` for news only
+- Always `is_triggered_only = yes`; log only if option has effects; `major = yes` for news only. Never wrap a `major = yes` event in `every_country` / `every_other_country` (one fire already broadcasts)
 - Date-based events: owner-guard pattern in `common/scripted_effects/00_yearly_effects.txt`
 - `add_building_construction` for `naval_base` requires `province = XXXXX`
 - New subideology parties: register in `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`
@@ -118,6 +124,7 @@ Keep all output token-efficient: conversation replies, agent hand-back reports, 
 - [OOB & Equipment Variants](.claude/docs/oob-variants-reference.md) | [Namelists](.claude/docs/namelist-reference.md)
 - [Diplomatic Actions](.claude/docs/diplomatic-action-reference.md) | [Content Guidelines](.claude/docs/content-guidelines.md)
 - [UN System](.claude/docs/un-system-reference.md) (read before editing UN voting, elections, or recognition, or adding a Security Council / General Assembly resolution type)
+- [Formables](.claude/docs/formable-reference.md) (read before editing `formable_nation_decisions.txt`, the EU end-states/EFS, UAR, or any union cosmetic — every formation path, the AI commitment ratchet, and the special-formable sentinel)
 - [Faction Rules](.claude/docs/faction-rules.md) | [Typo Watchlist](.claude/docs/typo-watchlist.md)
 - [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`)
 - [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) + [Patterns](.claude/docs/scripted-gui-patterns.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)

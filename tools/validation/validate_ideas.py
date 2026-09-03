@@ -13,6 +13,8 @@ from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from equipment_module_slots import blank_comments
+from equipment_stats import build_equipment_stat_index, iter_type_archetype_stacks
 from shared_utils import normalize_path_separators
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
@@ -1311,6 +1313,33 @@ class Validator(BaseValidator):
             category="unused-idea",
         )
 
+    def validate_equipment_bonus_stack(self):
+        """Flag nested equipment_bonus keys that stack a type on its child."""
+        self._log_section("Checking equipment_bonus type/archetype stacking...")
+        idea_files = self._collect_files(["common/ideas/**/*.txt"])
+        if not idea_files:
+            self.log("  No idea files to scan")
+            return
+        index = build_equipment_stat_index(self.mod_path)
+        for filepath in idea_files:
+            try:
+                with open(filepath, encoding="utf-8") as handle:
+                    text = blank_comments(handle.read())
+            except (OSError, UnicodeDecodeError):
+                continue
+            rel = os.path.relpath(filepath, self.mod_path)
+            for offset, type_key, child, shared in iter_type_archetype_stacks(
+                text, index
+            ):
+                line = text.count("\n", 0, offset) + 1
+                self.add_error(
+                    "bonus-type-archetype-stack",
+                    f"equipment_bonus {', '.join(sorted(shared))} on {child} "
+                    f"also applies via type '{type_key}' in this block",
+                    rel,
+                    line,
+                )
+
     def run_validations(self):
         # Always parse all ideas — needed as the reference set even in staged mode
         defined_ideas, issues_by_file, ideas_by_file = self._parse_all_ideas()
@@ -1354,6 +1383,7 @@ class Validator(BaseValidator):
             ideas_for_consolidation = ideas_by_file
 
         self.validate_category_icon_frames()
+        self.validate_equipment_bonus_stack()
 
         if self.suggest_consolidation:
             if ideas_for_consolidation:
