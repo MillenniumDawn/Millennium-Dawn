@@ -892,7 +892,25 @@ def _owner_findings(
         "groups": groups,
         "additive": sorted(set(additive)),
         "unused_flags": unused,
+        "multi_root": _multi_root_owners(owned),
     }
+
+
+def _multi_root_owners(owned: Sequence[Focus]) -> Dict[str, List[str]]:
+    """Owner tokens boosting more than one branch root.
+
+    One rule option is supposed to buy one government. A token owning several
+    roots means the option covers rival spines the AI still picks between at
+    random, whatever weight the tree carries. Legitimate when a single spine
+    converges from two roots, so this is a read, not a verdict.
+    """
+    roots: Dict[str, List[str]] = {}
+    for focus in owned:
+        if focus.prereq_groups:
+            continue
+        for token in focus.owner_tokens:
+            roots.setdefault(token, []).append(focus.id)
+    return {token: ids for token, ids in sorted(roots.items()) if len(ids) > 1}
 
 
 def _matrix(
@@ -1837,6 +1855,12 @@ def render(report: Dict, sections: Sequence[str]) -> str:
         if owners["unused_flags"]:
             out.append(
                 "  ! flags never read in the tree: " + ", ".join(owners["unused_flags"])
+            )
+        for token, ids in owners["multi_root"].items():
+            out.append(
+                "  ! {} owns {} branch roots: {}".format(
+                    token, len(ids), ", ".join(ids)
+                )
             )
         out.append("")
 
