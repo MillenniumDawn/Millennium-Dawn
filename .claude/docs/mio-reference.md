@@ -58,29 +58,25 @@ Valid modifier keys per block type. Use to verify which keys are legal for a giv
 
 Used inside `organization_modifier = { ... }` blocks.
 
-| Key                                                                    | Description                                                                                                                      | Example                                                                       |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `military_industrial_organization_design_team_assign_cost`             | Cost to assign an MIO in the Tank/Aircraft/Ship designer.                                                                        | `military_industrial_organization_design_team_assign_cost = -0.2`             |
-| `military_industrial_organization_design_team_change_cost`             | Cost to pull the latest changes from an already-assigned MIO for a given Tank/Aircraft/Ship design.                              | `military_industrial_organization_design_team_change_cost = -0.1`             |
-| `military_industrial_organization_funds_gain`                          | Rate at which funds are obtained (funds level the MIO and unlock traits). Another lever for the levelling rate.                  | `military_industrial_organization_funds_gain = 0.2`                           |
-| `military_industrial_organization_industrial_manufacturer_assign_cost` | Cost to assign a MIO to an industrial (non-designer) production line.                                                            | `military_industrial_organization_industrial_manufacturer_assign_cost = -0.2` |
-| `military_industrial_organization_research_bonus`                      | Flat increase to the research bonus percentage the MIO applies. If it gave 20% and receives "0.1" here, it then gives 30%.       | `military_industrial_organization_research_bonus = 0.1`                       |
-| `military_industrial_organization_size_up_requirement`                 | Modifies funds needed to level up, accelerating trait unlocks. Use when designing an MIO with an above-average number of traits. | `military_industrial_organization_size_up_requirement = -0.1`                 |
-| `military_industrial_organization_task_capacity`                       | Flat increase to the number of tasks an MIO can be assigned in parallel.                                                         | `military_industrial_organization_task_capacity = 5`                          |
+- `military_industrial_organization_design_team_assign_cost` — Cost to assign an MIO in the Tank/Aircraft/Ship designer. Example: `= -0.2`
+- `military_industrial_organization_design_team_change_cost` — Cost to pull the latest changes from an already-assigned MIO for a given Tank/Aircraft/Ship design. Example: `= -0.1`
+- `military_industrial_organization_funds_gain` — Rate at which funds are obtained (funds level the MIO and unlock traits) — another levelling lever. Example: `= 0.2`
+- `military_industrial_organization_industrial_manufacturer_assign_cost` — Cost to assign a MIO to an industrial (non-designer) production line. Example: `= -0.2`
+- `military_industrial_organization_research_bonus` — Flat increase to the MIO's research bonus percentage: 20% plus "0.1" here gives 30%. Example: `= 0.1`
+- `military_industrial_organization_size_up_requirement` — Modifies funds needed per level, speeding trait unlocks; for MIOs with above-average trait counts. Example: `= -0.1`
+- `military_industrial_organization_task_capacity` — Flat increase to the number of tasks an MIO can be assigned in parallel. Example: `= 5`
 
 ### Production modifiers
 
-Used inside `production_bonus = { ... }` blocks.
+Used inside `production_bonus = { ... }` blocks. Equipment types the key applies to in parentheses.
 
-| Key                                  | Equipment types | Description                                                                      | Example                                     |
-| ------------------------------------ | --------------- | -------------------------------------------------------------------------------- | ------------------------------------------- |
-| `production_capacity_factor`         | All             | Increases production output (items produced per day).                            | `production_capacity_factor = 0.1`          |
-| `production_conversion_speed_factor` | non-naval       | Speed at which equipment conversions are performed.                              | `production_conversion_speed_factor = 0.5`  |
-| `production_cost_factor`             | All             | Reduces production cost.                                                         | `production_cost_factor = 0.05`             |
-| `production_efficiency_cap_factor`   | non-naval       | Increase max production efficiency. Ships have no production efficiency cap.     | `production_efficiency_cap_factor = 0.2`    |
-| `production_efficiency_gain_factor`  | non-naval       | Increase the rate efficiency increases. Ships have no production efficiency cap. | `production_efficiency_gain_factor = 0.24`  |
-| `production_resource_need_factor`    | All             | Change raw resources needed (Iron, Tungsten, Chromium, etc.).                    | `production_resource_need_factor = -0.1`    |
-| `production_resource_penalty_factor` | All             | Modify the penalty from not having enough resources.                             | `production_resource_penalty_factor = -0.1` |
+- `production_capacity_factor` (All) — Increases production output (items produced per day). Example: `= 0.1`
+- `production_conversion_speed_factor` (non-naval) — Speed at which equipment conversions are performed. Example: `= 0.5`
+- `production_cost_factor` (All) — Reduces production cost. Example: `= 0.05`
+- `production_efficiency_cap_factor` (non-naval) — Increase max production efficiency. Ships have no production efficiency cap. Example: `= 0.2`
+- `production_efficiency_gain_factor` (non-naval) — Increase the rate efficiency increases. Ships have no production efficiency cap. Example: `= 0.24`
+- `production_resource_need_factor` (All) — Change raw resources needed (Iron, Tungsten, Chromium, etc.). Example: `= -0.1`
+- `production_resource_penalty_factor` (All) — Modify the penalty from not having enough resources. Example: `= -0.1`
 
 ### Equipment modifiers
 
@@ -90,11 +86,13 @@ Used inside `equipment_bonus = { ... }` blocks.
 
 #### All equipment
 
-| Key                | Effective on                                                                                                                                                                          |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `build_cost_ic`    | everything                                                                                                                                                                            |
-| `reliability`      | everything                                                                                                                                                                            |
-| `max_organisation` | **only `cnc_equipment_type`, `convoy` and ship hulls.** No land or air archetype declares it — it is inert on infantry, armour, artillery, MANPADS, ATGM, aircraft and missiles alike |
+| Key                | Effective on                                                            |
+| ------------------ | ----------------------------------------------------------------------- |
+| `build_cost_ic`    | everything                                                              |
+| `reliability`      | everything                                                              |
+| `max_organisation` | **only `cnc_equipment_type`, `convoy` and ship hulls** (see note below) |
+
+`max_organisation`: no land or air archetype declares it — it is inert on infantry, armour, artillery, MANPADS, ATGM, aircraft and missiles alike.
 
 #### Air and Missiles
 
