@@ -5,6 +5,12 @@ shared_focus = {
 	x = 90
 	y = 0
 
+	offset = {
+		x = -65
+		y = 21
+		trigger = { original_tag = SIA }
+	}
+
 	cost = 5
 
 	allow_branch = { is_asean_member = yes }
@@ -61,7 +67,10 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
 
-	available = { date > 2007.11.20 }
+	available = {
+		can_do_asean_focus = yes
+		date > 2007.11.20
+	}
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -75,18 +84,17 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_asean_charter_completed } }
 			set_global_flag = ASEAN_asean_charter_completed
-			set_global_flag = asean_charter_ratified
 		}
-		set_temp_variable = { ASEAN_stability_factor_temp = 0.02 }
-		add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
-		set_temp_variable = { ASEAN_political_power_factor_temp = 0.02 }
+		set_temp_variable = { ASEAN_political_power_factor_temp = 0.05 }
 		add_to_variable = { ASEAN_political_power_factor = ASEAN_political_power_factor_temp tooltip = political_power_factor_tt }
+		set_temp_variable = { ASEAN_corruption_cost_factor_temp = -0.02 }
+		add_to_variable = { ASEAN_corruption_cost_factor = ASEAN_corruption_cost_factor_temp tooltip = corruption_cost_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
-				add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
 				add_to_variable = { ASEAN_political_power_factor = ASEAN_political_power_factor_temp tooltip = political_power_factor_tt }
+				add_to_variable = { ASEAN_corruption_cost_factor = ASEAN_corruption_cost_factor_temp tooltip = corruption_cost_factor_tt }
 			}
 		}
 	}
@@ -108,6 +116,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -121,7 +131,7 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_flexible_engagement_debate_completed } }
 			set_global_flag = ASEAN_flexible_engagement_debate_completed
 		}
-		add_political_power = 50
+		add_political_power = 25
 	}
 
 	ai_will_do = { base = 100 }
@@ -142,6 +152,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_STABILITY }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -154,16 +166,14 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_uphold_non_interference_completed } }
 			set_global_flag = ASEAN_uphold_non_interference_completed
-			set_global_flag = ASEAN_non_interference_upheld
 		}
-		add_stability = 0.02
-		set_temp_variable = { ASEAN_stability_factor_temp = 0.02 }
-		add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+		set_temp_variable = { ASEAN_drift_defence_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_drift_defence_factor = ASEAN_drift_defence_factor_temp tooltip = drift_defence_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
-				add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+				add_to_variable = { ASEAN_drift_defence_factor = ASEAN_drift_defence_factor_temp tooltip = drift_defence_factor_tt }
 			}
 		}
 	}
@@ -186,6 +196,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -198,9 +210,16 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_flexible_engagement_completed } }
 			set_global_flag = ASEAN_flexible_engagement_completed
-			set_global_flag = ASEAN_flexible_engagement_adopted
 		}
-		add_political_power = 50
+		set_temp_variable = { ASEAN_drift_defence_factor_temp = 0.03 }
+		add_to_variable = { ASEAN_drift_defence_factor = ASEAN_drift_defence_factor_temp tooltip = drift_defence_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_drift_defence_factor = ASEAN_drift_defence_factor_temp tooltip = drift_defence_factor_tt }
+			}
+		}
 	}
 
 	ai_will_do = { base = 40 }
@@ -218,7 +237,9 @@ shared_focus = {
 
 	prerequisite = { focus = ASEAN_asean_charter }
 
-	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INTERNAL_AFFAIRS }
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INTERNAL_AFFAIRS FOCUS_FILTER_EXPENDITURE }
+
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -237,20 +258,30 @@ shared_focus = {
 					limit = { NOT = { has_idea = ASEAN_secretariat_hq } }
 					add_ideas = ASEAN_secretariat_hq
 				}
+				one_random_industrial_complex = yes
 			}
 		}
-		set_temp_variable = { ASEAN_political_power_factor_temp = 0.02 }
-		add_to_variable = { ASEAN_political_power_factor = ASEAN_political_power_factor_temp tooltip = political_power_factor_tt }
+		set_temp_variable = { ASEAN_drift_defence_factor_temp = 0.03 }
+		add_to_variable = { ASEAN_drift_defence_factor = ASEAN_drift_defence_factor_temp tooltip = drift_defence_factor_tt }
+		set_temp_variable = { ASEAN_corruption_cost_factor_temp = -0.01 }
+		add_to_variable = { ASEAN_corruption_cost_factor = ASEAN_corruption_cost_factor_temp tooltip = corruption_cost_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
-				add_to_variable = { ASEAN_political_power_factor = ASEAN_political_power_factor_temp tooltip = political_power_factor_tt }
+				add_to_variable = { ASEAN_drift_defence_factor = ASEAN_drift_defence_factor_temp tooltip = drift_defence_factor_tt }
+				add_to_variable = { ASEAN_corruption_cost_factor = ASEAN_corruption_cost_factor_temp tooltip = corruption_cost_factor_tt }
 			}
 		}
 	}
 
-	ai_will_do = { base = 100 }
+	ai_will_do = {
+		base = 100
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
 }
 
 shared_focus = {
@@ -267,6 +298,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -279,9 +312,11 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_summit_calendar_completed } }
 			set_global_flag = ASEAN_summit_calendar_completed
-			set_global_flag = ASEAN_summit_calendar_institutionalised
 		}
-		add_political_power = 50
+		unlock_decision_tooltip = {
+			decision = ASEAN_propose_summit
+			show_effect_tooltip = yes
+		}
 	}
 
 	ai_will_do = { base = 80 }
@@ -301,7 +336,7 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
 
-	available = { date > 2004.11.29 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -315,9 +350,7 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_dispute_settlement_completed } }
 			set_global_flag = ASEAN_dispute_settlement_completed
-			set_global_flag = ASEAN_dispute_protocol_active
 		}
-		add_political_power = 50
 	}
 
 	ai_will_do = { base = 80 }
@@ -339,7 +372,7 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
 
-	available = { date > 2009.10.23 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -358,6 +391,8 @@ shared_focus = {
 			limit = { NOT = { has_idea = ASEAN_aicur_body } }
 			add_ideas = ASEAN_aicur_body
 		}
+		set_temp_variable = { ASEAN_corruption_cost_factor_temp = -0.03 }
+		add_to_variable = { ASEAN_corruption_cost_factor = ASEAN_corruption_cost_factor_temp tooltip = corruption_cost_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
@@ -366,6 +401,10 @@ shared_focus = {
 					NOT = { has_idea = ASEAN_aicur_body }
 				}
 				add_ideas = ASEAN_aicur_body
+			}
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_corruption_cost_factor = ASEAN_corruption_cost_factor_temp tooltip = corruption_cost_factor_tt }
 			}
 		}
 	}
@@ -389,6 +428,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -402,13 +443,14 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_court_founded } }
 			set_global_flag = ASEAN_court_founded
 		}
-		set_temp_variable = { ASEAN_stability_factor_temp = 0.03 }
-		add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+		add_named_threat = { threat = -2 name = ASEAN_found_the_court }
+		set_temp_variable = { ASEAN_corruption_cost_factor_temp = -0.05 }
+		add_to_variable = { ASEAN_corruption_cost_factor = ASEAN_corruption_cost_factor_temp tooltip = corruption_cost_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
-				add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+				add_to_variable = { ASEAN_corruption_cost_factor = ASEAN_corruption_cost_factor_temp tooltip = corruption_cost_factor_tt }
 			}
 		}
 	}
@@ -432,6 +474,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -445,13 +489,19 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_free_trade_area_completed } }
 			set_global_flag = ASEAN_free_trade_area_completed
 		}
-		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.08 }
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.05 }
 		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		set_temp_variable = { ASEAN_consumer_goods_factor_temp = -0.02 }
+		add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
+		set_temp_variable = { ASEAN_local_resources_factor_temp = 0.03 }
+		add_to_variable = { ASEAN_local_resources_factor = ASEAN_local_resources_factor_temp tooltip = local_resources_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+				add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
+				add_to_variable = { ASEAN_local_resources_factor = ASEAN_local_resources_factor_temp tooltip = local_resources_factor_tt }
 			}
 		}
 	}
@@ -473,6 +523,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -486,13 +538,16 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_revise_cept_completed } }
 			set_global_flag = ASEAN_revise_cept_completed
 		}
-		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.05 }
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.03 }
 		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		set_temp_variable = { ASEAN_consumer_goods_factor_temp = -0.02 }
+		add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+				add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
 			}
 		}
 	}
@@ -514,7 +569,7 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
 
-	available = { date > 2000.5.6 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -562,7 +617,7 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
 
-	available = { date > 2010.1.1 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -577,13 +632,22 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_atiga_completed } }
 			set_global_flag = ASEAN_atiga_completed
 		}
-		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.15 }
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.08 }
 		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		set_temp_variable = { ASEAN_consumer_goods_factor_temp = -0.03 }
+		add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
+		set_temp_variable = { ASEAN_return_on_investment_modifier_temp = 0.02 }
+		add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+		set_temp_variable = { ASEAN_local_resources_factor_temp = 0.03 }
+		add_to_variable = { ASEAN_local_resources_factor = ASEAN_local_resources_factor_temp tooltip = local_resources_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+				add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
+				add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+				add_to_variable = { ASEAN_local_resources_factor = ASEAN_local_resources_factor_temp tooltip = local_resources_factor_tt }
 			}
 		}
 	}
@@ -603,9 +667,9 @@ shared_focus = {
 
 	prerequisite = { focus = ASEAN_chiang_mai_initiative }
 
-	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY FOCUS_FILTER_EXPENDITURE }
 
-	available = { date > 2010.3.24 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -619,19 +683,29 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_cmim_completed } }
 			set_global_flag = ASEAN_cmim_completed
+			SIN = { one_random_industrial_complex = yes }
 		}
-		set_temp_variable = { ASEAN_interest_rate_multiplier_modifier_temp = 0.10 }
+		set_temp_variable = { ASEAN_interest_rate_multiplier_modifier_temp = -0.10 }
 		add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
+		set_temp_variable = { ASEAN_inflation_cost_multiplier_modifier_temp = -0.05 }
+		add_to_variable = { ASEAN_inflation_cost_multiplier_modifier = ASEAN_inflation_cost_multiplier_modifier_temp tooltip = inflation_cost_multiplier_modifier_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
+				add_to_variable = { ASEAN_inflation_cost_multiplier_modifier = ASEAN_inflation_cost_multiplier_modifier_temp tooltip = inflation_cost_multiplier_modifier_tt }
 			}
 		}
 	}
 
-	ai_will_do = { base = 120 }
+	ai_will_do = {
+		base = 120
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
 }
 
 shared_focus = {
@@ -647,6 +721,8 @@ shared_focus = {
 	prerequisite = { focus = ASEAN_atiga }
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INFRASTRUCTURE }
+
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -670,6 +746,13 @@ shared_focus = {
 				add_to_variable = { ASEAN_production_speed_infrastructure_factor = ASEAN_production_speed_infrastructure_factor_temp tooltip = production_speed_infrastructure_factor_tt }
 			}
 		}
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { any_owned_state = { is_coastal = yes } }
+				add_equipment_to_stockpile = { type = convoy amount = 50 }
+			}
+		}
 	}
 
 	ai_will_do = { base = 80 }
@@ -689,7 +772,7 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
 
-	available = { date > 2015.1.1 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -704,13 +787,19 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_open_skies_completed } }
 			set_global_flag = ASEAN_open_skies_completed
 		}
-		set_temp_variable = { ASEAN_consumer_goods_factor_temp = 0.03 }
+		set_temp_variable = { ASEAN_consumer_goods_factor_temp = -0.03 }
 		add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
+		set_temp_variable = { ASEAN_return_on_investment_modifier_temp = 0.02 }
+		add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+		set_temp_variable = { ASEAN_experience_gain_air_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_experience_gain_air_factor = ASEAN_experience_gain_air_factor_temp tooltip = experience_gain_air_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
+				add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+				add_to_variable = { ASEAN_experience_gain_air_factor = ASEAN_experience_gain_air_factor_temp tooltip = experience_gain_air_factor_tt }
 			}
 		}
 	}
@@ -730,7 +819,9 @@ shared_focus = {
 
 	prerequisite = { focus = ASEAN_single_window }
 
-	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POWER_INFRASTRUCTURE }
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POWER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
+
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -747,16 +838,32 @@ shared_focus = {
 		}
 		set_temp_variable = { ASEAN_productivity_growth_modifier_temp = 0.02 }
 		add_to_variable = { ASEAN_productivity_growth_modifier = ASEAN_productivity_growth_modifier_temp tooltip = productivity_growth_modifier_tt }
+		set_temp_variable = { ASEAN_renewable_energy_gain_multiplier_temp = 0.20 }
+		add_to_variable = { ASEAN_renewable_energy_gain_multiplier = ASEAN_renewable_energy_gain_multiplier_temp tooltip = renewable_energy_gain_multiplier_tt }
+		set_temp_variable = { ASEAN_production_speed_infrastructure_factor_temp = 0.03 }
+		add_to_variable = { ASEAN_production_speed_infrastructure_factor = ASEAN_production_speed_infrastructure_factor_temp tooltip = production_speed_infrastructure_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { ASEAN_productivity_growth_modifier = ASEAN_productivity_growth_modifier_temp tooltip = productivity_growth_modifier_tt }
+				add_to_variable = { ASEAN_renewable_energy_gain_multiplier = ASEAN_renewable_energy_gain_multiplier_temp tooltip = renewable_energy_gain_multiplier_tt }
+				add_to_variable = { ASEAN_production_speed_infrastructure_factor = ASEAN_production_speed_infrastructure_factor_temp tooltip = production_speed_infrastructure_factor_tt }
 			}
+		}
+		unlock_decision_tooltip = {
+			decision = ASEAN_release_infrastructure_fund_round
+			show_effect_tooltip = yes
 		}
 	}
 
-	ai_will_do = { base = 60 }
+	ai_will_do = {
+		base = 60
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
 }
 
 shared_focus = {
@@ -771,7 +878,9 @@ shared_focus = {
 
 	prerequisite = { focus = ASEAN_single_window }
 
-	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INFRASTRUCTURE }
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
+
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -795,9 +904,19 @@ shared_focus = {
 				add_to_variable = { ASEAN_production_speed_infrastructure_factor = ASEAN_production_speed_infrastructure_factor_temp tooltip = production_speed_infrastructure_factor_tt }
 			}
 		}
+		unlock_decision_tooltip = {
+			decision = ASEAN_release_infrastructure_fund_round
+			show_effect_tooltip = yes
+		}
 	}
 
-	ai_will_do = { base = 60 }
+	ai_will_do = {
+		base = 60
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
 }
 
 shared_focus = {
@@ -817,7 +936,10 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
 
-	available = { date > 2015.12.31 }
+	available = {
+		can_do_asean_focus = yes
+		date > 2015.12.31
+	}
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -831,18 +953,23 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_aec_completed } }
 			set_global_flag = ASEAN_aec_completed
-			set_global_flag = ASEAN_aec_declared
 		}
 		set_temp_variable = { ASEAN_return_on_investment_modifier_temp = 0.03 }
 		add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
-		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.05 }
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.04 }
 		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+		set_temp_variable = { ASEAN_productivity_growth_modifier_temp = 0.01 }
+		add_to_variable = { ASEAN_productivity_growth_modifier = ASEAN_productivity_growth_modifier_temp tooltip = productivity_growth_modifier_tt }
+		set_temp_variable = { ASEAN_monthly_population_temp = 0.02 }
+		add_to_variable = { ASEAN_monthly_population = ASEAN_monthly_population_temp tooltip = monthly_population_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
 				add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
+				add_to_variable = { ASEAN_productivity_growth_modifier = ASEAN_productivity_growth_modifier_temp tooltip = productivity_growth_modifier_tt }
+				add_to_variable = { ASEAN_monthly_population = ASEAN_monthly_population_temp tooltip = monthly_population_tt }
 			}
 		}
 	}
@@ -864,6 +991,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -877,7 +1006,11 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_hub_or_market_completed } }
 			set_global_flag = ASEAN_hub_or_market_completed
 		}
-		add_political_power = 50
+		add_political_power = 25
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			country_event = { id = asean.6 days = 1 }
+		}
 	}
 
 	ai_will_do = { base = 80 }
@@ -898,6 +1031,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -910,9 +1045,11 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_hub_strategy_completed } }
 			set_global_flag = ASEAN_hub_strategy_completed
-			set_global_flag = ASEAN_hub_strategy_chosen
 		}
-		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.10 }
+		add_opinion_modifier = { target = CHI modifier = medium_increase }
+		add_opinion_modifier = { target = JAP modifier = medium_increase }
+		add_opinion_modifier = { target = KOR modifier = medium_increase }
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.05 }
 		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
@@ -941,6 +1078,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -953,18 +1092,27 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_deep_market_completed } }
 			set_global_flag = ASEAN_deep_market_completed
-			set_global_flag = ASEAN_deep_market_chosen
 		}
+		add_stability = -0.02
 		set_temp_variable = { ASEAN_interest_rate_multiplier_modifier_temp = 0.10 }
 		add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
 		set_temp_variable = { ASEAN_return_on_investment_modifier_temp = 0.03 }
 		add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+		set_temp_variable = { ASEAN_consumer_goods_factor_temp = -0.03 }
+		add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
+		set_temp_variable = { ASEAN_monthly_population_temp = 0.03 }
+		add_to_variable = { ASEAN_monthly_population = ASEAN_monthly_population_temp tooltip = monthly_population_tt }
+		set_temp_variable = { ASEAN_local_resources_factor_temp = 0.04 }
+		add_to_variable = { ASEAN_local_resources_factor = ASEAN_local_resources_factor_temp tooltip = local_resources_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
 				add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+				add_to_variable = { ASEAN_consumer_goods_factor = ASEAN_consumer_goods_factor_temp tooltip = consumer_goods_factor_tt }
+				add_to_variable = { ASEAN_monthly_population = ASEAN_monthly_population_temp tooltip = monthly_population_tt }
+				add_to_variable = { ASEAN_local_resources_factor = ASEAN_local_resources_factor_temp tooltip = local_resources_factor_tt }
 			}
 		}
 	}
@@ -984,9 +1132,12 @@ shared_focus = {
 
 	prerequisite = { focus = ASEAN_deep_single_market }
 
-	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY }
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_ECONOMY FOCUS_FILTER_EXPENDITURE }
 
-	available = { has_global_flag = asean_second_crisis_survived }
+	available = {
+		can_do_asean_focus = yes
+		has_global_flag = asean_second_crisis_survived
+	}
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1000,19 +1151,38 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_acu_completed } }
 			set_global_flag = ASEAN_acu_completed
+			SIN = {
+				one_random_industrial_complex = yes
+				one_random_industrial_complex = yes
+			}
 		}
-		set_temp_variable = { ASEAN_interest_rate_multiplier_modifier_temp = 0.20 }
+		set_temp_variable = { ASEAN_interest_rate_multiplier_modifier_temp = -0.20 }
 		add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
+		set_temp_variable = { ASEAN_return_on_investment_modifier_temp = 0.03 }
+		add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+		set_temp_variable = { ASEAN_corruption_cost_factor_temp = -0.02 }
+		add_to_variable = { ASEAN_corruption_cost_factor = ASEAN_corruption_cost_factor_temp tooltip = corruption_cost_factor_tt }
+		set_temp_variable = { ASEAN_inflation_cost_multiplier_modifier_temp = -0.10 }
+		add_to_variable = { ASEAN_inflation_cost_multiplier_modifier = ASEAN_inflation_cost_multiplier_modifier_temp tooltip = inflation_cost_multiplier_modifier_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { ASEAN_interest_rate_multiplier_modifier = ASEAN_interest_rate_multiplier_modifier_temp tooltip = interest_rate_multiplier_modifier_tt }
+				add_to_variable = { ASEAN_return_on_investment_modifier = ASEAN_return_on_investment_modifier_temp tooltip = return_on_investment_modifier_tt }
+				add_to_variable = { ASEAN_corruption_cost_factor = ASEAN_corruption_cost_factor_temp tooltip = corruption_cost_factor_tt }
+				add_to_variable = { ASEAN_inflation_cost_multiplier_modifier = ASEAN_inflation_cost_multiplier_modifier_temp tooltip = inflation_cost_multiplier_modifier_tt }
 			}
 		}
 	}
 
-	ai_will_do = { base = 10 }
+	ai_will_do = {
+		base = 10
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
 }
 
 ### Branch 3: Political-Security Community
@@ -1031,6 +1201,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -1043,9 +1215,8 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_psc_completed } }
 			set_global_flag = ASEAN_psc_completed
-			set_global_flag = ASEAN_apsc_active
 		}
-		add_political_power = 50
+		add_named_threat = { threat = -1 name = ASEAN_political_security_community }
 	}
 
 	ai_will_do = { base = 150 }
@@ -1065,6 +1236,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -1078,6 +1251,14 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_arf_completed } }
 			set_global_flag = ASEAN_arf_completed
 		}
+		add_opinion_modifier = { target = CHI modifier = small_increase }
+		add_opinion_modifier = { target = JAP modifier = small_increase }
+		add_opinion_modifier = { target = KOR modifier = small_increase }
+		add_opinion_modifier = { target = RAJ modifier = small_increase }
+		add_opinion_modifier = { target = AST modifier = small_increase }
+		add_opinion_modifier = { target = NZL modifier = small_increase }
+		add_opinion_modifier = { target = USA modifier = small_increase }
+		add_opinion_modifier = { target = RUS modifier = small_increase }
 		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.05 }
 		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
 		for_each_scope_loop = {
@@ -1106,7 +1287,7 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
 
-	available = { date > 2002.11.4 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1120,9 +1301,12 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_scs_doc_completed } }
 			set_global_flag = ASEAN_scs_doc_completed
-			set_global_flag = ASEAN_scs_declaration_signed
 		}
-		add_political_power = 30
+		add_opinion_modifier = { target = CHI modifier = medium_decrease }
+		if = { limit = { country_exists = PHI } PHI = { country_event = { id = asean.8 days = 3 } } }
+		if = { limit = { country_exists = VIE } VIE = { country_event = { id = asean.8 days = 5 } } }
+		if = { limit = { country_exists = MAY } MAY = { country_event = { id = asean.8 days = 7 } } }
+		if = { limit = { country_exists = BRU } BRU = { country_event = { id = asean.8 days = 9 } } }
 	}
 
 	ai_will_do = { base = 80 }
@@ -1142,7 +1326,10 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INSURGENCY }
 
-	available = { date > 2002.10.12 }
+	available = {
+		can_do_asean_focus = yes
+		date > 2002.10.12
+	}
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1157,7 +1344,15 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_counterterror_completed } }
 			set_global_flag = ASEAN_counterterror_completed
 		}
-		add_political_power = 30
+		set_temp_variable = { ASEAN_police_cost_multiplier_modifier_temp = -0.05 }
+		add_to_variable = { ASEAN_police_cost_multiplier_modifier = ASEAN_police_cost_multiplier_modifier_temp tooltip = police_cost_multiplier_modifier_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_police_cost_multiplier_modifier = ASEAN_police_cost_multiplier_modifier_temp tooltip = police_cost_multiplier_modifier_tt }
+			}
+		}
 	}
 
 	ai_will_do = { base = 100 }
@@ -1177,7 +1372,7 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_NAVY }
 
-	available = { date > 2004.7.20 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1196,6 +1391,24 @@ shared_focus = {
 			limit = { any_owned_state = { is_coastal = yes } }
 			navy_experience = 25
 		}
+		add_named_threat = { threat = -1 name = ASEAN_malacca_patrols }
+		if = { limit = { country_exists = MAY } MAY = { country_event = { id = asean.9 days = 3 } } }
+		if = { limit = { country_exists = SIN } SIN = { country_event = { id = asean.9 days = 5 } } }
+		if = { limit = { country_exists = IND } IND = { country_event = { id = asean.9 days = 7 } } }
+		if = { limit = { country_exists = SIA } SIA = { country_event = { id = asean.9 days = 9 } } }
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			add_equipment_to_stockpile = { type = convoy amount = 30 }
+		}
+		set_temp_variable = { ASEAN_naval_defense_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_naval_defense_factor = ASEAN_naval_defense_factor_temp tooltip = naval_defense_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_naval_defense_factor = ASEAN_naval_defense_factor_temp tooltip = naval_defense_factor_tt }
+			}
+		}
 	}
 
 	ai_will_do = { base = 80 }
@@ -1213,9 +1426,12 @@ shared_focus = {
 
 	prerequisite = { focus = ASEAN_political_security_community }
 
-	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_EXPENDITURE }
 
-	available = { date > 2005.1.1 }
+	available = {
+		can_do_asean_focus = yes
+		date > 2005.1.1
+	}
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1229,19 +1445,26 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_hadr_completed } }
 			set_global_flag = ASEAN_hadr_completed
+			IND = { one_random_industrial_complex = yes }
 		}
-		set_temp_variable = { ASEAN_stability_factor_temp = 0.02 }
-		add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+		set_temp_variable = { ASEAN_experience_gain_army_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_experience_gain_army_factor = ASEAN_experience_gain_army_factor_temp tooltip = experience_gain_army_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
 			if = {
 				limit = { NOT = { tag = ROOT } }
-				add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+				add_to_variable = { ASEAN_experience_gain_army_factor = ASEAN_experience_gain_army_factor_temp tooltip = experience_gain_army_factor_tt }
 			}
 		}
 	}
 
-	ai_will_do = { base = 80 }
+	ai_will_do = {
+		base = 80
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
 }
 
 shared_focus = {
@@ -1257,6 +1480,8 @@ shared_focus = {
 	prerequisite = { focus = ASEAN_arf }
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
+
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1291,6 +1516,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -1304,6 +1531,9 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_plus_three_completed } }
 			set_global_flag = ASEAN_plus_three_completed
 		}
+		add_opinion_modifier = { target = CHI modifier = medium_increase }
+		add_opinion_modifier = { target = JAP modifier = medium_increase }
+		add_opinion_modifier = { target = KOR modifier = medium_increase }
 		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.05 }
 		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
 		for_each_scope_loop = {
@@ -1335,7 +1565,7 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_MILITARY_LAWS }
 
-	available = { date > 2006.5.9 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1351,6 +1581,15 @@ shared_focus = {
 			set_global_flag = ASEAN_admm_completed
 		}
 		army_experience = 25
+		set_temp_variable = { ASEAN_experience_gain_army_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_experience_gain_army_factor = ASEAN_experience_gain_army_factor_temp tooltip = experience_gain_army_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_experience_gain_army_factor = ASEAN_experience_gain_army_factor_temp tooltip = experience_gain_army_factor_tt }
+			}
+		}
 	}
 
 	ai_will_do = { base = 100 }
@@ -1370,7 +1609,10 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
 
-	available = { date > 2005.12.14 }
+	available = {
+		can_do_asean_focus = yes
+		date > 2005.12.14
+	}
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1385,6 +1627,9 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_eas_completed } }
 			set_global_flag = ASEAN_eas_completed
 		}
+		add_opinion_modifier = { target = RAJ modifier = medium_increase }
+		add_opinion_modifier = { target = AST modifier = medium_increase }
+		add_opinion_modifier = { target = NZL modifier = medium_increase }
 		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.05 }
 		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
 		for_each_scope_loop = {
@@ -1414,7 +1659,7 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_MILITARY_LAWS }
 
-	available = { date > 2010.10.12 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1430,6 +1675,15 @@ shared_focus = {
 			set_global_flag = ASEAN_admm_plus_completed
 		}
 		army_experience = 25
+		add_opinion_modifier = { target = USA modifier = small_increase }
+		add_opinion_modifier = { target = CHI modifier = small_increase }
+		add_opinion_modifier = { target = RUS modifier = small_increase }
+		add_opinion_modifier = { target = RAJ modifier = small_increase }
+		add_opinion_modifier = { target = JAP modifier = small_increase }
+		add_opinion_modifier = { target = KOR modifier = small_increase }
+		add_opinion_modifier = { target = AST modifier = small_increase }
+		add_opinion_modifier = { target = NZL modifier = small_increase }
+		add_tech_bonus = { name = CAT_special_forces bonus = 0.10 uses = 1 category = CAT_special_forces }
 		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.05 }
 		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
 		for_each_scope_loop = {
@@ -1437,6 +1691,7 @@ shared_focus = {
 			if = {
 				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+				add_tech_bonus = { name = CAT_special_forces bonus = 0.10 uses = 1 category = CAT_special_forces }
 			}
 		}
 	}
@@ -1458,9 +1713,11 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
 
+	available = { can_do_asean_focus = yes }
+
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_alignment_question"
-		add_political_power = 50
+		add_political_power = 25
 	}
 
 	ai_will_do = { base = 80 }
@@ -1480,7 +1737,7 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
 
-	available = { date > 2011.11.19 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1495,6 +1752,8 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_eas_extended_completed } }
 			set_global_flag = ASEAN_eas_extended_completed
 		}
+		add_opinion_modifier = { target = USA modifier = medium_increase }
+		add_opinion_modifier = { target = RUS modifier = medium_increase }
 		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.10 }
 		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
 		for_each_scope_loop = {
@@ -1523,7 +1782,7 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_MILITARY_LAWS }
 
-	available = { date > 2020.1.1 }
+	available = { can_do_asean_focus = yes }
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1539,6 +1798,15 @@ shared_focus = {
 			set_global_flag = ASEAN_joint_exercise_completed
 		}
 		army_experience = 25
+		set_temp_variable = { ASEAN_experience_gain_navy_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_experience_gain_navy_factor = ASEAN_experience_gain_navy_factor_temp tooltip = experience_gain_navy_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_to_variable = { ASEAN_experience_gain_navy_factor = ASEAN_experience_gain_navy_factor_temp tooltip = experience_gain_navy_factor_tt }
+			}
+		}
 	}
 
 	ai_will_do = { base = 60 }
@@ -1562,12 +1830,20 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INFLUENCE }
 
+	available = { can_do_asean_focus = yes }
+
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_align_with_china"
 		set_country_flag = ASEAN_aligned_china
 		add_political_power = -50
 		CHI = { add_opinion_modifier = { target = ROOT modifier = large_increase } }
 		add_opinion_modifier = { target = CHI modifier = large_increase }
+		if = {
+			limit = { NOT = { has_idea = ASEAN_chinese_doctrine } }
+			add_ideas = ASEAN_chinese_doctrine
+		}
+		add_tech_bonus = { name = CAT_afv bonus = 0.25 uses = 1 category = CAT_afv }
+		add_equipment_to_stockpile = { type = MBT_2 amount = 50 producer = CHI }
 	}
 
 	ai_will_do = {
@@ -1601,11 +1877,17 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_MILITARY_LAWS }
 
+	available = { can_do_asean_focus = yes }
+
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_pursue_self_reliance"
 		set_country_flag = ASEAN_aligned_self_reliance
 		add_war_support = 0.05
 		army_experience = 25
+		if = {
+			limit = { NOT = { has_idea = ASEAN_bebas_aktif_doctrine } }
+			add_ideas = ASEAN_bebas_aktif_doctrine
+		}
 	}
 
 	ai_will_do = {
@@ -1638,12 +1920,20 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INFLUENCE }
 
+	available = { can_do_asean_focus = yes }
+
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus ASEAN_align_with_america"
 		set_country_flag = ASEAN_aligned_america
 		add_political_power = -50
 		USA = { add_opinion_modifier = { target = ROOT modifier = large_increase } }
 		add_opinion_modifier = { target = USA modifier = large_increase }
+		if = {
+			limit = { NOT = { has_idea = ASEAN_american_doctrine } }
+			add_ideas = ASEAN_american_doctrine
+		}
+		add_tech_bonus = { name = CAT_naval_air bonus = 0.25 uses = 1 category = CAT_naval_air }
+		add_equipment_to_stockpile = { type = MR_Fighter3 amount = 40 producer = USA }
 	}
 
 	ai_will_do = {
@@ -1673,7 +1963,10 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_MILITARY_LAWS }
 
-	available = { has_global_flag = asean_defense_pact_gate }
+	available = {
+		can_do_asean_focus = yes
+		has_global_flag = asean_defense_pact_gate
+	}
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1687,12 +1980,39 @@ shared_focus = {
 		if = {
 			limit = { NOT = { has_global_flag = ASEAN_defense_community_completed } }
 			set_global_flag = ASEAN_defense_community_completed
-			set_global_flag = ASEAN_defense_pact_signed
 		}
 		set_rule = { can_create_factions = yes }
 		if = {
 			limit = { is_in_faction = no }
 			create_faction_from_template = faction_template_sia_seato
+			custom_effect_tooltip = ASEAN_seato_faction_rules_tt
+		}
+		add_named_threat = { threat = 3 name = ASEAN_defense_community }
+		set_temp_variable = { ASEAN_send_volunteers_tension_temp = -0.15 }
+		add_to_variable = { ASEAN_send_volunteers_tension = ASEAN_send_volunteers_tension_temp tooltip = send_volunteers_tension_tt }
+		set_temp_variable = { ASEAN_send_volunteer_size_temp = 2 }
+		add_to_variable = { ASEAN_send_volunteer_size = ASEAN_send_volunteer_size_temp tooltip = send_volunteer_size_tt }
+		set_temp_variable = { ASEAN_army_defence_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_army_defence_factor = ASEAN_army_defence_factor_temp tooltip = army_defence_factor_tt }
+		set_temp_variable = { ASEAN_naval_defense_factor_temp = 0.05 }
+		add_to_variable = { ASEAN_naval_defense_factor = ASEAN_naval_defense_factor_temp tooltip = naval_defense_factor_tt }
+		set_temp_variable = { ASEAN_defensive_war_stability_factor_temp = 0.03 }
+		add_to_variable = { ASEAN_defensive_war_stability_factor = ASEAN_defensive_war_stability_factor_temp tooltip = defensive_war_stability_factor_tt }
+		set_temp_variable = { ASEAN_stability_factor_temp = -0.03 }
+		add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+		for_each_scope_loop = {
+			array = global.ASEAN_Member
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				set_temp_variable = { ASEAN_send_volunteers_tension_temp = -0.075 }
+				add_to_variable = { ASEAN_send_volunteers_tension = ASEAN_send_volunteers_tension_temp tooltip = send_volunteers_tension_tt }
+				set_temp_variable = { ASEAN_send_volunteer_size_temp = 1 }
+				add_to_variable = { ASEAN_send_volunteer_size = ASEAN_send_volunteer_size_temp tooltip = send_volunteer_size_tt }
+				add_to_variable = { ASEAN_army_defence_factor = ASEAN_army_defence_factor_temp tooltip = army_defence_factor_tt }
+				add_to_variable = { ASEAN_naval_defense_factor = ASEAN_naval_defense_factor_temp tooltip = naval_defense_factor_tt }
+				add_to_variable = { ASEAN_defensive_war_stability_factor = ASEAN_defensive_war_stability_factor_temp tooltip = defensive_war_stability_factor_tt }
+				add_to_variable = { ASEAN_stability_factor = ASEAN_stability_factor_temp tooltip = stability_factor_tt }
+			}
 		}
 	}
 
@@ -1715,7 +2035,10 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_TRADE }
 
-	available = { date > 2020.11.15 }
+	available = {
+		can_do_asean_focus = yes
+		date > 2020.11.15
+	}
 
 	bypass = {
 		custom_trigger_tooltip = {
@@ -1730,7 +2053,13 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_rcep_completed } }
 			set_global_flag = ASEAN_rcep_completed
 		}
-		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.15 }
+		add_opinion_modifier = { target = CHI modifier = large_increase }
+		add_opinion_modifier = { target = JAP modifier = large_increase }
+		add_opinion_modifier = { target = KOR modifier = large_increase }
+		add_opinion_modifier = { target = AST modifier = large_increase }
+		add_opinion_modifier = { target = NZL modifier = large_increase }
+		add_tech_bonus = { name = CAT_industry bonus = 0.15 uses = 1 category = CAT_industry }
+		set_temp_variable = { ASEAN_trade_opinion_factor_temp = 0.08 }
 		add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
 		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.05 }
 		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
@@ -1740,6 +2069,7 @@ shared_focus = {
 				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { ASEAN_trade_opinion_factor = ASEAN_trade_opinion_factor_temp tooltip = trade_opinion_factor_tt }
 				add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
+				add_tech_bonus = { name = CAT_industry bonus = 0.15 uses = 1 category = CAT_industry }
 			}
 		}
 	}
@@ -1763,6 +2093,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -1776,7 +2108,10 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_admission_protocols_completed } }
 			set_global_flag = ASEAN_admission_protocols_completed
 		}
-		add_political_power = 50
+		unlock_decision_tooltip = {
+			decision = ASEAN_apply_membership
+			show_effect_tooltip = yes
+		}
 	}
 
 	ai_will_do = { base = 100 }
@@ -1796,6 +2131,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -1811,6 +2148,16 @@ shared_focus = {
 		}
 		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.05 } }
 		modify_treasury_effect = yes
+		if = { limit = { country_exists = CBD } CBD = { country_event = { id = asean.11 days = 3 } } }
+		if = { limit = { country_exists = LAO } LAO = { country_event = { id = asean.11 days = 5 } } }
+		if = { limit = { country_exists = BRM } BRM = { country_event = { id = asean.11 days = 7 } } }
+		if = { limit = { country_exists = VIE } VIE = { country_event = { id = asean.11 days = 9 } } }
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			set_country_flag = { flag = ASEAN_iai_recipient_flag days = 1800 value = 1 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.02 } }
+			modify_treasury_effect = yes
+		}
 		set_temp_variable = { ASEAN_productivity_growth_modifier_temp = 0.02 }
 		add_to_variable = { ASEAN_productivity_growth_modifier = ASEAN_productivity_growth_modifier_temp tooltip = productivity_growth_modifier_tt }
 		for_each_scope_loop = {
@@ -1843,11 +2190,15 @@ shared_focus = {
 
 	prerequisite = { focus = ASEAN_admission_protocols }
 
-	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_DIPLOMACY }
+	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_EXPENDITURE }
 
 	available = {
+		can_do_asean_focus = yes
 		date > 2022.11.11
-		check_variable = { global.ASEAN_active_count > 3 }
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_enlargement_quorum_tt
+			check_variable = { global.ASEAN_active_count > 3 }
+		}
 	}
 
 	bypass = {
@@ -1863,10 +2214,17 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_admit_east_timor_completed } }
 			set_global_flag = ASEAN_admit_east_timor_completed
 			TIM = { country_event = { id = asean.1 days = 3 } }
+			IND = { one_random_industrial_complex = yes }
 		}
 	}
 
-	ai_will_do = { base = 60 }
+	ai_will_do = {
+		base = 60
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
 }
 
 shared_focus = {
@@ -1884,7 +2242,11 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_DIPLOMACY }
 
 	available = {
-		check_variable = { global.ASEAN_active_count > 3 }
+		can_do_asean_focus = yes
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_enlargement_quorum_tt
+			check_variable = { global.ASEAN_active_count > 3 }
+		}
 	}
 
 	bypass = {
@@ -1920,6 +2282,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_POLITICAL }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -1933,7 +2297,8 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_governance_11_completed } }
 			set_global_flag = ASEAN_governance_11_completed
 		}
-		set_temp_variable = { ASEAN_political_power_factor_temp = 0.02 }
+		add_political_power = 100
+		set_temp_variable = { ASEAN_political_power_factor_temp = 0.04 }
 		add_to_variable = { ASEAN_political_power_factor = ASEAN_political_power_factor_temp tooltip = political_power_factor_tt }
 		for_each_scope_loop = {
 			array = global.ASEAN_Member
@@ -1965,7 +2330,11 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_DIPLOMACY }
 
 	available = {
-		check_variable = { global.ASEAN_active_count > 3 }
+		can_do_asean_focus = yes
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_enlargement_quorum_tt
+			check_variable = { global.ASEAN_active_count > 3 }
+		}
 	}
 
 	bypass = {
@@ -1983,6 +2352,7 @@ shared_focus = {
 			BAN = { country_event = { id = asean.1 days = 3 } }
 			SRI = { country_event = { id = asean.1 days = 3 } }
 		}
+		add_opinion_modifier = { target = RAJ modifier = medium_decrease }
 	}
 
 	ai_will_do = { base = 10 }
@@ -2003,7 +2373,11 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_DIPLOMACY }
 
 	available = {
-		check_variable = { global.ASEAN_active_count > 3 }
+		can_do_asean_focus = yes
+		custom_trigger_tooltip = {
+			tooltip = ASEAN_enlargement_quorum_tt
+			check_variable = { global.ASEAN_active_count > 3 }
+		}
 	}
 
 	bypass = {
@@ -2025,6 +2399,8 @@ shared_focus = {
 			TON = { country_event = { id = asean.1 days = 11 } }
 			MAR = { country_event = { id = asean.1 days = 13 } }
 		}
+		add_opinion_modifier = { target = CHI modifier = medium_decrease }
+		add_opinion_modifier = { target = AST modifier = medium_decrease }
 	}
 
 	ai_will_do = { base = 10 }
@@ -2045,6 +2421,8 @@ shared_focus = {
 
 	search_filters = { FOCUS_FILTER_ASEAN FOCUS_FILTER_FOREIGN_POLICY }
 
+	available = { can_do_asean_focus = yes }
+
 	bypass = {
 		custom_trigger_tooltip = {
 			tooltip = ASEAN_focus_completed_tt
@@ -2058,6 +2436,7 @@ shared_focus = {
 			limit = { NOT = { has_global_flag = ASEAN_indo_pacific_pole_completed } }
 			set_global_flag = ASEAN_indo_pacific_pole_completed
 		}
+		add_named_threat = { threat = -3 name = ASEAN_indo_pacific_pole }
 		set_temp_variable = { ASEAN_foreign_influence_defense_modifier_temp = 0.15 }
 		add_to_variable = { ASEAN_foreign_influence_defense_modifier = ASEAN_foreign_influence_defense_modifier_temp tooltip = foreign_influence_defense_modifier_tt }
 		for_each_scope_loop = {
