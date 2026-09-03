@@ -30,10 +30,10 @@ ASEAN_check_breach = {
 
 	if = {
 		limit = {
-			any_country = {
-				is_asean_member = yes
-				has_war_with = ROOT
-				NOT = { original_tag = ROOT.original_tag }
+			any_of_scopes = {
+				array = global.ASEAN_Member
+				has_war_with = PREV
+				NOT = { original_tag = PREV.original_tag }
 			}
 		}
 		add_to_variable = { THIS.ASEAN_breach = 3 }
@@ -44,15 +44,18 @@ ASEAN_check_breach = {
 		add_to_variable = { THIS.ASEAN_breach = 2 }
 	}
 
+	# Ideology is not a breach: ASEAN doctrine is non-interference in how members govern
+	# themselves. Governance stability is what the Association actually tracks.
 	if = {
 		limit = {
-			has_elections = no
-			OR = {
-				western_autocrats_are_in_power = yes
-				emerging_communist_state_are_in_power = yes
-			}
+			has_war = no
+			has_stability > 0.5
 		}
-		add_to_variable = { THIS.ASEAN_breach = 1 }
+		add_to_variable = { THIS.ASEAN_breach = -1 }
+	}
+	else_if = {
+		limit = { has_civil_war = yes }
+		add_to_variable = { THIS.ASEAN_breach = 2 }
 	}
 
 	if = {
@@ -99,7 +102,10 @@ ASEAN_check_breach = {
 	}
 }
 
+# swap_ideas fires on_remove before on_add, so without this guard a band change would
+# splice the country out of global.ASEAN_Member and re-append it mid-iteration.
 ASEAN_apply_band = {
+	set_country_flag = ASEAN_band_swap_in_progress
 	if = {
 		limit = { check_variable = { THIS.ASEAN_breach < 2 } }
 		if = {
@@ -187,6 +193,7 @@ ASEAN_apply_band = {
 			}
 		}
 	}
+	clr_country_flag = ASEAN_band_swap_in_progress
 }
 
 ASEAN_recount_bands = {
@@ -304,12 +311,42 @@ ASEAN_iai_recipient_upkeep = {
 	}
 }
 
+# A member who leaves ASEAN mid-window drops out of global.ASEAN_Member, so the monthly
+# loop above never visits it again to run the withdraw branch. Called instead from each
+# band idea's on_remove once that on_remove has confirmed a real departure, so the +0.05
+# is withdrawn on the way out no matter which band the country left from.
+ASEAN_iai_recipient_withdraw_on_departure = {
+	if = {
+		limit = { has_country_flag = ASEAN_iai_bonus_applied }
+		clr_country_flag = ASEAN_iai_bonus_applied
+		set_temp_variable = { ASEAN_production_speed_infrastructure_factor_temp = -0.05 }
+		add_to_variable = { ASEAN_production_speed_infrastructure_factor = ASEAN_production_speed_infrastructure_factor_temp tooltip = production_speed_infrastructure_factor_tt }
+	}
+}
+
+# The four band ideas carry a flat -1000 ai_get_ally_desire_factor so AI members do not
+# drift into unrelated factions. That same veto leaves SIA_defense_community's SEATO
+# capstone with no willing members once it exists. Rather than weaken the band ideas'
+# own modifier for every member regardless of context, grant a self-healing offset idea
+# once the pact actually exists so the veto lifts only then.
+ASEAN_seato_alignment_upkeep = {
+	if = {
+		limit = {
+			has_global_flag = ASEAN_defense_community_completed
+			is_asean_member = yes
+			NOT = { has_idea = ASEAN_seato_alignment }
+		}
+		add_ideas = ASEAN_seato_alignment
+	}
+}
+
 ASEAN_monthly_update = {
 	for_each_scope_loop = {
 		array = global.ASEAN_Member
 		ASEAN_check_breach = yes
 		ASEAN_apply_band = yes
 		ASEAN_iai_recipient_upkeep = yes
+		ASEAN_seato_alignment_upkeep = yes
 	}
 	ASEAN_recount_bands = yes
 	ASEAN_recount_founding_committed = yes

@@ -1,7 +1,6 @@
 add_namespace = asean
 add_namespace = asean_summit
 add_namespace = asean_crisis
-add_namespace = asean_news
 
 country_event = {
 	id = asean.1
@@ -13,7 +12,6 @@ country_event = {
 
 	option = {
 		name = asean.1.a
-		ai_chance = { base = 70 }
 		log = "[GetDateText]: [Root.GetName]: Event asean.1 option a (accept ASEAN invitation)"
 		add_ideas = ASEAN_Member
 		if = {
@@ -21,14 +19,39 @@ country_event = {
 			add_dynamic_modifier = { modifier = ASEAN_reforms_modifier }
 		}
 		news_event = { id = asean.2 days = 3 }
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_opinion = { target = FROM value > 20 }
+			}
+			modifier = {
+				add = 15
+				sender_influence_higher_15 = yes
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
 	}
 	option = {
 		name = asean.1.b
-		ai_chance = { base = 30 }
 		log = "[GetDateText]: [Root.GetName]: Event asean.1 option b (decline ASEAN invitation)"
 		if = {
 			limit = { FROM = { exists = yes } }
 			FROM = { country_event = { id = asean.3 days = 3 } }
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = -20
+				has_opinion = { target = FROM value > 20 }
+			}
+			modifier = {
+				add = 20
+				has_opinion = { target = FROM value < 0 }
+			}
 		}
 	}
 }
@@ -326,17 +349,48 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = { has_country_flag = ASEAN_signed_seanwfz_protocol }
+		OR = {
+			original_tag = USA
+			original_tag = RUS
+			original_tag = CHI
+			original_tag = ENG
+			original_tag = FRA
+		}
+	}
+
 	option = {
 		name = asean.20.a
-		ai_chance = { base = 15 }
 		log = "[GetDateText]: [Root.GetName]: Event asean.20 option a (sign SEANWFZ protocol)"
 		add_named_threat = { threat = -1 name = ASEAN_seanwfz_peace_dividend }
 		set_country_flag = ASEAN_signed_seanwfz_protocol
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				has_opinion = { target = FROM value > 20 }
+			}
+			modifier = {
+				add = -10
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
 	}
 	option = {
 		name = asean.20.b
-		ai_chance = { base = 85 }
 		log = "[GetDateText]: [Root.GetName]: Event asean.20 option b (defer)"
+		ai_chance = {
+			base = 85
+			modifier = {
+				add = -15
+				has_opinion = { target = FROM value > 20 }
+			}
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
 	}
 }
 
@@ -352,6 +406,15 @@ country_event = {
 		name = asean_summit.1.a
 		log = "[GetDateText]: [Root.GetName]: Event asean_summit.1 option a"
 		news_event = { id = asean_summit.2 days = 5 }
+		hidden_effect = {
+			random_country = {
+				limit = {
+					is_asean_member = yes
+					NOT = { tag = ROOT }
+				}
+				country_event = { id = asean_summit.10 days = 2 }
+			}
+		}
 	}
 }
 
@@ -377,6 +440,8 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = { is_asean_member = yes }
+
 	option = {
 		name = asean_summit.10.a
 		log = "[GetDateText]: [Root.GetName]: Event asean_summit.10 option a"
@@ -391,6 +456,16 @@ country_event = {
 	picture = GFX_carrier
 
 	is_triggered_only = yes
+
+	trigger = {
+		is_asean_member_active = yes
+		OR = {
+			original_tag = PHI
+			original_tag = VIE
+			original_tag = MAY
+			original_tag = BRU
+		}
+	}
 
 	option = {
 		name = asean_crisis.1.a
@@ -548,6 +623,8 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = { is_asean_member = yes }
+
 	option = {
 		name = asean_crisis.30.a
 		log = "[GetDateText]: [Root.GetName]: Event asean_crisis.30 option a (draw on Chiang Mai)"
@@ -587,18 +664,39 @@ country_event = {
 		ai_chance = { base = 70 }
 		log = "[GetDateText]: [Root.GetName]: Event asean_crisis.10 option a (save what can be saved)"
 		add_political_power = -100
+		hidden_effect = {
+			if = {
+				limit = { NOT = { has_global_flag = ASEAN_dissolution_news_scheduled } }
+				set_global_flag = ASEAN_dissolution_news_scheduled
+				news_event = { id = asean_crisis.11 days = 30 }
+			}
+		}
 	}
 	option = {
 		name = asean_crisis.10.b
 		ai_chance = { base = 15 }
 		log = "[GetDateText]: [Root.GetName]: Event asean_crisis.10 option b (mainland successor)"
 		set_country_flag = ASEAN_prefer_mainland_successor
+		hidden_effect = {
+			if = {
+				limit = { NOT = { has_global_flag = ASEAN_dissolution_news_scheduled } }
+				set_global_flag = ASEAN_dissolution_news_scheduled
+				news_event = { id = asean_crisis.11 days = 30 }
+			}
+		}
 	}
 	option = {
 		name = asean_crisis.10.c
 		ai_chance = { base = 15 }
 		log = "[GetDateText]: [Root.GetName]: Event asean_crisis.10 option c (maritime successor)"
 		set_country_flag = ASEAN_prefer_maritime_successor
+		hidden_effect = {
+			if = {
+				limit = { NOT = { has_global_flag = ASEAN_dissolution_news_scheduled } }
+				set_global_flag = ASEAN_dissolution_news_scheduled
+				news_event = { id = asean_crisis.11 days = 30 }
+			}
+		}
 	}
 }
 
@@ -614,6 +712,31 @@ news_event = {
 	option = {
 		name = asean_crisis.11.a
 		log = "[GetDateText]: [Root.GetName]: Event asean_crisis.11 option a"
+		hidden_effect = {
+			if = {
+				limit = { NOT = { has_global_flag = ASEAN_dissolution_resolved } }
+				set_global_flag = ASEAN_dissolution_resolved
+				set_temp_variable = { ASEAN_mainland_tally_tmp = 0 }
+				set_temp_variable = { ASEAN_maritime_tally_tmp = 0 }
+				for_each_scope_loop = {
+					array = global.ASEAN_Member
+					if = {
+						limit = { has_country_flag = ASEAN_prefer_mainland_successor }
+						add_to_temp_variable = { ASEAN_mainland_tally_tmp = 1 }
+					}
+					if = {
+						limit = { has_country_flag = ASEAN_prefer_maritime_successor }
+						add_to_temp_variable = { ASEAN_maritime_tally_tmp = 1 }
+					}
+				}
+				set_variable = { global.ASEAN_mainland_successor_tally = ASEAN_mainland_tally_tmp }
+				set_variable = { global.ASEAN_maritime_successor_tally = ASEAN_maritime_tally_tmp }
+				if = {
+					limit = { country_exists = SIA }
+					SIA = { country_event = { id = asean_crisis.12 days = 5 } }
+				}
+			}
+		}
 	}
 }
 
@@ -627,19 +750,31 @@ country_event = {
 
 	option = {
 		name = asean_crisis.12.a
-		ai_chance = { base = 40 }
 		log = "[GetDateText]: [Root.GetName]: Event asean_crisis.12 option a (mainland)"
 		set_country_flag = ASEAN_prefer_mainland_successor
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				check_variable = { global.ASEAN_mainland_successor_tally > global.ASEAN_maritime_successor_tally }
+			}
+		}
 	}
 	option = {
 		name = asean_crisis.12.b
-		ai_chance = { base = 40 }
 		log = "[GetDateText]: [Root.GetName]: Event asean_crisis.12 option b (maritime)"
 		set_country_flag = ASEAN_prefer_maritime_successor
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				check_variable = { global.ASEAN_maritime_successor_tally > global.ASEAN_mainland_successor_tally }
+			}
+		}
 	}
 	option = {
 		name = asean_crisis.12.c
-		ai_chance = { base = 20 }
 		log = "[GetDateText]: [Root.GetName]: Event asean_crisis.12 option c (stand alone)"
+		ai_chance = { base = 20 }
 	}
 }
