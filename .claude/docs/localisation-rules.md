@@ -98,22 +98,22 @@ Hits in both `common/national_focus/` and `common/ideas/` for the same KEY = ren
 
 ## Common Mistakes to Avoid
 
-| Wrong                                                                   | Correct                                                                     |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `key:0 "value"`                                                         | `key: "value"`                                                              |
-| `...` trailing sentences                                                | End with a full stop                                                        |
-| `Pro-Western` mid-sentence as a standalone noun                         | `pro-Western` (adjective)                                                   |
-| Repeating the same sentence across multiple ideology descs              | Unique body per entry                                                       |
-| Empty or placeholder strings like `"TODO"`                              | Always provide a complete string                                            |
-| `"text "quoted word" more text"`                                        | `"text \"quoted word\" more text"`                                          |
-| Mixed indented/non-indented keys in same file                           | All keys at same indentation level                                          |
-| Backtick `` ` `` as apostrophe: ``"we`ll"``                             | `"we'll"` — use the real apostrophe                                         |
-| Cyrillic lookalike characters (e.g., `С`, `а`, `е`) in English text     | Latin equivalents — run a non-ASCII check                                   |
-| Non-English text in `*_l_english.yml` (French, Russian, Spanish titles) | Full English translation                                                    |
-| Duplicate keys in the same `.yml` file                                  | Remove the earlier duplicate; keep only one definition per key              |
-| Wrong color-code prefix, e.g. `§RY` (stray extra character)             | `§R` then text immediately — no stray character between code and content    |
-| Copy-pasted country-specific flavour text left unreplaced               | Update every reference to the original country's name, demonym, and culture |
-| Lowercase scope keywords: `[From.GetName]`, `[Root.GetName]`            | Always uppercase: `[FROM.GetName]`, `[ROOT.GetName]`, `[THIS.GetName]`      |
+Each entry is wrong form → correct form:
+
+- `key:0 "value"` → `key: "value"`
+- `...` trailing sentences → end with a full stop
+- `Pro-Western` mid-sentence as a standalone noun → `pro-Western` (adjective)
+- Repeating the same sentence across multiple ideology descs → unique body per entry
+- Empty or placeholder strings like `"TODO"` → always provide a complete string
+- `"text "quoted word" more text"` → `"text \"quoted word\" more text"`
+- Mixed indented/non-indented keys in same file → all keys at same indentation level
+- Backtick `` ` `` as apostrophe (``"we`ll"``) → `"we'll"` — use the real apostrophe
+- Cyrillic lookalike characters (e.g., `С`, `а`, `е`) in English text → Latin equivalents; run a non-ASCII check
+- Non-English text in `*_l_english.yml` (French, Russian, Spanish titles) → full English translation
+- Duplicate keys in the same `.yml` file → remove the earlier duplicate; keep only one definition per key
+- Wrong color-code prefix, e.g. `§RY` (stray extra character) → `§R` then text immediately, no stray character between code and content
+- Copy-pasted country-specific flavour text left unreplaced → update every reference to the original country's name, demonym, and culture
+- Lowercase scope keywords `[From.GetName]`, `[Root.GetName]` → always uppercase: `[FROM.GetName]`, `[ROOT.GetName]`, `[THIS.GetName]`
 
 ## Recurring Typos
 
