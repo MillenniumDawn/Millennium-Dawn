@@ -6,11 +6,19 @@ How HOI4 links unit/equipment script objects to 3D models, and how Millennium Da
 
 Three layers, all under `gfx/`:
 
-| Layer     | File                    | Block       | Defines                                                                                                                    |
-| --------- | ----------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Mesh      | `gfx/entities/*.gfx`    | `pdxmesh`   | `name`, `file` (path to a `.mesh`), `animation` id→type bindings, `scale`                                                  |
-| Entity    | `gfx/entities/*.asset`  | `entity`    | `name`, `pdxmesh`, `state` (animation states), `attach` (sub-entities), `locator`, `scale`, `cull_radius`, `default_state` |
-| Animation | `gfx/models/**/*.asset` | `animation` | `name`, `file` (path to a `.anim`)                                                                                         |
+| Layer     | File                    | Block       |
+| --------- | ----------------------- | ----------- |
+| Mesh      | `gfx/entities/*.gfx`    | `pdxmesh`   |
+| Entity    | `gfx/entities/*.asset`  | `entity`    |
+| Animation | `gfx/models/**/*.asset` | `animation` |
+
+Each block defines:
+
+- `pdxmesh` — `name`, `file` (path to a `.mesh`), `animation` id→type bindings, `scale`
+- `entity` — `name`, `pdxmesh`, `state`, `attach`, `locator`, `scale`, `cull_radius`, `default_state`
+- `animation` — `name`, `file` (path to a `.anim`)
+
+In `entity`, `state` holds animation states and `attach` sub-entities.
 
 An `entity` references a `pdxmesh` by name; a `pdxmesh` references a `.mesh` file and binds animation ids; an `animation` id resolves to a `.anim` file. An entity may `attach` other entities (a soldier attaches weapon entities, a vehicle attaches its crew, etc.).
 
@@ -42,17 +50,19 @@ Entity files (`.asset`) define `entity` blocks; pdxmesh files (`.gfx`) define `p
 
 ### Shared pdxmesh files
 
-| File                           | Contains                                                                     |
-| ------------------------------ | ---------------------------------------------------------------------------- |
-| `infantry.gfx`                 | Shared infantry pdxmesh definitions (fallback variants for generic infantry) |
-| `MD_vehicles.gfx`              | Shared vehicle pdxmesh definitions                                           |
-| `MD_smallarms.gfx`             | Shared small-arms pdxmesh definitions                                        |
-| `MD_ships.gfx`                 | Shared ship pdxmesh definitions                                              |
-| `MD_buildings.gfx`             | Shared building pdxmesh definitions                                          |
-| `MD_units_planes.asset`        | Generic plane entity sets                                                    |
-| `MD_units_ships.asset`         | Generic ship entity sets                                                     |
-| `___MD_planes.gfx`             | Additional shared plane pdxmesh definitions                                  |
-| `___MD_tanks_and_vehicles.gfx` | Additional shared tank/vehicle pdxmesh definitions                           |
+`.gfx` rows hold shared pdxmesh definitions; `.asset` rows hold generic entity sets.
+
+| File                           | Contains                                          |
+| ------------------------------ | ------------------------------------------------- |
+| `infantry.gfx`                 | Infantry (fallback variants for generic infantry) |
+| `MD_vehicles.gfx`              | Vehicles                                          |
+| `MD_smallarms.gfx`             | Small arms                                        |
+| `MD_ships.gfx`                 | Ships                                             |
+| `MD_buildings.gfx`             | Buildings                                         |
+| `MD_units_planes.asset`        | Generic plane entity sets                         |
+| `MD_units_ships.asset`         | Generic ship entity sets                          |
+| `___MD_planes.gfx`             | Additional shared plane pdxmeshes                 |
+| `___MD_tanks_and_vehicles.gfx` | Additional shared tank/vehicle pdxmeshes          |
 
 Pdxmesh naming follows the `MD_` prefix convention (e.g., `MD_mechanized`, `MD_infantry_2`). Historical files may still reference the older `MD4_` prefix — both are valid but new definitions should use `MD_`.
 
@@ -78,13 +88,11 @@ Landmarks (Big Ben, Statue of Liberty, Mt. Fuji, etc.) use the same mesh/entity 
 
 ### Five files per landmark
 
-| File                                         | Block / line                                                                 | Purpose                                                                              |
-| -------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `common/buildings/01_landmark_buildings.txt` | `landmark_<name> = { spawn_point = landmark_spawn ... }`                     | Building definition (DLC gate, modifiers, icon, scale cap, `enable_for_controllers`) |
-| `gfx/entities/landmarks.asset`               | `entity = { name = "building_landmark_<name>" pdxmesh = "..." }`             | Entity definition + scale + destruction animation states                             |
-| `gfx/entities/landmarks.gfx`                 | `pdxmesh = { name = "landmark_<name>_mesh" file = "..." }`                   | Mesh-name → `.mesh` file mapping                                                     |
-| `history/states/<id>-<Name>.txt`             | Inside `buildings = { <PROVINCE_ID> = { landmark_<name> = { level = 1 } } }` | Per-state placement of the landmark in a specific province                           |
-| `map/buildings.txt`                          | `<state_id>;landmark_spawn;<x>;<y>;<z>;<rot>;<province_id>`                  | World-space spawn coordinates used to render the model                               |
+- `common/buildings/01_landmark_buildings.txt` — `landmark_<name> = { spawn_point = landmark_spawn ... }`: building definition (DLC gate, modifiers, icon, scale cap, `enable_for_controllers`).
+- `gfx/entities/landmarks.asset` — `entity = { name = "building_landmark_<name>" pdxmesh = "..." }`: entity definition + scale + destruction animation states.
+- `gfx/entities/landmarks.gfx` — `pdxmesh = { name = "landmark_<name>_mesh" file = "..." }`: mesh-name → `.mesh` file mapping.
+- `history/states/<id>-<Name>.txt` — inside `buildings = { <PROVINCE_ID> = { landmark_<name> = { level = 1 } } }`: per-state placement of the landmark in a specific province.
+- `map/buildings.txt` — `<state_id>;landmark_spawn;<x>;<y>;<z>;<rot>;<province_id>`: world-space spawn coordinates used to render the model.
 
 If any is missing or inconsistent, the building either silently fails to render or errors in `error.log` (`mapbuildings.cpp:679: ... not over the land - ignoring instance`).
 

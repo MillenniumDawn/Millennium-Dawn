@@ -37,16 +37,16 @@ scripted_gui = {
 
 ## Context Types
 
-| Type                       | Default Scope     | ROOT           | Notes                                                                                  |
-| -------------------------- | ----------------- | -------------- | -------------------------------------------------------------------------------------- |
-| `player_context`           | Player country    | Player country | Baseline context; use for most GUIs                                                    |
-| `selected_country_context` | Selected country  | Player country | GUI only appears when a country is selected; AI evaluates for every other country      |
-| `selected_state_context`   | Selected state    | Player country | GUI only appears when a state is selected; AI evaluates for every state                |
-| `decision_category`        | Player country    | Player country | Embeds in a decision category via `scripted_gui` attribute; no parent window needed    |
-| `diplomatic_action`        | Player country    | Player country | Attached via `send_scripted_gui`/`receive_scripted_gui` in scripted diplomatic actions |
-| `national_focus_context`   | Target country    | Player country | Attached to the national focus view for the targeted country                           |
-| `country_mapicon`          | Displayed country | Player country | Shows next to every country on the world map                                           |
-| `state_mapicon`            | Displayed state   | Player country | Shows next to every state on the world map                                             |
+ROOT is the player country in every context type. Default scope in parentheses.
+
+- `player_context` (player country) — Baseline context; use for most GUIs
+- `selected_country_context` (selected country) — GUI only appears when a country is selected; AI evaluates for every other country
+- `selected_state_context` (selected state) — GUI only appears when a state is selected; AI evaluates for every state
+- `decision_category` (player country) — Embeds in a decision category via `scripted_gui` attribute; no parent window needed
+- `diplomatic_action` (player country) — Attached via `send_scripted_gui`/`receive_scripted_gui` in scripted diplomatic actions
+- `national_focus_context` (target country) — Attached to the national focus view for the targeted country
+- `country_mapicon` (displayed country) — Shows next to every country on the world map
+- `state_mapicon` (displayed state) — Shows next to every state on the world map
 
 **Note:** `diplomatic_action` context logs harmless parse errors (`Unexpected token: context_type`) during load. Known engine quirk — the GUIs work correctly at runtime when invoked through `scripted_diplomatic_actions`.
 

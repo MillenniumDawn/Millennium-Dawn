@@ -41,12 +41,14 @@ Reviewer and analyzer agents return findings in this shape. Builder agents have 
 
 Severity rubric (when applicable):
 
-| Tier     | Meaning                                                                                                                    |
-| -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Critical | Game-breaking, silently-broken behavior, or perf catastrophe (unbounded daily `every_country`, GUI `dirty = global.date`). |
-| High     | Clear correctness bug or significant perf hit, but the surface still works.                                                |
-| Medium   | Style / readability / minor perf — should fix but won't block.                                                             |
-| Low      | Cosmetic; nice-to-have.                                                                                                    |
+| Tier     | Meaning                                                                            |
+| -------- | ---------------------------------------------------------------------------------- |
+| Critical | Game-breaking, silently-broken behavior, or perf catastrophe (see examples below). |
+| High     | Clear correctness bug or significant perf hit, but the surface still works.        |
+| Medium   | Style / readability / minor perf — should fix but won't block.                     |
+| Low      | Cosmetic; nice-to-have.                                                            |
+
+Critical perf examples: an unbounded daily `every_country`; GUI `dirty = global.date`.
 
 ## Hand-back contract
 
