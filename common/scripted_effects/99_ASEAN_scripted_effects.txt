@@ -41,47 +41,39 @@ ASEAN_check_breach = {
 
 	if = {
 		limit = { has_elections = no }
-		add_to_variable = { THIS.ASEAN_breach = 2 }
+		add_to_variable = { THIS.ASEAN_breach = 1 }
 	}
 
 	# Ideology is not a breach: ASEAN doctrine is non-interference in how members govern
 	# themselves. What the Association tracks is whether a member can govern at all, on a
-	# -2..+2 axis running from settled peace to open internal conflict.
+	# -2..+2 axis running from settled peace to open internal conflict. MD's regional
+	# stability runs well under vanilla's, so only the ends of the range are scored: a
+	# normal Southeast Asian government sits in the middle and takes neither term.
 	if = {
 		limit = { has_civil_war = yes }
 		add_to_variable = { THIS.ASEAN_breach = 2 }
 	}
 	else_if = {
-		limit = { has_stability < 0.35 }
+		limit = { has_stability < 0.3 }
 		add_to_variable = { THIS.ASEAN_breach = 1 }
 	}
 	else_if = {
 		limit = {
 			has_war = no
-			has_stability > 0.7
+			has_stability > 0.8
 		}
 		add_to_variable = { THIS.ASEAN_breach = -2 }
 	}
 	else_if = {
 		limit = {
 			has_war = no
-			has_stability > 0.5
+			has_stability > 0.65
 		}
 		add_to_variable = { THIS.ASEAN_breach = -1 }
 	}
 
 	if = {
 		limit = { has_country_flag = ASEAN_recent_coup }
-		add_to_variable = { THIS.ASEAN_breach = 2 }
-	}
-
-	if = {
-		limit = {
-			OR = {
-				has_country_flag = ASEAN_aligned_china
-				has_country_flag = ASEAN_aligned_america
-			}
-		}
 		add_to_variable = { THIS.ASEAN_breach = 2 }
 	}
 
@@ -112,6 +104,8 @@ ASEAN_check_breach = {
 		}
 		add_to_variable = { THIS.ASEAN_breach = 1 }
 	}
+
+	clamp_variable = { var = THIS.ASEAN_breach min = 0 }
 }
 
 # swap_ideas fires on_remove before on_add, so without this guard a band change would
@@ -352,6 +346,30 @@ ASEAN_seato_alignment_upkeep = {
 	}
 }
 
+ASEAN_recount_chair = {
+	set_temp_variable = { ASEAN_chair_tmp = 0 }
+	for_each_scope_loop = {
+		array = global.ASEAN_Member
+		if = {
+			limit = { has_country_flag = ASEAN_chair_this_year_flag }
+			set_temp_variable = { ASEAN_chair_tmp = THIS.id }
+		}
+	}
+	set_variable = { global.ASEAN_chair = ASEAN_chair_tmp }
+}
+
+# History seats every member as Committed, so without a pass at startup the readout claims
+# ten Committed members for up to a month before the first tick corrects it.
+ASEAN_startup_pass = {
+	for_each_scope_loop = {
+		array = global.ASEAN_Member
+		ASEAN_check_breach = yes
+		ASEAN_apply_band = yes
+	}
+	ASEAN_recount_bands = yes
+	ASEAN_recount_founding_committed = yes
+}
+
 ASEAN_monthly_update = {
 	for_each_scope_loop = {
 		array = global.ASEAN_Member
@@ -362,6 +380,7 @@ ASEAN_monthly_update = {
 	}
 	ASEAN_recount_bands = yes
 	ASEAN_recount_founding_committed = yes
+	ASEAN_recount_chair = yes
 	ASEAN_fracture_watch = yes
 	ASEAN_defense_pact_watch = yes
 }
@@ -419,4 +438,12 @@ ASEAN_lift_suspension = {
 
 ASEAN_record_objection = {
 	set_country_flag = { flag = ASEAN_objection_recent days = 180 value = 1 }
+}
+
+# A decision that changes a member's breach inputs applies here rather than waiting up to a
+# month for the tick, so the player sees the standing move when they take the decision.
+ASEAN_rescore_standing = {
+	ASEAN_check_breach = yes
+	ASEAN_apply_band = yes
+	ASEAN_recount_bands = yes
 }
