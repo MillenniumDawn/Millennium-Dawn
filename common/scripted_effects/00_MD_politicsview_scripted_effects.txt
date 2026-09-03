@@ -7,18 +7,9 @@ steal_from_party = {
 		hidden_effect = {
 			set_temp_variable = { outlook_party_index = steal_party_index }
 			set_outlook_from_party_index = yes
+			set_current_outlook_id = yes
 			if = {
-				limit = {
-					NOT = {
-						OR = {
-							AND = { check_variable = { outlook_id = 0 } has_government = democratic }
-							AND = { check_variable = { outlook_id = 1 } has_government = communism }
-							AND = { check_variable = { outlook_id = 2 } has_government = fascism }
-							AND = { check_variable = { outlook_id = 3 } has_government = neutrality }
-							AND = { check_variable = { outlook_id = 4 } has_government = nationalist }
-						}
-					}
-				}
+				limit = { NOT = { check_variable = { outlook_id = current_outlook_id } } }
 				set_temp_variable = { outlook_popularity_change = -0.01 }
 				change_outlook_popularity = yes
 			}
@@ -186,13 +177,10 @@ set_party_index_to_ruling_party = {
 	}
 }
 
-# Maps a party slot (0-23) to its outlook. The single source for the slot-to-outlook
-# ranges, so a later 1-index shift (#3392) only updates this effect.
+# Maps a party slot (0-23) to its numeric outlook ID.
 # Parameters:
 # set_temp_variable = { outlook_party_index = X }
 # set_outlook_from_party_index = yes
-# Sets the temp variables outlook_id (0-4) and outlook_start / outlook_end
-# (half-open sibling range).
 set_outlook_from_party_index = {
 	set_temp_variable = {
 		outlook_id = {
@@ -202,35 +190,44 @@ set_outlook_from_party_index = {
 			add = { value = outlook_party_index greater_than = 19 }
 		}
 	}
-	set_temp_variable = {
-		outlook_start = {
-			value = { value = outlook_party_index greater_than = 3 multiply = 4 }
-			add = { value = outlook_party_index greater_than = 9 multiply = 6 }
-			add = { value = outlook_party_index greater_than = 11 multiply = 2 }
-			add = { value = outlook_party_index greater_than = 19 multiply = 8 }
-		}
+}
+
+set_current_outlook_id = {
+	set_temp_variable = { current_outlook_id = -1 }
+	if = {
+		limit = { has_government = democratic }
+		set_temp_variable = { current_outlook_id = 0 }
 	}
-	set_temp_variable = {
-		outlook_end = {
-			value = 4
-			add = { value = outlook_party_index greater_than = 3 multiply = 6 }
-			add = { value = outlook_party_index greater_than = 9 multiply = 2 }
-			add = { value = outlook_party_index greater_than = 11 multiply = 8 }
-			add = { value = outlook_party_index greater_than = 19 multiply = 4 }
-		}
+	else_if = {
+		limit = { has_government = communism }
+		set_temp_variable = { current_outlook_id = 1 }
+	}
+	else_if = {
+		limit = { has_government = fascism }
+		set_temp_variable = { current_outlook_id = 2 }
+	}
+	else_if = {
+		limit = { has_government = neutrality }
+		set_temp_variable = { current_outlook_id = 3 }
+	}
+	else_if = {
+		limit = { has_government = nationalist }
+		set_temp_variable = { current_outlook_id = 4 }
 	}
 }
 
+set_outlook_popularity_array = {
+	resize_temp_array = { array = outlook_popularity_by_id size = 5 }
+	set_temp_variable = { outlook_popularity_by_id^0 = party_popularity@democratic }
+	set_temp_variable = { outlook_popularity_by_id^1 = party_popularity@communism }
+	set_temp_variable = { outlook_popularity_by_id^2 = party_popularity@fascism }
+	set_temp_variable = { outlook_popularity_by_id^3 = party_popularity@neutrality }
+	set_temp_variable = { outlook_popularity_by_id^4 = party_popularity@nationalist }
+}
+
 set_outlook_popularity_from_id = {
-	set_temp_variable = {
-		outlook_popularity = {
-			value = { value = outlook_id equals = 0 multiply = party_popularity@democratic }
-			add = { value = outlook_id equals = 1 multiply = party_popularity@communism }
-			add = { value = outlook_id equals = 2 multiply = party_popularity@fascism }
-			add = { value = outlook_id equals = 3 multiply = party_popularity@neutrality }
-			add = { value = outlook_id equals = 4 multiply = party_popularity@nationalist }
-		}
-	}
+	set_outlook_popularity_array = yes
+	set_temp_variable = { outlook_popularity = outlook_popularity_by_id^outlook_id }
 }
 
 change_outlook_popularity = {
@@ -302,6 +299,23 @@ change_relative_party_popularity = {
 			subtract_from_temp_variable = { outlook_remainder = party_pop_array^party_index }
 			#Scale all non-boosted parties
 			divide_temp_variable = { outlook_remainder = old_outlook_remainder }
+			set_temp_variable = {
+				outlook_start = {
+					value = { value = outlook_party_index greater_than = 3 multiply = 4 }
+					add = { value = outlook_party_index greater_than = 9 multiply = 6 }
+					add = { value = outlook_party_index greater_than = 11 multiply = 2 }
+					add = { value = outlook_party_index greater_than = 19 multiply = 8 }
+				}
+			}
+			set_temp_variable = {
+				outlook_end = {
+					value = 4
+					add = { value = outlook_party_index greater_than = 3 multiply = 6 }
+					add = { value = outlook_party_index greater_than = 9 multiply = 2 }
+					add = { value = outlook_party_index greater_than = 11 multiply = 8 }
+					add = { value = outlook_party_index greater_than = 19 multiply = 4 }
+				}
+			}
 			for_loop_effect = {
 				start = outlook_start
 				end = outlook_end
@@ -474,11 +488,7 @@ add_up_party_totals = {
 		set_outlook_from_party_index = yes
 		add_to_temp_variable = { pop_total_temp^outlook_id = party_pop_array^current_id }
 	}
-	set_variable = { pop_total_democratic = pop_total_temp^0 }
-	set_variable = { pop_total_communism = pop_total_temp^1 }
-	set_variable = { pop_total_fascism = pop_total_temp^2 }
-	set_variable = { pop_total_neutrality = pop_total_temp^3 }
-	set_variable = { pop_total_nationalist = pop_total_temp^4 }
+	set_outlook_popularity_array = yes
 
 	#Scale party popularity totals to match actual Outlook popularity
 	for_loop_effect = {
@@ -487,11 +497,10 @@ add_up_party_totals = {
 		multiply_variable = { party_pop_array^current_id = 1000 }
 		set_temp_variable = { outlook_party_index = current_id }
 		set_outlook_from_party_index = yes
-		set_outlook_popularity_from_id = yes
 		if = {
 			limit = { check_variable = { pop_total_temp^outlook_id > 0 } }
 			divide_variable = { party_pop_array^current_id = pop_total_temp^outlook_id }
-			multiply_variable = { party_pop_array^current_id = outlook_popularity }
+			multiply_variable = { party_pop_array^current_id = outlook_popularity_by_id^outlook_id }
 		}
 		else = {
 			set_variable = { party_pop_array^current_id = 0 }
@@ -505,7 +514,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			democratic > 0.01
-			check_variable = { pop_total_democratic < 0.01 }
+			check_variable = { pop_total_temp^0 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^0 = 0.01 } }
@@ -517,7 +526,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			communism > 0.01
-			check_variable = { pop_total_communism < 0.01 }
+			check_variable = { pop_total_temp^1 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^4 = 0.01 } }
@@ -531,7 +540,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			fascism > 0.01
-			check_variable = { pop_total_fascism < 0.01 }
+			check_variable = { pop_total_temp^2 < 0.01 }
 		}
 		if = {
 			limit = { Is_Muslim_Country = yes }
@@ -544,7 +553,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			neutrality > 0.01
-			check_variable = { pop_total_neutrality < 0.01 }
+			check_variable = { pop_total_temp^3 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^12 = 0.01 } }
@@ -560,7 +569,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			nationalist > 0.01
-			check_variable = { pop_total_nationalist < 0.01 }
+			check_variable = { pop_total_temp^4 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^20 = 0.01 } }
@@ -674,7 +683,6 @@ set_coalition_drift = {
 	resize_temp_array = { array = coalition_count_temp size = 5 }
 	for_each_loop = {
 		array = gov_coalition_array
-		index = i
 		value = v
 		set_temp_variable = { outlook_party_index = v }
 		set_outlook_from_party_index = yes
@@ -682,25 +690,10 @@ set_coalition_drift = {
 	}
 
 	#Don't get bonuses to ruling Outlook
+	set_current_outlook_id = yes
 	if = {
-		limit = { has_government = democratic }
-		set_temp_variable = { coalition_count_temp^0 = 0 }
-	}
-	else_if = {
-		limit = { has_government = communism }
-		set_temp_variable = { coalition_count_temp^1 = 0 }
-	}
-	else_if = {
-		limit = { has_government = fascism }
-		set_temp_variable = { coalition_count_temp^2 = 0 }
-	}
-	else_if = {
-		limit = { has_government = neutrality }
-		set_temp_variable = { coalition_count_temp^3 = 0 }
-	}
-	else_if = {
-		limit = { has_government = nationalist }
-		set_temp_variable = { coalition_count_temp^4 = 0 }
+		limit = { check_variable = { current_outlook_id > -1 } }
+		set_temp_variable = { coalition_count_temp^current_outlook_id = 0 }
 	}
 
 	set_variable = { coalition_democratic = coalition_count_temp^0 }
@@ -1957,65 +1950,51 @@ change_ruling_party_effect = {
 	# Disable Elections of 0 means that they have elections
 	if = { limit = { check_variable = { disable_elections = 0 } }
 		custom_effect_tooltip = ruling_party_changed_elections_tt
-		if = {
-			limit = {
-				check_variable = { rul_party_temp > -1 }
-				check_variable = { rul_party_temp < 24 }
-			}
-			hidden_effect = {
-				set_temp_variable = { outlook_party_index = rul_party_temp }
-				set_outlook_from_party_index = yes
-				if = {
-					limit = { check_variable = { outlook_id = 0 } }
-					set_politics = { ruling_party = democratic elections_allowed = yes }
-				}
-				else_if = {
-					limit = { check_variable = { outlook_id = 1 } }
-					set_politics = { ruling_party = communism elections_allowed = yes }
-				}
-				else_if = {
-					limit = { check_variable = { outlook_id = 2 } }
-					set_politics = { ruling_party = fascism elections_allowed = yes }
-				}
-				else_if = {
-					limit = { check_variable = { outlook_id = 3 } }
-					set_politics = { ruling_party = neutrality elections_allowed = yes }
-				}
-				else = {
-					set_politics = { ruling_party = nationalist elections_allowed = yes }
-				}
-			}
-		}
 	}
 	else = {
 		custom_effect_tooltip = ruling_party_changed_no_elections_tt
-		if = {
-			limit = {
-				check_variable = { rul_party_temp > -1 }
-				check_variable = { rul_party_temp < 24 }
+	}
+	if = {
+		limit = {
+			check_variable = { rul_party_temp > -1 }
+			check_variable = { rul_party_temp < 24 }
+		}
+		hidden_effect = {
+			set_temp_variable = { outlook_party_index = rul_party_temp }
+			set_outlook_from_party_index = yes
+			if = {
+				limit = { check_variable = { outlook_id = 0 } }
+				if = { limit = { check_variable = { disable_elections = 0 } }
+					set_politics = { ruling_party = democratic elections_allowed = yes }
+				}
+				else = { set_politics = { ruling_party = democratic elections_allowed = no } }
 			}
-			hidden_effect = {
-				set_temp_variable = { outlook_party_index = rul_party_temp }
-				set_outlook_from_party_index = yes
-				if = {
-					limit = { check_variable = { outlook_id = 0 } }
-					set_politics = { ruling_party = democratic elections_allowed = no }
+			else_if = {
+				limit = { check_variable = { outlook_id = 1 } }
+				if = { limit = { check_variable = { disable_elections = 0 } }
+					set_politics = { ruling_party = communism elections_allowed = yes }
 				}
-				else_if = {
-					limit = { check_variable = { outlook_id = 1 } }
-					set_politics = { ruling_party = communism elections_allowed = no }
+				else = { set_politics = { ruling_party = communism elections_allowed = no } }
+			}
+			else_if = {
+				limit = { check_variable = { outlook_id = 2 } }
+				if = { limit = { check_variable = { disable_elections = 0 } }
+					set_politics = { ruling_party = fascism elections_allowed = yes }
 				}
-				else_if = {
-					limit = { check_variable = { outlook_id = 2 } }
-					set_politics = { ruling_party = fascism elections_allowed = no }
+				else = { set_politics = { ruling_party = fascism elections_allowed = no } }
+			}
+			else_if = {
+				limit = { check_variable = { outlook_id = 3 } }
+				if = { limit = { check_variable = { disable_elections = 0 } }
+					set_politics = { ruling_party = neutrality elections_allowed = yes }
 				}
-				else_if = {
-					limit = { check_variable = { outlook_id = 3 } }
-					set_politics = { ruling_party = neutrality elections_allowed = no }
+				else = { set_politics = { ruling_party = neutrality elections_allowed = no } }
+			}
+			else = {
+				if = { limit = { check_variable = { disable_elections = 0 } }
+					set_politics = { ruling_party = nationalist elections_allowed = yes }
 				}
-				else = {
-					set_politics = { ruling_party = nationalist elections_allowed = no }
-				}
+				else = { set_politics = { ruling_party = nationalist elections_allowed = no } }
 			}
 		}
 	}
