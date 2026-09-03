@@ -39,6 +39,7 @@ env:
     interface
     gfx/flags
     map/adjacency_rules.txt
+    music
     tools
     resources/documentation
     .claude
@@ -257,6 +258,7 @@ jobs:
             mios:
               - 'common/military_industrial_organization/**'
               - 'common/country_leader/**'
+              - 'common/doctrines/**'
               # Equipment and its groups are the other half of the dead-bonus
               # check: dropping a base stat there kills bonuses elsewhere.
               - 'common/units/equipment/**'
@@ -267,6 +269,7 @@ jobs:
               - 'common/**/*.txt'
               - 'events/**/*.txt'
               - 'history/**/*.txt'
+              - 'music/**/*.txt'
             mod:
               - '*.mod'
             # Union of everything any validator job consumes — gates
@@ -278,6 +281,7 @@ jobs:
               - 'history/**'
               - 'localisation/**'
               - 'interface/**'
+              - 'music/**'
               # The variables validator counts global flags read by canal
               # closures, so a change here must rebuild the workspace.
               - 'map/adjacency_rules.txt'
@@ -332,6 +336,7 @@ jobs:
             localisation
             interface
             gfx/flags
+            music
             # Canal/strait closure logic; the variables validator counts the
             # global flags read here as consumers.
             map/adjacency_rules.txt
@@ -422,9 +427,9 @@ jobs:
       needs.detect-changes.outputs.events == 'true' ||
       needs.detect-changes.outputs.history == 'true' ||
       needs.detect-changes.outputs.localisation == 'true' ||
-      needs.detect-changes.outputs.mod == 'true'
+      needs.detect-changes.outputs.mod == 'true' ||
+      needs.detect-changes.outputs.style == 'true'
     runs-on: ubuntu-latest
-
     steps:
       - name: Download prepared workspace
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
@@ -442,7 +447,7 @@ jobs:
         if: needs.detect-changes.outputs.style == 'true'
         id: style-files
         env:
-          # JSON array of changed .txt files under common/events/history.
+          # JSON array of changed .txt files under common/events/history/music.
           STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style-files }}
         run: |
           # Newline-delimit the JSON array.
