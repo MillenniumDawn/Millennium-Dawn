@@ -1,8 +1,42 @@
 """Helpers shared by tools/tests. Not imported by production scripts."""
 
+import importlib.util
+import io
 import json
+import struct
 import subprocess
+import sys
+import tempfile
+import urllib.error
+from http.client import HTTPMessage
 from pathlib import Path
+from types import ModuleType
+
+
+def symlinks_available() -> bool:
+    """Whether this process may create a symlink.
+
+    Windows refuses without Developer Mode or admin rights (WinError 1314), so
+    symlink-rejection tests skip there instead of failing the whole suite.
+    """
+    with tempfile.TemporaryDirectory() as folder:
+        target = Path(folder) / "target"
+        target.mkdir()
+        try:
+            (Path(folder) / "link").symlink_to(target)
+        except (OSError, NotImplementedError):
+            return False
+    return True
+
+
+def imagemagick_available() -> bool:
+    """Whether a real ImageMagick binary is on PATH.
+
+    Windows ships its own `convert.exe` (the FAT-to-NTFS converter), so the
+    tool's own resolver decides — the name alone proves nothing.
+    """
+    converter = load_tool_module("assets/md_art_convert.py")
+    return converter.find_imagemagick("magick", "convert", "identify") is not None
 
 
 def run_git(repository, *args):
@@ -79,12 +113,74 @@ def issue_dict(severity, file="a.txt", line=1, message="m", category="c"):
     }
 
 
+class _UnreadableHTTPError(urllib.error.HTTPError):
+    def read(self, *_args, **_kwargs):
+        raise OSError("response stream already consumed")
+
+
+def http_error(code: int, body: bytes | None = b"denied"):
+    error_type = _UnreadableHTTPError if body is None else urllib.error.HTTPError
+    return error_type(
+        "https://api.github.invalid",
+        code,
+        "err",
+        HTTPMessage(),
+        io.BytesIO(body or b""),
+    )
+
+
+def dds_header(
+    magic: int,
+    flags: int,
+    height: int,
+    width: int,
+    linear_size: int,
+    pixel_format: bytes,
+    caps: int,
+    mip_count: int = 0,
+) -> bytes:
+    return (
+        struct.pack("<8I", magic, 124, flags, height, width, linear_size, 0, mip_count)
+        + bytes(44)
+        + pixel_format
+        + struct.pack("<I", caps)
+        + bytes(16)
+    )
+
+
+def load_tool_module(
+    relative_path: str, *, module_name: str | None = None, register: bool = False
+) -> ModuleType:
+    path = Path(__file__).resolve().parents[1] / relative_path
+    name = module_name or f"_tool_test_{path.stem.replace('-', '_')}"
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    if register:
+        sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 def write_text(path: Path, content: str) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
         handle.write(content)
     return path
+
+
+def write_under(root: Path, relative_path: str, content: str) -> Path:
+    return write_text(root / relative_path, content)
+
+
+def write_under_str(root: Path, relative_path: str, content: str) -> str:
+    return str(write_under(root, relative_path, content))
+
+
+def read_text(path: Path) -> str:
+    with path.open(encoding="utf-8", newline="") as handle:
+        return handle.read()
 
 
 def write_slug_json(base: Path, slug: str, issues: list) -> None:

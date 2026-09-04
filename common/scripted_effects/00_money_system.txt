@@ -1358,7 +1358,7 @@ calculate_additional_income_rate = {
 			set_variable = {
 				additional_income_FRA_cfa_franc_custodian = {
 					value = FRA_cfa_franc_gdp_total
-					multiply = 0.005
+					multiply = 0.0025
 				}
 			}
 			add_to_variable = { additional_income_rate = additional_income_FRA_cfa_franc_custodian }
@@ -2436,6 +2436,28 @@ calculate_interest_rate = {
 
 		#Calculate weekly debt rate based on interest (52 weeks in a year)
 		set_variable = { debt_rate = { value = debt multiply = 0.00019 multiply = interest_rate } }
+
+		# Only debt denominated in an external reserve currency takes the exchange hit.
+		# Must follow the set_variable above: applied before it, the adjustment is
+		# overwritten and never reaches the player.
+		if = {
+			limit = {
+				OR = {
+					has_idea = us_dollar
+					has_idea = euro
+					has_idea = chinese_yuan
+					has_idea = chinese_yuan_2
+					has_idea = chinese_yuan_3
+					has_idea = russia_rouble
+					has_idea = japanese_yen
+					has_idea = british_pound
+					has_idea = swiss_frank
+					has_idea = gulden
+				}
+			}
+			set_temp_variable = { debt_fx_factor = { value = 1 divide = currency_strength } }
+			multiply_variable = { debt_rate = debt_fx_factor }
+		}
 
 		#If interest rate is really high, add additional modifier
 		if = { limit = { check_variable = { interest_rate > 14.999 } }

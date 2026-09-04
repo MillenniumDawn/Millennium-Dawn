@@ -137,7 +137,7 @@ focus_tree = {
 				clr_country_flag = sov_zir_econ
 			}
 			if = {
-				limit = { NOT = { is_in_array = { ruling_party = 6 } } }
+				limit = { NOT = { check_variable = { ruling_party = 6 } } }
 				set_temp_variable = { rul_party_temp = 6 }
 				change_ruling_party_effect = yes
 			}
@@ -1395,6 +1395,10 @@ focus_tree = {
 		ai_will_do = {
 			base = 0
 			modifier = {
+				CHE_ai_historical_path = yes
+				add = 155
+			}
+			modifier = {
 				has_global_flag = SOV_PUTIN_PATH
 				add = 155
 			}
@@ -2125,7 +2129,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rokirovka"
 			retire_country_leader = yes
 			hidden_effect = {
-				clear_array = ruling_party
+				clear_variable = ruling_party
 				clear_array = gov_coalition_array
 				update_government_coalition_strength = yes
 				update_party_name = yes
@@ -4957,22 +4961,7 @@ focus_tree = {
 				add_coalition_members_effect = yes
 				set_temp_variable = { add_col_one = 18 }
 				add_coalition_members_effect = yes
-			subtract_from_variable = {
-				party_pop_array^1 = current_cons_popularity
-			}
-			subtract_from_variable = {
-				party_pop_array^5 = current_cons_popularity
-			}
-			subtract_from_variable = {
-				party_pop_array^7 = current_cons_popularity
-			}
-			subtract_from_variable = {
-				party_pop_array^15 = current_cons_popularity
-			}
-			subtract_from_variable = {
-				party_pop_array^18 = current_cons_popularity
-			}
-			recalculate_party = yes
+				recalculate_party = yes
 			}
 			custom_effect_tooltip = SOV_the_onf_TT
 		}
@@ -5497,7 +5486,7 @@ focus_tree = {
 					change_relative_party_popularity = yes
 				}
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 20 } } }
+					limit = { NOT = { check_variable = { ruling_party = 20 } } }
 					set_temp_variable = { rul_party_temp = 20 }
 					set_temp_variable = { disable_elections = 0 }
 					change_ruling_party_effect = yes
@@ -13223,7 +13212,7 @@ focus_tree = {
 					clr_country_flag = sov_zir_econ
 				}
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+					limit = { NOT = { check_variable = { ruling_party = 4 } } }
 					set_temp_variable = { rul_party_temp = 4 }
 					set_temp_variable = { disable_elections = 0 }
 					change_ruling_party_effect = yes
@@ -16197,14 +16186,10 @@ focus_tree = {
 				set_temp_variable = { rul_party_temp = 2 }
 				set_temp_variable = { col_one = 1 }
 				change_ruling_party_effect = yes
-				set_temp_variable = { current_cons_popularity = { value = party_pop_array^2 multiply = 0.5 } }
-				# Remove most of support, retrack it to emerg communist party
-				set_temp_variable = { party_index = 6 }
-				set_temp_variable = { party_popularity_increase = { value = current_cons_popularity multiply = -1 } }
-				change_relative_party_popularity = yes
 				set_temp_variable = { party_index = 2 }
-				set_temp_variable = { party_popularity_increase = current_cons_popularity }
-				change_relative_party_popularity = yes
+				set_temp_variable = { funder_party_index = 6 }
+				set_temp_variable = { party_popularity_fraction = 0.5 }
+				boost_party_popularity = yes
 				if = {
 					limit = { OR = { has_country_flag = SOV_navalny_a has_country_flag = SOV_navalny_p has_country_flag = SOV_navalny_b has_country_flag = SOV_navalny_n } }
 					clr_country_flag = SOV_navalny_a
@@ -16927,14 +16912,10 @@ focus_tree = {
 				set_temp_variable = { rul_party_temp = 2 }
 				set_temp_variable = { col_one = 1 }
 				change_ruling_party_effect = yes
-				set_temp_variable = { current_cons_popularity = { value = party_pop_array^2 multiply = 0.5 } }
-				# Remove most of support, retrack it to emerg communist party
-				set_temp_variable = { party_index = 6 }
-				set_temp_variable = { party_popularity_increase = { value = current_cons_popularity multiply = -1 } }
-				change_relative_party_popularity = yes
 				set_temp_variable = { party_index = 2 }
-				set_temp_variable = { party_popularity_increase = current_cons_popularity }
-				change_relative_party_popularity = yes
+				set_temp_variable = { funder_party_index = 6 }
+				set_temp_variable = { party_popularity_fraction = 0.5 }
+				boost_party_popularity = yes
 			}
 			create_country_leader = {
 				name = "Alexei Navalny"
@@ -16992,13 +16973,10 @@ focus_tree = {
 				set_temp_variable = { rul_party_temp = 1 }
 				set_temp_variable = { col_one = 2 }
 				change_ruling_party_effect = yes
-				set_temp_variable = { current_cons_popularity = { value = party_pop_array^1 multiply = 0.5 } }
-				set_temp_variable = { party_index = 6 }
-				set_temp_variable = { party_popularity_increase = { value = current_cons_popularity multiply = -1 } }
-				change_relative_party_popularity = yes
 				set_temp_variable = { party_index = 1 }
-				set_temp_variable = { party_popularity_increase = current_cons_popularity }
-				change_relative_party_popularity = yes
+				set_temp_variable = { funder_party_index = 6 }
+				set_temp_variable = { party_popularity_fraction = 0.5 }
+				boost_party_popularity = yes
 			}
 			create_country_leader = {
 				name = "Boris Nemtsov"
@@ -17643,48 +17621,33 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_civil_war_belarus"
 			hidden_effect = {
-				create_dynamic_country = {
-					original_tag = BLR
-					copy_tag = BLR
-					transfer_state = 1093
-					transfer_state = 702
-					set_popularities = {
-						democratic = 70
-						neutrality = 5
-						fascism = 0
-						communism = 5
-						nationalist = 20
-					}
-					inherit_technology = BLR
-					set_temp_variable = { rul_party_temp = 2 }
-					set_temp_variable = { col_one = 3 }
-					set_temp_variable = { disable_elections = 1 }
-					change_ruling_party_effect = yes
-					set_temp_variable = { current_cons_popularity = { value = party_pop_array^2 multiply = 0.5 } }
-					subtract_from_variable = {
-						party_pop_array^3 = current_cons_popularity
-					}
-					add_to_variable = {
-						party_pop_array^2 = current_cons_popularity
-					}
-					recalculate_party = yes
-					retire_country_leader = yes
-					BLR = {
-						transfer_units_fraction = {
-							target = PREV
-							size = 0.5
-							stockpile_ratio = 0.5
-							army_ratio = 0.5
-							navy_ratio = 0.5
-							air_ratio = 0.5
+				BLR = {
+					start_civil_war = {
+						ideology = democratic
+						size = 0.5
+						capital = 702
+						states = { 1093 702 }
+						set_popularities = {
+							democratic = 70
+							neutrality = 5
+							fascism = 0
+							communism = 5
+							nationalist = 20
 						}
+						set_temp_variable = { rul_party_temp = 2 }
+						set_temp_variable = { col_one = 3 }
+						set_temp_variable = { disable_elections = 1 }
+						change_ruling_party_effect = yes
+						set_temp_variable = { current_cons_popularity = { value = party_pop_array^2 multiply = 0.5 } }
+						subtract_from_variable = {
+							party_pop_array^3 = current_cons_popularity
+						}
+						add_to_variable = {
+							party_pop_array^2 = current_cons_popularity
+						}
+						recalculate_party = yes
+						country_event = russia.51
 					}
-					declare_war_on = {
-						target = BLR
-						type = civil_war
-					}
-					add_civil_war_target = BLR
-					country_event = russia.51
 				}
 			}
 			custom_effect_tooltip = SOV_blr_democracy_tt
@@ -27243,12 +27206,6 @@ focus_tree = {
 			add_coalition_members_effect = yes
 			set_temp_variable = { add_col_one = 15 }
 			add_coalition_members_effect = yes
-			subtract_from_variable = {
-				party_pop_array^1 = current_cons_popularity
-			}
-			subtract_from_variable = {
-				party_pop_array^15 = current_cons_popularity
-			}
 			recalculate_party = yes
 		}
 

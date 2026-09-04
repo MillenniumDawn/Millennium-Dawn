@@ -163,35 +163,9 @@ steal_popularity_from_progressives = {
 }
 
 add_ruling_outlook_popularity = {
-	if = { limit = { has_government = democratic }
-		add_popularity = {
-			ideology = democratic
-			popularity = arg_popularity
-		}
-	}
-	else_if = { limit = { has_government = communism }
-		add_popularity = {
-			ideology = communism
-			popularity = arg_popularity
-		}
-	}
-	else_if = { limit = { has_government = fascism }
-		add_popularity = {
-			ideology = fascism
-			popularity = arg_popularity
-		}
-	}
-	else_if = { limit = { has_government = neutrality }
-		add_popularity = {
-			ideology = neutrality
-			popularity = arg_popularity
-		}
-	}
-	else_if = { limit = { has_government = nationalist }
-		add_popularity = {
-			ideology = nationalist
-			popularity = arg_popularity
-		}
+	add_popularity = {
+		ideology = ROOT
+		popularity = arg_popularity
 	}
 	recalculate_party = yes
 }
@@ -212,14 +186,7 @@ modify_election_threshold = {
 set_party_index_to_ruling_party = {
 	if = {
 		limit = {
-			is_in_array = { array = ruling_party value = 0 }
-			NOT = { has_country_leader_with_trait = western_technocrat }
-		}
-		set_temp_variable = { party_index = 0 }
-	}
-	else_if = {
-		limit = {
-			is_in_array = { array = ruling_party value = 0 }
+			western_autocrats_are_in_power = yes
 			has_country_leader_with_trait = western_technocrat
 		}
 		for_each_loop = {
@@ -235,7 +202,7 @@ set_party_index_to_ruling_party = {
 		set_temp_variable = { party_index = biggest_party_in_coalition }
 	}
 	else = {
-		set_temp_variable = { party_index = ruling_party^0 }
+		set_temp_variable = { party_index = ruling_party }
 	}
 }
 
@@ -458,12 +425,57 @@ change_relative_party_popularity = {
 	recalculate_party = yes
 }
 
+# Move popularity from one party to another. The funder loses party_popularity_fraction of
+# its own popularity and the beneficiary gains the same amount.
+#
+# set_temp_variable = { party_index = 0-23 } # funder, loses popularity
+# set_temp_variable = { target_party_index = 0-23 } # beneficiary, gains popularity
+# set_temp_variable = { party_popularity_fraction = F } # 0.5 moves half of the funder's popularity
+move_party_popularity = {
+	set_temp_variable = { temp_outlook_increase = 0 }
+	set_temp_variable = { _party_pop_delta = party_pop_array^party_index }
+	multiply_temp_variable = { _party_pop_delta = party_popularity_fraction }
+	set_temp_variable = { party_popularity_increase = { value = _party_pop_delta multiply = -1 } }
+	change_relative_party_popularity = yes
+	set_temp_variable = { party_index = target_party_index }
+	set_temp_variable = { party_popularity_increase = _party_pop_delta }
+	change_relative_party_popularity = yes
+}
+
+# Boost one party by party_popularity_fraction of its own popularity, with the funder paying
+# for it. The measured party gains, the funder loses the same amount.
+#
+# set_temp_variable = { party_index = 0-23 } # beneficiary, measured and boosted
+# set_temp_variable = { funder_party_index = 0-23 } # party funding the boost
+# set_temp_variable = { party_popularity_fraction = F } # 0.5 boosts by half of the beneficiary's popularity
+boost_party_popularity = {
+	set_temp_variable = { temp_outlook_increase = 0 }
+	set_temp_variable = { _party_pop_delta = party_pop_array^party_index }
+	multiply_temp_variable = { _party_pop_delta = party_popularity_fraction }
+	set_temp_variable = { _party_pop_beneficiary = party_index }
+	set_temp_variable = { party_index = funder_party_index }
+	set_temp_variable = { party_popularity_increase = { value = _party_pop_delta multiply = -1 } }
+	change_relative_party_popularity = yes
+	set_temp_variable = { party_index = _party_pop_beneficiary }
+	set_temp_variable = { party_popularity_increase = _party_pop_delta }
+	change_relative_party_popularity = yes
+}
+
+# Scale one party's popularity directly, then rescale its outlook to preserve the total.
+#
+# set_temp_variable = { party_index = 0-23 } # party to scale
+# set_temp_variable = { party_popularity_multiplier = M } # 0.5 halves, 1.5 boosts by half, 0 clears
+scale_party_popularity = {
+	multiply_variable = { party_pop_array^party_index = party_popularity_multiplier }
+	recalculate_party = yes
+}
+
 # Parameter:
 # - overlord_to_match: id of the overlord whose ruling party the subject adopts
 effect_puppet_match_ruling_party_to_overlord = {		#Used in target scope
 	if = {
-		limit = { check_variable = { var:overlord_to_match.ruling_party^num > 0 } }
-		set_temp_variable = { rul_party_temp = var:overlord_to_match.ruling_party^0 }
+		limit = { var:overlord_to_match = { has_variable = ruling_party } }
+		set_temp_variable = { rul_party_temp = var:overlord_to_match.ruling_party }
 		set_temp_variable = { disable_elections = 1 }
 		if = {
 			limit = { var:overlord_to_match = { has_elections = yes } }
@@ -511,12 +523,50 @@ effect_puppet_match_ruling_party_to_overlord = {		#Used in target scope
 }
 
 set_temp_variable_to_ruling_party = {
-	set_temp_variable = { party_index = ruling_party^0 }
+	set_temp_variable = { party_index = ruling_party }
 }
 
 #### New Coalition stuff ####
+# Self-heal only. Does not touch coalitions or set_* flags.
+seed_ruling_party_if_unset = {
+	if = { limit = { NOT = { has_variable = ruling_party } }
+		set_temp_variable = { rp_lo = 0 }
+		set_temp_variable = { rp_hi = 4 }
+		if = { limit = { has_government = communism }
+			set_temp_variable = { rp_lo = 4 }
+			set_temp_variable = { rp_hi = 10 }
+		}
+		else_if = { limit = { has_government = fascism }
+			set_temp_variable = { rp_lo = 10 }
+			set_temp_variable = { rp_hi = 12 }
+		}
+		else_if = { limit = { has_government = neutrality }
+			set_temp_variable = { rp_lo = 12 }
+			set_temp_variable = { rp_hi = 20 }
+		}
+		else_if = { limit = { has_government = nationalist }
+			set_temp_variable = { rp_lo = 20 }
+			set_temp_variable = { rp_hi = 24 }
+		}
+		set_temp_variable = { rp_best = -1 }
+		set_temp_variable = { rp_best_i = rp_lo }
+		for_loop_effect = {
+			start = rp_lo
+			end = rp_hi
+			value = rp_i
+			if = {
+				limit = { check_variable = { party_pop_array^rp_i > rp_best } }
+				set_temp_variable = { rp_best = party_pop_array^rp_i }
+				set_temp_variable = { rp_best_i = rp_i }
+			}
+		}
+		set_variable = { ruling_party = rp_best_i }
+	}
+}
+
 startup_politics = {
 	set_failsafe_values = yes #adds needed values if missing
+	seed_ruling_party_if_unset = yes
 	add_up_party_totals = yes
 	set_party_positions = yes
 
@@ -540,7 +590,7 @@ start_politics_input = {
 	clear_array = party_pop_array
 	clear_array = party_pop_elect_array
 	clear_array = pos_array
-	clear_array = ruling_party
+	clear_variable = ruling_party
 	clear_array = gov_coalition_array
 
 	resize_array = { array = party_pop_array size = 24 }
@@ -586,9 +636,8 @@ hold_elections = {
 	}
 	else = {
 		# Should set the main election value and ignore the election threshold
-		for_each_loop = {
-			array = ruling_party
-			set_variable = { party_pop_elect_array^i = party_pop_array^i }
+		if = { limit = { has_variable = ruling_party }
+			set_variable = { party_pop_elect_array^ruling_party = party_pop_array^ruling_party }
 		}
 	}
 	calculate_banned_parties = yes
@@ -619,9 +668,8 @@ recalculate_party_strength = {
 	}
 	else = {
 		# Should set the main election value and ignore the election threshold
-		for_each_loop = {
-			array = ruling_party
-			set_variable = { party_pop_elect_array^i = party_pop_array^i }
+		if = { limit = { has_variable = ruling_party }
+			set_variable = { party_pop_elect_array^ruling_party = party_pop_array^ruling_party }
 		}
 	}
 	update_majority_threshold = yes
@@ -844,66 +892,16 @@ find_two_highest_parties = {
 # function: update_party_name
 # Purpose: Updates the political ideology
 update_party_name = {
-	if = { limit = { check_variable = { ruling_party^num > 0 } }
-		if = { limit = { has_government = democratic }
-			meta_effect = {
-				text = {
-					set_party_name = {
-						ideology = democratic
-						name = "[SUBIDEOLOGY_NAME]"
-						long_name = "[SUBIDEOLOGY_NAME]"
-					}
+	if = { limit = { has_variable = ruling_party }
+		meta_effect = {
+			text = {
+				set_party_name = {
+					ideology = ROOT
+					name = "[SUBIDEOLOGY_NAME]"
+					long_name = "[SUBIDEOLOGY_NAME]"
 				}
-				SUBIDEOLOGY_NAME = "[show_ruling_party]"
 			}
-		}
-		else_if = { limit = { has_government = communism }
-			meta_effect = {
-				text = {
-					set_party_name = {
-						ideology = communism
-						name = "[SUBIDEOLOGY_NAME]"
-						long_name = "[SUBIDEOLOGY_NAME]"
-					}
-				}
-				SUBIDEOLOGY_NAME = "[show_ruling_party]"
-			}
-		}
-		else_if = { limit = { has_government = fascism }
-			meta_effect = {
-				text = {
-					set_party_name = {
-						ideology = fascism
-						name = "[SUBIDEOLOGY_NAME]"
-						long_name = "[SUBIDEOLOGY_NAME]"
-					}
-				}
-				SUBIDEOLOGY_NAME = "[show_ruling_party]"
-			}
-		}
-		else_if = { limit = { has_government = neutrality }
-			meta_effect = {
-				text = {
-					set_party_name = {
-						ideology = neutrality
-						name = "[SUBIDEOLOGY_NAME]"
-						long_name = "[SUBIDEOLOGY_NAME]"
-					}
-				}
-				SUBIDEOLOGY_NAME = "[show_ruling_party]"
-			}
-		}
-		else_if = { limit = { has_government = nationalist }
-			meta_effect = {
-				text = {
-					set_party_name = {
-						ideology = nationalist
-						name = "[SUBIDEOLOGY_NAME]"
-						long_name = "[SUBIDEOLOGY_NAME]"
-					}
-				}
-				SUBIDEOLOGY_NAME = "[show_ruling_party]"
-			}
+			SUBIDEOLOGY_NAME = "[show_ruling_party]"
 		}
 	}
 }
@@ -1044,11 +1042,9 @@ update_government_coalition_strength = {
 	#strength of ruling_party is separate
 	set_temp_variable = { sum = 0 }
 	set_temp_variable = { sum_elect = 0 }
-	for_each_loop = {
-		array = ruling_party
-		value = v
-		add_to_temp_variable = { sum = party_pop_array^v }
-		add_to_temp_variable = { sum_elect = party_pop_elect_array^v }
+	if = { limit = { has_variable = ruling_party }
+		add_to_temp_variable = { sum = party_pop_array^ruling_party }
+		add_to_temp_variable = { sum_elect = party_pop_elect_array^ruling_party }
 	}
 	add_to_variable = { government_coalition_strength = sum }
 	add_to_variable = { government_coalition_strength_elect = sum_elect }
@@ -1074,7 +1070,7 @@ update_coalition_leader = {
 
 		# Build temp array of all coalition members (ruling party + partners)
 		clear_temp_array = full_coalition_temp
-		add_to_temp_array = { full_coalition_temp = ruling_party^0 }
+		add_to_temp_array = { full_coalition_temp = ruling_party }
 		for_each_loop = {
 			array = gov_coalition_array
 			value = v
@@ -1083,7 +1079,7 @@ update_coalition_leader = {
 
 		# Find the strongest member by electoral popularity
 		set_temp_variable = { best_coalition_pop = 0 }
-		set_temp_variable = { best_coalition_index = ruling_party^0 }
+		set_temp_variable = { best_coalition_index = ruling_party }
 		for_each_loop = {
 			array = full_coalition_temp
 			value = v
@@ -1097,7 +1093,7 @@ update_coalition_leader = {
 		# Only swap if a different party is now strongest
 		if = {
 			limit = {
-				NOT = { is_in_array = { ruling_party = best_coalition_index } }
+				NOT = { check_variable = { ruling_party = best_coalition_index } }
 				NOT = { has_country_leader_with_trait = roman_senate_trait }
 			}
 
@@ -1147,7 +1143,7 @@ refund_government_coalition = {
 		index = i
 
 		set_temp_variable = { pol_dist_target_index = v }
-		set_temp_variable = { pol_dist_source_index = ruling_party^0 }
+		set_temp_variable = { pol_dist_source_index = ruling_party }
 		get_pol_distance = yes
 		add_to_temp_variable = {
 			var = sum_factor
@@ -1247,7 +1243,6 @@ AI_setup_government = {
 		log = "[GetDateText]: [Root.GetName]: AI started setup government [?political_power]"
 	}
 	# hold_elections = yes #add values to election array etc
-	clear_array = ruling_party
 	clear_array = gov_coalition_array
 
 	set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
@@ -1269,7 +1264,7 @@ AI_setup_government = {
 				compare = less_than_or_equals
 			}
 		}
-		add_to_array = { ruling_party = max_index_1 }
+		set_variable = { ruling_party = max_index_1 }
 		for_each_loop = {
 			array = party_pop_elect_array
 			index = i1
@@ -1285,7 +1280,7 @@ AI_setup_government = {
 		limit = {
 			check_variable = { cost1 > cost2 } #coalition 2 is prefered - lowest
 		}
-		add_to_array = { ruling_party = max_index_2 }
+		set_variable = { ruling_party = max_index_2 }
 		for_each_loop = {
 			array = party_pop_elect_array
 			index = i2
@@ -1316,103 +1311,103 @@ AI_setup_government = {
 				OR = {
 					AND = {
 						has_country_leader_with_trait = western_Western_Autocracy
-						is_in_array = { ruling_party = 0 }
+						western_autocrats_are_in_power = yes
 					}
 					AND = {
 						has_country_leader_with_trait = western_technocrat
-						is_in_array = { ruling_party = 0 }
+						western_autocrats_are_in_power = yes
 					}
 					AND = {
 						has_country_leader_with_trait = western_conservatism
-						is_in_array = { ruling_party = 1 }
+						check_variable = { ruling_party = 1 }
 					}
 					AND = {
 						has_country_leader_with_trait = western_liberalism
-						is_in_array = { ruling_party = 2 }
+						check_variable = { ruling_party = 2 }
 					}
 					AND = {
 						has_country_leader_with_trait = western_socialism
-						is_in_array = { ruling_party = 3 }
+						check_variable = { ruling_party = 3 }
 					}
 					AND = {
 						has_country_leader_with_trait = emerging_Communist-State
-						is_in_array = { ruling_party = 4 }
+						check_variable = { ruling_party = 4 }
 					}
 					AND = {
 						has_country_leader_with_trait = emerging_anarchist_communism
-						is_in_array = { ruling_party = 5 }
+						check_variable = { ruling_party = 5 }
 					}
 					AND = {
 						has_country_leader_with_trait = emerging_Conservative
-						is_in_array = { ruling_party = 6 }
+						check_variable = { ruling_party = 6 }
 					}
 					AND = {
 						has_country_leader_with_trait = emerging_Autocracy
-						is_in_array = { ruling_party = 7 }
+						check_variable = { ruling_party = 7 }
 					}
 					AND = {
 						has_country_leader_with_trait = emerging_Mod_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 8 }
+						check_variable = { ruling_party = 8 }
 					}
 					AND = {
 						has_country_leader_with_trait = emerging_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 9 }
+						check_variable = { ruling_party = 9 }
 					}
 					AND = {
 						has_country_leader_with_trait = salafist_Kingdom
-						is_in_array = { ruling_party = 10 }
+						check_variable = { ruling_party = 10 }
 					}
 					AND = {
 						has_country_leader_with_trait = salafist_Caliphate
-						is_in_array = { ruling_party = 11 }
+						check_variable = { ruling_party = 11 }
 					}
 					AND = {
 						has_country_leader_with_trait = neutrality_Neutral_Muslim_Brotherhood
-						is_in_array = { ruling_party = 12 }
+						check_variable = { ruling_party = 12 }
 					}
 					AND = {
 						has_country_leader_with_trait = neutrality_Neutral_Autocracy
-						is_in_array = { ruling_party = 13 }
+						check_variable = { ruling_party = 13 }
 					}
 					AND = {
 						has_country_leader_with_trait = neutrality_Neutral_conservatism
-						is_in_array = { ruling_party = 14 }
+						check_variable = { ruling_party = 14 }
 					}
 					AND = {
 						has_country_leader_with_trait = neutrality_oligarchism
-						is_in_array = { ruling_party = 15 }
+						check_variable = { ruling_party = 15 }
 					}
 					AND = {
 						has_country_leader_with_trait = neutrality_Neutral_Libertarian
-						is_in_array = { ruling_party = 16 }
+						check_variable = { ruling_party = 16 }
 					}
 					AND = {
 						has_country_leader_with_trait = neutrality_Neutral_green
-						is_in_array = { ruling_party = 17 }
+						check_variable = { ruling_party = 17 }
 					}
 					AND = {
 						has_country_leader_with_trait = neutrality_neutral_Social
-						is_in_array = { ruling_party = 18 }
+						check_variable = { ruling_party = 18 }
 					}
 					AND = {
 						has_country_leader_with_trait = neutrality_Neutral_Communism
-						is_in_array = { ruling_party = 19 }
+						check_variable = { ruling_party = 19 }
 					}
 					AND = {
 						has_country_leader_with_trait = nationalist_Nat_Populism
-						is_in_array = { ruling_party = 20 }
+						check_variable = { ruling_party = 20 }
 					}
 					AND = {
 						has_country_leader_with_trait = nationalist_Nat_Fascism
-						is_in_array = { ruling_party = 21 }
+						check_variable = { ruling_party = 21 }
 					}
 					AND = {
 						has_country_leader_with_trait = nationalist_Nat_Autocracy
-						is_in_array = { ruling_party = 22 }
+						check_variable = { ruling_party = 22 }
 					}
 					AND = {
 						has_country_leader_with_trait = nationalist_Monarchist
-						is_in_array = { ruling_party = 23 }
+						check_variable = { ruling_party = 23 }
 					}
 				}
 			}
@@ -2198,7 +2193,6 @@ add_coalition_members_effect = {
 		add_to_array = { gov_coalition_array = add_col_one }
 		hidden_effect = {
 			update_government_coalition_strength = yes
-			set_coalition_drift = yes
 		}
 	}
 }
@@ -2211,7 +2205,6 @@ remove_coalition_members_effect = {
 		remove_from_array = { gov_coalition_array = remove_col_one }
 		hidden_effect = {
 			update_government_coalition_strength = yes
-			set_coalition_drift = yes
 		}
 	}
 }
@@ -2233,12 +2226,11 @@ change_ruling_party_effect = {
 	}
 
 	# Clears the Parameters
-	clear_array = ruling_party
 	clear_array = gov_coalition_array
 
 	# Rul Party Addition
 	custom_effect_tooltip = ruling_party_changed_tt
-	add_to_array = { ruling_party = rul_party_temp }
+	set_variable = { ruling_party = rul_party_temp }
 
 	# Coalition Array Parameters
 	if = { limit = { has_variable = col_one }
@@ -2403,6 +2395,9 @@ change_ruling_party_effect = {
 		# INFO: This is here to offload from the weekly tick and instead call it whenever this is called.
 		IP_idea_configuration = yes
 		mb_refresh_relations_effect = yes
+		# Subideology swaps keep the same ideology group, so on_government_change cannot carry these.
+		if = { limit = { original_tag = FRA } FRA_update_party_programmes = yes }
+		if = { limit = { original_tag = HOL } HOL_update_party_programmes = yes }
 	}
 	if = { limit = { check_variable = { change_leader_temp = 1 } }
 		clr_country_flag = do_not_retire
@@ -2461,32 +2456,35 @@ unban_party_scripted_call = {
 
 set_partyall_banned = {
 	set_country_flag = partyall_banned
-
-	if = { limit = { NOT = { has_country_flag = free_ban_parties } }
-		set_temp_variable = { pp_cost = 0 }
-		for_loop_effect = {
-			end = 24
-			value = ban_i
-			if = {
-				limit = {
-					NOT = { is_in_array = { ruling_party = ban_i } }
-					NOT = { is_in_array = { gov_coalition_array = ban_i } }
-				}
-				set_temp_variable = { ban_flag_index = ban_i }
-				add_to_temp_variable = { ban_flag_index = 1 }
-				meta_effect = {
-					text = {
-						if = {
-							limit = { NOT = { has_country_flag = party[v]_banned } }
-							add_to_temp_variable = { pp_cost = 10 }
-							set_country_flag = party[v]_banned
-						}
+	set_temp_variable = { pp_cost = 0 }
+	for_loop_effect = {
+		end = 24
+		value = ban_i
+		if = {
+			limit = {
+				NOT = {
+					AND = {
+						has_variable = ruling_party
+						check_variable = { ruling_party = ban_i }
 					}
-					v = "[?ban_flag_index|.0]"
 				}
+				NOT = { is_in_array = { gov_coalition_array = ban_i } }
+			}
+			set_temp_variable = { ban_flag_index = ban_i }
+			add_to_temp_variable = { ban_flag_index = 1 }
+			meta_effect = {
+				text = {
+					if = {
+						limit = { NOT = { has_country_flag = party[v]_banned } }
+						add_to_temp_variable = { pp_cost = 10 }
+						set_country_flag = party[v]_banned
+					}
+				}
+				v = "[?ban_flag_index|.0]"
 			}
 		}
-
+	}
+	if = { limit = { NOT = { has_country_flag = free_ban_parties } }
 		multiply_temp_variable = { pp_cost = -1 }
 		add_political_power = pp_cost
 	}
@@ -2498,30 +2496,28 @@ set_partyall_banned = {
 
 set_partyall_allowed = {
 	clr_country_flag = partyall_banned
-
-	if = { limit = { NOT = { has_country_flag = free_allow_parties } }
-		set_temp_variable = { pp_cost = 0 }
-		for_loop_effect = {
-			end = 24
-			value = unban_i
-			set_temp_variable = { unban_flag_index = unban_i }
-			add_to_temp_variable = { unban_flag_index = 1 }
-			meta_effect = {
-				text = {
-					if = { limit = { has_country_flag = party[v]_banned }
-						add_to_temp_variable = { pp_cost = 10 }
-						clr_country_flag = party[v]_banned
-					}
+	set_temp_variable = { pp_cost = 0 }
+	for_loop_effect = {
+		end = 24
+		value = unban_i
+		set_temp_variable = { unban_flag_index = unban_i }
+		add_to_temp_variable = { unban_flag_index = 1 }
+		meta_effect = {
+			text = {
+				if = { limit = { has_country_flag = party[v]_banned }
+					add_to_temp_variable = { pp_cost = 10 }
+					clr_country_flag = party[v]_banned
 				}
-				v = "[?unban_flag_index|.0]"
 			}
+			v = "[?unban_flag_index|.0]"
 		}
-
+	}
+	if = { limit = { NOT = { has_country_flag = free_allow_parties } }
 		multiply_temp_variable = { pp_cost = -1 }
 		add_political_power = pp_cost
 	}
 
-	clr_country_flag = free_ban_parties
+	clr_country_flag = free_allow_parties
 	custom_effect_tooltip = set_partyall_allowed_tt
 	update_dirty_politicsview_expanded = yes
 }
@@ -2530,80 +2526,18 @@ set_partyall_allowed = {
 # Parameters: election_freq (48/60/72), uses global.year and global.month
 set_elections_with_frequency = {
 	set_country_flag = no_leader_change
-	if = { limit = { has_government = democratic }
-		meta_effect = {
-			text = {
-				set_politics = {
-					ruling_party = democratic
-					elections_allowed = yes
-					last_election = "[YEAR].[MONTH].1"
-					election_frequency = [FREQ]
-				}
+	meta_effect = {
+		text = {
+			set_politics = {
+				ruling_party = ROOT
+				elections_allowed = yes
+				last_election = "[YEAR].[MONTH].1"
+				election_frequency = [FREQ]
 			}
-			YEAR = "[?election_year_param]"
-			MONTH = "[?election_month_param|0]"
-			FREQ = "[?election_freq|.0]"
 		}
-	}
-	else_if = { limit = { has_government = communism }
-		meta_effect = {
-			text = {
-				set_politics = {
-					ruling_party = communism
-					elections_allowed = yes
-					last_election = "[YEAR].[MONTH].1"
-					election_frequency = [FREQ]
-				}
-			}
-			YEAR = "[?election_year_param]"
-			MONTH = "[?election_month_param|0]"
-			FREQ = "[?election_freq|.0]"
-		}
-	}
-	else_if = { limit = { has_government = fascism }
-		meta_effect = {
-			text = {
-				set_politics = {
-					ruling_party = fascism
-					elections_allowed = yes
-					last_election = "[YEAR].[MONTH].1"
-					election_frequency = [FREQ]
-				}
-			}
-			YEAR = "[?election_year_param]"
-			MONTH = "[?election_month_param|0]"
-			FREQ = "[?election_freq|.0]"
-		}
-	}
-	else_if = { limit = { has_government = neutrality }
-		meta_effect = {
-			text = {
-				set_politics = {
-					ruling_party = neutrality
-					elections_allowed = yes
-					last_election = "[YEAR].[MONTH].1"
-					election_frequency = [FREQ]
-				}
-			}
-			YEAR = "[?election_year_param]"
-			MONTH = "[?election_month_param|0]"
-			FREQ = "[?election_freq|.0]"
-		}
-	}
-	else_if = { limit = { has_government = nationalist }
-		meta_effect = {
-			text = {
-				set_politics = {
-					ruling_party = nationalist
-					elections_allowed = yes
-					last_election = "[YEAR].[MONTH].1"
-					election_frequency = [FREQ]
-				}
-			}
-			YEAR = "[?election_year_param]"
-			MONTH = "[?election_month_param|0]"
-			FREQ = "[?election_freq|.0]"
-		}
+		YEAR = "[?election_year_param]"
+		MONTH = "[?election_month_param|0]"
+		FREQ = "[?election_freq|.0]"
 	}
 	clr_country_flag = no_leader_change
 }
@@ -2643,8 +2577,8 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 4 }
-				is_in_array = { ruling_party = 19 }
+				check_variable = { ruling_party = 4 }
+				check_variable = { ruling_party = 19 }
 			}
 			NOT = { has_idea = IP_spread_the_revolution }
 		}
@@ -2653,8 +2587,8 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 4 }
-				is_in_array = { ruling_party = 19 }
+				check_variable = { ruling_party = 4 }
+				check_variable = { ruling_party = 19 }
 			}
 			NOT = { has_idea = IP_hard_labour }
 		}
@@ -2665,10 +2599,10 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				has_country_flag = PER_backbone_front
-				is_in_array = { ruling_party = 3 }	#socialsim
-				is_in_array = { ruling_party = 5 }	#anarchist_communism
-				is_in_array = { ruling_party = 17 }	#Neutral_green
-				is_in_array = { ruling_party = 18 }	#neutral_Social
+				check_variable = { ruling_party = 3 }	#socialsim
+				check_variable = { ruling_party = 5 }	#anarchist_communism
+				check_variable = { ruling_party = 17 }	#Neutral_green
+				check_variable = { ruling_party = 18 }	#neutral_Social
 			}
 			NOT = { has_idea = IP_welfare_state }
 		}
@@ -2678,9 +2612,9 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				has_country_flag = PER_backbone_front
-				is_in_array = { ruling_party = 3 }	#socialsim
-				is_in_array = { ruling_party = 5 }	#anarchist_communism
-				is_in_array = { ruling_party = 18 }	#neutral_Social
+				check_variable = { ruling_party = 3 }	#socialsim
+				check_variable = { ruling_party = 5 }	#anarchist_communism
+				check_variable = { ruling_party = 18 }	#neutral_Social
 			}
 			NOT = { has_idea = IP_economic_interventionism }
 		}
@@ -2688,7 +2622,7 @@ IP_idea_configuration = {
 	}
 	if = {
 		limit = {
-			is_in_array = { ruling_party = 17 }	#Neutral_green
+			check_variable = { ruling_party = 17 }	#Neutral_green
 			NOT = { has_idea = IP_economic_interventionism_green }
 		}
 		add_ideas = IP_economic_interventionism_green
@@ -2697,10 +2631,10 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				has_country_flag = PER_backbone_front
-				is_in_array = { ruling_party = 3 }	#socialsim
-				is_in_array = { ruling_party = 5 }	#anarchist_communism
-				is_in_array = { ruling_party = 17 }	#Neutral_green
-				is_in_array = { ruling_party = 18 }	#neutral_Social
+				check_variable = { ruling_party = 3 }	#socialsim
+				check_variable = { ruling_party = 5 }	#anarchist_communism
+				check_variable = { ruling_party = 17 }	#Neutral_green
+				check_variable = { ruling_party = 18 }	#neutral_Social
 			}
 		}
 		update_construction_bonus_from_interventionism_green = yes
@@ -2709,10 +2643,10 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				has_country_flag = PER_backbone_front
-				is_in_array = { ruling_party = 3 }	#socialsim
-				is_in_array = { ruling_party = 5 }	#anarchist_communism
-				is_in_array = { ruling_party = 17 }	#Neutral_green
-				is_in_array = { ruling_party = 18 }	#neutral_Social
+				check_variable = { ruling_party = 3 }	#socialsim
+				check_variable = { ruling_party = 5 }	#anarchist_communism
+				check_variable = { ruling_party = 17 }	#Neutral_green
+				check_variable = { ruling_party = 18 }	#neutral_Social
 			}
 			NOT = { has_idea = IP_naive_worldview }
 		}
@@ -2722,12 +2656,12 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 1 }	#conservative
-				is_in_array = { ruling_party = 6 }	#Conservative
-				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
-				is_in_array = { ruling_party = 12 }	#muslim brotherhood
-				is_in_array = { ruling_party = 14 }	#neutral conservative
-				is_in_array = { ruling_party = 20 }	#national populist
+				check_variable = { ruling_party = 1 }	#conservative
+				check_variable = { ruling_party = 6 }	#Conservative
+				check_variable = { ruling_party = 8 }	#Mod vilayat e faqih
+				check_variable = { ruling_party = 12 }	#muslim brotherhood
+				check_variable = { ruling_party = 14 }	#neutral conservative
+				check_variable = { ruling_party = 20 }	#national populist
 			}
 			NOT = { has_idea = IP_good_old_days }
 		}
@@ -2736,12 +2670,12 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 1 }	#conservative
-				is_in_array = { ruling_party = 6 }	#Conservative
-				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
-				is_in_array = { ruling_party = 12 }	#muslim brotherhood
-				is_in_array = { ruling_party = 14 }	#neutral conservative
-				is_in_array = { ruling_party = 20 }	#national populist
+				check_variable = { ruling_party = 1 }	#conservative
+				check_variable = { ruling_party = 6 }	#Conservative
+				check_variable = { ruling_party = 8 }	#Mod vilayat e faqih
+				check_variable = { ruling_party = 12 }	#muslim brotherhood
+				check_variable = { ruling_party = 14 }	#neutral conservative
+				check_variable = { ruling_party = 20 }	#national populist
 			}
 			NOT = { has_idea = IP_stable_society }
 		}
@@ -2750,10 +2684,10 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 1 }	#conservative
-				is_in_array = { ruling_party = 6 }	#Conservative
-				is_in_array = { ruling_party = 14 }	#neutral conservative
-				is_in_array = { ruling_party = 20 }	#national populist
+				check_variable = { ruling_party = 1 }	#conservative
+				check_variable = { ruling_party = 6 }	#Conservative
+				check_variable = { ruling_party = 14 }	#neutral conservative
+				check_variable = { ruling_party = 20 }	#national populist
 			}
 			NOT = { has_idea = IP_patriotism }
 		}
@@ -2762,8 +2696,8 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
-				is_in_array = { ruling_party = 12 }	#muslim brotherhood
+				check_variable = { ruling_party = 8 }	#Mod vilayat e faqih
+				check_variable = { ruling_party = 12 }	#muslim brotherhood
 			}
 			NOT = { has_idea = IP_patriotism_religious }
 		}
@@ -2772,12 +2706,12 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 1 }	#conservative
-				is_in_array = { ruling_party = 6 }	#Conservative
-				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
-				is_in_array = { ruling_party = 12 }	#muslim brotherhood
-				is_in_array = { ruling_party = 14 }	#neutral conservative
-				is_in_array = { ruling_party = 20 }	#national populist
+				check_variable = { ruling_party = 1 }	#conservative
+				check_variable = { ruling_party = 6 }	#Conservative
+				check_variable = { ruling_party = 8 }	#Mod vilayat e faqih
+				check_variable = { ruling_party = 12 }	#muslim brotherhood
+				check_variable = { ruling_party = 14 }	#neutral conservative
+				check_variable = { ruling_party = 20 }	#national populist
 			}
 			NOT = { has_idea = IP_homefront_first }
 		}
@@ -2788,8 +2722,8 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				has_country_leader_with_trait = western_technocrat
-				is_in_array = { ruling_party = 2 }	#liberalism
-				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+				check_variable = { ruling_party = 2 }	#liberalism
+				check_variable = { ruling_party = 16 }	#Neutral_Libertarian
 			}
 			NOT = { has_idea = IP_high_risk_investment }
 		}
@@ -2799,8 +2733,8 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				has_country_leader_with_trait = western_technocrat
-				is_in_array = { ruling_party = 2 }	#liberalism
-				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+				check_variable = { ruling_party = 2 }	#liberalism
+				check_variable = { ruling_party = 16 }	#Neutral_Libertarian
 			}
 			NOT = { has_idea = IP_invisible_hand }
 		}
@@ -2810,8 +2744,8 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				has_country_leader_with_trait = western_technocrat
-				is_in_array = { ruling_party = 2 }	#liberalism
-				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+				check_variable = { ruling_party = 2 }	#liberalism
+				check_variable = { ruling_party = 16 }	#Neutral_Libertarian
 			}
 			NOT = { has_idea = IP_business_friendly_environment }
 		}
@@ -2821,8 +2755,8 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				has_country_leader_with_trait = western_technocrat
-				is_in_array = { ruling_party = 2 }	#liberalism
-				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+				check_variable = { ruling_party = 2 }	#liberalism
+				check_variable = { ruling_party = 16 }	#Neutral_Libertarian
 			}
 			NOT = { has_idea = IP_anti_military }
 		}
@@ -2834,11 +2768,11 @@ IP_idea_configuration = {
 			OR = {
 				has_country_flag = PER_access_to_this
 				western_autocrats_have_autocrat_powers = yes
-				is_in_array = { ruling_party = 7 }	#Emerging autocrats
-				is_in_array = { ruling_party = 13 }	#Neutral autocrats
-				is_in_array = { ruling_party = 15 }	#oligarchs
-				is_in_array = { ruling_party = 21 }	#fascists
-				is_in_array = { ruling_party = 22 }	#military junta
+				check_variable = { ruling_party = 7 }	#Emerging autocrats
+				check_variable = { ruling_party = 13 }	#Neutral autocrats
+				check_variable = { ruling_party = 15 }	#oligarchs
+				check_variable = { ruling_party = 21 }	#fascists
+				check_variable = { ruling_party = 22 }	#military junta
 			}
 		}
 		update_pp_bonus_from_corruption = yes
@@ -2848,7 +2782,7 @@ IP_idea_configuration = {
 	}
 	if = {
 		limit = {
-			is_in_array = { ruling_party = 15 }	#oligarchs
+			check_variable = { ruling_party = 15 }	#oligarchs
 			NOT = { has_idea = IP_good_connections }
 		}
 		add_ideas = IP_good_connections
@@ -2858,10 +2792,10 @@ IP_idea_configuration = {
 			OR = {
 				has_country_flag = PER_access_to_this
 				western_autocrats_have_autocrat_powers = yes
-				is_in_array = { ruling_party = 7 }	#Emerging autocrats
-				is_in_array = { ruling_party = 13 }	#Neutral autocrats
-				is_in_array = { ruling_party = 15 }	#oligarchs
-				is_in_array = { ruling_party = 22 }	#military junta
+				check_variable = { ruling_party = 7 }	#Emerging autocrats
+				check_variable = { ruling_party = 13 }	#Neutral autocrats
+				check_variable = { ruling_party = 15 }	#oligarchs
+				check_variable = { ruling_party = 22 }	#military junta
 			}
 			NOT = { has_idea = IP_emergency_powers }
 		}
@@ -2872,11 +2806,11 @@ IP_idea_configuration = {
 			OR = {
 				has_country_flag = PER_access_to_this
 				western_autocrats_have_autocrat_powers = yes
-				is_in_array = { ruling_party = 7 }	#Emerging autocrats
-				is_in_array = { ruling_party = 13 }	#Neutral autocrats
-				is_in_array = { ruling_party = 15 }	#oligarchs
-				is_in_array = { ruling_party = 21 }	#fascists
-				is_in_array = { ruling_party = 22 }	#military junta
+				check_variable = { ruling_party = 7 }	#Emerging autocrats
+				check_variable = { ruling_party = 13 }	#Neutral autocrats
+				check_variable = { ruling_party = 15 }	#oligarchs
+				check_variable = { ruling_party = 21 }	#fascists
+				check_variable = { ruling_party = 22 }	#military junta
 			}
 			NOT = { has_idea = IP_yes_men_army }
 		}
@@ -2887,8 +2821,8 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				western_autocrats_have_monarchist_powers = yes
-				is_in_array = { ruling_party = 10 }	#Kingdom
-				is_in_array = { ruling_party = 23 }	#Monarchist
+				check_variable = { ruling_party = 10 }	#Kingdom
+				check_variable = { ruling_party = 23 }	#Monarchist
 			}
 			NOT = { has_idea = IP_keep_it_in_the_family }
 		}
@@ -2898,8 +2832,8 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				western_autocrats_have_monarchist_powers = yes
-				is_in_array = { ruling_party = 10 }	#Kingdom
-				is_in_array = { ruling_party = 23 }	#Monarchist
+				check_variable = { ruling_party = 10 }	#Kingdom
+				check_variable = { ruling_party = 23 }	#Monarchist
 			}
 			NOT = { has_idea = IP_for_king_and_queen }
 		}
@@ -2909,8 +2843,8 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				western_autocrats_have_monarchist_powers = yes
-				is_in_array = { ruling_party = 10 }	#Kingdom
-				is_in_array = { ruling_party = 23 }	#Monarchist
+				check_variable = { ruling_party = 10 }	#Kingdom
+				check_variable = { ruling_party = 23 }	#Monarchist
 			}
 			NOT = { has_idea = IP_crown_estate }
 		}
@@ -2920,8 +2854,8 @@ IP_idea_configuration = {
 		limit = {
 			OR = {
 				western_autocrats_have_monarchist_powers = yes
-				is_in_array = { ruling_party = 10 }	#Kingdom
-				is_in_array = { ruling_party = 23 }	#Monarchist
+				check_variable = { ruling_party = 10 }	#Kingdom
+				check_variable = { ruling_party = 23 }	#Monarchist
 			}
 			NOT = { has_idea = IP_outdated_ideals }
 		}
@@ -2930,14 +2864,14 @@ IP_idea_configuration = {
 	#Fundamentalists
 	if = {
 		limit = {
-			is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
+			check_variable = { ruling_party = 9 }	#Vilayat_e_Faqih
 			NOT = { has_idea = IP_religious_law_emerging }
 		}
 		add_ideas = IP_religious_law_emerging
 	}
 	if = {
 		limit = {
-			is_in_array = { ruling_party = 11 }	#Caliphate
+			check_variable = { ruling_party = 11 }	#Caliphate
 			NOT = { has_idea = IP_religious_law_salafist }
 		}
 		add_ideas = IP_religious_law_salafist
@@ -2945,8 +2879,8 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
-				is_in_array = { ruling_party = 11 }	#Caliphate
+				check_variable = { ruling_party = 9 }	#Vilayat_e_Faqih
+				check_variable = { ruling_party = 11 }	#Caliphate
 			}
 			NOT = { has_idea = IP_recruitment_campaign }
 		}
@@ -2955,8 +2889,8 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
-				is_in_array = { ruling_party = 11 }	#Caliphate
+				check_variable = { ruling_party = 9 }	#Vilayat_e_Faqih
+				check_variable = { ruling_party = 11 }	#Caliphate
 			}
 			NOT = { has_idea = IP_nationalist_liberation_movements }
 		}
@@ -2965,8 +2899,8 @@ IP_idea_configuration = {
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
-				is_in_array = { ruling_party = 11 }	#Caliphate
+				check_variable = { ruling_party = 9 }	#Vilayat_e_Faqih
+				check_variable = { ruling_party = 11 }	#Caliphate
 			}
 			NOT = { has_idea = IP_international_pariah }
 		}
@@ -2980,10 +2914,10 @@ IP_idea_construction_update = {
 			limit = {
 				OR = {
 					has_country_flag = PER_backbone_front
-					is_in_array = { ruling_party = 3 }	#socialsim
-					is_in_array = { ruling_party = 5 }	#anarchist_communism
-					is_in_array = { ruling_party = 17 }	#Neutral_green
-					is_in_array = { ruling_party = 18 }	#neutral_Social
+					check_variable = { ruling_party = 3 }	#socialsim
+					check_variable = { ruling_party = 5 }	#anarchist_communism
+					check_variable = { ruling_party = 17 }	#Neutral_green
+					check_variable = { ruling_party = 18 }	#neutral_Social
 				}
 			}
 			update_construction_bonus_from_interventionism_green = yes
@@ -2998,11 +2932,11 @@ IP_idea_corruption_update = {
 				OR = {
 					has_country_flag = PER_access_to_this
 					western_autocrats_have_autocrat_powers = yes
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 15 }	#oligarchs
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
+					check_variable = { ruling_party = 7 }	#Emerging autocrats
+					check_variable = { ruling_party = 13 }	#Neutral autocrats
+					check_variable = { ruling_party = 15 }	#oligarchs
+					check_variable = { ruling_party = 21 }	#fascists
+					check_variable = { ruling_party = 22 }	#military junta
 				}
 			}
 			update_pp_bonus_from_corruption = yes
@@ -3022,35 +2956,9 @@ enable_elections_with_no_leader_change = {
 		set_variable = { current_term = 1 }
 	}
 
-	if = { limit = { has_government = democratic }
-		set_politics = {
-			ruling_party = democratic
-			elections_allowed = yes
-		}
-	}
-	else_if = { limit = { has_government = communism }
-		set_politics = {
-			ruling_party = communism
-			elections_allowed = yes
-		}
-	}
-	else_if = { limit = { has_government = fascism }
-		set_politics = {
-			ruling_party = fascism
-			elections_allowed = yes
-		}
-	}
-	else_if = { limit = { has_government = neutrality }
-		set_politics = {
-			ruling_party = neutrality
-			elections_allowed = yes
-		}
-	}
-	else_if = { limit = { has_government = nationalist }
-		set_politics = {
-			ruling_party = nationalist
-			elections_allowed = yes
-		}
+	set_politics = {
+		ruling_party = ROOT
+		elections_allowed = yes
 	}
 	clr_country_flag = no_leader_change
 }
@@ -3059,35 +2967,9 @@ enable_elections_with_no_leader_change = {
 # Purpose: Disable elections with no leader change
 disable_elections_with_no_leader_change = {
 	set_country_flag = no_leader_change
-	if = { limit = { has_government = democratic }
-		set_politics = {
-			ruling_party = democratic
-			elections_allowed = no
-		}
-	}
-	else_if = { limit = { has_government = communism }
-		set_politics = {
-			ruling_party = communism
-			elections_allowed = no
-		}
-	}
-	else_if = { limit = { has_government = fascism }
-		set_politics = {
-			ruling_party = fascism
-			elections_allowed = no
-		}
-	}
-	else_if = { limit = { has_government = neutrality }
-		set_politics = {
-			ruling_party = neutrality
-			elections_allowed = no
-		}
-	}
-	else_if = { limit = { has_government = nationalist }
-		set_politics = {
-			ruling_party = nationalist
-			elections_allowed = no
-		}
+	set_politics = {
+		ruling_party = ROOT
+		elections_allowed = no
 	}
 	clr_country_flag = no_leader_change
 }
@@ -3096,35 +2978,9 @@ disable_elections_with_no_leader_change = {
 # Purpose: Start a civil war with no leader change
 start_civil_war_with_no_leader_change = {
 	set_country_flag = no_leader_change
-	if = { limit = { has_government = nationalist }
-		start_civil_war = {
-			ideology = nationalist
-			size = 0.5
-		}
-	}
-	else_if = { limit = { has_government = communism }
-		start_civil_war = {
-			ideology = communism
-			size = 0.5
-		}
-	}
-	else_if = { limit = { has_government = democratic }
-		start_civil_war = {
-			ideology = democratic
-			size = 0.5
-		}
-	}
-	else_if = { limit = { has_government = neutrality }
-		start_civil_war = {
-			ideology = neutrality
-			size = 0.5
-		}
-	}
-	else_if = { limit = { has_government = fascism }
-		start_civil_war = {
-			ideology = fascism
-			size = 0.5
-		}
+	start_civil_war = {
+		ideology = ROOT
+		size = 0.5
 	}
 	clr_country_flag = no_leader_change
 }
@@ -3224,17 +3080,20 @@ replicate_configure_politics = {
 	}
 	start_politics_input = yes
 	#copy politics
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = v
-		set_variable = { party_pop_array^v = nation_to_copy_from.party_pop_array^v }
-	}
-	add_to_array = { ruling_party = nation_to_copy_from.ruling_party^0 }
-	for_each_loop = {
-		array = gov_coalition_array
-		index = i
-		value = v
-		add_to_array = { gov_coalition_array = nation_to_copy_from.gov_coalition_array^i }
+	var:nation_to_copy_from = {
+		for_loop_effect = {
+			end = party_pop_array^num
+			value = v
+			set_variable = { PREV.party_pop_array^v = party_pop_array^v }
+		}
+		if = { limit = { has_variable = ruling_party }
+			set_variable = { PREV.ruling_party = ruling_party }
+		}
+		for_each_loop = {
+			array = gov_coalition_array
+			value = v
+			add_to_array = { PREV.gov_coalition_array = v }
+		}
 	}
 	set_variable = { party_pop_array^19 = 0.01 } #all moved to fight ;)
 	set_variable = { party_pop_elect_array^19 = 0 } #made illegal
@@ -3269,71 +3128,66 @@ calculate_all_propaganda_costs = {
 }
 
 calculate_prowestern_propaganda_cost = {
+	set_temp_variable = { propaganda_cost_mult = 1 }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@propaganda_campaign_cost_modifier }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@western_outlook_campaign_cost_modifier }
 	set_variable = {
 		promote_outlook_western_costs = {
 			value = gdp_total
 			multiply = 0.001
-			multiply = {
-				value = 1
-				add = modifier@propaganda_campaign_cost_modifier
-				add = modifier@western_outlook_campaign_cost_modifier
-			}
+			multiply = propaganda_cost_mult
 		}
 	}
 }
 
 calculate_emerging_propaganda_cost = {
+	set_temp_variable = { propaganda_cost_mult = 1 }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@propaganda_campaign_cost_modifier }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@emerging_outlook_campaign_cost_modifier }
 	set_variable = {
 		promote_outlook_emerging_costs = {
 			value = gdp_total
 			multiply = 0.001
-			multiply = {
-				value = 1
-				add = modifier@propaganda_campaign_cost_modifier
-				add = modifier@emerging_outlook_campaign_cost_modifier
-			}
+			multiply = propaganda_cost_mult
 		}
 	}
 }
 
 calculate_nonaligned_propaganda_cost = {
+	set_temp_variable = { propaganda_cost_mult = 1 }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@propaganda_campaign_cost_modifier }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@nonaligned_outlook_campaign_cost_modifier }
 	set_variable = {
 		promote_outlook_nonaligned_costs = {
 			value = gdp_total
 			multiply = 0.001
-			multiply = {
-				value = 1
-				add = modifier@propaganda_campaign_cost_modifier
-				add = modifier@nonaligned_outlook_campaign_cost_modifier
-			}
+			multiply = propaganda_cost_mult
 		}
 	}
 }
 
 calculate_nationalist_propaganda_cost = {
+	set_temp_variable = { propaganda_cost_mult = 1 }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@propaganda_campaign_cost_modifier }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@nationalist_outlook_campaign_cost_modifier }
 	set_variable = {
 		promote_outlook_nationalist_costs = {
 			value = gdp_total
 			multiply = 0.001
-			multiply = {
-				value = 1
-				add = modifier@propaganda_campaign_cost_modifier
-				add = modifier@nationalist_outlook_campaign_cost_modifier
-			}
+			multiply = propaganda_cost_mult
 		}
 	}
 }
 
 calculate_salafist_propaganda_cost = {
+	set_temp_variable = { propaganda_cost_mult = 1 }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@propaganda_campaign_cost_modifier }
+	add_to_temp_variable = { propaganda_cost_mult = modifier@salafist_outlook_campaign_cost_modifier }
 	set_variable = {
 		promote_outlook_salafist_costs = {
 			value = gdp_total
 			multiply = 0.001
-			multiply = {
-				value = 1
-				add = modifier@propaganda_campaign_cost_modifier
-				add = modifier@salafist_outlook_campaign_cost_modifier
-			}
+			multiply = propaganda_cost_mult
 		}
 	}
 }
