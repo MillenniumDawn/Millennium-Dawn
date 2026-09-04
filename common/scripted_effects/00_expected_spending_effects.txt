@@ -8,6 +8,113 @@ calculate_expected_spending = {
 	calculate_expected_adm_spending = yes
 	calculate_expected_military_spending = yes
 	md_check_spending_alerts = yes
+	refresh_expected_spending_frames = yes
+	update_protest_dirty_var = yes
+}
+
+refresh_expected_spending_frames = {
+	if = { limit = { is_ai = no }
+		calculate_expected_spending_frames = yes
+	}
+}
+
+calculate_expected_spending_frames = {
+	set_temp_variable = { current_spending = bureau_law }
+	set_temp_variable = { expected_spending = expected_adm_spending }
+	for_loop_effect = {
+		start = 1
+		end = 6
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { adm_spending_frames^spending_level = spending_frame }
+	}
+
+	set_temp_variable = { current_spending = police_law }
+	set_temp_variable = { expected_spending = expected_police_spending }
+	for_loop_effect = {
+		start = 1
+		end = 6
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { police_spending_frames^spending_level = spending_frame }
+	}
+
+	set_temp_variable = { current_spending = education_law }
+	set_temp_variable = { expected_spending = expected_edu_spending }
+	for_loop_effect = {
+		start = 1
+		end = 6
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { edu_spending_frames^spending_level = spending_frame }
+	}
+
+	set_temp_variable = { current_spending = health_law }
+	set_temp_variable = { expected_spending = expected_health_spending }
+	for_loop_effect = {
+		start = 1
+		end = 7
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { health_spending_frames^spending_level = spending_frame }
+	}
+
+	set_temp_variable = { current_spending = social_law }
+	set_temp_variable = { expected_spending = expected_welfare_spending }
+	for_loop_effect = {
+		start = 1
+		end = 7
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { welfare_spending_frames^spending_level = spending_frame }
+	}
+
+	set_temp_variable = { current_spending = military_law }
+	set_temp_variable = { expected_spending = expected_military_sp }
+	for_loop_effect = {
+		start = 1
+		end = 11
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { military_spending_frames^spending_level = spending_frame }
+	}
+}
+
+calculate_expected_spending_frame = {
+	if = {
+		limit = {
+			check_variable = {
+				var = current_spending
+				value = spending_level
+				compare = greater_than_or_equals
+			}
+			check_variable = { spending_level > expected_spending }
+		}
+		set_temp_variable = { spending_frame = 3 }
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				var = current_spending
+				value = spending_level
+				compare = greater_than_or_equals
+			}
+		}
+		set_temp_variable = { spending_frame = 2 }
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				var = expected_spending
+				value = spending_level
+				compare = greater_than_or_equals
+			}
+		}
+		set_temp_variable = { spending_frame = 4 }
+	}
+	else = {
+		set_temp_variable = { spending_frame = 1 }
+	}
 }
 
 calculate_expected_spending_totals = {
