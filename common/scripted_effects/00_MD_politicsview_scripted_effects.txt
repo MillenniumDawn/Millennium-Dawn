@@ -425,6 +425,51 @@ change_relative_party_popularity = {
 	recalculate_party = yes
 }
 
+# Move popularity from one party to another. The funder loses party_popularity_fraction of
+# its own popularity and the beneficiary gains the same amount.
+#
+# set_temp_variable = { party_index = 0-23 } # funder, loses popularity
+# set_temp_variable = { target_party_index = 0-23 } # beneficiary, gains popularity
+# set_temp_variable = { party_popularity_fraction = F } # 0.5 moves half of the funder's popularity
+move_party_popularity = {
+	set_temp_variable = { temp_outlook_increase = 0 }
+	set_temp_variable = { _party_pop_delta = party_pop_array^party_index }
+	multiply_temp_variable = { _party_pop_delta = party_popularity_fraction }
+	set_temp_variable = { party_popularity_increase = { value = _party_pop_delta multiply = -1 } }
+	change_relative_party_popularity = yes
+	set_temp_variable = { party_index = target_party_index }
+	set_temp_variable = { party_popularity_increase = _party_pop_delta }
+	change_relative_party_popularity = yes
+}
+
+# Boost one party by party_popularity_fraction of its own popularity, with the funder paying
+# for it. The measured party gains, the funder loses the same amount.
+#
+# set_temp_variable = { party_index = 0-23 } # beneficiary, measured and boosted
+# set_temp_variable = { funder_party_index = 0-23 } # party funding the boost
+# set_temp_variable = { party_popularity_fraction = F } # 0.5 boosts by half of the beneficiary's popularity
+boost_party_popularity = {
+	set_temp_variable = { temp_outlook_increase = 0 }
+	set_temp_variable = { _party_pop_delta = party_pop_array^party_index }
+	multiply_temp_variable = { _party_pop_delta = party_popularity_fraction }
+	set_temp_variable = { _party_pop_beneficiary = party_index }
+	set_temp_variable = { party_index = funder_party_index }
+	set_temp_variable = { party_popularity_increase = { value = _party_pop_delta multiply = -1 } }
+	change_relative_party_popularity = yes
+	set_temp_variable = { party_index = _party_pop_beneficiary }
+	set_temp_variable = { party_popularity_increase = _party_pop_delta }
+	change_relative_party_popularity = yes
+}
+
+# Scale one party's popularity directly, then rescale its outlook to preserve the total.
+#
+# set_temp_variable = { party_index = 0-23 } # party to scale
+# set_temp_variable = { party_popularity_multiplier = M } # 0.5 halves, 1.5 boosts by half, 0 clears
+scale_party_popularity = {
+	multiply_variable = { party_pop_array^party_index = party_popularity_multiplier }
+	recalculate_party = yes
+}
+
 # Parameter:
 # - overlord_to_match: id of the overlord whose ruling party the subject adopts
 effect_puppet_match_ruling_party_to_overlord = {		#Used in target scope
@@ -482,8 +527,46 @@ set_temp_variable_to_ruling_party = {
 }
 
 #### New Coalition stuff ####
+# Self-heal only. Does not touch coalitions or set_* flags.
+seed_ruling_party_if_unset = {
+	if = { limit = { NOT = { has_variable = ruling_party } }
+		set_temp_variable = { rp_lo = 0 }
+		set_temp_variable = { rp_hi = 4 }
+		if = { limit = { has_government = communism }
+			set_temp_variable = { rp_lo = 4 }
+			set_temp_variable = { rp_hi = 10 }
+		}
+		else_if = { limit = { has_government = fascism }
+			set_temp_variable = { rp_lo = 10 }
+			set_temp_variable = { rp_hi = 12 }
+		}
+		else_if = { limit = { has_government = neutrality }
+			set_temp_variable = { rp_lo = 12 }
+			set_temp_variable = { rp_hi = 20 }
+		}
+		else_if = { limit = { has_government = nationalist }
+			set_temp_variable = { rp_lo = 20 }
+			set_temp_variable = { rp_hi = 24 }
+		}
+		set_temp_variable = { rp_best = -1 }
+		set_temp_variable = { rp_best_i = rp_lo }
+		for_loop_effect = {
+			start = rp_lo
+			end = rp_hi
+			value = rp_i
+			if = {
+				limit = { check_variable = { party_pop_array^rp_i > rp_best } }
+				set_temp_variable = { rp_best = party_pop_array^rp_i }
+				set_temp_variable = { rp_best_i = rp_i }
+			}
+		}
+		set_variable = { ruling_party = rp_best_i }
+	}
+}
+
 startup_politics = {
 	set_failsafe_values = yes #adds needed values if missing
+	seed_ruling_party_if_unset = yes
 	add_up_party_totals = yes
 	set_party_positions = yes
 

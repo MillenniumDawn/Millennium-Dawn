@@ -2,7 +2,7 @@
 name: Task
 about: "Task for a set of work or a feature in Millennium Dawn."
 title: "[TASK]"
-labels: suggested improvement, enhancement
+labels: enhancement
 type: task
 assignees: ""
 ---
