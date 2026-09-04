@@ -2456,37 +2456,35 @@ unban_party_scripted_call = {
 
 set_partyall_banned = {
 	set_country_flag = partyall_banned
-
-	if = { limit = { NOT = { has_country_flag = free_ban_parties } }
-		set_temp_variable = { pp_cost = 0 }
-		for_loop_effect = {
-			end = 24
-			value = ban_i
-			if = {
-				limit = {
-					NOT = {
-						AND = {
-							has_variable = ruling_party
-							check_variable = { ruling_party = ban_i }
-						}
+	set_temp_variable = { pp_cost = 0 }
+	for_loop_effect = {
+		end = 24
+		value = ban_i
+		if = {
+			limit = {
+				NOT = {
+					AND = {
+						has_variable = ruling_party
+						check_variable = { ruling_party = ban_i }
 					}
-					NOT = { is_in_array = { gov_coalition_array = ban_i } }
 				}
-				set_temp_variable = { ban_flag_index = ban_i }
-				add_to_temp_variable = { ban_flag_index = 1 }
-				meta_effect = {
-					text = {
-						if = {
-							limit = { NOT = { has_country_flag = party[v]_banned } }
-							add_to_temp_variable = { pp_cost = 10 }
-							set_country_flag = party[v]_banned
-						}
+				NOT = { is_in_array = { gov_coalition_array = ban_i } }
+			}
+			set_temp_variable = { ban_flag_index = ban_i }
+			add_to_temp_variable = { ban_flag_index = 1 }
+			meta_effect = {
+				text = {
+					if = {
+						limit = { NOT = { has_country_flag = party[v]_banned } }
+						add_to_temp_variable = { pp_cost = 10 }
+						set_country_flag = party[v]_banned
 					}
-					v = "[?ban_flag_index|.0]"
 				}
+				v = "[?ban_flag_index|.0]"
 			}
 		}
-
+	}
+	if = { limit = { NOT = { has_country_flag = free_ban_parties } }
 		multiply_temp_variable = { pp_cost = -1 }
 		add_political_power = pp_cost
 	}
@@ -2498,30 +2496,28 @@ set_partyall_banned = {
 
 set_partyall_allowed = {
 	clr_country_flag = partyall_banned
-
-	if = { limit = { NOT = { has_country_flag = free_allow_parties } }
-		set_temp_variable = { pp_cost = 0 }
-		for_loop_effect = {
-			end = 24
-			value = unban_i
-			set_temp_variable = { unban_flag_index = unban_i }
-			add_to_temp_variable = { unban_flag_index = 1 }
-			meta_effect = {
-				text = {
-					if = { limit = { has_country_flag = party[v]_banned }
-						add_to_temp_variable = { pp_cost = 10 }
-						clr_country_flag = party[v]_banned
-					}
+	set_temp_variable = { pp_cost = 0 }
+	for_loop_effect = {
+		end = 24
+		value = unban_i
+		set_temp_variable = { unban_flag_index = unban_i }
+		add_to_temp_variable = { unban_flag_index = 1 }
+		meta_effect = {
+			text = {
+				if = { limit = { has_country_flag = party[v]_banned }
+					add_to_temp_variable = { pp_cost = 10 }
+					clr_country_flag = party[v]_banned
 				}
-				v = "[?unban_flag_index|.0]"
 			}
+			v = "[?unban_flag_index|.0]"
 		}
-
+	}
+	if = { limit = { NOT = { has_country_flag = free_allow_parties } }
 		multiply_temp_variable = { pp_cost = -1 }
 		add_political_power = pp_cost
 	}
 
-	clr_country_flag = free_ban_parties
+	clr_country_flag = free_allow_parties
 	custom_effect_tooltip = set_partyall_allowed_tt
 	update_dirty_politicsview_expanded = yes
 }
