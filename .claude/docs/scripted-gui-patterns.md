@@ -79,12 +79,14 @@ instantTextboxType = {
 
 ### Where scripted-loc invocation works
 
-| Attribute                                          | Works      | Notes                                                     |
-| -------------------------------------------------- | ---------- | --------------------------------------------------------- |
-| `text = "[scripted_loc]"`                          | yes        | `instantTextboxType.text`, also `buttonText`              |
-| `pdx_tooltip = "[scripted_loc]"`                   | yes        | Precedent: `interface/eu.gui`                             |
-| `pdx_tooltip_delayed = "[scripted_loc]"`           | use direct | Don't wrap through a static YAML key — `v` scope may drop |
-| `image = "[scripted_loc]"` (in `properties` block) | yes        | Sprite name returned by scripted-loc                      |
+Each attribute below takes a `= "[scripted_loc]"` value.
+
+| Attribute             | Works      | Notes                                                     |
+| --------------------- | ---------- | --------------------------------------------------------- |
+| `text`                | yes        | `instantTextboxType.text`, also `buttonText`              |
+| `pdx_tooltip`         | yes        | Precedent: `interface/eu.gui`                             |
+| `pdx_tooltip_delayed` | use direct | Don't wrap through a static YAML key — `v` scope may drop |
+| `image`               | yes        | Sprite name from scripted-loc; in `properties` block      |
 
 ### What scripted-loc dispatch can't do
 
@@ -155,14 +157,12 @@ The payoff test for a data-driven display: **adding one more entity should requi
 
 EU parliament reference implementation:
 
-| Piece                    | Location                                                                            |
-| ------------------------ | ----------------------------------------------------------------------------------- |
-| Populate effect          | `EU_select_party_members` — `common/scripted_effects/99_eu_scripted_effects.txt`    |
-| Selector + open handler  | `eu_view_party_N_members_click` — `common/scripted_guis/01_european_union_guis.txt` |
-| Gridbox scripted_gui     | `eu_party_member_detail_gui` — same file                                            |
-| Window + entry container | `eu_party_member_detail_container` / `eu_party_member_detail` — `interface/eu.gui`  |
-| Per-scope data           | `THIS.MEP_party_0..23`, `THIS.MEP_Total`; aggregates `global.MEP_PG_party_N`        |
-| Entity set               | `global.EU_member`                                                                  |
+- Populate effect: `EU_select_party_members` — `common/scripted_effects/99_eu_scripted_effects.txt`
+- Selector + open handler: `eu_view_party_N_members_click` — `common/scripted_guis/01_european_union_guis.txt`
+- Gridbox scripted_gui: `eu_party_member_detail_gui` — same file
+- Window + entry container: `eu_party_member_detail_container` / `eu_party_member_detail` — `interface/eu.gui`
+- Per-scope data: `THIS.MEP_party_0..23`, `THIS.MEP_Total`; aggregates `global.MEP_PG_party_N`
+- Entity set: `global.EU_member`
 
 ---
 
