@@ -2431,7 +2431,7 @@ unban_party_scripted_call = {
 	}
 }
 
-# Leaves slots in ban_except_array unbanned. No partyall_banned flag, no PP.
+# Leaves slots in ban_except_array unbanned. Tallies pp_cost (10 per newly banned slot) for the caller to spend. No partyall_banned flag.
 ban_all_parties_except_array = {
 	hidden_effect = {
 		for_loop_effect = {
@@ -2440,7 +2440,11 @@ ban_all_parties_except_array = {
 			value = ban_i
 			if = {
 				limit = { NOT = { is_in_array = { ban_except_array = ban_i } } }
-				set_variable = { party_banned_array^ban_i = 1 }
+				if = {
+					limit = { NOT = { check_variable = { party_banned_array^ban_i = 1 } } }
+					add_to_temp_variable = { pp_cost = 10 }
+					set_variable = { party_banned_array^ban_i = 1 }
+				}
 			}
 		}
 		clear_temp_array = ban_except_array
@@ -2451,36 +2455,28 @@ ban_all_parties_except_array = {
 set_partyall_banned = {
 	set_country_flag = partyall_banned
 
+	if = { limit = { has_variable = ruling_party }
+		add_to_temp_array = { ban_except_array = ruling_party }
+	}
+	for_each_loop = {
+		array = gov_coalition_array
+		value = v
+		add_to_temp_array = { ban_except_array = v }
+	}
+
 	if = { limit = { NOT = { has_country_flag = free_ban_parties } }
-		set_temp_variable = { pp_cost = 0 }
-		for_loop_effect = {
-			end = 24
-			value = ban_i
-			if = {
-				limit = {
-					NOT = {
-						AND = {
-							has_variable = ruling_party
-							check_variable = { ruling_party = ban_i }
-						}
-					}
-					NOT = { is_in_array = { gov_coalition_array = ban_i } }
-				}
-				if = {
-					limit = { NOT = { check_variable = { party_banned_array^ban_i = 1 } } }
-					add_to_temp_variable = { pp_cost = 10 }
-					set_variable = { party_banned_array^ban_i = 1 }
-				}
-			}
-		}
+		ban_all_parties_except_array = yes
 
 		multiply_temp_variable = { pp_cost = -1 }
 		add_political_power = pp_cost
 	}
+	else = {
+		clear_temp_array = ban_except_array
+		update_dirty_politicsview_expanded = yes
+	}
 
 	clr_country_flag = free_ban_parties
 	custom_effect_tooltip = set_partyall_banned_tt
-	update_dirty_politicsview_expanded = yes
 }
 
 set_partyall_allowed = {
