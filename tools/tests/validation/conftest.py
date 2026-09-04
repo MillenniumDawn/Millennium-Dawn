@@ -23,6 +23,18 @@ def write_path():
 
 
 @pytest.fixture
+def country_file(tmp_path):
+    def write(body, name="ARA - Arabistan.txt"):
+        d = tmp_path / "history" / "countries"
+        d.mkdir(parents=True, exist_ok=True)
+        p = d / name
+        p.write_text(body, encoding="utf-8")
+        return str(p)
+
+    return write
+
+
+@pytest.fixture
 def gfx_notices(monkeypatch):
     from validate_gfx_references import Validator
 
