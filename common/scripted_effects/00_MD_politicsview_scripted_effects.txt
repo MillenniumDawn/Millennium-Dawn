@@ -163,35 +163,9 @@ steal_popularity_from_progressives = {
 }
 
 add_ruling_outlook_popularity = {
-	if = { limit = { has_government = democratic }
-		add_popularity = {
-			ideology = democratic
-			popularity = arg_popularity
-		}
-	}
-	else_if = { limit = { has_government = communism }
-		add_popularity = {
-			ideology = communism
-			popularity = arg_popularity
-		}
-	}
-	else_if = { limit = { has_government = fascism }
-		add_popularity = {
-			ideology = fascism
-			popularity = arg_popularity
-		}
-	}
-	else_if = { limit = { has_government = neutrality }
-		add_popularity = {
-			ideology = neutrality
-			popularity = arg_popularity
-		}
-	}
-	else_if = { limit = { has_government = nationalist }
-		add_popularity = {
-			ideology = nationalist
-			popularity = arg_popularity
-		}
+	add_popularity = {
+		ideology = ROOT
+		popularity = arg_popularity
 	}
 	recalculate_party = yes
 }
@@ -451,6 +425,51 @@ change_relative_party_popularity = {
 	recalculate_party = yes
 }
 
+# Move popularity from one party to another. The funder loses party_popularity_fraction of
+# its own popularity and the beneficiary gains the same amount.
+#
+# set_temp_variable = { party_index = 0-23 } # funder, loses popularity
+# set_temp_variable = { target_party_index = 0-23 } # beneficiary, gains popularity
+# set_temp_variable = { party_popularity_fraction = F } # 0.5 moves half of the funder's popularity
+move_party_popularity = {
+	set_temp_variable = { temp_outlook_increase = 0 }
+	set_temp_variable = { _party_pop_delta = party_pop_array^party_index }
+	multiply_temp_variable = { _party_pop_delta = party_popularity_fraction }
+	set_temp_variable = { party_popularity_increase = { value = _party_pop_delta multiply = -1 } }
+	change_relative_party_popularity = yes
+	set_temp_variable = { party_index = target_party_index }
+	set_temp_variable = { party_popularity_increase = _party_pop_delta }
+	change_relative_party_popularity = yes
+}
+
+# Boost one party by party_popularity_fraction of its own popularity, with the funder paying
+# for it. The measured party gains, the funder loses the same amount.
+#
+# set_temp_variable = { party_index = 0-23 } # beneficiary, measured and boosted
+# set_temp_variable = { funder_party_index = 0-23 } # party funding the boost
+# set_temp_variable = { party_popularity_fraction = F } # 0.5 boosts by half of the beneficiary's popularity
+boost_party_popularity = {
+	set_temp_variable = { temp_outlook_increase = 0 }
+	set_temp_variable = { _party_pop_delta = party_pop_array^party_index }
+	multiply_temp_variable = { _party_pop_delta = party_popularity_fraction }
+	set_temp_variable = { _party_pop_beneficiary = party_index }
+	set_temp_variable = { party_index = funder_party_index }
+	set_temp_variable = { party_popularity_increase = { value = _party_pop_delta multiply = -1 } }
+	change_relative_party_popularity = yes
+	set_temp_variable = { party_index = _party_pop_beneficiary }
+	set_temp_variable = { party_popularity_increase = _party_pop_delta }
+	change_relative_party_popularity = yes
+}
+
+# Scale one party's popularity directly, then rescale its outlook to preserve the total.
+#
+# set_temp_variable = { party_index = 0-23 } # party to scale
+# set_temp_variable = { party_popularity_multiplier = M } # 0.5 halves, 1.5 boosts by half, 0 clears
+scale_party_popularity = {
+	multiply_variable = { party_pop_array^party_index = party_popularity_multiplier }
+	recalculate_party = yes
+}
+
 # Parameter:
 # - overlord_to_match: id of the overlord whose ruling party the subject adopts
 effect_puppet_match_ruling_party_to_overlord = {		#Used in target scope
@@ -508,8 +527,46 @@ set_temp_variable_to_ruling_party = {
 }
 
 #### New Coalition stuff ####
+# Self-heal only. Does not touch coalitions or set_* flags.
+seed_ruling_party_if_unset = {
+	if = { limit = { NOT = { has_variable = ruling_party } }
+		set_temp_variable = { rp_lo = 0 }
+		set_temp_variable = { rp_hi = 4 }
+		if = { limit = { has_government = communism }
+			set_temp_variable = { rp_lo = 4 }
+			set_temp_variable = { rp_hi = 10 }
+		}
+		else_if = { limit = { has_government = fascism }
+			set_temp_variable = { rp_lo = 10 }
+			set_temp_variable = { rp_hi = 12 }
+		}
+		else_if = { limit = { has_government = neutrality }
+			set_temp_variable = { rp_lo = 12 }
+			set_temp_variable = { rp_hi = 20 }
+		}
+		else_if = { limit = { has_government = nationalist }
+			set_temp_variable = { rp_lo = 20 }
+			set_temp_variable = { rp_hi = 24 }
+		}
+		set_temp_variable = { rp_best = -1 }
+		set_temp_variable = { rp_best_i = rp_lo }
+		for_loop_effect = {
+			start = rp_lo
+			end = rp_hi
+			value = rp_i
+			if = {
+				limit = { check_variable = { party_pop_array^rp_i > rp_best } }
+				set_temp_variable = { rp_best = party_pop_array^rp_i }
+				set_temp_variable = { rp_best_i = rp_i }
+			}
+		}
+		set_variable = { ruling_party = rp_best_i }
+	}
+}
+
 startup_politics = {
 	set_failsafe_values = yes #adds needed values if missing
+	seed_ruling_party_if_unset = yes
 	add_up_party_totals = yes
 	set_party_positions = yes
 
@@ -580,8 +637,7 @@ hold_elections = {
 	else = {
 		# Should set the main election value and ignore the election threshold
 		if = { limit = { has_variable = ruling_party }
-			# deliberately slot 0, not ^ruling_party: preserves pre-conversion behaviour, see #3369
-		set_variable = { party_pop_elect_array^0 = party_pop_array^0 }
+			set_variable = { party_pop_elect_array^ruling_party = party_pop_array^ruling_party }
 		}
 	}
 	calculate_banned_parties = yes
@@ -613,8 +669,7 @@ recalculate_party_strength = {
 	else = {
 		# Should set the main election value and ignore the election threshold
 		if = { limit = { has_variable = ruling_party }
-			# deliberately slot 0, not ^ruling_party: preserves pre-conversion behaviour, see #3369
-		set_variable = { party_pop_elect_array^0 = party_pop_array^0 }
+			set_variable = { party_pop_elect_array^ruling_party = party_pop_array^ruling_party }
 		}
 	}
 	update_majority_threshold = yes
@@ -838,65 +893,15 @@ find_two_highest_parties = {
 # Purpose: Updates the political ideology
 update_party_name = {
 	if = { limit = { has_variable = ruling_party }
-		if = { limit = { has_government = democratic }
-			meta_effect = {
-				text = {
-					set_party_name = {
-						ideology = democratic
-						name = "[SUBIDEOLOGY_NAME]"
-						long_name = "[SUBIDEOLOGY_NAME]"
-					}
+		meta_effect = {
+			text = {
+				set_party_name = {
+					ideology = ROOT
+					name = "[SUBIDEOLOGY_NAME]"
+					long_name = "[SUBIDEOLOGY_NAME]"
 				}
-				SUBIDEOLOGY_NAME = "[show_ruling_party]"
 			}
-		}
-		else_if = { limit = { has_government = communism }
-			meta_effect = {
-				text = {
-					set_party_name = {
-						ideology = communism
-						name = "[SUBIDEOLOGY_NAME]"
-						long_name = "[SUBIDEOLOGY_NAME]"
-					}
-				}
-				SUBIDEOLOGY_NAME = "[show_ruling_party]"
-			}
-		}
-		else_if = { limit = { has_government = fascism }
-			meta_effect = {
-				text = {
-					set_party_name = {
-						ideology = fascism
-						name = "[SUBIDEOLOGY_NAME]"
-						long_name = "[SUBIDEOLOGY_NAME]"
-					}
-				}
-				SUBIDEOLOGY_NAME = "[show_ruling_party]"
-			}
-		}
-		else_if = { limit = { has_government = neutrality }
-			meta_effect = {
-				text = {
-					set_party_name = {
-						ideology = neutrality
-						name = "[SUBIDEOLOGY_NAME]"
-						long_name = "[SUBIDEOLOGY_NAME]"
-					}
-				}
-				SUBIDEOLOGY_NAME = "[show_ruling_party]"
-			}
-		}
-		else_if = { limit = { has_government = nationalist }
-			meta_effect = {
-				text = {
-					set_party_name = {
-						ideology = nationalist
-						name = "[SUBIDEOLOGY_NAME]"
-						long_name = "[SUBIDEOLOGY_NAME]"
-					}
-				}
-				SUBIDEOLOGY_NAME = "[show_ruling_party]"
-			}
+			SUBIDEOLOGY_NAME = "[show_ruling_party]"
 		}
 	}
 }
@@ -2188,7 +2193,6 @@ add_coalition_members_effect = {
 		add_to_array = { gov_coalition_array = add_col_one }
 		hidden_effect = {
 			update_government_coalition_strength = yes
-			set_coalition_drift = yes
 		}
 	}
 }
@@ -2201,7 +2205,6 @@ remove_coalition_members_effect = {
 		remove_from_array = { gov_coalition_array = remove_col_one }
 		hidden_effect = {
 			update_government_coalition_strength = yes
-			set_coalition_drift = yes
 		}
 	}
 }
@@ -2392,6 +2395,9 @@ change_ruling_party_effect = {
 		# INFO: This is here to offload from the weekly tick and instead call it whenever this is called.
 		IP_idea_configuration = yes
 		mb_refresh_relations_effect = yes
+		# Subideology swaps keep the same ideology group, so on_government_change cannot carry these.
+		if = { limit = { original_tag = FRA } FRA_update_party_programmes = yes }
+		if = { limit = { original_tag = HOL } HOL_update_party_programmes = yes }
 	}
 	if = { limit = { check_variable = { change_leader_temp = 1 } }
 		clr_country_flag = do_not_retire
@@ -2524,80 +2530,18 @@ set_partyall_allowed = {
 # Parameters: election_freq (48/60/72), uses global.year and global.month
 set_elections_with_frequency = {
 	set_country_flag = no_leader_change
-	if = { limit = { has_government = democratic }
-		meta_effect = {
-			text = {
-				set_politics = {
-					ruling_party = democratic
-					elections_allowed = yes
-					last_election = "[YEAR].[MONTH].1"
-					election_frequency = [FREQ]
-				}
+	meta_effect = {
+		text = {
+			set_politics = {
+				ruling_party = ROOT
+				elections_allowed = yes
+				last_election = "[YEAR].[MONTH].1"
+				election_frequency = [FREQ]
 			}
-			YEAR = "[?election_year_param]"
-			MONTH = "[?election_month_param|0]"
-			FREQ = "[?election_freq|.0]"
 		}
-	}
-	else_if = { limit = { has_government = communism }
-		meta_effect = {
-			text = {
-				set_politics = {
-					ruling_party = communism
-					elections_allowed = yes
-					last_election = "[YEAR].[MONTH].1"
-					election_frequency = [FREQ]
-				}
-			}
-			YEAR = "[?election_year_param]"
-			MONTH = "[?election_month_param|0]"
-			FREQ = "[?election_freq|.0]"
-		}
-	}
-	else_if = { limit = { has_government = fascism }
-		meta_effect = {
-			text = {
-				set_politics = {
-					ruling_party = fascism
-					elections_allowed = yes
-					last_election = "[YEAR].[MONTH].1"
-					election_frequency = [FREQ]
-				}
-			}
-			YEAR = "[?election_year_param]"
-			MONTH = "[?election_month_param|0]"
-			FREQ = "[?election_freq|.0]"
-		}
-	}
-	else_if = { limit = { has_government = neutrality }
-		meta_effect = {
-			text = {
-				set_politics = {
-					ruling_party = neutrality
-					elections_allowed = yes
-					last_election = "[YEAR].[MONTH].1"
-					election_frequency = [FREQ]
-				}
-			}
-			YEAR = "[?election_year_param]"
-			MONTH = "[?election_month_param|0]"
-			FREQ = "[?election_freq|.0]"
-		}
-	}
-	else_if = { limit = { has_government = nationalist }
-		meta_effect = {
-			text = {
-				set_politics = {
-					ruling_party = nationalist
-					elections_allowed = yes
-					last_election = "[YEAR].[MONTH].1"
-					election_frequency = [FREQ]
-				}
-			}
-			YEAR = "[?election_year_param]"
-			MONTH = "[?election_month_param|0]"
-			FREQ = "[?election_freq|.0]"
-		}
+		YEAR = "[?election_year_param]"
+		MONTH = "[?election_month_param|0]"
+		FREQ = "[?election_freq|.0]"
 	}
 	clr_country_flag = no_leader_change
 }
@@ -3016,35 +2960,9 @@ enable_elections_with_no_leader_change = {
 		set_variable = { current_term = 1 }
 	}
 
-	if = { limit = { has_government = democratic }
-		set_politics = {
-			ruling_party = democratic
-			elections_allowed = yes
-		}
-	}
-	else_if = { limit = { has_government = communism }
-		set_politics = {
-			ruling_party = communism
-			elections_allowed = yes
-		}
-	}
-	else_if = { limit = { has_government = fascism }
-		set_politics = {
-			ruling_party = fascism
-			elections_allowed = yes
-		}
-	}
-	else_if = { limit = { has_government = neutrality }
-		set_politics = {
-			ruling_party = neutrality
-			elections_allowed = yes
-		}
-	}
-	else_if = { limit = { has_government = nationalist }
-		set_politics = {
-			ruling_party = nationalist
-			elections_allowed = yes
-		}
+	set_politics = {
+		ruling_party = ROOT
+		elections_allowed = yes
 	}
 	clr_country_flag = no_leader_change
 }
@@ -3053,35 +2971,9 @@ enable_elections_with_no_leader_change = {
 # Purpose: Disable elections with no leader change
 disable_elections_with_no_leader_change = {
 	set_country_flag = no_leader_change
-	if = { limit = { has_government = democratic }
-		set_politics = {
-			ruling_party = democratic
-			elections_allowed = no
-		}
-	}
-	else_if = { limit = { has_government = communism }
-		set_politics = {
-			ruling_party = communism
-			elections_allowed = no
-		}
-	}
-	else_if = { limit = { has_government = fascism }
-		set_politics = {
-			ruling_party = fascism
-			elections_allowed = no
-		}
-	}
-	else_if = { limit = { has_government = neutrality }
-		set_politics = {
-			ruling_party = neutrality
-			elections_allowed = no
-		}
-	}
-	else_if = { limit = { has_government = nationalist }
-		set_politics = {
-			ruling_party = nationalist
-			elections_allowed = no
-		}
+	set_politics = {
+		ruling_party = ROOT
+		elections_allowed = no
 	}
 	clr_country_flag = no_leader_change
 }
@@ -3090,35 +2982,9 @@ disable_elections_with_no_leader_change = {
 # Purpose: Start a civil war with no leader change
 start_civil_war_with_no_leader_change = {
 	set_country_flag = no_leader_change
-	if = { limit = { has_government = nationalist }
-		start_civil_war = {
-			ideology = nationalist
-			size = 0.5
-		}
-	}
-	else_if = { limit = { has_government = communism }
-		start_civil_war = {
-			ideology = communism
-			size = 0.5
-		}
-	}
-	else_if = { limit = { has_government = democratic }
-		start_civil_war = {
-			ideology = democratic
-			size = 0.5
-		}
-	}
-	else_if = { limit = { has_government = neutrality }
-		start_civil_war = {
-			ideology = neutrality
-			size = 0.5
-		}
-	}
-	else_if = { limit = { has_government = fascism }
-		start_civil_war = {
-			ideology = fascism
-			size = 0.5
-		}
+	start_civil_war = {
+		ideology = ROOT
+		size = 0.5
 	}
 	clr_country_flag = no_leader_change
 }
