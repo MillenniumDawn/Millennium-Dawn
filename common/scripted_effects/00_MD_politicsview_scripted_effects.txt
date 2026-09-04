@@ -482,9 +482,46 @@ set_temp_variable_to_ruling_party = {
 }
 
 #### New Coalition stuff ####
+# Self-heal only. Does not touch coalitions or set_* flags.
+seed_ruling_party_if_unset = {
+	if = { limit = { NOT = { has_variable = ruling_party } }
+		set_temp_variable = { rp_lo = 0 }
+		set_temp_variable = { rp_hi = 4 }
+		if = { limit = { has_government = communism }
+			set_temp_variable = { rp_lo = 4 }
+			set_temp_variable = { rp_hi = 10 }
+		}
+		else_if = { limit = { has_government = fascism }
+			set_temp_variable = { rp_lo = 10 }
+			set_temp_variable = { rp_hi = 12 }
+		}
+		else_if = { limit = { has_government = neutrality }
+			set_temp_variable = { rp_lo = 12 }
+			set_temp_variable = { rp_hi = 20 }
+		}
+		else_if = { limit = { has_government = nationalist }
+			set_temp_variable = { rp_lo = 20 }
+			set_temp_variable = { rp_hi = 24 }
+		}
+		set_temp_variable = { rp_best = -1 }
+		set_temp_variable = { rp_best_i = rp_lo }
+		for_loop_effect = {
+			start = rp_lo
+			end = rp_hi
+			value = rp_i
+			if = {
+				limit = { check_variable = { party_pop_array^rp_i > rp_best } }
+				set_temp_variable = { rp_best = party_pop_array^rp_i }
+				set_temp_variable = { rp_best_i = rp_i }
+			}
+		}
+		set_variable = { ruling_party = rp_best_i }
+	}
+}
+
 startup_politics = {
 	set_failsafe_values = yes #adds needed values if missing
-	set_failsafe_ruling_party = yes #must precede set_party_positions, which reorders party_pop_array by value and would break its party-index assumption
+	seed_ruling_party_if_unset = yes
 	add_up_party_totals = yes
 	set_party_positions = yes
 
