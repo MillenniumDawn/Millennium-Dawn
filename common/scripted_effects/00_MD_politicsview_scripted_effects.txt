@@ -2413,18 +2413,39 @@ update_dirty_politicsview_expanded = {
 # Parameters: party_index - 0-23
 # Purpose: Bans the provided party index from elections
 ban_party_scripted_call = {
-	set_variable = { party_banned_array^party_index = 1 }
 	custom_effect_tooltip = ban_party_effect_tt
-	update_dirty_politicsview_expanded = yes
+	hidden_effect = {
+		set_variable = { party_banned_array^party_index = 1 }
+		update_dirty_politicsview_expanded = yes
+	}
 }
 
 # unban_party_scripted_call
 # Parameters: party_index - 0-23
 # Purpose: Allows the provided party index for elections
 unban_party_scripted_call = {
-	set_variable = { party_banned_array^party_index = 0 }
 	custom_effect_tooltip = unban_party_effect_tt
-	update_dirty_politicsview_expanded = yes
+	hidden_effect = {
+		set_variable = { party_banned_array^party_index = 0 }
+		update_dirty_politicsview_expanded = yes
+	}
+}
+
+# Leaves slots in ban_except_array unbanned. No partyall_banned flag, no PP.
+ban_all_parties_except_array = {
+	hidden_effect = {
+		for_loop_effect = {
+			start = 0
+			end = 24
+			value = ban_i
+			if = {
+				limit = { NOT = { is_in_array = { ban_except_array = ban_i } } }
+				set_variable = { party_banned_array^ban_i = 1 }
+			}
+		}
+		clear_temp_array = ban_except_array
+		update_dirty_politicsview_expanded = yes
+	}
 }
 
 set_partyall_banned = {
