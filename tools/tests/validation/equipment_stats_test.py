@@ -295,3 +295,61 @@ mio_cat_edge = {
 
 def test_group_ignores_blocks_other_than_equipment_type():
     assert _index(_AA, groups=_EDGE_GROUPS).expand("mio_cat_edge") == ["frigate"]
+
+
+_SHIPS = """
+equipments = {
+	helicopter_operator = {
+		is_archetype = yes
+		type = carrier
+		build_cost_ic = 28000
+	}
+	carrier = {
+		is_archetype = yes
+		type = carrier
+		build_cost_ic = 40000
+	}
+}
+"""
+
+
+def test_type_and_child_sharing_a_stat_overlap():
+    index = _index(_SHIPS)
+    assert index.type_archetype_overlaps(
+        {
+            "carrier": {"build_cost_ic"},
+            "helicopter_operator": {"build_cost_ic"},
+        }
+    ) == [("carrier", "helicopter_operator", frozenset({"build_cost_ic"}))]
+
+
+def test_type_and_child_with_distinct_stats_do_not_overlap():
+    index = _index(_SHIPS)
+    assert (
+        index.type_archetype_overlaps(
+            {
+                "carrier": {"carrier_size"},
+                "helicopter_operator": {"anti_air_attack"},
+            }
+        )
+        == []
+    )
+
+
+def test_iter_stacks_reports_the_child_key_offset():
+    index = _index(_SHIPS)
+    text = (
+        "equipment_bonus = {\n"
+        "\tcarrier = { build_cost_ic = -0.25 }\n"
+        "\thelicopter_operator = { build_cost_ic = -0.25 }\n"
+        "}\n"
+    )
+    hits = list(S.iter_type_archetype_stacks(text, index))
+    assert len(hits) == 1
+    offset, type_key, child, shared = hits[0]
+    assert (type_key, child, shared) == (
+        "carrier",
+        "helicopter_operator",
+        frozenset({"build_cost_ic"}),
+    )
+    assert text[offset:].startswith("helicopter_operator")

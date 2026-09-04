@@ -87,6 +87,40 @@ def test_position_x_bounds_exempt_orgs(tmp_path):
     assert v._issues[0].category == "trait-x-bounds"
 
 
+def test_percentage_org_modifier_whole_number_flagged(tmp_path):
+    v = _validator(tmp_path)
+    body = (
+        "\tinitial_trait = {\n"
+        "\t\torganization_modifier = {\n"
+        "\t\t\tmilitary_industrial_organization_size_up_requirement = -3\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert len(v._issues) == 1
+    assert v._issues[0].category == "org-modifier-out-of-range"
+    assert v._issues[0].line == 3
+
+
+def test_fractional_org_modifier_passes(tmp_path):
+    v = _validator(tmp_path)
+    body = (
+        "\torganization_modifier = {\n"
+        "\t\tmilitary_industrial_organization_size_up_requirement = -0.15\n"
+        "\t\tmilitary_industrial_organization_research_bonus = 0.10\n"
+        "\t}\n"
+    )
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert not v._issues
+
+
+def test_task_capacity_is_exempt_from_range_check(tmp_path):
+    v = _validator(tmp_path)
+    body = "\torganization_modifier = { military_industrial_organization_task_capacity = 3 }\n"
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert not v._issues
+
+
 def test_empty_on_complete_flagged(tmp_path):
     v = _validator(tmp_path)
     v._check_on_complete("\ton_complete = {\n\t}\n", "f.txt", 0)
@@ -457,6 +491,46 @@ def test_nested_policy_form_checks_each_archetype_separately(tmp_path):
     v._check_nested_equipment_bonus(text, "p.txt", _equipment_index(tmp_path))
     assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
     assert "AA_Equipment" in v._issues[0].message
+
+
+def test_type_and_child_sharing_a_stat_is_flagged(tmp_path):
+    equipment_dir = tmp_path / "common" / "units" / "equipment"
+    equipment_dir.mkdir(parents=True, exist_ok=True)
+    (equipment_dir / "MD_ships.txt").write_text(
+        "equipments = {\n"
+        "\thelicopter_operator = {\n"
+        "\t\tis_archetype = yes\n"
+        "\t\ttype = carrier\n"
+        "\t\tbuild_cost_ic = 28000\n"
+        "\t}\n"
+        "\tcarrier = {\n"
+        "\t\tis_archetype = yes\n"
+        "\t\ttype = carrier\n"
+        "\t\tbuild_cost_ic = 40000\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    text = (
+        "mio_policy_test = {\n"
+        "\tequipment_bonus = {\n"
+        "\t\tcarrier = {\n"
+        "\t\t\tbuild_cost_ic = -0.25\n"
+        "\t\t}\n"
+        "\t\thelicopter_operator = {\n"
+        "\t\t\tbuild_cost_ic = -0.25\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    v = _validator(tmp_path)
+    v._check_nested_equipment_bonus(
+        text, "p.txt", V.build_equipment_stat_index(str(tmp_path))
+    )
+    assert [i.category for i in v._issues] == ["bonus-type-archetype-stack"]
+    assert v._issues[0].severity == "error"
+    assert "helicopter_operator" in v._issues[0].message
+    assert "carrier" in v._issues[0].message
 
 
 def test_production_keys_are_not_equipment_stats(tmp_path):

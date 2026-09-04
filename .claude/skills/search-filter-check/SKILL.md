@@ -35,9 +35,9 @@ For each `focus = { ... }` block, extract:
 
 **Rule 3 — Legacy alias:** `FOCUS_FILTER_MILITARY` is legacy/unused. Correct filter is `FOCUS_FILTER_MILITARY_LAWS`. Flag any use of the old name.
 
-**Rule 4 — Two-layer convention:** For trees using country-specific custom filters (ISR, Russia, Ukraine, Armenia, Brazil, Iran, Korea, etc.), each focus with a custom filter must also have the correct paired generic filter (see pairing tables in `.claude/docs/search-filters.md`).
+**Rule 4 — Two-layer convention:** For trees using country-specific custom filters (ISR, Russia, Ukraine, Armenia, Brazil, Iran, Korea, etc.), each focus with a custom filter must also have the correct paired generic filter (see the pairing reference in `.claude/docs/search-filters.md`).
 
-- Israel (`FOCUS_FILTER_ISRPOLIT`, `FOCUS_FILTER_ISRMILITARY`, etc.): check the ISRMILITARY and ISRECON subcategory mapping tables to verify the correct generic is paired.
+- Israel (`FOCUS_FILTER_ISRPOLIT`, `FOCUS_FILTER_ISRMILITARY`, etc.): check the ISRMILITARY and ISRECON subcategory mappings to verify the correct generic is paired.
 - Other countries: verify a generic filter is present alongside the custom filter.
 
 **Rule 5 — Cross-assignment:** Country-specific custom filters must not appear in another country's file. E.g., `FOCUS_FILTER_ISRPOLIT` must not appear in a non-Israel file. Use the country prefix to detect this.
@@ -48,12 +48,12 @@ For each `focus = { ... }` block, extract:
 
 Report issues in a table:
 
-| Focus ID        | Issue               | Current Filters          | Recommendation                                             |
-| --------------- | ------------------- | ------------------------ | ---------------------------------------------------------- |
-| TAG_some_focus  | Missing filter      | (none)                   | Add appropriate filter                                     |
-| TAG_other_focus | Legacy alias        | FOCUS_FILTER_MILITARY    | Use FOCUS_FILTER_MILITARY_LAWS                             |
-| TAG_big_focus   | Missing generic     | FOCUS_FILTER_ISRPOLIT    | Add FOCUS_FILTER_POLITICAL                                 |
-| TAG_expensive   | No bankruptcy guard | FOCUS_FILTER_EXPENDITURE | Add factor = 0 / has_active_mission modifier in ai_will_do |
+| Focus ID      | Issue               | Current Filters          | Recommendation                  |
+| ------------- | ------------------- | ------------------------ | ------------------------------- |
+| TAG_focus_a   | Missing filter      | (none)                   | Add appropriate filter          |
+| TAG_focus_b   | Legacy alias        | FOCUS_FILTER_MILITARY    | Use FOCUS_FILTER_MILITARY_LAWS  |
+| TAG_focus_c   | Missing generic     | FOCUS_FILTER_ISRPOLIT    | Add FOCUS_FILTER_POLITICAL      |
+| TAG_expensive | No bankruptcy guard | FOCUS_FILTER_EXPENDITURE | Add ai_will_do bankruptcy guard |
 
 End with a count: `N issues found across M focuses` or `All N focuses pass filter validation`.
 
