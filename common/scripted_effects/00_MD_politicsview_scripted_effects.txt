@@ -435,8 +435,7 @@ move_party_popularity = {
 	set_temp_variable = { temp_outlook_increase = 0 }
 	set_temp_variable = { _party_pop_delta = party_pop_array^party_index }
 	multiply_temp_variable = { _party_pop_delta = party_popularity_fraction }
-	set_temp_variable = { party_popularity_increase = _party_pop_delta }
-	multiply_temp_variable = { party_popularity_increase = -1 }
+	set_temp_variable = { party_popularity_increase = { value = _party_pop_delta multiply = -1 } }
 	change_relative_party_popularity = yes
 	set_temp_variable = { party_index = target_party_index }
 	set_temp_variable = { party_popularity_increase = _party_pop_delta }
@@ -455,21 +454,20 @@ boost_party_popularity = {
 	multiply_temp_variable = { _party_pop_delta = party_popularity_fraction }
 	set_temp_variable = { _party_pop_beneficiary = party_index }
 	set_temp_variable = { party_index = funder_party_index }
-	set_temp_variable = { party_popularity_increase = _party_pop_delta }
-	multiply_temp_variable = { party_popularity_increase = -1 }
+	set_temp_variable = { party_popularity_increase = { value = _party_pop_delta multiply = -1 } }
 	change_relative_party_popularity = yes
 	set_temp_variable = { party_index = _party_pop_beneficiary }
 	set_temp_variable = { party_popularity_increase = _party_pop_delta }
 	change_relative_party_popularity = yes
 }
 
-# Scale one party's popularity directly. The outlook total is preserved on the next
-# recalculate_party, which rescales every party of the outlook to its outlook popularity.
+# Scale one party's popularity directly, then rescale its outlook to preserve the total.
 #
 # set_temp_variable = { party_index = 0-23 } # party to scale
 # set_temp_variable = { party_popularity_multiplier = M } # 0.5 halves, 1.5 boosts by half, 0 clears
 scale_party_popularity = {
 	multiply_variable = { party_pop_array^party_index = party_popularity_multiplier }
+	recalculate_party = yes
 }
 
 # Parameter:
