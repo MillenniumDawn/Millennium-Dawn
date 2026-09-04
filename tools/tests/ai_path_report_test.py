@@ -230,6 +230,62 @@ class TestFocusParsing:
         )
         assert findings["unused_flags"] == ["DEN_DEAD_FOCUS_PATH"]
 
+    def test_one_root_per_owner_is_not_reported(self):
+        assert report._owner_findings(self.focuses, "DEN", [], {})["multi_root"] == {}
+
+
+MULTI_ROOT_FILE = """
+focus = {
+	id = DEN_reds
+	ai_will_do = {
+		base = 1
+		modifier = { factor = 25 has_global_flag = DEN_LEFT_FOCUS_PATH }
+		modifier = { factor = 0 DEN_ai_not_left_path = yes }
+	}
+}
+
+focus = {
+	id = DEN_greens
+	ai_will_do = {
+		base = 1
+		modifier = { factor = 25 has_global_flag = DEN_LEFT_FOCUS_PATH }
+		modifier = { factor = 0 DEN_ai_not_left_path = yes }
+	}
+}
+
+focus = {
+	id = DEN_red_green_pact
+	prerequisite = { focus = DEN_reds focus = DEN_greens }
+	ai_will_do = {
+		base = 1
+		modifier = { factor = 25 has_global_flag = DEN_LEFT_FOCUS_PATH }
+		modifier = { factor = 0 DEN_ai_not_left_path = yes }
+	}
+}
+"""
+
+
+class TestRivalSpinesUnderOneOption:
+    def test_a_flag_owning_two_branch_roots_is_reported(self):
+        focuses = report.parse_focus_file(MULTI_ROOT_FILE, "DEN")
+        findings = report._owner_findings(focuses, "DEN", [], {})
+        assert findings["multi_root"] == {
+            "DEN_LEFT_FOCUS_PATH": ["DEN_reds", "DEN_greens"]
+        }
+
+    def test_the_finding_renders_with_every_root_named(self):
+        focuses = report.parse_focus_file(MULTI_ROOT_FILE, "DEN")
+        built = {
+            "tag": "DEN",
+            "focus_file": "common/national_focus/05_denmark.txt",
+            "focus_count": len(focuses),
+            "path_flags": [],
+            "triggers": [],
+            "owners": report._owner_findings(focuses, "DEN", [], {}),
+        }
+        text = report.render(built, ["owners"])
+        assert "! DEN_LEFT_FOCUS_PATH owns 2 branch roots: DEN_reds, DEN_greens" in text
+
 
 class TestReachability:
     def test_single_member_group_with_a_dead_parent_orphans_the_child(self):
