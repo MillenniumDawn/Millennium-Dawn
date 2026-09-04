@@ -33,3 +33,187 @@ CHE_test_supply_yield_set_10_effect = {
 	set_variable = { ichkeria_supply_yield_pct = 10 }
 	CHE_update_supply_yield_effect = yes
 }
+
+CHE_update_pct_yield_effect = {
+	set_variable = {
+		ichkeria_supply_yield_var = 0
+	}
+
+	# FACTOR 1 - FACTION OPINION
+	# If the Military is active, use Military Opinion.
+	# Otherwise use Intelligence Community Opinion.
+
+	set_temp_variable = {
+		ichkeria_supply_yield_var_faction_opinion = 0
+	}
+
+	if = {
+		limit = {
+			has_idea = the_military
+		}
+
+		set_temp_variable = {
+			ichkeria_supply_yield_var_faction_opinion = the_military_opinion
+		}
+	}
+	else = {
+		set_temp_variable = {
+			ichkeria_supply_yield_var_faction_opinion = intelligence_community_opinion
+		}
+	}
+
+	clamp_temp_variable = {
+		var = ichkeria_supply_yield_var_faction_opinion
+		min = 0
+		max = 100
+	}
+
+
+	# FACTOR 2 - GEORGIAN INFLUENCE
+	# Find CHE's influence value in GEO's influence array.
+	# Multiply by 6, then clamp between 0 and 100.
+
+	set_temp_variable = {
+		ichkeria_supply_yield_var_geo_influence = 0
+	}
+
+	GEO = {
+		for_each_loop = {
+			array = influence_array
+			value = v
+			index = i
+
+			if = {
+				limit = {
+					var:v = {
+						tag = CHE
+					}
+				}
+
+				set_temp_variable = {
+					ROOT.ichkeria_supply_yield_var_geo_influence = influence_array_val^i
+				}
+			}
+		}
+	}
+
+	multiply_temp_variable = {
+		ichkeria_supply_yield_var_geo_influence = 6 #gives a massive bonus
+	}
+
+	clamp_temp_variable = {
+		var = ichkeria_supply_yield_var_geo_influence
+		min = 0
+		max = 100
+	}
+
+
+	# BASE YIELD
+	# Add Faction Opinion + Georgian Influence.
+	# Divide by 2 to get the average.
+
+	set_variable = {
+		ichkeria_supply_yield_var = ichkeria_supply_yield_var_faction_opinion
+	}
+
+	add_to_variable = {
+		var = ichkeria_supply_yield_var
+		value = ichkeria_supply_yield_var_geo_influence
+	}
+
+	divide_variable = {
+		var = ichkeria_supply_yield_var
+		value = 2
+	}
+
+	clamp_variable = {
+		var = ichkeria_supply_yield_var
+		min = 0
+		max = 100
+	}
+
+	set_temp_variable = {
+		ichkeria_supply_yield_var_base = ichkeria_supply_yield_var
+	}
+
+	# PERCENTAGE MODIFIERS
+	# Positive value = reduction.
+	# Negative value = increase.
+	# Examples:
+	#  15  = -15%
+	# -15  = +15%
+
+	set_temp_variable = {
+		ichkeria_supply_yield_var_modifier_pct = 0
+	}
+
+	# Military reduction
+	if = {
+		limit = {
+			has_idea = the_military
+		}
+
+		add_to_temp_variable = {
+			ichkeria_supply_yield_var_modifier_pct = 15
+		}
+	}
+
+	# Example reduction:
+	#
+	# if = {
+	#     limit = {
+	#         has_idea = example_reduction
+	#     }
+	#
+	#     add_to_temp_variable = {
+	#         ichkeria_supply_yield_var_modifier_pct = 10
+	#     }
+	# }
+
+	# Example addition:
+	#
+	# if = {
+	#     limit = {
+	#         has_idea = example_bonus
+	#     }
+	#
+	#     add_to_temp_variable = {
+	#         ichkeria_supply_yield_var_modifier_pct = -10
+	#     }
+	# }
+
+
+	# CONVERT PERCENTAGE MODIFIER TO MULTIPLIER
+	#  15  -> 0.85  (-15%)
+	#   0  -> 1.00  (no change)
+	# -15  -> 1.15  (+15%)
+
+	multiply_temp_variable = {
+		ichkeria_supply_yield_var_modifier_pct = -0.01
+	}
+
+	add_to_temp_variable = {
+		ichkeria_supply_yield_var_modifier_pct = 1
+	}
+
+	# APPLY PERCENTAGE MODIFIER
+
+	multiply_variable = {
+		var = ichkeria_supply_yield_var
+		value = ichkeria_supply_yield_var_modifier_pct
+	}
+
+	clamp_variable = {
+		var = ichkeria_supply_yield_var
+		min = 0
+		max = 100
+	}
+
+	# FINAL YIELD
+
+	set_variable = {
+		ichkeria_supply_yield_pct = ichkeria_supply_yield_var
+	}
+
+	CHE_update_supply_yield_effect = yes
+}
