@@ -1335,20 +1335,6 @@ def validate_capital_defined(filepath: str) -> List[str]:
     return []
 
 
-def _history_politics_blocks(content: str) -> List[Tuple[str, str]]:
-    matches = list(_DATE_BLOCK_RE.finditer(content))
-    if not matches:
-        return [("", content)]
-    blocks: List[Tuple[str, str]] = []
-    preamble = content[: matches[0].start()]
-    if preamble.strip():
-        blocks.append(("", preamble))
-    for m in matches:
-        body_end = _match_brace_end(content, m.end())
-        blocks.append((m.group(1), content[m.end() : body_end - 1]))
-    return blocks
-
-
 def validate_ruling_party_assigned(filepath: str) -> List[str]:
     """start_politics_input clears ruling_party; the same date block must set it."""
     filename = os.path.basename(filepath)
@@ -1358,24 +1344,34 @@ def validate_ruling_party_assigned(filepath: str) -> List[str]:
     except Exception:
         return [f"{filename}: could not read file"]
 
+    matches = list(_DATE_BLOCK_RE.finditer(content))
+    if matches:
+        blocks: List[Tuple[str, str]] = []
+        preamble = content[: matches[0].start()]
+        if preamble.strip():
+            blocks.append(("", preamble))
+        for m in matches:
+            body_end = _match_brace_end(content, m.end())
+            blocks.append((m.group(1), content[m.end() : body_end - 1]))
+    else:
+        blocks = [("", content)]
+
     results = []
-    for label, body in _history_politics_blocks(content):
+    for label, body in blocks:
         inputs = list(_START_POLITICS_INPUT_RE.finditer(body))
         if not inputs:
             continue
         clear_at = inputs[-1].start()
-        assigned = False
-        for match in _RULING_PARTY_VAR_RE.finditer(body):
-            if match.start() <= clear_at:
+        for m in _RULING_PARTY_VAR_RE.finditer(body):
+            if m.start() <= clear_at:
                 continue
             try:
-                idx = int(match.group(1))
+                idx = int(m.group(1))
             except ValueError:
                 continue
             if 0 <= idx <= 23:
-                assigned = True
                 break
-        if not assigned:
+        else:
             where = f"{label}: " if label else ""
             results.append(
                 f"{filename}: {where}start_politics_input does not assign "
