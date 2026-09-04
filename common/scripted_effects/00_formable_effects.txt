@@ -48,3 +48,19 @@ formable_purchase_cancel_offer = {
 mark_formed_country_formable = {
 	set_country_flag = formed_country_formable
 }
+
+# Function: commit_special_formable
+# Purpose: Commit the AI to a special (non-decision) formable. Caller sets special_formable_id first
+# (ids >= 100, table in .claude/docs/formable-reference.md). Size 1000 outranks every decision
+# formable's ratchet gate, so the AI never leaves the special identity for a decision formable.
+commit_special_formable = {
+	mark_formed_country_formable = yes
+	if = {
+		limit = { has_idea = reshaping_national_identity }
+		remove_ideas = reshaping_national_identity
+	}
+	hidden_effect = {
+		set_variable = { formable_committed_id = special_formable_id }
+		set_variable = { formable_committed_size = 1000 }
+	}
+}

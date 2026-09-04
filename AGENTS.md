@@ -30,6 +30,12 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
   `has_completed_focus`, variables, event targets, ideology, subject status,
   faction membership, and similar direct checks instead. Use a flag only for
   state that cannot be queried directly or must record a historical transition.
+- Markdown docs: tables must read aligned in plaintext — prettier-padded columns
+  (the repo `.md` hook settings) with the **whole padded row within 100 characters**.
+  Tighten cells, factor a shared path prefix into a note above the table, drop or
+  merge columns, or move detail into a terse `Details:` list under the table
+  (patterns: `.claude/docs/documentation-references.md`, `.claude/docs/formable-reference.md`).
+  Content that cannot fit a 100-wide table becomes a bulleted list instead.
 
 ### Line endings in Python tooling
 
@@ -118,7 +124,9 @@ Keep all output token-efficient: conversation replies, agent hand-back reports, 
 - [OOB & Equipment Variants](.claude/docs/oob-variants-reference.md) | [Namelists](.claude/docs/namelist-reference.md)
 - [Diplomatic Actions](.claude/docs/diplomatic-action-reference.md) | [Content Guidelines](.claude/docs/content-guidelines.md)
 - [UN System](.claude/docs/un-system-reference.md) (read before editing UN voting, elections, or recognition, or adding a Security Council / General Assembly resolution type)
+- [Formables](.claude/docs/formable-reference.md) (read before editing `formable_nation_decisions.txt`, the EU end-states/EFS, UAR, or any union cosmetic — every formation path, the AI commitment ratchet, and the special-formable sentinel)
 - [Faction Rules](.claude/docs/faction-rules.md) | [Typo Watchlist](.claude/docs/typo-watchlist.md)
 - [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`)
 - [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) + [Patterns](.claude/docs/scripted-gui-patterns.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
 - [MD Custom Modifiers](.claude/docs/md-custom-modifiers.md) — non-vanilla modifier keys in `common/modifier_definitions/`
+- [Loading Screens](.claude/docs/loading-screen-system.md) (read before touching `gfx/loadingscreens/` or the menu background picker)
