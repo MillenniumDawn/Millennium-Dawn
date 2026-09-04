@@ -70,6 +70,7 @@ _STATE_DRIVEN_DATE_POLL_GATE_RE = re.compile(
     r")\b"
 )
 _PULSE_ON_ACTIONS = ("on_daily", "on_weekly", "on_monthly")
+_FACTION_GOAL_STARTUP_EVENT = "faction_goal_cache.2"
 # Dated polls intentionally kept as retries outside the yearly event table.
 _DATE_POLL_EXEMPT_IDS = frozenset(
     {
@@ -97,6 +98,18 @@ def _scan_event_text(text: str) -> Tuple[Set[str], Set[str]]:
             triggered_only_ids.add(eid)
 
     return defined_ids, triggered_only_ids
+
+
+def _event_calls_effect(text: str, event_id: str, effect: str) -> bool:
+    """Return whether the named event directly calls an effect."""
+    text = re.sub(r"#[^\n]*", "", text)
+    effect_re = re.compile(rf"\b{re.escape(effect)}\s*=\s*yes\b")
+    for match in _EVENT_BLOCK_OPEN_RE.finditer(text):
+        body, _ = extract_block_from_text(text, match.end() - 1)
+        id_match = _EVENT_ID_IN_BODY_RE.search(body)
+        if id_match and id_match.group(1) == event_id:
+            return effect_re.search(body) is not None
+    return False
 
 
 def _scan_event_file(args: Tuple[str, str]) -> Tuple[Set[str], Set[str]]:
@@ -411,7 +424,7 @@ def _parse_on_actions_file(
 
 class Validator(BaseValidator):
     TITLE = "ON_ACTIONS REFERENCE VALIDATION"
-    STAGED_EXTENSIONS = [".txt"]
+    STAGED_EXTENSIONS = (".txt",)
 
     def __init__(self, mod_path: str, **kwargs):
         super().__init__(mod_path, **kwargs)
@@ -594,6 +607,50 @@ class Validator(BaseValidator):
             category="non-triggered-on-action",
         )
 
+    def validate_faction_goal_cache_creation(self):
+        """Require post-startup faction creation to initialize faction-goal caches."""
+        self._log_section("Checking faction-goal cache creation wiring...")
+
+        defined_ids, _ = self._get_defined_event_ids()
+        if _FACTION_GOAL_STARTUP_EVENT not in defined_ids:
+            return
+
+        all_refs, _ = self._get_on_actions_refs()
+        create_hook_wired = any(
+            eid == _FACTION_GOAL_STARTUP_EVENT and block_name == "on_create_faction"
+            for eid, block_name, _line, _filepath in all_refs
+        )
+        startup_event_updates_cache = False
+        for filepath in self._collect_files(["events/**/*.txt"]):
+            try:
+                text = Path(filepath).read_text(encoding="utf-8-sig", errors="replace")
+            except OSError:
+                continue
+            if _event_calls_effect(
+                text, _FACTION_GOAL_STARTUP_EVENT, "faction_goal_update_daily_caches"
+            ):
+                startup_event_updates_cache = True
+                break
+
+        results = []
+        if not create_hook_wired:
+            results.append(
+                "on_create_faction must schedule faction_goal_cache.2 to initialize "
+                "new faction caches"
+            )
+        if not startup_event_updates_cache:
+            results.append(
+                "faction_goal_cache.2 must call faction_goal_update_daily_caches"
+            )
+
+        self._report(
+            results,
+            "Faction-goal caches initialize when factions are created",
+            "Missing faction-goal cache lifecycle wiring:",
+            Severity.ERROR,
+            category="missing-faction-goal-cache-lifecycle",
+        )
+
     def validate_duplicate_event_refs(self):
         """Warn when the same event ID appears more than once in the same on_action block."""
         self._log_section(
@@ -625,6 +682,7 @@ class Validator(BaseValidator):
         self.validate_deterministic_date_polls()
         self.validate_missing_event_refs()
         self.validate_non_triggered_on_action_refs()
+        self.validate_faction_goal_cache_creation()
         self.validate_duplicate_event_refs()
 
 

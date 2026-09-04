@@ -1,8 +1,7 @@
 """Behavior tests for the on_actions event-reference validator.
 
-Covers the events-tree scan, the on_actions block parser, and the four checks
-the validator reports: dated pulse polling, undefined references, references to
-events without is_triggered_only, and duplicates inside one on_action block.
+Covers the events-tree scan, the on_actions block parser, and the validator's
+dated polls, references, lifecycle wiring, triggered-only, and duplicate checks.
 """
 
 import runpy
@@ -13,6 +12,7 @@ import validate_on_actions
 from shared.suite import write_under as _write
 from validate_on_actions import (
     Validator,
+    _event_calls_effect,
     _extract_random_events_ids,
     _parse_on_actions_file,
     _parse_on_actions_text,
@@ -56,6 +56,21 @@ def _issues(validator, category):
         for issue in validator._issues
         if issue.category == category
     ]
+
+
+def test_event_effect_call_is_scoped_to_the_matching_event():
+    text = """country_event = {
+\tid = faction_goal_cache.1
+\tfaction_goal_update_daily_caches = yes
+}
+country_event = {
+\tid = faction_goal_cache.2
+}
+"""
+
+    assert not _event_calls_effect(
+        text, "faction_goal_cache.2", "faction_goal_update_daily_caches"
+    )
 
 
 def test_event_scan_collects_ids_and_triggered_only_flags():
@@ -289,6 +304,69 @@ def test_clean_on_actions_file_reports_nothing(tmp_path):
 
     assert validator._issues == []
     assert (validator.errors_found, validator.warnings_found) == (0, 0)
+
+
+def _faction_cache_validator(tmp_path, on_create_body, event_effect=True):
+    effect = "\tfaction_goal_update_daily_caches = yes\n" if event_effect else ""
+    _write(
+        tmp_path,
+        "events/MD_faction_goal_cache_events.txt",
+        "add_namespace = faction_goal_cache\n"
+        "country_event = {\n"
+        "\tid = faction_goal_cache.2\n"
+        "\tis_triggered_only = yes\n"
+        f"{effect}"
+        "}\n",
+    )
+    _write(
+        tmp_path,
+        ON_ACTIONS_FILE,
+        "on_actions = {\n"
+        "\ton_create_faction = {\n"
+        f"{on_create_body}"
+        "\t}\n"
+        "}\n",
+    )
+    return Validator(str(tmp_path), use_colors=False, workers=1)
+
+
+def test_missing_faction_cache_creation_wiring_is_reported(tmp_path):
+    validator = _faction_cache_validator(tmp_path, "\t\teffect = { }\n")
+
+    validator.validate_faction_goal_cache_creation()
+
+    issues = _issues(validator, "missing-faction-goal-cache-lifecycle")
+    assert len(issues) == 1
+    assert "on_create_faction must schedule faction_goal_cache.2" in issues[0][0]
+
+
+def test_faction_cache_creation_event_is_accepted(tmp_path):
+    validator = _faction_cache_validator(
+        tmp_path,
+        "\t\teffect = {\n"
+        "\t\t\tcountry_event = { id = faction_goal_cache.2 hours = 1 }\n"
+        "\t\t}\n",
+    )
+
+    validator.validate_faction_goal_cache_creation()
+
+    assert _issues(validator, "missing-faction-goal-cache-lifecycle") == []
+
+
+def test_faction_cache_creation_event_must_update_the_cache(tmp_path):
+    validator = _faction_cache_validator(
+        tmp_path,
+        "\t\teffect = {\n"
+        "\t\t\tcountry_event = { id = faction_goal_cache.2 hours = 1 }\n"
+        "\t\t}\n",
+        event_effect=False,
+    )
+
+    validator.validate_faction_goal_cache_creation()
+
+    issues = _issues(validator, "missing-faction-goal-cache-lifecycle")
+    assert len(issues) == 1
+    assert "must call faction_goal_update_daily_caches" in issues[0][0]
 
 
 def test_dated_pulse_poll_is_reported_with_its_source_line(tmp_path):
