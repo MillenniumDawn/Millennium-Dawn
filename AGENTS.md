@@ -129,3 +129,4 @@ Keep all output token-efficient: conversation replies, agent hand-back reports, 
 - [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`)
 - [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) + [Patterns](.claude/docs/scripted-gui-patterns.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
 - [MD Custom Modifiers](.claude/docs/md-custom-modifiers.md) — non-vanilla modifier keys in `common/modifier_definitions/`
+- [Loading Screens](.claude/docs/loading-screen-system.md) (read before touching `gfx/loadingscreens/` or the menu background picker)
