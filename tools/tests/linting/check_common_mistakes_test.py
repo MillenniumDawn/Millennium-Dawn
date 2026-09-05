@@ -2262,10 +2262,10 @@ def _tier(counter, number, guard="", increment=1, retire=None, undo=None, tail="
     ]
 
 
-def _rotation(*tiers, flag="set_conservatism"):
+def _rotation(*tiers, slot=1):
     return [
         "set_leader_TST = {\n",
-        f"\tif = {{ limit = {{ has_country_flag = {flag} }}\n",
+        f"\tif = {{ limit = {{ check_variable = {{ ruling_party = {slot} }} }}\n",
         *[line for tier in tiers for line in tier],
         "\t}\n",
         "}\n",
@@ -2396,7 +2396,7 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 1 } }\n",
         "\t\tif = { limit = { date < 2002.12.10 }\n",
         *_tier("conservatism_leader", 0),
         "\t\t}\n",
@@ -2415,7 +2415,7 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_liberalism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 2 } }\n",
         "\t\tif = { limit = { check_variable = { liberalism_leader = 1 } }\n",
         '\t\t\tcreate_country_leader = { name = "A" ideology = liberalism }\n',
         "\t\t}\n",
@@ -2433,10 +2433,10 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 1 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
-        "\telse_if = { limit = { has_country_flag = set_conservatism }\n",
+        "\telse_if = { limit = { check_variable = { ruling_party = 1 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
         "}\n",
@@ -2459,10 +2459,10 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 1 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
-        "\telse_if = { limit = { has_country_flag = set_Monarchist }\n",
+        "\telse_if = { limit = { check_variable = { ruling_party = 23 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
         "}\n",
@@ -2471,13 +2471,26 @@ assert_finds(
     "branch counting with another ideology's counter flagged",
 )
 
+assert_finds(
+    _check_leader_rotation,
+    [
+        "set_leader_TST = {\n",
+        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        *_tier("conservatism_leader", 0),
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "retired set_conservatism flag flagged",
+)
+
 # CAS/PHI carry off-name counters (socalism_leader) that nothing else drives -- harmless
 assert_finds(
     _check_leader_rotation,
     _rotation(
         _tier("socalism_leader", 0),
         _tier("socalism_leader", 1, guard=_B_GUARD),
-        flag="set_socialism",
+        slot=3,
     ),
     0,
     "off-name counter owned by a single branch not flagged",
