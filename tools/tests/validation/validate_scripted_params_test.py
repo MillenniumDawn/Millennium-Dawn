@@ -84,6 +84,16 @@ def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
     return out
 
 
+def _missing_required_param_issues(tmp_path):
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    return [
+        issue
+        for issue in validator._issues
+        if issue.category == "missing-required-param"
+    ]
+
+
 def test_contract_parser_reads_parameter_after_header(tmp_path):
     effect_path = tmp_path / "common" / "scripted_effects" / "test_effect.txt"
     _write(
@@ -97,6 +107,22 @@ def test_contract_parser_reads_parameter_after_header(tmp_path):
             "optional": [],
         }
     }
+
+
+def test_validator_enforces_uppercase_effect_and_parameter_names(tmp_path):
+    effect_path = tmp_path / "common" / "scripted_effects" / "test_effect.txt"
+    caller_path = tmp_path / "events" / "test_event.txt"
+    _write(
+        effect_path,
+        "# Parameters:\n"
+        "# - ENG_agitation_change: signed amount\n"
+        "ENG_change_scottish_agitation = {\n}\n",
+    )
+    _write(caller_path, "ENG_change_scottish_agitation = yes\n")
+
+    issues = _missing_required_param_issues(tmp_path)
+    assert len(issues) == 1
+    assert "ENG_agitation_change" in issues[0].message
 
 
 @pytest.mark.parametrize(
@@ -123,14 +149,7 @@ def test_validator_scans_all_scripted_effect_caller_directories(tmp_path, caller
     )
     _write(caller_path, "test_contracted_effect = yes\n")
 
-    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-
-    issues = [
-        issue
-        for issue in validator._issues
-        if issue.category == "missing-required-param"
-    ]
+    issues = _missing_required_param_issues(tmp_path)
     assert len(issues) == 1
     assert issues[0].file == f"{caller_dir}/test_caller.txt"
 
