@@ -900,7 +900,6 @@ PER_minister_clear = {
 
 # New Majlis Shit (Dread gave me permission to use some parts of the code from AoN)
 PER_majlis_duopoly = {
-	# this finds the most popular party
 	find_highest_in_array = {
 		array = party_pop_array
 		value = popular_1_temp
@@ -908,7 +907,6 @@ PER_majlis_duopoly = {
 	}
 	set_variable = { popular_index_1 = popular_index_1_temp }
 	set_variable = { party_pop_array^popular_index_1 = -2 }
-	# this finds the second most popular party
 	find_highest_in_array = {
 		array = party_pop_array
 		value = popular_2_temp
@@ -922,52 +920,46 @@ PER_majlis_elections = {
 	custom_effect_tooltip = PER_majlis_TT
 	set_variable = { PER_majlis_total_seats = 0 }
 	set_variable = { PER_majlis_seats_INDEPENDENT = 0 }
-	PER_testing = yes
+	PER_majlis_stash_banned_popularity = yes
 	if = {
 		limit = { NOT = { has_completed_focus = PER_weaken_guardian_council } }
 		PER_majlis_duopoly = yes
-
 		for_each_loop = {
 			array = party_pop_array
 			value = v
 			index = i
 			set_variable = { PER_majlis_seats^i = 0 }
-		}
-
-		for_each_loop = {
-			array = party_pop_array
-			value = v
-			index = i
-
-			set_variable = { PER_majlis_seats^i = 0 }
-
 			if = {
 				limit = { check_variable = { party_pop_array^i = party_pop_array^popular_index_1 } }
-				set_temp_variable = { PER_majlis_popularity^i = party_pop_array^popular_index_1 }
-				set_variable = { PER_majlis_seats^i = PER_majlis_popularity^popular_index_1 }
-				multiply_variable = { PER_majlis_seats^i = 1 } # gives an 50% boost to seats
-				multiply_variable = { PER_majlis_seats^i = 290 }
-				round_variable = PER_majlis_seats^i
+				set_variable = {
+					PER_majlis_seats^i = {
+						value = party_pop_array^popular_index_1
+						multiply = 290
+						round = yes
+					}
+				}
 			}
 			else_if = {
 				limit = { check_variable = { party_pop_array^i = party_pop_array^popular_index_2 } }
-				set_temp_variable = { PER_majlis_popularity^i = party_pop_array^popular_index_2 }
-				set_variable = { PER_majlis_seats^i = PER_majlis_popularity^popular_index_2 }
-				multiply_variable = { PER_majlis_seats^i = 1.1 } # gives a 25% disadvantage to seats
-				multiply_variable = { PER_majlis_seats^i = 290 }
-				round_variable = PER_majlis_seats^i
+				set_variable = {
+					PER_majlis_seats^i = {
+						value = party_pop_array^popular_index_2
+						multiply = 1.1
+						multiply = 290
+						round = yes
+					}
+				}
 			}
-
 			else_if = {
 				limit = { check_variable = { party_pop_array^i > 0.05 } }
-				set_temp_variable = { PER_majlis_popularity^i = party_pop_array^i }
-				set_variable = { PER_majlis_seats^i = PER_majlis_popularity^i }
-				multiply_variable = { PER_majlis_seats^i = 0.2 }
-				multiply_variable = { PER_majlis_seats^i = 290 }
-				round_variable = PER_majlis_seats^i
-			}
-			set_temp_variable = {
-				PER_majlis_seats = x
+				set_variable = {
+					PER_majlis_seats^i = {
+						value = party_pop_array^i
+						multiply = 0.2
+						multiply = 290
+						round = yes
+					}
+				}
 			}
 			add_to_variable = { PER_majlis_total_seats = PER_majlis_seats^i }
 		}
@@ -978,100 +970,87 @@ PER_majlis_elections = {
 			array = party_pop_array
 			value = v
 			index = i
-
 			set_variable = { PER_majlis_seats^i = 0 }
-
 			if = {
 				limit = { check_variable = { party_pop_array^i > 0.005 } }
-				set_temp_variable = { PER_majlis_popularity^i = party_pop_array^i }
-				set_variable = { PER_majlis_seats^i = PER_majlis_popularity^i }
-				multiply_variable = { PER_majlis_seats^i = 290 }
-				round_variable = PER_majlis_seats^i
+				set_variable = {
+					PER_majlis_seats^i = {
+						value = party_pop_array^i
+						multiply = 290
+						round = yes
+					}
+				}
 			}
 			add_to_variable = { PER_majlis_total_seats = PER_majlis_seats^i }
 		}
-
 		PER_majlis_correct_seats = yes
 	}
-	set_variable = { PER_majlis_seats_INDEPENDENT = 290 }
-	subtract_from_variable = { PER_majlis_seats_INDEPENDENT = PER_majlis_total_seats }
+	set_variable = {
+		PER_majlis_seats_INDEPENDENT = {
+			value = 290
+			subtract = PER_majlis_total_seats
+		}
+	}
 	add_to_variable = { PER_majlis_total_seats = PER_majlis_seats_INDEPENDENT }
-	PER_testing2 = yes
+	PER_majlis_restore_banned_popularity = yes
 }
 
 PER_majlis_correct_seats = {
 	for_each_loop = {
 		array = party_pop_array
-		value = PER_majlis_total_seats_temp_allocation
+		value = v
 		index = i
-		# break = PER_majlis_no_more_seats
-
 		if = {
-			limit = {
-				check_variable = { PER_majlis_total_seats < 291 }
-				check_variable = { PER_majlis_seats^i > 1 }
+			limit = { check_variable = { PER_majlis_seats^i > 1 } }
+			if = {
+				limit = { check_variable = { PER_majlis_total_seats < 291 } }
+				set_temp_variable = {
+					PER_majlis_total_seats_temp = {
+						value = 291
+						subtract = PER_majlis_total_seats
+					}
+				}
 			}
-			set_temp_variable = { PER_majlis_total_seats_temp = PER_majlis_total_seats }
-			log = "[?PER_majlis_total_seats_temp]"
-			subtract_from_temp_variable = { PER_majlis_total_seats_temp = 291 }
-			log = "[?PER_majlis_total_seats_temp]"
-			multiply_temp_variable = { PER_majlis_total_seats_temp = -1 }
-			log = "[?PER_majlis_total_seats_temp]"
+			else = {
+				set_temp_variable = {
+					PER_majlis_total_seats_temp = {
+						value = PER_majlis_total_seats
+						subtract = 289
+					}
+				}
+			}
 			set_temp_variable_to_random = {
 				var = PER_majlis_total_seats_temp_allocation
 				max = PER_majlis_total_seats_temp
 				integer = yes
 			}
-			log = "[?PER_majlis_total_seats_temp_allocation]"
 			add_to_variable = { PER_majlis_seats^i = PER_majlis_total_seats_temp_allocation }
-			log = "[?PER_majlis_total_seats_temp_allocation]"
 			add_to_variable = { PER_majlis_total_seats = PER_majlis_total_seats_temp_allocation }
-			log = "[?PER_majlis_total_seats_temp_allocation]"
 		}
-		else_if = {
-			limit = {
-				check_variable = { PER_majlis_total_seats > 289 }
-				check_variable = { PER_majlis_seats^i > 1 }
-			}
-			set_temp_variable = { PER_majlis_total_seats_temp = PER_majlis_total_seats }
-			log = "[?PER_majlis_total_seats_temp]"
-			subtract_from_temp_variable = { PER_majlis_total_seats_temp = 289 }
-			log = "[?PER_majlis_total_seats_temp]"
-			set_temp_variable_to_random = {
-				var = PER_majlis_total_seats_temp_allocation
-				max = PER_majlis_total_seats_temp
-				integer = yes
-			}
-			log = "[?PER_majlis_total_seats_temp_allocation]"
-			add_to_variable = { PER_majlis_seats^i = PER_majlis_total_seats_temp_allocation }
-			log = "[?PER_majlis_total_seats_temp_allocation]"
-			add_to_variable = { PER_majlis_total_seats = PER_majlis_total_seats_temp_allocation }
-			log = "[?PER_majlis_total_seats_temp_allocation]"
-		}
+	}
+}
 
-		else = { set_temp_variable = { PER_majlis_no_more_seats = 1 } }
-	}
-}
-PER_testing = {
-	for_loop_effect = {
-		start = 0
-		end = 24
+PER_majlis_stash_banned_popularity = {
+	for_each_loop = {
+		array = party_pop_array
 		value = v
+		index = i
 		if = {
-			limit = { check_variable = { party_banned_array^v = 1 } }
-			set_variable = { PER_banned_pop_stash^v = party_pop_array^v }
-			set_variable = { party_pop_array^v = 0 }
+			limit = { check_variable = { party_banned_array^i = 1 } }
+			set_variable = { PER_banned_pop_stash^i = v }
+			set_variable = { party_pop_array^i = 0 }
 		}
 	}
 }
-PER_testing2 = {
-	for_loop_effect = {
-		start = 0
-		end = 24
+
+PER_majlis_restore_banned_popularity = {
+	for_each_loop = {
+		array = party_pop_array
 		value = v
+		index = i
 		if = {
-			limit = { check_variable = { party_banned_array^v = 1 } }
-			set_variable = { party_pop_array^v = PER_banned_pop_stash^v }
+			limit = { check_variable = { party_banned_array^i = 1 } }
+			set_variable = { party_pop_array^i = PER_banned_pop_stash^i }
 		}
 	}
 	clear_array = PER_banned_pop_stash
