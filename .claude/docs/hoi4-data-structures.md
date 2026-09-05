@@ -155,15 +155,15 @@ the pre-write value, since the full RHS evaluates before assignment.
 
 ### Operators
 
-| Statement                                          | Effect                                                |
-| -------------------------------------------------- | ----------------------------------------------------- |
-| `add`, `subtract`, `multiply`, `divide`            | Arithmetic on the accumulator                         |
-| `min`, `max`                                       | Accumulator becomes min/max of itself and value       |
-| `clamp = { min = X max = Y }`                      | Bound the accumulator (argument order matters)        |
-| `greater_than`, `less_than`                        | Return `1.0`/`0.0`                                    |
-| `round = yes`                                      | Round to nearest integer                              |
-| `if = { limit = { ... } ... } else = { ... }`      | `limit` is itself an expression; true if non-zero     |
-| `every_collection = { named_collection = X  ... }` | Iterate a collection, applying statements per element |
+| Statement                                          | Effect                                     |
+| -------------------------------------------------- | ------------------------------------------ |
+| `add`, `subtract`, `multiply`, `divide`            | Arithmetic on the accumulator              |
+| `min`, `max`                                       | Accumulator = min/max of itself and value  |
+| `clamp = { min = X max = Y }`                      | Bound accumulator (argument order matters) |
+| `greater_than`, `less_than`                        | Return `1.0`/`0.0`                         |
+| `round = yes`                                      | Round to nearest integer                   |
+| `if = { limit = { ... } ... } else = { ... }`      | `limit` is an expression; true if non-zero |
+| `every_collection = { named_collection = X  ... }` | Run statements per element of a collection |
 
 Each operator's argument is itself a full expression, so they nest:
 
@@ -316,36 +316,37 @@ Engine-provided scope arrays. Usable anywhere an array name is accepted: `target
 
 ### Global-scoped
 
-| Array                         | Contents                                                                              |
-| ----------------------------- | ------------------------------------------------------------------------------------- |
-| `global.countries`            | Every country in the game, including non-existing dynamic tags                        |
-| `global.majors`               | Every country currently marked major                                                  |
-| `global.states`               | Every state in the game                                                               |
-| `global.ideology_groups`      | Every ideology group                                                                  |
-| `global.operations`           | Every operation                                                                       |
-| `global.technology`           | Every technology                                                                      |
-| `global.province_controllers` | Province ID → controller (indexed by province ID: `global.province_controllers^1234`) |
+| Array                         | Contents                                                       |
+| ----------------------------- | -------------------------------------------------------------- |
+| `global.countries`            | Every country in the game, including non-existing dynamic tags |
+| `global.majors`               | Every country currently marked major                           |
+| `global.states`               | Every state in the game                                        |
+| `global.ideology_groups`      | Every ideology group                                           |
+| `global.operations`           | Every operation                                                |
+| `global.technology`           | Every technology                                               |
+| `global.province_controllers` | Controller by province ID: `global.province_controllers^1234`  |
 
 ### Country-scoped
 
-| Array                                        | Contents                                                      |
-| -------------------------------------------- | ------------------------------------------------------------- |
-| `allies`                                     | Fellow faction members + subjects + overlord                  |
-| `faction_members`                            | All members of the current country's faction                  |
-| `subjects`                                   | Current country's subjects                                    |
-| `occupied_countries`                         | Countries currently occupied by this one                      |
-| `enemies`                                    | Countries currently at war with the current country           |
-| `potential_and_current_enemies`              | Current enemies + allies-of-enemies + countries with wargoals |
-| `enemies_of_allies`                          | Enemies of any of the current country's allies                |
-| `neighbors`                                  | Countries sharing a border via **controlled** provinces       |
-| `neighbors_owned`                            | Countries sharing a border via **owned** states               |
-| `owned_states`                               | States owned (but not necessarily controlled)                 |
-| `controlled_states`                          | States controlled (but not necessarily owned)                 |
-| `owned_controlled_states`                    | States both owned and controlled                              |
-| `core_states`                                | States considered national territory                          |
-| `army_leaders`, `navy_leaders`, `operatives` | Recruited characters/operatives                               |
-| `researched_techs`                           | Technologies already researched                               |
-| `exiles`                                     | Exiled governments this country is hosting                    |
+| Array                           | Contents                                                      |
+| ------------------------------- | ------------------------------------------------------------- |
+| `allies`                        | Fellow faction members + subjects + overlord                  |
+| `faction_members`               | All members of the current country's faction                  |
+| `subjects`                      | Current country's subjects                                    |
+| `occupied_countries`            | Countries currently occupied by this one                      |
+| `enemies`                       | Countries currently at war with the current country           |
+| `potential_and_current_enemies` | Current enemies + allies-of-enemies + countries with wargoals |
+| `enemies_of_allies`             | Enemies of any of the current country's allies                |
+| `neighbors`                     | Countries sharing a border via **controlled** provinces       |
+| `neighbors_owned`               | Countries sharing a border via **owned** states               |
+| `owned_states`                  | States owned (but not necessarily controlled)                 |
+| `controlled_states`             | States controlled (but not necessarily owned)                 |
+| `owned_controlled_states`       | States both owned and controlled                              |
+| `core_states`                   | States considered national territory                          |
+| `army_leaders`, `navy_leaders`  | Recruited characters                                          |
+| `operatives`                    | Recruited operatives                                          |
+| `researched_techs`              | Technologies already researched                               |
+| `exiles`                        | Exiled governments this country is hosting                    |
 
 ### State-scoped
 

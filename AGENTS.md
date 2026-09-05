@@ -4,7 +4,7 @@
 
 Millennium Dawn is a Hearts of Iron IV mod (2000-present). Key directories: `common/` (game data), `events/`, `localisation/` (English `.yml`, UTF-8 BOM), `history/`, `interface/`, `gfx/`, `tools/` (Python dev scripts).
 
-**IMPORTANT**: The `resources/` directory is for reference material only. Do NOT modify files under `resources/` unless explicitly asked by the user.
+**IMPORTANT**: The `resources/` directory is for reference material only. Do NOT modify files under `resources/` unless explicitly asked by the user. It holds the vanilla docs the validators read plus the unsorted art dumps (`resources/README.md`); everything else retired from the mod lives in the [millennium-dawn-resources](https://github.com/MillenniumDawn/millennium-dawn-resources) repo.
 
 ## Validation & Tools
 
@@ -14,7 +14,7 @@ Validation runs on GitHub CI at PR time — don't run proactively. Standardizati
 
 Pre-commit and CI run **different hook sets** — passing locally does not guarantee passing CI, and vice versa. Before wiring, judging, or debugging any validator, read `.claude/docs/validation-pipeline.md` (CI-only validators, pre-commit-only fixers, strictness divergences, vanilla-manifest regeneration, deprecation watch).
 
-**The validator test suite must stay green permanently.** CI runs `python -m pytest` on every PR that touches `tools/` (testpaths in `pyproject.toml` cover `tools/tests`, `tools/report_lib/tests`, `tools/validation/tests`, `tools/linting/tests`, `tools/standardization/tests`, `tools/docs_checks/tests`). Do not introduce regressions into the testing schema. When a validator behavior change breaks a regression test, fix it in the same change: update the affected `*_test.py` to match the new correct behavior, or fix the validator if the test is right. Never delete or weaken a regression test to hide a failure — the suite is a gate, not a suggestion. Before merging any `tools/` change, run `python -m pytest` and confirm zero failures.
+**The validator test suite must stay green permanently.** CI runs `python -m pytest` on every PR that touches `tools/` (`testpaths` in `pyproject.toml` is `tools/tests`). Do not introduce regressions into the testing schema. When a validator behavior change breaks a regression test, fix it in the same change: update the affected `*_test.py` to match the new correct behavior, or fix the validator if the test is right. Never delete or weaken a regression test to hide a failure — the suite is a gate, not a suggestion. Before merging any `tools/` change, run `python -m pytest` and confirm zero failures.
 
 ## Formatting
 
@@ -30,6 +30,12 @@ Pre-commit and CI run **different hook sets** — passing locally does not guara
   `has_completed_focus`, variables, event targets, ideology, subject status,
   faction membership, and similar direct checks instead. Use a flag only for
   state that cannot be queried directly or must record a historical transition.
+- Markdown docs: tables must read aligned in plaintext — prettier-padded columns
+  (the repo `.md` hook settings) with the **whole padded row within 100 characters**.
+  Tighten cells, factor a shared path prefix into a note above the table, drop or
+  merge columns, or move detail into a terse `Details:` list under the table
+  (patterns: `.claude/docs/documentation-references.md`, `.claude/docs/formable-reference.md`).
+  Content that cannot fit a 100-wide table becomes a bulleted list instead.
 
 ### Line endings in Python tooling
 
@@ -56,22 +62,26 @@ Every text-mode write in `tools/` must pass `newline=""`. Without it, Python's t
 - Logging: `log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"` as the first statement of every effect block the engine runs (`complete_effect`, `remove_effect`, `timeout_effect`, `cancel_effect`). A log nested inside an `if`/`hidden_effect` records which branch ran and stays there
 - `ai_will_do = { base = N }` — `base` not `factor` at root
 - Don't repeat category `allowed` in decisions — put nation gate on category, dynamic checks in `available`/`visible`
+- AI-only decisions get **no localisation and no tooltip wrappers**. A decision is AI-only when an unconditional `is_ai = yes` sits at the top level of its `visible`/`available`/`allowed`, or its category is gated that way — no human sees it, so a loc key is dead weight and is flagged. An AI-only category's own key is flagged the same way. Write `check_variable` bare in such an `available` block: `custom_trigger_tooltip` / `custom_effect_tooltip` render to nobody, and the `available`-block tooltip checks skip AI-only decisions
+- A category that becomes visible mid-game (flag, completed focus, idea, variable) should get `unlock_decision_category_tooltip = <category>` in whatever turns it on, or `unlock_decision_tooltip` on one of its decisions. Otherwise a whole tab appears with no indication of where it came from. Always-on and tag-gated categories need nothing. Audit with `validate_decisions.py --unannounced-categories` (opt-in, not in CI — 118 existing cases)
+- An effect that sets a flag another decision's `visible`/`available` waits on has unlocked it. If the block already calls `unlock_decision_tooltip` for some, it must call it for all of them (`unannounced-decision-unlock`). Gates only count at depth 0 — inside a `NOT` the flag hides rather than unlocks
 - Ref: `.claude/docs/decision-reference.md`
 
 ## Events
 
-- Always `is_triggered_only = yes`; log only if option has effects; `major = yes` for news only
+- Always `is_triggered_only = yes`; log only if option has effects; `major = yes` for news only. Never wrap a `major = yes` event in `every_country` / `every_other_country` (one fire already broadcasts)
 - Date-based events: owner-guard pattern in `common/scripted_effects/00_yearly_effects.txt`
 - `add_building_construction` for `naval_base` requires `province = XXXXX`
 - New subideology parties: register in `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`
 - Pure notifications get `minor_flavor = yes`. When many sources deliver to one country, batch them into a single report event instead of one event per delivery, and keep the payload at the delivery site (rules and traps: `.claude/docs/event-reference.md`)
 - Describe an effect with `effect_tooltip = { <the real effect> }` before writing a new `custom_effect_tooltip` loc key
+- Every `picture = GFX_*` must resolve to a sprite defined in `interface/*.gfx` — MD must not use vanilla event pictures. An undefined name is a commit blocker (`validate_events` → `missing-event-picture`), so grep `interface/` for it before writing it
 - Ref: `.claude/docs/event-reference.md`
 
 ## Ideas
 
-- Always `picture = sprite_name` (no picture = blank icon); `original_tag` not `tag` in `allowed` blocks
-- Category-specific `allowed`-block scoping and removable defaults (`cancel`, `on_add`, `allowed_civil_war`): `.claude/docs/idea-reference.md`
+- Always `picture = sprite_name` (no picture = blank icon); `original_tag` not `tag` in `allowed` blocks; no `available` in `country`/`hidden_ideas`
+- Category-specific `allowed`/`available`-block scoping and removable defaults (`cancel`, `on_add`, `allowed_civil_war`): `.claude/docs/idea-reference.md`
 
 ## MIOs
 
@@ -114,7 +124,9 @@ Keep all output token-efficient: conversation replies, agent hand-back reports, 
 - [OOB & Equipment Variants](.claude/docs/oob-variants-reference.md) | [Namelists](.claude/docs/namelist-reference.md)
 - [Diplomatic Actions](.claude/docs/diplomatic-action-reference.md) | [Content Guidelines](.claude/docs/content-guidelines.md)
 - [UN System](.claude/docs/un-system-reference.md) (read before editing UN voting, elections, or recognition, or adding a Security Council / General Assembly resolution type)
+- [Formables](.claude/docs/formable-reference.md) (read before editing `formable_nation_decisions.txt`, the EU end-states/EFS, UAR, or any union cosmetic — every formation path, the AI commitment ratchet, and the special-formable sentinel)
 - [Faction Rules](.claude/docs/faction-rules.md) | [Typo Watchlist](.claude/docs/typo-watchlist.md)
 - [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`)
 - [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) + [Patterns](.claude/docs/scripted-gui-patterns.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
 - [MD Custom Modifiers](.claude/docs/md-custom-modifiers.md) — non-vanilla modifier keys in `common/modifier_definitions/`
+- [Loading Screens](.claude/docs/loading-screen-system.md) (read before touching `gfx/loadingscreens/` or the menu background picker)

@@ -1,0 +1,559 @@
+on_actions = {
+	on_monthly_SAU = {
+		effect = {
+				# The succession jitters resolve once the date passes and the King still lives.
+				if = {
+					limit = {
+						date > 2005.6.1
+						has_idea = SAU_succession_instability
+						NOT = { has_country_flag = SAU_succession_jitters_done }
+					}
+					set_country_flag = SAU_succession_jitters_done
+					country_event = { id = SAU_events.1 days = 5 }
+				}
+				# Fahd dies Aug 2005 and Abdullah dies Jan 2015; both were focus-driven before.
+				if = {
+					limit = {
+						date > 2005.8.1
+						salafist_kingdom_are_in_power = yes
+						NOT = { has_country_flag = SAU_fahd_dead }
+						NOT = { has_country_flag = SAU_monarchy_abolished }
+						NOT = { has_country_flag = SAU_military_coup_ready }
+					}
+					set_country_flag = SAU_fahd_dead
+					country_event = { id = SAU_events.88 days = 1 }
+				}
+				if = {
+					limit = {
+						date > 2015.1.23
+						has_country_flag = SAU_fahd_dead
+						has_country_flag = SAU_succession_race_active
+						NOT = { has_country_flag = SAU_monarchy_abolished }
+						NOT = { has_country_flag = SAU_military_coup_ready }
+					}
+					country_event = { id = SAU_events.89 days = 1 }
+				}
+				# MBS displaced MBN as Crown Prince in June 2017; Salman's own passing is open-ended.
+				if = {
+					limit = {
+						date > 2017.6.21
+						has_country_flag = SAU_crown_prince_race_active
+						NOT = { has_country_flag = SAU_monarchy_abolished }
+						NOT = { has_country_flag = SAU_military_coup_ready }
+					}
+					SAU_resolve_crown_prince = yes
+					country_event = { id = SAU_events.115 days = 1 }
+				}
+				# The Tadawul peaked on 25 February 2006 and lost roughly two thirds over the year.
+				if = {
+					limit = {
+						date > 2006.2.25
+						NOT = { has_country_flag = SAU_black_february }
+					}
+					set_country_flag = SAU_black_february
+					country_event = { id = SAU_events.141 days = 1 }
+				}
+				# Crude peaked at 147 dollars in July 2008 and hit 32 by December. OPEC cut 4.2 mb/d.
+				if = {
+					limit = {
+						date > 2008.10.1
+						NOT = { has_country_flag = SAU_oil_crash_2008 }
+					}
+					set_country_flag = SAU_oil_crash_2008
+					country_event = { id = SAU_events.142 days = 1 }
+				}
+				# The crash lands in October 2008 and the defence line is cut within the month. The Guard
+				# keeps its funding because it guards the throne; the regular forces do not.
+				if = {
+					limit = {
+						date > 2008.11.1
+						has_country_flag = SAU_oil_crash_2008
+						salafist_kingdom_are_in_power = yes
+						NOT = { has_country_flag = SAU_officer_grievance_active }
+						NOT = { has_country_flag = SAU_officers_stood_down }
+						NOT = { has_country_flag = SAU_military_coup_ready }
+					}
+					country_event = { id = SAU_events.145 days = 3 }
+				}
+				if = {
+					limit = { has_country_flag = SAU_officer_grievance_active }
+					add_to_variable = { SAU_army_grievance = 1 }
+					if = {
+						limit = { has_country_flag = SAU_sang_shielded }
+						add_to_variable = { SAU_army_grievance = 1 }
+					}
+					clamp_variable = { var = SAU_army_grievance min = 0 max = 100 }
+					hidden_effect = { SAU_army_grievance_set_tier = yes }
+				}
+				if = {
+					limit = {
+						has_country_flag = SAU_officer_grievance_active
+						check_variable = { SAU_army_grievance > 49 }
+						NOT = { has_country_flag = SAU_order_to_deploy_given }
+					}
+					country_event = { id = SAU_events.146 days = 3 }
+				}
+				if = {
+					limit = {
+						has_country_flag = SAU_officer_grievance_active
+						has_country_flag = SAU_order_to_deploy_given
+						check_variable = { SAU_army_grievance > 74 }
+					}
+					country_event = { id = SAU_events.147 days = 3 }
+				}
+				# A throne taken by the army is not in the family's gift: the race stops with the coup.
+				if = {
+					limit = {
+						has_country_flag = SAU_military_coup_ready
+						OR = {
+							has_country_flag = SAU_succession_race_active
+							has_country_flag = SAU_crown_prince_race_active
+						}
+					}
+					SAU_succession_dissolve = yes
+					hidden_effect = { country_event = { id = SAU_events.215 days = 2 } }
+				}
+				# The Council sits by the King's leave: no King of the House of Saud, no Council.
+				if = {
+					limit = {
+						has_country_flag = SAU_shura_open
+						OR = {
+							has_country_flag = SAU_military_coup_ready
+							has_country_flag = SAU_monarchy_abolished
+							NOT = { salafist_kingdom_are_in_power = yes }
+						}
+					}
+					SAU_shura_dissolve = yes
+					hidden_effect = { country_event = { id = SAU_events.205 days = 2 } }
+				}
+				# The civil war next door is a fact, not a decision - the focus records it.
+				if = {
+					limit = {
+						country_exists = HOU
+						country_exists = YEM
+						OR = {
+							HOU = { has_war_with = YEM }
+							YEM = { has_war_with = HOU }
+						}
+						NOT = { has_completed_focus = SAU_the_yemeni_civil_war }
+					}
+					if = {
+						limit = { NOT = { has_completed_focus = SAU_saudi_foreign_policy } }
+						complete_national_focus = SAU_saudi_foreign_policy
+					}
+					complete_national_focus = SAU_the_yemeni_civil_war
+				}
+				# Faisalism grows out of how conservative the Kingdom actually is: the traditionalist
+				# end of the modernisation balance feeds it, the liberalising end eats it away.
+				if = {
+					limit = {
+						has_country_flag = SAU_faisalite_circle_active
+						NOT = { has_country_flag = SAU_faisalite_path_open }
+						NOT = { has_country_flag = SAU_faisalite_path_rejected }
+						NOT = { has_country_flag = SAU_military_coup_ready }
+					}
+					add_to_variable = { var = SAU_faisalite_conviction value = SAU_social_conservatism }
+					if = {
+						limit = { has_idea = wahabi_ulema }
+						add_to_variable = { SAU_faisalite_conviction = 1 }
+					}
+					if = {
+						limit = { has_country_flag = SAU_sang_shielded }
+						add_to_variable = { SAU_faisalite_conviction = 1 }
+					}
+					hidden_effect = { SAU_faisalite_conviction_set_tier = yes }
+					# American boots next door: the occupation of Iraq is the argument made for them.
+					if = {
+						limit = {
+							NOT = { has_country_flag = SAU_faisalite_pivot_iraq }
+							OR = {
+								has_global_flag = GLOBAL_operation_iraqi_freedom_succeeded
+								is_subject_of = USA
+								IRQ = { is_subject_of = USA }
+								USA = { has_war_with = IRQ }
+							}
+						}
+						set_country_flag = SAU_faisalite_pivot_iraq
+						country_event = { id = SAU_events.188 days = 5 }
+					}
+					# and every American war on a Muslim state after it.
+					if = {
+						limit = {
+							NOT = { has_country_flag = SAU_faisalite_pivot_next_war }
+							USA = {
+								OR = {
+									has_war_with = PER
+									has_war_with = SYR
+									has_war_with = LBA
+									has_war_with = YEM
+									has_war_with = AFG
+								}
+							}
+						}
+						set_country_flag = SAU_faisalite_pivot_next_war
+						country_event = { id = SAU_events.190 days = 5 }
+					}
+					if = {
+						limit = { has_idea = SAU_faisalite_street_movement }
+						add_to_variable = { SAU_faisalite_conviction = 2 }
+					}
+					# While the family is still bidding for the throne, the circle keeps asking
+					# the Kingdom the same question, and the answer is the player's.
+					if = {
+						limit = {
+							OR = {
+								has_country_flag = SAU_succession_race_active
+								has_country_flag = SAU_crown_prince_race_active
+							}
+							NOT = { has_country_flag = SAU_faisalite_question_cooldown }
+						}
+						random = {
+							chance = 25
+							set_country_flag = { flag = SAU_faisalite_question_cooldown value = 1 days = 120 }
+							country_event = { id = SAU_events.216 days = 3 }
+						}
+					}
+					# The doctrine leaves the officers' messes and reaches the street.
+					if = {
+						limit = {
+							check_variable = { SAU_faisalite_conviction > 59 }
+							NOT = { has_country_flag = SAU_faisalite_movement_risen }
+						}
+						set_country_flag = SAU_faisalite_movement_risen
+						country_event = { id = SAU_events.191 days = 4 }
+					}
+					# Israel at war with an Arab state - the street answers once per war.
+					if = {
+						limit = {
+							SAU_israel_at_war_with_arabs = yes
+							NOT = { has_country_flag = SAU_israel_war_answered }
+						}
+						set_country_flag = SAU_israel_war_answered
+						country_event = { id = SAU_events.192 days = 4 }
+					}
+					if = {
+						limit = {
+							has_country_flag = SAU_israel_war_answered
+							NOT = { SAU_israel_at_war_with_arabs = yes }
+						}
+						clr_country_flag = SAU_israel_war_answered
+					}
+					if = {
+						limit = {
+							check_variable = { SAU_faisalite_conviction > 49 }
+							NOT = { has_country_flag = SAU_faisalite_rabat_asked }
+						}
+						set_country_flag = SAU_faisalite_rabat_asked
+						country_event = { id = SAU_events.186 days = 3 }
+					}
+					if = {
+						limit = {
+							check_variable = { SAU_faisalite_conviction > 99 }
+							has_country_flag = SAU_faisalite_rabat_asked
+						}
+						country_event = { id = SAU_events.140 days = 3 }
+					}
+				}
+				# Under military rule, legitimacy decays unless it is bought. Let it fall far enough and
+				# the tribes answer; let it fall further with a weak grip and the officers turn on each other.
+				if = {
+					limit = {
+						has_country_flag = SAU_military_coup_ready
+						NOT = { has_country_flag = SAU_military_rule_ended }
+					}
+					subtract_from_variable = { SAU_junta_legitimacy = 1 }
+					subtract_from_variable = { SAU_junta_control = 1 }
+					hidden_effect = { SAU_junta_set_tier = yes }
+					if = {
+						limit = {
+							check_variable = { SAU_junta_legitimacy < 20 }
+							NOT = { has_country_flag = SAU_tribal_backlash_fired }
+						}
+						set_country_flag = SAU_tribal_backlash_fired
+						country_event = { id = SAU_events.151 days = 3 }
+					}
+					if = {
+						limit = {
+							check_variable = { SAU_junta_legitimacy < 10 }
+							check_variable = { SAU_junta_control < 40 }
+							NOT = { has_country_flag = SAU_counter_coup_fired }
+						}
+						set_country_flag = SAU_counter_coup_fired
+						country_event = { id = SAU_events.152 days = 3 }
+					}
+				}
+				# Recount the directive slots from the decisions themselves; a country that loses a
+				# running decision abnormally would otherwise leak a slot and lock the branch.
+				if = {
+					limit = { check_variable = { SAU_faisalite_active > 0 } }
+					set_temp_variable = { SAU_faisalite_running = 0 }
+					if = { limit = { has_decision = SAU_faisalite_iso_buy_foreign_firms } add_to_temp_variable = { SAU_faisalite_running = 1 } }
+					if = { limit = { has_decision = SAU_faisalite_iso_repatriate_reserves } add_to_temp_variable = { SAU_faisalite_running = 1 } }
+					if = { limit = { has_decision = SAU_faisalite_iso_cancel_visas } add_to_temp_variable = { SAU_faisalite_running = 1 } }
+					if = { limit = { has_decision = SAU_faisalite_iso_import_licences } add_to_temp_variable = { SAU_faisalite_running = 1 } }
+					if = { limit = { has_decision = SAU_faisalite_iso_close_foreign_schools } add_to_temp_variable = { SAU_faisalite_running = 1 } }
+					if = { limit = { has_decision = SAU_faisalite_int_officers_abroad } add_to_temp_variable = { SAU_faisalite_running = 1 } }
+					if = { limit = { has_decision = SAU_faisalite_int_buy_satellite_channels } add_to_temp_variable = { SAU_faisalite_running = 1 } }
+					if = { limit = { has_decision = SAU_faisalite_int_pilgrimage_quotas } add_to_temp_variable = { SAU_faisalite_running = 1 } }
+					if = { limit = { has_decision = SAU_faisalite_int_endow_universities } add_to_temp_variable = { SAU_faisalite_running = 1 } }
+					if = { limit = { has_decision = SAU_faisalite_int_hard_currency_loans } add_to_temp_variable = { SAU_faisalite_running = 1 } }
+					set_variable = { SAU_faisalite_active = SAU_faisalite_running }
+				}
+				if = {
+					limit = {
+						check_variable = { SAU_current_king = 2 }
+						NOT = { has_country_flag = SAU_monarchy_abolished }
+						NOT = { has_country_flag = SAU_military_coup_ready }
+					}
+					SAU_salman_health_tick = yes
+				}
+				# Salman dies when his health runs out, or in 2032 at the latest however well he is nursed.
+				if = {
+					limit = {
+						check_variable = { SAU_current_king = 2 }
+						NOT = { has_country_flag = SAU_monarchy_abolished }
+						NOT = { has_country_flag = SAU_military_coup_ready }
+						OR = {
+							check_variable = { SAU_salman_health < 1 }
+							date > 2032.1.1
+						}
+					}
+					if = {
+						limit = { has_country_flag = SAU_crown_prince_race_active }
+						SAU_resolve_crown_prince = yes
+					}
+					SAU_crown_prince_accedes = yes
+					country_event = { id = SAU_events.116 days = 1 }
+				}
+
+
+				if = {
+					limit = { has_completed_focus = SAU_the_sovereign_saudi_water_company }
+					SAU_water_pride_set_tier = yes
+				}
+
+				if = {
+					limit = {
+						has_idea = wahabi_ulema
+						NOT = {
+							OR = {
+								has_idea = SAU_royal_ulema_alliance_high
+								has_idea = SAU_royal_ulema_alliance_content
+								has_idea = SAU_royal_ulema_alliance_neutral
+								has_idea = SAU_royal_ulema_alliance_strained
+							}
+						}
+					}
+					add_ideas = SAU_royal_ulema_alliance_neutral
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = SAU_royal_ulema_alliance_high
+							has_idea = SAU_royal_ulema_alliance_content
+							has_idea = SAU_royal_ulema_alliance_neutral
+							has_idea = SAU_royal_ulema_alliance_strained
+						}
+					}
+					if = { limit = { has_idea = SAU_royal_ulema_alliance_high } remove_ideas = SAU_royal_ulema_alliance_high }
+					if = { limit = { has_idea = SAU_royal_ulema_alliance_content } remove_ideas = SAU_royal_ulema_alliance_content }
+					if = { limit = { has_idea = SAU_royal_ulema_alliance_neutral } remove_ideas = SAU_royal_ulema_alliance_neutral }
+					if = { limit = { has_idea = SAU_royal_ulema_alliance_strained } remove_ideas = SAU_royal_ulema_alliance_strained }
+					if = {
+						limit = { check_variable = { wahabi_ulema_opinion > 75 } }
+						add_ideas = SAU_royal_ulema_alliance_high
+					}
+					if = {
+						limit = {
+							check_variable = { wahabi_ulema_opinion > 50 }
+							check_variable = { wahabi_ulema_opinion < 76 }
+						}
+						add_ideas = SAU_royal_ulema_alliance_content
+					}
+					if = {
+						limit = {
+							check_variable = { wahabi_ulema_opinion > 24 }
+							check_variable = { wahabi_ulema_opinion < 51 }
+						}
+						add_ideas = SAU_royal_ulema_alliance_neutral
+					}
+					if = {
+						limit = { check_variable = { wahabi_ulema_opinion < 25 } }
+						add_ideas = SAU_royal_ulema_alliance_strained
+					}
+				}
+
+				clamp_variable = { var = oil_dependence min = 0 max = 100 }
+
+				# The Kingdom slides back toward the well a point a quarter, not a point a month.
+				if = {
+					limit = { check_variable = { oil_dependence < 100 } }
+					add_to_variable = { SAU_oil_dep_quarter = 1 }
+					if = {
+						limit = { check_variable = { SAU_oil_dep_quarter > 2 } }
+						set_variable = { SAU_oil_dep_quarter = 0 }
+						add_to_variable = { oil_dependence = 1 }
+					}
+				}
+
+				if = {
+					limit = {
+						OR = {
+							has_idea = SAU_oil_dependence_t5
+							has_idea = SAU_oil_dependence_t4
+							has_idea = SAU_oil_dependence_t3
+							has_idea = SAU_oil_dependence_t2
+							has_idea = SAU_oil_dependence_t1
+						}
+					}
+					if = { limit = { has_idea = SAU_oil_dependence_t5 } remove_ideas = SAU_oil_dependence_t5 }
+					if = { limit = { has_idea = SAU_oil_dependence_t4 } remove_ideas = SAU_oil_dependence_t4 }
+					if = { limit = { has_idea = SAU_oil_dependence_t3 } remove_ideas = SAU_oil_dependence_t3 }
+					if = { limit = { has_idea = SAU_oil_dependence_t2 } remove_ideas = SAU_oil_dependence_t2 }
+					if = { limit = { has_idea = SAU_oil_dependence_t1 } remove_ideas = SAU_oil_dependence_t1 }
+					if = { limit = { check_variable = { oil_dependence > 80 } } add_ideas = SAU_oil_dependence_t5 }
+					if = { limit = { check_variable = { oil_dependence > 60 } check_variable = { oil_dependence < 80.001 } } add_ideas = SAU_oil_dependence_t4 }
+					if = { limit = { check_variable = { oil_dependence > 40 } check_variable = { oil_dependence < 60.001 } } add_ideas = SAU_oil_dependence_t3 }
+					if = { limit = { check_variable = { oil_dependence > 20 } check_variable = { oil_dependence < 40.001 } } add_ideas = SAU_oil_dependence_t2 }
+					if = { limit = { check_variable = { oil_dependence < 20.001 } } add_ideas = SAU_oil_dependence_t1 }
+				}
+
+			if = {
+				limit = {
+					has_country_flag = SAU_vision_2030_launched
+				}
+				SAU_update_vision2030 = yes
+			}
+
+			if = {
+				limit = {
+					has_completed_focus = SAU_freedom_or_death
+					NOT = { has_completed_focus = SAU_victory_in_syria }
+					NOT = { has_completed_focus = SAU_defeat_in_syria }
+				}
+				if = {
+					limit = {
+						OR = {
+							NOT = { country_exists = SYR }
+							SYR = { has_capitulated = yes }
+						}
+					}
+					complete_national_focus = SAU_victory_in_syria
+				}
+				else_if = {
+					limit = {
+						country_exists = SYR
+						NOT = { SYR = { has_capitulated = yes } }
+						OR = {
+							NOT = { country_exists = FSA }
+							FSA = { has_capitulated = yes }
+						}
+					}
+					complete_national_focus = SAU_defeat_in_syria
+					country_event = SAU_events.110
+				}
+			}
+
+			if = {
+				limit = {
+					has_country_flag = SAU_yemen_pipeline_open
+				}
+				if = {
+					limit = { SAU_houthis_won_south = yes }
+					country_event = { id = SAU_events.28 hours = 1 }
+				}
+				else_if = {
+					limit = { SAU_yemen_at_war = yes }
+					random = {
+						chance = 15
+						country_event = { id = SAU_events.28 hours = 1 }
+					}
+				}
+			}
+
+
+			if = {
+				limit = {
+					country_exists = HOU
+					country_exists = YEM
+					HOU = {
+						NOT = { has_war_with = YEM }
+						NOT = { has_country_flag = yemen_partition_north }
+					}
+				}
+				HOU = {
+					set_country_flag = yemen_partition_north
+					set_cosmetic_tag = HOU_north_yemen
+				}
+				YEM = { set_cosmetic_tag = YEM_south_yemen }
+			}
+
+			if = {
+				limit = {
+					country_exists = HOU
+					country_exists = YEM
+					HOU = {
+						has_country_flag = yemen_partition_north
+						has_idea = faction_resistance_axis_member
+					}
+				}
+				HOU = { remove_ideas = faction_resistance_axis_member }
+			}
+		}
+	}
+
+	on_daily_SAU = {
+		effect = {
+			if = {
+				limit = {
+					has_country_flag = SAU_parties_legalized
+					NOT = { has_country_flag = SAU_monarchy_parties_purged }
+				}
+				set_country_flag = SAU_monarchy_parties_purged
+				SAU_purge_monarchy_parties = yes
+			}
+			if = {
+				limit = {
+					has_completed_focus = SAU_unity_freedom_socialism
+					nationalist_fascist_are_in_power = yes
+					NOT = { has_country_flag = SAU_baath_state_active }
+				}
+				SAU_attach_baath_state = yes
+			}
+			if = {
+				limit = { has_country_flag = SAU_baath_state_active }
+				clamp_variable = { var = SAU_baath_pp min = 0 max = 0.10 }
+				clamp_variable = { var = SAU_baath_stab min = 0 max = 0.15 }
+				clamp_variable = { var = SAU_baath_ws min = 0 max = 0.15 }
+				clamp_variable = { var = SAU_baath_attack min = 0 max = 0.05 }
+				clamp_variable = { var = SAU_baath_consc min = 0 max = 0.10 }
+			}
+			if = {
+				limit = {
+					has_war = no
+					no_jihadist_government = yes
+					NOT = { has_country_flag = SAU_bop_event_cooldown }
+				}
+				random = {
+					chance = 1
+					set_country_flag = { flag = SAU_bop_event_cooldown value = 1 days = 30 }
+					random_list = {
+						1 = { country_event = SAU_events.370 }
+						1 = { country_event = SAU_events.371 }
+						1 = { country_event = SAU_events.372 }
+						1 = { country_event = SAU_events.373 }
+					}
+				}
+			}
+		}
+	}
+
+	on_weekly_SAU = {
+		effect = {
+			if = {
+				limit = { has_country_flag = SAU_vision_2030_launched }
+				SAU_tick_vision_deadlines = yes
+			}
+		}
+	}
+}

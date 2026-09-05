@@ -7,8 +7,8 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
-					has_tech = beachhead_raiding_parties
 					ROOT = {
+						has_tech = beachhead_raiding_parties
 						divisions_in_state = {
 							unit = L_Marine_Cdo_Bat
 							size > 0
@@ -87,10 +87,24 @@ on_actions = {
 		effect = {
 			energy_on_daily = yes
 			resource_storage_system = yes
+			faction_goal_update_daily_caches = yes
 			# INFO: If you are a player and updating the UI for the research one for the next 90 days
 			if = { limit = { is_ai = no }
 				set_party_positions = yes
 				add_to_variable = { BI_topbar_update = 1 }
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = automation_combat_foreign_influence
+							has_country_flag = automation_attack_foreign_influencers
+						}
+					}
+					automation_influence_daily = yes
+				}
+				if = {
+					limit = { has_country_flag = automation_internal_investments }
+					automation_internal_investments_daily = yes
+				}
 				if = {
 					limit = { has_decision = gdp_gain_slot }
 					add_to_variable = { global.research_screen_ui = 1 }
@@ -282,8 +296,12 @@ on_actions = {
 
 	on_leave_faction = { }
 
-	#FROM is the one that joins the faction
-	on_create_faction = { }
+	#ROOT is the country creating the faction
+	on_create_faction = {
+		effect = {
+			country_event = { id = faction_goal_cache.2 hours = 1 }
+		}
+	}
 
 	#FROM is country getting invited.
 	on_offer_join_faction = { }
@@ -353,6 +371,7 @@ on_actions = {
 				limit = { FROM = { has_idea = S0V_russian_sphere_idea } }
 				add_ideas = S0V_russian_sphere_idea
 			}
+			hidden_effect = { FROM = { faction_goal_refresh_all_caches = yes } }
 		}
 	}
 
@@ -454,6 +473,7 @@ on_actions = {
 				limit = { has_idea = UNASUL_member }
 				remove_ideas = UNASUL_member
 			}
+			hidden_effect = { FROM = { faction_goal_refresh_all_caches = yes } }
 		}
 	}
 
@@ -649,6 +669,7 @@ on_actions = {
 						annex_country = { target = ATC transfer_troops = yes }
 						annex_country = { target = HII transfer_troops = yes }
 						drop_cosmetic_tag = yes
+						clear_variable = dynamic_flag_variant
 						clr_country_flag = is_IRAQ
 						clr_country_flag = IRQ_Islamic_Army_in_Iraq
 						set_temp_variable = { rul_party_temp = 10 }
@@ -690,6 +711,7 @@ on_actions = {
 						#annex_country = { target = HII transfer_troops = yes }
 						annex_country = { target = IAI transfer_troops = yes }
 						drop_cosmetic_tag = yes
+						clear_variable = dynamic_flag_variant
 						clr_country_flag = is_IRAQ
 						clr_country_flag = IRQ_hamas_of_iraq
 						set_temp_variable = { rul_party_temp = 12 }
@@ -729,6 +751,7 @@ on_actions = {
 						annex_country = { target = HII transfer_troops = yes }
 						annex_country = { target = IAI transfer_troops = yes }
 						drop_cosmetic_tag = yes
+						clear_variable = dynamic_flag_variant
 						clr_country_flag = is_IRAQ
 						clr_country_flag = IRQ_1920_revolution_brigades
 						set_temp_variable = { rul_party_temp = 12 }
@@ -767,6 +790,7 @@ on_actions = {
 					annex_country = { target = HII transfer_troops = yes }
 					annex_country = { target = IAI transfer_troops = yes }
 					drop_cosmetic_tag = yes
+					clear_variable = dynamic_flag_variant
 					clr_country_flag = is_IRAQ
 					clr_country_flag = IRQ_GMCIR
 					set_temp_variable = { rul_party_temp = 21 }
@@ -857,6 +881,7 @@ on_actions = {
 					annex_country = { target = HII transfer_troops = yes }
 					annex_country = { target = IAI transfer_troops = yes }
 					drop_cosmetic_tag = yes
+					clear_variable = dynamic_flag_variant
 					clr_country_flag = is_IRAQ
 					clr_country_flag = IRQ_AlAwda
 					set_temp_variable = { rul_party_temp = 7 }
@@ -906,6 +931,7 @@ on_actions = {
 							transfer_troops = yes
 						}
 						drop_cosmetic_tag = yes
+						clear_variable = dynamic_flag_variant
 						clr_country_flag = is_IRAQ
 						clr_global_flag = IRQ_has_shia_civil_war
 						set_temp_variable = { add_col_one = 9 }
@@ -919,6 +945,7 @@ on_actions = {
 							popularity = 48
 						}
 						set_cosmetic_tag = IRQ_NEW
+						set_variable = { dynamic_flag_variant = 1 }
 						set_temp_variable = { percent_change = 3.50 }
 						set_temp_variable = { tag_index = PER }
 						set_temp_variable = { influence_target = IRQ }
@@ -932,6 +959,7 @@ on_actions = {
 					news_event = iraqi_flavor_events.8
 					IRQ = {
 						drop_cosmetic_tag = yes
+						clear_variable = dynamic_flag_variant
 						clr_country_flag = is_IRAQ
 						clr_global_flag = IRQ_has_shia_civil_war
 					}
@@ -965,6 +993,7 @@ on_actions = {
 					news_event = axis_of_resistance_events.33
 					IRQ = {
 						drop_cosmetic_tag = yes
+						clear_variable = dynamic_flag_variant
 						clr_country_flag = is_IRAQ
 					}
 				}
@@ -1091,60 +1120,66 @@ on_actions = {
 					if = {
 						limit = {
 							OR = {
-								is_in_array = { ruling_party = 0 }
-								is_in_array = { ruling_party = 7 }
-								is_in_array = { ruling_party = 13 }
-								is_in_array = { ruling_party = 22 }
+								western_autocrats_are_in_power = yes
+								check_variable = { ruling_party = 7 }
+								check_variable = { ruling_party = 13 }
+								check_variable = { ruling_party = 22 }
 							}
 						}
 						meta_effect = {
 							text = { set_cosmetic_tag = [ROOTTAG]_AUTH }
 							ROOTTAG = "[?original_tag.GetTag]"
 						}
+						set_variable = { dynamic_flag_variant = 2 }
 					}
 					else_if = {
 						limit = {
 							OR = {
-								is_in_array = { ruling_party = 0 }
-								is_in_array = { ruling_party = 7 }
-								is_in_array = { ruling_party = 13 }
-								is_in_array = { ruling_party = 22 }
+								western_autocrats_are_in_power = yes
+								check_variable = { ruling_party = 7 }
+								check_variable = { ruling_party = 13 }
+								check_variable = { ruling_party = 22 }
 							}
 						}
 						meta_effect = {
 							text = { set_cosmetic_tag = [ROOTTAG]_AUTH_S }
 							ROOTTAG = "[?original_tag.GetTag]"
 						}
+						set_variable = { dynamic_flag_variant = 3 }
 					}
 					else_if = {
 						limit = {
 							OR = {
-								is_in_array = { ruling_party = 4 }
-								is_in_array = { ruling_party = 10 }
-								is_in_array = { ruling_party = 19 }
-								is_in_array = { ruling_party = 23 }
+								check_variable = { ruling_party = 4 }
+								check_variable = { ruling_party = 10 }
+								check_variable = { ruling_party = 19 }
+								check_variable = { ruling_party = 23 }
 							}
 						}
 						meta_effect = {
 							text = { set_cosmetic_tag = [ROOTTAG]_AUTH_S }
 							ROOTTAG = "[?original_tag.GetTag]"
 						}
+						set_variable = { dynamic_flag_variant = 3 }
 					}
 					else_if = {
 						limit = {
 							OR = {
-								is_in_array = { ruling_party = 9 }
-								is_in_array = { ruling_party = 11 }
-								is_in_array = { ruling_party = 21 }
+								check_variable = { ruling_party = 9 }
+								check_variable = { ruling_party = 11 }
+								check_variable = { ruling_party = 21 }
 							}
 						}
 						meta_effect = {
 							text = { set_cosmetic_tag = [ROOTTAG]_AUTH_SS }
 							ROOTTAG = "[?original_tag.GetTag]"
 						}
+						set_variable = { dynamic_flag_variant = 4 }
 					}
 					else = {
 						drop_cosmetic_tag = yes
+						clear_variable = dynamic_flag_variant
+						clear_variable = dynamic_flag_variant
 					}
 				}
 			}
@@ -1261,6 +1296,7 @@ on_actions = {
 					}
 					SSU = {
 						drop_cosmetic_tag = yes
+						clear_variable = dynamic_flag_variant
 						set_cosmetic_tag = NEW_SUDAN
 						set_politics = {
 							ruling_party = ROOT
@@ -1462,7 +1498,7 @@ on_actions = {
 					limit = { NOT = { has_country_flag = generic_civil_war_skip_elections } }
 					if = {
 						limit = {
-							is_in_array = { ruling_party = 0 }
+							western_autocrats_are_in_power = yes
 						}
 						set_politics = {
 							ruling_party = democratic
@@ -1472,9 +1508,9 @@ on_actions = {
 					else_if = {
 						limit = {
 							OR = {
-								is_in_array = { ruling_party = 1 }
-								is_in_array = { ruling_party = 2 }
-								is_in_array = { ruling_party = 3 }
+								check_variable = { ruling_party = 1 }
+								check_variable = { ruling_party = 2 }
+								check_variable = { ruling_party = 3 }
 							}
 						}
 						set_politics = {
@@ -1485,9 +1521,9 @@ on_actions = {
 					else_if = {
 						limit = {
 							OR = {
-								is_in_array = { ruling_party = 4 }
-								is_in_array = { ruling_party = 7 }
-								is_in_array = { ruling_party = 9 }
+								check_variable = { ruling_party = 4 }
+								check_variable = { ruling_party = 7 }
+								check_variable = { ruling_party = 9 }
 							}
 						}
 						set_politics = {
@@ -1498,9 +1534,9 @@ on_actions = {
 					else_if = {
 						limit = {
 							OR = {
-								is_in_array = { ruling_party = 5 }
-								is_in_array = { ruling_party = 6 }
-								is_in_array = { ruling_party = 8 }
+								check_variable = { ruling_party = 5 }
+								check_variable = { ruling_party = 6 }
+								check_variable = { ruling_party = 8 }
 							}
 						}
 						set_politics = {
@@ -1511,8 +1547,8 @@ on_actions = {
 					else_if = {
 						limit = {
 							OR = {
-								is_in_array = { ruling_party = 10 }
-								is_in_array = { ruling_party = 11 }
+								check_variable = { ruling_party = 10 }
+								check_variable = { ruling_party = 11 }
 							}
 						}
 						set_politics = {
@@ -1523,8 +1559,8 @@ on_actions = {
 					else_if = {
 						limit = {
 							OR = {
-								is_in_array = { ruling_party = 13 }
-								is_in_array = { ruling_party = 19 }
+								check_variable = { ruling_party = 13 }
+								check_variable = { ruling_party = 19 }
 							}
 						}
 						set_politics = {
@@ -1535,12 +1571,12 @@ on_actions = {
 					else_if = {
 						limit = {
 							OR = {
-								is_in_array = { ruling_party = 12 }
-								is_in_array = { ruling_party = 14 }
-								is_in_array = { ruling_party = 15 }
-								is_in_array = { ruling_party = 16 }
-								is_in_array = { ruling_party = 17 }
-								is_in_array = { ruling_party = 18 }
+								check_variable = { ruling_party = 12 }
+								check_variable = { ruling_party = 14 }
+								check_variable = { ruling_party = 15 }
+								check_variable = { ruling_party = 16 }
+								check_variable = { ruling_party = 17 }
+								check_variable = { ruling_party = 18 }
 							}
 						}
 						set_politics = {
@@ -1551,9 +1587,9 @@ on_actions = {
 					else_if = {
 						limit = {
 							OR = {
-								is_in_array = { ruling_party = 21 }
-								is_in_array = { ruling_party = 22 }
-								is_in_array = { ruling_party = 23 }
+								check_variable = { ruling_party = 21 }
+								check_variable = { ruling_party = 22 }
+								check_variable = { ruling_party = 23 }
 							}
 						}
 						set_politics = {
@@ -1563,7 +1599,7 @@ on_actions = {
 					}
 					else_if = {
 						limit = {
-							is_in_array = { ruling_party = 20 }
+							check_variable = { ruling_party = 20 }
 						}
 						set_politics = {
 							ruling_party = nationalist
@@ -1619,6 +1655,7 @@ on_actions = {
 						}
 					}
 					drop_cosmetic_tag = yes
+					clear_variable = dynamic_flag_variant
 					set_country_flag = dynamic_flag
 					set_country_flag = dynamic_rebel_flag
 				}
@@ -1640,6 +1677,7 @@ on_actions = {
 				# on_add does not fire for history-file ideas, so count them manually here.
 				# Must precede the every_country loop below, whose ingame_update_setup reads the counts.
 				recount_global_reserve_currency = yes
+				setup_ruling_party_idea_tokens = yes
 				set_buy_core_state_arrays = yes
 				set_all_prod_arrays = yes
 				set_all_sat_system_tech = yes
@@ -1656,6 +1694,7 @@ on_actions = {
 				setup_initial_expected_spending_by_party = yes
 				# Init Global Variables
 				setup_global_arrays = yes
+				setup_coalition_idea_tokens = yes
 				for_each_scope_loop = {
 					array = global.possible_muslim_brotherhood_nation
 					mb_refresh_relations_effect = yes
@@ -1831,6 +1870,11 @@ on_actions = {
 						add_ideas = GAME_RULE_reduce_internal_factions_cost
 					}
 				}
+
+				if = {
+					limit = { is_faction_leader = yes }
+					country_event = { id = faction_goal_cache.2 hours = 1 }
+				}
 			}
 
 			ABK = {
@@ -1869,7 +1913,6 @@ on_actions = {
 	on_government_change = {
 		effect = {
 			update_neighbors_effects = yes
-			clear_own_ideology_drift = yes
 			recalculate_law_desires = yes
 			add_own_ideology_drift = yes
 			# Clearing Economic Drifts
@@ -1937,6 +1980,7 @@ on_actions = {
 				}
 				set_country_flag = dynamic_flag
 				drop_cosmetic_tag = yes
+				clear_variable = dynamic_flag_variant
 			}
 			# Remove terrorist opinion modifiers when a country is no longer Salafist
 			if = {
@@ -2181,7 +2225,7 @@ on_actions = {
 						#Politics
 						if = {
 							limit = {
-								NOT = { has_variable = ruling_party^0 }
+								NOT = { has_variable = ruling_party }
 							}
 							start_politics_input = yes
 
@@ -2552,8 +2596,6 @@ on_actions = {
 					# spawn some units in case there are too few
 					if = { limit = { FROM = { check_variable = { num_divisions < 6 } } }
 						FROM = {
-							set_country_flag = civil_war_units_spawned_flag
-
 							division_template = {
 								name = "National Militia"
 								is_locked = yes
@@ -2574,21 +2616,33 @@ on_actions = {
 							set_temp_variable = { div_count = 5 }
 							subtract_from_temp_variable = { div_count = num_divisions }
 
-							capital_scope = {
-								create_unit = {
-									division = "name = \"National Militia\" division_template = \"National Militia\" start_experience_factor = 0.4"
-									owner = FROM
-									count = div_count
+							if = {
+								limit = { capital_scope = { is_fully_controlled_by = FROM } }
+								capital_scope = {
+									create_unit = {
+										division = "name = \"National Militia\" division_template = \"National Militia\" start_experience_factor = 0.4"
+										owner = FROM
+										count = div_count
+									}
 								}
 							}
+							else = {
+								random_owned_controlled_state = {
+									create_unit = {
+										division = "name = \"National Militia\" division_template = \"National Militia\" start_experience_factor = 0.4"
+										owner = FROM
+										count = div_count
+									}
+								}
+							}
+
+							set_country_flag = civil_war_units_spawned_flag
 						}
 					}
 
 					# same for ROOT
 					if = { limit = { ROOT = { check_variable = { num_divisions < 6 } } }
 						ROOT = {
-							set_country_flag = civil_war_units_spawned_flag
-
 							division_template = {
 								name = "National Militia"
 								is_locked = yes
@@ -2609,13 +2663,27 @@ on_actions = {
 							set_temp_variable = { div_count = 5 }
 							subtract_from_temp_variable = { div_count = num_divisions }
 
-							capital_scope = {
-								create_unit = {
-									division = "name = \"National Militia\" division_template = \"National Militia\" start_experience_factor = 0.4"
-									owner = ROOT
-									count = div_count
+							if = {
+								limit = { capital_scope = { is_fully_controlled_by = ROOT } }
+								capital_scope = {
+									create_unit = {
+										division = "name = \"National Militia\" division_template = \"National Militia\" start_experience_factor = 0.4"
+										owner = ROOT
+										count = div_count
+									}
 								}
 							}
+							else = {
+								random_owned_controlled_state = {
+									create_unit = {
+										division = "name = \"National Militia\" division_template = \"National Militia\" start_experience_factor = 0.4"
+										owner = ROOT
+										count = div_count
+									}
+								}
+							}
+
+							set_country_flag = civil_war_units_spawned_flag
 						}
 					}
 				}
@@ -2965,6 +3033,7 @@ on_actions = {
 								OR = {
 									UKR = { owns_state = 669 }
 									UKR = { owns_state = 1110 }
+									UKR = { owns_state = 1248 }
 								}
 								BLR = {
 									nationalist_right_wing_populists_are_in_power = yes

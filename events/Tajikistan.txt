@@ -107,9 +107,10 @@ country_event = {
 		### Party Popularities
 		set_variable = { party_pop_array^22 = 1 } #Nat_Autocracy
 		### Ruling Party
-		add_to_array = { ruling_party = 22 }
+		set_variable = { ruling_party = 22 }
 		startup_politics = yes
 		set_cosmetic_tag = UZB_REB_S_nationalist
+		set_variable = { dynamic_flag_variant = 8 }
 		TAJ = {
 			every_core_state = {
 				add_core_of = ROOT
@@ -178,6 +179,7 @@ country_event = {
 	option = {
 		name = tajik_focus.2.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.2.a executed"
+		set_temp_variable = { faction_goal_refresh_transferred_leader = 0 }
 		if = {
 			limit = {
 				original_tag = PER
@@ -195,7 +197,9 @@ country_event = {
 				limit = { check_variable = { allies^num > 0 } }
 				random_allied_country = {
 					set_faction_leader = yes
+					save_event_target_as = faction_goal_transferred_leader
 				}
+				set_temp_variable = { faction_goal_refresh_transferred_leader = 1 }
 				leave_faction = yes
 			}
 			else = {
@@ -208,6 +212,10 @@ country_event = {
 		}
 		TAJ = {
 			add_to_faction = PREV
+		}
+		if = {
+			limit = { check_variable = { faction_goal_refresh_transferred_leader = 1 } }
+			hidden_effect = { event_target:faction_goal_transferred_leader = { faction_goal_refresh_all_caches = yes } }
 		}
 		ai_chance = {
 			base = 10
@@ -1331,7 +1339,7 @@ country_event = { # Tajik Revolution
 					original_tag = TAJ
 					set_country_flag = TAJ_civil_war_time
 					copy_tag = TAJ
-					set_country_flag = is_TAJIKISTAN
+					mark_formed_country_formable = yes
 					retire_country_leader = yes
 					# Intialization
 					set_popularities = {
@@ -1398,7 +1406,7 @@ country_event = { # Tajik Revolution
 					sort_influence = yes
 
 					### Ruling Party
-					add_to_array = { ruling_party = 6 }
+					set_variable = { ruling_party = 6 }
 					startup_politics = yes
 					load_focus_tree = { tree = tajikistan_focus keep_completed = yes }
 
@@ -1406,18 +1414,13 @@ country_event = { # Tajik Revolution
 					set_temp_variable = { nation_to_copy_from = PREV.id }
 					setup_employment_variables = yes
 					ingame_update_setup = yes
-				}
-				# Transferring States
-				724 = {
-					transfer_state_to = RAH
-				}
-				723 = {
-					transfer_state_to = RAH
-				}
-				# War Declarations
-				declare_war_on = {
-					target = RAH
-					type = annex_everything
+					save_event_target_as = TAJ_rahmon_side
+					transfer_state = 724
+					transfer_state = 723
+					declare_war_on = {
+						target = PREV
+						type = annex_everything
+					}
 				}
 			}
 			# UTO Centered Scenario
@@ -1430,7 +1433,8 @@ country_event = { # Tajik Revolution
 				add_ideas = TAJ_uto_support
 				hidden_effect = {
 					set_cosmetic_tag = TAJ_REB
-					set_country_flag = is_TAJIKISTAN
+					set_variable = { dynamic_flag_variant = 6 }
+					mark_formed_country_formable = yes
 				}
 				if = {
 					limit = {
@@ -1492,7 +1496,7 @@ country_event = { # Tajik Revolution
 					original_tag = TAJ
 					set_country_flag = TAJ_civil_war_time
 					copy_tag = TAJ
-					set_country_flag = is_TAJIKISTAN
+					mark_formed_country_formable = yes
 					retire_country_leader = yes
 					# Intialization
 					set_popularities = {
@@ -1559,7 +1563,7 @@ country_event = { # Tajik Revolution
 					sort_influence = yes
 
 					### Ruling Party
-					add_to_array = { ruling_party = 6 }
+					set_variable = { ruling_party = 6 }
 					startup_politics = yes
 					load_focus_tree = { tree = tajikistan_focus keep_completed = yes }
 
@@ -1567,15 +1571,12 @@ country_event = { # Tajik Revolution
 					set_temp_variable = { nation_to_copy_from = PREV.id }
 					setup_employment_variables = yes
 					ingame_update_setup = yes
-				}
-				# Transferring States
-				724 = {
-					transfer_state_to = RAH
-				}
-				# War Declarations
-				declare_war_on = {
-					target = RAH
-					type = annex_everything
+					save_event_target_as = TAJ_rahmon_side
+					transfer_state = 724
+					declare_war_on = {
+						target = PREV
+						type = annex_everything
+					}
 				}
 				# Army
 				TAJ = {
@@ -1641,7 +1642,7 @@ country_event = { # Tajik Revolution
 					limit = {
 						has_country_flag = TAJ_rahmon_dead
 					}
-					RAH = {
+					event_target:TAJ_rahmon_side = {
 						create_country_leader = {
 							name = "Rustam Emomali"
 							picture = "rostam_rahmon.dds"
@@ -1655,7 +1656,7 @@ country_event = { # Tajik Revolution
 					}
 				}
 				else = {
-					RAH = {
+					event_target:TAJ_rahmon_side = {
 						create_country_leader = {
 							name = "Emomali Rahmonov"
 							picture = "emomali_rahmon_young.dds"
@@ -1710,7 +1711,7 @@ country_event = {
 				days = 360
 			}
 			drop_cosmetic_tag = yes
-			clr_country_flag = is_TAJIKISTAN
+			clear_variable = dynamic_flag_variant
 			# Civil war drains fuel (state 724 with the agriculture district goes to Rahmon).
 			# Refill reserves so fossil power plants pass the fuel_k = 0 killswitch check.
 			set_fuel_ratio = 0.5
@@ -2679,7 +2680,8 @@ country_event = {
 				}
 			}
 		}
-		clr_country_flag = party20_banned
+		set_temp_variable = { party_index = 19 }
+		unban_party_scripted_call = yes
 		ai_chance = {
 			base = 20
 		}
@@ -2692,7 +2694,8 @@ country_event = {
 		set_temp_variable = { add_col_one = 20 }
 		add_coalition_members_effect = yes
 		add_political_power = 250
-		clr_country_flag = party20_banned
+		set_temp_variable = { party_index = 19 }
+		unban_party_scripted_call = yes
 		ai_chance = {
 			base = 5
 		}
@@ -3543,7 +3546,7 @@ country_event = {
 				set_country_flag = TAJ_islamist_uprising
 				copy_tag = TAJ
 				set_cosmetic_tag = TAJ_islamist_government
-				set_country_flag = is_TAJIKISTAN
+				mark_formed_country_formable = yes
 				retire_country_leader = yes
 				# Intialization
 				set_popularities = {
@@ -3590,7 +3593,7 @@ country_event = {
 				}
 
 				### Ruling Party
-				add_to_array = { ruling_party = 12 }
+				set_variable = { ruling_party = 12 }
 				startup_politics = yes
 				load_focus_tree = { tree = tajikistan_focus keep_completed = yes }
 			}
@@ -4254,7 +4257,7 @@ country_event = {
 				set_country_flag = TAJ_islamist_uprising
 				copy_tag = TAJ
 				set_cosmetic_tag = TAJ_islamist_government_2
-				set_country_flag = is_TAJIKISTAN
+				mark_formed_country_formable = yes
 				# Intialization
 				set_popularities = {
 					neutrality = 20
@@ -4285,7 +4288,7 @@ country_event = {
 				}
 
 				### Ruling Party
-				add_to_array = { ruling_party = 10 }
+				set_variable = { ruling_party = 10 }
 				startup_politics = yes
 				load_focus_tree = { tree = tajikistan_focus keep_completed = yes }
 			}
@@ -4316,7 +4319,7 @@ country_event = {
 				}
 			}
 			IRP = {
-				add_to_array = { ruling_party = 10 }
+				set_variable = { ruling_party = 10 }
 				startup_politics = yes
 				create_country_leader = {
 					name = "Hafiz Saeed Khan"
@@ -4361,7 +4364,7 @@ country_event = {
 				set_cosmetic_tag = TAJ
 				set_country_flag = TAJ_islamist_uprising
 				copy_tag = TAJ
-				set_country_flag = is_TAJIKISTAN
+				mark_formed_country_formable = yes
 				# Intialization
 				set_popularities = {
 					nationalist = 100
@@ -4391,7 +4394,7 @@ country_event = {
 				}
 
 				### Ruling Party
-				add_to_array = { ruling_party = 22 }
+				set_variable = { ruling_party = 22 }
 				startup_politics = yes
 				load_focus_tree = { tree = tajikistan_focus keep_completed = yes }
 			}
@@ -4416,7 +4419,7 @@ country_event = {
 				}
 				set_cosmetic_tag = TAJ
 				set_country_flag = TAJ_islamist_uprising
-				set_country_flag = is_TAJIKISTAN
+				mark_formed_country_formable = yes
 				# Intialization
 				set_popularities = {
 					nationalist = 100
@@ -4446,7 +4449,7 @@ country_event = {
 				}
 
 				### Ruling Party
-				add_to_array = { ruling_party = 22 }
+				set_variable = { ruling_party = 22 }
 				startup_politics = yes
 				load_focus_tree = { tree = tajikistan_focus keep_completed = yes }
 			}
@@ -4512,7 +4515,7 @@ country_event = {
 	option = { # No
 		name = iranic_confederation.1.b
 		log = "[GetDateText]: [This.GetName]: iranic_confederation.1.b executed"
-		set_country_flag = is_IRAN
+		mark_formed_country_formable = yes
 		FROM = {
 			country_event = iranic_confederation.3
 		}

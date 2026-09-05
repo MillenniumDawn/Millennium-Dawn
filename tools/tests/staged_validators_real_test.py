@@ -10,11 +10,12 @@ Usage:
 """
 
 import os
-import shutil
 import subprocess
 import sys
 import time
 from unittest import SkipTest
+
+from _staged_integration_gate import require_staged_integration_enabled
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -309,12 +310,7 @@ def test_staged_validators_real():
 
     Opt-in (MD_RUN_STAGED_INTEGRATION=1): it mutates the working repo and runs
     the full validator set, so it stays out of the default `pytest` sweep."""
-    if not os.environ.get("MD_RUN_STAGED_INTEGRATION"):
-        raise SkipTest(
-            "set MD_RUN_STAGED_INTEGRATION=1 to run staged-validator integration"
-        )
-    if shutil.which("git") is None:
-        raise SkipTest("git not available")
+    require_staged_integration_enabled()
     if not _touched_files_clean():
         raise SkipTest("target files have local changes; skipping to avoid clobbering")
     if main() != 0:
