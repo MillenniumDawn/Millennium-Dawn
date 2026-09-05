@@ -31,8 +31,7 @@ EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 # The five HOI4 event-firing keywords. It is `operative_leader_event`, not
 # `operative_event`, and there is no `character_event`; because `operative` has
 # no word boundary before `_leader_event`, an `operative`/`_event` split never
-# matches the real keyword. Kept in sync with the definition keywords in
-# _EVENT_TYPE_PATTERN.
+# matches the real keyword.
 _EVENT_CALL_KEYWORDS = (
     "country_event",
     "news_event",
@@ -149,17 +148,25 @@ def _matching_brace(text: str, open_pos: int) -> int:
     return -1
 
 
-def _iter_typed_event_bodies(cleaned: str):
-    """Yield typed definitions using brace matching so indentation is irrelevant."""
+def _iter_typed_event_bodies(cleaned: str, *, require_id: bool = True):
+    """Yield typed definitions using brace matching so indentation is irrelevant.
+
+    With require_id=False a definition block missing its `id` is still yielded,
+    with None for the id; the metadata checks report those blocks as "unknown"
+    rather than passing over them.
+    """
     for m in _EVENT_BLOCK_OPEN_RE.finditer(cleaned):
         ob = cleaned.index("{", m.end() - 1)
         end = _matching_brace(cleaned, ob)
         if end == -1:
             continue
         body = cleaned[ob + 1 : end]
+        if not _DEFINITION_ONLY_RE.search(body):
+            continue
         idm = _FIRE_ID_RE.search(body)
-        if idm and _DEFINITION_ONLY_RE.search(body):
-            yield idm.group(1), m.group(1), body, m.start()
+        if idm is None and require_id:
+            continue
+        yield (idm.group(1) if idm else None), m.group(1), body, m.start()
 
 
 def _iter_event_bodies(cleaned: str):
@@ -572,12 +579,7 @@ def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
 # --- Event parsing ---
 
 
-_EVENT_TYPE_PATTERN = re.compile(
-    r"^(country_event|news_event|state_event|unit_leader_event|operative_leader_event)\s*=\s*\{",
-    re.MULTILINE,
-)
 _ADD_NAMESPACE_PATTERN = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
-_EVENT_ID_PATTERN = re.compile(r"^\tid\s*=\s*(\S+)", re.MULTILINE)
 _RANDOM_EVENTS_PATTERN = re.compile(r"\brandom_events\s*=\s*\{")
 _RANDOM_EVENT_ID_PATTERN = re.compile(r"=\s*([A-Za-z_]\w*\.[\w.]+)")
 _OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
@@ -656,9 +658,12 @@ _RE_MAJOR_YES = re.compile(r"(?<![A-Za-z0-9_])major\s*=\s*yes")
 def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str]]:
     namespaces: Set[str] = set(_ADD_NAMESPACE_PATTERN.findall(text))
     meta: List[dict] = []
-    for m in _EVENT_TYPE_PATTERN.finditer(text):
-        event_type = m.group(1)
-        body, _ = extract_block_from_text(text, m.end() - 1)
+    # Brace matching rather than column-anchored patterns: 64 definitions in
+    # the mod are indented, and an anchored scan drops every one of them from
+    # the checks that read this metadata.
+    for event_id, event_type, body, _start in _iter_typed_event_bodies(
+        text, require_id=False
+    ):
         # Quote-aware comment strip + quoted-string blanking before the `in body`
         # flag checks: a commented-out `#fire_only_once = yes` (or hidden /
         # is_triggered_only / mean_time_to_happen) must not count as an active
@@ -666,11 +671,9 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
         # log/desc string must not truncate the line or false-match.
         body_nc = blank_quoted_strings(strip_comments(body))
 
-        id_match = _EVENT_ID_PATTERN.search(body)
-
         meta.append(
             {
-                "id": id_match.group(1) if id_match else None,
+                "id": event_id,
                 "body": body,
                 "type": event_type,
                 "file": basename,

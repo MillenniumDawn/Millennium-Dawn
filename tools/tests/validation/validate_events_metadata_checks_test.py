@@ -362,3 +362,42 @@ def test_empty_event_file_is_skipped(tmp_path):
     assert [ev["id"] for ev in meta] == ["foo.1"]
     assert v._get_fire_only_once_ids() == {"foo.1"}
     assert v._get_fire_only_once_ids() is v._fire_only_once_ids_cache
+
+
+def test_indented_definitions_reach_the_metadata_checks(tmp_path):
+    """Definitions are found by brace matching, not by column.
+
+    64 event definitions in the mod are indented, and a column-anchored scan
+    dropped every one of them from the duplicate-id and namespace checks.
+    """
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "add_namespace = foo\n"
+        "\tcountry_event = {\n"
+        "\t\tid = foo.1\n"
+        "\t\tis_triggered_only = yes\n"
+        "\t\toption = { name = foo.1.a }\n"
+        "\t}\n"
+        "country_event = {\n"
+        "\tid = foo.1\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { name = foo.1.a }\n"
+        "}\n"
+        "\tcountry_event = {\n"
+        "\t\tid = undeclared.1\n"
+        "\t\tis_triggered_only = yes\n"
+        "\t\toption = { name = undeclared.1.a }\n"
+        "\t}\n",
+    )
+    v = _validator(tmp_path)
+    meta, namespaces = v._get_event_metadata()
+
+    assert namespaces == {"foo"}
+    assert [m["id"] for m in meta] == ["foo.1", "foo.1", "undeclared.1"]
+
+    v.validate_duplicate_event_ids()
+    v.validate_namespace_mismatch()
+    reported = " ".join(str(i) for i in v._issues)
+    assert "foo.1" in reported, "the indented duplicate was not reported"
+    assert "undeclared.1" in reported, "the indented namespace mismatch was not reported"
