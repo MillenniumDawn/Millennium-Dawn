@@ -162,130 +162,66 @@ clear_coalition_count_ideas = {
 	clear_array = coalition_applied_tokens
 }
 
+setup_ruling_party_idea_tokens = {
+	clear_array = global.ruling_party_idea
+	add_to_array = { global.ruling_party_idea = token:ruling_party_western }
+	add_to_array = { global.ruling_party_idea = token:ruling_party_emerging }
+	add_to_array = { global.ruling_party_idea = token:ruling_party_salafist }
+	add_to_array = { global.ruling_party_idea = token:ruling_party_non_alligned }
+	add_to_array = { global.ruling_party_idea = token:ruling_party_nationalist }
+
+	clear_array = global.major_ruling_party_idea
+	add_to_array = { global.major_ruling_party_idea = token:major_ruling_party_western }
+	add_to_array = { global.major_ruling_party_idea = token:major_ruling_party_emerging }
+	add_to_array = { global.major_ruling_party_idea = token:major_ruling_party_salafist }
+	add_to_array = { global.major_ruling_party_idea = token:major_ruling_party_non_alligned }
+	add_to_array = { global.major_ruling_party_idea = token:major_ruling_party_nationalist }
+}
+
 clear_own_ideology_drift = {
 	if = {
-		limit = { has_idea = ruling_party_western }
-		remove_ideas = ruling_party_western
-	}
-	if = {
-		limit = { has_idea = ruling_party_nationalist }
-		remove_ideas = ruling_party_nationalist
-	}
-	if = {
-		limit = { has_idea = ruling_party_emerging }
-		remove_ideas = ruling_party_emerging
-	}
-	if = {
-		limit = { has_idea = ruling_party_non_alligned }
-		remove_ideas = ruling_party_non_alligned
-	}
-	if = {
-		limit = { has_idea = ruling_party_salafist }
-		remove_ideas = ruling_party_salafist
-	}
-	if = {
-		limit = { has_idea = major_ruling_party_western }
-		remove_ideas = major_ruling_party_western
-	}
-	if = {
-		limit = { has_idea = major_ruling_party_nationalist }
-		remove_ideas = major_ruling_party_nationalist
-	}
-	if = {
-		limit = { has_idea = major_ruling_party_emerging }
-		remove_ideas = major_ruling_party_emerging
-	}
-	if = {
-		limit = { has_idea = major_ruling_party_non_alligned }
-		remove_ideas = major_ruling_party_non_alligned
-	}
-	if = {
-		limit = { has_idea = major_ruling_party_salafist }
-		remove_ideas = major_ruling_party_salafist
+		limit = { has_variable = ruling_party_drift_applied_token }
+		remove_ideas = var:ruling_party_drift_applied_token
+		clear_variable = ruling_party_drift_applied_token
 	}
 }
 
 add_own_ideology_drift = {
+	set_current_outlook_id = yes
 	if = {
-		limit = {
-			has_government = fascism
-			is_major = no
+		limit = { check_variable = { current_outlook_id > -1 } }
+		if = {
+			limit = { is_major = yes }
+			set_temp_variable = { ruling_party_drift_target_token = global.major_ruling_party_idea^current_outlook_id }
 		}
-		add_ideas = ruling_party_salafist
+		else = {
+			set_temp_variable = { ruling_party_drift_target_token = global.ruling_party_idea^current_outlook_id }
+		}
 		if = {
 			limit = {
-				NOT = { original_tag = NIG }
-				NOT = { has_idea = sunni }
+				has_variable = ruling_party_drift_applied_token
+				NOT = { check_variable = { ruling_party_drift_applied_token = ruling_party_drift_target_token } }
 			}
-			add_ideas = sunni
+			clear_own_ideology_drift = yes
 		}
+		if = {
+			limit = { NOT = { has_idea = var:ruling_party_drift_target_token } }
+			add_ideas = var:ruling_party_drift_target_token
+		}
+		set_variable = { ruling_party_drift_applied_token = ruling_party_drift_target_token }
 	}
-	else_if = {
+	else = {
+		clear_own_ideology_drift = yes
+	}
+
+	if = {
 		limit = {
 			has_government = fascism
-			is_major = yes
-		}
-		add_ideas = major_ruling_party_salafist
-	}
-
-	if = {
-		limit = {
-			has_government = democratic
 			is_major = no
+			NOT = { original_tag = NIG }
+			NOT = { has_idea = sunni }
 		}
-		add_ideas = ruling_party_western
-	}
-	else_if = {
-		limit = {
-			has_government = democratic
-			is_major = yes
-		}
-		add_ideas = major_ruling_party_western
-	}
-
-	if = {
-		limit = {
-			has_government = communism
-			is_major = no
-		}
-		add_ideas = ruling_party_emerging
-	}
-	else_if = {
-		limit = {
-			has_government = communism
-			is_major = yes
-		}
-		add_ideas = major_ruling_party_emerging
-	}
-
-	if = {
-		limit = {
-			has_government = neutrality
-			is_major = no
-		}
-		add_ideas = ruling_party_non_alligned
-	}
-	else_if = {
-		limit = {
-			has_government = neutrality
-			is_major = yes
-		}
-		add_ideas = major_ruling_party_non_alligned
-	}
-
-	if = {
-		limit = {
-			has_government = nationalist
-			is_major = no
-		}
-		add_ideas = ruling_party_nationalist
-	}
-	else_if = {
-		limit = {
-			has_government = nationalist
-			is_major = yes
-		}
-		add_ideas = major_ruling_party_nationalist
+		add_ideas = sunni
 	}
 }
 
