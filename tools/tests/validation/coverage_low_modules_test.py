@@ -173,6 +173,128 @@ def test_agency_success_and_staged_empty_boundaries(tmp_path, monkeypatch):
     assert staged._issues == []
 
 
+def _agency_completion_cache_fixture(tmp_path, triggers: str, effects: str):
+    _write(
+        tmp_path,
+        agency.ON_ACTIONS_FILE,
+        "global.agency_upgrades^0 = token:MD_auto_agency_0_upgrade_a\n"
+        "global.agency_upgrades^1 = token:MD_auto_agency_1_upgrade_b\n",
+    )
+    _write(tmp_path, agency.SCRIPTED_TRIGGERS_FILE, triggers)
+    _write(tmp_path, agency.SCRIPTED_EFFECTS_FILE, effects)
+    validator = _validator(agency.Validator, tmp_path)
+    validator._collect_registry()
+    validator._validate_completion_cache()
+    return validator
+
+
+def _slot_trigger(idx: int, read_idx: int = None, max_idx: int = None) -> str:
+    read_idx = idx if read_idx is None else read_idx
+    max_idx = idx if max_idx is None else max_idx
+    return (
+        f"MD_auto_agency_slot_available_{idx}_trigger = {{\n"
+        f"\tNOT = {{\n"
+        f"\t\tcheck_variable = {{\n"
+        f"\t\t\tvar = agency_upgrades_completed_and_queued^{read_idx}\n"
+        f"\t\t\tvalue = global.agency_max_upgrades^{max_idx}\n"
+        f"\t\t\tcompare = greater_than_or_equals\n"
+        f"\t\t}}\n"
+        f"\t}}\n"
+        f"}}\n"
+    )
+
+
+def _seed_branch(idx: int, upgrade: str) -> str:
+    return (
+        f"\tif = {{\n"
+        f"\t\tlimit = {{ has_done_agency_upgrade = {upgrade} }}\n"
+        f"\t\tset_variable = {{ agency_upgrades_completed_and_queued^{idx} = 1 }}\n"
+        f"\t}}\n"
+    )
+
+
+def _can_upgrade_block(indices) -> str:
+    branches = "".join(
+        f"\t\tAND = {{\n"
+        f"\t\t\tMD_auto_agency_slot_available_{i}_trigger = yes\n"
+        f"\t\t\tMD_auto_agency_can_select_upgrade_{i}_trigger = yes\n"
+        f"\t\t}}\n"
+        for i in indices
+    )
+    return f"MD_auto_agency_can_upgrade = {{\n\tOR = {{\n{branches}\t}}\n}}\n"
+
+
+def test_agency_completion_cache_accepts_a_fully_wired_pair(tmp_path):
+    triggers = _slot_trigger(0) + _slot_trigger(1) + _can_upgrade_block([0, 1])
+    effects = (
+        "MD_auto_agency_seed_completed_cache = {\n"
+        + _seed_branch(0, "upgrade_a")
+        + _seed_branch(1, "upgrade_b")
+        + "}\n"
+    )
+    validator = _agency_completion_cache_fixture(tmp_path, triggers, effects)
+    assert validator._issues == []
+
+
+def test_agency_completion_cache_flags_missing_and_mismatched_wiring(tmp_path):
+    # Index 1 has no slot trigger, no can_upgrade branch and no seed branch;
+    # index 0 reads the wrong array slot and seeds from the wrong upgrade.
+    triggers = _slot_trigger(0, read_idx=1, max_idx=1) + _can_upgrade_block([0])
+    effects = (
+        "MD_auto_agency_seed_completed_cache = {\n"
+        + _seed_branch(0, "upgrade_b")
+        + "}\n"
+    )
+    validator = _agency_completion_cache_fixture(tmp_path, triggers, effects)
+    messages = [issue.message for issue in validator._issues]
+    assert _categories(validator) == {"agency-upgrades-completion-cache"}
+    assert any(
+        "does not read agency_upgrades_completed_and_queued^0" in m for m in messages
+    )
+    assert any(
+        "does not compare against global.agency_max_upgrades^0" in m for m in messages
+    )
+    assert any(
+        "MD_auto_agency_slot_available_1_trigger definition" in m for m in messages
+    )
+    assert any(
+        "MD_auto_agency_slot_available_1_trigger = yes branch" in m for m in messages
+    )
+    assert any(
+        "MD_auto_agency_can_select_upgrade_1_trigger = yes branch" in m
+        for m in messages
+    )
+    assert any("never seeds" in m and "^1" in m for m in messages)
+    assert any(
+        "seeds index ^0 from 'upgrade_b' but the registry has 'upgrade_a'" in m
+        for m in messages
+    )
+
+
+def test_agency_completion_cache_flags_orphans_and_missing_blocks(tmp_path):
+    triggers = _slot_trigger(0) + _slot_trigger(1) + _slot_trigger(9)
+    effects = (
+        "MD_auto_agency_seed_completed_cache = {\n"
+        + _seed_branch(0, "upgrade_a")
+        + _seed_branch(1, "upgrade_b")
+        + _seed_branch(9, "upgrade_ghost")
+        + "}\n"
+    )
+    validator = _agency_completion_cache_fixture(tmp_path, triggers, effects)
+    messages = [issue.message for issue in validator._issues]
+    assert any("MD_auto_agency_can_upgrade block not found" in m for m in messages)
+    assert any(
+        "MD_auto_agency_slot_available_9_trigger is defined but index ^9 is not registered"
+        in m
+        for m in messages
+    )
+    assert any("seeds index ^9 but it is not registered" in m for m in messages)
+
+    missing = _validator(agency.Validator, tmp_path / "missing")
+    missing._validate_completion_cache()
+    assert missing._issues == []
+
+
 def test_cosmetic_workers_cover_comments_dynamic_and_missing_files(tmp_path):
     path = _write(
         tmp_path,

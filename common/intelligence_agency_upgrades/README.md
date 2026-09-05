@@ -6,7 +6,7 @@ This directory holds the intelligence agency upgrade definitions used by the van
 
 ## Files involved
 
-Adding or renaming an agency upgrade touches six files. All six must stay in sync or the upgrade will be invisible, unclickable, or show as a blank icon in the queue UI.
+Adding or renaming an agency upgrade touches seven files. All seven must stay in sync or the upgrade will be invisible, unclickable, or show as a blank icon in the queue UI.
 
 | File                                                                   | What it holds                                                                                |
 | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -14,7 +14,8 @@ Adding or renaming an agency upgrade touches six files. All six must stay in syn
 | `common/on_actions/MD_auto_agency_on_actions.txt`                      | Registry — assigns the upgrade to an index in four parallel global arrays                    |
 | `localisation/english/MD_auto_agency_l_english.yml`                    | Loc triple — token id / display name / gfx sprite name                                       |
 | `common/scripted_guis/00_MD_auto_agency_scripted_gui.txt`              | Prerequisite gating (only if the upgrade needs `has_done_agency_upgrade = ...` prereqs)      |
-| `common/scripted_triggers/00_MD_auto_agency_scripted_triggers.txt`     | Per-index `can_select` trigger and its dispatch branch in `MD_auto_agency_v_can_select`      |
+| `common/scripted_triggers/00_MD_auto_agency_scripted_triggers.txt`     | Per-index `can_select` / `slot_available` triggers and their dispatch branches               |
+| `common/scripted_effects/00_MD_auto_agency_scripted_effects.txt`       | Per-index seed branch in `MD_auto_agency_seed_completed_cache`                               |
 | `interface/countryintelligenceagencyview.gfx`                          | Sprite definition referenced by `picture =` and the `_gfx` loc key                           |
 
 ## Adding a new upgrade — step by step
@@ -88,11 +89,29 @@ If the upgrade has a `has_done_agency_upgrade = upgrade_X` prereq, add a corresp
 
 Also add a matching `MD_auto_agency_prereq_X_tt` loc key describing the prereq text, and extend `MD_auto_agency_scripted_loc_prereqs` in `common/scripted_localisation/00_MD_auto_agency_scripted_localisation.txt` to dispatch on the index.
 
-### 5. Register the selection trigger
+### 5. Register the selection and slot triggers
 
-Every new index needs a `MD_auto_agency_can_select_upgrade_N_trigger` in `common/scripted_triggers/00_MD_auto_agency_scripted_triggers.txt` (use `always = yes` when there are no prereqs) plus a matching `AND = { check_variable = { v = N } ... }` branch in `MD_auto_agency_v_can_select`. If the upgrade has prereqs, also add an entry to the `MD_auto_agency_can_upgrade` OR block so automation does not go stale.
+In `common/scripted_triggers/00_MD_auto_agency_scripted_triggers.txt` every new index needs:
 
-### 6. Ensure the sprite exists
+- a `MD_auto_agency_can_select_upgrade_N_trigger` (use `always = yes` when there are no prereqs) plus a matching `AND = { check_variable = { v = N } ... }` branch in `MD_auto_agency_v_can_select`;
+- a `MD_auto_agency_slot_available_N_trigger` comparing `agency_upgrades_completed_and_queued^N` against `global.agency_max_upgrades^N`, plus an `AND = { ..._slot_available_N_trigger ..._can_select_upgrade_N_trigger }` branch in `MD_auto_agency_can_upgrade`.
+
+`MD_auto_agency_can_upgrade` is the start gate for the whole automation, so an index missing there can never be picked even when a level is free.
+
+### 6. Seed the completion cache
+
+Add a branch to `MD_auto_agency_seed_completed_cache` in `common/scripted_effects/00_MD_auto_agency_scripted_effects.txt`:
+
+```
+if = {
+    limit = { has_done_agency_upgrade = upgrade_deepfake_detection }
+    set_variable = { agency_upgrades_completed_and_queued^25 = 1 }
+}
+```
+
+This runs once per country on first queue-tab open so levels taken through history, focuses, or the vanilla agency UI are already counted. `has_done_agency_upgrade` is per-upgrade, not per-level, so a country that took several levels before opening the tab seeds as `1` — that under-count is the engine's limit, not something to work around here.
+
+### 7. Ensure the sprite exists
 
 Confirm `GFX_agency_cyber_security` (or whichever sprite you used) is defined in `interface/countryintelligenceagencyview.gfx` or another `.gfx` file. If you need a brand-new sprite, add a `spriteType = { name = "..." texturefile = "gfx/..." }` entry there first.
 
@@ -104,7 +123,7 @@ Run the validator to confirm everything lines up:
 python3 tools/validation/validate_agency_upgrades.py --path .
 ```
 
-The validator covers eight checks:
+The validator covers nine checks:
 
 1. **Registry coverage** — every `upgrade_X` defined in this directory is registered in all four parallel arrays, and every registry entry points to a real upgrade. Parallel arrays must use the same token at the same index (`_name` and `_gfx` suffixes enforced).
 2. **max_upgrades vs level count** — `global.agency_max_upgrades^N` equals the number of `level = { }` blocks in the upgrade definition.
@@ -114,6 +133,7 @@ The validator covers eight checks:
 6. **`create_intelligence_agency` icons (mod-wide)** — every country that creates an agency in focus/event/history files references a real `GFX_intelligence_agency_logo_*` sprite.
 7. **`upgrade_intelligence_agency` calls (mod-wide)** — every `upgrade_intelligence_agency = upgrade_X` call (in focuses, events, history, faction goals, etc.) references a defined upgrade.
 8. **can_select trigger + dispatch coverage** — every registered index has a `MD_auto_agency_can_select_upgrade_N_trigger` definition and a matching dispatch branch in `MD_auto_agency_v_can_select`, with no orphaned definitions or dispatch branches for unregistered indices.
+9. **Completion cache coverage** — every registered index has a `MD_auto_agency_slot_available_N_trigger` reading its own array slot, an `AND` branch for it in `MD_auto_agency_can_upgrade`, and a seed branch in `MD_auto_agency_seed_completed_cache` naming the upgrade the registry has at that index. Orphans in either direction are flagged.
 
 ## Common mistakes
 
@@ -123,3 +143,5 @@ The validator covers eight checks:
 - **Non-existent agency logo** — countries passing an invalid `icon = GFX_intelligence_agency_logo_xyz` to `create_intelligence_agency` silently render a blank. Use the `GFX_intelligence_agency_logo_generic_1..9` sprites when no country-specific one exists.
 - **Prereq added to scripted_gui but not to loc** — the prereq tooltip renders as `[MD_auto_agency_prereq_X_tt]` literal text. Add the loc key and the `MD_auto_agency_scripted_loc_prereqs` dispatch entry together.
 - **New index registered but no `v_can_select` dispatch branch** — the upgrade is never auto-selected.
+- **New index missing from `MD_auto_agency_can_upgrade`** — the start gate goes false, and the automation stops activating missions entirely once the other indices are maxed.
+- **`meta_trigger` in the auto-agency hot path** — the whole system is deliberately statically dispatched. `has_done_agency_upgrade` needs a literal name, so write out the per-index branch instead of interpolating one.
