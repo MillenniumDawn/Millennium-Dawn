@@ -259,6 +259,32 @@ _TIER_KEYWORDS = {"if", "else_if"}
 _LEADER_EFFECT_PREFIX = "set_leader_"
 _LEADER_COUNTER_SUFFIX = "_leader"
 _SET_IDEOLOGY_PREFIX = "set_"
+_PARTY_SLOT_NAMES = {
+    0: "Western_Autocracy",
+    1: "conservatism",
+    2: "liberalism",
+    3: "socialism",
+    4: "Communist-State",
+    5: "anarchist_communism",
+    6: "Conservative",
+    7: "Autocracy",
+    8: "Mod_Vilayat_e_Faqih",
+    9: "Vilayat_e_Faqih",
+    10: "Kingdom",
+    11: "Caliphate",
+    12: "Neutral_Muslim_Brotherhood",
+    13: "Neutral_Autocracy",
+    14: "Neutral_conservatism",
+    15: "oligarchism",
+    16: "Neutral_Libertarian",
+    17: "Neutral_green",
+    18: "neutral_Social",
+    19: "Neutral_Communism",
+    20: "Nat_Populism",
+    21: "Nat_Fascism",
+    22: "Nat_Autocracy",
+    23: "Monarchist",
+}
 _DO_NOT_RETIRE_FLAG = "do_not_retire"
 _RE_TAG_SCOPE = re.compile(r"^[A-Z]{2,3}$")
 _LOGIC_SCOPE_TOKENS = {"AND", "OR", "NOT"}
@@ -3142,26 +3168,65 @@ def _tier_discriminates(limit, counter):
     return False
 
 
+def _slot_branch_token(slot):
+    name = _PARTY_SLOT_NAMES.get(slot)
+    if name is None:
+        return None
+    return _SET_IDEOLOGY_PREFIX + name
+
+
+def _is_branch_gate(child, token=None):
+    if (
+        child.key == "has_country_flag"
+        and child.value
+        and child.value.startswith(_SET_IDEOLOGY_PREFIX)
+    ):
+        return token is None or child.value == token
+    if child.key == "western_autocrats_are_in_power" and child.value == "yes":
+        return token is None or token == "set_Western_Autocracy"
+    if child.key == "check_variable" and len(child.children) == 1:
+        inner = child.children[0]
+        if (
+            inner.key == "ruling_party"
+            and inner.value
+            and _RE_BARE_INT.match(inner.value)
+        ):
+            found = _slot_branch_token(int(inner.value))
+            return found is not None and (token is None or found == token)
+    return False
+
+
 def _branch_flag(node):
-    """The set_<ideology> flag an if/else_if branch gates on, or None."""
+    """The set_<ideology> token an if/else_if branch gates on, or None."""
     limit = _first_child(node, "limit")
     if limit is None:
         return None
     for child in limit.children:
+        if child.key == "western_autocrats_are_in_power" and child.value == "yes":
+            return "set_Western_Autocracy"
         if (
             child.key == "has_country_flag"
             and child.value
             and child.value.startswith(_SET_IDEOLOGY_PREFIX)
         ):
             return child.value
+        if child.key == "check_variable" and len(child.children) == 1:
+            inner = child.children[0]
+            if (
+                inner.key == "ruling_party"
+                and inner.value
+                and _RE_BARE_INT.match(inner.value)
+            ):
+                found = _slot_branch_token(int(inner.value))
+                if found:
+                    return found
     return None
 
 
 def _branch_discriminates(node, flag):
     limit = _first_child(node, "limit")
     return limit is not None and any(
-        not (child.key == "has_country_flag" and child.value == flag)
-        for child in limit.children
+        not _is_branch_gate(child, flag) for child in limit.children
     )
 
 

@@ -629,7 +629,7 @@ class TestOwnerPartyGates:
 
 ROSTER_FILE = """
 set_leader_DEN = {
-	if = { limit = { has_country_flag = set_conservatism }
+	if = { limit = { check_variable = { ruling_party = 1 } }
 		if = { limit = { check_variable = { conservatism_leader = 0 } }
 			add_to_variable = { conservatism_leader = 1 }
 			create_country_leader = { name = "Anders Fogh" ideology = conservatism }
@@ -641,7 +641,7 @@ set_leader_DEN = {
 			set_temp_variable = { b = 1 }
 		}
 	}
-	else_if = { limit = { has_country_flag = set_socialism }
+	else_if = { limit = { check_variable = { ruling_party = 3 } }
 		if = { limit = { check_variable = { socialism_leader = 0 } }
 			add_to_variable = { socialism_leader = 1 }
 			create_country_leader = { name = "Mette Frederiksen" ideology = socialism }
@@ -674,7 +674,6 @@ WALKER_IMMEDIATE = """
 		set_elections_60_months = yes
 	}
 	else = {
-		set_ruling_leader = yes
 		set_leader = yes
 	}
 """
@@ -781,7 +780,7 @@ class TestWalker:
         blind = report.parse_walker(
             "if = { limit = { date > 2010.5.11 } "
             "set_temp_variable = { rul_party_temp = 1 } }"
-            " else = { set_ruling_leader = yes set_leader = yes }"
+            " else = { set_leader = yes }"
         )
         assert [branch.pointer for branch in blind.chain] == [None, None]
         assert blind.chain[1].advances
@@ -794,21 +793,11 @@ class TestWalker:
 
 
 class TestPartyIndices:
-    def test_indices_are_read_from_set_ruling_leader(self):
-        text = (
-            "set_ruling_leader = {\n"
-            "\tif = { limit = { is_in_array = { ruling_party = 0 } }\n"
-            "\t\tset_country_flag = set_Western_Autocracy\n"
-            "\t}\n"
-            "\telse_if = { limit = { is_in_array = { ruling_party = 3 } }\n"
-            "\t\tset_country_flag = set_socialism\n"
-            "\t}\n"
-            "}\n"
-        )
-        assert report.parse_party_indices(text) == {
-            0: "Western_Autocracy",
-            3: "socialism",
-        }
+    def test_indices_cover_all_24_slots(self):
+        indices = report.parse_party_indices("")
+        assert indices[0] == "Western_Autocracy"
+        assert indices[23] == "Monarchist"
+        assert len(indices) == 24
 
 
 class TestLocalisation:
@@ -1153,7 +1142,7 @@ scripted_gui = {
 """,
     "common/scripted_effects/DEN_political_leaders.txt": """
 set_leader_DEN = {
-	if = { limit = { has_country_flag = set_conservatism }
+	if = { limit = { check_variable = { ruling_party = 1 } }
 		if = { limit = { check_variable = { conservatism_leader = 0 } }
 			add_to_variable = { conservatism_leader = 1 }
 			create_country_leader = { name = "Poul Rasmussen" ideology = conservatism }
@@ -1205,7 +1194,6 @@ country_event = {
 			set_elections_48_months = yes
 		}
 		else = {
-			set_ruling_leader = yes
 			set_leader = yes
 		}
 	}

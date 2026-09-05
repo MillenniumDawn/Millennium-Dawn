@@ -233,7 +233,7 @@ def test_political_leaders_file_dispatch(tmp_path, scoped_refs):
         "common/scripted_effects/MD_TAG_political_leaders.txt",
         "set_leader_TAG = {",
         "\tif = {",
-        "\t\tlimit = { has_country_flag = set_conservatism }",
+        "\t\tlimit = { check_variable = { ruling_party = 1 } }",
         "\t\tif = {",
         "\t\t\tlimit = { check_variable = { conservatism_leader = 0 } }",
         "\t\t\tadd_to_variable = { conservatism_leader = 2 }",
