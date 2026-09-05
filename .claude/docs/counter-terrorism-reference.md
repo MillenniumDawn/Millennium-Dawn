@@ -15,6 +15,13 @@ position. Raid resolution finds the ID's current slot; a destroyed or missing ta
 organization effects. The player's selected slot shifts with surviving organizations and resets
 to the first slot when its organization is removed. Organization controls require a valid slot.
 
+Attacked, infiltrated, and failed-infil state live in per-country arrays indexed by organization
+id (`ct_attacked_by_org_arr`, `ct_infiltrated_org_arr`, `ct_failed_infil_org_arr`, fixed size 10).
+Id indexing survives slot shifts, so org creation and removal touch no per-country state except
+clearing the removed id (ids recycle through the inactive pool). Attacked and failed-infil entries
+count down one per staggered pass (13 passes cover the old 365-day flag window); infiltrated is
+permanent until its org is removed. No CT scoring, gate, or button uses `meta_trigger`/`meta_effect`.
+
 Global setup creates the organization arrays before country intel initialization. New countries
 size their intel arrays from the current organization count, including when that count is zero.
 Creation appends a complete organization record with a controlled HQ in the existing Middle East

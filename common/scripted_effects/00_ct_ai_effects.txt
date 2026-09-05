@@ -119,14 +119,7 @@ ct_ai_select_target_org = {
 		#Attack flags are keyed by org id, not array index — indices shift when orgs die
 		set_temp_variable = { cur_org_id = global.active_terror_orgs^i }
 		if = {
-			limit = {
-				meta_trigger = {
-					text = {
-						has_country_flag = ct_attacked_by_org_[ORG]
-					}
-					ORG = "[?cur_org_id]"
-				}
-			}
+			limit = { check_variable = { ct_attacked_by_org_arr^cur_org_id > 0 } }
 			add_to_temp_variable = { ct_ai_org_score = 40 }
 		}
 
@@ -138,14 +131,7 @@ ct_ai_select_target_org = {
 		}
 
 		if = {
-			limit = {
-				meta_trigger = {
-					text = {
-						has_country_flag = ct_infiltrated_agent_[ORG]
-					}
-					ORG = "[?global.active_terror_orgs^i]"
-				}
-			}
+			limit = { check_variable = { ct_infiltrated_org_arr^cur_org_id > 0 } }
 			add_to_temp_variable = { ct_ai_org_score = 15 }
 		}
 
@@ -177,6 +163,13 @@ ct_ai_select_target_org = {
 #executes the select action against the target organization
 ct_ai_execute_action = {
 	set_temp_variable = { ct_ai_acted = 1 }
+	if = {
+		limit = {
+			check_variable = { selected_org > -1 }
+			check_variable = { selected_org < global.active_terror_orgs^num }
+		}
+		set_temp_variable = { ct_exec_org_id = global.active_terror_orgs^selected_org }
+	}
 
 	if = {
 		limit = {
@@ -217,22 +210,8 @@ ct_ai_execute_action = {
 	else_if = {
 		limit = {
 			has_political_power > 100
-			NOT = {
-				meta_trigger = {
-					text = {
-						has_country_flag = ct_infiltrated_agent_[ORG]
-					}
-					ORG = "[?global.active_terror_orgs^selected_org]"
-				}
-			}
-			NOT = {
-				meta_trigger = {
-					text = {
-						has_country_flag = ct_failed_infil_against_[ORG]
-					}
-					ORG = "[?global.active_terror_orgs^selected_org]"
-				}
-			}
+			NOT = { check_variable = { ct_infiltrated_org_arr^ct_exec_org_id > 0 } }
+			NOT = { check_variable = { ct_failed_infil_org_arr^ct_exec_org_id > 0 } }
 		}
 		ct_ai_infiltrate_agent = yes
 	}
@@ -350,6 +329,14 @@ ct_ai_mass_gathering = {
 ct_ai_infiltrate_agent = {
 	add_political_power = -50
 
+	if = {
+		limit = {
+			check_variable = { selected_org > -1 }
+			check_variable = { selected_org < global.active_terror_orgs^num }
+		}
+		set_temp_variable = { ct_infil_org_id = global.active_terror_orgs^selected_org }
+	}
+
 	set_temp_variable = { success_chance = { value = international_terror_org_intel^selected_org add = ct_intel_agency_value } }
 	set_temp_variable = { fail_chance = { value = 100 subtract = success_chance } }
 
@@ -365,12 +352,7 @@ ct_ai_infiltrate_agent = {
 				max = 0.5
 			}
 			add_to_variable = { international_terror_org_specific_intel^selected_org = random_add }
-			meta_effect = {
-				text = {
-					set_country_flag = ct_infiltrated_agent_[ORG]
-				}
-				ORG = "[?global.active_terror_orgs^selected_org]"
-			}
+			set_variable = { ct_infiltrated_org_arr^ct_infil_org_id = 1 }
 			if = { limit = { is_debug = yes }
 				log = "[GetDateText]: [THIS.GetTag]: DEBUG: CT AI infiltration SUCCESS — org [?selected_org], specific intel +[?random_add]"
 			}
@@ -383,16 +365,7 @@ ct_ai_infiltrate_agent = {
 				max = -0.05
 			}
 			add_to_variable = { international_terror_org_specific_intel^selected_org = random_add }
-			meta_effect = {
-				text = {
-					set_country_flag = {
-						flag = ct_failed_infil_against_[ORG]
-						days = 365
-						value = 1
-					}
-				}
-				ORG = "[?global.active_terror_orgs^selected_org]"
-			}
+			set_variable = { ct_failed_infil_org_arr^ct_infil_org_id = 13 }
 			if = { limit = { is_debug = yes }
 				log = "[GetDateText]: [THIS.GetTag]: DEBUG: CT AI infiltration FAILED — org [?selected_org], specific intel [?random_add]"
 			}
