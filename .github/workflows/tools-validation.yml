@@ -69,6 +69,7 @@ jobs:
             .claude/docs/typo-watchlist.md
             resources/documentation/modifiers_documentation.md
             common/national_focus
+            common/scripted_localisation/01_politics_scripted_localisation.txt
             common/idea_tags
             common/script_enums.txt
             common/units/equipment
@@ -182,6 +183,14 @@ jobs:
           python -m pytest \
             tools/tests/staged_validators_test.py \
             tools/tests/staged_validators_real_test.py -q
+
+      - name: Run branch common-mistakes validation
+        if: >-
+          !cancelled() && matrix.check.id == 'staged' &&
+          steps.staged-deps.outcome == 'success'
+        run: >-
+          python tools/validation/validate_common_mistakes.py
+          --strict --no-color --workers 4
 
       # Run after test failures, but not broken setup or cancellation.
       - name: Run tools validation

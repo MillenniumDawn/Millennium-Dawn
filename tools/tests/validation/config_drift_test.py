@@ -636,6 +636,16 @@ def test_staged_validator_integration_runs_in_isolated_worktree():
     assert "staged_validators_test.py" in run_step["run"]
     assert "staged_validators_real_test.py" in run_step["run"]
 
+    branch_step = next(
+        s for s in steps if s.get("name") == "Run branch common-mistakes validation"
+    )
+    assert "!cancelled()" in branch_step["if"]
+    assert "steps.staged-deps.outcome == 'success'" in branch_step["if"]
+    assert "validate_common_mistakes.py" in branch_step["run"]
+    assert "--strict" in branch_step["run"]
+    assert "--staged" not in branch_step["run"]
+    assert steps.index(branch_step) > steps.index(run_step)
+
     tools_step = next(s for s in steps if s.get("name") == "Run tools validation")
     # Runs even when the staged tests fail, but not on broken setup or cancel.
     assert "!cancelled()" in tools_step["if"]
@@ -686,6 +696,7 @@ def test_tools_tests_checkout_consumed_configuration():
         # real files those loaders read; without them each returns None and the
         # module-level assertions blow up at collection time.
         "common/national_focus",
+        "common/scripted_localisation/01_politics_scripted_localisation.txt",
         "common/script_enums.txt",
         "common/units/equipment",
         # renewable_power_per_cost_test drives the CLI against its live input.

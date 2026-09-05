@@ -364,13 +364,17 @@ def _build_focus(focus_id: str, kind: str, line: int, body: str, tag: str) -> Fo
     for key, scalar, block in iter_statements(body):
         if key == "prerequisite" and block is not None:
             group = [
-                value for name, value, _ in iter_statements(block) if name == "focus"
+                value
+                for name, value, _ in iter_statements(block)
+                if name == "focus" and value is not None
             ]
             if group:
                 focus.prereq_groups.append(group)
         elif key == "mutually_exclusive" and block is not None:
             focus.mutex.extend(
-                value for name, value, _ in iter_statements(block) if name == "focus"
+                value
+                for name, value, _ in iter_statements(block)
+                if name == "focus" and value is not None
             )
         elif key in ("available", "allow_branch") and block is not None:
             _read_gates(block, focus)
@@ -659,7 +663,8 @@ def build_states(rule: Optional[Rule], flags: Sequence[str]) -> List[State]:
             )
             options.append((option.name, match))
     else:
-        options = [(flag, flag) for flag in flags] + [("NO_PATH", None)]
+        options.extend((flag, flag) for flag in flags)
+        options.append(("NO_PATH", None))
     return [
         State(option=name, flag=flag, historical=historical)
         for name, flag in options
@@ -1600,11 +1605,6 @@ def _block_of(body: str, key: str) -> Optional[str]:
     return None
 
 
-def parse_party_indices(text: str) -> Dict[int, str]:
-    """Map `ruling_party` index to sub-ideology."""
-    return dict(PARTY_SLOT_NAMES)
-
-
 def parse_leader_roster(text: str, tag: str) -> Dict[str, List[Leader]]:
     """Map sub-ideology to its ordered succession list in `set_leader_<TAG>`."""
     match = re.search(r"^\s*set_leader_" + tag + r"\s*=\s*\{", text, re.M)
@@ -1810,12 +1810,7 @@ def _government_findings(root: str, tag: str) -> Dict:
     }
     total_dated = sum(dated.values())
 
-    parties: Dict[int, str] = {}
-    election_effects = os.path.join(
-        root, "common", "scripted_effects", "99_election_effects.txt"
-    )
-    if os.path.isfile(election_effects):
-        parties = parse_party_indices(read_script(election_effects))
+    parties = dict(PARTY_SLOT_NAMES)
 
     yearly = os.path.join(root, "common", "scripted_effects", "00_yearly_effects.txt")
     schedule = (

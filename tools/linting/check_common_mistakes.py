@@ -42,14 +42,14 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - Event AI choices that all reach factor 0 when historical focus and the
     bankruptcy mission are both active
   - hidden_trigger = { } directly inside custom_trigger_tooltip (redundant nesting)
+  - Retired set_/has_ ideology country flags in runtime scripts (use ruling_party).
   - Malformed leader rotations in common/scripted_effects/*_political_leaders.txt:
     a tier that advances its counter by anything but 1, a do_not_retire guard that
     doesn't undo its own tier's increment, a gap or an undiscriminated duplicate in a
-    branch's tier numbers, a second if/else_if branch on an already-handled set_
-    ideology flag, an always-false NOT = { check_variable = { b = 0 } }, and a branch
-    counting with another ideology's leader counter. set_leader kills the country
-    leader before dispatching, so every one of these hands the country a randomly
-    generated leader.
+    branch's tier numbers, an always-false NOT = { check_variable = { b = 0 } }, and a
+    branch counting with another ideology's leader counter. set_leader kills the
+    country leader before dispatching, so every one of these hands the country a
+    randomly generated leader.
   - add_to_faction = X where X is not a country (a faction name like BRICS, or a
     lowercase id) -- add_to_faction adds the ARGUMENT country to the current
     scope's faction; it takes a country tag or scope ref, never a faction name.
@@ -3378,6 +3378,34 @@ def _check_impossible_b_guards(node, issues):
         _check_impossible_b_guards(child, issues)
 
 
+def _check_retired_ideology_flags(lines):
+    retired_flags = {f"set_{name}" for name in PARTY_SLOT_NAMES.values()}
+    operations = {"has_country_flag", "set_country_flag", "clr_country_flag"}
+    issues = []
+
+    def walk(nodes):
+        for node in nodes:
+            value = node.value
+            line = node.line
+            if node.key in operations and value is None:
+                flag = _first_child(node, "flag")
+                if flag is not None:
+                    value = flag.value
+                    line = flag.line
+            if node.key in operations and value in retired_flags:
+                issues.append(
+                    (
+                        line,
+                        f"retired ideology flag {value} -- gate on "
+                        "ruling_party (slot 0: western_autocrats_are_in_power)",
+                    )
+                )
+            walk(node.children)
+
+    walk(_parse_script_tree(lines))
+    return sorted(issues)
+
+
 def _check_leader_rotation(lines):
     """Flag malformed leader rotations in common/scripted_effects/*_political_leaders.txt.
 
@@ -3386,21 +3414,6 @@ def _check_leader_rotation(lines):
     authored one.
     """
     issues = []
-    retired_tokens = tuple(
-        f"has_country_flag = set_{name}" for name in PARTY_SLOT_NAMES.values()
-    ) + tuple(f"set_country_flag = set_{name}" for name in PARTY_SLOT_NAMES.values())
-    for i, line in enumerate(lines, 1):
-        code = strip_inline_comment(line)
-        for token in retired_tokens:
-            if token in code:
-                issues.append(
-                    (
-                        i,
-                        f"retired ideology flag {token.split()[-1]} -- gate on "
-                        "ruling_party (slot 0: western_autocrats_are_in_power)",
-                    )
-                )
-                break
     for root in _parse_script_tree(lines):
         if not root.key.startswith(_LEADER_EFFECT_PREFIX):
             continue
@@ -3641,6 +3654,7 @@ def check_file(filepath):
     issues.extend(_check_mutually_exclusive_contradictions(lines))
     issues.extend(_check_has_idea_mutex_in_not_block(lines))
     issues.extend(_check_country_exists_scope_contradiction(lines))
+    issues.extend(_check_retired_ideology_flags(lines))
 
     if is_focus_file:
         issues.extend(_check_focus_available_always_no(lines))
