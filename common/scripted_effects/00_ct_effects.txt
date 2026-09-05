@@ -5,7 +5,9 @@
 counter_terror_nation_startup = {
 	set_temp_variable = { ct_org_count = global.active_terror_orgs^num }
 	ct_resize_nation_intel = yes
-	ct_init_org_id_state = yes
+	resize_array = { ct_attacked_by_org_arr = 10 }
+	resize_array = { ct_infiltrated_org_arr = 10 }
+	resize_array = { ct_failed_infil_org_arr = 10 }
 	counter_terror_individual = yes
 }
 
@@ -14,13 +16,6 @@ ct_resize_nation_intel = {
 	resize_array = { international_terror_org_specific_intel = ct_org_count }
 	resize_array = { international_terror_org_temp_specific_intel = ct_org_count }
 	resize_array = { ct_mass_gather_store_var = ct_org_count }
-}
-
-# Org-id-indexed state (ids 0-9). Survives slot shifts, needs no resize on org add/remove.
-ct_init_org_id_state = {
-	resize_array = { ct_attacked_by_org_arr = 10 }
-	resize_array = { ct_infiltrated_org_arr = 10 }
-	resize_array = { ct_failed_infil_org_arr = 10 }
 }
 
 counter_terror_global_setup = {
@@ -221,29 +216,25 @@ remove_org = {
 		}
 		for_each_scope_loop = {
 			array = global.ct_first_week
-			ct_remove_nation_intel = yes
-			ct_clear_org_id_state = yes
+			ct_remove_nation_org_state = yes
 		}
 		for_each_scope_loop = {
 			array = global.ct_second_week
-			ct_remove_nation_intel = yes
-			ct_clear_org_id_state = yes
+			ct_remove_nation_org_state = yes
 		}
 		for_each_scope_loop = {
 			array = global.ct_third_week
-			ct_remove_nation_intel = yes
-			ct_clear_org_id_state = yes
+			ct_remove_nation_org_state = yes
 		}
 		for_each_scope_loop = {
 			array = global.ct_last_week
-			ct_remove_nation_intel = yes
-			ct_clear_org_id_state = yes
+			ct_remove_nation_org_state = yes
 		}
 		international_systems_force_update = yes
 	}
 }
 
-ct_remove_nation_intel = {
+ct_remove_nation_org_state = {
 	remove_from_array = { array = international_terror_org_intel index = targeted_org }
 	remove_from_array = { array = international_terror_org_specific_intel index = targeted_org }
 	remove_from_array = { array = international_terror_org_temp_specific_intel index = targeted_org }
@@ -256,6 +247,9 @@ ct_remove_nation_intel = {
 		limit = { check_variable = { selected_org = targeted_org } }
 		set_variable = { selected_org = 0 }
 	}
+	set_variable = { ct_attacked_by_org_arr^ct_cleared_org_id = 0 }
+	set_variable = { ct_infiltrated_org_arr^ct_cleared_org_id = 0 }
+	set_variable = { ct_failed_infil_org_arr^ct_cleared_org_id = 0 }
 }
 
 # One tick per staggered pass (~28 days); 13 ticks cover the old 365-day flag window.
@@ -265,7 +259,7 @@ ct_decay_org_id_state = {
 		value = ct_decay_v
 		index = ct_decay_i
 		if = {
-			limit = { check_variable = { ct_attacked_by_org_arr^ct_decay_i > 0 } }
+			limit = { check_variable = { ct_decay_v > 0 } }
 			subtract_from_variable = { ct_attacked_by_org_arr^ct_decay_i = 1 }
 		}
 		if = {
@@ -273,13 +267,6 @@ ct_decay_org_id_state = {
 			subtract_from_variable = { ct_failed_infil_org_arr^ct_decay_i = 1 }
 		}
 	}
-}
-
-# Org ids recycle through the inactive pool, so a removed id must start clean.
-ct_clear_org_id_state = {
-	set_variable = { ct_attacked_by_org_arr^ct_cleared_org_id = 0 }
-	set_variable = { ct_infiltrated_org_arr^ct_cleared_org_id = 0 }
-	set_variable = { ct_failed_infil_org_arr^ct_cleared_org_id = 0 }
 }
 
 ct_resolve_raid_org = {
