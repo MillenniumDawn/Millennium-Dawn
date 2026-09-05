@@ -568,6 +568,7 @@ _IDEA_REF_BLOCK = re.compile(
     r"\b(?:add_ideas|remove_ideas)\s*=\s*\{([^{}]*)\}", re.IGNORECASE
 )
 _WORD_TOKEN = re.compile(r"[A-Za-z0-9_.\-]+")
+_IDEA_LITERAL_TOKEN_REF = re.compile(r"\btoken:([A-Za-z0-9_.\-]+)")
 
 # Meta-effect references build the idea name at runtime from a scope substitution,
 # e.g. `idea = tribute_idea_[ROOTTAG]` or `remove_ideas = foo_[THIS.GetTag]`. The
@@ -608,7 +609,8 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
     """Pool worker: every idea name a file references, for the unused check.
 
     Captures single (`add_ideas = X`), block (`add_ideas = { X Y }`), timed
-    (`idea = X`) and swap (`add_idea`/`remove_idea`) forms. Content-cached.
+    (`idea = X`), swap (`add_idea`/`remove_idea`) and literal `token:X`
+    forms. Content-cached.
     """
     filepath, mod_path = args
     if should_skip_file(filepath):
@@ -621,6 +623,7 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
 
     def _compute() -> List[str]:
         refs = set(_IDEA_REF_GENEROUS.findall(text))
+        refs.update(_IDEA_LITERAL_TOKEN_REF.findall(text))
         for m in _IDEA_REF_BLOCK.finditer(text):
             refs.update(_WORD_TOKEN.findall(m.group(1)))
         for prefix in _IDEA_REF_META.findall(text):
