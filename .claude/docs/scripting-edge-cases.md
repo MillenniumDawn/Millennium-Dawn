@@ -44,12 +44,36 @@ Also watch for typos in the temp-var name itself (e.g., `influence_tBRAet` from 
 
 When a function uses `^index` array subscripts, the **meaning of the index variable** must be obvious and consistent. Bugs arise when two different index types are stored in similarly-named variables.
 
-| Variable name              | Should hold                  | Must NOT hold                                   |
-| -------------------------- | ---------------------------- | ----------------------------------------------- |
-| `project`, `slot`, `idx`   | Slot / array position (0..N) | Building type, category ID, or other lookup key |
-| `type`, `kind`, `category` | Lookup key / type ID (1..N)  | Slot index                                      |
+| Variable name              | Should hold                  |
+| -------------------------- | ---------------------------- |
+| `project`, `slot`, `idx`   | Slot / array position (0..N) |
+| `type`, `kind`, `category` | Lookup key / type ID (1..N)  |
+
+Neither kind may hold the other's: a slot variable must not hold a building type, category ID, or other lookup key; a type variable must not hold a slot index.
 
 **Rule:** Document an array-index parameter in the function comment. Verify every caller passes the right kind of index. See `.claude/docs/refactor-checklist.md` for the full verification steps.
+
+## damage_building / remove_building Need a Matching Presence Guard
+
+Both effects require the named building to exist in the scope they run in. Against a state that doesn't have it, the engine logs an error and does nothing. One stray call is invisible; MD fires these from raids and repeatable `random_list` decisions, so at campaign scale the log spam becomes a real cost (#2806).
+
+The guard must name the **same** building as the effect. An `if` that gates on something else — an idea, a flag, state control — reads like a guard and isn't one:
+
+```
+# Wrong — guarded, but on an idea; state 652 may hold no industrial_complex
+if = {
+    limit = { has_idea = SOV_foreign_cars_idea1 }
+    652 = { remove_building = { type = industrial_complex level = 2 } }
+}
+
+# Correct — the building's own count trigger, in state scope
+if = {
+    limit = { fuel_silo > 0 }
+    damage_building = { type = fuel_silo damage = 1 }
+}
+```
+
+Other accepted forms: `non_damaged_building_level = { building = X level > 0 }` (use this when damage matters, not just presence), a `random_list` bucket zeroed by `modifier = { factor = 0  X < 1 }`, and an `any_core_state = { X > N }` pre-selection before a `random_core_state` pick. Flagged (WARNING) by `validate_building_guards.py`.
 
 ## Guard Gates on Optional / Elected Office Holders — Worked Example
 
@@ -109,13 +133,21 @@ Mirror the vacant case in the tooltip (e.g. "if no office is filled, this requir
 
 Some effects accept `event_target:` / `tag` / scope tokens directly in their parameters; others require you to enter the target country as the current scope (typically `event_target:X = { ... }`) and reference the other party as `ROOT` / `PREV` / `THIS` inside the block. The behavior is per-effect, not per-mod.
 
-| Effect                              | `target =` accepts `event_target:`? | Pattern                                                                 |
-| ----------------------------------- | ----------------------------------- | ----------------------------------------------------------------------- |
-| `add_to_war`                        | yes                                 | `add_to_war = { targeted_alliance = event_target:X enemy = event_target:Y }` at executor scope |
-| `add_opinion_modifier`              | yes (in practice)                   | `add_opinion_modifier = { target = event_target:X modifier = foo }`     |
-| `reverse_add_opinion_modifier`      | yes (in practice)                   | `reverse_add_opinion_modifier = { target = event_target:X modifier = foo }` |
-| `add_relation_modifier`             | **no — tag literal only**          | enter scope: `event_target:X = { add_relation_modifier = { target = ROOT modifier = foo } }` |
-| `send_equipment`                    | yes                                 | `send_equipment = { target = event_target:X ... }`                      |
+| Effect                         | `target =` accepts `event_target:`? |
+| ------------------------------ | ----------------------------------- |
+| `add_to_war`                   | yes                                 |
+| `add_opinion_modifier`         | yes (in practice)                   |
+| `reverse_add_opinion_modifier` | yes (in practice)                   |
+| `add_relation_modifier`        | **no — tag literal only**           |
+| `send_equipment`               | yes                                 |
+
+Patterns:
+
+- `add_to_war = { targeted_alliance = event_target:X enemy = event_target:Y }` at executor scope
+- `add_opinion_modifier = { target = event_target:X modifier = foo }`
+- `reverse_add_opinion_modifier = { target = event_target:X modifier = foo }`
+- `add_relation_modifier` — enter scope: `event_target:X = { add_relation_modifier = { target = ROOT modifier = foo } }`
+- `send_equipment = { target = event_target:X ... }`
 
 **Rule of thumb:** when an effect has both an executor side and a `target =` side and the two countries must differ, open a scope block on the side whose `target =` would otherwise need a non-tag token. The executor side becomes `ROOT` / `PREV` from inside the block; the `target =` field takes the simple `TAG` form and is unambiguous.
 

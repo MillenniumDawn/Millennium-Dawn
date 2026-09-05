@@ -2,7 +2,7 @@
 name: Suggestions
 about: "Suggestion for a feature in Millennium Dawn "
 title: "[SUGGESTION]"
-labels: suggested improvement
+labels: ""
 type: Suggestion
 assignees: ""
 ---

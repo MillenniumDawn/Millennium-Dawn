@@ -348,7 +348,7 @@ country_event = { #Turkey offers investments GREECE
 
 	option = {
 		name = Turkish_Economy.5.a #YES
-		log = "[GetDateText]: [This.GetName]: Turkish_Economy.4.a executed"
+		log = "[GetDateText]: [This.GetName]: Turkish_Economy.5.a executed"
 		TUR = {
 			country_event = Turkish_Economy.55
 		}
@@ -365,7 +365,7 @@ country_event = { #Turkey offers investments GREECE
 	}
 	option = {
 		name = Turkish_Economy.5.b #NO
-		log = "[GetDateText]: [This.GetName]: Turkish_Economy.4.b executed"
+		log = "[GetDateText]: [This.GetName]: Turkish_Economy.5.b executed"
 		TUR = {
 			country_event = Turkish_Economy.555
 		}
@@ -459,6 +459,14 @@ country_event = { #How do we appraoch our operation
 		}
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 5
+				TUR_ai_keeps_the_southeast = yes
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS
+			}
 		}
 	}
 	option = {
@@ -469,6 +477,14 @@ country_event = { #How do we appraoch our operation
 		set_country_flag = TUR_PKK_conventional
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 5
+				TUR_ai_keeps_the_southeast = yes
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS
+			}
 		}
 	}
 	option = {
@@ -479,6 +495,14 @@ country_event = { #How do we appraoch our operation
 		activate_mission = TUR_the_promise_of_no_return
 		ai_chance = {
 			base = 10
+			modifier = {
+				factor = 0
+				TUR_ai_keeps_the_southeast = yes
+			}
+			modifier = {
+				factor = 5
+				has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS
+			}
 		}
 	}
 }
@@ -1085,9 +1109,12 @@ country_event = {
 				chance = 50
 
 					935 = {
-						remove_building = {
-							type = industrial_complex
-							level = 1
+						if = {
+							limit = { industrial_complex > 0 }
+							remove_building = {
+								type = industrial_complex
+								level = 1
+							}
 						}
 					}
 
@@ -2222,6 +2249,35 @@ country_event = { # PKK Breaks Free
 	}
 }
 
+country_event = { # Renewed offensive in the southeast
+	id = TUR_pkk.605
+	title = TUR_pkk.605.t
+	desc = TUR_pkk.605.d
+	picture = GFX_TUR_PKK_generic2
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = TUR_PKK_gone }
+	}
+
+	option = {
+		name = TUR_pkk.605.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.605.a executed"
+		add_manpower = -15000
+		add_stability = -0.05
+		add_war_support = -0.05
+		add_political_power = -75
+		set_temp_variable = { treasury_change = -25.00 }
+		modify_treasury_effect = yes
+		custom_effect_tooltip = TUR_PKK_OFFENSIVE_TT
+		set_variable = { TUR_PKK_strength = TUR_PKK_min_strength }
+		add_to_variable = { TUR_PKK_strength = 20 }
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
 #Calling out Özakan - Özakan forms a new party
 country_event = {
 	id = Turkey.1
@@ -2321,12 +2377,6 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = -0.05 }
 		change_relative_party_popularity = yes
 		hidden_effect = {
-			meta_effect = {
-				text = {
-					set_country_flag = [META_SET_RULING_PARTY]
-				}
-				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-			}
 			set_leader = yes
 		}
 
@@ -2345,7 +2395,7 @@ country_event = {
 	fire_only_once = yes
 
 	trigger = {
-		is_in_array = { ruling_party = 3 }
+		check_variable = { ruling_party = 3 }
 		is_in_array = { gov_coalition_array = 20 }
 		OR = {
 			NOT = {
@@ -2371,7 +2421,6 @@ country_event = {
 		hidden_effect = {
 			remove_from_array = { gov_coalition_array = 20 }
 			update_government_coalition_strength = yes
-			set_coalition_drift = yes
 		}
 		country_event = MD4_election_campaign.0
 		hidden_effect = {
@@ -2395,7 +2444,6 @@ country_event = {
 		hidden_effect = {
 			remove_from_array = { gov_coalition_array = 20 }
 			update_government_coalition_strength = yes
-			set_coalition_drift = yes
 		}
 		add_ideas = TUR_minority_government
 		recalculate_party = yes
@@ -2565,7 +2613,7 @@ country_event = {
 	}
 	option = {
 		name = Turkey.8.b	#Support FP
-		log = "[GetDateText]: [This.GetName]: Turkey.8.a executed"
+		log = "[GetDateText]: [This.GetName]: Turkey.8.b executed"
 		ai_chance = {
 			base = 100
 		}
@@ -2733,12 +2781,6 @@ country_event = {
 						add_ideas = TUR_guards_of_kemalism
 						set_temp_variable = { rul_party_temp = 22 }
 						change_ruling_party_effect = yes
-						meta_effect = {
-							text = {
-								set_country_flag = [META_SET_RULING_PARTY]
-							}
-							META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-						}
 						if = {
 							limit = { NOT = { has_idea = the_military } }
 							hidden_effect = { add_ideas = the_military }
@@ -2749,6 +2791,13 @@ country_event = {
 		}
 		clear_variable = military_support
 		clear_variable = islamist_support
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 10
+				check_variable = { islamist_support > military_support }
+			}
+		}
 	}
 	option = {
 		name = Turkey.11.b	#Side with military
@@ -2771,12 +2820,6 @@ country_event = {
 				set_temp_variable = { party_index = 22 }
 				set_temp_variable = { party_popularity_increase = 0.20 }
 				change_relative_party_popularity = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
 			}
 			islamist_support = {
 				custom_effect_tooltip = TUR_MILITARY_COUP_CIVIL_WAR_MIL_TT
@@ -2800,16 +2843,17 @@ country_event = {
 				set_temp_variable = { party_index = 22 }
 				set_temp_variable = { party_popularity_increase = 0.20 }
 				change_relative_party_popularity = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
 			}
 		}
 		clear_variable = military_support
 		clear_variable = islamist_support
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 10
+				check_variable = { military_support > islamist_support }
+			}
+		}
 	}
 }
 
@@ -2910,12 +2954,6 @@ country_event = {
 		trigger = { has_country_leader = { name = "Deniz Baykal" ruling_only = yes } }
 		ai_chance = { base = 50 }
 		hidden_effect = {
-			meta_effect = {
-				text = {
-					set_country_flag = [META_SET_RULING_PARTY]
-				}
-				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-			}
 			set_leader = yes
 		}
 		set_temp_variable = { party_index = 1 }
@@ -3096,7 +3134,7 @@ country_event = {
 				puppet = PER
 				PER = {
 					set_cosmetic_tag = PER_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
@@ -3112,7 +3150,7 @@ country_event = {
 				puppet = PER
 				PER = {
 					set_cosmetic_tag = PER_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					leave_faction = yes
 					start_civil_war = {
 						ideology = communism
@@ -3142,7 +3180,7 @@ country_event = {
 				puppet = PER
 				PER = {
 					set_cosmetic_tag = PER_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
@@ -3158,7 +3196,7 @@ country_event = {
 				puppet = PER
 				PER = {
 					set_cosmetic_tag = PER_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					leave_faction = yes
 					start_civil_war = {
 						ideology = communism
@@ -3200,7 +3238,7 @@ country_event = {
 				puppet = IRQ
 				IRQ = {
 					set_cosmetic_tag = IRQ_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
@@ -3216,7 +3254,7 @@ country_event = {
 				puppet = IRQ
 				IRQ = {
 					set_cosmetic_tag = IRQ_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					leave_faction = yes
 					start_civil_war = {
 						ideology = communism
@@ -3246,7 +3284,7 @@ country_event = {
 				puppet = IRQ
 				IRQ = {
 					set_cosmetic_tag = IRQ_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
@@ -3262,7 +3300,7 @@ country_event = {
 				puppet = IRQ
 				IRQ = {
 					set_cosmetic_tag = IRQ_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					leave_faction = yes
 					start_civil_war = {
 						ideology = communism
@@ -3304,7 +3342,7 @@ country_event = {
 				puppet = SYR
 				SYR = {
 					set_cosmetic_tag = SYR_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
@@ -3320,7 +3358,7 @@ country_event = {
 				puppet = SYR
 				SYR = {
 					set_cosmetic_tag = SYR_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					leave_faction = yes
 					start_civil_war = {
 						ideology = communism
@@ -3350,7 +3388,7 @@ country_event = {
 				puppet = SYR
 				SYR = {
 					set_cosmetic_tag = SYR_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					set_temp_variable = { party_index = 5 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
@@ -3366,7 +3404,7 @@ country_event = {
 				puppet = SYR
 				SYR = {
 					set_cosmetic_tag = SYR_VANGUARD
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 					leave_faction = yes
 					start_civil_war = {
 						ideology = communism
@@ -3409,7 +3447,7 @@ country_event = {
 	}
 	option = { #No way
 		name = TurkeyFocusEvents.81.b
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.81.a executed"
+		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.81.b executed"
 		ai_chance = { base = 1 }
 	}
 }
@@ -3476,17 +3514,10 @@ country_event = { #Greece event
 		set_country_flag = GRE_Enosis_In_Progress
 		custom_effect_tooltip = GRE_north_50_TT
 		custom_effect_tooltip = GRE_south_50_TT
-		add_to_variable = { 145.GRE_SUPPORT = 55 }
-		add_to_variable = { 146.GRE_SUPPORT = 45 }
-		clamp_variable = {
-			var = 146.GRE_SUPPORT
-			min = 0
-			max = 100
-		}
-		clamp_variable = {
-			var = 145.GRE_SUPPORT
-			min = 0
-			max = 100
+		hidden_effect = {
+			set_temp_variable = { GRE_cyp_south_change = 55 }
+			set_temp_variable = { GRE_cyp_north_change = 45 }
+			GRE_change_cyprus_support = yes
 		}
 		ai_chance = { base = 10 }
 	}
@@ -3576,7 +3607,7 @@ country_event = { #Turkey Send back Migrants
 	}
 	option = {
 		name = TurkeyFocusEvents.20.b #Sure
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.20.a executed"
+		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.20.b executed"
 		GRE = {
 			add_stability = -0.05
 		}
@@ -3941,6 +3972,7 @@ country_event = { #Against the Gulf Monarchies!
 				popularity = 0.15
 			}
 		}
+		ai_chance = { base = 10 }
 	}
 }
 #
@@ -4528,7 +4560,7 @@ country_event = { #Iran is fighting Israel with Turkey
 	}
 	option = { # No
 		name = TurkeyFocusEvents.381.b
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.38.b executed"
+		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.381.b executed"
 		ai_chance = { base = 0 }
 	}
 }
@@ -4901,7 +4933,7 @@ country_event = { #Turkey asks for Hejaz
 	is_triggered_only = yes
 	option = { #No
 		name = TurkeyFocusEvents.55.a
-		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.54.a executed"
+		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.55.a executed"
 		TUR = {
 			country_event = TurkeyFocusEvents.57
 		}
@@ -6165,7 +6197,7 @@ country_event = { # Turkish Mafia cause a scene!
 	}
 	option = { #Launch a full investigation
 	name = Turkish_mafia.1.c
-	log = "[GetDateText]: [This.GetName]: Turkish_mafia.1.b executed"
+	log = "[GetDateText]: [This.GetName]: Turkish_mafia.1.c executed"
 	add_political_power = -50
 	set_variable = { TUR_event_counter_1_mafia = 2 }
 	custom_effect_tooltip = TUR_mafia_warn
@@ -6970,6 +7002,7 @@ country_event = { #Left-wing parties gain traction
 					}
 				}
 				drop_cosmetic_tag = yes
+				clear_variable = dynamic_flag_variant
 				clr_country_flag = TUR_osmani
 			}
 			# Will lose Anatolian Syndicate cosmetic tag if not Mafia
@@ -6984,6 +7017,7 @@ country_event = { #Left-wing parties gain traction
 				clr_country_flag = playing_mafia
 				remove_ideas = non_state_actor
 				drop_cosmetic_tag = yes
+				clear_variable = dynamic_flag_variant
 			}
 			# Will drop Vanguard of Turkey cosmetic tag if not communist
 			if = {
@@ -6999,6 +7033,7 @@ country_event = { #Left-wing parties gain traction
 					}
 				}
 				drop_cosmetic_tag = yes
+				clear_variable = dynamic_flag_variant
 			}
 		}
 		ai_chance = { base = 5 }
@@ -7043,5 +7078,6 @@ country_event = { # HEPAR is founded
 		name = Turkish_parties.11.a
 		log = "[GetDateText]: [This.GetName]: Turkish_parties.11.a executed"
 		set_country_flag = TUR_hepar_founded
+		ai_chance = { base = 10 }
 	}
 }

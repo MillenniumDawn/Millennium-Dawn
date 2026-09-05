@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Validate technology prerequisites, equipment module unlocks, DLC gating,
-and special-project requirements in history files."""
+special-project requirements, and ruling_party seeding in history files."""
 
 import glob
 import os
 import re
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Tuple
+from typing import DefaultDict, Dict, List, Optional, Set, Tuple, TypedDict
 
 import disk_cache
 from validator_common import BaseValidator, run_validator_main, strip_comments
@@ -28,6 +28,13 @@ _SET_TECHNOLOGY_BLOCK_RE = re.compile(r"^set_technology\s*=\s*\{")
 _IF_BLOCK_LINE_RE = re.compile(r"^if\s*=\s*\{")
 _SET_TECH_1_RE = re.compile(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*1\s*$")
 _ELSE_BLOCK_RE = re.compile(r"else\s*=\s*\{")
+
+
+class _HistoryFrame(TypedDict):
+    name: Optional[str]
+    conds: List[Tuple[str, bool]]
+
+
 _HAS_DLC_RE = re.compile(r'has_dlc\s*=\s*"([^"]+)"')
 _NOT_HAS_DLC_BLOCK_RE = re.compile(
     r'NOT\s*=\s*\{[^{}]*?has_dlc\s*=\s*"([^"]+)"[^{}]*?\}'
@@ -46,6 +53,16 @@ _OOB_REF_RE = re.compile(r'(oob|set_oob|set_air_oob|set_naval_oob)\s*=\s*"([^"]+
 # Anchored to line start (indent-tolerant for DLC-guarded blocks) so a
 # `capital = N` inside a quoted string mid-line can't count as a real capital.
 _CAPITAL_RE = re.compile(r"^\s*capital\s*=\s*\d+", re.MULTILINE)
+_DATE_BLOCK_RE = re.compile(r"^(\d{4}\.\d{1,2}\.\d{1,2})\s*=\s*\{", re.MULTILINE)
+_START_POLITICS_INPUT_RE = re.compile(
+    r"^\s*start_politics_input\s*=\s*yes\b", re.MULTILINE
+)
+# First key in the set_variable block so set_politics = { ruling_party = democratic }
+# does not count as the MD party index.
+_RULING_PARTY_VAR_RE = re.compile(
+    r"set_variable\s*=\s*\{\s*ruling_party\s*=\s*(-?\d+)\s*\}",
+    re.MULTILINE,
+)
 # `complete_special_project = sp:sp_X` lines grant a country the special project
 # at game start. Used to detect techs whose `allow` block requires an SP the
 # country has not completed.
@@ -68,6 +85,34 @@ _SET_BUILDING_LEVEL_RE = re.compile(r"set_building_level\s*=\s*\{")
 _BUILDING_TYPE_RE = re.compile(r"\btype\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)")
 
 
+def _iter_cleaned_text_files(directory: str):
+    """Yield each readable text file in *directory* with comments stripped."""
+    for filepath in glob.iglob(os.path.join(directory, "*.txt")):
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as input_file:
+                content = input_file.read()
+        except (OSError, UnicodeError):
+            continue
+        yield filepath, strip_comments(content)
+
+
+def _iter_project_blocks(projects_dir: str):
+    """Yield every top-level special-project name and block body."""
+    for _filepath, content in _iter_cleaned_text_files(projects_dir):
+        for match in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
+            end = _match_brace_end(content, match.end())
+            yield match.group(1), content[match.end() : end]
+
+
+def _iter_project_allowed_bodies(projects_dir: str):
+    """Yield projects that declare an ``allowed`` block and that block's body."""
+    for name, block in _iter_project_blocks(projects_dir):
+        allowed = re.search(r"allowed\s*=\s*\{", block)
+        if allowed:
+            end = _match_brace_end(block, allowed.end())
+            yield name, block[allowed.end() : end - 1]
+
+
 def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict, Dict]:
     """Build the tech prerequisite graph, the module -> enabling-tech map, and
     the per-tech DLC gating map.
@@ -85,19 +130,12 @@ def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict, Dict]:
     files that grant A in a contradicting DLC branch can be flagged.
     """
     tech_dir = os.path.join(mod_path, "common", "technologies")
-    prerequisites = defaultdict(set)  # tech -> set of techs that lead to it
-    all_techs = set()
-    module_techs = defaultdict(set)  # module -> set of techs that enable it
-    tech_dlc_reqs = defaultdict(list)  # tech -> [(kind, dlc), ...]
+    prerequisites: DefaultDict[str, Set[str]] = defaultdict(set)
+    all_techs: Set[str] = set()
+    module_techs: DefaultDict[str, Set[str]] = defaultdict(set)
+    tech_dlc_reqs: DefaultDict[str, List[Tuple[str, str]]] = defaultdict(list)
 
-    for filepath in glob.iglob(os.path.join(tech_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-
-        content = strip_comments(content)
+    for _filepath, content in _iter_cleaned_text_files(tech_dir):
         _parse_tech_file(content, prerequisites, all_techs, module_techs, tech_dlc_reqs)
 
     return prerequisites, all_techs, module_techs, tech_dlc_reqs
@@ -173,14 +211,7 @@ def parse_tech_sp_requirements(mod_path: str) -> Dict[str, Set[str]]:
     tech_dir = os.path.join(mod_path, "common", "technologies")
     sp_reqs: Dict[str, Set[str]] = defaultdict(set)
 
-    for filepath in glob.iglob(os.path.join(tech_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-
-        content = strip_comments(content)
+    for _filepath, content in _iter_cleaned_text_files(tech_dir):
         outer = re.search(r"^technologies\s*=\s*\{", content, re.MULTILINE)
         if not outer:
             continue
@@ -263,27 +294,10 @@ def parse_sp_allowed_dlc(mod_path: str) -> Dict[str, List[str]]:
     projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
     allowed_dlc: Dict[str, List[str]] = {}
 
-    for filepath in glob.iglob(os.path.join(projects_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-
-        content = strip_comments(content)
-        for m in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
-            name = m.group(1)
-            end = _match_brace_end(content, m.end())
-            block = content[m.end() : end]
-            allowed = re.search(r"allowed\s*=\s*\{", block)
-            if not allowed:
-                continue
-            # Brace-match the allowed block so a has_dlc nested inside (e.g. in
-            # an OR) is still seen; a flat `[^{}]*` capture would miss it.
-            allowed_end = _match_brace_end(block, allowed.end())
-            dlcs = _HAS_DLC_RE.findall(block[allowed.end() : allowed_end])
-            if dlcs:
-                allowed_dlc[name] = sorted(set(dlcs))
+    for name, body in _iter_project_allowed_bodies(projects_dir):
+        dlcs = _HAS_DLC_RE.findall(body)
+        if dlcs:
+            allowed_dlc[name] = sorted(set(dlcs))
 
     return allowed_dlc
 
@@ -301,27 +315,9 @@ def parse_sp_always_yes(mod_path: str) -> Set[str]:
     projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
     always: Set[str] = set()
 
-    for filepath in glob.iglob(os.path.join(projects_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-
-        content = strip_comments(content)
-        for m in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
-            name = m.group(1)
-            end = _match_brace_end(content, m.end())
-            block = content[m.end() : end]
-            allowed = re.search(r"allowed\s*=\s*\{", block)
-            if not allowed:
-                continue
-            allowed_end = _match_brace_end(block, allowed.end())
-            body = block[allowed.end() : allowed_end - 1]
-            if _HAS_DLC_RE.search(body):
-                continue
-            if re.search(r"\balways\s*=\s*yes\b", body):
-                always.add(name)
+    for name, body in _iter_project_allowed_bodies(projects_dir):
+        if not _HAS_DLC_RE.search(body) and re.search(r"\balways\s*=\s*yes\b", body):
+            always.add(name)
 
     return always
 
@@ -340,23 +336,13 @@ def parse_sp_output_claims(mod_path: str) -> Dict[str, List[str]]:
     projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
     claims: Dict[str, List[str]] = defaultdict(list)
 
-    for filepath in glob.iglob(os.path.join(projects_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-
-        content = strip_comments(content)
-        for m in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
-            name = m.group(1)
-            block = content[m.end() : _match_brace_end(content, m.end())]
-            for cet in _CUSTOM_TOOLTIP_RE.finditer(block):
-                body = block[cet.end() : _match_brace_end(block, cet.end()) - 1]
-                if not _SP_UNLOCK_TECH_KEY_RE.search(body):
-                    continue
-                for tp in _TECH_PARAM_RE.finditer(body):
-                    claims[name].append(tp.group(1))
+    for name, block in _iter_project_blocks(projects_dir):
+        for cet in _CUSTOM_TOOLTIP_RE.finditer(block):
+            body = block[cet.end() : _match_brace_end(block, cet.end()) - 1]
+            if not _SP_UNLOCK_TECH_KEY_RE.search(body):
+                continue
+            for tp in _TECH_PARAM_RE.finditer(body):
+                claims[name].append(tp.group(1))
 
     return dict(claims)
 
@@ -471,8 +457,13 @@ def parse_state_building_owners(
 
             if depth == 1:
                 bm = _BUILDING_LEVEL_RE.match(stripped)
-                if bm and bm.group(1) in buildings and int(bm.group(2)) >= 1:
-                    found.add(bm.group(1))
+                if bm and bm.group(1) in buildings:
+                    try:
+                        level = int(bm.group(2))
+                    except ValueError:
+                        continue
+                    if level >= 1:
+                        found.add(bm.group(1))
 
             depth += stripped.count("{") - stripped.count("}")
             if depth <= 0:
@@ -498,24 +489,13 @@ def parse_project_granted_buildings(mod_path: str) -> Dict[str, Set[str]]:
     projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
     granted: Dict[str, Set[str]] = defaultdict(set)
 
-    for filepath in glob.iglob(os.path.join(projects_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-        content = strip_comments(content)
-
-        for m in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
-            name = m.group(1)
-            end = _match_brace_end(content, m.end())
-            block = content[m.end() : end]
-            for sbl in _SET_BUILDING_LEVEL_RE.finditer(block):
-                sbl_end = _match_brace_end(block, sbl.end())
-                body = block[sbl.end() : sbl_end - 1]
-                tm = _BUILDING_TYPE_RE.search(body)
-                if tm:
-                    granted[tm.group(1)].add(name)
+    for name, block in _iter_project_blocks(projects_dir):
+        for sbl in _SET_BUILDING_LEVEL_RE.finditer(block):
+            sbl_end = _match_brace_end(block, sbl.end())
+            body = block[sbl.end() : sbl_end - 1]
+            tm = _BUILDING_TYPE_RE.search(body)
+            if tm:
+                granted[tm.group(1)].add(name)
 
     return dict(granted)
 
@@ -820,8 +800,8 @@ def _walk_history_tokens(
     constraints; because the enclosing `if` frame is still on the stack, deeper
     frames override shallower ones for the same DLC when the guard is resolved.
     """
-    root = {"name": None, "conds": []}
-    stack = [root]
+    root: _HistoryFrame = {"name": None, "conds": []}
+    stack: List[_HistoryFrame] = [root]
     techs: List[Tuple[str, Guard]] = []
     sps: List[Tuple[str, Guard]] = []
 
@@ -851,7 +831,7 @@ def _walk_history_tokens(
             key = t
             after = tokens[i + 2] if i + 2 < n else None
             if after == "{":
-                frame = {"name": key, "conds": []}
+                frame: _HistoryFrame = {"name": key, "conds": []}
                 if key in ("else", "else_if"):
                     frame["conds"] = [
                         (dlc, not present) for dlc, present in stack[-1]["conds"]
@@ -1281,11 +1261,11 @@ def _get_oob_refs(filepath: str) -> List[Tuple[str, int, str]]:
     Returns all non-commented OOB references: oob, set_oob, set_air_oob,
     set_naval_oob. ref_type is the HOI4 key used (e.g. 'oob', 'set_oob').
     """
-    refs = []
+    refs: List[Tuple[str, int, str]] = []
     try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            lines = f.readlines()
-    except Exception:
+        with open(filepath, "r", encoding="utf-8-sig") as history_file:
+            lines = history_file.readlines()
+    except (OSError, UnicodeError):
         return refs
 
     for i, line in enumerate(lines, 1):
@@ -1353,6 +1333,51 @@ def validate_capital_defined(filepath: str) -> List[str]:
     if not _CAPITAL_RE.search(strip_comments(content)):
         return [f"{filename}: no capital defined"]
     return []
+
+
+def validate_ruling_party_assigned(filepath: str) -> List[str]:
+    """start_politics_input clears ruling_party; the same date block must set it."""
+    filename = os.path.basename(filepath)
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            content = strip_comments(f.read())
+    except Exception:
+        return [f"{filename}: could not read file"]
+
+    matches = list(_DATE_BLOCK_RE.finditer(content))
+    if matches:
+        blocks: List[Tuple[str, str]] = []
+        preamble = content[: matches[0].start()]
+        if preamble.strip():
+            blocks.append(("", preamble))
+        for m in matches:
+            body_end = _match_brace_end(content, m.end())
+            blocks.append((m.group(1), content[m.end() : body_end - 1]))
+    else:
+        blocks = [("", content)]
+
+    results = []
+    for label, body in blocks:
+        inputs = list(_START_POLITICS_INPUT_RE.finditer(body))
+        if not inputs:
+            continue
+        clear_at = inputs[-1].start()
+        for m in _RULING_PARTY_VAR_RE.finditer(body):
+            if m.start() <= clear_at:
+                continue
+            try:
+                idx = int(m.group(1))
+            except ValueError:
+                continue
+            if 0 <= idx <= 23:
+                break
+        else:
+            where = f"{label}: " if label else ""
+            results.append(
+                f"{filename}: {where}start_politics_input does not assign "
+                "ruling_party (0-23) after it"
+            )
+    return results
 
 
 def validate_country_file(
@@ -1640,6 +1665,23 @@ class Validator(BaseValidator):
             "History files missing a capital definition:",
         )
 
+    def validate_ruling_party_assigned(self):
+        """Check that start_politics_input is followed by a ruling_party index."""
+        self._log_section("Checking ruling_party assignments in history files...")
+
+        files = self._get_history_files()
+        self.log(f"  Found {len(files)} history files to check")
+
+        results = []
+        for f in files:
+            results.extend(validate_ruling_party_assigned(f))
+
+        self._report(
+            results,
+            "✓ All start_politics_input blocks assign ruling_party after the clear",
+            "History files whose start_politics_input does not assign ruling_party:",
+        )
+
     def validate_reactor_nuclear_status(self):
         """Validate that every tag owning a nuclear_reactor at game start
         grants a non-default nuclear_status idea in its country file."""
@@ -1697,6 +1739,7 @@ class Validator(BaseValidator):
         self.validate_sp_output_consistency()
         self.validate_oob_references()
         self.validate_capital_defined()
+        self.validate_ruling_party_assigned()
         self._build_building_ownership()
         self.validate_reactor_nuclear_status()
         self.validate_project_granted_buildings()
@@ -1705,5 +1748,5 @@ class Validator(BaseValidator):
 if __name__ == "__main__":
     run_validator_main(
         Validator,
-        "Validate history files: technology dependencies, OOB references, capital definitions",
+        "Validate history files: technology dependencies, OOB references, capital and ruling_party",
     )

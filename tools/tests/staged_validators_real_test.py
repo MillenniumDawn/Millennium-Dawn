@@ -10,11 +10,12 @@ Usage:
 """
 
 import os
-import shutil
 import subprocess
 import sys
 import time
 from unittest import SkipTest
+
+from _staged_integration_gate import require_staged_integration_enabled
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -62,6 +63,8 @@ def run_validator(
     label: str,
     expect_issues: bool | None = True,
     min_issues: int = 0,
+    expected_path: str | None = None,
+    expected_category: str | None = None,
 ):
     global passed, failed, errors
 
@@ -103,9 +106,17 @@ def run_validator(
     else:
         status_parts.append(f"{elapsed:.1f}s")
 
-    if expect_issues is True and result.returncode == 0:
+    if expect_issues is True and result.returncode != 1:
         ok = False
-        status_parts.append("expected issues but validator passed")
+        status_parts.append(f"expected findings exit 1 but got {result.returncode}")
+    elif expect_issues is True and expected_path and expected_path not in output:
+        ok = False
+        status_parts.append(f"missing expected path {expected_path}")
+    elif (
+        expect_issues is True and expected_category and expected_category not in output
+    ):
+        ok = False
+        status_parts.append(f"missing expected category {expected_category}")
     elif expect_issues is False and result.returncode != 0:
         ok = False
         status_parts.append(f"expected pass but got exit {result.returncode}")
@@ -157,6 +168,8 @@ def main():
             "events: Event Horizon.txt (missing is_triggered_only)",
             expect_issues=True,
             min_issues=1,
+            expected_path="Event Horizon.txt",
+            expected_category="missing-triggered-only",
         )
         cleanup()
 
@@ -174,6 +187,8 @@ def main():
             "localisation: ALG loc file (unclosed bracket)",
             expect_issues=True,
             min_issues=1,
+            expected_path="MD_focus_ALG_l_english.yml",
+            expected_category="Unpaired brackets found in localisation",
         )
         cleanup()
 
@@ -216,12 +231,16 @@ def main():
             "events: multiple files staged (only events checked)",
             expect_issues=True,
             min_issues=1,
+            expected_path="Event Horizon.txt",
+            expected_category="missing-triggered-only",
         )
         run_validator(
             "validate_localisation.py",
             "localisation: multiple files staged (only loc checked)",
             expect_issues=True,
             min_issues=1,
+            expected_path="MD_focus_ALG_l_english.yml",
+            expected_category="Unpaired brackets found in localisation",
         )
         cleanup()
 
@@ -291,12 +310,7 @@ def test_staged_validators_real():
 
     Opt-in (MD_RUN_STAGED_INTEGRATION=1): it mutates the working repo and runs
     the full validator set, so it stays out of the default `pytest` sweep."""
-    if not os.environ.get("MD_RUN_STAGED_INTEGRATION"):
-        raise SkipTest(
-            "set MD_RUN_STAGED_INTEGRATION=1 to run staged-validator integration"
-        )
-    if shutil.which("git") is None:
-        raise SkipTest("git not available")
+    require_staged_integration_enabled()
     if not _touched_files_clean():
         raise SkipTest("target files have local changes; skipping to avoid clobbering")
     if main() != 0:

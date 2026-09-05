@@ -10,36 +10,19 @@ faction_goal_joint_military_exercises = {
 	visible = {
 		has_faction_research_unlocked = yes
 	}
+	select_effect = {
+		set_temp_variable = { faction_goal_force_infantry_cache = 1 }
+		faction_goal_update_member_metrics_cache = yes
+	}
 	completed = {
 		num_faction_members > 5
-		hidden_trigger = {
-			tooltip_evaluation = eval
-			set_temp_variable = {
-				num_infantry_battalions_faction = {
-					value = 0
-					every_collection = {
-						named_collection = faction_members_collection
-						add = num_battalions_with_type@Militia_Bat
-						add = num_battalions_with_type@L_Inf_Bat
-						add = num_battalions_with_type@L_Air_Inf_Bat
-						add = num_battalions_with_type@Mot_Air_Inf_Bat
-						add = num_battalions_with_type@Mech_Air_Inf_Bat
-						add = num_battalions_with_type@Arm_Air_Inf_Bat
-						add = num_battalions_with_type@L_Marine_Bat
-						add = num_battalions_with_type@L_Air_assault_Bat
-						add = num_battalions_with_type@L_Ranger_Bat
-						add = num_battalions_with_type@L_Marine_Cdo_Bat
-						add = num_battalions_with_type@Special_Forces
-						add = num_battalions_with_type@fake_intel_unit
-					}
-				}
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_infantry_battalions_cache
+				value = 100
+				compare = greater_than_or_equals
+				tooltip = faction_goal_infantry_bats_at_least_tt
 			}
-		}
-		check_variable = {
-			var = num_infantry_battalions_faction
-			value = 100
-			compare = greater_than_or_equals
-			tooltip = faction_goal_infantry_bats_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -114,16 +97,18 @@ faction_goal_technology_sharing = {
 	visible = {
 		has_faction_research_unlocked = yes
 	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
+	}
 	completed = {
 		num_faction_members > 5
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_technology_sharing_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = faction_goal_technology_sharing_completed_tt
 			}
-			buildings = { internet_station }
-			size > 49
 		}
 	}
 	complete_effect = {
@@ -235,26 +220,22 @@ faction_goal_semiconductor_supremacy = {
 	category = long_term
 	group = FOCUS_FILTER_RESEARCH
 	visible = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION_NAME
-			}
-			buildings = { microchip_plant }
-			size > 0
+		scope:faction = {
+			check_variable = { faction_goal_semiconductor_visible_cache = 1 }
 		}
+	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
 	}
 	completed = {
 		num_faction_members > 3
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION_NAME
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_semiconductor_supremacy_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = faction_goal_semiconductor_supremacy_completed_tt
 			}
-			buildings = { microchip_plant }
-			size > 49
 		}
 	}
 	complete_effect = {
@@ -296,60 +277,30 @@ faction_goal_strategic_resource_security = {
 	category = long_term
 	group = resources_to_market_icon
 	visible = {
-		has_resources_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
-			}
-			resource = oil
-			amount < 300
-			extracted = yes
+		scope:faction = {
+			check_variable = { faction_goal_strategic_resources_available_cache = 1 }
 		}
 	}
 	available = {
-		has_resources_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		scope:faction = {
+			custom_trigger_tooltip = {
+				tooltip = faction_goal_strategic_resources_available_tt
+				check_variable = { faction_goal_strategic_resources_available_cache = 1 }
 			}
-			resource = oil
-			amount < 300
-			extracted = yes
 		}
+	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
 	}
 	completed = {
 		num_faction_members > 3
-		has_resources_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
+		scope:faction = {
+			check_variable = {
+				var = faction_goal_strategic_resources_completed_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = faction_goal_strategic_resources_completed_tt
 			}
-			resource = oil
-			amount > 299
-			extracted = yes
-		}
-		has_resources_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
-			}
-			resource = rubber
-			amount > 149
-			extracted = yes
-		}
-		has_resources_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
-			}
-			resource = aluminium
-			amount > 149
-			extracted = yes
 		}
 	}
 	complete_effect = {

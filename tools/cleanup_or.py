@@ -24,7 +24,12 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from shared_utils import strip_inline_comment
+from shared_utils import (
+    atomic_write_text,
+    is_excluded_path,
+    iter_txt_targets,
+    strip_inline_comment,
+)
 
 # ---------------------------------------------------------------------------
 # Core OR-block parsing helpers (also imported by check_common_mistakes.py)
@@ -134,17 +139,12 @@ def _extract_single_condition_lines(inner_text, or_indent):
     return result
 
 
-def _collect_or_block(lines, start):
-    """Collect all lines belonging to the OR = { } block starting at start.
+def _extend_block(lines, start, block_lines, depth):
+    """Append subsequent lines to block_lines while brace depth stays positive.
 
     Returns (block_lines, next_index) where next_index is the first line
-    after the block.
+    after the block closes.
     """
-    line = lines[start]
-    block_lines = [line]
-    depth = 1
-    after_brace = re.sub(r"^.*OR\s*=\s*\{", "", strip_inline_comment(line), count=1)
-    depth += after_brace.count("{") - after_brace.count("}")
     j = start + 1
     while depth > 0 and j < len(lines):
         l = lines[j]
@@ -153,6 +153,18 @@ def _collect_or_block(lines, start):
         depth += code.count("{") - code.count("}")
         j += 1
     return block_lines, j
+
+
+def _collect_or_block(lines, start):
+    """Collect all lines belonging to the OR = { } block starting at start.
+
+    Returns (block_lines, next_index) where next_index is the first line
+    after the block.
+    """
+    line = lines[start]
+    after_brace = re.sub(r"^.*OR\s*=\s*\{", "", strip_inline_comment(line), count=1)
+    depth = 1 + after_brace.count("{") - after_brace.count("}")
+    return _extend_block(lines, start, [line], depth)
 
 
 def _collect_block(lines, start):
@@ -166,15 +178,7 @@ def _collect_block(lines, start):
     """
     code = strip_inline_comment(lines[start])
     depth = code.count("{") - code.count("}")
-    block_lines = [lines[start]]
-    j = start + 1
-    while depth > 0 and j < len(lines):
-        l = lines[j]
-        block_lines.append(l)
-        code = strip_inline_comment(l)
-        depth += code.count("{") - code.count("}")
-        j += 1
-    return block_lines, j
+    return _extend_block(lines, start, [lines[start]], depth)
 
 
 # ---------------------------------------------------------------------------
@@ -248,6 +252,20 @@ def _extract_all_inner_lines(inner_text, target_indent):
     return result
 
 
+def _push_pop_or_context(stack, is_or, opens, closes):
+    """Update the OR-context stack for a line with `opens` opens and `closes` closes.
+
+    stack[-1] is True while the current brace depth was opened by OR = { }, so
+    callers can tell whether an AND = { } at this depth sits inside OR
+    context. Mutates stack in place.
+    """
+    for k in range(opens):
+        stack.append(True if (is_or and k == 0) else False)
+    for _ in range(closes):
+        if len(stack) > 1:
+            stack.pop()
+
+
 def _simplify_and_single_pass(lines):
     """Single pass: remove AND = { } wrappers that are not in OR context.
 
@@ -285,11 +303,7 @@ def _simplify_and_single_pass(lines):
         opens = code.count("{")
         closes = code.count("}")
         out.append(line)
-        for k in range(opens):
-            block_is_or.append(True if (is_or and k == 0) else False)
-        for _ in range(closes):
-            if len(block_is_or) > 1:
-                block_is_or.pop()
+        _push_pop_or_context(block_is_or, is_or, opens, closes)
 
         i += 1
 
@@ -390,11 +404,7 @@ def find_redundant_and_blocks(lines):
         is_or = bool(_RE_AND_KEEPER_OPEN.match(line))
         opens = code.count("{")
         closes = code.count("}")
-        for k in range(opens):
-            block_is_or.append(True if (is_or and k == 0) else False)
-        for _ in range(closes):
-            if len(block_is_or) > 1:
-                block_is_or.pop()
+        _push_pop_or_context(block_is_or, is_or, opens, closes)
 
         i += 1
 
@@ -449,19 +459,18 @@ def process_file(filepath):
     new_lines = simplify_or_block(lines)
     new_lines = simplify_and_block(new_lines)
     if new_lines != lines:
-        with open(filepath, "w", encoding="utf-8", newline="") as f:
-            f.writelines(new_lines)
+        atomic_write_text(filepath, "".join(new_lines))
         return True
     return False
 
 
 # resources/ is reference-only and must never be modified; .git is not content.
-_EXCLUDED_DIRS = {"resources", ".git"}
+_EXCLUDED_DIRS = {"resources", ".git", ".claude"}
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 def _is_excluded_path(path, repo_root=None):
-    """True if the path is under an excluded dir (resources/, .git) inside the repo.
+    """True if the path is under an excluded repository directory.
 
     Matching is against the path *relative to the repo root*, not the absolute
     path: a checkout nested under an ancestor dir literally named `resources`
@@ -473,8 +482,7 @@ def _is_excluded_path(path, repo_root=None):
     `resources/...` target would otherwise be rewritten regardless.
     """
     root = _REPO_ROOT if repo_root is None else os.path.abspath(repo_root)
-    rel = os.path.relpath(os.path.abspath(path), root)
-    return any(part in _EXCLUDED_DIRS for part in rel.split(os.sep))
+    return is_excluded_path(path, _EXCLUDED_DIRS, root)
 
 
 def main(paths):
@@ -483,21 +491,13 @@ def main(paths):
     for path in paths:
         if _is_excluded_path(path):
             print(
-                f"SKIP: {path} is under an excluded directory (resources/, .git); not modified",
+                f"SKIP: {path} is under an excluded directory; not modified",
                 file=sys.stderr,
             )
             continue
-        if os.path.isdir(path):
-            for dirpath, dirnames, filenames in os.walk(path):
-                dirnames[:] = [d for d in dirnames if d not in _EXCLUDED_DIRS]
-                for fn in filenames:
-                    if fn.lower().endswith(".txt"):
-                        full = os.path.join(dirpath, fn)
-                        if process_file(full):
-                            changed.append(os.path.relpath(full, path))
-        elif os.path.isfile(path):
-            if process_file(path):
-                changed.append(path)
+        for display, full in iter_txt_targets(path, _EXCLUDED_DIRS):
+            if process_file(full):
+                changed.append(display)
     if changed:
         print("Simplified OR blocks in:")
         for p in changed:

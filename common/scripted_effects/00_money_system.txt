@@ -87,9 +87,84 @@
 # tweak this to modify the operative cost of all equipment
 @equipment_operative_cost_multiplier = 5
 
+setup_spending_law_tables = {
+	clear_array = global.bureau_law_idea
+	resize_array = { array = global.bureau_law_idea size = 1 }
+	add_to_array = { global.bureau_law_idea = token:bureau_01 }
+	add_to_array = { global.bureau_law_idea = token:bureau_02 }
+	add_to_array = { global.bureau_law_idea = token:bureau_03 }
+	add_to_array = { global.bureau_law_idea = token:bureau_04 }
+	add_to_array = { global.bureau_law_idea = token:bureau_05 }
+
+	clear_array = global.police_law_idea
+	resize_array = { array = global.police_law_idea size = 1 }
+	add_to_array = { global.police_law_idea = token:police_01 }
+	add_to_array = { global.police_law_idea = token:police_02 }
+	add_to_array = { global.police_law_idea = token:police_03 }
+	add_to_array = { global.police_law_idea = token:police_04 }
+	add_to_array = { global.police_law_idea = token:police_05 }
+
+	clear_array = global.edu_law_idea
+	resize_array = { array = global.edu_law_idea size = 1 }
+	add_to_array = { global.edu_law_idea = token:edu_01 }
+	add_to_array = { global.edu_law_idea = token:edu_02 }
+	add_to_array = { global.edu_law_idea = token:edu_03 }
+	add_to_array = { global.edu_law_idea = token:edu_04 }
+	add_to_array = { global.edu_law_idea = token:edu_05 }
+
+	clear_array = global.health_law_idea
+	resize_array = { array = global.health_law_idea size = 1 }
+	add_to_array = { global.health_law_idea = token:health_01 }
+	add_to_array = { global.health_law_idea = token:health_02 }
+	add_to_array = { global.health_law_idea = token:health_03 }
+	add_to_array = { global.health_law_idea = token:health_04 }
+	add_to_array = { global.health_law_idea = token:health_05 }
+	add_to_array = { global.health_law_idea = token:health_06 }
+
+	clear_array = global.social_law_idea
+	resize_array = { array = global.social_law_idea size = 1 }
+	add_to_array = { global.social_law_idea = token:social_01 }
+	add_to_array = { global.social_law_idea = token:social_02 }
+	add_to_array = { global.social_law_idea = token:social_03 }
+	add_to_array = { global.social_law_idea = token:social_04 }
+	add_to_array = { global.social_law_idea = token:social_05 }
+	add_to_array = { global.social_law_idea = token:social_06 }
+
+	clear_array = global.defence_law_idea
+	resize_array = { array = global.defence_law_idea size = 1 }
+	add_to_array = { global.defence_law_idea = token:defence_00 }
+	add_to_array = { global.defence_law_idea = token:defence_01 }
+	add_to_array = { global.defence_law_idea = token:defence_02 }
+	add_to_array = { global.defence_law_idea = token:defence_03 }
+	add_to_array = { global.defence_law_idea = token:defence_04 }
+	add_to_array = { global.defence_law_idea = token:defence_05 }
+	add_to_array = { global.defence_law_idea = token:defence_06 }
+	add_to_array = { global.defence_law_idea = token:defence_07 }
+	add_to_array = { global.defence_law_idea = token:defence_08 }
+	add_to_array = { global.defence_law_idea = token:defence_09 }
+
+	clear_array = global.bureau_workers
+	resize_array = { array = global.bureau_workers size = 1 }
+	add_to_array = { global.bureau_workers = 0.00075 }
+	add_to_array = { global.bureau_workers = 0.0015 }
+	add_to_array = { global.bureau_workers = 0.003 }
+	add_to_array = { global.bureau_workers = 0.00525 }
+	add_to_array = { global.bureau_workers = 0.009 }
+
+	clear_array = global.health_workers
+	resize_array = { array = global.health_workers size = 1 }
+	add_to_array = { global.health_workers = 0.15 }
+	add_to_array = { global.health_workers = 0.30 }
+	add_to_array = { global.health_workers = 0.50 }
+	add_to_array = { global.health_workers = 0.70 }
+	add_to_array = { global.health_workers = 0.90 }
+	add_to_array = { global.health_workers = 1.10 }
+}
+
 # Effect: setup_spending_ladders
 # Purpose: Populates the global per-level spending multiplier arrays once at game start for the ladders
 setup_spending_ladders = {
+	setup_spending_law_tables = yes
 	if = {
 		limit = { NOT = { has_global_flag = spending_ladders_initialized } }
 		clear_array = global.spending_ladder_standard
@@ -1358,14 +1433,13 @@ calculate_additional_income_rate = {
 			set_variable = {
 				additional_income_FRA_cfa_franc_custodian = {
 					value = FRA_cfa_franc_gdp_total
-					multiply = 0.005
+					multiply = 0.0025
 				}
 			}
 			add_to_variable = { additional_income_rate = additional_income_FRA_cfa_franc_custodian }
 		}
 		if = {
 			limit = {
-				has_country_flag = FRA_new_frontiers
 				has_completed_focus = FRA_the_space_program
 				is_subject = no
 				has_capitulated = no
@@ -2005,6 +2079,53 @@ calculate_additional_income_rate = {
 		set_variable = { additional_income_gulf_exploitation = { value = gdp_total multiply = 0.0003 } }
 		add_to_variable = { additional_income_rate = additional_income_gulf_exploitation }
 	}
+	# Saudi Arabia - Seperate from GULF
+	# === Saudi pipeline Additional Income (added by SAU pipeline feature) ===
+	if = { limit = { original_tag = SAU }
+		set_variable = { additional_income_SAU_pipeline_export = 0 }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 1.0 } }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 1.15 } }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 1.25 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 1.0 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 1.15 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 1.25 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 1.0 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 1.15 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 1.25 } }
+		if = { limit = { check_variable = { additional_income_SAU_pipeline_export > 0 } }
+			add_to_variable = { additional_income_rate = additional_income_SAU_pipeline_export }
+		}
+	}
+	# One entry per transit country the pipeline crosses; a host on more than one route is paid for each.
+	if = {
+		limit = {
+			OR = {
+				has_idea = SAU_pipeline_transit_YEM_t1 has_idea = SAU_pipeline_transit_YEM_t2 has_idea = SAU_pipeline_transit_YEM_t3
+				has_idea = SAU_pipeline_transit_JOR_t1 has_idea = SAU_pipeline_transit_JOR_t2 has_idea = SAU_pipeline_transit_JOR_t3
+				has_idea = SAU_pipeline_transit_SYR_t1 has_idea = SAU_pipeline_transit_SYR_t2 has_idea = SAU_pipeline_transit_SYR_t3
+				has_idea = SAU_pipeline_transit_IRQ_t1 has_idea = SAU_pipeline_transit_IRQ_t2 has_idea = SAU_pipeline_transit_IRQ_t3
+				has_idea = SAU_pipeline_transit_TUR_t1 has_idea = SAU_pipeline_transit_TUR_t2 has_idea = SAU_pipeline_transit_TUR_t3
+			}
+		}
+		set_variable = { additional_income_SAU_pipeline_transit = 0 }
+		if = { limit = { has_idea = SAU_pipeline_transit_YEM_t1 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.0 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_YEM_t2 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.15 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_YEM_t3 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.25 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_JOR_t1 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.0 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_JOR_t2 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.15 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_JOR_t3 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.25 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_SYR_t1 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.0 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_SYR_t2 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.15 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_SYR_t3 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.25 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_IRQ_t1 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.0 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_IRQ_t2 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.15 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_IRQ_t3 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.25 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_TUR_t1 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.0 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_TUR_t2 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.15 } }
+		if = { limit = { has_idea = SAU_pipeline_transit_TUR_t3 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.25 } }
+		add_to_variable = { additional_income_rate = additional_income_SAU_pipeline_transit }
+	}
+
 	#Sold Equipment Tax Income
 	if = {
 		limit = { check_variable = { market_sold_contracts > 0 } }
@@ -2327,6 +2448,8 @@ calculate_additional_income_rate = {
 	if = { limit = { has_idea = CPD_war_reparations_receiver }
 		add_to_variable = { additional_income_rate = CPD_reparations_weekly }
 	}
+
+
 }
 
 # Effect: update_tension_premium
@@ -2388,6 +2511,28 @@ calculate_interest_rate = {
 
 		#Calculate weekly debt rate based on interest (52 weeks in a year)
 		set_variable = { debt_rate = { value = debt multiply = 0.00019 multiply = interest_rate } }
+
+		# Only debt denominated in an external reserve currency takes the exchange hit.
+		# Must follow the set_variable above: applied before it, the adjustment is
+		# overwritten and never reaches the player.
+		if = {
+			limit = {
+				OR = {
+					has_idea = us_dollar
+					has_idea = euro
+					has_idea = chinese_yuan
+					has_idea = chinese_yuan_2
+					has_idea = chinese_yuan_3
+					has_idea = russia_rouble
+					has_idea = japanese_yen
+					has_idea = british_pound
+					has_idea = swiss_frank
+					has_idea = gulden
+				}
+			}
+			set_temp_variable = { debt_fx_factor = { value = 1 divide = currency_strength } }
+			multiply_variable = { debt_rate = debt_fx_factor }
+		}
 
 		#If interest rate is really high, add additional modifier
 		if = { limit = { check_variable = { interest_rate > 14.999 } }
@@ -2662,6 +2807,16 @@ update_military_rate = {
 		}
 	}
 
+	# MLRS (cost: 0.5M yearly)
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@medium_tank_rocket_chassis
+			multiply = 0.5
+			add = { value = num_equipment@medium_tank_rocket_chassis multiply = 0.1 } # 0.2 × 0.5
+		}
+	}
+
 	# Medium tank chassis (cost: 0.7M yearly)
 	add_to_variable = {
 		var = equipment_operative_cost
@@ -2702,6 +2857,36 @@ update_military_rate = {
 		}
 	}
 
+	# Light Walker Tank (cost: 0.8M yearly)
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@super_heavy_tank_destroyer_chassis
+			multiply = 0.8
+			add = { value = num_equipment@super_heavy_tank_destroyer_chassis multiply = 0.16 } # 0.2 × 0.8
+		}
+	}
+
+	# Medium Walker Tank (cost: 1.0M yearly)
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@super_heavy_tank_chassis
+			multiply = 1
+			add = { value = num_equipment@super_heavy_tank_chassis multiply = 0.2 } # 0.2 × 1
+		}
+	}
+
+	# Heavy Walker Tank (cost: 1.2M yearly)
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@super_heavy_tank_artillery_chassis
+			multiply = 1.2
+			add = { value = num_equipment@super_heavy_tank_artillery_chassis multiply = 0.24 } # 0.2 × 1.2
+		}
+	}
+
 	# Utility vehicles (cost: 0.022M yearly)
 	add_to_variable = {
 		var = equipment_operative_cost
@@ -2719,6 +2904,26 @@ update_military_rate = {
 			value = num_equipment_in_armies@heavy_util_vehicle_type
 			multiply = 0.022
 			add = { value = num_equipment@heavy_util_vehicle_type multiply = 0.0044 } # 0.2 × 0.022
+		}
+	}
+
+	# Land drones (cost: 0.022M yearly)
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@land_drone_equipment_type
+			multiply = 0.022
+			add = { value = num_equipment@land_drone_equipment_type multiply = 0.0044 } # 0.2 × 0.022
+		}
+	}
+
+	# Orbital Fire Control Relay (cost: 2.0M yearly)
+	add_to_variable = {
+		var = equipment_operative_cost
+		value = {
+			value = num_equipment_in_armies@space_artillery_equipment_type
+			multiply = 2
+			add = { value = num_equipment@space_artillery_equipment_type multiply = 0.4 } # 0.2 × 2
 		}
 	}
 
@@ -3318,6 +3523,8 @@ update_infra_rate = {
 				value = 1
 				add = modifier@infrastructure_cost_multiplier_modifier
 				multiply = common_money_modifier
+				add = modifier@internet_infra_cost_multiplier_modifier
+				clamp = { min = 0 max = 100000000 }
 			}
 			multiply = infra_size_scaling
 		}
@@ -4181,17 +4388,33 @@ calculate_additional_expense_rate = {
 	if = { limit = { has_idea = CPD_war_reparations_payer }
 		add_to_variable = { additional_expenses_rate = CPD_reparations_weekly }
 	}
+	# Saudi Arabia - Seperate from GULF
+	# === Saudi pipeline transit fees (Additional Expense) ===
+	if = { limit = { original_tag = SAU }
+		set_variable = { additional_expense_SAU_pipeline = 0 }
+		# Yemen route - 1 transit country (Yemen)
+		if = { limit = { has_idea = SAU_yemen_pipeline_t1 } add_to_variable = { additional_expense_SAU_pipeline = 1.0 } }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t2 } add_to_variable = { additional_expense_SAU_pipeline = 1.15 } }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t3 } add_to_variable = { additional_expense_SAU_pipeline = 1.25 } }
+		# Levant route - 2 transit countries (Jordan + Syria)
+		if = { limit = { has_idea = SAU_syria_pipeline_t1 } add_to_variable = { additional_expense_SAU_pipeline = 2.0 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t2 } add_to_variable = { additional_expense_SAU_pipeline = 2.3 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t3 } add_to_variable = { additional_expense_SAU_pipeline = 2.5 } }
+		# Iraq route - 1 transit country (Iraq)
+		if = { limit = { has_idea = SAU_iraq_pipeline_t1 } add_to_variable = { additional_expense_SAU_pipeline = 1.0 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t2 } add_to_variable = { additional_expense_SAU_pipeline = 1.15 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t3 } add_to_variable = { additional_expense_SAU_pipeline = 1.25 } }
+		# Europe extension - 1 transit country (Turkey)
+		if = { limit = { has_country_flag = SAU_turkey_pipeline_open } add_to_variable = { additional_expense_SAU_pipeline = 1.25 } }
+		add_to_variable = { additional_expenses_rate = additional_expense_SAU_pipeline }
+	}
 }
 
 # Effect: calculate_int_investments_rate
 # Purpose: Computes weekly ROI from international investments and splits it into treasury vs reinvested shares
 calculate_int_investments_rate = {
-	# Set base ROI rate
-	set_variable = { roi_rate = 0.06 }	#6%
-
-	# Modifier for ROI
-	add_to_variable = { roi_rate = modifier@return_on_investment_modifier }
-	clamp_variable = { var = roi_rate min = 0 max = 0.20 }
+	# Base ROI + stacked return_on_investment_modifier, clamped to the engine-wide ceiling
+	set_variable = { roi_rate = { value = 0.06 add = modifier@return_on_investment_modifier clamp = { min = 0 max = 0.20 } } }
 
 	#This is how much money we get back in a year, converted to weekly
 	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate multiply = 0.019 clamp = { min = 0 max = @math_expressions_max } } }
@@ -5688,12 +5911,7 @@ calculate_gdp = {
 	}
 
 	# Healthcare Sector — Workforce
-	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_workforce_level_scalar = 0.15 } }
-	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_workforce_level_scalar = 0.30 } }
-	else_if = { limit = { has_idea = health_03 } set_temp_variable = { healthcare_workforce_level_scalar = 0.50 } }
-	else_if = { limit = { has_idea = health_04 } set_temp_variable = { healthcare_workforce_level_scalar = 0.70 } }
-	else_if = { limit = { has_idea = health_05 } set_temp_variable = { healthcare_workforce_level_scalar = 0.90 } }
-	else_if = { limit = { has_idea = health_06 } set_temp_variable = { healthcare_workforce_level_scalar = 1.10 } }
+	set_temp_variable = { healthcare_workforce_level_scalar = global.health_workers^health_law }
 
 	set_temp_variable = {
 		max_workers_in_healthcare = {
@@ -5730,22 +5948,7 @@ calculate_gdp = {
 	}
 
 	# Bureaucracy — civil servants required by government administration level
-	set_temp_variable = { workers_per_bureau = 0 }
-	if = { limit = { has_idea = bureau_01 }
-		set_temp_variable = { workers_per_bureau = 0.00075 }
-	}
-	else_if = { limit = { has_idea = bureau_02 }
-		set_temp_variable = { workers_per_bureau = 0.0015 }
-	}
-	else_if = { limit = { has_idea = bureau_03 }
-		set_temp_variable = { workers_per_bureau = 0.003 }
-	}
-	else_if = { limit = { has_idea = bureau_04 }
-		set_temp_variable = { workers_per_bureau = 0.00525 }
-	}
-	else_if = { limit = { has_idea = bureau_05 }
-		set_temp_variable = { workers_per_bureau = 0.009 }
-	}
+	set_temp_variable = { workers_per_bureau = global.bureau_workers^bureau_law }
 
 	if = { limit = { check_variable = { workers_per_bureau = 0 } }
 		set_variable = { bureaucracy_manpower_fulfillment = 1 }

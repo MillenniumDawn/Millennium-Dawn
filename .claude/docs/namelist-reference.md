@@ -8,15 +8,17 @@ Full authoring guide: `docs/src/content/resources/unit-name-lists.md`
 
 ### Seven mandatory groups
 
-| Token                  | division_types                                               | Link            |
-| ---------------------- | ------------------------------------------------------------ | --------------- |
-| `TAG_INF_DIV`          | `L_Inf_Bat Mot_Inf_Bat Mech_Inf_Bat Arm_Inf_Bat`             | ↔ `TAG_INF_BDE` |
-| `TAG_INF_BDE`          | same as above                                                | ↔ `TAG_INF_DIV` |
-| `TAG_ARM_BDE`          | `armor_Bat`                                                  | —               |
-| `TAG_SOF`              | `Special_Forces`                                             | —               |
-| `TAG_AIR_CAV_BRIGADES` | `L_Air_assault_Bat L_Air_Inf_Bat Mot_Air_Inf_Bat`            | —               |
-| `TAG_MAR`              | `L_Marine_Bat Mot_Marine_Bat Mech_Marine_Bat Arm_Marine_Bat` | —               |
-| `TAG_MIL`              | `Militia_Bat Mot_Militia_Bat`                                | —               |
+| Token                  | division_types                                               |
+| ---------------------- | ------------------------------------------------------------ |
+| `TAG_INF_DIV`          | `L_Inf_Bat Mot_Inf_Bat Mech_Inf_Bat Arm_Inf_Bat`             |
+| `TAG_INF_BDE`          | same as above                                                |
+| `TAG_ARM_BDE`          | `armor_Bat`                                                  |
+| `TAG_SOF`              | `Special_Forces`                                             |
+| `TAG_AIR_CAV_BRIGADES` | `L_Air_assault_Bat L_Air_Inf_Bat Mot_Air_Inf_Bat`            |
+| `TAG_MAR`              | `L_Marine_Bat Mot_Marine_Bat Mech_Marine_Bat Arm_Marine_Bat` |
+| `TAG_MIL`              | `Militia_Bat Mot_Militia_Bat`                                |
+
+Link: `TAG_INF_DIV` ↔ `TAG_INF_BDE` (mutual `link_numbering_with`); the other five groups have no link.
 
 ### Minimal template
 
@@ -58,7 +60,7 @@ TAG_FRIGATE_HISTORICAL = {
 
 ### Ship type tokens (canonical — match `common/units/MD_naval_units.txt`)
 
-Valid: `carrier` `helicopter_operator` `destroyer` `stealth_destroyer` `frigate` `stealth_frigate` `corvette` `stealth_corvette` `cruiser` `battle_cruiser` `battleship` `attack_submarine` `missile_submarine`
+Valid: `carrier` `helicopter_operator` `destroyer` `stealth_destroyer` `screen_destroyer` `frigate` `stealth_frigate` `heavy_frigate` `corvette` `stealth_corvette` `patrol_boat` `cruiser` `battle_cruiser` `battleship` `attack_submarine` `missile_submarine`
 
 **Dead vanilla tokens that silently never match** (removed when MD restructured naval units — never use them):
 
@@ -130,11 +132,25 @@ If you set `air_wing_names_template = AIR_WING_NAME_FOO_FALLBACK` but no matchin
 
 ### 27 archetypes (must match `common/units/MD_air_units.txt`)
 
-| Land                                                                                                                                                                                                   | Carrier (`cv_`)                                                                                                                                                                                                        |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `small_plane_airframe`, `small_plane_strike_airframe`, `small_plane_naval_bomber_airframe`, `small_plane_cas_airframe`, `small_plane_suicide_airframe`                                                 | `cv_small_plane_airframe`, `cv_small_plane_strike_airframe`, `cv_small_plane_naval_bomber_airframe`, `cv_small_plane_cas_airframe`, `cv_small_plane_suicide_airframe`                                                  |
-| `medium_plane_airframe`, `medium_plane_fighter_airframe`, `medium_plane_cas_airframe`, `medium_plane_maritime_patrol_airframe`, `medium_plane_air_transport_airframe`, `medium_plane_suicide_airframe` | `cv_medium_plane_airframe`, `cv_medium_plane_fighter_airframe`, `cv_medium_plane_cas_airframe`, `cv_medium_plane_maritime_patrol_airframe`, `cv_medium_plane_air_transport_airframe`, `cv_medium_plane_scout_airframe` |
-| `large_plane_airframe`, `large_plane_air_transport_airframe`, `large_plane_awacs_airframe`, `large_plane_cas_airframe`, `large_plane_maritime_patrol_airframe`                                         | —                                                                                                                                                                                                                      |
+| Land                                    | Carrier (`cv_`)                            |
+| --------------------------------------- | ------------------------------------------ |
+| `small_plane_airframe`                  | `cv_small_plane_airframe`                  |
+| `small_plane_strike_airframe`           | `cv_small_plane_strike_airframe`           |
+| `small_plane_naval_bomber_airframe`     | `cv_small_plane_naval_bomber_airframe`     |
+| `small_plane_cas_airframe`              | `cv_small_plane_cas_airframe`              |
+| `small_plane_suicide_airframe`          | `cv_small_plane_suicide_airframe`          |
+| `medium_plane_airframe`                 | `cv_medium_plane_airframe`                 |
+| `medium_plane_fighter_airframe`         | `cv_medium_plane_fighter_airframe`         |
+| `medium_plane_cas_airframe`             | `cv_medium_plane_cas_airframe`             |
+| `medium_plane_maritime_patrol_airframe` | `cv_medium_plane_maritime_patrol_airframe` |
+| `medium_plane_air_transport_airframe`   | `cv_medium_plane_air_transport_airframe`   |
+| `medium_plane_suicide_airframe`         | —                                          |
+| —                                       | `cv_medium_plane_scout_airframe`           |
+| `large_plane_airframe`                  | —                                          |
+| `large_plane_air_transport_airframe`    | —                                          |
+| `large_plane_awacs_airframe`            | —                                          |
+| `large_plane_cas_airframe`              | —                                          |
+| `large_plane_maritime_patrol_airframe`  | —                                          |
 
 **USA's namelist contains a typo**: `small_plane_sucide_airframe` (missing the `i`). The correct token is `small_plane_suicide_airframe` — copy from `common/units/MD_air_units.txt`, never from `00_USA_names.txt`.
 

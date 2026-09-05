@@ -8,6 +8,113 @@ calculate_expected_spending = {
 	calculate_expected_adm_spending = yes
 	calculate_expected_military_spending = yes
 	md_check_spending_alerts = yes
+	refresh_expected_spending_frames = yes
+	update_protest_dirty_var = yes
+}
+
+refresh_expected_spending_frames = {
+	if = { limit = { is_ai = no }
+		calculate_expected_spending_frames = yes
+	}
+}
+
+calculate_expected_spending_frames = {
+	set_temp_variable = { current_spending = bureau_law }
+	set_temp_variable = { expected_spending = expected_adm_spending }
+	for_loop_effect = {
+		start = 1
+		end = 6
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { adm_spending_frames^spending_level = spending_frame }
+	}
+
+	set_temp_variable = { current_spending = police_law }
+	set_temp_variable = { expected_spending = expected_police_spending }
+	for_loop_effect = {
+		start = 1
+		end = 6
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { police_spending_frames^spending_level = spending_frame }
+	}
+
+	set_temp_variable = { current_spending = education_law }
+	set_temp_variable = { expected_spending = expected_edu_spending }
+	for_loop_effect = {
+		start = 1
+		end = 6
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { edu_spending_frames^spending_level = spending_frame }
+	}
+
+	set_temp_variable = { current_spending = health_law }
+	set_temp_variable = { expected_spending = expected_health_spending }
+	for_loop_effect = {
+		start = 1
+		end = 7
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { health_spending_frames^spending_level = spending_frame }
+	}
+
+	set_temp_variable = { current_spending = social_law }
+	set_temp_variable = { expected_spending = expected_welfare_spending }
+	for_loop_effect = {
+		start = 1
+		end = 7
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { welfare_spending_frames^spending_level = spending_frame }
+	}
+
+	set_temp_variable = { current_spending = military_law }
+	set_temp_variable = { expected_spending = expected_military_sp }
+	for_loop_effect = {
+		start = 1
+		end = 11
+		value = spending_level
+		calculate_expected_spending_frame = yes
+		set_variable = { military_spending_frames^spending_level = spending_frame }
+	}
+}
+
+calculate_expected_spending_frame = {
+	if = {
+		limit = {
+			check_variable = {
+				var = current_spending
+				value = spending_level
+				compare = greater_than_or_equals
+			}
+			check_variable = { spending_level > expected_spending }
+		}
+		set_temp_variable = { spending_frame = 3 }
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				var = current_spending
+				value = spending_level
+				compare = greater_than_or_equals
+			}
+		}
+		set_temp_variable = { spending_frame = 2 }
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				var = expected_spending
+				value = spending_level
+				compare = greater_than_or_equals
+			}
+		}
+		set_temp_variable = { spending_frame = 4 }
+	}
+	else = {
+		set_temp_variable = { spending_frame = 1 }
+	}
 }
 
 calculate_expected_spending_totals = {
@@ -78,6 +185,7 @@ calculate_expected_welfare_spending = {
 		subtract_from_variable = { expected_welfare_spending = 1 }
 	}
 	add_to_variable = { expected_welfare_spending = modifier@expected_welfare_modifier }
+	add_to_variable = { expected_welfare_spending = social_desire_offset }
 	round_variable = expected_welfare_spending
 
 	if = { limit = { is_debug = yes }
@@ -96,6 +204,7 @@ calculate_expected_healthcare_spending = {
 		subtract_from_variable = { expected_health_spending = 1 }
 	}
 	add_to_variable = { expected_health_spending = modifier@expected_healthcare_modifier }
+	add_to_variable = { expected_health_spending = health_desire_offset }
 	round_variable = expected_health_spending
 
 	if = { limit = { is_debug = yes }
@@ -115,6 +224,7 @@ calculate_expected_education_spending = {
 		subtract_from_variable = { expected_edu_spending = 1 }
 	}
 	add_to_variable = { expected_edu_spending = modifier@expected_education_modifier }
+	add_to_variable = { expected_edu_spending = education_desire_offset }
 	round_variable = expected_edu_spending
 
 	if = { limit = { is_debug = yes }
@@ -134,6 +244,7 @@ calculate_expected_police_spending = {
 		subtract_from_variable = { expected_police_spending = 1 }
 	}
 	add_to_variable = { expected_police_spending = modifier@expected_police_modifier }
+	add_to_variable = { expected_police_spending = police_desire_offset }
 	round_variable = expected_police_spending
 
 	if = { limit = { is_debug = yes }
@@ -153,6 +264,7 @@ calculate_expected_adm_spending = {
 		subtract_from_variable = { expected_adm_spending = 1 }
 	}
 	add_to_variable = { expected_adm_spending = modifier@expected_adm_modifier }
+	add_to_variable = { expected_adm_spending = bureau_desire_offset }
 	round_variable = expected_adm_spending
 
 	if = { limit = { is_debug = yes }
@@ -172,6 +284,8 @@ calculate_expected_military_spending = {
 		add_to_variable = { expected_military_sp = 3 }
 	}
 	add_to_variable = { expected_military_sp = modifier@expected_mil_modifier }
+	add_security_pressure_to_expected_military = yes
+	add_to_variable = { expected_military_sp = defence_desire_offset }
 	round_variable = expected_military_sp
 
 	if = {
@@ -193,7 +307,7 @@ calculate_expected_military_spending = {
 		clamp_variable = {
 			var = expected_military_sp
 			min = 1
-			max = 4
+			max = 5
 		}
 	}
 	else = {
@@ -205,37 +319,137 @@ calculate_expected_military_spending = {
 	}
 }
 
+# Read off the engine-maintained hostility arrays, so it lapses on its own once they empty.
+add_security_pressure_to_expected_military = {
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_idea = no_military
+					ai_has_major_economic_problems = yes
+					ai_has_moderate_economic_problems = yes
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_idea = intervention_neo_imperialism
+					has_idea = intervention_global_interventionism
+				}
+			}
+			add_to_variable = { expected_military_sp = 2 }
+		}
+		if = {
+			limit = { check_variable = { potential_and_current_enemies^num > 0 } }
+			add_to_variable = { expected_military_sp = 1 }
+		}
+		if = {
+			limit = { check_variable = { potential_and_current_enemies^num > 2 } }
+			add_to_variable = { expected_military_sp = 1 }
+		}
+		if = {
+			limit = { we_are_being_justified_against_or_wargoal_against_us = yes }
+			add_to_variable = { expected_military_sp = 1 }
+		}
+		if = {
+			limit = { threat > 0.35 }
+			add_to_variable = { expected_military_sp = 1 }
+		}
+		if = {
+			limit = {
+				OR = {
+					threat > 0.6
+					any_neighbor_country = { has_war = yes }
+				}
+			}
+			add_to_variable = { expected_military_sp = 1 }
+		}
+		if = {
+			limit = { manpower_per_military_factory < 450 }
+			add_to_variable = { expected_military_sp = 1 }
+		}
+	}
+}
+
 resolve_gdp_c_deltas = {
 	if = {
-		limit = { check_variable = { gdp_per_capita < 5 } }
+		limit = { check_variable = { gdp_per_capita < 1 } }
 		set_temp_variable = { gdp_c_tier = 0 }
 	}
 	else_if = {
-		limit = { check_variable = { gdp_per_capita < 10 } }
+		limit = { check_variable = { gdp_per_capita < 2.5 } }
 		set_temp_variable = { gdp_c_tier = 1 }
 	}
 	else_if = {
-		limit = { check_variable = { gdp_per_capita < 15 } }
+		limit = { check_variable = { gdp_per_capita < 5 } }
 		set_temp_variable = { gdp_c_tier = 2 }
 	}
 	else_if = {
-		limit = { check_variable = { gdp_per_capita < 20 } }
+		limit = { check_variable = { gdp_per_capita < 10 } }
 		set_temp_variable = { gdp_c_tier = 3 }
 	}
 	else_if = {
-		limit = { check_variable = { gdp_per_capita < 30 } }
+		limit = { check_variable = { gdp_per_capita < 15 } }
 		set_temp_variable = { gdp_c_tier = 4 }
 	}
 	else_if = {
-		limit = { check_variable = { gdp_per_capita < 40 } }
+		limit = { check_variable = { gdp_per_capita < 20 } }
 		set_temp_variable = { gdp_c_tier = 5 }
 	}
-	else = {
+	else_if = {
+		limit = { check_variable = { gdp_per_capita < 30 } }
 		set_temp_variable = { gdp_c_tier = 6 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_per_capita < 40 } }
+		set_temp_variable = { gdp_c_tier = 7 }
+	}
+	else = {
+		set_temp_variable = { gdp_c_tier = 8 }
 	}
 	set_temp_variable = { gdp_c_delta = global.gdp_c_delta_table^gdp_c_tier }
 	set_temp_variable = { gdp_c_delta_lvl5 = global.gdp_c_delta_lvl5_table^gdp_c_tier }
 	set_temp_variable = { gdp_c_delta_mil = global.gdp_c_delta_mil_table^gdp_c_tier }
+
+	# Economy size only offsets a poverty penalty, so the clamp stops it adding to wealth.
+	if = {
+		limit = { check_variable = { gdp_c_tier < 5 } }
+		resolve_gdp_scale_delta = yes
+		add_to_temp_variable = { gdp_c_delta = gdp_scale_delta }
+		add_to_temp_variable = { gdp_c_delta_lvl5 = gdp_scale_delta }
+		add_to_temp_variable = { gdp_c_delta_mil = gdp_scale_delta }
+		clamp_temp_variable = { var = gdp_c_delta max = 0 }
+		clamp_temp_variable = { var = gdp_c_delta_lvl5 max = 0 }
+		clamp_temp_variable = { var = gdp_c_delta_mil max = 0 }
+	}
+}
+
+resolve_gdp_scale_delta = {
+	if = {
+		limit = { check_variable = { gdp_total < 10 } }
+		set_temp_variable = { gdp_scale_delta = -0.2 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_total < 50 } }
+		set_temp_variable = { gdp_scale_delta = 0 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_total < 150 } }
+		set_temp_variable = { gdp_scale_delta = 0.3 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_total < 500 } }
+		set_temp_variable = { gdp_scale_delta = 0.6 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_total < 1500 } }
+		set_temp_variable = { gdp_scale_delta = 0.9 }
+	}
+	else = {
+		set_temp_variable = { gdp_scale_delta = 1.2 }
+	}
 }
 
 setup_initial_expected_spending_by_party = {
@@ -243,27 +457,33 @@ setup_initial_expected_spending_by_party = {
 		log = "[GetDateText]: Setup for expected spending started"
 	}
 	clear_array = global.gdp_c_delta_table
-	add_to_array = { global.gdp_c_delta_table = -1.8 }
+	add_to_array = { global.gdp_c_delta_table = -1.5 }
 	add_to_array = { global.gdp_c_delta_table = -1.2 }
+	add_to_array = { global.gdp_c_delta_table = -0.9 }
 	add_to_array = { global.gdp_c_delta_table = -0.6 }
+	add_to_array = { global.gdp_c_delta_table = -0.3 }
 	add_to_array = { global.gdp_c_delta_table = -0.1 }
 	add_to_array = { global.gdp_c_delta_table = 0.4 }
 	add_to_array = { global.gdp_c_delta_table = 0.9 }
 	add_to_array = { global.gdp_c_delta_table = 1.4 }
 
 	clear_array = global.gdp_c_delta_lvl5_table
-	add_to_array = { global.gdp_c_delta_lvl5_table = -1.5 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = -1.3 }
 	add_to_array = { global.gdp_c_delta_lvl5_table = -1 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = -0.8 }
 	add_to_array = { global.gdp_c_delta_lvl5_table = -0.5 }
+	add_to_array = { global.gdp_c_delta_lvl5_table = -0.2 }
 	add_to_array = { global.gdp_c_delta_lvl5_table = 0.1 }
 	add_to_array = { global.gdp_c_delta_lvl5_table = 0.4 }
 	add_to_array = { global.gdp_c_delta_lvl5_table = 0.8 }
 	add_to_array = { global.gdp_c_delta_lvl5_table = 1.2 }
 
 	clear_array = global.gdp_c_delta_mil_table
-	add_to_array = { global.gdp_c_delta_mil_table = -1.5 }
+	add_to_array = { global.gdp_c_delta_mil_table = -1.3 }
 	add_to_array = { global.gdp_c_delta_mil_table = -1 }
+	add_to_array = { global.gdp_c_delta_mil_table = -0.8 }
 	add_to_array = { global.gdp_c_delta_mil_table = -0.5 }
+	add_to_array = { global.gdp_c_delta_mil_table = -0.3 }
 	add_to_array = { global.gdp_c_delta_mil_table = 0 }
 	add_to_array = { global.gdp_c_delta_mil_table = 0.2 }
 	add_to_array = { global.gdp_c_delta_mil_table = 0.6 }

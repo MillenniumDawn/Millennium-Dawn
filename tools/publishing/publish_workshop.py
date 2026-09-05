@@ -20,10 +20,11 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import threading
 import time
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 HOI4_APP_ID = "394360"
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -92,9 +93,7 @@ ANYWHERE_EXCLUDES = {
     "*.pyd",
     "*.psd",
     "repomix-*.xml",
-    # Tool/CI caches. Gitignored but copytree ships the working tree, not the
-    # git index, so these leak into the upload. .validation_cache alone is
-    # ~267k files and blows the Workshop commit-manifest step past its timeout.
+    # Tool/CI caches are excluded if they were committed accidentally.
     ".validation_cache",
     ".md-mcp-cache",
     ".opencode",
@@ -228,30 +227,71 @@ def dir_stats(root: Path) -> tuple[int, int]:
     return count, total
 
 
-def copy_repo(dest_parent: Path, excludes: set[str]) -> Path:
-    dest = dest_parent / "mod"
-
-    # Anything in excludes that is also in ROOT_ONLY_EXCLUDES is applied only
-    # at the repo root. Everything else matches at every depth.
-    # Note: we treat any exclusion matching ROOT_ONLY_EXCLUDES as root-only,
-    # even if added via --exclude.
-    root_only = {e for e in excludes if e in ROOT_ONLY_EXCLUDES}
+def _archive_path_excluded(path: PurePosixPath, excludes: set[str]) -> bool:
+    root_only = {pattern for pattern in excludes if pattern in ROOT_ONLY_EXCLUDES}
     anywhere = excludes - root_only
+    if path.parts and any(
+        fnmatch.fnmatch(path.parts[0], pattern) for pattern in root_only
+    ):
+        return True
+    return any(
+        fnmatch.fnmatch(part, pattern) for part in path.parts for pattern in anywhere
+    )
 
-    def _ignore(dir_path: str, names: list[str]) -> set[str]:
-        patterns = anywhere
-        # dir_path is relative to REPO_ROOT during copy, so join them
-        abs_dir = (REPO_ROOT / dir_path).resolve()
-        if abs_dir == REPO_ROOT:
-            patterns = patterns | root_only
-        return {
-            n
-            for n in names
-            if n in patterns or any(fnmatch.fnmatch(n, p) for p in patterns)
-        }
 
-    with Spinner("Copying mod files"):
-        shutil.copytree(REPO_ROOT, dest, ignore=_ignore)
+def copy_repo(dest_parent: Path, excludes: set[str]) -> Path:
+    """Extract publishable regular files from tracked HEAD."""
+    dest = dest_parent / "mod"
+    dest.mkdir(parents=True)
+    with Spinner("Copying tracked HEAD files"):
+        proc = subprocess.Popen(
+            ["git", "archive", "--format=tar", "HEAD"],
+            cwd=REPO_ROOT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        assert proc.stdout is not None
+        try:
+            with tarfile.open(fileobj=proc.stdout, mode="r|") as archive:
+                for member in archive:
+                    path = PurePosixPath(member.name)
+                    if path.is_absolute() or ".." in path.parts:
+                        raise RuntimeError(
+                            f"Unsafe path in tracked HEAD: {member.name}"
+                        )
+                    if member.issym() or member.islnk():
+                        raise RuntimeError(
+                            f"Refusing to publish tracked symlink: {member.name}"
+                        )
+                    if _archive_path_excluded(path, excludes):
+                        continue
+                    target = dest.joinpath(*path.parts)
+                    if member.isdir():
+                        target.mkdir(parents=True, exist_ok=True)
+                        continue
+                    if not member.isfile():
+                        continue
+                    source = archive.extractfile(member)
+                    if source is None:
+                        raise RuntimeError(
+                            f"Could not read tracked file: {member.name}"
+                        )
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    with target.open("wb") as handle:
+                        shutil.copyfileobj(source, handle)
+                    os.chmod(target, member.mode)
+        except Exception:
+            proc.terminate()
+            proc.wait()
+            raise
+        finally:
+            proc.stdout.close()
+        stderr = (
+            proc.stderr.read().decode("utf-8", errors="replace") if proc.stderr else ""
+        )
+        returncode = proc.wait()
+        if returncode != 0:
+            raise RuntimeError(f"git archive HEAD failed: {stderr.strip()}")
 
     count, total = dir_stats(dest)
     print(f"    {count:,} files, {format_size(total)}")
@@ -334,7 +374,7 @@ def prune_unchanged(mod_dir: Path, changed: set[str], verbose: bool = False) -> 
 
 def write_vdf(mod_dir: Path, mod_id: str, changenote: str) -> Path:
     vdf_path = mod_dir.parent / "workshop_upload.vdf"
-    vdf_path.write_text(
+    content = (
         f'"workshopitem"\n'
         f"{{\n"
         f'    "appid"           "{HOI4_APP_ID}"\n'
@@ -342,9 +382,10 @@ def write_vdf(mod_dir: Path, mod_id: str, changenote: str) -> Path:
         f'    "contentfolder"   "{escape_vdf(mod_dir)}"\n'
         f'    "previewfile"     "{escape_vdf(mod_dir / "thumbnail.png")}"\n'
         f'    "changenote"      "{escape_vdf(changenote)}"\n'
-        f"}}\n",
-        encoding="utf-8",
+        f"}}\n"
     )
+    with vdf_path.open("w", encoding="utf-8", newline="") as handle:
+        handle.write(content)
     return vdf_path
 
 
@@ -503,6 +544,7 @@ def publish(
     )
 
     overall_start = time.time()
+    last_returncode = 1
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
         if attempt > 1:
@@ -526,6 +568,7 @@ def publish(
             bufsize=1,
         )
 
+        assert proc.stdout is not None
         with log_path.open("a", encoding="utf-8", newline="") as log_f:
             log_f.write(f"\n=== Attempt {attempt}/{MAX_ATTEMPTS} ===\n")
             log_f.flush()
@@ -575,6 +618,7 @@ def publish(
                     print(f"  [{elapsed_str(start)}] {PHASES[phase_idx][0]}: {line}")
 
         proc.wait()
+        last_returncode = proc.returncode or 0
         phase_timings.append((PHASES[phase_idx][0], time.time() - phase_start))
 
         print(f"\n  --- Phase timings (attempt {attempt}) ---")
@@ -600,7 +644,7 @@ def publish(
 
     print(f"  Full steamcmd output: {log_path}")
     sys.exit(
-        f"ERROR: steamcmd exited with code {proc.returncode} "
+        f"ERROR: steamcmd exited with code {last_returncode} "
         f"after {MAX_ATTEMPTS} attempts"
     )
 

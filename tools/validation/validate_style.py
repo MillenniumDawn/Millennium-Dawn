@@ -31,6 +31,7 @@ _SCAN_PATTERNS = [
     "common/**/*.txt",
     "events/**/*.txt",
     "history/**/*.txt",
+    "music/**/*.txt",
 ]
 
 _RE_COMMENT_QUOTE = re.compile(r'#.*["]+', re.M | re.I)
@@ -61,6 +62,11 @@ _RE_TRANSPARENT_BLOCK = re.compile(r"^(?:if|else|else_if)\s*=\s*\{")
 
 # EH is the Event Horizon generic tree's mod-wide domain prefix, not a tag.
 _SHARED_FOCUS_PREFIXES = ("USoE", "POTEF", "AFRICAN_UNION", "GENERIC", "EH")
+
+# common/national_focus/00_generic_dummy.txt is a structurally inert placeholder
+# tree (country = { factor = 0 }), never assigned to a TAG, used only as a
+# workaround for the base-game joint-focus mechanic, not a real focus.
+_EXEMPT_FOCUS_IDS = {"dummy_focus"}
 
 
 def _check_brace_matching(text: str, path: str):
@@ -279,8 +285,10 @@ def _check_focus_standards(text: str, path: str):
 
 
 def _has_focus_format(focus_id: str) -> bool:
-    return focus_id.startswith(_SHARED_FOCUS_PREFIXES) or bool(
-        _RE_FOCUS_FORMAT.match(focus_id)
+    return (
+        focus_id.startswith(_SHARED_FOCUS_PREFIXES)
+        or focus_id in _EXEMPT_FOCUS_IDS
+        or bool(_RE_FOCUS_FORMAT.match(focus_id))
     )
 
 

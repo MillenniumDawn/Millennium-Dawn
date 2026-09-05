@@ -3,6 +3,14 @@
 # The influence system is MD's take on using political soft power and pressuring other nations.
 # It is intended to mock superpower's sphere of influence.
 
+# Effect: install_influence_coup_rebel_party
+# Purpose: copy influence_coup_party onto a civil-war rebel
+install_influence_coup_rebel_party = {
+	set_variable = { ruling_party = FROM.influence_coup_party }
+	set_temp_variable = { _coup_slot = FROM.influence_coup_party }
+	set_variable = { party_pop_array^_coup_slot = 0.7 }
+}
+
 # Effect: init_influence
 # Purpose: This is the main effect that is used to initialize the influence array
 init_influence = {
@@ -14,11 +22,11 @@ init_influence = {
 # Purpose: This is the main effect that is used to update the dirty influence variable
 update_dirty_influence_var = {
 	if = {
-		limit = { NOT = { has_variable = global.update_influence_ui } }
-		set_variable = { global.update_influence_ui = 1 }
+		limit = { check_variable = { global.update_influence_ui < 10000 } }
+		add_to_variable = { global.update_influence_ui = 1 }
 	}
 	else = {
-		add_to_variable = { global.update_influence_ui = 1 }
+		set_variable = { global.update_influence_ui = 1 }
 	}
 }
 
@@ -354,7 +362,7 @@ manipulate_politics_action = {
 		change_influence_percentage = yes
 	}
 	else = {
-		set_temp_variable = { party_index = ROOT.ruling_party^0 }
+		set_temp_variable = { party_index = ROOT.ruling_party }
 		set_temp_variable = { party_popularity_increase = var_pop }
 		set_temp_variable = { temp_outlook_increase = var_pop }
 		change_relative_party_popularity = yes
@@ -398,6 +406,198 @@ mp_economic_aid_transfer = {
 
 	update_money_dirty_variable = yes
 	update_dirty_influence_var = yes
+}
+
+automation_combat_foreign_influence_execute = {
+	set_country_flag = { flag = automation_combat_foreign_influence_cooldown value = 1 days = 100 }
+	set_temp_variable = { percent_change = 2.5 }
+	change_domestic_influence_percentage = yes
+}
+
+automation_combat_influencer_attack_complete = {
+	set_temp_variable = { influencer_index = -1 }
+	for_each_loop = {
+		array = influence_array
+		value = current_influencer
+		index = current_influencer_index
+		if = {
+			limit = { check_variable = { current_influencer = combat_influencer_target } }
+			set_temp_variable = { influencer_index = current_influencer_index }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { combat_influencer_target > 0 }
+			check_variable = { influencer_index > -1 }
+			check_variable = { influence_array_val^influencer_index > 0 }
+			var:combat_influencer_target = { exists = yes }
+		}
+		set_temp_variable = { percent_change = -5 }
+		change_current_influencer_index_percentage = yes
+	}
+}
+
+automation_influence_domestic_action = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = automation_combat_foreign_influence_cooldown }
+			check_variable = { influence_array^0 > 0 }
+			NOT = { has_country_flag = influence_government_lobbied }
+		}
+		set_temp_variable = {
+			automation_available_pp = {
+				value = political_power
+				subtract = automation_pp_reserve
+			}
+		}
+		if = {
+			limit = {
+				check_variable = {
+					var = automation_available_pp
+					value = 100
+					compare = greater_than_or_equals
+				}
+			}
+			log = "[GetDateText]: [ROOT.GetName]: Automatically combating foreign influence"
+			add_political_power = -100
+			automation_combat_foreign_influence_execute = yes
+		}
+	}
+}
+
+automation_influence_attack_action = {
+	if = {
+		limit = {
+			NOT = { has_decision = combat_biggest_influencer_decision }
+			NOT = { has_decision = combat_second_influencer_decision }
+			NOT = { has_decision = combat_third_influencer_decision }
+		}
+		set_temp_variable = {
+			automation_available_pp = {
+				value = political_power
+				subtract = automation_pp_reserve
+			}
+		}
+		if = {
+			limit = {
+				check_variable = {
+					var = automation_available_pp
+					value = 125
+					compare = greater_than_or_equals
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = automation_combat_biggest_influencer_cooldown }
+					check_variable = { influence_array^0 > 0 }
+					var:influence_array^0 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+					check_variable = { influence_array_val^0 > 0 }
+					NOT = { check_variable = { influence_array^0 = ROOT.id } }
+					var:influence_array^0 = { exists = yes }
+					NOT = {
+						AND = {
+							has_country_flag = influence_government_lobbied
+							check_variable = { influence_lobbied_by = influence_array^0 }
+						}
+					}
+				}
+				log = "[GetDateText]: [ROOT.GetName]: Automatically attacking influence from [?var:influence_array^0.GetName]"
+				add_political_power = -125
+				activate_decision = combat_biggest_influencer_decision
+			}
+			else_if = {
+				limit = {
+					NOT = { has_country_flag = automation_combat_second_influencer_cooldown }
+					check_variable = { influence_array^1 > 0 }
+					var:influence_array^1 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+					check_variable = { influence_array_val^1 > 0 }
+					NOT = { check_variable = { influence_array^1 = ROOT.id } }
+					var:influence_array^1 = { exists = yes }
+					NOT = {
+						AND = {
+							has_country_flag = influence_government_lobbied
+							check_variable = { influence_lobbied_by = influence_array^1 }
+						}
+					}
+				}
+				log = "[GetDateText]: [ROOT.GetName]: Automatically attacking influence from [?var:influence_array^1.GetName]"
+				add_political_power = -125
+				activate_decision = combat_second_influencer_decision
+			}
+			else_if = {
+				limit = {
+					NOT = { has_country_flag = automation_combat_third_influencer_cooldown }
+					check_variable = { influence_array^2 > 0 }
+					var:influence_array^2 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+					check_variable = { influence_array_val^2 > 0 }
+					NOT = { check_variable = { influence_array^2 = ROOT.id } }
+					var:influence_array^2 = { exists = yes }
+					NOT = {
+						AND = {
+							has_country_flag = influence_government_lobbied
+							check_variable = { influence_lobbied_by = influence_array^2 }
+						}
+					}
+				}
+				log = "[GetDateText]: [ROOT.GetName]: Automatically attacking influence from [?var:influence_array^2.GetName]"
+				add_political_power = -125
+				activate_decision = combat_third_influencer_decision
+			}
+		}
+	}
+}
+
+automation_influence_daily = {
+	set_temp_variable = { automation_domestic_influence_fee_paid = 0 }
+	set_temp_variable = { automation_influence_attack_fee_paid = 0 }
+	if = {
+		limit = { has_country_flag = automation_combat_foreign_influence }
+		set_temp_variable = {
+			automation_available_pp = {
+				value = political_power
+				subtract = automation_pp_reserve
+			}
+		}
+		if = {
+			limit = {
+				check_variable = {
+					var = automation_available_pp
+					value = 0.05
+					compare = greater_than_or_equals
+				}
+			}
+			add_political_power = -0.05
+			set_temp_variable = { automation_domestic_influence_fee_paid = 1 }
+		}
+	}
+	if = {
+		limit = { has_country_flag = automation_attack_foreign_influencers }
+		set_temp_variable = {
+			automation_available_pp = {
+				value = political_power
+				subtract = automation_pp_reserve
+			}
+		}
+		if = {
+			limit = {
+				check_variable = {
+					var = automation_available_pp
+					value = 0.05
+					compare = greater_than_or_equals
+				}
+			}
+			add_political_power = -0.05
+			set_temp_variable = { automation_influence_attack_fee_paid = 1 }
+		}
+	}
+	if = {
+		limit = { check_variable = { automation_domestic_influence_fee_paid = 1 } }
+		automation_influence_domestic_action = yes
+	}
+	if = {
+		limit = { check_variable = { automation_influence_attack_fee_paid = 1 } }
+		automation_influence_attack_action = yes
+	}
 }
 
 # Effect: change_domestic_influence_percentage

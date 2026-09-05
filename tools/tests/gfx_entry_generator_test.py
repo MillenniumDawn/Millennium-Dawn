@@ -1,16 +1,11 @@
 """Unit tests for merge_gfx_entries de-duplication in gfx_entry_generator."""
 
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-
 from gfx_entry_generator import (
     _build_scripted_gui_text,
     _extract_manual_body,
     generate_decisions,
     generate_decisions_desc,
+    generate_goals,
     generate_modifier_icons,
     generate_scripted_gui,
     merge_gfx_entries,
@@ -43,6 +38,18 @@ def test_dedup_same_texture(tmp_path):
     assert out.count('name = "GFX_a"') == 1
     assert out.count('name = "GFX_b"') == 1
     assert written is True
+
+
+def test_generated_goals_shine_headers_do_not_trail(tmp_path):
+    goals = tmp_path / "gfx" / "interface" / "goals"
+    goals.mkdir(parents=True)
+    (goals / "a.dds").write_bytes(b"x")
+    (tmp_path / "interface").mkdir()
+
+    generate_goals(tmp_path, gfxbool=0)
+
+    shine = (tmp_path / "interface" / "goals_shine.gfx").read_text(encoding="utf-8")
+    assert "spriteType = { \n" not in shine
 
 
 def test_dedup_is_idempotent(tmp_path):

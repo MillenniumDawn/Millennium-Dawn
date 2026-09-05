@@ -15,9 +15,12 @@ from typing import Dict, List, Optional, TextIO, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import disk_cache
-from shared_utils import Colors
+from report_lib.dedupe import dedupe
+from report_lib.models import Issue
+from shared_utils import Colors, split_cpu_budget
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+PERSISTENCE_MARKER = ".persist-complete"
 TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 
 
@@ -161,40 +164,24 @@ def _issue_sort_key(issue: Dict):
 def collect_all_issues(
     output_dir: str, validators: List[Tuple[str, str, str]]
 ) -> List[Dict]:
-    """Collect all issues from validator output files."""
-    all_issues = []
-    seen_keys = set()
-
+    """Collect and semantically deduplicate validator sidecar issues."""
+    collected: List[Issue] = []
     for name, _, _ in validators:
         json_path = os.path.join(output_dir, f"{name}.json")
-        if os.path.exists(json_path):
-            try:
-                with open(json_path, "r", encoding="utf-8") as f:
-                    issues = json.load(f)
-                    # Sort before the first-seen dedup: some validators emit
-                    # same-key (file/line/severity/category) issues in
-                    # nondeterministic order, which would otherwise make the
-                    # surviving representative vary between runs.
-                    issues.sort(key=_issue_sort_key)
-                    for issue in issues:
-                        # Message is part of the key — distinct findings on the
-                        # same line (e.g. two missing loc keys) must both survive.
-                        # Matches report_lib's dedupe key.
-                        key = (
-                            issue.get("file", ""),
-                            issue.get("line", 0),
-                            issue.get("severity", ""),
-                            issue.get("category", ""),
-                            issue.get("message", ""),
-                        )
-                        if key not in seen_keys:
-                            seen_keys.add(key)
-                            issue["validator"] = name
-                            all_issues.append(issue)
-            except Exception:
-                pass
-
-    return all_issues
+        if not os.path.exists(json_path):
+            continue
+        try:
+            with open(json_path, "r", encoding="utf-8") as handle:
+                raw_issues = json.load(handle)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"Malformed validator sidecar: {json_path}") from exc
+        if not isinstance(raw_issues, list) or not all(
+            isinstance(issue, dict) for issue in raw_issues
+        ):
+            raise ValueError(f"Malformed validator sidecar: {json_path}")
+        raw_issues.sort(key=_issue_sort_key)
+        collected.extend(Issue.from_dict(issue, validator=name) for issue in raw_issues)
+    return [issue.to_dict() for issue in dedupe(collected)]
 
 
 def _format_issues_by_file(issues: List[Dict], lines: List[str]) -> None:
@@ -274,6 +261,16 @@ def _persist_sidecars(output_dir: str, persist_dir: str) -> None:
         os.makedirs(persist_dir, exist_ok=True)
     except OSError:
         raise
+    marker_path = os.path.join(persist_dir, PERSISTENCE_MARKER)
+    try:
+        os.unlink(marker_path)
+    except FileNotFoundError:
+        pass
+    for stale_path in glob.glob(os.path.join(persist_dir, "*.json")):
+        try:
+            os.unlink(stale_path)
+        except FileNotFoundError:
+            pass
     copied = 0
     for json_path in glob.glob(os.path.join(output_dir, "*.json")):
         try:
@@ -283,6 +280,11 @@ def _persist_sidecars(output_dir: str, persist_dir: str) -> None:
         except OSError:
             raise
         copied += 1
+    try:
+        with open(marker_path, "w", encoding="utf-8", newline="") as marker:
+            marker.write("complete\n")
+    except OSError:
+        raise
     print(
         f"Persisted {copied} validator result sidecar(s) to {persist_dir}",
         file=sys.stderr,
@@ -415,23 +417,38 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
 
     print(file=human_stream)
 
-    # Unbounded subprocess fan-out is intentional: capping concurrency or
-    # forcing per-child --workers starves the regex-heavy slow validators
-    # (verified slower in practice; the suite is I/O-bound, not CPU-bound).
-    processes = {}
-    for name, script, _label in VALIDATORS:
-        processes[name] = launch_validator(
-            script, extra_flags, output_dir, name, mod_path
-        )
+    # The fan-out used to be unbounded, which is faster (the suite is largely
+    # I/O-bound) but launches every validator at once and each keeps its own
+    # pool, so the run took over the machine. Concurrency and per-child workers
+    # now come out of the shared budget; MD_MAX_WORKERS buys the speed back.
+    max_parallel, inner_workers = split_cpu_budget(len(VALIDATORS))
+    child_flags = extra_flags + ["--workers", str(inner_workers)]
+    print(
+        f"Running up to {max_parallel} at a time ({inner_workers} worker(s) each)\n",
+        file=human_stream,
+    )
 
-    total_errors = 0
-    total_warnings = 0
+    processes: Dict[str, Tuple[subprocess.Popen, TextIO]] = {}
+    pending = list(VALIDATORS)
     crashed_validators = []
+
+    def launch_next() -> None:
+        # Results are consumed in VALIDATORS order and launched in the same
+        # order, so whatever is waited on next has always started already.
+        if pending:
+            name, script, _label = pending.pop(0)
+            processes[name] = launch_validator(
+                script, child_flags, output_dir, name, mod_path
+            )
+
+    for _ in range(max_parallel):
+        launch_next()
 
     for name, _script, label in VALIDATORS:
         proc, stderr_fh = processes[name]
         returncode = proc.wait()
         stderr_fh.close()
+        launch_next()
         error_count, warning_count = read_validator_counts(output_dir, name)
 
         if error_count > 0 or warning_count > 0:
@@ -439,8 +456,6 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
                 f"{Colors.RED}✗ {label}{Colors.ENDC} ({error_count} errors, {warning_count} warnings)",
                 file=human_stream,
             )
-            total_errors += error_count
-            total_warnings += warning_count
         elif returncode != 0:
             # Non-zero exit with no JSON output means the validator itself crashed
             print(
@@ -449,7 +464,6 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             )
             _print_stderr_tail(output_dir, name, stream=human_stream)
             crashed_validators.append(label)
-            total_errors += 1
         else:
             print(f"{Colors.GREEN}✓ {label}{Colors.ENDC}", file=human_stream)
 
@@ -458,13 +472,20 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     report = generate_combined_report(
         output_dir, VALIDATORS, crashed_validators, not args.no_color
     )
+    combined_issues = collect_all_issues(output_dir, VALIDATORS)
+    total_errors = sum(
+        1 for issue in combined_issues if issue.get("severity") == "error"
+    ) + len(crashed_validators)
+    total_warnings = sum(
+        1 for issue in combined_issues if issue.get("severity") == "warning"
+    )
 
     if args.format in ("json", "both"):
         combined_json = {
             "validators": len(VALIDATORS),
             "total_errors": total_errors,
             "total_warnings": total_warnings,
-            "issues": collect_all_issues(output_dir, VALIDATORS),
+            "issues": combined_issues,
         }
         json_output = json.dumps(combined_json, indent=2)
         if args.output:
