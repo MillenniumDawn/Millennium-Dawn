@@ -25,6 +25,7 @@ Run this after cloning the repo. It will:
   5. Optionally set up the docs site (Node.js 24+, Bun)
 """
 
+import importlib.metadata
 import importlib.util
 import os
 import re
@@ -209,20 +210,44 @@ def _group_packages(group: str) -> list[str]:
     return re.findall(r'"([^"]+)"', match.group(1)) if match else []
 
 
+def _version_tuple(value: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in re.findall(r"\d+", value))
+
+
+def _spec_satisfied(spec: str, installed: str) -> bool:
+    match = re.fullmatch(r"([A-Za-z0-9_.-]+)(?:(==|>=)(.+))?", spec)
+    if not match:
+        return False
+    operator, required = match.group(2), match.group(3)
+    if operator is None or required is None:
+        return True
+    if operator == "==":
+        return _version_tuple(installed) == _version_tuple(required)
+    return _version_tuple(installed) >= _version_tuple(required)
+
+
 def _check_group(group: str, label: str) -> bool:
-    """Return True if every package in the dependency-group is importable."""
+    """Return True if dependency-group packages and versions are installed."""
     specs = _group_packages(group)
     if not specs:
         print(f"  {label}: group '{group}' not found in pyproject.toml")
         return False
-    missing = []
+    failures = []
     for spec in specs:
         pkg = re.split(r"[><=!~]+", spec)[0].strip()
         import_name = _IMPORT_NAMES.get(pkg.lower(), pkg.replace("-", "_"))
         if importlib.util.find_spec(import_name) is None:
-            missing.append(pkg)
-    if missing:
-        print(f"  {label}: missing {', '.join(missing)}")
+            failures.append(f"{pkg} (missing)")
+            continue
+        try:
+            installed = importlib.metadata.version(pkg)
+        except importlib.metadata.PackageNotFoundError:
+            failures.append(f"{pkg} (version unknown)")
+            continue
+        if not _spec_satisfied(spec, installed):
+            failures.append(f"{pkg} {installed} (requires {spec})")
+    if failures:
+        print(f"  {label}: {', '.join(failures)}")
         return False
     print(f"  {label}: OK")
     return True

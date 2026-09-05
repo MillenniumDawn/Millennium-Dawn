@@ -13,17 +13,14 @@ required instead.
 import ast
 import os
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-TOOLS_ROOT = os.path.join(REPO_ROOT, "tools")
+from shared.paths import REPO_ROOT
+from shared.paths import TOOLS_DIR as TOOLS_ROOT
+from shared_utils import read_text_under
 
 # Deliberate exemptions, as "<repo-relative path>:<line>". Add an entry only for
 # a write whose consumer genuinely requires platform-native line endings, and
 # say why — never to silence a real offender.
-_ALLOWLIST = {
-    # Steam workshop manifest handed straight to SteamCMD; generated outside the
-    # repo and never committed, so its line endings are Steam's business.
-    "tools/publishing/publish_workshop.py:337",
-}
+_ALLOWLIST: set[str] = set()
 
 _WRITE_MODES = set("wax")
 
@@ -72,14 +69,16 @@ def _python_sources():
 def _offenders():
     found = []
     for path in _python_sources():
-        with open(path, "r", encoding="utf-8", newline="") as fh:
-            tree = ast.parse(fh.read(), filename=path)
+        tree = ast.parse(
+            read_text_under(path, TOOLS_ROOT, encoding="utf-8", errors="strict"),
+            filename=path,
+        )
         rel = os.path.relpath(path, REPO_ROOT).replace(os.sep, "/")
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
             name = _callee_name(node)
-            if name == "write_text":
+            if isinstance(node.func, ast.Attribute) and name == "write_text":
                 reason = "Path.write_text — use open(..., newline='') instead"
             elif (
                 name == "open" and _is_text_write(node) and not _has_newline_kwarg(node)
@@ -106,8 +105,10 @@ def test_allowlist_entries_still_exist():
     live = set()
     for path in _python_sources():
         rel = os.path.relpath(path, REPO_ROOT).replace(os.sep, "/")
-        with open(path, "r", encoding="utf-8", newline="") as fh:
-            tree = ast.parse(fh.read(), filename=path)
+        tree = ast.parse(
+            read_text_under(path, TOOLS_ROOT, encoding="utf-8", errors="strict"),
+            filename=path,
+        )
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and _callee_name(node) in (
                 "open",

@@ -9,12 +9,14 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
     Timer,
+    atomic_write_text,
     clean_filepath,
     collect_files_by_mode,
     create_linting_parser,
     get_root_dir,
     normalize_spacing,
     print_timing_summary,
+    read_text_strict,
     run_with_pool,
     strip_inline_comment,
 )
@@ -74,8 +76,7 @@ def fix_file(filepath):
     Returns (filepath, fixes_count, unfixable_issues).
     """
     try:
-        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-            content = f.read()
+        content = read_text_strict(filepath)
 
         lines = content.split("\n")
         fixed_lines = []
@@ -101,8 +102,7 @@ def fix_file(filepath):
         new_content = "\n".join(fixed_lines)
 
         if new_content != content:
-            with open(filepath, "w", encoding="utf-8", newline="") as f:
-                f.write(new_content)
+            atomic_write_text(filepath, new_content)
 
         return (filepath, total_fixes, unfixable)
 

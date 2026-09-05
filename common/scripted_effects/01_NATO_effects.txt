@@ -11,6 +11,54 @@ update_nato_dirty_variable = {
 	}
 }
 
+NATO_auto_ratify_accession = {
+	if = {
+		limit = { has_country_flag = NATO_Accession_Voting }
+		for_each_scope_loop = {
+			array = global.nato_members
+			if = {
+				limit = {
+					exists = yes
+					has_idea = NATO_member
+					# The AI cannot toggle the automation GUI, so without this it could
+					# only ratify by winning a political-power contest for the decision,
+					# and accession needs every living member to succeed at that.
+					OR = {
+						is_ai = yes
+						has_country_flag = MD_auto_ratify_nato_accession
+					}
+					NOT = { has_country_flag = NATO_Ratified_@ROOT }
+				}
+				set_temp_variable = {
+					automation_available_pp = {
+						value = political_power
+						subtract = automation_pp_reserve
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							is_ai = yes
+							check_variable = {
+								var = automation_available_pp
+								value = 20
+								compare = greater_than_or_equals
+							}
+						}
+					}
+					log = "[GetDateText]: [THIS.GetName]: Automatic NATO accession ratification target: [ROOT.GetName]"
+					add_political_power = -20
+					set_country_flag = NATO_Ratified_@ROOT
+					# Unconditional: the dirty variable is global and drives the
+					# ratification tracker, so a human watching it has to see an AI
+					# member's ratification too. The decision path already does this.
+					update_nato_dirty_variable = yes
+				}
+			}
+		}
+	}
+}
+
 # Effect: NATO_join
 # Purpose: Admits ROOT to NATO full membership (mutual opinion boost, military access, NATO_member idea, tech sharing, faction join) when can_join_NATO passes; otherwise routes eligible non-members to Major Non-NATO Ally status.
 NATO_join = {
@@ -30,7 +78,9 @@ NATO_join = {
 					relation = military_access
 					active = yes
 				}
-				PREV = {
+			}
+			PREV = {
+				if = { limit = { NOT = { has_military_access_to = PREV } }
 					diplomatic_relation = {
 						country = PREV
 						relation = military_access
@@ -114,6 +164,7 @@ NATO_join_via_event = {
 # Effect: NATO_leave
 # Purpose: Strips NATO membership and tech sharing, transfers faction leadership to another member if ROOT is the leader, tears down the mutual opinion/access web, and fires the departure news event.
 NATO_leave = {
+	set_temp_variable = { faction_goal_refresh_transferred_leader = 0 }
 	if = {
 		limit = { has_idea = NATO_member }
 
@@ -131,10 +182,16 @@ NATO_leave = {
 				}
 				# Transfer faction leadership
 				set_faction_leader = yes
+				save_event_target_as = faction_goal_transferred_leader
+				set_temp_variable = { ROOT.faction_goal_refresh_transferred_leader = 1 }
 			}
 		}
 
 		leave_faction = yes
+		if = {
+			limit = { check_variable = { faction_goal_refresh_transferred_leader = 1 } }
+			hidden_effect = { event_target:faction_goal_transferred_leader = { faction_goal_refresh_all_caches = yes } }
+		}
 
 		for_each_scope_loop = {
 			array = global.nato_members
@@ -212,7 +269,10 @@ NATO_promote_new_leader = {
 	}
 	if = {
 		limit = { country_exists = event_target:new_nato_leader }
-		hidden_effect = { news_event = { id = NATO.20 hours = 6 } }
+		hidden_effect = {
+			event_target:new_nato_leader = { faction_goal_refresh_all_caches = yes }
+			news_event = { id = NATO.20 hours = 6 }
+		}
 	}
 }
 

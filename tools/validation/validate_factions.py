@@ -6,11 +6,12 @@ import glob
 import os
 import re
 import sys
+from collections import Counter
 from typing import Dict, List, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import extract_block_from_text
+from shared_utils import blank_quoted_strings, extract_block_from_text
 from validator_common import (
     BaseValidator,
     Colors,
@@ -37,6 +38,9 @@ MANIFEST_RE = re.compile(r"\bmanifest\s*=\s*(\w+)")
 ICON_RE = re.compile(r"\bicon\s*=\s*(\w+)")
 TYPE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 IS_MANIFEST_RE = re.compile(r"\bis_manifest\s*=\s*yes\b")
+CATEGORY_RE = re.compile(r"^\s*category\s*=\s*(\w+)")
+GOAL_CATEGORIES = ("short_term", "medium_term", "long_term")
+MAX_TEMPLATE_GOALS_PER_CATEGORY = 2
 
 
 def read_file(filepath: str) -> str:
@@ -70,6 +74,23 @@ def extract_goals_block(content: str, template_id: str) -> List[str]:
     return [
         w.strip() for w in goals_body.split() if w.strip() and not w.startswith("#")
     ]
+
+
+def extract_goal_categories(content: str) -> Dict[str, str]:
+    """Extract each goal's top-level category."""
+    categories = {}
+    for match in BLOCK_DEF_RE.finditer(content):
+        block_body, _ = extract_block_from_text(content, match.end() - 1)
+        depth = 0
+        for line in block_body.splitlines():
+            code = blank_quoted_strings(line)
+            if depth == 0:
+                category_match = CATEGORY_RE.match(code)
+                if category_match:
+                    categories[match.group(1)] = category_match.group(1)
+                    break
+            depth += code.count("{") - code.count("}")
+    return categories
 
 
 def extract_default_rules_block(content: str, template_id: str) -> List[str]:
@@ -133,6 +154,7 @@ class Validator(BaseValidator):
         super().__init__(*args, **kwargs)
         self.template_ids: Dict[str, str] = {}  # id -> filepath
         self.goal_ids: Set[str] = set()
+        self.goal_categories: Dict[str, str] = {}
         self.manifest_ids: Set[str] = set()
         self.rule_ids: Set[str] = set()
         self.upgrade_ids: Set[str] = set()
@@ -172,6 +194,7 @@ class Validator(BaseValidator):
                 if IS_MANIFEST_RE.search(block_body):
                     self.manifest_ids.add(block_id)
                 self.goal_ids.add(block_id)
+            self.goal_categories.update(extract_goal_categories(content))
 
         # Collect rule IDs from rules/
         rules_dir = self._faction_path("rules")
@@ -248,22 +271,27 @@ class Validator(BaseValidator):
             "Templates with invalid manifest references:",
         )
 
-    def _validate_template_goals(self):
-        """Check that every goal listed in a template exists."""
-        self._log_section("Checking template goal references...")
-
-        results = []
+    def _iter_templates(self):
+        """Yield each template block with its source filename."""
         template_dir = self._faction_path("templates")
         for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
             content = read_file(filepath)
             fname = os.path.basename(filepath)
             for template_id in extract_block_ids(content):
-                goals = extract_goals_block(content, template_id)
-                for goal_id in goals:
-                    if goal_id not in self.goal_ids:
-                        results.append(
-                            f"{fname} ({template_id}): goal '{goal_id}' not found"
-                        )
+                yield fname, template_id, content
+
+    def _validate_template_goals(self):
+        """Check that every goal listed in a template exists."""
+        self._log_section("Checking template goal references...")
+
+        results = []
+        for fname, template_id, content in self._iter_templates():
+            goals = extract_goals_block(content, template_id)
+            for goal_id in goals:
+                if goal_id not in self.goal_ids:
+                    results.append(
+                        f"{fname} ({template_id}): goal '{goal_id}' not found"
+                    )
 
         self._report(
             results,
@@ -271,22 +299,46 @@ class Validator(BaseValidator):
             "Templates with invalid goal references:",
         )
 
+    def _validate_template_goal_limits(self):
+        """Check that templates start with at most two goals of each category."""
+        self._log_section("Checking template goal category limits...")
+
+        results = []
+        for fname, template_id, content in self._iter_templates():
+            goals = extract_goals_block(content, template_id)
+            counts = Counter(self.goal_categories.get(goal_id) for goal_id in goals)
+            for category in GOAL_CATEGORIES:
+                if counts[category] <= MAX_TEMPLATE_GOALS_PER_CATEGORY:
+                    continue
+                category_goals = [
+                    goal_id
+                    for goal_id in goals
+                    if self.goal_categories.get(goal_id) == category
+                ]
+                results.append(
+                    f"{fname} ({template_id}): {len(category_goals)} {category} goals "
+                    f"(maximum {MAX_TEMPLATE_GOALS_PER_CATEGORY}): "
+                    f"{', '.join(category_goals)}"
+                )
+
+        self._report(
+            results,
+            "All templates meet goal category limits",
+            "Templates with too many starting goals:",
+        )
+
     def _validate_template_rules(self):
         """Check that every rule listed in default_rules exists."""
         self._log_section("Checking template default_rules references...")
 
         results = []
-        template_dir = self._faction_path("templates")
-        for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
-            content = read_file(filepath)
-            fname = os.path.basename(filepath)
-            for template_id in extract_block_ids(content):
-                rules = extract_default_rules_block(content, template_id)
-                for rule_id in rules:
-                    if rule_id not in self.rule_ids:
-                        results.append(
-                            f"{fname} ({template_id}): rule '{rule_id}' not found"
-                        )
+        for fname, template_id, content in self._iter_templates():
+            rules = extract_default_rules_block(content, template_id)
+            for rule_id in rules:
+                if rule_id not in self.rule_ids:
+                    results.append(
+                        f"{fname} ({template_id}): rule '{rule_id}' not found"
+                    )
 
         self._report(
             results,
@@ -506,6 +558,7 @@ class Validator(BaseValidator):
         self._collect_definitions()
         self._validate_template_manifests()
         self._validate_template_goals()
+        self._validate_template_goal_limits()
         self._validate_template_rules()
         self._validate_template_icons()
         self._validate_rule_groups()

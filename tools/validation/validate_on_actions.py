@@ -10,7 +10,7 @@ from typing import List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text
+from shared_utils import extract_block_from_text, find_unquoted_block_end
 from validator_common import (
     BaseValidator,
     Severity,
@@ -55,6 +55,30 @@ _SHORT_FORM_EVENT_RE = re.compile(
     r"\b(?:country_event|news_event|state_event|unit_leader_event|operative_leader_event)"
     r"\s*=\s*([A-Za-z_]\w*\.[A-Za-z0-9_.]+)"
 )
+_DATE_LOWER_BOUND_RE = re.compile(r"\bdate\s*>\s*\d{4}\.\d{1,2}\.\d{1,2}")
+_IF_BLOCK_RE = re.compile(r"\b(?:if|else_if)\s*=\s*\{")
+_DIRECT_LIMIT_RE = re.compile(r"\s*limit\s*=\s*\{")
+_RANDOM_BLOCK_RE = re.compile(r"\b(random(?:_list)?)\s*=\s*\{")
+_CHANCE_FIELD_RE = re.compile(r"\bchance\s*=")
+_STATE_DRIVEN_DATE_POLL_GATE_RE = re.compile(
+    r"\b(?:"
+    r"check_variable|"
+    r"has_(?!dlc\b)\w*|"
+    r"(?:is|gives|owns|controls)_\w+|"
+    r"country_exists|"
+    r"[A-Za-z_]\w*\s*=\s*yes"
+    r")\b"
+)
+_PULSE_ON_ACTIONS = ("on_daily", "on_weekly", "on_monthly")
+_FACTION_GOAL_STARTUP_EVENT = "faction_goal_cache.2"
+# Dated polls intentionally kept as retries outside the yearly event table.
+_DATE_POLL_EXEMPT_IDS = frozenset(
+    {
+        "ast_elections_howard_placeholders.1",
+        "ast_elections_howard_placeholders.2",
+        "the_new_look_rudd.1",
+    }
+)
 
 
 def _scan_event_text(text: str) -> Tuple[Set[str], Set[str]]:
@@ -74,6 +98,18 @@ def _scan_event_text(text: str) -> Tuple[Set[str], Set[str]]:
             triggered_only_ids.add(eid)
 
     return defined_ids, triggered_only_ids
+
+
+def _event_calls_effect(text: str, event_id: str, effect: str) -> bool:
+    """Return whether the named event directly calls an effect."""
+    text = re.sub(r"#[^\n]*", "", text)
+    effect_re = re.compile(rf"\b{re.escape(effect)}\s*=\s*yes\b")
+    for match in _EVENT_BLOCK_OPEN_RE.finditer(text):
+        body, _ = extract_block_from_text(text, match.end() - 1)
+        id_match = _EVENT_ID_IN_BODY_RE.search(body)
+        if id_match and id_match.group(1) == event_id:
+            return effect_re.search(body) is not None
+    return False
 
 
 def _scan_event_file(args: Tuple[str, str]) -> Tuple[Set[str], Set[str]]:
@@ -152,6 +188,17 @@ def _gate_signature(pos: int, gate_spans: List[Tuple[int, int]]) -> Tuple[int, .
     )
 
 
+def _iter_event_call_positions(text: str):
+    """Yield literal event IDs and their positions outside random_events pools."""
+    long_form_spans = {(m.start(), m.end()) for m in _LONG_FORM_EVENT_RE.finditer(text)}
+    for m in _LONG_FORM_EVENT_RE.finditer(text):
+        yield m.group(1), m.start()
+    for m in _SHORT_FORM_EVENT_RE.finditer(text):
+        if any(start <= m.start() < end for start, end in long_form_spans):
+            continue
+        yield m.group(1), m.start()
+
+
 def _scan_on_action_block(
     text: str, block_name: str, filepath: str, line_offset: int = 0
 ) -> Tuple[
@@ -191,115 +238,166 @@ def _scan_on_action_block(
     # the same event listed twice in the same random_events body, which IS a bug.
     for m in _RANDOM_EVENTS_BLOCK_RE.finditer(text):
         start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
+        i, _ = find_unquoted_block_end(text, start)
         body = text[start : i - 1]
         body_offset = start
         for entry in _RANDOM_EVENT_ENTRY_RE.finditer(body):
             eid = entry.group(1)
             _record(eid, body_offset + entry.start())
 
-    for m in _LONG_FORM_EVENT_RE.finditer(text):
-        _record(m.group(1), m.start())
-
-    # Collect short-form calls — but only when the match isn't already inside a
-    # long-form call (the long-form pattern consumes the id= part, so a
-    # short-form match immediately following an event keyword and = is the
-    # actual token we want).
-    long_form_spans = {(m.start(), m.end()) for m in _LONG_FORM_EVENT_RE.finditer(text)}
-
-    for m in _SHORT_FORM_EVENT_RE.finditer(text):
-        if any(start <= m.start() < end for start, end in long_form_spans):
-            continue
-        _record(m.group(1), m.start())
+    for eid, pos in _iter_event_call_positions(text):
+        _record(eid, pos)
 
     return refs, duplicates
 
 
+def _iter_on_action_blocks(text_clean: str):
+    """Yield top-level on-action names, bodies, and full-file line offsets."""
+    outer_re = re.compile(r"\bon_actions\s*=\s*\{")
+    trigger_open_re = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*\{")
+    subblocks = {
+        "effect",
+        "random_events",
+        "if",
+        "else",
+        "else_if",
+        "limit",
+        "AND",
+        "OR",
+        "NOT",
+        "hidden_effect",
+        "random_list",
+        "modifier",
+    }
+
+    for outer_match in outer_re.finditer(text_clean):
+        outer_start = outer_match.end()
+        depth = 1
+        outer_end = outer_start
+        while outer_end < len(text_clean) and depth > 0:
+            if text_clean[outer_end] == "{":
+                depth += 1
+            elif text_clean[outer_end] == "}":
+                depth -= 1
+            outer_end += 1
+        outer_body = text_clean[outer_start : outer_end - 1]
+
+        pos = 0
+        while pos < len(outer_body):
+            block_match = trigger_open_re.search(outer_body, pos)
+            if not block_match:
+                break
+            block_name = block_match.group(1)
+            if block_name in subblocks:
+                pos = block_match.end()
+                continue
+
+            body_start = block_match.end()
+            depth = 1
+            body_end = body_start
+            while body_end < len(outer_body) and depth > 0:
+                if outer_body[body_end] == "{":
+                    depth += 1
+                elif outer_body[body_end] == "}":
+                    depth -= 1
+                body_end += 1
+            if depth > 0:
+                break
+            block_body = outer_body[body_start : body_end - 1]
+            line_offset = text_clean[: outer_start + body_start].count("\n")
+            yield block_name, block_body, line_offset
+            pos = body_end
+
+
 def _parse_on_actions_text(text_clean: str, filepath: str) -> Tuple[
-    List[Tuple[str, str, int, str]],  # (event_id, block_name, line, relpath)
-    List[Tuple[str, str, int, str]],  # duplicates
+    List[Tuple[str, str, int, str]],
+    List[Tuple[str, str, int, str]],
 ]:
     """Parse comment-stripped on_actions text and return all event references."""
     all_refs: List[Tuple[str, str, int, str]] = []
     all_dupes: List[Tuple[str, str, int, str]] = []
 
-    relpath = filepath
-
-    outer_re = re.compile(r"\bon_actions\s*=\s*\{")
-    trigger_open_re = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*\{")
-
-    for outer_m in outer_re.finditer(text_clean):
-        start = outer_m.end()
-        depth = 1
-        i = start
-        while i < len(text_clean) and depth > 0:
-            if text_clean[i] == "{":
-                depth += 1
-            elif text_clean[i] == "}":
-                depth -= 1
-            i += 1
-        outer_body = text_clean[start : i - 1]
-        outer_offset = start
-
-        # Each top-level key inside on_actions is an on_action trigger name
-        pos = 0
-        while pos < len(outer_body):
-            tm = trigger_open_re.search(outer_body, pos)
-            if not tm:
-                break
-            block_name = tm.group(1)
-            # Skip known HOI4 sub-blocks that aren't on_action names
-            if block_name in (
-                "effect",
-                "random_events",
-                "if",
-                "else",
-                "else_if",
-                "limit",
-                "AND",
-                "OR",
-                "NOT",
-                "hidden_effect",
-                "random_list",
-                "modifier",
-            ):
-                pos = tm.end()
-                continue
-
-            bstart = tm.end()
-            bdepth = 1
-            bi = bstart
-            while bi < len(outer_body) and bdepth > 0:
-                if outer_body[bi] == "{":
-                    bdepth += 1
-                elif outer_body[bi] == "}":
-                    bdepth -= 1
-                bi += 1
-            block_body = outer_body[bstart : bi - 1]
-
-            # line_offset: number of lines before block_body in the full file
-            line_offset = text_clean[: outer_offset + bstart].count("\n")
-            refs, dupes = _scan_on_action_block(
-                block_body,
-                block_name,
-                filepath,
-                line_offset=line_offset,
-            )
-            for eid, bname, lno in refs:
-                all_refs.append((eid, bname, lno, relpath))
-            for eid, bname, lno in dupes:
-                all_dupes.append((eid, bname, lno, relpath))
-
-            pos = bi
+    for block_name, block_body, line_offset in _iter_on_action_blocks(text_clean):
+        refs, dupes = _scan_on_action_block(
+            block_body,
+            block_name,
+            filepath,
+            line_offset=line_offset,
+        )
+        for eid, ref_block, line in refs:
+            all_refs.append((eid, ref_block, line, filepath))
+        for eid, ref_block, line in dupes:
+            all_dupes.append((eid, ref_block, line, filepath))
 
     return all_refs, all_dupes
+
+
+def scan_deterministic_date_polls(
+    text_clean: str, filepath: str
+) -> List[Tuple[str, str, int, str]]:
+    """Return event fires inside deterministic dated pulse on-actions."""
+    polls: List[Tuple[str, str, int, str]] = []
+    seen: Set[Tuple[str, str, int]] = set()
+
+    for block_name, block_body, block_line_offset in _iter_on_action_blocks(text_clean):
+        if not any(
+            block_name == pulse or block_name.startswith(f"{pulse}_")
+            for pulse in _PULSE_ON_ACTIONS
+        ):
+            continue
+
+        for if_match in _IF_BLOCK_RE.finditer(block_body):
+            limit_match = _DIRECT_LIMIT_RE.match(block_body, if_match.end())
+            if not limit_match:
+                continue
+            limit_body, limit_end = extract_block_from_text(
+                block_body, limit_match.end() - 1
+            )
+            if limit_end == -1 or not _DATE_LOWER_BOUND_RE.search(limit_body):
+                continue
+            if _STATE_DRIVEN_DATE_POLL_GATE_RE.search(limit_body):
+                continue
+            if_body, if_end = extract_block_from_text(block_body, if_match.end() - 1)
+            if if_end == -1:
+                continue
+
+            stochastic_spans = []
+            for random_match in _RANDOM_BLOCK_RE.finditer(if_body):
+                random_body, random_end = extract_block_from_text(
+                    if_body, random_match.end() - 1
+                )
+                if random_end == -1:
+                    continue
+                if random_match.group(1) == "random_list" or _CHANCE_FIELD_RE.search(
+                    random_body
+                ):
+                    stochastic_spans.append((random_match.start(), random_end))
+
+            line_offset = block_line_offset + block_body[: if_match.end()].count("\n")
+            for eid, pos in _iter_event_call_positions(if_body):
+                if any(start <= pos < end for start, end in stochastic_spans):
+                    continue
+                if eid in _DATE_POLL_EXEMPT_IDS:
+                    continue
+                line = line_offset + if_body[:pos].count("\n") + 1
+                key = (eid, block_name, line)
+                if key in seen:
+                    continue
+                seen.add(key)
+                polls.append((eid, block_name, line, filepath))
+    return polls
+
+
+def _scan_date_polls_file(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int, str]]:
+    filepath, _mod_path = args
+    try:
+        text = Path(filepath).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    text_clean = re.sub(r"#[^\n]*", "", text)
+    return scan_deterministic_date_polls(text_clean, filepath)
 
 
 def _parse_on_actions_file(
@@ -326,7 +424,7 @@ def _parse_on_actions_file(
 
 class Validator(BaseValidator):
     TITLE = "ON_ACTIONS REFERENCE VALIDATION"
-    STAGED_EXTENSIONS = [".txt"]
+    STAGED_EXTENSIONS = (".txt",)
 
     def __init__(self, mod_path: str, **kwargs):
         super().__init__(mod_path, **kwargs)
@@ -344,7 +442,10 @@ class Validator(BaseValidator):
         references can be resolved even when the event definition file itself
         is not staged.
         """
-        if self._defined_ids_cache is not None:
+        if (
+            self._defined_ids_cache is not None
+            and self._triggered_only_cache is not None
+        ):
             return self._defined_ids_cache, self._triggered_only_cache
 
         event_files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
@@ -390,6 +491,38 @@ class Validator(BaseValidator):
     # ------------------------------------------------------------------
     # Checks
     # ------------------------------------------------------------------
+
+    def validate_deterministic_date_polls(self):
+        """Report date-gated daily, weekly, and monthly event polling."""
+        self._log_section("Checking pulse on-actions for deterministic date polling...")
+
+        on_actions_files = self._collect_files(["common/on_actions/**/*.txt"])
+        polls: List[Tuple[str, str, int, str]] = []
+        for result in self._pool_map(
+            _scan_date_polls_file,
+            [(f, self.mod_path) for f in on_actions_files],
+            chunksize=10,
+        ):
+            polls.extend(result)
+
+        results = []
+        for eid, block_name, line, filepath in sorted(polls, key=lambda x: x[2]):
+            results.append(
+                (
+                    f"Event '{eid}' is polled by dated on_action '{block_name}'; "
+                    "schedule it from 00_yearly_effects.txt",
+                    os.path.relpath(filepath, self.mod_path),
+                    line,
+                )
+            )
+
+        self._report(
+            results,
+            "Pulse on-actions contain no deterministic historical event polling",
+            "Dated events polled from pulse on-actions:",
+            Severity.ERROR,
+            category="deterministic-date-poll",
+        )
 
     def validate_missing_event_refs(self):
         """Report event IDs referenced in on_actions that are not defined anywhere."""
@@ -474,6 +607,50 @@ class Validator(BaseValidator):
             category="non-triggered-on-action",
         )
 
+    def validate_faction_goal_cache_creation(self):
+        """Require post-startup faction creation to initialize faction-goal caches."""
+        self._log_section("Checking faction-goal cache creation wiring...")
+
+        defined_ids, _ = self._get_defined_event_ids()
+        if _FACTION_GOAL_STARTUP_EVENT not in defined_ids:
+            return
+
+        all_refs, _ = self._get_on_actions_refs()
+        create_hook_wired = any(
+            eid == _FACTION_GOAL_STARTUP_EVENT and block_name == "on_create_faction"
+            for eid, block_name, _line, _filepath in all_refs
+        )
+        startup_event_updates_cache = False
+        for filepath in self._collect_files(["events/**/*.txt"]):
+            try:
+                text = Path(filepath).read_text(encoding="utf-8-sig", errors="replace")
+            except OSError:
+                continue
+            if _event_calls_effect(
+                text, _FACTION_GOAL_STARTUP_EVENT, "faction_goal_update_daily_caches"
+            ):
+                startup_event_updates_cache = True
+                break
+
+        results = []
+        if not create_hook_wired:
+            results.append(
+                "on_create_faction must schedule faction_goal_cache.2 to initialize "
+                "new faction caches"
+            )
+        if not startup_event_updates_cache:
+            results.append(
+                "faction_goal_cache.2 must call faction_goal_update_daily_caches"
+            )
+
+        self._report(
+            results,
+            "Faction-goal caches initialize when factions are created",
+            "Missing faction-goal cache lifecycle wiring:",
+            Severity.ERROR,
+            category="missing-faction-goal-cache-lifecycle",
+        )
+
     def validate_duplicate_event_refs(self):
         """Warn when the same event ID appears more than once in the same on_action block."""
         self._log_section(
@@ -502,8 +679,10 @@ class Validator(BaseValidator):
         )
 
     def run_validations(self):
+        self.validate_deterministic_date_polls()
         self.validate_missing_event_refs()
         self.validate_non_triggered_on_action_refs()
+        self.validate_faction_goal_cache_creation()
         self.validate_duplicate_event_refs()
 
 

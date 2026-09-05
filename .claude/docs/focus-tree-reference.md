@@ -196,19 +196,37 @@ two_random_industrial_complex = yes
 
 ### Available Building Effects
 
-| Building               | Random Effect                       | State Scope Effect                 |
-| ---------------------- | ----------------------------------- | ---------------------------------- |
-| Civilian Factory       | `one_random_industrial_complex`     | `one_state_industrial_complex`     |
-| Military Factory       | `one_random_arms_factory`           | `one_state_arms_factory`           |
-| Dockyard               | `one_random_dockyard`               | `one_state_dockyard`               |
-| Offices                | `one_office_construction`           | `one_state_office_construction`    |
-| Infrastructure         | `one_random_infrastructure`         | `one_state_infrastructure`         |
-| Air Base               | `one_air_base`                      | `one_state_air_base`               |
-| Network Infrastructure | `one_random_network_infrastructure` | `one_state_network_infrastructure` |
-| Anti-Air/SAM           | `one_anti_air`                      | `one_state_anti_air`               |
-| Radar                  | `one_radar_station`                 | `one_state_radar_station`          |
-| Nuclear Reactor        | `one_random_nuclear_reactor`        | `one_state_nuclear_reactor`        |
-| Agriculture District   | `one_random_agriculture_district`   | `one_state_agriculture_district`   |
+Random effects:
+
+| Building               | Random Effect                       |
+| ---------------------- | ----------------------------------- |
+| Civilian Factory       | `one_random_industrial_complex`     |
+| Military Factory       | `one_random_arms_factory`           |
+| Dockyard               | `one_random_dockyard`               |
+| Offices                | `one_office_construction`           |
+| Infrastructure         | `one_random_infrastructure`         |
+| Air Base               | `one_air_base`                      |
+| Network Infrastructure | `one_random_network_infrastructure` |
+| Anti-Air/SAM           | `one_anti_air`                      |
+| Radar                  | `one_radar_station`                 |
+| Nuclear Reactor        | `one_random_nuclear_reactor`        |
+| Agriculture District   | `one_random_agriculture_district`   |
+
+State-scope effects:
+
+| Building               | State Scope Effect                 |
+| ---------------------- | ---------------------------------- |
+| Civilian Factory       | `one_state_industrial_complex`     |
+| Military Factory       | `one_state_arms_factory`           |
+| Dockyard               | `one_state_dockyard`               |
+| Offices                | `one_state_office_construction`    |
+| Infrastructure         | `one_state_infrastructure`         |
+| Air Base               | `one_state_air_base`               |
+| Network Infrastructure | `one_state_network_infrastructure` |
+| Anti-Air/SAM           | `one_state_anti_air`               |
+| Radar                  | `one_state_radar_station`          |
+| Nuclear Reactor        | `one_state_nuclear_reactor`        |
+| Agriculture District   | `one_state_agriculture_district`   |
 
 ### Building Costs (includes building slot at $1.00)
 

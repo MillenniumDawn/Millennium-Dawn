@@ -144,11 +144,24 @@ repos:
         pass_filenames: true
       # Runs the full tools test suite before push (not on every commit).
       # Enable with: pre-commit install --hook-type pre-push
+      - id: tools-pytest-config
+        name: Verify tools pytest collection configuration
+        entry: >-
+          python3 -m pytest tools/tests/collection_layout_test.py
+          -o addopts= -q
+        language: system
+        files: >-
+          ^(tools/|pyproject.toml|.pre-commit-config.yaml|.(github|claude)/)
+        pass_filenames: false
+        stages: [pre-push]
       - id: tools-pytest
         name: Run tools test suite (pytest)
-        entry: python3 -m pytest
+        entry: >-
+          python3 -m pytest tools/tests -o addopts=
+          -o python_files=*_test.py
         language: system
-        files: '^tools/.*\.py$'
+        files: >-
+          ^(tools/|pyproject.toml|.pre-commit-config.yaml|.(github|claude)/)
         pass_filenames: false
         stages: [pre-push]
       # --- MD-specific hooks (manual by default) ---
@@ -160,12 +173,12 @@ repos:
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
         stages: [manual]
-      - id: md-standardize
-        name: MD Standardize (auto-fix ideas/events/decisions/focuses)
-        entry: python3 tools/standardize_staged.py
-        language: system
-        files: '(common/(national_focus|decisions|ideas)|events)/.*\.txt$'
-        pass_filenames: true
+      # - id: md-standardize
+      #   name: MD Standardize (auto-fix ideas/events/decisions/focuses)
+      #   entry: python3 tools/standardize_staged.py
+      #   language: system
+      #   files: '(common/(national_focus|decisions|ideas)|events)/.*\.txt$'
+      #   pass_filenames: true
       - id: md-validate-content
         name: MD Validate (commit-stage content validators, in parallel)
         # One process fans the run-on-commit validators out concurrently instead
@@ -179,13 +192,6 @@ repos:
         language: system
         files: '\.(txt|yml)$'
         pass_filenames: true
-      - id: check-common-mistakes
-        name: MD Common Mistakes (threat scale, value ranges, always=no, etc.)
-        entry: python3 tools/linting/check_common_mistakes.py --mode staged
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: false
       - id: md-validate-defines
         name: MD Validate defines against vanilla
         entry: >-

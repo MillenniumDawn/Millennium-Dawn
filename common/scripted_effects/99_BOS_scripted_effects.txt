@@ -1,7 +1,10 @@
-BOS_mark_gui_dirty_effect = {
+update_bos_internal_factions_dirty_variable = {
 	if = {
-		limit = { is_ai = no }
-		add_to_variable = { global.md_gui_dirty = 1 }
+		limit = { check_variable = { global.BOS_internal_factions_dirty_update_var < 10000 } }
+		add_to_variable = { global.BOS_internal_factions_dirty_update_var = 1 }
+	}
+	else = {
+		set_variable = { global.BOS_internal_factions_dirty_update_var = 1 }
 	}
 }
 
@@ -87,7 +90,10 @@ BOS_refresh_internal_faction_modifiers_effect = {
 		limit = { NOT = { has_dynamic_modifier = { modifier = BOS_internal_faction_balance } } }
 		add_dynamic_modifier = { modifier = BOS_internal_faction_balance }
 	}
-	BOS_mark_gui_dirty_effect = yes
+	if = {
+		limit = { is_ai = no }
+		update_bos_internal_factions_dirty_variable = yes
+	}
 }
 
 BOS_initialize_internal_factions_effect = {
@@ -419,9 +425,12 @@ BOS_finish_civil_war_recovery_effect = {
 	set_temp_variable = { treasury_change = -25.00 }
 	modify_treasury_effect = yes
 	128 = {
-		damage_building = {
-			type = infrastructure
-			damage = 1
+		if = {
+			limit = { infrastructure > 0 }
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
 		}
 	}
 	delete_units = {

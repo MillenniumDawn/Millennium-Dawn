@@ -19,20 +19,28 @@ from .models import Issue, Severity, ValidatorRun
 def discover_validator_runs(results_dir: str) -> List[Tuple[str, Path]]:
     """Return [(validator_slug, artifact_dir), ...] sorted by slug.
 
-    Matches any subdirectory named `validation-<slug>-results`, which is the
-    convention the workflow uses for uploaded artifacts.
+    Multiple downloaded artifacts use `validation-<slug>-results`
+    subdirectories. GitHub extracts a single pattern match directly into the
+    destination, so flat `validation-<slug>.json` or `.log` files also count.
     """
     base = Path(results_dir)
     if not base.is_dir():
         return []
 
-    runs = []
+    runs = {}
     for sub in sorted(base.glob("validation-*-results")):
         if not sub.is_dir():
             continue
         slug = sub.name.removeprefix("validation-").removesuffix("-results")
-        runs.append((slug, sub))
-    return runs
+        runs[slug] = sub
+
+    for path in sorted(base.glob("validation-*.*")):
+        if not path.is_file() or path.suffix not in {".json", ".log"}:
+            continue
+        slug = path.stem.removeprefix("validation-")
+        runs.setdefault(slug, base)
+
+    return sorted(runs.items())
 
 
 def load_all(results_dir: str) -> List[ValidatorRun]:
@@ -47,7 +55,25 @@ def load_all(results_dir: str) -> List[ValidatorRun]:
 def _load_one(slug: str, artifact_dir: Path) -> ValidatorRun:
     title = _slug_to_title(slug)
     log_text = _read_first(artifact_dir, "*.log")
-    json_issues = _read_json_sidecar(artifact_dir, slug)
+    try:
+        json_issues = _read_json_sidecar(artifact_dir, slug)
+    except ValueError as exc:
+        return ValidatorRun(
+            name=slug,
+            title=title,
+            log_text=log_text,
+            issues=[
+                Issue(
+                    severity=Severity.ERROR,
+                    category="malformed-validator-sidecar",
+                    message=str(exc),
+                    validator=slug,
+                )
+            ],
+            status="failed",
+            errors=1,
+            had_json=True,
+        )
 
     run = ValidatorRun(name=slug, title=title, log_text=log_text)
 
@@ -112,24 +138,21 @@ def _read_first(artifact_dir: Path, pattern: str) -> Optional[str]:
 
 
 def _read_json_sidecar(artifact_dir: Path, slug: str) -> Optional[list]:
-    """Return the parsed JSON list of issue dicts, or None if not present.
-
-    Validators emit `<output_stem>.json` next to their `.log`. In CI the log
-    path is `validation-<slug>.log` so the sidecar is `validation-<slug>.json`.
-    We also search for any `*.json` in the artifact dir as a fallback.
-    """
+    """Return the validated JSON issue list, or None when no sidecar exists."""
     candidates = list(artifact_dir.glob(f"validation-{slug}.json"))
     if not candidates:
         candidates = list(artifact_dir.glob("*.json"))
-    for path in candidates:
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            if isinstance(data, list):
-                return data
-        except Exception:
-            continue
-    return None
+    if not candidates:
+        return None
+    path = sorted(candidates)[0]
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Malformed validator sidecar: {path.name}") from exc
+    if not isinstance(data, list) or not all(isinstance(item, dict) for item in data):
+        raise ValueError(f"Malformed validator sidecar: {path.name}")
+    return data
 
 
 _LOG_ISSUE_RE = re.compile(
@@ -166,6 +189,17 @@ def _parse_issues_from_log(
 
 
 def _determine_status(run: ValidatorRun, log_text: Optional[str]) -> str:
+    if log_text is None and not run.had_json:
+        return "no_output"
+    # A JSON sidecar carries every issue, so its counts settle the status on
+    # their own. Linters outside BaseValidator emit one without the
+    # "VALIDATION COMPLETE" marker the text fallback below keys on.
+    if run.had_json:
+        if run.errors > 0:
+            return "failed"
+        if run.warnings > 0:
+            return "warnings"
+        return "passed"
     if log_text is None:
         return "no_output"
     if "✓ VALIDATION COMPLETE" in log_text and run.errors == 0 and run.warnings == 0:

@@ -37,9 +37,14 @@ PREFIX_MAP = {
     "attack_submarine": "submarine",
     "convoy": "convoy",
     "mio_cat_eq_only_transport": "transport_airplane",
+    "mio_cat_eq_only_uav": "uav",
     "guided_missile_equipment": "guided_missile",
     "cnc_equipment_type": "cnc",
     "infantry_weapons_type": "smallarms",
+    "artillery_equipment": "artillery",
+    "AA_Equipment": "aa",
+    "L_AT_Equipment": "atgm",
+    "H_AT_Equipment": "atgm",
     # ballistic_missile_equipment -> intentionally no prefix (standard icons)
 }
 

@@ -139,20 +139,79 @@ ENG_advance_moon_base = {
 # English seats: (Take Party Popularity variable) (if minor -, if major +) ( random variable selected from range of 0-10)
 # (Take Party Popularity of Labour,Tories,LibDems,Greens) (then Combine) (then add Nationalist Percentage) (remainder randomly distributed)
 # FUTURE ADDITIONS: Good to get UI to expand to states within England
+# Parameters:
+# - ENG_dependency_change: signed amount
+ENG_change_scottish_dependency = {
+	custom_effect_tooltip = ENG_dependency_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_scottish_dependency = { value = ROOT.ENG_scottish_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
+	}
+}
+
+# Parameters:
+# - ENG_dependency_change: signed amount
+ENG_change_north_irish_dependency = {
+	custom_effect_tooltip = ENG_dependency_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_north_irish_dependency = { value = ROOT.ENG_north_irish_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
+	}
+}
+
+# Parameters:
+# - ENG_dependency_change: signed amount
+ENG_change_wales_dependency = {
+	custom_effect_tooltip = ENG_dependency_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_wales_dependency = { value = ROOT.ENG_wales_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
+	}
+}
+
 ENG_lower_dependence_1 = {
 	custom_effect_tooltip = ENG_lower_dependence_1_TT
-	add_to_variable = { ENG_scottish_dependency = -1 }
-	add_to_variable = { ENG_north_irish_dependency = -1 }
-	add_to_variable = { ENG_wales_dependency = -1 }
+	hidden_effect = {
+		set_temp_variable = { ENG_dependency_change = -1 }
+		ENG_change_scottish_dependency = yes
+		ENG_change_north_irish_dependency = yes
+		ENG_change_wales_dependency = yes
+	}
 }
-# Lower dependence + agitation
-# Increase Dependence
-# Increase Agitation
+
+# Parameters:
+# - ENG_agitation_change: signed amount
+ENG_change_scottish_agitation = {
+	custom_effect_tooltip = ENG_agitation_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_scottish_agitation = { value = ROOT.ENG_scottish_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
+	}
+}
+
+# Parameters:
+# - ENG_agitation_change: signed amount
+ENG_change_north_irish_agitation = {
+	custom_effect_tooltip = ENG_agitation_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_north_irish_agitation = { value = ROOT.ENG_north_irish_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
+		ROOT = { ENG_north_irish_agitation_change_check = yes }
+	}
+}
+
+# Parameters:
+# - ENG_agitation_change: signed amount
+ENG_change_wales_agitation = {
+	custom_effect_tooltip = ENG_agitation_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_wales_agitation = { value = ROOT.ENG_wales_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
+	}
+}
+
 ENG_increase_agitation_2 = {
 	custom_effect_tooltip = ENG_increase_agitation_2_TT
-	add_to_variable = { ENG_scottish_agitation = 2 }
-	add_to_variable = { ENG_north_irish_agitation = 2 }
-	add_to_variable = { ENG_wales_agitation = 2 }
+	hidden_effect = {
+		set_temp_variable = { ENG_agitation_change = 2 }
+		ENG_change_scottish_agitation = yes
+		ENG_change_north_irish_agitation = yes
+		ENG_change_wales_agitation = yes
+	}
 }
 
 ENG_north_irish_agitation_change_check = {
@@ -242,81 +301,30 @@ ENG_north_irish_agitation_change_check = {
 }
 
 
-ENG_var_cap = {
-	if = {
-		limit = { check_variable = { ENG_scottish_agitation > 100 } }
-		set_variable = { ENG_scottish_agitation = 100 }
+# Parameters:
+# - ENG_nationalists_change: signed amount
+ENG_change_north_irish_nationalists = {
+	custom_effect_tooltip = ENG_nationalists_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_north_irish_nationalists = { value = ROOT.ENG_north_irish_nationalists add = ENG_nationalists_change clamp = { min = 0 max = 100 } } }
 	}
-	if = {
-		limit = { check_variable = { ENG_scottish_dependency > 100 } }
-		set_variable = { ENG_scottish_dependency = 100 }
+}
+
+ENG_clamp_nationalists = {
+	hidden_effect = {
+		set_variable = { ROOT.ENG_scottish_nationalists = { value = ROOT.ENG_scottish_nationalists clamp = { min = 0 max = 100 } } }
+		set_variable = { ROOT.ENG_north_irish_nationalists = { value = ROOT.ENG_north_irish_nationalists clamp = { min = 0 max = 100 } } }
+		set_variable = { ROOT.ENG_wales_nationalists = { value = ROOT.ENG_wales_nationalists clamp = { min = 0 max = 100 } } }
 	}
+}
+
+update_eng_devolution_dirty_variable = {
 	if = {
-		limit = { check_variable = { ENG_scottish_nationalists > 100 } }
-		set_variable = { ENG_scottish_nationalists = 100 }
+		limit = { check_variable = { global.ENG_devolution_dirty_update_var < 10000 } }
+		add_to_variable = { global.ENG_devolution_dirty_update_var = 1 }
 	}
-	if = {
-		limit = { check_variable = { ENG_scottish_agitation < 0 } }
-		set_variable = { ENG_scottish_agitation = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_scottish_dependency < 0 } }
-		set_variable = { ENG_scottish_dependency = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_scottish_nationalists < 0 } }
-		set_variable = { ENG_scottish_nationalists = 0 }
-	}
-	# Ireland
-	ENG_north_irish_agitation_change_check = yes
-	if = {
-		limit = { check_variable = { ENG_north_irish_agitation > 100 } }
-		set_variable = { ENG_north_irish_agitation = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_dependency > 100 } }
-		set_variable = { ENG_north_irish_dependency = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_nationalists > 100 } }
-		set_variable = { ENG_north_irish_nationalists = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_agitation < 0 } }
-		set_variable = { ENG_north_irish_agitation = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_dependency < 0 } }
-		set_variable = { ENG_north_irish_dependency = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_nationalists < 0 } }
-		set_variable = { ENG_north_irish_nationalists = 0 }
-	}
-	# Wales
-	if = {
-		limit = { check_variable = { ENG_wales_agitation > 100 } }
-		set_variable = { ENG_wales_agitation = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_dependency > 100 } }
-		set_variable = { ENG_wales_dependency = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_nationalists > 100 } }
-		set_variable = { ENG_wales_nationalists = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_agitation < 0 } }
-		set_variable = { ENG_wales_agitation = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_dependency < 0 } }
-		set_variable = { ENG_wales_dependency = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_nationalists < 0 } }
-		set_variable = { ENG_wales_nationalists = 0 }
+	else = {
+		set_variable = { global.ENG_devolution_dirty_update_var = 1 }
 	}
 }
 
@@ -1270,5 +1278,113 @@ ENG_run_agendas = {
 				}
 			}
 		}
+	}
+}
+
+ENG_arm_apply_sovereign_architecture_stake = {
+	if = {
+		limit = { ENG_arm_outcome_settled = no }
+		add_ideas = ENG_arm_sovereign_architecture_stake
+	}
+}
+
+ENG_arm_apply_foreign_platform_architecture = {
+	if = {
+		limit = { ENG_arm_outcome_settled = no }
+		add_timed_idea = { idea = ENG_arm_foreign_platform_architecture days = 365 }
+	}
+}
+
+ENG_arm_apply_listed_at_home = {
+	if = {
+		limit = { ENG_arm_outcome_settled = no }
+		add_timed_idea = { idea = ENG_arm_listed_at_home days = 365 }
+	}
+}
+
+ENG_arm_apply_licensing_island = {
+	if = {
+		limit = { ENG_arm_outcome_settled = no }
+		add_timed_idea = { idea = ENG_arm_licensing_island days = 365 }
+	}
+}
+
+# One entry point per milestone, called from the yearly pulse. Full presents the
+# choice; Outcomes Only applies the historical persistent route silently without
+# the live event's one-time costs or rewards.
+ENG_arm_milestone_2004 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = britain_md.300 days = 235 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = ENG_arm_physical_ip
+	}
+}
+
+ENG_arm_milestone_2007 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = britain_md.301 days = 179 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = ENG_arm_market_led
+	}
+}
+
+ENG_arm_milestone_2011 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = britain_md.302 days = 299 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = ENG_arm_neutral_licensing
+	}
+}
+
+ENG_arm_milestone_2016 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = britain_md.303 days = 199 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = ENG_arm_softbank_undertakings
+	}
+}
+
+ENG_arm_milestone_2020 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = britain_md.304 days = 256 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = ENG_arm_nvidia_referred
+	}
+}
+
+ENG_arm_milestone_2023 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = britain_md.305 days = 256 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = ENG_arm_new_york_listing
+	}
+}
+
+ENG_arm_milestone_2026 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = britain_md.306 days = 151 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		ENG_arm_apply_licensing_island = yes
 	}
 }

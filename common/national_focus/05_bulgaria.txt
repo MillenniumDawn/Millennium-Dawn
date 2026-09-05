@@ -355,9 +355,7 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = {
-			base = 100
-		}
+		ai_will_do = { base = 100 }
 	}
 
 	focus = {
@@ -484,9 +482,7 @@ focus_tree = {
 			add_to_variable = { BUL_economy_economic_cycles_cost_factor = -0.02 tooltip = economic_cycles_cost_factor_tt }
 		}
 
-		ai_will_do = {
-			base = 100
-		}
+		ai_will_do = { base = 100 }
 	}
 
 	focus = {
@@ -510,9 +506,7 @@ focus_tree = {
 			add_to_variable = { BUL_economy_economic_cycles_cost_factor = -0.01 tooltip = economic_cycles_cost_factor_tt }
 		}
 
-		ai_will_do = {
-			base = 100
-		}
+		ai_will_do = { base = 100 }
 	}
 
 	focus = {
@@ -684,9 +678,7 @@ focus_tree = {
 			BUL_award_reforms_if_pending = yes
 		}
 
-		ai_will_do = {
-			base = 100
-		}
+		ai_will_do = { base = 100 }
 	}
 
 	focus = {
@@ -708,9 +700,7 @@ focus_tree = {
 			add_ideas = BUL_tourism_0
 		}
 
-		ai_will_do = {
-			base = 100
-		}
+		ai_will_do = { base = 100 }
 	}
 
 	focus = {
@@ -736,9 +726,7 @@ focus_tree = {
 			unlock_decision_category_tooltip = BUL_tourism_development_category
 		}
 
-		ai_will_do = {
-			base = 100
-		}
+		ai_will_do = { base = 100 }
 	}
 
 	focus = {
@@ -772,9 +760,7 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = {
-			base = 100
-		}
+		ai_will_do = { base = 100 }
 	}
 
 	focus = {
@@ -789,7 +775,6 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available_if_capitulated = yes
-
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_generic_political_effort executed"
@@ -845,7 +830,6 @@ focus_tree = {
 
 		available_if_capitulated = yes
 
-
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_collectivist_ethos executed"
 			country_event = { id = bulg.8 days = 10 }
@@ -862,8 +846,25 @@ focus_tree = {
 		ai_will_do = {
 			base = 1
 			modifier = {
+				factor = 100
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
+			}
+			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -1149,7 +1150,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_nationalism_focus executed"
-			set_country_flag = BUL_NATIONALIST_PATH
+			set_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
 			custom_effect_tooltip = BUL_nationalist_path_tt
 			country_event = bulg.4
 			set_temp_variable = { modify_europeanism = -0.10 }
@@ -1167,7 +1168,7 @@ focus_tree = {
 				}
 			}
 			if = {
-				limit = { NOT = { is_in_array = { ruling_party = 23 } } }
+				limit = { NOT = { check_variable = { ruling_party = 23 } } }
 				set_temp_variable = { rul_party_temp = 23 }
 				if = {
 					limit = { has_elections = no }
@@ -1180,17 +1181,27 @@ focus_tree = {
 			}
 			remove_ideas = Major_Non_NATO_Ally
 			set_cosmetic_tag = BUL_AUTH
+			set_variable = { dynamic_flag_variant = 2 }
 		}
 
 		ai_will_do = {
 			base = 1
 			modifier = {
-				factor = 0
-				is_historical_focus_on = yes
+				factor = 100
+				has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				is_historical_focus_on = yes
+				NOT = { has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
 			}
 		}
 	}
@@ -1213,7 +1224,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_internationalism_focus executed"
-			set_country_flag = BUL_COMMUNIST_PATH
+			set_global_flag = BUL_RED_BALKAN_FOCUS_PATH
 			custom_effect_tooltip = BUL_communist_path_tt
 			country_event = bulg.5
 			set_temp_variable = { modify_europeanism = -0.10 }
@@ -1236,31 +1247,34 @@ focus_tree = {
 				set_temp_variable = { col_two = 5 }
 				set_temp_variable = { col_three = 18 }
 				change_ruling_party_effect = yes
-				set_temp_variable = { current_cons_popularity = party_pop_array^4 }
-				multiply_temp_variable = { current_cons_popularity = 0.5 }
-				# Remove most of support, retrack it to emerg communist party
-				set_temp_variable = { temp_outlook_increase = 0 }
-				set_temp_variable = { party_index = 19 }
-				set_temp_variable = { party_popularity_increase = current_cons_popularity }
-				multiply_temp_variable = { party_popularity_increase = -1 }
-				change_relative_party_popularity = yes
 				set_temp_variable = { party_index = 4 }
-				set_temp_variable = { party_popularity_increase = current_cons_popularity }
-				change_relative_party_popularity = yes
+				set_temp_variable = { funder_party_index = 19 }
+				set_temp_variable = { party_popularity_fraction = 0.5 }
+				boost_party_popularity = yes
 			}
 			remove_ideas = Major_Non_NATO_Ally
 			set_cosmetic_tag = BUL_REB_S
+			set_variable = { dynamic_flag_variant = 7 }
 		}
 
 		ai_will_do = {
 			base = 1
 			modifier = {
-				factor = 0
-				is_historical_focus_on = yes
+				factor = 100
+				has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				is_historical_focus_on = yes
+				NOT = { has_global_flag = BUL_RED_BALKAN_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
 			}
 		}
 	}
@@ -1285,16 +1299,17 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_steady executed"
-			set_country_flag = BUL_EUROATLANTIC_PATH
+			set_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			custom_effect_tooltip = BUL_euroatlantic_path_tt
 			drop_cosmetic_tag = yes
+			clear_variable = dynamic_flag_variant
 			add_stability = 0.10
 			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BUL_economy_modifier }
@@ -1309,11 +1324,11 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_NATIONALIST_PATH
+				has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_COMMUNIST_PATH
+				has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
 			}
 		}
 	}
@@ -1338,14 +1353,15 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_liberty_ethos executed"
 			drop_cosmetic_tag = yes
+			clear_variable = dynamic_flag_variant
 			set_temp_variable = { modify_europeanism = 0.05 }
 			set_temp_variable = { modify_europeanism_target = ROOT }
 			europeanism_change = yes
@@ -1362,11 +1378,11 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_NATIONALIST_PATH
+				has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_COMMUNIST_PATH
+				has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
 			}
 		}
 	}
@@ -1391,8 +1407,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -1439,13 +1455,12 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
 		available_if_capitulated = yes
-
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_generic_influence_france executed"
@@ -1487,8 +1502,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -1893,7 +1908,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_pirate_party executed"
@@ -1916,7 +1931,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+				NOT = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -1935,7 +1950,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_freedom_for_all executed"
@@ -1957,7 +1972,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+				NOT = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -1976,13 +1991,13 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_PROPAGANDA }
 
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_free_media executed"
 			add_ideas = BUL_decommodify_the_basics_idea
 			custom_effect_tooltip = BUL_lib_coal
-			add_to_array = { ruling_party = 17 }
+			add_to_array = { gov_coalition_array = 17 }
 			update_government_coalition_strength = yes
 			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BUL_economy_modifier }
@@ -1993,7 +2008,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+				NOT = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -2012,7 +2027,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_AFFAIRS }
 
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_freedom_for_communes executed"
@@ -2033,7 +2048,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+				NOT = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -2052,7 +2067,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_PROPAGANDA FOCUS_FILTER_INDUSTRY }
 
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_crusade_on_propaganda executed"
@@ -2068,7 +2083,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+				NOT = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 			}
 			modifier = {
 				factor = 0
@@ -2095,7 +2110,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
 
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_minarchist_council executed"
@@ -2113,7 +2128,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+				NOT = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 			}
 			modifier = {
 				factor = 0
@@ -2140,7 +2155,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_AFFAIRS }
 
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_no_copyright executed"
@@ -2152,7 +2167,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+				NOT = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -2172,7 +2187,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FOREIGN_POLICY }
 
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_support_from_us_party executed"
@@ -2200,7 +2215,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+				NOT = { neutrality_neutral_libertarian_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -2508,7 +2523,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_POLITICAL }
 
-		available = { neutrality_neutral_green_are_in_power = yes }
+		available = { neutrality_neutral_green_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_greens_focus executed"
@@ -2531,7 +2546,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_green_are_in_power = yes }
+				NOT = { neutrality_neutral_green_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -2550,7 +2565,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_RADICALIZATION }
 
-		available = { neutrality_neutral_green_are_in_power = yes }
+		available = { neutrality_neutral_green_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_ecological_radicalism executed"
@@ -2564,7 +2579,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_green_are_in_power = yes }
+				NOT = { neutrality_neutral_green_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -2583,7 +2598,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_ECONOMY }
 
-		available = { neutrality_neutral_green_are_in_power = yes }
+		available = { neutrality_neutral_green_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_investing_in_eco_projects executed"
@@ -2598,7 +2613,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_green_are_in_power = yes }
+				NOT = { neutrality_neutral_green_in_power_or_coalition = yes }
 			}
 			modifier = {
 				factor = 0
@@ -2621,7 +2636,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_POLITICAL }
 
-		available = { neutrality_neutral_green_are_in_power = yes }
+		available = { neutrality_neutral_green_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_countering_ecological_reactionism executed"
@@ -2639,9 +2654,9 @@ focus_tree = {
 			set_temp_variable = { party_index = 2 }
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			change_relative_party_popularity = yes
-			add_to_array = { ruling_party = 18 }
+			add_to_array = { gov_coalition_array = 18 }
 			update_government_coalition_strength = yes
-			add_to_array = { ruling_party = 16 }
+			add_to_array = { gov_coalition_array = 16 }
 			update_government_coalition_strength = yes
 			custom_effect_tooltip = BUL_gre_all_TT
 			newline = yes
@@ -2653,7 +2668,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_green_are_in_power = yes }
+				NOT = { neutrality_neutral_green_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -2672,7 +2687,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_ECONOMY }
 
-		available = { neutrality_neutral_green_are_in_power = yes }
+		available = { neutrality_neutral_green_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_glxin_bampem_zavodneri executed"
@@ -2701,7 +2716,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_green_are_in_power = yes }
+				NOT = { neutrality_neutral_green_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -2720,7 +2735,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_RENEWABLE_ENERGY_INFRASTRUCTURE }
 
-		available = { neutrality_neutral_green_are_in_power = yes }
+		available = { neutrality_neutral_green_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_green_energy executed"
@@ -2762,7 +2777,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_green_are_in_power = yes }
+				NOT = { neutrality_neutral_green_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -2781,7 +2796,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_STABILITY }
 
-		available = { neutrality_neutral_green_are_in_power = yes }
+		available = { neutrality_neutral_green_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_freash_bulgarian_air executed"
@@ -2799,7 +2814,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_green_are_in_power = yes }
+				NOT = { neutrality_neutral_green_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -2818,7 +2833,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_TRADE }
 
-		available = { neutrality_neutral_green_are_in_power = yes }
+		available = { neutrality_neutral_green_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_bulgarian_wine executed"
@@ -2856,7 +2871,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_green_are_in_power = yes }
+				NOT = { neutrality_neutral_green_in_power_or_coalition = yes }
 			}
 			modifier = {
 				factor = 0
@@ -2884,7 +2899,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_ECONOMY }
 
-		available = { neutrality_neutral_green_are_in_power = yes }
+		available = { neutrality_neutral_green_in_power_or_coalition = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_green_bulgaria executed"
@@ -2907,7 +2922,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				NOT = { neutrality_neutral_green_are_in_power = yes }
+				NOT = { neutrality_neutral_green_in_power_or_coalition = yes }
 			}
 		}
 	}
@@ -3039,7 +3054,6 @@ focus_tree = {
 
 		available_if_capitulated = yes
 
-
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_volunteer_corps executed"
 			add_ideas = BUL_develop_public_sector
@@ -3048,9 +3062,7 @@ focus_tree = {
 			add_war_support = 0.02
 		}
 
-		ai_will_do = {
-			base = 10
-		}
+		ai_will_do = { base = 10 }
 	}
 
 	focus = {
@@ -3218,9 +3230,7 @@ focus_tree = {
 			increase_social_spending = yes
 		}
 
-		ai_will_do = {
-			base = 10
-		}
+		ai_will_do = { base = 10 }
 	}
 
 	focus = {
@@ -3243,8 +3253,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -3292,8 +3302,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -3341,8 +3351,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -3390,8 +3400,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -3580,8 +3590,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -3598,7 +3608,13 @@ focus_tree = {
 			increase_healthcare_budget = yes
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
+			}
+		}
 	}
 
 	focus = {
@@ -3623,8 +3639,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -3716,8 +3732,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -3766,8 +3782,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -3788,9 +3804,7 @@ focus_tree = {
 			add_to_variable = { BUL_army_send_volunteer_size = 1 tooltip = send_volunteer_size_tt }
 		}
 
-		ai_will_do = {
-			base = 10
-		}
+		ai_will_do = { base = 10 }
 	}
 
 	focus = {
@@ -3847,8 +3861,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -3890,8 +3904,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -3938,8 +3952,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 			has_completed_focus = BUL_align_to_nato
 			is_subject = no
@@ -3988,8 +4002,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -4036,8 +4050,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -4076,8 +4090,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -4128,8 +4142,8 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarian_in_power_or_coalition = yes
+				neutrality_neutral_green_in_power_or_coalition = yes
 			}
 		}
 
@@ -4144,9 +4158,7 @@ focus_tree = {
 			add_to_variable = { BUL_services_police_cost_multiplier_modifier = -0.01 tooltip = police_cost_multiplier_modifier_tt }
 		}
 
-		ai_will_do = {
-			base = 10
-		}
+		ai_will_do = { base = 10 }
 	}
 
 	focus = {
@@ -4171,9 +4183,9 @@ focus_tree = {
 			}
 		}
 
-		available_if_capitulated = yes
-
 		bypass = { NOT = { country_exists = FYR } }
+
+		available_if_capitulated = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_demcrat_maced_resolv executed"
@@ -4217,7 +4229,6 @@ focus_tree = {
 
 		available_if_capitulated = yes
 
-
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_demcrat_turks_compromis executed"
 			set_country_flag = BUL_no_turks
@@ -4238,7 +4249,13 @@ focus_tree = {
 			add_stability = 0.05
 		}
 
-		ai_will_do = { base = 15 }
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 3
+				has_idea = BUL_unsatisf_rurk_minority
+			}
+		}
 	}
 
 	focus = {
@@ -4277,7 +4294,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
@@ -4314,7 +4331,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -4351,7 +4368,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -4387,7 +4404,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -4427,6 +4444,13 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
+			}
 		}
 	}
 
@@ -4460,10 +4484,20 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
 				GRE = { strength_ratio = { tag = BUL ratio > 1 } }
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
 			}
 		}
 	}
@@ -4485,9 +4519,9 @@ focus_tree = {
 
 		available = { country_exists = GRE }
 
-		available_if_capitulated = yes
-
 		bypass = { NOT = { country_exists = GRE } }
+
+		available_if_capitulated = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_ally_to_greece executed"
@@ -4510,6 +4544,16 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
 			}
 		}
 	}
@@ -4553,6 +4597,12 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
@@ -4596,6 +4646,12 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
@@ -4643,6 +4699,12 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 		}
 	}
@@ -4678,6 +4740,21 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				ALB = {
+					strength_ratio = {
+						tag = BUL
+						ratio > 1
+					}
+				}
 			}
 		}
 	}
@@ -4722,6 +4799,12 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 		}
 	}
@@ -4753,6 +4836,12 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 		}
 	}
@@ -4793,6 +4882,12 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
@@ -4819,7 +4914,6 @@ focus_tree = {
 
 		available_if_capitulated = yes
 
-
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_bosnian executed"
 			set_temp_variable = { wargoal_on = BOS }
@@ -4836,10 +4930,20 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
 				BOS = { strength_ratio = { tag = BUL ratio > 1 } }
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
 			}
 		}
 	}
@@ -4875,6 +4979,12 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
@@ -4914,6 +5024,12 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
@@ -4939,9 +5055,9 @@ focus_tree = {
 
 		available = { country_exists = BOS }
 
-		available_if_capitulated = yes
-
 		bypass = { NOT = { country_exists = BOS } }
+
+		available_if_capitulated = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_bosnian_friendship executed"
@@ -4964,6 +5080,16 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
 			}
 		}
 	}
@@ -4986,7 +5112,6 @@ focus_tree = {
 
 		available_if_capitulated = yes
 
-
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_crush_romania executed"
 			set_temp_variable = { wargoal_on = ROM }
@@ -5003,6 +5128,12 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
@@ -5029,7 +5160,6 @@ focus_tree = {
 
 		available_if_capitulated = yes
 
-
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_crush_turkey executed"
 			set_temp_variable = { wargoal_on = TUR }
@@ -5046,6 +5176,12 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
@@ -5087,7 +5223,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5144,7 +5280,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
@@ -5189,7 +5325,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5225,7 +5361,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5260,7 +5396,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5292,7 +5428,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5325,7 +5461,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
@@ -5366,7 +5502,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
@@ -5411,7 +5547,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5454,7 +5590,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
@@ -5507,7 +5643,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5547,7 +5683,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5589,7 +5725,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
@@ -5634,6 +5770,7 @@ focus_tree = {
 			air_experience = 10
 			one_random_arms_factory = yes
 			set_cosmetic_tag = BUL_AUTH_S_communism
+			set_variable = { dynamic_flag_variant = 8 }
 			newline = yes
 			if = {
 				limit = { has_dlc = "Arms Against Tyranny" }
@@ -5645,7 +5782,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
@@ -5726,7 +5863,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5766,7 +5903,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5806,7 +5943,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5858,7 +5995,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -5910,7 +6047,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
@@ -5959,7 +6096,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
@@ -6015,7 +6152,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -6060,7 +6197,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
@@ -6102,7 +6239,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -6150,7 +6287,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -6194,7 +6331,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -6223,7 +6360,6 @@ focus_tree = {
 
 		available_if_capitulated = yes
 
-
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BUL_technology_sharing executed"
 			set_country_flag = BUL_no_turks
@@ -6245,7 +6381,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -6286,7 +6422,7 @@ focus_tree = {
 			base = 5
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
 			}
 		}
 	}
@@ -6339,9 +6475,7 @@ focus_tree = {
 			add_to_variable = { BUL_services_police_cost_multiplier_modifier = 0.01 tooltip = police_cost_multiplier_modifier_tt }
 		}
 
-		ai_will_do = {
-			base = 15
-		}
+		ai_will_do = { base = 15 }
 	}
 
 	focus = {
@@ -6439,7 +6573,13 @@ focus_tree = {
 			add_ideas = BUL_quantity_small_arms_idea
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -6471,6 +6611,14 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+			modifier = {
+				factor = 5
+				check_variable = { BUL_army_army_org_factor < 0 }
+			}
 		}
 	}
 
@@ -6503,6 +6651,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_arms_industry = no
+			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
 			}
 		}
 	}
@@ -6538,6 +6690,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
 			}
 		}
 	}
@@ -6579,6 +6735,10 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -6608,6 +6768,10 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -6640,6 +6804,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
 			}
 		}
 	}
@@ -6687,6 +6855,10 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -6724,6 +6896,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
 			}
 		}
 	}
@@ -6768,6 +6944,10 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -6795,6 +6975,10 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -6829,6 +7013,10 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -6861,6 +7049,10 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -6888,6 +7080,10 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -6925,6 +7121,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_arms_industry = no
+			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
 			}
 		}
 	}
@@ -6973,6 +7173,10 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -7013,6 +7217,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
 			}
 		}
 	}
@@ -7056,6 +7264,10 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -7098,6 +7310,10 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -7133,6 +7349,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
 			}
 		}
 	}
@@ -7175,6 +7395,10 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -7215,6 +7439,10 @@ focus_tree = {
 				factor = 0
 				can_staff_an_dockyard = no
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -7247,6 +7475,10 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -7274,6 +7506,10 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -7333,7 +7569,14 @@ focus_tree = {
 			base = 10
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
+			}
+			modifier = {
+				factor = 5
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -7384,7 +7627,14 @@ focus_tree = {
 			base = 10
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
+			}
+			modifier = {
+				factor = 5
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -7434,6 +7684,13 @@ focus_tree = {
 			modifier = {
 				add = 350
 				has_government = neutrality
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -7488,6 +7745,13 @@ focus_tree = {
 			modifier = {
 				add = 350
 				has_government = neutrality
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -7547,10 +7811,23 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
+			}
+			modifier = {
+				factor = 50
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -7600,10 +7877,23 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
+			}
+			modifier = {
+				factor = 50
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -7641,10 +7931,23 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
+			}
+			modifier = {
+				factor = 50
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
 			}
 			modifier = {
 				factor = 0
@@ -7695,10 +7998,23 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+						has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+					}
+				}
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = BUL_EUROATLANTIC_PATH
+				has_global_flag = BUL_HISTORICAL_FOCUS_PATH
+			}
+			modifier = {
+				factor = 50
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -7751,6 +8067,13 @@ focus_tree = {
 			modifier = {
 				add = 350
 				has_government = neutrality
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -7823,6 +8146,13 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
+			}
 		}
 	}
 
@@ -7877,6 +8207,13 @@ focus_tree = {
 			modifier = {
 				add = 350
 				has_government = neutrality
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -7935,6 +8272,13 @@ focus_tree = {
 			modifier = {
 				add = 350
 				has_government = neutrality
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = BUL_TSARIST_RESTORATION_FOCUS_PATH
+					has_global_flag = BUL_RED_BALKAN_FOCUS_PATH
+				}
 			}
 		}
 	}

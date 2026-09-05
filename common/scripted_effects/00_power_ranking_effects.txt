@@ -60,6 +60,34 @@ register_in_power_ranking_array = {
 		if = { limit = { NOT = { is_in_array = { global.american_nations = THIS } } }
 			add_to_array = { global.american_nations = THIS }
 		}
+		if = {
+			limit = {
+				has_country_flag = south_america_nation_flag
+				NOT = { is_in_array = { global.south_american_nation = THIS } }
+			}
+			add_to_array = { global.south_american_nation = THIS }
+		}
+	}
+
+	# Outside the partition: North Africa carries african_nation_flag and is claimed by the
+	# sub-Saharan branch above, so global.middle_eastern_nations is not the MENA set that
+	# is_middle_eastern_nation describes. Consumers that mean MENA read this array instead.
+	if = {
+		limit = {
+			has_country_flag = middle_east_nation_flag
+			NOT = { is_in_array = { global.mena_nations = THIS } }
+		}
+		add_to_array = { global.mena_nations = THIS }
+	}
+
+	# Also outside the partition: the Pacific island states match none of the five branches above,
+	# so they would otherwise have no array to scan.
+	if = {
+		limit = {
+			has_country_flag = oceania_nation_flag
+			NOT = { is_in_array = { global.oceania_nations = THIS } }
+		}
+		add_to_array = { global.oceania_nations = THIS }
 	}
 }
 
@@ -85,13 +113,35 @@ add_country_to_power_ranking = {
 	assign_power_ranking_ideas = yes
 }
 
+setup_power_ranking_idea_tokens = {
+	clear_array = global.power_ranking_idea_token
+	resize_array = { array = global.power_ranking_idea_token size = 1 }
+	add_to_array = { global.power_ranking_idea_token = token:non_power }
+	add_to_array = { global.power_ranking_idea_token = token:super_power }
+	add_to_array = { global.power_ranking_idea_token = token:great_power }
+	add_to_array = { global.power_ranking_idea_token = token:large_power }
+	add_to_array = { global.power_ranking_idea_token = token:minor_power }
+
+	clear_array = global.power_ranking_regional_idea_token
+	resize_array = { array = global.power_ranking_regional_idea_token size = 1 }
+	add_to_array = { global.power_ranking_regional_idea_token = token:non_power }
+	add_to_array = { global.power_ranking_regional_idea_token = token:super_power }
+	add_to_array = { global.power_ranking_regional_idea_token = token:great_power }
+	add_to_array = { global.power_ranking_regional_idea_token = token:large_power }
+	add_to_array = { global.power_ranking_regional_idea_token = token:regional_power }
+}
+
 # STARTUP ONLY: Full clear + build + sort (called once at game start from 00_on_actions.txt)
 set_power_ranking_ideas_for_every_country = {
+	setup_power_ranking_idea_tokens = yes
 	clear_array = global.european_nations
 	clear_array = global.sub_saharan_nations
 	clear_array = global.middle_eastern_nations
 	clear_array = global.asian_nations
 	clear_array = global.american_nations
+	clear_array = global.south_american_nation
+	clear_array = global.mena_nations
+	clear_array = global.oceania_nations
 	set_variable = { global.global_num_of_factories = 0 }
 
 	every_country = {
@@ -293,8 +343,7 @@ power_ranking_evaluate_all_regions = {
 
 # Map contribution share to a tier id power_ranking_name_var:
 #   1 non_power (<0.2%)  2 super (>15%)  3 great (>6.5%)  4 large (>2.5%)  5 minor (else)
-# regional_power is layered onto tier 5 during regional prefix selection; PRGetIdeaName turns
-# the id into the idea name.
+# regional_power is layered onto tier 5 during regional prefix selection.
 assign_power_ranking_value = {
 	if = { limit = { check_variable = { percentage_of_global_factories < 0.002 } }
 		set_variable = { power_ranking_name_var = 1 }
@@ -552,18 +601,27 @@ game_startup_idea_set = {
 	}
 }
 
-# Apply the idea matching power_ranking_name_var (+ regional_power flag) via PRGetIdeaName,
-# skipping the remove/add churn if the country already holds the right one.
 assign_power_ranking_ideas = {
-	set_variable = { global.cur_nation_idea_pull = power_ranking_name_var }
-	meta_effect = {
-		text = {
-			if = {
-				limit = { NOT = { has_idea = [IDEA] } }
-				remove_power_ideas = yes
-				add_ideas = [IDEA]
+	set_temp_variable = { power_ranking_idea_index = power_ranking_name_var }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { power_ranking_idea_index < 1 }
+				check_variable = { power_ranking_idea_index > 5 }
 			}
 		}
-		IDEA = "[PRGetIdeaName]"
+		set_temp_variable = { power_ranking_idea_index = 1 }
+	}
+	if = {
+		limit = { has_country_flag = regional_power }
+		set_temp_variable = { power_ranking_target_token = global.power_ranking_regional_idea_token^power_ranking_idea_index }
+	}
+	else = {
+		set_temp_variable = { power_ranking_target_token = global.power_ranking_idea_token^power_ranking_idea_index }
+	}
+	if = {
+		limit = { NOT = { has_idea = var:power_ranking_target_token } }
+		remove_power_ideas = yes
+		add_ideas = var:power_ranking_target_token
 	}
 }

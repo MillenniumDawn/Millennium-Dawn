@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Archive diverging files from stale branches into resources/archived-branches/.
+"""Archive diverging files from stale branches into the millennium-dawn-resources repo.
 
 Uses 3-dot diff (main...branch) so we only see changes made on the branch
 relative to its merge base with main, not the full diverged history.
@@ -19,11 +19,14 @@ we archived in the initial chore commit.
 
 import argparse
 import hashlib
+import json
+import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 BRANCHES = [
     "origin/yemen-development",
@@ -43,6 +46,9 @@ BRANCHES = [
 # Files we never want to archive regardless of diff (unrelated noise)
 SKIP_FILES = {".gitignore"}
 
+# The archive lives in the sibling millennium-dawn-resources checkout, not this repo.
+DEFAULT_OUTPUT = Path("../millennium-dawn-resources/archive/branches")
+
 
 def find_repo_root() -> Path:
     out = subprocess.run(
@@ -60,6 +66,20 @@ def run(cmd, repo: Path, **kw):
 
 def sha256_bytes(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
+
+
+def diff_paths(branch: str, repo: Path) -> list[str]:
+    output = run(["git", "diff", "--name-only", "-z", f"main...{branch}"], repo)
+    paths = []
+    for raw_path in output.split(b"\0"):
+        if not raw_path:
+            continue
+        path = os.fsdecode(raw_path)
+        pure = PurePosixPath(path)
+        if pure.is_absolute() or ".." in pure.parts:
+            raise ValueError(f"Unsafe path from git diff: {path}")
+        paths.append(path)
+    return paths
 
 
 def archive_ref(ref: str, dest: Path, repo: Path):
@@ -81,6 +101,51 @@ def archive_ref(ref: str, dest: Path, repo: Path):
         )
 
 
+def _reject_symlinks(root: Path) -> None:
+    """Reject links before archive output can dereference one."""
+    if root.is_symlink():
+        raise ValueError(f"Refusing symlink in archive output: {root}")
+    if not root.exists():
+        return
+    for current, directories, files in os.walk(root, followlinks=False):
+        for name in (*directories, *files):
+            path = Path(current) / name
+            if path.is_symlink():
+                raise ValueError(f"Refusing symlink in archive output: {path}")
+
+
+def _mkdir_owned(path: Path, root: Path) -> None:
+    """Create *path* without traversing a pre-existing symlink directory."""
+    relative = path.relative_to(root)
+    current = root
+    for part in relative.parts:
+        current /= part
+        if current.is_symlink():
+            raise ValueError(f"Refusing symlink in archive output: {current}")
+        current.mkdir(exist_ok=True)
+        if not current.is_dir():
+            raise ValueError(f"Archive output path is not a directory: {current}")
+
+
+def remove_stale_files(target: Path, desired_files: set[str]) -> int:
+    _reject_symlinks(target)
+    removed = 0
+    for existing in target.rglob("*"):
+        if not existing.is_file():
+            continue
+        rel = existing.relative_to(target).as_posix()
+        if rel not in desired_files:
+            existing.unlink()
+            removed += 1
+    for directory in sorted(target.rglob("*"), reverse=True):
+        if directory.is_dir():
+            try:
+                directory.rmdir()
+            except OSError:
+                pass
+    return removed
+
+
 def branch_exists(ref: str, repo: Path) -> bool:
     return (
         subprocess.run(
@@ -88,6 +153,78 @@ def branch_exists(ref: str, repo: Path) -> bool:
         ).returncode
         == 0
     )
+
+
+def branch_tip_metadata(ref: str, repo: Path) -> dict:
+    output = run(
+        ["git", "log", "-1", "--format=%H%x00%h%x00%an%x00%aI%x00%s", ref],
+        repo,
+    )
+    tip_sha, tip_short, author, date, subject = output.decode().rstrip("\n").split("\0")
+    return {
+        "tip_sha": tip_sha,
+        "tip_short": tip_short,
+        "last_author": author,
+        "last_commit_date": date,
+        "last_commit_subject": subject,
+    }
+
+
+def write_branch_json(path: Path, payload: dict) -> None:
+    if path.is_symlink():
+        raise ValueError(f"Refusing symlink in archive output: {path}")
+    path.write_bytes((json.dumps(payload, indent=2) + "\n").encode("utf-8"))
+
+
+def _insert_table_rows(text: str, rows: list[str]) -> str:
+    lines = text.splitlines(keepends=True)
+    last_row = None
+    for i, line in enumerate(lines):
+        stripped = line.lstrip()
+        if (
+            stripped.startswith("| ")
+            and "---" not in line
+            and not stripped.startswith("| Branch")
+        ):
+            last_row = i
+    if last_row is None:
+        return text
+    return "".join(lines[: last_row + 1] + rows + lines[last_row + 1 :])
+
+
+def sync_archive_readmes(archive_root: Path) -> None:
+    branch_dirs = sorted(p for p in archive_root.iterdir() if p.is_dir())
+    readme = archive_root / "README.md"
+    if readme.is_file() and not readme.is_symlink():
+        text = readme.read_bytes().decode("utf-8")
+        new_rows = []
+        for folder in branch_dirs:
+            if f"| {folder.name}" in text:
+                continue
+            json_path = folder / f"{folder.name}.json"
+            if not json_path.is_file():
+                continue
+            try:
+                payload = json.loads(json_path.read_bytes())
+                date = str(payload["last_commit_date"])[:10]
+                archived = payload["archived_files"]
+            except (OSError, ValueError, KeyError, TypeError):
+                continue
+            new_rows.append(f"| {folder.name:<29} | {date:<13} | {archived:<16} |\n")
+        if new_rows:
+            readme.write_bytes(_insert_table_rows(text, new_rows).encode("utf-8"))
+
+    parent = archive_root.parent.parent / "README.md"
+    if parent.is_file() and not parent.is_symlink():
+        text = parent.read_bytes().decode("utf-8")
+        updated = re.sub(
+            r"from \d+ stale upstream branches",
+            f"from {len(branch_dirs)} stale upstream branches",
+            text,
+            count=1,
+        )
+        if updated != text:
+            parent.write_bytes(updated.encode("utf-8"))
 
 
 def main():
@@ -100,13 +237,26 @@ def main():
         default=BRANCHES,
         help=f"Branches to archive (default: the {len(BRANCHES)} in BRANCHES)",
     )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT,
+        help=f"Archive destination, absolute or relative to this repo (default: {DEFAULT_OUTPUT})",
+    )
     args = parser.parse_args()
 
     repo = find_repo_root()
-    archive_root = repo / "resources" / "archived-branches"
+    archive_root = args.output.expanduser()
+    if not archive_root.is_absolute():
+        archive_root = (repo / archive_root).resolve()
+    # _mkdir_owned needs an existing ancestor to walk down from.
+    anchor = archive_root
+    while not anchor.exists():
+        anchor = anchor.parent
     temp_root = repo / ".tmp-archive"
-    archive_root.mkdir(parents=True, exist_ok=True)
-    temp_root.mkdir(parents=True, exist_ok=True)
+    _mkdir_owned(archive_root, anchor)
+    _mkdir_owned(temp_root, repo)
+    _reject_symlinks(archive_root)
 
     summary = {}
     missing_refs = []
@@ -123,36 +273,35 @@ def main():
                 continue
 
             name = branch.removeprefix("origin/")
-            target = archive_root / name
-
-            # 3-dot diff: only changes in branch not in main
-            diff_out = run(
-                ["git", "diff", "--name-only", f"main...{branch}"], repo, text=True
-            )
-            diff_files = [f for f in diff_out.splitlines() if f.strip()]
+            name_path = PurePosixPath(name)
+            if name_path.is_absolute() or ".." in name_path.parts:
+                raise ValueError(f"Unsafe branch archive name: {name}")
+            target = archive_root.joinpath(*name_path.parts)
+            diff_files = diff_paths(branch, repo)
 
             with tempfile.TemporaryDirectory(dir=temp_root) as branch_tmp:
                 branch_tmp_path = Path(branch_tmp)
                 print(f"  archiving {branch} ({len(diff_files)} files)...", flush=True)
                 archive_ref(branch, branch_tmp_path, repo)
 
-                target.mkdir(parents=True, exist_ok=True)
+                _mkdir_owned(target, archive_root)
+                _reject_symlinks(target)
                 copied = 0
                 skipped_identical = 0
                 skipped_missing = 0
                 skipped_excluded = 0
+                desired_files = set()
 
                 for f in diff_files:
                     if f in SKIP_FILES:
                         skipped_excluded += 1
                         continue
-                    # git diff --name-only quotes paths with non-ASCII bytes
-                    if not f or f.startswith('"'):
-                        continue
-
                     src = branch_tmp_path / f
                     if not src.exists():
                         skipped_missing += 1
+                        continue
+                    if src.is_symlink():
+                        skipped_excluded += 1
                         continue
 
                     branch_bytes = src.read_bytes()
@@ -164,20 +313,42 @@ def main():
                             continue
 
                     dest = target / f
-                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    if dest.is_symlink():
+                        raise ValueError(f"Refusing symlink in archive output: {dest}")
+                    _mkdir_owned(dest.parent, target)
                     shutil.copy2(src, dest)
+                    desired_files.add(f)
                     copied += 1
 
+                json_rel = f"{name_path.name}.json"
+                tip = branch_tip_metadata(branch, repo)
+                write_branch_json(
+                    target / json_rel,
+                    {
+                        "branch": branch,
+                        "tip_sha": tip["tip_sha"],
+                        "tip_short": tip["tip_short"],
+                        "last_author": tip["last_author"],
+                        "last_commit_date": tip["last_commit_date"],
+                        "last_commit_subject": tip["last_commit_subject"],
+                        "diverging_files_3dot": len(diff_files),
+                        "archived_files": copied,
+                    },
+                )
+                desired_files.add(json_rel)
+                removed_stale = remove_stale_files(target, desired_files)
+
             summary[branch] = {
-                "target": str(target.relative_to(repo)),
+                "target": os.path.relpath(target, repo),
                 "copied": copied,
                 "skipped_identical": skipped_identical,
                 "skipped_missing": skipped_missing,
                 "skipped_excluded": skipped_excluded,
+                "removed_stale": removed_stale,
             }
             print(
                 f"  {branch}: copied={copied} | identical={skipped_identical} | "
-                f"missing={skipped_missing} | excluded={skipped_excluded}",
+                f"missing={skipped_missing} | excluded={skipped_excluded} | stale={removed_stale}",
                 flush=True,
             )
 
@@ -188,7 +359,8 @@ def main():
         print(f"  -> {s['target']}/")
         print(
             f"     copied={s['copied']} | identical={s['skipped_identical']} | "
-            f"missing={s['skipped_missing']} | excluded={s['skipped_excluded']}"
+            f"missing={s['skipped_missing']} | excluded={s['skipped_excluded']} | "
+            f"stale={s['removed_stale']}"
         )
     if missing_refs:
         print()
@@ -196,6 +368,7 @@ def main():
             f"Skipped {len(missing_refs)} branch(es) with missing refs: {missing_refs}"
         )
 
+    sync_archive_readmes(archive_root)
     return 0 if not missing_refs else 1
 
 

@@ -277,7 +277,7 @@
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
 	NDefines.NBuildings.RADAR_INTEL_EFFECT = 60 -- 40
 	NDefines.NBuildings.BASE_FACTORY_REPAIR = 0.25
-	NDefines.NBuildings.MAX_SHARED_SLOTS = 56
+	NDefines.NBuildings.MAX_SHARED_SLOTS = 72
 	NDefines.NBuildings.INFRASTRUCTURE_RESOURCE_BONUS = 0.05	--upped from 0.02, vanilla 0.2
 	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 3.5 -- was 4.0 --Fucked with this to see
 	-- NOTE: The below piercing values are granularized to make piercing less punishing for nations with no real tank access
@@ -454,7 +454,7 @@
 	NDefines.NAir.AIR_WING_MAX_STATS_SPEED = 4000 -- 800
 	NDefines.NAir.AIR_WING_MAX_STATS_BOMBING = 999 -- 100
 	NDefines.NAir.AIR_WING_AVERAGE_SIZE = 30 -- 100 vanilla; was 50. Reduced to reflect MD wing sizes (land=50, cv=10, strat=25). Used for air volunteer calculations.
-	NDefines.NAir.AIR_WING_BOMB_DAMAGE_FACTOR = 20 -- 2
+	NDefines.NAir.AIR_WING_BOMB_DAMAGE_FACTOR = 10 -- 2
 	NDefines.NAir.AI_ALLOWED_PLANES_KEPT_IN_RESERVE = 0.05 -- 0.10 vanilla; was 0.15 — too many carrier planes held back from deployment
 	NDefines.NAir.BIGGEST_AGILITY_FACTOR_DIFF = 6 -- 2.5
 	NDefines.NAir.COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.70 -- 0.3
@@ -1196,8 +1196,8 @@
 
 	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 0.65 --how much the country's industry affects its influence
 	NDefines.NFactions.FACTION_INFLUENCE_LEADER_BONUS = 250			-- How much influence we are giving a faction member for being the leader, vanilla 200
-	NDefines.NFactions.MAX_NUM_SHORT_TERM_GOALS = 4						-- Maximum number of short term goals a faction can have at any one time, vanilla 1
-	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 3						-- Maximum number of medium term goals a faction can have at any one time
+	NDefines.NFactions.MAX_NUM_SHORT_TERM_GOALS = 2						-- Maximum number of short term goals a faction can have at any one time, vanilla 1
+	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 2						-- Maximum number of medium term goals a faction can have at any one time
 	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 2						-- Maximum number of long term goals a faction can have at any one time
 	NDefines.NFactions.FACTION_INITIATIVE_CHANGE_RULE_COST = 3 -- vanilla 1
 	NDefines.NFactions.FACTION_TAKE_OVER_RELUCTANCE_VERSUS_HUMAN_INFLUENCE = 2.5

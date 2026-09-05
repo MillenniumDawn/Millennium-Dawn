@@ -168,6 +168,8 @@ clr_country_flag = TAG_my_decision_visible   # when it ceases to be met
 
 `ai_strategy` `enable` blocks are re-evaluated by the AI far more often than once a day. Heavy math (a chain of `set_temp_variable` / `multiply_temp_variable` / `round_temp_variable`) inside `enable` runs every evaluation.
 
+**Arithmetic only.** A boolean condition — flag checks, `strength_ratio`, a scope switch — is not "heavy math" and must not be cached this way; see the next section. Caching a boolean into a daily flag adds a tick and a day of lag to serve a check the engine was already making lazily.
+
 ### Wrong
 
 ```

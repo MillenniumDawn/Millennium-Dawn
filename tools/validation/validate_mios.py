@@ -16,6 +16,8 @@ Rules from .claude/docs/mio-reference.md + AGENTS.md:
     localisation key (TAG_<key> fallback included)
   * equipment_bonus stats reach equipment that declares a base for them, since
     the bonus is a percentage and 10% of an undeclared stat is still nothing
+  * percentage-type organization_modifier keys stay inside -1..1 — a whole
+    number there is a dropped decimal point that silently breaks the org
   * every `mio:<org>` reference names a real org, and the org is reachable from
     the country whose script references it — an org pinned to another tag is
     simply absent in that scope, so the engine logs `was not found in country
@@ -43,6 +45,7 @@ ORG_DIR = "common/military_industrial_organization/organizations"
 POLICY_DIR = "common/military_industrial_organization/policies"
 COMPANY_TRAIT_FILE = "common/country_leader/defense_company_traits.txt"
 COUNTRY_TAG_DIR = "common/country_tags"
+DOCTRINE_DIR = "common/doctrines"
 
 # Files that can carry a `mio:` reference. The org dir itself is excluded — a
 # trait naming its own org is not a cross-scope reference.
@@ -125,6 +128,22 @@ NON_STAT_BONUS_KEYS = frozenset(
 # (naval_light_gun_hit_chance_factor, naval_heavy_gun_hit_chance_factor,
 # naval_torpedo_damage_reduction_factor, naval_weather_penalty_factor).
 ZERO_BASE_EXEMPT_STATS: FrozenSet[str] = frozenset()
+
+# organization_modifier keys the engine reads as a factor, so 0.15 is +15% and a
+# whole number is a dropped decimal point, not a strong bonus. Helsing SE shipped
+# `size_up_requirement = -3`, driving the level-up cost negative and maxing the
+# org's trait tree for free. task_capacity is absent on purpose — it is a flat
+# task count and 1..5 is its normal range.
+PERCENT_ORG_MODIFIERS = frozenset(
+    {
+        "military_industrial_organization_design_team_assign_cost",
+        "military_industrial_organization_design_team_change_cost",
+        "military_industrial_organization_funds_gain",
+        "military_industrial_organization_industrial_manufacturer_assign_cost",
+        "military_industrial_organization_research_bonus",
+        "military_industrial_organization_size_up_requirement",
+    }
+)
 
 LocKeys = Union[FrozenSet[str], Set[str]]
 
@@ -223,7 +242,7 @@ def _named_sub_blocks(body: str) -> List[Tuple[str, int, str]]:
 
 class Validator(BaseValidator):
     TITLE = "MIOS"
-    STAGED_EXTENSIONS = (".txt", ".yml")
+    STAGED_EXTENSIONS = [".txt", ".yml"]
 
     # org id -> comment-blanked body, for resolving `include` across files.
     _org_bodies: Dict[str, str] = {}
@@ -313,6 +332,18 @@ class Validator(BaseValidator):
         company_traits = Path(self.mod_path) / COMPANY_TRAIT_FILE
         if company_traits.is_file():
             files.append(str(company_traits))
+        return self._staged_bonus_subset(files)
+
+    def _doctrine_files(self) -> List[str]:
+        files = sorted(
+            glob.glob(
+                str(Path(self.mod_path) / DOCTRINE_DIR / "**" / "*.txt"),
+                recursive=True,
+            )
+        )
+        return self._staged_bonus_subset(files)
+
+    def _staged_bonus_subset(self, files: List[str]) -> List[str]:
         if not self.staged_only:
             return files
         staged = {Path(f).resolve() for f in self.staged_files or []}
@@ -323,8 +354,15 @@ class Validator(BaseValidator):
     def run_validations(self):
         files = self._org_files()
         bonus_files = self._bonus_files()
+        doctrine_files = self._doctrine_files()
         reference_files = self._reference_files()
-        if self.staged_only and not files and not bonus_files and not reference_files:
+        if (
+            self.staged_only
+            and not files
+            and not bonus_files
+            and not doctrine_files
+            and not reference_files
+        ):
             self.log("No staged MIO files found — skipping MIO validation", "warning")
             return
 
@@ -342,20 +380,21 @@ class Validator(BaseValidator):
             # blank_comments preserves offsets, so line numbers still line up
             # while a commented-out bonus can no longer be read as live script.
             clean = blank_comments(text)
-            for start, end, org_id in _block_spans(text):
+            for start, end, org_id in _block_spans(clean):
                 org_count += 1
-                body = text[start:end]
-                self._org_bodies[org_id] = clean[start:end]
-                body_offset = text.count("\n", 0, start)
+                body = clean[start:end]
+                self._org_bodies[org_id] = body
+                body_offset = clean.count("\n", 0, start)
                 self._check_id(org_id, rel, body_offset)
                 self._check_allowed(org_id, body, rel, body_offset)
                 self._check_initial_trait(org_id, body, rel, body_offset)
                 self._check_positions(org_id, body, rel, body_offset)
+                self._check_org_modifier_range(body, rel, body_offset)
                 self._check_on_complete(body, rel, body_offset)
                 self._check_header_text(org_id, body, rel, body_offset, loc_keys)
                 self._check_trait_localisation(org_id, body, rel, body_offset, loc_keys)
                 self._check_org_equipment_bonus(
-                    org_id, clean[start:end], rel, body_offset, equipment
+                    org_id, body, rel, body_offset, equipment
                 )
 
         for filepath in bonus_files:
@@ -364,7 +403,18 @@ class Validator(BaseValidator):
             except OSError:
                 continue
             rel = Path(filepath).relative_to(self.mod_path).as_posix()
-            self._check_nested_equipment_bonus(blank_comments(text), rel, equipment)
+            clean = blank_comments(text)
+            self._check_nested_equipment_bonus(clean, rel, equipment)
+            self._check_org_modifier_range(clean, rel, 0)
+        for filepath in doctrine_files:
+            try:
+                text = Path(filepath).read_text(encoding="utf-8")
+            except OSError:
+                continue
+            rel = Path(filepath).relative_to(self.mod_path).as_posix()
+            self._check_nested_equipment_bonus(
+                blank_comments(text), rel, equipment, dead_stats=False
+            )
 
         reference_hits = 0
         for filepath in reference_files:
@@ -454,6 +504,33 @@ class Validator(BaseValidator):
                     f"trait position x = {x} must stay inside 0..9",
                     rel,
                     body_offset + body.count("\n", 0, m.start()) + 1,
+                )
+
+    def _check_org_modifier_range(self, body: str, rel: str, line_offset: int):
+        for block_start, inner in _sub_blocks(body, "organization_modifier"):
+            for m in BONUS_STAT_RE.finditer(inner):
+                key = m.group(1)
+                if key not in PERCENT_ORG_MODIFIERS:
+                    continue
+                try:
+                    value = float(m.group(2))
+                except ValueError:
+                    continue
+                if abs(value) < 1:
+                    continue
+                line = (
+                    line_offset
+                    + body.count("\n", 0, block_start)
+                    + inner.count("\n", 0, m.start())
+                    + 1
+                )
+                self.add_error(
+                    "org-modifier-out-of-range",
+                    f"{key} = {m.group(2)} is a factor, so this reads as "
+                    f"{value * 100:.0f}% — write it as a decimal "
+                    f"(e.g. {value / 100:g})",
+                    rel,
+                    line,
                 )
 
     @staticmethod
@@ -648,14 +725,29 @@ class Validator(BaseValidator):
                 )
 
     def _check_nested_equipment_bonus(
-        self, text: str, rel: str, equipment: EquipmentStatIndex
+        self,
+        text: str,
+        rel: str,
+        equipment: EquipmentStatIndex,
+        *,
+        dead_stats: bool = True,
     ):
-        """Policies and country-leader company traits key their equipment_bonus
-        by archetype, so each nested block is its own scope."""
+        """Policies, doctrines, and country-leader company traits key their
+        equipment_bonus by archetype, so each nested block is its own scope."""
         for start, block in _sub_blocks(text, "equipment_bonus"):
             block_offset = text.count("\n", 0, start)
+            keyed: Dict[str, Set[str]] = {}
+            token_at: Dict[str, int] = {}
             for token, token_start, inner in _named_sub_blocks(block):
                 line = block_offset + block.count("\n", 0, token_start) + 1
+                keyed[token] = {
+                    stat
+                    for stat, _value in BONUS_STAT_RE.findall(inner)
+                    if stat != "instant"
+                }
+                token_at[token] = token_start
+                if not dead_stats:
+                    continue
                 scope = self._resolve_scope([token], equipment, rel, line)
                 if not scope:
                     continue
@@ -665,6 +757,15 @@ class Validator(BaseValidator):
                     scope,
                     rel,
                     lambda pos, o=offset, b=inner: o + b.count("\n", 0, pos) + 1,
+                )
+            for type_key, child, shared in equipment.type_archetype_overlaps(keyed):
+                line = block_offset + block.count("\n", 0, token_at[child]) + 1
+                self.add_error(
+                    "bonus-type-archetype-stack",
+                    f"equipment_bonus {', '.join(sorted(shared))} on {child} "
+                    f"also applies via type '{type_key}' in this block",
+                    rel,
+                    line,
                 )
 
     def _focus_context(self, text: str, pos: int, tags: FrozenSet[str]) -> Set[str]:

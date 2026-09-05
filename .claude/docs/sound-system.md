@@ -4,14 +4,14 @@ How MD defines sound effects, combat sounds, and country voicelines. Music: see 
 
 ## File types
 
-| Type                   | Location                                    | Format                                              |
-| ---------------------- | ------------------------------------------- | --------------------------------------------------- |
-| Sound definitions      | `sound/*.asset`                             | `.asset` files (not Paradox script)                 |
-| Sound effect groupings | `sound/*.asset`                             | `soundeffect` blocks in the same `.asset` files     |
-| Sound categories       | `sound/MD4_category.asset`                  | Category blocks with compressor settings            |
-| Combat sound mapping   | `sound/combat_sounds/MD4_combat_sounds.txt` | Maps unit types to sound effects                    |
-| Country voicelines     | `sound/vo.asset`                            | Voice category + all country soundeffects           |
-| DLC voiceover stubs    | `sound/*_vo.asset`                          | Blanked-out DLC voice packs (replaced by MD voices) |
+| Type                   | Location & format                                                      |
+| ---------------------- | ---------------------------------------------------------------------- |
+| Sound definitions      | `sound/*.asset` — `.asset` files (not Paradox script)                  |
+| Sound effect groupings | `sound/*.asset` — `soundeffect` blocks in the same `.asset` files      |
+| Sound categories       | `sound/MD4_category.asset` — category blocks with compressor settings  |
+| Combat sound mapping   | `sound/combat_sounds/MD4_combat_sounds.txt` — maps unit types → sounds |
+| Country voicelines     | `sound/vo.asset` — voice category + all country soundeffects           |
+| DLC voiceover stubs    | `sound/*_vo.asset` — blanked DLC voice packs (replaced by MD voices)   |
 
 ## Directory layout
 
@@ -97,20 +97,21 @@ soundeffect = {
 }
 ```
 
-| Field                        | Purpose                                                                     |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `name`                       | Identifier for the soundeffect                                              |
-| `falloff`                    | Falloff entry used by this effect                                           |
-| `sounds`                     | One or more sound entries; `weighted_sound` picks by weight                 |
-| `loop`                       | Whether the effect repeats                                                  |
-| `is3d`                       | Whether the effect uses 3D positioning                                      |
-| `random_sound_when_looping`  | Picks a random sound on each loop iteration                                 |
-| `max_audible`                | Maximum concurrent instances; `max_audible_behaviour = fail` rejects extras |
-| `fade_in` / `fade_out`       | Transition durations in seconds                                             |
-| `delay_random_offset`        | Min/max random delay between loops                                          |
-| `volume_random_offset`       | Min/max random volume variation per play                                    |
-| `playbackrate_random_offset` | Min/max random playback rate variation                                      |
-| `prevent_random_repetition`  | Prevents the same sound playing twice in a row                              |
+| Field                        | Purpose                                                     |
+| ---------------------------- | ----------------------------------------------------------- |
+| `name`                       | Identifier for the soundeffect                              |
+| `falloff`                    | Falloff entry used by this effect                           |
+| `sounds`                     | One or more sound entries; `weighted_sound` picks by weight |
+| `loop`                       | Whether the effect repeats                                  |
+| `is3d`                       | Whether the effect uses 3D positioning                      |
+| `random_sound_when_looping`  | Picks a random sound on each loop iteration                 |
+| `max_audible`                | Maximum concurrent instances                                |
+| `max_audible_behaviour`      | `fail` rejects extras over the cap                          |
+| `fade_in` / `fade_out`       | Transition durations in seconds                             |
+| `delay_random_offset`        | Min/max random delay between loops                          |
+| `volume_random_offset`       | Min/max random volume variation per play                    |
+| `playbackrate_random_offset` | Min/max random playback rate variation                      |
+| `prevent_random_repetition`  | Prevents the same sound playing twice in a row              |
 
 ## Falloff format
 
@@ -150,12 +151,19 @@ category = {
 
 ### MD categories (`MD4_category.asset`)
 
-| Category              | Purpose                                       | Contents                                                                |
-| --------------------- | --------------------------------------------- | ----------------------------------------------------------------------- |
-| `Millennium Dawn`     | Primary MD combat sounds                      | Rifle attacks, jet sounds, vehicle sounds, Czech vehicles, PER marching |
-| `MD animations`       | Vehicle/aircraft engine loops and weapon fire | Helicopter engines, tank engines, autocannons, CIWS, rifles             |
-| `MD ambient battle`   | Ambient battle layer                          | Empty (compressor-only, applied to ambient sounds)                      |
-| `MD EH static effect` | Event Horizon static noise                    | `EH_static`                                                             |
+| Category              | Purpose                                       |
+| --------------------- | --------------------------------------------- |
+| `Millennium Dawn`     | Primary MD combat sounds                      |
+| `MD animations`       | Vehicle/aircraft engine loops and weapon fire |
+| `MD ambient battle`   | Ambient battle layer                          |
+| `MD EH static effect` | Event Horizon static noise                    |
+
+Contents:
+
+- `Millennium Dawn`: rifle attacks, jet sounds, vehicle sounds, Czech vehicles, PER marching
+- `MD animations`: helicopter engines, tank engines, autocannons, CIWS, rifles
+- `MD ambient battle`: empty (compressor-only, applied to ambient sounds)
+- `MD EH static effect`: `EH_static`
 
 ### Global compressors
 

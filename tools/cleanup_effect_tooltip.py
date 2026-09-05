@@ -33,7 +33,11 @@ from cleanup_or import (  # noqa: E402
     _extract_inner_text,
     _tokenize_inner,
 )
-from shared_utils import strip_inline_comment  # noqa: E402
+from shared_utils import (  # noqa: E402
+    is_excluded_path,
+    iter_txt_targets,
+    strip_inline_comment,
+)
 
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # resources/ is reference-only; .git is not content; .claude/worktrees holds full
@@ -49,8 +53,7 @@ def _is_excluded_path(path, repo_root=None):
     would otherwise match every file and no-op the whole repo.
     """
     root = _REPO_ROOT if repo_root is None else os.path.abspath(repo_root)
-    rel = os.path.relpath(os.path.abspath(path), root)
-    return any(part in _EXCLUDED_DIRS for part in rel.split(os.sep))
+    return is_excluded_path(path, _EXCLUDED_DIRS, root)
 
 
 _RE_EFFECT_TOOLTIP_OPEN = re.compile(r"^\s*effect_tooltip\s*=\s*\{")
@@ -210,20 +213,10 @@ def main(paths, check_only=False):
                 file=sys.stderr,
             )
             continue
-        if os.path.isdir(path):
-            for dirpath, dirnames, filenames in os.walk(path):
-                dirnames[:] = [d for d in dirnames if d not in _EXCLUDED_DIRS]
-                for fn in filenames:
-                    if fn.lower().endswith(".txt"):
-                        full = os.path.join(dirpath, fn)
-                        c = process_file(full, check_only)
-                        if c:
-                            changed.append((os.path.relpath(full, path), c))
-                            total += c
-        elif os.path.isfile(path):
-            c = process_file(path, check_only)
+        for display, full in iter_txt_targets(path, _EXCLUDED_DIRS):
+            c = process_file(full, check_only)
             if c:
-                changed.append((path, c))
+                changed.append((display, c))
                 total += c
     verb = "Would collapse" if check_only else "Collapsed"
     if changed:
