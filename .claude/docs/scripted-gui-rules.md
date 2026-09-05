@@ -35,6 +35,8 @@ scripted_gui = {
 1. **`context_type`** — determines scope and available data (see Context Types)
 2. **`window_name`** — must reference an independent `containerWindowType` name in an `interface/*.gui` file
 
+`visible` is **not** required — omit it rather than writing `visible = { always = yes }`, which is the engine default. For `decision_category` GUIs the category's own `visible`/`allowed` already gates the panel.
+
 ## Context Types
 
 ROOT is the player country in every context type. Default scope in parentheses.
