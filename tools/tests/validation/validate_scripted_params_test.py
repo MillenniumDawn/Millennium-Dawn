@@ -58,6 +58,17 @@ _TEST_VALID_TAGS = frozenset(
 )
 
 
+def _missing_param_issues(tmp_path):
+    """Run the validator over tmp_path and return its missing-required-param issues."""
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    return [
+        issue
+        for issue in validator._issues
+        if issue.category == "missing-required-param"
+    ]
+
+
 def _write(path, content):
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="") as file:
@@ -110,14 +121,7 @@ def test_validator_enforces_uppercase_effect_and_parameter_names(tmp_path):
     )
     _write(caller_path, "ENG_change_scottish_agitation = yes\n")
 
-    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-
-    issues = [
-        issue
-        for issue in validator._issues
-        if issue.category == "missing-required-param"
-    ]
+    issues = _missing_param_issues(tmp_path)
     assert len(issues) == 1
     assert "ENG_agitation_change" in issues[0].message
 
@@ -146,14 +150,7 @@ def test_validator_scans_all_scripted_effect_caller_directories(tmp_path, caller
     )
     _write(caller_path, "test_contracted_effect = yes\n")
 
-    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-
-    issues = [
-        issue
-        for issue in validator._issues
-        if issue.category == "missing-required-param"
-    ]
+    issues = _missing_param_issues(tmp_path)
     assert len(issues) == 1
     assert issues[0].file == f"{caller_dir}/test_caller.txt"
 
