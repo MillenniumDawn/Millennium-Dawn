@@ -148,6 +148,29 @@ def _matching_brace(text: str, open_pos: int) -> int:
     return -1
 
 
+_ID_OR_BRACE_RE = re.compile(r"[{}]|\bid\s*=\s*([A-Za-z_][\w.]*)")
+
+
+def _own_id(body: str):
+    """The `id` at the definition's own depth.
+
+    A malformed event with no id of its own can still contain a block fire
+    (`country_event = { id = foo.1 days = 1 }`) in its effects. Searching the
+    whole body would adopt that child's id, inventing a duplicate of the real
+    foo.1 and mislabelling the malformed block instead of leaving it unknown.
+    """
+    depth = 0
+    for m in _ID_OR_BRACE_RE.finditer(body):
+        token = m.group(0)
+        if token == "{":
+            depth += 1
+        elif token == "}":
+            depth -= 1
+        elif depth == 0:
+            return m.group(1)
+    return None
+
+
 def _iter_typed_event_bodies(cleaned: str, *, require_id: bool = True):
     """Yield typed definitions using brace matching so indentation is irrelevant.
 
@@ -163,10 +186,10 @@ def _iter_typed_event_bodies(cleaned: str, *, require_id: bool = True):
         body = cleaned[ob + 1 : end]
         if not _DEFINITION_ONLY_RE.search(body):
             continue
-        idm = _FIRE_ID_RE.search(body)
-        if idm is None and require_id:
+        event_id = _own_id(body)
+        if event_id is None and require_id:
             continue
-        yield (idm.group(1) if idm else None), m.group(1), body, m.start()
+        yield event_id, m.group(1), body, m.start()
 
 
 def _iter_event_bodies(cleaned: str):

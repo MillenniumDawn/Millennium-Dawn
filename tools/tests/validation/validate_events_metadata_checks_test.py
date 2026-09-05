@@ -403,3 +403,38 @@ def test_indented_definitions_reach_the_metadata_checks(tmp_path):
     assert (
         "undeclared.1" in reported
     ), "the indented namespace mismatch was not reported"
+
+
+def test_nested_fire_id_is_not_adopted_by_a_malformed_parent(tmp_path):
+    """An id belonging to a block fire is not the definition's own id.
+
+    The malformed block has no id of its own but fires foo.1 from an option.
+    Taking that id would invent a duplicate of the real foo.1 and label the
+    malformed block with someone else's name instead of leaving it unknown.
+    """
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "add_namespace = foo\n"
+        "country_event = {\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = {\n"
+        "\t\tname = broken.a\n"
+        "\t\tcountry_event = { id = foo.1 days = 1 }\n"
+        "\t}\n"
+        "}\n"
+        "country_event = {\n"
+        "\tid = foo.1\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { name = foo.1.a }\n"
+        "}\n",
+    )
+    v = _validator(tmp_path)
+    meta, _ = v._get_event_metadata()
+
+    assert [m["id"] for m in meta] == [None, "foo.1"]
+
+    v.validate_duplicate_event_ids()
+    assert not any(
+        "foo.1" in str(issue) for issue in v._issues
+    ), "the nested fire was counted as a second definition of foo.1"
