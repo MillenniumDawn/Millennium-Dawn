@@ -3086,70 +3086,76 @@ update_military_rate = {
 	set_variable = { defence_gain = { value = array_defence_spend^def_index add = defence_breakdown_cyber clamp = { min = 0 max = @math_expressions_max } } }
 }
 
+# Effect: calculate_spending_law_base_cost
+# Purpose: Shared per-capita cost base behind the flat spending-law ladders
+# Parameters:
+# - spending_law_cost_multiplier: 1 plus the department's cost modifiers
+# - spending_law_per_capita: the department's @*_base_cost_per_capita constant
+calculate_spending_law_base_cost = {
+	set_temp_variable = {
+		spending_law_base_cost = {
+			value = population_total
+			multiply = spending_law_cost_multiplier
+			multiply = common_money_modifier
+			multiply = spending_law_per_capita
+			clamp = { min = 0 max = @spending_cost_clamp_max }
+		}
+	}
+}
+
 # Effect: update_bureaucracy_rate
 # Purpose: Computes daily bureaucracy/civil-service spending based on population and selected law level
 update_bureaucracy_rate = {
-	#clear the array that stores the law cost
-	clear_array = array_bureaucracy_spend
+	set_temp_variable = { spending_law_cost_multiplier = { value = 1 add = modifier@bureaucracy_cost_multiplier_modifier } }
+	set_temp_variable = { spending_law_per_capita = @bureau_base_cost_per_capita }
+	calculate_spending_law_base_cost = yes
 
-	# Recreate the Array
+	clear_array = array_bureaucracy_spend
 	resize_array = { array = array_bureaucracy_spend size = 5 value = 0 }
 
-	#Calculate the base cost of each bureaucracy level, scaled by the per-level multiplier ladder
 	for_each_loop = {
 		array = array_bureaucracy_spend
 		index = i
-		value = v
 		set_variable = {
 			array_bureaucracy_spend^i = {
-				value = population_total
-				multiply = { value = 1 add = modifier@bureaucracy_cost_multiplier_modifier }
-				multiply = common_money_modifier
-				multiply = @bureau_base_cost_per_capita
-				clamp = { min = 0 max = @spending_cost_clamp_max }
+				value = spending_law_base_cost
 				multiply = global.spending_ladder_standard^i
 			}
 		}
 	}
 
-	#Set which spending level the country is at
 	set_temp_variable = { bureau_index = { value = bureau_law subtract = 1 clamp = { min = 0 max = 4 } } }
-	set_variable = { var = bureaucracy_gain value = { value = array_bureaucracy_spend^bureau_index clamp = { min = 0 max = @math_expressions_max } } }
+	set_variable = { bureaucracy_gain = { value = array_bureaucracy_spend^bureau_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: update_police_rate
 # Purpose: Computes daily police/public-security spending based on population and selected law level
 update_police_rate = {
-	#clear the array that stores the law cost
-	clear_array = array_security_spend
+	set_temp_variable = {
+		spending_law_cost_multiplier = {
+			value = 1
+			add = modifier@police_cost_multiplier_modifier
+			add = ct_police_cost_var
+		}
+	}
+	set_temp_variable = { spending_law_per_capita = @police_base_cost_per_capita }
+	calculate_spending_law_base_cost = yes
 
-	# Recreate the Array
+	clear_array = array_security_spend
 	resize_array = { array = array_security_spend size = 5 value = 0 }
 
-	#Calculate the base cost of each police level, scaled by the per-level multiplier ladder
 	for_each_loop = {
 		array = array_security_spend
 		index = i
-		value = v
 		set_variable = {
 			array_security_spend^i = {
-				value = population_total
-				multiply = {
-					value = 1
-					add = modifier@police_cost_multiplier_modifier
-					add = ct_police_cost_var
-				}
-				multiply = common_money_modifier
-				multiply = @police_base_cost_per_capita
-				clamp = { min = 0 max = @spending_cost_clamp_max }
+				value = spending_law_base_cost
 				multiply = global.spending_ladder_standard^i
 			}
 		}
 	}
 
-	#Set which spending level the country is at
 	set_temp_variable = { security_index = { value = police_law subtract = 1 clamp = { min = 0 max = 4 } } }
-
 	set_variable = { security_gain = { value = array_security_spend^security_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
@@ -3263,64 +3269,50 @@ update_education_rate = {
 # Effect: update_health_rate
 # Purpose: Computes daily healthcare spending based on population and selected law level
 update_health_rate = {
-	#clear the array that stores the law cost
-	clear_array = array_health_spend
+	set_temp_variable = { spending_law_cost_multiplier = { value = 1 add = modifier@health_cost_multiplier_modifier } }
+	set_temp_variable = { spending_law_per_capita = @health_base_cost_per_capita }
+	calculate_spending_law_base_cost = yes
 
-	# Recreate the Array
+	clear_array = array_health_spend
 	resize_array = { array = array_health_spend size = 6 value = 0 }
 
-	#Calculate the base cost of each health level, scaled by the per-level multiplier ladder
 	for_each_loop = {
 		array = array_health_spend
 		index = i
-		value = v
 		set_variable = {
 			array_health_spend^i = {
-				value = population_total	#Unit 100 000
-				multiply = { value = 1 add = modifier@health_cost_multiplier_modifier }
-				multiply = common_money_modifier
-				multiply = @health_base_cost_per_capita
-				clamp = { min = 0 max = @spending_cost_clamp_max }
+				value = spending_law_base_cost
 				multiply = global.spending_ladder_health^i
 			}
 		}
 	}
 
-	#Set which spending level the country is at
 	set_temp_variable = { health_index = { value = health_law subtract = 1 clamp = { min = 0 max = 5 } } }
-
 	set_variable = { health_gain = { value = array_health_spend^health_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: update_social_rate
 # Purpose: Computes daily welfare/social-benefit spending based on population and selected law level
 update_social_rate = {
-	#clear the array that stores the law cost
-	clear_array = array_social_spend
+	set_temp_variable = { spending_law_cost_multiplier = { value = 1 add = modifier@social_cost_multiplier_modifier } }
+	set_temp_variable = { spending_law_per_capita = @social_base_cost_per_capita }
+	calculate_spending_law_base_cost = yes
 
-	# Recreate the Array
+	clear_array = array_social_spend
 	resize_array = { array = array_social_spend size = 6 value = 0 }
 
-	#Calculate the base cost of each social level, scaled by the per-level multiplier ladder
 	for_each_loop = {
 		array = array_social_spend
 		index = i
-		value = v
 		set_variable = {
 			array_social_spend^i = {
-				value = population_total	#Unit 100 000
-				multiply = { value = 1 add = modifier@social_cost_multiplier_modifier }
-				multiply = common_money_modifier
-				multiply = @social_base_cost_per_capita
-				clamp = { min = 0 max = @spending_cost_clamp_max }
+				value = spending_law_base_cost
 				multiply = global.spending_ladder_social^i
 			}
 		}
 	}
 
-	#Set which spending level the country is at
 	set_temp_variable = { social_index = { value = social_law subtract = 1 clamp = { min = 0 max = 5 } } }
-
 	set_variable = { welfare_gain = { value = array_social_spend^social_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
