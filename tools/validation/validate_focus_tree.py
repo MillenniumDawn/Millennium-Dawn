@@ -13,8 +13,10 @@ import disk_cache
 from shared_utils import extract_block_from_text as _extract_block
 from shared_utils import read_text_under
 from sprite_index import build_sprite_index
+from validate_tech_categories import _TAGS_GLOB, load_known_categories
 from validator_common import (
     BaseValidator,
+    Issue,
     Severity,
     case_mismatch,
     casefold_index,
@@ -1248,6 +1250,7 @@ class Validator(BaseValidator):
 
     def __init__(self, mod_path: str, **kwargs):
         self.missing_icons = kwargs.pop("missing_icons", False)
+        self.name_not_focus_id = kwargs.pop("name_not_focus_id", False)
         super().__init__(mod_path, **kwargs)
         self._parsed_cache: Optional[List[Dict]] = None
         self._staged_paths: Optional[Set[str]] = None
@@ -1569,11 +1572,15 @@ class Validator(BaseValidator):
     # -----------------------------------------------------------------------
 
     def validate_tech_bonus_names(self):
-        """Flag add_tech_bonus blocks in completion rewards without a
-        localised `name =`.
+        """Flag add_tech_bonus blocks in completion rewards whose `name =` does
+        not identify the granting focus.
 
         Without a name the research-bonus row shows no source; the convention
-        is `name = <focus_id>`, which reuses the focus title loc key.
+        is `name = <focus_id>`, which reuses the focus title loc key. A category
+        token passes a bare loc-key test — every CAT_ name is localised — while
+        labelling the row with the tech field instead of the focus, and two
+        focuses sharing one category name collapse into one indistinguishable
+        entry, so it gets its own finding.
         """
         self._log_section("Checking add_tech_bonus name parameters in focus rewards...")
 
@@ -1582,6 +1589,12 @@ class Validator(BaseValidator):
             _extract_tech_bonuses, [(f, self.mod_path) for f in files]
         )
         loc_keys = self._load_localisation_keys()
+        categories = self.cached(
+            "tech_categories",
+            lambda: load_known_categories(
+                self._collect_files([_TAGS_GLOB], ignore_staged=True)
+            ),
+        )
 
         results = []
         for sub in bonus_lists:
@@ -1598,7 +1611,24 @@ class Validator(BaseValidator):
                             line,
                         )
                     )
-                elif "[" not in name and name not in loc_keys:
+                elif "[" in name:
+                    continue
+                elif name in categories:
+                    results.append(
+                        Issue(
+                            severity=Severity.WARNING,
+                            category="tech-bonus-name-is-category",
+                            message=(
+                                f"add_tech_bonus name '{name}' in '{focus_id}' is a"
+                                " technology category, not a bonus source — the research"
+                                " row names the tech field instead of the focus"
+                                f" (use name = {focus_id})"
+                            ),
+                            file=rel,
+                            line=line,
+                        )
+                    )
+                elif name not in loc_keys:
                     results.append(
                         (
                             f"add_tech_bonus name '{name}' in '{focus_id}' has no"
@@ -1607,11 +1637,25 @@ class Validator(BaseValidator):
                             line,
                         )
                     )
+                elif self.name_not_focus_id and name != focus_id:
+                    results.append(
+                        Issue(
+                            severity=Severity.WARNING,
+                            category="tech-bonus-name-not-focus-id",
+                            message=(
+                                f"add_tech_bonus name '{name}' in '{focus_id}' does not"
+                                " name the granting focus — intentional only when the"
+                                " bonus is deliberately shared across focuses"
+                            ),
+                            file=rel,
+                            line=line,
+                        )
+                    )
 
         self._report(
             results,
-            "All add_tech_bonus blocks in focus rewards carry a localised name",
-            "add_tech_bonus blocks missing a name or using an unlocalised name:",
+            "All add_tech_bonus blocks in focus rewards name their granting focus",
+            "add_tech_bonus blocks whose name does not identify the granting focus:",
             Severity.WARNING,
             category="tech-bonus-name",
         )
@@ -2181,6 +2225,12 @@ def _add_extra_args(parser):
         action="store_true",
         dest="missing_icons",
         help="Flag focuses whose icon sprite is undefined in interface/*.gfx",
+    )
+    parser.add_argument(
+        "--name-not-focus-id",
+        action="store_true",
+        dest="name_not_focus_id",
+        help="Flag add_tech_bonus names that are localised but do not match the granting focus id",
     )
 
 
