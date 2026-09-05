@@ -400,4 +400,6 @@ def test_indented_definitions_reach_the_metadata_checks(tmp_path):
     v.validate_namespace_mismatch()
     reported = " ".join(str(i) for i in v._issues)
     assert "foo.1" in reported, "the indented duplicate was not reported"
-    assert "undeclared.1" in reported, "the indented namespace mismatch was not reported"
+    assert (
+        "undeclared.1" in reported
+    ), "the indented namespace mismatch was not reported"
