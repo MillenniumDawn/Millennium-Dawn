@@ -1944,6 +1944,112 @@ modify_economic_support = {
 		}
 	}
 }
+###########CAPITALISAION COMPANIES - MODIFIER RECALCULATION###########
+# Rebuilt from zero every month rather than nudged, so a missed or doubled tick cannot drift.
+# Stacks on top of SOV_economy_modifier, which carries the flat focus- and decision-granted half.
+SOV_recalculate_capitalisation_modifier = {
+	set_variable = { SOV_cap_corporate_tax_income_multiplier_modifier = 0 }
+	set_variable = { SOV_cap_gdp_from_resource_sector_modifier = 0 }
+	set_variable = { SOV_cap_oil_export_multiplier_modifier = 0 }
+	set_variable = { SOV_cap_chromium_export_multiplier_modifier = 0 }
+	set_variable = { SOV_cap_production_speed_internet_station_factor = 0 }
+	set_variable = { SOV_cap_economic_cycles_cost_factor = 0 }
+	set_variable = { SOV_cap_research_speed_factor = 0 }
+	set_variable = { SOV_cap_education_cost_multiplier_modifier = 0 }
+
+	#Gazprom
+	if = {
+		limit = { has_completed_focus = SOV_economic_reform_gazprom }
+		set_temp_variable = { SOV_cap_ramp = capitalisation_gazprom }
+		subtract_from_temp_variable = { SOV_cap_ramp = 3 }
+		divide_temp_variable = { SOV_cap_ramp = 22 }
+		clamp_temp_variable = { var = SOV_cap_ramp min = 0 max = 1 }
+
+		set_temp_variable = { SOV_cap_step = SOV_cap_ramp }
+		multiply_temp_variable = { SOV_cap_step = 0.03 }
+		add_to_variable = { SOV_cap_gdp_from_resource_sector_modifier = SOV_cap_step }
+		add_to_variable = { SOV_cap_oil_export_multiplier_modifier = SOV_cap_step }
+		add_to_variable = { SOV_cap_corporate_tax_income_multiplier_modifier = SOV_cap_step }
+	}
+	#Rosneft
+	if = {
+		limit = { has_completed_focus = SOV_economic_reform_rosneft }
+		set_temp_variable = { SOV_cap_ramp = capitalisation_rosneft }
+		subtract_from_temp_variable = { SOV_cap_ramp = 3 }
+		divide_temp_variable = { SOV_cap_ramp = 22 }
+		clamp_temp_variable = { var = SOV_cap_ramp min = 0 max = 1 }
+
+		set_temp_variable = { SOV_cap_step = SOV_cap_ramp }
+		multiply_temp_variable = { SOV_cap_step = 0.02 }
+		add_to_variable = { SOV_cap_gdp_from_resource_sector_modifier = SOV_cap_step }
+		set_temp_variable = { SOV_cap_step = SOV_cap_ramp }
+		multiply_temp_variable = { SOV_cap_step = 0.04 }
+		add_to_variable = { SOV_cap_oil_export_multiplier_modifier = SOV_cap_step }
+		set_temp_variable = { SOV_cap_step = SOV_cap_ramp }
+		multiply_temp_variable = { SOV_cap_step = 0.03 }
+		add_to_variable = { SOV_cap_corporate_tax_income_multiplier_modifier = SOV_cap_step }
+	}
+	#MTS
+	if = {
+		limit = { has_completed_focus = SOV_economic_mts }
+		set_temp_variable = { SOV_cap_ramp = capitalisation_mts }
+		subtract_from_temp_variable = { SOV_cap_ramp = 3 }
+		divide_temp_variable = { SOV_cap_ramp = 22 }
+		clamp_temp_variable = { var = SOV_cap_ramp min = 0 max = 1 }
+
+		set_temp_variable = { SOV_cap_step = SOV_cap_ramp }
+		multiply_temp_variable = { SOV_cap_step = 0.03 }
+		add_to_variable = { SOV_cap_corporate_tax_income_multiplier_modifier = SOV_cap_step }
+		add_to_variable = { SOV_cap_production_speed_internet_station_factor = SOV_cap_step }
+	}
+	#VTB - the ramp only opens once the bank has floated
+	if = {
+		limit = { check_variable = { SOV_vtb_stage > 0 } }
+		set_temp_variable = { SOV_cap_ramp = capitalisation_vtb }
+		subtract_from_temp_variable = { SOV_cap_ramp = 3 }
+		divide_temp_variable = { SOV_cap_ramp = 22 }
+		clamp_temp_variable = { var = SOV_cap_ramp min = 0 max = 1 }
+
+		set_temp_variable = { SOV_cap_step = SOV_cap_ramp }
+		multiply_temp_variable = { SOV_cap_step = 0.03 }
+		add_to_variable = { SOV_cap_corporate_tax_income_multiplier_modifier = SOV_cap_step }
+		set_temp_variable = { SOV_cap_step = SOV_cap_ramp }
+		multiply_temp_variable = { SOV_cap_step = -0.03 }
+		add_to_variable = { SOV_cap_economic_cycles_cost_factor = SOV_cap_step }
+	}
+	#Sberbank
+	if = {
+		limit = { has_completed_focus = SOV_economic_destiny_sber }
+		set_temp_variable = { SOV_cap_ramp = capitalisation_sberbank }
+		subtract_from_temp_variable = { SOV_cap_ramp = 3 }
+		divide_temp_variable = { SOV_cap_ramp = 22 }
+		clamp_temp_variable = { var = SOV_cap_ramp min = 0 max = 1 }
+
+		set_temp_variable = { SOV_cap_step = SOV_cap_ramp }
+		multiply_temp_variable = { SOV_cap_step = 0.03 }
+		add_to_variable = { SOV_cap_research_speed_factor = SOV_cap_step }
+		add_to_variable = { SOV_cap_corporate_tax_income_multiplier_modifier = SOV_cap_step }
+		set_temp_variable = { SOV_cap_step = SOV_cap_ramp }
+		multiply_temp_variable = { SOV_cap_step = 0.05 }
+		add_to_variable = { SOV_cap_education_cost_multiplier_modifier = SOV_cap_step }
+		set_temp_variable = { SOV_cap_step = SOV_cap_ramp }
+		multiply_temp_variable = { SOV_cap_step = -0.03 }
+		add_to_variable = { SOV_cap_economic_cycles_cost_factor = SOV_cap_step }
+	}
+	#ALROSA - diamonds only started paying once the mines were consolidated, hence the later floor
+	if = {
+		limit = { has_completed_focus = SOV_economic_alrosa }
+		set_temp_variable = { SOV_cap_ramp = capitalisation_alrosa }
+		subtract_from_temp_variable = { SOV_cap_ramp = 10 }
+		divide_temp_variable = { SOV_cap_ramp = 15 }
+		clamp_temp_variable = { var = SOV_cap_ramp min = 0 max = 1 }
+
+		set_temp_variable = { SOV_cap_step = SOV_cap_ramp }
+		multiply_temp_variable = { SOV_cap_step = 0.02 }
+		add_to_variable = { SOV_cap_chromium_export_multiplier_modifier = SOV_cap_step }
+		add_to_variable = { SOV_cap_corporate_tax_income_multiplier_modifier = SOV_cap_step }
+	}
+}
 SOV_asteroids_farming_script = {
 	if = {
 		limit = { has_idea = SOV_asteroids_idea6 }
