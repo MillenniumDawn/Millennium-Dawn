@@ -51,6 +51,7 @@ All files below live in `.claude/docs/`.
 | `ai-strategy-reference.md`       | Unit production: 5 layers, on_action entries, plan files     |
 | `bug-patterns.md`                | Known bug patterns: scan signatures, diff-review questions   |
 | `content-guidelines.md`          | Content checklist: economic, political, military, visual, AI |
+| `counter-terrorism-reference.md` | CT slots, lifecycle, country coverage, cadence, recipients   |
 | `debug-commands.md`              | Console recipes for testing MD systems (EU/USoE focus)       |
 | `decision-reference.md`          | Decision structure, targeted-decision perf, examples         |
 | `diplomatic-action-reference.md` | Scripted diplomatic actions: files, ROOT/THIS/PREV scopes    |
