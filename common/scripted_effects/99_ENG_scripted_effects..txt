@@ -139,16 +139,105 @@ ENG_advance_moon_base = {
 # English seats: (Take Party Popularity variable) (if minor -, if major +) ( random variable selected from range of 0-10)
 # (Take Party Popularity of Labour,Tories,LibDems,Greens) (then Combine) (then add Nationalist Percentage) (remainder randomly distributed)
 # FUTURE ADDITIONS: Good to get UI to expand to states within England
+# Parameters:
+# - ENG_dependency_change: signed amount
+ENG_change_scottish_dependency = {
+	custom_effect_tooltip = ENG_scottish_dependency_change_tt
+	hidden_effect = {
+		if = {
+			limit = { ROOT = { NOT = { has_country_flag = ENG_scottish_integrated } } }
+			set_variable = { ROOT.ENG_scottish_dependency = { value = ROOT.ENG_scottish_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
+			ROOT = { ENG_update_scottish_pressure = yes }
+		}
+	}
+}
+
+# Parameters:
+# - ENG_dependency_change: signed amount
+ENG_change_north_irish_dependency = {
+	custom_effect_tooltip = ENG_north_irish_dependency_change_tt
+	hidden_effect = {
+		if = {
+			limit = { ROOT = { NOT = { has_country_flag = ENG_north_irish_integrated } } }
+			set_variable = { ROOT.ENG_north_irish_dependency = { value = ROOT.ENG_north_irish_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
+			ROOT = { ENG_update_north_irish_pressure = yes }
+		}
+	}
+}
+
+# Parameters:
+# - ENG_dependency_change: signed amount
+ENG_change_wales_dependency = {
+	custom_effect_tooltip = ENG_wales_dependency_change_tt
+	hidden_effect = {
+		if = {
+			limit = { ROOT = { NOT = { has_country_flag = ENG_welsh_integrated } } }
+			set_variable = { ROOT.ENG_wales_dependency = { value = ROOT.ENG_wales_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
+			ROOT = { ENG_update_wales_pressure = yes }
+		}
+	}
+}
+
 ENG_lower_dependence_1 = {
-	add_to_variable = { ENG_scottish_dependency = -1 tooltip = ENG_scottish_dependency_TT }
-	add_to_variable = { ENG_north_irish_dependency = -1 tooltip = ENG_north_irish_dependency_TT }
-	add_to_variable = { ENG_wales_dependency = -1 tooltip = ENG_wales_dependency_TT }
+	custom_effect_tooltip = ENG_lower_dependence_1_TT
+	hidden_effect = {
+		set_temp_variable = { ENG_dependency_change = -1 }
+		ENG_change_scottish_dependency = yes
+		ENG_change_north_irish_dependency = yes
+		ENG_change_wales_dependency = yes
+	}
+}
+
+# Parameters:
+# - ENG_agitation_change: signed amount
+ENG_change_scottish_agitation = {
+	custom_effect_tooltip = ENG_scottish_agitation_change_tt
+	hidden_effect = {
+		if = {
+			limit = { ROOT = { NOT = { has_country_flag = ENG_scottish_integrated } } }
+			set_variable = { ROOT.ENG_scottish_agitation = { value = ROOT.ENG_scottish_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
+			ROOT = { ENG_update_scottish_pressure = yes }
+		}
+	}
+}
+
+# Parameters:
+# - ENG_agitation_change: signed amount
+ENG_change_north_irish_agitation = {
+	custom_effect_tooltip = ENG_north_irish_agitation_change_tt
+	hidden_effect = {
+		if = {
+			limit = { ROOT = { NOT = { has_country_flag = ENG_north_irish_integrated } } }
+			set_variable = { ROOT.ENG_north_irish_agitation = { value = ROOT.ENG_north_irish_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
+			ROOT = {
+				ENG_north_irish_agitation_change_check = yes
+				ENG_update_north_irish_pressure = yes
+			}
+		}
+	}
+}
+
+# Parameters:
+# - ENG_agitation_change: signed amount
+ENG_change_wales_agitation = {
+	custom_effect_tooltip = ENG_wales_agitation_change_tt
+	hidden_effect = {
+		if = {
+			limit = { ROOT = { NOT = { has_country_flag = ENG_welsh_integrated } } }
+			set_variable = { ROOT.ENG_wales_agitation = { value = ROOT.ENG_wales_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
+			ROOT = { ENG_update_wales_pressure = yes }
+		}
+	}
 }
 
 ENG_increase_agitation_2 = {
-	add_to_variable = { ENG_scottish_agitation = 2 tooltip = ENG_scottish_agitation_TT }
-	add_to_variable = { ENG_north_irish_agitation = 2 tooltip = ENG_north_irish_agitation_TT }
-	add_to_variable = { ENG_wales_agitation = 2 tooltip = ENG_wales_agitation_TT }
+	custom_effect_tooltip = ENG_increase_agitation_2_TT
+	hidden_effect = {
+		set_temp_variable = { ENG_agitation_change = 2 }
+		ENG_change_scottish_agitation = yes
+		ENG_change_north_irish_agitation = yes
+		ENG_change_wales_agitation = yes
+	}
 }
 
 ENG_north_irish_agitation_change_check = {
@@ -238,123 +327,106 @@ ENG_north_irish_agitation_change_check = {
 }
 
 
-ENG_var_cap = {
-	if = {
-		limit = { check_variable = { ENG_scottish_agitation > 100 } }
-		set_variable = { ENG_scottish_agitation = 100 }
+# Parameters:
+# - ENG_nationalists_change: signed amount
+ENG_change_scottish_nationalists = {
+	custom_effect_tooltip = ENG_scottish_nationalists_change_tt
+	hidden_effect = {
+		if = {
+			limit = { ROOT = { NOT = { has_country_flag = ENG_scottish_integrated } } }
+			set_variable = { ROOT.ENG_scottish_nationalists = { value = ROOT.ENG_scottish_nationalists add = ENG_nationalists_change clamp = { min = 0 max = 100 } } }
+			ROOT = { ENG_update_scottish_pressure = yes }
+		}
 	}
-	if = {
-		limit = { check_variable = { ENG_scottish_dependency > 100 } }
-		set_variable = { ENG_scottish_dependency = 100 }
+}
+
+# Parameters:
+# - ENG_nationalists_change: signed amount
+ENG_change_north_irish_nationalists = {
+	custom_effect_tooltip = ENG_north_irish_nationalists_change_tt
+	hidden_effect = {
+		if = {
+			limit = { ROOT = { NOT = { has_country_flag = ENG_north_irish_integrated } } }
+			set_variable = { ROOT.ENG_north_irish_nationalists = { value = ROOT.ENG_north_irish_nationalists add = ENG_nationalists_change clamp = { min = 0 max = 100 } } }
+			ROOT = { ENG_update_north_irish_pressure = yes }
+		}
 	}
-	if = {
-		limit = { check_variable = { ENG_scottish_nationalists > 100 } }
-		set_variable = { ENG_scottish_nationalists = 100 }
+}
+
+# Parameters:
+# - ENG_nationalists_change: signed amount
+ENG_change_wales_nationalists = {
+	custom_effect_tooltip = ENG_wales_nationalists_change_tt
+	hidden_effect = {
+		if = {
+			limit = { ROOT = { NOT = { has_country_flag = ENG_welsh_integrated } } }
+			set_variable = { ROOT.ENG_wales_nationalists = { value = ROOT.ENG_wales_nationalists add = ENG_nationalists_change clamp = { min = 0 max = 100 } } }
+			ROOT = { ENG_update_wales_pressure = yes }
+		}
 	}
+}
+
+update_eng_devolution_dirty_variable = {
 	if = {
-		limit = { check_variable = { ENG_scottish_agitation < 0 } }
-		set_variable = { ENG_scottish_agitation = 0 }
+		limit = { check_variable = { global.ENG_devolution_dirty_update_var < 10000 } }
+		add_to_variable = { global.ENG_devolution_dirty_update_var = 1 }
 	}
-	if = {
-		limit = { check_variable = { ENG_scottish_dependency < 0 } }
-		set_variable = { ENG_scottish_dependency = 0 }
+	else = {
+		set_variable = { global.ENG_devolution_dirty_update_var = 1 }
 	}
-	if = {
-		limit = { check_variable = { ENG_scottish_nationalists < 0 } }
-		set_variable = { ENG_scottish_nationalists = 0 }
-	}
-	# Ireland
-	ENG_north_irish_agitation_change_check = yes
-	if = {
-		limit = { check_variable = { ENG_north_irish_agitation > 100 } }
-		set_variable = { ENG_north_irish_agitation = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_dependency > 100 } }
-		set_variable = { ENG_north_irish_dependency = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_nationalists > 100 } }
-		set_variable = { ENG_north_irish_nationalists = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_agitation < 0 } }
-		set_variable = { ENG_north_irish_agitation = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_dependency < 0 } }
-		set_variable = { ENG_north_irish_dependency = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_nationalists < 0 } }
-		set_variable = { ENG_north_irish_nationalists = 0 }
-	}
-	# Wales
-	if = {
-		limit = { check_variable = { ENG_wales_agitation > 100 } }
-		set_variable = { ENG_wales_agitation = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_dependency > 100 } }
-		set_variable = { ENG_wales_dependency = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_nationalists > 100 } }
-		set_variable = { ENG_wales_nationalists = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_agitation < 0 } }
-		set_variable = { ENG_wales_agitation = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_dependency < 0 } }
-		set_variable = { ENG_wales_dependency = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_nationalists < 0 } }
-		set_variable = { ENG_wales_nationalists = 0 }
-	}
-	# An integrated region is out of the mechanic: every writer still targeting it is neutralised here
-	if = {
-		limit = { has_country_flag = ENG_scottish_integrated }
-		set_variable = { ENG_scottish_agitation = 0 }
-		set_variable = { ENG_scottish_nationalists = 0 }
-		set_variable = { ENG_scottish_dependency = 100 }
-	}
-	if = {
-		limit = { has_country_flag = ENG_north_irish_integrated }
-		set_variable = { ENG_north_irish_agitation = 0 }
-		set_variable = { ENG_north_irish_nationalists = 0 }
-		set_variable = { ENG_north_irish_dependency = 100 }
-	}
-	if = {
-		limit = { has_country_flag = ENG_welsh_integrated }
-		set_variable = { ENG_wales_agitation = 0 }
-		set_variable = { ENG_wales_nationalists = 0 }
-		set_variable = { ENG_wales_dependency = 100 }
-	}
-	ENG_update_devolution_pressure = yes
 }
 
 # Independence pressure: (nationalism + the share of self-reliance + agitation) averaged into a 0-100 score
-ENG_update_devolution_pressure = {
+ENG_update_scottish_pressure = {
 	set_variable = { ENG_scottish_pressure = 100 }
 	subtract_from_variable = { var = ENG_scottish_pressure value = ENG_scottish_dependency }
 	add_to_variable = { var = ENG_scottish_pressure value = ENG_scottish_nationalists }
 	add_to_variable = { var = ENG_scottish_pressure value = ENG_scottish_agitation }
 	divide_variable = { ENG_scottish_pressure = 3 }
+	update_eng_devolution_dirty_variable = yes
+}
 
+ENG_update_north_irish_pressure = {
 	set_variable = { ENG_north_irish_pressure = 100 }
 	subtract_from_variable = { var = ENG_north_irish_pressure value = ENG_north_irish_dependency }
 	add_to_variable = { var = ENG_north_irish_pressure value = ENG_north_irish_nationalists }
 	add_to_variable = { var = ENG_north_irish_pressure value = ENG_north_irish_agitation }
 	divide_variable = { ENG_north_irish_pressure = 3 }
+	update_eng_devolution_dirty_variable = yes
+}
 
+ENG_update_wales_pressure = {
 	set_variable = { ENG_wales_pressure = 100 }
 	subtract_from_variable = { var = ENG_wales_pressure value = ENG_wales_dependency }
 	add_to_variable = { var = ENG_wales_pressure value = ENG_wales_nationalists }
 	add_to_variable = { var = ENG_wales_pressure value = ENG_wales_agitation }
 	divide_variable = { ENG_wales_pressure = 3 }
+	update_eng_devolution_dirty_variable = yes
+}
+
+# An integrated region leaves the mechanic on a fixed baseline: no agitation, no nationalists, wholly dependent
+ENG_apply_integrated_baseline = {
+	if = {
+		limit = { check_variable = { ENG_referendum_target = 1 } }
+		set_variable = { ENG_scottish_agitation = 0 }
+		set_variable = { ENG_scottish_nationalists = 0 }
+		set_variable = { ENG_scottish_dependency = 100 }
+		ENG_update_scottish_pressure = yes
+	}
+	else_if = {
+		limit = { check_variable = { ENG_referendum_target = 2 } }
+		set_variable = { ENG_north_irish_agitation = 0 }
+		set_variable = { ENG_north_irish_nationalists = 0 }
+		set_variable = { ENG_north_irish_dependency = 100 }
+		ENG_update_north_irish_pressure = yes
+	}
+	else_if = {
+		limit = { check_variable = { ENG_referendum_target = 3 } }
+		set_variable = { ENG_wales_agitation = 0 }
+		set_variable = { ENG_wales_nationalists = 0 }
+		set_variable = { ENG_wales_dependency = 100 }
+		ENG_update_wales_pressure = yes
+	}
 }
 
 ENG_settle_northern_ireland_question = {
@@ -383,7 +455,7 @@ ENG_settle_northern_ireland_question = {
 	set_variable = { ENG_north_irish_agitation = 0 }
 	set_variable = { ENG_north_irish_nationalists = 0 }
 	set_variable = { ENG_north_irish_dependency = 0 }
-	ENG_var_cap = yes
+	ENG_update_north_irish_pressure = yes
 }
 
 # Opening ballot position: nationalism carries twice the weight of the wider pressure score
@@ -409,22 +481,28 @@ ENG_seed_referendum_campaign = {
 	}
 	divide_variable = { ENG_referendum_leave_vote = 3 }
 	clamp_variable = { var = ENG_referendum_leave_vote min = 0 max = 100 }
+	update_eng_devolution_dirty_variable = yes
 }
 
+# Parameters:
+# - temp_change: signed amount
 ENG_referendum_campaign_shift = {
 	add_to_variable = { var = ENG_referendum_leave_vote value = temp_change }
 	clamp_variable = { var = ENG_referendum_leave_vote min = 0 max = 100 }
+	update_eng_devolution_dirty_variable = yes
 }
 
 ENG_clear_referendum_campaign = {
 	set_variable = { ENG_referendum_target = 0 }
 	set_variable = { ENG_referendum_leave_vote = 0 }
 	set_variable = { ENG_referendum_stay_vote = 0 }
+	update_eng_devolution_dirty_variable = yes
 }
 
 ENG_resolve_independence_referendum = {
 	set_variable = { ENG_referendum_stay_vote = 100 }
 	subtract_from_variable = { var = ENG_referendum_stay_vote value = ENG_referendum_leave_vote }
+	update_eng_devolution_dirty_variable = yes
 	random_list = {
 		ENG_referendum_leave_vote = {
 			country_event = devolution.11
@@ -438,6 +516,7 @@ ENG_resolve_independence_referendum = {
 ENG_resolve_union_settlement = {
 	set_variable = { ENG_referendum_stay_vote = 100 }
 	subtract_from_variable = { var = ENG_referendum_stay_vote value = ENG_referendum_leave_vote }
+	update_eng_devolution_dirty_variable = yes
 	random_list = {
 		ENG_referendum_stay_vote = {
 			country_event = devolution.13
@@ -521,7 +600,7 @@ ENG_integrate_referendum_region = {
 			}
 			remove_core_of = SCO
 		}
-		ENG_var_cap = yes
+		ENG_apply_integrated_baseline = yes
 	}
 	else_if = {
 		limit = { check_variable = { ENG_referendum_target = 2 } }
@@ -530,6 +609,7 @@ ENG_integrate_referendum_region = {
 		clr_country_flag = ENG_auto_subsidy_NIR
 		17 = { remove_core_of = NIR }
 		ENG_settle_northern_ireland_question = yes
+		ENG_apply_integrated_baseline = yes
 	}
 	else_if = {
 		limit = { check_variable = { ENG_referendum_target = 3 } }
@@ -544,7 +624,7 @@ ENG_integrate_referendum_region = {
 			}
 			remove_core_of = WAS
 		}
-		ENG_var_cap = yes
+		ENG_apply_integrated_baseline = yes
 	}
 }
 

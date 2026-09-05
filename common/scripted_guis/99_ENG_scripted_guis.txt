@@ -2,36 +2,39 @@ scripted_gui = {
 	ENG_devolution_gui_window = {
 		window_name = "ENG_devolution_gui_window"
 		context_type = player_context
+
+		dirty = global.ENG_devolution_dirty_update_var
+
 		visible = { has_country_flag = open_devolution_screen }
 		triggers = {
 			# Scotland Info
-			ENG_scotland_menu_agitation_visible = { has_country_flag = ENG_scotland_menu_opened }
-			ENG_scotland_menu_parliament_visible = { has_country_flag = ENG_scotland_menu_opened }
-			ENG_scotland_menu_dependency_visible = { has_country_flag = ENG_scotland_menu_opened }
-			ENG_scottish_agitation_VAR_visible = { has_country_flag = ENG_scotland_menu_opened }
-			ENG_scotland_parliament_VAR_visible = { has_country_flag = ENG_scotland_menu_opened }
-			ENG_scotland_dependency_VAR_visible = { has_country_flag = ENG_scotland_menu_opened }
+			ENG_scotland_menu_agitation_visible = { check_variable = { ENG_devolution_ui_selected = 1 } }
+			ENG_scotland_menu_parliament_visible = { check_variable = { ENG_devolution_ui_selected = 1 } }
+			ENG_scotland_menu_dependency_visible = { check_variable = { ENG_devolution_ui_selected = 1 } }
+			ENG_scottish_agitation_VAR_visible = { check_variable = { ENG_devolution_ui_selected = 1 } }
+			ENG_scotland_parliament_VAR_visible = { check_variable = { ENG_devolution_ui_selected = 1 } }
+			ENG_scotland_dependency_VAR_visible = { check_variable = { ENG_devolution_ui_selected = 1 } }
 			# North Ireland Info
-			ENG_north_ireland_menu_agitation_visible = { has_country_flag = ENG_n_ireland_menu_opened }
-			ENG_north_ireland_menu_parliament_visible = { has_country_flag = ENG_n_ireland_menu_opened }
-			ENG_north_ireland_menu_dependency_visible = { has_country_flag = ENG_n_ireland_menu_opened }
-			ENG_north_ireland_agitation_VAR_visible = { has_country_flag = ENG_n_ireland_menu_opened }
-			ENG_north_ireland_parliament_VAR_visible = { has_country_flag = ENG_n_ireland_menu_opened }
-			ENG_north_ireland_dependency_VAR_visible = { has_country_flag = ENG_n_ireland_menu_opened }
+			ENG_north_ireland_menu_agitation_visible = { check_variable = { ENG_devolution_ui_selected = 2 } }
+			ENG_north_ireland_menu_parliament_visible = { check_variable = { ENG_devolution_ui_selected = 2 } }
+			ENG_north_ireland_menu_dependency_visible = { check_variable = { ENG_devolution_ui_selected = 2 } }
+			ENG_north_ireland_agitation_VAR_visible = { check_variable = { ENG_devolution_ui_selected = 2 } }
+			ENG_north_ireland_parliament_VAR_visible = { check_variable = { ENG_devolution_ui_selected = 2 } }
+			ENG_north_ireland_dependency_VAR_visible = { check_variable = { ENG_devolution_ui_selected = 2 } }
 			# Wales Info
-			ENG_wales_menu_agitation_visible = { has_country_flag = ENG_wales_menu_opened }
-			ENG_wales_menu_parliament_visible = { has_country_flag = ENG_wales_menu_opened }
-			ENG_wales_menu_dependency_visible = { has_country_flag = ENG_wales_menu_opened }
-			ENG_wales_agitation_VAR_visible = { has_country_flag = ENG_wales_menu_opened }
-			ENG_wales_parliament_VAR_visible = { has_country_flag = ENG_wales_menu_opened }
-			ENG_wales_dependency_VAR_visible = { has_country_flag = ENG_wales_menu_opened }
+			ENG_wales_menu_agitation_visible = { check_variable = { ENG_devolution_ui_selected = 3 } }
+			ENG_wales_menu_parliament_visible = { check_variable = { ENG_devolution_ui_selected = 3 } }
+			ENG_wales_menu_dependency_visible = { check_variable = { ENG_devolution_ui_selected = 3 } }
+			ENG_wales_agitation_VAR_visible = { check_variable = { ENG_devolution_ui_selected = 3 } }
+			ENG_wales_parliament_VAR_visible = { check_variable = { ENG_devolution_ui_selected = 3 } }
+			ENG_wales_dependency_VAR_visible = { check_variable = { ENG_devolution_ui_selected = 3 } }
 			# Information Icons
-			GFX_ENG_agitation_info_visible = { OR = { has_country_flag = ENG_scotland_menu_opened has_country_flag = ENG_wales_menu_opened } }
-			GFX_ENG_parliament_info_visible = { OR = { has_country_flag = ENG_scotland_menu_opened has_country_flag = ENG_n_ireland_menu_opened has_country_flag = ENG_wales_menu_opened } }
-			GFX_ENG_dependency_info_visible = { OR = { has_country_flag = ENG_scotland_menu_opened has_country_flag = ENG_n_ireland_menu_opened has_country_flag = ENG_wales_menu_opened } }
-			GFX_ENG_irish_tension_info_visible = { has_country_flag = ENG_n_ireland_menu_opened }
+			GFX_ENG_agitation_info_visible = { OR = { check_variable = { ENG_devolution_ui_selected = 1 } check_variable = { ENG_devolution_ui_selected = 3 } } }
+			GFX_ENG_parliament_info_visible = { check_variable = { ENG_devolution_ui_selected > 0 } }
+			GFX_ENG_dependency_info_visible = { check_variable = { ENG_devolution_ui_selected > 0 } }
+			GFX_ENG_irish_tension_info_visible = { check_variable = { ENG_devolution_ui_selected = 2 } }
 			# Back button
-			GFX_ENG_back_button_visible = { OR = { has_country_flag = ENG_scotland_menu_opened has_country_flag = ENG_n_ireland_menu_opened has_country_flag = ENG_wales_menu_opened } }
+			GFX_ENG_back_button_visible = { check_variable = { ENG_devolution_ui_selected > 0 } }
 
 			ENG_scotland_map_button_right_click_enabled = {
 				NOT = { country_exists = SCO }
@@ -73,11 +76,13 @@ scripted_gui = {
 			}
 		}
 		effects = {
-			close_button_click = { clr_country_flag = open_devolution_screen }
+			close_button_click = {
+				clr_country_flag = open_devolution_screen
+				update_eng_devolution_dirty_variable = yes
+			}
 			ENG_scotland_map_button_click = {
-				set_country_flag = ENG_scotland_menu_opened
-				clr_country_flag = ENG_n_ireland_menu_opened
-				clr_country_flag = ENG_wales_menu_opened
+				set_variable = { ENG_devolution_ui_selected = 1 }
+				update_eng_devolution_dirty_variable = yes
 			}
 			ENG_scotland_map_button_right_click = {
 				set_country_flag = {
@@ -86,6 +91,7 @@ scripted_gui = {
 					value = 1
 				}
 				activate_decision = ENG_appease_scotland
+				update_eng_devolution_dirty_variable = yes
 			}
 			ENG_scotland_map_button_shift_click = {
 				if = {
@@ -102,12 +108,12 @@ scripted_gui = {
 						activate_decision = ENG_appease_scotland
 					}
 				}
+				update_eng_devolution_dirty_variable = yes
 			}
 			# North Ireland button
 			ENG_north_ireland_map_button_click = {
-				set_country_flag = ENG_n_ireland_menu_opened
-				clr_country_flag = ENG_scotland_menu_opened
-				clr_country_flag = ENG_wales_menu_opened
+				set_variable = { ENG_devolution_ui_selected = 2 }
+				update_eng_devolution_dirty_variable = yes
 			}
 			ENG_north_ireland_map_button_right_click = {
 				set_country_flag = {
@@ -116,6 +122,7 @@ scripted_gui = {
 					value = 1
 				}
 				activate_decision = ENG_appease_nireland
+				update_eng_devolution_dirty_variable = yes
 			}
 			ENG_north_ireland_map_button_shift_click = {
 				if = {
@@ -132,12 +139,12 @@ scripted_gui = {
 						activate_decision = ENG_appease_nireland
 					}
 				}
+				update_eng_devolution_dirty_variable = yes
 			}
 			# Wales button
 			ENG_wales_map_button_click = {
-				set_country_flag = ENG_wales_menu_opened
-				clr_country_flag = ENG_n_ireland_menu_opened
-				clr_country_flag = ENG_scotland_menu_opened
+				set_variable = { ENG_devolution_ui_selected = 3 }
+				update_eng_devolution_dirty_variable = yes
 			}
 			ENG_wales_map_button_right_click = {
 				set_country_flag = {
@@ -146,6 +153,7 @@ scripted_gui = {
 					value = 1
 				}
 				activate_decision = ENG_appease_wales
+				update_eng_devolution_dirty_variable = yes
 			}
 			ENG_wales_map_button_shift_click = {
 				if = {
@@ -162,12 +170,12 @@ scripted_gui = {
 						activate_decision = ENG_appease_wales
 					}
 				}
+				update_eng_devolution_dirty_variable = yes
 			}
 			# Back
 			GFX_ENG_back_button_click = {
-				clr_country_flag = ENG_n_ireland_menu_opened
-				clr_country_flag = ENG_scotland_menu_opened
-				clr_country_flag = ENG_wales_menu_opened
+				set_variable = { ENG_devolution_ui_selected = 0 }
+				update_eng_devolution_dirty_variable = yes
 			}
 		}
 	}
@@ -175,7 +183,9 @@ scripted_gui = {
 		context_type = player_context
 		window_name = "main_devolution_open_button"
 		parent_window_name = "MapmodesInterface_Ingame"
-		dirty = global.md_gui_dirty
+
+		dirty = global.ENG_devolution_dirty_update_var
+
 		visible = {
 			original_tag = ENG
 			NOT = {
@@ -188,21 +198,14 @@ scripted_gui = {
 					limit = { NOT = { has_country_flag = open_devolution_screen } }
 					set_country_flag = open_devolution_screen
 					if = {
-						limit = {
-							NOT = {
-								OR = {
-									has_country_flag = ENG_n_ireland_menu_opened
-									has_country_flag = ENG_scotland_menu_opened
-									has_country_flag = ENG_wales_menu_opened
-								}
-							}
-						}
-						set_country_flag = ENG_scotland_menu_opened
+						limit = { check_variable = { ENG_devolution_ui_selected = 0 } }
+						set_variable = { ENG_devolution_ui_selected = 1 }
 					}
 				}
 				else = {
 					clr_country_flag = open_devolution_screen
 				}
+				update_eng_devolution_dirty_variable = yes
 			}
 		}
 	}
