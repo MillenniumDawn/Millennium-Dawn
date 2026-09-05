@@ -71,56 +71,83 @@ reset_coalition_ideas = {
 }
 
 reset_democratic_coalition_ideas = {
-	update_coalition_outlook_idea = { OUTLOOK = 0 SHARE = coalition_democratic IDEAS = coalition_western_idea }
+	set_temp_variable = { coalition_idea_share = coalition_democratic }
+	set_coalition_idea_level = yes
+	set_temp_variable = { coalition_idea_outlook_id = 0 }
+	set_temp_variable = { coalition_idea_target_token = global.coalition_western_idea^coalition_idea_level }
+	update_coalition_outlook_idea = yes
 }
 
 reset_communism_coalition_ideas = {
-	update_coalition_outlook_idea = { OUTLOOK = 1 SHARE = coalition_communism IDEAS = coalition_emerging_idea }
+	set_temp_variable = { coalition_idea_share = coalition_communism }
+	set_coalition_idea_level = yes
+	set_temp_variable = { coalition_idea_outlook_id = 1 }
+	set_temp_variable = { coalition_idea_target_token = global.coalition_emerging_idea^coalition_idea_level }
+	update_coalition_outlook_idea = yes
 }
 
 reset_fascism_coalition_ideas = {
-	update_coalition_outlook_idea = { OUTLOOK = 2 SHARE = coalition_fascism IDEAS = coalition_salafist_idea }
+	set_temp_variable = { coalition_idea_share = coalition_fascism }
+	set_coalition_idea_level = yes
+	set_temp_variable = { coalition_idea_outlook_id = 2 }
+	set_temp_variable = { coalition_idea_target_token = global.coalition_salafist_idea^coalition_idea_level }
+	update_coalition_outlook_idea = yes
 }
 
 reset_neutrality_coalition_ideas = {
-	update_coalition_outlook_idea = { OUTLOOK = 3 SHARE = coalition_neutrality IDEAS = coalition_non_alligned_idea }
+	set_temp_variable = { coalition_idea_share = coalition_neutrality }
+	set_coalition_idea_level = yes
+	set_temp_variable = { coalition_idea_outlook_id = 3 }
+	set_temp_variable = { coalition_idea_target_token = global.coalition_non_alligned_idea^coalition_idea_level }
+	update_coalition_outlook_idea = yes
 }
 
 reset_nationalist_coalition_ideas = {
-	update_coalition_outlook_idea = { OUTLOOK = 4 SHARE = coalition_nationalist IDEAS = coalition_nationalist_idea }
+	set_temp_variable = { coalition_idea_share = coalition_nationalist }
+	set_coalition_idea_level = yes
+	set_temp_variable = { coalition_idea_outlook_id = 4 }
+	set_temp_variable = { coalition_idea_target_token = global.coalition_nationalist_idea^coalition_idea_level }
+	update_coalition_outlook_idea = yes
 }
 
-# OUTLOOK is the 0..4 numeric outlook ID; table slot 0 means no coalition idea.
-update_coalition_outlook_idea = {
+# Parameters:
+# - coalition_idea_share: Coalition vote share as a fraction.
+# Output: coalition_idea_level, with 0 meaning no idea.
+set_coalition_idea_level = {
 	set_temp_variable = {
 		coalition_idea_level = {
-			value = { value = $SHARE$ greater_than = 0.01 }
-			add = { value = $SHARE$ greater_than = 0.07 }
-			add = { value = $SHARE$ greater_than = 0.11 }
-			add = { value = $SHARE$ greater_than = 0.15 }
-			add = { value = $SHARE$ greater_than = 0.20 }
-			add = { value = $SHARE$ greater_than = 0.25 }
-			add = { value = $SHARE$ greater_than = 0.30 }
-			add = { value = $SHARE$ greater_than = 0.35 }
-			add = { value = $SHARE$ greater_than = 0.40 }
+			value = { value = coalition_idea_share greater_than = 0.01 }
+			add = { value = coalition_idea_share greater_than = 0.07 }
+			add = { value = coalition_idea_share greater_than = 0.11 }
+			add = { value = coalition_idea_share greater_than = 0.15 }
+			add = { value = coalition_idea_share greater_than = 0.20 }
+			add = { value = coalition_idea_share greater_than = 0.25 }
+			add = { value = coalition_idea_share greater_than = 0.30 }
+			add = { value = coalition_idea_share greater_than = 0.35 }
+			add = { value = coalition_idea_share greater_than = 0.40 }
 		}
 	}
-	set_temp_variable = { coalition_idea_target_token = global.$IDEAS$^coalition_idea_level }
+}
+
+# Parameters:
+# - coalition_idea_outlook_id: Numeric outlook ID (0..4).
+# - coalition_idea_target_token: Desired idea token, or 0 to remove it.
+update_coalition_outlook_idea = {
 	if = {
 		limit = {
-			NOT = { check_variable = { coalition_applied_tokens^$OUTLOOK$ = 0 } }
-			NOT = { check_variable = { coalition_applied_tokens^$OUTLOOK$ = coalition_idea_target_token } }
+			NOT = { check_variable = { coalition_applied_tokens^coalition_idea_outlook_id = 0 } }
+			NOT = { check_variable = { coalition_applied_tokens^coalition_idea_outlook_id = coalition_idea_target_token } }
 		}
-		remove_ideas = var:coalition_applied_tokens^$OUTLOOK$
+		remove_ideas = var:coalition_applied_tokens^coalition_idea_outlook_id
 	}
 	if = {
 		limit = {
-			check_variable = { coalition_idea_level > 0 }
+			NOT = { check_variable = { coalition_idea_target_token = 0 } }
 			NOT = { has_idea = var:coalition_idea_target_token }
 		}
 		add_ideas = var:coalition_idea_target_token
 	}
-	set_variable = { coalition_applied_tokens^$OUTLOOK$ = coalition_idea_target_token }
+	set_variable = { coalition_applied_tokens^coalition_idea_outlook_id = coalition_idea_target_token }
 }
 
 clear_coalition_count_ideas = {
