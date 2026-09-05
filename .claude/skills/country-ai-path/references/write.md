@@ -383,7 +383,6 @@ A ramp pair per path, in `common/decisions/<Country>.txt`:
 			log = "[GetDateText]: [Root.GetName]: Decision DEN_monarchists_take_the_country"
 			set_temp_variable = { rul_party_temp = 23 }
 			change_ruling_party_effect = yes
-			hidden_effect = { update_party_name = yes }
 		}
 
 		ai_will_do = { base = 100 }
