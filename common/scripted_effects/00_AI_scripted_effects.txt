@@ -1122,6 +1122,18 @@ ai_division_limiter_refresh = {
 		if = { limit = { is_major = yes }
 			set_temp_variable = { ai_limiter_is_major = 1 }
 		}
+		set_temp_variable = { ai_limiter_is_major_power = 0 }
+		if = {
+			limit = {
+				OR = {
+					original_tag = SOV
+					original_tag = USA
+					original_tag = CHI
+					original_tag = RAJ
+				}
+			}
+			set_temp_variable = { ai_limiter_is_major_power = 1 }
+		}
 		set_temp_variable = { ai_limiter_high_threat = 0 }
 		if = { limit = { threat > 0.50 }
 			set_temp_variable = { ai_limiter_high_threat = 1 }
@@ -1163,65 +1175,90 @@ ai_division_limiter_refresh = {
 }
 
 division_limiter_calculation = {
-	set_temp_variable = { upper_limit = num_of_factories }
-	if = {
-		limit = { num_of_factories > 4 }
-		add_to_temp_variable = { upper_limit = 5 }
-	}
-	multiply_temp_variable = { upper_limit = 1.3 }
-	if = { limit = { check_variable = { ai_limiter_at_war = 1 } }
-		multiply_temp_variable = { upper_limit = 1.75 }
-	}
-
-	if = { limit = { check_variable = { ai_limiter_is_threatened = 1 } }
-		multiply_temp_variable = { upper_limit = 1.25 }
-	}
-	if = {
-		limit = {
-			check_variable = { ai_limiter_at_war = 0 }
-			check_variable = { ai_limiter_is_threatened = 0 }
-		}
-		multiply_temp_variable = { upper_limit = 0.75 }
-	}
-	if = { limit = { check_variable = { ai_limiter_is_major = 1 } }
-		multiply_temp_variable = { upper_limit = 1.15 }
-	}
-	if = { limit = { check_variable = { ai_limiter_nato_member = 1 } }
-		multiply_temp_variable = { upper_limit = 0.8 }
-	}
-	if = { limit = { check_variable = { ai_limiter_eu_member = 1 } }
-		multiply_temp_variable = { upper_limit = 0.8 }
-	}
-	if = { limit = { check_variable = { ai_limiter_high_threat = 1 } }
-		multiply_temp_variable = { upper_limit = 1.25 }
-	}
-
-	if = { limit = { num_of_military_factories > 35 }
-		multiply_temp_variable = { upper_limit = 1.15 }
-	}
-	else_if = { limit = { num_of_military_factories > 25 }
-		multiply_temp_variable = { upper_limit = 1.1 }
-	}
-	else_if = { limit = { num_of_military_factories > 15 }
-		multiply_temp_variable = { upper_limit = 1.05 }
-	}
-
-	if = { limit = { check_variable = { ai_limiter_in_faction = 1 } }
-		multiply_temp_variable = { upper_limit = 0.90 }
-	}
-	if = {
-		limit = {
-			OR = {
-				original_tag = SOV
-				original_tag = USA
-				original_tag = CHI
-				original_tag = RAJ
+	set_variable = {
+		division_limiter_limit = {
+			value = num_of_factories
+			if = {
+				limit = {
+					value = num_of_factories
+					greater_than = 4
+				}
+				add = 5
 			}
+			multiply = 1.3
+			if = {
+				limit = { value = ai_limiter_at_war }
+				multiply = 1.75
+			}
+			if = {
+				limit = { value = ai_limiter_is_threatened }
+				multiply = 1.25
+			}
+			if = {
+				limit = {
+					value = ai_limiter_at_war
+					not = yes
+				}
+				if = {
+					limit = {
+						value = ai_limiter_is_threatened
+						not = yes
+					}
+					multiply = 0.75
+				}
+			}
+			if = {
+				limit = { value = ai_limiter_is_major }
+				multiply = 1.15
+			}
+			if = {
+				limit = { value = ai_limiter_nato_member }
+				multiply = 0.8
+			}
+			if = {
+				limit = { value = ai_limiter_eu_member }
+				multiply = 0.8
+			}
+			if = {
+				limit = { value = ai_limiter_high_threat }
+				multiply = 1.25
+			}
+			if = {
+				limit = {
+					value = num_of_military_factories
+					greater_than = 35
+				}
+				multiply = 1.15
+			}
+			else = {
+				if = {
+					limit = {
+						value = num_of_military_factories
+						greater_than = 25
+					}
+					multiply = 1.1
+				}
+				else = {
+					if = {
+						limit = {
+							value = num_of_military_factories
+							greater_than = 15
+						}
+						multiply = 1.05
+					}
+				}
+			}
+			if = {
+				limit = { value = ai_limiter_in_faction }
+				multiply = 0.90
+			}
+			if = {
+				limit = { value = ai_limiter_is_major_power }
+				multiply = 1.2
+			}
+			round = yes
 		}
-		multiply_temp_variable = { upper_limit = 1.2 }
 	}
-	round_temp_variable = upper_limit
-	set_variable = { division_limiter_limit = upper_limit }
 }
 
 plane_limiter_calculation = {
