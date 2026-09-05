@@ -99,6 +99,29 @@ def test_contract_parser_reads_parameter_after_header(tmp_path):
     }
 
 
+def test_validator_enforces_uppercase_effect_and_parameter_names(tmp_path):
+    effect_path = tmp_path / "common" / "scripted_effects" / "test_effect.txt"
+    caller_path = tmp_path / "events" / "test_event.txt"
+    _write(
+        effect_path,
+        "# Parameters:\n"
+        "# - ENG_agitation_change: signed amount\n"
+        "ENG_change_scottish_agitation = {\n}\n",
+    )
+    _write(caller_path, "ENG_change_scottish_agitation = yes\n")
+
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    issues = [
+        issue
+        for issue in validator._issues
+        if issue.category == "missing-required-param"
+    ]
+    assert len(issues) == 1
+    assert "ENG_agitation_change" in issues[0].message
+
+
 @pytest.mark.parametrize(
     "caller_dir",
     [
