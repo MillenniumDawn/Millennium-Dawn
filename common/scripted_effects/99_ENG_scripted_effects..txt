@@ -314,6 +314,25 @@ ENG_var_cap = {
 		limit = { check_variable = { ENG_wales_nationalists < 0 } }
 		set_variable = { ENG_wales_nationalists = 0 }
 	}
+	# An integrated region is out of the mechanic: every writer still targeting it is neutralised here
+	if = {
+		limit = { has_country_flag = ENG_scottish_integrated }
+		set_variable = { ENG_scottish_agitation = 0 }
+		set_variable = { ENG_scottish_nationalists = 0 }
+		set_variable = { ENG_scottish_dependency = 100 }
+	}
+	if = {
+		limit = { has_country_flag = ENG_north_irish_integrated }
+		set_variable = { ENG_north_irish_agitation = 0 }
+		set_variable = { ENG_north_irish_nationalists = 0 }
+		set_variable = { ENG_north_irish_dependency = 100 }
+	}
+	if = {
+		limit = { has_country_flag = ENG_welsh_integrated }
+		set_variable = { ENG_wales_agitation = 0 }
+		set_variable = { ENG_wales_nationalists = 0 }
+		set_variable = { ENG_wales_dependency = 100 }
+	}
 	ENG_update_devolution_pressure = yes
 }
 
@@ -365,6 +384,168 @@ ENG_settle_northern_ireland_question = {
 	set_variable = { ENG_north_irish_nationalists = 0 }
 	set_variable = { ENG_north_irish_dependency = 0 }
 	ENG_var_cap = yes
+}
+
+# Opening ballot position: nationalism carries twice the weight of the wider pressure score
+ENG_seed_referendum_campaign = {
+	clr_country_flag = ENG_referendum_pledge_used
+	if = {
+		limit = { check_variable = { ENG_referendum_target = 1 } }
+		set_variable = { ENG_referendum_leave_vote = ENG_scottish_nationalists }
+		multiply_variable = { ENG_referendum_leave_vote = 2 }
+		add_to_variable = { var = ENG_referendum_leave_vote value = ENG_scottish_pressure }
+	}
+	else_if = {
+		limit = { check_variable = { ENG_referendum_target = 2 } }
+		set_variable = { ENG_referendum_leave_vote = ENG_north_irish_nationalists }
+		multiply_variable = { ENG_referendum_leave_vote = 2 }
+		add_to_variable = { var = ENG_referendum_leave_vote value = ENG_north_irish_pressure }
+	}
+	else_if = {
+		limit = { check_variable = { ENG_referendum_target = 3 } }
+		set_variable = { ENG_referendum_leave_vote = ENG_wales_nationalists }
+		multiply_variable = { ENG_referendum_leave_vote = 2 }
+		add_to_variable = { var = ENG_referendum_leave_vote value = ENG_wales_pressure }
+	}
+	divide_variable = { ENG_referendum_leave_vote = 3 }
+	clamp_variable = { var = ENG_referendum_leave_vote min = 0 max = 100 }
+}
+
+ENG_referendum_campaign_shift = {
+	add_to_variable = { var = ENG_referendum_leave_vote value = temp_change }
+	clamp_variable = { var = ENG_referendum_leave_vote min = 0 max = 100 }
+}
+
+ENG_clear_referendum_campaign = {
+	set_variable = { ENG_referendum_target = 0 }
+	set_variable = { ENG_referendum_leave_vote = 0 }
+	set_variable = { ENG_referendum_stay_vote = 0 }
+}
+
+ENG_resolve_independence_referendum = {
+	set_variable = { ENG_referendum_stay_vote = 100 }
+	subtract_from_variable = { var = ENG_referendum_stay_vote value = ENG_referendum_leave_vote }
+	random_list = {
+		ENG_referendum_leave_vote = {
+			country_event = devolution.11
+		}
+		ENG_referendum_stay_vote = {
+			country_event = devolution.12
+		}
+	}
+}
+
+ENG_resolve_union_settlement = {
+	set_variable = { ENG_referendum_stay_vote = 100 }
+	subtract_from_variable = { var = ENG_referendum_stay_vote value = ENG_referendum_leave_vote }
+	random_list = {
+		ENG_referendum_stay_vote = {
+			country_event = devolution.13
+		}
+		ENG_referendum_leave_vote = {
+			country_event = devolution.14
+		}
+	}
+}
+
+ENG_release_referendum_region = {
+	if = {
+		limit = { check_variable = { ENG_referendum_target = 1 } }
+		release_autonomy = {
+			target = SCO
+			autonomy_state = autonomy_constituent_country_very_low_devolution
+		}
+		every_owned_state = {
+			limit = { is_core_of = SCO }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = ENG_resistance_against_westminster } }
+				remove_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
+			}
+		}
+		hidden_effect = {
+			SCO = {
+				ingame_startup_nations_effect = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { ENG_referendum_target = 2 } }
+		release_autonomy = {
+			target = NIR
+			autonomy_state = autonomy_constituent_country_very_low_devolution
+		}
+		17 = {
+			if = {
+				limit = { has_dynamic_modifier = { modifier = ENG_resistance_against_westminster } }
+				remove_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
+			}
+		}
+		hidden_effect = {
+			NIR = {
+				ingame_startup_nations_effect = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { ENG_referendum_target = 3 } }
+		release_autonomy = {
+			target = WAS
+			autonomy_state = autonomy_constituent_country_very_low_devolution
+		}
+		every_owned_state = {
+			limit = { is_core_of = WAS }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = ENG_resistance_against_westminster } }
+				remove_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
+			}
+		}
+		hidden_effect = {
+			WAS = {
+				ingame_startup_nations_effect = yes
+			}
+		}
+	}
+}
+
+ENG_integrate_referendum_region = {
+	if = {
+		limit = { check_variable = { ENG_referendum_target = 1 } }
+		set_country_flag = ENG_scottish_integrated
+		clr_country_flag = ENG_scottish_rejected
+		clr_country_flag = ENG_auto_subsidy_SCO
+		every_owned_state = {
+			limit = { is_core_of = SCO }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = ENG_resistance_against_westminster } }
+				remove_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
+			}
+			remove_core_of = SCO
+		}
+		ENG_var_cap = yes
+	}
+	else_if = {
+		limit = { check_variable = { ENG_referendum_target = 2 } }
+		set_country_flag = ENG_north_irish_integrated
+		clr_country_flag = ENG_irish_rejected
+		clr_country_flag = ENG_auto_subsidy_NIR
+		17 = { remove_core_of = NIR }
+		ENG_settle_northern_ireland_question = yes
+	}
+	else_if = {
+		limit = { check_variable = { ENG_referendum_target = 3 } }
+		set_country_flag = ENG_welsh_integrated
+		clr_country_flag = ENG_welsh_rejected
+		clr_country_flag = ENG_auto_subsidy_WAS
+		every_owned_state = {
+			limit = { is_core_of = WAS }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = ENG_resistance_against_westminster } }
+				remove_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
+			}
+			remove_core_of = WAS
+		}
+		ENG_var_cap = yes
+	}
 }
 
 ### Inner Circle

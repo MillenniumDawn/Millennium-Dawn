@@ -2609,6 +2609,8 @@ country_event = {
 	option = {
 		name = devolution.5.a
 		log = "[GetDateText]: [This.GetName]: devolution.5.a executed"
+		set_variable = { ENG_referendum_target = 1 }
+		ENG_seed_referendum_campaign = yes
 		activate_mission = ENG_scottish_referendum
 		ai_chance = {
 			base = 1
@@ -2662,6 +2664,8 @@ country_event = {
 	option = {
 		name = devolution.6.a
 		log = "[GetDateText]: [This.GetName]: devolution.6.a executed"
+		set_variable = { ENG_referendum_target = 2 }
+		ENG_seed_referendum_campaign = yes
 		activate_mission = ENG_irish_referendum
 		ai_chance = {
 			base = 1
@@ -2712,6 +2716,8 @@ country_event = {
 	option = {
 		name = devolution.7.a
 		log = "[GetDateText]: [This.GetName]: devolution.7.a executed"
+		set_variable = { ENG_referendum_target = 3 }
+		ENG_seed_referendum_campaign = yes
 		activate_mission = ENG_welsh_referendum
 		ai_chance = {
 			base = 1
@@ -2750,6 +2756,126 @@ country_event = {
 				check_variable = { ENG_wales_agitation > 89 }
 			}
 		}
+	}
+}
+
+# Referendum Results
+
+# Independence Carried
+country_event = {
+	id = devolution.11
+	title = devolution.11.t
+	desc = devolution.11.d
+	picture = GFX_ENG_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = devolution.11.a
+		log = "[GetDateText]: [This.GetName]: devolution.11.a executed"
+		ENG_release_referendum_region = yes
+		add_stability = -0.05
+		ENG_clear_referendum_campaign = yes
+	}
+}
+
+# The Union Holds
+country_event = {
+	id = devolution.12
+	title = devolution.12.t
+	desc = devolution.12.d
+	picture = GFX_ENG_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = devolution.12.a
+		log = "[GetDateText]: [This.GetName]: devolution.12.a executed"
+		add_stability = 0.05
+		if = {
+			limit = { check_variable = { ENG_referendum_target = 1 } }
+			set_country_flag = { flag = ENG_scottish_referendum_cooldown days = 5475 value = 1 }
+			add_to_variable = { ENG_scottish_nationalists = -10 tooltip = ENG_scottish_nationalists_TT }
+			add_to_variable = { ENG_scottish_agitation = 5 tooltip = ENG_scottish_agitation_TT }
+		}
+		else_if = {
+			limit = { check_variable = { ENG_referendum_target = 2 } }
+			set_country_flag = { flag = ENG_north_irish_referendum_cooldown days = 5475 value = 1 }
+			add_to_variable = { ENG_north_irish_nationalists = -10 tooltip = ENG_north_irish_nationalists_TT }
+			add_to_variable = { ENG_north_irish_agitation = 5 tooltip = ENG_north_irish_agitation_TT }
+		}
+		else_if = {
+			limit = { check_variable = { ENG_referendum_target = 3 } }
+			set_country_flag = { flag = ENG_welsh_referendum_cooldown days = 5475 value = 1 }
+			add_to_variable = { ENG_wales_nationalists = -10 tooltip = ENG_wales_nationalists_TT }
+			add_to_variable = { ENG_wales_agitation = 5 tooltip = ENG_wales_agitation_TT }
+		}
+		ENG_var_cap = yes
+		ENG_clear_referendum_campaign = yes
+	}
+}
+
+# Union Settlement Approved
+country_event = {
+	id = devolution.13
+	title = devolution.13.t
+	desc = devolution.13.d
+	picture = GFX_ENG_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = devolution.13.a
+		log = "[GetDateText]: [This.GetName]: devolution.13.a executed"
+		ENG_integrate_referendum_region = yes
+		add_stability = 0.05
+		ENG_clear_referendum_campaign = yes
+	}
+}
+
+# Union Settlement Rejected
+country_event = {
+	id = devolution.14
+	title = devolution.14.t
+	desc = devolution.14.d
+	picture = GFX_ENG_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = devolution.14.a
+		log = "[GetDateText]: [This.GetName]: devolution.14.a executed"
+		set_country_flag = { flag = ENG_settlement_cooldown days = 3650 value = 1 }
+		add_stability = -0.05
+		if = {
+			limit = { check_variable = { ENG_referendum_target = 1 } }
+			add_to_variable = { ENG_scottish_nationalists = 10 tooltip = ENG_scottish_nationalists_TT }
+			add_to_variable = { ENG_scottish_agitation = 10 tooltip = ENG_scottish_agitation_TT }
+			if = {
+				limit = { check_variable = { ENG_referendum_leave_vote > 49 } }
+				add_to_variable = { ENG_scottish_nationalists = 10 tooltip = ENG_scottish_nationalists_TT }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { ENG_referendum_target = 2 } }
+			add_to_variable = { ENG_north_irish_nationalists = 10 tooltip = ENG_north_irish_nationalists_TT }
+			add_to_variable = { ENG_north_irish_agitation = 10 tooltip = ENG_north_irish_agitation_TT }
+			if = {
+				limit = { check_variable = { ENG_referendum_leave_vote > 49 } }
+				add_to_variable = { ENG_north_irish_nationalists = 10 tooltip = ENG_north_irish_nationalists_TT }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { ENG_referendum_target = 3 } }
+			add_to_variable = { ENG_wales_nationalists = 10 tooltip = ENG_wales_nationalists_TT }
+			add_to_variable = { ENG_wales_agitation = 10 tooltip = ENG_wales_agitation_TT }
+			if = {
+				limit = { check_variable = { ENG_referendum_leave_vote > 49 } }
+				add_to_variable = { ENG_wales_nationalists = 10 tooltip = ENG_wales_nationalists_TT }
+			}
+		}
+		ENG_var_cap = yes
+		ENG_clear_referendum_campaign = yes
 	}
 }
 

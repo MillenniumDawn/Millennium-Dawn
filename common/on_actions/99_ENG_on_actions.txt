@@ -157,6 +157,7 @@ on_actions = {
 			if = {
 				limit = {
 					NOT = {	has_country_flag = ENG_devolution_purged }
+					NOT = { has_country_flag = ENG_scottish_integrated }
 					NOT = { country_exists = SCO }
 				}
 				if = {
@@ -176,6 +177,7 @@ on_actions = {
 			if = {
 				limit = {
 					NOT = {	has_country_flag = ENG_devolution_purged }
+					NOT = { has_country_flag = ENG_north_irish_integrated }
 					NOT = { country_exists = NIR }
 				}
 				if = {
@@ -195,6 +197,7 @@ on_actions = {
 			if = {
 				limit = {
 					NOT = {	has_country_flag = ENG_devolution_purged }
+					NOT = { has_country_flag = ENG_welsh_integrated }
 					NOT = { country_exists = WAS }
 				}
 				if = {
@@ -212,6 +215,45 @@ on_actions = {
 			}
 
 			ENG_var_cap = yes
+
+			# A live ballot drifts with the region's pressure, so a campaign that is never fought is lost
+			if = {
+				limit = {
+					check_variable = { ENG_referendum_target > 0 }
+					ENG_referendum_campaign_running = yes
+				}
+				if = {
+					limit = { check_variable = { ENG_referendum_target = 1 } }
+					set_temp_variable = { ENG_referendum_drift_pressure = ENG_scottish_pressure }
+				}
+				else_if = {
+					limit = { check_variable = { ENG_referendum_target = 2 } }
+					set_temp_variable = { ENG_referendum_drift_pressure = ENG_north_irish_pressure }
+				}
+				else_if = {
+					limit = { check_variable = { ENG_referendum_target = 3 } }
+					set_temp_variable = { ENG_referendum_drift_pressure = ENG_wales_pressure }
+				}
+				if = {
+					limit = { check_variable = { ENG_referendum_drift_pressure > 74 } }
+					set_temp_variable = { temp_change = 2 }
+					ENG_referendum_campaign_shift = yes
+				}
+				else_if = {
+					limit = { check_variable = { ENG_referendum_drift_pressure > 59 } }
+					set_temp_variable = { temp_change = 1 }
+					ENG_referendum_campaign_shift = yes
+				}
+				else_if = {
+					limit = { check_variable = { ENG_referendum_drift_pressure < 40 } }
+					set_temp_variable = { temp_change = -1 }
+					ENG_referendum_campaign_shift = yes
+				}
+			}
+			else_if = {
+				limit = { check_variable = { ENG_referendum_target > 0 } }
+				ENG_clear_referendum_campaign = yes
+			}
 
 			# Standing subsidies: re-arm anything whose own timeout did not renew it
 			if = {
