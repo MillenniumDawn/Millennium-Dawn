@@ -87,9 +87,84 @@
 # tweak this to modify the operative cost of all equipment
 @equipment_operative_cost_multiplier = 5
 
+setup_spending_law_tables = {
+	clear_array = global.bureau_law_idea
+	resize_array = { array = global.bureau_law_idea size = 1 }
+	add_to_array = { global.bureau_law_idea = token:bureau_01 }
+	add_to_array = { global.bureau_law_idea = token:bureau_02 }
+	add_to_array = { global.bureau_law_idea = token:bureau_03 }
+	add_to_array = { global.bureau_law_idea = token:bureau_04 }
+	add_to_array = { global.bureau_law_idea = token:bureau_05 }
+
+	clear_array = global.police_law_idea
+	resize_array = { array = global.police_law_idea size = 1 }
+	add_to_array = { global.police_law_idea = token:police_01 }
+	add_to_array = { global.police_law_idea = token:police_02 }
+	add_to_array = { global.police_law_idea = token:police_03 }
+	add_to_array = { global.police_law_idea = token:police_04 }
+	add_to_array = { global.police_law_idea = token:police_05 }
+
+	clear_array = global.edu_law_idea
+	resize_array = { array = global.edu_law_idea size = 1 }
+	add_to_array = { global.edu_law_idea = token:edu_01 }
+	add_to_array = { global.edu_law_idea = token:edu_02 }
+	add_to_array = { global.edu_law_idea = token:edu_03 }
+	add_to_array = { global.edu_law_idea = token:edu_04 }
+	add_to_array = { global.edu_law_idea = token:edu_05 }
+
+	clear_array = global.health_law_idea
+	resize_array = { array = global.health_law_idea size = 1 }
+	add_to_array = { global.health_law_idea = token:health_01 }
+	add_to_array = { global.health_law_idea = token:health_02 }
+	add_to_array = { global.health_law_idea = token:health_03 }
+	add_to_array = { global.health_law_idea = token:health_04 }
+	add_to_array = { global.health_law_idea = token:health_05 }
+	add_to_array = { global.health_law_idea = token:health_06 }
+
+	clear_array = global.social_law_idea
+	resize_array = { array = global.social_law_idea size = 1 }
+	add_to_array = { global.social_law_idea = token:social_01 }
+	add_to_array = { global.social_law_idea = token:social_02 }
+	add_to_array = { global.social_law_idea = token:social_03 }
+	add_to_array = { global.social_law_idea = token:social_04 }
+	add_to_array = { global.social_law_idea = token:social_05 }
+	add_to_array = { global.social_law_idea = token:social_06 }
+
+	clear_array = global.defence_law_idea
+	resize_array = { array = global.defence_law_idea size = 1 }
+	add_to_array = { global.defence_law_idea = token:defence_00 }
+	add_to_array = { global.defence_law_idea = token:defence_01 }
+	add_to_array = { global.defence_law_idea = token:defence_02 }
+	add_to_array = { global.defence_law_idea = token:defence_03 }
+	add_to_array = { global.defence_law_idea = token:defence_04 }
+	add_to_array = { global.defence_law_idea = token:defence_05 }
+	add_to_array = { global.defence_law_idea = token:defence_06 }
+	add_to_array = { global.defence_law_idea = token:defence_07 }
+	add_to_array = { global.defence_law_idea = token:defence_08 }
+	add_to_array = { global.defence_law_idea = token:defence_09 }
+
+	clear_array = global.bureau_workers
+	resize_array = { array = global.bureau_workers size = 1 }
+	add_to_array = { global.bureau_workers = 0.00075 }
+	add_to_array = { global.bureau_workers = 0.0015 }
+	add_to_array = { global.bureau_workers = 0.003 }
+	add_to_array = { global.bureau_workers = 0.00525 }
+	add_to_array = { global.bureau_workers = 0.009 }
+
+	clear_array = global.health_workers
+	resize_array = { array = global.health_workers size = 1 }
+	add_to_array = { global.health_workers = 0.15 }
+	add_to_array = { global.health_workers = 0.30 }
+	add_to_array = { global.health_workers = 0.50 }
+	add_to_array = { global.health_workers = 0.70 }
+	add_to_array = { global.health_workers = 0.90 }
+	add_to_array = { global.health_workers = 1.10 }
+}
+
 # Effect: setup_spending_ladders
 # Purpose: Populates the global per-level spending multiplier arrays once at game start for the ladders
 setup_spending_ladders = {
+	setup_spending_law_tables = yes
 	if = {
 		limit = { NOT = { has_global_flag = spending_ladders_initialized } }
 		clear_array = global.spending_ladder_standard
@@ -5836,12 +5911,7 @@ calculate_gdp = {
 	}
 
 	# Healthcare Sector — Workforce
-	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_workforce_level_scalar = 0.15 } }
-	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_workforce_level_scalar = 0.30 } }
-	else_if = { limit = { has_idea = health_03 } set_temp_variable = { healthcare_workforce_level_scalar = 0.50 } }
-	else_if = { limit = { has_idea = health_04 } set_temp_variable = { healthcare_workforce_level_scalar = 0.70 } }
-	else_if = { limit = { has_idea = health_05 } set_temp_variable = { healthcare_workforce_level_scalar = 0.90 } }
-	else_if = { limit = { has_idea = health_06 } set_temp_variable = { healthcare_workforce_level_scalar = 1.10 } }
+	set_temp_variable = { healthcare_workforce_level_scalar = global.health_workers^health_law }
 
 	set_temp_variable = {
 		max_workers_in_healthcare = {
@@ -5878,22 +5948,7 @@ calculate_gdp = {
 	}
 
 	# Bureaucracy — civil servants required by government administration level
-	set_temp_variable = { workers_per_bureau = 0 }
-	if = { limit = { has_idea = bureau_01 }
-		set_temp_variable = { workers_per_bureau = 0.00075 }
-	}
-	else_if = { limit = { has_idea = bureau_02 }
-		set_temp_variable = { workers_per_bureau = 0.0015 }
-	}
-	else_if = { limit = { has_idea = bureau_03 }
-		set_temp_variable = { workers_per_bureau = 0.003 }
-	}
-	else_if = { limit = { has_idea = bureau_04 }
-		set_temp_variable = { workers_per_bureau = 0.00525 }
-	}
-	else_if = { limit = { has_idea = bureau_05 }
-		set_temp_variable = { workers_per_bureau = 0.009 }
-	}
+	set_temp_variable = { workers_per_bureau = global.bureau_workers^bureau_law }
 
 	if = { limit = { check_variable = { workers_per_bureau = 0 } }
 		set_variable = { bureaucracy_manpower_fulfillment = 1 }
