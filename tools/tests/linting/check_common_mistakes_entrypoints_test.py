@@ -1111,7 +1111,7 @@ def test_rotation_walker_tolerates_incomplete_branches():
         "\t\tadd_political_power = 1\n",
         "\t}\n",
         "\tif = {\n",
-        "\t\tlimit = { has_country_flag = set_conservatism date > 2010.1.1 }\n",
+        "\t\tlimit = { check_variable = { ruling_party = 1 } date > 2010.1.1 }\n",
         "\t\tif = {\n",
         "\t\t\tadd_political_power = 1\n",
         "\t\t}\n",

@@ -794,10 +794,9 @@ class TestWalker:
 
 class TestPartyIndices:
     def test_indices_cover_all_24_slots(self):
-        indices = report.parse_party_indices("")
-        assert indices[0] == "Western_Autocracy"
-        assert indices[23] == "Monarchist"
-        assert len(indices) == 24
+        from shared_utils import PARTY_SLOT_NAMES
+
+        assert report.parse_party_indices("") == PARTY_SLOT_NAMES
 
 
 class TestLocalisation:

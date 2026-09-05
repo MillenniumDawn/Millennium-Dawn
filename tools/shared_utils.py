@@ -45,6 +45,34 @@ _LEVEL_COLORS = {
 # extend this list with their own patterns.
 DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
 
+# ruling_party 0-23. Slot 0 is Western Autocracy.
+PARTY_SLOT_NAMES: Dict[int, str] = {
+    0: "Western_Autocracy",
+    1: "conservatism",
+    2: "liberalism",
+    3: "socialism",
+    4: "Communist-State",
+    5: "anarchist_communism",
+    6: "Conservative",
+    7: "Autocracy",
+    8: "Mod_Vilayat_e_Faqih",
+    9: "Vilayat_e_Faqih",
+    10: "Kingdom",
+    11: "Caliphate",
+    12: "Neutral_Muslim_Brotherhood",
+    13: "Neutral_Autocracy",
+    14: "Neutral_conservatism",
+    15: "oligarchism",
+    16: "Neutral_Libertarian",
+    17: "Neutral_green",
+    18: "neutral_Social",
+    19: "Neutral_Communism",
+    20: "Nat_Populism",
+    21: "Nat_Fascism",
+    22: "Nat_Autocracy",
+    23: "Monarchist",
+}
+
 # Leave a quarter of the machine to whoever is using it. A full suite run
 # fans out over every validator and each of those keeps its own pool, so
 # without a shared ceiling the tooling oversubscribes the box and everything

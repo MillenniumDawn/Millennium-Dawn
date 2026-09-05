@@ -24,6 +24,7 @@ from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from shared_utils import (  # noqa: E402
+    PARTY_SLOT_NAMES,
     blank_quoted_strings,
     find_matching_brace,
     strip_comments,
@@ -60,32 +61,6 @@ GUARD_TOKENS = (
 
 BOOKMARK_DATES = ((2016, 1, 2), (2017, 1, 1))
 START_YEAR = 2000
-PARTY_SLOT_NAMES: Dict[int, str] = {
-    0: "Western_Autocracy",
-    1: "conservatism",
-    2: "liberalism",
-    3: "socialism",
-    4: "Communist-State",
-    5: "anarchist_communism",
-    6: "Conservative",
-    7: "Autocracy",
-    8: "Mod_Vilayat_e_Faqih",
-    9: "Vilayat_e_Faqih",
-    10: "Kingdom",
-    11: "Caliphate",
-    12: "Neutral_Muslim_Brotherhood",
-    13: "Neutral_Autocracy",
-    14: "Neutral_conservatism",
-    15: "oligarchism",
-    16: "Neutral_Libertarian",
-    17: "Neutral_green",
-    18: "neutral_Social",
-    19: "Neutral_Communism",
-    20: "Nat_Populism",
-    21: "Nat_Fascism",
-    22: "Nat_Autocracy",
-    23: "Monarchist",
-}
 TIMELINE_MIN_DATES = 3
 DAYS_PER_MONTH = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
@@ -1644,13 +1619,10 @@ def parse_leader_roster(text: str, tag: str) -> Dict[str, List[Leader]]:
         if key not in ("if", "else_if") or block is None:
             continue
         limit = _block_of(block, "limit") or ""
-        found = re.search(r"has_country_flag\s*=\s*set_([\w-]+)", limit)
-        name = found.group(1) if found else None
-        if name is None and re.search(
-            r"western_autocrats_are_in_power\s*=\s*yes", limit
-        ):
+        name = None
+        if re.search(r"western_autocrats_are_in_power\s*=\s*yes", limit):
             name = "Western_Autocracy"
-        if name is None:
+        else:
             slot = re.search(r"ruling_party\s*=\s*(\d+)", limit)
             if slot:
                 name = PARTY_SLOT_NAMES.get(int(slot.group(1)))
