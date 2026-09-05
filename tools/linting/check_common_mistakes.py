@@ -3150,19 +3150,22 @@ def _slot_branch_token(slot):
     return _SET_IDEOLOGY_PREFIX + name
 
 
-def _is_branch_gate(child, token=None):
+def _branch_gate_token(child):
     if child.key == "western_autocrats_are_in_power" and child.value == "yes":
-        return token is None or token == "set_Western_Autocracy"
-    if child.key == "check_variable" and len(child.children) == 1:
-        inner = child.children[0]
-        if (
-            inner.key == "ruling_party"
-            and inner.value
-            and _RE_BARE_INT.match(inner.value)
-        ):
-            found = _slot_branch_token(int(inner.value))
-            return found is not None and (token is None or found == token)
-    return False
+        return "set_Western_Autocracy"
+    if child.key != "check_variable" or len(child.children) != 1:
+        return None
+    inner = child.children[0]
+    if inner.key != "ruling_party" or not inner.value:
+        return None
+    if not _RE_BARE_INT.match(inner.value):
+        return None
+    return _slot_branch_token(int(inner.value))
+
+
+def _is_branch_gate(child, token=None):
+    found = _branch_gate_token(child)
+    return found is not None and (token is None or found == token)
 
 
 def _branch_flag(node):
@@ -3171,18 +3174,9 @@ def _branch_flag(node):
     if limit is None:
         return None
     for child in limit.children:
-        if child.key == "western_autocrats_are_in_power" and child.value == "yes":
-            return "set_Western_Autocracy"
-        if child.key == "check_variable" and len(child.children) == 1:
-            inner = child.children[0]
-            if (
-                inner.key == "ruling_party"
-                and inner.value
-                and _RE_BARE_INT.match(inner.value)
-            ):
-                found = _slot_branch_token(int(inner.value))
-                if found:
-                    return found
+        found = _branch_gate_token(child)
+        if found:
+            return found
     return None
 
 
