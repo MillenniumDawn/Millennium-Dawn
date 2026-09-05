@@ -1138,6 +1138,10 @@ ai_division_limiter_refresh = {
 		if = { limit = { has_idea = EU_member }
 			set_temp_variable = { ai_limiter_eu_member = 1 }
 		}
+		set_temp_variable = { ai_limiter_is_usa = 0 }
+		if = { limit = { original_tag = USA }
+			set_temp_variable = { ai_limiter_is_usa = 1 }
+		}
 		division_limiter_calculation = yes
 		plane_limiter_calculation = yes
 		if = {
@@ -1221,64 +1225,84 @@ division_limiter_calculation = {
 }
 
 plane_limiter_calculation = {
-	set_temp_variable = { upper_limit = num_of_military_factories }
-	multiply_temp_variable = { upper_limit = 80 }
-	add_to_temp_variable = { upper_limit = 50 }
-	if = { limit = { check_variable = { ai_limiter_at_war = 1 } }
-		multiply_temp_variable = { upper_limit = 1.25 }
+	set_variable = {
+		plane_limiter_limit = {
+			value = num_of_military_factories
+			multiply = 80
+			add = 50
+			if = {
+				limit = { value = ai_limiter_at_war }
+				multiply = 1.25
+			}
+			if = {
+				limit = { value = ai_limiter_is_threatened }
+				multiply = 1.25
+			}
+			if = {
+				limit = { value = ai_limiter_is_major }
+				multiply = 1.15
+			}
+			if = {
+				limit = { value = ai_limiter_nato_member }
+				multiply = 1.2
+			}
+			if = {
+				limit = { value = ai_limiter_high_threat }
+				multiply = 1.25
+			}
+			if = {
+				limit = { value = ai_limiter_in_faction }
+				multiply = 0.90
+			}
+			round = yes
+		}
 	}
-	if = { limit = { check_variable = { ai_limiter_is_threatened = 1 } }
-		multiply_temp_variable = { upper_limit = 1.25 }
-	}
-	if = { limit = { check_variable = { ai_limiter_is_major = 1 } }
-		multiply_temp_variable = { upper_limit = 1.15 }
-	}
-	if = { limit = { check_variable = { ai_limiter_nato_member = 1 } }
-		multiply_temp_variable = { upper_limit = 1.2 }
-	}
-	if = { limit = { check_variable = { ai_limiter_high_threat = 1 } }
-		multiply_temp_variable = { upper_limit = 1.25 }
-	}
-	if = { limit = { check_variable = { ai_limiter_in_faction = 1 } }
-		multiply_temp_variable = { upper_limit = 0.90 }
-	}
-	round_temp_variable = upper_limit
-	set_variable = { plane_limiter_limit = upper_limit }
 }
 
 ship_limiter_calculation = {
-	set_temp_variable = { ship_limit = num_of_naval_factories }
-	multiply_temp_variable = { ship_limit = 7 }
-	if = { limit = { check_variable = { ai_limiter_at_war = 1 } }
-		multiply_temp_variable = { ship_limit = 1.35 }
+	set_variable = {
+		ship_limiter_limit = {
+			value = num_of_naval_factories
+			multiply = 7
+			if = {
+				limit = { value = ai_limiter_at_war }
+				multiply = 1.35
+			}
+			else = {
+				multiply = 0.80
+			}
+			if = {
+				limit = { value = ai_limiter_is_threatened }
+				multiply = 1.25
+			}
+			if = {
+				limit = { value = ai_limiter_is_major }
+				multiply = 1.35
+			}
+			if = {
+				limit = { value = ai_limiter_nato_member }
+				multiply = 0.80
+			}
+			if = {
+				limit = { value = ai_limiter_eu_member }
+				multiply = 0.80
+			}
+			if = {
+				limit = { value = ai_limiter_high_threat }
+				multiply = 1.25
+			}
+			else = {
+				multiply = 0.85
+			}
+			if = {
+				limit = { value = ai_limiter_in_faction }
+				multiply = 0.95
+			}
+			if = {
+				limit = { value = ai_limiter_is_usa }
+				multiply = 1.25
+			}
+			round = yes
+		}
 	}
-	else = {
-		multiply_temp_variable = { ship_limit = 0.80 }
-	}
-	if = { limit = { check_variable = { ai_limiter_is_threatened = 1 } }
-		multiply_temp_variable = { ship_limit = 1.25 }
-	}
-	if = { limit = { check_variable = { ai_limiter_is_major = 1 } }
-		multiply_temp_variable = { ship_limit = 1.35 }
-	}
-	if = { limit = { check_variable = { ai_limiter_nato_member = 1 } }
-		multiply_temp_variable = { ship_limit = 0.80 }
-	}
-	if = { limit = { check_variable = { ai_limiter_eu_member = 1 } }
-		multiply_temp_variable = { ship_limit = 0.80 }
-	}
-	if = { limit = { check_variable = { ai_limiter_high_threat = 1 } }
-		multiply_temp_variable = { ship_limit = 1.25 }
-	}
-	else = {
-		multiply_temp_variable = { ship_limit = 0.85 }
-	}
-	if = { limit = { check_variable = { ai_limiter_in_faction = 1 } }
-		multiply_temp_variable = { ship_limit = 0.95 }
-	}
-	if = { limit = { original_tag = USA }
-		multiply_temp_variable = { ship_limit = 1.25 }
-	}
-	round_temp_variable = ship_limit
-	set_variable = { ship_limiter_limit = ship_limit }
 }
