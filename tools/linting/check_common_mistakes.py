@@ -405,6 +405,7 @@ def _init_worker(focuses, decisions, nation_flags):
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from cleanup_or import find_redundant_and_blocks, find_single_condition_or_blocks
 from shared_utils import (
+    PARTY_SLOT_NAMES,
     Timer,
     clean_filepath,
     collect_files_by_mode,
@@ -3142,26 +3143,47 @@ def _tier_discriminates(limit, counter):
     return False
 
 
+def _slot_branch_token(slot):
+    name = PARTY_SLOT_NAMES.get(slot)
+    if name is None:
+        return None
+    return _SET_IDEOLOGY_PREFIX + name
+
+
+def _branch_gate_token(child):
+    if child.key == "western_autocrats_are_in_power" and child.value == "yes":
+        return "set_Western_Autocracy"
+    if child.key != "check_variable" or len(child.children) != 1:
+        return None
+    inner = child.children[0]
+    if inner.key != "ruling_party" or not inner.value:
+        return None
+    if not _RE_BARE_INT.match(inner.value):
+        return None
+    return _slot_branch_token(int(inner.value))
+
+
+def _is_branch_gate(child, token=None):
+    found = _branch_gate_token(child)
+    return found is not None and (token is None or found == token)
+
+
 def _branch_flag(node):
-    """The set_<ideology> flag an if/else_if branch gates on, or None."""
+    """The set_<ideology> token an if/else_if branch gates on, or None."""
     limit = _first_child(node, "limit")
     if limit is None:
         return None
     for child in limit.children:
-        if (
-            child.key == "has_country_flag"
-            and child.value
-            and child.value.startswith(_SET_IDEOLOGY_PREFIX)
-        ):
-            return child.value
+        found = _branch_gate_token(child)
+        if found:
+            return found
     return None
 
 
 def _branch_discriminates(node, flag):
     limit = _first_child(node, "limit")
     return limit is not None and any(
-        not (child.key == "has_country_flag" and child.value == flag)
-        for child in limit.children
+        not _is_branch_gate(child, flag) for child in limit.children
     )
 
 
@@ -3364,6 +3386,21 @@ def _check_leader_rotation(lines):
     authored one.
     """
     issues = []
+    retired_tokens = tuple(
+        f"has_country_flag = set_{name}" for name in PARTY_SLOT_NAMES.values()
+    ) + tuple(f"set_country_flag = set_{name}" for name in PARTY_SLOT_NAMES.values())
+    for i, line in enumerate(lines, 1):
+        code = strip_inline_comment(line)
+        for token in retired_tokens:
+            if token in code:
+                issues.append(
+                    (
+                        i,
+                        f"retired ideology flag {token.split()[-1]} -- gate on "
+                        "ruling_party (slot 0: western_autocrats_are_in_power)",
+                    )
+                )
+                break
     for root in _parse_script_tree(lines):
         if not root.key.startswith(_LEADER_EFFECT_PREFIX):
             continue

@@ -24,6 +24,7 @@ from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from shared_utils import (  # noqa: E402
+    PARTY_SLOT_NAMES,
     blank_quoted_strings,
     find_matching_brace,
     strip_comments,
@@ -1600,19 +1601,8 @@ def _block_of(body: str, key: str) -> Optional[str]:
 
 
 def parse_party_indices(text: str) -> Dict[int, str]:
-    """Map `ruling_party` index to sub-ideology, read from `set_ruling_leader`."""
-    match = re.search(r"^set_ruling_leader\s*=\s*\{", text, re.M)
-    if not match:
-        return {}
-    start = text.index("{", match.start())
-    close = find_matching_brace(text, start)
-    if close == -1:
-        return {}
-    pairs = re.findall(
-        r"ruling_party\s*=\s*(\d+)[\s}]*set_country_flag\s*=\s*set_(\w+)",
-        text[start + 1 : close],
-    )
-    return {int(index): name for index, name in pairs}
+    """Map `ruling_party` index to sub-ideology."""
+    return dict(PARTY_SLOT_NAMES)
 
 
 def parse_leader_roster(text: str, tag: str) -> Dict[str, List[Leader]]:
@@ -1629,9 +1619,15 @@ def parse_leader_roster(text: str, tag: str) -> Dict[str, List[Leader]]:
         if key not in ("if", "else_if") or block is None:
             continue
         limit = _block_of(block, "limit") or ""
-        found = re.search(r"has_country_flag\s*=\s*set_(\w+)", limit)
-        if found:
-            branches[found.group(1)] = _parse_roster_branch(block, found.group(1))
+        name = None
+        if re.search(r"western_autocrats_are_in_power\s*=\s*yes", limit):
+            name = "Western_Autocracy"
+        else:
+            slot = re.search(r"ruling_party\s*=\s*(\d+)", limit)
+            if slot:
+                name = PARTY_SLOT_NAMES.get(int(slot.group(1)))
+        if name:
+            branches[name] = _parse_roster_branch(block, name)
     return branches
 
 
