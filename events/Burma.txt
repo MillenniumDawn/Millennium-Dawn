@@ -295,7 +295,10 @@ country_event = {
 		name = Burma.4.a
 		log = "[GetDateText]: [This.GetName]: Burma.4.a executed"
 
-		set_country_flag = ASEAN_defence_treaty
+		if = {
+			limit = { NOT = { is_in_array = { global.ASEAN_defence_treaty_members = THIS } } }
+			add_to_array = { global.ASEAN_defence_treaty_members = ROOT }
+		}
 		country_event = {
 			id = Burma.10
 			days = 5
@@ -599,12 +602,16 @@ country_event = {
 	option = {
 		name = Burma.10.a
 		log = "[GetDateText]: [This.GetName]: Burma.10.a executed"
-		every_other_country = {
-			limit = { has_country_flag = ASEAN_defence_treaty }
-			diplomatic_relation = {
-				country = ROOT
-				relation = guarantee
-				active = yes
+		for_each_scope_loop = {
+			array = global.ASEAN_defence_treaty_members
+			tooltip = TT_ALL_ASEAN_TREATY_MEMBERS_GAIN
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				diplomatic_relation = {
+					country = ROOT
+					relation = guarantee
+					active = yes
+				}
 			}
 		}
 	}
