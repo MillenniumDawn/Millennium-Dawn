@@ -166,6 +166,26 @@ def test_unused_scan_captures_literal_and_meta_references(tmp_path):
     assert _META_PREFIX_SENTINEL + "tribute_idea_" in refs
 
 
+def test_unused_scan_captures_literal_tokens_and_ignores_comments(tmp_path):
+    path = _write(
+        tmp_path,
+        "common/scripted_effects/tables.txt",
+        "setup = {\n"
+        "\tadd_to_array = { global.ideas = token:SPIRIT_one }\n"
+        "\tadd_to_array = { array = global.ideas value = token:SPIRIT_two }\n"
+        "\tset_temp_variable = { idea = token:SPIRIT_three-four }\n"
+        "\tadd_to_array = { global.ideas = token:SPIRIT_one_extra }\n"
+        "\t# add_to_array = { global.ideas = token:DEAD_spirit }\n"
+        "}\n",
+    )
+
+    refs = set(_scan_idea_refs_for_unused((str(path), str(tmp_path))))
+
+    assert {"SPIRIT_one", "SPIRIT_two", "SPIRIT_three-four", "SPIRIT_one_extra"} <= refs
+    assert "SPIRIT_three" not in refs
+    assert "DEAD_spirit" not in refs
+
+
 def test_unused_scan_ignores_skipped_and_empty_files(tmp_path):
     ignored = _write(tmp_path, "gfx/notes.txt", "add_ideas = SPIRIT_one\n")
     empty = _write(tmp_path, "common/empty.txt", "")
