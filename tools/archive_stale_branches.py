@@ -19,7 +19,9 @@ we archived in the initial chore commit.
 
 import argparse
 import hashlib
+import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -153,6 +155,78 @@ def branch_exists(ref: str, repo: Path) -> bool:
     )
 
 
+def branch_tip_metadata(ref: str, repo: Path) -> dict:
+    output = run(
+        ["git", "log", "-1", "--format=%H%x00%h%x00%an%x00%aI%x00%s", ref],
+        repo,
+    )
+    tip_sha, tip_short, author, date, subject = output.decode().rstrip("\n").split("\0")
+    return {
+        "tip_sha": tip_sha,
+        "tip_short": tip_short,
+        "last_author": author,
+        "last_commit_date": date,
+        "last_commit_subject": subject,
+    }
+
+
+def write_branch_json(path: Path, payload: dict) -> None:
+    if path.is_symlink():
+        raise ValueError(f"Refusing symlink in archive output: {path}")
+    path.write_bytes((json.dumps(payload, indent=2) + "\n").encode("utf-8"))
+
+
+def _insert_table_rows(text: str, rows: list[str]) -> str:
+    lines = text.splitlines(keepends=True)
+    last_row = None
+    for i, line in enumerate(lines):
+        stripped = line.lstrip()
+        if (
+            stripped.startswith("| ")
+            and "---" not in line
+            and not stripped.startswith("| Branch")
+        ):
+            last_row = i
+    if last_row is None:
+        return text
+    return "".join(lines[: last_row + 1] + rows + lines[last_row + 1 :])
+
+
+def sync_archive_readmes(archive_root: Path) -> None:
+    branch_dirs = sorted(p for p in archive_root.iterdir() if p.is_dir())
+    readme = archive_root / "README.md"
+    if readme.is_file() and not readme.is_symlink():
+        text = readme.read_bytes().decode("utf-8")
+        new_rows = []
+        for folder in branch_dirs:
+            if f"| {folder.name}" in text:
+                continue
+            json_path = folder / f"{folder.name}.json"
+            if not json_path.is_file():
+                continue
+            try:
+                payload = json.loads(json_path.read_bytes())
+                date = str(payload["last_commit_date"])[:10]
+                archived = payload["archived_files"]
+            except (OSError, ValueError, KeyError, TypeError):
+                continue
+            new_rows.append(f"| {folder.name:<29} | {date:<13} | {archived:<16} |\n")
+        if new_rows:
+            readme.write_bytes(_insert_table_rows(text, new_rows).encode("utf-8"))
+
+    parent = archive_root.parent.parent / "README.md"
+    if parent.is_file() and not parent.is_symlink():
+        text = parent.read_bytes().decode("utf-8")
+        updated = re.sub(
+            r"from \d+ stale upstream branches",
+            f"from {len(branch_dirs)} stale upstream branches",
+            text,
+            count=1,
+        )
+        if updated != text:
+            parent.write_bytes(updated.encode("utf-8"))
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=__doc__.splitlines()[0] if __doc__ else ""
@@ -246,10 +320,26 @@ def main():
                     desired_files.add(f)
                     copied += 1
 
+                json_rel = f"{name_path.name}.json"
+                tip = branch_tip_metadata(branch, repo)
+                write_branch_json(
+                    target / json_rel,
+                    {
+                        "branch": branch,
+                        "tip_sha": tip["tip_sha"],
+                        "tip_short": tip["tip_short"],
+                        "last_author": tip["last_author"],
+                        "last_commit_date": tip["last_commit_date"],
+                        "last_commit_subject": tip["last_commit_subject"],
+                        "diverging_files_3dot": len(diff_files),
+                        "archived_files": copied,
+                    },
+                )
+                desired_files.add(json_rel)
                 removed_stale = remove_stale_files(target, desired_files)
 
             summary[branch] = {
-                "target": str(target.relative_to(repo)),
+                "target": os.path.relpath(target, repo),
                 "copied": copied,
                 "skipped_identical": skipped_identical,
                 "skipped_missing": skipped_missing,
@@ -278,6 +368,7 @@ def main():
             f"Skipped {len(missing_refs)} branch(es) with missing refs: {missing_refs}"
         )
 
+    sync_archive_readmes(archive_root)
     return 0 if not missing_refs else 1
 
 
