@@ -173,11 +173,28 @@ Therefore:
 
 Note: If The Breaking Point is triggered while the protest event chain is active, the protests will subside, but the revolution event chain will still begin without any issues, so you can continue playing without concern.
 
-###　Majles
-The Iranian parliament. Elections and debates are held at regular intervals. When a debate concludes, the parties in parliament can assign missions. Completing these missions grants rewards, while failure results in penalties.
+### Majles
 
-Examples of missions obtained through debates Mission:
-Network infrastructure level 2 or higher in four specific states Reward for completion: Office districts +2, Thermal power plants +1 (funds are taken from the national treasury) On failure: Office districts -2
+The Iranian parliament has 290 seats. At game start the Reformists hold 200, the Followers of
+Principle hold 65, and independents hold 5.
+
+The first election arrives shortly after game start, then about every four years. The first debate
+is a few months in, then about every 18 months. Decisions can dissolve parliament early or pull the
+next debate forward by two months.
+
+Banned parties win no seats. Those seats go to independents. While the Guardian Council is strong,
+the two most popular legal parties take most of the chamber, and other legal parties above 5%
+popularity get a reduced share. Completing Undermine the Guardian Council switches allocation to a
+straight popularity split (parties under 0.5% get nothing).
+
+When a debate starts, parties with seats can offer missions. Finish them for rewards. Let the
+21-day timer expire and you lose 100 Political Power, plus the mission's failure effect.
+
+Changing bureaucracy, police, education, health, or welfare laws can provoke a Majles objection.
+
+Example debate mission: network infrastructure level 2 or higher in four specific states.
+Completion: Office districts +2, thermal power plants +1 (paid from the treasury). Failure: Office
+districts -2.
 
 ## National Focus
 
