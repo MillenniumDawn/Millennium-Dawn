@@ -3884,18 +3884,13 @@ scripted_gui = {
 				var:open_state = { has_idea = lacks_international_recognition }
 				country_exists = var:open_state
 				is_full_state = yes
-				meta_trigger = {
-					text = {
-						custom_trigger_tooltip = {
-							tooltip = has_recog_tt
-							has_country_flag = Recognised_[stname]
-						}
-						custom_trigger_tooltip = {
-							tooltip = recent_pressure_tt
-							NOT = { has_country_flag = pressure_timer_[stname] }
-						}
-					}
-					stname = "[?var:open_state.GetTag]"
+				custom_trigger_tooltip = {
+					tooltip = has_recog_tt
+					is_in_array = { recognised_countries = var:open_state }
+				}
+				custom_trigger_tooltip = {
+					tooltip = recent_pressure_tt
+					NOT = { check_variable = { recognition_pressure_end@var:open_state > global.num_days } }
 				}
 				if = {
 					limit = { original_tag = SWI }
@@ -3912,14 +3907,9 @@ scripted_gui = {
 					limit = { original_tag = SWI }
 					has_dynamic_modifier = { modifier = united_nations_member }
 				}
-				meta_trigger = {
-					text = {
-						custom_trigger_tooltip = {
-							tooltip = not_recog_tt
-							NOT = { has_country_flag = Recognised_[stname] }
-						}
-					}
-					stname = "[?var:open_state.GetTag]"
+				custom_trigger_tooltip = {
+					tooltip = not_recog_tt
+					NOT = { is_in_array = { recognised_countries = var:open_state } }
 				}
 
 				has_political_power > 25
@@ -3932,14 +3922,9 @@ scripted_gui = {
 					limit = { original_tag = SWI }
 					has_dynamic_modifier = { modifier = united_nations_member }
 				}
-				meta_trigger = {
-					text = {
-						custom_trigger_tooltip = {
-							tooltip = has_recog_tt
-							has_country_flag = Recognised_[stname]
-						}
-					}
-					stname = "[?var:open_state.GetTag]"
+				custom_trigger_tooltip = {
+					tooltip = has_recog_tt
+					is_in_array = { recognised_countries = var:open_state }
 				}
 				has_political_power > 25
 			}
@@ -4006,7 +3991,7 @@ scripted_gui = {
 				add_political_power = -25
 				meta_effect = {
 					text = {
-						THIS = { set_country_flag = Recognised_[stname] }
+						add_to_array = { recognised_countries = var:open_state }
 
 						if = {
 							limit = {
@@ -4019,11 +4004,11 @@ scripted_gui = {
 								if = {
 									limit = {
 										has_country_flag = supports_original_owner_[stname]
-										NOT = { has_country_flag = Recognised_[stname] }
+										NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
 									}
 									add_opinion_modifier = { target = ROOT modifier = recognises_them }
 								} else_if = {
-									limit = { has_country_flag = Recognised_[stname] }
+									limit = { is_in_array = { recognised_countries = var:ROOT.open_state } }
 									add_opinion_modifier = { target = ROOT modifier = supporting_recognized_ally }
 								}
 							}
@@ -4031,7 +4016,7 @@ scripted_gui = {
 							random_country = {
 								limit = {
 									has_country_flag = original_owner_[stname]
-									NOT = { has_country_flag = Recognised_[stname] }
+									NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
 								}
 								add_opinion_modifier = { target = ROOT modifier = recognises_them }
 								country_event = recognition.1
@@ -4057,7 +4042,7 @@ scripted_gui = {
 							if = {
 								limit = {
 									is_influencer = yes
-									NOT = { has_country_flag = Recognised_[stname] }
+									NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
 									NOT = { has_country_flag = pressured_to_recognize_[stname] }
 									NOT = { tag = ROOT }
 									is_full_state = yes
@@ -4066,25 +4051,23 @@ scripted_gui = {
 								country_event = recognition.8
 							}
 						}
-						set_country_flag = {
-							flag = pressure_timer_[stname]
-							days = 180 value = 1
-						}
 					}
 					stname = "[?var:open_state.GetTag]"
 				}
+				set_variable = { recognition_pressure_end@var:open_state = global.num_days }
+				add_to_variable = { recognition_pressure_end@var:open_state = 180 }
 				add_political_power = -100
 				international_systems_update = yes
 			}
 			rescind_recog_button_click = {
 				meta_effect = {
 					text = {
-						clr_country_flag = Recognised_[stname]
+						remove_from_array = { recognised_countries = var:open_state }
 
 						random_country = {
 							limit = {
 								has_country_flag = original_owner_[stname]
-								NOT = { has_country_flag = Recognised_[stname] }
+								NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
 							}
 							add_opinion_modifier = {
 								target = ROOT
@@ -10158,14 +10141,9 @@ scripted_gui = {
 							has_country_flag = recognition_campaign_from@ROOT
 						}
 					}
-					meta_trigger = {
-						text = {
-							custom_trigger_tooltip = {
-								tooltip = not_recog_checker_tt
-								NOT = { has_country_flag = Recognised_[stname] }
-							}
-						}
-						stname = "[?ROOT.GetTag]"
+					custom_trigger_tooltip = {
+						tooltip = not_recog_checker_tt
+						NOT = { is_in_array = { recognised_countries = ROOT } }
 					}
 				}
 				has_political_power > 200
