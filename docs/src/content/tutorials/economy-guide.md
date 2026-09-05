@@ -334,6 +334,8 @@ Tax rates are adjusted through the economy interface:
 
 **Tax Rate Change Cost**: Each 1% change costs approximately 50 political power.
 
+For many countries, **20-30% corporate tax** is a practical starting range. A 20% rate avoids the productivity growth penalty; rates above that trade some long-term growth for additional revenue. Adjust the rate to your budget and development strategy rather than treating this range as a universal target.
+
 ---
 
 ## Currency and Monetary Policy
@@ -523,6 +525,13 @@ You can prioritize which building types receive workers first from the Economy w
 
 **State Productivity** is a per-state variable that directly scales building output and GDP. Each state has its own productivity value, and the country-level overall productivity is calculated as the population-weighted average across all states.
 
+A country-level productivity value of **1,000** is the economic baseline. Corporate tax income scales with overall productivity divided by that baseline, so countries below 1,000 collect less from the same building mix while countries above 1,000 collect more.
+
+This creates two broad development paths:
+
+- **Lower-productivity countries** benefit from affordable agriculture and basic industry while using network infrastructure and internal investment to improve productivity.
+- **Higher-productivity countries** gain more value from offices and advanced industry, but must support them with sufficient workers, electricity, and microchips.
+
 **What Productivity Affects:**
 
 - **Military factory output**: Higher productivity increases factory production efficiency
@@ -539,7 +548,7 @@ You can prioritize which building types receive workers first from the Economy w
 | Asia & Oceania                             | 650                   |
 | Africa, Middle East, North & South America | 550                   |
 
-There is no maximum cap on productivity, it can grow indefinitely. The minimum floor is 100; it cannot fall below this.
+Productivity is clamped between 100 and 100,000.
 
 **Catch-Up Mechanic:**
 
@@ -746,6 +755,8 @@ Countries must supply electricity as part of their infrastructure. Power is gene
 | Fossil Fuel Powerplant          | Fuel                   | 2 GW          |
 | Nuclear Reactor                 | Reactor-Grade Material | 5 GW          |
 | Renewable Energy Infrastructure | None                   | 0.5 GW        |
+
+The renewable figure is a base value, not guaranteed output. Each state receives its own renewable capacity factor, and actual generation is randomized monthly between zero and that state's potential. Regions with better capacity factors produce more on average, but renewable-heavy grids still need room for monthly fluctuations.
 
 Reactor-Grade Material can be produced at Enrichment Facilities (built from the electricity panel) or purchased from other countries via decisions. States with Geothermal Infrastructure or Hydroelectric Infrastructure modifiers provide additional power.
 
