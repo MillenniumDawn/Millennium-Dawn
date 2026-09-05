@@ -3816,6 +3816,7 @@ ENG_devolved_matters = {
 			NOT = { has_country_flag = ENG_referendum_cooldown }
 			NOT = { has_country_flag = ENG_north_irish_referendum_cooldown }
 			NOT = { country_exists = NIR }
+			17 = { is_owned_and_controlled_by = ROOT }
 			NOT = { has_active_mission = ENG_scottish_referendum }
 			NOT = { has_active_mission = ENG_irish_referendum }
 			NOT = { has_active_mission = ENG_welsh_referendum }
@@ -3838,6 +3839,7 @@ ENG_devolved_matters = {
 			OR = {
 				country_exists = NIR
 				has_country_flag = ENG_devolution_purged
+				NOT = { 17 = { is_owned_and_controlled_by = ROOT } }
 			}
 		}
 
@@ -3911,6 +3913,284 @@ ENG_devolved_matters = {
 			set_country_flag = { flag = ENG_referendum_cooldown days = 1825 value = 1 }
 			set_country_flag = { flag = ENG_welsh_referendum_cooldown days = 3650 value = 1 }
 			country_event = devolution.7
+		}
+	}
+
+	# The Northern Ireland Question
+	ENG_decommission_paramilitaries = {
+		icon = GFX_decision_generic_civil_support
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 17
+			}
+		}
+
+		days_remove = 730
+
+		cost = 100
+
+		visible = {
+			has_idea = ENG_the_dissident_campaign
+			17 = { is_owned_and_controlled_by = ROOT }
+		}
+
+		available = {
+			has_idea = ENG_good_friday_agreement
+			check_variable = {
+				tooltip = ENG_decommission_tension_tt
+				var = ENG_north_irish_agitation
+				value = 15
+				compare = less_than
+			}
+			check_variable = {
+				tooltip = ENG_decommission_dependency_tt
+				var = ENG_north_irish_dependency
+				value = 59
+				compare = greater_than
+			}
+			check_variable = {
+				tooltip = ENG_decommission_unemployment_tt
+				var = total_unemployed_percentage_display
+				value = 0.10
+				compare = less_than
+			}
+		}
+
+		cancel_trigger = {
+			OR = {
+				check_variable = { ENG_north_irish_agitation > 24 }
+				NOT = { 17 = { is_owned_and_controlled_by = ROOT } }
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_decommission_paramilitaries"
+			country_event = devolution.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_decommission_paramilitaries"
+			custom_effect_tooltip = ENG_decommission_started_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_decommission_paramilitaries"
+			country_event = devolution.21
+		}
+
+		modifier = {
+			tax_gain_multiplier_modifier = -0.05
+			political_power_cost = 0.10
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 20
+				check_variable = { ENG_north_irish_agitation < 10 }
+			}
+		}
+	}
+
+	ENG_call_border_poll = {
+		icon = GFX_decision_generic_nationalism
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 17
+			}
+		}
+
+		cost = 75
+
+		visible = {
+			has_idea = ENG_good_friday_agreement
+			17 = { is_owned_and_controlled_by = ROOT }
+			country_exists = IRE
+			NOT = { IRE = { is_subject_of = ROOT } }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ENG_border_poll_needs_peace_tt
+				NOT = { has_idea = ENG_the_dissident_campaign }
+			}
+			check_variable = {
+				tooltip = ENG_border_poll_nationalism_tt
+				var = ENG_north_irish_nationalists
+				value = 54
+				compare = greater_than
+			}
+			NOT = { has_country_flag = ENG_border_poll_cooldown }
+			NOT = { has_active_mission = ENG_border_poll_mission }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_call_border_poll"
+			activate_mission = ENG_border_poll_mission
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	ENG_border_poll_mission = {
+		icon = GFX_decision_generic_nationalism
+
+		activation = {
+			always = no
+		}
+
+		available = {
+			always = no
+		}
+
+		cancel_trigger = {
+			OR = {
+				NOT = { 17 = { is_owned_and_controlled_by = ROOT } }
+				has_country_flag = ENG_devolution_purged
+			}
+		}
+
+		days_mission_timeout = 365
+		is_good = no
+		selectable_mission = no
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_border_poll_mission"
+			country_event = devolution.22
+		}
+	}
+
+	ENG_all_ireland_dominion = {
+		icon = GFX_decision_generic_form_nation
+
+		cost = 100
+
+		fire_only_once = yes
+
+		targets = { IRE }
+
+		target_root_trigger = {
+			has_idea = ENG_good_friday_agreement
+			17 = { is_owned_and_controlled_by = ROOT }
+		}
+
+		target_trigger = {
+			FROM = { is_subject_of = ROOT }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ENG_border_poll_needs_peace_tt
+				NOT = { has_idea = ENG_the_dissident_campaign }
+			}
+			check_variable = {
+				tooltip = ENG_dominion_tension_tt
+				var = ENG_north_irish_agitation
+				value = 10
+				compare = less_than
+			}
+			check_variable = {
+				tooltip = ENG_dominion_dependency_tt
+				var = ENG_north_irish_dependency
+				value = 69
+				compare = greater_than
+			}
+			check_variable = {
+				tooltip = ENG_dominion_pressure_tt
+				var = ENG_north_irish_pressure
+				value = 40
+				compare = less_than
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_all_ireland_dominion"
+			FROM = { transfer_state = 17 }
+			ENG_settle_northern_ireland_question = yes
+			FROM = {
+				add_opinion_modifier = { target = ROOT modifier = large_increase }
+				add_autonomy_ratio = { value = -0.10 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	ENG_repeal_good_friday_agreement = {
+		icon = GFX_decision_generic_police_action
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 17
+			}
+		}
+
+		cost = 150
+
+		visible = {
+			has_idea = ENG_good_friday_agreement
+			17 = { is_owned_and_controlled_by = ROOT }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_repeal_good_friday_agreement"
+			remove_ideas = ENG_good_friday_agreement
+			add_stability = -0.10
+			add_to_variable = { ENG_north_irish_agitation = 25 tooltip = ENG_north_irish_agitation_TT }
+			add_to_variable = { ENG_north_irish_nationalists = 15 tooltip = ENG_north_irish_nationalists_TT }
+			add_to_variable = { ENG_north_irish_dependency = -10 tooltip = ENG_north_irish_dependency_TT }
+			if = {
+				limit = { NOT = { has_idea = ENG_the_dissident_campaign } }
+				add_ideas = ENG_the_dissident_campaign
+			}
+			ENG_var_cap = yes
+			activate_mission = ENG_ulster_on_the_brink
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	ENG_ulster_on_the_brink = {
+		icon = GFX_decision_generic_police_action
+
+		activation = {
+			always = no
+		}
+
+		available = {
+			check_variable = {
+				tooltip = ENG_ulster_brink_defused_tt
+				var = ENG_north_irish_agitation
+				value = 20
+				compare = less_than
+			}
+		}
+
+		cancel_trigger = {
+			NOT = { 17 = { is_owned_and_controlled_by = ROOT } }
+		}
+
+		days_mission_timeout = 180
+		is_good = no
+		selectable_mission = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_ulster_on_the_brink"
+			add_to_variable = { ENG_north_irish_nationalists = -5 tooltip = ENG_north_irish_nationalists_TT }
+			ENG_var_cap = yes
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_ulster_on_the_brink"
+			country_event = devolution.27
 		}
 	}
 }
