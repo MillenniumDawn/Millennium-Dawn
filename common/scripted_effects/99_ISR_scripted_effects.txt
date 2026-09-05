@@ -821,3 +821,91 @@ ISR_electronics_milestone_2026 = {
 		ISR_electronics_apply_foundry_and_exit = yes
 	}
 }
+
+update_isr_knesset_dirty_variable = {
+	if = {
+		limit = { check_variable = { global.ISR_knesset_dirty_update_var < 10000 } }
+		add_to_variable = { global.ISR_knesset_dirty_update_var = 1 }
+	}
+	else = {
+		set_variable = { global.ISR_knesset_dirty_update_var = 1 }
+	}
+}
+
+update_isr_screen_dirty_variable = {
+	if = {
+		limit = { check_variable = { global.ISR_screen_dirty_update_var < 10000 } }
+		add_to_variable = { global.ISR_screen_dirty_update_var = 1 }
+	}
+	else = {
+		set_variable = { global.ISR_screen_dirty_update_var = 1 }
+	}
+}
+
+update_isr_attack_dirty_variable = {
+	if = {
+		limit = { check_variable = { global.ISR_attack_dirty_update_var < 10000 } }
+		add_to_variable = { global.ISR_attack_dirty_update_var = 1 }
+	}
+	else = {
+		set_variable = { global.ISR_attack_dirty_update_var = 1 }
+	}
+}
+
+ISR_start_knesset_bill = {
+	set_country_flag = ISR_bill_in_progress
+	custom_effect_tooltip = ISR_knesset_start_TT
+	hidden_effect = {
+		country_event = {
+			id = israel.knesset.0
+			days = 1
+		}
+		country_event = {
+			id = israel.knesset.3
+			days = 30
+		}
+		country_event = {
+			id = israel.knesset.4
+			days = 10
+		}
+		random_list = {
+			50 = {
+				country_event = {
+					id = israel.knesset.1
+					days = 15
+				}
+			}
+			50 = {
+				country_event = {
+					id = israel.knesset.2
+					days = 15
+				}
+			}
+		}
+		random_list = {
+			30 = {
+				country_event = {
+					id = israel.knesset.7
+					days = 40
+				}
+			}
+		}
+	}
+}
+
+ISR_end_knesset_bill = {
+	clr_country_flag = ISR_bill_in_progress
+	if = {
+		limit = {
+			check_variable = {
+				bill_support > 59
+			}
+		}
+		country_event = israel.knesset.5
+	}
+	else = {
+		country_event = israel.knesset.6
+	}
+	clear_variable = bill_support
+	update_isr_knesset_dirty_variable = yes
+}
