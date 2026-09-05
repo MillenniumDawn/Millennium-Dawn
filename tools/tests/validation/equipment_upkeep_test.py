@@ -1,5 +1,6 @@
 """Tests for validate_equipment_upkeep."""
 
+from shared.suite import write_under as _write
 from validate_equipment_upkeep import Validator
 
 _EQUIPMENT = """equipments = {
@@ -55,14 +56,13 @@ def _entry(archetype: str, deployed: bool = True, stockpile: bool = True) -> str
 
 
 def _run(tmp_path, battalions: str, money: str, equipment: str = _EQUIPMENT):
-    for rel, content in (
-        ("common/units/equipment/MD_test_equipment.txt", equipment),
-        ("common/units/MD_land_units.txt", "sub_units = {\n" + battalions + "}\n"),
-        ("common/scripted_effects/00_money_system.txt", money),
-    ):
-        target = tmp_path / rel
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content, encoding="utf-8")
+    _write(tmp_path, "common/units/equipment/MD_test_equipment.txt", equipment)
+    _write(
+        tmp_path,
+        "common/units/MD_land_units.txt",
+        "sub_units = {\n" + battalions + "}\n",
+    )
+    _write(tmp_path, "common/scripted_effects/00_money_system.txt", money)
 
     v = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     v.run_validations()
