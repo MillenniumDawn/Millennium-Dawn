@@ -3029,10 +3029,14 @@ scripted_gui = {
 			}
 
 			analyst_focus_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 50
 			}
 
 			analyst_focus_button_right_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 50
 			}
 
@@ -3045,23 +3049,23 @@ scripted_gui = {
 			}
 
 			infil_agent_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 50
-				meta_trigger = {
-					text = {
-						custom_trigger_tooltip = {
-							tooltip = ct_has_infiltrated_org
-							NOT = { has_country_flag = ct_infiltrated_agent_[ORG] }
-						}
-						custom_trigger_tooltip = {
-							tooltip = ct_has_failed_recent_infil_against
-							NOT = { has_country_flag = ct_failed_infil_against_[ORG] }
-						}
-					}
-					ORG = "[?selected_org]"
+				set_temp_variable = { ct_gui_org_id = global.active_terror_orgs^selected_org }
+				custom_trigger_tooltip = {
+					tooltip = ct_has_infiltrated_org
+					NOT = { check_variable = { ct_infiltrated_org_arr^ct_gui_org_id > 0 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = ct_has_failed_recent_infil_against
+					NOT = { check_variable = { ct_failed_infil_org_arr^ct_gui_org_id > 0 } }
 				}
 			}
 
 			arrest_sympathizers_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 100
 				set_temp_variable = { req_level > 30 }
 				custom_trigger_tooltip = {
@@ -3076,6 +3080,8 @@ scripted_gui = {
 			}
 
 			seize_assets_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 100
 				set_temp_variable = { req_level > 40 }
 				custom_trigger_tooltip = {
@@ -3089,6 +3095,8 @@ scripted_gui = {
 			}
 
 			mass_gathering_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 100
 				custom_trigger_tooltip = {
 					tooltip = ct_not_has_done_recent_intel_op
@@ -3097,6 +3105,8 @@ scripted_gui = {
 			}
 
 			exploit_intelligence_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				custom_trigger_tooltip = {
 					tooltip = ct_has_intel_to_exploit
 					check_variable = { ct_mass_gather_store_var^selected_org > 0 }
@@ -3141,6 +3151,8 @@ scripted_gui = {
 			}
 
 			conduct_drone_operations_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 100
 				set_temp_variable = { req_level > 24 }
 				custom_trigger_tooltip = {
@@ -3330,6 +3342,13 @@ scripted_gui = {
 			infil_agent_button_click = {
 				add_political_power = -50
 				custom_effect_tooltip = is_ct_infil_agent_tt
+				if = {
+					limit = {
+						check_variable = { selected_org > -1 }
+						check_variable = { selected_org < global.active_terror_orgs^num }
+					}
+					set_temp_variable = { ct_gui_infil_org_id = global.active_terror_orgs^selected_org }
+				}
 				set_temp_variable = {
 					success_chance = {
 						value = international_terror_org_intel^selected_org
@@ -3352,12 +3371,7 @@ scripted_gui = {
 							max = 0.5
 						}
 						add_to_variable = { international_terror_org_specific_intel^selected_org = random_add }
-						meta_effect = {
-							text = {
-								set_country_flag = ct_infiltrated_agent_[ORG]
-							}
-							ORG = "[?selected_org]"
-						}
+						set_variable = { ct_infiltrated_org_arr^ct_gui_infil_org_id = 1 }
 					}
 					fail_chance = {
 						country_event = MD_terror.8
@@ -3367,16 +3381,7 @@ scripted_gui = {
 							max = -0.05
 						}
 						add_to_variable = { international_terror_org_specific_intel^selected_org = random_add }
-						meta_effect = {
-							text = {
-								set_country_flag = {
-									flag = ct_failed_infil_against_[ORG]
-									days = 365
-									value = 1
-								}
-							}
-							ORG = "[?selected_org]"
-						}
+						set_variable = { ct_failed_infil_org_arr^ct_gui_infil_org_id = 13 }
 					}
 				}
 				international_systems_update = yes
@@ -7016,57 +7021,6 @@ scripted_gui = {
 			list_of_available_pmc_units = {
 				array = THIS.selected_units
 				entry_container = IS_available_pmc_units_list
-				ai_weights = {
-					#TODO: For further international system updates, detail this out further for better ai utilization
-					name_of_pmc_units_button_click = {
-						ai_will_do = {
-							factor = 1
-
-							modifier = {
-								add = 25
-								has_army_size = { size < 40 }
-							}
-							modifier = {
-								add = 50
-								has_army_size = { size < 30 }
-							}
-							modifier = {
-								add = 75
-								has_army_size = { size < 20 }
-							}
-							modifier = {
-								add = 100
-								has_army_size = { size < 10 }
-							}
-							#buy armor if you need it bois
-							modifier = {
-								add = 100
-								has_army_size = {
-									size < 5
-									type = armor
-								}
-								check_variable = { v = 006 }
-							}
-							#killswitch for recently grabbing a major pmc
-							modifier = {
-								factor = 0
-								has_country_flag = hold_major_pmc_purchase
-							}
-							#killswitch for not having a major selected, just in case
-							modifier = {
-								factor = 0
-								NOT = {
-									OR = {
-										has_country_flag = blackwater_sel
-										has_country_flag = aegis_sel
-										has_country_flag = wagner_sel
-										has_country_flag = constellis_sel
-									}
-								}
-							}
-						}
-					}
-				}
 			}
 
 		}
@@ -7351,159 +7305,6 @@ scripted_gui = {
 			list_of_available_pmc_companies = {
 				array = global.PMC_Companies
 				entry_container = IS_available_pmc_companies_list
-				ai_weights = {
-					name_of_pmc_companies_button_click = {
-						ai_will_do = {
-							factor = 1
-							#Get Buffs
-							modifier = {
-								add = 5
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = super_power
-							}
-							modifier = {
-								add = 5
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = great_power
-							}
-							modifier = {
-								add = 10
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = large_power
-							}
-							modifier = {
-								add = 20
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = regional_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = minor_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = non_power
-							}
-							modifier = {
-								add = 30
-								has_army_size = { size > 20 }
-							}
-							modifier = {
-								add = -30
-								has_army_size = { size < 21 }
-							}
-							#Get Units (Smol)
-							modifier = {
-								add = 0
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = super_power
-							}
-							modifier = {
-								add = 0
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = great_power
-							}
-							modifier = {
-								add = 5
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = large_power
-							}
-							modifier = {
-								add = 20
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = regional_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = minor_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = non_power
-							}
-							modifier = {
-								add = 30
-								has_army_size = { size < 20 }
-							}
-							modifier = {
-								add = -30
-								has_army_size = { size > 19 }
-							}
-							#Get Units (Lorg)
-							modifier = {
-								add = 5
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = super_power
-							}
-							modifier = {
-								add = 5
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = great_power
-							}
-							modifier = {
-								add = 10
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = large_power
-							}
-							modifier = {
-								add = 20
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = regional_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = minor_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = non_power
-							}
-							modifier = {
-								add = 30
-								has_army_size = { size < 20 }
-							}
-							modifier = {
-								add = -30
-								has_army_size = { size > 19 }
-							}
-							#when at war, hire what you can get
-							modifier = {
-								factor = 5
-								has_war = yes
-							}
-							#killswitch for recent hires or selections
-							modifier = {
-								factor = 0
-								has_country_flag = ai_recent_pmc_select
-							}
-							#killswitch for being broke
-							modifier = {
-								factor = 0
-								check_variable = { treasury_rate < -10 }
-								NOT = { has_war = yes }
-							}
-							modifier = {
-								factor = 0
-								check_variable = { treasury_rate < -20 }
-								has_war = yes
-							}
-							#killswitch for non-state actor / unrecognized state
-							modifier = {
-								factor = 0
-								OR = {
-									has_idea = non_state_actor
-									has_idea = lacks_international_recognition
-								}
-							}
-						}
-					}
-				}
 			}
 		}
 

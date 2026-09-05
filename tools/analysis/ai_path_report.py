@@ -24,6 +24,7 @@ from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from shared_utils import (  # noqa: E402
+    PARTY_SLOT_NAMES,
     blank_quoted_strings,
     find_matching_brace,
     strip_comments,
@@ -363,13 +364,17 @@ def _build_focus(focus_id: str, kind: str, line: int, body: str, tag: str) -> Fo
     for key, scalar, block in iter_statements(body):
         if key == "prerequisite" and block is not None:
             group = [
-                value for name, value, _ in iter_statements(block) if name == "focus"
+                value
+                for name, value, _ in iter_statements(block)
+                if name == "focus" and value is not None
             ]
             if group:
                 focus.prereq_groups.append(group)
         elif key == "mutually_exclusive" and block is not None:
             focus.mutex.extend(
-                value for name, value, _ in iter_statements(block) if name == "focus"
+                value
+                for name, value, _ in iter_statements(block)
+                if name == "focus" and value is not None
             )
         elif key in ("available", "allow_branch") and block is not None:
             _read_gates(block, focus)
@@ -658,7 +663,8 @@ def build_states(rule: Optional[Rule], flags: Sequence[str]) -> List[State]:
             )
             options.append((option.name, match))
     else:
-        options = [(flag, flag) for flag in flags] + [("NO_PATH", None)]
+        options.extend((flag, flag) for flag in flags)
+        options.append(("NO_PATH", None))
     return [
         State(option=name, flag=flag, historical=historical)
         for name, flag in options
@@ -1599,22 +1605,6 @@ def _block_of(body: str, key: str) -> Optional[str]:
     return None
 
 
-def parse_party_indices(text: str) -> Dict[int, str]:
-    """Map `ruling_party` index to sub-ideology, read from `set_ruling_leader`."""
-    match = re.search(r"^set_ruling_leader\s*=\s*\{", text, re.M)
-    if not match:
-        return {}
-    start = text.index("{", match.start())
-    close = find_matching_brace(text, start)
-    if close == -1:
-        return {}
-    pairs = re.findall(
-        r"ruling_party\s*=\s*(\d+)[\s}]*set_country_flag\s*=\s*set_(\w+)",
-        text[start + 1 : close],
-    )
-    return {int(index): name for index, name in pairs}
-
-
 def parse_leader_roster(text: str, tag: str) -> Dict[str, List[Leader]]:
     """Map sub-ideology to its ordered succession list in `set_leader_<TAG>`."""
     match = re.search(r"^\s*set_leader_" + tag + r"\s*=\s*\{", text, re.M)
@@ -1629,9 +1619,15 @@ def parse_leader_roster(text: str, tag: str) -> Dict[str, List[Leader]]:
         if key not in ("if", "else_if") or block is None:
             continue
         limit = _block_of(block, "limit") or ""
-        found = re.search(r"has_country_flag\s*=\s*set_(\w+)", limit)
-        if found:
-            branches[found.group(1)] = _parse_roster_branch(block, found.group(1))
+        name = None
+        if re.search(r"western_autocrats_are_in_power\s*=\s*yes", limit):
+            name = "Western_Autocracy"
+        else:
+            slot = re.search(r"ruling_party\s*=\s*(\d+)", limit)
+            if slot:
+                name = PARTY_SLOT_NAMES.get(int(slot.group(1)))
+        if name:
+            branches[name] = _parse_roster_branch(block, name)
     return branches
 
 
@@ -1814,12 +1810,7 @@ def _government_findings(root: str, tag: str) -> Dict:
     }
     total_dated = sum(dated.values())
 
-    parties: Dict[int, str] = {}
-    election_effects = os.path.join(
-        root, "common", "scripted_effects", "99_election_effects.txt"
-    )
-    if os.path.isfile(election_effects):
-        parties = parse_party_indices(read_script(election_effects))
+    parties = dict(PARTY_SLOT_NAMES)
 
     yearly = os.path.join(root, "common", "scripted_effects", "00_yearly_effects.txt")
     schedule = (
