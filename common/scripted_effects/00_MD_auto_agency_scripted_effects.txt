@@ -82,13 +82,19 @@ MD_auto_agency_verify_queue = {
 			if = {
 				limit = {
 					MD_auto_agency_v_index_valid = yes
-					MD_auto_agency_v_not_completed = yes
 					MD_auto_agency_v_not_maxed_in_queue = yes
 				}
 
 				set_variable = { agency_queue^write_idx = v }
 				add_to_variable = { agency_upgrades_in_queue_count^v = 1 }
 				add_to_temp_variable = { write_idx = 1 }
+			}
+			else_if = {
+				limit = {
+					MD_auto_agency_v_index_valid = yes
+					check_variable = { agency_upgrades_completed_and_queued^v > 0 }
+				}
+				subtract_from_variable = { agency_upgrades_completed_and_queued^v = 1 }
 			}
 		}
 
@@ -160,7 +166,7 @@ MD_auto_agency_select_random = {
 		if = {
 			limit = {
 				MD_auto_agency_v_can_select = yes
-				MD_auto_agency_v_not_completed = yes
+				MD_auto_agency_v_slot_available = yes
 			}
 
 			add_to_array = { random_agency_upgrade_to_select = v }
@@ -204,6 +210,16 @@ MD_auto_agency_apply_selected = {
 
 MD_auto_agency_init_country_state = {
 	resize_array = { array = agency_upgrades_completed_and_queued value = 0 size = 25 }
+
+	for_loop_effect = {
+		end = global.agency_upgrades^num
+		value = v
+
+		if = {
+			limit = { NOT = { MD_auto_agency_v_not_completed = yes } }
+			set_variable = { agency_upgrades_completed_and_queued^v = 1 }
+		}
+	}
 
 	if = {
 		limit = { NOT = { has_variable = agency_selected_upgrade } }

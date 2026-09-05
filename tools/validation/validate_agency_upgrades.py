@@ -18,6 +18,9 @@ from validator_common import BaseValidator, Colors, run_validator_main, strip_co
 ON_ACTIONS_FILE = "common/on_actions/MD_auto_agency_on_actions.txt"
 UPGRADES_DIR = "common/intelligence_agency_upgrades"
 SCRIPTED_GUI_FILE = "common/scripted_guis/00_MD_auto_agency_scripted_gui.txt"
+SCRIPTED_TRIGGERS_FILE = (
+    "common/scripted_triggers/00_MD_auto_agency_scripted_triggers.txt"
+)
 LOC_FILE = "localisation/english/MD_auto_agency_l_english.yml"
 
 # global.agency_upgrades^12 = token:MD_auto_agency_12_upgrade_commando_training
@@ -57,6 +60,16 @@ AGENCY_ICON_RE = re.compile(r"icon\s*=\s*\"?(GFX_\w+)\"?")
 UPGRADE_CALL_RE = re.compile(r"upgrade_intelligence_agency\s*=\s*(upgrade_\w+)")
 
 GFX_NAME_RE = re.compile(r'name\s*=\s*"(GFX_\w+)"')
+
+CAN_SELECT_DEF_RE = re.compile(
+    r"^MD_auto_agency_can_select_upgrade_(\d+)_trigger\s*=\s*\{", re.MULTILINE
+)
+V_CAN_SELECT_BLOCK_RE = re.compile(
+    r"^MD_auto_agency_v_can_select\s*=\s*\{(.*?)^\}", re.MULTILINE | re.DOTALL
+)
+CAN_SELECT_CALL_RE = re.compile(
+    r"MD_auto_agency_can_select_upgrade_(\d+)_trigger\s*=\s*yes"
+)
 
 
 def _read(path: Path) -> str:
@@ -450,6 +463,63 @@ class Validator(BaseValidator):
             category="agency-upgrades-prereqs",
         )
 
+    def _validate_can_select_dispatch(self) -> None:
+        self._log_section("Checking can_select trigger definitions and dispatch...")
+
+        text = strip_comments(_read(Path(self.mod_path) / SCRIPTED_TRIGGERS_FILE))
+        if not text:
+            self.log(
+                f"{Colors.YELLOW if self.use_colors else ''}Missing {SCRIPTED_TRIGGERS_FILE} — skipping{Colors.ENDC if self.use_colors else ''}",
+                "warning",
+            )
+            return
+
+        results: List[str] = []
+        registered = set(self.registered_upgrades)
+        defined = {int(i) for i in CAN_SELECT_DEF_RE.findall(text)}
+
+        block_match = V_CAN_SELECT_BLOCK_RE.search(text)
+        if block_match is None:
+            results.append(
+                f"{SCRIPTED_TRIGGERS_FILE}: MD_auto_agency_v_can_select block not found"
+            )
+            dispatched: Set[int] = set()
+        else:
+            dispatched = {
+                int(i) for i in CAN_SELECT_CALL_RE.findall(block_match.group(1))
+            }
+
+        for idx in sorted(registered):
+            if idx not in defined:
+                results.append(
+                    f"{SCRIPTED_TRIGGERS_FILE}: index ^{idx} is registered but has no "
+                    f"MD_auto_agency_can_select_upgrade_{idx}_trigger definition"
+                )
+            if block_match is not None and idx not in dispatched:
+                results.append(
+                    f"{SCRIPTED_TRIGGERS_FILE}: index ^{idx} is registered but has no "
+                    f"MD_auto_agency_can_select_upgrade_{idx}_trigger = yes branch in "
+                    f"MD_auto_agency_v_can_select"
+                )
+
+        for idx in sorted(defined - registered):
+            results.append(
+                f"{SCRIPTED_TRIGGERS_FILE}: MD_auto_agency_can_select_upgrade_{idx}_trigger "
+                f"is defined but index ^{idx} is not registered"
+            )
+        for idx in sorted(dispatched - registered):
+            results.append(
+                f"{SCRIPTED_TRIGGERS_FILE}: MD_auto_agency_v_can_select dispatches index ^{idx} "
+                f"but it is not registered"
+            )
+
+        self._report(
+            results,
+            "✓ All can_select triggers are defined and dispatched",
+            "can_select trigger / dispatch problems:",
+            category="agency-upgrades-can-select",
+        )
+
     def run_validations(self):
         if self.staged_only and not self.staged_files:
             self.log(
@@ -475,6 +545,7 @@ class Validator(BaseValidator):
         self._validate_loc_and_gfx()
         self._validate_array_size()
         self._validate_scripted_gui_prereqs()
+        self._validate_can_select_dispatch()
         self._validate_agency_calls()
 
 
