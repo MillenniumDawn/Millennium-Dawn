@@ -595,7 +595,6 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: fossil_fuels.1.a executed"
 		name = fossil_fuels.1.a
 		ai_chance = { base = 1 }
-		add_opinion_modifier = { target = AST modifier = ast_trade_deal }
 		AST = {
 			add_opinion_modifier = { target = ROOT modifier = ast_trade_deal }
 			country_event = { id = fossil_fuels.3 days = 1 } # Success Notification
@@ -649,8 +648,14 @@ country_event = {
 	picture = GFX_china_ccecc
 	is_triggered_only = yes
 
-	option = { name = fossil_fuels.3.a }
-
+	option = {
+		log = "[GetDateText]: [This.GetName]: fossil_fuels.3.a executed"
+		name = fossil_fuels.3.a 
+		CHI = {
+			add_opinion_modifier = { target = AST modifier = ast_trade_deal }
+		}
+	}
+		
 }
 
 # Standard Failure
@@ -661,7 +666,10 @@ country_event = {
 	picture = GFX_china_ccecc
 	is_triggered_only = yes
 
-	option = { name = fossil_fuels.4.a }
+	option = {
+		log = "[GetDateText]: [This.GetName]: fossil_fuels.4.a executed"
+		name = fossil_fuels.4.a add_political_power = -20 
+	}
 
 }
 
@@ -674,7 +682,7 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-			log = "[GetDateText]: [This.GetName]: fossil_fuels.5.a executed"
+		log = "[GetDateText]: [This.GetName]: fossil_fuels.5.a executed"
 		name = fossil_fuels.5.a
 		add_opinion_modifier = { target = CHI modifier = sino_aus_trade }
 		add_ideas = chinese_export_bonus_ast
@@ -793,7 +801,7 @@ country_event = {
 	picture = GFX_jap_flag
 	is_triggered_only = yes
 
-	option = { name = ast_jap_trade.4.a }
+	option = { name = ast_jap_trade.4.a add_political_power = -5 }
 
 }
 
@@ -1188,7 +1196,7 @@ news_event = {
 	picture = GFX_news_crime_fighting
 	is_triggered_only = yes
 
-	option = { name = governor_general_sacked.1.a }
+	option = { name = governor_general_sacked.1.a add_political_power = 90 }
 
 }
 
@@ -1517,30 +1525,125 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-			log = "[GetDateText]: [This.GetName]: papua_affair.1.a executed"
+		log = "[GetDateText]: [This.GetName]: papua_affair.1.a executed"
 		name = papua_affair.1.a
+		add_political_power = -150
 		PAP = {
-			add_opinion_modifier = {
-				target = AST
-				modifier = attempted_to_patch_things_up
-			}
+			country_event = papua_affair.2
 		}
-		set_temp_variable = { treasury_change = -0.8 }
-		modify_treasury_effect = yes
-		add_political_power = -120
+		ai_chance = {
+			base = 1
+		}
+
 	}
 
 	option = {
-			log = "[GetDateText]: [This.GetName]: papua_affair.1.b executed"
+		log = "[GetDateText]: [This.GetName]: papua_affair.1.b executed"
 		name = papua_affair.1.b
+		add_political_power = 50
 		PAP = {
 			add_opinion_modifier = {
 				target = AST
-				modifier = hostile_to_our_tradition
+				modifier = insult
 			}
+		}
+		ai_chance = {
+			base = 0
 		}
 	}
 
+}
+
+country_event = {
+	id = papua_affair.2
+	title = papua_affair.2.t
+	desc = papua_affair.2.d
+	picture = GFX_papua_aus
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: papua_affair.2.a executed"
+		name = papua_affair.2.a
+		add_ideas = australian_rubber_pact_ast
+		capital_scope = {
+			add_resource = {
+				type = rubber
+				amount = 6
+			}
+		}
+		set_temp_variable = { temp_opinion = 15 }
+		change_landowners_opinion = yes
+		newline = yes
+		AST = {
+			country_event = { id = papua_affair.3 days = 1 }
+		}
+		ai_chance = {
+			base = 80
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: papua_affair.2.b executed"
+		name = papua_affair.2.b
+		set_temp_variable = { temp_opinion = -5 }
+		change_landowners_opinion = yes
+		set_temp_variable = { percent_change = 5 }
+		change_domestic_influence_percentage = yes
+		newline = yes
+		AST = {
+			add_opinion_modifier = {
+				target = PAP
+				modifier = refused_trade_deal
+			}
+			country_event = { id = papua_affair.4 days = 1 }
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+
+}
+
+#png accepts
+country_event = {
+	id = papua_affair.3
+	title = papua_affair.3.t
+	desc = papua_affair.3.d
+	picture = GFX_papua_aus
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: papua_affair.3.a executed"
+		name = papua_affair.3.a
+		add_ideas = png_rubber_pact_ast
+		newline = yes
+		set_temp_variable = { percent_change = 8 }
+		set_temp_variable = { tag_index = AST }
+		set_temp_variable = { influence_target = PAP }
+		change_influence_percentage = yes
+		set_temp_variable = { treasury_change = -2.5 }
+		modify_treasury_effect = yes
+	}
+}
+
+#png refuses
+country_event = {
+	id = papua_affair.4
+	title = papua_affair.4.t
+	desc = papua_affair.4.d
+	picture = GFX_passenger_plane
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: papua_affair.4.a executed"
+		name = papua_affair.4.a
+		add_timed_idea = {
+			idea = synthetic_investment_ast
+			days = 340
+		}
+		set_temp_variable = { treasury_change = -4.5 }
+		modify_treasury_effect = yes
+	}
 }
 
 add_namespace = ast_howard_of_arabia
@@ -1569,92 +1672,6 @@ country_event = {
 				target = ROOT
 				modifier = isr_walked_back_on_negotiations
 			}
-		}
-	}
-
-}
-
-add_namespace = dissuading_china
-
-country_event = {
-	id = dissuading_china.1
-	title = dissuading_china.1.t
-	desc = dissuading_china.1.d
-	picture = GFX_aus_flag
-	is_triggered_only = yes
-
-	#yes
-	option = {
-			log = "[GetDateText]: [This.GetName]: dissuading_china.1.a executed"
-		name = dissuading_china.1.a
-		AST = {
-			country_event = { id = dissuading_china.2 days = 3 }
-		}
-		ai_chance = {
-			base = 10
-			modifier = {
-				has_opinion = {
-					target = AST
-					value > 0
-				}
-				add = 80
-			}
-		}
-	}
-
-	#no
-	option = {
-			log = "[GetDateText]: [This.GetName]: dissuading_china.1.b executed"
-		name = dissuading_china.1.b
-		AST = {
-			country_event = { id = dissuading_china.3 days = 3 }
-		}
-		ai_chance = {
-			base = 10
-			modifier = {
-				has_opinion = {
-					target = AST
-					value < 0
-				}
-				add = 80
-			}
-		}
-	}
-
-}
-
-country_event = {
-	id = dissuading_china.2
-	title = dissuading_china.2.t
-	desc = dissuading_china.2.d
-	picture = GFX_CHI_china_unite
-	is_triggered_only = yes
-
-	option = {
-			log = "[GetDateText]: [This.GetName]: dissuading_china.2.a executed"
-		name = dissuading_china.2.a
-		diplomatic_relation = {
-			country = CHI
-			relation = non_aggression_pact
-			active = yes
-		}
-	}
-
-}
-
-country_event = {
-	id = dissuading_china.3
-	title = dissuading_china.3.t
-	desc = dissuading_china.3.d
-	picture = GFX_CHI_china_unite
-	is_triggered_only = yes
-
-	option = {
-			log = "[GetDateText]: [This.GetName]: dissuading_china.3.a executed"
-		name = dissuading_china.3.a
-		add_opinion_modifier = {
-			target = CHI
-			modifier = isr_walked_back_on_negotiations
 		}
 	}
 
