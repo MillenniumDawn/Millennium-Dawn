@@ -21,7 +21,7 @@ on_actions = {
 					}
 					add_ideas = ENG_the_dissident_campaign_hidden_idea
 				}
-				
+
 				ENG_var_cap = yes
 			}
 			if = {
@@ -153,60 +153,95 @@ on_actions = {
 				}
 			}
 
-			# Dependency is low, nationalism is high. Referendum?
-
+			# A constituent that leans on Westminster calms down; one that no longer needs it does not
 			if = {
 				limit = {
 					NOT = {	has_country_flag = ENG_devolution_purged }
-					OR = {
-						check_variable = {
-							ENG_scottish_dependency < 20
-						}
-						check_variable = {
-							ENG_scottish_nationalists > 65
-						}
-					}
+					NOT = { country_exists = SCO }
 				}
-				random = {
-					chance = 50
-					country_event = devolution.5
+				if = {
+					limit = { check_variable = { ENG_scottish_dependency > 79 } }
+					add_to_variable = { var = ENG_scottish_agitation value = -0.25 }
+				}
+				else_if = {
+					limit = { check_variable = { ENG_scottish_dependency > 39 } }
+					add_to_variable = { var = ENG_scottish_agitation value = -0.1 }
+				}
+				else_if = {
+					limit = { check_variable = { ENG_scottish_dependency < 20 } }
+					add_to_variable = { var = ENG_scottish_agitation value = 0.25 }
 				}
 			}
 
 			if = {
 				limit = {
 					NOT = {	has_country_flag = ENG_devolution_purged }
-					OR = {
-						check_variable = {
-							ENG_north_irish_dependency < 20
-						}
-						check_variable = {
-							ENG_north_irish_nationalists > 65
-						}
-					}
+					NOT = { country_exists = NIR }
 				}
-				random = {
-					chance = 50
-					country_event = devolution.6
+				if = {
+					limit = { check_variable = { ENG_north_irish_dependency > 79 } }
+					add_to_variable = { var = ENG_north_irish_agitation value = -0.25 }
+				}
+				else_if = {
+					limit = { check_variable = { ENG_north_irish_dependency > 39 } }
+					add_to_variable = { var = ENG_north_irish_agitation value = -0.1 }
+				}
+				else_if = {
+					limit = { check_variable = { ENG_north_irish_dependency < 20 } }
+					add_to_variable = { var = ENG_north_irish_agitation value = 0.25 }
 				}
 			}
 
 			if = {
 				limit = {
 					NOT = {	has_country_flag = ENG_devolution_purged }
-					OR = {
-						check_variable = {
-							ENG_wales_nationalists > 65
-						}
-						check_variable = {
-							ENG_wales_dependency < 20
-						}
-					}
+					NOT = { country_exists = WAS }
 				}
-				random = {
-					chance = 50
-					country_event = devolution.7
+				if = {
+					limit = { check_variable = { ENG_wales_dependency > 79 } }
+					add_to_variable = { var = ENG_wales_agitation value = -0.25 }
 				}
+				else_if = {
+					limit = { check_variable = { ENG_wales_dependency > 39 } }
+					add_to_variable = { var = ENG_wales_agitation value = -0.1 }
+				}
+				else_if = {
+					limit = { check_variable = { ENG_wales_dependency < 20 } }
+					add_to_variable = { var = ENG_wales_agitation value = 0.25 }
+				}
+			}
+
+			ENG_var_cap = yes
+
+			# Standing subsidies: re-arm anything whose own timeout did not renew it
+			if = {
+				limit = {
+					has_country_flag = ENG_auto_subsidy_SCO
+					NOT = { country_exists = SCO }
+					NOT = { has_decision = ENG_appease_scotland }
+					check_variable = { ENG_scottish_agitation > 9 }
+				}
+				activate_decision = ENG_appease_scotland
+			}
+
+			if = {
+				limit = {
+					has_country_flag = ENG_auto_subsidy_NIR
+					NOT = { country_exists = NIR }
+					NOT = { has_decision = ENG_appease_nireland }
+					check_variable = { ENG_north_irish_agitation > 9 }
+				}
+				activate_decision = ENG_appease_nireland
+			}
+
+			if = {
+				limit = {
+					has_country_flag = ENG_auto_subsidy_WAS
+					NOT = { country_exists = WAS }
+					NOT = { has_decision = ENG_appease_wales }
+					check_variable = { ENG_wales_agitation > 9 }
+				}
+				activate_decision = ENG_appease_wales
 			}
 
 			if = {
