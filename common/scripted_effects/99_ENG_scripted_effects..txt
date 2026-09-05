@@ -139,20 +139,79 @@ ENG_advance_moon_base = {
 # English seats: (Take Party Popularity variable) (if minor -, if major +) ( random variable selected from range of 0-10)
 # (Take Party Popularity of Labour,Tories,LibDems,Greens) (then Combine) (then add Nationalist Percentage) (remainder randomly distributed)
 # FUTURE ADDITIONS: Good to get UI to expand to states within England
+# Parameters:
+# - ENG_dependency_change: signed amount
+ENG_change_scottish_dependency = {
+	custom_effect_tooltip = ENG_dependency_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_scottish_dependency = { value = ROOT.ENG_scottish_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
+	}
+}
+
+# Parameters:
+# - ENG_dependency_change: signed amount
+ENG_change_north_irish_dependency = {
+	custom_effect_tooltip = ENG_dependency_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_north_irish_dependency = { value = ROOT.ENG_north_irish_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
+	}
+}
+
+# Parameters:
+# - ENG_dependency_change: signed amount
+ENG_change_wales_dependency = {
+	custom_effect_tooltip = ENG_dependency_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_wales_dependency = { value = ROOT.ENG_wales_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
+	}
+}
+
 ENG_lower_dependence_1 = {
 	custom_effect_tooltip = ENG_lower_dependence_1_TT
-	add_to_variable = { ENG_scottish_dependency = -1 }
-	add_to_variable = { ENG_north_irish_dependency = -1 }
-	add_to_variable = { ENG_wales_dependency = -1 }
+	hidden_effect = {
+		set_temp_variable = { ENG_dependency_change = -1 }
+		ENG_change_scottish_dependency = yes
+		ENG_change_north_irish_dependency = yes
+		ENG_change_wales_dependency = yes
+	}
 }
-# Lower dependence + agitation
-# Increase Dependence
-# Increase Agitation
+
+# Parameters:
+# - ENG_agitation_change: signed amount
+ENG_change_scottish_agitation = {
+	custom_effect_tooltip = ENG_agitation_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_scottish_agitation = { value = ROOT.ENG_scottish_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
+	}
+}
+
+# Parameters:
+# - ENG_agitation_change: signed amount
+ENG_change_north_irish_agitation = {
+	custom_effect_tooltip = ENG_agitation_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_north_irish_agitation = { value = ROOT.ENG_north_irish_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
+		ROOT = { ENG_north_irish_agitation_change_check = yes }
+	}
+}
+
+# Parameters:
+# - ENG_agitation_change: signed amount
+ENG_change_wales_agitation = {
+	custom_effect_tooltip = ENG_agitation_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_wales_agitation = { value = ROOT.ENG_wales_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
+	}
+}
+
 ENG_increase_agitation_2 = {
 	custom_effect_tooltip = ENG_increase_agitation_2_TT
-	add_to_variable = { ENG_scottish_agitation = 2 }
-	add_to_variable = { ENG_north_irish_agitation = 2 }
-	add_to_variable = { ENG_wales_agitation = 2 }
+	hidden_effect = {
+		set_temp_variable = { ENG_agitation_change = 2 }
+		ENG_change_scottish_agitation = yes
+		ENG_change_north_irish_agitation = yes
+		ENG_change_wales_agitation = yes
+	}
 }
 
 ENG_north_irish_agitation_change_check = {
@@ -242,81 +301,20 @@ ENG_north_irish_agitation_change_check = {
 }
 
 
-ENG_var_cap = {
-	if = {
-		limit = { check_variable = { ENG_scottish_agitation > 100 } }
-		set_variable = { ENG_scottish_agitation = 100 }
+# Parameters:
+# - ENG_nationalists_change: signed amount
+ENG_change_north_irish_nationalists = {
+	custom_effect_tooltip = ENG_nationalists_change_tt
+	hidden_effect = {
+		set_variable = { ROOT.ENG_north_irish_nationalists = { value = ROOT.ENG_north_irish_nationalists add = ENG_nationalists_change clamp = { min = 0 max = 100 } } }
 	}
-	if = {
-		limit = { check_variable = { ENG_scottish_dependency > 100 } }
-		set_variable = { ENG_scottish_dependency = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_scottish_nationalists > 100 } }
-		set_variable = { ENG_scottish_nationalists = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_scottish_agitation < 0 } }
-		set_variable = { ENG_scottish_agitation = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_scottish_dependency < 0 } }
-		set_variable = { ENG_scottish_dependency = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_scottish_nationalists < 0 } }
-		set_variable = { ENG_scottish_nationalists = 0 }
-	}
-	# Ireland
-	ENG_north_irish_agitation_change_check = yes
-	if = {
-		limit = { check_variable = { ENG_north_irish_agitation > 100 } }
-		set_variable = { ENG_north_irish_agitation = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_dependency > 100 } }
-		set_variable = { ENG_north_irish_dependency = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_nationalists > 100 } }
-		set_variable = { ENG_north_irish_nationalists = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_agitation < 0 } }
-		set_variable = { ENG_north_irish_agitation = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_dependency < 0 } }
-		set_variable = { ENG_north_irish_dependency = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_north_irish_nationalists < 0 } }
-		set_variable = { ENG_north_irish_nationalists = 0 }
-	}
-	# Wales
-	if = {
-		limit = { check_variable = { ENG_wales_agitation > 100 } }
-		set_variable = { ENG_wales_agitation = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_dependency > 100 } }
-		set_variable = { ENG_wales_dependency = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_nationalists > 100 } }
-		set_variable = { ENG_wales_nationalists = 100 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_agitation < 0 } }
-		set_variable = { ENG_wales_agitation = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_dependency < 0 } }
-		set_variable = { ENG_wales_dependency = 0 }
-	}
-	if = {
-		limit = { check_variable = { ENG_wales_nationalists < 0 } }
-		set_variable = { ENG_wales_nationalists = 0 }
+}
+
+ENG_clamp_nationalists = {
+	hidden_effect = {
+		set_variable = { ROOT.ENG_scottish_nationalists = { value = ROOT.ENG_scottish_nationalists clamp = { min = 0 max = 100 } } }
+		set_variable = { ROOT.ENG_north_irish_nationalists = { value = ROOT.ENG_north_irish_nationalists clamp = { min = 0 max = 100 } } }
+		set_variable = { ROOT.ENG_wales_nationalists = { value = ROOT.ENG_wales_nationalists clamp = { min = 0 max = 100 } } }
 	}
 }
 
