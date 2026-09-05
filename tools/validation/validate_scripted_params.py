@@ -112,7 +112,7 @@ SCOPE_CHANGING_KEYWORDS: Set[str] = {
 _SET_TEMP_RE = re.compile(
     r"\bset_temp_variable\s*=\s*\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([^}]+?)\s*\}",
 )
-_CALL_RE = re.compile(r"\b([a-z][a-z0-9_]*)\s*=\s*yes\b")
+_CALL_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*)\s*=\s*yes\b")
 _KW_OPEN_RE = re.compile(r"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{")
 
 
@@ -257,7 +257,7 @@ def _parse_effect_contracts_from_file(
 
                 # "# set_temp_variable = { param_name = ... }"
                 stv_m = re.search(
-                    r"set_temp_variable\s*=\s*\{\s*([a-z][a-z0-9_]*)\s*=", inner
+                    r"set_temp_variable\s*=\s*\{\s*([A-Za-z][A-Za-z0-9_]*)\s*=", inner
                 )
                 if stv_m:
                     pname = stv_m.group(1)
@@ -269,7 +269,7 @@ def _parse_effect_contracts_from_file(
                     continue
 
                 # "# - param_name: ..." or "# - param_name - ..."
-                plain_m = re.match(r"^[-\*]?\s*([a-z][a-z0-9_]*)\s*[-:]", inner)
+                plain_m = re.match(r"^[-\*]?\s*([A-Za-z][A-Za-z0-9_]*)\s*[-:]", inner)
                 if plain_m:
                     pname = plain_m.group(1)
                     skip_words = {
@@ -301,7 +301,7 @@ def _parse_effect_contracts_from_file(
             while k < len(lines) and not lines[k].strip():
                 k += 1
             if k < len(lines):
-                def_m = re.match(r"^([a-z][a-z0-9_]*)\s*=\s*\{", lines[k].strip())
+                def_m = re.match(r"^([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{", lines[k].strip())
                 if def_m and (params_required or params_optional):
                     eff_name = def_m.group(1)
                     if eff_name not in HARDCODED_CONTRACTS:
