@@ -39,12 +39,10 @@ focus_tree = {
 
 	focus = {
 		id = UKR_ukraine_elections
-		relative_position_id = UKR_our_ukraine_parliamentary_republic
 		icon = ukraine_idelistic
 
-		x = 1
-		y = 2
-		prerequisite = { focus = UKR_our_ukraine_parliamentary_republic focus = UKR_our_ukraine_president_republic }
+		x = 93
+		y = 20
 
 		cost = 0.5
 
@@ -52,6 +50,16 @@ focus_tree = {
 
 		available = { date > 2010.2.1 }
 
+
+		bypass = {
+			date > 2004.10.31
+			NOT = { has_completed_focus = UKR_lyvochkin }
+			NOT = { western_conservatism_are_in_power = yes }
+			OR = {
+				has_country_flag = UKR_orange_2004_resolved
+				date > 2006.1.1
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_ukraine_elections"
@@ -258,6 +266,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_radicalize_without_kuchma"
 			remove_ideas = UKR_without_kuchma_idea
+		
+			hidden_effect = { country_event = { id = ukr_history.4 days = 5 } }
 		}
 
 		ai_will_do = { base = 400 }
@@ -406,6 +416,8 @@ focus_tree = {
 				}
 				remove_ideas = UKR_yushenko_premier_idea
 			}
+		
+			hidden_effect = { country_event = { id = ukr_history.5 days = 3 } }
 		}
 
 		ai_will_do = {
@@ -647,7 +659,7 @@ focus_tree = {
 
 		available = {
 			neutrality_neutral_conservatism_are_in_power = yes
-			date > 2004.10.31
+			date > 2004.8.31
 		}
 
 		completion_reward = {
@@ -686,9 +698,11 @@ focus_tree = {
 
 		prerequisite = { focus = UKR_negotiate_orange_maidan }
 
+		mutually_exclusive = { focus = UKR_stay_for_fair_election }
 		search_filters = { FOCUS_FILTER_UKRAINE_KUCHMA FOCUS_FILTER_POLITICAL }
 
 		available = {
+			date > 2004.8.31
 			date < 2006.1.1
 			NOT = { has_country_flag = UKR_orange_2004_started }
 			NOT = { has_country_flag = UKR_orange_2004_resolved }
@@ -698,13 +712,18 @@ focus_tree = {
 			}
 		}
 
+		bypass = {
+			# already in power - nothing left to negotiate
+			western_conservatism_are_in_power = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_lyvochkin"
 			set_country_flag = UKR_yushenko_party
 			update_party_name = yes
 			if = {
-				limit = { NOT = { check_variable = { ruling_party = 16 } } }
-				set_temp_variable = { rul_party_temp = 16 }
+				limit = { NOT = { check_variable = { ruling_party = 1 } } }
+				set_temp_variable = { rul_party_temp = 1 }
 				set_temp_variable = { disable_elections = 1 }
 				change_ruling_party_effect = yes
 			}
@@ -792,7 +811,7 @@ focus_tree = {
 			NOT = { has_country_flag = UKR_orange_2004_started }
 			NOT = { has_country_flag = UKR_orange_2004_resolved }
 			OR = {
-				emerging_reactionaries_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
 				has_global_flag = UKR_YANUK_PATH
 			}
 		}
@@ -801,7 +820,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_stay_for_fair_election"
 			set_country_flag = UKR_yushenko_party
 			update_party_name = yes
-			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_index = 14 }
 			set_temp_variable = { party_popularity_increase = 0.15 }
 			set_temp_variable = { temp_outlook_increase = 0.15 }
 			change_relative_party_popularity = yes
@@ -813,8 +832,8 @@ focus_tree = {
 				UKR_add_political_tension = yes
 			}
 			if = {
-				limit = { NOT = { check_variable = { ruling_party = 6 } } }
-				set_temp_variable = { rul_party_temp = 6 }
+				limit = { NOT = { check_variable = { ruling_party = 14 } } }
+				set_temp_variable = { rul_party_temp = 14 }
 				set_temp_variable = { disable_elections = 1 }
 				change_ruling_party_effect = yes
 			}
@@ -11463,6 +11482,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_party_regions_taxx"
 			add_ideas = UKR_parti_regions_taxx
+		
+			hidden_effect = { country_event = { id = ukr_history.62 days = 10 } }
 		}
 
 		ai_will_do = { base = 100 }
@@ -11551,6 +11572,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_party_regions_stability_reform"
 			add_ideas = UKR_parti_regions_stability_reform
+		
+			hidden_effect = { country_event = { id = ukr_history.57 days = 3 } }
 		}
 
 		ai_will_do = { base = 100 }
@@ -12407,12 +12430,7 @@ SOV = { country_event = { id = ukraine_regions.7 days = 1 } }
 	#YUSHENKO - OUR UKRAINE
 	focus = {
 		id = UKR_our_ukraine_start
-		icon = {
-			UKR_nasha_ukraina_net_moya = {
-				NOT = { has_country_flag = UKR_zelensky_formed }
-			}
-			UKR_sluga_narodu = yes
-		}
+		icon = UKR_nasha_ukraina_net_moya
 
 		x = 0
 		y = 1
@@ -12437,16 +12455,6 @@ SOV = { country_event = { id = ukraine_regions.7 days = 1 } }
 					}
 				}
 				set_country_flag = UKR_our_ukraine
-				create_country_leader = {
-					name = "Viktor Yushchenko"
-					picture = "gfx/leaders/UKR/Viktor_Yushchenko.dds"
-					expire = "2010.1.1"
-					ideology = Neutral_Libertarian
-					traits = {
-						neutrality_Neutral_Libertarian
-						humble
-					}
-				}
 				hidden_effect = {
 					update_party_name = yes
 				}
@@ -12497,7 +12505,7 @@ SOV = { country_event = { id = ukraine_regions.7 days = 1 } }
 				}
 			}
 			add_dynamic_modifier = { modifier = UKR_liberals_modifier }
-			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = neutrality_drift_tt }
+			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = democratic_drift_tt }
 			add_political_power = 100
 			add_stability = 0.03
 			set_party_index_to_ruling_party = yes
@@ -12511,12 +12519,7 @@ SOV = { country_event = { id = ukraine_regions.7 days = 1 } }
 
 	focus = {
 		id = UKR_our_ukraine_decentralization
-		icon = {
-			UKR_yushenko_party = {
-				NOT = { has_country_flag = UKR_zelensky_formed }
-			}
-			UKR_zelenkiy_party = yes
-		}
+		icon = UKR_yushenko_party
 
 		x = 0
 		y = 1
@@ -12533,7 +12536,7 @@ SOV = { country_event = { id = ukraine_regions.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_decentralization"
 			add_dynamic_modifier = { modifier = UKR_liberals_modifier }
-			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = neutrality_drift_tt }
+			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = democratic_drift_tt }
 			add_to_variable = { UKR_liberals_stability_factor = 0.05 tooltip = stability_factor_tt }
 			add_to_variable = { UKR_liberals_bureaucracy_cost_multiplier_modifier = -0.15 tooltip = bureaucracy_cost_multiplier_modifier_tt }
 			decrease_centralization = yes
@@ -12683,7 +12686,7 @@ SOV = { country_event = { id = ukraine_regions.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_wto"
 			add_popularity = {
-				ideology = neutrality
+				ideology = democratic
 				popularity = 0.15
 			}
 			add_timed_idea = {
@@ -12848,12 +12851,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 
 	focus = {
 		id = UKR_our_ukraine_fire_corrupt
-		icon = {
-			our_ukraine = {
-				NOT = { has_country_flag = UKR_zelensky_formed }
-			}
-			blr_anti_corruption_law = yes
-		}
+		icon = our_ukraine
 
 		x = 2
 		y = 2
@@ -12870,7 +12868,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_fire_corrupt"
 			add_dynamic_modifier = { modifier = UKR_liberals_modifier }
-			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = neutrality_drift_tt }
+			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = democratic_drift_tt }
 			add_to_variable = { UKR_liberals_corruption_cost_factor = -0.1 tooltip = corruption_cost_factor_tt }
 			UKR_idea_kleptocratia_down = yes
 		}
@@ -12899,7 +12897,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_form_new_government"
 			add_dynamic_modifier = { modifier = UKR_liberals_modifier }
-			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = neutrality_drift_tt }
+			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = democratic_drift_tt }
 			add_to_variable = { UKR_liberals_stability_factor = 0.05 tooltip = stability_factor_tt }
 			add_to_variable = { UKR_liberals_corruption_cost_factor = -0.1 tooltip = corruption_cost_factor_tt }
 			set_party_index_to_ruling_party = yes
@@ -12907,6 +12905,8 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 			set_temp_variable = { temp_outlook_increase = 0.03 }
 			change_relative_party_popularity = yes
 			UKR_idea_pro_ukraine_government_reforms = yes
+		
+			hidden_effect = { country_event = { id = ukr_history.30 days = 3 } }
 		}
 
 		ai_will_do = { base = 100 }
@@ -13147,7 +13147,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_provide_housing"
 			add_dynamic_modifier = { modifier = UKR_liberals_modifier }
-			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = neutrality_drift_tt }
+			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = democratic_drift_tt }
 			add_to_variable = { UKR_liberals_stability_factor = 0.05 tooltip = stability_factor_tt }
 			add_to_variable = { UKR_liberals_production_speed_infrastructure_factor = 0.1 tooltip = production_speed_infrastructure_factor_tt }
 			add_timed_idea = { idea = UKR_our_ukraine_social_reform_idea days = 465 }
@@ -13183,7 +13183,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_cost_reduction"
 			add_dynamic_modifier = { modifier = UKR_liberals_modifier }
-			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = neutrality_drift_tt }
+			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = democratic_drift_tt }
 			add_to_variable = { UKR_liberals_stability_factor = 0.05 tooltip = stability_factor_tt }
 			add_to_variable = { UKR_liberals_education_budget_cost_factor = -0.05 tooltip = education_cost_multiplier_modifier_tt }
 			add_to_variable = { UKR_liberals_health_cost_multiplier_modifier = -0.05 tooltip = health_cost_multiplier_modifier_tt }
@@ -13303,7 +13303,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_parliamentary_republic"
 			add_dynamic_modifier = { modifier = UKR_liberals_modifier }
 			add_to_variable = { UKR_liberals_stability_factor = 0.1 tooltip = stability_factor_tt }
-			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = neutrality_drift_tt }
+			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = democratic_drift_tt }
 		}
 
 		ai_will_do = {
@@ -13327,12 +13327,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 
 	focus = {
 		id = UKR_our_ukraine_president_republic
-		icon = {
-			UKR_yushenko_office = {
-				NOT = { has_country_flag = UKR_zelensky_formed }
-			}
-			UKR_zelenskiy_office = yes
-		}
+		icon = UKR_yushenko_office
 
 		x = 1
 		y = 8
@@ -13353,7 +13348,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_president_republic"
 			add_dynamic_modifier = { modifier = UKR_liberals_modifier }
 			add_to_variable = { UKR_liberals_political_power_factor = 0.1 tooltip = political_power_factor_tt }
-			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = neutrality_drift_tt }
+			add_to_variable = { UKR_liberals_democratic_support = 0.02 tooltip = democratic_drift_tt }
 			if = {
 				limit = { check_variable = { UKR.UKR_political_tension > 40 } }
 				add_timed_idea = {
@@ -13684,8 +13679,8 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 			}
 			hidden_effect = {
 				if = {
-					limit = { NOT = { check_variable = { ruling_party = 2 } } }
-					set_temp_variable = { rul_party_temp = 2 }
+					limit = { NOT = { check_variable = { ruling_party = 1 } } }
+					set_temp_variable = { rul_party_temp = 1 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
 				}
