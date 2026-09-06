@@ -36,18 +36,18 @@ Each line maps a game modifier field to a variable name. The variable defaults t
 
 #### When to Write an `enable` Block
 
-Don't, in most cases. `enable` is optional and absent means "always on", which is what the majority of MD's dynamic modifiers want. It is also re-evaluated at runtime rather than once at load, so every trigger inside it is a recurring cost on every country holding the modifier.
+Don't. `enable` is optional and absent means "always on", which is what the majority of MD's dynamic modifiers want. It is also re-evaluated at runtime rather than once at load, so every trigger inside it is a recurring cost on every country holding the modifier. Pair every `add_dynamic_modifier` with a `remove_dynamic_modifier` in whatever effect owns the state instead: that pays the cost once, at the moment the condition flips.
 
-Two shapes are always wrong:
+`validate_modifiers.py` reports every dynamic modifier carrying an `enable` block as `dynamic-modifier-enable-block` (WARNING). It does not gate, so an existing block is not a merge blocker, but a new one is a design decision to justify.
+
+Two shapes are always wrong, and are the harder `redundant-enable-gate` (ERROR):
 
 - `enable = { always = yes }`. That is the default. Delete it.
 - `enable = { original_tag = TAG }`. `add_dynamic_modifier` already picked who gets the modifier, so gating on the same country restates the call site. Worse, `tag = TAG` (rather than `original_tag`) goes false for a civil-war split-off and silently switches the modifier off for them.
 
-Both are flagged by `validate_modifiers.py` (`redundant-enable-gate`). That validator is CI-only, so a bad gate passes `git commit` and turns up as a red PR. Run it yourself before pushing: `python3 tools/validation/validate_modifiers.py --strict`.
+Neither check is in the pre-commit registry, so both pass `git commit` and turn up on the PR. Run the validator yourself before pushing: `python3 tools/validation/validate_modifiers.py --strict`.
 
-Write one only when the condition can go false **while the modifier stays attached**. The internal factions system is the worked example: `initialize_internal_faction_dynamic_modifiers` (`common/scripted_effects/00_internal_faction_effects.txt`) attaches a faction's modifier when the country has the faction idea, but nothing ever calls `remove_dynamic_modifier` for it, and focuses do remove those ideas. `enable = { has_idea = the_military }` is the only thing that turns a lost faction's modifier off. `country_exists = ISR` on the Israeli settlement modifiers is the same pattern: state-attached modifiers that have to stop applying if Israel is annexed.
-
-The alternative is to pair every `add_dynamic_modifier` with a `remove_dynamic_modifier`, which is cheaper at runtime but easier to forget.
+A block is defensible only when the condition can go false **while the modifier stays attached**, and nothing is positioned to remove it at that moment. `TAJ_tajik_drugs` (`99_TAJ_dynamic_modifiers.txt:19`) is the live example: it rides on either SOV or TAJ, and `country_exists = TAJ` plus the subject check have to switch it off on annexation or puppeting, neither of which routes through an effect that could call `remove_dynamic_modifier`. Note that its `OR` over `original_tag` is load-bearing for the same reason, and is not what `redundant-enable-gate` flags.
 
 #### Attach Scope Decides Everything
 
