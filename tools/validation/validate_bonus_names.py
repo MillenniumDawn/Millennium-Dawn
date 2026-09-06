@@ -218,7 +218,12 @@ class Validator(BaseValidator):
         for batch in batches:
             for effect, name, kind, token, accepted, rel, line in batch:
                 where = f" in {kind} '{token}'" if token else ""
-                hint = f" (use name = {accepted[0]})" if accepted else ""
+                # An event id is not itself a loc key; its title key is.
+                hint_name = next(
+                    (a for a in accepted if a in loc_keys),
+                    accepted[0] if accepted else None,
+                )
+                hint = f" (use name = {hint_name})" if hint_name else ""
                 if name is None:
                     results.append(
                         self._issue(

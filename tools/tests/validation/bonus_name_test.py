@@ -295,6 +295,27 @@ def test_validator_warns_on_unlocalised_name(tmp_path):
     assert _categories(v) == ["bonus-name-missing-loc"]
 
 
+def test_hint_names_the_accepted_key_that_resolves(tmp_path):
+    # An event id is not itself a loc key, so hinting it would only repeat the
+    # finding; the hint has to name the title key.
+    content = """add_namespace = test
+
+country_event = {
+	id = test.1
+	is_triggered_only = yes
+	option = {
+		name = test.1.a
+		add_tech_bonus = { name = TAG_typoed_name bonus = 0.5 uses = 1 category = CAT_industry }
+	}
+}
+"""
+    _write(tmp_path, "events/test.txt", content)
+    _write_loc(tmp_path, ["test.1.t"])
+    v = _run_check(tmp_path)
+    assert _categories(v) == ["bonus-name-missing-loc"]
+    assert "(use name = test.1.t)" in v._issues[0].message
+
+
 def test_validator_clean_on_localised_name(tmp_path):
     _write_focus_file(
         tmp_path,
