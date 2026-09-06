@@ -114,9 +114,6 @@ on_actions = {
 					add_to_variable = { global.research_screen_ui = 1 }
 				}
 			}
-			else = {
-				ai_limiter_calculations = yes
-			}
 		}
 	}
 
@@ -207,6 +204,16 @@ on_actions = {
 	#FROM = defending side
 	on_war_relation_added = { # ---> Fires in 2nd place (1st is on_declare_war) -> This one is triggered ALWAYS
 		effect = {
+			ROOT = {
+				if = { limit = { is_ai = yes }
+					ai_division_limiter_refresh = yes
+				}
+			}
+			FROM = {
+				if = { limit = { is_ai = yes }
+					ai_division_limiter_refresh = yes
+				}
+			}
 			if = {
 				limit = {
 					NOT = { is_in_array = { global.un_sc_pressure_end_war = ROOT } }
@@ -220,6 +227,19 @@ on_actions = {
 	#FIRES FOR ALL SIDES
 	on_peaceconference_ended = {
 		effect = {
+			ROOT = {
+				if = {
+					limit = { is_ai = yes has_war = no }
+					ai_division_limiter_refresh = yes
+				}
+			}
+			FROM = {
+				if = {
+					limit = { is_ai = yes has_war = no }
+					ai_division_limiter_refresh = yes
+				}
+			}
+
 			# Remove capitulation ally-call suppression on peace
 			ROOT = {
 				if = {
@@ -1769,8 +1789,6 @@ on_actions = {
 				economic_cycle_drift_popularity = yes #drift from neighbor
 				calculate_expected_spending = yes
 				recalculate_law_desires = yes
-				resource_storage_system_setup = yes
-				counter_terror_nation_startup = yes #sets up the basic CT stuff
 				#Make sure all nations are setup for international systems
 				un_recog_setup_check = yes
 
@@ -1830,6 +1848,11 @@ on_actions = {
 						set_variable = { corporate_tax_rate = 20 }
 						add_ideas = MICROSTATE_fix
 					}
+				}
+
+				if = {
+					limit = { is_ai = yes }
+					ai_division_limiter_refresh = yes
 				}
 
 				# Is Arabic Country
@@ -1906,12 +1929,14 @@ on_actions = {
 						yearly_investment_targets_routine = yes
 					}
 				}
+				rebuild_country_classification_arrays = yes
 			}
 		}
 	}
 
 	on_government_change = {
 		effect = {
+			update_government_classification_arrays = yes
 			update_neighbors_effects = yes
 			recalculate_law_desires = yes
 			add_own_ideology_drift = yes
