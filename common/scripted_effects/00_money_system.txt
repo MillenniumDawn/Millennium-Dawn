@@ -2616,8 +2616,9 @@ calculate_interest_rate = {
 # Effect: update_military_rate
 # Purpose: Computes daily military upkeep: defence-industry cost plus fielded-unit personnel cost
 update_military_rate = {
-	# Recreate the Array
-	resize_array = { array = array_defence_spend size = 10 value = 0 }
+	if = { limit = { is_ai = no }
+		resize_array = { array = array_defence_spend size = 10 value = 0 }
+	}
 
 	#A variable that stores the current military law the player has
 	set_temp_variable = { def_index = { value = military_law subtract = 1 clamp = { min = 0 max = 9 } } }
@@ -2644,18 +2645,21 @@ update_military_rate = {
 	clamp_temp_variable = { var = gdp_defence_modifier_industry min = 1 }
 
 	#Base cost per spending level = (naval + mil factories) * inflation * level ladder / gdp/c modifier * 1.1
-	for_each_loop = {
-		array = array_defence_spend
-		value = v
-		index = i
-		set_variable = {
-			array_defence_spend^i = {
-				value = num_of_naval_factories
-				add = military_factory_total
-				multiply = inflation_multiplier
-				multiply = global.spending_ladder_defence^i
-				divide = gdp_defence_modifier_industry
-				multiply = 1.1 #tweak this to modify industrial cost spending in relations to everything else
+	if = {
+		limit = { is_ai = no }
+		for_each_loop = {
+			array = array_defence_spend
+			value = v
+			index = i
+			set_variable = {
+				array_defence_spend^i = {
+					value = num_of_naval_factories
+					add = military_factory_total
+					multiply = inflation_multiplier
+					multiply = global.spending_ladder_defence^i
+					divide = gdp_defence_modifier_industry
+					multiply = 1.1 #tweak this to modify industrial cost spending in relations to everything else
+				}
 			}
 		}
 	}
@@ -3075,6 +3079,8 @@ update_military_rate = {
 	} }
 
 	# Add missile buildings
+	set_temp_variable = { num_missile_silo = rocket_sites }
+	set_temp_variable = { num_anti_air_building = anti_air_building }
 	multiply_temp_variable = { num_missile_silo = 28 }
 	multiply_temp_variable = { num_anti_air_building = 14 }
 
@@ -3172,7 +3178,7 @@ update_military_rate = {
 	set_temp_variable = { personnel_cost = { value = land_count add = navy_count add = airforce_count } }
 
 	#Values for breakdown tooltips
-	set_variable = { defence_breakdown_industry = { value = array_defence_spend^def_index multiply = 7 } }
+	set_variable = { defence_breakdown_industry = { value = num_of_naval_factories add = military_factory_total multiply = inflation_multiplier multiply = global.spending_ladder_defence^def_index divide = gdp_defence_modifier_industry multiply = 1.1 multiply = 7 } }
 	set_variable = { defence_breakdown_land = { value = land_count multiply = 7 add = equipment_operative_cost } }
 	set_variable = { defence_breakdown_navy = { value = navy_count multiply = 7 } }
 	set_variable = { defence_breakdown_airforce = { value = airforce_count multiply = 7 } }
@@ -3214,23 +3220,46 @@ update_military_rate = {
 	}
 
 	#Add military industry and personnel costs together for the total
-	for_each_loop = {
-		array = array_defence_spend
-		index = i
-		value = v
-		#Industry cost + personnel, over 7 days, plus equipment upkeep
-		set_variable = {
-			array_defence_spend^i = {
-				value = array_defence_spend^i
+	if = {
+		limit = { is_ai = no }
+		for_each_loop = {
+			array = array_defence_spend
+			index = i
+			value = v
+			#Industry cost + personnel, over 7 days, plus equipment upkeep
+			set_variable = {
+				array_defence_spend^i = {
+					value = array_defence_spend^i
+					add = personnel_cost
+					multiply = 7
+					add = equipment_operative_cost
+					clamp = { min = 0 max = @math_expressions_max }
+				}
+			}
+		}
+	}
+
+	if = {
+		limit = { is_ai = yes }
+		set_temp_variable = {
+			ai_defence_total = {
+				value = num_of_naval_factories
+				add = military_factory_total
+				multiply = inflation_multiplier
+				multiply = global.spending_ladder_defence^def_index
+				divide = gdp_defence_modifier_industry
+				multiply = 1.1
 				add = personnel_cost
 				multiply = 7
 				add = equipment_operative_cost
 				clamp = { min = 0 max = @math_expressions_max }
 			}
 		}
+		set_variable = { defence_gain = { value = ai_defence_total add = defence_breakdown_cyber clamp = { min = 0 max = @math_expressions_max } } }
 	}
-
-	set_variable = { defence_gain = { value = array_defence_spend^def_index add = defence_breakdown_cyber clamp = { min = 0 max = @math_expressions_max } } }
+	else = {
+		set_variable = { defence_gain = { value = array_defence_spend^def_index add = defence_breakdown_cyber clamp = { min = 0 max = @math_expressions_max } } }
+	}
 }
 
 # Effect: update_bureaucracy_rate
@@ -4772,6 +4801,29 @@ econ_force_refresh = {
 	}
 }
 
+# Effect: refresh_military_building_totals
+# Purpose: Refreshes missile and anti-air totals for standalone military updates
+refresh_military_building_totals = {
+	set_variable = {
+		rocket_sites = {
+			value = 0
+			every_collection = {
+				named_collection = controlled_states_collection
+				add = building_level@rocket_site
+			}
+		}
+	}
+	set_variable = {
+		anti_air_building = {
+			value = 0
+			every_collection = {
+				named_collection = controlled_states_collection
+				add = building_level@anti_air_building
+			}
+		}
+	}
+}
+
 # Effect: update_state_variables
 # Purpose: Calculates national aggregate variables (consumer goods, military buildings, population state)
 update_state_variables = {
@@ -4789,6 +4841,7 @@ update_state_variables = {
 	hidden_effect = {
 		productivity_growth_country_display_effect = yes
 
+
 		set_temp_variable = {
 			num_missile_silo = {
 				value = 0
@@ -4798,7 +4851,6 @@ update_state_variables = {
 				}
 			}
 		}
-
 		set_temp_variable = {
 			num_anti_air_building = {
 				value = 0
@@ -6664,7 +6716,24 @@ worker_requirements_variable_gdpc_converging = {
 # Effect: calculate_migration_mechanic_values
 # Purpose: Calculates the effects of the migration mechanic.
 calculate_migration_mechanic_values = {
-	# Calculations
+	set_temp_variable = { border_control_index = { value = migration_law subtract = 1 clamp = { min = 0 max = 4 } } }
+	if = {
+		limit = { is_ai = yes }
+		set_variable = {
+			border_control_gain = {
+				value = population_total
+				multiply = { value = 1 add = modifier@border_control_multiplier_modifier }
+				multiply = { value = 1 add = modifier@inflation_cost_multiplier_modifier }
+				multiply = { value = gdp_per_capita multiply = @spending_laws_gdp_scaling add = 1 }
+				multiply = 0.07
+				multiply = 0.004
+				clamp = { min = 0 max = @spending_cost_clamp_max }
+				multiply = global.spending_ladder_standard^border_control_index
+				clamp = { min = 0 max = @math_expressions_max }
+			}
+		}
+	}
+	else = {
 	# Recreate the Array
 	resize_array = { array = array_border_control_spend size = 5 value = 0 }
 
@@ -6701,9 +6770,8 @@ calculate_migration_mechanic_values = {
 	}
 
 	#Set which spending level the country is at
-	set_temp_variable = { border_control_index = { value = migration_law subtract = 1 clamp = { min = 0 max = 4 } } }
-
 	set_variable = { border_control_gain = { value = array_border_control_spend^border_control_index clamp = { min = 0 max = @math_expressions_max } } }
+	}
 
 	# Productivity Calculation
 	set_variable = {
