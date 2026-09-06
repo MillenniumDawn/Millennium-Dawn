@@ -164,6 +164,7 @@ NATO_join_via_event = {
 # Effect: NATO_leave
 # Purpose: Strips NATO membership and tech sharing, transfers faction leadership to another member if ROOT is the leader, tears down the mutual opinion/access web, and fires the departure news event.
 NATO_leave = {
+	set_temp_variable = { faction_goal_refresh_transferred_leader = 0 }
 	if = {
 		limit = { has_idea = NATO_member }
 
@@ -181,10 +182,16 @@ NATO_leave = {
 				}
 				# Transfer faction leadership
 				set_faction_leader = yes
+				save_event_target_as = faction_goal_transferred_leader
+				set_temp_variable = { ROOT.faction_goal_refresh_transferred_leader = 1 }
 			}
 		}
 
 		leave_faction = yes
+		if = {
+			limit = { check_variable = { faction_goal_refresh_transferred_leader = 1 } }
+			hidden_effect = { event_target:faction_goal_transferred_leader = { faction_goal_refresh_all_caches = yes } }
+		}
 
 		for_each_scope_loop = {
 			array = global.nato_members
@@ -262,7 +269,10 @@ NATO_promote_new_leader = {
 	}
 	if = {
 		limit = { country_exists = event_target:new_nato_leader }
-		hidden_effect = { news_event = { id = NATO.20 hours = 6 } }
+		hidden_effect = {
+			event_target:new_nato_leader = { faction_goal_refresh_all_caches = yes }
+			news_event = { id = NATO.20 hours = 6 }
+		}
 	}
 }
 
