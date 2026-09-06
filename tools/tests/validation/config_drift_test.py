@@ -2,19 +2,19 @@
 
 Every validator in `tools/validation/validate_*.py` is wired independently into
 `.pre-commit-config.yaml` (the `md-validate-*` hooks) and into
-`.github/workflows/coding-pipeline.yml` (the `validate-core` /
-`validate-targeted` matrices). Those two lists are hand-maintained and drift: a
+`tools/validation/validator_batches.py` (the coding pipeline's batch jobs and
+the PR-code impact scan). Those two lists are hand-maintained and drift: a
 validator gets added to one and forgotten in the other, or `--strict` is set on
 one side only. These tests fail when that happens, so the gap surfaces at PR
 time instead of as a "passed locally, failed CI" surprise.
 
-The workflow checks below also verify that matrix entries are reachable through
-their parent job condition and that tool-test configuration files trigger the
-workflow that reads them.
+The workflow checks below also verify that every change group a batch validator
+selects on is reachable through the validate-batch job condition and that
+tool-test configuration files trigger the workflow that reads them.
 
 Scope is `tools/validation/validate_*.py` only. The linting scripts in
 `tools/linting/` (check_common_mistakes, fix_styling) are few, stable, and not
-matrix-driven, so they are out of scope here.
+batch-driven, so they are out of scope here.
 
 Intentional exceptions live in the EXEMPT / ALLOWED sets below, each with a
 reason. The guard also checks those sets stay current: an exemption that no
@@ -22,7 +22,9 @@ longer applies (the validator got wired, or deleted) fails the test so the
 stale entry gets removed.
 """
 
+import os
 import re
+import subprocess
 from fnmatch import fnmatch
 
 import pytest
@@ -39,10 +41,15 @@ from validate_oob_units import (
 )
 from validate_scripted_params import _CALLER_PATTERNS
 from validate_staged import VALIDATORS as STAGED_VALIDATORS
+from validator_batches import ALL_SPECS, BATCHES, ValidatorSpec
 
 PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "coding-pipeline.yml"
 TOOLS_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "tools-validation.yml"
+IMPACT_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-impact.yml"
+IMPACT_REPORT_WORKFLOW = (
+    REPO_ROOT / ".github" / "workflows" / "validator-impact-report.yml"
+)
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
 NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
 PR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "pr-cache-cleanup.yml"
@@ -83,19 +90,84 @@ def _sole_checkout(steps: list) -> dict:
     return checkouts[0]
 
 
-# Validators intentionally absent from the CI matrices. Each needs a reason.
+def _tools_scope_script() -> str:
+    workflow = yaml.safe_load(IMPACT_WORKFLOW.read_text(encoding="utf-8"))
+    return next(
+        step["run"]
+        for step in workflow["jobs"]["impact"]["steps"]
+        if step.get("name") == "Compute tools validation scope"
+    )
+
+
+def _run_tools_scope(tmp_path, changed_files: list[str]) -> str:
+    changed = tmp_path / ".changed-files.txt"
+    output = tmp_path / "github-output"
+    with changed.open("w", encoding="utf-8", newline="") as handle:
+        handle.write("".join(f"{path}\n" for path in changed_files))
+    subprocess.run(
+        ["bash", "-euo", "pipefail", "-c", _tools_scope_script()],
+        cwd=tmp_path,
+        env={**os.environ, "GITHUB_OUTPUT": str(output)},
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    values = dict(
+        line.split("=", 1)
+        for line in output.read_text(encoding="utf-8").splitlines()
+        if "=" in line
+    )
+    return values["run"]
+
+
+@pytest.mark.parametrize(
+    ("changed_file", "expected"),
+    [
+        ("docs/README.md", "false"),
+        ("common/national_focus/example.txt", "false"),
+        ("events/example.txt", "false"),
+        ("history/example.txt", "false"),
+        ("localisation/english/example.yml", "false"),
+        ("interface/example.gui", "false"),
+        ("example.mod", "false"),
+        ("tools/validation/validate_tools.py", "true"),
+        ("common/on_actions/example.txt", "true"),
+        ("common/scripted_effects/example.txt", "true"),
+        (".claude/docs/typo-watchlist.md", "true"),
+        ("resources/documentation/modifiers_documentation.md", "true"),
+        (".pre-commit-config.yaml", "true"),
+        ("pyproject.toml", "true"),
+        ("package.json", "true"),
+        ("bun.lock", "true"),
+        (".jscpd.json", "true"),
+        (".github/workflows/coding-pipeline.yml", "true"),
+        (".github/workflows/nightly-pr-validation.yml", "true"),
+        (".github/workflows/pr-cache-cleanup.yml", "true"),
+        (".github/workflows/tools-validation.yml", "true"),
+        (".github/workflows/validator-cache.yml", "true"),
+        (".github/workflows/validator-impact.yml", "true"),
+        (".github/workflows/validator-impact-report.yml", "true"),
+    ],
+)
+def test_tools_scope_matches_former_tools_validation_paths(
+    tmp_path, changed_file, expected
+):
+    assert _run_tools_scope(tmp_path, [changed_file]) == expected
+
+
+# Validators intentionally absent from the CI batches. Each needs a reason.
 CI_EXEMPT = {
     # Runs in the content-checks job, diff-scoped to the changed
     # .txt files (MD_STAGED_FILES from detect-changes' style_files output) so a
     # PR is gated on the style it introduced, not the repo-wide backlog. Can't
-    # join the validate-core/validate-targeted matrices: those run full-repo
-    # with no diff-list injection, which would resurface the whole backlog.
+    # join the validate-batch jobs: those run full-repo with no diff-list
+    # injection, which would resurface the whole backlog.
     "validate_style.py",
     # ~22k pre-existing unreferenced textures plus a slow full-repo scan make
     # this a periodic mod-size audit, not a per-PR gate. Manual hook only.
     "validate_unused_textures.py",
     # Runs in the standalone validate-paths job. It reads path names from the
-    # git index, which the matrix jobs don't have: they restore a content
+    # git index, which the batch jobs don't have: they restore a content
     # bundle that carries no .git and omits map/.
     "validate_file_paths.py",
     # Runs in content-checks because descriptors are root files in the
@@ -157,15 +229,12 @@ def _parse_precommit():
 
 
 def _parse_ci():
-    """Map validate_*.py -> {'strict': bool} from the two validator matrices."""
-    wf = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    result = {}
-    for job in ("validate-core", "validate-targeted"):
-        matrix = wf["jobs"][job]["strategy"]["matrix"]["validator"]
-        for entry in matrix:
-            # CI Run step passes --strict unless `strict: false` is set.
-            result[entry["script"]] = {"strict": bool(entry.get("strict", True))}
-    return result
+    """Map validate_*.py -> {'strict': bool} from the CI batch list."""
+    return {spec.script: {"strict": spec.strict} for spec in ALL_SPECS}
+
+
+def _spec_for(script: str):
+    return next(spec for spec in ALL_SPECS if spec.script == script)
 
 
 def _parse_ci_standalone():
@@ -204,31 +273,56 @@ def _filter_definitions():
     return detect, yaml.safe_load(step["with"]["filters"])
 
 
-def test_should_run_expressions_render_strings():
-    """A matrix `should_run` that does boolean logic must coerce to a string.
+def _dispatch_groups():
+    """The group names the dispatch step forces to 'true'."""
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    detect = workflow["jobs"]["detect-changes"]
+    step = next(step for step in detect["steps"] if step.get("id") == "dispatch")
+    match = re.search(r"for out in (.*?);", step["run"], re.DOTALL)
+    assert match, "dispatch step no longer loops over group names"
+    return set(match.group(1).split())
 
-    The step guard is `if: matrix.validator.should_run == 'true'`. A bare
-    boolean expression (`${{ A == 'true' || B == 'true' }}`) yields boolean
-    true; GitHub coerces `true == 'true'` to `1 == NaN` = false, so every step
-    silently skips and the validator never runs or reports. Any expression
-    using `||`/`==` must end with `&& 'true' || 'false'` to stay a string.
-    """
-    wf = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    offenders = []
-    for job in ("validate-core", "validate-targeted"):
-        for entry in wf["jobs"][job]["strategy"]["matrix"]["validator"]:
-            expr = entry.get("should_run")
-            if not isinstance(expr, str):
-                continue
-            does_logic = "||" in expr or "==" in expr
-            coerces_to_string = "'true'" in expr and "'false'" in expr
-            if does_logic and not coerces_to_string:
-                offenders.append(f"{entry.get('script')}: {expr}")
-    assert not offenders, (
-        "These should_run expressions evaluate to a boolean and fail the "
-        "`== 'true'` step guard (validator silently skips). Wrap as "
-        "`(<expr>) && 'true' || 'false'`:\n" + "\n".join(offenders)
+
+def _reachable_group_outputs():
+    """Every detect-changes output a batch validator may select on.
+
+    Union of the paths-filter keys and the dispatch step's forced list; a
+    group outside it can never be 'true' and the validator would never run."""
+    _, filters = _filter_definitions()
+    return set(filters) | _dispatch_groups()
+
+
+def test_batch_groups_are_reachable_detect_changes_outputs():
+    known = _reachable_group_outputs()
+    offenders = sorted(
+        {group for spec in ALL_SPECS for group in spec.groups if group not in known}
     )
+    assert not offenders, (
+        "Batch validators select on detect-changes outputs that no filter or "
+        f"dispatch entry can set, so they would never run: {offenders}. Add a "
+        "paths-filter entry or a dispatch group, or fix the spec's groups."
+    )
+
+
+def test_validate_batch_job_reaches_every_group_its_validators_use():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["validate-batch"]
+    job_true_outputs = set(
+        re.findall(r"needs\.detect-changes\.outputs\.([\w-]+)\s*==\s*'true'", job["if"])
+    )
+    needed = {group for spec in ALL_SPECS for group in spec.groups}
+    unreachable = sorted(needed - job_true_outputs)
+    assert not unreachable, (
+        "validate-batch's job condition does not reference every changed "
+        f"group its validators select on: {unreachable}. A PR touching only "
+        "those files would skip the batch entirely."
+    )
+
+
+def test_validate_batch_matrix_lists_every_batch():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    matrix = workflow["jobs"]["validate-batch"]["strategy"]["matrix"]["batch"]
+    assert sorted(matrix) == sorted(BATCHES)
 
 
 @pytest.fixture(scope="module")
@@ -254,9 +348,9 @@ def ci_standalone():
 def test_every_disk_validator_runs_on_ci(disk, ci):
     missing = sorted(disk - set(ci) - CI_EXEMPT)
     assert not missing, (
-        "Validators exist on disk but are not in the CI matrices "
-        f"(coding-pipeline.yml): {missing}. Add each to validate-core or "
-        "validate-targeted, or add it to CI_EXEMPT with a reason."
+        "Validators exist on disk but are not in the CI batch list "
+        f"(validator_batches.py): {missing}. Add each to a batch in "
+        "validator_batches.BATCHES, or add it to CI_EXEMPT with a reason."
     )
 
 
@@ -271,7 +365,7 @@ def test_every_disk_validator_runs_somewhere(disk, precommit, ci, ci_standalone)
     )
     assert not orphaned, (
         f"Validators run neither on pre-commit nor in CI: {orphaned}. Wire each "
-        "into .pre-commit-config.yaml or the CI matrix, or add to "
+        "into .pre-commit-config.yaml or the CI batch list, or add to "
         "PRECOMMIT_EXEMPT with a reason."
     )
 
@@ -339,70 +433,40 @@ def test_strict_mismatch_allowlist_is_current(disk, precommit, ci):
     )
 
 
-def test_targeted_parent_reaches_every_matrix_entry():
-    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    job = workflow["jobs"]["validate-targeted"]
-    parent = job["if"]
-    matrix = job["strategy"]["matrix"]["validator"]
-    parent_true_outputs = set(
-        re.findall(r"needs\.detect-changes\.outputs\.([\w-]+)\s*==\s*'true'", parent)
-    )
-    invalid = {}
-    for entry in matrix:
-        expression = entry.get("should_run", "")
-        outputs = set(
-            re.findall(r"needs\.detect-changes\.outputs\.([\w-]+)", expression)
-        )
-        unreachable = outputs - parent_true_outputs
-        if not expression.strip() or not outputs or unreachable:
-            invalid[entry["script"]] = {
-                "expression": expression,
-                "unreachable": sorted(unreachable),
-            }
-    assert not invalid, (
-        "validate-targeted entries need a nonempty should_run expression using "
-        f"reachable detect-changes outputs: {invalid}"
+def test_dispatch_forces_every_batch_group():
+    # Dispatch runs have no diff; detect-changes must force every group a
+    # batch validator selects on to 'true' so a dispatch scans everything.
+    forced = _dispatch_groups()
+    missing = sorted({group for spec in ALL_SPECS for group in spec.groups} - forced)
+    assert not missing, (
+        f"The dispatch step does not force {missing}, so dispatched runs "
+        "silently skip those validators."
     )
 
 
-def test_validator_cache_runs_suite_once_and_reuses_results():
+def test_validator_cache_build_and_baseline_share_one_job():
     workflow = VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
     assert workflow.count("python3 tools/validation/run_all_validators.py") == 1
     assert "--persist-results .validation_baseline_candidate" in workflow
-    assert "Upload validation result candidate" in workflow
-    assert "Download validation result candidate" in workflow
+    assert "actions/upload-artifact" not in workflow
+    assert "actions/download-artifact" not in workflow
     config = yaml.safe_load(workflow)
-    upload = next(
-        step
-        for step in config["jobs"]["build-cache"]["steps"]
-        if step.get("name") == "Upload validation result candidate"
-    )
-    download = next(
-        step
-        for step in config["jobs"]["check-baseline"]["steps"]
-        if step.get("name") == "Download validation result candidate"
-    )
-    assert upload["with"]["path"] == ".validation_baseline_candidate/"
-    assert upload["with"]["include-hidden-files"] is True
-    assert download["with"]["path"] == ".validation_baseline_candidate/"
+    assert set(config["jobs"]) == {"build-cache"}
+    steps = config["jobs"]["build-cache"]["steps"]
+    checkouts = [
+        step for step in steps if step.get("uses", "").startswith("actions/checkout@")
+    ]
+    assert len(checkouts) == 1
+    assert checkouts[0]["with"]["persist-credentials"] is False
     verify = next(
         step
-        for step in config["jobs"]["check-baseline"]["steps"]
+        for step in steps
         if step.get("name") == "Verify validation result candidate completion"
     )
     assert verify["run"] == "test -f .validation_baseline_candidate/.persist-complete"
     assert "--current .validation_baseline_candidate" in workflow
-    for job in config["jobs"].values():
-        checkout = next(
-            step
-            for step in job["steps"]
-            if step.get("uses", "").startswith("actions/checkout@")
-        )
-        assert checkout["with"]["persist-credentials"] is False
     baseline_diff = next(
-        step
-        for step in config["jobs"]["check-baseline"]["steps"]
-        if step.get("name") == "Diff against previous baseline"
+        step for step in steps if step.get("name") == "Diff against previous baseline"
     )
     assert baseline_diff["env"]["TOOLSHASH"] == "${{ steps.toolshash.outputs.hash }}"
     assert '--toolshash "$TOOLSHASH"' in baseline_diff["run"]
@@ -446,17 +510,8 @@ def test_validator_cache_restore_is_source_hash_scoped():
 
 
 def test_mio_validator_runs_for_localisation_changes():
-    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    entry = next(
-        entry
-        for entry in workflow["jobs"]["validate-targeted"]["strategy"]["matrix"][
-            "validator"
-        ]
-        if entry["script"] == "validate_mios.py"
-    )
-    expression = entry["should_run"]
     for output in ("mios", "localisation"):
-        assert f"needs.detect-changes.outputs.{output} == 'true'" in expression
+        assert output in _spec_for("validate_mios.py").groups
 
 
 def test_check_baseline_saves_only_on_clean_diff():
@@ -466,8 +521,7 @@ def test_check_baseline_saves_only_on_clean_diff():
     # regressed results as the new baseline and the alarm self-heals
     # silently.
     config = yaml.safe_load(VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8"))
-    job = config["jobs"]["check-baseline"]
-    assert job["needs"] == ["build-cache"]
+    job = config["jobs"]["build-cache"]
 
     diff = next(step for step in job["steps"] if step.get("id") == "diff")
     assert "tools/baseline_check.py" in diff["run"]
@@ -506,18 +560,25 @@ def test_report_job_wires_baseline_flags():
 
 def test_tools_validation_triggers_for_consumed_configuration():
     paths = _pull_request_paths(TOOLS_WORKFLOW)
-    assert {
+    assert paths == {
+        "tools/**",
+        "common/on_actions/**",
+        "common/scripted_effects/**",
         ".claude/docs/typo-watchlist.md",
         "resources/documentation/modifiers_documentation.md",
         ".pre-commit-config.yaml",
         "pyproject.toml",
-        "common/on_actions/**",
-        "common/scripted_effects/**",
+        "package.json",
+        "bun.lock",
+        ".jscpd.json",
         ".github/workflows/coding-pipeline.yml",
         ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/pr-cache-cleanup.yml",
+        ".github/workflows/tools-validation.yml",
         ".github/workflows/validator-cache.yml",
-    } <= paths
+        ".github/workflows/validator-impact.yml",
+        ".github/workflows/validator-impact-report.yml",
+    }
 
 
 def test_python_quality_checks_are_wired_in_precommit_and_ci():
@@ -536,7 +597,7 @@ def test_python_quality_checks_are_wired_in_precommit_and_ci():
     assert hooks["mypy-tools"]["language"] == "python"
     assert "mypy==2.3.0" in hooks["mypy-tools"]["additional_dependencies"]
 
-    steps = _checks_matrix_steps("lint")
+    steps = _checks_matrix_steps("quality")
     commands = "\n".join(s.get("run", "") for s in steps)
     assert "ruff check tools" in commands
     assert "black --check tools" in commands
@@ -588,17 +649,11 @@ def test_tools_checks_share_one_matrix():
     assert set(jobs) == {"checks"}
     entries = jobs["checks"]["strategy"]["matrix"]["check"]
     by_id = {entry["id"]: entry for entry in entries}
-    assert set(by_id) == {
-        "unit",
-        "unit-macos",
-        "unit-windows",
-        "staged",
-        "lint",
-        "duplication",
-    }
+    assert set(by_id) == {"unit", "unit-macos", "unit-windows", "quality"}
     assert by_id["unit"]["runner"] == "ubuntu-latest"
     assert by_id["unit-macos"]["runner"] == "macos-latest"
     assert by_id["unit-windows"]["runner"] == "windows-latest"
+    assert by_id["quality"]["runner"] == "ubuntu-latest"
 
 
 def test_unit_tests_run_on_all_supported_platforms():
@@ -624,12 +679,17 @@ def test_unit_tests_run_on_all_supported_platforms():
     assert "python_files=*_test.py" in cross_platform["run"]
 
 
-def test_staged_validator_integration_runs_in_isolated_worktree():
-    steps = _checks_matrix_steps("staged")
+def test_impact_job_shares_staged_setup_and_runs_branch_scan_once():
+    workflow = yaml.safe_load(IMPACT_WORKFLOW.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["impact"]
+    steps = job["steps"]
+
     worktree_step = next(
         s for s in steps if s.get("name") == "Create isolated test worktree"
     )
     assert "git worktree add --detach" in worktree_step["run"]
+    assert '"${{ github.sha }}"' in worktree_step["run"]
+    assert "steps.tools-scope.outputs.run == 'true'" in worktree_step["if"]
 
     run_step = next(
         s for s in steps if s.get("name") == "Run staged-validator integration"
@@ -637,46 +697,106 @@ def test_staged_validator_integration_runs_in_isolated_worktree():
     assert run_step["env"]["MD_RUN_STAGED_INTEGRATION"] == "1"
     assert "staged_validators_test.py" in run_step["run"]
     assert "staged_validators_real_test.py" in run_step["run"]
+    assert "steps.dependencies.outcome == 'success'" in run_step["if"]
+    assert "steps.tools-scope.outputs.run == 'true'" in run_step["if"]
+
+    tools_step = next(s for s in steps if s.get("name") == "Run tools validation")
+    assert "always()" in tools_step["if"]
+    assert "steps.dependencies.outcome == 'success'" in tools_step["if"]
+    assert "steps.tools-scope.outputs.run == 'true'" in tools_step["if"]
+    assert "tools/validate_tools.py --strict" in tools_step["run"]
+    upload = next(s for s in steps if s.get("name") == "Upload tools validation report")
+    assert upload["with"]["if-no-files-found"] == "error"
+    assert "steps.tools-scope.outputs.run == 'true'" in upload["if"]
 
     branch_step = next(
         s for s in steps if s.get("name") == "Run branch common-mistakes validation"
     )
-    assert "!cancelled()" in branch_step["if"]
-    assert "steps.staged-deps.outcome == 'success'" in branch_step["if"]
+    assert "always()" in branch_step["if"]
+    assert "steps.dependencies.outcome == 'success'" in branch_step["if"]
+    assert "steps.tools-scope.outputs.run == 'true'" in branch_step["if"]
+    assert "batch-manifest.json" in branch_step["run"]
+    assert branch_step["env"]["MD_NO_CACHE"] == "1"
     assert "validate_common_mistakes.py" in branch_step["run"]
     assert "--strict" in branch_step["run"]
+    scope = next(s for s in steps if s.get("name") == "Compute tools validation scope")
+    assert scope["id"] == "tools-scope"
+    for path in (
+        "tools/**",
+        "common/on_actions/**",
+        "common/scripted_effects/**",
+        ".claude/docs/typo-watchlist.md",
+        "resources/documentation/modifiers_documentation.md",
+        ".pre-commit-config.yaml",
+        "pyproject.toml",
+        "package.json",
+        "bun.lock",
+        ".jscpd.json",
+        ".github/workflows/coding-pipeline.yml",
+        ".github/workflows/nightly-pr-validation.yml",
+        ".github/workflows/pr-cache-cleanup.yml",
+        ".github/workflows/tools-validation.yml",
+        ".github/workflows/validator-cache.yml",
+        ".github/workflows/validator-impact.yml",
+        ".github/workflows/validator-impact-report.yml",
+    ):
+        assert path in scope["run"]
     assert "--staged" not in branch_step["run"]
     assert steps.index(branch_step) > steps.index(run_step)
 
-    tools_step = next(s for s in steps if s.get("name") == "Run tools validation")
-    # Runs even when the staged tests fail, but not on broken setup or cancel.
-    assert "!cancelled()" in tools_step["if"]
-    assert "steps.staged-deps.outcome == 'success'" in tools_step["if"]
-    assert "tools/validate_tools.py --strict" in tools_step["run"]
-    assert steps.index(tools_step) > steps.index(run_step)
+    dependencies = next(s for s in steps if s.get("name") == "Install dependencies")
+    assert dependencies["id"] == "dependencies"
+    assert len([s for s in steps if "actions/checkout@" in s.get("uses", "")]) == 1
 
-    upload = next(s for s in steps if s.get("name") == "Upload tools validation report")
-    assert upload["with"]["if-no-files-found"] == "error"
+    # This job is the only home for staged integration after it moved from the
+    # path-filtered tools matrix.
+    tools_workflow = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))
+    ids = {
+        entry["id"]
+        for entry in tools_workflow["jobs"]["checks"]["strategy"]["matrix"]["check"]
+    }
+    assert "staged" not in ids
 
-    # The integration stages files under these trees; a sparse checkout that
-    # drops one makes every real-file test skip instead of fail.
+
+def test_quality_job_combines_lint_and_duplication_checks():
+    steps = _checks_matrix_steps("quality")
     checkout = _sole_checkout(steps)
-    sparse = checkout.get("with", {}).get("sparse-checkout")
-    if sparse is not None:
-        assert {"events", "common", "localisation", "history", "tools"} <= set(
-            sparse.split()
-        )
-
-
-def test_duplication_check_is_a_matrix_entry():
-    steps = _checks_matrix_steps("duplication")
-    checkout = _sole_checkout(steps)
-    assert {"tools", "package.json", "bun.lock", ".jscpd.json"} <= set(
-        checkout["with"]["sparse-checkout"].split()
-    )
+    assert {
+        "tools",
+        "pyproject.toml",
+        "package.json",
+        "bun.lock",
+        ".jscpd.json",
+    } <= set(checkout["with"]["sparse-checkout"].split())
     commands = "\n".join(step.get("run", "") for step in steps)
+    assert "ruff check tools" in commands
+    assert "black --check tools" in commands
+    assert "pylint tools" in commands
+    assert "mypy" in commands
     assert "bun install --frozen-lockfile" in commands
     assert "bun run jscpd" in commands
+    for name in (
+        "Run ruff",
+        "Check formatting (black)",
+        "Run pylint",
+        "Run mypy",
+    ):
+        condition = next(step for step in steps if step.get("name") == name)["if"]
+        assert "always()" in condition
+        assert "!cancelled()" in condition
+        assert "steps.quality-deps.outcome == 'success'" in condition
+
+    bun = next(step for step in steps if step.get("name") == "Setup Bun")
+    assert "always()" in bun["if"]
+    assert "!cancelled()" in bun["if"]
+    assert "steps.quality-checkout.outcome == 'success'" in bun["if"]
+    assert "steps.quality-deps.outcome" not in bun["if"]
+    bun_deps = next(
+        step for step in steps if step.get("name") == "Install duplication dependencies"
+    )
+    assert "steps.bun.outcome == 'success'" in bun_deps["if"]
+    jscpd = next(step for step in steps if step.get("name") == "Run jscpd")
+    assert "steps.bun-deps.outcome == 'success'" in jscpd["if"]
 
 
 def test_tools_tests_checkout_consumed_configuration():
@@ -696,6 +816,8 @@ def test_tools_tests_checkout_consumed_configuration():
         ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/pr-cache-cleanup.yml",
         ".github/workflows/tools-validation.yml",
+        ".github/workflows/validator-impact.yml",
+        ".github/workflows/validator-impact-report.yml",
         "pyproject.toml",
     }
     missing = sorted(required - set(sparse.split()))
@@ -717,47 +839,24 @@ def test_manual_texture_audit_always_runs():
     assert hook.get("pass_filenames") is False
 
 
-def test_ci_run_steps_default_to_strict():
-    # _parse_ci models an omitted `strict:` as --strict. Both Run steps must
-    # agree: keying off `= "true"` instead would silently drop the gate for any
-    # entry added without the field, and this guard could not see it.
-    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    for job in ("validate-core", "validate-targeted"):
-        run = next(
-            step["run"]
-            for step in workflow["jobs"][job]["steps"]
-            if step.get("name") == "Run validation"
-        )
-        assert isinstance(run, str)
-        assert (
-            'matrix.validator.strict }}" != "false"' in run
-        ), f"{job}'s Run step must default to --strict when `strict:` is absent."
+def test_ci_strict_gate_lives_in_the_batch_specs():
+    # The batch runner passes --strict per spec. ValidatorSpec defaults to
+    # strict=True, so a spec added without the field gates — never fail open
+    # by default. The two WARNING-only informational validators are the only
+    # deliberate opt-outs.
+    assert ValidatorSpec("x", "validate_x.py", ("common",)).strict is True
+    informational = sorted(spec.name for spec in ALL_SPECS if not spec.strict)
+    assert informational == ["building-guards", "simplifications"]
 
 
 def test_ci_redundant_modifier_gate_is_strict():
-    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    entry = next(
-        entry
-        for entry in workflow["jobs"]["validate-targeted"]["strategy"]["matrix"][
-            "validator"
-        ]
-        if entry["script"] == "validate_modifiers.py"
-    )
-    assert entry.get("strict") is True
+    assert _spec_for("validate_modifiers.py").strict is True
 
 
 def test_ci_idea_icon_check_is_enabled():
-    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    entry = next(
-        entry
-        for entry in workflow["jobs"]["validate-core"]["strategy"]["matrix"][
-            "validator"
-        ]
-        if entry["script"] == "validate_ideas.py"
-    )
     # The CI run passes no opt-in flag, so the check has to be default-on in
     # the validator itself — asserting the absent flag proves nothing alone.
-    assert entry.get("args") in (None, "")
+    assert _spec_for("validate_ideas.py").args in ((), None)
 
     validator = IdeaValidator("/nonexistent", use_colors=False, workers=1)
     called = []
@@ -777,6 +876,7 @@ def test_ci_idea_icon_check_is_enabled():
 
     # CI has no HOI4 install, so the check resolves mod sprites from the
     # restored interface/ and vanilla names from the committed manifest.
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     paths = set(workflow["env"]["WORKSPACE_PATHS"].split())
     assert {"interface", "tools"} <= paths
     assert (VALIDATION_DIR / "vanilla_sprites.txt").is_file()
@@ -808,20 +908,13 @@ def test_scripted_param_routes_cover_every_caller_source():
     )
     assert caller_dirs <= set(staged["prefixes"])
 
-    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    entry = next(
-        entry
-        for job in ("validate-core", "validate-targeted")
-        for entry in workflow["jobs"][job]["strategy"]["matrix"]["validator"]
-        if entry["script"] == "validate_scripted_params.py"
-    )
     _, filters = _filter_definitions()
-    expression = entry["should_run"]
+    spec = _spec_for("validate_scripted_params.py")
     for directory in caller_dirs:
         output = directory.rstrip("/").rsplit("/", 1)[-1].replace("_", "-")
         sample = directory + "_scripted_param_probe.txt"
         assert any(fnmatch(sample, pattern) for pattern in filters[output])
-        assert f"needs.detect-changes.outputs.{output} == 'true'" in expression
+        assert output in spec.groups
 
 
 def test_oob_routes_cover_every_create_unit_and_variant_source():
@@ -849,25 +942,15 @@ def test_decision_filter_covers_every_reference_source():
 
 
 def test_gfx_reference_validator_runs_for_all_reference_sources():
-    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    entry = next(
-        entry
-        for entry in workflow["jobs"]["validate-targeted"]["strategy"]["matrix"][
-            "validator"
-        ]
-        if entry["script"] == "validate_gfx_references.py"
+    assert {"interface", "common", "events", "history", "localisation"} <= set(
+        _spec_for("validate_gfx_references.py").groups
     )
-    expression = entry["should_run"]
-    for output in ("interface", "common", "events", "history", "localisation"):
-        assert f"needs.detect-changes.outputs.{output} == 'true'" in expression
 
 
 def test_scripted_localisation_core_runs_for_interface_changes():
-    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    core = workflow["jobs"]["validate-core"]
-    assert "needs.detect-changes.outputs.interface == 'true'" in core["if"]
-    scripts = {entry["script"] for entry in core["strategy"]["matrix"]["validator"]}
-    assert "validate_scripted_localisation.py" in scripts
+    # The scripted-localisation validator selects on the core group union,
+    # which is where interface changes reach it.
+    assert "interface" in _spec_for("validate_scripted_localisation.py").groups
 
 
 def test_pr_target_pipeline_runs_for_conflicted_and_clean_prs():
@@ -906,6 +989,8 @@ def test_validation_checkout_uses_the_live_pr_head():
     assert 'head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"' in script
     assert 'head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"' in script
     assert 'base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"' in script
+    assert 'requested_head_sha="$INPUT_HEAD_SHA"' in script
+    assert "The PR head changed before validation was dispatched" in script
     assert 'echo "repository=$head_repository"' in script
     assert 'echo "ref=$head_sha"' in script
     assert 'echo "head-sha=$head_sha"' in script
@@ -914,7 +999,11 @@ def test_validation_checkout_uses_the_live_pr_head():
     assert detect["outputs"]["base-sha"] == "${{ steps.resolve-ref.outputs.base-sha }}"
     assert detect["outputs"]["checkout-ref"] == "${{ steps.resolve-ref.outputs.ref }}"
     trigger = _workflow_trigger(CI_WORKFLOW)
-    assert trigger["workflow_dispatch"]["inputs"]["pr_number"]["required"] is False
+    inputs = trigger["workflow_dispatch"]["inputs"]
+    assert inputs["pr_number"]["required"] is False
+    assert inputs["head_sha"]["type"] == "string"
+    assert "inputs.head_sha" in workflow["run-name"]
+    assert "inputs.base_sha" in workflow["run-name"]
 
     for job_name in ("prepare-workspace", "validate-paths"):
         job = workflow["jobs"][job_name]
@@ -1040,11 +1129,14 @@ def test_prepare_workspace_uses_trusted_tools_and_run_artifact():
     assert "../trusted/tools/validation/validate_file_paths.py" in run["run"]
 
 
-def test_nightly_dispatches_every_open_pr_from_trusted_main():
+def test_nightly_skips_only_exact_successful_head_base_pairs():
     config = yaml.safe_load(NIGHTLY_WORKFLOW.read_text(encoding="utf-8"))
     job = config["jobs"]["revalidate-open-prs"]
     assert config["permissions"]["pull-requests"] == "read"
     assert job["env"]["GH_REPO"] == "${{ github.repository }}"
+    force = _workflow_trigger(NIGHTLY_WORKFLOW)["workflow_dispatch"]["inputs"]["force"]
+    assert force["type"] == "boolean"
+    assert force["default"] is True
     step = next(
         step for step in job["steps"] if "gh workflow run" in step.get("run", "")
     )
@@ -1055,8 +1147,15 @@ def test_nightly_dispatches_every_open_pr_from_trusted_main():
     assert "commits/main" in script
     assert "--paginate" in script
     assert "state=open&base=main" in script
+    assert "display_title" in script
+    assert 'status == "completed"' in script
+    assert 'conclusion == "success"' in script
+    assert "head=$head_sha" in script
+    assert "base=$base_sha" in script
+    assert "grep -Fqx" in script
     assert "--ref main" in script
     assert '-f pr_number="$num"' in script
+    assert '-f head_sha="$head_sha"' in script
     assert '-f base_sha="$base_sha"' in script
     assert "refs/pull/" not in script
     assert "merge ref" not in script
@@ -1085,14 +1184,6 @@ def test_validation_jobs_require_complete_report_files():
             "validation-common-mistakes.log",
             "validation-common-mistakes.json",
         },
-        "validate-core": {
-            "validation-${{ matrix.validator.name }}.log",
-            "validation-${{ matrix.validator.name }}.json",
-        },
-        "validate-targeted": {
-            "validation-${{ matrix.validator.name }}.log",
-            "validation-${{ matrix.validator.name }}.json",
-        },
         "validate-paths": {
             "pr-tree/validation-file-paths.log",
             "pr-tree/validation-file-paths.json",
@@ -1113,6 +1204,251 @@ def test_validation_jobs_require_complete_report_files():
         assert all(
             upload["with"].get("if-no-files-found") == "error" for upload in uploads
         )
+
+
+def test_batch_jobs_upload_complete_result_sets():
+    # Per-validator log + sidecar verification moved inside
+    # run_validator_batch.py (a crash or missing file fails the batch), so
+    # the workflow side only has to ship what the runner produced and never
+    # mask an empty batch with a successful upload.
+    jobs = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))["jobs"]
+    job = jobs["validate-batch"]
+    uploads = [
+        step
+        for step in job["steps"]
+        if step.get("uses", "").startswith("actions/upload-artifact@")
+    ]
+    assert len(uploads) == 1
+    upload = uploads[0]
+    assert upload["with"]["name"] == "validation-batch-${{ matrix.batch }}-results"
+    assert upload["with"]["path"] == "batch-results"
+    assert upload["with"]["if-no-files-found"] == "error"
+    assert "hashFiles('batch-results/**') != ''" in upload["if"]
+    run = next(
+        step["run"]
+        for step in job["steps"]
+        if step.get("name") == "Run validator batch"
+    )
+    assert "run_validator_batch.py" in run
+    assert "--changed-groups" in run
+
+
+def test_pr_code_impact_scan_wiring():
+    # The impact scan runs PR-owned validator code unprivileged: no cache
+    # restore or save (a cache written under PR execution would poison the
+    # shared cache), no PR comment or Checks API access, and results shipped
+    # as data-only artifacts. Changed files come from the pinned base/head
+    # git diff, not the 3000-file PR files API.
+    workflow = yaml.safe_load(IMPACT_WORKFLOW.read_text(encoding="utf-8"))
+    trigger = _workflow_trigger(IMPACT_WORKFLOW)
+    assert set(trigger["pull_request"]["types"]) == {
+        "opened",
+        "synchronize",
+        "reopened",
+        "ready_for_review",
+    }
+    assert workflow["permissions"] == {"contents": "read"}
+    assert workflow["concurrency"]["cancel-in-progress"] is True
+    assert "pull_request.number" in workflow["concurrency"]["group"]
+    job = workflow["jobs"]["impact"]
+
+    checkout = next(
+        step
+        for step in job["steps"]
+        if step.get("uses", "").startswith("actions/checkout@")
+    )
+    assert checkout["with"]["persist-credentials"] is False
+
+    fetch = next(
+        step["run"]
+        for step in job["steps"]
+        if step.get("name") == "Fetch PR base revision"
+    )
+    assert '"${{ github.sha }}"' in fetch
+
+    verify = next(
+        step["run"]
+        for step in job["steps"]
+        if step.get("name") == "Verify pinned revisions"
+    )
+    assert "base.sha" in verify
+    assert "head.sha" in verify
+    assert '"${{ github.sha }}^1"' in verify
+    assert '"${{ github.sha }}^2"' in verify
+
+    diff = next(
+        step["run"]
+        for step in job["steps"]
+        if step.get("name") == "Derive changed files from the pinned diff"
+    )
+    assert "--name-status" in diff
+    assert "merge-base" in diff
+    assert "collect_changed_files.py" in diff
+    assert "pulls/" not in diff and "api" not in diff
+    assert "Checkout PR head revision" in IMPACT_WORKFLOW.read_text(encoding="utf-8")
+    assert "continue-on-error" not in IMPACT_WORKFLOW.read_text(encoding="utf-8")
+    assert "conflicted PR" not in IMPACT_WORKFLOW.read_text(encoding="utf-8")
+
+    run = next(
+        step["run"]
+        for step in job["steps"]
+        if "run_validator_batch.py" in (step.get("run") or "")
+    )
+    assert "--impact" in run
+    assert "--changed-files-file" in run
+    scan_step = next(
+        step
+        for step in job["steps"]
+        if "run_validator_batch.py" in (step.get("run") or "")
+    )
+    assert "steps.tools-scope" not in scan_step["if"]
+
+    cache_steps = [
+        step for step in job["steps"] if "actions/cache" in step.get("uses", "")
+    ]
+    assert cache_steps == []
+
+    dependencies = next(
+        step for step in job["steps"] if step.get("name") == "Install dependencies"
+    )
+    assert dependencies["id"] == "dependencies"
+    staged = next(
+        step
+        for step in job["steps"]
+        if step.get("name") == "Run staged-validator integration"
+    )
+    assert "staged_validators_test.py" in staged["run"]
+    assert "staged_validators_real_test.py" in staged["run"]
+
+    scan = next(
+        step
+        for step in job["steps"]
+        if (step.get("name") or "").startswith("Run changed validators")
+    )
+    assert scan["env"]["MD_NO_CACHE"] == "1"
+
+    uploads = [
+        step
+        for step in job["steps"]
+        if step.get("uses", "").startswith("actions/upload-artifact@")
+    ]
+    assert len(uploads) == 2
+    tools_upload = next(
+        step for step in uploads if step["with"]["path"] == "tools_validation.log"
+    )
+    assert tools_upload["with"]["if-no-files-found"] == "error"
+    impact_upload = next(
+        step for step in uploads if step["with"]["path"] == "validator-impact"
+    )
+    assert impact_upload["with"]["if-no-files-found"] == "error"
+    assert "hashFiles('validator-impact/**') != ''" in impact_upload["if"]
+
+
+def test_impact_base_fetch_has_full_history(tmp_path):
+    workflow = yaml.safe_load(IMPACT_WORKFLOW.read_text(encoding="utf-8"))
+    run = next(
+        step["run"]
+        for step in workflow["jobs"]["impact"]["steps"]
+        if step.get("name") == "Fetch PR base revision"
+    )
+    fetch_line = next(
+        line.strip()
+        for line in run.splitlines()
+        if line.strip().startswith("git fetch")
+    )
+    assert "--depth" not in fetch_line
+
+    def git(repo, *args):
+        return subprocess.run(
+            ["git", *args], cwd=repo, check=True, capture_output=True, text=True
+        ).stdout.strip()
+
+    source = tmp_path / "source"
+    source.mkdir()
+    git(source, "init", "-b", "main")
+    git(source, "config", "user.name", "Test")
+    git(source, "config", "user.email", "test@example.com")
+    (source / "state").write_text("root\n", encoding="utf-8")
+    git(source, "add", "state")
+    git(source, "commit", "-m", "root")
+    (source / "state").write_text("old base\n", encoding="utf-8")
+    git(source, "commit", "-am", "old base")
+    old_base = git(source, "rev-parse", "HEAD")
+
+    upstream = tmp_path / "upstream.git"
+    git(tmp_path, "clone", "--bare", str(source), str(upstream))
+    git(source, "checkout", "-b", "feature")
+    (source / "state").write_text("feature\n", encoding="utf-8")
+    git(source, "commit", "-am", "feature")
+    head = git(source, "rev-parse", "HEAD")
+    fork = tmp_path / "fork.git"
+    git(tmp_path, "clone", "--bare", str(source), str(fork))
+    git(source, "checkout", "main")
+    (source / "state").write_text("new base\n", encoding="utf-8")
+    git(source, "commit", "-am", "new base")
+    base = git(source, "rev-parse", "HEAD")
+    git(source, "push", str(upstream), "main")
+
+    checkout = tmp_path / "checkout"
+    git(tmp_path, "clone", str(fork), str(checkout))
+    git(checkout, "checkout", "feature")
+    options = [option for option in fetch_line.split()[2:] if option != "\\"]
+    git(checkout, "fetch", *options, str(upstream), base)
+    assert git(checkout, "merge-base", base, head) == old_base
+
+    shallow = tmp_path / "shallow"
+    git(tmp_path, "clone", str(fork), str(shallow))
+    git(shallow, "checkout", "feature")
+    git(shallow, "fetch", "--no-tags", "--depth=1", str(upstream), base)
+    merge_base = subprocess.run(
+        ["git", "merge-base", base, head],
+        cwd=shallow,
+        capture_output=True,
+        text=True,
+    )
+    assert merge_base.returncode != 0
+
+
+def test_impact_report_bridge_wiring():
+    # The reporter is the privileged half: workflow_run from the default
+    # branch, base-owned tooling, read-only on PR content.
+    workflow = yaml.safe_load(IMPACT_REPORT_WORKFLOW.read_text(encoding="utf-8"))
+    trigger = _workflow_trigger(IMPACT_REPORT_WORKFLOW)
+    assert trigger["workflow_run"]["workflows"] == ["Validator impact"]
+    assert trigger["workflow_run"]["types"] == ["completed"]
+    assert workflow["permissions"]["pull-requests"] == "write"
+    assert workflow["permissions"]["checks"] == "write"
+    assert workflow["permissions"]["actions"] == "read"
+
+    job = workflow["jobs"]["report"]
+    assert job["if"] == "github.event.workflow_run.event == 'pull_request'"
+
+    report = next(
+        step["run"]
+        for step in job["steps"]
+        if "impact_report.py" in (step.get("run") or "")
+    )
+    assert '--workflow-run-json "$GITHUB_EVENT_PATH"' in report
+    assert "GITHUB_EVENT_PATH" in report
+    assert "toJSON" not in report
+    assert "github.event.workflow_run" not in report
+
+    checkouts = [
+        step
+        for step in job["steps"]
+        if step.get("uses", "").startswith("actions/checkout@")
+    ]
+    assert len(checkouts) == 1
+    assert checkouts[0]["with"]["persist-credentials"] is False
+    # The reporting checkout is the default branch; no PR ref is fetched.
+    assert "ref" not in checkouts[0]["with"]
+
+
+def test_impact_workflows_document_the_bootstrap_caveat():
+    # workflow_run only fires once the report workflow reaches the default
+    # branch, so the pair must not claim live coverage before that.
+    assert "Bootstrap caveat" in IMPACT_WORKFLOW.read_text(encoding="utf-8")
+    assert "Bootstrap caveat" in IMPACT_REPORT_WORKFLOW.read_text(encoding="utf-8")
 
 
 def test_mod_changes_reach_content_checks():

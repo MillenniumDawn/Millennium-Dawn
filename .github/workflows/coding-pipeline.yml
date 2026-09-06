@@ -1,4 +1,9 @@
 name: Code Standards & Validation
+run-name: >-
+  Validate PR #${{ inputs.pr_number || github.event.pull_request.number ||
+  'current' }} head=${{ inputs.head_sha || github.event.pull_request.head.sha ||
+  github.sha }} base=${{ inputs.base_sha || github.event.pull_request.base.sha ||
+  github.sha }}
 
 on:
   # Runs for fork and conflicted PRs with base-owned tooling against PR data.
@@ -9,6 +14,10 @@ on:
     inputs:
       pr_number:
         description: "PR number to validate (omit for the current ref)"
+        required: false
+        type: string
+      head_sha:
+        description: "PR head SHA to validate"
         required: false
         type: string
       base_sha:
@@ -143,9 +152,11 @@ jobs:
           EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_HEAD_SHA: ${{ inputs.head_sha }}
           INPUT_BASE_SHA: ${{ inputs.base_sha }}
         run: |
           pr_number="${INPUT_PR_NUMBER:-$EVENT_PR_NUMBER}"
+          requested_head_sha="$INPUT_HEAD_SHA"
           head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"
           head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"
           base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"
@@ -163,6 +174,11 @@ jobs:
             fi
           fi
           base_sha="${base_sha:-$GITHUB_SHA}"
+          if [ -n "$requested_head_sha" ] &&
+              [ "$head_sha" != "$requested_head_sha" ]; then
+            echo "::error::The PR head changed before validation was dispatched"
+            exit 1
+          fi
           if [ -z "$head_repository" ] || [ -z "$head_sha" ]; then
             echo "::error::Unable to resolve the PR head repository and SHA"
             exit 1
@@ -534,9 +550,9 @@ jobs:
           python3 tools/validation/validate_mod_descriptors.py --strict
           --no-color
 
-  # Core validators for broad content changes.
-  validate-core:
-    name: Validate ${{ matrix.validator.title }}
+  # Batch runner selects validators and writes grouped artifacts.
+  validate-batch:
+    name: Validate (batch ${{ matrix.batch }})
     needs: [detect-changes, prepare-workspace]
     if: >-
       needs.detect-changes.outputs.common == 'true' ||
@@ -544,119 +560,7 @@ jobs:
       needs.detect-changes.outputs.history == 'true' ||
       needs.detect-changes.outputs.localisation == 'true' ||
       needs.detect-changes.outputs.interface == 'true' ||
-      needs.detect-changes.outputs.map-adjacency == 'true'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        validator:
-          - script: validate_common_mistakes.py
-            name: common-mistakes
-            title: "Common Scripting Mistakes"
-            strict: true
-          - script: validate_variables.py
-            name: variables
-            title: "Variables"
-            strict: true
-          - script: validate_scripted_localisation.py
-            name: scripted-localisation
-            title: "Scripted Localisation"
-            strict: true
-          - script: validate_cosmetic_tags.py
-            name: cosmetic-tags
-            title: "Cosmetic Tags"
-            strict: true
-          - script: validate_localisation.py
-            name: localisation
-            title: "Localisation"
-            strict: true
-          - script: validate_events.py
-            name: events
-            title: "Events"
-            strict: true
-          - script: validate_history.py
-            name: history-files
-            title: "History Files"
-            strict: true
-          - script: validate_unused_scripted.py
-            name: unused-scripted
-            title: "Unused Scripted Effects & Triggers"
-            strict: true
-          - script: validate_agency_upgrades.py
-            name: agency-upgrades
-            title: "Intelligence Agency Upgrades"
-            strict: true
-          - script: validate_ideas.py
-            name: ideas
-            title: "Idea References"
-            strict: true
-          - script: validate_set_variables.py
-            name: set-variables
-            title: "Set Variable References"
-            strict: true
-          - script: validate_defines.py
-            name: defines
-            title: "Defines"
-            strict: true
-            # cross-references the committed vanilla_defines.txt manifest (CI
-            # has no HOI4 install); regenerate it after a game update via
-            # refresh_vanilla_data.py.
-          # NOTE: validate_unused_textures.py is intentionally not wired here
-          # — ~22k pre-existing unreferenced textures make it a periodic
-          # mod-size audit, not a per-PR signal. Run manually via
-          # `pre-commit run md-validate-unused-textures --hook-stage manual`.
-
-    steps:
-      - name: Download prepared workspace
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: prepared-workspace
-          path: .
-
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
-        with:
-          python-version: "3.x"
-
-      # Per-matrix opt-out: `strict: false` makes the validator informational
-      # (still produces the log + PR comment but exits 0 on findings). An entry
-      # that omits the field keeps gating behavior — never fail open by default.
-      # The idea missing-icon audit is WARNING severity, so it reports its
-      # backlog without blocking a PR.
-      - name: Run validation
-        run: |
-          if [ "${{ matrix.validator.strict }}" != "false" ]; then
-            python3 tools/validation/${{ matrix.validator.script }} \
-              --strict --no-color --workers 4 \
-              --output validation-${{ matrix.validator.name }}.log
-          else
-            python3 tools/validation/${{ matrix.validator.script }} \
-              --no-color --workers 4 \
-              --output validation-${{ matrix.validator.name }}.log
-          fi
-
-      - name: Verify result files
-        if: always()
-        run: |
-          test -f validation-${{ matrix.validator.name }}.log
-          test -f validation-${{ matrix.validator.name }}.json
-
-      - name: Upload results
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always()
-        with:
-          name: validation-${{ matrix.validator.name }}-results
-          path: |
-            validation-${{ matrix.validator.name }}.log
-            validation-${{ matrix.validator.name }}.json
-          if-no-files-found: error
-          retention-days: 7
-
-  # Targeted validators gated by their changed-file groups.
-  validate-targeted:
-    name: ${{ matrix.validator.title }}
-    needs: [detect-changes, prepare-workspace]
-    if: >-
+      needs.detect-changes.outputs.map-adjacency == 'true' ||
       needs.detect-changes.outputs.decisions == 'true' ||
       needs.detect-changes.outputs.oob == 'true' ||
       needs.detect-changes.outputs.ai-strategy == 'true' ||
@@ -666,227 +570,81 @@ jobs:
       needs.detect-changes.outputs.characters == 'true' ||
       needs.detect-changes.outputs.scientist-traits == 'true' ||
       needs.detect-changes.outputs.scripted-guis == 'true' ||
-      needs.detect-changes.outputs.interface == 'true' ||
       needs.detect-changes.outputs.national-focus == 'true' ||
       needs.detect-changes.outputs.on-actions == 'true' ||
       needs.detect-changes.outputs.scripted-effects == 'true' ||
-      needs.detect-changes.outputs.mios == 'true' ||
-      needs.detect-changes.outputs.events == 'true' ||
-      needs.detect-changes.outputs.history == 'true' ||
-      needs.detect-changes.outputs.localisation == 'true' ||
-      needs.detect-changes.outputs.common == 'true'
+      needs.detect-changes.outputs.mios == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        validator:
-          - script: validate_decisions.py
-            name: decisions
-            title: "Validate Decisions"
-            strict: true
-            should_run: >-
-              ${{ (needs.detect-changes.outputs.decisions == 'true' ||
-              needs.detect-changes.outputs.localisation == 'true') &&
-              'true' || 'false' }}
-          - script: validate_oob_units.py
-            name: oob-units
-            title: "Validate OOB Unit Names"
-            strict: true
-            should_run: ${{ needs.detect-changes.outputs.oob }}
-          - script: validate_equipment_upkeep.py
-            name: equipment-upkeep
-            title: "Validate Equipment Maintenance Coverage"
-            strict: true
-            # Reuses the oob filter: it already covers both halves of this
-            # cross-reference, common/units/** and common/scripted_effects/**.
-            should_run: ${{ needs.detect-changes.outputs.oob }}
-          - script: validate_ai_roles.py
-            name: ai-roles
-            title: "Validate AI Role References"
-            strict: true
-            should_run: ${{ needs.detect-changes.outputs.ai-strategy }}
-          - script: validate_ai_navy.py
-            name: ai-navy
-            title: "Validate AI Navy"
-            strict: true
-            should_run: ${{ needs.detect-changes.outputs.ai-navy }}
-          - script: validate_ai_equipment.py
-            name: ai-equipment
-            title: "Validate AI Equipment Coverage"
-            strict: true
-            should_run: ${{ needs.detect-changes.outputs.ai-equipment }}
-          - script: validate_factions.py
-            name: factions
-            title: "Validate Faction System"
-            strict: true
-            should_run: ${{ needs.detect-changes.outputs.factions }}
-          - script: validate_characters.py
-            name: characters
-            title: "Validate Character and Advisor Traits"
-            strict: true
-            # undefined-unit-leader-trait is WARNING-severity: the 9-item
-            # ALG/PHI backlog surfaces in reports without gating PRs. Every
-            # advisor-slot category gates.
-            should_run: ${{ needs.detect-changes.outputs.characters }}
-          - script: validate_scientist_traits.py
-            name: scientist-traits
-            title: "Validate Scientist Traits"
-            strict: true
-            # All findings are WARNING-severity: the 19-item missing-medal
-            # backlog surfaces in reports without gating PRs.
-            should_run: ${{ needs.detect-changes.outputs.scientist-traits }}
-          - script: validate_mios.py
-            name: mios
-            title: "Validate MIO Organizations"
-            strict: true
-            should_run: >-
-              ${{ (needs.detect-changes.outputs.mios == 'true' ||
-              needs.detect-changes.outputs.localisation == 'true') &&
-              'true' || 'false' }}
-          - script: validate_scripted_gui.py
-            name: scripted-gui
-            title: "Validate Scripted GUIs"
-            strict: true
-            should_run: >-
-              ${{ (needs.detect-changes.outputs.scripted-guis == 'true' ||
-              needs.detect-changes.outputs.interface == 'true') &&
-              'true' || 'false' }}
-          - script: validate_focus_tree.py
-            name: focus-tree
-            title: "Validate Focus Tree Structure"
-            strict: true
-            should_run: ${{ needs.detect-changes.outputs.national-focus }}
-          - script: validate_on_actions.py
-            name: on-actions
-            title: "Validate On Actions"
-            strict: true
-            should_run: >-
-              ${{ (needs.detect-changes.outputs.on-actions == 'true' ||
-              needs.detect-changes.outputs.events == 'true') &&
-              'true' || 'false' }}
-          - script: validate_scripted_params.py
-            name: scripted-params
-            title: "Validate Scripted Effect Parameters"
-            strict: true
-            should_run: >-
-              ${{ (needs.detect-changes.outputs.common == 'true' ||
-              needs.detect-changes.outputs.events == 'true' ||
-              needs.detect-changes.outputs.history == 'true') && 'true' ||
-              'false' }}
-          - script: validate_gfx_references.py
-            name: gfx-references
-            title: "Validate GFX Sprite References"
-            strict: true
-            # Gating: undefined-sprite errors are clean on main. Vanilla sprite
-            # names come from the committed tools/validation/vanilla_sprites.txt
-            # manifest (regenerate with refresh_vanilla_data.py after a
-            # HOI4 version bump). The unused-sprite check is opt-in
-            # (--report-unused) and never runs here.
-            should_run: >-
-              ${{ (needs.detect-changes.outputs.interface == 'true' ||
-              needs.detect-changes.outputs.common == 'true' ||
-              needs.detect-changes.outputs.events == 'true' ||
-              needs.detect-changes.outputs.history == 'true' ||
-              needs.detect-changes.outputs.localisation == 'true') && 'true' ||
-              'false' }}
-          - script: validate_bonus_names.py
-            name: bonus-names
-            title: "Validate Bonus Source Names"
-            strict: true
-            should_run: >-
-              ${{ (needs.detect-changes.outputs.common == 'true' ||
-              needs.detect-changes.outputs.events == 'true') && 'true' ||
-              'false' }}
-          - script: validate_tech_categories.py
-            name: tech-categories
-            title: "Validate Technology Categories"
-            # Strict: an unknown category compiles silently and grants nothing,
-            # so the content promises a research bonus it never delivers.
-            strict: true
-            should_run: >-
-              ${{ (needs.detect-changes.outputs.common == 'true' ||
-              needs.detect-changes.outputs.events == 'true') && 'true' ||
-              'false' }}
-          - script: validate_modifiers.py
-            name: modifiers
-            title: "Validate Modifier Names"
-            # Unknown-name findings remain warnings; redundant enable gates are
-            # errors because their backlog was cleared in the same change.
-            strict: true
-            should_run: ${{ needs.detect-changes.outputs.common }}
-          - script: validate_simplifications.py
-            name: simplifications
-            title: "Suggest Scope Merges"
-            # informational: WARNING-only simplification hints, never gates a PR
-            strict: false
-            should_run: >-
-              ${{ (needs.detect-changes.outputs.scripted-effects == 'true' ||
-              needs.detect-changes.outputs.national-focus == 'true' ||
-              needs.detect-changes.outputs.decisions == 'true' ||
-              needs.detect-changes.outputs.on-actions == 'true' ||
-              needs.detect-changes.outputs.events == 'true') && 'true' ||
-              'false' }}
-          - script: validate_building_guards.py
-            name: building-guards
-            title: "Validate Building Guards"
-            # informational: WARNING-only, ~660-item backlog, never gates a PR
-            strict: false
-            should_run: >-
-              ${{ (needs.detect-changes.outputs.common == 'true' ||
-              needs.detect-changes.outputs.events == 'true') && 'true' ||
-              'false' }}
-          - script: validate_dlc_guards.py
-            name: dlc-guards
-            title: "Validate DLC Guards"
-            strict: true
-            should_run: >-
-              ${{ (needs.detect-changes.outputs.common == 'true' ||
-              needs.detect-changes.outputs.events == 'true') && 'true' ||
-              'false' }}
-          - script: validate_technologies.py
-            name: technologies
-            title: "Validate Tech Category Consistency"
-            strict: true
-            should_run: ${{ needs.detect-changes.outputs.common }}
+        batch: [core, targeted-a, targeted-b]
     steps:
-      # Keep skipped matrix entries from downloading or running.
       - name: Download prepared workspace
-        if: matrix.validator.should_run == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: prepared-workspace
           path: .
+
       - name: Set up Python
-        if: matrix.validator.should_run == 'true'
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
           python-version: "3.x"
-      - name: Run validation
-        if: matrix.validator.should_run == 'true'
-        run: |
-          if [ "${{ matrix.validator.strict }}" != "false" ]; then
-            python3 tools/validation/${{ matrix.validator.script }} \
-              --strict --no-color --workers 4 \
-              --output validation-${{ matrix.validator.name }}.log
-          else
-            python3 tools/validation/${{ matrix.validator.script }} \
-              --no-color --workers 4 \
-              --output validation-${{ matrix.validator.name }}.log
-          fi
-      - name: Verify result files
-        if: always() && matrix.validator.should_run == 'true'
-        run: |
-          test -f validation-${{ matrix.validator.name }}.log
-          test -f validation-${{ matrix.validator.name }}.json
 
-      - name: Upload results
-        if: always() && matrix.validator.should_run == 'true'
+      # Empty groups select nothing.
+      - name: Compute changed validator groups
+        id: groups
+        env:
+          G_COMMON: ${{ needs.detect-changes.outputs.common }}
+          G_EVENTS: ${{ needs.detect-changes.outputs.events }}
+          G_HISTORY: ${{ needs.detect-changes.outputs.history }}
+          G_LOCALISATION: ${{ needs.detect-changes.outputs.localisation }}
+          G_INTERFACE: ${{ needs.detect-changes.outputs.interface }}
+          G_MAP_ADJACENCY: ${{ needs.detect-changes.outputs.map-adjacency }}
+          G_DECISIONS: ${{ needs.detect-changes.outputs.decisions }}
+          G_OOB: ${{ needs.detect-changes.outputs.oob }}
+          G_AI_STRATEGY: ${{ needs.detect-changes.outputs.ai-strategy }}
+          G_AI_NAVY: ${{ needs.detect-changes.outputs.ai-navy }}
+          G_AI_EQUIPMENT: ${{ needs.detect-changes.outputs.ai-equipment }}
+          G_FACTIONS: ${{ needs.detect-changes.outputs.factions }}
+          G_CHARACTERS: ${{ needs.detect-changes.outputs.characters }}
+          G_SCIENTIST_TRAITS: >-
+            ${{ needs.detect-changes.outputs.scientist-traits }}
+          G_SCRIPTED_GUIS: ${{ needs.detect-changes.outputs.scripted-guis }}
+          G_NATIONAL_FOCUS: ${{ needs.detect-changes.outputs.national-focus }}
+          G_ON_ACTIONS: ${{ needs.detect-changes.outputs.on-actions }}
+          G_SCRIPTED_EFFECTS: >-
+            ${{ needs.detect-changes.outputs.scripted-effects }}
+          G_MIOS: ${{ needs.detect-changes.outputs.mios }}
+        run: |
+          changed=()
+          for group in common events history localisation interface \
+              map-adjacency decisions oob ai-strategy ai-navy ai-equipment \
+              factions characters scientist-traits scripted-guis \
+              national-focus on-actions scripted-effects mios; do
+            var="G_${group^^}"
+            var="${var//-/_}"
+            if [ "${!var}" = "true" ]; then
+              changed+=("$group")
+            fi
+          done
+          echo "groups=${changed[*]}" >> "$GITHUB_OUTPUT"
+
+      # The runner fails on crashes and missing result files.
+      - name: Run validator batch
+        run: >-
+          python3 tools/validation/run_validator_batch.py
+          --batch ${{ matrix.batch }}
+          --changed-groups "${{ steps.groups.outputs.groups }}"
+          --no-color
+          --output-dir batch-results
+
+      - name: Upload batch results
+        if: always() && hashFiles('batch-results/**') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: validation-${{ matrix.validator.name }}-results
-          path: |
-            validation-${{ matrix.validator.name }}.log
-            validation-${{ matrix.validator.name }}.json
+          name: validation-batch-${{ matrix.batch }}-results
+          path: batch-results
           if-no-files-found: error
           retention-days: 7
 
@@ -979,8 +737,7 @@ jobs:
       - detect-changes
       - prepare-workspace
       - content-checks
-      - validate-core
-      - validate-targeted
+      - validate-batch
       - validate-paths
     permissions:
       contents: read
@@ -997,8 +754,7 @@ jobs:
       VALIDATION_SCOPE: >-
         ${{ github.event_name == 'workflow_dispatch' &&
         needs.content-checks.result == 'success' &&
-        needs.validate-core.result == 'success' &&
-        needs.validate-targeted.result == 'success' &&
+        needs.validate-batch.result == 'success' &&
         needs.validate-paths.result == 'success' && 'full' || 'partial' }}
     steps:
       - name: Checkout report tooling
@@ -1028,7 +784,7 @@ jobs:
           'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
 
       # Latest main-side validation baseline (saved nightly by
-      # validator-cache.yml's check-baseline job). A miss (cold cache,
+      # validator-cache.yml). A miss (cold cache,
       # validator generation changed) only drops the NEW/EXISTING annotation
       # in the report — never a failure.
       - name: Restore validation baseline
@@ -1063,8 +819,7 @@ jobs:
           needs.detect-changes.result == 'failure' ||
           needs.prepare-workspace.result == 'failure' ||
           needs.content-checks.result == 'failure' ||
-          needs.validate-core.result == 'failure' ||
-          needs.validate-targeted.result == 'failure' ||
+          needs.validate-batch.result == 'failure' ||
           needs.validate-paths.result == 'failure'
         run: |
           pipeline_dir="validation-results/validation-pipeline-results"

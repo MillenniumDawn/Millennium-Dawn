@@ -29,6 +29,9 @@ class Issue:
 
     @classmethod
     def from_dict(cls, d: dict, validator: str = "") -> "Issue":
+        detected_by = d.get("detected_by", [])
+        if not isinstance(detected_by, list):
+            detected_by = []
         try:
             line = int(d.get("line", 0) or 0)
         except (TypeError, ValueError):
@@ -40,6 +43,7 @@ class Issue:
             file=d.get("file", ""),
             line=line,
             validator=d.get("validator", validator),
+            detected_by=list(detected_by),
         )
 
     def to_dict(self) -> dict:
@@ -74,6 +78,8 @@ class ValidatorRun:
     errors: int = 0
     warnings: int = 0
     had_json: bool = False  # True when JSON sidecar was loaded; False = text fallback
+    execution_complete: bool = True
+    strict: Optional[bool] = None
 
     def status_symbol(self) -> str:
         return {
@@ -95,6 +101,8 @@ class ReportContext:
     artifact_url: Optional[str] = None
     date_utc: Optional[str] = None
     repo: Optional[str] = None  # "owner/name", used to build blob links to file:line
-    # "partial" when only the validators covering the diff ran, which makes a
-    # clean report a weaker claim, so the rendered body has to say which.
+    # Scope distinguishes diff-only and PR-code reports from full validation.
     validation_scope: str = "full"
+    # Impact reports use a separate comment marker and title.
+    report_marker: str = ""
+    report_title: str = ""

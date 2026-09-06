@@ -159,8 +159,10 @@ To keep commit latency low, only a fast subset of validators runs on
 `validate_scripted_gui`, `validate_localisation`, `validate_cosmetic_tags`,
 `validate_variables`, and `validate_focus_tree` run
 **CI-only**. The
-`validate-core` and `validate-targeted` matrices in
+`validate-batch` jobs in
 `.github/workflows/coding-pipeline.yml` gate them instead of pre-commit.
+Their list, changed-group selection, and `--strict` gates live in
+`tools/validation/validator_batches.py`.
 
 The commit-stage validators (`validate_common_mistakes`, `validate_style`,
 `validate_oob_units`, `validate_ai_roles`, `validate_ai_navy`,
@@ -172,8 +174,10 @@ hook. `validate_unused_textures` keeps a `stages: [manual]` hook because CI
 cannot run it.
 
 `validate_file_paths` runs CI-only in its own `validate-paths` job. It reads
-the git index rather than the working tree, so it sits outside both matrices.
-Those restore a content bundle with no `.git` and no `map/`.
+the git index rather than the working tree, so it sits outside the batches.
+Those restore a content bundle with no `.git` and no `map/`. The impact scan
+also covers standalone style, descriptor, path, and encoding checks through
+`IMPACT_ONLY_SPECS`; the manual texture audit stays excluded.
 
 To run any validator locally, including a CI-only one, invoke it directly:
 

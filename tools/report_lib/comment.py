@@ -16,20 +16,23 @@ _PAGE_SIZE = 100
 _REQUEST_TIMEOUT = 30
 
 
-def find_existing_comment(comments: list) -> Optional[dict]:
-    """Return the bot-authored validation report comment, or None.
-
-    Prefers marker match; falls back to legacy title-string match.
-    """
+def find_existing_comment(
+    comments: list, marker: str = REPORT_MARKER
+) -> Optional[dict]:
+    """Return the bot-authored report comment, or None."""
     marker_match = None
     legacy_match = None
     for comment in comments:
         if comment.get("user", {}).get("type") != "Bot":
             continue
         body = comment.get("body", "")
-        if REPORT_MARKER in body and marker_match is None:
+        if marker in body and marker_match is None:
             marker_match = comment
-        elif body.startswith("# Validation Report\n") and legacy_match is None:
+        elif (
+            marker == REPORT_MARKER
+            and body.startswith("# Validation Report\n")
+            and legacy_match is None
+        ):
             legacy_match = comment
     return marker_match or legacy_match
 
@@ -40,6 +43,7 @@ def post_comment(
     pr_number: str,
     body: str,
     github_token: str,
+    marker: str = REPORT_MARKER,
 ) -> Tuple[bool, str]:
     """Create or update the validation report PR comment.
 
@@ -48,7 +52,7 @@ def post_comment(
     api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
     headers = _auth_headers(github_token)
 
-    existing, error = _find_report_comment(api_base, pr_number, headers)
+    existing, error = _find_report_comment(api_base, pr_number, headers, marker)
     if error:
         return False, error
     try:
@@ -78,12 +82,13 @@ def clear_comment(
     repo_name: str,
     pr_number: str,
     github_token: str,
+    marker: str = REPORT_MARKER,
 ) -> Tuple[bool, str]:
     """Remove the validation report comment when the current run is clean."""
     api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
     headers = _auth_headers(github_token)
 
-    existing, error = _find_report_comment(api_base, pr_number, headers)
+    existing, error = _find_report_comment(api_base, pr_number, headers, marker)
     if error:
         return False, error
     if not existing:
@@ -108,7 +113,7 @@ def _auth_headers(github_token: str) -> dict:
     }
 
 
-def _find_report_comment(api_base: str, pr_number: str, headers: dict):
+def _find_report_comment(api_base: str, pr_number: str, headers: dict, marker: str):
     """Return (comment_or_None, error_message_or_None)."""
     comments = []
     page = 1
@@ -124,7 +129,7 @@ def _find_report_comment(api_base: str, pr_number: str, headers: dict):
         return None, _fmt_http_error("list comments", e)
     except Exception as e:
         return None, f"list comments: {e}"
-    return find_existing_comment(comments), None
+    return find_existing_comment(comments, marker), None
 
 
 def _get(url: str, headers: dict) -> list:
