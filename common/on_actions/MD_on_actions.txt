@@ -14,10 +14,6 @@ on_actions = {
 				update_canal_blockage_flags = yes
 
 				international_systems_update = yes
-				add_to_variable = { global.md_gui_dirty = 1 }
-				if = { limit = { check_variable = { global.md_gui_dirty > 1000000 } }
-					set_variable = { global.md_gui_dirty = 1 }
-				}
 				if = {
 					limit = {
 						has_global_flag = NATO_CSTO_treaty_ratified
@@ -210,40 +206,15 @@ on_actions = {
 				}
 				un_check_for_next_queued_vote = yes
 				set_global_flag = { flag = cycled_ct_tick_this_week days = 4 value = 1 }
+				set_temp_variable = { ct_weekly_org_count = global.active_terror_orgs^num }
 				if = {
 					limit = {
 						check_variable = { global.week = 1 }
 					}
 					add_to_variable = { global.week = 1 }
-					for_each_loop = {
+					for_each_scope_loop = {
 						array = global.ct_first_week
-						value = v
-						var:v = {
-							counter_terror_individual = yes
-							if = {
-								limit = {
-									has_global_flag = power_ranking_ideas_cycle
-								}
-								assign_power_ranking_ideas = yes
-							}
-							if = {
-								limit = {
-									is_ai = yes
-								}
-								if = {
-									limit = {
-										check_variable = { cyber_capability > 0 }
-									}
-									ai_cyber_monthly = yes
-								}
-								if = {
-									limit = {
-										check_variable = { global.active_terror_orgs^num > 0 }
-									}
-									ct_ai_weekly = yes
-								}
-							}
-						}
+						ct_staggered_country_tick = yes
 					}
 				}
 				else_if = {
@@ -251,32 +222,9 @@ on_actions = {
 						check_variable = { global.week = 2 }
 					}
 					add_to_variable = { global.week = 1 }
-					for_each_loop = {
+					for_each_scope_loop = {
 						array = global.ct_second_week
-						value = v
-						var:v = {
-							counter_terror_individual = yes
-							if = {
-								limit = {
-									has_global_flag = power_ranking_ideas_cycle
-								}
-								assign_power_ranking_ideas = yes
-							}
-							if = {
-								limit = {
-									is_ai = yes
-									check_variable = { cyber_capability > 0 }
-								}
-								ai_cyber_monthly = yes
-							}
-							if = {
-								limit = {
-									is_ai = yes
-									check_variable = { global.active_terror_orgs^num > 0 }
-								}
-								ct_ai_weekly = yes
-							}
-						}
+						ct_staggered_country_tick = yes
 					}
 				}
 				else_if = {
@@ -284,32 +232,9 @@ on_actions = {
 						check_variable = { global.week = 3 }
 					}
 					add_to_variable = { global.week = 1 }
-					for_each_loop = {
+					for_each_scope_loop = {
 						array = global.ct_third_week
-						value = v
-						var:v = {
-							counter_terror_individual = yes
-							if = {
-								limit = {
-									has_global_flag = power_ranking_ideas_cycle
-								}
-								assign_power_ranking_ideas = yes
-							}
-							if = {
-								limit = {
-									is_ai = yes
-									check_variable = { cyber_capability > 0 }
-								}
-								ai_cyber_monthly = yes
-							}
-							if = {
-								limit = {
-									is_ai = yes
-									check_variable = { global.active_terror_orgs^num > 0 }
-								}
-								ct_ai_weekly = yes
-							}
-						}
+						ct_staggered_country_tick = yes
 					}
 				}
 				else_if = {
@@ -317,32 +242,9 @@ on_actions = {
 						check_variable = { global.week = 4 }
 					}
 					set_variable = { global.week = 1 }
-					for_each_loop = {
+					for_each_scope_loop = {
 						array = global.ct_last_week
-						value = v
-						var:v = {
-							counter_terror_individual = yes
-							if = {
-								limit = {
-									has_global_flag = power_ranking_ideas_cycle
-								}
-								assign_power_ranking_ideas = yes
-							}
-							if = {
-								limit = {
-									is_ai = yes
-									check_variable = { cyber_capability > 0 }
-								}
-								ai_cyber_monthly = yes
-							}
-							if = {
-								limit = {
-									is_ai = yes
-									check_variable = { global.active_terror_orgs^num > 0 }
-								}
-								ct_ai_weekly = yes
-							}
-						}
+						ct_staggered_country_tick = yes
 					}
 				}
 				calculate_un_program_budgets = yes
@@ -747,36 +649,8 @@ on_actions = {
 
 			# Public War Weariness
 			if = { limit = { NOT = { has_global_flag = GAME_RULE_disable_anti_bully } }
-				if = {
-					limit = {
-						ROOT = {
-							has_an_AB_war = no
-							has_war = no
-							has_dynamic_modifier = { modifier = public_war_weariness_effect }
-						}
-					}
-					ROOT = {
-						remove_dynamic_modifier = { modifier = public_war_weariness_effect }
-						clear_variable = anti_bully_wars
-						clear_variable = penalty_factor
-						clear_variable = war_support_factor_var
-					}
-				}
-				if = {
-					limit = {
-						FROM = {
-							has_an_AB_war = no
-							has_war = no
-							has_dynamic_modifier = { modifier = public_war_weariness_effect }
-						}
-					}
-					FROM = {
-						remove_dynamic_modifier = { modifier = public_war_weariness_effect }
-						clear_variable = anti_bully_wars
-						clear_variable = penalty_factor
-						clear_variable = war_support_factor_var
-					}
-				}
+				ROOT = { remove_public_war_weariness_effect = yes }
+				FROM = { remove_public_war_weariness_effect = yes }
 			}
 
 			# Update dynamic issuer globals so any capital that changed hands is reflected
@@ -786,6 +660,9 @@ on_actions = {
 
 	on_monthly = {
 		effect = {
+			if = { limit = { is_ai = yes }
+				ai_division_limiter_refresh = yes
+			}
 			diplomatic_action_cached_array_resync = yes
 
 			# Triggers for one nation
