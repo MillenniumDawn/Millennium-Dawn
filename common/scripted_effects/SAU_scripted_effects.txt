@@ -719,6 +719,7 @@ SAU_yemen_tier_down = {
 	else_if = { limit = { has_idea = SAU_yemen_pipeline_t1 }
 		set_temp_variable = { SAU_yemen_tier = 0 } SAU_yemen_set_tier = yes
 		clr_country_flag = SAU_yemen_pipeline_open
+		set_variable = { SAU_yemen_saved_tier = 0 }
 		if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
 	}
 }
@@ -776,6 +777,7 @@ SAU_syria_tier_down = {
 	else_if = { limit = { has_idea = SAU_syria_pipeline_t1 }
 		set_temp_variable = { SAU_syria_tier = 0 } SAU_syria_set_tier = yes
 		clr_country_flag = SAU_syria_pipeline_open
+		set_variable = { SAU_syria_saved_tier = 0 }
 		if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
 	}
 }
@@ -815,6 +817,7 @@ SAU_iraq_tier_down = {
 	else_if = { limit = { has_idea = SAU_iraq_pipeline_t1 }
 		set_temp_variable = { SAU_iraq_tier = 0 } SAU_iraq_set_tier = yes
 		clr_country_flag = SAU_iraq_pipeline_open
+		set_variable = { SAU_iraq_saved_tier = 0 }
 		if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
 		clr_country_flag = SAU_turkey_pipeline_open
 		if = { limit = { country_exists = TUR } TUR = {
@@ -829,6 +832,119 @@ SAU_iraq_tier_down = {
 SAU_iraq_tier_up = {
 	if = { limit = { has_idea = SAU_iraq_pipeline_t1 } set_temp_variable = { SAU_iraq_tier = 2 } SAU_iraq_set_tier = yes }
 	else_if = { limit = { has_idea = SAU_iraq_pipeline_t2 } set_temp_variable = { SAU_iraq_tier = 3 } SAU_iraq_set_tier = yes }
+}
+
+# Reopening a route the Kingdom shut down itself resumes at the tier it was closed at, so
+# shutdown-and-reopen cannot stand in for the repair decisions after sabotage.
+
+SAU_restore_route_yemen = {
+	set_temp_variable = { SAU_yemen_tier = 3 }
+	if = {
+		limit = { check_variable = { SAU_yemen_saved_tier > 0 } }
+		set_temp_variable = { SAU_yemen_tier = SAU_yemen_saved_tier }
+		set_variable = { SAU_yemen_saved_tier = 0 }
+	}
+	SAU_yemen_set_tier = yes
+}
+
+SAU_restore_route_syria = {
+	set_temp_variable = { SAU_syria_tier = 3 }
+	if = {
+		limit = { check_variable = { SAU_syria_saved_tier > 0 } }
+		set_temp_variable = { SAU_syria_tier = SAU_syria_saved_tier }
+		set_variable = { SAU_syria_saved_tier = 0 }
+	}
+	SAU_syria_set_tier = yes
+}
+
+SAU_restore_route_iraq = {
+	set_temp_variable = { SAU_iraq_tier = 3 }
+	if = {
+		limit = { check_variable = { SAU_iraq_saved_tier > 0 } }
+		set_temp_variable = { SAU_iraq_tier = SAU_iraq_saved_tier }
+		set_variable = { SAU_iraq_saved_tier = 0 }
+	}
+	SAU_iraq_set_tier = yes
+}
+
+# Pipeline shutdown effects - tier 0 tears the route down through the same set_tier path
+# that built it, so SAU's spirit and every transit partner's come off together.
+
+SAU_close_route_yemen = {
+	if = { limit = { has_idea = SAU_yemen_pipeline_t1 } set_variable = { SAU_yemen_saved_tier = 1 } }
+	else_if = { limit = { has_idea = SAU_yemen_pipeline_t2 } set_variable = { SAU_yemen_saved_tier = 2 } }
+	else = { set_variable = { SAU_yemen_saved_tier = 3 } }
+	set_temp_variable = { SAU_yemen_tier = 0 }
+	SAU_yemen_set_tier = yes
+	clr_country_flag = SAU_yemen_pipeline_open
+	if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
+	add_to_variable = { oil_dependence = -5 }
+	custom_effect_tooltip = SAU_tt_pipeline_shutdown_dependence
+	if = {
+		limit = { country_exists = YEM }
+		YEM = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown } }
+	}
+}
+
+SAU_close_route_syria = {
+	if = { limit = { has_idea = SAU_syria_pipeline_t1 } set_variable = { SAU_syria_saved_tier = 1 } }
+	else_if = { limit = { has_idea = SAU_syria_pipeline_t2 } set_variable = { SAU_syria_saved_tier = 2 } }
+	else = { set_variable = { SAU_syria_saved_tier = 3 } }
+	set_temp_variable = { SAU_syria_tier = 0 }
+	SAU_syria_set_tier = yes
+	clr_country_flag = SAU_syria_pipeline_open
+	if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
+	add_to_variable = { oil_dependence = -5 }
+	custom_effect_tooltip = SAU_tt_pipeline_shutdown_dependence
+	if = {
+		limit = { country_exists = JOR }
+		JOR = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown } }
+	}
+	if = {
+		limit = { country_exists = SYR }
+		SYR = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown } }
+	}
+	if = {
+		limit = { country_exists = FSA }
+		FSA = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown } }
+	}
+}
+
+SAU_close_route_iraq = {
+	SAU_close_route_turkey = yes
+	if = { limit = { has_idea = SAU_iraq_pipeline_t1 } set_variable = { SAU_iraq_saved_tier = 1 } }
+	else_if = { limit = { has_idea = SAU_iraq_pipeline_t2 } set_variable = { SAU_iraq_saved_tier = 2 } }
+	else = { set_variable = { SAU_iraq_saved_tier = 3 } }
+	set_temp_variable = { SAU_iraq_tier = 0 }
+	SAU_iraq_set_tier = yes
+	clr_country_flag = SAU_iraq_pipeline_open
+	if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
+	add_to_variable = { oil_dependence = -5 }
+	custom_effect_tooltip = SAU_tt_pipeline_shutdown_dependence
+	if = {
+		limit = { country_exists = IRQ }
+		IRQ = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown } }
+	}
+}
+
+# Called on its own from the Turkey decision and folded into the Iraq teardown, since the
+# extension has nothing to carry once the trunk line through Iraq is shut.
+SAU_close_route_turkey = {
+	if = {
+		limit = { has_country_flag = SAU_turkey_pipeline_open }
+		clr_country_flag = SAU_turkey_pipeline_open
+		add_to_variable = { oil_dependence = -3 }
+		custom_effect_tooltip = SAU_tt_pipeline_shutdown_dependence
+		if = {
+			limit = { country_exists = TUR }
+			TUR = {
+				if = { limit = { has_idea = SAU_pipeline_transit_TUR_t1 } remove_ideas = SAU_pipeline_transit_TUR_t1 }
+				if = { limit = { has_idea = SAU_pipeline_transit_TUR_t2 } remove_ideas = SAU_pipeline_transit_TUR_t2 }
+				if = { limit = { has_idea = SAU_pipeline_transit_TUR_t3 } remove_ideas = SAU_pipeline_transit_TUR_t3 }
+				add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown }
+			}
+		}
+	}
 }
 
 SAU_purge_monarchy_parties = {
