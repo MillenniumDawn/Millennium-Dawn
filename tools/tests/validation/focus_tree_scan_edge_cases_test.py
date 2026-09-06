@@ -35,7 +35,6 @@ def test_read_mod_text_returns_empty_instead_of_raising(tmp_path):
     "worker",
     [
         V._extract_focus_icons,
-        V._extract_tech_bonuses,
         V._extract_pp_malus,
         V._extract_focus_search_filters,
     ],
@@ -135,7 +134,6 @@ def test_empty_blocks_are_skipped_by_the_per_focus_workers(tmp_path):
     args = (path, str(tmp_path))
 
     assert V._extract_focus_icons(args) == []
-    assert V._extract_tech_bonuses(args) == []
     assert V._extract_pp_malus(args) == []
     assert V._extract_focus_search_filters(args) == []
 
