@@ -755,9 +755,6 @@ jobs:
             name: focus-tree
             title: "Validate Focus Tree Structure"
             strict: true
-            # the ai_will_do guard checks (#2233) and tech-bonus-name-is-category
-            # are WARNING-severity: the ~1900-focus and ~357-bonus backlogs
-            # surface in reports without gating PRs.
             should_run: ${{ needs.detect-changes.outputs.national-focus }}
           - script: validate_on_actions.py
             name: on-actions
@@ -771,9 +768,6 @@ jobs:
             name: scripted-params
             title: "Validate Scripted Effect Parameters"
             strict: true
-            # Contracted effects are called from every script tree, so the
-            # gate is the tree, not a per-directory output that goes stale
-            # when a new caller directory appears.
             should_run: >-
               ${{ (needs.detect-changes.outputs.common == 'true' ||
               needs.detect-changes.outputs.events == 'true' ||
@@ -794,6 +788,14 @@ jobs:
               needs.detect-changes.outputs.events == 'true' ||
               needs.detect-changes.outputs.history == 'true' ||
               needs.detect-changes.outputs.localisation == 'true') && 'true' ||
+              'false' }}
+          - script: validate_bonus_names.py
+            name: bonus-names
+            title: "Validate Bonus Source Names"
+            strict: true
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.common == 'true' ||
+              needs.detect-changes.outputs.events == 'true') && 'true' ||
               'false' }}
           - script: validate_tech_categories.py
             name: tech-categories
