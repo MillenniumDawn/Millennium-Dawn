@@ -755,9 +755,8 @@ jobs:
             name: focus-tree
             title: "Validate Focus Tree Structure"
             strict: true
-            # the ai_will_do guard checks (#2233) and tech-bonus-name-is-category
-            # are WARNING-severity: the ~1900-focus and ~357-bonus backlogs
-            # surface in reports without gating PRs.
+            # the ai_will_do guard checks (#2233) are WARNING-severity: the
+            # ~1900-focus backlog surfaces in reports without gating PRs.
             should_run: ${{ needs.detect-changes.outputs.national-focus }}
           - script: validate_on_actions.py
             name: on-actions
@@ -794,6 +793,18 @@ jobs:
               needs.detect-changes.outputs.events == 'true' ||
               needs.detect-changes.outputs.history == 'true' ||
               needs.detect-changes.outputs.localisation == 'true') && 'true' ||
+              'false' }}
+          - script: validate_bonus_names.py
+            name: bonus-names
+            title: "Validate Bonus Source Names"
+            strict: true
+            # WARNING-severity: the ~495 name-is-category backlog surfaces in
+            # reports without gating PRs. The owner-token check (name must be
+            # the granting focus/decision/event/MIO trait) is opt-in behind
+            # --name-not-owner-id — ~914 more findings.
+            should_run: >-
+              ${{ (needs.detect-changes.outputs.common == 'true' ||
+              needs.detect-changes.outputs.events == 'true') && 'true' ||
               'false' }}
           - script: validate_tech_categories.py
             name: tech-categories
