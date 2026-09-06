@@ -426,6 +426,47 @@ country_event = {
     ]
 
 
+def test_owner_token_check_accepts_a_title_key_that_is_not_id_dot_t(tmp_path):
+    # An event reusing another chain's title key names its bonus after that key.
+    content = """add_namespace = test
+
+country_event = {
+	id = test.1
+	title = other_chain.22.title1
+	is_triggered_only = yes
+	option = {
+		name = test.1.a
+		add_tech_bonus = { name = other_chain.22.title1 bonus = 0.5 uses = 1 category = CAT_industry }
+	}
+}
+"""
+    _write(tmp_path, "events/test.txt", content)
+    _write_loc(tmp_path, ["other_chain.22.title1"])
+    _write_tech_tags(tmp_path, ["CAT_industry"])
+    assert _run_check(tmp_path, name_not_owner_id=True).warnings_found == 0
+
+
+def test_conditional_title_block_is_not_an_accepted_name(tmp_path):
+    # `title = { text = ... }` must not register `{` as the event's title key.
+    content = """add_namespace = test
+
+country_event = {
+	id = test.1
+	title = {
+		text = test.1.t
+		trigger = { always = yes }
+	}
+	is_triggered_only = yes
+	option = {
+		name = test.1.a
+		add_tech_bonus = { name = test.1.t bonus = 0.5 uses = 1 category = CAT_industry }
+	}
+}
+"""
+    out = _scan(tmp_path, "events/test.txt", content)
+    assert [r[4] for r in out] == [("test.1", "test.1.t")]
+
+
 def test_owner_token_check_skips_blocks_without_an_owner(tmp_path):
     # A scripted effect has no id convention, so the opt-in check stays quiet.
     _write(
