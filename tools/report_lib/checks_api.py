@@ -31,6 +31,7 @@ def post_checks(
     head_sha: str,
     runs: List[ValidatorRun],
     github_token: str,
+    name_prefix: str = "",
 ) -> List[Tuple[str, bool, str]]:
     """Create one Check Run per validator. Returns [(title, success, msg), ...]."""
     api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}/check-runs"
@@ -47,7 +48,7 @@ def post_checks(
         first_batch = annotations[:ANNOTATIONS_PER_REQUEST]
         remaining = annotations[ANNOTATIONS_PER_REQUEST:]
 
-        payload = _build_check_payload(run, head_sha, first_batch)
+        payload = _build_check_payload(run, head_sha, first_batch, name_prefix)
         success, msg, check_id = _post_one(api_base, payload, headers)
         if not success or not remaining:
             results.append((run.title, success, msg))
@@ -69,10 +70,10 @@ def post_checks(
 
 
 def _build_check_payload(
-    run: ValidatorRun, head_sha: str, annotations: List[Dict]
+    run: ValidatorRun, head_sha: str, annotations: List[Dict], name_prefix: str = ""
 ) -> dict:
     return {
-        "name": run.title or run.name,
+        "name": name_prefix + (run.title or run.name),
         "head_sha": head_sha,
         "status": "completed",
         "conclusion": _conclusion_for(run),
@@ -96,9 +97,11 @@ def _build_patch_payload(run: ValidatorRun, annotations: List[Dict]) -> dict:
 
 
 def _conclusion_for(run: ValidatorRun) -> str:
-    if run.errors > 0 or run.status in {"failed", "unknown"}:
+    if run.errors > 0 and run.strict is not False:
         return "failure"
-    if run.warnings > 0:
+    if run.status in {"failed", "unknown"} and run.strict is not False:
+        return "failure"
+    if run.errors > 0 or run.warnings > 0:
         return "neutral"
     if run.status == "no_output":
         return "skipped"

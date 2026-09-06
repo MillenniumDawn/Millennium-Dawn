@@ -57,8 +57,8 @@ def render(
     baseline restored) and the report renders as before.
     """
     parts: List[str] = []
-    parts.append(REPORT_MARKER)
-    parts.append("# Validation Report")
+    parts.append(ctx.report_marker or REPORT_MARKER)
+    parts.append(f"# {ctx.report_title or 'Validation Report'}")
     parts.append("")
 
     verdict = _render_verdict(runs, ctx.validation_scope, baseline_stats)
@@ -176,6 +176,8 @@ def _render_verdict(
 ) -> str:
     """A GitHub alert callout giving an at-a-glance pass/fail verdict."""
     if not runs:
+        if validation_scope == "preview":
+            return "> [!NOTE]\n> ✅ No validators selected. Nothing to run."
         return ""
     total_errors, total_warnings = _totals(runs)
     incomplete = sum(1 for run in runs if run.status in {"unknown", "no_output"})
@@ -202,10 +204,14 @@ def _render_verdict(
         line = f"{_plural(incomplete, 'validator')} did not produce a complete result."
         return f"> [!CAUTION]\n> ❌ {line} Review the workflow run."
 
-    tail = (
-        "Nothing to fix."
-        if validation_scope == "full"
-        else "Nothing to fix in the file groups this diff touches."
+    scope_tails = {
+        "full": "Nothing to fix.",
+        "partial": "Nothing to fix in the file groups this diff touches.",
+        "preview": "Nothing to fix among the validators this PR's changes select.",
+    }
+    tail = scope_tails.get(
+        validation_scope,
+        "Nothing to fix in the file groups this diff touches.",
     )
     return f"> [!NOTE]\n> ✅ All {_plural(len(runs), 'validator')} passed. {tail}"
 
@@ -223,8 +229,13 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
         bits.append(f"**Run:** [step summary]({ctx.workflow_run_url})")
     if ctx.date_utc:
         bits.append(f"**Date:** {ctx.date_utc}")
-    if ctx.validation_scope != "full":
-        bits.append("**Scope:** changed file groups only")
+    scope_labels = {
+        "partial": "changed file groups only",
+        "preview": "PR-code preview scan (no baseline comparison)",
+    }
+    scope_label = scope_labels.get(ctx.validation_scope)
+    if scope_label:
+        bits.append(f"**Scope:** {scope_label}")
     return " · ".join(bits)
 
 

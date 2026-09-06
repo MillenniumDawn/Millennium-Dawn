@@ -28,7 +28,14 @@ from .baseline import (
 from .checks_api import post_checks
 from .comment import REPORT_MARKER, clear_comment, find_existing_comment, post_comment
 from .dedupe import dedupe
-from .loader import discover_validator_runs, load_all
+from .loader import (
+    MANIFEST_NAME,
+    artifact_members,
+    discover_validator_runs,
+    load_all,
+    load_manifest,
+    validate_manifest,
+)
 from .markdown import MAX_ISSUES_STEP_SUMMARY, render
 from .models import Issue, ReportContext, Severity, ValidatorRun
 from .truncation import MAX_COMMENT_BYTES, truncate_if_needed
@@ -44,6 +51,10 @@ __all__ = [
     "BaselineStats",
     "load_all",
     "discover_validator_runs",
+    "MANIFEST_NAME",
+    "artifact_members",
+    "load_manifest",
+    "validate_manifest",
     "load_baseline",
     "load_issues",
     "write_baseline",

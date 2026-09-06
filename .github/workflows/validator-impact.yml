@@ -1,0 +1,81 @@
+name: Validator impact
+
+# Scans selected validators with PR code in a read-only pull_request job.
+# The trusted bridge publishes results from default-branch code.
+# Bootstrap caveat: bridge activates after merge.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  impact:
+    name: Validator impact (PR code full scan)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      # A fork checkout may not contain the base object.
+      - name: Fetch PR base revision
+        run: |
+          git fetch --no-tags \
+            "https://github.com/${{ github.repository }}.git" \
+            "${{ github.event.pull_request.base.sha }}"
+
+      # Ensure the checkout and changed-file list use the same revisions.
+
+      - name: Verify pinned revisions
+        run: |
+          test "$(git rev-parse HEAD)" = \
+            "${{ github.event.pull_request.head.sha }}"
+          git cat-file -e "${{ github.event.pull_request.base.sha }}^{commit}"
+          git merge-base "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" >/dev/null
+
+      - name: Derive changed files from the pinned diff
+        run: |
+          merge_base=$(git merge-base \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}")
+          git diff --name-status -z "$merge_base" \
+            "${{ github.event.pull_request.head.sha }}" \
+            | python3 tools/validation/collect_changed_files.py \
+            > .changed-files.txt
+          wc -l .changed-files.txt
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --group dev --group runtime
+
+      # PR-owned validator code must not read or write shared cache entries.
+      - name: Run changed validators against real content
+        env:
+          MD_NO_CACHE: "1"
+        run: |
+          python3 tools/validation/run_validator_batch.py \
+            --impact --changed-files-file .changed-files.txt \
+            --no-color --output-dir validator-impact
+
+      - name: Upload impact scan results
+        if: always() && hashFiles('validator-impact/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: validator-impact-results
+          path: validator-impact
+          if-no-files-found: error
+          retention-days: 7

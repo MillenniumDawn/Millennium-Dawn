@@ -19,13 +19,79 @@ Two extra entry points cover open PRs that get no pushes:
 - `workflow_dispatch` accepts optional `pr_number` and `base_sha`. With a PR number, `detect-changes` resolves the live PR JSON. Without one, it validates the current repository at `github.sha` and skips PR-only comment posting. Dispatch treats every validator group as changed except `style`, which is diff-scoped and has no diff on dispatch.
 - `nightly-pr-validation.yml`: cron (06:00 UTC) + manual dispatch. It resolves main's live SHA, then dispatches the trusted coding workflow from `main` for every open PR, including forks and conflicts, passing `pr_number` and `base_sha`. The coding workflow resolves each PR's head data itself and uses that base SHA for trusted tooling and baseline selection.
 
-The prepare job checks out PR content without tools, then installs `tools/`, reference resources, and `.claude/` from the base branch. It restores the shared main-built validator cache read-only and distributes the prepared workspace through a same-run artifact. No PR-scoped cache is saved. `validate-paths` keeps a PR checkout for its git index and invokes the validator from the trusted checkout. A PR that introduces a new validator or a new check (like the AI-only decision localisation/tooltip rules) is therefore exercised in `coding-pipeline.yml` only after merge; until then it is covered by `tools-validation.yml`'s unit and staged-integration suite, which does run the PR's own `tools/` (see above), and by the nightly `validator-cache.yml` baseline once on `main`. The staged integration also full-scans branch content with the branch-owned common-mistakes validator because its structural rules need coverage against real scripts, not only fixtures.
+The prepare job checks out PR content without tools, then installs `tools/`, reference resources, and `.claude/` from the base branch. It restores the shared main-built validator cache read-only and distributes the prepared workspace through a same-run artifact. No PR-scoped cache is saved. `validate-paths` keeps a PR checkout for its git index and invokes the validator from the trusted checkout. A PR that introduces a new validator or a new check (like the AI-only decision localisation/tooltip rules) is exercised against real content before merge by `.github/workflows/validator-impact.yml`'s `impact` job, which full-scans the affected validators with the PR's own code (below); unit and staged-integration coverage runs the PR's own `tools/` (see above), and the nightly `validator-cache.yml` baseline re-scans once on `main`. The staged integration also full-scans branch content with the branch-owned common-mistakes validator because its structural rules need coverage against real scripts, not only fixtures.
+
+## PR-code impact scan
+
+`.github/workflows/validator-impact.yml` runs on every PR (no path filter, so
+huge PRs are covered too): when the PR changes a validator script, shared
+validator infrastructure, or a reference file the validators read, it
+full-scans the affected validators against real mod content with the PR's own
+code, before merge. It is deliberately unprivileged — a `pull_request`
+checkout cannot post comments or write Checks API results, and the job
+restores and saves no cache (`MD_NO_CACHE=1`, since the shared cache keys on
+content stats, not validator source, so PR-code results must never read
+entries built by another validator generation). A crash, a missing result
+file, or a `--strict` failure fails the job, with remaining validators still
+running. Selection lives in `tools/validation/validator_batches.py`: a
+changed validator script selects itself and its transitive importers, a new unwired `validate_*.py` with the standard validator CLI runs as an
+ad-hoc scan, a shared module selects its transitive importers (the import graph is AST-parsed, so comma and relative
+imports are not missed), and any other change under the validation tooling selects every ordinary and
+impact-only validator. A deleted or renamed validator is dropped from the
+selection; there is nothing left to run.
+
+Changed files come from a pinned `git diff --name-status` between the
+merge-base and head SHAs — rename old and new paths both feed selection — not
+from the PR files API (capped at 3000 files) or a live listing that can drift
+from the checked-out revision. The checkout verifies the head matches the
+event SHA and that the base is present, so the scanned tree and diff describe
+the same revision. The `pull_request` impact workflow requires a mergeable PR;
+conflicted PRs remain covered by the trusted coding pipeline.
+
+The runner writes a `batch-manifest.json` beside the per-validator log and
+JSON sidecar recording the selection and each validator's exit code and
+status, so a crash that still emitted an empty sidecar cannot read as a clean
+run.
+
+### Reporting bridge
+
+The unprivileged scan cannot post anything, so
+`.github/workflows/validator-impact-report.yml` publishes the results: a
+`workflow_run`-triggered workflow, which always runs from the default branch
+with base-owned tooling and never checks out or executes PR content. It
+verifies the triggering run's identity (workflow name, path, id, event,
+repository, run id/attempt, source repository, and branch), resolves the
+associated PR through the API from the run's head SHA (fork head repositories
+included), staleness-checks the run against the PR's current head,
+downloads only the expected `validator-impact-results` artifact from that run into a bounded directory
+(flat result files only, size-capped, nothing executed), and cross-checks the
+manifest's selection against the unpacked result files.
+
+Results render through `report_lib` under the dedicated
+`md-validator-impact-report` comment marker, the "Validator Impact Report"
+title, and `Impact /`-prefixed Check Run names, so they never collide with
+the coding pipeline's report. Scope is a **PR-code preview**: there is no
+baseline comparison, and no NEW/EXISTING classification — findings come from
+a validator generation the PR itself supplies.
+
+Any gap reports incomplete and fails: missing artifact, malformed manifest or
+sidecar, a selected validator with no result files, a recorded crash,
+non-zero exit, or a stale run. A clean verified run clears the impact report
+comment. Complete warning-only runs post a report and neutral Checks but exit
+success. Stale or unverifiable runs never post or clear comments.
+
+**Bootstrap caveat:** `workflow_run` only fires for workflows that exist on
+the default branch, so the reporting bridge activates after its workflow file
+merges. Until then impact runs upload artifacts with no posted report, and
+this bridge has not been exercised live.
+The CI validator list also lives in `validator_batches.py`, so the impact scan
+and pipeline use the same ordinary set and exclusions.
 
 Every PR run publishes Checks API results, a step summary, and a report artifact. The bot posts a PR comment only when validators have findings or the pipeline cannot produce a complete verdict. A clean run removes an older bot report instead of posting a success comment. Partial reports label themselves in the verdict banner and metadata strip. Scope is computed in the `validation-report` job and passed as `--validation-scope`.
 
 ## The split
 
-- Most content validators run **CI-only**: the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml` are the gate. Their old `stages: [manual]` pre-commit hooks were removed (almost nobody ran them). On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `validate_defines.py`. Common scripting-mistake rules run once through `validate_common_mistakes.py` in that dispatcher and the CI validator matrix. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
+- Most content validators run **CI-only**: the three bounded-parallel `validate-batch` jobs in `.github/workflows/coding-pipeline.yml` are the gate. `tools/validation/validator_batches.py` is the single list of what runs, which changed-file groups select each validator, and which run without `--strict`; the batch runner (`run_validator_batch.py`) executes the selected validators with the shared CPU budget and uploads one artifact per batch holding every validator's `validation-<name>.log` + `.json` sidecar (the report loader unpacks them per validator). A crash or missing result file fails the batch while the remaining validators finish. On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `validate_defines.py`. Common scripting-mistake rules run once through `validate_common_mistakes.py` in that dispatcher and the CI validator list. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
 - Everything that fans out draws on one CPU ceiling: `cpu_budget()` in `tools/shared_utils.py` hands out 75% of the cores and leaves the rest to whoever is using the machine. `run_all_validators.py` caps how many validators run at once and passes each `--workers`; `precommit_validate.py` splits the same budget across its fan-out (it used to floor inner workers at 2, so fan-out times pools could reach twice the core count); `BaseValidator` clamps whatever `--workers` it is given. CI runners get every core, and `MD_MAX_WORKERS=N` overrides both. The unbounded suite fan-out that this replaced was measurably faster — the suite is largely I/O-bound — so a run that needs the old speed sets `MD_MAX_WORKERS`.
 - `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
 - `fix_loc_yaml.py` is pre-commit-only. `validate_localization_encoding.py` and `validate_mod_encoding.py` also run in the coding pipeline, so web-UI edits and contributors with hooks disabled cannot bypass the encoding checks. (The old `check_braces.py` hook was absorbed into `tools/validation/validate_style.py`.)

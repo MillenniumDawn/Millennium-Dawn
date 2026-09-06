@@ -97,6 +97,23 @@ def test_conclusion_failure_on_any_error():
     assert _conclusion_for(run) == "failure"
 
 
+def test_non_strict_error_is_neutral():
+    run = _run_with_issues(
+        [
+            Issue(
+                severity=Severity.ERROR,
+                category="c",
+                message="m",
+                file="a.txt",
+                line=1,
+                validator="events",
+            )
+        ]
+    )
+    run.strict = False
+    assert _conclusion_for(run) == "neutral"
+
+
 def test_pick_annotations_skips_issues_without_file():
     issues = [
         Issue(

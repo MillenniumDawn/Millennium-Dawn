@@ -74,6 +74,7 @@ class ValidatorRun:
     errors: int = 0
     warnings: int = 0
     had_json: bool = False  # True when JSON sidecar was loaded; False = text fallback
+    strict: Optional[bool] = None
 
     def status_symbol(self) -> str:
         return {
@@ -95,6 +96,8 @@ class ReportContext:
     artifact_url: Optional[str] = None
     date_utc: Optional[str] = None
     repo: Optional[str] = None  # "owner/name", used to build blob links to file:line
-    # "partial" when only the validators covering the diff ran, which makes a
-    # clean report a weaker claim, so the rendered body has to say which.
+    # Scope distinguishes diff-only and PR-code reports from full validation.
     validation_scope: str = "full"
+    # Impact reports use a separate comment marker and title.
+    report_marker: str = ""
+    report_title: str = ""
