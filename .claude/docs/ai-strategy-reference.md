@@ -16,8 +16,8 @@ LAYER 2: CONTINUOUS STRATEGIES (ai_strategy files, always-evaluated)
   Country-specific files ──► diplomacy, war, production overrides
 
 LAYER 3: PERIODIC EFFECTS (on_daily / on_weekly / on_monthly)
-  Daily (AI only):
-    division/plane/ship_limiter_calculation ──► cache unit caps into *_limiter_limit vars
+  Monthly (AI only):
+    division/plane/ship_limiter_calculation ──► cache unit caps and deployed-plane count into limiter variables
   Weekly:
     AI Investment Pulse ──► AC_event.500 ──► AI_get_*_score effects
     ai_cyber_monthly ──► cyber operations against enemies
@@ -101,7 +101,7 @@ This replaced the old `ai_update_build_units` effect and its `AI_is_threatened` 
 
 ### `division_limiter_calculation` / `plane_limiter_calculation` / `ship_limiter_calculation` (`00_AI_scripted_effects.txt`)
 
-Run daily for AI countries. Each computes a cap from factory count and situational multipliers (war, `ai_is_threatened`, major, NATO/EU, threat, faction, great-power) and stores it in `division_limiter_limit` / `plane_limiter_limit` / `ship_limiter_limit`. The matching limiter strategy reads that variable in `enable` instead of recomputing the math every evaluation. Under the `potato_edition` game rule the same formula runs, then the result is halved (`x0.5`) and re-rounded.
+Run monthly for AI countries, with additional refreshes on relevant war transitions. Each computes a cap from factory count and situational multipliers (war, `ai_is_threatened`, major, NATO/EU, threat, faction, great-power) and stores it in `division_limiter_limit` / `plane_limiter_limit` / `ship_limiter_limit`. The plane refresh also caches deployed plane count in `plane_limiter_deployed_size`. Matching limiter strategies read cached variables in `enable` instead of recomputing live counts every evaluation. Under the `potato_edition` game rule the same formula runs, then the result is halved (`x0.5`) and re-rounded.
 
 ### `ai_weapon_dump` (`99_weapon_dump_effects.txt`)
 
