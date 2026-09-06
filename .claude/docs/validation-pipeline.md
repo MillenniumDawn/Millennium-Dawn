@@ -8,7 +8,7 @@ CI runs `python -m pytest` on every PR touching `tools/` (the `unit` entry of th
 
 CI and pre-push run the collection-layout guard by explicit path with config `addopts` disabled. The suite command also pins `tools/tests` and `*_test.py`, so a `pyproject.toml` change cannot remove tests or the guard from the run it protects. CI runs that pinned suite on Linux, macOS, and Windows; the Linux entry also enforces the coverage threshold.
 
-`tools-validation.yml` uses one `checks` matrix. Its staged-integration entry also runs `validate_tools.py`, after the isolated-worktree tests, so either gate can fail without hiding the other. Code duplication remains a separate matrix entry and keeps the `Code duplication (jscpd)` check name.
+`tools-validation.yml` uses one `checks` matrix. Its staged-integration entry also runs `validate_tools.py`, after the isolated-worktree tests, so either gate can fail without hiding the other. Code duplication remains a separate matrix entry and keeps the `Code duplication (jscpd)` check name. `.jscpd.json` scans Python under `tools/` at `threshold: 0` with `minLines: 5` / `minTokens: 50`, so a single copy-pasted block — a duplicated `tmp_path` test fixture is the usual one — fails the job on its own. Factor shared setup into a helper instead of pasting it into the neighbouring test.
 
 ## When the coding pipeline runs
 

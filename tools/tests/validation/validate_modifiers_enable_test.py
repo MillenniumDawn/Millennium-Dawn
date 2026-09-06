@@ -13,9 +13,19 @@ so its `has_idea` gates are the only thing switching a lost faction off.
 
 from validate_modifiers import Validator, _enable_block_line, _redundant_enable_gates
 
+_ALWAYS_YES = "FOO_modifier = {\n\tenable = { always = yes }\n}\n"
+
 
 def _messages(body):
     return [message for message, _line in _redundant_enable_gates(body)]
+
+
+def _validator_for(tmp_path, content):
+    path = tmp_path / "common" / "dynamic_modifiers" / "test.txt"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="") as handle:
+        handle.write(content)
+    return Validator(str(tmp_path), use_colors=False, workers=1)
 
 
 def test_always_yes_flagged():
@@ -121,12 +131,7 @@ def test_line_offset_points_at_the_gate():
 
 
 def test_validator_reports_redundant_gate_as_error(tmp_path):
-    path = tmp_path / "common" / "dynamic_modifiers" / "test.txt"
-    path.parent.mkdir(parents=True)
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write("FOO_modifier = {\n\tenable = { always = yes }\n}\n")
-
-    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+    validator = _validator_for(tmp_path, _ALWAYS_YES)
     validator.validate_redundant_enable_gates()
 
     assert validator.errors_found == 1
@@ -134,11 +139,7 @@ def test_validator_reports_redundant_gate_as_error(tmp_path):
 
 
 def _write_modifiers(tmp_path, content):
-    path = tmp_path / "common" / "dynamic_modifiers" / "test.txt"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+    validator = _validator_for(tmp_path, content)
     validator.validate_dynamic_modifier_enable_blocks()
     return validator
 
@@ -218,12 +219,7 @@ def test_validator_ignores_a_commented_out_enable_block(tmp_path):
 
 
 def test_redundant_gate_reports_an_error_and_a_warning(tmp_path):
-    path = tmp_path / "common" / "dynamic_modifiers" / "test.txt"
-    path.parent.mkdir(parents=True)
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write("FOO_modifier = {\n\tenable = { always = yes }\n}\n")
-
-    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+    validator = _validator_for(tmp_path, _ALWAYS_YES)
     validator.validate_redundant_enable_gates()
     validator.validate_dynamic_modifier_enable_blocks()
 
