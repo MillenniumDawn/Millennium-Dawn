@@ -1,4 +1,3 @@
-## RUSSIA FOCUS TREE
 ## Authors: LordBogdanoff,heastel, alexmarkel0v, crocomoth, BoNDeX, DarkCloud, Reid, PAKMAN, scotch and BirdyBoi
 focus_tree = {
 	id = russia_focus
@@ -11,7 +10,6 @@ focus_tree = {
 	}
 	continuous_focus_position = { x = 17000 y = 1000 }
 
-	# Sets Camera to Opening of the Start
 	initial_show_position = { x = 2 y = 0 }
 
 	shared_focus = USoE001
@@ -354,8 +352,8 @@ focus_tree = {
 			add_ideas = SOV_stab_fund_idea
 			set_temp_variable = { treasury_change = -155 }
 			modify_treasury_effect = yes
-			set_temp_variable = { modify_economic = 2 }
-			modify_economic_support = yes
+			set_temp_variable = { SOV_modify_economic = 2 }
+			SOV_modify_economic_support = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -710,8 +708,8 @@ focus_tree = {
 			has_completed_focus = SOV_economic_buy_thk_bp
 			custom_trigger_tooltip = {
 				tooltip = SOV_state_corp_tt
-				has_country_flag = SOV_state_corp_1
-				has_country_flag = SOV_state_corp_2
+				check_variable = { SOV_statist_verdicts > 1 }
+				check_variable = { var = SOV_statist_verdicts value = SOV_oligarch_verdicts compare = greater_than }
 			}
 		}
 
@@ -768,8 +766,8 @@ focus_tree = {
 			has_completed_focus = SOV_delay_sibirneft_merger
 			custom_trigger_tooltip = {
 				tooltip = SOV_oligarch_rep_tt
-				has_country_flag = SOV_oligarchic_rep_1
-				has_country_flag = SOV_oligarchic_rep_2
+				check_variable = { SOV_oligarch_verdicts > 1 }
+				check_variable = { var = SOV_oligarch_verdicts value = SOV_statist_verdicts compare = greater_than }
 			}
 			NOT = { has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -821,16 +819,8 @@ focus_tree = {
 			has_completed_focus = SOV_delay_sibirneft_merger
 			custom_trigger_tooltip = {
 				tooltip = SOV_combined_econ_tt
-				OR = {
-					AND = {
-						has_country_flag = SOV_oligarchic_rep_1
-						has_country_flag = SOV_state_corp_2
-					}
-					AND = {
-						has_country_flag = SOV_state_corp_1
-						has_country_flag = SOV_oligarchic_rep_2
-					}
-				}
+				check_variable = { SOV_statist_verdicts > 0 }
+				check_variable = { var = SOV_statist_verdicts value = SOV_oligarch_verdicts compare = equals }
 			}
 			NOT = { has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -6567,8 +6557,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zhirinovsky_economic_policy"
-			set_temp_variable = { modify_economic = 2 }
-			modify_economic_support = yes
+			set_temp_variable = { SOV_modify_economic = 2 }
+			SOV_modify_economic_support = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -6610,8 +6600,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_expand_conscription"
 			add_ideas = SOV_idea_comp_industry
-			set_temp_variable = { modify_economic = 2 }
-			modify_economic_support = yes
+			set_temp_variable = { SOV_modify_economic = 2 }
+			SOV_modify_economic_support = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -6701,8 +6691,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_revitalize_russian_industrial_sector"
 			three_random_industrial_complex = yes
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -6811,15 +6801,15 @@ focus_tree = {
 			change_fossil_fuel_industry_opinion = yes
 			set_temp_variable = { treasury_change = -30 }
 			modify_treasury_effect = yes
-			set_temp_variable = { modify_economic = 2 }
-			modify_economic_support = yes
+			set_temp_variable = { SOV_modify_economic = 2 }
+			SOV_modify_economic_support = yes
 			if = {
 				limit = {
 					has_completed_focus = SOV_economic_reform_gazprom
 				}
 				SOV = {
-					set_temp_variable = { modify_capitalisation_gazprom = 4.3 }
-					modify_capitalisation_gazprom_support = yes
+					set_temp_variable = { SOV_modify_capitalisation_gazprom = 4.3 }
+					SOV_modify_capitalisation_gazprom_support = yes
 				}
 			}
 			if = {
@@ -6827,8 +6817,8 @@ focus_tree = {
 					has_completed_focus = SOV_economic_reform_rosneft
 				}
 				SOV = {
-					set_temp_variable = { modify_capitalisation_rosneft = 2.5 }
-					modify_capitalisation_rosneft_support = yes
+					set_temp_variable = { SOV_modify_capitalisation_rosneft = 2.5 }
+					SOV_modify_capitalisation_rosneft_support = yes
 				}
 			}
 			hidden_effect = {
@@ -7106,6 +7096,16 @@ focus_tree = {
 				news_event = {
 					hours = 12
 					id = sov_nationalists_news.8
+				}
+				if = {
+					limit = {
+						country_exists = BLR
+						BLR = {
+							nationalist_fascist_are_in_power = yes
+							NOT = { has_autonomy_state = autonomy_union_state }
+						}
+					}
+					BLR = { country_event = { id = belarus_another.53 days = 3 } }
 				}
 			}
 		}
@@ -10426,7 +10426,7 @@ focus_tree = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = SOV_republickill_23_TT
-				check_variable = { SOV.republickill > 18 }
+				check_variable = { SOV.SOV_republickill > 18 }
 			}
 		}
 
@@ -11805,8 +11805,8 @@ focus_tree = {
 				specialization = all
 				value = 1
 			}
-			set_temp_variable = { modify_economic = 2 }
-			modify_economic_support = yes
+			set_temp_variable = { SOV_modify_economic = 2 }
+			SOV_modify_economic_support = yes
 		}
 
 		ai_will_do = {
@@ -33125,10 +33125,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_russian"
-			unlock_decision_tooltip = SOV_first_broken_destroy
-			unlock_decision_tooltip = SOV_second_broken_destroy
-			unlock_decision_tooltip = SOV_third_broken_destroy
-			one_random_industrial_complex = yes
+			every_owned_state = {
+				random_select_amount = 4
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -34 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -33161,8 +33169,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_outer_space_initiative"
 			unlock_decision_tooltip = SOV_roskosmos_open
-			unlock_decision_tooltip = SOV_roskosmos_close
-			add_ideas = SOV_idea_outer_space_development
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_research_speed_factor = 0.03 tooltip = research_speed_factor_tt }
+			add_to_variable = { SOV_econ_education_cost_multiplier_modifier = 0.05 tooltip = education_cost_multiplier_modifier_tt }
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -33195,8 +33205,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_outer_space_vostochniy"
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
 			1069 = {
 				add_building_construction = {
 					type = infrastructure
@@ -33205,15 +33213,18 @@ focus_tree = {
 				}
 				add_building_construction = {
 					type = anti_air_building
-					level = 5
+					level = 2
 					instant_build = yes
 				}
 				add_building_construction = {
 					type = air_base
-					level = 10
+					level = 4
 					instant_build = yes
 				}
 			}
+			newline = yes
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -33261,10 +33272,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_outer_space_asteroids_mining"
 			unlock_decision_tooltip = SOV_asteroid_mining_continue
-			add_ideas = SOV_asteroids_idea
+			newline = yes
+			random_owned_state = { add_resource = { type = steel amount = 5 } }
+			newline = yes
 			set_temp_variable = { treasury_change = -9 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = SOV_mining_asteroid_tt
 		}
 
 		ai_will_do = {
@@ -33311,7 +33323,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_outer_space_sateelites"
 			add_tech_bonus = {
-				name = CAT_satellite
+				name = SOV_outer_space_sateelites
 				bonus = 0.5
 				uses = 3
 				category = CAT_satellite
@@ -33355,10 +33367,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_outer_space_space_combat_wombat"
-			swap_ideas = {
-				remove_idea = SOV_idea_outer_space_development
-				add_idea = SOV_idea_outer_space_development1
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_research_speed_factor = 0.02 tooltip = research_speed_factor_tt }
+			add_to_variable = { SOV_econ_education_cost_multiplier_modifier = 0.02 tooltip = education_cost_multiplier_modifier_tt }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_intelligence_modifier }
+			add_to_variable = { SOV_intel_encryption_factor = 0.05 tooltip = encryption_factor_tt }
+			newline = yes
 			set_temp_variable = { treasury_change = -25 }
 			modify_treasury_effect = yes
 		}
@@ -33392,12 +33407,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_outer_space_weaponized_space"
-			swap_ideas = {
-				remove_idea = SOV_idea_outer_space_development1
-				add_idea = SOV_idea_outer_space_development2
-			}
-			add_political_power = 75
-			add_stability = 0.05
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_education_cost_multiplier_modifier = 0.02 tooltip = education_cost_multiplier_modifier_tt }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_landforce_modifier }
+			add_to_variable = { SOV_land_max_planning = 0.05 tooltip = max_planning_tt }
+			add_to_variable = { SOV_land_army_artillery_attack_factor = 0.05 tooltip = army_artillery_attack_factor_tt }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_intelligence_modifier }
+			add_to_variable = { SOV_intel_encryption_factor = 0.03 tooltip = encryption_factor_tt }
+			newline = yes
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
 		}
@@ -33419,7 +33438,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = SOV_economic_russian
 
-		cost = 7
+		cost = 5
 
 		prerequisite = { focus = SOV_outer_space_space_combat_wombat }
 		prerequisite = { focus = SOV_outer_space_asteroids_mining }
@@ -33432,13 +33451,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_outer_space_moon_base"
 			add_tech_bonus = {
-				name = CAT_satellite
+				name = SOV_outer_space_moon_base
 				bonus = 1
 				uses = 1
 				category = CAT_satellite
 			}
 			add_tech_bonus = {
-				name = CAT_missile
+				name = SOV_outer_space_moon_base
 				bonus = 1
 				uses = 1
 				category = CAT_missile
@@ -33467,7 +33486,17 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_outer_space_marines"
-			add_ideas = SOV_space_marines_idea
+			add_equipment_bonus = {
+				name = SOV_outer_space_marines
+				bonus = {
+					large_plane_air_transport_airframe = {
+						instant = yes
+						air_range = 3
+						build_cost_ic = 3
+					}
+				}
+			}
+			newline = yes
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
 		}
@@ -33485,7 +33514,7 @@ focus_tree = {
 		id = SOV_russian_resistance_economy
 		icon = sov_anti_sanctions
 
-		x = 29
+		x = 28
 		y = 1
 		relative_position_id = SOV_economic_russian
 
@@ -33502,9 +33531,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_russian_resistance_economy"
-			one_random_industrial_complex = yes
 			set_temp_variable = { percent_change = 4 }
 			change_domestic_influence_percentage = yes
+			newline = yes
+			one_random_industrial_complex = yes
 		}
 
 		ai_will_do = {
@@ -33541,14 +33571,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_fnb_destroyed"
-			set_temp_variable = { treasury_change = -40 }
-			modify_treasury_effect = yes
-			add_political_power = 100
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_western_sanctions_modifier }
 			add_to_variable = { SOV_sanctions_roi = 0.02 tooltip = return_on_investment_modifier_tt }
+			newline = yes
 			swap_ideas = {
 				remove_idea = SOV_ruble_collapse
 				add_idea = SOV_ruble_collapse_1
 			}
+			newline = yes
+			set_temp_variable = { treasury_change = -40 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -33578,10 +33610,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_prevent_panic_on_currency_exchange"
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_western_sanctions_modifier }
 			add_to_variable = { SOV_sanctions_office_tax_gain = 0.02 tooltip = office_park_income_tax_modifier_tt }
 			add_to_variable = { SOV_sanctions_research_speed = 0.01 tooltip = research_speed_factor_tt }
+			newline = yes
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -33611,14 +33645,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_stop_moex_sessions"
-			add_stability = -0.05
 			set_temp_variable = { temp_opinion = -10 }
 			change_oligarchs_opinion = yes
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_western_sanctions_modifier }
 			add_to_variable = { SOV_sanctions_construction_speed = 0.01 tooltip = production_speed_buildings_factor_tt }
+			newline = yes
 			custom_effect_tooltip = SOV_stop_moex_tt
-			hidden_effect = {
-				set_country_flag = SOV_stop_moex
-			}
+			set_country_flag = SOV_stop_moex
+			newline = yes
 			country_event = { id = sov_economic.33 days = 30 }
 		}
 
@@ -33651,6 +33686,8 @@ focus_tree = {
 				remove_idea = SOV_ruble_collapse_1
 				add_idea = SOV_ruble_collapse_2
 			}
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_western_sanctions_modifier }
 			add_to_variable = { SOV_sanctions_roi = 0.02 tooltip = return_on_investment_modifier_tt }
 		}
 
@@ -33679,6 +33716,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_stabilized_finances"
 			remove_ideas = SOV_ruble_collapse_2
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_western_sanctions_modifier }
 			add_to_variable = { SOV_sanctions_roi = 0.02 tooltip = return_on_investment_modifier_tt }
 		}
 
@@ -33708,9 +33747,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_back_to_growth"
-			add_stability = 0.07
-			add_political_power = 100
 			increase_economic_growth = yes
+			newline = yes
 			custom_effect_tooltip = SOV_sanctions_over_capitalization_tt
 		}
 
@@ -33738,10 +33776,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_expansion_of_importozamesheniye"
-			one_random_industrial_complex = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_western_sanctions_modifier }
 			add_to_variable = { SOV_sanctions_construction_speed = 0.02 tooltip = production_speed_buildings_factor_tt }
 			add_to_variable = { SOV_sanctions_tax_cost = -0.02 tooltip = consumer_goods_factor_tt }
 			add_to_variable = { SOV_sanctions_research_speed = 0.02 tooltip = research_speed_factor_tt }
+			newline = yes
+			one_random_industrial_complex = yes
 		}
 
 		ai_will_do = {
@@ -33778,10 +33818,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_consumer_goods_replacement"
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_western_sanctions_modifier }
 			add_to_variable = { SOV_sanctions_tax_cost = -0.03 tooltip = consumer_goods_factor_tt }
 			add_to_variable = { SOV_sanctions_office_tax_gain = 0.02 tooltip = office_park_income_tax_modifier_tt }
+			newline = yes
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -33814,10 +33856,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_add_liquidity"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_western_sanctions_modifier }
+			add_to_variable = { SOV_sanctions_construction_speed = 0.03 tooltip = production_speed_buildings_factor_tt }
+			newline = yes
 			set_temp_variable = { treasury_change = -30 }
 			modify_treasury_effect = yes
-			add_stability = 0.05
-			add_to_variable = { SOV_sanctions_construction_speed = 0.03 tooltip = production_speed_buildings_factor_tt }
 		}
 
 		ai_will_do = {
@@ -33850,25 +33893,37 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_UVZ_expanding"
-			add_ideas = BLR_uvz
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-			if = {
-				limit = {
-					NOT = {
-					has_country_flag = SOV_wagner_parties
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_industrial_capacity_factory = 0.10 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { SOV_econ_production_factory_max_efficiency_factor = 0.10 tooltip = production_factory_max_efficiency_factor_tt }
+			newline = yes
+			add_equipment_bonus = {
+				name = SOV_UVZ_expanding
+				bonus = {
+					medium_tank_chassis = {
+						instant = yes
+						armor_value = 0.09
+						reliability = 0.09
+						build_cost_ic = -0.08
 					}
 				}
-				set_temp_variable = { party_index = 22 }
-				set_temp_variable = { party_popularity_increase = 0.01 }
-				change_relative_party_popularity = yes
 			}
+			newline = yes
 			add_tech_bonus = {
 				name = SOV_medvedev_tanks
 				bonus = 1
 				uses = 1
 				category = CAT_mbt
 			}
+			if = {
+				limit = { NOT = { has_country_flag = SOV_wagner_parties } }
+				set_temp_variable = { party_index = 22 }
+				set_temp_variable = { party_popularity_increase = 0.01 }
+				change_relative_party_popularity = yes
+				newline = yes
+			}
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -33898,15 +33953,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_more_drones"
+			if = {
+				limit = { NOT = { has_tech = Air_Kamikaze1 } }
+				set_technology = { Air_Kamikaze1 = 1 }
+			}
+			else = {
+				add_tech_bonus = {
+					name = SOV_more_drones
+					uses = 2
+					bonus = 0.5
+					category = CAT_l_drone
+				}
+			}
+			newline = yes
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
-			add_tech_bonus = {
-				name = GENERIC_drones
-				uses = 2
-				bonus = 0.5
-				category = CAT_l_drone
-			}
-			hidden_effect = { set_technology = { Air_Kamikaze1 = 1 } }
 		}
 
 		ai_will_do = {
@@ -33941,6 +34002,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_the_turn_to_the_east"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_western_sanctions_modifier }
 			add_to_variable = { SOV_sanctions_invest_cost = -0.05 tooltip = receiving_investment_cost_modifier_tt }
 			add_to_variable = { SOV_sanctions_roi = 0.02 tooltip = return_on_investment_modifier_tt }
 			add_to_variable = { SOV_sanctions_construction_speed = 0.02 tooltip = production_speed_buildings_factor_tt }
@@ -33970,6 +34032,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_creation_of_sovereign_economy"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_western_sanctions_modifier }
 			add_to_variable = { SOV_sanctions_tax_cost = -0.02 tooltip = consumer_goods_factor_tt }
 			add_to_variable = { SOV_sanctions_construction_speed = 0.03 tooltip = production_speed_buildings_factor_tt }
 			add_to_variable = { SOV_sanctions_office_tax_gain = 0.02 tooltip = office_park_income_tax_modifier_tt }
@@ -33997,39 +34060,31 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rusagro"
 			unlock_decision_tooltip = SOV_economic_rusagro_expanded
-			add_ideas = SOV_rusagro_idea
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
-			653 = {
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_agriculture_district_income_tax_modifier = 0.01 tooltip = agriculture_district_income_tax_modifier_tt }
+			add_to_variable = { SOV_econ_agriculture_tax_modifier = 0.01 tooltip = agriculture_tax_modifier_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
+			every_owned_state = {
+				random_select_amount = 4
 				add_building_construction = {
 					type = agriculture_district
 					level = 1
 					instant_build = yes
 				}
+				add_extra_state_shared_building_slots = 1
 			}
-			676 = {
-				add_building_construction = {
-					type = agriculture_district
-					level = 1
-					instant_build = yes
-				}
-			}
-			1180 = {
-				add_building_construction = {
-					type = agriculture_district
-					level = 1
-					instant_build = yes
-				}
-			}
-			1172 = {
-				add_building_construction = {
-					type = agriculture_district
-					level = 1
-					instant_build = yes
-				}
-			}
+			newline = yes
 			set_temp_variable = { treasury_change = -16 }
 			modify_treasury_effect = yes
+			hidden_effect = {
+				add_to_variable = { SOV_econsub_agriculture_district_income_tax_modifier = 0.01 }
+				add_to_variable = { SOV_econsub_agriculture_tax_modifier = 0.01 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
+			}
 		}
 
 		ai_will_do = {
@@ -34073,12 +34128,23 @@ focus_tree = {
 					level = 1
 					instant_build = yes
 				}
+				add_extra_state_shared_building_slots = 1
 			}
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_agriculture_workers_modifier = 0.02 tooltip = agriculture_workers_modifier_tt }
+			add_to_variable = { SOV_econ_agricolture_productivity_modifier = 0.03 tooltip = agricolture_productivity_modifier_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -4 }
 			modify_treasury_effect = yes
-			add_ideas = SOV_miratorg_idea
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			hidden_effect = {
+				add_to_variable = { SOV_econsub_agriculture_workers_modifier = 0.02 }
+				add_to_variable = { SOV_econsub_agricolture_productivity_modifier = 0.03 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
+			}
 		}
 
 		ai_will_do = {
@@ -34113,32 +34179,29 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_efko"
 			unlock_decision_tooltip = SOV_economic_efko_expanded
-			1172 = {
+			newline = yes
+			every_owned_state = {
+				random_select_amount = 3
 				add_building_construction = {
 					type = agriculture_district
 					level = 1
 					instant_build = yes
 				}
+				add_extra_state_shared_building_slots = 1
 			}
-			676 = {
-				add_building_construction = {
-					type = agriculture_district
-					level = 1
-					instant_build = yes
-				}
-			}
-			656 = {
-				add_building_construction = {
-					type = agriculture_district
-					level = 1
-					instant_build = yes
-				}
-			}
-			add_ideas = SOV_efko_idea
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_agricolture_productivity_modifier = 0.02 tooltip = agricolture_productivity_modifier_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -12.5 }
 			modify_treasury_effect = yes
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			hidden_effect = {
+				add_to_variable = { SOV_econsub_agricolture_productivity_modifier = 0.02 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
+			}
 		}
 
 		ai_will_do = {
@@ -34172,7 +34235,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_phos_agro"
-			add_ideas = SOV_azod_phosagro_income
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_agricolture_productivity_modifier = 0.06 tooltip = agricolture_productivity_modifier_tt }
+			add_to_variable = { SOV_econ_agriculture_workers_modifier = 0.08 tooltip = agriculture_workers_modifier_tt }
+			newline = yes
+			custom_effect_tooltip = SOV_phosagro_income_tt
 		}
 
 		ai_will_do = { base = 355 }
@@ -34182,11 +34249,13 @@ focus_tree = {
 		id = SOV_economic_belarus_integrate
 		icon = wagner_lukash
 
-		x = -13
-		y = 5
+		x = 35
+		y = 1
 		relative_position_id = SOV_economic_russian
 
 		cost = 3
+
+		prerequisite = { focus = SOV_economic_russian }
 
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
@@ -34200,8 +34269,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_belarus_integrate"
 			unlock_decision_tooltip = SOV_belarus_open
-			unlock_decision_tooltip = SOV_belarus_close
-			add_political_power = 100
 		}
 
 		ai_will_do = { base = 355 }
@@ -34229,11 +34296,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_grodno_annex"
 			custom_effect_tooltip = SOV_grodno_TT
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_agricolture_productivity_modifier = 0.02 tooltip = agricolture_productivity_modifier_tt }
 			hidden_effect = {
-				set_variable = { current_azot_capacity = 0 }
 				set_variable = { current_max_azot_capacity = 3 }
 				set_variable = { max_azot_capacity = 7 }
-				add_ideas = SOV_azot_fertilizers_income
 			}
 		}
 
@@ -34262,7 +34330,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_140_annex"
 			unlock_decision_tooltip = SOV_added_140z1
+			newline = yes
 			add_ideas = BLR_140_zavod_union_state1
+			newline = yes
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}
@@ -34292,7 +34362,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_mzkt_annex"
 			unlock_decision_tooltip = SOV_added_mzktz1
+			newline = yes
 			add_ideas = BLR_mzkt_union_state1
+			newline = yes
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}
@@ -34319,7 +34391,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_peleng_annex"
 			unlock_decision_tooltip = SOV_added_pelengz1
+			newline = yes
 			add_ideas = BLR_peleng_union_state1
+			newline = yes
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}
@@ -34343,7 +34417,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rao_ues"
-			country_event = { id = sov_economic.6 days = 1 }
+			remove_ideas = SOV_rao_ues
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 		}
 
 		ai_will_do = {
@@ -34375,17 +34452,25 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_interrao"
 			unlock_decision_tooltip = SOV_economic_interrao_expand
 			unlock_decision_tooltip = SOV_interrao_open
-			unlock_decision_tooltip = SOV_interrao_close
 			unlock_decision_tooltip = SOV_interrao_buy_pmr_gres
-			two_random_fossil_fuel_powerplant = yes
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
-			add_ideas = SOV_interrao
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_energy_use_multiplier = -0.03 tooltip = energy_use_multiplier_tt }
+			add_to_variable = { SOV_econ_energy_gain_multiplier = 0.03 tooltip = energy_gain_multiplier_tt }
+			newline = yes
 			add_tech_bonus = {
-				name = CAT_renewable
+				name = SOV_economic_interrao
 				bonus = 0.5
 				uses = 1
 				category = CAT_renewable
+			}
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			hidden_effect = {
+				add_to_variable = { SOV_econsub_energy_use_multiplier = -0.03 }
+				add_to_variable = { SOV_econsub_energy_gain_multiplier = 0.03 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
 			}
 		}
 
@@ -34394,10 +34479,6 @@ focus_tree = {
 			modifier = {
 				PMR = { is_ai = no }
 				add = 355
-			}
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -34421,37 +34502,23 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rus_hydro"
 			unlock_decision_tooltip = SOV_economic_rus_hydro_expanded
-			671 = {
-				add_building_construction = {
-					type = fossil_powerplant
-					level = 1
-					instant_build = yes
-				}
-			}
-			673 = {
-				add_building_construction = {
-					type = fossil_powerplant
-					level = 1
-					instant_build = yes
-				}
-			}
-			1069 = {
-				add_building_construction = {
-					type = fossil_powerplant
-					level = 1
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { treasury_change = -6.75 }
-			modify_treasury_effect = yes
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			671 = { multiply_variable = { hydroelectric_energy_production_var = 1.25 } }
+			1065 = { multiply_variable = { hydroelectric_energy_production_var = 1.25 } }
+			1069 = { multiply_variable = { hydroelectric_energy_production_var = 1.25 } }
+			custom_effect_tooltip = SOV_economic_rus_hydro_TT
+			newline = yes
 			add_tech_bonus = {
-				name = CAT_renewable
+				name = SOV_economic_rus_hydro
 				bonus = 0.5
 				uses = 1
 				category = CAT_renewable
 			}
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
+			set_temp_variable = { treasury_change = -4.5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -34479,12 +34546,17 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_found_rosatom"
-			add_political_power = 100
-			add_ideas = SOV_rosatom_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_nuclear_energy_generation_modifier = 0.01 tooltip = nuclear_energy_generation_modifier_tt }
+			add_to_variable = { SOV_econ_nuclear_fuel_consumption_modifier = -0.01 tooltip = nuclear_fuel_consumption_modifier_tt }
+			add_to_variable = { SOV_econ_repair_speed_nuclear_reactor_factor = 0.10 tooltip = repair_speed_nuclear_reactor_factor_tt }
+			add_to_variable = { SOV_econ_production_speed_nuclear_reactor_factor = 0.20 tooltip = production_speed_nuclear_reactor_factor_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 2 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -20 }
 			modify_treasury_effect = yes
-			set_temp_variable = { modify_economic = 2 }
-			modify_economic_support = yes
 		}
 
 		ai_will_do = {
@@ -34520,8 +34592,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_floating_nuclear"
-			add_political_power = 100
-			add_ideas = SOV_academic_lomonosov_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_production_speed_nuclear_reactor_factor = 0.02 tooltip = production_speed_nuclear_reactor_factor_tt }
+			add_to_variable = { SOV_econ_nuclear_energy_generation_modifier = 0.01 tooltip = nuclear_energy_generation_modifier_tt }
+			newline = yes
 			set_temp_variable = { treasury_change = -12 }
 			modify_treasury_effect = yes
 		}
@@ -34559,10 +34633,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_securing_rosatom"
-			swap_ideas = {
-				remove_idea = SOV_rosatom_idea
-				add_idea = SOV_rosatom_idea1
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_nuclear_energy_generation_modifier = 0.01 tooltip = nuclear_energy_generation_modifier_tt }
+			add_to_variable = { SOV_econ_nuclear_fuel_consumption_modifier = -0.01 tooltip = nuclear_fuel_consumption_modifier_tt }
+			add_to_variable = { SOV_econ_repair_speed_nuclear_reactor_factor = 0.05 tooltip = repair_speed_nuclear_reactor_factor_tt }
+			add_to_variable = { SOV_econ_production_speed_nuclear_reactor_factor = 0.05 tooltip = production_speed_nuclear_reactor_factor_tt }
 		}
 
 		ai_will_do = {
@@ -34594,9 +34669,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosatom_fuel_division"
-			add_ideas = SOV_rosatom_fuel_division_idea
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_state_resource_cost_chromium = -2 tooltip = state_resource_cost_chromium_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 		}
 
 		ai_will_do = {
@@ -34630,10 +34707,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosatom_fuel_division2"
-			swap_ideas = {
-				remove_idea = SOV_rosatom_fuel_division_idea
-				add_idea = SOV_rosatom_fuel_division_idea1
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_state_resource_cost_chromium = -2 tooltip = state_resource_cost_chromium_tt }
+			newline = yes
 			681 = {
 				add_building_construction = {
 					type = nuclear_facility
@@ -34641,8 +34717,9 @@ focus_tree = {
 					level = 1
 				}
 			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 		}
 
 		ai_will_do = {
@@ -34675,12 +34752,25 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosatom_predmet_zoloto"
-			swap_ideas = {
-				remove_idea = SOV_rosatom_fuel_division_idea
-				add_idea = SOV_rosatom_fuel_division_idea1
+			every_owned_state = {
+				random_select_amount = 2
+				add_building_construction = {
+					type = nuclear_reactor
+					level = 1
+					instant_build = yes
+				}
 			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			random_owned_state = {
+				add_building_construction = {
+					type = enrichment_facility
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 		}
 
 		ai_will_do = {
@@ -34714,10 +34804,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_anti_terrorist_rosatom"
-			swap_ideas = {
-				remove_idea = SOV_rosatom_idea1
-				add_idea = SOV_rosatom_idea2
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_nuclear_energy_generation_modifier = 0.01 tooltip = nuclear_energy_generation_modifier_tt }
+			add_to_variable = { SOV_econ_nuclear_fuel_consumption_modifier = -0.01 tooltip = nuclear_fuel_consumption_modifier_tt }
+			add_to_variable = { SOV_econ_repair_speed_nuclear_reactor_factor = 0.05 tooltip = repair_speed_nuclear_reactor_factor_tt }
+			add_to_variable = { SOV_econ_production_speed_nuclear_reactor_factor = 0.05 tooltip = production_speed_nuclear_reactor_factor_tt }
+			add_to_variable = { SOV_econ_fascism_drift = -0.01 tooltip = fascism_drift_tt }
 		}
 
 		ai_will_do = {
@@ -34752,17 +34844,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_severstal"
 			unlock_decision_tooltip = SOV_economic_severstal_expanded
-			1128 = {
-				add_resource = {
-					type = steel
-					amount = 4
-				}
-			}
+			newline = yes
+			1128 = { add_resource = { type = steel amount = 4 } }
 			643 = {
-				add_resource = {
-					type = steel
-					amount = 2
-				}
+				add_resource = { type = steel amount = 2 }
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
 					type = industrial_complex
@@ -34770,8 +34855,10 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -14 }
 			modify_treasury_effect = yes
 		}
@@ -34811,6 +34898,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_mechel"
 			unlock_decision_tooltip = SOV_economic_yakut_ugol
+			newline = yes
 			1133 = {
 				add_resource = {
 					type = steel
@@ -34823,8 +34911,9 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 		}
 
 		ai_will_do = {
@@ -34858,17 +34947,23 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_evraz"
 			unlock_decision_tooltip = SOV_economic_evraz_asset
-			1066 = {
-				add_resource = {
-					type = steel
-					amount = 4
-				}
-			}
-			add_ideas = SOV_evraz_idea
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			1066 = { add_resource = { type = steel amount = 4 } }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_steel_export_multiplier_modifier = 0.03 tooltip = steel_export_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -4.7 }
 			modify_treasury_effect = yes
+			hidden_effect = {
+				add_to_variable = { SOV_econsub_steel_export_multiplier_modifier = 0.03 }
+				add_to_variable = { SOV_econsub_corporate_tax_income_multiplier_modifier = 0.01 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
+			}
 		}
 
 		ai_will_do = { base = 355 }
@@ -34890,6 +34985,33 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_delay_sibirneft_merger"
+			custom_effect_tooltip = SOV_ruling_statist_TT
+			effect_tooltip = {
+				add_political_power = -85
+				set_temp_variable = { temp_opinion = -10 }
+				change_oligarchs_opinion = yes
+				set_temp_variable = { temp_opinion = 7 }
+				change_fossil_fuel_industry_opinion = yes
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = 4 }
+				SOV_modify_capitalisation_gazprom_support = yes
+				set_temp_variable = { treasury_change = -20 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			custom_effect_tooltip = SOV_ruling_oligarch_TT
+			effect_tooltip = {
+				add_stability = -0.05
+				set_temp_variable = { temp_opinion = 7 }
+				change_oligarchs_opinion = yes
+				set_temp_variable = { temp_opinion = -10 }
+				change_fossil_fuel_industry_opinion = yes
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.05
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = SOV_verdict_scorecard_TT
 			country_event = { id = sov_economic.5 days = 1 }
 		}
 
@@ -34923,6 +35045,35 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_khodorkovsky_case"
 			custom_effect_tooltip = SOV_khodorkovsky_path_warning_TT
+			newline = yes
+			custom_effect_tooltip = SOV_ruling_statist_TT
+			effect_tooltip = {
+				add_political_power = -100
+				add_stability = -0.03
+				set_temp_variable = { temp_opinion = 10 }
+				change_intelligence_community_opinion = yes
+				set_temp_variable = { temp_opinion = -10 }
+				change_oligarchs_opinion = yes
+				set_temp_variable = { temp_opinion = -10 }
+				change_fossil_fuel_industry_opinion = yes
+			}
+			newline = yes
+			custom_effect_tooltip = SOV_ruling_oligarch_TT
+			effect_tooltip = {
+				add_stability = 0.02
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.15
+				}
+				set_temp_variable = { temp_opinion = 10 }
+				change_oligarchs_opinion = yes
+				set_temp_variable = { temp_opinion = 10 }
+				change_fossil_fuel_industry_opinion = yes
+				set_temp_variable = { temp_opinion = -15 }
+				change_intelligence_community_opinion = yes
+			}
+			newline = yes
+			custom_effect_tooltip = SOV_verdict_scorecard_TT
 			country_event = sov_economic.1
 		}
 
@@ -34955,14 +35106,53 @@ focus_tree = {
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = SOV_khodorkovsky_trigger_TT
-				has_country_flag = SOV_khodorkovsky_found_guilty
+				tooltip = SOV_khodorkovsky_verdict_delivered_TT
+				OR = {
+					has_country_flag = SOV_khodorkovsky_found_guilty
+					has_country_flag = SOV_khodorkovsky_acquitted
+				}
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_khodorkovsky_trial"
-			country_event = sov_economic.2
+			custom_effect_tooltip = SOV_ruling_statist_TT
+			effect_tooltip = {
+				add_political_power = -50
+				add_stability = 0.03
+				set_temp_variable = { temp_opinion = 7 }
+				change_intelligence_community_opinion = yes
+				set_temp_variable = { temp_opinion = -5 }
+				change_oligarchs_opinion = yes
+				set_temp_variable = { party_popularity_increase = 0.10 }
+				change_relative_party_popularity = yes
+			}
+			newline = yes
+			custom_effect_tooltip = SOV_ruling_oligarch_TT
+			effect_tooltip = {
+				add_stability = -0.05
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.05
+				}
+				set_temp_variable = { party_popularity_increase = -0.10 }
+				change_relative_party_popularity = yes
+				set_temp_variable = { temp_opinion = 3 }
+				change_oligarchs_opinion = yes
+				set_temp_variable = { temp_opinion = 3 }
+				change_fossil_fuel_industry_opinion = yes
+				set_temp_variable = { treasury_change = 5 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			custom_effect_tooltip = SOV_verdict_scorecard_TT
+			if = {
+				limit = { has_country_flag = SOV_khodorkovsky_acquitted }
+				country_event = sov_economic.306
+			}
+			else = {
+				country_event = sov_economic.2
+			}
 		}
 
 		ai_will_do = {
@@ -34999,19 +35189,25 @@ focus_tree = {
 			}
 		}
 
+		bypass = { has_country_flag = SOV_khodorkovsky_acquitted }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_seize_yukos_oil"
-			set_temp_variable = { treasury_change = -4.8 }
-			modify_treasury_effect = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_fossil_fuel_industry_opinion = yes
-			set_temp_variable = { modify_economic = 2 }
-			modify_economic_support = yes
+			newline = yes
 			SOV = {
-				set_temp_variable = { modify_capitalisation_gazprom = 8.5 }
-				modify_capitalisation_gazprom_support = yes
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = 8.5 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
+			newline = yes
 			remove_ideas = SOV_yukos_idea
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 2 }
+			SOV_modify_economic_support = yes
+			newline = yes
+			set_temp_variable = { treasury_change = -4.8 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -35039,24 +35235,34 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
-		available = { has_completed_focus = SOV_seize_yukos_oil }
+		prerequisite = { focus = SOV_seize_yukos_oil }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_reform_rosneft"
-			add_ideas = SOV_rosneft_idea
-			set_temp_variable = { modify_economic = 2 }
-			modify_economic_support = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_gdp_from_resource_sector_modifier = 0.01 tooltip = gdp_from_resource_sector_modifier_tt }
+			add_to_variable = { SOV_econ_oil_export_multiplier_modifier = 0.01 tooltip = oil_export_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 2 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_fossil_fuel_industry_opinion = yes
+			newline = yes
 			SOV = {
-				set_temp_variable = { modify_capitalisation_rosneft = 1 }
-				modify_capitalisation_rosneft_support = yes
+				set_temp_variable = { SOV_modify_capitalisation_rosneft = 1 }
+				SOV_modify_capitalisation_rosneft_support = yes
 			}
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
 					ai_russian_popularity_assistant = yes
 				}
+				add_to_variable = { SOV_econsub_gdp_from_resource_sector_modifier = 0.01 }
+				add_to_variable = { SOV_econsub_oil_export_multiplier_modifier = 0.01 }
+				add_to_variable = { SOV_econsub_corporate_tax_income_multiplier_modifier = 0.01 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
 			}
 		}
 
@@ -35087,16 +35293,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_use_yukos"
-			swap_ideas = {
-				remove_idea = SOV_rosneft_idea
-				add_idea = SOV_rosneft_idea1
-			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			SOV = {
-				set_temp_variable = { modify_capitalisation_rosneft = 3 }
-				modify_capitalisation_rosneft_support = yes
+				set_temp_variable = { SOV_modify_capitalisation_rosneft = 3 }
+				SOV_modify_capitalisation_rosneft_support = yes
 			}
+			newline = yes
 			set_temp_variable = { temp_opinion = 3 }
 			change_fossil_fuel_industry_opinion = yes
 		}
@@ -35140,6 +35344,7 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			newline = yes
 			685 = {
 				add_resource = {
 					type = oil
@@ -35152,12 +35357,14 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_rosneft = -9 }
+				SOV_modify_capitalisation_rosneft_support = yes
+			}
+			newline = yes
 			set_temp_variable = { treasury_change = -9 }
 			modify_treasury_effect = yes
-			SOV = {
-				set_temp_variable = { modify_capitalisation_rosneft = -9 }
-				modify_capitalisation_rosneft_support = yes
-			}
 		}
 
 		ai_will_do = {
@@ -35195,26 +35402,22 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_buy_severnaya_neft"
-			648 = {
+			every_owned_state = {
+				random_select_amount = 2
 				add_building_construction = {
 					type = fuel_silo
 					level = 1
 					instant_build = yes
 				}
 			}
-			683 = {
-				add_building_construction = {
-					type = fuel_silo
-					level = 1
-					instant_build = yes
-				}
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_rosneft = -3 }
+				SOV_modify_capitalisation_rosneft_support = yes
 			}
+			newline = yes
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
-			SOV = {
-				set_temp_variable = { modify_capitalisation_rosneft = -3 }
-				modify_capitalisation_rosneft_support = yes
-			}
 		}
 
 		ai_will_do = {
@@ -35244,6 +35447,33 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_buy_thk_bp"
+			custom_effect_tooltip = SOV_ruling_statist_TT
+			effect_tooltip = {
+				add_political_power = -75
+				set_temp_variable = { temp_opinion = -7 }
+				change_oligarchs_opinion = yes
+				set_temp_variable = { temp_opinion = 5 }
+				change_fossil_fuel_industry_opinion = yes
+				set_temp_variable = { SOV_modify_capitalisation_rosneft = 3 }
+				SOV_modify_capitalisation_rosneft_support = yes
+				set_temp_variable = { treasury_change = -15 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			custom_effect_tooltip = SOV_ruling_oligarch_TT
+			effect_tooltip = {
+				add_stability = -0.03
+				set_temp_variable = { temp_opinion = 5 }
+				change_oligarchs_opinion = yes
+				set_temp_variable = { temp_opinion = -7 }
+				change_fossil_fuel_industry_opinion = yes
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.05
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = SOV_verdict_scorecard_TT
 			country_event = { id = sov_economic.4 days = 1 }
 		}
 
@@ -35274,12 +35504,23 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_gazprom_neft"
-			add_ideas = SOV_gazprom_neft_idea
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_gdp_from_resource_sector_modifier = 0.01 tooltip = gdp_from_resource_sector_modifier_tt }
+			add_to_variable = { SOV_econ_oil_export_multiplier_modifier = 0.01 tooltip = oil_export_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			SOV = {
-				set_temp_variable = { modify_capitalisation_gazprom = 2.5 }
-				modify_capitalisation_gazprom_support = yes
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = 2.5 }
+				SOV_modify_capitalisation_gazprom_support = yes
+			}
+			hidden_effect = {
+				add_to_variable = { SOV_econsub_gdp_from_resource_sector_modifier = 0.01 }
+				add_to_variable = { SOV_econsub_oil_export_multiplier_modifier = 0.01 }
+				add_to_variable = { SOV_econsub_corporate_tax_income_multiplier_modifier = 0.01 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
 			}
 		}
 
@@ -35304,38 +35545,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_arctic_gas"
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
-			643 = {
-				add_resource = {
-					type = oil
-					amount = 3
-				}
+			643 = { add_resource = { type = oil amount = 3 } }
+			683 = { add_resource = { type = oil amount = 6 } }
+			648 = { add_resource = { type = oil amount = 12 } }
+			679 = { add_resource = { type = oil amount = 6 } }
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = -17 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
-			683 = {
-				add_resource = {
-					type = oil
-					amount = 6
-				}
-			}
-			648 = {
-				add_resource = {
-					type = oil
-					amount = 12
-				}
-			}
-			679 = {
-				add_resource = {
-					type = oil
-					amount = 6
-				}
-			}
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -17 }
 			modify_treasury_effect = yes
-			SOV = {
-				set_temp_variable = { modify_capitalisation_gazprom = -17 }
-				modify_capitalisation_gazprom_support = yes
-			}
 		}
 
 		ai_will_do = {
@@ -35373,20 +35597,19 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			678 = {
-				add_resource = {
-					type = oil
-					amount = 2
-				}
+			newline = yes
+			678 = { add_resource = { type = oil amount = 2 } }
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_rosneft = -1.050 }
+				SOV_modify_capitalisation_rosneft_support = yes
+				newline = yes
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = -1.050 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
+			newline = yes
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
-			SOV = {
-				set_temp_variable = { modify_capitalisation_rosneft = -1.050 }
-				modify_capitalisation_rosneft_support = yes
-				set_temp_variable = { modify_capitalisation_gazprom = -1.050 }
-				modify_capitalisation_gazprom_support = yes
-			}
 		}
 
 		ai_will_do = {
@@ -35418,18 +35641,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_gas_with_sibur"
-			678 = {
-				add_resource = {
-					type = oil
-					amount = 2
-				}
+			678 = { add_resource = { type = oil amount = 2 } }
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = -0.900 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
+			newline = yes
 			set_temp_variable = { treasury_change = -0.9 }
 			modify_treasury_effect = yes
-			SOV = {
-				set_temp_variable = { modify_capitalisation_gazprom = -0.900 }
-				modify_capitalisation_gazprom_support = yes
-			}
 		}
 
 		ai_will_do = { base = 355 }
@@ -35453,18 +35673,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_oil_nenets"
-			683 = {
-				add_resource = {
-					type = oil
-					amount = 3
-				}
+			683 = { add_resource = { type = oil amount = 3 } }
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = -1.8 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
+			newline = yes
 			set_temp_variable = { treasury_change = -1.8 }
 			modify_treasury_effect = yes
-			SOV = {
-				set_temp_variable = { modify_capitalisation_gazprom = -1.8 }
-				modify_capitalisation_gazprom_support = yes
-			}
 		}
 
 		ai_will_do = { base = 355 }
@@ -35489,18 +35706,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_oil_yamao"
-			679 = {
-				add_resource = {
-					type = oil
-					amount = 3
-				}
+			679 = { add_resource = { type = oil amount = 3 } }
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = -1.8 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
+			newline = yes
 			set_temp_variable = { treasury_change = -1.8 }
 			modify_treasury_effect = yes
-			SOV = {
-				set_temp_variable = { modify_capitalisation_gazprom = -1.8 }
-				modify_capitalisation_gazprom_support = yes
-			}
 		}
 
 		ai_will_do = { base = 355 }
@@ -35524,18 +35738,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_oil_khmao"
-			678 = {
-				add_resource = {
-					type = oil
-					amount = 3
-				}
+			678 = { add_resource = { type = oil amount = 3 } }
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = -1.8 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
+			newline = yes
 			set_temp_variable = { treasury_change = -1.8 }
 			modify_treasury_effect = yes
-			SOV = {
-				set_temp_variable = { modify_capitalisation_gazprom = -1.8 }
-				modify_capitalisation_gazprom_support = yes
-			}
 		}
 
 		ai_will_do = { base = 355 }
@@ -35559,34 +35770,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rubber"
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
+			665 = { add_resource = { type = rubber amount = 3 } }
+			651 = { add_resource = { type = rubber amount = 3 } }
+			659 = { add_resource = { type = rubber amount = 3 } }
+			1189 = { add_resource = { type = rubber amount = 3 } }
+			newline = yes
 			set_temp_variable = { treasury_change = -12 }
 			modify_treasury_effect = yes
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
-			665 = {
-				add_resource = {
-					type = rubber
-					amount = 3
-				}
-			}
-			651 = {
-				add_resource = {
-					type = rubber
-					amount = 3
-				}
-			}
-			659 = {
-				add_resource = {
-					type = rubber
-					amount = 3
-				}
-			}
-			1189 = {
-				add_resource = {
-					type = rubber
-					amount = 3
-				}
-			}
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -35640,143 +35833,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rubber_foreign"
-			if = {
-				limit = {
-					NOT = {
-						has_war_with = FRA
-					}
-				}
-				FRA = { country_event = sov_economic.13 }
-			}
-			if = {
-				limit = {
-					NOT = {
-						has_war_with = GER
-					}
-				}
-				GER = { country_event = sov_economic.13 }
-			}
-			if = {
-				limit = {
-					NOT = {
-						has_war_with = ITA
-					}
-				}
-				ITA = { country_event = sov_economic.13 }
-			}
-			if = {
-				limit = {
-					NOT = {
-						has_war_with = FIN
-					}
-				}
-				FIN = { country_event = sov_economic.13 }
-			}
-			if = {
-				limit = {
-					NOT = {
-						has_war_with = JAP
-					}
-				}
-				JAP = { country_event = sov_economic.13 }
-			}
+			if = { limit = { NOT = { has_war_with = FRA } } FRA = { country_event = sov_economic.13 } }
+			if = { limit = { NOT = { has_war_with = GER } } GER = { country_event = sov_economic.13 } }
+			if = { limit = { NOT = { has_war_with = ITA } } ITA = { country_event = sov_economic.13 } }
+			if = { limit = { NOT = { has_war_with = FIN } } FIN = { country_event = sov_economic.13 } }
+			if = { limit = { NOT = { has_war_with = JAP } } JAP = { country_event = sov_economic.13 } }
+			newline = yes
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
 				set_temp_variable = { treasury_change = -2.8 }
 				modify_treasury_effect = yes
-				if = {
-					limit = { NOT = { has_war_with = FRA } }
-					add_ideas = SOV_michelin_idea
-				}
-				if = {
-					limit = { NOT = { has_war_with = GER } }
-					add_ideas = SOV_continental_idea
-				}
-				if = {
-					limit = { NOT = { has_war_with = ITA } }
-					add_ideas = SOV_pirelly_idea
-				}
-				if = {
-					limit = { NOT = { has_war_with = FIN } }
-					add_ideas = SOV_nokian_idea
-				}
-				if = {
-					limit = { NOT = { has_war_with = JAP } }
-					add_ideas = SOV_yokohama_idea
-				}
+				random_owned_state = { add_resource = { type = rubber amount = 3 } }
 			}
-		}
-
-		ai_will_do = { base = 355 }
-	}
-
-	focus = {
-		id = SOV_economic_sber_reorg
-		icon = sov_sberich
-
-		x = 24
-		y = 3
-		relative_position_id = SOV_economic_russian
-
-		cost = 3
-
-		prerequisite = { focus = SOV_economic_inter_networks }
-
-		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_sber_reorg"
-			unlock_decision_tooltip = SOV_economic_sber_ipo
-			add_ideas = SOV_sberbank_idea
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
-		}
-
-		ai_will_do = { base = 355 }
-	}
-
-	focus = {
-		id = SOV_economic_vtb
-		icon = sov_vtb
-
-		x = 23
-		y = 4
-		relative_position_id = SOV_economic_russian
-
-		cost = 2
-
-		prerequisite = { focus = SOV_economic_rostelekom }
-		prerequisite = { focus = SOV_economic_sber_reorg }
-
-		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_vtb"
-			unlock_decision_tooltip = SOV_economic_vtb_ipo
-			add_ideas = SOV_vtbbank_idea
-		}
-
-		ai_will_do = { base = 355 }
-	}
-
-	focus = {
-		id = SOV_economic_alpha
-		icon = sov_alpha
-
-		x = 25
-		y = 4
-		relative_position_id = SOV_economic_russian
-
-		cost = 2
-
-		prerequisite = { focus = SOV_economic_sber_reorg }
-
-		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_alpha"
-			unlock_decision_tooltip = SOV_economic_alpha_lab
-			add_ideas = SOV_alphabank_idea
 		}
 
 		ai_will_do = { base = 355 }
@@ -35786,7 +35854,7 @@ focus_tree = {
 		id = SOV_economic_mmvb
 		icon = sov_mmvb
 
-		x = 22
+		x = 21
 		y = 1
 		relative_position_id = SOV_economic_russian
 
@@ -35798,19 +35866,108 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_mmvb"
-			custom_effect_tooltip = SOV_mosbirja_tt
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_tax_gain_multiplier_modifier = 0.01 tooltip = tax_gain_multiplier_modifier_tt }
 		}
 
 		ai_will_do = { base = 455 }
 	}
 
 	focus = {
+		id = SOV_economic_sber_reorg
+		icon = sov_sberich
+
+		x = 2
+		y = 2
+		relative_position_id = SOV_economic_mmvb
+
+		cost = 3
+
+		prerequisite = { focus = SOV_economic_inter_networks }
+
+		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_sber_reorg"
+			unlock_decision_tooltip = SOV_economic_sber_ipo
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_economic_cycles_cost_factor = -0.02 tooltip = economic_cycles_cost_factor_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+		}
+
+		ai_will_do = { base = 355 }
+	}
+
+	focus = {
+		id = SOV_economic_vtb
+		icon = sov_vtb
+
+		x = 1
+		y = 3
+		relative_position_id = SOV_economic_mmvb
+
+		cost = 2
+
+		prerequisite = { focus = SOV_economic_rostelekom }
+		prerequisite = { focus = SOV_economic_sber_reorg }
+
+		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_vtb"
+			unlock_decision_tooltip = SOV_economic_vtb_ipo
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_economic_cycles_cost_factor = -0.01 tooltip = economic_cycles_cost_factor_tt }
+		}
+
+		ai_will_do = { base = 355 }
+	}
+
+	focus = {
+		id = SOV_economic_alpha
+		icon = sov_alpha
+
+		x = 3
+		y = 3
+		relative_position_id = SOV_economic_mmvb
+
+		cost = 2
+
+		prerequisite = { focus = SOV_economic_sber_reorg }
+
+		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_alpha"
+			unlock_decision_tooltip = SOV_economic_alpha_lab
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_economic_cycles_cost_factor = -0.01 tooltip = economic_cycles_cost_factor_tt }
+			hidden_effect = {
+				add_to_variable = { SOV_econsub_corporate_tax_income_multiplier_modifier = 0.01 }
+				add_to_variable = { SOV_econsub_economic_cycles_cost_factor = -0.01 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
+			}
+		}
+
+		ai_will_do = { base = 355 }
+	}
+
+	focus = {
 		id = SOV_economic_mosbirja
 		icon = sov_moex
 
-		x = 23
-		y = 6
-		relative_position_id = SOV_economic_russian
+		x = 1
+		y = 5
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 1
 
@@ -35824,9 +35981,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_mosbirja"
 			add_political_power = 100
-			custom_effect_tooltip = SOV_start_moex_tt
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_economic_cycles_cost_factor = -0.02 tooltip = economic_cycles_cost_factor_tt }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 		}
 
 		ai_will_do = { base = 355 }
@@ -35836,9 +35997,9 @@ focus_tree = {
 		id = SOV_economic_rostelekom
 		icon = SOV_rostelekom
 
-		x = 22
-		y = 3
-		relative_position_id = SOV_economic_russian
+		x = 0
+		y = 2
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 3
 
@@ -35849,19 +36010,28 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rostelekom"
 			add_tech_bonus = {
-				name = CAT_internet_tech
+				name = SOV_economic_rostelekom
 				bonus = 1.0
 				uses = 2
 				category = CAT_internet_tech
 			}
-			add_ideas = SOV_rostelekom_idea
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_research_speed_factor = 0.01 tooltip = research_speed_factor_tt }
+			add_to_variable = { SOV_econ_foreign_influence_defense_modifier = 0.04 tooltip = foreign_influence_defense_modifier_tt }
+			add_to_variable = { SOV_econ_production_speed_internet_station_factor = 0.05 tooltip = production_speed_internet_station_factor_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
 					ai_russian_popularity_assistant = yes
 				}
+				add_to_variable = { SOV_econsub_research_speed_factor = 0.01 }
+				add_to_variable = { SOV_econsub_foreign_influence_defense_modifier = 0.04 }
+				add_to_variable = { SOV_econsub_production_speed_internet_station_factor = 0.05 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
 			}
 		}
 
@@ -35872,9 +36042,9 @@ focus_tree = {
 		id = SOV_economic_inter_networks
 		icon = SOV_regions_connect
 
-		x = 22
-		y = 2
-		relative_position_id = SOV_economic_russian
+		x = 0
+		y = 1
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 5
 
@@ -35886,9 +36056,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_inter_networks"
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			two_random_network_infrastructure = yes
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -35910,9 +36081,9 @@ focus_tree = {
 		id = SOV_economic_gosuslugi
 		icon = SOV_gosuslug
 
-		x = 20
-		y = 5
-		relative_position_id = SOV_economic_russian
+		x = -2
+		y = 4
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 3
 
@@ -35925,9 +36096,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_gosuslugi"
-			add_ideas = SOV_gosuslugi_idea
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_bureaucracy_cost_multiplier_modifier = -0.06 tooltip = bureaucracy_cost_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_offices_worker_requirement_modifier = -0.03 tooltip = offices_worker_requirement_modifier_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 		}
 
 		ai_will_do = { base = 355 }
@@ -35937,9 +36111,9 @@ focus_tree = {
 		id = SOV_economic_megaphon
 		icon = SOV_megaphone
 
-		x = 21
-		y = 4
-		relative_position_id = SOV_economic_russian
+		x = -1
+		y = 3
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 3
 
@@ -35950,20 +36124,26 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_megaphon"
-			add_ideas = SOV_megaphon_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_production_speed_internet_station_factor = 0.01 tooltip = production_speed_internet_station_factor_tt }
+			newline = yes
 			add_tech_bonus = {
-				name = GENERIC_network_infrastructure
+				name = SOV_economic_megaphon
 				uses = 1
 				bonus = 0.15
 				category = CAT_internet_tech
 			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
 					ai_russian_popularity_assistant = yes
 				}
+				add_to_variable = { SOV_econsub_corporate_tax_income_multiplier_modifier = 0.01 }
+				add_to_variable = { SOV_econsub_production_speed_internet_station_factor = 0.01 }
 			}
 		}
 
@@ -35974,9 +36154,9 @@ focus_tree = {
 		id = SOV_economic_bilene
 		icon = sov_beeline
 
-		x = 19
-		y = 4
-		relative_position_id = SOV_economic_russian
+		x = -3
+		y = 3
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 2
 
@@ -35987,7 +36167,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_bilene"
 			add_tech_bonus = {
-				name = GENERIC_network_infrastructure
+				name = SOV_economic_bilene
 				uses = 2
 				bonus = 0.15
 				category = CAT_internet_tech
@@ -36007,9 +36187,9 @@ focus_tree = {
 		id = SOV_economic_tele2
 		icon = SWE_tele2
 
-		x = 18
-		y = 5
-		relative_position_id = SOV_economic_russian
+		x = -4
+		y = 4
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 7
 
@@ -36024,58 +36204,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_tele2"
-			687 = {
-				add_extra_state_shared_building_slots = 1
+			every_owned_state = {
+				random_select_amount = 6
 				add_building_construction = {
 					type = internet_station
 					level = 2
 					instant_build = yes
 				}
 			}
-			686 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = internet_station
-					level = 2
-					instant_build = yes
-				}
-			}
-			685 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = internet_station
-					level = 2
-					instant_build = yes
-				}
-			}
-			692 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = internet_station
-					level = 2
-					instant_build = yes
-				}
-			}
-			1069 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = internet_station
-					level = 2
-					instant_build = yes
-				}
-			}
-			682 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = internet_station
-					level = 2
-					instant_build = yes
-				}
-			}
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -27 }
 			modify_treasury_effect = yes
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -36097,9 +36239,9 @@ focus_tree = {
 		id = SOV_economic_mts
 		icon = blr_mts
 
-		x = 20
-		y = 3
-		relative_position_id = SOV_economic_russian
+		x = -2
+		y = 2
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 3
 
@@ -36110,18 +36252,29 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_mts"
 			unlock_decision_tooltip = SOV_economic_mts_expanding
-			add_ideas = SOV_mts_idea
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_production_speed_internet_station_factor = 0.02 tooltip = production_speed_internet_station_factor_tt }
+			newline = yes
 			add_tech_bonus = {
 				name = GENERIC_network_infrastructure
 				uses = 1
 				bonus = 0.15
 				category = CAT_internet_tech
 			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			SOV = {
-				set_temp_variable = { modify_capitalisation_mts = 0.590 }
-				modify_capitalisation_mts_support = yes
+				set_temp_variable = { SOV_modify_capitalisation_mts = 0.590 }
+				SOV_modify_capitalisation_mts_support = yes
+			}
+			hidden_effect = {
+				add_to_variable = { SOV_econsub_corporate_tax_income_multiplier_modifier = 0.01 }
+				add_to_variable = { SOV_econsub_production_speed_internet_station_factor = 0.02 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
 			}
 		}
 
@@ -36144,13 +36297,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_glonass"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_landforce_modifier }
+			add_to_variable = { SOV_land_army_org_factor = 0.03 tooltip = army_org_factor_tt }
+			add_to_variable = { SOV_land_army_speed_factor = 0.03 tooltip = army_speed_factor_tt }
+			newline = yes
 			set_temp_variable = { percent_change = 3 }
 			change_domestic_influence_percentage = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
-			add_ideas = SOV_idea_glonass
 			hidden_effect = {
-				add_ideas = SOV_russian_kosmos_idea
 				if = {
 					limit = { SOV = { is_ai = yes } }
 					ai_russian_popularity_assistant = yes
@@ -36183,14 +36342,22 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_aeroflot"
-			add_ideas = SOV_aeroflot_idea
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.03 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_airforce_modifier }
+			add_to_variable = { SOV_air_production_speed_air_base_factor = 0.07 tooltip = production_speed_air_base_factor_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
 					ai_russian_popularity_assistant = yes
 				}
+				add_to_variable = { SOV_econsub_corporate_tax_income_multiplier_modifier = 0.03 }
+				add_to_variable = { SOV_econsub_production_speed_air_base_factor = 0.07 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
 			}
 		}
 
@@ -36201,9 +36368,9 @@ focus_tree = {
 		id = SOV_economic_poebda
 		icon = SOV_pobeda
 
-		x = 12
-		y = 2
-		relative_position_id = SOV_economic_russian
+		x = -2
+		y = 1
+		relative_position_id = SOV_economic_aeroflot
 
 		cost = 3
 
@@ -36214,10 +36381,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_poebda"
 			unlock_decision_tooltip = SOV_economic_new_airports
-			swap_ideas = {
-				remove_idea = SOV_aeroflot_idea
-				add_idea = SOV_aeroflot_idea1
-			}
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.02 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_airforce_modifier }
+			add_to_variable = { SOV_air_production_speed_air_base_factor = 0.02 tooltip = production_speed_air_base_factor_tt }
 		}
 
 		ai_will_do = { base = 355 }
@@ -36227,9 +36396,9 @@ focus_tree = {
 		id = SOV_economic_rjd
 		icon = rjd
 
-		x = 16
-		y = 1
-		relative_position_id = SOV_economic_russian
+		x = 2
+		y = 0
+		relative_position_id = SOV_economic_aeroflot
 
 		cost = 3
 
@@ -36241,14 +36410,26 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rjd"
 			unlock_decision_tooltip = SOV_economic_rjd_sakhalin
 			unlock_decision_tooltip = SOV_economic_rjd_mcd
-			add_ideas = SOV_rjd_idea
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_repair_speed_infrastructure_factor = 0.02 tooltip = repair_speed_infrastructure_factor_tt }
+			add_to_variable = { SOV_econ_production_speed_infrastructure_factor = 0.05 tooltip = production_speed_infrastructure_factor_tt }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.04 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_landforce_modifier }
+			add_to_variable = { SOV_land_army_speed_factor = 0.01 tooltip = army_speed_factor_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
 					ai_russian_popularity_assistant = yes
 				}
+				add_to_variable = { SOV_econsub_army_speed_factor = 0.01 }
+				add_to_variable = { SOV_econsub_repair_speed_infrastructure_factor = 0.02 }
+				add_to_variable = { SOV_econsub_production_speed_infrastructure_factor = 0.05 }
+				add_to_variable = { SOV_econsub_corporate_tax_income_multiplier_modifier = 0.04 }
 			}
 		}
 
@@ -36259,9 +36440,9 @@ focus_tree = {
 		id = SOV_economic_rjd_sochi
 		icon = SOV_to_sochi
 
-		x = 14
-		y = 2
-		relative_position_id = SOV_economic_russian
+		x = 0
+		y = 1
+		relative_position_id = SOV_economic_aeroflot
 
 		cost = 3
 
@@ -36276,13 +36457,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rjd_sochi"
-			1140 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
+			1140 = { add_building_construction = { type = rail_terminal level = 1 instant_build = yes }	}
+			newline = yes
 			set_temp_variable = { treasury_change = -3.50 }
 			modify_treasury_effect = yes
 		}
@@ -36294,9 +36470,9 @@ focus_tree = {
 		id = SOV_economic_rjd_more_trains
 		icon = SOV_i_like_trains
 
-		x = 16
-		y = 2
-		relative_position_id = SOV_economic_russian
+		x = 2
+		y = 1
+		relative_position_id = SOV_economic_aeroflot
 
 		cost = 3
 
@@ -36319,6 +36495,7 @@ focus_tree = {
 				bonus = 0.15
 				category = CAT_infrastructure
 			}
+			newline = yes
 			set_temp_variable = { treasury_change = -6 }
 			modify_treasury_effect = yes
 		}
@@ -36336,9 +36513,9 @@ focus_tree = {
 		id = SOV_economic_rjd_moscow_circle
 		icon = SOV_moscow_central_circle
 
-		x = 18
-		y = 2
-		relative_position_id = SOV_economic_russian
+		x = 4
+		y = 1
+		relative_position_id = SOV_economic_aeroflot
 
 		cost = 3
 
@@ -36346,15 +36523,15 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
-		available = { SOV = { owns_state = 652 } }
+		available = { owns_state = 652  }
 
-		bypass = { NOT = { SOV = { owns_state = 652 } } }
+		bypass = { NOT = { owns_state = 652  } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rjd_moscow_circle"
-			652 = { #Moscow
+			652 = {
 				add_building_construction = {
-					type = infrastructure
+					type = rail_terminal
 					level = 1
 					instant_build = yes
 				}
@@ -36370,9 +36547,9 @@ focus_tree = {
 		id = SOV_economic_rjd_transsib
 		icon = transsibirskaya_magistral_russia
 
-		x = 13
-		y = 3
-		relative_position_id = SOV_economic_russian
+		x = -1
+		y = 2
+		relative_position_id = SOV_economic_aeroflot
 
 		cost = 7
 
@@ -36384,99 +36561,24 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rjd_transsib"
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
+			651 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			660 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			661 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			658 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			676 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			677 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			680 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			682 = { add_building_construction = { type = infrastructure level = 2 instant_build = yes } }
+			685 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			687 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			686 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			692 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			newline = yes
 			set_temp_variable = { treasury_change = -42 }
 			modify_treasury_effect = yes
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
-			651 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			660 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			661 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			658 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			676 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			677 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			680 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			682 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			685 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			687 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			686 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			692 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
 		}
 
 		ai_will_do = {
@@ -36492,9 +36594,9 @@ focus_tree = {
 		id = SOV_economic_rjd_baikal_amure
 		icon = baikal_amur_rzd
 
-		x = 15
-		y = 3
-		relative_position_id = SOV_economic_russian
+		x = 1
+		y = 2
+		relative_position_id = SOV_economic_aeroflot
 
 		cost = 5
 
@@ -36507,36 +36609,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rjd_baikal_amure"
-			685 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			687 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			688 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			1069 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			685 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			687 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			688 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			1069 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -14 }
 			modify_treasury_effect = yes
 		}
@@ -36554,9 +36634,9 @@ focus_tree = {
 		id = SOV_economic_rjd_north_latitudinal
 		icon = SOV_northen_railway
 
-		x = 17
-		y = 3
-		relative_position_id = SOV_economic_russian
+		x = 3
+		y = 2
+		relative_position_id = SOV_economic_aeroflot
 
 		cost = 3
 
@@ -36565,19 +36645,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
-		available = { SOV = { owns_state = 679 } }
+		available = { owns_state = 679 }
 
-		bypass = { NOT = { SOV = { owns_state = 679 } } }
+		bypass = { NOT = { owns_state = 679 } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rjd_north_latitudinal"
-			679 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
+			679 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+			newline = yes
 			set_temp_variable = { treasury_change = -3.50 }
 			modify_treasury_effect = yes
 		}
@@ -36600,18 +36675,16 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY FOCUS_FILTER_INDUSTRY }
 
 		available = {
-			SOV = { owns_state = 1065 }
+			owns_state = 1065
 			NOT = { has_active_mission = bankruptcy_incoming_collapse }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rusal"
 			unlock_decision_tooltip = SOV_economic_buy_sual
+			newline = yes
 			1065 = {
-				add_resource = {
-					type = aluminium
-					amount = 2
-				}
+				add_resource = { type = aluminium amount = 2 }
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
 					type = industrial_complex
@@ -36619,8 +36692,10 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -10.3 }
 			modify_treasury_effect = yes
 		}
@@ -36654,6 +36729,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_auto"
+			add_ideas = SOV_auto_industry_idea
 			add_political_power = 50
 			add_stability = 0.01
 		}
@@ -36856,6 +36932,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_reno_nissan_autovaz"
 			SOV_economy_cars_script = yes
+			newline = yes
 			644 = {
 				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
@@ -36864,8 +36941,7 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			set_temp_variable = { treasury_change = -17 }
-			modify_treasury_effect = yes
+			newline = yes
 			set_temp_variable = { percent_change = 3 }
 			set_temp_variable = { tag_index = FRA }
 			set_temp_variable = { influence_target = SOV }
@@ -36874,6 +36950,9 @@ focus_tree = {
 			set_temp_variable = { tag_index = JAP }
 			set_temp_variable = { influence_target = SOV }
 			change_influence_percentage = yes
+			newline = yes
+			set_temp_variable = { treasury_change = -17 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -36980,13 +37059,16 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			set_temp_variable = { treasury_change = -8.5 }
-			modify_treasury_effect = yes
+			newline = yes
 			SOV_economy_cars_script = yes
+			newline = yes
 			set_temp_variable = { percent_change = 4 }
 			set_temp_variable = { tag_index = JAP }
 			set_temp_variable = { influence_target = SOV }
 			change_influence_percentage = yes
+			newline = yes
+			set_temp_variable = { treasury_change = -8.5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -37041,6 +37123,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_cars_china_market"
 			add_ideas = SOV_foreign_chinacars_idea
+			newline = yes
 			set_temp_variable = { percent_change = 3 }
 			set_temp_variable = { tag_index = CHI }
 			set_temp_variable = { influence_target = SOV }
@@ -37091,11 +37174,12 @@ focus_tree = {
 				remove_idea = SOV_foreign_chinacars_idea
 				add_idea = SOV_foreign_chinacars_idea1
 			}
-			one_random_industrial_complex = yes
 			set_temp_variable = { percent_change = 3 }
 			set_temp_variable = { tag_index = CHI }
 			set_temp_variable = { influence_target = SOV }
 			change_influence_percentage = yes
+			newline = yes
+			one_random_industrial_complex = yes
 		}
 
 		ai_will_do = {
@@ -37150,8 +37234,7 @@ focus_tree = {
 				set_temp_variable = { percent_change = 3 }
 				change_domestic_influence_percentage = yes
 			}
-			else_if = {
-				limit = { has_completed_focus = SOV_economic_cars_udar_market }
+			else = {
 				swap_ideas = {
 					remove_idea = SOV_foreign_chinacars_idea1
 					add_idea = SOV_foreign_chinacars_idea2
@@ -37217,8 +37300,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_avtovaz"
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
 			663 = { # Samara
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -37227,8 +37308,11 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			newline = yes
 			SOV_economy_own_cars_script = yes
-			custom_effect_tooltip = SOV_auto_domestic_tt
+			newline = yes
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -37263,8 +37347,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_gaz"
-			set_temp_variable = { treasury_change = -9 }
-			modify_treasury_effect = yes
 			660 = { # Nizhny Novgorod
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -37273,14 +37355,18 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			newline = yes
 			add_tech_bonus = {
 				name = SOV_domestic_auto_production
 				uses = 1
 				bonus = 0.15
 				category = CAT_afv
 			}
+			newline = yes
 			SOV_economy_own_cars_script = yes
-			custom_effect_tooltip = SOV_auto_domestic_tt
+			newline = yes
+			set_temp_variable = { treasury_change = -9 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -37317,7 +37403,6 @@ focus_tree = {
 			SOV_economy_own_cars_script = yes
 			set_temp_variable = { percent_change = 1 }
 			change_domestic_influence_percentage = yes
-			custom_effect_tooltip = SOV_auto_domestic_tt
 		}
 
 		ai_will_do = { base = 40 }
@@ -37341,7 +37426,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_vaz_electro_car"
-			add_ideas = SOV_electric_car_project_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_stability_factor = 0.05 tooltip = stability_factor_tt }
+			add_to_variable = { SOV_econ_pop_energy_use_multiplier = 0.10 tooltip = pop_energy_use_multiplier_tt }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_landforce_modifier }
+			add_to_variable = { SOV_land_army_fuel_consumption_factor = -0.10 tooltip = army_fuel_consumption_factor_tt }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_airforce_modifier }
+			add_to_variable = { SOV_air_air_fuel_consumption_factor = -0.05 tooltip = air_fuel_consumption_factor_tt }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_navy_modifier }
+			add_to_variable = { SOV_navy_navy_fuel_consumption_factor = -0.025 tooltip = navy_fuel_consumption_factor_tt }
+			newline = yes
 			set_temp_variable = { percent_change = 1 }
 			change_domestic_influence_percentage = yes
 		}
@@ -37368,16 +37465,15 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_own_mosnosti"
 			SOV_economy_own_cars_script = yes
+			newline = yes
 			add_tech_bonus = {
 				name = SOV_domestic_auto_production
 				uses = 1
 				bonus = 0.45
 				category = CAT_afv
 			}
+			newline = yes
 			one_random_industrial_complex = yes
-			set_temp_variable = { percent_change = 1 }
-			change_domestic_influence_percentage = yes
-			custom_effect_tooltip = SOV_auto_domestic_tt
 		}
 
 		ai_will_do = {
@@ -37415,7 +37511,6 @@ focus_tree = {
 			SOV_economy_own_cars_script = yes
 			set_temp_variable = { percent_change = 1 }
 			change_domestic_influence_percentage = yes
-			custom_effect_tooltip = SOV_auto_domestic_tt
 		}
 
 		ai_will_do = { base = 40 }
@@ -37439,8 +37534,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_kamaz"
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
 			661 = { # Tatarstan
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -37449,14 +37542,18 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			newline = yes
 			add_tech_bonus = {
 				name = SOV_domestic_auto_production
 				uses = 1
 				bonus = 0.15
 				category = CAT_afv
 			}
+			newline = yes
 			SOV_economy_own_cars_script = yes
-			custom_effect_tooltip = SOV_auto_domestic_tt
+			newline = yes
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -37493,8 +37590,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_aurus"
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
 			652 = { # Moscow
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -37503,8 +37598,12 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			newline = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_oligarchs_opinion = yes
+			newline = yes
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -37545,8 +37644,10 @@ focus_tree = {
 				idea = recently_acceded_to_wto
 				days = 365
 			}
-			news_event = russia_news.7
-			country_event = { id = sov_economic.32 days = 1 }
+			hidden_effect = {
+				news_event = russia_news.7
+				country_event = { id = sov_economic.32 days = 1 }
+			}
 		}
 
 		ai_will_do = { base = 355 }
@@ -37589,8 +37690,11 @@ focus_tree = {
 			unlock_decision_tooltip = SOV_nord_stream2_prepare
 			unlock_decision_tooltip = SOV_blue_stream_prepare
 			unlock_decision_tooltip = SOV_turkey_stream_prepare
-			add_political_power = 50
-			custom_effect_tooltip = SOV_pipelinise_TT
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_oil_export_multiplier_modifier = 0.03 tooltip = oil_export_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_gdp_from_resource_sector_modifier = 0.02 tooltip = gdp_from_resource_sector_modifier_tt }
+			newline = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_fossil_fuel_industry_opinion = yes
 		}
@@ -37618,53 +37722,23 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
-		available = {
-			has_country_flag = SOV_gazprom_mechanic_nord_stream
-			NOT = {
-				has_war_with = GER
-			}
-			539 = {
-				is_owned_and_controlled_by = GER
-			}
-			country_exists = GER
-			NOT = {
-				OR = {
-					AND = {
-						nationalist_monarchists_are_in_power = yes
-						nationalist_fascist_are_in_coalition = yes
-					}
-					AND = {
-						nationalist_right_wing_populists_are_in_power = yes
-						nationalist_fascist_are_in_coalition = yes
-					}
-					nationalist_fascist_are_in_power = yes
-				}
-			}
-		}
+		available = { has_idea = SOV_nord_stream_sov_idea }
 
-		bypass = {
-			OR = {
-				NOT = { country_exists = GER }
-				GER = {
-					has_idea = SOV_nord_stream_idea
-				}
-			}
-		}
+		bypass = { NOT = { country_exists = GER } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_gazprom_norstream"
-			GER = { country_event = sov_economic.7 }
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				GER = { add_ideas = SOV_nord_stream_idea }
-				add_opinion_modifier = { target = GER modifier = economic_mission }
-				GER = { add_opinion_modifier = { target = SOV modifier = economic_mission } }
-				set_temp_variable = { treasury_change = 11 }
-				modify_treasury_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_oil_export_multiplier_modifier = 0.03 tooltip = oil_export_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.02 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = 2.5 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = { base = 200 }
 	}
 
 	focus = {
@@ -37681,53 +37755,23 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
-		available = {
-			has_country_flag = SOV_gazprom_mechanic_blue_stream
-			NOT = {
-				has_war_with = TUR
-			}
-			country_exists = TUR
-			160 = {
-				is_owned_and_controlled_by = TUR
-			}
-			NOT = {
-				OR = {
-					AND = {
-						nationalist_monarchists_are_in_power = yes
-						nationalist_fascist_are_in_coalition = yes
-					}
-					AND = {
-						nationalist_right_wing_populists_are_in_power = yes
-						nationalist_fascist_are_in_coalition = yes
-					}
-					nationalist_fascist_are_in_power = yes
-				}
-			}
-		}
+		available = { has_idea = SOV_blue_stream_sov_idea }
 
-		bypass = {
-			OR = {
-				NOT = { country_exists = TUR }
-				TUR = {
-					has_idea = SOV_blue_stream_idea
-				}
-			}
-		}
+		bypass = { NOT = { country_exists = TUR } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_gazprom_bluestream"
-			TUR = { country_event = sov_economic.10 }
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				TUR = { add_ideas = SOV_blue_stream_idea }
-				add_opinion_modifier = { target = TUR modifier = economic_mission }
-				TUR = { add_opinion_modifier = { target = SOV modifier = economic_mission } }
-				set_temp_variable = { treasury_change = 11 }
-				modify_treasury_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_gdp_from_resource_sector_modifier = 0.03 tooltip = gdp_from_resource_sector_modifier_tt }
+			add_to_variable = { SOV_econ_tax_gain_multiplier_modifier = 0.02 tooltip = tax_gain_multiplier_modifier_tt }
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = 2 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = { base = 200 }
 	}
 
 	focus = {
@@ -37744,58 +37788,23 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
-		available = {
-			has_country_flag = SOV_gazprom_mechanic_turkey_stream
-			NOT = {
-				has_war_with = TUR
-			}
-			country_exists = TUR
-			OR = {
-				160 = {
-					is_owned_and_controlled_by = TUR
-				}
-				934 = {
-					is_owned_and_controlled_by = TUR
-				}
-			}
-			NOT = {
-				OR = {
-					AND = {
-						nationalist_monarchists_are_in_power = yes
-						nationalist_fascist_are_in_coalition = yes
-					}
-					AND = {
-						nationalist_right_wing_populists_are_in_power = yes
-						nationalist_fascist_are_in_coalition = yes
-					}
-					nationalist_fascist_are_in_power = yes
-				}
-			}
-		}
+		available = { has_idea = SOV_turkey_stream_sov_idea }
 
-		bypass = {
-			OR = {
-				NOT = { country_exists = TUR }
-				TUR = {
-					has_idea = SOV_turkey_stream_idea
-				}
-			}
-		}
+		bypass = { NOT = { country_exists = TUR } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_gazprom_turkeystream"
-			TUR = { country_event = sov_economic.11 }
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				TUR = { add_ideas = SOV_turkey_stream_idea }
-				add_opinion_modifier = { target = TUR modifier = economic_mission }
-				TUR = { add_opinion_modifier = { target = SOV modifier = economic_mission } }
-				set_temp_variable = { treasury_change = 11 }
-				modify_treasury_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_foreign_influence_defense_modifier = 0.05 tooltip = foreign_influence_defense_modifier_tt }
+			add_to_variable = { SOV_econ_oil_export_multiplier_modifier = 0.02 tooltip = oil_export_multiplier_modifier_tt }
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = 2.5 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = { base = 200 }
 	}
 
 	focus = {
@@ -37812,55 +37821,32 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
-		available = {
-			has_country_flag = SOV_gazprom_mechanic_nord_stream2
-			NOT = {
-				has_war_with = GER
-			}
-			539 = {
-				is_owned_and_controlled_by = GER
-			}
-			country_exists = GER
-			NOT = {
-				OR = {
-					AND = {
-						nationalist_monarchists_are_in_power = yes
-						nationalist_fascist_are_in_coalition = yes
-					}
-					AND = {
-						nationalist_right_wing_populists_are_in_power = yes
-						nationalist_fascist_are_in_coalition = yes
-					}
-					nationalist_fascist_are_in_power = yes
-				}
-			}
-		}
+		available = { has_idea = SOV_nord_stream2_sov_idea }
 
-		bypass = { GER = { has_idea = SOV_nord_stream2_idea } }
+		bypass = { NOT = { country_exists = GER } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_gazprom_nordstream2"
-			GER = { country_event = sov_economic.12 }
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				GER = { add_ideas = SOV_nord_stream2_idea }
-				add_opinion_modifier = { target = GER modifier = economic_mission }
-				GER = { add_opinion_modifier = { target = SOV modifier = economic_mission } }
-				set_temp_variable = { treasury_change = 11 }
-				modify_treasury_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_oil_export_multiplier_modifier = 0.05 tooltip = oil_export_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = 3 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = { base = 200 }
 	}
 
 	focus = {
 		id = SOV_economic_it_sphere
 		icon = russian_it_icon
 
-		x = 22
-		y = 5
-		relative_position_id = SOV_economic_russian
+		x = 0
+		y = 4
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 5
 
@@ -37876,15 +37862,17 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_it_sphere"
-			one_office_construction = yes
 			add_tech_bonus = {
 				name = SOV_expand_the_tech_industry
 				bonus = 0.30
 				uses = 1
 				category = CAT_internet_tech
 			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
+			one_office_construction = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -37910,9 +37898,9 @@ focus_tree = {
 		id = SOV_economic_destiny_vk
 		icon = vkontakte
 
-		x = 19
-		y = 6
-		relative_position_id = SOV_economic_russian
+		x = -3
+		y = 5
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 5
 
@@ -37926,6 +37914,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_destiny_vk"
 			country_event = sov_economic.40
+			newline = yes
+			custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
+			effect_tooltip = { add_ideas = SOV_vk_durov_idea }
+			custom_effect_tooltip = TT_ALTERNATIVELY
+			effect_tooltip = { add_ideas = SOV_vk_idea }
 		}
 
 		ai_will_do = { base = 355 }
@@ -37935,9 +37928,9 @@ focus_tree = {
 		id = SOV_economic_mir
 		icon = SOV_mir
 
-		x = 21
-		y = 6
-		relative_position_id = SOV_economic_russian
+		x = -1
+		y = 5
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 3
 
@@ -37948,7 +37941,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_mir"
-			add_ideas = SOV_mir_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_political_power_factor = 0.02 tooltip = political_power_factor_tt }
+			add_to_variable = { SOV_econ_bureaucracy_cost_multiplier_modifier = -0.10 tooltip = bureaucracy_cost_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_drift_defence_factor = 0.03 tooltip = drift_defence_factor_tt }
+			add_to_variable = { SOV_econ_tax_gain_multiplier_modifier = 0.05 tooltip = tax_gain_multiplier_modifier_tt }
 		}
 
 		ai_will_do = { base = 355 }
@@ -37958,9 +37955,9 @@ focus_tree = {
 		id = SOV_economic_destiny_sber
 		icon = SOV_sber
 
-		x = 25
-		y = 6
-		relative_position_id = SOV_economic_russian
+		x = 3
+		y = 5
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 2
 
@@ -37971,20 +37968,33 @@ focus_tree = {
 
 		available = {
 			has_tech = internet4
-			has_idea = SOV_sberbank_idea1
+			custom_trigger_tooltip = {
+				tooltip = SOV_sber_ipo_done_tt
+				check_variable = { SOV_sber_stage > 0 }
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_destiny_sber"
-			swap_ideas = {
-				remove_idea = SOV_sberbank_idea1
-				add_idea = SOV_sber_idea
-			}
-			set_temp_variable = { modify_economic = 2 }
-			modify_economic_support = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_research_speed_factor = 0.02 tooltip = research_speed_factor_tt }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_education_cost_multiplier_modifier = 0.02 tooltip = education_cost_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_economic_cycles_cost_factor = -0.01 tooltip = economic_cycles_cost_factor_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 2 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			SOV = {
-				set_temp_variable = { modify_capitalisation_sberbank = 0.150 }
-				modify_capitalisation_sberbank_support = yes
+				set_temp_variable = { SOV_modify_capitalisation_sberbank = 0.150 }
+				SOV_modify_capitalisation_sberbank_support = yes
+			}
+			hidden_effect = {
+				add_to_variable = { SOV_econsub_research_speed_factor = 0.02 }
+				add_to_variable = { SOV_econsub_corporate_tax_income_multiplier_modifier = 0.03 }
+				add_to_variable = { SOV_econsub_education_cost_multiplier_modifier = 0.02 }
+				add_to_variable = { SOV_econsub_economic_cycles_cost_factor = -0.04 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
 			}
 		}
 
@@ -37995,9 +38005,9 @@ focus_tree = {
 		id = SOV_economic_destiny_yandex
 		icon = yandex
 
-		x = 26
-		y = 5
-		relative_position_id = SOV_economic_russian
+		x = 4
+		y = 4
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 5
 
@@ -38009,7 +38019,17 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_destiny_yandex"
-			add_ideas = SOV_yandex_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_drift_defence_factor = 0.01 tooltip = drift_defence_factor_tt }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.03 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_research_speed_factor = 0.04 tooltip = research_speed_factor_tt }
+			add_to_variable = { SOV_econ_education_cost_multiplier_modifier = 0.02 tooltip = education_cost_multiplier_modifier_tt }
+			hidden_effect = {
+				add_to_variable = { SOV_econsub_drift_defence_factor = 0.01 }
+				add_to_variable = { SOV_econsub_corporate_tax_income_multiplier_modifier = 0.03 }
+				add_to_variable = { SOV_econsub_research_speed_factor = 0.04 }
+				add_to_variable = { SOV_econsub_education_cost_multiplier_modifier = 0.02 }
+			}
 		}
 
 		ai_will_do = { base = 355 }
@@ -38019,9 +38039,9 @@ focus_tree = {
 		id = SOV_economic_kasperskyi
 		icon = sov_kaspersky
 
-		x = 24
-		y = 5
-		relative_position_id = SOV_economic_russian
+		x = 2
+		y = 4
+		relative_position_id = SOV_economic_mmvb
 
 		cost = 5
 
@@ -38034,7 +38054,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_kasperskyi"
-			add_ideas = SOV_kaspersky_idea
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_intelligence_modifier }
+			add_to_variable = { SOV_intel_crypto_strength = 1 tooltip = crypto_strength_tt }
+			add_to_variable = { SOV_intel_decryption_power_factor = 0.10 tooltip = decryption_power_factor_tt }
+			hidden_effect = {
+				add_to_variable = { SOV_econsub_crypto_strength = 1 }
+				add_to_variable = { SOV_econsub_decryption_power_factor = 0.10 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
+			}
 		}
 
 		ai_will_do = { base = 355 }
@@ -38062,11 +38089,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_alrosa"
 			unlock_decision_tooltip = SOV_economic_nakynskoe
+			newline = yes
 			688 = {
-				add_resource = {
-					type = chromium
-					amount = 2
-				}
+				add_resource = { type = chromium amount = 2 }
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
 					type = industrial_complex
@@ -38074,21 +38099,23 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			647 = {
-				add_resource = {
-					type = chromium
-					amount = 2
-				}
+			647 = { add_resource = { type = chromium amount = 2 } }
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_gdp_from_resource_sector_modifier = 0.01 tooltip = gdp_from_resource_sector_modifier_tt }
+			add_to_variable = { SOV_econ_chromium_export_multiplier_modifier = 0.02 tooltip = chromium_export_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.02 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_alrosa = 0.190 }
+				SOV_modify_capitalisation_alrosa_support = yes
 			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -12.1 }
 			modify_treasury_effect = yes
-			add_ideas = SOV_alrosa_idea
-			SOV = {
-				set_temp_variable = { modify_capitalisation_alrosa = 0.190 }
-				modify_capitalisation_alrosa_support = yes
-			}
 		}
 
 		ai_will_do = {
@@ -38123,48 +38150,34 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_nornickel"
 			unlock_decision_tooltip = SOV_economic_buy_polus
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-			set_temp_variable = { temp_opinion = 10 }
-			change_oligarchs_opinion = yes
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
 			682 = {
-				add_resource = {
-					type = tungsten
-					amount = 2
-				}
-				add_resource = {
-					type = chromium
-					amount = 3
-				}
-				add_resource = {
-					type = steel
-					amount = 4
-				}
-				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
 					type = industrial_complex
 					level = 1
 					instant_build = yes
 				}
+				add_extra_state_shared_building_slots = 1
+				add_resource = { type = tungsten amount = 2 }
+				add_resource = { type = chromium amount = 3 }
+				add_resource = { type = steel amount = 4 }
 			}
+			newline = yes
 			643 = {
-				add_resource = {
-					type = tungsten
-					amount = 2
-				}
-				add_resource = {
-					type = steel
-					amount = 2
-				}
+				add_resource = { type = tungsten amount = 2 }
+				add_resource = { type = steel amount = 2 }
 			}
-			1070 = {
-				add_resource = {
-					type = steel
-					amount = 3
-				}
-			}
+			newline = yes
+			1070 = { add_resource = { type = steel amount = 3 } }
+			newline = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_oligarchs_opinion = yes
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -38184,7 +38197,7 @@ focus_tree = {
 		id = SOV_economic_reform_gazprom
 		icon = gazprom_sheep5
 
-		x = 2
+		x = 4
 		y = 1
 		relative_position_id = SOV_economic_russian
 
@@ -38199,16 +38212,25 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_reform_gazprom"
 			unlock_decision_tooltip = SOV_gazprom_open
-			unlock_decision_tooltip = SOV_gazprom_close
 			unlock_decision_tooltip = SOV_gazprom_in_pmr
-			add_ideas = SOV_gazprom_idea
-			set_temp_variable = { modify_economic = 2 }
-			modify_economic_support = yes
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_economy_modifier }
+			add_to_variable = { SOV_econ_gdp_from_resource_sector_modifier = 0.01 tooltip = gdp_from_resource_sector_modifier_tt }
+			add_to_variable = { SOV_econ_oil_export_multiplier_modifier = 0.02 tooltip = oil_export_multiplier_modifier_tt }
+			add_to_variable = { SOV_econ_corporate_tax_income_multiplier_modifier = 0.02 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 2 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			SOV = {
-				set_temp_variable = { modify_capitalisation_gazprom = 1 }
-				modify_capitalisation_gazprom_support = yes
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = 1 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
 			hidden_effect = {
+				add_to_variable = { SOV_econsub_gdp_from_resource_sector_modifier = 0.01 }
+				add_to_variable = { SOV_econsub_oil_export_multiplier_modifier = 0.02 }
+				add_to_variable = { SOV_econsub_corporate_tax_income_multiplier_modifier = 0.02 }
+				add_to_variable = { SOV_econ_sphere_company_count = 1 }
 				if = {
 					limit = { SOV = { is_ai = yes } }
 					ai_russian_popularity_assistant = yes
@@ -38233,9 +38255,9 @@ focus_tree = {
 		id = SOV_economic_buy_sibur
 		icon = SOV_sibur
 
-		x = 2
-		y = 2
-		relative_position_id = SOV_economic_russian
+		x = 0
+		y = 1
+		relative_position_id = SOV_economic_reform_gazprom
 
 		cost = 3
 
@@ -38245,15 +38267,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_buy_sibur"
-			swap_ideas = {
-				remove_idea = SOV_gazprom_idea
-				add_idea = SOV_gazprom1_idea
-			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			SOV = {
-				set_temp_variable = { modify_capitalisation_gazprom = 3 }
-				modify_capitalisation_gazprom_support = yes
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = 3 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
 		}
 
@@ -38270,9 +38289,9 @@ focus_tree = {
 		id = SOV_economic_zapolyarnoe
 		icon = siberian_pipeline_rus
 
-		x = 2
-		y = 3
-		relative_position_id = SOV_economic_russian
+		x = 0
+		y = 2
+		relative_position_id = SOV_economic_reform_gazprom
 
 		cost = 3
 
@@ -38286,20 +38305,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_zapolyarnoe"
-			679 = {
-				add_resource = {
-					type = oil
-					amount = 3
-				}
+			679 = { add_resource = { type = oil amount = 3 } }
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = -1.8 }
+				SOV_modify_capitalisation_gazprom_support = yes
 			}
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -1.8 }
 			modify_treasury_effect = yes
-			SOV = {
-				set_temp_variable = { modify_capitalisation_gazprom = -1.8 }
-				modify_capitalisation_gazprom_support = yes
-			}
 		}
 
 		ai_will_do = {
@@ -38326,33 +38343,33 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 691 }
+			 owns_state = 691
 			NOT = { has_active_mission = bankruptcy_incoming_collapse }
 		}
 
-		bypass = { NOT = { SOV = { owns_state = 691 } } }
+		bypass = { NOT = { owns_state = 691 } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_nat_gas_sakhalin"
 			691 = {
-				add_resource = {
-					type = oil
-					amount = 2
-				}
+				add_resource = { type = oil amount = 2 }
 				add_building_construction = {
 					type = fuel_silo
 					level = 1
 					instant_build = yes
 				}
 			}
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
+			SOV = {
+				set_temp_variable = { SOV_modify_capitalisation_gazprom = -2.4 }
+				SOV_modify_capitalisation_gazprom_support = yes
+			}
+			newline = yes
 			set_temp_variable = { treasury_change = -2.4 }
 			modify_treasury_effect = yes
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
-			SOV = {
-				set_temp_variable = { modify_capitalisation_gazprom = -2.4 }
-				modify_capitalisation_gazprom_support = yes
-			}
 		}
 
 		ai_will_do = { base = 455 }
@@ -38372,42 +38389,43 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY FOCUS_FILTER_EXPENDITURE }
 
-		available = { NOT = { has_active_mission = bankruptcy_incoming_collapse } }
+		available = {
+			owns_state = 1137
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		bypass = { NOT = { owns_state = 1137 } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_gazprom_tes"
+			1137 = { multiply_variable = { geothermal_energy_production_var = 1.5 } }
+			1168 = {
+				if = {
+					limit = { is_owned_and_controlled_by = ROOT }
+					set_variable = { geothermal_energy_production_var = 0.0036 }
+					add_dynamic_modifier = { modifier = geothermal_infrastructure_in_state }
+				}
+			}
+			671 = {
+				if = {
+					limit = { is_owned_and_controlled_by = ROOT }
+					set_variable = { geothermal_energy_production_var = 0.006 }
+					add_dynamic_modifier = { modifier = geothermal_infrastructure_in_state }
+				}
+			}
 			1140 = {
-				add_building_construction = {
-					type = fossil_powerplant
-					level = 1
-					instant_build = yes
+				if = {
+					limit = { is_owned_and_controlled_by = ROOT }
+					set_variable = { geothermal_energy_production_var = 0.005 }
+					add_dynamic_modifier = { modifier = geothermal_infrastructure_in_state }
 				}
 			}
-			676 = {
-				add_building_construction = {
-					type = fossil_powerplant
-					level = 1
-					instant_build = yes
-				}
-			}
-			667 = {
-				add_building_construction = {
-					type = fossil_powerplant
-					level = 1
-					instant_build = yes
-				}
-			}
-			652 = {
-				add_building_construction = {
-					type = fossil_powerplant
-					level = 1
-					instant_build = yes
-				}
-			}
+			newline = yes
+			set_temp_variable = { SOV_modify_economic = 1 }
+			SOV_modify_economic_support = yes
+			newline = yes
 			set_temp_variable = { treasury_change = -9 }
 			modify_treasury_effect = yes
-			set_temp_variable = { modify_economic = 1 }
-			modify_economic_support = yes
 		}
 
 		ai_will_do = {
@@ -38427,7 +38445,7 @@ focus_tree = {
 		id = SOV_remove_guzinsky
 		icon = BLR_Anti_Corruption
 
-		x = 0
+		x = 1
 		y = 1
 		relative_position_id = SOV_economic_russian
 
@@ -38439,6 +38457,43 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_remove_guzinsky"
+			custom_effect_tooltip = SOV_media_path_fork_TT
+			newline = yes
+			custom_effect_tooltip = SOV_ruling_statist_TT
+			effect_tooltip = {
+				add_political_power = -25
+				add_stability = 0.07
+				set_temp_variable = { temp_opinion = -5 }
+				change_oligarchs_opinion = yes
+				add_ideas = SOV_private_media_nationalisation_idea
+				set_temp_variable = { treasury_change = -5 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			custom_effect_tooltip = SOV_ruling_statist_hardline_TT
+			effect_tooltip = {
+				add_political_power = -50
+				add_stability = 0.05
+				set_temp_variable = { temp_opinion = -10 }
+				change_oligarchs_opinion = yes
+				set_temp_variable = { temp_opinion = 10 }
+				change_intelligence_community_opinion = yes
+				add_ideas = SOV_private_media_nationalisation_idea
+			}
+			newline = yes
+			custom_effect_tooltip = SOV_ruling_oligarch_TT
+			effect_tooltip = {
+				add_stability = -0.05
+				set_temp_variable = { temp_opinion = 10 }
+				change_oligarchs_opinion = yes
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.15
+				}
+				add_ideas = SOV_independent_media_idea
+			}
+			newline = yes
+			custom_effect_tooltip = SOV_verdict_scorecard_TT
 			country_event = { id = sov_economic.3 days = 1 }
 		}
 
@@ -38449,13 +38504,14 @@ focus_tree = {
 		id = SOV_economic_trikolov_tv
 		icon = trikolor_tv
 
-		x = 0
-		y = 2
-		relative_position_id = SOV_economic_russian
+		x = -1
+		y = 1
+		relative_position_id = SOV_remove_guzinsky
 
 		cost = 3
 
 		prerequisite = { focus = SOV_remove_guzinsky }
+		mutually_exclusive = { focus = SOV_economic_tv6_broadcasting }
 
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
@@ -38482,9 +38538,9 @@ focus_tree = {
 		id = SOV_economic_gazprom_media
 		icon = SOV_gazprom_media
 
-		x = 0
-		y = 3
-		relative_position_id = SOV_economic_russian
+		x = -1
+		y = 2
+		relative_position_id = SOV_remove_guzinsky
 
 		cost = 3
 
@@ -38500,8 +38556,8 @@ focus_tree = {
 				remove_idea = SOV_private_media_nationalisation_idea1
 				add_idea = SOV_private_media_nationalisation_idea2
 			}
-			set_temp_variable = { modify_capitalisation_gazprom = 0.200 }
-			modify_capitalisation_gazprom_support = yes
+			set_temp_variable = { SOV_modify_capitalisation_gazprom = 0.200 }
+			SOV_modify_capitalisation_gazprom_support = yes
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -38511,5 +38567,72 @@ focus_tree = {
 		}
 
 		ai_will_do = { base = 355 }
+	}
+
+	focus = {
+		id = SOV_economic_tv6_broadcasting
+		icon = media_awareness
+
+		x = 1
+		y = 1
+		relative_position_id = SOV_remove_guzinsky
+
+		cost = 3
+
+		prerequisite = { focus = SOV_remove_guzinsky }
+		mutually_exclusive = { focus = SOV_economic_trikolov_tv }
+
+		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
+
+		available = { has_idea = SOV_independent_media_idea }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_tv6_broadcasting"
+			swap_ideas = {
+				remove_idea = SOV_independent_media_idea
+				add_idea = SOV_independent_media_idea1
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_oligarchs_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 355
+				has_global_flag = SOV_OLIGARCHS_RUSSIA_PATH
+			}
+		}
+	}
+
+	focus = {
+		id = SOV_economic_independent_press
+		icon = liberal_press
+
+		x = 1
+		y = 2
+		relative_position_id = SOV_remove_guzinsky
+
+		cost = 3
+
+		prerequisite = { focus = SOV_economic_tv6_broadcasting }
+
+		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_independent_press"
+			swap_ideas = {
+				remove_idea = SOV_independent_media_idea1
+				add_idea = SOV_independent_media_idea2
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 355
+				has_global_flag = SOV_OLIGARCHS_RUSSIA_PATH
+			}
+		}
 	}
 }
