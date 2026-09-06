@@ -966,6 +966,94 @@ def iter_flat_offsets(block: str) -> Iterator[Tuple[str, int]]:
         index += 1
 
 
+_STATEMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_.:@]*)\s*(>=|<=|==|=|>|<)")
+_FOCUS_START = re.compile(r"^[ \t]*(focus|shared_focus|joint_focus)\s*=\s*\{", re.M)
+_FOCUS_ID = re.compile(r"^[ \t]*id\s*=\s*(\S+)", re.M)
+
+
+def read_script(path: str, keep_quotes: bool = False) -> str:
+    """Read a mod file and neutralise comments, and by default quoted strings.
+
+    Both passes preserve length and newlines, so every offset and line number
+    computed downstream still points at the original file. `keep_quotes` is for
+    files whose quoted values are the data (loc key names in a game rule).
+    """
+    with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
+        text = strip_comments(handle.read())
+    return text if keep_quotes else blank_quoted_strings(text)
+
+
+def iter_statement_ops(
+    body: str,
+) -> Iterator[Tuple[str, str, Optional[str], Optional[str]]]:
+    """Yield (key, operator, scalar, block) for every statement at depth 0."""
+    index = 0
+    length = len(body)
+    while index < length:
+        if body[index] in "{}":
+            index += 1
+            continue
+        match = _STATEMENT.match(body, index)
+        if not match:
+            index += 1
+            continue
+        key, operator = match.group(1), match.group(2)
+        cursor = match.end()
+        while cursor < length and body[cursor] in " \t\r\n":
+            cursor += 1
+        if cursor < length and body[cursor] == "{":
+            close = find_matching_brace(body, cursor)
+            if close == -1:
+                return
+            yield key, operator, None, body[cursor + 1 : close]
+            index = close + 1
+            continue
+        if cursor < length and body[cursor] == '"':
+            stop = body.find('"', cursor + 1)
+            if stop == -1:
+                return
+            yield key, operator, body[cursor + 1 : stop], None
+            index = stop + 1
+            continue
+        stop = cursor
+        while stop < length and body[stop] not in " \t\r\n{}":
+            stop += 1
+        yield key, operator, body[cursor:stop], None
+        index = stop
+
+
+def iter_statements(body: str) -> Iterator[Tuple[str, Optional[str], Optional[str]]]:
+    """Yield (key, scalar, block) for every `key = ...` at depth 0 of *body*."""
+    for key, _operator, scalar, block in iter_statement_ops(body):
+        yield key, scalar, block
+
+
+def line_of(text: str, offset: int) -> int:
+    return text.count("\n", 0, offset) + 1
+
+
+def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
+    """Yield (id, kind, line, body) for each focus of a focus tree file.
+
+    A block without an `id` is skipped rather than reported under a made-up
+    name; the game ignores it too.
+    """
+    position = 0
+    while True:
+        match = _FOCUS_START.search(text, position)
+        if not match:
+            return
+        open_index = text.index("{", match.start())
+        close = find_matching_brace(text, open_index)
+        if close == -1:
+            return
+        body = text[open_index + 1 : close]
+        position = close + 1
+        id_match = _FOCUS_ID.search(body)
+        if id_match:
+            yield id_match.group(1), match.group(1), line_of(text, match.start()), body
+
+
 _IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
 # The three trigger blocks that can hide a decision or category from a player.
 _AI_GATE_FIELDS = ("visible", "available", "allowed")
