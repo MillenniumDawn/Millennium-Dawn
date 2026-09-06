@@ -687,23 +687,8 @@ def test_tools_tests_checkout_consumed_configuration():
     required = {
         ".pre-commit-config.yaml",
         ".claude/docs/typo-watchlist.md",
-        # validate_modifiers_test parses the shipped doc to catch a Paradox
-        # format change; without it here the test reads an absent file.
-        "resources/documentation/modifiers_documentation.md",
-        # common/national_focus is walked by focus_pp_malus_test's
-        # exemption-freshness guard. check_common_mistakes_test asserts its
-        # script_enums, equipment, decision and modifier loaders against the
-        # real files those loaders read; without them each returns None and the
-        # module-level assertions blow up at collection time.
-        "common/national_focus",
-        "common/scripted_localisation/01_politics_scripted_localisation.txt",
-        "common/script_enums.txt",
-        "common/units/equipment",
-        # renewable_power_per_cost_test drives the CLI against its live input.
-        "common/technologies/industry.txt",
-        "common/decisions",
-        "common/opinion_modifiers",
-        "common/modifiers",
+        "common",
+        "resources",
         ".github/workflows/coding-pipeline.yml",
         ".github/workflows/validator-cache.yml",
         ".github/workflows/nightly-pr-validation.yml",
