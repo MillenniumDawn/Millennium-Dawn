@@ -408,20 +408,22 @@ def apply_execution_metadata(
             continue
         run.strict = entry["strict"]
         failed = entry["status"] in {"crash", "missing"} or entry["returncode"] != 0
-        if failed and run.status == "passed":
-            run.status = "failed"
-            run.errors += 1
-            run.issues.append(
-                Issue(
-                    severity=Severity.ERROR,
-                    category="impact-run-incomplete",
-                    message=(
-                        f"validator exited {entry['returncode']} "
-                        f"({entry['status']}); no trustworthy verdict"
-                    ),
-                    validator=run.name,
+        if failed:
+            run.execution_complete = False
+            if run.status == "passed":
+                run.status = "failed"
+                run.errors += 1
+                run.issues.append(
+                    Issue(
+                        severity=Severity.ERROR,
+                        category="impact-run-incomplete",
+                        message=(
+                            f"validator exited {entry['returncode']} "
+                            f"({entry['status']}); no trustworthy verdict"
+                        ),
+                        validator=run.name,
+                    )
                 )
-            )
     return runs
 
 
@@ -492,7 +494,9 @@ def build_report_body(
 
 def report_is_clean(runs: List[ValidatorRun], problems: List[str]) -> bool:
     """True when a complete run has no findings, including an empty run."""
-    return not problems and all(run.status == "passed" for run in runs)
+    return not problems and all(
+        run.execution_complete and run.status == "passed" for run in runs
+    )
 
 
 def report_should_fail(runs: List[ValidatorRun], problems: List[str]) -> bool:
@@ -500,7 +504,10 @@ def report_should_fail(runs: List[ValidatorRun], problems: List[str]) -> bool:
     if problems:
         return True
     return any(
-        run.status in {"failed", "unknown", "no_output"} and run.strict is not False
+        not run.execution_complete
+        or (
+            run.status in {"failed", "unknown", "no_output"} and run.strict is not False
+        )
         for run in runs
     )
 

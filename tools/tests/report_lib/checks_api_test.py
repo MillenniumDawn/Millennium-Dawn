@@ -114,6 +114,13 @@ def test_non_strict_error_is_neutral():
     assert _conclusion_for(run) == "neutral"
 
 
+def test_non_strict_incomplete_run_is_failure():
+    run = _run_with_issues([], errors=0, warnings=0, status="failed")
+    run.strict = False
+    run.execution_complete = False
+    assert _conclusion_for(run) == "failure"
+
+
 def test_pick_annotations_skips_issues_without_file():
     issues = [
         Issue(

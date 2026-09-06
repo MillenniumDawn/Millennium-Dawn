@@ -6,6 +6,7 @@ from pathlib import Path
 
 import impact_report as ir
 import pytest
+from report_lib.checks_api import _conclusion_for
 from report_lib.comment import REPORT_MARKER
 
 
@@ -482,6 +483,32 @@ def test_warnings_post_but_do_not_fail():
     warning.warnings = 1
     assert not ir.report_should_fail([warning], [])
     assert not ir.report_is_clean([warning], [])
+
+
+def test_malformed_sidecar_cannot_clear_impact_or_be_neutral(tmp_path):
+    root = tmp_path / "results"
+    _write_results(
+        root, _manifest(results=[{**_manifest()["results"][0], "strict": False}])
+    )
+    (root / "validation-events.json").write_text(
+        json.dumps(
+            [
+                {
+                    "severity": "ERROR",
+                    "category": "broken",
+                    "message": "bad sidecar",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    run = ir.load_all(str(root))[0]
+
+    assert run.execution_complete is False
+    assert _conclusion_for(run) == "failure"
+    assert not ir.report_is_clean([run], [])
+    assert ir.report_should_fail([run], [])
 
 
 def test_workflow_event_payload_extracts_only_workflow_run(tmp_path):

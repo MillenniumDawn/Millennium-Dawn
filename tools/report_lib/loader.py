@@ -199,13 +199,15 @@ def load_all(results_dir: str) -> List[ValidatorRun]:
             execution_failed = entries[name]["returncode"] != 0 or entries[name][
                 "status"
             ] in {"crash", "missing"}
-            if execution_failed and current_run.status != "failed":
-                _add_failure(
-                    current_run,
-                    "impact-run-incomplete",
-                    f"validator exited {entries[name]['returncode']} "
-                    f"({entries[name]['status']}); no trustworthy verdict",
-                )
+            if execution_failed:
+                current_run.execution_complete = False
+                if current_run.status != "failed":
+                    _add_failure(
+                        current_run,
+                        "impact-run-incomplete",
+                        f"validator exited {entries[name]['returncode']} "
+                        f"({entries[name]['status']}); no trustworthy verdict",
+                    )
         for name, run in by_name.items():
             if name not in entries:
                 _add_failure(
@@ -231,6 +233,7 @@ def _manifest_failure(message: str, name: str = "impact-verification") -> Valida
         ],
         status="failed",
         errors=1,
+        execution_complete=False,
     )
 
 
@@ -244,6 +247,7 @@ def _add_failure(run: ValidatorRun, category: str, message: str) -> None:
         )
     )
     run.status = "failed"
+    run.execution_complete = False
     run.errors += 1
 
 
@@ -268,6 +272,7 @@ def _load_one(slug: str, artifact_dir: Path) -> ValidatorRun:
             status="failed",
             errors=1,
             had_json=True,
+            execution_complete=False,
         )
 
     run = ValidatorRun(name=slug, title=title, log_text=log_text)
@@ -294,6 +299,7 @@ def _load_one(slug: str, artifact_dir: Path) -> ValidatorRun:
             run.errors = s_err
             run.warnings = s_warn
     run.status = _determine_status(run, log_text)
+    run.execution_complete = run.status not in {"unknown", "no_output"}
     return run
 
 
@@ -343,9 +349,33 @@ def _read_json_sidecar(artifact_dir: Path, slug: str) -> Optional[list]:
             data = json.load(handle)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ValueError(f"Malformed validator sidecar: {path.name}") from exc
-    if not isinstance(data, list) or not all(isinstance(item, dict) for item in data):
+    if not isinstance(data, list) or not all(_is_valid_issue(item) for item in data):
         raise ValueError(f"Malformed validator sidecar: {path.name}")
     return data
+
+
+def _is_valid_issue(item: Any) -> bool:
+    if not isinstance(item, dict):
+        return False
+    required = {"severity", "category", "message"}
+    if not required <= item.keys():
+        return False
+    if not isinstance(item["severity"], str) or item["severity"] not in {
+        Severity.ERROR,
+        Severity.WARNING,
+    }:
+        return False
+    for field in ("category", "message", "file", "validator"):
+        if field in item and not isinstance(item[field], str):
+            return False
+    if "line" in item and (type(item["line"]) is not int or item["line"] < 0):
+        return False
+    if "detected_by" in item and not (
+        isinstance(item["detected_by"], list)
+        and all(isinstance(value, str) for value in item["detected_by"])
+    ):
+        return False
+    return True
 
 
 _LOG_ISSUE_RE = re.compile(

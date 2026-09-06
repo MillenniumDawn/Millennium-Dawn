@@ -29,6 +29,9 @@ class Issue:
 
     @classmethod
     def from_dict(cls, d: dict, validator: str = "") -> "Issue":
+        detected_by = d.get("detected_by", [])
+        if not isinstance(detected_by, list):
+            detected_by = []
         try:
             line = int(d.get("line", 0) or 0)
         except (TypeError, ValueError):
@@ -40,6 +43,7 @@ class Issue:
             file=d.get("file", ""),
             line=line,
             validator=d.get("validator", validator),
+            detected_by=list(detected_by),
         )
 
     def to_dict(self) -> dict:
@@ -74,6 +78,7 @@ class ValidatorRun:
     errors: int = 0
     warnings: int = 0
     had_json: bool = False  # True when JSON sidecar was loaded; False = text fallback
+    execution_complete: bool = True
     strict: Optional[bool] = None
 
     def status_symbol(self) -> str:

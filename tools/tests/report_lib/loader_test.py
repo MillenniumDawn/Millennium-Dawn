@@ -74,6 +74,57 @@ def test_load_failed_from_json_sidecar(tmp_path):
     assert run.had_json is True
 
 
+def test_valid_sidecar_accepts_optional_issue_fields(tmp_path):
+    root = make_results_tree(
+        tmp_path,
+        {
+            "events": {
+                "log": "warning\n",
+                "issues": [
+                    {
+                        "severity": "warning",
+                        "category": "unused",
+                        "message": "something",
+                        "validator": "events",
+                        "detected_by": ["events", "variables"],
+                    }
+                ],
+            }
+        },
+    )
+
+    run = load_all(str(root))[0]
+
+    assert run.status == "warnings"
+    assert run.issues[0].validator == "events"
+    assert run.issues[0].detected_by == ["events", "variables"]
+
+
+def test_malformed_issue_schema_fails_closed(tmp_path):
+    base_issue = {"severity": "error", "category": "c", "message": "m"}
+    malformed = (
+        {**base_issue, "severity": "ERROR"},
+        {**base_issue, "severity": None},
+        {**base_issue, "severity": []},
+        None,
+        {**base_issue, "category": None},
+        {**base_issue, "message": 1},
+        {**base_issue, "line": True},
+        {**base_issue, "detected_by": "events"},
+    )
+
+    for index, issue in enumerate(malformed):
+        root = make_results_tree(
+            tmp_path / str(index),
+            {"events": {"log": "✓ VALIDATION COMPLETE\n", "issues": [issue]}},
+        )
+        run = load_all(str(root))[0]
+        assert run.status == "failed"
+        assert run.errors == 1
+        assert run.execution_complete is False
+        assert run.issues[0].category == "malformed-validator-sidecar"
+
+
 def test_load_warnings_only(tmp_path):
     root = make_results_tree(
         tmp_path,
