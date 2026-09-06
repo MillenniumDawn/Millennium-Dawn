@@ -216,6 +216,15 @@ setup_spending_ladders = {
 # Effect: ingame_update_setup
 # Purpose: Aggregates every income and expense stream, then refreshes the economy UI; the weekly economic tick
 ingame_update_setup = {
+	if = {
+		limit = {
+			is_ai = yes
+			has_variable = last_quarter_gdp_total
+			NOT = { has_country_flag = ECON_weekly_refresh }
+		}
+		set_country_flag = ECON_refresh_pending
+	}
+	else = {
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
 
@@ -265,6 +274,7 @@ ingame_update_setup = {
 
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: Weekly Economic Update: Treasury: [?THIS.treasury] Treasury Rate: [?THIS.treasury_rate] Debt: [?THIS.debt] Interest Rate: [?THIS.interest_rate] Population Tax Rate: [?THIS.population_tax_rate] Corporate Tax Rate: [?THIS.corporate_tax_rate]"
+	}
 	}
 }
 
@@ -3325,6 +3335,7 @@ update_education_rate = {
 	set_temp_variable = { education_index = { value = education_law subtract = 1 clamp = { min = 0 max = 4 } } }
 	if = {
 		limit = { is_ai = yes }
+		set_variable = { research_slot_modifier = { value = 0.04 multiply = amount_research_slots add = -0.2 } }
 		set_temp_variable = { education_facilities_cost = 0 }
 		if = { limit = { nuclear_facility > 2 } add_to_temp_variable = { education_facilities_cost = 0.15 } }
 		else_if = { limit = { nuclear_facility > 1 } add_to_temp_variable = { education_facilities_cost = 0.1 } }
@@ -3338,7 +3349,7 @@ update_education_rate = {
 		if = { limit = { naval_facility > 2 } add_to_temp_variable = { education_facilities_cost = 0.15 } }
 		else_if = { limit = { naval_facility > 1 } add_to_temp_variable = { education_facilities_cost = 0.1 } }
 		else_if = { limit = { naval_facility > 0 } add_to_temp_variable = { education_facilities_cost = 0.05 } }
-		set_temp_variable = { education_cost_multiplier = { value = 1 add = modifier@education_cost_multiplier_modifier add = { value = 0.04 multiply = amount_research_slots add = -0.2 } multiply = common_money_modifier multiply = @education_base_cost_per_capita } }
+		set_temp_variable = { education_cost_multiplier = { value = 1 add = modifier@education_cost_multiplier_modifier add = research_slot_modifier multiply = common_money_modifier multiply = @education_base_cost_per_capita } }
 		set_variable = {
 			education_gain = {
 				value = population_total
@@ -4747,6 +4758,17 @@ econ_request_refresh = {
 	}
 	else = {
 		ingame_update_setup = yes
+	}
+}
+
+# Effect: econ_force_refresh
+# Purpose: Runs an immediate refresh for newly created countries
+econ_force_refresh = {
+	set_country_flag = ECON_weekly_refresh
+	ingame_update_setup = yes
+	clr_country_flag = ECON_weekly_refresh
+	if = { limit = { has_country_flag = ECON_refresh_pending }
+		clr_country_flag = ECON_refresh_pending
 	}
 }
 
