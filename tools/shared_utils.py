@@ -16,7 +16,17 @@ from collections import OrderedDict
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Container, Dict, Iterator, List, Optional, Set, Tuple
+from typing import (
+    Any,
+    Callable,
+    Container,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+)
 
 
 class Colors:
@@ -1395,6 +1405,70 @@ def get_root_dir() -> str:
     return os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
     )
+
+
+def add_dry_run_argument(parser: argparse.ArgumentParser) -> None:
+    """Add the standard `--dry-run` flag shared by the auto-fixer sweeps."""
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report what would be fixed without writing changes",
+    )
+
+
+def run_linting_sweep(
+    args,
+    *,
+    banner: str,
+    file_filter: Callable[[str], bool],
+    apply_fn: Callable[[str], Tuple[str, int]],
+    dry_run_fn: Callable[[str], Tuple[str, int]],
+    unit: str,
+    no_files_message: str,
+    applied_verb: str = "Fixed",
+    dry_run_verb: str = "Would fix",
+) -> int:
+    """Run a whole-tree auto-fixer sweep and print its standard report.
+
+    *apply_fn* / *dry_run_fn* each take a path and return (path, fix count).
+    Returns the process exit code.
+    """
+    timings = []
+    root_dir = get_root_dir()
+    print(f"{banner} (Mode: {args.mode}, Dry run: {args.dry_run})")
+
+    with Timer("file collection") as t:
+        all_files = collect_files_by_mode(args, root_dir)
+    timings.append(("file collection", t.elapsed))
+
+    targets = [f for f in all_files if file_filter(f)]
+    if not targets:
+        print(no_files_message)
+        return 0
+
+    print(f"Processing {len(targets)} files...")
+
+    process_fn = dry_run_fn if args.dry_run else apply_fn
+    with Timer("processing") as t:
+        results = run_with_pool(process_fn, targets, args.workers)
+    timings.append(("processing", t.elapsed))
+
+    action = dry_run_verb if args.dry_run else applied_verb
+    files_fixed = [(f, c) for f, c in results if c > 0]
+    total_fixes = sum(c for _, c in results)
+
+    for filepath, count in sorted(files_fixed):
+        print(f"  {clean_filepath(filepath)}: {action.lower()} {count} {unit}")
+
+    print("\n------")
+    print(f"Processed {len(targets)} files")
+    print(f"{action} {total_fixes} {unit} in {len(files_fixed)} file(s)")
+
+    elapsed_total = sum(t for _, t in timings)
+    print(f"\nCompleted in {elapsed_total:.1f}s")
+    print_timing_summary(timings)
+
+    return 0
 
 
 def run_with_pool(
