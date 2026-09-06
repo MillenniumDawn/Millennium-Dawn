@@ -371,8 +371,8 @@
 	NDefines.NMilitary.PLAN_PROVINCE_BASE_IMPORTANCE = 1.0 -- 2.0
 	NDefines.NMilitary.PLAN_AREA_DEFENSE_ENEMY_UNIT_FACTOR = -3.0 -- -2.0
 	NDefines.NMilitary.PLAN_EXECUTE_BALANCED_LIMIT = 2 -- 0
-	NDefines.NMilitary.COMBAT_OVER_WIDTH_PENALTY = -1 -- -1
-	NDefines.NMilitary.COMBAT_OVER_WIDTH_PENALTY_MAX = -0.80 -- -0.33
+	NDefines.NMilitary.COMBAT_OVER_WIDTH_PENALTY = -1.5 -- -1
+	NDefines.NMilitary.COMBAT_OVER_WIDTH_PENALTY_MAX = -0.60 -- -0.33
 	NDefines.NMilitary.RETREAT_SPEED_FACTOR = 0.8 -- 0.25
 	NDefines.NMilitary.WITHDRAWING_SPEED_FACTOR = 0.35 -- 0.15
 	NDefines.NMilitary.STRATEGIC_SPEED_INFRA_BASE = 5.0               -- Base speed of strategic redeployment when not on railways
