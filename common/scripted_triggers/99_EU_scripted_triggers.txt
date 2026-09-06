@@ -326,34 +326,18 @@ EU_has_external_border = {
 ##########################
 
 EU_is_leader_of_foreign_policy = {
-	has_idea = EU_member
 	OR = {
 		has_idea = EU_foreign_minister
-		AND = {
-			check_variable = { global.euforeignaffairs = EUU.id }
-			has_idea = EU_commission_president
-		}
-		AND = {
-			check_variable = { global.euforeignaffairs = EUU.id }
-			check_variable = { global.eu_commission = EUU.id }
-			has_idea = EU_parliament_president
-		}
+		has_idea = EU_commission_president
+		has_idea = EU_parliament_president
 	}
 }
 
 EU_is_leader_of_trade_policy = {
-	has_idea = EU_member
 	OR = {
 		has_idea = EU_commission_president
-		AND = {
-			check_variable = { global.eu_commission = EUU.id }
-			has_idea = EU_council_president
-		}
-		AND = {
-			check_variable = { global.eu_commission = EUU.id }
-			check_variable = { global.eucouncil = EUU.id }
-			has_idea = EU_parliament_president
-		}
+		has_idea = EU_council_president
+		has_idea = EU_parliament_president
 	}
 }
 
@@ -362,32 +346,17 @@ EU_influence_on_leader_of_foreign_policy_25_percent = {
 		tooltip = EU_influence_on_leader_of_foreign_policy_25_percent_TT
 		OR = {
 			# A foreign-policy office holder exists: negotiate exit with them.
-			AND = {
-				any_of_scopes = {
-					array = global.EU_potential
-					EU_is_leader_of_foreign_policy = yes
-				}
-				OR = {
-					# You hold EU foreign policy: negotiate your own exit
-					EU_is_leader_of_foreign_policy = yes
-					any_of_scopes = {
-						array = global.EU_member
-						EU_is_leader_of_foreign_policy = yes
-						influence_higher_25 = yes
-					}
-				}
-			}
+			var:global.EU_foreign_minister = { influence_higher_25 = yes }
+			var:global.EU_commission_president = { influence_higher_25 = yes }
+			var:global.EU_parliament_president = { influence_higher_25 = yes }
 			# No EU foreign-policy office is filled (foreign minister, commission president and
 			# parliament president are all vacant — they are 5-year timed ideas that can lapse).
 			# Fall back to the broad-influence bar so exit is never hard-locked on an office that
 			# does not currently exist.
 			AND = {
-				NOT = {
-					any_of_scopes = {
-						array = global.EU_potential
-						EU_is_leader_of_foreign_policy = yes
-					}
-				}
+				NOT = { has_global_flag = EU_foreign_taken_flag }
+				NOT = { has_global_flag = EU_commission_taken_flag }
+				NOT = { has_global_flag = EU_parliament_taken_flag }
 				EU_influence_on_all_other_members_5_percent = yes
 			}
 		}
