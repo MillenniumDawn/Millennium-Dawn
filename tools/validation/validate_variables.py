@@ -22,7 +22,9 @@ from shared_utils import (
     ai_only_decision_categories,
     blank_quoted_strings,
     compute_line_offsets,
+    direct_child_block,
     extract_block_from_text,
+    has_flat_is_ai,
     is_ai_only_block,
     iter_direct_child_blocks,
     line_for_offset,
@@ -503,6 +505,44 @@ def _ai_only_spans(
     return spans
 
 
+_IF_BRANCH_OPEN_RE = re.compile(r"\b(?:if|else_if)\s*=\s*\{")
+
+
+def _ai_only_branch_spans(cleaned: str) -> List[Tuple[int, int]]:
+    """Offset spans of `if` / `else_if` branches only the AI ever evaluates.
+
+    `if = { limit = { is_ai = yes } ... }` is the AI half of an ai/human split:
+    the matching `else` carries what a human reads, so nothing inside the AI
+    half ever renders a requirement line. Unlike ``_ai_only_spans`` this is not
+    restricted to decisions - the split is a focus-tree idiom too.
+    """
+    if "is_ai" not in cleaned:
+        return []
+    spans: List[Tuple[int, int]] = []
+    for m in _IF_BRANCH_OPEN_RE.finditer(cleaned):
+        # Matches arrive in file order, so once no is_ai remains ahead of this
+        # opener no later branch can qualify either - stop before paying for
+        # a brace walk per `if` across the rest of a large focus file.
+        if cleaned.find("is_ai", m.end()) == -1:
+            break
+        open_idx = m.end() - 1
+        close_idx = _matching_brace(cleaned, open_idx)
+        inner = cleaned[open_idx + 1 : close_idx]
+        if has_flat_is_ai(direct_child_block(inner, "limit")):
+            spans.append((m.start(), close_idx))
+    return spans
+
+
+def _available_exempt_spans(
+    cleaned: str, rel: str, ai_categories: AbstractSet[str]
+) -> Tuple[List[int], List[int]]:
+    """Containment index of every region no human player reads a requirement in."""
+    object_level = (
+        _ai_only_spans(cleaned, ai_categories) if _is_decision_source(rel) else []
+    )
+    return _span_index(object_level + _ai_only_branch_spans(cleaned))
+
+
 def _scan_available_file(
     args: Tuple[str, str, AbstractSet[str]],
 ) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str]]]:
@@ -512,9 +552,7 @@ def _scan_available_file(
     if cleaned is None:
         return [], []
     rel = os.path.relpath(filename, mod_path)
-    exempt = _span_index(
-        _ai_only_spans(cleaned, ai_categories) if _is_decision_source(rel) else []
-    )
+    exempt = _available_exempt_spans(cleaned, rel, ai_categories)
     events: List[Tuple[int, int, object]] = _scope_events(cleaned)
     for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
         open_idx = m.end() - 1
@@ -654,9 +692,7 @@ def process_file_for_untooltipped_available_scripted_trigger(
     events.sort(key=lambda e: (e[0], e[1]))
 
     rel = os.path.relpath(filename, mod_path)
-    exempt = _span_index(
-        _ai_only_spans(cleaned, ai_categories) if _is_decision_source(rel) else []
-    )
+    exempt = _available_exempt_spans(cleaned, rel, ai_categories)
     stack: List[str] = []
     issues: List[Tuple[str, str, int]] = []
     for pos, kind, tok in events:
