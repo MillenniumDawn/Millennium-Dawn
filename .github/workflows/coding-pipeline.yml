@@ -1,4 +1,9 @@
 name: Code Standards & Validation
+run-name: >-
+  Validate PR #${{ inputs.pr_number || github.event.pull_request.number ||
+  'current' }} head=${{ inputs.head_sha || github.event.pull_request.head.sha ||
+  github.sha }} base=${{ inputs.base_sha || github.event.pull_request.base.sha ||
+  github.sha }}
 
 on:
   # Runs for fork and conflicted PRs with base-owned tooling against PR data.
@@ -9,6 +14,10 @@ on:
     inputs:
       pr_number:
         description: "PR number to validate (omit for the current ref)"
+        required: false
+        type: string
+      head_sha:
+        description: "PR head SHA to validate"
         required: false
         type: string
       base_sha:
@@ -143,9 +152,11 @@ jobs:
           EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_HEAD_SHA: ${{ inputs.head_sha }}
           INPUT_BASE_SHA: ${{ inputs.base_sha }}
         run: |
           pr_number="${INPUT_PR_NUMBER:-$EVENT_PR_NUMBER}"
+          requested_head_sha="$INPUT_HEAD_SHA"
           head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"
           head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"
           base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"
@@ -163,6 +174,11 @@ jobs:
             fi
           fi
           base_sha="${base_sha:-$GITHUB_SHA}"
+          if [ -n "$requested_head_sha" ] &&
+              [ "$head_sha" != "$requested_head_sha" ]; then
+            echo "::error::The PR head changed before validation was dispatched"
+            exit 1
+          fi
           if [ -z "$head_repository" ] || [ -z "$head_sha" ]; then
             echo "::error::Unable to resolve the PR head repository and SHA"
             exit 1
@@ -768,7 +784,7 @@ jobs:
           'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
 
       # Latest main-side validation baseline (saved nightly by
-      # validator-cache.yml's check-baseline job). A miss (cold cache,
+      # validator-cache.yml). A miss (cold cache,
       # validator generation changed) only drops the NEW/EXISTING annotation
       # in the report — never a failure.
       - name: Restore validation baseline

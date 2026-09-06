@@ -6,10 +6,15 @@ name: Validator impact
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
+
+concurrency:
+  # A newer push supersedes every older impact scan for this PR.
+  group: validator-impact-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   impact:
@@ -29,7 +34,8 @@ jobs:
         run: |
           git fetch --no-tags \
             "https://github.com/${{ github.repository }}.git" \
-            "${{ github.event.pull_request.base.sha }}"
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.sha }}"
 
       # Ensure the checkout and changed-file list use the same revisions.
 
@@ -38,6 +44,11 @@ jobs:
           test "$(git rev-parse HEAD)" = \
             "${{ github.event.pull_request.head.sha }}"
           git cat-file -e "${{ github.event.pull_request.base.sha }}^{commit}"
+          git cat-file -e "${{ github.sha }}^{commit}"
+          test "$(git rev-parse "${{ github.sha }}^1")" = \
+            "${{ github.event.pull_request.base.sha }}"
+          test "$(git rev-parse "${{ github.sha }}^2")" = \
+            "${{ github.event.pull_request.head.sha }}"
           git merge-base "${{ github.event.pull_request.base.sha }}" \
             "${{ github.event.pull_request.head.sha }}" >/dev/null
 
@@ -52,18 +63,97 @@ jobs:
             > .changed-files.txt
           wc -l .changed-files.txt
 
+      # Keep the former tools-validation path filter for staged/tool scans.
+      - name: Compute tools validation scope
+        id: tools-scope
+        run: |
+          run_scan=false
+          while IFS= read -r path; do
+            case "$path" in
+              tools/**|common/on_actions/**|common/scripted_effects/**|\
+              .claude/docs/typo-watchlist.md|\
+              resources/documentation/modifiers_documentation.md|\
+              .pre-commit-config.yaml|pyproject.toml|package.json|bun.lock|\
+              .jscpd.json|.github/workflows/coding-pipeline.yml|\
+              .github/workflows/nightly-pr-validation.yml|\
+              .github/workflows/pr-cache-cleanup.yml|\
+              .github/workflows/tools-validation.yml|\
+              .github/workflows/validator-cache.yml|\
+              .github/workflows/validator-impact.yml|\
+              .github/workflows/validator-impact-report.yml)
+                run_scan=true
+                break
+                ;;
+            esac
+          done < .changed-files.txt
+          echo "run=$run_scan" >> "$GITHUB_OUTPUT"
+
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.x"
 
       - name: Install dependencies
+        id: dependencies
         run: |
           python -m pip install --upgrade pip
           pip install --group dev --group runtime
 
+      # The staged tests and impact scan share this checkout and environment.
+      - name: Create isolated test worktree
+        id: worktree
+        if: >-
+          always() && !cancelled() &&
+          steps.dependencies.outcome == 'success' &&
+          steps.tools-scope.outcome == 'success' &&
+          steps.tools-scope.outputs.run == 'true'
+        run: |
+          git worktree add --detach \
+            "${{ runner.temp }}/md-staged-validator-test" "${{ github.sha }}"
+
+      - name: Run staged-validator integration
+        if: >-
+          always() && !cancelled() &&
+          steps.dependencies.outcome == 'success' &&
+          steps.tools-scope.outcome == 'success' &&
+          steps.tools-scope.outputs.run == 'true' &&
+          steps.worktree.outcome == 'success'
+        working-directory: ${{ runner.temp }}/md-staged-validator-test
+        env:
+          MD_RUN_STAGED_INTEGRATION: "1"
+        run: |
+          python -m pytest \
+            tools/tests/staged_validators_test.py \
+            tools/tests/staged_validators_real_test.py -q
+
+      # Run after staged-test failures, but not broken setup or cancellation.
+      - name: Run tools validation
+        if: >-
+          always() && !cancelled() &&
+          steps.dependencies.outcome == 'success' &&
+          steps.tools-scope.outcome == 'success' &&
+          steps.tools-scope.outputs.run == 'true'
+        run: |
+          python tools/validate_tools.py --strict --no-color --output \
+            tools_validation.log
+
+      - name: Upload tools validation report
+        if: >-
+          always() && !cancelled() &&
+          steps.dependencies.outcome == 'success' &&
+          steps.tools-scope.outcome == 'success' &&
+          steps.tools-scope.outputs.run == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tools-validation-report
+          path: tools_validation.log
+          if-no-files-found: error
+          retention-days: 7
+
       # PR-owned validator code must not read or write shared cache entries.
       - name: Run changed validators against real content
+        if: >-
+          always() && !cancelled() && steps.dependencies.outcome == 'success'
         env:
           MD_NO_CACHE: "1"
         run: |
@@ -71,6 +161,31 @@ jobs:
             --impact --changed-files-file .changed-files.txt \
             --no-color --output-dir validator-impact
 
+      # The impact selection already runs this validator when its code or
+      # importer changed. Avoid a second full scan in that case.
+      - name: Run branch common-mistakes validation
+        if: >-
+          always() && !cancelled() &&
+          steps.dependencies.outcome == 'success' &&
+          steps.tools-scope.outcome == 'success' &&
+          steps.tools-scope.outputs.run == 'true'
+        env:
+          MD_NO_CACHE: "1"
+        run: |
+          selected=false
+          if [ -f validator-impact/batch-manifest.json ]; then
+            selected=$(jq -r \
+              '(.selected // []) | index("common-mistakes") != null' \
+              validator-impact/batch-manifest.json)
+          fi
+          if [ "$selected" = "true" ]; then
+            echo "Impact scan already ran common-mistakes; skipping duplicate"
+            exit 0
+          fi
+          python tools/validation/validate_common_mistakes.py \
+            --strict --no-color --workers 4
+
+      # Run after test or impact failures, but not broken setup or cancellation.
       - name: Upload impact scan results
         if: always() && hashFiles('validator-impact/**') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

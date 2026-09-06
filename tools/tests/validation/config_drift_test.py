@@ -22,6 +22,7 @@ longer applies (the validator got wired, or deleted) fails the test so the
 stale entry gets removed.
 """
 
+import os
 import re
 import subprocess
 from fnmatch import fnmatch
@@ -87,6 +88,71 @@ def _sole_checkout(steps: list) -> dict:
         len(checkouts) == 1
     ), f"expected exactly one checkout for this matrix entry, got {len(checkouts)}"
     return checkouts[0]
+
+
+def _tools_scope_script() -> str:
+    workflow = yaml.safe_load(IMPACT_WORKFLOW.read_text(encoding="utf-8"))
+    return next(
+        step["run"]
+        for step in workflow["jobs"]["impact"]["steps"]
+        if step.get("name") == "Compute tools validation scope"
+    )
+
+
+def _run_tools_scope(tmp_path, changed_files: list[str]) -> str:
+    changed = tmp_path / ".changed-files.txt"
+    output = tmp_path / "github-output"
+    with changed.open("w", encoding="utf-8", newline="") as handle:
+        handle.write("".join(f"{path}\n" for path in changed_files))
+    subprocess.run(
+        ["bash", "-euo", "pipefail", "-c", _tools_scope_script()],
+        cwd=tmp_path,
+        env={**os.environ, "GITHUB_OUTPUT": str(output)},
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    values = dict(
+        line.split("=", 1)
+        for line in output.read_text(encoding="utf-8").splitlines()
+        if "=" in line
+    )
+    return values["run"]
+
+
+@pytest.mark.parametrize(
+    ("changed_file", "expected"),
+    [
+        ("docs/README.md", "false"),
+        ("common/national_focus/example.txt", "false"),
+        ("events/example.txt", "false"),
+        ("history/example.txt", "false"),
+        ("localisation/english/example.yml", "false"),
+        ("interface/example.gui", "false"),
+        ("example.mod", "false"),
+        ("tools/validation/validate_tools.py", "true"),
+        ("common/on_actions/example.txt", "true"),
+        ("common/scripted_effects/example.txt", "true"),
+        (".claude/docs/typo-watchlist.md", "true"),
+        ("resources/documentation/modifiers_documentation.md", "true"),
+        (".pre-commit-config.yaml", "true"),
+        ("pyproject.toml", "true"),
+        ("package.json", "true"),
+        ("bun.lock", "true"),
+        (".jscpd.json", "true"),
+        (".github/workflows/coding-pipeline.yml", "true"),
+        (".github/workflows/nightly-pr-validation.yml", "true"),
+        (".github/workflows/pr-cache-cleanup.yml", "true"),
+        (".github/workflows/tools-validation.yml", "true"),
+        (".github/workflows/validator-cache.yml", "true"),
+        (".github/workflows/validator-impact.yml", "true"),
+        (".github/workflows/validator-impact-report.yml", "true"),
+    ],
+)
+def test_tools_scope_matches_former_tools_validation_paths(
+    tmp_path, changed_file, expected
+):
+    assert _run_tools_scope(tmp_path, [changed_file]) == expected
 
 
 # Validators intentionally absent from the CI batches. Each needs a reason.
@@ -378,44 +444,29 @@ def test_dispatch_forces_every_batch_group():
     )
 
 
-def test_validator_cache_runs_suite_once_and_reuses_results():
+def test_validator_cache_build_and_baseline_share_one_job():
     workflow = VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
     assert workflow.count("python3 tools/validation/run_all_validators.py") == 1
     assert "--persist-results .validation_baseline_candidate" in workflow
-    assert "Upload validation result candidate" in workflow
-    assert "Download validation result candidate" in workflow
+    assert "actions/upload-artifact" not in workflow
+    assert "actions/download-artifact" not in workflow
     config = yaml.safe_load(workflow)
-    upload = next(
-        step
-        for step in config["jobs"]["build-cache"]["steps"]
-        if step.get("name") == "Upload validation result candidate"
-    )
-    download = next(
-        step
-        for step in config["jobs"]["check-baseline"]["steps"]
-        if step.get("name") == "Download validation result candidate"
-    )
-    assert upload["with"]["path"] == ".validation_baseline_candidate/"
-    assert upload["with"]["include-hidden-files"] is True
-    assert download["with"]["path"] == ".validation_baseline_candidate/"
+    assert set(config["jobs"]) == {"build-cache"}
+    steps = config["jobs"]["build-cache"]["steps"]
+    checkouts = [
+        step for step in steps if step.get("uses", "").startswith("actions/checkout@")
+    ]
+    assert len(checkouts) == 1
+    assert checkouts[0]["with"]["persist-credentials"] is False
     verify = next(
         step
-        for step in config["jobs"]["check-baseline"]["steps"]
+        for step in steps
         if step.get("name") == "Verify validation result candidate completion"
     )
     assert verify["run"] == "test -f .validation_baseline_candidate/.persist-complete"
     assert "--current .validation_baseline_candidate" in workflow
-    for job in config["jobs"].values():
-        checkout = next(
-            step
-            for step in job["steps"]
-            if step.get("uses", "").startswith("actions/checkout@")
-        )
-        assert checkout["with"]["persist-credentials"] is False
     baseline_diff = next(
-        step
-        for step in config["jobs"]["check-baseline"]["steps"]
-        if step.get("name") == "Diff against previous baseline"
+        step for step in steps if step.get("name") == "Diff against previous baseline"
     )
     assert baseline_diff["env"]["TOOLSHASH"] == "${{ steps.toolshash.outputs.hash }}"
     assert '--toolshash "$TOOLSHASH"' in baseline_diff["run"]
@@ -470,8 +521,7 @@ def test_check_baseline_saves_only_on_clean_diff():
     # regressed results as the new baseline and the alarm self-heals
     # silently.
     config = yaml.safe_load(VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8"))
-    job = config["jobs"]["check-baseline"]
-    assert job["needs"] == ["build-cache"]
+    job = config["jobs"]["build-cache"]
 
     diff = next(step for step in job["steps"] if step.get("id") == "diff")
     assert "tools/baseline_check.py" in diff["run"]
@@ -510,18 +560,25 @@ def test_report_job_wires_baseline_flags():
 
 def test_tools_validation_triggers_for_consumed_configuration():
     paths = _pull_request_paths(TOOLS_WORKFLOW)
-    assert {
+    assert paths == {
+        "tools/**",
+        "common/on_actions/**",
+        "common/scripted_effects/**",
         ".claude/docs/typo-watchlist.md",
         "resources/documentation/modifiers_documentation.md",
         ".pre-commit-config.yaml",
         "pyproject.toml",
-        "common/on_actions/**",
-        "common/scripted_effects/**",
+        "package.json",
+        "bun.lock",
+        ".jscpd.json",
         ".github/workflows/coding-pipeline.yml",
         ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/pr-cache-cleanup.yml",
+        ".github/workflows/tools-validation.yml",
         ".github/workflows/validator-cache.yml",
-    } <= paths
+        ".github/workflows/validator-impact.yml",
+        ".github/workflows/validator-impact-report.yml",
+    }
 
 
 def test_python_quality_checks_are_wired_in_precommit_and_ci():
@@ -540,7 +597,7 @@ def test_python_quality_checks_are_wired_in_precommit_and_ci():
     assert hooks["mypy-tools"]["language"] == "python"
     assert "mypy==2.3.0" in hooks["mypy-tools"]["additional_dependencies"]
 
-    steps = _checks_matrix_steps("lint")
+    steps = _checks_matrix_steps("quality")
     commands = "\n".join(s.get("run", "") for s in steps)
     assert "ruff check tools" in commands
     assert "black --check tools" in commands
@@ -592,17 +649,11 @@ def test_tools_checks_share_one_matrix():
     assert set(jobs) == {"checks"}
     entries = jobs["checks"]["strategy"]["matrix"]["check"]
     by_id = {entry["id"]: entry for entry in entries}
-    assert set(by_id) == {
-        "unit",
-        "unit-macos",
-        "unit-windows",
-        "staged",
-        "lint",
-        "duplication",
-    }
+    assert set(by_id) == {"unit", "unit-macos", "unit-windows", "quality"}
     assert by_id["unit"]["runner"] == "ubuntu-latest"
     assert by_id["unit-macos"]["runner"] == "macos-latest"
     assert by_id["unit-windows"]["runner"] == "windows-latest"
+    assert by_id["quality"]["runner"] == "ubuntu-latest"
 
 
 def test_unit_tests_run_on_all_supported_platforms():
@@ -628,12 +679,17 @@ def test_unit_tests_run_on_all_supported_platforms():
     assert "python_files=*_test.py" in cross_platform["run"]
 
 
-def test_staged_validator_integration_runs_in_isolated_worktree():
-    steps = _checks_matrix_steps("staged")
+def test_impact_job_shares_staged_setup_and_runs_branch_scan_once():
+    workflow = yaml.safe_load(IMPACT_WORKFLOW.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["impact"]
+    steps = job["steps"]
+
     worktree_step = next(
         s for s in steps if s.get("name") == "Create isolated test worktree"
     )
     assert "git worktree add --detach" in worktree_step["run"]
+    assert '"${{ github.sha }}"' in worktree_step["run"]
+    assert "steps.tools-scope.outputs.run == 'true'" in worktree_step["if"]
 
     run_step = next(
         s for s in steps if s.get("name") == "Run staged-validator integration"
@@ -641,46 +697,106 @@ def test_staged_validator_integration_runs_in_isolated_worktree():
     assert run_step["env"]["MD_RUN_STAGED_INTEGRATION"] == "1"
     assert "staged_validators_test.py" in run_step["run"]
     assert "staged_validators_real_test.py" in run_step["run"]
+    assert "steps.dependencies.outcome == 'success'" in run_step["if"]
+    assert "steps.tools-scope.outputs.run == 'true'" in run_step["if"]
+
+    tools_step = next(s for s in steps if s.get("name") == "Run tools validation")
+    assert "always()" in tools_step["if"]
+    assert "steps.dependencies.outcome == 'success'" in tools_step["if"]
+    assert "steps.tools-scope.outputs.run == 'true'" in tools_step["if"]
+    assert "tools/validate_tools.py --strict" in tools_step["run"]
+    upload = next(s for s in steps if s.get("name") == "Upload tools validation report")
+    assert upload["with"]["if-no-files-found"] == "error"
+    assert "steps.tools-scope.outputs.run == 'true'" in upload["if"]
 
     branch_step = next(
         s for s in steps if s.get("name") == "Run branch common-mistakes validation"
     )
-    assert "!cancelled()" in branch_step["if"]
-    assert "steps.staged-deps.outcome == 'success'" in branch_step["if"]
+    assert "always()" in branch_step["if"]
+    assert "steps.dependencies.outcome == 'success'" in branch_step["if"]
+    assert "steps.tools-scope.outputs.run == 'true'" in branch_step["if"]
+    assert "batch-manifest.json" in branch_step["run"]
+    assert branch_step["env"]["MD_NO_CACHE"] == "1"
     assert "validate_common_mistakes.py" in branch_step["run"]
     assert "--strict" in branch_step["run"]
+    scope = next(s for s in steps if s.get("name") == "Compute tools validation scope")
+    assert scope["id"] == "tools-scope"
+    for path in (
+        "tools/**",
+        "common/on_actions/**",
+        "common/scripted_effects/**",
+        ".claude/docs/typo-watchlist.md",
+        "resources/documentation/modifiers_documentation.md",
+        ".pre-commit-config.yaml",
+        "pyproject.toml",
+        "package.json",
+        "bun.lock",
+        ".jscpd.json",
+        ".github/workflows/coding-pipeline.yml",
+        ".github/workflows/nightly-pr-validation.yml",
+        ".github/workflows/pr-cache-cleanup.yml",
+        ".github/workflows/tools-validation.yml",
+        ".github/workflows/validator-cache.yml",
+        ".github/workflows/validator-impact.yml",
+        ".github/workflows/validator-impact-report.yml",
+    ):
+        assert path in scope["run"]
     assert "--staged" not in branch_step["run"]
     assert steps.index(branch_step) > steps.index(run_step)
 
-    tools_step = next(s for s in steps if s.get("name") == "Run tools validation")
-    # Runs even when the staged tests fail, but not on broken setup or cancel.
-    assert "!cancelled()" in tools_step["if"]
-    assert "steps.staged-deps.outcome == 'success'" in tools_step["if"]
-    assert "tools/validate_tools.py --strict" in tools_step["run"]
-    assert steps.index(tools_step) > steps.index(run_step)
+    dependencies = next(s for s in steps if s.get("name") == "Install dependencies")
+    assert dependencies["id"] == "dependencies"
+    assert len([s for s in steps if "actions/checkout@" in s.get("uses", "")]) == 1
 
-    upload = next(s for s in steps if s.get("name") == "Upload tools validation report")
-    assert upload["with"]["if-no-files-found"] == "error"
+    # This job is the only home for staged integration after it moved from the
+    # path-filtered tools matrix.
+    tools_workflow = yaml.safe_load(TOOLS_WORKFLOW.read_text(encoding="utf-8"))
+    ids = {
+        entry["id"]
+        for entry in tools_workflow["jobs"]["checks"]["strategy"]["matrix"]["check"]
+    }
+    assert "staged" not in ids
 
-    # The integration stages files under these trees; a sparse checkout that
-    # drops one makes every real-file test skip instead of fail.
+
+def test_quality_job_combines_lint_and_duplication_checks():
+    steps = _checks_matrix_steps("quality")
     checkout = _sole_checkout(steps)
-    sparse = checkout.get("with", {}).get("sparse-checkout")
-    if sparse is not None:
-        assert {"events", "common", "localisation", "history", "tools"} <= set(
-            sparse.split()
-        )
-
-
-def test_duplication_check_is_a_matrix_entry():
-    steps = _checks_matrix_steps("duplication")
-    checkout = _sole_checkout(steps)
-    assert {"tools", "package.json", "bun.lock", ".jscpd.json"} <= set(
-        checkout["with"]["sparse-checkout"].split()
-    )
+    assert {
+        "tools",
+        "pyproject.toml",
+        "package.json",
+        "bun.lock",
+        ".jscpd.json",
+    } <= set(checkout["with"]["sparse-checkout"].split())
     commands = "\n".join(step.get("run", "") for step in steps)
+    assert "ruff check tools" in commands
+    assert "black --check tools" in commands
+    assert "pylint tools" in commands
+    assert "mypy" in commands
     assert "bun install --frozen-lockfile" in commands
     assert "bun run jscpd" in commands
+    for name in (
+        "Run ruff",
+        "Check formatting (black)",
+        "Run pylint",
+        "Run mypy",
+    ):
+        condition = next(step for step in steps if step.get("name") == name)["if"]
+        assert "always()" in condition
+        assert "!cancelled()" in condition
+        assert "steps.quality-deps.outcome == 'success'" in condition
+
+    bun = next(step for step in steps if step.get("name") == "Setup Bun")
+    assert "always()" in bun["if"]
+    assert "!cancelled()" in bun["if"]
+    assert "steps.quality-checkout.outcome == 'success'" in bun["if"]
+    assert "steps.quality-deps.outcome" not in bun["if"]
+    bun_deps = next(
+        step for step in steps if step.get("name") == "Install duplication dependencies"
+    )
+    assert "steps.bun.outcome == 'success'" in bun_deps["if"]
+    jscpd = next(step for step in steps if step.get("name") == "Run jscpd")
+    assert "steps.bun-deps.outcome == 'success'" in jscpd["if"]
 
 
 def test_tools_tests_checkout_consumed_configuration():
@@ -700,6 +816,8 @@ def test_tools_tests_checkout_consumed_configuration():
         ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/pr-cache-cleanup.yml",
         ".github/workflows/tools-validation.yml",
+        ".github/workflows/validator-impact.yml",
+        ".github/workflows/validator-impact-report.yml",
         "pyproject.toml",
     }
     missing = sorted(required - set(sparse.split()))
@@ -871,6 +989,8 @@ def test_validation_checkout_uses_the_live_pr_head():
     assert 'head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"' in script
     assert 'head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"' in script
     assert 'base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"' in script
+    assert 'requested_head_sha="$INPUT_HEAD_SHA"' in script
+    assert "The PR head changed before validation was dispatched" in script
     assert 'echo "repository=$head_repository"' in script
     assert 'echo "ref=$head_sha"' in script
     assert 'echo "head-sha=$head_sha"' in script
@@ -879,7 +999,11 @@ def test_validation_checkout_uses_the_live_pr_head():
     assert detect["outputs"]["base-sha"] == "${{ steps.resolve-ref.outputs.base-sha }}"
     assert detect["outputs"]["checkout-ref"] == "${{ steps.resolve-ref.outputs.ref }}"
     trigger = _workflow_trigger(CI_WORKFLOW)
-    assert trigger["workflow_dispatch"]["inputs"]["pr_number"]["required"] is False
+    inputs = trigger["workflow_dispatch"]["inputs"]
+    assert inputs["pr_number"]["required"] is False
+    assert inputs["head_sha"]["type"] == "string"
+    assert "inputs.head_sha" in workflow["run-name"]
+    assert "inputs.base_sha" in workflow["run-name"]
 
     for job_name in ("prepare-workspace", "validate-paths"):
         job = workflow["jobs"][job_name]
@@ -1005,11 +1129,14 @@ def test_prepare_workspace_uses_trusted_tools_and_run_artifact():
     assert "../trusted/tools/validation/validate_file_paths.py" in run["run"]
 
 
-def test_nightly_dispatches_every_open_pr_from_trusted_main():
+def test_nightly_skips_only_exact_successful_head_base_pairs():
     config = yaml.safe_load(NIGHTLY_WORKFLOW.read_text(encoding="utf-8"))
     job = config["jobs"]["revalidate-open-prs"]
     assert config["permissions"]["pull-requests"] == "read"
     assert job["env"]["GH_REPO"] == "${{ github.repository }}"
+    force = _workflow_trigger(NIGHTLY_WORKFLOW)["workflow_dispatch"]["inputs"]["force"]
+    assert force["type"] == "boolean"
+    assert force["default"] is True
     step = next(
         step for step in job["steps"] if "gh workflow run" in step.get("run", "")
     )
@@ -1020,8 +1147,15 @@ def test_nightly_dispatches_every_open_pr_from_trusted_main():
     assert "commits/main" in script
     assert "--paginate" in script
     assert "state=open&base=main" in script
+    assert "display_title" in script
+    assert 'status == "completed"' in script
+    assert 'conclusion == "success"' in script
+    assert "head=$head_sha" in script
+    assert "base=$base_sha" in script
+    assert "grep -Fqx" in script
     assert "--ref main" in script
     assert '-f pr_number="$num"' in script
+    assert '-f head_sha="$head_sha"' in script
     assert '-f base_sha="$base_sha"' in script
     assert "refs/pull/" not in script
     assert "merge ref" not in script
@@ -1107,12 +1241,15 @@ def test_pr_code_impact_scan_wiring():
     # git diff, not the 3000-file PR files API.
     workflow = yaml.safe_load(IMPACT_WORKFLOW.read_text(encoding="utf-8"))
     trigger = _workflow_trigger(IMPACT_WORKFLOW)
-    assert trigger["pull_request"]["types"] == [
+    assert set(trigger["pull_request"]["types"]) == {
         "opened",
         "synchronize",
         "reopened",
-    ]
+        "ready_for_review",
+    }
     assert workflow["permissions"] == {"contents": "read"}
+    assert workflow["concurrency"]["cancel-in-progress"] is True
+    assert "pull_request.number" in workflow["concurrency"]["group"]
     job = workflow["jobs"]["impact"]
 
     checkout = next(
@@ -1122,6 +1259,13 @@ def test_pr_code_impact_scan_wiring():
     )
     assert checkout["with"]["persist-credentials"] is False
 
+    fetch = next(
+        step["run"]
+        for step in job["steps"]
+        if step.get("name") == "Fetch PR base revision"
+    )
+    assert '"${{ github.sha }}"' in fetch
+
     verify = next(
         step["run"]
         for step in job["steps"]
@@ -1129,6 +1273,8 @@ def test_pr_code_impact_scan_wiring():
     )
     assert "base.sha" in verify
     assert "head.sha" in verify
+    assert '"${{ github.sha }}^1"' in verify
+    assert '"${{ github.sha }}^2"' in verify
 
     diff = next(
         step["run"]
@@ -1150,11 +1296,29 @@ def test_pr_code_impact_scan_wiring():
     )
     assert "--impact" in run
     assert "--changed-files-file" in run
+    scan_step = next(
+        step
+        for step in job["steps"]
+        if "run_validator_batch.py" in (step.get("run") or "")
+    )
+    assert "steps.tools-scope" not in scan_step["if"]
 
     cache_steps = [
         step for step in job["steps"] if "actions/cache" in step.get("uses", "")
     ]
     assert cache_steps == []
+
+    dependencies = next(
+        step for step in job["steps"] if step.get("name") == "Install dependencies"
+    )
+    assert dependencies["id"] == "dependencies"
+    staged = next(
+        step
+        for step in job["steps"]
+        if step.get("name") == "Run staged-validator integration"
+    )
+    assert "staged_validators_test.py" in staged["run"]
+    assert "staged_validators_real_test.py" in staged["run"]
 
     scan = next(
         step
@@ -1163,13 +1327,21 @@ def test_pr_code_impact_scan_wiring():
     )
     assert scan["env"]["MD_NO_CACHE"] == "1"
 
-    upload = next(
+    uploads = [
         step
         for step in job["steps"]
         if step.get("uses", "").startswith("actions/upload-artifact@")
+    ]
+    assert len(uploads) == 2
+    tools_upload = next(
+        step for step in uploads if step["with"]["path"] == "tools_validation.log"
     )
-    assert upload["with"]["if-no-files-found"] == "error"
-    assert "hashFiles('validator-impact/**') != ''" in upload["if"]
+    assert tools_upload["with"]["if-no-files-found"] == "error"
+    impact_upload = next(
+        step for step in uploads if step["with"]["path"] == "validator-impact"
+    )
+    assert impact_upload["with"]["if-no-files-found"] == "error"
+    assert "hashFiles('validator-impact/**') != ''" in impact_upload["if"]
 
 
 def test_impact_base_fetch_has_full_history(tmp_path):

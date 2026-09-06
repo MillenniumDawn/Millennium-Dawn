@@ -8,7 +8,7 @@ CI runs `python -m pytest` on every PR touching `tools/` (the `unit` entry of th
 
 CI and pre-push run the collection-layout guard by explicit path with config `addopts` disabled. The suite command also pins `tools/tests` and `*_test.py`, so a `pyproject.toml` change cannot remove tests or the guard from the run it protects. CI runs that pinned suite on Linux, macOS, and Windows; the Linux entry also enforces the coverage threshold.
 
-`tools-validation.yml` uses one `checks` matrix. Its staged-integration entry also runs `validate_tools.py`, after the isolated-worktree tests, so either gate can fail without hiding the other. Code duplication remains a separate matrix entry and keeps the `Code duplication (jscpd)` check name. `.jscpd.json` scans Python under `tools/` at `threshold: 0` with `minLines: 5` / `minTokens: 50`, so a single copy-pasted block — a duplicated `tmp_path` test fixture is the usual one — fails the job on its own. Factor shared setup into a helper instead of pasting it into the neighbouring test.
+`tools-validation.yml` uses one `checks` matrix. Its Ubuntu `quality` entry runs ruff, Black, pylint, mypy, and jscpd as independent named steps after one checkout and dependency setup. The Linux, macOS, and Windows unit-test entries stay separate. Staged integration, `validate_tools.py`, and the branch common-mistakes scan share the PR checkout and dependencies with the unprivileged impact scan in `validator-impact.yml`; one scope output from the pinned changed-file list enables them only for the former tools-validation paths, plus workflows consumed by the tools tests. The impact scan itself still runs on every PR. `.jscpd.json` scans Python under `tools/` at `threshold: 0` with `minLines: 5` / `minTokens: 50`, so a single copy-pasted block — a duplicated `tmp_path` test fixture is the usual one — fails the quality job on its own. Factor shared setup into a helper instead of pasting it into the neighbouring test.
 
 ## When the coding pipeline runs
 
@@ -16,10 +16,10 @@ CI and pre-push run the collection-layout guard by explicit path with config `ad
 
 Two extra entry points cover open PRs that get no pushes:
 
-- `workflow_dispatch` accepts optional `pr_number` and `base_sha`. With a PR number, `detect-changes` resolves the live PR JSON. Without one, it validates the current repository at `github.sha` and skips PR-only comment posting. Dispatch treats every validator group as changed except `style`, which is diff-scoped and has no diff on dispatch.
-- `nightly-pr-validation.yml`: cron (06:00 UTC) + manual dispatch. It resolves main's live SHA, then dispatches the trusted coding workflow from `main` for every open PR, including forks and conflicts, passing `pr_number` and `base_sha`. The coding workflow resolves each PR's head data itself and uses that base SHA for trusted tooling and baseline selection.
+- `workflow_dispatch` accepts optional `pr_number`, `head_sha`, and `base_sha`. With a PR number, `detect-changes` resolves the live PR JSON and rejects a stale requested head. Without one, it validates the current repository at `github.sha` and skips PR-only comment posting. Dispatch treats every validator group as changed except `style`, which is diff-scoped and has no diff on dispatch.
+- `nightly-pr-validation.yml`: cron (06:00 UTC) + manual dispatch. It resolves main's live SHA, then dispatches the trusted coding workflow from `main` for each open PR that lacks a successful exact head/base pair. Failed and incomplete runs are retried. The optional manual `force` input preserves the full sweep. The coding workflow records both pins in its base-owned run name and uses them for trusted tooling and baseline selection.
 
-The prepare job checks out PR content without tools, then installs `tools/`, reference resources, and `.claude/` from the base branch. It restores the shared main-built validator cache read-only and distributes the prepared workspace through a same-run artifact. No PR-scoped cache is saved. `validate-paths` keeps a PR checkout for its git index and invokes the validator from the trusted checkout. A PR that introduces a new validator or a new check (like the AI-only decision localisation/tooltip rules) is exercised against real content before merge by `.github/workflows/validator-impact.yml`'s `impact` job, which full-scans the affected validators with the PR's own code (below); unit and staged-integration coverage runs the PR's own `tools/` (see above), and the nightly `validator-cache.yml` baseline re-scans once on `main`. The staged integration also full-scans branch content with the branch-owned common-mistakes validator because its structural rules need coverage against real scripts, not only fixtures.
+The prepare job checks out PR content without tools, then installs `tools/`, reference resources, and `.claude/` from the base branch. It restores the shared main-built validator cache read-only and distributes the prepared workspace through a same-run artifact. No PR-scoped cache is saved. `validate-paths` keeps a PR checkout for its git index and invokes the validator from the trusted checkout. A PR that introduces a new validator or a new check (like the AI-only decision localisation/tooltip rules) is exercised against real content before merge by `.github/workflows/validator-impact.yml`'s `impact` job, which full-scans the affected validators with the PR's own code (below); its staged integration uses an isolated worktree at the pinned PR merge SHA for combination coverage, while `validate_tools.py` and the branch common-mistakes fallback use that same unprivileged setup only when the pinned changed-file scope matches the former tools-validation paths. The nightly `validator-cache.yml` baseline re-scans once on `main`. Its single job builds the disk cache and compares the baseline candidate without an intermediate checkout or artifact.
 
 ## PR-code impact scan
 
@@ -46,7 +46,8 @@ from the PR files API (capped at 3000 files) or a live listing that can drift
 from the checked-out revision. The checkout verifies the head matches the
 event SHA and that the base is present, so the scanned tree and diff describe
 the same revision. The `pull_request` impact workflow requires a mergeable PR;
-conflicted PRs remain covered by the trusted coding pipeline.
+conflicted PRs remain covered by the trusted coding pipeline. Its per-PR
+concurrency group cancels obsolete scans.
 
 The runner writes a `batch-manifest.json` beside the per-validator log and
 JSON sidecar recording the selection and each validator's exit code and
@@ -85,7 +86,10 @@ the default branch, so the reporting bridge activates after its workflow file
 merges. Until then impact runs upload artifacts with no posted report, and
 this bridge has not been exercised live.
 The CI validator list also lives in `validator_batches.py`, so the impact scan
-and pipeline use the same ordinary set and exclusions.
+and pipeline use the same ordinary set and exclusions. The impact scan and its
+conditionally scoped staged integration, tools validation, and common-mistakes
+fallback intentionally remain unprivileged; none receives trusted caches or
+write permissions.
 
 Every PR run publishes Checks API results, a step summary, and a report artifact. The bot posts a PR comment only when validators have findings or the pipeline cannot produce a complete verdict. A clean run removes an older bot report instead of posting a success comment. Partial reports label themselves in the verdict banner and metadata strip. Scope is computed in the `validation-report` job and passed as `--validation-scope`.
 

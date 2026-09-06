@@ -5,7 +5,13 @@ name: Nightly PR Revalidation
 on:
   schedule:
     - cron: "0 6 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Run the full validation sweep even for successful pairs"
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -25,18 +31,41 @@ jobs:
       - name: Dispatch validation for open PRs
         env:
           GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force }}
         run: |
           # Resolve main's live head so each run uses current base data.
           base_sha=$(gh api "repos/$GH_REPO/commits/main" --jq '.sha')
           pulls_url="repos/$GH_REPO/pulls?state=open&base=main&per_page=100"
           # Pagination keeps open PRs after the first 100 in the sweep.
-          prs=$(gh api --paginate "$pulls_url" --jq '.[].number')
+          prs=$(gh api --paginate "$pulls_url" \
+            --jq '.[] | [.number, .head.sha] | @tsv')
+          # The workflow run title is base-owned and carries both pins. A
+          # successful head-only match is never enough to skip a validation.
+          runs_url="repos/$GH_REPO/actions/workflows/coding-pipeline.yml/runs"
+          runs_url="$runs_url?event=workflow_dispatch&branch=main&per_page=100"
+          successful=$(gh api --paginate "$runs_url" --jq '
+            .workflow_runs[]
+            | select(.status == "completed" and
+                .conclusion == "success" and
+                .event == "workflow_dispatch" and
+                .head_branch == "main")
+            | .display_title
+          ')
           sent=0
+          skipped=0
           failed=0
-          while IFS= read -r num; do
+          while IFS=$'\t' read -r num head_sha; do
             [ -z "$num" ] && continue
+            title="Validate PR #$num head=$head_sha base=$base_sha"
+            if [ "$FORCE" != "true" ] &&
+                printf '%s\n' "$successful" | grep -Fqx "$title"; then
+              skipped=$((skipped + 1))
+              echo "Skipping PR #$num: exact successful head/base pair exists"
+              continue
+            fi
             if gh workflow run coding-pipeline.yml --ref main \
-                -f pr_number="$num" -f base_sha="$base_sha"; then
+                -f pr_number="$num" -f head_sha="$head_sha" \
+                -f base_sha="$base_sha"; then
               sent=$((sent + 1))
             else
               echo "::warning::PR #$num could not be dispatched"
@@ -44,6 +73,7 @@ jobs:
             fi
           done <<< "$prs"
           echo "Dispatched coding-pipeline for $sent open PR(s)," \
+            "skipped $skipped exact successful pair(s)," \
             "$failed dispatch failure(s)"
           if [ "$failed" -gt 0 ]; then
             exit 1
