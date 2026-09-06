@@ -47,7 +47,9 @@ Two shapes are always wrong, and are the harder `redundant-enable-gate` (ERROR):
 
 Neither check is in the pre-commit registry, so both pass `git commit` and turn up on the PR. Run the validator yourself before pushing: `python3 tools/validation/validate_modifiers.py --strict`.
 
-A block is defensible only when the condition can go false **while the modifier stays attached**, and nothing is positioned to remove it at that moment. `TAJ_tajik_drugs` (`99_TAJ_dynamic_modifiers.txt:19`) is the live example: it rides on either SOV or TAJ, and `country_exists = TAJ` plus the subject check have to switch it off on annexation or puppeting, neither of which routes through an effect that could call `remove_dynamic_modifier`. Note that its `OR` over `original_tag` is load-bearing for the same reason, and is not what `redundant-enable-gate` flags.
+The tempting case is a condition that can go false **while the modifier stays attached**, with no effect positioned to remove it at that moment — annexation, puppeting, a state changing hands. That is not a reason to keep the block; it is a reason to write the hook. `TAJ_tajik_drugs` used to be the standing example here, and now demonstrates the replacement: a `TAJ_drug_flow_update` scripted effect owns the add/remove decision, the two events that start and stop the drug flow call it, and `99_TAJ_on_actions.txt` re-runs it from `on_puppet`, `on_subject_free`, the two release hooks and `on_peaceconference_ended`, each gated on a single flag read so every other country pays almost nothing. `on_annex` and `on_subject_annexed` remove outright, because they can fire while the annexed country still exists.
+
+Where no event can observe the flip at all, fold the check into a recurring effect the country already runs rather than into `enable`: the three Syrian inclusiveness modifiers attach and detach from the `on_weekly_SYR` pass that recomputes their variables anyway (`99_SYR_scripted_effects.txt`).
 
 #### Attach Scope Decides Everything
 
