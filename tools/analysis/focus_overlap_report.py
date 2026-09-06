@@ -23,63 +23,22 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, Iterator, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from shared_utils import (  # noqa: E402
-    blank_quoted_strings,
-    find_matching_brace,
-    strip_comments,
+    iter_focus_blocks,
+    iter_statement_ops,
+    read_script,
 )
 
 DEFAULT_FILE = "common/national_focus/05_poland.txt"
 
-_FOCUS_START = re.compile(r"\b(shared_focus|focus)\s*=\s*\{")
-_ID_LINE = re.compile(r"^\s*id\s*=\s*(\S+)", re.M)
-_STATEMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_.:@]*)\s*(>=|<=|==|=|>|<)")
-
 Date = Tuple[int, int, int]
-
-
-def iter_statements(
-    body: str,
-) -> Iterator[Tuple[str, str, Optional[str], Optional[str]]]:
-    """Yield (key, operator, scalar, block) for every statement at depth 0."""
-    index = 0
-    length = len(body)
-    while index < length:
-        if body[index] in "{}":
-            index += 1
-            continue
-        match = _STATEMENT.match(body, index)
-        if not match:
-            index += 1
-            continue
-        key, operator = match.group(1), match.group(2)
-        cursor = match.end()
-        while cursor < length and body[cursor] in " \t\r\n":
-            cursor += 1
-        if cursor < length and body[cursor] == "{":
-            close = find_matching_brace(body, cursor)
-            if close == -1:
-                return
-            yield key, operator, None, body[cursor + 1 : close]
-            index = close + 1
-            continue
-        stop = cursor
-        while stop < length and body[stop] not in " \t\r\n{}":
-            stop += 1
-        yield key, operator, body[cursor:stop], None
-        index = stop
-
-
-def line_of(text: str, offset: int) -> int:
-    return text.count("\n", 0, offset) + 1
 
 
 @dataclass
@@ -116,36 +75,18 @@ def parse_date(value: str) -> Date:
     return int(parts[0]), int(parts[1]), int(parts[2])
 
 
-def read_script(path: str) -> str:
-    with open(path, "r", encoding="utf-8", errors="replace") as handle:
-        return blank_quoted_strings(strip_comments(handle.read()))
-
-
 def parse_focus_file(text: str) -> Dict[str, Focus]:
     """Return every focus in *text*, keyed by id and in file order."""
     focuses: Dict[str, Focus] = {}
-    position = 0
-    while True:
-        match = _FOCUS_START.search(text, position)
-        if not match:
-            return focuses
-        open_index = text.index("{", match.start())
-        close = find_matching_brace(text, open_index)
-        if close == -1:
-            return focuses
-        body = text[open_index + 1 : close]
-        position = close + 1
-        id_match = _ID_LINE.search(body)
-        if not id_match or id_match.group(1) in focuses:
-            continue
-        focuses[id_match.group(1)] = _build_focus(
-            id_match.group(1), match.group(1), line_of(text, match.start()), body
-        )
+    for focus_id, kind, line, body in iter_focus_blocks(text):
+        if focus_id not in focuses:
+            focuses[focus_id] = _build_focus(focus_id, kind, line, body)
+    return focuses
 
 
 def _build_focus(focus_id: str, kind: str, line: int, body: str) -> Focus:
     focus = Focus(id=focus_id, line=line, kind=kind)
-    for key, _operator, scalar, block in iter_statements(body):
+    for key, _operator, scalar, block in iter_statement_ops(body):
         if key == "x" and scalar is not None:
             focus.x = int(scalar)
         elif key == "y" and scalar is not None:
@@ -159,7 +100,7 @@ def _build_focus(focus_id: str, kind: str, line: int, body: str) -> Focus:
         elif key == "prerequisite" and block is not None:
             group = [
                 value
-                for name, _op, value, _nested in iter_statements(block)
+                for name, _op, value, _nested in iter_statement_ops(block)
                 if name == "focus" and value is not None
             ]
             if group:
@@ -169,7 +110,7 @@ def _build_focus(focus_id: str, kind: str, line: int, body: str) -> Focus:
 
 def _build_offset(block: str) -> Offset:
     offset = Offset()
-    for key, _operator, scalar, nested in iter_statements(block):
+    for key, _operator, scalar, nested in iter_statement_ops(block):
         if key == "x" and scalar is not None:
             offset.dx = int(scalar)
         elif key == "y" and scalar is not None:
@@ -182,7 +123,7 @@ def _build_offset(block: str) -> Offset:
 def evaluate(body: str, scenario: Scenario) -> Optional[bool]:
     """Three-valued AND over the statements of a trigger body."""
     unknown = False
-    for key, operator, scalar, block in iter_statements(body):
+    for key, operator, scalar, block in iter_statement_ops(body):
         value = _evaluate_statement(key, operator, scalar, block, scenario)
         if value is False:
             return False
@@ -221,7 +162,7 @@ def _evaluate_statement(
 
 def _evaluate_or(block: str, scenario: Scenario) -> Optional[bool]:
     unknown = False
-    for key, operator, scalar, nested in iter_statements(block):
+    for key, operator, scalar, nested in iter_statement_ops(block):
         value = _evaluate_statement(key, operator, scalar, nested, scenario)
         if value is True:
             return True

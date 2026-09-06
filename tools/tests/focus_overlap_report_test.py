@@ -6,6 +6,7 @@ import json
 
 import focus_overlap_report as report
 from shared.suite import write_under
+from shared_utils import blank_quoted_strings
 
 
 def focus(body: str) -> str:
@@ -13,7 +14,7 @@ def focus(body: str) -> str:
 
 
 def parse(text: str):
-    return report.parse_focus_file(report.blank_quoted_strings(text))
+    return report.parse_focus_file(blank_quoted_strings(text))
 
 
 def positions(text: str, **scenario):
