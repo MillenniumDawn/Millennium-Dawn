@@ -419,7 +419,7 @@ def test_empty_dynamic_modifier_file_is_skipped(tmp_path):
     assert validator._issues[0].file.endswith("real.txt")
 
 
-def test_full_run_covers_all_three_checks(tmp_path):
+def test_full_run_covers_every_check(tmp_path):
     _write_idea_file(tmp_path, "\t\t\t\tcompletely_fake_modifier_field = 0.1\n")
     dynamic_dir = tmp_path / "common" / "dynamic_modifiers"
     dynamic_dir.mkdir(parents=True)
@@ -436,8 +436,11 @@ def test_full_run_covers_all_three_checks(tmp_path):
     validator.run_validations()
 
     categories = {issue.category for issue in validator._issues}
+    # The one modifier trips both enable checks: the error names the dead
+    # trigger, the warning questions the block.
     assert categories == {
         "unknown-modifier",
         "dynamic-modifier-name-loc",
         "redundant-enable-gate",
+        "dynamic-modifier-enable-block",
     }
