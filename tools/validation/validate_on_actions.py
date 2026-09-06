@@ -424,7 +424,7 @@ def _parse_on_actions_file(
 
 class Validator(BaseValidator):
     TITLE = "ON_ACTIONS REFERENCE VALIDATION"
-    STAGED_EXTENSIONS = (".txt",)
+    STAGED_EXTENSIONS = [".txt"]
 
     def __init__(self, mod_path: str, **kwargs):
         super().__init__(mod_path, **kwargs)
@@ -621,7 +621,7 @@ class Validator(BaseValidator):
             for eid, block_name, _line, _filepath in all_refs
         )
         startup_event_updates_cache = False
-        for filepath in self._collect_files(["events/**/*.txt"]):
+        for filepath in self._collect_files(["events/**/*.txt"], ignore_staged=True):
             try:
                 text = Path(filepath).read_text(encoding="utf-8-sig", errors="replace")
             except OSError:
