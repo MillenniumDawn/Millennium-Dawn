@@ -5,6 +5,8 @@ name: Tools Validation
   pull_request:
     paths:
       - "tools/**"
+      - "common/on_actions/**"
+      - "common/scripted_effects/**"
       - ".claude/docs/typo-watchlist.md"
       - "resources/documentation/modifiers_documentation.md"
       - ".pre-commit-config.yaml"
@@ -67,15 +69,8 @@ jobs:
             pyproject.toml
             .pre-commit-config.yaml
             .claude/docs/typo-watchlist.md
-            resources/documentation/modifiers_documentation.md
-            common/national_focus
-            common/idea_tags
-            common/script_enums.txt
-            common/units/equipment
-            common/technologies/industry.txt
-            common/decisions
-            common/opinion_modifiers
-            common/modifiers
+            common
+            resources
             .github/workflows/coding-pipeline.yml
             .github/workflows/nightly-pr-validation.yml
             .github/workflows/pr-cache-cleanup.yml
@@ -182,6 +177,14 @@ jobs:
           python -m pytest \
             tools/tests/staged_validators_test.py \
             tools/tests/staged_validators_real_test.py -q
+
+      - name: Run branch common-mistakes validation
+        if: >-
+          !cancelled() && matrix.check.id == 'staged' &&
+          steps.staged-deps.outcome == 'success'
+        run: >-
+          python tools/validation/validate_common_mistakes.py
+          --strict --no-color --workers 4
 
       # Run after test failures, but not broken setup or cancellation.
       - name: Run tools validation

@@ -27,6 +27,10 @@ from shared_utils import (  # noqa: E402
     PARTY_SLOT_NAMES,
     blank_quoted_strings,
     find_matching_brace,
+    iter_focus_blocks,
+    iter_statements,
+    line_of,
+    read_script,
     strip_comments,
 )
 
@@ -64,8 +68,6 @@ START_YEAR = 2000
 TIMELINE_MIN_DATES = 3
 DAYS_PER_MONTH = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
-_STATEMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*[=<>]\s*")
-_FOCUS_START = re.compile(r"^[ \t]*(focus|shared_focus|joint_focus)\s*=\s*\{", re.M)
 _ID_LINE = re.compile(r"^[ \t]*id\s*=\s*(\S+)", re.M)
 _LOC_KEY = re.compile(r'^\s*([A-Za-z_][A-Za-z0-9_]*):\s*\d*\s*"(.*)"\s*$')
 _YEAR = re.compile(r"\b(19|20)\d{2}\b")
@@ -107,58 +109,6 @@ def iter_txt_files(folder: str) -> Iterator[str]:
 def read_raw(path: str) -> str:
     with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
         return handle.read()
-
-
-def read_script(path: str, keep_quotes: bool = False) -> str:
-    """Read a mod file and neutralise comments, and by default quoted strings.
-
-    Both passes preserve length and newlines, so every offset and line number
-    computed downstream still points at the original file. `keep_quotes` is for
-    files whose quoted values are the data (loc key names in a game rule).
-    """
-    text = strip_comments(read_raw(path))
-    return text if keep_quotes else blank_quoted_strings(text)
-
-
-def iter_statements(body: str) -> Iterator[Tuple[str, Optional[str], Optional[str]]]:
-    """Yield (key, scalar, block) for every `key = ...` at depth 0 of *body*."""
-    index = 0
-    length = len(body)
-    while index < length:
-        char = body[index]
-        if char in "{}":
-            index += 1
-            continue
-        match = _STATEMENT.match(body, index)
-        if not match:
-            index += 1
-            continue
-        cursor = match.end()
-        while cursor < length and body[cursor] in " \t\r\n":
-            cursor += 1
-        if cursor < length and body[cursor] == "{":
-            close = find_matching_brace(body, cursor)
-            if close == -1:
-                return
-            yield match.group(1), None, body[cursor + 1 : close]
-            index = close + 1
-            continue
-        if cursor < length and body[cursor] == '"':
-            stop = body.find('"', cursor + 1)
-            if stop == -1:
-                return
-            yield match.group(1), body[cursor + 1 : stop], None
-            index = stop + 1
-            continue
-        stop = cursor
-        while stop < length and body[stop] not in " \t\r\n{}":
-            stop += 1
-        yield match.group(1), body[cursor:stop], None
-        index = stop
-
-
-def line_of(text: str, offset: int) -> int:
-    return text.count("\n", 0, offset) + 1
 
 
 # --------------------------------------------------------------------------
@@ -333,30 +283,10 @@ class Focus:
 
 
 def parse_focus_file(text: str, tag: str) -> List[Focus]:
-    focuses: List[Focus] = []
-    position = 0
-    while True:
-        match = _FOCUS_START.search(text, position)
-        if not match:
-            return focuses
-        open_index = text.index("{", match.start())
-        close = find_matching_brace(text, open_index)
-        if close == -1:
-            return focuses
-        body = text[open_index + 1 : close]
-        position = close + 1
-        id_match = _ID_LINE.search(body)
-        if not id_match:
-            continue
-        focuses.append(
-            _build_focus(
-                id_match.group(1),
-                match.group(1),
-                line_of(text, match.start()),
-                body,
-                tag,
-            )
-        )
+    return [
+        _build_focus(focus_id, kind, line, body, tag)
+        for focus_id, kind, line, body in iter_focus_blocks(text)
+    ]
 
 
 def _build_focus(focus_id: str, kind: str, line: int, body: str, tag: str) -> Focus:
@@ -364,13 +294,17 @@ def _build_focus(focus_id: str, kind: str, line: int, body: str, tag: str) -> Fo
     for key, scalar, block in iter_statements(body):
         if key == "prerequisite" and block is not None:
             group = [
-                value for name, value, _ in iter_statements(block) if name == "focus"
+                value
+                for name, value, _ in iter_statements(block)
+                if name == "focus" and value is not None
             ]
             if group:
                 focus.prereq_groups.append(group)
         elif key == "mutually_exclusive" and block is not None:
             focus.mutex.extend(
-                value for name, value, _ in iter_statements(block) if name == "focus"
+                value
+                for name, value, _ in iter_statements(block)
+                if name == "focus" and value is not None
             )
         elif key in ("available", "allow_branch") and block is not None:
             _read_gates(block, focus)
@@ -659,7 +593,8 @@ def build_states(rule: Optional[Rule], flags: Sequence[str]) -> List[State]:
             )
             options.append((option.name, match))
     else:
-        options = [(flag, flag) for flag in flags] + [("NO_PATH", None)]
+        options.extend((flag, flag) for flag in flags)
+        options.append(("NO_PATH", None))
     return [
         State(option=name, flag=flag, historical=historical)
         for name, flag in options
@@ -1600,11 +1535,6 @@ def _block_of(body: str, key: str) -> Optional[str]:
     return None
 
 
-def parse_party_indices(text: str) -> Dict[int, str]:
-    """Map `ruling_party` index to sub-ideology."""
-    return dict(PARTY_SLOT_NAMES)
-
-
 def parse_leader_roster(text: str, tag: str) -> Dict[str, List[Leader]]:
     """Map sub-ideology to its ordered succession list in `set_leader_<TAG>`."""
     match = re.search(r"^\s*set_leader_" + tag + r"\s*=\s*\{", text, re.M)
@@ -1810,12 +1740,7 @@ def _government_findings(root: str, tag: str) -> Dict:
     }
     total_dated = sum(dated.values())
 
-    parties: Dict[int, str] = {}
-    election_effects = os.path.join(
-        root, "common", "scripted_effects", "99_election_effects.txt"
-    )
-    if os.path.isfile(election_effects):
-        parties = parse_party_indices(read_script(election_effects))
+    parties = dict(PARTY_SLOT_NAMES)
 
     yearly = os.path.join(root, "common", "scripted_effects", "00_yearly_effects.txt")
     schedule = (
