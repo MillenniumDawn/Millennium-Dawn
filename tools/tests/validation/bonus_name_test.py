@@ -23,6 +23,16 @@ def _write_focus_file(tmp_path, content):
     return _write(tmp_path, "common/national_focus/test.txt", content)
 
 
+def _scan(tmp_path, relpath, content):
+    """Write one mod file and run the pool worker over it."""
+    fpath = _write(tmp_path, relpath, content)
+    return _scan_file((str(fpath), str(tmp_path)))
+
+
+def _scan_focus(tmp_path, content):
+    return _scan(tmp_path, "common/national_focus/test.txt", content)
+
+
 def _write_tech_tags(tmp_path, cats):
     body = "\n".join(f"\t\t{c}" for c in cats)
     _write(
@@ -71,7 +81,7 @@ def _categories(validator):
 
 
 def test_worker_resolves_focus_owner(tmp_path):
-    fpath = _write_focus_file(
+    out = _scan_focus(
         tmp_path,
         FOCUS_TEMPLATE.format(
             reward=(
@@ -84,7 +94,6 @@ def test_worker_resolves_focus_owner(tmp_path):
             )
         ),
     )
-    out = _scan_file((str(fpath), str(tmp_path)))
     assert out == [
         (
             "add_tech_bonus",
@@ -100,13 +109,12 @@ def test_worker_resolves_focus_owner(tmp_path):
 
 def test_worker_reads_single_line_block(tmp_path):
     # The benelux joint-focus form: whole block on one line.
-    fpath = _write_focus_file(
+    out = _scan_focus(
         tmp_path,
         FOCUS_TEMPLATE.format(
             reward="			add_tech_bonus = { name = TAG_focus_a bonus = 0.30 uses = 2 category = CAT_air_eqp }"
         ),
     )
-    out = _scan_file((str(fpath), str(tmp_path)))
     assert [r[1] for r in out] == ["TAG_focus_a"]
 
 
@@ -123,8 +131,7 @@ def test_worker_scans_joint_reward_variants(tmp_path):
 	}
 }
 """
-    fpath = _write_focus_file(tmp_path, content)
-    out = _scan_file((str(fpath), str(tmp_path)))
+    out = _scan_focus(tmp_path, content)
     assert [(r[1], r[3]) for r in out] == [
         ("TAG_joint", "TAG_joint"),
         (None, "TAG_joint"),
@@ -140,8 +147,7 @@ def test_worker_resolves_decision_owner(tmp_path):
 	}
 }
 """
-    fpath = _write(tmp_path, "common/decisions/test.txt", content)
-    out = _scan_file((str(fpath), str(tmp_path)))
+    out = _scan(tmp_path, "common/decisions/test.txt", content)
     assert [(r[2], r[3]) for r in out] == [("decision", "TAG_the_decision")]
 
 
@@ -157,8 +163,7 @@ country_event = {
 	}
 }
 """
-    fpath = _write(tmp_path, "events/test.txt", content)
-    out = _scan_file((str(fpath), str(tmp_path)))
+    out = _scan(tmp_path, "events/test.txt", content)
     assert [(r[1], r[2], r[3], r[4]) for r in out] == [
         ("test.1.t", "event", "test.1", ("test.1", "test.1.t"))
     ]
@@ -180,12 +185,11 @@ def test_worker_resolves_mio_trait_owner(tmp_path):
 	}
 }
 """
-    fpath = _write(
+    out = _scan(
         tmp_path,
         "common/military_industrial_organization/organizations/test.txt",
         content,
     )
-    out = _scan_file((str(fpath), str(tmp_path)))
     assert [(r[2], r[3]) for r in out] == [("MIO trait", "TAG_the_trait")]
 
 
@@ -194,8 +198,7 @@ def test_worker_leaves_owner_unset_without_id_convention(tmp_path):
 	add_tech_bonus = { name = shared_lab_bonus bonus = 0.5 uses = 1 category = CAT_industry }
 }
 """
-    fpath = _write(tmp_path, "common/scripted_effects/test.txt", content)
-    out = _scan_file((str(fpath), str(tmp_path)))
+    out = _scan(tmp_path, "common/scripted_effects/test.txt", content)
     assert [(r[2], r[3], r[4]) for r in out] == [(None, None, ())]
 
 
@@ -213,8 +216,7 @@ def test_worker_reads_bonus_outside_completion_reward(tmp_path):
 	}
 }
 """
-    fpath = _write_focus_file(tmp_path, content)
-    out = _scan_file((str(fpath), str(tmp_path)))
+    out = _scan_focus(tmp_path, content)
     assert [(r[1], r[3]) for r in out] == [(None, "TAG_focus_a")]
 
 
@@ -236,8 +238,7 @@ def test_worker_covers_all_six_effects(tmp_path):
 	}
 }
 """
-    fpath = _write_focus_file(tmp_path, content)
-    out = _scan_file((str(fpath), str(tmp_path)))
+    out = _scan_focus(tmp_path, content)
     assert [r[0] for r in out] == [
         "add_tech_bonus",
         "add_equipment_bonus",
