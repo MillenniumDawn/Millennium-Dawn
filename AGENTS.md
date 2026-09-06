@@ -69,7 +69,7 @@ Every text-mode write in `tools/` must pass `newline=""`. Without it, Python's t
 
 ## Events
 
-- Always `is_triggered_only = yes`; log only if option has effects; `major = yes` for news only. Never wrap a `major = yes` event in `every_country` / `every_other_country` (one fire already broadcasts)
+- Always `is_triggered_only = yes`; log only if option has effects (`validate_events` → `event-option-log-without-effect`); `major = yes` for news only. Never wrap a `major = yes` event in `every_country` / `every_other_country` (one fire already broadcasts)
 - Date-based events: owner-guard pattern in `common/scripted_effects/00_yearly_effects.txt`
 - `add_building_construction` for `naval_base` requires `province = XXXXX`
 - New subideology parties: register in `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`
