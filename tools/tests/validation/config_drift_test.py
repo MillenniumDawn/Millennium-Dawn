@@ -511,6 +511,8 @@ def test_tools_validation_triggers_for_consumed_configuration():
         "resources/documentation/modifiers_documentation.md",
         ".pre-commit-config.yaml",
         "pyproject.toml",
+        "common/on_actions/**",
+        "common/scripted_effects/**",
         ".github/workflows/coding-pipeline.yml",
         ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/pr-cache-cleanup.yml",
