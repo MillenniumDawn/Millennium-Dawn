@@ -763,6 +763,28 @@ def test_effect_block_with_log_leaves_unloggable_blocks_alone():
     )
 
 
+def test_effect_block_collapses_single_leaf_children():
+    out = effect_block_with_log(
+        [
+            "\t\tcompletion_reward = {\n",
+            "\t\t\tset_temp_variable = {\n",
+            "\t\t\t\tparty_popularity_increase = 0.1\n",
+            "\t\t\t}\n",
+            "\t\t\tchange_relative_party_popularity = yes\n",
+            "\t\t}\n",
+        ],
+        "TST_x",
+    )
+    assert out == [
+        "\t\tcompletion_reward = {",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TST_x"',
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.1 }",
+        "\t\t\tchange_relative_party_popularity = yes",
+        "\t\t}",
+    ]
+    assert effect_block_with_log(out, "TST_x") == out
+
+
 def test_offset_block_keeps_unknown_lines_without_coordinates():
     assert format_offset_block(
         ["offset = {\n", "\tunknown = yes\n", "}\n"],

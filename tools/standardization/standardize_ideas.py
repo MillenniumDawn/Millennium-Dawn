@@ -18,6 +18,7 @@ from common_utils import (
 )
 from shared_utils import (
     blank_quoted_strings,
+    collapse_nested_blocks,
     collapse_or_compact,
     extract_block,
     log_message,
@@ -315,7 +316,7 @@ class IdeaStandardizer(BaseStandardizer):
     ) -> List[str]:
         """Single-line collapse a single-leaf block, else reindent at prop_indent."""
         collapsed = collapse_or_compact(block_lines[:], prop_indent)
-        multi = self.compact_block(block_lines[:], prop_indent)
+        multi = self.compact_block(collapse_nested_blocks(block_lines), prop_indent)
         if len(collapsed) == 1 and len(multi) != 1:
             return collapsed
         return multi
@@ -365,7 +366,7 @@ class IdeaStandardizer(BaseStandardizer):
                     modified.append(log_line)
             block = modified
 
-        return self.compact_block(block[:], prop_indent)
+        return self.compact_block(collapse_nested_blocks(block[:]), prop_indent)
 
     def format_block(self, props: Dict[str, Any], base_indent: str = "\t") -> List[str]:
         """Format idea according to Millennium Dawn standard"""

@@ -165,15 +165,79 @@ ARM_bad_army_remove = {
 	}
 }
 
+# Artsakh reaches this effect from only five focuses, so each step clears two tiers of the eight-tier ladder.
+NKR_bad_army_remove = {
+	if = {
+		limit = { has_idea = ARM_outdated_army_idea7 }
+		remove_ideas = ARM_outdated_army_idea7
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea6 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea6
+			add_idea = ARM_outdated_army_idea7
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea5 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea5
+			add_idea = ARM_outdated_army_idea7
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea4 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea4
+			add_idea = ARM_outdated_army_idea6
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea3 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea3
+			add_idea = ARM_outdated_army_idea5
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea2 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea2
+			add_idea = ARM_outdated_army_idea4
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea1 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea1
+			add_idea = ARM_outdated_army_idea3
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea
+			add_idea = ARM_outdated_army_idea2
+		}
+	}
+}
+
 ARM_tourism_calculate = {
 	set_variable = { tourism_armenia = 0.015 }
+	set_temp_variable = { ARM_tourism_income = 0 }
 
 	if = {
 		limit = {
-			has_idea = ARM_tourism_idea
-			owns_state = 709
+			has_country_flag = ARM_tourism_russian_tourists
+			country_exists = SOV
+			NOT = { has_war_with = SOV }
 		}
-		set_temp_variable = { ARM_tourism_income = 0.0194 }
+		set_temp_variable = { ARM_tourism_russians = 1 }
+	}
+
+	if = {
+		limit = { owns_state = 709 }
+		add_to_temp_variable = { ARM_tourism_income = 0.0194 }
 		if = { limit = { has_completed_focus = ARM_economy_historic }
 			add_to_temp_variable = { ARM_tourism_income = 0.0098 }
 		}
@@ -186,31 +250,17 @@ ARM_tourism_calculate = {
 		if = { limit = { has_completed_focus = ARM_economy_hotels }
 			add_to_temp_variable = { ARM_tourism_income = 0.0138 }
 		}
-		if = {
-			limit = {
-				has_country_flag = ARM_tourism_russian_tourists
-				country_exists = SOV
-				NOT = { has_war_with = SOV }
-			}
+		if = { limit = { check_variable = { ARM_tourism_russians > 0 } }
 			add_to_temp_variable = { ARM_tourism_income = 0.0314 }
 		}
-		random_list = {
-			seed = random
-			40 = { }
-			40 = { multiply_temp_variable = { ARM_tourism_income = 0.75 } }
-			20 = { multiply_temp_variable = { ARM_tourism_income = 1.50 } }
-		}
-		set_temp_variable = { modify_tourism_armenia = ARM_tourism_income }
-		ARM_tourism_add_and_pay = yes
 	}
 
 	if = {
 		limit = {
-			has_idea = ARM_tourism_idea
 			owns_state = 706
 			has_country_flag = ARM_economy_tourism_abkhazia
 		}
-		set_temp_variable = { ARM_tourism_income = 0.0090 }
+		add_to_temp_variable = { ARM_tourism_income = 0.0090 }
 		if = { limit = { has_completed_focus = ARM_economy_historic }
 			add_to_temp_variable = { ARM_tourism_income = 0.0098 }
 		}
@@ -220,31 +270,17 @@ ARM_tourism_calculate = {
 		if = { limit = { has_completed_focus = ARM_economy_hotels }
 			add_to_temp_variable = { ARM_tourism_income = 0.0070 }
 		}
-		if = {
-			limit = {
-				has_country_flag = ARM_tourism_russian_tourists
-				country_exists = SOV
-				NOT = { has_war_with = SOV }
-			}
+		if = { limit = { check_variable = { ARM_tourism_russians > 0 } }
 			add_to_temp_variable = { ARM_tourism_income = 0.0082 }
 		}
-		random_list = {
-			seed = random
-			40 = { }
-			40 = { multiply_temp_variable = { ARM_tourism_income = 0.75 } }
-			20 = { multiply_temp_variable = { ARM_tourism_income = 1.50 } }
-		}
-		set_temp_variable = { modify_tourism_armenia = ARM_tourism_income }
-		ARM_tourism_add_and_pay = yes
 	}
 
 	if = {
 		limit = {
-			has_idea = ARM_tourism_idea
 			owns_state = 713
 			has_country_flag = ARM_economy_tourism_azer
 		}
-		set_temp_variable = { ARM_tourism_income = 0.0122 }
+		add_to_temp_variable = { ARM_tourism_income = 0.0122 }
 		if = { limit = { has_completed_focus = ARM_economy_historic }
 			add_to_temp_variable = { ARM_tourism_income = 0.0098 }
 		}
@@ -254,14 +290,13 @@ ARM_tourism_calculate = {
 		if = { limit = { has_completed_focus = ARM_economy_hotels }
 			add_to_temp_variable = { ARM_tourism_income = 0.0138 }
 		}
-		if = {
-			limit = {
-				has_country_flag = ARM_tourism_russian_tourists
-				country_exists = SOV
-				NOT = { has_war_with = SOV }
-			}
+		if = { limit = { check_variable = { ARM_tourism_russians > 0 } }
 			add_to_temp_variable = { ARM_tourism_income = 0.0110 }
 		}
+	}
+
+	if = {
+		limit = { check_variable = { ARM_tourism_income > 0 } }
 		random_list = {
 			seed = random
 			40 = { }
@@ -590,71 +625,74 @@ ARM_multigroup_script = {
 }
 ARM_it_sector_positive_script = {
 	if = {
-		limit = { has_idea = ARM_it_sector_idea8 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea8
-			add_idea = ARM_it_sector_idea9
-		}
+		limit = { check_variable = { ARM_econ_it_level < 10 } }
+		add_to_variable = { ARM_econ_it_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ARM_western_partners_modifier }
+		add_to_variable = { ARM_west_research_speed_factor = 0.01 tooltip = research_speed_factor_tt }
+		add_to_variable = { ARM_west_offices_productivity = 0.01 tooltip = offices_productivity_tt }
+		add_to_variable = { ARM_west_projects_cost_modifier = -0.04 tooltip = projects_cost_modifier_tt }
+		add_to_variable = { ARM_west_corporate_tax_income_multiplier_modifier = 0.005 tooltip = corporate_tax_income_multiplier_modifier_tt }
 	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea7 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea7
-			add_idea = ARM_it_sector_idea8
+}
+# Unwinds whichever retail banks are actually held before the sector aggregate replaces them.
+ARM_dissolve_retail_banks = {
+	if = {
+		limit = { check_variable = { ARM_econ_ardshinbank_level > 0 } }
+		add_to_variable = { ARM_econ_corporate_tax_income_multiplier_modifier = -0.01 }
+		add_to_variable = { ARM_econ_economic_cycles_cost_factor = 0.03 }
+		if = {
+			limit = { check_variable = { ARM_econ_ardshinbank_level > 1 } }
+			add_to_variable = { ARM_econ_corporate_tax_income_multiplier_modifier = -0.01 }
+			add_to_variable = { ARM_econ_economic_cycles_cost_factor = 0.01 }
+			add_to_variable = { ARM_econ_research_speed_factor = -0.01 }
 		}
+		set_variable = { ARM_econ_ardshinbank_level = 0 }
 	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea6 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea6
-			add_idea = ARM_it_sector_idea7
+	if = {
+		limit = { check_variable = { ARM_econ_evocabank_level > 0 } }
+		add_to_variable = { ARM_econ_corporate_tax_income_multiplier_modifier = -0.02 }
+		add_to_variable = { ARM_econ_economic_cycles_cost_factor = 0.04 }
+		add_to_variable = { ARM_econ_research_speed_factor = -0.01 }
+		set_variable = { ARM_econ_evocabank_level = 0 }
+	}
+	if = {
+		limit = { check_variable = { ARM_econ_inecobank_level > 0 } }
+		add_to_variable = { ARM_econ_corporate_tax_income_multiplier_modifier = -0.02 }
+		add_to_variable = { ARM_econ_economic_cycles_cost_factor = 0.04 }
+		set_variable = { ARM_econ_inecobank_level = 0 }
+	}
+	if = {
+		limit = { check_variable = { ARM_econ_ameriabank_level > 0 } }
+		add_to_variable = { ARM_econ_corporate_tax_income_multiplier_modifier = -0.03 }
+		add_to_variable = { ARM_econ_economic_cycles_cost_factor = 0.04 }
+		set_variable = { ARM_econ_ameriabank_level = 0 }
+	}
+}
+# Called from on_war_relation_added for both ROOT and FROM, so the body lives here rather than twice in the hook.
+ARM_review_foreign_partner_ties = {
+	if = {
+		limit = {
+			has_dynamic_modifier = { modifier = ARM_western_partners_modifier }
+			OR = {
+				has_war_with = USA
+				has_war_with = ENG
+				has_war_with = CAN
+				has_war_with = FRA
+				has_war_with = GER
+				has_war_with = HOL
+				has_war_with = ISR
+			}
 		}
+		remove_dynamic_modifier = { modifier = ARM_western_partners_modifier }
+		country_event = arm_economic.24
 	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea5 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea5
-			add_idea = ARM_it_sector_idea6
+	if = {
+		limit = {
+			has_dynamic_modifier = { modifier = ARM_russian_partners_modifier }
+			has_war_with = SOV
 		}
-	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea4 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea4
-			add_idea = ARM_it_sector_idea5
-		}
-	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea3 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea3
-			add_idea = ARM_it_sector_idea4
-		}
-	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea2 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea2
-			add_idea = ARM_it_sector_idea3
-		}
-	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea1 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea1
-			add_idea = ARM_it_sector_idea2
-		}
-	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea
-			add_idea = ARM_it_sector_idea1
-		}
-	}
-	else_if = {
-		limit = { NOT = { has_idea = ARM_it_sector_idea } }
-		add_ideas = ARM_it_sector_idea
+		remove_dynamic_modifier = { modifier = ARM_russian_partners_modifier }
+		country_event = arm_economic.25
 	}
 }
 ARM_polish_revoult_script = {
@@ -1696,62 +1734,76 @@ NKR_integrate_army_of_armenia = {
 	set_temp_variable = { percent_change = 0 }
 	if = {
 		limit = {
-			ARM = { has_idea = ARM_national_guard_idea }
-			NOT = { has_idea = ARM_national_guard_idea }
+			ARM = { check_variable = { ARM_national_guard_level > 0 } }
+			check_variable = { NKR_national_guard_level = 0 }
 		}
-		add_ideas = ARM_national_guard_idea
+		set_variable = { NKR_national_guard_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_army_core_attack_factor = 0.04 tooltip = army_core_attack_factor_tt }
+		add_to_variable = { NKR_land_army_core_defence_factor = 0.06 tooltip = army_core_defence_factor_tt }
+		add_to_variable = { NKR_land_resistance_damage_to_garrison = -0.08 tooltip = resistance_damage_to_garrison_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 	if = {
 		limit = {
-			ARM = { has_idea = ARM_teroborona }
-			NOT = { has_idea = ARM_teroborona }
+			ARM = { check_variable = { ARM_teroborona_level > 0 } }
+			check_variable = { NKR_teroborona_level = 0 }
 		}
-		add_ideas = ARM_teroborona
+		set_variable = { NKR_teroborona_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_mobilization_speed = 0.04 tooltip = mobilization_speed_tt }
+		add_to_variable = { NKR_land_army_core_defence_factor = 0.03 tooltip = army_core_defence_factor_tt }
+		add_to_variable = { NKR_land_war_support_factor = 0.01 tooltip = war_support_factor_tt }
+		add_to_variable = { NKR_land_training_time_army_factor = -0.02 tooltip = training_time_army_factor_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 	if = {
 		limit = {
-			ARM = {
-				has_idea = ARM_army_engineer
-			}
-			NOT = {
-				has_idea = ARM_army_engineer
-			}
+			ARM = { check_variable = { ARM_army_engineer_level > 0 } }
+			check_variable = { NKR_army_engineer_level = 0 }
 		}
-		add_ideas = ARM_army_engineer
+		set_variable = { NKR_army_engineer_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_army_speed_factor = 0.05 tooltip = army_speed_factor_tt }
+		add_to_variable = { NKR_land_army_core_defence_factor = 0.05 tooltip = army_core_defence_factor_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 	if = {
 		limit = {
-			ARM = {
-				has_idea = ARM_army_railway
-			}
-			NOT = {
-				has_idea = ARM_army_railway
-			}
+			ARM = { check_variable = { ARM_army_railway_level > 0 } }
+			check_variable = { NKR_army_railway_level = 0 }
 		}
-		add_ideas = ARM_army_railway
+		set_variable = { NKR_army_railway_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_repair_speed_rail_way_factor = 0.10 tooltip = repair_speed_rail_way_factor_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 	if = {
 		limit = {
-			ARM = {
-				has_idea = ARM_army_radio
-			}
-			NOT = {
-				has_idea = ARM_army_radio
-			}
+			ARM = { check_variable = { ARM_army_radio_level > 0 } }
+			check_variable = { NKR_army_radio_level = 0 }
 		}
-		add_ideas = ARM_army_radio
+		set_variable = { NKR_army_radio_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_army_attack_factor = 0.01 tooltip = army_attack_factor_tt }
+		add_to_variable = { NKR_land_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 	if = {
 		limit = {
-			ARM = { has_idea = ARM_border_troops }
-			NOT = { has_idea = ARM_border_troops }
+			ARM = { check_variable = { ARM_border_troops_level > 0 } }
+			check_variable = { NKR_border_troops_level = 0 }
 		}
-		add_ideas = ARM_border_troops
+		set_variable = { NKR_border_troops_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_foreign_influence_defense_modifier = 0.06 tooltip = foreign_influence_defense_modifier_tt }
+		add_to_variable = { NKR_land_army_core_defence_factor = 0.06 tooltip = army_core_defence_factor_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 

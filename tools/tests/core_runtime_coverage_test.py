@@ -166,6 +166,55 @@ def test_text_blocks_and_spacing_edge_cases():
     )
 
 
+def test_collapse_nested_blocks():
+    reward = [
+        "\t\tcompletion_reward = {",
+        '\t\t\tlog = "x"',
+        "\t\t\tset_temp_variable = {",
+        "\t\t\t\tparty_popularity_increase = 0.1",
+        "\t\t\t}",
+        "\t\t\thas_country_leader = {",
+        '\t\t\t\tname = "Serzh Sargsyan"',
+        "\t\t\t\truling_only = yes",
+        "\t\t\t}",
+        "\t\t}",
+    ]
+    collapsed = U.collapse_nested_blocks(reward)
+    assert collapsed == [
+        "\t\tcompletion_reward = {",
+        '\t\t\tlog = "x"',
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.1 }",
+        "\t\t\thas_country_leader = {",
+        '\t\t\t\tname = "Serzh Sargsyan"',
+        "\t\t\t\truling_only = yes",
+        "\t\t\t}",
+        "\t\t}",
+    ]
+    assert U.collapse_nested_blocks(collapsed) == collapsed
+    assert U.collapse_or_compact(reward) == collapsed
+
+    # Innermost first, at any depth; a child with a comment stays multi-line.
+    assert U.collapse_nested_blocks(
+        [
+            "a = {",
+            "\tb = {",
+            "\t\tc = {",
+            "\t\t\tx = 1",
+            "\t\t}",
+            "\t\ty = 2",
+            "\t}",
+            "}",
+        ]
+    ) == ["a = {", "\tb = {", "\t\tc = { x = 1 }", "\t\ty = 2", "\t}", "}"]
+    commented = ["a = {", "\tb = {", "\t\tx = 1 # note", "\t}", "\tc = 3", "}"]
+    assert U.collapse_nested_blocks(commented) == commented
+
+    # Unbalanced input is handed back untouched rather than reshaped.
+    unbalanced = ["a = {", "\tb = {", "\t\tx = 1", "}"]
+    assert U.collapse_nested_blocks(unbalanced) == unbalanced
+    assert U.collapse_nested_blocks(["a = { b = 1 }"]) == ["a = { b = 1 }"]
+
+
 def test_atomic_encoding_backup_and_safe_reads(tmp_path, monkeypatch):
     target = tmp_path / "nested" / "file.txt"
     U.atomic_write_text(str(target), "café\n", encoding="utf-8-sig", bom=True)
