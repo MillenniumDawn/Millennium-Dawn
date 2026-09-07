@@ -65,7 +65,7 @@ def _parse_file(text: str) -> Dict[str, Dict]:
 
 class Validator(BaseValidator):
     TITLE = "TECHNOLOGIES"
-    STAGED_EXTENSIONS = (".txt",)
+    STAGED_EXTENSIONS = [".txt"]
 
     def run_validations(self):
         pattern = str(Path(self.mod_path) / TECH_DIR / "*.txt")

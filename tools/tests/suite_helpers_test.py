@@ -7,6 +7,7 @@ from shared.suite import (
     collecting_validator,
     initialize_git_repository,
     issue_dict,
+    make_issue,
     make_results_tree,
     run_git,
     write_slug_json,
@@ -37,6 +38,17 @@ def test_issue_dict_defaults():
         "file": "a.txt",
         "line": 1,
     }
+
+
+def test_make_issue_defaults_and_overrides():
+    issue = make_issue()
+    assert issue.severity == "error"
+    assert issue.category == "missing_key"
+    assert issue.message == "key FOO not found"
+    assert issue.file == "events/MD_x.txt"
+    assert issue.line == 212
+    assert issue.validator == "events"
+    assert make_issue(file="other.txt", line=3).file == "other.txt"
 
 
 def test_write_text_creates_parents_and_returns_path(tmp_path):

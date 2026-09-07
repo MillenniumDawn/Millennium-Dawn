@@ -52,10 +52,10 @@ themselves up on the next suite run.
 
 ## CI integration
 
-`.github/workflows/coding-pipeline.yml` restores the cache via
-`actions/cache` keyed on `<runner>-<validator>-<base SHA>-<hash of
-tools/validation>`. PRs that don't touch validator code restore the main
-branch's cache and re-scan only the changed mod files.
+`.github/workflows/test-suite.yml` restores the cache via `actions/cache`
+keyed on runner OS and the hash of `tools/validation`. PRs that don't touch
+validator code restore the main branch's cache and re-scan only the changed
+mod files. A tools edit skips that restore and runs the full suite.
 
 ## Auto-reset when stale
 

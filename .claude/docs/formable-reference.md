@@ -67,7 +67,7 @@ Hidden for everyone under the game rule. Unlatched: hidden once anyone else star
 
 ### Formed-country latch
 
-`formed_country_formable` is a permanent country flag set by `mark_formed_country_formable` (`00_formable_effects.txt:48-50`; #3440, issue #3432 — Hohenzollern Germany flipping German Empire ↔ GDR every few seconds). Writers: `reshaping_national_identity` `on_add` (`MD_formable_ideas.txt:9-13`) — every decision-formable start latches; `commit_special_formable` (§4) — every special formable latches; both UAR announces (:44, :104), `LBA_strive_for_uar` (:11797), `SPR_solidify_the_iberian_union` (`05_spain.txt:3417`); and ~80 national-identity sites across the German empires, Iranic/Tajik unions, Vanguard, Iraq, US junta and similar cosmetic-identity decisions and events. Readers (all `visible`): the 23 formable categories (above), `different_country_flags_category` (`different_country_flags.txt:25`), both UAR announces (`UnitedArabRepublic.txt:7`, :68). Never cleared, even when the identity that set it is later abandoned or revoked (§8m).
+`formed_country_formable` is a permanent country flag set by `mark_formed_country_formable` (`00_formable_effects.txt:48-50`; #3440, issue #3432 — Hohenzollern Germany flipping German Empire ↔ GDR every few seconds). Writers: `reshaping_national_identity` `on_add` (`MD_formable_ideas.txt:9-13`) — every decision-formable start latches; `commit_special_formable` (§4) — every special formable latches; both UAR announces (:44, :104), `LBA_strive_for_uar` (:11797), `SPR_solidify_the_iberian_union` (`05_spain.txt:3417`); and ~80 national-identity sites across the German empires, Iranic/Tajik unions, Vanguard, Iraq, US junta and similar cosmetic-identity decisions and events. Readers (all `visible`): the 23 formable categories (above), `different_country_flags_category` (`different_country_flags.txt:26`), both UAR announces (`UnitedArabRepublic.txt:7`, :68). Never cleared, even when the identity that set it is later abandoned or revoked (§8m).
 
 Latch vs ratchet: the latch is a one-way **visibility** cut for players and AI alike; the ratchet (§3) is an AI-only ranked commitment. Once latched, only already-started formables' categories are visible, so the ratchet's strictly-larger upgrade and the CANZUK fallback exemptions are reachable only from pre-latch states (old saves, multi-`is_<TAG>` countries). Inside a still-visible category the ratchet is what stops `update_flag` flicking and enforces special identities — the latch does neither.
 
@@ -112,7 +112,7 @@ Prefixes omitted: `common/national_focus/`, `common/decisions/categories/`.
 | EFS branding          | `MD_EFS_decisions.txt` :48, :74, :94, … — `is_IBR/SCA/BLT` → `EFS_*`   |
 | UAR category          | `UnitedArabRepublic_categories.txt:10` — hidden when `is_MAGHREB`      |
 | Benelux focus         | `03_benelux_shared.txt:776` — `BNL_treaty_of_union` bypass on `is_HBL` |
-| Flag-change decisions | `different_country_flags.txt:25` — hidden once latched (#3440)         |
+| Flag-change decisions | `different_country_flags.txt:26` — hidden once latched (#3440)         |
 | MAGHREB start         | `formable_nation_decisions.txt:10866-10867` — `NOT is_*_uar` (below)   |
 | Spain                 | `05_spain.txt:3061-3062`, :3416 — sets `IBR_exists`, `is_IBR`          |
 
@@ -357,7 +357,7 @@ Scenario gate `EH_scenario_enabled` (`common/scripted_triggers/99_EH_scripted_tr
 | `EH_event.420` :1444 | `EH_EAC`                   | :1455 / :1456-1457  |
 | `EH_event.422` :1566 | `EH_ODU`                   | :1577 / :1578-1579  |
 
-`is_european_federation_country` (`99_EH_scripted_triggers.txt:182`) is a continent test (Europe + TUR minus SOV/SOO/ABK/CHE/GEO/UKR/BLR), not a read of the `european_federation` flag. `different_country_flags_category` hides when `EH_scenario_enabled` (`categories/different_country_flags.txt:65`). The bloc ROOT (USA → USNA, BRA → SOU, …) stays a decision-formable constituent — hence the sentinel. Nothing in the EU scripts reads the scenario, so the EU keeps running (§8g). No revocation.
+`is_european_federation_country` (`99_EH_scripted_triggers.txt:182`) is a continent test (Europe + TUR minus SOV/SOO/ABK/CHE/GEO/UKR/BLR), not a read of the `european_federation` flag. `different_country_flags_category` hides for a bloc through `formed_country_formable` (`categories/different_country_flags.txt:26`), latched by `commit_special_formable` — the scenario rule itself hides nothing (#2672). The bloc ROOT (USA → USNA, BRA → SOU, …) stays a decision-formable constituent — hence the sentinel. Nothing in the EU scripts reads the scenario, so the EU keeps running (§8g). No revocation.
 
 ### 4.7 Not wired (documented only)
 
@@ -397,7 +397,7 @@ Paths: `common/` files may appear by basename alone — focus trees live in `com
 - **Serbia-Montenegro** (cosmetic; AI: `base = 0`) — `common/decisions/Serbia.txt:381` (`SER_rename_nation`). Writes: cosmetic `SER_MNT` (:400) / back to `SER`. Ratchet: none.
 - **Antillean Confederation** (cosmetic; AI: yes) — `common/decisions/Cuba.txt:1124` (`CUB_form_confederation`). Writes: cosmetic `CUB_confederation` (:1141); needs HAI/DOM/COL/JAM/PTR subjects. Ratchet: none.
 - **Liechtenstein HRE** (decision-union; AI: `base = 3`) — `common/decisions/Liechtenstein.txt:123` (`LIC_form_HRE`). Writes: cosmetic `LIC_AUTH_SS` (:178); cores. Ratchet: none.
-- **Kurdistan declaration** (decision-union; AI: yes) — `common/decisions/Kurdistan.txt:133` (`KUR_declare_kurdistan`). Writes: cosmetic `KUR_neutrality` (:157; hides `different_country_flags` :35); 8 cores. Ratchet: none.
+- **Kurdistan declaration** (decision-union; AI: yes) — `common/decisions/Kurdistan.txt:133` (`KUR_declare_kurdistan`). Writes: cosmetic `KUR_neutrality` (:157; hides `different_country_flags` :36); 8 cores. Ratchet: none.
 - **Ottoman State / Turkic confederation** (decision-union; AI: yes) — `common/decisions/Turkey.txt` (`TUR_empower_sultan`, cosmetic :772); `turkey.txt:16781` (below). Writes: cosmetic `TUR_NEW_TURKIC_STATE`; flag `TUR_osmani` :16817; latch. Ratchet: none.
 - **Pan-Turkic** (focus-union; AI: yes) — `turkey.txt:16736` (`TUR_pan_turkey`). Writes: cosmetic `TUR_PAN_TURKIC` :16760; latch :16762. Ratchet: none.
 - **Ethiopia-Eritrea federation** (decision-union; AI: yes) — `common/decisions/Ethiopia.txt:375` (`ETH_federalise_ERI_flip`, cosmetic :406); event below. Writes: cosmetic `ETH_federation_ct` / `ERI_ETH`. Ratchet: none.
@@ -456,7 +456,7 @@ Cosmetic-only identities (no annex or cores in the block; flavour / easter egg; 
 
 - `SWE_Swedish_empire` — `05_sweden.txt:16663`, :16674
 - `ITA_RomanEmpire` / `ITA_RomanEmpire2` — `05_italy.txt:3510`, :3522
-- `SOV_hyper_empire` (hides `different_country_flags` :46) — `05_russia.txt:7994`
+- `SOV_hyper_empire` (hides `different_country_flags` :47) — `05_russia.txt:7994`
 - `SOV_soviet_empire`, `SOV_USA` — `05_russia.txt:13010`, :18074
 - `SOV_romanov_empire` — `events/Russia.txt:5757`
 - `RAJ_AUTH_SS`, `RAJ_Empireofsun` — `05_india.txt:13942`, :14924
@@ -527,7 +527,7 @@ Details:
 - `rule_disable_formable_nations`: read by the 23 `form_<TAG>_category` blocks and, since #3440, `form_UAR_category` (`UnitedArabRepublic_categories.txt:10`) — hides them all; sentinel writes stay inert but harmless. EU111/EU112, Yugoslavia, United States of Africa, Event Horizon, Spain's IBR focus and every other §5 mechanism stay formable.
 - `rule_disable_eu`: read by the EU setup (`99_eu_scripted_effects.txt:134`, :164, :189, :681) — no EU, so EU111/EU112 are unreachable and `EFS_flag_category` never appears.
 - `rule_enable_ai_european_union_end_game_paths`: GUI AI weights (`01_european_union_guis.txt:4548-4552`, :5190-5194); `option = no` → `factor = 0` on the AI proposing agendas 110/111/112 — the **only** AI kill switch for USoE/EFS; players unaffected (§8j).
-- `rule_event_horizon_scenario`: read by `EH_convergence_event_chain_effect` and `categories/different_country_flags.txt:49` — enables the Event Horizon chain and hides flag-change decisions. The EU system does not read it.
+- `rule_event_horizon_scenario`: read by `EH_convergence_event_chain_effect` — enables the Event Horizon chain. It does not gate flag-change decisions; a formed bloc is hidden by `formed_country_formable` instead (§4.6, #2672). The EU system does not read it.
 
 ## 8. Known traps / accepted behaviour
 

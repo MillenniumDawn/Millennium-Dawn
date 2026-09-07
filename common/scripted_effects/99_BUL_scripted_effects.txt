@@ -71,3 +71,27 @@ BUL_award_reforms_if_pending = {
 		add_to_variable = { BUL_economy_tax_gain_multiplier_modifier = 0.15 tooltip = tax_gain_multiplier_modifier_tt }
 	}
 }
+
+BUL_sanctions_update = {
+	clamp_variable = {
+		var = BUL_sanctions_count
+		min = 0
+		max = 5
+	}
+	set_variable = { BUL_sanctions_tax_value = { value = BUL_sanctions_count multiply = -0.02 } }
+	if = {
+		limit = { check_variable = { BUL_sanctions_count > 0 } }
+		if = {
+			limit = { NOT = { has_idea = BUL_under_sanctions } }
+			add_ideas = BUL_under_sanctions
+		}
+		if = {
+			limit = { NOT = { has_dynamic_modifier = { modifier = BUL_sanctions_modifier } } }
+			add_dynamic_modifier = { modifier = BUL_sanctions_modifier }
+		}
+	}
+	else = {
+		remove_ideas = BUL_under_sanctions
+		remove_dynamic_modifier = { modifier = BUL_sanctions_modifier }
+	}
+}

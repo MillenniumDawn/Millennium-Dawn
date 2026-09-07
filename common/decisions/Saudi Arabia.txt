@@ -2133,6 +2133,140 @@ SAU_Foregin_affairs_category = {
 		}
 		ai_will_do = { base = 1 }
 	}
+	# Throttling a line short of closing it: graduated pressure on the transit states, who
+	# lose fee income a tier at a time.
+	SAU_throttle_pipeline_yemen = {
+		icon = oil
+		priority = 95
+		visible = {
+			has_country_flag = SAU_yemen_pipeline_open
+			OR = { has_idea = SAU_yemen_pipeline_t2 has_idea = SAU_yemen_pipeline_t3 }
+		}
+		cost = 25
+		days_re_enable = 60
+		fire_only_once = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_throttle_pipeline_yemen"
+			SAU_yemen_tier_down = yes
+			if = {
+				limit = { country_exists = YEM }
+				YEM = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_throttled } }
+			}
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_throttle_pipeline_syria = {
+		icon = oil
+		priority = 95
+		visible = {
+			has_country_flag = SAU_syria_pipeline_open
+			OR = { has_idea = SAU_syria_pipeline_t2 has_idea = SAU_syria_pipeline_t3 }
+		}
+		cost = 25
+		days_re_enable = 60
+		fire_only_once = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_throttle_pipeline_syria"
+			SAU_syria_tier_down = yes
+			if = {
+				limit = { country_exists = JOR }
+				JOR = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_throttled } }
+			}
+			if = {
+				limit = { country_exists = SYR }
+				SYR = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_throttled } }
+			}
+			if = {
+				limit = { country_exists = FSA }
+				FSA = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_throttled } }
+			}
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_throttle_pipeline_iraq = {
+		icon = oil
+		priority = 95
+		visible = {
+			has_country_flag = SAU_iraq_pipeline_open
+			OR = { has_idea = SAU_iraq_pipeline_t2 has_idea = SAU_iraq_pipeline_t3 }
+		}
+		cost = 25
+		days_re_enable = 60
+		fire_only_once = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_throttle_pipeline_iraq"
+			SAU_iraq_tier_down = yes
+			if = {
+				limit = { country_exists = IRQ }
+				IRQ = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_throttled } }
+			}
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	# Pipeline shutdown - the transit fees are charged for as long as a route is open, so
+	# the Kingdom needs a way out of a corridor that has stopped paying for itself.
+	SAU_shutdown_pipeline_yemen = {
+		icon = oil
+		priority = 95
+		visible = {
+			has_country_flag = SAU_yemen_pipeline_open
+		}
+		cost = 50
+		fire_only_once = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_shutdown_pipeline_yemen"
+			SAU_close_route_yemen = yes
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_shutdown_pipeline_syria = {
+		icon = oil
+		priority = 95
+		visible = {
+			has_country_flag = SAU_syria_pipeline_open
+		}
+		cost = 50
+		fire_only_once = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_shutdown_pipeline_syria"
+			SAU_close_route_syria = yes
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_shutdown_pipeline_iraq = {
+		icon = oil
+		priority = 95
+		visible = {
+			has_country_flag = SAU_iraq_pipeline_open
+		}
+		cost = 50
+		fire_only_once = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_shutdown_pipeline_iraq"
+			SAU_close_route_iraq = yes
+		}
+		ai_will_do = { base = 0 }
+	}
+
+	SAU_shutdown_pipeline_turkey = {
+		icon = oil
+		priority = 95
+		visible = {
+			has_country_flag = SAU_turkey_pipeline_open
+		}
+		cost = 50
+		fire_only_once = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SAU_shutdown_pipeline_turkey"
+			SAU_close_route_turkey = yes
+		}
+		ai_will_do = { base = 0 }
+	}
 	# Yemen Proxies
 	SAU_yemen_raise_brigade = {
 		icon = generic_operation
@@ -3594,7 +3728,17 @@ SAU_crown_prince_category = {
 			hidden_effect = { SAU_faisalite_conviction_set_tier = yes }
 		}
 
-		ai_will_do = { base = 8 }
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 25
+				has_global_flag = SAU_FAISALITE_KINGDOM_FOCUS_PATH
+			}
+			modifier = {
+				factor = 0
+				SAU_ai_not_faisalite_path = yes
+			}
+		}
 	}
 
 	SAU_faisalite_endowments = {
@@ -3625,6 +3769,14 @@ SAU_crown_prince_category = {
 			modifier = {
 				has_active_mission = bankruptcy_incoming_collapse
 				factor = 0
+			}
+			modifier = {
+				factor = 25
+				has_global_flag = SAU_FAISALITE_KINGDOM_FOCUS_PATH
+			}
+			modifier = {
+				factor = 0
+				SAU_ai_not_faisalite_path = yes
 			}
 		}
 	}
@@ -3658,7 +3810,17 @@ SAU_crown_prince_category = {
 			hidden_effect = { SAU_faisalite_conviction_set_tier = yes }
 		}
 
-		ai_will_do = { base = 8 }
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 25
+				has_global_flag = SAU_FAISALITE_KINGDOM_FOCUS_PATH
+			}
+			modifier = {
+				factor = 0
+				SAU_ai_not_faisalite_path = yes
+			}
+		}
 	}
 
 	SAU_royal_patronage = {
@@ -3966,7 +4128,13 @@ SAU_crown_prince_category = {
 			set_variable = { SAU_crown_choice = 1 }
 		}
 
-		ai_will_do = { base = 100 }
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_global_flag = SAU_FAISALITE_KINGDOM_FOCUS_PATH
+			}
+		}
 	}
 
 	SAU_back_mbn = {
@@ -4004,7 +4172,13 @@ SAU_crown_prince_category = {
 			set_variable = { SAU_crown_choice = 3 }
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 500
+				has_global_flag = SAU_FAISALITE_KINGDOM_FOCUS_PATH
+			}
+		}
 	}
 
 	#### STEP 2 - Rally support behind your candidate (30-day timed action) ####
@@ -6270,7 +6444,13 @@ SAU_junta_category = {
 			hidden_effect = { SAU_junta_set_tier = yes }
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 5
+				check_variable = { SAU_junta_legitimacy < 40 }
+			}
+		}
 	}
 
 	SAU_junta_tour_the_provinces = {
@@ -6294,6 +6474,10 @@ SAU_junta_category = {
 			modifier = {
 				has_active_mission = bankruptcy_incoming_collapse
 				factor = 0
+			}
+			modifier = {
+				factor = 5
+				check_variable = { SAU_junta_legitimacy < 40 }
 			}
 		}
 	}
@@ -6319,6 +6503,10 @@ SAU_junta_category = {
 			modifier = {
 				has_active_mission = bankruptcy_incoming_collapse
 				factor = 0
+			}
+			modifier = {
+				factor = 5
+				check_variable = { SAU_junta_control < 40 }
 			}
 		}
 	}

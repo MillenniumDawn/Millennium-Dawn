@@ -14,10 +14,6 @@ on_actions = {
 				update_canal_blockage_flags = yes
 
 				international_systems_update = yes
-				add_to_variable = { global.md_gui_dirty = 1 }
-				if = { limit = { check_variable = { global.md_gui_dirty > 1000000 } }
-					set_variable = { global.md_gui_dirty = 1 }
-				}
 				if = {
 					limit = {
 						has_global_flag = NATO_CSTO_treaty_ratified
@@ -78,6 +74,22 @@ on_actions = {
 					has_country_flag = automation_internal_investment_upkeep_paid
 				}
 				automation_internal_investments_weekly = yes
+			}
+			if = {
+				limit = {
+					is_ai = no
+					OR = {
+						has_country_flag = automation_population_tax
+						has_country_flag = automation_corporate_tax
+						has_country_flag = automation_budget_bureaucracy
+						has_country_flag = automation_budget_crime_fighting
+						has_country_flag = automation_budget_education_budget
+						has_country_flag = automation_budget_health_budget
+						has_country_flag = automation_budget_social_budget
+						has_country_flag = automation_budget_military_spending
+					}
+				}
+				automation_economy_weekly = yes
 			}
 
 			# Banked here, not in ingame_update_setup, which re-runs on demand
@@ -653,36 +665,8 @@ on_actions = {
 
 			# Public War Weariness
 			if = { limit = { NOT = { has_global_flag = GAME_RULE_disable_anti_bully } }
-				if = {
-					limit = {
-						ROOT = {
-							has_an_AB_war = no
-							has_war = no
-							has_dynamic_modifier = { modifier = public_war_weariness_effect }
-						}
-					}
-					ROOT = {
-						remove_dynamic_modifier = { modifier = public_war_weariness_effect }
-						clear_variable = anti_bully_wars
-						clear_variable = penalty_factor
-						clear_variable = war_support_factor_var
-					}
-				}
-				if = {
-					limit = {
-						FROM = {
-							has_an_AB_war = no
-							has_war = no
-							has_dynamic_modifier = { modifier = public_war_weariness_effect }
-						}
-					}
-					FROM = {
-						remove_dynamic_modifier = { modifier = public_war_weariness_effect }
-						clear_variable = anti_bully_wars
-						clear_variable = penalty_factor
-						clear_variable = war_support_factor_var
-					}
-				}
+				ROOT = { remove_public_war_weariness_effect = yes }
+				FROM = { remove_public_war_weariness_effect = yes }
 			}
 
 			# Update dynamic issuer globals so any capital that changed hands is reflected
@@ -692,6 +676,9 @@ on_actions = {
 
 	on_monthly = {
 		effect = {
+			if = { limit = { is_ai = yes }
+				ai_division_limiter_refresh = yes
+			}
 			diplomatic_action_cached_array_resync = yes
 
 			# Triggers for one nation
@@ -1313,6 +1300,8 @@ on_actions = {
 
 				recount_global_reserve_currency = yes
 
+				calculate_reserve_projections = yes
+
 				# On Monthly Flag:
 				# Set this to 27 days to time out so that way February isn't missed
 				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
@@ -1386,7 +1375,7 @@ on_actions = {
 						}
 					}
 				}
-				add_ideas = chinese_yuan
+				adopt_chinese_yuan_reserve = yes
 			}
 			else_if = {
 				limit = {

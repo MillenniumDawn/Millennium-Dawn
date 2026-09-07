@@ -210,6 +210,7 @@ default_air_units_production_cv_variants_low_mils = {
 		NOT = { original_tag = CHI }
 	}
 	enable = {
+		num_of_naval_factories > 0
 		OR = {
 			check_variable = { num_ships_with_type@helicopter_operator > 0 }
 			check_variable = { num_ships_with_type@carrier > 0 }
@@ -230,6 +231,7 @@ default_air_units_production_cv_variants_mod_mils = {
 		NOT = { original_tag = CHI }
 	}
 	enable = {
+		num_of_naval_factories > 0
 		OR = {
 			check_variable = { num_ships_with_type@helicopter_operator > 0 }
 			check_variable = { num_ships_with_type@carrier > 0 }
@@ -251,6 +253,7 @@ default_air_units_production_cv_variants_high_mils = {
 		NOT = { original_tag = CHI }
 	}
 	enable = {
+		num_of_naval_factories > 0
 		OR = {
 			check_variable = { num_ships_with_type@helicopter_operator > 0 }
 			check_variable = { num_ships_with_type@carrier > 0 }
@@ -1069,7 +1072,7 @@ plane_limiter = {
 		ai_for_units_is_not_disabled = yes
 	}
 	enable = {
-		has_deployed_air_force_size = { size > plane_limiter_limit }
+		check_variable = { plane_limiter_deployed_size > plane_limiter_limit }
 	}
 	abort_when_not_enabled = yes
 
@@ -1136,6 +1139,23 @@ major_wartime_commitment = {
 	ai_strategy = { type = force_build_armies value = 35 }
 }
 
+major_peacetime_force_build = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		OR = {
+			original_tag = USA
+			original_tag = UKR
+			original_tag = SOV
+			original_tag = CHI
+			original_tag = GER
+		}
+	}
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = force_build_armies value = 50 }
+}
+
 # Wartime air superiority push — boost fighters and CAS when at war with enough industry
 wartime_air_superiority = {
 	allowed = {
@@ -1156,21 +1176,13 @@ wartime_air_superiority = {
 }
 
 # During war, stop spamming offices and internet stations — focus on military buildings
-wartime_stop_office_spam = {
+wartime_construction_priorities = {
 	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = { has_war = yes }
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = building_target id = offices value = -10 }
 	ai_strategy = { type = building_target id = internet_station value = -5 }
-}
-
-# During war, push infrastructure for supply
-wartime_logistics_support = {
-	allowed = { ai_for_units_is_not_disabled = yes }
-	enable = { has_war = yes }
-	abort_when_not_enabled = yes
-
 	ai_strategy = { type = building_target id = infrastructure value = 8 }
 }
 
@@ -1224,7 +1236,7 @@ plane_limiter_potato = {
 		ai_for_units_is_not_disabled = yes
 	}
 	enable = {
-		has_deployed_air_force_size = { size > plane_limiter_limit }
+		check_variable = { plane_limiter_deployed_size > plane_limiter_limit }
 	}
 	abort_when_not_enabled = yes
 
