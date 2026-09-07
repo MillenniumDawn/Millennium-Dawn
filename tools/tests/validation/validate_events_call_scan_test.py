@@ -279,6 +279,35 @@ def test_event_fire_caches_are_reused(tmp_path):
     assert v._rel_posix(str(tmp_path / "common" / "f.txt")) == "common/f.txt"
 
 
+@pytest.mark.parametrize("has_staged_script", [False, True])
+def test_undefined_fire_check_needs_staged_scripts(tmp_path, has_staged_script):
+    caller = _write(tmp_path, "common/f.txt", "country_event = ghost.1\n")
+    v = _validator(tmp_path)
+    v.staged_only = True
+    v.staged_files = [caller] if has_staged_script else []
+
+    v.validate_undefined_event_fires()
+
+    assert len(v._issues) == int(has_staged_script)
+    if has_staged_script:
+        assert v._issues[0].category == "undefined-event-fire"
+
+
+def test_deleted_event_keeps_undefined_fire_check(tmp_path, monkeypatch):
+    _write(tmp_path, "common/f.txt", "country_event = deleted.1\n")
+    monkeypatch.setenv("MD_STAGED_FILES", "events/deleted.txt")
+    v = V.Validator(
+        mod_path=str(tmp_path), use_colors=False, workers=1, staged_only=True
+    )
+    assert v.staged_files == []
+
+    v.validate_undefined_event_fires()
+
+    assert len(v._issues) == 1
+    assert v._issues[0].category == "undefined-event-fire"
+    assert "deleted.1" in v._issues[0].message
+
+
 def test_empty_on_actions_file_contributes_no_random_event_ids(tmp_path):
     _write(tmp_path, "common/on_actions/00_empty.txt", "")
     v = _validator(tmp_path)
