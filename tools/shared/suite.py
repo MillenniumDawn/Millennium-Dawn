@@ -12,6 +12,8 @@ from http.client import HTTPMessage
 from pathlib import Path
 from types import ModuleType
 
+from report_lib.models import Issue, Severity
+
 
 def symlinks_available() -> bool:
     """Whether this process may create a symlink.
@@ -111,6 +113,19 @@ def issue_dict(severity, file="a.txt", line=1, message="m", category="c"):
         "file": file,
         "line": line,
     }
+
+
+def make_issue(**overrides):
+    fields = {
+        "severity": Severity.ERROR,
+        "category": "missing_key",
+        "message": "key FOO not found",
+        "file": "events/MD_x.txt",
+        "line": 212,
+        "validator": "events",
+    }
+    fields.update(overrides)
+    return Issue(**fields)
 
 
 class _UnreadableHTTPError(urllib.error.HTTPError):
