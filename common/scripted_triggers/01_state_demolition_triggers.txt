@@ -1,0 +1,32 @@
+state_demolition_allowed = {
+	is_owned_by = ROOT
+	is_fully_controlled_by = ROOT
+	ROOT = { is_ai = no }
+}
+
+state_demolition_type_present = {
+	check_variable = { $SELECTED$ = token:$TYPE$ }
+	$TYPE$ > 0
+}
+
+state_demolition_selection_present = {
+	OR = {
+		state_demolition_type_present = { TYPE = fossil_powerplant SELECTED = $SELECTED$ }
+		state_demolition_type_present = { TYPE = nuclear_reactor SELECTED = $SELECTED$ }
+		state_demolition_type_present = { TYPE = renewable_energy_infra SELECTED = $SELECTED$ }
+		state_demolition_type_present = { TYPE = air_base SELECTED = $SELECTED$ }
+		state_demolition_type_present = { TYPE = radar_station SELECTED = $SELECTED$ }
+		state_demolition_type_present = { TYPE = anti_air_building SELECTED = $SELECTED$ }
+		state_demolition_type_present = { TYPE = fuel_silo SELECTED = $SELECTED$ }
+	}
+}
+
+state_demolition_can_confirm = {
+	state_demolition_allowed = yes
+	state = ROOT.state_demolition_state
+	ROOT = {
+		has_country_flag = state_demolition_open
+		has_variable = state_demolition_building
+	}
+	state_demolition_selection_present = { SELECTED = ROOT.state_demolition_building }
+}

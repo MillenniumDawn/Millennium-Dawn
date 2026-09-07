@@ -1,0 +1,92 @@
+scripted_gui = {
+	state_demolition_launcher = {
+		context_type = selected_state_context
+		parent_window_token = selected_state_view
+		window_name = "state_demolition_launcher_window"
+
+		visible = { state_demolition_allowed = yes }
+
+		effects = {
+			state_demolition_open_button_click = {
+				if = { limit = { state_demolition_allowed = yes }
+					set_variable = { ROOT.state_demolition_state = THIS }
+					ROOT = {
+						set_country_flag = state_demolition_open
+						clear_variable = state_demolition_building
+					}
+					state_demolition_rebuild_list = yes
+				}
+			}
+		}
+
+		ai_enabled = { always = no }
+	}
+
+	state_demolition_panel = {
+		context_type = selected_state_context
+		parent_window_token = selected_state_view
+		window_name = "state_demolition_panel_window"
+
+		visible = {
+			state_demolition_allowed = yes
+			state = ROOT.state_demolition_state
+			ROOT = { has_country_flag = state_demolition_open }
+		}
+
+		dynamic_lists = {
+			state_demolition_building_list = {
+				array = ROOT.state_demolition_buildings
+				value = state_demolition_entry
+				entry_container = "state_demolition_building_entry"
+			}
+		}
+
+		triggers = {
+			state_demolition_select_button_click_enabled = {
+				state_demolition_allowed = yes
+				state = ROOT.state_demolition_state
+				state_demolition_selection_present = { SELECTED = state_demolition_entry }
+			}
+			state_demolition_empty_visible = {
+				check_variable = { ROOT.state_demolition_buildings^num = 0 }
+			}
+			state_demolition_confirmation_visible = {
+				ROOT = { has_variable = state_demolition_building }
+			}
+			state_demolition_confirm_button_visible = {
+				ROOT = { has_variable = state_demolition_building }
+			}
+			state_demolition_confirm_button_click_enabled = { state_demolition_can_confirm = yes }
+			state_demolition_cancel_button_visible = {
+				ROOT = { has_variable = state_demolition_building }
+			}
+		}
+
+		effects = {
+			state_demolition_close_button_click = {
+				ROOT = {
+					clr_country_flag = state_demolition_open
+					clear_variable = state_demolition_building
+					clear_variable = state_demolition_state
+					clear_array = state_demolition_buildings
+				}
+			}
+			state_demolition_select_button_click = {
+				if = {
+					limit = {
+						state_demolition_allowed = yes
+						state = ROOT.state_demolition_state
+						state_demolition_selection_present = { SELECTED = state_demolition_entry }
+					}
+					set_variable = { ROOT.state_demolition_building = state_demolition_entry }
+				}
+			}
+			state_demolition_cancel_button_click = {
+				ROOT = { clear_variable = state_demolition_building }
+			}
+			state_demolition_confirm_button_click = { state_demolition_confirm = yes }
+		}
+
+		ai_enabled = { always = no }
+	}
+}
