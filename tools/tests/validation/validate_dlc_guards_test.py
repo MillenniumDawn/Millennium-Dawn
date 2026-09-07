@@ -7,6 +7,7 @@ to desktop. Regression for the China `CHI_project_jxx` CTD (issue #2790).
 """
 
 import validate_dlc_guards as V
+from shared.paths import REPO_ROOT
 
 BBA = "By Blood Alone"
 NSB = "No Step Back"
@@ -32,6 +33,22 @@ def _scan(script):
 
 def _messages(script):
     return [message for _, _, message in _scan(script)]
+
+
+def test_poland_logistics_focus_uses_the_matching_aircraft_tree():
+    mod_path = f"{REPO_ROOT}/"
+    folder_gates = V.parse_folder_gates(mod_path)
+    tech_gates, category_gates = V.parse_tech_gates(mod_path, folder_gates)
+    project_gates = V.parse_project_gates(mod_path)
+    path = REPO_ROOT / "common" / "national_focus" / "05_poland.txt"
+    scanner = V.Scanner(
+        V._sanitize(path.read_text(encoding="utf-8-sig")),
+        tech_gates,
+        category_gates,
+        project_gates,
+    )
+    scanner.walk(0, len(scanner.text), V.Context())
+    assert scanner.findings == []
 
 
 def _bonus(tech, indent="\t"):
@@ -507,7 +524,7 @@ def _dlc_repo(tmp_path):
     _write(
         tmp_path,
         "common/special_projects/projects/air.txt",
-        "sp_stealth_technology = {\n" f'\tallowed = {{ has_dlc = "{BBA}" }}\n' "}\n",
+        f'sp_stealth_technology = {{\n\tallowed = {{ has_dlc = "{BBA}" }}\n}}\n',
     )
 
 

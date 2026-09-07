@@ -84,7 +84,7 @@ All files below live in `.claude/docs/`.
 | `sound-system.md`                | Sound defs, combat sounds, voicelines, compressors           |
 | `typo-watchlist.md`              | Recurring localisation typos to check in review              |
 | `un-system-reference.md`         | UN votes/elections: invariants, new-resolution recipe        |
-| `validation-pipeline.md`         | Pre-commit vs CI validator divergence; deprecation watch     |
+| `validation-pipeline.md`         | Pre-commit vs Test Suite CI divergence; deprecation watch    |
 
 Detail moved out of the table:
 

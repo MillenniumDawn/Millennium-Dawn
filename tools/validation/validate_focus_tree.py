@@ -13,10 +13,8 @@ import disk_cache
 from shared_utils import extract_block_from_text as _extract_block
 from shared_utils import read_text_under
 from sprite_index import build_sprite_index
-from validate_tech_categories import _TAGS_GLOB, load_known_categories
 from validator_common import (
     BaseValidator,
-    Issue,
     Severity,
     case_mismatch,
     casefold_index,
@@ -50,12 +48,10 @@ _PREREQ_FOCUS_RE = re.compile(r"\bfocus\s*=\s*(\S+)")
 # shared_focus reference inside a focus_tree block (not a definition)
 _SHARED_REF_RE = re.compile(r"\bshared_focus\s*=\s*(\w+)")
 
-# add_tech_bonus inside completion_reward (incl. joint-focus reward variants)
+# completion_reward, incl. the joint-focus reward variants
 _REWARD_BLOCK_RE = re.compile(
     r"\bcompletion_reward(?:_joint_originator|_joint_member)?\s*=\s*\{"
 )
-_TECH_BONUS_START = re.compile(r"\badd_tech_bonus\s*=\s*\{")
-_NAME_LINE_RE = re.compile(r"\bname\s*=\s*(\S+)")
 
 # PP malus in completion_reward (focus time is the cost — AGENTS.md).
 # Occurrences inside an effect_tooltip = { } subtree preview a PP change
@@ -853,44 +849,6 @@ def _iter_reward_blocks(
         pos = body_end
 
 
-def _extract_tech_bonuses(
-    args: Tuple[str, str],
-) -> List[Tuple[str, Optional[str], str, int]]:
-    """Pool worker: return (focus_id, bonus_name, filepath, line) for every
-    add_tech_bonus inside a completion_reward* block. bonus_name is None when
-    the block has no `name =` parameter.
-    """
-    filepath, mod_path = args
-    raw = _read_mod_text(filepath, mod_path)
-    if not raw:
-        return []
-    text = strip_comments(raw)
-
-    def _compute() -> List[Tuple[str, Optional[str], str, int]]:
-        out: List[Tuple[str, Optional[str], str, int]] = []
-        for focus_id, _, fstart, fend in _iter_focus_blocks_with_id(text):
-            focus_id = focus_id if focus_id is not None else "?"
-            for _, rstart, rend in _iter_reward_blocks(text, fstart, fend):
-                bpos = rstart
-                while True:
-                    bm = _TECH_BONUS_START.search(text, bpos, rend)
-                    if not bm:
-                        break
-                    bbody, bend = _extract_block(text, bm.start())
-                    if not bbody:
-                        bpos = bm.end()
-                        continue
-                    nm = _NAME_LINE_RE.search(bbody)
-                    name = nm.group(1).strip('"') if nm else None
-                    out.append((focus_id, name, filepath, _line_of(text, bm.start())))
-                    bpos = bend
-        return out
-
-    return disk_cache.per_file_cached_by_content(
-        mod_path, "focus_tree.tech_bonus", filepath, text, _compute
-    )
-
-
 def _extract_ai_guard_data(
     args: Tuple[str, str, Dict[str, FrozenSet[str]], FrozenSet[str]],
 ) -> List[Dict]:
@@ -1250,7 +1208,6 @@ class Validator(BaseValidator):
 
     def __init__(self, mod_path: str, **kwargs):
         self.missing_icons = kwargs.pop("missing_icons", False)
-        self.name_not_focus_id = kwargs.pop("name_not_focus_id", False)
         super().__init__(mod_path, **kwargs)
         self._parsed_cache: Optional[List[Dict]] = None
         self._staged_paths: Optional[Set[str]] = None
@@ -1568,100 +1525,7 @@ class Validator(BaseValidator):
         )
 
     # -----------------------------------------------------------------------
-    # Check 5: add_tech_bonus name parameters
-    # -----------------------------------------------------------------------
-
-    def validate_tech_bonus_names(self):
-        """Flag add_tech_bonus blocks in completion rewards whose `name =` does
-        not identify the granting focus.
-
-        Without a name the research-bonus row shows no source; the convention
-        is `name = <focus_id>`, which reuses the focus title loc key. A category
-        token passes a bare loc-key test — every CAT_ name is localised — while
-        labelling the row with the tech field instead of the focus, and two
-        focuses sharing one category name collapse into one indistinguishable
-        entry, so it gets its own finding.
-        """
-        self._log_section("Checking add_tech_bonus name parameters in focus rewards...")
-
-        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
-        bonus_lists = self._pool_map(
-            _extract_tech_bonuses, [(f, self.mod_path) for f in files]
-        )
-        loc_keys = self._load_localisation_keys()
-        categories = self.cached(
-            "tech_categories",
-            lambda: load_known_categories(
-                self._collect_files([_TAGS_GLOB], ignore_staged=True)
-            ),
-        )
-
-        results = []
-        for sub in bonus_lists:
-            for focus_id, name, fp, line in sub:
-                if not self._is_reportable(fp):
-                    continue
-                rel = os.path.relpath(fp, self.mod_path)
-                if name is None:
-                    results.append(
-                        (
-                            f"add_tech_bonus in '{focus_id}' has no name = parameter"
-                            f" — players see no source for the bonus (use name = {focus_id})",
-                            rel,
-                            line,
-                        )
-                    )
-                elif "[" in name:
-                    continue
-                elif name in categories:
-                    results.append(
-                        Issue(
-                            severity=Severity.WARNING,
-                            category="tech-bonus-name-is-category",
-                            message=(
-                                f"add_tech_bonus name '{name}' in '{focus_id}' is a"
-                                " technology category, not a bonus source — the research"
-                                " row names the tech field instead of the focus"
-                                f" (use name = {focus_id})"
-                            ),
-                            file=rel,
-                            line=line,
-                        )
-                    )
-                elif name not in loc_keys:
-                    results.append(
-                        (
-                            f"add_tech_bonus name '{name}' in '{focus_id}' has no"
-                            " localisation key (typo? convention is the focus id)",
-                            rel,
-                            line,
-                        )
-                    )
-                elif self.name_not_focus_id and name != focus_id:
-                    results.append(
-                        Issue(
-                            severity=Severity.WARNING,
-                            category="tech-bonus-name-not-focus-id",
-                            message=(
-                                f"add_tech_bonus name '{name}' in '{focus_id}' does not"
-                                " name the granting focus — intentional only when the"
-                                " bonus is deliberately shared across focuses"
-                            ),
-                            file=rel,
-                            line=line,
-                        )
-                    )
-
-        self._report(
-            results,
-            "All add_tech_bonus blocks in focus rewards name their granting focus",
-            "add_tech_bonus blocks whose name does not identify the granting focus:",
-            Severity.WARNING,
-            category="tech-bonus-name",
-        )
-
-    # -----------------------------------------------------------------------
-    # Check 5b: Missing search_filters in focus blocks
+    # Check 5: Missing search_filters in focus blocks
     # -----------------------------------------------------------------------
 
     def validate_missing_search_filters(self):
@@ -2205,7 +2069,6 @@ class Validator(BaseValidator):
         self.validate_orphan_focuses()
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()
-        self.validate_tech_bonus_names()
         self.validate_missing_search_filters()
         self.validate_ai_will_do_guards()
         self.validate_cross_country_event_tooltips()
@@ -2225,12 +2088,6 @@ def _add_extra_args(parser):
         action="store_true",
         dest="missing_icons",
         help="Flag focuses whose icon sprite is undefined in interface/*.gfx",
-    )
-    parser.add_argument(
-        "--name-not-focus-id",
-        action="store_true",
-        dest="name_not_focus_id",
-        help="Flag add_tech_bonus names that are localised but do not match the granting focus id",
     )
 
 
