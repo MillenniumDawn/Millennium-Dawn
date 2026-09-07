@@ -1,5 +1,5 @@
 version="2.0.0"
-name="Millennium Dawn: Developer Version"
+name="Millennium Dawn: OEM Edition"
 tags={
 	"Alternative History"
 	"Gameplay"
@@ -11,8 +11,6 @@ tags={
 	"Fixes"
 }
 supported_version="1.19.*"
-remote_file_id="2777392649"
-
 replace_path = "events"
 replace_path = "common/abilities"
 replace_path = "common/ai_equipment"

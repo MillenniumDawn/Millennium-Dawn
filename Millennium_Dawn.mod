@@ -1,5 +1,5 @@
 version="2.0.0"
-name="Millennium Dawn: Developer Version"
+name="Millennium Dawn: OEM Edition"
 tags={
 	"Alternative History"
 	"Gameplay"
@@ -12,8 +12,7 @@ tags={
 }
 supported_version="1.19.*"
 picture = "thumbnail.png"
-remote_file_id="2777392649"
-path="mod/Millennium-Dawn"
+path="mod/Millennium-Dawn-OEM"
 
 replace_path = "events"
 replace_path = "common/abilities"
