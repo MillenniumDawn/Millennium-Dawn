@@ -1,8 +1,9 @@
 """Tests for annotation-building and posting logic in `report_lib.checks_api`.
 
 The GitHub transport is scripted through a fake `urlopen`, so the request
-sequence (POST then PATCH per overflow batch), the payloads, and the failure
-messages are all asserted without touching the network.
+sequence (GET of the existing job check runs, POST or PATCH per job, then
+PATCH per overflow batch), the payloads, and the failure messages are all
+asserted without touching the network.
 """
 
 import json
@@ -16,6 +17,7 @@ from report_lib.checks_api import (
     MAX_MESSAGE_CHARS,
     _build_check_payload,
     _conclusion_for,
+    _fallback_job,
     _output_text,
     _pick_annotations,
     post_checks,
@@ -94,6 +96,30 @@ def test_conclusion_failure_on_any_error():
             )
         ]
     )
+    assert _conclusion_for(run) == "failure"
+
+
+def test_non_strict_error_is_neutral():
+    run = _run_with_issues(
+        [
+            Issue(
+                severity=Severity.ERROR,
+                category="c",
+                message="m",
+                file="a.txt",
+                line=1,
+                validator="events",
+            )
+        ]
+    )
+    run.strict = False
+    assert _conclusion_for(run) == "neutral"
+
+
+def test_non_strict_incomplete_run_is_failure():
+    run = _run_with_issues([], errors=0, warnings=0, status="failed")
+    run.strict = False
+    run.execution_complete = False
     assert _conclusion_for(run) == "failure"
 
 
@@ -261,11 +287,12 @@ def _transport(monkeypatch, outcomes):
     calls = []
 
     def urlopen(request, timeout=None):
+        body = request.data
         calls.append(
             (
                 request.get_method(),
                 request.full_url,
-                json.loads(request.data.decode("utf-8")),
+                json.loads(body.decode("utf-8")) if body else None,
                 timeout,
             )
         )
@@ -292,57 +319,241 @@ def _error_issues(count):
     ]
 
 
-def test_post_checks_creates_one_check_run_per_validator(monkeypatch):
-    runs = [_run_with_issues(_error_issues(1)), _run_with_issues([])]
-    runs[1].name, runs[1].title = "ideas", "Ideas"
-    calls = _transport(monkeypatch, [_Resp(b'{"id": 11}'), _Resp(b'{"id": 12}')])
+def test_fallback_job_maps_batch_and_standalone_names():
+    assert _fallback_job("events") == "Mod tests (core)"
+    assert _fallback_job("focus-tree") == "Mod tests (targeted-b)"
+    assert _fallback_job("file-paths") == "Mod tests (core)"
+    assert _fallback_job("style-check") == "Mod tests (core)"
+    assert _fallback_job("common-mistakes") == "Mod tests (core)"
+    assert _fallback_job("tools-linux") == "Tools tests (Linux)"
+    assert _fallback_job("tools-macos") == "Tools tests (macOS)"
+    assert _fallback_job("tools-windows") == "Tools tests (Windows)"
 
-    results = post_checks("MillenniumDawn", "Millennium-Dawn", "sha1", runs, "token")
 
-    assert results == [("Events", True, "check #11"), ("Ideas", True, "check #12")]
-    assert [c[0] for c in calls] == ["POST", "POST"]
+def test_run_job_field_wins_over_the_name_fallback(monkeypatch):
+    run = _run_with_issues([])
+    run.name, run.title = "tools-linux", "Tools tests (Linux)"
+    run.job = "Custom job"
+    calls = _transport(
+        monkeypatch, [_Resp(b'{"check_runs": []}'), _Resp(b'{"id": 11}')]
+    )
+
+    results = post_checks("owner", "repo", "sha1", [run], "token")
+
+    assert results == [("Custom job", True, "check #11")]
+    assert calls[1][2]["name"] == "Custom job"
+
+
+def test_post_checks_posts_one_check_run_per_job(monkeypatch):
+    linux = _run_with_issues([])
+    linux.name, linux.title, linux.suite, linux.job = (
+        "tools-linux",
+        "Tools tests (Linux)",
+        "tools",
+        "Tools tests (Linux)",
+    )
+    core = _run_with_issues(_error_issues(1))
+    calls = _transport(
+        monkeypatch,
+        [_Resp(b'{"check_runs": []}'), _Resp(b'{"id": 11}'), _Resp(b'{"id": 12}')],
+    )
+
+    results = post_checks(
+        "MillenniumDawn", "Millennium-Dawn", "sha1", [linux, core], "t"
+    )
+
+    assert results == [
+        ("Tools tests (Linux)", True, "check #11"),
+        ("Mod tests (core)", True, "check #12"),
+    ]
+    assert [c[0] for c in calls] == ["GET", "POST", "POST"]
     assert (
         calls[0][1]
-        == "https://api.github.com/repos/MillenniumDawn/Millennium-Dawn/check-runs"
+        == "https://api.github.com/repos/MillenniumDawn/Millennium-Dawn/commits/sha1/check-runs?per_page=100"
     )
-    assert calls[0][2]["head_sha"] == "sha1"
-    assert calls[0][2]["name"] == "Events"
-    assert calls[1][2]["conclusion"] == "success"
+    assert calls[1][2]["name"] == "Tools tests (Linux)"
+    assert calls[1][2]["head_sha"] == "sha1"
+    assert calls[2][2]["conclusion"] == "failure"
     assert all(call[3] == 30 for call in calls)
+
+
+def test_post_checks_groups_validators_without_a_job_by_batch(monkeypatch):
+    events = _run_with_issues([])
+    events.name, events.title = "events", "Events"
+    decisions = _run_with_issues(_error_issues(1))
+    decisions.name, decisions.title = "decisions", "Decisions"
+    calls = _transport(
+        monkeypatch,
+        [_Resp(b'{"check_runs": []}'), _Resp(b'{"id": 11}'), _Resp(b'{"id": 12}')],
+    )
+
+    results = post_checks("owner", "repo", "sha1", [events, decisions], "token")
+
+    assert results == [
+        ("Mod tests (core)", True, "check #11"),
+        ("Mod tests (targeted-a)", True, "check #12"),
+    ]
+    assert [c[0] for c in calls] == ["GET", "POST", "POST"]
+    assert calls[1][2]["name"] == "Mod tests (core)"
+    assert calls[2][2]["name"] == "Mod tests (targeted-a)"
+
+
+def test_post_checks_merges_annotations_within_one_job(monkeypatch):
+    first = _run_with_issues(
+        [
+            Issue(
+                severity=Severity.WARNING,
+                category="c",
+                message="W",
+                file="a.txt",
+                line=1,
+                validator="events",
+            )
+        ]
+    )
+    second = _run_with_issues(
+        [
+            Issue(
+                severity=Severity.ERROR,
+                category="c",
+                message="E",
+                file="b.txt",
+                line=2,
+                validator="ideas",
+            )
+        ]
+    )
+    second.name, second.title = "ideas", "Ideas"
+    calls = _transport(
+        monkeypatch, [_Resp(b'{"check_runs": []}'), _Resp(b'{"id": 11}')]
+    )
+
+    results = post_checks("owner", "repo", "sha1", [first, second], "token")
+
+    assert results == [("Mod tests (core)", True, "check #11")]
+    payload = calls[1][2]
+    assert payload["name"] == "Mod tests (core)"
+    # Errors first across the merged group.
+    annotations = payload["output"]["annotations"]
+    assert [a["path"] for a in annotations] == ["b.txt", "a.txt"]
+    assert payload["output"]["title"] == "Mod tests (core): 1 error(s), 1 warning(s)"
+
+
+def test_post_checks_patches_the_existing_job_check_run(monkeypatch):
+    run = _run_with_issues(_error_issues(1))
+    calls = _transport(
+        monkeypatch,
+        [
+            _Resp(b'{"check_runs": [{"id": 9, "name": "Mod tests (core)"}]}'),
+            _Resp(b"{}"),
+        ],
+    )
+
+    results = post_checks("owner", "repo", "sha1", [run], "token")
+
+    assert results == [("Mod tests (core)", True, "check #9")]
+    assert [c[0] for c in calls] == ["GET", "PATCH"]
+    assert calls[1][1] == "https://api.github.com/repos/owner/repo/check-runs/9"
+    assert calls[1][2]["status"] == "completed"
+    assert calls[1][2]["conclusion"] == "failure"
+    assert "head_sha" not in calls[1][2]
+    assert len(calls[1][2]["output"]["annotations"]) == 1
+
+
+def test_post_checks_posts_when_existing_check_run_rejects_patch(monkeypatch):
+    run = _run_with_issues(_error_issues(1))
+    calls = _transport(
+        monkeypatch,
+        [
+            _Resp(b'{"check_runs": [{"id": 9, "name": "Mod tests (core)"}]}'),
+            _http_error(403, b"forbidden"),
+            _Resp(b'{"id": 11}'),
+        ],
+    )
+
+    results = post_checks("owner", "repo", "sha1", [run], "token")
+
+    assert results == [("Mod tests (core)", True, "check #11")]
+    assert [c[0] for c in calls] == ["GET", "PATCH", "POST"]
+    assert calls[2][2]["name"] == "Mod tests (core)"
+
+
+def test_post_checks_posts_when_no_check_run_matches_the_job(monkeypatch):
+    run = _run_with_issues([])
+    run.name, run.title = "events", "Events"
+    calls = _transport(
+        monkeypatch,
+        [
+            _Resp(b'{"check_runs": [{"id": 5, "name": "Unrelated job"}]}'),
+            _Resp(b'{"id": 11}'),
+        ],
+    )
+
+    results = post_checks("owner", "repo", "sha1", [run], "token")
+
+    assert results == [("Mod tests (core)", True, "check #11")]
+    assert [c[0] for c in calls] == ["GET", "POST"]
+    assert calls[1][2]["name"] == "Mod tests (core)"
+
+
+def test_post_checks_falls_back_to_post_when_the_lookup_fails(monkeypatch):
+    run = _run_with_issues([])
+    run.name, run.title = "events", "Events"
+    calls = _transport(
+        monkeypatch, [urllib.error.URLError("no route"), _Resp(b'{"id": 11}')]
+    )
+
+    results = post_checks("owner", "repo", "sha1", [run], "token")
+
+    assert results == [("Mod tests (core)", True, "check #11")]
+    assert [c[0] for c in calls] == ["GET", "POST"]
 
 
 def test_post_checks_patches_annotations_beyond_the_first_batch(monkeypatch):
     run = _run_with_issues(_error_issues(MAX_ANNOTATIONS_PER_CHECK))
-    calls = _transport(monkeypatch, [_Resp(b'{"id": 7}'), _Resp(b"{}")])
+    calls = _transport(
+        monkeypatch,
+        [_Resp(b'{"check_runs": []}'), _Resp(b'{"id": 7}'), _Resp(b"{}")],
+    )
 
     results = post_checks("owner", "repo", "sha1", [run], "token")
 
-    assert results == [("Events", True, "check #7")]
-    assert [c[0] for c in calls] == ["POST", "PATCH"]
+    assert results == [("Mod tests (core)", True, "check #7")]
+    assert [c[0] for c in calls] == ["GET", "POST", "PATCH"]
     assert (
-        calls[1][1] == "https://api.github.com/repos/owner/repo/check-runs/7"
+        calls[2][1] == "https://api.github.com/repos/owner/repo/check-runs/7"
     ), "PATCH must target the freshly created check run"
-    assert len(calls[0][2]["output"]["annotations"]) == ANNOTATIONS_PER_REQUEST
+    assert len(calls[1][2]["output"]["annotations"]) == ANNOTATIONS_PER_REQUEST
     assert (
-        len(calls[1][2]["output"]["annotations"])
+        len(calls[2][2]["output"]["annotations"])
         == MAX_ANNOTATIONS_PER_CHECK - ANNOTATIONS_PER_REQUEST
     )
-    assert "head_sha" not in calls[1][2]
+    assert "head_sha" not in calls[2][2]
 
 
 def test_post_checks_reports_a_failed_overflow_patch(monkeypatch):
     run = _run_with_issues(_error_issues(MAX_ANNOTATIONS_PER_CHECK))
-    _transport(monkeypatch, [_Resp(b'{"id": 7}'), _http_error(422, b"unprocessable")])
+    _transport(
+        monkeypatch,
+        [
+            _Resp(b'{"check_runs": []}'),
+            _Resp(b'{"id": 7}'),
+            _http_error(422, b"unprocessable"),
+        ],
+    )
 
     title, success, message = post_checks("owner", "repo", "sha1", [run], "token")[0]
 
-    assert (title, success) == ("Events", False)
+    assert (title, success) == ("Mod tests (core)", False)
     assert "PATCH at offset 50 failed: HTTP 422: unprocessable" in message
 
 
 def test_post_checks_reports_a_patch_error_with_an_unreadable_body(monkeypatch):
     run = _run_with_issues(_error_issues(MAX_ANNOTATIONS_PER_CHECK))
-    _transport(monkeypatch, [_Resp(b'{"id": 7}'), _http_error(502, None)])
+    _transport(
+        monkeypatch,
+        [_Resp(b'{"check_runs": []}'), _Resp(b'{"id": 7}'), _http_error(502, None)],
+    )
 
     _title, success, message = post_checks("owner", "repo", "sha1", [run], "token")[0]
 
@@ -352,7 +563,14 @@ def test_post_checks_reports_a_patch_error_with_an_unreadable_body(monkeypatch):
 
 def test_post_checks_reports_a_patch_transport_error(monkeypatch):
     run = _run_with_issues(_error_issues(MAX_ANNOTATIONS_PER_CHECK))
-    _transport(monkeypatch, [_Resp(b'{"id": 7}'), urllib.error.URLError("no route")])
+    _transport(
+        monkeypatch,
+        [
+            _Resp(b'{"check_runs": []}'),
+            _Resp(b'{"id": 7}'),
+            urllib.error.URLError("no route"),
+        ],
+    )
 
     _title, success, message = post_checks("owner", "repo", "sha1", [run], "token")[0]
 
@@ -362,24 +580,32 @@ def test_post_checks_reports_a_patch_transport_error(monkeypatch):
 
 def test_post_checks_skips_patches_when_the_post_fails(monkeypatch):
     run = _run_with_issues(_error_issues(MAX_ANNOTATIONS_PER_CHECK))
-    calls = _transport(monkeypatch, [_http_error(403, b"forbidden")])
+    calls = _transport(
+        monkeypatch, [_Resp(b'{"check_runs": []}'), _http_error(403, b"forbidden")]
+    )
 
     results = post_checks("owner", "repo", "sha1", [run], "token")
 
-    assert results == [("Events", False, "HTTP 403: forbidden")]
-    assert len(calls) == 1, "a failed POST must not be followed by PATCH batches"
+    assert results == [("Mod tests (core)", False, "HTTP 403: forbidden")]
+    assert [c[0] for c in calls] == [
+        "GET",
+        "POST",
+    ], "a failed POST must not be followed by PATCH batches"
 
 
 def test_post_checks_reports_an_unreadable_error_body(monkeypatch):
-    _transport(monkeypatch, [_http_error(500, None)])
+    _transport(monkeypatch, [_Resp(b'{"check_runs": []}'), _http_error(500, None)])
 
     results = post_checks("owner", "repo", "sha1", [_run_with_issues([])], "token")
 
-    assert results == [("Events", False, "HTTP 500: <no body>")]
+    assert results == [("Mod tests (core)", False, "HTTP 500: <no body>")]
 
 
 def test_post_checks_reports_a_transport_error(monkeypatch):
-    _transport(monkeypatch, [urllib.error.URLError("connection reset")])
+    _transport(
+        monkeypatch,
+        [_Resp(b'{"check_runs": []}'), urllib.error.URLError("connection reset")],
+    )
 
     _title, success, message = post_checks(
         "owner", "repo", "sha1", [_run_with_issues([])], "token"

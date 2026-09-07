@@ -266,6 +266,46 @@ def test_main_posts_comment_when_no_validator_ran(tmp_path, monkeypatch):
     assert not cleared
 
 
+def test_main_hands_tools_suite_runs_to_the_checks_api(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _findings_tree(tmp_path)
+    root = tmp_path / "validation-results"
+    directory = root / "tools-tests-Linux-results"
+    directory.mkdir()
+    (directory / "suite-run.json").write_text(
+        json.dumps(
+            {
+                "suite": "tools",
+                "job": "Tools tests (Linux)",
+                "name": "tools-linux",
+                "title": "Tools tests (Linux)",
+                "status": "passed",
+                "errors": 0,
+                "warnings": 0,
+                "issues": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    seen = []
+    monkeypatch.setattr(
+        generate_validation_report,
+        "post_checks",
+        lambda _owner, _repo, _sha, runs, _token: seen.extend(runs) or [],
+    )
+
+    code = generate_validation_report.main(
+        _argv(tmp_path) + ["--checks-api", "--github-token", "token"]
+    )
+
+    assert code == 0
+    by_name = {run.name: run for run in seen}
+    assert by_name["tools-linux"].suite == "tools"
+    assert by_name["tools-linux"].job == "Tools tests (Linux)"
+    assert by_name["events"].suite == "mod"
+    assert by_name["events"].job == ""
+
+
 def test_main_checks_api_failure_is_non_fatal(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _findings_tree(tmp_path)
@@ -378,7 +418,7 @@ def test_main_prints_the_body_when_asked(tmp_path, monkeypatch, capsys):
     code = generate_validation_report.main(_argv(tmp_path) + ["--print"])
 
     assert code == 0
-    assert "# Validation Report" in capsys.readouterr().out
+    assert "# Test Suite Report" in capsys.readouterr().out
 
 
 def test_main_api_call_requires_a_token(tmp_path, monkeypatch, capsys):
