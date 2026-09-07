@@ -558,9 +558,9 @@ Productivity changes monthly. When national growth is positive, states below the
 
 Hover over the productivity value in the Economy window to see the current world and national averages, followed by the monthly growth breakdown:
 
-- **Base Monthly Growth Contributions**: Corporate taxes, literacy, the economic cycle, and other laws, national spirits and technologies add together to form the subtotal. These are productivity points per month, before growth modifiers.
-- **National Growth Modifiers**: Inflation and other national modifiers combine into a multiplier: 1 plus their total, limited to 0–100. For example, a total modifier of −21.7% gives a multiplier of ×0.783.
-- **Monthly Growth Before State Adjustments**: The subtotal multiplied by the national multiplier. A subtotal of 0.050 with ×0.783 gives about 0.039 monthly growth. Each state then applies its world-average adjustment and, for positive growth, its local modifiers. The displayed number is therefore not the final change in every state or in the national average.
+- **Base Productivity Growth**: The existing total from corporate taxes, literacy, the economic cycle, laws, national spirits and technologies. Multiply this value by the displayed monthly growth factor of ×0.5.
+- **National Growth Modifier**: The existing total from inflation and other national modifiers. Its multiplier is 1 plus that total, limited to 0–100. For example, a total modifier of −21.7% gives a multiplier of ×0.783.
+- **Monthly Growth Before State Adjustments**: Base productivity growth ×0.5 × the national multiplier. Base growth of 0.100 with ×0.783 gives about 0.039 monthly growth. Each state then applies its world-average adjustment and, for positive growth, its local modifiers. The displayed number is therefore not the final change in every state or in the national average.
 - **Effect of Productivity**: The current output, construction and corporate tax modifiers. Commercialized Agriculture Districts have a separate construction-speed modifier.
 
 **Factors That Increase Productivity Growth:**

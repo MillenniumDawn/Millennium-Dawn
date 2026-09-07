@@ -59,37 +59,6 @@ productivity_growth_controlled_display_effect = {
 			}
 		}
 	}
-
-	set_variable = { productivity_country_growth_display = PREV.productivity_growth_scaled }
-	set_variable = { productivity_local_factor_display = 1 }
-	if = {
-		limit = { check_variable = { PREV.productivity_growth_scaled > 0 } }
-		set_variable = {
-			productivity_world_factor_display = {
-				value = global.average_world_productivity
-				divide = {
-					value = productivity_state_var
-					clamp = { min = 100 max = 100000 }
-				}
-				add = -1
-				multiply = 0.5
-				add = 1
-				clamp = { min = 0 max = 2 }
-			}
-		}
-		add_to_variable = { productivity_local_factor_display = modifier@state_productivity_growth_modifier }
-	}
-	else = {
-		set_variable = {
-			productivity_world_factor_display = {
-				value = productivity_state_var
-				divide = {
-					value = global.average_world_productivity
-					clamp = { min = 100 max = 10000 }
-				}
-			}
-		}
-	}
 }
 
 productivity_growth_country_display_effect = {
@@ -110,77 +79,6 @@ productivity_growth_country_display_effect = {
 				add = modifier@country_productivity_growth_modifier
 				clamp = { min = 0 max = 100 } # maluses can slow growth to zero, not invert it
 			}
-		}
-	}
-
-	# Snapshot named sources with the total; inactive dynamic modifiers contribute nothing.
-	set_variable = { productivity_tax_growth_display = 0 }
-	if = {
-		limit = { has_dynamic_modifier = { modifier = impact_of_tax_dynamic_modifier } }
-		set_variable = { productivity_tax_growth_display = { value = productivity_growth_modifier_from_corporate_tax multiply = 0.5 } }
-	}
-	set_variable = { productivity_literacy_growth_display = 0 }
-	if = {
-		limit = { has_dynamic_modifier = { modifier = education_dynamic_modifier } }
-		set_variable = { productivity_literacy_growth_display = { value = literacy_productivity_gain multiply = 0.5 } }
-	}
-
-	# Monthly contributions are half the economic-cycle modifiers in AA_law_economics.txt.
-	set_variable = { productivity_cycle_growth_display = 0 }
-	if = {
-		limit = { has_idea = depression }
-		set_variable = { productivity_cycle_growth_display = -2 }
-	}
-	else_if = {
-		limit = { has_idea = recession }
-		set_variable = { productivity_cycle_growth_display = -1.25 }
-	}
-	else_if = {
-		limit = { has_idea = stagnation }
-		set_variable = { productivity_cycle_growth_display = -0.5 }
-	}
-	else_if = {
-		limit = { has_idea = stable_growth }
-		set_variable = { productivity_cycle_growth_display = 0.25 }
-	}
-	else_if = {
-		limit = { has_idea = fast_growth }
-		set_variable = { productivity_cycle_growth_display = 1 }
-	}
-	else_if = {
-		limit = { has_idea = economic_boom }
-		set_variable = { productivity_cycle_growth_display = 1.75 }
-	}
-	set_variable = {
-		productivity_base_growth_display = {
-			value = modifier@productivity_growth_modifier
-			multiply = 0.5
-		}
-	}
-	set_variable = {
-		productivity_other_growth_display = {
-			value = productivity_base_growth_display
-			subtract = productivity_tax_growth_display
-			subtract = productivity_literacy_growth_display
-			subtract = productivity_cycle_growth_display
-		}
-	}
-	set_variable = { productivity_inflation_growth_display = 0 }
-	if = {
-		limit = { has_dynamic_modifier = { modifier = inflation_dynamic_modifier } }
-		set_variable = { productivity_inflation_growth_display = inflation_rate_prod_var }
-	}
-	set_variable = {
-		productivity_other_multiplier_display = {
-			value = modifier@country_productivity_growth_modifier
-			subtract = productivity_inflation_growth_display
-		}
-	}
-	set_variable = {
-		productivity_country_factor_display = {
-			value = 1
-			add = modifier@country_productivity_growth_modifier
-			clamp = { min = 0 max = 100 }
 		}
 	}
 }
