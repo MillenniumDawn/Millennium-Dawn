@@ -628,7 +628,11 @@ _OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
 # Statements an option can carry that change no game state. `trigger` gates the
 # option's visibility and `ai_chance` weights the AI's pick; neither runs an effect.
 _OPTION_NON_EFFECT_KEYS = frozenset({"name", "log", "ai_chance", "trigger"})
-_OPTION_STATEMENT_RE = re.compile(r"([A-Za-z_]\w*)\s*=")
+# A scope key is an effect too: `652 = { ... }` opens a state scope and `"LGN" = { ... }`
+# a quoted tag scope, so both alternatives must match or an option whose only effect is
+# one of them reads as effect-free. Quoted keys survive blank_quoted_strings, which
+# blanks the interior but keeps the quotes.
+_OPTION_STATEMENT_RE = re.compile(r'([A-Za-z_]\w*|\d+|"[^"]*")\s*=')
 _OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
 
 # Event-level (depth-1) title/desc fields — option-level name fields are
