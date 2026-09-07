@@ -606,20 +606,26 @@ check_for_investment_project_limits = {
 }
 
 has_automated_internal_investment_request = {
+	set_temp_variable = { internal_investment_state = id }
+	ROOT = { check_variable = { automated_internal_investment_requests@var:internal_investment_state^num > 0 } }
+}
+
+internal_investment_repeat_selected = {
+	set_temp_variable = { internal_investment_state = id }
+	ROOT = { is_in_array = { array = automated_internal_investment_requests@var:internal_investment_state value = internal_investment_action } }
+}
+
+internal_investment_repeat_toggle_allowed = {
 	OR = {
-		has_state_flag = auto_repeat_internal_encourage_investments_@ROOT
-		has_state_flag = auto_repeat_internal_encourage_productivity_@ROOT
-		has_state_flag = auto_repeat_internal_expand_building_capacity_@ROOT
-		has_state_flag = auto_repeat_internal_expand_renewable_capacity_@ROOT
-		has_state_flag = auto_repeat_internal_expand_infrastructure_@ROOT
-		has_state_flag = auto_repeat_internal_expand_military_infrastructure_@ROOT
-		has_state_flag = auto_repeat_internal_expand_energy_infrastructure_@ROOT
-		has_state_flag = auto_repeat_internal_build_logistics_base_@ROOT
-		has_state_flag = auto_repeat_internal_improve_rebuilding_@ROOT
-		has_state_flag = auto_repeat_internal_hire_primary_workers_@ROOT
-		has_state_flag = auto_repeat_internal_expand_coastal_infrastructure_@ROOT
-		has_state_flag = auto_repeat_internal_expand_fortifications_@ROOT
-		has_state_flag = auto_repeat_internal_conservation_@ROOT
+		internal_investment_repeat_selected = yes
+		AND = {
+			if = {
+				limit = { OR = { check_variable = { internal_investment_action = 3 } check_variable = { internal_investment_action = 11 } check_variable = { internal_investment_action = 13 } } }
+				check_for_investment_project_limits = yes
+				internal_investment_action_eligible = yes
+				NOT = { internal_investment_action_on_cooldown = yes }
+			}
+		}
 	}
 }
 
@@ -658,23 +664,31 @@ internal_investment_can_pay = {
 	}
 }
 
-internal_investment_pp_affordable = {
-	set_temp_variable = {
-		internal_investment_pp_cost = {
-			value = 75
-			multiply = {
-				value = 1
-				add = ROOT.modifier@internal_investments_pp_cost_modifier
-			}
-			clamp = { min = 25 max = 999999999 }
-		}
-	}
-	custom_trigger_tooltip = {
-		tooltip = internal_investment_pp_affordable_tt
-		check_variable = {
-			var = ROOT.political_power
-			value = internal_investment_pp_cost
-			compare = greater_than_or_equals
-		}
+internal_investment_action_on_cooldown = {
+	if = { limit = { check_variable = { internal_investment_action = 1 } } has_state_flag = currently_encouraged_investments }
+	else_if = { limit = { check_variable = { internal_investment_action = 2 } } has_dynamic_modifier = { modifier = state_owned_encouraged_productivity } }
+	else_if = { limit = { check_variable = { internal_investment_action = 3 } } has_state_flag = expand_local_building_capacity }
+	else_if = { limit = { check_variable = { internal_investment_action = 4 } } has_dynamic_modifier = { modifier = state_owned_local_renewable_capacity_modifier } }
+	else_if = { limit = { check_variable = { internal_investment_action = 5 } } has_dynamic_modifier = { modifier = state_owned_local_infrastructure_modifier } }
+	else_if = { limit = { check_variable = { internal_investment_action = 6 } } has_dynamic_modifier = { modifier = state_owned_local_military_infrastructure_modifier } }
+	else_if = { limit = { check_variable = { internal_investment_action = 7 } } has_dynamic_modifier = { modifier = state_owned_local_energy_infrastructure_modifier } }
+	else_if = { limit = { check_variable = { internal_investment_action = 8 } } has_dynamic_modifier = { modifier = state_owned_build_forward_logistics_base_modifier } }
+	else_if = { limit = { check_variable = { internal_investment_action = 9 } } has_dynamic_modifier = { modifier = state_owned_improve_rebuilding_efforts_modifier } }
+	else_if = { limit = { check_variable = { internal_investment_action = 10 } } has_dynamic_modifier = { modifier = state_owned_hire_extra_primary_sector_workers_modifier } }
+	else_if = { limit = { check_variable = { internal_investment_action = 11 } } has_dynamic_modifier = { modifier = state_owned_local_naval_infrastructure_modifier } }
+	else_if = { limit = { check_variable = { internal_investment_action = 12 } } has_dynamic_modifier = { modifier = state_owned_local_fortification_efforts_modifier } }
+	else_if = { limit = { check_variable = { internal_investment_action = 13 } } has_state_flag = improve_local_conservation_efforts }
+	else = { always = no }
+}
+
+internal_investment_action_eligible = {
+	check_variable = { internal_investment_action > 0 }
+	check_variable = { internal_investment_action < 14 }
+	if = { limit = { check_variable = { internal_investment_action = 3 } } check_variable = { expanded_building_slot_times < 5 } }
+	else_if = { limit = { check_variable = { internal_investment_action = 11 } } is_coastal = yes }
+	else_if = {
+		limit = { check_variable = { internal_investment_action = 13 } }
+		has_dynamic_modifier = { modifier = BRA_amazon_modifier }
+		ROOT = { original_tag = BRA }
 	}
 }
