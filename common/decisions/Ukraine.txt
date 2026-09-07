@@ -6454,6 +6454,105 @@ UKR_reorganize_navy_category = {
 			}
 		}
 	}
+
+	UKR_reorganize_navy_build_lahuna_recon_ship = {
+		icon = GFX_decision_icon_UKR_reorganize_navy_ships
+		
+		allowed = { always = yes }
+		
+		visible = {
+		}
+		
+		available = {
+			NOT = { has_country_flag = UKR_lahuna_program_over }
+			date > 2010.01.01
+			
+			has_tech = tech_landing_craft_4
+			num_of_naval_factories > 1
+			
+			custom_trigger_tooltip = {
+				tooltip = UKR_lahuna_needs_kuznya_tt
+				owns_state = 698
+				controls_state = 698
+			}
+			
+			custom_trigger_tooltip = {
+				tooltip = UKR_lahuna_needs_black_sea_port_tt
+				any_owned_state = {
+					OR = {
+						state = 695  # Odesa
+						state = 1085 # Kherson
+						state = 1086 # Mykolaiv
+					}
+				}
+			}
+		}
+
+		visible = {
+			NOT = { has_country_flag = UKR_lahuna_program_over }
+			date > 2010.01.01
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > 0.2 } }
+		custom_cost_text = UKR_prog_cost_0_2
+
+		days_remove = 200
+		days_re_enable = 45
+		fire_only_once = no
+
+		modifier = { political_power_gain = -0.03 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_reorganize_navy_build_lahuna_recon_ship"
+			set_temp_variable = { treasury_change = -0.2 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = UKR_lahuna_recon_ship
+				bonus = 0.20
+				uses = 1
+				category = CAT_landing_craft
+			}
+			navy_experience = 5
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_reorganize_navy_build_lahuna_recon_ship"
+			add_to_variable = { UKR_lahuna_progress = 1 }
+			custom_effect_tooltip = UKR_lahuna_progress_tt
+
+			if = {
+				limit = { check_variable = { UKR_lahuna_progress = 1 } }
+				country_event = { id = ukraine_reorganize_navy_built_simferopol_recon_ship.1 hours = 6 }
+			}
+			if = {
+				limit = {
+					check_variable = { UKR_lahuna_progress > 2 }
+					has_country_flag = UKR_lahuna_hull_chosen
+					NOT = { has_country_flag = UKR_lahuna_suite_chosen }
+				}
+				country_event = { id = ukraine_reorganize_navy_built_simferopol_recon_ship.2 hours = 6 }
+			}
+			if = {
+				limit = {
+					check_variable = { UKR_lahuna_progress > 4 }
+					has_country_flag = UKR_lahuna_suite_chosen
+				}
+				country_event = { id = ukraine_reorganize_navy_built_simferopol_recon_ship.3 hours = 6 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 5 }
+			}
+			modifier = {
+				factor = 2
+				has_war_with = SOV
+			}
+		}
+	}
 }
 
 UKR_modernize_sov_category = {
