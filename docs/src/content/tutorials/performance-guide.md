@@ -5,8 +5,6 @@ permalink: /player-tutorials/performance-guide/
 version: "v2.0"
 ---
 
-# Performance Guide
-
 Millennium Dawn, by its nature, is a performance-intensive mod for Hearts of Iron IV due to its extended mechanics, numerous nations, and drive to deepen the Hearts of Iron IV experience. This guide seeks to help players make changes to the mod without losing meaningful content while delivering a solid experience. The team is striving to optimize the mod and the experience while providing the targeted gameplay; this is a focal point for the team. However, we are limited by the game engine and the interactions that Hearts of Iron IV allows.
 
 ## What this guide does not do
