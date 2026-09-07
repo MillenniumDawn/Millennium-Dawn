@@ -15,6 +15,21 @@ calculate_energy_use = {
 	# Add the Dynamic Modifiers for the System in case they are not present
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = energy_dynamic_modifier } } } add_dynamic_modifier = { modifier = energy_dynamic_modifier } }
 
+	set_variable = { energy_seasonal_population_demand_factor = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { global.month = 12 }
+				check_variable = { global.month = 1 }
+				check_variable = { global.month = 2 }
+				check_variable = { global.month = 6 }
+				check_variable = { global.month = 7 }
+				check_variable = { global.month = 8 }
+			}
+		}
+		set_variable = { energy_seasonal_population_demand_factor = 0.2 }
+	}
+
 	energy_calc_consumption = yes
 	energy_calc_generation = yes
 	energy_calc_balance = yes
@@ -189,6 +204,7 @@ energy_calc_consumption = {
 			multiply = temp_gdp_per_capita
 			multiply = @population_energy_use_balance_value
 			multiply = display_multiplier
+			multiply = { value = 1 add = energy_seasonal_population_demand_factor }
 		}
 	}
 
@@ -596,6 +612,7 @@ energy_calc_fuel = {
 				clamp = { min = 0 max = 999999999 }
 			}
 			multiply = no_fuel_killswitch_var
+			multiply = { value = 1 add = energy_seasonal_population_demand_factor }
 		}
 	}
 	set_variable = {
