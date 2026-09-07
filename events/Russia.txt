@@ -344,10 +344,10 @@ country_event = {
 	option = {
 		name = russia.17.o1
 		log = "[GetDateText]: [This.GetName]: russia.17.o1 executed"
-		swap_ideas = {
-			remove_idea = SOV_army_sso
-			add_idea = SOV_spetznaz_o
-		}
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_landforce_modifier }
+		add_to_variable = { SOV_land_special_forces_attack_factor = 0.05 tooltip = special_forces_attack_factor_tt }
+		add_to_variable = { SOV_land_special_forces_defence_factor = 0.05 tooltip = special_forces_defence_factor_tt }
+		add_to_variable = { SOV_land_special_forces_training_time_factor = -0.05 tooltip = special_forces_training_time_factor_tt }
 	}
 }
 
@@ -884,7 +884,11 @@ country_event = {
 		name = russia.54.a
 		log = "[GetDateText]: [This.GetName]: russia.54.a"
 		add_war_support = 0.05
-		add_ideas = SOV_russian_airspaceforce_idea
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_airforce_modifier }
+		add_to_variable = { SOV_air_air_training_xp_gain_factor = 0.10 tooltip = air_training_xp_gain_factor_tt }
+		add_to_variable = { SOV_air_air_mission_xp_gain_factor = 0.10 tooltip = air_mission_xp_gain_factor_tt }
+		add_to_variable = { SOV_air_air_accidents_factor = -0.02 tooltip = air_accidents_factor_tt }
+		add_to_variable = { SOV_air_airforce_personnel_cost_multiplier_modifier = -0.10 tooltip = airforce_personnel_cost_multiplier_modifier_tt }
 		ai_chance = {
 			base = 50
 		}
@@ -902,78 +906,6 @@ country_event = {
 		name = russia.55.a
 		log = "[GetDateText]: [This.GetName]: russia.55.a"
 		set_country_flag = SOV_borya_ded
-	}
-}
-##Reform 2001 Year Army
-country_event = {
-	id = russia.58
-	title = russia.58.t
-	desc = russia.58.d
-	picture = GFX_tosochka
-	is_triggered_only = yes
-
-	option = {
-		name = russia.58.a
-		log = "[GetDateText]: [This.GetName]: russia.58.a"
-		set_country_flag = SOV_unlock_2001_reform_generals
-		effect_tooltip = {
-			create_corps_commander = {
-				name = "Alexander Lapin"
-				portrait_path = "gfx/leaders/SOV/Gen_Alexander_Lapin.dds"
-				traits = { armoured_cavalry_leader panzer_leader }
-				skill = 2
-				attack_skill = 3
-				defense_skill = 2
-				planning_skill = 2
-				logistics_skill = 2
-			}
-			create_corps_commander = {
-				name = "Sergey Kisel"
-				portrait_path = "gfx/leaders/SOV/Gen_Sergey_Kisel.dds"
-				traits = { panzer_leader }
-				skill = 2
-				attack_skill = 2
-				defense_skill = 2
-				planning_skill = 1
-				logistics_skill = 2
-			}
-			create_corps_commander = {
-				name = "Andrey Mordvichev"
-				portrait_path = "gfx/leaders/SOV/Gen_Andrey_Mordvichev.dds"
-				traits = { engineer_officer armoured_cavalry_leader }
-				skill = 1
-				attack_skill = 3
-				defense_skill = 1
-				planning_skill = 2
-				logistics_skill = 1
-			}
-		}
-	}
-}
-
-##Reform 2008 Year Army
-country_event = {
-	id = russia.59
-	title = russia.59.t
-	desc = russia.59.d
-	picture = GFX_tosochka
-	is_triggered_only = yes
-
-	option = {
-		name = russia.59.a
-		log = "[GetDateText]: [This.GetName]: russia.59.a"
-		effect_tooltip = {
-			create_field_marshal = {
-				name = "Sergey Shoygu"
-				portrait_path = "gfx/leaders/SOV/Gen_Sergey_Shoygu.dds"
-				traits = { logistics_wizard }
-				skill = 2
-				attack_skill = 3
-				defense_skill = 2
-				planning_skill = 2
-				logistics_skill = 4
-			}
-		}
 	}
 }
 
@@ -5851,21 +5783,6 @@ country_event = {
 }
 
 country_event = {
-	id = sov_nationalists.34
-	title = sov_nationalists.34.t
-	desc = sov_nationalists.34.d
-	picture = GFX_sov_empire_new_russian_army
-	is_triggered_only = yes
-
-	option = {
-		name = sov_nationalists.34.a
-		log = "[GetDateText]: [This.GetName]: sov_nationalists.34.a executed"
-		increase_military_spending = yes
-		add_war_support = 0.05
-	}
-}
-
-country_event = {
 	id = sov_nationalists.35
 	title = sov_nationalists.35.t
 	desc = sov_nationalists.35.d
@@ -7868,6 +7785,9 @@ country_event = {
 			change_relative_party_popularity = yes
 			set_temp_variable = { rul_party_temp = 15 }
 			set_temp_variable = { col_one = 16 }
+			# Must precede the party change: SOV_update_political_modifiers reads this flag to decide
+			# that Putinism is over and the oligarch modifier is earned.
+			set_country_flag = SOV_oligarch_takeover
 			change_ruling_party_effect = yes
 			remove_ideas = idea_SOV_oligarchic_republic
 		}
@@ -7878,9 +7798,7 @@ country_event = {
 			traits = { spy geopolitical_thinker political_dancer likeable sly rational corruptible }
 			expire = "2050.1.1"
 		}
-		remove_dynamic_modifier = { modifier = SOV_putin_politic_modifier }
 		remove_ideas = SOV_idea_revision_6
-		add_dynamic_modifier = { modifier = SOV_russian_oligarchs_modifier }
 		set_temp_variable = { temp_opinion = 10 }
 		change_oligarchs_opinion = yes
 		ai_chance = {
@@ -11369,8 +11287,13 @@ country_event = {
 	option = {
 		name = sov_gru.2.a
 		log = "[GetDateText]: [This.GetName]: sov_gru.2.a executed"
-		clr_country_flag = SOV_gru_active
-		remove_ideas = SOV_gru1
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_intelligence_modifier }
+		subtract_from_variable = { SOV_intel_decryption_factor = 0.07 tooltip = decryption_factor_tt }
+		subtract_from_variable = { SOV_intel_police_cost_multiplier_modifier = 0.06 tooltip = police_cost_multiplier_modifier_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_landforce_modifier }
+		subtract_from_variable = { SOV_land_send_volunteers_tension = -0.08 tooltip = send_volunteers_tension_tt }
+		subtract_from_variable = { SOV_land_special_forces_training_time_factor = -0.05 tooltip = special_forces_training_time_factor_tt }
 	}
 }
 #GRU Decline
@@ -11398,7 +11321,14 @@ country_event = {
 	option = {
 		name = sov_gru.4.a
 		log = "[GetDateText]: [This.GetName]: sov_gru.4.a executed"
-		add_ideas = SOV_gru1
+		clr_country_flag = SOV_gru_active
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_intelligence_modifier }
+		add_to_variable = { SOV_intel_decryption_factor = 0.07 tooltip = decryption_factor_tt }
+		add_to_variable = { SOV_intel_police_cost_multiplier_modifier = 0.06 tooltip = police_cost_multiplier_modifier_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_landforce_modifier }
+		add_to_variable = { SOV_land_send_volunteers_tension = -0.08 tooltip = send_volunteers_tension_tt }
+		add_to_variable = { SOV_land_special_forces_training_time_factor = -0.05 tooltip = special_forces_training_time_factor_tt }
 	}
 }
 

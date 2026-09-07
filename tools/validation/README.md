@@ -159,8 +159,10 @@ To keep commit latency low, only a fast subset of validators runs on
 `validate_scripted_gui`, `validate_localisation`, `validate_cosmetic_tags`,
 `validate_variables`, and `validate_focus_tree` run
 **CI-only**. The
-`validate-core` and `validate-targeted` matrices in
-`.github/workflows/coding-pipeline.yml` gate them instead of pre-commit.
+`mod-tests` batch jobs in
+`.github/workflows/test-suite.yml` gate them instead of pre-commit.
+Their list, changed-group selection, and `--strict` gates live in
+`tools/validation/validator_batches.py`.
 
 The commit-stage validators (`validate_common_mistakes`, `validate_style`,
 `validate_oob_units`, `validate_ai_roles`, `validate_ai_navy`,
@@ -171,9 +173,12 @@ The commit-stage validators (`validate_common_mistakes`, `validate_style`,
 hook. `validate_unused_textures` keeps a `stages: [manual]` hook because CI
 cannot run it.
 
-`validate_file_paths` runs CI-only in its own `validate-paths` job. It reads
-the git index rather than the working tree, so it sits outside both matrices.
-Those restore a content bundle with no `.git` and no `map/`.
+`validate_file_paths` runs CI-only in the `prepare-workspace` job of
+`test-suite.yml`. It reads the PR git index rather than the working tree,
+against a blob:none checkout that keeps `.git`. The batch jobs restore the
+prepared content bundle with no `.git` and no `map/`. Standalone style,
+descriptor, and encoding checks run inside the core batch job; the manual
+texture audit stays excluded.
 
 To run any validator locally, including a CI-only one, invoke it directly:
 
