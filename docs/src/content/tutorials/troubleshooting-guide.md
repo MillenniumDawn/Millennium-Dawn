@@ -9,6 +9,8 @@ Some computers may have performance issues with Millennium Dawn and as such we r
 
 Hearts of Iron IV runs multi-core on most processes but AI remains it's main bottleneck and is what causes most of the lag you see in game. Having a strong CPU with single-core performance will yield you
 
+\***\*[For a more detailed performance guide click this link.](/player-tutorials/performance-guide/)\*\***
+
 **Troubleshoot Guide**
 
 - Clear the User Directory via your Hearts of Iron IV Launcher
