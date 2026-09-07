@@ -1,7 +1,6 @@
 """Tests for `report_lib.markdown`."""
 
 from report_lib import (
-    Issue,
     ReportContext,
     Severity,
     ValidatorRun,
@@ -10,6 +9,7 @@ from report_lib import (
 from report_lib.baseline import BaselineStats
 from report_lib.comment import REPORT_MARKER
 from report_lib.markdown import _severity_icon
+from shared.suite import make_issue
 
 
 def _ctx(repo=None):
@@ -137,14 +137,7 @@ def test_render_qualifies_a_clean_partial_run():
 
 
 def test_render_links_file_to_blob_when_repo_known():
-    issue = Issue(
-        severity=Severity.ERROR,
-        category="missing_key",
-        message="key FOO not found",
-        file="events/MD_x.txt",
-        line=212,
-        validator="events",
-    )
+    issue = make_issue()
     body = render([], [issue], _ctx(repo="MillenniumDawn/Millennium-Dawn"))
     assert (
         "https://github.com/MillenniumDawn/Millennium-Dawn/blob/"
@@ -153,14 +146,7 @@ def test_render_links_file_to_blob_when_repo_known():
 
 
 def test_render_no_link_without_repo():
-    issue = Issue(
-        severity=Severity.ERROR,
-        category="missing_key",
-        message="key FOO not found",
-        file="events/MD_x.txt",
-        line=212,
-        validator="events",
-    )
+    issue = make_issue()
     body = render([], [issue], _ctx())
     assert "https://github.com/" not in body
     assert "`events/MD_x.txt:212`" in body
@@ -168,29 +154,14 @@ def test_render_no_link_without_repo():
 
 def test_render_groups_issues_by_category():
     issues = [
-        Issue(
-            severity=Severity.ERROR,
-            category="alpha",
-            message="A",
-            file="z.txt",
-            line=5,
-            validator="events",
-        ),
-        Issue(
-            severity=Severity.ERROR,
-            category="beta",
-            message="B",
-            file="a.txt",
-            line=1,
-            validator="events",
-        ),
-        Issue(
+        make_issue(category="alpha", message="A", file="z.txt", line=5),
+        make_issue(category="beta", message="B", file="a.txt", line=1),
+        make_issue(
             severity=Severity.WARNING,
             category="alpha",
             message="C",
             file="a.txt",
             line=2,
-            validator="events",
         ),
     ]
     body = render([], issues, _ctx())
@@ -204,13 +175,9 @@ def test_render_groups_issues_by_category():
 
 
 def test_render_shows_detected_by_when_multiple_validators():
-    issue = Issue(
-        severity=Severity.ERROR,
-        category="missing_key",
-        message="key FOO not found",
+    issue = make_issue(
         file="a.txt",
         line=1,
-        validator="events",
         detected_by=["localisation", "variables"],
     )
     body = render([], [issue], _ctx())
@@ -228,11 +195,11 @@ def test_render_passing_validator_omits_empty_dropdown():
 
 
 def test_render_url_encodes_spaces_in_file_path():
-    issue = Issue(
-        severity=Severity.ERROR,
+    issue = make_issue(
         category="missing_texture",
         message="texture not referenced",
         file="gfx/interface/My Cool File.dds",
+        line=0,
         validator="unused-textures",
     )
     body = render([], [issue], _ctx(repo="MillenniumDawn/Millennium-Dawn"))
@@ -268,14 +235,7 @@ def test_concise_comment_omits_validator_sections():
             name="events", title="Events", status="failed", errors=2, warnings=1
         ),
     ]
-    issue = Issue(
-        severity=Severity.ERROR,
-        category="missing_key",
-        message="key FOO not found",
-        file="events/MD_x.txt",
-        line=212,
-        validator="events",
-    )
+    issue = make_issue()
     body = render([runs[0]], [issue], _ctx(), include_validator_sections=False)
     # Summary table counts stay so reviewers see the totals at a glance.
     assert "| **Total** | **2** | **1** |" in body
@@ -360,11 +320,11 @@ def test_metadata_strip_omits_missing_fields():
 
 
 def test_bullet_without_a_file_renders_the_message_alone():
-    issue = Issue(
-        severity=Severity.ERROR,
+    issue = make_issue(
         category="config",
         message="validator crashed before reporting a file",
-        validator="events",
+        file="",
+        line=0,
     )
     body = render([], [issue], _ctx(repo="MillenniumDawn/Millennium-Dawn"))
     assert "- ❌ validator crashed before reporting a file" in body
@@ -373,13 +333,11 @@ def test_bullet_without_a_file_renders_the_message_alone():
 
 def _two_category_issues():
     return [
-        Issue(
-            severity=Severity.ERROR,
+        make_issue(
             category=f"cat_{n}",
             message=f"finding {n}",
             file=f"{n}.txt",
             line=1,
-            validator="events",
         )
         for n in (1, 2)
     ]
@@ -436,15 +394,18 @@ def _stats(**overrides):
     return stats
 
 
+def _new_error(**overrides):
+    issue = make_issue(baseline_status="new", **overrides)
+    return issue, _stats(new_issues=[issue], new_errors=1, new_warnings=0)
+
+
 def test_verdict_counts_new_against_baseline():
     runs = [ValidatorRun(name="events", title="Events", status="failed", errors=2)]
     body = render(
         [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=2, new_warnings=0)
     )
-    assert (
-        "2 errors must be fixed before merge. (2 new errors against the main baseline.)"
-        in body
-    )
+    assert "2 new errors against the main baseline must be fixed before merge." in body
+    assert "2 errors total" in body
 
 
 def test_verdict_says_none_new_when_all_existing():
@@ -452,7 +413,8 @@ def test_verdict_says_none_new_when_all_existing():
     body = render(
         [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=0, new_warnings=0)
     )
-    assert "(none new against the main baseline.)" in body
+    assert "No new errors against the main baseline." in body
+    assert "2 errors must be fixed before merge." in body
 
 
 def test_verdict_splits_new_errors_and_warnings():
@@ -464,7 +426,8 @@ def test_verdict_splits_new_errors_and_warnings():
     body = render(
         [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=2, new_warnings=1)
     )
-    assert "(2 new errors, 1 new warning against the main baseline.)" in body
+    assert "2 new errors against the main baseline must be fixed before merge." in body
+    assert "1 new warning" in body
 
 
 def test_step_summary_lists_new_findings():
@@ -473,22 +436,11 @@ def test_step_summary_lists_new_findings():
             name="events", title="Events", status="failed", errors=1, warnings=1
         )
     ]
-    error = Issue(
-        severity=Severity.ERROR,
-        category="missing_key",
-        message="key FOO not found",
-        file="events/MD_x.txt",
-        line=212,
-        validator="events",
-        baseline_status="new",
-    )
-    warning = Issue(
+    error = make_issue(baseline_status="new")
+    warning = make_issue(
         severity=Severity.WARNING,
-        category="missing_key",
         message="key BAR unused",
-        file="events/MD_x.txt",
         line=80,
-        validator="events",
         baseline_status="new",
     )
     stats = _stats(new_issues=[error, warning], unclassified=1)
@@ -513,13 +465,10 @@ def test_step_summary_opens_warnings_when_no_new_errors():
             name="events", title="Events", status="warnings", errors=0, warnings=1
         )
     ]
-    warning = Issue(
+    warning = make_issue(
         severity=Severity.WARNING,
-        category="missing_key",
         message="key BAR unused",
-        file="events/MD_x.txt",
         line=80,
-        validator="events",
         baseline_status="new",
     )
     stats = _stats(new_issues=[warning], new_errors=0, new_warnings=1)
@@ -552,27 +501,20 @@ def _warning_verdict_body(new_warnings):
 
 def test_warning_verdict_counts_new_against_baseline():
     body = _warning_verdict_body(3)
+    assert "3 new warnings against the main baseline." in body
     assert "5 warnings to review. None block merge." in body
-    assert "(3 new warnings against the main baseline.)" in body
 
 
 def test_warning_verdict_says_none_new():
     body = _warning_verdict_body(0)
-    assert "(none new against the main baseline.)" in body
+    assert "No new warnings against the main baseline." in body
+    assert "5 warnings to review. None block merge." in body
 
 
 def test_baseline_section_caps_new_findings():
     runs = [ValidatorRun(name="events", title="Events", status="failed", errors=2)]
     issues = [
-        Issue(
-            severity=Severity.ERROR,
-            category="missing_key",
-            message=f"key {n} not found",
-            file="events/MD_x.txt",
-            line=n,
-            validator="events",
-            baseline_status="new",
-        )
+        make_issue(message=f"key {n} not found", line=n, baseline_status="new")
         for n in range(1, 6)
     ]
     stats = _stats(new_issues=issues)
@@ -591,24 +533,12 @@ def test_baseline_section_gives_remaining_budget_to_warnings():
         )
     ]
     issues = [
-        Issue(
-            severity=Severity.ERROR,
-            category="missing_key",
-            message=f"error {n}",
-            file="events/MD_x.txt",
-            line=n,
-            validator="events",
-            baseline_status="new",
-        )
-        for n in (1, 2)
+        make_issue(message=f"error {n}", line=n, baseline_status="new") for n in (1, 2)
     ] + [
-        Issue(
+        make_issue(
             severity=Severity.WARNING,
-            category="missing_key",
             message=f"warning {n}",
-            file="events/MD_x.txt",
             line=n,
-            validator="events",
             baseline_status="new",
         )
         for n in (3, 4)
@@ -637,22 +567,13 @@ def test_baseline_section_notes_unclassified_findings():
     assert "2 finding(s) could not be compared (no file/line)." in body
 
 
-def test_concise_comment_omits_baseline_section():
+def test_concise_comment_lists_new_findings():
     runs = [
         ValidatorRun(
             name="events", title="Events", status="failed", errors=1, warnings=1
         )
     ]
-    issue = Issue(
-        severity=Severity.ERROR,
-        category="missing_key",
-        message="key FOO not found",
-        file="events/MD_x.txt",
-        line=212,
-        validator="events",
-        baseline_status="new",
-    )
-    stats = _stats(new_issues=[issue])
+    issue, stats = _new_error()
     body = render(
         [runs[0]],
         [issue],
@@ -660,7 +581,86 @@ def test_concise_comment_omits_baseline_section():
         include_validator_sections=False,
         baseline_stats=stats,
     )
-    # The concise PR comment carries the counts in the verdict, not the
-    # per-finding section that lives in the step summary.
-    assert "## New Findings Introduced by this branch." not in body
-    assert "(1 new error, 1 new warning against the main baseline.)" in body
+    assert "## New Findings Introduced by this branch." in body
+    assert "**NEW**" in body
+    assert "key FOO not found" in body
+    assert "## Validators" not in body
+    assert "1 new error against the main baseline must be fixed before merge." in body
+    assert "step summary" in body
+
+
+def test_summary_table_adds_new_column_with_baseline():
+    runs = [
+        ValidatorRun(
+            name="events", title="Events", status="failed", errors=3, warnings=1
+        ),
+        ValidatorRun(name="ideas", title="Ideas", status="failed", errors=1),
+    ]
+    new_issue, stats = _new_error()
+    body = render(runs, [new_issue], _ctx(), baseline_stats=stats)
+    assert "| Validator | New | Errors | Warnings |" in body
+    assert "| ❌ Events | 1 | 3 | 1 |" in body
+    assert "| ❌ Ideas | 0 | 1 | 0 |" in body
+    assert "| **Total** | **1** | **4** | **1** |" in body
+
+
+def test_summary_table_sorts_new_error_validators_first():
+    runs = [
+        ValidatorRun(name="ideas", title="Ideas", status="failed", errors=9),
+        ValidatorRun(name="events", title="Events", status="failed", errors=1),
+    ]
+    new_issue, stats = _new_error()
+    body = render(runs, [new_issue], _ctx(), baseline_stats=stats)
+    assert body.index("| ❌ Events | 1 |") < body.index("| ❌ Ideas | 0 |")
+
+
+def test_unavailable_baseline_is_explicit():
+    ctx = _ctx()
+    ctx.baseline_status = "unavailable"
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
+    body = render(runs, [], ctx)
+    assert "Baseline comparison unavailable" in body
+    assert "**Baseline comparison:** unavailable" in body
+    assert "against the main baseline" not in body
+
+
+def test_comment_lists_in_diff_findings_without_baseline():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
+    issue = make_issue(in_diff=True)
+    body = render(runs, [issue], _ctx(), include_validator_sections=False)
+    assert "## Findings in your diff" in body
+    assert "**IN YOUR DIFF**" in body
+    assert "**NEW**" not in body
+
+
+def test_comment_tags_new_and_in_diff_together():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
+    issue, stats = _new_error(in_diff=True)
+    body = render(
+        runs,
+        [issue],
+        _ctx(),
+        include_validator_sections=False,
+        baseline_stats=stats,
+    )
+    assert "**NEW** **IN YOUR DIFF**" in body
+
+
+def test_comment_caps_new_findings():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=5)]
+    issues = [
+        make_issue(message=f"key {n} not found", line=n, baseline_status="new")
+        for n in range(1, 6)
+    ]
+    stats = _stats(new_issues=issues, new_errors=5, new_warnings=0)
+    body = render(
+        runs,
+        issues,
+        _ctx(),
+        include_validator_sections=False,
+        max_visible=3,
+        baseline_stats=stats,
+    )
+    assert "key 3 not found" in body
+    assert "key 4 not found" not in body
+    assert "_…and 2 more new errors._" in body
