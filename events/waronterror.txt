@@ -1036,13 +1036,19 @@ country_event = {
 		name = wot.21.a
 		log = "[GetDateText]: [This.GetName]: wot.21.a"
 		ai_chance = { base = 100 }
-		add_stability = 0.05
-		set_temp_variable_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = 0.10 }
-		set_temp_variable = { temp_outlook_increase = 0.10 }
-		change_relative_party_popularity = yes
-		hidden_effect = { news_event = { id = wotnews.15 hours = 6 } }
-		set_global_flag = GLOBAL_bin_laden_killed_or_captured
+		if = {
+			limit = { TOP_enabled = yes }
+			TOP_capture_target = { TARGET = 1 }
+		}
+		else = {
+			add_stability = 0.05
+			set_temp_variable_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			change_relative_party_popularity = yes
+			hidden_effect = { news_event = { id = wotnews.15 hours = 6 } }
+			set_global_flag = GLOBAL_bin_laden_killed_or_captured
+		}
 	}
 }
 
@@ -1064,6 +1070,7 @@ country_event = {
 	#is still sitting unanswered in the player's queue.
 	immediate = {
 		set_country_flag = { flag = USA_wot_manhunt_cooldown days = 180 value = 1 }
+		if = { limit = { TOP_enabled = yes } TOP_add_target_lead = { TARGET = 1 AMOUNT = 40 } }
 	}
 
 	option = {
@@ -1150,9 +1157,16 @@ country_event = {
 		name = wot.24.a		#
 		log = "[GetDateText]: [This.GetName]: wot.24.a"
 		ai_chance = { base = 100 }
-		custom_effect_tooltip = TT_BIN_LADEN_KILLED
-		bin_laden_clear_hideout = yes
-		hidden_effect = { news_event = { id = wotnews.16 days = 4 } }
+		if = {
+			limit = { TOP_enabled = yes }
+			TOP_grant_target_mandate = { TARGET = 1 }
+			TOP_add_target_lead = { TARGET = 1 AMOUNT = 40 }
+		}
+		else = {
+			custom_effect_tooltip = TT_BIN_LADEN_KILLED
+			bin_laden_clear_hideout = yes
+			hidden_effect = { news_event = { id = wotnews.16 days = 4 } }
+		}
 	}
 }
 
@@ -1241,18 +1255,26 @@ country_event = {
 			name = USA_unilateral_raid_threat
 		}
 		#Going in blind, over a border, without the host's help. It usually works. Usually.
-		random_list = {
-			75 = {
-				add_war_support = 0.05
-				bin_laden_clear_hideout = yes
-				hidden_effect = { news_event = { id = wotnews.16 days = 4 } }
-			}
-			25 = {
-				add_war_support = -0.10
-				add_stability = -0.05
-				unsc_members_condemn_us = yes
-				bin_laden_relocate_hideout = yes
-				hidden_effect = { news_event = { id = wotnews.20 days = 4 } }
+
+		if = {
+			limit = { TOP_enabled = yes }
+			TOP_grant_target_mandate = { TARGET = 1 }
+			TOP_add_target_lead = { TARGET = 1 AMOUNT = 40 }
+		}
+		else = {
+			random_list = {
+				75 = {
+					add_war_support = 0.05
+					bin_laden_clear_hideout = yes
+					hidden_effect = { news_event = { id = wotnews.16 days = 4 } }
+				}
+				25 = {
+					add_war_support = -0.10
+					add_stability = -0.05
+					unsc_members_condemn_us = yes
+					bin_laden_relocate_hideout = yes
+					hidden_effect = { news_event = { id = wotnews.20 days = 4 } }
+				}
 			}
 		}
 	}
@@ -1566,8 +1588,16 @@ news_event = {
 news_event = {
 	id = wotnews.12
 	title = wotnews.12.t
-	desc = wotnews.12.d
+	desc = {
+		text = wotnews.12.d
+		trigger = { TOP_enabled = no }
+	}
+	desc = {
+		text = TOP_legacy_saddam_captured_d
+		trigger = { TOP_enabled = yes }
+	}
 	picture = GFX_news_saddam_captured
+	trigger = { OR = { TOP_enabled = no check_variable = { global.TOP_first_outcome^56 = 2 } } }
 	is_triggered_only = yes
 	major = yes
 
@@ -1601,9 +1631,24 @@ news_event = {
 #Osama bin Laden captured
 news_event = {
 	id = wotnews.15
-	title = wotnews.15.t
-	desc = wotnews.15.d
+	title = {
+		text = wotnews.15.t
+		trigger = { TOP_enabled = no }
+	}
+	title = {
+		text = TOP_legacy_bin_laden_captured_t
+		trigger = { TOP_enabled = yes }
+	}
+	desc = {
+		text = wotnews.15.d
+		trigger = { TOP_enabled = no }
+	}
+	desc = {
+		text = TOP_legacy_bin_laden_captured_d
+		trigger = { TOP_enabled = yes }
+	}
 	picture = GFX_news_bin_laden_captured
+	trigger = { OR = { TOP_enabled = no check_variable = { global.TOP_first_outcome^1 = 2 } } }
 	is_triggered_only = yes
 	major = yes
 
@@ -1613,8 +1658,16 @@ news_event = {
 news_event = {
 	id = wotnews.16
 	title = wotnews.16.t
-	desc = wotnews.16.d
+	desc = {
+		text = wotnews.16.d
+		trigger = { TOP_enabled = no }
+	}
+	desc = {
+		text = TOP_legacy_bin_laden_dead_d
+		trigger = { TOP_enabled = yes }
+	}
 	picture = GFX_news_bin_laden_captured
+	trigger = { OR = { TOP_enabled = no AND = { check_variable = { global.TOP_first_outcome^1 = 3 } check_variable = { global.TOP_confirmed_dead^1 = 1 } } } }
 	is_triggered_only = yes
 	major = yes
 

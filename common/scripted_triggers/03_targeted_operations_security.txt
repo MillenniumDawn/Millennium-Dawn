@@ -1,0 +1,46 @@
+TOP_security_policy_active = {
+	TOP_enabled = yes
+	exists = yes
+	check_variable = { TOP_$TRACK$_level > 0 }
+	check_variable = { TOP_$TRACK$_level < 4 }
+	check_variable = { TOP_$TRACK$_until > global.TOP_clock }
+}
+
+TOP_security_country_eligible = {
+	TOP_enabled = yes
+	exists = yes
+	num_of_controlled_states > 0
+	OR = {
+		TOP_country_eligible = yes
+		TOP_has_protected_official = yes
+	}
+}
+
+TOP_security_can_purchase = {
+	TOP_security_country_eligible = yes
+	set_temp_variable = { TOP_security_requested_level = $LEVEL$ }
+	OR = {
+		AND = {
+			check_variable = { TOP_security_requested_level = 1 }
+			has_political_power > 24.999
+			check_variable = { var = treasury value = 0.25 compare = greater_than_or_equals }
+		}
+		AND = {
+			check_variable = { TOP_security_requested_level = 2 }
+			has_political_power > 39.999
+			check_variable = { var = treasury value = 0.75 compare = greater_than_or_equals }
+		}
+		AND = {
+			check_variable = { TOP_security_requested_level = 3 }
+			has_political_power > 59.999
+			check_variable = { var = treasury value = 1.5 compare = greater_than_or_equals }
+		}
+	}
+}
+
+TOP_security_window_visible = {
+	TOP_enabled = yes
+	has_country_flag = open_MD_countrymissilesview
+	check_variable = { var_open_MD_CT_gui = 2 }
+	check_variable = { TOP_open = 1 }
+}

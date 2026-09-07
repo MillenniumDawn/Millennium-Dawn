@@ -1,0 +1,101 @@
+TOP_purchase_security_policy = {
+	if = {
+		limit = { TOP_security_can_purchase = { LEVEL = $LEVEL$ } }
+		if = {
+			limit = { check_variable = { TOP_security_requested_level = 1 } }
+			add_political_power = -25
+			set_temp_variable = { treasury_change = -0.25 }
+		}
+		else_if = {
+			limit = { check_variable = { TOP_security_requested_level = 2 } }
+			add_political_power = -40
+			set_temp_variable = { treasury_change = -0.75 }
+		}
+		else = {
+			add_political_power = -60
+			set_temp_variable = { treasury_change = -1.5 }
+		}
+		modify_treasury_effect = yes
+		set_variable = { TOP_$TRACK$_level = $LEVEL$ }
+		set_variable = { TOP_$TRACK$_until = global.TOP_clock }
+		add_to_variable = { TOP_$TRACK$_until = 182 }
+		TOP_security_refresh_view = yes
+	}
+}
+
+TOP_security_stand_down = {
+	set_variable = { TOP_protection_level = 0 }
+	set_variable = { TOP_protection_until = 0 }
+	set_variable = { TOP_counterintelligence_level = 0 }
+	set_variable = { TOP_counterintelligence_until = 0 }
+	TOP_security_refresh_view = yes
+}
+
+TOP_security_refresh_view = {
+	if = {
+		limit = { is_ai = no }
+		set_variable = { TOP_protection_days = TOP_protection_until }
+		subtract_from_variable = { TOP_protection_days = global.TOP_clock }
+		clamp_variable = { var = TOP_protection_days min = 0 max = 182 }
+		set_variable = { TOP_counterintelligence_days = TOP_counterintelligence_until }
+		subtract_from_variable = { TOP_counterintelligence_days = global.TOP_clock }
+		clamp_variable = { var = TOP_counterintelligence_days min = 0 max = 182 }
+		add_to_variable = { TOP_security_dirty = 1 }
+	}
+}
+
+TOP_security_country_tick = {
+	if = {
+		limit = {
+			TOP_enabled = yes
+			is_ai = yes
+			TOP_has_protected_official = yes
+			has_war = yes
+			check_variable = { treasury > 2 }
+			has_political_power > 100
+		}
+		if = {
+			limit = { NOT = { TOP_security_policy_active = { TRACK = protection } } }
+			TOP_purchase_security_policy = { TRACK = protection LEVEL = 1 }
+		}
+		if = {
+			limit = { NOT = { TOP_security_policy_active = { TRACK = counterintelligence } } }
+			TOP_purchase_security_policy = { TRACK = counterintelligence LEVEL = 1 }
+		}
+	}
+	if = {
+		limit = { is_ai = no check_variable = { TOP_security_open = 1 } TOP_security_window_visible = yes }
+		TOP_security_refresh_view = yes
+	}
+}
+
+TOP_get_defensive_modifiers = {
+	set_temp_variable = { TOP_defensive_collection_penalty = 0 }
+	set_temp_variable = { TOP_defensive_success_penalty = 0 }
+	set_temp_variable = { TOP_defensive_exposure_bonus = 0 }
+	set_temp_variable = { TOP_security_actor = THIS }
+	set_temp_variable = { TOP_security_country = 0 }
+	TOP_get_protection_country = yes
+	if = {
+		limit = {
+			TOP_enabled = yes
+			check_variable = { TOP_security_country > 0 }
+			NOT = { check_variable = { TOP_security_country = TOP_security_actor } }
+			var:TOP_security_country = { exists = yes }
+		}
+		var:TOP_security_country = {
+			if = {
+				limit = { TOP_security_policy_active = { TRACK = protection } }
+				set_temp_variable = { TOP_defensive_success_penalty = TOP_protection_level }
+				multiply_temp_variable = { TOP_defensive_success_penalty = 5 }
+			}
+			if = {
+				limit = { TOP_security_policy_active = { TRACK = counterintelligence } }
+				set_temp_variable = { TOP_defensive_collection_penalty = TOP_counterintelligence_level }
+				multiply_temp_variable = { TOP_defensive_collection_penalty = 3 }
+				set_temp_variable = { TOP_defensive_exposure_bonus = TOP_counterintelligence_level }
+				multiply_temp_variable = { TOP_defensive_exposure_bonus = 5 }
+			}
+		}
+	}
+}

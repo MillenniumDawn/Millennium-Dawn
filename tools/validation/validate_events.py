@@ -15,7 +15,12 @@ from typing import Callable, Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import blank_quoted_strings, extract_block_from_text, strip_comments
+from shared_utils import (
+    blank_quoted_strings,
+    extract_block_from_text,
+    get_staged_files,
+    strip_comments,
+)
 from sprite_index import build_sprite_index
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
@@ -1387,6 +1392,15 @@ class Validator(BaseValidator):
         literal token, so any namespace dispatched that way is exempt.
         """
         self._log_section("Checking event fires resolve to a defined event...")
+
+        if (
+            self.staged_only
+            and not self.staged_files
+            and not get_staged_files(
+                self.mod_path, extensions=self.STAGED_EXTENSIONS, include_missing=True
+            )
+        ):
+            return
 
         args_list = self._get_fire_scan_args()
 
