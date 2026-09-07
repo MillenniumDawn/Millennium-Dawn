@@ -17,23 +17,21 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "standardization"))
 
+from standardize_api import kind_for_path
 from standardize_decisions import DecisionStandardizer
 from standardize_events import EventStandardizer
 from standardize_focus_tree import standardize_focus_tree
 from standardize_ideas import IdeaStandardizer
 
+# MIO files are routed by kind_for_path but not handled here: the hook never
+# covered them, and its `files:` pattern does not select them.
+_HOOK_TYPES = {"focus", "event", "decision", "idea"}
+
 
 def get_standardizer(filepath):
-    """Return (type, standardizer_or_func) for a file, or None if no match."""
-    if filepath.startswith("common/national_focus/") and filepath.endswith(".txt"):
-        return "focus"
-    if filepath.startswith("events/") and filepath.endswith(".txt"):
-        return "event"
-    if filepath.startswith("common/decisions/") and filepath.endswith(".txt"):
-        return "decision"
-    if filepath.startswith("common/ideas/") and filepath.endswith(".txt"):
-        return "idea"
-    return None
+    """Return the standardizer type for a file, or None if the hook skips it."""
+    kind = kind_for_path(filepath)
+    return kind if kind in _HOOK_TYPES else None
 
 
 def standardize_file(filepath, file_type):
