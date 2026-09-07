@@ -1,15 +1,16 @@
 """Render the validation report as Markdown.
 
 Two renderings come out of the same builder:
-  - PR comment (``include_validator_sections=False``): marker, verdict banner
-    (new errors and new warnings counted separately when a baseline is present),
-    metadata strip, and a summary table of only the validators with findings
-    (passing ones fold into a count line), plus a pointer to the step summary.
-    Kept small so the comment doesn't drown the PR conversation in inline findings.
-  - Step summary (default): new findings in two collapsible error/warning
-    groups, a summary table of only the validators with findings, and
-    per-validator <details> only for those. Clean validators collapse to a
-    single count line. Optionally the raw per-validator logs.
+  - PR comment (``include_validator_sections=False``): marker, "Test Suite
+    Report" verdict banner (new errors and new warnings counted separately
+    when a baseline is present), metadata strip, the Tools tests table, and
+    the Mod tests summary table of only the validators with findings
+    (passing ones fold into a count line), plus a pointer to the step
+    summary. Kept small so the comment doesn't drown the PR conversation.
+  - Step summary (default): the same top sections, then new findings in two
+    collapsible error/warning groups, and per-validator <details> only for
+    validators with findings. Clean validators collapse to a single count
+    line. Optionally the raw per-validator logs.
 """
 
 from collections import defaultdict
@@ -57,8 +58,8 @@ def render(
     baseline restored) and the report renders as before.
     """
     parts: List[str] = []
-    parts.append(REPORT_MARKER)
-    parts.append("# Validation Report")
+    parts.append(ctx.report_marker or REPORT_MARKER)
+    parts.append(f"# {ctx.report_title or 'Test Suite Report'}")
     parts.append("")
 
     verdict = _render_verdict(runs, ctx.validation_scope, baseline_stats)
@@ -69,16 +70,21 @@ def render(
     parts.append(_render_metadata_strip(ctx))
     parts.append("")
 
-    if baseline_stats is not None and include_validator_sections:
-        baseline_section = _render_baseline_section(baseline_stats, ctx, max_visible)
-        if baseline_section:
-            parts.append(baseline_section)
-            parts.append("")
+    tools_section = _render_tools_section(runs)
+    if tools_section:
+        parts.append(tools_section)
+        parts.append("")
 
     summary = _render_summary_table(runs)
     if summary:
         parts.append(summary)
         parts.append("")
+
+    if baseline_stats is not None and include_validator_sections:
+        baseline_section = _render_baseline_section(baseline_stats, ctx, max_visible)
+        if baseline_section:
+            parts.append(baseline_section)
+            parts.append("")
 
     errored_or_warned = [
         i for i in issues if i.severity in (Severity.ERROR, Severity.WARNING)
@@ -176,6 +182,8 @@ def _render_verdict(
 ) -> str:
     """A GitHub alert callout giving an at-a-glance pass/fail verdict."""
     if not runs:
+        if validation_scope == "preview":
+            return "> [!NOTE]\n> ✅ No validators selected. Nothing to run."
         return ""
     total_errors, total_warnings = _totals(runs)
     incomplete = sum(1 for run in runs if run.status in {"unknown", "no_output"})
@@ -202,10 +210,14 @@ def _render_verdict(
         line = f"{_plural(incomplete, 'validator')} did not produce a complete result."
         return f"> [!CAUTION]\n> ❌ {line} Review the workflow run."
 
-    tail = (
-        "Nothing to fix."
-        if validation_scope == "full"
-        else "Nothing to fix in the file groups this diff touches."
+    scope_tails = {
+        "full": "Nothing to fix.",
+        "partial": "Nothing to fix in the file groups this diff touches.",
+        "preview": "Nothing to fix among the validators this PR's changes select.",
+    }
+    tail = scope_tails.get(
+        validation_scope,
+        "Nothing to fix in the file groups this diff touches.",
     )
     return f"> [!NOTE]\n> ✅ All {_plural(len(runs), 'validator')} passed. {tail}"
 
@@ -223,8 +235,13 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
         bits.append(f"**Run:** [step summary]({ctx.workflow_run_url})")
     if ctx.date_utc:
         bits.append(f"**Date:** {ctx.date_utc}")
-    if ctx.validation_scope != "full":
-        bits.append("**Scope:** changed file groups only")
+    scope_labels = {
+        "partial": "changed file groups only",
+        "preview": "PR-code preview scan (no baseline comparison)",
+    }
+    scope_label = scope_labels.get(ctx.validation_scope)
+    if scope_label:
+        bits.append(f"**Scope:** {scope_label}")
     return " · ".join(bits)
 
 
@@ -237,12 +254,30 @@ def _run_sort_key(r: ValidatorRun) -> Tuple[int, str]:
     return (rank, r.title.lower())
 
 
-def _render_summary_table(runs: List[ValidatorRun]) -> str:
-    if not runs:
-        return "_No validator results found._"
+def _render_tools_section(runs: List[ValidatorRun]) -> str:
+    """One row per tools-tests suite run; omitted when none ran."""
+    tools_runs = sorted(
+        (r for r in runs if r.suite == "tools"), key=lambda r: r.title.lower()
+    )
+    if not tools_runs:
+        return ""
 
+    header = "| Tool suite | Errors | Warnings |\n|-----------|-------:|---------:|"
+    rows = [
+        f"| {_severity_icon(r.errors, r.warnings)} {r.title} | {r.errors:,} | {r.warnings:,} |"
+        for r in tools_runs
+    ]
+    return "## Tools tests\n\n" + header + "\n" + "\n".join(rows)
+
+
+def _render_summary_table(runs: List[ValidatorRun]) -> str:
+    mod_runs = [r for r in runs if r.suite != "tools"]
+    if not mod_runs:
+        return "## Mod tests\n\n_No validator results found._"
+
+    runs = mod_runs
     total_errors, total_warnings = _totals(runs)
-    # All clean — the verdict banner already states this; a zero table is noise.
+    # All clean: the verdict banner already states this; a zero table is noise.
     if total_errors == 0 and total_warnings == 0:
         return ""
 
@@ -261,7 +296,7 @@ def _render_summary_table(runs: List[ValidatorRun]) -> str:
         for r in table_runs
     ]
     rows.append(f"| **Total** | **{total_errors:,}** | **{total_warnings:,}** |")
-    return "## Summary\n\n" + header + "\n" + "\n".join(rows) + passed_note
+    return "## Mod tests\n\n" + header + "\n" + "\n".join(rows) + passed_note
 
 
 # ── Issues section ─────────────────────────────────────────────────────────────
