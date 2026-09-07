@@ -87,6 +87,7 @@ jobs:
       style: ${{ steps.groups.outputs.style }}
       style_files: ${{ steps.groups.outputs.style_files }}
       tools: ${{ steps.groups.outputs.tools }}
+      file-paths: ${{ steps.groups.outputs.file-paths }}
       full_suite: ${{ steps.groups.outputs.full_suite }}
       head-sha: ${{ steps.resolve-ref.outputs.head-sha }}
       base-sha: ${{ steps.resolve-ref.outputs.base-sha }}
@@ -183,6 +184,65 @@ jobs:
             python3 tools/validation/change_groups.py < .changed-files.txt
           fi
 
+  validate-paths:
+    name: File path validation
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.file-paths == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout PR index and validator
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ needs.detect-changes.outputs.checkout-repository }}
+          ref: ${{ needs.detect-changes.outputs.checkout-ref }}
+          fetch-depth: 1
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout: |
+            descriptor.mod
+            tools
+            .github/actions/setup-md-python/action.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Reject links in PR index
+        run: |
+          if git ls-files --stage | grep -Eq '^(120000|160000) '; then
+            echo "::error::PR index contains a symbolic link or submodule"
+            exit 1
+          fi
+
+      - name: Set up Python
+        id: setup-python
+        uses: ./.github/actions/setup-md-python
+        with:
+          install: "false"
+
+      - name: Run file-path validation
+        if: always() && !cancelled() && steps.setup-python.outcome == 'success'
+        run: >-
+          python3 tools/validation/validate_file_paths.py --path .
+          --strict --no-color --output validation-file-paths.log
+
+      - name: Verify file-path results
+        if: always() && !cancelled() && steps.setup-python.outcome == 'success'
+        run: |
+          test -f validation-file-paths.log
+          test -f validation-file-paths.json
+
+      - name: Upload file-path results
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: validation-file-paths-results
+          path: |
+            validation-file-paths.log
+            validation-file-paths.json
+          if-no-files-found: error
+          retention-days: 7
+
   prepare-workspace:
     name: Prepare workspace
     needs: [detect-changes]
@@ -261,40 +321,6 @@ jobs:
             exit 1
           fi
 
-      - name: Checkout PR index for file paths
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: ${{ needs.detect-changes.outputs.checkout-repository }}
-          ref: ${{ needs.detect-changes.outputs.checkout-ref }}
-          path: pr-tree
-          fetch-depth: 1
-          persist-credentials: false
-          filter: blob:none
-          sparse-checkout: |
-            common
-            descriptions
-            events
-            gfx
-            history
-            interface
-            localisation
-            map
-            music
-            portraits
-            scenario_tests
-            sound
-            tutorial
-            descriptor.mod
-          sparse-checkout-cone-mode: false
-
-      - name: Reject links in PR index
-        working-directory: pr-tree
-        run: |
-          if git ls-files --stage | grep -Eq '^(120000|160000) '; then
-            echo "::error::PR index contains a symbolic link or submodule"
-            exit 1
-          fi
-
       - name: Compute validator code hash
         id: toolshash
         run: >-
@@ -312,25 +338,6 @@ jobs:
             steps.toolshash.outputs.hash }}
           restore-keys: |
             md-valcache-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
-
-      - name: Set up Python
-        id: setup-python
-        uses: ./.github/actions/setup-md-python
-        with:
-          install: "false"
-
-      - name: Run file-path validation
-        if: always() && !cancelled() && steps.setup-python.outcome == 'success'
-        working-directory: pr-tree
-        run: >-
-          python3 ../tools/validation/validate_file_paths.py --path .
-          --strict --no-color --output validation-file-paths.log
-
-      - name: Verify file-path results
-        if: always() && !cancelled() && steps.setup-python.outcome == 'success'
-        run: |
-          test -f pr-tree/validation-file-paths.log
-          test -f pr-tree/validation-file-paths.json
 
       - name: Write workspace manifest
         env:
@@ -370,17 +377,6 @@ jobs:
           key: >-
             md-sparse-v1-${{ runner.os }}-${{
             needs.detect-changes.outputs.head-sha }}
-
-      - name: Upload file-path results
-        if: always() && !cancelled()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: validation-file-paths-results
-          path: |
-            pr-tree/validation-file-paths.log
-            pr-tree/validation-file-paths.json
-          if-no-files-found: error
-          retention-days: 7
 
       - name: Upload prepared workspace
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -809,7 +805,12 @@ jobs:
   report:
     name: Test suite report
     runs-on: ubuntu-latest
-    needs: [detect-changes, prepare-workspace, tools-tests, mod-tests]
+    needs:
+      - detect-changes
+      - validate-paths
+      - prepare-workspace
+      - tools-tests
+      - mod-tests
     if: ${{ always() && !cancelled() }}
     permissions:
       contents: read
@@ -849,7 +850,6 @@ jobs:
           'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
 
       - name: Restore validation baseline
-        if: needs.detect-changes.outputs.full_suite != 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .validation_baseline
@@ -880,6 +880,7 @@ jobs:
         if: >-
           steps.download-results.outcome == 'failure' ||
           needs.detect-changes.result == 'failure' ||
+          needs.validate-paths.result == 'failure' ||
           needs.prepare-workspace.result == 'failure' ||
           needs.tools-tests.result == 'failure' ||
           needs.mod-tests.result == 'failure'
@@ -909,12 +910,10 @@ jobs:
             --checks-api
             --print
           )
-          if [ -f .validation_baseline/baseline-meta.json ]; then
-            args+=(
-              --baseline-dir .validation_baseline
-              --baseline-toolshash "$TOOLSHASH"
-            )
-          fi
+          args+=(
+            --baseline-dir .validation_baseline
+            --baseline-toolshash "$TOOLSHASH"
+          )
           if [ -n "$PR_NUMBER" ]; then
             args+=(--post-comment)
           fi
