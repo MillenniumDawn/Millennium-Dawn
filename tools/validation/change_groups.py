@@ -94,6 +94,21 @@ _FULL_SUITE_PREFIXES = (
     ".github/workflows/pr-cache-cleanup.yml",
     ".github/workflows/validator-cache.yml",
 )
+_FILE_PATH_ROOTS = (
+    "common",
+    "descriptions",
+    "events",
+    "gfx",
+    "history",
+    "interface",
+    "localisation",
+    "map",
+    "music",
+    "portraits",
+    "scenario_tests",
+    "sound",
+    "tutorial",
+)
 
 
 def _glob_regex(pattern: str) -> re.Pattern:
@@ -133,6 +148,12 @@ def _is_full_suite(path: str) -> bool:
     )
 
 
+def _needs_file_path_validation(path: str) -> bool:
+    return path == "descriptor.mod" or any(
+        path == root or path.startswith(f"{root}/") for root in _FILE_PATH_ROOTS
+    )
+
+
 def classify(paths: Iterable[str], dispatch: bool = False) -> Dict[str, object]:
     """Return changed group booleans and the diff-scoped style file list."""
     normalized = [path.replace("\\", "/") for path in paths if path]
@@ -155,6 +176,9 @@ def classify(paths: Iterable[str], dispatch: bool = False) -> Dict[str, object]:
     result["full_suite"] = full_suite
     result["tools"] = full_suite or any(
         path.startswith("tools/") for path in normalized
+    )
+    result["file-paths"] = full_suite or any(
+        _needs_file_path_validation(path) for path in normalized
     )
     result["style_files"] = style_files
     result["style"] = bool(style_files)

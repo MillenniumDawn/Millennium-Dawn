@@ -119,6 +119,7 @@ def test_test_suite_replaces_old_workflows():
     assert workflow["name"] == "Test Suite"
     assert set(workflow["jobs"]) == {
         "detect-changes",
+        "validate-paths",
         "prepare-workspace",
         "tools-tests",
         "mod-tests",
@@ -185,21 +186,47 @@ def test_tools_checkout_exposes_consumed_configuration():
     assert required <= sparse
 
 
-def test_file_paths_runs_inside_prepare_workspace():
+def test_file_paths_run_in_a_lightweight_index_job():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    assert "validate-paths" not in workflow["jobs"]
-    prepare = workflow["jobs"]["prepare-workspace"]
-    run = next(
-        step["run"]
-        for step in prepare["steps"]
+    detect = workflow["jobs"]["detect-changes"]
+    path_job = workflow["jobs"]["validate-paths"]
+    assert detect["outputs"]["file-paths"] == "${{ steps.groups.outputs.file-paths }}"
+    assert path_job["needs"] == ["detect-changes"]
+    assert path_job["if"].strip() == "needs.detect-changes.outputs.file-paths == 'true'"
+    checkout = path_job["steps"][0]
+    assert checkout["uses"].startswith("actions/checkout@")
+    assert checkout["with"]["repository"] == (
+        "${{ needs.detect-changes.outputs.checkout-repository }}"
+    )
+    assert checkout["with"]["ref"] == "${{ needs.detect-changes.outputs.checkout-ref }}"
+    assert checkout["with"]["filter"] == "blob:none"
+    sparse = set(checkout["with"]["sparse-checkout"].split())
+    assert "descriptor.mod" in sparse
+    assert "tools" in sparse
+    assert "gfx" not in sparse
+    assert "map" not in sparse
+    run_step = next(
+        step
+        for step in path_job["steps"]
         if "validate_file_paths.py" in (step.get("run") or "")
     )
+    run = run_step["run"]
+    assert "working-directory" not in run_step
+    assert "python3 tools/validation/validate_file_paths.py --path ." in run
     assert "--strict" in run
     assert "--output validation-file-paths.log" in run
     assert any(
         step.get("with", {}).get("name") == "validation-file-paths-results"
-        for step in prepare["steps"]
+        for step in path_job["steps"]
     )
+    report = workflow["jobs"]["report"]
+    assert "validate-paths" in report["needs"]
+    failure_check = next(
+        step["if"]
+        for step in report["steps"]
+        if step.get("name") == "Record failed validation jobs"
+    )
+    assert "needs.validate-paths.result == 'failure'" in failure_check
 
 
 def test_detect_changes_uses_python_grouping():
@@ -242,15 +269,10 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
     checkouts = [
         step for step in prepare["steps"] if "actions/checkout@" in step.get("uses", "")
     ]
-    assert len(checkouts) == 2
-    index = next(
-        step
-        for step in prepare["steps"]
-        if step.get("name") == "Checkout PR index for file paths"
+    assert len(checkouts) == 1
+    assert not any(
+        "validate_file_paths.py" in (step.get("run") or "") for step in prepare["steps"]
     )
-    assert index["with"]["path"] == "pr-tree"
-    assert index["with"]["filter"] == "blob:none"
-    assert "gfx" in index["with"]["sparse-checkout"]
     cache = next(
         step
         for step in prepare["steps"]
@@ -306,6 +328,28 @@ def test_report_job_posts_comment_and_checks():
     )
     assert "checkout-repository" in checkout["with"]["repository"]
     assert "checkout-ref" in checkout["with"]["ref"]
+
+
+def test_report_restores_baseline_for_full_and_dispatch_runs():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    report = workflow["jobs"]["report"]
+    restore = next(
+        step
+        for step in report["steps"]
+        if step.get("name") == "Restore validation baseline"
+    )
+    assert "if" not in restore
+    script = next(
+        step["run"]
+        for step in report["steps"]
+        if step.get("name") == "Generate and post validation report"
+    )
+    assert "--baseline-dir .validation_baseline" in script
+    assert '--baseline-toolshash "$TOOLSHASH"' in script
+    assert "if [ -f .validation_baseline/baseline-meta.json ]" not in script
+    assert (
+        "github.event_name == 'workflow_dispatch'" in report["env"]["VALIDATION_SCOPE"]
+    )
 
 
 def test_tools_sidecars_have_stable_schema():

@@ -108,6 +108,8 @@ class ReportContext:
     repo: Optional[str] = None  # "owner/name", used to build blob links to file:line
     # Scope distinguishes diff-only and PR-code reports from full validation.
     validation_scope: str = "full"
+    # "available" or "unavailable" when the workflow requested a baseline.
+    baseline_status: Optional[str] = None
     # Impact reports use a separate comment marker and title.
     report_marker: str = ""
     report_title: str = ""

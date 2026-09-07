@@ -23,12 +23,9 @@ from typing import List, Optional
 
 # Add tools/ to path so the report_lib package imports cleanly when this
 # script is invoked directly (e.g. `python3 tools/generate_validation_report.py`).
-# tools/validation is needed by report_lib.checks_api for the batch name map.
 _TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
-_VALIDATION_DIR = os.path.join(_TOOLS_DIR, "validation")
-for _path in (_TOOLS_DIR, _VALIDATION_DIR):
-    if _path not in sys.path:
-        sys.path.insert(0, _path)
+if _TOOLS_DIR not in sys.path:
+    sys.path.insert(0, _TOOLS_DIR)
 
 from report_lib import (  # noqa: E402
     MAX_ISSUES_STEP_SUMMARY,
@@ -162,6 +159,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.baseline_dir
         else None
     )
+    if args.baseline_dir:
+        ctx.baseline_status = "available" if baseline is not None else "unavailable"
 
     body, step_body, runs, deduped, truncated, baseline_stats = build_report(
         args.results_dir, ctx, baseline
@@ -206,6 +205,11 @@ def main(argv: Optional[List[str]] = None) -> int:
             f"{baseline_stats.new_warnings} new warning(s), "
             f"{baseline_stats.existing_errors + baseline_stats.existing_warnings} existing, "
             f"{baseline_stats.unclassified} unclassified",
+            file=sys.stderr,
+        )
+    elif args.baseline_dir:
+        print(
+            "main baseline unavailable; no NEW/EXISTING comparison was made",
             file=sys.stderr,
         )
 

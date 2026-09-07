@@ -84,6 +84,7 @@ def test_main_annotates_new_vs_existing_from_baseline(tmp_path, monkeypatch, cap
     assert code == 0
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert "1 new error against the main baseline." in report
+    assert "**Baseline comparison:** available" in report
     err = capsys.readouterr().err
     assert "vs main baseline: 1 new error(s), 0 new warning(s)" in err
 
@@ -118,6 +119,7 @@ def test_main_ignores_stale_baseline(tmp_path, monkeypatch):
     # A baseline from a different validator generation must be ignored, not
     # compared: no NEW/EXISTING annotation anywhere.
     assert "main baseline" not in report
+    assert "**Baseline comparison:** unavailable" in report
 
 
 def test_main_renders_without_baseline_when_dir_missing(tmp_path, monkeypatch):
@@ -140,6 +142,7 @@ def test_main_renders_without_baseline_when_dir_missing(tmp_path, monkeypatch):
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert "1 error must be fixed before merge." in report
     assert "main baseline" not in report
+    assert "**Baseline comparison:** unavailable" in report
 
 
 def _findings_tree(tmp_path):
