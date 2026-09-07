@@ -23,6 +23,19 @@ def _ctx(repo=None):
     )
 
 
+def _finding(**overrides):
+    fields = {
+        "severity": Severity.ERROR,
+        "category": "missing_key",
+        "message": "key FOO not found",
+        "file": "events/MD_x.txt",
+        "line": 212,
+        "validator": "events",
+    }
+    fields.update(overrides)
+    return Issue(**fields)
+
+
 def test_render_starts_with_marker(tmp_path):
     run = ValidatorRun(name="events", title="Events", status="passed", had_json=True)
     body = render([run], [], _ctx())
@@ -441,10 +454,8 @@ def test_verdict_counts_new_against_baseline():
     body = render(
         [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=2, new_warnings=0)
     )
-    assert (
-        "2 errors must be fixed before merge. (2 new errors against the main baseline.)"
-        in body
-    )
+    assert "2 new errors against the main baseline must be fixed before merge." in body
+    assert "2 errors total" in body
 
 
 def test_verdict_says_none_new_when_all_existing():
@@ -452,7 +463,8 @@ def test_verdict_says_none_new_when_all_existing():
     body = render(
         [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=0, new_warnings=0)
     )
-    assert "(none new against the main baseline.)" in body
+    assert "No new errors against the main baseline." in body
+    assert "2 errors must be fixed before merge." in body
 
 
 def test_verdict_splits_new_errors_and_warnings():
@@ -464,7 +476,8 @@ def test_verdict_splits_new_errors_and_warnings():
     body = render(
         [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=2, new_warnings=1)
     )
-    assert "(2 new errors, 1 new warning against the main baseline.)" in body
+    assert "2 new errors against the main baseline must be fixed before merge." in body
+    assert "1 new warning" in body
 
 
 def test_step_summary_lists_new_findings():
@@ -552,13 +565,14 @@ def _warning_verdict_body(new_warnings):
 
 def test_warning_verdict_counts_new_against_baseline():
     body = _warning_verdict_body(3)
+    assert "3 new warnings against the main baseline." in body
     assert "5 warnings to review. None block merge." in body
-    assert "(3 new warnings against the main baseline.)" in body
 
 
 def test_warning_verdict_says_none_new():
     body = _warning_verdict_body(0)
-    assert "(none new against the main baseline.)" in body
+    assert "No new warnings against the main baseline." in body
+    assert "5 warnings to review. None block merge." in body
 
 
 def test_baseline_section_caps_new_findings():
@@ -637,22 +651,14 @@ def test_baseline_section_notes_unclassified_findings():
     assert "2 finding(s) could not be compared (no file/line)." in body
 
 
-def test_concise_comment_omits_baseline_section():
+def test_concise_comment_lists_new_findings():
     runs = [
         ValidatorRun(
             name="events", title="Events", status="failed", errors=1, warnings=1
         )
     ]
-    issue = Issue(
-        severity=Severity.ERROR,
-        category="missing_key",
-        message="key FOO not found",
-        file="events/MD_x.txt",
-        line=212,
-        validator="events",
-        baseline_status="new",
-    )
-    stats = _stats(new_issues=[issue])
+    issue = _finding(baseline_status="new")
+    stats = _stats(new_issues=[issue], new_errors=1, new_warnings=0)
     body = render(
         [runs[0]],
         [issue],
@@ -660,7 +666,89 @@ def test_concise_comment_omits_baseline_section():
         include_validator_sections=False,
         baseline_stats=stats,
     )
-    # The concise PR comment carries the counts in the verdict, not the
-    # per-finding section that lives in the step summary.
-    assert "## New Findings Introduced by this branch." not in body
-    assert "(1 new error, 1 new warning against the main baseline.)" in body
+    assert "## New Findings Introduced by this branch." in body
+    assert "**NEW**" in body
+    assert "key FOO not found" in body
+    assert "## Validators" not in body
+    assert "1 new error against the main baseline must be fixed before merge." in body
+    assert "step summary" in body
+
+
+def test_summary_table_adds_new_column_with_baseline():
+    runs = [
+        ValidatorRun(
+            name="events", title="Events", status="failed", errors=3, warnings=1
+        ),
+        ValidatorRun(name="ideas", title="Ideas", status="failed", errors=1),
+    ]
+    new_issue = _finding(baseline_status="new")
+    stats = _stats(new_issues=[new_issue], new_errors=1, new_warnings=0)
+    body = render(runs, [new_issue], _ctx(), baseline_stats=stats)
+    assert "| Validator | New | Errors | Warnings |" in body
+    assert "| ❌ Events | 1 | 3 | 1 |" in body
+    assert "| ❌ Ideas | 0 | 1 | 0 |" in body
+    assert "| **Total** | **1** | **4** | **1** |" in body
+
+
+def test_summary_table_sorts_new_error_validators_first():
+    runs = [
+        ValidatorRun(name="ideas", title="Ideas", status="failed", errors=9),
+        ValidatorRun(name="events", title="Events", status="failed", errors=1),
+    ]
+    new_issue = _finding(baseline_status="new")
+    stats = _stats(new_issues=[new_issue], new_errors=1, new_warnings=0)
+    body = render(runs, [new_issue], _ctx(), baseline_stats=stats)
+    assert body.index("| ❌ Events | 1 |") < body.index("| ❌ Ideas | 0 |")
+
+
+def test_unavailable_baseline_is_explicit():
+    ctx = _ctx()
+    ctx.baseline_status = "unavailable"
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
+    body = render(runs, [], ctx)
+    assert "Baseline comparison unavailable" in body
+    assert "**Baseline comparison:** unavailable" in body
+    assert "against the main baseline" not in body
+
+
+def test_comment_lists_in_diff_findings_without_baseline():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
+    issue = _finding(in_diff=True)
+    body = render(runs, [issue], _ctx(), include_validator_sections=False)
+    assert "## Findings in your diff" in body
+    assert "**IN YOUR DIFF**" in body
+    assert "**NEW**" not in body
+
+
+def test_comment_tags_new_and_in_diff_together():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
+    issue = _finding(baseline_status="new", in_diff=True)
+    stats = _stats(new_issues=[issue], new_errors=1, new_warnings=0)
+    body = render(
+        runs,
+        [issue],
+        _ctx(),
+        include_validator_sections=False,
+        baseline_stats=stats,
+    )
+    assert "**NEW** **IN YOUR DIFF**" in body
+
+
+def test_comment_caps_new_findings():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=5)]
+    issues = [
+        _finding(message=f"key {n} not found", line=n, baseline_status="new")
+        for n in range(1, 6)
+    ]
+    stats = _stats(new_issues=issues, new_errors=5, new_warnings=0)
+    body = render(
+        runs,
+        issues,
+        _ctx(),
+        include_validator_sections=False,
+        max_visible=3,
+        baseline_stats=stats,
+    )
+    assert "key 3 not found" in body
+    assert "key 4 not found" not in body
+    assert "_…and 2 more new errors._" in body

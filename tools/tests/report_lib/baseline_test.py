@@ -7,7 +7,9 @@ from report_lib import (
     Severity,
     classify,
     load_baseline,
+    load_changed_files,
     load_issues,
+    tag_changed_files,
     write_baseline,
 )
 from report_lib.baseline import META_FILENAME, issue_key
@@ -341,6 +343,58 @@ def test_build_report_annotates_new_vs_existing(tmp_path):
     assert stats is not None
     assert stats.new_errors == 1
     assert stats.existing_errors == 1
-    assert "1 new error against the main baseline." in body
+    assert "1 new error against the main baseline" in body
+    assert "## New Findings Introduced by this branch." in body
     assert "## New Findings Introduced by this branch." in step_body
     assert len(deduped) == 2
+
+
+def test_tag_changed_files_sets_in_diff():
+    issues = [
+        _issue(file="events/MD_x.txt"),
+        _issue(file="events/other.txt"),
+        _issue(file=""),
+    ]
+    tag_changed_files(issues, {"events/MD_x.txt"})
+    assert issues[0].in_diff is True
+    assert issues[1].in_diff is False
+    assert issues[2].in_diff is False
+
+
+def test_tag_changed_files_normalises_slashes():
+    issue = _issue(file="events\\MD_x.txt")
+    tag_changed_files([issue], {"events/MD_x.txt"})
+    assert issue.in_diff is True
+
+
+def test_load_changed_files_skips_blank_lines(tmp_path):
+    path = tmp_path / "changed-files.txt"
+    path.write_text("a.txt\n\nb.txt\n", encoding="utf-8")
+    assert load_changed_files(str(path)) == {"a.txt", "b.txt"}
+
+
+def test_load_changed_files_missing_path_is_empty(tmp_path):
+    assert load_changed_files(str(tmp_path / "missing.txt")) == set()
+
+
+def test_classify_then_tag_marks_both_axes(tmp_path):
+    (tmp_path / META_FILENAME).write_text(
+        json.dumps({"toolshash": "h"}), encoding="utf-8"
+    )
+    _write_sidecar(
+        tmp_path,
+        "events",
+        [_issue_dict("error", file="old.txt", line=1, message="old finding")],
+    )
+    baseline = load_baseline(str(tmp_path), "h")
+    assert baseline is not None
+    issues = [
+        _issue(file="old.txt", line=1, message="old finding"),
+        _issue(file="new.txt", line=1, message="new finding"),
+    ]
+    classify(issues, baseline)
+    tag_changed_files(issues, {"new.txt"})
+    assert issues[0].baseline_status == "existing"
+    assert issues[0].in_diff is False
+    assert issues[1].baseline_status == "new"
+    assert issues[1].in_diff is True
