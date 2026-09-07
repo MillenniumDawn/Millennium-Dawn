@@ -1,6 +1,12 @@
 CK_init_supply_yield_effect = {
+	#Yield 
 	set_variable = { ichkeria_supply_yield_pct = 0 }
-	CHE_update_supply_yield_effect = yes
+	CHE_update_pct_yield_effect = yes
+	CHE_weapons_shipment_vars = yes
+	#Iintelligence (Rats/Moles) start up
+	set_variable = { ichkeria_intelligence_pct = 15 }
+	CHE_update_pct_yield_effect = yes
+	CHE_weapons_shipment_vars = yes
 }
 
 CHE_update_supply_yield_effect = {
@@ -21,18 +27,25 @@ CHE_update_supply_yield_effect = {
 	set_variable = { ichkeria_supply_yield_dirty = ichkeria_supply_yield_flip }
 }
 
-CHE_test_supply_yield_set_15_effect = {
-	set_variable = { ichkeria_supply_yield_pct = 15 }
-	CHE_update_supply_yield_effect = yes
+#Iintelligence (Rats/Moles)
+CHE_update_intelligence_effect = {
+	if = {
+		limit = { check_variable = { ichkeria_intelligence_pct > 100 } }
+		set_variable = { ichkeria_intelligence_pct = 100 }
+	}
+	if = {
+		limit = { check_variable = { ichkeria_intelligence_pct < 0 } }
+		set_variable = { ichkeria_intelligence_pct = 0 }
+	}
+
+	set_variable = { ichkeria_intelligence_frame = ichkeria_intelligence_pct }
+	multiply_variable = { ichkeria_intelligence_frame = 10 }
+
+	set_temp_variable = { ichkeria_supply_yield_flip = 1 }
+	subtract_from_temp_variable = { ichkeria_supply_yield_flip = ichkeria_supply_yield_dirty }
+	set_variable = { ichkeria_supply_yield_dirty = ichkeria_supply_yield_flip }
 }
-CHE_test_supply_yield_set_40_effect = {
-	set_variable = { ichkeria_supply_yield_pct = 40 }
-	CHE_update_supply_yield_effect = yes
-}
-CHE_test_supply_yield_set_10_effect = {
-	set_variable = { ichkeria_supply_yield_pct = 10 }
-	CHE_update_supply_yield_effect = yes
-}
+#
 
 CHE_update_pct_yield_effect = {
 	set_variable = {
@@ -216,4 +229,75 @@ CHE_update_pct_yield_effect = {
 	}
 
 	CHE_update_supply_yield_effect = yes
+}
+
+CHE_contraband_effect_on_action = {
+
+	CHE_update_pct_yield_effect = yes
+	
+	if = {
+		limit = {
+			has_country_flag = CHE_slected_arms_package_contraband_type
+		}
+		CHE_weapons_shipment_effect = yes
+	}
+	#add future toggles if you want to collect other packages. (setup up for future contont)
+}
+
+CHE_weapons_shipment_vars = {
+	#Infantry Weapons
+	set_variable = { CHE_weapons_package_var1 = ichkeria_supply_yield_pct }
+	multiply_variable = { CHE_weapons_package_var1 = 20 } #x2000 base
+
+	#Anti Air
+	set_variable = { CHE_weapons_package_var2 = ichkeria_supply_yield_pct }
+	divide_variable = { CHE_weapons_package_var2 = 2.5 } #40 base
+
+	#Anti Tank
+	set_variable = { CHE_weapons_package_var4 = ichkeria_supply_yield_pct }
+	divide_variable = { CHE_weapons_package_var4 = 1.25 } #80 base
+
+	#Artillery
+	set_variable = { CHE_weapons_package_var5= ichkeria_supply_yield_pct }
+	divide_variable = { CHE_weapons_package_var5 = 20 } #5
+	multiply_variable = { CHE_weapons_package_var5 = 3 } #15 base
+
+	#C&C equipment
+	set_variable = { CHE_weapons_package_var6 = ichkeria_supply_yield_pct }
+	divide_variable = { CHE_weapons_package_var6 = 2 } #50
+	multiply_variable = { CHE_weapons_package_var6 = 2.5 } #125 base
+}
+
+CHE_weapons_shipment_effect = {
+	CHE_weapons_shipment_vars = yes
+
+	add_equipment_to_stockpile = {
+		type = infantry_weapons_2
+		amount = CHE_weapons_package_var1
+		producer = CHE
+	}
+
+	add_equipment_to_stockpile = {
+		type = Anti_Air_0
+		amount = CHE_weapons_package_var2
+		producer = CHE
+	}
+
+	add_equipment_to_stockpile = {
+		type = Anti_tank_0
+		amount = CHE_weapons_package_var4
+		producer = CHE
+	}
+
+	add_equipment_to_stockpile = {
+		type = artillery_0
+		amount = CHE_weapons_package_var5
+		producer = CHE
+	}
+
+	add_equipment_to_stockpile = {
+		type = cnc_equipment_1
+		amount = CHE_weapons_package_var6
+		producer = CHE
+	}
 }
