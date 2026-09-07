@@ -80,6 +80,11 @@ class ValidatorRun:
     had_json: bool = False  # True when JSON sidecar was loaded; False = text fallback
     execution_complete: bool = True
     strict: Optional[bool] = None
+    # "tools" for tools-tests suite-run artifacts, "mod" for validator sidecars.
+    suite: str = "mod"
+    job: str = (
+        ""  # owning CI job; empty until known (Checks API falls back to the name)
+    )
 
     def status_symbol(self) -> str:
         return {

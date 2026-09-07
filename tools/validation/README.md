@@ -159,8 +159,8 @@ To keep commit latency low, only a fast subset of validators runs on
 `validate_scripted_gui`, `validate_localisation`, `validate_cosmetic_tags`,
 `validate_variables`, and `validate_focus_tree` run
 **CI-only**. The
-`validate-batch` jobs in
-`.github/workflows/coding-pipeline.yml` gate them instead of pre-commit.
+`mod-tests` batch jobs in
+`.github/workflows/test-suite.yml` gate them instead of pre-commit.
 Their list, changed-group selection, and `--strict` gates live in
 `tools/validation/validator_batches.py`.
 
@@ -175,9 +175,9 @@ cannot run it.
 
 `validate_file_paths` runs CI-only in its own `validate-paths` job. It reads
 the git index rather than the working tree, so it sits outside the batches.
-Those restore a content bundle with no `.git` and no `map/`. The impact scan
-also covers standalone style, descriptor, path, and encoding checks through
-`IMPACT_ONLY_SPECS`; the manual texture audit stays excluded.
+Those restore a content bundle with no `.git` and no `map/`. Standalone style,
+descriptor, path, and encoding checks run inside the core batch job and the
+prepare workspace job; the manual texture audit stays excluded.
 
 To run any validator locally, including a CI-only one, invoke it directly:
 

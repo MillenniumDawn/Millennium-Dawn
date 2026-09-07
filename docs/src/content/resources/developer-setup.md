@@ -202,7 +202,7 @@ See [tools/README.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/mai
 2. Subclass `BaseValidator` from `tools/validation/validator_common.py`.
 3. Use `add_error(category, msg, file, line)` for structured issues.
 4. Add a pre-commit hook entry in `.pre-commit-config.yaml`.
-5. Add a CI entry in `.github/workflows/coding-pipeline.yml`.
+5. Add a CI entry in `tools/validation/validator_batches.py`.
 
 ---
 

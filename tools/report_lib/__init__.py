@@ -31,6 +31,7 @@ from .dedupe import dedupe
 from .loader import (
     MANIFEST_NAME,
     artifact_members,
+    discover_suite_runs,
     discover_validator_runs,
     load_all,
     load_manifest,
@@ -50,6 +51,7 @@ __all__ = [
     "Baseline",
     "BaselineStats",
     "load_all",
+    "discover_suite_runs",
     "discover_validator_runs",
     "MANIFEST_NAME",
     "artifact_members",

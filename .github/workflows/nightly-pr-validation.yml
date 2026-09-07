@@ -1,6 +1,6 @@
 name: Nightly PR Revalidation
 
-# Re-runs the trusted coding pipeline for every open PR after main moves.
+# Re-runs the validation suite for every open PR after main moves.
 
 on:
   schedule:
@@ -41,7 +41,7 @@ jobs:
             --jq '.[] | [.number, .head.sha] | @tsv')
           # The workflow run title is base-owned and carries both pins. A
           # successful head-only match is never enough to skip a validation.
-          runs_url="repos/$GH_REPO/actions/workflows/coding-pipeline.yml/runs"
+          runs_url="repos/$GH_REPO/actions/workflows/test-suite.yml/runs"
           runs_url="$runs_url?event=workflow_dispatch&branch=main&per_page=100"
           successful=$(gh api --paginate "$runs_url" --jq '
             .workflow_runs[]
@@ -63,7 +63,7 @@ jobs:
               echo "Skipping PR #$num: exact successful head/base pair exists"
               continue
             fi
-            if gh workflow run coding-pipeline.yml --ref main \
+            if gh workflow run test-suite.yml --ref main \
                 -f pr_number="$num" -f head_sha="$head_sha" \
                 -f base_sha="$base_sha"; then
               sent=$((sent + 1))
@@ -72,7 +72,7 @@ jobs:
               failed=$((failed + 1))
             fi
           done <<< "$prs"
-          echo "Dispatched coding-pipeline for $sent open PR(s)," \
+          echo "Dispatched test-suite for $sent open PR(s)," \
             "skipped $skipped exact successful pair(s)," \
             "$failed dispatch failure(s)"
           if [ "$failed" -gt 0 ]; then

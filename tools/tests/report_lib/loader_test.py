@@ -1,5 +1,8 @@
 """Tests for `report_lib.loader`."""
 
+import json
+
+import pytest
 from report_lib import MANIFEST_NAME, discover_validator_runs, load_all
 from shared.suite import make_results_tree, write_log, write_sidecar, write_text
 
@@ -415,6 +418,137 @@ def test_malformed_manifest_only_batch_is_reported(tmp_path):
     assert runs[0].name == "impact-verification"
     assert runs[0].status == "failed"
     assert runs[0].issues[0].category == "batch-manifest"
+
+
+def _write_suite_run(root, payload):
+    directory = root / "tools-tests-Linux-results"
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "suite-run.json").write_text(payload, encoding="utf-8")
+    return root
+
+
+def test_suite_run_artifact_loads_as_a_tools_run(tmp_path):
+    root = _write_suite_run(
+        tmp_path / "validation-results",
+        json.dumps(
+            {
+                "suite": "tools",
+                "job": "Tools tests (Linux)",
+                "name": "tools-linux",
+                "title": "Tools tests (Linux)",
+                "status": "failed",
+                "errors": 2,
+                "warnings": 0,
+                "issues": [],
+            }
+        ),
+    )
+
+    runs = load_all(str(root))
+
+    assert len(runs) == 1
+    run = runs[0]
+    assert run.name == "tools-linux"
+    assert run.suite == "tools"
+    assert run.job == "Tools tests (Linux)"
+    assert run.status == "failed"
+    assert run.errors == 2
+    assert run.execution_complete is True
+
+
+def test_suite_run_without_errors_counts_its_issues(tmp_path):
+    root = _write_suite_run(
+        tmp_path / "validation-results",
+        json.dumps(
+            {
+                "suite": "tools",
+                "job": "Tools tests (Linux)",
+                "name": "tools-linux",
+                "title": "Tools tests (Linux)",
+                "status": "failed",
+                "errors": 0,
+                "warnings": 0,
+                "issues": [
+                    {
+                        "severity": "error",
+                        "category": "quality",
+                        "message": "pylint failed",
+                    }
+                ],
+            }
+        ),
+    )
+
+    run = load_all(str(root))[0]
+
+    assert run.errors == 1
+    assert run.issues[0].validator == "tools-linux"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "{broken",
+        "[]",
+        json.dumps({"suite": "tools", "name": "tools-linux"}),
+        json.dumps(
+            {
+                "suite": "not-a-suite",
+                "job": "",
+                "name": "tools-linux",
+                "title": "t",
+                "status": "passed",
+                "errors": 0,
+                "warnings": 0,
+                "issues": [],
+            }
+        ),
+        json.dumps(
+            {
+                "suite": "tools",
+                "job": "",
+                "name": "tools-linux",
+                "title": "t",
+                "status": "exploded",
+                "errors": 0,
+                "warnings": 0,
+                "issues": [],
+            }
+        ),
+        json.dumps(
+            {
+                "suite": "tools",
+                "job": "",
+                "name": "tools-linux",
+                "title": "t",
+                "status": "passed",
+                "errors": -1,
+                "warnings": 0,
+                "issues": [],
+            }
+        ),
+        json.dumps(
+            {
+                "suite": "tools",
+                "job": "",
+                "name": "tools-linux",
+                "title": "t",
+                "status": "passed",
+                "errors": 0,
+                "warnings": 0,
+                "issues": [{"severity": "ERROR", "category": "c", "message": "m"}],
+            }
+        ),
+    ],
+)
+def test_malformed_suite_run_fails_closed(tmp_path, payload):
+    root = _write_suite_run(tmp_path / "validation-results", payload)
+
+    run = load_all(str(root))[0]
+
+    assert run.status == "failed"
+    assert run.execution_complete is False
+    assert run.issues[0].category == "malformed-suite-run"
 
 
 def test_stderr_logs_are_not_runs(tmp_path):

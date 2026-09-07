@@ -8,7 +8,10 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from .models import Issue, Severity, ValidatorRun
 
 MANIFEST_NAME = "batch-manifest.json"
+_SUITE_RUN_NAME = "suite-run.json"
 _VALID_MODES = {"batch", "impact"}
+_VALID_RUN_STATUSES = {"passed", "warnings", "failed", "no_output", "unknown"}
+_VALID_SUITES = {"tools", "mod"}
 _VALID_STATUSES = {"ok", "findings", "crash", "missing"}
 _SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 _SCRIPT_RE = re.compile(r"^validate_[a-z0-9_-]+\.py$")
@@ -142,12 +145,23 @@ def discover_validator_runs(results_dir: str) -> List[Tuple[str, Path]]:
     return sorted(runs.items())
 
 
+def discover_suite_runs(results_dir: str) -> List[Path]:
+    """Return every suite-run.json sidecar, sorted by parent directory."""
+    base = Path(results_dir)
+    if not base.is_dir():
+        return []
+    return sorted(base.rglob(_SUITE_RUN_NAME))
+
+
 def load_all(results_dir: str) -> List[ValidatorRun]:
     """Load validator results and apply any batch manifest metadata."""
     records = [
         (slug, artifact_dir, _load_one(slug, artifact_dir))
         for slug, artifact_dir in discover_validator_runs(results_dir)
     ]
+    records.extend(
+        (run.name, path.parent, run) for path, run in _load_suite_runs(results_dir)
+    )
     manifests = []
     base = Path(results_dir)
     if base.is_dir():
@@ -217,6 +231,88 @@ def load_all(results_dir: str) -> List[ValidatorRun]:
                 )
 
     return [run for _slug, _directory, run in sorted(records, key=lambda item: item[0])]
+
+
+def _load_suite_runs(results_dir: str) -> List[Tuple[Path, ValidatorRun]]:
+    """Load one ValidatorRun per tools-tests suite-run.json, failing closed."""
+    runs = []
+    for path in discover_suite_runs(results_dir):
+        fallback = path.parent.name.removesuffix("-results") or "suite-run"
+        try:
+            runs.append((path, _parse_suite_run(path)))
+        except ValueError as exc:
+            runs.append(
+                (
+                    path,
+                    ValidatorRun(
+                        name=fallback,
+                        title=_slug_to_title(fallback),
+                        issues=[
+                            Issue(
+                                severity=Severity.ERROR,
+                                category="malformed-suite-run",
+                                message=str(exc),
+                                validator=fallback,
+                            )
+                        ],
+                        status="failed",
+                        errors=1,
+                        execution_complete=False,
+                    ),
+                )
+            )
+    return runs
+
+
+def _parse_suite_run(path: Path) -> ValidatorRun:
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Malformed suite-run sidecar: {path.name}") from exc
+    required = {
+        "suite",
+        "job",
+        "name",
+        "title",
+        "status",
+        "errors",
+        "warnings",
+        "issues",
+    }
+    if not isinstance(data, dict) or not required <= data.keys():
+        raise ValueError(f"Malformed suite-run sidecar: {path.name}")
+    if (
+        data["suite"] not in _VALID_SUITES
+        or not isinstance(data["job"], str)
+        or not isinstance(data["name"], str)
+        or not isinstance(data["title"], str)
+        or data["status"] not in _VALID_RUN_STATUSES
+        or type(data["errors"]) is not int
+        or type(data["warnings"]) is not int
+        or data["errors"] < 0
+        or data["warnings"] < 0
+        or not isinstance(data["issues"], list)
+        or not all(_is_valid_issue(item) for item in data["issues"])
+    ):
+        raise ValueError(f"Malformed suite-run sidecar: {path.name}")
+    issues = [Issue.from_dict(item, validator=data["name"]) for item in data["issues"]]
+    errors = data["errors"] or sum(1 for i in issues if i.severity == Severity.ERROR)
+    warnings = data["warnings"] or sum(
+        1 for i in issues if i.severity == Severity.WARNING
+    )
+    return ValidatorRun(
+        name=data["name"],
+        title=data["title"],
+        issues=issues,
+        errors=errors,
+        warnings=warnings,
+        status=data["status"],
+        had_json=True,
+        execution_complete=data["status"] not in {"unknown", "no_output"},
+        suite=data["suite"],
+        job=data["job"],
+    )
 
 
 def _manifest_failure(message: str, name: str = "impact-verification") -> ValidatorRun:

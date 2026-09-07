@@ -1,12 +1,20 @@
-"""Emit GitHub Checks API annotations for validator issues.
+"""Emit GitHub Checks API annotations for validator issues, grouped by CI job.
 
-One Check Run per validator. The GitHub Checks API caps each request at 50
-annotations, but a Check Run can hold an unlimited total — additional
-batches are attached via PATCH after the initial POST. We default to 100
-annotations per Check Run (configurable via MAX_ANNOTATIONS_PER_CHECK),
-which keeps the slowest GitHub Files-Changed render time reasonable while
-giving reviewers double the inline coverage. Issues are sorted errors-first,
-then by file/line, so the most important entries always survive any cap.
+One Check Run per job (the Actions job names, e.g. "Tools tests (Linux)" or
+"Mod tests (core)"). Runs carry an explicit `job` when they come from a
+suite-run sidecar or a batch manifest; validator sidecars fall back to a
+name-based lookup through `validator_batches.BATCHES`. The GitHub Checks API
+caps each request at 50 annotations, but a Check Run can hold an unlimited
+total; additional batches are attached via PATCH after the initial write. We
+default to 100 annotations per Check Run (configurable via
+MAX_ANNOTATIONS_PER_CHECK), which keeps the slowest GitHub Files-Changed
+render time reasonable while giving reviewers double the inline coverage.
+Issues are sorted errors-first, then by file/line, so the most important
+entries always survive any cap.
+
+The workflow jobs already create Check Runs on the head SHA under their own
+names, so an existing run with the job name is PATCHed in place; a POST is
+only made when no matching Check Run exists.
 
 Only issues with both `file` and `line > 0` are eligible for annotations.
 Issues without a concrete location appear in the PR comment but not on the
@@ -18,11 +26,29 @@ import urllib.error
 import urllib.request
 from typing import Dict, List, Optional, Tuple
 
+from validator_batches import BATCHES
+
 from .models import Issue, Severity, ValidatorRun
 
 ANNOTATIONS_PER_REQUEST = 50  # GitHub API hard limit per POST/PATCH
 MAX_ANNOTATIONS_PER_CHECK = 100  # total kept; multiple of ANNOTATIONS_PER_REQUEST
 MAX_MESSAGE_CHARS = 64_000  # API cap on output.text
+
+_CORE_JOB = "Mod tests (core)"
+_OS_JOB_NAMES = {"linux": "Linux", "macos": "macOS", "windows": "Windows"}
+
+
+def _fallback_job(name: str) -> str:
+    """Map a validator slug to its owning CI job when `job` is unset."""
+    if name.startswith("tools-"):
+        os_name = name.removeprefix("tools-")
+        return f"Tools tests ({_OS_JOB_NAMES.get(os_name.lower(), os_name)})"
+    for batch, specs in BATCHES.items():
+        if any(spec.name == name for spec in specs):
+            return f"Mod tests ({batch})"
+    # Standalone checks (file-paths, style, common-mistakes, encoding,
+    # descriptors) and anything unmapped run inside the core batch job.
+    return _CORE_JOB
 
 
 def post_checks(
@@ -33,8 +59,9 @@ def post_checks(
     github_token: str,
     name_prefix: str = "",
 ) -> List[Tuple[str, bool, str]]:
-    """Create one Check Run per validator. Returns [(title, success, msg), ...]."""
-    api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}/check-runs"
+    """Create one Check Run per job. Returns [(name, success, msg), ...]."""
+    base = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
+    api_base = f"{base}/check-runs"
     headers = {
         "Authorization": f"Bearer {github_token}",
         "Accept": "application/vnd.github+json",
@@ -42,16 +69,34 @@ def post_checks(
         "Content-Type": "application/json",
     }
 
-    results: List[Tuple[str, bool, str]] = []
+    groups: Dict[str, List[ValidatorRun]] = {}
     for run in runs:
-        annotations = _pick_annotations(run)
+        groups.setdefault(run.job or _fallback_job(run.name), []).append(run)
+
+    results: List[Tuple[str, bool, str]] = []
+    existing = _existing_check_runs(base, head_sha, headers)
+    for job, job_runs in groups.items():
+        merged = _merge_runs(job, job_runs)
+        annotations = _pick_annotations(merged)
         first_batch = annotations[:ANNOTATIONS_PER_REQUEST]
         remaining = annotations[ANNOTATIONS_PER_REQUEST:]
 
-        payload = _build_check_payload(run, head_sha, first_batch, name_prefix)
-        success, msg, check_id = _post_one(api_base, payload, headers)
+        name = name_prefix + (merged.title or merged.name)
+        check_id = existing.get(name)
+        success = False
+        msg = ""
+        if check_id is not None:
+            patch_url = f"{api_base}/{check_id}"
+            payload = _build_patch_payload(merged, first_batch, with_conclusion=True)
+            success, msg = _patch_one(patch_url, payload, headers)
+            if success:
+                msg = f"check #{check_id}"
+        if check_id is None or not success:
+            # Job-owned Check Runs often reject PATCHes; POST a job-named run.
+            payload = _build_check_payload(merged, head_sha, first_batch, name_prefix)
+            success, msg, check_id = _post_one(api_base, payload, headers)
         if not success or not remaining:
-            results.append((run.title, success, msg))
+            results.append((name, success, msg))
             continue
 
         # Attach the extra batches. Each PATCH replaces output.title/summary
@@ -59,14 +104,63 @@ def post_checks(
         patch_url = f"{api_base}/{check_id}"
         for start in range(0, len(remaining), ANNOTATIONS_PER_REQUEST):
             batch = remaining[start : start + ANNOTATIONS_PER_REQUEST]
-            patch_payload = _build_patch_payload(run, batch)
+            patch_payload = _build_patch_payload(merged, batch)
             patch_ok, patch_msg = _patch_one(patch_url, patch_payload, headers)
             if not patch_ok:
                 msg += f"; PATCH at offset {start + ANNOTATIONS_PER_REQUEST} failed: {patch_msg}"
                 success = False
                 break
-        results.append((run.title, success, msg))
+        results.append((name, success, msg))
     return results
+
+
+def _merge_runs(job: str, runs: List[ValidatorRun]) -> ValidatorRun:
+    """One synthetic run per job, carrying the merged verdict and issues."""
+    status = "passed"
+    if any(r.status in {"failed", "unknown"} for r in runs):
+        status = "failed"
+    elif any(r.status == "no_output" for r in runs):
+        status = "no_output"
+    elif any(r.status == "warnings" for r in runs):
+        status = "warnings"
+    return ValidatorRun(
+        name=job,
+        title=job,
+        issues=[issue for run in runs for issue in run.issues],
+        errors=sum(r.errors for r in runs),
+        warnings=sum(r.warnings for r in runs),
+        status=status,
+        log_text="\n\n".join(r.log_text for r in runs if r.log_text),
+        had_json=any(r.had_json for r in runs),
+        execution_complete=all(r.execution_complete for r in runs),
+        strict=all(r.strict is None or r.strict for r in runs),
+    )
+
+
+def _existing_check_runs(base: str, head_sha: str, headers: dict) -> Dict[str, int]:
+    """Name -> id for the Check Runs already posted on the head SHA.
+
+    An unreadable listing (network hiccup, rate limit) returns {} so the
+    caller falls back to POSTing; the report comment stays the source of
+    truth either way.
+    """
+    url = f"{base}/commits/{head_sha}/check-runs?per_page=100"
+    try:
+        req = urllib.request.Request(url, headers=headers, method="GET")
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return {}
+    entries = data.get("check_runs") if isinstance(data, dict) else None
+    if not isinstance(entries, list):
+        return {}
+    return {
+        entry["name"]: entry["id"]
+        for entry in entries
+        if isinstance(entry, dict)
+        and isinstance(entry.get("name"), str)
+        and isinstance(entry.get("id"), int)
+    }
 
 
 def _build_check_payload(
@@ -86,22 +180,28 @@ def _build_check_payload(
     }
 
 
-def _build_patch_payload(run: ValidatorRun, annotations: List[Dict]) -> dict:
-    return {
+def _build_patch_payload(
+    run: ValidatorRun, annotations: List[Dict], with_conclusion: bool = False
+) -> Dict[str, object]:
+    payload: Dict[str, object] = {
         "output": {
             "title": f"{run.title}: {run.errors} error(s), {run.warnings} warning(s)",
             "summary": _summary_line(run),
             "annotations": annotations,
         },
     }
+    if with_conclusion:
+        payload["status"] = "completed"
+        payload["conclusion"] = _conclusion_for(run)
+    return payload
 
 
 def _conclusion_for(run: ValidatorRun) -> str:
     if not run.execution_complete:
         return "failure"
-    if run.errors > 0 and run.strict is not False:
+    if run.errors > 0 and (run.strict is None or run.strict):
         return "failure"
-    if run.status in {"failed", "unknown"} and run.strict is not False:
+    if run.status in {"failed", "unknown"} and (run.strict is None or run.strict):
         return "failure"
     if run.errors > 0 or run.warnings > 0:
         return "neutral"

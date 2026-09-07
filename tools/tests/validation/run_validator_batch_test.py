@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 import run_validator_batch as rvb
-from impact_report import safe_extract
 from report_lib import load_all
 from validator_batches import ValidatorSpec
 
@@ -385,7 +384,10 @@ def test_batch_archive_round_trip_includes_stderr(
         for path in sorted(out_dir.iterdir()):
             archive.write(path, path.name)
     extracted = tmp_path / "extracted"
-    members = safe_extract(archive_path, extracted)
+    extracted.mkdir()
+    with zipfile.ZipFile(archive_path) as archive:
+        members = archive.namelist()
+        archive.extractall(extracted)
 
     assert "validation-stub.stderr.log" in members
     assert (extracted / "validation-stub.stderr.log").read_text(

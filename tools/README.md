@@ -214,19 +214,19 @@ See the [Workshop Publishing Guide](#workshop-publishing-guide) below for full u
 
 ### Report Library (`report_lib/`)
 
-Internal package used by `generate_validation_report.py` to render PR comments and post GitHub Check Runs. Its only inputs are the JSON sidecars produced by each validator.
+Internal package used by `generate_validation_report.py` to render PR comments and post GitHub Check Runs. Its inputs are the JSON sidecars produced by each validator plus the `suite-run.json` artifacts the tools-tests jobs upload.
 
-| Module            | Responsibility                                                          |
-| ----------------- | ----------------------------------------------------------------------- |
-| **models.py**     | `Issue`, `ValidatorRun`, `ReportContext` dataclasses                    |
-| **loader.py**     | Reads `.json` sidecars; falls back to parsing `.log` text when missing  |
-| **dedupe.py**     | Collapses cross-validator duplicates, preserving first-seen order       |
-| **markdown.py**   | Renders the report Markdown — summary table + issues-by-file + raw logs |
-| **truncation.py** | Drops heavy sections when the body exceeds 60 KB, keeping the summary   |
-| **comment.py**    | Find-by-marker + PATCH/POST logic for the bot-authored PR comment       |
-| **checks_api.py** | One Check Run per validator with up to 50 annotations per run           |
+| Module            | Responsibility                                                                                 |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| **models.py**     | `Issue`, `ValidatorRun`, `ReportContext` dataclasses                                           |
+| **loader.py**     | Reads `.json` sidecars and `suite-run.json`; falls back to parsing `.log` text when missing    |
+| **dedupe.py**     | Collapses cross-validator duplicates, preserving first-seen order                              |
+| **markdown.py**   | Renders the report Markdown: verdict banner, Tools/Mod test sections, issues-by-file, raw logs |
+| **truncation.py** | Drops heavy sections when the body exceeds 60 KB, keeping the summary                          |
+| **comment.py**    | Find-by-marker + PATCH/POST logic for the bot-authored PR comment                              |
+| **checks_api.py** | One Check Run per CI job with up to 50 annotations per request                                 |
 
-Tests live in `tests/report_lib/` and run on every PR via the `tools-validation.yml` workflow.
+Tests live in `tests/report_lib/` and run on every PR via the `test-suite.yml` workflow.
 
 ### Tests (`tests/`)
 

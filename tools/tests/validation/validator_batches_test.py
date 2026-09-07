@@ -193,7 +193,7 @@ def test_reference_file_selects_its_validator():
 def test_unrelated_changes_select_nothing():
     for path in (
         "tools/tests/validation/config_drift_test.py",
-        ".github/workflows/coding-pipeline.yml",
+        ".github/workflows/test-suite.yml",
         "common/decisions/whatever.txt",
     ):
         batch, adhoc = vb.select_for_changed_files([path])
