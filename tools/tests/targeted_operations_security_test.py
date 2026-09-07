@@ -1,16 +1,22 @@
 from pathlib import Path
 
 import pytest
-from great_ai_race_state_model_test import RaceScript, _parse_race_script
+from great_ai_race_state_model_test import _parse_race_script
 from targeted_operations_core_test import TargetScript
+from targeted_operations_helpers_test import TargetedScript
 
 ROOT = Path(__file__).resolve().parents[2]
 EFFECTS = ROOT / "common/scripted_effects/03_targeted_operations_security.txt"
 TRIGGERS = ROOT / "common/scripted_triggers/03_targeted_operations_security.txt"
 
 
-class SecurityScript(RaceScript):
+class SecurityScript(TargetedScript):
     """Execute policy source with roster and economy interfaces as fixtures."""
+
+    country_trigger_fields = {
+        "has_political_power": "power",
+        "num_of_controlled_states": "states",
+    }
 
     def __init__(self):
         self.effects = _parse_race_script(EFFECTS.read_text(encoding="utf-8"))
@@ -33,50 +39,33 @@ class SecurityScript(RaceScript):
             for identifier in (0, 1, 2, 3)
         }
 
-    def value(self, name, identifier):
-        if name == "THIS":
-            return identifier
-        return super().value(name, identifier)
-
-    def condition(self, statements, identifier):
+    def condition_statement(self, statement, identifier):
+        key, comparison, operand = statement
         country = self.countries[identifier]
-        outcomes = []
-        for key, comparison, operand in self._active_statements(statements, identifier):
-            if key == "set_temp_variable":
-                self.execute([(key, comparison, operand)], identifier)
-                result = True
-            elif key.startswith("var:"):
-                target = self.value(key[4:], identifier)
-                result = self.condition(operand, target)
-            elif key == "TOP_enabled":
-                result = self.enabled == (operand == "yes")
-            elif key == "TOP_country_eligible":
-                eligible = self.enabled and country["exists"] and country["eligible"]
-                result = eligible == (operand == "yes")
-            elif key == "TOP_has_protected_official":
-                result = country["official"] == (operand == "yes")
-            elif key in {"has_political_power", "num_of_controlled_states"}:
-                field = "power" if key == "has_political_power" else "states"
-                result = self.comparisons[comparison](
-                    country[field], self.value(operand, identifier)
-                )
-            else:
-                result = super().condition([(key, comparison, operand)], identifier)
-            outcomes.append(result)
-        return all(outcomes)
+        if key.startswith("var:"):
+            target = self.value(key[4:], identifier)
+            result = self.condition(operand, target)
+        elif key == "TOP_enabled":
+            result = self.enabled == (operand == "yes")
+        elif key == "TOP_country_eligible":
+            eligible = self.enabled and country["exists"] and country["eligible"]
+            result = eligible == (operand == "yes")
+        elif key == "TOP_has_protected_official":
+            result = country["official"] == (operand == "yes")
+        else:
+            result = super().condition_statement(statement, identifier)
+        return result
 
-    def execute(self, statements, identifier):
-        for key, comparison, operand in self._active_statements(statements, identifier):
-            if key in {"if", "else_if", "else"}:
-                self.execute(operand, identifier)
-            elif key == "add_political_power":
-                self.countries[identifier]["power"] += self.value(operand, identifier)
-            elif key == "TOP_get_protection_country":
-                self.temps["TOP_security_country"] = self.protected.get(
-                    self.temps.get("TOP_target"), 0
-                )
-            else:
-                super().execute([(key, comparison, operand)], identifier)
+    def execute_statement(self, statement, identifier):
+        key, comparison, operand = statement
+        if key == "add_political_power":
+            self.countries[identifier]["power"] += self.value(operand, identifier)
+        elif key == "TOP_get_protection_country":
+            self.temps["TOP_security_country"] = self.protected.get(
+                self.temps.get("TOP_target"), 0
+            )
+        else:
+            super().execute_statement(statement, identifier)
 
     def run(self, name, identifier=1):
         if name == "modify_treasury_effect":
@@ -300,17 +289,13 @@ def test_successful_lethal_operation_preserves_pre_retirement_exposure_bonus():
             else:
                 super().run(name, identifier)
 
-        def execute(self, statements, identifier):
-            for key, comparison, operand in self._active_statements(
-                statements, identifier
-            ):
-                if key in {"if", "else_if", "else"}:
-                    self.execute(operand, identifier)
-                elif key == "random":
-                    data = {name: value for name, _, value in operand}
-                    self.exposure_rolls.append(self.value(data["chance"], identifier))
-                else:
-                    super().execute([(key, comparison, operand)], identifier)
+        def execute_statement(self, statement, identifier):
+            key, comparison, operand = statement
+            if key == "random":
+                data = {name: value for name, _, value in operand}
+                self.exposure_rolls.append(self.value(data["chance"], identifier))
+            else:
+                super().execute_statement(statement, identifier)
 
     game = ExposureScript()
     game.authorize(target=129, method=3)

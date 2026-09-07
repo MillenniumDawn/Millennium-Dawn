@@ -103,7 +103,7 @@ alias can select Python 3.9.
 
 Local verification on 7 September 2026, Python 3.12:
 
-- Full repository pytest suite: 5,690 passed, 12 skipped, zero failures (519 seconds).
+- Full repository pytest suite: 5,690 passed, 12 skipped, zero failures (553 seconds after the shared-helper repair).
   This includes 258 Targeted Operations contract cases across six test modules.
 - Roster generation check: no generated output differs. Focused checks for the new contracts
   and isolated staged-validation CLI behavior: 260 passed.
@@ -115,6 +115,13 @@ Local verification on 7 September 2026, Python 3.12:
   commit; the separate corporate-history check's 34 duplicate keys were also verified there.
 - CI unit checkout now includes country tags, generated raids, and the Iraqi card GUI consumed
   by these tests. The existing configuration guard checks those fixtures.
+- The first published commit passed Linux, macOS, and Windows unit CI. Its duplication failure
+  was repaired by sharing interpreter helpers without changing any test function or assertion.
+  Local jscpd 5.0.16 then reported zero clones using the unchanged repository configuration.
+- Published content CI also reports 68 duplicate localisation keys and 62 variable-reference
+  errors. Duplicate counts match the fork base; variable findings occur in unchanged files.
+  Its comparison cache came from an older base, so its reported new-error count is not evidence
+  that these errors were introduced here. Staged integration fails on the same 105 old events.
 
 Native-engine console fixtures, visual acceptance, and natural campaign tests have not been run.
 The source-interpreter results above do not close those acceptance items.

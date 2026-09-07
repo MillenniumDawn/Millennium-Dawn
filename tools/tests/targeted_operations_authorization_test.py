@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 from great_ai_race_state_model_test import (
-    RaceScript,
     _extract_block,
     _named_block,
     _parse_race_script,
     _substitute_script_parameters,
 )
+from targeted_operations_helpers_test import TargetedScript
 
 ROOT = Path(__file__).resolve().parents[2]
 EFFECT_PATH = "common/scripted_effects/02_targeted_operations_authorization_effects.txt"
@@ -24,8 +24,10 @@ def source(path):
     return (ROOT / path).read_text(encoding="utf-8-sig")
 
 
-class ReviewScript(RaceScript):
+class ReviewScript(TargetedScript):
     """Execute approval source with engine diplomacy and core eligibility as fixtures."""
+
+    country_trigger_fields = {"has_political_power": "power"}
 
     def __init__(self, designated=True):
         self.effects = _parse_race_script(source(EFFECT_PATH))
@@ -125,110 +127,79 @@ class ReviewScript(RaceScript):
             return scope.get(key, 0)
         return super().value(name, identifier)
 
-    def condition(self, statements, identifier):
+    def condition_statement(self, statement, identifier):
+        key, comparison, operand = statement
         country = self.countries[identifier]
-        outcomes = []
-        for key, comparison, operand in self._active_statements(statements, identifier):
-            if key in {"if", "else_if", "else"}:
-                result = self.condition(operand, identifier)
-            elif key.startswith("var:") or key == "controller":
-                target = self.value(key, identifier)
-                self.scope_stack.append(identifier)
-                try:
-                    result = self.condition(operand, target)
-                finally:
-                    self.scope_stack.pop()
-            elif key == "set_temp_variable":
-                self.execute([(key, comparison, operand)], identifier)
-                result = True
-            elif key in {"TOP_enabled", "TOP_country_eligible"}:
-                result = country["exists"] == (operand == "yes")
-            elif key == "TOP_authored_role_eligible":
-                result = (
-                    True  # Military/office authoring is validated by the roster suite.
-                )
-            elif key == "TOP_authored_capture_override":
-                result = operand == "no"
-            elif key in {"any_of", "all_of"}:
-                data = {name: value for name, _, value in operand}
-                values = []
-                for member in self.value(data["array"], identifier) or []:
-                    self.temps[data.get("value", "v")] = member
-                    values.append(
-                        self.condition(
-                            [
-                                entry
-                                for entry in operand
-                                if entry[0] not in {"array", "value"}
-                            ],
-                            identifier,
-                        )
-                    )
-                result = any(values) if key == "any_of" else all(values)
-            elif key == "TOP_exceptional_authority":
-                result = country["authority"] == (operand == "yes")
-            elif key == "TOP_facility_available":
-                state = self.countries[self.temps["TOP_facility_state"]]
-                result = (self.temps["TOP_facility_kind"] in state["facilities"]) == (
-                    operand == "yes"
-                )
-            elif key in {
-                "western_conservatism_are_in_power",
-                "western_liberals_are_in_power",
-                "western_social_democrats_are_in_power",
-            }:
-                result = country["enhanced"] == (operand == "yes")
-            elif key == "has_political_power":
-                result = self.comparisons[comparison](
-                    country["power"], self.value(operand, identifier)
-                )
-            elif key == "is_controlled_by":
-                result = country.get("controller", 0) == self.value(operand, identifier)
-            elif key in {"has_war_with", "is_in_faction_with"}:
-                pool = "wars" if key == "has_war_with" else "allies"
-                result = self.value(operand, identifier) in country[pool]
-            elif key == "has_opinion":
-                data = {name: value for name, _, value in operand}
-                target = self.value(data["target"], identifier)
-                _, op, bound = next(entry for entry in operand if entry[0] == "value")
-                result = self.comparisons[op](
-                    country["opinion"].get(target, 0), float(bound)
-                )
-            else:
-                result = super().condition([(key, comparison, operand)], identifier)
-            outcomes.append(result)
-        return all(outcomes)
+        if key.startswith("var:") or key == "controller":
+            target = self.value(key, identifier)
+            self.scope_stack.append(identifier)
+            try:
+                result = self.condition(operand, target)
+            finally:
+                self.scope_stack.pop()
+        elif key in {"TOP_enabled", "TOP_country_eligible"}:
+            result = country["exists"] == (operand == "yes")
+        elif key == "TOP_authored_role_eligible":
+            result = True
+        elif key == "TOP_authored_capture_override":
+            result = operand == "no"
+        elif key == "TOP_exceptional_authority":
+            result = country["authority"] == (operand == "yes")
+        elif key == "TOP_facility_available":
+            state = self.countries[self.temps["TOP_facility_state"]]
+            result = (self.temps["TOP_facility_kind"] in state["facilities"]) == (
+                operand == "yes"
+            )
+        elif key in {
+            "western_conservatism_are_in_power",
+            "western_liberals_are_in_power",
+            "western_social_democrats_are_in_power",
+        }:
+            result = country["enhanced"] == (operand == "yes")
+        elif key == "is_controlled_by":
+            result = country.get("controller", 0) == self.value(operand, identifier)
+        elif key in {"has_war_with", "is_in_faction_with"}:
+            pool = "wars" if key == "has_war_with" else "allies"
+            result = self.value(operand, identifier) in country[pool]
+        elif key == "has_opinion":
+            data = {name: value for name, _, value in operand}
+            target = self.value(data["target"], identifier)
+            _, op, bound = next((entry for entry in operand if entry[0] == "value"))
+            result = self.comparisons[op](
+                country["opinion"].get(target, 0), float(bound)
+            )
+        else:
+            result = super().condition_statement(statement, identifier)
+        return result
 
-    def execute(self, statements, identifier):
-        for key, comparison, operand in self._active_statements(statements, identifier):
-            if key in {"if", "else_if", "else", "hidden_effect"}:
-                self.execute(operand, identifier)
-            elif key == "for_each_loop":
-                data = {name: value for name, _, value in operand}
-                for index, value in enumerate(
-                    list(self.value(data["array"], identifier) or [])
-                ):
-                    self.temps[data["value"]] = value
-                    if "index" in data:
-                        self.temps[data["index"]] = index
-                    self.execute(
-                        [
-                            entry
-                            for entry in operand
-                            if entry[0] not in {"array", "value", "index"}
-                        ],
-                        identifier,
-                    )
-            elif key == "add_political_power":
-                self.countries[identifier]["power"] += self.value(operand, identifier)
-            elif key == "remove_from_array":
-                name, _, value = operand[0]
-                values = self.value(name, identifier) or []
-                member = self.value(value, identifier)
-                if member in values:
-                    values.remove(member)
-            else:
-                super().execute([(key, comparison, operand)], identifier)
+    def execute_statement(self, statement, identifier):
+        key, comparison, operand = statement
+        if key == "for_each_loop":
+            data = {name: value for name, _, value in operand}
+            for index, value in enumerate(
+                list(self.value(data["array"], identifier) or [])
+            ):
+                self.temps[data["value"]] = value
+                if "index" in data:
+                    self.temps[data["index"]] = index
+                self.execute(
+                    [
+                        entry
+                        for entry in operand
+                        if entry[0] not in {"array", "value", "index"}
+                    ],
+                    identifier,
+                )
+        elif key == "add_political_power":
+            self.countries[identifier]["power"] += self.value(operand, identifier)
+        elif key == "remove_from_array":
+            name, _, value = operand[0]
+            values = self.value(name, identifier) or []
+            member = self.value(value, identifier)
+            if member in values:
+                values.remove(member)
+        else:
+            super().execute_statement(statement, identifier)
 
     def run(self, name, identifier=1):
         self.execute(self.effects[name], identifier)

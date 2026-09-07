@@ -3,13 +3,19 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from great_ai_race_state_model_test import RaceScript, _parse_race_script
+from great_ai_race_state_model_test import _parse_race_script
+from targeted_operations_helpers_test import TargetedScript
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-class PoliticalScript(RaceScript):
+class PoliticalScript(TargetedScript):
     """Execute authored role and mandate source with engine identities as fixtures."""
+
+    country_trigger_fields = {
+        "has_stability": "stability",
+        "has_war_support": "support",
+    }
 
     def __init__(self):
         source = (
@@ -66,92 +72,74 @@ class PoliticalScript(RaceScript):
                 name = f"{field}^{int(self.value(index, identifier))}"
         return super().value(name, identifier)
 
-    def condition(self, statements, identifier):
+    def condition_statement(self, statement, identifier):
+        key, comparison, operand = statement
         country = self.countries[identifier]
-        outcomes = []
-        for key, comparison, operand in self._active_statements(statements, identifier):
-            if key == "set_temp_variable":
-                self.execute([(key, comparison, operand)], identifier)
-                result = True
-            elif key in self.tags:
-                result = self.condition(operand, self.tags[key])
-            elif key in {"TOP_enabled", "TOP_country_eligible"}:
-                eligible = self.enabled and (
-                    key == "TOP_enabled" or country["eligible"]
-                )
-                result = eligible == (operand == "yes")
-            elif key == "has_country_leader":
-                data = dict((name, value) for name, _, value in operand)
-                assert data.get("ruling_only") == "yes"
-                result = country["leader"] == data["name"].strip('"')
-            elif key == "has_character":
-                result = operand in country["characters"]
-            elif key == "has_government":
-                result = country["government"] == operand
-            elif key == "has_civil_war":
-                result = country["civil_war"] == (operand == "yes")
-            elif key == "has_war_with":
-                result = self.value(operand, identifier) in country["wars"]
-            elif key in {"has_stability", "has_war_support"}:
-                field = "stability" if key == "has_stability" else "support"
-                result = self.comparisons[comparison](
-                    country[field], self.value(operand, identifier)
-                )
-            else:
-                result = super().condition([(key, comparison, operand)], identifier)
-            outcomes.append(result)
-        return all(outcomes)
+        if key in self.tags:
+            result = self.condition(operand, self.tags[key])
+        elif key in {"TOP_enabled", "TOP_country_eligible"}:
+            eligible = self.enabled and (key == "TOP_enabled" or country["eligible"])
+            result = eligible == (operand == "yes")
+        elif key == "has_country_leader":
+            data = dict(((name, value) for name, _, value in operand))
+            assert data.get("ruling_only") == "yes"
+            result = country["leader"] == data["name"].strip('"')
+        elif key == "has_character":
+            result = operand in country["characters"]
+        elif key == "has_government":
+            result = country["government"] == operand
+        elif key == "has_civil_war":
+            result = country["civil_war"] == (operand == "yes")
+        elif key == "has_war_with":
+            result = self.value(operand, identifier) in country["wars"]
+        else:
+            result = super().condition_statement(statement, identifier)
+        return result
 
-    def execute(self, statements, identifier):
+    def execute_statement(self, statement, identifier):
+        key, comparison, operand = statement
         country = self.countries[identifier]
-        for key, comparison, operand in self._active_statements(statements, identifier):
-            if key in {"if", "else_if", "else"}:
-                self.execute(operand, identifier)
-            elif key in self.tags:
-                self.execute(operand, self.tags[key])
-            elif key in {"add_ideas", "remove_ideas"}:
-                if key == "add_ideas":
-                    country["ideas"].add(operand)
-                else:
-                    country["ideas"].discard(operand)
-            elif key in {"recruit_character", "retire_character"}:
-                if key == "recruit_character":
-                    country["characters"].add(operand)
-                else:
-                    country["characters"].discard(operand)
-            elif key == "kill_country_leader":
-                country["leader"] = "Engine successor"
-            elif key == "create_country_leader":
-                data = dict((name, value) for name, _, value in operand)
-                country["leader"] = data["name"].strip('"')
-            elif key.startswith("set_leader_"):
-                country["leader"] = "Existing office successor"
-            elif key in {"add_stability", "add_war_support"}:
-                field = "stability" if key == "add_stability" else "support"
-                country[field] += self.value(operand, identifier)
-            elif key in {"TOP_add_target_lead", "TOP_grant_target_mandate"}:
-                data = {
-                    name: self.value(value, identifier) for name, _, value in operand
-                }
-                target = int(data["TARGET"])
-                if key == "TOP_add_target_lead":
-                    self.leads.append((identifier, target, data["AMOUNT"]))
-                else:
-                    country["vars"][f"TOP_mandates^{target}"] = (
-                        self.globals["TOP_clock"] + 365
-                    )
-            elif key == "for_loop_effect":
-                data = dict((name, value) for name, _, value in operand)
-                body = [
-                    entry
-                    for entry in operand
-                    if entry[0] not in {"start", "end", "value"}
-                ]
-                for index in range(int(data["start"]), int(data["end"])):
-                    self.temps[data["value"]] = index
-                    self.execute(body, identifier)
+        if key in self.tags:
+            self.execute(operand, self.tags[key])
+        elif key in {"add_ideas", "remove_ideas"}:
+            if key == "add_ideas":
+                country["ideas"].add(operand)
             else:
-                super().execute([(key, comparison, operand)], identifier)
+                country["ideas"].discard(operand)
+        elif key in {"recruit_character", "retire_character"}:
+            if key == "recruit_character":
+                country["characters"].add(operand)
+            else:
+                country["characters"].discard(operand)
+        elif key == "kill_country_leader":
+            country["leader"] = "Engine successor"
+        elif key == "create_country_leader":
+            data = dict(((name, value) for name, _, value in operand))
+            country["leader"] = data["name"].strip('"')
+        elif key.startswith("set_leader_"):
+            country["leader"] = "Existing office successor"
+        elif key in {"add_stability", "add_war_support"}:
+            field = "stability" if key == "add_stability" else "support"
+            country[field] += self.value(operand, identifier)
+        elif key in {"TOP_add_target_lead", "TOP_grant_target_mandate"}:
+            data = {name: self.value(value, identifier) for name, _, value in operand}
+            target = int(data["TARGET"])
+            if key == "TOP_add_target_lead":
+                self.leads.append((identifier, target, data["AMOUNT"]))
+            else:
+                country["vars"][f"TOP_mandates^{target}"] = (
+                    self.globals["TOP_clock"] + 365
+                )
+        elif key == "for_loop_effect":
+            data = dict(((name, value) for name, _, value in operand))
+            body = [
+                entry for entry in operand if entry[0] not in {"start", "end", "value"}
+            ]
+            for index in range(int(data["start"]), int(data["end"])):
+                self.temps[data["value"]] = index
+                self.execute(body, identifier)
+        else:
+            super().execute_statement(statement, identifier)
 
     def run(self, name, identifier=1):
         self.execute(self.effects[name], identifier)
