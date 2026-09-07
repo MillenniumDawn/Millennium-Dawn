@@ -38,12 +38,16 @@ Each option's log must match its own ID — copy-paste errors between `.a` and `
 	option = {
 		name = tag_ns.N.a
 		log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"  # .a not .b
+		add_political_power = 25
 	}
 	option = {
 		name = tag_ns.N.b
 		log = "[GetDateText]: [This.GetName]: tag_ns.N.b executed"  # .b not .a
+		add_stability = -0.02
 	}
 ```
+
+Only an option that runs effects gets a log — a dismiss option carrying nothing but `name`, `trigger` and `ai_chance` logs a state change that never happened, and `validate_events` reports it as `event-option-log-without-effect`.
 
 ## Example: Multi-Option Cross-Country Event
 
