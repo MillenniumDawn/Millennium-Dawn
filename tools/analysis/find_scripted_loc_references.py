@@ -8,14 +8,18 @@ Usage:
     python3 tools/find_scripted_loc_references.py common/scripted_localisation/BRM_scripted_localisation.txt --no-report
 """
 
-import os
 import re
-import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+from _shared import (  # noqa: E402
+    REPO_ROOT,
+    compile_token_regex,
+    configure_import_paths,
+    iter_existing_dirs,
+    iter_readable_files,
+)
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+configure_import_paths()
 
 from _reference_finder import build_parser, run_reference_search  # noqa: E402
 
@@ -47,37 +51,31 @@ def extract_scripted_loc_names(filepath: Path) -> list[str]:
 def make_scripted_loc_searcher(search_dirs: list[Path], source_file: Path):
     """Build a closure that scans each candidate file once for all names."""
 
+    def record_file(refs, token_re, filepath, lines, is_loc_dir):
+        rel = str(filepath.relative_to(REPO_ROOT))
+        for line_number, line in enumerate(lines, 1):
+            for name in dict.fromkeys(token_re.findall(line)):
+                if filepath == source_file and re.fullmatch(
+                    rf"\s*name\s*=\s*{re.escape(name)}\s*", line
+                ):
+                    continue
+                if is_loc_dir and f"[{name}]" not in line:
+                    continue
+                refs[name].append((rel, line_number, line.strip()))
+
     def search(names: list[str]) -> dict[str, list[tuple[str, int, str]]]:
-        refs: dict[str, list[tuple[str, int, str]]] = {name: [] for name in names}
         if not names:
-            return refs
-        token_re = re.compile(
-            r"(?<![\w])(?:" + "|".join(map(re.escape, names)) + r")(?![\w])"
+            return {}
+        references: dict[str, list[tuple[str, int, str]]] = dict(
+            (name, []) for name in names
         )
-        for search_dir in search_dirs:
-            if not search_dir.is_dir():
-                continue
-            is_loc_dir = "localisation" in search_dir.parts
-            globs = ["*.yml"] if is_loc_dir else ["*.txt", "*.gui", "*.gfx", "*.yml"]
-            for glob_pattern in globs:
-                for filepath in search_dir.rglob(glob_pattern):
-                    try:
-                        lines = filepath.read_text(
-                            encoding="utf-8", errors="replace"
-                        ).splitlines()
-                    except OSError:
-                        continue
-                    rel = str(filepath.relative_to(REPO_ROOT))
-                    for i, line in enumerate(lines, 1):
-                        for name in set(token_re.findall(line)):
-                            if filepath == source_file and re.fullmatch(
-                                rf"\s*name\s*=\s*{re.escape(name)}\s*", line
-                            ):
-                                continue
-                            if is_loc_dir and f"[{name}]" not in line:
-                                continue
-                            refs[name].append((rel, i, line.strip()))
-        return refs
+        matcher = compile_token_regex(names)
+        for directory in iter_existing_dirs(search_dirs):
+            is_loc_dir = "localisation" in directory.parts
+            patterns = ["*.yml"] if is_loc_dir else ["*.txt", "*.gui", "*.gfx", "*.yml"]
+            for path, lines in iter_readable_files([directory], tuple(patterns)):
+                record_file(references, matcher, path, lines, is_loc_dir)
+        return references
 
     return search
 

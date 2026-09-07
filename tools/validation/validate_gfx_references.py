@@ -6,6 +6,9 @@ scripted_gui image= properties, and scripted_localisation localization_key= agai
 the set defined in interface/*.gfx. Promotes .gui errors from WARNING to ERROR for
 MD-authored files; vanilla-override files stay at WARNING, as do MD-authored nation
 variants for refs inherited from the specific vanilla file they copy.
+
+Also checks .gui `font = "x"` against the bitmapfonts declared in interface/*.gfx
+(mod plus vanilla) — an unresolved font silently falls back to the default face.
 """
 
 import glob
@@ -163,6 +166,12 @@ _SPRITE_TEMPLATE_REF = re.compile(
 _GFX_TOKEN_REF = re.compile(r"GFX_[A-Za-z0-9_.\-]+")
 _HASH_COMMENT = re.compile(r"#[^\n]*")
 
+# Bitmap font declarations in .gfx, and the .gui `font = "x"` references to them.
+# A font name is not GFX_-prefixed, so it needs its own pair of patterns.
+_FONT_DEF = re.compile(r"\bbitmapfont\s*=\s*\{")
+_FONT_NAME = re.compile(r'\bname\s*=\s*"([^"]+)"')
+_FONT_REF = re.compile(r'\bfont\s*=\s*"([^"\[]+)"')
+
 # Localisation sprite reference: `£name` renders the sprite `GFX_name` (an
 # optional `|frame` suffix may follow). Party, idea and money icons are often
 # referenced this way and nowhere else, so skipping .yml mis-reports them as
@@ -195,6 +204,19 @@ def _load_vanilla_sprite_manifest() -> FrozenSet[str]:
     # corrupt manifest should degrade to the heuristic, not crash the run.
     try:
         with open(_VANILLA_SPRITES_MANIFEST, encoding="utf-8") as fh:
+            return frozenset(
+                line.strip() for line in fh if line.strip() and not line.startswith("#")
+            )
+    except (OSError, UnicodeDecodeError):
+        return frozenset()
+
+
+_VANILLA_FONTS_MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_fonts.txt")
+
+
+def _load_vanilla_font_manifest() -> FrozenSet[str]:
+    try:
+        with open(_VANILLA_FONTS_MANIFEST, encoding="utf-8") as fh:
             return frozenset(
                 line.strip() for line in fh if line.strip() and not line.startswith("#")
             )
@@ -693,6 +715,27 @@ def sprite_defs_from_gfx_text(raw: str) -> List[Tuple[str, str, int]]:
     return defs
 
 
+def font_names_from_gfx_text(raw: str) -> Set[str]:
+    """Return the bitmapfont names defined in raw .gfx file content.
+
+    Shared with refresh_vanilla_data.py so the committed manifest is built with
+    exactly the parse the validator applies to mod files.
+    """
+    names: Set[str] = set()
+    text = _strip_comments(raw)
+    for match in _FONT_DEF.finditer(text):
+        depth, i = 0, match.end() - 1
+        while i < len(text):
+            depth += (text[i] == "{") - (text[i] == "}")
+            if not depth:
+                break
+            i += 1
+        name = _FONT_NAME.search(text[match.end() : i])
+        if name:
+            names.add(name.group(1))
+    return names
+
+
 def sprite_names_from_gfx_text(raw: str) -> Set[str]:
     """Return the set of GFX sprite names defined in raw .gfx file content.
 
@@ -744,6 +787,62 @@ def _parse_gui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     )
 
 
+def _parse_gui_fonts(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
+    """Return list of (font_name, filepath, line_number) from a .gui file."""
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return []
+
+    def _compute():
+        text = _strip_comments(raw)
+        offsets = compute_line_offsets(raw)
+        return [
+            (m.group(1), filepath, line_for_offset(offsets, m.start()))
+            for m in _FONT_REF.finditer(text)
+        ]
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.font", filepath, raw, _compute
+    )
+
+
+def _parse_gfx_fonts(args: Tuple[str, str]) -> List[str]:
+    """Return the bitmapfont names a .gfx file defines."""
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return []
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "gfx_ref.fontdef",
+        filepath,
+        raw,
+        lambda: sorted(font_names_from_gfx_text(raw)),
+    )
+
+
+def _refs_from_raw_text(
+    raw: str, filepath: str, pattern: "re.Pattern[str]"
+) -> List[Tuple[str, str, int]]:
+    """Return (sprite_name, filepath, line) for each `pattern` match's group(1).
+
+    Scans `raw` directly rather than comment-stripped text: scripted_gui .txt
+    and scripted_localisation .txt both use # for Clausewitz-script comments,
+    but a scripted loc key can itself start with #, so stripping would corrupt
+    a legitimate reference. Dynamic names are skipped.
+    """
+    offsets = compute_line_offsets(raw)
+    results = []
+    for m in pattern.finditer(raw):
+        sprite = m.group(1)
+        if _is_dynamic(sprite):
+            continue
+        line = line_for_offset(offsets, m.start())
+        results.append((sprite, filepath, line))
+    return results
+
+
 def _parse_sgui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     """Return list of (sprite_name, rel_filepath, line_number) from a scripted_gui .txt file."""
     filepath, mod_path = args
@@ -751,22 +850,12 @@ def _parse_sgui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     if raw is None:
         return []
 
-    def _compute():
-        # scripted_gui .txt files use # comments (Clausewitz script style) but the
-        # image = "GFX_xxx" attribute pattern is the same. We don't strip # comments
-        # here to avoid stripping scripted loc keys that start with # — use raw text.
-        offsets = compute_line_offsets(raw)
-        results = []
-        for m in _SGUI_IMAGE_REF.finditer(raw):
-            sprite = m.group(1)
-            if _is_dynamic(sprite):
-                continue
-            line = line_for_offset(offsets, m.start())
-            results.append((sprite, filepath, line))
-        return results
-
     return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.sgui", filepath, raw, _compute
+        mod_path,
+        "gfx_ref.sgui",
+        filepath,
+        raw,
+        lambda: _refs_from_raw_text(raw, filepath, _SGUI_IMAGE_REF),
     )
 
 
@@ -854,19 +943,12 @@ def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     if raw is None:
         return []
 
-    def _compute():
-        offsets = compute_line_offsets(raw)
-        results = []
-        for m in _SLOC_KEY_REF.finditer(raw):
-            sprite = m.group(1)
-            if _is_dynamic(sprite):
-                continue
-            line = line_for_offset(offsets, m.start())
-            results.append((sprite, filepath, line))
-        return results
-
     return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.sloc", filepath, raw, _compute
+        mod_path,
+        "gfx_ref.sloc",
+        filepath,
+        raw,
+        lambda: _refs_from_raw_text(raw, filepath, _SLOC_KEY_REF),
     )
 
 
@@ -1137,11 +1219,11 @@ class Validator(BaseValidator):
         # .gui refs are gathered full-repo (ignore_staged) to build the override
         # index below, so under --staged the reported entries must be re-scoped to
         # the staged files or the whole repo's ~50 .gui errors would surface.
-        staged_rel = (
-            {os.path.relpath(f, self.mod_path) for f in (self.staged_files or [])}
-            if self.staged_only
-            else None
-        )
+        staged_rel: Set[str] = set()
+        if self.staged_only:
+            staged_rel = {
+                os.path.relpath(f, self.mod_path) for f in (self.staged_files or [])
+            }
         # Vanilla .gui files ship dead sprite refs of their own; an MD-authored
         # nation variant (`<vanilla_stem>_<tag>.gui`) inheriting the same ref is
         # vanilla's bug, not the mod's — downgrade to WARNING. Keyed per vanilla
@@ -1169,7 +1251,7 @@ class Validator(BaseValidator):
             if not self._vanilla_defs_loaded and _is_likely_vanilla(sprite):
                 continue
             rel = os.path.relpath(filepath, self.mod_path)
-            if staged_rel is not None and rel not in staged_rel:
+            if self.staged_only and rel not in staged_rel:
                 continue
             key = (sprite, rel, line)
             if key in seen:
@@ -1298,6 +1380,62 @@ class Validator(BaseValidator):
                 severity=Severity.WARNING,
                 category="case-variant-sprite",
             )
+
+    def _check_undefined_fonts(self) -> None:
+        """Report .gui `font = "x"` naming a bitmapfont nothing declares.
+
+        An unresolved font logs "No font with name x" and the text box renders
+        with the engine default, so the layout silently drifts. MD overrides
+        vanilla's interface/core.gfx wholesale but leaves its other font files
+        alone, so the universe is the mod's declarations plus vanilla's.
+        """
+        self._log_section("Checking font references in interface/*.gui files")
+        gfx_files = self._collect_files(["interface/**/*.gfx"], ignore_staged=True)
+        defined: Set[str] = set()
+        for batch in self._pool_map(
+            _parse_gfx_fonts, [(f, self.mod_path) for f in gfx_files]
+        ):
+            defined.update(batch)
+
+        vanilla_gfx = _vanilla_gfx_files()
+        if vanilla_gfx:
+            for batch in self._pool_map(
+                _parse_gfx_fonts, [(f, self.mod_path) for f in vanilla_gfx]
+            ):
+                defined.update(batch)
+        else:
+            manifest = _load_vanilla_font_manifest()
+            if not manifest:
+                self.log(
+                    "  No vanilla HOI4 install detected and no vanilla_fonts.txt"
+                    " manifest — skipping the font check"
+                )
+                return
+            defined.update(manifest)
+
+        gui_files = self._collect_files(["interface/**/*.gui"], ignore_staged=True)
+        issues = []
+        for batch in self._pool_map(
+            _parse_gui_fonts, [(f, self.mod_path) for f in gui_files]
+        ):
+            for name, filepath, line in batch:
+                if name in defined:
+                    continue
+                issues.append(
+                    (
+                        f'font = "{name}" is not declared as a bitmapfont — the '
+                        f"engine falls back to its default face",
+                        os.path.relpath(filepath, self.mod_path),
+                        line,
+                    )
+                )
+        self._report(
+            issues,
+            ok_msg=f"All font references resolve ({len(defined)} fonts declared).",
+            fail_msg=f"Undefined font references ({len(issues)} total):",
+            severity=Severity.ERROR,
+            category="undefined-font",
+        )
 
     def _check_loc_ref_case(
         self,
@@ -1485,6 +1623,7 @@ class Validator(BaseValidator):
         mod_defined_ci = casefold_index(mod_defined)
 
         self._check_duplicate_definitions()
+        self._check_undefined_fonts()
 
         gui_refs = self._collect_gui_refs(defined)
         sgui_refs = self._collect_sgui_refs(defined)

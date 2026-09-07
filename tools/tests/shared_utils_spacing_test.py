@@ -4,13 +4,7 @@ Guards the MD style rule (AGENTS.md) that ``{``, ``}`` and ``=`` carry single
 spaces, while string interiors, comments and indentation stay byte-exact.
 """
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-from shared_utils import normalize_spacing  # noqa: E402
+from shared_utils import normalize_spacing
 
 
 def test_pads_inline_block():
@@ -84,6 +78,11 @@ def test_comparison_operators_not_split():
         == "\tcheck_variable = { x >= 3 }"
     )
     assert normalize_spacing("\thas_war_support > 0.5") == "\thas_war_support > 0.5"
+
+
+def test_pads_bare_single_character_comparisons():
+    assert normalize_spacing("\thas_war_support>0.5") == "\thas_war_support > 0.5"
+    assert normalize_spacing("\tvalue<3") == "\tvalue < 3"
 
 
 def test_collapses_extra_whitespace_outside_strings():

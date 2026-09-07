@@ -1,11 +1,11 @@
 import importlib.util
 import os
 import subprocess
-from pathlib import Path, PurePosixPath
+from pathlib import PurePosixPath
 
 import pytest
+from shared.paths import TOOLS_DIR as TOOLS
 
-TOOLS = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
     "publish_workshop", TOOLS / "publishing" / "publish_workshop.py"
 )

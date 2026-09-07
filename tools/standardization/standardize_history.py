@@ -30,7 +30,7 @@ import os
 import re
 import sys
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common_utils import BaseStandardizer, collapse_blank_runs, run_standardizer
@@ -47,6 +47,22 @@ _OPENER_RE = re.compile(r"^([\w:]+)\s*=\s*\{")
 _LAW_RE = re.compile(r"law\s*=\s*yes\b")
 _LAWFILE_RE = re.compile(r"^AA_(law_|corruption|religion)", re.IGNORECASE)
 _TAG_PREFIX_RE = re.compile(r"^[A-Z]{3}_")
+
+
+def _iter_file_lines(path: str) -> Optional[List[str]]:
+    """Read a script file's lines, or None if it can't be opened."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.readlines()
+    except OSError:
+        return None
+
+
+def _iter_code_lines(lines: List[str]) -> Iterator[Tuple[str, str]]:
+    """Yield (code, stripped) for each raw line, inline comments stripped."""
+    for raw in lines:
+        code = strip_inline_comment(raw)
+        yield code, code.strip()
 
 
 def _detect_mod_root(start: str) -> Optional[str]:
@@ -86,15 +102,11 @@ def _load_idea_classification(mod_root: str) -> Tuple[set, set]:
     ideas_dir = os.path.join(mod_root, "common", "ideas")
     for path in glob.glob(os.path.join(ideas_dir, "*.txt")):
         is_lawfile = bool(_LAWFILE_RE.match(os.path.basename(path)))
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-        except OSError:
+        lines = _iter_file_lines(path)
+        if lines is None:
             continue
         stack: List[str] = []
-        for raw in lines:
-            code = strip_inline_comment(raw)
-            stripped = code.strip()
+        for code, stripped in _iter_code_lines(lines):
             if _LAW_RE.match(stripped) and len(stack) >= 2:
                 law_categories.add(stack[1])
             m = _OPENER_RE.match(stripped)
@@ -150,15 +162,11 @@ def _load_modifier_variables(mod_root: str) -> Dict[str, set]:
 
     dm_dir = os.path.join(mod_root, "common", "dynamic_modifiers")
     for path in glob.glob(os.path.join(dm_dir, "*.txt")):
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-        except OSError:
+        lines = _iter_file_lines(path)
+        if lines is None:
             continue
         stack: List[str] = []
-        for raw in lines:
-            code = strip_inline_comment(raw)
-            stripped = code.strip()
+        for code, stripped in _iter_code_lines(lines):
             nopen = code.count("{")
             nclose = code.count("}")
             m = _OPENER_RE.match(stripped)

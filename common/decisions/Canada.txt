@@ -1,5 +1,78 @@
 CAN_french_happiness = {
-	#No Decisions
+
+	CAN_federal_transfers_to_quebec = {
+
+		icon = GFX_decision_attract_foreign_investor
+
+		days_remove = 90
+
+		custom_cost_trigger = { check_variable = { treasury > 2.4 } }
+		custom_cost_text = cost_2_5
+
+		available = {
+			NOT = { country_exists = QUE }
+			custom_trigger_tooltip = {
+				tooltip = CAN_french_happiness_below_80_tt
+				check_variable = { french_happiness_var < 80 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_federal_transfers_to_quebec"
+			set_temp_variable = { treasury_change = -2.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove CAN_federal_transfers_to_quebec"
+			set_temp_variable = { modify_que_happy = 4 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 3
+				check_variable = { french_happiness_var < 40 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CAN_bilingual_public_services = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 60
+
+		days_remove = 120
+
+		available = {
+			NOT = { country_exists = QUE }
+			custom_trigger_tooltip = {
+				tooltip = CAN_french_happiness_below_80_tt
+				check_variable = { french_happiness_var < 80 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove CAN_bilingual_public_services"
+			add_stability = 0.02
+			set_temp_variable = { modify_que_happy = 3 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 3
+				check_variable = { french_happiness_var < 40 }
+			}
+		}
+	}
 }
 
 CAN_provincial_infrastructure = {
@@ -399,6 +472,78 @@ CAN_provincial_infrastructure = {
 
 		ai_will_do = { base = 1 }
 	}
+
+	CAN_improve_infrastructure_1159 = {
+		icon = GFX_decision_attract_foreign_investor
+		days_remove = 80
+		custom_cost_trigger = { check_variable = { treasury > 2.4 } }
+		custom_cost_text = cost_2_5
+
+		visible = {
+			1159 = {
+				free_building_slots = {
+					building = infrastructure
+					size > 0
+				}
+			}
+		}
+
+		available = {
+			has_full_control_of_state = 1159
+			owns_state = 1159
+		}
+
+		on_map_mode = map_and_decisions_view
+		highlight_states = { highlight_state_targets = { state = 1159 } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove CAN_improve_infrastructure_1159"
+			1159 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+				}
+			}
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	CAN_improve_infrastructure_1160 = {
+		icon = GFX_decision_attract_foreign_investor
+		days_remove = 80
+		custom_cost_trigger = { check_variable = { treasury > 2.4 } }
+		custom_cost_text = cost_2_5
+
+		visible = {
+			1160 = {
+				free_building_slots = {
+					building = infrastructure
+					size > 0
+				}
+			}
+		}
+
+		available = {
+			has_full_control_of_state = 1160
+			owns_state = 1160
+		}
+
+		on_map_mode = map_and_decisions_view
+		highlight_states = { highlight_state_targets = { state = 1160 } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove CAN_improve_infrastructure_1160"
+			1160 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+				}
+			}
+		}
+
+		ai_will_do = { base = 1 }
+	}
 }
 
 CAN_canadian_subsidies_projects = {
@@ -493,6 +638,7 @@ CAN_canadian_subsidies_projects = {
 	CAN_infrastructure_subsidies = {
 		icon = GFX_decision_attract_foreign_investor
 		days_remove = 60
+		days_re_enable = 1
 		cost = 50
 
 		remove_effect = {
@@ -580,5 +726,34 @@ CAN_war_decisions = {
 		}
 
 		ai_will_do = { base = 1 }
+	}
+}
+
+CAN_ai_path_category = {
+
+	CAN_rally_the_nationalists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = CAN_NATIONALIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^20 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_rally_the_nationalists"
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
 	}
 }

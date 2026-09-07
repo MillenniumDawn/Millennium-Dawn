@@ -3,6 +3,14 @@
 # The influence system is MD's take on using political soft power and pressuring other nations.
 # It is intended to mock superpower's sphere of influence.
 
+# Effect: install_influence_coup_rebel_party
+# Purpose: copy influence_coup_party onto a civil-war rebel
+install_influence_coup_rebel_party = {
+	set_variable = { ruling_party = FROM.influence_coup_party }
+	set_temp_variable = { _coup_slot = FROM.influence_coup_party }
+	set_variable = { party_pop_array^_coup_slot = 0.7 }
+}
+
 # Effect: init_influence
 # Purpose: This is the main effect that is used to initialize the influence array
 init_influence = {
@@ -14,11 +22,11 @@ init_influence = {
 # Purpose: This is the main effect that is used to update the dirty influence variable
 update_dirty_influence_var = {
 	if = {
-		limit = { NOT = { has_variable = global.update_influence_ui } }
-		set_variable = { global.update_influence_ui = 1 }
+		limit = { check_variable = { global.update_influence_ui < 10000 } }
+		add_to_variable = { global.update_influence_ui = 1 }
 	}
 	else = {
-		add_to_variable = { global.update_influence_ui = 1 }
+		set_variable = { global.update_influence_ui = 1 }
 	}
 }
 
@@ -354,7 +362,7 @@ manipulate_politics_action = {
 		change_influence_percentage = yes
 	}
 	else = {
-		set_temp_variable = { party_index = ROOT.ruling_party^0 }
+		set_temp_variable = { party_index = ROOT.ruling_party }
 		set_temp_variable = { party_popularity_increase = var_pop }
 		set_temp_variable = { temp_outlook_increase = var_pop }
 		change_relative_party_popularity = yes

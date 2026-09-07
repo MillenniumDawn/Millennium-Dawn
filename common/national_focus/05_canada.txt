@@ -45,16 +45,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Canadian_Economy"
 			custom_effect_tooltip = CAN_economy_tt
-			hidden_effect = {
-				set_variable = { CAN_stability_factor_var = 0.01 }
-				set_variable = { CAN_industrial_capacity_factory_var = 0.01 }
-				set_variable = { CAN_production_speed_buildings_var = 0.01 }
-				set_variable = { CAN_production_speed_infrastructure_factor_var = 0.01 }
-				set_variable = { CAN_production_oil_var = 0.01 }
-				set_variable = { CAN_subsidy_total = 0.25 }
-				ingame_update_setup = yes
-			}
+			set_temp_variable = { subsidy_change_tmp = 0.25 }
+			CAN_modify_subsidy_changes = yes
 			add_dynamic_modifier = { modifier = CAN_canadian_economy_dynamic_modifier }
+			set_variable = { CAN_stability_factor_var = 0.01 tooltip = stability_factor_tt }
+			set_variable = { CAN_industrial_capacity_factory_var = 0.01 tooltip = industrial_capacity_factory_tt }
+			set_variable = { CAN_production_speed_buildings_var = 0.01 tooltip = production_speed_buildings_factor_tt }
+			set_variable = { CAN_production_speed_infrastructure_factor_var = 0.01 tooltip = production_speed_infrastructure_factor_tt }
+			set_variable = { CAN_production_oil_var = 0.01 tooltip = production_oil_factor_tt }
 			unlock_decision_category_tooltip = CAN_canadian_subsidies_projects
 		}
 
@@ -1378,6 +1376,14 @@ focus_tree = {
 				factor = 0
 				has_active_mission = debt_default_main_mission
 			}
+			modifier = {
+				factor = 4
+				OR = {
+					has_idea = CAN_overburdened_economy
+					has_idea = CAN_overburdened_economy1
+					has_idea = CAN_overburdened_economy2
+				}
+			}
 		}
 	}
 
@@ -1492,7 +1498,13 @@ focus_tree = {
 			CAN_modify_french_happiness = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				check_variable = { french_happiness_var < 60 }
+			}
+		}
 	}
 
 	focus = {
@@ -1566,7 +1578,13 @@ focus_tree = {
 			CAN_modify_french_happiness = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	focus = {
@@ -1635,7 +1653,17 @@ focus_tree = {
 			CAN_modify_french_happiness = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				check_variable = { french_happiness_var > 59 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { french_happiness_var < 40 }
+			}
+		}
 	}
 
 	focus = {
@@ -1797,7 +1825,17 @@ focus_tree = {
 			CAN_update_overburdened_economy = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 4
+				OR = {
+					has_idea = CAN_overburdened_economy
+					has_idea = CAN_overburdened_economy1
+					has_idea = CAN_overburdened_economy2
+				}
+			}
+		}
 	}
 
 	##Canadian Infrastructure
@@ -2153,7 +2191,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Petrochemical_Industrialization"
 			add_tech_bonus = {
-				name = CAT_fuel_oil
+				name = CAN_Petrochemical_Industrialization
 				bonus = 0.50
 				uses = 2
 				category = CAT_fuel_oil
@@ -2245,7 +2283,13 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				has_idea = NATO_member
+			}
+		}
 	}
 
 	focus = {
@@ -2350,7 +2394,13 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				NOT = { has_idea = NATO_member }
+			}
+		}
 	}
 
 	focus = {
@@ -2462,6 +2512,14 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				has_active_mission = debt_default_main_mission
+			}
+			modifier = {
+				factor = 4
+				OR = {
+					has_idea = CAN_overburdened_economy
+					has_idea = CAN_overburdened_economy1
+					has_idea = CAN_overburdened_economy2
+				}
 			}
 		}
 	}
@@ -3868,6 +3926,25 @@ focus_tree = {
 				factor = 2
 				is_historical_focus_on = yes
 			}
+			modifier = {
+				factor = 3
+				check_variable = { french_happiness_var < 50 }
+			}
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = CAN_HISTORICAL_FOCUS_PATH
+					has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH
+					has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
+					has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+				}
+			}
 		}
 	}
 
@@ -3893,7 +3970,13 @@ focus_tree = {
 			CAN_modify_french_happiness = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				check_variable = { french_happiness_var < 50 }
+			}
+		}
 	}
 
 	focus = {
@@ -3922,7 +4005,13 @@ focus_tree = {
 			CAN_modify_french_happiness = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				check_variable = { french_happiness_var < 50 }
+			}
+		}
 	}
 
 	focus = {
@@ -3948,7 +4037,13 @@ focus_tree = {
 			change_expected_education_spending = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				check_variable = { french_happiness_var < 50 }
+			}
+		}
 	}
 
 	focus = {
@@ -3976,7 +4071,13 @@ focus_tree = {
 			CAN_modify_french_happiness = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				check_variable = { french_happiness_var < 50 }
+			}
+		}
 	}
 
 	focus = {
@@ -4178,7 +4279,14 @@ focus_tree = {
 					add_idea = CAN_multi_ethnic_nation_4
 				}
 			}
-			remove_ideas = large_far_right_movement
+			if = {
+				limit = { has_idea = large_far_right_movement }
+				remove_ideas = large_far_right_movement
+			}
+			else_if = {
+				limit = { has_idea = medium_far_right_movement }
+				remove_ideas = medium_far_right_movement
+			}
 		}
 
 		ai_will_do = { base = 1 }
@@ -4210,7 +4318,13 @@ focus_tree = {
 			CAN_modify_french_happiness = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				check_variable = { french_happiness_var < 50 }
+			}
+		}
 	}
 
 	focus = {
@@ -4269,12 +4383,25 @@ focus_tree = {
 		ai_will_do = {
 			base = 1
 			modifier = {
-				is_historical_focus_on = yes
 				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH }
+				NOT = { has_global_flag = CAN_NATIONALIST_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 10
+				OR = {
+					has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
+					has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+				}
 			}
 			modifier = {
 				factor = 0
-				has_global_flag = CAN_NORTH_AMERICAN_STATUS_QUO
+				OR = {
+					has_global_flag = CAN_HISTORICAL_FOCUS_PATH
+					has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH
+					has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -4309,6 +4436,15 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				has_stability > 0.45
+				NOT = { has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 10
+				has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
 			}
 		}
 	}
@@ -4378,6 +4514,8 @@ focus_tree = {
 		prerequisite = { focus = CAN_french_schools }
 
 		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
+
+		available = { NOT = { country_exists = QUE } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_move_capital "
@@ -4640,7 +4778,13 @@ focus_tree = {
 			increase_officer_training_level = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
 	}
 
 	focus = {
@@ -4738,6 +4882,15 @@ focus_tree = {
 			modifier = {
 				factor = 2
 				is_historical_focus_on = yes
+				NOT = { has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 10
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
 			}
 		}
 	}
@@ -4767,7 +4920,13 @@ focus_tree = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+			}
+		}
 	}
 
 	focus = {
@@ -4809,6 +4968,20 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+				NOT = { has_global_flag = CAN_NATIONALIST_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 10
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = CAN_HISTORICAL_FOCUS_PATH
+					has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
+					has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH
+					has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -4863,6 +5036,14 @@ focus_tree = {
 			modifier = {
 				factor = 2
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 2
+				has_idea = CAN_native_policy_idea
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
 			}
 		}
 	}
@@ -4920,6 +5101,10 @@ focus_tree = {
 				factor = 2
 				is_historical_focus_on = yes
 			}
+			modifier = {
+				factor = 0
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+			}
 		}
 	}
 
@@ -4953,12 +5138,22 @@ focus_tree = {
 		ai_will_do = {
 			base = 1
 			modifier = {
-				is_historical_focus_on = yes
 				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_global_flag = CAN_NATIONALIST_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 10
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
-				has_global_flag = CAN_NORTH_AMERICAN_STATUS_QUO
+				OR = {
+					has_global_flag = CAN_HISTORICAL_FOCUS_PATH
+					has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
+					has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH
+					has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -4989,7 +5184,13 @@ focus_tree = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+			}
+		}
 	}
 
 	focus = {
@@ -5014,7 +5215,22 @@ focus_tree = {
 			add_ideas = CAN_terror
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_global_flag = CAN_NATIONALIST_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 10
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH
+			}
+		}
 	}
 
 	##Stand Alone Branch
@@ -5049,12 +5265,25 @@ focus_tree = {
 		ai_will_do = {
 			base = 1
 			modifier = {
-				is_historical_focus_on = yes
 				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH }
+				NOT = { has_global_flag = CAN_NATIONALIST_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 10
+				OR = {
+					has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH
+					has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+				}
 			}
 			modifier = {
 				factor = 0
-				has_global_flag = CAN_NORTH_AMERICAN_STATUS_QUO
+				OR = {
+					has_global_flag = CAN_HISTORICAL_FOCUS_PATH
+					has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
+					has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -5206,12 +5435,25 @@ focus_tree = {
 		ai_will_do = {
 			base = 1
 			modifier = {
-				is_historical_focus_on = yes
 				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH }
+				NOT = { has_global_flag = CAN_NATIONALIST_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 10
+				OR = {
+					has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH
+					has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+				}
 			}
 			modifier = {
 				factor = 0
-				has_global_flag = CAN_NORTH_AMERICAN_STATUS_QUO
+				OR = {
+					has_global_flag = CAN_HISTORICAL_FOCUS_PATH
+					has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
+					has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
+				}
 			}
 			modifier = {
 				factor = 0
@@ -5303,6 +5545,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_arms_industry = no
+			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
 			}
 		}
 	}
@@ -5478,6 +5724,10 @@ focus_tree = {
 				factor = 0
 				can_staff_an_industrial_complex = no
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -5627,12 +5877,27 @@ focus_tree = {
 		ai_will_do = {
 			base = 3
 			modifier = {
-				is_historical_focus_on = yes
 				factor = 3
+				is_historical_focus_on = yes
 			}
 			modifier = {
 				factor = 2
 				is_in_faction_with = USA
+			}
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = CAN_HISTORICAL_FOCUS_PATH
+					has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
+					has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+					has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -5807,7 +6072,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_american_canadian_military"
 			add_tech_bonus = {
-				name = CAT_mbt
+				name = CAN_american_canadian_military
 				uses = 1
 				bonus = 0.50
 				category = CAT_mbt
@@ -5853,6 +6118,21 @@ focus_tree = {
 			modifier = {
 				factor = 3
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = CAN_HISTORICAL_FOCUS_PATH
+					has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH
+					has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+					has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -6156,12 +6436,22 @@ focus_tree = {
 		ai_will_do = {
 			base = 1
 			modifier = {
-				is_historical_focus_on = yes
 				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 20
+				has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
-				has_global_flag = CAN_NORTH_AMERICAN_STATUS_QUO
+				OR = {
+					has_global_flag = CAN_HISTORICAL_FOCUS_PATH
+					has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
+					has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH
+					has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+				}
 			}
 			modifier = {
 				factor = 0
@@ -6170,6 +6460,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				NOT = { country_exists = CHI }
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
 			}
 		}
 	}
@@ -6316,7 +6610,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Expand_Arctic_Routes"
 			add_political_power = 100
 			add_tech_bonus = {
-				name = CAT_sub
+				name = CAN_Expand_Arctic_Routes
 				bonus = 0.50
 				uses = 1
 				category = CAT_sub
@@ -6341,7 +6635,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESEARCH }
 
 		available = {
-			SOV = { has_opinion = { target = CAN value > 50 } }
+			SOV = {
+				OR = {
+					has_opinion = { target = CAN value > 50 }
+					CAN = { is_ai = yes }
+				}
+			}
 			NOT = {
 				has_war_with = SOV
 			}
@@ -6353,7 +6652,10 @@ focus_tree = {
 
 		cancel = {
 			OR = {
-				SOV = { has_opinion = { target = CAN value < 50 } }
+				AND = {
+					is_ai = no
+					SOV = { has_opinion = { target = CAN value < 50 } }
+				}
 				has_war_with = SOV
 			}
 		}
@@ -6363,7 +6665,7 @@ focus_tree = {
 			add_opinion_modifier = { target = SOV modifier = global_trade }
 			reverse_add_opinion_modifier = { target = SOV modifier = global_trade }
 			add_tech_bonus = {
-				name = CAT_fuel_oil
+				name = CAN_Russo_Canadian_Trade_Agreement
 				bonus = 0.50
 				uses = 2
 				category = CAT_fuel_oil
@@ -6390,7 +6692,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESEARCH }
 
 		available = {
-			CHI = { has_opinion = { target = CAN value > 50 } }
+			CHI = {
+				OR = {
+					has_opinion = { target = CAN value > 50 }
+					CAN = { is_ai = yes }
+				}
+			}
 			NOT = {
 				has_war_with = CHI
 			}
@@ -6402,7 +6709,10 @@ focus_tree = {
 
 		cancel = {
 			OR = {
-				CHI = { has_opinion = { target = CAN value < 50 } }
+				AND = {
+					is_ai = no
+					CHI = { has_opinion = { target = CAN value < 50 } }
+				}
 				has_war_with = CHI
 			}
 		}
@@ -6481,7 +6791,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
 
 		available = {
-			SOV = { has_opinion = { target = CAN value > 50 } }
+			SOV = {
+				OR = {
+					has_opinion = { target = CAN value > 50 }
+					CAN = { is_ai = yes }
+				}
+			}
 			NOT = {
 				has_war_with = SOV
 			}
@@ -6493,7 +6808,10 @@ focus_tree = {
 
 		cancel = {
 			OR = {
-				SOV = { has_opinion = { target = CAN value < 50 } }
+				AND = {
+					is_ai = no
+					SOV = { has_opinion = { target = CAN value < 50 } }
+				}
 				has_war_with = SOV
 			}
 		}
@@ -6523,7 +6841,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS }
 
 		available = {
-			CHI = { has_opinion = { target = CAN value > 50 } }
+			CHI = {
+				OR = {
+					has_opinion = { target = CAN value > 50 }
+					CAN = { is_ai = yes }
+				}
+			}
 			NOT = {
 				has_war_with = CHI
 			}
@@ -6535,7 +6858,10 @@ focus_tree = {
 
 		cancel = {
 			OR = {
-				CHI = { has_opinion = { target = CAN value < 50 } }
+				AND = {
+					is_ai = no
+					CHI = { has_opinion = { target = CAN value < 50 } }
+				}
 				has_war_with = CHI
 			}
 		}
@@ -6567,7 +6893,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		available = {
-			CHI = { has_opinion = { target = CAN value > 50 } }
+			CHI = {
+				OR = {
+					has_opinion = { target = CAN value > 50 }
+					CAN = { is_ai = yes }
+				}
+			}
 			NOT = {
 				has_war_with = CHI
 			}
@@ -6579,7 +6910,10 @@ focus_tree = {
 
 		cancel = {
 			OR = {
-				CHI = { has_opinion = { target = CAN value < 50 } }
+				AND = {
+					is_ai = no
+					CHI = { has_opinion = { target = CAN value < 50 } }
+				}
 				has_war_with = CHI
 			}
 		}
@@ -6587,7 +6921,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_chinese_lavs "
 			add_tech_bonus = {
-				name = CAT_ifv
+				name = CAN_chinese_lavs
 				bonus = 0.50
 				uses = 1
 				category = CAT_ifv
@@ -6612,7 +6946,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		available = {
-			SOV = { has_opinion = { target = CAN value > 50 } }
+			SOV = {
+				OR = {
+					has_opinion = { target = CAN value > 50 }
+					CAN = { is_ai = yes }
+				}
+			}
 			NOT = {
 				has_war_with = SOV
 			}
@@ -6624,7 +6963,10 @@ focus_tree = {
 
 		cancel = {
 			OR = {
-				SOV = { has_opinion = { target = CAN value < 50 } }
+				AND = {
+					is_ai = no
+					SOV = { has_opinion = { target = CAN value < 50 } }
+				}
 				has_war_with = SOV
 			}
 		}
@@ -6636,7 +6978,7 @@ focus_tree = {
 				modifier = free_trade_agreement
 			}
 			add_tech_bonus = {
-				name = CAT_sub
+				name = CAN_rus_dockyards
 				bonus = 0.50
 				uses = 1
 				category = CAT_sub
@@ -6742,7 +7084,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_increase_ship_production"
 			add_tech_bonus = {
-				name = CAT_naval_all
+				name = CAN_increase_ship_production
 				bonus = 0.50
 				uses = 2
 				category = CAT_naval_all
@@ -6880,7 +7222,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
 
 		available = {
-			SOV = { has_opinion = { target = CAN value > 50 } }
+			SOV = {
+				OR = {
+					has_opinion = { target = CAN value > 50 }
+					CAN = { is_ai = yes }
+				}
+			}
 			NOT = {
 				has_war_with = SOV
 			}
@@ -6892,7 +7239,10 @@ focus_tree = {
 
 		cancel = {
 			OR = {
-				SOV = { has_opinion = { target = CAN value < 50 } }
+				AND = {
+					is_ai = no
+					SOV = { has_opinion = { target = CAN value < 50 } }
+				}
 				has_war_with = SOV
 			}
 		}
@@ -6926,7 +7276,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_global_army "
 			add_tech_bonus = {
-				name = CAT_inf
+				name = CAN_global_army
 				bonus = 0.50
 				uses = 2
 				category = CAT_inf
@@ -7049,7 +7399,13 @@ focus_tree = {
 			add_ideas = CAN_huawei
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
+			}
+		}
 	}
 
 	focus = {
@@ -7073,7 +7429,13 @@ focus_tree = {
 			add_ideas = CAN_hyundai
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 4
+				NOT = { has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH }
+			}
+		}
 	}
 
 	focus = {
@@ -7097,7 +7459,13 @@ focus_tree = {
 			add_ideas = CAN_kalashnikov
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
+			}
+		}
 	}
 
 	focus = {
@@ -7171,7 +7539,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_vehicle_industry "
 			add_tech_bonus = {
-				name = CAT_ifv
+				name = CAN_vehicle_industry
 				bonus = 0.50
 				uses = 2
 				category = CAT_ifv
@@ -7198,7 +7566,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_advanced_ultility_vehicle "
 			add_tech_bonus = {
-				name = CAT_util
+				name = CAN_advanced_ultility_vehicle
 				bonus = 0.50
 				uses = 2
 				category = CAT_util
@@ -7225,7 +7593,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_sat_tech "
 			add_tech_bonus = {
-				name = CAT_computing_tech
+				name = CAN_sat_tech
 				bonus = 0.50
 				uses = 2
 				category = CAT_computing_tech
@@ -7252,7 +7620,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_advanced_radar "
 			add_tech_bonus = {
-				name = CAT_internet_tech
+				name = CAN_advanced_radar
 				bonus = 0.50
 				uses = 2
 				category = CAT_internet_tech
@@ -7289,7 +7657,13 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -7322,6 +7696,10 @@ focus_tree = {
 				factor = 1.5
 				threat > 0.30
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -7349,7 +7727,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -7437,7 +7821,13 @@ focus_tree = {
 		cancel = {
 			OR = {
 				has_war_with = SOV
-				SOV = { has_opinion = { target = CAN value < 50 } }
+				AND = {
+					is_ai = no
+					AND = {
+					is_ai = no
+					SOV = { has_opinion = { target = CAN value < 50 } }
+				}
+				}
 				AND = {
 					is_subject = yes
 					NOT = { is_subject_of = SOV }
@@ -7689,13 +8079,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_mechanized"
 			add_tech_bonus = {
-				name = CAT_ifv
+				name = CAN_mechanized
 				bonus = 1.00
 				uses = 1
 				category = CAT_ifv
 			}
 			add_tech_bonus = {
-				name = CAT_apc
+				name = CAN_mechanized
 				bonus = 1.00
 				uses = 1
 				category = CAT_apc
@@ -7707,6 +8097,10 @@ focus_tree = {
 			modifier = {
 				factor = 2
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
 			}
 		}
 	}
@@ -7732,14 +8126,20 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_infantry_focus"
 			add_tech_bonus = {
-				name = CAT_inf
+				name = CAN_infantry_focus
 				bonus = 1.0
 				uses = 2
 				category = CAT_inf
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -7759,14 +8159,20 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_specops"
 			add_tech_bonus = {
-				name = CAT_special_forces
+				name = CAN_specops
 				bonus = 0.50
 				uses = 1
 				category = CAT_special_forces
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -7791,7 +8197,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -7817,7 +8229,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -7837,14 +8255,20 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_tanks"
 			add_tech_bonus = {
-				name = CAT_mbt
+				name = CAN_tanks
 				bonus = 1.0
 				uses = 1
 				category = CAT_mbt
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -7869,7 +8293,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -7895,7 +8325,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	##Canadian Air Force
@@ -7928,6 +8364,10 @@ focus_tree = {
 				factor = 1.5
 				threat > 0.30
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -7948,14 +8388,20 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_air_focus"
 			add_tech_bonus = {
-				name = CAT_fighter
+				name = CAN_air_focus
 				bonus = 0.50
 				uses = 2
 				category = CAT_fighter
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -7976,14 +8422,20 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_air_model_us"
 			add_tech_bonus = {
-				name = CAT_str_bomber
+				name = CAN_air_model_us
 				bonus = 0.50
 				uses = 2
 				category = CAT_str_bomber
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				has_idea = NATO_member
+			}
+		}
 	}
 
 	focus = {
@@ -8004,14 +8456,20 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_air_model_uk"
 			add_tech_bonus = {
-				name = CAT_mr_fighter
+				name = CAN_air_model_uk
 				bonus = 0.50
 				uses = 2
 				category = CAT_mr_fighter
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				NOT = { has_idea = NATO_member }
+			}
+		}
 	}
 
 	focus = {
@@ -8200,7 +8658,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_new_doctrine"
 			add_tech_bonus = {
-				name = CAT_as_fighter
+				name = CAN_new_doctrine
 				bonus = 0.25
 				uses = 1
 				category = CAT_as_fighter
@@ -8289,7 +8747,13 @@ focus_tree = {
 			add_ideas = CAN_force_air
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	##International Wargames Section
@@ -8344,6 +8808,10 @@ focus_tree = {
 				factor = 2
 				has_war = yes
 			}
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
 		}
 	}
 
@@ -8364,7 +8832,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_navy_carrier"
 			add_tech_bonus = {
-				name = CAT_carrier
+				name = CAN_navy_carrier
 				bonus = 0.50
 				uses = 1
 				category = CAT_carrier
@@ -8391,7 +8859,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_destroyers"
 			add_tech_bonus = {
-				name = CAT_destroyer
+				name = CAN_destroyers
 				bonus = 0.50
 				uses = 2
 				category = CAT_destroyer
@@ -8419,7 +8887,13 @@ focus_tree = {
 			navy_experience = 100
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -8445,7 +8919,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -8472,7 +8952,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -8545,7 +9031,13 @@ focus_tree = {
 			add_ideas = CAN_bluwater_navy
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	##English Nationalist Section -- Requires Destroy Reservations and NOT TAKING WESTERN OR EASTERN
@@ -8579,8 +9071,22 @@ focus_tree = {
 		ai_will_do = {
 			base = 1
 			modifier = {
-				is_historical_focus_on = yes
 				factor = 0
+				is_historical_focus_on = yes
+				NOT = { has_global_flag = CAN_NATIONALIST_FOCUS_PATH }
+			}
+			modifier = {
+				factor = 10
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = CAN_HISTORICAL_FOCUS_PATH
+					has_global_flag = CAN_FRENCH_CANADA_FOCUS_PATH
+					has_global_flag = CAN_ARMED_NEUTRALITY_FOCUS_PATH
+					has_global_flag = CAN_EASTERN_REALIGNMENT_FOCUS_PATH
+				}
 			}
 		}
 	}
@@ -8651,7 +9157,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 3
+				ai_is_threatened = yes
+			}
+		}
 	}
 
 	focus = {
@@ -8665,27 +9177,41 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = CAN_regional_diplomacy }
-		will_lead_to_war_with = DEN
+		will_lead_to_war_with = GRN
 
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
 
-		available = { DEN = { owns_state = 1 } }
+		available = { GRN = { owns_state = 1 } }
 
 		bypass = { owns_state = 1 }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_greenland "
 			1 = { add_core_of = CAN }
-			set_temp_variable = { wargoal_on = DEN }
-			set_temp_variable = { wargoal_type = 2 }
+			add_state_claim = 1
+			set_temp_variable = { wargoal_on = GRN }
 			add_threat_from_wargoal_effect = yes
 			create_wargoal = {
-				target = DEN
-				type = annex_everything
+				target = GRN
+				type = take_claimed_state
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 5
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+				strength_ratio = {
+					tag = DEN
+					ratio > 1.5
+				}
+			}
+			modifier = {
+				add = 3
+				has_war_with = DEN
+			}
+		}
 	}
 
 	focus = {
@@ -8723,7 +9249,21 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 5
+				has_global_flag = CAN_NATIONALIST_FOCUS_PATH
+				strength_ratio = {
+					tag = USA
+					ratio > 1.5
+				}
+			}
+			modifier = {
+				add = 3
+				has_war_with = USA
+			}
+		}
 	}
 
 	focus = {
