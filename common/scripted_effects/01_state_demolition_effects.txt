@@ -1,5 +1,8 @@
 state_demolition_rebuild_list = {
 	clear_array = ROOT.state_demolition_buildings
+	if = { limit = { naval_headquarters > 0 }
+		add_to_array = { ROOT.state_demolition_buildings = token:naval_headquarters }
+	}
 	if = { limit = { fossil_powerplant > 0 }
 		add_to_array = { ROOT.state_demolition_buildings = token:fossil_powerplant }
 	}
@@ -25,60 +28,76 @@ state_demolition_rebuild_list = {
 
 state_demolition_confirm = {
 	if = { limit = { state_demolition_can_confirm = yes }
-		log = "[GetDateText]: [ROOT.GetName]: Demolished one level of [?ROOT.state_demolition_building.GetTokenKey] in [THIS.GetName]"
-		if = {
-			limit = {
-				check_variable = { ROOT.state_demolition_building = token:fossil_powerplant }
-				fossil_powerplant > 0
-			}
-			remove_building = { type = fossil_powerplant level = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { ROOT.state_demolition_building = token:nuclear_reactor }
-				nuclear_reactor > 0
-			}
-			remove_building = { type = nuclear_reactor level = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { ROOT.state_demolition_building = token:renewable_energy_infra }
-				renewable_energy_infra > 0
-			}
-			remove_building = { type = renewable_energy_infra level = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { ROOT.state_demolition_building = token:air_base }
-				air_base > 0
-			}
-			remove_building = { type = air_base level = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { ROOT.state_demolition_building = token:radar_station }
-				radar_station > 0
-			}
-			remove_building = { type = radar_station level = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { ROOT.state_demolition_building = token:anti_air_building }
-				anti_air_building > 0
-			}
-			remove_building = { type = anti_air_building level = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { ROOT.state_demolition_building = token:fuel_silo }
-				fuel_silo > 0
-			}
-			remove_building = { type = fuel_silo level = 1 }
+		log = "[GetDateText]: [ROOT.GetName]: Demolition requested for up to [?ROOT.state_demolition_amount] levels of [?ROOT.state_demolition_building.GetTokenKey] in [THIS.GetName]"
+		for_loop_effect = {
+			start = 1
+			end = ROOT.state_demolition_amount
+			value = state_demolition_iteration
+			state_demolition_remove_one = yes
 		}
 		ROOT = {
 			clear_variable = state_demolition_building
 			ingame_update_setup = yes
 		}
 		state_demolition_rebuild_list = yes
+	}
+}
+
+state_demolition_remove_one = {
+	if = {
+		limit = {
+			check_variable = { ROOT.state_demolition_building = token:fossil_powerplant }
+			fossil_powerplant > 0
+		}
+		remove_building = { type = fossil_powerplant level = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { ROOT.state_demolition_building = token:nuclear_reactor }
+			nuclear_reactor > 0
+		}
+		remove_building = { type = nuclear_reactor level = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { ROOT.state_demolition_building = token:renewable_energy_infra }
+			renewable_energy_infra > 0
+		}
+		remove_building = { type = renewable_energy_infra level = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { ROOT.state_demolition_building = token:air_base }
+			air_base > 0
+		}
+		remove_building = { type = air_base level = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { ROOT.state_demolition_building = token:radar_station }
+			radar_station > 0
+		}
+		remove_building = { type = radar_station level = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { ROOT.state_demolition_building = token:anti_air_building }
+			anti_air_building > 0
+		}
+		remove_building = { type = anti_air_building level = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { ROOT.state_demolition_building = token:fuel_silo }
+			fuel_silo > 0
+		}
+		remove_building = { type = fuel_silo level = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { ROOT.state_demolition_building = token:naval_headquarters }
+			naval_headquarters > 0
+		}
+		remove_building = { type = naval_headquarters level = 1 }
 	}
 }
