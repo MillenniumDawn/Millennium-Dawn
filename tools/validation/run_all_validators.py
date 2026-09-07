@@ -39,6 +39,7 @@ _AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
 # these surface as warnings without gating. --missing-loc is intentionally left
 # off — its ~7.8k backlog would drown the report; run it on demand instead.
 _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
+    "bonus-names": ["--name-not-owner-id"],
     "focus-tree": ["--missing-icons"],
 }
 
