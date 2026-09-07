@@ -54,6 +54,7 @@ _EVENT_BLOCKS = frozenset(
 _NAME_FIELD_RE = re.compile(r"\bname\s*=\s*(\S+)")
 _ID_FIELD_RE = re.compile(r"\bid\s*=\s*(\S+)")
 _TOKEN_FIELD_RE = re.compile(r"\btoken\s*=\s*(\S+)")
+_TITLE_FIELD_RE = re.compile(r"\btitle\s*=\s*(\S+)")
 
 _VALIDATE_PATTERNS = [
     "common/**/*.txt",
@@ -100,8 +101,17 @@ def _owner_for(
         return ("focus", token, (token,)) if token else None
     if name in _EVENT_BLOCKS:
         token = _direct_field(text, body_start, body_end, _ID_FIELD_RE, children)
+        if not token:
+            return None
         # MD labels an event's bonus with either the event id or its title key.
-        return ("event", token, (token, f"{token}.t")) if token else None
+        # Most titles are `<id>.t`, but an event reusing another chain's key
+        # (spaceshuttle.2) names it outright, so read the field as well. A
+        # conditional `title = { text = ... }` yields a brace, not a key.
+        accepted = (token, f"{token}.t")
+        title = _direct_field(text, body_start, body_end, _TITLE_FIELD_RE, children)
+        if title and not title.startswith("{") and title not in accepted:
+            accepted += (title,)
+        return ("event", token, accepted)
     if in_mio and name == "trait":
         token = _direct_field(text, body_start, body_end, _TOKEN_FIELD_RE, children)
         return ("MIO trait", token, (token,)) if token else None
@@ -218,7 +228,12 @@ class Validator(BaseValidator):
         for batch in batches:
             for effect, name, kind, token, accepted, rel, line in batch:
                 where = f" in {kind} '{token}'" if token else ""
-                hint = f" (use name = {accepted[0]})" if accepted else ""
+                # An event id is not itself a loc key; its title key is.
+                hint_name = next(
+                    (a for a in accepted if a in loc_keys),
+                    accepted[0] if accepted else None,
+                )
+                hint = f" (use name = {hint_name})" if hint_name else ""
                 if name is None:
                     results.append(
                         self._issue(

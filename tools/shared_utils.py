@@ -16,7 +16,17 @@ from collections import OrderedDict
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Container, Dict, Iterator, List, Optional, Set, Tuple
+from typing import (
+    Any,
+    Callable,
+    Container,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+)
 
 
 class Colors:
@@ -956,6 +966,94 @@ def iter_flat_offsets(block: str) -> Iterator[Tuple[str, int]]:
         index += 1
 
 
+_STATEMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_.:@]*)\s*(>=|<=|==|=|>|<)")
+_FOCUS_START = re.compile(r"^[ \t]*(focus|shared_focus|joint_focus)\s*=\s*\{", re.M)
+_FOCUS_ID = re.compile(r"^[ \t]*id\s*=\s*(\S+)", re.M)
+
+
+def read_script(path: str, keep_quotes: bool = False) -> str:
+    """Read a mod file and neutralise comments, and by default quoted strings.
+
+    Both passes preserve length and newlines, so every offset and line number
+    computed downstream still points at the original file. `keep_quotes` is for
+    files whose quoted values are the data (loc key names in a game rule).
+    """
+    with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
+        text = strip_comments(handle.read())
+    return text if keep_quotes else blank_quoted_strings(text)
+
+
+def iter_statement_ops(
+    body: str,
+) -> Iterator[Tuple[str, str, Optional[str], Optional[str]]]:
+    """Yield (key, operator, scalar, block) for every statement at depth 0."""
+    index = 0
+    length = len(body)
+    while index < length:
+        if body[index] in "{}":
+            index += 1
+            continue
+        match = _STATEMENT.match(body, index)
+        if not match:
+            index += 1
+            continue
+        key, operator = match.group(1), match.group(2)
+        cursor = match.end()
+        while cursor < length and body[cursor] in " \t\r\n":
+            cursor += 1
+        if cursor < length and body[cursor] == "{":
+            close = find_matching_brace(body, cursor)
+            if close == -1:
+                return
+            yield key, operator, None, body[cursor + 1 : close]
+            index = close + 1
+            continue
+        if cursor < length and body[cursor] == '"':
+            stop = body.find('"', cursor + 1)
+            if stop == -1:
+                return
+            yield key, operator, body[cursor + 1 : stop], None
+            index = stop + 1
+            continue
+        stop = cursor
+        while stop < length and body[stop] not in " \t\r\n{}":
+            stop += 1
+        yield key, operator, body[cursor:stop], None
+        index = stop
+
+
+def iter_statements(body: str) -> Iterator[Tuple[str, Optional[str], Optional[str]]]:
+    """Yield (key, scalar, block) for every `key = ...` at depth 0 of *body*."""
+    for key, _operator, scalar, block in iter_statement_ops(body):
+        yield key, scalar, block
+
+
+def line_of(text: str, offset: int) -> int:
+    return text.count("\n", 0, offset) + 1
+
+
+def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
+    """Yield (id, kind, line, body) for each focus of a focus tree file.
+
+    A block without an `id` is skipped rather than reported under a made-up
+    name; the game ignores it too.
+    """
+    position = 0
+    while True:
+        match = _FOCUS_START.search(text, position)
+        if not match:
+            return
+        open_index = text.index("{", match.start())
+        close = find_matching_brace(text, open_index)
+        if close == -1:
+            return
+        body = text[open_index + 1 : close]
+        position = close + 1
+        id_match = _FOCUS_ID.search(body)
+        if id_match:
+            yield id_match.group(1), match.group(1), line_of(text, match.start()), body
+
+
 _IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
 # The three trigger blocks that can hide a decision or category from a player.
 _AI_GATE_FIELDS = ("visible", "available", "allowed")
@@ -1307,6 +1405,70 @@ def get_root_dir() -> str:
     return os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
     )
+
+
+def add_dry_run_argument(parser: argparse.ArgumentParser) -> None:
+    """Add the standard `--dry-run` flag shared by the auto-fixer sweeps."""
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report what would be fixed without writing changes",
+    )
+
+
+def run_linting_sweep(
+    args,
+    *,
+    banner: str,
+    file_filter: Callable[[str], bool],
+    apply_fn: Callable[[str], Tuple[str, int]],
+    dry_run_fn: Callable[[str], Tuple[str, int]],
+    unit: str,
+    no_files_message: str,
+    applied_verb: str = "Fixed",
+    dry_run_verb: str = "Would fix",
+) -> int:
+    """Run a whole-tree auto-fixer sweep and print its standard report.
+
+    *apply_fn* / *dry_run_fn* each take a path and return (path, fix count).
+    Returns the process exit code.
+    """
+    timings = []
+    root_dir = get_root_dir()
+    print(f"{banner} (Mode: {args.mode}, Dry run: {args.dry_run})")
+
+    with Timer("file collection") as t:
+        all_files = collect_files_by_mode(args, root_dir)
+    timings.append(("file collection", t.elapsed))
+
+    targets = [f for f in all_files if file_filter(f)]
+    if not targets:
+        print(no_files_message)
+        return 0
+
+    print(f"Processing {len(targets)} files...")
+
+    process_fn = dry_run_fn if args.dry_run else apply_fn
+    with Timer("processing") as t:
+        results = run_with_pool(process_fn, targets, args.workers)
+    timings.append(("processing", t.elapsed))
+
+    action = dry_run_verb if args.dry_run else applied_verb
+    files_fixed = [(f, c) for f, c in results if c > 0]
+    total_fixes = sum(c for _, c in results)
+
+    for filepath, count in sorted(files_fixed):
+        print(f"  {clean_filepath(filepath)}: {action.lower()} {count} {unit}")
+
+    print("\n------")
+    print(f"Processed {len(targets)} files")
+    print(f"{action} {total_fixes} {unit} in {len(files_fixed)} file(s)")
+
+    elapsed_total = sum(t for _, t in timings)
+    print(f"\nCompleted in {elapsed_total:.1f}s")
+    print_timing_summary(timings)
+
+    return 0
 
 
 def run_with_pool(
