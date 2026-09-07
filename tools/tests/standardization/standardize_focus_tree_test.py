@@ -238,6 +238,31 @@ def test_duplicate_single_line_available_blocks_merged():
     assert _code_braces_balanced(out)
 
 
+def test_duplicate_ai_will_do_blocks_are_not_merged():
+    # Merging two weight blocks under one header yields a single ai_will_do
+    # carrying two `base` lines, which is neither block's meaning. Both survive
+    # verbatim instead (POL_azure_poland in 05_poland.txt is the live case).
+    props = extract_focus_properties(
+        [
+            "\tfocus = {\n",
+            "\t\tid = TST_weighted\n",
+            "\t\tai_will_do = {\n",
+            "\t\t\tbase = 15\n",
+            "\t\t}\n",
+            "\t\tai_will_do = {\n",
+            "\t\t\tbase = 25\n",
+            "\t\t}\n",
+            "\t}\n",
+        ]
+    )
+    out = format_focus_block(props)
+    assert sum(1 for l in out if l.strip().startswith("ai_will_do")) == 2
+    body = "\n".join(out)
+    assert "base = 15" in body
+    assert "base = 25" in body
+    assert _code_braces_balanced(out)
+
+
 def test_duplicate_single_line_blocks_with_comment_braces_not_merged():
     # A `}` inside a trailing comment must not be mistaken for the block's
     # closing brace — merging is skipped and both blocks survive verbatim.

@@ -744,6 +744,17 @@ jobs:
             python3 tools/linting/check_common_mistakes.py \
             --output validation-common-mistakes.log
 
+      # No --strict: warning-only while the repo-wide standardization backlog
+      # stands, so it reports on the files a PR touches without gating them.
+      - name: Run standardization check
+        if: >-
+          always() && !cancelled() && matrix.batch == 'core' &&
+          steps.style-files.outputs.has-files == 'true'
+        run: |
+          MD_STAGED_FILES="$(cat style_files.txt)" \
+            python3 tools/validation/validate_standardization.py \
+            --staged --no-color --output validation-standardization.log
+
       - name: Verify style results
         if: >-
           always() && !cancelled() && matrix.batch == 'core' &&
@@ -753,6 +764,8 @@ jobs:
           test -f validation-style-check.json
           test -f validation-common-mistakes.log
           test -f validation-common-mistakes.json
+          test -f validation-standardization.log
+          test -f validation-standardization.json
 
       - name: Check localisation UTF-8 BOM
         if: >-
@@ -799,6 +812,19 @@ jobs:
           path: |
             validation-common-mistakes.log
             validation-common-mistakes.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload standardization results
+        if: >-
+          always() && !cancelled() && matrix.batch == 'core' &&
+          steps.style-files.outputs.has-files == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: validation-standardization-results
+          path: |
+            validation-standardization.log
+            validation-standardization.json
           if-no-files-found: error
           retention-days: 7
 

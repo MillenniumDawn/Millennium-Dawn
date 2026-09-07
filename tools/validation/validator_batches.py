@@ -112,6 +112,12 @@ ALL_SPECS: Tuple[ValidatorSpec, ...] = tuple(
 IMPACT_ONLY_SPECS: Tuple[ValidatorSpec, ...] = (
     ValidatorSpec("file-paths", "validate_file_paths.py", (), True),
     ValidatorSpec("style", "validate_style.py", (), True),
+    # Warning-only and changed-files-scoped: the repo-wide backlog of files the
+    # standardizers would rewrite is in the hundreds, so a gate or a full-repo
+    # run would bury every other finding.
+    ValidatorSpec(
+        "standardization", "validate_standardization.py", (), False, ("--staged",)
+    ),
     ValidatorSpec("mod-descriptors", "validate_mod_descriptors.py", (), True),
     ValidatorSpec(
         "localization-encoding",

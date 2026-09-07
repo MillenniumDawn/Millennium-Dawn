@@ -7,7 +7,7 @@ Standardizes HOI4 idea files according to Millennium Dawn coding standards
 
 import re
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from common_utils import (
     PROP_NAME_RE,
@@ -471,6 +471,10 @@ class IdeaStandardizer(BaseStandardizer):
 
         return cleaned_lines
 
+    def standardize_lines(self, lines: List[str]) -> Optional[List[str]]:
+        """Ideas nest, so the recursive walker replaces the base block loop."""
+        return self._process_lines(lines, depth=0)
+
     def standardize_file(self, input_file: str, output_file: str) -> bool:
         """Standardize ideas file by handling nested structure properly"""
         self.start_time = time.time()
@@ -478,7 +482,9 @@ class IdeaStandardizer(BaseStandardizer):
         if lines is None:
             return False
 
-        output_lines = self._process_lines(lines, depth=0)
+        output_lines = self.standardize_lines(lines)
+        if output_lines is None:
+            return True
 
         return write_standardized_output(
             output_file,
