@@ -1,0 +1,266 @@
+add_namespace = TOP_authorization
+add_namespace = TOP_opportunity
+
+country_event = {
+	id = TOP_authorization.1
+	title = TOP_authorization.1.t
+	desc = TOP_authorization.1.d
+	picture = GFX_USA_event_cia
+	is_triggered_only = yes
+
+	option = {
+		name = TOP_authorization.1.c
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.1.c executed"
+		hidden_effect = {
+			TOP_close_review_event = yes
+			TOP_cancel_review = yes
+		}
+		ai_chance = { base = 0 modifier = { add = 100 check_variable = { TOP_proposal_stage = 0 } } }
+	}
+
+	option = {
+		name = TOP_authorization.1.a
+		trigger = { check_variable = { TOP_proposal_stage = 1 } TOP_review_staff_ready = yes }
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.1.a executed"
+		custom_effect_tooltip = TOP_staff_review_tt
+		hidden_effect = {
+			TOP_close_review_event = yes
+			TOP_submit_staff_review = yes
+		}
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = TOP_authorization.1.b
+		trigger = {
+			check_variable = { TOP_proposal_stage = 1 }
+			check_variable = { global.TOP_status^TOP_proposal_target = 1 }
+			check_variable = { TOP_case_sequence^TOP_proposal_target = TOP_proposal_case_sequence }
+			check_variable = { TOP_case_phase^TOP_proposal_target > 0 }
+			check_variable = { TOP_case_phase^TOP_proposal_target < 4 }
+			OR = { check_variable = { TOP_case_collecting^TOP_proposal_target = 1 } has_political_power > 24 }
+		}
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.1.b executed"
+		custom_effect_tooltip = TOP_return_collection_tt
+		effect_tooltip = {
+			if = { limit = { check_variable = { TOP_case_collecting^TOP_proposal_target = 0 } } add_political_power = -25 }
+		}
+		hidden_effect = {
+			TOP_return_recorded_collection = yes
+			TOP_close_review_event = yes
+			TOP_cancel_review = yes
+		}
+		ai_chance = {
+			base = 0
+			modifier = { add = 100 TOP_review_staff_ready = no }
+		}
+	}
+}
+
+country_event = {
+	id = TOP_authorization.2
+	title = TOP_authorization.2.t
+	desc = TOP_authorization.2.d
+	picture = GFX_USA_event_cia
+	is_triggered_only = yes
+
+	option = {
+		name = TOP_authorization.2.e
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.2.e executed"
+		hidden_effect = {
+			TOP_close_review_event = yes
+			TOP_cancel_review = yes
+		}
+		ai_chance = { base = 0 modifier = { add = 100 TOP_review_staff_ready = no } }
+	}
+
+	option = {
+		name = TOP_authorization.2.a
+		trigger = {
+			check_variable = { TOP_proposal_stage = 2 }
+			TOP_review_staff_ready = yes
+			NOT = { check_variable = { TOP_proposal_host = THIS } }
+		}
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.2.a executed"
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = { custom_effect_tooltip = TOP_host_consent_tt }
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = { custom_effect_tooltip = TOP_host_refusal_tt }
+		hidden_effect = {
+			TOP_close_review_event = yes
+			TOP_send_host_request = yes
+		}
+		ai_chance = {
+			base = 60
+			modifier = { factor = 0 var:TOP_proposal_host = { has_war_with = PREV } }
+			modifier = { add = 100 check_variable = { TOP_proposal_method = 5 } }
+		}
+	}
+
+	option = {
+		name = TOP_authorization.2.b
+		trigger = {
+			check_variable = { TOP_proposal_stage = 2 }
+			TOP_review_staff_ready = yes
+			NOT = { check_variable = { TOP_proposal_host = THIS } }
+			NOT = { check_variable = { TOP_proposal_method = 5 } }
+		}
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.2.b executed"
+		custom_effect_tooltip = TOP_unilateral_review_tt
+		hidden_effect = {
+			TOP_close_review_event = yes
+			set_variable = { TOP_proposal_consent = 0 }
+			TOP_open_senior_review = yes
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 100 var:TOP_proposal_host = { has_war_with = PREV } }
+			modifier = { factor = 0.25 TOP_enhanced_review_government = yes }
+		}
+	}
+
+	option = {
+		name = TOP_authorization.2.c
+		trigger = {
+			check_variable = { TOP_proposal_stage = 2 }
+			TOP_review_staff_ready = yes
+			check_variable = { TOP_proposal_host = THIS }
+		}
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.2.c executed"
+		custom_effect_tooltip = TOP_domestic_review_tt
+		hidden_effect = {
+			TOP_close_review_event = yes
+			set_variable = { TOP_proposal_consent = 1 }
+			TOP_open_senior_review = yes
+		}
+		ai_chance = { base = 100 }
+	}
+
+}
+
+country_event = {
+	id = TOP_authorization.3
+	title = TOP_authorization.3.t
+	desc = TOP_authorization.3.d
+	picture = GFX_USA_event_cia
+	is_triggered_only = yes
+
+	option = {
+		name = TOP_authorization.3.b
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.3.b executed"
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		effect_tooltip = { custom_effect_tooltip = TOP_host_refusal_tt }
+		hidden_effect = { TOP_answer_host_request = { CONSENT = -1 } }
+		ai_chance = {
+			base = 40
+			modifier = { add = 100 has_war_with = var:TOP_incoming_actor }
+			modifier = { add = 30 has_opinion = { target = var:TOP_incoming_actor value < 0 } }
+			modifier = { factor = 0.25 is_in_faction_with = var:TOP_incoming_actor }
+		}
+	}
+
+	option = {
+		name = TOP_authorization.3.a
+		trigger = { TOP_host_request_matches = yes }
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.3.a executed"
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		effect_tooltip = { custom_effect_tooltip = TOP_host_consent_tt }
+		hidden_effect = { TOP_answer_host_request = { CONSENT = 1 } }
+		ai_chance = {
+			base = 10
+			modifier = { add = 70 is_in_faction_with = var:TOP_incoming_actor }
+			modifier = { add = 50 is_subject_of = var:TOP_incoming_actor }
+			modifier = { add = 30 has_opinion = { target = var:TOP_incoming_actor value > 49 } }
+			modifier = { factor = 0 has_war_with = var:TOP_incoming_actor }
+			modifier = { factor = 0 has_opinion = { target = var:TOP_incoming_actor value < -49 } }
+		}
+	}
+
+}
+
+country_event = {
+	id = TOP_authorization.4
+	title = TOP_authorization.4.t
+	desc = TOP_authorization.4.d
+	picture = GFX_USA_event_cia
+	is_triggered_only = yes
+
+	option = {
+		name = TOP_authorization.4.c
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.4.c executed"
+		hidden_effect = {
+			TOP_close_review_event = yes
+			TOP_cancel_review = yes
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 100 TOP_review_can_approve = no }
+			modifier = { factor = 0 check_variable = { TOP_proposal_consent = 1 } TOP_review_can_approve = yes }
+		}
+	}
+
+	option = {
+		name = TOP_authorization.4.a
+		trigger = { TOP_review_can_approve = yes check_variable = { TOP_proposal_consent = 1 } }
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.4.a executed"
+		custom_effect_tooltip = TOP_mandate_approved_tt
+		effect_tooltip = { add_political_power = -50 }
+		hidden_effect = {
+			TOP_close_review_event = yes
+			TOP_approve_review = yes
+		}
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = TOP_authorization.4.b
+		trigger = { TOP_review_can_approve = yes check_variable = { TOP_proposal_consent < 1 } }
+		log = "[GetDateText]: [This.GetName]: TOP_authorization.4.b executed"
+		custom_effect_tooltip = TOP_mandate_approved_tt
+		custom_effect_tooltip = TOP_unilateral_review_tt
+		effect_tooltip = { add_political_power = -50 }
+		hidden_effect = {
+			TOP_close_review_event = yes
+			TOP_approve_review = yes
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 80 var:TOP_proposal_host = { has_war_with = PREV } }
+			modifier = { factor = 0.25 TOP_enhanced_review_government = yes }
+		}
+	}
+
+}
+
+country_event = {
+	id = TOP_opportunity.1
+	title = TOP_opportunity.1.t
+	desc = TOP_opportunity.1.d
+	picture = GFX_USA_event_cia
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = TOP_opportunity.1.a }
+}
+
+country_event = {
+	id = TOP_opportunity.2
+	title = TOP_opportunity.2.t
+	desc = TOP_opportunity.2.d
+	picture = GFX_USA_event_cia
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = TOP_opportunity.2.a }
+}
+
+country_event = {
+	id = TOP_opportunity.3
+	title = TOP_opportunity.3.t
+	desc = TOP_opportunity.3.d
+	picture = GFX_USA_event_cia
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = TOP_opportunity.3.a }
+}

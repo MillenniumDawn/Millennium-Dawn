@@ -462,23 +462,39 @@ class TestValidateStaged:
 
     def test_main_no_staged_files_or_skip_env(self, tmp_path):
         """With no staged files or MD_SKIP_VALIDATE=1, no validators run and exit 0."""
+        subprocess.run(
+            ["git", "init", "--quiet", str(tmp_path)], check=True, capture_output=True
+        )
+        validation_env = {
+            key: value for key, value in os.environ.items() if key != "MD_SKIP_VALIDATE"
+        }
         # No staged files
         result = subprocess.run(
             [sys.executable, str(TOOLS / "validate_staged.py")],
             capture_output=True,
             text=True,
-            cwd=REPO_ROOT,
+            cwd=tmp_path,
+            env=validation_env,
         )
         assert result.returncode == 0
         assert "Running " not in result.stdout
 
         # Skip env
+        probe = tmp_path / "events" / "skip_probe.txt"
+        probe.parent.mkdir()
+        with probe.open("w", encoding="utf-8", newline="") as stream:
+            stream.write("add_namespace = skip_probe\n")
+        subprocess.run(
+            ["git", "-C", str(tmp_path), "add", "--", "events/skip_probe.txt"],
+            check=True,
+            capture_output=True,
+        )
         result = subprocess.run(
             [sys.executable, str(TOOLS / "validate_staged.py")],
             capture_output=True,
             text=True,
-            cwd=REPO_ROOT,
-            env={**os.environ, "MD_SKIP_VALIDATE": "1"},
+            cwd=tmp_path,
+            env={**validation_env, "MD_SKIP_VALIDATE": "1"},
         )
         assert result.returncode == 0
         assert "Running " not in result.stdout

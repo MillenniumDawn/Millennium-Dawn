@@ -1,9 +1,21 @@
 #War on Terror:
 
 bin_laden_set_hideout = {
-	save_global_event_target_as = GLOBAL_bin_laden_hideout
-	set_country_flag = wot_sheltering_bin_laden
-	set_global_flag = GLOBAL_bin_laden_at_large
+	if = {
+		limit = { TOP_enabled = yes }
+		if = {
+			limit = { check_variable = { global.TOP_status^1 < 2 } }
+			save_global_event_target_as = GLOBAL_bin_laden_hideout
+			set_country_flag = wot_sheltering_bin_laden
+			set_global_flag = GLOBAL_bin_laden_at_large
+			TOP_import_target_location = { TARGET = 1 }
+		}
+	}
+	else = {
+		save_global_event_target_as = GLOBAL_bin_laden_hideout
+		set_country_flag = wot_sheltering_bin_laden
+		set_global_flag = GLOBAL_bin_laden_at_large
+	}
 }
 
 #Each tier only runs if the previous one found nobody, so the candidate set can never diverge from a separate guard.
@@ -87,29 +99,38 @@ bin_laden_relocate_hideout = {
 			NOT = { has_global_flag = GLOBAL_bin_laden_at_large }
 			NOT = { has_global_flag = GLOBAL_bin_laden_killed_or_captured }
 		}
-		set_global_flag = GLOBAL_bin_laden_killed_or_captured
-		news_event = { id = wotnews.19 hours = 6 }
+		if = {
+			limit = { TOP_enabled = no }
+			set_global_flag = GLOBAL_bin_laden_killed_or_captured
+			news_event = { id = wotnews.19 hours = 6 }
+		}
 	}
 }
 
 #Keeps GLOBAL_bin_laden_hideout: wotnews.16 renders the target days later and its option clears it.
 #The shelterer's fallout lands here, not in that option, which never runs if they are annexed inside the delay.
 bin_laden_clear_hideout = {
-	clr_global_flag = GLOBAL_bin_laden_at_large
-	set_global_flag = GLOBAL_bin_laden_killed_or_captured
-
-	event_target:GLOBAL_bin_laden_hideout = {
-		if = {
-			limit = { has_country_flag = wot_sheltering_bin_laden }
-			add_popularity = { ideology = democratic popularity = -0.10 }
-			clr_country_flag = wot_sheltering_bin_laden
-		}
+	if = {
+		limit = { TOP_enabled = yes }
+		TOP_kill_target = { TARGET = 1 }
 	}
+	else = {
+		clr_global_flag = GLOBAL_bin_laden_at_large
+		set_global_flag = GLOBAL_bin_laden_killed_or_captured
 
-	#Decapitation. The network survives him, but it is badly degraded and far more exposed.
-	set_temp_variable = { wot_aq_threat_change = -30 }
-	set_temp_variable = { wot_aq_visibility_change = 20 }
-	wot_al_qaeda_shift = yes
+		event_target:GLOBAL_bin_laden_hideout = {
+			if = {
+				limit = { has_country_flag = wot_sheltering_bin_laden }
+				add_popularity = { ideology = democratic popularity = -0.10 }
+				clr_country_flag = wot_sheltering_bin_laden
+			}
+		}
+
+		#Decapitation. The network survives him, but it is badly degraded and far more exposed.
+		set_temp_variable = { wot_aq_threat_change = -30 }
+		set_temp_variable = { wot_aq_visibility_change = 20 }
+		wot_al_qaeda_shift = yes
+	}
 }
 
 #The Council turns on whoever is in ROOT. Runs on the country being condemned.

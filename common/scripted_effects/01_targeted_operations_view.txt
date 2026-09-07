@@ -1,0 +1,37 @@
+TOP_open_dossiers = {
+	TOP_initialize_global = yes
+	TOP_country_initialize = yes
+	set_variable = { TOP_open = 1 }
+	set_variable = { TOP_tab = 0 }
+	set_variable = { var_open_MD_CT_gui = 2 }
+	set_country_flag = open_MD_countrymissilesview
+	TOP_build_view = yes
+}
+
+TOP_build_view = {
+	TOP_load_case = { TARGET = TOP_selected }
+	set_temp_variable = { TOP_target = TOP_selected }
+	TOP_get_defensive_modifiers = yes
+	set_variable = { TOP_view_collection_penalty = TOP_defensive_collection_penalty }
+	set_variable = { TOP_view_protection_penalty = TOP_defensive_success_penalty }
+	set_variable = { TOP_view_exposure_bonus = TOP_defensive_exposure_bonus }
+	set_variable = { TOP_view_case_days = { value = TOP_case_until^TOP_selected subtract = global.TOP_clock } }
+	clamp_variable = { var = TOP_view_case_days min = 0 max = 182 }
+	set_variable = { TOP_view_mission_days = { value = TOP_case_due^TOP_selected subtract = global.TOP_clock } }
+	clamp_variable = { var = TOP_view_mission_days min = 0 max = 28 }
+	clear_array = TOP_visible_rows
+	clear_array = TOP_visible_archive
+	if = {
+		limit = { check_variable = { TOP_tab = 0 } }
+		for_each_loop = { array = TOP_dossiers value = TOP_view_id add_to_array = { TOP_visible_rows = TOP_view_id } }
+	}
+	else_if = {
+		limit = { check_variable = { TOP_tab = 3 } }
+		for_each_loop = { array = TOP_active_cases value = TOP_view_id add_to_array = { TOP_visible_rows = TOP_view_id } }
+	}
+	else_if = {
+		limit = { check_variable = { TOP_tab = 2 } }
+		for_each_loop = { array = TOP_archive_rows value = TOP_view_id add_to_array = { TOP_visible_archive = TOP_view_id } }
+	}
+	TOP_refresh_view = yes
+}
