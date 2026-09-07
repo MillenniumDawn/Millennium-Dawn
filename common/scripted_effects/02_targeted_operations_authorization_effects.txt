@@ -1,0 +1,282 @@
+TOP_begin_review = {
+	if = {
+		limit = { TOP_method_startable = { METHOD = $METHOD$ } TOP_review_pending = no }
+		add_to_variable = { TOP_proposal_sequence = 1 }
+		set_variable = { TOP_proposal_target = TOP_selected }
+		set_variable = { TOP_proposal_case_sequence = TOP_case_sequence^TOP_selected }
+		set_variable = { TOP_proposal_method = $METHOD$ }
+		set_variable = { TOP_proposal_state = TOP_lead_state^TOP_selected }
+		set_variable = { TOP_proposal_facility = 0 }
+		if = {
+			limit = { check_variable = { TOP_proposal_method = 6 } }
+			set_variable = { TOP_proposal_facility = TOP_selected_facility }
+			clamp_variable = { var = TOP_proposal_facility min = 1 max = 3 }
+		}
+		var:TOP_proposal_state = { set_temp_variable = { TOP_review_host = controller } }
+		set_variable = { TOP_proposal_host = TOP_review_host }
+		set_variable = { TOP_proposal_expires = { value = global.TOP_clock add = 42 } }
+		set_variable = { TOP_proposal_rigor = 1 }
+		set_variable = { TOP_proposal_consent = 0 }
+		set_variable = { TOP_proposal_capture_feasible = 0 }
+		set_variable = { TOP_proposal_civilian_assurance = TOP_confidence^TOP_proposal_target }
+		subtract_from_variable = { TOP_proposal_civilian_assurance = { value = TOP_lead_age^TOP_proposal_target multiply = 0.25 } }
+		clamp_variable = { var = TOP_proposal_civilian_assurance min = 0 max = 100 }
+		if = {
+			limit = {
+				OR = {
+					TOP_enhanced_review_government = yes
+					check_variable = { global.TOP_political^TOP_proposal_target = 1 }
+				}
+			}
+			set_variable = { TOP_proposal_rigor = 2 }
+		}
+		set_temp_variable = { TOP_review_actor = THIS }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { TOP_proposal_host = THIS }
+					var:TOP_proposal_host = {
+						NOT = { has_war_with = var:TOP_review_actor }
+						OR = {
+							is_in_faction_with = var:TOP_review_actor
+							has_opinion = { target = var:TOP_review_actor value > 49 }
+						}
+					}
+				}
+			}
+			set_variable = { TOP_proposal_capture_feasible = 1 }
+		}
+		if = {
+			limit = { TOP_review_valid = yes }
+			set_variable = { TOP_proposal_stage = 1 }
+			set_variable = { TOP_review_event_open = 1 }
+			TOP_enroll_pending_actor = yes
+			country_event = TOP_authorization.1
+		}
+		else = { TOP_cancel_review = yes }
+		TOP_refresh_view = yes
+	}
+}
+
+TOP_return_recorded_collection = {
+	if = {
+		limit = {
+			check_variable = { TOP_proposal_stage = 1 }
+			check_variable = { global.TOP_status^TOP_proposal_target = 1 }
+			check_variable = { TOP_case_sequence^TOP_proposal_target = TOP_proposal_case_sequence }
+			check_variable = { TOP_case_phase^TOP_proposal_target > 0 }
+			check_variable = { TOP_case_phase^TOP_proposal_target < 4 }
+			check_variable = { TOP_case_collecting^TOP_proposal_target = 0 }
+			has_political_power > 24
+		}
+		add_political_power = -25
+		set_variable = { TOP_case_collecting^TOP_proposal_target = 1 }
+		if = {
+			limit = { check_variable = { TOP_case_phase^TOP_proposal_target = 1 } }
+			set_variable = { TOP_case_until^TOP_proposal_target = { value = global.TOP_clock add = 182 } }
+		}
+	}
+}
+
+TOP_cancel_review = {
+	# An open popup keeps its slot until consumed so its callbacks cannot attach to another case.
+	set_variable = { TOP_proposal_stage = 0 }
+	set_variable = { TOP_proposal_expires = 0 }
+	TOP_refresh_view = yes
+}
+
+TOP_close_review_event = {
+	set_variable = { TOP_review_event_open = 0 }
+	TOP_refresh_view = yes
+}
+
+TOP_review_tick = {
+	if = {
+		limit = { check_variable = { TOP_proposal_stage > 0 } NOT = { TOP_review_valid = yes } }
+		TOP_cancel_review = yes
+	}
+}
+
+TOP_submit_staff_review = {
+	if = {
+		limit = { check_variable = { TOP_proposal_stage = 1 } TOP_review_staff_ready = yes }
+		set_variable = { TOP_proposal_stage = 2 }
+		set_variable = { TOP_review_event_open = 2 }
+		country_event = TOP_authorization.2
+		TOP_refresh_view = yes
+	}
+}
+
+TOP_send_host_request = {
+	if = {
+		limit = {
+			check_variable = { TOP_proposal_stage = 2 }
+			TOP_review_staff_ready = yes
+			NOT = { check_variable = { TOP_proposal_host = THIS } }
+		}
+		set_variable = { TOP_proposal_stage = 3 }
+		set_temp_variable = { TOP_review_actor = THIS }
+		var:TOP_proposal_host = {
+			if = {
+				limit = { check_variable = { TOP_incoming_actor = 0 } }
+				set_variable = { TOP_incoming_actor = TOP_review_actor }
+				set_variable = { TOP_incoming_sequence = PREV.TOP_proposal_sequence }
+				set_variable = { TOP_incoming_target = PREV.TOP_proposal_target }
+				set_variable = { TOP_incoming_state = PREV.TOP_proposal_state }
+				set_variable = { TOP_incoming_method = PREV.TOP_proposal_method }
+				set_variable = { TOP_incoming_facility = PREV.TOP_proposal_facility }
+				country_event = TOP_authorization.3
+			}
+			else = {
+				var:TOP_review_actor = {
+					set_variable = { TOP_proposal_consent = -1 }
+					TOP_open_senior_review = yes
+				}
+			}
+		}
+		TOP_refresh_view = yes
+	}
+}
+
+TOP_answer_host_request = {
+	if = {
+		limit = { TOP_host_request_matches = yes }
+		var:TOP_incoming_actor = {
+			set_variable = { TOP_proposal_consent = $CONSENT$ }
+			TOP_open_senior_review = yes
+		}
+	}
+	# Only consuming the request releases this host slot; cancellation never overwrites its identity.
+	set_variable = { TOP_incoming_actor = 0 }
+	set_variable = { TOP_incoming_sequence = 0 }
+}
+
+TOP_open_senior_review = {
+	if = {
+		limit = { TOP_review_valid = yes }
+		set_variable = { TOP_proposal_stage = 4 }
+		set_variable = { TOP_review_event_open = 4 }
+		country_event = TOP_authorization.4
+		TOP_refresh_view = yes
+	}
+	else = { TOP_cancel_review = yes }
+}
+
+TOP_approve_review = {
+	if = {
+		limit = { TOP_review_can_approve = yes }
+		if = {
+			limit = { check_variable = { TOP_proposal_consent < 1 } }
+			set_variable = { TOP_proposal_consent = 0 }
+		}
+		TOP_commit_reviewed_authorization = yes
+		TOP_cancel_review = yes
+	}
+}
+
+TOP_modern_opportunities_2024 = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { global.TOP_modern_year < 2024 } }
+		set_variable = { global.TOP_modern_year = 2024 }
+		set_variable = { global.TOP_modern_until = { value = global.TOP_clock add = 365 } }
+	}
+}
+
+TOP_modern_opportunities_2025 = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { global.TOP_modern_year < 2025 } }
+		set_variable = { global.TOP_modern_year = 2025 }
+		set_variable = { global.TOP_modern_until = { value = global.TOP_clock add = 365 } }
+	}
+}
+
+TOP_modern_opportunities_2026 = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { global.TOP_modern_year < 2026 } }
+		set_variable = { global.TOP_modern_year = 2026 }
+		set_variable = { global.TOP_modern_until = { value = global.TOP_clock add = 365 } }
+	}
+}
+
+TOP_modern_country_opportunity = {
+	if = {
+		limit = {
+			TOP_country_eligible = yes
+			check_variable = { global.TOP_modern_year > 2023 }
+			check_variable = { global.TOP_modern_year < 2027 }
+			check_variable = { global.TOP_modern_until > global.TOP_clock }
+			check_variable = { TOP_last_modern_year < global.TOP_modern_year }
+		}
+		set_variable = { TOP_last_modern_year = global.TOP_modern_year }
+		set_temp_variable = { TOP_modern_candidate = 0 }
+		set_temp_variable = { TOP_modern_best_score = 0 }
+		for_each_loop = {
+			array = TOP_dossiers
+			value = TOP_modern_target
+			if = {
+				limit = {
+					check_variable = { global.TOP_status^TOP_modern_target = 1 }
+					check_variable = { TOP_known^TOP_modern_target = 1 }
+					check_variable = { TOP_confidence^TOP_modern_target > 0 }
+					check_variable = { global.TOP_political^TOP_modern_target = 0 }
+					check_variable = { global.TOP_affiliation^TOP_modern_target > 0 }
+					check_variable = { global.TOP_affiliation^TOP_modern_target < 8 }
+					is_in_array = { global.TOP_active_targets = TOP_modern_target }
+				}
+				set_temp_variable = { TOP_target = TOP_modern_target }
+				TOP_find_org = yes
+				set_temp_variable = { TOP_modern_score = TOP_confidence^TOP_modern_target }
+				if = {
+					limit = { check_variable = { TOP_org_slot > -1 } }
+					add_to_temp_variable = { TOP_modern_score = global.active_terror_org_threat_lvl^TOP_org_slot }
+				}
+				if = {
+					limit = {
+						OR = {
+							AND = {
+								check_variable = { TOP_last_modern_year = 2024 }
+								check_variable = { global.TOP_affiliation^TOP_modern_target = 3 }
+							}
+							AND = {
+								check_variable = { TOP_last_modern_year = 2025 }
+								check_variable = { global.TOP_affiliation^TOP_modern_target > 4 }
+							}
+							AND = {
+								check_variable = { TOP_last_modern_year = 2026 }
+								OR = {
+									check_variable = { global.TOP_affiliation^TOP_modern_target = 1 }
+									check_variable = { global.TOP_affiliation^TOP_modern_target = 4 }
+								}
+							}
+						}
+					}
+					add_to_temp_variable = { TOP_modern_score = 30 }
+				}
+				if = {
+					limit = { check_variable = { TOP_modern_score > TOP_modern_best_score } }
+					set_temp_variable = { TOP_modern_candidate = TOP_modern_target }
+					set_temp_variable = { TOP_modern_best_score = TOP_modern_score }
+				}
+			}
+		}
+		if = {
+			limit = { check_variable = { TOP_modern_candidate > 0 } }
+			TOP_add_target_lead = { TARGET = TOP_modern_candidate AMOUNT = 25 }
+			if = {
+				limit = { check_variable = { TOP_last_modern_year = 2024 } }
+				set_variable = { TOP_modern_2024_target = TOP_modern_candidate }
+				if = { limit = { is_ai = no } country_event = { id = TOP_opportunity.1 days = 1 } }
+			}
+			else_if = {
+				limit = { check_variable = { TOP_last_modern_year = 2025 } }
+				set_variable = { TOP_modern_2025_target = TOP_modern_candidate }
+				if = { limit = { is_ai = no } country_event = { id = TOP_opportunity.2 days = 1 } }
+			}
+			else = {
+				set_variable = { TOP_modern_2026_target = TOP_modern_candidate }
+				if = { limit = { is_ai = no } country_event = { id = TOP_opportunity.3 days = 1 } }
+			}
+			TOP_refresh_view = yes
+		}
+	}
+}

@@ -1,0 +1,1252 @@
+TOP_bin_laden_legacy_removed = {
+	clr_global_flag = GLOBAL_bin_laden_at_large
+	set_global_flag = GLOBAL_bin_laden_killed_or_captured
+
+	event_target:GLOBAL_bin_laden_hideout = {
+		if = {
+			limit = { has_country_flag = wot_sheltering_bin_laden }
+			add_popularity = { ideology = democratic popularity = -0.10 }
+			clr_country_flag = wot_sheltering_bin_laden
+		}
+	}
+
+	#Decapitation. The network survives him, but it is badly degraded and far more exposed.
+	set_temp_variable = { wot_aq_threat_change = -30 }
+	set_temp_variable = { wot_aq_visibility_change = 20 }
+	wot_al_qaeda_shift = yes
+}
+
+TOP_update_iraq_progress = {
+	if = {
+		limit = { TOP_enabled = yes }
+		USA = {
+			set_variable = { IRQ_baathist_dead = 0 }
+			for_loop_effect = {
+				start = 56
+				end = 64
+				value = TOP_iraq_target
+				if = {
+					limit = { check_variable = { global.TOP_status^TOP_iraq_target > 1 } check_variable = { global.TOP_status^TOP_iraq_target < 4 } }
+					add_to_variable = { IRQ_baathist_dead = 1 }
+				}
+			}
+			if = { limit = { check_variable = { global.TOP_status^56 = 2 } check_variable = { global.TOP_custodian^56 = USA } } set_country_flag = IRQ_saddam_caught }
+			else = { clr_country_flag = IRQ_saddam_caught }
+			if = { limit = { check_variable = { global.TOP_status^56 = 3 } } set_country_flag = USA_saddam_dead }
+			else = { clr_country_flag = USA_saddam_dead }
+			if = { limit = { check_variable = { global.TOP_status^57 = 2 } check_variable = { global.TOP_custodian^57 = USA } } set_country_flag = IRQ_qusay_caught }
+			else = { clr_country_flag = IRQ_qusay_caught }
+			if = { limit = { check_variable = { global.TOP_status^57 = 3 } } set_country_flag = USA_qusay_dead }
+			else = { clr_country_flag = USA_qusay_dead }
+			if = { limit = { check_variable = { global.TOP_status^58 = 2 } check_variable = { global.TOP_custodian^58 = USA } } set_country_flag = IRQ_uday_caught }
+			else = { clr_country_flag = IRQ_uday_caught }
+			if = { limit = { check_variable = { global.TOP_status^58 = 3 } } set_country_flag = USA_uday_dead }
+			else = { clr_country_flag = USA_uday_dead }
+			if = { limit = { check_variable = { global.TOP_status^59 = 2 } check_variable = { global.TOP_custodian^59 = USA } } set_country_flag = IRQ_abid_caught }
+			else = { clr_country_flag = IRQ_abid_caught }
+			if = { limit = { check_variable = { global.TOP_status^59 = 3 } } set_country_flag = USA_abid_dead }
+			else = { clr_country_flag = USA_abid_dead }
+			if = { limit = { check_variable = { global.TOP_status^60 = 2 } check_variable = { global.TOP_custodian^60 = USA } } set_country_flag = IRQ_majid_caught }
+			else = { clr_country_flag = IRQ_majid_caught }
+			if = { limit = { check_variable = { global.TOP_status^60 = 3 } } set_country_flag = USA_majid_dead }
+			else = { clr_country_flag = USA_majid_dead }
+			if = { limit = { check_variable = { global.TOP_status^61 = 2 } check_variable = { global.TOP_custodian^61 = USA } } set_country_flag = IRQ_walter_caught }
+			else = { clr_country_flag = IRQ_walter_caught }
+			if = { limit = { check_variable = { global.TOP_status^61 = 3 } } set_country_flag = USA_walter_dead }
+			else = { clr_country_flag = USA_walter_dead }
+			if = { limit = { check_variable = { global.TOP_status^62 = 2 } check_variable = { global.TOP_custodian^62 = USA } } set_country_flag = IRQ_tilfah_caught }
+			else = { clr_country_flag = IRQ_tilfah_caught }
+			if = { limit = { check_variable = { global.TOP_status^62 = 3 } } set_country_flag = USA_latif_dead }
+			else = { clr_country_flag = USA_latif_dead }
+			if = { limit = { check_variable = { global.TOP_status^63 = 2 } check_variable = { global.TOP_custodian^63 = USA } } set_country_flag = IRQ_salih_caught }
+			else = { clr_country_flag = IRQ_salih_caught }
+			if = { limit = { check_variable = { global.TOP_status^63 = 3 } } set_country_flag = USA_salih_dead }
+			else = { clr_country_flag = USA_salih_dead }
+			if = { limit = { is_ai = no } add_to_variable = { global.update_irq_ui = 1 } }
+		}
+	}
+}
+
+# The canonical resolver writes status before this adapter; no branch calls the resolver again.
+TOP_apply_legacy_outcome = {
+	if = {
+		limit = { check_variable = { TOP_target = 1 } NOT = { check_variable = { TOP_previous_status = 2 } } }
+		clr_global_flag = GLOBAL_bin_laden_at_large
+		set_global_flag = GLOBAL_bin_laden_killed_or_captured
+		if = {
+			limit = { check_variable = { TOP_first_removal = 1 } }
+			if = {
+				limit = { check_variable = { TOP_result = 3 } }
+				TOP_bin_laden_legacy_removed = yes
+				set_variable = { TOP_legacy_report_pending^TOP_target = 1 }
+			}
+			else = {
+				event_target:GLOBAL_bin_laden_hideout = { clr_country_flag = wot_sheltering_bin_laden }
+				add_stability = 0.05
+				set_temp_variable_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.10 }
+				set_temp_variable = { temp_outlook_increase = 0.10 }
+				change_relative_party_popularity = yes
+				news_event = { id = wotnews.15 hours = 6 }
+			}
+		}
+		else = { event_target:GLOBAL_bin_laden_hideout = { clr_country_flag = wot_sheltering_bin_laden } }
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target > 15 } check_variable = { TOP_target < 29 } check_variable = { TOP_first_removal = 1 } NOT = { check_variable = { TOP_previous_status = 2 } } }
+		set_temp_variable = { ISI_hvt_id = { value = TOP_target subtract = 15 } }
+		remove_from_array = { global.ISI_hvt_pool = ISI_hvt_id }
+		ISI = {
+			add_timed_idea = { idea = ISI_decapitated_leadership days = 120 }
+			add_war_support = -0.02
+			set_country_flag = { flag = ISI_hvt_cooldown value = 1 days = 60 }
+			ISI_retire_hvt_character = yes
+		}
+		if = {
+			limit = { check_variable = { TOP_result = 3 } }
+			set_variable = { TOP_legacy_report_pending^TOP_target = 1 }
+		}
+		else = {
+			if = { limit = { original_tag = SOV } ISI_hvt_news_russian = yes }
+			else = { ISI_hvt_news_coalition = yes }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 56 } }
+		if = {
+			limit = { check_variable = { TOP_result = 2 } }
+			set_country_flag = IRQ_saddam_caught
+			if = {
+				limit = { check_variable = { TOP_first_removal = 1 } }
+				army_experience = 100
+				news_event = { id = wotnews.12 hours = 19 }
+			}
+		}
+		else = { set_country_flag = USA_saddam_dead }
+		TOP_update_iraq_progress = yes
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 57 } }
+		if = {
+			limit = { check_variable = { TOP_result = 2 } }
+			set_country_flag = IRQ_qusay_caught
+			if = {
+				limit = { check_variable = { TOP_first_removal = 1 } }
+				army_experience = 100
+			}
+		}
+		else = { set_country_flag = USA_qusay_dead }
+		TOP_update_iraq_progress = yes
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 58 } }
+		if = {
+			limit = { check_variable = { TOP_result = 2 } }
+			set_country_flag = IRQ_uday_caught
+			if = {
+				limit = { check_variable = { TOP_first_removal = 1 } }
+				army_experience = 100
+			}
+		}
+		else = { set_country_flag = USA_uday_dead }
+		TOP_update_iraq_progress = yes
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 59 } }
+		if = {
+			limit = { check_variable = { TOP_result = 2 } }
+			set_country_flag = IRQ_abid_caught
+			if = {
+				limit = { check_variable = { TOP_first_removal = 1 } }
+				army_experience = 100
+			}
+		}
+		else = { set_country_flag = USA_abid_dead }
+		TOP_update_iraq_progress = yes
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 60 } }
+		if = {
+			limit = { check_variable = { TOP_result = 2 } }
+			set_country_flag = IRQ_majid_caught
+			if = {
+				limit = { check_variable = { TOP_first_removal = 1 } }
+				army_experience = 100
+			}
+		}
+		else = { set_country_flag = USA_majid_dead }
+		TOP_update_iraq_progress = yes
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 61 } }
+		if = {
+			limit = { check_variable = { TOP_result = 2 } }
+			set_country_flag = IRQ_walter_caught
+			if = {
+				limit = { check_variable = { TOP_first_removal = 1 } }
+				army_experience = 100
+			}
+		}
+		else = { set_country_flag = USA_walter_dead }
+		TOP_update_iraq_progress = yes
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 62 } }
+		if = {
+			limit = { check_variable = { TOP_result = 2 } }
+			set_country_flag = IRQ_tilfah_caught
+			if = {
+				limit = { check_variable = { TOP_first_removal = 1 } }
+				army_experience = 100
+			}
+		}
+		else = { set_country_flag = USA_latif_dead }
+		TOP_update_iraq_progress = yes
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 63 } }
+		if = {
+			limit = { check_variable = { TOP_result = 2 } }
+			set_country_flag = IRQ_salih_caught
+			if = {
+				limit = { check_variable = { TOP_first_removal = 1 } }
+				army_experience = 100
+			}
+		}
+		else = { set_country_flag = USA_salih_dead }
+		TOP_update_iraq_progress = yes
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 64 } check_variable = { TOP_previous_status = 1 } check_variable = { TOP_first_removal = 1 } }
+		PER = { add_timed_idea = { idea = ISR_souleimani_killed_idea days = 365 } }
+		ISR = { clr_country_flag = sul_kill_unlock }
+		if = {
+			limit = { check_variable = { TOP_result = 3 } }
+			if = {
+				limit = { original_tag = USA }
+				set_variable = { TOP_legacy_report_pending^TOP_target = 1 }
+			}
+			else_if = {
+				limit = { original_tag = ISR }
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ISR }
+				set_temp_variable = { influence_target = IRQ }
+				change_influence_percentage = yes
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ISR }
+				set_temp_variable = { influence_target = PER }
+				change_influence_percentage = yes
+				set_variable = { TOP_legacy_report_pending^TOP_target = 1 }
+
+				add_named_threat = { threat = 0.5 name = kill_soleimani_thr }
+				update_isr_attack_dirty_variable = yes
+			}
+		}
+	}
+}
+
+# Delivery follows the resolver's assessment; consume the pending report before any event runs.
+TOP_apply_legacy_assessment = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { TOP_legacy_report_pending^TOP_target = 1 } check_variable = { TOP_assessment^TOP_target = 3 } }
+		set_variable = { TOP_legacy_report_pending^TOP_target = 0 }
+		if = {
+			limit = { check_variable = { TOP_target = 1 } }
+			news_event = { id = wotnews.16 hours = 1 }
+		}
+		else_if = {
+			limit = { check_variable = { TOP_target > 15 } check_variable = { TOP_target < 29 } }
+			set_temp_variable = { ISI_hvt_id = { value = TOP_target subtract = 15 } }
+			if = { limit = { original_tag = SOV } ISI_hvt_news_russian = yes }
+			else = { ISI_hvt_news_coalition = yes }
+		}
+		else_if = {
+			limit = { check_variable = { TOP_target = 64 } }
+			if = {
+				limit = { original_tag = USA }
+				PER = { country_event = { id = iranian_focus.159 hours = 1 } }
+			}
+			else_if = {
+				limit = { original_tag = ISR }
+				ISR = { country_event = { id = israel_mechanic.13 hours = 1 } }
+				PER = { country_event = { id = israel_mechanic.13 hours = 1 } }
+				IRQ = { country_event = { id = israel_mechanic.13 hours = 1 } }
+				if = { limit = { has_country_flag = USA_did_support_sol } USA = { country_event = { id = israel_mechanic.13 hours = 1 } } }
+			}
+		}
+	}
+}
+
+TOP_retire_authored_movement_office = {
+	if = {
+		limit = { check_variable = { TOP_target = 12 } }
+		AQY = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Nasir al-Wuhayshi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { TOP_target = 14 } }
+		AQY = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Khalid al-Batarfi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { TOP_target = 30 } }
+		ISI = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abu Ayyub al-Masri" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { TOP_target = 31 } }
+		ISI = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abu Omar al-Baghdadi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { TOP_target = 35 } }
+		ISI = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abu Ibrahim al-Hashimi al-Qurashi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { TOP_target = 36 } }
+		ISI = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abu Hafs al-Hashimi al-Qurashi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { TOP_target = 46 } }
+		SHB = {
+			if = {
+				limit = {
+					OR = {
+						has_country_leader = { name = "Ahmed Diriye" ruling_only = yes }
+						has_country_leader = { name = "Ahmad Umar" ruling_only = yes }
+					}
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { TOP_target = 14 } }
+		AQY = {
+			if = {
+				limit = { has_character = AQY_khalid_saeed_batarfi }
+				retire_character = AQY_khalid_saeed_batarfi
+			}
+		}
+	}
+}
+
+TOP_retire_registered_character = {
+	TOP_retire_political_roster = yes
+	TOP_retire_authored_movement_office = yes
+	if = { limit = { check_variable = { TOP_target > 64 } } TOP_retire_generated_office = yes }
+	if = {
+		limit = { check_variable = { TOP_target = 1 } }
+		AFG = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Osama bin Laden" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		SAU = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Osama bin Laden" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		TAL = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Osama bin Laden" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+			QAT = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Osama bin Laden" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		UAE = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Osama bin Laden" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		BHR = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Osama bin Laden" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		KUW = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Osama bin Laden" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		OMA = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Osama bin Laden" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 2 } }
+		SAU = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Ayman Mohammed Rabie al-Zawahiri" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 7 } }
+		LBA = {
+			if = {
+				limit = { has_character = LBA_abu_yahya_al_libi }
+				retire_character = LBA_abu_yahya_al_libi
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 8 } }
+		LBA = {
+			if = {
+				limit = { has_character = LBA_atiyah_abd_al_rahman }
+				retire_character = LBA_atiyah_abd_al_rahman
+			}
+			if = {
+				limit = {
+					has_country_leader = { name = "Atiyah Abd al-Rahman" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		TRP = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Atiyah Abd al-Rahman" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 13 } }
+		AQY = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qasim al-Raymi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		QAT = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qasim al-Raymi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+			UAE = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qasim al-Raymi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		BHR = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qasim al-Raymi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		KUW = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qasim al-Raymi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		OMA = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qasim al-Raymi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 15 } }
+		AQY = {
+			if = {
+				limit = { has_character = AQY_ibrahim_al_asiri }
+				retire_character = AQY_ibrahim_al_asiri
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 16 } }
+		ISI = {
+			if = {
+				limit = { has_character = ISI_abu_fatima_aljaheishi }
+				retire_character = ISI_abu_fatima_aljaheishi
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 18 } }
+		ISI = {
+			if = {
+				limit = { has_character = ISI_lavdrim_muhaxheri }
+				retire_character = ISI_lavdrim_muhaxheri
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 19 } }
+		ISI = {
+			if = {
+				limit = { has_character = ISI_gulmurod_khalimov }
+				retire_character = ISI_gulmurod_khalimov
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 20 } }
+		ISI = {
+			if = {
+				limit = { has_character = ISI_abdullah_ahmed_almashadani }
+				retire_character = ISI_abdullah_ahmed_almashadani
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 21 } }
+		ISI = {
+			if = {
+				limit = { has_character = ISI_ahmed_khalal_aljuhayshi }
+				retire_character = ISI_ahmed_khalal_aljuhayshi
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 22 } }
+		ISI = {
+			if = {
+				limit = { has_character = ISI_fares_reif_alnaima }
+				retire_character = ISI_fares_reif_alnaima
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 23 } }
+		ISI = {
+			if = {
+				limit = { has_character = ISI_abu_ahmad_alalwani }
+				retire_character = ISI_abu_ahmad_alalwani
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 25 } }
+		ISI = {
+			if = {
+				limit = { has_character = ISI_ayad_aljumaili }
+				retire_character = ISI_ayad_aljumaili
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 27 } }
+		ISI = {
+			if = {
+				limit = { has_character = ISI_abdul_wahid_khutnayer_ahmad }
+				retire_character = ISI_abdul_wahid_khutnayer_ahmad
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 29 } }
+		IRQ = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abu Musab Al-Zarqawi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		ISI = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abu Musab Al-Zarqawi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		PER = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abu Musab Al-Zarqawi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+			AQY = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abu Musab Al-Zarqawi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 32 } }
+		IRQ = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abu Bakr al-Baghdadi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		ISI = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abu Bakr al-Baghdadi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		PER = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abu Bakr al-Baghdadi" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 37 } }
+		TTP = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Nek Muhammad Wazir" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 38 } }
+		TTP = {
+			if = {
+				limit = { has_character = TTP_baitullah_mehsud }
+				retire_character = TTP_baitullah_mehsud
+			}
+			if = {
+				limit = {
+					has_country_leader = { name = "Baitullah Mehsud" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 39 } }
+		TTP = {
+			if = {
+				limit = { has_character = TTP_hakimullah_mehsud }
+				retire_character = TTP_hakimullah_mehsud
+			}
+			if = {
+				limit = {
+					has_country_leader = { name = "Hakimullah Mehsud" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 40 } }
+		PAK = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Maulana Fazlullah" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		TTP = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Maulana Fazlullah" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 41 } }
+		TTP = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Noor Wali Mehsud" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 42 } }
+		TTP = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Omar Khalid Khorasani" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 43 } }
+		NIG = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abubakar Shekau" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 45 } }
+		SHB = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Ahmed Abdi Godane" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 47 } }
+		ALG = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Abdelmalek Droukdel" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 48 } }
+		SHA = {
+			if = {
+				limit = { has_character = SHA_mokhtar_belmokhtar }
+				retire_character = SHA_mokhtar_belmokhtar
+			}
+		}
+		ALG = {
+			if = {
+				limit = { has_character = ALG_SHA_mokhtar_belmokhtar }
+				retire_character = ALG_SHA_mokhtar_belmokhtar
+			}
+			if = {
+				limit = {
+					has_country_leader = { name = "Mokhtar Belmokhtar" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		SHA = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Mokhtar Belmokhtar" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 54 } }
+		BNG = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Khadaffy Janjalani" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		PHI = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Khadaffy Janjalani" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 56 } }
+		IRQ = {
+			if = {
+				limit = {
+					OR = {
+						has_country_leader = { name = "Saddam Hussein" ruling_only = yes }
+						has_country_leader = { name = "Saddam Hussein " ruling_only = yes }
+					}
+				}
+				kill_country_leader = yes
+			}
+		}
+		ISI = {
+			if = {
+				limit = {
+					OR = {
+						has_country_leader = { name = "Saddam Hussein" ruling_only = yes }
+						has_country_leader = { name = "Saddam Hussein " ruling_only = yes }
+					}
+				}
+				kill_country_leader = yes
+			}
+		}
+		PER = {
+			if = {
+				limit = {
+					OR = {
+						has_country_leader = { name = "Saddam Hussein" ruling_only = yes }
+						has_country_leader = { name = "Saddam Hussein " ruling_only = yes }
+					}
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 57 } }
+		IRQ = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qusay Hussein" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		ISI = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qusay Hussein" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		PER = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qusay Hussein" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 58 } }
+		IRQ = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Uday Hussein" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		ISI = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Uday Hussein" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		PER = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Uday Hussein" ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 60 } }
+		IRQ = {
+			if = {
+				limit = { has_character = IRQ_ali_hassan_al_majid }
+				retire_character = IRQ_ali_hassan_al_majid
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 61 } }
+		IRQ = {
+			if = {
+				limit = { has_character = IRQ_izzat_ibrahim_al_douri }
+				retire_character = IRQ_izzat_ibrahim_al_douri
+			}
+			if = {
+				limit = {
+					OR = {
+						has_country_leader = { name = "Izzat Ibrahim Al-Douri" ruling_only = yes }
+						has_country_leader = { name = "Izzat Ibrahim al-Douri" ruling_only = yes }
+					}
+				}
+				kill_country_leader = yes
+			}
+		}
+		ISI = {
+			if = {
+				limit = {
+					OR = {
+						has_country_leader = { name = "Izzat Ibrahim Al-Douri" ruling_only = yes }
+						has_country_leader = { name = "Izzat Ibrahim al-Douri" ruling_only = yes }
+					}
+				}
+				kill_country_leader = yes
+			}
+		}
+		PER = {
+			if = {
+				limit = {
+					OR = {
+						has_country_leader = { name = "Izzat Ibrahim Al-Douri" ruling_only = yes }
+						has_country_leader = { name = "Izzat Ibrahim al-Douri" ruling_only = yes }
+					}
+				}
+				kill_country_leader = yes
+			}
+		}
+			IRS = {
+			if = {
+				limit = { has_character = IRQ_izzat_ibrahim_al_douri }
+				retire_character = IRQ_izzat_ibrahim_al_douri
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TOP_target = 64 } }
+		HEZ = {
+			if = {
+				limit = { has_character = HEZ_qasem_soleimani }
+				retire_character = HEZ_qasem_soleimani
+			}
+		}
+		PER = {
+			if = {
+				limit = { has_character = PER_qasem_soleimani }
+				retire_character = PER_qasem_soleimani
+			}
+		}
+		HEZ = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qasem Soleimani " ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		IRI = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qasem Soleimani " ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+		PER = {
+			if = {
+				limit = {
+					has_country_leader = { name = "Qasem Soleimani " ruling_only = yes }
+				}
+				kill_country_leader = yes
+			}
+		}
+	}
+}
+
+
+TOP_apply_office_successor = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { TOP_target > 0 } check_variable = { global.TOP_status^TOP_target = 1 } }
+		if = { limit = { check_variable = { TOP_target > 64 } } TOP_install_generated_office = yes }
+		AQY = {
+			if = {
+				limit = { exists = yes has_government = fascism }
+				if = {
+					limit = { check_variable = { TOP_target = 12 } NOT = { has_country_leader = { name = "Nasir al-Wuhayshi" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Nasir al-Wuhayshi"
+						picture = "gfx/interface/scripted_gui/countries/IRQ/card_unknown.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1012 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 13 } NOT = { has_country_leader = { name = "Qasim al-Raymi" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Qasim al-Raymi"
+						picture = "gfx/leaders/AQY/AQY_qashim.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1013 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 14 } NOT = { has_country_leader = { name = "Khalid al-Batarfi" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Khalid al-Batarfi"
+						picture = "gfx/leaders/AQY/Khalid_Saeed_Batarfi.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1014 }
+				}
+			}
+		}
+		ISI = {
+			if = {
+				limit = { exists = yes has_government = fascism }
+				if = {
+					limit = { check_variable = { TOP_target = 29 } NOT = { has_country_leader = { name = "Abu Musab al-Zarqawi" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Abu Musab al-Zarqawi"
+						picture = "gfx/leaders/ISI/Abu_Musab_Al-Zarqawi.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1029 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 30 } NOT = { has_country_leader = { name = "Abu Ayyub al-Masri" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Abu Ayyub al-Masri"
+						picture = "gfx/interface/scripted_gui/countries/IRQ/card_unknown.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1030 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 31 } NOT = { has_country_leader = { name = "Abu Omar al-Baghdadi" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Abu Omar al-Baghdadi"
+						picture = "gfx/interface/scripted_gui/countries/IRQ/card_unknown.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1031 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 32 } NOT = { has_country_leader = { name = "Abu Bakr al-Baghdadi" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Abu Bakr al-Baghdadi"
+						picture = "gfx/leaders/ISI/Abu_Bakr_al-Baghdadi.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1032 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 35 } NOT = { has_country_leader = { name = "Abu Ibrahim al-Hashimi al-Qurashi" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Abu Ibrahim al-Hashimi al-Qurashi"
+						picture = "gfx/interface/scripted_gui/countries/IRQ/card_unknown.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1035 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 36 } NOT = { has_country_leader = { name = "Abu Hafs al-Hashimi al-Qurashi" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Abu Hafs al-Hashimi al-Qurashi"
+						picture = "gfx/interface/scripted_gui/countries/IRQ/card_unknown.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1036 }
+				}
+			}
+		}
+		TTP = {
+			if = {
+				limit = { exists = yes has_government = fascism }
+				if = {
+					limit = { check_variable = { TOP_target = 37 } NOT = { has_country_leader = { name = "Nek Muhammad Wazir" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Nek Muhammad Wazir"
+						picture = "gfx/leaders/PAK/Nek_Muhammad_Wazir.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1037 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 38 } NOT = { has_country_leader = { name = "Baitullah Mehsud" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Baitullah Mehsud"
+						picture = "gfx/leaders/PAK/Baitullah_Mehsud.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1038 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 39 } NOT = { has_country_leader = { name = "Hakimullah Mehsud" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Hakimullah Mehsud"
+						picture = "gfx/leaders/PAK/Gen_Hakimullah_Mehsud.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1039 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 40 } NOT = { has_country_leader = { name = "Maulana Fazlullah" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Maulana Fazlullah"
+						picture = "gfx/leaders/PAK/PAKTaliban_Maulana_Fazlullah.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1040 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 41 } NOT = { has_country_leader = { name = "Noor Wali Mehsud" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Noor Wali Mehsud"
+						picture = "gfx/interface/scripted_gui/countries/IRQ/card_unknown.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1041 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 42 } NOT = { has_country_leader = { name = "Omar Khalid Khorasani" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Omar Khalid Khorasani"
+						picture = "gfx/interface/scripted_gui/countries/IRQ/card_unknown.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1042 }
+				}
+			}
+		}
+		SHB = {
+			if = {
+				limit = { exists = yes has_government = fascism }
+				if = {
+					limit = { check_variable = { TOP_target = 45 } NOT = { has_country_leader = { name = "Ahmed Abdi Godane" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Ahmed Abdi Godane"
+						picture = "gfx/leaders/SHB/SHB_Ahmed_Abdi_Godane.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1045 }
+				}
+				else_if = {
+					limit = { check_variable = { TOP_target = 46 } NOT = { has_country_leader = { name = "Ahmed Diriye" ruling_only = yes } } }
+					create_country_leader = {
+						name = "Ahmed Diriye"
+						picture = "gfx/leaders/SHB/Ahmad_Umar.dds"
+						ideology = Caliphate
+						traits = { salafist_Caliphate }
+					}
+					set_variable = { Caliphate_leader = 1046 }
+				}
+			}
+		}
+	}
+}
+
+TOP_apply_legacy_release = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { TOP_target = 1 } check_variable = { global.TOP_status^1 = 1 } }
+		clr_global_flag = GLOBAL_bin_laden_killed_or_captured
+		event_target:GLOBAL_bin_laden_hideout = { clr_country_flag = wot_sheltering_bin_laden }
+		clear_global_event_target = GLOBAL_bin_laden_hideout
+		if = {
+			limit = { var:global.TOP_host^1 = { exists = yes num_of_controlled_states > 0 } }
+			var:global.TOP_host^1 = {
+				save_global_event_target_as = GLOBAL_bin_laden_hideout
+				set_country_flag = wot_sheltering_bin_laden
+			}
+			set_global_flag = GLOBAL_bin_laden_at_large
+		}
+		else = { bin_laden_relocate_hideout = yes }
+	}
+}

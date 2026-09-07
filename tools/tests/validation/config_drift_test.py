@@ -698,6 +698,8 @@ def test_tools_tests_checkout_consumed_configuration():
         # real files those loaders read; without them each returns None and the
         # module-level assertions blow up at collection time.
         "common/national_focus",
+        "common/country_tags",
+        "common/raids",
         "common/scripted_localisation/01_politics_scripted_localisation.txt",
         "common/script_enums.txt",
         "common/units/equipment",
@@ -711,6 +713,7 @@ def test_tools_tests_checkout_consumed_configuration():
         "common/special_projects/projects/civilian_projects.txt",
         "common/special_projects/projects/nuclear_projects.txt",
         "common/scripted_guis/01_energy_gui.txt",
+        "common/scripted_guis/99_IRQ_scripted_guis.txt",
         "common/scripted_diplomatic_actions/00_scripted_diplomatic_actions.txt",
         "common/ai_focuses/MD_SOV.txt",
         "common/doctrines/folders/doctrine_folders.txt",

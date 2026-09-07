@@ -1,0 +1,192 @@
+TOP_initialize_cases = {
+	resize_array = { TOP_case_host = global.TOP_registry_capacity }
+	resize_array = { TOP_case_state = global.TOP_registry_capacity }
+	resize_array = { TOP_case_method = global.TOP_registry_capacity }
+	resize_array = { TOP_case_until = global.TOP_registry_capacity }
+	resize_array = { TOP_case_consent = global.TOP_registry_capacity }
+	resize_array = { TOP_case_phase = global.TOP_registry_capacity }
+	resize_array = { TOP_case_due = global.TOP_registry_capacity }
+	resize_array = { TOP_case_sequence = global.TOP_registry_capacity }
+	resize_array = { TOP_case_facility = global.TOP_registry_capacity }
+	resize_array = { TOP_case_rigor = global.TOP_registry_capacity }
+	resize_array = { TOP_case_assurance = global.TOP_registry_capacity }
+	resize_array = { TOP_case_collecting = global.TOP_registry_capacity }
+}
+
+TOP_find_host_case = {
+	set_temp_variable = { TOP_host_case = 0 }
+	for_each_loop = {
+		array = TOP_active_cases
+		value = TOP_host_case_candidate
+		if = {
+			limit = { check_variable = { TOP_case_host^TOP_host_case_candidate = $HOST$ } check_variable = { TOP_case_phase^TOP_host_case_candidate > 0 } }
+			set_temp_variable = { TOP_host_case = TOP_host_case_candidate }
+		}
+	}
+}
+
+TOP_designate_selected = {
+	if = {
+		limit = { TOP_can_designate = yes }
+		add_to_variable = { TOP_case_counter = 1 }
+		set_variable = { TOP_case_sequence^TOP_selected = TOP_case_counter }
+		set_variable = { TOP_case_host^TOP_selected = TOP_lead_host^TOP_selected }
+		set_variable = { TOP_case_phase^TOP_selected = 1 }
+		set_variable = { TOP_case_until^TOP_selected = { value = global.TOP_clock add = 182 } }
+		add_to_array = { TOP_active_cases = TOP_selected }
+		TOP_enroll_pending_actor = yes
+		TOP_build_view = yes
+	}
+}
+
+TOP_load_case = {
+	# Flat values are an execution/display snapshot. Case arrays alone grant authority.
+	set_variable = { TOP_authorized_target = $TARGET$ }
+	set_variable = { TOP_authorized_method = TOP_case_method^$TARGET$ }
+	set_variable = { TOP_authorized_state = TOP_case_state^$TARGET$ }
+	set_variable = { TOP_authorized_host = TOP_case_host^$TARGET$ }
+	set_variable = { TOP_authorized_until = TOP_case_until^$TARGET$ }
+	set_variable = { TOP_authorized_consent = TOP_case_consent^$TARGET$ }
+	set_variable = { TOP_authorized_rigor = TOP_case_rigor^$TARGET$ }
+	set_variable = { TOP_authorized_assurance = TOP_case_assurance^$TARGET$ }
+	set_variable = { TOP_authorized_facility = TOP_case_facility^$TARGET$ }
+	set_variable = { TOP_pending_target = 0 }
+	if = {
+		limit = { check_variable = { TOP_case_phase^$TARGET$ = 3 } }
+		set_variable = { TOP_pending_target = $TARGET$ }
+	}
+	set_variable = { TOP_pending_method = TOP_case_method^$TARGET$ }
+	set_variable = { TOP_pending_state = TOP_case_state^$TARGET$ }
+	set_variable = { TOP_pending_host = TOP_case_host^$TARGET$ }
+	set_variable = { TOP_pending_facility = TOP_case_facility^$TARGET$ }
+	set_variable = { TOP_pending_due = TOP_case_due^$TARGET$ }
+}
+
+TOP_close_case = {
+	if = {
+		limit = { check_variable = { TOP_case_phase^$TARGET$ > 0 } check_variable = { TOP_case_sequence^$TARGET$ = $SEQUENCE$ } }
+		if = {
+			limit = { check_variable = { TOP_case_method^$TARGET$ > 0 } check_variable = { TOP_case_method^$TARGET$ < 3 } }
+			# Raid callbacks expose no instance token. Never recycle a closed native binding.
+			set_temp_variable = { TOP_binding_key = { value = $TARGET$ multiply = 20000 } }
+			add_to_temp_variable = { TOP_binding_key = { value = TOP_case_state^$TARGET$ multiply = 2 } }
+			add_to_temp_variable = { TOP_binding_key = TOP_case_method^$TARGET$ }
+			if = {
+				limit = { NOT = { is_in_array = { TOP_retired_native_bindings = TOP_binding_key } } }
+				add_to_array = { TOP_retired_native_bindings = TOP_binding_key }
+			}
+		}
+		set_variable = { TOP_case_phase^$TARGET$ = 0 }
+		set_variable = { TOP_case_method^$TARGET$ = 0 }
+		set_variable = { TOP_case_due^$TARGET$ = 0 }
+		set_variable = { TOP_case_collecting^$TARGET$ = 0 }
+		remove_from_array = { TOP_active_cases = $TARGET$ }
+		if = {
+			limit = { check_variable = { TOP_authorized_target = $TARGET$ } }
+			set_variable = { TOP_authorized_target = 0 }
+			set_variable = { TOP_pending_target = 0 }
+		}
+		TOP_refresh_view = yes
+	}
+}
+
+TOP_finish_case = {
+	if = {
+		limit = { check_variable = { TOP_case_phase^TOP_target > 0 } }
+		set_variable = { TOP_case_phase^TOP_target = 5 }
+		if = {
+			limit = { is_in_array = { TOP_pending_assessments = TOP_target } }
+			set_variable = { TOP_case_phase^TOP_target = 4 }
+		}
+		set_variable = { TOP_case_due^TOP_target = 0 }
+		set_variable = { TOP_case_collecting^TOP_target = 0 }
+		TOP_enroll_pending_actor = yes
+		TOP_refresh_view = yes
+	}
+}
+
+TOP_confirm_assessment = {
+	if = {
+		limit = { TOP_can_confirm_assessment = yes }
+		TOP_close_case = { TARGET = TOP_selected SEQUENCE = TOP_case_sequence^TOP_selected }
+		TOP_build_view = yes
+	}
+}
+
+TOP_process_cases = {
+	clear_array = TOP_cases_to_close
+	for_each_loop = {
+		array = TOP_active_cases
+		value = TOP_timer_case
+		set_temp_variable = { TOP_target = TOP_timer_case }
+		if = {
+			limit = { check_variable = { TOP_case_phase^TOP_target < 4 } check_variable = { global.TOP_status^TOP_target > 1 } }
+			# Another country's result ends preparation, but the host slot waits for assessment.
+			set_variable = { TOP_assessment^TOP_target = global.TOP_status^TOP_target }
+			if = { limit = { check_variable = { global.TOP_status^TOP_target = 3 } check_variable = { global.TOP_confirmed_dead^TOP_target = 0 } } set_variable = { TOP_assessment^TOP_target = 5 } }
+			set_variable = { TOP_case_phase^TOP_target = 5 }
+			if = {
+				limit = { check_variable = { TOP_assessment^TOP_target = 5 } }
+				set_variable = { TOP_case_phase^TOP_target = 4 }
+			}
+		}
+		if = {
+			limit = { check_variable = { TOP_case_phase^TOP_target = 4 } check_variable = { global.TOP_confirmed_dead^TOP_target = 1 } }
+			set_variable = { TOP_assessment^TOP_target = 3 }
+			set_variable = { TOP_case_phase^TOP_target = 5 }
+		}
+		if = {
+			limit = { check_variable = { TOP_case_phase^TOP_target = 3 } check_variable = { TOP_case_due^TOP_target < global.TOP_clock } }
+			TOP_load_case = { TARGET = TOP_target }
+			set_temp_variable = { TOP_method = TOP_case_method^TOP_target }
+			set_temp_variable = { TOP_operation_state = TOP_case_state^TOP_target }
+			set_temp_variable = { TOP_facility_kind = TOP_case_facility^TOP_target }
+			if = { limit = { TOP_mission_binding_valid = yes } TOP_resolve_timed_case = yes }
+			else = { add_to_array = { TOP_cases_to_close = TOP_timer_case } }
+		}
+		if = {
+			limit = {
+				OR = {
+					AND = { check_variable = { TOP_case_phase^TOP_timer_case < 4 } check_variable = { TOP_case_until^TOP_timer_case < global.TOP_clock } }
+					AND = { is_ai = yes check_variable = { TOP_case_phase^TOP_timer_case = 5 } }
+				}
+			}
+			if = { limit = { NOT = { is_in_array = { TOP_cases_to_close = TOP_timer_case } } } add_to_array = { TOP_cases_to_close = TOP_timer_case } }
+		}
+	}
+	for_each_loop = {
+		array = TOP_cases_to_close
+		value = TOP_timer_case
+		TOP_close_case = { TARGET = TOP_timer_case SEQUENCE = TOP_case_sequence^TOP_timer_case }
+	}
+}
+
+TOP_resolve_timed_case = {
+	set_temp_variable = { TOP_tier = 0 }
+	set_temp_variable = { TOP_partner_accepted = 1 }
+	TOP_get_defensive_modifiers = yes
+	set_temp_variable = { TOP_chance = { value = TOP_confidence^TOP_target subtract = global.TOP_security^TOP_target subtract = TOP_defensive_success_penalty } }
+	if = {
+		limit = { check_variable = { TOP_method = 5 } }
+		set_temp_variable = { TOP_actor = THIS }
+		var:TOP_pending_host = {
+			if = {
+				limit = { OR = { is_in_faction_with = var:TOP_actor has_opinion = { target = var:TOP_actor value > 49 } } }
+				add_to_temp_variable = { TOP_chance = 10 }
+			}
+			else = { set_temp_variable = { TOP_partner_accepted = 0 } }
+		}
+	}
+	if = {
+		limit = { check_variable = { TOP_partner_accepted = 1 } }
+		clamp_temp_variable = { var = TOP_chance min = 0 max = 90 }
+		random = { chance = TOP_chance set_temp_variable = { TOP_tier = 2 } }
+		TOP_complete_operation = yes
+	}
+	else = {
+		set_temp_variable = { TOP_result = 10 }
+		set_variable = { TOP_assessment^TOP_target = 10 }
+		TOP_archive_result = yes
+		TOP_finish_case = yes
+	}
+}
