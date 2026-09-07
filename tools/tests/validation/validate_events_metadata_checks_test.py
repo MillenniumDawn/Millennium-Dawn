@@ -300,6 +300,29 @@ def test_unreferenced_triggered_only_flagged_unless_namespace_is_dynamic(tmp_pat
     assert v._issues[0].category == "unreferenced-triggered-only"
 
 
+def test_unreferenced_triggered_only_skips_exempt_ids(tmp_path):
+    """Engine-dispatched events on the exempt list are never reported."""
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "add_namespace = lar_collab_gov\n"
+        "add_namespace = foo\n"
+        "country_event = {\n"
+        "\tid = lar_collab_gov.1\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { name = traitors }\n"
+        "}\n"
+        "country_event = {\n"
+        "\tid = foo.9\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { name = foo.9.a }\n"
+        "}\n",
+    )
+    v = _validator(tmp_path)
+    v.validate_triggered_only_unreferenced()
+    assert [i.message for i in v._issues] == ["foo.9 - Ev.txt"]
+
+
 def test_id_based_checks_skip_a_block_with_no_id(tmp_path):
     """A malformed block has no ID to report against; only the checks that can
     name it "unknown" may report on it."""
