@@ -29,6 +29,60 @@ def test_render_starts_with_marker(tmp_path):
     assert body.startswith(REPORT_MARKER)
 
 
+def test_render_defaults_to_the_test_suite_title():
+    body = render([], [], _ctx())
+    assert body.splitlines()[1] == "# Test Suite Report"
+
+
+def _tools_run(os_name, errors=0):
+    return ValidatorRun(
+        name=f"tools-{os_name.lower()}",
+        title=f"Tools tests ({os_name})",
+        status="failed" if errors else "passed",
+        errors=errors,
+        suite="tools",
+        job=f"Tools tests ({os_name})",
+    )
+
+
+def test_render_orders_tools_tests_before_mod_tests():
+    runs = [
+        ValidatorRun(name="events", title="Events", status="failed", errors=2),
+        _tools_run("Linux", errors=1),
+        _tools_run("macOS"),
+    ]
+    body = render(runs, [], _ctx())
+    tools_pos = body.index("## Tools tests")
+    mod_pos = body.index("## Mod tests")
+    assert tools_pos < mod_pos
+    assert "| ❌ Tools tests (Linux) | 1 | 0 |" in body
+    assert "| ✅ Tools tests (macOS) | 0 | 0 |" in body
+    assert "| ❌ Events | 2 | 0 |" in body
+
+
+def test_render_omits_the_tools_section_without_tools_runs():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=2)]
+    body = render(runs, [], _ctx())
+    assert "## Tools tests" not in body
+    assert "## Mod tests" in body
+
+
+def test_mod_tests_ignores_tools_runs_in_counts():
+    runs = [_tools_run("Linux"), _tools_run("macOS")]
+    body = render(runs, [], _ctx())
+    assert "## Mod tests\n\n_No validator results found._" in body
+
+
+def test_mod_tests_passing_count_counts_only_mod_runs():
+    runs = [
+        ValidatorRun(name="events", title="Events", status="failed", errors=2),
+        ValidatorRun(name="ideas", title="Ideas", status="passed"),
+        _tools_run("Linux"),
+    ]
+    body = render(runs, [], _ctx())
+    assert "✅ 1 other validator completed successfully." in body
+
+
 def test_render_includes_summary_table_totals():
     runs = [
         ValidatorRun(

@@ -15,7 +15,12 @@ from typing import Callable, Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import blank_quoted_strings, extract_block_from_text, strip_comments
+from shared_utils import (
+    blank_quoted_strings,
+    extract_block_from_text,
+    strip_comments,
+    strip_inline_comment,
+)
 from sprite_index import build_sprite_index
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
@@ -76,6 +81,19 @@ def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
         line = text.count("\n", 0, m.start()) + 1
         out.append((m.group(1), filename, line))
     return out
+
+
+def _extract_option_logs_without_effects(filename: str) -> List[Tuple[str, str, int]]:
+    """Pool worker: (option name, filename, line) for logs in effect-free options."""
+    if _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return []
+    return [
+        (name, filename, line) for name, line in find_option_logs_without_effects(text)
+    ]
 
 
 _ID_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_.]+")
@@ -606,6 +624,13 @@ _ADD_NAMESPACE_PATTERN = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILI
 _RANDOM_EVENTS_PATTERN = re.compile(r"\brandom_events\s*=\s*\{")
 _RANDOM_EVENT_ID_PATTERN = re.compile(r"=\s*([A-Za-z_]\w*\.[\w.]+)")
 _OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
+
+# Statements an option can carry that change no game state. `trigger` gates the
+# option's visibility and `ai_chance` weights the AI's pick; neither runs an effect.
+_OPTION_NON_EFFECT_KEYS = frozenset({"name", "log", "ai_chance", "trigger"})
+_OPTION_STATEMENT_RE = re.compile(r"([A-Za-z_]\w*)\s*=")
+_OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
+
 # Event-level (depth-1) title/desc fields — option-level name fields are
 # nested deeper and are not matched.
 _EVENT_TITLEDESC_PATTERN = re.compile(r"^\t(?:title|desc)\s*=\s*(.+)$", re.MULTILINE)
@@ -624,6 +649,61 @@ _TITLE_DESC_INLINE_RE = {
 # a dot). Covers simple form (title = foo.1.t) and block form
 # (triggered_desc { desc = foo.1.t }). validate_missing_localisation.
 _LOC_REF_PATTERN = re.compile(r"\b(?:title|desc|name)\s*=\s*([\w][\w.]*)", re.MULTILINE)
+
+
+def find_option_logs_without_effects(text: str) -> List[Tuple[str, int]]:
+    """(option name, 1-based log line) for every `log` in an effect-free option.
+
+    Shared with tools/linting/fix_event_option_logs.py so detection cannot drift.
+    Line-based rather than offset-based: strip_comments preserves line counts but
+    not offsets, and the fixer needs the exact line to delete.
+    """
+    lines = text.splitlines()
+    code = [blank_quoted_strings(strip_inline_comment(line)) for line in lines]
+    out: List[Tuple[str, int]] = []
+    row = 0
+    while row < len(code):
+        match = _OPTION_OPEN_RE.search(code[row])
+        if match is None:
+            row += 1
+            continue
+        names: List[str] = []
+        logs: List[int] = []
+        name: Optional[str] = None
+        depth = 0
+        end_row = row
+        closed = False
+        while end_row < len(code) and not closed:
+            line = code[end_row]
+            i = match.end() - 1 if end_row == row else 0
+            while i < len(line):
+                char = line[i]
+                if char == "{":
+                    depth += 1
+                elif char == "}":
+                    depth -= 1
+                    if depth == 0:
+                        closed = True
+                        break
+                elif depth == 1:
+                    stmt = _OPTION_STATEMENT_RE.match(line, i)
+                    if stmt:
+                        key = stmt.group(1)
+                        names.append(key)
+                        if key == "log":
+                            logs.append(end_row + 1)
+                        elif key == "name":
+                            value = line[stmt.end() :].split()
+                            name = value[0] if value else None
+                        i = stmt.end()
+                        continue
+                i += 1
+            if not closed:
+                end_row += 1
+        if logs and not (set(names) - _OPTION_NON_EFFECT_KEYS):
+            out.extend((name or "unnamed option", line_no) for line_no in logs)
+        row = end_row + 1 if end_row > row else row + 1
+    return out
 
 
 def _extract_random_event_ids(text: str) -> set:
@@ -1597,6 +1677,30 @@ class Validator(BaseValidator):
             category="major-event-in-loop",
         )
 
+    def validate_option_log_without_effect(self):
+        """Flag `log` lines in event options that run no effects.
+
+        An option carrying only `name`, `log`, `trigger` and `ai_chance` changes
+        nothing, so its log records a state change that never happened.
+        """
+        self._log_section("Checking event options for logs without effects...")
+        files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+        results: List[str] = []
+        for sub in self._pool_map(_extract_option_logs_without_effects, files):
+            for name, filename, line in sub:
+                results.append(f"{os.path.basename(filename)}:{line} - {name}")
+        self._report(
+            sorted(results),
+            "✓ No event option logs without effects",
+            "Event options with a log but no effects (the option changes nothing"
+            " — remove the log line):",
+            Severity.WARNING,
+            category="event-option-log-without-effect",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
@@ -1615,6 +1719,7 @@ class Validator(BaseValidator):
         self.validate_event_pictures()
         self.validate_fire_only_once_in_loop()
         self.validate_major_event_in_loop()
+        self.validate_option_log_without_effect()
 
 
 if __name__ == "__main__":

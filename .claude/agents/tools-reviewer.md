@@ -28,8 +28,7 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 - `tools/validation/validator_common.py` — `BaseValidator`, `_pool_map`, staged-file support.
 - `pyproject.toml` — single source for ruff (lint), pytest (testpaths), black, isort config.
 - `.pre-commit-config.yaml` — which scripts are hooks vs `stages: [manual]` vs unwired; the `ruff` hook and the `tools-pytest` pre-push hook.
-- `.github/workflows/tools-validation.yml` — the `checks` matrix (`lint`, `unit`, `staged` entries) and `validate_tools.py --strict`.
-- `.github/workflows/coding-pipeline.yml` — what CI runs unconditionally vs locally-only.
+- `.github/workflows/test-suite.yml` — the Tools tests quality steps (ruff, Black, pylint, mypy, jscpd, staged integration, `validate_tools.py --strict`) and the `mod-tests` batches that gate CI-only validators.
 
 ## Workflow
 
@@ -97,7 +96,7 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 
 **Wiring sanity**:
 
-- Pre-commit-only hook? CI-only? Both? `stages: [manual]`? Confirm against `AGENTS.md` "Pre-commit vs CI divergence" section.
+- Pre-commit-only hook? CI-only? Both? `stages: [manual]`? Confirm against `.claude/docs/validation-pipeline.md`.
 - New validator must declare `--strict` behavior explicitly.
 
 ## Output format
