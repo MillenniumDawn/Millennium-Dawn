@@ -22,7 +22,9 @@ from .baseline import (
     classify,
     issue_key,
     load_baseline,
+    load_changed_files,
     load_issues,
+    tag_changed_files,
     write_baseline,
 )
 from .checks_api import post_checks
@@ -58,10 +60,12 @@ __all__ = [
     "load_manifest",
     "validate_manifest",
     "load_baseline",
+    "load_changed_files",
     "load_issues",
     "write_baseline",
     "issue_key",
     "classify",
+    "tag_changed_files",
     "dedupe",
     "render",
     "truncate_if_needed",
