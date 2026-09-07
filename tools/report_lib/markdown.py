@@ -242,6 +242,10 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
     scope_label = scope_labels.get(ctx.validation_scope)
     if scope_label:
         bits.append(f"**Scope:** {scope_label}")
+    if ctx.baseline_status == "available":
+        bits.append("**Baseline comparison:** available")
+    elif ctx.baseline_status == "unavailable":
+        bits.append("**Baseline comparison:** unavailable")
     return " · ".join(bits)
 
 
