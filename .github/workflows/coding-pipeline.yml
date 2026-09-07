@@ -149,6 +149,14 @@ jobs:
           head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"
           head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"
           base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"
+          # Dispatch runs must validate the currently checked-out trusted ref only.
+          # Ignore manual inputs that could otherwise route to untrusted PR data.
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            pr_number=""
+            head_repository="$GITHUB_REPOSITORY"
+            head_sha="$GITHUB_SHA"
+            base_sha="$GITHUB_SHA"
+          fi
           if [ -n "$pr_number" ]; then
             pr_url="repos/$GITHUB_REPOSITORY/pulls/$pr_number"
             pr_json=$(gh api "$pr_url")
