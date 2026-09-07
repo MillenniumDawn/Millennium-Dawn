@@ -1,0 +1,71 @@
+TOP_host_case_available = {
+	NOT = {
+		any_of = {
+			array = TOP_active_cases
+			value = TOP_host_check
+			check_variable = { TOP_case_host^TOP_host_check = $HOST$ }
+			check_variable = { TOP_case_phase^TOP_host_check > 0 }
+			NOT = { check_variable = { TOP_host_check = $TARGET$ } }
+		}
+	}
+}
+
+TOP_can_designate = {
+	TOP_country_eligible = yes
+	TOP_has_selected_target = yes
+	check_variable = { global.TOP_status^TOP_selected = 1 }
+	check_variable = { TOP_case_phase^TOP_selected = 0 }
+	check_variable = { TOP_lead_host^TOP_selected > 0 }
+	var:TOP_lead_host^TOP_selected = { exists = yes }
+	TOP_authored_role_eligible = { TARGET = TOP_selected }
+	TOP_host_case_available = { TARGET = TOP_selected HOST = TOP_lead_host^TOP_selected }
+	set_temp_variable = { TOP_target = TOP_selected }
+	TOP_exceptional_authority = yes
+}
+
+TOP_case_can_review = {
+	OR = { check_variable = { TOP_case_phase^$TARGET$ = 1 } check_variable = { TOP_case_phase^$TARGET$ = 2 } }
+	check_variable = { TOP_case_host^$TARGET$ = $HOST$ }
+	TOP_host_case_available = { TARGET = $TARGET$ HOST = $HOST$ }
+	TOP_authored_role_eligible = { TARGET = $TARGET$ }
+}
+
+TOP_native_binding_unused = {
+	set_temp_variable = { TOP_binding_state = $STATE$ }
+	check_variable = { TOP_binding_state > 0 }
+	check_variable = { TOP_binding_state < 10000 }
+	set_temp_variable = { TOP_binding_key = { value = $TARGET$ multiply = 20000 } }
+	set_temp_variable = { TOP_binding_key = { value = TOP_binding_key add = { value = $STATE$ multiply = 2 } } }
+	set_temp_variable = { TOP_binding_key = { value = TOP_binding_key add = $METHOD$ } }
+	NOT = { is_in_array = { TOP_retired_native_bindings = TOP_binding_key } }
+}
+
+TOP_case_binding_valid = {
+	TOP_country_eligible = yes
+	set_temp_variable = { TOP_binding_target = $TARGET$ }
+	check_variable = { TOP_binding_target > 0 }
+	check_variable = { TOP_binding_target < global.TOP_registry_capacity }
+	OR = { check_variable = { TOP_case_phase^$TARGET$ = 2 } check_variable = { TOP_case_phase^$TARGET$ = 3 } }
+	check_variable = { TOP_case_method^$TARGET$ = $METHOD$ }
+	check_variable = { TOP_case_state^$TARGET$ = $STATE$ }
+	check_variable = { TOP_case_until^$TARGET$ > global.TOP_clock }
+	check_variable = { global.TOP_status^$TARGET$ = 1 }
+	check_variable = { TOP_lead_age^$TARGET$ < 57 }
+	check_variable = { TOP_confidence^$TARGET$ > 59 }
+	set_temp_variable = { TOP_expected_host = TOP_case_host^$TARGET$ }
+	var:TOP_case_state^$TARGET$ = { is_controlled_by = var:TOP_expected_host }
+	TOP_authored_role_eligible = { TARGET = $TARGET$ }
+	set_temp_variable = { TOP_target = $TARGET$ }
+	TOP_exceptional_authority = yes
+}
+
+TOP_can_confirm_assessment = {
+	TOP_has_selected_target = yes
+	check_variable = { TOP_case_phase^TOP_selected = 5 }
+}
+
+TOP_can_revoke_case = {
+	TOP_has_selected_target = yes
+	check_variable = { TOP_case_phase^TOP_selected > 0 }
+	check_variable = { TOP_case_phase^TOP_selected < 4 }
+}
