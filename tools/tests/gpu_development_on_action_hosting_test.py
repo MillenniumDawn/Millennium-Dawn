@@ -56,6 +56,13 @@ def test_gpu_driver_uses_each_authoritative_monthly_host_once():
         assert callers == [(expected_filename, 1)]
 
 
+def test_gpu_yearly_dispatch_has_no_retired_milestone_calls():
+    yearly = (ROOT / "common/scripted_effects/00_yearly_effects.txt").read_text(
+        encoding="utf-8"
+    )
+    assert not re.findall(r"(?m)^\s*gpu_development_milestone_\d+\s*=", yearly)
+
+
 def test_corporate_drivers_reuse_existing_authoritative_monthly_hosts():
     dedicated_text = (
         ON_ACTIONS_ROOT / "02_oem_corporate_history_monthly_on_actions.txt"

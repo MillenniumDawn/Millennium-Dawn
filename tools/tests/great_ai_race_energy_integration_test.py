@@ -48,6 +48,9 @@ class EnergyRaceScript(StrategicRaceScript):
         for key, comparison, operand in statements:
             if key == "ROOT":
                 result = self.condition(operand, identifier)
+            elif key == "set_temp_variable":
+                self.execute([(key, comparison, operand)], identifier)
+                result = True
             elif key == "has_fuel":
                 result = self.comparisons[comparison](
                     values.get("fuel", 0), self.value(operand, identifier)
@@ -206,6 +209,27 @@ def test_reactor_recovery_checks_zero_consumption_before_division():
     race, country = _recovering()
     country["vars"]["nuclear_fuel_consumption"] = 0
     assert not race.condition([("ai_race_ai_needs_reactor_material", "=", "yes")], 1)
+
+
+@pytest.mark.parametrize(
+    "stockpile,expected", [(79.999, True), (80, False), (80.001, False)]
+)
+def test_reactor_recovery_recalculates_threshold_without_changing_saved_state(
+    stockpile, expected
+):
+    race, country = _recovering()
+    country["vars"]["var_reactor_material_stockpile"] = stockpile
+    before = country["vars"].copy()
+    race.temps["ai_race_ai_reactor_material_threshold"] = 9999
+    assert (
+        race.condition([("ai_race_ai_needs_reactor_material", "=", "yes")], 1)
+        is expected
+    )
+    assert country["vars"] == before
+
+    country["vars"]["nuclear_fuel_consumption"] = 20
+    assert race.condition([("ai_race_ai_needs_reactor_material", "=", "yes")], 1)
+    assert race.temps["ai_race_ai_reactor_material_threshold"] == 160
 
 
 @pytest.mark.parametrize(

@@ -515,20 +515,25 @@ ai_race_ai_choose_construction = {
 }
 
 
-# CODE is only a selector for the matching declarative strategy; research remains engine-owned.
+# Research tokens need runtime substitution; numeric selectors remain temporary inputs.
 ai_race_ai_consider_support_tech = {
 	if = {
-		limit = {
-			check_variable = { ai_race_ai_support_checked = 0 }
-			NOT = { has_tech = $TECH$ }
-		}
-		set_temp_variable = { ai_race_ai_support_checked = 1 }
-		if = {
-			limit = {
-				can_research = $TECH$
-				check_variable = { var = global.year value = $YEAR$ compare = greater_than_or_equals }
+		limit = { check_variable = { ai_race_ai_support_checked = 0 } }
+		meta_effect = {
+			text = {
+				if = {
+					limit = { NOT = { has_tech = [TECH] } }
+					set_temp_variable = { ai_race_ai_support_checked = 1 }
+					if = {
+						limit = {
+							can_research = [TECH]
+							check_variable = { var = global.year value = ai_race_ai_considered_year compare = greater_than_or_equals }
+						}
+						set_variable = { ai_race_ai_support_tech = ai_race_ai_considered_code }
+					}
+				}
 			}
-			set_variable = { ai_race_ai_support_tech = $CODE$ }
+			TECH = "[?ai_race_ai_considered_tech.GetTokenKey]"
 		}
 	}
 }
@@ -537,16 +542,23 @@ ai_race_ai_consider_ai_tech = {
 	if = {
 		limit = {
 			check_variable = { ai_race_ai_research_checked = 0 }
-			NOT = { has_tech = $TECH$ }
-			check_variable = { var = ai_race_ai_required_tech value = $CODE$ compare = greater_than_or_equals }
+			check_variable = { var = ai_race_ai_required_tech value = ai_race_ai_considered_code compare = greater_than_or_equals }
 		}
-		set_temp_variable = { ai_race_ai_research_checked = 1 }
-		if = {
-			limit = {
-				can_research = $TECH$
-				check_variable = { var = global.year value = $YEAR$ compare = greater_than_or_equals }
+		meta_effect = {
+			text = {
+				if = {
+					limit = { NOT = { has_tech = [TECH] } }
+					set_temp_variable = { ai_race_ai_research_checked = 1 }
+					if = {
+						limit = {
+							can_research = [TECH]
+							check_variable = { var = global.year value = ai_race_ai_considered_year compare = greater_than_or_equals }
+						}
+						set_variable = { ai_race_ai_research_target = ai_race_ai_considered_code }
+					}
+				}
 			}
-			set_variable = { ai_race_ai_research_target = $CODE$ }
+			TECH = "[?ai_race_ai_considered_tech.GetTokenKey]"
 		}
 	}
 }
@@ -563,14 +575,38 @@ ai_race_ai_choose_research = {
 			set_temp_variable = { ai_race_ai_required_tech = 8 }
 		}
 		set_temp_variable = { ai_race_ai_research_checked = 0 }
-		ai_race_ai_consider_ai_tech = { TECH = artificial_intelligence_1 CODE = 1 YEAR = 1984 }
-		ai_race_ai_consider_ai_tech = { TECH = artificial_intelligence_2 CODE = 2 YEAR = 1989 }
-		ai_race_ai_consider_ai_tech = { TECH = artificial_intelligence_3 CODE = 3 YEAR = 1994 }
-		ai_race_ai_consider_ai_tech = { TECH = artificial_intelligence_4 CODE = 4 YEAR = 1999 }
-		ai_race_ai_consider_ai_tech = { TECH = artificial_intelligence_5 CODE = 5 YEAR = 2004 }
-		ai_race_ai_consider_ai_tech = { TECH = artificial_intelligence_6 CODE = 6 YEAR = 2009 }
-		ai_race_ai_consider_ai_tech = { TECH = artificial_intelligence_7 CODE = 7 YEAR = 2014 }
-		ai_race_ai_consider_ai_tech = { TECH = artificial_intelligence_8 CODE = 8 YEAR = 2019 }
+		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_1 }
+		set_temp_variable = { ai_race_ai_considered_code = 1 }
+		set_temp_variable = { ai_race_ai_considered_year = 1984 }
+		ai_race_ai_consider_ai_tech = yes
+		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_2 }
+		set_temp_variable = { ai_race_ai_considered_code = 2 }
+		set_temp_variable = { ai_race_ai_considered_year = 1989 }
+		ai_race_ai_consider_ai_tech = yes
+		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_3 }
+		set_temp_variable = { ai_race_ai_considered_code = 3 }
+		set_temp_variable = { ai_race_ai_considered_year = 1994 }
+		ai_race_ai_consider_ai_tech = yes
+		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_4 }
+		set_temp_variable = { ai_race_ai_considered_code = 4 }
+		set_temp_variable = { ai_race_ai_considered_year = 1999 }
+		ai_race_ai_consider_ai_tech = yes
+		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_5 }
+		set_temp_variable = { ai_race_ai_considered_code = 5 }
+		set_temp_variable = { ai_race_ai_considered_year = 2004 }
+		ai_race_ai_consider_ai_tech = yes
+		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_6 }
+		set_temp_variable = { ai_race_ai_considered_code = 6 }
+		set_temp_variable = { ai_race_ai_considered_year = 2009 }
+		ai_race_ai_consider_ai_tech = yes
+		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_7 }
+		set_temp_variable = { ai_race_ai_considered_code = 7 }
+		set_temp_variable = { ai_race_ai_considered_year = 2014 }
+		ai_race_ai_consider_ai_tech = yes
+		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_8 }
+		set_temp_variable = { ai_race_ai_considered_code = 8 }
+		set_temp_variable = { ai_race_ai_considered_year = 2019 }
+		ai_race_ai_consider_ai_tech = yes
 	}
 	if = {
 		limit = { ai_race_ai_support_permitted = yes }
@@ -662,144 +698,462 @@ ai_race_ai_choose_research = {
 
 ai_race_ai_choose_construction_tech = {
 	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	ai_race_ai_consider_support_tech = { TECH = construction1 CODE = 101 YEAR = 1984 }
-	ai_race_ai_consider_support_tech = { TECH = construction2 CODE = 102 YEAR = 1994 }
-	ai_race_ai_consider_support_tech = { TECH = construction3 CODE = 103 YEAR = 1999 }
-	ai_race_ai_consider_support_tech = { TECH = construction4 CODE = 104 YEAR = 2004 }
-	ai_race_ai_consider_support_tech = { TECH = construction5 CODE = 105 YEAR = 2009 }
-	ai_race_ai_consider_support_tech = { TECH = construction6 CODE = 106 YEAR = 2014 }
-	ai_race_ai_consider_support_tech = { TECH = construction7 CODE = 107 YEAR = 2024 }
-	ai_race_ai_consider_support_tech = { TECH = construction8 CODE = 108 YEAR = 2034 }
-	ai_race_ai_consider_support_tech = { TECH = construction9 CODE = 109 YEAR = 2044 }
-	ai_race_ai_consider_support_tech = { TECH = construction10 CODE = 110 YEAR = 2054 }
-	ai_race_ai_consider_support_tech = { TECH = construction11 CODE = 111 YEAR = 2064 }
-	ai_race_ai_consider_support_tech = { TECH = construction12 CODE = 112 YEAR = 2074 }
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction1 }
+	set_temp_variable = { ai_race_ai_considered_code = 101 }
+	set_temp_variable = { ai_race_ai_considered_year = 1984 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction2 }
+	set_temp_variable = { ai_race_ai_considered_code = 102 }
+	set_temp_variable = { ai_race_ai_considered_year = 1994 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction3 }
+	set_temp_variable = { ai_race_ai_considered_code = 103 }
+	set_temp_variable = { ai_race_ai_considered_year = 1999 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction4 }
+	set_temp_variable = { ai_race_ai_considered_code = 104 }
+	set_temp_variable = { ai_race_ai_considered_year = 2004 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction5 }
+	set_temp_variable = { ai_race_ai_considered_code = 105 }
+	set_temp_variable = { ai_race_ai_considered_year = 2009 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction6 }
+	set_temp_variable = { ai_race_ai_considered_code = 106 }
+	set_temp_variable = { ai_race_ai_considered_year = 2014 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction7 }
+	set_temp_variable = { ai_race_ai_considered_code = 107 }
+	set_temp_variable = { ai_race_ai_considered_year = 2024 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction8 }
+	set_temp_variable = { ai_race_ai_considered_code = 108 }
+	set_temp_variable = { ai_race_ai_considered_year = 2034 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction9 }
+	set_temp_variable = { ai_race_ai_considered_code = 109 }
+	set_temp_variable = { ai_race_ai_considered_year = 2044 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction10 }
+	set_temp_variable = { ai_race_ai_considered_code = 110 }
+	set_temp_variable = { ai_race_ai_considered_year = 2054 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction11 }
+	set_temp_variable = { ai_race_ai_considered_code = 111 }
+	set_temp_variable = { ai_race_ai_considered_year = 2064 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:construction12 }
+	set_temp_variable = { ai_race_ai_considered_code = 112 }
+	set_temp_variable = { ai_race_ai_considered_year = 2074 }
+	ai_race_ai_consider_support_tech = yes
 }
 
 ai_race_ai_choose_network_tech = {
 	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	ai_race_ai_consider_support_tech = { TECH = internet1 CODE = 121 YEAR = 1974 }
-	ai_race_ai_consider_support_tech = { TECH = internet2 CODE = 122 YEAR = 1989 }
-	ai_race_ai_consider_support_tech = { TECH = internet3 CODE = 123 YEAR = 1999 }
-	ai_race_ai_consider_support_tech = { TECH = internet4 CODE = 124 YEAR = 2009 }
-	ai_race_ai_consider_support_tech = { TECH = internet5 CODE = 125 YEAR = 2019 }
-	ai_race_ai_consider_support_tech = { TECH = internet6 CODE = 126 YEAR = 2029 }
-	ai_race_ai_consider_support_tech = { TECH = internet7 CODE = 127 YEAR = 2039 }
-	ai_race_ai_consider_support_tech = { TECH = internet8 CODE = 128 YEAR = 2049 }
-	ai_race_ai_consider_support_tech = { TECH = internet9 CODE = 129 YEAR = 2059 }
-	ai_race_ai_consider_support_tech = { TECH = internet10 CODE = 130 YEAR = 2069 }
-	ai_race_ai_consider_support_tech = { TECH = internet11 CODE = 131 YEAR = 2079 }
+	set_temp_variable = { ai_race_ai_considered_tech = token:internet1 }
+	set_temp_variable = { ai_race_ai_considered_code = 121 }
+	set_temp_variable = { ai_race_ai_considered_year = 1974 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:internet2 }
+	set_temp_variable = { ai_race_ai_considered_code = 122 }
+	set_temp_variable = { ai_race_ai_considered_year = 1989 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:internet3 }
+	set_temp_variable = { ai_race_ai_considered_code = 123 }
+	set_temp_variable = { ai_race_ai_considered_year = 1999 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:internet4 }
+	set_temp_variable = { ai_race_ai_considered_code = 124 }
+	set_temp_variable = { ai_race_ai_considered_year = 2009 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:internet5 }
+	set_temp_variable = { ai_race_ai_considered_code = 125 }
+	set_temp_variable = { ai_race_ai_considered_year = 2019 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:internet6 }
+	set_temp_variable = { ai_race_ai_considered_code = 126 }
+	set_temp_variable = { ai_race_ai_considered_year = 2029 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:internet7 }
+	set_temp_variable = { ai_race_ai_considered_code = 127 }
+	set_temp_variable = { ai_race_ai_considered_year = 2039 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:internet8 }
+	set_temp_variable = { ai_race_ai_considered_code = 128 }
+	set_temp_variable = { ai_race_ai_considered_year = 2049 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:internet9 }
+	set_temp_variable = { ai_race_ai_considered_code = 129 }
+	set_temp_variable = { ai_race_ai_considered_year = 2059 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:internet10 }
+	set_temp_variable = { ai_race_ai_considered_code = 130 }
+	set_temp_variable = { ai_race_ai_considered_year = 2069 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:internet11 }
+	set_temp_variable = { ai_race_ai_considered_code = 131 }
+	set_temp_variable = { ai_race_ai_considered_year = 2079 }
+	ai_race_ai_consider_support_tech = yes
 }
 
 ai_race_ai_choose_microchips_tech = {
 	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	ai_race_ai_consider_support_tech = { TECH = basic_computing CODE = 201 YEAR = 1944 }
-	ai_race_ai_consider_support_tech = { TECH = computing1 CODE = 202 YEAR = 1964 }
-	ai_race_ai_consider_support_tech = { TECH = microprocessors CODE = 203 YEAR = 1974 }
-	ai_race_ai_consider_support_tech = { TECH = microchip_production_1 CODE = 204 YEAR = 1974 }
-	ai_race_ai_consider_support_tech = { TECH = microchip_production_2 CODE = 205 YEAR = 1994 }
-	ai_race_ai_consider_support_tech = { TECH = microchip_production_3 CODE = 206 YEAR = 2004 }
-	ai_race_ai_consider_support_tech = { TECH = microchip_production_4 CODE = 207 YEAR = 2014 }
-	ai_race_ai_consider_support_tech = { TECH = microchip_production_5 CODE = 208 YEAR = 2024 }
-	ai_race_ai_consider_support_tech = { TECH = microchip_production_6 CODE = 209 YEAR = 2034 }
-	ai_race_ai_consider_support_tech = { TECH = microchip_production_7 CODE = 210 YEAR = 2044 }
-	ai_race_ai_consider_support_tech = { TECH = microchip_production_8 CODE = 211 YEAR = 2054 }
-	ai_race_ai_consider_support_tech = { TECH = microchip_production_9 CODE = 212 YEAR = 2064 }
-	ai_race_ai_consider_support_tech = { TECH = microchip_production_10 CODE = 213 YEAR = 2074 }
+	set_temp_variable = { ai_race_ai_considered_tech = token:basic_computing }
+	set_temp_variable = { ai_race_ai_considered_code = 201 }
+	set_temp_variable = { ai_race_ai_considered_year = 1944 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:computing1 }
+	set_temp_variable = { ai_race_ai_considered_code = 202 }
+	set_temp_variable = { ai_race_ai_considered_year = 1964 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:microprocessors }
+	set_temp_variable = { ai_race_ai_considered_code = 203 }
+	set_temp_variable = { ai_race_ai_considered_year = 1974 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_1 }
+	set_temp_variable = { ai_race_ai_considered_code = 204 }
+	set_temp_variable = { ai_race_ai_considered_year = 1974 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_2 }
+	set_temp_variable = { ai_race_ai_considered_code = 205 }
+	set_temp_variable = { ai_race_ai_considered_year = 1994 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_3 }
+	set_temp_variable = { ai_race_ai_considered_code = 206 }
+	set_temp_variable = { ai_race_ai_considered_year = 2004 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_4 }
+	set_temp_variable = { ai_race_ai_considered_code = 207 }
+	set_temp_variable = { ai_race_ai_considered_year = 2014 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_5 }
+	set_temp_variable = { ai_race_ai_considered_code = 208 }
+	set_temp_variable = { ai_race_ai_considered_year = 2024 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_6 }
+	set_temp_variable = { ai_race_ai_considered_code = 209 }
+	set_temp_variable = { ai_race_ai_considered_year = 2034 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_7 }
+	set_temp_variable = { ai_race_ai_considered_code = 210 }
+	set_temp_variable = { ai_race_ai_considered_year = 2044 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_8 }
+	set_temp_variable = { ai_race_ai_considered_code = 211 }
+	set_temp_variable = { ai_race_ai_considered_year = 2054 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_9 }
+	set_temp_variable = { ai_race_ai_considered_code = 212 }
+	set_temp_variable = { ai_race_ai_considered_year = 2064 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_10 }
+	set_temp_variable = { ai_race_ai_considered_code = 213 }
+	set_temp_variable = { ai_race_ai_considered_year = 2074 }
+	ai_race_ai_consider_support_tech = yes
 }
 
 ai_race_ai_choose_composites_tech = {
 	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	ai_race_ai_consider_support_tech = { TECH = composite_production_1 CODE = 221 YEAR = 1989 }
-	ai_race_ai_consider_support_tech = { TECH = composite_production_2 CODE = 222 YEAR = 1999 }
-	ai_race_ai_consider_support_tech = { TECH = composite_production_3 CODE = 223 YEAR = 2004 }
-	ai_race_ai_consider_support_tech = { TECH = composite_production_4 CODE = 224 YEAR = 2014 }
-	ai_race_ai_consider_support_tech = { TECH = composite_production_5 CODE = 225 YEAR = 2029 }
-	ai_race_ai_consider_support_tech = { TECH = composite_production_6 CODE = 226 YEAR = 2044 }
-	ai_race_ai_consider_support_tech = { TECH = composite_production_7 CODE = 227 YEAR = 2059 }
-	ai_race_ai_consider_support_tech = { TECH = composite_production_8 CODE = 228 YEAR = 2074 }
+	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_1 }
+	set_temp_variable = { ai_race_ai_considered_code = 221 }
+	set_temp_variable = { ai_race_ai_considered_year = 1989 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_2 }
+	set_temp_variable = { ai_race_ai_considered_code = 222 }
+	set_temp_variable = { ai_race_ai_considered_year = 1999 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_3 }
+	set_temp_variable = { ai_race_ai_considered_code = 223 }
+	set_temp_variable = { ai_race_ai_considered_year = 2004 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_4 }
+	set_temp_variable = { ai_race_ai_considered_code = 224 }
+	set_temp_variable = { ai_race_ai_considered_year = 2014 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_5 }
+	set_temp_variable = { ai_race_ai_considered_code = 225 }
+	set_temp_variable = { ai_race_ai_considered_year = 2029 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_6 }
+	set_temp_variable = { ai_race_ai_considered_code = 226 }
+	set_temp_variable = { ai_race_ai_considered_year = 2044 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_7 }
+	set_temp_variable = { ai_race_ai_considered_code = 227 }
+	set_temp_variable = { ai_race_ai_considered_year = 2059 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_8 }
+	set_temp_variable = { ai_race_ai_considered_code = 228 }
+	set_temp_variable = { ai_race_ai_considered_year = 2074 }
+	ai_race_ai_consider_support_tech = yes
 }
 
 ai_race_ai_choose_renewable_tech = {
 	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_silos CODE = 301 YEAR = 1984 }
-	ai_race_ai_consider_support_tech = { TECH = early_renewables CODE = 302 YEAR = 1989 }
-	ai_race_ai_consider_support_tech = { TECH = renewables CODE = 303 YEAR = 1994 }
-	ai_race_ai_consider_support_tech = { TECH = improved_renewables CODE = 304 YEAR = 1999 }
-	ai_race_ai_consider_support_tech = { TECH = advanced_renewables CODE = 305 YEAR = 2004 }
-	ai_race_ai_consider_support_tech = { TECH = modern_renewables CODE = 306 YEAR = 2009 }
-	ai_race_ai_consider_support_tech = { TECH = improved_modern_renewables CODE = 307 YEAR = 2014 }
-	ai_race_ai_consider_support_tech = { TECH = advanced_modern_renewables CODE = 308 YEAR = 2019 }
-	ai_race_ai_consider_support_tech = { TECH = early_renewables_9 CODE = 309 YEAR = 2029 }
-	ai_race_ai_consider_support_tech = { TECH = renewables_9 CODE = 310 YEAR = 2039 }
-	ai_race_ai_consider_support_tech = { TECH = renewables_10 CODE = 311 YEAR = 2049 }
-	ai_race_ai_consider_support_tech = { TECH = renewables_11 CODE = 312 YEAR = 2059 }
-	ai_race_ai_consider_support_tech = { TECH = renewables_12 CODE = 313 YEAR = 2069 }
-	ai_race_ai_consider_support_tech = { TECH = renewables_13 CODE = 314 YEAR = 2079 }
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_silos }
+	set_temp_variable = { ai_race_ai_considered_code = 301 }
+	set_temp_variable = { ai_race_ai_considered_year = 1984 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:early_renewables }
+	set_temp_variable = { ai_race_ai_considered_code = 302 }
+	set_temp_variable = { ai_race_ai_considered_year = 1989 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:renewables }
+	set_temp_variable = { ai_race_ai_considered_code = 303 }
+	set_temp_variable = { ai_race_ai_considered_year = 1994 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:improved_renewables }
+	set_temp_variable = { ai_race_ai_considered_code = 304 }
+	set_temp_variable = { ai_race_ai_considered_year = 1999 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:advanced_renewables }
+	set_temp_variable = { ai_race_ai_considered_code = 305 }
+	set_temp_variable = { ai_race_ai_considered_year = 2004 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:modern_renewables }
+	set_temp_variable = { ai_race_ai_considered_code = 306 }
+	set_temp_variable = { ai_race_ai_considered_year = 2009 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:improved_modern_renewables }
+	set_temp_variable = { ai_race_ai_considered_code = 307 }
+	set_temp_variable = { ai_race_ai_considered_year = 2014 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:advanced_modern_renewables }
+	set_temp_variable = { ai_race_ai_considered_code = 308 }
+	set_temp_variable = { ai_race_ai_considered_year = 2019 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:early_renewables_9 }
+	set_temp_variable = { ai_race_ai_considered_code = 309 }
+	set_temp_variable = { ai_race_ai_considered_year = 2029 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:renewables_9 }
+	set_temp_variable = { ai_race_ai_considered_code = 310 }
+	set_temp_variable = { ai_race_ai_considered_year = 2039 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:renewables_10 }
+	set_temp_variable = { ai_race_ai_considered_code = 311 }
+	set_temp_variable = { ai_race_ai_considered_year = 2049 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:renewables_11 }
+	set_temp_variable = { ai_race_ai_considered_code = 312 }
+	set_temp_variable = { ai_race_ai_considered_year = 2059 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:renewables_12 }
+	set_temp_variable = { ai_race_ai_considered_code = 313 }
+	set_temp_variable = { ai_race_ai_considered_year = 2069 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:renewables_13 }
+	set_temp_variable = { ai_race_ai_considered_code = 314 }
+	set_temp_variable = { ai_race_ai_considered_year = 2079 }
+	ai_race_ai_consider_support_tech = yes
 }
 
 ai_race_ai_choose_fossil_tech = {
 	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_silos CODE = 301 YEAR = 1984 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_efficiency CODE = 321 YEAR = 1989 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_efficiency2 CODE = 322 YEAR = 1999 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_efficiency3 CODE = 323 YEAR = 2009 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_efficiency4 CODE = 324 YEAR = 2019 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_efficiency5 CODE = 325 YEAR = 2029 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_efficiency6 CODE = 326 YEAR = 2039 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_efficiency_7 CODE = 327 YEAR = 2049 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_efficiency_8 CODE = 328 YEAR = 2059 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_efficiency_9 CODE = 329 YEAR = 2069 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_efficiency_10 CODE = 330 YEAR = 2079 }
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_silos }
+	set_temp_variable = { ai_race_ai_considered_code = 301 }
+	set_temp_variable = { ai_race_ai_considered_year = 1984 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency }
+	set_temp_variable = { ai_race_ai_considered_code = 321 }
+	set_temp_variable = { ai_race_ai_considered_year = 1989 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency2 }
+	set_temp_variable = { ai_race_ai_considered_code = 322 }
+	set_temp_variable = { ai_race_ai_considered_year = 1999 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency3 }
+	set_temp_variable = { ai_race_ai_considered_code = 323 }
+	set_temp_variable = { ai_race_ai_considered_year = 2009 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency4 }
+	set_temp_variable = { ai_race_ai_considered_code = 324 }
+	set_temp_variable = { ai_race_ai_considered_year = 2019 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency5 }
+	set_temp_variable = { ai_race_ai_considered_code = 325 }
+	set_temp_variable = { ai_race_ai_considered_year = 2029 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency6 }
+	set_temp_variable = { ai_race_ai_considered_code = 326 }
+	set_temp_variable = { ai_race_ai_considered_year = 2039 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_7 }
+	set_temp_variable = { ai_race_ai_considered_code = 327 }
+	set_temp_variable = { ai_race_ai_considered_year = 2049 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_8 }
+	set_temp_variable = { ai_race_ai_considered_code = 328 }
+	set_temp_variable = { ai_race_ai_considered_year = 2059 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_9 }
+	set_temp_variable = { ai_race_ai_considered_code = 329 }
+	set_temp_variable = { ai_race_ai_considered_year = 2069 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_10 }
+	set_temp_variable = { ai_race_ai_considered_code = 330 }
+	set_temp_variable = { ai_race_ai_considered_year = 2079 }
+	ai_race_ai_consider_support_tech = yes
 }
 
 ai_race_ai_choose_refining_tech = {
 	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_silos CODE = 301 YEAR = 1984 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_refining CODE = 381 YEAR = 1989 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_refining2 CODE = 382 YEAR = 1994 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_refining3 CODE = 383 YEAR = 1999 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_refining4 CODE = 384 YEAR = 2009 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_refining5 CODE = 385 YEAR = 2019 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_refining6 CODE = 386 YEAR = 2029 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_refining7 CODE = 387 YEAR = 2039 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_refining8 CODE = 388 YEAR = 2049 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_refining9 CODE = 389 YEAR = 2059 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_refining10 CODE = 390 YEAR = 2069 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_refining11 CODE = 391 YEAR = 2079 }
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_silos }
+	set_temp_variable = { ai_race_ai_considered_code = 301 }
+	set_temp_variable = { ai_race_ai_considered_year = 1984 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining }
+	set_temp_variable = { ai_race_ai_considered_code = 381 }
+	set_temp_variable = { ai_race_ai_considered_year = 1989 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining2 }
+	set_temp_variable = { ai_race_ai_considered_code = 382 }
+	set_temp_variable = { ai_race_ai_considered_year = 1994 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining3 }
+	set_temp_variable = { ai_race_ai_considered_code = 383 }
+	set_temp_variable = { ai_race_ai_considered_year = 1999 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining4 }
+	set_temp_variable = { ai_race_ai_considered_code = 384 }
+	set_temp_variable = { ai_race_ai_considered_year = 2009 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining5 }
+	set_temp_variable = { ai_race_ai_considered_code = 385 }
+	set_temp_variable = { ai_race_ai_considered_year = 2019 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining6 }
+	set_temp_variable = { ai_race_ai_considered_code = 386 }
+	set_temp_variable = { ai_race_ai_considered_year = 2029 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining7 }
+	set_temp_variable = { ai_race_ai_considered_code = 387 }
+	set_temp_variable = { ai_race_ai_considered_year = 2039 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining8 }
+	set_temp_variable = { ai_race_ai_considered_code = 388 }
+	set_temp_variable = { ai_race_ai_considered_year = 2049 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining9 }
+	set_temp_variable = { ai_race_ai_considered_code = 389 }
+	set_temp_variable = { ai_race_ai_considered_year = 2059 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining10 }
+	set_temp_variable = { ai_race_ai_considered_code = 390 }
+	set_temp_variable = { ai_race_ai_considered_year = 2069 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining11 }
+	set_temp_variable = { ai_race_ai_considered_code = 391 }
+	set_temp_variable = { ai_race_ai_considered_year = 2079 }
+	ai_race_ai_consider_support_tech = yes
 }
 
 ai_race_ai_choose_nuclear_tech = {
 	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	ai_race_ai_consider_support_tech = { TECH = reactor1 CODE = 341 YEAR = 1989 }
-	ai_race_ai_consider_support_tech = { TECH = reactor2 CODE = 342 YEAR = 1999 }
-	ai_race_ai_consider_support_tech = { TECH = reactor3 CODE = 343 YEAR = 2004 }
-	ai_race_ai_consider_support_tech = { TECH = reactor4 CODE = 344 YEAR = 2014 }
-	ai_race_ai_consider_support_tech = { TECH = reactor5 CODE = 345 YEAR = 2019 }
-	ai_race_ai_consider_support_tech = { TECH = reactor6 CODE = 346 YEAR = 2029 }
-	ai_race_ai_consider_support_tech = { TECH = reactor7 CODE = 347 YEAR = 2039 }
-	ai_race_ai_consider_support_tech = { TECH = reactor8 CODE = 348 YEAR = 2044 }
-	ai_race_ai_consider_support_tech = { TECH = reactor9 CODE = 349 YEAR = 2054 }
-	ai_race_ai_consider_support_tech = { TECH = reactor10 CODE = 350 YEAR = 2059 }
-	ai_race_ai_consider_support_tech = { TECH = reactor11 CODE = 351 YEAR = 2069 }
-	ai_race_ai_consider_support_tech = { TECH = reactor12 CODE = 352 YEAR = 2079 }
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor1 }
+	set_temp_variable = { ai_race_ai_considered_code = 341 }
+	set_temp_variable = { ai_race_ai_considered_year = 1989 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor2 }
+	set_temp_variable = { ai_race_ai_considered_code = 342 }
+	set_temp_variable = { ai_race_ai_considered_year = 1999 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor3 }
+	set_temp_variable = { ai_race_ai_considered_code = 343 }
+	set_temp_variable = { ai_race_ai_considered_year = 2004 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor4 }
+	set_temp_variable = { ai_race_ai_considered_code = 344 }
+	set_temp_variable = { ai_race_ai_considered_year = 2014 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor5 }
+	set_temp_variable = { ai_race_ai_considered_code = 345 }
+	set_temp_variable = { ai_race_ai_considered_year = 2019 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor6 }
+	set_temp_variable = { ai_race_ai_considered_code = 346 }
+	set_temp_variable = { ai_race_ai_considered_year = 2029 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor7 }
+	set_temp_variable = { ai_race_ai_considered_code = 347 }
+	set_temp_variable = { ai_race_ai_considered_year = 2039 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor8 }
+	set_temp_variable = { ai_race_ai_considered_code = 348 }
+	set_temp_variable = { ai_race_ai_considered_year = 2044 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor9 }
+	set_temp_variable = { ai_race_ai_considered_code = 349 }
+	set_temp_variable = { ai_race_ai_considered_year = 2054 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor10 }
+	set_temp_variable = { ai_race_ai_considered_code = 350 }
+	set_temp_variable = { ai_race_ai_considered_year = 2059 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor11 }
+	set_temp_variable = { ai_race_ai_considered_code = 351 }
+	set_temp_variable = { ai_race_ai_considered_year = 2069 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:reactor12 }
+	set_temp_variable = { ai_race_ai_considered_code = 352 }
+	set_temp_variable = { ai_race_ai_considered_year = 2079 }
+	ai_race_ai_consider_support_tech = yes
 }
 
 ai_race_ai_choose_efficiency_tech = {
 	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	ai_race_ai_consider_support_tech = { TECH = fuel_silos CODE = 301 YEAR = 1984 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency CODE = 361 YEAR = 1989 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency2 CODE = 362 YEAR = 1994 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency3 CODE = 363 YEAR = 1999 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency4 CODE = 364 YEAR = 2004 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency5 CODE = 365 YEAR = 2009 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency6 CODE = 366 YEAR = 2014 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency7 CODE = 367 YEAR = 2024 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency8 CODE = 368 YEAR = 2034 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency_9 CODE = 369 YEAR = 2044 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency_10 CODE = 370 YEAR = 2054 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency_11 CODE = 371 YEAR = 2064 }
-	ai_race_ai_consider_support_tech = { TECH = energy_efficiency_12 CODE = 372 YEAR = 2074 }
+	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_silos }
+	set_temp_variable = { ai_race_ai_considered_code = 301 }
+	set_temp_variable = { ai_race_ai_considered_year = 1984 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency }
+	set_temp_variable = { ai_race_ai_considered_code = 361 }
+	set_temp_variable = { ai_race_ai_considered_year = 1989 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency2 }
+	set_temp_variable = { ai_race_ai_considered_code = 362 }
+	set_temp_variable = { ai_race_ai_considered_year = 1994 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency3 }
+	set_temp_variable = { ai_race_ai_considered_code = 363 }
+	set_temp_variable = { ai_race_ai_considered_year = 1999 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency4 }
+	set_temp_variable = { ai_race_ai_considered_code = 364 }
+	set_temp_variable = { ai_race_ai_considered_year = 2004 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency5 }
+	set_temp_variable = { ai_race_ai_considered_code = 365 }
+	set_temp_variable = { ai_race_ai_considered_year = 2009 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency6 }
+	set_temp_variable = { ai_race_ai_considered_code = 366 }
+	set_temp_variable = { ai_race_ai_considered_year = 2014 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency7 }
+	set_temp_variable = { ai_race_ai_considered_code = 367 }
+	set_temp_variable = { ai_race_ai_considered_year = 2024 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency8 }
+	set_temp_variable = { ai_race_ai_considered_code = 368 }
+	set_temp_variable = { ai_race_ai_considered_year = 2034 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency_9 }
+	set_temp_variable = { ai_race_ai_considered_code = 369 }
+	set_temp_variable = { ai_race_ai_considered_year = 2044 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency_10 }
+	set_temp_variable = { ai_race_ai_considered_code = 370 }
+	set_temp_variable = { ai_race_ai_considered_year = 2054 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency_11 }
+	set_temp_variable = { ai_race_ai_considered_code = 371 }
+	set_temp_variable = { ai_race_ai_considered_year = 2064 }
+	ai_race_ai_consider_support_tech = yes
+	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency_12 }
+	set_temp_variable = { ai_race_ai_considered_code = 372 }
+	set_temp_variable = { ai_race_ai_considered_year = 2074 }
+	ai_race_ai_consider_support_tech = yes
 }
 
 

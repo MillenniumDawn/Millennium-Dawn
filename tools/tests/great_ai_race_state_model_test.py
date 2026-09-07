@@ -509,6 +509,8 @@ class RaceScript:
             return result
         if name == "THIS.id":
             return identifier
+        if name.startswith("token:"):
+            return name.removeprefix("token:")
         try:
             return float(name)
         except ValueError:
@@ -577,6 +579,9 @@ class RaceScript:
                     )
                 else:
                     left, comparison, right = operand[0]
+                assert not isinstance(
+                    right, list
+                ), "check_variable needs a scalar value"
                 result = self.comparisons[comparison](
                     self.value(left, identifier), self.value(right, identifier)
                 )
@@ -787,11 +792,9 @@ class RaceScript:
                     self.execute(
                         [entry for entry in operand if entry[0] != "limit"], identifier
                     )
-            elif key in {"clear_variable", "clear_temp_variable", "clear_array"}:
+            elif key in {"clear_variable", "clear_array"}:
                 scope, name = self._scope(operand, identifier)
-                if key == "clear_temp_variable":
-                    self.temps.pop(operand, None)
-                elif key == "clear_array":
+                if key == "clear_array":
                     scope[name] = []
                 else:
                     scope.pop(name, None)
@@ -887,6 +890,29 @@ class RaceScript:
                 self.unlocked_categories.append((identifier, operand))
             elif key == "log":
                 continue
+            elif key == "meta_effect":
+                data = {key: value for key, _op, value in operand}
+                arguments = {}
+                for argument, expression in data.items():
+                    if argument == "text":
+                        continue
+                    match = re.fullmatch(r'"\[\?(\w+)\.GetTokenKey\]"', expression)
+                    assert match, f"Unsupported meta expression {expression}"
+                    arguments[argument] = self.value(match[1], identifier)
+
+                def substitute(value):
+                    if isinstance(value, list):
+                        return [
+                            (substitute(key), op, substitute(raw))
+                            for key, op, raw in value
+                        ]
+                    return re.sub(
+                        r"\[([A-Za-z0-9_]+)\]",
+                        lambda match: arguments[match[1]],
+                        value,
+                    )
+
+                self.execute(substitute(data["text"]), identifier)
             elif key in self.effects and isinstance(operand, list):
                 arguments = {key: value for key, _op, value in operand}
                 self.execute(
@@ -907,6 +933,23 @@ class RaceScript:
                 self.run(key, identifier)
             else:
                 raise AssertionError(f"Unsupported effect {key}")
+
+
+def test_harness_rejects_the_unsupported_temporary_clear_effect():
+    race = RaceScript()
+    race.country(1)
+    with pytest.raises(AssertionError, match="Unsupported effect clear_temp_variable"):
+        race.execute([("clear_temp_variable", "=", "counter")], 1)
+
+
+def test_harness_rejects_math_blocks_inside_variable_comparisons():
+    race = RaceScript()
+    race.country(1)
+    script = _parse_race_script(
+        "trigger = { check_variable = { var = counter value = { value = 2 multiply = 8 } } }"
+    )["trigger"]
+    with pytest.raises(AssertionError, match="check_variable needs a scalar value"):
+        race.condition(script, 1)
 
 
 @pytest.mark.parametrize("initial, expected", [(0, 23), (1, 15), (2, 18)])

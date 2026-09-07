@@ -651,13 +651,27 @@ def test_research_does_not_skip_a_blocked_prerequisite_to_a_later_available_tech
 
 
 @pytest.mark.parametrize("year,expected", [(2013, 0), (2014, 106)])
-def test_parameterized_support_research_respects_the_first_missing_year(year, expected):
+def test_tokenized_support_research_respects_the_first_missing_year(year, expected):
     race, country = _planner(year=year)
     country["techs"].update(f"construction{level}" for level in range(1, 6))
     country["researchable"] = {"construction6", "construction7"}
     country["vars"]["ai_race_ai_support_tech"] = 0
     race.run("ai_race_ai_choose_construction_tech", 1)
     assert country["vars"]["ai_race_ai_support_tech"] == expected
+
+
+def test_runtime_research_tokens_are_synchronized():
+    research_tokens = set(
+        re.findall(r"token:([A-Za-z0-9_]+)", AI_EFFECTS.read_text(encoding="utf-8"))
+    )
+    registrations = set()
+    for path in (ROOT / "common/synchronized_dynamic_tokens").glob("*.txt"):
+        registrations.update(
+            line.split("#", 1)[0].strip()
+            for line in path.read_text(encoding="utf-8").splitlines()
+        )
+    assert research_tokens
+    assert research_tokens <= registrations
 
 
 def test_support_research_tracks_the_largest_capacity_gap_without_granting_technology():
