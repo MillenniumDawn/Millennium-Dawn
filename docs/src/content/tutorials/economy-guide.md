@@ -523,9 +523,9 @@ You can prioritize which building types receive workers first from the Economy w
 
 ### Productivity
 
-**State Productivity** is a per-state variable that directly scales building output and GDP. Each state has its own productivity value, and the country-level overall productivity is calculated as the population-weighted average across all states.
+**State Productivity** is a per-state variable that directly scales building output and GDP. Each state has its own productivity value, and the country-level overall productivity is calculated as the population-weighted average across controlled states.
 
-A country-level productivity value of **1,000** is the economic baseline. Corporate tax income scales with overall productivity divided by that baseline, so countries below 1,000 collect less from the same building mix while countries above 1,000 collect more.
+The economic baseline is **1,000 or the world average productivity, whichever is higher**. GDP and corporate tax income scale with overall productivity divided by this baseline. Productivity also contributes bonuses or penalties to industrial output and construction speed. Once the world average exceeds 1,000, your productivity must keep pace to maintain the same benefits.
 
 This creates two broad development paths:
 
@@ -534,11 +534,11 @@ This creates two broad development paths:
 
 **What Productivity Affects:**
 
-- **Military factory output**: Higher productivity increases factory production efficiency
+- **Military factory output**: Higher productivity increases factory output
 - **Dockyard output**: Naval construction speed and output
 - **Construction speed**: All building construction is faster in high-productivity states
 - **Agriculture district output**: Farming yields scale with productivity
-- **GDP**: Overall productivity multiplies your total GDP (approximately 0.1% per productivity point)
+- **GDP**: Scales with overall productivity relative to the economic baseline
 
 **Starting Values by Region:**
 
@@ -552,7 +552,16 @@ Productivity is clamped between 100 and 100,000.
 
 **Catch-Up Mechanic:**
 
-Productivity growth uses a catch-up mechanism: states with productivity below the global average grow faster than those above it. This means poorer regions naturally converge toward wealthier ones over time, though wealthy states still grow, just more slowly relative to their starting advantage.
+Productivity changes monthly. When national growth is positive, states below the world average receive a catch-up bonus, while states above it grow more slowly, before local modifiers apply. With negative national growth, more productive states suffer larger declines relative to the world average; local growth modifiers do not apply.
+
+**Reading the Productivity Tooltip:**
+
+Hover over the productivity value in the Economy window to see the current world and national averages, followed by the monthly growth breakdown:
+
+- **Base Monthly Growth Contributions**: Corporate taxes, literacy, the economic cycle, and other laws, national spirits and technologies add together to form the subtotal. These are productivity points per month, before growth modifiers.
+- **National Growth Modifiers**: Inflation and other national modifiers combine into a multiplier: 1 plus their total, limited to 0–100. For example, a total modifier of −21.7% gives a multiplier of ×0.783.
+- **Monthly Growth Before State Adjustments**: The subtotal multiplied by the national multiplier. A subtotal of 0.050 with ×0.783 gives about 0.039 monthly growth. Each state then applies its world-average adjustment and, for positive growth, its local modifiers. The displayed number is therefore not the final change in every state or in the national average.
+- **Effect of Productivity**: The current output, construction and corporate tax modifiers. Commercialized Agriculture Districts have a separate construction-speed modifier.
 
 **Factors That Increase Productivity Growth:**
 
@@ -565,16 +574,18 @@ Productivity growth uses a catch-up mechanism: states with productivity below th
 | Railway infrastructure level 5 | +20%                                                 |
 | Railway infrastructure level 6 | +24%                                                 |
 | Internal investment (state)    | +20% growth in that state while investment is active |
-| Economic Cycle (Fast Growth)   | +2.0 monthly productivity growth                     |
-| Economic Cycle (Economic Boom) | +3.5 monthly productivity growth                     |
+| Economic Cycle (Fast Growth)   | +1.0 monthly base productivity growth                |
+| Economic Cycle (Economic Boom) | +1.75 monthly base productivity growth               |
 | National focuses and spirits   | Varies                                               |
 
 **Corporate Tax and Productivity:**
 
-Corporate tax directly suppresses productivity growth. The relationship is linear:
+Higher corporate taxes reduce the base monthly growth contribution. The relationship is linear, before national and state modifiers:
 
-- At 20% corporate tax: no productivity growth penalty
-- At 40% corporate tax: −10% productivity growth
+- At 20% corporate tax: no contribution to base growth
+- At 40% corporate tax: −0.050 productivity points per month
+
+This is an additive reduction in productivity points, not a percentage reduction in total growth.
 
 High taxes generate revenue but slow long-term growth. Finding a balance between revenue needs and long-term productivity is one of the core tensions in economic management.
 
