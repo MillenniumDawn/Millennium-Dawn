@@ -176,3 +176,27 @@ def write_baseline(sidecar_dir: str, baseline_dir: str, meta: Dict[str, str]) ->
         shutil.copyfile(path, target / path.name)
     with open(target / META_FILENAME, "w", encoding="utf-8", newline="") as fh:
         fh.write(json.dumps(meta, indent=2, sort_keys=True))
+
+
+def load_changed_files(path: str) -> Set[str]:
+    """Load one repo-relative path per line, normalised to forward slashes."""
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except OSError:
+        return set()
+    paths: Set[str] = set()
+    for line in text.splitlines():
+        stripped = line.strip().replace("\\", "/")
+        if stripped:
+            paths.add(stripped)
+    return paths
+
+
+def tag_changed_files(issues: List[Issue], changed_files: Set[str]) -> None:
+    """Set ``Issue.in_diff`` when the finding's file is in the PR diff."""
+    if not changed_files:
+        return
+    normalised = {p.replace("\\", "/") for p in changed_files}
+    for issue in issues:
+        file_path = (issue.file or "").replace("\\", "/")
+        issue.in_diff = bool(file_path) and file_path in normalised
