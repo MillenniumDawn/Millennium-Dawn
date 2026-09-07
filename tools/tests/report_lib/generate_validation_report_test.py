@@ -24,6 +24,26 @@ def _write_baseline(base, toolshash, issues):
     (base / "events.json").write_text(json.dumps(issues), encoding="utf-8")
 
 
+def _old_and_new_tree(tmp_path, toolshash="h"):
+    make_results_tree(
+        tmp_path,
+        {
+            "events": {
+                "log": "VALIDATION COMPLETE",
+                "issues": [
+                    _issue_dict("error", file="old.txt", message="old finding"),
+                    _issue_dict("error", file="new.txt", message="new finding"),
+                ],
+            }
+        },
+    )
+    _write_baseline(
+        tmp_path / "baseline",
+        toolshash,
+        [_issue_dict("error", file="old.txt", message="old finding")],
+    )
+
+
 def _argv(tmp_path, baseline_dir=None, baseline_toolshash=None):
     argv = [
         "--results-dir",
@@ -59,23 +79,7 @@ def _post_argv(tmp_path, *extra):
 
 def test_main_annotates_new_vs_existing_from_baseline(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    make_results_tree(
-        tmp_path,
-        {
-            "events": {
-                "log": "VALIDATION COMPLETE",
-                "issues": [
-                    _issue_dict("error", file="old.txt", message="old finding"),
-                    _issue_dict("error", file="new.txt", message="new finding"),
-                ],
-            }
-        },
-    )
-    _write_baseline(
-        tmp_path / "baseline",
-        "h",
-        [_issue_dict("error", file="old.txt", message="old finding")],
-    )
+    _old_and_new_tree(tmp_path)
 
     code = generate_validation_report.main(
         _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
@@ -91,15 +95,7 @@ def test_main_annotates_new_vs_existing_from_baseline(tmp_path, monkeypatch, cap
 
 def test_main_ignores_stale_baseline(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    make_results_tree(
-        tmp_path,
-        {
-            "events": {
-                "log": "VALIDATION COMPLETE",
-                "issues": [_issue_dict("error", file="new.txt", message="finding")],
-            }
-        },
-    )
+    _findings_tree(tmp_path)
     _write_baseline(
         tmp_path / "baseline",
         "old-generation",
@@ -124,15 +120,7 @@ def test_main_ignores_stale_baseline(tmp_path, monkeypatch):
 
 def test_main_renders_without_baseline_when_dir_missing(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    make_results_tree(
-        tmp_path,
-        {
-            "events": {
-                "log": "VALIDATION COMPLETE",
-                "issues": [_issue_dict("error", file="new.txt", message="finding")],
-            }
-        },
-    )
+    _findings_tree(tmp_path)
 
     code = generate_validation_report.main(
         _argv(tmp_path, baseline_dir=tmp_path / "no-such-baseline")
@@ -600,23 +588,7 @@ def test_main_changed_files_missing_sets_unavailable(tmp_path, monkeypatch, caps
 
 def test_main_changed_files_and_baseline_tag_both(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    make_results_tree(
-        tmp_path,
-        {
-            "events": {
-                "log": "VALIDATION COMPLETE",
-                "issues": [
-                    _issue_dict("error", file="old.txt", message="old finding"),
-                    _issue_dict("error", file="new.txt", message="new finding"),
-                ],
-            }
-        },
-    )
-    _write_baseline(
-        tmp_path / "baseline",
-        "h",
-        [_issue_dict("error", file="old.txt", message="old finding")],
-    )
+    _old_and_new_tree(tmp_path)
     changed = tmp_path / "changed-files.txt"
     changed.write_text("new.txt\n", encoding="utf-8")
 

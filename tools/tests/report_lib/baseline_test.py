@@ -3,7 +3,6 @@
 import json
 
 from report_lib import (
-    Issue,
     Severity,
     classify,
     load_baseline,
@@ -13,21 +12,8 @@ from report_lib import (
     write_baseline,
 )
 from report_lib.baseline import META_FILENAME, issue_key
-from shared.suite import issue_dict
+from shared.suite import issue_dict, make_issue, write_text
 from shared.suite import write_slug_json as _write_sidecar
-
-
-def _issue(**overrides):
-    fields = {
-        "severity": Severity.ERROR,
-        "category": "missing_key",
-        "message": "key FOO not found",
-        "file": "events/MD_x.txt",
-        "line": 212,
-        "validator": "events",
-    }
-    fields.update(overrides)
-    return Issue(**fields)
 
 
 def _issue_dict(severity, file="a.txt", line=1, message="m", category="missing_key"):
@@ -36,22 +22,31 @@ def _issue_dict(severity, file="a.txt", line=1, message="m", category="missing_k
     )
 
 
+def _write_meta(path, toolshash="h"):
+    write_text(path / META_FILENAME, json.dumps({"toolshash": toolshash}))
+
+
+def _baseline(path, issues=None, toolshash="h"):
+    _write_meta(path, toolshash)
+    if issues is not None:
+        _write_sidecar(path, "events", issues)
+    baseline = load_baseline(str(path), toolshash)
+    assert baseline is not None
+    return baseline
+
+
 def test_load_baseline_returns_none_without_meta(tmp_path):
     _write_sidecar(tmp_path, "events", [_issue_dict("error")])
     assert load_baseline(str(tmp_path)) is None
 
 
 def test_load_baseline_returns_none_on_toolshash_mismatch(tmp_path):
-    (tmp_path / META_FILENAME).write_text(
-        json.dumps({"toolshash": "old-hash"}), encoding="utf-8"
-    )
+    _write_meta(tmp_path, "old-hash")
     assert load_baseline(str(tmp_path), "new-hash") is None
 
 
 def test_load_baseline_loads_and_dedupes_sidecars(tmp_path):
-    (tmp_path / META_FILENAME).write_text(
-        json.dumps({"toolshash": "h"}), encoding="utf-8"
-    )
+    _write_meta(tmp_path)
     dup = _issue_dict("error")
     _write_sidecar(tmp_path, "events", [dup])
     _write_sidecar(tmp_path, "localisation", [dup])
@@ -63,36 +58,30 @@ def test_load_baseline_loads_and_dedupes_sidecars(tmp_path):
 
 
 def test_issue_key_requires_location():
-    assert issue_key(_issue()) is not None
-    assert issue_key(_issue(file="", line=0)) is None
-    assert issue_key(_issue(line=-3)) is None
+    assert issue_key(make_issue()) is not None
+    assert issue_key(make_issue(file="", line=0)) is None
+    assert issue_key(make_issue(line=-3)) is None
 
 
 def test_classify_tags_new_and_existing(tmp_path):
-    (tmp_path / META_FILENAME).write_text(
-        json.dumps({"toolshash": "h"}), encoding="utf-8"
-    )
-    _write_sidecar(
+    baseline = _baseline(
         tmp_path,
-        "events",
         [
             _issue_dict("error", file="old.txt", line=1, message="old finding"),
             _issue_dict("warning", file="warn.txt", line=3, message="known warning"),
         ],
     )
-    baseline = load_baseline(str(tmp_path), "h")
-    assert baseline is not None
 
     issues = [
-        _issue(file="old.txt", line=1, message="old finding"),
-        _issue(file="new.txt", line=1, message="new finding"),
-        _issue(
+        make_issue(file="old.txt", line=1, message="old finding"),
+        make_issue(file="new.txt", line=1, message="new finding"),
+        make_issue(
             severity=Severity.WARNING,
             file="new.txt",
             line=2,
             message="new warning",
         ),
-        _issue(
+        make_issue(
             severity=Severity.WARNING,
             file="warn.txt",
             line=3,
@@ -118,30 +107,20 @@ def test_classify_tags_new_and_existing(tmp_path):
 def test_classify_escalated_severity_counts_as_new(tmp_path):
     # Severity is part of the key: a warning on main that a PR escalates to
     # an error must alarm as a new error, not read as existing.
-    (tmp_path / META_FILENAME).write_text(
-        json.dumps({"toolshash": "h"}), encoding="utf-8"
-    )
-    _write_sidecar(
+    baseline = _baseline(
         tmp_path,
-        "events",
         [_issue_dict("warning", file="a.txt", line=1, message="escalated")],
     )
-    baseline = load_baseline(str(tmp_path), "h")
-    assert baseline is not None
 
-    stats = classify([_issue(file="a.txt", line=1, message="escalated")], baseline)
+    stats = classify([make_issue(file="a.txt", line=1, message="escalated")], baseline)
     assert stats.new_errors == 1
     assert stats.existing_errors == 0
 
 
 def test_classify_leaves_unkeyable_issues_untagged(tmp_path):
-    (tmp_path / META_FILENAME).write_text(
-        json.dumps({"toolshash": "h"}), encoding="utf-8"
-    )
-    baseline = load_baseline(str(tmp_path), "h")
-    assert baseline is not None
+    baseline = _baseline(tmp_path)
 
-    unkeyable = _issue(file="", line=0, message="no location")
+    unkeyable = make_issue(file="", line=0, message="no location")
     stats = classify([unkeyable], baseline)
 
     assert unkeyable.baseline_status is None
@@ -210,31 +189,20 @@ def test_load_baseline_returns_none_on_unreadable_meta(tmp_path):
     assert load_baseline(str(tmp_path), "h") is None
 
 
-def _empty_baseline(tmp_path):
-    (tmp_path / META_FILENAME).write_text(
-        json.dumps({"toolshash": "h"}), encoding="utf-8"
-    )
-    baseline = load_baseline(str(tmp_path), "h")
-    assert baseline is not None
-    return baseline
-
-
 def test_classify_with_empty_baseline_marks_everything_new(tmp_path):
     # An all-clean main run stores only meta (no sidecars): any PR finding
     # is new by definition.
-    baseline = _empty_baseline(tmp_path)
-
     stats = classify(
         [
-            _issue(file="a.txt", line=1, message="first"),
-            _issue(
+            make_issue(file="a.txt", line=1, message="first"),
+            make_issue(
                 severity=Severity.WARNING,
                 file="b.txt",
                 line=2,
                 message="second",
             ),
         ],
-        baseline,
+        _baseline(tmp_path),
     )
 
     assert stats.new_errors == 1
@@ -244,14 +212,12 @@ def test_classify_with_empty_baseline_marks_everything_new(tmp_path):
 
 
 def test_classify_counts_mixed_unclassified_and_new(tmp_path):
-    baseline = _empty_baseline(tmp_path)
-
     stats = classify(
         [
-            _issue(file="a.txt", line=1, message="keyed"),
-            _issue(file="", line=0, message="no location"),
+            make_issue(file="a.txt", line=1, message="keyed"),
+            make_issue(file="", line=0, message="no location"),
         ],
-        baseline,
+        _baseline(tmp_path),
     )
 
     assert stats.new_errors == 1
@@ -316,18 +282,10 @@ def test_build_report_annotates_new_vs_existing(tmp_path):
         encoding="utf-8",
     )
 
-    baseline_dir = tmp_path / "baseline"
-    baseline_dir.mkdir()
-    (baseline_dir / META_FILENAME).write_text(
-        json.dumps({"toolshash": "h"}), encoding="utf-8"
-    )
-    _write_sidecar(
-        baseline_dir,
-        "events",
+    baseline = _baseline(
+        tmp_path / "baseline",
         [_issue_dict("error", file="old.txt", message="old finding")],
     )
-    baseline = load_baseline(str(baseline_dir), "h")
-    assert baseline is not None
 
     ctx = ReportContext(
         pr_number="42",
@@ -351,9 +309,9 @@ def test_build_report_annotates_new_vs_existing(tmp_path):
 
 def test_tag_changed_files_sets_in_diff():
     issues = [
-        _issue(file="events/MD_x.txt"),
-        _issue(file="events/other.txt"),
-        _issue(file=""),
+        make_issue(file="events/MD_x.txt"),
+        make_issue(file="events/other.txt"),
+        make_issue(file=""),
     ]
     tag_changed_files(issues, {"events/MD_x.txt"})
     assert issues[0].in_diff is True
@@ -362,7 +320,7 @@ def test_tag_changed_files_sets_in_diff():
 
 
 def test_tag_changed_files_normalises_slashes():
-    issue = _issue(file="events\\MD_x.txt")
+    issue = make_issue(file="events\\MD_x.txt")
     tag_changed_files([issue], {"events/MD_x.txt"})
     assert issue.in_diff is True
 
@@ -378,19 +336,13 @@ def test_load_changed_files_missing_path_is_empty(tmp_path):
 
 
 def test_classify_then_tag_marks_both_axes(tmp_path):
-    (tmp_path / META_FILENAME).write_text(
-        json.dumps({"toolshash": "h"}), encoding="utf-8"
-    )
-    _write_sidecar(
+    baseline = _baseline(
         tmp_path,
-        "events",
         [_issue_dict("error", file="old.txt", line=1, message="old finding")],
     )
-    baseline = load_baseline(str(tmp_path), "h")
-    assert baseline is not None
     issues = [
-        _issue(file="old.txt", line=1, message="old finding"),
-        _issue(file="new.txt", line=1, message="new finding"),
+        make_issue(file="old.txt", line=1, message="old finding"),
+        make_issue(file="new.txt", line=1, message="new finding"),
     ]
     classify(issues, baseline)
     tag_changed_files(issues, {"new.txt"})
