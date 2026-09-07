@@ -401,6 +401,33 @@ def process_txt_for_loc_key_refs(filename: str) -> List[str]:
     return results
 
 
+def _trigger_tooltip_keys(text: str) -> List[str]:
+    """Keys from every ``custom_trigger_tooltip = { ... tooltip = KEY }``.
+
+    The trigger body comes first and routinely contains nested blocks
+    (``check_variable = { ... }``, ``OR = { ... }``). A pattern bounded by
+    ``[^}]*?`` stops at the first inner ``}`` and never reaches the key, so
+    those tooltips went unchecked. Walk the braces and take the ``tooltip``
+    sitting at the block's own depth.
+    """
+    keys: List[str] = []
+    for match in re.finditer(r"custom_trigger_tooltip\s*=\s*\{", text):
+        depth = 0
+        start = text.index("{", match.end() - 1)
+        for token in re.finditer(r"[{}]|\btooltip\s*=\s*(?!\{)(\S+)", text[start:]):
+            symbol = token.group(0)
+            if symbol == "{":
+                depth += 1
+            elif symbol == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            elif depth == 1:
+                keys.append(token.group(1))
+                break
+    return keys
+
+
 def process_txt_for_custom_tt_refs(filename: str) -> List[str]:
     """Pool worker: check custom_effect_tooltip / custom_trigger_tooltip keys in one .txt file.
 
@@ -418,22 +445,20 @@ def process_txt_for_custom_tt_refs(filename: str) -> List[str]:
     ):
         return []
     simple_pattern = r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)"
-    trigger_pattern = r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(?!\{)(\S+)"
     basename = os.path.basename(filename)
     results = []
-    for pattern in [simple_pattern, trigger_pattern]:
-        for key in re.findall(pattern, text_file):
-            if key in valid_keys or key in VANILLA_LOC_KEYS or key in scripted_keys:
-                continue
-            if "[" in key or "|" in key or '"' in key:
-                continue
-            if key.startswith("GFX_"):
-                continue
-            if key.startswith("cannot_go_higher_than_") or key.startswith(
-                "cannot_go_lower_than_"
-            ):
-                continue
-            results.append(f"{key} - {basename}")
+    for key in re.findall(simple_pattern, text_file) + _trigger_tooltip_keys(text_file):
+        if key in valid_keys or key in VANILLA_LOC_KEYS or key in scripted_keys:
+            continue
+        if "[" in key or "|" in key or '"' in key:
+            continue
+        if key.startswith("GFX_"):
+            continue
+        if key.startswith("cannot_go_higher_than_") or key.startswith(
+            "cannot_go_lower_than_"
+        ):
+            continue
+        results.append(f"{key} - {basename}")
     return results
 
 

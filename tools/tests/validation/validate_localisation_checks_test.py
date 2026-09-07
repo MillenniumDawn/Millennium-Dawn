@@ -162,6 +162,27 @@ def test_custom_tooltip_reference_is_reported(tmp_path, monkeypatch):
     assert VL.process_txt_for_custom_tt_refs(path) == ["MISSING_TT - tt.txt"]
 
 
+def test_trigger_tooltip_key_found_behind_a_nested_block(tmp_path, monkeypatch):
+    """The trigger body precedes the key and may contain nested blocks.
+
+    A pattern bounded by ``[^}]*?`` stops at the inner ``}`` and never reaches
+    ``tooltip``, so every tooltip written in this shape went unchecked.
+    """
+    _init_worker_keys(monkeypatch, valid={"KNOWN_TT"})
+    path = _txt(
+        tmp_path,
+        "common/tt.txt",
+        "custom_trigger_tooltip = {\n"
+        "\tcheck_variable = { party_pop_array^19 > 0.30 }\n"
+        "\ttooltip = MISSING_NESTED_TT\n"
+        "}\n"
+        "custom_trigger_tooltip = {\n"
+        "\ttooltip = KNOWN_TT\n"
+        "}\n",
+    )
+    assert VL.process_txt_for_custom_tt_refs(path) == ["MISSING_NESTED_TT - tt.txt"]
+
+
 # --- NOT-block extraction ---------------------------------------------------
 
 
