@@ -558,10 +558,10 @@ Productivity changes monthly. When national growth is positive, states below the
 
 Hover over the productivity value in the Economy window to see the current world and national averages, followed by the monthly growth breakdown:
 
-- **Base Productivity Growth Sources**: Corporate taxes, literacy, the economic cycle, and other laws, national spirits and technologies are listed separately and add up to total base growth. These source values are before the monthly ×0.5 factor and national modifiers.
-- **National Growth Modifiers**: Inflation and other national modifiers are listed separately, followed by their total. Its multiplier is 1 plus that total, limited to 0–100. For example, a total modifier of −21.7% gives a multiplier of ×0.783.
+- **Base Productivity Growth**: The existing combined modifier from laws, ideas and technologies, including the economic cycle. Corporate tax and literacy values are shown as included contributions, not additional bonuses. These values are before the monthly ×0.5 factor and national modifiers.
+- **National Growth Modifier**: The existing combined modifier from laws, ideas and technologies. Inflation is shown as an included contribution. Its multiplier is 1 plus the combined modifier, limited to 0–100. For example, a total modifier of −21.7% gives a multiplier of ×0.783.
 - **Monthly Growth Before State Adjustments**: Base productivity growth ×0.5 × the national multiplier. Base growth of 0.100 with ×0.783 gives about 0.039 monthly growth. Each state then applies its world-average adjustment and, for positive growth, its local modifiers. The displayed number is therefore not the final change in every state or in the national average.
-- **Effect of Productivity**: The current output, construction and corporate tax modifiers. Commercialized Agriculture Districts have a separate construction-speed modifier.
+- **Effect of Productivity**: The current GDP, output, construction and corporate tax modifiers. Commercialized Agriculture Districts have a separate construction-speed modifier.
 
 **Factors That Increase Productivity Growth:**
 
