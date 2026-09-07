@@ -461,7 +461,10 @@ def publish(
     vdf_path = write_vdf(mod_dir, mod_id, changenote)
 
     # Persistent log outside the temp content folder so it survives cleanup.
-    log_path = Path(tempfile.gettempdir()) / f"md_publish_{int(time.time())}.log"
+    with tempfile.NamedTemporaryFile(
+        prefix="md_publish_", suffix=".log", delete=False
+    ) as log_handle:
+        log_path = Path(log_handle.name)
 
     count, total = dir_stats(mod_dir)
 
