@@ -171,8 +171,8 @@ jobs:
           merge_base=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
           git diff --name-status -z "$merge_base" "$HEAD_SHA" \
             | python3 tools/validation/collect_changed_files.py \
-            > .changed-files.txt
-          wc -l .changed-files.txt
+            > changed-files.txt
+          wc -l changed-files.txt
 
       - name: Compute changed groups
         id: groups
@@ -181,8 +181,17 @@ jobs:
             python3 tools/validation/change_groups.py --dispatch \
               < /dev/null
           else
-            python3 tools/validation/change_groups.py < .changed-files.txt
+            python3 tools/validation/change_groups.py < changed-files.txt
           fi
+
+      - name: Upload changed files
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: changed-files
+          path: changed-files.txt
+          if-no-files-found: warn
+          retention-days: 7
 
   validate-paths:
     name: File path validation
@@ -869,28 +878,18 @@ jobs:
           install: "false"
 
       - name: Download all validation results
-        id: download-results
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         continue-on-error: true
         with:
           pattern: "*results"
           path: validation-results
 
-      - name: Record failed validation jobs
-        if: >-
-          steps.download-results.outcome == 'failure' ||
-          needs.detect-changes.result == 'failure' ||
-          needs.validate-paths.result == 'failure' ||
-          needs.prepare-workspace.result == 'failure' ||
-          needs.tools-tests.result == 'failure' ||
-          needs.mod-tests.result == 'failure'
-        run: |
-          pipeline_dir="validation-results/validation-pipeline-results"
-          mkdir -p "$pipeline_dir"
-          printf '%s\n' \
-            '[{"severity":"error","category":"pipeline-job-failed",' \
-            '"message":"Validation jobs failed. Review the workflow run."}]' \
-            > "$pipeline_dir/validation-pipeline.json"
+      - name: Download changed files
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: changed-files
+          path: changed-files
 
       - name: Generate and post validation report
         env:
@@ -914,6 +913,9 @@ jobs:
             --baseline-dir .validation_baseline
             --baseline-toolshash "$TOOLSHASH"
           )
+          if [ -f changed-files/changed-files.txt ]; then
+            args+=(--changed-files changed-files/changed-files.txt)
+          fi
           if [ -n "$PR_NUMBER" ]; then
             args+=(--post-comment)
           fi

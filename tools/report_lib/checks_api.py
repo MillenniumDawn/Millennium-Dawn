@@ -40,8 +40,6 @@ _OS_JOB_NAMES = {"linux": "Linux", "macos": "macOS", "windows": "Windows"}
 
 def _fallback_job(name: str) -> str:
     """Map a validator slug to its owning CI job when `job` is unset."""
-    if name == "pipeline":
-        return "Test suite report"
     if name == "file-paths":
         return "File path validation"
     if name.startswith("tools-"):

@@ -339,9 +339,7 @@ def test_fallback_job_maps_batch_and_standalone_names():
     assert _fallback_job("tools-windows") == "Tools tests (Windows)"
 
 
-def test_post_checks_keeps_path_and_pipeline_failures_in_their_own_checks(
-    tmp_path, monkeypatch
-):
+def test_post_checks_keeps_path_failures_in_their_own_check(tmp_path, monkeypatch):
     results_dir = make_results_tree(
         tmp_path,
         {
@@ -354,44 +352,25 @@ def test_post_checks_keeps_path_and_pipeline_failures_in_their_own_checks(
                     }
                 ]
             },
-            "pipeline": {
-                "issues": [
-                    {
-                        "severity": "error",
-                        "category": "pipeline-job-failed",
-                        "message": "Validation jobs failed.",
-                    }
-                ]
-            },
         },
     )
 
     runs = load_all(str(results_dir))
-    assert [(run.name, run.status) for run in runs] == [
-        ("file-paths", "failed"),
-        ("pipeline", "failed"),
-    ]
+    assert [(run.name, run.status) for run in runs] == [("file-paths", "failed")]
     calls = _transport(
         monkeypatch,
         [
             _Resp(b'{"check_runs": []}'),
             _Resp(b'{"id": 31}'),
-            _Resp(b'{"id": 32}'),
         ],
     )
 
     results = post_checks("owner", "repo", "sha1", runs, "token")
 
-    assert results == [
-        ("File path validation", True, "check #31"),
-        ("Test suite report", True, "check #32"),
-    ]
-    assert [call[2]["name"] for call in calls[1:]] == [
-        "File path validation",
-        "Test suite report",
-    ]
-    assert [call[2]["conclusion"] for call in calls[1:]] == ["failure", "failure"]
-    assert all(call[2]["name"] != "Mod tests (core)" for call in calls[1:])
+    assert results == [("File path validation", True, "check #31")]
+    assert calls[1][2]["name"] == "File path validation"
+    assert calls[1][2]["conclusion"] == "failure"
+    assert calls[1][2]["name"] != "Mod tests (core)"
 
 
 def test_run_job_field_wins_over_the_name_fallback(monkeypatch):

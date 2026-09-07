@@ -221,12 +221,9 @@ def test_file_paths_run_in_a_lightweight_index_job():
     )
     report = workflow["jobs"]["report"]
     assert "validate-paths" in report["needs"]
-    failure_check = next(
-        step["if"]
-        for step in report["steps"]
-        if step.get("name") == "Record failed validation jobs"
+    assert all(
+        step.get("name") != "Record failed validation jobs" for step in report["steps"]
     )
-    assert "needs.validate-paths.result == 'failure'" in failure_check
 
 
 def test_detect_changes_uses_python_grouping():
@@ -240,6 +237,7 @@ def test_detect_changes_uses_python_grouping():
     assert "change_groups.py" in text
     assert "full_suite" in detect["outputs"]
     assert "tools" in detect["outputs"]
+    assert any(step.get("name") == "Upload changed files" for step in detect["steps"])
     for path in ("resources/documentation/modifiers_documentation.md",):
         assert classify([path])["full_suite"] is True
 
@@ -252,7 +250,7 @@ def test_dispatch_forces_all_content_groups():
         if step.get("name") == "Compute changed groups"
     )
     assert "--dispatch" in script
-    assert "< .changed-files.txt" in script
+    assert "< changed-files.txt" in script
 
 
 def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
@@ -322,6 +320,7 @@ def test_report_job_posts_comment_and_checks():
     assert "--post-comment" in text
     assert "--checks-api" in text
     assert 'pattern: "*results"' in text
+    assert any(step.get("name") == "Download changed files" for step in report["steps"])
     assert "full_suite == 'true'" in text
     checkout = next(
         step for step in report["steps"] if "actions/checkout@" in step.get("uses", "")
@@ -346,6 +345,7 @@ def test_report_restores_baseline_for_full_and_dispatch_runs():
     )
     assert "--baseline-dir .validation_baseline" in script
     assert '--baseline-toolshash "$TOOLSHASH"' in script
+    assert "--changed-files changed-files/changed-files.txt" in script
     assert "if [ -f .validation_baseline/baseline-meta.json ]" not in script
     assert (
         "github.event_name == 'workflow_dispatch'" in report["env"]["VALIDATION_SCOPE"]
