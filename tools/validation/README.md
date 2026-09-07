@@ -173,11 +173,12 @@ The commit-stage validators (`validate_common_mistakes`, `validate_style`,
 hook. `validate_unused_textures` keeps a `stages: [manual]` hook because CI
 cannot run it.
 
-`validate_file_paths` runs CI-only in its own `validate-paths` job. It reads
-the git index rather than the working tree, so it sits outside the batches.
-Those restore a content bundle with no `.git` and no `map/`. Standalone style,
-descriptor, path, and encoding checks run inside the core batch job and the
-prepare workspace job; the manual texture audit stays excluded.
+`validate_file_paths` runs CI-only in the `prepare-workspace` job of
+`test-suite.yml`. It reads the PR git index rather than the working tree,
+against a blob:none checkout that keeps `.git`. The batch jobs restore the
+prepared content bundle with no `.git` and no `map/`. Standalone style,
+descriptor, and encoding checks run inside the core batch job; the manual
+texture audit stays excluded.
 
 To run any validator locally, including a CI-only one, invoke it directly:
 
