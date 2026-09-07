@@ -444,3 +444,225 @@ calculate_reserve_roi_bonus = {
 clamp_currency_strength = {
 	clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
 }
+
+# ── Reserve currency projections (for the law tooltips) ───────────────────────
+
+# reserve_roi_bonus above holds a single value, for whatever currency the country
+# currently holds, so a tooltip on any OTHER currency has nothing of its own to
+# show. These effects precompute, for all eight currencies, what each one would
+# pay a holder — so a law entry can be read before it is adopted.
+#
+# The result depends only on the issuer's currency_strength and that currency's
+# adoption count, both global, so the values are identical for every country and
+# are computed once per month rather than once per country.
+#
+# Everything here reads and writes globals only, so it is scope-independent: it
+# runs from the on_monthly global guard and from the once-only startup block.
+
+capture_issuer_strength = {
+	set_variable = { global.proj_str_tmp = currency_strength }
+}
+
+zero_reserve_projection = {
+	set_variable = { global.proj_str_tmp = 0 }
+	set_variable = { global.proj_roi_tmp = 0 }
+	set_variable = { global.proj_trade_tmp = 0 }
+	set_variable = { global.proj_infl_tmp = 0 }
+}
+
+# Mirrors apply_reserve_roi_curve and the trade/inflation maths in
+# calculate_reserve_roi_bonus, but sourced from global.proj_str_tmp instead of a
+# PREV scope. Caller presets tmp_roi_mult and tmp_adopters.
+#
+# The trade block below repeats calculate_reserve_roi_bonus verbatim, bare min/max
+# included, so the tooltip prints the value the player actually receives. Change
+# both together or the readout stops matching the effect.
+apply_reserve_projection = {
+	set_variable = {
+		global.proj_roi_tmp = {
+			value = 1
+			divide = global.proj_str_tmp
+			multiply = -1
+			add = 1
+			multiply = tmp_roi_mult
+		}
+	}
+	set_temp_variable = {
+		tmp_network = {
+			value = tmp_adopters
+			multiply = @reserve_network_factor
+		}
+	}
+	add_to_variable = { global.proj_roi_tmp = tmp_network }
+	clamp_variable = { var = global.proj_roi_tmp min = -0.03 max = 0.03 }
+
+	set_variable = {
+		global.proj_trade_tmp = {
+			value = global.proj_roi_tmp
+			multiply = 0.3
+			min = 0
+			max = 0.05
+		}
+	}
+	set_variable = {
+		global.proj_infl_tmp = {
+			value = global.proj_roi_tmp
+			multiply = -0.5
+		}
+	}
+}
+
+# Several currencies also carry flat modifiers in the idea's own modifier block.
+# Those are a separate modifier source, so the engine sums them with the dynamic
+# bonus and the player receives the total. They sit outside the +/-0.03 clamp and
+# outside the trade min/max, which is why they are added last rather than folded
+# into the maths above. Currencies with no overlapping static pass zeroes.
+add_reserve_statics = {
+	add_to_variable = { global.proj_roi_tmp = tmp_static_roi }
+	add_to_variable = { global.proj_trade_tmp = tmp_static_trade }
+	add_to_variable = { global.proj_infl_tmp = tmp_static_infl }
+}
+
+# A currency whose issuer no longer exists keeps its statics but loses the
+# dynamic half, which is what the country would actually receive.
+calculate_reserve_projections = {
+	zero_reserve_projection = yes
+
+	# US dollar — no overlapping statics.
+	set_temp_variable = { tmp_static_roi = 0 }
+	set_temp_variable = { tmp_static_trade = 0 }
+	set_temp_variable = { tmp_static_infl = 0 }
+	if = { limit = { check_variable = { global.usd_issuer > 0 } }
+		var:global.usd_issuer = { capture_issuer_strength = yes }
+		set_temp_variable = { tmp_roi_mult = @usd_roi_curve }
+		set_temp_variable = { tmp_adopters = global.usd_reserve_adoption_count }
+		apply_reserve_projection = yes
+	}
+	else = { zero_reserve_projection = yes }
+	add_reserve_statics = yes
+	set_variable = { global.proj_roi_usd = global.proj_roi_tmp }
+	set_variable = { global.proj_trade_usd = global.proj_trade_tmp }
+	set_variable = { global.proj_infl_usd = global.proj_infl_tmp }
+
+	# Euro — trade_opinion_factor 0.2 on the idea.
+	set_temp_variable = { tmp_static_roi = 0 }
+	set_temp_variable = { tmp_static_trade = 0.2 }
+	set_temp_variable = { tmp_static_infl = 0 }
+	if = { limit = { check_variable = { global.eur_issuer > 0 } }
+		var:global.eur_issuer = { capture_issuer_strength = yes }
+		set_temp_variable = { tmp_roi_mult = @eur_roi_curve }
+		set_temp_variable = { tmp_adopters = global.eur_reserve_adoption_count }
+		apply_reserve_projection = yes
+	}
+	else = { zero_reserve_projection = yes }
+	add_reserve_statics = yes
+	set_variable = { global.proj_roi_eur = global.proj_roi_tmp }
+	set_variable = { global.proj_trade_eur = global.proj_trade_tmp }
+	set_variable = { global.proj_infl_eur = global.proj_infl_tmp }
+
+	# Chinese yuan
+	set_temp_variable = { tmp_static_roi = 0 }
+	set_temp_variable = { tmp_static_trade = 0.10 }
+	set_temp_variable = { tmp_static_infl = 0 }
+	# The three yuan tiers share this key but are mutually exclusive by `visible`,
+	# so the statics follow whichever tier CHI's focus progress makes selectable.
+	if = { limit = { CHI = { has_completed_focus = CHI_yuan_internationalisation } }
+		set_temp_variable = { tmp_static_roi = 0.02 }
+		set_temp_variable = { tmp_static_trade = 0.25 }
+	}
+	else_if = { limit = { CHI = { has_completed_focus = CHI_Renminbi_Internationalization } }
+		set_temp_variable = { tmp_static_roi = 0.015 }
+		set_temp_variable = { tmp_static_trade = 0.20 }
+	}
+	if = { limit = { check_variable = { global.cny_issuer > 0 } }
+		var:global.cny_issuer = { capture_issuer_strength = yes }
+		set_temp_variable = { tmp_roi_mult = @cny_roi_curve }
+		set_temp_variable = { tmp_adopters = global.cny_reserve_adoption_count }
+		apply_reserve_projection = yes
+	}
+	else = { zero_reserve_projection = yes }
+	add_reserve_statics = yes
+	set_variable = { global.proj_roi_cny = global.proj_roi_tmp }
+	set_variable = { global.proj_trade_cny = global.proj_trade_tmp }
+	set_variable = { global.proj_infl_cny = global.proj_infl_tmp }
+
+	# Russian rouble — no overlapping statics.
+	set_temp_variable = { tmp_static_roi = 0 }
+	set_temp_variable = { tmp_static_trade = 0 }
+	set_temp_variable = { tmp_static_infl = 0 }
+	if = { limit = { check_variable = { global.rub_issuer > 0 } }
+		var:global.rub_issuer = { capture_issuer_strength = yes }
+		set_temp_variable = { tmp_roi_mult = @rub_roi_curve }
+		set_temp_variable = { tmp_adopters = global.rub_reserve_adoption_count }
+		apply_reserve_projection = yes
+	}
+	else = { zero_reserve_projection = yes }
+	add_reserve_statics = yes
+	set_variable = { global.proj_roi_rub = global.proj_roi_tmp }
+	set_variable = { global.proj_trade_rub = global.proj_trade_tmp }
+	set_variable = { global.proj_infl_rub = global.proj_infl_tmp }
+
+	# Japanese yen — return_on_investment -0.02, inflation_cost -0.10.
+	set_temp_variable = { tmp_static_roi = -0.02 }
+	set_temp_variable = { tmp_static_trade = 0 }
+	set_temp_variable = { tmp_static_infl = -0.10 }
+	if = { limit = { check_variable = { global.jpy_issuer > 0 } }
+		var:global.jpy_issuer = { capture_issuer_strength = yes }
+		set_temp_variable = { tmp_roi_mult = @jpy_roi_curve }
+		set_temp_variable = { tmp_adopters = global.jpy_reserve_adoption_count }
+		apply_reserve_projection = yes
+	}
+	else = { zero_reserve_projection = yes }
+	add_reserve_statics = yes
+	set_variable = { global.proj_roi_jpy = global.proj_roi_tmp }
+	set_variable = { global.proj_trade_jpy = global.proj_trade_tmp }
+	set_variable = { global.proj_infl_jpy = global.proj_infl_tmp }
+
+	# British pound — no overlapping statics.
+	set_temp_variable = { tmp_static_roi = 0 }
+	set_temp_variable = { tmp_static_trade = 0 }
+	set_temp_variable = { tmp_static_infl = 0 }
+	if = { limit = { check_variable = { global.gbp_issuer > 0 } }
+		var:global.gbp_issuer = { capture_issuer_strength = yes }
+		set_temp_variable = { tmp_roi_mult = @gbp_roi_curve }
+		set_temp_variable = { tmp_adopters = global.gbp_reserve_adoption_count }
+		apply_reserve_projection = yes
+	}
+	else = { zero_reserve_projection = yes }
+	add_reserve_statics = yes
+	set_variable = { global.proj_roi_gbp = global.proj_roi_tmp }
+	set_variable = { global.proj_trade_gbp = global.proj_trade_tmp }
+	set_variable = { global.proj_infl_gbp = global.proj_infl_tmp }
+
+	# Swiss franc — foreign_influence_defense only, no overlap.
+	set_temp_variable = { tmp_static_roi = 0 }
+	set_temp_variable = { tmp_static_trade = 0 }
+	set_temp_variable = { tmp_static_infl = 0 }
+	if = { limit = { check_variable = { global.chf_issuer > 0 } }
+		var:global.chf_issuer = { capture_issuer_strength = yes }
+		set_temp_variable = { tmp_roi_mult = @chf_roi_curve }
+		set_temp_variable = { tmp_adopters = global.chf_reserve_adoption_count }
+		apply_reserve_projection = yes
+	}
+	else = { zero_reserve_projection = yes }
+	add_reserve_statics = yes
+	set_variable = { global.proj_roi_chf = global.proj_roi_tmp }
+	set_variable = { global.proj_trade_chf = global.proj_trade_tmp }
+	set_variable = { global.proj_infl_chf = global.proj_infl_tmp }
+
+	# Dutch gulden — return_on_investment -0.02.
+	set_temp_variable = { tmp_static_roi = -0.02 }
+	set_temp_variable = { tmp_static_trade = 0 }
+	set_temp_variable = { tmp_static_infl = 0 }
+	if = { limit = { check_variable = { global.nlg_issuer > 0 } }
+		var:global.nlg_issuer = { capture_issuer_strength = yes }
+		set_temp_variable = { tmp_roi_mult = @nlg_roi_curve }
+		set_temp_variable = { tmp_adopters = global.nlg_reserve_adoption_count }
+		apply_reserve_projection = yes
+	}
+	else = { zero_reserve_projection = yes }
+	add_reserve_statics = yes
+	set_variable = { global.proj_roi_nlg = global.proj_roi_tmp }
+	set_variable = { global.proj_trade_nlg = global.proj_trade_tmp }
+	set_variable = { global.proj_infl_nlg = global.proj_infl_tmp }
+}
