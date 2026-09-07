@@ -1,42 +1,50 @@
-name: PR Automation
+name: PR Housekeeping
 
 on:
   pull_request_target:
-    types: [opened, reopened]
+    types: [opened, synchronize, reopened]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
-  assign-author:
+  housekeeping:
+    name: Housekeeping
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
     steps:
+      - name: Label PR based on changed files
+        uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          sync-labels: false
+
       - name: Assign PR to author
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           REPO: ${{ github.repository }}
-        run: |
-          gh pr edit "$PR_NUMBER" --repo "$REPO" --add-assignee "$PR_AUTHOR"
+        run: gh pr edit "$PR_NUMBER" --repo "$REPO" --add-assignee "$PR_AUTHOR"
 
-  milestone:
-    if: github.event.action == 'opened'
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
-    steps:
       - name: Checkout composite action
+        if: github.event.action == 'opened'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
+          persist-credentials: false
           sparse-checkout: .github/actions
           sparse-checkout-cone-mode: false
-      - uses: ./.github/actions/assign-milestone
+
+      - name: Assign milestone
+        if: github.event.action == 'opened'
+        uses: ./.github/actions/assign-milestone
         with:
           issue-number: ${{ github.event.pull_request.number }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
