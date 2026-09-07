@@ -632,3 +632,49 @@ automated_internal_investment_state_available = {
 	check_for_investment_project_limits = yes
 	ROOT = { NOT = { has_active_mission = bankruptcy_incoming_collapse } }
 }
+
+internal_investment_can_pay = {
+	ROOT = {
+		if = {
+			limit = { check_variable = { automation_internal_investment_attempt = 1 } }
+			check_variable = {
+				var = automation_internal_investment_available_pp
+				value = internal_investment_pp_cost
+				compare = greater_than_or_equals
+			}
+			check_variable = {
+				var = treasury
+				value = internal_investment_money_cost
+				compare = greater_than_or_equals
+			}
+		}
+		else = {
+			check_variable = {
+				var = political_power
+				value = internal_investment_pp_cost
+				compare = greater_than_or_equals
+			}
+		}
+	}
+}
+
+internal_investment_pp_affordable = {
+	set_temp_variable = {
+		internal_investment_pp_cost = {
+			value = 75
+			multiply = {
+				value = 1
+				add = ROOT.modifier@internal_investments_pp_cost_modifier
+			}
+			clamp = { min = 25 max = 999999999 }
+		}
+	}
+	custom_trigger_tooltip = {
+		tooltip = internal_investment_pp_affordable_tt
+		check_variable = {
+			var = ROOT.political_power
+			value = internal_investment_pp_cost
+			compare = greater_than_or_equals
+		}
+	}
+}
