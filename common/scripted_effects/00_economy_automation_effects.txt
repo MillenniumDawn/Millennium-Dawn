@@ -1,218 +1,832 @@
-apply_player_tax_change = {
-	set_temp_variable = { automation_tax_pp_cost = { value = $COST$ multiply = -1 } }
-	add_political_power = automation_tax_pp_cost
-	add_to_variable = { $TYPE$_tax_rate = $CHANGE$ }
-	clamp_variable = { var = $TYPE$_tax_rate min = 0 max = 50 }
-	ingame_update_setup = yes
-	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: $TYPE$ tax changed by $CHANGE$ to [?$TYPE$_tax_rate]%"
-	}
-}
-
-automation_adjust_tax = {
-	if = {
-		limit = {
-			has_country_flag = automation_$TYPE$_tax
-			NOT = { has_country_flag = no_$LOCK$_tax_rate_change }
-			has_political_power > tax_rate_change
-			NOT = { check_variable = { $CHANGE$ = 0 } }
-		}
-		set_temp_variable = { automation_tax_next_rate = { value = $TYPE$_tax_rate add = $CHANGE$ } }
-		set_temp_variable = { automation_tax_available_pp = { value = political_power subtract = automation_pp_reserve } }
-		if = {
-			limit = {
-				check_variable = { var = automation_tax_available_pp value = tax_rate_change compare = greater_than_or_equals }
-				check_variable = { automation_tax_next_rate > -1 }
-				check_variable = { automation_tax_next_rate < 51 }
-			}
-			apply_player_tax_change = { TYPE = $TYPE$ CHANGE = $CHANGE$ COST = tax_rate_change }
-		}
-	}
-}
-
-automation_pause_budget_law = {
-	if = {
-		limit = { NOT = { check_variable = { automation_applying_budget_law = 1 } } }
-		clr_country_flag = automation_budget_$GROUP$
-	}
-}
-
-automation_select_budget_law = {
-	if = { limit = { can_select_$IDEA$ = yes }
-		set_temp_variable = {
-			automation_law_pp_cost = {
-				value = 1
-				add = modifier@$GROUP$_cost_factor
-				add = modifier@government_budget_category_type_cost_factor
-				multiply = $COST$
-				max = 0
-			}
-		}
-		set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
-		if = {
-			limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
-			set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
-			add_political_power = automation_law_pp_cost
-			set_temp_variable = { automation_applying_budget_law = 1 }
-			add_ideas = $IDEA$
-			set_temp_variable = { automation_applying_budget_law = 0 }
-			set_temp_variable = { automation_budget_changed = 1 }
-		}
-	}
-}
-
-automation_review_budget_category = {
-	if = {
-		limit = {
-			has_country_flag = automation_budget_$GROUP$
-			check_variable = { automation_budget_changed = 0 }
-			has_variable = $CURRENT$
-			has_variable = $EXPECTED$
-		}
-		set_temp_variable = { automation_budget_next_level = $CURRENT$ }
-		if = {
-			limit = {
-				check_variable = { $CURRENT$ < $EXPECTED$ }
-				check_variable = { treasury_rate > 0 }
-				NOT = { has_active_mission = bankruptcy_incoming_collapse }
-			}
-			add_to_temp_variable = { automation_budget_next_level = 1 }
-		}
-		else_if = { limit = { check_variable = { $CURRENT$ > $EXPECTED$ } }
-			subtract_from_temp_variable = { automation_budget_next_level = 1 }
-		}
-		if = { limit = { NOT = { check_variable = { automation_budget_next_level = $CURRENT$ } } }
-			automation_select_$GROUP$ = yes
-		}
-	}
-}
-
 automation_select_bureaucracy = {
 	if = { limit = { check_variable = { automation_budget_next_level = 1 } }
-		automation_select_budget_law = { IDEA = bureau_01 GROUP = bureaucracy COST = 200 }
+		if = { limit = { can_select_bureau_01 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@bureaucracy_cost_factor
+					multiply = 200
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = bureau_01
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 2 } }
-		automation_select_budget_law = { IDEA = bureau_02 GROUP = bureaucracy COST = 80 }
+		if = { limit = { can_select_bureau_02 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@bureaucracy_cost_factor
+					multiply = 80
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = bureau_02
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 3 } }
-		automation_select_budget_law = { IDEA = bureau_03 GROUP = bureaucracy COST = 50 }
+		if = { limit = { can_select_bureau_03 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@bureaucracy_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = bureau_03
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 4 } }
-		automation_select_budget_law = { IDEA = bureau_04 GROUP = bureaucracy COST = 30 }
+		if = { limit = { can_select_bureau_04 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@bureaucracy_cost_factor
+					multiply = 30
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = bureau_04
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 5 } }
-		automation_select_budget_law = { IDEA = bureau_05 GROUP = bureaucracy COST = 10 }
+		if = { limit = { can_select_bureau_05 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@bureaucracy_cost_factor
+					multiply = 10
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = bureau_05
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 }
 
 automation_select_crime_fighting = {
 	if = { limit = { check_variable = { automation_budget_next_level = 1 } }
-		automation_select_budget_law = { IDEA = police_01 GROUP = crime_fighting COST = 50 }
+		if = { limit = { can_select_police_01 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@crime_fighting_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = police_01
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 2 } }
-		automation_select_budget_law = { IDEA = police_02 GROUP = crime_fighting COST = 50 }
+		if = { limit = { can_select_police_02 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@crime_fighting_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = police_02
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 3 } }
-		automation_select_budget_law = { IDEA = police_03 GROUP = crime_fighting COST = 50 }
+		if = { limit = { can_select_police_03 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@crime_fighting_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = police_03
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 4 } }
-		automation_select_budget_law = { IDEA = police_04 GROUP = crime_fighting COST = 50 }
+		if = { limit = { can_select_police_04 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@crime_fighting_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = police_04
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 5 } }
-		automation_select_budget_law = { IDEA = police_05 GROUP = crime_fighting COST = 50 }
+		if = { limit = { can_select_police_05 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@crime_fighting_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = police_05
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 }
 
 automation_select_education_budget = {
 	if = { limit = { check_variable = { automation_budget_next_level = 1 } }
-		automation_select_budget_law = { IDEA = edu_01 GROUP = education_budget COST = 200 }
+		if = { limit = { can_select_edu_01 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@education_budget_cost_factor
+					multiply = 200
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = edu_01
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 2 } }
-		automation_select_budget_law = { IDEA = edu_02 GROUP = education_budget COST = 80 }
+		if = { limit = { can_select_edu_02 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@education_budget_cost_factor
+					multiply = 80
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = edu_02
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 3 } }
-		automation_select_budget_law = { IDEA = edu_03 GROUP = education_budget COST = 50 }
+		if = { limit = { can_select_edu_03 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@education_budget_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = edu_03
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 4 } }
-		automation_select_budget_law = { IDEA = edu_04 GROUP = education_budget COST = 30 }
+		if = { limit = { can_select_edu_04 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@education_budget_cost_factor
+					multiply = 30
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = edu_04
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 5 } }
-		automation_select_budget_law = { IDEA = edu_05 GROUP = education_budget COST = 10 }
+		if = { limit = { can_select_edu_05 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@education_budget_cost_factor
+					multiply = 10
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = edu_05
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 }
 
 automation_select_health_budget = {
 	if = { limit = { check_variable = { automation_budget_next_level = 1 } }
-		automation_select_budget_law = { IDEA = health_01 GROUP = health_budget COST = 200 }
+		if = { limit = { can_select_health_01 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@health_budget_cost_factor
+					multiply = 200
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = health_01
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 2 } }
-		automation_select_budget_law = { IDEA = health_02 GROUP = health_budget COST = 80 }
+		if = { limit = { can_select_health_02 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@health_budget_cost_factor
+					multiply = 80
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = health_02
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 3 } }
-		automation_select_budget_law = { IDEA = health_03 GROUP = health_budget COST = 50 }
+		if = { limit = { can_select_health_03 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@health_budget_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = health_03
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 4 } }
-		automation_select_budget_law = { IDEA = health_04 GROUP = health_budget COST = 40 }
+		if = { limit = { can_select_health_04 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@health_budget_cost_factor
+					multiply = 40
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = health_04
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 5 } }
-		automation_select_budget_law = { IDEA = health_05 GROUP = health_budget COST = 30 }
+		if = { limit = { can_select_health_05 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@health_budget_cost_factor
+					multiply = 30
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = health_05
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 6 } }
-		automation_select_budget_law = { IDEA = health_06 GROUP = health_budget COST = 10 }
+		if = { limit = { can_select_health_06 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@health_budget_cost_factor
+					multiply = 10
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = health_06
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 }
 
 automation_select_social_budget = {
 	if = { limit = { check_variable = { automation_budget_next_level = 1 } }
-		automation_select_budget_law = { IDEA = social_01 GROUP = social_budget COST = 200 }
+		if = { limit = { can_select_social_01 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@social_budget_cost_factor
+					multiply = 200
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = social_01
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 2 } }
-		automation_select_budget_law = { IDEA = social_02 GROUP = social_budget COST = 80 }
+		if = { limit = { can_select_social_02 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@social_budget_cost_factor
+					multiply = 80
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = social_02
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 3 } }
-		automation_select_budget_law = { IDEA = social_03 GROUP = social_budget COST = 50 }
+		if = { limit = { can_select_social_03 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@social_budget_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = social_03
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 4 } }
-		automation_select_budget_law = { IDEA = social_04 GROUP = social_budget COST = 40 }
+		if = { limit = { can_select_social_04 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@social_budget_cost_factor
+					multiply = 40
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = social_04
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 5 } }
-		automation_select_budget_law = { IDEA = social_05 GROUP = social_budget COST = 30 }
+		if = { limit = { can_select_social_05 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@social_budget_cost_factor
+					multiply = 30
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = social_05
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 6 } }
-		automation_select_budget_law = { IDEA = social_06 GROUP = social_budget COST = 10 }
+		if = { limit = { can_select_social_06 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@social_budget_cost_factor
+					multiply = 10
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = social_06
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 }
 
 automation_select_military_spending = {
 	if = { limit = { check_variable = { automation_budget_next_level = 1 } }
-		automation_select_budget_law = { IDEA = defence_00 GROUP = military_spending COST = 50 }
+		if = { limit = { can_select_defence_00 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@military_spending_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = defence_00
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 2 } }
-		automation_select_budget_law = { IDEA = defence_01 GROUP = military_spending COST = 50 }
+		if = { limit = { can_select_defence_01 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@military_spending_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = defence_01
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 3 } }
-		automation_select_budget_law = { IDEA = defence_02 GROUP = military_spending COST = 50 }
+		if = { limit = { can_select_defence_02 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@military_spending_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = defence_02
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 4 } }
-		automation_select_budget_law = { IDEA = defence_03 GROUP = military_spending COST = 50 }
+		if = { limit = { can_select_defence_03 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@military_spending_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = defence_03
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 5 } }
-		automation_select_budget_law = { IDEA = defence_04 GROUP = military_spending COST = 50 }
+		if = { limit = { can_select_defence_04 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@military_spending_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = defence_04
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 6 } }
-		automation_select_budget_law = { IDEA = defence_05 GROUP = military_spending COST = 50 }
+		if = { limit = { can_select_defence_05 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@military_spending_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = defence_05
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 7 } }
-		automation_select_budget_law = { IDEA = defence_06 GROUP = military_spending COST = 50 }
+		if = { limit = { can_select_defence_06 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@military_spending_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = defence_06
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 8 } }
-		automation_select_budget_law = { IDEA = defence_07 GROUP = military_spending COST = 50 }
+		if = { limit = { can_select_defence_07 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@military_spending_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = defence_07
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 9 } }
-		automation_select_budget_law = { IDEA = defence_08 GROUP = military_spending COST = 50 }
+		if = { limit = { can_select_defence_08 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@military_spending_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = defence_08
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 	else_if = { limit = { check_variable = { automation_budget_next_level = 10 } }
-		automation_select_budget_law = { IDEA = defence_09 GROUP = military_spending COST = 50 }
+		if = { limit = { can_select_defence_09 = yes }
+			set_temp_variable = {
+				automation_law_pp_cost = {
+					value = 1
+					add = modifier@military_spending_cost_factor
+					multiply = 50
+					max = 0
+				}
+			}
+			set_temp_variable = { automation_law_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = { check_variable = { var = automation_law_available_pp value = automation_law_pp_cost compare = greater_than_or_equals } }
+				set_temp_variable = { automation_law_pp_cost = { value = automation_law_pp_cost multiply = -1 } }
+				add_political_power = automation_law_pp_cost
+				set_temp_variable = { automation_applying_budget_law = 1 }
+				add_ideas = defence_09
+				set_temp_variable = { automation_applying_budget_law = 0 }
+				set_temp_variable = { automation_budget_changed = 1 }
+			}
+		}
 	}
 }
 
@@ -225,8 +839,56 @@ automation_economy_weekly = {
 			}
 		}
 		calculate_tax_adjustments = yes
-		automation_adjust_tax = { TYPE = population LOCK = personal CHANGE = pop_tax_change }
-		automation_adjust_tax = { TYPE = corporate LOCK = corporate CHANGE = corp_tax_change }
+		if = {
+			limit = {
+				has_country_flag = automation_population_tax
+				NOT = { has_country_flag = no_personal_tax_rate_change }
+				has_political_power > tax_rate_change
+				NOT = { check_variable = { pop_tax_change = 0 } }
+			}
+			set_temp_variable = { automation_tax_next_rate = { value = population_tax_rate add = pop_tax_change } }
+			set_temp_variable = { automation_tax_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = {
+					check_variable = { var = automation_tax_available_pp value = tax_rate_change compare = greater_than_or_equals }
+					check_variable = { automation_tax_next_rate > -1 }
+					check_variable = { automation_tax_next_rate < 51 }
+				}
+				set_temp_variable = { automation_tax_pp_cost = { value = tax_rate_change multiply = -1 } }
+				add_political_power = automation_tax_pp_cost
+				add_to_variable = { population_tax_rate = pop_tax_change }
+				clamp_variable = { var = population_tax_rate min = 0 max = 50 }
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: population tax changed by pop_tax_change to [?population_tax_rate]%"
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = automation_corporate_tax
+				NOT = { has_country_flag = no_corporate_tax_rate_change }
+				has_political_power > tax_rate_change
+				NOT = { check_variable = { corp_tax_change = 0 } }
+			}
+			set_temp_variable = { automation_tax_next_rate = { value = corporate_tax_rate add = corp_tax_change } }
+			set_temp_variable = { automation_tax_available_pp = { value = political_power subtract = automation_pp_reserve } }
+			if = {
+				limit = {
+					check_variable = { var = automation_tax_available_pp value = tax_rate_change compare = greater_than_or_equals }
+					check_variable = { automation_tax_next_rate > -1 }
+					check_variable = { automation_tax_next_rate < 51 }
+				}
+				set_temp_variable = { automation_tax_pp_cost = { value = tax_rate_change multiply = -1 } }
+				add_political_power = automation_tax_pp_cost
+				add_to_variable = { corporate_tax_rate = corp_tax_change }
+				clamp_variable = { var = corporate_tax_rate min = 0 max = 50 }
+				ingame_update_setup = yes
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: corporate tax changed by corp_tax_change to [?corporate_tax_rate]%"
+				}
+			}
+		}
 	}
 	set_temp_variable = { automation_budget_changed = 0 }
 	for_loop_effect = {
@@ -235,22 +897,154 @@ automation_economy_weekly = {
 		value = automation_budget_offset
 		set_temp_variable = { automation_budget_category = { value = automation_budget_next_category add = automation_budget_offset mod = 6 } }
 		if = { limit = { check_variable = { automation_budget_category = 0 } }
-			automation_review_budget_category = { GROUP = bureaucracy CURRENT = bureau_law EXPECTED = expected_adm_spending }
+			if = {
+				limit = {
+					has_country_flag = automation_budget_bureaucracy
+					check_variable = { automation_budget_changed = 0 }
+					has_variable = bureau_law
+					has_variable = expected_adm_spending
+				}
+				set_temp_variable = { automation_budget_next_level = bureau_law }
+				if = {
+					limit = {
+						check_variable = { bureau_law < expected_adm_spending }
+						check_variable = { treasury_rate > 0 }
+						NOT = { has_active_mission = bankruptcy_incoming_collapse }
+					}
+					add_to_temp_variable = { automation_budget_next_level = 1 }
+				}
+				else_if = { limit = { check_variable = { bureau_law > expected_adm_spending } }
+					subtract_from_temp_variable = { automation_budget_next_level = 1 }
+				}
+				if = { limit = { NOT = { check_variable = { automation_budget_next_level = bureau_law } } }
+					automation_select_bureaucracy = yes
+				}
+			}
 		}
 		else_if = { limit = { check_variable = { automation_budget_category = 1 } }
-			automation_review_budget_category = { GROUP = crime_fighting CURRENT = police_law EXPECTED = expected_police_spending }
+			if = {
+				limit = {
+					has_country_flag = automation_budget_crime_fighting
+					check_variable = { automation_budget_changed = 0 }
+					has_variable = police_law
+					has_variable = expected_police_spending
+				}
+				set_temp_variable = { automation_budget_next_level = police_law }
+				if = {
+					limit = {
+						check_variable = { police_law < expected_police_spending }
+						check_variable = { treasury_rate > 0 }
+						NOT = { has_active_mission = bankruptcy_incoming_collapse }
+					}
+					add_to_temp_variable = { automation_budget_next_level = 1 }
+				}
+				else_if = { limit = { check_variable = { police_law > expected_police_spending } }
+					subtract_from_temp_variable = { automation_budget_next_level = 1 }
+				}
+				if = { limit = { NOT = { check_variable = { automation_budget_next_level = police_law } } }
+					automation_select_crime_fighting = yes
+				}
+			}
 		}
 		else_if = { limit = { check_variable = { automation_budget_category = 2 } }
-			automation_review_budget_category = { GROUP = education_budget CURRENT = education_law EXPECTED = expected_edu_spending }
+			if = {
+				limit = {
+					has_country_flag = automation_budget_education_budget
+					check_variable = { automation_budget_changed = 0 }
+					has_variable = education_law
+					has_variable = expected_edu_spending
+				}
+				set_temp_variable = { automation_budget_next_level = education_law }
+				if = {
+					limit = {
+						check_variable = { education_law < expected_edu_spending }
+						check_variable = { treasury_rate > 0 }
+						NOT = { has_active_mission = bankruptcy_incoming_collapse }
+					}
+					add_to_temp_variable = { automation_budget_next_level = 1 }
+				}
+				else_if = { limit = { check_variable = { education_law > expected_edu_spending } }
+					subtract_from_temp_variable = { automation_budget_next_level = 1 }
+				}
+				if = { limit = { NOT = { check_variable = { automation_budget_next_level = education_law } } }
+					automation_select_education_budget = yes
+				}
+			}
 		}
 		else_if = { limit = { check_variable = { automation_budget_category = 3 } }
-			automation_review_budget_category = { GROUP = health_budget CURRENT = health_law EXPECTED = expected_health_spending }
+			if = {
+				limit = {
+					has_country_flag = automation_budget_health_budget
+					check_variable = { automation_budget_changed = 0 }
+					has_variable = health_law
+					has_variable = expected_health_spending
+				}
+				set_temp_variable = { automation_budget_next_level = health_law }
+				if = {
+					limit = {
+						check_variable = { health_law < expected_health_spending }
+						check_variable = { treasury_rate > 0 }
+						NOT = { has_active_mission = bankruptcy_incoming_collapse }
+					}
+					add_to_temp_variable = { automation_budget_next_level = 1 }
+				}
+				else_if = { limit = { check_variable = { health_law > expected_health_spending } }
+					subtract_from_temp_variable = { automation_budget_next_level = 1 }
+				}
+				if = { limit = { NOT = { check_variable = { automation_budget_next_level = health_law } } }
+					automation_select_health_budget = yes
+				}
+			}
 		}
 		else_if = { limit = { check_variable = { automation_budget_category = 4 } }
-			automation_review_budget_category = { GROUP = social_budget CURRENT = social_law EXPECTED = expected_welfare_spending }
+			if = {
+				limit = {
+					has_country_flag = automation_budget_social_budget
+					check_variable = { automation_budget_changed = 0 }
+					has_variable = social_law
+					has_variable = expected_welfare_spending
+				}
+				set_temp_variable = { automation_budget_next_level = social_law }
+				if = {
+					limit = {
+						check_variable = { social_law < expected_welfare_spending }
+						check_variable = { treasury_rate > 0 }
+						NOT = { has_active_mission = bankruptcy_incoming_collapse }
+					}
+					add_to_temp_variable = { automation_budget_next_level = 1 }
+				}
+				else_if = { limit = { check_variable = { social_law > expected_welfare_spending } }
+					subtract_from_temp_variable = { automation_budget_next_level = 1 }
+				}
+				if = { limit = { NOT = { check_variable = { automation_budget_next_level = social_law } } }
+					automation_select_social_budget = yes
+				}
+			}
 		}
 		else_if = { limit = { check_variable = { automation_budget_category = 5 } }
-			automation_review_budget_category = { GROUP = military_spending CURRENT = military_law EXPECTED = expected_military_sp }
+			if = {
+				limit = {
+					has_country_flag = automation_budget_military_spending
+					check_variable = { automation_budget_changed = 0 }
+					has_variable = military_law
+					has_variable = expected_military_sp
+				}
+				set_temp_variable = { automation_budget_next_level = military_law }
+				if = {
+					limit = {
+						check_variable = { military_law < expected_military_sp }
+						check_variable = { treasury_rate > 0 }
+						NOT = { has_active_mission = bankruptcy_incoming_collapse }
+					}
+					add_to_temp_variable = { automation_budget_next_level = 1 }
+				}
+				else_if = { limit = { check_variable = { military_law > expected_military_sp } }
+					subtract_from_temp_variable = { automation_budget_next_level = 1 }
+				}
+				if = { limit = { NOT = { check_variable = { automation_budget_next_level = military_law } } }
+					automation_select_military_spending = yes
+				}
+			}
 		}
 	}
 	set_variable = { automation_budget_next_category = { value = automation_budget_next_category add = 1 mod = 6 } }
