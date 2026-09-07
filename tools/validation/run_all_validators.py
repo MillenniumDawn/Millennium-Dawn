@@ -78,14 +78,23 @@ def _extract_label_from_script(script_path: str, fallback_name: str) -> str:
 
 
 def launch_validator(
-    script_name: str, extra_flags: List[str], output_dir: str, name: str, mod_path: str
+    script_name: str,
+    extra_flags: List[str],
+    output_dir: str,
+    name: str,
+    mod_path: str,
+    output_filename: Optional[str] = None,
+    apply_extra_flags: bool = True,
 ) -> Tuple[subprocess.Popen, TextIO]:
     """Launch a single validator as a background subprocess (non-blocking)."""
     script_path = os.path.join(SCRIPTS_DIR, script_name)
-    output_path = os.path.join(output_dir, f"{name}.txt")
+    output_path = os.path.join(output_dir, output_filename or f"{name}.txt")
 
     combined_flags: List[str] = []
-    for flag in extra_flags + _VALIDATOR_EXTRA_FLAGS.get(name, []):
+    extra = extra_flags + (
+        _VALIDATOR_EXTRA_FLAGS.get(name, []) if apply_extra_flags else []
+    )
+    for flag in extra:
         if flag not in combined_flags:
             combined_flags.append(flag)
 
