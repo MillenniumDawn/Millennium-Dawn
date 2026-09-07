@@ -22,8 +22,10 @@ from report_lib.checks_api import (
     _pick_annotations,
     post_checks,
 )
+from report_lib.loader import load_all
 from report_lib.models import Issue, Severity, ValidatorRun
 from shared.suite import http_error as _http_error
+from shared.suite import make_results_tree
 
 
 def _run_with_issues(issues, errors=None, warnings=None, status=None):
@@ -329,12 +331,67 @@ def _post_single_run(monkeypatch, outcomes, run=None):
 def test_fallback_job_maps_batch_and_standalone_names():
     assert _fallback_job("events") == "Mod tests (core)"
     assert _fallback_job("focus-tree") == "Mod tests (targeted-b)"
-    assert _fallback_job("file-paths") == "Mod tests (core)"
+    assert _fallback_job("file-paths") == "File path validation"
     assert _fallback_job("style-check") == "Mod tests (core)"
     assert _fallback_job("common-mistakes") == "Mod tests (core)"
     assert _fallback_job("tools-linux") == "Tools tests (Linux)"
     assert _fallback_job("tools-macos") == "Tools tests (macOS)"
     assert _fallback_job("tools-windows") == "Tools tests (Windows)"
+
+
+def test_post_checks_keeps_path_and_pipeline_failures_in_their_own_checks(
+    tmp_path, monkeypatch
+):
+    results_dir = make_results_tree(
+        tmp_path,
+        {
+            "file-paths": {
+                "issues": [
+                    {
+                        "severity": "error",
+                        "category": "case-collision",
+                        "message": "duplicate path",
+                    }
+                ]
+            },
+            "pipeline": {
+                "issues": [
+                    {
+                        "severity": "error",
+                        "category": "pipeline-job-failed",
+                        "message": "Validation jobs failed.",
+                    }
+                ]
+            },
+        },
+    )
+
+    runs = load_all(str(results_dir))
+    assert [(run.name, run.status) for run in runs] == [
+        ("file-paths", "failed"),
+        ("pipeline", "failed"),
+    ]
+    calls = _transport(
+        monkeypatch,
+        [
+            _Resp(b'{"check_runs": []}'),
+            _Resp(b'{"id": 31}'),
+            _Resp(b'{"id": 32}'),
+        ],
+    )
+
+    results = post_checks("owner", "repo", "sha1", runs, "token")
+
+    assert results == [
+        ("File path validation", True, "check #31"),
+        ("Test suite report", True, "check #32"),
+    ]
+    assert [call[2]["name"] for call in calls[1:]] == [
+        "File path validation",
+        "Test suite report",
+    ]
+    assert [call[2]["conclusion"] for call in calls[1:]] == ["failure", "failure"]
+    assert all(call[2]["name"] != "Mod tests (core)" for call in calls[1:])
 
 
 def test_run_job_field_wins_over_the_name_fallback(monkeypatch):
