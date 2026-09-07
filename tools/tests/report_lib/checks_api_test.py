@@ -319,6 +319,13 @@ def _error_issues(count):
     ]
 
 
+def _post_single_run(monkeypatch, outcomes, run=None):
+    """Post one run (default: 1 error) through a scripted transport."""
+    run = run or _run_with_issues(_error_issues(1))
+    calls = _transport(monkeypatch, outcomes)
+    return calls, post_checks("owner", "repo", "sha1", [run], "token")
+
+
 def test_fallback_job_maps_batch_and_standalone_names():
     assert _fallback_job("events") == "Mod tests (core)"
     assert _fallback_job("focus-tree") == "Mod tests (targeted-b)"
@@ -461,8 +468,7 @@ def test_post_checks_patches_the_existing_job_check_run(monkeypatch):
 
 
 def test_post_checks_posts_when_existing_check_run_rejects_patch(monkeypatch):
-    run = _run_with_issues(_error_issues(1))
-    calls = _transport(
+    calls, results = _post_single_run(
         monkeypatch,
         [
             _Resp(b'{"check_runs": [{"id": 9, "name": "Mod tests (core)"}]}'),
@@ -470,8 +476,6 @@ def test_post_checks_posts_when_existing_check_run_rejects_patch(monkeypatch):
             _Resp(b'{"id": 11}'),
         ],
     )
-
-    results = post_checks("owner", "repo", "sha1", [run], "token")
 
     assert results == [("Mod tests (core)", True, "check #11")]
     assert [c[0] for c in calls] == ["GET", "PATCH", "POST"]
@@ -481,15 +485,14 @@ def test_post_checks_posts_when_existing_check_run_rejects_patch(monkeypatch):
 def test_post_checks_posts_when_no_check_run_matches_the_job(monkeypatch):
     run = _run_with_issues([])
     run.name, run.title = "events", "Events"
-    calls = _transport(
+    calls, results = _post_single_run(
         monkeypatch,
         [
             _Resp(b'{"check_runs": [{"id": 5, "name": "Unrelated job"}]}'),
             _Resp(b'{"id": 11}'),
         ],
+        run,
     )
-
-    results = post_checks("owner", "repo", "sha1", [run], "token")
 
     assert results == [("Mod tests (core)", True, "check #11")]
     assert [c[0] for c in calls] == ["GET", "POST"]
