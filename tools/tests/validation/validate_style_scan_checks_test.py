@@ -257,6 +257,24 @@ def test_run_validations_splits_errors_from_warnings(tmp_path, write_path):
     assert v.warnings_found == 2
 
 
+def test_focus_named_event_option_is_not_reported_as_a_focus_standard(
+    tmp_path, write_path
+):
+    """An option name carrying "Focus" belongs to event-log alone, not both buckets."""
+    write_path(
+        tmp_path,
+        "events/Test.txt",
+        "option = {\n\tname = LibyaFocus.104.a\n\tadd_political_power = 50\n}\n",
+    )
+
+    v = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.run_validations()
+
+    categories = [i.category for i in v._issues]
+    assert categories == ["event-log"]
+    assert v.warnings_found == 1
+
+
 def test_run_validations_scans_music_files(tmp_path, write_path):
     write_path(tmp_path, "music/broken.txt", "a = {\n")
 
