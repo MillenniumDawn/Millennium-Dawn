@@ -403,14 +403,7 @@ def process_txt_for_loc_key_refs(filename: str) -> List[str]:
 
 
 def _trigger_tooltip_keys(text: str) -> List[str]:
-    """Keys from every ``custom_trigger_tooltip = { ... tooltip = KEY }``.
-
-    The trigger body comes first and routinely contains nested blocks
-    (``check_variable = { ... }``, ``OR = { ... }``). A pattern bounded by
-    ``[^}]*?`` stops at the first inner ``}`` and never reaches the key, so
-    those tooltips went unchecked. Walk the braces and take the ``tooltip``
-    sitting at the block's own depth.
-    """
+    """Keys from every custom_trigger_tooltip, past any nested trigger body."""
     keys: List[str] = []
     for match in re.finditer(r"custom_trigger_tooltip\s*=\s*\{", text):
         depth = 0
@@ -431,8 +424,7 @@ def _trigger_tooltip_keys(text: str) -> List[str]:
 
 # --- [?variable] references -------------------------------------------------
 
-# Loc reads a script variable as `[?name|format]`. An unwritten name renders as
-# 0 / 0% / $0 rather than erroring, so a stale readout is invisible in play.
+# An unwritten [?name] renders as 0 rather than erroring, so it is invisible.
 
 _LOC_VAR_REF_RE = re.compile(r"\[\?([^\]]+)\]")
 _LOC_VAR_WRITE_RE = re.compile(
@@ -462,9 +454,7 @@ _VAR_SCOPE_WORDS = frozenset(
     }
 )
 
-# Engine-side loc variables absent from resources/documentation. Each was
-# confirmed by its use beside documented builtins in the same readout, so
-# treating them as unwritten would be a false positive.
+# Engine-side, but absent from resources/documentation.
 _EXTRA_ENGINE_LOC_VARS = frozenset({"days_left", "war_support"})
 
 _DYNAMIC_VAR_DOC = os.path.join(
@@ -475,12 +465,7 @@ _DOC_HEADING_RE = re.compile(r"^#{2,4}\s+([A-Za-z_][\w.]*)\s*$", re.M)
 
 @functools.lru_cache(maxsize=1)
 def _engine_loc_vars(mod_path: str) -> frozenset:
-    """Read-only dynamic variables the engine provides, from the vanilla docs.
-
-    Without these the check reports `num_of_civilian_factories`,
-    `political_power_daily` and friends, which no mod script writes because the
-    engine supplies them.
-    """
+    """Read-only dynamic variables the engine supplies, from the vanilla docs."""
     try:
         with open(
             os.path.join(mod_path, _DYNAMIC_VAR_DOC), "r", encoding="utf-8"
@@ -492,12 +477,9 @@ def _engine_loc_vars(mod_path: str) -> frozenset:
 
 
 def _loc_var_name(raw: str) -> str:
-    """The variable a `[?...]` names, or "" if it names something else.
+    """The variable a `[?...]` names, or "" for an @ read, promote or scope.
 
-    Not variables: `modifier@x` / `resource@x` and any other `@` read, a bare
-    scope word, an array subscript, and a scope chain ending in a promote. A
-    leading scope hop — `var:`, `CONTROLLER:`, `ROOT.`, or a numeric state id
-    such as `145.` — is stripped so the variable itself is what gets checked.
+    Leading scope hops (`var:`, `CONTROLLER:`, `ROOT.`, `145.`) are stripped.
     """
     name = raw.split("|", 1)[0].strip()
     if not name or "@" in name:

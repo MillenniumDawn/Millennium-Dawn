@@ -163,11 +163,7 @@ def test_custom_tooltip_reference_is_reported(tmp_path, monkeypatch):
 
 
 def test_trigger_tooltip_key_found_behind_a_nested_block(tmp_path, monkeypatch):
-    """The trigger body precedes the key and may contain nested blocks.
-
-    A pattern bounded by ``[^}]*?`` stops at the inner ``}`` and never reaches
-    ``tooltip``, so every tooltip written in this shape went unchecked.
-    """
+    """A nested block in the trigger body must not hide the tooltip key."""
     _init_worker_keys(monkeypatch, valid={"KNOWN_TT"})
     path = _txt(
         tmp_path,
