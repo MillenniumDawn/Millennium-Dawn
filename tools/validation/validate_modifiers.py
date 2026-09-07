@@ -109,7 +109,6 @@ _PARAMETRIC_MODIFIER_PATTERNS: Tuple[re.Pattern, ...] = tuple(
         r"^production_cost_max_[a-z][a-z0-9_]*$",
         # <Doctrine>-keyed (covers _mastery_gain and _track_mastery_gain)
         r"^[a-z][a-z0-9_]*_mastery_gain_factor$",
-        r"^[a-z][a-z0-9_]*_doctrine_cost_factor$",
         # <Ideology>-keyed
         r"^[a-z][a-z0-9_]*_drift(?:_from_guarantees)?$",
         r"^[a-z][a-z0-9_]*_acceptance$",
@@ -395,6 +394,11 @@ def _load_documented_modifiers(
 
 _IDEA_SLOT_RE = re.compile(r"^\s*(?:character_)?slot\s*=\s*([A-Za-z][A-Za-z0-9_]*)")
 
+# Doctrine folders are declared as top-level `<id> = {` blocks. MD adds its own
+# `equipment` folder alongside vanilla's four, and the vanilla documentation
+# naturally lists only vanilla folders, so these must be harvested.
+_DOCTRINE_FOLDER_RE = re.compile(r"^([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{")
+
 _BRACE_OR_ENABLE_RE = re.compile(r"\benable\s*=\s*\{|\{|\}")
 # The lookbehind keeps `tag` off the tail of `has_cosmetic_tag`; matching a
 # token rather than a whole line is what stops a gate hiding on a shared line.
@@ -474,6 +478,18 @@ def _redundant_enable_gates(body: str) -> List[Tuple[str, int]]:
     return findings
 
 
+def _enable_block_line(body: str):
+    """Return the line offset of the modifier's own `enable` block, else None.
+
+    Every `enable` is a per-tick cost for every holder, whatever it contains,
+    so this reports the block itself rather than inspecting its triggers.
+    """
+    match = _find_top_level_enable(blank_quoted_strings(body))
+    if not match:
+        return None
+    return body.count("\n", 0, match.start())
+
+
 def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
     """Every idea slot auto-generates a `<slot>_cost_factor` modifier.
 
@@ -491,6 +507,28 @@ def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
             m = _IDEA_SLOT_RE.match(line)
             if m:
                 names.add(f"{m.group(1)}_cost_factor")
+    return names
+
+
+def _harvest_doctrine_folder_cost_factors(folder_files: List[str]) -> Set[str]:
+    """Every doctrine folder auto-generates a `<folder>_doctrine_cost_factor`.
+
+    MD declares its own `equipment` folder next to vanilla's land/naval/air/
+    special_forces, so the shipped vanilla documentation cannot cover the set.
+    Harvesting the declared ids keeps mod-defined folders valid while still
+    rejecting a misspelled folder name.
+    """
+    names: Set[str] = set()
+    for filepath in folder_files:
+        try:
+            with open(filepath, encoding="utf-8-sig") as fh:
+                content = fh.read()
+        except OSError:
+            continue
+        for line in content.splitlines():
+            m = _DOCTRINE_FOLDER_RE.match(line)
+            if m:
+                names.add(f"{m.group(1)}_doctrine_cost_factor")
     return names
 
 
@@ -702,6 +740,14 @@ class Validator(BaseValidator):
         slot_factors = _harvest_idea_slot_cost_factors(idea_tag_files)
         known_good |= slot_factors
 
+        # Engine-generated <folder>_doctrine_cost_factor from every doctrine
+        # folder, including MD's own `equipment` folder.
+        doctrine_folder_files = self._collect_files(
+            ["common/doctrines/folders/**/*.txt"], ignore_staged=True
+        )
+        doctrine_factors = _harvest_doctrine_folder_cost_factors(doctrine_folder_files)
+        known_good |= doctrine_factors
+
         # Engine-generated per-sub-unit modifiers (unit-keyed doc templates plus
         # modifier_army_sub_unit_*, doc-concrete for vanilla only) for MD's own
         # sub_units entries — the vanilla doc has no MD unit names to expand against.
@@ -734,6 +780,7 @@ class Validator(BaseValidator):
         self.log(
             f"  Known-good modifier set: {len(known_good)} names "
             f"({len(documented)} documented, {len(slot_factors)} slot cost factors, "
+            f"{len(doctrine_factors)} doctrine cost factors, "
             f"{len(sub_unit_modifiers)} MD sub-unit modifiers, "
             f"{len(operation_modifiers)} MD operation modifiers)"
         )
@@ -856,11 +903,43 @@ class Validator(BaseValidator):
             category="redundant-enable-gate",
         )
 
+    def validate_dynamic_modifier_enable_blocks(self):
+        """Flag every dynamic modifier `enable` block, whatever it gates on."""
+        self._log_section("Checking for dynamic modifier enable blocks...")
+
+        results = []
+        for _filepath, rel, text in self._iter_dynamic_modifier_files():
+            for name, _nl, body_line, body in _extract_top_level_definition_blocks(
+                text
+            ):
+                offset = _enable_block_line(body)
+                if offset is None:
+                    continue
+                results.append(
+                    (
+                        f"'{name}': enable is re-evaluated every tick for every "
+                        "country holding the modifier - delete the block and let "
+                        "the effect that owns this state call add_dynamic_modifier "
+                        "/ remove_dynamic_modifier when it flips",
+                        rel,
+                        body_line + offset,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ No dynamic modifier enable blocks",
+            "Dynamic modifiers with an enable block (tie the state to an effect instead):",
+            severity=Severity.WARNING,
+            category="dynamic-modifier-enable-block",
+        )
+
     def run_validations(self):
         known_good = self._build_known_good_set()
         self.validate_modifier_names(known_good)
         self.validate_dynamic_modifier_name_loc()
         self.validate_redundant_enable_gates()
+        self.validate_dynamic_modifier_enable_blocks()
 
 
 if __name__ == "__main__":

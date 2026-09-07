@@ -44,6 +44,8 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   41. is_at_war is not a valid trigger (use has_war)
   42. review regressions: add-after-zero, excluded fallback, single-line ai_chance
   43. windows path separators keep the directory-scoped checks enabled
+  44. on_daily_TAG blocks that only refresh country flags for the AI to read
+  45. per-tag war brakes already covered by MD_avoid_new_wars_when_outmatched
 """
 
 import os
@@ -56,6 +58,7 @@ from check_common_mistakes import (
     _ai_zero_modifier_conditions,
     _check_active_decision_defined,
     _check_add_to_faction_country,
+    _check_ai_daily_flag_cache,
     _check_any_country_member_array,
     _check_building_missing_province,
     _check_check_expr_bad_operand,
@@ -88,6 +91,8 @@ from check_common_mistakes import (
     _check_nested_province_block,
     _check_on_add_array_symmetry,
     _check_random_select_amount_literal,
+    _check_redundant_avoid_starting_wars,
+    _check_retired_ideology_flags,
     _check_tautological_or,
     _equipment_bonus_enum,
     _equipment_names,
@@ -2240,10 +2245,11 @@ assert_finds(
 print("\n── Leader rotation (political_leaders) ──")
 
 
-def _tier(counter, number, guard="", increment=1, retire=None, undo=None, tail=""):
+def _tier(counter, number, guard="", increment=1, retire=None, undo=None, tail=None):
     """One rotation tier: counter check, increment, kill, create, do_not_retire undo."""
     retire = counter if retire is None else retire
     undo = increment if undo is None else undo
+    tail = [] if tail is None else tail
     return [
         f"\t\tif = {{ limit = {{ check_variable = {{ {counter} = {number} }} {guard}}}\n",
         f"\t\t\tadd_to_variable = {{ {counter} = {increment} }}\n",
@@ -2258,10 +2264,10 @@ def _tier(counter, number, guard="", increment=1, retire=None, undo=None, tail="
     ]
 
 
-def _rotation(*tiers, flag="set_conservatism"):
+def _rotation(*tiers, slot=1):
     return [
         "set_leader_TST = {\n",
-        f"\tif = {{ limit = {{ has_country_flag = {flag} }}\n",
+        f"\tif = {{ limit = {{ check_variable = {{ ruling_party = {slot} }} }}\n",
         *[line for tier in tiers for line in tier],
         "\t}\n",
         "}\n",
@@ -2392,7 +2398,7 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 1 } }\n",
         "\t\tif = { limit = { date < 2002.12.10 }\n",
         *_tier("conservatism_leader", 0),
         "\t\t}\n",
@@ -2411,7 +2417,7 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_liberalism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 2 } }\n",
         "\t\tif = { limit = { check_variable = { liberalism_leader = 1 } }\n",
         '\t\t\tcreate_country_leader = { name = "A" ideology = liberalism }\n',
         "\t\t}\n",
@@ -2429,10 +2435,10 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 1 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
-        "\telse_if = { limit = { has_country_flag = set_conservatism }\n",
+        "\telse_if = { limit = { check_variable = { ruling_party = 1 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
         "}\n",
@@ -2455,10 +2461,10 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 1 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
-        "\telse_if = { limit = { has_country_flag = set_Monarchist }\n",
+        "\telse_if = { limit = { check_variable = { ruling_party = 23 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
         "}\n",
@@ -2467,13 +2473,43 @@ assert_finds(
     "branch counting with another ideology's counter flagged",
 )
 
+assert_finds(
+    _check_retired_ideology_flags,
+    [
+        "test_trigger = {\n",
+        "\thas_country_flag\n",
+        "\t\t=\n",
+        "\t\tset_conservatism\n",
+        "}\n",
+        "test_effect = {\n",
+        "\tset_country_flag = {\n",
+        "\t\tvalue = 1\n",
+        "\t\tflag = set_Kingdom\n",
+        "\t}\n",
+        "}\n",
+        "cleanup_effect = { clr_country_flag = set_Nat_Autocracy }\n",
+    ],
+    3,
+    "retired ideology flags flagged regardless of operation or layout",
+)
+
+assert_finds(
+    _check_retired_ideology_flags,
+    [
+        "# has_country_flag = set_conservatism\n",
+        'log = "set_country_flag = set_Kingdom"\n',
+    ],
+    0,
+    "commented and quoted retired ideology flags ignored",
+)
+
 # CAS/PHI carry off-name counters (socalism_leader) that nothing else drives -- harmless
 assert_finds(
     _check_leader_rotation,
     _rotation(
         _tier("socalism_leader", 0),
         _tier("socalism_leader", 1, guard=_B_GUARD),
-        flag="set_socialism",
+        slot=3,
     ),
     0,
     "off-name counter owned by a single branch not flagged",
@@ -3722,9 +3758,11 @@ assert_finds(
 
 print("\n── add_equipment_bonus ──")
 
+equipment_bonus_enum = _equipment_bonus_enum()
+assert equipment_bonus_enum is not None
 assert_eq(
-    "util_vehicle_type" in _equipment_bonus_enum()
-    and "util_vehicle_equipment" not in _equipment_bonus_enum(),
+    "util_vehicle_type" in equipment_bonus_enum
+    and "util_vehicle_equipment" not in equipment_bonus_enum,
     True,
     "equipment bonus enum read from common/script_enums.txt",
 )
@@ -3770,10 +3808,12 @@ assert_finds(
 
 print("\n── equipment type ──")
 
+equipment_names = _equipment_names()
+assert equipment_names is not None
 assert_eq(
-    "infantry_weapons_type" in _equipment_names()
-    and "medium_tank_destroyer_chassis_0" in _equipment_names()
-    and "infantry_equipment" not in _equipment_names(),
+    "infantry_weapons_type" in equipment_names
+    and "medium_tank_destroyer_chassis_0" in equipment_names
+    and "infantry_equipment" not in equipment_names,
     True,
     "equipment names cover archetypes, variants and duplicate_archetypes clones",
 )
@@ -3883,6 +3923,164 @@ assert_finds(
     ],
     0,
     "defined opinion modifier not flagged",
+)
+
+
+# 44. on_daily_TAG blocks that only refresh country flags for the AI to read
+
+print("\n── AI daily flag caches ──")
+
+_CUB_DAILY_CACHE = [
+    "on_actions = {\n",
+    "\ton_daily_CUB = {\n",
+    "\t\teffect = {\n",
+    "\t\t\tif = {\n",
+    "\t\t\t\tlimit = { is_ai = yes }\n",
+    "\t\t\t\tif = {\n",
+    "\t\t\t\t\tlimit = { CUB_ai_can_attack_hai_uncached_trigger = yes }\n",
+    "\t\t\t\t\tset_country_flag = CUB_ai_can_attack_hai\n",
+    "\t\t\t\t}\n",
+    "\t\t\t\telse = { clr_country_flag = CUB_ai_can_attack_hai }\n",
+    "\t\t\t}\n",
+    "\t\t}\n",
+    "\t}\n",
+    "}\n",
+]
+
+assert_finds(
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/99_CUB_on_actions.txt"
+    ),
+    _CUB_DAILY_CACHE,
+    1,
+    "on_daily block that only set/clears a flag flagged",
+)
+
+assert_finds(
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/99_CUB_on_actions.txt"
+    ),
+    _CUB_DAILY_CACHE[:6]
+    + [
+        "\t\t\t\tadd_political_power = 5\n",
+        "\t\t\t\tset_country_flag = CUB_did_a_thing\n",
+        "\t\t\t\tclr_country_flag = CUB_did_a_thing\n",
+    ]
+    + _CUB_DAILY_CACHE[-4:],
+    0,
+    "on_daily block that also does real work not flagged",
+)
+
+assert_finds(
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/99_CUB_on_actions.txt"
+    ),
+    [
+        "on_actions = {\n",
+        "\ton_daily_CUB = {\n",
+        "\t\teffect = {\n",
+        "\t\t\tset_country_flag = CUB_one_way_latch\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "one-way latch (set with no matching clr) not flagged",
+)
+
+assert_finds(
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/on_actions/MD_event_on_actions.txt"
+    ),
+    [ln.replace("on_daily_CUB", "on_daily_BOS") for ln in _CUB_DAILY_CACHE],
+    0,
+    "allowlisted on_daily_BOS not flagged",
+)
+
+assert_finds(
+    lambda lines: _check_ai_daily_flag_cache(
+        lines, "common/scripted_effects/00_scripted_effects.txt"
+    ),
+    _CUB_DAILY_CACHE,
+    0,
+    "check is scoped to common/on_actions",
+)
+
+
+# 45. Per-tag war brakes already covered by MD_avoid_new_wars_when_outmatched
+
+print("\n── Redundant per-tag war brakes ──")
+
+
+def _war_brake(ratio, strategy="avoid_starting_wars value = -200"):
+    return [
+        "CUB_avoid_starting_wars = {\n",
+        "\tallowed = { original_tag = CUB }\n",
+        "\tenable = {\n",
+        "\t\thas_war = yes\n",
+        f"\t\tenemies_strength_ratio > {ratio}\n",
+        "\t}\n",
+        "\tabort_when_not_enabled = yes\n",
+        "\n",
+        f"\tai_strategy = {{ type = {strategy} }}\n",
+        "}\n",
+    ]
+
+
+assert_finds(
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/CUB.txt"
+    ),
+    _war_brake("1.2"),
+    1,
+    "stricter-than-mod-wide ratio flagged",
+)
+
+assert_finds(
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/CUB.txt"
+    ),
+    _war_brake("0.5"),
+    0,
+    "looser ratio than the mod-wide block not flagged",
+)
+
+assert_finds(
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/CUB.txt"
+    ),
+    _war_brake("1.2", "declare_war id = HAI value = -4000"),
+    0,
+    "block carrying a targeted strategy not flagged",
+)
+
+assert_finds(
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/MD_war_declaration_ai.txt"
+    ),
+    _war_brake("1.2"),
+    0,
+    "the mod-wide file itself is exempt",
+)
+
+assert_finds(
+    lambda lines: _check_redundant_avoid_starting_wars(
+        lines, "common/ai_strategy/BLR.txt"
+    ),
+    [
+        "BLR_avoid_nato_wars = {\n",
+        "\tallowed = { original_tag = BLR }\n",
+        "\tenable = {\n",
+        "\t\thas_war = yes\n",
+        "\t\tany_enemy_country = { is_in_faction_with = USA }\n",
+        "\t}\n",
+        "\tabort_when_not_enabled = yes\n",
+        "\n",
+        "\tai_strategy = { type = avoid_starting_wars value = -200 }\n",
+        "}\n",
+    ],
+    0,
+    "brake on a gate the strength ratio cannot express not flagged",
 )
 
 

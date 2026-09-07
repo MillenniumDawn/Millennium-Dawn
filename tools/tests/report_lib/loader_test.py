@@ -1,7 +1,10 @@
 """Tests for `report_lib.loader`."""
 
-from report_lib import load_all
-from shared.suite import make_results_tree, write_log, write_sidecar
+import json
+
+import pytest
+from report_lib import MANIFEST_NAME, discover_validator_runs, load_all
+from shared.suite import make_results_tree, write_log, write_sidecar, write_text
 
 
 def test_load_passed_validator(tmp_path):
@@ -72,6 +75,57 @@ def test_load_failed_from_json_sidecar(tmp_path):
     assert run.issues[0].file == "history/units/FOO_1979.txt"
     assert run.issues[0].line == 12
     assert run.had_json is True
+
+
+def test_valid_sidecar_accepts_optional_issue_fields(tmp_path):
+    root = make_results_tree(
+        tmp_path,
+        {
+            "events": {
+                "log": "warning\n",
+                "issues": [
+                    {
+                        "severity": "warning",
+                        "category": "unused",
+                        "message": "something",
+                        "validator": "events",
+                        "detected_by": ["events", "variables"],
+                    }
+                ],
+            }
+        },
+    )
+
+    run = load_all(str(root))[0]
+
+    assert run.status == "warnings"
+    assert run.issues[0].validator == "events"
+    assert run.issues[0].detected_by == ["events", "variables"]
+
+
+def test_malformed_issue_schema_fails_closed(tmp_path):
+    base_issue = {"severity": "error", "category": "c", "message": "m"}
+    malformed = (
+        {**base_issue, "severity": "ERROR"},
+        {**base_issue, "severity": None},
+        {**base_issue, "severity": []},
+        None,
+        {**base_issue, "category": None},
+        {**base_issue, "message": 1},
+        {**base_issue, "line": True},
+        {**base_issue, "detected_by": "events"},
+    )
+
+    for index, issue in enumerate(malformed):
+        root = make_results_tree(
+            tmp_path / str(index),
+            {"events": {"log": "✓ VALIDATION COMPLETE\n", "issues": [issue]}},
+        )
+        run = load_all(str(root))[0]
+        assert run.status == "failed"
+        assert run.errors == 1
+        assert run.execution_complete is False
+        assert run.issues[0].category == "malformed-validator-sidecar"
 
 
 def test_load_warnings_only(tmp_path):
@@ -193,3 +247,327 @@ def test_empty_results_dir(tmp_path):
 
 def test_missing_results_dir_returns_empty():
     assert load_all("/nonexistent/path/that/does/not/exist") == []
+
+
+def test_discovery_ignores_non_artifact_entries(tmp_path):
+    root = tmp_path / "validation-results"
+    root.mkdir()
+    # A plain file whose name looks like an artifact directory.
+    write_text(root / "validation-decoy-results", "not a directory")
+    # A flat artifact with an extension the loader does not read.
+    write_text(root / "validation-notes.md", "ignored")
+    write_sidecar(root, "events", [])
+
+    assert [slug for slug, _ in discover_validator_runs(str(root))] == ["events"]
+
+
+def test_legacy_total_issue_summary_line_counts_as_errors(tmp_path):
+    log = (
+        "  common/events/foo.txt:42 - missing localisation\n"
+        "✗ VALIDATION COMPLETE - 3 TOTAL ISSUES FOUND\n"
+    )
+    root = make_results_tree(tmp_path, {"events": {"log": log}})
+
+    run = load_all(str(root))[0]
+
+    assert (run.errors, run.warnings, run.status) == (3, 0, "failed")
+
+
+def test_sidecar_without_a_log_still_loads(tmp_path):
+    root = tmp_path / "validation-results"
+    write_sidecar(root, "events", [])
+
+    run = load_all(str(root))[0]
+
+    assert run.log_text is None
+    assert run.status == "passed"
+
+
+def test_unreadable_log_is_treated_as_absent(tmp_path):
+    root = tmp_path / "validation-results"
+    write_sidecar(root, "events", [])
+    (root / "validation-events.log").write_bytes(b"\xff\xfe not utf-8 \xff")
+
+    run = load_all(str(root))[0]
+
+    assert run.log_text is None
+    assert run.status == "passed"
+
+
+def test_log_only_run_without_output_is_no_output(tmp_path):
+    root = tmp_path / "validation-results"
+    root.mkdir()
+    # A directory artifact holding neither a .log nor a .json.
+    (root / "validation-events-results").mkdir()
+    write_text(root / "validation-events-results" / "notes.txt", "nothing useful")
+
+    run = load_all(str(root))[0]
+
+    assert run.status == "no_output"
+    assert run.had_json is False
+
+
+def test_failure_marker_without_parsable_issues_still_fails(tmp_path):
+    root = make_results_tree(
+        tmp_path, {"events": {"log": "✗ VALIDATION COMPLETE\nsomething went wrong\n"}}
+    )
+
+    run = load_all(str(root))[0]
+
+    assert run.status == "failed"
+    assert run.issues == []
+
+
+def test_batch_artifact_yields_one_run_per_validator(tmp_path):
+    # A batch job packages every validator's log + sidecar into one artifact
+    # directory; the loader must still produce one run per validator with the
+    # right log/sidecar pairing.
+    root = tmp_path / "validation-results"
+    batch = root / "validation-batch-core-results"
+    batch.mkdir(parents=True)
+    write_log(batch, "events", "✓ VALIDATION COMPLETE - NO ISSUES FOUND\n")
+    write_sidecar(batch, "events", [])
+    write_log(batch, "variables", "✗ VALIDATION COMPLETE - 1 ERROR(S)\n")
+    write_sidecar(
+        batch, "variables", [{"severity": "error", "category": "c", "message": "m"}]
+    )
+
+    runs = {run.name: run for run in load_all(str(root))}
+
+    assert set(runs) == {"events", "variables"}
+    assert runs["events"].status == "passed"
+    assert runs["variables"].status == "failed"
+    assert runs["variables"].errors == 1
+
+
+def test_batch_artifact_crash_parses_its_own_log(tmp_path):
+    # The crashed validator has a log but no sidecar; the text fallback must
+    # read its log, never a neighbour's.
+    root = tmp_path / "validation-results"
+    batch = root / "validation-batch-core-results"
+    batch.mkdir(parents=True)
+    crashed_log = (
+        "  common/events/foo.txt:42 - boom\n✗ VALIDATION COMPLETE - 1 ERROR(S)\n"
+    )
+    write_log(batch, "events", crashed_log)
+    write_log(batch, "variables", "✓ VALIDATION COMPLETE - NO ISSUES FOUND\n")
+    write_sidecar(batch, "variables", [])
+
+    runs = {run.name: run for run in load_all(str(root))}
+
+    assert set(runs) == {"events", "variables"}
+    assert runs["events"].had_json is False
+    assert runs["events"].status == "failed"
+    assert runs["events"].issues[0].message == "boom"
+
+
+def test_batch_container_is_not_reported_as_a_run(tmp_path):
+    # The batch artifact directory itself is a `validation-*-results` match;
+    # it must not surface as a no_output run beside its children.
+    root = tmp_path / "validation-results"
+    batch = root / "validation-batch-core-results"
+    batch.mkdir(parents=True)
+    write_log(batch, "events", "✓ VALIDATION COMPLETE - NO ISSUES FOUND\n")
+    write_sidecar(batch, "events", [])
+
+    runs = load_all(str(root))
+
+    assert [run.name for run in runs] == ["events"]
+
+
+def test_manifest_only_empty_batch_is_not_a_legacy_run(tmp_path):
+    root = tmp_path / "validation-results"
+    empty = root / "nested" / "validation-batch-empty-results"
+    empty.mkdir(parents=True)
+    (empty / MANIFEST_NAME).write_text(
+        '{"mode":"batch","batch":"empty","selected":[],"results":[]}',
+        encoding="utf-8",
+    )
+
+    populated = root / "nested" / "validation-batch-core-results"
+    populated.mkdir(parents=True)
+    write_log(populated, "variables", "✓ VALIDATION COMPLETE - NO ISSUES FOUND\n")
+    write_sidecar(populated, "variables", [])
+    (populated / MANIFEST_NAME).write_text(
+        '{"mode":"batch","batch":"core","selected":["variables"],'
+        '"results":[{"name":"variables","script":"validate_variables.py",'
+        '"strict":true,"returncode":0,"status":"ok"}]}',
+        encoding="utf-8",
+    )
+
+    ordinary = root / "validation-events-results"
+    ordinary.mkdir(parents=True)
+    write_log(ordinary, "events", "✓ VALIDATION COMPLETE - NO ISSUES FOUND\n")
+    write_sidecar(ordinary, "events", [])
+
+    runs = {run.name: run for run in load_all(str(root))}
+
+    assert set(runs) == {"events", "variables"}
+    assert all(run.status == "passed" for run in runs.values())
+
+
+def test_malformed_manifest_only_batch_is_reported(tmp_path):
+    root = tmp_path / "validation-results"
+    batch = root / "nested" / "validation-batch-bad-results"
+    batch.mkdir(parents=True)
+    (batch / MANIFEST_NAME).write_text("{broken", encoding="utf-8")
+
+    runs = load_all(str(root))
+
+    assert len(runs) == 1
+    assert runs[0].name == "impact-verification"
+    assert runs[0].status == "failed"
+    assert runs[0].issues[0].category == "batch-manifest"
+
+
+def _write_suite_run(root, payload):
+    directory = root / "tools-tests-Linux-results"
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "suite-run.json").write_text(payload, encoding="utf-8")
+    return root
+
+
+def test_suite_run_artifact_loads_as_a_tools_run(tmp_path):
+    root = _write_suite_run(
+        tmp_path / "validation-results",
+        json.dumps(
+            {
+                "suite": "tools",
+                "job": "Tools tests (Linux)",
+                "name": "tools-linux",
+                "title": "Tools tests (Linux)",
+                "status": "failed",
+                "errors": 2,
+                "warnings": 0,
+                "issues": [],
+            }
+        ),
+    )
+
+    runs = load_all(str(root))
+
+    assert len(runs) == 1
+    run = runs[0]
+    assert run.name == "tools-linux"
+    assert run.suite == "tools"
+    assert run.job == "Tools tests (Linux)"
+    assert run.status == "failed"
+    assert run.errors == 2
+    assert run.execution_complete is True
+
+
+def test_suite_run_without_errors_counts_its_issues(tmp_path):
+    root = _write_suite_run(
+        tmp_path / "validation-results",
+        json.dumps(
+            {
+                "suite": "tools",
+                "job": "Tools tests (Linux)",
+                "name": "tools-linux",
+                "title": "Tools tests (Linux)",
+                "status": "failed",
+                "errors": 0,
+                "warnings": 0,
+                "issues": [
+                    {
+                        "severity": "error",
+                        "category": "quality",
+                        "message": "pylint failed",
+                    }
+                ],
+            }
+        ),
+    )
+
+    run = load_all(str(root))[0]
+
+    assert run.errors == 1
+    assert run.issues[0].validator == "tools-linux"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "{broken",
+        "[]",
+        json.dumps({"suite": "tools", "name": "tools-linux"}),
+        json.dumps(
+            {
+                "suite": "not-a-suite",
+                "job": "",
+                "name": "tools-linux",
+                "title": "t",
+                "status": "passed",
+                "errors": 0,
+                "warnings": 0,
+                "issues": [],
+            }
+        ),
+        json.dumps(
+            {
+                "suite": "tools",
+                "job": "",
+                "name": "tools-linux",
+                "title": "t",
+                "status": "exploded",
+                "errors": 0,
+                "warnings": 0,
+                "issues": [],
+            }
+        ),
+        json.dumps(
+            {
+                "suite": "tools",
+                "job": "",
+                "name": "tools-linux",
+                "title": "t",
+                "status": "passed",
+                "errors": -1,
+                "warnings": 0,
+                "issues": [],
+            }
+        ),
+        json.dumps(
+            {
+                "suite": "tools",
+                "job": "",
+                "name": "tools-linux",
+                "title": "t",
+                "status": "passed",
+                "errors": 0,
+                "warnings": 0,
+                "issues": [{"severity": "ERROR", "category": "c", "message": "m"}],
+            }
+        ),
+    ],
+)
+def test_malformed_suite_run_fails_closed(tmp_path, payload):
+    root = _write_suite_run(tmp_path / "validation-results", payload)
+
+    run = load_all(str(root))[0]
+
+    assert run.status == "failed"
+    assert run.execution_complete is False
+    assert run.issues[0].category == "malformed-suite-run"
+
+
+def test_stderr_logs_are_not_runs(tmp_path):
+    # The batch runner captures each validator's stderr beside its results;
+    # those diagnostics must not surface as bogus validators.
+    root = tmp_path / "validation-results"
+    batch = root / "validation-batch-core-results"
+    batch.mkdir(parents=True)
+    write_log(batch, "events", "✓ VALIDATION COMPLETE - NO ISSUES FOUND\n")
+    write_sidecar(batch, "events", [])
+    (batch / "validation-events.stderr.log").write_text(
+        "Traceback ...", encoding="utf-8"
+    )
+    write_log(batch, "variables", "✓ VALIDATION COMPLETE - NO ISSUES FOUND\n")
+    write_sidecar(batch, "variables", [])
+    (root / "validation-variables.stderr.log").write_text(
+        "Traceback ...", encoding="utf-8"
+    )
+
+    runs = {run.name: run for run in load_all(str(root))}
+
+    assert set(runs) == {"events", "variables"}

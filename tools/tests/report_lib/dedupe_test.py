@@ -3,17 +3,22 @@
 from report_lib import Issue, Severity, dedupe
 
 
-def _issue(**kw):
-    defaults = dict(
-        severity=Severity.ERROR,
-        category="cat",
-        message="m",
-        file="a.txt",
-        line=1,
-        validator="v1",
+def _issue(
+    severity=Severity.ERROR,
+    category="cat",
+    message="m",
+    file="a.txt",
+    line=1,
+    validator="v1",
+):
+    return Issue(
+        severity=severity,
+        category=category,
+        message=message,
+        file=file,
+        line=line,
+        validator=validator,
     )
-    defaults.update(kw)
-    return Issue(**defaults)
 
 
 def test_dedupe_keeps_unique_issues():
@@ -69,3 +74,18 @@ def test_dedupe_preserves_order():
     ]
     result = dedupe(issues)
     assert [i.file for i in result] == ["c.txt", "a.txt", "b.txt"]
+
+
+def test_dedupe_skips_empty_and_repeat_validators():
+    first = _issue(validator="events", file="a.txt", line=1)
+    same = _issue(validator="events", file="a.txt", line=1)
+    again = _issue(validator="localisation", file="a.txt", line=1)
+    empty = _issue(validator="", file="a.txt", line=1)
+    result = dedupe([first, same, again, again, empty])
+    assert len(result) == 1
+    assert result[0].detected_by == ["localisation", "cat"]
+
+
+def test_dedupe_leaves_an_issue_without_a_validator_untagged():
+    result = dedupe([_issue(validator="")])
+    assert result[0].detected_by == []

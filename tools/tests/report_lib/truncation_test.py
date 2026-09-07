@@ -46,3 +46,35 @@ def test_truncation_uses_workflow_url_when_no_artifact():
     )
     assert truncated is True
     assert "https://example.test/run/1" in out
+
+
+def test_truncation_falls_back_to_a_byte_slice_without_a_summary():
+    body = "# Validation Report\n\n" + ("x" * (MAX_COMMENT_BYTES + 10_000))
+    out, truncated = truncate_if_needed(body)
+    assert truncated is True
+    assert len(out.encode("utf-8")) < MAX_COMMENT_BYTES
+    assert out.startswith("# Validation Report")
+    assert "This report was too large" in out
+    # No link available, so the notice names the step summary in plain text.
+    assert "available in the step summary." in out
+
+
+def test_truncation_keeps_the_summary_when_it_is_the_last_section():
+    body = (
+        "## Summary\n\n"
+        "| Validator | Errors | Warnings |\n"
+        "| **Total** | **1** | **0** |\n" + ("y" * (MAX_COMMENT_BYTES + 10_000)) + "\n"
+    )
+    out, truncated = truncate_if_needed(body, artifact_url="https://example.test/a")
+    assert truncated is True
+    assert out.endswith("available in [workflow artifact](https://example.test/a).\n")
+    assert "| **Total** | **1** | **0** |" in out
+    assert "yyyy" not in out
+
+
+def test_truncation_keeps_a_summary_section_with_no_totals_row():
+    body = "## Summary\n\n" + ("z" * (MAX_COMMENT_BYTES + 10_000)) + "\n"
+    out, truncated = truncate_if_needed(body)
+    assert truncated is True
+    assert out.startswith("## Summary")
+    assert "This report was too large" in out

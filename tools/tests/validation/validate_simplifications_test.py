@@ -6,7 +6,13 @@ under OR / random_list / count_triggers, and never for non-deterministic
 (random_*) or iterator scopes.
 """
 
+import runpy
+import sys
+
+import pytest
+import validate_simplifications as vs
 from validate_simplifications import (
+    _count_children,
     _find_bare_not,
     _find_count_collapsible,
     _find_empty_trigger_blocks,
@@ -15,6 +21,8 @@ from validate_simplifications import (
     _find_random_controlled_shortcut,
     _find_scope_expansion,
     _find_two_bucket_random,
+    _iter_direct_assignments,
+    _scan_composite,
     strip_comments,
 )
 
@@ -597,3 +605,326 @@ def test_scan_patterns_preserve_recursive_overlap_without_absolute_prefix():
     assert _matches_relative_pattern("common/test.txt", patterns)
     assert _matches_relative_pattern("common/nested/test.txt", patterns)
     assert not _matches_relative_pattern("other/common/test.txt", patterns)
+
+
+# --- malformed input must never crash or false-flag ------------------------
+
+
+def test_unterminated_tag_block_is_not_an_expansion():
+    assert _expansion("USA = { exists = yes\n") == []
+
+
+def test_logical_operator_header_is_not_a_tag_scope():
+    # NOT/AND are three-caps tokens but never country scopes.
+    assert _expansion("NOT = { exists = yes }\n") == []
+
+
+def test_unterminated_random_list_is_skipped():
+    assert _random("random_list = { 50 = { a = yes } 50 = {}\n") == []
+
+
+def test_final_bucket_flush_against_body_end_still_collapses():
+    # No trailing whitespace after the last bucket: the walker must finish on
+    # the loop condition, not on a failed search.
+    assert _random("random_list = { 50 = { add_stability = 0.1 } 50 = {}}") == [50]
+
+
+def test_quoted_brace_between_buckets_is_treated_as_malformed():
+    # `"z = {"` looks like a bucket opener to the header regex but never
+    # balances; the walker must bail instead of reporting a bogus collapse.
+    text = 'random_list = { 50 = { a = yes } log = "z = {" 60 = { } }\n'
+    assert _random(text) == []
+
+
+def test_non_weight_child_is_not_a_bucket_list():
+    assert _random("random_list = { 50 = { a = yes } foo = { } }\n") == []
+
+
+def test_zero_total_weight_is_skipped():
+    # 0/0 has no meaningful chance to suggest.
+    assert _random("random_list = { 0 = { a = yes } 0 = { } }\n") == []
+
+
+def test_unterminated_create_unit_stops_the_run():
+    assert _count('create_unit = { division = "x"\n') == []
+
+
+def test_unterminated_visible_block_is_skipped():
+    assert _empty("visible = {\n") == []
+
+
+def test_unterminated_random_state_is_skipped():
+    assert (
+        _controlled("random_state = { limit = { controller = { tag = ROOT } }\n") == []
+    )
+
+
+def test_random_state_without_a_limit_is_skipped():
+    assert _controlled("random_state = { add_stability = 0.1 }\n") == []
+
+
+def test_limit_after_another_child_is_still_found():
+    text = (
+        "random_state = { prioritize = yes limit = { controller = { tag = ROOT } } }\n"
+    )
+    assert _controlled(text) == [(1, "controller = { tag = ROOT }")]
+
+
+# --- government-match rejections -------------------------------------------
+
+
+def test_two_bare_government_checks_in_one_clause_not_flagged():
+    text = (
+        "OR = {\n"
+        "  AND = { has_government = democratic  has_government = communism  "
+        "FROM = { has_government = democratic } }\n"
+        "}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_quoted_brace_inside_a_clause_not_flagged():
+    text = "OR = {\n" '  AND = { has_government = democratic  log = "x = {" }\n' "}\n"
+    assert _gov(text) == []
+
+
+def test_bare_not_without_a_scope_block_not_flagged():
+    text = (
+        "OR = {\n"
+        "  AND = { has_government = democratic  NOT = { has_war = yes } }\n"
+        "}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_outer_not_with_an_extra_trigger_not_flagged():
+    text = (
+        "OR = {\n"
+        "  AND = { has_government = democratic  "
+        "NOT = { has_war = yes  FROM = { has_government = democratic } } }\n"
+        "}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_outer_not_wrapping_an_unrelated_trigger_not_flagged():
+    text = (
+        "OR = {\n"
+        "  AND = { has_government = democratic  NOT = { FROM = { has_war = yes } } }\n"
+        "}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_unterminated_or_block_is_skipped():
+    assert _gov("OR = {\n  AND = { has_government = democratic }\n") == []
+
+
+def test_non_and_child_of_or_not_flagged():
+    assert _gov("OR = {\n  FROM = { has_government = democratic }\n}\n") == []
+
+
+def test_quoted_and_opener_after_a_clause_not_flagged():
+    text = (
+        "OR = {\n"
+        "  AND = { has_government = democratic  FROM = { has_government = democratic } }\n"
+        '  log = "AND = {"\n'
+        "}\n"
+    )
+    assert _gov(text) == []
+
+
+def test_bare_condition_beside_two_clauses_not_flagged():
+    # Leftover text outside the AND spans means collapsing would drop a gate.
+    text = (
+        "OR = {\n"
+        "  AND = { has_government = democratic  FROM = { has_government = democratic } }\n"
+        "  AND = { has_government = communism  FROM = { has_government = communism } }\n"
+        "  has_war = yes\n"
+        "}\n"
+    )
+    assert _gov(text) == []
+
+
+# --- child counting --------------------------------------------------------
+
+
+def test_children_counted_up_to_the_body_end():
+    # Body ends flush with the last value, with no trailing whitespace.
+    assert _not("NOT = { tag = USA tag = CHI}\n") == [(1, 2)]
+
+
+def test_unparseable_child_stops_the_count():
+    assert _not("NOT = { garbage }\n") == []
+
+
+def test_unterminated_not_block_is_skipped():
+    assert _not("NOT = { tag = USA\n") == []
+
+
+def test_quoted_child_value_counts_as_one_child():
+    assert _count_children(' name = "alpha" other = yes') == 2
+
+
+def test_unterminated_quoted_value_stops_the_count():
+    assert _count_children(' name = "alpha other = yes') == 1
+
+
+def test_unterminated_child_block_stops_the_count():
+    assert _count_children(" a = { c = 1") == 1
+
+
+def test_missing_child_value_stops_the_count():
+    assert _count_children(" tag =") == 1
+
+
+# --- direct child iteration ------------------------------------------------
+
+
+def test_direct_assignments_walk_to_the_body_end():
+    assert list(_iter_direct_assignments(" a = yes")) == [("a", "yes", False)]
+
+
+def test_direct_assignments_stop_on_an_unparseable_child():
+    assert list(_iter_direct_assignments(" garbage")) == []
+
+
+def test_direct_assignments_stop_on_an_unterminated_block():
+    assert list(_iter_direct_assignments(" a = { b = 1")) == []
+
+
+def test_direct_assignments_yield_quoted_values_verbatim():
+    assert list(_iter_direct_assignments(' a = "x y" b = yes')) == [
+        ("a", '"x y"', False),
+        ("b", "yes", False),
+    ]
+
+
+def test_direct_assignments_stop_on_an_unterminated_quote():
+    assert list(_iter_direct_assignments(' a = "x')) == []
+
+
+def test_direct_assignments_stop_on_a_missing_value():
+    assert list(_iter_direct_assignments(" a =")) == []
+
+
+# --- scope merging ---------------------------------------------------------
+
+
+def test_relation_scope_blocks_merge():
+    assert _merge_lines("owner = { a = yes }\nowner = { b = yes }\n") == [2]
+
+
+def test_final_block_without_a_trailing_newline_still_merges():
+    assert _merge_lines("USA = { a = yes }\nUSA = { b = yes }") == [2]
+
+
+def test_unterminated_block_stops_the_merge_walk():
+    assert _merge_lines("USA = { a = yes }\nUSA = { b = yes\n") == []
+
+
+# --- composite pass and validator wiring -----------------------------------
+
+
+def test_composite_runs_only_the_not_pass_outside_the_effect_dirs():
+    text = "ai_strategy = {\n  allowed = { NOT = { tag = USA tag = GER } }\n}\n"
+    findings = _scan_composite(text, "common/ai_strategy/test.txt")
+    assert [line for _message, line in findings] == [2]
+    assert "NOT with 2 children" in findings[0][0]
+
+
+def test_composite_skips_a_path_outside_both_pattern_sets():
+    text = "USA = { a = yes }\nUSA = { b = yes }\nNOT = { tag = USA tag = GER }\n"
+    assert _scan_composite(text, "history/countries/USA.txt") == []
+
+
+def test_composite_reports_every_detector():
+    text = (
+        "USA = { exists = yes }\n"
+        "random_list = { 30 = { add_stability = 0.1 } 70 = { } }\n"
+        'create_unit = { division = "x" owner = ALG }\n'
+        'create_unit = { division = "x" owner = ALG }\n'
+        "visible = { }\n"
+        + _all_five("FROM", "{t} = {{ has_government = {i} }}")
+        + "random_state = { limit = { is_controlled_by = ROOT } }\n"
+    )
+    messages = [m for m, _line in _scan_composite(text, "common/national_focus/t.txt")]
+
+    assert any("use `country_exists = USA`" in m for m in messages)
+    assert any("random = { chance = 30" in m for m in messages)
+    assert any("identical adjacent `create_unit`" in m for m in messages)
+    assert any("empty `visible = { }` block" in m for m in messages)
+    assert any("use `has_government = FROM`" in m for m in messages)
+    assert any("use `random_controlled_state`" in m for m in messages)
+
+
+def test_composite_runs_both_passes_inside_the_effect_dirs():
+    text = "USA = { a = yes }\nUSA = { b = yes }\nNOT = { tag = USA tag = GER }\n"
+    findings = _scan_composite(text, "common/national_focus/test.txt")
+    messages = [message for message, _line in findings]
+    assert any("can be merged into one" in m for m in messages)
+    assert any("NOT with 2 children" in m for m in messages)
+
+
+def test_validator_reports_findings_with_file_and_line(tmp_path, write_path):
+    write_path(
+        tmp_path,
+        "common/national_focus/test_tree.txt",
+        "focus_tree = {\n"
+        "\tid = test_tree\n"
+        "\tfocus = {\n"
+        "\t\tid = TST_focus\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tUSA = { add_stability = 0.01 }\n"
+        "\t\t\tUSA = { add_war_support = 0.01 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+    write_path(
+        tmp_path,
+        "common/ai_strategy/test_ai.txt",
+        "ai_strategy = {\n\tallowed = { NOT = { tag = USA tag = GER } }\n}\n",
+    )
+
+    validator = vs.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    found = {(issue.file, issue.line) for issue in validator._issues}
+    assert found == {
+        ("common/national_focus/test_tree.txt", 7),
+        ("common/ai_strategy/test_ai.txt", 2),
+    }
+    assert {issue.severity for issue in validator._issues} == {"warning"}
+    assert {issue.category for issue in validator._issues} == {"simplification"}
+
+
+def test_clean_tree_reports_nothing(tmp_path, write_path):
+    write_path(
+        tmp_path,
+        "common/national_focus/clean.txt",
+        "focus_tree = {\n\tid = clean\n}\n",
+    )
+
+    validator = vs.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    assert validator._issues == []
+
+
+def test_cli_entry_point_exits_zero(tmp_path, monkeypatch, write_path):
+    write_path(
+        tmp_path,
+        "common/national_focus/clean.txt",
+        "focus_tree = {\n\tid = clean\n}\n",
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [vs.__file__, "--path", str(tmp_path), "--workers", "1", "--no-color"],
+    )
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(vs.__file__, run_name="__main__")
+
+    assert exit_info.value.code == 0

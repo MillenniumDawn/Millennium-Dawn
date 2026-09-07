@@ -8,6 +8,7 @@ from report_lib.comment import (
     find_existing_comment,
     post_comment,
 )
+from shared.suite import http_error as _http_error
 
 
 def _comment(body, bot=True, cid=1):
@@ -154,6 +155,121 @@ def test_clear_reports_delete_failure(monkeypatch):
 
     assert not success
     assert message == "delete comment: boom"
+
+
+def test_finds_the_report_on_a_later_page(monkeypatch):
+    pages = {
+        1: [_comment("chatter", cid=n) for n in range(C._PAGE_SIZE)],
+        2: [_comment(f"{REPORT_MARKER}\nreport", cid=999)],
+    }
+    requested = []
+
+    def fake_get(url, _headers):
+        requested.append(url)
+        return pages[int(url.rsplit("page=", 1)[1])]
+
+    monkeypatch.setattr(C, "_get", fake_get)
+    patched = []
+    monkeypatch.setattr(
+        C, "_patch", lambda url, payload, headers: patched.append(url) or {}
+    )
+
+    success, message = post_comment("owner", "repo", "7", "body", "token")
+
+    assert success
+    assert message == "updated comment #999"
+    assert [url.rsplit("&", 1)[1] for url in requested] == ["page=1", "page=2"]
+
+
+def test_post_reports_a_listing_http_error(monkeypatch):
+    monkeypatch.setattr(
+        C, "_get", lambda *a, **k: (_ for _ in ()).throw(_http_error(403))
+    )
+
+    success, message = post_comment("owner", "repo", "7", "body", "token")
+
+    assert not success
+    assert message == "list comments: HTTP 403 — denied"
+
+
+def test_post_reports_a_listing_transport_error(monkeypatch):
+    monkeypatch.setattr(
+        C, "_get", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("no route"))
+    )
+
+    assert post_comment("owner", "repo", "7", "body", "token") == (
+        False,
+        "list comments: no route",
+    )
+
+
+def test_post_reports_a_create_http_error(monkeypatch):
+    monkeypatch.setattr(C, "_get", lambda *a, **k: [])
+    monkeypatch.setattr(
+        C, "_post", lambda *a, **k: (_ for _ in ()).throw(_http_error(500, b"boom"))
+    )
+
+    success, message = post_comment("owner", "repo", "7", "body", "token")
+
+    assert not success
+    assert message == "post comment: HTTP 500 — boom"
+
+
+def test_post_reports_an_update_transport_error(monkeypatch):
+    monkeypatch.setattr(
+        C, "_get", lambda *a, **k: [_comment(f"{REPORT_MARKER}\nold", cid=42)]
+    )
+    monkeypatch.setattr(
+        C, "_patch", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("timeout"))
+    )
+
+    assert post_comment("owner", "repo", "7", "body", "token") == (
+        False,
+        "post comment: timeout",
+    )
+
+
+def test_clear_reports_a_listing_error(monkeypatch):
+    monkeypatch.setattr(
+        C, "_get", lambda *a, **k: (_ for _ in ()).throw(_http_error(401, b"bad token"))
+    )
+    monkeypatch.setattr(
+        C,
+        "_delete",
+        lambda *a: (_ for _ in ()).throw(AssertionError("must not delete")),
+    )
+
+    success, message = clear_comment("owner", "repo", "7", "token")
+
+    assert not success
+    assert message == "list comments: HTTP 401 — bad token"
+
+
+@pytest.mark.parametrize(
+    ("code", "body", "message"),
+    [
+        (404, b"gone", "delete comment: HTTP 404 — gone"),
+        (502, None, "delete comment: HTTP 502 — <no body>"),
+    ],
+)
+def test_clear_reports_a_delete_http_error(monkeypatch, code, body, message):
+    monkeypatch.setattr(
+        C, "_get", lambda *a, **k: [_comment(f"{REPORT_MARKER}\nold", cid=42)]
+    )
+    monkeypatch.setattr(
+        C, "_delete", lambda *a: (_ for _ in ()).throw(_http_error(code, body))
+    )
+
+    assert clear_comment("owner", "repo", "7", "token") == (False, message)
+
+
+def test_decode_json_rejects_a_non_json_body():
+    class Response:
+        def read(self):
+            return b"<html>502 Bad Gateway</html>"
+
+    with pytest.raises(ValueError, match="invalid JSON response"):
+        C._decode_json(Response())
 
 
 @pytest.mark.parametrize(

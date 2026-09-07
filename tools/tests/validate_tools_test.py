@@ -64,7 +64,7 @@ def test_index_mode_controls_executable_check(tmp_path, monkeypatch):
         return V.subprocess.CompletedProcess(
             args[0],
             0,
-            "100755 hash 0\ttools/executable.py\n" "100644 hash 0\ttools/regular.py\n",
+            "100755 hash 0\ttools/executable.py\n100644 hash 0\ttools/regular.py\n",
             "",
         )
 
@@ -177,5 +177,84 @@ def test_missing_runtime_dependency_reported(tmp_path):
 
 def test_no_pyproject_means_no_dependency_findings(tmp_path):
     _write_script(tmp_path, "good_script.py", _HEALTHY)
+    validator = ToolsValidator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    assert validator._check_dependencies() == []
+
+
+def test_tools_scan_failure_is_warned(tmp_path, monkeypatch):
+    validator = ToolsValidator(mod_path=str(tmp_path), use_colors=False, workers=1)
+
+    def boom(_self, _pattern):
+        raise NotADirectoryError("not a directory")
+
+    monkeypatch.setattr(V.Path, "rglob", boom)
+    assert validator._find_scripts() == []
+    assert "tools directory not found" in "\n".join(validator.output_lines)
+
+
+def test_unreadable_script_is_reported(tmp_path):
+    locked = tmp_path / "tools" / "locked.py"
+    locked.parent.mkdir(parents=True, exist_ok=True)
+    locked.mkdir()
+    validator = _run(tmp_path)
+    assert validator.errors_found == 1
+    assert "locked.py" in validator._issues[0].message
+
+
+def test_null_byte_in_source_is_a_parse_error(tmp_path):
+    path = tmp_path / "tools" / "nulls.py"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"#!/usr/bin/env python3\nx = 1\x00\n")
+    path.chmod(0o755)
+    validator = _run(tmp_path)
+    assert validator.errors_found == 1
+    assert "nulls.py" in validator._issues[0].message
+
+
+def test_relative_import_does_not_crash_import_collection(tmp_path):
+    _write_script(
+        tmp_path,
+        "rel.py",
+        "#!/usr/bin/env python3\nfrom . import helper\n" + _HEALTHY,
+    )
+    validator = _run(tmp_path)
+    assert validator.errors_found == 0
+
+
+def test_from_import_is_collected(tmp_path):
+    _write_script(
+        tmp_path,
+        "fromimp.py",
+        "#!/usr/bin/env python3\nfrom pathlib import Path\n" + _HEALTHY,
+    )
+    validator = _run(tmp_path)
+    assert validator.errors_found == 0
+
+
+def test_non_syntax_parse_error_is_reported(tmp_path, monkeypatch):
+    _write_script(tmp_path, "ok.py", _HEALTHY)
+
+    def boom(_src, filename=None):
+        raise TypeError("bad ast")
+
+    monkeypatch.setattr(V.ast, "parse", boom)
+    validator = _run(tmp_path)
+    assert validator.errors_found == 1
+    assert "bad ast" in validator._issues[0].message
+
+
+def test_unreadable_pyproject_is_reported(tmp_path):
+    _write_script(tmp_path, "good_script.py", _HEALTHY)
+    (tmp_path / "pyproject.toml").mkdir()
+    validator = ToolsValidator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    missing = validator._check_dependencies()
+    assert missing and missing[0].startswith("Error reading pyproject.toml")
+
+
+def test_pyproject_without_runtime_group_has_no_dependency_findings(tmp_path):
+    _write_script(tmp_path, "good_script.py", _HEALTHY)
+    (tmp_path / "pyproject.toml").write_text(
+        '[dependency-groups]\ndev = ["pytest"]\n', encoding="utf-8"
+    )
     validator = ToolsValidator(mod_path=str(tmp_path), use_colors=False, workers=1)
     assert validator._check_dependencies() == []

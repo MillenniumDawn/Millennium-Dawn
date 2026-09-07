@@ -11,11 +11,11 @@ Scripted diplomatic actions live in `common/scripted_diplomatic_actions/`. All `
 
 In all blocks within a scripted diplomatic action:
 
-| Keyword | Scope                                                                                                                           |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `ROOT`  | The **sender** (country initiating the action)                                                                                  |
-| `THIS`  | The **target** (country receiving the action)                                                                                   |
-| `PREV`  | Context-dependent — in `visible`/`selectable`, `PREV` inside a `ROOT = { }` block refers to `THIS` (the target), and vice versa |
+| Keyword | Scope                                                                           |
+| ------- | ------------------------------------------------------------------------------- |
+| `ROOT`  | The **sender** (country initiating the action)                                  |
+| `THIS`  | The **target** (country receiving the action)                                   |
+| `PREV`  | In `visible`/`selectable`, `PREV` inside `ROOT = { }` is `THIS`, and vice versa |
 
 **Important:** `selectable` evaluates in the **target's** scope by default. Bare conditions (no explicit `ROOT = { }`/`THIS = { }`) check `THIS`. Always be explicit about scope.
 
@@ -225,17 +225,20 @@ log = "[GetDateText]: [Root.GetName]: diplomatic action {block_name} {action_nam
 
 ## Existing Actions
 
-| Action                             | Requires Acceptance | Cooldown                 | Notes                                 |
-| ---------------------------------- | ------------------- | ------------------------ | ------------------------------------- |
-| `recall_volunteers`                | No                  | None                     | Player-only (`is_ai = no`)            |
-| `propose_improved_trade_agreement` | Yes                 | 180d on reject           | Reject flag on both ROOT and THIS     |
-| `cancel_trade_agreement`           | No                  | None                     | Sets 90d `has_recently_canceled` flag |
-| `diplo_action_assume_debt`         | Yes                 | 90d AI cooldown          | AI-only cooldown flag                 |
-| `propose_mutual_investment_treaty` | Yes                 | Similar to trade         | —                                     |
-| `overlord_subsidies`               | Yes                 | 90d on reject            | Subject/overlord only                 |
-| `negotiate_release`                | Yes                 | None                     | Subject release                       |
-| `enforce_peace_option`             | Yes                 | 90d                      | Cooldown in visible + reject          |
-| `propose_energy_load_sharing`      | Yes                 | 90d accept / 270d reject | Neighbor + energy deficit             |
-| `request_energy_load_sharing`      | Yes                 | 270d on reject           | Reverse direction                     |
-| `purchase_reactor_grade_material`  | Yes                 | —                        | Nuclear material trade                |
-| `close_embassy` / `reopen_embassy` | No                  | —                        | Embassy management                    |
+All require acceptance except `recall_volunteers`, `cancel_trade_agreement`, and
+`close_embassy` / `reopen_embassy` (no acceptance needed).
+
+| Action                             | Cooldown                 | Notes                        |
+| ---------------------------------- | ------------------------ | ---------------------------- |
+| `recall_volunteers`                | None                     | Player-only (`is_ai = no`)   |
+| `propose_improved_trade_agreement` | 180d on reject           | Reject flag on ROOT and THIS |
+| `cancel_trade_agreement`           | None (sets 90d flag)     | `has_recently_canceled`      |
+| `diplo_action_assume_debt`         | 90d AI cooldown          | AI-only cooldown flag        |
+| `propose_mutual_investment_treaty` | Similar to trade         | —                            |
+| `overlord_subsidies`               | 90d on reject            | Subject/overlord only        |
+| `negotiate_release`                | None                     | Subject release              |
+| `enforce_peace_option`             | 90d                      | Cooldown in visible + reject |
+| `propose_energy_load_sharing`      | 90d accept / 270d reject | Neighbor + energy deficit    |
+| `request_energy_load_sharing`      | 270d on reject           | Reverse direction            |
+| `purchase_reactor_grade_material`  | —                        | Nuclear material trade       |
+| `close_embassy` / `reopen_embassy` | —                        | Embassy management           |

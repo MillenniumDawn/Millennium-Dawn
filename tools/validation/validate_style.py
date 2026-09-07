@@ -31,6 +31,7 @@ _SCAN_PATTERNS = [
     "common/**/*.txt",
     "events/**/*.txt",
     "history/**/*.txt",
+    "music/**/*.txt",
 ]
 
 _RE_COMMENT_QUOTE = re.compile(r'#.*["]+', re.M | re.I)

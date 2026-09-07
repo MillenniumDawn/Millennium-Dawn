@@ -27,7 +27,7 @@ BRA_idea_higher_minimum_wage_1 = {
 - Use `original_tag` not `tag` in `allowed` blocks
 - Drop the `allowed` block entirely in a category with no slot (`country`, `hidden_ideas`). Nothing picks from those, so `add_idea` is the only way in and it never consults `allowed` — the gate is dead either way. A category that has a slot draws from a pool `allowed` filters, so keep it there. Flagged by `validate_ideas.py` (`allowed-in-slotless-category`); `tools/standardization/strip_idea_allowed_gates.py` removes them in bulk
 - Drop the `available` block entirely in a category with no slot (`country`, `hidden_ideas`). Same reason: nothing picks from those, so `available` is never consulted. Use `cancel` if the idea should remove itself. Flagged by `validate_ideas.py` (`available-in-slotless-category`); the same stripper removes them in bulk
-- Remove `allowed = { always = no }` in the remaining categories (default, hurts performance)
+- Keep `allowed = { always = no }` on slotted ideas that must not appear in the picker (religion, other laws). `add_idea` still applies them. Do not use it in slotless categories (`country`, `hidden_ideas`); that gate is dead and the validator flags it
 - Remove `cancel = { always = no }` (checked hourly, never true)
 - Remove empty `on_add = { log = "" }` unless actually doing something
 - Tiered ideas use suffix numbering: `TAG_idea_name_1`, `TAG_idea_name_2`, with shared `name = TAG_idea_name` for display

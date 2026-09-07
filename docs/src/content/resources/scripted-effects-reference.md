@@ -334,7 +334,7 @@ Where `N` is the slot index from the slots table. Only set slots for parties tha
 If the party holds government or is a coalition partner at game start, also add:
 
 ```hoiscript
-add_to_array = { ruling_party = N }          # if this party governs alone or leads the coalition
+set_variable = { ruling_party = N }          # if this party governs alone or leads the coalition
 add_to_array = { gov_coalition_array = N }   # if this party is a junior coalition partner
 ```
 

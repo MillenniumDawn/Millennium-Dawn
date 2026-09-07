@@ -9,7 +9,7 @@ import re
 import sys
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, cast
+from typing import AbstractSet, Dict, List, Set, Tuple, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -19,13 +19,22 @@ import disk_cache
 # or the orphaned quote desyncs extract_block_from_text's in-string tracking
 # and container spans are silently lost.
 from shared_utils import (
+    ai_only_decision_categories,
     blank_quoted_strings,
     compute_line_offsets,
+    direct_child_block,
     extract_block_from_text,
+    has_flat_is_ai,
+    is_ai_only_block,
+    iter_direct_child_blocks,
     line_for_offset,
     read_text_under,
     strip_comments,
 )
+
+# Focus block/reward walking is owned by the focus-tree validator — reuse it
+# rather than growing a second focus parser here.
+from validate_focus_tree import _iter_focus_blocks_with_id, _iter_reward_blocks
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
@@ -152,6 +161,126 @@ def process_file_for_all_flags(
     )
 
 
+def _scan_focus_flag_sites(text: str, rel: str, in_focus_dir: bool):
+    """Collect every country-flag write/read in *text*, with focus context.
+
+    Returns (set_sites, read_sites, cleared, long_form_reads).
+
+    A set site is (rel, line, focus_id, disqualifier). ``disqualifier`` is None
+    only for a short-form set sitting unconditionally in the completion_reward of
+    a non-bypassable, non-joint focus — the one shape has_completed_focus can
+    replace.
+    """
+    offsets = compute_line_offsets(text)
+
+    def line_at(pos: int) -> int:
+        return line_for_offset(offsets, pos)
+
+    cleared: Set[str] = set()
+    long_form_reads: Set[str] = set()
+    set_sites: Dict[str, List[Tuple[str, int, str | None, str | None]]] = {}
+    read_sites: Dict[str, List[Tuple[str, int, str | None]]] = {}
+
+    for m in _CLR_CFLAG_RE.finditer(text):
+        cleared.add(m.group(1))
+    for m in _MODIFY_CFLAG_RE.finditer(text):
+        inner = _CFLAG_INNER_FLAG_RE.search(m.group(1))
+        if inner:
+            # A modify is a write, not a read: it keeps the flag alive
+            # independently of focus completion.
+            cleared.add(inner.group(1))
+    for m in _HAS_CFLAG_LONG_RE.finditer(text):
+        inner = _CFLAG_INNER_FLAG_RE.search(m.group(1))
+        if inner:
+            long_form_reads.add(inner.group(1))
+    for m in _SET_CFLAG_LONG_RE.finditer(text):
+        inner = _CFLAG_INNER_FLAG_RE.search(m.group(1))
+        if inner:
+            # Timed/valued sets are counters, not completion latches.
+            long_form_reads.add(inner.group(1))
+
+    # One merged walk over brace events and reads: for each read, the nearest
+    # enclosing scope switch is the innermost such token still on the stack.
+    reads = [(m.start(), m.group(1)) for m in _HAS_CFLAG_SHORT_RE.finditer(text)]
+    if reads:
+        stack: List[str] = []
+        ri = 0
+        for pos, kind, token in sorted(_scope_events(text)):
+            while ri < len(reads) and reads[ri][0] < pos:
+                rpos, flag = reads[ri]
+                scope = next((t for t in reversed(stack) if _is_scope_switch(t)), None)
+                read_sites.setdefault(flag, []).append((rel, line_at(rpos), scope))
+                ri += 1
+            if kind == 0:
+                stack.append(cast(str, token))
+            elif stack:
+                stack.pop()
+        for rpos, flag in reads[ri:]:
+            read_sites.setdefault(flag, []).append((rel, line_at(rpos), None))
+
+    # Focus context only matters for the set side, and only inside the focus dir.
+    reward_spans: List[Tuple[int, int, str | None, str | None]] = []
+    if in_focus_dir:
+        for focus_id, body, fstart, fend in _iter_focus_blocks_with_id(text):
+            if focus_id is None:
+                continue
+            focus_dq = None
+            if text[fstart:].startswith("joint_focus"):
+                focus_dq = "joint"
+            elif _BYPASS_BLOCK_RE.search(body):
+                # A bypassed focus counts as completed but never runs its reward.
+                focus_dq = "bypass"
+            for rbody, rstart, rend in _iter_reward_blocks(text, fstart, fend):
+                dq = focus_dq
+                if dq is None and _JOINT_REWARD_RE.match(text, rstart):
+                    dq = "joint"
+                reward_spans.append((rstart, rend, focus_id, dq))
+
+    for m in _SET_CFLAG_SHORT_RE.finditer(text):
+        flag = m.group(1)
+        focus_id = None
+        dq = "not-in-focus"
+        for rstart, rend, fid, focus_dq in reward_spans:
+            if rstart <= m.start() < rend:
+                focus_id = fid
+                dq = focus_dq
+                if dq is None:
+                    path = _block_path_at(text, rstart, m.start())
+                    if any(p in _CONDITIONAL_BLOCK_NAMES for p in path):
+                        dq = "conditional"
+                    elif any(_is_scope_switch(p) for p in path):
+                        dq = "foreign-scope"
+                break
+        set_sites.setdefault(flag, []).append((rel, line_at(m.start()), focus_id, dq))
+
+    # A tree reload without keep_completed wipes completion while a flag would
+    # survive, so findings in such a file carry a caution rather than a verdict.
+    tree_reload = set()
+    for m in _LOAD_FOCUS_TREE_RE.finditer(text):
+        if not (m.group(1) and _KEEP_COMPLETED_RE.search(m.group(1))):
+            tree_reload.add(rel)
+            break
+
+    return set_sites, read_sites, cleared, long_form_reads, tree_reload
+
+
+def process_file_for_focus_flag_sites(args: Tuple[str, str]):
+    """Pool worker for the redundant focus-flag check. See _scan_focus_flag_sites."""
+    filename, mod_path = args
+    text = _read_script_text(filename)
+    if text is None or "country_flag" not in text:
+        return {}, {}, set(), set(), set()
+    rel = os.path.relpath(filename, mod_path)
+    in_focus_dir = _FOCUS_DIR_MARKER in rel + os.sep
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "variables.redundant_focus_flag",
+        filename,
+        text,
+        lambda: _scan_focus_flag_sites(text, rel, in_focus_dir),
+    )
+
+
 def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List[str]]:
     """Combined pool worker: check both days-no-value and long-form flag calls in one file.
 
@@ -269,6 +398,8 @@ _TOOLTIP_WRAPPER_TOKENS = frozenset(
 # requirement line a wrapper would. `\b` does not match custom_trigger_tooltip.
 _INLINE_TOOLTIP_RE = re.compile(r"\btooltip\s*=")
 _PLAYER_FACING_BLOCK = "available"
+# Column-0 blocks in a decisions file are the decision categories.
+_CATEGORY_OPEN_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
 # Both `available` scans cover the same player-facing object types.
 _PLAYER_FACING_GLOBS = [
     "common/decisions/**/*.txt",
@@ -314,6 +445,28 @@ _TOOLTIP_EFFECT_BLOCKS = (
 _RE_TOOLTIP_EFFECT_BLOCK = re.compile(
     r"\b(?:" + "|".join(_TOOLTIP_EFFECT_BLOCKS) + r")\s*=\s*\{"
 )
+
+# --- redundant focus-set country flags -------------------------------------
+# A flag whose only writer is one focus completion_reward and whose only readers
+# are has_country_flag duplicates state the engine already tracks, so
+# has_completed_focus replaces it. See .claude/docs/performance-patterns.md.
+_SET_CFLAG_SHORT_RE = re.compile(r"\bset_country_flag\s*=\s*([^\s{}=]+)")
+_SET_CFLAG_LONG_RE = re.compile(r"\bset_country_flag\s*=\s*\{([^{}]*)\}")
+_HAS_CFLAG_SHORT_RE = re.compile(r"\bhas_country_flag\s*=\s*([^\s{}=]+)")
+_HAS_CFLAG_LONG_RE = re.compile(r"\bhas_country_flag\s*=\s*\{([^{}]*)\}")
+_CLR_CFLAG_RE = re.compile(r"\bclr_country_flag\s*=\s*([^\s{}=]+)")
+_MODIFY_CFLAG_RE = re.compile(r"\bmodify_country_flag\s*=\s*\{([^{}]*)\}")
+_CFLAG_INNER_FLAG_RE = re.compile(r"\bflag\s*=\s*([^\s{}=]+)")
+_BYPASS_BLOCK_RE = re.compile(r"\bbypass\s*=\s*\{")
+_JOINT_REWARD_RE = re.compile(r"\bcompletion_reward_joint_(?:originator|member)\b")
+_LOAD_FOCUS_TREE_RE = re.compile(r"\bload_focus_tree\s*=\s*(?:\{([^{}]*)\}|\S+)")
+_KEEP_COMPLETED_RE = re.compile(r"\bkeep_completed\s*=\s*yes\b")
+# Blocks that make an enclosed effect conditional. A flag set under one of these
+# is not implied by focus completion, so has_completed_focus is not equivalent.
+_CONDITIONAL_BLOCK_NAMES = frozenset(
+    {"if", "else_if", "else", "limit", "random", "random_list", "modifier", "trigger"}
+)
+_FOCUS_DIR_MARKER = os.path.join("common", "national_focus") + os.sep
 
 # Dynamic modifier definitions: `<modifier_key> = <backing_variable>` at depth 1
 # of a `<modifier_name> = { ... }` block.
@@ -366,6 +519,66 @@ def _inside(index: Tuple[List[int], List[int]], pos: int) -> bool:
     starts, max_ends = index
     i = bisect.bisect_right(starts, pos) - 1
     return i >= 0 and max_ends[i] > pos
+
+
+def _block_path_at(text: str, start: int, pos: int) -> List[str]:
+    """Names of the blocks enclosing ``pos``, outermost first, walking from ``start``.
+
+    ``start`` is the offset of a known container's opener (a completion_reward),
+    so the walk stays inside one focus instead of re-parsing the whole file.
+    A block whose opener has no name (a bare `{`) contributes an empty string,
+    which no caller matches against.
+    """
+    stack: List[str] = []
+    i = text.find("{", start)
+    if i < 0 or i > pos:
+        return stack
+    i += 1
+    while i < pos:
+        ch = text[i]
+        if ch == "{":
+            head = text[:i].rstrip()
+            if head.endswith("="):
+                # Several openers can match in the lookback window; keep the one
+                # that actually opens on this brace.
+                name = ""
+                for m in _SCOPE_OPEN_RE.finditer(text, max(0, i - 128), i + 1):
+                    if m.end() - 1 == i:
+                        name = m.group(1)
+                stack.append(name)
+            else:
+                stack.append("")
+        elif ch == "}":
+            if stack:
+                stack.pop()
+        i += 1
+    return stack
+
+
+# Openers _classify_scope_token would call a scope but that do not switch one:
+# three-letter logic keywords look like country tags, and the *_event effects
+# read as "country" without moving the scope their contents run in.
+_NON_SCOPE_OPENERS = frozenset(
+    {
+        "NOT",
+        "AND",
+        "OR",
+        "ALL",
+        "ANY",
+        "country_event",
+        "news_event",
+        "state_event",
+        "unit_leader_event",
+        "operative_leader_event",
+    }
+)
+
+
+def _is_scope_switch(token: str) -> bool:
+    """True when a block opener changes scope (a tag, an iterator, ROOT/FROM/…)."""
+    if not token or token in _NON_SCOPE_OPENERS:
+        return False
+    return _classify_scope_token(token, "") != "INHERIT"
 
 
 def _normalise_variable(name: str) -> str:
@@ -462,15 +675,90 @@ def process_file_for_clamp_conflicts(args) -> List[str]:
     return issues
 
 
+def _is_decision_source(rel: str) -> bool:
+    """True for a decisions file, excluding the category definitions beside it."""
+    parts = rel.replace("\\", "/").split("/")
+    return parts[:2] == ["common", "decisions"] and "categories" not in parts
+
+
+def _ai_only_spans(
+    cleaned: str, ai_categories: AbstractSet[str]
+) -> List[Tuple[int, int]]:
+    """Offset spans of decisions no human player ever sees.
+
+    Depth-0 blocks in a decisions file are categories and depth-1 the decisions
+    themselves. A decision is exempt when its category is AI-only or when its
+    own ``visible``, ``available`` or ``allowed`` block carries an unconditional
+    ``is_ai = yes``.
+    """
+    if not ai_categories and "is_ai" not in cleaned:
+        return []
+    spans: List[Tuple[int, int]] = []
+    for category in _CATEGORY_OPEN_RE.finditer(cleaned):
+        open_idx = category.end() - 1
+        close_idx = _matching_brace(cleaned, open_idx)
+        if category.group(1) in ai_categories:
+            spans.append((category.start(), close_idx))
+            continue
+        offset = open_idx + 1
+        inner = cleaned[offset:close_idx]
+        for match, dec_open, dec_close in iter_direct_child_blocks(
+            inner, _SCOPE_OPEN_RE
+        ):
+            body = inner[dec_open : dec_close + 1]
+            if is_ai_only_block(body):
+                spans.append((offset + match.start(), offset + dec_close))
+    return spans
+
+
+_IF_BRANCH_OPEN_RE = re.compile(r"\b(?:if|else_if)\s*=\s*\{")
+
+
+def _ai_only_branch_spans(cleaned: str) -> List[Tuple[int, int]]:
+    """Offset spans of `if` / `else_if` branches only the AI ever evaluates.
+
+    `if = { limit = { is_ai = yes } ... }` is the AI half of an ai/human split:
+    the matching `else` carries what a human reads, so nothing inside the AI
+    half ever renders a requirement line. Unlike ``_ai_only_spans`` this is not
+    restricted to decisions - the split is a focus-tree idiom too.
+    """
+    if "is_ai" not in cleaned:
+        return []
+    spans: List[Tuple[int, int]] = []
+    for m in _IF_BRANCH_OPEN_RE.finditer(cleaned):
+        # Matches arrive in file order, so once no is_ai remains ahead of this
+        # opener no later branch can qualify either - stop before paying for
+        # a brace walk per `if` across the rest of a large focus file.
+        if cleaned.find("is_ai", m.end()) == -1:
+            break
+        open_idx = m.end() - 1
+        close_idx = _matching_brace(cleaned, open_idx)
+        inner = cleaned[open_idx + 1 : close_idx]
+        if has_flat_is_ai(direct_child_block(inner, "limit")):
+            spans.append((m.start(), close_idx))
+    return spans
+
+
+def _available_exempt_spans(
+    cleaned: str, rel: str, ai_categories: AbstractSet[str]
+) -> Tuple[List[int], List[int]]:
+    """Containment index of every region no human player reads a requirement in."""
+    object_level = (
+        _ai_only_spans(cleaned, ai_categories) if _is_decision_source(rel) else []
+    )
+    return _span_index(object_level + _ai_only_branch_spans(cleaned))
+
+
 def _scan_available_file(
-    args: Tuple[str, str],
+    args: Tuple[str, str, AbstractSet[str]],
 ) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str]]]:
     """Extract both available-block checks from one comment-stripped source."""
-    filename, mod_path = args
+    filename, mod_path, ai_categories = args
     cleaned = _read_script_text(filename)
     if cleaned is None:
         return [], []
     rel = os.path.relpath(filename, mod_path)
+    exempt = _available_exempt_spans(cleaned, rel, ai_categories)
     events: List[Tuple[int, int, object]] = _scope_events(cleaned)
     for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
         open_idx = m.end() - 1
@@ -491,6 +779,8 @@ def _scan_available_file(
         if kind == 1:
             if stack:
                 stack.pop()
+            continue
+        if _inside(exempt, pos):
             continue
         if kind == 2:
             for token in reversed(stack):
@@ -522,13 +812,13 @@ def _scan_available_file(
 
 
 def process_file_for_untooltipped_available_checks(
-    args: Tuple[str, str],
+    args: Tuple[str, str, AbstractSet[str]],
 ) -> List[Tuple[str, str, int]]:
     return _scan_available_file(args)[0]
 
 
 def process_file_for_available_flags(
-    args: Tuple[str, str],
+    args: Tuple[str, str, AbstractSet[str]],
 ) -> List[Tuple[str, str, int, str]]:
     return _scan_available_file(args)[1]
 
@@ -574,7 +864,7 @@ def _scripted_trigger_body_has_unwrapped_global_flag(body: str) -> bool:
 
 
 def process_file_for_untooltipped_available_scripted_trigger(
-    args: Tuple[str, str, frozenset],
+    args: Tuple[str, str, frozenset, AbstractSet[str]],
 ) -> List[Tuple[str, str, int]]:
     """Pool worker: flag bare `<name> = yes` in `available` that resolves to a
     scripted trigger whose own body checks an unwrapped global flag, with no
@@ -584,7 +874,7 @@ def process_file_for_untooltipped_available_scripted_trigger(
     depth above it counts, not just the direct parent - same machinery as
     ``process_file_for_untooltipped_available_checks``.
     """
-    filename, mod_path, flagged_names = args
+    filename, mod_path, flagged_names, ai_categories = args
     if not flagged_names:
         return []
     cleaned = _read_script_text(filename)
@@ -608,6 +898,7 @@ def process_file_for_untooltipped_available_scripted_trigger(
     events.sort(key=lambda e: (e[0], e[1]))
 
     rel = os.path.relpath(filename, mod_path)
+    exempt = _available_exempt_spans(cleaned, rel, ai_categories)
     stack: List[str] = []
     issues: List[Tuple[str, str, int]] = []
     for pos, kind, tok in events:
@@ -616,7 +907,7 @@ def process_file_for_untooltipped_available_scripted_trigger(
         elif kind == 1:
             if stack:
                 stack.pop()
-        else:
+        elif not _inside(exempt, pos):
             for token in reversed(stack):
                 if token in _TOOLTIP_WRAPPER_TOKENS:
                     break
@@ -1312,6 +1603,10 @@ class Validator(BaseValidator):
     TITLE = "VARIABLE AND EVENT TARGET VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".yml"]
 
+    def __init__(self, mod_path: str, **kwargs):
+        self.redundant_focus_flags = kwargs.pop("redundant_focus_flags", False)
+        super().__init__(mod_path, **kwargs)
+
     def _report_with_locations(
         self, results: list, ok_msg: str, fail_msg: str, category: str = "variables"
     ):
@@ -1493,6 +1788,80 @@ class Validator(BaseValidator):
             f"Unused {flag_type} flags were encountered - they are not used via 'has_{flag_type}_flag' at least once. Flags with @ are skipped.",
         )
 
+    def validate_redundant_focus_flags(self, all_txt_files):
+        """Flag country flags a `has_completed_focus` check could replace (WARNING).
+
+        Opt-in: the mod carries ~160 pre-existing cases, so this is a cleanup
+        backlog rather than a merge gate. See .claude/docs/validation-pipeline.md.
+        """
+        self._log_section("Checking for redundant focus-set country flags...")
+
+        args_list = [(f, self.mod_path) for f in all_txt_files]
+        all_results = self._pool_map(
+            process_file_for_focus_flag_sites, args_list, chunksize=30
+        )
+
+        set_sites: Dict[str, List] = {}
+        read_sites: Dict[str, List] = {}
+        cleared: Set[str] = set()
+        long_form: Set[str] = set()
+        tree_reload: Set[str] = set()
+        for f_sets, f_reads, f_cleared, f_long, f_reload in all_results:
+            for flag, sites in f_sets.items():
+                set_sites.setdefault(flag, []).extend(sites)
+            for flag, sites in f_reads.items():
+                read_sites.setdefault(flag, []).extend(sites)
+            cleared |= f_cleared
+            long_form |= f_long
+            tree_reload |= f_reload
+
+        loc_keys = self._load_localisation_keys()
+        dynamic = self._build_dynamic_flag_matchers(list(set_sites))
+
+        issues = []
+        for flag, sites in sorted(set_sites.items()):
+            if any(c in flag for c in "@[{"):
+                continue
+            if flag in cleared or flag in long_form:
+                continue
+            if len(sites) != 1:
+                continue
+            rel, line, focus_id, disqualifier = sites[0]
+            if disqualifier or not focus_id:
+                continue
+            readers = read_sites.get(flag)
+            if not readers:
+                # Zero readers is validate_unused_flags' finding, not this one.
+                continue
+            if any(p.match(flag) for p in dynamic):
+                continue
+
+            shown = sorted(readers)[:8]
+            reader_text = ", ".join(
+                f"{r}:{ln}" + (f" (in {sc} scope - keep the wrapper)" if sc else "")
+                for r, ln, sc in shown
+            )
+            if len(readers) > len(shown):
+                reader_text += f", +{len(readers) - len(shown)} more"
+            msg = (
+                f"{flag} - set only by focus {focus_id}; replace "
+                f"{len(readers)} read(s) with `has_completed_focus = {focus_id}`: "
+                f"{reader_text}"
+            )
+            if rel in tree_reload:
+                msg += "; caution: this file reloads a focus tree without keep_completed = yes"
+            if flag in loc_keys:
+                msg += "; flag has a loc key - the effect tooltip line changes"
+            issues.append((msg, rel, line))
+
+        self._report(
+            issues,
+            "✓ No redundant focus-set country flags found",
+            "Country flags set by exactly one focus completion_reward that has_completed_focus could replace:",
+            severity=Severity.WARNING,
+            category="redundant-focus-flag",
+        )
+
     def validate_math_precision(self):
         """Flag math expression operator literals with >5 decimal places (ERROR)."""
         self._log_section("Checking for math expression precision issues...")
@@ -1648,6 +2017,18 @@ class Validator(BaseValidator):
             category="clamp-range-conflict",
         )
 
+    def _get_ai_only_categories(self) -> frozenset:
+        """Decision categories gated on an unconditional `is_ai = yes`.
+
+        Every `available` check inside one is exempt from the tooltip and
+        localisation requirements: no human player ever opens the tab.
+        """
+        memo = getattr(self, "_ai_only_categories_memo", None)
+        if memo is None:
+            memo = frozenset(ai_only_decision_categories(self.mod_path))
+            self._ai_only_categories_memo = memo
+        return memo
+
     def _get_available_scan(self):
         """Return both available-block scans from one per-file worker pass."""
         memo = getattr(self, "_available_scan_memo", None)
@@ -1657,18 +2038,23 @@ class Validator(BaseValidator):
         if not files:
             self._available_scan_memo = []
             return self._available_scan_memo
+        ai_categories = self._get_ai_only_categories()
         self._available_scan_memo = self._pool_map(
             _scan_available_file,
-            [(f, self.mod_path) for f in files],
+            [(f, self.mod_path, ai_categories) for f in files],
             chunksize=30,
         )
         return self._available_scan_memo
 
     def validate_untooltipped_available_checks(self):
-        """Flag bare check_variable inside `available` blocks (WARNING).
+        """Flag bare check_variable inside `available` blocks (ERROR).
 
         `visible` is excluded: a failing visible hides the object outright, so
         there is no tooltip surface for the check to render into.
+
+        Gating rather than warning: as a warning this reported #3362's blank
+        requirement line and the PR merged anyway. AI-only decisions are already
+        exempt, so a hit here is always a requirement a human player would read.
         """
         self._log_section(
             "Checking for untooltipped check_variable in available blocks..."
@@ -1684,7 +2070,7 @@ class Validator(BaseValidator):
             issues,
             "✓ No untooltipped check_variable in available blocks",
             "check_variable in `available` with no tooltip wrapper (the player sees a blank requirement line):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="untooltipped-available-check",
         )
 
@@ -1797,7 +2183,10 @@ class Validator(BaseValidator):
             self.log("✓ No untooltipped scripted-trigger calls in available blocks")
             return
 
-        args_list = [(f, self.mod_path, flagged_names) for f in txt_files]
+        ai_categories = self._get_ai_only_categories()
+        args_list = [
+            (f, self.mod_path, flagged_names, ai_categories) for f in txt_files
+        ]
         all_results = self._pool_map(
             process_file_for_untooltipped_available_scripted_trigger,
             args_list,
@@ -2233,10 +2622,28 @@ class Validator(BaseValidator):
         self.validate_cleared_event_targets(et_cleared, et_set)
         self.validate_missing_event_targets(et_used, et_set)
         self.validate_unused_event_targets(et_set, et_used)
+
+        if self.redundant_focus_flags:
+            self.validate_redundant_focus_flags(all_txt_files)
+        else:
+            self._log_section(
+                "Skipping redundant focus-flag check (pass --redundant-focus-flags to enable)"
+            )
         self.validate_flag_syntax()
+
+
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--redundant-focus-flags",
+        action="store_true",
+        dest="redundant_focus_flags",
+        help="Flag country flags set by exactly one focus completion_reward that has_completed_focus could replace",
+    )
 
 
 if __name__ == "__main__":
     run_validator_main(
-        Validator, "Validate variables and event targets in Millennium Dawn mod"
+        Validator,
+        "Validate variables and event targets in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
     )

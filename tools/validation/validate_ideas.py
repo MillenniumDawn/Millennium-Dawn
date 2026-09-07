@@ -13,6 +13,9 @@ from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from equipment_module_slots import blank_comments
+from equipment_stats import build_equipment_stat_index, iter_type_archetype_stacks
+from shared_utils import normalize_path_separators
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
@@ -565,6 +568,7 @@ _IDEA_REF_BLOCK = re.compile(
     r"\b(?:add_ideas|remove_ideas)\s*=\s*\{([^{}]*)\}", re.IGNORECASE
 )
 _WORD_TOKEN = re.compile(r"[A-Za-z0-9_.\-]+")
+_IDEA_LITERAL_TOKEN_REF = re.compile(r"\btoken:([A-Za-z0-9_.\-]+)")
 
 # Meta-effect references build the idea name at runtime from a scope substitution,
 # e.g. `idea = tribute_idea_[ROOTTAG]` or `remove_ideas = foo_[THIS.GetTag]`. The
@@ -605,7 +609,8 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
     """Pool worker: every idea name a file references, for the unused check.
 
     Captures single (`add_ideas = X`), block (`add_ideas = { X Y }`), timed
-    (`idea = X`) and swap (`add_idea`/`remove_idea`) forms. Content-cached.
+    (`idea = X`), swap (`add_idea`/`remove_idea`) and literal `token:X`
+    forms. Content-cached.
     """
     filepath, mod_path = args
     if should_skip_file(filepath):
@@ -618,6 +623,7 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
 
     def _compute() -> List[str]:
         refs = set(_IDEA_REF_GENEROUS.findall(text))
+        refs.update(_IDEA_LITERAL_TOKEN_REF.findall(text))
         for m in _IDEA_REF_BLOCK.finditer(text):
             refs.update(_WORD_TOKEN.findall(m.group(1)))
         for prefix in _IDEA_REF_META.findall(text):
@@ -1239,11 +1245,18 @@ class Validator(BaseValidator):
             if cat in non_selectable and cat != "character"
         }
         if self.staged_only:
-            staged_set = set(self.staged_files or [])
+            staged_set = {
+                normalize_path_separators(path) for path in self.staged_files or []
+            }
             candidates = {
                 name: cat
                 for name, cat in candidates.items()
-                if any(defining_file.get(name, "").endswith(sf) for sf in staged_set)
+                if any(
+                    normalize_path_separators(defining_file.get(name, "")).endswith(
+                        staged_file
+                    )
+                    for staged_file in staged_set
+                )
             }
         if not candidates:
             self.log("  No non-selectable ideas to check.")
@@ -1303,22 +1316,57 @@ class Validator(BaseValidator):
             category="unused-idea",
         )
 
+    def validate_equipment_bonus_stack(self):
+        """Flag nested equipment_bonus keys that stack a type on its child."""
+        self._log_section("Checking equipment_bonus type/archetype stacking...")
+        idea_files = self._collect_files(["common/ideas/**/*.txt"])
+        if not idea_files:
+            self.log("  No idea files to scan")
+            return
+        index = build_equipment_stat_index(self.mod_path)
+        for filepath in idea_files:
+            try:
+                with open(filepath, encoding="utf-8") as handle:
+                    text = blank_comments(handle.read())
+            except (OSError, UnicodeDecodeError):
+                continue
+            rel = os.path.relpath(filepath, self.mod_path)
+            for offset, type_key, child, shared in iter_type_archetype_stacks(
+                text, index
+            ):
+                line = text.count("\n", 0, offset) + 1
+                self.add_error(
+                    "bonus-type-archetype-stack",
+                    f"equipment_bonus {', '.join(sorted(shared))} on {child} "
+                    f"also applies via type '{type_key}' in this block",
+                    rel,
+                    line,
+                )
+
     def run_validations(self):
         # Always parse all ideas — needed as the reference set even in staged mode
         defined_ideas, issues_by_file, ideas_by_file = self._parse_all_ideas()
         self.log(f"  Found {len(defined_ideas)} defined ideas total")
 
         if self.staged_only:
-            staged_files_set = set(self.staged_files or [])
+            staged_files_set = {
+                normalize_path_separators(path) for path in self.staged_files or []
+            }
             staged_issues = {
                 fp: issues
                 for fp, issues in issues_by_file.items()
-                if any(fp.endswith(sf) for sf in staged_files_set)
+                if any(
+                    normalize_path_separators(fp).endswith(staged_file)
+                    for staged_file in staged_files_set
+                )
             }
             staged_ideas_by_file = {
                 fp: ids
                 for fp, ids in ideas_by_file.items()
-                if any(fp.endswith(sf) for sf in staged_files_set)
+                if any(
+                    normalize_path_separators(fp).endswith(staged_file)
+                    for staged_file in staged_files_set
+                )
             }
             idea_tags_changed = any(
                 path.startswith("common/idea_tags/") and path.endswith(".txt")
@@ -1338,6 +1386,7 @@ class Validator(BaseValidator):
             ideas_for_consolidation = ideas_by_file
 
         self.validate_category_icon_frames()
+        self.validate_equipment_bonus_stack()
 
         if self.suggest_consolidation:
             if ideas_for_consolidation:

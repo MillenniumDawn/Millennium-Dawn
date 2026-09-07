@@ -63,6 +63,19 @@ def test_consecutive_newlines_both_flagged_when_nothing_follows():
     assert _orphan_lines(text) == [5, 6]
 
 
+def test_newline_before_if_carrying_only_hidden_effects_is_flagged():
+    """`if` renders its children inline, so the scan walks into the block."""
+    text = _lines(
+        "add_stability = 0.05",
+        "newline = yes",
+        "if = {",
+        "\tlimit = { has_idea = TAG_idea }",
+        "\tset_country_flag = TAG_flag",
+        "}",
+    )
+    assert _orphan_lines(text) == [5]
+
+
 def test_newline_before_only_temp_variable_math_is_flagged():
     """Bare temp-var math renders nothing without a following apply effect."""
     text = _lines(
@@ -90,6 +103,18 @@ def test_newline_last_in_if_block_is_not_flagged():
         "\tnewline = yes",
         "}",
         "add_political_power = 100",
+    )
+    assert _orphan_lines(text) == []
+
+
+def test_newline_before_if_carrying_a_visible_effect_is_not_flagged():
+    text = _lines(
+        "add_stability = 0.05",
+        "newline = yes",
+        "if = {",
+        "\tlimit = { has_idea = TAG_idea }",
+        "\tadd_political_power = 100",
+        "}",
     )
     assert _orphan_lines(text) == []
 

@@ -87,6 +87,40 @@ def test_position_x_bounds_exempt_orgs(tmp_path):
     assert v._issues[0].category == "trait-x-bounds"
 
 
+def test_percentage_org_modifier_whole_number_flagged(tmp_path):
+    v = _validator(tmp_path)
+    body = (
+        "\tinitial_trait = {\n"
+        "\t\torganization_modifier = {\n"
+        "\t\t\tmilitary_industrial_organization_size_up_requirement = -3\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert len(v._issues) == 1
+    assert v._issues[0].category == "org-modifier-out-of-range"
+    assert v._issues[0].line == 3
+
+
+def test_fractional_org_modifier_passes(tmp_path):
+    v = _validator(tmp_path)
+    body = (
+        "\torganization_modifier = {\n"
+        "\t\tmilitary_industrial_organization_size_up_requirement = -0.15\n"
+        "\t\tmilitary_industrial_organization_research_bonus = 0.10\n"
+        "\t}\n"
+    )
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert not v._issues
+
+
+def test_task_capacity_is_exempt_from_range_check(tmp_path):
+    v = _validator(tmp_path)
+    body = "\torganization_modifier = { military_industrial_organization_task_capacity = 3 }\n"
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert not v._issues
+
+
 def test_empty_on_complete_flagged(tmp_path):
     v = _validator(tmp_path)
     v._check_on_complete("\ton_complete = {\n\t}\n", "f.txt", 0)
@@ -459,6 +493,46 @@ def test_nested_policy_form_checks_each_archetype_separately(tmp_path):
     assert "AA_Equipment" in v._issues[0].message
 
 
+def test_type_and_child_sharing_a_stat_is_flagged(tmp_path):
+    equipment_dir = tmp_path / "common" / "units" / "equipment"
+    equipment_dir.mkdir(parents=True, exist_ok=True)
+    (equipment_dir / "MD_ships.txt").write_text(
+        "equipments = {\n"
+        "\thelicopter_operator = {\n"
+        "\t\tis_archetype = yes\n"
+        "\t\ttype = carrier\n"
+        "\t\tbuild_cost_ic = 28000\n"
+        "\t}\n"
+        "\tcarrier = {\n"
+        "\t\tis_archetype = yes\n"
+        "\t\ttype = carrier\n"
+        "\t\tbuild_cost_ic = 40000\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    text = (
+        "mio_policy_test = {\n"
+        "\tequipment_bonus = {\n"
+        "\t\tcarrier = {\n"
+        "\t\t\tbuild_cost_ic = -0.25\n"
+        "\t\t}\n"
+        "\t\thelicopter_operator = {\n"
+        "\t\t\tbuild_cost_ic = -0.25\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    v = _validator(tmp_path)
+    v._check_nested_equipment_bonus(
+        text, "p.txt", V.build_equipment_stat_index(str(tmp_path))
+    )
+    assert [i.category for i in v._issues] == ["bonus-type-archetype-stack"]
+    assert v._issues[0].severity == "error"
+    assert "helicopter_operator" in v._issues[0].message
+    assert "carrier" in v._issues[0].message
+
+
 def test_production_keys_are_not_equipment_stats(tmp_path):
     text = (
         "mio_policy_test = {\n"
@@ -493,6 +567,10 @@ CHI_norinco_manufacturer = {
 
 SOV_uralvagonzavod_tank_manufacturer = {
 \tallowed = { original_tag = SOV }
+}
+
+GENERIC_open_organization = {
+\tallowed = { always = yes }
 }
 """
 
@@ -637,3 +715,275 @@ def test_commented_out_reference_is_ignored(tmp_path):
         V.blank_comments(raw), "common/national_focus/05_greece.txt"
     )
     assert not v._issues
+
+
+def test_org_open_to_every_tag_is_reachable_anywhere(tmp_path):
+    v = _reference_validator(tmp_path)
+    text = _focus("GRE_test", "\t\t\tdesign_team = mio:GENERIC_open_organization\n")
+    v._check_mio_references(text, "common/national_focus/05_greece.txt")
+    assert not v._issues
+
+
+def test_reference_outside_every_focus_block_is_not_scoped(tmp_path):
+    v = _reference_validator(tmp_path)
+    text = (
+        "focus_tree = {\n"
+        "\tid = greece\n"
+        "\tmio:ENG_lockheed_martin_manufacturer = { }\n"
+        "\tfocus = {\n"
+        "\t\tid = GRE_other\n"
+        "\t}\n"
+        "}\n"
+    )
+    v._check_mio_references(text, "common/national_focus/05_greece.txt")
+    assert not v._issues
+
+
+def test_focus_without_an_id_falls_back_to_the_tags_it_names(tmp_path):
+    v = _reference_validator(tmp_path)
+    text = (
+        "focus_tree = {\n"
+        "\tfocus = {\n"
+        "\t\tavailable = { original_tag = GRE }\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tdesign_team = mio:ENG_lockheed_martin_manufacturer\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    v._check_mio_references(text, "common/national_focus/05_greece.txt")
+    assert [i.category for i in v._issues] == ["mio-reference-wrong-tag"]
+
+
+def test_focus_id_prefix_that_is_not_a_tag_is_ignored(tmp_path):
+    v = _reference_validator(tmp_path)
+    text = _focus(
+        "generic_industrial_base",
+        "\t\t\tdesign_team = mio:GRE_eas_materiel_manufacturer\n",
+        available="original_tag = GRE",
+    )
+    v._check_mio_references(text, "common/national_focus/05_greece.txt")
+    assert not v._issues
+
+
+def test_history_filename_without_a_known_tag_is_not_scoped(tmp_path):
+    v = _reference_validator(tmp_path)
+    text = "\tdesign_team = mio:ENG_lockheed_martin_manufacturer\n"
+    v._check_mio_references(text, "history/countries/ZZZ - Nowhere.txt")
+    assert not v._issues
+
+
+def test_org_index_is_built_once_and_survives_an_unreadable_file(tmp_path):
+    v = _reference_validator(tmp_path)
+    (tmp_path / V.ORG_DIR / "broken.txt").mkdir()
+
+    first = v._org_allowed_tags()
+
+    assert first["GRE_eas_materiel_manufacturer"] == frozenset({"GRE"})
+    assert v._org_allowed_tags() is first
+
+
+def test_country_tags_are_built_once_and_survive_an_unreadable_file(tmp_path):
+    v = _reference_validator(tmp_path)
+    (tmp_path / V.COUNTRY_TAG_DIR / "broken.txt").mkdir()
+
+    first = v._country_tags()
+
+    assert "GRE" in first
+    assert v._country_tags() is first
+
+
+# ---- parser and check edge cases -------------------------------------------
+
+
+def test_named_sub_blocks_walks_nested_bodies_to_the_end():
+    body = "AA_Equipment = { limit = { always = yes } max_organisation = 0.03 }"
+    assert [name for name, _start, _inner in V._named_sub_blocks(body)] == [
+        "AA_Equipment"
+    ]
+
+
+def test_allowed_check_skips_an_id_with_no_tag_prefix(tmp_path):
+    v = _validator(tmp_path)
+    v._check_allowed(
+        "norinco_manufacturer", "\tallowed = { always = yes }\n", "f.txt", 0
+    )
+    assert not v._issues
+
+
+def test_header_block_without_a_text_key_is_ignored(tmp_path):
+    v = _validator(tmp_path)
+    v._check_header_text(
+        "GRE_org", "tree_header_text = {\n\tx = 1\n}", "f.txt", 0, set()
+    )
+    assert not v._issues
+
+
+def test_trait_without_name_or_token_is_ignored(tmp_path):
+    v = _validator(tmp_path)
+    v._check_trait_localisation(
+        "GRE_org", "trait = {\n\tposition = { x = 1 }\n}", "f.txt", 0, set()
+    )
+    assert not v._issues
+
+
+def test_include_pointing_at_an_unknown_org_supplies_nothing(tmp_path):
+    body = (
+        "\tinclude = generic_missing\n"
+        "\ttrait = {\n"
+        "\t\tequipment_bonus = { max_organisation = 0.10 }\n"
+        "\t}\n"
+    )
+    v = _validator(tmp_path)
+    v._org_bodies = {"TST_org": body}
+    v._check_org_equipment_bonus(
+        "TST_org", body, "f.txt", 0, _equipment_index(tmp_path)
+    )
+    assert not v._issues
+
+
+def test_nested_bonus_on_an_unknown_archetype_reports_only_the_type(tmp_path):
+    text = (
+        "mio_policy_test = {\n"
+        "\tequipment_bonus = {\n"
+        "\t\tnot_an_archetype = {\n"
+        "\t\t\tmax_organisation = 0.03\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    v = _validator(tmp_path)
+    v._check_nested_equipment_bonus(text, "p.txt", _equipment_index(tmp_path))
+    assert [i.category for i in v._issues] == ["mio-equipment-type-unknown"]
+
+
+# ---- full-repo runs --------------------------------------------------------
+
+_RUN_ORGS = """\
+TST_test_org = {
+\tallowed = { original_tag = TST }
+\tequipment_type = {
+\t\tAA_Equipment
+\t}
+\tinitial_trait = {
+\t\tname = TST_test_org_trait
+\t}
+\ttrait = {
+\t\tname = TST_test_org_dead_trait
+\t\tequipment_bonus = { max_organisation = 0.10 }
+\t}
+}
+"""
+
+_RUN_POLICY = """\
+mio_policy_test = {
+\tequipment_bonus = {
+\t\tAA_Equipment = {
+\t\t\tmax_organisation = 0.03
+\t\t}
+\t}
+}
+"""
+
+_RUN_COMPANY_TRAIT = """\
+TST_company_trait = {
+\tequipment_bonus = {
+\t\tAA_Equipment = {
+\t\t\treliability = 0.05
+\t\t}
+\t}
+}
+"""
+
+_RUN_FOCUS = """\
+focus_tree = {
+\tfocus = {
+\t\tid = TST_industry
+\t\tcompletion_reward = {
+\t\t\tdesign_team = mio:TST_missing_org
+\t\t}
+\t}
+}
+"""
+
+
+def _run_repo(tmp_path, write_path):
+    write_path(tmp_path, f"{V.ORG_DIR}/MD_TEST_organizations.txt", _RUN_ORGS)
+    write_path(tmp_path, f"{V.POLICY_DIR}/MD_TEST_policies.txt", _RUN_POLICY)
+    write_path(tmp_path, V.COMPANY_TRAIT_FILE, _RUN_COMPANY_TRAIT)
+    write_path(tmp_path, f"{V.COUNTRY_TAG_DIR}/00_countries.txt", "TST = { }\n")
+    write_path(tmp_path, "common/national_focus/05_test.txt", _RUN_FOCUS)
+    write_path(
+        tmp_path,
+        "localisation/english/MD_mio_l_english.yml",
+        'l_english:\n TST_test_org_trait:0 "Trait"\n'
+        ' TST_test_org_dead_trait:0 "Dead"\n',
+    )
+    _equipment_index(tmp_path)
+    return tmp_path
+
+
+def test_full_run_covers_orgs_policies_and_references(tmp_path, write_path):
+    _run_repo(tmp_path, write_path)
+    v = _validator(tmp_path)
+
+    v.run_validations()
+
+    categories = sorted(i.category for i in v._issues)
+    assert categories == [
+        "mio-bonus-no-base-stat",
+        "mio-bonus-no-base-stat",
+        "mio-reference-unknown",
+    ]
+    assert {i.file for i in v._issues} == {
+        f"{V.ORG_DIR}/MD_TEST_organizations.txt",
+        f"{V.POLICY_DIR}/MD_TEST_policies.txt",
+        "common/national_focus/05_test.txt",
+    }
+
+
+def test_unreadable_and_undecodable_files_do_not_stop_the_run(tmp_path, write_path):
+    _run_repo(tmp_path, write_path)
+    (tmp_path / V.ORG_DIR / "broken.txt").mkdir()
+    (tmp_path / V.POLICY_DIR / "broken.txt").mkdir()
+    (tmp_path / "common" / "decisions").mkdir(parents=True)
+    (tmp_path / "common" / "decisions" / "broken.txt").mkdir()
+    (tmp_path / "common" / "decisions" / "latin1.txt").write_bytes(
+        b"design_team = mio:TST_test_org # caf\xe9\n"
+    )
+    v = _validator(tmp_path)
+
+    v.run_validations()
+
+    assert sorted(i.category for i in v._issues) == [
+        "mio-bonus-no-base-stat",
+        "mio-bonus-no-base-stat",
+        "mio-reference-unknown",
+    ]
+
+
+def test_a_staged_equipment_edit_rescans_every_org(tmp_path, write_path, monkeypatch):
+    _run_repo(tmp_path, write_path)
+    monkeypatch.setenv(
+        "MD_STAGED_FILES", "common/units/equipment/MD_test_equipment.txt"
+    )
+    v = V.Validator(str(tmp_path), staged_only=True)
+
+    v.run_validations()
+
+    assert sorted(i.category for i in v._issues) == [
+        "mio-bonus-no-base-stat",
+        "mio-bonus-no-base-stat",
+    ]
+
+
+def test_staged_run_with_no_mio_input_skips(tmp_path, write_path, monkeypatch):
+    _run_repo(tmp_path, write_path)
+    write_path(tmp_path, "interface/unrelated.txt", "guiTypes = { }\n")
+    monkeypatch.setenv("MD_STAGED_FILES", "interface/unrelated.txt")
+    v = V.Validator(str(tmp_path), staged_only=True)
+
+    v.run_validations()
+
+    assert v._issues == []
+    assert any("No staged MIO files" in line for line in v.output_lines)

@@ -7,13 +7,22 @@ The standardizer must preserve every decision ID, keep all properties in source
 order, and never drop or split content.
 """
 
+import sys
+from typing import cast
+
 import pytest
+import standardize_decisions
+from shared.suite import read_text as _read
+from shared.suite import write_text as _write
 from shared_utils import collapse_or_compact
 from standardize_decisions import (
     DecisionStandardizer,
+    detect_file_type,
+    ensure_effect_log,
     ensure_missing_ai_will_do,
     format_decision,
     inject_missing_decision_logs,
+    reindent_block,
     strip_sole_decision_allowed,
 )
 
@@ -608,3 +617,291 @@ def test_ensure_ai_will_do_skips_missions():
     ]
     out = "".join(ensure_missing_ai_will_do(src))
     assert "ai_will_do" not in out
+
+
+def test_reindent_block_boundaries():
+    assert reindent_block([], 2) == []
+    assert reindent_block(["visible = {", "", "\thas_war = no", "}"], 2) == [
+        "\t\tvisible = {",
+        "\t\t\thas_war = no",
+        "\t\t}",
+    ]
+
+
+def test_ensure_effect_log_boundaries():
+    assert ensure_effect_log([], "CHI_x") == []
+    # A one-line property that is not an effect block is returned untouched.
+    assert ensure_effect_log(["\t\ticon = generic_decision"], "CHI_x") == [
+        "\t\ticon = generic_decision"
+    ]
+    # An empty one-line effect expands and carries no stray body line; the
+    # source has no trailing newline, so neither does the injected log.
+    assert ensure_effect_log(["\t\tremove_effect = { }"], "CHI_x") == [
+        "\t\tremove_effect = {",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision CHI_x"',
+        "\t\t}",
+    ]
+
+
+def test_format_decision_of_empty_block_is_empty():
+    assert format_decision([]) == []
+
+
+def test_single_line_effect_after_one_liners_starts_a_new_group():
+    out = format_decision(
+        _decision(
+            [
+                "\tCHI_visit = {",
+                "\t\tcost = 50",
+                "\t\tremove_effect = { country_event = foo.1 }",
+                "\t}",
+            ]
+        )
+    )
+    assert out == [
+        "\tCHI_visit = {",
+        "\t\tcost = 50",
+        "",
+        "\t\tremove_effect = {",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision CHI_visit"',
+        "\t\t\tcountry_event = foo.1",
+        "\t\t}",
+        "\t}",
+    ]
+
+
+def test_logs_only_passes_category_scaffolding_through_untouched():
+    src = [
+        "# top of file\n",
+        "CHI_cat = {\n",
+        "\tvisible = {\n",
+        "\t\thas_war = no\n",
+        "\t}\n",
+        "\tCHI_visit = {\n",
+        "\t\tcomplete_effect = { add_political_power = 1 }\n",
+        "\t}\n",
+        "}\n",
+        "\n",
+    ]
+    text = "".join(inject_missing_decision_logs(src))
+    assert text.startswith("# top of file\n")
+    assert "\tvisible = {\n\t\thas_war = no\n\t}\n" in text
+    assert 'log = "[GetDateText]: [Root.GetName]: Decision CHI_visit"' in text
+    assert text.endswith("}\n\n")
+
+
+def test_unbalanced_category_header_is_passed_through_verbatim():
+    # `{` only inside the comment: the brace scan sees a stray `}` and refuses
+    # to claim a block, so the line must survive untouched (and not spin).
+    src = ["CHI_cat = } # {\n", "\tCHI_visit = {\n", "\t\ticon = generic\n", "\t}\n"]
+    assert inject_missing_decision_logs(src) == src
+
+
+def test_strip_sole_decision_allowed_without_category_gate_is_noop():
+    src = [
+        "CHI_cat = {\n",
+        "\tCHI_visit = {\n",
+        "\t\tallowed = { tag = CHI }\n",
+        "\t}\n",
+        "}\n",
+    ]
+    assert strip_sole_decision_allowed(src) == src
+
+
+def test_ensure_ai_will_do_reuses_an_existing_trailing_blank():
+    src = [
+        "CHI_cat = {\n",
+        "\tCHI_bare = {\n",
+        "\t\ticon = generic_decision\n",
+        "\n",
+        "\t}\n",
+        "}\n",
+    ]
+    out = ensure_missing_ai_will_do(src)
+    assert out[2:5] == [
+        "\t\ticon = generic_decision\n",
+        "\n",
+        "\t\tai_will_do = { base = 10 }\n",
+    ]
+
+
+def test_ensure_ai_will_do_terminates_an_unterminated_last_line():
+    src = cast(
+        list[str],
+        "CHI_cat = {\n\tCHI_bare = {\n\t\ticon = generic_decision\n\t}\n}".splitlines(),
+    )
+    out = ensure_missing_ai_will_do(src)
+    assert out[2:5] == [
+        "\t\ticon = generic_decision\n",
+        "\n",
+        "\t\tai_will_do = { base = 10 }\n",
+    ]
+
+
+_CATEGORY_FILE = """# a decisions file
+CHI_test_category = {
+\ticon = GFX_decision_category
+\tpriority = 100
+\tallowed = { original_tag = CHI }
+\tvisible = {
+\t\thas_war = no
+\t\thas_stability > 0.2
+\t}
+
+\tCHI_first = {
+\t\tremove_effect = { country_event = foo.1 }
+\t}
+
+\tCHI_noop = { }
+}
+"""
+
+
+def test_detect_file_type_returns_the_decision_standardizer():
+    assert isinstance(detect_file_type("anything.txt"), DecisionStandardizer)
+
+
+def test_standardize_file_reformats_category_children_in_order(tmp_path):
+    source = tmp_path / "decisions.txt"
+    output = tmp_path / "out.txt"
+    _write(source, _CATEGORY_FILE)
+
+    assert DecisionStandardizer().standardize_file(str(source), str(output))
+    once = _read(output)
+    assert once == (
+        "# a decisions file\n"
+        "CHI_test_category = {\n"
+        "\ticon = GFX_decision_category\n"
+        "\tpriority = 100\n"
+        "\n"
+        "\tallowed = { original_tag = CHI }\n"
+        "\n"
+        "\tvisible = {\n"
+        "\t\thas_war = no\n"
+        "\t\thas_stability > 0.2\n"
+        "\t}\n"
+        "\n"
+        "\tCHI_first = {\n"
+        "\t\tremove_effect = {\n"
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision CHI_first"\n'
+        "\t\t\tcountry_event = foo.1\n"
+        "\t\t}\n"
+        "\t}\n"
+        "\n"
+        "\tCHI_noop = { }\n"
+        "}\n"
+    )
+
+    assert DecisionStandardizer().standardize_file(str(output), str(output))
+    assert _read(output) == once
+
+
+def test_main_without_arguments_reports_usage(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["standardize_decisions.py"])
+    with pytest.raises(SystemExit) as exit_info:
+        standardize_decisions.main()
+    assert exit_info.value.code == 1
+    assert "Usage:" in capsys.readouterr().out
+
+
+def test_main_help_exits_zero(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["standardize_decisions.py", "x.txt", "--help"])
+    with pytest.raises(SystemExit) as exit_info:
+        standardize_decisions.main()
+    assert exit_info.value.code == 0
+    assert "Detects file type automatically" in capsys.readouterr().out
+
+
+def test_main_standardizes_to_an_explicit_output(tmp_path, monkeypatch):
+    source = tmp_path / "decisions.txt"
+    output = tmp_path / "out.txt"
+    _write(source, _CATEGORY_FILE)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["standardize_decisions.py", str(source), "-o", str(output), "-v"],
+    )
+
+    standardize_decisions.main()
+
+    assert 'Decision CHI_first"' in _read(output)
+    assert _read(source) == _CATEGORY_FILE
+
+
+_SWEEP_FILE = (
+    "CHI_cat = {\n"
+    "\tallowed = { tag = CHI }\n"
+    "\tCHI_visit = {\n"
+    "\t\tallowed = { tag = CHI }\n"
+    "\t\ticon      = generic_decision\n"
+    "\t\tremove_effect = { country_event = foo.1 }\n"
+    "\t}\n"
+    "}\n"
+)
+
+
+def test_main_logs_and_allowed_sweep_edits_in_place(tmp_path, monkeypatch):
+    source = tmp_path / "decisions.txt"
+    _write(source, _SWEEP_FILE)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "standardize_decisions.py",
+            str(source),
+            "--logs-only",
+            "--strip-sole-allowed",
+            "-b",
+        ],
+    )
+
+    standardize_decisions.main()
+
+    once = _read(source)
+    assert "\t\tallowed = { tag = CHI }" not in once
+    assert "\tallowed = { tag = CHI }" in once
+    # Untouched spacing proves the sweep did not run the full standardizer.
+    assert "\t\ticon      = generic_decision" in once
+    assert 'log = "[GetDateText]: [Root.GetName]: Decision CHI_visit"' in once
+    assert "ai_will_do" not in once
+    assert list(tmp_path.glob("decisions.txt.backup.*"))
+
+
+def test_main_ai_will_do_sweep_leaves_logs_and_allowed_alone(tmp_path, monkeypatch):
+    source = tmp_path / "decisions.txt"
+    _write(source, _SWEEP_FILE)
+    monkeypatch.setattr(
+        sys, "argv", ["standardize_decisions.py", str(source), "--ensure-ai-will-do"]
+    )
+
+    standardize_decisions.main()
+
+    once = _read(source)
+    assert "\t\tai_will_do = { base = 10 }\n" in once
+    assert "\t\tallowed = { tag = CHI }" in once
+    assert "log =" not in once
+
+
+def test_main_sweep_read_failure_exits_one(tmp_path, monkeypatch):
+    unreadable = tmp_path / "as_a_directory"
+    unreadable.mkdir()
+    monkeypatch.setattr(
+        sys, "argv", ["standardize_decisions.py", str(unreadable), "--logs-only"]
+    )
+    with pytest.raises(SystemExit) as exit_info:
+        standardize_decisions.main()
+    assert exit_info.value.code == 1
+
+
+def test_main_exits_one_when_the_write_fails(tmp_path, monkeypatch):
+    source = tmp_path / "decisions.txt"
+    _write(source, _CATEGORY_FILE)
+
+    def fail_write(_path, _text):
+        raise OSError("no space left on device")
+
+    monkeypatch.setattr("common_utils.atomic_write_text", fail_write)
+    monkeypatch.setattr(sys, "argv", ["standardize_decisions.py", str(source)])
+    with pytest.raises(SystemExit) as exit_info:
+        standardize_decisions.main()
+    assert exit_info.value.code == 1

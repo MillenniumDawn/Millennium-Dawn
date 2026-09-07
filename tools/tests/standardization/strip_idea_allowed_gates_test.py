@@ -6,6 +6,11 @@ pool that slot draws from, so removing it there would change what the player
 can pick.
 """
 
+import sys
+
+import strip_idea_allowed_gates
+from shared.suite import read_text as _read
+from shared.suite import write_text as _write
 from strip_idea_allowed_gates import process_file, strip_allowed_blocks
 
 SLOTLESS = frozenset({"country", "hidden_ideas"})
@@ -369,3 +374,73 @@ def test_crlf_survives_the_rewrite(tmp_path):
 def test_unreadable_file_is_reported_not_raised(tmp_path):
     missing = str(tmp_path / "missing.txt")
     assert process_file(missing, SLOTLESS, False, False) == (0, 0, True)
+
+
+_IDEA_TAGS = (
+    "idea_categories = {\n"
+    "\tcountry = { }\n"
+    "\thidden_ideas = { hidden = yes }\n"
+    "\ttank_manufacturer = { slot = tank_manufacturer }\n"
+    "}\n"
+)
+
+
+def _mod_root(tmp_path):
+    root = tmp_path / "mod"
+    tags = root / "common" / "idea_tags"
+    tags.mkdir(parents=True)
+    _write(tags / "tags.txt", _IDEA_TAGS)
+    return root
+
+
+def test_main_sweeps_the_ideas_directory_by_default(tmp_path, monkeypatch):
+    root = _mod_root(tmp_path)
+    ideas = root / "common" / "ideas"
+    ideas.mkdir()
+    idea_file = ideas / "ideas.txt"
+    _write(idea_file, _IDEA_SAMPLE)
+    monkeypatch.setattr(
+        sys, "argv", ["strip_idea_allowed_gates.py", "--root", str(root)]
+    )
+
+    assert strip_idea_allowed_gates.main() == 0
+    assert "allowed" not in _read(idea_file)
+    assert "picture = gold" in _read(idea_file)
+
+
+def test_main_errors_when_the_ideas_directory_is_missing(tmp_path, monkeypatch):
+    root = _mod_root(tmp_path)
+    monkeypatch.setattr(
+        sys, "argv", ["strip_idea_allowed_gates.py", "--root", str(root)]
+    )
+    assert strip_idea_allowed_gates.main() == 1
+
+
+_UNBALANCED_IDEA = (
+    "ideas = {\n\tcountry = {\n\t\tFOO_idea = {\n\t\t\tallowed = {\n"
+    "\t\t\t\toriginal_tag = FOO\n"
+)
+
+
+def test_main_reports_unreadable_files_and_unbalanced_gates(tmp_path, monkeypatch):
+    root = _mod_root(tmp_path)
+    unbalanced = root / "unbalanced.txt"
+    clean = root / "clean.txt"
+    _write(unbalanced, _UNBALANCED_IDEA)
+    _write(clean, "ideas = {\n\tcountry = {\n\t\tFOO_idea = {\n\t\t}\n\t}\n}\n")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "strip_idea_allowed_gates.py",
+            "--root",
+            str(root),
+            "--dry-run",
+            str(root / "missing.txt"),
+            str(unbalanced),
+            str(clean),
+        ],
+    )
+
+    assert strip_idea_allowed_gates.main() == 1
+    assert _read(unbalanced) == _UNBALANCED_IDEA

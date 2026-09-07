@@ -6,6 +6,7 @@ automated gate. Fixtures supply a tiny fake vanilla defines file via the
 validator's ``vanilla_path`` injection point.
 """
 
+import pytest
 from validate_defines import Validator, parse_md_defines, parse_vanilla_defines
 
 _VANILLA = """NDefines = {
@@ -159,3 +160,130 @@ def test_explicit_wrong_vanilla_path_is_setup_error(tmp_path):
     )
     validator.run_validations()
     assert validator.errors_found == 1
+
+
+_NESTED_VANILLA = """NDefines = {
+\t-- a whole-line comment
+
+\tNAI = {
+\t\tDIVISION_DESIRED_WIDTH = 20,
+\t\tNEW_NAVY_LEADER_LEVEL_CHANCES = {
+\t\t\t0.5,
+\t\t\t0.3,
+\t\t},
+\t},
+}
+"""
+
+
+def test_parse_vanilla_defines_ignores_comments_blanks_and_table_values(tmp_path):
+    path = tmp_path / "00_defines.lua"
+    path.write_text(_NESTED_VANILLA, encoding="utf-8")
+
+    namespaces = parse_vanilla_defines(str(path))
+
+    assert namespaces["NAI"] >= {
+        "DIVISION_DESIRED_WIDTH",
+        "NEW_NAVY_LEADER_LEVEL_CHANCES",
+    }
+    # The bare numbers inside the sub-table are values, not define names.
+    assert not any(name.startswith("0") for name in namespaces["NAI"])
+
+
+def test_parse_vanilla_defines_skips_lua_keywords(tmp_path):
+    # `NDefines` reappearing as a key inside a namespace is the enclosing table
+    # name, not a define — collecting it would whitelist NDefines.X.NDefines.
+    path = tmp_path / "00_defines.lua"
+    path.write_text(
+        "NDefines = {\n\tNAI = {\n\t\tNDefines = 1,\n\t\tREAL_DEFINE = 2,\n\t},\n}\n",
+        encoding="utf-8",
+    )
+    names = parse_vanilla_defines(str(path))["NAI"]
+    assert "REAL_DEFINE" in names
+    assert "NDefines" not in names
+
+
+def test_parse_vanilla_defines_reports_an_unreadable_path(tmp_path, capsys):
+    assert parse_vanilla_defines(str(tmp_path)) == {}
+    assert "Error reading vanilla defines" in capsys.readouterr().err
+
+
+def test_parse_md_defines_reports_an_unreadable_path(tmp_path, capsys):
+    assert parse_md_defines(str(tmp_path)) == []
+    assert "Error reading MD defines" in capsys.readouterr().err
+
+
+def test_parse_md_defines_ignores_lines_that_are_not_defines(tmp_path):
+    _write_md_defines(
+        tmp_path,
+        "local helper = 1\nNDefines.NAI.DIVISION_DESIRED_WIDTH = 30\n",
+    )
+    results = parse_md_defines(str(tmp_path / "common" / "defines" / "MD_defines.lua"))
+    assert [(ns, name) for ns, name, _ln, _text in results] == [
+        ("NAI", "DIVISION_DESIRED_WIDTH")
+    ]
+
+
+def test_manifest_lines_without_a_namespace_are_ignored(tmp_path, monkeypatch):
+    import validate_defines as vd
+
+    manifest = tmp_path / "vanilla_defines.txt"
+    manifest.write_text(
+        "# header\nNOT_NAMESPACED\nNCountry.STARTING_COMMAND_POWER\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(vd, "_DEFINES_MANIFEST", str(manifest))
+    assert vd.load_defines_manifest() == {
+        "NCountry": {"STARTING_COMMAND_POWER"},
+    }
+
+
+def test_find_vanilla_defines_without_an_install_is_none(tmp_path, monkeypatch):
+    import validate_defines as vd
+
+    monkeypatch.setattr(vd, "find_hoi4_install", lambda: None)
+    assert vd.find_vanilla_defines() is None
+    # An install without the defines file is the same answer, not a crash.
+    monkeypatch.setattr(vd, "find_hoi4_install", lambda: str(tmp_path))
+    assert vd.find_vanilla_defines() is None
+
+    defines = tmp_path / "common" / "defines"
+    defines.mkdir(parents=True)
+    (defines / "00_defines.lua").write_text("NDefines = {}\n", encoding="utf-8")
+    assert vd.find_vanilla_defines() == str(defines / "00_defines.lua")
+
+
+def test_no_install_and_no_manifest_is_a_setup_error(tmp_path, monkeypatch):
+    import validate_defines as vd
+
+    monkeypatch.setattr(vd, "find_vanilla_defines", lambda: None)
+    monkeypatch.setattr(vd, "_DEFINES_MANIFEST", str(tmp_path / "absent.txt"))
+    _write_md_defines(tmp_path, "NDefines.NCountry.STARTING_COMMAND_POWER = 5\n")
+
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    assert validator.errors_found == 1
+    assert validator._issues[0].category == "defines-setup"
+    assert "refresh_vanilla_data.py" in validator._issues[0].message
+
+
+@pytest.mark.parametrize(
+    ("staged_file", "expected_errors"),
+    [
+        ("common/ideas/other.txt", 0),
+        ("common/defines/MD_defines.lua", 1),
+    ],
+)
+def test_staged_run_scopes_the_defines_check(tmp_path, staged_file, expected_errors):
+    vanilla = _write_vanilla(tmp_path)
+    _write_md_defines(tmp_path, "NDefines.NCountry.NOT_A_REAL_DEFINE = 1\n")
+    validator = Validator(
+        mod_path=str(tmp_path), use_colors=False, workers=1, vanilla_path=vanilla
+    )
+    validator.staged_only = True
+    validator.staged_files = [str(tmp_path / staged_file)]
+    validator.run_validations()
+
+    assert validator.errors_found == expected_errors
+    assert bool(validator._issues) is bool(expected_errors)

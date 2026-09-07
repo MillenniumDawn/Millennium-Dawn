@@ -7,6 +7,45 @@ on_actions = {
 			150 = wot.22
 		}
 		effect = {
+			set_variable = { USA_can_expand_steel_resources = 0 }
+			set_variable = { USA_can_expand_aluminium_resources = 0 }
+			set_variable = { USA_can_expand_tungsten_resources = 0 }
+			every_owned_state = {
+				if = {
+					limit = {
+						ROOT = { check_variable = { USA_can_expand_steel_resources = 0 } }
+						has_resources_amount = {
+							resource = steel
+							amount > 5
+						}
+						check_variable = { USA_steel_expansion_count < 3 }
+					}
+					ROOT = { set_variable = { USA_can_expand_steel_resources = 1 } }
+				}
+				if = {
+					limit = {
+						ROOT = { check_variable = { USA_can_expand_aluminium_resources = 0 } }
+						has_resources_amount = {
+							resource = aluminium
+							amount > 4
+						}
+						check_variable = { USA_aluminium_expansion_count < 3 }
+					}
+					ROOT = { set_variable = { USA_can_expand_aluminium_resources = 1 } }
+				}
+				if = {
+					limit = {
+						ROOT = { check_variable = { USA_can_expand_tungsten_resources = 0 } }
+						has_resources_amount = {
+							resource = tungsten
+							amount > 4
+						}
+						check_variable = { USA_tungsten_expansion_count < 3 }
+					}
+					ROOT = { set_variable = { USA_can_expand_tungsten_resources = 1 } }
+				}
+			}
+
 			# The shelterer can be annexed with bin Laden still at large; without this the manhunt stalls forever
 			if = {
 				limit = {
@@ -143,6 +182,66 @@ on_actions = {
 				}
 				set_global_flag = saddam_sentenced_to_death
 				news_event = { id = wotnews.13 random_days = 14 random_hours = 24 hours = 6 }
+			}
+		}
+	}
+
+	on_state_control_changed = {
+		effect = {
+			if = {
+				limit = {
+					FROM.FROM = { state = 598 }
+					country_exists = USA
+					USA = { check_variable = { USA_tsmc_resource_trade_cost_bonus_per_factory > 0 } }
+				}
+				USA = { USA_tsmc_access_update = yes }
+			}
+		}
+	}
+
+	on_annex = {
+		effect = {
+			if = {
+				limit = {
+					FROM = { original_tag = TAI }
+					country_exists = USA
+					USA = { check_variable = { USA_tsmc_resource_trade_cost_bonus_per_factory > 0 } }
+				}
+				USA = { USA_tsmc_access_update = yes }
+			}
+		}
+	}
+
+	on_war_relation_added = {
+		effect = {
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							ROOT = { original_tag = USA }
+							FROM = { original_tag = TAI }
+						}
+						AND = {
+							ROOT = { original_tag = TAI }
+							FROM = { original_tag = USA }
+						}
+					}
+					country_exists = USA
+					USA = { check_variable = { USA_tsmc_resource_trade_cost_bonus_per_factory > 0 } }
+				}
+				USA = { USA_tsmc_access_update = yes }
+			}
+		}
+	}
+
+	on_peaceconference_ended = {
+		effect = {
+			if = {
+				limit = {
+					country_exists = USA
+					USA = { check_variable = { USA_tsmc_resource_trade_cost_bonus_per_factory > 0 } }
+				}
+				USA = { USA_tsmc_access_update = yes }
 			}
 		}
 	}
