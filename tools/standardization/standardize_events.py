@@ -148,7 +148,7 @@ def _option_has_effects(option_block: List[str]) -> bool:
     Brace depth is tracked across body lines so the inner lines of a multi-line
     skipped block (`ai_chance = {` / `trigger = {`) are swallowed whole and not
     misread as top-level effects."""
-    skip_prefixes = ("name =", "ai_chance =", "trigger =")
+    skip_prefixes = ("name =", "ai_chance =", "trigger =", "effect_tooltip =")
     depth = 0
     for line in _option_body(option_block):
         for stripped in _split_packed_body(line.strip()):
