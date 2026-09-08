@@ -62,6 +62,24 @@ def test_real_effect_is_not_flagged(tmp_path):
     assert v._issues == []
 
 
+def test_numeric_state_scope_counts_as_an_effect(tmp_path):
+    body = (
+        "\t\tname = foo.1.a\n" + _LOG + "\t\t652 = { MSC_elect_sobyanin_edro = yes }\n"
+    )
+    _write(tmp_path, "events/Ev.txt", _event(body))
+    v = _validator(tmp_path)
+    v.validate_option_log_without_effect()
+    assert v._issues == []
+
+
+def test_quoted_tag_scope_counts_as_an_effect(tmp_path):
+    body = "\t\tname = foo.1.a\n" + _LOG + '\t\t"LGN" = { change_tag_from = CAR }\n'
+    _write(tmp_path, "events/Ev.txt", _event(body))
+    v = _validator(tmp_path)
+    v.validate_option_log_without_effect()
+    assert v._issues == []
+
+
 def test_hidden_effect_counts_as_an_effect(tmp_path):
     body = (
         "\t\tname = foo.1.a\n"

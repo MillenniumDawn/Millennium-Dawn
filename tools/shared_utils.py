@@ -330,6 +330,23 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+def count_braces(text: str) -> Tuple[int, int]:
+    """Return ``(opens, closes)`` for *text*, ignoring braces inside double-quoted
+    strings and after an unquoted ``#`` comment."""
+    code = strip_inline_comment(text)
+    opens = closes = 0
+    in_str = False
+    for i, c in enumerate(code):
+        if c == '"' and (i == 0 or code[i - 1] != "\\"):
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                opens += 1
+            elif c == "}":
+                closes += 1
+    return opens, closes
+
+
 def collapse_ws_outside_quotes(text: str) -> str:
     """Collapse runs of whitespace outside double-quoted spans to single spaces,
     leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
@@ -460,9 +477,52 @@ def collapse_or_compact(
                 n_close += 1
 
     if n_open != n_close or n_leaf - n_open != 1:
-        return compact_block(block_lines)
+        return compact_block(collapse_nested_blocks(block_lines))
 
     return [f"{indent}{_normalize_oneline_braces(text)}"]
+
+
+def collapse_nested_blocks(block_lines: List[str]) -> List[str]:
+    """Collapse each nested ``key = { ... }`` child that reduces to a single leaf
+    onto one line, innermost first, leaving the enclosing block multi-line.
+
+    Applies :func:`collapse_or_compact`'s single-leaf test per child, so a child
+    with two leaves (``{ name = "X" ruling_only = yes }``) or a ``#`` comment
+    stays multi-line. Each collapsed child keeps its own opening line's
+    indentation; the enclosing opener and closer are never touched. Input whose
+    braces don't balance is returned as-is.
+    """
+    if len(block_lines) < 3:
+        return list(block_lines)
+
+    out = [block_lines[0]]
+    last = len(block_lines) - 1
+    i = 1
+    while i < last:
+        line = block_lines[i]
+        opens, closes = count_braces(line)
+        if opens <= closes:
+            out.append(line)
+            i += 1
+            continue
+
+        depth = opens - closes
+        j = i + 1
+        while j < last and depth > 0:
+            o, c = count_braces(block_lines[j])
+            depth += o - c
+            j += 1
+        if depth > 0:
+            out.extend(block_lines[i:])
+            return out
+
+        child = collapse_nested_blocks(block_lines[i:j])
+        collapsed = collapse_or_compact(child)
+        out.extend(collapsed if len(collapsed) == 1 else child)
+        i = j
+
+    out.append(block_lines[last])
+    return out
 
 
 _FACTOR_TOKEN_RE = re.compile(r"\bfactor\b")
