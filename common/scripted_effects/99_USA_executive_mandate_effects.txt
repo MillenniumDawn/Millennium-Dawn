@@ -1,0 +1,38 @@
+# Opens the mandate panel and attaches the modifier. The backing variables are
+# left unset: an unset variable already reads as 0, so the modifier applies
+# nothing until a decision moves one.
+USA_open_executive_mandate = {
+	if = {
+		limit = { NOT = { has_country_flag = USA_executive_mandate_open } }
+		set_country_flag = USA_executive_mandate_open
+		unlock_decision_category_tooltip = USA_executive_mandate_category
+		add_dynamic_modifier = { modifier = USA_executive_mandate }
+	}
+}
+
+# Keeps the derived readouts in step after a decision moves a variable.
+# Backlash is the only one that feeds back: past a threshold it starts eating
+# the authority the mandate was taken for.
+USA_mandate_refresh = {
+	clamp_variable = { var = USA_enforcement_capacity min = 0 max = 10 }
+	clamp_variable = { var = USA_detention_capacity min = 0 max = 10 }
+	clamp_variable = { var = USA_detained_population min = 0 max = 10 }
+	clamp_variable = { var = USA_civil_backlash min = 0 max = 40 }
+	clamp_variable = { var = USA_mandate_tier min = 0 max = 3 }
+
+	set_variable = { USA_mandate_backlash_drag = { value = USA_civil_backlash divide = 200 } }
+	if = {
+		limit = { check_variable = { USA_civil_backlash > 19 } }
+		subtract_from_variable = { USA_mandate_authority = USA_mandate_backlash_drag }
+		subtract_from_variable = { USA_mandate_stability = USA_mandate_backlash_drag }
+	}
+
+	clamp_variable = { var = USA_mandate_authority min = -0.5 max = 0.5 }
+	clamp_variable = { var = USA_mandate_compliance min = -0.5 max = 0.5 }
+	clamp_variable = { var = USA_mandate_stability min = -0.5 max = 0.5 }
+	clamp_variable = { var = USA_mandate_resolve min = -0.5 max = 0.5 }
+	clamp_variable = { var = USA_mandate_population min = -0.5 max = 0.5 }
+	clamp_variable = { var = USA_mandate_labour_slack min = -0.5 max = 0.5 }
+	clamp_variable = { var = USA_mandate_insulation min = -0.5 max = 0.5 }
+	clamp_variable = { var = USA_mandate_enforcement_cost min = -0.5 max = 0.5 }
+}
