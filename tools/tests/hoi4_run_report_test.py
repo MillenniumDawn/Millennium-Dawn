@@ -6,6 +6,11 @@ look clean minutes before the errors arrive.
 """
 
 import json
+import sys
+from pathlib import Path
+
+# Make tools/analysis importable for `import hoi4_run_report`.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "analysis"))
 
 import hoi4_run_report as rr
 
