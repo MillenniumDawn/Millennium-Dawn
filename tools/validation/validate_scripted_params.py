@@ -137,16 +137,21 @@ def _block_end(text: str, open_brace_index: int) -> int:
 
 
 def _parameterised_trigger_defs(mod_path: str) -> Dict[str, Tuple[str, int]]:
-    """Scripted triggers whose body uses $PARAM$, mapped to (file, line).
+    """Scripted triggers and effects whose body uses $PARAM$, as (file, line).
 
-    The engine does not substitute parameters for scripted triggers. At a call
-    site it reads the argument name as a trigger, reports `Unknown
-    trigger-type`, and then loses brace tracking for the rest of that file.
-    Scripted effects do support parameters, so only triggers are reported.
+    The engine substitutes parameters for neither. At a call site it reads the
+    argument name as a trigger or effect, reports `Unknown trigger-type` or
+    `Invalid effect`, and then loses brace tracking for the rest of that file -
+    which is how one construct produced parse errors across decisions, events
+    and GUIs.
     """
     found: Dict[str, Tuple[str, int]] = {}
-    pattern = os.path.join(mod_path, "common", "scripted_triggers", "**", "*.txt")
-    for filepath in sorted(glob.glob(pattern, recursive=True)):
+    patterns = [
+        os.path.join(mod_path, "common", kind, "**", "*.txt")
+        for kind in ("scripted_triggers", "scripted_effects")
+    ]
+    files = [f for pattern in patterns for f in glob.glob(pattern, recursive=True)]
+    for filepath in sorted(files):
         try:
             with open(filepath, "r", encoding="utf-8-sig", newline="") as handle:
                 text = strip_comments(handle.read())
@@ -164,6 +169,8 @@ def _parameterised_trigger_defs(mod_path: str) -> Dict[str, Tuple[str, int]]:
                 depth -= 1
                 continue
             if depth:
+                # the name alternative consumed this block's opening brace
+                depth += 1
                 continue
             open_brace = text.index("{", match.end() - 1)
             body = text[open_brace : _block_end(text, open_brace)]
@@ -762,8 +769,8 @@ class Validator(BaseValidator):
         )
 
     def _validate_parameterised_triggers(self):
-        """A scripted trigger must not take $PARAM$ arguments."""
-        self._log_section("Checking for parameterised scripted triggers")
+        """A scripted trigger or effect must not take $PARAM$ arguments."""
+        self._log_section("Checking for parameterised scripted triggers and effects")
 
         defined = _parameterised_trigger_defs(self.mod_path)
         results = []
@@ -771,8 +778,8 @@ class Validator(BaseValidator):
         for name, (filepath, line) in sorted(defined.items()):
             results.append(
                 (
-                    f"{name} takes $PARAM$ arguments, which the engine cannot"
-                    " substitute for a trigger - drive it from a temp variable",
+                    f"{name} takes $PARAM$ arguments, which the engine does not"
+                    " substitute - drive it from a temp variable instead",
                     os.path.relpath(filepath, self.mod_path),
                     line,
                 )
@@ -803,8 +810,8 @@ class Validator(BaseValidator):
                             continue
                         results.append(
                             (
-                                f"calls {name}, a scripted trigger taking"
-                                " $PARAM$ arguments, so it cannot resolve",
+                                f"calls {name}, which takes $PARAM$ arguments"
+                                " and therefore cannot resolve",
                                 os.path.relpath(filepath, self.mod_path),
                                 line,
                             )
@@ -812,8 +819,8 @@ class Validator(BaseValidator):
 
         self._report(
             results,
-            "No scripted trigger takes $PARAM$ arguments",
-            "Scripted triggers cannot take parameters:",
+            "No scripted trigger or effect takes $PARAM$ arguments",
+            "Scripted triggers and effects cannot take parameters:",
             severity=Severity.ERROR,
             category="parameterised-scripted-trigger",
         )

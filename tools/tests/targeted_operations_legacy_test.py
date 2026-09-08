@@ -40,7 +40,10 @@ def enabled_branch(text):
 def test_iraq_capture_events_have_one_authoritative_enabled_outcome(name, target):
     text = event(f"iraqi_MNF.{target - 46}", "events/Middle East Peace Plan.txt")
     branch = enabled_branch(text)
-    assert f"TOP_capture_target = {{ TARGET = {target} }}" in branch
+    assert (
+        f"set_temp_variable = {{ TOP_arg_target = {target} }}"
+        " TOP_capture_target = yes" in branch
+    )
     assert "army_experience" not in branch
     assert "set_country_flag" not in branch
     legacy = _named_block(text, "else")
@@ -62,7 +65,10 @@ def test_custody_sentences_revalidate_owner_and_use_shared_resolver(name, target
     removal = _named_block(text, "remove_effect")
     assert re.search(r"remove_effect\s*=\s*\{\s*log\s*=", removal)
     branch = enabled_branch(removal)
-    assert f"TOP_kill_target = {{ TARGET = {target} }}" in branch
+    assert (
+        f"set_temp_variable = {{ TOP_arg_target = {target} }}"
+        " TOP_kill_target = yes" in branch
+    )
     assert "IRQ_baathist_dead" not in branch
 
 
@@ -73,7 +79,11 @@ def test_foreign_handover_decisions_develop_leads_without_automatic_captures(hos
     assert "country_event" not in branch
     assert "TOP_capture_target" not in branch
     for target in range(60, 64):
-        assert f"TOP_add_target_lead = {{ TARGET = {target} AMOUNT = 40 }}" in branch
+        assert (
+            f"set_temp_variable = {{ TOP_arg_target = {target} }}"
+            " set_temp_variable = { TOP_arg_amount = 40 }"
+            " TOP_add_target_lead = yes" in branch
+        )
     assert "iraqi_MNF.14" in _named_block(_named_block(text, "remove_effect"), "else")
 
 
@@ -87,7 +97,11 @@ def test_isi_pulse_produces_personal_leads_without_removal():
     assert "retire_character" not in branch
     assert "ISI_retire_hvt_character" not in branch
     for target in range(16, 29):
-        assert f"TOP_add_target_lead = {{ TARGET = {target} AMOUNT = 40 }}" in branch
+        assert (
+            f"set_temp_variable = {{ TOP_arg_target = {target} }}"
+            " set_temp_variable = { TOP_arg_amount = 40 }"
+            " TOP_add_target_lead = yes" in branch
+        )
     assert "ISI_retire_hvt_character = yes" in _named_block(text, "else")
 
 
@@ -98,8 +112,15 @@ def test_oef_consent_and_unilateral_choices_authorize_operations():
         match = re.search(r"if\s*=\s*\{\s*limit\s*=\s*\{\s*TOP_enabled\s*=\s*yes", text)
         assert match
         branch = _extract_block(text, match.start())
-        assert "TOP_grant_target_mandate = { TARGET = 1 }" in branch
-        assert "TOP_add_target_lead = { TARGET = 1 AMOUNT = 40 }" in branch
+        assert (
+            "set_temp_variable = { TOP_arg_target = 1 }"
+            " TOP_grant_target_mandate = yes" in branch
+        )
+        assert (
+            "set_temp_variable = { TOP_arg_target = 1 }"
+            " set_temp_variable = { TOP_arg_amount = 40 }"
+            " TOP_add_target_lead = yes" in branch
+        )
         assert "bin_laden_clear_hideout" not in branch
         assert "TOP_kill_target" not in branch
 
@@ -273,7 +294,10 @@ def test_soleimani_historical_report_cannot_remove_an_active_target():
     assert "TOP_kill_target" not in report
     opportunity = event("iranian_focus.160", "events/Iran.txt")
     branch = enabled_branch(opportunity)
-    assert "TOP_grant_target_mandate = { TARGET = 64 }" in branch
+    assert (
+        "set_temp_variable = { TOP_arg_target = 64 }"
+        " TOP_grant_target_mandate = yes" in branch
+    )
     assert "country_event" not in branch
 
 

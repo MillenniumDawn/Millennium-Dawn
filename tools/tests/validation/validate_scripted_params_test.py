@@ -970,8 +970,14 @@ def test_parameterised_scripted_trigger_and_its_callers_are_reported(tmp_path):
     assert any("calls PARAM_gate" in f and "00_e.txt" in f for f in findings), findings
 
 
-def test_a_parameterised_scripted_effect_is_not_reported(tmp_path):
-    """Effects do support parameters; only triggers are the problem."""
+def test_a_parameterised_scripted_effect_is_reported_too(tmp_path):
+    """Effects are not exempt.
+
+    This test previously asserted the opposite, on the assumption that the
+    engine substitutes parameters for effects even though it does not for
+    triggers. A crash log disproved it: a call site reports `Invalid effect
+    'TARGET'` exactly the way a trigger reports `Unknown trigger-type`.
+    """
     _mod(
         tmp_path,
         {
@@ -985,7 +991,10 @@ def test_a_parameterised_scripted_effect_is_not_reported(tmp_path):
         },
     )
 
-    assert _trigger_findings(tmp_path) == []
+    findings = _trigger_findings(tmp_path)
+
+    assert any("param_effect takes $PARAM$" in f for f in findings), findings
+    assert any("calls param_effect" in f for f in findings), findings
 
 
 def test_the_definition_file_is_not_counted_as_a_caller(tmp_path):
