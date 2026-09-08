@@ -90,3 +90,45 @@ def test_an_unreadable_definition_file_does_not_hide_the_rest(tmp_path, write_pa
     assert [(issue.file, issue.line, issue.message) for issue in validator._issues] == [
         ("common/scripted_effects/effects.txt", 1, "lonely_effect")
     ]
+
+
+def test_parameterised_cross_call_between_definition_files_counts_as_use(
+    tmp_path, write_path
+):
+    """`NAME = { ARG = 1 }` from another scripted file is a use.
+
+    The cross-call pass matched only `NAME = yes`, so an effect called solely
+    with parameters, and solely from other definition files, was reported
+    unused. Targeted Operations tripped this repeatedly.
+    """
+    write_path(
+        tmp_path,
+        "common/scripted_effects/00_caller.txt",
+        "caller_effect = {\n\tcallee_effect = { TARGET = 7 }\n}\n",
+    )
+    write_path(
+        tmp_path,
+        "common/scripted_effects/01_callee.txt",
+        "callee_effect = {\n\tset_temp_variable = { x = $TARGET$ }\n}\n",
+    )
+    write_path(tmp_path, "events/use.txt", "caller_effect = yes\n")
+
+    validator = _validator(tmp_path)
+    validator.run_validations()
+
+    reported = [str(issue) for issue in validator._issues]
+    assert not any("callee_effect" in r for r in reported), reported
+
+
+def test_a_definition_does_not_count_as_its_own_use(tmp_path, write_path):
+    """Definitions sit at column 0; only an indented call is a call."""
+    write_path(
+        tmp_path,
+        "common/scripted_effects/00_lonely.txt",
+        "lonely_effect = {\n\tadd_political_power = 1\n}\n",
+    )
+
+    validator = _validator(tmp_path)
+    validator.run_validations()
+
+    assert any("lonely_effect" in str(issue) for issue in validator._issues)

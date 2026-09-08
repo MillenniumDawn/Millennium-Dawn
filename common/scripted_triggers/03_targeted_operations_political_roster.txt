@@ -101,14 +101,15 @@ TOP_person_160_serving = {
 	VEN = { exists = yes has_country_leader = { name = "Nicolás Maduro" ruling_only = yes } }
 }
 
+# Reads TOP_role_target.
 TOP_authored_role_eligible = {
-	set_temp_variable = { TOP_role_target = $TARGET$ }
 	OR = {
 		AND = {
 			check_variable = { TOP_role_target > 0 }
 			check_variable = { TOP_role_target < global.TOP_registry_capacity }
 			check_variable = { global.TOP_political^TOP_role_target = 0 }
-			TOP_group_operational = { TARGET = TOP_role_target }
+			set_temp_variable = { TOP_group_target = TOP_role_target }
+			TOP_group_operational = yes
 		}
 		AND = { check_variable = { TOP_role_target = 129 } TOP_person_129_serving = yes }
 		AND = { check_variable = { TOP_role_target = 130 } TOP_person_130_serving = yes }
@@ -136,8 +137,9 @@ TOP_authored_role_eligible = {
 	}
 }
 
+# Reads TOP_group_target.
 TOP_group_operational = {
-	set_temp_variable = { TOP_operational_group = global.TOP_affiliation^$TARGET$ }
+	set_temp_variable = { TOP_operational_group = global.TOP_affiliation^TOP_group_target }
 	set_temp_variable = { TOP_operational_ct = global.TOP_group_ct^TOP_operational_group }
 	check_variable = { TOP_operational_group > 0 }
 	check_variable = { global.TOP_group_window^TOP_operational_group = 1 }
@@ -148,8 +150,8 @@ TOP_group_operational = {
 	}
 }
 
+# Reads TOP_protected_target.
 TOP_target_protection_at_war = {
-	set_temp_variable = { TOP_protected_target = $TARGET$ }
 	OR = {
 		AND = { check_variable = { TOP_protected_target = 129 } SOV = { has_war_with = PREV } }
 		AND = { check_variable = { TOP_protected_target = 130 } SOV = { has_war_with = PREV } }
@@ -211,12 +213,13 @@ TOP_civilian_emergency_case_available = {
 	has_war_support > 0.60
 	has_stability < 0.45
 	check_variable = { global.TOP_status^141 = 1 }
-	TOP_authored_role_eligible = { TARGET = 141 }
+	set_temp_variable = { TOP_role_target = 141 }
+	TOP_authored_role_eligible = yes
 	check_variable = { TOP_civilian_mandate_review_after < global.TOP_clock }
 }
 
+# Reads TOP_civilian_valid_target.
 TOP_authored_civilian_mandate_valid = {
-	set_temp_variable = { TOP_civilian_valid_target = $TARGET$ }
 	check_variable = { TOP_civilian_valid_target = 141 }
 	TOP_country_eligible = yes
 	NOT = { has_government = democratic }
@@ -230,7 +233,8 @@ TOP_authored_civilian_mandate_valid = {
 	check_variable = { TOP_mandates^141 > global.TOP_clock }
 }
 
+# Reads TOP_civilian_valid_target.
 TOP_authored_capture_override = {
-	TOP_authored_civilian_mandate_valid = { TARGET = $TARGET$ }
+	TOP_authored_civilian_mandate_valid = yes
 	check_variable = { TOP_civilian_mandate_origin = 1 }
 }

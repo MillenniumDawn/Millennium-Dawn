@@ -209,7 +209,8 @@ TOP_country_tick = {
 			array = TOP_active_cases
 			value = TOP_collection_target
 			if = {
-				limit = { check_variable = { TOP_case_collecting^TOP_collection_target = 1 } TOP_authored_role_eligible = { TARGET = TOP_collection_target } check_variable = { global.TOP_status^TOP_collection_target = 1 } }
+				set_temp_variable = { TOP_role_target = TOP_collection_target }
+				limit = { check_variable = { TOP_case_collecting^TOP_collection_target = 1 } TOP_authored_role_eligible = yes check_variable = { global.TOP_status^TOP_collection_target = 1 } }
 				set_temp_variable = { TOP_target = TOP_collection_target }
 				TOP_find_org = yes
 				TOP_get_defensive_modifiers = yes
@@ -360,10 +361,10 @@ TOP_exploit_capture = {
 	set_temp_variable = { TOP_target = TOP_saved_target }
 }
 
-TOP_native_result = {
-	set_temp_variable = { TOP_target = $TARGET$ }
-	set_temp_variable = { TOP_method = $METHOD$ }
-	set_temp_variable = { TOP_tier = $TIER$ }
+# Reads TOP_target, TOP_method and TOP_tier. Raids set them inline:
+# common/raids/ is parsed before the scripted effects register, so a
+# parameterised call there cannot resolve.
+TOP_native_result_args = {
 	set_temp_variable = { TOP_operation_state = target_state }
 	var:actor_country = {
 		if = {
@@ -451,6 +452,7 @@ TOP_complete_operation = {
 TOP_apply_exposure = {
 	set_temp_variable = { TOP_actor = THIS }
 	set_temp_variable = { TOP_exposure_recorded = 0 }
+	set_temp_variable = { TOP_exposure_applicable = 0 }
 	set_temp_variable = { TOP_exposure_chance = 100 }
 	if = {
 		limit = { OR = { check_variable = { TOP_method = 3 } check_variable = { TOP_method = 6 } } }
@@ -465,37 +467,60 @@ TOP_apply_exposure = {
 	add_to_temp_variable = { TOP_exposure_chance = TOP_operation_exposure_bonus }
 	clamp_temp_variable = { var = TOP_exposure_chance min = 0 max = 100 }
 	if = {
-		limit = { check_variable = { TOP_authorized_host > 0 } NOT = { check_variable = { TOP_authorized_host = THIS } } }
-		var:TOP_authorized_host = {
-			if = {
-				limit = {
-					NOT = { has_war_with = var:TOP_actor }
-					check_variable = { PREV.TOP_authorized_consent = 0 }
+		limit = {
+			check_variable = { TOP_authorized_host > 0 }
+			OR = {
+				AND = {
+					NOT = { check_variable = { TOP_authorized_host = THIS } }
+					var:TOP_authorized_host = { NOT = { has_war_with = var:TOP_actor } }
+					check_variable = { TOP_authorized_consent = 0 }
 				}
-				random = {
-					chance = TOP_exposure_chance
-					set_temp_variable = { TOP_exposure_recorded = 1 }
-					add_opinion_modifier = { target = var:TOP_actor modifier = TOP_sovereignty_violation }
-					var:TOP_actor = { add_stability = -0.01 }
-				}
-			}
-			if = {
-				limit = {
-					NOT = { has_war_with = var:TOP_actor }
-					check_variable = { PREV.TOP_authorized_consent = 1 }
-					check_variable = { global.TOP_political^PREV.TOP_target = 1 }
-					check_variable = { PREV.TOP_result = 3 }
-				}
-				random = {
-					chance = TOP_exposure_chance
-					set_temp_variable = { TOP_exposure_recorded = 1 }
+				AND = {
+					check_variable = { TOP_authorized_visit_status > 0 }
+					check_variable = { global.TOP_political^TOP_target = 1 }
+					check_variable = { TOP_result = 3 }
 				}
 			}
 		}
+		set_temp_variable = { TOP_exposure_applicable = 1 }
 	}
 	if = {
-		limit = { check_variable = { TOP_exposure_recorded = 1 } check_variable = { TOP_result = 3 } }
-		TOP_start_exposed_kill_crisis = yes
+		limit = { check_variable = { TOP_exposure_applicable = 1 } }
+		random = {
+			chance = TOP_exposure_chance
+			set_temp_variable = { TOP_exposure_recorded = 1 }
+		}
+	}
+	if = {
+		limit = { check_variable = { TOP_exposure_recorded = 1 } }
+		set_temp_variable = { TOP_exposure_external_penalty = 0 }
+		if = {
+			limit = {
+				check_variable = { TOP_authorized_host > 0 }
+				NOT = { check_variable = { TOP_authorized_host = THIS } }
+				var:TOP_authorized_host = { NOT = { has_war_with = var:TOP_actor } }
+			}
+			var:TOP_authorized_host = { add_opinion_modifier = { target = var:TOP_actor modifier = TOP_sovereignty_violation } }
+			set_temp_variable = { TOP_exposure_external_penalty = 1 }
+		}
+		if = {
+			limit = {
+				check_variable = { TOP_authorized_visit_status > 0 }
+				check_variable = { TOP_operation_protection_country > 0 }
+				NOT = { check_variable = { TOP_operation_protection_country = THIS } }
+				NOT = { check_variable = { TOP_operation_protection_country = TOP_authorized_host } }
+			}
+			var:TOP_operation_protection_country = { add_opinion_modifier = { target = var:TOP_actor modifier = TOP_sovereignty_violation } }
+			set_temp_variable = { TOP_exposure_external_penalty = 1 }
+		}
+		if = {
+			limit = { check_variable = { TOP_exposure_external_penalty = 1 } }
+			add_stability = -0.01
+		}
+		if = {
+			limit = { check_variable = { TOP_result = 3 } }
+			TOP_start_exposed_kill_crisis = yes
+		}
 	}
 	set_temp_variable = { TOP_civilian_risk = { value = 100 subtract = TOP_authorized_assurance } }
 	if = { limit = { check_variable = { TOP_authorized_rigor = 2 } } multiply_temp_variable = { TOP_civilian_risk = 0.5 } }
@@ -643,12 +668,15 @@ TOP_ai_choose_operation = {
 			if = {
 				limit = {
 					check_variable = { global.TOP_status^TOP_ai_target = 1 }
-					TOP_authored_role_eligible = { TARGET = TOP_ai_target }
+					set_temp_variable = { TOP_role_target = TOP_ai_target }
+					TOP_authored_role_eligible = yes
 					set_temp_variable = { TOP_target = TOP_ai_target }
 					TOP_exceptional_authority = yes
 					check_variable = { TOP_case_phase^TOP_ai_target < 2 }
 					OR = { check_variable = { TOP_case_phase^TOP_ai_target = 1 } check_variable = { TOP_active_cases^num < 3 } }
-					TOP_host_case_available = { TARGET = TOP_ai_target HOST = TOP_lead_host^TOP_ai_target }
+					set_temp_variable = { TOP_arg_target = TOP_ai_target }
+					set_temp_variable = { TOP_arg_host = TOP_lead_host^TOP_ai_target }
+					TOP_host_case_available = yes
 					check_variable = { TOP_ai_candidate_score > TOP_ai_score }
 					OR = {
 						check_variable = { global.TOP_political^TOP_ai_target = 0 }

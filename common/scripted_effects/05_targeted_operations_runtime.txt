@@ -281,18 +281,6 @@ TOP_start_exposed_kill_crisis = {
 		limit = { is_subject = yes }
 		OVERLORD = { set_variable = { global.TOP_crisis_candidate_actor = THIS } }
 	}
-	var:TOP_operation_protection_country = {
-		if = {
-			limit = { is_subject = yes }
-			OVERLORD = { set_variable = { global.TOP_crisis_candidate_protection = THIS } }
-		}
-	}
-	var:TOP_authorized_host = {
-		if = {
-			limit = { is_subject = yes }
-			OVERLORD = { set_variable = { global.TOP_crisis_candidate_host = THIS } }
-		}
-	}
 	if = {
 		limit = {
 			TOP_exposed_visit_kill_valid = yes
@@ -342,16 +330,26 @@ TOP_start_exposed_kill_crisis = {
 				clamp_variable = { var = global.TOP_crisis_tension min = 0 max = 100 }
 			}
 			set_variable = { global.TOP_crisis_existing_war = 0 }
+			set_variable = { global.TOP_crisis_actor_faction_leader = 0 }
+			set_variable = { global.TOP_crisis_protection_faction_leader = 0 }
 			var:global.TOP_crisis_actor = {
 				if = {
 					limit = { has_war_with = var:global.TOP_crisis_protection }
 					set_variable = { global.TOP_crisis_existing_war = 1 }
+				}
+				if = {
+					limit = { is_in_faction = yes }
+					faction_leader = { set_variable = { global.TOP_crisis_actor_faction_leader = THIS } }
 				}
 				set_variable = { TOP_crisis_token = global.TOP_crisis_token }
 				set_variable = { TOP_crisis_counterpart = global.TOP_crisis_protection }
 				set_variable = { TOP_crisis_target = global.TOP_crisis_target }
 			}
 			var:global.TOP_crisis_protection = {
+				if = {
+					limit = { is_in_faction = yes }
+					faction_leader = { set_variable = { global.TOP_crisis_protection_faction_leader = THIS } }
+				}
 				set_variable = { TOP_crisis_token = global.TOP_crisis_token }
 				set_variable = { TOP_crisis_counterpart = global.TOP_crisis_actor }
 				set_variable = { TOP_crisis_target = global.TOP_crisis_target }
@@ -372,13 +370,41 @@ TOP_start_exposed_kill_crisis = {
 					country_event = { id = TOP_crisis.4 days = 1 }
 				}
 			}
+			if = {
+				limit = {
+					check_variable = { global.TOP_crisis_actor_faction_leader > 0 }
+					NOT = { check_variable = { global.TOP_crisis_actor_faction_leader = global.TOP_crisis_actor } }
+					NOT = { check_variable = { global.TOP_crisis_actor_faction_leader = global.TOP_crisis_protection } }
+					NOT = { check_variable = { global.TOP_crisis_actor_faction_leader = global.TOP_crisis_host } }
+					var:global.TOP_crisis_actor_faction_leader = { exists = yes }
+				}
+				var:global.TOP_crisis_actor_faction_leader = {
+					set_variable = { TOP_crisis_token = global.TOP_crisis_token }
+					set_variable = { TOP_crisis_counterpart = global.TOP_crisis_protection }
+					set_variable = { TOP_crisis_target = global.TOP_crisis_target }
+					country_event = { id = TOP_crisis.7 days = 1 }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { global.TOP_crisis_protection_faction_leader > 0 }
+					NOT = { check_variable = { global.TOP_crisis_protection_faction_leader = global.TOP_crisis_actor } }
+					NOT = { check_variable = { global.TOP_crisis_protection_faction_leader = global.TOP_crisis_protection } }
+					NOT = { check_variable = { global.TOP_crisis_protection_faction_leader = global.TOP_crisis_host } }
+					NOT = { check_variable = { global.TOP_crisis_protection_faction_leader = global.TOP_crisis_actor_faction_leader } }
+					var:global.TOP_crisis_protection_faction_leader = { exists = yes }
+				}
+				var:global.TOP_crisis_protection_faction_leader = {
+					set_variable = { TOP_crisis_token = global.TOP_crisis_token }
+					set_variable = { TOP_crisis_counterpart = global.TOP_crisis_actor }
+					set_variable = { TOP_crisis_target = global.TOP_crisis_target }
+					country_event = { id = TOP_crisis.7 days = 1 }
+				}
+			}
 			news_event = { id = TOP_crisis.10 days = 1 }
 		}
 		else_if = {
-			limit = {
-				check_variable = { global.TOP_crisis_actor = global.TOP_crisis_candidate_actor }
-				check_variable = { global.TOP_crisis_protection = global.TOP_crisis_candidate_protection }
-			}
+			limit = { check_variable = { global.TOP_crisis_active = 1 } }
 			add_to_variable = { global.TOP_crisis_tension = global.TOP_crisis_repeat_tension }
 			clamp_variable = { var = global.TOP_crisis_tension min = 0 max = 100 }
 			news_event = { id = TOP_crisis.11 days = 1 }
@@ -415,6 +441,8 @@ TOP_cleanup_crisis = {
 		set_temp_variable = { TOP_crisis_cleanup_actor = global.TOP_crisis_actor }
 		set_temp_variable = { TOP_crisis_cleanup_protection = global.TOP_crisis_protection }
 		set_temp_variable = { TOP_crisis_cleanup_host = global.TOP_crisis_host }
+		set_temp_variable = { TOP_crisis_cleanup_actor_faction = global.TOP_crisis_actor_faction_leader }
+		set_temp_variable = { TOP_crisis_cleanup_protection_faction = global.TOP_crisis_protection_faction_leader }
 		var:TOP_crisis_cleanup_actor = {
 			if = {
 				limit = { check_variable = { TOP_crisis_token = PREV.TOP_crisis_cleanup_token } }
@@ -448,6 +476,39 @@ TOP_cleanup_crisis = {
 				}
 			}
 		}
+		if = {
+			limit = {
+				check_variable = { TOP_crisis_cleanup_actor_faction > 0 }
+				NOT = { check_variable = { TOP_crisis_cleanup_actor_faction = TOP_crisis_cleanup_actor } }
+				NOT = { check_variable = { TOP_crisis_cleanup_actor_faction = TOP_crisis_cleanup_protection } }
+				NOT = { check_variable = { TOP_crisis_cleanup_actor_faction = TOP_crisis_cleanup_host } }
+			}
+			var:TOP_crisis_cleanup_actor_faction = {
+				if = {
+					limit = { check_variable = { TOP_crisis_token = PREV.TOP_crisis_cleanup_token } }
+					set_variable = { TOP_crisis_token = 0 }
+					set_variable = { TOP_crisis_counterpart = 0 }
+					set_variable = { TOP_crisis_target = 0 }
+				}
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { TOP_crisis_cleanup_protection_faction > 0 }
+				NOT = { check_variable = { TOP_crisis_cleanup_protection_faction = TOP_crisis_cleanup_actor } }
+				NOT = { check_variable = { TOP_crisis_cleanup_protection_faction = TOP_crisis_cleanup_protection } }
+				NOT = { check_variable = { TOP_crisis_cleanup_protection_faction = TOP_crisis_cleanup_host } }
+				NOT = { check_variable = { TOP_crisis_cleanup_protection_faction = TOP_crisis_cleanup_actor_faction } }
+			}
+			var:TOP_crisis_cleanup_protection_faction = {
+				if = {
+					limit = { check_variable = { TOP_crisis_token = PREV.TOP_crisis_cleanup_token } }
+					set_variable = { TOP_crisis_token = 0 }
+					set_variable = { TOP_crisis_counterpart = 0 }
+					set_variable = { TOP_crisis_target = 0 }
+				}
+			}
+		}
 		set_variable = { global.TOP_crisis_active = 0 }
 		set_variable = { global.TOP_crisis_actor = 0 }
 		set_variable = { global.TOP_crisis_protection = 0 }
@@ -460,6 +521,8 @@ TOP_cleanup_crisis = {
 		set_variable = { global.TOP_crisis_until = 0 }
 		set_variable = { global.TOP_crisis_existing_war = 0 }
 		set_variable = { global.TOP_crisis_host_complicit = 0 }
+		set_variable = { global.TOP_crisis_actor_faction_leader = 0 }
+		set_variable = { global.TOP_crisis_protection_faction_leader = 0 }
 	}
 }
 

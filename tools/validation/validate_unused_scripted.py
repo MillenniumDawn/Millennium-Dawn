@@ -27,6 +27,10 @@ from validator_common import (
 # `\bname\s*=\s*(?:yes|no)\b` search (same word boundaries, same identifier
 # capture) but avoids compiling a pattern per (name, file) — millions of calls.
 _CALL_YES_NO_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*(?:yes|no)\b")
+# A parameterised call, `NAME = { TARGET = 7 }`. Definitions sit at column 0,
+# so requiring leading whitespace keeps one from counting as its own use.
+# Only ever intersected with known definition names.
+_CALL_BLOCK_RE = re.compile(r"^[ 	]+([A-Za-z_]\w*)\s*=\s*\{", re.M)
 _CUSTOM_TT_REF_RE = re.compile(
     r"custom_(?:effect|trigger)_tooltip\s*=\s*([A-Za-z_]\w*)\b"
 )
@@ -333,6 +337,7 @@ class Validator(BaseValidator):
                     continue
                 called = set(_CALL_YES_NO_RE.findall(content))
                 called.update(_CUSTOM_TT_REF_RE.findall(content))
+                called.update(_CALL_BLOCK_RE.findall(content))
                 used_names |= called & potentially_used
 
         # Third pass: detect names called via meta_effect/meta_trigger template

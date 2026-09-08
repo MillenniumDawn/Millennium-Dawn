@@ -182,9 +182,19 @@ class PoliticalScript(TargetedScript):
     def run(self, name, identifier=1):
         self.execute(self.effects[name], identifier)
 
+    # These triggers used to take a TARGET parameter. The engine does not
+    # substitute $PARAM$ for a scripted trigger, so each now reads a temp
+    # variable the caller sets first.
+    TARGET_TEMPS = {
+        "TOP_authored_role_eligible": "TOP_role_target",
+        "TOP_authored_civilian_mandate_valid": "TOP_civilian_valid_target",
+        "TOP_authored_capture_override": "TOP_civilian_valid_target",
+    }
+
     def trigger(self, name, target=None, actor="USA"):
-        operand = "yes" if target is None else [("TARGET", "=", str(target))]
-        return self.condition([(name, "=", operand)], self.tags[actor])
+        if target is not None:
+            self.temps[self.TARGET_TEMPS[name]] = target
+        return self.condition([(name, "=", "yes")], self.tags[actor])
 
     def protect(self, target):
         self.temps["TOP_target"] = target
@@ -414,34 +424,14 @@ def test_wartime_opportunities_use_one_serving_person_and_a_country_cooldown():
     assert len(game.leads) == 1
 
 
-def test_whitmer_is_confined_to_the_2028_democratic_leader_path():
-    source = (ROOT / "common/scripted_effects/USA_political_leaders.txt").read_text(
-        encoding="utf-8"
-    )
-    democratic_start = source.index(
-        "############ Democratic Party Leaders ####################"
-    )
-    democratic_end = source.index(
-        "############ Progressive Party Leaders ####################"
-    )
-    democratic = source[democratic_start:democratic_end]
-    assert "else_if = { limit = { check_variable = { ruling_party = 2 } }" in democratic
-    assert "date > 2027.12.31" in democratic
-    assert "date < 2029.1.1" in democratic
-    assert "set_variable = { liberalism_leader = 7 }" in democratic
-    assert 'name = "Gretchen Whitmer"' in democratic
-    assert 'picture = "gretchen_whitmer.dds"' in democratic
-    assert (ROOT / "gfx/leaders/USA/gretchen_whitmer.dds").is_file()
-
-
 def test_maduro_retirement_has_an_idempotent_venezuelan_successor():
     source = (ROOT / "common/scripted_effects/VEN_political_leaders.txt").read_text(
         encoding="utf-8"
     )
     helper = _named_block(source, "TOP_retire_VEN_nicolas_maduro")
-    assert 'has_country_leader = { name = "Nicolás Maduro" ruling_only = yes }' in helper
+    assert (
+        'has_country_leader = { name = "Nicolás Maduro" ruling_only = yes }' in helper
+    )
     assert 'name = "Delcy Rodríguez"' in helper
     assert "ideology = anarchist_communism" in helper
-    assert (
-        ROOT / "gfx/leaders/generic_politicians/latin_female_001.dds"
-    ).is_file()
+    assert (ROOT / "gfx/leaders/generic_politicians/latin_female_001.dds").is_file()

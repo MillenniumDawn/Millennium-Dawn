@@ -58,6 +58,14 @@ class TargetScript(TargetedScript):
                 ).read_text(encoding="utf-8")
             )
         )
+        self.triggers.update(
+            _parse_race_script(
+                (
+                    ROOT
+                    / "common/scripted_triggers/05_targeted_operations_arg_wrappers.txt"
+                ).read_text(encoding="utf-8")
+            )
+        )
         self.countries, self.globals, self.temps = {}, {}, {}
         self.scope_stack, self.events = [], []
         self.global_flags, self.external = {}, Counter()
@@ -176,8 +184,11 @@ class TargetScript(TargetedScript):
         elif key in {"TOP_country_eligible", "raid_show_target_intervention_check"}:
             result = operand == "yes"
         elif key == "TOP_authored_role_eligible":
-            data = {name: value for name, _, value in operand}
-            result = self.value(data["TARGET"], identifier) not in self.ineligible_roles
+            # No longer parameterised: the caller sets TOP_role_target,
+            # because the engine cannot substitute $PARAM$ for a trigger.
+            result = (
+                self.value("TOP_role_target", identifier) not in self.ineligible_roles
+            )
         elif key == "TOP_review_pending":
             result = operand == "no"
         elif key == "TOP_target_protection_at_war":
@@ -482,9 +493,9 @@ def test_partner_refusal_never_executes_or_exposes_an_operation():
 def test_changed_state_controller_invalidates_authorization(trigger):
     script = TargetScript()
     script.authorize()
-    statements = _substitute_script_parameters(
-        script.triggers[trigger], {"TARGET": "11", "METHOD": "1"}
-    )
+    # These triggers no longer take parameters; they read temp variables.
+    script.temps.update({"TOP_arg_target": 11, "TOP_arg_method": 1})
+    statements = script.triggers[trigger]
     assert script.condition(statements, 1)
     script.countries[101]["controller"] = 3
     assert not script.condition(statements, 1)
@@ -695,8 +706,14 @@ def test_native_callback_for_a_superseded_binding_cannot_touch_current_case(
     variables = script.authorize()
     original_case = case_snapshot(script, 11)
     script.globals["TOP_status"][12] = 1
-    script.temps.update(actor_country=1, target_state=state)
-    script.call("TOP_native_result", TARGET=target, METHOD=method, TIER=2)
+    script.temps.update(
+        actor_country=1,
+        target_state=state,
+        TOP_target=target,
+        TOP_method=method,
+        TOP_tier=2,
+    )
+    script.call("TOP_native_result_args")
     assert script.globals["TOP_status"][11] == 1
     assert script.globals["TOP_status"][12] == 1
     assert script.globals["TOP_attempts"][11] == 0
@@ -807,15 +824,26 @@ def test_designation_limits_each_actor_to_one_person_in_each_host():
     assert case_snapshot(script, 11) == first
 
 
+def fire_native_callback(script, target=11, method=1, tier=2, state=101):
+    """Run a raid callback from its own instance scope.
+
+    TOP_native_result_args reads TOP_target, TOP_method and TOP_tier: raids set
+    them inline because common/raids/ is parsed before the scripted effects
+    register, so a parameterised call there cannot resolve.
+    """
+    script.country(1000, tag="raid_instance")
+    script.countries[1000]["vars"].update(actor_country=1, target_state=state)
+    script.temps.pop("target_state", None)
+    script.temps.update(TOP_target=target, TOP_method=method, TOP_tier=tier)
+    script.call("TOP_native_result_args", 1000)
+
+
 def test_native_callback_loads_its_person_case_while_another_host_is_selected():
     script = TargetScript()
     variables = script.authorize()
     script.authorize(12, host=3, state=102)
     other = case_snapshot(script, 12)
-    script.country(1000, tag="raid_instance")
-    script.countries[1000]["vars"].update(actor_country=1, target_state=101)
-    script.temps.pop("target_state", None)
-    script.call("TOP_native_result", 1000, TARGET=11, METHOD=1, TIER=2)
+    fire_native_callback(script)
     assert script.globals["TOP_status"][11] == 3
     assert script.globals["TOP_status"][12] == 1
     assert variables["TOP_case_phase"][11] == 4
@@ -914,10 +942,7 @@ def test_closing_one_case_preserves_other_hosts_and_rejects_its_late_callback(ac
     assert variables["TOP_case_phase"][11] == 0
     assert case_snapshot(script, 12) == other
     assert variables["TOP_active_cases"] == [12]
-    script.country(1000, tag="raid_instance")
-    script.countries[1000]["vars"].update(actor_country=1, target_state=101)
-    script.temps.pop("target_state", None)
-    script.call("TOP_native_result", 1000, TARGET=11, METHOD=1, TIER=2)
+    fire_native_callback(script)
     assert script.globals["TOP_status"][11] == 1
     assert script.globals["TOP_status"][12] == 1
     assert variables["TOP_archive_cursor"] == 0
