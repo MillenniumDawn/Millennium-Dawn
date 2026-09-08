@@ -517,3 +517,22 @@ def test_issue_paths_use_the_file_basename(tmp_path):
     path = _english(tmp_path, "prose_l_english.yml", 'l_english:\n A:0 "a — b"\n')
     issues = VL.process_yml_for_prose((path,))
     assert [i.file for i in issues] == [os.path.basename(path)]
+
+
+@pytest.mark.parametrize(
+    "directory", ["common", "events", "history/countries", "history/states"]
+)
+@pytest.mark.parametrize(
+    "target", ["written_var", "145.written_var", "ROOT.written_var"]
+)
+def test_loc_variable_writes_include_history_and_state_scopes(
+    tmp_path, directory, target
+):
+    _english(
+        tmp_path, "t_l_english.yml", ' a_key: "[?145.written_var] [?missing_var]"\n'
+    )
+    _txt(tmp_path, f"{directory}/e.txt", f"set_variable = {{ {target} = 3 }}\n")
+    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_variable_references()
+    assert len(validator._issues) == 1
+    assert "missing_var" in str(validator._issues[0])
