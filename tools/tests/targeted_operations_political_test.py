@@ -122,10 +122,14 @@ class PoliticalScript(TargetedScript):
             field = "stability" if key == "add_stability" else "support"
             country[field] += self.value(operand, identifier)
         elif key in {"TOP_add_target_lead", "TOP_grant_target_mandate"}:
-            data = {name: self.value(value, identifier) for name, _, value in operand}
-            target = int(data["TARGET"])
+            # These no longer take parameters: the engine does not substitute
+            # $PARAM$ for a scripted effect either, so the caller sets
+            # TOP_arg_target and TOP_arg_amount first.
+            target = int(self.value("TOP_arg_target", identifier))
             if key == "TOP_add_target_lead":
-                self.leads.append((identifier, target, data["AMOUNT"]))
+                self.leads.append(
+                    (identifier, target, self.value("TOP_arg_amount", identifier))
+                )
             else:
                 country["vars"][f"TOP_mandates^{target}"] = (
                     self.globals["TOP_clock"] + 365
