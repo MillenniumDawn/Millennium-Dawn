@@ -38,7 +38,9 @@ def _write(tmp_path, text=LOG):
 def test_third_party_noise_is_separated_from_mod_errors(tmp_path):
     report = rr.parse(_write(tmp_path))
 
-    assert report["third_party"] == 2  # the ugc .mod line and the audio line
+    # the ugc line is evidenced third-party; the audio line is unattributed
+    assert report["third_party"] == 1
+    assert report["audio"] == 1
     assert report["mod_errors"] == 4
     assert report["span"] == ("22:10:49", "22:12:30")
 
@@ -126,3 +128,42 @@ def test_saved_baseline_is_valid_json(tmp_path, monkeypatch):
 
     with open(out, encoding="utf-8") as handle:
         assert json.load(handle)["mod_errors"] == 4
+
+
+def test_an_audio_error_without_third_party_evidence_is_not_dropped(tmp_path):
+    """Matching the audio subsystem alone would hide a mod-owned audio error."""
+    log = (
+        "[10:00:00][no_game_date][pdx_audio.cpp:1294]: Music with name "
+        "'MD_theme' already added\n"
+    )
+    report = rr.parse(_write(tmp_path, log))
+
+    assert report["third_party"] == 0
+    assert report["audio"] == 1
+
+
+def test_a_run_with_only_audio_errors_does_not_read_as_clean(
+    tmp_path, monkeypatch, capsys
+):
+    monkeypatch.setattr(rr, "hoi4_is_running", lambda: False)
+    log = (
+        "[10:00:00][no_game_date][pdx_audio.cpp:1294]: Music with name "
+        "'MD_theme' already added\n"
+    )
+    rr.main(["--log", _write(tmp_path, log)])
+
+    out = capsys.readouterr().out
+    assert "could not be attributed" in out
+    assert "No mod errors." not in out
+
+
+def test_a_ugc_line_is_still_dropped_as_third_party(tmp_path):
+    log = (
+        "[10:00:00][no_game_date][dlc.cpp:218]: Invalid supported_version in  "
+        "file: mod/ugc_2243912940.mod line: 10\n"
+    )
+    report = rr.parse(_write(tmp_path, log))
+
+    assert report["third_party"] == 1
+    assert report["audio"] == 0
+    assert report["mod_errors"] == 0

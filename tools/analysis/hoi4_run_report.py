@@ -35,12 +35,15 @@ _LINE_RE = re.compile(
 _FILE_RE = re.compile(r"(?:in )?file: \"([^\"]+)\"|in ([\w/]+\.(?:txt|gui|gfx|yml))")
 _NUM_RE = re.compile(r"\b\d+\b")
 
-# Noise from third-party mods and audio assets. These are not MD's to fix, and
-# they dominate the raw counts, so they are separated rather than deleted.
-_THIRD_PARTY = re.compile(
-    r"ugc_\d+|pdx_audio|pdx_audiomusic|assetfactory_audio|"
-    r"Invalid supported_version|44\.1kHz|already added",
-    re.I,
+# Only drop a line that actually names a third-party mod. Matching on the audio
+# subsystem alone would hide an audio error belonging to this mod and let a run
+# carrying nothing else report zero.
+_THIRD_PARTY = re.compile(r"ugc_\d+|mod/[\w.-]+\.mod|Invalid supported_version", re.I)
+
+# Audio diagnostics with no third-party evidence. Counted and shown separately
+# rather than dropped, because ownership cannot be established from the line.
+_AUDIO = re.compile(
+    r"pdx_audio|pdx_audiomusic|assetfactory_audio|44\.1kHz|already added", re.I
 )
 
 
@@ -92,6 +95,7 @@ def parse(path: str) -> Dict[str, object]:
     lines = raw.split("\n")
     mod: List[Tuple[str, str, str]] = []
     third_party = 0
+    audio = 0
     runtime = 0
     clocks: List[str] = []
 
@@ -106,6 +110,9 @@ def parse(path: str) -> Dict[str, object]:
         if _THIRD_PARTY.search(line):
             third_party += 1
             continue
+        if _AUDIO.search(line):
+            audio += 1
+            continue
         if match.group("date") != "no_game_date":
             runtime += 1
         mod.append((match.group("source"), _origin(body) or "(no file)", _shape(body)))
@@ -117,6 +124,7 @@ def parse(path: str) -> Dict[str, object]:
         "log": path,
         "total_lines": len([ln for ln in lines if ln.strip()]),
         "third_party": third_party,
+        "audio": audio,
         "mod_errors": len(mod),
         "runtime_errors": runtime,
         "span": (clocks[0], clocks[-1]) if clocks else ("", ""),
@@ -134,12 +142,19 @@ def render(report: Dict[str, object], baseline: Optional[Dict[str, object]]) -> 
         f"errors   {report['mod_errors']} from the mod"
         f"  ({report['runtime_errors']} after the game date started)"
     )
-    out.append(f"ignored  {report['third_party']} third-party mod / audio lines")
+    out.append(f"ignored  {report['third_party']} third-party mod lines")
+    out.append(f"audio    {report['audio']} audio diagnostics, ownership unclear")
     out.append("")
 
     by_file: Dict[str, int] = report["by_file"]  # type: ignore[assignment]
     if not by_file:
-        out.append("No mod errors.")
+        if report.get("audio"):
+            out.append(
+                f"No mod errors, but {report['audio']} audio diagnostics were seen"
+                " and could not be attributed."
+            )
+        else:
+            out.append("No mod errors.")
     else:
         out.append("by file")
         for name, count in list(by_file.items())[:20]:

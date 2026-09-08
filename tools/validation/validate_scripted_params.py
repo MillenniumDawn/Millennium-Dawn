@@ -118,7 +118,9 @@ _KW_OPEN_RE = re.compile(r"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{")
 
 
 _PARAM_TOKEN_RE = re.compile(r"\$[A-Za-z_]\w*\$")
-_TRIGGER_DEF_RE = re.compile(r"^([A-Za-z_]\w*)\s*=\s*\{", re.M)
+# A top-level definition may be indented: 00_peace_deal_triggers.txt indents
+# its own by two tabs. Depth decides what is a definition, not column.
+_DEF_OR_BRACE_RE = re.compile(r"([{}])|([A-Za-z_]\w*)\s*=\s*\{")
 
 
 def _block_end(text: str, open_brace_index: int) -> int:
@@ -152,13 +154,25 @@ def _parameterised_trigger_defs(mod_path: str) -> Dict[str, Tuple[str, int]]:
             continue
         if "$" not in text:
             continue
-        for match in _TRIGGER_DEF_RE.finditer(text):
-            body = text[match.end() - 1 : _block_end(text, match.end() - 1)]
+        depth = 0
+        for match in _DEF_OR_BRACE_RE.finditer(text):
+            brace = match.group(1)
+            if brace == "{":
+                depth += 1
+                continue
+            if brace == "}":
+                depth -= 1
+                continue
+            if depth:
+                continue
+            open_brace = text.index("{", match.end() - 1)
+            body = text[open_brace : _block_end(text, open_brace)]
             if _PARAM_TOKEN_RE.search(body):
-                found[match.group(1)] = (
+                found[match.group(2)] = (
                     filepath,
                     text.count(chr(10), 0, match.start()) + 1,
                 )
+            depth += 1
     return found
 
 

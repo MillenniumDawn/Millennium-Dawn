@@ -1003,3 +1003,50 @@ def test_the_definition_file_is_not_counted_as_a_caller(tmp_path):
 
     assert len(findings) == 1, findings
     assert "takes $PARAM$ arguments" in findings[0]
+
+
+def test_an_indented_top_level_trigger_definition_is_found(tmp_path):
+    """A top-level definition may be indented.
+
+    00_peace_deal_triggers.txt indents its own by two tabs, so anchoring the
+    name to column 1 made those definitions, and every call to them, invisible.
+    """
+    _mod(
+        tmp_path,
+        {
+            "common/scripted_triggers/00_t.txt": (
+                "# HEADER\n"
+                "\t# SECTION\n"
+                "\t\tINDENTED_gate = {\n"
+                "\t\t\tcheck_variable = { a^$TARGET$ = 1 }\n"
+                "\t\t}\n"
+            ),
+        },
+    )
+
+    findings = _trigger_findings(tmp_path)
+
+    assert any("INDENTED_gate takes $PARAM$" in f for f in findings), findings
+
+
+def test_a_nested_block_is_not_mistaken_for_a_definition(tmp_path):
+    """Only depth zero is a definition; an inner block that happens to use a
+    parameter belongs to the definition around it."""
+    _mod(
+        tmp_path,
+        {
+            "common/scripted_triggers/00_t.txt": (
+                "OUTER_gate = {\n"
+                "\tOR = {\n"
+                "\t\tcheck_variable = { a^$TARGET$ = 1 }\n"
+                "\t}\n"
+                "}\n"
+            ),
+        },
+    )
+
+    findings = _trigger_findings(tmp_path)
+
+    assert len(findings) == 1, findings
+    assert "OUTER_gate" in findings[0]
+    assert not any("OR takes" in f for f in findings)
