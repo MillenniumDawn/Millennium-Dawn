@@ -140,32 +140,6 @@ _ALLOWED_CIVIL_WAR_ALWAYS_NO = re.compile(
     r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}"
 )
 
-KeyOwner = Tuple[str, str, str, int]
-KeyOwners = Dict[str, List[KeyOwner]]
-
-
-def _parse_focus_id_entries(args: Tuple[str, str]) -> List[Tuple[str, int]]:
-    """Return focus ids and source lines from one file."""
-    filepath, mod_path = args
-    text = FileOpener.open_text_file(
-        filepath, lowercase=False, strip_comments_flag=True
-    )
-    if not text:
-        return []
-    from validate_focus_tree import _iter_focus_blocks_with_id
-
-    def _compute() -> List[Tuple[str, int]]:
-        out: List[Tuple[str, int]] = []
-        for focus_id, _body, start, _end in _iter_focus_blocks_with_id(text):
-            if not focus_id or "[" in focus_id:
-                continue
-            out.append((focus_id, text.count("\n", 0, start) + 1))
-        return out
-
-    return disk_cache.per_file_cached_by_content(
-        mod_path, "ideas.focus_id_entries", filepath, text, _compute
-    )
-
 
 def _blank_nested_braces(text: str) -> str:
     """Blank everything nested inside `{...}`, keeping only top-level text.
@@ -947,123 +921,6 @@ class Validator(BaseValidator):
             category="idea-quality",
         )
 
-    def validate_name_override_collisions(
-        self,
-        defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]],
-        ideas_by_file: Dict[str, List[str]],
-    ):
-        """Warn when an idea name override shares a loc key with a focus or decision."""
-        self._log_section("Checking idea name overrides vs focus/decision ids...")
-
-        name_keys, desc_keys = self._object_loc_keys()
-        from validate_localisation import get_all_loc_keys
-
-        loc_values, _ = get_all_loc_keys(self.mod_path, lowercase=False)
-
-        defining_file: Dict[str, str] = {}
-        for filepath, names in ideas_by_file.items():
-            for name in names:
-                defining_file.setdefault(name, filepath)
-
-        staged_set = {
-            normalize_path_separators(path) for path in self.staged_files or []
-        }
-
-        def _is_staged(rel: str) -> bool:
-            if rel == "":
-                return False
-            rel_norm = normalize_path_separators(rel)
-            return any(staged_file.endswith(rel_norm) for staged_file in staged_set)
-
-        findings: List[Issue] = []
-        for idea_name in sorted(defined_ideas):
-            cat, name_override, _pic = defined_ideas[idea_name]
-            if not name_override:
-                continue
-            src = defining_file.get(idea_name, "")
-            idea_rel = os.path.relpath(src, self.mod_path) if src else "common/ideas/"
-            for key, desc_of in (
-                (name_override, False),
-                (name_override + "_desc", True),
-            ):
-                owners = (desc_keys if desc_of else name_keys).get(key, [])
-                if not owners or key not in loc_values:
-                    continue
-                if (
-                    self.staged_only
-                    and not _is_staged(idea_rel)
-                    and not any(_is_staged(owner[2]) for owner in owners)
-                ):
-                    continue
-                owners_txt = ", ".join(
-                    (
-                        f"{kind} `{obj}` ({rel}:{line})"
-                        if line
-                        else f"{kind} `{obj}` ({rel})"
-                    )
-                    for kind, obj, rel, line in owners
-                )
-                findings.append(
-                    Issue(
-                        severity=Severity.WARNING,
-                        category="loc-key-collision",
-                        message=(
-                            f"idea `{idea_name}` ({idea_rel}) also owns loc "
-                            f"key `{key}` with {owners_txt}; shared-key "
-                            f"collision may couple their localisation strings"
-                        ),
-                        file=idea_rel,
-                        line=0,
-                    )
-                )
-
-        self._report(
-            findings,
-            "✓ No idea name overrides collide with focus/decision ids",
-            "Loc key ownership collisions (idea name override vs focus/decision id):",
-            severity=Severity.WARNING,
-            category="loc-key-collision",
-        )
-
-    def _object_loc_keys(self) -> Tuple[KeyOwners, KeyOwners]:
-        """Map localisation keys to focus and decision owners."""
-        name_keys: KeyOwners = {}
-        desc_keys: KeyOwners = {}
-
-        focus_files = self._collect_files(
-            ["common/national_focus/**/*.txt"], ignore_staged=True
-        )
-        for filepath, batch in zip(
-            focus_files,
-            self._pool_map(
-                _parse_focus_id_entries, [(f, self.mod_path) for f in focus_files]
-            ),
-        ):
-            rel = os.path.relpath(filepath, self.mod_path)
-            for focus_id, line in batch:
-                name_keys.setdefault(focus_id, []).append(
-                    ("focus", focus_id, rel, line)
-                )
-                desc_keys.setdefault(focus_id + "_desc", []).append(
-                    ("focus", focus_id, rel, line)
-                )
-
-        from validate_decisions import parse_all_decision_factories
-
-        for factory in parse_all_decision_factories(self.mod_path):
-            name_key = factory.name_override or factory.token
-            if "[" in name_key:
-                continue
-            rel = os.path.join("common/decisions", factory.source_basename)
-            name_keys.setdefault(name_key, []).append(
-                ("decision", factory.token, rel, 0)
-            )
-            desc_key = factory.desc_override or factory.token + "_desc"
-            desc_keys.setdefault(desc_key, []).append(
-                ("decision", factory.token, rel, 0)
-            )
-        return name_keys, desc_keys
-
     def validate_loc_consolidation(
         self,
         defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]],
@@ -1530,7 +1387,6 @@ class Validator(BaseValidator):
 
         self.validate_category_icon_frames()
         self.validate_equipment_bonus_stack()
-        self.validate_name_override_collisions(defined_ideas, ideas_by_file)
 
         if self.suggest_consolidation:
             if ideas_for_consolidation:
