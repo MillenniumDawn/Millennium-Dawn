@@ -515,18 +515,19 @@ When an `every_country` or `every_other_country` loop filters on a bloc-membersh
 
 Array-backed membership ideas (`check_common_mistakes.py` flags these automatically):
 
-| Idea                                         | Array                                                |
-| -------------------------------------------- | ---------------------------------------------------- |
-| `NATO_member`                                | `global.nato_members`                                |
-| `EU_member`                                  | `global.EU_member`                                   |
-| `CSTO_member`                                | `global.CSTO_member`                                 |
-| `AU_member`                                  | `global.AU_member`                                   |
-| `LoAS_member` / `LoAS_member_upd`            | `global.arab_league_members`                         |
-| `OAU_member`                                 | `global.OAU_member`                                  |
-| `ecowas_member_state`                        | `global.ECOWAS_member`                               |
-| `idea_gcc_member_state`                      | `global.gcc_member_state`                            |
-| `faction_warsaw_pact_idea`                   | `global.WARSAW_PACT_member`                          |
-| `RAJ_BRICS_associate` / `RAJ_BRICS_observer` | `global.BRICS_associates` / `global.BRICS_observers` |
+| Idea                              | Array                        |
+| --------------------------------- | ---------------------------- |
+| `NATO_member`                     | `global.nato_members`        |
+| `EU_member`                       | `global.EU_member`           |
+| `CSTO_member`                     | `global.CSTO_member`         |
+| `AU_member`                       | `global.AU_member`           |
+| `LoAS_member` / `LoAS_member_upd` | `global.arab_league_members` |
+| `OAU_member`                      | `global.OAU_member`          |
+| `ecowas_member_state`             | `global.ECOWAS_member`       |
+| `idea_gcc_member_state`           | `global.gcc_member_state`    |
+| `faction_warsaw_pact_idea`        | `global.WARSAW_PACT_member`  |
+| `RAJ_BRICS_associate`             | `global.BRICS_associates`    |
+| `RAJ_BRICS_observer`              | `global.BRICS_observers`     |
 
 Ideas backed by TWO arrays (`p5_member`, `at_member`, `RAJ_BRICS`) cannot convert to a single array loop — leave those as `every_country`, or loop the primary array and re-check the idea inside.
 

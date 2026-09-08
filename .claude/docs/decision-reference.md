@@ -21,13 +21,15 @@ A decision becomes targeted when it includes `targets`, `target_array`, `target_
 
 ### Trigger Evaluation Order & Frequency
 
-| Block                 | Scope       | Frequency                                    | Purpose                                       |
-| --------------------- | ----------- | -------------------------------------------- | --------------------------------------------- |
-| `allowed`             | ROOT        | Once (game start/load)                       | Permanent gate                                |
-| `target_root_trigger` | ROOT only   | Daily                                        | Fast pre-filter — if false, skips all targets |
-| `target_trigger`      | ROOT + FROM | Daily (only if `target_root_trigger` passes) | Per-target daily filter                       |
-| `visible`             | ROOT + FROM | Every tick                                   | UI visibility (most expensive)                |
-| `available`           | ROOT + FROM | Every tick                                   | Clickability gate                             |
+| Block                 | Scope       | Frequency              | Purpose                        |
+| --------------------- | ----------- | ---------------------- | ------------------------------ |
+| `allowed`             | ROOT        | Once (game start/load) | Permanent gate                 |
+| `target_root_trigger` | ROOT only   | Daily                  | Fast pre-filter                |
+| `target_trigger`      | ROOT + FROM | Daily                  | Per-target daily filter        |
+| `visible`             | ROOT + FROM | Every tick             | UI visibility (most expensive) |
+| `available`           | ROOT + FROM | Every tick             | Clickability gate              |
+
+`target_trigger` runs only if `target_root_trigger` passes — a false pre-filter skips all targets.
 
 **Don't repeat the category's `allowed` on each decision.** A decision's `allowed` is redundant when it just duplicates the parent category's `allowed` (e.g. both are `original_tag = TAG`) — the category gate already applies to every decision inside it. Restrict the nation once on the category; put dynamic conditions in `available`/`visible` (since `allowed` is locked at game start).
 
@@ -125,6 +127,73 @@ Log first so the game log reads in firing order, and use the decision's own ID: 
 
 `validate_decisions.py` reports a block with no log as `missing-decision-log` and a block-level log that is not first as `decision-log-not-first`. A log that is the _only_ content of a `complete_effect` is a separate mistake: `check_common_mistakes.py` rejects it, because the block does nothing but log. Delete the dead block instead.
 
+## AI-Only Decisions
+
+A decision is **AI-only** when the engine can never show it to a human player. Two forms count:
+
+- an unconditional `is_ai = yes` at the top level of the decision's own `visible`, `available` or `allowed` block, or
+- membership in a decision **category** whose `visible` / `available` / `allowed` carries that same unconditional `is_ai = yes`.
+
+```
+	SOV_nuke_europe = {
+		allowed = { original_tag = SOV }
+
+		visible = {
+			is_ai = yes
+		}
+```
+
+"Unconditional" means the token sits at brace depth zero of the trigger block. Nested inside `OR`, `AND`, `if = { limit = }` or a scoped `TAG = { }` it is conditional and the decision is **not** AI-only — `allowed = { OR = { is_ai = yes  is_debug = yes } }` still shows to a player in debug, and `GRE = { is_ai = yes }` asks about a different country entirely.
+
+**An AI-only decision takes no localisation.** Nothing renders its name or tooltip, so a key for it is dead weight that later has to be translated. The raw ID surfacing in the decision UI is harmless because no human ever opens that tab. `validate_decisions.py` enforces both directions: an AI-only decision is exempt from `missing-decision-localisation`, and a key that does exist for one is reported as `ai-only-decision-localisation`. Both are WARNING-severity. `custom_cost_text` is exempt from the reverse check, since it can point at a scripted-loc key shared with player-facing decisions.
+
+The same holds for an **AI-only category** — one whose own `visible` / `available` / `allowed` carries that unconditional `is_ai = yes`. Its header is drawn in the same tab as its decisions, so its `<id>` and `<id>_desc` are dead weight too and are reported under `ai-only-decision-localisation` as well. The one exemption is a category named by `unlock_decision_category_tooltip` in a focus or decision, which renders the name key outside that tab. Categories are still never _required_ to carry localisation — the missing-key direction does not apply to them.
+
+**An AI-only decision takes no tooltip wrappers either.** `custom_trigger_tooltip` exists to give a requirement line a human can read, and `custom_effect_tooltip` to describe an effect the player is about to trigger; on an AI-only decision both render to nobody and only keep a loc key alive. Write the trigger bare:
+
+```
+		available = {
+			nationalist_monarchists_are_in_power = no
+			check_variable = { party_pop_array^23 < 0.35 }
+		}
+```
+
+`validate_variables.py` backs this: its three `available`-block checks — `untooltipped-available-check`, `unlocalised-available-flag` and `untooltipped-available-scripted-trigger` — skip AI-only decisions and every decision inside an AI-only category, using the same depth-0 `is_ai = yes` rule as above.
+
+## Announcing a Category
+
+A category with no `visible` block sits on the decisions tab from the first day, and one gated only on the tag or the date is on from the start too. Neither has anything to announce.
+
+A category gated on state that flips during play (a country or global flag, a completed focus, an idea, a variable) appears part-way through a game. Whatever turns it on should say so, with `unlock_decision_category_tooltip = <category>` in the focus `completion_reward` or event effect that sets the gate:
+
+```
+	completion_reward = {
+		set_country_flag = ALG_drone_program_open
+		unlock_decision_category_tooltip = ALG_drone_program_category
+	}
+```
+
+Without it a whole tab of decisions appears with no indication of where it came from. `unlock_decision_tooltip = <decision>` on one of its decisions counts too, since that names the decision the player just gained.
+
+`validate_decisions.py` reports the gap as `unannounced-decision-category` (WARNING), naming the trigger that makes the category conditional so the fix location is obvious. AI-only categories are exempt: nobody is watching.
+
+The check is **opt-in** (`--unannounced-categories`) and does not run in CI. MD has 118 categories in this state, so it is a backlog to work through deliberately rather than a gate on new work.
+
+The gate must sit at brace depth zero of `visible` to count. Inside a `NOT` the meaning inverts: `NOT = { has_country_flag = X }` is satisfied _until_ X is set, so X hides the category rather than opening it.
+
+## Announcing a Decision
+
+A decision effect that sets a flag another decision's `visible` or `available` waits on has unlocked that decision. `unlock_decision_tooltip = <decision>` is how the player is told:
+
+```
+		complete_effect = {
+			set_country_flag = SAU_decisive_storm
+			unlock_decision_tooltip = SAU_storm_air_campaign
+		}
+```
+
+MD does not announce every unlock, so `validate_decisions.py` only reports the inconsistent case as `unannounced-decision-unlock` (WARNING): a block that already calls `unlock_decision_tooltip` at least once and misses a sibling gated on the very flag it just set. That is an oversight, not a style choice. Both `visible` and `available` gates count, and the same depth-zero rule applies.
+
 ## Randomised Effects
 
 A decision that can fire more than once and rolls randomness (`random_list = { ... }` or `random = { chance = N ... }`) needs `fixed_random_seed = no` at decision top level:
@@ -141,9 +210,9 @@ The engine seeds the roll from the save state, so without it every repeat of the
 
 ## Formable Commitment Ratchet
 
-The AI commits to one formable at a time via two country variables: `formable_committed_id` (unique ordinal per formable) and `formable_committed_size` (that formable's full `update_flag` state count). Without this, a country holding territory for two formables alternates their zero-cost `update_flag` decisions forever.
+The AI commits to one formable at a time via `formable_committed_id` / `formable_committed_size`; every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate that blocks any formable other than the committed one unless it is strictly larger, and special formables (USoE, EFS membership, UAR, ...) commit through `commit_special_formable` with a sentinel size that outranks every decision formable. Full contract, id/size tables, guarded sites, and the maintenance rules (a new formable must wire the gates; editing an `update_flag` state list means updating every size literal — `validate_decisions.py` gates on drift): [formable-reference.md](formable-reference.md).
 
-Every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate — *blocked when committed to a different formable that is not strictly smaller*:
+Every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate — _blocked when committed to a different formable that is not strictly smaller_:
 
 ```
 	modifier = {

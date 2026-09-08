@@ -18,7 +18,12 @@ from __future__ import annotations
 import argparse
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from concurrent.futures import (
+    Future,
+    ProcessPoolExecutor,
+    ThreadPoolExecutor,
+    as_completed,
+)
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -176,32 +181,30 @@ ALL_CHECKS: list[Check] = [
 # ---------------------------------------------------------------------------
 
 
-def _run_parallel(checks: list[Check], max_workers: int) -> list[CheckResult]:
+def _collect_results(futures: dict[Future[CheckResult], Check]) -> list[CheckResult]:
+    """Gather CheckResults from futures, turning an exception into a failed result."""
     results: list[CheckResult] = []
+    for future in as_completed(futures):
+        check = futures[future]
+        try:
+            results.append(future.result())
+        except Exception as exc:  # noqa: BLE001 - surface as a failed check
+            results.append(CheckResult(check.name, False, f"Exception: {exc}", 0.0))
+    return results
+
+
+def _run_parallel(checks: list[Check], max_workers: int) -> list[CheckResult]:
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(c.fn): c for c in checks}
-        for future in as_completed(futures):
-            check = futures[future]
-            try:
-                results.append(future.result())
-            except Exception as exc:  # noqa: BLE001 - surface as a failed check
-                results.append(CheckResult(check.name, False, f"Exception: {exc}", 0.0))
-    return results
+        return _collect_results(futures)
 
 
 def _run_dist_parallel(checks: list[Check], max_workers: int) -> list[CheckResult]:
     # Dist checks parse ~163 HTML files each via html.parser, which holds the GIL,
     # so threads serialize instead of overlapping. Processes give real parallelism.
-    results: list[CheckResult] = []
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(_run_dist_check, c.name): c for c in checks}
-        for future in as_completed(futures):
-            check = futures[future]
-            try:
-                results.append(future.result())
-            except Exception as exc:  # noqa: BLE001 - surface as a failed check
-                results.append(CheckResult(check.name, False, f"Exception: {exc}", 0.0))
-    return results
+        return _collect_results(futures)
 
 
 def run_checks(

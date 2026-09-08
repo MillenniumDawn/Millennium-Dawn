@@ -31,6 +31,7 @@ _SCAN_PATTERNS = [
     "common/**/*.txt",
     "events/**/*.txt",
     "history/**/*.txt",
+    "music/**/*.txt",
 ]
 
 _RE_COMMENT_QUOTE = re.compile(r'#.*["]+', re.M | re.I)
@@ -567,7 +568,10 @@ class Validator(BaseValidator):
         )
 
         self._log_section("Focus Standards (WARNING)")
-        focus_warnings = [r for r in warning_results if "focus" in r[0].lower()]
+        # Match the message _check_focus_standards actually emits. A substring test
+        # on "focus" also catches event options whose own name carries it
+        # (LibyaFocus.104.a), double-reporting them here and under event-log.
+        focus_warnings = [r for r in warning_results if r[0].startswith("Focus ID ")]
         self._report(
             focus_warnings,
             "Focus standards OK",

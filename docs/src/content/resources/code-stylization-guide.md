@@ -21,7 +21,7 @@ This guide covers coding standards, best practices, and formatting rules for Mil
 | Focus Trees | Use `relative_position_id`, include logging, `ai_will_do` last |
 | Decisions   | Include logging, use `fire_only_once` sparingly                |
 | Events      | Use `is_triggered_only = yes`, log only if effects exist       |
-| Ideas       | Remove `allowed = { always = no }`, use `allowed_civil_war`    |
+| Ideas       | Keep picker gates on slotted ideas, use `allowed_civil_war`    |
 | Formatting  | Tabs (not spaces), 1 line between elements                     |
 
 ---
@@ -200,7 +200,8 @@ country_event = {
 ## Best Practices
 
 - Include `allowed_civil_war = { always = yes }` for civil war tags
-- **Remove** `allowed = { always = no }` - this is the default; `allowed` is checked once at game start/load and `add_ideas` bypasses it entirely. Tradeoff: `has_available_idea_with_trait` builds a list of every idea that passes `allowed`, then evaluates their `available` triggers at runtime. Removing `allowed = { always = no }` lets more ideas into that pool (more runtime checks), while keeping it filters them out. MD does not use that trigger, so the tradeoff is moot here
+- **Remove** the whole `allowed` block from an idea in a category with no slot (`country`, `hidden_ideas`). Nothing picks from those categories, so `add_idea` is the only way in and it never consults `allowed`. The gate does nothing no matter what is inside it
+- **Keep** `allowed = { always = no }` on slotted ideas that must not appear in the picker (religion and other laws). `add_idea` still applies them. Missing `allowed` means everyone sees the idea in the list
 - **Remove** `cancel = { always = no }` - checked hourly, never true; redundant default
 - **Remove** empty `on_add = { log = "" }` unless you're actually doing something
 - Log in `on_add` only when making changes

@@ -16,8 +16,8 @@ LAYER 2: CONTINUOUS STRATEGIES (ai_strategy files, always-evaluated)
   Country-specific files ──► diplomacy, war, production overrides
 
 LAYER 3: PERIODIC EFFECTS (on_daily / on_weekly / on_monthly)
-  Daily (AI only):
-    division/plane/ship_limiter_calculation ──► cache unit caps into *_limiter_limit vars
+  Monthly (AI only):
+    division/plane/ship_limiter_calculation ──► cache unit caps and deployed-plane count into limiter variables
   Weekly:
     AI Investment Pulse ──► AC_event.500 ──► AI_get_*_score effects
     ai_cyber_monthly ──► cyber operations against enemies
@@ -50,7 +50,7 @@ LAYER 5: GOD OF WAR OVERRIDES (game rule gated)
 
 ### on_daily (`common/on_actions/00_on_actions.txt`)
 
-- **AI Unit-Cap Cache**: AI only → `division_limiter_calculation` + `plane_limiter_calculation` + `ship_limiter_calculation`. Each recomputes the cached `*_limiter_limit` variable the matching limiter strategy reads in its `enable`.
+- **AI Unit-Cap Cache**: AI only → monthly division/plane/ship limiter calculations, plus immediate refreshes on war-relation changes.
 
 ### on_monthly (`common/on_actions/MD_on_actions.txt`)
 
@@ -94,14 +94,14 @@ ai_is_threatened = {
 
 `potential_and_current_enemies` is a built-in engine array (current enemies + allies-of-enemies + countries with wargoals), so it already covers hostile neighbours without a live neighbour loop. When `ai_is_threatened`:
 
-- The division/plane/ship limiter caps expand (1.25x multiplier inside the daily calc).
+- The division/plane/ship limiter caps expand (1.25x multiplier inside the monthly and transition refresh).
 - The division cap no longer receives its 0.75x peaceful-country reduction.
 
 This replaced the old `ai_update_build_units` effect and its `AI_is_threatened` country flag (removed).
 
 ### `division_limiter_calculation` / `plane_limiter_calculation` / `ship_limiter_calculation` (`00_AI_scripted_effects.txt`)
 
-Run daily for AI countries. Each computes a cap from factory count and situational multipliers (war, `ai_is_threatened`, major, NATO/EU, threat, faction, great-power) and stores it in `division_limiter_limit` / `plane_limiter_limit` / `ship_limiter_limit`. The matching limiter strategy reads that variable in `enable` instead of recomputing the math every evaluation. Under the `potato_edition` game rule the same formula runs, then the result is halved (`x0.5`) and re-rounded.
+Run monthly for AI countries, with additional refreshes on relevant war transitions. Each computes a cap from factory count and situational multipliers (war, `ai_is_threatened`, major, NATO/EU, threat, faction, great-power) and stores it in `division_limiter_limit` / `plane_limiter_limit` / `ship_limiter_limit`. The plane refresh also caches deployed plane count in `plane_limiter_deployed_size`. Matching limiter strategies read cached variables in `enable` instead of recomputing live counts every evaluation. Under the `potato_edition` game rule the same formula runs, then the result is halved (`x0.5`) and re-rounded.
 
 ### `ai_weapon_dump` (`99_weapon_dump_effects.txt`)
 
@@ -136,12 +136,15 @@ Monthly target selection scoring: player targets (+30 veteran), faction members 
 
 ### Template Conversion Decisions (`99_ai_templates_decisions.txt`)
 
-| Decision                       | Cooldown  | Requirements                             | Converts                              |
-| ------------------------------ | --------- | ---------------------------------------- | ------------------------------------- |
-| `convert_militia_to_light_inf` | 300 days  | No war, weapons > 2k, CNC > 500, MIL > 5 | 5 militia → L_Inf                     |
-| `convert_l_inf_to_mot_inf`     | 300 days  | No war, util vehicles > 500, MIL > 10    | 5 L_Inf → motorized                   |
-| `convert_mot_to_mech_inf`      | 300 days  | No war, APC chassis > 500, MIL > 20      | 5 mot → mechanized                    |
-| `UKR_convert_stuff`            | Fire once | UKR, date > 2000.6, no war               | All militia → L_Inf, all L_Inf → mech |
+All four require no active war. Cooldown: 300 days, except `UKR_convert_stuff` (fire once),
+which converts all militia → L_Inf and all L_Inf → mech.
+
+| Decision                       | Requirements                     | Converts             |
+| ------------------------------ | -------------------------------- | -------------------- |
+| `convert_militia_to_light_inf` | weapons > 2k, CNC > 500, MIL > 5 | 5 militia → L_Inf    |
+| `convert_l_inf_to_mot_inf`     | util vehicles > 500, MIL > 10    | 5 L_Inf → motorized  |
+| `convert_mot_to_mech_inf`      | APC chassis > 500, MIL > 20      | 5 mot → mechanized   |
+| `UKR_convert_stuff`            | UKR, date > 2000.6               | all (see note above) |
 
 ## AI Strategy Files
 
@@ -188,15 +191,42 @@ In MD both signs appear intentionally:
 
 Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (in the HOI4 install). Mirror gotchas here as they come up.
 
+### `declare_war` — target-keyed only, and pre-war only
+
+`declare_war` weights the AI's desire to **open** a war on one target. Two consequences:
+
+- **There is no generic form.** It requires `id = TAG`; `target =` is not accepted, and `dont_declare_war` is not a token at all (absent from vanilla `_documentation.md`, which lists only `declare_war` and `dont_join_wars_with`). The targetless equivalent is `avoid_starting_wars`.
+- **`enable = { has_war_with = TARGET }` makes it a no-op** — you cannot declare war on a country you are already fighting. Gate on `has_wargoal_against = X` + `NOT = { has_war_with = X }` instead, as `MD_war_declaration_ai.txt` and `BOS_avoid_unready_war_with_cro` do.
+
+306 `TAG_cancel_war_TARGET` blocks carrying that no-op gate were deleted from 18 files and replaced by one mod-wide block in `MD_war_declaration_ai.txt`:
+
+```pdx
+MD_avoid_new_wars_when_outmatched = {
+ enable = {
+  has_war = yes
+  enemies_strength_ratio > 0.75
+ }
+ abort_when_not_enabled = yes
+
+ ai_strategy = { type = avoid_starting_wars value = -200 }
+}
+```
+
+Omitting `allowed` applies a strategy to every country (precedent: `save_pp_for_laws`, `AI_generic_office_construction`, `default_area_priority`). Do not re-add per-tag `*_cancel_war_*` blocks, and do not write a per-tag `TAG_avoid_starting_wars` on a plain `enemies_strength_ratio` gate — anything stricter than `> 0.75` is already covered by the mod-wide block and does nothing. A per-tag brake earns its place only on a gate the strength ratio cannot express, such as `BLR`/`SOV` firing on NATO/EU-aligned enemies at any strength.
+
+**Ratio direction differs between the two triggers.** `strength_ratio = { tag = X ratio < 1 }` means the scope country is weaker than X. `enemies_strength_ratio` rises as the scope country's enemies get stronger — MD's peace-deal triggers read `> 1.7` as losing and `> 2.0` as massively outgunned (`common/scripted_triggers/00_peace_deal_triggers.txt`).
+
 ### `MD_combat_ai_strategies.txt` — Production & Combat
 
 **Army production (3 tiers by factory count):**
 
-| Strategy | MIL Range | Key Ratios |
-| ---------- | ----------- | ------------ |
-| `default_army_production_strategy` | < 11 | L_Inf=30, infantry=25, mech/IFV=50, armor=35, SF=20, marines=15 |
-| `default_army_production_strategy_maj` | 11–29 | Infantry=15, IFV=50, armor=40, SF=25, marines=25 |
-| `default_army_production_strategy_global` | 30+ | Infantry=30, APC=30, IFV=35, armor=25, SF=6, marines=10 |
+All three share the `default_army_production_strategy` name prefix:
+
+| Suffix    | MIL Range | Key Ratios                                                      |
+| --------- | --------- | --------------------------------------------------------------- |
+| (none)    | < 11      | L_Inf=30, infantry=25, mech/IFV=50, armor=35, SF=20, marines=15 |
+| `_maj`    | 11–29     | Infantry=15, IFV=50, armor=40, SF=25, marines=25                |
+| `_global` | 30+       | Infantry=30, APC=30, IFV=35, armor=25, SF=6, marines=10         |
 
 **Note:** `_maj` covers 11–29 MIL. `_global` replaces it at 30+ MIL so advanced-role weights do not stack.
 
@@ -209,11 +239,11 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 
 **Equipment production (3 tiers):**
 
-| Strategy | MIL Range | Focus |
-| ---------- | ----------- | ------- |
-| `MD_poor_production_strategy` | < 6 | Infantry weapons dominate |
-| `MD_default_production_strategy` | 6-10 | Balanced with mech/armor intro |
-| `MD_major_production_strategy` | > 10 | Full spectrum with min factory targets |
+| Strategy                         | MIL Range | Focus                                  |
+| -------------------------------- | --------- | -------------------------------------- |
+| `MD_poor_production_strategy`    | < 6       | Infantry weapons dominate              |
+| `MD_default_production_strategy` | 6-10      | Balanced with mech/armor intro         |
+| `MD_major_production_strategy`   | > 10      | Full spectrum with min factory targets |
 
 APCs use the `amphibious` equipment category and IFVs use `flame`, not
 `mechanized`. Countries with enough factories, a healthy rifle stockpile, and
@@ -227,7 +257,7 @@ stockpile adds a second +100% category-demand increase.
 **Division/Ship/Plane Limiters:**
 
 - `division_limiter`: (factories + 5 when factories > 4) × 1.3 × situational modifiers. Peaceful, unthreatened countries receive a 0.75x reduction instead of being blocked from training. Active war scales up (~1.75x, wars demand more divisions than peacetime), `ai_is_threatened` adds ~1.25x, major status adds ~1.15x. Alliances that constrain unilateral builds (NATO, EU) apply a negative multiplier (~-0.8x) so members don't all maintain peer-major standing armies.
-- `division_limiter_potato_edition`: 0.5x base for the "performance" rule path, extra penalties for very large factions (CHI/SOV) so end-game stutter stays manageable.
+- `division_limiter_potato_edition`: 0.5x base for the "performance" rule path. Limiter inputs are cached and unchanged AI states skip recalculation.
 - `ship_limiter`: naval_factories × ~7 (or ×3 potato), tuned so a typical naval power lands at a plausible fleet size, not the engine's hard cap.
 - `plane_limiter`: mil_factories × ~80 + 50 (or ×40 potato), accounts for air industries producing many cheap units per factory vs ground.
 
@@ -257,13 +287,13 @@ stockpile adds a second +100% category-demand increase.
 
 **Factory building targets (scaled by power level):**
 
-| Power Level | CIC Target |
-| ------------- | ----------- |
-| Minor/non-power | +50 |
-| Regional | +75 |
-| Large | +100 |
-| Great | +125 |
-| Super | +150 |
+| Power Level     | CIC Target |
+| --------------- | ---------- |
+| Minor/non-power | +50        |
+| Regional        | +75        |
+| Large           | +100       |
+| Great           | +125       |
+| Super           | +150       |
 
 **Economic crisis response:**
 
@@ -300,7 +330,7 @@ stockpile adds a second +100% category-demand increase.
 | SOV     | 50        | Always                                |
 | CHI     | 50        | Always                                |
 | GER     | 50        | Always                                |
-| UKR     | 50/150/50 | Always / SOV threatening / BLR allied |
+| UKR     | 50, 150, 50 | Always, SOV threatening, BLR allied |
 | CAN     | 100       | Preparing for war                     |
 | ARG     | 100       | Preparing for war                     |
 | RAJ     | 100       | China aggressive                      |
@@ -317,8 +347,8 @@ stockpile adds a second +100% category-demand increase.
 
 **Notable diplomacy patterns:**
 
-- **Japan**: Most pacifist AI, `declare_war = -200` against 24 neighbors
-- **SOV**: `declare_war = -4000` against nations guaranteed by TUR/CHI
+- **Japan**: Most pacifist AI, `JAP_no_war_if_at_war` sets `declare_war = -200` against 30 neighbors
+- **SOV**: `SOV_cancel_war_chi_guaranteed` sets `declare_war = -4000` against nations guaranteed by TUR/CHI
 - **USA during War on Terror**: `pp_spend_priority` forces decision spending (decisions=250, all others=-9999)
 
 ## AI Strategy Plans (`common/ai_strategy_plans/`)
@@ -440,12 +470,10 @@ Used throughout the AI system for priorities, weights, and `ai_will_do` values.
 
 ## Common Pitfalls
 
-| Issue                                          | Impact                                | Prevention                               |
-| ---------------------------------------------- | ------------------------------------- | ---------------------------------------- |
-| `role_ratio id = mechanized`                   | Wasted production weight              | Use `apc_mechanized` or `ifv_mechanized` |
-| `role = armored` in templates                  | Template never selected               | Use `armor`                              |
-| Case-mismatched unit names                     | Battalion silently missing            | `validate_oob_units` pre-commit hook     |
-| Factory threshold gaps                         | No template at specific factory count | Ensure contiguous ranges                 |
-| Overlapping MIL-tier enable ranges               | Role weights stack unexpectedly         | Keep generic, major, and global tiers exclusive   |
-| Missing equipment coverage for blocked nations | AI can't produce equipment            | Check all roles covered                  |
-| CAS designs with `medium_as_fighter` role      | Deployed as air superiority           | Use `medium_cas_fighter`                 |
+- **`role_ratio id = mechanized`** — wasted production weight; use `apc_mechanized` or `ifv_mechanized`.
+- **`role = armored` in templates** — template never selected; use `armor`.
+- **Case-mismatched unit names** — battalion silently missing; caught by `validate_oob_units` pre-commit hook.
+- **Factory threshold gaps** — no template at specific factory count; ensure contiguous ranges.
+- **Overlapping MIL-tier enable ranges** — role weights stack unexpectedly; keep generic, major, and global tiers exclusive.
+- **Missing equipment coverage for blocked nations** — AI can't produce equipment; check all roles covered.
+- **CAS designs with `medium_as_fighter` role** — deployed as air superiority; use `medium_cas_fighter`.

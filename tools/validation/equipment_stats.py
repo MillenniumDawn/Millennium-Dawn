@@ -35,7 +35,17 @@ import glob
 import os
 import re
 from dataclasses import dataclass
-from typing import Dict, FrozenSet, List, Optional, Set
+from typing import (
+    AbstractSet,
+    Dict,
+    FrozenSet,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+)
 
 from equipment_module_slots import (
     EquipmentIndex,
@@ -109,6 +119,11 @@ class _Entry:
     types: Set[str]
 
 
+_BONUS_OPEN_RE = re.compile(r"(?<![A-Za-z0-9_])equipment_bonus\s*=\s*\{")
+_BONUS_STAT_RE = re.compile(r"([A-Za-z_]\w*)[^\S\n]*=[^\S\n]*([^\s{}]+)")
+_NON_STACKING_BONUS_KEYS = frozenset({"instant"})
+
+
 @dataclass(frozen=True)
 class EquipmentStatIndex:
     """Lookup for equipment tokens used by ``equipment_type`` and
@@ -116,6 +131,7 @@ class EquipmentStatIndex:
 
     stats: Dict[str, FrozenSet[str]]
     groups: Dict[str, List[str]]
+    types: Dict[str, FrozenSet[str]]
 
     def resolve(self, token: str) -> Optional[FrozenSet[str]]:
         """Stats *token* declares a base for, or None when nothing defines it."""
@@ -125,6 +141,26 @@ class EquipmentStatIndex:
         """Member tokens of a ``mio_cat_*`` group, or ``[token]`` when it is not
         a group."""
         return list(self.groups.get(token, (token,)))
+
+    def type_archetype_overlaps(
+        self, keyed_stats: Mapping[str, AbstractSet[str]]
+    ) -> List[Tuple[str, str, FrozenSet[str]]]:
+        """Pairs ``(type_key, child_key, shared stats)`` in one nested bonus.
+
+        A type-category key (``carrier``, ``submarine``, ...) applies to every
+        archetype that declares that type. Naming the child too stacks the
+        shared modifiers twice, which is how helicopter-operator IC can hit 0.
+        """
+        present = set(keyed_stats)
+        found: List[Tuple[str, str, FrozenSet[str]]] = []
+        for child in present:
+            for category in self.types.get(child, ()):
+                if category == child or category not in present:
+                    continue
+                shared = frozenset(keyed_stats[category] & keyed_stats[child])
+                if shared:
+                    found.append((category, child, shared))
+        return found
 
 
 def _parse_equipment_file(text: str, entries: Dict[str, _Entry]) -> None:
@@ -221,9 +257,9 @@ def _hull_module_stats(
         if not slots:
             continue
         categories: Set[str] = set()
-        for allowed in slots.values():
-            if allowed:
-                categories |= allowed
+        for slot in slots.values():
+            if slot and slot.allowed:
+                categories |= slot.allowed
         pending = set(categories)
         while pending:
             category = pending.pop()
@@ -295,6 +331,7 @@ def build_index(
     return EquipmentStatIndex(
         stats={k: frozenset(v) for k, v in stats.items()},
         groups=_parse_groups(group_texts),
+        types={k: frozenset(v) for k, v in types.items()},
     )
 
 
@@ -316,3 +353,34 @@ def build_equipment_stat_index(mod_path: str) -> EquipmentStatIndex:
         )
     ]
     return build_index(equipment_texts, module_texts, group_texts)
+
+
+def iter_type_archetype_stacks(
+    text: str, index: EquipmentStatIndex
+) -> Iterator[Tuple[int, str, str, FrozenSet[str]]]:
+    """Yield ``(child_offset, type_key, child_key, shared)`` for stacked bonuses."""
+    for match in _BONUS_OPEN_RE.finditer(text):
+        start = match.end()
+        depth = 1
+        i = start
+        while i < len(text) and depth:
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+            i += 1
+        if depth:
+            continue
+        block = text[start : i - 1]
+        keyed: Dict[str, Set[str]] = {}
+        child_at: Dict[str, int] = {}
+        for name, blo, bhi, header in _iter_blocks(block, 0, len(block)):
+            stats = {
+                key
+                for key, _value in _BONUS_STAT_RE.findall(_depth0_text(block, blo, bhi))
+                if key not in _NON_STACKING_BONUS_KEYS
+            }
+            keyed[name] = stats
+            child_at[name] = start + header
+        for type_key, child, shared in index.type_archetype_overlaps(keyed):
+            yield child_at[child], type_key, child, shared

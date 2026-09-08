@@ -230,8 +230,8 @@ def dir_stats(root: Path) -> tuple[int, int]:
 def _archive_path_excluded(path: PurePosixPath, excludes: set[str]) -> bool:
     root_only = {pattern for pattern in excludes if pattern in ROOT_ONLY_EXCLUDES}
     anywhere = excludes - root_only
-    if len(path.parts) == 1 and any(
-        fnmatch.fnmatch(path.name, pattern) for pattern in root_only
+    if path.parts and any(
+        fnmatch.fnmatch(path.parts[0], pattern) for pattern in root_only
     ):
         return True
     return any(
@@ -461,7 +461,10 @@ def publish(
     vdf_path = write_vdf(mod_dir, mod_id, changenote)
 
     # Persistent log outside the temp content folder so it survives cleanup.
-    log_path = Path(tempfile.gettempdir()) / f"md_publish_{int(time.time())}.log"
+    with tempfile.NamedTemporaryFile(
+        prefix="md_publish_", suffix=".log", delete=False
+    ) as log_handle:
+        log_path = Path(log_handle.name)
 
     count, total = dir_stats(mod_dir)
 

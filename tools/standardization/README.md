@@ -30,6 +30,20 @@ Standardizes national focus files according to Millennium Dawn standards.
 python3 standardize_focus_tree.py input.txt -o output.txt --backup --verbose
 ```
 
+### Focus ID Prefixes (`rename_focus_ids.py`)
+
+Renames country focus IDs and their references without rewriting unrelated focus formatting.
+It scans the repository containing the tool by default; use `--root` for another checkout.
+
+**Usage:**
+
+```bash
+python3 rename_focus_ids.py \
+  --focus-file ../../common/national_focus/05_Australia.txt \
+  --localisation-file ../../localisation/english/MD_focus_AST_l_english.yml \
+  --tag AST
+```
+
 ### Events (`standardize_events.py`)
 
 Standardizes event files according to Millennium Dawn standards.
@@ -70,7 +84,7 @@ Standardizes idea files according to Millennium Dawn standards.
 
 **Key features:**
 
-- Removes redundant default properties (`allowed = { always = no }`, `cancel = { always = no }`)
+- Removes redundant default properties (`cancel = { always = no }`). Keeps `allowed = { always = no }` (hides a slotted idea from the picker; `add_idea` still applies it)
 - Adds logging to on_add/on_remove when they have effects
 - Preserves allowed_civil_war for civil war tags
 - Maintains proper formatting
@@ -80,6 +94,63 @@ Standardizes idea files according to Millennium Dawn standards.
 ```bash
 python3 standardize_ideas.py input.txt -o output.txt --backup --verbose
 ```
+
+### Redundant Gate Blocks (`strip_idea_allowed_gates.py`, `strip_dynmod_tag_gates.py`)
+
+Surgical sweeps for two gates that never fail. Unlike the standardizers above they rewrite only the blocks they remove, so the diff carries no reformatting.
+
+`strip_idea_allowed_gates.py` drops `allowed` and `available` blocks from every idea in a category with no slot. Nothing picks from `country` or `hidden_ideas`, so `add_idea` is the only way in and it never consults either gate. Use `cancel` if the idea should remove itself. Categories come from `common/idea_tags/`, so a new slotless one is covered without editing the script.
+
+`strip_dynmod_tag_gates.py` drops `always = yes` and top-level `original_tag` / `tag` triggers from a dynamic modifier's `enable` block, removing the block when that empties it. `enable` is re-evaluated at runtime, so these cost something every pass. Only top-level triggers are touched: one inside `OR` / `NOT` is an alternative or an exclusion, and `country_exists`, `has_idea` and `has_completed_focus` stay, because those go false while the modifier is still attached. Every strip is reported — "only this country ever attaches it" is a claim about the rest of the repo that the script does not verify.
+
+Both find a block's closing brace by column, not by "the line where depth hit zero" — a closer sharing a line with the enclosing block's own `}` would otherwise be swallowed along with it. A block whose braces never balance is reported and left alone, and the run exits non-zero, rather than rewriting from the opener to EOF.
+
+`validate_ideas.py` and `validate_modifiers.py` flag both patterns, so neither grows back silently.
+
+**Usage:**
+
+```bash
+python3 strip_idea_allowed_gates.py --dry-run
+python3 strip_dynmod_tag_gates.py --backup
+```
+
+### AI Path Weights (`apply_ai_path_weights.py`)
+
+Writes the `ai_will_do` path modifiers for a country's AI path game rule (issue #3162) from a
+mapping of focus id to ownership group, so the two-line boost/killswitch pair does not have to be
+hand-written across ~180 focuses. Like the gate sweeps above it rewrites only the blocks it owns.
+
+A modifier is replaced only when it exists to route paths: it names a `<TAG>_*_FOCUS_PATH` flag, a
+`<TAG>_ai_*_path` trigger, or is a bare `factor = 0` `is_historical_focus_on` killswitch. Anything
+carrying `can_staff_an_*`, `bankruptcy_incoming_collapse` or `ai_is_threatened` is a guard and is
+preserved verbatim — `validate_focus_tree.py` scans for those tokens literally and would report a
+guard that had been folded into a path trigger as missing.
+
+The emitted pair goes last in the block, because modifiers apply in order and a later `add` would
+resurrect a focus the killswitch just zeroed. The run aborts without writing on an unknown or
+duplicated focus id, a shared focus file, unbalanced braces, or a rewrite that is not idempotent.
+
+**Usage:**
+
+```bash
+python3 apply_ai_path_weights.py --tag DEN --map plan.txt --dry-run
+python3 apply_ai_path_weights.py --tag DEN --map -
+```
+
+Mapping format (`#` comments allowed):
+
+```
+group historical owner=DEN_ai_historical_path not=DEN_ai_not_historical_path
+group socialist owner_flag=DEN_SOCIALIST_FOCUS_PATH not=DEN_ai_not_socialist_path
+boost 25
+
+DEN_join_the_euro historical
+DEN_red_bloc socialist 150
+DEN_army_reform -
+```
+
+Pair it with `tools/analysis/ai_path_report.py`, which decides which focuses belong to which group
+and re-checks the result for killswitch orphans.
 
 ### Military Industrial Organizations (`standardize_mio.py`)
 
@@ -161,7 +232,7 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 
 ### Ideas
 
-- Remove `allowed = { always = no }` (redundant default; `allowed` checked once at load, bypassed by `add_ideas`)
+- Keep `allowed = { always = no }` on slotted ideas (hides them from the picker; `add_idea` still applies them)
 - Remove `cancel = { always = no }` (redundant default; checked hourly, never true)
 - Remove empty `on_add = { log = "" }`
 - Include `allowed_civil_war = { always = yes }` for civil war tags
@@ -242,30 +313,36 @@ This will show:
 
 ## Integration with Development Workflow
 
-### Pre-commit Hook
+No standardizer runs automatically. The `md-standardize` pre-commit hook is
+disabled on purpose: it rewrites whole files, so on a repo where most files
+predate the current rules it would drag a full reformat into every unrelated
+commit. Run the standardizers by hand on the files you are working on.
 
-Consider adding standardization to your pre-commit hooks:
+What runs instead is `tools/validation/validate_standardization.py`, which
+_reports_ the files a standardizer would rewrite without touching them. It is
+warning-only and scoped to changed files, in pre-commit (through
+`tools/precommit_validate.py`) and in CI (a `core`-batch step). Each finding
+names the command that fixes it:
 
-```bash
-# In .git/hooks/pre-commit
-#!/bin/bash
-    python3 tools/standardization/standardize.py focus common/national_focus/*.txt
-    python3 tools/standardization/standardize.py event events/*.txt
-    python3 tools/standardization/standardize.py mio common/military_industrial_organization/organizations/*.txt
+```
+events/Gulf.txt - not standardized - run: python3 tools/standardization/standardize.py event "events/Gulf.txt"
 ```
 
-### CI/CD Pipeline
+Pass `--all` for a full-repo sweep instead of the changed-file scope.
 
-Add standardization checks to your continuous integration:
+### standardize_api.py
 
-```yaml
-# .github/workflows/standardize.yml
-- name: Standardize Files
-  run: |
-    python3 tools/standardization/standardize.py focus common/national_focus/*.txt --backup
-    python3 tools/standardization/standardize.py event events/*.txt --backup
-    python3 tools/standardization/standardize.py mio common/military_industrial_organization/organizations/*.txt --backup
-```
+`standardize_api.py` is the in-memory entry point both the validator and the
+(disabled) `tools/standardize_staged.py` hook drive, so path routing and
+standardizer selection live in one place:
+
+- `kind_for_path(path)` — `"focus"`, `"event"`, `"decision"`, `"idea"`, `"mio"`,
+  or `None` when no standardizer owns the path.
+- `standardize_text(kind, text)` — the text the standardizer would write, or
+  `None` when the file holds no block of that kind.
+
+Neither reads or writes the file, so a checker can compare against disk without
+the risk of a half-written file.
 
 ## Related Documentation
 

@@ -43,13 +43,11 @@ import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 from shared_utils import blank_quoted_strings, compute_line_offsets, line_for_offset
 from validator_common import (  # noqa: E402
     BaseValidator,
+    _child_blocks,
     run_validator_main,
     strip_comments,
 )
 
-# Numeric names so `random_list` weight buckets (`50 = { ... }`) and state ids
-# (`652 = { ... }`) parse as blocks.
-_BLOCK_RE = re.compile(r"([A-Za-z_0-9@][A-Za-z0-9_.@]*(?::[A-Za-z0-9_]+)?)\s*=\s*\{")
 _TYPE_RE = re.compile(r"\btype\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 _BARE_GUARD_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*(?:>=|<=|==|!=|>|<)\s*-?\d")
 _BUILDING_FIELD_RE = re.compile(r"\b(?:building|type)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
@@ -89,20 +87,6 @@ _SKIP_BLOCKS = frozenset(
 )
 
 
-def _match_brace(text: str, open_pos: int) -> int:
-    """Return the index of the `}` closing the `{` at ``open_pos``, or -1."""
-    depth = 0
-    for i in range(open_pos, len(text)):
-        char = text[i]
-        if char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                return i
-    return -1
-
-
 def _sanitize(text: str) -> str:
     """Strip comments and blank quoted strings, preserving line numbering.
 
@@ -111,22 +95,6 @@ def _sanitize(text: str) -> str:
     matching or false-match the bare-comparison guard regex.
     """
     return blank_quoted_strings(strip_comments(text))
-
-
-def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, int]]:
-    """Direct child blocks of a body as (name, name_start, body_start, body_end)."""
-    blocks = []
-    i = start
-    while i < end:
-        match = _BLOCK_RE.search(text, i, end)
-        if not match:
-            break
-        close = _match_brace(text, match.end() - 1)
-        if close < 0 or close > end:
-            break
-        blocks.append((match.group(1), match.start(), match.end(), close))
-        i = close + 1
-    return blocks
 
 
 def _extract_building_guards(text: str) -> Set[str]:

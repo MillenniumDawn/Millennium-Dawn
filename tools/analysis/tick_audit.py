@@ -209,6 +209,18 @@ def _line_of(text, index):
     return text.count("\n", 0, index) + 1
 
 
+def _iter_hook_blocks():
+    """Yield (path, clean, m, cadence, tag, body) for every recurring on_action hook block."""
+    for path, text in _iter_txt("common/on_actions"):
+        clean = strip_comments(text)
+        for m in HOOK_RE.finditer(clean):
+            cadence, tag = m.group(1), m.group(2)
+            body, end = extract_block_from_text(clean, m.end() - 1)
+            if end == -1:
+                continue
+            yield path, clean, m, cadence, tag, body
+
+
 # --- index construction -----------------------------------------------------
 
 
@@ -370,55 +382,49 @@ def _named_subblock(body, key):
 def collect_hooks(effects, events, effect_cache):
     """Parse every recurring on_action hook into a structured record."""
     hooks = []
-    for path, text in _iter_txt("common/on_actions"):
-        clean = strip_comments(text)
-        for m in HOOK_RE.finditer(clean):
-            cadence, tag = m.group(1), m.group(2)
-            body, end = extract_block_from_text(clean, m.end() - 1)
-            if end == -1:
-                continue
-            direct_calls = extract_scripted_calls(body, effects)
-            reached = set()
-            edges = 0
-            for name in direct_calls:
-                reached.add(name)
-                sub, sub_edges = expand_effect(name, effects, effect_cache, set())
-                reached |= sub
-                edges += 1 + sub_edges
-            # Work proxy: inline statements in the hook (effects + checks + event
-            # fires) plus statements in every scripted_effect it reaches. Each
-            # reached effect counted once. This is what makes on_daily_GER (fires
-            # events, calls no named effect) register as real work.
-            work = count_statements(body) + sum(
-                count_statements(effects.get(name, "")) for name in reached
-            )
-            # Event fires are taken ONLY from the hook's own text. Events fired
-            # deep inside called scripted_effects are deliberately NOT attributed
-            # here: those fires are gated by in-effect conditions (e.g.
-            # `if = { limit = { original_tag = HOL } ... }`) that cannot be
-            # evaluated statically, so attributing them to every caller would
-            # over-report. They still count as work via `call_edges`.
-            direct_events = {
-                eid for eid, _d in extract_direct_event_fires(body) if eid in events
+    for path, clean, m, cadence, tag, body in _iter_hook_blocks():
+        direct_calls = extract_scripted_calls(body, effects)
+        reached = set()
+        edges = 0
+        for name in direct_calls:
+            reached.add(name)
+            sub, sub_edges = expand_effect(name, effects, effect_cache, set())
+            reached |= sub
+            edges += 1 + sub_edges
+        # Work proxy: inline statements in the hook (effects + checks + event
+        # fires) plus statements in every scripted_effect it reaches. Each
+        # reached effect counted once. This is what makes on_daily_GER (fires
+        # events, calls no named effect) register as real work.
+        work = count_statements(body) + sum(
+            count_statements(effects.get(name, "")) for name in reached
+        )
+        # Event fires are taken ONLY from the hook's own text. Events fired
+        # deep inside called scripted_effects are deliberately NOT attributed
+        # here: those fires are gated by in-effect conditions (e.g.
+        # `if = { limit = { original_tag = HOL } ... }`) that cannot be
+        # evaluated statically, so attributing them to every caller would
+        # over-report. They still count as work via `call_edges`.
+        direct_events = {
+            eid for eid, _d in extract_direct_event_fires(body) if eid in events
+        }
+        direct_events |= {
+            eid for eid in extract_plain_events_block(body) if eid in events
+        }
+        random_pool = {eid for eid in extract_random_events(body) if eid in events}
+        hooks.append(
+            {
+                "cadence": cadence,
+                "scope": tag if tag else "GLOBAL",
+                "file": _rel(path),
+                "line": _line_of(clean, m.start()),
+                "direct_effect_calls": sorted(direct_calls),
+                "reached_effects": sorted(reached),
+                "call_edges": edges,
+                "work_units": work,
+                "events_direct": sorted(direct_events),
+                "events_random": sorted(random_pool),
             }
-            direct_events |= {
-                eid for eid in extract_plain_events_block(body) if eid in events
-            }
-            random_pool = {eid for eid in extract_random_events(body) if eid in events}
-            hooks.append(
-                {
-                    "cadence": cadence,
-                    "scope": tag if tag else "GLOBAL",
-                    "file": _rel(path),
-                    "line": _line_of(clean, m.start()),
-                    "direct_effect_calls": sorted(direct_calls),
-                    "reached_effects": sorted(reached),
-                    "call_edges": edges,
-                    "work_units": work,
-                    "events_direct": sorted(direct_events),
-                    "events_random": sorted(random_pool),
-                }
-            )
+        )
     return hooks
 
 
@@ -608,42 +614,36 @@ def build_call_tree(effects, events, loc, max_depth=22, max_nodes=9000):
         c: {"name": c.upper(), "kind": "cadence", "ops": 0, "children": []}
         for c in CADENCES
     }
-    for path, text in _iter_txt("common/on_actions"):
-        clean = strip_comments(text)
-        for m in HOOK_RE.finditer(clean):
-            cadence, tag = m.group(1), m.group(2)
-            body, end = extract_block_from_text(clean, m.end() - 1)
-            if end == -1:
-                continue
-            counter = [0]
-            children = []
-            for callee in sorted(extract_scripted_calls(body, effects)):
-                children.append(
-                    _effect_subtree(
-                        callee, effects, events, loc, frozenset(), 1, budget, counter
-                    )
+    for path, clean, m, cadence, tag, body in _iter_hook_blocks():
+        counter = [0]
+        children = []
+        for callee in sorted(extract_scripted_calls(body, effects)):
+            children.append(
+                _effect_subtree(
+                    callee, effects, events, loc, frozenset(), 1, budget, counter
                 )
-            seen = set()
-            for eid, _d in extract_direct_event_fires(body):
-                if eid in events and eid not in seen:
-                    seen.add(eid)
-                    children.append(_event_leaf(eid, events))
-            for eid in extract_random_events(body):
-                if eid in events and eid not in seen:
-                    seen.add(eid)
-                    children.append(_event_leaf(eid, events, random=True))
-            self_ops = count_statements(body)
-            children.sort(key=lambda c: -c["total"])
-            node = {
-                "name": "on_" + cadence + (("_" + tag) if tag else ""),
-                "scope": tag or "GLOBAL",
-                "kind": "hook",
-                "file": _rel(path) + ":" + str(_line_of(clean, m.start())),
-                "ops": self_ops,
-                "children": children,
-                "total": self_ops + sum(c["total"] for c in children),
-            }
-            cad[cadence]["children"].append(node)
+            )
+        seen = set()
+        for eid, _d in extract_direct_event_fires(body):
+            if eid in events and eid not in seen:
+                seen.add(eid)
+                children.append(_event_leaf(eid, events))
+        for eid in extract_random_events(body):
+            if eid in events and eid not in seen:
+                seen.add(eid)
+                children.append(_event_leaf(eid, events, random=True))
+        self_ops = count_statements(body)
+        children.sort(key=lambda c: -c["total"])
+        node = {
+            "name": "on_" + cadence + (("_" + tag) if tag else ""),
+            "scope": tag or "GLOBAL",
+            "kind": "hook",
+            "file": _rel(path) + ":" + str(_line_of(clean, m.start())),
+            "ops": self_ops,
+            "children": children,
+            "total": self_ops + sum(c["total"] for c in children),
+        }
+        cad[cadence]["children"].append(node)
     root = {"name": "Millennium Dawn - recurring ticks", "kind": "root", "children": []}
     for c in CADENCES:
         n = cad[c]

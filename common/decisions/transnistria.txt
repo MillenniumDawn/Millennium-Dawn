@@ -605,15 +605,15 @@ PMR_russia_moldovian_way = {
 		ai_will_do = {
 			base = 355
 			modifier = {
-				has_global_flag = PMR_HISTORIC_DEFAULT_PATH
+				has_global_flag = PMR_HISTORICAL_FOCUS_PATH
 				add = 355
 			}
 			modifier = {
-				has_global_flag = PMR_COMMUNISM_PATH
+				has_global_flag = PMR_COMMUNIST_FOCUS_PATH
 				add = 355
 			}
 			modifier = {
-				has_global_flag = PMR_PATRIOTIC_PATH
+				has_global_flag = PMR_REPUBLICAN_FOCUS_PATH
 				add = 355
 			}
 			modifier = {
@@ -651,15 +651,15 @@ PMR_russia_moldovian_way = {
 		ai_will_do = {
 			base = 355
 			modifier = {
-				has_global_flag = PMR_HISTORIC_DEFAULT_PATH
+				has_global_flag = PMR_HISTORICAL_FOCUS_PATH
 				add = 355
 			}
 			modifier = {
-				has_global_flag = PMR_COMMUNISM_PATH
+				has_global_flag = PMR_COMMUNIST_FOCUS_PATH
 				add = 355
 			}
 			modifier = {
-				has_global_flag = PMR_PATRIOTIC_PATH
+				has_global_flag = PMR_REPUBLICAN_FOCUS_PATH
 				add = 355
 			}
 		}
@@ -681,8 +681,8 @@ PMR_russia_moldovian_way = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove PMR_annex_odessa"
-			annex_country = { target = OPR transfer_troops = yes }
 			OPR = { every_core_state = { add_core_of = PMR } }
+			annex_country = { target = OPR transfer_troops = yes }
 			hidden_effect = {
 				add_to_variable = { treasury = OPR.treasury }
 				add_to_variable = { debt = OPR.debt }
@@ -693,15 +693,15 @@ PMR_russia_moldovian_way = {
 		ai_will_do = {
 			base = 355
 			modifier = {
-				has_global_flag = PMR_HISTORIC_DEFAULT_PATH
+				has_global_flag = PMR_HISTORICAL_FOCUS_PATH
 				add = 355
 			}
 			modifier = {
-				has_global_flag = PMR_COMMUNISM_PATH
+				has_global_flag = PMR_COMMUNIST_FOCUS_PATH
 				add = 355
 			}
 			modifier = {
-				has_global_flag = PMR_PATRIOTIC_PATH
+				has_global_flag = PMR_REPUBLICAN_FOCUS_PATH
 				add = 355
 			}
 		}
@@ -737,7 +737,7 @@ PMR_russia_moldovian_way = {
 		ai_will_do = {
 			base = 355
 			modifier = {
-				has_global_flag = PMR_LIBERAL_PATH
+				has_global_flag = PMR_DEMOCRATIC_FOCUS_PATH
 				add = 355
 			}
 		}
@@ -958,9 +958,6 @@ PMR_economy_category = {
 		ai_will_do = { base = 0 }
 	}
 }
-###########ARMY DECISIONS###########
-PMR_army_category = {
-}
 ###########MVD DECISIONS###########
 PMR_mvd_category = {
 	#SHERIFF DEAD
@@ -976,7 +973,7 @@ PMR_mvd_category = {
 		}
 
 		visible = {
-			has_idea = PMR_sheriff7
+			check_variable = { PMR_sheriff_level = 7 }
 			NOT = {
 				OR = {
 					has_country_flag = PMR_sheriff_finish
@@ -989,12 +986,293 @@ PMR_mvd_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision PMR_destroy_sheriff"
-			remove_ideas = PMR_sheriff7
-			set_country_flag = PMR_sheriff_finish
-			remove_ideas = PMR_sheriff7
+			remove_dynamic_modifier = { modifier = PMR_sheriff_modifier }
 			set_country_flag = PMR_sheriff_finish
 		}
 
 		ai_will_do = { base = 0 }
+	}
+}
+
+PMR_ai_path_category = {
+
+	PMR_rally_the_autocrats = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { PMR_ai_autocrat_trunk_path = yes }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^7 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_rally_the_autocrats"
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	PMR_rally_the_liberals = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = PMR_DEMOCRATIC_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^2 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_rally_the_liberals"
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	PMR_liberals_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = PMR_DEMOCRATIC_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			western_liberals_are_in_power = no
+			check_variable = { party_pop_array^2 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_liberals_take_the_country"
+			set_temp_variable = { rul_party_temp = 2 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	PMR_rally_the_republicans = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = PMR_REPUBLICAN_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^5 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_rally_the_republicans"
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	PMR_republicans_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = PMR_REPUBLICAN_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			emerging_anarchist_communism_are_in_power = no
+			check_variable = { party_pop_array^5 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_republicans_take_the_country"
+			set_temp_variable = { rul_party_temp = 5 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	PMR_rally_the_communists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = PMR_COMMUNIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^4 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_rally_the_communists"
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	PMR_communists_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = PMR_COMMUNIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			emerging_communist_state_are_in_power = no
+			check_variable = { party_pop_array^4 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_communists_take_the_country"
+			set_temp_variable = { rul_party_temp = 4 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	PMR_rally_the_monarchists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = PMR_MONARCHIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^23 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_rally_the_monarchists"
+			set_temp_variable = { party_index = 23 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	PMR_monarchists_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = PMR_MONARCHIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			nationalist_monarchists_are_in_power = no
+			check_variable = { party_pop_array^23 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_monarchists_take_the_country"
+			set_temp_variable = { rul_party_temp = 23 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	PMR_rally_the_officers = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = PMR_MILITARY_JUNTA_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			NOT = { has_country_flag = ded_lebed }
+			check_variable = { party_pop_array^22 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_rally_the_officers"
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	PMR_officers_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = PMR_MILITARY_JUNTA_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			NOT = { has_country_flag = ded_lebed }
+			nationalist_military_junta_are_in_power = no
+			check_variable = { party_pop_array^22 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_officers_take_the_country"
+			set_temp_variable = { rul_party_temp = 22 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
 	}
 }

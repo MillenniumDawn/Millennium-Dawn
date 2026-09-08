@@ -1,11 +1,13 @@
 import importlib.util
-from pathlib import Path
+import sys
+
+import pytest
 
 
 def _module():
-    path = (
-        Path(__file__).resolve().parents[1] / "generators" / "generate_tribute_ideas.py"
-    )
+    from shared.paths import GENERATORS_DIR
+
+    path = GENERATORS_DIR / "generate_tribute_ideas.py"
     spec = importlib.util.spec_from_file_location("generate_tribute_ideas", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -36,3 +38,19 @@ def test_generation_does_not_touch_caller_owned_temp_names(tmp_path, monkeypatch
     assert (ideas / "tribute_ideas.txt").is_file()
     generated_loc = loc / "MD_tribute_ideas_l_english.yml"
     assert generated_loc.read_bytes().startswith(b"\xef\xbb\xbf")
+
+
+def test_missing_required_path_exits(tmp_path, monkeypatch):
+    module = _module()
+    monkeypatch.setattr(module, "REPO_ROOT", str(tmp_path))
+    monkeypatch.setattr(module, "TAG_DIR", str(tmp_path / "missing_tags"))
+    with pytest.raises(SystemExit, match="required path not found"):
+        module.main()
+
+
+def test_tools_dir_is_put_on_sys_path(monkeypatch):
+    monkeypatch.setattr(
+        sys, "path", [entry for entry in sys.path if not entry.endswith("tools")]
+    )
+    module = _module()
+    assert module.TOOLS_DIR in sys.path

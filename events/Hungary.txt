@@ -1,0 +1,151 @@
+add_namespace = hungary_karpatalja
+
+country_event = { #Local councils in Karpatalja vote to join Hungary
+	id = hungary_karpatalja.1
+	title = hungary_karpatalja.1.t
+	desc = hungary_karpatalja.1.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+
+	trigger = {
+		tag = HUN
+		country_exists = UKR
+		701 = { is_owned_by = UKR }
+	}
+
+	option = {
+		name = hungary_karpatalja.1.a
+		log = "[GetDateText]: [This.GetName]: hungary_karpatalja.1.a executed"
+		if = {
+			limit = { 701 = { is_owned_by = UKR } }
+			701 = {
+				transfer_state_to = HUN
+				set_compliance = 35
+				set_resistance = 15
+			}
+		}
+		add_political_power = 50
+		hidden_effect = {
+			country_event = { id = hungary_karpatalja.2 days = 5 }
+		}
+	}
+}
+
+country_event = { #Governing Karpatalja
+	id = hungary_karpatalja.2
+	title = hungary_karpatalja.2.t
+	desc = hungary_karpatalja.2.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	option = { #self-government
+		name = hungary_karpatalja.2.a
+		log = "[GetDateText]: [This.GetName]: hungary_karpatalja.2.a executed"
+		add_ideas = HUN_karpatalja_autonomy
+		add_stability = 0.02
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				NOT = {
+					OR = {
+						has_government = fascism
+						has_government = nationalist
+					}
+				}
+			}
+		}
+	}
+
+	option = { #direct rule
+		name = hungary_karpatalja.2.b
+		log = "[GetDateText]: [This.GetName]: hungary_karpatalja.2.b executed"
+		add_political_power = 50
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				OR = {
+					has_government = fascism
+					has_government = nationalist
+				}
+			}
+		}
+	}
+}
+
+country_event = { #Budapest sends an ultimatum over Karpatalja
+	id = hungary_karpatalja.10
+	title = hungary_karpatalja.10.t
+	desc = hungary_karpatalja.10.d
+	picture = GFX_UKR_generic
+	is_triggered_only = yes
+
+	trigger = {
+		tag = UKR
+		country_exists = UKR
+		country_exists = HUN
+		date > 2013.12.31
+		NOT = { has_war_with = HUN }
+		701 = { is_owned_by = UKR is_controlled_by = UKR }
+	}
+
+	option = { #cede Karpatalja
+		name = hungary_karpatalja.10.a
+		log = "[GetDateText]: [This.GetName]: hungary_karpatalja.10.a executed"
+		ai_chance = {
+			base = 0
+			modifier = { add = 5 has_opinion = { target = HUN value > 150 } }
+			modifier = { add = 25 surrender_progress > 0.2 }
+			modifier = { add = 30 surrender_progress > 0.5 }
+			modifier = { factor = 0 is_historical_focus_on = yes }
+		}
+		if = {
+			limit = { 701 = { is_owned_by = UKR is_controlled_by = UKR } }
+			701 = {
+				transfer_state_to = HUN
+				set_compliance = 20
+				set_resistance = 30
+			}
+		}
+		hidden_effect = {
+			HUN = { country_event = { id = hungary_karpatalja.2 days = 5 } }
+		}
+	}
+
+	option = { #refuse
+		name = hungary_karpatalja.10.b
+		log = "[GetDateText]: [This.GetName]: hungary_karpatalja.10.b executed"
+		ai_chance = { base = 100 }
+		HUN = { country_event = hungary_karpatalja.11 }
+	}
+}
+
+country_event = { #Ukraine refuses Budapest's ultimatum
+	id = hungary_karpatalja.11
+	title = hungary_karpatalja.11.t
+	desc = hungary_karpatalja.11.d
+	picture = GFX_UKR_generic
+	is_triggered_only = yes
+
+	trigger = {
+		tag = HUN
+		country_exists = HUN
+		country_exists = UKR
+		NOT = { has_war_with = UKR }
+		701 = { is_owned_by = UKR is_controlled_by = UKR }
+	}
+
+	option = {
+		name = hungary_karpatalja.11.a
+		log = "[GetDateText]: [This.GetName]: hungary_karpatalja.11.a executed"
+		set_temp_variable = { wargoal_on = UKR }
+		set_temp_variable = { wargoal_type = 1 }
+		add_threat_from_wargoal_effect = yes
+		create_wargoal = {
+			type = take_claimed_state
+			target = UKR
+		}
+		add_war_support = 0.05
+	}
+}

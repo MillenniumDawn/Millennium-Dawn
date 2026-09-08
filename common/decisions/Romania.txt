@@ -239,7 +239,7 @@ ROM_vadim_struggle = {
 		}
 	}
 	ROM_promote_patriotic_views = {
-		icon = GFX_decision_fascism
+		icon = GFX_decision_fascism_button
 		days_remove = 30
 
 		available = {
@@ -314,6 +314,63 @@ ROM_vadim_struggle = {
 		}
 		ai_will_do = {
 			base = 150
+		}
+	}
+	ROM_ukrainian_ultimatum = {
+		icon = GFX_decision_border_war
+		fire_only_once = yes
+		days_remove = 15
+
+		available = {
+			date > 2013.12.31
+			country_exists = UKR
+			NOT = { has_war_with = UKR }
+			has_capitulated = no
+			OR = {
+				333 = { is_owned_by = UKR is_controlled_by = UKR }
+				335 = { is_owned_by = UKR is_controlled_by = UKR }
+			}
+		}
+		visible = {
+			has_completed_focus = ROM_greater_romania_party
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_ukrainian_ultimatum"
+			add_named_threat = {
+				threat = 3
+				name = ROM_ukrainian_ultimatum
+			}
+			add_opinion_modifier = {
+				target = UKR
+				modifier = imminent_danger_to_national_security
+			}
+			UKR = {
+				country_event = romania_politics.16
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = ROM_ukr_cede_tt
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			custom_effect_tooltip = ROM_ukr_refuse_tt
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = {
+					OR = {
+						UKR = { has_civil_war = yes }
+						UKR = { surrender_progress > 0.2 }
+					}
+				}
+			}
 		}
 	}
 	ROM_vadim_timer = {
@@ -410,5 +467,238 @@ ROM_romanianization_category = {
 		ai_will_do = {
 			base = 355
 		}
+	}
+}
+
+ROM_ukrainian_border_lands_category = {
+	ROM_annex_bukovina_budjak = {
+		icon = GFX_decision_annex
+		days_remove = 30
+
+		available = {
+			has_capitulated = no
+			country_exists = UKR
+			NOT = {
+				AND = {
+					owns_state = 333
+					owns_state = 335
+				}
+			}
+			OR = {
+				333 = { is_owned_by = UKR }
+				335 = { is_owned_by = UKR }
+			}
+		}
+		visible = {
+			date > 2013.12.31
+			OR = {
+				AND = {
+					country_exists = UKR
+					UKR = { UKR_border_claim_window = yes }
+				}
+				country_exists = NOV
+			}
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_annex_bukovina_budjak"
+			country_event = { id = romania_misc.20 days = 3 }
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+	ROM_333_return = {
+		icon = GFX_decision_romania
+		fire_only_once = yes
+		days_remove = 120
+
+		cost = 70
+
+		visible = {
+			owns_state = 333
+			NOT = { is_in_array = { core_states = 333 } }
+		}
+
+		available = {
+			333 = { compliance > 79 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_333_return"
+			add_state_core = 333
+			add_stability = -0.05
+		}
+
+		ai_will_do = {
+			base = 355
+		}
+	}
+	ROM_335_return = {
+		icon = GFX_decision_romania
+		fire_only_once = yes
+		days_remove = 120
+
+		cost = 70
+
+		visible = {
+			owns_state = 335
+			NOT = { is_in_array = { core_states = 335 } }
+		}
+
+		available = {
+			335 = { compliance > 79 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_335_return"
+			add_state_core = 335
+			add_stability = -0.05
+		}
+
+		ai_will_do = {
+			base = 355
+		}
+	}
+}
+
+ROM_ai_path_category = {
+
+	ROM_rally_the_social_democrats = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 25
+
+		visible = { ROM_ai_historical_path = yes }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^3 < 0.45 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_rally_the_social_democrats"
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	ROM_rally_the_liberals = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 25
+
+		visible = { ROM_ai_liberal_bloc_path = yes }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^2 < 0.45 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_rally_the_liberals"
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	ROM_rally_the_peasants = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 25
+
+		visible = { has_global_flag = ROM_PEASANT_PARTY_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^1 < 0.45 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_rally_the_peasants"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	ROM_rally_the_democrats = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 25
+
+		visible = { has_global_flag = ROM_DEMOCRATIC_PARTY_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^18 < 0.30 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_rally_the_democrats"
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
+			set_temp_variable = { party_index = 14 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	ROM_rally_the_nationalists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 25
+
+		visible = { has_global_flag = ROM_GREATER_ROMANIA_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^20 < 0.45 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROM_rally_the_nationalists"
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
 	}
 }

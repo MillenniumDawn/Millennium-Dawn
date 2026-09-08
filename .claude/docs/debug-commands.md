@@ -145,15 +145,17 @@ effect election_EU_Parliament = yes   # recompute MEP totals / majority
 
 ## Key EU state handles
 
-| Handle                              | Kind          | Meaning                                                      |
-| ----------------------------------- | ------------- | ------------------------------------------------------------ |
-| `global.EU_member`                  | country array | Current EU member states                                     |
-| `global.EU_potential`               | country array | Candidate / potential members                                |
-| `global.EU_passed_votes`            | int array     | Agenda IDs that have passed (source of truth)                |
-| `global.EU_council_votes`           | int array     | Agenda IDs currently in council voting                       |
-| `global.current_active_agenda_disp` | int           | Agenda being voted in the EP (0 = none)                      |
-| `global.current_active_vote_disp`   | int           | Agenda in the council vote (0 = none)                        |
-| `EU_member`                         | idea          | Membership; `on_add`/`on_remove` maintain `global.EU_member` |
-| `USoE`                              | country flag  | Set on the formed United States of Europe                    |
-| `USoE_member`                       | country flag  | Set on each nation folded into the USoE                      |
-| `EUU`                               | tag           | Tech-bank country used to pool member technologies           |
+| Handle                              | Kind          | Meaning                                   |
+| ----------------------------------- | ------------- | ----------------------------------------- |
+| `global.EU_member`                  | country array | Current EU member states                  |
+| `global.EU_potential`               | country array | Candidate / potential members             |
+| `global.EU_passed_votes`            | int array     | Passed agenda IDs (source of truth)       |
+| `global.EU_council_votes`           | int array     | Agenda IDs currently in council voting    |
+| `global.current_active_agenda_disp` | int           | Agenda being voted in the EP (0 = none)   |
+| `global.current_active_vote_disp`   | int           | Agenda in the council vote (0 = none)     |
+| `EU_member`                         | idea          | Membership (see note)                     |
+| `USoE`                              | country flag  | Set on the formed United States of Europe |
+| `USoE_member`                       | country flag  | Set on each nation folded into the USoE   |
+| `EUU`                               | tag           | Tech-bank country pooling member techs    |
+
+Note: the `EU_member` idea's `on_add`/`on_remove` maintain `global.EU_member`.

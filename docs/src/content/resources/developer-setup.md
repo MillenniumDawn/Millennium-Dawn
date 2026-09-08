@@ -135,7 +135,7 @@ Hooks run automatically on every `git commit`. They catch:
 pre-commit run --files common/national_focus/05_SER_focus.txt
 
 # Run a specific hook
-pre-commit run check-braces
+pre-commit run md-validate-content
 
 # Update hook versions
 pre-commit autoupdate
@@ -145,17 +145,20 @@ pre-commit autoupdate
 
 ## What Runs Where
 
-| Hook                             | Pre-commit      | CI (PR)             | Notes                                                     |
-| -------------------------------- | --------------- | ------------------- | --------------------------------------------------------- |
-| `check-braces`                   | Yes             | No                  | Pre-commit only                                           |
-| `fix-loc-yaml`                   | Yes             | No                  | Pre-commit only                                           |
-| `validate-localization-encoding` | Yes             | No                  | Pre-commit only                                           |
-| `coding-standards`               | Manual          | Yes                 | Runs on PR, not on commit                                 |
-| `check-basic-style`              | Manual          | Yes                 | Runs on PR, not on commit                                 |
-| `check-common-mistakes`          | Manual          | Yes                 | Runs on PR, not on commit                                 |
-| `validate-ai-equipment`          | Yes (no strict) | Yes (strict)        | Strict mode on CI blocks coverage gaps                    |
-| `validate-ideas`                 | Yes (strict)    | Yes (informational) | CI is informational until pre-existing issues are cleared |
-| `validate-defines`               | Yes             | Skipped             | Needs vanilla file not in CI runner                       |
+| Hook                          | Pre-commit | CI (PR) | Notes                                |
+| ----------------------------- | ---------- | ------- | ------------------------------------ |
+| `md-validate-content`         | Yes        | Yes     | Fast subset; CI runs all batches     |
+| `md-validate-defines`         | Yes        | Yes     | CI uses `vanilla_defines.txt`        |
+| `md-validate-descriptors`     | Yes        | Yes     | Also runs in the core batch job      |
+| `fix-localization-encoding`   | Yes        | No      | Fixer; CI checks BOM without fixing  |
+| `fix-loc-yaml`                | Yes        | No      | Pre-commit only                      |
+| `md-fix-styling`              | Manual     | No      | CI checks style in batches           |
+| `md-validate-unused-textures` | Manual     | No      | CI cannot run it                     |
+| `tools-pytest`                | Pre-push   | Yes     | CI Tools tests job when tools change |
+
+The CI (PR) column is the Test Suite (`test-suite.yml`). The full pre-commit vs
+CI map, including per-validator strictness, lives in
+`.claude/docs/validation-pipeline.md`.
 
 ---
 
@@ -201,8 +204,10 @@ See [tools/README.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/mai
 1. Create `tools/validation/validate_<topic>.py`.
 2. Subclass `BaseValidator` from `tools/validation/validator_common.py`.
 3. Use `add_error(category, msg, file, line)` for structured issues.
-4. Add a pre-commit hook entry in `.pre-commit-config.yaml`.
-5. Add a CI entry in `.github/workflows/coding-pipeline.yml`.
+4. Add a `ValidatorSpec` for it in `tools/validation/validator_batches.py`
+   (batch, changed-file groups, `--strict`). This is the gate for most validators.
+5. Only if it is fast enough for commits, join the commit-stage set: add it to
+   the `_REGISTRY` in `tools/precommit_validate.py`.
 
 ---
 
@@ -241,7 +246,7 @@ A summary. The full reference is the [Code Stylization Guide](/dev-resources/cod
 - Follow naming conventions: `TAG_focus_name_here`.
 - Use `is_triggered_only = yes` for events.
 - Include `ai_will_do` in all focuses and decisions.
-- Remove redundant code (`allowed = { always = no }`, empty trigger blocks).
+- Remove redundant code (empty trigger blocks). Keep `allowed = { always = no }` on slotted ideas that must not appear in the picker.
 
 ### Docs Content (`docs/`)
 
