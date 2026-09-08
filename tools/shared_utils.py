@@ -1550,8 +1550,8 @@ def run_with_pool(
         return pool.map(func, items)
 
 
-_DEFAULT_DIRECTORIES = ("common", "events", "history")
-_DIRECTORIES_WITH_INTERFACE = ("common", "events", "history", "interface")
+_DEFAULT_DIRECTORIES = ("common", "events", "history", "music")
+_DIRECTORIES_WITH_INTERFACE = ("common", "events", "history", "music", "interface")
 
 _staged_files_cache: Optional[List[str]] = None
 
