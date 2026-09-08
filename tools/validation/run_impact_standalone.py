@@ -10,7 +10,23 @@ from typing import List
 SOURCES = {
     "localization-encoding": "validate_localization_encoding.py",
     "mod-encoding": "validate_mod_encoding.py",
+    "txt-encoding": "validate_txt_encoding.py",
 }
+
+_TXT_ROOTS = (
+    "common",
+    "descriptions",
+    "events",
+    "gfx",
+    "history",
+    "localisation",
+    "map",
+    "music",
+    "portraits",
+    "scenario_tests",
+    "sound",
+    "tutorial",
+)
 
 
 def _files(mod_path: Path, validator: str) -> List[str]:
@@ -24,6 +40,12 @@ def _files(mod_path: Path, validator: str) -> List[str]:
         }
         files.update((mod_path / "localisation" / "english").rglob("*.yml"))
         return [str(path) for path in sorted(files)]
+    if validator == "txt-encoding":
+        return [
+            str(path)
+            for root in _TXT_ROOTS
+            for path in sorted((mod_path / root).rglob("*.txt"))
+        ]
     return [
         str(path)
         for path in sorted(mod_path.rglob("*.mod"))

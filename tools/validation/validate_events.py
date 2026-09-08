@@ -54,6 +54,7 @@ _LONG_FORM_PATTERN = re.compile(
 # sprite). Sprite names may contain `.` (frame suffixes like GFX_CTC.5) and `-`
 # (e.g. GFX_Polizistin-Kiesewetter), so both are part of the captured name.
 _EVENT_PICTURE_REF = re.compile(r'\bpicture\s*=\s*"?(GFX_[A-Za-z0-9_.\-]+)"?')
+_EVENT_PICTURE_FIELD = re.compile(r"\bpicture\s*=")
 
 
 def _should_skip(filename: str) -> bool:
@@ -222,7 +223,7 @@ def scan_event_definitions(args: Tuple[str, frozenset]) -> Set[str]:
     cleaned = _read_cleaned_text(filename, skip=False)
     if cleaned is None:
         return set()
-    return {eid for eid, _body, _start in _iter_event_bodies(cleaned)}
+    return {eid for eid, _body, _start in _iter_event_bodies(cleaned) if eid}
 
 
 def scan_event_definition_types(
@@ -236,6 +237,7 @@ def scan_event_definition_types(
     return [
         (eid, event_type)
         for eid, event_type, _body, _start in _iter_typed_event_bodies(cleaned)
+        if eid
     ]
 
 
@@ -389,6 +391,8 @@ def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, 
 
     out: List[Tuple[str, str, int]] = []
     for eid, body, start in _iter_event_bodies(cleaned):
+        if not eid:
+            continue
         trigger = _event_trigger_body(body)
         if trigger and _DATE_LOWER_BOUND_RE.search(trigger):
             out.append((eid, filename, cleaned.count("\n", 0, start) + 1))
@@ -408,8 +412,10 @@ def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
 
     out: List[Tuple[str, str]] = []
     for parent, body, _start in _iter_event_bodies(cleaned):
+        if not parent:
+            continue
         for child, _pos in _iter_fired_ids(body):
-            if child != parent:
+            if child and child != parent:
                 out.append((parent, child))
     return out
 
@@ -774,7 +780,7 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
     # Brace matching rather than column-anchored patterns: 64 definitions in
     # the mod are indented, and an anchored scan drops every one of them from
     # the checks that read this metadata.
-    for event_id, event_type, body, _start in _iter_typed_event_bodies(
+    for event_id, event_type, body, start in _iter_typed_event_bodies(
         text, require_id=False
     ):
         # Quote-aware comment strip + quoted-string blanking before the `in body`
@@ -790,7 +796,9 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "body": body,
                 "type": event_type,
                 "file": basename,
+                "line": text.count("\n", 0, start) + 1,
                 "is_hidden": "hidden = yes" in body_nc,
+                "has_picture": bool(_EVENT_PICTURE_FIELD.search(body_nc)),
                 "is_triggered_only": "is_triggered_only = yes" in body_nc,
                 "fire_only_once": "fire_only_once = yes" in body_nc,
                 "is_major": bool(_RE_MAJOR_YES.search(body_nc)),
@@ -824,8 +832,8 @@ class Validator(BaseValidator):
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
         Each metadata dict has: id (or None for malformed blocks), type, file,
-        is_hidden, is_triggered_only, fire_only_once, is_major, has_mtth,
-        option_count, title_desc_refs.
+        is_hidden, has_picture, is_triggered_only, fire_only_once, is_major,
+        has_mtth, option_count, title_desc_refs.
         """
         if self._meta_cache is not None:
             return self._meta_cache
@@ -1544,6 +1552,27 @@ class Validator(BaseValidator):
             category="undefined-event-fire",
         )
 
+    def validate_event_picture_omissions(self):
+        """Warn visible country/news events that do not declare a picture."""
+        self._log_section("Checking visible country/news events have pictures...")
+
+        meta, _ = self._get_event_metadata()
+        results = [
+            f"{ev['id'] or 'unknown'} - {ev['file']}"
+            for ev in meta
+            if ev["type"] in ("country_event", "news_event")
+            and not ev["is_hidden"]
+            and not ev["has_picture"]
+        ]
+
+        self._report(
+            results,
+            "✓ All visible country/news events have pictures",
+            "Visible country/news events missing a picture field:",
+            Severity.WARNING,
+            category="event-picture-omitted",
+        )
+
     def validate_event_pictures(self):
         """Flag events whose `picture = GFX_x` sprite is not MD-defined.
 
@@ -1553,6 +1582,7 @@ class Validator(BaseValidator):
         where the vanilla install is absent. A missing sprite renders a blank
         picture box, so it is an error.
         """
+        self.validate_event_picture_omissions()
         self._log_section("Checking for events with missing pictures...")
 
         files = self._collect_files(["events/**/*.txt"])
