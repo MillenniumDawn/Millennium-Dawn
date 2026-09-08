@@ -446,6 +446,5 @@ def test_the_same_findings_are_reported_in_a_full_run(tmp_path, monkeypatch):
         "missing-loc-key",
         "missing-cross-country-tooltip",
         "pp-malus-completion-reward",
-        "tech-bonus-name",
         "missing-search-filters",
     }

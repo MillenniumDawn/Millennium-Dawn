@@ -23,30 +23,39 @@ faction_goal_update_daily_condition_caches = {
 		set_variable = { faction_goal_anti_communist_states_completed_cache = 0 }
 		set_variable = { faction_goal_long_live_revolution_cache = 0 }
 		set_variable = { faction_goal_democracy_in_europe_cache = 0 }
-		set_variable = { faction_goal_core_states_not_controlled_count_cache = 0 }
-		set_variable = { faction_goal_core_states_not_fully_controlled_count_cache = 0 }
-		set_variable = { faction_goal_enemy_core_states_controlled_count_cache = 0 }
 		set_variable = { faction_goal_communist_controlled_states_count_cache = 0 }
 		set_variable = { faction_goal_fascist_controlled_states_count_cache = 0 }
 		set_variable = { faction_goal_anti_communist_controlled_states_count_cache = 0 }
 	}
 
-	set_temp_variable = { faction_goal_core_states_not_controlled_count_cache_temp = 0 }
-	set_temp_variable = { faction_goal_core_states_not_fully_controlled_count_cache_temp = 0 }
-	every_collection_element = {
-		input = collection:faction_owned_core_states_collection
-		if = {
-			limit = { is_controlled_by_ROOT_or_ally = no }
-			add_to_temp_variable = { ROOT.faction_goal_core_states_not_controlled_count_cache_temp = 1 }
+	if = {
+		limit = {
+			OR = {
+				has_war = yes
+				has_faction_goal = faction_goal_aggressive_defense
+				has_faction_goal = faction_goal_liberate_territory
+				has_faction_goal = faction_goal_great_offensive
+			}
 		}
-		if = {
-			limit = { NOT = { is_fully_controlled_by = OWNER } }
-			add_to_temp_variable = { ROOT.faction_goal_core_states_not_fully_controlled_count_cache_temp = 1 }
+		set_temp_variable = { faction_goal_core_states_not_controlled_count_cache_temp = 0 }
+		set_temp_variable = { faction_goal_core_states_not_fully_controlled_count_cache_temp = 0 }
+		every_collection_element = {
+			input = collection:faction_owned_core_states_collection
+			if = {
+				limit = { is_controlled_by_ROOT_or_ally = no }
+				add_to_temp_variable = { ROOT.faction_goal_core_states_not_controlled_count_cache_temp = 1 }
+			}
+			if = {
+				limit = { NOT = { is_fully_controlled_by = OWNER } }
+				add_to_temp_variable = { ROOT.faction_goal_core_states_not_fully_controlled_count_cache_temp = 1 }
+			}
+		}
+		scope:faction = {
+			set_variable = { faction_goal_core_states_not_controlled_count_cache = ROOT.faction_goal_core_states_not_controlled_count_cache_temp }
+			set_variable = { faction_goal_core_states_not_fully_controlled_count_cache = ROOT.faction_goal_core_states_not_fully_controlled_count_cache_temp }
 		}
 	}
 	scope:faction = {
-		set_variable = { faction_goal_core_states_not_controlled_count_cache = ROOT.faction_goal_core_states_not_controlled_count_cache_temp }
-		set_variable = { faction_goal_core_states_not_fully_controlled_count_cache = ROOT.faction_goal_core_states_not_fully_controlled_count_cache_temp }
 		if = {
 			limit = {
 				check_variable = {
@@ -251,17 +260,11 @@ faction_goal_update_daily_condition_caches = {
 		limit = { has_war = yes }
 		set_temp_variable = { faction_goal_enemy_core_states_controlled_count_cache_temp = 0 }
 		every_collection_element = {
-			input = {
-				input = game:all_states
-				operators = {
-					limit = {
-						owner = { has_war_with = ROOT }
-						is_core_of = OWNER
-						is_controlled_by_ROOT_or_ally = yes
-					}
-				}
+			input = collection:faction_enemy_owned_core_states_collection
+			if = {
+				limit = { is_controlled_by_ROOT_or_ally = yes }
+				add_to_temp_variable = { ROOT.faction_goal_enemy_core_states_controlled_count_cache_temp = 1 }
 			}
-			add_to_temp_variable = { ROOT.faction_goal_enemy_core_states_controlled_count_cache_temp = 1 }
 		}
 		scope:faction = {
 			set_variable = { faction_goal_enemy_core_states_controlled_count_cache = ROOT.faction_goal_enemy_core_states_controlled_count_cache_temp }
@@ -291,13 +294,6 @@ faction_goal_update_daily_condition_caches = {
 	if = {
 		limit = {
 			OR = {
-				scope:faction = {
-					OR = {
-						check_variable = { var = faction_goal_communist_member_count_cache value = 0 compare = less_than_or_equals }
-						check_variable = { var = faction_goal_fascist_member_count_cache value = 0 compare = less_than_or_equals }
-						check_variable = { var = faction_goal_anti_communist_member_count_cache value = 0 compare = less_than_or_equals }
-					}
-				}
 				AND = {
 					has_faction_goal = faction_goal_defeat_of_communism
 					NOT = { has_completed_faction_goal = faction_goal_defeat_of_communism }
@@ -407,6 +403,13 @@ faction_goal_update_daily_condition_caches = {
 }
 
 faction_goal_update_weekly_condition_caches = {
+	if = { limit = { faction_goal_member_metrics_needed = yes }
+		faction_goal_update_member_metrics_cache = yes
+	}
+	else = {
+		faction_goal_clear_member_metrics_cache = yes
+		faction_goal_clear_member_metric_targets = yes
+	}
 	scope:faction = {
 		set_variable = { faction_goal_resource_control_available_cache = 0 }
 		set_variable = { faction_goal_resource_control_completed_cache = 0 }
@@ -575,6 +578,73 @@ faction_goal_update_weekly_condition_caches = {
 }
 
 faction_goal_update_member_metrics_cache = {
+	faction_goal_clear_member_metrics_cache = yes
+	if = {
+		limit = {
+			has_faction_goal = faction_goal_unlock_research
+		}
+		scope:faction = { clear_variable = unlock_target }
+	}
+	else_if = {
+		limit = {
+			has_faction_goal = faction_goal_unlock_military
+		}
+		scope:faction = { clear_variable = unlock_military_techs_researched_target }
+	}
+	else = {
+		faction_goal_clear_member_metric_targets = yes
+	}
+	set_temp_variable = { faction_goal_member_metrics_land = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { faction_goal_force_infantry_cache = 1 }
+				check_variable = { faction_goal_force_mechanized_cache = 1 }
+				check_variable = { faction_goal_force_tank_cache = 1 }
+				has_faction_goal = faction_goal_joint_military_exercises
+				has_faction_goal = faction_goal_an_infantry_army
+				has_faction_goal = faction_goal_transform_nato_forces
+				has_faction_goal = faction_goal_transform_eap_forces
+				has_faction_goal = faction_goal_an_armored_fist
+			}
+		}
+		set_temp_variable = { faction_goal_member_metrics_land = 1 }
+	}
+	set_temp_variable = { faction_goal_member_metrics_naval = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { faction_goal_force_capital_ships_cache = 1 }
+				has_faction_goal = faction_goal_high_seas_fleet
+				has_faction_goal = faction_goal_marine_corps
+				has_faction_goal = faction_goal_submarine_force
+				has_faction_goal = faction_goal_convoy_escort_force
+			}
+		}
+		set_temp_variable = { faction_goal_member_metrics_naval = 1 }
+	}
+	set_temp_variable = { faction_goal_member_metrics_air = 0 }
+	if = {
+		limit = {
+			OR = {
+				has_faction_goal = faction_goal_airborne_corps
+				has_faction_goal = faction_goal_air_superiority
+			}
+		}
+		set_temp_variable = { faction_goal_member_metrics_air = 1 }
+	}
+	set_temp_variable = { faction_goal_member_metrics_research = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { faction_goal_force_researched_technologies_cache = 1 }
+				check_variable = { faction_goal_force_armies_cache = 1 }
+				has_faction_goal = faction_goal_unlock_research
+				has_faction_goal = faction_goal_unlock_military
+			}
+		}
+		set_temp_variable = { faction_goal_member_metrics_research = 1 }
+	}
 	set_temp_variable = { faction_goal_infantry_battalions_cache_temp = 0 }
 	set_temp_variable = { faction_goal_mechanized_battalions_cache_temp = 0 }
 	set_temp_variable = { faction_goal_tank_battalions_cache_temp = 0 }
@@ -673,106 +743,69 @@ faction_goal_update_member_metrics_cache = {
 		if = {
 			limit = {
 				PREV = {
-					OR = {
-						check_variable = { faction_goal_force_infantry_cache = 1 }
-						AND = {
-							has_faction_goal = faction_goal_joint_military_exercises
-							NOT = { has_completed_faction_goal = faction_goal_joint_military_exercises }
-						}
-						AND = {
-							has_faction_goal = faction_goal_an_infantry_army
-							NOT = { has_completed_faction_goal = faction_goal_an_infantry_army }
-						}
-					}
+					check_variable = { faction_goal_member_metrics_land = 1 }
 				}
 			}
-			add_to_temp_variable = {
-				PREV.faction_goal_infantry_battalions_cache_temp = {
-					value = 0
-					add = num_battalions_with_type@Militia_Bat
-					add = num_battalions_with_type@L_Inf_Bat
-					add = num_battalions_with_type@L_Air_Inf_Bat
-					add = num_battalions_with_type@Mot_Air_Inf_Bat
-					add = num_battalions_with_type@Mech_Air_Inf_Bat
-					add = num_battalions_with_type@Arm_Air_Inf_Bat
-					add = num_battalions_with_type@L_Marine_Bat
-					add = num_battalions_with_type@L_Air_assault_Bat
-					add = num_battalions_with_type@L_Ranger_Bat
-					add = num_battalions_with_type@L_Marine_Cdo_Bat
-					add = num_battalions_with_type@Special_Forces
-					add = num_battalions_with_type@fake_intel_unit
-				}
-			}
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@Militia_Bat }
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@L_Inf_Bat }
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@L_Air_Inf_Bat }
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@Mot_Air_Inf_Bat }
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@Mech_Air_Inf_Bat }
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@Arm_Air_Inf_Bat }
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@L_Marine_Bat }
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@L_Air_assault_Bat }
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@L_Ranger_Bat }
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@L_Marine_Cdo_Bat }
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@Special_Forces }
+			add_to_temp_variable = { PREV.faction_goal_infantry_battalions_cache_temp = num_battalions_with_type@fake_intel_unit }
 		}
 		if = {
 			limit = {
 				PREV = {
-					OR = {
-						check_variable = { faction_goal_force_capital_ships_cache = 1 }
-						AND = {
-							has_faction_goal = faction_goal_high_seas_fleet
-							NOT = { has_completed_faction_goal = faction_goal_high_seas_fleet }
-						}
-					}
+					check_variable = { faction_goal_member_metrics_naval = 1 }
 				}
 			}
-			add_to_temp_variable = {
-				PREV.faction_goal_capital_ships_cache_temp = {
-					value = 0
-					add = num_ships_with_type@battleship
-					add = num_ships_with_type@battle_cruiser
-					add = num_ships_with_type@cruiser
-					add = num_ships_with_type@stealth_destroyer
-					add = num_ships_with_type@destroyer
-					add = num_ships_with_type@heavy_frigate
-				}
-			}
+			add_to_temp_variable = { PREV.faction_goal_capital_ships_cache_temp = num_ships_with_type@battleship }
+			add_to_temp_variable = { PREV.faction_goal_capital_ships_cache_temp = num_ships_with_type@battle_cruiser }
+			add_to_temp_variable = { PREV.faction_goal_capital_ships_cache_temp = num_ships_with_type@cruiser }
+			add_to_temp_variable = { PREV.faction_goal_capital_ships_cache_temp = num_ships_with_type@stealth_destroyer }
+			add_to_temp_variable = { PREV.faction_goal_capital_ships_cache_temp = num_ships_with_type@destroyer }
+			add_to_temp_variable = { PREV.faction_goal_capital_ships_cache_temp = num_ships_with_type@heavy_frigate }
 		}
-		add_to_temp_variable = {
-			PREV.faction_goal_airborne_battalions_cache_temp = {
-				value = 0
-				add = num_battalions_with_type@Arm_Air_Inf_Bat
-				add = num_battalions_with_type@Mech_Air_Inf_Bat
-				add = num_battalions_with_type@Mot_Air_Inf_Bat
-				add = num_battalions_with_type@L_Air_Inf_Bat
-			}
+		if = {
+			limit = { PREV = { check_variable = { faction_goal_member_metrics_air = 1 } } }
+			add_to_temp_variable = { PREV.faction_goal_airborne_battalions_cache_temp = num_battalions_with_type@Arm_Air_Inf_Bat }
+			add_to_temp_variable = { PREV.faction_goal_airborne_battalions_cache_temp = num_battalions_with_type@Mech_Air_Inf_Bat }
+			add_to_temp_variable = { PREV.faction_goal_airborne_battalions_cache_temp = num_battalions_with_type@Mot_Air_Inf_Bat }
+			add_to_temp_variable = { PREV.faction_goal_airborne_battalions_cache_temp = num_battalions_with_type@L_Air_Inf_Bat }
 		}
-		add_to_temp_variable = {
-			PREV.faction_goal_submarines_cache_temp = {
-				value = 0
-				add = num_ships_with_type@missile_submarine
-				add = num_ships_with_type@attack_submarine
-			}
+		if = {
+			limit = { PREV = { check_variable = { faction_goal_member_metrics_naval = 1 } } }
+			add_to_temp_variable = { PREV.faction_goal_submarines_cache_temp = num_ships_with_type@missile_submarine }
+			add_to_temp_variable = { PREV.faction_goal_submarines_cache_temp = num_ships_with_type@attack_submarine }
 		}
-		add_to_temp_variable = {
-			PREV.faction_goal_screen_ships_cache_temp = {
-				value = 0
-				add = num_ships_with_type@screen_destroyer
-				add = num_ships_with_type@stealth_frigate
-				add = num_ships_with_type@frigate
-				add = num_ships_with_type@corvette
-				add = num_ships_with_type@stealth_corvette
-				add = num_ships_with_type@patrol_boat
-			}
+		if = {
+			limit = { PREV = { check_variable = { faction_goal_member_metrics_naval = 1 } } }
+			add_to_temp_variable = { PREV.faction_goal_screen_ships_cache_temp = num_ships_with_type@screen_destroyer }
+			add_to_temp_variable = { PREV.faction_goal_screen_ships_cache_temp = num_ships_with_type@stealth_frigate }
+			add_to_temp_variable = { PREV.faction_goal_screen_ships_cache_temp = num_ships_with_type@frigate }
+			add_to_temp_variable = { PREV.faction_goal_screen_ships_cache_temp = num_ships_with_type@corvette }
+			add_to_temp_variable = { PREV.faction_goal_screen_ships_cache_temp = num_ships_with_type@stealth_corvette }
+			add_to_temp_variable = { PREV.faction_goal_screen_ships_cache_temp = num_ships_with_type@patrol_boat }
 		}
-		add_to_temp_variable = {
-			PREV.faction_goal_fighters_cache_temp = {
-				value = 0
-				add = num_deployed_planes_with_type@small_plane_airframe
-				add = num_deployed_planes_with_type@cv_small_plane_airframe
-			}
+		if = {
+			limit = { PREV = { check_variable = { faction_goal_member_metrics_air = 1 } } }
+			add_to_temp_variable = { PREV.faction_goal_fighters_cache_temp = num_deployed_planes_with_type@small_plane_airframe }
+			add_to_temp_variable = { PREV.faction_goal_fighters_cache_temp = num_deployed_planes_with_type@cv_small_plane_airframe }
 		}
-		add_to_temp_variable = { PREV.faction_goal_strategic_bombers_cache_temp = num_deployed_planes_with_type@large_plane_airframe }
+		if = {
+			limit = { PREV = { check_variable = { faction_goal_member_metrics_air = 1 } } }
+			add_to_temp_variable = { PREV.faction_goal_strategic_bombers_cache_temp = num_deployed_planes_with_type@large_plane_airframe }
+		}
 		if = {
 			limit = {
 				PREV = {
-					OR = {
-						check_variable = { faction_goal_force_researched_technologies_cache = 1 }
-						AND = {
-							has_faction_goal = faction_goal_unlock_research
-							NOT = { has_completed_faction_goal = faction_goal_unlock_research }
-						}
-					}
+					check_variable = { faction_goal_member_metrics_research = 1 }
 				}
 			}
 			add_to_temp_variable = { PREV.faction_goal_researched_technologies_cache_temp = num_researched_technologies }
@@ -780,13 +813,7 @@ faction_goal_update_member_metrics_cache = {
 		if = {
 			limit = {
 				PREV = {
-					OR = {
-						check_variable = { faction_goal_force_armies_cache = 1 }
-						AND = {
-							has_faction_goal = faction_goal_unlock_military
-							NOT = { has_completed_faction_goal = faction_goal_unlock_military }
-						}
-					}
+					check_variable = { faction_goal_member_metrics_research = 1 }
 				}
 			}
 			add_to_temp_variable = { PREV.faction_goal_armies_cache_temp = num_armies }
@@ -823,90 +850,60 @@ faction_goal_update_member_metrics_cache = {
 		}
 	}
 	if = {
-		limit = {
-			OR = {
-				check_variable = { faction_goal_force_mechanized_cache = 1 }
-				AND = {
-					has_faction_goal = faction_goal_transform_nato_forces
-					NOT = { has_completed_faction_goal = faction_goal_transform_nato_forces }
-				}
-				AND = {
-					has_faction_goal = faction_goal_transform_eap_forces
-					NOT = { has_completed_faction_goal = faction_goal_transform_eap_forces }
-				}
-			}
-		}
-		set_temp_variable = {
-			faction_goal_mechanized_battalions_cache_temp = {
-				value = 0
-				every_collection = {
-					named_collection = faction_members_collection
-					add = num_battalions_with_type@Mech_Inf_Bat
-					add = num_battalions_with_type@Arm_Inf_Bat
-					add = num_battalions_with_type@Mech_Air_Inf_Bat
-					add = num_battalions_with_type@Arm_Air_Inf_Bat
-					add = num_battalions_with_type@Mech_Marine_Bat
-					add = num_battalions_with_type@Arm_Marine_Bat
-				}
-			}
+		limit = { check_variable = { faction_goal_member_metrics_land = 1 } }
+		every_collection_element = {
+			input = collection:faction_members_collection
+			add_to_temp_variable = { ROOT.faction_goal_mechanized_battalions_cache_temp = num_battalions_with_type@Mech_Inf_Bat }
+			add_to_temp_variable = { ROOT.faction_goal_mechanized_battalions_cache_temp = num_battalions_with_type@Arm_Inf_Bat }
+			add_to_temp_variable = { ROOT.faction_goal_mechanized_battalions_cache_temp = num_battalions_with_type@Mech_Air_Inf_Bat }
+			add_to_temp_variable = { ROOT.faction_goal_mechanized_battalions_cache_temp = num_battalions_with_type@Arm_Air_Inf_Bat }
+			add_to_temp_variable = { ROOT.faction_goal_mechanized_battalions_cache_temp = num_battalions_with_type@Mech_Marine_Bat }
+			add_to_temp_variable = { ROOT.faction_goal_mechanized_battalions_cache_temp = num_battalions_with_type@Arm_Marine_Bat }
 		}
 	}
 	if = {
-		limit = {
-			OR = {
-				check_variable = { faction_goal_force_tank_cache = 1 }
-				AND = {
-					has_faction_goal = faction_goal_transform_nato_forces
-					NOT = { has_completed_faction_goal = faction_goal_transform_nato_forces }
-				}
-				AND = {
-					has_faction_goal = faction_goal_transform_eap_forces
-					NOT = { has_completed_faction_goal = faction_goal_transform_eap_forces }
-				}
-				AND = {
-					has_faction_goal = faction_goal_an_armored_fist
-					NOT = { has_completed_faction_goal = faction_goal_an_armored_fist }
-				}
-			}
-		}
-		set_temp_variable = {
-			faction_goal_tank_battalions_cache_temp = {
-				value = 0
-				every_collection = {
-					named_collection = faction_members_collection
-					add = num_battalions_with_type@armor_Bat
-					add = num_battalions_with_type@L_arm_Bat
-					add = num_battalions_with_type@A_L_arm_Bat
-				}
-			}
+		limit = { check_variable = { faction_goal_member_metrics_land = 1 } }
+		every_collection_element = {
+			input = collection:faction_members_collection
+			add_to_temp_variable = { ROOT.faction_goal_tank_battalions_cache_temp = num_battalions_with_type@armor_Bat }
+			add_to_temp_variable = { ROOT.faction_goal_tank_battalions_cache_temp = num_battalions_with_type@L_arm_Bat }
+			add_to_temp_variable = { ROOT.faction_goal_tank_battalions_cache_temp = num_battalions_with_type@A_L_arm_Bat }
 		}
 	}
-	set_temp_variable = {
-		faction_goal_marine_battalions_cache_temp = {
-			value = 0
-			every_collection = {
-				named_collection = faction_members_collection
-				add = num_battalions_with_type@L_Marine_Bat
-				add = num_battalions_with_type@L_Marine_Cdo_Bat
-				add = num_battalions_with_type@Mot_Marine_Bat
-				add = num_battalions_with_type@Mech_Marine_Bat
-				add = num_battalions_with_type@Arm_Marine_Bat
-			}
+	if = {
+		limit = { check_variable = { faction_goal_member_metrics_naval = 1 } }
+		every_collection_element = {
+			input = collection:faction_members_collection
+			add_to_temp_variable = { ROOT.faction_goal_marine_battalions_cache_temp = num_battalions_with_type@L_Marine_Bat }
+			add_to_temp_variable = { ROOT.faction_goal_marine_battalions_cache_temp = num_battalions_with_type@L_Marine_Cdo_Bat }
+			add_to_temp_variable = { ROOT.faction_goal_marine_battalions_cache_temp = num_battalions_with_type@Mot_Marine_Bat }
+			add_to_temp_variable = { ROOT.faction_goal_marine_battalions_cache_temp = num_battalions_with_type@Mech_Marine_Bat }
+			add_to_temp_variable = { ROOT.faction_goal_marine_battalions_cache_temp = num_battalions_with_type@Arm_Marine_Bat }
 		}
 	}
-	set_variable = { faction_goal_mechanized_battalions_cache = faction_goal_mechanized_battalions_cache_temp }
-	set_variable = { faction_goal_tank_battalions_cache = faction_goal_tank_battalions_cache_temp }
-	set_variable = { faction_goal_marine_battalions_cache = faction_goal_marine_battalions_cache_temp }
+	if = { limit = { check_variable = { faction_goal_member_metrics_land = 1 } }
+		set_variable = { faction_goal_mechanized_battalions_cache = faction_goal_mechanized_battalions_cache_temp }
+		set_variable = { faction_goal_tank_battalions_cache = faction_goal_tank_battalions_cache_temp }
+	}
 	scope:faction = {
-		set_variable = { faction_goal_infantry_battalions_cache = PREV.faction_goal_infantry_battalions_cache_temp }
-		set_variable = { faction_goal_capital_ships_cache = PREV.faction_goal_capital_ships_cache_temp }
-		set_variable = { faction_goal_airborne_battalions_cache = PREV.faction_goal_airborne_battalions_cache_temp }
-		set_variable = { faction_goal_submarines_cache = PREV.faction_goal_submarines_cache_temp }
-		set_variable = { faction_goal_screen_ships_cache = PREV.faction_goal_screen_ships_cache_temp }
-		set_variable = { faction_goal_fighters_cache = PREV.faction_goal_fighters_cache_temp }
-		set_variable = { faction_goal_strategic_bombers_cache = PREV.faction_goal_strategic_bombers_cache_temp }
-		set_variable = { faction_goal_researched_technologies_cache = PREV.faction_goal_researched_technologies_cache_temp }
-		set_variable = { faction_goal_armies_cache = PREV.faction_goal_armies_cache_temp }
+		if = { limit = { PREV = { check_variable = { faction_goal_member_metrics_land = 1 } } }
+			set_variable = { faction_goal_infantry_battalions_cache = PREV.faction_goal_infantry_battalions_cache_temp }
+		}
+		if = { limit = { PREV = { check_variable = { faction_goal_member_metrics_naval = 1 } } }
+			set_variable = { faction_goal_capital_ships_cache = PREV.faction_goal_capital_ships_cache_temp }
+			set_variable = { faction_goal_marine_battalions_cache = PREV.faction_goal_marine_battalions_cache_temp }
+			set_variable = { faction_goal_submarines_cache = PREV.faction_goal_submarines_cache_temp }
+			set_variable = { faction_goal_screen_ships_cache = PREV.faction_goal_screen_ships_cache_temp }
+		}
+		if = { limit = { PREV = { check_variable = { faction_goal_member_metrics_air = 1 } } }
+			set_variable = { faction_goal_airborne_battalions_cache = PREV.faction_goal_airborne_battalions_cache_temp }
+			set_variable = { faction_goal_fighters_cache = PREV.faction_goal_fighters_cache_temp }
+			set_variable = { faction_goal_strategic_bombers_cache = PREV.faction_goal_strategic_bombers_cache_temp }
+		}
+		if = { limit = { PREV = { check_variable = { faction_goal_member_metrics_research = 1 } } }
+			set_variable = { faction_goal_researched_technologies_cache = PREV.faction_goal_researched_technologies_cache_temp }
+			set_variable = { faction_goal_armies_cache = PREV.faction_goal_armies_cache_temp }
+		}
 		set_variable = { faction_goal_military_factories_cache = PREV.faction_goal_military_factories_cache_temp }
 		set_variable = { faction_goal_member_count_cache = PREV.faction_goal_member_count_cache_temp }
 		set_variable = { faction_goal_communist_member_count_cache = PREV.faction_goal_communist_member_count_cache_temp }
@@ -923,23 +920,68 @@ faction_goal_update_member_metrics_cache = {
 	}
 }
 
+faction_goal_clear_member_metrics_cache = {
+	scope:faction = {
+		clear_variable = faction_goal_infantry_battalions_cache
+		clear_variable = faction_goal_mechanized_battalions_cache
+		clear_variable = faction_goal_tank_battalions_cache
+		clear_variable = faction_goal_capital_ships_cache
+		clear_variable = faction_goal_marine_battalions_cache
+		clear_variable = faction_goal_airborne_battalions_cache
+		clear_variable = faction_goal_submarines_cache
+		clear_variable = faction_goal_screen_ships_cache
+		clear_variable = faction_goal_fighters_cache
+		clear_variable = faction_goal_strategic_bombers_cache
+		clear_variable = faction_goal_researched_technologies_cache
+		clear_variable = faction_goal_armies_cache
+		clear_variable = faction_goal_military_factories_cache
+		clear_variable = faction_goal_member_count_cache
+		clear_variable = faction_goal_communist_member_count_cache
+		clear_variable = faction_goal_fascist_member_count_cache
+		clear_variable = faction_goal_anti_communist_member_count_cache
+		clear_variable = faction_goal_below_30_democracy_member_count_cache
+		clear_variable = faction_goal_above_75_communism_member_count_cache
+		clear_variable = faction_goal_nato_gdp_eligible_member_count_cache
+		clear_variable = faction_goal_panama_visible_cache
+		clear_variable = faction_goal_gibraltar_visible_cache
+		clear_variable = faction_goal_bosporus_visible_cache
+		clear_variable = faction_goal_suez_visible_cache
+		clear_variable = faction_goal_mandeb_visible_cache
+	}
+}
+
+faction_goal_clear_member_metric_targets = {
+	scope:faction = {
+		clear_variable = unlock_military_techs_researched_target
+		clear_variable = unlock_target
+	}
+}
+
 faction_goal_select_unlock_research = {
 	set_temp_variable = { faction_goal_force_researched_technologies_cache = 1 }
 	set_temp_variable = { faction_goal_unlock_research_target_temp = 0 }
 	every_faction_member = {
-		add_to_temp_variable = {
-			ROOT.faction_goal_unlock_research_target_temp = {
-				value = num_researched_technologies
-				multiply = {
-					value = 0
-					if = { limit = { value = num_researched_technologies less_than = 50 } add = 1.25 }
-					else_if = { limit = { value = num_researched_technologies less_than = 75 } add = 1.2 }
-					else_if = { limit = { value = num_researched_technologies less_than = 100 } add = 1.15 }
-					else_if = { limit = { value = num_researched_technologies less_than = 150 } add = 1.1 }
-					else_if = { limit = { value = num_researched_technologies less_than = 200 } add = 1.05 }
-				}
-			}
+		set_temp_variable = { faction_goal_research_factor = 0 }
+		if = { limit = { num_researched_technologies < 50 }
+			set_temp_variable = { faction_goal_research_factor = 1.25 }
 		}
+		else_if = { limit = { num_researched_technologies < 75 }
+			set_temp_variable = { faction_goal_research_factor = 1.2 }
+		}
+		else_if = { limit = { num_researched_technologies < 100 }
+			set_temp_variable = { faction_goal_research_factor = 1.15 }
+		}
+		else_if = { limit = { num_researched_technologies < 150 }
+			set_temp_variable = { faction_goal_research_factor = 1.1 }
+		}
+		else_if = { limit = { num_researched_technologies < 200 }
+			set_temp_variable = { faction_goal_research_factor = 1.05 }
+		}
+		set_temp_variable = {
+			faction_goal_research_contribution = num_researched_technologies
+		}
+		multiply_temp_variable = { faction_goal_research_contribution = faction_goal_research_factor }
+		add_to_temp_variable = { ROOT.faction_goal_unlock_research_target_temp = faction_goal_research_contribution }
 	}
 	round_temp_variable = faction_goal_unlock_research_target_temp
 	scope:faction = {
@@ -952,12 +994,8 @@ faction_goal_select_unlock_military = {
 	set_temp_variable = { faction_goal_force_armies_cache = 1 }
 	faction_goal_update_member_metrics_cache = yes
 	scope:faction = {
-		set_variable = {
-			unlock_target = {
-				value = faction_goal_armies_cache
-				multiply = 1.2
-			}
-		}
+		set_variable = { unlock_target = faction_goal_armies_cache }
+		multiply_variable = { unlock_target = 1.2 }
 	}
 }
 
@@ -965,14 +1003,9 @@ faction_goal_update_strategic_bombing_campaign_cache = {
 	set_temp_variable = { faction_goal_recently_bombed_states_cache_temp = 0 }
 	if = {
 		limit = { has_war = yes }
-		set_temp_variable = {
-			faction_goal_recently_bombed_states_cache_temp = {
-				value = 0
-				every_collection = {
-					named_collection = faction_enemy_owned_core_states_recently_bombed_collection
-					add = 1
-				}
-			}
+		every_collection_element = {
+			input = collection:faction_enemy_owned_core_states_recently_bombed_collection
+			add_to_temp_variable = { ROOT.faction_goal_recently_bombed_states_cache_temp = 1 }
 		}
 	}
 	scope:faction = {
@@ -1005,7 +1038,14 @@ faction_goal_refresh_all_caches = {
 faction_goal_update_daily_caches = {
 	if = {
 		limit = { is_faction_leader = yes }
-		faction_goal_update_member_metrics_cache = yes
+		if = {
+			limit = { faction_goal_member_metrics_needed = yes }
+			faction_goal_update_member_metrics_cache = yes
+		}
+		else = {
+			faction_goal_clear_member_metrics_cache = yes
+			faction_goal_clear_member_metric_targets = yes
+		}
 		faction_goal_update_daily_condition_caches = yes
 		if = {
 			limit = {
