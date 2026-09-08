@@ -1,34 +1,17 @@
 name: Test Suite
 run-name: >-
-  Validate PR #${{ inputs.pr_number ||
-  github.event.pull_request.number || 'current' }}
-  head=${{ inputs.head_sha || github.event.pull_request.head.sha ||
-  github.sha }} base=${{ inputs.base_sha ||
-  github.event.pull_request.base.sha || github.sha }}
+  Validate PR #${{ github.event.pull_request.number || 'current' }}
+  head=${{ github.event.pull_request.head.sha || github.sha }}
+  base=${{ github.event.pull_request.base.sha || github.sha }}
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: "PR number to validate (omit for the current ref)"
-        required: false
-        type: string
-      head_sha:
-        description: "PR head SHA to validate"
-        required: false
-        type: string
-      base_sha:
-        description: "Base branch SHA for the validation baseline"
-        required: false
-        type: string
 
 concurrency:
   group: >-
-    ${{ github.workflow }}-${{ inputs.pr_number ||
-    github.event.pull_request.number || github.ref }}
+    ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -60,7 +43,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
     outputs:
       common: ${{ steps.groups.outputs.common }}
       events: ${{ steps.groups.outputs.events }}
@@ -100,50 +82,19 @@ jobs:
       - name: Resolve validation ref
         id: resolve-ref
         env:
-          GH_TOKEN: ${{ github.token }}
           EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
           EVENT_HEAD_REPOSITORY: >-
             ${{ github.event.pull_request.head.repo.full_name }}
           EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
-          INPUT_HEAD_SHA: ${{ inputs.head_sha }}
-          INPUT_BASE_SHA: ${{ inputs.base_sha }}
         run: |
-          pr_number="${INPUT_PR_NUMBER:-$EVENT_PR_NUMBER}"
-          requested_head_sha="$INPUT_HEAD_SHA"
-          requested_base_sha="$INPUT_BASE_SHA"
+          pr_number="$EVENT_PR_NUMBER"
           head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"
           head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"
           base_sha="${EVENT_BASE_SHA:-$GITHUB_SHA}"
           if [ -n "$pr_number" ] &&
               [[ ! "$pr_number" =~ ^[1-9][0-9]*$ ]]; then
             echo "::error::The PR number must be a positive integer"
-            exit 1
-          fi
-          for requested_sha in "$requested_head_sha" "$requested_base_sha"; do
-            if [ -n "$requested_sha" ] &&
-                [[ ! "$requested_sha" =~ ^[0-9a-f]{40}$ ]]; then
-              echo "::error::Requested revisions must be full commit SHAs"
-              exit 1
-            fi
-          done
-          if [ -n "$pr_number" ]; then
-            pr_url="repos/$GITHUB_REPOSITORY/pulls/$pr_number"
-            pr_json=$(gh api "$pr_url")
-            head_repository=$(printf '%s' "$pr_json" \
-              | jq -r '.head.repo.full_name // empty')
-            head_sha=$(printf '%s' "$pr_json" \
-              | jq -r '.head.sha // empty')
-          fi
-          if [ -n "$requested_head_sha" ] &&
-              [ "$head_sha" != "$requested_head_sha" ]; then
-            echo "::error::The PR head changed before validation was dispatched"
-            exit 1
-          fi
-          if [ -n "$requested_base_sha" ] &&
-              [ "$base_sha" != "$requested_base_sha" ]; then
-            echo "::error::The base changed before validation was dispatched"
             exit 1
           fi
           if [[ ! "$head_repository" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] ||
@@ -160,8 +111,8 @@ jobs:
             echo "base-sha=$base_sha"
           } >> "$GITHUB_OUTPUT"
 
-      # The PR checkout supplies Git data only. Executable helper scripts come
-      # from the trusted base revision checked out below.
+      # The job is pull_request-only with read permissions. Use the PR's own
+      # helper version so newly introduced grouping rules can validate themselves.
       - name: Checkout PR index
         id: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -176,12 +127,12 @@ jobs:
           sparse-checkout: descriptor.mod
           sparse-checkout-cone-mode: false
 
-      - name: Checkout trusted change tooling
+      - name: Checkout change tooling
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: ${{ github.repository }}
-          ref: ${{ github.event.pull_request.base.sha || github.sha }}
-          path: trusted
+          repository: ${{ steps.resolve-ref.outputs.repository }}
+          ref: ${{ steps.resolve-ref.outputs.ref }}
+          path: tooling
           fetch-depth: 1
           persist-credentials: false
           sparse-checkout: |
@@ -205,19 +156,14 @@ jobs:
         run: |
           merge_base=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
           git diff --name-status -z "$merge_base" "$HEAD_SHA" \
-            | python3 ../trusted/tools/validation/collect_changed_files.py \
+            | python3 ../tooling/tools/validation/collect_changed_files.py \
             > ../changed-files.txt
           wc -l ../changed-files.txt
 
       - name: Compute changed groups
         id: groups
         run: |
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            python3 trusted/tools/validation/change_groups.py --dispatch \
-              < /dev/null
-          else
-            python3 trusted/tools/validation/change_groups.py < changed-files.txt
-          fi
+          python3 tooling/tools/validation/change_groups.py < changed-files.txt
 
       - name: Upload changed files
         if: always()
@@ -315,8 +261,8 @@ jobs:
       MD_NO_CACHE: >-
         ${{ needs.detect-changes.outputs.full_suite == 'true' && '1' || '' }}
     steps:
-      # The PR checkout contains game data only. Validators, dependency files,
-      # and the composite setup action are copied from the trusted base below.
+      # The PR checkout contains game data only. This read-only pull-request job
+      # loads the matching validators and dependencies in a separate checkout.
       - name: Checkout PR content
         id: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -340,7 +286,6 @@ jobs:
 
       - name: Restore sparse workspace cache
         id: sparse-cache
-        if: github.event_name != 'workflow_dispatch'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
@@ -368,12 +313,12 @@ jobs:
             exit 1
           fi
 
-      - name: Checkout trusted validation tooling
+      - name: Checkout validation tooling
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: ${{ github.repository }}
-          ref: ${{ needs.detect-changes.outputs.trusted-ref }}
-          path: trusted
+          repository: ${{ needs.detect-changes.outputs.checkout-repository }}
+          ref: ${{ needs.detect-changes.outputs.checkout-ref }}
+          path: tooling
           fetch-depth: 1
           persist-credentials: false
           sparse-checkout: |
@@ -385,14 +330,14 @@ jobs:
             pyproject.toml
           sparse-checkout-cone-mode: false
 
-      - name: Install trusted validation tooling
+      - name: Install validation tooling
         run: |
-          cp -a trusted/tools .
+          cp -a tooling/tools .
           mkdir -p resources .github/actions
-          cp -a trusted/resources/documentation resources/
-          cp -a trusted/.claude .
-          cp -a trusted/.github/actions/setup-md-python .github/actions/
-          cp -a trusted/CLAUDE.md trusted/pyproject.toml .
+          cp -a tooling/resources/documentation resources/
+          cp -a tooling/.claude .
+          cp -a tooling/.github/actions/setup-md-python .github/actions/
+          cp -a tooling/CLAUDE.md tooling/pyproject.toml .
 
       - name: Compute validator code hash
         id: toolshash
@@ -403,7 +348,6 @@ jobs:
       - name: Restore shared validator disk cache
         id: valcache
         if: >-
-          github.event_name != 'workflow_dispatch' &&
           needs.detect-changes.outputs.full_suite != 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
@@ -430,9 +374,7 @@ jobs:
           } | tee .workspace-manifest
 
       - name: Save sparse workspace cache
-        if: >-
-          github.event_name != 'workflow_dispatch' &&
-          steps.sparse-cache.outputs.cache-hit != 'true'
+        if: false
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
@@ -462,9 +404,8 @@ jobs:
     name: Tools tests (${{ matrix.os }})
     needs: [detect-changes]
     if: >-
-      github.event_name != 'workflow_dispatch' &&
-      (needs.detect-changes.outputs.full_suite == 'true' ||
-      needs.detect-changes.outputs.tools == 'true')
+      needs.detect-changes.outputs.full_suite == 'true' ||
+      needs.detect-changes.outputs.tools == 'true'
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -929,8 +870,7 @@ jobs:
         ${{ needs.detect-changes.outputs.head-sha ||
         github.event.pull_request.head.sha || github.sha }}
       VALIDATION_SCOPE: >-
-        ${{ github.event_name != 'workflow_dispatch' &&
-        needs.detect-changes.outputs.full_suite == 'true' &&
+        ${{ needs.detect-changes.outputs.full_suite == 'true' &&
         'full' || 'partial' }}
     steps:
       - name: Checkout report tooling
@@ -1006,7 +946,9 @@ jobs:
             --baseline-dir .validation_baseline
             --baseline-toolshash "$TOOLSHASH"
           )
-          if [ -f changed-files/changed-files.txt ]; then
+          if [ -f changed-files/changed-files.txt ] &&
+              python3 tools/generate_validation_report.py --help \
+                | grep -q -- '--changed-files'; then
             args+=(--changed-files changed-files/changed-files.txt)
           fi
           if [ -n "$PR_NUMBER" ]; then

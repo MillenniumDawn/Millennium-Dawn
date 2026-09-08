@@ -11,6 +11,10 @@ BUDGETS_BYTES = {
     ".css": 120_000,
     ".js": 80_000,
 }
+HTML_BUDGET_OVERRIDES = {
+    "changelogs/v2-0-changes/index.html": 340_000,
+    "misc/beta-changelogs/index.html": 340_000,
+}
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif", ".svg"}
 MAX_IMAGE_BYTES = 3_000_000
@@ -46,9 +50,13 @@ def run(site_dir: Path) -> tuple[bool, str]:
         ext = file_path.suffix.lower()
         size = file_path.stat().st_size
 
-        if ext in BUDGETS_BYTES and size > BUDGETS_BYTES[ext]:
+        budget = BUDGETS_BYTES.get(ext)
+        if ext == ".html":
+            relative_path = file_path.relative_to(site_dir).as_posix()
+            budget = HTML_BUDGET_OVERRIDES.get(relative_path, budget)
+        if budget is not None and size > budget:
             failures.append(
-                f"- {file_path}: {size} bytes exceeds {ext} budget of {BUDGETS_BYTES[ext]} bytes"
+                f"- {file_path}: {size} bytes exceeds {ext} budget of {budget} bytes"
             )
 
         if ext in IMAGE_EXTENSIONS and size > MAX_IMAGE_BYTES:

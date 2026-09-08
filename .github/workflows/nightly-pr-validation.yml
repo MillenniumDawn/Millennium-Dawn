@@ -1,6 +1,7 @@
-name: Nightly PR Revalidation
+name: Nightly PR Validation Rerun
 
-# Re-runs the validation suite for every open PR after main moves.
+# Re-runs each open PR's latest low-trust pull_request validation. The scheduler
+# never checks out or executes PR code in its privileged default-branch context.
 
 on:
   schedule:
@@ -28,53 +29,51 @@ jobs:
     env:
       GH_REPO: ${{ github.repository }}
     steps:
-      - name: Dispatch validation for open PRs
+      - name: Rerun validation for open PRs
         env:
           GH_TOKEN: ${{ github.token }}
           FORCE: ${{ inputs.force }}
         run: |
-          # Resolve main's live head so each run uses current base data.
-          base_sha=$(gh api "repos/$GH_REPO/commits/main" --jq '.sha')
           pulls_url="repos/$GH_REPO/pulls?state=open&base=main&per_page=100"
-          # Pagination keeps open PRs after the first 100 in the sweep.
           prs=$(gh api --paginate "$pulls_url" \
-            --jq '.[] | [.number, .head.sha] | @tsv')
-          # The workflow run title is base-owned and carries both pins. A
-          # successful head-only match is never enough to skip a validation.
+            --jq '.[].number')
           runs_url="repos/$GH_REPO/actions/workflows/test-suite.yml/runs"
-          runs_url="$runs_url?event=workflow_dispatch&branch=main&per_page=100"
-          successful=$(gh api --paginate "$runs_url" --jq '
-            .workflow_runs[]
-            | select(.status == "completed" and
-                .conclusion == "success" and
-                .event == "workflow_dispatch" and
-                .head_branch == "main")
-            | .display_title
-          ')
+          runs_url="$runs_url?event=pull_request&per_page=100"
+          runs=$(gh api --paginate --slurp "$runs_url")
           sent=0
           skipped=0
           failed=0
-          while IFS=$'\t' read -r num head_sha; do
+          while read -r num; do
             [ -z "$num" ] && continue
-            title="Validate PR #$num head=$head_sha base=$base_sha"
-            if [ "$FORCE" != "true" ] &&
-                printf '%s\n' "$successful" | grep -Fqx "$title"; then
-              skipped=$((skipped + 1))
-              echo "Skipping PR #$num: exact successful head/base pair exists"
+            run=$(printf '%s' "$runs" | jq -c \
+              --argjson number "$num" \
+              '[.[].workflow_runs[] | select(
+                .event == "pull_request" and
+                any(.pull_requests[]?; .number == $number)
+              )] | sort_by(.created_at) | reverse | first // empty')
+            if [ -z "$run" ]; then
+              echo "::warning::PR #$num has no Test Suite pull_request run"
+              failed=$((failed + 1))
               continue
             fi
-            if gh workflow run test-suite.yml --ref main \
-                -f pr_number="$num" -f head_sha="$head_sha" \
-                -f base_sha="$base_sha"; then
+            run_id=$(printf '%s' "$run" | jq -r '.id')
+            conclusion=$(printf '%s' "$run" | jq -r '.conclusion // empty')
+            if [ "$FORCE" != "true" ] && [ "$conclusion" = "success" ]; then
+              skipped=$((skipped + 1))
+              echo "Skipping PR #$num: latest Test Suite run succeeded"
+              continue
+            fi
+            rerun_url="repos/$GH_REPO/actions/runs/$run_id/rerun"
+            if gh api --method POST "$rerun_url"; then
               sent=$((sent + 1))
             else
-              echo "::warning::PR #$num could not be dispatched"
+              echo "::warning::PR #$num Test Suite run could not be rerun"
               failed=$((failed + 1))
             fi
           done <<< "$prs"
-          echo "Dispatched test-suite for $sent open PR(s)," \
-            "skipped $skipped exact successful pair(s)," \
-            "$failed dispatch failure(s)"
+          echo "Reran Test Suite for $sent open PR(s)," \
+            "skipped $skipped successful run(s)," \
+            "$failed missing or failed rerun(s)"
           if [ "$failed" -gt 0 ]; then
             exit 1
           fi

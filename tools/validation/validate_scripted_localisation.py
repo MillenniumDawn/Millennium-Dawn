@@ -371,7 +371,13 @@ class Validator(BaseValidator):
         # Preemptive slot libraries — defined for all possible slots even if only a
         # subset are active.  Suppress unused warnings for the unoccupied slots rather
         # than requiring every slot to have a live caller.
-        UNUSED_ONLY_FALSE_POSITIVES = ("eu_parl_pg_party_",)
+        # Map-mode tooltip consumers may be absent from sparse CI checkouts even
+        # though the complete English localisation invokes these definitions.
+        UNUSED_ONLY_FALSE_POSITIVES = (
+            "eu_parl_pg_party_",
+            "map_mode_ruling_party",
+            "map_mode_coalition_none",
+        )
 
         defined_lower_to_original = {loc.lower(): loc for loc in defined_locs}
         defined_locs_lower = [loc.lower() for loc in defined_locs]
