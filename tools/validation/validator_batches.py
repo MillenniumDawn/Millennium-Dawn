@@ -36,6 +36,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
     "core": (
         ValidatorSpec("common-mistakes", "validate_common_mistakes.py", _CORE_GROUPS),
         ValidatorSpec("variables", "validate_variables.py", _CORE_GROUPS),
+        ValidatorSpec("math-expressions", "validate_math_expressions.py", _CORE_GROUPS),
         ValidatorSpec(
             "scripted-localisation", "validate_scripted_localisation.py", _CORE_GROUPS
         ),
@@ -64,7 +65,9 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "scientist-traits", "validate_scientist_traits.py", ("scientist-traits",)
         ),
-        ValidatorSpec("mios", "validate_mios.py", ("mios", "localisation")),
+        ValidatorSpec(
+            "mios", "validate_mios.py", ("mios", "localisation", "interface")
+        ),
         ValidatorSpec(
             "scripted-gui", "validate_scripted_gui.py", ("scripted-guis", "interface")
         ),
@@ -133,6 +136,9 @@ IMPACT_ONLY_SPECS: Tuple[ValidatorSpec, ...] = (
     ),
     ValidatorSpec(
         "mod-encoding", "validate_mod_encoding.py", (), True, runner="standalone"
+    ),
+    ValidatorSpec(
+        "txt-encoding", "validate_txt_encoding.py", (), True, runner="standalone"
     ),
 )
 

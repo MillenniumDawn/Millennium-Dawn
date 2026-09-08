@@ -141,6 +141,7 @@ def test_standalone_ci_tools_select_only_their_impact_specs():
     for path, name in (
         ("tools/linting/validate_localization_encoding.py", "localization-encoding"),
         ("tools/linting/validate_mod_encoding.py", "mod-encoding"),
+        ("tools/linting/validate_txt_encoding.py", "txt-encoding"),
         ("tools/validation/validate_style.py", "style"),
         ("tools/validation/validate_mod_descriptors.py", "mod-descriptors"),
         ("tools/validation/validate_file_paths.py", "file-paths"),
