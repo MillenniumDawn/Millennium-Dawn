@@ -780,15 +780,19 @@ class Validator(BaseValidator):
                 except (OSError, UnicodeDecodeError):
                     continue
                 for name, pattern in patterns.items():
-                    if os.path.abspath(defined[name][0]) == os.path.abspath(filepath):
-                        continue
+                    def_path, def_line = defined[name]
+                    abs_def = os.path.abspath(def_path)
+                    abs_file = os.path.abspath(filepath)
                     for match in pattern.finditer(text):
+                        line = text.count(chr(10), 0, match.start()) + 1
+                        if abs_def == abs_file and line == def_line:
+                            continue
                         results.append(
                             (
                                 f"calls {name}, a scripted trigger taking"
                                 " $PARAM$ arguments, so it cannot resolve",
                                 os.path.relpath(filepath, self.mod_path),
-                                text.count(chr(10), 0, match.start()) + 1,
+                                line,
                             )
                         )
 
