@@ -198,32 +198,114 @@ TOP_modern_opportunities_2026 = {
 	}
 }
 
+TOP_modern_opportunities_2027 = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { global.TOP_modern_year < 2027 } }
+		set_variable = { global.TOP_modern_year = 2027 }
+		set_variable = { global.TOP_modern_first = 142 }
+		set_variable = { global.TOP_modern_last = 145 }
+		set_variable = { global.TOP_modern_until = { value = global.TOP_clock add = 365 } }
+	}
+}
+
+TOP_modern_opportunities_2028 = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { global.TOP_modern_year < 2028 } }
+		set_variable = { global.TOP_modern_year = 2028 }
+		set_variable = { global.TOP_modern_first = 145 }
+		set_variable = { global.TOP_modern_last = 148 }
+		set_variable = { global.TOP_modern_until = { value = global.TOP_clock add = 365 } }
+	}
+}
+
+TOP_modern_opportunities_2029 = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { global.TOP_modern_year < 2029 } }
+		set_variable = { global.TOP_modern_year = 2029 }
+		set_variable = { global.TOP_modern_first = 148 }
+		set_variable = { global.TOP_modern_last = 151 }
+		set_variable = { global.TOP_modern_until = { value = global.TOP_clock add = 365 } }
+	}
+}
+
+TOP_modern_opportunities_2030 = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { global.TOP_modern_year < 2030 } }
+		set_variable = { global.TOP_modern_year = 2030 }
+		set_variable = { global.TOP_modern_first = 151 }
+		set_variable = { global.TOP_modern_last = 154 }
+		set_variable = { global.TOP_modern_until = { value = global.TOP_clock add = 365 } }
+	}
+}
+
+TOP_modern_opportunities_2031 = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { global.TOP_modern_year < 2031 } }
+		set_variable = { global.TOP_modern_year = 2031 }
+		set_variable = { global.TOP_modern_first = 154 }
+		set_variable = { global.TOP_modern_last = 157 }
+		set_variable = { global.TOP_modern_until = { value = global.TOP_clock add = 365 } }
+	}
+}
+
+TOP_modern_opportunities_2032 = {
+	if = {
+		limit = { TOP_enabled = yes check_variable = { global.TOP_modern_year < 2032 } }
+		set_variable = { global.TOP_modern_year = 2032 }
+		set_variable = { global.TOP_modern_first = 157 }
+		set_variable = { global.TOP_modern_last = 160 }
+		set_variable = { global.TOP_modern_until = { value = global.TOP_clock add = 365 } }
+	}
+}
+
 TOP_modern_country_opportunity = {
+	set_temp_variable = { TOP_modern_lead_gain = global.TOP_annual_lead_gain }
+	if = { limit = { check_variable = { TOP_modern_lead_gain < 1 } } set_temp_variable = { TOP_modern_lead_gain = 25 } }
 	if = {
 		limit = {
 			TOP_country_eligible = yes
 			check_variable = { global.TOP_modern_year > 2023 }
-			check_variable = { global.TOP_modern_year < 2027 }
+			check_variable = { global.TOP_modern_year < 2033 }
 			check_variable = { global.TOP_modern_until > global.TOP_clock }
 			check_variable = { TOP_last_modern_year < global.TOP_modern_year }
 		}
-		set_variable = { TOP_last_modern_year = global.TOP_modern_year }
 		set_temp_variable = { TOP_modern_candidate = 0 }
 		set_temp_variable = { TOP_modern_best_score = 0 }
+		set_temp_variable = { TOP_modern_floor = global.TOP_modern_first }
+		subtract_from_temp_variable = { TOP_modern_floor = 1 }
 		for_each_loop = {
 			array = TOP_dossiers
 			value = TOP_modern_target
+			set_temp_variable = { TOP_target = TOP_modern_target }
 			if = {
 				limit = {
 					check_variable = { global.TOP_status^TOP_modern_target = 1 }
 					check_variable = { TOP_known^TOP_modern_target = 1 }
 					check_variable = { TOP_confidence^TOP_modern_target > 0 }
-					check_variable = { global.TOP_political^TOP_modern_target = 0 }
-					check_variable = { global.TOP_affiliation^TOP_modern_target > 0 }
-					check_variable = { global.TOP_affiliation^TOP_modern_target < 8 }
 					is_in_array = { global.TOP_active_targets = TOP_modern_target }
+					TOP_authored_role_eligible = { TARGET = TOP_modern_target }
+					OR = {
+						AND = {
+							check_variable = { global.TOP_modern_year < 2027 }
+							check_variable = { global.TOP_political^TOP_modern_target = 0 }
+							check_variable = { global.TOP_affiliation^TOP_modern_target > 0 }
+							check_variable = { global.TOP_affiliation^TOP_modern_target < 8 }
+						}
+						AND = {
+							check_variable = { global.TOP_modern_year > 2026 }
+							check_variable = { TOP_modern_target > TOP_modern_floor }
+							check_variable = { TOP_modern_target < global.TOP_modern_last }
+							check_variable = { global.TOP_civilian^TOP_modern_target = 0 }
+							OR = {
+								check_variable = { global.TOP_political^TOP_modern_target = 0 }
+								AND = {
+									check_variable = { global.TOP_political^TOP_modern_target = 1 }
+									TOP_exceptional_authority = yes
+								}
+							}
+						}
+					}
 				}
-				set_temp_variable = { TOP_target = TOP_modern_target }
 				TOP_find_org = yes
 				set_temp_variable = { TOP_modern_score = TOP_confidence^TOP_modern_target }
 				if = {
@@ -231,18 +313,22 @@ TOP_modern_country_opportunity = {
 					add_to_temp_variable = { TOP_modern_score = global.active_terror_org_threat_lvl^TOP_org_slot }
 				}
 				if = {
+					limit = { check_variable = { global.TOP_political^TOP_modern_target = 1 } }
+					subtract_from_temp_variable = { TOP_modern_score = global.TOP_official_review_penalty }
+				}
+				if = {
 					limit = {
 						OR = {
 							AND = {
-								check_variable = { TOP_last_modern_year = 2024 }
+								check_variable = { global.TOP_modern_year = 2024 }
 								check_variable = { global.TOP_affiliation^TOP_modern_target = 3 }
 							}
 							AND = {
-								check_variable = { TOP_last_modern_year = 2025 }
+								check_variable = { global.TOP_modern_year = 2025 }
 								check_variable = { global.TOP_affiliation^TOP_modern_target > 4 }
 							}
 							AND = {
-								check_variable = { TOP_last_modern_year = 2026 }
+								check_variable = { global.TOP_modern_year = 2026 }
 								OR = {
 									check_variable = { global.TOP_affiliation^TOP_modern_target = 1 }
 									check_variable = { global.TOP_affiliation^TOP_modern_target = 4 }
@@ -261,7 +347,8 @@ TOP_modern_country_opportunity = {
 		}
 		if = {
 			limit = { check_variable = { TOP_modern_candidate > 0 } }
-			TOP_add_target_lead = { TARGET = TOP_modern_candidate AMOUNT = 25 }
+			set_variable = { TOP_last_modern_year = global.TOP_modern_year }
+			TOP_add_target_lead = { TARGET = TOP_modern_candidate AMOUNT = TOP_modern_lead_gain }
 			if = {
 				limit = { check_variable = { TOP_last_modern_year = 2024 } }
 				set_variable = { TOP_modern_2024_target = TOP_modern_candidate }
@@ -272,9 +359,39 @@ TOP_modern_country_opportunity = {
 				set_variable = { TOP_modern_2025_target = TOP_modern_candidate }
 				if = { limit = { is_ai = no } country_event = { id = TOP_opportunity.2 days = 1 } }
 			}
-			else = {
+			else_if = {
+				limit = { check_variable = { TOP_last_modern_year = 2026 } }
 				set_variable = { TOP_modern_2026_target = TOP_modern_candidate }
 				if = { limit = { is_ai = no } country_event = { id = TOP_opportunity.3 days = 1 } }
+			}
+			else_if = {
+				limit = { check_variable = { TOP_last_modern_year = 2027 } }
+				set_variable = { TOP_modern_2027_target = TOP_modern_candidate }
+				if = { limit = { is_ai = no } country_event = { id = TOP_opportunity.4 days = 1 } }
+			}
+			else_if = {
+				limit = { check_variable = { TOP_last_modern_year = 2028 } }
+				set_variable = { TOP_modern_2028_target = TOP_modern_candidate }
+				if = { limit = { is_ai = no } country_event = { id = TOP_opportunity.5 days = 1 } }
+			}
+			else_if = {
+				limit = { check_variable = { TOP_last_modern_year = 2029 } }
+				set_variable = { TOP_modern_2029_target = TOP_modern_candidate }
+				if = { limit = { is_ai = no } country_event = { id = TOP_opportunity.6 days = 1 } }
+			}
+			else_if = {
+				limit = { check_variable = { TOP_last_modern_year = 2030 } }
+				set_variable = { TOP_modern_2030_target = TOP_modern_candidate }
+				if = { limit = { is_ai = no } country_event = { id = TOP_opportunity.7 days = 1 } }
+			}
+			else_if = {
+				limit = { check_variable = { TOP_last_modern_year = 2031 } }
+				set_variable = { TOP_modern_2031_target = TOP_modern_candidate }
+				if = { limit = { is_ai = no } country_event = { id = TOP_opportunity.8 days = 1 } }
+			}
+			else = {
+				set_variable = { TOP_modern_2032_target = TOP_modern_candidate }
+				if = { limit = { is_ai = no } country_event = { id = TOP_opportunity.9 days = 1 } }
 			}
 			TOP_refresh_view = yes
 		}

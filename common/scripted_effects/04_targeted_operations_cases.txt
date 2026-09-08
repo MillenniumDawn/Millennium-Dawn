@@ -11,6 +11,9 @@ TOP_initialize_cases = {
 	resize_array = { TOP_case_rigor = global.TOP_registry_capacity }
 	resize_array = { TOP_case_assurance = global.TOP_registry_capacity }
 	resize_array = { TOP_case_collecting = global.TOP_registry_capacity }
+	resize_array = { TOP_case_visit_token = global.TOP_registry_capacity }
+	resize_array = { TOP_case_visit_status = global.TOP_registry_capacity }
+	resize_array = { TOP_case_visit_story = global.TOP_registry_capacity }
 }
 
 TOP_find_host_case = {
@@ -31,6 +34,9 @@ TOP_designate_selected = {
 		add_to_variable = { TOP_case_counter = 1 }
 		set_variable = { TOP_case_sequence^TOP_selected = TOP_case_counter }
 		set_variable = { TOP_case_host^TOP_selected = TOP_lead_host^TOP_selected }
+		set_variable = { TOP_case_visit_token^TOP_selected = global.TOP_visit_token^TOP_selected }
+		set_variable = { TOP_case_visit_status^TOP_selected = global.TOP_visit_status^TOP_selected }
+		set_variable = { TOP_case_visit_story^TOP_selected = global.TOP_visit_story^TOP_selected }
 		set_variable = { TOP_case_phase^TOP_selected = 1 }
 		set_variable = { TOP_case_until^TOP_selected = { value = global.TOP_clock add = 182 } }
 		add_to_array = { TOP_active_cases = TOP_selected }
@@ -50,6 +56,9 @@ TOP_load_case = {
 	set_variable = { TOP_authorized_rigor = TOP_case_rigor^$TARGET$ }
 	set_variable = { TOP_authorized_assurance = TOP_case_assurance^$TARGET$ }
 	set_variable = { TOP_authorized_facility = TOP_case_facility^$TARGET$ }
+	set_variable = { TOP_authorized_visit_token = TOP_case_visit_token^$TARGET$ }
+	set_variable = { TOP_authorized_visit_status = TOP_case_visit_status^$TARGET$ }
+	set_variable = { TOP_authorized_visit_story = TOP_case_visit_story^$TARGET$ }
 	set_variable = { TOP_pending_target = 0 }
 	if = {
 		limit = { check_variable = { TOP_case_phase^$TARGET$ = 3 } }
@@ -80,6 +89,9 @@ TOP_close_case = {
 		set_variable = { TOP_case_method^$TARGET$ = 0 }
 		set_variable = { TOP_case_due^$TARGET$ = 0 }
 		set_variable = { TOP_case_collecting^$TARGET$ = 0 }
+		set_variable = { TOP_case_visit_token^$TARGET$ = 0 }
+		set_variable = { TOP_case_visit_status^$TARGET$ = 0 }
+		set_variable = { TOP_case_visit_story^$TARGET$ = 0 }
 		remove_from_array = { TOP_active_cases = $TARGET$ }
 		if = {
 			limit = { check_variable = { TOP_authorized_target = $TARGET$ } }
@@ -119,6 +131,23 @@ TOP_process_cases = {
 		array = TOP_active_cases
 		value = TOP_timer_case
 		set_temp_variable = { TOP_target = TOP_timer_case }
+		if = {
+			limit = {
+				check_variable = { TOP_case_phase^TOP_target > 0 }
+				check_variable = { TOP_case_phase^TOP_target < 4 }
+				check_variable = { TOP_case_visit_status^TOP_target > 0 }
+				check_variable = { TOP_case_visit_token^TOP_target = global.TOP_visit_token^TOP_target }
+				check_variable = { TOP_case_visit_story^TOP_target = global.TOP_visit_story^TOP_target }
+			}
+			set_variable = { TOP_case_until^TOP_target = global.TOP_visit_execution_until^TOP_target }
+			if = {
+				limit = {
+					check_variable = { TOP_case_phase^TOP_target = 3 }
+					check_variable = { TOP_case_due^TOP_target < global.TOP_visit_start^TOP_target }
+				}
+				set_variable = { TOP_case_due^TOP_target = global.TOP_visit_start^TOP_target }
+			}
+		}
 		if = {
 			limit = { check_variable = { TOP_case_phase^TOP_target < 4 } check_variable = { global.TOP_status^TOP_target > 1 } }
 			# Another country's result ends preparation, but the host slot waits for assessment.
