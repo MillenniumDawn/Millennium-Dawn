@@ -135,17 +135,18 @@ def test_all_native_raids_bind_their_own_person_method_and_callback(manifest):
         assert f"TOP_case_phase^{target} = 2" in visible
         assert f"TOP_case_method^{target} = {method}" in visible
         assert "TOP_authorized_target" not in visible
+        # common/raids/ is parsed before the scripted trigger and effect files
+        # register, and the engine does not substitute $PARAM$ for a trigger, so
+        # each raid names its own gate and sets its own result variables.
+        expected_gate = f"TOP_native_gate_{target}_{method}"
         for gate in ("show_target", "available", "launchable"):
             statements = _parse_race_script(_named_block(raid, gate))[gate]
-            call = next(
-                operand
+            assert any(
+                key == expected_gate and operand == "yes"
                 for key, _, operand in statements
-                if key == "TOP_native_authorized"
-            )
-            assert {key: value for key, _, value in call} == {
-                "TARGET": target,
-                "METHOD": method,
-            }
+            ), (token, gate)
+            assert not any(key == "TOP_native_authorized" for key, _, _ in statements)
+
         for tier, outcome in enumerate(
             ("failure", "limited_success", "success", "critical_success")
         ):
@@ -153,14 +154,47 @@ def test_all_native_raids_bind_their_own_person_method_and_callback(manifest):
             effects = _parse_race_script(
                 _named_block(_named_block(levels, outcome), "actor_effects")
             )["actor_effects"]
-            call = next(
-                operand for key, _, operand in effects if key == "TOP_native_result"
-            )
-            assert {key: value for key, _, value in call} == {
-                "TARGET": target,
-                "METHOD": method,
-                "TIER": str(tier),
-            }
+            temps = {}
+            for key, _, operand in effects:
+                if key == "set_temp_variable":
+                    for name, _, value in operand:
+                        temps[name] = value
+            assert temps == {
+                "TOP_target": target,
+                "TOP_method": method,
+                "TOP_tier": str(tier),
+            }, (token, outcome)
+            assert any(
+                key == "TOP_native_result_args" for key, _, _ in effects
+            ), (token, outcome)
+
+
+def test_every_raid_has_a_gate_that_binds_its_own_person_and_method(manifest):
+    """The gate is the only thing carrying the binding into the raid."""
+    rendered = GENERATOR.render(manifest)
+    gates = rendered[
+        "common/scripted_triggers/06_targeted_operations_native_gates.txt"
+    ]
+    raids = rendered["common/raids/targeted_operations_raids.txt"]
+
+    defined = set(re.findall(r"(?m)^(TOP_native_gate_\d+_\d+) =", gates))
+    expected = {
+        f"TOP_native_gate_{ident}_{method}"
+        for ident in range(1, manifest["capacity"])
+        for method in (1, 2)
+    }
+    assert defined == expected
+
+    for ident in range(1, manifest["capacity"]):
+        for method in (1, 2):
+            body = _named_block(gates, f"TOP_native_gate_{ident}_{method}")
+            assert f"TOP_arg_target = {ident}" in body
+            assert f"TOP_arg_method = {method}" in body
+            assert "TOP_native_authorized = yes" in body
+
+    # nothing in the generated raids may pass parameters
+    assert "TOP_native_authorized = {" not in raids
+    assert "TOP_native_result = {" not in raids
 
 
 def test_generated_names_and_roles_have_english_localisation(manifest):
@@ -205,7 +239,7 @@ def test_reserved_successors_and_political_civilian_identity_are_separate(manife
     assert {t["id"] for t in manifest["targets"] if t.get("civilian")} == {141}
     assert "global.TOP_civilian^141 = 1" in registry
     for ident in range(129, 142):
-        assert f"TOP_authored_role_eligible = {{ TARGET = {ident} }}" in registry
+        assert f"TOP_authored_role_eligible_{ident} = yes" in registry
         assert f"global.TOP_political^{ident} = 1" in registry
     successors = output["common/scripted_effects/01_targeted_operations_successors.txt"]
     assert "TOP_person_129" not in successors

@@ -144,9 +144,19 @@ class PoliticalScript(TargetedScript):
     def run(self, name, identifier=1):
         self.execute(self.effects[name], identifier)
 
+    # These triggers used to take a TARGET parameter. The engine does not
+    # substitute $PARAM$ for a scripted trigger, so each now reads a temp
+    # variable the caller sets first.
+    TARGET_TEMPS = {
+        "TOP_authored_role_eligible": "TOP_role_target",
+        "TOP_authored_civilian_mandate_valid": "TOP_civilian_valid_target",
+        "TOP_authored_capture_override": "TOP_civilian_valid_target",
+    }
+
     def trigger(self, name, target=None, actor="USA"):
-        operand = "yes" if target is None else [("TARGET", "=", str(target))]
-        return self.condition([(name, "=", operand)], self.tags[actor])
+        if target is not None:
+            self.temps[self.TARGET_TEMPS[name]] = target
+        return self.condition([(name, "=", "yes")], self.tags[actor])
 
     def protect(self, target):
         self.temps["TOP_target"] = target

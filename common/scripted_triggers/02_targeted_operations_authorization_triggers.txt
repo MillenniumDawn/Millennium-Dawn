@@ -35,7 +35,9 @@ TOP_review_valid = {
 	check_variable = { TOP_proposal_state > 0 }
 	check_variable = { TOP_proposal_host > 0 }
 
-	TOP_case_can_review = { TARGET = TOP_proposal_target HOST = TOP_proposal_host }
+	set_temp_variable = { TOP_arg_target = TOP_proposal_target }
+	set_temp_variable = { TOP_arg_host = TOP_proposal_host }
+	TOP_case_can_review = yes
 	check_variable = { TOP_case_sequence^TOP_proposal_target = TOP_proposal_case_sequence }
 	if = {
 		limit = { check_variable = { TOP_case_phase^TOP_proposal_target = 2 } }
@@ -44,7 +46,10 @@ TOP_review_valid = {
 	}
 	if = {
 		limit = { check_variable = { TOP_proposal_method < 3 } }
-		TOP_native_binding_unused = { TARGET = TOP_proposal_target METHOD = TOP_proposal_method STATE = TOP_proposal_state }
+		set_temp_variable = { TOP_arg_target = TOP_proposal_target }
+		set_temp_variable = { TOP_arg_method = TOP_proposal_method }
+		set_temp_variable = { TOP_arg_state = TOP_proposal_state }
+		TOP_native_binding_unused = yes
 	}
 	has_political_power > 49
 	set_temp_variable = { TOP_review_expected_host = TOP_proposal_host }
@@ -67,9 +72,13 @@ TOP_review_valid = {
 	}
 	if = {
 		limit = { check_variable = { TOP_proposal_method > 2 } }
+		set_temp_variable = { TOP_civilian_valid_target = TOP_proposal_target }
 		OR = {
 			NOT = { check_variable = { TOP_proposal_host = THIS } }
-			AND = { check_variable = { TOP_proposal_method = 3 } TOP_authored_capture_override = { TARGET = TOP_proposal_target } }
+			AND = {
+				check_variable = { TOP_proposal_method = 3 }
+				TOP_authored_capture_override = yes
+			}
 		}
 	}
 	if = {
@@ -95,9 +104,10 @@ TOP_review_staff_ready = {
 		check_variable = { TOP_proposal_civilian_assurance > 79 }
 		if = {
 			limit = { TOP_review_lethal = yes }
+			set_temp_variable = { TOP_civilian_valid_target = TOP_proposal_target }
 			OR = {
 				check_variable = { TOP_proposal_capture_feasible = 0 }
-				TOP_authored_capture_override = { TARGET = TOP_proposal_target }
+				TOP_authored_capture_override = yes
 			}
 		}
 	}

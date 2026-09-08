@@ -222,16 +222,17 @@ class ReviewScript(TargetedScript):
         self.run("TOP_approve_review")
 
     def binding(self, target=1, method=2, state=100):
+        # TOP_case_binding_valid no longer takes parameters: the engine cannot
+        # substitute $PARAM$ for a scripted trigger, so it reads temp variables.
         self.temps.update(
-            TOP_target=target, TOP_method=method, TOP_operation_state=state
+            TOP_target=target,
+            TOP_method=method,
+            TOP_operation_state=state,
+            TOP_arg_target=target,
+            TOP_arg_method=method,
+            TOP_arg_state=state,
         )
-        return self.condition(
-            _substitute_script_parameters(
-                self.triggers["TOP_case_binding_valid"],
-                {"TARGET": str(target), "METHOD": str(method), "STATE": str(state)},
-            ),
-            1,
-        )
+        return self.condition(self.triggers["TOP_case_binding_valid"], 1)
 
     def case(self, target, field):
         return self.actor.get(f"TOP_case_{field}^{target}", 0)

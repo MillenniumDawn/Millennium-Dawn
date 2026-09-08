@@ -206,7 +206,8 @@ TOP_country_tick = {
 			array = TOP_active_cases
 			value = TOP_collection_target
 			if = {
-				limit = { check_variable = { TOP_case_collecting^TOP_collection_target = 1 } TOP_authored_role_eligible = { TARGET = TOP_collection_target } check_variable = { global.TOP_status^TOP_collection_target = 1 } }
+				set_temp_variable = { TOP_role_target = TOP_collection_target }
+				limit = { check_variable = { TOP_case_collecting^TOP_collection_target = 1 } TOP_authored_role_eligible = yes check_variable = { global.TOP_status^TOP_collection_target = 1 } }
 				set_temp_variable = { TOP_target = TOP_collection_target }
 				TOP_find_org = yes
 				TOP_get_defensive_modifiers = yes
@@ -357,10 +358,18 @@ TOP_exploit_capture = {
 	set_temp_variable = { TOP_target = TOP_saved_target }
 }
 
+# Parameter shim. Raids cannot use it: common/raids/ is parsed before the
+# scripted effects register, so they set the three variables and call
+# TOP_native_result_args directly.
 TOP_native_result = {
 	set_temp_variable = { TOP_target = $TARGET$ }
 	set_temp_variable = { TOP_method = $METHOD$ }
 	set_temp_variable = { TOP_tier = $TIER$ }
+	TOP_native_result_args = yes
+}
+
+# Reads TOP_target, TOP_method and TOP_tier.
+TOP_native_result_args = {
 	set_temp_variable = { TOP_operation_state = target_state }
 	var:actor_country = {
 		if = {
@@ -608,12 +617,15 @@ TOP_ai_choose_operation = {
 			if = {
 				limit = {
 					check_variable = { global.TOP_status^TOP_ai_target = 1 }
-					TOP_authored_role_eligible = { TARGET = TOP_ai_target }
+					set_temp_variable = { TOP_role_target = TOP_ai_target }
+					TOP_authored_role_eligible = yes
 					set_temp_variable = { TOP_target = TOP_ai_target }
 					TOP_exceptional_authority = yes
 					check_variable = { TOP_case_phase^TOP_ai_target < 2 }
 					OR = { check_variable = { TOP_case_phase^TOP_ai_target = 1 } check_variable = { TOP_active_cases^num < 3 } }
-					TOP_host_case_available = { TARGET = TOP_ai_target HOST = TOP_lead_host^TOP_ai_target }
+					set_temp_variable = { TOP_arg_target = TOP_ai_target }
+					set_temp_variable = { TOP_arg_host = TOP_lead_host^TOP_ai_target }
+					TOP_host_case_available = yes
 					check_variable = { TOP_confidence^TOP_ai_target > TOP_ai_score }
 					NOT = { check_variable = { global.TOP_host^TOP_ai_target = THIS } }
 				}

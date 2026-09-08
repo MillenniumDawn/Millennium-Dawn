@@ -172,8 +172,12 @@ class TargetScript(TargetedScript):
         elif key in {"TOP_country_eligible", "raid_show_target_intervention_check"}:
             result = operand == "yes"
         elif key == "TOP_authored_role_eligible":
-            data = {name: value for name, _, value in operand}
-            result = self.value(data["TARGET"], identifier) not in self.ineligible_roles
+            # No longer parameterised: the caller sets TOP_role_target,
+            # because the engine cannot substitute $PARAM$ for a trigger.
+            result = (
+                self.value("TOP_role_target", identifier)
+                not in self.ineligible_roles
+            )
         elif key == "TOP_review_pending":
             result = operand == "no"
         elif key == "is_in_array":
@@ -470,9 +474,9 @@ def test_partner_refusal_never_executes_or_exposes_an_operation():
 def test_changed_state_controller_invalidates_authorization(trigger):
     script = TargetScript()
     script.authorize()
-    statements = _substitute_script_parameters(
-        script.triggers[trigger], {"TARGET": "11", "METHOD": "1"}
-    )
+    # These triggers no longer take parameters; they read temp variables.
+    script.temps.update({"TOP_arg_target": 11, "TOP_arg_method": 1})
+    statements = script.triggers[trigger]
     assert script.condition(statements, 1)
     script.countries[101]["controller"] = 3
     assert not script.condition(statements, 1)
