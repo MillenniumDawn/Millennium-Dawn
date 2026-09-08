@@ -369,6 +369,21 @@ def test_faction_cache_creation_event_must_update_the_cache(tmp_path):
     assert "must call faction_goal_update_daily_caches" in issues[0][0]
 
 
+def test_faction_cache_event_body_scan_reads_unstaged_events(tmp_path):
+    validator = _faction_cache_validator(
+        tmp_path,
+        "\t\teffect = {\n"
+        "\t\t\tcountry_event = { id = faction_goal_cache.2 hours = 1 }\n"
+        "\t\t}\n",
+    )
+    validator.staged_only = True
+    validator.staged_files = [str(tmp_path / ON_ACTIONS_FILE)]
+
+    validator.validate_faction_goal_cache_creation()
+
+    assert _issues(validator, "missing-faction-goal-cache-lifecycle") == []
+
+
 def test_dated_pulse_poll_is_reported_with_its_source_line(tmp_path):
     _write(
         tmp_path,

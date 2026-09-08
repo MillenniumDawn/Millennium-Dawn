@@ -300,6 +300,29 @@ def test_unreferenced_triggered_only_flagged_unless_namespace_is_dynamic(tmp_pat
     assert v._issues[0].category == "unreferenced-triggered-only"
 
 
+def test_unreferenced_triggered_only_skips_exempt_ids(tmp_path):
+    """Engine-dispatched events on the exempt list are never reported."""
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "add_namespace = lar_collab_gov\n"
+        "add_namespace = foo\n"
+        "country_event = {\n"
+        "\tid = lar_collab_gov.1\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { name = traitors }\n"
+        "}\n"
+        "country_event = {\n"
+        "\tid = foo.9\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { name = foo.9.a }\n"
+        "}\n",
+    )
+    v = _validator(tmp_path)
+    v.validate_triggered_only_unreferenced()
+    assert [i.message for i in v._issues] == ["foo.9 - Ev.txt"]
+
+
 def test_id_based_checks_skip_a_block_with_no_id(tmp_path):
     """A malformed block has no ID to report against; only the checks that can
     name it "unknown" may report on it."""
@@ -362,3 +385,79 @@ def test_empty_event_file_is_skipped(tmp_path):
     assert [ev["id"] for ev in meta] == ["foo.1"]
     assert v._get_fire_only_once_ids() == {"foo.1"}
     assert v._get_fire_only_once_ids() is v._fire_only_once_ids_cache
+
+
+def test_indented_definitions_reach_the_metadata_checks(tmp_path):
+    """Definitions are found by brace matching, not by column.
+
+    64 event definitions in the mod are indented, and a column-anchored scan
+    dropped every one of them from the duplicate-id and namespace checks.
+    """
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "add_namespace = foo\n"
+        "\tcountry_event = {\n"
+        "\t\tid = foo.1\n"
+        "\t\tis_triggered_only = yes\n"
+        "\t\toption = { name = foo.1.a }\n"
+        "\t}\n"
+        "country_event = {\n"
+        "\tid = foo.1\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { name = foo.1.a }\n"
+        "}\n"
+        "\tcountry_event = {\n"
+        "\t\tid = undeclared.1\n"
+        "\t\tis_triggered_only = yes\n"
+        "\t\toption = { name = undeclared.1.a }\n"
+        "\t}\n",
+    )
+    v = _validator(tmp_path)
+    meta, namespaces = v._get_event_metadata()
+
+    assert namespaces == {"foo"}
+    assert [m["id"] for m in meta] == ["foo.1", "foo.1", "undeclared.1"]
+
+    v.validate_duplicate_event_ids()
+    v.validate_namespace_mismatch()
+    reported = " ".join(str(i) for i in v._issues)
+    assert "foo.1" in reported, "the indented duplicate was not reported"
+    assert (
+        "undeclared.1" in reported
+    ), "the indented namespace mismatch was not reported"
+
+
+def test_nested_fire_id_is_not_adopted_by_a_malformed_parent(tmp_path):
+    """An id belonging to a block fire is not the definition's own id.
+
+    The malformed block has no id of its own but fires foo.1 from an option.
+    Taking that id would invent a duplicate of the real foo.1 and label the
+    malformed block with someone else's name instead of leaving it unknown.
+    """
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "add_namespace = foo\n"
+        "country_event = {\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = {\n"
+        "\t\tname = broken.a\n"
+        "\t\tcountry_event = { id = foo.1 days = 1 }\n"
+        "\t}\n"
+        "}\n"
+        "country_event = {\n"
+        "\tid = foo.1\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { name = foo.1.a }\n"
+        "}\n",
+    )
+    v = _validator(tmp_path)
+    meta, _ = v._get_event_metadata()
+
+    assert [m["id"] for m in meta] == [None, "foo.1"]
+
+    v.validate_duplicate_event_ids()
+    assert not any(
+        "foo.1" in str(issue) for issue in v._issues
+    ), "the nested fire was counted as a second definition of foo.1"

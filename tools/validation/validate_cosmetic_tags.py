@@ -70,8 +70,9 @@ def _scan_both_cosmetic_tags(
                 has_paths[match] = basename
     if "set_cosmetic_tag =" in text_file:
         for match in re.findall(r"set_cosmetic_tag = (\S+)", text_file):
-            set_tags[match] = 0
-            set_paths[match] = basename
+            if "[" not in match:
+                set_tags[match] = 0
+                set_paths[match] = basename
     return (has_tags, has_paths, set_tags, set_paths)
 
 

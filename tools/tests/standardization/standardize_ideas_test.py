@@ -369,6 +369,49 @@ def test_single_line_on_add_with_effects_is_exploded_and_logged():
     assert _standardize([line + "\n" for line in out]) == out
 
 
+def test_nested_single_leaf_child_in_lifecycle_block_collapses():
+    out = _standardize(
+        _idea(
+            [
+                "\tTAG_lifecycle = {",
+                "\t\tpicture = x",
+                "\t\ton_remove = {",
+                '\t\t\tlog = "[GetDateText]: [Root.GetName]: Idea TAG_lifecycle removed"',
+                "\t\t\tTAG = {",
+                "\t\t\t\tcountry_event = arme.185",
+                "\t\t\t}",
+                "\t\t}",
+                "\t}",
+            ]
+        )
+    )
+    assert "\t\t\tTAG = { country_event = arme.185 }" in out
+    assert _standardize([line + "\n" for line in out]) == out
+
+
+def test_multi_leaf_child_in_lifecycle_block_stays_multiline():
+    out = _standardize(
+        _idea(
+            [
+                "\tTAG_lifecycle = {",
+                "\t\tpicture = x",
+                "\t\ton_remove = {",
+                '\t\t\tlog = "[GetDateText]: [Root.GetName]: Idea TAG_lifecycle removed"',
+                "\t\t\tSOV = {",
+                "\t\t\t\tadd_opinion_modifier = {",
+                "\t\t\t\t\ttarget = ARM",
+                "\t\t\t\t\tmodifier = denied_us",
+                "\t\t\t\t}",
+                "\t\t\t}",
+                "\t\t}",
+                "\t}",
+            ]
+        )
+    )
+    assert "\t\t\tSOV = {" in out
+    assert "\t\t\t\tadd_opinion_modifier = {" in out
+
+
 def test_effectless_lifecycle_blocks_are_dropped():
     out = _standardize(
         _idea(
