@@ -16,6 +16,19 @@ from shared.suite import initialize_git_repository, run_git
 _BY_SCRIPT = {spec.script: spec for spec in _REGISTRY}
 
 
+def _run_dispatcher_with_stubbed_runner(monkeypatch, argv):
+    """Stub the dispatcher's subprocess runner and argv; return recorded calls."""
+    calls = []
+
+    def run(spec, _mod_path, env, _no_color, _inner_workers):
+        calls.append((spec.script, env["MD_STAGED_FILES"]))
+        return (spec.script, 0, "", "", 0.0)
+
+    monkeypatch.setattr(dispatcher, "_run", run)
+    monkeypatch.setattr(sys, "argv", argv)
+    return calls
+
+
 def _selected(path):
     """Set of validator scripts the dispatcher runs for a single staged path."""
     return {spec.script for spec in _REGISTRY if spec.matches([path])}
@@ -196,17 +209,8 @@ def test_dispatcher_keeps_gfx_through_main_filter(tmp_path, monkeypatch):
     target.write_text("spriteTypes = {\n}\n", encoding="utf-8")
     run_git(tmp_path, "add", "-A")
 
-    calls = []
-
-    def run(spec, _mod_path, env, _no_color, _inner_workers):
-        calls.append((spec.script, env["MD_STAGED_FILES"]))
-        return (spec.script, 0, "", "", 0.0)
-
-    monkeypatch.setattr(dispatcher, "_run", run)
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        ["precommit_validate.py", "--path", str(tmp_path)],
+    calls = _run_dispatcher_with_stubbed_runner(
+        monkeypatch, ["precommit_validate.py", "--path", str(tmp_path)]
     )
 
     assert dispatcher.main() == 0
@@ -303,16 +307,8 @@ def test_precommit_dispatcher_selects_oob_for_a_moved_history_target(
         spec.script for spec in _REGISTRY if spec.matches(paths)
     }
 
-    calls = []
-
-    def run(spec, _mod_path, env, _no_color, _inner_workers):
-        calls.append((spec.script, env["MD_STAGED_FILES"]))
-        return (spec.script, 0, "", "", 0.0)
-
-    monkeypatch.setattr(dispatcher, "_run", run)
-    monkeypatch.setattr(
-        sys,
-        "argv",
+    calls = _run_dispatcher_with_stubbed_runner(
+        monkeypatch,
         ["precommit_validate.py", "--path", str(tmp_path), destination],
     )
 
