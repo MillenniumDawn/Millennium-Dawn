@@ -186,6 +186,8 @@ def test_tools_checkout_exposes_consumed_configuration():
         ".github/workflows/pr-cache-cleanup.yml",
         ".github/workflows/pr-housekeeping.yml",
         ".github/workflows/issue-triage.yml",
+        "common/scripted_guis/01_targeted_operations_gui.txt",
+        "gfx/leaders/generic_politicians/latin_female_001.dds",
     }
     assert required <= sparse
 
