@@ -110,6 +110,11 @@ def test_multi_scope_bracketed_invocation_tracks_member_name():
     }
 
 
+def test_dynamic_scoped_variable_is_not_a_scripted_loc_candidate():
+    assert V._scan_loc_tokens("[?FROM.current_vote_sway]", False) == set()
+    assert V._scan_loc_tokens("[?global.current_sc_vote_type]", False) == set()
+
+
 def test_unknown_lowercase_and_uppercase_bracket_calls_are_retained():
     assert V._scan_loc_tokens("[status] [USA_STATUS]", False) == {
         "status",

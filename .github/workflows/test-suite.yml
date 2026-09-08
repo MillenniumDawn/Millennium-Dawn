@@ -1,8 +1,5 @@
 name: Test Suite
-run-name: >-
-  Validate PR #${{ github.event.pull_request.number || 'current' }}
-  head=${{ github.event.pull_request.head.sha || github.sha }}
-  base=${{ github.event.pull_request.base.sha || github.sha }}
+run-name: Validate live PR #${{ github.event.pull_request.number || 'current' }}
 
 on:
   pull_request:
@@ -25,6 +22,11 @@ env:
     localisation
     interface
     gfx/flags
+    descriptions/**/*.txt
+    portraits/**/*.txt
+    scenario_tests/**/*.txt
+    sound/**/*.txt
+    tutorial/**/*.txt
     map/adjacency_rules.txt
     music
     tools
@@ -75,32 +77,37 @@ jobs:
       head-sha: ${{ steps.resolve-ref.outputs.head-sha }}
       base-sha: ${{ steps.resolve-ref.outputs.base-sha }}
       trusted-ref: >-
-        ${{ github.event.pull_request.base.sha || github.sha }}
+        ${{ steps.resolve-ref.outputs.base-sha }}
       checkout-repository: ${{ steps.resolve-ref.outputs.repository }}
       checkout-ref: ${{ steps.resolve-ref.outputs.ref }}
     steps:
       - name: Resolve validation ref
         id: resolve-ref
         env:
+          GH_TOKEN: ${{ github.token }}
           EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
-          EVENT_HEAD_REPOSITORY: >-
-            ${{ github.event.pull_request.head.repo.full_name }}
-          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           pr_number="$EVENT_PR_NUMBER"
-          head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"
-          head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"
-          base_sha="${EVENT_BASE_SHA:-$GITHUB_SHA}"
           if [ -n "$pr_number" ] &&
               [[ ! "$pr_number" =~ ^[1-9][0-9]*$ ]]; then
             echo "::error::The PR number must be a positive integer"
             exit 1
           fi
+          pr=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr_number")
+          head_repository=$(printf '%s' "$pr" | jq -r '.head.repo.full_name')
+          head_sha=$(printf '%s' "$pr" | jq -r '.head.sha')
+          base_repository=$(printf '%s' "$pr" | jq -r '.base.repo.full_name')
+          base_ref=$(printf '%s' "$pr" | jq -r '.base.ref')
+          base_sha=$(printf '%s' "$pr" | jq -r '.base.sha')
           if [[ ! "$head_repository" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] ||
               [[ ! "$head_sha" =~ ^[0-9a-f]{40}$ ]] ||
               [[ ! "$base_sha" =~ ^[0-9a-f]{40}$ ]]; then
             echo "::error::Unable to resolve the PR head repository and SHA"
+            exit 1
+          fi
+          if [ "$base_repository" != "$GITHUB_REPOSITORY" ] ||
+              [ "$base_ref" != "main" ]; then
+            echo "::error::The pull request must target this repository's main branch"
             exit 1
           fi
           {
@@ -279,6 +286,11 @@ jobs:
             localisation
             interface
             gfx/flags
+            descriptions/**/*.txt
+            portraits/**/*.txt
+            scenario_tests/**/*.txt
+            sound/**/*.txt
+            tutorial/**/*.txt
             map/adjacency_rules.txt
             music
             *.mod
@@ -295,6 +307,11 @@ jobs:
             localisation
             interface
             gfx/flags
+            descriptions/**/*.txt
+            portraits/**/*.txt
+            scenario_tests/**/*.txt
+            sound/**/*.txt
+            tutorial/**/*.txt
             map/adjacency_rules.txt
             music
             *.mod
@@ -384,6 +401,11 @@ jobs:
             localisation
             interface
             gfx/flags
+            descriptions/**/*.txt
+            portraits/**/*.txt
+            scenario_tests/**/*.txt
+            sound/**/*.txt
+            tutorial/**/*.txt
             map/adjacency_rules.txt
             music
             *.mod
@@ -433,11 +455,16 @@ jobs:
             pyproject.toml
             .pre-commit-config.yaml
             .claude/docs/typo-watchlist.md
+            .claude/docs/linux-system-reference.md
+            .claude/docs/linux-national-adapters.md
             .github/actions/setup-md-python/action.yml
             common
             events
             history
             localisation
+            interface/MD_decisions.gfx
+            interface/countrytechtreeview.gui
+            interface/Iraq_civil_war.gui
             resources
             package.json
             bun.lock
