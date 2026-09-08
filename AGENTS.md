@@ -126,6 +126,7 @@ Keep all output token-efficient: conversation replies, agent hand-back reports, 
 - [UN System](.claude/docs/un-system-reference.md) (read before editing UN voting, elections, or recognition, or adding a Security Council / General Assembly resolution type)
 - [Formables](.claude/docs/formable-reference.md) (read before editing `formable_nation_decisions.txt`, the EU end-states/EFS, UAR, or any union cosmetic — every formation path, the AI commitment ratchet, and the special-formable sentinel)
 - [Faction Rules](.claude/docs/faction-rules.md) | [Typo Watchlist](.claude/docs/typo-watchlist.md)
+- [Game Rules](.claude/docs/game-rules-reference.md) (read before editing `common/game_rules/` — MD's file replaces vanilla's wholesale)
 - [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`)
 - [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) + [Patterns](.claude/docs/scripted-gui-patterns.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
 - [MD Custom Modifiers](.claude/docs/md-custom-modifiers.md) — non-vanilla modifier keys in `common/modifier_definitions/`

@@ -62,6 +62,7 @@ All files below live in `.claude/docs/`.
 | `faction-rules.md`               | `common/factions/rules/`: rule types and trigger scopes      |
 | `focus-tree-reference.md`        | Focus structure, property order, bankruptcy-guard examples   |
 | `formable-reference.md`          | Formable paths, AI ratchet, sentinel, cross-guards, traps    |
+| `game-rules-reference.md`        | Vanilla-override policy, engine-read rules, preset errors    |
 | `hoi4-data-structures.md`        | Variables, arrays, loops, collections, formatted loc         |
 | `idea-reference.md`              | Idea structure: pictures, tiered naming, `name =` gotchas    |
 | `known-false-positives.md`       | Intentional bug-lookalikes; review agents must skip them     |
