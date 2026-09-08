@@ -1,11 +1,10 @@
 ---
-title: Beta Changelog
-description: Changelog for the Beta Test Mod.
+title: v2.0
+page_id: changelog-v2-0-changes
+order: 14
 ---
 
-## Purpose of this Page
-
-This page lists out all of the BETA test mod changes.
+## v2.0.0 - "The Millennium Renaissance"
 
 Content:
 
@@ -189,15 +188,6 @@ AI:
 - [BOL] Re-tagged all 256 focuses with correct search filters; the whole tree was previously tagged Political, so economic and military focuses were undiscoverable
 - [UKR] Added the missing generic search filter layer to 9 focuses that only carried party filters
 - Overhauled the focus AI guard pass across all trees: the bankruptcy guard now keys on the money a focus actually spends (not its completion time), added staffing guards so the AI skips construction focuses it cannot staff, and tagged spending focuses with the Budget search filter
-- [RAJ] Fixed the SCO accession focus firing a nonexistent event; India now joins the SCO as a dialogue partner
-- [RAJ] Fixed the Central Asia focus annexing Bangladesh instead of the targeted Central Asian nation
-- [RAJ] Fixed the Turkmen treaty and Afghan partition path locking permanently when Turkmenistan was destroyed before answering the treaty offer
-- [RAJ] Fixed the BRICS Tower focus never bypassing after China left BRICS
-- [RAJ] Fixed the SCO accession focus registering India as an SCO dialogue partner a second time when it already held SCO status
-- [RAJ] Fixed the Bangladesh annexation focus locking when Bangladesh no longer existed, and only the first of its two source focuses firing the ultimatum
-- [RAJ] Fixed the Pakistan reunification event granting India cores on every state it owned worldwide instead of only ex-Pakistani territory
-- [RAJ] Fixed the Turkmen treaty acceptance signing a non-aggression pact with itself instead of with India
-- [RAJ] Fixed the Vietnam alliance event making Vietnam the faction leader instead of adding it to India's faction
 - [DEN] Fixed the Viking Age purchase transferring the Highlands instead of Shetland and Orkney, the state Denmark actually claims
 - [NIG] Fixed the Islamic States faction invitation only reaching the first invited nation
 - [AZE] Fixed Turkey's aid-refusal event showing another event's option text and log line
@@ -216,7 +206,6 @@ AI:
 - [BLR] Added NATO membership checks to wargoal focuses against Lithuania, Poland, Ukraine, and the Baltics
 - [BLR] Added strength ratio checks to wargoal focuses against Russia and PMR
 - [BLR] Added avoid_starting_wars AI strategy when at war with NATO/EU nations
-- [RAJ] Added AI behavior for handling Naxalite-Maoist insurgency (Issue #330)
 - AI India now prioritizes insurgency suppression decisions
 - AI escalates priority when multiple states reach Severe level
 - AI unlocks Operation Green Hunt after 2009
@@ -331,13 +320,6 @@ Balance:
   - Reduced the construction cost of Civilian Factories by 15%, base workers down from 345k to 275k and GDP to 17.5 from 20 billion
   - Naval Yards + Military Factories Give 1.5 billion GDP per building at base
   - Fossil Fuel Powerplants Construction Cost Reduced by 5%
-- [RAJ] Complete rework of Naxalite-Maoist insurgency system (Issue #330)
-  - [RAJ] Renamed all "hoxaists" references to historically accurate "naxalite" terminology
-  - [RAJ] Rebalanced initial state severities for 2000 start (pre-PWG-MCC merger period)
-  - [RAJ] Reduced modifier penalties: Severe now -35% recruitable/-40% resources (was -50%/-60%)
-  - [RAJ] Removed insurgency from non-historical states (Karnataka, Uttaranchal, Gorkhaland)
-  - [RAJ] Core states (Chhattisgarh, Jharkhand, Telangana) now start at Moderate instead of Severe
-  - [RAJ] Converted MTTH-based events to on_monthly_RAJ triggers for better performance
 - Adjusted some ideas in Germany which was giving a pointless < 0.01 democratic drift causing no actual impact or change
 - Reduced the penalties from the starting spirit "American Militarism"
 - Fixed an influence exploit by proposing, the AI accepting, then canceling the trade agreement giving you near infinite influence
@@ -499,9 +481,6 @@ Bugfix:
 - [CAN] Fixed the fifteen Caribbean and Americas alignment focuses never cancelling when the target soured on Canada, went to war with it, or no longer existed
 - [TAJ] Fixed six alignment and intervention focuses never bypassing when the target was already at war, already a subject, or no longer existed
 - [GER] Fixed the collapse-of-the-republic event reaching only the first European nation instead of every European country
-- [RAJ] Fixed the Islamic Ulema faction invitation reaching only the first Salafist state instead of every eligible one
-- [RAJ] Fixed the Vietnam Alliance focus tooltip promising an alliance offer that silently failed to fire once Vietnam had already joined another faction
-- [RAJ] Fixed the True Indian Territories in Central Asia focus locking permanently once any one of Kazakhstan, Uzbekistan, Kyrgyzstan, or Tajikistan was annexed
 - [DEN] Fixed the Viking Age purchase offer's description omitting the Channel Islands, which the accepted deal also transfers
 - [IRQ] Fixed the Saudi civil war intervention event reaching only the first Saudi belligerent instead of every one
 - [GCC] Fixed the coalition-against-Assad invitation reaching only the first ally instead of every NATO and regional partner
@@ -836,7 +815,6 @@ Bugfix:
 - Fixed German, Denmark and Israel events not giving helicopters (usually from NF) due to outdated designs; added some missing DLC checks
 - Fixed German Green Alliance NFs not being accessible when Greens are in coalition
 - Fixed the USA focus "Army Knowledge Priority" not properly giving generals army size (replaced w/ giving 6 general skilled staffer that do not have it + increased the personnel cost by 1%)
-- Added missing argument to the Sweden Unit Name File that made it accessible by other nations
 - Fixed wrong Self-Propelled Anti-Air Equipment type in generic MIO Company
 - Fixed missing icons for North-Korean MIO
 - Fixed Komatsu MIO Night Ops Trait being unlockable without the parent trait
@@ -1042,7 +1020,6 @@ Bugfix:
 - [CHI] Fixed the Vocational Skills Education Centres decision never becoming available: it required Xinjiang resistance below 0.9 on a scale that runs 0 to 100, which also blocked the only way to raise the Sinicization multiplier (Issue #2973)
 - [CHI] Fixed the Restore Order in Hong Kong decision being unavailable whenever China controlled Hong Kong, caused by the same resistance scale error
 - The generic Intelligence Director now respects the one-intel-advisor-per-country limit
-- [RAJ] Fixed the border war locking up permanently when both sides attacked at the same time (Issue #2092)
 - Marine commandos' naval invasion bonus now actually applies; its tech check was reading the wrong scope and always failed
 - Annexing a country no longer spams errors while cleaning up its intelligence operation tokens
 - [CUB] The Open Borders investment decision no longer force-installs a migration law a nationalist or fascist Cuba is not allowed to hold; blocked governments get political power instead
@@ -1077,7 +1054,6 @@ Database:
 - China now starts with the "Microprocessor" tech
 - Adjusted productivity for nations to be more accurate to the development of regions and GDP as a percentage of their national GDP
 - Expanded the name list for the UK and made brigade numbers shared across different brigade types meaning no duplicates
-- Added unit name lists for Scotland and Wales
 - Added MD modifiers to be used as a dynamic modifier tooltip
 - Updated the MIO Code Styleguide page
 - [ISR] Fixed indentation in Israel history file equipment variant definitions
@@ -1277,7 +1253,6 @@ Localization:
 - Specify that fuel will only be purchased if on low on fuel
 - [FRA] Fixed a typo on focus "Improved Nuclear Waste Management"
 - Modified the Economic Capacity Surplus tooltip to make it clear that the Economic Capacity Surplus is disabled and that money is earned instead
-- [RAJ] Rewrote the Indian party list with abbreviations, subideology labels and descriptions
 - [GER] East German debuff tiers 2, 3 and 4 now have their own names and descriptions instead of all displaying "East German Anger" (Issue #3774)
 
 Map:
