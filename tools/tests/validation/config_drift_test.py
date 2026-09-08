@@ -184,6 +184,8 @@ def test_tools_checkout_exposes_consumed_configuration():
         ".github/workflows/validator-cache.yml",
         ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/pr-cache-cleanup.yml",
+        ".github/workflows/pr-housekeeping.yml",
+        ".github/workflows/issue-triage.yml",
     }
     assert required <= sparse
 
@@ -253,38 +255,39 @@ def test_detect_changes_uses_python_grouping():
     )
     assert checkout["with"]["path"] == "pr-head"
     assert set(checkout["with"]["sparse-checkout"].split()) == {"descriptor.mod"}
-    trusted = next(
+    tooling = next(
         step
         for step in detect["steps"]
-        if step.get("name") == "Checkout trusted change tooling"
+        if step.get("name") == "Checkout change tooling"
     )
-    assert trusted["with"]["repository"] == "${{ github.repository }}"
-    assert trusted["with"]["ref"] == (
-        "${{ github.event.pull_request.base.sha || github.sha }}"
+    assert tooling["with"]["repository"] == (
+        "${{ steps.resolve-ref.outputs.repository }}"
     )
+    assert tooling["with"]["ref"] == "${{ steps.resolve-ref.outputs.ref }}"
     derive = next(
         step["run"]
         for step in detect["steps"]
         if step.get("name") == "Derive changed files"
     )
-    assert "../trusted/tools/validation/collect_changed_files.py" in derive
+    assert "../tooling/tools/validation/collect_changed_files.py" in derive
     for path in ("resources/documentation/modifiers_documentation.md",):
         assert classify([path])["full_suite"] is True
 
 
-def test_dispatch_forces_all_content_groups():
+def test_pull_request_grouping_reads_changed_files_only():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     script = next(
         step["run"]
         for step in workflow["jobs"]["detect-changes"]["steps"]
         if step.get("name") == "Compute changed groups"
     )
-    assert "--dispatch" in script
+    assert "--dispatch" not in script
     assert "< changed-files.txt" in script
 
 
-def test_dispatch_inputs_are_pins_and_executable_refs_are_trusted():
+def test_pull_request_validation_keeps_writable_reporting_on_the_base_ref():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    assert "workflow_dispatch" not in CI_WORKFLOW.read_text(encoding="utf-8")
     detect = workflow["jobs"]["detect-changes"]
     resolver = next(
         step["run"]
@@ -292,10 +295,9 @@ def test_dispatch_inputs_are_pins_and_executable_refs_are_trusted():
         if step.get("name") == "Resolve validation ref"
     )
     assert "^[1-9][0-9]*$" in resolver
-    assert "^[0-9a-f]{40}$" in resolver
     assert 'base_sha="${EVENT_BASE_SHA:-$GITHUB_SHA}"' in resolver
-    assert 'base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"' not in resolver
-    assert "The base changed before validation was dispatched" in resolver
+    assert "INPUT_HEAD_SHA" not in resolver
+    assert "INPUT_BASE_SHA" not in resolver
     assert (
         detect["outputs"]["pr-number"] == "${{ steps.resolve-ref.outputs.pr-number }}"
     )
@@ -304,7 +306,7 @@ def test_dispatch_inputs_are_pins_and_executable_refs_are_trusted():
     )
 
     tools = workflow["jobs"]["tools-tests"]
-    assert "github.event_name != 'workflow_dispatch'" in tools["if"]
+    assert "workflow_dispatch" not in tools["if"]
 
     prepare = workflow["jobs"]["prepare-workspace"]
     save = next(
@@ -312,10 +314,10 @@ def test_dispatch_inputs_are_pins_and_executable_refs_are_trusted():
         for step in prepare["steps"]
         if "actions/cache/save@" in step.get("uses", "")
     )
-    assert "github.event_name != 'workflow_dispatch'" in save["if"]
+    assert save["if"] is False
 
 
-def test_prepare_workspace_separates_pr_data_from_trusted_tooling():
+def test_prepare_workspace_separates_pr_data_from_validation_tooling():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     prepare = workflow["jobs"]["prepare-workspace"]
     checkout = next(
@@ -331,16 +333,20 @@ def test_prepare_workspace_separates_pr_data_from_trusted_tooling():
     assert "tools" not in pr_sparse
     assert "pyproject.toml" not in pr_sparse
     assert ".github/actions/setup-md-python/action.yml" not in pr_sparse
-    trusted = next(
+    tooling = next(
         step
         for step in prepare["steps"]
-        if step.get("name") == "Checkout trusted validation tooling"
+        if step.get("name") == "Checkout validation tooling"
     )
-    assert trusted["with"]["repository"] == "${{ github.repository }}"
-    assert trusted["with"]["ref"] == "${{ needs.detect-changes.outputs.trusted-ref }}"
-    trusted_sparse = set(trusted["with"]["sparse-checkout"].split())
-    assert {"tools", "pyproject.toml"} <= trusted_sparse
-    assert ".github/actions/setup-md-python/action.yml" in trusted_sparse
+    assert tooling["with"]["repository"] == (
+        "${{ needs.detect-changes.outputs.checkout-repository }}"
+    )
+    assert tooling["with"]["ref"] == (
+        "${{ needs.detect-changes.outputs.checkout-ref }}"
+    )
+    tooling_sparse = set(tooling["with"]["sparse-checkout"].split())
+    assert {"tools", "pyproject.toml"} <= tooling_sparse
+    assert ".github/actions/setup-md-python/action.yml" in tooling_sparse
     checkouts = [
         step for step in prepare["steps"] if "actions/checkout@" in step.get("uses", "")
     ]
@@ -357,7 +363,7 @@ def test_prepare_workspace_separates_pr_data_from_trusted_tooling():
     )
     assert "md-sparse-v1-${{ runner.os }}" in cache["with"]["key"]
     assert "needs.detect-changes.outputs.head-sha" in cache["with"]["key"]
-    assert "github.event_name != 'workflow_dispatch'" in cache["if"]
+    assert "if" not in cache
     valcache = next(
         step
         for step in prepare["steps"]
@@ -365,7 +371,7 @@ def test_prepare_workspace_separates_pr_data_from_trusted_tooling():
         and "validation_cache" in step.get("with", {}).get("path", "")
     )
     assert "full_suite != 'true'" in valcache["if"]
-    assert "github.event_name != 'workflow_dispatch'" in valcache["if"]
+    assert "workflow_dispatch" not in valcache["if"]
     assert "steps.toolshash.outputs.hash" in valcache["with"]["key"]
     assert "base-sha" not in valcache["with"]["key"]
 
@@ -414,7 +420,7 @@ def test_report_job_posts_comment_and_checks():
     assert setup["uses"].startswith("actions/setup-python@")
 
 
-def test_report_restores_baseline_for_full_and_dispatch_runs():
+def test_report_restores_baseline_and_supports_old_base_generators():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     report = workflow["jobs"]["report"]
     restore = next(
@@ -431,10 +437,10 @@ def test_report_restores_baseline_for_full_and_dispatch_runs():
     assert "--baseline-dir .validation_baseline" in script
     assert '--baseline-toolshash "$TOOLSHASH"' in script
     assert "--changed-files changed-files/changed-files.txt" in script
+    assert "--help" in script
+    assert "grep -q -- '--changed-files'" in script
     assert "if [ -f .validation_baseline/baseline-meta.json ]" not in script
-    assert (
-        "github.event_name != 'workflow_dispatch'" in report["env"]["VALIDATION_SCOPE"]
-    )
+    assert "workflow_dispatch" not in report["env"]["VALIDATION_SCOPE"]
 
 
 def test_tools_sidecars_have_stable_schema():
@@ -450,18 +456,18 @@ def test_tools_sidecars_have_stable_schema():
     assert upload["with"]["name"] == "tools-tests-${{ matrix.os }}-results"
 
 
-def test_nightly_dispatches_test_suite_and_matches_its_runs():
+def test_nightly_reruns_only_pull_request_test_suite_runs():
     config = yaml.safe_load(NIGHTLY_WORKFLOW.read_text(encoding="utf-8"))
     job = config["jobs"]["revalidate-open-prs"]
     script = next(
-        step["run"] for step in job["steps"] if "gh workflow run" in step.get("run", "")
+        step["run"] for step in job["steps"] if "actions/runs" in step.get("run", "")
     )
     assert "test-suite.yml" in script
     assert "actions/workflows/test-suite.yml/runs" in script
-    assert "display_title" in script
-    assert "head=$head_sha" in script
-    assert "base=$base_sha" in script
-    assert "grep -Fqx" in script
+    assert "event=pull_request" in script
+    assert 'event == "pull_request"' in script
+    assert "actions/runs/$run_id/rerun" in script
+    assert "gh workflow run" not in script
 
 
 def test_housekeeping_has_one_job_and_three_actions():

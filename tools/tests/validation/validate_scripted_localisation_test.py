@@ -391,6 +391,26 @@ def test_unused_check_skips_the_preemptive_party_slot_library(tmp_path):
     assert validator._issues == []
 
 
+def test_unused_check_skips_sparse_map_mode_consumers(tmp_path):
+    _write_sloc(
+        tmp_path,
+        "defs.txt",
+        "defined_text = {\n\tname = map_mode_ruling_party\n}\n"
+        "defined_text = {\n\tname = map_mode_coalition_none\n}\n",
+    )
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_unused_scripted_localisations(
+        [],
+        ["map_mode_ruling_party", "map_mode_coalition_none"],
+        {
+            "map_mode_ruling_party": "defs.txt",
+            "map_mode_coalition_none": "defs.txt",
+        },
+        [],
+    )
+    assert validator._issues == []
+
+
 def test_missing_check_ignores_a_reference_it_cannot_locate(tmp_path):
     validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     validator.validate_missing_scripted_localisations(

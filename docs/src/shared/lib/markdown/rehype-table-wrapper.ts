@@ -3,7 +3,7 @@ import { visit } from "unist-util-visit";
 import type { Parent } from "unist";
 
 function hasClassName(node: Element, className: string): boolean {
-  const value = node.properties?.className;
+  const value: unknown = node.properties?.className;
   if (typeof value === "string") return value.split(/\s+/).includes(className);
   if (Array.isArray(value)) return value.map(String).includes(className);
   return false;
