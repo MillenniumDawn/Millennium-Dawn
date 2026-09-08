@@ -55,6 +55,7 @@ from shared_utils import (  # noqa: E402 — needs the path tweak above
 
 TXT = ".txt"
 YML = ".yml"
+GFX = ".gfx"
 
 
 class _Spec:
@@ -102,6 +103,7 @@ _REGISTRY = [
         "validate_oob_units",
         [
             ("history/units/", TXT),
+            ("history/general/", TXT),
             ("common/units/", TXT),
             ("common/ai_templates/", TXT),
             ("common/scripted_effects/", TXT),
@@ -183,6 +185,7 @@ _REGISTRY = [
             # check: dropping a base stat there kills bonuses elsewhere.
             ("common/units/equipment/", TXT),
             ("common/equipment_groups/", TXT),
+            ("interface/", GFX),
             ("localisation/english/", YML),
         ],
     ),
@@ -195,7 +198,7 @@ def _discover_staged(mod_path, argv_files):
 
     staged = (
         get_staged_files(
-            mod_path, extensions=[TXT, YML], include_missing=bool(argv_files)
+            mod_path, extensions=[TXT, YML, GFX], include_missing=bool(argv_files)
         )
         or []
     )

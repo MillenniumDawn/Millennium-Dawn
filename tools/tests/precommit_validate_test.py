@@ -177,6 +177,10 @@ def test_style_runs_on_normal_txt():
     assert "validate_style" in _selected("common/national_focus/france.txt")
 
 
+def test_interface_sprite_changes_run_mio_validation():
+    assert _selected("interface/mio_icons.gfx") == {"validate_mios"}
+
+
 def test_agency_upgrades_exact_file_match():
     spec = _BY_SCRIPT["validate_agency_upgrades"]
     assert spec.matches(["common/on_actions/MD_auto_agency_on_actions.txt"])
@@ -235,6 +239,14 @@ def test_dispatcher_subprocess_contract(monkeypatch, tmp_path):
     assert captured["env"] is env
     assert captured["timeout"] == 300
     assert result[1] == 1
+
+
+def test_precommit_dispatcher_routes_history_general_templates():
+    assert "validate_oob_units" in {
+        spec.script
+        for spec in _REGISTRY
+        if spec.matches(["history/general/template.txt"])
+    }
 
 
 def test_precommit_dispatcher_selects_oob_for_a_moved_history_target(

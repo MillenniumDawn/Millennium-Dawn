@@ -11,8 +11,10 @@
 # The normal `git commit` flow already runs hooks against just the staged
 # files, which is what you want.
 #
-# md-standardize runs on commit so focus, event, decision, and idea files cannot
-# bypass the project's formatter. The remaining MD-specific hooks are manual:
+# md-fix-styling runs on commit and normalizes only staged-diff lines, so a
+# legacy file never becomes a whole-file whitespace rewrite. It writes the
+# worktree and does not git-add the result; stage the fix and retry the commit.
+# Bulk legacy passes are opt-in:
 #   pre-commit run --hook-stage manual           # all manual hooks
 #   pre-commit run md-fix-styling --hook-stage manual  # single hook
 
@@ -164,15 +166,15 @@ repos:
           ^(tools/|pyproject.toml|.pre-commit-config.yaml|.(github|claude)/)
         pass_filenames: false
         stages: [pre-push]
-      # --- MD-specific hooks (manual by default) ---
+      # --- MD-specific hooks ---
       - id: md-fix-styling
-        name: MD Fix Styling (auto-fix spaces/tabs/braces)
-        entry: python3 tools/linting/fix_styling.py --mode staged
+        name: MD Fix Styling (fix spacing warnings on the staged diff's lines)
+        entry: >-
+          python3 tools/linting/fix_styling.py --mode staged --changed-lines
         language: system
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
-        stages: [manual]
       # - id: md-standardize
       #   name: MD Standardize (auto-fix ideas/events/decisions/focuses)
       #   entry: python3 tools/standardize_staged.py

@@ -30,6 +30,8 @@ GROUP_PATTERNS = {
     "scientist-traits": ["common/scientist_traits/**", "interface/**"],
     "oob": [
         "history/units/**",
+        "history/general/**",
+        "history/**",
         "common/units/**",
         "common/ai_templates/**",
         "common/scripted_effects/**",
@@ -56,6 +58,7 @@ GROUP_PATTERNS = {
         "common/doctrines/**",
         "common/units/equipment/**",
         "common/equipment_groups/**",
+        "interface/**",
     ],
     "scripted-effects": ["common/scripted_effects/**"],
     "style": [

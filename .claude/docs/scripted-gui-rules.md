@@ -17,16 +17,16 @@ Every scripted GUI lives inside a `scripted_gui = { ... }` container:
 
 ```
 scripted_gui = {
-	my_gui_name = {
-		context_type = player_context
-		window_name = "my_gui_window"
-		visible = { }
-		effects = { }
-		triggers = { }
-		properties = { }
-		dynamic_lists = { }
-		ai_enabled = { }
-	}
+ my_gui_name = {
+  context_type = player_context
+  window_name = "my_gui_window"
+  visible = { }
+  effects = { }
+  triggers = { }
+  properties = { }
+  dynamic_lists = { }
+  ai_enabled = { }
+ }
 }
 ```
 
@@ -64,9 +64,9 @@ Map button element names to click effects:
 
 ```
 effects = {
-	my_button_click = { <effects> }
-	my_button_right_click = { <effects> }
-	my_button_shift_click = { <effects> }
+ my_button_click = { <effects> }
+ my_button_right_click = { <effects> }
+ my_button_shift_click = { <effects> }
 }
 ```
 
@@ -78,9 +78,9 @@ Control element visibility and clickability:
 
 ```
 triggers = {
-	my_button_click_enabled = { <triggers> }
-	my_button_visible = { <triggers> }
-	my_icon_visible = { <triggers> }
+ my_button_click_enabled = { <triggers> }
+ my_button_visible = { <triggers> }
+ my_icon_visible = { <triggers> }
 }
 ```
 
@@ -95,12 +95,12 @@ Manipulate element textures, frames, and positions:
 
 ```
 properties = {
-	my_icon = {
-		image = "[get_my_icon_texture]"    # supports scripted localisation
-		frame = my_variable                 # variable-driven frame
-		x = my_x_var                        # variable-driven position
-		y = my_y_var
-	}
+ my_icon = {
+  image = "[get_my_icon_texture]"    # supports scripted localisation
+  frame = my_variable                 # variable-driven frame
+  x = my_x_var                        # variable-driven position
+  y = my_y_var
+ }
 }
 ```
 
@@ -110,13 +110,13 @@ Used with `gridBoxType` elements to draw one entry per array index:
 
 ```
 dynamic_lists = {
-	my_gridbox = {
-		array = my_array           # draws one GUI per index
-		value = v                  # optional, default = v
-		index = i                  # optional, default = i
-		change_scope = no          # if yes, scopes to the array value
-		entry_container = "my_entry_container"
-	}
+ my_gridbox = {
+  array = my_array           # draws one GUI per index
+  value = v                  # optional, default = v
+  index = i                  # optional, default = i
+  change_scope = no          # if yes, scopes to the array value
+  entry_container = "my_entry_container"
+ }
 }
 ```
 
@@ -147,6 +147,8 @@ my_effect = {
 
 Matters most for any GUI the AI also interacts with — peace deal builders, investment dialogs, scripted-effect-driven menus.
 
+Never bind `dirty` to `global.date` or `global.num_days`. Both change every tick, so the GUI redraws every frame and the dirty optimization is gone. Bind a dedicated counter instead (performance-patterns.md has the pattern). `validate_scripted_gui.py` reports these two bindings as `DIRTY_TIMER_GLOBAL`.
+
 MD's shared `update_*_dirty_variable` effects deliberately carry no guard — they are reached only from player click paths in the scripted_gui's `effects` block. When an effect can also be invoked from an AI on_action, guard the call site with `is_ai = no`, not the shared dirty effect.
 
 ## AI Configuration
@@ -165,12 +167,12 @@ ai_check_scope = { <triggers> }      # filters scoped targets
 ai_max_weight_taken_per_test = 1     # max actions per tick (default: 1)
 
 ai_weights = {
-	my_button_click = {
-		ai_will_do = {
-			base = 1
-			modifier = { factor = 0 <triggers> }
-		}
-	}
+ my_button_click = {
+  ai_will_do = {
+   base = 1
+   modifier = { factor = 0 <triggers> }
+  }
+ }
 }
 ```
 
@@ -201,48 +203,48 @@ Additional filters: `test_if_only_major`, `test_if_only_coastal`
 
 ```
 scripted_gui = {
-	my_feature_gui = {
-		context_type = player_context
-		window_name = "my_feature_window"
-		parent_window_token = decision_tab
+ my_feature_gui = {
+  context_type = player_context
+  window_name = "my_feature_window"
+  parent_window_token = decision_tab
 
-		dirty = my_feature_dirty_var
+  dirty = my_feature_dirty_var
 
-		visible = {
-			has_country_flag = my_feature_enabled
-		}
+  visible = {
+   has_country_flag = my_feature_enabled
+  }
 
-		dynamic_lists = {
-			my_list_gridbox = {
-				array = my_data_array
-				change_scope = yes
-				entry_container = "my_list_entry"
-			}
-		}
+  dynamic_lists = {
+   my_list_gridbox = {
+    array = my_data_array
+    change_scope = yes
+    entry_container = "my_list_entry"
+   }
+  }
 
-		effects = {
-			my_action_button_click = {
-				log = "[GetDateText]: [Root.GetName]: my_feature_gui action clicked"
-				my_scripted_effect = yes
-			}
-		}
+  effects = {
+   my_action_button_click = {
+    log = "[GetDateText]: [Root.GetName]: my_feature_gui action clicked"
+    my_scripted_effect = yes
+   }
+  }
 
-		triggers = {
-			my_action_button_click_enabled = {
-				my_scripted_trigger = yes
-			}
-			my_info_icon_visible = {
-				check_variable = { my_var > 0 }
-			}
-		}
+  triggers = {
+   my_action_button_click_enabled = {
+    my_scripted_trigger = yes
+   }
+   my_info_icon_visible = {
+    check_variable = { my_var > 0 }
+   }
+  }
 
-		properties = {
-			my_status_icon = {
-				image = "[get_my_status_texture]"
-			}
-		}
+  properties = {
+   my_status_icon = {
+    image = "[get_my_status_texture]"
+   }
+  }
 
-		ai_enabled = { always = no }
-	}
+  ai_enabled = { always = no }
+ }
 }
 ```
