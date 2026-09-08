@@ -191,6 +191,25 @@ def test_staged_mode_reports_only_when_a_side_is_staged(tmp_path):
     assert len(_collision_findings(validator)) == 1
 
 
+def test_staged_mode_matches_absolute_staged_paths(tmp_path):
+    validator, defined, by_file = _ideas_and_file(tmp_path, "shared_key")
+    _write(
+        tmp_path,
+        "common/national_focus/tree.txt",
+        FOCUS.replace("{key}", "shared_key"),
+    )
+    _write(
+        tmp_path,
+        "localisation/english/collide_l_english.yml",
+        ' l_english:\n shared_key:0 "Shared"\n',
+    )
+
+    validator.staged_only = True
+    validator.staged_files = [str(tmp_path / "common/national_focus/tree.txt")]
+    validator.validate_name_override_collisions(defined, by_file)
+    assert len(_collision_findings(validator)) == 1
+
+
 def test_dynamic_focus_id_is_not_an_owner(tmp_path):
     validator, defined, by_file = _ideas_and_file(tmp_path, "TAG_shared_key")
     _write(

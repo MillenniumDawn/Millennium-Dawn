@@ -186,6 +186,34 @@ def test_interface_sprite_changes_run_mio_validation():
     assert _selected("interface/mio_icons.gfx") == {"validate_mios"}
 
 
+def test_dispatcher_keeps_gfx_through_main_filter(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    run_git(tmp_path, "init")
+    run_git(tmp_path, "config", "user.email", "test@example.com")
+    run_git(tmp_path, "config", "user.name", "Test User")
+    target = tmp_path / "interface" / "mio_icons.gfx"
+    target.parent.mkdir(parents=True)
+    target.write_text("spriteTypes = {\n}\n", encoding="utf-8")
+    run_git(tmp_path, "add", "-A")
+
+    calls = []
+
+    def run(spec, _mod_path, env, _no_color, _inner_workers):
+        calls.append((spec.script, env["MD_STAGED_FILES"]))
+        return (spec.script, 0, "", "", 0.0)
+
+    monkeypatch.setattr(dispatcher, "_run", run)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["precommit_validate.py", "--path", str(tmp_path)],
+    )
+
+    assert dispatcher.main() == 0
+    mio_calls = [env for script, env in calls if script == "validate_mios"]
+    assert mio_calls == ["interface/mio_icons.gfx"]
+
+
 def test_agency_upgrades_exact_file_match():
     spec = _BY_SCRIPT["validate_agency_upgrades"]
     assert spec.matches(["common/on_actions/MD_auto_agency_on_actions.txt"])

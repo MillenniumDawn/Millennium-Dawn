@@ -972,10 +972,8 @@ class Validator(BaseValidator):
         def _is_staged(rel: str) -> bool:
             if rel == "":
                 return False
-            return any(
-                normalize_path_separators(rel).endswith(staged_file)
-                for staged_file in staged_set
-            )
+            rel_norm = normalize_path_separators(rel)
+            return any(staged_file.endswith(rel_norm) for staged_file in staged_set)
 
         findings: List[Issue] = []
         for idea_name in sorted(defined_ideas):

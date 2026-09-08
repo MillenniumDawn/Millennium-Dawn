@@ -30,7 +30,6 @@ GROUP_PATTERNS = {
     "scientist-traits": ["common/scientist_traits/**", "interface/**"],
     "oob": [
         "history/units/**",
-        "history/general/**",
         "history/**",
         "common/units/**",
         "common/ai_templates/**",
