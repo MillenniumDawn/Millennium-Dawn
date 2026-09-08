@@ -171,7 +171,7 @@ Each operator's argument is itself a full expression, so they nest:
 greater_than = { value = num_units  multiply = 0.4 }   # accumulator > (num_units * 0.4)
 ```
 
-**Only `greater_than` and `less_than` are safe comparators.** `equals`, `not_equals`, `greater_than_or_equals`, and `less_than_or_equals` appear in Paradox-adjacent references, but the mod's one use of `equals` inside an `if`'s `limit` (`00_ct_effects.txt`, counter-terror `ambition_chance`) threw a load-time `script_math` error and zeroed the expression, killing every terror-org attack roll. Vanilla never uses anything but `less_than` here (10 uses, zero `equals`), and MD has 29 `greater_than` / 7 `less_than`.
+**Only `greater_than` and `less_than` are safe comparators.** `equals`, `not_equals`, `greater_than_or_equals`, and `less_than_or_equals` appear in Paradox-adjacent references, but the mod's one use of `equals` inside an `if`'s `limit` (`00_ct_effects.txt`, counter-terror `ambition_chance`) threw a load-time `script_math` error and zeroed the expression, killing every terror-org attack roll. Vanilla never uses anything but `less_than` here (10 uses, zero `equals`), and MD has 29 `greater_than` / 7 `less_than`. `validate_math_expressions.py` reports the sibling-operator, unsafe-comparator and `FROM`-read traps (all three classes on this page) as warnings.
 
 For an equality test, either rewrite as a strict inequality on an integer variable (`equals = 0` on a 0/1/2 value becomes `less_than = 1`), or hoist the branch out of the expression entirely and use a normal effect-level `if` with `check_variable`:
 
