@@ -406,6 +406,27 @@ def test_manifest_only_empty_batch_is_not_a_legacy_run(tmp_path):
     assert all(run.status == "passed" for run in runs.values())
 
 
+def test_manifest_loader_ignores_the_pre_batch_reporter_compatibility_sidecar(
+    tmp_path,
+):
+    root = tmp_path / "validation-results"
+    batch = root / "validation-batch-core-results"
+    batch.mkdir(parents=True)
+    write_log(batch, "variables", "✓ VALIDATION COMPLETE - NO ISSUES FOUND\n")
+    write_sidecar(batch, "variables", [])
+    (batch / "validation-batch-core.json").write_text("[]", encoding="utf-8")
+    (batch / MANIFEST_NAME).write_text(
+        '{"mode":"batch","batch":"core","selected":["variables"],'
+        '"results":[{"name":"variables","script":"validate_variables.py",'
+        '"strict":true,"returncode":0,"status":"ok"}]}',
+        encoding="utf-8",
+    )
+
+    runs = load_all(str(root))
+
+    assert [run.name for run in runs] == ["variables"]
+
+
 def test_malformed_manifest_only_batch_is_reported(tmp_path):
     root = tmp_path / "validation-results"
     batch = root / "nested" / "validation-batch-bad-results"

@@ -23,6 +23,7 @@ from validator_batches import BATCHES, ValidatorSpec, select_for_changed_files
 
 RESULT_PREFIX = "validation-"
 MANIFEST_NAME = "batch-manifest.json"
+LEGACY_SUMMARY_LOG = "000-batch-summary.log"
 
 
 def parse_changed_groups(raw: str) -> Optional[Set[str]]:
@@ -107,6 +108,72 @@ def _write_manifest(
         handle.write("\n")
 
 
+def _write_legacy_batch_summary(
+    batch: Optional[str],
+    specs: List[ValidatorSpec],
+    outcomes: Dict[str, Tuple[int, str]],
+    output_dir: str,
+) -> None:
+    """Write the aggregate sidecar expected by the pre-batch trusted reporter."""
+    if not batch:
+        return
+
+    issues = []
+    for spec in specs:
+        _log_path, json_path = _output_paths(output_dir, spec.name)
+        first_issue = len(issues)
+        try:
+            with open(json_path, "r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+            if not isinstance(payload, list) or not all(
+                isinstance(issue, dict) for issue in payload
+            ):
+                raise ValueError("sidecar is not an issue list")
+            issues.extend(payload)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            issues.append(
+                {
+                    "severity": "error",
+                    "category": "batch-execution",
+                    "message": f"{spec.name} result sidecar is unreadable: {exc}",
+                    "file": "",
+                    "line": 0,
+                }
+            )
+
+        returncode, status = outcomes[spec.name]
+        new_issues = issues[first_issue:]
+        if (returncode != 0 or status in {"crash", "missing"}) and not any(
+            issue.get("severity") == "error" for issue in new_issues
+        ):
+            issues.append(
+                {
+                    "severity": "error",
+                    "category": "batch-execution",
+                    "message": (
+                        f"{spec.name} exited {returncode} with status {status}; "
+                        "no trustworthy verdict"
+                    ),
+                    "file": "",
+                    "line": 0,
+                }
+            )
+
+    summary_json = os.path.join(output_dir, f"validation-batch-{batch}.json")
+    with open(summary_json, "w", encoding="utf-8", newline="") as handle:
+        json.dump(issues, handle, indent=2)
+        handle.write("\n")
+
+    errors = sum(issue.get("severity") == "error" for issue in issues)
+    warnings = sum(issue.get("severity") == "warning" for issue in issues)
+    summary_log = os.path.join(output_dir, LEGACY_SUMMARY_LOG)
+    with open(summary_log, "w", encoding="utf-8", newline="") as handle:
+        handle.write(
+            f"Validation batch {batch}: {len(specs)} validator(s), "
+            f"{errors} error(s), {warnings} warning(s)\n"
+        )
+
+
 def run_batch(specs: List[ValidatorSpec], args) -> int:
     mod_path = os.path.abspath(args.path)
     os.makedirs(args.output_dir, exist_ok=True)
@@ -174,6 +241,9 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
         outcomes,
         args.output_dir,
     )
+    _write_legacy_batch_summary(
+        getattr(args, "batch", None), specs, outcomes, args.output_dir
+    )
 
     if failures:
         print(
@@ -240,6 +310,9 @@ def main(argv: Optional[List[str]] = None) -> int:
             [],
             {},
             args.output_dir,
+        )
+        _write_legacy_batch_summary(
+            args.batch if not args.impact else None, [], {}, args.output_dir
         )
         print("Nothing to run; wrote an empty manifest.")
         return 0

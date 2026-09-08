@@ -301,6 +301,8 @@ def test_main_batch_with_no_selection_does_nothing(tmp_path, monkeypatch):
 
     assert code == 0
     assert ran == []
+    assert json.loads((tmp_path / "out/validation-batch-core.json").read_text()) == []
+    assert (tmp_path / "out" / rvb.LEGACY_SUMMARY_LOG).is_file()
 
 
 def test_manifest_records_selection_and_execution_outcomes(
@@ -325,6 +327,28 @@ def test_manifest_records_selection_and_execution_outcomes(
     assert results["events"]["strict"] is True
     assert results["variables"]["status"] == "crash"
     assert results["variables"]["returncode"] == 2
+
+
+def test_legacy_batch_summary_aggregates_findings_and_execution_failures(
+    tmp_path, monkeypatch
+):
+    warning = [{"severity": "warning", "category": "c", "message": "m"}]
+    behaviors = {
+        "validation-events": (0, "log", warning),
+        "validation-variables": (2, None, None),
+    }
+    _patch_runner(tmp_path, monkeypatch, behaviors, 2)
+
+    assert rvb.run_batch([_spec("events"), _spec("variables")], _Args(tmp_path)) == 1
+
+    with open(tmp_path / "validation-batch-core.json", "r", encoding="utf-8") as handle:
+        issues = json.load(handle)
+    assert warning[0] in issues
+    assert any(
+        issue["severity"] == "error" and "variables" in issue["message"]
+        for issue in issues
+    )
+    assert (tmp_path / rvb.LEGACY_SUMMARY_LOG).is_file()
 
 
 def test_stub_batch_artifact_loads_end_to_end(tmp_path, monkeypatch):
