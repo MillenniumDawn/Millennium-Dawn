@@ -174,6 +174,19 @@ _REGISTRY = [
         "validate_events",
         [("common/", TXT), ("events/", TXT), ("history/", TXT)],
     ),
+    # Warning-only: most of the repo predates the current formatter, so a gate
+    # would demand a full-file reformat alongside every one-line edit.
+    _Spec(
+        "validate_standardization",
+        [
+            ("common/national_focus/", TXT),
+            ("events/", TXT),
+            ("common/decisions/", TXT),
+            ("common/ideas/", TXT),
+            ("common/military_industrial_organization/", TXT),
+        ],
+        strict=False,
+    ),
     _Spec(
         "validate_mios",
         [

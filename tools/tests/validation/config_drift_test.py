@@ -107,6 +107,7 @@ def ci_standalone():
 
 CI_EXEMPT = {
     "validate_style.py",
+    "validate_standardization.py",
     "validate_unused_textures.py",
     "validate_file_paths.py",
     "validate_mod_descriptors.py",
