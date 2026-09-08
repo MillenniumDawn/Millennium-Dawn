@@ -201,20 +201,28 @@ def test_file_paths_run_in_a_lightweight_index_job():
         "${{ needs.detect-changes.outputs.checkout-repository }}"
     )
     assert checkout["with"]["ref"] == "${{ needs.detect-changes.outputs.checkout-ref }}"
+    assert checkout["with"]["path"] == "pr-tree"
     assert checkout["with"]["filter"] == "blob:none"
     sparse = set(checkout["with"]["sparse-checkout"].split())
     assert "descriptor.mod" in sparse
-    assert "tools" in sparse
+    assert "tools" not in sparse
     assert "gfx" not in sparse
     assert "map" not in sparse
+    trusted = next(
+        step
+        for step in path_job["steps"]
+        if step.get("name") == "Checkout trusted file-path validator"
+    )
+    assert trusted["with"]["repository"] == "${{ github.repository }}"
+    assert trusted["with"]["ref"] == "${{ needs.detect-changes.outputs.trusted-ref }}"
     run_step = next(
         step
         for step in path_job["steps"]
         if "validate_file_paths.py" in (step.get("run") or "")
     )
     run = run_step["run"]
-    assert "working-directory" not in run_step
-    assert "python3 tools/validation/validate_file_paths.py --path ." in run
+    assert run_step["working-directory"] == "pr-tree"
+    assert "python3 ../trusted/tools/validation/validate_file_paths.py --path ." in run
     assert "--strict" in run
     assert "--output validation-file-paths.log" in run
     assert any(
@@ -240,6 +248,26 @@ def test_detect_changes_uses_python_grouping():
     assert "full_suite" in detect["outputs"]
     assert "tools" in detect["outputs"]
     assert any(step.get("name") == "Upload changed files" for step in detect["steps"])
+    checkout = next(
+        step for step in detect["steps"] if step.get("name") == "Checkout PR index"
+    )
+    assert checkout["with"]["path"] == "pr-head"
+    assert set(checkout["with"]["sparse-checkout"].split()) == {"descriptor.mod"}
+    trusted = next(
+        step
+        for step in detect["steps"]
+        if step.get("name") == "Checkout trusted change tooling"
+    )
+    assert trusted["with"]["repository"] == "${{ github.repository }}"
+    assert trusted["with"]["ref"] == (
+        "${{ github.event.pull_request.base.sha || github.sha }}"
+    )
+    derive = next(
+        step["run"]
+        for step in detect["steps"]
+        if step.get("name") == "Derive changed files"
+    )
+    assert "../trusted/tools/validation/collect_changed_files.py" in derive
     for path in ("resources/documentation/modifiers_documentation.md",):
         assert classify([path])["full_suite"] is True
 
@@ -255,21 +283,68 @@ def test_dispatch_forces_all_content_groups():
     assert "< changed-files.txt" in script
 
 
-def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
+def test_dispatch_inputs_are_pins_and_executable_refs_are_trusted():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    detect = workflow["jobs"]["detect-changes"]
+    resolver = next(
+        step["run"]
+        for step in detect["steps"]
+        if step.get("name") == "Resolve validation ref"
+    )
+    assert "^[1-9][0-9]*$" in resolver
+    assert "^[0-9a-f]{40}$" in resolver
+    assert 'base_sha="${EVENT_BASE_SHA:-$GITHUB_SHA}"' in resolver
+    assert 'base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"' not in resolver
+    assert "The base changed before validation was dispatched" in resolver
+    assert (
+        detect["outputs"]["pr-number"] == "${{ steps.resolve-ref.outputs.pr-number }}"
+    )
+    assert detect["outputs"]["trusted-ref"] == (
+        "${{ github.event.pull_request.base.sha || github.sha }}"
+    )
+
+    tools = workflow["jobs"]["tools-tests"]
+    assert "github.event_name != 'workflow_dispatch'" in tools["if"]
+
+    prepare = workflow["jobs"]["prepare-workspace"]
+    save = next(
+        step
+        for step in prepare["steps"]
+        if "actions/cache/save@" in step.get("uses", "")
+    )
+    assert "github.event_name != 'workflow_dispatch'" in save["if"]
+
+
+def test_prepare_workspace_separates_pr_data_from_trusted_tooling():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     prepare = workflow["jobs"]["prepare-workspace"]
     checkout = next(
-        step for step in prepare["steps"] if step.get("name") == "Checkout PR workspace"
+        step for step in prepare["steps"] if step.get("name") == "Checkout PR content"
     )
     assert checkout["with"]["repository"] == (
         "${{ needs.detect-changes.outputs.checkout-repository }}"
     )
     assert checkout["with"]["ref"] == "${{ needs.detect-changes.outputs.checkout-ref }}"
     assert checkout["with"]["filter"] == "blob:none"
+    pr_sparse = set(checkout["with"]["sparse-checkout"].split())
+    assert "common" in pr_sparse
+    assert "tools" not in pr_sparse
+    assert "pyproject.toml" not in pr_sparse
+    assert ".github/actions/setup-md-python/action.yml" not in pr_sparse
+    trusted = next(
+        step
+        for step in prepare["steps"]
+        if step.get("name") == "Checkout trusted validation tooling"
+    )
+    assert trusted["with"]["repository"] == "${{ github.repository }}"
+    assert trusted["with"]["ref"] == "${{ needs.detect-changes.outputs.trusted-ref }}"
+    trusted_sparse = set(trusted["with"]["sparse-checkout"].split())
+    assert {"tools", "pyproject.toml"} <= trusted_sparse
+    assert ".github/actions/setup-md-python/action.yml" in trusted_sparse
     checkouts = [
         step for step in prepare["steps"] if "actions/checkout@" in step.get("uses", "")
     ]
-    assert len(checkouts) == 1
+    assert len(checkouts) == 2
     assert not any(
         "validate_file_paths.py" in (step.get("run") or "") for step in prepare["steps"]
     )
@@ -282,6 +357,7 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
     )
     assert "md-sparse-v1-${{ runner.os }}" in cache["with"]["key"]
     assert "needs.detect-changes.outputs.head-sha" in cache["with"]["key"]
+    assert "github.event_name != 'workflow_dispatch'" in cache["if"]
     valcache = next(
         step
         for step in prepare["steps"]
@@ -289,6 +365,7 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
         and "validation_cache" in step.get("with", {}).get("path", "")
     )
     assert "full_suite != 'true'" in valcache["if"]
+    assert "github.event_name != 'workflow_dispatch'" in valcache["if"]
     assert "steps.toolshash.outputs.hash" in valcache["with"]["key"]
     assert "base-sha" not in valcache["with"]["key"]
 
@@ -327,8 +404,14 @@ def test_report_job_posts_comment_and_checks():
     checkout = next(
         step for step in report["steps"] if "actions/checkout@" in step.get("uses", "")
     )
-    assert "checkout-repository" in checkout["with"]["repository"]
-    assert "checkout-ref" in checkout["with"]["ref"]
+    assert checkout["with"]["repository"] == "${{ github.repository }}"
+    assert checkout["with"]["ref"] == (
+        "${{ needs.detect-changes.outputs.trusted-ref || github.sha }}"
+    )
+    setup = next(
+        step for step in report["steps"] if step.get("name") == "Set up Python"
+    )
+    assert setup["uses"].startswith("actions/setup-python@")
 
 
 def test_report_restores_baseline_for_full_and_dispatch_runs():
@@ -350,7 +433,7 @@ def test_report_restores_baseline_for_full_and_dispatch_runs():
     assert "--changed-files changed-files/changed-files.txt" in script
     assert "if [ -f .validation_baseline/baseline-meta.json ]" not in script
     assert (
-        "github.event_name == 'workflow_dispatch'" in report["env"]["VALIDATION_SCOPE"]
+        "github.event_name != 'workflow_dispatch'" in report["env"]["VALIDATION_SCOPE"]
     )
 
 

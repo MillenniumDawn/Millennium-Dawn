@@ -89,8 +89,11 @@ jobs:
       tools: ${{ steps.groups.outputs.tools }}
       file-paths: ${{ steps.groups.outputs.file-paths }}
       full_suite: ${{ steps.groups.outputs.full_suite }}
+      pr-number: ${{ steps.resolve-ref.outputs.pr-number }}
       head-sha: ${{ steps.resolve-ref.outputs.head-sha }}
       base-sha: ${{ steps.resolve-ref.outputs.base-sha }}
+      trusted-ref: >-
+        ${{ github.event.pull_request.base.sha || github.sha }}
       checkout-repository: ${{ steps.resolve-ref.outputs.repository }}
       checkout-ref: ${{ steps.resolve-ref.outputs.ref }}
     steps:
@@ -109,9 +112,22 @@ jobs:
         run: |
           pr_number="${INPUT_PR_NUMBER:-$EVENT_PR_NUMBER}"
           requested_head_sha="$INPUT_HEAD_SHA"
+          requested_base_sha="$INPUT_BASE_SHA"
           head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"
           head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"
-          base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"
+          base_sha="${EVENT_BASE_SHA:-$GITHUB_SHA}"
+          if [ -n "$pr_number" ] &&
+              [[ ! "$pr_number" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::The PR number must be a positive integer"
+            exit 1
+          fi
+          for requested_sha in "$requested_head_sha" "$requested_base_sha"; do
+            if [ -n "$requested_sha" ] &&
+                [[ ! "$requested_sha" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "::error::Requested revisions must be full commit SHAs"
+              exit 1
+            fi
+          done
           if [ -n "$pr_number" ]; then
             pr_url="repos/$GITHUB_REPOSITORY/pulls/$pr_number"
             pr_json=$(gh api "$pr_url")
@@ -119,37 +135,54 @@ jobs:
               | jq -r '.head.repo.full_name // empty')
             head_sha=$(printf '%s' "$pr_json" \
               | jq -r '.head.sha // empty')
-            if [ -z "$base_sha" ]; then
-              base_ref=$(printf '%s' "$pr_json" | jq -r '.base.ref')
-              base_sha=$(gh api \
-                "repos/$GITHUB_REPOSITORY/commits/$base_ref" --jq '.sha')
-            fi
           fi
-          base_sha="${base_sha:-$GITHUB_SHA}"
           if [ -n "$requested_head_sha" ] &&
               [ "$head_sha" != "$requested_head_sha" ]; then
             echo "::error::The PR head changed before validation was dispatched"
             exit 1
           fi
-          if [ -z "$head_repository" ] || [ -z "$head_sha" ]; then
+          if [ -n "$requested_base_sha" ] &&
+              [ "$base_sha" != "$requested_base_sha" ]; then
+            echo "::error::The base changed before validation was dispatched"
+            exit 1
+          fi
+          if [[ ! "$head_repository" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] ||
+              [[ ! "$head_sha" =~ ^[0-9a-f]{40}$ ]] ||
+              [[ ! "$base_sha" =~ ^[0-9a-f]{40}$ ]]; then
             echo "::error::Unable to resolve the PR head repository and SHA"
             exit 1
           fi
           {
+            echo "pr-number=$pr_number"
             echo "repository=$head_repository"
             echo "ref=$head_sha"
             echo "head-sha=$head_sha"
             echo "base-sha=$base_sha"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Checkout PR head
+      # The PR checkout supplies Git data only. Executable helper scripts come
+      # from the trusted base revision checked out below.
+      - name: Checkout PR index
         id: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ steps.resolve-ref.outputs.repository }}
           ref: ${{ steps.resolve-ref.outputs.ref }}
+          path: pr-head
           fetch-depth: 0
           filter: blob:none
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
+          sparse-checkout: descriptor.mod
+          sparse-checkout-cone-mode: false
+
+      - name: Checkout trusted change tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          path: trusted
+          fetch-depth: 1
           persist-credentials: false
           sparse-checkout: |
             tools/validation/collect_changed_files.py
@@ -157,6 +190,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Fetch PR base revision
+        working-directory: pr-head
         env:
           BASE_SHA: ${{ steps.resolve-ref.outputs.base-sha }}
         run: |
@@ -164,24 +198,25 @@ jobs:
             "https://github.com/${{ github.repository }}.git" "$BASE_SHA"
 
       - name: Derive changed files
+        working-directory: pr-head
         env:
           BASE_SHA: ${{ steps.resolve-ref.outputs.base-sha }}
           HEAD_SHA: ${{ steps.resolve-ref.outputs.head-sha }}
         run: |
           merge_base=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
           git diff --name-status -z "$merge_base" "$HEAD_SHA" \
-            | python3 tools/validation/collect_changed_files.py \
-            > changed-files.txt
-          wc -l changed-files.txt
+            | python3 ../trusted/tools/validation/collect_changed_files.py \
+            > ../changed-files.txt
+          wc -l ../changed-files.txt
 
       - name: Compute changed groups
         id: groups
         run: |
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            python3 tools/validation/change_groups.py --dispatch \
+            python3 trusted/tools/validation/change_groups.py --dispatch \
               < /dev/null
           else
-            python3 tools/validation/change_groups.py < changed-files.txt
+            python3 trusted/tools/validation/change_groups.py < changed-files.txt
           fi
 
       - name: Upload changed files
@@ -202,44 +237,56 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout PR index and validator
+      - name: Checkout PR index
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ needs.detect-changes.outputs.checkout-repository }}
           ref: ${{ needs.detect-changes.outputs.checkout-ref }}
+          path: pr-tree
           fetch-depth: 1
           filter: blob:none
           persist-credentials: false
-          sparse-checkout: |
-            descriptor.mod
-            tools
-            .github/actions/setup-md-python/action.yml
+          allow-unsafe-pr-checkout: true
+          sparse-checkout: descriptor.mod
           sparse-checkout-cone-mode: false
 
       - name: Reject links in PR index
+        working-directory: pr-tree
         run: |
           if git ls-files --stage | grep -Eq '^(120000|160000) '; then
             echo "::error::PR index contains a symbolic link or submodule"
             exit 1
           fi
 
+      - name: Checkout trusted file-path validator
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ needs.detect-changes.outputs.trusted-ref }}
+          path: trusted
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: tools
+          sparse-checkout-cone-mode: false
+
       - name: Set up Python
         id: setup-python
-        uses: ./.github/actions/setup-md-python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
-          install: "false"
+          python-version: "3.x"
 
       - name: Run file-path validation
         if: always() && !cancelled() && steps.setup-python.outcome == 'success'
+        working-directory: pr-tree
         run: >-
-          python3 tools/validation/validate_file_paths.py --path .
+          python3 ../trusted/tools/validation/validate_file_paths.py --path .
           --strict --no-color --output validation-file-paths.log
 
       - name: Verify file-path results
         if: always() && !cancelled() && steps.setup-python.outcome == 'success'
         run: |
-          test -f validation-file-paths.log
-          test -f validation-file-paths.json
+          test -f pr-tree/validation-file-paths.log
+          test -f pr-tree/validation-file-paths.json
 
       - name: Upload file-path results
         if: always() && !cancelled()
@@ -247,8 +294,8 @@ jobs:
         with:
           name: validation-file-paths-results
           path: |
-            validation-file-paths.log
-            validation-file-paths.json
+            pr-tree/validation-file-paths.log
+            pr-tree/validation-file-paths.json
           if-no-files-found: error
           retention-days: 7
 
@@ -263,12 +310,14 @@ jobs:
       contents: read
       actions: read
     env:
-      PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+      PR_NUMBER: ${{ needs.detect-changes.outputs.pr-number }}
       HEAD_SHA: ${{ needs.detect-changes.outputs.head-sha }}
       MD_NO_CACHE: >-
         ${{ needs.detect-changes.outputs.full_suite == 'true' && '1' || '' }}
     steps:
-      - name: Checkout PR workspace
+      # The PR checkout contains game data only. Validators, dependency files,
+      # and the composite setup action are copied from the trusted base below.
+      - name: Checkout PR content
         id: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -286,17 +335,12 @@ jobs:
             gfx/flags
             map/adjacency_rules.txt
             music
-            tools
-            resources/documentation
-            .claude
-            .github/actions/setup-md-python/action.yml
-            CLAUDE.md
-            pyproject.toml
             *.mod
           sparse-checkout-cone-mode: false
 
       - name: Restore sparse workspace cache
         id: sparse-cache
+        if: github.event_name != 'workflow_dispatch'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
@@ -308,12 +352,6 @@ jobs:
             gfx/flags
             map/adjacency_rules.txt
             music
-            tools
-            resources/documentation
-            .claude
-            .github/actions/setup-md-python/action.yml
-            CLAUDE.md
-            pyproject.toml
             *.mod
           key: >-
             md-sparse-v1-${{ runner.os }}-${{
@@ -330,6 +368,32 @@ jobs:
             exit 1
           fi
 
+      - name: Checkout trusted validation tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ needs.detect-changes.outputs.trusted-ref }}
+          path: trusted
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            tools
+            resources/documentation
+            .claude
+            .github/actions/setup-md-python/action.yml
+            CLAUDE.md
+            pyproject.toml
+          sparse-checkout-cone-mode: false
+
+      - name: Install trusted validation tooling
+        run: |
+          cp -a trusted/tools .
+          mkdir -p resources .github/actions
+          cp -a trusted/resources/documentation resources/
+          cp -a trusted/.claude .
+          cp -a trusted/.github/actions/setup-md-python .github/actions/
+          cp -a trusted/CLAUDE.md trusted/pyproject.toml .
+
       - name: Compute validator code hash
         id: toolshash
         run: >-
@@ -338,7 +402,9 @@ jobs:
 
       - name: Restore shared validator disk cache
         id: valcache
-        if: needs.detect-changes.outputs.full_suite != 'true'
+        if: >-
+          github.event_name != 'workflow_dispatch' &&
+          needs.detect-changes.outputs.full_suite != 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .validation_cache
@@ -364,7 +430,9 @@ jobs:
           } | tee .workspace-manifest
 
       - name: Save sparse workspace cache
-        if: steps.sparse-cache.outputs.cache-hit != 'true'
+        if: >-
+          github.event_name != 'workflow_dispatch' &&
+          steps.sparse-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
@@ -376,12 +444,6 @@ jobs:
             gfx/flags
             map/adjacency_rules.txt
             music
-            tools
-            resources/documentation
-            .claude
-            .github/actions/setup-md-python/action.yml
-            CLAUDE.md
-            pyproject.toml
             *.mod
           key: >-
             md-sparse-v1-${{ runner.os }}-${{
@@ -400,8 +462,9 @@ jobs:
     name: Tools tests (${{ matrix.os }})
     needs: [detect-changes]
     if: >-
-      needs.detect-changes.outputs.full_suite == 'true' ||
-      needs.detect-changes.outputs.tools == 'true'
+      github.event_name != 'workflow_dispatch' &&
+      (needs.detect-changes.outputs.full_suite == 'true' ||
+      needs.detect-changes.outputs.tools == 'true')
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -861,26 +924,23 @@ jobs:
       pull-requests: write
       checks: write
     env:
-      PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+      PR_NUMBER: ${{ needs.detect-changes.outputs.pr-number }}
       HEAD_SHA: >-
         ${{ needs.detect-changes.outputs.head-sha ||
         github.event.pull_request.head.sha || github.sha }}
       VALIDATION_SCOPE: >-
-        ${{ (github.event_name == 'workflow_dispatch' ||
-        needs.detect-changes.outputs.full_suite == 'true') &&
+        ${{ github.event_name != 'workflow_dispatch' &&
+        needs.detect-changes.outputs.full_suite == 'true' &&
         'full' || 'partial' }}
     steps:
       - name: Checkout report tooling
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: >-
-            ${{ needs.detect-changes.outputs.checkout-repository ||
-            github.repository }}
-          ref: ${{ needs.detect-changes.outputs.checkout-ref || github.sha }}
+          repository: ${{ github.repository }}
+          ref: ${{ needs.detect-changes.outputs.trusted-ref || github.sha }}
           fetch-depth: 1
           persist-credentials: false
           sparse-checkout: |
-            .github/actions/setup-md-python/action.yml
             tools/generate_validation_report.py
             tools/report_lib
             tools/validation
@@ -906,11 +966,9 @@ jobs:
 
       - name: Set up Python
         id: setup-python
-        uses: ./.github/actions/setup-md-python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
-          # The report tooling is stdlib-only and the sparse checkout has no
-          # pyproject.toml, so there is nothing to install or cache.
-          install: "false"
+          python-version: "3.x"
 
       - name: Download all validation results
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c

@@ -16,13 +16,14 @@ TOP_initialize_cases = {
 	resize_array = { TOP_case_visit_story = global.TOP_registry_capacity }
 }
 
+# Reads TOP_arg_host.
 TOP_find_host_case = {
 	set_temp_variable = { TOP_host_case = 0 }
 	for_each_loop = {
 		array = TOP_active_cases
 		value = TOP_host_case_candidate
 		if = {
-			limit = { check_variable = { TOP_case_host^TOP_host_case_candidate = $HOST$ } check_variable = { TOP_case_phase^TOP_host_case_candidate > 0 } }
+			limit = { check_variable = { TOP_case_host^TOP_host_case_candidate = TOP_arg_host } check_variable = { TOP_case_phase^TOP_host_case_candidate > 0 } }
 			set_temp_variable = { TOP_host_case = TOP_host_case_candidate }
 		}
 	}
@@ -45,56 +46,58 @@ TOP_designate_selected = {
 	}
 }
 
+# Reads TOP_arg_target.
 TOP_load_case = {
 	# Flat values are an execution/display snapshot. Case arrays alone grant authority.
-	set_variable = { TOP_authorized_target = $TARGET$ }
-	set_variable = { TOP_authorized_method = TOP_case_method^$TARGET$ }
-	set_variable = { TOP_authorized_state = TOP_case_state^$TARGET$ }
-	set_variable = { TOP_authorized_host = TOP_case_host^$TARGET$ }
-	set_variable = { TOP_authorized_until = TOP_case_until^$TARGET$ }
-	set_variable = { TOP_authorized_consent = TOP_case_consent^$TARGET$ }
-	set_variable = { TOP_authorized_rigor = TOP_case_rigor^$TARGET$ }
-	set_variable = { TOP_authorized_assurance = TOP_case_assurance^$TARGET$ }
-	set_variable = { TOP_authorized_facility = TOP_case_facility^$TARGET$ }
-	set_variable = { TOP_authorized_visit_token = TOP_case_visit_token^$TARGET$ }
-	set_variable = { TOP_authorized_visit_status = TOP_case_visit_status^$TARGET$ }
-	set_variable = { TOP_authorized_visit_story = TOP_case_visit_story^$TARGET$ }
+	set_variable = { TOP_authorized_target = TOP_arg_target }
+	set_variable = { TOP_authorized_method = TOP_case_method^TOP_arg_target }
+	set_variable = { TOP_authorized_state = TOP_case_state^TOP_arg_target }
+	set_variable = { TOP_authorized_host = TOP_case_host^TOP_arg_target }
+	set_variable = { TOP_authorized_until = TOP_case_until^TOP_arg_target }
+	set_variable = { TOP_authorized_consent = TOP_case_consent^TOP_arg_target }
+	set_variable = { TOP_authorized_rigor = TOP_case_rigor^TOP_arg_target }
+	set_variable = { TOP_authorized_assurance = TOP_case_assurance^TOP_arg_target }
+	set_variable = { TOP_authorized_facility = TOP_case_facility^TOP_arg_target }
+	set_variable = { TOP_authorized_visit_token = TOP_case_visit_token^TOP_arg_target }
+	set_variable = { TOP_authorized_visit_status = TOP_case_visit_status^TOP_arg_target }
+	set_variable = { TOP_authorized_visit_story = TOP_case_visit_story^TOP_arg_target }
 	set_variable = { TOP_pending_target = 0 }
 	if = {
-		limit = { check_variable = { TOP_case_phase^$TARGET$ = 3 } }
-		set_variable = { TOP_pending_target = $TARGET$ }
+		limit = { check_variable = { TOP_case_phase^TOP_arg_target = 3 } }
+		set_variable = { TOP_pending_target = TOP_arg_target }
 	}
-	set_variable = { TOP_pending_method = TOP_case_method^$TARGET$ }
-	set_variable = { TOP_pending_state = TOP_case_state^$TARGET$ }
-	set_variable = { TOP_pending_host = TOP_case_host^$TARGET$ }
-	set_variable = { TOP_pending_facility = TOP_case_facility^$TARGET$ }
-	set_variable = { TOP_pending_due = TOP_case_due^$TARGET$ }
+	set_variable = { TOP_pending_method = TOP_case_method^TOP_arg_target }
+	set_variable = { TOP_pending_state = TOP_case_state^TOP_arg_target }
+	set_variable = { TOP_pending_host = TOP_case_host^TOP_arg_target }
+	set_variable = { TOP_pending_facility = TOP_case_facility^TOP_arg_target }
+	set_variable = { TOP_pending_due = TOP_case_due^TOP_arg_target }
 }
 
+# Reads TOP_arg_sequence, TOP_arg_target.
 TOP_close_case = {
 	if = {
-		limit = { check_variable = { TOP_case_phase^$TARGET$ > 0 } check_variable = { TOP_case_sequence^$TARGET$ = $SEQUENCE$ } }
+		limit = { check_variable = { TOP_case_phase^TOP_arg_target > 0 } check_variable = { TOP_case_sequence^TOP_arg_target = TOP_arg_sequence } }
 		if = {
-			limit = { check_variable = { TOP_case_method^$TARGET$ > 0 } check_variable = { TOP_case_method^$TARGET$ < 3 } }
+			limit = { check_variable = { TOP_case_method^TOP_arg_target > 0 } check_variable = { TOP_case_method^TOP_arg_target < 3 } }
 			# Raid callbacks expose no instance token. Never recycle a closed native binding.
-			set_temp_variable = { TOP_binding_key = { value = $TARGET$ multiply = 20000 } }
-			add_to_temp_variable = { TOP_binding_key = { value = TOP_case_state^$TARGET$ multiply = 2 } }
-			add_to_temp_variable = { TOP_binding_key = TOP_case_method^$TARGET$ }
+			set_temp_variable = { TOP_binding_key = { value = TOP_arg_target multiply = 20000 } }
+			add_to_temp_variable = { TOP_binding_key = { value = TOP_case_state^TOP_arg_target multiply = 2 } }
+			add_to_temp_variable = { TOP_binding_key = TOP_case_method^TOP_arg_target }
 			if = {
 				limit = { NOT = { is_in_array = { TOP_retired_native_bindings = TOP_binding_key } } }
 				add_to_array = { TOP_retired_native_bindings = TOP_binding_key }
 			}
 		}
-		set_variable = { TOP_case_phase^$TARGET$ = 0 }
-		set_variable = { TOP_case_method^$TARGET$ = 0 }
-		set_variable = { TOP_case_due^$TARGET$ = 0 }
-		set_variable = { TOP_case_collecting^$TARGET$ = 0 }
-		set_variable = { TOP_case_visit_token^$TARGET$ = 0 }
-		set_variable = { TOP_case_visit_status^$TARGET$ = 0 }
-		set_variable = { TOP_case_visit_story^$TARGET$ = 0 }
-		remove_from_array = { TOP_active_cases = $TARGET$ }
+		set_variable = { TOP_case_phase^TOP_arg_target = 0 }
+		set_variable = { TOP_case_method^TOP_arg_target = 0 }
+		set_variable = { TOP_case_due^TOP_arg_target = 0 }
+		set_variable = { TOP_case_collecting^TOP_arg_target = 0 }
+		set_variable = { TOP_case_visit_token^TOP_arg_target = 0 }
+		set_variable = { TOP_case_visit_status^TOP_arg_target = 0 }
+		set_variable = { TOP_case_visit_story^TOP_arg_target = 0 }
+		remove_from_array = { TOP_active_cases = TOP_arg_target }
 		if = {
-			limit = { check_variable = { TOP_authorized_target = $TARGET$ } }
+			limit = { check_variable = { TOP_authorized_target = TOP_arg_target } }
 			set_variable = { TOP_authorized_target = 0 }
 			set_variable = { TOP_pending_target = 0 }
 		}
@@ -120,7 +123,7 @@ TOP_finish_case = {
 TOP_confirm_assessment = {
 	if = {
 		limit = { TOP_can_confirm_assessment = yes }
-		TOP_close_case = { TARGET = TOP_selected SEQUENCE = TOP_case_sequence^TOP_selected }
+		set_temp_variable = { TOP_arg_target = TOP_selected } set_temp_variable = { TOP_arg_sequence = TOP_case_sequence^TOP_selected } TOP_close_case = yes
 		TOP_build_view = yes
 	}
 }
@@ -181,7 +184,7 @@ TOP_process_cases = {
 		}
 		if = {
 			limit = { check_variable = { TOP_case_phase^TOP_target = 3 } check_variable = { TOP_case_due^TOP_target < global.TOP_clock } }
-			TOP_load_case = { TARGET = TOP_target }
+			set_temp_variable = { TOP_arg_target = TOP_target } TOP_load_case = yes
 			set_temp_variable = { TOP_method = TOP_case_method^TOP_target }
 			set_temp_variable = { TOP_operation_state = TOP_case_state^TOP_target }
 			set_temp_variable = { TOP_facility_kind = TOP_case_facility^TOP_target }
@@ -201,7 +204,7 @@ TOP_process_cases = {
 	for_each_loop = {
 		array = TOP_cases_to_close
 		value = TOP_timer_case
-		TOP_close_case = { TARGET = TOP_timer_case SEQUENCE = TOP_case_sequence^TOP_timer_case }
+		set_temp_variable = { TOP_arg_target = TOP_timer_case } set_temp_variable = { TOP_arg_sequence = TOP_case_sequence^TOP_timer_case } TOP_close_case = yes
 	}
 }
 

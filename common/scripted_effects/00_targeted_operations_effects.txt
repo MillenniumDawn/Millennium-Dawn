@@ -22,11 +22,12 @@ TOP_country_initialize = {
 	}
 }
 
+# Reads TOP_arg_target.
 TOP_import_target_location = {
 	if = {
 		limit = { TOP_enabled = yes }
 		TOP_initialize_global = yes
-		set_temp_variable = { TOP_target = $TARGET$ }
+		set_temp_variable = { TOP_target = TOP_arg_target }
 		if = {
 			limit = { check_variable = { global.TOP_status^TOP_target < 2 } num_of_controlled_states > 0 }
 			set_variable = { global.TOP_status^TOP_target = 1 }
@@ -66,17 +67,18 @@ TOP_find_group_org = {
 	}
 }
 
+# Reads TOP_arg_amount, TOP_arg_target.
 TOP_add_target_lead = {
 	if = {
 		limit = { TOP_enabled = yes }
 		TOP_initialize_global = yes
 		TOP_country_initialize = yes
-		set_temp_variable = { TOP_target = $TARGET$ }
+		set_temp_variable = { TOP_target = TOP_arg_target }
 		if = {
 			limit = { check_variable = { global.TOP_status^TOP_target = 1 } }
 			set_variable = { TOP_known^TOP_target = 1 }
 			set_variable = { TOP_assessment^TOP_target = 1 }
-			add_to_variable = { TOP_confidence^TOP_target = $AMOUNT$ }
+			add_to_variable = { TOP_confidence^TOP_target = TOP_arg_amount }
 			clamp_variable = { var = TOP_confidence^TOP_target min = 0 max = 100 }
 			set_variable = { TOP_lead_age^TOP_target = 0 }
 			set_variable = { TOP_lead_state^TOP_target = global.TOP_state^TOP_target }
@@ -89,11 +91,12 @@ TOP_add_target_lead = {
 	}
 }
 
+# Reads TOP_arg_target.
 TOP_grant_target_mandate = {
 	if = {
 		limit = { TOP_enabled = yes }
 		TOP_country_initialize = yes
-		set_variable = { TOP_mandates^$TARGET$ = { value = global.TOP_clock add = 365 } }
+		set_variable = { TOP_mandates^TOP_arg_target = { value = global.TOP_clock add = 365 } }
 	}
 }
 
@@ -133,7 +136,7 @@ TOP_commit_reviewed_authorization = {
 			set_variable = { TOP_case_phase^TOP_proposal_target = 3 }
 			set_variable = { TOP_case_due^TOP_proposal_target = { value = global.TOP_clock add = 28 } }
 		}
-		TOP_load_case = { TARGET = TOP_proposal_target }
+		set_temp_variable = { TOP_arg_target = TOP_proposal_target } TOP_load_case = yes
 		TOP_enroll_pending_actor = yes
 		set_variable = { TOP_proposal_stage = 0 }
 		TOP_refresh_view = yes
@@ -147,7 +150,7 @@ TOP_revoke_authorization = {
 	}
 	if = {
 		limit = { TOP_can_revoke_case = yes }
-		TOP_close_case = { TARGET = TOP_selected SEQUENCE = TOP_case_sequence^TOP_selected }
+		set_temp_variable = { TOP_arg_target = TOP_selected } set_temp_variable = { TOP_arg_sequence = TOP_case_sequence^TOP_selected } TOP_close_case = yes
 	}
 	TOP_build_view = yes
 }
@@ -200,7 +203,9 @@ TOP_country_tick = {
 				limit = { check_variable = { TOP_detect > 24 } check_variable = { TOP_new_dossiers_this_tick = 0 } }
 				if = {
 					limit = { check_variable = { TOP_known^TOP_target = 0 } }
-					TOP_add_target_lead = { TARGET = TOP_tick_target AMOUNT = 15 }
+					set_temp_variable = { TOP_arg_target = TOP_tick_target }
+					set_temp_variable = { TOP_arg_amount = 15 }
+					TOP_add_target_lead = yes
 					set_temp_variable = { TOP_new_dossiers_this_tick = 1 }
 				}
 			}
@@ -225,7 +230,7 @@ TOP_country_tick = {
 					}
 				}
 				clamp_temp_variable = { var = TOP_gain min = 2 max = 25 }
-				TOP_add_target_lead = { TARGET = TOP_collection_target AMOUNT = TOP_gain }
+				set_temp_variable = { TOP_arg_target = TOP_collection_target } set_temp_variable = { TOP_arg_amount = TOP_gain } TOP_add_target_lead = yes
 				random = {
 					chance = 15
 					set_temp_variable = { TOP_false_state = global.TOP_state^TOP_collection_target }
@@ -245,14 +250,16 @@ TOP_country_tick = {
 	}
 }
 
+# Reads TOP_arg_target.
 TOP_capture_target = {
-	set_temp_variable = { TOP_target = $TARGET$ }
+	set_temp_variable = { TOP_target = TOP_arg_target }
 	set_temp_variable = { TOP_result = 2 }
 	TOP_resolve_target = yes
 }
 
+# Reads TOP_arg_target.
 TOP_kill_target = {
-	set_temp_variable = { TOP_target = $TARGET$ }
+	set_temp_variable = { TOP_target = TOP_arg_target }
 	set_temp_variable = { TOP_result = 3 }
 	TOP_resolve_target = yes
 }
@@ -354,7 +361,7 @@ TOP_exploit_capture = {
 		value = TOP_link_target
 		if = {
 			limit = { check_variable = { global.TOP_affiliation^TOP_link_target = TOP_capture_group } check_variable = { TOP_capture_leads < 2 } }
-			TOP_add_target_lead = { TARGET = TOP_link_target AMOUNT = 25 }
+			set_temp_variable = { TOP_arg_target = TOP_link_target } set_temp_variable = { TOP_arg_amount = 25 } TOP_add_target_lead = yes
 			add_to_temp_variable = { TOP_capture_leads = 1 }
 		}
 	}
@@ -369,7 +376,7 @@ TOP_native_result_args = {
 	var:actor_country = {
 		if = {
 			limit = { TOP_mission_binding_valid = yes }
-			TOP_load_case = { TARGET = TOP_target }
+			set_temp_variable = { TOP_arg_target = TOP_target } TOP_load_case = yes
 
 			TOP_get_defensive_modifiers = yes
 			if = {
@@ -392,12 +399,12 @@ TOP_complete_operation = {
 		limit = { check_variable = { global.TOP_state^TOP_target = TOP_operation_state } }
 		if = {
 			limit = { check_variable = { TOP_tier > 1 } }
-			if = { limit = { check_variable = { TOP_method = 1 } } TOP_kill_target = { TARGET = TOP_target } }
-			else_if = { limit = { check_variable = { TOP_method = 2 } } TOP_capture_target = { TARGET = TOP_target } }
-			else_if = { limit = { check_variable = { TOP_method = 3 } } TOP_kill_target = { TARGET = TOP_target } }
-			else_if = { limit = { check_variable = { TOP_method = 4 } } TOP_capture_target = { TARGET = TOP_target } }
-			else_if = { limit = { check_variable = { TOP_method = 5 } } TOP_capture_target = { TARGET = TOP_target } }
-			else_if = { limit = { check_variable = { TOP_method = 7 } } TOP_kill_target = { TARGET = TOP_target } }
+			if = { limit = { check_variable = { TOP_method = 1 } } set_temp_variable = { TOP_arg_target = TOP_target } TOP_kill_target = yes }
+			else_if = { limit = { check_variable = { TOP_method = 2 } } set_temp_variable = { TOP_arg_target = TOP_target } TOP_capture_target = yes }
+			else_if = { limit = { check_variable = { TOP_method = 3 } } set_temp_variable = { TOP_arg_target = TOP_target } TOP_kill_target = yes }
+			else_if = { limit = { check_variable = { TOP_method = 4 } } set_temp_variable = { TOP_arg_target = TOP_target } TOP_capture_target = yes }
+			else_if = { limit = { check_variable = { TOP_method = 5 } } set_temp_variable = { TOP_arg_target = TOP_target } TOP_capture_target = yes }
+			else_if = { limit = { check_variable = { TOP_method = 7 } } set_temp_variable = { TOP_arg_target = TOP_target } TOP_kill_target = yes }
 			else = {
 				TOP_damage_recorded_facility = yes
 				set_temp_variable = { TOP_result = 8 }
@@ -694,8 +701,8 @@ TOP_ai_choose_operation = {
 			TOP_designate_selected = yes
 			if = {
 				limit = { TOP_can_authorize = yes }
-				if = { limit = { has_tech = special_forces_tech_1 } TOP_begin_review = { METHOD = 2 } }
-				else = { TOP_begin_review = { METHOD = 5 } }
+				if = { limit = { has_tech = special_forces_tech_1 } set_temp_variable = { TOP_arg_method = 2 } TOP_begin_review = yes }
+				else = { set_temp_variable = { TOP_arg_method = 5 } TOP_begin_review = yes }
 			}
 			else_if = { limit = { TOP_can_collect = yes } TOP_collect_selected = yes }
 		}

@@ -76,16 +76,10 @@ class SecurityScript(TargetedScript):
             self.execute(self.effects[name], identifier)
 
     def purchase(self, track, level, identifier=2):
-        self.execute(
-            [
-                (
-                    "TOP_purchase_security_policy",
-                    "=",
-                    [("TRACK", "=", track), ("LEVEL", "=", str(level))],
-                )
-            ],
-            identifier,
-        )
+        # $TRACK$ was spliced into the variable name, so there is one effect per
+        # track now, and $LEVEL$ is read from a temp variable.
+        self.temps["TOP_arg_level"] = level
+        self.execute([(f"TOP_purchase_{track}_policy", "=", "yes")], identifier)
 
     def modifiers(self, target=1, attacker=1):
         self.temps["TOP_target"] = target

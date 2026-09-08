@@ -48,12 +48,13 @@ TOP_setup_visit_country = {
 	}
 }
 
+# Reads TOP_arg_state, TOP_arg_story, TOP_arg_target.
 TOP_plan_visit = {
 	TOP_setup_extended_runtime = yes
 	TOP_setup_visit_country = yes
-	set_temp_variable = { TOP_visit_target = $TARGET$ }
-	set_temp_variable = { TOP_visit_destination = $STATE$ }
-	set_temp_variable = { TOP_visit_story_id = $STORY$ }
+	set_temp_variable = { TOP_visit_target = TOP_arg_target }
+	set_temp_variable = { TOP_visit_destination = TOP_arg_state }
+	set_temp_variable = { TOP_visit_story_id = TOP_arg_story }
 	set_temp_variable = { TOP_visit_destination_host = THIS }
 	set_temp_variable = { TOP_visit_trigger_target = TOP_visit_target }
 	set_temp_variable = { TOP_visit_trigger_state = TOP_visit_destination }
@@ -79,8 +80,9 @@ TOP_plan_visit = {
 	}
 }
 
+# Reads TOP_arg_target.
 TOP_clear_visit = {
-	set_temp_variable = { TOP_visit_clear_target = $TARGET$ }
+	set_temp_variable = { TOP_visit_clear_target = TOP_arg_target }
 	set_variable = { global.TOP_visit_status^TOP_visit_clear_target = 0 }
 	set_variable = { global.TOP_visit_planned_token^TOP_visit_clear_target = 0 }
 	set_variable = { global.TOP_visit_active_token^TOP_visit_clear_target = 0 }
@@ -94,10 +96,11 @@ TOP_clear_visit = {
 	set_variable = { global.TOP_visit_return_state^TOP_visit_clear_target = 0 }
 }
 
+# Reads TOP_arg_state, TOP_arg_story, TOP_arg_target.
 TOP_activate_visit = {
-	set_temp_variable = { TOP_visit_target = $TARGET$ }
-	set_temp_variable = { TOP_visit_destination = $STATE$ }
-	set_temp_variable = { TOP_visit_story_id = $STORY$ }
+	set_temp_variable = { TOP_visit_target = TOP_arg_target }
+	set_temp_variable = { TOP_visit_destination = TOP_arg_state }
+	set_temp_variable = { TOP_visit_story_id = TOP_arg_story }
 	set_temp_variable = { TOP_visit_trigger_target = TOP_visit_target }
 	set_temp_variable = { TOP_visit_trigger_state = TOP_visit_destination }
 	set_temp_variable = { TOP_visit_trigger_story = TOP_visit_story_id }
@@ -122,9 +125,10 @@ TOP_activate_visit = {
 	}
 }
 
+# Reads TOP_arg_story, TOP_arg_target.
 TOP_end_visit = {
-	set_temp_variable = { TOP_visit_target = $TARGET$ }
-	set_temp_variable = { TOP_visit_story_id = $STORY$ }
+	set_temp_variable = { TOP_visit_target = TOP_arg_target }
+	set_temp_variable = { TOP_visit_story_id = TOP_arg_story }
 	set_temp_variable = { TOP_visit_trigger_target = TOP_visit_target }
 	set_temp_variable = { TOP_visit_trigger_story = TOP_visit_story_id }
 	if = {
@@ -164,12 +168,14 @@ TOP_end_visit = {
 			set_variable = { global.TOP_host^TOP_visit_target = TOP_visit_restore_host }
 		}
 		remove_from_array = { global.TOP_active_visits = TOP_visit_target }
-		TOP_clear_visit = { TARGET = TOP_visit_target }
+		set_temp_variable = { TOP_arg_target = TOP_visit_target }
+		TOP_clear_visit = yes
 	}
 }
 
+# Reads TOP_arg_target.
 TOP_revalidate_planned_visit = {
-	set_temp_variable = { TOP_visit_revalidate_target = $TARGET$ }
+	set_temp_variable = { TOP_visit_revalidate_target = TOP_arg_target }
 	set_temp_variable = { TOP_visit_revalidate_host = global.TOP_visit_host^TOP_visit_revalidate_target }
 	set_temp_variable = { TOP_visit_revalidate_state = global.TOP_visit_state^TOP_visit_revalidate_target }
 	set_temp_variable = { TOP_visit_revalidate_story = global.TOP_visit_story^TOP_visit_revalidate_target }
@@ -191,8 +197,9 @@ TOP_revalidate_planned_visit = {
 	}
 }
 
+# Reads TOP_arg_target.
 TOP_revalidate_active_visit = {
-	set_temp_variable = { TOP_visit_revalidate_target = $TARGET$ }
+	set_temp_variable = { TOP_visit_revalidate_target = TOP_arg_target }
 	set_temp_variable = { TOP_visit_revalidate_host = global.TOP_visit_host^TOP_visit_revalidate_target }
 	set_temp_variable = { TOP_visit_revalidate_state = global.TOP_visit_state^TOP_visit_revalidate_target }
 	set_temp_variable = { TOP_visit_revalidate_story = global.TOP_visit_story^TOP_visit_revalidate_target }
@@ -220,7 +227,8 @@ TOP_process_visits = {
 	for_each_loop = {
 		array = global.TOP_planned_visits
 		value = TOP_visit_target
-		TOP_revalidate_planned_visit = { TARGET = TOP_visit_target }
+		set_temp_variable = { TOP_arg_target = TOP_visit_target }
+		TOP_revalidate_planned_visit = yes
 		if = {
 			limit = { check_variable = { TOP_visit_revalidated = 1 } }
 			add_to_array = { global.TOP_planned_visits_next = TOP_visit_target }
@@ -230,7 +238,8 @@ TOP_process_visits = {
 				check_variable = { global.TOP_visit_status^TOP_visit_target = 1 }
 				check_variable = { global.TOP_visit_planned_token^TOP_visit_target = global.TOP_visit_token^TOP_visit_target }
 			}
-			TOP_clear_visit = { TARGET = TOP_visit_target }
+			set_temp_variable = { TOP_arg_target = TOP_visit_target }
+			TOP_clear_visit = yes
 		}
 	}
 	clear_array = global.TOP_planned_visits
@@ -244,7 +253,8 @@ TOP_process_visits = {
 	for_each_loop = {
 		array = global.TOP_active_visits
 		value = TOP_visit_target
-		TOP_revalidate_active_visit = { TARGET = TOP_visit_target }
+		set_temp_variable = { TOP_arg_target = TOP_visit_target }
+		TOP_revalidate_active_visit = yes
 		if = {
 			limit = { check_variable = { TOP_visit_revalidated = 1 } }
 			add_to_array = { global.TOP_active_visits_next = TOP_visit_target }
@@ -262,10 +272,15 @@ TOP_process_visits = {
 					var:TOP_visit_cleanup_host = { exists = yes }
 				}
 				var:TOP_visit_cleanup_host = {
-					TOP_end_visit = { TARGET = PREV.TOP_visit_target STORY = PREV.TOP_visit_story_id }
+					set_temp_variable = { TOP_arg_target = PREV.TOP_visit_target }
+					set_temp_variable = { TOP_arg_story = PREV.TOP_visit_story_id }
+					TOP_end_visit = yes
 				}
 			}
-			else = { TOP_clear_visit = { TARGET = TOP_visit_target } }
+			else = {
+				set_temp_variable = { TOP_arg_target = TOP_visit_target }
+				TOP_clear_visit = yes
+			}
 		}
 	}
 	clear_array = global.TOP_active_visits
@@ -285,7 +300,8 @@ TOP_refresh_visit_dossiers = {
 		for_each_loop = {
 			array = global.TOP_planned_visits
 			value = TOP_visit_target
-			TOP_revalidate_planned_visit = { TARGET = TOP_visit_target }
+			set_temp_variable = { TOP_arg_target = TOP_visit_target }
+			TOP_revalidate_planned_visit = yes
 			if = {
 				limit = {
 					check_variable = { TOP_visit_revalidated = 1 }
@@ -306,7 +322,8 @@ TOP_refresh_visit_dossiers = {
 		for_each_loop = {
 			array = global.TOP_active_visits
 			value = TOP_visit_target
-			TOP_revalidate_active_visit = { TARGET = TOP_visit_target }
+			set_temp_variable = { TOP_arg_target = TOP_visit_target }
+			TOP_revalidate_active_visit = yes
 			if = {
 				limit = {
 					check_variable = { TOP_visit_revalidated = 1 }
@@ -517,10 +534,11 @@ TOP_start_exposed_kill_crisis = {
 	set_variable = { global.TOP_crisis_candidate_host = 0 }
 }
 
+# Reads TOP_arg_amount.
 TOP_adjust_crisis_tension = {
 	if = {
 		limit = { TOP_crisis_event_valid = yes }
-		add_to_variable = { global.TOP_crisis_tension = $AMOUNT$ }
+		add_to_variable = { global.TOP_crisis_tension = TOP_arg_amount }
 		clamp_variable = { var = global.TOP_crisis_tension min = 0 max = 100 }
 	}
 }

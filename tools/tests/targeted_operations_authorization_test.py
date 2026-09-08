@@ -210,8 +210,10 @@ class ReviewScript(TargetedScript):
         self.execute(self.effects[name], identifier)
 
     def call(self, name, identifier=1, **parameters):
-        operand = [(key, "=", str(value)) for key, value in parameters.items()]
-        self.execute([(name, "=", operand or "yes")], identifier)
+        # Effects read TOP_arg_* temp variables now; see the core harness.
+        for key, value in parameters.items():
+            self.temps[f"TOP_arg_{key.lower()}"] = value
+        self.execute([(name, "=", "yes")], identifier)
 
     def ready_for_host(self, method=2):
         self.run("TOP_designate_selected")
@@ -727,5 +729,5 @@ def test_novichok_is_a_russia_only_high_exposure_timed_method():
     exposure = _named_block(core, "TOP_apply_exposure")
     assert "TOP_exposure_chance = 65" in exposure
     assert "TOP_exposure_chance = 90" in exposure
-    assert "TOP_begin_review = { METHOD = 7 }" in gui
+    assert "set_temp_variable = { TOP_arg_method = 7 } TOP_begin_review = yes" in gui
     assert 'name = "TOP_novichok"' in layout

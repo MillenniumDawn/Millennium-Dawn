@@ -8,7 +8,6 @@ import pytest
 from great_ai_race_state_model_test import (
     _named_block,
     _parse_race_script,
-    _substitute_script_parameters,
 )
 from targeted_operations_helpers_test import TargetedScript
 
@@ -249,13 +248,12 @@ class TargetScript(TargetedScript):
             self.execute(self.effects[name], identifier)
 
     def call(self, name, identifier=1, **arguments):
-        self.execute(
-            _substitute_script_parameters(
-                self.effects[name],
-                {key: str(value) for key, value in arguments.items()},
-            ),
-            identifier,
-        )
+        # Scripted effects no longer take parameters: the engine does not
+        # substitute $PARAM$ for an effect any more than for a trigger, so each
+        # reads a TOP_arg_* temp variable the caller sets first.
+        for key, value in arguments.items():
+            self.temps[f"TOP_arg_{key.lower()}"] = value
+        self.execute(self.effects[name], identifier)
 
     def execute_statement(self, statement, identifier):
         key, comparison, operand = statement

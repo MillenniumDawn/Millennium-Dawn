@@ -72,17 +72,27 @@ def test_headline_visit_schedule_and_fixed_story_bindings():
             f"{host} = {{ country_event = {{ id = TOP_visit.{story} days = {day} }} }}"
             in YEARLY
         )
-        assert (
-            f"TOP_plan_visit = {{ TARGET = {target} STATE = {state} STORY = {story} }}"
-            in EVENTS
+        plan_call = "\n".join(
+            (
+                f"\t\tset_temp_variable = {{ TOP_arg_target = {target} }}",
+                f"\t\tset_temp_variable = {{ TOP_arg_state = {state} }}",
+                f"\t\tset_temp_variable = {{ TOP_arg_story = {story} }}",
+                "\t\tTOP_plan_visit = yes",
+            )
         )
+        assert plan_call in EVENTS
         assert f"country_event = {{ id = TOP_visit.1{story} days = 60 }}" in EVENTS
-        assert (
-            f"TOP_activate_visit = {{ TARGET = {target} STATE = {state} STORY = {story} }}"
-            in EVENTS
-        )
+        activate_call = plan_call.replace("TOP_plan_visit", "TOP_activate_visit")
+        assert activate_call in EVENTS
         assert f"country_event = {{ id = TOP_visit.2{story} days = 21 }}" in EVENTS
-        assert f"TOP_end_visit = {{ TARGET = {target} STORY = {story} }}" in EVENTS
+        end_call = "\n".join(
+            (
+                f"\t\tset_temp_variable = {{ TOP_arg_target = {target} }}",
+                f"\t\tset_temp_variable = {{ TOP_arg_story = {story} }}",
+                "\t\tTOP_end_visit = yes",
+            )
+        )
+        assert end_call in EVENTS
 
 
 def test_visit_cases_snapshot_story_and_require_the_active_token_for_execution():
@@ -143,7 +153,10 @@ def test_crisis_constants_deltas_bands_and_single_war_path():
     assert "global.TOP_crisis_sanctions_threshold = 36" in EFFECTS
     assert "global.TOP_crisis_ultimatum_threshold = 70" in EFFECTS
     for delta in (-20, -15, -10, 5, 10, 20):
-        assert f"TOP_adjust_crisis_tension = {{ AMOUNT = {delta} }}" in EVENTS
+        assert (
+            f"set_temp_variable = {{ TOP_arg_amount = {delta} }}\n"
+            "\t\tTOP_adjust_crisis_tension = yes"
+        ) in EVENTS
     assert EVENTS.count("declare_war_on = {") == 1
     assert (
         "declare_war_on = { target = var:global.TOP_crisis_actor "
@@ -235,11 +248,12 @@ def test_visit_retention_and_dossier_refresh_share_full_live_revalidation():
     processor = _named_block(EFFECTS, "TOP_process_visits")
     refresher = _named_block(EFFECTS, "TOP_refresh_visit_dossiers")
     for effect in (
-        "TOP_revalidate_planned_visit = { TARGET = TOP_visit_target }",
-        "TOP_revalidate_active_visit = { TARGET = TOP_visit_target }",
+        "TOP_revalidate_planned_visit",
+        "TOP_revalidate_active_visit",
     ):
-        assert effect in processor
-        assert effect in refresher
+        for block in (processor, refresher):
+            assert "set_temp_variable = { TOP_arg_target = TOP_visit_target }" in block
+            assert f"{effect} = yes" in block
     assert "global.TOP_visit_minimum_confidence" in refresher
 
 
@@ -254,7 +268,12 @@ def test_invalid_visit_cleanup_requires_current_token_and_preserves_newer_locati
         "global.TOP_visit_token^TOP_visit_target"
     ) in processor
     assert "var:TOP_visit_cleanup_host = { exists = yes }" in processor
-    assert "else = { TOP_clear_visit = { TARGET = TOP_visit_target } }" in processor
+    assert (
+        "else = {\n"
+        "\t\t\t\tset_temp_variable = { TOP_arg_target = TOP_visit_target }\n"
+        "\t\t\t\tTOP_clear_visit = yes\n"
+        "\t\t\t}"
+    ) in processor
 
     end_visit = _named_block(EFFECTS, "TOP_end_visit")
     assert (
