@@ -63,10 +63,11 @@ _LOC_REFERENCE_RE = re.compile(
     r"\b(?:custom_(?:effect|trigger|prerequisite|gain_xp)_tooltip|"
     r"localization_key)\s*=\s*(\w[\w-]*)"
 )
-_BRACKET_LOC_RE = re.compile(
-    r"\[(?:\?(?=[A-Za-z_][A-Za-z0-9_]*\.Get))?"
-    r"(?:([A-Za-z_][A-Za-z0-9_]*)\.)?(\w[\w-]*)\]"
-)
+# Scope chains can be multi-level: a map-mode tooltip scopes to a state, so the country
+# scripted loc is only reachable as [FROM.CONTROLLER.name]. A single-segment prefix misses
+# those calls and reports the target as unused. The optional question mark covers dynamic
+# variable chains such as [?global.some_country.GetName].
+_BRACKET_LOC_RE = re.compile(r"\[(\??(?:[A-Za-z_][A-Za-z0-9_]*\.)+)?(\w[\w-]*)\]")
 
 
 def _find_reference_line(path: str, name: str) -> int:

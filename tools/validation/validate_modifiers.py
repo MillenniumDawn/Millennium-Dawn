@@ -478,6 +478,18 @@ def _redundant_enable_gates(body: str) -> List[Tuple[str, int]]:
     return findings
 
 
+def _enable_block_line(body: str):
+    """Return the line offset of the modifier's own `enable` block, else None.
+
+    Every `enable` is a per-tick cost for every holder, whatever it contains,
+    so this reports the block itself rather than inspecting its triggers.
+    """
+    match = _find_top_level_enable(blank_quoted_strings(body))
+    if not match:
+        return None
+    return body.count("\n", 0, match.start())
+
+
 def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
     """Every idea slot auto-generates a `<slot>_cost_factor` modifier.
 
@@ -891,11 +903,43 @@ class Validator(BaseValidator):
             category="redundant-enable-gate",
         )
 
+    def validate_dynamic_modifier_enable_blocks(self):
+        """Flag every dynamic modifier `enable` block, whatever it gates on."""
+        self._log_section("Checking for dynamic modifier enable blocks...")
+
+        results = []
+        for _filepath, rel, text in self._iter_dynamic_modifier_files():
+            for name, _nl, body_line, body in _extract_top_level_definition_blocks(
+                text
+            ):
+                offset = _enable_block_line(body)
+                if offset is None:
+                    continue
+                results.append(
+                    (
+                        f"'{name}': enable is re-evaluated every tick for every "
+                        "country holding the modifier - delete the block and let "
+                        "the effect that owns this state call add_dynamic_modifier "
+                        "/ remove_dynamic_modifier when it flips",
+                        rel,
+                        body_line + offset,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ No dynamic modifier enable blocks",
+            "Dynamic modifiers with an enable block (tie the state to an effect instead):",
+            severity=Severity.WARNING,
+            category="dynamic-modifier-enable-block",
+        )
+
     def run_validations(self):
         known_good = self._build_known_good_set()
         self.validate_modifier_names(known_good)
         self.validate_dynamic_modifier_name_loc()
         self.validate_redundant_enable_gates()
+        self.validate_dynamic_modifier_enable_blocks()
 
 
 if __name__ == "__main__":
