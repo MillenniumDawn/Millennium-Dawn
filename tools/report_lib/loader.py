@@ -191,6 +191,14 @@ def load_all(results_dir: str) -> List[ValidatorRun]:
             for slug, run_directory, run in records
             if run_directory == directory
         }
+        if manifest["mode"] == "batch":
+            compatibility_name = f"batch-{manifest['batch']}"
+            by_name.pop(compatibility_name, None)
+            records = [
+                record
+                for record in records
+                if not (record[0] == compatibility_name and record[1] == directory)
+            ]
         entries = {entry["name"]: entry for entry in manifest["results"]}
         for name in manifest["selected"]:
             existing_run = by_name.get(name)
