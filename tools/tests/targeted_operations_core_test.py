@@ -60,6 +60,13 @@ class TargetScript(TargetedScript):
         self.triggers.update(
             _parse_race_script(
                 (
+                    ROOT / "common/scripted_triggers/05_targeted_operations_runtime.txt"
+                ).read_text(encoding="utf-8")
+            )
+        )
+        self.triggers.update(
+            _parse_race_script(
+                (
                     ROOT
                     / "common/scripted_triggers/05_targeted_operations_arg_wrappers.txt"
                 ).read_text(encoding="utf-8")

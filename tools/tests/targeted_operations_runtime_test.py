@@ -22,9 +22,7 @@ EVENTS = (ROOT / "events/Targeted Operations Runtime.txt").read_text(encoding="u
 OPINION_MODIFIERS = (
     ROOT / "common/opinion_modifiers/01_targeted_operations.txt"
 ).read_text(encoding="utf-8")
-LOCALISATION_PATH = (
-    ROOT / "localisation/english/MD_targeted_operations_l_english.yml"
-)
+LOCALISATION_PATH = ROOT / "localisation/english/MD_targeted_operations_l_english.yml"
 LOCALISATION = LOCALISATION_PATH.read_text(encoding="utf-8-sig")
 YEARLY = (ROOT / "common/scripted_effects/00_yearly_effects.txt").read_text(
     encoding="utf-8"
@@ -105,10 +103,14 @@ def test_visit_cases_snapshot_story_and_require_the_active_token_for_execution()
     )
     assert "global.TOP_visit_status^TOP_case_visit_target = 2" in execution
     assert (
-        "global.TOP_clock < global.TOP_visit_execution_until^TOP_case_visit_target"
+        "var = global.TOP_clock value = global.TOP_visit_execution_until^TOP_case_visit_target compare = less_than_or_equals"
         in execution
     )
     assert "TOP_case_visit_execution_valid = yes" in CASE_TRIGGERS
+    assert (
+        "var = TOP_case_until^TOP_arg_target value = global.TOP_clock compare = greater_than_or_equals"
+        in CASE_TRIGGERS
+    )
 
 
 def test_cancelled_visit_closes_preparation_but_underway_operation_fails_closed():
@@ -118,6 +120,10 @@ def test_cancelled_visit_closes_preparation_but_underway_operation_fails_closed(
     assert "NOT = { TOP_authored_role_eligible = yes }" in processor
     assert "TOP_case_phase^TOP_target = 3" in processor
     assert "TOP_mission_binding_valid = yes" in processor
+    waiting = _named_block(TRIGGERS, "TOP_case_visit_waiting_for_arrival")
+    assert "global.TOP_visit_status^TOP_case_visit_target = 1" in waiting
+    assert "global.TOP_visit_planned_token^TOP_case_visit_target" in waiting
+    assert "NOT = { TOP_case_visit_waiting_for_arrival = yes }" in processor
 
 
 def test_visit_review_deadline_and_specific_tooltip_are_wired():
@@ -167,6 +173,27 @@ def test_crisis_constants_deltas_bands_and_single_war_path():
     assert "every_country" not in EVENTS
     assert "every_other_country" not in EFFECTS
     assert "every_other_country" not in EVENTS
+
+
+def test_repeat_incident_and_timeout_dispatch_the_ultimatum_band():
+    initializer = _named_block(EFFECTS, "TOP_start_exposed_kill_crisis")
+    assert "global.TOP_crisis_stage = 1" in initializer
+    assert "global.TOP_crisis_stage = 2" in EVENTS
+    assert "global.TOP_crisis_stage = 3" in EVENTS
+    assert "global.TOP_crisis_stage = 2" in initializer
+    assert "TOP_crisis_tension_ultimatum = yes" in initializer
+    assert "country_event = { id = TOP_crisis.3 days = 1 }" in initializer
+
+    timeout = _named_block(EFFECTS, "TOP_process_crisis")
+    assert "TOP_crisis_tension_ultimatum = yes" in timeout
+    assert "add_to_variable = { global.TOP_crisis_until = 30 }" in timeout
+    assert "country_event = { id = TOP_crisis.3 days = 1 }" in timeout
+    assert timeout.index("TOP_crisis_tension_ultimatum = yes") < timeout.index(
+        "TOP_cleanup_crisis = yes"
+    )
+
+    cleanup = _named_block(EFFECTS, "TOP_cleanup_crisis")
+    assert "global.TOP_crisis_stage = 0" in cleanup
 
 
 def test_crisis_preserves_physical_home_and_host_and_deduplicates_faction_consultations():
@@ -227,9 +254,7 @@ def test_visit_retention_and_dossier_refresh_share_full_live_revalidation():
         assert "global.TOP_status^TOP_visit_trigger_target = 1" in gate
         assert "TOP_authored_role_eligible = yes" in gate
         assert "global.TOP_visit_host^TOP_visit_trigger_target = THIS" in gate
-        assert (
-            "var:TOP_visit_trigger_state = { is_controlled_by = PREV }" in gate
-        )
+        assert "var:TOP_visit_trigger_state = { is_controlled_by = PREV }" in gate
         assert "TOP_visit_story_valid = yes" in gate
     assert (
         "global.TOP_visit_planned_token^TOP_visit_trigger_target = "
@@ -241,8 +266,7 @@ def test_visit_retention_and_dossier_refresh_share_full_live_revalidation():
     ) in active
     assert "global.TOP_host^TOP_visit_trigger_target = THIS" in active
     assert (
-        "global.TOP_state^TOP_visit_trigger_target = TOP_visit_trigger_state"
-        in active
+        "global.TOP_state^TOP_visit_trigger_target = TOP_visit_trigger_state" in active
     )
 
     processor = _named_block(EFFECTS, "TOP_process_visits")

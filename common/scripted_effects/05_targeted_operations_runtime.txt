@@ -431,6 +431,7 @@ TOP_start_exposed_kill_crisis = {
 			set_variable = { global.TOP_crisis_target = TOP_target }
 			set_variable = { global.TOP_crisis_story = TOP_authorized_visit_story }
 			set_variable = { global.TOP_crisis_visit_token = TOP_authorized_visit_token }
+			set_variable = { global.TOP_crisis_stage = 1 }
 			set_variable = { global.TOP_crisis_tension = global.TOP_crisis_opening_tension }
 			set_variable = { global.TOP_crisis_until = global.TOP_clock }
 			add_to_variable = { global.TOP_crisis_until = global.TOP_crisis_duration_days }
@@ -526,6 +527,14 @@ TOP_start_exposed_kill_crisis = {
 			limit = { check_variable = { global.TOP_crisis_active = 1 } }
 			add_to_variable = { global.TOP_crisis_tension = global.TOP_crisis_repeat_tension }
 			clamp_variable = { var = global.TOP_crisis_tension min = 0 max = 100 }
+			if = {
+				limit = {
+					check_variable = { global.TOP_crisis_stage = 2 }
+					TOP_crisis_tension_ultimatum = yes
+				}
+				set_variable = { global.TOP_crisis_stage = 3 }
+				var:global.TOP_crisis_protection = { country_event = { id = TOP_crisis.3 days = 1 } }
+			}
 			news_event = { id = TOP_crisis.11 days = 1 }
 		}
 	}
@@ -637,6 +646,7 @@ TOP_cleanup_crisis = {
 		set_variable = { global.TOP_crisis_target = 0 }
 		set_variable = { global.TOP_crisis_story = 0 }
 		set_variable = { global.TOP_crisis_visit_token = 0 }
+		set_variable = { global.TOP_crisis_stage = 0 }
 		set_variable = { global.TOP_crisis_tension = 0 }
 		set_variable = { global.TOP_crisis_until = 0 }
 		set_variable = { global.TOP_crisis_existing_war = 0 }
@@ -678,13 +688,22 @@ TOP_process_crisis = {
 			check_variable = { global.TOP_crisis_active = 1 }
 			check_variable = { global.TOP_crisis_until < global.TOP_clock }
 		}
-		var:global.TOP_crisis_protection = {
-			add_opinion_modifier = { target = var:global.TOP_crisis_actor modifier = harsh_sanctions }
+		if = {
+			limit = { TOP_crisis_tension_ultimatum = yes }
+			set_variable = { global.TOP_crisis_stage = 3 }
+			set_variable = { global.TOP_crisis_until = global.TOP_clock }
+			add_to_variable = { global.TOP_crisis_until = 30 }
+			var:global.TOP_crisis_protection = { country_event = { id = TOP_crisis.3 days = 1 } }
 		}
-		var:global.TOP_crisis_actor = {
-			add_opinion_modifier = { target = var:global.TOP_crisis_protection modifier = harsh_sanctions }
-			add_stability = -0.01
+		else = {
+			var:global.TOP_crisis_protection = {
+				add_opinion_modifier = { target = var:global.TOP_crisis_actor modifier = harsh_sanctions }
+			}
+			var:global.TOP_crisis_actor = {
+				add_opinion_modifier = { target = var:global.TOP_crisis_protection modifier = harsh_sanctions }
+				add_stability = -0.01
+			}
+			TOP_cleanup_crisis = yes
 		}
-		TOP_cleanup_crisis = yes
 	}
 }
