@@ -21,6 +21,7 @@ WARNING-level checks (reported, do not fail):
 import os
 import re
 import sys
+from typing import List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -67,6 +68,45 @@ _SHARED_FOCUS_PREFIXES = ("USoE", "POTEF", "AFRICAN_UNION", "GENERIC", "EH")
 # tree (country = { factor = 0 }), never assigned to a TAG, used only as a
 # workaround for the base-game joint-focus mechanic, not a real focus.
 _EXEMPT_FOCUS_IDS = {"dummy_focus"}
+
+
+def split_code_and_comment(line: str) -> Tuple[str, str]:
+    in_string = False
+    for index, char in enumerate(line):
+        if char == '"' and not _is_escaped(line, index):
+            in_string = not in_string
+        elif char == "#" and not in_string:
+            return line[:index], line[index:]
+    return line, ""
+
+
+def _is_escaped(text: str, index: int) -> bool:
+    backslashes = 0
+    index -= 1
+    while index >= 0 and text[index] == "\\":
+        backslashes += 1
+        index -= 1
+    return backslashes % 2 == 1
+
+
+def _code_outside_strings(code: str) -> str:
+    output = []
+    in_string = False
+    for index, char in enumerate(code):
+        if char == '"' and not _is_escaped(code, index):
+            in_string = not in_string
+            output.append('"')
+        elif in_string:
+            output.append(" ")
+        else:
+            output.append(char)
+    return "".join(output)
+
+
+def _quote_count(code: str) -> int:
+    return sum(
+        char == '"' and not _is_escaped(code, index) for index, char in enumerate(code)
+    )
 
 
 def _check_brace_matching(text: str, path: str):
@@ -178,59 +218,63 @@ def _check_indent_and_brackets(text: str, path: str):
     return errors
 
 
+def line_spacing_warnings(line: str) -> List[str]:
+    """Return spacing and quote warnings for one line."""
+    warnings: List[str] = []
+    code, _comment = split_code_and_comment(line)
+    code_only = _code_outside_strings(code)
+    spacing_line = re.sub(r"\{\s*\}", "", code_only)
+
+    if "{" in code_only:
+        unstyled = (
+            spacing_line.count("{")
+            - spacing_line.count(" {\n")
+            - spacing_line.count(" { ")
+        )
+        if unstyled > 0 and _RE_NO_SP_OPEN.search(spacing_line):
+            warnings.append("Missing space before or after open brace")
+
+    if "}" in code_only:
+        unstyled = (
+            spacing_line.count("}")
+            - spacing_line.count(" }\n")
+            - spacing_line.count(" } ")
+        )
+        if unstyled > 0 and _RE_NO_SP_CLOSE.search(spacing_line):
+            warnings.append("Missing space before or after close brace")
+
+    if _quote_count(code) % 2:
+        warnings.append("Odd number of quotation marks")
+
+    if "=" in code_only:
+        unstyled = (
+            code_only.count("=") - code_only.count(" = ") - code_only.count(" =\n")
+        )
+        if code_only.count("  =") > 0 or code_only.count("=  ") > 0:
+            warnings.append("Two spaces before or after '='")
+            unstyled -= code_only.count("  =") + code_only.count("=  ")
+        if unstyled != 0:
+            warnings.append("Missing space before or after '='")
+
+    return warnings
+
+
 def _check_spacing_and_quotes(text: str, path: str):
     """Brace/equal-sign spacing, quote-parity, and running-brace-depth checks.
     Returns [(message, line)]."""
-    warnings = []
+    warnings: List[Tuple[str, int]] = []
     brace_depth = 0
 
     for line_num, line in enumerate(text.splitlines(), 1):
-        if line.startswith("#"):
+        code, _comment = split_code_and_comment(line)
+        if not code.strip():
             continue
 
-        # Empty `{}` blocks (e.g. `topbar_empty = {}`) are idiomatic and have no
-        # interior to space; strip them before the brace-spacing check so they
-        # don't false-positive. Brace depth still counts the originals.
-        spacing_line = re.sub(r"\{\s*\}", "", line)
+        warnings.extend((message, line_num) for message in line_spacing_warnings(line))
 
-        if "{" in line:
-            if not re.search(r"#.*[{}]+", line):
-                brace_depth += line.count("{")
-                unstyled = (
-                    spacing_line.count("{")
-                    - spacing_line.count(" {\n")
-                    - spacing_line.count(" { ")
-                )
-                if unstyled > 0 and _RE_NO_SP_OPEN.search(spacing_line):
-                    warnings.append(
-                        ("Missing space before or after open brace", line_num)
-                    )
-
-        if "}" in line:
-            if not re.search(r"#.*[{}]+", line):
-                brace_depth -= line.count("}")
-                unstyled = (
-                    spacing_line.count("}")
-                    - spacing_line.count(" }\n")
-                    - spacing_line.count(" } ")
-                )
-                if unstyled > 0 and _RE_NO_SP_CLOSE.search(spacing_line):
-                    warnings.append(
-                        ("Missing space before or after close brace", line_num)
-                    )
-
-        if '"' in line:
-            if (line.count('"') % 2) != 0:
-                if not _RE_COMMENT_QUOTE.search(line):
-                    warnings.append(("Odd number of quotation marks", line_num))
-
-        if "=" in line:
-            unstyled = line.count("=") - line.count(" = ") - line.count(" =\n")
-            if line.count("  =") > 0 or line.count("=  ") > 0:
-                warnings.append(("Two spaces before or after '='", line_num))
-                unstyled -= line.count("  =") + line.count("=  ")
-            if unstyled != 0:
-                warnings.append(("Missing space before or after '='", line_num))
+        code_only = _code_outside_strings(code)
+        brace_depth += code_only.count("{")
+        brace_depth -= code_only.count("}")
 
         if brace_depth <= -1:
             warnings.append(("Running brace depth went negative", line_num))
