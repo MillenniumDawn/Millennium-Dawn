@@ -43,6 +43,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec("cosmetic-tags", "validate_cosmetic_tags.py", _CORE_GROUPS),
         ValidatorSpec("localisation", "validate_localisation.py", _CORE_GROUPS),
         ValidatorSpec("events", "validate_events.py", _CORE_GROUPS),
+        ValidatorSpec("achievements", "validate_achievements.py", _CORE_GROUPS),
         ValidatorSpec("history-files", "validate_history.py", _CORE_GROUPS),
         ValidatorSpec("unused-scripted", "validate_unused_scripted.py", _CORE_GROUPS),
         ValidatorSpec("agency-upgrades", "validate_agency_upgrades.py", _CORE_GROUPS),
@@ -103,6 +104,11 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             strict=False,
         ),
         ValidatorSpec("dlc-guards", "validate_dlc_guards.py", ("common", "events")),
+        ValidatorSpec(
+            "dynamic-modifier-guards",
+            "validate_dynamic_modifier_guards.py",
+            ("common", "events"),
+        ),
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
     ),
 }
