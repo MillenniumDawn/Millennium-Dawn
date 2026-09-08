@@ -15,6 +15,8 @@ add_namespace = HOL_asml_events
 @HOL_D66_time_tier_1 = 105
 # FLAG CONSTANTS (It is 1 day more so the tooltip and days shown in the focus about Focus Progress match exactly the moment when the focus is completed)
 @HOL_D66_time_tier_1_flag = 106
+# Tier start to next tier start: 105 days of focus progress plus the old 180-216 day gap
+@HOL_D66_focus_cooldown = 288
 
 #Economy Events
 country_event = {
@@ -6421,6 +6423,7 @@ country_event = {
 	trigger = {
 		has_completed_focus = HOL_paars
 		neutrality_neutral_social_are_in_coalition = yes
+		NOT = { has_country_flag = HOL_D66_focus_cooldown }
 	}
 
 	immediate = {
@@ -6434,6 +6437,7 @@ country_event = {
 			}
 			activate_shine_on_focus = HOL_d66
 			set_country_flag = { flag = HOL_D66_in_progress_flag days = @HOL_D66_time_tier_1_flag value = 1 }
+			set_country_flag = { flag = HOL_D66_focus_cooldown days = @HOL_D66_focus_cooldown value = 1 }
 			country_event = { id = HOL_politics.58 days = @HOL_D66_time_tier_1 }
 		}
 		else_if = {
@@ -6448,6 +6452,7 @@ country_event = {
 			}
 			activate_shine_on_focus = HOL_d66_democratic_institutions
 			set_country_flag = { flag = HOL_D66_democratic_institutions_in_progress_flag days = @HOL_D66_time_tier_1_flag value = 1 }
+			set_country_flag = { flag = HOL_D66_focus_cooldown days = @HOL_D66_focus_cooldown value = 1 }
 			country_event = { id = HOL_politics.58 days = @HOL_D66_time_tier_1 }
 		}
 		else_if = {
@@ -6461,6 +6466,7 @@ country_event = {
 			}
 			activate_shine_on_focus = HOL_d66_direct_democracy
 			set_country_flag = { flag = HOL_D66_direct_democracy_in_progress_flag days = @HOL_D66_time_tier_1_flag value = 1 }
+			set_country_flag = { flag = HOL_D66_focus_cooldown days = @HOL_D66_focus_cooldown value = 1 }
 			country_event = { id = HOL_politics.58 days = @HOL_D66_time_tier_1 }
 		}
 		else_if = {
@@ -6474,6 +6480,7 @@ country_event = {
 			}
 			activate_shine_on_focus = HOL_d66_rule_of_law
 			set_country_flag = { flag = HOL_D66_rule_of_law_in_progress_flag days = @HOL_D66_time_tier_1_flag value = 1 }
+			set_country_flag = { flag = HOL_D66_focus_cooldown days = @HOL_D66_focus_cooldown value = 1 }
 			country_event = { id = HOL_politics.58 days = @HOL_D66_time_tier_1 }
 		}
 		else_if = {
@@ -6487,6 +6494,7 @@ country_event = {
 			}
 			activate_shine_on_focus = HOL_d66_climate_action_plan
 			set_country_flag = { flag = HOL_D66_climate_action_plan_in_progress_flag days = @HOL_D66_time_tier_1_flag value = 1 }
+			set_country_flag = { flag = HOL_D66_focus_cooldown days = @HOL_D66_focus_cooldown value = 1 }
 			country_event = { id = HOL_politics.58 days = @HOL_D66_time_tier_1 }
 		}
 		else_if = {
@@ -6500,6 +6508,7 @@ country_event = {
 			}
 			activate_shine_on_focus = HOL_d66_green_energy
 			set_country_flag = { flag = HOL_D66_green_energy_in_progress_flag days = @HOL_D66_time_tier_1_flag value = 1 }
+			set_country_flag = { flag = HOL_D66_focus_cooldown days = @HOL_D66_focus_cooldown value = 1 }
 			country_event = { id = HOL_politics.58 days = @HOL_D66_time_tier_1 }
 		}
 		else_if = {
@@ -6513,6 +6522,7 @@ country_event = {
 			}
 			activate_shine_on_focus = HOL_d66_european_initiative
 			set_country_flag = { flag = HOL_D66_european_initiative_in_progress_flag days = @HOL_D66_time_tier_1_flag value = 1 }
+			set_country_flag = { flag = HOL_D66_focus_cooldown days = @HOL_D66_focus_cooldown value = 1 }
 			country_event = { id = HOL_politics.58 days = @HOL_D66_time_tier_1 }
 		}
 		else_if = {
@@ -6527,6 +6537,7 @@ country_event = {
 			}
 			activate_shine_on_focus = HOL_d66_social_progress
 			set_country_flag = { flag = HOL_D66_social_progress_in_progress_flag days = @HOL_D66_time_tier_1_flag value = 1 }
+			set_country_flag = { flag = HOL_D66_focus_cooldown days = @HOL_D66_focus_cooldown value = 1 }
 			country_event = { id = HOL_politics.58 days = @HOL_D66_time_tier_1 }
 		}
 		else_if = {
@@ -6540,21 +6551,12 @@ country_event = {
 			}
 			activate_shine_on_focus = HOL_d66_education_investments
 			set_country_flag = { flag = HOL_D66_education_investments_in_progress_flag days = @HOL_D66_time_tier_1_flag value = 1 }
+			set_country_flag = { flag = HOL_D66_focus_cooldown days = @HOL_D66_focus_cooldown value = 1 }
 			country_event = { id = HOL_politics.58 days = @HOL_D66_time_tier_1 }
 		}
-		else_if = {
-			limit = {
-				NOT = { neutrality_neutral_social_are_in_coalition = yes }
-				OR = {
-					has_country_flag = HOL_SGP_in_progress_flag
-					has_country_flag = HOL_GL_in_progress_flag
-				}
-			}
-			country_event = {
-				id = HOL_politics.57
-				days = 365
-				random_days = 25
-			}
+		else = {
+			# No tier could start; wait out the blocking focus instead of re-polling every month
+			set_country_flag = { flag = HOL_D66_focus_cooldown days = @HOL_D66_time_tier_1_flag value = 1 }
 		}
 	}
 }
@@ -6577,7 +6579,6 @@ country_event = {
 				originator_name = HOL_d66_character
 			}
 			clr_country_flag = HOL_D66_in_progress_flag
-			country_event = { id = HOL_politics.57 days = 180 random_days = 36 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_d66_democratic_institutions }
@@ -6587,7 +6588,6 @@ country_event = {
 				originator_name = HOL_d66_character
 			}
 			clr_country_flag = HOL_D66_democratic_institutions_in_progress_flag
-			country_event = { id = HOL_politics.57 days = 180 random_days = 36 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_d66_direct_democracy }
@@ -6597,7 +6597,6 @@ country_event = {
 				originator_name = HOL_d66_character
 			}
 			clr_country_flag = HOL_D66_direct_democracy_in_progress_flag
-			country_event = { id = HOL_politics.57 days = 180 random_days = 36 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_d66_rule_of_law }
@@ -6607,7 +6606,6 @@ country_event = {
 				originator_name = HOL_d66_character
 			}
 			clr_country_flag = HOL_D66_rule_of_law_in_progress_flag
-			country_event = { id = HOL_politics.57 days = 180 random_days = 36 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_d66_climate_action_plan }
@@ -6617,7 +6615,6 @@ country_event = {
 				originator_name = HOL_d66_character
 			}
 			clr_country_flag = HOL_D66_climate_action_plan_in_progress_flag
-			country_event = { id = HOL_politics.57 days = 180 random_days = 36 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_d66_green_energy }
@@ -6627,7 +6624,6 @@ country_event = {
 				originator_name = HOL_d66_character
 			}
 			clr_country_flag = HOL_D66_green_energy_in_progress_flag
-			country_event = { id = HOL_politics.57 days = 180 random_days = 36 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_d66_european_initiative }
@@ -6637,7 +6633,6 @@ country_event = {
 				originator_name = HOL_d66_character
 			}
 			clr_country_flag = HOL_D66_european_initiative_in_progress_flag
-			country_event = { id = HOL_politics.57 days = 180 random_days = 36 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_d66_social_progress }
@@ -6647,7 +6642,6 @@ country_event = {
 				originator_name = HOL_d66_character
 			}
 			clr_country_flag = HOL_D66_social_progress_in_progress_flag
-			country_event = { id = HOL_politics.57 days = 180 random_days = 36 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_d66_education_investments }
@@ -6657,7 +6651,6 @@ country_event = {
 				originator_name = HOL_d66_character
 			}
 			clr_country_flag = HOL_D66_education_investments_in_progress_flag
-			country_event = { id = HOL_politics.57 days = 180 random_days = 36 }
 		}
 	}
 }
@@ -6669,6 +6662,7 @@ country_event = {
 	trigger = {
 		has_completed_focus = HOL_paars
 		neutrality_neutral_conservatism_are_in_coalition = yes
+		NOT = { has_country_flag = HOL_SGP_in_progress_flag }
 	}
 
 	immediate = {
@@ -6773,19 +6767,9 @@ country_event = {
 			set_country_flag = { flag = HOL_SGP_in_progress_flag days = @HOL_D66_time_tier_1_flag value = 1 }
 			country_event = { id = HOL_politics.60 days = @HOL_D66_time_tier_1 }
 		}
-		else_if = {
-			limit = {
-				NOT = { neutrality_neutral_conservatism_are_in_coalition = yes }
-				OR = {
-					has_country_flag = HOL_D66_in_progress_flag
-					has_country_flag = HOL_GL_in_progress_flag
-				}
-			}
-			country_event = {
-				id = HOL_politics.59
-				days = 365
-				random_days = 25
-			}
+		else = {
+			# No tier could start; wait out the blocking focus instead of re-polling every month
+			set_country_flag = { flag = HOL_SGP_loop_cooldown days = @HOL_D66_time_tier_1_flag value = 1 }
 		}
 	}
 }
@@ -6808,7 +6792,7 @@ country_event = {
 				originator_name = "[Neutral_conservatism_L]"
 			}
 			clr_country_flag = HOL_SGP_in_progress_flag
-			country_event = { id = HOL_politics.59 days = 180 random_days = 36 }
+			set_country_flag = { flag = HOL_SGP_loop_cooldown days = 180 value = 1 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_sgp_protect_sunday_rest }
@@ -6818,7 +6802,7 @@ country_event = {
 				originator_name = "[Neutral_conservatism_L]"
 			}
 			clr_country_flag = HOL_SGP_in_progress_flag
-			country_event = { id = HOL_politics.59 days = 180 random_days = 36 }
+			set_country_flag = { flag = HOL_SGP_loop_cooldown days = 180 value = 1 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_sgp_religious_education_policy }
@@ -6828,7 +6812,7 @@ country_event = {
 				originator_name = "[Neutral_conservatism_L]"
 			}
 			clr_country_flag = HOL_SGP_in_progress_flag
-			country_event = { id = HOL_politics.59 days = 180 random_days = 36 }
+			set_country_flag = { flag = HOL_SGP_loop_cooldown days = 180 value = 1 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_sgp_support_large_families }
@@ -6838,7 +6822,7 @@ country_event = {
 				originator_name = "[Neutral_conservatism_L]"
 			}
 			clr_country_flag = HOL_SGP_in_progress_flag
-			country_event = { id = HOL_politics.59 days = 180 random_days = 36 }
+			set_country_flag = { flag = HOL_SGP_loop_cooldown days = 180 value = 1 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_sgp_support_christian_unions }
@@ -6848,7 +6832,7 @@ country_event = {
 				originator_name = "[Neutral_conservatism_L]"
 			}
 			clr_country_flag = HOL_SGP_in_progress_flag
-			country_event = { id = HOL_politics.59 days = 180 random_days = 36 }
+			set_country_flag = { flag = HOL_SGP_loop_cooldown days = 180 value = 1 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_sgp_secure_rural_communities }
@@ -6858,7 +6842,7 @@ country_event = {
 				originator_name = "[Neutral_conservatism_L]"
 			}
 			clr_country_flag = HOL_SGP_in_progress_flag
-			country_event = { id = HOL_politics.59 days = 180 random_days = 36 }
+			set_country_flag = { flag = HOL_SGP_loop_cooldown days = 180 value = 1 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_sgp_strengthen_defense }
@@ -6868,7 +6852,7 @@ country_event = {
 				originator_name = "[Neutral_conservatism_L]"
 			}
 			clr_country_flag = HOL_SGP_in_progress_flag
-			country_event = { id = HOL_politics.59 days = 180 random_days = 36 }
+			set_country_flag = { flag = HOL_SGP_loop_cooldown days = 180 value = 1 }
 		}
 		else_if = {
 			limit = { has_shine_effect_on_focus = HOL_sgp_resist_secularism }
@@ -6878,7 +6862,7 @@ country_event = {
 				originator_name = "[Neutral_conservatism_L]"
 			}
 			clr_country_flag = HOL_SGP_in_progress_flag
-			country_event = { id = HOL_politics.59 days = 180 random_days = 36 }
+			set_country_flag = { flag = HOL_SGP_loop_cooldown days = 180 value = 1 }
 		}
 	}
 }

@@ -5,6 +5,8 @@ Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
 
+import bisect
+import graphlib
 import os
 import re
 import sys
@@ -519,25 +521,123 @@ def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, 
     return out
 
 
-def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
-    """Pool worker: (parent_id, child_id) for every event fired from an event.
+def scan_event_fire_edges(
+    args: Tuple[str, frozenset],
+) -> List[Tuple[str, str, str, int]]:
+    """Pool worker: (parent_id, child_id, filename, line) for events fired from an event.
 
-    Lets a chain event inherit whatever schedules its parent, so only the head
-    of a chain needs a scheduling entry.
+    Self-edges are kept. An event that fires itself is exactly what the cycle
+    check reports, and a finding has to point at the call site rather than the
+    definition, so the line travels with the edge.
     """
     filename = args[0]
     cleaned = _read_cleaned_text(filename)
     if cleaned is None:
         return []
+    # A `country_event = foo.1` written inside a quoted log string is prose,
+    # not a fire. The self-fire check is an ERROR, so it must not read one.
+    cleaned = blank_quoted_strings(cleaned)
 
-    out: List[Tuple[str, str]] = []
-    for parent, body, _start in _iter_event_bodies(cleaned):
+    # One newline table for the whole file: counting from offset 0 once per
+    # definition is quadratic on the 20k-line event files.
+    newlines = [m.start() for m in re.finditer("\n", cleaned)]
+
+    out: List[Tuple[str, str, str, int]] = []
+    for parent, body, start in _iter_event_bodies(cleaned):
         if not parent:
             continue
-        for child, _pos in _iter_fired_ids(body):
-            if child and child != parent:
-                out.append((parent, child))
+        # `body` is the block's interior, so a fire's absolute offset is
+        # measured from just past the opening brace — which `\s*` in the
+        # block pattern allows to sit on the line below the keyword.
+        base = cleaned.index("{", start) + 1
+        for child, pos in _iter_fired_ids(body):
+            if not child:
+                continue
+            line = bisect.bisect_left(newlines, base + pos) + 1
+            out.append((parent, child, filename, line))
     return out
+
+
+def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
+    """Pool worker: (parent_id, child_id) for every event fired from a *different* event.
+
+    Lets a chain event inherit whatever schedules its parent, so only the head
+    of a chain needs a scheduling entry. A self-fire schedules nothing new, so
+    it is dropped here — `scan_event_fire_edges` is the check that wants it.
+    """
+    return [
+        (parent, child)
+        for parent, child, _file, _line in scan_event_fire_edges(args)
+        if child != parent
+    ]
+
+
+# --- self-referencing events and event fire cycles ---
+#
+# An event that fires itself parks a re-arming entry in the engine's event
+# queue: the recurrence lives in the save rather than in script, every country
+# that ever entered the loop keeps paying for it, and nothing outside the event
+# can stop it. Issue #3332 — the recurrence belongs in an on_action.
+#
+# Self-reference is the length-1 case of a cycle in the event fire graph, so
+# both are found by one pass. `graphlib.TopologicalSorter` (stdlib) raises
+# `CycleError` carrying one concrete cycle; dropping one edge of each reported
+# cycle and re-preparing enumerates the rest. The reported path runs in fire
+# order and repeats its first node, so `cycle[0]` fires `cycle[1]`.
+
+
+def _canonical_cycle(cycle: List[str]) -> List[str]:
+    """Rotate `[a, b, …, a]` to start at its lexicographically smallest node.
+
+    graphlib reports whichever rotation its walk happened to enter, so without
+    this the anchored call site — and the message — moves between runs.
+    """
+    nodes = cycle[:-1]
+    start = nodes.index(min(nodes))
+    rotated = nodes[start:] + nodes[:start]
+    return rotated + [rotated[0]]
+
+
+def _iter_fire_cycles(edges: Dict[str, Set[str]]) -> List[List[str]]:
+    """One cycle per pass through the fire graph, as `[a, b, …, a]` paths.
+
+    `edges` maps a firing event to the events it fires. Each pass reports one
+    cycle and drops one of its edges, so the walk terminates after at most one
+    pass per edge. Dropping an edge can also break other cycles that share it:
+    the result is enough to prove the graph cyclic and to point at every
+    component, not an enumeration of every distinct cycle.
+    """
+    # graphlib takes {node: predecessors}; the fire graph is parent -> children.
+    # Insertion order is sorted both ways: graphlib walks its nodes in that
+    # order, so unsorted sets make the reported rotation depend on the hash
+    # seed and the findings move between runs.
+    preds: Dict[str, Set[str]] = {}
+    for parent in sorted(edges):
+        preds.setdefault(parent, set())
+        for child in sorted(edges[parent]):
+            preds.setdefault(child, set()).add(parent)
+
+    cycles: List[List[str]] = []
+    while True:
+        try:
+            graphlib.TopologicalSorter(preds).prepare()
+            return cycles
+        except graphlib.CycleError as exc:
+            cycle = list(exc.args[1])
+            cycles.append(_canonical_cycle(cycle))
+            preds[cycle[1]].discard(cycle[0])
+
+
+_SELF_REF_MSG = (
+    "event {eid} fires itself (self-referencing event: the recurrence sits in "
+    "the engine event queue forever and nothing outside the event can stop it; "
+    "move it to an on_action, or split the recipient half into its own event)"
+)
+_FIRE_CYCLE_MSG = (
+    "event fire cycle: {path} (the chain re-enters itself; if this is a "
+    "recurring poll rather than player-driven navigation, move the recurrence "
+    "to an on_action)"
+)
 
 
 # Where MD schedules its historical events from.
@@ -946,8 +1046,11 @@ class Validator(BaseValidator):
     TITLE = "EVENT VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, fire_cycles: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fire_cycles = fire_cycles
+        self._fire_edges_cache_full: Optional[List[Tuple[str, str, str, int]]] = None
+        self._fire_edges_cache_scoped: Optional[List[Tuple[str, str, str, int]]] = None
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
         self._random_events_cache: Optional[set] = None
         self._probability_rolled_cache: Optional[set] = None
@@ -1923,6 +2026,112 @@ class Validator(BaseValidator):
             category="major-event-in-loop",
         )
 
+    def _get_event_fire_edges(
+        self, full: bool = True
+    ) -> List[Tuple[str, str, str, int]]:
+        """Every event-to-event fire as (parent, child, file, line).
+
+        `full` scans the whole events tree, which a cycle needs: it can run
+        through an event defined in a file the commit does not touch. A
+        self-fire has both ends in one definition, so that check scans only
+        its own reporting scope instead of the whole tree on every commit.
+        """
+        cached = self._fire_edges_cache_full if full else self._fire_edges_cache_scoped
+        if cached is not None:
+            return cached
+        edge_args = [
+            (f, frozenset())
+            for f in self._collect_files(["events/**/*.txt"], ignore_staged=full)
+        ]
+        edges: List[Tuple[str, str, str, int]] = []
+        for result in self._pool_map(scan_event_fire_edges, edge_args, chunksize=10):
+            edges.extend(result)
+        if full:
+            self._fire_edges_cache_full = edges
+        else:
+            self._fire_edges_cache_scoped = edges
+        return edges
+
+    def validate_self_referencing_events(self):
+        """Flag events that fire themselves.
+
+        A self-fire is a recurrence the engine keeps re-arming in the event
+        queue, or a two-sided event handing itself to the other party. Both
+        want restructuring: the recurrence into an on_action, the second party
+        into its own event.
+        """
+        self._log_section("Checking for self-referencing events...")
+
+        results = [
+            (
+                _SELF_REF_MSG.format(eid=parent),
+                self._rel_posix(filename),
+                line,
+            )
+            for parent, child, filename, line in sorted(
+                self._get_event_fire_edges(full=False), key=lambda e: (e[2], e[3])
+            )
+            if child == parent
+        ]
+
+        self._report(
+            results,
+            "✓ No event fires itself",
+            "Self-referencing events:",
+            Severity.ERROR,
+            category="self-referencing-event",
+        )
+
+    def validate_event_fire_cycles(self):
+        """Flag multi-event cycles in the event fire graph (opt-in).
+
+        Cycles longer than one event are usually deliberate — a paginated
+        browse screen, a hub event with a "back" option, a two-step
+        confirmation. They are still worth listing when auditing a chain, so
+        the check is opt-in rather than a commit blocker. Self-fires are
+        reported by `validate_self_referencing_events` and skipped here.
+        """
+        self._log_section("Checking for cycles in the event fire graph...")
+
+        graph: Dict[str, Set[str]] = {}
+        sites: Dict[Tuple[str, str], Tuple[str, int]] = {}
+        for parent, child, filename, line in self._get_event_fire_edges():
+            if child == parent:
+                continue
+            graph.setdefault(parent, set()).add(child)
+            sites.setdefault((parent, child), (filename, line))
+
+        in_scope = {
+            os.path.abspath(f) for f in self._collect_files(["events/**/*.txt"])
+        }
+        results = []
+        for cycle in _iter_fire_cycles(graph):
+            # A cycle can span files: keep it when any of its call sites is in
+            # the reporting scope, and anchor the finding at that site.
+            hits = [
+                sites[(a, b)]
+                for a, b in zip(cycle, cycle[1:])
+                if os.path.abspath(sites[(a, b)][0]) in in_scope
+            ]
+            if not hits:
+                continue
+            filename, line = min(hits)
+            results.append(
+                (
+                    _FIRE_CYCLE_MSG.format(path=" -> ".join(cycle)),
+                    self._rel_posix(filename),
+                    line,
+                )
+            )
+
+        self._report(
+            sorted(results, key=lambda r: (r[1], r[2])),
+            "✓ No cycles in the event fire graph",
+            "Event fire cycles:",
+            Severity.WARNING,
+            category="event-fire-cycle",
+        )
+
     def validate_option_log_without_effect(self):
         """Flag `log` lines in event options that run no effects.
 
@@ -1968,7 +2177,28 @@ class Validator(BaseValidator):
         self.validate_fire_only_once_in_loop()
         self.validate_major_event_in_loop()
         self.validate_option_log_without_effect()
+        self.validate_self_referencing_events()
+
+        if self.fire_cycles:
+            self.validate_event_fire_cycles()
+        else:
+            self._log_section(
+                "Skipping event fire cycle check (pass --fire-cycles to enable)"
+            )
+
+
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--fire-cycles",
+        action="store_true",
+        dest="fire_cycles",
+        help="Flag multi-event cycles in the event fire graph (self-fires are always flagged)",
+    )
 
 
 if __name__ == "__main__":
-    run_validator_main(Validator, "Validate events in Millennium Dawn mod")
+    run_validator_main(
+        Validator,
+        "Validate events in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
+    )

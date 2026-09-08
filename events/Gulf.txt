@@ -321,58 +321,55 @@ country_event = {
 	option = {
 		name = gulf.16.a #Time to bring down the dictator.
 		log = "[GetDateText]: [This.GetName]: gulf.16.a executed"
-		if = {
-			limit = { tag = USA }
-			for_each_scope_loop = {
-				array = global.nato_members
-				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-				if = {
-					limit = {
-						NOT = { tag = ISR }
-						NOT = { tag = SYR }
-						NOT = { tag = FSA }
-						NOT = { has_country_flag = received_assad_coalition_proposal }
-						NOT = { has_country_flag = proposed_coalition_against_assad }
-					}
-					country_event = gulf.16
-				}
-			}
-			for_each_scope_loop = {
-				array = global.arab_league_members
-				tooltip = TT_ALL_ARAB_LEAGUE_MEMBER_NATIONS_GAIN
-				if = {
-					limit = {
-						NOT = { has_idea = NATO_member }
-						NOT = { tag = ISR }
-						NOT = { SYR = { has_idea = LoAS_member } }
-						NOT = { tag = SYR }
-						NOT = { tag = FSA }
-						NOT = { has_country_flag = received_assad_coalition_proposal }
-						NOT = { has_country_flag = proposed_coalition_against_assad }
-					}
-					country_event = gulf.16
-				}
-			}
+		for_each_scope_loop = {
+			array = global.nato_members
+			tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
 			if = {
 				limit = {
-					country_exists = ISR
-					ISR = {
-						NOT = { tag = SYR }
-						NOT = { tag = FSA }
-						NOT = { has_country_flag = received_assad_coalition_proposal }
-						NOT = { has_country_flag = proposed_coalition_against_assad }
-					}
+					NOT = { tag = ISR }
+					NOT = { tag = SYR }
+					NOT = { tag = FSA }
+					NOT = { has_country_flag = received_assad_coalition_proposal }
+					NOT = { has_country_flag = proposed_coalition_against_assad }
 				}
-				ISR = {
-					country_event = gulf.16
-				}
+				country_event = gulf.38
 			}
-			if = {
-				limit = { threat < 0.1 }
-				add_threat = 10
-			}
-			news_event = { days = 2 id = gulf.18 }
 		}
+		for_each_scope_loop = {
+			array = global.arab_league_members
+			tooltip = TT_ALL_ARAB_LEAGUE_MEMBER_NATIONS_GAIN
+			if = {
+				limit = {
+					NOT = { has_idea = NATO_member }
+					NOT = { tag = ISR }
+					NOT = { SYR = { has_idea = LoAS_member } }
+					NOT = { tag = SYR }
+					NOT = { tag = FSA }
+					NOT = { has_country_flag = received_assad_coalition_proposal }
+					NOT = { has_country_flag = proposed_coalition_against_assad }
+				}
+				country_event = gulf.38
+			}
+		}
+		if = {
+			limit = {
+				country_exists = ISR
+				ISR = {
+					NOT = { tag = SYR }
+					NOT = { tag = FSA }
+					NOT = { has_country_flag = received_assad_coalition_proposal }
+					NOT = { has_country_flag = proposed_coalition_against_assad }
+				}
+			}
+			ISR = {
+				country_event = gulf.38
+			}
+		}
+		if = {
+			limit = { threat < 0.1 }
+			add_threat = 10
+		}
+		news_event = { days = 2 id = gulf.18 }
 		if = {
 			limit = {
 				OR = {
@@ -509,10 +506,173 @@ country_event = {
 	option = {
 		name = gulf.16.b #We cannot risk a clash with Russia and Iran.
 		log = "[GetDateText]: [This.GetName]: gulf.16.b executed"
-		if = {
-			limit = { tag = USA }
-			FROM = { country_event = { id = gulf.17 hours = 6 } }
+		FROM = { country_event = { id = gulf.17 hours = 6 } }
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_idea = intervention_local_security
+			}
+			modifier = {
+				add = 50
+				has_idea = intervention_isolation
+			}
+			modifier = {
+				add = 50
+				NOT = { has_government = democratic }
+			}
 		}
+	}
+}
+
+#The United States Is Assembling a Coalition Against Assad
+country_event = {
+	id = gulf.38
+	title = gulf.38.t
+	desc = gulf.38.d
+
+	picture = GFX_Assad_parade
+
+	is_triggered_only = yes
+
+	immediate = {
+		set_country_flag = received_assad_coalition_proposal
+	}
+
+	option = {
+		name = gulf.38.a #Time to bring down the dictator.
+		log = "[GetDateText]: [This.GetName]: gulf.38.a executed"
+		if = {
+			limit = {
+				OR = {
+					has_idea = intervention_isolation
+					has_idea = intervention_local_security
+					has_idea = intervention_limited_interventionism
+				}
+			}
+			add_ideas = intervention_regional_interventionism
+		}
+		add_ai_strategy = { type = send_volunteers_desire id = FSA value = 200 }
+		add_ai_strategy = { type = support id = FSA value = 200 }
+		add_war_support = 0.05
+		add_political_power = -100
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_government = democratic
+			}
+			modifier = {
+				add = 10
+				has_idea = intervention_regional_interventionism
+			}
+			modifier = {
+				add = 10
+				has_idea = intervention_global_interventionism
+			}
+			modifier = {
+				add = 10
+				OR = {
+					AND = {
+						BHR = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = BHR
+							value > 19
+						}
+					}
+					AND = {
+						KUW = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = KUW
+							value > 19
+						}
+					}
+					AND = {
+						OMA = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = OMA
+							value > 19
+						}
+					}
+					AND = {
+						QAT = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = QAT
+							value > 19
+						}
+					}
+					AND = {
+						SAU = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = SAU
+							value > 19
+						}
+					}
+					AND = {
+						UAE = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = UAE
+							value > 19
+						}
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				OR = {
+					AND = {
+						BHR = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = BHR
+							value > 49
+						}
+					}
+					AND = {
+						KUW = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = KUW
+							value > 49
+						}
+					}
+					AND = {
+						OMA = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = OMA
+							value > 49
+						}
+					}
+					AND = {
+						QAT = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = QAT
+							value > 49
+						}
+					}
+					AND = {
+						SAU = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = SAU
+							value > 49
+						}
+					}
+					AND = {
+						UAE = { has_country_flag = proposed_coalition_against_assad }
+						has_opinion = {
+							target = UAE
+							value > 49
+						}
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				check_variable = { influence_array^0 = FROM }
+			}
+		}
+	}
+
+	option = {
+		name = gulf.38.b #We cannot risk a clash with Russia and Iran.
 		ai_chance = {
 			base = 10
 			modifier = {
@@ -724,25 +884,14 @@ country_event = {
 		text = gulf.22.d1
 		trigger = {
 			original_tag = USA
-			FROM = { has_country_flag = israel_accepted }
+			ISR = { has_country_flag = israel_accepted }
 		}
 	}
 	desc = {
 		text = gulf.22.d2
 		trigger = {
 			original_tag = USA
-			FROM = { has_country_flag = israel_rejected }
-		}
-	}
-	desc = {
-		text = gulf.22.d3
-		trigger = {
-			NOT = {
-				OR = {
-					original_tag = USA
-					original_tag = ISR
-				}
-			}
+			ISR = { has_country_flag = israel_rejected }
 		}
 	}
 
@@ -753,53 +902,10 @@ country_event = {
 	option = {
 		name = gulf.22.a #Our joint forces will annihilate the terrorists!
 		log = "[GetDateText]: [This.GetName]: gulf.22.a executed"
-		trigger = { NOT = { original_tag = USA } }
-		if = {
-			limit = { original_tag = ISR }
-			set_country_flag = israel_accepted
-			FROM = {
-				country_event = { days = 1 id = gulf.23 }
-			}
-		}
-		else = {
-			if = {
-				limit = {
-					OR = {
-						has_idea = intervention_isolation
-						has_idea = intervention_local_security
-						has_idea = intervention_limited_interventionism
-					}
-				}
-				add_ideas = intervention_regional_interventionism
-			}
-			if = {
-				limit = { ISR = { has_country_flag = israel_accepted } }
-				add_ai_strategy = { type = send_volunteers_desire id = ISR value = 200 }
-			}
-			if = {
-				limit = { BHR = { has_completed_focus = GCC_war_with_hezbollah } }
-				add_ai_strategy = { type = send_volunteers_desire id = BHR value = 200 }
-			}
-			if = {
-				limit = { KUW = { has_completed_focus = GCC_war_with_hezbollah } }
-				add_ai_strategy = { type = send_volunteers_desire id = KUW value = 200 }
-			}
-			if = {
-				limit = { OMA = { has_completed_focus = GCC_war_with_hezbollah } }
-				add_ai_strategy = { type = send_volunteers_desire id = OMA value = 200 }
-			}
-			if = {
-				limit = { QAT = { has_completed_focus = GCC_war_with_hezbollah } }
-				add_ai_strategy = { type = send_volunteers_desire id = QAT value = 200 }
-			}
-			if = {
-				limit = { SAU = { has_completed_focus = GCC_war_with_hezbollah } }
-				add_ai_strategy = { type = send_volunteers_desire id = SAU value = 200 }
-			}
-			if = {
-				limit = { UAE = { has_completed_focus = GCC_war_with_hezbollah } }
-				add_ai_strategy = { type = send_volunteers_desire id = UAE value = 200 }
-			}
+		trigger = { original_tag = ISR }
+		set_country_flag = israel_accepted
+		FROM = {
+			country_event = { days = 1 id = gulf.23 }
 		}
 		ai_chance = {
 			base = 2
@@ -809,13 +915,10 @@ country_event = {
 	option = {
 		name = gulf.22.b #We do not want war.
 		log = "[GetDateText]: [This.GetName]: gulf.22.b executed"
-		trigger = { NOT = { original_tag = USA } }
-		if = {
-			limit = { original_tag = ISR }
-			set_country_flag = israel_rejected
-			FROM = {
-				country_event = { days = 1 id = gulf.24 }
-			}
+		trigger = { original_tag = ISR }
+		set_country_flag = israel_rejected
+		FROM = {
+			country_event = { days = 1 id = gulf.24 }
 		}
 		ai_chance = {
 			base = 1
@@ -872,8 +975,11 @@ country_event = {
 			array = global.nato_members
 			tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
 			if = {
-				limit = { NOT = { tag = ROOT } }
-				country_event = { days = 1 id = gulf.22 }
+				limit = {
+					NOT = { tag = ROOT }
+					NOT = { tag = ISR }
+				}
+				country_event = { days = 1 id = gulf.39 }
 			}
 		}
 		ai_chance = {
@@ -909,6 +1015,77 @@ country_event = {
 			modifier = {
 				add = 1
 				NOT = { check_variable = { ruling_party = 1 } }
+			}
+		}
+	}
+}
+
+#The Americans have called upon NATO to join the operation against Hezbollah
+country_event = {
+	id = gulf.39
+	title = gulf.39.t
+	desc = gulf.39.d
+
+	picture = GFX_politics_talks
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.39.a #Our joint forces will annihilate the terrorists!
+		log = "[GetDateText]: [This.GetName]: gulf.39.a executed"
+		if = {
+			limit = {
+				OR = {
+					has_idea = intervention_isolation
+					has_idea = intervention_local_security
+					has_idea = intervention_limited_interventionism
+				}
+			}
+			add_ideas = intervention_regional_interventionism
+		}
+		if = {
+			limit = { ISR = { has_country_flag = israel_accepted } }
+			add_ai_strategy = { type = send_volunteers_desire id = ISR value = 200 }
+		}
+		if = {
+			limit = { BHR = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = BHR value = 200 }
+		}
+		if = {
+			limit = { KUW = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = KUW value = 200 }
+		}
+		if = {
+			limit = { OMA = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = OMA value = 200 }
+		}
+		if = {
+			limit = { QAT = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = QAT value = 200 }
+		}
+		if = {
+			limit = { SAU = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = SAU value = 200 }
+		}
+		if = {
+			limit = { UAE = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = UAE value = 200 }
+		}
+		ai_chance = {
+			base = 2
+		}
+	}
+
+	option = {
+		name = gulf.39.b #We do not want war.
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 3
+				OR = {
+					has_idea = intervention_isolation
+					has_idea = intervention_local_security
+				}
 			}
 		}
 	}
@@ -1299,7 +1476,7 @@ country_event = {
 						NOT = { original_tag = ISR }
 						NOT = { has_country_flag = proposed_coalition_against_iran }
 					}
-					country_event = gulf.30
+					country_event = gulf.40
 				}
 			}
 			for_each_scope_loop = {
@@ -1318,22 +1495,25 @@ country_event = {
 						NOT = { original_tag = ISR }
 						NOT = { has_country_flag = proposed_coalition_against_iran }
 					}
-					country_event = gulf.30
+					country_event = gulf.40
 				}
 			}
-			every_country = {
+			if = {
 				limit = {
-					original_tag = ISR
-					NOT = {
-						OR = {
-							has_war_with = PER
-							is_subject_of = PER
+					country_exists = ISR
+					ISR = {
+						NOT = {
+							OR = {
+								has_war_with = PER
+								is_subject_of = PER
+							}
 						}
+						NOT = { has_country_flag = proposed_coalition_against_iran }
 					}
-					NOT = { tag = USA }
-					NOT = { has_country_flag = proposed_coalition_against_iran }
 				}
-				country_event = gulf.30
+				ISR = {
+					country_event = gulf.40
+				}
 			}
 			news_event = { days = 2 id = gulf.32 }
 		}
@@ -1374,7 +1554,6 @@ country_event = {
 		}
 	}
 	option = {
-		trigger = { NOT = { has_country_flag = arabic_nation_flag } }
 		name = gulf.30.b #Middle Eastern politics is none of our business.
 		log = "[GetDateText]: [This.GetName]: gulf.30.b executed"
 		if = {
@@ -1410,9 +1589,90 @@ country_event = {
 			}
 		}
 	}
+}
+
+#[FROM.GetName] Asks Us to Join the Coalition Against Iran
+country_event = {
+	id = gulf.40
+	title = gulf.40.t
+	desc = gulf.40.d
+
+	picture = GFX_rocket_explosion
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.40.a #The Iranian threat must be eliminated!
+		log = "[GetDateText]: [This.GetName]: gulf.40.a executed"
+		add_war_support = 0.05
+		add_political_power = -100
+		set_temp_variable = { wargoal_on = PER }
+		set_temp_variable = { wargoal_type = 1 }
+		add_threat_from_wargoal_effect = yes
+		create_wargoal = {
+			type = topple_government
+			target = PER
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				OR = {
+					western_autocrats_are_in_power = yes
+					check_variable = { ruling_party = 1 }
+				}
+			}
+			modifier = {
+				add = 10
+				has_idea = intervention_regional_interventionism
+			}
+			modifier = {
+				add = 10
+				has_idea = intervention_global_interventionism
+			}
+			modifier = {
+				add = 10
+				check_variable = { influence_array^0 = FROM }
+			}
+		}
+	}
+
+	option = {
+		trigger = { NOT = { has_country_flag = arabic_nation_flag } }
+		name = gulf.40.b #Middle Eastern politics is none of our business.
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 10
+				NOT = {
+					OR = {
+						western_autocrats_are_in_power = yes
+						check_variable = { ruling_party = 1 }
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				has_idea = intervention_limited_interventionism
+			}
+			modifier = {
+				add = 20
+				has_idea = intervention_local_security
+			}
+			modifier = {
+				add = 50
+				has_idea = intervention_isolation
+			}
+			modifier = {
+				add = 100
+				NOT = { has_government = democratic }
+			}
+		}
+	}
+
 	option = {
 		trigger = { has_country_flag = arabic_nation_flag }
-		name = gulf.30.c #We have nothing to gain from [FROM.GetAdjective] adventurism.
+		name = gulf.40.c #We have nothing to gain from [FROM.GetAdjective] adventurism.
 		ai_chance = {
 			base = 10
 			modifier = {
@@ -1533,7 +1793,7 @@ country_event = {
 					NOT = { tag = ISR }
 					NOT = { has_country_flag = proposed_coalition_against_iran }
 				}
-				country_event = gulf.30
+				country_event = gulf.40
 			}
 		}
 		if = {
@@ -1542,7 +1802,7 @@ country_event = {
 				ISR = { NOT = { has_country_flag = proposed_coalition_against_iran } }
 			}
 			ISR = {
-				country_event = gulf.30
+				country_event = gulf.40
 			}
 		}
 		news_event = { days = 2 id = gulf.32 }

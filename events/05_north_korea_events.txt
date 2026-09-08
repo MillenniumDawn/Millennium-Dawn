@@ -2438,10 +2438,6 @@ country_event = {
 
 	option = {
 		name = nko_naval_buildup.1.a
-		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.1.a executed"
-		hidden_effect = {
-			country_event = { id = nko_naval_buildup.50 days = 30 }
-		}
 	}
 }
 
@@ -3061,42 +3057,6 @@ country_event = {
 	}
 }
 
-country_event = {
-	id = nko_naval_buildup.50
-	is_triggered_only = yes
-	hidden = yes
-
-	immediate = {
-		if = {
-			limit = {
-				has_country_flag = NKO_naval_buildup_unlocked
-				NOT = { has_country_flag = NKO_naval_buildup_capstone_done }
-				NOT = { has_country_flag = NKO_naval_buildup_recent_incident }
-				NOT = { has_civil_war = yes }
-			}
-			set_country_flag = {
-				flag = NKO_naval_buildup_recent_incident
-				days = 30
-				value = 1
-			}
-			random_list = {
-				20 = { country_event = { id = nko_naval_buildup.51 days = 0 } }
-				20 = { country_event = { id = nko_naval_buildup.52 days = 0 } }
-				20 = { country_event = { id = nko_naval_buildup.53 days = 0 } }
-				15 = { country_event = { id = nko_naval_buildup.54 days = 0 } }
-				10 = { country_event = { id = nko_naval_buildup.56 days = 0 } }
-			}
-		}
-		if = {
-			limit = {
-				has_country_flag = NKO_naval_buildup_unlocked
-				NOT = { has_country_flag = NKO_naval_buildup_capstone_done }
-			}
-			country_event = { id = nko_naval_buildup.50 days = 60 }
-		}
-	}
-}
-
 # .51 Naval Drill at Wonsan (submarine theme)
 country_event = {
 	id = nko_naval_buildup.51
@@ -3712,9 +3672,9 @@ country_event = {
 	}
 }
 
-# Hidden per-host manpower watcher. Seeded by NKO_export_finalize_troops, fires on
-# the host every 30 days while our forces are deployed. When the host runs low on
-# manpower it appeals to its patron (event_target:NKO_storm_corps_patron).
+# Hidden per-host manpower watcher. Polled monthly from on_monthly_NKO for every
+# host still carrying NKO_storm_corps_host. When the host runs low on manpower it
+# appeals to its patron (event_target:NKO_storm_corps_patron).
 country_event = {
 	id = NKO_export.21
 	is_triggered_only = yes
@@ -3729,10 +3689,6 @@ country_event = {
 			}
 			set_country_flag = { flag = NKO_manpower_request_cooldown value = 1 days = 120 }
 			event_target:NKO_storm_corps_patron = { country_event = { id = NKO_export.20 days = 2 } }
-		}
-		if = {
-			limit = { has_country_flag = NKO_storm_corps_host }
-			country_event = { id = NKO_export.21 days = 30 }
 		}
 	}
 }

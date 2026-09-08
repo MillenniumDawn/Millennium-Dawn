@@ -3384,6 +3384,15 @@ antarctica_trigger_blizzard_event = {
 	set_variable = { global.antarctica_blizzard_days_remaining = blizzard_duration }
 	set_variable = { global.antarctica_blizzard_next_damage_check = 14 }
 
+	set_variable_to_random = {
+		var = blizzard_next_start_delay
+		min = 300
+		max = 351
+		integer = yes
+	}
+	set_variable = { global.antarctica_blizzard_next_start_countdown = blizzard_next_start_delay }
+	clear_variable = blizzard_next_start_delay
+
 	log = "[GetDateText]: [Root.GetName]: Antarctica blizzard started. Duration: [?blizzard_duration] days"
 }
 
@@ -3405,6 +3414,20 @@ antarctica_process_blizzard_daily = {
 			clr_global_flag = antarctica_blizzard_active
 			antarctica_start_blizzard_repairs = yes
 			log = "[GetDateText]: [Root.GetName]: Antarctica blizzard ended. Starting module repairs."
+		}
+	}
+	else = {
+		add_to_variable = { global.antarctica_blizzard_next_start_countdown = -1 }
+		if = {
+			limit = { check_variable = { global.antarctica_blizzard_next_start_countdown < 1 } }
+			antarctica_trigger_blizzard_event = yes
+			for_each_scope_loop = {
+				array = global.at_members
+				if = {
+					limit = { has_country_flag = antarctica_has_active_station }
+					news_event = MD_antarctica_news.9
+				}
+			}
 		}
 	}
 }

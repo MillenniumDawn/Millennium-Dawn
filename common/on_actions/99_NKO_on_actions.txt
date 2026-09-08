@@ -35,6 +35,54 @@ on_actions = {
 				country_event = { id = NKO_export.1 days = 3 }
 				set_country_flag = { flag = NKO_arms_export_russia_offer_cooldown value = 1 days = 180 }
 			}
+
+			# Storm Corps hosts appeal to Pyongyang for manpower while deployed.
+			if = {
+				limit = {
+					has_country_flag = NKO_arms_export_active
+					any_of_scopes = {
+						array = NKO_arms_export_supplied_array
+						has_country_flag = NKO_storm_corps_host
+					}
+				}
+				save_global_event_target_as = NKO_storm_corps_patron
+				for_each_loop = {
+					array = NKO_arms_export_supplied_array
+					if = {
+						limit = {
+							var:NKO_arms_export_supplied_array^i = {
+								exists = yes
+								has_country_flag = NKO_storm_corps_host
+							}
+						}
+						var:NKO_arms_export_supplied_array^i = { country_event = { id = NKO_export.21 days = 0 } }
+					}
+				}
+			}
+
+			# Songun naval buildup — passive incident roll, one per ~2 months.
+			if = {
+				limit = {
+					has_country_flag = NKO_naval_buildup_unlocked
+					NOT = { has_country_flag = NKO_naval_buildup_capstone_done }
+					NOT = { has_country_flag = NKO_naval_buildup_recent_incident }
+					NOT = { has_civil_war = yes }
+				}
+				# 45d cooldown against a monthly poll: the next tick that can fire is
+				# the one ~60 days out, which is the interval .50 rescheduled itself on.
+				set_country_flag = {
+					flag = NKO_naval_buildup_recent_incident
+					days = 45
+					value = 1
+				}
+				random_list = {
+					20 = { country_event = { id = nko_naval_buildup.51 days = 0 } }
+					20 = { country_event = { id = nko_naval_buildup.52 days = 0 } }
+					20 = { country_event = { id = nko_naval_buildup.53 days = 0 } }
+					15 = { country_event = { id = nko_naval_buildup.54 days = 0 } }
+					10 = { country_event = { id = nko_naval_buildup.56 days = 0 } }
+				}
+			}
 		}
 	}
 
