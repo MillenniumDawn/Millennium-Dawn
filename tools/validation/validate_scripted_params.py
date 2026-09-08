@@ -117,6 +117,51 @@ _CALL_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*)\s*=\s*yes\b")
 _KW_OPEN_RE = re.compile(r"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{")
 
 
+_PARAM_TOKEN_RE = re.compile(r"\$[A-Za-z_]\w*\$")
+_TRIGGER_DEF_RE = re.compile(r"^([A-Za-z_]\w*)\s*=\s*\{", re.M)
+
+
+def _block_end(text: str, open_brace_index: int) -> int:
+    """Index just past the brace that closes the one at open_brace_index."""
+    depth = 0
+    for index in range(open_brace_index, len(text)):
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return index + 1
+    return len(text)
+
+
+def _parameterised_trigger_defs(mod_path: str) -> Dict[str, Tuple[str, int]]:
+    """Scripted triggers whose body uses $PARAM$, mapped to (file, line).
+
+    The engine does not substitute parameters for scripted triggers. At a call
+    site it reads the argument name as a trigger, reports `Unknown
+    trigger-type`, and then loses brace tracking for the rest of that file.
+    Scripted effects do support parameters, so only triggers are reported.
+    """
+    found: Dict[str, Tuple[str, int]] = {}
+    pattern = os.path.join(mod_path, "common", "scripted_triggers", "**", "*.txt")
+    for filepath in sorted(glob.glob(pattern, recursive=True)):
+        try:
+            with open(filepath, "r", encoding="utf-8-sig", newline="") as handle:
+                text = strip_comments(handle.read())
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "$" not in text:
+            continue
+        for match in _TRIGGER_DEF_RE.finditer(text):
+            body = text[match.end() - 1 : _block_end(text, match.end() - 1)]
+            if _PARAM_TOKEN_RE.search(body):
+                found[match.group(1)] = (
+                    filepath,
+                    text.count(chr(10), 0, match.start()) + 1,
+                )
+    return found
+
+
 def _normalize_influence_value(value: str) -> str:
     """Normalize a tag_index / influence_target value for identity comparison.
 
@@ -702,10 +747,64 @@ class Validator(BaseValidator):
             category="invalid-influence-tag",
         )
 
+    def _validate_parameterised_triggers(self):
+        """A scripted trigger must not take $PARAM$ arguments."""
+        self._log_section("Checking for parameterised scripted triggers")
+
+        defined = _parameterised_trigger_defs(self.mod_path)
+        results = []
+
+        for name, (filepath, line) in sorted(defined.items()):
+            results.append(
+                (
+                    f"{name} takes $PARAM$ arguments, which the engine cannot"
+                    " substitute for a trigger - drive it from a temp variable",
+                    os.path.relpath(filepath, self.mod_path),
+                    line,
+                )
+            )
+
+        if defined:
+            patterns = {
+                name: re.compile(r"\b" + re.escape(name) + r"\s*=\s*\{")
+                for name in defined
+            }
+            for filepath in self._collect_files(
+                ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+            ):
+                try:
+                    with open(
+                        filepath, "r", encoding="utf-8-sig", newline=""
+                    ) as handle:
+                        text = strip_comments(handle.read())
+                except (OSError, UnicodeDecodeError):
+                    continue
+                for name, pattern in patterns.items():
+                    if os.path.abspath(defined[name][0]) == os.path.abspath(filepath):
+                        continue
+                    for match in pattern.finditer(text):
+                        results.append(
+                            (
+                                f"calls {name}, a scripted trigger taking"
+                                " $PARAM$ arguments, so it cannot resolve",
+                                os.path.relpath(filepath, self.mod_path),
+                                text.count(chr(10), 0, match.start()) + 1,
+                            )
+                        )
+
+        self._report(
+            results,
+            "No scripted trigger takes $PARAM$ arguments",
+            "Scripted triggers cannot take parameters:",
+            severity=Severity.ERROR,
+            category="parameterised-scripted-trigger",
+        )
+
     def run_validations(self):
         self._build_contracts()
         self._build_tag_set()
         self._validate_callers()
+        self._validate_parameterised_triggers()
 
 
 if __name__ == "__main__":

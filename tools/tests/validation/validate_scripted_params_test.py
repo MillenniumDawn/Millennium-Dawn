@@ -924,3 +924,82 @@ def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch):
         runpy.run_path(vsp.__file__, run_name="__main__")
 
     assert exit_info.value.code == 0
+
+
+# --- parameterised scripted triggers ---------------------------------------
+
+
+def _mod(tmp_path, files):
+    for relative, body in files.items():
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8", newline="") as handle:
+            handle.write(body)
+    return tmp_path
+
+
+def _trigger_findings(tmp_path):
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator._validate_parameterised_triggers()
+    return [str(issue) for issue in validator._issues]
+
+
+def test_parameterised_scripted_trigger_and_its_callers_are_reported(tmp_path):
+    """The engine cannot substitute $PARAM$ for a trigger.
+
+    It reads the argument name as a trigger, reports `Unknown trigger-type`,
+    and then loses brace tracking for the rest of the file.
+    """
+    _mod(
+        tmp_path,
+        {
+            "common/scripted_triggers/00_t.txt": (
+                "PARAM_gate = {\n\tcheck_variable = { some_array^$TARGET$ = 1 }\n}\n"
+            ),
+            "common/scripted_effects/00_e.txt": (
+                "caller = {\n\tif = {\n"
+                "\t\tlimit = { PARAM_gate = { TARGET = 7 } }\n"
+                "\t\tadd_political_power = 1\n\t}\n}\n"
+            ),
+        },
+    )
+
+    findings = _trigger_findings(tmp_path)
+
+    assert any("PARAM_gate takes $PARAM$ arguments" in f for f in findings)
+    assert any("calls PARAM_gate" in f and "00_e.txt" in f for f in findings), findings
+
+
+def test_a_parameterised_scripted_effect_is_not_reported(tmp_path):
+    """Effects do support parameters; only triggers are the problem."""
+    _mod(
+        tmp_path,
+        {
+            "common/scripted_triggers/00_t.txt": "plain_gate = {\n\thas_war = yes\n}\n",
+            "common/scripted_effects/00_e.txt": (
+                "param_effect = {\n\tset_temp_variable = { x = $VAL$ }\n}\n"
+            ),
+            "common/scripted_effects/01_c.txt": (
+                "caller = {\n\tparam_effect = { VAL = 3 }\n}\n"
+            ),
+        },
+    )
+
+    assert _trigger_findings(tmp_path) == []
+
+
+def test_the_definition_file_is_not_counted_as_a_caller(tmp_path):
+    """A parameterised trigger names itself once, as the definition."""
+    _mod(
+        tmp_path,
+        {
+            "common/scripted_triggers/00_t.txt": (
+                "PARAM_gate = {\n\tcheck_variable = { a^$TARGET$ = 1 }\n}\n"
+            ),
+        },
+    )
+
+    findings = _trigger_findings(tmp_path)
+
+    assert len(findings) == 1, findings
+    assert "takes $PARAM$ arguments" in findings[0]
