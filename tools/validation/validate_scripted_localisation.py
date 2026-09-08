@@ -65,8 +65,8 @@ _LOC_REFERENCE_RE = re.compile(
 )
 # Scope chains can be multi-level: a map-mode tooltip scopes to a state, so the country
 # scripted loc is only reachable as [FROM.CONTROLLER.name]. A single-segment prefix misses
-# those calls and reports the target as unused. The optional question mark covers dynamic
-# variable chains such as [?global.some_country.GetName].
+# those calls and reports the target as unused. The optional question mark captures dynamic
+# variable chains so _scan_loc_token_candidates can discard them before validation.
 _BRACKET_LOC_RE = re.compile(r"\[(\??(?:[A-Za-z_][A-Za-z0-9_]*\.)+)?(\w[\w-]*)\]")
 
 
@@ -123,7 +123,9 @@ def _scan_loc_token_candidates(
     text: str, is_scripted_loc_file: bool
 ) -> Tuple[Set[Tuple[str, bool]], Set[str]]:
     bracketed = {
-        (member, bool(scope)) for scope, member in _BRACKET_LOC_RE.findall(text)
+        (member, bool(scope))
+        for scope, member in _BRACKET_LOC_RE.findall(text)
+        if not scope.startswith("?")
     }
     explicit = set() if is_scripted_loc_file else set(_LOC_REFERENCE_RE.findall(text))
     return bracketed, explicit

@@ -295,14 +295,16 @@ def test_pull_request_validation_keeps_writable_reporting_on_the_base_ref():
         if step.get("name") == "Resolve validation ref"
     )
     assert "^[1-9][0-9]*$" in resolver
-    assert 'base_sha="${EVENT_BASE_SHA:-$GITHUB_SHA}"' in resolver
+    assert 'gh api "repos/$GITHUB_REPOSITORY/pulls/$pr_number"' in resolver
+    assert "base_ref=$(printf" in resolver
+    assert '[ "$base_ref" != "main" ]' in resolver
     assert "INPUT_HEAD_SHA" not in resolver
     assert "INPUT_BASE_SHA" not in resolver
     assert (
         detect["outputs"]["pr-number"] == "${{ steps.resolve-ref.outputs.pr-number }}"
     )
     assert detect["outputs"]["trusted-ref"] == (
-        "${{ github.event.pull_request.base.sha || github.sha }}"
+        "${{ steps.resolve-ref.outputs.base-sha }}"
     )
 
     tools = workflow["jobs"]["tools-tests"]

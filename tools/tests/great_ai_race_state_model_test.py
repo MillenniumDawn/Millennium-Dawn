@@ -624,6 +624,9 @@ class RaceScript:
                 result = country["tag"] == operand
             elif key == "has_idea":
                 result = operand in country.get("ideas", set())
+            elif key == "has_dynamic_modifier":
+                data = {key: value for key, _op, value in operand}
+                result = data["modifier"] in country.get("dynamic_modifiers", set())
             elif key == "always":
                 result = operand == "yes"
             elif key in {
