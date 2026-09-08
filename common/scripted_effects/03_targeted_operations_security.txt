@@ -1,5 +1,7 @@
-TOP_purchase_security_policy = {
-	set_temp_variable = { TOP_security_requested_level = $LEVEL$ }
+# Reads TOP_arg_level. $TRACK$ was spliced into the variable name,
+# which a temp variable cannot express, so there is one per track.
+TOP_purchase_protection_policy = {
+	set_temp_variable = { TOP_security_requested_level = TOP_arg_level }
 	if = {
 		limit = { TOP_security_can_purchase = yes }
 		if = {
@@ -17,9 +19,37 @@ TOP_purchase_security_policy = {
 			set_temp_variable = { treasury_change = -1.5 }
 		}
 		modify_treasury_effect = yes
-		set_variable = { TOP_$TRACK$_level = $LEVEL$ }
-		set_variable = { TOP_$TRACK$_until = global.TOP_clock }
-		add_to_variable = { TOP_$TRACK$_until = 182 }
+		set_variable = { TOP_protection_level = TOP_arg_level }
+		set_variable = { TOP_protection_until = global.TOP_clock }
+		add_to_variable = { TOP_protection_until = 182 }
+		TOP_security_refresh_view = yes
+	}
+}
+
+# Reads TOP_arg_level. $TRACK$ was spliced into the variable name,
+# which a temp variable cannot express, so there is one per track.
+TOP_purchase_counterintelligence_policy = {
+	set_temp_variable = { TOP_security_requested_level = TOP_arg_level }
+	if = {
+		limit = { TOP_security_can_purchase = yes }
+		if = {
+			limit = { check_variable = { TOP_security_requested_level = 1 } }
+			add_political_power = -25
+			set_temp_variable = { treasury_change = -0.25 }
+		}
+		else_if = {
+			limit = { check_variable = { TOP_security_requested_level = 2 } }
+			add_political_power = -40
+			set_temp_variable = { treasury_change = -0.75 }
+		}
+		else = {
+			add_political_power = -60
+			set_temp_variable = { treasury_change = -1.5 }
+		}
+		modify_treasury_effect = yes
+		set_variable = { TOP_counterintelligence_level = TOP_arg_level }
+		set_variable = { TOP_counterintelligence_until = global.TOP_clock }
+		add_to_variable = { TOP_counterintelligence_until = 182 }
 		TOP_security_refresh_view = yes
 	}
 }
@@ -57,11 +87,11 @@ TOP_security_country_tick = {
 		}
 		if = {
 			limit = { NOT = { TOP_protection_policy_active = yes } }
-			TOP_purchase_security_policy = { TRACK = protection LEVEL = 1 }
+			set_temp_variable = { TOP_arg_level = 1 } TOP_purchase_protection_policy = yes
 		}
 		if = {
 			limit = { NOT = { TOP_counterintelligence_policy_active = yes } }
-			TOP_purchase_security_policy = { TRACK = counterintelligence LEVEL = 1 }
+			set_temp_variable = { TOP_arg_level = 1 } TOP_purchase_counterintelligence_policy = yes
 		}
 	}
 	if = {
