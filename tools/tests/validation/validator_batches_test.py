@@ -7,7 +7,7 @@ from shared.paths import VALIDATION_DIR
 
 
 def test_every_batch_spec_script_exists():
-    assert len(vb.ALL_SPECS) == 34
+    assert len(vb.ALL_SPECS) == 36
     assert not {spec.name for spec in vb.ALL_SPECS} & {
         spec.name for spec in vb.IMPACT_ONLY_SPECS
     }
@@ -141,6 +141,7 @@ def test_standalone_ci_tools_select_only_their_impact_specs():
     for path, name in (
         ("tools/linting/validate_localization_encoding.py", "localization-encoding"),
         ("tools/linting/validate_mod_encoding.py", "mod-encoding"),
+        ("tools/linting/validate_txt_encoding.py", "txt-encoding"),
         ("tools/validation/validate_style.py", "style"),
         ("tools/validation/validate_mod_descriptors.py", "mod-descriptors"),
         ("tools/validation/validate_file_paths.py", "file-paths"),
