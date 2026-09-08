@@ -103,6 +103,11 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             strict=False,
         ),
         ValidatorSpec("dlc-guards", "validate_dlc_guards.py", ("common", "events")),
+        ValidatorSpec(
+            "dynamic-modifier-guards",
+            "validate_dynamic_modifier_guards.py",
+            ("common", "events"),
+        ),
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
     ),
 }
