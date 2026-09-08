@@ -686,8 +686,14 @@ def test_native_callback_for_a_superseded_binding_cannot_touch_current_case(
     variables = script.authorize()
     original_case = case_snapshot(script, 11)
     script.globals["TOP_status"][12] = 1
-    script.temps.update(actor_country=1, target_state=state)
-    script.call("TOP_native_result", TARGET=target, METHOD=method, TIER=2)
+    script.temps.update(
+        actor_country=1,
+        target_state=state,
+        TOP_target=target,
+        TOP_method=method,
+        TOP_tier=2,
+    )
+    script.call("TOP_native_result_args")
     assert script.globals["TOP_status"][11] == 1
     assert script.globals["TOP_status"][12] == 1
     assert script.globals["TOP_attempts"][11] == 0
@@ -806,7 +812,8 @@ def test_native_callback_loads_its_person_case_while_another_host_is_selected():
     script.country(1000, tag="raid_instance")
     script.countries[1000]["vars"].update(actor_country=1, target_state=101)
     script.temps.pop("target_state", None)
-    script.call("TOP_native_result", 1000, TARGET=11, METHOD=1, TIER=2)
+    script.temps.update(TOP_target=11, TOP_method=1, TOP_tier=2)
+    script.call("TOP_native_result_args", 1000)
     assert script.globals["TOP_status"][11] == 3
     assert script.globals["TOP_status"][12] == 1
     assert variables["TOP_case_phase"][11] == 4
@@ -908,7 +915,8 @@ def test_closing_one_case_preserves_other_hosts_and_rejects_its_late_callback(ac
     script.country(1000, tag="raid_instance")
     script.countries[1000]["vars"].update(actor_country=1, target_state=101)
     script.temps.pop("target_state", None)
-    script.call("TOP_native_result", 1000, TARGET=11, METHOD=1, TIER=2)
+    script.temps.update(TOP_target=11, TOP_method=1, TOP_tier=2)
+    script.call("TOP_native_result_args", 1000)
     assert script.globals["TOP_status"][11] == 1
     assert script.globals["TOP_status"][12] == 1
     assert variables["TOP_archive_cursor"] == 0
