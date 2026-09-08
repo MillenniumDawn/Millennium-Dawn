@@ -8,7 +8,6 @@ from great_ai_race_state_model_test import (
     _extract_block,
     _named_block,
     _parse_race_script,
-    _substitute_script_parameters,
 )
 from targeted_operations_helpers_test import TargetedScript
 

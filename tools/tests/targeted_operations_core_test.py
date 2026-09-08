@@ -175,8 +175,7 @@ class TargetScript(TargetedScript):
             # No longer parameterised: the caller sets TOP_role_target,
             # because the engine cannot substitute $PARAM$ for a trigger.
             result = (
-                self.value("TOP_role_target", identifier)
-                not in self.ineligible_roles
+                self.value("TOP_role_target", identifier) not in self.ineligible_roles
             )
         elif key == "TOP_review_pending":
             result = operand == "no"

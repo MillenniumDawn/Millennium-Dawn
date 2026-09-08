@@ -199,9 +199,7 @@ def registry(data: dict) -> str:
         for target in (t for t in data["targets"] if t["group"] == gid):
             ident = target["id"]
             role_gate = (
-                f" TOP_authored_role_eligible_{ident} = yes"
-                if ident >= 129
-                else ""
+                f" TOP_authored_role_eligible_{ident} = yes" if ident >= 129 else ""
             )
             lines += [
                 "\t\tif = {",

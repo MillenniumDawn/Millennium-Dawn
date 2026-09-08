@@ -164,17 +164,16 @@ def test_all_native_raids_bind_their_own_person_method_and_callback(manifest):
                 "TOP_method": method,
                 "TOP_tier": str(tier),
             }, (token, outcome)
-            assert any(
-                key == "TOP_native_result_args" for key, _, _ in effects
-            ), (token, outcome)
+            assert any(key == "TOP_native_result_args" for key, _, _ in effects), (
+                token,
+                outcome,
+            )
 
 
 def test_every_raid_has_a_gate_that_binds_its_own_person_and_method(manifest):
     """The gate is the only thing carrying the binding into the raid."""
     rendered = GENERATOR.render(manifest)
-    gates = rendered[
-        "common/scripted_triggers/06_targeted_operations_native_gates.txt"
-    ]
+    gates = rendered["common/scripted_triggers/06_targeted_operations_native_gates.txt"]
     raids = rendered["common/raids/targeted_operations_raids.txt"]
 
     defined = set(re.findall(r"(?m)^(TOP_native_gate_\d+_\d+) =", gates))
