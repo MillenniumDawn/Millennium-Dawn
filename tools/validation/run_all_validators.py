@@ -39,6 +39,7 @@ _AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
 # these surface as warnings without gating. --missing-loc is intentionally left
 # off — its ~7.8k backlog would drown the report; run it on demand instead.
 _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
+    "bonus-names": ["--name-not-owner-id"],
     "focus-tree": ["--missing-icons"],
 }
 
@@ -78,14 +79,23 @@ def _extract_label_from_script(script_path: str, fallback_name: str) -> str:
 
 
 def launch_validator(
-    script_name: str, extra_flags: List[str], output_dir: str, name: str, mod_path: str
+    script_name: str,
+    extra_flags: List[str],
+    output_dir: str,
+    name: str,
+    mod_path: str,
+    output_filename: Optional[str] = None,
+    apply_extra_flags: bool = True,
 ) -> Tuple[subprocess.Popen, TextIO]:
     """Launch a single validator as a background subprocess (non-blocking)."""
     script_path = os.path.join(SCRIPTS_DIR, script_name)
-    output_path = os.path.join(output_dir, f"{name}.txt")
+    output_path = os.path.join(output_dir, output_filename or f"{name}.txt")
 
     combined_flags: List[str] = []
-    for flag in extra_flags + _VALIDATOR_EXTRA_FLAGS.get(name, []):
+    extra = extra_flags + (
+        _VALIDATOR_EXTRA_FLAGS.get(name, []) if apply_extra_flags else []
+    )
+    for flag in extra:
         if flag not in combined_flags:
             combined_flags.append(flag)
 
@@ -292,6 +302,11 @@ def _persist_sidecars(output_dir: str, persist_dir: str) -> None:
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="Run all MD validators in parallel")
     parser.add_argument("--staged", action="store_true")
     parser.add_argument("--strict", action="store_true")

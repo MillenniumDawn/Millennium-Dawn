@@ -16,8 +16,8 @@ LAYER 2: CONTINUOUS STRATEGIES (ai_strategy files, always-evaluated)
   Country-specific files ──► diplomacy, war, production overrides
 
 LAYER 3: PERIODIC EFFECTS (on_daily / on_weekly / on_monthly)
-  Daily (AI only):
-    division/plane/ship_limiter_calculation ──► cache unit caps into *_limiter_limit vars
+  Monthly (AI only):
+    division/plane/ship_limiter_calculation ──► cache unit caps and deployed-plane count into limiter variables
   Weekly:
     AI Investment Pulse ──► AC_event.500 ──► AI_get_*_score effects
     ai_cyber_monthly ──► cyber operations against enemies
@@ -50,7 +50,7 @@ LAYER 5: GOD OF WAR OVERRIDES (game rule gated)
 
 ### on_daily (`common/on_actions/00_on_actions.txt`)
 
-- **AI Unit-Cap Cache**: AI only → `division_limiter_calculation` + `plane_limiter_calculation` + `ship_limiter_calculation`. Each recomputes the cached `*_limiter_limit` variable the matching limiter strategy reads in its `enable`.
+- **AI Unit-Cap Cache**: AI only → monthly division/plane/ship limiter calculations, plus immediate refreshes on war-relation changes.
 
 ### on_monthly (`common/on_actions/MD_on_actions.txt`)
 
@@ -94,14 +94,14 @@ ai_is_threatened = {
 
 `potential_and_current_enemies` is a built-in engine array (current enemies + allies-of-enemies + countries with wargoals), so it already covers hostile neighbours without a live neighbour loop. When `ai_is_threatened`:
 
-- The division/plane/ship limiter caps expand (1.25x multiplier inside the daily calc).
+- The division/plane/ship limiter caps expand (1.25x multiplier inside the monthly and transition refresh).
 - The division cap no longer receives its 0.75x peaceful-country reduction.
 
 This replaced the old `ai_update_build_units` effect and its `AI_is_threatened` country flag (removed).
 
 ### `division_limiter_calculation` / `plane_limiter_calculation` / `ship_limiter_calculation` (`00_AI_scripted_effects.txt`)
 
-Run daily for AI countries. Each computes a cap from factory count and situational multipliers (war, `ai_is_threatened`, major, NATO/EU, threat, faction, great-power) and stores it in `division_limiter_limit` / `plane_limiter_limit` / `ship_limiter_limit`. The matching limiter strategy reads that variable in `enable` instead of recomputing the math every evaluation. Under the `potato_edition` game rule the same formula runs, then the result is halved (`x0.5`) and re-rounded.
+Run monthly for AI countries, with additional refreshes on relevant war transitions. Each computes a cap from factory count and situational multipliers (war, `ai_is_threatened`, major, NATO/EU, threat, faction, great-power) and stores it in `division_limiter_limit` / `plane_limiter_limit` / `ship_limiter_limit`. The plane refresh also caches deployed plane count in `plane_limiter_deployed_size`. Matching limiter strategies read cached variables in `enable` instead of recomputing live counts every evaluation. Under the `potato_edition` game rule the same formula runs, then the result is halved (`x0.5`) and re-rounded.
 
 ### `ai_weapon_dump` (`99_weapon_dump_effects.txt`)
 
@@ -202,13 +202,13 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 
 ```pdx
 MD_avoid_new_wars_when_outmatched = {
-	enable = {
-		has_war = yes
-		enemies_strength_ratio > 0.75
-	}
-	abort_when_not_enabled = yes
+ enable = {
+  has_war = yes
+  enemies_strength_ratio > 0.75
+ }
+ abort_when_not_enabled = yes
 
-	ai_strategy = { type = avoid_starting_wars value = -200 }
+ ai_strategy = { type = avoid_starting_wars value = -200 }
 }
 ```
 
@@ -257,7 +257,7 @@ stockpile adds a second +100% category-demand increase.
 **Division/Ship/Plane Limiters:**
 
 - `division_limiter`: (factories + 5 when factories > 4) × 1.3 × situational modifiers. Peaceful, unthreatened countries receive a 0.75x reduction instead of being blocked from training. Active war scales up (~1.75x, wars demand more divisions than peacetime), `ai_is_threatened` adds ~1.25x, major status adds ~1.15x. Alliances that constrain unilateral builds (NATO, EU) apply a negative multiplier (~-0.8x) so members don't all maintain peer-major standing armies.
-- `division_limiter_potato_edition`: 0.5x base for the "performance" rule path, extra penalties for very large factions (CHI/SOV) so end-game stutter stays manageable.
+- `division_limiter_potato_edition`: 0.5x base for the "performance" rule path. Limiter inputs are cached and unchanged AI states skip recalculation.
 - `ship_limiter`: naval_factories × ~7 (or ×3 potato), tuned so a typical naval power lands at a plausible fleet size, not the engine's hard cap.
 - `plane_limiter`: mil_factories × ~80 + 50 (or ×40 potato), accounts for air industries producing many cheap units per factory vs ground.
 
@@ -330,7 +330,7 @@ stockpile adds a second +100% category-demand increase.
 | SOV     | 50        | Always                                |
 | CHI     | 50        | Always                                |
 | GER     | 50        | Always                                |
-| UKR     | 50/150/50 | Always / SOV threatening / BLR allied |
+| UKR     | 50, 150, 50 | Always, SOV threatening, BLR allied |
 | CAN     | 100       | Preparing for war                     |
 | ARG     | 100       | Preparing for war                     |
 | RAJ     | 100       | China aggressive                      |
