@@ -781,6 +781,15 @@ jobs:
           find . -name '*.mod' -not -path './resources/*' -print0 \
             | xargs -0 -r python3 tools/linting/validate_mod_encoding.py
 
+      - name: Check .txt files have no BOM
+        if: >-
+          always() && !cancelled() && matrix.batch == 'core' &&
+          steps.setup-python.outcome == 'success'
+        run: |
+          find common descriptions events gfx history localisation map music \
+            portraits scenario_tests sound tutorial -name '*.txt' -print0 \
+            | xargs -0 -r python3 tools/linting/validate_txt_encoding.py
+
       - name: Check mod descriptor replace_path sync
         if: >-
           always() && !cancelled() && matrix.batch == 'core' &&
