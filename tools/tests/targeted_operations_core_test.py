@@ -804,16 +804,26 @@ def test_designation_limits_each_actor_to_one_person_in_each_host():
     assert case_snapshot(script, 11) == first
 
 
+def fire_native_callback(script, target=11, method=1, tier=2, state=101):
+    """Run a raid callback from its own instance scope.
+
+    TOP_native_result_args reads TOP_target, TOP_method and TOP_tier: raids set
+    them inline because common/raids/ is parsed before the scripted effects
+    register, so a parameterised call there cannot resolve.
+    """
+    script.country(1000, tag="raid_instance")
+    script.countries[1000]["vars"].update(actor_country=1, target_state=state)
+    script.temps.pop("target_state", None)
+    script.temps.update(TOP_target=target, TOP_method=method, TOP_tier=tier)
+    script.call("TOP_native_result_args", 1000)
+
+
 def test_native_callback_loads_its_person_case_while_another_host_is_selected():
     script = TargetScript()
     variables = script.authorize()
     script.authorize(12, host=3, state=102)
     other = case_snapshot(script, 12)
-    script.country(1000, tag="raid_instance")
-    script.countries[1000]["vars"].update(actor_country=1, target_state=101)
-    script.temps.pop("target_state", None)
-    script.temps.update(TOP_target=11, TOP_method=1, TOP_tier=2)
-    script.call("TOP_native_result_args", 1000)
+    fire_native_callback(script)
     assert script.globals["TOP_status"][11] == 3
     assert script.globals["TOP_status"][12] == 1
     assert variables["TOP_case_phase"][11] == 4
@@ -912,11 +922,7 @@ def test_closing_one_case_preserves_other_hosts_and_rejects_its_late_callback(ac
     assert variables["TOP_case_phase"][11] == 0
     assert case_snapshot(script, 12) == other
     assert variables["TOP_active_cases"] == [12]
-    script.country(1000, tag="raid_instance")
-    script.countries[1000]["vars"].update(actor_country=1, target_state=101)
-    script.temps.pop("target_state", None)
-    script.temps.update(TOP_target=11, TOP_method=1, TOP_tier=2)
-    script.call("TOP_native_result_args", 1000)
+    fire_native_callback(script)
     assert script.globals["TOP_status"][11] == 1
     assert script.globals["TOP_status"][12] == 1
     assert variables["TOP_archive_cursor"] == 0
