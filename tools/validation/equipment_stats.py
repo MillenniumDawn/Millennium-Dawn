@@ -61,6 +61,23 @@ EQUIPMENT_GROUP_DIR = os.path.join("common", "equipment_groups")
 
 _MODULE_STAT_BLOCKS = ("add_stats", "multiply_stats", "add_average_stats")
 
+# The engine's ship `type` categories. Naval production runs in dockyards, which
+# have no production-efficiency mechanic, so the efficiency and conversion
+# production_bonus keys are inert on everything in here. `naval_support` is not a
+# member: it only ever appears inside a nested `modifier_stat` block, which is a
+# modifier target rather than an equipment type.
+NAVAL_TYPE_CATEGORIES = frozenset(
+    {
+        "capital_ship",
+        "carrier",
+        "convoy",
+        "floating_harbor",
+        "screen_ship",
+        "submarine",
+        "support_ship",
+    }
+)
+
 # The value must sit on the key's own line. Nested blocks are stripped before
 # this runs, so a greedy `\s*` would let `upgrades = {...}` swallow the next
 # line's `reliability = 0.9` and silently drop that stat.
@@ -141,6 +158,18 @@ class EquipmentStatIndex:
         """Member tokens of a ``mio_cat_*`` group, or ``[token]`` when it is not
         a group."""
         return list(self.groups.get(token, (token,)))
+
+    def is_naval(self, token: str) -> bool:
+        """True when *token* is a ship.
+
+        Both branches carry weight. A token reaches here either as an equipment
+        name, whose ``type`` categories the index holds, or as a type category
+        itself — ``equipment_type`` accepts ``submarine`` and ``carrier``
+        directly, and a category has no ``types`` entry of its own.
+        """
+        if token in NAVAL_TYPE_CATEGORIES:
+            return True
+        return bool(self.types.get(token, frozenset()) & NAVAL_TYPE_CATEGORIES)
 
     def type_archetype_overlaps(
         self, keyed_stats: Mapping[str, AbstractSet[str]]
