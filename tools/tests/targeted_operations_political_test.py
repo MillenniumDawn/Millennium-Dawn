@@ -1,9 +1,10 @@
+import json
 import re
 from datetime import date
 from pathlib import Path
 
 import pytest
-from great_ai_race_state_model_test import _parse_race_script
+from great_ai_race_state_model_test import _named_block, _parse_race_script
 from targeted_operations_helpers_test import TargetedScript
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -34,7 +35,26 @@ class PoliticalScript(TargetedScript):
         self.tags = {
             tag: index
             for index, tag in enumerate(
-                ("USA", "SOV", "BLR", "UKR", "PER", "HEZ", "IRQ"), 1
+                (
+                    "USA",
+                    "SOV",
+                    "BLR",
+                    "UKR",
+                    "PER",
+                    "HEZ",
+                    "IRQ",
+                    "CHI",
+                    "NKO",
+                    "BRM",
+                    "TUR",
+                    "BRA",
+                    "EGY",
+                    "IND",
+                    "SAU",
+                    "ISR",
+                    "VEN",
+                ),
+                1,
             )
         }
         self.countries = {
@@ -54,8 +74,21 @@ class PoliticalScript(TargetedScript):
             }
             for tag, index in self.tags.items()
         }
-        self.globals = {"TOP_clock": 10, "TOP_registry_capacity": 142}
-        self.globals.update({f"TOP_status^{i}": 1 for i in range(1, 142)})
+        manifest = json.loads(
+            (ROOT / "tools/data/targeted_operations.json").read_text(encoding="utf-8")
+        )
+        capacity = manifest["capacity"]
+        self.globals = {"TOP_clock": 10, "TOP_registry_capacity": capacity}
+        self.globals["active_terror_orgs"] = []
+        self.globals.update({f"TOP_status^{i}": 1 for i in range(1, capacity)})
+        for target in manifest["targets"]:
+            ident = target["id"]
+            self.globals[f"TOP_political^{ident}"] = int(
+                target["target_class"] in {"official", "civilian"}
+            )
+            self.globals[f"TOP_civilian^{ident}"] = int(
+                target["target_class"] == "civilian"
+            )
         self.temps, self.scope_stack, self.leads = {}, [], []
         self.today, self.enabled = date(2026, 1, 1), True
 
@@ -80,6 +113,8 @@ class PoliticalScript(TargetedScript):
         elif key in {"TOP_enabled", "TOP_country_eligible"}:
             eligible = self.enabled and (key == "TOP_enabled" or country["eligible"])
             result = eligible == (operand == "yes")
+        elif key == "TOP_exceptional_authority":
+            result = operand == "yes"
         elif key == "has_country_leader":
             data = dict(((name, value) for name, _, value in operand))
             assert data.get("ruling_only") == "yes"
@@ -139,7 +174,10 @@ class PoliticalScript(TargetedScript):
             body = [
                 entry for entry in operand if entry[0] not in {"start", "end", "value"}
             ]
-            for index in range(int(data["start"]), int(data["end"])):
+            for index in range(
+                int(self.value(data["start"], identifier)),
+                int(self.value(data["end"], identifier)),
+            ):
                 self.temps[data["value"]] = index
                 self.execute(body, identifier)
         else:
@@ -196,6 +234,16 @@ class PoliticalScript(TargetedScript):
         (132, "UKR", "Volodymyr Zelenskyy"),
         (133, "PER", "Ali Khamenei"),
         (134, "PER", "Mojtaba Khamenei"),
+        (144, "CHI", "Xi Jinping"),
+        (146, "NKO", "Kim Jong-un"),
+        (147, "BRM", "Min Aung Hlaing"),
+        (150, "TUR", "Recep Tayyip Erdoğan"),
+        (152, "BRA", "Luiz Inácio Lula da Silva"),
+        (153, "EGY", "Abdel Fattah el-Sisi"),
+        (156, "IND", "Prabowo Subianto"),
+        (158, "SAU", "Mohammed bin Salman Al-Saud"),
+        (159, "ISR", "Benjamin Netanyahu"),
+        (160, "VEN", "Nicolás Maduro"),
         (64, "PER", "Qasem Soleimani"),
         (56, "IRQ", "Saddam Hussein"),
     ],
@@ -378,3 +426,46 @@ def test_wartime_opportunities_use_one_serving_person_and_a_country_cooldown():
     game.countries[game.tags["SOV"]]["leader"] = "Another leader"
     game.run("TOP_political_country_opportunities")
     assert len(game.leads) == 1
+
+
+def test_top_only_militant_group_requires_explicit_operational_state():
+    game = PoliticalScript()
+    game.globals.update(
+        {
+            "TOP_affiliation^145": 22,
+            "TOP_group_ct^22": -1,
+            "TOP_group_window^22": 1,
+            "TOP_group_destroyed^22": 0,
+            "TOP_group_created^22": 0,
+        }
+    )
+    assert not game.trigger("TOP_authored_role_eligible", 145)
+    game.globals["TOP_group_created^22"] = 1
+    assert game.trigger("TOP_authored_role_eligible", 145)
+    game.globals["TOP_group_destroyed^22"] = 1
+    assert not game.trigger("TOP_authored_role_eligible", 145)
+
+
+def test_nko_retirement_preserves_the_active_communist_ideology():
+    source = (ROOT / "common/scripted_effects/NKO_political_leaders.txt").read_text(
+        encoding="utf-8"
+    )
+    helper = _named_block(source, "TOP_retire_NKO_kim_jong_un")
+    assert "limit = { check_variable = { ruling_party = 19 } }" in helper
+    assert "ideology = Neutral_Communism" in helper
+    assert "neutrality_Neutral_Communism" in helper
+    assert "ideology = Communist-State" in helper
+    assert "emerging_Communist-State" in helper
+
+
+def test_maduro_retirement_has_an_idempotent_venezuelan_successor():
+    source = (ROOT / "common/scripted_effects/VEN_political_leaders.txt").read_text(
+        encoding="utf-8"
+    )
+    helper = _named_block(source, "TOP_retire_VEN_nicolas_maduro")
+    assert (
+        'has_country_leader = { name = "Nicolás Maduro" ruling_only = yes }' in helper
+    )
+    assert 'name = "Delcy Rodríguez"' in helper
+    assert "ideology = anarchist_communism" in helper
+    assert (ROOT / "gfx/leaders/generic_politicians/latin_female_001.dds").is_file()

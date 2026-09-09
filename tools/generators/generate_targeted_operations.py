@@ -42,6 +42,9 @@ COUNTRY_FIELDS = (
     "capture_exploited",
 )
 ROOT = Path(__file__).resolve().parents[2]
+TARGET_CLASSES = {"militant", "official", "civilian"}
+GROUP_CLASSES = {"militant", "office"}
+LOCATION_POLICIES = {"group_hq", "country_capital", "target_state"}
 
 
 def block(name: str, lines: list[str]) -> str:
@@ -88,12 +91,48 @@ def load_manifest(root: Path) -> dict:
             raise ValueError(f"Invalid affiliation or successor for {target['id']}")
         if not re.fullmatch(r"[a-z][a-z0-9_]*", target["key"]):
             raise ValueError(f"Invalid target key for {target['id']}")
+        if target.get("target_class") not in TARGET_CLASSES:
+            raise ValueError(f"Invalid target class for {target['id']}")
+        group = next(
+            group for group in data["groups"] if group["id"] == target["group"]
+        )
+        expected_group_class = (
+            "militant" if target["target_class"] == "militant" else "office"
+        )
+        group_class = group.get("group_class")
+        if group_class is None:
+            raise ValueError(f"Missing group class for group {group['id']}")
+        if group_class != expected_group_class:
+            raise ValueError(f"Target class does not match group for {target['id']}")
         if target["historical_outcome"].get("force_in_campaign") is not False:
             raise ValueError("Historical outcomes cannot force campaign removals")
-        if not 2000 <= target["activation_year"] <= 2026:
+        if not 2000 <= target["activation_year"] <= 2032:
             raise ValueError(f"Invalid authored opportunity year for {target['id']}")
         if not target["sources"]:
             raise ValueError(f"Missing authoring provenance for {target['id']}")
+        if any(source not in data["sources"] for source in target["sources"]):
+            raise ValueError(f"Unknown source for {target['id']}")
+    for group in data["groups"]:
+        if group.get("group_class") not in GROUP_CLASSES:
+            raise ValueError(f"Invalid group class for {group['id']}")
+        if group.get("location_policy") not in LOCATION_POLICIES:
+            raise ValueError(f"Invalid location policy for {group['id']}")
+        if group["group_class"] == "office" and group["ct_id"] != -1:
+            raise ValueError(f"Office group cannot use a CT identity: {group['id']}")
+        if (
+            group["location_policy"] == "group_hq"
+            and group["group_class"] != "militant"
+        ):
+            raise ValueError(
+                f"Only militant groups can use group HQ placement: {group['id']}"
+            )
+        if (
+            group["location_policy"] == "country_capital"
+            and group["group_class"] != "office"
+        ):
+            raise ValueError(
+                f"Only office groups can use capital placement: {group['id']}"
+            )
     affiliations = {t["id"]: t["group"] for t in data["targets"]}
     for group in data["groups"]:
         for successor in group.get("succession", []):
@@ -133,9 +172,9 @@ def registry(data: dict) -> str:
             f"set_variable = {{ global.TOP_affiliation^{ident} = {target['group']} }}"
         )
         lines.append(
-            f"set_variable = {{ global.TOP_political^{ident} = {int(target.get('political', ident >= 56))} }}"
+            f"set_variable = {{ global.TOP_political^{ident} = {int(target['target_class'] in {'official', 'civilian'})} }}"
         )
-        if target.get("civilian", False):
+        if target["target_class"] == "civilian":
             lines.append(f"set_variable = {{ global.TOP_civilian^{ident} = 1 }}")
     for ident in range(data["generated_start"], data["generated_end"]):
         group = (ident - data["generated_start"]) % 10 + 1
@@ -165,6 +204,13 @@ def registry(data: dict) -> str:
                 f"set_variable = {{ global.TOP_group_window^{g['id']} = 1 }}"
                 for g in data["groups"]
                 if g["year"] == year
+            ]
+            + [
+                f"set_variable = {{ global.TOP_group_created^{g['id']} = 1 }}"
+                for g in data["groups"]
+                if g["year"] == year
+                and g["group_class"] == "militant"
+                and g["ct_id"] == -1
             ],
         )
     output += "\n" + block(
@@ -213,7 +259,7 @@ def registry(data: dict) -> str:
         lines += ["\t}", "}"]
         output += "\n" + block(f"TOP_activate_group_{gid}", lines)
         location = ["set_temp_variable = { TOP_activation_state = 0 }"]
-        if group["ct_id"] >= 0:
+        if group["location_policy"] == "group_hq" and group["ct_id"] >= 0:
             location += [
                 f"set_temp_variable = {{ TOP_group = {gid} }}",
                 "TOP_find_group_org = yes",
@@ -224,11 +270,20 @@ def registry(data: dict) -> str:
                 "\t}",
                 "}",
             ]
-        for host in dict.fromkeys(
+        hosts = dict.fromkeys(
             group.get("movement_hosts", [])
             + [group["host"]]
             + group.get("regional_hosts", [])
-        ):
+        )
+        for host in hosts:
+            if group["location_policy"] == "country_capital":
+                location += [
+                    "if = {",
+                    f"\tlimit = {{ check_variable = {{ TOP_activation_state = 0 }} {host} = {{ exists = yes num_of_controlled_states > 0 }} }}",
+                    f"\t{host} = {{ capital_scope = {{ if = {{ limit = {{ controller = {{ exists = yes }} }} set_temp_variable = {{ TOP_activation_state = THIS }} }} }} }}",
+                    "}",
+                ]
+                continue
             location += [
                 "if = {",
                 f"\tlimit = {{ check_variable = {{ TOP_activation_state = 0 }} {host} = {{ exists = yes num_of_controlled_states > 0 }} }}",
@@ -361,7 +416,7 @@ def localisation(data: dict) -> str:
         lines.append(
             f' TOP_person_{target["id"]}_role: "{target["role"].replace("_", " ").title()}"'
         )
-        if 16 <= target["id"] <= 28:
+        if target.get("legacy_isi_id") is not None:
             ident, name = target["id"], target["name"]
             lines += [
                 f' TOP_legacy_person_{ident}_dead_t: "Death of {name} Confirmed"',
@@ -389,16 +444,19 @@ def localisation(data: dict) -> str:
 
 def dispatch(data: dict) -> str:
     output = ""
-    for name, variable in (
+    selectors = [
         ("TOP_selected_name", "TOP_selected"),
         ("TOP_authorized_name", "TOP_authorized_target"),
         ("TOP_proposal_name", "TOP_proposal_target"),
         ("TOP_row_name", "v"),
         ("TOP_archive_name", "TOP_archive_target^v"),
-        ("TOP_modern_2024_name", "TOP_modern_2024_target"),
-        ("TOP_modern_2025_name", "TOP_modern_2025_target"),
-        ("TOP_modern_2026_name", "TOP_modern_2026_target"),
-    ):
+    ]
+    latest_year = max(target["activation_year"] for target in data["targets"])
+    selectors += [
+        (f"TOP_modern_{year}_name", f"TOP_modern_{year}_target")
+        for year in range(2024, latest_year + 1)
+    ]
+    for name, variable in selectors:
         lines = [f"name = {name}"]
         lines += [
             f"text = {{ trigger = {{ check_variable = {{ {variable} = {ident} }} }} localization_key = TOP_person_{ident} }}"

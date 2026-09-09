@@ -57,6 +57,21 @@ class TargetScript(TargetedScript):
                 ).read_text(encoding="utf-8")
             )
         )
+        self.triggers.update(
+            _parse_race_script(
+                (
+                    ROOT / "common/scripted_triggers/05_targeted_operations_runtime.txt"
+                ).read_text(encoding="utf-8")
+            )
+        )
+        self.triggers.update(
+            _parse_race_script(
+                (
+                    ROOT
+                    / "common/scripted_triggers/05_targeted_operations_arg_wrappers.txt"
+                ).read_text(encoding="utf-8")
+            )
+        )
         self.countries, self.globals, self.temps = {}, {}, {}
         self.scope_stack, self.events = [], []
         self.global_flags, self.external = {}, Counter()
@@ -76,6 +91,7 @@ class TargetScript(TargetedScript):
             "TOP_apply_office_successor",
             "TOP_exploit_capture",
             "TOP_apply_exposure",
+            "TOP_start_exposed_kill_crisis",
             "TOP_review_tick",
             "TOP_cancel_review",
             "TOP_begin_review",
@@ -83,6 +99,9 @@ class TargetScript(TargetedScript):
             "TOP_security_country_tick",
             "TOP_build_view",
             "TOP_prepare_authored_service",
+            "TOP_refresh_visit_dossiers",
+            "TOP_process_visits",
+            "TOP_process_crisis",
             "international_systems_force_update",
         }
         manifest = json.loads(
@@ -178,6 +197,14 @@ class TargetScript(TargetedScript):
             )
         elif key == "TOP_review_pending":
             result = operand == "no"
+        elif key == "TOP_target_protection_at_war":
+            result = operand == "no"
+        elif key in {
+            "TOP_case_visit_review_valid",
+            "TOP_case_visit_execution_valid",
+            "TOP_case_visit_approval_fits",
+        }:
+            result = operand != "no"
         elif key == "is_in_array":
             name, _, member = operand[0]
             result = self.value(member, identifier) in (

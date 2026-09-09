@@ -144,6 +144,12 @@ class ReviewScript(TargetedScript):
             result = operand == "no"
         elif key == "TOP_exceptional_authority":
             result = country["authority"] == (operand == "yes")
+        elif key in {
+            "TOP_case_visit_review_valid",
+            "TOP_case_visit_execution_valid",
+            "TOP_case_visit_approval_fits",
+        }:
+            result = operand != "no"
         elif key == "TOP_facility_available":
             state = self.countries[self.temps["TOP_facility_state"]]
             result = (self.temps["TOP_facility_kind"] in state["facilities"]) == (
@@ -699,3 +705,29 @@ def test_snapshot_identity_and_host_slot_have_single_writers():
             assert "TOP_incoming_actor" not in rendered
     assert "TOP_selected" not in _named_block(source(EFFECT_PATH), "TOP_approve_review")
     assert "TOP_selected" not in _named_block(source(TRIGGER_PATH), "TOP_review_valid")
+
+
+def test_novichok_is_a_russia_only_high_exposure_timed_method():
+    startable = _named_block(
+        source("common/scripted_triggers/01_targeted_operations_triggers.txt"),
+        "TOP_method_startable",
+    )
+    review = _named_block(source(TRIGGER_PATH), "TOP_review_valid")
+    lethal = _named_block(source(TRIGGER_PATH), "TOP_review_lethal")
+    core = source("common/scripted_effects/00_targeted_operations_effects.txt")
+    gui = source("common/scripted_guis/01_targeted_operations_gui.txt")
+    layout = source("interface/targeted_operations.gui")
+    assert "TOP_requested_method = 7" in startable
+    assert "original_tag = SOV" in startable
+    assert "has_tech = decryption2" in startable
+    assert "TOP_confidence^TOP_selected > 89" in startable
+    assert "TOP_proposal_method < 8" in review
+    assert "TOP_proposal_method = 7" in review
+    assert "has_tech = decryption2" in review
+    assert "TOP_proposal_method = 7" in lethal
+    assert "TOP_method = 7" in _named_block(core, "TOP_complete_operation")
+    exposure = _named_block(core, "TOP_apply_exposure")
+    assert "TOP_exposure_chance = 65" in exposure
+    assert "TOP_exposure_chance = 90" in exposure
+    assert "set_temp_variable = { TOP_arg_method = 7 } TOP_begin_review = yes" in gui
+    assert 'name = "TOP_novichok"' in layout
