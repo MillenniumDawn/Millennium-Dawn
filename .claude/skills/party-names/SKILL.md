@@ -67,5 +67,6 @@ procedure; that doc is the reference.
 
 7. **Verify**
 
-   Run the reference doc's verification checklist and report the counts. Then, in game,
-   open the politics view at the start date and at any date the gates split on.
+   Run `python tools/validation/validate_party_loc.py --tag <TAG>` until it is clean, then
+   work the rest of the reference doc's verification checklist. Finally, in game, open the
+   politics view at the start date and at any date the gates split on.
