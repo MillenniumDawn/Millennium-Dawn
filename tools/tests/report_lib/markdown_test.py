@@ -34,11 +34,11 @@ def test_render_defaults_to_the_test_suite_title():
     assert body.splitlines()[1] == "# Test Suite Report"
 
 
-def _tools_run(os_name, errors=0):
+def _tools_run(os_name, errors=0, status=None):
     return ValidatorRun(
         name=f"tools-{os_name.lower()}",
         title=f"Tools tests ({os_name})",
-        status="failed" if errors else "passed",
+        status=status or ("failed" if errors else "passed"),
         errors=errors,
         suite="tools",
         job=f"Tools tests ({os_name})",
@@ -56,8 +56,37 @@ def test_render_orders_tools_tests_before_mod_tests():
     mod_pos = body.index("## Mod tests")
     assert tools_pos < mod_pos
     assert "| ❌ Tools tests (Linux) | 1 | 0 |" in body
-    assert "| ✅ Tools tests (macOS) | 0 | 0 |" in body
     assert "| ❌ Events | 2 | 0 |" in body
+
+
+def test_tools_section_folds_passing_suites_into_a_count():
+    runs = [_tools_run("Linux", errors=1), _tools_run("macOS"), _tools_run("Windows")]
+    body = render(runs, [], _ctx())
+    assert "| ❌ Tools tests (Linux) | 1 | 0 |" in body
+    assert "Tools tests (macOS)" not in body
+    assert "✅ 2 other tool suites completed successfully." in body
+
+
+def test_tools_section_collapses_to_one_line_when_all_pass():
+    runs = [_tools_run("Linux"), _tools_run("macOS")]
+    body = render(runs, [], _ctx())
+    assert "## Tools tests\n\n✅ All tools based tests have succeeded!" in body
+    assert "| Tool suite |" not in body
+
+
+def test_tools_section_collapses_with_a_baseline_classification():
+    runs = [_tools_run("Linux"), _tools_run("macOS")]
+    body = render(runs, [], _ctx(), baseline_stats=BaselineStats())
+    assert "✅ All tools based tests have succeeded!" in body
+    assert "| Tool suite | New |" not in body
+
+
+def test_tools_section_keeps_an_incomplete_suite_visible():
+    runs = [_tools_run("Linux"), _tools_run("macOS", status="no_output")]
+    body = render(runs, [], _ctx())
+    assert "All tools based tests have succeeded!" not in body
+    assert "| ✅ Tools tests (macOS) | 0 | 0 |" in body
+    assert "✅ 1 other tool suite completed successfully." in body
 
 
 def test_render_omits_the_tools_section_without_tools_runs():
@@ -71,6 +100,7 @@ def test_mod_tests_ignores_tools_runs_in_counts():
     runs = [_tools_run("Linux"), _tools_run("macOS")]
     body = render(runs, [], _ctx())
     assert "## Mod tests\n\n_No validator results found._" in body
+    assert "✅ All tools based tests have succeeded!" in body
 
 
 def test_mod_tests_passing_count_counts_only_mod_runs():
@@ -624,16 +654,16 @@ def test_unavailable_baseline_is_explicit():
     assert "against the main baseline" not in body
 
 
-def test_comment_lists_in_diff_findings_without_baseline():
+def test_comment_lists_in_pr_findings_without_baseline():
     runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
     issue = make_issue(in_diff=True)
     body = render(runs, [issue], _ctx(), include_validator_sections=False)
-    assert "## Findings in your diff" in body
-    assert "**IN YOUR DIFF**" in body
+    assert "## Findings in your PR" in body
+    assert "**IN YOUR PR**" in body
     assert "**NEW**" not in body
 
 
-def test_comment_tags_new_and_in_diff_together():
+def test_comment_tags_new_and_in_pr_together():
     runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
     issue, stats = _new_error(in_diff=True)
     body = render(
@@ -643,7 +673,27 @@ def test_comment_tags_new_and_in_diff_together():
         include_validator_sections=False,
         baseline_stats=stats,
     )
-    assert "**NEW** **IN YOUR DIFF**" in body
+    assert "**NEW** **IN YOUR PR**" in body
+
+
+def test_in_pr_section_lists_existing_findings_alongside_baseline():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=2)]
+    new_issue, stats = _new_error(in_diff=True, message="new key not found", line=1)
+    existing = make_issue(
+        in_diff=True, message="existing key not found", line=2, category="backlog"
+    )
+    body = render(
+        runs,
+        [new_issue, existing],
+        _ctx(),
+        include_validator_sections=False,
+        baseline_stats=stats,
+    )
+    assert "## New Findings Introduced by this branch." in body
+    assert "## Findings in your PR" in body
+    in_pr = body[body.index("## Findings in your PR") :]
+    assert "existing key not found" in in_pr
+    assert "new key not found" not in in_pr
 
 
 def test_comment_caps_new_findings():
@@ -664,3 +714,61 @@ def test_comment_caps_new_findings():
     assert "key 3 not found" in body
     assert "key 4 not found" not in body
     assert "_…and 2 more new errors._" in body
+
+
+def test_category_section_counts_errors_and_warnings_per_category():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
+    issues = [
+        make_issue(category="missing-event-picture"),
+        make_issue(category="event-picture-format-mismatch", severity=Severity.WARNING),
+        make_issue(category="event-picture-format-mismatch", severity=Severity.WARNING),
+    ]
+    body = render(runs, issues, _ctx())
+    assert "## Findings by category" in body
+    assert "| ❌ Missing Event Picture | 1 | 0 |" in body
+    assert "| ⚠️ Event Picture Format Mismatch | 0 | 2 |" in body
+
+
+def test_category_section_reaches_the_pr_comment():
+    """A baselined backlog reaches no other comment section — see #3829."""
+    runs = [ValidatorRun(name="events", title="Events", status="failed", warnings=2)]
+    issues = [
+        make_issue(
+            category="event-picture-format-mismatch",
+            severity=Severity.WARNING,
+            baseline_status="existing",
+            line=n,
+        )
+        for n in (1, 2)
+    ]
+    body = render(
+        runs,
+        issues,
+        _ctx(),
+        include_validator_sections=False,
+        baseline_stats=_stats(new_errors=0, new_warnings=0),
+    )
+    assert "| ⚠️ Event Picture Format Mismatch | 0 | 0 | 2 |" in body
+
+
+def test_category_section_new_column_only_with_a_baseline():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
+    issues = [make_issue(category="missing-event-picture")]
+    assert "| Category | New |" not in render(runs, issues, _ctx())
+    assert "| Category | New |" in render(
+        runs, issues, _ctx(), baseline_stats=_stats(new_errors=0, new_warnings=0)
+    )
+
+
+def test_category_section_caps_its_rows():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=30)]
+    issues = [make_issue(category=f"category-{n:02d}", line=n) for n in range(30)]
+    body = render(runs, issues, _ctx())
+    assert "| ❌ Category 00 | 1 | 0 |" in body
+    assert "| ❌ Category 29 | 1 | 0 |" not in body
+    assert "_…and 5 more categories._" in body
+
+
+def test_category_section_omitted_without_findings():
+    runs = [ValidatorRun(name="events", title="Events", status="passed", had_json=True)]
+    assert "## Findings by category" not in render(runs, [], _ctx())
