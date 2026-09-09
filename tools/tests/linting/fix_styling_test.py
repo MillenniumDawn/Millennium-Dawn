@@ -7,6 +7,7 @@ explicit opt-ins. The file-level cases cover what fix_file writes back, what it
 can only report, and dry-run/apply agreement on BOM'd and CRLF files.
 """
 
+import os
 import runpy
 import shutil
 import subprocess
@@ -294,6 +295,31 @@ def test_staged_changed_lines_supports_an_unborn_head(tmp_path):
     _git(tmp_path, "add", "new.txt")
 
     assert fix_styling.staged_changed_lines(str(path)) == {1}
+
+
+def test_staged_changed_lines_supports_linked_worktree_hook_env(
+    git_repo, tmp_path, monkeypatch
+):
+    linked = tmp_path / "linked"
+    _git(git_repo, "worktree", "add", "--detach", str(linked))
+    path = linked / "common" / "decisions" / "Ukraine.txt"
+    path.parent.mkdir(parents=True)
+    with open(path, "w", encoding="utf-8", newline="") as handle:
+        handle.write("cost\t= 10\n")
+    _git(linked, "add", "common/decisions/Ukraine.txt")
+
+    git_dir = (
+        (linked / ".git").read_text(encoding="utf-8").split("gitdir: ", 1)[1].strip()
+    )
+    monkeypatch.setenv("GIT_DIR", git_dir)
+    monkeypatch.delenv("GIT_WORK_TREE", raising=False)
+    monkeypatch.setenv("GIT_INDEX_FILE", os.path.join(git_dir, "index"))
+
+    root, relative = fix_styling._repo_path(str(path))
+    assert root == os.path.realpath(linked)
+    assert relative == "common/decisions/Ukraine.txt"
+    assert fix_styling.staged_changed_lines(str(path)) == {1}
+    assert fix_styling._worktree_matches_index(str(path)) is None
 
 
 def test_staged_changed_lines_supports_a_staged_deletion(git_repo):

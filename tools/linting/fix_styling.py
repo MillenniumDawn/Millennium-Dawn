@@ -95,6 +95,9 @@ class StagedDiffError(RuntimeError):
 def _repo_path(filepath):
     absolute = os.path.abspath(filepath)
     parent = absolute if os.path.isdir(absolute) else os.path.dirname(absolute)
+    discovery_env = os.environ.copy()
+    discovery_env.pop("GIT_DIR", None)
+    discovery_env.pop("GIT_WORK_TREE", None)
     try:
         result = subprocess.run(
             ["git", "-C", parent, "rev-parse", "--show-toplevel"],
@@ -102,6 +105,7 @@ def _repo_path(filepath):
             text=True,
             check=False,
             timeout=15,
+            env=discovery_env,
         )
     except (OSError, subprocess.SubprocessError) as error:
         raise StagedDiffError(
