@@ -6,7 +6,7 @@ Pipeline:
   1. Load per-validator JSON sidecars (falls back to parsing `.log` text).
   2. Dedupe issues that multiple validators surface about the same line.
   3. Classify NEW vs EXISTING against the main-side baseline when one was
-     restored, and tag IN YOUR DIFF from --changed-files when given.
+     restored, and tag IN YOUR PR from --changed-files when given.
   4. Render two bodies: a PR comment (new-findings list + tables + pointer)
      and a detailed step summary (full per-validator issue list).
   5. Truncate the comment if over GitHub's 65 536-byte limit.
@@ -59,7 +59,7 @@ def build_report(
     if changed_files:
         tag_changed_files(deduped, changed_files)
 
-    # PR comment: verdict, tables, capped new-findings (or in-diff) list, and a
+    # PR comment: verdict, tables, capped new-findings and in-PR lists, and a
     # pointer to the step summary for the full per-validator issue list.
     body = render(
         runs,
@@ -139,7 +139,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         default=None,
         help=(
             "Newline-separated PR changed-file list. Findings whose file is "
-            "in the list are tagged IN YOUR DIFF."
+            "in the list are tagged IN YOUR PR."
         ),
     )
     parser.add_argument(
@@ -236,13 +236,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     if changed_files is not None:
         in_diff = sum(1 for issue in deduped if issue.in_diff)
         print(
-            f"tagged {in_diff} finding(s) IN YOUR DIFF "
+            f"tagged {in_diff} finding(s) IN YOUR PR "
             f"({len(changed_files)} changed file(s))",
             file=sys.stderr,
         )
     elif args.changed_files:
         print(
-            "changed-file list unavailable; no IN YOUR DIFF tagging",
+            "changed-file list unavailable; no IN YOUR PR tagging",
             file=sys.stderr,
         )
 

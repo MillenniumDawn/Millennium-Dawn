@@ -4,8 +4,9 @@ Two renderings come out of the same builder:
   - PR comment (``include_validator_sections=False``): marker, "Test Suite
     Report" verdict banner (new counts lead when a baseline is present),
     metadata strip, an unavailable-baseline notice when needed, the Tools
-    tests and Mod tests tables (with a New column when classified), capped
-    new-findings or in-diff groups, plus a pointer to the step summary.
+    tests and Mod tests tables (findings only, with a New column when
+    classified; a clean Tools sweep collapses to one line), capped
+    new-findings and in-PR groups, plus a pointer to the step summary.
   - Step summary (default): the same top sections, then new findings in two
     collapsible error/warning groups, and per-validator <details> only for
     validators with findings. Clean validators collapse to a single count
@@ -34,7 +35,9 @@ MAX_PER_CATEGORY = 100
 # Shown once above the issue list when there is anything to fix.
 _LEGEND = "_Errors block merge. Warnings are advisory and won't fail CI._"
 _NEW_FINDINGS_HEADING = "New Findings Introduced by this branch."
-_IN_DIFF_HEADING = "Findings in your diff"
+_IN_PR_HEADING = "Findings in your PR"
+# Statuses that mean a run produced no usable result, so it cannot count as passed.
+_INCOMPLETE_STATUSES = {"unknown", "no_output"}
 
 
 def render(
@@ -50,7 +53,7 @@ def render(
 
     With ``include_validator_sections=False`` the per-validator <details>
     sections and raw logs are dropped (the concise PR comment). New findings
-    (or in-diff findings when no baseline) still appear, capped by
+    and in-PR findings still appear, each capped by
     ``MAX_NEW_FINDINGS_COMMENT``. The default renders the full detail for the
     step summary.
 
@@ -58,7 +61,7 @@ def render(
     annotation: new counts lead the verdict, a New column appears on the
     tables, and new findings are listed in separate groups.
     ``Issue.baseline_status`` drives the per-bullet NEW tag; ``Issue.in_diff``
-    drives IN YOUR DIFF. Omit ``baseline_stats`` (no baseline restored) and
+    drives IN YOUR PR. Omit ``baseline_stats`` (no baseline restored) and
     the report renders without NEW annotation.
     """
     parts: List[str] = []
@@ -103,11 +106,13 @@ def render(
         if baseline_section:
             parts.append(baseline_section)
             parts.append("")
-    else:
-        in_diff_section = _render_in_diff_section(issues, ctx, findings_cap)
-        if in_diff_section:
-            parts.append(in_diff_section)
-            parts.append("")
+
+    in_pr_section = _render_in_pr_section(
+        issues, ctx, findings_cap, exclude_new=baseline_stats is not None
+    )
+    if in_pr_section:
+        parts.append(in_pr_section)
+        parts.append("")
 
     errored_or_warned = [
         i for i in issues if i.severity in (Severity.ERROR, Severity.WARNING)
@@ -236,7 +241,7 @@ def _render_verdict(
             return "> [!NOTE]\n> ✅ No validators selected. Nothing to run."
         return ""
     total_errors, total_warnings = _totals(runs)
-    incomplete = sum(1 for run in runs if run.status in {"unknown", "no_output"})
+    incomplete = sum(1 for run in runs if run.status in _INCOMPLETE_STATUSES)
 
     if total_errors:
         if baseline_stats is not None:
@@ -316,7 +321,7 @@ def _render_availability_notice(ctx: ReportContext) -> str:
         )
     if ctx.changed_files_status == "unavailable":
         bits.append(
-            "Changed-file list was not available. Findings are not tagged IN YOUR DIFF."
+            "Changed-file list was not available. Findings are not tagged IN YOUR PR."
         )
     if not bits:
         return ""
@@ -360,22 +365,40 @@ def _table_row(
 def _render_tools_section(
     runs: List[ValidatorRun], new_errors: Optional[Dict[str, int]] = None
 ) -> str:
-    """One row per tools-tests suite run; omitted when none ran."""
+    """Findings only; omitted when no tools suite ran, one line when all passed."""
     tools_runs = [r for r in runs if r.suite == "tools"]
     if not tools_runs:
         return ""
+
+    total_errors, total_warnings = _totals(tools_runs)
+    # A suite that produced no sidecar also reports 0/0 — never call that a success.
+    incomplete = [r for r in tools_runs if r.status in _INCOMPLETE_STATUSES]
+    if not total_errors and not total_warnings and not incomplete:
+        return "## Tools tests\n\n✅ All tools based tests have succeeded!"
+
+    sorted_runs = sorted(tools_runs, key=lambda r: _run_sort_key(r, new_errors))
+    table_runs = [
+        r
+        for r in sorted_runs
+        if r.errors or r.warnings or r.status in _INCOMPLETE_STATUSES
+    ]
+    passed = len(tools_runs) - len(table_runs)
+    passed_note = ""
+    if passed:
+        passed_note = (
+            f"\n\n✅ {_plural(passed, 'other tool suite')} completed successfully."
+        )
+
     if new_errors is not None:
-        tools_runs = sorted(tools_runs, key=lambda r: _run_sort_key(r, new_errors))
         header = "| Tool suite | New | Errors | Warnings |\n|-----------|----:|-------:|---------:|"
         rows = [
             _table_row(r.title, r.errors, r.warnings, new_errors.get(r.name, 0))
-            for r in tools_runs
+            for r in table_runs
         ]
     else:
-        tools_runs = sorted(tools_runs, key=lambda r: r.title.lower())
         header = "| Tool suite | Errors | Warnings |\n|-----------|-------:|---------:|"
-        rows = [_table_row(r.title, r.errors, r.warnings) for r in tools_runs]
-    return "## Tools tests\n\n" + header + "\n" + "\n".join(rows)
+        rows = [_table_row(r.title, r.errors, r.warnings) for r in table_runs]
+    return "## Tools tests\n\n" + header + "\n" + "\n".join(rows) + passed_note
 
 
 def _render_summary_table(
@@ -420,7 +443,7 @@ def _render_summary_table(
 
 
 def _finding_sort_key(issue: Issue) -> Tuple[int, str, int, str]:
-    """IN YOUR DIFF first (including NEW + in-diff), then file/line."""
+    """IN YOUR PR first (including NEW + in-PR), then file/line."""
     return (0 if issue.in_diff else 1, issue.file, issue.line, issue.message)
 
 
@@ -455,23 +478,34 @@ def _render_new_severity_group(
     return lines, overflow
 
 
-def _render_in_diff_section(
-    issues: List[Issue], ctx: ReportContext, max_visible: int
+def _render_in_pr_section(
+    issues: List[Issue],
+    ctx: ReportContext,
+    max_visible: int,
+    exclude_new: bool = False,
 ) -> str:
-    """Cold-baseline fallback: findings whose file is in the PR diff."""
-    in_diff = [
+    """Findings whose file is in the PR diff, pre-existing ones included.
+
+    Always rendered, so a standing backlog surfaces in the files a PR touches
+    instead of staying invisible behind the new-vs-baseline comparison. With
+    ``exclude_new`` the new findings are dropped here, since the New Findings
+    section above already lists them.
+    """
+    in_pr = [
         i
         for i in issues
-        if i.in_diff and i.severity in (Severity.ERROR, Severity.WARNING)
+        if i.in_diff
+        and i.severity in (Severity.ERROR, Severity.WARNING)
+        and not (exclude_new and i.baseline_status == "new")
     ]
-    if not in_diff:
+    if not in_pr:
         return ""
-    lines: List[str] = [f"## {_IN_DIFF_HEADING}", ""]
-    errors = [i for i in in_diff if i.severity == Severity.ERROR]
-    warnings = [i for i in in_diff if i.severity != Severity.ERROR]
+    lines: List[str] = [f"## {_IN_PR_HEADING}", ""]
+    errors = [i for i in in_pr if i.severity == Severity.ERROR]
+    warnings = [i for i in in_pr if i.severity != Severity.ERROR]
     remaining = max_visible
     error_lines, error_overflow = _render_new_severity_group(
-        "❌ In-diff errors",
+        "❌ Errors in your PR",
         "error",
         errors,
         ctx,
@@ -481,7 +515,7 @@ def _render_in_diff_section(
     )
     remaining = max(0, remaining - (len(errors) - error_overflow))
     warning_lines, _warning_overflow = _render_new_severity_group(
-        "⚠️ In-diff warnings",
+        "⚠️ Warnings in your PR",
         "warning",
         warnings,
         ctx,
@@ -681,7 +715,7 @@ def _render_bullet(issue: Issue, ctx: ReportContext) -> str:
     if issue.baseline_status == "new":
         tags.append("**NEW**")
     if issue.in_diff:
-        tags.append("**IN YOUR DIFF**")
+        tags.append("**IN YOUR PR**")
     tag_str = f" {' '.join(tags)}" if tags else ""
     also = f" _(also: {', '.join(issue.detected_by)})_" if issue.detected_by else ""
 
