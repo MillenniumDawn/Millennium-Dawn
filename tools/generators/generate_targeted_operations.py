@@ -99,7 +99,10 @@ def load_manifest(root: Path) -> dict:
         expected_group_class = (
             "militant" if target["target_class"] == "militant" else "office"
         )
-        if group["group_class"] != expected_group_class:
+        group_class = group.get("group_class")
+        if group_class is None:
+            raise ValueError(f"Missing group class for group {group['id']}")
+        if group_class != expected_group_class:
             raise ValueError(f"Target class does not match group for {target['id']}")
         if target["historical_outcome"].get("force_in_campaign") is not False:
             raise ValueError("Historical outcomes cannot force campaign removals")
