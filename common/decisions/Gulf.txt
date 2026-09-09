@@ -224,7 +224,6 @@ gulf_society = {
 						tag = KUW
 						tag = OMA
 						tag = QAT
-						tag = SAU
 						tag = UAE
 					}
 				}
@@ -277,7 +276,6 @@ gulf_society = {
 						tag = KUW
 						tag = OMA
 						tag = QAT
-						tag = SAU
 						tag = UAE
 					}
 				}
@@ -320,7 +318,6 @@ gulf_society = {
 						tag = KUW
 						tag = OMA
 						tag = QAT
-						tag = SAU
 						tag = UAE
 					}
 				}
@@ -373,7 +370,6 @@ gulf_society = {
 						tag = KUW
 						tag = OMA
 						tag = QAT
-						tag = SAU
 						tag = UAE
 					}
 				}
@@ -841,57 +837,6 @@ gulf_society = {
 
 shia_decisions = {
 
-	# The politics view is the only route out of set_partyall_banned, and the AI cannot use it.
-	BHR_legalise_the_opposition = {
-
-		icon = GFX_decision_generic_political_discourse
-
-		allowed = { original_tag = BHR }
-
-		visible = {
-			is_ai = yes
-			has_completed_focus = GCC_free_and_fair_elections
-			OR = {
-				AND = {
-					has_global_flag = BHR_DAY_OF_RAGE_FOCUS_PATH
-					OR = {
-						has_country_flag = party7_banned
-						has_country_flag = party9_banned
-					}
-				}
-				AND = {
-					has_global_flag = BHR_CROWNED_DEMOCRACY_FOCUS_PATH
-					OR = {
-						has_country_flag = party2_banned
-						has_country_flag = party3_banned
-					}
-				}
-			}
-		}
-
-		cost = 75
-
-		days_remove = 30
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BHR_legalise_the_opposition"
-			if = {
-				limit = { has_global_flag = BHR_DAY_OF_RAGE_FOCUS_PATH }
-				clr_country_flag = party7_banned
-				clr_country_flag = party9_banned
-			}
-			else = {
-				clr_country_flag = party2_banned
-				clr_country_flag = party3_banned
-			}
-			clr_country_flag = partyall_banned
-			recalculate_party = yes
-			add_stability = 0.02
-		}
-
-		ai_will_do = { base = 10 }
-	}
-
 	encourage_shia_immigration = {
 
 		icon = GFX_decision_infiltrate_state
@@ -934,7 +879,10 @@ shia_decisions = {
 					}
 					AND = {
 						tag = SAU
-						has_global_flag = SAU_SHIA_REVIVAL_FOCUS_PATH
+						OR = {
+							has_global_flag = SAU_SHIA_ACCOMMODATION
+							has_global_flag = SAU_ISLAMIC_REPUBLIC_FOCUS_PATH
+						}
 					}
 				}
 			}
@@ -1071,7 +1019,10 @@ shia_decisions = {
 					}
 					AND = {
 						tag = SAU
-						has_global_flag = SAU_SHIA_REVIVAL_FOCUS_PATH
+						OR = {
+							has_global_flag = SAU_SHIA_ACCOMMODATION
+							has_global_flag = SAU_ISLAMIC_REPUBLIC_FOCUS_PATH
+						}
 					}
 				}
 			}
@@ -1097,7 +1048,14 @@ gcc_decisions = {
 			modify_gcc_unity = yes
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 10
+				tag = SAU
+				has_global_flag = SAU_KHALEEJI_UNION_FOCUS_PATH
+			}
+		}
 	}
 
 	GCC_offer_joint_exercises_specific = {
@@ -1201,6 +1159,8 @@ gcc_decisions = {
 						OR = {
 							has_completed_focus = GCC_increase_autonomy
 							has_completed_focus = GCC_new_partners
+							has_completed_focus = SAU_increase_autonomy
+							has_completed_focus = SAU_new_partners
 						}
 					}
 				}
@@ -1213,7 +1173,12 @@ gcc_decisions = {
 		}
 
 		available = {
-			NOT = { has_completed_focus = GCC_increase_autonomy }
+			NOT = {
+				OR = {
+					has_completed_focus = GCC_increase_autonomy
+					has_completed_focus = SAU_increase_autonomy
+				}
+			}
 			gcc_dominant_member = yes
 			gcc_unity_greater_40 = yes
 		}
@@ -1232,6 +1197,8 @@ gcc_decisions = {
 						OR = {
 							has_completed_focus = GCC_increase_autonomy
 							has_completed_focus = GCC_new_partners
+							has_completed_focus = SAU_increase_autonomy
+							has_completed_focus = SAU_new_partners
 						}
 					}
 				}
@@ -2257,6 +2224,7 @@ gcc_decisions = {
 					date > 2017.1.1
 				}
 				has_completed_focus = GCC_confront_iranian_partners
+				has_completed_focus = SAU_roll_back_iran_in_the_gulf
 			}
 		}
 
@@ -2292,20 +2260,6 @@ gcc_decisions = {
 			if = {
 				limit = { FROM = { original_tag = UAE } }
 				country_event = SAU_GCC_CRISIS.27
-			}
-			if = {
-				limit = {
-					FROM = { tag = QAT }
-					tag = SAU
-					is_in_array = { ruling_party = 10 }
-					has_country_leader = {
-						name = "Salman bin Abdulaziz Al-Saud"
-						ruling_only = yes
-					}
-					NOT = { has_country_flag = SAU_mbs_punished }
-				}
-				custom_effect_tooltip = MBS_strengthened_tt
-				add_to_variable = { mbs = 1 }
 			}
 			if = {
 				limit = { has_idea = idea_gcc_member_state }
@@ -2346,19 +2300,6 @@ gcc_decisions = {
 				limit = { has_idea = idea_gcc_member_state }
 				set_temp_variable = { temp_modify_gcc_unity = 25 }
 				modify_gcc_unity = yes
-			}
-			if = {
-				limit = {
-					FROM = { tag = QAT }
-					tag = SAU
-					is_in_array = { ruling_party = 10 }
-					has_country_leader = {
-						name = "Salman bin Abdulaziz Al-Saud"
-						ruling_only = yes
-					}
-				}
-				custom_effect_tooltip = MBS_weakened_tt
-				subtract_from_variable = { mbs = 1 }
 			}
 		}
 
@@ -2724,9 +2665,7 @@ gcc_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision GCC_begin_accession_process"
 			unlock_decision_tooltip = GCC_complete_accession_plan
 			set_country_flag = gcc_accession_process
-			every_country = {
-				news_event = gcc.25
-			}
+			news_event = gcc.25
 		}
 
 		ai_will_do = { base = 1 }
@@ -3404,7 +3343,12 @@ subversive_activities = {
 
 		icon = GFX_decision_generic_prepare_civil_war_new
 
-		visible = { has_completed_focus = GCC_support_hamas }
+		visible = {
+			OR = {
+				has_completed_focus = GCC_support_hamas
+				has_completed_focus = SAU_arm_the_militants
+			}
+		}
 
 		available = {
 			OR = {
@@ -3486,7 +3430,12 @@ subversive_activities = {
 
 		icon = GFX_decision_generic_prepare_civil_war_new
 
-		visible = { has_completed_focus = GCC_non_aggression_pact }
+		visible = {
+			OR = {
+				has_completed_focus = GCC_non_aggression_pact
+				has_completed_focus = SAU_alliance_with_iran
+			}
+		}
 
 		available = {
 			country_exists = HEZ
@@ -3534,7 +3483,12 @@ subversive_activities = {
 
 		icon = GFX_decision_generic_prepare_civil_war_new
 
-		visible = { has_completed_focus = GCC_non_aggression_pact }
+		visible = {
+			OR = {
+				has_completed_focus = GCC_non_aggression_pact
+				has_completed_focus = SAU_alliance_with_iran
+			}
+		}
 
 		available = {
 			country_exists = IRQ
@@ -3587,7 +3541,12 @@ subversive_activities = {
 
 		icon = GFX_decision_generic_prepare_civil_war_new
 
-		visible = { has_completed_focus = GCC_non_aggression_pact }
+		visible = {
+			OR = {
+				has_completed_focus = GCC_non_aggression_pact
+				has_completed_focus = SAU_alliance_with_iran
+			}
+		}
 
 		available = {
 			country_exists = SYR
@@ -3640,7 +3599,12 @@ subversive_activities = {
 
 		icon = GFX_decision_generic_prepare_civil_war_new
 
-		visible = { has_completed_focus = GCC_back_the_syrian_opposition }
+		visible = {
+			OR = {
+				has_completed_focus = GCC_back_the_syrian_opposition
+				has_completed_focus = SAU_fund_the_free_syrian_army
+			}
+		}
 
 		available = {
 			has_equipment = { infantry_weapons_type > 99 }
@@ -3688,7 +3652,12 @@ subversive_activities = {
 
 		icon = GFX_decision_generic_prepare_civil_war_new
 
-		visible = { has_completed_focus = GCC_support_iranian_separatists }
+		visible = {
+			OR = {
+				has_completed_focus = GCC_support_iranian_separatists
+				has_completed_focus = SAU_arm_the_anti_iranian_groups
+			}
+		}
 
 		available = {
 			has_equipment = { infantry_weapons_type > 99 }
@@ -3722,7 +3691,12 @@ subversive_activities = {
 
 		icon = GFX_decision_generic_prepare_civil_war_new
 
-		visible = { has_completed_focus = GCC_support_iranian_separatists }
+		visible = {
+			OR = {
+				has_completed_focus = GCC_support_iranian_separatists
+				has_completed_focus = SAU_arm_the_anti_iranian_groups
+			}
+		}
 
 		available = {
 			has_equipment = { infantry_weapons_type > 99 }
@@ -3757,8 +3731,16 @@ subversive_activities = {
 		icon = GFX_decision_generic_prepare_civil_war_new
 
 		visible = {
-			has_completed_focus = GCC_back_the_brotherhood
-			has_completed_focus = GCC_war_in_libya
+			OR = {
+				AND = {
+					has_completed_focus = GCC_back_the_brotherhood
+					has_completed_focus = GCC_war_in_libya
+				}
+				AND = {
+					has_completed_focus = SAU_back_the_brotherhood
+					has_completed_focus = SAU_libyan_arms_shipments
+				}
+			}
 			country_exists = GNA
 		}
 
@@ -3808,8 +3790,16 @@ subversive_activities = {
 		icon = GFX_decision_generic_prepare_civil_war_new
 
 		visible = {
-			has_completed_focus = GCC_back_the_brotherhood
-			has_completed_focus = GCC_war_in_libya
+			OR = {
+				AND = {
+					has_completed_focus = GCC_back_the_brotherhood
+					has_completed_focus = GCC_war_in_libya
+				}
+				AND = {
+					has_completed_focus = SAU_back_the_brotherhood
+					has_completed_focus = SAU_libyan_arms_shipments
+				}
+			}
 			country_exists = GNC
 			NOT = { country_exists = GNA }
 		}
@@ -3860,8 +3850,16 @@ subversive_activities = {
 		icon = GFX_decision_generic_prepare_civil_war_new
 
 		visible = {
-			has_completed_focus = GCC_back_the_strongman
-			has_completed_focus = GCC_war_in_libya
+			OR = {
+				AND = {
+					has_completed_focus = GCC_back_the_strongman
+					has_completed_focus = GCC_war_in_libya
+				}
+				AND = {
+					has_completed_focus = SAU_back_the_strongman
+					has_completed_focus = SAU_libyan_arms_shipments
+				}
+			}
 			country_exists = HOR
 		}
 

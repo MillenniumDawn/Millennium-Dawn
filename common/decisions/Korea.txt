@@ -241,7 +241,13 @@ KOR_38th_parallel = {
 			}
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				NOT = { NKO = { NKO_is_pursuing_peaceful_reunification = yes } }
+			}
+		}
 	}
 
 	KOR_restart_propaganda_broadcasts = {
@@ -294,7 +300,13 @@ KOR_38th_parallel = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				NOT = { NKO = { NKO_is_pursuing_peaceful_reunification = yes } }
+			}
+		}
 	}
 
 	KOR_restart_propaganda_leaflets = {
@@ -1520,6 +1532,78 @@ KOR_guerrilla_mobilization = {
 			set_temp_variable = { tag_index = CHI }
 			set_temp_variable = { influence_target = NKO }
 			change_influence_percentage = yes
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	CHI_operation_new_dawn = {
+		allowed = { original_tag = CHI }
+		icon = GFX_decision_generic_operation
+
+		visible = {
+			has_completed_focus = CHI_Operation_New_Dawn
+			country_exists = NKO
+		}
+
+		available = {
+			NOT = { has_war_with = NKO }
+			NKO = { is_top3_influencer = yes }
+			custom_trigger_tooltip = {
+				tooltip = {
+					localization_key = variable_above_tt
+					VAR_NAME = CHI_nko_internal_influence
+					THRESHOLD = "30"
+				}
+				check_variable = { CHI_nko_internal_influence > 30 }
+			}
+		}
+
+		fire_only_once = yes
+		cost = 200
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_operation_new_dawn"
+			add_to_variable = { CHI_korea_peninsula_tension = 20 tooltip = CHI_korea_peninsula_tension_tt }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_operation_new_dawn resolved"
+			random_list = {
+				25 = {
+					modifier = {
+						factor = 0.4
+						check_variable = { CHI_nko_internal_influence > 50 }
+					}
+					country_event = { id = CHI_foreign.66 hours = 6 }
+					NKO = { country_event = { id = CHI_foreign.66 days = 1 } }
+				}
+				25 = {
+					modifier = {
+						factor = 0.6
+						check_variable = { CHI_nko_internal_influence > 50 }
+					}
+					country_event = { id = CHI_foreign.67 hours = 6 }
+					NKO = { country_event = { id = CHI_foreign.67 days = 1 } }
+				}
+				25 = {
+					country_event = { id = CHI_foreign.68 hours = 6 }
+					NKO = { country_event = { id = CHI_foreign.68 days = 1 } }
+				}
+				25 = {
+					modifier = {
+						factor = 2
+						check_variable = { CHI_nko_internal_influence > 50 }
+					}
+					modifier = {
+						factor = 1.5
+						check_variable = { CHI_nko_internal_influence > 65 }
+					}
+					country_event = { id = CHI_foreign.69 hours = 6 }
+					NKO = { country_event = { id = CHI_foreign.69 days = 1 } }
+				}
+			}
 		}
 
 		ai_will_do = { base = 10 }

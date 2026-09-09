@@ -474,6 +474,67 @@ _OWN_GATE_ID_RE = re.compile(
 )
 _ID_LITERAL_RE = re.compile(r"formable_committed_id\s*=\s*(\d+)")
 
+# Special (non-decision) formables commit through commit_special_formable with a
+# reserved id and the sentinel size. This dict is the single source of truth for
+# the ids; .claude/docs/formable-reference.md mirrors it.
+_SPECIAL_FORMABLE_IDS = {
+    101: "United States of Europe",
+    102: "European Federation member",
+    103: "United Arab Republic",
+    104: "Yugoslavia",
+    105: "United States of Africa",
+    106: "Event Horizon bloc",
+}
+_SPECIAL_ID_FLOOR = 100
+_SPECIAL_COMMIT_SIZE = 1000
+_SPECIAL_EFFECT_BASENAME = "00_formable_effects.txt"
+_SPECIAL_SETTER_RE = re.compile(
+    r"set_temp_variable\s*=\s*\{\s*special_formable_id\s*=\s*(\d+)\s*\}"
+)
+_SPECIAL_CALL_RE = re.compile(r"commit_special_formable\s*=\s*yes")
+_SPECIAL_PAIR_RE = re.compile(
+    _SPECIAL_SETTER_RE.pattern + r"\s*commit_special_formable\s*=\s*yes"
+)
+_SPECIAL_DEF_RE = re.compile(r"commit_special_formable\s*=\s*\{")
+_EFFECT_TOOLTIP_RE = re.compile(r"\beffect_tooltip\s*=\s*\{")
+# Directories whose .txt files can host commit writes or special-formable calls.
+_COMMIT_SCAN_DIRS = (
+    ("common", "decisions"),
+    ("common", "national_focus"),
+    ("common", "scripted_effects"),
+    ("common", "on_actions"),
+    ("events",),
+)
+
+
+def _block_body(text: str, open_brace_end: int) -> str:
+    """Return the text between a block's opening brace (already consumed at
+    ``open_brace_end``) and its matching closing brace."""
+    depth = 1
+    i = open_brace_end
+    while i < len(text) and depth:
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+        i += 1
+    return text[open_brace_end : i - 1]
+
+
+def _strip_effect_tooltip_blocks(text: str) -> str:
+    """Drop ``effect_tooltip = { ... }`` bodies — they render but never run, so
+    a commit call inside one is not a call site."""
+    out = []
+    pos = 0
+    while True:
+        m = _EFFECT_TOOLTIP_RE.search(text, pos)
+        if not m:
+            out.append(text[pos:])
+            return "".join(out)
+        out.append(text[pos : m.start()])
+        body = _block_body(text, m.end())
+        pos = m.end() + len(body) + 1
+
 
 def _is_targeted_decision(d: "DecisionFactory") -> bool:
     """True if targets/target_array/target_trigger/target_root_trigger is present."""
@@ -746,8 +807,18 @@ def _is_effectively_ai_only(
     return dec.ai_only or dec_id in ai_only_by_category
 
 
+def _formable_state_counts(factories: List["DecisionFactory"]) -> Dict[str, int]:
+    """tag -> full state count of ``<tag>_update_flag``'s available block."""
+    counts: Dict[str, int] = {}
+    for d in factories:
+        m = _FORMABLE_TAG_RE.match(d.token)
+        if m and d.token == f"{m.group(1)}_update_flag" and d.available:
+            counts[m.group(1)] = len(_STATE_ENTRY_RE.findall(d.available))
+    return counts
+
+
 def _find_formable_commitment_rows(
-    factories: List["DecisionFactory"], focus_texts: Dict[str, str]
+    factories: List["DecisionFactory"], extra_texts: Dict[str, str]
 ) -> List[str]:
     """Drift check for the formable commitment ratchet.
 
@@ -761,8 +832,9 @@ def _find_formable_commitment_rows(
     it against every literal.
 
     ``factories`` must already be restricted to the formables file;
-    ``focus_texts`` maps basename -> text for focus files mentioning
-    ``formable_committed_``.
+    ``extra_texts`` maps repo-relative path -> text for every other script
+    file mentioning the commitment variables (focus trees, scripted effects,
+    events, on_actions).
     """
     rows: List[str] = []
     by_tag: Dict[str, List["DecisionFactory"]] = {}
@@ -774,14 +846,15 @@ def _find_formable_commitment_rows(
             )
             continue
         by_tag.setdefault(m.group(1), []).append(d)
+        if _SPECIAL_CALL_RE.search(d.raw) or _SPECIAL_SETTER_RE.search(d.raw):
+            rows.append(
+                f"{d.token:<55}{d.source_basename} - decision formables commit by id/size, not commit_special_formable"
+            )
 
-    canonical: Dict[str, int] = {}
-    for tag, decs in by_tag.items():
-        uf = next((d for d in decs if d.token == f"{tag}_update_flag"), None)
-        if uf is None or not uf.available:
+    canonical = _formable_state_counts(factories)
+    for tag in by_tag:
+        if tag not in canonical:
             rows.append(f"{tag}: no update_flag available block - cannot derive size")
-            continue
-        canonical[tag] = len(_STATE_ENTRY_RE.findall(uf.available))
 
     commit_ids: Dict[str, int] = {}
     for tag, decs in by_tag.items():
@@ -810,6 +883,10 @@ def _find_formable_commitment_rows(
             rows.append(f"{tag}: conflicting commit ids {sorted(ids)}")
         elif ids:
             commit_ids[tag] = next(iter(ids))
+            if commit_ids[tag] >= _SPECIAL_ID_FLOOR:
+                rows.append(
+                    f"{tag}: commit id {commit_ids[tag]} is in the reserved special range (>= {_SPECIAL_ID_FLOOR})"
+                )
         else:
             rows.append(f"{tag}: no commit write (set_variable formable_committed_id)")
 
@@ -838,21 +915,93 @@ def _find_formable_commitment_rows(
                     )
 
     size_by_id = {commit_ids[t]: canonical[t] for t in commit_ids if t in canonical}
-    for basename, text in focus_texts.items():
+    for path, text in extra_texts.items():
         for i, s in _COMMIT_PAIR_RE.findall(text):
             if _int_literal(i) not in size_by_id:
-                rows.append(
-                    f"{basename}: focus commit references unknown formable id {i}"
-                )
+                rows.append(f"{path}: commit references unknown formable id {i}")
             elif _int_literal(s) != size_by_id[_int_literal(i)]:
                 rows.append(
-                    f"{basename}: focus commit size {s} != update_flag state count {size_by_id[_int_literal(i)]} for id {i}"
+                    f"{path}: commit size {s} != update_flag state count {size_by_id[_int_literal(i)]} for id {i}"
                 )
         for v in _SIZE_CMP_RE.findall(text):
             if size_by_id and _int_literal(v) not in set(size_by_id.values()):
+                rows.append(f"{path}: guard size {v} matches no formable state count")
+    return rows
+
+
+def _find_special_formable_rows(
+    extra_texts: Dict[str, str], largest_formable_size: int
+) -> List[str]:
+    """Sentinel-commit checks for special (non-decision) formables.
+
+    Special identities (USoE, EFS membership, UAR, ...) commit through
+    ``commit_special_formable`` — ``set_temp_variable = { special_formable_id
+    = N }`` immediately followed by the call — which writes a reserved id and
+    the ``_SPECIAL_COMMIT_SIZE`` sentinel so every decision-formable gate
+    blocks. Inline sentinel writes, orphan setters, calls without a setter,
+    unknown ids, unused table ids, and a drifted definition all defeat that.
+    ``effect_tooltip`` bodies are ignored: they render but never run.
+    """
+    rows: List[str] = []
+    if _SPECIAL_COMMIT_SIZE <= largest_formable_size:
+        rows.append(
+            f"special sentinel size {_SPECIAL_COMMIT_SIZE} does not exceed the largest formable state count {largest_formable_size}"
+        )
+    definitions = 0
+    call_sites: Dict[int, int] = {}
+    for path, raw in extra_texts.items():
+        text = _strip_effect_tooltip_blocks(raw)
+        if path.endswith(_SPECIAL_EFFECT_BASENAME):
+            for m in _SPECIAL_DEF_RE.finditer(text):
+                definitions += 1
+                body = _block_body(text, m.end())
+                if not (
+                    re.search(r"formable_committed_id\s*=\s*special_formable_id", body)
+                    and re.search(
+                        rf"formable_committed_size\s*=\s*{_SPECIAL_COMMIT_SIZE}\b", body
+                    )
+                ):
+                    rows.append(
+                        f"{path}: commit_special_formable must set formable_committed_id = special_formable_id and formable_committed_size = {_SPECIAL_COMMIT_SIZE}"
+                    )
+        else:
+            for v in _SIZE_SET_RE.findall(text):
+                if _int_literal(v) >= _SPECIAL_ID_FLOOR:
+                    rows.append(
+                        f"{path}: sentinel size literal {v} outside commit_special_formable"
+                    )
+            for v in _ID_LITERAL_RE.findall(text):
+                if _int_literal(v) >= _SPECIAL_ID_FLOOR:
+                    rows.append(
+                        f"{path}: special formable id {v} written inline - use commit_special_formable"
+                    )
+        setters = _SPECIAL_SETTER_RE.findall(text)
+        pairs = _SPECIAL_PAIR_RE.findall(text)
+        calls = _SPECIAL_CALL_RE.findall(text)
+        if len(setters) > len(pairs):
+            rows.append(
+                f"{path}: {len(setters) - len(pairs)} special_formable_id setter(s) not immediately followed by commit_special_formable = yes"
+            )
+        if len(calls) > len(pairs):
+            rows.append(
+                f"{path}: {len(calls) - len(pairs)} commit_special_formable call(s) without a preceding special_formable_id setter"
+            )
+        for v in pairs:
+            fid = _int_literal(v)
+            if fid not in _SPECIAL_FORMABLE_IDS:
                 rows.append(
-                    f"{basename}: focus guard size {v} matches no formable state count"
+                    f"{path}: unknown special formable id {fid} (add it to _SPECIAL_FORMABLE_IDS)"
                 )
+            call_sites[fid] = call_sites.get(fid, 0) + 1
+    if definitions != 1:
+        rows.append(
+            f"{_SPECIAL_EFFECT_BASENAME}: expected exactly one commit_special_formable definition, found {definitions}"
+        )
+    for fid, name in sorted(_SPECIAL_FORMABLE_IDS.items()):
+        if fid not in call_sites:
+            rows.append(
+                f"special formable id {fid} ({name}) has no call site - remove it from _SPECIAL_FORMABLE_IDS"
+            )
     return rows
 
 
@@ -2763,9 +2912,11 @@ class Validator(BaseValidator):
     def validate_formable_commitment_sync(self):
         """Flag formable commitment-ratchet literals out of sync with state lists.
 
-        See ``_find_formable_commitment_rows`` for the rule set. New formables
-        must wire the ratchet (gate on every decision, commit in
-        integrate_start/update_flag) or this check reports them.
+        See ``_find_formable_commitment_rows`` and
+        ``_find_special_formable_rows`` for the rule sets. New decision
+        formables must wire the ratchet (gate on every decision, commit in
+        integrate_start/update_flag); new special formables must commit through
+        ``commit_special_formable`` with a reserved id.
         """
         self._log_section(
             "Checking formable commitment ratchet id/size literals for drift..."
@@ -2777,18 +2928,36 @@ class Validator(BaseValidator):
             if d.source_basename == _FORMABLE_DECISIONS_BASENAME
         ]
 
-        focus_texts: Dict[str, str] = {}
-        pattern = os.path.join(self.mod_path, "common", "national_focus", "*.txt")
-        for filename in glob.iglob(pattern):
-            if _should_skip(filename):
-                continue
-            text = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
-            )
-            if "formable_committed_" in text:
-                focus_texts[os.path.basename(filename)] = text
+        extra_texts: Dict[str, str] = {}
+        for parts in _COMMIT_SCAN_DIRS:
+            pattern = os.path.join(self.mod_path, *parts, "**", "*.txt")
+            for filename in glob.iglob(pattern, recursive=True):
+                if _should_skip(filename):
+                    continue
+                if os.path.basename(filename) == _FORMABLE_DECISIONS_BASENAME:
+                    continue
+                text = FileOpener.open_text_file(
+                    filename, lowercase=False, strip_comments_flag=True
+                )
+                if (
+                    "formable_committed_" in text
+                    or "special_formable_id" in text
+                    or "commit_special_formable" in text
+                ):
+                    key = os.path.relpath(filename, self.mod_path).replace(os.sep, "/")
+                    extra_texts[key] = text
 
-        results = _find_formable_commitment_rows(factories, focus_texts)
+        # No ratchet sites (fixture checkouts): skip, else each special id reads unused.
+        if not factories and not extra_texts:
+            self.log(
+                "No formable commitment sites found — skipping the ratchet check",
+                "warning",
+            )
+            return
+
+        results = _find_formable_commitment_rows(factories, extra_texts)
+        largest = max(_formable_state_counts(factories).values(), default=0)
+        results += _find_special_formable_rows(extra_texts, largest)
         self._report(
             results,
             "✓ Formable commitment ids/sizes in sync",

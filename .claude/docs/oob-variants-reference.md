@@ -75,17 +75,29 @@ create_equipment_variant = {
 
 Source: `common/units/equipment/MD_x_tank_chassis.txt`
 
-| Chassis                            | In-Game Role                    | Equipment IDs                                   | Example Vehicles                  |
-| ---------------------------------- | ------------------------------- | ----------------------------------------------- | --------------------------------- |
-| `medium_tank_chassis_N`            | MBT (Main Battle Tank)          | MBT_1 – MBT_8                                   | T-64, T-84, Leopard 2, M1 Abrams  |
-| `medium_tank_amphibious_chassis_N` | APC (Wheeled/Tracked APC)       | APC_1 – APC_8                                   | BTR-3, BTR-60, MT-LB, M113        |
-| `medium_tank_flame_chassis_N`      | IFV (Infantry Fighting Vehicle) | IFV_1 – IFV_8                                   | BMP-2, BMP-3, Bradley, Marder     |
-| `medium_tank_artillery_chassis_N`  | SP Artillery                    | SP_arty_0 – SP_arty_4                           | 2S1 Gvozdika, 2S19 Msta, PzH 2000 |
-| `medium_tank_rocket_chassis_N`     | MLRS / Rocket Artillery         | SP_R_arty_0 – SP_R_arty_4                       | BM-27 Uragan, M270 MLRS           |
-| `medium_tank_aa_chassis_N`         | SPAA (Self-Propelled Anti-Air)  | SP_Anti_Air_0 – SP_Anti_Air_4                   | ZSU-23-4, Tunguska, Gepard        |
-| `medium_tank_destroyer_chassis_N`  | Recon Tank / Light Tank         | Rec_tank_0 – Rec_tank_5                         | BRDM, AMX-10RC, Stryker           |
-| `heavy_tank_chassis_N`             | Attack Helicopter               | attack_helicopter_1 – attack_helicopter_5       | Mi-24, AH-64 Apache, Ka-52        |
-| `heavy_tank_amphibious_chassis_N`  | Transport Helicopter            | transport_helicopter_1 – transport_helicopter_5 | Mi-8, UH-60 Black Hawk, CH-47     |
+| Chassis                            | In-Game Role                    | Equipment IDs            |
+| ---------------------------------- | ------------------------------- | ------------------------ |
+| `medium_tank_chassis_N`            | MBT (Main Battle Tank)          | MBT_1–8                  |
+| `medium_tank_amphibious_chassis_N` | APC (Wheeled/Tracked APC)       | APC_1–8                  |
+| `medium_tank_flame_chassis_N`      | IFV (Infantry Fighting Vehicle) | IFV_1–8                  |
+| `medium_tank_artillery_chassis_N`  | SP Artillery                    | SP_arty_0–4              |
+| `medium_tank_rocket_chassis_N`     | MLRS / Rocket Artillery         | SP_R_arty_0–4            |
+| `medium_tank_aa_chassis_N`         | SPAA (Self-Propelled Anti-Air)  | SP_Anti_Air_0–4          |
+| `medium_tank_destroyer_chassis_N`  | Recon Tank / Light Tank         | Rec_tank_0–5             |
+| `heavy_tank_chassis_N`             | Attack Helicopter               | attack_helicopter_1–5    |
+| `heavy_tank_amphibious_chassis_N`  | Transport Helicopter            | transport_helicopter_1–5 |
+
+Example vehicles:
+
+- MBT — T-64, T-84, Leopard 2, M1 Abrams
+- APC — BTR-3, BTR-60, MT-LB, M113
+- IFV — BMP-2, BMP-3, Bradley, Marder
+- SP Artillery — 2S1 Gvozdika, 2S19 Msta, PzH 2000
+- MLRS — BM-27 Uragan, M270 MLRS
+- SPAA — ZSU-23-4, Tunguska, Gepard
+- Recon Tank — BRDM, AMX-10RC, Stryker
+- Attack Helicopter — Mi-24, AH-64 Apache, Ka-52
+- Transport Helicopter — Mi-8, UH-60 Black Hawk, CH-47
 
 **Generation mapping (medium_tank_chassis MBT):**
 
@@ -150,37 +162,39 @@ Base archetypes (defined in `MD_plane_airframes.txt`):
 - `cv_medium_plane_airframe` — Medium carrier planes
 - `large_plane_airframe` — Large strategic bombers
 
-Duplicate archetypes (sub-types derived from base archetypes):
+Duplicate archetypes (sub-types derived from base archetypes). Base archetype is given by the name's prefix: `small_plane_*` sub-types derive from `small_plane_airframe`, `medium_plane_*` from `medium_plane_airframe`, `large_plane_*` from `large_plane_airframe`.
 
-| Airframe                                | Base Archetype          | In-Game Role                        | HOI4 Type         | Equipment IDs       |
-| --------------------------------------- | ----------------------- | ----------------------------------- | ----------------- | ------------------- |
-| `small_plane_cas_airframe`              | `small_plane_airframe`  | Small CAS                           | `cas`             | —                   |
-| `small_plane_strike_airframe`           | `small_plane_airframe`  | Light Multirole / Trainer           | `tactical_bomber` | L_Strike_fighter1–5 |
-| `small_plane_naval_bomber_airframe`     | `small_plane_airframe`  | Small Naval Bomber                  | `naval_bomber`    | —                   |
-| `small_plane_suicide_airframe`          | `small_plane_airframe`  | UAV / Drone                         | `suicide`         | Air_UAV1–4          |
-| `medium_plane_fighter_airframe`         | `medium_plane_airframe` | Air Superiority Fighter             | `fighter`         | AS_Fighter1–7       |
-| `medium_plane_cas_airframe`             | `medium_plane_airframe` | Medium CAS / Attack                 | `cas`             | cas1–5              |
-| `medium_plane_suicide_airframe`         | `medium_plane_airframe` | Kamikaze Drone / Loitering Munition | `suicide`         | kamikaze_drone_1–4  |
-| `medium_plane_maritime_patrol_airframe` | `medium_plane_airframe` | Medium Maritime Patrol              | `naval_bomber`    | —                   |
-| `medium_plane_air_transport_airframe`   | `medium_plane_airframe` | Medium Transport                    | `suicide`         | —                   |
-| `large_plane_maritime_patrol_airframe`  | `large_plane_airframe`  | Large Maritime Patrol (MPA)         | `naval_bomber`    | naval_plane1–6      |
-| `large_plane_awacs_airframe`            | `large_plane_airframe`  | AWACS / Scout Plane                 | `scout_plane`     | awacs_equipment_1–2 |
-| `large_plane_cas_airframe`              | `large_plane_airframe`  | Gunship (AC-130 type)               | `cas`             | —                   |
-| `large_plane_air_transport_airframe`    | `large_plane_airframe`  | Large Transport                     | `suicide`         | transport_plane1–6  |
+| Airframe                                | In-Game Role                      | HOI4 Type         |
+| --------------------------------------- | --------------------------------- | ----------------- |
+| `small_plane_cas_airframe`              | Small CAS                         | `cas`             |
+| `small_plane_strike_airframe`           | Light Multirole / Trainer         | `tactical_bomber` |
+| `small_plane_naval_bomber_airframe`     | Small Naval Bomber                | `naval_bomber`    |
+| `small_plane_suicide_airframe`          | UAV / Drone                       | `suicide`         |
+| `medium_plane_fighter_airframe`         | Air Superiority Fighter           | `fighter`         |
+| `medium_plane_cas_airframe`             | Medium CAS / Attack               | `cas`             |
+| `medium_plane_suicide_airframe`         | Kamikaze Drone/Loitering Munition | `suicide`         |
+| `medium_plane_maritime_patrol_airframe` | Medium Maritime Patrol            | `naval_bomber`    |
+| `medium_plane_air_transport_airframe`   | Medium Transport                  | `suicide`         |
+| `large_plane_maritime_patrol_airframe`  | Large Maritime Patrol (MPA)       | `naval_bomber`    |
+| `large_plane_awacs_airframe`            | AWACS / Scout Plane               | `scout_plane`     |
+| `large_plane_cas_airframe`              | Gunship (AC-130 type)             | `cas`             |
+| `large_plane_air_transport_airframe`    | Large Transport                   | `suicide`         |
 
-Carrier variants (CV prefix):
+Equipment IDs (sub-types not listed have none): `small_plane_strike_airframe` → L_Strike_fighter1–5; `small_plane_suicide_airframe` → Air_UAV1–4; `medium_plane_fighter_airframe` → AS_Fighter1–7; `medium_plane_cas_airframe` → cas1–5; `medium_plane_suicide_airframe` → kamikaze_drone_1–4; `large_plane_maritime_patrol_airframe` → naval_plane1–6; `large_plane_awacs_airframe` → awacs_equipment_1–2; `large_plane_air_transport_airframe` → transport_plane1–6.
 
-| Airframe                                   | Base Archetype             | Role                    | Equipment IDs          |
-| ------------------------------------------ | -------------------------- | ----------------------- | ---------------------- |
-| `cv_small_plane_cas_airframe`              | `cv_small_plane_airframe`  | Carrier CAS             | —                      |
-| `cv_small_plane_naval_bomber_airframe`     | `cv_small_plane_airframe`  | Carrier Naval Bomber    | —                      |
-| `cv_small_plane_suicide_airframe`          | `cv_small_plane_airframe`  | Carrier Drone           | —                      |
-| `cv_small_plane_strike_airframe`           | `cv_small_plane_airframe`  | Carrier Light Multirole | CV_L_Strike_fighter1–5 |
-| `cv_medium_plane_fighter_airframe`         | `cv_medium_plane_airframe` | Carrier AS Fighter      | —                      |
-| `cv_medium_plane_cas_airframe`             | `cv_medium_plane_airframe` | Carrier CAS             | —                      |
-| `cv_medium_plane_scout_airframe`           | `cv_medium_plane_airframe` | Carrier AWACS           | cv_awacs_equipment_1–2 |
-| `cv_medium_plane_maritime_patrol_airframe` | `cv_medium_plane_airframe` | Carrier MPA             | —                      |
-| `cv_medium_plane_air_transport_airframe`   | `cv_medium_plane_airframe` | Carrier Transport       | —                      |
+Carrier variants (CV prefix). Base archetype by prefix: `cv_small_plane_*` sub-types derive from `cv_small_plane_airframe`, `cv_medium_plane_*` from `cv_medium_plane_airframe`.
+
+| Airframe                                   | Role                    | Equipment IDs          |
+| ------------------------------------------ | ----------------------- | ---------------------- |
+| `cv_small_plane_cas_airframe`              | Carrier CAS             | —                      |
+| `cv_small_plane_naval_bomber_airframe`     | Carrier Naval Bomber    | —                      |
+| `cv_small_plane_suicide_airframe`          | Carrier Drone           | —                      |
+| `cv_small_plane_strike_airframe`           | Carrier Light Multirole | CV_L_Strike_fighter1–5 |
+| `cv_medium_plane_fighter_airframe`         | Carrier AS Fighter      | —                      |
+| `cv_medium_plane_cas_airframe`             | Carrier CAS             | —                      |
+| `cv_medium_plane_scout_airframe`           | Carrier AWACS           | cv_awacs_equipment_1–2 |
+| `cv_medium_plane_maritime_patrol_airframe` | Carrier MPA             | —                      |
+| `cv_medium_plane_air_transport_airframe`   | Carrier Transport       | —                      |
 
 **Medium multirole equipment (uses base `medium_plane_airframe` directly):**
 
@@ -189,14 +203,14 @@ Carrier variants (CV prefix):
 
 **Generation mapping for aircraft airframes** (applies to all archetype + generation combinations like `small_plane_strike_airframe_N`):
 
-| Generation Suffix | Tech Required | Start Year | Example Variants                                   |
-| ----------------- | ------------- | ---------- | -------------------------------------------------- |
-| `_0`              | `gen_3_*`     | 1960       | Early jets (F-4, MiG-21, J 35 Draken)              |
-| `_1`              | `gen_3_*`     | 1960       | 1960s variants (A-4, F-104, JA 37 Viggen)          |
-| `_2`              | `gen_4_*`     | 1980       | 1980s variants (F-16A, F/A-18A, JAS 39 Gripen A/B) |
-| `_3`              | `gen_5_*`     | 2015       | 2010s variants (F-16C, JAS 39E Gripen)             |
-| `_4`              | `gen_6_*`     | 2025       | Future variants                                    |
-| `_5`              | `gen_7_*`     | 2035       | Endgame variants                                   |
+| Suffix | Tech Required | Start Year | Example Variants                                   |
+| ------ | ------------- | ---------- | -------------------------------------------------- |
+| `_0`   | `gen_3_*`     | 1960       | Early jets (F-4, MiG-21, J 35 Draken)              |
+| `_1`   | `gen_3_*`     | 1960       | 1960s variants (A-4, F-104, JA 37 Viggen)          |
+| `_2`   | `gen_4_*`     | 1980       | 1980s variants (F-16A, F/A-18A, JAS 39 Gripen A/B) |
+| `_3`   | `gen_5_*`     | 2015       | 2010s variants (F-16C, JAS 39E Gripen)             |
+| `_4`   | `gen_6_*`     | 2025       | Future variants                                    |
+| `_5`   | `gen_7_*`     | 2035       | Endgame variants                                   |
 
 **Important:** The generation suffix (`_0`, `_1`, `_2`, etc.) must match a technology that unlocks that equipment type. E.g., `small_plane_strike_airframe_2` requires `gen_4_light`. If you create `type = small_plane_strike_airframe_3` but the country lacks `gen_5_light`, the variant exists but cannot be produced or added to stockpile.
 
@@ -267,34 +281,40 @@ ship = { name = "Hetman Sahaydachnyi" definition = frigate start_experience_fact
 
 Source: `common/units/equipment/MD_mtg_ships.txt`
 
-**Screen Ships:**
+**Screen Ships** — type `screen_ship` for every hull except `stealth_destroyer_hull_N`, which is `capital_ship`:
 
-| Hull                       | Type           | Tiers          | Year Range | Role                                              |
-| -------------------------- | -------------- | -------------- | ---------- | ------------------------------------------------- |
-| `corvette_hull_N`          | `screen_ship`  | 1–6            | 1965–2040  | Corvettes, patrol boats (Grisha, Tarantul, Pauk)  |
-| `stealth_corvette_hull_N`  | `screen_ship`  | 1–3            | 2010–2040  | Stealth corvettes (higher cost, lower visibility) |
-| `frigate_hull_N`           | `screen_ship`  | 1–6            | 1965–2040  | Frigates (Krivak, Oliver Hazard Perry)            |
-| `stealth_frigate_hull_N`   | `screen_ship`  | 1–3            | 2010–2040  | Stealth frigates                                  |
-| `heavy_frigate`            | `screen_ship`  | archetype only | 2010       | Heavy frigate upgrade (higher cost)               |
-| `destroyer_hull_N`         | `screen_ship`  | 1–5            | 1965–2045  | Destroyers (Arleigh Burke, Sovremenny)            |
-| `stealth_destroyer_hull_N` | `capital_ship` | 1–3            | 2015–2040  | Stealth destroyers (Zumwalt-type)                 |
+| Hull                       | Tiers          | Year Range | Role                                |
+| -------------------------- | -------------- | ---------- | ----------------------------------- |
+| `corvette_hull_N`          | 1–6            | 1965–2040  | Corvettes, patrol boats             |
+| `stealth_corvette_hull_N`  | 1–3            | 2010–2040  | Stealth corvettes                   |
+| `frigate_hull_N`           | 1–6            | 1965–2040  | Frigates                            |
+| `stealth_frigate_hull_N`   | 1–3            | 2010–2040  | Stealth frigates                    |
+| `heavy_frigate`            | archetype only | 2010       | Heavy frigate upgrade (higher cost) |
+| `destroyer_hull_N`         | 1–5            | 1965–2045  | Destroyers                          |
+| `stealth_destroyer_hull_N` | 1–3            | 2015–2040  | Stealth destroyers (Zumwalt-type)   |
+
+Examples: corvettes/patrol boats — Grisha, Tarantul, Pauk; frigates — Krivak, Oliver Hazard Perry; destroyers — Arleigh Burke, Sovremenny. Stealth corvettes trade higher cost for lower visibility.
 
 **Capital Ships:**
 
-| Hull                         | Type           | Tiers | Year Range | Role                                       |
-| ---------------------------- | -------------- | ----- | ---------- | ------------------------------------------ |
-| `cruiser_hull_N`             | `capital_ship` | 1–5   | 1965–2040  | Cruisers (Slava, Ticonderoga)              |
-| `battle_cruiser_hull_N`      | `capital_ship` | 1–4   | 1965–2025  | Battlecruisers (Kirov class)               |
-| `battleship_hull_N`          | `capital_ship` | 0–4   | 1965–2025  | Battleships (Iowa class, Yamato)           |
-| `helicopter_operator_hull_N` | `carrier`      | 1–4   | 1970–2025  | Helicopter carriers / LHDs (Mistral, Wasp) |
-| `carrier_hull_N`             | `carrier`      | 1–5   | 1965–2040  | Aircraft carriers (Nimitz, Kuznetsov)      |
+| Hull                         | Type           | Tiers | Year Range | Role                       |
+| ---------------------------- | -------------- | ----- | ---------- | -------------------------- |
+| `cruiser_hull_N`             | `capital_ship` | 1–5   | 1965–2040  | Cruisers                   |
+| `battle_cruiser_hull_N`      | `capital_ship` | 1–4   | 1965–2025  | Battlecruisers             |
+| `battleship_hull_N`          | `capital_ship` | 0–4   | 1965–2025  | Battleships                |
+| `helicopter_operator_hull_N` | `carrier`      | 1–4   | 1970–2025  | Helicopter carriers / LHDs |
+| `carrier_hull_N`             | `carrier`      | 1–5   | 1965–2040  | Aircraft carriers          |
+
+Examples: cruisers — Slava, Ticonderoga; battlecruisers — Kirov class; battleships — Iowa class, Yamato; helicopter carriers/LHDs — Mistral, Wasp; aircraft carriers — Nimitz, Kuznetsov.
 
 **Submarines:**
 
-| Hull                       | Type        | Tiers | Year Range | Role                                         |
-| -------------------------- | ----------- | ----- | ---------- | -------------------------------------------- |
-| `attack_submarine_hull_N`  | `submarine` | 1–6   | 1965–2040  | Attack submarines (Los Angeles, Akula, Kilo) |
-| `missile_submarine_hull_N` | `submarine` | 1–6   | 1965–2040  | Missile submarines / SSBNs (Ohio, Typhoon)   |
+| Hull                       | Type        | Tiers | Year Range | Role                       |
+| -------------------------- | ----------- | ----- | ---------- | -------------------------- |
+| `attack_submarine_hull_N`  | `submarine` | 1–6   | 1965–2040  | Attack submarines          |
+| `missile_submarine_hull_N` | `submarine` | 1–6   | 1965–2040  | Missile submarines / SSBNs |
+
+Examples: attack submarines — Los Angeles, Akula, Kilo; missile submarines/SSBNs — Ohio, Typhoon.
 
 **OOB `definition` field values:** maps to these roles: `corvette`, `frigate`, `destroyer`, `cruiser`, `battle_cruiser`, `battleship`, `helicopter_operator`, `carrier`, `submarine` (for both attack and missile subs).
 
@@ -453,18 +473,18 @@ add_equipment_to_stockpile = {
 
 ### Equipment Type Mapping
 
-| Vehicle Role         | NSB Chassis Type                   | Non-NSB Legacy ID                                   |
-| -------------------- | ---------------------------------- | --------------------------------------------------- |
-| MBT                  | `medium_tank_chassis_N`            | `MBT_1` – `MBT_8`                                   |
-| APC                  | `medium_tank_amphibious_chassis_N` | `APC_1` – `APC_8`                                   |
-| IFV                  | `medium_tank_flame_chassis_N`      | `IFV_1` – `IFV_8`                                   |
-| Recon/Tank Destroyer | `medium_tank_destroyer_chassis_N`  | `Rec_tank_0` – `Rec_tank_5`                         |
-| SP Artillery         | `medium_tank_artillery_chassis_N`  | `SP_arty_0` – `SP_arty_4`                           |
-| SP Rocket Artillery  | `medium_tank_rocket_chassis_N`     | `SP_R_arty_0` – `SP_R_arty_4`                       |
-| SP Anti-Air          | `medium_tank_aa_chassis_N`         | `SP_Anti_Air_0` – `SP_Anti_Air_4`                   |
-| Towed Artillery      | `artillery_N`                      | `artillery_0` – `artillery_4`                       |
-| Attack Helicopter    | `heavy_tank_chassis_N`             | `attack_helicopter_1` – `attack_helicopter_5`       |
-| Transport Helicopter | `heavy_tank_amphibious_chassis_N`  | `transport_helicopter_1` – `transport_helicopter_5` |
+| Vehicle Role         | NSB Chassis Type                   | Non-NSB Legacy ID          |
+| -------------------- | ---------------------------------- | -------------------------- |
+| MBT                  | `medium_tank_chassis_N`            | `MBT_1–8`                  |
+| APC                  | `medium_tank_amphibious_chassis_N` | `APC_1–8`                  |
+| IFV                  | `medium_tank_flame_chassis_N`      | `IFV_1–8`                  |
+| Recon/Tank Destroyer | `medium_tank_destroyer_chassis_N`  | `Rec_tank_0–5`             |
+| SP Artillery         | `medium_tank_artillery_chassis_N`  | `SP_arty_0–4`              |
+| SP Rocket Artillery  | `medium_tank_rocket_chassis_N`     | `SP_R_arty_0–4`            |
+| SP Anti-Air          | `medium_tank_aa_chassis_N`         | `SP_Anti_Air_0–4`          |
+| Towed Artillery      | `artillery_N`                      | `artillery_0–4`            |
+| Attack Helicopter    | `heavy_tank_chassis_N`             | `attack_helicopter_1–5`    |
+| Transport Helicopter | `heavy_tank_amphibious_chassis_N`  | `transport_helicopter_1–5` |
 
 **Generation mapping**: The `_N` suffix maps the same way in both systems:
 
@@ -475,12 +495,10 @@ add_equipment_to_stockpile = {
 
 When `add_equipment_to_stockpile` specifies a `variant_name`, the `type` must match what was used in `create_equipment_variant`. Common errors:
 
-| Wrong                                                                 | Correct                                                                    | Issue                                                                    |
-| --------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `type = medium_tank_flame_chassis_0`, `variant_name = "Grizzly AVGP"` | `type = medium_tank_amphibious_chassis_1`, `variant_name = "AVGP Grizzly"` | Grizzly is an APC (amphibious_chassis), not IFV (flame_chassis)          |
-| `type = APC_2` (in NSB file)                                          | `type = medium_tank_amphibious_chassis_1`                                  | Legacy ID in NSB file                                                    |
-| `type = medium_tank_amphibious_chassis_1` (in non-NSB file)           | `type = APC_2`                                                             | Chassis type in non-NSB file                                             |
-| `type = medium_tank_chassis_0`, `variant_name = "Leopard 2A4"`        | `type = medium_tank_chassis_2`, `variant_name = "Leopard 2A4"`             | Wrong generation — Leopard 2 is 1980s (chassis_2), not 1960s (chassis_0) |
+- Wrong: `type = medium_tank_flame_chassis_0`, `variant_name = "Grizzly AVGP"` → correct: `type = medium_tank_amphibious_chassis_1`, `variant_name = "AVGP Grizzly"`. Grizzly is an APC (amphibious_chassis), not IFV (flame_chassis).
+- Wrong: `type = APC_2` in an NSB file → correct: `type = medium_tank_amphibious_chassis_1`. Legacy ID in NSB file.
+- Wrong: `type = medium_tank_amphibious_chassis_1` in a non-NSB file → correct: `type = APC_2`. Chassis type in non-NSB file.
+- Wrong: `type = medium_tank_chassis_0`, `variant_name = "Leopard 2A4"` → correct: `type = medium_tank_chassis_2`, `variant_name = "Leopard 2A4"`. Wrong generation — Leopard 2 is 1980s (chassis_2), not 1960s (chassis_0).
 
 ### Verifying Variant Consistency
 

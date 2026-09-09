@@ -80,7 +80,7 @@ tools/
 2. Subclass `BaseValidator` from `validator_common`. Implement `run_validations(self, files: List[str]) -> None`.
 3. Use `self.add_error(category, message, file, line)` for structured issues. The PR report renderer picks these up for inline annotations.
 4. Use `DEFAULT_EXTRA_SKIP_PATTERNS` from `validator_common` for `EXTRA_SKIP_PATTERNS` (extend with domain-specific patterns if needed).
-5. Wire into CI: add an entry to `.github/workflows/coding-pipeline.yml` in the `validate-core` or `validate-targeted` matrix. This is the gate for most validators — they run CI-only.
+5. Wire into CI: add a `ValidatorSpec` for it in `tools/validation/validator_batches.py` (batch, changed-file groups, `--strict`). This is the gate for most validators — they run CI-only.
 6. Decide if it should also run on `git commit`. Heavy cross-reference validators stay CI-only. A fast validator can join the commit-stage set: add it to the `_REGISTRY` in `tools/precommit_validate.py` (with its path rules and `--strict` flag) and pin its selection in `tools/tests/precommit_validate_test.py`. The `config_drift_test` enforces that every validator runs on pre-commit or CI.
 7. Add tests in `tools/tests/validation/`.
 
@@ -186,10 +186,10 @@ Metrics, reference analysis, and review tools.
 
 | Script                              | Description                                                                                                                                                     |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ai_path_report.py**               | Reports one country's AI path rule, flag wiring, focus ownership and killswitch orphans (issue #3162)                                                            |
+| **ai_path_report.py**               | Reports one country's AI path rule, flag wiring, focus ownership, killswitch orphans, and the burdens/mechanics the AI must be able to resolve (issue #3162)    |
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                       |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas                                                                                            |
-| **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                            |
+| **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                               |
 | **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                          |
 | **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced                                                                                              |
 | **pre_place_power_plants.py**       | Bakes fossil_powerplant + composite_plant counts into `history/states/` to skip startup loops. Re-run after edits to the energy formula or country/state setup. |
@@ -214,19 +214,19 @@ See the [Workshop Publishing Guide](#workshop-publishing-guide) below for full u
 
 ### Report Library (`report_lib/`)
 
-Internal package used by `generate_validation_report.py` to render PR comments and post GitHub Check Runs. Its only inputs are the JSON sidecars produced by each validator.
+Internal package used by `generate_validation_report.py` to render PR comments and post GitHub Check Runs. Its inputs are the JSON sidecars produced by each validator plus the `suite-run.json` artifacts the tools-tests jobs upload.
 
-| Module            | Responsibility                                                          |
-| ----------------- | ----------------------------------------------------------------------- |
-| **models.py**     | `Issue`, `ValidatorRun`, `ReportContext` dataclasses                    |
-| **loader.py**     | Reads `.json` sidecars; falls back to parsing `.log` text when missing  |
-| **dedupe.py**     | Collapses cross-validator duplicates, preserving first-seen order       |
-| **markdown.py**   | Renders the report Markdown — summary table + issues-by-file + raw logs |
-| **truncation.py** | Drops heavy sections when the body exceeds 60 KB, keeping the summary   |
-| **comment.py**    | Find-by-marker + PATCH/POST logic for the bot-authored PR comment       |
-| **checks_api.py** | One Check Run per validator with up to 50 annotations per run           |
+| Module            | Responsibility                                                                                 |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| **models.py**     | `Issue`, `ValidatorRun`, `ReportContext` dataclasses                                           |
+| **loader.py**     | Reads `.json` sidecars and `suite-run.json`; falls back to parsing `.log` text when missing    |
+| **dedupe.py**     | Collapses cross-validator duplicates, preserving first-seen order                              |
+| **markdown.py**   | Renders the report Markdown: verdict banner, Tools/Mod test sections, issues-by-file, raw logs |
+| **truncation.py** | Drops heavy sections when the body exceeds 60 KB, keeping the summary                          |
+| **comment.py**    | Find-by-marker + PATCH/POST logic for the bot-authored PR comment                              |
+| **checks_api.py** | One Check Run per CI job with up to 50 annotations per request                                 |
 
-Tests live in `tests/report_lib/` and run on every PR via the `tools-validation.yml` workflow.
+Tests live in `tests/report_lib/` and run on every PR via the `test-suite.yml` workflow.
 
 ### Tests (`tests/`)
 

@@ -16,6 +16,19 @@ from shared.suite import initialize_git_repository, run_git
 _BY_SCRIPT = {spec.script: spec for spec in _REGISTRY}
 
 
+def _run_dispatcher_with_stubbed_runner(monkeypatch, argv):
+    """Stub the dispatcher's subprocess runner and argv; return recorded calls."""
+    calls = []
+
+    def run(spec, _mod_path, env, _no_color, _inner_workers):
+        calls.append((spec.script, env["MD_STAGED_FILES"]))
+        return (spec.script, 0, "", "", 0.0)
+
+    monkeypatch.setattr(dispatcher, "_run", run)
+    monkeypatch.setattr(sys, "argv", argv)
+    return calls
+
+
 def _selected(path):
     """Set of validator scripts the dispatcher runs for a single staged path."""
     return {spec.script for spec in _REGISTRY if spec.matches([path])}
@@ -29,6 +42,7 @@ def _selected(path):
 _GOLDEN = {
     "common/national_focus/france.txt": {
         "validate_style",
+        "validate_standardization",
         "validate_ideas",
         "validate_events",
         "validate_oob_units",
@@ -41,6 +55,7 @@ _GOLDEN = {
     },
     "events/Syria.txt": {
         "validate_style",
+        "validate_standardization",
         "validate_ideas",
         "validate_events",
         "validate_oob_units",
@@ -48,6 +63,7 @@ _GOLDEN = {
     },
     "common/decisions/Sudan.txt": {
         "validate_style",
+        "validate_standardization",
         "validate_ideas",
         "validate_events",
         "validate_oob_units",
@@ -126,11 +142,13 @@ _GOLDEN = {
     "common/factions/x.txt": {"validate_style", "validate_events"},
     "common/military_industrial_organization/organizations/MD_ISR_organizations.txt": {
         "validate_style",
+        "validate_standardization",
         "validate_mios",
         "validate_events",
     },
     "common/military_industrial_organization/policies/_land_policies.txt": {
         "validate_style",
+        "validate_standardization",
         "validate_mios",
         "validate_events",
     },
@@ -175,6 +193,29 @@ def test_style_excludes_changelog_and_authors():
 
 def test_style_runs_on_normal_txt():
     assert "validate_style" in _selected("common/national_focus/france.txt")
+
+
+def test_interface_sprite_changes_run_mio_validation():
+    assert _selected("interface/mio_icons.gfx") == {"validate_mios"}
+
+
+def test_dispatcher_keeps_gfx_through_main_filter(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    run_git(tmp_path, "init")
+    run_git(tmp_path, "config", "user.email", "test@example.com")
+    run_git(tmp_path, "config", "user.name", "Test User")
+    target = tmp_path / "interface" / "mio_icons.gfx"
+    target.parent.mkdir(parents=True)
+    target.write_text("spriteTypes = {\n}\n", encoding="utf-8")
+    run_git(tmp_path, "add", "-A")
+
+    calls = _run_dispatcher_with_stubbed_runner(
+        monkeypatch, ["precommit_validate.py", "--path", str(tmp_path)]
+    )
+
+    assert dispatcher.main() == 0
+    mio_calls = [env for script, env in calls if script == "validate_mios"]
+    assert mio_calls == ["interface/mio_icons.gfx"]
 
 
 def test_agency_upgrades_exact_file_match():
@@ -237,6 +278,14 @@ def test_dispatcher_subprocess_contract(monkeypatch, tmp_path):
     assert result[1] == 1
 
 
+def test_precommit_dispatcher_routes_history_general_templates():
+    assert "validate_oob_units" in {
+        spec.script
+        for spec in _REGISTRY
+        if spec.matches(["history/general/template.txt"])
+    }
+
+
 def test_precommit_dispatcher_selects_oob_for_a_moved_history_target(
     tmp_path, monkeypatch
 ):
@@ -258,16 +307,8 @@ def test_precommit_dispatcher_selects_oob_for_a_moved_history_target(
         spec.script for spec in _REGISTRY if spec.matches(paths)
     }
 
-    calls = []
-
-    def run(spec, _mod_path, env, _no_color, _inner_workers):
-        calls.append((spec.script, env["MD_STAGED_FILES"]))
-        return (spec.script, 0, "", "", 0.0)
-
-    monkeypatch.setattr(dispatcher, "_run", run)
-    monkeypatch.setattr(
-        sys,
-        "argv",
+    calls = _run_dispatcher_with_stubbed_runner(
+        monkeypatch,
         ["precommit_validate.py", "--path", str(tmp_path), destination],
     )
 

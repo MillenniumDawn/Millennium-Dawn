@@ -123,7 +123,7 @@ focus_tree = {
 		ai_will_do = {
 			base = 400
 			modifier = {
-				has_global_flag = SOV_PUTIN_PATH
+				has_global_flag = SOV_HISTORICAL_FOCUS_PATH
 				add = 400
 			}
 		}
@@ -708,7 +708,7 @@ focus_tree = {
 			set_country_flag = UKR_yushenko_party
 			update_party_name = yes
 			if = {
-				limit = { NOT = { is_in_array = { ruling_party = 16 } } }
+				limit = { NOT = { check_variable = { ruling_party = 16 } } }
 				set_temp_variable = { rul_party_temp = 16 }
 				set_temp_variable = { disable_elections = 1 }
 				change_ruling_party_effect = yes
@@ -818,7 +818,7 @@ focus_tree = {
 				UKR_add_political_tension = yes
 			}
 			if = {
-				limit = { NOT = { is_in_array = { ruling_party = 6 } } }
+				limit = { NOT = { check_variable = { ruling_party = 6 } } }
 				set_temp_variable = { rul_party_temp = 6 }
 				set_temp_variable = { disable_elections = 1 }
 				change_ruling_party_effect = yes
@@ -2061,11 +2061,13 @@ focus_tree = {
 			}
 			hidden_effect = {
 				drop_cosmetic_tag = yes
+				clear_variable = dynamic_flag_variant
 				set_cosmetic_tag = UKR_AUTH_S_communism
+				set_variable = { dynamic_flag_variant = 8 }
 				clr_country_flag = dynamic_flag
 				recalculate_party = yes
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+					limit = { NOT = { check_variable = { ruling_party = 4 } } }
 					set_temp_variable = { rul_party_temp = 4 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -2139,11 +2141,13 @@ focus_tree = {
 			}
 			hidden_effect = {
 				drop_cosmetic_tag = yes
+				clear_variable = dynamic_flag_variant
 				set_cosmetic_tag = UKR_AUTH_S_neutrality
+				set_variable = { dynamic_flag_variant = 8 }
 				clr_country_flag = dynamic_flag
 				recalculate_party = yes
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 18 } } }
+					limit = { NOT = { check_variable = { ruling_party = 18 } } }
 					set_temp_variable = { rul_party_temp = 18 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -3607,8 +3611,8 @@ focus_tree = {
 			change_influence_percentage = yes
 			one_office_construction = yes
 			SOV = {
-				set_temp_variable = { modify_capitalisation_sberbank = 0.190 }
-				modify_capitalisation_sberbank_support = yes
+				set_temp_variable = { SOV_modify_capitalisation_sberbank = 0.190 }
+				SOV_modify_capitalisation_sberbank_support = yes
 			}
 		}
 
@@ -4190,7 +4194,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_arms_tanks"
 			add_tech_bonus = {
-				name = GENERIC_develop_armor_prototypes
+				name = UKR_arms_tanks
 				bonus = 0.5
 				uses = 2
 				category = CAT_armor
@@ -4448,7 +4452,19 @@ focus_tree = {
 			unlock_decision_tooltip = UKR_attack_kuban_commies
 			unlock_decision_tooltip = UKR_attack_tatarstan_commies
 			hidden_effect = {
-				SOV = { revoult_in_russia_from_commi_ukraine = yes }
+				SOV = {
+					country_event = { id = ukraine_kommi.16 days = 1 }
+					start_civil_war = {
+						ideology = communism
+						size = 0.3
+						capital = 667
+						states = { 662 1130 1118 665 666 667 670 }
+						set_cosmetic_tag = SOV_AUTH_S_communism
+						set_variable = { dynamic_flag_variant = 8 }
+						UKR_setup_revolt_government = yes
+						load_focus_tree = russia_focus
+					}
+				}
 			}
 			custom_effect_tooltip = UKR_revoult_in_russia_tt
 			custom_effect_tooltip = UKR_hur_operation_russian_tt
@@ -4531,7 +4547,26 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_revolut_in_blr"
 			hidden_effect = {
-				BLR = { revoult_in_belarus_from_commi_ukraine = yes }
+				BLR = {
+					start_civil_war = {
+						ideology = communism
+						size = 0.3
+						capital = 704
+						states = { 704 1092 1094 }
+						set_cosmetic_tag = BLR_AUTH_S_communism
+						set_variable = { dynamic_flag_variant = 8 }
+						UKR_setup_revolt_government = yes
+						create_country_leader = {
+							name = "Tatiana  Golubeva"
+							picture = "tacciana_holubiewa.dds"
+							ideology = Communist-State
+							traits = {
+								emerging_Communist-State
+							}
+						}
+						load_focus_tree = belorussia_focus
+					}
+				}
 			}
 			custom_effect_tooltip = UKR_revoult_in_belarus_tt
 		}
@@ -4567,7 +4602,17 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_revolut_in_mol"
 			hidden_effect = {
-				revoult_in_molvoda_from_commi_ukraine = yes
+				MLV = {
+					start_civil_war = {
+						ideology = communism
+						size = 0.3
+						capital = 148
+						states = { 148 }
+						set_cosmetic_tag = MLV_AUTH_S_communism
+						set_variable = { dynamic_flag_variant = 8 }
+						UKR_setup_revolt_government = yes
+					}
+				}
 			}
 			custom_effect_tooltip = UKR_revoult_in_modvola_tt
 		}
@@ -4736,6 +4781,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_declare_ussr"
 			drop_cosmetic_tag = yes
+			clear_variable = dynamic_flag_variant
 			set_cosmetic_tag = SOV_USSR_AUTH_S
 			clr_country_flag = dynamic_flag
 			add_political_power = 100
@@ -6568,6 +6614,22 @@ focus_tree = {
 			unlock_decision_tooltip = UKR_reorganize_the_national_guard_four_brigade
 			custom_effect_tooltip = UKR_natguard_created_tt
 			if = {
+				limit = { NOT = { has_template = "Natsionalna Hvardiya" } }
+				division_template = {
+					name = "Natsionalna Hvardiya"
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+			}
+			if = {
 				limit = {
 					NOT = {
 						has_completed_focus = UKR_reform_vv
@@ -7393,7 +7455,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_oplit"
 			add_tech_bonus = {
-				name = GENERIC_develop_armor_prototypes
+				name = UKR_oplit
 				bonus = 0.5
 				uses = 2
 				category = CAT_armor
@@ -7428,13 +7490,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_sapsan"
 			add_tech_bonus = {
-				name = SOV_hypersonic_missiles
+				name = UKR_sapsan
 				bonus = 0.75
 				uses = 1
 				category = CAT_OLV
 			}
 			add_tech_bonus = {
-				name = SOV_hypersonic_missiles
+				name = UKR_sapsan
 				bonus = 0.75
 				uses = 1
 				category = CAT_cm
@@ -8671,10 +8733,12 @@ focus_tree = {
 			}
 			hidden_effect = {
 				drop_cosmetic_tag = yes
+				clear_variable = dynamic_flag_variant
 				set_cosmetic_tag = UKR_AUTH_SS_nationalist
+				set_variable = { dynamic_flag_variant = 8 }
 				clr_country_flag = dynamic_flag
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 21 } } }
+					limit = { NOT = { check_variable = { ruling_party = 21 } } }
 					set_temp_variable = { rul_party_temp = 21 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -10643,7 +10707,7 @@ focus_tree = {
 			}
 			hidden_effect = {
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 6 } } }
+					limit = { NOT = { check_variable = { ruling_party = 6 } } }
 					set_temp_variable = { rul_party_temp = 6 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -10655,7 +10719,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = UKR_party_regions_inaguration
+		id = UKR_party_regions_inauguration
 		icon = {
 			UKR_yanukivich_party = {
 				NOT = { has_country_flag = ukr_revoult_bilo }
@@ -10676,7 +10740,7 @@ focus_tree = {
 		available = { emerging_reactionaries_are_in_power = yes }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus UKR_party_regions_inaguration"
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_party_regions_inauguration"
 			add_political_power = 100
 			hidden_effect = {
 				country_event = { id = ukraine_maidan.16 days = 15 }
@@ -10696,7 +10760,7 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = { focus = UKR_party_regions_inaguration }
+		prerequisite = { focus = UKR_party_regions_inauguration }
 
 		search_filters = { FOCUS_FILTER_UKRAINE_REGIONS FOCUS_FILTER_POLITICAL }
 
@@ -10811,7 +10875,7 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = { focus = UKR_party_regions_inaguration }
+		prerequisite = { focus = UKR_party_regions_inauguration }
 
 		search_filters = { FOCUS_FILTER_UKRAINE_REGIONS FOCUS_FILTER_STABILITY }
 
@@ -11304,7 +11368,7 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = { focus = UKR_party_regions_inaguration }
+		prerequisite = { focus = UKR_party_regions_inauguration }
 
 		search_filters = { FOCUS_FILTER_UKRAINE_REGIONS FOCUS_FILTER_POLITICAL }
 
@@ -14320,7 +14384,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 			}
 			hidden_effect = {
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 2 } } }
+					limit = { NOT = { check_variable = { ruling_party = 2 } } }
 					set_temp_variable = { rul_party_temp = 2 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -16245,6 +16309,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_vitrenko_party"
 			drop_cosmetic_tag = yes
+			clear_variable = dynamic_flag_variant
 			set_cosmetic_tag = UKR_vetrenko
 			clr_country_flag = dynamic_flag
 			add_political_power = 100
@@ -17409,6 +17474,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 			set_temp_variable = { percent_change = 7 }
 			change_domestic_influence_percentage = yes
 			drop_cosmetic_tag = yes
+			clear_variable = dynamic_flag_variant
 			set_cosmetic_tag = UKR_Ruthenia
 			clr_country_flag = dynamic_flag
 			UKR_idea_pro_ukraine_government_reforms = yes
@@ -18136,6 +18202,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 			set_temp_variable = { percent_change = 10 }
 			change_domestic_influence_percentage = yes
 			drop_cosmetic_tag = yes
+			clear_variable = dynamic_flag_variant
 			set_cosmetic_tag = UKR_SlavicUSSR
 			clr_country_flag = dynamic_flag
 			hidden_effect = {
@@ -18169,7 +18236,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_bmz"
 			add_tech_bonus = {
-				name = UKR_Industry_Improvement
+				name = UKR_bmz
 				bonus = 0.25
 				uses = 2
 				category = CAT_industry
@@ -18204,7 +18271,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_nkmz"
 			add_tech_bonus = {
-				name = UKR_Mining_Improvement
+				name = UKR_nkmz
 				bonus = 0.3
 				uses = 2
 				category = CAT_excavation_tech
@@ -18327,7 +18394,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_construction_kovalska"
 			add_tech_bonus = {
-				name = UKR_Construction_Improvement
+				name = UKR_construction_kovalska
 				bonus = 0.5
 				uses = 2
 				category = CAT_construction_tech
@@ -18362,7 +18429,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_train_prod"
 			add_tech_bonus = {
-				name = UKR_train_Improvement
+				name = UKR_train_prod
 				bonus = 1
 				uses = 1
 				category = CAT_infrastructure
@@ -19837,7 +19904,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 			}
 			newline = yes
 			add_tech_bonus = {
-				name = UKR_Network_Improvement
+				name = UKR_it_2
 				bonus = 0.5
 				uses = 3
 				category = CAT_ai
@@ -19907,7 +19974,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_kyivstar"
 			newline = yes
 			add_tech_bonus = {
-				name = UKR_Network_Improvement
+				name = UKR_kyivstar
 				bonus = 0.2
 				uses = 3
 				category = CAT_internet_tech
@@ -21180,7 +21247,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_infra_rail"
 			add_tech_bonus = {
-				name = UKR_Construction_Improvement
+				name = UKR_infra_rail
 				bonus = 0.5
 				uses = 2
 				category = CAT_infrastructure
@@ -21291,13 +21358,13 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_pivdenne_db"
 			add_tech_bonus = {
-				name = UKR_Military_Improvement
+				name = UKR_pivdenne_db
 				bonus = 0.25
 				uses = 1
 				category = CAT_icbm
 			}
 			add_tech_bonus = {
-				name = UKR_Military_Improvement
+				name = UKR_pivdenne_db
 				bonus = 0.15
 				uses = 3
 				category = CAT_OLV
@@ -21332,25 +21399,25 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_luch"
 			add_tech_bonus = {
-				name = UKR_Military_Improvement
+				name = UKR_luch
 				bonus = 0.15
 				uses = 1
 				category = CAT_alcm
 			}
 			add_tech_bonus = {
-				name = UKR_Military_Improvement
+				name = UKR_luch
 				bonus = 0.15
 				uses = 1
 				category = CAT_slcm
 			}
 			add_tech_bonus = {
-				name = UKR_Military_Improvement
+				name = UKR_luch
 				bonus = 0.15
 				uses = 1
 				category = CAT_hscm
 			}
 			add_tech_bonus = {
-				name = UKR_Military_Improvement
+				name = UKR_luch
 				bonus = 0.2
 				uses = 3
 				category = CAT_at
@@ -21392,7 +21459,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_mayak"
 			add_tech_bonus = {
-				name = UKR_Military_Improvement
+				name = UKR_mayak
 				bonus = 0.25
 				uses = 2
 				category = CAT_inf_wep
@@ -21436,7 +21503,7 @@ SOV = { country_event = { id = ukraine_our_ukraine.7 days = 1 } }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_ukrainian_armor"
 			add_tech_bonus = {
-				name = UKR_Military_Improvement
+				name = UKR_ukrainian_armor
 				bonus = 0.15
 				uses = 3
 				category = CAT_inf

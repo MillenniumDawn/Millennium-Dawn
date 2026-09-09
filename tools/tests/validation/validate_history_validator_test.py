@@ -78,6 +78,8 @@ oob = "TST_1990"
 add_ideas = { nuclear_energy }
 complete_special_project = sp:sp_microchip
 complete_special_project = sp:sp_open
+start_politics_input = yes
+set_variable = { ruling_party = 2 }
 set_technology = {
 \troot_tech = 1
 \tchild_tech = 1
@@ -94,6 +96,7 @@ create_equipment_variant = {
 
 _BAD_COUNTRY = """oob = "BAD_missing"
 add_ideas = { non_nuclear_power }
+start_politics_input = yes
 set_technology = {
 \tchild_tech = 1
 \tsp_tech = 1
@@ -175,6 +178,8 @@ def test_each_history_check_reports_its_own_finding(tmp_path):
         "players without that DLC still complete it",
         "BAD - Bad.txt: sp_tech requires special project sp:sp_microchip but it "
         "is not completed at game start [any DLC configuration]",
+        "BAD - Bad.txt: start_politics_input does not assign "
+        "ruling_party (0-23) after it",
         'BAD - Bad.txt: variant "Ghost" uses engine_9 without enabling tech '
         "advanced_engines",
         "BAD: owns a state starting with microchip_plant but never completes "

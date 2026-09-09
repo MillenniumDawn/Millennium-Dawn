@@ -1,18 +1,3 @@
-
-
-SAU_tadawul_promote = {
-	if = { limit = { has_idea = SAU_tadawul_market_t9 } swap_ideas = { remove_idea = SAU_tadawul_market_t9 add_idea = SAU_tadawul_market_t10 } }
-	if = { limit = { has_idea = SAU_tadawul_market_t8 } swap_ideas = { remove_idea = SAU_tadawul_market_t8 add_idea = SAU_tadawul_market_t9 } }
-	if = { limit = { has_idea = SAU_tadawul_market_t7 } swap_ideas = { remove_idea = SAU_tadawul_market_t7 add_idea = SAU_tadawul_market_t8 } }
-	if = { limit = { has_idea = SAU_tadawul_market_t6 } swap_ideas = { remove_idea = SAU_tadawul_market_t6 add_idea = SAU_tadawul_market_t7 } }
-	if = { limit = { has_idea = SAU_tadawul_market_t5 } swap_ideas = { remove_idea = SAU_tadawul_market_t5 add_idea = SAU_tadawul_market_t6 } }
-	if = { limit = { has_idea = SAU_tadawul_market_t4 } swap_ideas = { remove_idea = SAU_tadawul_market_t4 add_idea = SAU_tadawul_market_t5 } }
-	if = { limit = { has_idea = SAU_tadawul_market_t3 } swap_ideas = { remove_idea = SAU_tadawul_market_t3 add_idea = SAU_tadawul_market_t4 } }
-	if = { limit = { has_idea = SAU_tadawul_market_t2 } swap_ideas = { remove_idea = SAU_tadawul_market_t2 add_idea = SAU_tadawul_market_t3 } }
-	if = { limit = { has_idea = SAU_tadawul_market_t1 } swap_ideas = { remove_idea = SAU_tadawul_market_t1 add_idea = SAU_tadawul_market_t2 } }
-	if = { limit = { has_idea = SAU_tadawul_market } swap_ideas = { remove_idea = SAU_tadawul_market add_idea = SAU_tadawul_market_t1 } }
-}
-
 SAU_clear_gulf_doctrines = {
 	if = { limit = { has_idea = SAU_gulf_war_lessons } remove_ideas = SAU_gulf_war_lessons }
 	if = { limit = { has_idea = SAU_doctrine_american } remove_ideas = SAU_doctrine_american }
@@ -531,7 +516,6 @@ SAU_add_crown_points = {
 
 # Crown the prince with the most points. Ties resolve to Salman (most senior). Installs via the generic leader system.
 SAU_resolve_succession = {
-	set_country_flag = set_Kingdom
 	if = {
 		limit = {
 			check_variable = { SAU_mbn_points > SAU_salman_points }
@@ -549,7 +533,7 @@ SAU_resolve_succession = {
 	else = {
 		set_variable = { Kingdom_leader = 0 }
 	}
-	set_leader_SAU = yes
+	set_leader = yes
 	# Hand the Reigning Monarch decisions to the winner: 2 Salman, 3 MBN, 4 Mutaib.
 	if = {
 		limit = {
@@ -699,7 +683,7 @@ SAU_crown_prince_accedes = {
 	else = {
 		set_variable = { Kingdom_leader = 1 }
 	}
-	set_leader_SAU = yes
+	set_leader = yes
 	clr_country_flag = SAU_crown_prince_named
 }
 
@@ -735,6 +719,7 @@ SAU_yemen_tier_down = {
 	else_if = { limit = { has_idea = SAU_yemen_pipeline_t1 }
 		set_temp_variable = { SAU_yemen_tier = 0 } SAU_yemen_set_tier = yes
 		clr_country_flag = SAU_yemen_pipeline_open
+		set_variable = { SAU_yemen_saved_tier = 0 }
 		if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
 	}
 }
@@ -792,6 +777,7 @@ SAU_syria_tier_down = {
 	else_if = { limit = { has_idea = SAU_syria_pipeline_t1 }
 		set_temp_variable = { SAU_syria_tier = 0 } SAU_syria_set_tier = yes
 		clr_country_flag = SAU_syria_pipeline_open
+		set_variable = { SAU_syria_saved_tier = 0 }
 		if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
 	}
 }
@@ -831,6 +817,7 @@ SAU_iraq_tier_down = {
 	else_if = { limit = { has_idea = SAU_iraq_pipeline_t1 }
 		set_temp_variable = { SAU_iraq_tier = 0 } SAU_iraq_set_tier = yes
 		clr_country_flag = SAU_iraq_pipeline_open
+		set_variable = { SAU_iraq_saved_tier = 0 }
 		if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
 		clr_country_flag = SAU_turkey_pipeline_open
 		if = { limit = { country_exists = TUR } TUR = {
@@ -847,13 +834,128 @@ SAU_iraq_tier_up = {
 	else_if = { limit = { has_idea = SAU_iraq_pipeline_t2 } set_temp_variable = { SAU_iraq_tier = 3 } SAU_iraq_set_tier = yes }
 }
 
+# Reopening a route the Kingdom shut down itself resumes at the tier it was closed at, so
+# shutdown-and-reopen cannot stand in for the repair decisions after sabotage.
+
+SAU_restore_route_yemen = {
+	set_temp_variable = { SAU_yemen_tier = 3 }
+	if = {
+		limit = { check_variable = { SAU_yemen_saved_tier > 0 } }
+		set_temp_variable = { SAU_yemen_tier = SAU_yemen_saved_tier }
+		set_variable = { SAU_yemen_saved_tier = 0 }
+	}
+	SAU_yemen_set_tier = yes
+}
+
+SAU_restore_route_syria = {
+	set_temp_variable = { SAU_syria_tier = 3 }
+	if = {
+		limit = { check_variable = { SAU_syria_saved_tier > 0 } }
+		set_temp_variable = { SAU_syria_tier = SAU_syria_saved_tier }
+		set_variable = { SAU_syria_saved_tier = 0 }
+	}
+	SAU_syria_set_tier = yes
+}
+
+SAU_restore_route_iraq = {
+	set_temp_variable = { SAU_iraq_tier = 3 }
+	if = {
+		limit = { check_variable = { SAU_iraq_saved_tier > 0 } }
+		set_temp_variable = { SAU_iraq_tier = SAU_iraq_saved_tier }
+		set_variable = { SAU_iraq_saved_tier = 0 }
+	}
+	SAU_iraq_set_tier = yes
+}
+
+# Pipeline shutdown effects - tier 0 tears the route down through the same set_tier path
+# that built it, so SAU's spirit and every transit partner's come off together.
+
+SAU_close_route_yemen = {
+	if = { limit = { has_idea = SAU_yemen_pipeline_t1 } set_variable = { SAU_yemen_saved_tier = 1 } }
+	else_if = { limit = { has_idea = SAU_yemen_pipeline_t2 } set_variable = { SAU_yemen_saved_tier = 2 } }
+	else = { set_variable = { SAU_yemen_saved_tier = 3 } }
+	set_temp_variable = { SAU_yemen_tier = 0 }
+	SAU_yemen_set_tier = yes
+	clr_country_flag = SAU_yemen_pipeline_open
+	if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
+	add_to_variable = { oil_dependence = -5 }
+	custom_effect_tooltip = SAU_tt_pipeline_shutdown_dependence
+	if = {
+		limit = { country_exists = YEM }
+		YEM = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown } }
+	}
+}
+
+SAU_close_route_syria = {
+	if = { limit = { has_idea = SAU_syria_pipeline_t1 } set_variable = { SAU_syria_saved_tier = 1 } }
+	else_if = { limit = { has_idea = SAU_syria_pipeline_t2 } set_variable = { SAU_syria_saved_tier = 2 } }
+	else = { set_variable = { SAU_syria_saved_tier = 3 } }
+	set_temp_variable = { SAU_syria_tier = 0 }
+	SAU_syria_set_tier = yes
+	clr_country_flag = SAU_syria_pipeline_open
+	if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
+	add_to_variable = { oil_dependence = -5 }
+	custom_effect_tooltip = SAU_tt_pipeline_shutdown_dependence
+	if = {
+		limit = { country_exists = JOR }
+		JOR = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown } }
+	}
+	if = {
+		limit = { country_exists = SYR }
+		SYR = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown } }
+	}
+	if = {
+		limit = { country_exists = FSA }
+		FSA = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown } }
+	}
+}
+
+SAU_close_route_iraq = {
+	SAU_close_route_turkey = yes
+	if = { limit = { has_idea = SAU_iraq_pipeline_t1 } set_variable = { SAU_iraq_saved_tier = 1 } }
+	else_if = { limit = { has_idea = SAU_iraq_pipeline_t2 } set_variable = { SAU_iraq_saved_tier = 2 } }
+	else = { set_variable = { SAU_iraq_saved_tier = 3 } }
+	set_temp_variable = { SAU_iraq_tier = 0 }
+	SAU_iraq_set_tier = yes
+	clr_country_flag = SAU_iraq_pipeline_open
+	if = { limit = { has_idea = SAU_pipeline_empire } remove_ideas = SAU_pipeline_empire }
+	add_to_variable = { oil_dependence = -5 }
+	custom_effect_tooltip = SAU_tt_pipeline_shutdown_dependence
+	if = {
+		limit = { country_exists = IRQ }
+		IRQ = { add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown } }
+	}
+}
+
+# Called on its own from the Turkey decision and folded into the Iraq teardown, since the
+# extension has nothing to carry once the trunk line through Iraq is shut.
+SAU_close_route_turkey = {
+	if = {
+		limit = { has_country_flag = SAU_turkey_pipeline_open }
+		clr_country_flag = SAU_turkey_pipeline_open
+		add_to_variable = { oil_dependence = -3 }
+		custom_effect_tooltip = SAU_tt_pipeline_shutdown_dependence
+		if = {
+			limit = { country_exists = TUR }
+			TUR = {
+				if = { limit = { has_idea = SAU_pipeline_transit_TUR_t1 } remove_ideas = SAU_pipeline_transit_TUR_t1 }
+				if = { limit = { has_idea = SAU_pipeline_transit_TUR_t2 } remove_ideas = SAU_pipeline_transit_TUR_t2 }
+				if = { limit = { has_idea = SAU_pipeline_transit_TUR_t3 } remove_ideas = SAU_pipeline_transit_TUR_t3 }
+				add_opinion_modifier = { target = ROOT modifier = SAU_pipeline_shutdown }
+			}
+		}
+	}
+}
+
 SAU_purge_monarchy_parties = {
 	set_partyall_allowed = yes
 	add_popularity = { ideology = fascism popularity = -1 }
 	set_variable = { party_pop_array^10 = 0 } #Kingdom (House of Saud)
 	set_variable = { party_pop_array^11 = 0 } #Caliphate (Al-Qaeda)
-	set_country_flag = party10_banned
-	set_country_flag = party11_banned
+	set_temp_variable = { party_index = 9 }
+	ban_party_scripted_call = yes
+	set_temp_variable = { party_index = 10 }
+	ban_party_scripted_call = yes
 	recalculate_party = yes
 }
 
@@ -875,7 +977,6 @@ SAU_debug_reset_reign = {
 	clr_country_flag = SAU_crown_prince_race_active
 	clr_country_flag = SAU_crown_prince_named
 	clr_country_flag = SAU_royal_decree_active
-	set_country_flag = set_Kingdom
 }
 
 SAU_faisalite_clear_spirits = {
@@ -916,7 +1017,7 @@ SAU_faisalite_update_balance = {
 	}
 }
 
-# Mirror of SAU_tadawul_promote: walks the index down one tier. Ordered low-to-high so a
+# Mirror of the tier walk inside SAU_tadawul_tier_up, one step down. Ordered low-to-high so a
 # single call cannot cascade a tier past its neighbour.
 SAU_tadawul_demote = {
 	if = { limit = { has_idea = SAU_tadawul_market_t1 } swap_ideas = { remove_idea = SAU_tadawul_market_t1 add_idea = SAU_tadawul_market } }
@@ -1177,6 +1278,11 @@ SAU_succession_dissolve = {
 # inside a limit renders nothing - the player paid the money and saw no reward.
 SAU_tadawul_tier_up = {
 	if = {
+		limit = { has_idea = SAU_tadawul_market_t10 }
+		custom_effect_tooltip = SAU_tadawul_matured_tt
+		one_office_construction = yes
+	}
+	else_if = {
 		limit = { has_idea = SAU_tadawul_market_t9 }
 		effect_tooltip = { add_ideas = SAU_tadawul_market_t10 }
 	}
@@ -1234,7 +1340,7 @@ SAU_tadawul_tier_up = {
 	}
 }
 # Sovereign Waters reads stability: what the Kingdom can promise about water is whatever
-# the country believes about it. Opened by SAU_Soverniy_saudi_company, then monthly.
+# the country believes about it. Opened by SAU_the_sovereign_saudi_water_company, then monthly.
 SAU_water_pride_set_tier = {
 	hidden_effect = {
 		if = { limit = { has_idea = SAU_national_water_pride_minus4 } remove_ideas = SAU_national_water_pride_minus4 }
@@ -1327,4 +1433,3 @@ SAU_pc_set_mandate = {
 # gains were divided away by a growing denominator and the share barely moved.
 
 # Same idea with only two claimants, so the whole gain comes out of the other one.
-

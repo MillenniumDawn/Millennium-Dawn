@@ -1,11 +1,11 @@
 import importlib.util
-import shutil
 import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import gfx_entry_generator as generator
 import pytest
+from shared.suite import imagemagick_available
 
 Image = importlib.import_module("PIL.Image")
 
@@ -25,7 +25,7 @@ md_art_convert = _load_asset("md_art_convert")
 state_gfx = _load_asset("state_gfx")
 
 
-HAS_IMAGEMAGICK = bool(shutil.which("magick") or shutil.which("convert"))
+HAS_IMAGEMAGICK = imagemagick_available()
 requires_imagemagick = pytest.mark.skipif(
     not HAS_IMAGEMAGICK, reason="ImageMagick is not installed"
 )
@@ -80,7 +80,13 @@ def _top_left_tga(image, datatype=2, tail=b""):
     return header + image.tobytes() + tail
 
 
+def _trust_resolved_binaries(monkeypatch):
+    """Every path `which` hands back is a real ImageMagick, for this test."""
+    monkeypatch.setattr(md_art_convert, "_is_imagemagick", lambda _path: True)
+
+
 def test_md_imagemagick_resolution_and_missing_executable(monkeypatch):
+    _trust_resolved_binaries(monkeypatch)
     paths = {"magick": "/tools/magick", "convert": "/tools/convert"}
     monkeypatch.setattr(md_art_convert.shutil, "which", paths.get)
     assert md_art_convert.imagemagick() == ["/tools/magick"]
@@ -93,7 +99,35 @@ def test_md_imagemagick_resolution_and_missing_executable(monkeypatch):
         md_art_convert.imagemagick()
 
 
+def test_a_convert_that_is_not_imagemagick_is_rejected(monkeypatch):
+    """Windows' own convert.exe must never be driven as an image converter."""
+    monkeypatch.setattr(
+        md_art_convert.shutil,
+        "which",
+        lambda name: "C:/Windows/system32/convert.exe" if name == "convert" else None,
+    )
+    monkeypatch.setattr(
+        md_art_convert.subprocess,
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            stdout="Converts FAT volumes to NTFS.", stderr=""
+        ),
+    )
+    with pytest.raises(SystemExit, match="ImageMagick not found"):
+        md_art_convert.imagemagick()
+
+
+def test_a_probe_that_cannot_run_the_binary_rejects_it(monkeypatch):
+    monkeypatch.setattr(
+        md_art_convert.subprocess,
+        "run",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("nope")),
+    )
+    assert md_art_convert._is_imagemagick("/tools/magick") is False
+
+
 def test_image_size_uses_magick_identify_subcommand(monkeypatch):
+    _trust_resolved_binaries(monkeypatch)
     monkeypatch.setattr(
         md_art_convert.shutil,
         "which",
@@ -111,6 +145,7 @@ def test_image_size_uses_magick_identify_subcommand(monkeypatch):
 
 
 def test_pixels_match_uses_magick_compare(monkeypatch):
+    _trust_resolved_binaries(monkeypatch)
     executables = {"magick": "/usr/bin/magick"}
     monkeypatch.setattr(md_art_convert.shutil, "which", executables.get)
     calls = []
@@ -125,6 +160,8 @@ def test_pixels_match_uses_magick_compare(monkeypatch):
 
 
 def test_pixels_match_uses_compare_binary(monkeypatch):
+    _trust_resolved_binaries(monkeypatch)
+
     def which(name):
         return {"convert": "/usr/bin/convert", "compare": "/usr/bin/compare"}.get(name)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Validate technology prerequisites, equipment module unlocks, DLC gating,
-and special-project requirements in history files."""
+special-project requirements, and ruling_party seeding in history files."""
 
 import glob
 import os
@@ -53,6 +53,16 @@ _OOB_REF_RE = re.compile(r'(oob|set_oob|set_air_oob|set_naval_oob)\s*=\s*"([^"]+
 # Anchored to line start (indent-tolerant for DLC-guarded blocks) so a
 # `capital = N` inside a quoted string mid-line can't count as a real capital.
 _CAPITAL_RE = re.compile(r"^\s*capital\s*=\s*\d+", re.MULTILINE)
+_DATE_BLOCK_RE = re.compile(r"^(\d{4}\.\d{1,2}\.\d{1,2})\s*=\s*\{", re.MULTILINE)
+_START_POLITICS_INPUT_RE = re.compile(
+    r"^\s*start_politics_input\s*=\s*yes\b", re.MULTILINE
+)
+# First key in the set_variable block so set_politics = { ruling_party = democratic }
+# does not count as the MD party index.
+_RULING_PARTY_VAR_RE = re.compile(
+    r"set_variable\s*=\s*\{\s*ruling_party\s*=\s*(-?\d+)\s*\}",
+    re.MULTILINE,
+)
 # `complete_special_project = sp:sp_X` lines grant a country the special project
 # at game start. Used to detect techs whose `allow` block requires an SP the
 # country has not completed.
@@ -1325,6 +1335,51 @@ def validate_capital_defined(filepath: str) -> List[str]:
     return []
 
 
+def validate_ruling_party_assigned(filepath: str) -> List[str]:
+    """start_politics_input clears ruling_party; the same date block must set it."""
+    filename = os.path.basename(filepath)
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            content = strip_comments(f.read())
+    except Exception:
+        return [f"{filename}: could not read file"]
+
+    matches = list(_DATE_BLOCK_RE.finditer(content))
+    if matches:
+        blocks: List[Tuple[str, str]] = []
+        preamble = content[: matches[0].start()]
+        if preamble.strip():
+            blocks.append(("", preamble))
+        for m in matches:
+            body_end = _match_brace_end(content, m.end())
+            blocks.append((m.group(1), content[m.end() : body_end - 1]))
+    else:
+        blocks = [("", content)]
+
+    results = []
+    for label, body in blocks:
+        inputs = list(_START_POLITICS_INPUT_RE.finditer(body))
+        if not inputs:
+            continue
+        clear_at = inputs[-1].start()
+        for m in _RULING_PARTY_VAR_RE.finditer(body):
+            if m.start() <= clear_at:
+                continue
+            try:
+                idx = int(m.group(1))
+            except ValueError:
+                continue
+            if 0 <= idx <= 23:
+                break
+        else:
+            where = f"{label}: " if label else ""
+            results.append(
+                f"{filename}: {where}start_politics_input does not assign "
+                "ruling_party (0-23) after it"
+            )
+    return results
+
+
 def validate_country_file(
     args: Tuple[str, Dict[str, Set[str]], Set[str], str],
 ) -> List[str]:
@@ -1610,6 +1665,23 @@ class Validator(BaseValidator):
             "History files missing a capital definition:",
         )
 
+    def validate_ruling_party_assigned(self):
+        """Check that start_politics_input is followed by a ruling_party index."""
+        self._log_section("Checking ruling_party assignments in history files...")
+
+        files = self._get_history_files()
+        self.log(f"  Found {len(files)} history files to check")
+
+        results = []
+        for f in files:
+            results.extend(validate_ruling_party_assigned(f))
+
+        self._report(
+            results,
+            "✓ All start_politics_input blocks assign ruling_party after the clear",
+            "History files whose start_politics_input does not assign ruling_party:",
+        )
+
     def validate_reactor_nuclear_status(self):
         """Validate that every tag owning a nuclear_reactor at game start
         grants a non-default nuclear_status idea in its country file."""
@@ -1667,6 +1739,7 @@ class Validator(BaseValidator):
         self.validate_sp_output_consistency()
         self.validate_oob_references()
         self.validate_capital_defined()
+        self.validate_ruling_party_assigned()
         self._build_building_ownership()
         self.validate_reactor_nuclear_status()
         self.validate_project_granted_buildings()
@@ -1675,5 +1748,5 @@ class Validator(BaseValidator):
 if __name__ == "__main__":
     run_validator_main(
         Validator,
-        "Validate history files: technology dependencies, OOB references, capital definitions",
+        "Validate history files: technology dependencies, OOB references, capital and ruling_party",
     )

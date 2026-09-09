@@ -38,12 +38,16 @@ Each option's log must match its own ID — copy-paste errors between `.a` and `
 	option = {
 		name = tag_ns.N.a
 		log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"  # .a not .b
+		add_political_power = 25
 	}
 	option = {
 		name = tag_ns.N.b
 		log = "[GetDateText]: [This.GetName]: tag_ns.N.b executed"  # .b not .a
+		add_stability = -0.02
 	}
 ```
+
+Only an option that runs effects gets a log — a dismiss option carrying nothing but `name`, `trigger` and `ai_chance` logs a state change that never happened, and `validate_events` reports it as `event-option-log-without-effect`.
 
 ## Example: Multi-Option Cross-Country Event
 
@@ -171,6 +175,12 @@ news_event = {
 	}
 }
 ```
+
+### Picture format
+
+A news event's picture is a different shape from a country event's, and each window draws its picture at the texture's native size, so the wrong one overflows the frame or leaves a gap. News art is wide (`397x153` dominant, `400x150` and `500x250` also in use); country art is nearly square (`217x163` dominant). Sprite names do not tell them apart — `GFX_trade_agreement` is news art and `GFX_FRA_eiffel_tower_news` is not — so check the texture before reusing a picture across the two event types. `validate_events` → `event-picture-format-mismatch` (WARNING) reports a swap.
+
+A `hidden = yes` event opens no window, so a `picture` on one is dead data and is reported as `hidden-event-picture`.
 
 ## Conditional Descriptions
 
