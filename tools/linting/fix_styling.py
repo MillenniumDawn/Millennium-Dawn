@@ -92,6 +92,19 @@ class StagedDiffError(RuntimeError):
     pass
 
 
+def _discovery_env():
+    """Environment for repo discovery, with any inherited repo binding dropped.
+
+    Git exports an absolute `GIT_DIR` to its hooks, and in a worktree that makes
+    `rev-parse --show-toplevel` answer with the directory it was run from rather
+    than the repo root, collapsing every path to its basename.
+    """
+    env = os.environ.copy()
+    env.pop("GIT_DIR", None)
+    env.pop("GIT_WORK_TREE", None)
+    return env
+
+
 def _repo_path(filepath):
     absolute = os.path.abspath(filepath)
     parent = absolute if os.path.isdir(absolute) else os.path.dirname(absolute)
@@ -105,7 +118,7 @@ def _repo_path(filepath):
             text=True,
             check=False,
             timeout=15,
-            env=discovery_env,
+            env=_discovery_env(),
         )
     except (OSError, subprocess.SubprocessError) as error:
         raise StagedDiffError(

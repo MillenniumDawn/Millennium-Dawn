@@ -76,7 +76,7 @@ Every text-mode write in `tools/` must pass `newline=""`. Without it, Python's t
 - Pure notifications get `minor_flavor = yes`. When many sources deliver to one country, batch them into a single report event instead of one event per delivery, and keep the payload at the delivery site (rules and traps: `.claude/docs/event-reference.md`)
 - Describe an effect with `effect_tooltip = { <the real effect> }` before writing a new `custom_effect_tooltip` loc key
 - Every `picture = GFX_*` must resolve to a sprite defined in `interface/*.gfx` — MD must not use vanilla event pictures. An undefined name is a commit blocker (`validate_events` → `missing-event-picture`), so grep `interface/` for it before writing it
-- Match the picture to the window: news art is wide (`397x153`), country art nearly square (`217x163`), and each window draws it at native size, so a swap overflows or under-fills the frame. Names do not tell them apart (`GFX_trade_agreement` is news art) — check the texture (`event-picture-format-mismatch`). A `hidden = yes` event renders nothing, so it takes no `picture` (`hidden-event-picture`)
+- Match the picture to the window: news art is wide (`397x153`), country art nearly square (`217x163`), and each window draws it at native size, so a swap overflows or under-fills the frame. Names do not tell them apart (`GFX_china_trade_war` is news art) — check the texture (`event-picture-format-mismatch`). A `hidden = yes` event renders nothing, so it takes no `picture` (`hidden-event-picture`)
 - Ref: `.claude/docs/event-reference.md`
 
 ## Ideas
@@ -128,6 +128,7 @@ Keep all output token-efficient: conversation replies, agent hand-back reports, 
 - [Formables](.claude/docs/formable-reference.md) (read before editing `formable_nation_decisions.txt`, the EU end-states/EFS, UAR, or any union cosmetic — every formation path, the AI commitment ratchet, and the special-formable sentinel)
 - [Faction Rules](.claude/docs/faction-rules.md) | [Typo Watchlist](.claude/docs/typo-watchlist.md)
 - [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`)
+- [Party Localisation](.claude/docs/party-loc-reference.md) (read before adding or reworking any `TAG.<subideology>` party key — the loc block alone is dead without its scripted-localisation hooks)
 - [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) + [Patterns](.claude/docs/scripted-gui-patterns.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
 - [MD Custom Modifiers](.claude/docs/md-custom-modifiers.md) — non-vanilla modifier keys in `common/modifier_definitions/`
 - [Loading Screens](.claude/docs/loading-screen-system.md) (read before touching `gfx/loadingscreens/` or the menu background picker)
