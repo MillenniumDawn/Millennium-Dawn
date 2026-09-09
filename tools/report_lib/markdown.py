@@ -31,11 +31,14 @@ MAX_NEW_FINDINGS_COMMENT = 40
 MAX_ISSUES_STEP_SUMMARY = 1000
 # How many issues to show inside one collapsed category block.
 MAX_PER_CATEGORY = 100
+# Rows in the per-category breakdown table.
+MAX_CATEGORY_ROWS = 25
 
 # Shown once above the issue list when there is anything to fix.
 _LEGEND = "_Errors block merge. Warnings are advisory and won't fail CI._"
 _NEW_FINDINGS_HEADING = "New Findings Introduced by this branch."
 _IN_PR_HEADING = "Findings in your PR"
+_CATEGORY_HEADING = "Findings by category"
 # Statuses that mean a run produced no usable result, so it cannot count as passed.
 _INCOMPLETE_STATUSES = {"unknown", "no_output"}
 
@@ -94,6 +97,11 @@ def render(
     summary = _render_summary_table(runs, new_errors)
     if summary:
         parts.append(summary)
+        parts.append("")
+
+    categories = _render_category_section(issues, baseline_stats)
+    if categories:
+        parts.append(categories)
         parts.append("")
 
     findings_cap = (
@@ -437,6 +445,52 @@ def _render_summary_table(
         rows = [_table_row(r.title, r.errors, r.warnings) for r in table_runs]
         rows.append(_table_row("Total", total_errors, total_warnings, bold=True))
     return "## Mod tests\n\n" + header + "\n" + "\n".join(rows) + passed_note
+
+
+def _render_category_section(
+    issues: List[Issue], baseline_stats: Optional["BaselineStats"] = None
+) -> str:
+    """Per-category counts, so a category name is visible without the step summary.
+
+    The per-validator issue lists only render in the step summary, and a
+    backlog that predates the baseline reaches neither the new-findings nor
+    the in-PR section, so its category is otherwise invisible in the comment.
+    """
+    counts: Dict[str, List[int]] = defaultdict(lambda: [0, 0, 0])
+    for issue in issues:
+        if issue.severity == Severity.ERROR:
+            index = 0
+        elif issue.severity == Severity.WARNING:
+            index = 1
+        else:
+            continue
+        row = counts[issue.category or "uncategorised"]
+        row[index] += 1
+        if baseline_stats is not None and issue.baseline_status == "new":
+            row[2] += 1
+    if not counts:
+        return ""
+
+    ordered = sorted(counts.items(), key=lambda kv: (-kv[1][0], -kv[1][1], kv[0]))
+    shown = ordered[:MAX_CATEGORY_ROWS]
+
+    if baseline_stats is not None:
+        header = "| Category | New | Errors | Warnings |\n|----------|----:|-------:|---------:|"
+        rows = [
+            _table_row(_humanize(cat), errors, warnings, new)
+            for cat, (errors, warnings, new) in shown
+        ]
+    else:
+        header = "| Category | Errors | Warnings |\n|----------|-------:|---------:|"
+        rows = [
+            _table_row(_humanize(cat), errors, warnings)
+            for cat, (errors, warnings, _new) in shown
+        ]
+    body = f"## {_CATEGORY_HEADING}\n\n" + header + "\n" + "\n".join(rows)
+    hidden = len(ordered) - len(shown)
+    if hidden:
+        body += f"\n\n_…and {hidden:,} more categories._"
+    return body
 
 
 # ── Issues section ─────────────────────────────────────────────────────────────
