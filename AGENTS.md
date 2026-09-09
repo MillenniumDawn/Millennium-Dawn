@@ -128,6 +128,7 @@ Keep all output token-efficient: conversation replies, agent hand-back reports, 
 - [Formables](.claude/docs/formable-reference.md) (read before editing `formable_nation_decisions.txt`, the EU end-states/EFS, UAR, or any union cosmetic — every formation path, the AI commitment ratchet, and the special-formable sentinel)
 - [Faction Rules](.claude/docs/faction-rules.md) | [Typo Watchlist](.claude/docs/typo-watchlist.md)
 - [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`)
+- [Party Localisation](.claude/docs/party-loc-reference.md) (read before adding or reworking any `TAG.<subideology>` party key — the loc block alone is dead without its scripted-localisation hooks)
 - [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) + [Patterns](.claude/docs/scripted-gui-patterns.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
 - [MD Custom Modifiers](.claude/docs/md-custom-modifiers.md) — non-vanilla modifier keys in `common/modifier_definitions/`
 - [Loading Screens](.claude/docs/loading-screen-system.md) (read before touching `gfx/loadingscreens/` or the menu background picker)
