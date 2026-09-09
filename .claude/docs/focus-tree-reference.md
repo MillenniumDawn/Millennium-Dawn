@@ -68,6 +68,8 @@ A **shared focus** lives in one tree file and appears in several countries' tree
 
 Joint focuses pick a `text_icon` titlebar style matching the joint set (`JOINT_BEL_LUX_HOL_focus_style`, `JOINT_HOL_focus_style`, etc.), defined in `common/national_focus/00_titlebar_styles.txt`.
 
+Focus **titles carry no `§` color codes**, and descriptions use only `§Y` / `§G` / `§R` — see [Color Codes](localisation-rules.md#color-codes).
+
 ## Example: Basic Focus
 
 ```

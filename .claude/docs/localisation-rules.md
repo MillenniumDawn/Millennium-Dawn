@@ -29,8 +29,29 @@
 - **No ellipsis abuse.** Do not use `...` in descriptions or tooltips.
 - **No em dashes** (`—`) in player-facing strings. Use a period when the clause stands alone ("Their economy answers to us. Their borders remain intact."), a comma for a participial phrase ("...transfers weekly, appearing as a new expense..."), or a colon to introduce a list or requirement ("Requires war contribution: one battle won or three months at war."). Em dashes read as soft connectors and almost always replace one of those three.
 - Capitalize proper nouns, party names, ideology group names, and in-game concepts (e.g., Political Power, Stability).
-- No all-caps for emphasis; use in-game formatting codes if needed (e.g., `£icon`, `§Y...§!`).
+- No all-caps for emphasis; use in-game formatting codes if needed (e.g., `£icon`, `§Y...§!`). Which color code to reach for is fixed — see [Color Codes](#color-codes).
 - **No padding filler.** Every sentence should carry real information — founding facts, political orientation, mechanical implication, alignment. Sentences that restate the title or fill space with "the party has remained influential over the years" add nothing. Applies to subideology descs, focus descs, idea descs, event flavour, and option text alike.
+
+## Color Codes
+
+A color code is `§X`, closed by `§!`. The mod uses **three** of them, chosen by what the text means, never by taste:
+
+| Code | Use for                                                                      |
+| ---- | ---------------------------------------------------------------------------- |
+| `§Y` | a key term, proper noun, programme name, or a `[TAG.GetNameWithFlag]` getter |
+| `§G` | a positive outcome: a gain, a bonus, a granted capability                    |
+| `§R` | a negative outcome: a cost, a malus, or a mechanical warning                 |
+
+Rules:
+
+- **Focus titles take no color at all.** The node's own frame already conveys state, so a colored title only competes with it. Color belongs in the description and the tooltip.
+- `§H` renders the identical RGB to `§Y` (`255 189 0` in `interface/core.gfx`). Write `§Y`.
+- The `§0`–`§9` gradient codes exist for graph series. Never use them in prose.
+- Do not build a per-country palette (a color per political party, per branch, per coup path). It reads as noise once a player moves between trees.
+- Colour only the term that carries the meaning, not the whole sentence.
+- One exception: text that **names a color the player can see elsewhere** picks the code matching that rendered color. `GCC_map_mode_tooltip_delayed` labels its map-mode legend `§CTeal§!` because the map really is teal.
+
+Enforced for focus name and `_desc` keys by `validate_focus_tree.py` (`focus-title-color-code`, `focus-desc-color-palette`).
 
 ## Subideology Localisation Format
 
