@@ -157,6 +157,12 @@ def test_exposure_roll_is_single_and_host_home_penalties_are_deduplicated():
     assert "TOP_operation_protection_country = TOP_authorized_host" in exposure
     assert "TOP_operation_protection_country = THIS" in exposure
     assert exposure.count("modifier = TOP_sovereignty_violation") == 2
+    assert (
+        exposure.count(
+            "add_opinion_modifier = { target = PREV modifier = TOP_sovereignty_violation }"
+        )
+        == 2
+    )
     assert "TOP_start_exposed_kill_crisis = yes" in exposure
 
 

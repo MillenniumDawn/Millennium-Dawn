@@ -125,6 +125,7 @@ class TargetScript(TargetedScript):
         self.state(102, 3)
         self.run("TOP_setup_registry", 1)
         self.globals.update(
+            TOP_rule_enabled=1,
             TOP_active_targets=ScriptArray(),
             active_terror_orgs=ScriptArray([0, 10]),
             active_terror_org_threat_lvl=ScriptArray([50, 40]),
@@ -693,6 +694,7 @@ def test_disabled_rule_keeps_global_and_country_state_inert():
     script = TargetScript()
     script.target()
     script.mode = "TOP_disabled_option"
+    script.globals["TOP_rule_enabled"] = 0
     before = deepcopy((script.globals, script.countries))
     script.call("TOP_capture_target", TARGET=11)
     script.call("TOP_import_target_location", 2, TARGET=12)
