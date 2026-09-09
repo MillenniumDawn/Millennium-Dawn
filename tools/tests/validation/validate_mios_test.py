@@ -304,6 +304,12 @@ equipments = {
 \t\treliability = 0.9
 \t\tmax_organisation = 0.2
 \t}
+\tcorvette = {
+\t\tis_archetype = yes
+\t\ttype = screen_ship
+\t\treliability = 0.9
+\t\tbuild_cost_ic = 900
+\t}
 }
 """
 
@@ -318,7 +324,7 @@ def _equipment_index(tmp_path):
 def _run_org_check(tmp_path, body, org_id="TST_org"):
     v = _validator(tmp_path)
     v._org_bodies = {org_id: body}
-    v._check_org_equipment_bonus(org_id, body, "f.txt", 0, _equipment_index(tmp_path))
+    v._check_org_trait_bonuses(org_id, body, "f.txt", 0, _equipment_index(tmp_path))
     return v
 
 
@@ -423,9 +429,7 @@ def test_include_supplies_the_equipment_type(tmp_path):
     )
     v = _validator(tmp_path)
     v._org_bodies = {"TST_org": body, "generic_shared": shared}
-    v._check_org_equipment_bonus(
-        "TST_org", body, "f.txt", 0, _equipment_index(tmp_path)
-    )
+    v._check_org_trait_bonuses("TST_org", body, "f.txt", 0, _equipment_index(tmp_path))
     assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
 
 
@@ -468,10 +472,78 @@ def test_commented_out_bonus_is_ignored(tmp_path):
     v = _validator(tmp_path)
     body = V.blank_comments(body)
     v._org_bodies = {"TST_org": body}
-    v._check_org_equipment_bonus(
-        "TST_org", body, "f.txt", 0, _equipment_index(tmp_path)
-    )
+    v._check_org_trait_bonuses("TST_org", body, "f.txt", 0, _equipment_index(tmp_path))
     assert not v._issues
+
+
+# ---- naval production_bonus checks (issue #3878) ---------------------------
+
+
+def _production_org(equipment_type: str, bonus: str, limit: str = "") -> str:
+    return (
+        f"\tequipment_type = {{ {equipment_type} }}\n"
+        "\ttrait = {\n"
+        "\t\ttoken = TST_trait\n"
+        f"{limit}"
+        f"\t\tproduction_bonus = {{ {bonus} }}\n"
+        "\t}\n"
+    )
+
+
+def test_efficiency_bonus_on_a_wholly_naval_scope_is_flagged(tmp_path):
+    body = _production_org("corvette", "production_efficiency_gain_factor = 0.10")
+    v = _run_org_check(tmp_path, body)
+    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
+    assert v._issues[0].severity == "error"
+    assert "corvette" in v._issues[0].message
+
+
+def test_conversion_speed_on_a_wholly_naval_scope_is_flagged(tmp_path):
+    body = _production_org("corvette", "production_conversion_speed_factor = 0.15")
+    v = _run_org_check(tmp_path, body)
+    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
+
+
+def test_type_category_token_counts_as_naval(tmp_path):
+    """`equipment_type` accepts a type category, which owns no `types` entry of
+    its own and so only resolves through the category set."""
+    body = _production_org("screen_ship", "production_efficiency_cap_factor = 0.08")
+    v = _run_org_check(tmp_path, body)
+    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
+
+
+def test_efficiency_bonus_on_a_land_scope_passes(tmp_path):
+    body = _production_org("AA_Equipment", "production_efficiency_gain_factor = 0.10")
+    assert not _run_org_check(tmp_path, body)._issues
+
+
+def test_live_production_keys_on_a_naval_scope_pass(tmp_path):
+    body = _production_org(
+        "corvette",
+        "production_capacity_factor = 0.10 production_cost_factor = -0.05",
+    )
+    assert not _run_org_check(tmp_path, body)._issues
+
+
+def test_mixed_naval_scope_is_its_own_category(tmp_path):
+    body = _production_org(
+        "AA_Equipment corvette", "production_efficiency_gain_factor = 0.10"
+    )
+    v = _run_org_check(tmp_path, body)
+    assert [i.category for i in v._issues] == ["mio-production-bonus-partial-naval"]
+    assert v._issues[0].severity == "warning"
+    assert "corvette" in v._issues[0].message
+    assert "AA_Equipment" in v._issues[0].message
+
+
+def test_limit_to_equipment_type_narrows_a_mixed_org_onto_ships(tmp_path):
+    body = _production_org(
+        "AA_Equipment corvette",
+        "production_efficiency_gain_factor = 0.10",
+        limit="\t\tlimit_to_equipment_type = { corvette }\n",
+    )
+    v = _run_org_check(tmp_path, body)
+    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
 
 
 def test_nested_policy_form_checks_each_archetype_separately(tmp_path):
@@ -836,9 +908,7 @@ def test_include_pointing_at_an_unknown_org_supplies_nothing(tmp_path):
     )
     v = _validator(tmp_path)
     v._org_bodies = {"TST_org": body}
-    v._check_org_equipment_bonus(
-        "TST_org", body, "f.txt", 0, _equipment_index(tmp_path)
-    )
+    v._check_org_trait_bonuses("TST_org", body, "f.txt", 0, _equipment_index(tmp_path))
     assert not v._issues
 
 

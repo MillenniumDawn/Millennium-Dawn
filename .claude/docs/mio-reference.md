@@ -70,6 +70,8 @@ Used inside `organization_modifier = { ... }` blocks.
 
 Used inside `production_bonus = { ... }` blocks. Equipment types the key applies to in parentheses.
 
+Ships are built in dockyards, which have no production-efficiency mechanic, so the three `(non-naval)` keys below are wholly inert on a naval roster. `validate_mios.py` enforces it: `mio-production-bonus-naval` (ERROR, gates) when every equipment the trait reaches is a ship, `mio-production-bonus-partial-naval` (WARNING) when only part of it is. Use `production_capacity_factor`, `production_cost_factor`, `production_resource_need_factor` or `production_resource_penalty_factor` on a naval MIO instead.
+
 - `production_capacity_factor` (All) — Increases production output (items produced per day). Example: `= 0.1`
 - `production_conversion_speed_factor` (non-naval) — Speed at which equipment conversions are performed. Example: `= 0.5`
 - `production_cost_factor` (All) — Reduces production cost. Example: `= 0.05`

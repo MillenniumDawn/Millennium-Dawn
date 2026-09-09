@@ -16,6 +16,8 @@ Rules from .claude/docs/mio-reference.md + AGENTS.md:
     localisation key (TAG_<key> fallback included)
   * equipment_bonus stats reach equipment that declares a base for them, since
     the bonus is a percentage and 10% of an undeclared stat is still nothing
+  * production_bonus efficiency and conversion keys never sit on a wholly naval
+    roster — ships are built in dockyards, which have no production efficiency
   * percentage-type organization_modifier keys stay inside -1..1 — a whole
     number there is a dropped decimal point that silently breaks the org
   * every `mio:<org>` reference names a real org, and the org is reachable from
@@ -36,7 +38,17 @@ import glob
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, FrozenSet, List, Optional, Sequence, Set, Tuple, Union
+from typing import (
+    Dict,
+    FrozenSet,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 from equipment_module_slots import blank_comments
 from equipment_stats import EquipmentStatIndex, build_equipment_stat_index
@@ -179,6 +191,17 @@ NON_STAT_BONUS_KEYS = frozenset(
         "production_efficiency_gain_factor",
         "production_efficiency_cap_factor",
         "production_resource_penalty_factor",
+    }
+)
+
+# production_bonus keys the engine only applies to a line that accumulates
+# production efficiency. Ships are built in dockyards, which have none, so all
+# three are inert on a wholly naval roster.
+NON_NAVAL_PRODUCTION_KEYS = frozenset(
+    {
+        "production_conversion_speed_factor",
+        "production_efficiency_cap_factor",
+        "production_efficiency_gain_factor",
     }
 )
 
@@ -430,18 +453,37 @@ class Validator(BaseValidator):
         if self._org_allowed is not None:
             return self._org_allowed
         allowed: Dict[str, FrozenSet[str]] = {}
+        for org_id, body in self._iter_all_org_blocks():
+            blocks = _sub_blocks(body, "allowed")
+            tags = ORIGINAL_TAG_RE.findall(blocks[0][1]) if blocks else []
+            allowed[org_id] = frozenset(tags)
+        self._org_allowed = allowed
+        return allowed
+
+    def _iter_all_org_blocks(self) -> Iterator[Tuple[str, str]]:
+        """(org id, block body) for every org in the dir, staged filter ignored.
+
+        Both callers need the whole universe rather than the staged subset: a
+        staged focus file has to resolve against orgs nobody touched, and
+        `include = <org>` reaches across files.
+        """
         for filepath in self._collect_files([f"{ORG_DIR}/*.txt"], ignore_staged=True):
             try:
                 text = blank_comments(Path(filepath).read_text(encoding="utf-8"))
             except (OSError, UnicodeDecodeError):
                 continue
             for start, end, org_id in _block_spans(text):
-                body = text[start:end]
-                blocks = _sub_blocks(body, "allowed")
-                tags = ORIGINAL_TAG_RE.findall(blocks[0][1]) if blocks else []
-                allowed[org_id] = frozenset(tags)
-        self._org_allowed = allowed
-        return allowed
+                yield org_id, text[start:end]
+
+    def _load_org_bodies(self) -> Dict[str, str]:
+        """org id -> its block body.
+
+        Built up front rather than as files are visited: the dir sorts
+        `MD_UKR_organizations.txt` before `MD_generic_organization.txt`, so a
+        lazily-filled map silently drops the equipment scope of every org whose
+        `include` target sorts after it.
+        """
+        return dict(self._iter_all_org_blocks())
 
     def _country_tags(self) -> FrozenSet[str]:
         """Every tag declared in common/country_tags/."""
@@ -505,7 +547,7 @@ class Validator(BaseValidator):
 
         loc_keys = self._load_localisation_keys()
         equipment = build_equipment_stat_index(self.mod_path)
-        self._org_bodies = {}
+        self._org_bodies = self._load_org_bodies()
 
         org_count = 0
         for filepath in files:
@@ -521,7 +563,6 @@ class Validator(BaseValidator):
             for start, end, org_id in _block_spans(clean):
                 org_count += 1
                 body = clean[start:end]
-                self._org_bodies[org_id] = body
                 body_offset = clean.count("\n", 0, start)
                 self._check_id(org_id, rel, body_offset)
                 self._check_allowed(org_id, body, rel, body_offset)
@@ -532,9 +573,7 @@ class Validator(BaseValidator):
                 self._check_on_complete(body, rel, body_offset)
                 self._check_header_text(org_id, body, rel, body_offset, loc_keys)
                 self._check_trait_localisation(org_id, body, rel, body_offset, loc_keys)
-                self._check_org_equipment_bonus(
-                    org_id, body, rel, body_offset, equipment
-                )
+                self._check_org_trait_bonuses(org_id, body, rel, body_offset, equipment)
 
         for filepath in bonus_files:
             try:
@@ -967,7 +1006,7 @@ class Validator(BaseValidator):
         With *allow_partial* a stat that reaches only part of the scope is
         accepted and just a wholly dead one is reported, which is the shape an
         ``initial_trait`` has no way to fix (see
-        :meth:`_check_org_equipment_bonus`).
+        :meth:`_check_org_trait_bonuses`).
         """
         for m in BONUS_STAT_RE.finditer(inner):
             stat = m.group(1)
@@ -997,7 +1036,45 @@ class Validator(BaseValidator):
                     line,
                 )
 
-    def _check_org_equipment_bonus(
+    def _report_production_bonus(
+        self,
+        inner: str,
+        scope: Dict[str, FrozenSet[str]],
+        equipment: EquipmentStatIndex,
+        rel: str,
+        line_of,
+    ):
+        """Flag every efficiency or conversion key in one production_bonus block
+        whose equipment scope is wholly or partly naval."""
+        naval = sorted(name for name in scope if equipment.is_naval(name))
+        if not naval:
+            return
+        for m in BONUS_STAT_RE.finditer(inner):
+            key = m.group(1)
+            if key not in NON_NAVAL_PRODUCTION_KEYS:
+                continue
+            line = line_of(m.start())
+            if len(naval) == len(scope):
+                self.add_error(
+                    "mio-production-bonus-naval",
+                    f"production_bonus '{key}' is inert: ships have no "
+                    f"production efficiency, and this trait only reaches "
+                    f"{', '.join(naval)}",
+                    rel,
+                    line,
+                )
+            else:
+                live = sorted(set(scope) - set(naval))
+                self.add_warning(
+                    "mio-production-bonus-partial-naval",
+                    f"production_bonus '{key}' is inert on {', '.join(naval)} "
+                    f"(ships have no production efficiency); it only applies to "
+                    f"{', '.join(live)}",
+                    rel,
+                    line,
+                )
+
+    def _check_org_trait_bonuses(
         self,
         org_id: str,
         body: str,
@@ -1005,6 +1082,9 @@ class Validator(BaseValidator):
         body_offset: int,
         equipment: EquipmentStatIndex,
     ):
+        """Both bonus blocks a trait can carry, against the equipment it reaches:
+        dead ``equipment_bonus`` stats and naval-inert ``production_bonus`` keys.
+        """
         org_types = self._org_equipment_types(org_id, body)
         if not org_types:
             return
@@ -1032,6 +1112,15 @@ class Validator(BaseValidator):
                     rel,
                     lambda pos, o=offset, b=bonus: o + b.count("\n", 0, pos) + 1,
                     allow_partial=is_initial,
+                )
+            for bonus_start, bonus in _sub_blocks(inner, "production_bonus"):
+                offset = inner_offset + inner.count("\n", 0, bonus_start)
+                self._report_production_bonus(
+                    bonus,
+                    scope,
+                    equipment,
+                    rel,
+                    lambda pos, o=offset, b=bonus: o + b.count("\n", 0, pos) + 1,
                 )
 
     def _check_nested_equipment_bonus(

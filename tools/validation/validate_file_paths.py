@@ -5,6 +5,11 @@ Windows resolves paths case-insensitively and Linux does not, so a mod file whos
 path differs from a vanilla one only in case replaces it on Windows but loads
 beside it on Linux. The two platforms then checksum different file sets and
 cannot play multiplayer together.
+
+It also checks the format a texture ships in, which is a property of the name
+rather than the bytes: MD converts delivered art to DDS (TGA for flags) with
+tools/assets/md_art_convert.py, so a PNG or PSD under a content root is art that
+skipped that step.
 """
 
 import os
@@ -52,6 +57,11 @@ _WINDOWS_RESERVED = (
     | {f"COM{i}" for i in range(1, 10)}
     | {f"LPT{i}" for i in range(1, 10)}
 )
+
+# .bmp is absent on purpose: map/ ships provinces, heightmap, terrain, rivers and
+# cities as BMP and the engine requires that format there.
+_WORKING_FILE_EXTENSIONS = frozenset({".psd", ".xcf"})
+_UNCOMPRESSED_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg"})
 
 
 def parse_checksum_manifest(text: str) -> List[Tuple[str, str, bool]]:
@@ -189,6 +199,16 @@ def windows_name_problem(path: str) -> Optional[str]:
     return None
 
 
+def source_art_problem(path: str) -> Optional[str]:
+    """Why this file must not ship in this format, or None when it may."""
+    extension = os.path.splitext(path)[1].lower()
+    if extension in _WORKING_FILE_EXTENSIONS:
+        return f"{extension} is a working file the engine cannot load"
+    if extension in _UNCOMPRESSED_EXTENSIONS:
+        return f"{extension} loads uncompressed and without mipmaps"
+    return None
+
+
 class Validator(BaseValidator):
     TITLE = "FILE PATH VALIDATION"
 
@@ -232,6 +252,7 @@ class Validator(BaseValidator):
         self._check_vanilla_collisions(paths, vanilla)
         self._check_internal_collisions(paths)
         self._check_windows_hostile_names(paths)
+        self._check_source_art_formats(paths)
 
     def _check_vanilla_collisions(self, paths: List[str], vanilla: Set[str]):
         self._log_section("Checking mod paths against vanilla...")
@@ -310,6 +331,22 @@ class Validator(BaseValidator):
             "Names Windows cannot check out (the file is missing there, so the "
             "checksum differs):",
             category="windows-hostile-name",
+        )
+
+    def _check_source_art_formats(self, paths: List[str]):
+        self._log_section("Checking for source art shipped under a content root...")
+        results = []
+        for path in paths:
+            problem = source_art_problem(path)
+            if problem:
+                results.append((problem, path, 0))
+        self._report(
+            results,
+            "✓ Every shipped texture is in a runtime format",
+            "Source art shipped under a content root (convert it with "
+            "tools/assets/md_art_convert.py and repoint the texturefile):",
+            severity=Severity.WARNING,
+            category="source-art-format",
         )
 
 
