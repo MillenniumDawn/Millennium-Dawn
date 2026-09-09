@@ -4,7 +4,8 @@ Two renderings come out of the same builder:
   - PR comment (``include_validator_sections=False``): marker, "Test Suite
     Report" verdict banner (new counts lead when a baseline is present),
     metadata strip, an unavailable-baseline notice when needed, the Tools
-    tests and Mod tests tables (with a New column when classified), capped
+    tests and Mod tests tables (findings only, with a New column when
+    classified; a clean Tools sweep collapses to one line), capped
     new-findings and in-PR groups, plus a pointer to the step summary.
   - Step summary (default): the same top sections, then new findings in two
     collapsible error/warning groups, and per-validator <details> only for
@@ -35,6 +36,8 @@ MAX_PER_CATEGORY = 100
 _LEGEND = "_Errors block merge. Warnings are advisory and won't fail CI._"
 _NEW_FINDINGS_HEADING = "New Findings Introduced by this branch."
 _IN_PR_HEADING = "Findings in your PR"
+# Statuses that mean a run produced no usable result, so it cannot count as passed.
+_INCOMPLETE_STATUSES = {"unknown", "no_output"}
 
 
 def render(
@@ -238,7 +241,7 @@ def _render_verdict(
             return "> [!NOTE]\n> ✅ No validators selected. Nothing to run."
         return ""
     total_errors, total_warnings = _totals(runs)
-    incomplete = sum(1 for run in runs if run.status in {"unknown", "no_output"})
+    incomplete = sum(1 for run in runs if run.status in _INCOMPLETE_STATUSES)
 
     if total_errors:
         if baseline_stats is not None:
@@ -362,22 +365,40 @@ def _table_row(
 def _render_tools_section(
     runs: List[ValidatorRun], new_errors: Optional[Dict[str, int]] = None
 ) -> str:
-    """One row per tools-tests suite run; omitted when none ran."""
+    """Findings only; omitted when no tools suite ran, one line when all passed."""
     tools_runs = [r for r in runs if r.suite == "tools"]
     if not tools_runs:
         return ""
+
+    total_errors, total_warnings = _totals(tools_runs)
+    # A suite that produced no sidecar also reports 0/0 — never call that a success.
+    incomplete = [r for r in tools_runs if r.status in _INCOMPLETE_STATUSES]
+    if not total_errors and not total_warnings and not incomplete:
+        return "## Tools tests\n\n✅ All tools based tests have succeeded!"
+
+    sorted_runs = sorted(tools_runs, key=lambda r: _run_sort_key(r, new_errors))
+    table_runs = [
+        r
+        for r in sorted_runs
+        if r.errors or r.warnings or r.status in _INCOMPLETE_STATUSES
+    ]
+    passed = len(tools_runs) - len(table_runs)
+    passed_note = ""
+    if passed:
+        passed_note = (
+            f"\n\n✅ {_plural(passed, 'other tool suite')} completed successfully."
+        )
+
     if new_errors is not None:
-        tools_runs = sorted(tools_runs, key=lambda r: _run_sort_key(r, new_errors))
         header = "| Tool suite | New | Errors | Warnings |\n|-----------|----:|-------:|---------:|"
         rows = [
             _table_row(r.title, r.errors, r.warnings, new_errors.get(r.name, 0))
-            for r in tools_runs
+            for r in table_runs
         ]
     else:
-        tools_runs = sorted(tools_runs, key=lambda r: r.title.lower())
         header = "| Tool suite | Errors | Warnings |\n|-----------|-------:|---------:|"
-        rows = [_table_row(r.title, r.errors, r.warnings) for r in tools_runs]
-    return "## Tools tests\n\n" + header + "\n" + "\n".join(rows)
+        rows = [_table_row(r.title, r.errors, r.warnings) for r in table_runs]
+    return "## Tools tests\n\n" + header + "\n" + "\n".join(rows) + passed_note
 
 
 def _render_summary_table(

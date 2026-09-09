@@ -34,11 +34,11 @@ def test_render_defaults_to_the_test_suite_title():
     assert body.splitlines()[1] == "# Test Suite Report"
 
 
-def _tools_run(os_name, errors=0):
+def _tools_run(os_name, errors=0, status=None):
     return ValidatorRun(
         name=f"tools-{os_name.lower()}",
         title=f"Tools tests ({os_name})",
-        status="failed" if errors else "passed",
+        status=status or ("failed" if errors else "passed"),
         errors=errors,
         suite="tools",
         job=f"Tools tests ({os_name})",
@@ -56,8 +56,37 @@ def test_render_orders_tools_tests_before_mod_tests():
     mod_pos = body.index("## Mod tests")
     assert tools_pos < mod_pos
     assert "| ❌ Tools tests (Linux) | 1 | 0 |" in body
-    assert "| ✅ Tools tests (macOS) | 0 | 0 |" in body
     assert "| ❌ Events | 2 | 0 |" in body
+
+
+def test_tools_section_folds_passing_suites_into_a_count():
+    runs = [_tools_run("Linux", errors=1), _tools_run("macOS"), _tools_run("Windows")]
+    body = render(runs, [], _ctx())
+    assert "| ❌ Tools tests (Linux) | 1 | 0 |" in body
+    assert "Tools tests (macOS)" not in body
+    assert "✅ 2 other tool suites completed successfully." in body
+
+
+def test_tools_section_collapses_to_one_line_when_all_pass():
+    runs = [_tools_run("Linux"), _tools_run("macOS")]
+    body = render(runs, [], _ctx())
+    assert "## Tools tests\n\n✅ All tools based tests have succeeded!" in body
+    assert "| Tool suite |" not in body
+
+
+def test_tools_section_collapses_with_a_baseline_classification():
+    runs = [_tools_run("Linux"), _tools_run("macOS")]
+    body = render(runs, [], _ctx(), baseline_stats=BaselineStats())
+    assert "✅ All tools based tests have succeeded!" in body
+    assert "| Tool suite | New |" not in body
+
+
+def test_tools_section_keeps_an_incomplete_suite_visible():
+    runs = [_tools_run("Linux"), _tools_run("macOS", status="no_output")]
+    body = render(runs, [], _ctx())
+    assert "All tools based tests have succeeded!" not in body
+    assert "| ✅ Tools tests (macOS) | 0 | 0 |" in body
+    assert "✅ 1 other tool suite completed successfully." in body
 
 
 def test_render_omits_the_tools_section_without_tools_runs():
@@ -71,6 +100,7 @@ def test_mod_tests_ignores_tools_runs_in_counts():
     runs = [_tools_run("Linux"), _tools_run("macOS")]
     body = render(runs, [], _ctx())
     assert "## Mod tests\n\n_No validator results found._" in body
+    assert "✅ All tools based tests have succeeded!" in body
 
 
 def test_mod_tests_passing_count_counts_only_mod_runs():
