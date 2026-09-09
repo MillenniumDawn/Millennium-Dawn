@@ -64,6 +64,19 @@ def _argv(tmp_path, baseline_dir=None, baseline_toolshash=None):
     return argv
 
 
+def _report_with_changed_files(tmp_path, changed_files):
+    changed = tmp_path / "changed-files.txt"
+    changed.write_text("".join(f"{name}\n" for name in changed_files), encoding="utf-8")
+
+    code = generate_validation_report.main(
+        _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
+        + ["--changed-files", str(changed)]
+    )
+
+    assert code == 0
+    return (tmp_path / "report.md").read_text(encoding="utf-8")
+
+
 def _post_argv(tmp_path, *extra):
     argv = _argv(tmp_path)
     argv += [
@@ -589,16 +602,9 @@ def test_main_changed_files_missing_sets_unavailable(tmp_path, monkeypatch, caps
 def test_main_changed_files_and_baseline_tag_both(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _old_and_new_tree(tmp_path)
-    changed = tmp_path / "changed-files.txt"
-    changed.write_text("new.txt\n", encoding="utf-8")
 
-    code = generate_validation_report.main(
-        _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
-        + ["--changed-files", str(changed)]
-    )
+    report = _report_with_changed_files(tmp_path, ["new.txt"])
 
-    assert code == 0
-    report = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert "**NEW** **IN YOUR PR**" in report
     assert "## New Findings Introduced by this branch." in report
 
@@ -606,16 +612,9 @@ def test_main_changed_files_and_baseline_tag_both(tmp_path, monkeypatch):
 def test_main_surfaces_existing_findings_in_touched_files(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _old_and_new_tree(tmp_path)
-    changed = tmp_path / "changed-files.txt"
-    changed.write_text("old.txt\nnew.txt\n", encoding="utf-8")
 
-    code = generate_validation_report.main(
-        _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
-        + ["--changed-files", str(changed)]
-    )
+    report = _report_with_changed_files(tmp_path, ["old.txt", "new.txt"])
 
-    assert code == 0
-    report = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert "## New Findings Introduced by this branch." in report
     in_pr = report[report.index("## Findings in your PR") :]
     assert "old finding" in in_pr
