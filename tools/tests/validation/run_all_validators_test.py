@@ -457,3 +457,31 @@ def test_main_stays_quiet_when_the_cache_is_fresh(tmp_path, monkeypatch, capsys)
     assert exc.value.code == 0
     assert "Pruned stale" not in stdout
     assert "cleared and rebuilding" not in stdout
+
+
+@pytest.mark.parametrize("format_", ["text", "json"])
+def test_main_prints_unicode_with_windows_pipe_encoding(tmp_path, monkeypatch, format_):
+    buffers = [io.BytesIO(), io.BytesIO()]
+    streams = [io.TextIOWrapper(buffer, encoding="cp1252") for buffer in buffers]
+    monkeypatch.setattr(sys, "stdout", streams[0])
+    monkeypatch.setattr(sys, "stderr", streams[1])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["runner", "--path", str(tmp_path), "--format", format_, "--no-color"],
+    )
+    monkeypatch.setattr(
+        runner, "discover_validators", lambda: [("stub", "validate_stub.py", "Stub")]
+    )
+    monkeypatch.setattr(runner, "launch_validator", _launcher_with([]))
+
+    with pytest.raises(SystemExit) as exc:
+        runner.main()
+
+    for stream in streams:
+        stream.flush()
+    output = [buffer.getvalue().decode("utf-8") for buffer in buffers]
+    assert exc.value.code == 0
+    assert "✓ Stub" in output[format_ == "json"]
+    if format_ == "json":
+        assert json.loads(output[0])["total_errors"] == 0
