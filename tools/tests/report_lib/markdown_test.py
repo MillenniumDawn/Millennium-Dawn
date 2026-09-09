@@ -624,16 +624,16 @@ def test_unavailable_baseline_is_explicit():
     assert "against the main baseline" not in body
 
 
-def test_comment_lists_in_diff_findings_without_baseline():
+def test_comment_lists_in_pr_findings_without_baseline():
     runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
     issue = make_issue(in_diff=True)
     body = render(runs, [issue], _ctx(), include_validator_sections=False)
-    assert "## Findings in your diff" in body
-    assert "**IN YOUR DIFF**" in body
+    assert "## Findings in your PR" in body
+    assert "**IN YOUR PR**" in body
     assert "**NEW**" not in body
 
 
-def test_comment_tags_new_and_in_diff_together():
+def test_comment_tags_new_and_in_pr_together():
     runs = [ValidatorRun(name="events", title="Events", status="failed", errors=1)]
     issue, stats = _new_error(in_diff=True)
     body = render(
@@ -643,7 +643,27 @@ def test_comment_tags_new_and_in_diff_together():
         include_validator_sections=False,
         baseline_stats=stats,
     )
-    assert "**NEW** **IN YOUR DIFF**" in body
+    assert "**NEW** **IN YOUR PR**" in body
+
+
+def test_in_pr_section_lists_existing_findings_alongside_baseline():
+    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=2)]
+    new_issue, stats = _new_error(in_diff=True, message="new key not found", line=1)
+    existing = make_issue(
+        in_diff=True, message="existing key not found", line=2, category="backlog"
+    )
+    body = render(
+        runs,
+        [new_issue, existing],
+        _ctx(),
+        include_validator_sections=False,
+        baseline_stats=stats,
+    )
+    assert "## New Findings Introduced by this branch." in body
+    assert "## Findings in your PR" in body
+    in_pr = body[body.index("## Findings in your PR") :]
+    assert "existing key not found" in in_pr
+    assert "new key not found" not in in_pr
 
 
 def test_comment_caps_new_findings():

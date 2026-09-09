@@ -565,10 +565,10 @@ def test_main_tags_changed_files(tmp_path, monkeypatch, capsys):
 
     assert code == 0
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
-    assert "**IN YOUR DIFF**" in report
-    assert "## Findings in your diff" in report
+    assert "**IN YOUR PR**" in report
+    assert "## Findings in your PR" in report
     assert "**Changed files:** available" in report
-    assert "tagged 1 finding(s) IN YOUR DIFF" in capsys.readouterr().err
+    assert "tagged 1 finding(s) IN YOUR PR" in capsys.readouterr().err
 
 
 def test_main_changed_files_missing_sets_unavailable(tmp_path, monkeypatch, capsys):
@@ -582,7 +582,7 @@ def test_main_changed_files_missing_sets_unavailable(tmp_path, monkeypatch, caps
     assert code == 0
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert "Changed-file list was not available" in report
-    assert "**IN YOUR DIFF**" not in report
+    assert "**IN YOUR PR**" not in report
     assert "changed-file list unavailable" in capsys.readouterr().err
 
 
@@ -599,5 +599,24 @@ def test_main_changed_files_and_baseline_tag_both(tmp_path, monkeypatch):
 
     assert code == 0
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
-    assert "**NEW** **IN YOUR DIFF**" in report
+    assert "**NEW** **IN YOUR PR**" in report
     assert "## New Findings Introduced by this branch." in report
+
+
+def test_main_surfaces_existing_findings_in_touched_files(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _old_and_new_tree(tmp_path)
+    changed = tmp_path / "changed-files.txt"
+    changed.write_text("old.txt\nnew.txt\n", encoding="utf-8")
+
+    code = generate_validation_report.main(
+        _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
+        + ["--changed-files", str(changed)]
+    )
+
+    assert code == 0
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "## New Findings Introduced by this branch." in report
+    in_pr = report[report.index("## Findings in your PR") :]
+    assert "old finding" in in_pr
+    assert "new finding" not in in_pr
