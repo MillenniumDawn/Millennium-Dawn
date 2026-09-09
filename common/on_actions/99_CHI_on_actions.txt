@@ -258,6 +258,24 @@ on_actions = {
 				country_event = { id = china_scs.21 days = 1 }
 			}
 
+			# SCS patrol round. The 165d cooldown .14 sets on itself lands the next
+			# monthly tick on the 180d interval it used to reschedule itself on; the
+			# campaign ended for good when aggression fell, so the flag clears.
+			if = {
+				limit = { has_country_flag = CHI_scs_fonop_campaign }
+				if = {
+					limit = {
+						check_variable = { CHI_chinese_aggression > 15 }
+						NOT = { has_country_flag = CHI_scs_fonop_cd }
+					}
+					country_event = china_scs.14
+				}
+				else_if = {
+					limit = { NOT = { check_variable = { CHI_chinese_aggression > 15 } } }
+					clr_country_flag = CHI_scs_fonop_campaign
+				}
+			}
+
 			if = {
 				limit = {
 					check_variable = { CHI_chinese_aggression > 30 }
@@ -308,6 +326,21 @@ on_actions = {
 			if = {
 				limit = { has_country_flag = CHI_ic_initialized }
 				CHI_gain_commission_influence = yes
+			}
+
+			# STE tech boost while the Hu Jintao succession is unresolved. 350d
+			# cooldown on a monthly poll = the yearly interval .8 rearmed itself on.
+			if = {
+				limit = {
+					has_completed_focus = CHI_invigorate_country_through_STE
+					NOT = { has_country_flag = CHI_STE_tech_boost_cooldown }
+					OR = {
+						NOT = { has_completed_focus = CHI_hu_jintao_reign }
+						NOT = { has_completed_focus = CHI_zeng_qinghong_reign }
+					}
+				}
+				set_country_flag = { flag = CHI_STE_tech_boost_cooldown days = 350 value = 1 }
+				country_event = CHI_political_events.8
 			}
 		}
 	}

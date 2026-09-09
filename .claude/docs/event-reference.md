@@ -243,6 +243,42 @@ Keys are defined in `localisation/english/MD_tooltips_l_english.yml`:
 - `TT_IF_THEY_ACCEPT` / `TT_IF_THEY_REJECT` — outcomes of YOUR action firing to THEM
 - `TT_IF_WE_ACCEPT` / `TT_IF_WE_DECLINE` — inside the target's event option
 
+## An Event Must Never Fire Itself
+
+`validate_events` reports any self-fire as `self-referencing-event` (ERROR, commit blocker). Two shapes produce one:
+
+**A self-rescheduling timer.** The option re-arms the event on a delay, so it runs forever:
+
+```
+# Wrong — a poll living in the engine's event queue
+option = {
+	name = TAG_flavour.1.a
+	hidden_effect = { country_event = { id = TAG_flavour.1 days = 150 } }
+}
+```
+
+The recurrence belongs in an on_action. `on_daily_<TAG>`, `on_weekly_<TAG>` and `on_monthly_<TAG>` live in `common/on_actions/99_<TAG>_on_actions.txt`, and a `random = { chance = N ... }` block gives the cadence an MTTH shape:
+
+```
+on_monthly_TAG = {
+	effect = {
+		if = {
+			limit = { has_country_flag = TAG_flavour_active }
+			random = {
+				chance = 20
+				country_event = TAG_flavour.1
+			}
+		}
+	}
+}
+```
+
+The old loop's stop condition has to survive the move — whatever ended the chain becomes part of the on_action `limit`, or an unbounded poll replaces a bounded one.
+
+**A two-sided event handing itself to the other party.** One definition carries both halves, separated by per-option `trigger = { tag = X }`, and the sender's option fires the same id at the recipient. Split it into two events, one per side. When the split leaves a single option, delete its now-redundant tag trigger: an event whose every option's trigger can fail at once shows the player a window with nothing to click.
+
+Cycles longer than one event — a paginated browse screen, a hub with a back option, a two-step confirmation — are legitimate and are not flagged by default. Audit them with `validate_events.py --path . --fire-cycles`, which reports each cycle in fire order (`a -> b -> a`).
+
 ## `random_events` Dispatch (on_actions)
 
 Events registered inside an `on_actions` `random_events = { … }` block are picked by **weighted roll against the `0 = N` "nothing happens" slot**, not by MTTH alone:

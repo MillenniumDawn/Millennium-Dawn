@@ -77,6 +77,7 @@ Every text-mode write in `tools/` must pass `newline=""`. Without it, Python's t
 - Describe an effect with `effect_tooltip = { <the real effect> }` before writing a new `custom_effect_tooltip` loc key
 - Every `picture = GFX_*` must resolve to a sprite defined in `interface/*.gfx` — MD must not use vanilla event pictures. An undefined name is a commit blocker (`validate_events` → `missing-event-picture`), so grep `interface/` for it before writing it
 - Match the picture to the window: news art is wide (`397x153`), country art nearly square (`217x163`), and each window draws it at native size, so a swap overflows or under-fills the frame. Names do not tell them apart (`GFX_trade_agreement` is news art) — check the texture (`event-picture-format-mismatch`). A `hidden = yes` event renders nothing, so it takes no `picture` (`hidden-event-picture`)
+- **No event may fire itself** (`validate_events` → `self-referencing-event`, commit blocker). A recurrence belongs in an `on_<period>_TAG` on_action, not in a self-rescheduling `country_event = { id = <self> days = N }`; a two-sided event that hands itself to the other party belongs in two events, one per side. Audit multi-event cycles with `validate_events.py --fire-cycles` (opt-in, not in CI)
 - Ref: `.claude/docs/event-reference.md`
 
 ## Ideas
