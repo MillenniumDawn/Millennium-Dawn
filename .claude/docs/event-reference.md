@@ -178,7 +178,7 @@ news_event = {
 
 ### Picture format
 
-A news event's picture is a different shape from a country event's, and each window draws its picture at the texture's native size, so the wrong one overflows the frame or leaves a gap. News art is wide (`397x153` dominant, `400x150` and `500x250` also in use); country art is nearly square (`217x163` dominant). Sprite names do not tell them apart — `GFX_trade_agreement` is news art and `GFX_FRA_eiffel_tower_news` is not — so check the texture before reusing a picture across the two event types. `validate_events` → `event-picture-format-mismatch` (WARNING) reports a swap.
+A news event's picture is a different shape from a country event's, and each window draws its picture at the texture's native size, so the wrong one overflows the frame or leaves a gap. News art is wide (`397x153` dominant, `400x150` and `500x250` also in use); country art is nearly square (`217x163` dominant). Sprite names do not tell them apart — `GFX_china_trade_war` is news art and `GFX_FRA_eiffel_tower_news` is not — so check the texture before reusing a picture across the two event types. `validate_events` → `event-picture-format-mismatch` (WARNING) reports a swap.
 
 A `hidden = yes` event opens no window, so a `picture` on one is dead data and is reported as `hidden-event-picture`.
 
