@@ -353,3 +353,13 @@ def test_iter_stacks_reports_the_child_key_offset():
         frozenset({"build_cost_ic"}),
     )
     assert text[offset:].startswith("helicopter_operator")
+
+
+def test_is_naval_covers_archetypes_categories_and_land():
+    index = _index(_SHIPS)
+    # An equipment name resolves through its own `type`; a bare type category
+    # has no `types` entry and resolves through the category set directly.
+    assert index.is_naval("helicopter_operator")
+    assert index.is_naval("carrier")
+    assert index.is_naval("submarine")
+    assert not index.is_naval("AA_Equipment")
