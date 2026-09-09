@@ -336,6 +336,16 @@ def test_irgc_roles_need_recruited_character_and_current_service(target, token):
     assert token not in iran["characters"]
 
 
+def test_legacy_officials_keep_their_pre_expansion_role_eligibility():
+    game = PoliticalScript()
+    for target in range(56, 65):
+        assert game.globals[f"TOP_political^{target}"] == 1
+        assert game.trigger("TOP_authored_role_eligible", target)
+
+    for target in (129, 144, 146, 147, 150, 152, 153, 156, 158, 159, 160):
+        assert not game.trigger("TOP_authored_role_eligible", target)
+
+
 @pytest.mark.parametrize(
     "target,token", [(136, "PER_top_hossein_salami"), (138, "PER_top_esmail_qaani")]
 )

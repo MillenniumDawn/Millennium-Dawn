@@ -407,19 +407,6 @@ TOP_start_exposed_kill_crisis = {
 			var:global.TOP_crisis_candidate_actor = { exists = yes }
 			var:global.TOP_crisis_candidate_protection = { exists = yes }
 		}
-		# This record describes the first qualifying incident and is never reused as live crisis state.
-		if = {
-			limit = { check_variable = { global.TOP_first_exposed_kill_recorded = 0 } }
-			set_variable = { global.TOP_first_exposed_kill_recorded = 1 }
-			set_variable = { global.TOP_first_exposed_kill_target = TOP_target }
-			set_variable = { global.TOP_first_exposed_kill_actor = TOP_crisis_actual_actor }
-			set_variable = { global.TOP_first_exposed_kill_protection = TOP_crisis_actual_protection }
-			set_variable = { global.TOP_first_exposed_kill_host = TOP_authorized_host }
-			set_variable = { global.TOP_first_exposed_kill_state = TOP_operation_state }
-			set_variable = { global.TOP_first_exposed_kill_story = TOP_authorized_visit_story }
-			set_variable = { global.TOP_first_exposed_kill_visit_token = TOP_authorized_visit_token }
-			set_variable = { global.TOP_first_exposed_kill_day = global.TOP_clock }
-		}
 		if = {
 			limit = { check_variable = { global.TOP_crisis_active = 0 } }
 			set_variable = { global.TOP_crisis_active = 1 }
@@ -524,7 +511,11 @@ TOP_start_exposed_kill_crisis = {
 			news_event = { id = TOP_crisis.10 days = 1 }
 		}
 		else_if = {
-			limit = { check_variable = { global.TOP_crisis_active = 1 } }
+			limit = {
+				check_variable = { global.TOP_crisis_active = 1 }
+				check_variable = { global.TOP_crisis_candidate_actor = global.TOP_crisis_actor }
+				check_variable = { global.TOP_crisis_candidate_protection = global.TOP_crisis_protection }
+			}
 			add_to_variable = { global.TOP_crisis_tension = global.TOP_crisis_repeat_tension }
 			clamp_variable = { var = global.TOP_crisis_tension min = 0 max = 100 }
 			if = {
@@ -536,6 +527,15 @@ TOP_start_exposed_kill_crisis = {
 				var:global.TOP_crisis_protection = { country_event = { id = TOP_crisis.3 days = 1 } }
 			}
 			news_event = { id = TOP_crisis.11 days = 1 }
+		}
+		else_if = {
+			limit = { check_variable = { global.TOP_crisis_active = 1 } }
+			var:global.TOP_crisis_candidate_actor = {
+				set_variable = { TOP_unmatched_incident_actor = THIS }
+				set_variable = { TOP_unmatched_incident_protection = global.TOP_crisis_candidate_protection }
+				set_variable = { TOP_unmatched_incident_host = global.TOP_crisis_candidate_host }
+				news_event = { id = TOP_crisis.12 days = 1 }
+			}
 		}
 	}
 	set_variable = { global.TOP_crisis_candidate_actor = 0 }
@@ -684,6 +684,17 @@ TOP_settle_crisis = {
 
 TOP_process_crisis = {
 	if = {
+		limit = {
+			check_variable = { global.TOP_crisis_active = 1 }
+			OR = {
+				check_variable = { global.TOP_crisis_story < 1 }
+				check_variable = { global.TOP_crisis_story > 5 }
+				check_variable = { global.TOP_crisis_visit_token < 1 }
+			}
+		}
+		TOP_cleanup_crisis = yes
+	}
+	else_if = {
 		limit = {
 			check_variable = { global.TOP_crisis_active = 1 }
 			check_variable = { global.TOP_crisis_until < global.TOP_clock }

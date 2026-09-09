@@ -96,11 +96,12 @@ def test_isi_pulse_produces_personal_leads_without_removal():
     assert "remove_from_array" not in branch
     assert "retire_character" not in branch
     assert "ISI_retire_hvt_character" not in branch
+    normalized_branch = " ".join(branch.split())
     for target in range(16, 29):
         assert (
             f"set_temp_variable = {{ TOP_arg_target = {target} }}"
             " set_temp_variable = { TOP_arg_amount = 40 }"
-            " TOP_add_target_lead = yes" in branch
+            " TOP_add_target_lead = yes" in normalized_branch
         )
     assert "ISI_retire_hvt_character = yes" in _named_block(text, "else")
 

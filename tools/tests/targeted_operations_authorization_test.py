@@ -79,7 +79,7 @@ class ReviewScript(TargetedScript):
             "TOP_status^num": manifest["capacity"],
             "TOP_registry_capacity": manifest["capacity"],
         }
-        self.temps, self.events, self.scope_stack = {}, [], []
+        self.temps, self.events, self.event_targets, self.scope_stack = {}, [], {}, []
         for target in (1, 2):
             self.globals[f"TOP_status^{target}"] = 1
             self.globals[f"TOP_political^{target}"] = 0
@@ -197,6 +197,15 @@ class ReviewScript(TargetedScript):
                 )
         elif key == "add_political_power":
             self.countries[identifier]["power"] += self.value(operand, identifier)
+        elif key == "PREV":
+            previous = self.value(key, identifier)
+            self.scope_stack.append(identifier)
+            try:
+                self.execute(operand, previous)
+            finally:
+                self.scope_stack.pop()
+        elif key == "save_event_target_as":
+            self.event_targets[operand] = identifier
         elif key == "remove_from_array":
             name, _, value = operand[0]
             values = self.value(name, identifier) or []
@@ -258,6 +267,7 @@ def test_reselection_during_review_commits_only_the_immutable_snapshot_once():
     review.ready_for_host()
     review.actor["TOP_selected"] = 2
     review.run("TOP_send_host_request")
+    assert review.event_targets["TOP_host_request_sender"] == 1
     review.call("TOP_answer_host_request", identifier=2, CONSENT=1)
     review.run("TOP_close_review_event")
     review.run("TOP_approve_review")

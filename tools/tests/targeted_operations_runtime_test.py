@@ -24,6 +24,10 @@ OPINION_MODIFIERS = (
 ).read_text(encoding="utf-8")
 LOCALISATION_PATH = ROOT / "localisation/english/MD_targeted_operations_l_english.yml"
 LOCALISATION = LOCALISATION_PATH.read_text(encoding="utf-8-sig")
+AUTH_LOCALISATION_PATH = (
+    ROOT / "localisation/english/MD_targeted_operations_authorization_l_english.yml"
+)
+AUTH_LOCALISATION = AUTH_LOCALISATION_PATH.read_text(encoding="utf-8-sig")
 YEARLY = (ROOT / "common/scripted_effects/00_yearly_effects.txt").read_text(
     encoding="utf-8"
 )
@@ -191,22 +195,86 @@ def test_crisis_constants_deltas_bands_and_single_war_path():
 def test_repeat_incident_and_timeout_dispatch_the_ultimatum_band():
     initializer = _named_block(EFFECTS, "TOP_start_exposed_kill_crisis")
     assert "global.TOP_crisis_stage = 1" in initializer
+    assert (
+        initializer.count("global.TOP_crisis_story = TOP_authorized_visit_story") == 1
+    )
+    assert (
+        initializer.count("global.TOP_crisis_visit_token = TOP_authorized_visit_token")
+        == 1
+    )
     assert "global.TOP_crisis_stage = 2" in EVENTS
     assert "global.TOP_crisis_stage = 3" in EVENTS
     assert "global.TOP_crisis_stage = 2" in initializer
     assert "TOP_crisis_tension_ultimatum = yes" in initializer
     assert "country_event = { id = TOP_crisis.3 days = 1 }" in initializer
 
+    repeat_news = initializer.index("news_event = { id = TOP_crisis.11 days = 1 }")
+    repeat_branch_start = initializer.rfind("\t\telse_if = {", 0, repeat_news)
+    unmatched_news = initializer.index("news_event = { id = TOP_crisis.12 days = 1 }")
+    unmatched_branch_start = initializer.rfind("\t\telse_if = {", 0, unmatched_news)
+    repeat_branch = initializer[repeat_branch_start:unmatched_branch_start]
+    unmatched_branch = initializer[unmatched_branch_start:]
+    assert (
+        "global.TOP_crisis_candidate_actor = global.TOP_crisis_actor" in repeat_branch
+    )
+    assert (
+        "global.TOP_crisis_candidate_protection = global.TOP_crisis_protection"
+        in repeat_branch
+    )
+    assert "global.TOP_crisis_repeat_tension" in repeat_branch
+    assert "global.TOP_crisis_tension" not in unmatched_branch
+    assert "TOP_unmatched_incident_actor = THIS" in unmatched_branch
+    assert (
+        "TOP_unmatched_incident_protection = "
+        "global.TOP_crisis_candidate_protection" in unmatched_branch
+    )
+    assert (
+        "TOP_unmatched_incident_host = global.TOP_crisis_candidate_host"
+        in unmatched_branch
+    )
+
     timeout = _named_block(EFFECTS, "TOP_process_crisis")
+    assert "global.TOP_crisis_story < 1" in timeout
+    assert "global.TOP_crisis_story > 5" in timeout
+    assert "global.TOP_crisis_visit_token < 1" in timeout
     assert "TOP_crisis_tension_ultimatum = yes" in timeout
     assert "add_to_variable = { global.TOP_crisis_until = 30 }" in timeout
     assert "country_event = { id = TOP_crisis.3 days = 1 }" in timeout
-    assert timeout.index("TOP_crisis_tension_ultimatum = yes") < timeout.index(
+    assert timeout.index("TOP_crisis_tension_ultimatum = yes") < timeout.rindex(
         "TOP_cleanup_crisis = yes"
     )
 
     cleanup = _named_block(EFFECTS, "TOP_cleanup_crisis")
+    assert "global.TOP_crisis_story = 0" in cleanup
+    assert "global.TOP_crisis_visit_token = 0" in cleanup
     assert "global.TOP_crisis_stage = 0" in cleanup
+
+
+def test_unmatched_exposed_killing_uses_independent_news_snapshots():
+    event_id = EVENTS.index("\tid = TOP_crisis.12")
+    event_start = EVENTS.rfind("news_event = {", 0, event_id)
+    event_end = EVENTS.index("\ncountry_event = {", event_id)
+    event = EVENTS[event_start:event_end]
+    assert "picture = GFX_USA_event_cia" in event
+    assert "is_triggered_only = yes" in event
+    assert "major = yes" not in event
+    option = event[event.index("\toption = {") :]
+    assert option.index('log = "[GetDateText]') < option.index(
+        "set_variable = { TOP_unmatched_incident_actor = 0 }"
+    )
+    for variable in (
+        "TOP_unmatched_incident_actor",
+        "TOP_unmatched_incident_protection",
+        "TOP_unmatched_incident_host",
+    ):
+        assert f"set_variable = {{ {variable} = 0 }}" in option
+        assert f"[?{variable}.GetNameDef]" in AUTH_LOCALISATION
+    independent_desc = next(
+        line
+        for line in AUTH_LOCALISATION.splitlines()
+        if line.startswith(" TOP_crisis.12.d:")
+    )
+    assert "global.TOP_crisis_" not in independent_desc
 
 
 def test_crisis_preserves_physical_home_and_host_and_deduplicates_faction_consultations():
