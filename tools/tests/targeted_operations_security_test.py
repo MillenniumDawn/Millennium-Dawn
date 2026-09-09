@@ -257,7 +257,7 @@ def test_parody_badge_has_explicit_non_sponsorship_hover_text():
     raw = path.read_bytes()
     assert raw.startswith(b"\xef\xbb\xbf")
     text = raw.decode("utf-8-sig")
-    assert "Sponsored by Palantir™" in text
+    assert "Sponsored by Palantir(TM)" in text
     assert "in-game parody" in text
     assert "no actual sponsorship, endorsement, or affiliation" in text
 
