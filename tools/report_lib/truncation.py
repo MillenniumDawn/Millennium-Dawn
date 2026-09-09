@@ -10,7 +10,7 @@ from typing import Tuple
 
 MAX_COMMENT_BYTES = 60_000  # headroom under GitHub's 65 536 hard limit
 
-_TABLE_HEADINGS = ("## Tools tests", "## Mod tests")
+_TABLE_HEADINGS = ("## Tools tests", "## Mod tests", "## Findings by category")
 
 
 def truncate_if_needed(
@@ -46,7 +46,9 @@ def _is_table_section_line(line: str) -> bool:
         return True
     if stripped.startswith("✅"):
         return True
-    if stripped.startswith("_No validator"):
+    # Italic one-line notes the tables carry ("_No validator results found._",
+    # "_…and N more categories._").
+    if stripped.startswith("_") and stripped.endswith("_"):
         return True
     return False
 

@@ -121,7 +121,7 @@ def _conditional_picture_refs(
 # country/report slot (interface/eventwindow.gui:87) and the news slot (:425)
 # each declare a position and no size — so art authored for one window overflows
 # or under-fills the other. The two families separate cleanly by aspect ratio and
-# not by name: GFX_trade_agreement is news art, GFX_FRA_eiffel_tower_news is not.
+# not by name: GFX_china_trade_war is news art, GFX_FRA_eiffel_tower_news is not.
 # Country art tops out at 1.45 (217x163 dominant) and news art starts at 2.0
 # (397x153 dominant, 500x250 at the low end), so the 1.5-2.0 band identifies no
 # family and is deliberately left unreported.

@@ -95,3 +95,25 @@ def test_truncation_keeps_tools_and_mod_tables():
     assert "## Mod tests" in out
     assert "| **Total** |" in out
     assert "## New Findings Introduced by this branch." not in out
+
+
+def test_long_body_keeps_the_category_table():
+    head = "<!-- md-validation-report:v1 -->\n# Test Suite Report\n\n"
+    tables = (
+        "## Mod tests\n\n"
+        "| Validator | Errors | Warnings |\n"
+        "|-----------|-------:|---------:|\n"
+        "| **Total** | **1** | **0** |\n\n"
+        "## Findings by category\n\n"
+        "| Category | Errors | Warnings |\n"
+        "|----------|-------:|---------:|\n"
+        "| Event Picture Format Mismatch | 0 | 211 |\n\n"
+        "_…and 5 more categories._\n\n"
+    )
+    issues = "## New Findings Introduced by this branch.\n\n"
+    issues += ("x" * (MAX_COMMENT_BYTES + 10_000)) + "\n"
+    out, truncated = truncate_if_needed(head + tables + issues)
+    assert truncated is True
+    assert "| Event Picture Format Mismatch | 0 | 211 |" in out
+    assert "_…and 5 more categories._" in out
+    assert "## New Findings Introduced by this branch." not in out
