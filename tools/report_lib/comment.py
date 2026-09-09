@@ -2,8 +2,8 @@
 
 Comment discovery uses a hidden HTML marker emitted by `markdown.render()`
 so renaming the title or restructuring the body never creates duplicate
-comments. Falls back to the legacy "Validation Report" title-string match
-to cleanly take over comments posted before the marker existed.
+comments. Falls back to the exact legacy report heading to cleanly take over
+comments posted before the marker existed.
 """
 
 import json
@@ -12,22 +12,27 @@ import urllib.request
 from typing import Optional, Tuple
 
 REPORT_MARKER = "<!-- md-validation-report:v1 -->"
+_PAGE_SIZE = 100
+_REQUEST_TIMEOUT = 30
 
 
-def find_existing_comment(comments: list) -> Optional[dict]:
-    """Return the bot-authored validation report comment, or None.
-
-    Prefers marker match; falls back to legacy title-string match.
-    """
+def find_existing_comment(
+    comments: list, marker: str = REPORT_MARKER
+) -> Optional[dict]:
+    """Return the bot-authored report comment, or None."""
     marker_match = None
     legacy_match = None
     for comment in comments:
         if comment.get("user", {}).get("type") != "Bot":
             continue
         body = comment.get("body", "")
-        if REPORT_MARKER in body and marker_match is None:
+        if marker in body and marker_match is None:
             marker_match = comment
-        elif "Validation Report" in body and legacy_match is None:
+        elif (
+            marker == REPORT_MARKER
+            and body.startswith("# Validation Report\n")
+            and legacy_match is None
+        ):
             legacy_match = comment
     return marker_match or legacy_match
 
@@ -38,6 +43,7 @@ def post_comment(
     pr_number: str,
     body: str,
     github_token: str,
+    marker: str = REPORT_MARKER,
 ) -> Tuple[bool, str]:
     """Create or update the validation report PR comment.
 
@@ -46,14 +52,9 @@ def post_comment(
     api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
     headers = _auth_headers(github_token)
 
-    try:
-        comments = _get(f"{api_base}/issues/{pr_number}/comments", headers)
-    except urllib.error.HTTPError as e:
-        return False, _fmt_http_error("list comments", e)
-    except Exception as e:
-        return False, f"list comments: {e}"
-
-    existing = find_existing_comment(comments)
+    existing, error = _find_report_comment(api_base, pr_number, headers, marker)
+    if error:
+        return False, error
     try:
         if existing:
             comment_id = existing["id"]
@@ -76,6 +77,33 @@ def post_comment(
         return False, f"post comment: {e}"
 
 
+def clear_comment(
+    repo_owner: str,
+    repo_name: str,
+    pr_number: str,
+    github_token: str,
+    marker: str = REPORT_MARKER,
+) -> Tuple[bool, str]:
+    """Remove the validation report comment when the current run is clean."""
+    api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
+    headers = _auth_headers(github_token)
+
+    existing, error = _find_report_comment(api_base, pr_number, headers, marker)
+    if error:
+        return False, error
+    if not existing:
+        return True, "no report comment to remove"
+
+    comment_id = existing["id"]
+    try:
+        _delete(f"{api_base}/issues/comments/{comment_id}", headers)
+        return True, f"deleted comment #{comment_id}"
+    except urllib.error.HTTPError as e:
+        return False, _fmt_http_error("delete comment", e)
+    except Exception as e:
+        return False, f"delete comment: {e}"
+
+
 def _auth_headers(github_token: str) -> dict:
     return {
         "Authorization": f"Bearer {github_token}",
@@ -85,24 +113,56 @@ def _auth_headers(github_token: str) -> dict:
     }
 
 
+def _find_report_comment(api_base: str, pr_number: str, headers: dict, marker: str):
+    """Return (comment_or_None, error_message_or_None)."""
+    comments = []
+    page = 1
+    url = f"{api_base}/issues/{pr_number}/comments"
+    try:
+        while True:
+            batch = _get(f"{url}?per_page={_PAGE_SIZE}&page={page}", headers)
+            comments.extend(batch)
+            if len(batch) < _PAGE_SIZE:
+                break
+            page += 1
+    except urllib.error.HTTPError as e:
+        return None, _fmt_http_error("list comments", e)
+    except Exception as e:
+        return None, f"list comments: {e}"
+    return find_existing_comment(comments, marker), None
+
+
 def _get(url: str, headers: dict) -> list:
     req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
+        return _decode_json(resp)
 
 
 def _post(url: str, payload: dict, headers: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
+        return _decode_json(resp)
 
 
 def _patch(url: str, payload: dict, headers: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=headers, method="PATCH")
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
+        return _decode_json(resp)
+
+
+def _delete(url: str, headers: dict) -> None:
+    req = urllib.request.Request(url, headers=headers, method="DELETE")
+    with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT):
+        pass
+
+
+def _decode_json(response):
+    try:
+        return json.loads(response.read().decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+        raise ValueError("invalid JSON response") from e
 
 
 def _fmt_http_error(label: str, e: urllib.error.HTTPError) -> str:

@@ -8,7 +8,7 @@ error but does nothing at runtime.
 import os
 import re
 import sys
-from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -77,6 +77,11 @@ _VAR_WRITE = re.compile(
     r"((?:global\.|ROOT\.|PREV\.|THIS\.|FROM\.|OWNER\.|CONTROLLER\.|[A-Z]{2,4}\.)?"
     r"[A-Za-z_][A-Za-z0-9_]*)"
 )
+
+# Timer-driven engine globals documented as a performance trap in
+# performance-patterns.md (GUI dirty counters): binding dirty to them redraws
+# the whole GUI every tick.
+_DIRTY_TIMER_GLOBALS: FrozenSet[str] = frozenset({"global.date", "global.num_days"})
 
 # global.X reference anywhere (read or write) — marks X as a global-namespace variable.
 _GLOBAL_REF = re.compile(r"\bglobal\.([A-Za-z_][A-Za-z0-9_]*)")
@@ -147,7 +152,8 @@ _VALID_AI_TEST_SCOPES: Dict[str, FrozenSet[str]] = {
 }
 
 # Known vanilla HOI4 container windows we cannot verify locally — referenced
-# as parent_window_name in MD scripted GUIs but defined by base game / DLC.
+# as parent_window_name / window_name in MD scripted GUIs but defined by base
+# game / DLC.
 _VANILLA_PARENT_WINDOWS: FrozenSet[str] = frozenset(
     {
         "templatedeploymentwindow",
@@ -164,6 +170,7 @@ _VANILLA_PARENT_WINDOWS: FrozenSet[str] = frozenset(
         "politics_tab",
         "top_bar",
         "characters_tab",
+        "usa_congress_decision_ui_window",
     }
 )
 
@@ -220,9 +227,9 @@ def _parse_gui_text(text: str, rel: str) -> Dict:
     }
 
 
-def _parse_one_sgui_block(name: str, body: str, file: str, line: int) -> Dict:
+def _parse_one_sgui_block(name: str, body: str, file: str, line: int) -> Dict[str, Any]:
     """Build a single scripted_gui block dict from its body text."""
-    block = {
+    block: Dict[str, Any] = {
         "name": name,
         "file": file,
         "line": line,
@@ -267,31 +274,34 @@ def _parse_scripted_gui_text(text: str, rel: str) -> Tuple[List[Dict], Set[str]]
     blocks: List[Dict] = []
     trigger_names: Set[str] = set()
 
-    outer = re.search(r"\bscripted_gui\s*=\s*\{", text)
-    if not outer:
-        return blocks, trigger_names
-    outer_start = outer.end()
-    outer_body, outer_end = extract_block_from_text(text, outer_start - 1)
-    if outer_end == -1:
-        return blocks, trigger_names
+    outer_opener = re.compile(r"\bscripted_gui\s*=\s*\{")
+    cursor = 0
+    while outer := outer_opener.search(text, cursor):
+        outer_start = outer.end()
+        outer_body, outer_end = extract_block_from_text(text, outer_start - 1)
+        if outer_end == -1:
+            cursor = outer_start
+            continue
 
-    i = 0
-    n = len(outer_body)
-    while i < n:
-        m = _SGUI_BLOCK_OPENER.search(outer_body, i)
-        if not m:
-            break
-        name = m.group(1)
-        inner_start = m.end()
-        body, inner_end = extract_block_from_text(outer_body, inner_start - 1)
-        if inner_end == -1:
-            break
-        line_no = text.count("\n", 0, outer_start + m.start()) + 1
-        block = _parse_one_sgui_block(name, body, rel, line_no)
-        for elem, kind in block["handlers"]:
-            trigger_names.add(f"{elem}_{kind}")
-        blocks.append(block)
-        i = inner_end
+        i = 0
+        n = len(outer_body)
+        while i < n:
+            m = _SGUI_BLOCK_OPENER.search(outer_body, i)
+            if not m:
+                break
+            name = m.group(1)
+            inner_start = m.end()
+            body, inner_end = extract_block_from_text(outer_body, inner_start - 1)
+            if inner_end == -1:
+                break
+            line_no = text.count("\n", 0, outer_start + m.start()) + 1
+            block = _parse_one_sgui_block(name, body, rel, line_no)
+            for elem, kind in block["handlers"]:
+                trigger_names.add(f"{elem}_{kind}")
+            blocks.append(block)
+            i = inner_end
+
+        cursor = outer_end
 
     return blocks, trigger_names
 
@@ -310,7 +320,7 @@ def _parse_var_writes_text(text: str) -> Tuple[Set[str], Set[str]]:
     return written, global_refs
 
 
-class ScriptedGuiValidator(BaseValidator):
+class Validator(BaseValidator):
     TITLE = "SCRIPTED GUI VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".gui", ".yml"]
 
@@ -370,15 +380,24 @@ class ScriptedGuiValidator(BaseValidator):
             f"{len(files)} .gui files"
         )
 
-    def _parse_one_gui_file(self, filepath: str) -> None:
+    def _read_text_or_warn(self, filepath: str) -> Optional[Tuple[str, str]]:
+        """Read filepath as utf-8-sig text, returning (text, relative path).
+
+        Logs a warning and returns None on any read failure.
+        """
         try:
             with open(filepath, "r", encoding="utf-8-sig") as fh:
                 text = fh.read()
         except Exception as e:
             self.log(f"  ! could not read {filepath}: {e}", "warning")
-            return
+            return None
+        return text, os.path.relpath(filepath, self.mod_path)
 
-        rel = os.path.relpath(filepath, self.mod_path)
+    def _parse_one_gui_file(self, filepath: str) -> None:
+        parsed = self._read_text_or_warn(filepath)
+        if parsed is None:
+            return
+        text, rel = parsed
         data = disk_cache.per_file_cached_by_content(
             self.mod_path,
             "sgui.gui2",
@@ -409,17 +428,13 @@ class ScriptedGuiValidator(BaseValidator):
         )
 
     def _parse_one_scripted_gui_file(self, filepath: str) -> None:
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as fh:
-                text = fh.read()
-        except Exception as e:
-            self.log(f"  ! could not read {filepath}: {e}", "warning")
+        parsed = self._read_text_or_warn(filepath)
+        if parsed is None:
             return
-
-        rel = os.path.relpath(filepath, self.mod_path)
+        text, rel = parsed
         blocks, trigger_names = disk_cache.per_file_cached_by_content(
             self.mod_path,
-            "sgui.scripted3",
+            "sgui.scripted4",
             filepath,
             text,
             lambda: _parse_scripted_gui_text(text, rel),
@@ -458,7 +473,7 @@ class ScriptedGuiValidator(BaseValidator):
                 "sgui.varwrites2",
                 filepath,
                 text,
-                lambda text=text: _parse_var_writes_text(text),
+                lambda: _parse_var_writes_text(text),
             )
             self._written_names.update(written)
             self._global_ref_names.update(global_refs)
@@ -558,17 +573,22 @@ class ScriptedGuiValidator(BaseValidator):
         self._log_section("Checking window_name / parent_window references")
         for block in self._sgui_blocks:
             if block["window_name"]:
-                if block["window_name"] not in self._gui_containers:
-                    self.add_issue(
-                        Severity.WARNING,
-                        "MISSING_WINDOW",
-                        f"Scripted GUI '{block['name']}' references "
-                        f'window_name = "{block["window_name"]}" but no '
-                        f"containerWindowType with that name exists in MD .gui "
-                        f"files (may be a vanilla container)",
-                        file=block["file"],
-                        line=block["line"],
-                    )
+                wn = block["window_name"]
+                if wn in self._gui_containers:
+                    continue
+                # Skip vanilla containers we don't define locally
+                if wn.lower() in _VANILLA_PARENT_WINDOWS:
+                    continue
+                self.add_issue(
+                    Severity.WARNING,
+                    "MISSING_WINDOW",
+                    f"Scripted GUI '{block['name']}' references "
+                    f'window_name = "{block["window_name"]}" but no '
+                    f"containerWindowType with that name exists in MD .gui "
+                    f"files (may be a vanilla container)",
+                    file=block["file"],
+                    line=block["line"],
+                )
             if block["parent_window_name"]:
                 pwn = block["parent_window_name"]
                 if pwn in self._gui_containers:
@@ -644,6 +664,18 @@ class ScriptedGuiValidator(BaseValidator):
             if not d or d in ("yes", "no"):
                 continue
             if "[" in d or "]" in d:  # runtime-substituted name, can't resolve
+                continue
+            if d in _DIRTY_TIMER_GLOBALS:
+                self.add_issue(
+                    Severity.WARNING,
+                    "DIRTY_TIMER_GLOBAL",
+                    f"Scripted GUI '{block['name']}' has dirty = {d}, which changes "
+                    f"every tick, so the GUI redraws every frame. Use a dedicated "
+                    f"counter incremented only when the backing data changes "
+                    f"(performance-patterns.md, GUI dirty counters)",
+                    file=block["file"],
+                    line=block["line"],
+                )
                 continue
             base = d.rsplit(".", 1)[-1]
             if d.startswith("global."):
@@ -740,7 +772,7 @@ class ScriptedGuiValidator(BaseValidator):
 
 def main() -> int:
     return run_validator_main(
-        ScriptedGuiValidator,
+        Validator,
         description="Validate scripted GUI cross-references against .gui and loc files.",
     )
 

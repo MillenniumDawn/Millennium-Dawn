@@ -87,13 +87,6 @@ git add -A
 git commit -m "Add Serbian election focus tree"
 ```
 
-### GitKraken
-
-1. Click into the **//WIP** commit in the commit graph.
-2. Click **Stage All Changes**.
-3. Type your commit summary in the **Summary** field.
-4. Click **Commit Changes**.
-
 ## Commit Messages
 
 - Write a short summary (5-10 words) describing what changed.
@@ -113,7 +106,7 @@ After committing, your changes are only stored locally. Push them to GitHub so o
 git push origin my-feature
 ```
 
-In GitHub Desktop or GitKraken, click the **Push** button.
+In GitHub Desktop, click the **Push** button.
 
 ## Pulling
 
@@ -123,7 +116,7 @@ Pull downloads any changes others have made to your branch:
 git pull origin my-feature
 ```
 
-In GitHub Desktop or GitKraken, click the **Pull** button.
+In GitHub Desktop, click the **Pull** button.
 
 > **Pull before you push** if others are working on the same branch. This reduces merge conflicts.
 
@@ -157,8 +150,6 @@ git rebase main
 
 > **Rebase vs Merge**: Rebase replays your commits on top of `main`, giving a linear history. Merge creates a merge commit. Both work, use whichever your team prefers. If unsure, use merge.
 
-In GitKraken: right-click your branch → **Rebase on main** (or **Merge main into my-feature**).
-
 ---
 
 # Merge Conflicts
@@ -167,7 +158,6 @@ A merge conflict happens when Git can't automatically combine two changes to the
 
 ## How to Identify
 
-- GitKraken shows orange warning signs on conflicted files.
 - GitHub Desktop shows a **Resolve conflicts** button.
 - The command line shows `CONFLICT` in the merge output.
 
@@ -270,8 +260,8 @@ Yes. Switch to their branch, sync, and make changes. Be careful not to break the
 **What if my download speed is very slow?**
 The repo is large. If cloning fails, try a shallow clone: `git clone --depth 1 https://github.com/MillenniumDawn/Millennium-Dawn.git`
 
-**GitHub Desktop vs GitKraken?**
-Both work. GitHub Desktop is simpler and free. GitKraken has more features (commit graph, interactive rebase) but the free tier has limitations. Pick whichever you prefer.
+**GitHub Desktop?**
+GitHub Desktop is the recommended Git GUI. It's free, simple, and integrates directly with GitHub.
 
 ---
 

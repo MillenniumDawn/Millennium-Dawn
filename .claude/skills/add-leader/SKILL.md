@@ -1,3 +1,8 @@
+---
+name: add-leader
+description: 'Scaffold generals, field marshals, and admirals for a country using the MD count formulas and region skill ranges, writing character and recruit_character entries. Use when asked to add leaders, generals, or admirals for a TAG, e.g. "/add-leader NIG".'
+---
+
 Scaffold generals, field marshals, and admirals for a country following the Millennium Dawn new-general-guidelines.
 
 **Syntax:** `/add-leader [TAG]`
@@ -10,7 +15,7 @@ The authoritative guide is `docs/src/content/resources/new-general-guidelines.md
 
 Read for TAG:
 
-- OOB file(s) `history/units/TAG_*.oob`: count **division** entries for starting unit count. Each `division = { }` block is one unit.
+- OOB file(s) `history/units/TAG_*.txt`: count **division** entries for starting unit count. Each `division = { }` block is one unit.
 - History file `history/countries/TAG*.txt`: identify whether the country is a major power, faction member, or NATO member.
 - Existing character file `common/characters/TAG.txt`: check if generals already exist to avoid duplicates.
 
@@ -85,9 +90,9 @@ characters = {
 
 **Portrait requirements:**
 
-- Large portrait: 156×210 px, `GFX/leaders/TAG/TAG_firstname_lastname.dds`
+- Large portrait: 156×210 px, `gfx/leaders/TAG/TAG_firstname_lastname.dds`
 - Small portrait: 38×51 px, same folder, `_small` suffix
-- If portraits don't exist yet, note them as needed in a comment; place stubs in `gfx/leaders/portrait_dump/` until real portraits exist
+- If portraits don't exist yet, note them as needed in a comment for the user to supply before merge
 
 ### 6. Write recruit_character entries
 

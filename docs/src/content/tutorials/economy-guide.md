@@ -3,7 +3,9 @@ title: Economy Guide
 description: Comprehensive guide to the economy system in Millennium Dawn
 ---
 
-Millennium Dawn includes a detailed modern economy system covering revenue, government expenditure, debt, employment, electricity, and more. This guide explains each element and how they interact.
+Millennium Dawn is set in the modern day and uses an in-depth economic system to model the importance of a nation's economy. You manage the entire state, not only its military and diplomacy. This includes taxation, government spending, debt, inflation, employment, and productivity. Each decision has interconnected consequences, and short-term fixes can create long-term problems. This guide explains the system so you can maintain a stable and growing economy.
+
+> **Tip:** Open the Economic Preview with the graph icon in the bottom-right corner. The button has a green dollar sign. Check it every few in-game weeks so you can respond to trends before they become crises.
 
 **Table of Contents**
 
@@ -209,9 +211,7 @@ When global demand exceeds half of global supply (demand/supply ratio > 0.5), pr
 
 ### Seigniorage Income
 
-Reserve currency issuers (the countries controlling USD, EUR, CNY, RUB, JPY, GBP, and CHF) earn passive seigniorage income proportional to how many other nations have adopted their currency. The more countries that hold your currency as their reserve, the more seigniorage you earn.
-
-Non-issuer countries can earn a smaller seigniorage income by activating the **Expand Money Supply** monetary policy decision, which provides a fraction of tax income as additional revenue at the cost of weakening the currency.
+Reserve currency issuers (the countries controlling USD, EUR, CNY, RUB, JPY, GBP, CHF, and NLG) earn passive seigniorage income proportional to how many other nations have adopted their currency. The more countries that hold your currency as their reserve, the more seigniorage you earn. Only issuers can use **Expand Money Supply** to increase that income at the cost of weakening their currency.
 
 ### Additional Income
 
@@ -333,6 +333,8 @@ Tax rates are adjusted through the economy interface:
 - **Population Tax**: Affects stability
 
 **Tax Rate Change Cost**: Each 1% change costs approximately 50 political power.
+
+For many countries, **20-30% corporate tax** is a practical starting range. A 20% rate avoids the productivity growth penalty; rates above that trade some long-term growth for additional revenue. Adjust the rate to your budget and development strategy rather than treating this range as a universal target.
 
 ---
 
@@ -521,15 +523,22 @@ You can prioritize which building types receive workers first from the Economy w
 
 ### Productivity
 
-**State Productivity** is a per-state variable that directly scales building output and GDP. Each state has its own productivity value, and the country-level overall productivity is calculated as the population-weighted average across all states.
+**State Productivity** is a per-state variable that directly scales building output and GDP. Each state has its own productivity value, and the country-level overall productivity is calculated as the population-weighted average across controlled states.
+
+The economic baseline is **1,000 or the world average productivity, whichever is higher**. GDP and corporate tax income scale with overall productivity divided by this baseline. Productivity also contributes bonuses or penalties to industrial output and construction speed. Once the world average exceeds 1,000, your productivity must keep pace to maintain the same benefits.
+
+This creates two broad development paths:
+
+- **Lower-productivity countries** benefit from affordable agriculture and basic industry while using network infrastructure and internal investment to improve productivity.
+- **Higher-productivity countries** gain more value from offices and advanced industry, but must support them with sufficient workers, electricity, and microchips.
 
 **What Productivity Affects:**
 
-- **Military factory output**: Higher productivity increases factory production efficiency
+- **Military factory output**: Higher productivity increases factory output
 - **Dockyard output**: Naval construction speed and output
 - **Construction speed**: All building construction is faster in high-productivity states
 - **Agriculture district output**: Farming yields scale with productivity
-- **GDP**: Overall productivity multiplies your total GDP (approximately 0.1% per productivity point)
+- **GDP**: Scales with overall productivity relative to the economic baseline
 
 **Starting Values by Region:**
 
@@ -539,11 +548,20 @@ You can prioritize which building types receive workers first from the Economy w
 | Asia & Oceania                             | 650                   |
 | Africa, Middle East, North & South America | 550                   |
 
-There is no maximum cap on productivity, it can grow indefinitely. The minimum floor is 100; it cannot fall below this.
+Productivity is clamped between 100 and 100,000.
 
 **Catch-Up Mechanic:**
 
-Productivity growth uses a catch-up mechanism: states with productivity below the global average grow faster than those above it. This means poorer regions naturally converge toward wealthier ones over time, though wealthy states still grow, just more slowly relative to their starting advantage.
+Productivity changes monthly. When national growth is positive, states below the world average receive a catch-up bonus, while states above it grow more slowly, before local modifiers apply. With negative national growth, more productive states suffer larger declines relative to the world average; local growth modifiers do not apply.
+
+**Reading the Productivity Tooltip:**
+
+Hover over the productivity value in the Economy window to see the current world and national averages, followed by the monthly growth breakdown:
+
+- **Base Productivity Growth**: The existing combined modifier from laws, ideas and technologies, including the economic cycle. Corporate tax and literacy values are shown as included contributions, not additional bonuses. These values are before the monthly ×0.5 factor and national modifiers.
+- **National Growth Modifier**: The existing combined modifier from laws, ideas and technologies. Inflation is shown as an included contribution. Its multiplier is 1 plus the combined modifier, limited to 0–100. For example, a total modifier of −21.7% gives a multiplier of ×0.783.
+- **Monthly Growth Before State Adjustments**: Base productivity growth ×0.5 × the national multiplier. Base growth of 0.100 with ×0.783 gives about 0.039 monthly growth. Each state then applies its world-average adjustment and, for positive growth, its local modifiers. The displayed number is therefore not the final change in every state or in the national average.
+- **Effect of Productivity**: The current GDP, output, construction and corporate tax modifiers. Commercialized Agriculture Districts have a separate construction-speed modifier.
 
 **Factors That Increase Productivity Growth:**
 
@@ -556,16 +574,18 @@ Productivity growth uses a catch-up mechanism: states with productivity below th
 | Railway infrastructure level 5 | +20%                                                 |
 | Railway infrastructure level 6 | +24%                                                 |
 | Internal investment (state)    | +20% growth in that state while investment is active |
-| Economic Cycle (Fast Growth)   | +2.0 monthly productivity growth                     |
-| Economic Cycle (Economic Boom) | +3.5 monthly productivity growth                     |
+| Economic Cycle (Fast Growth)   | +1.0 monthly base productivity growth                |
+| Economic Cycle (Economic Boom) | +1.75 monthly base productivity growth               |
 | National focuses and spirits   | Varies                                               |
 
 **Corporate Tax and Productivity:**
 
-Corporate tax directly suppresses productivity growth. The relationship is linear:
+Higher corporate taxes reduce the base monthly growth contribution. The relationship is linear, before national and state modifiers:
 
-- At 20% corporate tax: no productivity growth penalty
-- At 40% corporate tax: −10% productivity growth
+- At 20% corporate tax: no contribution to base growth
+- At 40% corporate tax: −0.050 productivity points per month
+
+This is an additive reduction in productivity points, not a percentage reduction in total growth.
 
 High taxes generate revenue but slow long-term growth. Finding a balance between revenue needs and long-term productivity is one of the core tensions in economic management.
 
@@ -746,6 +766,8 @@ Countries must supply electricity as part of their infrastructure. Power is gene
 | Fossil Fuel Powerplant          | Fuel                   | 2 GW          |
 | Nuclear Reactor                 | Reactor-Grade Material | 5 GW          |
 | Renewable Energy Infrastructure | None                   | 0.5 GW        |
+
+The renewable figure is a base value, not guaranteed output. Each state receives its own renewable capacity factor, and actual generation is randomized monthly between zero and that state's potential. Regions with better capacity factors produce more on average, but renewable-heavy grids still need room for monthly fluctuations.
 
 Reactor-Grade Material can be produced at Enrichment Facilities (built from the electricity panel) or purchased from other countries via decisions. States with Geothermal Infrastructure or Hydroelectric Infrastructure modifiers provide additional power.
 

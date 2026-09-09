@@ -201,7 +201,7 @@ TUR_domestic_politics_category = {
 			add_ideas = TUR_religious_directorate
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -459,24 +459,31 @@ TUR_domestic_politics_category = {
 			set_temp_variable = { party_popularity_increase = FP_pop_drop }
 			multiply_temp_variable = { party_popularity_increase = -1 }
 			set_temp_variable = { temp_outlook_increase = FP_pop_drop_neg }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			custom_effect_tooltip = TUR_FP_POP_DROP
 			custom_effect_tooltip = TUR_FP_NEW_NAME
 			set_temp_variable = { party_index = 0 }
 			set_temp_variable = { party_popularity_increase = Hizmet_pop_gain }
 			set_temp_variable = { temp_outlook_increase = Hizmet_pop_gain }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			custom_effect_tooltip = TUR_HIZMET_POP_GAIN
 			set_temp_variable = { party_index = 12 }
 			set_temp_variable = { party_popularity_increase = AKP_pop_gain }
 			set_temp_variable = { temp_outlook_increase = AKP_pop_gain }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			custom_effect_tooltip = TUR_AKP_POP_GAIN
 			custom_effect_tooltip = TUR_AKP_EMERGES
 		}
 
 		ai_will_do = {
 			base = 1000
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = TUR_GREAT_EAST_AI_FOCUS
+					has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS
+				}
+			}
 		}
 	}
 	TUR_homeland_defence = { #FP/Islamist Decision
@@ -565,7 +572,7 @@ TUR_domestic_politics_category = {
 			complete_national_focus = TUR_mit
 		}
 		ai_will_do = {
-			base = 1
+			base = 10
 		}
 	}
 	TUR_disaster_decision = {
@@ -586,7 +593,7 @@ TUR_domestic_politics_category = {
 			complete_national_focus = TUR_disaster_relief
 		}
 		ai_will_do = {
-			base = 1
+			base = 10
 		}
 	}
 	TUR_migrants = {
@@ -607,7 +614,7 @@ TUR_domestic_politics_category = {
 			complete_national_focus = TUR_migration_problems
 		}
 		ai_will_do = {
-			base = 1
+			base = 10
 		}
 	}
 	TUR_drug_problems_decision = {
@@ -629,7 +636,7 @@ TUR_domestic_politics_category = {
 			complete_national_focus = TUR_drug_problem
 		}
 		ai_will_do = {
-			base = 1
+			base = 10
 		}
 	}
 	TUR_nationalist_rise = {
@@ -650,7 +657,7 @@ TUR_domestic_politics_category = {
 			complete_national_focus = TUR_rising_nationalism
 		}
 		ai_will_do = {
-			base = 1
+			base = 10
 		}
 	}
 
@@ -689,7 +696,7 @@ TUR_domestic_politics_category = {
 			modify_treasury_effect = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 		remove_effect = {
@@ -766,7 +773,7 @@ TUR_domestic_politics_category = {
 					set_temp_variable = { party_index = 23 }
 					set_temp_variable = { party_popularity_increase = 0.45 }
 					set_temp_variable = { temp_outlook_increase = 0.45 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					set_temp_variable = { rul_party_temp = 23 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -779,7 +786,7 @@ TUR_domestic_politics_category = {
 					set_temp_variable = { party_index = 1 }
 					set_temp_variable = { party_popularity_increase = 0.45 }
 					set_temp_variable = { temp_outlook_increase = 0.45 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					set_temp_variable = { rul_party_temp = 1 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -788,6 +795,25 @@ TUR_domestic_politics_category = {
 		}
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = TUR_HISTORICAL_AI_FOCUS
+					has_global_flag = TUR_KEMALIST_GUARD_AI_FOCUS
+					has_global_flag = TUR_HIZMET_AI_FOCUS
+					has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS
+					has_global_flag = TUR_GREAT_EAST_AI_FOCUS
+				}
+			}
+			modifier = {
+				factor = 0
+				is_ai = yes
+				OR = {
+					NOT = { has_army_manpower = { size = 400000 } }
+					has_war = yes
+					NOT = { has_stability > 0.5 }
+				}
+			}
 		}
 	}
 
@@ -819,6 +845,7 @@ TUR_domestic_politics_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_establish_shia_dominance"
 			add_ideas = unrepresentative_government_shia
 			swap_ideas = {
 				add_idea = shia
@@ -831,6 +858,199 @@ TUR_domestic_politics_category = {
 
 	}
 
+
+	TUR_ai_build_the_akp = {
+
+		cost = 25
+
+		visible = {
+			hidden_trigger = {
+				is_ai = yes
+				has_global_flag = TUR_HISTORICAL_AI_FOCUS
+				NOT = { neutrality_neutral_muslim_brotherhood_are_in_power = yes }
+				has_country_flag = Turkey_FP_banned
+			}
+		}
+
+		days_remove = 60
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_ai_build_the_akp"
+			set_temp_variable = { party_index = 12 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+	}
+
+	TUR_ai_rally_the_kemalists = {
+
+		cost = 25
+
+		visible = {
+			hidden_trigger = {
+				is_ai = yes
+				has_global_flag = TUR_KEMALIST_GUARD_AI_FOCUS
+				NOT = { western_conservatism_are_in_power = yes }
+			}
+		}
+
+		days_remove = 60
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_ai_rally_the_kemalists"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+	}
+
+	TUR_ai_rally_the_grey_wolves = {
+
+		cost = 25
+
+		visible = {
+			hidden_trigger = {
+				is_ai = yes
+				has_global_flag = TUR_GREY_WOLVES_AI_FOCUS
+				NOT = { nationalist_right_wing_populists_are_in_power = yes }
+			}
+		}
+
+		days_remove = 60
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_ai_rally_the_grey_wolves"
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+	}
+
+	TUR_ai_build_hizmet = {
+
+		cost = 25
+
+		visible = {
+			hidden_trigger = {
+				is_ai = yes
+				has_global_flag = TUR_HIZMET_AI_FOCUS
+				NOT = { western_autocrats_are_in_power = yes }
+				has_country_flag = Turkey_FP_banned
+			}
+		}
+
+		days_remove = 60
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_ai_build_hizmet"
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+	}
+
+	TUR_ai_rally_the_left = {
+
+		cost = 25
+
+		visible = {
+			hidden_trigger = {
+				is_ai = yes
+				has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS
+				NOT = { emerging_communist_state_are_in_power = yes }
+			}
+		}
+
+		days_remove = 60
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_ai_rally_the_left"
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+	}
+
+	TUR_ai_rally_the_virtue_party = {
+
+		cost = 25
+
+		visible = {
+			hidden_trigger = {
+				is_ai = yes
+				has_global_flag = TUR_GREAT_EAST_AI_FOCUS
+				NOT = { emerging_reactionaries_are_in_power = yes }
+				NOT = { has_country_flag = TUR_military_peacefully_removed }
+			}
+		}
+
+		days_remove = 60
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_ai_rally_the_virtue_party"
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+	}
+
+	TUR_ai_rally_the_great_east = {
+
+		cost = 25
+
+		visible = {
+			hidden_trigger = {
+				is_ai = yes
+				has_global_flag = TUR_GREAT_EAST_AI_FOCUS
+				NOT = { salafist_caliphate_are_in_power = yes }
+				has_country_flag = TUR_military_peacefully_removed
+			}
+		}
+
+		days_remove = 60
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_ai_rally_the_great_east"
+			set_temp_variable = { party_index = 11 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+	}
 }
 
 # TUR_misak_mili = {
@@ -1287,9 +1507,11 @@ TUR_mafia_category = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
 				NOT = {
-					has_decision = TUR_arrest_mafia_central
-					has_decision = TUR_arrest_mafia_south
-					has_decision = TUR_arrest_mafia_east
+					OR = {
+						has_decision = TUR_arrest_mafia_central
+						has_decision = TUR_arrest_mafia_south
+						has_decision = TUR_arrest_mafia_east
+					}
 				}
 			}
 		}
@@ -1327,9 +1549,11 @@ TUR_mafia_category = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
 				NOT = {
-					has_decision = TUR_arrest_mafia_west
-					has_decision = TUR_arrest_mafia_south
-					has_decision = TUR_arrest_mafia_east
+					OR = {
+						has_decision = TUR_arrest_mafia_west
+						has_decision = TUR_arrest_mafia_south
+						has_decision = TUR_arrest_mafia_east
+					}
 				}
 			}
 		}
@@ -1367,9 +1591,11 @@ TUR_mafia_category = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
 				NOT = {
-					has_decision = TUR_arrest_mafia_west
-					has_decision = TUR_arrest_mafia_central
-					has_decision = TUR_arrest_mafia_east
+					OR = {
+						has_decision = TUR_arrest_mafia_west
+						has_decision = TUR_arrest_mafia_central
+						has_decision = TUR_arrest_mafia_east
+					}
 				}
 			}
 		}
@@ -1407,9 +1633,11 @@ TUR_mafia_category = {
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
 				NOT = {
-					has_decision = TUR_arrest_mafia_west
-					has_decision = TUR_arrest_mafia_central
-					has_decision = TUR_arrest_mafia_south
+					OR = {
+						has_decision = TUR_arrest_mafia_west
+						has_decision = TUR_arrest_mafia_central
+						has_decision = TUR_arrest_mafia_south
+					}
 				}
 			}
 		}
@@ -1526,8 +1754,10 @@ TUR_ottoman_revival = {
 				has_country_flag = TUR_osmani
 			}
 			NOT = {
-				has_decision = TUR_support_in_syria
-				has_decision = TUR_support_in_kuwait
+				OR = {
+					has_decision = TUR_support_in_syria
+					has_decision = TUR_support_in_kuwait
+				}
 			}
 		}
 		remove_effect = {
@@ -1555,8 +1785,10 @@ TUR_ottoman_revival = {
 				has_country_flag = TUR_osmani
 			}
 			NOT = {
-				has_decision = TUR_support_in_kuwait
-				has_decision = TUR_support_in_iraq
+				OR = {
+					has_decision = TUR_support_in_kuwait
+					has_decision = TUR_support_in_iraq
+				}
 			}
 		}
 		remove_effect = {
@@ -1584,8 +1816,10 @@ TUR_ottoman_revival = {
 				has_country_flag = TUR_osmani
 			}
 			NOT = {
-				has_decision = TUR_support_in_syria
-				has_decision = TUR_support_in_iraq
+				OR = {
+					has_decision = TUR_support_in_syria
+					has_decision = TUR_support_in_iraq
+				}
 			}
 		}
 		remove_effect = {
@@ -1647,9 +1881,11 @@ TUR_ottoman_revival = {
 				has_country_flag = TUR_osmani
 			}
 			NOT = {
-				has_decision = TUR_support_in_jordan
-				has_decision = TUR_support_in_lebanon
-				has_decision = TUR_support_in_saudi
+				OR = {
+					has_decision = TUR_support_in_jordan
+					has_decision = TUR_support_in_lebanon
+					has_decision = TUR_support_in_saudi
+				}
 			}
 		}
 		remove_effect = {
@@ -1677,9 +1913,11 @@ TUR_ottoman_revival = {
 				has_country_flag = TUR_osmani
 			}
 			NOT = {
-				has_decision = TUR_support_in_jordan
-				has_decision = TUR_support_in_israel
-				has_decision = TUR_support_in_saudi
+				OR = {
+					has_decision = TUR_support_in_jordan
+					has_decision = TUR_support_in_israel
+					has_decision = TUR_support_in_saudi
+				}
 			}
 		}
 		remove_effect = {
@@ -1707,9 +1945,11 @@ TUR_ottoman_revival = {
 				has_country_flag = TUR_osmani
 			}
 			NOT = {
-				has_decision = TUR_support_in_saudi
-				has_decision = TUR_support_in_israel
-				has_decision = TUR_support_in_lebanon
+				OR = {
+					has_decision = TUR_support_in_saudi
+					has_decision = TUR_support_in_israel
+					has_decision = TUR_support_in_lebanon
+				}
 			}
 		}
 		remove_effect = {
@@ -1737,9 +1977,11 @@ TUR_ottoman_revival = {
 				has_country_flag = TUR_osmani
 			}
 			NOT = {
-				has_decision = TUR_support_in_jordan
-				has_decision = TUR_support_in_israel
-				has_decision = TUR_support_in_lebanon
+				OR = {
+					has_decision = TUR_support_in_jordan
+					has_decision = TUR_support_in_israel
+					has_decision = TUR_support_in_lebanon
+				}
 			}
 		}
 		remove_effect = {
@@ -1801,8 +2043,10 @@ TUR_ottoman_revival = {
 				has_country_flag = TUR_osmani
 			}
 			NOT = {
-				has_decision = TUR_support_in_macedonia
-				has_decision = TUR_support_in_greece
+				OR = {
+					has_decision = TUR_support_in_macedonia
+					has_decision = TUR_support_in_greece
+				}
 			}
 		}
 		remove_effect = {
@@ -1830,8 +2074,10 @@ TUR_ottoman_revival = {
 				has_country_flag = TUR_osmani
 			}
 			NOT = {
-				has_decision = TUR_support_in_macedonia
-				has_decision = TUR_support_in_bulgaria
+				OR = {
+					has_decision = TUR_support_in_macedonia
+					has_decision = TUR_support_in_bulgaria
+				}
 			}
 		}
 		remove_effect = {
@@ -1859,8 +2105,10 @@ TUR_ottoman_revival = {
 				has_country_flag = TUR_osmani
 			}
 			NOT = {
-				has_decision = TUR_support_in_greece
-				has_decision = TUR_support_in_bulgaria
+				OR = {
+					has_decision = TUR_support_in_greece
+					has_decision = TUR_support_in_bulgaria
+				}
 			}
 		}
 		remove_effect = {
@@ -2152,8 +2400,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_fund_ira
-				has_decision = TUR_sow_division
+				OR = {
+					has_decision = TUR_fund_ira
+					has_decision = TUR_sow_division
+				}
 			}
 		}
 
@@ -2162,6 +2412,7 @@ TUR_mafia_influence_mechanic = {
 			custom_effect_tooltip = TUR_boost_mafia
 			add_to_variable = { var = mafia_uk value = 0.02 }
 			clamp_variable = { var = mafia_uk min = 0 max = 1 }
+			TUR_update_mafia_dirty_variable = yes
 		}
 
 		days_remove = 20
@@ -2183,8 +2434,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_boost_british_firms
-				has_decision = TUR_sow_division
+				OR = {
+					has_decision = TUR_boost_british_firms
+					has_decision = TUR_sow_division
+				}
 			}
 		}
 
@@ -2218,8 +2471,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_boost_british_firms
-				has_decision = TUR_fund_ira
+				OR = {
+					has_decision = TUR_boost_british_firms
+					has_decision = TUR_fund_ira
+				}
 			}
 		}
 
@@ -2229,7 +2484,7 @@ TUR_mafia_influence_mechanic = {
 				set_temp_variable = { party_index = 15 }
 				set_temp_variable = { party_popularity_increase = 0.03 }
 				set_temp_variable = { temp_outlook_increase = 0.03 }
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 				random_list = {
 					10 = {
 						modifier = {
@@ -2239,7 +2494,7 @@ TUR_mafia_influence_mechanic = {
 						set_temp_variable = { party_index = 0 }
 						set_temp_variable = { party_popularity_increase = -0.05 }
 						set_temp_variable = { temp_outlook_increase = -0.05 }
-						add_relative_party_popularity = yes
+						change_relative_party_popularity = yes
 					}
 					10 = {
 						modifier = {
@@ -2249,7 +2504,7 @@ TUR_mafia_influence_mechanic = {
 						set_temp_variable = { party_index = 1 }
 						set_temp_variable = { party_popularity_increase = -0.05 }
 						set_temp_variable = { temp_outlook_increase = -0.05 }
-						add_relative_party_popularity = yes
+						change_relative_party_popularity = yes
 					}
 					10 = {
 						modifier = {
@@ -2259,7 +2514,7 @@ TUR_mafia_influence_mechanic = {
 						set_temp_variable = { party_index = 2 }
 						set_temp_variable = { party_popularity_increase = -0.05 }
 						set_temp_variable = { temp_outlook_increase = -0.05 }
-						add_relative_party_popularity = yes
+						change_relative_party_popularity = yes
 					}
 					10 = {
 						modifier = {
@@ -2269,7 +2524,7 @@ TUR_mafia_influence_mechanic = {
 						set_temp_variable = { party_index = 3 }
 						set_temp_variable = { party_popularity_increase = -0.05 }
 						set_temp_variable = { temp_outlook_increase = -0.05 }
-						add_relative_party_popularity = yes
+						change_relative_party_popularity = yes
 					}
 					10 = {
 						modifier = {
@@ -2279,7 +2534,7 @@ TUR_mafia_influence_mechanic = {
 						set_temp_variable = { party_index = 17 }
 						set_temp_variable = { party_popularity_increase = -0.05 }
 						set_temp_variable = { temp_outlook_increase = -0.05 }
-						add_relative_party_popularity = yes
+						change_relative_party_popularity = yes
 					}
 					10 = {
 						modifier = {
@@ -2289,7 +2544,7 @@ TUR_mafia_influence_mechanic = {
 						set_temp_variable = { party_index = 18 }
 						set_temp_variable = { party_popularity_increase = -0.05 }
 						set_temp_variable = { temp_outlook_increase = -0.05 }
-						add_relative_party_popularity = yes
+						change_relative_party_popularity = yes
 					}
 					10 = {
 						modifier = {
@@ -2299,7 +2554,7 @@ TUR_mafia_influence_mechanic = {
 						set_temp_variable = { party_index = 19 }
 						set_temp_variable = { party_popularity_increase = -0.05 }
 						set_temp_variable = { temp_outlook_increase = -0.05 }
-						add_relative_party_popularity = yes
+						change_relative_party_popularity = yes
 					}
 				}
 			}
@@ -2325,9 +2580,11 @@ TUR_mafia_influence_mechanic = {
 		fire_only_once = yes
 		available = {
 			NOT = {
-				has_decision = TUR_boost_british_firms
-				has_decision = TUR_fund_ira
-				has_decision = TUR_sow_division
+				OR = {
+					has_decision = TUR_boost_british_firms
+					has_decision = TUR_fund_ira
+					has_decision = TUR_sow_division
+				}
 			}
 			ENG = {
 				has_stability < 0.3
@@ -2417,11 +2674,11 @@ TUR_mafia_influence_mechanic = {
 			hidden_effect = {
 				SCO = {
 					set_cosmetic_tag = TUR_SCOTTISH_SYNDICATE
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 				}
 				WAS = {
 					set_cosmetic_tag = TUR_WELSH_SYNDICATE
-					set_country_flag = is_VANGUARD
+					mark_formed_country_formable = yes
 				}
 			}
 		}
@@ -2482,8 +2739,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_commit_vehicle_rob
-				has_decision = TUR_attack_german_politics
+				OR = {
+					has_decision = TUR_commit_vehicle_rob
+					has_decision = TUR_attack_german_politics
+				}
 			}
 		}
 		remove_effect = {
@@ -2491,6 +2750,7 @@ TUR_mafia_influence_mechanic = {
 			custom_effect_tooltip = TUR_boost_mafia
 			add_to_variable = { var = mafia_germany value = 0.02 }
 			clamp_variable = { var = mafia_germany min = 0 max = 1 }
+			TUR_update_mafia_dirty_variable = yes
 		}
 		modifier = {
 			political_power_gain = -0.80
@@ -2523,8 +2783,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_gray_wolves_networks
-				has_decision = TUR_attack_german_politics
+				OR = {
+					has_decision = TUR_gray_wolves_networks
+					has_decision = TUR_attack_german_politics
+				}
 			}
 		}
 		remove_effect = {
@@ -2583,8 +2845,10 @@ TUR_mafia_influence_mechanic = {
 				check_variable = { from.mafia_germany > 0.59 }
 			}
 			NOT = {
-				has_decision = TUR_gray_wolves_networks
-				has_decision = TUR_commit_vehicle_rob
+				OR = {
+					has_decision = TUR_gray_wolves_networks
+					has_decision = TUR_commit_vehicle_rob
+				}
 			}
 		}
 		remove_effect = {
@@ -2697,8 +2961,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_decrease_policing_holland
-				has_decision = TUR_seize_goods_from_ports
+				OR = {
+					has_decision = TUR_decrease_policing_holland
+					has_decision = TUR_seize_goods_from_ports
+				}
 			}
 		}
 		remove_effect = {
@@ -2706,6 +2972,7 @@ TUR_mafia_influence_mechanic = {
 			custom_effect_tooltip = TUR_boost_mafia
 			add_to_variable = { var = mafia_holland value = 0.02 }
 			clamp_variable = { var = mafia_holland min = 0 max = 1 }
+			TUR_update_mafia_dirty_variable = yes
 		}
 
 		days_remove = 15
@@ -2731,8 +2998,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_decrease_policing_holland
-				has_decision = TUR_establish_drug_networks_rotterdam
+				OR = {
+					has_decision = TUR_decrease_policing_holland
+					has_decision = TUR_establish_drug_networks_rotterdam
+				}
 			}
 		}
 		remove_effect = {
@@ -2800,8 +3069,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_seize_goods_from_ports
-				has_decision = TUR_establish_drug_networks_rotterdam
+				OR = {
+					has_decision = TUR_seize_goods_from_ports
+					has_decision = TUR_establish_drug_networks_rotterdam
+				}
 			}
 		}
 		remove_effect = {
@@ -2878,16 +3149,7 @@ TUR_mafia_influence_mechanic = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_close_aus_operations"
-			add_to_variable = { var = mafia_germany value = 0.60 }
-			clamp_variable = { var = mafia_germany min = 0 max = 1 }
-			add_to_variable = { var = mafia_uk value = 0.60 }
-			clamp_variable = { var = mafia_uk min = 0 max = 1 }
-			add_to_variable = { var = mafia_holland value = 0.60 }
-			clamp_variable = { var = mafia_holland min = 0 max = 1 }
-			add_to_variable = { var = mafia_belgium value = 0.60 }
-			clamp_variable = { var = mafia_belgium min = 0 max = 1 }
-			add_to_variable = { var = mafia_australia value = 0.60 }
-			clamp_variable = { var = mafia_australia min = 0 max = 1 }
+			clr_country_flag = TUR_opening_australia
 		}
 
 		ai_will_do = {
@@ -2907,8 +3169,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_target_aussie_welfare
-				has_decision = TUR_spread_hatred_indonesia
+				OR = {
+					has_decision = TUR_target_aussie_welfare
+					has_decision = TUR_spread_hatred_indonesia
+				}
 			}
 		}
 		remove_effect = {
@@ -2916,6 +3180,7 @@ TUR_mafia_influence_mechanic = {
 			custom_effect_tooltip = TUR_boost_mafia
 			add_to_variable = { var = mafia_australia value = 0.02 }
 			clamp_variable = { var = mafia_australia min = 0 max = 1 }
+			TUR_update_mafia_dirty_variable = yes
 		}
 
 		days_remove = 15
@@ -2946,8 +3211,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_boost_honoured_society
-				has_decision = TUR_spread_hatred_indonesia
+				OR = {
+					has_decision = TUR_boost_honoured_society
+					has_decision = TUR_spread_hatred_indonesia
+				}
 			}
 		}
 		remove_effect = {
@@ -2990,8 +3257,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_boost_honoured_society
-				has_decision = TUR_target_aussie_welfare
+				OR = {
+					has_decision = TUR_boost_honoured_society
+					has_decision = TUR_target_aussie_welfare
+				}
 			}
 		}
 		remove_effect = {
@@ -3116,8 +3385,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_strings_in_belgian_govt
-				has_decision = TUR_steal_crucial_info
+				OR = {
+					has_decision = TUR_strings_in_belgian_govt
+					has_decision = TUR_steal_crucial_info
+				}
 			}
 		}
 		remove_effect = {
@@ -3125,6 +3396,7 @@ TUR_mafia_influence_mechanic = {
 			custom_effect_tooltip = TUR_boost_mafia
 			add_to_variable = { var = mafia_belgium value = 0.02 }
 			clamp_variable = { var = mafia_belgium min = 0 max = 1 }
+			TUR_update_mafia_dirty_variable = yes
 		}
 
 		modifier = {
@@ -3150,8 +3422,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_fund_bel_mafia
-				has_decision = TUR_steal_crucial_info
+				OR = {
+					has_decision = TUR_fund_bel_mafia
+					has_decision = TUR_steal_crucial_info
+				}
 			}
 		}
 		remove_effect = {
@@ -3182,8 +3456,10 @@ TUR_mafia_influence_mechanic = {
 				has_country_flag = playing_mafia
 			}
 			NOT = {
-				has_decision = TUR_fund_bel_mafia
-				has_decision = TUR_strings_in_belgian_govt
+				OR = {
+					has_decision = TUR_fund_bel_mafia
+					has_decision = TUR_strings_in_belgian_govt
+				}
 			}
 		}
 		remove_effect = {
@@ -3191,7 +3467,7 @@ TUR_mafia_influence_mechanic = {
 			random_list = {
 				10 = {
 					add_tech_bonus = {
-						name = ALB_taken_research
+						name = TUR_steal_crucial_info
 						bonus = 0.10
 						uses = 1
 						category = CAT_industry
@@ -3199,7 +3475,7 @@ TUR_mafia_influence_mechanic = {
 				}
 				10 = {
 					add_tech_bonus = {
-						name = ALB_taken_research
+						name = TUR_steal_crucial_info
 						bonus = 0.10
 						uses = 1
 						category = CAT_computing_tech
@@ -3207,7 +3483,7 @@ TUR_mafia_influence_mechanic = {
 				}
 				10 = {
 					add_tech_bonus = {
-						name = CAT_construction_tech
+						name = TUR_steal_crucial_info
 						bonus = 0.10
 						uses = 1
 						category = CAT_construction_tech
@@ -3215,7 +3491,7 @@ TUR_mafia_influence_mechanic = {
 				}
 				10 = {
 					add_tech_bonus = {
-						name = CAT_3d
+						name = TUR_steal_crucial_info
 						bonus = 0.10
 						uses = 1
 						category = CAT_3d
@@ -3223,7 +3499,7 @@ TUR_mafia_influence_mechanic = {
 				}
 				10 = {
 					add_tech_bonus = {
-						name = CAT_util
+						name = TUR_steal_crucial_info
 						bonus = 0.10
 						uses = 1
 						category = CAT_util
@@ -3231,7 +3507,7 @@ TUR_mafia_influence_mechanic = {
 				}
 				10 = {
 					add_tech_bonus = {
-						name = CAT_artillery
+						name = TUR_steal_crucial_info
 						bonus = 0.10
 						uses = 1
 						category = CAT_artillery
@@ -3239,7 +3515,7 @@ TUR_mafia_influence_mechanic = {
 				}
 				10 = {
 					add_tech_bonus = {
-						name = CAT_fuel_oil
+						name = TUR_steal_crucial_info
 						bonus = 0.10
 						uses = 1
 						category = CAT_fuel_oil
@@ -3247,7 +3523,7 @@ TUR_mafia_influence_mechanic = {
 				}
 				10 = {
 					add_tech_bonus = {
-						name = CAT_tanks
+						name = TUR_steal_crucial_info
 						bonus = 0.10
 						uses = 1
 						category = CAT_tanks
@@ -3255,7 +3531,7 @@ TUR_mafia_influence_mechanic = {
 				}
 				10 = {
 					add_tech_bonus = {
-						name = CAT_ifv
+						name = TUR_steal_crucial_info
 						bonus = 0.10
 						uses = 1
 						category = CAT_ifv
@@ -3263,7 +3539,7 @@ TUR_mafia_influence_mechanic = {
 				}
 				10 = {
 					add_tech_bonus = {
-						name = CAT_apc
+						name = TUR_steal_crucial_info
 						bonus = 0.10
 						uses = 1
 						category = CAT_apc
@@ -3317,10 +3593,12 @@ TUR_ciw_decisions = {
 		allowed = { original_tag = TUR }
 		available = {
 			NOT = {
-				has_decision = TUR_invest_in_industry
-				has_decision = TUR_invest_in_health
-				has_decision = TUR_invest_in_education
-				has_decision = TUR_invest_in_disasters
+				OR = {
+					has_decision = TUR_invest_in_industry
+					has_decision = TUR_invest_in_health
+					has_decision = TUR_invest_in_education
+					has_decision = TUR_invest_in_disasters
+				}
 			}
 		}
 		complete_effect = {
@@ -3349,10 +3627,12 @@ TUR_ciw_decisions = {
 
 		available = {
 			NOT = {
-				has_decision = TUR_invest_in_industry
-				has_decision = TUR_invest_in_health
-				has_decision = TUR_invest_in_education
-				has_decision = TUR_invest_in_infrastructure
+				OR = {
+					has_decision = TUR_invest_in_industry
+					has_decision = TUR_invest_in_health
+					has_decision = TUR_invest_in_education
+					has_decision = TUR_invest_in_infrastructure
+				}
 			}
 		}
 		complete_effect = {
@@ -3380,10 +3660,12 @@ TUR_ciw_decisions = {
 
 		available = {
 			NOT = {
-				has_decision = TUR_invest_in_industry
-				has_decision = TUR_invest_in_health
-				has_decision = TUR_invest_in_disasters
-				has_decision = TUR_invest_in_infrastructure
+				OR = {
+					has_decision = TUR_invest_in_industry
+					has_decision = TUR_invest_in_health
+					has_decision = TUR_invest_in_disasters
+					has_decision = TUR_invest_in_infrastructure
+				}
 			}
 		}
 		complete_effect = {
@@ -3412,10 +3694,12 @@ TUR_ciw_decisions = {
 
 		available = {
 			NOT = {
-				has_decision = TUR_invest_in_industry
-				has_decision = TUR_invest_in_education
-				has_decision = TUR_invest_in_disasters
-				has_decision = TUR_invest_in_infrastructure
+				OR = {
+					has_decision = TUR_invest_in_industry
+					has_decision = TUR_invest_in_education
+					has_decision = TUR_invest_in_disasters
+					has_decision = TUR_invest_in_infrastructure
+				}
 			}
 		}
 		complete_effect = {
@@ -3444,10 +3728,12 @@ TUR_ciw_decisions = {
 
 		available = {
 			NOT = {
-				has_decision = TUR_invest_in_health
-				has_decision = TUR_invest_in_education
-				has_decision = TUR_invest_in_disasters
-				has_decision = TUR_invest_in_infrastructure
+				OR = {
+					has_decision = TUR_invest_in_health
+					has_decision = TUR_invest_in_education
+					has_decision = TUR_invest_in_disasters
+					has_decision = TUR_invest_in_infrastructure
+				}
 			}
 		}
 		complete_effect = {
@@ -3484,15 +3770,14 @@ TUR_ciw_decisions = {
 		}
 		cost = 100
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = TUR_we_need_5
-				check_variable = { treasury > 4.99 }
-			}
+			treasury_higher_than_5 = yes
 			NOT = {
-				has_decision = TUR_ask_for_network
-				has_decision = TUR_ask_for_supply
-				has_decision = TUR_ask_for_radars
-				has_decision = TUR_ask_for_airbase
+				OR = {
+					has_decision = TUR_ask_for_network
+					has_decision = TUR_ask_for_supply
+					has_decision = TUR_ask_for_radars
+					has_decision = TUR_ask_for_airbase
+				}
 			}
 		}
 		complete_effect = {
@@ -3530,15 +3815,14 @@ TUR_ciw_decisions = {
 		}
 		cost = 100
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = TUR_we_need_5
-				check_variable = { treasury > 4.99 }
-			}
+			treasury_higher_than_5 = yes
 			NOT = {
-				has_decision = TUR_ask_for_infrastructure
-				has_decision = TUR_ask_for_supply
-				has_decision = TUR_ask_for_radars
-				has_decision = TUR_ask_for_airbase
+				OR = {
+					has_decision = TUR_ask_for_infrastructure
+					has_decision = TUR_ask_for_supply
+					has_decision = TUR_ask_for_radars
+					has_decision = TUR_ask_for_airbase
+				}
 			}
 		}
 		complete_effect = {
@@ -3584,15 +3868,14 @@ TUR_ciw_decisions = {
 		}
 		cost = 100
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = TUR_we_need_5
-				check_variable = { treasury > 4.99 }
-			}
+			treasury_higher_than_5 = yes
 			NOT = {
-				has_decision = TUR_ask_for_infrastructure
-				has_decision = TUR_ask_for_network
-				has_decision = TUR_ask_for_radars
-				has_decision = TUR_ask_for_airbase
+				OR = {
+					has_decision = TUR_ask_for_infrastructure
+					has_decision = TUR_ask_for_network
+					has_decision = TUR_ask_for_radars
+					has_decision = TUR_ask_for_airbase
+				}
 			}
 		}
 		complete_effect = {
@@ -3609,6 +3892,7 @@ TUR_ciw_decisions = {
 					type = supply_node
 					level = 1
 					instant_build = yes
+					province = { all_provinces = yes first = yes }
 				}
 			}
 		}
@@ -3629,15 +3913,14 @@ TUR_ciw_decisions = {
 		}
 		cost = 100
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = TUR_we_need_5
-				check_variable = { treasury > 4.99 }
-			}
+			treasury_higher_than_5 = yes
 			NOT = {
-				has_decision = TUR_ask_for_infrastructure
-				has_decision = TUR_ask_for_network
-				has_decision = TUR_ask_for_supply
-				has_decision = TUR_ask_for_airbase
+				OR = {
+					has_decision = TUR_ask_for_infrastructure
+					has_decision = TUR_ask_for_network
+					has_decision = TUR_ask_for_supply
+					has_decision = TUR_ask_for_airbase
+				}
 			}
 		}
 		complete_effect = {
@@ -3675,15 +3958,14 @@ TUR_ciw_decisions = {
 		}
 		cost = 100
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = TUR_we_need_5
-				check_variable = { treasury > 4.99 }
-			}
+			treasury_higher_than_5 = yes
 			NOT = {
-				has_decision = TUR_ask_for_infrastructure
-				has_decision = TUR_ask_for_network
-				has_decision = TUR_ask_for_supply
-				has_decision = TUR_ask_for_radars
+				OR = {
+					has_decision = TUR_ask_for_infrastructure
+					has_decision = TUR_ask_for_network
+					has_decision = TUR_ask_for_supply
+					has_decision = TUR_ask_for_radars
+				}
 			}
 		}
 		complete_effect = {
@@ -3723,7 +4005,7 @@ TUR_ciw_decisions = {
 			has_idea = CIW_member
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_ask_for_airbase"
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_leave_ciw"
 			remove_ideas = CIW_member
 			TUR = {
 				country_event = TurkeyFocusEvents.49
@@ -3785,18 +4067,18 @@ TUR_disaster_income = {
 					set_temp_variable = { party_popularity_increase = FP_pop_drop }
 					multiply_temp_variable = { party_popularity_increase = -1 }
 					set_temp_variable = { temp_outlook_increase = FP_pop_drop_neg }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					custom_effect_tooltip = TUR_FP_POP_DROP
 					custom_effect_tooltip = TUR_FP_NEW_NAME
 					set_temp_variable = { party_index = 0 }
 					set_temp_variable = { party_popularity_increase = Hizmet_pop_gain }
 					set_temp_variable = { temp_outlook_increase = Hizmet_pop_gain }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					custom_effect_tooltip = TUR_HIZMET_POP_GAIN
 					set_temp_variable = { party_index = 12 }
 					set_temp_variable = { party_popularity_increase = AKP_pop_gain }
 					set_temp_variable = { temp_outlook_increase = AKP_pop_gain }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					custom_effect_tooltip = TUR_AKP_POP_GAIN
 					custom_effect_tooltip = TUR_AKP_EMERGES
 				}
@@ -3828,6 +4110,10 @@ TUR_PKK_mechanic = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 
@@ -3839,11 +4125,13 @@ TUR_PKK_mechanic = {
 				has_country_flag = TUR_PKK_unconventional
 			}
 			NOT = {
-				has_country_flag = TUR_targeting_van
-				has_country_flag = TUR_auto_attacks_van
-				has_country_flag = TUR_auto_attacks_euphrates
-				has_country_flag = TUR_auto_attacks_diyarbakir
-				has_country_flag = TUR_van_done
+				OR = {
+					has_country_flag = TUR_targeting_van
+					has_country_flag = TUR_auto_attacks_van
+					has_country_flag = TUR_auto_attacks_euphrates
+					has_country_flag = TUR_auto_attacks_diyarbakir
+					has_country_flag = TUR_van_done
+				}
 			}
 		}
 		available = {
@@ -3866,11 +4154,16 @@ TUR_PKK_mechanic = {
 				add_to_variable = { var_pkk_van = 3950 }
 				clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
 				set_country_flag = TUR_selected_van_already
+				country_event = TUR_pkk.100
 			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 	TUR_select_diyarbakir_base = {
@@ -3881,11 +4174,13 @@ TUR_PKK_mechanic = {
 				has_country_flag = TUR_PKK_unconventional
 			}
 			NOT = {
-				has_country_flag = TUR_targeting_diyarbakir
-				has_country_flag = TUR_auto_attacks_van
-				has_country_flag = TUR_auto_attacks_euphrates
-				has_country_flag = TUR_auto_attacks_diyarbakir
-				has_country_flag = TUR_diyarbakir_done
+				OR = {
+					has_country_flag = TUR_targeting_diyarbakir
+					has_country_flag = TUR_auto_attacks_van
+					has_country_flag = TUR_auto_attacks_euphrates
+					has_country_flag = TUR_auto_attacks_diyarbakir
+					has_country_flag = TUR_diyarbakir_done
+				}
 			}
 		}
 		available = {
@@ -3908,11 +4203,16 @@ TUR_PKK_mechanic = {
 				add_to_variable = { var_pkk_diyarbakir = 4800 }
 				clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
 				set_country_flag = TUR_selected_diyarbakir_already
+				country_event = TUR_pkk.100
 			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 	TUR_select_euphrates_base = {
@@ -3923,11 +4223,13 @@ TUR_PKK_mechanic = {
 				has_country_flag = TUR_PKK_unconventional
 			}
 			NOT = {
-				has_country_flag = TUR_targeting_euphrates
-				has_country_flag = TUR_auto_attacks_van
-				has_country_flag = TUR_auto_attacks_euphrates
-				has_country_flag = TUR_auto_attacks_diyarbakir
-				has_country_flag = TUR_euphrates_done
+				OR = {
+					has_country_flag = TUR_targeting_euphrates
+					has_country_flag = TUR_auto_attacks_van
+					has_country_flag = TUR_auto_attacks_euphrates
+					has_country_flag = TUR_auto_attacks_diyarbakir
+					has_country_flag = TUR_euphrates_done
+				}
 			}
 		}
 
@@ -3951,11 +4253,16 @@ TUR_PKK_mechanic = {
 				add_to_variable = { var_pkk_euphrates = 3200 }
 				clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
 				set_country_flag = TUR_selected_euphrates_already
+				country_event = TUR_pkk.100
 			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 
@@ -3979,9 +4286,11 @@ TUR_PKK_mechanic = {
 				has_country_flag = TUR_targeting_diyarbakir
 			}
 			NOT = {
-				has_country_flag = TUR_euphrates_done
-				has_country_flag = TUR_van_done
-				has_country_flag = TUR_diyarbakir_done
+				OR = {
+					has_country_flag = TUR_euphrates_done
+					has_country_flag = TUR_van_done
+					has_country_flag = TUR_diyarbakir_done
+				}
 			}
 		}
 
@@ -4002,6 +4311,10 @@ TUR_PKK_mechanic = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 
@@ -4020,8 +4333,10 @@ TUR_PKK_mechanic = {
 			}
 			has_country_flag = TUR_targeting_van
 			NOT = {
-				has_country_flag = TUR_auto_attacks_van
-				has_country_flag = TUR_van_done
+				OR = {
+					has_country_flag = TUR_auto_attacks_van
+					has_country_flag = TUR_van_done
+				}
 			}
 		}
 		available = {
@@ -4057,6 +4372,10 @@ TUR_PKK_mechanic = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 
@@ -4105,8 +4424,10 @@ TUR_PKK_mechanic = {
 			}
 			has_country_flag = TUR_targeting_diyarbakir
 			NOT = {
-				has_country_flag = TUR_auto_attacks_diyarbakir
-				has_country_flag = TUR_diyarbakir_done
+				OR = {
+					has_country_flag = TUR_auto_attacks_diyarbakir
+					has_country_flag = TUR_diyarbakir_done
+				}
 			}
 		}
 
@@ -4143,6 +4464,10 @@ TUR_PKK_mechanic = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 
@@ -4189,8 +4514,10 @@ TUR_PKK_mechanic = {
 			}
 			has_country_flag = TUR_targeting_euphrates
 			NOT = {
-				has_country_flag = TUR_auto_attacks_euphrates
-				has_country_flag = TUR_euphrates_done
+				OR = {
+					has_country_flag = TUR_auto_attacks_euphrates
+					has_country_flag = TUR_euphrates_done
+				}
 			}
 		}
 
@@ -4227,6 +4554,10 @@ TUR_PKK_mechanic = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 
@@ -4316,6 +4647,10 @@ TUR_PKK_mechanic = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 
@@ -4349,7 +4684,7 @@ TUR_PKK_mechanic = {
 		days_remove = 30
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TUR_clean_out_PKK_in_van"
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_clean_out_PKK_in_euphrates"
 			country_event = TUR_pkk.215
 			set_country_flag = TUR_euphrates_done
 			clr_country_flag = TUR_auto_attacks_euphrates
@@ -4375,6 +4710,10 @@ TUR_PKK_mechanic = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 
@@ -4434,6 +4773,10 @@ TUR_PKK_mechanic = {
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 
@@ -4460,12 +4803,17 @@ TUR_PKK_mechanic = {
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 50
+				TUR_ai_keeps_the_southeast = yes
+			}
 		}
 	}
 }
 
 TUR_rebuilding_kurdistan = {
 	TUR_the_promise_of_no_return = {
+		allowed = { always = no }
 		fire_only_once = yes
 		available = {
 			has_country_flag = TUR_finalized_reforms
@@ -4473,11 +4821,11 @@ TUR_rebuilding_kurdistan = {
 		days_mission_timeout = 1500
 		is_good = no
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TUR_the_promise_of_the_century"
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_the_promise_of_no_return"
 			country_event = TUR_pkk.601
 		}
 		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TUR_the_promise_of_the_century"
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_the_promise_of_no_return"
 			country_event = TUR_pkk.600
 		}
 	}
@@ -4529,7 +4877,7 @@ TUR_rebuilding_kurdistan = {
 			set_temp_variable = { party_index = 19 }
 			set_temp_variable = { party_popularity_increase = 0.1 }
 			set_temp_variable = { temp_outlook_increase = 0.1 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -4928,7 +5276,7 @@ TUR_rebuilding_kurdistan = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TUR_jobs_and_careers"
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_power_infrastructure"
 			add_days_mission_timeout = {
 				mission = TUR_the_promise_of_no_return
 				days = 550
@@ -4936,7 +5284,7 @@ TUR_rebuilding_kurdistan = {
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TUR_jobs_and_careers"
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_power_infrastructure"
 			add_to_variable = {
 				var = TUR_pkk_reconcile_var value = 1
 			}

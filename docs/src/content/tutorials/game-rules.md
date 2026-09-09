@@ -82,14 +82,14 @@ Controls influence system mechanics.
 
 Performance-related settings.
 
-| Rule                                   | Options               | Default | Description                      |
-| -------------------------------------- | --------------------- | ------- | -------------------------------- |
-| `allow_mp_optimizations`               | yes/no                | no      | Enable multiplayer optimizations |
-| `allow_division_limiter`               | yes/no/potato_edition | yes     | Division count limiter           |
-| `remove_mp_states`                     | yes/no                | no      | Remove small nations             |
-| `rule_disable_generals_getting_killed` | yes/no                | no      | Prevent general deaths           |
-| `rule_allow_free_factories`            | yes/no                | no      | Free factories in MP             |
-| `rule_allow_MP_enhancements`           | yes/no                | no      | MP enhancements                  |
+| Rule                                   | Options               | Default | Description                        |
+| -------------------------------------- | --------------------- | ------- | ---------------------------------- |
+| `allow_mp_optimizations`               | yes/no                | no      | Enable multiplayer optimizations   |
+| `allow_division_limiter`               | yes/no/potato_edition | yes     | Division count limiter             |
+| `remove_mp_states`                     | yes/no                | no      | Remove small nations               |
+| `rule_disable_generals_getting_killed` | yes/no                | no      | Prevent general deaths             |
+| `rule_free_factories_amount`           | off/1/2/3/5           | off     | Free factories to players at start |
+| `rule_allow_MP_enhancements`           | yes/no                | no      | MP enhancements                    |
 
 ## Nuclear Rules (`MD_NUCLEAR_RULES`)
 

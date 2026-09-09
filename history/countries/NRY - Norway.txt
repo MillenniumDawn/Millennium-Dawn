@@ -11,7 +11,9 @@ capital = 32
 	set_naval_oob = "NRY_2000_naval_mtg"
 
 	complete_special_project = sp:sp_composite_production
+	complete_special_project = sp:sp_space_program
 
+	complete_special_project = sp:sp_armoured_vehicle_project
 	if = {
 		limit = { has_dlc = "No Step Back" }
 
@@ -73,6 +75,7 @@ capital = 32
 				main_armament_slot = missile_launcher_system
 				reload_type_slot = four_missile_pack
 				ammunition_load_slot = spaa_long_range_missiles_3
+				turret_type_slot = tank_no_turret
 				suspension_type_slot = tank_wheeled_suspension_medium
 				engine_type_slot = tank_diesel_engine_gen4
 				secondary_armament_slot = empty
@@ -109,7 +112,6 @@ capital = 32
 			obsolete = yes
 			icon = "gfx/interface/technologies/NRY/LAND/NM135.dds"
 		}
-		complete_special_project = sp:sp_armoured_vehicle_project
 		else = {
 			set_oob = "NRY_2000_nonnsb"
 			set_technology = {
@@ -140,9 +142,10 @@ capital = 32
 		}
 	}
 
+	complete_special_project = sp:sp_aircraft_project
+	complete_special_project = sp:sp_awacs_project
 	if = {
 		limit = { has_dlc = "By Blood Alone" }
-		complete_special_project = sp:sp_awacs_project
 		set_air_oob = "NRY_2000_bba"
 		set_technology = {
 			early_airframe_designs = 1
@@ -193,6 +196,7 @@ capital = 32
 		complete_special_project = sp:sp_helicopter_project
 
 	add_ideas = {
+		wto_member
 		partially_nationalized_healthcare
 		partial_environmental_protections
 		extensive_maintenance
@@ -227,6 +231,7 @@ capital = 32
 		un_aid_cdf_member
 
 		antarctica_small_treaty_admin_cost_2
+		no_currency_backing
 	}
 	add_to_array = { global.un_aid_esco_contributor = THIS }
 	add_to_array = { global.un_aid_ido_contributor = THIS }
@@ -303,7 +308,7 @@ capital = 32
 	### Non-Aligned (neutrality) ###: Neutral_Muslim_Brotherhood(12) Neutral_Autocracy(13) Neutral_conservatism(14) oligarchism(15) Neutral_Libertarian(16) Neutral_green(17) neutral_Social(18) Neutral_Communism(19)
 	### Nationalist (nationalist) ###: Nat_Populism(20) Nat_Fascism(21) Nat_Autocracy(22) Monarchist(23)
 
-	# All their definitions are stored in arrays - (party_pop_array) stores current popularities, (party_pop_elect_array) stores popularities at the previous election, (ruling_party) stores the ID of the governing party, (gov_coalition_array) stores the ID's of it's coalition partners. If party_pop_elect_array entries are not set for a party, it will take values from party_pop_array for this purpose. If no popularities are set at all, the game will give them failsafe values based on ruling outlook, geography and religion.
+	# All their definitions are stored in arrays - (party_pop_array) stores current popularities, (party_pop_elect_array) starts from party_pop_array and stores later election results, (ruling_party) stores the ID of the governing party, (gov_coalition_array) stores the ID's of it's coalition partners. If no popularities are set at all, the game will give them failsafe values based on ruling outlook, geography and religion.
 	# Please note that the main ruling party should NOT be also added to gov_coalition_array. Upon startup, parties are recalculated to conform to outlook popularities. This means that if the sum of popularity of say the western parties don't match the popularity of the democratic entry in set_politics = {}, or add up to 100, they will appear a bit different in-game, but there is no harm in this in general.
 	# Before any array values can be set for both 2000 and 2017, one must first use the scripted function start_politics_input = yes
 	# after input is finished, set startup_politics = yes
@@ -337,18 +342,11 @@ capital = 32
 	set_variable = { party_pop_array^18 = 0.121 } #neutral_Social
 	set_variable = { party_pop_array^20 = 0.153 } #Nat_Populism
 
-	add_to_array = { ruling_party = 14 } #Neutral_conservatism
+	set_variable = { ruling_party = 14 } #Neutral_conservatism
 
 	add_to_array = { gov_coalition_array = 1 } #conservatism
 	add_to_array = { gov_coalition_array = 2 } #liberalism
 	add_to_array = { gov_coalition_array = 15 } #oligarchism
-
-	#optional: special custom values representing % of votes in last election
-
-	set_variable = { party_pop_elect_array^1 = 0.143 } #conservatism
-	set_variable = { party_pop_elect_array^2 = 0.045 } #liberalism
-	set_variable = { party_pop_elect_array^14 = 0.137 } #Neutral_conservatism
-	set_variable = { party_pop_elect_array^15 = 0.079 } #oligarchism
 
 	startup_politics = yes
 
@@ -452,15 +450,12 @@ capital = 32
 		land_fort_building_1 = 1
 		construction2 = 1
 	}
+	complete_special_project = sp:sp_missile_project
 	if = { limit = { has_dlc = "Gotterdammerung" }
 		set_technology = {
 			air_defense = 1
 			SAM = 1
 			SAM0 = 1
-		}
-
-		else = {
-			complete_special_project = sp:sp_space_program_non_gdm
 		}
 	}
 	set_technology = {
@@ -543,7 +538,8 @@ capital = 32
 				fixed_ship_auxillary_slot = module_torpedoes_2
 				fixed_ship_battery_slot = module_chain_gun
 				front_1_custom_slot = empty
-				rear_1_custom_slot = module_asm_1
+				rear_1_custom_slot = module_naval_missile_mount_quad
+				fixed_ship_missile_ammo_slot = module_naval_ammo_anti_ship_1
 			}
 		}
 		#Oslo Class
@@ -558,10 +554,11 @@ capital = 32
 				fixed_ship_radar_slot = module_radar_3
 				fixed_ship_auxillary_slot_2 = module_chain_gun
 				fixed_ship_auxillary_slot_1 = module_torpedoes_2
-				fixed_ship_auxillary_slot = module_aa_missiles_2
+				fixed_ship_auxillary_slot = module_naval_missile_mount_quad
 				fixed_ship_battery_slot = module_76mm_battery
 				front_1_custom_slot = module_76mm_gun_1
 				rear_1_custom_slot = module_anti_submarine_mortar
+				fixed_ship_missile_ammo_slot = module_naval_ammo_air_defense_2
 			}
 		}
 		#Ula Class
@@ -615,7 +612,7 @@ capital = 32
 		}
 		create_intelligence_agency = {
 			name = "Norwegian Intelligence Service (E-tjenesten)"
-			icon = GFX_intelligence_agency_logo_generic_1
+			icon = GFX_intelligence_agency_logo_nor
 		}
 		set_country_flag = MD_skip_treasury_cost
 		upgrade_intelligence_agency = upgrade_form_department
@@ -643,11 +640,12 @@ capital = 32
 	add_relation_modifier = { target = ENG modifier = ENG_World_Economical_Relations }
 	add_relation_modifier = { target = SPR modifier = SPR_World_Economical_Relations }
 	add_relation_modifier = { target = ITA modifier = ITA_World_Economical_Relations }
-	add_relation_modifier = { target = UKR modifier = UKR_World_Economical_Relations }
+	add_relation_modifier = { target = UKR modifier = UKR_world_economical_relations }
 	add_relation_modifier = { target = ISR modifier = ISR_World_Economical_Relations }
 	add_opinion_modifier = { target = TTP modifier = AlQaida_Are_Terrorists }
 	add_opinion_modifier = { target = TTP modifier = AlQaida_Are_Terrorists_Trade }
 	add_opinion_modifier = { target = TAL modifier = Taliban_Are_Terrorists }
 	add_opinion_modifier = { target = TAL modifier = Taliban_Are_Terrorists_Trade }
 	reverse_add_opinion_modifier = { target = SOV modifier = RUS_OIL }
+	set_variable = { cb_policy_rate = 3 }
 }

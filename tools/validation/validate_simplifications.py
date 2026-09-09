@@ -18,15 +18,18 @@ Only deterministic scopes are flagged. Random scopes (`random_country`,
 `AND`, ...) are not scopes — merging any of those would change behaviour, so
 they are never suggested.
 
-Three more collapses are flagged on top of the same-scope merge:
+Four more collapses are flagged on top of the same-scope merge:
 
   * two-bucket `random_list` with one empty bucket -> `random = { chance = N }`
   * runs of identical adjacent `create_unit` blocks -> one block + `count = N`
   * empty `visible` / `available` / `allowed` blocks -> delete (engine default)
+  * `random_state` limited by `controller = { tag = X }` / `is_controlled_by = X`
+    -> `random_controlled_state` (drop the controller check; keep other limits)
 
 Output is WARNING-only.
 """
 
+import fnmatch
 import os
 import re
 import sys
@@ -48,6 +51,13 @@ _SCAN_PATTERNS = [
     "common/scripted_triggers/**/*.txt",
     "common/on_actions/*.txt",
     "events/*.txt",
+    "events/**/*.txt",
+]
+
+# The bare multi-child NOT check scans every trigger-bearing script file, not
+# just the effect-heavy dirs above (history/ carries no bare multi-child NOTs).
+_NOT_SCAN_PATTERNS = [
+    "common/**/*.txt",
     "events/**/*.txt",
 ]
 
@@ -398,6 +408,67 @@ def _find_government_match(text: str):
     return results
 
 
+# Bare multi-child NOT is ambiguous: the project doc reads it as NAND, cwtools
+# as NOR (see AGENTS.md "NOT blocks and NOR"). A single child — one trigger or
+# one explicit AND/OR wrapper — is unambiguous and never flagged.
+_NOT_RE = re.compile(r"\bNOT\s*=\s*\{")
+_CHILD_KEY_RE = re.compile(r"[\w.:^@\[\]-]+\s*(?:>=|<=|=|>|<)\s*")
+_VALUE_RE = re.compile(r"\S+")
+
+
+def _count_children(body: str) -> int:
+    """Count direct depth-1 constructs in a block body: a `key = { ... }`
+    block (however large) and a bare `key = value` scalar each count as one
+    child. Stops counting on anything unparseable, so malformed input
+    undercounts rather than false-flagging."""
+    count = 0
+    pos = 0
+    n = len(body)
+    while pos < n:
+        while pos < n and body[pos].isspace():
+            pos += 1
+        if pos >= n:
+            break
+        m = _CHILD_KEY_RE.match(body, pos)
+        if not m:
+            break
+        count += 1
+        pos = m.end()
+        if pos < n and body[pos] == "{":
+            _, end = extract_block_from_text(body, pos)
+            if end == -1:
+                break
+            pos = end
+        elif pos < n and body[pos] == '"':
+            close = body.find('"', pos + 1)
+            if close == -1:
+                break
+            pos = close + 1
+        else:
+            vm = _VALUE_RE.match(body, pos)
+            if not vm:
+                break
+            pos = vm.end()
+    return count
+
+
+def _find_bare_not(text: str):
+    """Return (line, child_count) for each `NOT = { ... }` with 2+ direct
+    children. A single child — a lone trigger or an explicit AND/OR wrapper —
+    is unambiguous and not flagged. finditer walks the whole file, so a NOT
+    nested inside another block (OR, if, a second NOT) is found independently
+    of its container."""
+    results = []
+    for m in _NOT_RE.finditer(text):
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            continue
+        count = _count_children(body)
+        if count >= 2:
+            results.append((text.count("\n", 0, m.start()) + 1, count))
+    return results
+
+
 def _is_magic_chain(header: str) -> bool:
     return all(part in _MAGIC for part in header.split("."))
 
@@ -461,6 +532,86 @@ def _find_mergeable(text: str, base_line: int = 0, parent: str = ""):
     return results
 
 
+# random_state walks every state in the world. A limit whose only country
+# filter is `controller = { tag = X }` or `is_controlled_by = X` is the
+# engine-native `random_controlled_state` iterator (scoped to that country),
+# which skips the world scan. Nested under AND/OR/NOT is left alone: those
+# are not a plain controller filter. Extra sibling limits stay on the rewrite.
+_RANDOM_STATE_RE = re.compile(r"\brandom_state\s*=\s*\{")
+_CHILD_HEAD_RE = re.compile(r"([\w.:^@\[\]-]+)\s*(?:>=|<=|=|>|<)\s*")
+_TAG_ONLY_RE = re.compile(r"^tag\s*=\s*(\S+)$")
+
+
+def _iter_direct_assignments(body: str):
+    """Yield (name, value, is_block) for each direct child. Stops on
+    unparseable input rather than guessing."""
+    pos = 0
+    n = len(body)
+    while pos < n:
+        while pos < n and body[pos].isspace():
+            pos += 1
+        if pos >= n:
+            return
+        m = _CHILD_HEAD_RE.match(body, pos)
+        if not m:
+            return
+        name = m.group(1)
+        pos = m.end()
+        if pos < n and body[pos] == "{":
+            inner, end = extract_block_from_text(body, pos)
+            if end == -1:
+                return
+            yield name, inner, True
+            pos = end
+        elif pos < n and body[pos] == '"':
+            close = body.find('"', pos + 1)
+            if close == -1:
+                return
+            yield name, body[pos : close + 1], False
+            pos = close + 1
+        else:
+            vm = _VALUE_RE.match(body, pos)
+            if not vm:
+                return
+            yield name, vm.group(0), False
+            pos = vm.end()
+
+
+def _controller_limit_detail(limit_body: str):
+    """Return the controller-check text if *limit_body* has a direct
+    `controller = { tag = X }` or `is_controlled_by = X` child, else None."""
+    for name, value, is_block in _iter_direct_assignments(limit_body):
+        if is_block and name == "controller":
+            tm = _TAG_ONLY_RE.fullmatch(value.strip())
+            if tm:
+                return f"controller = {{ tag = {tm.group(1)} }}"
+        elif not is_block and name == "is_controlled_by":
+            return f"is_controlled_by = {value}"
+    return None
+
+
+def _find_random_controlled_shortcut(text: str):
+    """Return (line, detail) for each `random_state` whose own limit has a
+    controller-tag / is_controlled_by check that collapses to
+    `random_controlled_state`."""
+    results = []
+    for m in _RANDOM_STATE_RE.finditer(text):
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            continue
+        limit_body = None
+        for name, value, is_block in _iter_direct_assignments(body):
+            if is_block and name == "limit":
+                limit_body = value
+                break
+        if limit_body is None:
+            continue
+        detail = _controller_limit_detail(limit_body)
+        if detail:
+            results.append((text.count("\n", 0, m.start()) + 1, detail))
+    return results
+
+
 def _scan_file(text: str, path: str):
     """Return [(message, line)] for one comment-stripped file. Pure function of
     *text*, so parse_files_cached can content-cache it."""
@@ -500,6 +651,65 @@ def _scan_file(text: str, path: str):
                 line,
             )
         )
+    for line, detail in _find_random_controlled_shortcut(text):
+        findings.append(
+            (
+                f"`random_state` limited by `{detail}`; use `random_controlled_state`",
+                line,
+            )
+        )
+    return findings
+
+
+def _scan_bare_not(text: str, path: str):
+    """Return [(message, line)] for the bare multi-child NOT check. Separate
+    from _scan_file: NOT lives in trigger contexts across all of common/ (the
+    founding bug was in an ai_strategy allowed block), so this check scans
+    wider than the effect-bearing files the other detectors target."""
+    findings = []
+    for line, count in _find_bare_not(text):
+        findings.append(
+            (
+                f"NOT with {count} children is ambiguous (semantics disputed "
+                "NAND vs NOR); write `NOT = { OR = { ... } }` or one NOT "
+                "per trigger",
+                line,
+            )
+        )
+    return findings
+
+
+_ALL_SCAN_PATTERNS = list(dict.fromkeys(_SCAN_PATTERNS + _NOT_SCAN_PATTERNS))
+
+
+def _matches_relative_pattern(path: str, patterns) -> bool:
+    path_parts = path.replace(os.sep, "/").split("/")
+
+    def matches(pattern_parts, path_index=0, pattern_index=0):
+        if pattern_index == len(pattern_parts):
+            return path_index == len(path_parts)
+        pattern_part = pattern_parts[pattern_index]
+        if pattern_part == "**":
+            return matches(pattern_parts, path_index, pattern_index + 1) or (
+                path_index < len(path_parts)
+                and matches(pattern_parts, path_index + 1, pattern_index)
+            )
+        return (
+            path_index < len(path_parts)
+            and fnmatch.fnmatchcase(path_parts[path_index], pattern_part)
+            and matches(pattern_parts, path_index + 1, pattern_index + 1)
+        )
+
+    return any(matches(pattern.replace(os.sep, "/").split("/")) for pattern in patterns)
+
+
+def _scan_composite(text: str, path: str):
+    """Run the two simplification passes after one content read/cache lookup."""
+    findings = []
+    if _matches_relative_pattern(path, _SCAN_PATTERNS):
+        findings.extend(_scan_file(text, path))
+    if _matches_relative_pattern(path, _NOT_SCAN_PATTERNS):
+        findings.extend(_scan_bare_not(text, path))
     return findings
 
 
@@ -509,11 +719,13 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         self._log_section("Scanning for simplification opportunities...")
-        # parse_files_cached reads case-preserving + comment-stripped and
-        # content-caches each file's findings, so a warm run only re-scans
-        # changed files.
+        # Both passes use the same comment-stripped source on overlapping files.
         parsed = self.parse_files_cached(
-            _SCAN_PATTERNS, "simplifications.scan", _scan_file
+            _ALL_SCAN_PATTERNS,
+            "simplifications.composite",
+            lambda text, path: _scan_composite(
+                text, os.path.relpath(path, self.mod_path)
+            ),
         )
         self.log(f"Scanned {len(parsed)} files for simplification opportunities")
 

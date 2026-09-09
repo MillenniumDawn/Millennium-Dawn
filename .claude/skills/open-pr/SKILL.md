@@ -50,7 +50,7 @@ For each issue number from step 2, run:
 gh issue view <N> --repo MillenniumDawn/Millennium-Dawn --json number,title,body,labels
 ```
 
-Use the title and body to write an accurate root-cause sentence in the summary. If `gh` errors (not found or private), note the failure and skip that number.
+Use the title and body to name the change accurately in one bullet. If `gh` errors (not found or private), note the failure and skip that number.
 
 ### 4. Derive the PR title
 
@@ -67,32 +67,26 @@ For a personal fork branch with no clear description (e.g. `thegeneral-uk`), der
 
 ### 5. Compose the PR body
 
-Use this exact structure (AngriestBird format):
+Use this exact structure (the project's real format, confirmed across recent merged PRs):
 
 ```
+### Changes
+- Adds Overall Productivity + Monthly Productivity Growth to toolbar options
+- Adds lists of all options for any dropdown menu list
+
 Closes #N
-Closes #M
-
-### Summary
-
-#### Bug Fixes
-
-- **Fixes #N: [Issue Title].** [Root cause in 1-2 sentences, specific: name focus ID, event ID, wrong value vs. correct value, using `backtick` for code identifiers.]
-
-#### [Other grouping, e.g. "AI", "Content", "Localisation", "Validation"]
-
-- **[Component or focus/event ID].** [What was added or changed and why.]
 ```
 
 Rules:
 
-- Include `Closes #N` lines only when issue numbers were given. Place them above `### Summary` with one blank line between the last close and `### Summary`.
-- `#### Bug Fixes`: one bullet per distinct fix. Group micro-changes (e.g. "Fixed 12 log copy-paste errors") into a single bullet.
-- Other subsections (`#### AI`, `#### Content`, etc.): include only if there are non-bug changes in that category.
-- **Never use em dashes (`—`, U+2014) anywhere: not in the PR title, body, bullet separators, Changelog.txt, or any `.yml` file.** Replace with a colon (introducing the explanation), a period (ending the bolded prefix, new sentence), or a comma (continuing the clause). Standing user rule, no exceptions even when mimicking AngriestBird's example PRs.
-- Bullet structure: bold the issue ref and title together followed by a period (`**Fixes #N: Issue Title.**`), a space, then the description. No `—` separator.
-- Bullet length: **2 sentences, 2-3 lines max** per fix (one for cause, one for resolution). Name the key focus/event/decision ID and the wrong-vs-right value; skip commit hashes, file:line citations, repro chains, and regression notes (those go in the commit and issue). The `Closes #N` lines are always preserved.
-  The test plan is **not** part of the PR body. After creating the PR, run `/test-plan` to generate and attach an approximate playthrough checklist (`.claude/skills/test-plan/SKILL.md`).
+- Single `### Changes` heading. No `### Summary`, no `#### ` subsections, no grouping by category.
+- One bullet per user-visible change, one line each. Plain sentence, no bold prefixes, no quoted issue titles, no root-cause narration, no file paths, no `file:line`, no commit hashes, no focus/event/decision IDs unless the ID is the only way to name the thing.
+- Describe the outcome the player sees, not the implementation.
+- Group micro-changes (e.g. "Fixed 12 log copy-paste errors") into a single bullet.
+- Default placement: `Closes #N` goes at the bottom, one blank line after the last bullet, one `Closes #N` per line for multiple issues (see PR #2523).
+- If different bullets close different issues, skip the trailing block instead: append the closure to the bullet it belongs to, either on the same line (`- Fixed the debt repayment bug - Closes #2486`) or, when one bullet closes more than one issue, as indented sub-lines (`  - Closes #2492` / `  - Closes #2355`). See PR #2598 and #2515.
+- **Never use em dashes (`—`, U+2014) anywhere: not in the PR title, body, bullets, Changelog.txt, or any `.yml` file.** Standing user rule, no exceptions.
+- The test plan is **not** part of the PR body. After creating the PR, run `/test-plan` to generate and attach an approximate playthrough checklist (`.claude/skills/test-plan/SKILL.md`).
 
 ### 6. Check and update `Changelog.txt`
 

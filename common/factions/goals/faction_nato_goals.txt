@@ -5,25 +5,28 @@ faction_goal_transform_nato_forces = {
 	group = FOCUS_FILTER_POLITICAL_CHARACTER
 	visible = {
 		has_faction_template = faction_template_nato
+		OR = {
+			has_war = yes
+			threat > 0.10
+		}
+	}
+	select_effect = {
+		set_temp_variable = { faction_goal_force_mechanized_cache = 1 }
+		set_temp_variable = { faction_goal_force_tank_cache = 1 }
+		faction_goal_update_member_metrics_cache = yes
 	}
 	completed = {
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
-			}
-			unit = mechanized
-			size > 999
+		check_variable = {
+			var = faction_goal_mechanized_battalions_cache
+			value = 1000
+			compare = greater_than_or_equals
+			tooltip = faction_goal_mechanized_bats_at_least_tt
 		}
-		count_in_collection = {
-			collection = {
-				input = game:scope
-				operators = { faction_members }
-				name = FACTION
-			}
-			unit = armor
-			size > 4499
+		check_variable = {
+			var = faction_goal_tank_battalions_cache
+			value = 750
+			compare = greater_than_or_equals
+			tooltip = faction_goal_tank_bats_at_least_tt
 		}
 	}
 	complete_effect = {
@@ -64,7 +67,7 @@ nato_goal_check_russia = {
 			}
 			# separate entry as its different from puppet check
 			SOV = {
-				has_at_least_great_power_status = no
+				NOT = { has_at_least_major_power_status = yes }
 			}
 		}
 	}
@@ -107,7 +110,7 @@ nato_goal_check_china = {
 			}
 			# separate entry as its different from puppet check
 			CHI = {
-				has_at_least_great_power_status = no
+				NOT = { has_at_least_major_power_status = yes }
 			}
 		}
 	}
@@ -131,16 +134,13 @@ faction_goal_democracy_in_europe = {
 	visible = {
 		has_faction_template = faction_template_nato
 	}
+	select_effect = {
+		faction_goal_update_daily_condition_caches = yes
+	}
 	completed = {
 		custom_override_tooltip = {
 			tooltip = democracy_in_europe_completed_tt
-			all_of_scopes = {
-				array = global.european_nations
-				has_elections = yes
-				NOT = { has_government = fascism }
-				NOT = { has_government = nationalist }
-				NOT = { has_government = communism }
-			}
+			scope:faction = { check_variable = { faction_goal_democracy_in_europe_cache = 1 } }
 		}
 	}
 	complete_effect = {
@@ -148,7 +148,6 @@ faction_goal_democracy_in_europe = {
 		newline = yes
 		custom_effect_tooltip = THE_FACTION_LEADER
 		add_faction_initiative = 1
-		newline = yes
 	}
 
 	ai_will_do = {
@@ -213,7 +212,7 @@ faction_goal_defeat_taliban = {
 	group = FOCUS_FILTER_POLITICAL_CHARACTER
 	visible = {
 		has_faction_template = faction_template_nato
-		USA = { has_country_flag = war_on_terror_speech }
+		USA = { has_country_flag = USA_wot_speech_given }
 	}
 	completed = {
 		OR = {

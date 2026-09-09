@@ -98,8 +98,22 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 | `comsat_production_speed_modifier`       |
 | `spysat_production_speed_modifier`       |
 | `killsat_production_speed_modifier`      |
+| `olv_production_cost_modifier`           |
+| `gnss_production_cost_modifier`          |
+| `comsat_production_cost_modifier`        |
+| `spysat_production_cost_modifier`        |
+| `killsat_production_cost_modifier`       |
+| `olv_launch_reliability_modifier`        |
 | `nuclear_reactor_fuel_production_factor` |
 | `nuclear_reactor_fuel_production`        |
+
+## Army (`modifier_definitions.txt`) — country scope
+
+| Modifier                        | Notes                                              |
+| ------------------------------- | -------------------------------------------------- |
+| `general_death_chance_modifier` | Per-battle multiplier delta on general kill chance |
+
+Set on officer corps ideas; read via `FROM.modifier@general_death_chance_modifier` in `on_army_leader_*` on_actions.
 
 ## Economy — General (`modifier_definitions.txt`) — country scope
 
@@ -257,17 +271,18 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 
 Exist only for a single country. Only use in content for that country.
 
-| Modifier                                    | Country | File                           |
-| ------------------------------------------- | ------- | ------------------------------ |
-| `CZE_skoda_superb_productivity_modifier`    | CZE     | `CZE_modifier_definitions.txt` |
-| `ITA_ageing_population_drift_modifier`      | ITA     | `ITA_modifier_definitions.txt` |
-| `ITA_reform_expectance_drift`               | ITA     | `ITA_modifier_definitions.txt` |
-| `JAP_declining_birthrate_measures_modifier` | JAP     | `JAP_modifier_definitions.txt` |
+| Modifier                                 | Country | File                           |
+| ---------------------------------------- | ------- | ------------------------------ |
+| `CZE_skoda_superb_productivity_modifier` | CZE     | `CZE_modifier_definitions.txt` |
+| `ITA_ageing_population_drift_modifier`   | ITA     | `ITA_modifier_definitions.txt` |
+| `ITA_reform_expectance_drift`            | ITA     | `ITA_modifier_definitions.txt` |
 
 ## Special
 
-| Modifier                                    | File                                      | Notes        |
-| ------------------------------------------- | ----------------------------------------- | ------------ |
-| `mech_production_speed_multiplier_modifier` | `EH_modifier_definitions.txt`             | EH mechanic  |
-| `randallite_resource_cost_modifier`         | `EH_modifier_definitions.txt`             | EH mechanic  |
-| `MD_auto_agency_in_progress_boolean`        | `MD_auto_agency_modifier_definitions.txt` | boolean flag |
+EH mechanic modifiers are in `EH_modifier_definitions.txt`; `MD_auto_agency_in_progress_boolean` is in `MD_auto_agency_modifier_definitions.txt`.
+
+| Modifier                                    | Notes        |
+| ------------------------------------------- | ------------ |
+| `mech_production_speed_multiplier_modifier` | EH mechanic  |
+| `randallite_resource_cost_modifier`         | EH mechanic  |
+| `MD_auto_agency_in_progress_boolean`        | boolean flag |

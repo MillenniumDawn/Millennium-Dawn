@@ -3,6 +3,14 @@
 # The influence system is MD's take on using political soft power and pressuring other nations.
 # It is intended to mock superpower's sphere of influence.
 
+# Effect: install_influence_coup_rebel_party
+# Purpose: copy influence_coup_party onto a civil-war rebel
+install_influence_coup_rebel_party = {
+	set_variable = { ruling_party = FROM.influence_coup_party }
+	set_temp_variable = { _coup_slot = FROM.influence_coup_party }
+	set_variable = { party_pop_array^_coup_slot = 0.7 }
+}
+
 # Effect: init_influence
 # Purpose: This is the main effect that is used to initialize the influence array
 init_influence = {
@@ -14,11 +22,11 @@ init_influence = {
 # Purpose: This is the main effect that is used to update the dirty influence variable
 update_dirty_influence_var = {
 	if = {
-		limit = { NOT = { has_variable = global.update_influence_ui } }
-		set_variable = { global.update_influence_ui = 1 }
+		limit = { check_variable = { global.update_influence_ui < 10000 } }
+		add_to_variable = { global.update_influence_ui = 1 }
 	}
 	else = {
-		add_to_variable = { global.update_influence_ui = 1 }
+		set_variable = { global.update_influence_ui = 1 }
 	}
 }
 
@@ -28,7 +36,6 @@ recalculate_influence = {
 	hidden_effect = {
 		sort_influence = yes
 		calculate_influence_percentage = yes
-		update_dirty_influence_var = yes
 	}
 }
 
@@ -290,13 +297,13 @@ manipulate_politics_action = {
 			set_temp_variable = { party_index = 6 }
 			set_temp_variable = { party_popularity_increase = var_pop }
 			set_temp_variable = { temp_outlook_increase = var_pop }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 
 			add_to_temp_variable = { var_pop = -0.02 }
 			set_temp_variable = { party_index = 8 }
 			set_temp_variable = { party_popularity_increase = var_pop }
 			set_temp_variable = { temp_outlook_increase = var_pop }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 
 			# Reduce by -5%
 			set_temp_variable = { percent_change = -5 }
@@ -311,13 +318,13 @@ manipulate_politics_action = {
 			set_temp_variable = { party_index = 8 }
 			set_temp_variable = { party_popularity_increase = var_pop }
 			set_temp_variable = { temp_outlook_increase = var_pop }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 
 			add_to_temp_variable = { var_pop = -0.02 }
 			set_temp_variable = { party_index = 9 }
 			set_temp_variable = { party_popularity_increase = var_pop }
 			set_temp_variable = { temp_outlook_increase = var_pop }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 
 			# Reduce by -5%
 			set_temp_variable = { percent_change = -5 }
@@ -340,13 +347,13 @@ manipulate_politics_action = {
 		set_temp_variable = { party_index = 8 }
 		set_temp_variable = { party_popularity_increase = var_pop }
 		set_temp_variable = { temp_outlook_increase = var_pop }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		add_to_temp_variable = { var_pop = -0.02 }
 		set_temp_variable = { party_index = 9 }
 		set_temp_variable = { party_popularity_increase = var_pop }
 		set_temp_variable = { temp_outlook_increase = var_pop }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		# Reduce by -5%
 		set_temp_variable = { percent_change = -5 }
@@ -355,10 +362,10 @@ manipulate_politics_action = {
 		change_influence_percentage = yes
 	}
 	else = {
-		set_temp_variable = { party_index = ROOT.ruling_party^0 }
+		set_temp_variable = { party_index = ROOT.ruling_party }
 		set_temp_variable = { party_popularity_increase = var_pop }
 		set_temp_variable = { temp_outlook_increase = var_pop }
-		add_relative_party_popularity = yes
+		change_relative_party_popularity = yes
 
 		# Reduce by -10%
 		set_temp_variable = { percent_change = -10 }
@@ -399,6 +406,198 @@ mp_economic_aid_transfer = {
 
 	update_money_dirty_variable = yes
 	update_dirty_influence_var = yes
+}
+
+automation_combat_foreign_influence_execute = {
+	set_country_flag = { flag = automation_combat_foreign_influence_cooldown value = 1 days = 100 }
+	set_temp_variable = { percent_change = 2.5 }
+	change_domestic_influence_percentage = yes
+}
+
+automation_combat_influencer_attack_complete = {
+	set_temp_variable = { influencer_index = -1 }
+	for_each_loop = {
+		array = influence_array
+		value = current_influencer
+		index = current_influencer_index
+		if = {
+			limit = { check_variable = { current_influencer = combat_influencer_target } }
+			set_temp_variable = { influencer_index = current_influencer_index }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { combat_influencer_target > 0 }
+			check_variable = { influencer_index > -1 }
+			check_variable = { influence_array_val^influencer_index > 0 }
+			var:combat_influencer_target = { exists = yes }
+		}
+		set_temp_variable = { percent_change = -5 }
+		change_current_influencer_index_percentage = yes
+	}
+}
+
+automation_influence_domestic_action = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = automation_combat_foreign_influence_cooldown }
+			check_variable = { influence_array^0 > 0 }
+			NOT = { has_country_flag = influence_government_lobbied }
+		}
+		set_temp_variable = {
+			automation_available_pp = {
+				value = political_power
+				subtract = automation_pp_reserve
+			}
+		}
+		if = {
+			limit = {
+				check_variable = {
+					var = automation_available_pp
+					value = 100
+					compare = greater_than_or_equals
+				}
+			}
+			log = "[GetDateText]: [ROOT.GetName]: Automatically combating foreign influence"
+			add_political_power = -100
+			automation_combat_foreign_influence_execute = yes
+		}
+	}
+}
+
+automation_influence_attack_action = {
+	if = {
+		limit = {
+			NOT = { has_decision = combat_biggest_influencer_decision }
+			NOT = { has_decision = combat_second_influencer_decision }
+			NOT = { has_decision = combat_third_influencer_decision }
+		}
+		set_temp_variable = {
+			automation_available_pp = {
+				value = political_power
+				subtract = automation_pp_reserve
+			}
+		}
+		if = {
+			limit = {
+				check_variable = {
+					var = automation_available_pp
+					value = 125
+					compare = greater_than_or_equals
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = automation_combat_biggest_influencer_cooldown }
+					check_variable = { influence_array^0 > 0 }
+					var:influence_array^0 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+					check_variable = { influence_array_val^0 > 0 }
+					NOT = { check_variable = { influence_array^0 = ROOT.id } }
+					var:influence_array^0 = { exists = yes }
+					NOT = {
+						AND = {
+							has_country_flag = influence_government_lobbied
+							check_variable = { influence_lobbied_by = influence_array^0 }
+						}
+					}
+				}
+				log = "[GetDateText]: [ROOT.GetName]: Automatically attacking influence from [?var:influence_array^0.GetName]"
+				add_political_power = -125
+				activate_decision = combat_biggest_influencer_decision
+			}
+			else_if = {
+				limit = {
+					NOT = { has_country_flag = automation_combat_second_influencer_cooldown }
+					check_variable = { influence_array^1 > 0 }
+					var:influence_array^1 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+					check_variable = { influence_array_val^1 > 0 }
+					NOT = { check_variable = { influence_array^1 = ROOT.id } }
+					var:influence_array^1 = { exists = yes }
+					NOT = {
+						AND = {
+							has_country_flag = influence_government_lobbied
+							check_variable = { influence_lobbied_by = influence_array^1 }
+						}
+					}
+				}
+				log = "[GetDateText]: [ROOT.GetName]: Automatically attacking influence from [?var:influence_array^1.GetName]"
+				add_political_power = -125
+				activate_decision = combat_second_influencer_decision
+			}
+			else_if = {
+				limit = {
+					NOT = { has_country_flag = automation_combat_third_influencer_cooldown }
+					check_variable = { influence_array^2 > 0 }
+					var:influence_array^2 = { NOT = { has_country_flag = automation_influence_attack_cooldown_@ROOT } }
+					check_variable = { influence_array_val^2 > 0 }
+					NOT = { check_variable = { influence_array^2 = ROOT.id } }
+					var:influence_array^2 = { exists = yes }
+					NOT = {
+						AND = {
+							has_country_flag = influence_government_lobbied
+							check_variable = { influence_lobbied_by = influence_array^2 }
+						}
+					}
+				}
+				log = "[GetDateText]: [ROOT.GetName]: Automatically attacking influence from [?var:influence_array^2.GetName]"
+				add_political_power = -125
+				activate_decision = combat_third_influencer_decision
+			}
+		}
+	}
+}
+
+automation_influence_daily = {
+	set_temp_variable = { automation_domestic_influence_fee_paid = 0 }
+	set_temp_variable = { automation_influence_attack_fee_paid = 0 }
+	if = {
+		limit = { has_country_flag = automation_combat_foreign_influence }
+		set_temp_variable = {
+			automation_available_pp = {
+				value = political_power
+				subtract = automation_pp_reserve
+			}
+		}
+		if = {
+			limit = {
+				check_variable = {
+					var = automation_available_pp
+					value = 0.05
+					compare = greater_than_or_equals
+				}
+			}
+			add_political_power = -0.05
+			set_temp_variable = { automation_domestic_influence_fee_paid = 1 }
+		}
+	}
+	if = {
+		limit = { has_country_flag = automation_attack_foreign_influencers }
+		set_temp_variable = {
+			automation_available_pp = {
+				value = political_power
+				subtract = automation_pp_reserve
+			}
+		}
+		if = {
+			limit = {
+				check_variable = {
+					var = automation_available_pp
+					value = 0.05
+					compare = greater_than_or_equals
+				}
+			}
+			add_political_power = -0.05
+			set_temp_variable = { automation_influence_attack_fee_paid = 1 }
+		}
+	}
+	if = {
+		limit = { check_variable = { automation_domestic_influence_fee_paid = 1 } }
+		automation_influence_domestic_action = yes
+	}
+	if = {
+		limit = { check_variable = { automation_influence_attack_fee_paid = 1 } }
+		automation_influence_attack_action = yes
+	}
 }
 
 # Effect: change_domestic_influence_percentage
@@ -461,8 +660,8 @@ redistribute_influence_pool = {
 	set_temp_variable = { temp_total = { value = 100 subtract = held_value divide = influence_outlook_amount } }
 
 	if = { limit = { check_variable = { scale_domestic = 1 } }
-		if = { limit = { check_variable = { domestic_influence_amount < 0.01 } }
-			set_variable = { domestic_influence_amount = 0.01 }
+		if = { limit = { check_variable = { domestic_influence_amount < 1 } }
+			set_variable = { domestic_influence_amount = 1 }
 		}
 		multiply_variable = { domestic_influence_amount = temp_total }
 	}
@@ -516,7 +715,10 @@ apply_influence_special_modifiers = {
 					has_idea = SOV_blue_stream_idea
 					has_idea = SOV_turkey_stream_idea
 					has_idea = PMR_14_army
-					has_idea = PMR_sov_idea
+					AND = {
+						has_completed_focus = PMR_sov_invest
+						NOT = { has_country_flag = PMR_sov_invest }
+					}
 					has_idea = USR_parlament_idea
 					has_idea = USR_gos_sovet_idea
 					has_idea = USR_council_ministers_idea
@@ -531,6 +733,14 @@ apply_influence_special_modifiers = {
 			}
 			add_to_temp_variable = { influence_change = 0.15 }
 		}
+	}
+	else_if = { limit = { check_variable = { tag_index = GRE } }
+		if = { limit = { has_idea = GRE_enosis_campaign_idea } add_to_temp_variable = { influence_change = 0.15 } }
+		if = { limit = { has_idea = GRE_enosis_campaign_idea_2 } add_to_temp_variable = { influence_change = 0.20 } }
+	}
+	else_if = { limit = { check_variable = { tag_index = JAP } }
+		if = { limit = { JAP = { has_country_flag = JAP_cool_japan_doctrine } } add_to_temp_variable = { influence_change = 0.10 } }
+		if = { limit = { JAP = { has_completed_focus = JAP_gross_national_cool } } add_to_temp_variable = { influence_change = 0.05 } }
 	}
 
 	# -- Multi-influencer / influencer-property (independent, always checked) --
@@ -570,8 +780,8 @@ apply_influence_special_modifiers = {
 		if = {
 			limit = {
 				OR = {
-					has_idea = ARM_economy_grand_tobacco_idea
-					has_idea = ARM_economy_masis_tobacco_idea
+					check_variable = { ARM_econ_grand_tobacco_level > 0 }
+					check_variable = { ARM_econ_masis_tobacco_level > 0 }
 				}
 				check_variable = { tag_index = CAN }
 			}
@@ -580,8 +790,8 @@ apply_influence_special_modifiers = {
 		if = {
 			limit = {
 				OR = {
-					has_idea = ARM_economy_hsbc_idea
-					has_idea = ARM_education_brit_idea
+					check_variable = { ARM_econ_hsbc_level > 0 }
+					check_variable = { ARM_econ_education_brit_level > 0 }
 				}
 				check_variable = { tag_index = ENG }
 			}
@@ -590,9 +800,9 @@ apply_influence_special_modifiers = {
 		if = {
 			limit = {
 				OR = {
-					has_idea = ARM_economy_ycrdi_idea
+					check_variable = { ARM_econ_ycrdi_level > 0 }
 					has_idea = ARM_Eraz_idea
-					has_idea = ARM_education_mgu_idea
+					check_variable = { ARM_econ_education_mgu_level > 0 }
 				}
 				check_variable = { tag_index = SOV }
 			}
@@ -607,14 +817,14 @@ apply_influence_special_modifiers = {
 		}
 		if = {
 			limit = {
-				has_idea = ARM_economy_shoghakn_idea1
+				check_variable = { ARM_econ_shoghakn_level = 2 }
 				check_variable = { tag_index = ISR }
 			}
 			add_to_temp_variable = { influence_change = 0.10 }
 		}
 		if = {
 			limit = {
-				has_idea = ARM_economy_veon_idea
+				check_variable = { ARM_econ_veon_level > 0 }
 				check_variable = { tag_index = HOL }
 			}
 			add_to_temp_variable = { influence_change = 0.10 }
@@ -629,16 +839,8 @@ apply_influence_special_modifiers = {
 		if = {
 			limit = {
 				OR = {
-					has_idea = ARM_it_sector_idea1
-					has_idea = ARM_it_sector_idea2
-					has_idea = ARM_it_sector_idea3
-					has_idea = ARM_it_sector_idea4
-					has_idea = ARM_it_sector_idea5
-					has_idea = ARM_it_sector_idea6
-					has_idea = ARM_it_sector_idea7
-					has_idea = ARM_it_sector_idea8
-					has_idea = ARM_it_sector_idea9
-					has_idea = ARM_education_aua_idea
+					check_variable = { ARM_econ_it_level > 1 }
+					check_variable = { ARM_econ_education_aua_level > 0 }
 					has_idea = ARM_usa_embaracy_idea
 				}
 				check_variable = { tag_index = USA }
@@ -662,9 +864,9 @@ apply_influence_special_modifiers = {
 		if = {
 			limit = {
 				OR = {
-					has_idea = ARM_education_erasmus_idea
+					check_variable = { ARM_econ_education_erasmus_level > 0 }
 					has_idea = ARM_armenian_foreign_legion_idea
-					has_idea = ARM_education_france_idea
+					check_variable = { ARM_econ_education_france_level > 0 }
 				}
 				check_variable = { tag_index = FRA }
 			}
@@ -672,7 +874,7 @@ apply_influence_special_modifiers = {
 		}
 		if = {
 			limit = {
-				has_idea = ARM_education_erasmus_idea
+				check_variable = { ARM_econ_education_erasmus_level > 0 }
 				check_variable = { tag_index = GER }
 			}
 			add_to_temp_variable = { influence_change = 0.10 }
@@ -686,7 +888,8 @@ apply_influence_special_modifiers = {
 		}
 		if = {
 			limit = {
-				has_idea = PMR_ger_idea
+				has_completed_focus = PMR_ge_invest
+				NOT = { has_country_flag = PMR_ger_invest }
 				check_variable = { tag_index = GER }
 			}
 			add_to_temp_variable = { influence_change = 0.10 }
@@ -694,7 +897,8 @@ apply_influence_special_modifiers = {
 
 		if = {
 			limit = {
-				has_idea = PMR_ita_idea
+				has_completed_focus = PMR_ita_invest
+				NOT = { has_country_flag = PMR_ita_invest }
 				check_variable = { tag_index = ITA }
 			}
 			add_to_temp_variable = { influence_change = 0.10 }
@@ -702,7 +906,8 @@ apply_influence_special_modifiers = {
 
 		if = {
 			limit = {
-				has_idea = PMR_rom_idea
+				has_completed_focus = PMR_rom_invest
+				NOT = { has_country_flag = PMR_rom_invest }
 				check_variable = { tag_index = ROM }
 			}
 			add_to_temp_variable = { influence_change = 0.10 }
@@ -710,14 +915,16 @@ apply_influence_special_modifiers = {
 
 		if = {
 			limit = {
-				has_idea = PMR_aus_idea
+				has_completed_focus = PMR_aus_invest
+				NOT = { has_country_flag = PMR_aus_invest }
 				check_variable = { tag_index = AUS }
 			}
 			add_to_temp_variable = { influence_change = 0.10 }
 		}
 		if = {
 			limit = {
-				has_idea = PMR_hun_idea
+				has_completed_focus = PMR_hun_invest
+				NOT = { has_country_flag = PMR_hun_invest }
 				check_variable = { tag_index = HUN }
 			}
 			add_to_temp_variable = { influence_change = 0.10 }
@@ -725,7 +932,8 @@ apply_influence_special_modifiers = {
 
 		if = {
 			limit = {
-				has_idea = PMR_ukr_idea
+				has_completed_focus = PMR_ukr_invest
+				NOT = { has_country_flag = PMR_ukr_invest }
 				check_variable = { tag_index = UKR }
 			}
 			add_to_temp_variable = { influence_change = 0.10 }
@@ -944,6 +1152,8 @@ change_influence_percentage = {
 		recalculate_influence = yes
 	}
 	set_temp_variable = { percent_change = percent_change_temp }
+
+	update_dirty_influence_var = yes
 }
 
 # Effect: init_auto_influence_array
@@ -1001,7 +1211,7 @@ update_auto_influence_array = {
 		}
 	}
 
-	clamp_variable = { var = ROOT.auto_influence_users min = 0 max = 10 }
+	clamp_variable = { var = auto_influence_users min = 0 max = 10 }
 	update_dirty_influence_var = yes
 }
 
@@ -1059,4 +1269,18 @@ remove_auto_influencer_request = {
 		clamp_variable = { var = auto_influence_users min = 0 max = 10 }
 	}
 	custom_effect_tooltip = influence_remove_auto_request_TT
+}
+
+# Effect: spread_influence_cooldown_effect
+# Purpose: sets the game rule country flags for spread_influence so we do not copy this code everywhere.
+spread_influence_cooldown_effect = {
+	if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
+		set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
+	}
+	else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
+		set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
+	}
+	else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
+		set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
+	}
 }

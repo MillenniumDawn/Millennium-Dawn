@@ -27,7 +27,7 @@ IRQ_iraq_war = {
 			}
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout IRQ_war_phase_two"
+			log = "[GetDateText]: [Root.GetName]: Decision timeout IRQ_war_phase_one"
 			if = {
 				limit = {
 					488 = {
@@ -215,6 +215,10 @@ IRQ_preparation_for_the_war = {
 		}
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 10
+				has_global_flag = IRQ_BAATHIST_STATE_FOCUS_PATH
+			}
 		}
 	}
 	IRQ_golden_guard_divisions = {
@@ -280,6 +284,10 @@ IRQ_preparation_for_the_war = {
 		}
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 10
+				has_global_flag = IRQ_BAATHIST_STATE_FOCUS_PATH
+			}
 		}
 	}
 	IRQ_conscription_in_schools = {
@@ -305,6 +313,10 @@ IRQ_preparation_for_the_war = {
 		}
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 10
+				has_global_flag = IRQ_BAATHIST_STATE_FOCUS_PATH
+			}
 		}
 	}
 	IRQ_faddayean_saddam = {
@@ -329,6 +341,10 @@ IRQ_preparation_for_the_war = {
 		}
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 10
+				has_global_flag = IRQ_BAATHIST_STATE_FOCUS_PATH
+			}
 		}
 	}
 	# move shit underground
@@ -376,6 +392,10 @@ IRQ_preparation_for_the_war = {
 		}
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 10
+				has_global_flag = IRQ_BAATHIST_STATE_FOCUS_PATH
+			}
 		}
 	}
 	IRQ_contract_the_MEK = {
@@ -456,13 +476,17 @@ IRQ_preparation_for_the_war = {
 		}
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 10
+				has_global_flag = IRQ_BAATHIST_STATE_FOCUS_PATH
+			}
 		}
 	}
 }
 IRQ_economic_union_menu = {
 	IRQ_invite_to_economic_union_targeted_decision = {
 		visible = { has_country_flag = economic_union_formed_iraq }
-		fire_only_once = yes
+		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_invite_to_economic_union_targeted_decision"
 			every_country = {
@@ -474,6 +498,36 @@ IRQ_economic_union_menu = {
 		}
 		ai_will_do = {
 			base = 2
+		}
+	}
+	IRQ_expel_economic_union_members_decision = {
+		visible = { has_country_flag = economic_union_formed_iraq }
+		cost = 50
+		days_re_enable = 180
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = IRQ_members_in_union_TT
+				check_variable = {
+					number_of_iraq_economic_union_members > 1
+				}
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_expel_economic_union_members_decision"
+			every_country = {
+				limit = {
+					has_country_flag = joined_iraqi_economic_union
+					NOT = { original_tag = IRQ }
+				}
+				country_event = iraqi_events.14
+			}
+		}
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 3
+				has_stability < 0.40
+			}
 		}
 	}
 }
@@ -770,6 +824,7 @@ IRQ_political_decisions = {
 					copy_tag = PER
 					set_cosmetic_tag = PER_mek_flag
 					set_country_flag = is_IRAQ
+					mark_formed_country_formable = yes
 					set_popularities = {
 						communism = 100
 					}
@@ -782,7 +837,7 @@ IRQ_political_decisions = {
 					start_politics_input = yes
 					set_variable = { party_pop_array^5 = 1 } #anarchist_communism
 					### Ruling Party
-					add_to_array = { ruling_party = 5 }
+					set_variable = { ruling_party = 5 }
 					startup_politics = yes
 					# Leader
 					create_country_leader = {
@@ -845,12 +900,12 @@ IRQ_political_decisions = {
 				50 = {
 					set_temp_variable = { party_popularity_increase = 0.10 }
 					set_temp_variable = { temp_outlook_increase = 0.10 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 				}
 				50 = {
 					set_temp_variable = { party_popularity_increase = -0.075 }
 					set_temp_variable = { temp_outlook_increase = -0.055 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 				}
 			}
 		}
@@ -917,11 +972,13 @@ IRQ_political_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_arrest_muqtada"
 			set_temp_variable = { party_index = 20 }
 			set_temp_variable = { party_popularity_increase = -0.075 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			newline = yes
 			custom_effect_tooltip = IRQ_saddam_rage_lower_by_3_TT
-			add_to_variable = { var = IRQ_saddam_pissboy value = -0.03 }
-			clamp_variable = { var = IRQ_saddam_pissboy min = 0 max = 0.50 }
+			hidden_effect = {
+				add_to_variable = { var = IRQ_saddam_pissboy value = -0.03 }
+				clamp_variable = { var = IRQ_saddam_pissboy min = 0 max = 0.50 }
+			}
 		}
 		ai_will_do = {
 			base = 10
@@ -967,7 +1024,7 @@ IRQ_political_decisions = {
 			set_temp_variable = { party_index = 19 }
 			set_temp_variable = { party_popularity_increase = 0.045 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			base = 10
@@ -1540,7 +1597,7 @@ IRQ_black_gold_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_encourage_iraqis_to_work_for_aramco"
 			set_country_flag = IRQ_iraqis_working_in_aramco
 			add_tech_bonus = {
-				name = GER_resource_excavation_research
+				name = IRQ_encourage_iraqis_to_work_for_aramco
 				bonus = 0.50
 				uses = 2
 				category = CAT_excavation_tech
@@ -2010,6 +2067,7 @@ IRQ_sunni_in_politics = {
 			}
 		}
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_satisfy_sunnis"
 			set_country_flag = IRQ_doing_decision
 		}
 		remove_effect = {
@@ -2041,6 +2099,7 @@ IRQ_sunni_in_politics = {
 			}
 		}
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_redirect_sunni_resources"
 			set_country_flag = IRQ_doing_decision
 		}
 		remove_effect = {
@@ -2103,7 +2162,7 @@ IRQ_sunni_in_politics = {
 		}
 		available = {
 			168 = {
-				infrastructure > 4
+				infrastructure > 1
 			}
 		}
 		days_mission_timeout = 130
@@ -2128,7 +2187,7 @@ IRQ_sunni_in_politics = {
 		}
 		available = {
 			167 = {
-				infrastructure > 4
+				infrastructure > 1
 			}
 		}
 		days_mission_timeout = 130
@@ -2153,7 +2212,7 @@ IRQ_sunni_in_politics = {
 		}
 		available = {
 			166 = {
-				infrastructure > 4
+				infrastructure > 1
 			}
 		}
 		days_mission_timeout = 130
@@ -2350,6 +2409,7 @@ IRQ_sunni_in_politics = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_resolve_the_crisis"
 			clr_country_flag = IRQ_sunni_mechanic
+			if = { limit = { has_dynamic_modifier = { modifier = IRQ_sunni_dynamic_idea } } remove_dynamic_modifier = { modifier = IRQ_sunni_dynamic_idea } }
 			country_event = iraq_civil_war.203
 		}
 		ai_will_do = {
@@ -2385,6 +2445,9 @@ IRQ_fao_decisions = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ask_for_iranian_arms"
+			PER = {
+				country_event = iraq_md.21
+			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
 				add_equipment_to_stockpile = {
@@ -2456,6 +2519,9 @@ IRQ_fao_decisions = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ask_for_iranian_funds"
+			PER = {
+				country_event = iraq_md.22
+			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
 				set_temp_variable = { treasury_change = 75.00 }
@@ -2502,7 +2568,7 @@ IRQ_fao_decisions = {
 			has_country_flag = IRQ_open_invite_menu
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision IRQ_open_invites"
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_close_invites"
 			clr_country_flag = IRQ_open_invite_menu
 		}
 		ai_will_do = {
@@ -3066,6 +3132,7 @@ IRQ_spring_of_islam = {
 		}
 		fire_only_once = yes
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_islamic_spring_in_jordan"
 			random_list = {
 				50 = {
 					custom_effect_tooltip = IRQ_coup_TT
@@ -3077,7 +3144,7 @@ IRQ_spring_of_islam = {
 							}
 							set_temp_variable = { party_index = 9 }
 							set_temp_variable = { party_popularity_increase = 1.00 }
-							add_relative_party_popularity = yes
+							change_relative_party_popularity = yes
 
 							set_temp_variable = { rul_party_temp = 9 }
 							set_temp_variable = { disable_elections = 1 }
@@ -3136,7 +3203,7 @@ IRQ_spring_of_islam = {
 							}
 							set_temp_variable = { party_index = 9 }
 							set_temp_variable = { party_popularity_increase = 1.00 }
-							add_relative_party_popularity = yes
+							change_relative_party_popularity = yes
 
 							set_temp_variable = { rul_party_temp = 9 }
 							set_temp_variable = { disable_elections = 1 }
@@ -3328,6 +3395,7 @@ IRQ_spring_of_islam = {
 		}
 		fire_only_once = yes
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_islamic_spring_in_kuwait"
 			custom_effect_tooltip = IRQ_coup_TT
 			hidden_effect = {
 				KUW = {
@@ -3337,7 +3405,7 @@ IRQ_spring_of_islam = {
 					}
 					set_temp_variable = { party_index = 9 }
 					set_temp_variable = { party_popularity_increase = 1.00 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 
 					set_temp_variable = { rul_party_temp = 9 }
 					set_temp_variable = { disable_elections = 1 }
@@ -3560,6 +3628,7 @@ IRQ_spring_of_islam = {
 		}
 		fire_only_once = yes
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_islamic_spring_in_turkey"
 			custom_effect_tooltip = IRQ_coup_TT
 			random_list = {
 				50 = {
@@ -3572,7 +3641,7 @@ IRQ_spring_of_islam = {
 							}
 							set_temp_variable = { party_index = 9 }
 							set_temp_variable = { party_popularity_increase = 1.00 }
-							add_relative_party_popularity = yes
+							change_relative_party_popularity = yes
 
 							set_temp_variable = { rul_party_temp = 9 }
 							set_temp_variable = { disable_elections = 1 }
@@ -3636,7 +3705,7 @@ IRQ_spring_of_islam = {
 							}
 							set_temp_variable = { party_index = 9 }
 							set_temp_variable = { party_popularity_increase = 1.00 }
-							add_relative_party_popularity = yes
+							change_relative_party_popularity = yes
 
 							set_temp_variable = { rul_party_temp = 9 }
 							set_temp_variable = { disable_elections = 1 }
@@ -3839,13 +3908,14 @@ IRQ_spring_of_islam = {
 						emerging_hardline_shiite_are_in_power = yes
 						emerging_moderate_shiite_are_in_power = yes
 						is_subject_of = IRQ
+						has_war_with = TAL
 					}
-					has_war_with = TAL
 				}
 			}
 		}
 		fire_only_once = yes
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_islamic_spring_in_afghanistan"
 			custom_effect_tooltip = IRQ_coup_TT
 			random_list = {
 				50 = {
@@ -3858,7 +3928,7 @@ IRQ_spring_of_islam = {
 							}
 							set_temp_variable = { party_index = 9 }
 							set_temp_variable = { party_popularity_increase = 1.00 }
-							add_relative_party_popularity = yes
+							change_relative_party_popularity = yes
 
 							set_temp_variable = { rul_party_temp = 9 }
 							set_temp_variable = { disable_elections = 1 }
@@ -3922,7 +3992,7 @@ IRQ_spring_of_islam = {
 							}
 							set_temp_variable = { party_index = 9 }
 							set_temp_variable = { party_popularity_increase = 1.00 }
-							add_relative_party_popularity = yes
+							change_relative_party_popularity = yes
 
 							set_temp_variable = { rul_party_temp = 9 }
 							set_temp_variable = { disable_elections = 1 }
@@ -3960,6 +4030,58 @@ IRQ_spring_of_islam = {
 						}
 					}
 				}
+			}
+		}
+		ai_will_do = {
+			base = 10
+		}
+	}
+}
+
+IRQ_saddams_pissfits = {
+	IRQ_demand_kuwait_naval_base = {
+		cost = 50
+		days_remove = 90
+		days_re_enable = 90
+		visible = {
+			country_exists = KUW
+			NOT = {
+				owns_state = 488
+			}
+		}
+		available = {
+			NOT = {
+				has_country_flag = IRQ_demanded_kuwait_naval_base
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_demand_kuwait_naval_base"
+			set_country_flag = IRQ_demanded_kuwait_naval_base
+			KUW = {
+				country_event = iraq_saddam.1
+			}
+		}
+		ai_will_do = {
+			base = 10
+		}
+	}
+	IRQ_propose_kurdistan_defensive_pact = {
+		cost = 50
+		days_remove = 90
+		days_re_enable = 90
+		visible = {
+			country_exists = KUR
+		}
+		available = {
+			NOT = {
+				has_country_flag = IRQ_proposed_kurdistan_pact
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_propose_kurdistan_defensive_pact"
+			set_country_flag = IRQ_proposed_kurdistan_pact
+			KUR = {
+				country_event = iraq_saddam.5
 			}
 		}
 		ai_will_do = {
@@ -4177,13 +4299,13 @@ IRQ_kurdish_friends = {
 					set_temp_variable = { party_index = 19 }
 					set_temp_variable = { party_popularity_increase = 0.055 }
 					set_temp_variable = { temp_outlook_increase = 0.045 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 				}
 				PUK = {
 					set_temp_variable = { party_index = 19 }
 					set_temp_variable = { party_popularity_increase = 0.055 }
 					set_temp_variable = { temp_outlook_increase = 0.045 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 				}
 			}
 			if = {
@@ -4194,13 +4316,13 @@ IRQ_kurdish_friends = {
 					set_temp_variable = { party_index = 19 }
 					set_temp_variable = { party_popularity_increase = 0.085 }
 					set_temp_variable = { temp_outlook_increase = 0.075 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 				}
 				PUK = {
 					set_temp_variable = { party_index = 19 }
 					set_temp_variable = { party_popularity_increase = 0.085 }
 					set_temp_variable = { temp_outlook_increase = 0.075 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 				}
 			}
 		}
@@ -4521,5 +4643,215 @@ IRQ_kurdish_friends = {
 				amount = -500
 			}
 		}
+	}
+}
+
+IRQ_ai_path_category = {
+	IRQ_ai_rally_the_clerics = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = IRQ_SHIA_THEOCRACY_FOCUS_PATH }
+
+		available = {
+			IRQ_ai_path_ramp_window = yes
+			check_variable = { party_pop_array^9 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ai_rally_the_clerics"
+			set_temp_variable = { party_index = 9 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	IRQ_ai_clerics_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = IRQ_SHIA_THEOCRACY_FOCUS_PATH }
+
+		available = {
+			IRQ_ai_path_takeover_window = yes
+			emerging_hardline_shiite_are_in_power = no
+			check_variable = { party_pop_array^9 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ai_clerics_take_the_country"
+			set_temp_variable = { rul_party_temp = 9 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	IRQ_ai_rally_the_sadrists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = IRQ_SADRIST_FOCUS_PATH }
+
+		available = {
+			IRQ_ai_path_ramp_window = yes
+			check_variable = { party_pop_array^20 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ai_rally_the_sadrists"
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	IRQ_ai_sadrists_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = IRQ_SADRIST_FOCUS_PATH }
+
+		available = {
+			IRQ_ai_path_takeover_window = yes
+			nationalist_right_wing_populists_are_in_power = no
+			check_variable = { party_pop_array^20 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ai_sadrists_take_the_country"
+			set_temp_variable = { rul_party_temp = 20 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	IRQ_ai_rally_the_secular_opposition = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = IRQ_SECULAR_REPUBLIC_FOCUS_PATH }
+
+		available = {
+			IRQ_ai_path_ramp_window = yes
+			check_variable = { party_pop_array^3 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ai_rally_the_secular_opposition"
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	IRQ_ai_secular_opposition_takes_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = IRQ_SECULAR_REPUBLIC_FOCUS_PATH }
+
+		available = {
+			IRQ_ai_path_takeover_window = yes
+			western_social_democrats_are_in_power = no
+			check_variable = { party_pop_array^3 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ai_secular_opposition_takes_the_country"
+			set_temp_variable = { rul_party_temp = 3 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	IRQ_ai_rally_the_communists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = IRQ_COMMUNIST_FOCUS_PATH }
+
+		available = {
+			IRQ_ai_path_ramp_window = yes
+			check_variable = { party_pop_array^19 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ai_rally_the_communists"
+			set_temp_variable = { party_index = 19 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	IRQ_ai_communists_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = IRQ_COMMUNIST_FOCUS_PATH }
+
+		available = {
+			IRQ_ai_path_takeover_window = yes
+			neutrality_neutral_communism_are_in_power = no
+			check_variable = { party_pop_array^19 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_ai_communists_take_the_country"
+			set_temp_variable = { rul_party_temp = 19 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
 	}
 }

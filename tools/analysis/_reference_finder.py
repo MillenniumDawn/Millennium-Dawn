@@ -9,10 +9,14 @@ supply their domain-specific name extractor and reference search logic via the
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
-from typing import Callable, List, Tuple
+from typing import Callable, Dict, List, Tuple
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from shared_utils import write_text_under
 
 
 def build_parser(
@@ -40,7 +44,7 @@ def run_reference_search(
     subject_singular: str,
     subject_plural: str,
     extract_names: Callable[[Path], List[str]],
-    search_for_references: Callable[[str], List[Tuple[str, int, str]]],
+    search_for_references: Callable[[List[str]], Dict[str, List[Tuple[str, int, str]]]],
     show_all: bool,
     no_report: bool,
     report_prefix_all: str,
@@ -50,9 +54,9 @@ def run_reference_search(
 ) -> None:
     """Run the shared "find unreferenced X" workflow.
 
-    ``search_for_references(name)`` is a thin closure the caller builds — it
-    captures any per-search context (source file, search dirs) so this harness
-    does not need to know about them.
+    ``search_for_references(names)`` scans each candidate file once and returns
+    a mapping for the requested names. The batch contract avoids rescanning the
+    repository once per identifier.
     """
     if not source_file.exists():
         sys.exit(f"Error: File '{source_file}' not found!")
@@ -85,9 +89,10 @@ def run_reference_search(
     referenced: List[Tuple[str, List[Tuple[str, int, str]]]] = []
     unreferenced: List[str] = []
 
+    print(f"  Searching {len(names)} names in candidate files...", flush=True)
+    references_by_name = search_for_references(names)
     for name in names:
-        print(f"\r  Searching: {name:<50}", end="", flush=True)
-        refs = search_for_references(name)
+        refs = references_by_name.get(name, [])
         if refs:
             referenced.append((name, refs))
             if show_all:
@@ -99,7 +104,10 @@ def run_reference_search(
             print(f"\r  UNREFERENCED: {name:<50}")
 
     elapsed = time.time() - start
-    minutes, seconds = divmod(int(elapsed), 60)
+    try:
+        minutes, seconds = divmod(int(elapsed), 60)
+    except (TypeError, ValueError, OverflowError):
+        minutes, seconds = 0, 0
 
     print("\n")
     print(header_bar)
@@ -151,5 +159,8 @@ def run_reference_search(
             lines_out.append(f"\n  {name} ({len(refs)} refs):")
             for filepath, line_num, content in refs:
                 lines_out.append(f"    {filepath}:{line_num} -> {content}")
-    report_path.write_text("\n".join(lines_out), encoding="utf-8")
+    try:
+        write_text_under(str(report_path), os.getcwd(), "\n".join(lines_out) + "\n")
+    except (OSError, ValueError) as e:
+        sys.exit(f"Error writing report: {e}")
     print(f"Report saved to: {report_path}")

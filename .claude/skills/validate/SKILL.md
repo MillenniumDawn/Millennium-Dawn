@@ -1,3 +1,9 @@
+---
+name: validate
+description: 'Run the Millennium Dawn validation tools and summarize errors by category as file:line. Use only when the user explicitly asks to validate, e.g. "/validate", "run the validators". Args: "staged" and/or "strict".'
+disable-model-invocation: true
+---
+
 Run the Millennium Dawn validation tools and summarize the results.
 
 Supported arguments: `staged` (only validate git-staged files), `strict` (fail on errors), or both.

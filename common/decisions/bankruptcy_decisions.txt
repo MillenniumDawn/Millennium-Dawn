@@ -4,34 +4,33 @@ bankruptcy_decisions = {
 	#Always use cheap loans from IMF first, only ask for bailout if interest > 15%
 	#First ask bailout from IMF, then neighbours, then 2nd influencer, then 1st influencer to do the least damage
 	#Default if interest > 25% and not at war
-
 	bankruptcy_cheap_loans_from_imf = {
+
 		icon = GFX_decision_bancru_imf_button
 
 		cost = 50
 
 		visible = {
 			NOT = {
-				has_active_mission = cheap_loan_from_the_imf_mission
-				has_country_flag = paused_debt_repayment
+				OR = {
+					has_active_mission = cheap_loan_from_the_imf_mission
+					has_country_flag = paused_debt_repayment
+				}
 			}
 		}
+
 		available = {
 			is_full_state = yes
 			has_added_tension_amount < 5
 			NOT = {
-				has_idea = corruption_level_10
-				has_idea = corruption_level_09
-				has_idea = corruption_level_08
+				OR = {
+					has_idea = corruption_level_10
+					has_idea = corruption_level_09
+					has_idea = corruption_level_08
+				}
 			}
-			custom_trigger_tooltip = {
-				tooltip = 5_per_capita_or_more_tt
-				check_variable = { gdp_per_capita > 5 }
-			}
-			custom_trigger_tooltip = {
-				tooltip = interest_rate_lower_than_15
-				check_variable = { interest_rate < 15 }
-			}
+			gdp_per_capita_greater_than_5 = yes
+			interest_rate_lower_than_15 = yes
 			custom_trigger_tooltip = {
 				tooltip = potential_expenses_higher_than_potential_income_tt
 				check_variable = { potential_expense > potential_income }
@@ -41,9 +40,9 @@ bankruptcy_decisions = {
 		days_re_enable = 365
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_cheap_loans_from_imf"
 			custom_effect_tooltip = cheap_loans_from_imf_tt
 			ingame_update_setup = yes
-
 			activate_mission = cheap_loan_from_the_imf_mission
 		}
 
@@ -54,35 +53,29 @@ bankruptcy_decisions = {
 				has_political_power < 0
 			}
 		}
-
 	}
 
 	bankruptcy_cheap_loans_from_african_investment_fund = {
-		icon = GFX_decision_bancru_ask_button
 
-		visible = {
-			is_in_array = { global.is_african_nation = THIS.id }
-		}
+		allowed = { is_african_nation = yes }
+
+		icon = GFX_decision_bancru_ask_button
 
 		available = {
 			is_full_state = yes
 			has_added_tension_amount < 5
 			has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
-			custom_trigger_tooltip = {
-				tooltip = interest_rate_lower_than_15
-				check_variable = { interest_rate < 15 }
-			}
+			interest_rate_lower_than_15 = yes
 		}
 
-		modifier = {
-			interest_rate_multiplier_modifier = -3
-		}
+		modifier = { interest_rate_multiplier_modifier = -3 }
 
 		days_remove = 360
 
 		days_re_enable = 180
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_cheap_loans_from_african_investment_fund"
 			if = { limit = { is_ai = yes }
 				add_political_power = -25
 			}
@@ -104,32 +97,28 @@ bankruptcy_decisions = {
 				has_political_power < 0
 			}
 		}
-
 	}
 
 	bankruptcy_seek_bailout_from_biggest_influencer = {
+
 		icon = GFX_decision_bancru_ask_button
+
 		visible = {
 			check_variable = { influence_array^0 > 0 }
 			NOT = { check_variable = { influence_array^0 > ROOT.id } }
 		}
+
 		available = {
 			is_subject = no
 			custom_trigger_tooltip = {
 				tooltip = has_foreign_influence
 				check_variable = { influence_array^0 > 0 }
 			}
-			custom_trigger_tooltip = {
-				tooltip = interest_rate_higher_than_10
-				check_variable = { interest_rate > 10 }
-			}
+			interest_rate_higher_than_10 = yes
 			NOT = { has_war_with = var:influence_array^0 }
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 			NOT = { has_decision = bankruptcy_seek_bailout_from_second_biggest_influencer }
 			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
@@ -141,6 +130,7 @@ bankruptcy_decisions = {
 		days_remove = 7
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_seek_bailout_from_biggest_influencer"
 			if = { limit = { is_ai = yes }
 				add_political_power = -50
 			}
@@ -170,32 +160,28 @@ bankruptcy_decisions = {
 				has_political_power < 0
 			}
 		}
-
 	}
 
 	bankruptcy_seek_bailout_from_second_biggest_influencer = {
+
 		icon = GFX_decision_bancru_ask_button
+
 		visible = {
 			check_variable = { influence_array^0 > 0 }
 			NOT = { check_variable = { influence_array^1 > ROOT.id } }
 		}
+
 		available = {
 			is_subject = no
 			custom_trigger_tooltip = {
 				tooltip = has_foreign_influence
 				check_variable = { influence_array^1 > 0 }
 			}
-			custom_trigger_tooltip = {
-				tooltip = interest_rate_higher_than_10
-				check_variable = { interest_rate > 10 }
-			}
+			interest_rate_higher_than_10 = yes
 			NOT = { has_war_with = var:influence_array^1 }
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 			NOT = { has_decision = bankruptcy_seek_bailout_from_biggest_influencer }
 			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
@@ -207,6 +193,7 @@ bankruptcy_decisions = {
 		days_remove = 7
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_seek_bailout_from_second_biggest_influencer"
 			if = { limit = { is_ai = yes }
 				add_political_power = -50
 			}
@@ -239,6 +226,7 @@ bankruptcy_decisions = {
 	}
 
 	bankruptcy_seek_bailout_from_neighbour = {
+
 		icon = GFX_decision_bancru_ask_button
 
 		target_array = neighbors
@@ -250,7 +238,7 @@ bankruptcy_decisions = {
 				NOT = { original_tag = var:ROOT.influence_array^0 }
 				NOT = { original_tag = var:ROOT.influence_array^1 }
 				check_variable = { FROM.gdp_total > ROOT.gdp_total }
-				FROM = { is_full_state = yes }
+				is_full_state = yes
 			}
 		}
 
@@ -262,10 +250,7 @@ bankruptcy_decisions = {
 			}
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 			NOT = { has_decision = bankruptcy_seek_bailout_from_biggest_influencer }
 			NOT = { has_decision = bankruptcy_seek_bailout_from_second_biggest_influencer }
@@ -273,19 +258,18 @@ bankruptcy_decisions = {
 			NOT = { has_decision = bankruptcy_seek_bailout_from_imf }
 		}
 
-
 		days_re_enable = 360
 
 		days_remove = 7
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_seek_bailout_from_neighbour"
 			if = { limit = { is_ai = yes }
 				add_political_power = -50
 			}
 			else = {
 				add_political_power = -100
 			}
-
 			set_variable = {
 				debt_bailout = {
 					value = debt
@@ -311,32 +295,33 @@ bankruptcy_decisions = {
 	}
 
 	bankruptcy_seek_bailout_from_overlord = {
-		visible = {
-			is_subject = yes
-		}
+
+		visible = { is_subject = yes }
+
 		icon = GFX_decision_bancru_ask_overlord_button
+
 		available = {
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 			is_subject = yes
 			NOT = { has_decision = bankruptcy_seek_bailout_from_imf }
 			overlord = { NOT = { has_dynamic_modifier = { modifier = very_high_interest_country_modifiers } } }
 		}
+
 		days_re_enable = 360
+
 		days_remove = 7
+
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_seek_bailout_from_overlord"
 			if = { limit = { is_ai = yes }
 				add_political_power = -50
 			}
 			else = {
 				add_political_power = -100
 			}
-
 			set_variable = {
 				debt_bailout = {
 					value = debt
@@ -348,6 +333,7 @@ bankruptcy_decisions = {
 			custom_effect_tooltip = bankruptcy_seek_bailout_from_overlord_tt
 			overlord = { country_event = { id = bankruptcy.5 hours = 3 } }
 		}
+
 		ai_will_do = {
 			base = 800
 			modifier = {
@@ -361,7 +347,9 @@ bankruptcy_decisions = {
 	}
 
 	bankruptcy_seek_bailout_from_imf = {
+
 		icon = GFX_decision_bancru_ass_imf_button
+
 		available = {
 			is_full_state = yes
 			has_added_tension_amount < 5
@@ -369,10 +357,7 @@ bankruptcy_decisions = {
 			NOT = { has_idea = IMF_debt_relief_rejected }
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 			if = { limit = { tag = ETH }
 				NOT = { has_idea = ETH_idea_refactored_debt }
@@ -382,12 +367,17 @@ bankruptcy_decisions = {
 			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
 			NOT = { has_decision = bankruptcy_seek_bailout_from_overlord }
 		}
+
 		fixed_random_seed = no
+
 		days_re_enable = 180
+
 		days_remove = 7
+
 		cost = 50
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_seek_bailout_from_imf"
 			set_variable = {
 				debt_bailout = {
 					value = debt
@@ -677,10 +667,12 @@ bankruptcy_decisions = {
 						modifier = {
 							factor = 0
 							NOT = {
-								has_idea = the_clergy
-								has_idea = the_priesthood
-								has_idea = the_ulema
-								has_idea = wahabi_ulema
+								OR = {
+									has_idea = the_clergy
+									has_idea = the_priesthood
+									has_idea = the_ulema
+									has_idea = wahabi_ulema
+								}
 							}
 						}
 						country_event = bankruptcy.110
@@ -700,11 +692,11 @@ bankruptcy_decisions = {
 						}
 						modifier = {
 							factor = 1.5
-							check_variable = { military_fac_percent > 0.15 }
+							check_variable = { military_factory_total_percent > 0.15 }
 						}
 						modifier = {
 							factor = 1.3
-							check_variable = { military_fac_percent > 0.25 }
+							check_variable = { military_factory_total_percent > 0.25 }
 						}
 						country_event = bankruptcy.111
 					}
@@ -723,11 +715,11 @@ bankruptcy_decisions = {
 						}
 						modifier = {
 							factor = 1.5
-							check_variable = { dockyard_fac_percent > 0.15 }
+							check_variable = { naval_factory_total_percent > 0.15 }
 						}
 						modifier = {
 							factor = 1.3
-							check_variable = { dockyard_fac_percent > 0.25 }
+							check_variable = { naval_factory_total_percent > 0.25 }
 						}
 						country_event = bankruptcy.112
 					}
@@ -791,6 +783,7 @@ bankruptcy_decisions = {
 				}
 			}
 		}
+
 		ai_will_do = {
 			base = 900
 			modifier = {
@@ -805,22 +798,20 @@ bankruptcy_decisions = {
 	}
 
 	bankruptcy_seek_bailout_from_african_monetary_fund = {
+
+		allowed = { is_african_nation = yes }
+
 		icon = GFX_decision_bancru_ask_button
-		visible = {
-			is_in_array = { global.is_african_nation = THIS.id }
-		}
+
 		available = {
 			is_full_state = yes
 			has_added_tension_amount < 5
 			has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
-			if = { limit = { tag = ETH }
+			if = { limit = { original_tag = ETH }
 				NOT = { has_idea = ETH_idea_refactored_debt }
 			}
 			NOT = { has_decision = bankruptcy_seek_bailout_from_biggest_influencer }
@@ -828,29 +819,33 @@ bankruptcy_decisions = {
 			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
 			NOT = { has_decision = bankruptcy_seek_bailout_from_overlord }
 		}
+
 		fixed_random_seed = no
+
 		days_re_enable = 360
+
 		days_remove = 7
+
 		cost = 100
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_seek_bailout_from_african_monetary_fund"
 			set_temp_variable = {
 				debt_change = {
 					value = debt
 					multiply = -0.10
-					clamp = { min = 0 max = -100  }
+					clamp = { min = -100 max = 0 }
 				}
 			}
 			modify_debt_effect = yes
 			# Persist absolute amount for display in tooltip (temp vars unreliable in tooltip render)
-			set_variable = { debt_bailout = debt_bailout_temp }
+			set_variable = { debt_bailout = debt_change }
 			multiply_variable = { debt_bailout = -1 }
 			round_variable = debt_bailout
 			custom_effect_tooltip = bankruptcy_seek_bailout_from_amf_tt
 			clear_variable = debt_bailout
 			random_other_country = {
 				limit = {
-					is_in_array = { global.is_african_nation = THIS.id }
 					has_idea = AU_member
 					OR = {
 						has_idea = regional_power
@@ -865,6 +860,7 @@ bankruptcy_decisions = {
 			set_temp_variable = { percent_change = 10 }
 			change_influence_percentage = yes
 		}
+
 		ai_will_do = {
 			base = 950
 			modifier = {
@@ -879,7 +875,9 @@ bankruptcy_decisions = {
 	}
 
 	bankruptcy_incoming_collapse = {
+
 		icon = GFX_decision_bancru_collapse_button
+
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = bankruptcy_incoming_collapse_complete_trigger
@@ -897,9 +895,10 @@ bankruptcy_decisions = {
 		days_mission_timeout = 360
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_incoming_collapse"
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.10 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			if = {
 				limit = { has_elections = yes }
 				country_event = bankruptcy.10
@@ -918,36 +917,34 @@ bankruptcy_decisions = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_incoming_collapse"
 			add_political_power = 150
 		}
-
 	}
 
 	bankruptcy_default_on_debts = {
-		visible = {
-			check_variable = { interest_rate > 14.999 }
-		}
+
+		visible = { interest_rate_higher_than_15 = yes }
+
 		icon = GFX_decision_bancru_depts_button
+
 		available = {
 			is_subject = no
-			check_variable = { interest_rate > 14.999 }
+			interest_rate_higher_than_15 = yes
 			if = {
 				limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = treasury_less_than_5
-					check_variable = { treasury < 5 }
-				}
+				treasury_lower_than_5 = yes
 			}
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_default_on_debts"
 			# Cartels
 			if = { limit = { has_dynamic_modifier = { modifier = cartel_penalties } }
 				set_temp_variable = { cart_strength_change = 10 }
 				set_temp_variable = { cart_influence_change = 20 }
 				modify_treasury_effect = yes
 			}
-
 			set_variable = { debt_default_left = debt }
 			multiply_variable = { debt_default_left = 0.5 }
 			round_variable = debt_default_left
@@ -979,27 +976,29 @@ bankruptcy_decisions = {
 	}
 
 	cheap_loan_from_the_imf_mission = {
+
 		fixed_random_seed = no
+
 		icon = GFX_decision_bancru_collapse_button
+
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = potential_expenses_are_less_than_potential_income_tt
+				tooltip = potential_expenses_lower_than_potential_income_tt
 				check_variable = { potential_expense < potential_income }
 			}
 		}
 
-		activation = {
-			always = no
-		}
+		activation = { always = no }
 
 		is_good = no
 
 		days_mission_timeout = 365
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cheap_loan_from_the_imf_mission"
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			random_owned_state = {
 				limit = {
 					OR = {
@@ -1041,9 +1040,7 @@ bankruptcy_decisions = {
 					}
 				}
 			}
-
 			activate_mission = cheap_loan_from_the_imf_mission
-
 			if = { limit = { has_idea = IMF_failed_to_balance_budget }
 				hidden_effect = {
 					remove_ideas = IMF_failed_to_balance_budget
@@ -1078,10 +1075,11 @@ bankruptcy_decisions = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cheap_loan_from_the_imf_mission"
 			add_political_power = 150
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 	}
 }
@@ -1094,9 +1092,10 @@ debt_default_decisions = {
 	#3. Sell factories unless GDP is < 80% of pre-default GDP (sell order NIC -> MIC -> Offices -> CIC)
 	#4. Political concessions to 2nd and 1st influencer
 	#Default if interest > 25% and not at war
-
 	debt_default_main_mission = {
+
 		icon = GFX_decision_bancru_collapse_button
+
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = debt_default_main_mission_complete_trigger
@@ -1104,16 +1103,16 @@ debt_default_decisions = {
 			}
 		}
 
-		activation = {
-			always = no
-		}
+		activation = { always = no }
 
 		is_good = no
+
 		selectable_mission = no
 
 		days_mission_timeout = 360
 
 		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision debt_default_main_mission"
 			if = {
 				limit = { is_subject = no }
 				if = { limit = { check_variable = { influence_array^0 > 0 } }
@@ -1210,6 +1209,7 @@ debt_default_decisions = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision debt_default_main_mission"
 			clear_variable = debt_default_left
 			clear_variable = debt_default_total
 			add_timed_idea = { idea = debt_default_ecomomic_boom days = 360 }
@@ -1218,20 +1218,18 @@ debt_default_decisions = {
 	}
 
 	debt_default_pay_10_from_treasury = {
+
 		icon = GFX_decision_bancru_ask_button
+
 		visible = {
 			has_active_mission = debt_default_main_mission
 			check_variable = { gdp_total < 100 }
 		}
 
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = debt_default_pay_from_treasury_trigger_tooltip
-				check_variable = { interest_rate < 5 }
-			}
-		}
+		available = { interest_rate_lower_than_5 = yes }
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision debt_default_pay_10_from_treasury"
 			custom_effect_tooltip = debt_default_pay_10_from_treasury_tt
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
@@ -1242,27 +1240,22 @@ debt_default_decisions = {
 			}
 		}
 
-		ai_will_do = {
-			base = 1000
-		}
-
+		ai_will_do = { base = 1000 }
 	}
 
 	debt_default_pay_50_from_treasury = {
+
 		icon = GFX_decision_bancru_ask_button
+
 		visible = {
 			has_active_mission = debt_default_main_mission
 			check_variable = { gdp_total > 100 }
 		}
 
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = debt_default_pay_from_treasury_trigger_tooltip
-				check_variable = { interest_rate < 5 }
-			}
-		}
+		available = { interest_rate_lower_than_5 = yes }
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision debt_default_pay_50_from_treasury"
 			custom_effect_tooltip = debt_default_pay_50_from_treasury_tt
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
@@ -1273,25 +1266,21 @@ debt_default_decisions = {
 			}
 		}
 
-		ai_will_do = {
-			base = 1000
-		}
-
+		ai_will_do = { base = 1000 }
 	}
 
 	debt_default_concessions_to_the_imf = {
+
 		icon = GFX_decision_bancru_ass_imf_button
-		visible = {
-			has_active_mission = debt_default_main_mission
-		}
 
-
+		visible = { has_active_mission = debt_default_main_mission }
 
 		days_re_enable = 180
 
 		cost = 25
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision debt_default_concessions_to_the_imf"
 			set_temp_variable = { percent_change = -10 }
 			change_domestic_influence_percentage = yes
 			set_temp_variable = { debt_default_reduction = debt_default_total }
@@ -1306,8 +1295,10 @@ debt_default_decisions = {
 			if = {
 				limit = {
 					NOT = {
-						has_idea = bureau_01
-						has_idea = bureau_02
+						OR = {
+							has_idea = bureau_01
+							has_idea = bureau_02
+						}
 					}
 				}
 				block_bureau_increase = yes
@@ -1316,9 +1307,11 @@ debt_default_decisions = {
 			if = {
 				limit = {
 					NOT = {
-						has_idea = defence_00
-						has_idea = defence_01
-						has_idea = defence_02
+						OR = {
+							has_idea = defence_00
+							has_idea = defence_01
+							has_idea = defence_02
+						}
 					}
 				}
 				block_defence_increase = yes
@@ -1327,8 +1320,10 @@ debt_default_decisions = {
 			if = {
 				limit = {
 					NOT = {
-						has_idea = police_01
-						has_idea = police_02
+						OR = {
+							has_idea = police_01
+							has_idea = police_02
+						}
 					}
 				}
 				block_police_increase = yes
@@ -1337,8 +1332,10 @@ debt_default_decisions = {
 			if = {
 				limit = {
 					NOT = {
-						has_idea = edu_01
-						has_idea = edu_02
+						OR = {
+							has_idea = edu_01
+							has_idea = edu_02
+						}
 					}
 				}
 				block_edu_increase = yes
@@ -1347,8 +1344,10 @@ debt_default_decisions = {
 			if = {
 				limit = {
 					NOT = {
-						has_idea = health_01
-						has_idea = health_02
+						OR = {
+							has_idea = health_01
+							has_idea = health_02
+						}
 					}
 				}
 				block_health_increase = yes
@@ -1357,8 +1356,10 @@ debt_default_decisions = {
 			if = {
 				limit = {
 					NOT = {
-						has_idea = social_01
-						has_idea = social_02
+						OR = {
+							has_idea = social_01
+							has_idea = social_02
+						}
 					}
 				}
 				block_social_increase = yes
@@ -1366,17 +1367,14 @@ debt_default_decisions = {
 			}
 		}
 
-		ai_will_do = {
-			base = 900
-		}
-
+		ai_will_do = { base = 900 }
 	}
 
 	debt_default_political_concessions_to_biggest_influencer = {
+
 		icon = GFX_decision_bancru_ask_overlord_button
-		visible = {
-			has_active_mission = debt_default_main_mission
-		}
+
+		visible = { has_active_mission = debt_default_main_mission }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -1391,6 +1389,7 @@ debt_default_decisions = {
 		cost = 25
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision debt_default_political_concessions_to_biggest_influencer"
 			var:influence_array^0 = {
 				set_temp_variable = { percent_change = 15 }
 				set_temp_variable = { tag_index = THIS.id }
@@ -1430,14 +1429,13 @@ debt_default_decisions = {
 				}
 			}
 		}
-
 	}
 
 	debt_default_political_concessions_to_second_biggest_influencer = {
+
 		icon = GFX_decision_bancru_ask_overlord_button
-		visible = {
-			has_active_mission = debt_default_main_mission
-		}
+
+		visible = { has_active_mission = debt_default_main_mission }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -1452,6 +1450,7 @@ debt_default_decisions = {
 		cost = 25
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision debt_default_political_concessions_to_second_biggest_influencer"
 			var:influence_array^1 = {
 				set_temp_variable = { percent_change = 10 }
 				set_temp_variable = { tag_index = THIS.id }
@@ -1491,17 +1490,16 @@ debt_default_decisions = {
 				}
 			}
 		}
-
 	}
 
 	debt_default_sell_civilian_factories = {
+
 		icon = GFX_decision_bancru_ask_button
-		visible = {
-			has_active_mission = debt_default_main_mission
-		}
+
+		visible = { has_active_mission = debt_default_main_mission }
 
 		available = {
-			check_variable = { industrial_complex_total > 0 }
+			num_of_civilian_factories > 0
 			NOT = { has_decision = debt_default_dismantle_military_factories }
 			NOT = { has_decision = debt_default_scrap_dockyard }
 			NOT = { has_decision = debt_default_cut_down_government_services }
@@ -1512,6 +1510,7 @@ debt_default_decisions = {
 		cost = 25
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision debt_default_sell_civilian_factories"
 			custom_effect_tooltip = sell_10_billion_factory
 			subtract_from_variable = { debt_default_left = 10 }
 			random_owned_state = {
@@ -1537,14 +1536,13 @@ debt_default_decisions = {
 				}
 			}
 		}
-
 	}
 
 	debt_default_dismantle_military_factories = {
+
 		icon = GFX_decision_bancru_ask_button
-		visible = {
-			has_active_mission = debt_default_main_mission
-		}
+
+		visible = { has_active_mission = debt_default_main_mission }
 
 		available = {
 			any_owned_state = {
@@ -1560,6 +1558,7 @@ debt_default_decisions = {
 		cost = 25
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision debt_default_dismantle_military_factories"
 			custom_effect_tooltip = sell_10_billion_factory
 			subtract_from_variable = { debt_default_left = 10 }
 			random_owned_state = {
@@ -1585,17 +1584,16 @@ debt_default_decisions = {
 				}
 			}
 		}
-
 	}
 
 	debt_default_scrap_dockyard = {
+
 		icon = GFX_decision_bancru_ask_button
-		visible = {
-			has_active_mission = debt_default_main_mission
-		}
+
+		visible = { has_active_mission = debt_default_main_mission }
 
 		available = {
-			check_variable = { dockyard_fac > 0 }
+			num_of_naval_factories > 0
 			NOT = { has_decision = debt_default_sell_civilian_factories }
 			NOT = { has_decision = debt_default_dismantle_military_factories }
 			NOT = { has_decision = debt_default_cut_down_government_services }
@@ -1606,6 +1604,7 @@ debt_default_decisions = {
 		cost = 25
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision debt_default_scrap_dockyard"
 			custom_effect_tooltip = sell_10_billion_factory
 			subtract_from_variable = { debt_default_left = 10 }
 			random_owned_state = {
@@ -1631,17 +1630,19 @@ debt_default_decisions = {
 				}
 			}
 		}
-
 	}
 
 	debt_default_cut_down_government_services = {
+
 		icon = GFX_decision_bancru_ask_button
-		visible = {
-			has_active_mission = debt_default_main_mission
-		}
+
+		visible = { has_active_mission = debt_default_main_mission }
 
 		available = {
-			check_variable = { office_park_total > 0 }
+			custom_trigger_tooltip = {
+				tooltip = debt_default_has_office_park_tt
+				check_variable = { office_park_total > 0 }
+			}
 			NOT = { has_decision = debt_default_sell_civilian_factories }
 			NOT = { has_decision = debt_default_dismantle_military_factories }
 			NOT = { has_decision = debt_default_scrap_dockyard }
@@ -1652,6 +1653,7 @@ debt_default_decisions = {
 		cost = 25
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision debt_default_cut_down_government_services"
 			custom_effect_tooltip = sell_15_billion_factory
 			subtract_from_variable = { debt_default_left = 10 }
 			random_owned_state = {
@@ -1677,7 +1679,5 @@ debt_default_decisions = {
 				}
 			}
 		}
-
 	}
-
 }

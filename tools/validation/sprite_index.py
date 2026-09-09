@@ -12,22 +12,25 @@ import glob
 import os
 import re
 import sys
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 import disk_cache
 from shared_utils import extract_block_from_text
-from validate_gfx_references import _GFX_SPRITE_TYPES, _find_vanilla_interface_dir
+from validate_gfx_references import (
+    _GFX_SPRITE_TYPES,
+    _strip_comments,
+    _vanilla_gfx_files,
+    sprite_defs_from_gfx_text,
+)
 
-_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
-# `//` and `#` are line comments; only `/* */` spans lines (needs DOTALL).
-_GFX_COMMENT = re.compile(r"//[^\n]*|#[^\n]*|/\*.*?\*/", re.DOTALL)
+_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*(?:"([^"]+)"|([^\s}]+))')
 
 
 def _parse_names(raw: str) -> List[str]:
     """Return every spriteType name in one .gfx file's text (block-scoped)."""
-    text = _GFX_COMMENT.sub("", raw)
+    text = _strip_comments(raw)
     names: List[str] = []
     for m in _GFX_SPRITE_TYPES.finditer(text):
         block, end = extract_block_from_text(text, m.end() - 1)
@@ -36,7 +39,7 @@ def _parse_names(raw: str) -> List[str]:
             block = text[m.end() : line_end if line_end != -1 else m.end() + 200]
         nm = _NAME_IN_BLOCK.search(block)
         if nm:
-            names.append(nm.group(1))
+            names.append(nm.group(1) or nm.group(2))
     return names
 
 
@@ -78,17 +81,14 @@ def build_sprite_index(
         include_vanilla: when True, also scan the vanilla HOI4 install (if
             discoverable). Event pictures must be MD-defined, so the event check
             passes False — that keeps it accurate in CI, where vanilla is absent.
-            Focus/idea icons may legitimately reuse vanilla sprites, so those
-            keep the default.
+            Focus/idea/decision icons may legitimately reuse vanilla sprites, so
+            those keep the default.
     """
-    interface_dirs: List[Optional[str]] = [os.path.join(mod_path, "interface")]
+    gfx_files: List[str] = glob.glob(
+        os.path.join(mod_path, "interface", "**", "*.gfx"), recursive=True
+    )
     if include_vanilla:
-        interface_dirs.append(_find_vanilla_interface_dir())
-
-    gfx_files: List[str] = []
-    for d in interface_dirs:
-        if d and os.path.isdir(d):
-            gfx_files.extend(glob.glob(os.path.join(d, "*.gfx")))
+        gfx_files.extend(_vanilla_gfx_files())
 
     names = set()
     if pool_map is not None:
@@ -101,3 +101,65 @@ def build_sprite_index(
     if gfx_only:
         names = {n for n in names if n.startswith("GFX_")}
     return frozenset(names)
+
+
+def _gfx_root(filepath: str) -> str:
+    """Return the root a .gfx file's `texturefile` paths are relative to.
+
+    That is the directory holding `interface/`: the mod root, the vanilla
+    install, or an individual `dlc/<name>/` — DLC art ships beside its own .gfx.
+    """
+    normalized = filepath.replace("\\", "/")
+    root, sep, _rest = normalized.partition("/interface/")
+    return root if sep else os.path.dirname(normalized)
+
+
+def _textures_in_file(args) -> List[List[str]]:
+    """Pool-worker: return ``[sprite_name, absolute texture path]`` pairs."""
+    filepath, mod_path = args
+    root = _gfx_root(filepath)
+    try:
+        with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except OSError:
+        return []
+
+    def _compute() -> List[List[str]]:
+        pairs = []
+        for name, texture, _line in sprite_defs_from_gfx_text(raw):
+            if not texture:
+                continue
+            rel = texture.replace("\\", "/").lstrip("/")
+            pairs.append([name, os.path.normpath(os.path.join(root, rel))])
+        return pairs
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "sprite_index.textures", filepath, raw, _compute
+    )
+
+
+def build_sprite_texture_index(
+    mod_path: str, pool_map=None, include_vanilla: bool = True
+) -> Dict[str, str]:
+    """Return sprite name -> absolute path of the texture it renders.
+
+    Mod definitions are applied last so a mod sprite overriding a vanilla name
+    wins, matching load order. Sprites with no `texturefile` (frame strips built
+    from other sprites, `textfile` entries) are absent rather than empty.
+    """
+    jobs: List = []
+    if include_vanilla:
+        jobs.extend((f, mod_path) for f in _vanilla_gfx_files())
+    jobs.extend(
+        (f, mod_path)
+        for f in glob.glob(
+            os.path.join(mod_path, "interface", "**", "*.gfx"), recursive=True
+        )
+    )
+
+    mapper = pool_map if pool_map is not None else lambda fn, it: map(fn, it)
+    index: Dict[str, str] = {}
+    for pairs in mapper(_textures_in_file, jobs):
+        for name, path in pairs:
+            index[name] = path
+    return index

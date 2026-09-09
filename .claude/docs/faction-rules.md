@@ -2,6 +2,10 @@
 
 When creating or editing files in `common/factions/rules/`, follow these conventions, derived from the engine documentation in `common/factions/_documentation.md`.
 
+## Creating Factions
+
+`create_faction = NAME` is deprecated in MD — use `create_faction_from_template = TEMPLATE` instead for DLC compatibility.
+
 ## Faction Rule Structure
 
 Every faction rule must include a `type` field. Valid built-in types and their `trigger` scopes:

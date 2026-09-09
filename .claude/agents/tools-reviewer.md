@@ -24,13 +24,11 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 
 `.claude/docs/agent-conventions.md` (especially pre-commit / CI divergence rules), plus tooling-specific files:
 
-- `tools/shared_utils.py` — `Timer`, `create_linting_parser`, `collect_files_by_mode`, `get_root_dir`, `run_with_pool`, `get_git_diff_files`, `get_all_txt_files`, `print_timing_summary`, `FileOpener`.
+- `tools/shared_utils.py` — `Timer`, `create_linting_parser`, `collect_files_by_mode`, `get_root_dir`, `run_with_pool`, `get_git_diff_files`, `get_all_txt_files`, `print_timing_summary`, `FileOpener`, `clean_filepath`.
 - `tools/validation/validator_common.py` — `BaseValidator`, `_pool_map`, staged-file support.
-- `tools/path_utils.py` — `clean_filepath`.
 - `pyproject.toml` — single source for ruff (lint), pytest (testpaths), black, isort config.
 - `.pre-commit-config.yaml` — which scripts are hooks vs `stages: [manual]` vs unwired; the `ruff` hook and the `tools-pytest` pre-push hook.
-- `.github/workflows/tools-validation.yml` — the `ruff-lint` job, the pytest job (runs all four test dirs), and `validate_tools.py --strict`.
-- `.github/workflows/coding-pipeline.yml` — what CI runs unconditionally vs locally-only.
+- `.github/workflows/test-suite.yml` — the Tools tests quality steps (ruff, Black, pylint, mypy, jscpd, staged integration, `validate_tools.py --strict`) and the `mod-tests` batches that gate CI-only validators.
 
 ## Workflow
 
@@ -76,9 +74,9 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 
 **Tests (pytest)**:
 
-- Any new or changed `validate_*.py` / `report_lib` logic needs matching tests in the right `tests/` dir (`tools/tests`, `tools/report_lib/tests`, `tools/validation/tests`, `tools/linting/tests`). The whole suite must stay green.
+- Any new or changed `validate_*.py` / `report_lib` logic needs matching tests under `tools/tests/` (domain subdirs: `validation/`, `report_lib/`, `linting/`, `standardization/`, `docs_checks/`). The whole suite must stay green.
 - New test files must end in `_test.py` (the `python_files` pattern in `pyproject.toml`); `test_*.py` is not collected.
-- All four dirs run in CI and at `pre-push`. A test added only under a dir not in `testpaths` is dead — confirm placement.
+- `testpaths` is `tools/tests`. A test added outside that tree is dead.
 
 **Consistency**:
 
@@ -98,7 +96,7 @@ Caller passes a file path, a directory (`tools/linting/`, `tools/validation/`, `
 
 **Wiring sanity**:
 
-- Pre-commit-only hook? CI-only? Both? `stages: [manual]`? Confirm against `AGENTS.md` "Pre-commit vs CI divergence" section.
+- Pre-commit-only hook? CI-only? Both? `stages: [manual]`? Confirm against `.claude/docs/validation-pipeline.md`.
 - New validator must declare `--strict` behavior explicitly.
 
 ## Output format

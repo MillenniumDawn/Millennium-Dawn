@@ -79,17 +79,19 @@ instantTextboxType = {
 
 ### Where scripted-loc invocation works
 
-| Attribute                                          | Works      | Notes                                                     |
-| -------------------------------------------------- | ---------- | --------------------------------------------------------- |
-| `text = "[scripted_loc]"`                          | yes        | `instantTextboxType.text`, also `buttonText`              |
-| `pdx_tooltip = "[scripted_loc]"`                   | yes        | Precedent: `interface/eu.gui`                             |
-| `pdx_tooltip_delayed = "[scripted_loc]"`           | use direct | Don't wrap through a static YAML key — `v` scope may drop |
-| `image = "[scripted_loc]"` (in `properties` block) | yes        | Sprite name returned by scripted-loc                      |
+Each attribute below takes a `= "[scripted_loc]"` value.
+
+| Attribute             | Works      | Notes                                                     |
+| --------------------- | ---------- | --------------------------------------------------------- |
+| `text`                | yes        | `instantTextboxType.text`, also `buttonText`              |
+| `pdx_tooltip`         | yes        | Precedent: `interface/eu.gui`                             |
+| `pdx_tooltip_delayed` | use direct | Don't wrap through a static YAML key — `v` scope may drop |
+| `image`               | yes        | Sprite name from scripted-loc; in `properties` block      |
 
 ### What scripted-loc dispatch can't do
 
 - Return a loc key whose value contains `[!trigger_name]` and have the `[!]` re-evaluate. The engine substitutes the dispatched loc value as raw text. Put `[!]` directly in the same flat loc value as your scripted-loc call, not chained through a dispatcher.
-- Compute or transform — only branch on `check_variable` (or other triggers) and return a static `localization_key`. For runtime string construction, use `meta_trigger`/`meta_effect` instead (see [`tokenization-patterns.md`](tokenization-patterns.md)).
+- Compute or transform — only branch on `check_variable` (or other triggers) and return a static `localization_key`. For runtime string construction, use `meta_trigger`/`meta_effect` instead (see [`meta-effect-patterns.md`](meta-effect-patterns.md)).
 
 ### Dispatcher size economics
 
@@ -155,14 +157,12 @@ The payoff test for a data-driven display: **adding one more entity should requi
 
 EU parliament reference implementation:
 
-| Piece                    | Location                                                                            |
-| ------------------------ | ----------------------------------------------------------------------------------- |
-| Populate effect          | `EU_select_party_members` — `common/scripted_effects/99_eu_scripted_effects.txt`    |
-| Selector + open handler  | `eu_view_party_N_members_click` — `common/scripted_guis/01_european_union_guis.txt` |
-| Gridbox scripted_gui     | `eu_party_member_detail_gui` — same file                                            |
-| Window + entry container | `eu_party_member_detail_container` / `eu_party_member_detail` — `interface/eu.gui`  |
-| Per-scope data           | `THIS.MEP_party_0..23`, `THIS.MEP_Total`; aggregates `global.MEP_PG_party_N`        |
-| Entity set               | `global.EU_member`                                                                  |
+- Populate effect: `EU_select_party_members` — `common/scripted_effects/99_eu_scripted_effects.txt`
+- Selector + open handler: `eu_view_party_N_members_click` — `common/scripted_guis/01_european_union_guis.txt`
+- Gridbox scripted_gui: `eu_party_member_detail_gui` — same file
+- Window + entry container: `eu_party_member_detail_container` / `eu_party_member_detail` — `interface/eu.gui`
+- Per-scope data: `THIS.MEP_party_0..23`, `THIS.MEP_Total`; aggregates `global.MEP_PG_party_N`
+- Entity set: `global.EU_member`
 
 ---
 
@@ -197,15 +197,11 @@ References:
 
 ### Call from every state-changing effect
 
-Every click handler / state-toggling effect in the scripted*gui should end with `update*<system>\_dirty_variable = yes`. Including the close/toggle-off paths, not just the open path.
-
-### Player-only guard
-
-The [`scripted-gui-rules.md` dirty rule](./scripted-gui-rules.md) says to guard bumps with `is_ai = no` for GUIs the AI also interacts with. In practice MD's `update_*_dirty_variable` effects don't carry the guard — the dirty variable is only bumped from player-initiated click paths in the scripted_gui's `effects` block, reached only when the player clicks. If your effect can be invoked from an AI on_action, wrap the call site (not the dirty effect itself) with `is_ai = no`.
+Every click handler / state-toggling effect in the scripted*gui should end with `update*<system>\_dirty_variable = yes`. Including the close/toggle-off paths, not just the open path. For the player-only `is_ai = no` guard rule (and when call sites need it), see the dirty-variable section of [`scripted-gui-rules.md`](./scripted-gui-rules.md).
 
 ## Filter checkbox — image swap, not frame swap
 
-`GFX_generic_checkbox` is a single-frame sprite. The `_frame` trigger pattern silently fails on it (renders as nothing on the "checked" frame). Mirror the construction-UI pattern instead: two separate sprites swapped via a scripted-loc and the GUI's `properties` block.
+`GFX_generic_checkbox` is a single-frame sprite. The `_frame` trigger pattern silently fails on it (renders as nothing on the "checked" frame). Use two separate sprites swapped via a scripted-loc and the GUI's `properties` block.
 
 ```
 # Scripted-loc
@@ -235,7 +231,7 @@ buttonType = {
 }
 ```
 
-Reference: `interface/MD_countryconstructionsview.gui:13-21` (`toggle_construction_building_speed`).
+Reference implementation: `mio_catalog_filter_toggle_btn` — scripted-loc `mio_catalog_filter_toggle_icon` in `common/scripted_localisation/00_mio_catalog_scripted_loc.txt`, properties swap in `common/scripted_guis/00_mio_unlock_catalog.txt`, button in `interface/military_industrial_organization/zz_mio_unlock_catalog.gui`. The `GFX_generic_checkbox_open` / `GFX_generic_checkbox_checked` sprites are defined in `interface/countryconstructionsview.gfx`.
 
 ## Per-entry tooltip with dynamic per-MIO ✓/✗ icons
 
@@ -254,7 +250,7 @@ mio_catalog_entry_prereqs_yes = {
 }
 ```
 
-See [`tokenization-patterns.md`](tokenization-patterns.md) for the meta_trigger mechanics and why this is the only way to keep `[!]` rendering working with per-entry dispatch.
+See [`meta-effect-patterns.md`](meta-effect-patterns.md) for the meta_trigger mechanics and why this is the only way to keep `[!]` rendering working with per-entry dispatch.
 
 ## Visibility rule of thumb
 

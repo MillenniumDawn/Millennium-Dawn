@@ -3,7 +3,7 @@ title: Conditional Peace Deals
 description: How to negotiate peace treaties with state actions, country actions, and VP-based deal scoring
 ---
 
-Conditional Peace Deals let you negotiate a custom peace treaty with an enemy country instead of fighting to total capitulation. You can demand or concede states, impose political conditions, and extract reparations — all scored through a Victory Point (VP) system that the AI uses to decide whether to accept.
+Conditional Peace Deals let you negotiate a custom peace treaty with an enemy country instead of fighting to total capitulation. You can demand or concede states, impose political conditions, and extract reparations, all scored through a Victory Point (VP) system that the AI uses to decide whether to accept.
 
 This system is enabled by the **Player-Led Peace Deals** game rule (on by default).
 
@@ -37,9 +37,9 @@ Switch between them with the tabs at the top of the window.
 
 ## Demands vs Concessions
 
-**Demands** are terms you impose on the enemy. They cost VP — the more you demand, the less likely the AI is to accept. You need war contribution (VP earned from battles or months at war) to make demands.
+**Demands** are terms you impose on the enemy. They cost VP. The more you demand, the less likely the AI is to accept. You need war contribution (VP earned from battles or months at war) to make demands.
 
-**Concessions** are terms you offer to the enemy. They give VP — offering concessions makes the AI more likely to accept. You can only concede states you own and control (you cannot offer your subjects' or allies' territory).
+**Concessions** are terms you offer to the enemy. They give VP. Offering concessions makes the AI more likely to accept. You can only concede states you own and control (you cannot offer your subjects' or allies' territory).
 
 The deal total (shown at the bottom) is the net VP cost. A positive number means you're demanding more than you're offering. A negative number means you're offering more than you're demanding.
 
@@ -76,7 +76,7 @@ Country actions apply to the entire enemy country. Toggle them on/off with the b
 | **Military Basing**   | Grants you military access.                                                                                 |
 | **Full Puppet**       | Makes the entire enemy country your puppet. Supersedes any individual puppet-in-state entries.              |
 
-Country actions have no VP cost — their impact is handled through AI acceptance modifiers (see below).
+Country actions have no VP cost. Their impact is handled through AI acceptance modifiers (see below).
 
 ---
 
@@ -146,7 +146,7 @@ The AI decides whether to accept based on a cumulative score starting at -100. T
 
 ## Ceasefire vs White Peace
 
-A **ceasefire** is a special deal type: it freezes the current frontlines (each side keeps what it controls), sets a 2-year truce, and clears all state actions. Ceasefires bypass the normal war contribution requirement — you can offer a ceasefire even with no VP.
+A **ceasefire** is a special deal type: it freezes the current frontlines (each side keeps what it controls), sets a 2-year truce, and clears all state actions. Ceasefires bypass the normal war contribution requirement. You can offer a ceasefire even with no VP.
 
 A normal deal without a ceasefire ends with a **white peace**: all territorial transfers and country actions execute, then the war ends with a 1-year truce (360 days).
 
