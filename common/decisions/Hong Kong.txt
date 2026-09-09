@@ -63,17 +63,6 @@ HKG_legco_decision_categories = {
 	}
 }
 
-# HKG_protest_decision_categories = {
-
-# 	HKG_arrest_protesters = {
-# 		complete_effect = {
-# 		  add_political_power = 1
-# 		  log = "[GetDateText]: [Root.GetName]: Decision complete HKG_arrest_protesters"
-# 		}
-# 	}
-# }
-
-
 HKG_naval_contracts_category = {
 
 	HKG_contract_solicit_contract = {
@@ -120,9 +109,7 @@ HKG_naval_contracts_category = {
 		}
 	}
 
-	# Delivery is class-based by necessity: transfer_ship moves one ship of an
-	# archetype per call, and decisions take no text input, so name-based ship
-	# selection is impossible. Do not rewrite this as name filtering.
+	# Count all ships: hull archetypes can map to different naval subunits.
 	HKG_contract_deliver_destroyer = {
 		icon = GFX_decision_generic_naval
 
@@ -134,7 +121,10 @@ HKG_naval_contracts_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = HKG_contract_need_destroyer_tt
-				has_navy_size = { archetype = destroyer size > 0 }
+				OR = {
+					has_navy_size = { unit = destroyer size > 0 }
+					has_navy_size = { unit = screen_destroyer size > 0 }
+				}
 			}
 		}
 
@@ -143,15 +133,26 @@ HKG_naval_contracts_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_destroyer"
 			custom_effect_tooltip = HKG_contract_tt_deliver
-			set_variable = { HKG_deliver_count_before = num_ships_with_type@destroyer }
-			transfer_ship = { type = destroyer target = CHI }
+			set_variable = { HKG_deliver_count_before = num_ships }
 			if = {
-				limit = { check_variable = { num_ships_with_type@destroyer < HKG_deliver_count_before } }
+				limit = { has_navy_size = { unit = destroyer size > 0 } }
+				transfer_ship = { type = destroyer target = CHI }
+			}
+			if = {
+				limit = {
+					check_variable = { num_ships = HKG_deliver_count_before }
+					has_navy_size = { unit = screen_destroyer size > 0 }
+				}
+				transfer_ship = { type = screen_destroyer target = CHI }
+			}
+			if = {
+				limit = { check_variable = { num_ships < HKG_deliver_count_before } }
 				custom_effect_tooltip = HKG_contract_tt_deliver_reward
 				set_temp_variable = { deliver_class = 1 }
 				HKG_contract_credit_delivery = yes
 			}
 			else = {
+				log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_destroyer failed: ships before [?HKG_deliver_count_before], after [?num_ships], destroyers [?num_ships_with_type@destroyer], screen destroyers [?num_ships_with_type@screen_destroyer]"
 				country_event = { id = HKG_contract.30 hours = 1 }
 			}
 		}
@@ -170,7 +171,10 @@ HKG_naval_contracts_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = HKG_contract_need_frigate_tt
-				has_navy_size = { archetype = frigate size > 0 }
+				OR = {
+					has_navy_size = { unit = frigate size > 0 }
+					has_navy_size = { unit = heavy_frigate size > 0 }
+				}
 			}
 		}
 
@@ -179,15 +183,26 @@ HKG_naval_contracts_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_frigate"
 			custom_effect_tooltip = HKG_contract_tt_deliver
-			set_variable = { HKG_deliver_count_before = num_ships_with_type@frigate }
-			transfer_ship = { type = frigate target = CHI }
+			set_variable = { HKG_deliver_count_before = num_ships }
 			if = {
-				limit = { check_variable = { num_ships_with_type@frigate < HKG_deliver_count_before } }
+				limit = { has_navy_size = { unit = frigate size > 0 } }
+				transfer_ship = { type = frigate target = CHI }
+			}
+			if = {
+				limit = {
+					check_variable = { num_ships = HKG_deliver_count_before }
+					has_navy_size = { unit = heavy_frigate size > 0 }
+				}
+				transfer_ship = { type = heavy_frigate target = CHI }
+			}
+			if = {
+				limit = { check_variable = { num_ships < HKG_deliver_count_before } }
 				custom_effect_tooltip = HKG_contract_tt_deliver_reward
 				set_temp_variable = { deliver_class = 2 }
 				HKG_contract_credit_delivery = yes
 			}
 			else = {
+				log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_frigate failed: ships before [?HKG_deliver_count_before], after [?num_ships], frigate [?num_ships_with_type@frigate], heavy_frigate [?num_ships_with_type@heavy_frigate]"
 				country_event = { id = HKG_contract.30 hours = 1 }
 			}
 		}
@@ -206,7 +221,7 @@ HKG_naval_contracts_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = HKG_contract_need_submarine_tt
-				has_navy_size = { archetype = attack_submarine size > 0 }
+				has_navy_size = { unit = attack_submarine size > 0 }
 			}
 		}
 
@@ -215,15 +230,19 @@ HKG_naval_contracts_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_submarine"
 			custom_effect_tooltip = HKG_contract_tt_deliver
-			set_variable = { HKG_deliver_count_before = num_ships_with_type@attack_submarine }
-			transfer_ship = { type = attack_submarine target = CHI }
+			set_variable = { HKG_deliver_count_before = num_ships }
 			if = {
-				limit = { check_variable = { num_ships_with_type@attack_submarine < HKG_deliver_count_before } }
+				limit = { has_navy_size = { unit = attack_submarine size > 0 } }
+				transfer_ship = { type = attack_submarine target = CHI }
+			}
+			if = {
+				limit = { check_variable = { num_ships < HKG_deliver_count_before } }
 				custom_effect_tooltip = HKG_contract_tt_deliver_reward
 				set_temp_variable = { deliver_class = 3 }
 				HKG_contract_credit_delivery = yes
 			}
 			else = {
+				log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_submarine failed: ships before [?HKG_deliver_count_before], after [?num_ships], attack_submarine [?num_ships_with_type@attack_submarine]"
 				country_event = { id = HKG_contract.30 hours = 1 }
 			}
 		}
@@ -242,7 +261,7 @@ HKG_naval_contracts_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = HKG_contract_need_cruiser_tt
-				has_navy_size = { archetype = cruiser size > 0 }
+				has_navy_size = { unit = cruiser size > 0 }
 			}
 		}
 
@@ -251,15 +270,19 @@ HKG_naval_contracts_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_cruiser"
 			custom_effect_tooltip = HKG_contract_tt_deliver
-			set_variable = { HKG_deliver_count_before = num_ships_with_type@cruiser }
-			transfer_ship = { type = cruiser target = CHI }
+			set_variable = { HKG_deliver_count_before = num_ships }
 			if = {
-				limit = { check_variable = { num_ships_with_type@cruiser < HKG_deliver_count_before } }
+				limit = { has_navy_size = { unit = cruiser size > 0 } }
+				transfer_ship = { type = cruiser target = CHI }
+			}
+			if = {
+				limit = { check_variable = { num_ships < HKG_deliver_count_before } }
 				custom_effect_tooltip = HKG_contract_tt_deliver_reward
 				set_temp_variable = { deliver_class = 4 }
 				HKG_contract_credit_delivery = yes
 			}
 			else = {
+				log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_cruiser failed: ships before [?HKG_deliver_count_before], after [?num_ships], cruiser [?num_ships_with_type@cruiser]"
 				country_event = { id = HKG_contract.30 hours = 1 }
 			}
 		}
@@ -278,7 +301,7 @@ HKG_naval_contracts_category = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = HKG_contract_need_carrier_tt
-				has_navy_size = { archetype = carrier size > 0 }
+				has_navy_size = { unit = carrier size > 0 }
 			}
 		}
 
@@ -287,15 +310,19 @@ HKG_naval_contracts_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_carrier"
 			custom_effect_tooltip = HKG_contract_tt_deliver
-			set_variable = { HKG_deliver_count_before = num_ships_with_type@carrier }
-			transfer_ship = { type = carrier target = CHI }
+			set_variable = { HKG_deliver_count_before = num_ships }
 			if = {
-				limit = { check_variable = { num_ships_with_type@carrier < HKG_deliver_count_before } }
+				limit = { has_navy_size = { unit = carrier size > 0 } }
+				transfer_ship = { type = carrier target = CHI }
+			}
+			if = {
+				limit = { check_variable = { num_ships < HKG_deliver_count_before } }
 				custom_effect_tooltip = HKG_contract_tt_deliver_reward
 				set_temp_variable = { deliver_class = 5 }
 				HKG_contract_credit_delivery = yes
 			}
 			else = {
+				log = "[GetDateText]: [Root.GetName]: Decision HKG_contract_deliver_carrier failed: ships before [?HKG_deliver_count_before], after [?num_ships], carrier [?num_ships_with_type@carrier]"
 				country_event = { id = HKG_contract.30 hours = 1 }
 			}
 		}
