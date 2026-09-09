@@ -58,7 +58,7 @@ class _FakeStream:
         pass
 
 
-_current_specs = []
+_current_specs: list[ValidatorSpec] = []
 
 
 def test_parse_changed_groups_empty_means_all():
@@ -471,6 +471,41 @@ def test_standalone_adapter_clean_encoding_has_no_issues(
     assert message in output.read_text(encoding="utf-8")
     with open(output.with_suffix(".json"), encoding="utf-8") as handle:
         assert json.load(handle) == []
+
+
+def test_txt_standalone_adapter_scans_shipped_roots_not_resources(tmp_path):
+    good = tmp_path / "common" / "good.txt"
+    good.parent.mkdir(parents=True)
+    good.write_bytes(b"x = 1\n")
+    bad = tmp_path / "events" / "bad.txt"
+    bad.parent.mkdir(parents=True)
+    bad.write_bytes(b"\xef\xbb\xbfx = 1\n")
+    ignored = tmp_path / "resources" / "documentation" / "ignored.txt"
+    ignored.parent.mkdir(parents=True)
+    ignored.write_bytes(b"\xef\xbb\xbfx = 1\n")
+    output = tmp_path / "out" / "validation-txt-encoding.log"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(
+                Path(__file__).parents[3] / "tools/validation/run_impact_standalone.py"
+            ),
+            "--validator",
+            "txt-encoding",
+            "--path",
+            str(tmp_path),
+            "--output",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    with open(output.with_suffix(".json"), encoding="utf-8") as handle:
+        issues = json.load(handle)
+    assert [issue["file"] for issue in issues] == ["events/bad.txt"]
 
 
 def test_standalone_adapter_writes_report_sidecar(tmp_path):

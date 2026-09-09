@@ -5,6 +5,7 @@ import sys
 import pytest
 import validate_localization_encoding as loc_encoding
 import validate_mod_encoding as mod_encoding
+import validate_txt_encoding as txt_encoding
 from validate_localization_encoding import (
     LocalizationValidator,
     find_english_localization_files,
@@ -302,3 +303,51 @@ def test_localisation_encoding_main_leaves_valid_files_alone(
     assert _run_main(loc_encoding, monkeypatch, *argv, str(path)) == 0
 
     assert path.read_bytes() == original
+
+
+# --- .txt game-script encoding (no BOM) --------------------------------------
+
+
+def test_txt_encoding_flags_a_bom(tmp_path, capsys):
+    path = tmp_path / "bom.txt"
+    path.write_bytes(codecs.BOM_UTF8 + b"focus = {\n}\n")
+
+    assert not txt_encoding.validate_txt_file(path)
+    assert "Unexpected UTF-8 BOM" in capsys.readouterr().err
+
+
+def test_txt_encoding_accepts_plain_utf8(tmp_path, capsys):
+    path = tmp_path / "plain.txt"
+    path.write_bytes('focus = {\n\tname = "café"\n}\n'.encode("utf-8"))
+
+    assert txt_encoding.validate_txt_file(path)
+    assert capsys.readouterr().out == ""
+
+
+def test_txt_encoding_reports_a_missing_file(tmp_path, capsys):
+    assert not txt_encoding.validate_txt_file(tmp_path / "gone.txt")
+    assert "File not found" in capsys.readouterr().err
+
+
+def test_txt_encoding_main_exit_code_follows_the_findings(tmp_path, monkeypatch):
+    bad = tmp_path / "bom.txt"
+    bad.write_bytes(codecs.BOM_UTF8 + b"x = 1\n")
+    good = tmp_path / "plain.txt"
+    good.write_bytes(b"x = 1\n")
+
+    assert _run_main(txt_encoding, monkeypatch, str(bad)) == 1
+    assert _run_main(txt_encoding, monkeypatch, str(good)) == 0
+    assert _run_main(txt_encoding, monkeypatch, str(good), str(bad)) == 1
+
+
+def test_txt_encoding_main_requires_a_file(monkeypatch, capsys):
+    assert _run_main(txt_encoding, monkeypatch) == 1
+    assert "No files provided" in capsys.readouterr().err
+
+
+def test_txt_encoding_script_exit_code_follows_the_findings(tmp_path, monkeypatch):
+    bad = tmp_path / "bom.txt"
+    bad.write_bytes(codecs.BOM_UTF8 + b"x = 1\n")
+
+    assert _run_as_script(txt_encoding, monkeypatch, str(bad)) == 1
+    assert _run_as_script(txt_encoding, monkeypatch, str(tmp_path / "gone.txt")) == 1
