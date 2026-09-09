@@ -46,6 +46,62 @@ def test_identical_event_bodies_are_not_collapsed(tmp_path):
     assert "B.txt" in joined
 
 
+def test_visible_country_and_news_events_without_pictures_warn(tmp_path):
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "country_event = {\n"
+        "\tid = foo.1\n"
+        "\tis_triggered_only = yes\n"
+        "}\n"
+        "news_event = {\n"
+        "\tid = foo.2\n"
+        "\tmajor = yes\n"
+        "\tis_triggered_only = yes\n"
+        "}\n",
+    )
+    v = _validator(tmp_path)
+    v.validate_event_picture_omissions()
+    assert [issue.message for issue in v._issues] == [
+        "foo.1 - Ev.txt",
+        "foo.2 - Ev.txt",
+    ]
+    assert v.warnings_found == 2
+    assert v.errors_found == 0
+    assert {issue.category for issue in v._issues} == {"event-picture-omitted"}
+
+
+def test_picture_omission_skips_hidden_events_fires_and_picture_forms(tmp_path):
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "country_event = {\n"
+        "\tid = hidden.1\n"
+        "\thidden = yes\n"
+        "\tis_triggered_only = yes\n"
+        "}\n"
+        "country_event = visible.1\n"
+        "news_event = { id = visible.2 days = 1 }\n"
+        "country_event = {\n"
+        "\tid = field.1\n"
+        "\tis_triggered_only = yes\n"
+        "\tpicture = GFX_direct\n"
+        "}\n"
+        "news_event = {\n"
+        "\tid = block.1\n"
+        "\tmajor = yes\n"
+        "\tis_triggered_only = yes\n"
+        "\tpicture = {\n"
+        "\t\ttrigger = { has_country_flag = show_picture }\n"
+        "\t\tpicture = GFX_conditional\n"
+        "\t}\n"
+        "}\n",
+    )
+    v = _validator(tmp_path)
+    v.validate_event_picture_omissions()
+    assert v._issues == []
+
+
 def test_missing_loc_skips_hidden_and_flags_option_names(tmp_path):
     _write(
         tmp_path,
