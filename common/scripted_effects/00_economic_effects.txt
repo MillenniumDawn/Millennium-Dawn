@@ -164,16 +164,19 @@ reapply_agreement_opinion_modifiers = {
 quarterly_inflation_calculation = {
 	#Get and set the basic civilian economic growth for this quarter, and grab our old inflation rate
 	set_temp_variable = { last_inflation_rate = inflation_rate_var }
-	set_temp_variable = { gdpc_growth_inflation_adjuster = last_quarter_gdpc_growth_rate }
-
-	#Grab the tax rate, and shift it to where it'll do the math right for us
-	set_temp_variable = { tax_rate_modifier = tax_rate }
-	multiply_temp_variable = { tax_rate_modifier = 0.01 }
 
 	#Adjust the inflation rate based on GDP/C + Taxes
-	set_temp_variable = { inflation_rate_adjuster = gdpc_growth_inflation_adjuster }
-	multiply_temp_variable = { gdpc_growth_inflation_adjuster = tax_rate_modifier }
-	subtract_from_temp_variable = { inflation_rate_adjuster = gdpc_growth_inflation_adjuster }
+	set_temp_variable = {
+		inflation_rate_adjuster = {
+			add = {
+				value = last_quarter_gdpc_growth_rate
+				multiply = {
+					value = tax_rate
+					multiply = 0.01
+				}
+			}
+		}
+	}
 
 	# Real rate = policy rate minus current inflation (both in %)
 	# Neutral floor at 2%: a zero-rate policy is always mildly stimulative, even in low-inflation environments
@@ -192,10 +195,13 @@ quarterly_inflation_calculation = {
 	#Adjust inflation further by the base GDP/C Amount
 	#Take the GDP/C and multiply it by the growth rate
 	#This means that insanely high growth can springboard inflation, but slower / steadier growth raises it in a controlled manner
-	set_temp_variable = { gdpc_inflation_adjuster = gdp_per_capita }
-	multiply_temp_variable = { gdpc_inflation_adjuster = 0.01 }
-	multiply_temp_variable = { gdpc_inflation_adjuster = last_quarter_gdpc_growth_rate }
-
+	set_temp_variable = {
+		gdpc_inflation_adjuster = {
+			value = gdp_per_capita
+			multiply = 0.01
+			multiply = last_quarter_gdpc_growth_rate
+		}
+	}
 	add_to_temp_variable = { inflation_rate_adjuster = gdpc_inflation_adjuster }
 
 	#Adjust inflation by economic cycle
@@ -328,37 +334,57 @@ quarterly_inflation_calculation = {
 }
 
 calculate_inflation_effects = {
-	set_temp_variable = { inflation_rate_start = inflation_rate_var }
-
-	set_temp_variable = { inflation_rate_production = inflation_rate_start }
-	multiply_temp_variable = { inflation_rate_production = 1.3 }
-	set_variable = { inflation_rate_prod_var = inflation_rate_production }
-
-	set_temp_variable = { inflation_rate_econ = inflation_rate_start }
-	multiply_temp_variable = { inflation_rate_econ = 1.25 }
-	set_variable = { inflation_rate_econ_var = inflation_rate_econ }
-
-	set_temp_variable = { inflation_rate_construction = inflation_rate_start }
-	multiply_temp_variable = { inflation_rate_construction = 2 }
-	set_variable = { inflation_construction_speed_var = inflation_rate_construction }
-
-	set_temp_variable = { inflation_rate_output = inflation_rate_start }
-	multiply_temp_variable = { inflation_rate_output = -1.25 }
-	set_variable = { inflation_rate_output_var = inflation_rate_output }
+	set_variable = {
+		inflation_rate_prod_var = {
+			value = inflation_rate_var
+			multiply = 1.25
+		}
+	}
+	set_variable = {
+		inflation_rate_econ_var = {
+			value = inflation_rate_var
+			multiply = 1.25
+		}
+	}
+	set_variable = {
+		inflation_construction_speed_var = {
+			value = inflation_rate_var
+			multiply = 1.70
+		}
+	}
+	set_variable = {
+		inflation_construction_speed_var = {
+			value = inflation_rate_var
+			multiply = 1.70
+		}
+	}
+	set_variable = {
+		inflation_rate_output_var = {
+			value = inflation_rate_var
+			multiply = -1.35
+		}
+	}
+	set_variable = {
+		trade_law_cost_var = {
+			value = inflation_rate_var
+			multiply = 1.5
+		}
+	}
+	set_variable = {
+		trade_law_cost_var = {
+			value = inflation_rate_var
+			multiply = -0.4
+		}
+	}
 
 	set_variable = { inflation_corruption_var = inflation_rate_start }
 
-	set_temp_variable = { inflation_trade_law = inflation_rate_start }
-	multiply_temp_variable = { inflation_trade_law = 1.5 }
-	set_variable = { trade_law_cost_var = inflation_trade_law }
-
-	set_temp_variable = { inflation_goods = inflation_rate_start }
-	multiply_temp_variable = { inflation_goods = -0.5 }
-	set_variable = { inflation_goods_var = inflation_goods }
-
 	# Combined inflation cost: economic rate + currency exchange pressure
-	set_variable = { inflation_cost_combined_var = inflation_rate_var }
-	add_to_variable = { inflation_cost_combined_var = currency_inflation_feed }
-	# Currency can reduce inflation but must not cause deflation
-	clamp_variable = { var = inflation_cost_combined_var min = 0 }
+	set_variable = {
+		inflation_cost_combined_var = {
+			value = inflation_rate_var
+			add = currency_inflation_feed
+			clamp = { min = 0 max = 10000 }
+		}
+	}
 }
