@@ -164,35 +164,15 @@ NKO_united_front_department = {
 
 ###########NKO NAVAL PROJECTS#########################
 NKO_navy_projects = {
-	# === Songun Naval Doctrine — buildup mechanic ===
-	# Category is gated on the NKO_naval_modernization focus.
-	# Player accumulates NKO_naval_points via 3 generation decisions, spends them
-	# on 4 invest decisions to push NKO_<track>_progress 0 -> 100. Capstone fires
-	# when all four tracks reach 100.
-	NKO_unlock_naval_buildup = {
-		icon = GFX_decision_NKO_naval_unlock
-		fire_only_once = yes
-
-		visible = { NOT = { has_country_flag = NKO_naval_buildup_unlocked } }
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision NKO_unlock_naval_buildup"
-			set_country_flag = NKO_naval_buildup_unlocked
-		}
-
-		ai_will_do = { base = 100 }
-	}
-
-	# --- Point generation ---
 	NKO_naval_allocate_party_funds = {
 		icon = GFX_decision_nko_fake_currency_button
 		cost = 35
 		days_re_enable = 70
-		visible = { has_country_flag = NKO_naval_buildup_unlocked }
+		visible = { has_completed_focus = NKO_naval_modernization }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_allocate_party_funds"
-			add_to_variable = { var = NKO_naval_points value = 1 }
+			add_to_variable = { NKO_naval_points = 1 tooltip = NKO_naval_allocate_party_funds_tt }
 		}
 
 		ai_will_do = { base = 60 }
@@ -201,12 +181,12 @@ NKO_navy_projects = {
 	NKO_naval_mobilize_nampo_shipyards = {
 		icon = GFX_decision_NKO_naval_shipyards
 		days_remove = 90
-		visible = { has_country_flag = NKO_naval_buildup_unlocked }
+		visible = { has_completed_focus = NKO_naval_modernization }
 		modifier = { civilian_factory_use = 1 }
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_mobilize_nampo_shipyards"
-			add_to_variable = { var = NKO_naval_points value = 2 }
+			add_to_variable = { NKO_naval_points = 2 tooltip = NKO_naval_mobilize_nampo_shipyards_tt }
 		}
 
 		ai_will_do = { base = 50 }
@@ -215,31 +195,34 @@ NKO_navy_projects = {
 	NKO_naval_juche_drive = {
 		icon = GFX_decision_NKO_naval_juche
 		cost = 80
-		days_re_enable = 180
-		visible = { has_country_flag = NKO_naval_buildup_unlocked }
+		days_remove = 180
+		visible = { has_completed_focus = NKO_naval_modernization }
 
 		available = {
 			has_stability > 0.45
 			has_war_support > 0.5
 		}
 
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_juche_drive"
-			add_to_variable = { var = NKO_naval_points value = 4 }
-			add_stability = -0.05
-			add_war_support = 0.05
+		modifier = {
+			industrial_capacity_dockyard = 0.15
+			consumer_goods_factor = 0.05
 		}
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_juche_drive"
+			add_to_variable = { NKO_naval_points = 4 tooltip = NKO_naval_juche_drive_tt }
+		}
+
+		remove_effect = { log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_juche_drive" }
 		ai_will_do = { base = 30 }
 	}
 
-	# --- Invest decisions (1 point -> +5 progress + side bonus + router fire) ---
 	NKO_naval_invest_submarine = {
 		icon = GFX_decision_NKO_naval_invest
 		days_remove = 14
 
 		visible = {
-			has_country_flag = NKO_naval_buildup_unlocked
+			has_completed_focus = NKO_naval_modernization
 			check_variable = { NKO_submarine_progress < 100 }
 		}
 
@@ -252,15 +235,14 @@ NKO_navy_projects = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_submarine"
-			subtract_from_variable = { var = NKO_naval_points value = 1 }
-			add_to_variable = { var = NKO_submarine_progress value = 5 }
+			subtract_from_variable = { NKO_naval_points = 1 tooltip = NKO_naval_point_spend_tt }
+			add_to_variable = { NKO_submarine_progress = 5 tooltip = NKO_naval_invest_submarine_tt }
 			clamp_variable = {
 				var = NKO_submarine_progress
 				min = 0
 				max = 100
 			}
 			navy_experience = 3
-			custom_effect_tooltip = NKO_naval_invest_submarine_tt
 			NKO_naval_check_all_tracks_maxed = yes
 			hidden_effect = {
 				country_event = { id = nko_naval_buildup.10 days = 0 }
@@ -276,7 +258,7 @@ NKO_navy_projects = {
 		days_remove = 14
 
 		visible = {
-			has_country_flag = NKO_naval_buildup_unlocked
+			has_completed_focus = NKO_naval_modernization
 			check_variable = { NKO_missile_boat_progress < 100 }
 		}
 
@@ -289,15 +271,14 @@ NKO_navy_projects = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_missile_boat"
-			subtract_from_variable = { var = NKO_naval_points value = 1 }
-			add_to_variable = { var = NKO_missile_boat_progress value = 5 }
+			subtract_from_variable = { NKO_naval_points = 1 tooltip = NKO_naval_point_spend_tt }
+			add_to_variable = { NKO_missile_boat_progress = 5 tooltip = NKO_naval_invest_missile_boat_tt }
 			clamp_variable = {
 				var = NKO_missile_boat_progress
 				min = 0
 				max = 100
 			}
 			navy_experience = 3
-			custom_effect_tooltip = NKO_naval_invest_missile_boat_tt
 			NKO_naval_check_all_tracks_maxed = yes
 			hidden_effect = {
 				country_event = { id = nko_naval_buildup.20 days = 0 }
@@ -313,7 +294,7 @@ NKO_navy_projects = {
 		days_remove = 14
 
 		visible = {
-			has_country_flag = NKO_naval_buildup_unlocked
+			has_completed_focus = NKO_naval_modernization
 			check_variable = { NKO_coastal_defense_progress < 100 }
 		}
 
@@ -326,15 +307,14 @@ NKO_navy_projects = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_coastal_defense"
-			subtract_from_variable = { var = NKO_naval_points value = 1 }
-			add_to_variable = { var = NKO_coastal_defense_progress value = 5 }
+			subtract_from_variable = { NKO_naval_points = 1 tooltip = NKO_naval_point_spend_tt }
+			add_to_variable = { NKO_coastal_defense_progress = 5 tooltip = NKO_naval_invest_coastal_defense_tt }
 			clamp_variable = {
 				var = NKO_coastal_defense_progress
 				min = 0
 				max = 100
 			}
 			army_experience = 3
-			custom_effect_tooltip = NKO_naval_invest_coastal_defense_tt
 			NKO_naval_check_all_tracks_maxed = yes
 			hidden_effect = {
 				country_event = { id = nko_naval_buildup.30 days = 0 }
@@ -350,7 +330,7 @@ NKO_navy_projects = {
 		days_remove = 14
 
 		visible = {
-			has_country_flag = NKO_naval_buildup_unlocked
+			has_completed_focus = NKO_naval_modernization
 			check_variable = { NKO_naval_specops_progress < 100 }
 		}
 
@@ -363,15 +343,14 @@ NKO_navy_projects = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_specops"
-			subtract_from_variable = { var = NKO_naval_points value = 1 }
-			add_to_variable = { var = NKO_naval_specops_progress value = 5 }
+			subtract_from_variable = { NKO_naval_points = 1 tooltip = NKO_naval_point_spend_tt }
+			add_to_variable = { NKO_naval_specops_progress = 5 tooltip = NKO_naval_invest_specops_tt }
 			clamp_variable = {
 				var = NKO_naval_specops_progress
 				min = 0
 				max = 100
 			}
 			army_experience = 3
-			custom_effect_tooltip = NKO_naval_invest_specops_tt
 			NKO_naval_check_all_tracks_maxed = yes
 			hidden_effect = {
 				country_event = { id = nko_naval_buildup.40 days = 0 }
@@ -388,7 +367,7 @@ NKO_navy_projects = {
 		fire_only_once = yes
 
 		visible = {
-			has_country_flag = NKO_naval_buildup_unlocked
+			has_completed_focus = NKO_naval_modernization
 			has_country_flag = NKO_naval_buildup_all_tracks_maxed
 			NOT = { has_country_flag = NKO_naval_buildup_capstone_done }
 		}
