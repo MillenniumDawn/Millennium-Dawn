@@ -428,6 +428,36 @@ def test_wartime_opportunities_use_one_serving_person_and_a_country_cooldown():
     assert len(game.leads) == 1
 
 
+def test_top_only_militant_group_requires_explicit_operational_state():
+    game = PoliticalScript()
+    game.globals.update(
+        {
+            "TOP_affiliation^145": 22,
+            "TOP_group_ct^22": -1,
+            "TOP_group_window^22": 1,
+            "TOP_group_destroyed^22": 0,
+            "TOP_group_created^22": 0,
+        }
+    )
+    assert not game.trigger("TOP_authored_role_eligible", 145)
+    game.globals["TOP_group_created^22"] = 1
+    assert game.trigger("TOP_authored_role_eligible", 145)
+    game.globals["TOP_group_destroyed^22"] = 1
+    assert not game.trigger("TOP_authored_role_eligible", 145)
+
+
+def test_nko_retirement_preserves_the_active_communist_ideology():
+    source = (ROOT / "common/scripted_effects/NKO_political_leaders.txt").read_text(
+        encoding="utf-8"
+    )
+    helper = _named_block(source, "TOP_retire_NKO_kim_jong_un")
+    assert "limit = { check_variable = { ruling_party = 19 } }" in helper
+    assert "ideology = Neutral_Communism" in helper
+    assert "neutrality_Neutral_Communism" in helper
+    assert "ideology = Communist-State" in helper
+    assert "emerging_Communist-State" in helper
+
+
 def test_maduro_retirement_has_an_idempotent_venezuelan_successor():
     source = (ROOT / "common/scripted_effects/VEN_political_leaders.txt").read_text(
         encoding="utf-8"

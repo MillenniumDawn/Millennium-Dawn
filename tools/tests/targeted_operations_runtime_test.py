@@ -32,6 +32,13 @@ WRAPPERS = (
 ).read_text(encoding="utf-8")
 
 
+def test_2026_yearly_hook_opens_maduro_before_reviewing_opportunities():
+    yearly = _named_block(YEARLY, "trigger_year_2026_events")
+    assert yearly.index("TOP_open_windows_2026 = yes") < yearly.index(
+        "TOP_modern_opportunities_2026 = yes"
+    )
+
+
 def test_visit_constants_and_capacity_sized_storage_are_explicit():
     assert "global.TOP_visit_notice_days = 60" in EFFECTS
     assert "global.TOP_visit_active_days = 21" in EFFECTS

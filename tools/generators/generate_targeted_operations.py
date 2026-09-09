@@ -204,6 +204,13 @@ def registry(data: dict) -> str:
                 f"set_variable = {{ global.TOP_group_window^{g['id']} = 1 }}"
                 for g in data["groups"]
                 if g["year"] == year
+            ]
+            + [
+                f"set_variable = {{ global.TOP_group_created^{g['id']} = 1 }}"
+                for g in data["groups"]
+                if g["year"] == year
+                and g["group_class"] == "militant"
+                and g["ct_id"] == -1
             ],
         )
     output += "\n" + block(

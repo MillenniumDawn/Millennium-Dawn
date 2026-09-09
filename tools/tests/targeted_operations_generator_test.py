@@ -336,3 +336,13 @@ def test_future_windows_names_and_placement_are_generated_from_manifest(manifest
     militant_group = _named_block(registry, "TOP_choose_location_22")
     assert "TOP_find_group_org" not in militant_group
     assert "AFG = { random_controlled_state =" in militant_group
+
+
+def test_top_only_militant_windows_create_an_explicit_operational_state(manifest):
+    registry = GENERATOR.render(manifest)[
+        "common/scripted_effects/01_targeted_operations_registry.txt"
+    ]
+    for year, group in ((2028, 22), (2029, 23), (2032, 24)):
+        window = _named_block(registry, f"TOP_open_windows_{year}")
+        assert f"global.TOP_group_window^{group} = 1" in window
+        assert f"global.TOP_group_created^{group} = 1" in window
