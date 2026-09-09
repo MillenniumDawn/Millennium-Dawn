@@ -162,12 +162,19 @@ and the royal house for `Monarchist`. Say what the entity actually is in its des
 
 ## Verification checklist
 
-1. Every new loc key has a hook in `<slot>_L`, `<slot>_L_desc` and — if a tag sprite exists —
-   `<slot>_L_icon`.
-2. Total hooks match: `grep -c "localization_key = TAG\." common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`
-   equals names + descs + icons written.
-3. No duplicate `original_tag = TAG` inside a single `defined_text` (the second is dead).
-4. Every `£sprite` resolves: `grep -rn 'name = "GFX_<name>"' interface/`.
-5. Keys alphabetical within the block, leading space on every line, BOM intact.
-6. `history/countries/<TAG>*.txt` `party_pop_array^N` indices still line up with the slots
+```bash
+python tools/validation/validate_party_loc.py --tag TAG
+```
+
+covers the name and description formats, the loc-key ↔ hook pairing in both directions, the
+icon/name sprite agreement, miscased subideologies, and duplicate `original_tag` gates. It never
+reports a missing slot — an unfilled one is meant to fall through to the generic label.
+
+Check by hand what it cannot see:
+
+1. Every `£sprite` resolves: `grep -rn 'name = "GFX_<name>"' interface/` (repo-wide, this is
+   `validate_gfx_references.py`).
+2. Keys alphabetical within the block, leading space on every line, BOM intact.
+3. `history/countries/<TAG>*.txt` `party_pop_array^N` indices still line up with the slots
    they are commented as.
+4. In game: the politics view at the start date and at every date a gate splits on.
