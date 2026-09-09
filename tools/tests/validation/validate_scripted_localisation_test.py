@@ -102,6 +102,19 @@ def test_scoped_bracketed_invocation_tracks_member_name():
     }
 
 
+def test_multi_scope_bracketed_invocation_tracks_member_name():
+    # A map-mode tooltip scopes to a state, so the country scripted loc is only reachable
+    # as [FROM.CONTROLLER.name]; a single-segment scope class reported it as unused.
+    assert V._scan_loc_tokens("[FROM.CONTROLLER.map_mode_ruling_party]", False) == {
+        "map_mode_ruling_party"
+    }
+
+
+def test_dynamic_scoped_variable_is_not_a_scripted_loc_candidate():
+    assert V._scan_loc_tokens("[?FROM.current_vote_sway]", False) == set()
+    assert V._scan_loc_tokens("[?global.current_sc_vote_type]", False) == set()
+
+
 def test_unknown_lowercase_and_uppercase_bracket_calls_are_retained():
     assert V._scan_loc_tokens("[status] [USA_STATUS]", False) == {
         "status",
@@ -111,7 +124,7 @@ def test_unknown_lowercase_and_uppercase_bracket_calls_are_retained():
 
 def test_engine_getters_are_not_scripted_loc_candidates(tmp_path):
     getters = " ".join(
-        f"[{value}] [ROOT.{value}]"
+        f"[{value}] [ROOT.{value}] [FROM.CONTROLLER.{value}]"
         for value in (
             "GetFullName",
             "GetRank",
@@ -379,6 +392,26 @@ def test_unused_check_skips_the_preemptive_party_slot_library(tmp_path):
     validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     validator.validate_unused_scripted_localisations(
         [], ["eu_parl_pg_party_7"], {"eu_parl_pg_party_7": "defs.txt"}, []
+    )
+    assert validator._issues == []
+
+
+def test_unused_check_skips_sparse_map_mode_consumers(tmp_path):
+    _write_sloc(
+        tmp_path,
+        "defs.txt",
+        "defined_text = {\n\tname = map_mode_ruling_party\n}\n"
+        "defined_text = {\n\tname = map_mode_coalition_none\n}\n",
+    )
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_unused_scripted_localisations(
+        [],
+        ["map_mode_ruling_party", "map_mode_coalition_none"],
+        {
+            "map_mode_ruling_party": "defs.txt",
+            "map_mode_coalition_none": "defs.txt",
+        },
+        [],
     )
     assert validator._issues == []
 

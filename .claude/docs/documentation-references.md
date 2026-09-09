@@ -44,52 +44,52 @@ Most filenames end in one of four suffixes: `-reference` (structure or valid-key
 
 All files below live in `.claude/docs/`.
 
-| File                             | Contents                                                     |
-| -------------------------------- | ------------------------------------------------------------ |
-| `agent-conventions.md`           | Rules for `.claude/agents/` definitions: anti-rules, reading |
-| `ai-equipment-reference.md`      | AI equipment variants: role templates, coverage errors       |
-| `ai-strategy-reference.md`       | Unit production: 5 layers, on_action entries, plan files     |
-| `asml-corporate-history-plan.md` | ASML chain plan: HOL owner, namespace `HOL_asml_events`      |
-| `bug-patterns.md`                | Known bug patterns: scan signatures, diff-review questions   |
-| `content-guidelines.md`          | Content checklist: economic, political, military, visual, AI |
-| `counter-terrorism-reference.md` | CT slots, lifecycle, country coverage, cadence, recipients   |
-| `debug-commands.md`              | Console recipes for testing MD systems (EU/USoE focus)       |
-| `decision-reference.md`          | Decision structure, targeted-decision perf, examples         |
-| `diplomatic-action-reference.md` | Scripted diplomatic actions: files, ROOT/THIS/PREV scopes    |
-| `dynamic-modifier-tooltips.md`   | `adds_` vs `modifies_dynamic_modifier_tt` tooltips           |
-| `energy-power-balance.md`        | Power-per-cost + tech S-curves; read before energy edits     |
-| `entity-system.md`               | Mesh→entity→animation chain, pdxmesh naming, landmarks       |
-| `event-reference.md`             | Event types, TT*IF*\* tooltips, `random_events` dispatch     |
-| `faction-rules.md`               | `common/factions/rules/`: rule types and trigger scopes      |
-| `focus-tree-reference.md`        | Focus structure, property order, bankruptcy-guard examples   |
-| `formable-reference.md`          | Formable paths, AI ratchet, sentinel, cross-guards, traps    |
-| `hoi4-data-structures.md`        | Variables, arrays, loops, collections, formatted loc         |
-| `idea-reference.md`              | Idea structure: pictures, tiered naming, `name =` gotchas    |
-| `known-false-positives.md`       | Intentional bug-lookalikes; review agents must skip them     |
-| `linux-national-adapters.md`     | Linux historical route, read-only adapters, source register  |
-| `linux-system-reference.md`      | Linux ecosystem game rule: state, milestones, USA bridge     |
-| `loading-screen-system.md`       | Loading rotation vs menu picker, `GFX_<x>_small`, generator  |
-| `localisation-rules.md`          | English `.yml` rules: BOM, file naming, key formatting       |
-| `md-custom-modifiers.md`         | Non-vanilla modifier keys, grouped by category               |
-| `md-oem-corporate-roadmap.md`    | OEM roadmap: semiconductors, AI race, minerals, defense, SWF |
-| `meta-effect-patterns.md`        | `meta_effect`/`meta_trigger` dispatch; `[!]` tooltips        |
-| `mio-reference.md`               | MIO structure, per-block modifier keys, trait-grid rules     |
-| `music-system.md`                | Stations, playlists, chance weights, radio GUI wiring        |
-| `namelist-reference.md`          | Division/ship name-list files and mandatory groups           |
-| `oob-equipment-reference.md`     | OOB equipment types (NSB), stockpiles, variant errors        |
-| `oob-variants-reference.md`      | Full OOB + variant reference (`history/units/`)              |
-| `performance-patterns.md`        | Hoisting, dirty counters, clamp-before-divide, early-outs    |
-| `refactor-checklist.md`          | Rename/migration sweeps: namespaces, GUI/GFX refs, tags      |
-| `scripted-gui-patterns.md`       | `dynamic_lists`, loc dispatchers, dirty-var standard         |
-| `scripted-gui-rules.md`          | scripted_gui mechanics: structure, dirty-var perf, AI        |
-| `scripting-edge-cases.md`        | Niche pitfalls: temp-var defaults, `^index`, vacant office   |
-| `search-filters.md`              | Every `FOCUS_FILTER_*`, Israel subcats, common mistakes      |
-| `simplification-patterns.md`     | Lookups→arrays, parameterized loc, shared helpers            |
-| `spacex-corporate-history-plan.md` | SpaceX chain plan: USA owner, namespace `USA_spacex_events` |
-| `sound-system.md`                | Sound defs, combat sounds, voicelines, compressors           |
-| `typo-watchlist.md`              | Recurring localisation typos to check in review              |
-| `un-system-reference.md`         | UN votes/elections: invariants, new-resolution recipe        |
-| `validation-pipeline.md`         | Pre-commit vs CI validator divergence; deprecation watch     |
+| File                               | Contents                                                     |
+| ---------------------------------- | ------------------------------------------------------------ |
+| `agent-conventions.md`             | Rules for `.claude/agents/` definitions: anti-rules, reading |
+| `ai-equipment-reference.md`        | AI equipment variants: role templates, coverage errors       |
+| `ai-strategy-reference.md`         | Unit production: 5 layers, on_action entries, plan files     |
+| `asml-corporate-history-plan.md`   | ASML chain plan: HOL owner, namespace `HOL_asml_events`      |
+| `bug-patterns.md`                  | Known bug patterns: scan signatures, diff-review questions   |
+| `content-guidelines.md`            | Content checklist: economic, political, military, visual, AI |
+| `counter-terrorism-reference.md`   | CT slots, lifecycle, country coverage, cadence, recipients   |
+| `debug-commands.md`                | Console recipes for testing MD systems (EU/USoE focus)       |
+| `decision-reference.md`            | Decision structure, targeted-decision perf, examples         |
+| `diplomatic-action-reference.md`   | Scripted diplomatic actions: files, ROOT/THIS/PREV scopes    |
+| `dynamic-modifier-tooltips.md`     | `adds_` vs `modifies_dynamic_modifier_tt` tooltips           |
+| `energy-power-balance.md`          | Power-per-cost + tech S-curves; read before energy edits     |
+| `entity-system.md`                 | Mesh→entity→animation chain, pdxmesh naming, landmarks       |
+| `event-reference.md`               | Event types, TT*IF*\* tooltips, `random_events` dispatch     |
+| `faction-rules.md`                 | `common/factions/rules/`: rule types and trigger scopes      |
+| `focus-tree-reference.md`          | Focus structure, property order, bankruptcy-guard examples   |
+| `formable-reference.md`            | Formable paths, AI ratchet, sentinel, cross-guards, traps    |
+| `hoi4-data-structures.md`          | Variables, arrays, loops, collections, formatted loc         |
+| `idea-reference.md`                | Idea structure: pictures, tiered naming, `name =` gotchas    |
+| `known-false-positives.md`         | Intentional bug-lookalikes; review agents must skip them     |
+| `linux-national-adapters.md`       | Linux historical route, read-only adapters, source register  |
+| `linux-system-reference.md`        | Linux ecosystem game rule: state, milestones, USA bridge     |
+| `loading-screen-system.md`         | Loading rotation vs menu picker, `GFX_<x>_small`, generator  |
+| `localisation-rules.md`            | English `.yml` rules: BOM, file naming, key formatting       |
+| `md-custom-modifiers.md`           | Non-vanilla modifier keys, grouped by category               |
+| `md-oem-corporate-roadmap.md`      | OEM roadmap: semiconductors, AI race, minerals, defense, SWF |
+| `meta-effect-patterns.md`          | `meta_effect`/`meta_trigger` dispatch; `[!]` tooltips        |
+| `mio-reference.md`                 | MIO structure, per-block modifier keys, trait-grid rules     |
+| `music-system.md`                  | Stations, playlists, chance weights, radio GUI wiring        |
+| `namelist-reference.md`            | Division/ship name-list files and mandatory groups           |
+| `oob-equipment-reference.md`       | OOB equipment types (NSB), stockpiles, variant errors        |
+| `oob-variants-reference.md`        | Full OOB + variant reference (`history/units/`)              |
+| `performance-patterns.md`          | Hoisting, dirty counters, clamp-before-divide, early-outs    |
+| `refactor-checklist.md`            | Rename/migration sweeps: namespaces, GUI/GFX refs, tags      |
+| `scripted-gui-patterns.md`         | `dynamic_lists`, loc dispatchers, dirty-var standard         |
+| `scripted-gui-rules.md`            | scripted_gui mechanics: structure, dirty-var perf, AI        |
+| `scripting-edge-cases.md`          | Niche pitfalls: temp-var defaults, `^index`, vacant office   |
+| `search-filters.md`                | Every `FOCUS_FILTER_*`, Israel subcats, common mistakes      |
+| `simplification-patterns.md`       | Lookups→arrays, parameterized loc, shared helpers            |
+| `spacex-corporate-history-plan.md` | SpaceX chain plan: USA owner, namespace `USA_spacex_events`  |
+| `sound-system.md`                  | Sound defs, combat sounds, voicelines, compressors           |
+| `typo-watchlist.md`                | Recurring localisation typos to check in review              |
+| `un-system-reference.md`           | UN votes/elections: invariants, new-resolution recipe        |
+| `validation-pipeline.md`           | Pre-commit vs Test Suite CI divergence; deprecation watch    |
 
 Detail moved out of the table:
 

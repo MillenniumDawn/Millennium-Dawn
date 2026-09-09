@@ -446,6 +446,91 @@ def test_the_same_findings_are_reported_in_a_full_run(tmp_path, monkeypatch):
         "missing-loc-key",
         "missing-cross-country-tooltip",
         "pp-malus-completion-reward",
-        "tech-bonus-name",
         "missing-search-filters",
     }
+
+
+STRUCTURAL_TREE = """focus_tree = {
+	id = tree
+	focus = {
+		id = TAG_writes_defaults
+		x = 0 y = 0 cost = 1
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+	}
+	focus = {
+		id = TAG_dead_gate
+		x = 2 y = 0 cost = 1
+		available = { always = no }
+		bypass = { country_exists = PAL }
+	}
+	focus = {
+		id = TAG_empty_blocks
+		x = 4 y = 0 cost = 1
+		mutually_exclusive = { }
+		available = { }
+	}
+	focus = {
+		id = TAG_clean
+		x = 6 y = 0 cost = 1
+	}
+}
+"""
+
+
+def test_structural_defaults_reports_all_kinds(tmp_path):
+    _focus_file(tmp_path, STRUCTURAL_TREE)
+    v = _validator(tmp_path)
+
+    v.validate_structural_defaults()
+
+    categories = sorted(i.category for i in v._issues)
+    assert categories == [
+        "focus-always-no-bypass",
+        "focus-default-write",
+        "focus-default-write",
+        "focus-default-write",
+        "focus-empty-block",
+        "focus-empty-block",
+    ]
+    assert [i.line for i in v._issues] == [5, 6, 7, 12, 18, 19]
+
+
+def test_always_no_available_without_bypass_is_clean(tmp_path):
+    tree = """focus_tree = {
+	id = tree
+	focus = {
+		id = TAG_event_driven
+		x = 0 y = 0 cost = 1
+		available = { always = no }
+	}
+}
+"""
+    _focus_file(tmp_path, tree)
+    v = _validator(tmp_path)
+
+    v.validate_structural_defaults()
+
+    assert v._issues == []
+
+
+def test_multiline_always_no_available_with_bypass_is_flagged(tmp_path):
+    tree = """focus_tree = {
+	id = tree
+	focus = {
+		id = TAG_dead_gate
+		x = 0 y = 0 cost = 1
+		available = {
+			always = no
+		}
+		bypass = { country_exists = PAL }
+	}
+}
+"""
+    _focus_file(tmp_path, tree)
+    v = _validator(tmp_path)
+
+    v.validate_structural_defaults()
+
+    assert [i.category for i in v._issues] == ["focus-always-no-bypass"]

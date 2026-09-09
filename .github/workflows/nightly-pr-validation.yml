@@ -1,11 +1,19 @@
-name: Nightly PR Revalidation
+name: Nightly PR Validation Rerun
 
-# Re-runs the trusted coding pipeline for every open PR after main moves.
+# Re-runs each open PR's latest low-trust pull_request validation. Test Suite
+# resolves the live PR head and base from the API on every run, so a rerun uses
+# the current pair without executing PR code in this privileged scheduler.
 
 on:
   schedule:
     - cron: "0 6 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Run the full validation sweep even for successful pairs"
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -22,29 +30,51 @@ jobs:
     env:
       GH_REPO: ${{ github.repository }}
     steps:
-      - name: Dispatch validation for open PRs
+      - name: Rerun validation for open PRs
         env:
           GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force }}
         run: |
-          # Resolve main's live head so each run uses current base data.
-          base_sha=$(gh api "repos/$GH_REPO/commits/main" --jq '.sha')
           pulls_url="repos/$GH_REPO/pulls?state=open&base=main&per_page=100"
-          # Pagination keeps open PRs after the first 100 in the sweep.
-          prs=$(gh api --paginate "$pulls_url" --jq '.[].number')
+          prs=$(gh api --paginate "$pulls_url" \
+            --jq '.[].number')
+          runs_url="repos/$GH_REPO/actions/workflows/test-suite.yml/runs"
+          runs_url="$runs_url?event=pull_request&per_page=100"
+          runs=$(gh api --paginate --slurp "$runs_url")
           sent=0
+          skipped=0
           failed=0
-          while IFS= read -r num; do
+          while read -r num; do
             [ -z "$num" ] && continue
-            if gh workflow run coding-pipeline.yml --ref main \
-                -f pr_number="$num" -f base_sha="$base_sha"; then
+            run=$(printf '%s' "$runs" | jq -c \
+              --argjson number "$num" \
+              '[.[].workflow_runs[] | select(
+                .event == "pull_request" and
+                any(.pull_requests[]?; .number == $number)
+              )] | sort_by(.created_at) | reverse | first // empty')
+            if [ -z "$run" ]; then
+              echo "::warning::PR #$num has no Test Suite pull_request run"
+              failed=$((failed + 1))
+              continue
+            fi
+            run_id=$(printf '%s' "$run" | jq -r '.id')
+            conclusion=$(printf '%s' "$run" | jq -r '.conclusion // empty')
+            if [ "$FORCE" != "true" ] && [ "$conclusion" = "success" ]; then
+              skipped=$((skipped + 1))
+              echo "Skipping PR #$num: latest Test Suite run succeeded"
+              continue
+            fi
+            rerun_url="repos/$GH_REPO/actions/runs/$run_id/rerun"
+            if gh api --method POST "$rerun_url"; then
               sent=$((sent + 1))
             else
-              echo "::warning::PR #$num could not be dispatched"
+              echo "::warning::PR #$num Test Suite run could not be rerun"
               failed=$((failed + 1))
             fi
           done <<< "$prs"
-          echo "Dispatched coding-pipeline for $sent open PR(s)," \
-            "$failed dispatch failure(s)"
+          echo "Reran Test Suite for $sent open PR(s)," \
+            "skipped $skipped successful run(s)," \
+            "$failed missing or failed rerun(s)"
           if [ "$failed" -gt 0 ]; then
             exit 1
           fi

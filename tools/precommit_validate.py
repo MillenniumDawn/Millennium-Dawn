@@ -55,6 +55,7 @@ from shared_utils import (  # noqa: E402 — needs the path tweak above
 
 TXT = ".txt"
 YML = ".yml"
+GFX = ".gfx"
 
 
 class _Spec:
@@ -101,13 +102,12 @@ _REGISTRY = [
     _Spec(
         "validate_oob_units",
         [
-            ("history/units/", TXT),
+            ("history/", TXT),
             ("common/units/", TXT),
             ("common/ai_templates/", TXT),
             ("common/scripted_effects/", TXT),
             # Ship variants and create_unit effects share this validator, so
             # every runtime source for either effect is routed here.
-            ("history/countries/", TXT),
             ("common/national_focus/", TXT),
             ("events/", TXT),
             ("common/decisions/", TXT),
@@ -172,6 +172,19 @@ _REGISTRY = [
         "validate_events",
         [("common/", TXT), ("events/", TXT), ("history/", TXT)],
     ),
+    # Warning-only: most of the repo predates the current formatter, so a gate
+    # would demand a full-file reformat alongside every one-line edit.
+    _Spec(
+        "validate_standardization",
+        [
+            ("common/national_focus/", TXT),
+            ("events/", TXT),
+            ("common/decisions/", TXT),
+            ("common/ideas/", TXT),
+            ("common/military_industrial_organization/", TXT),
+        ],
+        strict=False,
+    ),
     _Spec(
         "validate_mios",
         [
@@ -183,6 +196,7 @@ _REGISTRY = [
             # check: dropping a base stat there kills bonuses elsewhere.
             ("common/units/equipment/", TXT),
             ("common/equipment_groups/", TXT),
+            ("interface/", GFX),
             ("localisation/english/", YML),
         ],
     ),
@@ -195,7 +209,7 @@ def _discover_staged(mod_path, argv_files):
 
     staged = (
         get_staged_files(
-            mod_path, extensions=[TXT, YML], include_missing=bool(argv_files)
+            mod_path, extensions=[TXT, YML, GFX], include_missing=bool(argv_files)
         )
         or []
     )
@@ -271,9 +285,9 @@ def main():
 
     mod_path = os.path.abspath(args.path)
     rel_paths = [p.replace("\\", "/") for p in _discover_staged(mod_path, args.files)]
-    rel_paths = [p for p in rel_paths if p.endswith((TXT, YML))]
+    rel_paths = [p for p in rel_paths if p.endswith((TXT, YML, GFX))]
     if not rel_paths:
-        print("No staged .txt/.yml content files — nothing to validate.")
+        print("No staged .txt/.yml/.gfx content files — nothing to validate.")
         return 0
 
     selected = [spec for spec in _REGISTRY if spec.matches(rel_paths)]

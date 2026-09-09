@@ -15,7 +15,7 @@ from pathlib import Path
 
 import assign_mio_icons
 import pytest
-from shared.suite import symlinks_available
+from shared.suite import run_git, symlinks_available
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOLS = REPO_ROOT / "tools"
@@ -460,41 +460,33 @@ class TestStandardizeStaged:
 class TestValidateStaged:
     """Tests for tools/validate_staged.py — pre-commit validation runner."""
 
-    def test_main_no_staged_files_or_skip_env(self, tmp_path):
+    def test_main_no_staged_files_or_skip_env(self, tmp_path, monkeypatch):
         """With no staged files or MD_SKIP_VALIDATE=1, no validators run and exit 0."""
-        subprocess.run(
-            ["git", "init", "--quiet", str(tmp_path)], check=True, capture_output=True
-        )
-        validation_env = {
-            key: value for key, value in os.environ.items() if key != "MD_SKIP_VALIDATE"
-        }
-        # No staged files
+        for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "MD_SKIP_VALIDATE"):
+            monkeypatch.delenv(name, raising=False)
+        run_git(tmp_path, "init")
         result = subprocess.run(
             [sys.executable, str(TOOLS / "validate_staged.py")],
             capture_output=True,
             text=True,
             cwd=tmp_path,
-            env=validation_env,
         )
         assert result.returncode == 0
         assert "Running " not in result.stdout
 
-        # Skip env
-        probe = tmp_path / "events" / "skip_probe.txt"
-        probe.parent.mkdir()
-        with probe.open("w", encoding="utf-8", newline="") as stream:
-            stream.write("add_namespace = skip_probe\n")
-        subprocess.run(
-            ["git", "-C", str(tmp_path), "add", "--", "events/skip_probe.txt"],
-            check=True,
-            capture_output=True,
+        (tmp_path / "events").mkdir()
+        write_text(tmp_path / "events" / "example.txt", "add_namespace = example\n")
+        run_git(tmp_path, "add", "events/example.txt")
+        assert (
+            run_git(tmp_path, "diff", "--cached", "--name-only").stdout.strip()
+            == "events/example.txt"
         )
         result = subprocess.run(
             [sys.executable, str(TOOLS / "validate_staged.py")],
             capture_output=True,
             text=True,
             cwd=tmp_path,
-            env={**validation_env, "MD_SKIP_VALIDATE": "1"},
+            env={**os.environ, "MD_SKIP_VALIDATE": "1"},
         )
         assert result.returncode == 0
         assert "Running " not in result.stdout

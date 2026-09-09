@@ -36,6 +36,16 @@ Default to no comments. Add one only when the WHY is non-obvious: a hidden const
 
 Unset script variables already read as `0`. Never write `set_variable = { X = 0 }` to "initialise" a var — it is redundant. This includes dynamic-modifier vars: `add_dynamic_modifier` with its backing vars unset applies a 0-effect modifier until a focus/decision `add_to_variable`s them, so no zero-seed is needed in history. Only seed a variable when its start value is non-zero.
 
+## Guard every remove_dynamic_modifier
+
+Removing a dynamic modifier the scope is not carrying logs an error and does nothing, so every call needs a matching presence check on the **same** modifier:
+
+```
+if = { limit = { has_dynamic_modifier = { modifier = X } } remove_dynamic_modifier = { modifier = X } }
+```
+
+A flag, idea or variable that tracks the modifier is not a guard, and neither is a decision `available` or an event `trigger` — they sit on the enclosing object, not on the scope the effect runs in. Flagged (error) by `validate_dynamic_modifier_guards.py`; details in `.claude/docs/scripting-edge-cases.md`.
+
 ## Relief effects must move penalty variables the right way
 
 Before writing an effect that "reduces" a penalty backed by a variable, check which direction the backing modifier reads. Cost-shaped keys (`receiving_investment_cost_modifier`, `consumer_goods_factor`, `*_cost_multiplier_modifier`) get _worse_ as the variable rises, so relief subtracts. Bonus-shaped keys (`return_on_investment_modifier`, `production_speed_buildings_factor`, `research_speed_factor`) get worse as it falls, so relief adds. Copying `add_to_variable = { X = 0.02 }` across a whole relief block silently deepens every cost-shaped penalty while the tooltip promises the opposite. Read the `common/dynamic_modifiers/` entry, then match the sign per variable.

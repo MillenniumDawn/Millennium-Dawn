@@ -322,6 +322,16 @@ class TestPerformance:
         monkeypatch.setattr(sys, "argv", ["perf", "--site-dir", "s"])
         assert perf.parse_args().site_dir == "s"
 
+    def test_long_changelog_pages_have_a_bounded_exception(self, tmp_path):
+        site = tmp_path / "site"
+        changelog = site / "changelogs" / "v2-0-changes" / "index.html"
+        write(changelog, "x" * (perf.BUDGETS_BYTES[".html"] + 1))
+        assert perf.run(site)[0]
+
+        limit = perf.HTML_BUDGET_OVERRIDES["changelogs/v2-0-changes/index.html"]
+        write(changelog, "x" * (limit + 1))
+        assert not perf.run(site)[0]
+
 
 class TestSiteLinks:
     def test_collector_and_normalization(self, tmp_path):
