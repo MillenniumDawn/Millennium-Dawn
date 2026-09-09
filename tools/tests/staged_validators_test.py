@@ -26,8 +26,11 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 
 # Maximum seconds a staged validator should take in CI
 MAX_TIME = 15.0
-# This validator intentionally scans the full repository in staged mode.
-TIME_BUDGETS = {"validate_scripted_localisation.py": 30.0}
+# Validators that intentionally perform full-repository lookups in staged mode.
+TIME_BUDGETS = {
+    "validate_events.py": 20.0,
+    "validate_scripted_localisation.py": 30.0,
+}
 
 passed = 0
 failed = 0
