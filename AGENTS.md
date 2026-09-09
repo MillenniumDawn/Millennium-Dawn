@@ -76,7 +76,7 @@ Every text-mode write in `tools/` must pass `newline=""`. Without it, Python's t
 - Pure notifications get `minor_flavor = yes`. When many sources deliver to one country, batch them into a single report event instead of one event per delivery, and keep the payload at the delivery site (rules and traps: `.claude/docs/event-reference.md`)
 - Describe an effect with `effect_tooltip = { <the real effect> }` before writing a new `custom_effect_tooltip` loc key
 - Every `picture = GFX_*` must resolve to a sprite defined in `interface/*.gfx` — MD must not use vanilla event pictures. An undefined name is a commit blocker (`validate_events` → `missing-event-picture`), so grep `interface/` for it before writing it
-- Match the picture to the window: news art is wide (`397x153`), country art nearly square (`217x163`), and each window draws it at native size, so a swap overflows or under-fills the frame. Names do not tell them apart (`GFX_trade_agreement` is news art) — check the texture (`event-picture-format-mismatch`). A `hidden = yes` event renders nothing, so it takes no `picture` (`hidden-event-picture`)
+- Match the picture to the window: news art is wide (`397x153`), country art nearly square (`217x163`), and each window draws it at native size, so a swap overflows or under-fills the frame. Names do not tell them apart (`GFX_china_trade_war` is news art) — check the texture (`event-picture-format-mismatch`). A `hidden = yes` event renders nothing, so it takes no `picture` (`hidden-event-picture`)
 - Ref: `.claude/docs/event-reference.md`
 
 ## Ideas
