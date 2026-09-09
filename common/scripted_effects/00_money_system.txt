@@ -860,14 +860,14 @@ calculate_additional_income_rate = {
 			}
 			if = {
 				limit = {
-					HEZ = {
+					LEB = {
 						OR = {
 							AND = {
-								check_variable = { influence_array^0 = LEB }
+								check_variable = { influence_array^0 = HEZ }
 								check_variable = { influence_array_val^0 > 49.999 }
 							}
 							AND = {
-								check_variable = { influence_array^1 = LEB }
+								check_variable = { influence_array^1 = HEZ }
 								check_variable = { influence_array_val^1 > 49.999 }
 							}
 						}
@@ -877,22 +877,22 @@ calculate_additional_income_rate = {
 			}
 			else_if = {
 				limit = {
-					HEZ = {
+					LEB = {
 						OR = {
 							AND = {
-								check_variable = { influence_array^0 = LEB }
+								check_variable = { influence_array^0 = HEZ }
 								check_variable = { influence_array_val^0 > 19.999 }
 							}
 							AND = {
-								check_variable = { influence_array^1 = LEB }
+								check_variable = { influence_array^1 = HEZ }
 								check_variable = { influence_array_val^1 > 19.999 }
 							}
 							AND = {
-								check_variable = { influence_array^2 = LEB }
+								check_variable = { influence_array^2 = HEZ }
 								check_variable = { influence_array_val^2 > 19.999 }
 							}
 							AND = {
-								check_variable = { influence_array^3 = LEB }
+								check_variable = { influence_array^3 = HEZ }
 								check_variable = { influence_array_val^3 > 19.999 }
 							}
 						}
@@ -914,14 +914,14 @@ calculate_additional_income_rate = {
 			}
 			if = {
 				limit = {
-					HEZ = {
+					PER = {
 						OR = {
 							AND = {
-								check_variable = { influence_array^0 = PER }
+								check_variable = { influence_array^0 = HEZ }
 								check_variable = { influence_array_val^0 > 49.999 }
 							}
 							AND = {
-								check_variable = { influence_array^1 = PER }
+								check_variable = { influence_array^1 = HEZ }
 								check_variable = { influence_array_val^1 > 49.999 }
 							}
 						}
@@ -931,22 +931,22 @@ calculate_additional_income_rate = {
 			}
 			else_if = {
 				limit = {
-					HEZ = {
+					PER = {
 						OR = {
 							AND = {
-								check_variable = { influence_array^0 = PER }
+								check_variable = { influence_array^0 = HEZ }
 								check_variable = { influence_array_val^0 > 19.999 }
 							}
 							AND = {
-								check_variable = { influence_array^1 = PER }
+								check_variable = { influence_array^1 = HEZ }
 								check_variable = { influence_array_val^1 > 19.999 }
 							}
 							AND = {
-								check_variable = { influence_array^2 = PER }
+								check_variable = { influence_array^2 = HEZ }
 								check_variable = { influence_array_val^2 > 19.999 }
 							}
 							AND = {
-								check_variable = { influence_array^3 = PER }
+								check_variable = { influence_array^3 = HEZ }
 								check_variable = { influence_array_val^3 > 19.999 }
 							}
 						}
@@ -1096,14 +1096,14 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_ABK_tourism2 }
 		}
 	}
-	#UK
+	# Albion Defence Services
 	else_if = {
 		limit = { original_tag = ADS }
 
 		if = {
-			limit = { has_idea = GER_russian_buddies }
-			set_variable = { additional_income_GER_russian_buddies = { value = gdp_total multiply = 0.0004 } } #2% of yearly GDP yearly estimated weekly
-			add_to_variable = { additional_income_rate = additional_income_GER_russian_buddies }
+			limit = { has_idea = ENG_ADS_money }
+			set_variable = { additional_income_ENG_ADS_money = 2.0 } #10% of GDP yearly estimated weekly
+			add_to_variable = { additional_income_rate = additional_income_ENG_ADS_money }
 		}
 	}
 	# United Kingdom
@@ -1843,6 +1843,11 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_BLR_oil_sov = 0.044 }
 			add_to_variable = { additional_income_rate = additional_income_BLR_oil_sov }
 		}
+		else_if = {
+			limit = { has_idea = BLR_oil_sov_positive }
+			set_variable = { additional_income_BLR_oil_sov = 0.066 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_oil_sov }
+		}
 		if = {
 			limit = { has_idea = SOV_kal_with }
 			set_variable = { additional_income_SOV_kal_with = 0.150 }
@@ -1864,7 +1869,7 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_UKR_russian_gas_cheaper_sov }
 		}
 		if = {
-			limit = { has_idea = SOV_azod_phosagro_income }
+			limit = { has_completed_focus = SOV_economic_phos_agro }
 			set_variable = { additional_income_SOV_azod_phosagro_income = 0.685 }
 			add_to_variable = { additional_income_rate = additional_income_SOV_azod_phosagro_income }
 		}
@@ -2081,22 +2086,30 @@ calculate_additional_income_rate = {
 	}
 	# Saudi Arabia - Seperate from GULF
 	# === Saudi pipeline Additional Income (added by SAU pipeline feature) ===
+	# Each route must out-earn the transit fees charged for it in calculate_additional_expenses_rate,
+	# or opening it is a straight loss. The Turkey extension is billed there too, so it is paid here.
 	if = { limit = { original_tag = SAU }
 		set_variable = { additional_income_SAU_pipeline_export = 0 }
-		if = { limit = { has_idea = SAU_yemen_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 1.0 } }
-		if = { limit = { has_idea = SAU_yemen_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 1.15 } }
-		if = { limit = { has_idea = SAU_yemen_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 1.25 } }
-		if = { limit = { has_idea = SAU_syria_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 1.0 } }
-		if = { limit = { has_idea = SAU_syria_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 1.15 } }
-		if = { limit = { has_idea = SAU_syria_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 1.25 } }
-		if = { limit = { has_idea = SAU_iraq_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 1.0 } }
-		if = { limit = { has_idea = SAU_iraq_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 1.15 } }
-		if = { limit = { has_idea = SAU_iraq_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 1.25 } }
+		# Arabian Sea route - fee 1.00 / 1.15 / 1.25
+		if = { limit = { has_idea = SAU_yemen_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 2.0 } }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 2.5 } }
+		if = { limit = { has_idea = SAU_yemen_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 3.0 } }
+		# Levant route - fee 2.00 / 2.30 / 2.50
+		if = { limit = { has_idea = SAU_syria_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 3.5 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 4.25 } }
+		if = { limit = { has_idea = SAU_syria_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 5.0 } }
+		# Europe route - fee 1.00 / 1.15 / 1.25
+		if = { limit = { has_idea = SAU_iraq_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 2.25 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t2 } add_to_variable = { additional_income_SAU_pipeline_export = 2.75 } }
+		if = { limit = { has_idea = SAU_iraq_pipeline_t3 } add_to_variable = { additional_income_SAU_pipeline_export = 3.25 } }
+		# Europe extension through Turkey - fee 1.25
+		if = { limit = { has_country_flag = SAU_turkey_pipeline_open } add_to_variable = { additional_income_SAU_pipeline_export = 2.25 } }
 		if = { limit = { check_variable = { additional_income_SAU_pipeline_export > 0 } }
 			add_to_variable = { additional_income_rate = additional_income_SAU_pipeline_export }
 		}
 	}
 	# One entry per transit country the pipeline crosses; a host on more than one route is paid for each.
+	set_variable = { additional_income_SAU_pipeline_transit = 0 }
 	if = {
 		limit = {
 			OR = {
@@ -2107,7 +2120,6 @@ calculate_additional_income_rate = {
 				has_idea = SAU_pipeline_transit_TUR_t1 has_idea = SAU_pipeline_transit_TUR_t2 has_idea = SAU_pipeline_transit_TUR_t3
 			}
 		}
-		set_variable = { additional_income_SAU_pipeline_transit = 0 }
 		if = { limit = { has_idea = SAU_pipeline_transit_YEM_t1 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.0 } }
 		if = { limit = { has_idea = SAU_pipeline_transit_YEM_t2 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.15 } }
 		if = { limit = { has_idea = SAU_pipeline_transit_YEM_t3 } add_to_variable = { additional_income_SAU_pipeline_transit = 1.25 } }
@@ -6394,10 +6406,7 @@ calculate_gdp_modifiers = {
 	}
 }
 
-# Effect: calculate_ai_taxes_desire
-# Purpose: Calculates the tax rate for the AI to change
-# Runs monthly from MD_on_actions (AI path only). Changes are ±1 per run.
-calculate_ai_taxes_desire = {
+calculate_tax_adjustments = {
 	if = { limit = { NOT = { has_variable = population_tax_rate } } set_variable = { var = population_tax_rate value = 20 } }
 	if = { limit = { NOT = { has_variable = corporate_tax_rate } } set_variable = { var = corporate_tax_rate value = 20 } }
 
@@ -6500,6 +6509,10 @@ calculate_ai_taxes_desire = {
 		}
 		set_temp_variable = { corp_tax_change = -1 }
 	}
+}
+
+calculate_ai_taxes_desire = {
+	calculate_tax_adjustments = yes
 
 	# --- APPLY AND CLAMP ---
 	if = { limit = { is_debug = yes }
