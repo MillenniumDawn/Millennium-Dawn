@@ -287,6 +287,26 @@ def test_staged_changed_lines_parses_hunk_headers(git_repo):
     assert lines == {3}
 
 
+def test_staged_changed_lines_ignores_an_inherited_git_dir(git_repo, monkeypatch):
+    """Git hands hooks an absolute GIT_DIR; discovery must not bind to it.
+
+    Inside a worktree that binding makes `rev-parse --show-toplevel` answer with
+    the file's own directory, so every staged path collapses to its basename.
+    """
+    nested = git_repo / "history" / "states"
+    nested.mkdir(parents=True)
+    path = nested / "focus.txt"
+    _write(path, "cost\t= 10\n")
+    _git(git_repo, "add", "history/states/focus.txt")
+    monkeypatch.setenv("GIT_DIR", str(git_repo / ".git"))
+
+    root, relative = fix_styling._repo_path(str(path))
+
+    assert relative == "history/states/focus.txt"
+    assert fix_styling.staged_changed_lines(str(path)) == {1}
+    assert root.endswith(git_repo.name)
+
+
 def test_staged_changed_lines_supports_an_unborn_head(tmp_path):
     _git(tmp_path, "init", "-q")
     path = tmp_path / "new.txt"

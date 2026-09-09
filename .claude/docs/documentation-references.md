@@ -74,6 +74,7 @@ All files below live in `.claude/docs/`.
 | `namelist-reference.md`          | Division/ship name-list files and mandatory groups           |
 | `oob-equipment-reference.md`     | OOB equipment types (NSB), stockpiles, variant errors        |
 | `oob-variants-reference.md`      | Full OOB + variant reference (`history/units/`)              |
+| `party-loc-reference.md`         | Politics-view party keys, subideology slots, loc hooks       |
 | `performance-patterns.md`        | Hoisting, dirty counters, clamp-before-divide, early-outs    |
 | `refactor-checklist.md`          | Rename/migration sweeps: namespaces, GUI/GFX refs, tags      |
 | `scripted-gui-patterns.md`       | `dynamic_lists`, loc dispatchers, dirty-var standard         |
