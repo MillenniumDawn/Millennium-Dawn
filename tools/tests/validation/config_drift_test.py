@@ -26,6 +26,10 @@ CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "test-suite.yml"
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
 DOCS_QUALITY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "docs-quality.yml"
 SETUP_MD_PYTHON = REPO_ROOT / ".github" / "actions" / "setup-md-python" / "action.yml"
+DEVELOPER_SETUP = (
+    REPO_ROOT / "docs" / "src" / "content" / "resources" / "developer-setup.md"
+)
+TOOLS_README = REPO_ROOT / "tools" / "README.md"
 NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
 PR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "pr-cache-cleanup.yml"
 
@@ -184,6 +188,7 @@ def test_tools_linux_runs_quality_suite():
 def test_python_version_declarations_agree():
     major, minor = dev_setup.MIN_PYTHON
     assert (major, minor) == (3, 12)
+    assert not hasattr(dev_setup, "REC_PYTHON")
     version = f"{major}.{minor}"
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     assert re.search(rf'^target-version\s*=\s*"py{major}{minor}"\s*$', pyproject, re.M)
@@ -195,6 +200,15 @@ def test_python_version_declarations_agree():
         rf'^pythonVersion\s*=\s*"{re.escape(version)}"\s*$', pyproject, re.M
     )
 
+    for path in (
+        SETUP_MD_PYTHON,
+        VALIDATOR_CACHE_WORKFLOW,
+        DOCS_QUALITY_WORKFLOW,
+        DEVELOPER_SETUP,
+        TOOLS_README,
+    ):
+        assert path.is_file(), path
+
     action = yaml.safe_load(SETUP_MD_PYTHON.read_text(encoding="utf-8"))
     cache = yaml.safe_load(VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8"))
     docs = yaml.safe_load(DOCS_QUALITY_WORKFLOW.read_text(encoding="utf-8"))
@@ -204,11 +218,10 @@ def test_python_version_declarations_agree():
     assert "3.x" not in SETUP_MD_PYTHON.read_text(encoding="utf-8")
     assert "3.x" not in VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
 
-    setup_doc = (
-        REPO_ROOT / "docs" / "src" / "content" / "resources" / "developer-setup.md"
-    ).read_text(encoding="utf-8")
+    setup_doc = DEVELOPER_SETUP.read_text(encoding="utf-8")
     assert f"{version}+" in setup_doc
     assert "3.10+" not in setup_doc
+    assert f"Python {version}" in TOOLS_README.read_text(encoding="utf-8")
 
 
 def test_tools_checkout_exposes_consumed_configuration():
@@ -223,8 +236,10 @@ def test_tools_checkout_exposes_consumed_configuration():
         ".github/actions/setup-md-python/action.yml",
         ".github/workflows/test-suite.yml",
         ".github/workflows/validator-cache.yml",
+        ".github/workflows/docs-quality.yml",
         ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/pr-cache-cleanup.yml",
+        "docs/src/content/resources/developer-setup.md",
     }
     assert required <= sparse
 
