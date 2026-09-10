@@ -330,6 +330,23 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+def count_braces(text: str) -> Tuple[int, int]:
+    """Return ``(opens, closes)`` for *text*, ignoring braces inside double-quoted
+    strings and after an unquoted ``#`` comment."""
+    code = strip_inline_comment(text)
+    opens = closes = 0
+    in_str = False
+    for i, c in enumerate(code):
+        if c == '"' and (i == 0 or code[i - 1] != "\\"):
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                opens += 1
+            elif c == "}":
+                closes += 1
+    return opens, closes
+
+
 def collapse_ws_outside_quotes(text: str) -> str:
     """Collapse runs of whitespace outside double-quoted spans to single spaces,
     leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
@@ -460,9 +477,52 @@ def collapse_or_compact(
                 n_close += 1
 
     if n_open != n_close or n_leaf - n_open != 1:
-        return compact_block(block_lines)
+        return compact_block(collapse_nested_blocks(block_lines))
 
     return [f"{indent}{_normalize_oneline_braces(text)}"]
+
+
+def collapse_nested_blocks(block_lines: List[str]) -> List[str]:
+    """Collapse each nested ``key = { ... }`` child that reduces to a single leaf
+    onto one line, innermost first, leaving the enclosing block multi-line.
+
+    Applies :func:`collapse_or_compact`'s single-leaf test per child, so a child
+    with two leaves (``{ name = "X" ruling_only = yes }``) or a ``#`` comment
+    stays multi-line. Each collapsed child keeps its own opening line's
+    indentation; the enclosing opener and closer are never touched. Input whose
+    braces don't balance is returned as-is.
+    """
+    if len(block_lines) < 3:
+        return list(block_lines)
+
+    out = [block_lines[0]]
+    last = len(block_lines) - 1
+    i = 1
+    while i < last:
+        line = block_lines[i]
+        opens, closes = count_braces(line)
+        if opens <= closes:
+            out.append(line)
+            i += 1
+            continue
+
+        depth = opens - closes
+        j = i + 1
+        while j < last and depth > 0:
+            o, c = count_braces(block_lines[j])
+            depth += o - c
+            j += 1
+        if depth > 0:
+            out.extend(block_lines[i:])
+            return out
+
+        child = collapse_nested_blocks(block_lines[i:j])
+        collapsed = collapse_or_compact(child)
+        out.extend(collapsed if len(collapsed) == 1 else child)
+        i = j
+
+    out.append(block_lines[last])
+    return out
 
 
 _FACTOR_TOKEN_RE = re.compile(r"\bfactor\b")
@@ -732,14 +792,146 @@ HOI4_INSTALL_PATHS = [
 ]
 
 
+_HOI4_GAME_SUBDIR = os.path.join("steamapps", "common", "Hearts of Iron IV")
+_STEAM_VDF_PATH_RE = re.compile(r'"path"\s*"([^"]+)"')
+# Keys the MD VS Code extensions and CWTools keep the game path under.
+_EDITOR_INSTALL_KEYS = (
+    "mdHoi4Utilities.installPath",
+    "hoi4ModUtilities.installPath",
+    "cwtools.cache.hoi4",
+)
+_EDITOR_INSTALL_RE = re.compile(
+    r'"(?:'
+    + "|".join(re.escape(k) for k in _EDITOR_INSTALL_KEYS)
+    + r')"\s*:\s*"([^"]+)"'
+)
+
+
+def _steam_roots() -> List[str]:
+    """Steam client roots: the Windows registry first, then the Unix defaults."""
+    roots: List[str] = []
+    if sys.platform == "win32":
+        try:
+            import winreg
+
+            for hive, key, value in (
+                (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam", "SteamPath"),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\WOW6432Node\Valve\Steam",
+                    "InstallPath",
+                ),
+            ):
+                try:
+                    with winreg.OpenKey(hive, key) as handle:
+                        roots.append(str(winreg.QueryValueEx(handle, value)[0]))
+                except OSError:
+                    continue
+        except ImportError:
+            pass
+    roots.extend(
+        os.path.expanduser(p)
+        for p in (
+            "~/.steam/steam",
+            "~/.local/share/Steam",
+            "~/.steam/debian-installation",
+            "~/Library/Application Support/Steam",
+        )
+    )
+    return roots
+
+
+def _steam_library_installs() -> List[str]:
+    """Game dirs under every library listed in Steam's libraryfolders.vdf."""
+    found: List[str] = []
+    for root in _steam_roots():
+        for vdf in (
+            os.path.join(root, "steamapps", "libraryfolders.vdf"),
+            os.path.join(root, "config", "libraryfolders.vdf"),
+        ):
+            try:
+                with open(vdf, encoding="utf-8", errors="replace") as fh:
+                    text = fh.read()
+            except OSError:
+                continue
+            for lib in _STEAM_VDF_PATH_RE.findall(text):
+                candidate = os.path.join(lib.replace("\\\\", "\\"), _HOI4_GAME_SUBDIR)
+                if candidate not in found:
+                    found.append(candidate)
+    return found
+
+
+def _editor_settings_files() -> List[str]:
+    mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    vscode = os.path.join(mod_root, ".vscode")
+    files = [os.path.join(vscode, "settings.json")]
+    try:
+        files.extend(
+            os.path.join(vscode, f)
+            for f in sorted(os.listdir(vscode))
+            if f.endswith(".code-workspace")
+        )
+    except OSError:
+        pass
+    appdata = os.environ.get("APPDATA", "")
+    files.extend(
+        os.path.expanduser(p)
+        for p in (
+            os.path.join(appdata, "Code", "User", "settings.json"),
+            os.path.join(appdata, "Code - Insiders", "User", "settings.json"),
+            "~/.config/Code/User/settings.json",
+            "~/Library/Application Support/Code/User/settings.json",
+        )
+        if p
+    )
+    return files
+
+
+def _editor_settings_installs() -> List[str]:
+    """Game paths the VS Code HOI4 extensions were configured with.
+
+    Settings files are JSONC (comments, trailing commas), so the keys are
+    picked out with a regex rather than json.loads.
+    """
+    found: List[str] = []
+    for path in _editor_settings_files():
+        try:
+            with open(path, encoding="utf-8-sig", errors="replace") as fh:
+                text = fh.read()
+        except OSError:
+            continue
+        for raw in _EDITOR_INSTALL_RE.findall(text):
+            candidate = raw.replace("\\\\", "\\").rstrip("\\/")
+            if candidate and candidate not in found:
+                found.append(candidate)
+    return found
+
+
+# Probed after $HOI4_PATH and before the fixed HOI4_INSTALL_PATHS list; tests
+# blank it so a developer machine with the game does not leak into assertions.
+HOI4_DISCOVERY_SOURCES: List[Callable[[], List[str]]] = [
+    _steam_library_installs,
+    _editor_settings_installs,
+]
+
+
 def find_hoi4_install(explicit_path: Optional[str] = None) -> Optional[str]:
-    """Return the first existing HOI4 install root, checking explicit_path, $HOI4_PATH, then HOI4_INSTALL_PATHS."""
+    """Return the first existing HOI4 install root.
+
+    Order: explicit_path, $HOI4_PATH, every Steam library folder, the game path
+    from the VS Code HOI4 extension settings, then HOI4_INSTALL_PATHS.
+    """
     candidates: List[str] = []
     if explicit_path:
         candidates.append(explicit_path)
     env_path = os.environ.get("HOI4_PATH")
     if env_path:
         candidates.append(env_path)
+    for source in HOI4_DISCOVERY_SOURCES:
+        try:
+            candidates.extend(source())
+        except OSError:
+            continue
     candidates.extend(HOI4_INSTALL_PATHS)
     for base in candidates:
         if base and os.path.isdir(base):
@@ -1490,8 +1682,8 @@ def run_with_pool(
         return pool.map(func, items)
 
 
-_DEFAULT_DIRECTORIES = ("common", "events", "history")
-_DIRECTORIES_WITH_INTERFACE = ("common", "events", "history", "interface")
+_DEFAULT_DIRECTORIES = ("common", "events", "history", "music")
+_DIRECTORIES_WITH_INTERFACE = ("common", "events", "history", "music", "interface")
 
 _staged_files_cache: Optional[List[str]] = None
 

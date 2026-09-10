@@ -2,6 +2,7 @@
 
 import re
 
+import dev_setup
 import pytest
 import yaml
 from change_groups import GROUP_PATTERNS, classify
@@ -13,6 +14,7 @@ from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import (
     _CREATE_UNIT_SOURCE_PATTERNS,
     _DELETE_TEMPLATE_SOURCE_PATTERNS,
+    _TEMPLATE_SOURCE_PATTERNS,
     _VARIANT_SOURCE_PATTERNS,
 )
 from validate_scripted_params import _CALLER_PATTERNS
@@ -22,6 +24,12 @@ from validator_batches import ALL_SPECS, BATCHES, ValidatorSpec
 PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "test-suite.yml"
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
+DOCS_QUALITY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "docs-quality.yml"
+SETUP_MD_PYTHON = REPO_ROOT / ".github" / "actions" / "setup-md-python" / "action.yml"
+DEVELOPER_SETUP = (
+    REPO_ROOT / "docs" / "src" / "content" / "resources" / "developer-setup.md"
+)
+TOOLS_README = REPO_ROOT / "tools" / "README.md"
 NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
 PR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "pr-cache-cleanup.yml"
 
@@ -37,6 +45,14 @@ OLD_WORKFLOWS = (
 def _workflow_trigger(workflow):
     config = yaml.safe_load(workflow.read_text(encoding="utf-8"))
     return config.get("on", config.get(True, {}))
+
+
+def _setup_python_version(steps):
+    for step in steps:
+        uses = str(step.get("uses", ""))
+        if "actions/setup-python@" in uses:
+            return step["with"]["python-version"]
+    raise AssertionError("no actions/setup-python step")
 
 
 def _parse_precommit():
@@ -106,11 +122,12 @@ def ci_standalone():
 
 CI_EXEMPT = {
     "validate_style.py",
+    "validate_standardization.py",
     "validate_unused_textures.py",
     "validate_file_paths.py",
     "validate_mod_descriptors.py",
 }
-PRECOMMIT_EXEMPT = set()
+PRECOMMIT_EXEMPT: set[str] = set()
 STRICT_MISMATCH_ALLOWED = {"validate_ai_equipment.py"}
 
 
@@ -119,6 +136,7 @@ def test_test_suite_replaces_old_workflows():
     assert workflow["name"] == "Test Suite"
     assert set(workflow["jobs"]) == {
         "detect-changes",
+        "validate-paths",
         "prepare-workspace",
         "tools-tests",
         "mod-tests",
@@ -167,6 +185,45 @@ def test_tools_linux_runs_quality_suite():
     assert "staged_validators_real_test.py" in commands
 
 
+def test_python_version_declarations_agree():
+    major, minor = dev_setup.MIN_PYTHON
+    assert (major, minor) == (3, 12)
+    assert not hasattr(dev_setup, "REC_PYTHON")
+    version = f"{major}.{minor}"
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert re.search(rf'^target-version\s*=\s*"py{major}{minor}"\s*$', pyproject, re.M)
+    assert re.search(rf'^py-version\s*=\s*"{re.escape(version)}"\s*$', pyproject, re.M)
+    assert re.search(
+        rf'^python_version\s*=\s*"{re.escape(version)}"\s*$', pyproject, re.M
+    )
+    assert re.search(
+        rf'^pythonVersion\s*=\s*"{re.escape(version)}"\s*$', pyproject, re.M
+    )
+
+    for path in (
+        SETUP_MD_PYTHON,
+        VALIDATOR_CACHE_WORKFLOW,
+        DOCS_QUALITY_WORKFLOW,
+        DEVELOPER_SETUP,
+        TOOLS_README,
+    ):
+        assert path.is_file(), path
+
+    action = yaml.safe_load(SETUP_MD_PYTHON.read_text(encoding="utf-8"))
+    cache = yaml.safe_load(VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8"))
+    docs = yaml.safe_load(DOCS_QUALITY_WORKFLOW.read_text(encoding="utf-8"))
+    assert _setup_python_version(action["runs"]["steps"]) == version
+    assert _setup_python_version(cache["jobs"]["build-cache"]["steps"]) == version
+    assert _setup_python_version(docs["jobs"]["docs-quality"]["steps"]) == version
+    assert "3.x" not in SETUP_MD_PYTHON.read_text(encoding="utf-8")
+    assert "3.x" not in VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
+
+    setup_doc = DEVELOPER_SETUP.read_text(encoding="utf-8")
+    assert f"{version}+" in setup_doc
+    assert "3.10+" not in setup_doc
+    assert f"Python {version}" in TOOLS_README.read_text(encoding="utf-8")
+
+
 def test_tools_checkout_exposes_consumed_configuration():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     checkout = workflow["jobs"]["tools-tests"]["steps"][0]
@@ -179,26 +236,51 @@ def test_tools_checkout_exposes_consumed_configuration():
         ".github/actions/setup-md-python/action.yml",
         ".github/workflows/test-suite.yml",
         ".github/workflows/validator-cache.yml",
+        ".github/workflows/docs-quality.yml",
         ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/pr-cache-cleanup.yml",
+        "docs/src/content/resources/developer-setup.md",
     }
     assert required <= sparse
 
 
-def test_file_paths_runs_inside_prepare_workspace():
+def test_file_paths_run_in_a_lightweight_index_job():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    assert "validate-paths" not in workflow["jobs"]
-    prepare = workflow["jobs"]["prepare-workspace"]
-    run = next(
-        step["run"]
-        for step in prepare["steps"]
+    detect = workflow["jobs"]["detect-changes"]
+    path_job = workflow["jobs"]["validate-paths"]
+    assert detect["outputs"]["file-paths"] == "${{ steps.groups.outputs.file-paths }}"
+    assert path_job["needs"] == ["detect-changes"]
+    assert path_job["if"].strip() == "needs.detect-changes.outputs.file-paths == 'true'"
+    checkout = path_job["steps"][0]
+    assert checkout["uses"].startswith("actions/checkout@")
+    assert checkout["with"]["repository"] == (
+        "${{ needs.detect-changes.outputs.checkout-repository }}"
+    )
+    assert checkout["with"]["ref"] == "${{ needs.detect-changes.outputs.checkout-ref }}"
+    assert checkout["with"]["filter"] == "blob:none"
+    sparse = set(checkout["with"]["sparse-checkout"].split())
+    assert "descriptor.mod" in sparse
+    assert "tools" in sparse
+    assert "gfx" not in sparse
+    assert "map" not in sparse
+    run_step = next(
+        step
+        for step in path_job["steps"]
         if "validate_file_paths.py" in (step.get("run") or "")
     )
+    run = run_step["run"]
+    assert "working-directory" not in run_step
+    assert "python3 tools/validation/validate_file_paths.py --path ." in run
     assert "--strict" in run
     assert "--output validation-file-paths.log" in run
     assert any(
         step.get("with", {}).get("name") == "validation-file-paths-results"
-        for step in prepare["steps"]
+        for step in path_job["steps"]
+    )
+    report = workflow["jobs"]["report"]
+    assert "validate-paths" in report["needs"]
+    assert all(
+        step.get("name") != "Record failed validation jobs" for step in report["steps"]
     )
 
 
@@ -213,6 +295,7 @@ def test_detect_changes_uses_python_grouping():
     assert "change_groups.py" in text
     assert "full_suite" in detect["outputs"]
     assert "tools" in detect["outputs"]
+    assert any(step.get("name") == "Upload changed files" for step in detect["steps"])
     for path in ("resources/documentation/modifiers_documentation.md",):
         assert classify([path])["full_suite"] is True
 
@@ -225,7 +308,7 @@ def test_dispatch_forces_all_content_groups():
         if step.get("name") == "Compute changed groups"
     )
     assert "--dispatch" in script
-    assert "< .changed-files.txt" in script
+    assert "< changed-files.txt" in script
 
 
 def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
@@ -242,15 +325,10 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
     checkouts = [
         step for step in prepare["steps"] if "actions/checkout@" in step.get("uses", "")
     ]
-    assert len(checkouts) == 2
-    index = next(
-        step
-        for step in prepare["steps"]
-        if step.get("name") == "Checkout PR index for file paths"
+    assert len(checkouts) == 1
+    assert not any(
+        "validate_file_paths.py" in (step.get("run") or "") for step in prepare["steps"]
     )
-    assert index["with"]["path"] == "pr-tree"
-    assert index["with"]["filter"] == "blob:none"
-    assert "gfx" in index["with"]["sparse-checkout"]
     cache = next(
         step
         for step in prepare["steps"]
@@ -258,7 +336,7 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
         and step.get("with", {}).get("path")
         and "sparse" in step.get("id", "")
     )
-    assert "md-sparse-v1-${{ runner.os }}" in cache["with"]["key"]
+    assert "md-sparse-v2-${{ runner.os }}" in cache["with"]["key"]
     assert "needs.detect-changes.outputs.head-sha" in cache["with"]["key"]
     valcache = next(
         step
@@ -300,12 +378,36 @@ def test_report_job_posts_comment_and_checks():
     assert "--post-comment" in text
     assert "--checks-api" in text
     assert 'pattern: "*results"' in text
+    assert any(step.get("name") == "Download changed files" for step in report["steps"])
     assert "full_suite == 'true'" in text
     checkout = next(
         step for step in report["steps"] if "actions/checkout@" in step.get("uses", "")
     )
     assert "checkout-repository" in checkout["with"]["repository"]
     assert "checkout-ref" in checkout["with"]["ref"]
+
+
+def test_report_restores_baseline_for_full_and_dispatch_runs():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    report = workflow["jobs"]["report"]
+    restore = next(
+        step
+        for step in report["steps"]
+        if step.get("name") == "Restore validation baseline"
+    )
+    assert "if" not in restore
+    script = next(
+        step["run"]
+        for step in report["steps"]
+        if step.get("name") == "Generate and post validation report"
+    )
+    assert "--baseline-dir .validation_baseline" in script
+    assert '--baseline-toolshash "$TOOLSHASH"' in script
+    assert "--changed-files changed-files/changed-files.txt" in script
+    assert "if [ -f .validation_baseline/baseline-meta.json ]" not in script
+    assert (
+        "github.event_name == 'workflow_dispatch'" in report["env"]["VALIDATION_SCOPE"]
+    )
 
 
 def test_tools_sidecars_have_stable_schema():
@@ -488,6 +590,7 @@ def test_ci_strict_gate_lives_in_batch_specs():
     assert ValidatorSpec("x", "validate_x.py", ("common",)).strict is True
     assert sorted(spec.name for spec in ALL_SPECS if not spec.strict) == [
         "building-guards",
+        "party-loc",
         "simplifications",
     ]
 
@@ -529,16 +632,20 @@ def test_gfx_and_scripted_localisation_routes_are_preserved():
 
 def test_group_patterns_preserve_cross_reference_routes():
     assert "interface/**" in GROUP_PATTERNS["scientist-traits"]
+    assert "interface/**" in GROUP_PATTERNS["mios"]
     assert "common/**/*.txt" in GROUP_PATTERNS["decisions"]
     assert "map/adjacency_rules.txt" in GROUP_PATTERNS["map-adjacency"]
-    dirs = {
-        pattern.rsplit("/", 1)[0] + "/"
-        for pattern in (
-            _CREATE_UNIT_SOURCE_PATTERNS
-            + _DELETE_TEMPLATE_SOURCE_PATTERNS
-            + _VARIANT_SOURCE_PATTERNS
-        )
-    }
+    dirs = set()
+    for pattern in (
+        _CREATE_UNIT_SOURCE_PATTERNS
+        + _DELETE_TEMPLATE_SOURCE_PATTERNS
+        + _TEMPLATE_SOURCE_PATTERNS
+        + _VARIANT_SOURCE_PATTERNS
+    ):
+        directory = pattern.rsplit("/", 1)[0]
+        if directory.endswith("/**"):
+            directory = directory[:-3]
+        dirs.add(directory + "/")
     assert {directory + "**" for directory in dirs} <= set(GROUP_PATTERNS["oob"])
     assert set(_DECISION_REFERENCE_SOURCE_PATTERNS) <= set(GROUP_PATTERNS["decisions"])
 

@@ -1,6 +1,6 @@
 # Idea Reference
 
-On-demand reference for idea structure and examples. For best practices, see AGENTS.md.
+Idea conventions, category-specific gates, and examples.
 
 ## Example Idea
 
@@ -29,6 +29,7 @@ BRA_idea_higher_minimum_wage_1 = {
 - Drop the `available` block entirely in a category with no slot (`country`, `hidden_ideas`). Same reason: nothing picks from those, so `available` is never consulted. Use `cancel` if the idea should remove itself. Flagged by `validate_ideas.py` (`available-in-slotless-category`); the same stripper removes them in bulk
 - Keep `allowed = { always = no }` on slotted ideas that must not appear in the picker (religion, other laws). `add_idea` still applies them. Do not use it in slotless categories (`country`, `hidden_ideas`); that gate is dead and the validator flags it
 - Remove `cancel = { always = no }` (checked hourly, never true)
+- A slotted idea whose `available` can turn false mid-game needs a mirrored `cancel` with the negated condition. `available` gates picking only — the engine never strips an already-slotted idea when it goes false — and the spirit categories are `removal_cost = -1`, so the player cannot un-pick it either. `cancel` is checked hourly and frees the slot. Precedent: the doctrine-gated office core spirits in `common/ideas/zzz_{army,navy,air}_spirits.txt`
 - Remove empty `on_add = { log = "" }` unless actually doing something
 - Tiered ideas use suffix numbering: `TAG_idea_name_1`, `TAG_idea_name_2`, with shared `name = TAG_idea_name` for display
 - `name = X` redirects **both** name and description loc lookups — game reads `X` for the displayed name and `X_desc` for the tooltip body. The idea's own ID is no longer used for loc once `name =` is set.

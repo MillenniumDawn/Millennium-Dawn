@@ -30,6 +30,7 @@ GROUP_PATTERNS = {
     "scientist-traits": ["common/scientist_traits/**", "interface/**"],
     "oob": [
         "history/units/**",
+        "history/**",
         "common/units/**",
         "common/ai_templates/**",
         "common/scripted_effects/**",
@@ -44,7 +45,13 @@ GROUP_PATTERNS = {
         "common/scripted_guis/**",
         "common/ideas/**",
     ],
-    "decisions": ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+    "decisions": [
+        "common/**/*.txt",
+        "events/**/*.txt",
+        "history/**/*.txt",
+        "interface/**/*.gfx",
+        "gfx/interface/decisions/**",
+    ],
     "scripted-loc": ["common/scripted_localisation/**"],
     "scripted-guis": ["common/scripted_guis/**"],
     "interface": ["interface/**"],
@@ -56,6 +63,7 @@ GROUP_PATTERNS = {
         "common/doctrines/**",
         "common/units/equipment/**",
         "common/equipment_groups/**",
+        "interface/**",
     ],
     "scripted-effects": ["common/scripted_effects/**"],
     "style": [
@@ -72,6 +80,7 @@ GROUP_PATTERNS = {
         "history/**",
         "localisation/**",
         "interface/**",
+        "gfx/interface/decisions/**",
         "music/**",
         "map/adjacency_rules.txt",
         "*.mod",
@@ -93,6 +102,21 @@ _FULL_SUITE_PREFIXES = (
     ".github/workflows/nightly-pr-validation.yml",
     ".github/workflows/pr-cache-cleanup.yml",
     ".github/workflows/validator-cache.yml",
+)
+_FILE_PATH_ROOTS = (
+    "common",
+    "descriptions",
+    "events",
+    "gfx",
+    "history",
+    "interface",
+    "localisation",
+    "map",
+    "music",
+    "portraits",
+    "scenario_tests",
+    "sound",
+    "tutorial",
 )
 
 
@@ -133,6 +157,12 @@ def _is_full_suite(path: str) -> bool:
     )
 
 
+def _needs_file_path_validation(path: str) -> bool:
+    return path == "descriptor.mod" or any(
+        path == root or path.startswith(f"{root}/") for root in _FILE_PATH_ROOTS
+    )
+
+
 def classify(paths: Iterable[str], dispatch: bool = False) -> Dict[str, object]:
     """Return changed group booleans and the diff-scoped style file list."""
     normalized = [path.replace("\\", "/") for path in paths if path]
@@ -155,6 +185,9 @@ def classify(paths: Iterable[str], dispatch: bool = False) -> Dict[str, object]:
     result["full_suite"] = full_suite
     result["tools"] = full_suite or any(
         path.startswith("tools/") for path in normalized
+    )
+    result["file-paths"] = full_suite or any(
+        _needs_file_path_validation(path) for path in normalized
     )
     result["style_files"] = style_files
     result["style"] = bool(style_files)

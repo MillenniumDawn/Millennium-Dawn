@@ -453,7 +453,7 @@ country_event = {
 	id = somalia.5
 	title = somalia.5.t
 	desc = somalia.5.d
-	picture = GFX_politics_negotiations # TODO: Replace with better image
+	picture = GFX_SOM_juba_valley_alliance
 	is_triggered_only = yes
 
 	# The Question of the TFG
@@ -539,7 +539,7 @@ country_event = {
 		text = somalia.7.d2
 		trigger = { NOT = { FROM = { has_country_flag = SOM_jubba_rejoins_somalia } } }
 	}
-	picture = GFX_politics_negotiations # TODO: Replace with better image
+	picture = GFX_SOM_unification_talks
 	is_triggered_only = yes
 
 	# Somalia is Nearly United
@@ -1197,7 +1197,7 @@ country_event = {
 	id = somalia.11
 	title = somalia.11.t
 	desc = somalia.11.d
-	picture = GFX_politics_negotiations # TODO: Replace with better image
+	picture = GFX_SOM_civil_war_ends
 	is_triggered_only = yes
 
 	trigger = {
@@ -1413,18 +1413,29 @@ country_event = {
 	option = {
 		name = somalia.21.b
 		log = "[GetDateText]: [This.GetName]: somalia.21.b executed"
-		start_border_war = {
-			change_state_after_war = no
-			attacker = {
-				state = 240
-				num_provinces = 1
-				on_win = somalia.24
-				on_lose = somalia.23
+		if = {
+			limit = {
+				controls_state = 240
+				NOT = { controls_state = 593 }
+				240 = { NOT = { has_border_war = yes } }
+				593 = { NOT = { has_border_war = yes } }
 			}
-			defender = {
-				state = 593
-				num_provinces = 1
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 240
+					num_provinces = 1
+					on_win = somalia.24
+					on_lose = somalia.23
+				}
+				defender = {
+					state = 593
+					num_provinces = 1
+				}
 			}
+		}
+		else = {
+			country_event = { id = somalia.24 days = 60 }
 		}
 		hidden_effect = {
 			country_event = { id = somalia.26 days = 40 }
@@ -1512,21 +1523,35 @@ country_event = {
 		}
 		SHB = {
 			set_global_flag = SOM_the_islamic_courts_union_offensive
-			hidden_effect = { set_cosmetic_tag = SHB_ICU }
-			declare_war_on = {
-				target = WL1
-				type = civil_war
+			hidden_effect = {
+				set_cosmetic_tag = SHB_ICU
+				transfer_state = 593
 			}
-			declare_war_on = {
-				target = TFG
-				type = civil_war
+			if = {
+				limit = {
+					country_exists = WL1
+					NOT = { has_war_with = WL1 }
+				}
+				declare_war_on = {
+					target = WL1
+					type = civil_war
+				}
+			}
+			if = {
+				limit = {
+					country_exists = TFG
+					NOT = { has_war_with = TFG }
+				}
+				declare_war_on = {
+					target = TFG
+					type = civil_war
+				}
 			}
 			add_timed_idea = {
 				idea = SHB_state_offensive_idea
 				days = 60
 			}
 			hidden_effect = {
-				transfer_state = 593
 				division_template = {
 					name = "Milishia ICU"
 					regiments = {
@@ -1568,13 +1593,25 @@ country_event = {
 						owner = SHB
 					}
 				}
-				declare_war_on = {
-					target = SOM
-					type = civil_war
+				if = {
+					limit = {
+						country_exists = SOM
+						NOT = { has_war_with = SOM }
+					}
+					declare_war_on = {
+						target = SOM
+						type = civil_war
+					}
 				}
-				declare_war_on = {
-					target = SNA
-					type = civil_war
+				if = {
+					limit = {
+						country_exists = SNA
+						NOT = { has_war_with = SNA }
+					}
+					declare_war_on = {
+						target = SNA
+						type = civil_war
+					}
 				}
 			}
 		}
@@ -1744,7 +1781,7 @@ country_event = {
 	id = somalia.34
 	title = somalia.34.t
 	desc = somalia.34.d
-	picture = GFX_politics_negotiations # TODO: Replace with better image
+	picture = GFX_SOM_puntland_breakaway
 	is_triggered_only = yes
 
 	trigger = { NOT = { country_exists = PUN } }
@@ -2021,15 +2058,23 @@ country_event = {
 			AIA = {
 				transfer_state = 1222
 				transfer_state = 1223
-				start_border_war = {
-					change_state_after_war = no
-					attacker = {
-						state = 1223
-						num_provinces = 1
+				if = {
+					limit = {
+						controls_state = 1223
+						NOT = { controls_state = 581 }
+						1223 = { NOT = { has_border_war = yes } }
+						581 = { NOT = { has_border_war = yes } }
 					}
-					defender = {
-						state = 581
-						num_provinces = 1
+					start_border_war = {
+						change_state_after_war = no
+						attacker = {
+							state = 1223
+							num_provinces = 1
+						}
+						defender = {
+							state = 581
+							num_provinces = 1
+						}
 					}
 				}
 				add_ideas = SHB_state_civil_war_idea

@@ -3216,32 +3216,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_the_pacific_solution"
+			custom_effect_tooltip = AST_the_pacific_solution_tt
+			newline = yes
 			PAP = { country_event = pacific_solution.1 }
 			NAU = { country_event = pacific_solution.2 }
 			newline = yes
 			custom_effect_tooltip = TT_IF_EACH_ACCEPTS
 			effect_tooltip = {
-				PAP = {
-					set_temp_variable = { treasury_change = 2 }
-					modify_treasury_effect = yes
+				
+				set_temp_variable = { treasury_change = 2 }
+				modify_treasury_effect = yes
 					733 = {
 						add_building_construction = { type = infrastructure level = 1 instant_build = yes }
 						add_building_construction = { type = naval_base level = 1 instant_build = yes province = 7339 }
 					}
 					AST = { add_opinion_modifier = { target = ROOT modifier = accepted_pacific_solution } }
-				}
-				NAU = {
-					set_temp_variable = { treasury_change = 2 }
-					modify_treasury_effect = yes
-					1117 = {
-						add_building_construction = { type = infrastructure level = 1 instant_build = yes }
-						add_building_construction = { type = naval_base level = 1 instant_build = yes province = 13038 }
-					}
-					AST = {
-						give_guarantee = NAU
-						add_opinion_modifier = { target = ROOT modifier = accepted_pacific_solution }
-					}
-				}
 			}
 			newline = yes
 			custom_effect_tooltip = TT_IF_THEY_REJECT
@@ -3990,12 +3979,15 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_crush_the_unions"
 			add_ideas = gutted_unions_ast
-			set_temp_variable = { temp_opinion = -50 }
+			set_temp_variable = { temp_opinion = -30 }
 			change_labour_unions_opinion = yes
 			newline = yes
-			swap_ideas = {
-				remove_idea = strong_regulations
-				add_idea = standard_regulations
+			if = {
+				limit = { has_idea = strong_regulations }
+				swap_ideas = {
+					remove_idea = strong_regulations
+					add_idea = standard_regulations
+				}
 			}
 			set_country_flag = crushed_unions_ast
 		}
@@ -4086,7 +4078,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_australian_made"
-			add_ideas = australian_made
+			add_timed_idea = {
+				idea = australian_made
+				days = 640
+			}
 		}
 
 		ai_will_do = { base = 1 }
@@ -4205,7 +4200,10 @@ focus_tree = {
 				}
 				add_extra_state_shared_building_slots = 1
 			}
-			add_ideas = hospital_investment_ast
+			add_timed_idea = {
+				idea = hospital_investment_ast
+				days = 280
+			}
 			newline = yes
 			set_temp_variable = { treasury_change = -8 }
 			modify_treasury_effect = yes
@@ -4596,7 +4594,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_negotiate_with_our_northern_neighbours"
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
-				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { percent_change = 4 }
 				set_temp_variable = { tag_index = AST }
 				set_temp_variable = { influence_target = PAP }
 				change_influence_percentage = yes
@@ -7730,10 +7728,15 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_domestic_demands"
 			745 = {
-				add_extra_state_shared_building_slots = 2
+				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
 					type = industrial_complex
-					level = 2
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = infrastructure
+					level = 1
 					instant_build = yes
 				}
 			}
@@ -7982,20 +7985,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_for_queen_and_company"
-			745 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = agriculture_district
-					level = 1
-				}
-			}
-			744 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = agriculture_district
-					level = 1
-				}
-			}
+			two_random_agriculture_district = yes
 			hidden_effect = {
 				set_temp_variable = { percent_change = 2 }
 				set_temp_variable = { tag_index = ENG }
@@ -8009,6 +7999,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_agriculture_district = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -8547,7 +8541,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_free_from_binds"
 			add_war_support = 0.03
-			remove_dynamic_modifier = {	modifier = Commonwealth_member_modifier }
+			if = { limit = { has_dynamic_modifier = { modifier = Commonwealth_member_modifier } } remove_dynamic_modifier = { modifier = Commonwealth_member_modifier } }
 			remove_from_array = { global.commonwealth_member = THIS }
 			ENG = { add_opinion_modifier = { target = PREV modifier = left_alliance } }
 		}
@@ -11195,6 +11189,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_renegotiate_with_papua"
 			set_country_flag = asylum_boats_dealt_with_ast
+			custom_effect_tooltip = AST_the_pacific_solution_tt
+			newline = yes
 			if = {
 				limit = { has_country_flag = pacific_solution_event_done }
 				PAP = { country_event = papua_talks_rudd.1 }
