@@ -3064,6 +3064,7 @@ class Validator(BaseValidator):
             results,
             "✓ All decision icons use art sized for their slot",
             "Decision icons using art from the wrong slot:",
+            Severity.WARNING,
             category="decision-icon-slot-mismatch",
         )
 
