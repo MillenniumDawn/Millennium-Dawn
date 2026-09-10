@@ -307,7 +307,7 @@ def render(source: str, target: str) -> Image.Image:
     scale = min(size[0] / art.width, size[1] / art.height)
     scaled = art.resize(
         (max(1, round(art.width * scale)), max(1, round(art.height * scale))),
-        Image.LANCZOS,
+        Image.Resampling.LANCZOS,
     )
     canvas = Image.new("RGBA", size, (0, 0, 0, 0))
     canvas.paste(
