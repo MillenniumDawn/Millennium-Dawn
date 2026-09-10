@@ -202,37 +202,23 @@ def test_configured_helper_change_invalidates_affected_namespace_only(
     disk_cache._FINGERPRINT_CACHE.clear()
     calls = {"building": 0, "events": 0}
 
-    disk_cache.per_file_cached_by_content(
-        str(tmp_path),
-        "building_guards_scan_v3.result",
-        str(source),
-        "body",
-        _counted_compute(calls, "building"),
-    )
-    disk_cache.per_file_cached_by_content(
-        str(tmp_path),
-        "events.result",
-        str(source),
-        "body",
-        _counted_compute(calls, "events"),
-    )
+    def run_both():
+        for namespace, key in (
+            ("building_guards_scan_v3.result", "building"),
+            ("events.result", "events"),
+        ):
+            disk_cache.per_file_cached_by_content(
+                str(tmp_path),
+                namespace,
+                str(source),
+                "body",
+                _counted_compute(calls, key),
+            )
 
+    run_both()
     _patch_helper_change(monkeypatch, "building_guards_scan_v3.result", "guard_scan.py")
     disk_cache._FINGERPRINT_CACHE.clear()
-    disk_cache.per_file_cached_by_content(
-        str(tmp_path),
-        "building_guards_scan_v3.result",
-        str(source),
-        "body",
-        _counted_compute(calls, "building"),
-    )
-    disk_cache.per_file_cached_by_content(
-        str(tmp_path),
-        "events.result",
-        str(source),
-        "body",
-        _counted_compute(calls, "events"),
-    )
+    run_both()
 
     assert calls == {"building": 2, "events": 1}
 
