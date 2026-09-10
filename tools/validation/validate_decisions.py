@@ -3047,8 +3047,7 @@ class Validator(BaseValidator):
         self._report(
             results,
             "✓ All decision icons use art sized for their slot",
-            "Decision icons using art from the wrong slot:",
-            Severity.WARNING,
+            "Decision icons using art from the wrong slot (resize with tools/assets/resize_decision_icons.py):",
             category="decision-icon-slot-mismatch",
         )
 

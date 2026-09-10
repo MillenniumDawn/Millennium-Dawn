@@ -193,7 +193,7 @@ python3 tools/validation/validate_scripted_gui.py --no-color           # full-re
 
 ## Refreshing Vanilla Data
 
-CI has no HOI4 install, so `validate_defines`, `validate_file_paths`, `validate_gfx_references` and `validate_modifiers` read checked-in copies of vanilla data instead: `vanilla_defines.txt`, `vanilla_gui_files.txt`, `vanilla_paths.txt`, `vanilla_sprites.txt`, and `resources/documentation/*.md`. `refresh_vanilla_data.py` rebuilds all five from a local install (auto-detected, or set `$HOI4_PATH`):
+CI has no HOI4 install, so `validate_defines`, `validate_file_paths`, `validate_gfx_references` and `validate_modifiers` read checked-in copies of vanilla data instead: `vanilla_defines.txt`, `vanilla_gui_files.txt`, `vanilla_paths.txt`, `vanilla_sprites.txt`, and `resources/documentation/*.md`. `refresh_vanilla_data.py` rebuilds all five from a local install (`$HOI4_PATH`, else auto-detected from Steam's `libraryfolders.vdf` or the VS Code HOI4 extension `installPath` settings):
 
 ```bash
 python3 tools/validation/refresh_vanilla_data.py
