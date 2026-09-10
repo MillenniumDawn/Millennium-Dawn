@@ -280,7 +280,7 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
         and step.get("with", {}).get("path")
         and "sparse" in step.get("id", "")
     )
-    assert "md-sparse-v1-${{ runner.os }}" in cache["with"]["key"]
+    assert "md-sparse-v2-${{ runner.os }}" in cache["with"]["key"]
     assert "needs.detect-changes.outputs.head-sha" in cache["with"]["key"]
     valcache = next(
         step
