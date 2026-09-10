@@ -12,6 +12,10 @@ Read `.claude/docs/party-loc-reference.md` first — it holds the slot table, th
 the icon rules, the hook mechanics, and the verification checklist. This skill is the
 procedure; that doc is the reference.
 
+**Hard limit: at most 5 TAGs per PR.** When asked for more, split the work into separate
+branches/PRs of 5 TAGs or fewer and say so up front. Never append a sixth TAG to an existing
+party-loc branch.
+
 ## Steps
 
 1. **Inventory what exists**
@@ -36,6 +40,12 @@ procedure; that doc is the reference.
 
    Leave a slot generic when the country has no real counterpart. Do not invent parties.
    Non-party entities are allowed only where the reference doc says so.
+
+   Use only verifiable sources: Wikipedia (and the references it cites), the party's own
+   website, the national electoral commission / parliament / government register, and
+   reputable news archives. Every name, abbreviation, founding year, and fact in a `_desc`
+   must be traceable to one of these. If a claim cannot be verified, drop it — leave the
+   slot generic rather than guess.
 
    Where a country's party of a given slot changed identity mid-period (a ban, a rename, a
    successor), plan a date- or flag-gated variant pair instead of picking one.
@@ -68,5 +78,6 @@ procedure; that doc is the reference.
 7. **Verify**
 
    Run `python tools/validation/validate_party_loc.py --tag <TAG>` until it is clean, then
-   work the rest of the reference doc's verification checklist. Finally, in game, open the
-   politics view at the start date and at any date the gates split on.
+   work the rest of the reference doc's verification checklist. Confirm the branch touches
+   the party blocks of at most 5 TAGs before pushing. Finally, in game, open the politics
+   view at the start date and at any date the gates split on.
