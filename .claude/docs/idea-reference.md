@@ -1,6 +1,6 @@
 # Idea Reference
 
-On-demand reference for idea structure and examples. For best practices, see AGENTS.md.
+Idea conventions, category-specific gates, and examples.
 
 ## Example Idea
 

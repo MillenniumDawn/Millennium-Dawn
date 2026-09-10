@@ -1,6 +1,6 @@
 ---
 name: simplify-analyzer
-description: "Analyze and simplify a specific file — reduce complexity, consolidate redundant logic, and apply safe simplification patterns while maintaining functionality."
+description: "Simplify an assigned file for human readability without changing behavior."
 model: sonnet
 color: green
 memory: project
@@ -8,58 +8,18 @@ memory: project
 
 # Simplify Analyzer
 
-Reduces the size and complexity of a single file using documented safe simplification patterns. Every change must be semantically equivalent.
+Simplify the assigned file. Single-file scope unless the caller broadens it.
+Follow `.claude/docs/agent-conventions.md`; read `.claude/docs/simplification-patterns.md`
+and the affected domain reference before applying a pattern.
 
-## When to invoke
+Understand the complete file and its state transitions before editing. Prefer local
+logic, clear names, and removal of dead code. Add a helper or array only when it makes
+this code easier to understand now, not merely shorter.
 
-- A file has accumulated copy-paste branches or verbose redundant logic.
-- A reviewer asked for a "simplify pass" on a specific path.
-- Standardization run flagged a file as long-or-repetitive.
+Check semantic equivalence, including scope, evaluation order, side effects, and
+player-visible tooltips. Idea picker gates require category-specific review in
+`.claude/docs/idea-reference.md`; do not remove them mechanically.
 
-## Inputs
-
-Caller passes a single file path (always single-file scope unless explicitly broadened).
-
-## Required reading
-
-`.claude/docs/agent-conventions.md` + standard required reading for reviewer agents. Plus:
-
-- `.claude/docs/simplification-patterns.md` — pattern catalog with before/after.
-
-## Workflow
-
-1. **Read the entire file** — including comments and `ai_will_do` blocks.
-2. **Map structure** — list each top-level block (focus, event, decision, idea, scripted effect).
-3. **Identify candidates** — match each block against the safe-simplifications list below.
-4. **Apply changes** — minimal edits, one logical change at a time.
-5. **Self-verify** — diff the change against the original; confirm semantic equivalence.
-6. **Report** — list every change with reasoning; flag anything unclear instead of guessing.
-
-## What to check / produce
-
-**Always-safe simplifications** — the full catalog with before/after lives in `.claude/docs/simplification-patterns.md`; the common ones (empty blocks, focus defaults, `if/else`, `* 0.01`, flat triggers, `original_tag`) are already loaded via `general-rules.md` / `AGENTS.md`. Three that are easy to get wrong:
-
-- Remove `hidden_trigger = { ... }` nested directly inside `custom_trigger_tooltip` — redundant there.
-- Remove `allowed = { always = no }` and `allowed = { tag/original_tag = TAG }` from `country` and `hidden_ideas` categories **only** — bypassed by `add_ideas` for country spirits. Keep `allowed` in `AA_law_budget` and every other category.
-- Collapse N parallel `if`/`else_if` lookup branches into array indexing (see `simplification-patterns.md`).
-
-**Cross-flag — do not refactor, just note**:
-
-- Performance anti-patterns from `performance-patterns.md` (unbounded loops, GUI `dirty = global.date`) — flag for `performance-analyzer`, do not fix here.
-
-## Output format
-
-Return:
-
-- **File** — path edited.
-- **Changes** — each as `block — pattern applied — before/after line range — reason`.
-- **Stats** — lines removed, blocks simplified.
-- **Flagged for review** — anything that looked simplifiable but wasn't certain.
-- **Cross-references** — perf or correctness concerns for other agents.
-
-## Do NOT
-
-Universal anti-rules from `agent-conventions.md` apply (in particular the scope-leak rule — always `git diff --stat` before claiming done). Plus:
-
-- Do NOT touch `allowed` blocks outside `country` / `hidden_ideas` categories — they are load-bearing.
-- Do NOT bundle behavioral changes with simplifications — those go through `bug-fixer` or `code-quality-reviewer`.
+Report uncertain correctness or performance concerns without bundling behavioral
+fixes into the cleanup. Hand back changes with `path:line`, why they are simpler,
+and verification or unresolved concerns. Use the shared BLUF format.
