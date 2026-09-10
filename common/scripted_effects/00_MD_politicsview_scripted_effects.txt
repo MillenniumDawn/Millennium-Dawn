@@ -375,38 +375,37 @@ scale_party_popularity = {
 	recalculate_party = yes
 }
 
+# Effect: effect_puppet_match_ruling_party_to_overlord
+# Purpose: Sets the outlook of a nation when being puppetted to the outlook of the overlord.
 # Parameter:
 # - overlord_to_match: id of the overlord whose ruling party the subject adopts
 effect_puppet_match_ruling_party_to_overlord = {		#Used in target scope
-	if = {
-		limit = { var:overlord_to_match = { has_variable = ruling_party } }
-		set_temp_variable = { rul_party_temp = var:overlord_to_match.ruling_party }
-		set_temp_variable = { disable_elections = 1 }
-		if = {
-			limit = { var:overlord_to_match = { has_elections = yes } }
-			set_temp_variable = { disable_elections = 0 }
-		}
-		change_ruling_party_effect = yes
-
-		#add_up_party_totals rescales every party back to its outlook's real popularity, so the imposed party needs support behind it or it is scaled straight out again
-		set_temp_variable = { puppet_outlook_swing = 0.60 }
-		set_temp_variable = { outlook_party_index = rul_party_temp }
-		set_outlook_from_party_index = yes
-		set_outlook_popularity_from_id = yes
-		subtract_from_temp_variable = { puppet_outlook_swing = outlook_popularity }
-		clamp_temp_variable = { var = puppet_outlook_swing min = 0 }
-		set_temp_variable = { outlook_popularity_change = puppet_outlook_swing }
-		change_outlook_popularity = yes
-
-		set_temp_variable = { party_index = rul_party_temp }
-		set_temp_variable = { party_popularity_increase = 0.40 }
-		change_relative_party_popularity = yes
-		recalculate_party = yes
+	var:overlord_to_match = {
+		set_temp_variable = { temp = ruling_party }
 	}
-}
 
-set_temp_variable_to_ruling_party = {
-	set_temp_variable = { party_index = ruling_party }
+	set_temp_variable = { rul_party_temp = temp }
+	set_temp_variable = { disable_elections = 1 }
+	if = {
+		limit = { var:overlord_to_match = { has_elections = yes } }
+		set_temp_variable = { disable_elections = 0 }
+	}
+	change_ruling_party_effect = yes
+
+	#add_up_party_totals rescales every party back to its outlook's real popularity, so the imposed party needs support behind it or it is scaled straight out again
+	set_temp_variable = { puppet_outlook_swing = 0.60 }
+	set_temp_variable = { outlook_party_index = rul_party_temp }
+	set_outlook_from_party_index = yes
+	set_outlook_popularity_from_id = yes
+	subtract_from_temp_variable = { puppet_outlook_swing = outlook_popularity }
+	clamp_temp_variable = { var = puppet_outlook_swing min = 0 }
+	set_temp_variable = { outlook_popularity_change = puppet_outlook_swing }
+	change_outlook_popularity = yes
+
+	set_temp_variable = { party_index = rul_party_temp }
+	set_temp_variable = { party_popularity_increase = 0.40 }
+	change_relative_party_popularity = yes
+	recalculate_party = yes
 }
 
 #### New Coalition stuff ####
