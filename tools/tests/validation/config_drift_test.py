@@ -2,6 +2,7 @@
 
 import re
 
+import dev_setup
 import pytest
 import yaml
 from change_groups import GROUP_PATTERNS, classify
@@ -23,6 +24,8 @@ from validator_batches import ALL_SPECS, BATCHES, ValidatorSpec
 PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "test-suite.yml"
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
+DOCS_QUALITY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "docs-quality.yml"
+SETUP_MD_PYTHON = REPO_ROOT / ".github" / "actions" / "setup-md-python" / "action.yml"
 NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
 PR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "pr-cache-cleanup.yml"
 
@@ -38,6 +41,14 @@ OLD_WORKFLOWS = (
 def _workflow_trigger(workflow):
     config = yaml.safe_load(workflow.read_text(encoding="utf-8"))
     return config.get("on", config.get(True, {}))
+
+
+def _setup_python_version(steps):
+    for step in steps:
+        uses = str(step.get("uses", ""))
+        if "actions/setup-python@" in uses:
+            return step["with"]["python-version"]
+    raise AssertionError("no actions/setup-python step")
 
 
 def _parse_precommit():
@@ -168,6 +179,36 @@ def test_tools_linux_runs_quality_suite():
     assert "bun run jscpd" in commands
     assert "staged_validators_test.py" in commands
     assert "staged_validators_real_test.py" in commands
+
+
+def test_python_version_declarations_agree():
+    major, minor = dev_setup.MIN_PYTHON
+    assert (major, minor) == (3, 12)
+    version = f"{major}.{minor}"
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert re.search(rf'^target-version\s*=\s*"py{major}{minor}"\s*$', pyproject, re.M)
+    assert re.search(rf'^py-version\s*=\s*"{re.escape(version)}"\s*$', pyproject, re.M)
+    assert re.search(
+        rf'^python_version\s*=\s*"{re.escape(version)}"\s*$', pyproject, re.M
+    )
+    assert re.search(
+        rf'^pythonVersion\s*=\s*"{re.escape(version)}"\s*$', pyproject, re.M
+    )
+
+    action = yaml.safe_load(SETUP_MD_PYTHON.read_text(encoding="utf-8"))
+    cache = yaml.safe_load(VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8"))
+    docs = yaml.safe_load(DOCS_QUALITY_WORKFLOW.read_text(encoding="utf-8"))
+    assert _setup_python_version(action["runs"]["steps"]) == version
+    assert _setup_python_version(cache["jobs"]["build-cache"]["steps"]) == version
+    assert _setup_python_version(docs["jobs"]["docs-quality"]["steps"]) == version
+    assert "3.x" not in SETUP_MD_PYTHON.read_text(encoding="utf-8")
+    assert "3.x" not in VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
+
+    setup_doc = (
+        REPO_ROOT / "docs" / "src" / "content" / "resources" / "developer-setup.md"
+    ).read_text(encoding="utf-8")
+    assert f"{version}+" in setup_doc
+    assert "3.10+" not in setup_doc
 
 
 def test_tools_checkout_exposes_consumed_configuration():
