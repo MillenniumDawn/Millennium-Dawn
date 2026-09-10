@@ -2,7 +2,8 @@
 
 Deduplicated catalog of known MD/HOI4 bug patterns. Two sections: **Scan patterns** are greppable signatures for codebase sweeps (`/fix-issue` idle scans); **Adversarial questions** are what-could-go-wrong checks for reviewing a diff (`/adversarial-review`, `/audit`). Reviewers apply both sections.
 
-Plus every pattern in `.claude/rules/general-rules.md` § Scripting Patterns — always loaded, not repeated here.
+Also read [Scripting Edge Cases](scripting-edge-cases.md) and
+[Data Structures](hoi4-data-structures.md) for scope, state, and trigger semantics.
 
 ## Scan patterns
 
@@ -24,6 +25,8 @@ Plus every pattern in `.claude/rules/general-rules.md` § Scripting Patterns —
 - Stacked multipliers producing near-zero denominators (clamp before division)
 - `add_building_construction` for `naval_base` missing `province`
 - Scripted trigger defined twice in the same file (second definition silently overwrites the first)
+- Merge-conflict markers left in a file
+- Defines with names or namespaces absent from vanilla's `00_defines.lua`; verify before reuse
 - New subideology parties missing registration in `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`
 
 ## Adversarial questions
