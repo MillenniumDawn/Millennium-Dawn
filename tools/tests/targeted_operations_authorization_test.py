@@ -79,7 +79,7 @@ class ReviewScript(TargetedScript):
             "TOP_status^num": manifest["capacity"],
             "TOP_registry_capacity": manifest["capacity"],
         }
-        self.temps, self.events, self.scope_stack = {}, [], []
+        self.temps, self.events, self.event_targets, self.scope_stack = {}, [], {}, []
         for target in (1, 2):
             self.globals[f"TOP_status^{target}"] = 1
             self.globals[f"TOP_political^{target}"] = 0
@@ -144,6 +144,12 @@ class ReviewScript(TargetedScript):
             result = operand == "no"
         elif key == "TOP_exceptional_authority":
             result = country["authority"] == (operand == "yes")
+        elif key in {
+            "TOP_case_visit_review_valid",
+            "TOP_case_visit_execution_valid",
+            "TOP_case_visit_approval_fits",
+        }:
+            result = operand != "no"
         elif key == "TOP_facility_available":
             state = self.countries[self.temps["TOP_facility_state"]]
             result = (self.temps["TOP_facility_kind"] in state["facilities"]) == (
@@ -191,6 +197,15 @@ class ReviewScript(TargetedScript):
                 )
         elif key == "add_political_power":
             self.countries[identifier]["power"] += self.value(operand, identifier)
+        elif key == "PREV":
+            previous = self.value(key, identifier)
+            self.scope_stack.append(identifier)
+            try:
+                self.execute(operand, previous)
+            finally:
+                self.scope_stack.pop()
+        elif key == "save_event_target_as":
+            self.event_targets[operand] = identifier
         elif key == "remove_from_array":
             name, _, value = operand[0]
             values = self.value(name, identifier) or []
@@ -252,6 +267,7 @@ def test_reselection_during_review_commits_only_the_immutable_snapshot_once():
     review.ready_for_host()
     review.actor["TOP_selected"] = 2
     review.run("TOP_send_host_request")
+    assert review.event_targets["TOP_host_request_sender"] == 1
     review.call("TOP_answer_host_request", identifier=2, CONSENT=1)
     review.run("TOP_close_review_event")
     review.run("TOP_approve_review")
@@ -699,3 +715,29 @@ def test_snapshot_identity_and_host_slot_have_single_writers():
             assert "TOP_incoming_actor" not in rendered
     assert "TOP_selected" not in _named_block(source(EFFECT_PATH), "TOP_approve_review")
     assert "TOP_selected" not in _named_block(source(TRIGGER_PATH), "TOP_review_valid")
+
+
+def test_novichok_is_a_russia_only_high_exposure_timed_method():
+    startable = _named_block(
+        source("common/scripted_triggers/01_targeted_operations_triggers.txt"),
+        "TOP_method_startable",
+    )
+    review = _named_block(source(TRIGGER_PATH), "TOP_review_valid")
+    lethal = _named_block(source(TRIGGER_PATH), "TOP_review_lethal")
+    core = source("common/scripted_effects/00_targeted_operations_effects.txt")
+    gui = source("common/scripted_guis/01_targeted_operations_gui.txt")
+    layout = source("interface/targeted_operations.gui")
+    assert "TOP_requested_method = 7" in startable
+    assert "original_tag = SOV" in startable
+    assert "has_tech = decryption2" in startable
+    assert "TOP_confidence^TOP_selected > 89" in startable
+    assert "TOP_proposal_method < 8" in review
+    assert "TOP_proposal_method = 7" in review
+    assert "has_tech = decryption2" in review
+    assert "TOP_proposal_method = 7" in lethal
+    assert "TOP_method = 7" in _named_block(core, "TOP_complete_operation")
+    exposure = _named_block(core, "TOP_apply_exposure")
+    assert "TOP_exposure_chance = 65" in exposure
+    assert "TOP_exposure_chance = 90" in exposure
+    assert "set_temp_variable = { TOP_arg_method = 7 } TOP_begin_review = yes" in gui
+    assert 'name = "TOP_novichok"' in layout

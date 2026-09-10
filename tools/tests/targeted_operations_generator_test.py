@@ -34,6 +34,10 @@ def manifest():
         "generated_overlap",
         "generated_end",
         "capacity",
+        "target_class",
+        "group_class",
+        "location_policy",
+        "unknown_source",
     ],
 )
 def test_manifest_rejects_ambiguous_or_cross_group_identities(
@@ -58,8 +62,16 @@ def test_manifest_rejects_ambiguous_or_cross_group_identities(
         data["targets"][-1]["id"] = 65
     elif defect == "generated_end":
         data["generated_end"] = 130
-    else:
+    elif defect == "capacity":
         data["capacity"] += 1
+    elif defect == "target_class":
+        data["targets"][0]["target_class"] = "person"
+    elif defect == "group_class":
+        data["groups"][0]["group_class"] = "organization"
+    elif defect == "location_policy":
+        data["groups"][0]["location_policy"] = "random_state"
+    else:
+        data["targets"][0]["sources"].append("missing_source")
     path = tmp_path / "tools/data/targeted_operations.json"
     path.parent.mkdir(parents=True)
     with path.open("w", encoding="utf-8", newline="") as stream:
@@ -222,23 +234,115 @@ def test_generated_names_and_roles_have_english_localisation(manifest):
 def test_reserved_successors_and_political_civilian_identity_are_separate(manifest):
     output = GENERATOR.render(manifest)
     registry = output["common/scripted_effects/01_targeted_operations_registry.txt"]
-    assert "global.TOP_registry_capacity = 142" in registry
+    assert "global.TOP_registry_capacity = 161" in registry
     for field in ("ct", "leader", "created", "destroyed", "window"):
-        assert f"resize_array = {{ global.TOP_group_{field} = 22 }}" in registry
+        assert f"resize_array = {{ global.TOP_group_{field} = 35 }}" in registry
     generated = range(manifest["generated_start"], manifest["generated_end"])
     assert set(generated) == set(range(65, 129))
     for ident in generated:
         assert f"global.TOP_affiliation^{ident} =" in registry
     for field in GENERATOR.GLOBAL_FIELDS:
-        assert f"resize_array = {{ global.TOP_{field} = 142 }}" in registry
+        assert f"resize_array = {{ global.TOP_{field} = 161 }}" in registry
     names = output["localisation/english/MD_targeted_operations_roster_l_english.yml"]
     for target in manifest["targets"]:
         ident = target["id"]
         assert f"TOP_person_{ident}: \"{target['name']}\"" in names
-    assert {t["id"] for t in manifest["targets"] if t.get("civilian")} == {141}
+    assert {
+        t["id"] for t in manifest["targets"] if t["target_class"] == "civilian"
+    } == {141}
     assert "global.TOP_civilian^141 = 1" in registry
-    for ident in range(129, 142):
-        assert f"TOP_authored_role_eligible_{ident} = yes" in registry
-        assert f"global.TOP_political^{ident} = 1" in registry
+    for target in manifest["targets"]:
+        ident = target["id"]
+        political = int(target["target_class"] in {"official", "civilian"})
+        assert f"global.TOP_political^{ident} = {political}" in registry
+        if ident >= 129:
+            assert f"TOP_authored_role_eligible_{ident} = yes" in registry
     successors = output["common/scripted_effects/01_targeted_operations_successors.txt"]
     assert "TOP_person_129" not in successors
+
+
+def test_manifest_declares_classes_location_policy_and_2027_2032_roster(manifest):
+    assert manifest["capacity"] == 161
+    assert all("target_class" in target for target in manifest["targets"])
+    assert all(
+        "political" not in target and "civilian" not in target
+        for target in manifest["targets"]
+    )
+    assert all(
+        {"group_class", "location_policy"} <= group.keys()
+        for group in manifest["groups"]
+    )
+    expected = {
+        142: ("saad_bin_atef_al_awlaki", 2027, "militant", 2),
+        143: ("abu_ubaydah_yusuf_al_anabi", 2027, "militant", 7),
+        144: ("xi_jinping", 2027, "official", 25),
+        145: ("sanaullah_ghafari", 2028, "militant", 22),
+        146: ("kim_jong_un", 2028, "official", 26),
+        147: ("min_aung_hlaing", 2028, "official", 27),
+        148: ("iyad_ag_ghali", 2029, "militant", 23),
+        149: ("jehad_serwan_mostafa", 2029, "militant", 6),
+        150: ("recep_tayyip_erdogan", 2029, "official", 28),
+        151: ("ibrahim_ahmed_mahmoud_al_qosi", 2030, "militant", 2),
+        152: ("luiz_inacio_lula_da_silva", 2030, "official", 29),
+        153: ("abdel_fattah_el_sisi", 2030, "official", 30),
+        154: ("hamza_salih_bin_said_al_ghamdi", 2031, "militant", 1),
+        155: ("abd_al_rahman_al_maghrebi", 2031, "militant", 1),
+        156: ("prabowo_subianto", 2031, "official", 31),
+        157: ("abdiqadir_mumin", 2032, "militant", 24),
+        158: ("mohammed_bin_salman", 2032, "official", 32),
+        159: ("benjamin_netanyahu", 2032, "official", 33),
+    }
+    actual = {
+        target["id"]: (
+            target["key"],
+            target["activation_year"],
+            target["target_class"],
+            target["group"],
+        )
+        for target in manifest["targets"]
+        if 142 <= target["id"] < 160
+    }
+    assert actual == expected
+    maduro = next(target for target in manifest["targets"] if target["id"] == 160)
+    assert (
+        maduro["key"],
+        maduro["activation_year"],
+        maduro["target_class"],
+        maduro["group"],
+    ) == ("nicolas_maduro", 2026, "official", 34)
+    assert maduro["historical_outcome"]["force_in_campaign"] is False
+    assert "doj_absolute_resolve_2026" in maduro["sources"]
+    groups = {group["key"]: group for group in manifest["groups"]}
+    for key in ("isis_k", "jnim", "isis_somalia"):
+        assert groups[key]["ct_id"] == -1
+        assert groups[key]["group_class"] == "militant"
+        assert groups[key]["location_policy"] == "group_hq"
+    for group in manifest["groups"]:
+        if group["id"] >= 25:
+            assert group["ct_id"] == -1
+            assert group["group_class"] == "office"
+            assert group["location_policy"] == "country_capital"
+
+
+def test_future_windows_names_and_placement_are_generated_from_manifest(manifest):
+    output = GENERATOR.render(manifest)
+    registry = output["common/scripted_effects/01_targeted_operations_registry.txt"]
+    dispatch = output["common/scripted_localisation/01_targeted_operations_names.txt"]
+    for year in range(2027, 2033):
+        assert f"TOP_open_windows_{year}" in registry
+        assert f"name = TOP_modern_{year}_name" in dispatch
+    capital_group = _named_block(registry, "TOP_choose_location_25")
+    assert "CHI = { capital_scope =" in capital_group
+    militant_group = _named_block(registry, "TOP_choose_location_22")
+    assert "TOP_find_group_org" not in militant_group
+    assert "AFG = { random_controlled_state =" in militant_group
+
+
+def test_top_only_militant_windows_create_an_explicit_operational_state(manifest):
+    registry = GENERATOR.render(manifest)[
+        "common/scripted_effects/01_targeted_operations_registry.txt"
+    ]
+    for year, group in ((2028, 22), (2029, 23), (2032, 24)):
+        window = _named_block(registry, f"TOP_open_windows_{year}")
+        assert f"global.TOP_group_window^{group} = 1" in window
+        assert f"global.TOP_group_created^{group} = 1" in window
