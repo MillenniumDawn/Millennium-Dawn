@@ -2,6 +2,31 @@
 
 For full lists of effects, triggers, modifiers, and dynamic variables, see the corresponding files in `resources/documentation/`.
 
+## Scopes and Identity
+
+`ROOT` is the original scope, `FROM` the event sender, and `PREV` the previous scope
+(`PREV.PREV` chains). `OWNER` and `CAPITAL` select the state's owner and country's
+capital. `CONTROLLER` is state-scope only. Event dispatch can change what `FROM`
+means; see [Effect Scope Interpolation](scripting-edge-cases.md#effect-scope-interpolation).
+
+`tag` is the runtime tag; civil-war countries get a new one. `original_tag` retains
+national identity. Use `original_tag` for nation-restricted objects such as MIOs and
+slotted ideas; use `tag` only when the literal current tag matters. Unslotted ideas
+have separate rules in [Idea Reference](idea-reference.md).
+
+## State and Naming
+
+- Prefix country-specific variables and flags with `TAG_`, globals with `GLOBAL_`,
+  and shared-system state with its domain prefix. Use `snake_case` after the prefix;
+  keep system acronyms uppercase.
+- Query existing ideas, focus completion, ideology, subjects, factions, variables,
+  or event targets instead of adding a flag that mirrors them. A flag is appropriate
+  for otherwise unavailable state or a historical transition.
+- Unset numeric variables read as zero. Do not seed them to zero at startup, including
+  dynamic-modifier backing variables. Resetting a used variable to zero is different.
+- Keep array slot indices distinct from type IDs. See
+  [Array Index Semantics](scripting-edge-cases.md#array-index-semantics).
+
 ## Variable Types
 
 ### Persistent variables
@@ -299,10 +324,27 @@ check_variable = { var = my_var value = 12 compare = greater_than }  # explicit
 
 Compare values: `less_than`, `less_than_or_equals`, `greater_than`, `greater_than_or_equals`, `equals`, `not_equals`.
 
+Inline `>=` and `<=` do not work. Use the explicit `compare` form. These comparator
+names do not carry over to math expressions; see [Math Expressions](#math-expressions).
+
 ### Other triggers
 
 - `is_in_array = { my_array = 42 }` — check membership
 - `var:my_var = { exists = yes }` — check if country in variable actually exists in-game
+
+## Variable and Array Tooltips
+
+Bare variable checks, array checks, and variable/array writes produce no useful
+player-facing tooltip. Give visible requirements a `custom_trigger_tooltip` and
+summarize effects with `custom_effect_tooltip`, or use an effect's supported
+`tooltip = KEY` form. Reuse a localised scripted trigger when it expresses the
+requirement, but verify its rendered tooltip rather than assuming the wrapper does.
+
+A failing `visible` hides the object, so it needs no requirement tooltip. AI-only
+decisions need neither tooltip wrappers nor localisation. See
+[Decision Reference](decision-reference.md) for the exact AI-only gate rules.
+
+For dynamic-modifier writes, use [Dynamic Modifier Tooltips](dynamic-modifier-tooltips.md).
 
 ## Dynamic Variables (Read-Only)
 

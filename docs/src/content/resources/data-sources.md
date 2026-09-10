@@ -34,6 +34,104 @@ not December-to-December inflation.
 - The World Bank's Serbia series is not copied to Kosovo or Montenegro. Its combined West Bank
   and Gaza series is used for Palestine, not Israel or a separate Gaza tag.
 
+## Starting policy rate
+
+`cb_policy_rate` is the central bank policy rate in whole percentage points. The GUI and the
+quarterly AI step it by 1 and clamp it to 0-20. The January 2000 start uses the official policy
+rate in force on **2000.1.1** where that instrument is documented. Half-percentage values round
+half up (5.50 becomes 6). Rates above 20 are stored as 20.
+
+Euro-area founding members already sat at 3, which matches the ECB main refinancing rate of
+**3.00%**. Sweden (3.25%) and Denmark (about 3.3%, euro peg) also round to 3, so those files are
+unchanged. Countries without a sourced 2000.1.1 policy rate keep the existing default of 3. That
+is a fallback, not a claim that their central bank was at 3%. Formables, rebels, and breakaway
+tags are not copied from a parent.
+
+Negative policy rates are out of scope. The clamp still bottoms out at 0.
+
+### Seeded values
+
+| Tag | Seed | Rate in force on 2000.1.1                 |
+| --- | ---: | ----------------------------------------- |
+| JAP |    0 | BoJ overnight call about 0.03% (ZIRP)     |
+| SWI |    2 | SNB 3-month Libor target midpoint 1.75%   |
+| SIA |    2 | BOT 14-day RP about 1.5%                  |
+| CAN |    5 | Bank of Canada overnight target 4.75%     |
+| AST |    5 | RBA cash rate 5.00%                       |
+| NZL |    5 | RBNZ OCR 5.00%                            |
+| CZE |    5 | CNB 2-week repo 5.25%                     |
+| KOR |    5 | BoK overnight call about 4.75%            |
+| USA |    6 | Fed funds target 5.50%                    |
+| ENG |    6 | BoE Bank Rate 5.50%                       |
+| NRY |    6 | Norges Bank deposit rate 5.50%            |
+| CHI |    6 | PBOC 1-year lending rate 5.85%            |
+| MAY |    6 | BNM intervention rate 5.50%               |
+| HKG |    7 | HKMA Base Rate 7.00% (Fed + 150 bp)       |
+| RAJ |    8 | RBI Bank Rate 8%                          |
+| GRE |   11 | Bank of Greece 14-day intervention 10.75% |
+| ISR |   11 | Bank of Israel declared rate 10.7%        |
+| SAF |   12 | SARB repo about 12% at end-1999           |
+| IND |   13 | Bank Indonesia 30-day SBI about 13%       |
+| HUN |   15 | MNB base rate 14.50%                      |
+| POL |   17 | NBP reference rate 16.50%                 |
+| BRA |   19 | Copom SELIC target 19%                    |
+| SOV |   20 | CBR refinancing rate 55% (clamped)        |
+| TUR |   20 | CBRT overnight well above 20% (clamped)   |
+| UKR |   20 | NBU discount rate 45% (clamped)           |
+| ROM |   20 | NBR 1999 policy rates above 20% (clamped) |
+
+Greece had not yet joined the euro. The 10.75% rate is the 14-day intervention rate still in
+force on 2000.1.1. The Bank of Greece cut it to 9.75% on 26 January 2000. The Bank of England
+raised Bank Rate to 5.75% on 13 January 2000. Both files use the New Year's Day setting.
+
+Thailand adopted inflation targeting and an official 14-day RP policy rate in May 2000. The
+seed uses the end-1999 14-day repurchase rate, which was already the money-market signal.
+Hong Kong's Base Rate is mechanical under the currency board (US federal funds target plus
+150 basis points). Chile is omitted: the 1999 TPM was a real rate, not a nominal policy rate.
+
+### Sources
+
+- **ECB:** [Key ECB interest rates](https://www.ecb.europa.eu/stats/policy_and_exchange_rates/key_ecb_interest_rates/html/index.en.html).
+  Main refinancing operations were 3.00% from 5 November 1999 through 3 February 2000.
+- **Federal Reserve:** [FOMC statement, 16 November 1999](https://www.federalreserve.gov/boarddocs/press/general/1999/19991116/).
+  Funds target 5.50% until 2 February 2000.
+- **Bank of England:** [Bank Rate history](https://www.bankofengland.co.uk/boeapps/database/Bank-Rate.asp).
+  5.50% from 4 November 1999 until the 13 January 2000 hike.
+- **Bank of Japan:** [Monetary Policy Meeting minutes, 1999](https://www.boj.or.jp/en/mopo/mpmsche_minu/minu_1999/g990813.htm).
+  Zero interest rate policy. Overnight call around 0.03%.
+- **Bank of Canada:** [Monetary Policy Report, November 1999](https://www.bankofcanada.ca/1999/11/17-november-1999/).
+  Overnight target 4.75% from 17 November 1999.
+- **Bank of Korea:** [Base rate history](https://www.bok.or.kr/portal/singl/baseRate/list.do?menuNo=200643).
+  Overnight call target 4.75% from 6 May 1999 until 10 February 2000.
+- **RBA:** [Cash rate to 5.0%, 3 November 1999](https://www.rba.gov.au/media-releases/1999/mr-99-11.html).
+- **RBNZ:** [OCR decisions](https://www.rbnz.govt.nz/monetary-policy/monetary-policy-decisions).
+  OCR 5.0% from 17 November 1999.
+- **Norges Bank:** deposit rate 5.50% from 23 September 1999.
+  [19 January 2000 decision](https://www.norges-bank.no/en/topics/monetary-policy/Monetary-policy-meetings/Key-policy-rate-decisions-2000/19-January-2000-Introduction/) left it unchanged.
+- **CNB:** [2-week repo history](https://www.cnb.cz/en/faq/How-has-the-CNB-two-week-repo-rate-changed-over-time/).
+  5.25% from 26 November 1999.
+- **NBP:** reference rate 16.50% from 18 November 1999.
+- **MNB:** base rate 14.50% from 22 December 1999.
+- **PBOC:** [1-year lending rate 5.85% from 10 June 1999](https://www.pbc.gov.cn/zhengcehuobisi/125207/125213/125440/125838/125888/2882344/index.html).
+- **RBI:** Bank Rate 8% from 1 March 1999.
+- **BNM:** intervention rate 5.50% from 9 August 1999.
+- **Bank of Greece:** 14-day intervention rate 10.75% until
+  [26 January 2000](https://www.bankofgreece.gr/en/news-and-media/press-office/news-list/news?announcement=fcae9b04-63c1-4815-973d-3481b1447b92).
+- **Bank of Russia:** refinancing rate 55% until 24 January 2000.
+- **NBU:** [discount rate 45% from 24 May 1999 to 1 February 2000](https://bank.gov.ua/en/monetary/archive-rish).
+- **Copom / Banco Central do Brasil:** SELIC target 19% from 22 September 1999 through
+  21 March 2000.
+- **HKMA:** Base Rate equals the US funds target plus 150 basis points when that floor binds.
+- **SARB:** repo near 12% at end-1999 after the daily-auction drift in late 1999.
+- **Bank Indonesia:** 30-day SBI about 13% in late 1999 (World Bank January 2000 brief).
+- **Bank of Israel:** declared rate 10.7% in December 1999.
+- **SNB:** 3-month Libor target range 1.25-2.25% at the start of 2000. Midpoint 1.75%.
+
+The seed sits on the next line after `inflation_rate_var` when that country has a
+historical inflation value. New tags and later history files should keep
+`cb_policy_rate = 3` unless a 2000.1.1 source exists. Runtime startup still writes 3
+when the variable is missing.
+
 ## Rail Terminal Placement
 
 Before this pass no state in Millennium Dawn started with a `rail_terminal`, so every real-world freight and passenger
