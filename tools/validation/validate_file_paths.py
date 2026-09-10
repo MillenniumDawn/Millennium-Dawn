@@ -149,17 +149,20 @@ def tracked_content_paths(mod_path: str) -> Optional[List[str]]:
     Reads the git index rather than the filesystem so the check still sees every
     shipped path under a sparse checkout, where most of the tree is absent.
     """
+    # -z emits raw UTF-8 names; text=True would decode them with the console
+    # code page and fail on Windows at the first non-ASCII path.
     try:
         result = subprocess.run(
             ["git", "-C", mod_path, "ls-files", "-z"],
             capture_output=True,
-            text=True,
             check=True,
         )
     except (OSError, subprocess.CalledProcessError):
         return None
     return [
-        path for path in result.stdout.split("\0") if path.startswith(_ROOT_PREFIXES)
+        path
+        for path in result.stdout.decode("utf-8", errors="surrogateescape").split("\0")
+        if path.startswith(_ROOT_PREFIXES)
     ]
 
 
