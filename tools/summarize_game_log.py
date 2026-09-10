@@ -23,7 +23,7 @@ Usage:
     python summarize_game_log.py game.log --top 20 --since 2003.1.1
     python summarize_game_log.py game.log --json > summary.json
 
-No third-party dependencies. Python 3.8+.
+No third-party dependencies. Python 3.12+.
 """
 
 import argparse
