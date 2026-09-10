@@ -42,6 +42,61 @@ python3 tools/run.py publish_workshop release --full      # pass args through
 python3 tools/run.py gfx_entry_generator                  # works on any platform
 ```
 
+### Validation timing baselines
+
+Save the Actions data without timing instrumentation:
+
+```bash
+gh run view RUN_ID --attempt ATTEMPT --json databaseId,attempt,headSha,displayTitle,status,conclusion,createdAt,startedAt,updatedAt,jobs > timing-RUN_ID-ATTEMPT.json
+```
+
+Add a `metadata` object to each export. Its required fields are `workload`,
+`runner`, `tool`, `python`, `dependencies`, `cache` (`cold` or `warm`),
+`worker_budget`, and `baseSha`. For example, this is user-supplied metadata,
+not independently verified by the report:
+
+```json
+{
+  "metadata": {
+    "workload": "tools-tests",
+    "runner": "ubuntu-24.04",
+    "tool": "6bf489e",
+    "python": "3.14.0",
+    "dependencies": { "pytest": "9.1.0", "ruff": "0.15.17" },
+    "cache": "cold",
+    "worker_budget": 4,
+    "baseSha": "4bce0fe"
+  }
+}
+```
+
+Run the same workload at least three times for cold-cache and three times for
+warm-cache samples, keeping those fields identical within each set. Missing
+memory or cache-hit counters are unknown, not zero. Fewer than three matching
+samples is not an accepted baseline and does not support a speed claim. Then
+run:
+
+```bash
+python3 tools/run.py validation_timing_report timing-*.json
+```
+
+The report lists each real Actions job and step, overall run span, and summed
+job time. It ignores synthetic Checks API jobs that have no `steps`, excludes
+incomplete or unsuccessful runs from summaries, and keeps revisions, cache
+modes, and job/step outcomes separate. Existing section timers and CI artifact
+logs are the timing mechanism. Do not instrument subprocess elapsed time with
+parent wait timestamps. `databaseId` plus positive integer `attempt` identifies
+an export, so duplicate files are ignored while distinct reruns are retained.
+Run history alone is not a controlled baseline and does not establish a
+performance gain. No workflow scheduling, worker count, checkout scope, or cache
+portability changes are part of this report.
+
+Observed run `34426341721` is illustrative only: head
+`3a6f37f9c5677f0276fc1ff8f57802b294b5362a`, base
+`4bce0fe79f9dd293a40a7200c99c63e5a58bb111`, Linux job 422s, worktree 131s,
+coverage 95s, integration 64s, prepare 119s, core batch 283s, targeted-a 143s,
+and targeted-b 115s. It is not a comparable baseline for this worktree.
+
 ## Directory Structure
 
 ```
@@ -190,6 +245,7 @@ Metrics, reference analysis, and review tools.
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                       |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas                                                                                            |
 | **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                               |
+| **validation_timing_report.py**     | Summarizes saved GitHub Actions validation job and step timings, grouped by compatible revision and environment                                                 |
 | **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                          |
 | **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced                                                                                              |
 | **pre_place_power_plants.py**       | Bakes fossil_powerplant + composite_plant counts into `history/states/` to skip startup loops. Re-run after edits to the energy formula or country/state setup. |
