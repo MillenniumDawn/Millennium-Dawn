@@ -14,12 +14,12 @@ branch. If you only want to play, use [Getting Started](/getting-started/) inste
 
 # Prerequisites
 
-| Tool            | Version                   | Purpose                              |
-| --------------- | ------------------------- | ------------------------------------ |
-| **Git**         | Any recent version        | Version control                      |
-| **Python**      | 3.10+ (3.12+ recommended) | Dev tools, validators, standardizers |
-| **Text editor** | VS Code recommended       | Editing script files                 |
-| **HOI4**        | Match mod descriptor      | Testing changes in-game              |
+| Tool            | Version              | Purpose                              |
+| --------------- | -------------------- | ------------------------------------ |
+| **Git**         | Any recent version   | Version control                      |
+| **Python**      | 3.12+                | Dev tools, validators, standardizers |
+| **Text editor** | VS Code recommended  | Editing script files                 |
+| **HOI4**        | Match mod descriptor | Testing changes in-game              |
 
 Optional but useful:
 

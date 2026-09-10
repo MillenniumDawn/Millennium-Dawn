@@ -4,6 +4,9 @@ Development tools and scripts used by the Millennium Dawn team for quality assur
 
 ## Requirements
 
+Python 3.12 or newer is required. CI installs 3.12 on Linux, macOS, and Windows.
+Ruff, mypy, pylint, and pyright target 3.12 in `pyproject.toml`.
+
 Some scripts rely on non-native packages for Python. The dependency lists live
 in `pyproject.toml` under `[dependency-groups]`. Install them from the repo root
 (pip 25.1+):
@@ -104,7 +107,7 @@ not independently verified by the report:
     "workload": "tools-tests",
     "runner": "ubuntu-24.04",
     "tool": "6bf489e",
-    "python": "3.14.0",
+    "python": "3.12.0",
     "dependencies": { "pytest": "9.1.0", "ruff": "0.15.17" },
     "cache": "cold",
     "worker_budget": 4,
