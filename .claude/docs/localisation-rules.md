@@ -2,7 +2,9 @@
 
 ## Language & Encoding
 
-- English is the only language to edit. All other language files are managed via Paratranz — **do not touch them**.
+- Edit and review English only. Non-English files are expected to diverge while
+  translation is deferred. Do not modify them or report missing, stale, or mismatched
+  keys relative to English.
 - All `.yml` files must be **UTF-8 with BOM**.
 - First line must be `l_english:` with no leading whitespace.
 - Use **1 space** of indentation per key (not tabs).
@@ -31,6 +33,30 @@
 - Capitalize proper nouns, party names, ideology group names, and in-game concepts (e.g., Political Power, Stability).
 - No all-caps for emphasis; use in-game formatting codes if needed (e.g., `£icon`, `§Y...§!`). Which color code to reach for is fixed — see [Color Codes](#color-codes).
 - **No padding filler.** Every sentence should carry real information — founding facts, political orientation, mechanical implication, alignment. Sentences that restate the title or fill space with "the party has remained influential over the years" add nothing. Applies to subideology descs, focus descs, idea descs, event flavour, and option text alike.
+
+### Perspective and Mechanical Claims
+
+Use first-person collective (we, us, our nation) when the country is the subject,
+and third person for the target. Tutorial tooltips may use second person sparingly.
+Keep lore in past/present tense and option buttons action-oriented. Use consistent
+grammar across a set of action labels.
+
+Verify durations, percentages, currency, and other mechanical claims against the
+actual effects and triggers. Short tooltips usually need one to three sentences;
+a full explainer may need more, but not filler. Do not repeat modifier values in
+idea descriptions when the modifier tooltip already shows them.
+
+### Preserve Dynamic Text
+
+When polishing values, preserve formatting and substitution tokens byte-for-byte:
+`§Y...§!`, `£icon`, `\n`, `[scope.Getter]`, `[?var|format]`, `[!trigger]`, and
+`[scripted_loc]`. A prose edit must not change the mechanic or break a getter.
+
+- Indexed values use forms such as `[?ROOT.CPD_VP@THIS|.0]`.
+- Scripted-localisation blocks use their defined-text name, such as `[CPD_some_defined_text]`.
+- Scripted-GUI trigger breakdowns use forms such as `[!CPD_some_button_click_enabled]`.
+
+These are syntax examples, not identifiers to copy. Resolve every name before use.
 
 ## Color Codes
 

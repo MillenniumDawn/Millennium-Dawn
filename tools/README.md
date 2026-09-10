@@ -30,6 +30,49 @@ Black is the canonical formatter. Mypy checks the typed report and validator-cor
 surfaces declared in `pyproject.toml`; the remaining scripts are migrated in
 small, behavior-tested slices rather than hidden behind broad ignores.
 
+## Maintaining Tools
+
+Keep code local and readable. Reuse shared helpers when they fit; do not add a
+wrapper or framework for one call site. Runtime dependencies stay within the
+`runtime` group in `pyproject.toml`; analysis and development dependencies are separate.
+Black formats Python; Ruff checks lint and import order.
+
+### Text Writes
+
+Every text-mode write passes `newline=""` to prevent Windows from turning LF into
+CRLF. Use explicit `open`, not `Path.write_text`, per the repository's write policy.
+Specify encoding: script `.txt` files use
+`encoding="utf-8"`, never `utf-8-sig`; localisation `.yml` needs its BOM.
+`tools/tests/text_write_newline_test.py` enforces this and lists the rare intentional
+platform-native writes. `.gitattributes` and `.editorconfig` keep the repository on LF.
+
+### Review Checklist
+
+- Preserve public re-exports in `shared_utils.py`, `validator_common.py`, and the other
+  hub modules listed in `pyproject.toml`. Check downstream imports before removing an
+  apparently unused name. For new explicit re-exports, use `from module import X as X`
+  rather than adding a lint suppression.
+- Reuse staged-file selection (`MD_STAGED_FILES`) instead of walking the full repository
+  or calling `git diff --cached` repeatedly. Check each tool's intended directory set.
+- Bound caches, subprocess runtimes, and worker counts. Use the shared CPU-budget
+  helpers rather than hard-coded pool sizes; avoid multiprocessing for tiny inputs.
+- Report I/O and subprocess failures. Do not silently return an empty result or use
+  `errors="ignore"` to discard bad bytes. If replacement decoding is intentional,
+  warn about it. Avoid broad exception handlers that hide the cause.
+- Check parser edge cases and reported line numbers. Compile reused regexes once.
+  Use existing collection, parser, timing, and root-resolution helpers where appropriate.
+- Read [Validation Pipeline](../.claude/docs/validation-pipeline.md) before changing
+  hook/CI selection or strictness. A new strict check needs an authorized baseline
+  audit and triage before rollout.
+
+### Regression Tests
+
+Tests belong under `tools/tests/` and end in `_test.py`; `test_*.py` is not collected.
+Add regression coverage with changed validator, fixer, or report behavior. Run
+`python -m pytest` before merging any `tools/` change, and fix failures in the same
+change. Never delete, skip, or weaken a test to reach green. A correct behavior change
+updates its regression expectations; a broken implementation gets fixed instead.
+
 ## Quick Start
 
 Use `run.py` to run any tool by short name — no need to remember subdirectory paths:

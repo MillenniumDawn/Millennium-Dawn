@@ -3,7 +3,29 @@ title: Code Stylization Guide
 description: Millennium Dawn's Code Stylization Guide
 ---
 
-This guide covers coding standards, best practices, and formatting rules for Millennium Dawn mod development.
+Write code another contributor can understand without reconstructing your intent.
+Keep the change local, reuse existing behavior, and add only what the task needs.
+
+## Keep It Simple
+
+- Prefer plain names and direct control flow over clever or compressed code.
+- Add a helper only when it removes meaningful duplication or clarifies a required boundary.
+  Do not turn a few clear lines into a one-use wrapper.
+- Query existing game state instead of maintaining flags that mirror it. Keep flags
+  for historical transitions or state the engine cannot otherwise answer.
+- Keep behavior-preserving cleanup separate from gameplay changes.
+- Remove unused code and commented-out blocks. Add a comment only for a non-obvious
+  reason, in one short line. Do not narrate the code.
+
+### Names and Encoding
+
+Country-specific variables and flags use `TAG_`; global state uses `GLOBAL_`; shared
+systems use their domain prefix. Use `snake_case` after the prefix and keep system
+acronyms uppercase. Match identifier case exactly.
+
+Script `.txt` files use UTF-8 without BOM. English localisation `.yml` files use
+UTF-8 with BOM. Python tools must preserve LF when writing; see
+[Maintaining Tools](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md#maintaining-tools).
 
 > **Quick Tools**:
 >
@@ -282,7 +304,8 @@ BRA_idea_higher_minimum_wage_1 = {
 
 ## Brackets
 
-- Place closing brackets on the same line as the keyword
+- Place opening braces on the same line as the keyword
+- Put closing braces on their own line at the outer indent, except for simple one-line blocks
 - Avoid excessive whitespace
 - Keep simple checks on one line when appropriate
 
@@ -353,7 +376,7 @@ CHI_norinco_manufacturer = {
 
 ## Trait Guidelines
 
-- Maximum grid: `y = 0 - 9`
+- Keep trait x positions at or below 9. Negative x is allowed; y is not capped
 - Use relative positioning within the grid
 
 ---
