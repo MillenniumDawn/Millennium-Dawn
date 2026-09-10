@@ -7,6 +7,8 @@ the generic label.
 """
 
 import validate_party_loc as V
+from shared.suite import issue_categories as _categories
+from shared.suite import run_validator
 
 LOC = V.LOC_PATH
 HOOK = V.HOOK_PATH
@@ -34,15 +36,7 @@ def _run(tmp_path, write_path, loc_body, hook_body, **kwargs):
     write_path(tmp_path, LOC, "l_english:\n" + loc_body)
     write_path(tmp_path, HOOK, hook_body)
     kwargs.setdefault("scan_all", True)
-    validator = V.Validator(
-        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True, **kwargs
-    )
-    validator.run_validations()
-    return validator
-
-
-def _categories(validator):
-    return sorted(issue.category for issue in validator._issues)
+    return run_validator(V.Validator, tmp_path, **kwargs)
 
 
 def test_a_standard_block_is_clean(tmp_path, write_path):
@@ -51,14 +45,7 @@ def test_a_standard_block_is_clean(tmp_path, write_path):
 
 
 def test_missing_files_are_not_an_error(tmp_path, write_path):
-    validator = V.Validator(
-        mod_path=str(tmp_path),
-        use_colors=False,
-        workers=1,
-        no_cache=True,
-        scan_all=True,
-    )
-    validator.run_validations()
+    validator = run_validator(V.Validator, tmp_path, scan_all=True)
     assert validator._issues == []
 
 
@@ -238,10 +225,7 @@ def test_only_the_staged_tag_is_audited(tmp_path, write_path):
     )
     run_git(tmp_path, "add", LOC)
 
-    validator = V.Validator(
-        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True
-    )
-    validator.run_validations()
+    validator = run_validator(V.Validator, tmp_path)
     assert {issue.line for issue in validator._issues} == {4}
     assert _categories(validator) == [
         "party-loc-missing-hook",
