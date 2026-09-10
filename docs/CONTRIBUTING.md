@@ -6,7 +6,7 @@
 
 - Node.js 24 LTS or newer ([nodejs.org](https://nodejs.org/))
 - [Bun](https://bun.com/). See **Bun version** below.
-- Python 3 (for `check:links`, `check:og`, `check:a11y`, `check:perf`)
+- Python 3.12+ (for `check:links`, `check:og`, `check:a11y`, `check:perf`)
 
 ### Bun version
 
