@@ -2,6 +2,24 @@
 
 Patterns for reducing complexity, eliminating copy-paste drift, and making scripts easier to maintain.
 
+Use a pattern only when it preserves behavior and makes the code easier to read.
+A helper or lookup table must remove meaningful duplication, not just a few lines.
+Check scope, evaluation order, side effects, and tooltips before calling a rewrite safe.
+
+## Local Simplifications
+
+- Trigger contexts already AND their children. Do not add a redundant `AND` wrapper.
+- An AI modifier whose `OR` covers every value of a condition is unconditional.
+  Remove the tautology and fold its additive weight into `base` where equivalent.
+- Use `if`/`else` for complementary branches. Two `if` blocks can both execute when
+  the first changes state read by the second.
+- Prefer flat checks when they express the same relationship:
+  `TAG = { exists = yes }` becomes `country_exists = TAG`;
+  `TAG = { has_war_with = ROOT }` becomes `has_war_with = TAG` when current scope is ROOT.
+  Verify direction rather than replacing scope blocks mechanically. In particular,
+  `TAG = { is_puppet = yes }` does not mean `is_puppet_of = TAG`: one checks TAG's
+  status, the other checks the current country's relationship to TAG.
+
 ## Array Lookup Tables
 
 When you have N parallel values indexed by a small integer type (1..N), use an array instead of N individual variables.
@@ -243,7 +261,7 @@ NOT = { check_variable = { global.POTEF_nominee_country^var_gov_index value = 0 
 
 ### Sentinel-value gating with country IDs
 
-Storing a **country id** in an array slot doubles as a set/unset sentinel: runtime country ids are always `> 0` (id 0 is reserved for rebels and never held by a live EU member), so `check_variable = { slot > 0 }` means "this slot is filled" and resetting the slot to `0` clears it. An uninitialized slot reads `0` and fails the gate safely — no `has_country_flag` needed. Use `compare = greater_than` (or `not_equals 0`); never inline `>=`/`<=` (invalid — see general-rules).
+Storing a **country id** in an array slot doubles as a set/unset sentinel: runtime country ids are always `> 0` (id 0 is reserved for rebels and never held by a live EU member), so `check_variable = { slot > 0 }` means "this slot is filled" and resetting the slot to `0` clears it. An uninitialized slot reads `0` and fails the gate safely — no `has_country_flag` needed. Use `compare = greater_than` (or `not_equals 0`); never inline `>=`/`<=` (invalid; see [Data Structures](hoi4-data-structures.md#check_variable)).
 
 ### Set ↔ clear symmetry is mandatory
 
@@ -264,7 +282,7 @@ Document which kind each array is in a one-line comment at its first write site 
 
 ### Loop type follows the array contents
 
-Numeric-index arrays (vote ids, subideology indices, token arrays) use `for_each_loop`. Scope-object arrays (countries, states — e.g. `global.EU_member`) use `for_each_scope_loop`. Mismatching them silently no-ops or misbehaves. (Also in general-rules; the migration is where it bites most.)
+Numeric-index arrays (vote ids, subideology indices, token arrays) use `for_each_loop`. Scope-object arrays (countries, states — e.g. `global.EU_member`) use `for_each_scope_loop`. Mismatching them silently no-ops or misbehaves. See [Data Structures](hoi4-data-structures.md#loop-effects).
 
 ### Scripted-loc fallthrough
 
@@ -625,18 +643,18 @@ When N events share identical option effect bodies and differ only in title/desc
 
 ```
 title = {
-	trigger = { check_variable = { global.current_ga_vote_type = 6 } }
-	text = UN.6.t
+ trigger = { check_variable = { global.current_ga_vote_type = 6 } }
+ text = UN.6.t
 }
 title = {
-	trigger = { check_variable = { global.current_ga_vote_type = 7 } }
-	text = UN.7.t
+ trigger = { check_variable = { global.current_ga_vote_type = 7 } }
+ text = UN.7.t
 }
 ```
 
-3. Merge ai_chance mechanically: group each `(add, condition)` modifier by the set of types that carry it, then emit one modifier per group, gated with `check_variable` / `OR` / range checks. If option bases differ across types, use `base = 0` plus a per-type gated `add`. Then re-expand the merged block per type and diff against the originals; the multisets must match exactly or you changed AI behavior.
-4. Replace the dispatch (`meta_effect` or if/else_if chain) with one literal `country_event`.
-5. Delete the collapsed events. Keep all their `.t`/`.d` loc keys (the triggered blocks reference them). Delete orphaned per-event option keys only after a repo-wide grep.
+1. Merge ai_chance mechanically: group each `(add, condition)` modifier by the set of types that carry it, then emit one modifier per group, gated with `check_variable` / `OR` / range checks. If option bases differ across types, use `base = 0` plus a per-type gated `add`. Then re-expand the merged block per type and diff against the originals; the multisets must match exactly or you changed AI behavior.
+2. Replace the dispatch (`meta_effect` or if/else_if chain) with one literal `country_event`.
+3. Delete the collapsed events. Keep all their `.t`/`.d` loc keys (the triggered blocks reference them). Delete orphaned per-event option keys only after a repo-wide grep.
 
 ### The delayed-fire trap
 
@@ -644,8 +662,8 @@ Triggered titles/descs and ai_chance evaluate at display/fire time, not at dispa
 
 ```
 fire_result_event = {
-	set_variable = { my_event_type = global.current_type }
-	country_event = { id = foo.1 days = 1 }
+ set_variable = { my_event_type = global.current_type }
+ country_event = { id = foo.1 days = 1 }
 }
 ```
 

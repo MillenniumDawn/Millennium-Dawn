@@ -4,6 +4,9 @@ Development tools and scripts used by the Millennium Dawn team for quality assur
 
 ## Requirements
 
+Python 3.12 or newer is required. CI installs 3.12 on Linux, macOS, and Windows.
+Ruff, mypy, pylint, and pyright target 3.12 in `pyproject.toml`.
+
 Some scripts rely on non-native packages for Python. The dependency lists live
 in `pyproject.toml` under `[dependency-groups]`. Install them from the repo root
 (pip 25.1+):
@@ -30,6 +33,49 @@ Black is the canonical formatter. Mypy checks the typed report and validator-cor
 surfaces declared in `pyproject.toml`; the remaining scripts are migrated in
 small, behavior-tested slices rather than hidden behind broad ignores.
 
+## Maintaining Tools
+
+Keep code local and readable. Reuse shared helpers when they fit; do not add a
+wrapper or framework for one call site. Runtime dependencies stay within the
+`runtime` group in `pyproject.toml`; analysis and development dependencies are separate.
+Black formats Python; Ruff checks lint and import order.
+
+### Text Writes
+
+Every text-mode write passes `newline=""` to prevent Windows from turning LF into
+CRLF. Use explicit `open`, not `Path.write_text`, per the repository's write policy.
+Specify encoding: script `.txt` files use
+`encoding="utf-8"`, never `utf-8-sig`; localisation `.yml` needs its BOM.
+`tools/tests/text_write_newline_test.py` enforces this and lists the rare intentional
+platform-native writes. `.gitattributes` and `.editorconfig` keep the repository on LF.
+
+### Review Checklist
+
+- Preserve public re-exports in `shared_utils.py`, `validator_common.py`, and the other
+  hub modules listed in `pyproject.toml`. Check downstream imports before removing an
+  apparently unused name. For new explicit re-exports, use `from module import X as X`
+  rather than adding a lint suppression.
+- Reuse staged-file selection (`MD_STAGED_FILES`) instead of walking the full repository
+  or calling `git diff --cached` repeatedly. Check each tool's intended directory set.
+- Bound caches, subprocess runtimes, and worker counts. Use the shared CPU-budget
+  helpers rather than hard-coded pool sizes; avoid multiprocessing for tiny inputs.
+- Report I/O and subprocess failures. Do not silently return an empty result or use
+  `errors="ignore"` to discard bad bytes. If replacement decoding is intentional,
+  warn about it. Avoid broad exception handlers that hide the cause.
+- Check parser edge cases and reported line numbers. Compile reused regexes once.
+  Use existing collection, parser, timing, and root-resolution helpers where appropriate.
+- Read [Validation Pipeline](../.claude/docs/validation-pipeline.md) before changing
+  hook/CI selection or strictness. A new strict check needs an authorized baseline
+  audit and triage before rollout.
+
+### Regression Tests
+
+Tests belong under `tools/tests/` and end in `_test.py`; `test_*.py` is not collected.
+Add regression coverage with changed validator, fixer, or report behavior. Run
+`python -m pytest` before merging any `tools/` change, and fix failures in the same
+change. Never delete, skip, or weaken a test to reach green. A correct behavior change
+updates its regression expectations; a broken implementation gets fixed instead.
+
 ## Quick Start
 
 Use `run.py` to run any tool by short name — no need to remember subdirectory paths:
@@ -41,6 +87,61 @@ python3 tools/run.py find_idea common/ideas/Greek.txt    # partial names work to
 python3 tools/run.py publish_workshop release --full      # pass args through
 python3 tools/run.py gfx_entry_generator                  # works on any platform
 ```
+
+### Validation timing baselines
+
+Save the Actions data without timing instrumentation:
+
+```bash
+gh run view RUN_ID --attempt ATTEMPT --json databaseId,attempt,headSha,displayTitle,status,conclusion,createdAt,startedAt,updatedAt,jobs > timing-RUN_ID-ATTEMPT.json
+```
+
+Add a `metadata` object to each export. Its required fields are `workload`,
+`runner`, `tool`, `python`, `dependencies`, `cache` (`cold` or `warm`),
+`worker_budget`, and `baseSha`. For example, this is user-supplied metadata,
+not independently verified by the report:
+
+```json
+{
+  "metadata": {
+    "workload": "tools-tests",
+    "runner": "ubuntu-24.04",
+    "tool": "6bf489e",
+    "python": "3.12.0",
+    "dependencies": { "pytest": "9.1.0", "ruff": "0.15.17" },
+    "cache": "cold",
+    "worker_budget": 4,
+    "baseSha": "4bce0fe"
+  }
+}
+```
+
+Run the same workload at least three times for cold-cache and three times for
+warm-cache samples, keeping those fields identical within each set. Missing
+memory or cache-hit counters are unknown, not zero. Fewer than three matching
+samples is not an accepted baseline and does not support a speed claim. Then
+run:
+
+```bash
+python3 tools/run.py validation_timing_report timing-*.json
+```
+
+The report lists each real Actions job and step, overall run span, and summed
+job time. It ignores synthetic Checks API jobs that have no `steps`, excludes
+incomplete or unsuccessful runs from summaries, and keeps revisions, cache
+modes, and job/step outcomes separate. Existing section timers and CI artifact
+logs are the timing mechanism. Do not instrument subprocess elapsed time with
+parent wait timestamps. `databaseId` plus positive integer `attempt` identifies
+an export, so duplicate files are ignored while distinct reruns are retained.
+Run history alone is not a controlled baseline and does not establish a
+performance gain. No workflow scheduling, worker count, checkout scope, or cache
+portability changes are part of this report.
+
+Observed run `34426341721` is illustrative only: head
+`3a6f37f9c5677f0276fc1ff8f57802b294b5362a`, base
+`4bce0fe79f9dd293a40a7200c99c63e5a58bb111`, Linux job 422s, worktree 131s,
+coverage 95s, integration 64s, prepare 119s, core batch 283s, targeted-a 143s,
+and targeted-b 115s. It is not a comparable baseline for this worktree.
 
 ## Directory Structure
 
@@ -178,6 +279,7 @@ DDS conversion, GFX entry generation, texture and flag tools.
 | **find_duplicate_textures.py** | Finds duplicate texture files in the mod                                          |
 | **flag-reference-checker.py**  | Validates flag references across the mod                                          |
 | **gfx_entry_generator_gui.py** | GFX sprite entry generator with GUI, calls into the root `gfx_entry_generator.py` |
+| **resize_decision_icons.py**   | Resizes wrong-slot decision icon art in place or as a sibling sprite              |
 | **state_gfx.py**               | Extracts province colors from state files and renders them on the map             |
 
 ### Analysis (`analysis/`)
@@ -190,6 +292,7 @@ Metrics, reference analysis, and review tools.
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                       |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas                                                                                            |
 | **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                               |
+| **validation_timing_report.py**     | Summarizes saved GitHub Actions validation job and step timings, grouped by compatible revision and environment                                                 |
 | **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                          |
 | **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced                                                                                              |
 | **pre_place_power_plants.py**       | Bakes fossil_powerplant + composite_plant counts into `history/states/` to skip startup loops. Re-run after edits to the energy formula or country/state setup. |
@@ -246,20 +349,20 @@ Tests for individual validators live in `tests/validation/`:
 
 Hook entry points, CI tools, shared libraries, and other scripts that stay at the `tools/` root.
 
-| Script                            | Description                                                                                                                                                                                                                                                                                                                                        |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                |
-| **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                   |
-| **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                    |
-| **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                |
-| **gfx_entry_generator.py**        | GFX sprite entry generator (cross-platform, merges into existing `.gfx` files)                                                                                                                                                                                                                                                                     |
-| **shared_utils.py**               | Shared utilities: `Colors` class, `FileOpener` (LRU cache), `clean_filepath()`, `should_skip_file()`, `DEFAULT_EXTRA_SKIP_PATTERNS`, argparse factories (`create_validation_parser`, `create_linting_parser`, `create_standard_parser`), entry points (`run_validator_main`, `run_tool_main`), `find_hoi4_install()`, `extract_block_from_text()`. |
-| **loc.py**                        | Localisation utilities                                                                                                                                                                                                                                                                                                                             |
-| **logging_tool.py**               | Logging utility                                                                                                                                                                                                                                                                                                                                    |
-| **cleanup_or.py**                 | Library for `linting/check_common_mistakes.py`: finds redundant `AND`/single-condition `OR` blocks                                                                                                                                                                                                                                                 |
-| **assign_mio_icons.py**           | Manual tool: assigns MIO trait icons deterministically from the trait's winning modifier                                                                                                                                                                                                                                                           |
-| **summarize_game_log.py**         | Manual tool: parses scripted `log =` lines out of game.log into a "what happened" report after a test run                                                                                                                                                                                                                                          |
-| **sync_dynamic_tokens.py**        | Manual tool: regenerates `common/synchronized_dynamic_tokens` from error.log                                                                                                                                                                                                                                                                       |
+| Script                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                                                                                                                                       |
+| **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **gfx_entry_generator.py**        | GFX sprite entry generator (cross-platform, merges into existing `.gfx` files)                                                                                                                                                                                                                                                                                                                                                                                            |
+| **shared_utils.py**               | Shared utilities: `Colors` class, `FileOpener` (LRU cache), `clean_filepath()`, `should_skip_file()`, `DEFAULT_EXTRA_SKIP_PATTERNS`, argparse factories (`create_validation_parser`, `create_linting_parser`, `create_standard_parser`), entry points (`run_validator_main`, `run_tool_main`), `find_hoi4_install()` (`$HOI4_PATH`, then Steam's `libraryfolders.vdf`, the VS Code HOI4 extension `installPath` settings, then fixed paths), `extract_block_from_text()`. |
+| **loc.py**                        | Localisation utilities                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **logging_tool.py**               | Logging utility                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **cleanup_or.py**                 | Library for `linting/check_common_mistakes.py`: finds redundant `AND`/single-condition `OR` blocks                                                                                                                                                                                                                                                                                                                                                                        |
+| **assign_mio_icons.py**           | Manual tool: assigns MIO trait icons deterministically from the trait's winning modifier                                                                                                                                                                                                                                                                                                                                                                                  |
+| **summarize_game_log.py**         | Manual tool: parses scripted `log =` lines out of game.log into a "what happened" report after a test run                                                                                                                                                                                                                                                                                                                                                                 |
+| **sync_dynamic_tokens.py**        | Manual tool: regenerates `common/synchronized_dynamic_tokens` from error.log                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ---
 

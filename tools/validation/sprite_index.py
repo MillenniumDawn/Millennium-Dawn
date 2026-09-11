@@ -12,14 +12,16 @@ import glob
 import os
 import re
 import sys
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 import disk_cache
+from image_size import read_image_size
 from shared_utils import extract_block_from_text
 from validate_gfx_references import (
     _GFX_SPRITE_TYPES,
+    _load_vanilla_sprite_sizes,
     _strip_comments,
     _vanilla_gfx_files,
     sprite_defs_from_gfx_text,
@@ -163,3 +165,56 @@ def build_sprite_texture_index(
         for name, path in pairs:
             index[name] = path
     return index
+
+
+class SpriteSizeIndex:
+    """Sprite name -> texture pixel size, from textures on disk else the manifest.
+
+    A name in the texture index is measured from its file, so a mod sprite that
+    shadows a vanilla name wins; anything else falls back to the size column of
+    ``vanilla_sprites.txt``. ``unreadable`` counts textures the index names but
+    could not be read — in CI that is every art directory the prepared workspace
+    does not ship, so callers log it rather than silently skipping.
+    """
+
+    def __init__(
+        self,
+        textures: Dict[str, str],
+        vanilla_sizes: Optional[Dict[str, Tuple[int, int]]] = None,
+    ):
+        self._textures = textures
+        self._vanilla = vanilla_sizes or {}
+        self.unreadable = 0
+
+    def __contains__(self, name: str) -> bool:
+        return name in self._textures or name in self._vanilla
+
+    def __len__(self) -> int:
+        return len(self._textures) + len(self._vanilla)
+
+    @property
+    def manifest_backed(self) -> bool:
+        return bool(self._vanilla)
+
+    def is_vanilla_only(self, name: str) -> bool:
+        return name not in self._textures and name in self._vanilla
+
+    def size(self, name: str) -> Optional[Tuple[int, int]]:
+        path = self._textures.get(name)
+        if path is None:
+            return self._vanilla.get(name)
+        size = read_image_size(path)
+        if size is None:
+            self.unreadable += 1
+        return size
+
+
+def build_sprite_size_index(mod_path: str, pool_map=None) -> SpriteSizeIndex:
+    """Return a size index over mod + vanilla sprites.
+
+    Same precedence as validate_gfx_references: a live install is read directly,
+    and the committed manifest stands in only when no install is discoverable.
+    """
+    textures = build_sprite_texture_index(mod_path, pool_map)
+    vanilla = {} if _vanilla_gfx_files() else _load_vanilla_sprite_sizes()
+    return SpriteSizeIndex(textures, vanilla)

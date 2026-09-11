@@ -61,6 +61,18 @@ def initialize_git_repository(repository, *paths):
     run_git(repository, "commit", "-m", "initial")
 
 
+def run_validator(validator_cls, tmp_path, **kwargs):
+    validator = validator_cls(
+        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True, **kwargs
+    )
+    validator.run_validations()
+    return validator
+
+
+def issue_categories(validator):
+    return sorted(issue.category for issue in validator._issues)
+
+
 def collecting_validator(cls):
     """Wrap a Validator so `_report` appends to `.collected` instead of printing."""
 

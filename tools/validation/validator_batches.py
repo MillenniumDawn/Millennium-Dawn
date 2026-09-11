@@ -74,7 +74,9 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ),
     ),
     "targeted-b": (
-        ValidatorSpec("focus-tree", "validate_focus_tree.py", ("national-focus",)),
+        ValidatorSpec(
+            "focus-tree", "validate_focus_tree.py", ("national-focus", "localisation")
+        ),
         ValidatorSpec("on-actions", "validate_on_actions.py", ("on-actions", "events")),
         ValidatorSpec(
             "scripted-params",
@@ -110,6 +112,12 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             ("common", "events"),
         ),
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
+        ValidatorSpec(
+            "party-loc",
+            "validate_party_loc.py",
+            ("localisation", "common"),
+            strict=False,
+        ),
     ),
 }
 

@@ -7,7 +7,7 @@ from shared.paths import VALIDATION_DIR
 
 
 def test_every_batch_spec_script_exists():
-    assert len(vb.ALL_SPECS) == 37
+    assert len(vb.ALL_SPECS) == 38
     assert not {spec.name for spec in vb.ALL_SPECS} & {
         spec.name for spec in vb.IMPACT_ONLY_SPECS
     }

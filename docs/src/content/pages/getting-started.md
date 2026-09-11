@@ -4,7 +4,8 @@ permalink: /getting-started/
 description: Step-by-step installation and setup guide for playing Millennium Dawn.
 ---
 
-Welcome to Millennium Dawn! This guide will help you get up and running with the mod.
+Install Millennium Dawn, enable it in a separate playset, and match your HOI4 version
+to the mod release you selected. Start with no other mods enabled.
 
 ## Installation
 
@@ -12,19 +13,27 @@ Welcome to Millennium Dawn! This guide will help you get up and running with the
 
 1. Open Hearts of Iron IV in Steam
 2. Go to the Workshop tab
-3. Search for "Millennium Dawn"
-4. Click "Subscribe" on the official mod
+3. Open the [official Millennium Dawn page](https://steamcommunity.com/sharedfiles/filedetails/?id=2777392649)
+4. Click **Subscribe** and wait for Steam to finish the download
 5. Launch Hearts of Iron IV
-6. Enable the mod in the launcher
+6. Add Millennium Dawn to a separate playset and enable only that copy of the mod
 
 ### Manual Installation
 
-1. Download from the [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2504231514) page
-2. Extract the files to your Hearts of Iron IV mods directory:
+1. Download the version you want from [GitHub Releases](https://github.com/MillenniumDawn/Millennium-Dawn/releases).
+   Check its supported HOI4 version before installing.
+2. Extract the mod into a folder named `Millennium-Dawn` inside your HOI4 mod directory:
    - **Windows**: `Documents/Paradox Interactive/Hearts of Iron IV/mod/`
    - **Mac**: `~/Documents/Paradox Interactive/Hearts of Iron IV/mod/`
    - **Linux**: `~/.local/share/Paradox Interactive/Hearts of Iron IV/mod/`
-3. Launch Hearts of Iron IV and enable the mod
+3. Keep the game folders (`common`, `events`, and others) directly inside `Millennium-Dawn`,
+   not inside another nested archive folder.
+4. Copy `Millennium_Dawn.mod` from the extracted folder into the parent `mod/` directory.
+   Its `path` must point to `mod/Millennium-Dawn`.
+5. Enable the local mod in the launcher. Do not enable the Workshop copy alongside it.
+
+For a Git checkout rather than a release archive, use [Developer Setup](/dev-resources/developer-setup/).
+Development updates can invalidate saves, so keep separate test saves.
 
 ## First Steps
 
@@ -62,9 +71,10 @@ The mod introduces several new mechanics:
 
 ### Crashes
 
-- Ensure you have the latest version of Hearts of Iron IV
+- Match HOI4 to the version supported by your selected mod release, not simply the newest game patch
 - Check that all DLC is up to date
 - Verify mod files are not corrupted
+- Follow the [Troubleshooting Guide](/player-tutorials/troubleshooting-guide/) if a clean playset still fails
 
 ### Compatibility
 
@@ -84,7 +94,7 @@ Once you're comfortable with the basics:
 
 If you are interested in developing content for Millennium Dawn:
 
-- Read the [Git Setup & Usage Guide](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#development-setup) to get the dev version running
+- Read [Developer Setup](/dev-resources/developer-setup/) to get the dev version running
 - See the [Contributing Guidelines](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md) for code standards and the PR process
 - Check the [Content Review Guide](/dev-resources/content-review-guide/) to understand quality expectations
 
