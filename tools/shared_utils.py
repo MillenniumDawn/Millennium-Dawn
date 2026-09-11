@@ -443,7 +443,9 @@ def collapse_or_compact(
     Single-leaf test (evaluated outside string literals and comments):
     ``leaves = (#"=<>") - (#"{")``; collapse iff ``leaves == 1`` and braces
     balance. Comparison operators ``<``/``>`` count as leaves alongside ``=`` so a
-    block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. Bails to
+    block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. A bare
+    token list (``focus = { A B C }``) counts as one leaf per token, so a
+    multi-line list stays multi-line. Bails to
     ``compact_block`` if any line carries a ``#`` comment. When *indent* is None
     the single-line form keeps the block's existing leading whitespace (from
     ``block_lines[0]``); otherwise *indent* is used as the prefix.
@@ -478,6 +480,11 @@ def collapse_or_compact(
 
     if n_open != n_close or n_leaf - n_open != 1:
         return compact_block(collapse_nested_blocks(block_lines))
+
+    unquoted = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
+    for group in re.findall(r"\{([^{}=<>]*)\}", unquoted):
+        if len(group.split()) > 1:
+            return compact_block(collapse_nested_blocks(block_lines))
 
     return [f"{indent}{_normalize_oneline_braces(text)}"]
 
